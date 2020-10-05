@@ -85,6 +85,17 @@ bool HostTracker::add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary)
     return true;
 }
 
+
+bool HostTracker::add_payload_no_lock(const AppId pld, HostApplication* ha)
+{
+    for ( const auto& app : ha->payloads )
+        if ( app == pld )
+            return false;
+
+    ha->payloads.emplace_back(pld);
+    return true;
+}
+
 bool HostTracker::get_hostmac(const uint8_t* mac, HostMac& hm)
 {
     if ( !mac or !memcmp(mac, zero_mac, MAC_SIZE) )
@@ -255,7 +266,14 @@ bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inf
 void HostTracker::clear_service(HostApplication& ha)
 {
     lock_guard<mutex> lck(host_tracker_lock);
-    ha = {};
+    ha.port = 0;
+    ha.proto = (IpProtocol) 0;
+    ha.appid = (AppId) 0;
+    ha.inferred_appid = false;
+    ha.hits = 0;
+    ha.last_seen = 0;
+    ha.payloads.clear();
+    ha.info.clear();
 }
 
 bool HostTracker::add_service(HostApplication& app, bool* added)
@@ -308,7 +326,39 @@ size_t HostTracker::get_service_count()
     return services.size();
 }
 
-HostApplication HostTracker::get_service(Port port, IpProtocol proto, uint32_t lseen,
+HostApplication* HostTracker::find_service_no_lock(Port port, IpProtocol proto, AppId appid)
+{
+    for ( auto& s : services )
+    {
+        if ( s.port == port and s.proto == proto )
+        {
+            if ( appid != APP_ID_NONE and s.appid == appid )
+                return &s;
+        }
+    }
+
+    return nullptr;
+}
+
+bool HostTracker::add_payload(HostApplication& local_ha, Port port, IpProtocol proto, AppId payload,
+    AppId service, size_t max_payloads)
+{
+    // This lock is responsible for find_service and add_payload
+    lock_guard<mutex> lck(host_tracker_lock);
+
+    auto ha = find_service_no_lock(port, proto, service);
+
+    if (ha and ha->payloads.size() < max_payloads)
+    {
+        bool success = add_payload_no_lock(payload, ha);
+        local_ha = *ha;
+        return success;
+    }
+
+    return false;
+}
+
+HostApplication HostTracker::add_service(Port port, IpProtocol proto, uint32_t lseen,
     bool& is_new, AppId appid)
 {
     host_tracker_stats.service_finds++;
@@ -596,6 +646,15 @@ void HostTracker::stringify(string& str)
                     if ( i.version[0] != '\0' )
                         str += ", version: " + string(i.version);
                 }
+
+            auto total_payloads = s.payloads.size();
+            if ( total_payloads )
+            {
+                str += ", payload";
+                str += (total_payloads > 1) ? "s: " : ": ";
+                for ( const auto& pld : s.payloads )
+                    str += to_string(pld) + (--total_payloads ? ", " : "");
+            }
         }
     }
 

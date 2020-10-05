@@ -87,6 +87,13 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
             discover_client(p, ht, (const struct in6_addr*) src_ip->get_ip6_ptr(), src_mac,
                 conf, logger, version, client, service);
         }
+
+        if ( appid_change_bits[APPID_PAYLOAD_BIT] and payload > APP_ID_NONE and
+            service > APP_ID_NONE)
+        {
+             discover_payload(p, proto, ht, (const struct in6_addr*) src_ip->get_ip6_ptr(),
+                 src_mac, conf, logger, service, payload);
+        }
     }
 
     if ( appid_change_bits[APPID_SERVICE_VENDOR_BIT] or appid_change_bits[APPID_VERSION_BIT] )
@@ -142,7 +149,7 @@ void RnaAppDiscovery::discover_service(const Packet* p, IpProtocol proto, RnaTra
     bool is_new = false;
 
     // Work on a local copy instead of reference as we release lock during event generations
-    auto ha = rt->get_service(port, proto, (uint32_t) packet_time(), is_new, service);
+    auto ha = rt->add_service(port, proto, (uint32_t) packet_time(), is_new, service);
     if ( is_new )
     {
         if ( proto == IpProtocol::TCP )
@@ -152,6 +159,30 @@ void RnaAppDiscovery::discover_service(const Packet* p, IpProtocol proto, RnaTra
 
         ha.hits = 0; // hit count is reset after logs are written
         rt->update_service(ha);
+    }
+}
+
+void RnaAppDiscovery::discover_payload(const Packet* p, IpProtocol proto, RnaTracker& rt,
+    const struct in6_addr* src_ip, const uint8_t* src_mac, RnaConfig* conf,
+    RnaLogger& logger, AppId service, AppId payload)
+{
+    uint16_t lookup_port;
+    size_t max_payloads = 0;
+
+    if ( p->is_from_client() )
+        lookup_port = p->flow->client_port;
+    else
+        lookup_port = p->flow->server_port;
+
+    if ( conf and conf->max_payloads )
+        max_payloads = conf->max_payloads;
+
+    HostApplication local_ha;
+    bool new_pld = rt->add_payload(local_ha, lookup_port, proto, payload, service, max_payloads);
+
+    if ( new_pld )
+    {
+        logger.log(RNA_EVENT_CHANGE, CHANGE_CLIENT_APP_UPDATE, p, &rt, src_ip, src_mac, &local_ha);
     }
 }
 

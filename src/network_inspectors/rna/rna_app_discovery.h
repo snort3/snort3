@@ -24,12 +24,15 @@
 class RnaAppDiscovery
 {
 public:
-    static void process(AppidEvent* appid_event, DiscoveryFilter& filter,
-        RnaConfig* conf, RnaLogger& logger);
+    static void process(AppidEvent*, DiscoveryFilter&, RnaConfig*, RnaLogger&);
 
-    static void discover_service(const snort::Packet* p, IpProtocol proto, RnaTracker& rt,
-        const struct in6_addr* src_ip, const uint8_t* src_mac, RnaConfig* conf,
-        RnaLogger& logger, uint16_t port, AppId service = APP_ID_NONE);
+    static void discover_service(const snort::Packet*, IpProtocol, RnaTracker&,
+        const struct in6_addr*, const uint8_t*, RnaConfig*, RnaLogger&, uint16_t,
+        AppId service = APP_ID_NONE);
+
+    static void discover_payload(const snort::Packet*, IpProtocol, RnaTracker&,
+        const struct in6_addr*, const uint8_t*, RnaConfig*, RnaLogger&,
+        AppId service, AppId payload);
 
     static void discover_client(const snort::Packet* p, RnaTracker& rt,
         const struct in6_addr* src_ip, const uint8_t* src_mac, RnaConfig* conf,
@@ -37,13 +40,15 @@ public:
 
     static void discover_user(const snort::Packet*, RnaTracker&, const struct in6_addr*,
         const uint8_t* src_mac, RnaLogger&, const char* username, AppId, IpProtocol);
+
 private:
-    static void update_service_info(const snort::Packet* p, IpProtocol proto, const char* vendor,
-        const char* version, RnaTracker& rt, const snort::SfIp* ip, const uint8_t* src_mac,
-        RnaLogger& logger, RnaConfig* conf, AppId service);
-    static void analyze_user_agent_fingerprint(const snort::Packet* p, const char* host,
-        const char* uagent, RnaTracker& rt, const snort::SfIp* ip, const uint8_t* src_mac,
-        RnaLogger& logger);
+    static void update_service_info(const snort::Packet*, IpProtocol, const char* vendor,
+        const char* version, RnaTracker&, const snort::SfIp*, const uint8_t*,
+        RnaLogger&, RnaConfig*, AppId service);
+
+    static void analyze_user_agent_fingerprint(const snort::Packet*, const char* host,
+        const char* uagent, RnaTracker&, const snort::SfIp*, const uint8_t*,
+        RnaLogger&);
 };
 
 #endif

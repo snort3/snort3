@@ -84,6 +84,21 @@ struct HostApplication
     HostApplication() = default;
     HostApplication(Port pt, IpProtocol pr, AppId ap, bool in, uint32_t ht = 0, uint32_t ls = 0) :
         port(pt), proto(pr), appid(ap), inferred_appid(in), hits(ht), last_seen(ls) { }
+    HostApplication(const HostApplication& ha): port(ha.port), proto(ha.proto), appid(ha.appid),
+        inferred_appid(ha.inferred_appid), hits(ha.hits), last_seen(ha.last_seen), info(ha.info),
+        payloads(ha.payloads) { }
+    HostApplication& operator=(const HostApplication& ha)
+    {
+        port = ha.port;
+        proto = ha.proto;
+        appid = ha.appid;
+        inferred_appid = ha.inferred_appid;
+        hits = ha.hits;
+        last_seen = ha.last_seen;
+        info = ha.info;
+        payloads = ha.payloads;
+        return *this;
+    }
 
     Port port = 0;
     IpProtocol proto;
@@ -94,6 +109,7 @@ struct HostApplication
     char user[INFO_SIZE] = { 0 };
 
     std::vector<HostApplicationInfo, HostAppInfoAllocator> info;
+    std::vector<AppId, HostCacheAllocIp<AppId>> payloads;
 };
 
 struct HostClient
@@ -199,6 +215,10 @@ public:
     // Returns true if we changed primary (false->true), false otherwise
     bool make_primary(const uint8_t* mac);
 
+    // Returns true if a new payload entry added, false otherwise
+    bool add_payload(HostApplication&, Port, IpProtocol, const AppId payload,
+        const AppId service, size_t max_payloads);
+
     // Returns the hostmac pointer with the highest TTL
     HostMac* get_max_ttl_hostmac();
 
@@ -220,21 +240,22 @@ public:
 
     // Appid may not be identified always. Inferred means dynamic/runtime
     // appid detected from one flow to another flow such as BitTorrent.
-    bool add_service(Port port, IpProtocol proto,
+    bool add_service(Port, IpProtocol,
         AppId appid = APP_ID_NONE, bool inferred_appid = false, bool* added = nullptr);
-    bool add_service(HostApplication& app, bool* added = nullptr);
-    void clear_service(HostApplication& hs);
-    void update_service_port(HostApplication& app, Port port);
-    void update_service_proto(HostApplication& app, IpProtocol proto);
+    bool add_service(HostApplication&, bool* added = nullptr);
+    void clear_service(HostApplication&);
+    void update_service_port(HostApplication&, Port);
+    void update_service_proto(HostApplication&, IpProtocol);
 
-    AppId get_appid(Port port, IpProtocol proto, bool inferred_only = false,
+    AppId get_appid(Port, IpProtocol, bool inferred_only = false,
         bool allow_port_wildcard = false);
 
     size_t get_service_count();
-    HostApplication get_service(Port port, IpProtocol proto, uint32_t lseen, bool& is_new,
-        AppId appid = APP_ID_NONE);
-    void update_service(const HostApplication& ha);
-    bool update_service_info(HostApplication& ha, const char* vendor, const char* version,
+
+    HostApplication add_service(Port, IpProtocol, uint32_t, bool&, AppId appid = APP_ID_NONE);
+
+    void update_service(const HostApplication&);
+    bool update_service_info(HostApplication&, const char* vendor, const char* version,
         uint16_t max_info);
     bool update_service_user(Port, IpProtocol, const char* username);
     void remove_inferred_services();
@@ -322,6 +343,12 @@ private:
     // Only the host cache can create them ...
     template<class Key, class Value, class Hash>
     friend class LruCacheShared;
+
+    // These two do not lock independently; they are used by payload discovery and called
+    // from add_payload(HostApplication&, Port, IpProtocol, AppId, AppId, size_t); where the
+    // lock is actually obtained
+    bool add_payload_no_lock(const AppId, HostApplication*);
+    HostApplication* find_service_no_lock(Port, IpProtocol, AppId);
 
     // ... and some unit tests. See Utest.h and UtestMacros.h in cpputest.
     friend class TEST_host_tracker_add_find_service_test_Test;

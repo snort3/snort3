@@ -39,6 +39,7 @@
     #define CHANGE_HOST_UPDATE         15
     #define CHANGE_HOST_TYPE           16
     #define CHANGE_VLAN_TAG            18
+    #define CHANGE_CLIENT_APP_UPDATE   32
 
 #define RUA_EVENT         1004
     #define CHANGE_USER_LOGIN    2
