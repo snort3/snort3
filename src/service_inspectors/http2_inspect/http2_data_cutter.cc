@@ -39,8 +39,8 @@ Http2DataCutter::Http2DataCutter(Http2FlowData* _session_data, HttpCommon::Sourc
 
 // Scan data frame, extract information needed for http scan.
 // http scan will need the data only, stripped of padding and header.
-bool Http2DataCutter::http2_scan(const uint8_t* data, uint32_t length,
-    uint32_t* flush_offset, uint32_t frame_len, uint8_t flags, uint32_t& data_offset)
+bool Http2DataCutter::http2_scan(uint32_t length, uint32_t* flush_offset, uint32_t frame_len,
+    uint8_t flags, uint32_t& data_offset)
 {
     cur_data_offset = data_offset;
     cur_data = cur_padding = 0;
@@ -50,12 +50,20 @@ bool Http2DataCutter::http2_scan(const uint8_t* data, uint32_t length,
         padding_len = data_bytes_read = padding_read = 0;
         frame_flags = flags;
         *flush_offset = frame_bytes_seen = FRAME_HEADER_LENGTH;
-        if (frame_length == 0)
-            data_state = FULL_FRAME;
-        else if ((frame_flags & PADDED) !=0)
-            data_state = PADDING_LENGTH;
-        else
+
+        if (frame_flags & PADDED)
+        {
+            padding_len = session_data->padding_length[source_id];
+            data_len -= (padding_len + 1);
+            frame_bytes_seen += 1;
+        }
+
+        if (data_len)
             data_state = DATA;
+        else if (padding_len)
+            data_state = PADDING;
+        else
+            data_state = FULL_FRAME;
     }
 
     uint32_t cur_pos = data_offset + leftover_bytes + leftover_padding;
@@ -63,26 +71,6 @@ bool Http2DataCutter::http2_scan(const uint8_t* data, uint32_t length,
     {
         switch (data_state)
         {
-        case PADDING_LENGTH:
-            padding_len = *(data + cur_data_offset);
-
-            if (data_len <= padding_len)
-            {
-                *session_data->infractions[source_id] += INF_PADDING_LEN;
-                session_data->events[source_id]->create_event(EVENT_PADDING_LEN);
-                return false;
-            }
-            data_len -= (padding_len + 1);
-
-            if (data_len)
-                data_state = DATA;
-            else if (padding_len)
-                data_state = PADDING;
-            else
-                data_state = FULL_FRAME;
-            cur_pos++;
-            cur_data_offset++;
-            break;
         case DATA:
           {
             const uint32_t missing = data_len - data_bytes_read;
@@ -113,6 +101,7 @@ bool Http2DataCutter::http2_scan(const uint8_t* data, uint32_t length,
     if (data_state == FULL_FRAME)
         session_data->reading_frame[source_id] = false;        
 
+    //FIXIT-E shouldn't need both scan_remaining_frame_octets and frame_bytes_seen
     frame_bytes_seen += (cur_pos - leftover_bytes - data_offset - leftover_padding);
     *flush_offset = data_offset = cur_pos;
     session_data->scan_remaining_frame_octets[source_id] = frame_length - frame_bytes_seen;
@@ -143,8 +132,6 @@ StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t*
             else
                 leftover_padding = 0;
             *flush_offset -= leftover_bytes + leftover_padding;
-            if (leftover_bytes || data_state != FULL_FRAME)
-                session_data->mid_data_frame[source_id] = true;
         }
         else if (scan_result == StreamSplitter::SEARCH)
         {
@@ -163,9 +150,9 @@ StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t*
         if (leftover_bytes == 0)
         {
             // Done with this frame, cleanup
-            session_data->mid_data_frame[source_id] = false;
             session_data->scan_octets_seen[source_id] = 0;
             session_data->scan_remaining_frame_octets[source_id] = 0;
+            session_data->scan_state[source_id] = SCAN_HEADER;
             frame_bytes_seen = 0;
 
             if (frame_flags & END_STREAM)
@@ -195,7 +182,7 @@ StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t*
 StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t length,
     uint32_t* flush_offset, uint32_t& data_offset, uint32_t frame_len, uint8_t frame_flags)
 {
-    if (!http2_scan(data, length, flush_offset, frame_len, frame_flags, data_offset))
+    if (!http2_scan(length, flush_offset, frame_len, frame_flags, data_offset))
         return StreamSplitter::ABORT;
 
     session_data->stream_in_hi = session_data->current_stream[source_id];

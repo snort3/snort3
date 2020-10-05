@@ -45,7 +45,7 @@ private:
     // total per frame - scan
     uint32_t frame_length;
     uint32_t data_len;
-    uint32_t padding_len;
+    uint8_t padding_len;
     uint8_t frame_flags;
     // accumulating - scan
     uint32_t frame_bytes_seen = 0;
@@ -74,15 +74,15 @@ private:
     //
 
     // data scan
-    enum DataState { PADDING_LENGTH, DATA, PADDING, FULL_FRAME };
+    enum DataState { DATA, PADDING, FULL_FRAME };
     enum DataState data_state;
 
     // reassemble
     enum ReassembleState { GET_FRAME_HDR, GET_PADDING_LEN, SEND_DATA, SKIP_PADDING, CLEANUP };
     enum ReassembleState reassemble_state = GET_FRAME_HDR;
 
-    bool http2_scan(const uint8_t* data, uint32_t length, uint32_t* flush_offset,
-        uint32_t frame_len, uint8_t frame_flags, uint32_t& data_offset);
+    bool http2_scan(uint32_t length, uint32_t* flush_offset, uint32_t frame_len,
+        uint8_t frame_flags, uint32_t& data_offset);
     snort::StreamSplitter::Status http_scan(const uint8_t* data, uint32_t* flush_offset);
 };
 

@@ -48,15 +48,18 @@ public:
 
 private:
     const HttpCommon::SourceId source_id;
-
-    static StreamSplitter::Status data_scan(Http2FlowData* session_data, const uint8_t* data,
-        uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id,
-        uint32_t frame_length, uint8_t frame_flags, uint32_t& data_offset);
-    static void partial_flush_data(Http2FlowData* session_data, HttpCommon::SourceId source_id,
-        uint32_t* flush_offset, uint32_t data_offset, Http2Stream* const stream);
+    static StreamSplitter::Status data_frame_header_checks(Http2FlowData* session_data,
+        uint32_t* flush_offset, HttpCommon::SourceId source_id, uint32_t frame_length,
+        uint32_t& data_offset);
+    static StreamSplitter::Status non_data_frame_header_checks(
+        Http2FlowData* session_data, HttpCommon::SourceId source_id, uint32_t frame_length,
+        uint8_t type);
     static StreamSplitter::Status non_data_scan(Http2FlowData* session_data,
-        uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id,
-        uint32_t frame_length, uint8_t type, uint8_t frame_flags, uint32_t& data_offset);
+        uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id, uint8_t type,
+        uint8_t frame_flags, uint32_t& data_offset);
+    static void partial_flush_data(Http2FlowData* session_data,
+        HttpCommon::SourceId source_id, uint32_t* flush_offset, uint32_t data_offset,
+        Http2Stream* const stream);
     static snort::StreamSplitter::Status implement_scan(Http2FlowData* session_data, const uint8_t* data,
         uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id);
     static const snort::StreamBuffer implement_reassemble(Http2FlowData* session_data, unsigned total,

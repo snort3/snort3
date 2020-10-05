@@ -145,8 +145,9 @@ protected:
     uint8_t scan_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH];
     uint32_t scan_remaining_frame_octets[2] = { 0, 0 };
     uint32_t scan_octets_seen[2] = { 0, 0 };
-    bool mid_data_frame[2] = { false, false }; //set for data frame with multiple flushes
     bool data_processing[2] = { false, false };
+    uint8_t padding_length[2] = { 0, 0 };
+    Http2Enums::ScanState scan_state[2] = { Http2Enums::SCAN_HEADER, Http2Enums::SCAN_HEADER };
 
     // Scan signals to reassemble()
     bool payload_discard[2] = { false, false };
@@ -166,8 +167,8 @@ protected:
     uint32_t frame_header_offset[2] = { 0, 0 };
     uint32_t frame_data_offset[2] = { 0, 0 };
     uint32_t remaining_frame_octets[2] = { 0, 0 };
-    uint8_t padding_octets_in_frame[2] = { 0, 0 };
-    bool get_padding_len[2] = { false, false };
+    uint8_t remaining_padding_octets_in_frame[2] = { 0, 0 };
+    bool read_padding_len[2] = { false, false };
 
     // used to signal frame wasn't fully read yet,
     // currently used by payload injector
