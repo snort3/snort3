@@ -335,31 +335,28 @@ static const uint8_t* POP_HandleCommand(Packet* p, POPData* pop_ssn, const uint8
     /* if command not found, alert and move on */
     if (!cmd_found)
     {
-        if (pop_ssn->state == STATE_UNKNOWN)
+        /* check for encrypted */
+        if (pop_ssn->state == STATE_UNKNOWN and
+            pop_ssn->session_flags & POP_FLAG_CHECK_SSL and
+            IsSSL(ptr, end - ptr, p->packet_flags))
         {
-            /* check for encrypted */
-            if ((pop_ssn->session_flags & POP_FLAG_CHECK_SSL) &&
-                (IsSSL(ptr, end - ptr, p->packet_flags)))
-            {
-                pop_ssn->state = STATE_TLS_DATA;
+            pop_ssn->state = STATE_TLS_DATA;
 
-                /* Ignore data */
-                return end;
-            }
-            else
+            /* Ignore data */
+            return end;
+        }
+        else
+        {
+            if (pop_ssn->state == STATE_UNKNOWN)
             {
                 /* don't check for ssl again in this packet */
                 if (pop_ssn->session_flags & POP_FLAG_CHECK_SSL)
                     pop_ssn->session_flags &= ~POP_FLAG_CHECK_SSL;
 
                 pop_ssn->state = STATE_DATA;
-                //pop_ssn->data_state = STATE_DATA_UNKNOWN;
-
+                DetectionEngine::queue_event(GID_POP, POP_UNKNOWN_CMD);
                 return ptr;
             }
-        }
-        else
-        {
             DetectionEngine::queue_event(GID_POP, POP_UNKNOWN_CMD);
             return eol;
         }
