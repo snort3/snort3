@@ -36,6 +36,14 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+void set_tcp_fp_processor(TcpFpProcessor*) { }
+void set_ua_fp_processor(UaFpProcessor*) { }
+
+namespace snort
+{
+    bool Snort::is_reloading() { return false; }
+}
+
 TEST_GROUP(rna_module_test)
 {
 };

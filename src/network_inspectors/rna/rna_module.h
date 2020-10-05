@@ -22,6 +22,7 @@
 #define RNA_MODULE_H
 
 #include "framework/module.h"
+#include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
 
@@ -48,6 +49,24 @@ struct RnaStats
 extern THREAD_LOCAL RnaStats rna_stats;
 extern THREAD_LOCAL snort::ProfileStats rna_perf_stats;
 extern THREAD_LOCAL const snort::Trace* rna_trace;
+
+
+// A tuner for initializing fingerprint processors during reload
+class FpProcReloadTuner : public snort::ReloadResourceTuner
+{
+public:
+    FpProcReloadTuner() = default;
+
+    bool tinit() override;
+
+    bool tune_packet_context() override
+    { return true; }
+
+    bool tune_idle_context() override
+    { return true; }
+
+    RnaModuleConfig* mod_conf = nullptr;
+};
 
 class RnaModule : public snort::Module
 {
@@ -77,6 +96,8 @@ private:
     const char* dump_file = nullptr;
 
     RawFingerprint fingerprint;
+
+    FpProcReloadTuner fprt;
 
     bool is_valid_fqn(const char* fqn) const;
 };
