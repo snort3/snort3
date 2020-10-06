@@ -211,9 +211,8 @@ public:
     PolicyMap(PolicyMap* old_map = nullptr);
     ~PolicyMap();
 
-    unsigned add_inspection_shell(Shell*);
-    unsigned add_ips_shell(Shell*);
-    unsigned add_network_shell(Shell*);
+    InspectionPolicy* add_inspection_shell(Shell*);
+    IpsPolicy* add_ips_shell(Shell*);
     std::shared_ptr<PolicyTuple> add_shell(Shell*);
     std::shared_ptr<PolicyTuple> get_policies(Shell* sh);
     void clone(PolicyMap *old_map);

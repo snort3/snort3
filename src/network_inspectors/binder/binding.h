@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// binder.cc author Russ Combs <rucombs@cisco.com>
+// binding.h author Russ Combs <rucombs@cisco.com>
 
 #ifndef BINDING_H
 #define BINDING_H
@@ -29,7 +29,8 @@
 namespace snort
 {
 class Flow;
-struct Packet;
+class Inspector;
+struct SnortConfig;
 }
 
 struct BindWhen
@@ -43,20 +44,44 @@ struct BindWhen
     Role role;
     std::string svc;
 
-    bool split_nets;
     sfip_var_t* src_nets;
     sfip_var_t* dst_nets;
 
-    ByteBitSet ifaces;
     VlanBitSet vlans;
 
-    bool split_ports;
     PortBitSet src_ports;
     PortBitSet dst_ports;
 
-    bool split_zones;
-    ZoneBitSet src_zones;
-    ZoneBitSet dst_zones;
+    std::unordered_set<int32_t> src_intfs;
+    std::unordered_set<int32_t> dst_intfs;
+
+    std::unordered_set<int16_t> src_groups;
+    std::unordered_set<int16_t> dst_groups;
+
+    std::unordered_set<uint16_t> addr_spaces;
+
+    enum Criteria
+    {
+        BWC_IPS_ID =        0x0001,
+        BWC_PROTO =         0x0002,
+        BWC_SVC =           0x0004,
+        BWC_NETS =          0x0008,
+        BWC_SPLIT_NETS =    0x0010,
+        BWC_VLANS =         0x0020,
+        BWC_PORTS =         0x0040,
+        BWC_SPLIT_PORTS =   0x0080,
+        BWC_INTFS =         0x0100,
+        BWC_SPLIT_INTFS =   0x0200,
+        BWC_GROUPS =        0x0400,
+        BWC_SPLIT_GROUPS =  0x0800,
+        BWC_ADDR_SPACES =   0x1000
+    };
+    uint16_t criteria_flags;
+
+    void add_criteria(uint16_t flags)
+    { criteria_flags |= flags; }
+    bool has_criteria(uint16_t flags) const
+    { return (criteria_flags & flags) == flags; }
 };
 
 struct BindUse
@@ -75,46 +100,34 @@ struct BindUse
     unsigned inspection_index;
     unsigned ips_index;
     What what;
-    void* object;
+    snort::Inspector* inspector;
+    bool global_type;
 };
 
 struct Binding
 {
-    enum DirResult
-    {
-        // Did not match
-        DR_NO_MATCH,
-
-        // Matched but direction could not be determined
-        DR_ANY_MATCH,
-
-        // On flow: src_* matched client, dst_* matched server
-        // On packet: src_* matched p->src_*, dst_* matched p->dst_*
-        DR_FORWARD,
-
-        // On flow: src_* matched server, dst_* matched client
-        // On packet: src_* matched p->dst_*, dst_* matched p->src_*
-        DR_REVERSE,
-    };
-
     BindWhen when;
     BindUse use;
 
     Binding();
-    ~Binding();
 
-    bool check_all(const snort::Flow*, snort::Packet*, const char* = nullptr) const;
-    bool check_ips_policy(const snort::Flow*) const;
-    bool check_iface(const snort::Packet*) const;
-    bool check_vlan(const snort::Flow*) const;
-    bool check_addr(const snort::Flow*) const;
-    DirResult check_split_addr(const snort::Flow*, const snort::Packet*, const DirResult) const;
-    bool check_proto(const snort::Flow*) const;
-    bool check_port(const snort::Flow*) const;
-    DirResult check_split_port(const snort::Flow*, const snort::Packet*, const DirResult) const;
-    bool check_zone(const snort::Packet*) const;
-    DirResult check_split_zone(const snort::Packet*, const DirResult) const;
-    bool check_service(const snort::Flow*) const;
+    void clear();
+    void configure(const snort::SnortConfig* sc);
+
+    bool check_all(const snort::Flow&, const char* = nullptr) const;
+    bool check_ips_policy(const snort::Flow&) const;
+    bool check_vlan(const snort::Flow&) const;
+    bool check_addr(const snort::Flow&) const;
+    bool check_split_addr(const snort::Flow&) const;
+    bool check_proto(const snort::Flow&) const;
+    bool check_port(const snort::Flow&) const;
+    bool check_split_port(const snort::Flow&) const;
+    bool check_intf(const snort::Flow&) const;
+    bool check_split_intf(const snort::Flow&) const;
+    bool check_group(const snort::Flow&) const;
+    bool check_split_group(const snort::Flow&) const;
+    bool check_address_space(const snort::Flow& flow) const;
+    bool check_service(const snort::Flow&) const;
     bool check_service(const char* service) const;
 };
 

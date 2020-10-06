@@ -24,9 +24,12 @@
 
 #include "bind_module.h"
 
+#include <iomanip>
+
 #include "log/messages.h"
 #include "main/shell.h"
 #include "main/snort_config.h"
+#include "managers/module_manager.h"
 #include "parser/parse_ip.h"
 #include "protocols/packet.h"
 
@@ -41,11 +44,15 @@ THREAD_LOCAL BindStats bstats;
 
 static const PegInfo bind_pegs[] =
 {
-    { CountType::SUM, "packets", "initial bindings" },
-    { CountType::SUM, "resets", "reset bindings" },
-    { CountType::SUM, "blocks", "block bindings" },
-    { CountType::SUM, "allows", "allow bindings" },
-    { CountType::SUM, "inspects", "inspect bindings" },
+    { CountType::SUM, "new_flows", "new flows evaluated" },
+    { CountType::SUM, "service_changes", "flow service changes evaluated" },
+    { CountType::SUM, "assistant_inspectors", "flow assistant inspector requests handled" },
+    { CountType::SUM, "new_standby_flows", "new HA flows evaluated" },
+    { CountType::SUM, "no_match", "binding evaluations that had no matches" },
+    { CountType::SUM, "resets", "reset actions bound" },
+    { CountType::SUM, "blocks", "block actions bound" },
+    { CountType::SUM, "allows", "allow actions bound" },
+    { CountType::SUM, "inspects", "inspect actions bound" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -58,11 +65,8 @@ static const Parameter binder_when_params[] =
     // FIXIT-L when.policy_id should be an arbitrary string auto converted
     // into index for binder matching and lookups
 
-    { "ips_policy_id", Parameter::PT_INT, "0:max32", "0",
+    { "ips_policy_id", Parameter::PT_INT, "0:max32", nullptr,
       "unique ID for selection of this config by external logic" },
-
-    { "ifaces", Parameter::PT_BIT_LIST, "255", nullptr,
-      "list of interface indices" },
 
     { "vlans", Parameter::PT_BIT_LIST, "4095", nullptr,
       "list of VLAN IDs" },
@@ -88,20 +92,42 @@ static const Parameter binder_when_params[] =
     { "dst_ports", Parameter::PT_BIT_LIST, "65535", nullptr,
       "list of destination ports" },
 
-    { "zones", Parameter::PT_BIT_LIST, "63", nullptr,
-      "zones" },
+    { "intfs", Parameter::PT_STRING, nullptr, nullptr,
+      "list of interface IDs" },
 
-    { "src_zone", Parameter::PT_BIT_LIST, "63", nullptr,
-      "source zone" },
+    { "src_intfs", Parameter::PT_STRING, nullptr, nullptr,
+      "list of source interface IDs" },
 
-    { "dst_zone", Parameter::PT_BIT_LIST, "63", nullptr,
-      "destination zone" },
+    { "dst_intfs", Parameter::PT_STRING, nullptr, nullptr,
+      "list of destination interface IDs" },
+
+    { "groups", Parameter::PT_STRING, nullptr, nullptr,
+      "list of interface group IDs" },
+
+    { "src_groups", Parameter::PT_STRING, nullptr, nullptr,
+      "list of source interface group IDs" },
+
+    { "dst_groups", Parameter::PT_STRING, nullptr, nullptr,
+      "list of destination group IDs" },
+
+    { "addr_spaces", Parameter::PT_STRING, nullptr, nullptr,
+      "list of address space IDs" },
 
     { "role", Parameter::PT_ENUM, "client | server | any", "any",
       "use the given configuration on one or any end of a session" },
 
     { "service", Parameter::PT_STRING, nullptr, nullptr,
       "override default configuration" },
+
+    // FIXIT-D deprecated zone parameters to be removed
+    { "zones", Parameter::PT_STRING, nullptr, nullptr,
+      "deprecated alias for groups" },
+
+    { "src_zone", Parameter::PT_STRING, nullptr, nullptr,
+      "deprecated alias for src_groups" },
+
+    { "dst_zone", Parameter::PT_STRING, nullptr, nullptr,
+      "deprecated alias for dst_groups" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -143,24 +169,56 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-BinderModule::BinderModule() : Module(BIND_NAME, BIND_HELP, s_params, true)
-{ work = nullptr; }
+template<typename T>
+static bool parse_int_set(const Value& v, unordered_set<T>& set)
+{
+    assert(v.get_type() == Value::VT_STR);
+
+    set.clear();
+
+    string pl = v.get_string();
+
+    stringstream ss(pl);
+    ss >> setbase(0);
+
+    uint64_t n;
+
+    while ( ss >> n )
+    {
+        if ( n > numeric_limits<T>::max() )
+            return false;
+
+        set.insert(n);
+    }
+    if ( !ss.eof() )
+        return false;
+
+    return true;
+}
+
+BinderModule::BinderModule() : Module(BIND_NAME, BIND_HELP, s_params, true) { }
 
 BinderModule::~BinderModule()
 {
-    if ( work )
-        delete work;
+    bindings.clear();
+    binding.clear();
 }
 
 ProfileStats* BinderModule::get_profile() const
 { return &bindPerfStats; }
 
-void BinderModule::add_file(const char* name, const char* type)
+bool BinderModule::add_policy_file(const char* name, const char* type)
 {
-    work->use.name = name;
-    work->use.type = type;
-    use_name_count++;
-    use_type_count++;
+    if (!policy_type.empty())
+    {
+        ParseError("Only one type of policy may be specified per binding");
+        return false;
+    }
+
+    policy_filename = name;
+    policy_type = type;
+
+    return true;
 }
 
 static void set_ip_var(sfip_var_t*& var, const char* val)
@@ -170,40 +228,55 @@ static void set_ip_var(sfip_var_t*& var, const char* val)
     var = sfip_var_from_string(val, "binder");
 }
 
+bool BinderModule::begin(const char* fqn, int idx, SnortConfig*)
+{
+    if ( idx && !strcmp(fqn, BIND_NAME) )
+    {
+        binding.clear();
+        policy_filename.clear();
+        policy_type.clear();
+    }
+
+    return true;
+}
+
 bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
 {
-    if ( !work )
-        return false;
-
     // both
-    else if ( !strcmp(fqn, "binder.when.service") )
-        work->when.svc = v.get_string();
-
+    if ( !strcmp(fqn, "binder.when.service") )
+    {
+        binding.when.svc = v.get_string();
+        binding.when.add_criteria(BindWhen::Criteria::BWC_SVC);
+    }
     else if ( !strcmp(fqn, "binder.use.service") )
-        work->use.svc = v.get_string();
+        binding.use.svc = v.get_string();
 
     // when
-    else if ( v.is("ifaces") )
-        v.get_bits(work->when.ifaces);
-
+    else if ( v.is("ips_policy_id") )
+    {
+        binding.when.ips_id_user = v.get_uint32();
+        binding.when.add_criteria(BindWhen::Criteria::BWC_IPS_ID);
+    }
+    else if ( v.is("vlans") )
+    {
+        v.get_bits(binding.when.vlans);
+        binding.when.add_criteria(BindWhen::Criteria::BWC_VLANS);
+    }
     else if ( v.is("nets") )
     {
-        set_ip_var(work->when.src_nets, v.get_string());
-        unsplit_nets = true;
+        set_ip_var(binding.when.src_nets, v.get_string());
+        binding.when.add_criteria(BindWhen::Criteria::BWC_NETS);
     }
     else if ( v.is("src_nets") )
     {
-        set_ip_var(work->when.src_nets, v.get_string());
-        work->when.split_nets = true;
+        set_ip_var(binding.when.src_nets, v.get_string());
+        binding.when.add_criteria(BindWhen::Criteria::BWC_SPLIT_NETS);
     }
     else if ( v.is("dst_nets") )
     {
-        set_ip_var(work->when.dst_nets, v.get_string());
-        work->when.split_nets = true;
+        set_ip_var(binding.when.dst_nets, v.get_string());
+        binding.when.add_criteria(BindWhen::Criteria::BWC_SPLIT_NETS);
     }
-    else if ( v.is("ips_policy_id") )
-        work->when.ips_id_user = v.get_uint32();
-
     else if ( v.is("proto") )
     {
         const unsigned mask[] =
@@ -211,174 +284,243 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
             PROTO_BIT__ANY_TYPE, PROTO_BIT__IP, PROTO_BIT__ICMP,
             PROTO_BIT__TCP, PROTO_BIT__UDP, PROTO_BIT__PDU, PROTO_BIT__FILE
         };
-        work->when.protos = mask[v.get_uint8()];
+        binding.when.protos = mask[v.get_uint8()];
+        binding.when.add_criteria(BindWhen::Criteria::BWC_PROTO);
     }
     else if ( v.is("ports") )
     {
-        v.get_bits(work->when.src_ports);
-        unsplit_ports = true;
+        v.get_bits(binding.when.src_ports);
+        binding.when.add_criteria(BindWhen::Criteria::BWC_PORTS);
     }
     else if ( v.is("src_ports") )
     {
-        v.get_bits(work->when.src_ports);
-        work->when.split_ports = true;
+        v.get_bits(binding.when.src_ports);
+        binding.when.add_criteria(BindWhen::Criteria::BWC_SPLIT_PORTS);
     }
     else if ( v.is("dst_ports") )
     {
-        v.get_bits(work->when.dst_ports);
-        work->when.split_ports = true;
+        v.get_bits(binding.when.dst_ports);
+        binding.when.add_criteria(BindWhen::Criteria::BWC_SPLIT_PORTS);
     }
-
-    else if ( v.is("zones") )
+    else if ( v.is("intfs") )
     {
-        v.get_bits(work->when.src_zones);
-        unsplit_zones = true;
+        if (!parse_int_set<int32_t>(v, binding.when.src_intfs))
+            return false;
+        binding.when.add_criteria(BindWhen::Criteria::BWC_INTFS);
     }
-    else if ( v.is("src_zone") )
+    else if ( v.is("src_intfs") )
     {
-        v.get_bits(work->when.src_zones);
-        work->when.split_zones = true;
+        if (!parse_int_set<int32_t>(v, binding.when.src_intfs))
+            return false;
+        binding.when.add_criteria(BindWhen::Criteria::BWC_SPLIT_INTFS);
     }
-    else if ( v.is("dst_zone") )
+    else if ( v.is("dst_intfs") )
     {
-        v.get_bits(work->when.dst_zones);
-        work->when.split_zones = true;
+        if (!parse_int_set<int32_t>(v, binding.when.dst_intfs))
+            return false;
+        binding.when.add_criteria(BindWhen::Criteria::BWC_SPLIT_INTFS);
     }
-
+    else if ( v.is("groups") || v.is("zones") )
+    {
+        if (!parse_int_set<int16_t>(v, binding.when.src_groups))
+            return false;
+        binding.when.add_criteria(BindWhen::Criteria::BWC_GROUPS);
+    }
+    else if ( v.is("src_groups") || v.is("src_zone") )
+    {
+        if (!parse_int_set<int16_t>(v, binding.when.src_groups))
+            return false;
+        binding.when.add_criteria(BindWhen::Criteria::BWC_SPLIT_GROUPS);
+    }
+    else if ( v.is("dst_groups") || v.is("dst_zone") )
+    {
+        if (!parse_int_set<int16_t>(v, binding.when.dst_groups))
+            return false;
+        binding.when.add_criteria(BindWhen::Criteria::BWC_SPLIT_GROUPS);
+    }
+    else if ( v.is("addr_spaces") )
+    {
+        if (!parse_int_set<uint16_t>(v, binding.when.addr_spaces))
+            return false;
+        binding.when.add_criteria(BindWhen::Criteria::BWC_ADDR_SPACES);
+    }
     else if ( v.is("role") )
-        work->when.role = (BindWhen::Role)v.get_uint8();
-
-    else if ( v.is("vlans") )
-        v.get_bits(work->when.vlans);
+        binding.when.role = (BindWhen::Role)v.get_uint8();
 
     // use
     else if ( v.is("action") )
-        work->use.action = (BindUse::Action)(v.get_uint8());
+        binding.use.action = (BindUse::Action)(v.get_uint8());
 
     else if ( v.is("file") )
-        add_file(v.get_string(), FILE_KEY);
-
+    {
+        if (!add_policy_file(v.get_string(), FILE_KEY))
+            return false;
+    }
     else if ( v.is("inspection_policy") )
-        add_file(v.get_string(), INSPECTION_KEY);
-
+    {
+        if (!add_policy_file(v.get_string(), INSPECTION_KEY))
+            return false;
+    }
     else if ( v.is("ips_policy") )
-        add_file(v.get_string(), IPS_KEY);
-
+    {
+        if (!add_policy_file(v.get_string(), IPS_KEY))
+            return false;
+    }
     else if ( v.is("name") )
-    {
-        work->use.name = v.get_string();
-        use_name_count++;
-    }
+        binding.use.name = v.get_string();
+
     else if ( v.is("type") )
-    {
-        work->use.type = v.get_string();
-        if ( work->use.type == "gtp" )
-            work->use.type = "gtp_inspect";
-        use_type_count++;
-    }
-    else
-        return false;
+        binding.use.type = v.get_string();
 
     return true;
 }
-
-bool BinderModule::begin(const char* fqn, int idx, SnortConfig*)
-{
-    if ( idx && !strcmp(fqn, BIND_NAME) )
-    {
-        work = new Binding;
-        unsplit_nets = false;
-        unsplit_ports = false;
-        unsplit_zones = false;
-        use_name_count = 0;
-        use_type_count = 0;
-    }
-
-    return true;
-}
-
-static void file_name_type_error()
-{ ParseError("you can't set binder.use file, detection_policy, or inspection_policy with type or name"); }
-
-static void split_nets_warning()
-{ ParseWarning(WARN_CONF, "src_nets and dst_nets override nets"); }
-
-static void split_ports_warning()
-{ ParseWarning(WARN_CONF, "src_ports and dst_ports override ports"); }
-
-static void split_zones_warning()
-{ ParseWarning(WARN_CONF, "src_zones and dst_zones override zones"); }
 
 bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
 {
-    if ( idx && !strcmp(fqn, BIND_NAME) )
+    if ( !strcmp(fqn, BIND_NAME) && idx )
     {
-        if ( !work )
+        // When validation
+        if ( binding.when.has_criteria(BindWhen::Criteria::BWC_NETS | BindWhen::Criteria::BWC_SPLIT_NETS) )
         {
-            ParseError("invalid %s[%d]", fqn, idx);
-            return true;
+            ParseError("Can't specify 'nets' in combination with either of 'src_nets' or 'dst_nets'");
+            return false;
         }
 
-        if ( unsplit_nets && work->when.split_nets )
-            split_nets_warning();
-
-        if ( unsplit_ports && work->when.split_ports )
-            split_ports_warning();
-
-        if ( unsplit_zones && work->when.split_zones )
-            split_zones_warning();
-
-        if ( use_type_count > 1 || use_name_count > 1 )
-            file_name_type_error();
-
-        if ( work->use.type == FILE_KEY )
+        if ( binding.when.has_criteria(BindWhen::Criteria::BWC_PORTS | BindWhen::Criteria::BWC_SPLIT_PORTS) )
         {
-            Shell* sh = new Shell(work->use.name.c_str());
-            auto policies = sc->policy_map->add_shell(sh);
-            work->use.inspection_index = policies->inspection->policy_id + 1;
-            work->use.ips_index = policies->ips->policy_id + 1;
-        }
-        else if ( work->use.type == INSPECTION_KEY )
-        {
-            Shell* sh = new Shell(work->use.name.c_str());
-            work->use.inspection_index = sc->policy_map->add_inspection_shell(sh) + 1;
-        }
-        else if ( work->use.type == IPS_KEY )
-        {
-            Shell* sh = new Shell(work->use.name.c_str());
-            work->use.ips_index = sc->policy_map->add_ips_shell(sh) + 1;
+            ParseError("Can't specify 'ports' in combination with either of 'src_ports' or 'dst_ports'");
+            return false;
         }
 
-        if ( work->use.name.empty() )
-            work->use.name = work->use.type;
+        if ( binding.when.has_criteria(BindWhen::Criteria::BWC_INTFS | BindWhen::Criteria::BWC_SPLIT_INTFS) )
+        {
+            ParseError("Can't specify 'intfs' in combination with either of 'src_intfs' or 'dst_intfs'");
+            return false;
+        }
 
-        bindings.emplace_back(work);
-        work = nullptr;
+        if ( binding.when.has_criteria(BindWhen::Criteria::BWC_GROUPS | BindWhen::Criteria::BWC_SPLIT_GROUPS) )
+        {
+            ParseError("Can't specify 'groups' in combination with either of 'src_groups' or 'dst_groups'");
+            return false;
+        }
+
+        // Use validation
+        if ( !policy_filename.empty() )
+        {
+            // Policy binding - Co-opts the binding structure, but doesn't want most of it.
+            if ( !binding.use.svc.empty() || !binding.use.type.empty() ||
+                !binding.use.name.empty() || binding.use.action != BindUse::BA_INSPECT )
+            {
+                ParseError("Policy bindings cannot specify any other use options");
+                return false;
+            }
+
+            if ( policy_type == FILE_KEY )
+            {
+                Shell* sh = new Shell(policy_filename.c_str());
+                auto policies = sc->policy_map->add_shell(sh);
+                binding.use.inspection_index = policies->inspection->policy_id;
+                binding.use.ips_index = policies->ips->policy_id;
+            }
+            else if ( policy_type == INSPECTION_KEY )
+            {
+                Shell* sh = new Shell(policy_filename.c_str());
+                InspectionPolicy* inspection_policy = sc->policy_map->add_inspection_shell(sh);
+                binding.use.inspection_index = inspection_policy->policy_id;
+            }
+            else if ( policy_type == IPS_KEY )
+            {
+                Shell* sh = new Shell(policy_filename.c_str());
+                IpsPolicy* ips_policy = sc->policy_map->add_ips_shell(sh);
+                binding.use.ips_index = ips_policy->policy_id;
+            }
+
+            // Store the policy type and filename for verbose output
+            binding.use.type = policy_type;
+            binding.use.name = policy_filename;
+
+            commit_policy_binding();
+        }
+        else
+        {
+            // Normal type binding (if name is given, it will be resolved to an inspector instance
+            //  during configure)
+            if ( !binding.use.type.empty() )
+            {
+                // Ensure that we can resolve the type to an extant module and that it is bindable
+                const char *mod_name = binding.use.type.c_str();
+                const Module* m = ModuleManager::get_module(mod_name);
+                if ( !m )
+                {
+                    ParseError("Can't bind to unknown type '%s'", mod_name);
+                    return false;
+                }
+                else if ( !m->is_bindable() )
+                {
+                    ParseError("Type '%s' is not bindable", mod_name);
+                    return false;
+                }
+                else if ( m->get_usage() == Module::GLOBAL )
+                    binding.use.global_type = true;
+
+                if ( binding.use.name.empty() )
+                    binding.use.name = binding.use.type;
+            }
+            else if ( !binding.use.name.empty() )
+            {
+                ParseError("Missing binding type for name '%s'", binding.use.name.c_str());
+                return false;
+            }
+
+            commit_binding();
+        }
     }
+
     return true;
 }
 
 void BinderModule::add(const char* svc, const char* type)
 {
-    Binding* b = new Binding;
-    b->when.svc = svc;
-    b->use.type = type;
-    b->use.name = type;
-    bindings.emplace_back(b);
+    binding.clear();
+    binding.when.svc = svc;
+    binding.when.add_criteria(BindWhen::Criteria::BWC_SVC);
+    binding.use.type = type;
+    binding.use.name = type;
+    commit_binding();
 }
 
 void BinderModule::add(unsigned proto, const char* type)
 {
-    Binding* b = new Binding;
-    b->when.protos = proto;
-    b->use.type = type;
-    b->use.name = type;
-    bindings.emplace_back(b);
+    binding.clear();
+    binding.when.protos = proto;
+    binding.when.add_criteria(BindWhen::Criteria::BWC_PROTO);
+    binding.use.type = type;
+    binding.use.name = type;
+    commit_binding();
 }
 
-vector<Binding*>& BinderModule::get_data()
+void BinderModule::commit_binding()
 {
-    return bindings;  // move semantics
+    bindings.emplace_back(binding);
+    binding.when.src_nets = nullptr;
+    binding.when.dst_nets = nullptr;
+}
+
+void BinderModule::commit_policy_binding()
+{
+    policy_bindings.emplace_back(binding);
+    binding.when.src_nets = nullptr;
+    binding.when.dst_nets = nullptr;
+}
+
+vector<Binding>& BinderModule::get_bindings()
+{
+    return bindings; // move semantics
+}
+
+vector<Binding>& BinderModule::get_policy_bindings()
+{
+    return policy_bindings; // move semantics
 }
 
 const PegInfo* BinderModule::get_pegs() const

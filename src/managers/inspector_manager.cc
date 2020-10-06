@@ -1105,7 +1105,6 @@ static inline void execute(
     }
 }
 
-// FIXIT-L use inspection events instead of exec
 void InspectorManager::bumble(Packet* p)
 {
     Flow* flow = p->flow;

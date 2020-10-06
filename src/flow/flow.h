@@ -274,10 +274,22 @@ public:
         ssn_client->add_ref();
     }
 
+    void clear_client()
+    {
+        ssn_client->rem_ref();
+        ssn_client = nullptr;
+    }
+
     void set_server(Inspector* ins)
     {
         ssn_server = ins;
         ssn_server->add_ref();
+    }
+
+    void clear_server()
+    {
+        ssn_server->rem_ref();
+        ssn_server = nullptr;
     }
 
     void set_clouseau(Inspector* ins)
@@ -424,14 +436,22 @@ public:  // FIXIT-M privatize if possible
 
     uint32_t default_session_timeout;
 
+    int32_t client_intf;
+    int32_t server_intf;
+
+    int16_t client_group;
+    int16_t server_group;
+
     uint16_t client_port;
     uint16_t server_port;
 
     uint16_t ssn_policy;
     uint16_t session_state;
 
-    uint8_t inner_client_ttl, inner_server_ttl;
-    uint8_t outer_client_ttl, outer_server_ttl;
+    uint8_t inner_client_ttl;
+    uint8_t inner_server_ttl;
+    uint8_t outer_client_ttl;
+    uint8_t outer_server_ttl;
 
     uint8_t response_count;
 

@@ -231,10 +231,19 @@ bool Normalizer::configure(SnortConfig*)
     // network policy with whichever instantiation of an inspection policy this normalize is in
     NetworkPolicy* nap = get_network_policy();
 
-    nap->normal_mask = config.normalizer_flags;
-
     if ( nap->new_ttl && nap->new_ttl < nap->min_ttl )
         nap->new_ttl = nap->min_ttl;
+
+    if ( (nap->new_ttl > 1) && (nap->new_ttl >= nap->min_ttl) )
+    {
+        if ( Norm_IsEnabled(&config, NORM_IP4_BASE) )
+            Norm_Enable(&config, NORM_IP4_TTL);
+
+        if ( Norm_IsEnabled(&config, NORM_IP6_BASE) )
+            Norm_Enable(&config, NORM_IP6_TTL);
+    }
+
+    nap->normal_mask = config.normalizer_flags;
 
     Norm_SetConfig(&config);
     return true;

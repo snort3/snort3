@@ -435,7 +435,7 @@ static bool ignored(const char* fqn)
 //
 // FIXIT-L presently no way to catch errors like EXTERNAL_NET = not HOME_NET
 // which becomes a bool var and is ignored.
-static bool set_var(const char* fqn, Value& v)
+static bool set_var(const char* fqn, const Value& v)
 {
     bool to_be_set = v.get_type() == Value::VT_STR;
 

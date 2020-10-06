@@ -1,6 +1,7 @@
 
 set(FILE_LIST
     binder.cc
+    binding.cc
     binding.h
     bind_module.cc
     bind_module.h

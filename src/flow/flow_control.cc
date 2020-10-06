@@ -204,8 +204,9 @@ static void init_roles_ip(const Packet* p, Flow* flow)
     flow->server_ip = *p->ptrs.ip_api.get_dst();
 }
 
-static void init_roles_tcp(const Packet* p, Flow* flow)
+static bool init_roles_tcp(const Packet* p, Flow* flow)
 {
+    bool swapped;
     if ( p->ptrs.tcph->is_syn_only() )
     {
         flow->ssn_state.direction = FROM_CLIENT;
@@ -213,6 +214,7 @@ static void init_roles_tcp(const Packet* p, Flow* flow)
         flow->client_port = p->ptrs.sp;
         flow->server_ip = *p->ptrs.ip_api.get_dst();
         flow->server_port = p->ptrs.dp;
+        swapped = false;
     }
     else if ( p->ptrs.tcph->is_syn_ack() )
     {
@@ -221,6 +223,7 @@ static void init_roles_tcp(const Packet* p, Flow* flow)
         flow->client_port = p->ptrs.dp;
         flow->server_ip = *p->ptrs.ip_api.get_src();
         flow->server_port = p->ptrs.sp;
+        swapped = true;
     }
     else if (p->ptrs.sp > p->ptrs.dp)
     {
@@ -229,6 +232,7 @@ static void init_roles_tcp(const Packet* p, Flow* flow)
         flow->client_port = p->ptrs.sp;
         flow->server_ip = *p->ptrs.ip_api.get_dst();
         flow->server_port = p->ptrs.dp;
+        swapped = false;
     }
     else
     {
@@ -237,7 +241,9 @@ static void init_roles_tcp(const Packet* p, Flow* flow)
         flow->client_port = p->ptrs.dp;
         flow->server_ip = *p->ptrs.ip_api.get_src();
         flow->server_port = p->ptrs.sp;
+        swapped = true;
     }
+    return swapped;
 }
 
 static void init_roles_udp(const Packet* p, Flow* flow)
@@ -249,8 +255,9 @@ static void init_roles_udp(const Packet* p, Flow* flow)
     flow->server_port = p->ptrs.dp;
 }
 
-static void init_roles_user(const Packet* p, Flow* flow)
+static bool init_roles_user(const Packet* p, Flow* flow)
 {
+    bool swapped;
     if ( p->ptrs.decode_flags & DECODE_C2S )
     {
         flow->ssn_state.direction = FROM_CLIENT;
@@ -258,6 +265,7 @@ static void init_roles_user(const Packet* p, Flow* flow)
         flow->client_port = p->ptrs.sp;
         flow->server_ip = *p->ptrs.ip_api.get_dst();
         flow->server_port = p->ptrs.dp;
+        swapped = false;
     }
     else
     {
@@ -266,35 +274,54 @@ static void init_roles_user(const Packet* p, Flow* flow)
         flow->client_port = p->ptrs.dp;
         flow->server_ip = *p->ptrs.ip_api.get_src();
         flow->server_port = p->ptrs.sp;
+        swapped = true;
     }
+    return swapped;
 }
 
 // FIXIT-L init_roles should take const Packet*
 static void init_roles(Packet* p, Flow* flow)
 {
+    bool swapped = false;
     switch ( flow->pkt_type )
     {
-    case PktType::IP:
-    case PktType::ICMP:
-        init_roles_ip(p, flow);
-        break;
+        case PktType::IP:
+        case PktType::ICMP:
+            init_roles_ip(p, flow);
+            break;
 
-    case PktType::TCP:
-        init_roles_tcp(p, flow);
-        break;
+        case PktType::TCP:
+            swapped = init_roles_tcp(p, flow);
+            break;
 
-    case PktType::UDP:
-        init_roles_udp(p, flow);
-        break;
+        case PktType::UDP:
+            init_roles_udp(p, flow);
+            break;
 
-    case PktType::PDU:
-    case PktType::FILE:
-        init_roles_user(p, flow);
-        break;
+        case PktType::PDU:
+        case PktType::FILE:
+            swapped = init_roles_user(p, flow);
+            break;
 
-    default:
-        break;
+        default:
+            break;
     }
+
+    if (swapped)
+    {
+        flow->client_intf = p->pkth->egress_index;
+        flow->server_intf = p->pkth->ingress_index;
+        flow->client_group = p->pkth->egress_group;
+        flow->server_group = p->pkth->ingress_group;
+    }
+    else
+    {
+        flow->client_intf = p->pkth->ingress_index;
+        flow->server_intf = p->pkth->egress_index;
+        flow->client_group = p->pkth->ingress_group;
+        flow->server_group = p->pkth->egress_group;
+    }
+
     flow->flags.app_direction_swapped = false;
     if ( flow->ssn_state.direction == FROM_CLIENT )
         p->packet_flags |= PKT_FROM_CLIENT;

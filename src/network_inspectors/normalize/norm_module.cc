@@ -354,32 +354,6 @@ bool NormalizeModule::begin(const char* fqn, int, SnortConfig*)
     return true;
 }
 
-bool NormalizeModule::end(const char* fqn, int, SnortConfig* sc)
-{
-    if ( !strcmp(fqn, NORM_NAME) )
-    {
-        NetworkPolicy* policy = get_network_policy();
-
-        // FIXIT-M untangle these policies. this is a workaround for loading inspection-only confs
-        if ( policy == nullptr )
-        {
-            set_network_policy(sc);
-            policy = get_network_policy();
-            set_network_policy((NetworkPolicy*)nullptr);
-        }
-
-        if ( (policy->new_ttl > 1) && (policy->new_ttl >= policy->min_ttl) )
-        {
-            if ( Norm_IsEnabled(&config, NORM_IP4_BASE) )
-                Norm_Enable(&config, NORM_IP4_TTL);
-
-            if ( Norm_IsEnabled(&config, NORM_IP6_BASE) )
-                Norm_Enable(&config, NORM_IP6_TTL);
-        }
-    }
-    return true;
-}
-
 void NormalizeModule::add_test_peg(const PegInfo& norm) const
 {
     PegInfo test;

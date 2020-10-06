@@ -108,19 +108,6 @@ void Value::get_bits(PortBitSet& list) const
     }
 }
 
-void Value::get_bits(ZoneBitSet& list) const
-{
-    list.reset();
-    std::size_t len = str.size();
-    assert(len == list.size());
-
-    for ( std::size_t n = 0; n < len; ++n )
-    {
-        if ( str[n] == '1' )
-            list.set(n);
-    }
-}
-
 void Value::get_bits(VlanBitSet& list) const
 {
     list.reset();

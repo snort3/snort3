@@ -126,13 +126,13 @@ int64_t Parameter::get_int(const char* r)
 // validation methods
 //--------------------------------------------------------------------------
 
-static bool valid_bool(Value& v, const char*)
+static bool valid_bool(const Value& v, const char*)
 {
     return v.get_type() == Value::VT_BOOL;
 }
 
 // FIXIT-L allow multiple , separated ranges
-static bool valid_int(Value& v, const char* r)
+static bool valid_int(const Value& v, const char* r)
 {
     if ( v.get_type() != Value::VT_NUM )
         return false;
@@ -183,11 +183,11 @@ static bool valid_int(Value& v, const char* r)
 // their actual, specific semantics instead of trying to explain the syntax.  this
 // also ensures that an int-type range is not applied to a string.
 
-static bool valid_interval(Value&, const char*)
+static bool valid_interval(const Value&, const char*)
 { return true; }
 
 // FIXIT-L allow multiple , separated ranges
-static bool valid_real(Value& v, const char* r)
+static bool valid_real(const Value& v, const char* r)
 {
     if ( v.get_type() != Value::VT_NUM )
         return false;
@@ -224,7 +224,7 @@ static bool valid_real(Value& v, const char* r)
     return true;
 }
 
-static bool valid_string(Value& v, const char* r)
+static bool valid_string(const Value& v, const char* r)
 {
     if ( v.get_type() != Value::VT_STR )
         return false;
@@ -241,7 +241,7 @@ static bool valid_string(Value& v, const char* r)
     return len <= max;
 }
 
-static bool valid_select(Value& v, const char* r)
+static bool valid_select(const Value& v, const char* r)
 {
     if ( v.get_type() != Value::VT_STR )
         return false;
@@ -554,7 +554,7 @@ TEST_CASE("bool", "[Parameter]")
 struct
 {
     bool expected;
-    bool (*validate)(Value&, const char*);
+    bool (*validate)(const Value&, const char*);
     double value;
     const char* range;
 }
@@ -621,11 +621,11 @@ TEST_CASE("num", "[Parameter]")
 struct
 {
     bool expected;
-    bool (*validate)(Value&, const char*);
+    bool (*validate)(const Value&, const char*);
     const char* value;
     const char* range;
 }
-string_tests[] =
+const_string_tests[] =
 {
 // __STRDUMP_DISABLE__
     { true, valid_string, "green", "(optional)" },
@@ -638,6 +638,20 @@ string_tests[] =
     { false, valid_select, "blue", "red | green | yellow" },
     { false, valid_select, "green", nullptr },
 
+    { false, nullptr, 0, nullptr }
+// __STRDUMP_ENABLE__
+};
+
+struct
+{
+    bool expected;
+    bool (*validate)(Value&, const char*);
+    const char* value;
+    const char* range;
+}
+string_tests[] =
+{
+// __STRDUMP_DISABLE__
     { true, valid_enum, "green", "red | green | yellow" },
     { false, valid_enum, "blue", "red | green | yellow" },
     { false, valid_enum, "green", nullptr },
@@ -680,8 +694,16 @@ string_tests[] =
 
 TEST_CASE("string", "[Parameter]")
 {
-    auto test = string_tests;
+    auto ctest = const_string_tests;
+    while ( ctest->validate )
+    {
+        Value v(ctest->value);
+        bool result = ctest->validate(v, ctest->range);
+        CHECK(result == ctest->expected);
+        ++ctest;
+    }
 
+    auto test = string_tests;
     while ( test->validate )
     {
         Value v(test->value);
