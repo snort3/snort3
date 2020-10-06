@@ -36,7 +36,7 @@ class TraceConfig;
 class TraceParser
 {
 public:
-    TraceParser(TraceConfig*);
+    TraceParser(TraceConfig&);
 
     bool set_traces(const std::string& option_name, const snort::Value& val);
     bool set_constraints(const snort::Value& val);
@@ -47,15 +47,15 @@ public:
 
     void reset_configured_trace_options();
 
-    TraceConfig* get_trace_config() const
+    TraceConfig& get_trace_config() const
     { return trace_config; }
 
 private:
     void init_configured_trace_options();
 
 private:
-    TraceConfig* trace_config = nullptr;
-    snort::PacketConstraints parsed_constraints;
+    TraceConfig& trace_config;
+    snort::PacketConstraints parsed_constraints{};
 
     static std::map<std::string, std::map<std::string, bool>> s_configured_trace_options;
 };

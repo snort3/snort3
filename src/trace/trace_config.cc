@@ -66,7 +66,7 @@ bool TraceConfig::set_trace(const std::string& module_name, const std::string& t
 {
     for ( auto& trace : traces )
     {
-        if ( strcmp(trace.module_name(), module_name.c_str()) == 0 )
+        if ( module_name == trace.module_name() )
             return trace.set(trace_option_name, trace_level);
     }
     return false;

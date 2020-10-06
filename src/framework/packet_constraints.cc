@@ -48,11 +48,11 @@ using namespace snort;
 bool PacketConstraints::operator==(const PacketConstraints& other) const
 {
     return set_bits == other.set_bits
-        and ip_proto == other.ip_proto
-        and src_port == other.src_port
-        and dst_port == other.dst_port
-        and src_ip == other.src_ip
-        and dst_ip == other.dst_ip;
+        and ( !(set_bits & IP_PROTO) or ip_proto == other.ip_proto )
+        and ( !(set_bits & SRC_PORT) or src_port == other.src_port )
+        and ( !(set_bits & DST_PORT) or dst_port == other.dst_port )
+        and ( !(set_bits & SRC_IP) or src_ip == other.src_ip )
+        and ( !(set_bits & DST_IP) or dst_ip == other.dst_ip );
 }
 
 bool PacketConstraints::packet_match(const Packet& p) const
@@ -91,6 +91,54 @@ bool PacketConstraints::flow_match(const Flow& f) const
 #ifdef UNIT_TEST
 
 #include <catch/snort_catch.h>
+
+TEST_CASE("Packet constraints comparison", "[framework]")
+{
+    SECTION("all unset")
+    {
+        const PacketConstraints exp = { IpProtocol::TCP, 10, 20,
+            SfIp(), SfIp(), 0 };
+        const PacketConstraints act = { IpProtocol::UDP, 30, 40,
+            SfIp(), SfIp(), 0 };
+        CHECK( exp == act );
+    }
+
+    SECTION("dst unset")
+    {
+        const uint32_t ip1 = 0x01010101;
+        const uint32_t ip2 = 0x02020202;
+        const PacketConstraints exp = { IpProtocol::PROTO_NOT_SET, 10, 20,
+            SfIp(&ip1, AF_INET), SfIp(&ip2, AF_INET),
+            (uint8_t)~PacketConstraints::SetBits::DST_IP };
+        const PacketConstraints act = { IpProtocol::PROTO_NOT_SET, 10, 20,
+            SfIp(&ip1, AF_INET), SfIp(),
+            (uint8_t)~PacketConstraints::SetBits::DST_IP };
+        CHECK( exp == act );
+    }
+
+    SECTION("not equal")
+    {
+        const uint32_t ip1 = 0x01010101;
+        const uint32_t ip2 = 0x02020202;
+        const uint32_t ip3 = 0x03030303;
+        const PacketConstraints exp = { IpProtocol::PROTO_NOT_SET, 0, 0,
+            SfIp(&ip1, AF_INET), SfIp(&ip2, AF_INET), (uint8_t)-1 };
+        const PacketConstraints act = { IpProtocol::PROTO_NOT_SET, 0, 0,
+            SfIp(&ip3, AF_INET), SfIp(&ip2, AF_INET), (uint8_t)-1};
+        CHECK( !(exp == act) );
+    }
+
+    SECTION("equal")
+    {
+        const uint32_t ip1 = 0x01010101;
+        const uint32_t ip2 = 0x02020202;
+        const PacketConstraints exp = { IpProtocol::PROTO_NOT_SET, 0, 0,
+            SfIp(&ip1, AF_INET), SfIp(&ip2, AF_INET), (uint8_t)-1 };
+        const PacketConstraints act = { IpProtocol::PROTO_NOT_SET, 0, 0,
+            SfIp(&ip1, AF_INET), SfIp(&ip2, AF_INET), (uint8_t)-1 };
+        CHECK( exp == act );
+    }
+}
 
 TEST_CASE("Packet constraints matching", "[framework]")
 {

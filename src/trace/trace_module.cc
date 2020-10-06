@@ -160,7 +160,7 @@ bool TraceModule::begin(const char* fqn, int, SnortConfig* sc)
 {
     if ( !strcmp(fqn, "trace") )
     {
-        trace_parser = new TraceParser(sc->trace_config);
+        trace_parser = new TraceParser(*sc->trace_config);
 
         // Init default output type based on Snort run-mode
         if ( sc->daemon_mode() or sc->log_syslog() )
@@ -191,7 +191,7 @@ bool TraceModule::set(const char* fqn, Value& v, SnortConfig*)
     }
     else if ( v.is("log_ntuple") )
     {
-        trace_parser->get_trace_config()->log_ntuple = v.get_bool();
+        trace_parser->get_trace_config().log_ntuple = v.get_bool();
         return true;
     }
     else if ( strstr(fqn, "trace.modules.") == fqn )
@@ -218,10 +218,10 @@ bool TraceModule::end(const char* fqn, int, SnortConfig* sc)
             switch ( log_output_type )
             {
             case OUTPUT_TYPE_STDOUT:
-                trace_parser->get_trace_config()->logger_factory = new StdoutLoggerFactory();
+                trace_parser->get_trace_config().logger_factory = new StdoutLoggerFactory();
                 break;
             case OUTPUT_TYPE_SYSLOG:
-                trace_parser->get_trace_config()->logger_factory = new SyslogLoggerFactory();
+                trace_parser->get_trace_config().logger_factory = new SyslogLoggerFactory();
                 break;
             default:
                 break;

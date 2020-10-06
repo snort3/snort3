@@ -151,7 +151,7 @@ static int set(lua_State* L)
     TraceConfig* trace_config = new TraceConfig(sc->overlay_trace_config
         ? *sc->overlay_trace_config : *sc->trace_config);
 
-    TraceParser trace_parser(trace_config);
+    TraceParser trace_parser(*trace_config);
 
     const Parameter* params_tree = TraceSwapParams::get_params();
     bool parse_err = false;
@@ -183,7 +183,7 @@ static int set(lua_State* L)
             if ( lua_isboolean(L, -1) and root_parameter )
             {
                 set_ntuple = true;
-                trace_parser.get_trace_config()->log_ntuple = bool(lua_toboolean(L, -1));
+                trace_parser.get_trace_config().log_ntuple = bool(lua_toboolean(L, -1));
             }
             else
             {
@@ -329,7 +329,7 @@ static int set(lua_State* L)
             trace_parser.finalize_constraints();
 
         main_broadcast_command(new TraceSwap(
-            trace_parser.get_trace_config(), set_traces, set_constraints, set_ntuple),
+            &trace_parser.get_trace_config(), set_traces, set_constraints, set_ntuple),
             true);
     }
     else
