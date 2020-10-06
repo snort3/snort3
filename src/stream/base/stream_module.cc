@@ -201,13 +201,18 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
     return true;
 }
 
-bool StreamModule::end(const char*, int, SnortConfig* sc)
+bool StreamModule::end(const char* fqn, int, SnortConfig* sc)
 {
-    if ( reload_resource_manager.initialize(config) )
-        sc->register_reload_resource_tuner(reload_resource_manager);
+    if ( Snort::is_reloading() && strcmp(fqn, MOD_NAME) == 0 )
+    {
+        StreamReloadResourceManager* reload_resource_manager = new StreamReloadResourceManager;
+        if (reload_resource_manager->initialize(config))
+            sc->register_reload_resource_tuner(reload_resource_manager);
+        else
+            delete reload_resource_manager;
 
-    if ( hpq_rrt.initialize(config.held_packet_timeout) )
-        sc->register_reload_resource_tuner(hpq_rrt);
+        sc->register_reload_resource_tuner(new HPQReloadTuner(config.held_packet_timeout));
+    }
 
     return true;
 }
@@ -229,12 +234,6 @@ bool StreamReloadResourceManager::initialize(const StreamModuleConfig& config_)
 {
     // saving a copy of the config only works here because there is only
     // one stream inspector per packet thread...
-    if ( !Snort::is_reloading() )
-    {
-        config = config_;
-        return false;
-    }
-
 #ifdef REG_TEST
     if ( config.footprint != config_.footprint )
     {
@@ -307,12 +306,6 @@ void StreamModuleConfig::show() const
 
         ConfigLogger::log_value(flow_type_names[i], tmp.c_str());
     }
-}
-
-bool HPQReloadTuner::initialize(uint32_t new_timeout_ms)
-{
-    held_packet_timeout = new_timeout_ms;
-    return Snort::is_reloading();
 }
 
 bool HPQReloadTuner::tinit()

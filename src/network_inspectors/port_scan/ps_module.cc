@@ -328,12 +328,8 @@ bool PortScanModule::set(const char* fqn, Value& v, SnortConfig*)
 
 bool PortScanModule::end(const char* fqn, int, SnortConfig* sc)
 {
-    if ( strcmp(fqn, "port_scan") == 0 )
-    {
-        ps_rrt.memcap = config->memcap;
-        if ( Snort::is_reloading() )
-            sc->register_reload_resource_tuner(ps_rrt);
-    }
+    if ( Snort::is_reloading() && strcmp(fqn, "port_scan") == 0 )
+        sc->register_reload_resource_tuner(new PortScanReloadTuner(config->memcap));
     return true;
 }
 

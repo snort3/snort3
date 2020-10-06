@@ -88,27 +88,21 @@ bool HostCacheModule::set(const char*, Value& v, SnortConfig*)
         dump_file = snort_strdup(v.get_string());
     }
     else if ( v.is("memcap") )
-        hc_rrt.memcap = v.get_size();
+        memcap = v.get_size();
     else
         return false;
 
     return true;
 }
 
-bool HostCacheModule::begin(const char*, int, SnortConfig*)
-{
-    hc_rrt.memcap = 0;
-    return true;
-}
-
 bool HostCacheModule::end(const char* fqn, int, SnortConfig* sc)
 {
-    if ( hc_rrt.memcap && !strcmp(fqn, HOST_CACHE_NAME) )
+    if ( memcap && !strcmp(fqn, HOST_CACHE_NAME) )
     {
         if ( Snort::is_reloading() )
-            sc->register_reload_resource_tuner(hc_rrt);
+            sc->register_reload_resource_tuner(new HostCacheReloadTuner(memcap));
         else
-            host_cache.set_max_size(hc_rrt.memcap);
+            host_cache.set_max_size(memcap);
     }
 
     return true;

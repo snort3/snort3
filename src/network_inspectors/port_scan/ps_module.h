@@ -137,6 +137,9 @@
 class PortScanReloadTuner : public snort::ReloadResourceTuner
 {
 public:
+    explicit PortScanReloadTuner(size_t memcap) : memcap(memcap) { }
+    ~PortScanReloadTuner() override = default;
+
     bool tinit() override
     { return ps_init_hash(memcap); }
 
@@ -146,7 +149,8 @@ public:
     bool tune_packet_context() override
     { return ps_prune_hash(max_work); }
 
-    size_t memcap = 0;
+private:
+    size_t memcap;
 };
 
 //-------------------------------------------------------------------------
@@ -184,7 +188,6 @@ public:
 private:
     PS_ALERT_CONF* get_alert_conf(const char* fqn);
     PortscanConfig* config;
-    PortScanReloadTuner ps_rrt;
 };
 
 #endif

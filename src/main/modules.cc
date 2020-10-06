@@ -1899,7 +1899,6 @@ public:
 private:
     HostServiceDescriptor service;
     HostAttributesEntry host;
-    HostAttributesReloadTuner hart;
 };
 
 bool HostsModule::set(const char*, Value& v, SnortConfig* sc)
@@ -1961,7 +1960,7 @@ bool HostsModule::end(const char* fqn, int idx, SnortConfig* sc)
         if ( HostAttributesManager::activate() )
         {
             if ( Snort::is_reloading() )
-                sc->register_reload_resource_tuner(hart);
+                sc->register_reload_resource_tuner(new HostAttributesReloadTuner);
         }
     }
 

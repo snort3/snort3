@@ -703,8 +703,7 @@ public:
     const std::list<ReloadResourceTuner*>& get_reload_resource_tuners() const
     { return reload_tuners; }
 
-    void clear_reload_resource_tuner_list()
-    { reload_tuners.clear(); }
+    void clear_reload_resource_tuner_list();
 
     bool get_default_rule_state() const;
 
@@ -730,8 +729,7 @@ public:
 
     static void set_conf(const SnortConfig*);
 
-    SO_PUBLIC void register_reload_resource_tuner(ReloadResourceTuner& rrt)
-    { reload_tuners.push_back(&rrt); }
+    SO_PUBLIC void register_reload_resource_tuner(ReloadResourceTuner*);
 
     static void cleanup_fatal_error();
 };

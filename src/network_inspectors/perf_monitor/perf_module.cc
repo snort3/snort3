@@ -333,15 +333,8 @@ bool PerfMonModule::begin(const char* fqn, int idx, SnortConfig*)
 bool PerfMonModule::end(const char* fqn, int idx, SnortConfig* sc)
 {
 
-    if ( strcmp(fqn, "perf_monitor") == 0 )
-    {
-        perfmon_rrt.set_memcap(config->flowip_memcap);
-
-        if ( Snort::is_reloading() )
-        {
-            sc->register_reload_resource_tuner(perfmon_rrt);
-        }
-    }
+    if ( Snort::is_reloading() && strcmp(fqn, "perf_monitor") == 0 )
+        sc->register_reload_resource_tuner(new PerfMonReloadTuner(config->flowip_memcap));
 
     if ( idx != 0 && strcmp(fqn, "perf_monitor.modules") == 0 )
         return config->modules.back().confirm_parse();

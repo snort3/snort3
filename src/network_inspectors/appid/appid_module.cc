@@ -367,7 +367,7 @@ static int reload_detectors(lua_State* L)
     assert(odp_thread_local_ctxt);
     delete odp_thread_local_ctxt;
     odp_thread_local_ctxt = new OdpThreadContext(true);
- 
+
     OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
     odp_ctxt.get_client_disco_mgr().initialize();
     odp_ctxt.get_service_disco_mgr().initialize();
@@ -493,12 +493,8 @@ bool AppIdModule::end(const char* fqn, int, SnortConfig* sc)
 {
     assert(config);
 
-    if ( strcmp(fqn, "appid") == 0 )
-    {
-        appid_rrt.memcap = config->memcap;
-        if ( Snort::is_reloading() )
-            sc->register_reload_resource_tuner(appid_rrt);
-    }
+    if ( Snort::is_reloading() && strcmp(fqn, "appid") == 0 )
+        sc->register_reload_resource_tuner(new AppIdReloadTuner(config->memcap));
 
     if ( !config->app_detector_dir )
     {

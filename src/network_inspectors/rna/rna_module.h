@@ -55,7 +55,8 @@ extern THREAD_LOCAL const snort::Trace* rna_trace;
 class FpProcReloadTuner : public snort::ReloadResourceTuner
 {
 public:
-    FpProcReloadTuner() = default;
+    explicit FpProcReloadTuner(RnaModuleConfig& mod_conf) : mod_conf(mod_conf) { }
+    ~FpProcReloadTuner() override = default;
 
     bool tinit() override;
 
@@ -65,7 +66,8 @@ public:
     bool tune_idle_context() override
     { return true; }
 
-    RnaModuleConfig* mod_conf = nullptr;
+private:
+    RnaModuleConfig& mod_conf;
 };
 
 class RnaModule : public snort::Module
@@ -96,8 +98,6 @@ private:
     const char* dump_file = nullptr;
 
     RawFingerprint fingerprint;
-
-    FpProcReloadTuner fprt;
 
     bool is_valid_fqn(const char* fqn) const;
 };

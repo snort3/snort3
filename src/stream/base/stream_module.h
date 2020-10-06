@@ -105,16 +105,16 @@ private:
 class HPQReloadTuner : public snort::ReloadResourceTuner
 {
 public:
-    HPQReloadTuner() = default;
+    explicit HPQReloadTuner(uint32_t packet_timeout) : held_packet_timeout(packet_timeout) { }
+    ~HPQReloadTuner() override = default;
 
     bool tinit() override;
     bool tune_packet_context() override;
     bool tune_idle_context() override;
-    bool initialize(uint32_t new_timeout_ms);
 
 private:
     uint32_t held_packet_timeout;
-    timeval reload_time;
+    timeval reload_time{};
 };
 
 class StreamModule : public snort::Module
@@ -150,8 +150,6 @@ public:
 
 private:
     StreamModuleConfig config;
-    StreamReloadResourceManager reload_resource_manager;
-    HPQReloadTuner hpq_rrt;
 };
 
 extern void base_prep();

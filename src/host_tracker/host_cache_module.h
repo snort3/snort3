@@ -35,6 +35,7 @@
 class HostCacheReloadTuner : public snort::ReloadResourceTuner
 {
 public:
+    explicit HostCacheReloadTuner(size_t memcap) : memcap(memcap) { }
     bool tinit() override
     { return host_cache.reload_resize(memcap); }
 
@@ -44,6 +45,7 @@ public:
     bool tune_packet_context() override
     { return host_cache.reload_prune(memcap, max_work); }
 
+private:
     size_t memcap;
 };
 
@@ -53,7 +55,6 @@ public:
     HostCacheModule();
     ~HostCacheModule() override;
 
-    bool begin(const char*, int, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
 
@@ -69,7 +70,7 @@ public:
 
 private:
     const char* dump_file = nullptr;
-    HostCacheReloadTuner hc_rrt;
+    size_t memcap = 0;
 };
 
 #endif

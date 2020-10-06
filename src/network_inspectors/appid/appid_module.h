@@ -46,7 +46,8 @@ extern THREAD_LOCAL const snort::Trace* appid_trace;
 class AppIdReloadTuner : public snort::ReloadResourceTuner
 {
 public:
-    AppIdReloadTuner() = default;
+    explicit AppIdReloadTuner(size_t memcap) : memcap(memcap) { }
+    ~AppIdReloadTuner() override = default;
 
     bool tinit() override;
     bool tune_packet_context() override
@@ -61,7 +62,7 @@ public:
     friend class AppIdModule;
 
 private:
-    size_t memcap = 0;
+    size_t memcap;
 
     bool tune_resources(unsigned work_limit);
 };
@@ -95,7 +96,6 @@ public:
 
 private:
     AppIdConfig* config;
-    AppIdReloadTuner appid_rrt;
 };
 
 #endif

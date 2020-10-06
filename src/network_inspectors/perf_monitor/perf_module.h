@@ -131,7 +131,6 @@ public:
 
 private:
     PerfConfig* config = nullptr;
-    PerfMonReloadTuner perfmon_rrt;
 };
 
 extern THREAD_LOCAL PerfPegStats pmstats;

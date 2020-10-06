@@ -78,8 +78,8 @@ static inline string format_dump_mac(const uint8_t mac[MAC_SIZE])
 
 bool FpProcReloadTuner::tinit()
 {
-    set_tcp_fp_processor(mod_conf->tcp_processor);
-    set_ua_fp_processor(mod_conf->ua_processor);
+    set_tcp_fp_processor(mod_conf.tcp_processor);
+    set_ua_fp_processor(mod_conf.ua_processor);
     return false;  // no work to do after this
 }
 
@@ -312,11 +312,7 @@ bool RnaModule::end(const char* fqn, int index, SnortConfig* sc)
             mod_conf->ua_processor->make_mpse(sc);
 
         if ( (mod_conf->tcp_processor || mod_conf->ua_processor) && Snort::is_reloading() )
-        {
-            fprt.mod_conf = mod_conf;
-            sc->register_reload_resource_tuner(fprt);
-        }
-
+            sc->register_reload_resource_tuner(new FpProcReloadTuner(*mod_conf));
     }
 
     if ( index > 0 and mod_conf->tcp_processor and !strcmp(fqn, "rna.tcp_fingerprints") )

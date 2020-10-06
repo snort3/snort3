@@ -26,7 +26,8 @@
 class PerfMonReloadTuner : public snort::ReloadResourceTuner
 {
 public:
-    PerfMonReloadTuner() = default;
+    explicit PerfMonReloadTuner(size_t memcap) : memcap(memcap) { }
+    ~PerfMonReloadTuner() override = default;
 
     bool tinit() override;
 
@@ -38,14 +39,8 @@ public:
 
     bool tune_resources(unsigned work_limit);
 
-    void set_memcap(size_t new_memcap)
-        { memcap = new_memcap; }
-
-    size_t get_memcap()
-        { return memcap; }
-
 private:
-    size_t memcap = 0;
+    size_t memcap;
 
 };
 

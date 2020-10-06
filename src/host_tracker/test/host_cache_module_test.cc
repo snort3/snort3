@@ -65,6 +65,7 @@ void LogMessage(const char* format,...)
 }
 time_t packet_time() { return 0; }
 bool Snort::is_reloading() { return false; }
+void SnortConfig::register_reload_resource_tuner(ReloadResourceTuner* rrt) { delete rrt; }
 } // end of namespace snort
 
 extern "C"

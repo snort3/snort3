@@ -60,6 +60,7 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
+#include "main/snort.h"
 #include "target_based/host_attributes.h"
 #include "target_based/snort_protocols.h"
 #include "trace/trace_config.h"
@@ -275,7 +276,7 @@ SnortConfig::~SnortConfig()
     delete so_rules;
     if ( plugins )
         delete plugins;
-    reload_tuners.clear();
+    clear_reload_resource_tuner_list();
 
     trim_heap();
 }
@@ -1007,6 +1008,21 @@ void SnortConfig::set_conf(const SnortConfig* sc)
         if (sc->policy_map->get_policies(sh))
             set_policies(sc, sh);
     }
+}
+
+void SnortConfig::register_reload_resource_tuner(ReloadResourceTuner* rrt)
+{
+    if (Snort::is_reloading())
+        reload_tuners.push_back(rrt);
+    else
+        delete rrt;
+}
+
+void SnortConfig::clear_reload_resource_tuner_list()
+{
+    for (ReloadResourceTuner* rrt : reload_tuners)
+        delete rrt;
+    reload_tuners.clear();
 }
 
 void SnortConfig::cleanup_fatal_error()
