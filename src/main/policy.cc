@@ -82,8 +82,14 @@ void InspectionPolicy::init(InspectionPolicy* other_inspection_policy)
     framework_policy = nullptr;
     cloned = false;
     if (other_inspection_policy)
+    {
         policy_id = other_inspection_policy->policy_id;
-
+        policy_mode = other_inspection_policy->policy_mode;
+        user_policy_id = other_inspection_policy->user_policy_id;
+#ifdef HAVE_UUID
+        uuid_copy(uuid, other_inspection_policy->uuid);
+#endif
+    }
     InspectorManager::new_policy(this, other_inspection_policy);
 }
 
