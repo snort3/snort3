@@ -27,7 +27,6 @@
 #include "detection/detection_engine.h"
 #include "network_inspectors/appid/appid_session_api.h"
 
-#include "rna_fingerprint_ua.h"
 #include "rna_logger_common.h"
 
 using namespace snort;
@@ -123,18 +122,23 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
     if ( p->is_from_client() and ( appid_change_bits[APPID_HOST_BIT] or
         appid_change_bits[APPID_USERAGENT_BIT] ) )
     {
-        const AppIdHttpSession* hsession;
-
-        if ( appid_event->get_is_http2() )
-            hsession = appid_session_api.get_http_session(appid_event->get_http2_stream_index());
-        else
-            hsession = appid_session_api.get_http_session();
-
-        if ( hsession )
+        auto processor = get_ua_fp_processor();
+        if ( processor and processor->has_pattern() )
         {
-            const char* host = hsession->get_cfield(REQ_HOST_FID);
-            const char* uagent = hsession->get_cfield(REQ_AGENT_FID);
-            analyze_user_agent_fingerprint(p, host, uagent, ht, src_ip, src_mac, logger);
+            const AppIdHttpSession* hsession;
+
+            if ( appid_event->get_is_http2() )
+                hsession = appid_session_api.get_http_session(appid_event->get_http2_stream_index());
+            else
+                hsession = appid_session_api.get_http_session();
+
+            if ( hsession )
+            {
+                const char* host = hsession->get_cfield(REQ_HOST_FID);
+                const char* uagent = hsession->get_cfield(REQ_AGENT_FID);
+                analyze_user_agent_fingerprint(p, host, uagent, ht, src_ip, src_mac,
+                    logger, *processor);
+            }
         }
     }
 }
@@ -240,19 +244,16 @@ void RnaAppDiscovery::discover_user(const Packet* p, RnaTracker& rt,
 }
 
 void RnaAppDiscovery::analyze_user_agent_fingerprint(const Packet* p, const char* host,
-    const char* uagent, RnaTracker& rt, const SfIp* ip, const uint8_t* src_mac, RnaLogger& logger)
+    const char* uagent, RnaTracker& rt, const SfIp* ip, const uint8_t* src_mac,
+    RnaLogger& logger, UaFpProcessor& processor)
 {
     if ( !host or !uagent )
-        return;
-
-    const auto& processor = get_ua_fp_processor();
-    if ( !processor )
         return;
 
     const UaFingerprint* uafp = nullptr;
     const char* device_info = nullptr;
     bool jail_broken = false;
-    processor->match_mpse(host, uagent, uafp, device_info, jail_broken);
+    processor.match_mpse(host, uagent, uafp, device_info, jail_broken);
 
     if ( uafp and rt->add_ua_fingerprint(uafp->fpid, uafp->fp_type, jail_broken,
         device_info, MAX_USER_AGENT_DEVICES) )

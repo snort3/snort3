@@ -49,12 +49,14 @@ class SO_PUBLIC UaFpProcessor
 public:
     ~UaFpProcessor();
 
+    bool has_pattern()
+    { return os_mpse != nullptr; }
+
     void make_mpse(SnortConfig* sc = nullptr);
 
-    void match_mpse(const char* host, const char* uagent, const UaFingerprint*& osfp,
-        const char*& device_info, bool& jail_broken);
+    void match_mpse(const char*, const char*, const UaFingerprint*&, const char*&, bool&);
 
-    void push(const RawFingerprint& rfp);
+    void push(const RawFingerprint&);
 
     void push_agent(const UaFingerprint& uafp)
     { os_fps.emplace_back(uafp); }

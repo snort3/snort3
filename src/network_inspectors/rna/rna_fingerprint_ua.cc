@@ -197,6 +197,8 @@ void UaFpProcessor::match_mpse(const char* host, const char* uagent, const UaFin
 {
     unsigned len = strlen(uagent);
     osfp = search_ua_fp(os_mpse, uagent, len);
+    if ( !osfp )
+        return;
 
     auto devicefp = search_ua_fp(device_mpse, uagent, len);
     if ( devicefp )

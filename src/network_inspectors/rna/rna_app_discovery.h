@@ -19,6 +19,7 @@
 #ifndef RNA_APP_DISCOVERY_H
 #define RNA_APP_DISCOVERY_H
 
+#include "rna_fingerprint_ua.h"
 #include "rna_pnd.h"
 
 class RnaAppDiscovery
@@ -27,16 +28,16 @@ public:
     static void process(AppidEvent*, DiscoveryFilter&, RnaConfig*, RnaLogger&);
 
     static void discover_service(const snort::Packet*, IpProtocol, RnaTracker&,
-        const struct in6_addr*, const uint8_t*, RnaConfig*, RnaLogger&, uint16_t,
+        const struct in6_addr*, const uint8_t*, RnaConfig*, RnaLogger&, uint16_t port,
         AppId service = APP_ID_NONE);
 
     static void discover_payload(const snort::Packet*, IpProtocol, RnaTracker&,
         const struct in6_addr*, const uint8_t*, RnaConfig*, RnaLogger&,
         AppId service, AppId payload);
 
-    static void discover_client(const snort::Packet* p, RnaTracker& rt,
-        const struct in6_addr* src_ip, const uint8_t* src_mac, RnaConfig* conf,
-        RnaLogger& logger, const char* version, AppId client, AppId service);
+    static void discover_client(const snort::Packet*, RnaTracker&,
+        const struct in6_addr*, const uint8_t*, RnaConfig*,
+        RnaLogger&, const char*, AppId client, AppId service);
 
     static void discover_user(const snort::Packet*, RnaTracker&, const struct in6_addr*,
         const uint8_t* src_mac, RnaLogger&, const char* username, AppId, IpProtocol);
@@ -48,7 +49,7 @@ private:
 
     static void analyze_user_agent_fingerprint(const snort::Packet*, const char* host,
         const char* uagent, RnaTracker&, const snort::SfIp*, const uint8_t*,
-        RnaLogger&);
+        RnaLogger&, snort::UaFpProcessor&);
 };
 
 #endif
