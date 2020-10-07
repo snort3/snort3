@@ -1,3 +1,41 @@
+2020/10/07 - 3.0.3 build 2
+
+-- appid: Create events for client user name, id and login success
+-- appid: Inform third-party about snort's idle state during reload
+-- appid: Reload detector patterns on reload_config for the sake of hyperscan
+-- appid: Update appid to use instance based reload tuner
+-- binder: Allow binding based on address spaces
+-- binder: Allow directional binding based on interfaces
+-- binder: Enforce directionality, add intfs, rename groups, cleanup
+-- framework: Update packet constraints comparison to check only set fields
+-- host_tracker: Update host tracker to use instance based reload tuner
+-- http2_inspect: Fix frame padding handling
+-- http2_inspect: Free up HI flow data when we are finished with it
+-- http2_inspect: Stream state tracking
+-- http_inspect: Implement can_start_tls(), add support of ssl search abandoned event
+-- http_inspect: Support for custom xff type headers
+-- main: Change reload memcap framework to use object instances
+-- main: Remove deprecated rule_state module
+-- main: Update host attribute class to use instance based reload tuner
+-- normalizer: Move TTL configuration toggle to inspector configure()
+-- perf_monitor: Update perf monitor to use instance based reload tuner
+-- policy: Copy uuid, user_policy_id, and policy_mode when an inspection policy is cloned
+-- pop: Generate alert for unknown command if file policy is attached.
+-- port_scan: Update port scan to use instance based reload tuner
+-- rna: Add event_time to rna logger events
+-- rna: Add payload discovery logic
+-- rna: Check user-agent processor early to skip some work
+-- rna: Port host type discovery logic
+-- rna: Set the thread local fingerprint processors during reload_config
+-- rna: Update rna to use instance based reload tuner
+-- rna: Update methods for user-agent processor
+-- rna: User discovery for successful login
+-- snort2lua: Convert rule_state into ips.states
+-- stream_tcp: Update trace messages to use trace framework
+-- stream: Update stream to use instance based reload tuner
+-- trace: Update parser unit tests
+-- wizard: Clean up parameter parsing and make it a bit stricter
+
 2020/09/23 - 3.0.3 build 1
 
 -- ac_bnfa: Disable broken fail state reduction

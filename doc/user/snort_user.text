@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.0.3 (Build 1) 2020-09-23 11:56:13 EDT TST
+Revision 3.0.3 (Build 2) 2020-10-07 13:10:58 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -662,8 +662,7 @@ additional information about the type and use of the parameter:
     by a *. Used for unquoted, comma-separated lists such as service
     and metadata.
   * The snort module has command line options starting with a -.
-  * $ denotes variable names, eg rule_state.$gid_sid which would be
-    used like rule_state["1:23456"] = { }.
+  * $ denotes variable names.
 
 Some additional details to note:
 
@@ -3858,7 +3857,22 @@ decodeURIComponent are %XX, %uXXXX, XX and uXXXXi. http_inspect also
 replaces consecutive whitespaces with a single space and normalizes
 the plus by concatenating the strings.
 
-5.10.2.9. URI processing
+5.10.2.9. xff_headers
+
+This configuration supports defining custom x-forwarded-for type
+headers. In a multi-vendor world, it is quite possible that the
+header name carrying the original client IP could be vendor-specific.
+This is due to the absence of standardization which would otherwise
+standardize the header name. In such a scenario, this configuration
+provides a way with which such headers can be introduced to HI. The
+default value of this configuration is "x-forwarded-for
+true-client-ip". The default definition introduces the two commonly
+known headers and is preferred in the same order by the inspector as
+they are defined, e.g "x-forwarded-for" will be preferred than
+"true-client-ip" if both headers are present in the stream. The
+header names should be delimited by a space.
+
+5.10.2.10. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize
@@ -4171,9 +4185,10 @@ applied to http_header when no specific header is specified.
 
 This provides the original IP address of the client sending the
 request as it was stored by a proxy in the request message headers.
-Specifically it is the last IP address listed in the X-Forwarded-For
-or True-Client-IP header. If both headers are present the former is
-used.
+Specifically it is the last IP address listed in the X-Forwarded-For,
+True-Client-IP or any other custom x-forwarded-for type header. If
+multiple headers are present the preference defined in xff_headers
+configuration is considered.
 
 5.10.4.6. http_client_body
 

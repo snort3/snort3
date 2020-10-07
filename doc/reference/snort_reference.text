@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.0.3 (Build 1) 2020-09-23 11:56:23 EDT TST
+Revision 3.0.3 (Build 2) 2020-10-07 13:11:06 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -43,12 +43,11 @@ Table of Contents
     2.24. profiler
     2.25. rate_filter
     2.26. references
-    2.27. rule_state
-    2.28. search_engine
-    2.29. side_channel
-    2.30. snort
-    2.31. suppress
-    2.32. trace
+    2.27. search_engine
+    2.28. side_channel
+    2.29. snort
+    2.30. suppress
+    2.31. trace
 
 3. Codec Modules
 
@@ -1215,28 +1214,7 @@ Configuration:
   * string references[].url: where this reference is defined
 
 
-2.27. rule_state
-
---------------
-
-Help: enable/disable and set actions for specific IPS rules;
-deprecated, use rule state stubs with enable instead
-
-Type: basic
-
-Usage: detect
-
-Configuration:
-
-  * enum rule_state.$gid_sid[].action = alert: apply action if rule
-    matches or inherit from rule definition { log | pass | alert |
-    drop | block | reset }
-  * enum rule_state.$gid_sid[].enable = inherit: enable or disable
-    rule in current ips policy or use default defined by ips policy {
-    no | yes | inherit }
-
-
-2.28. search_engine
+2.27. search_engine
 
 --------------
 
@@ -1302,7 +1280,7 @@ Peg counts:
   * search_engine.searched_bytes: total bytes searched (sum)
 
 
-2.29. side_channel
+2.28. side_channel
 
 --------------
 
@@ -1324,7 +1302,7 @@ Peg counts:
   * side_channel.packets: total packets (sum)
 
 
-2.30. snort
+2.29. snort
 
 --------------
 
@@ -1599,7 +1577,7 @@ Peg counts:
     failed due to attribute table full (sum)
 
 
-2.31. suppress
+2.30. suppress
 
 --------------
 
@@ -1619,7 +1597,7 @@ Configuration:
     according to track
 
 
-2.32. trace
+2.31. trace
 
 --------------
 
@@ -1654,6 +1632,7 @@ Configuration:
     logging { 0:255 }
   * int trace.modules.detection.tag: enable tag trace logging { 0:255
     }
+  * int trace.modules.dpx.all: enable all trace options { 0:255 }
   * int trace.modules.gtp_inspect.all: enable all trace options {
     0:255 }
   * int trace.modules.latency.all: enable all trace options { 0:255 }
@@ -1665,6 +1644,12 @@ Configuration:
   * int trace.modules.stream.all: enable all trace options { 0:255 }
   * int trace.modules.stream_ip.all: enable all trace options { 0:255
     }
+  * int trace.modules.stream_tcp.all: enable all trace options {
+    0:255 }
+  * int trace.modules.stream_tcp.segments: enable stream TCP segments
+    trace logging { 0:255 }
+  * int trace.modules.stream_tcp.state: enable stream TCP state trace
+    logging { 0:255 }
   * int trace.modules.stream_user.all: enable all trace options {
     0:255 }
   * int trace.modules.wizard.all: enable all trace options { 0:255 }
@@ -2526,9 +2511,8 @@ Instance Type: singleton
 
 Configuration:
 
-  * int binder[].when.ips_policy_id = 0: unique ID for selection of
-    this config by external logic { 0:max32 }
-  * bit_list binder[].when.ifaces: list of interface indices { 255 }
+  * int binder[].when.ips_policy_id: unique ID for selection of this
+    config by external logic { 0:max32 }
   * bit_list binder[].when.vlans: list of VLAN IDs { 4095 }
   * addr_list binder[].when.nets: list of networks
   * addr_list binder[].when.src_nets: list of source networks
@@ -2539,12 +2523,20 @@ Configuration:
   * bit_list binder[].when.src_ports: list of source ports { 65535 }
   * bit_list binder[].when.dst_ports: list of destination ports {
     65535 }
-  * bit_list binder[].when.zones: zones { 63 }
-  * bit_list binder[].when.src_zone: source zone { 63 }
-  * bit_list binder[].when.dst_zone: destination zone { 63 }
+  * string binder[].when.intfs: list of interface IDs
+  * string binder[].when.src_intfs: list of source interface IDs
+  * string binder[].when.dst_intfs: list of destination interface IDs
+  * string binder[].when.groups: list of interface group IDs
+  * string binder[].when.src_groups: list of source interface group
+    IDs
+  * string binder[].when.dst_groups: list of destination group IDs
+  * string binder[].when.addr_spaces: list of address space IDs
   * enum binder[].when.role = any: use the given configuration on one
     or any end of a session { client | server | any }
   * string binder[].when.service: override default configuration
+  * string binder[].when.zones: deprecated alias for groups
+  * string binder[].when.src_zone: deprecated alias for src_groups
+  * string binder[].when.dst_zone: deprecated alias for dst_groups
   * enum binder[].use.action = inspect: what to do with matching
     traffic { reset | block | allow | inspect }
   * string binder[].use.file: use configuration in given file
@@ -2558,11 +2550,16 @@ Configuration:
 
 Peg counts:
 
-  * binder.packets: initial bindings (sum)
-  * binder.resets: reset bindings (sum)
-  * binder.blocks: block bindings (sum)
-  * binder.allows: allow bindings (sum)
-  * binder.inspects: inspect bindings (sum)
+  * binder.new_flows: new flows evaluated (sum)
+  * binder.service_changes: flow service changes evaluated (sum)
+  * binder.assistant_inspectors: flow assistant inspector requests
+    handled (sum)
+  * binder.new_standby_flows: new HA flows evaluated (sum)
+  * binder.no_match: binding evaluations that had no matches (sum)
+  * binder.resets: reset actions bound (sum)
+  * binder.blocks: block actions bound (sum)
+  * binder.allows: allow actions bound (sum)
+  * binder.inspects: inspect actions bound (sum)
 
 
 5.6. cip
@@ -3569,6 +3566,11 @@ Rules:
   * 121:17 (http2_inspect) HTTP/2 pseudo-header after regular header
   * 121:18 (http2_inspect) HTTP/2 pseudo-header in trailers
   * 121:19 (http2_inspect) invalid HTTP/2 pseudo-header
+  * 121:20 (http2_inspect) HTTP/2 trailers without END_STREAM bit
+  * 121:21 (http2_inspect) padding flag set on invalid HTTP/2 frame
+    type
+  * 121:22 (http2_inspect) padding flag set on HTTP/2 frame with zero
+    length
 
 Peg counts:
 
@@ -3649,6 +3651,9 @@ Configuration:
     normalizing URIs
   * bool http_inspect.simplify_path = true: reduce URI directory path
     to simplest form
+  * string http_inspect.xff_headers = x-forwarded-for true-client-ip:
+    specifies the xff type headers to parse and consider in the same
+    order of preference as defined
 
 Rules:
 
@@ -3836,6 +3841,8 @@ Peg counts:
   * http_inspect.parameters: HTTP parameters inspected (sum)
   * http_inspect.connect_tunnel_cutovers: CONNECT tunnel flow
     cutovers to wizard (sum)
+  * http_inspect.ssl_srch_abandoned_early: total SSL search abandoned
+    too soon (sum)
 
 
 5.25. imap
@@ -8299,13 +8306,17 @@ these libraries see the Getting Started section of the manual.
   * string binder[].use.service: override automatic service
     identification
   * string binder[].use.type: select module for binding
+  * string binder[].when.addr_spaces: list of address space IDs
+  * string binder[].when.dst_groups: list of destination group IDs
+  * string binder[].when.dst_intfs: list of destination interface IDs
   * addr_list binder[].when.dst_nets: list of destination networks
   * bit_list binder[].when.dst_ports: list of destination ports {
     65535 }
-  * bit_list binder[].when.dst_zone: destination zone { 63 }
-  * bit_list binder[].when.ifaces: list of interface indices { 255 }
-  * int binder[].when.ips_policy_id = 0: unique ID for selection of
-    this config by external logic { 0:max32 }
+  * string binder[].when.dst_zone: deprecated alias for dst_groups
+  * string binder[].when.groups: list of interface group IDs
+  * string binder[].when.intfs: list of interface IDs
+  * int binder[].when.ips_policy_id: unique ID for selection of this
+    config by external logic { 0:max32 }
   * addr_list binder[].when.nets: list of networks
   * bit_list binder[].when.ports: list of ports { 65535 }
   * enum binder[].when.proto: protocol { any | ip | icmp | tcp | udp
@@ -8313,11 +8324,14 @@ these libraries see the Getting Started section of the manual.
   * enum binder[].when.role = any: use the given configuration on one
     or any end of a session { client | server | any }
   * string binder[].when.service: override default configuration
+  * string binder[].when.src_groups: list of source interface group
+    IDs
+  * string binder[].when.src_intfs: list of source interface IDs
   * addr_list binder[].when.src_nets: list of source networks
   * bit_list binder[].when.src_ports: list of source ports { 65535 }
-  * bit_list binder[].when.src_zone: source zone { 63 }
+  * string binder[].when.src_zone: deprecated alias for src_groups
   * bit_list binder[].when.vlans: list of VLAN IDs { 4095 }
-  * bit_list binder[].when.zones: zones { 63 }
+  * string binder[].when.zones: deprecated alias for groups
   * interval bufferlen.~range: check that total length of current
     buffer is in given range { 0:65535 }
   * implied bufferlen.relative: use remaining length (from current
@@ -8835,6 +8849,9 @@ these libraries see the Getting Started section of the manual.
     encoded
   * bool http_inspect.utf8 = true: normalize 2-byte and 3-byte UTF-8
     characters to a single byte
+  * string http_inspect.xff_headers = x-forwarded-for true-client-ip:
+    specifies the xff type headers to parse and consider in the same
+    order of preference as defined
   * implied http_method.with_body: parts of this rule examine HTTP
     message body
   * implied http_method.with_header: this rule is limited to
@@ -9429,12 +9446,6 @@ these libraries see the Getting Started section of the manual.
   * int rpc.~app: application number { 0:max32 }
   * string rpc.~proc: procedure number or * for any
   * string rpc.~ver: version number or * for any
-  * enum rule_state.$gid_sid[].action = alert: apply action if rule
-    matches or inherit from rule definition { log | pass | alert |
-    drop | block | reset }
-  * enum rule_state.$gid_sid[].enable = inherit: enable or disable
-    rule in current ips policy or use default defined by ips policy {
-    no | yes | inherit }
   * string s7commplus_func.~: function code to match
   * string s7commplus_opcode.~: opcode code to match
   * string sd_pattern.~pattern: The pattern to search for
@@ -9986,6 +9997,7 @@ these libraries see the Getting Started section of the manual.
     trace logging { 0:255 }
   * int trace.modules.detection.tag: enable tag trace logging { 0:255
     }
+  * int trace.modules.dpx.all: enable all trace options { 0:255 }
   * int trace.modules.gtp_inspect.all: enable all trace options {
     0:255 }
   * int trace.modules.latency.all: enable all trace options { 0:255 }
@@ -9997,6 +10009,12 @@ these libraries see the Getting Started section of the manual.
   * int trace.modules.stream.all: enable all trace options { 0:255 }
   * int trace.modules.stream_ip.all: enable all trace options { 0:255
     }
+  * int trace.modules.stream_tcp.all: enable all trace options {
+    0:255 }
+  * int trace.modules.stream_tcp.segments: enable stream TCP segments
+    trace logging { 0:255 }
+  * int trace.modules.stream_tcp.state: enable stream TCP state trace
+    logging { 0:255 }
   * int trace.modules.stream_user.all: enable all trace options {
     0:255 }
   * int trace.modules.wizard.all: enable all trace options { 0:255 }
@@ -10076,11 +10094,16 @@ these libraries see the Getting Started section of the manual.
     third-party module is reloaded (sum)
   * arp_spoof.packets: total packets (sum)
   * back_orifice.packets: total packets (sum)
-  * binder.allows: allow bindings (sum)
-  * binder.blocks: block bindings (sum)
-  * binder.inspects: inspect bindings (sum)
-  * binder.packets: initial bindings (sum)
-  * binder.resets: reset bindings (sum)
+  * binder.allows: allow actions bound (sum)
+  * binder.assistant_inspectors: flow assistant inspector requests
+    handled (sum)
+  * binder.blocks: block actions bound (sum)
+  * binder.inspects: inspect actions bound (sum)
+  * binder.new_flows: new flows evaluated (sum)
+  * binder.new_standby_flows: new HA flows evaluated (sum)
+  * binder.no_match: binding evaluations that had no matches (sum)
+  * binder.resets: reset actions bound (sum)
+  * binder.service_changes: flow service changes evaluated (sum)
   * cip.concurrent_sessions: total concurrent SIP sessions (now)
   * cip.max_concurrent_sessions: maximum concurrent SIP sessions
     (max)
@@ -10582,6 +10605,8 @@ these libraries see the Getting Started section of the manual.
     messages (sum)
   * http_inspect.script_detections: early inspections of scripts in
     HTTP responses (sum)
+  * http_inspect.ssl_srch_abandoned_early: total SSL search abandoned
+    too soon (sum)
   * http_inspect.trace_requests: TRACE requests inspected (sum)
   * http_inspect.uri_coding: URIs with character coding problems
     (sum)
@@ -11534,6 +11559,11 @@ these libraries see the Getting Started section of the manual.
   * 121:17 (http2_inspect) HTTP/2 pseudo-header after regular header
   * 121:18 (http2_inspect) HTTP/2 pseudo-header in trailers
   * 121:19 (http2_inspect) invalid HTTP/2 pseudo-header
+  * 121:20 (http2_inspect) HTTP/2 trailers without END_STREAM bit
+  * 121:21 (http2_inspect) padding flag set on invalid HTTP/2 frame
+    type
+  * 121:22 (http2_inspect) padding flag set on HTTP/2 frame with zero
+    length
   * 122:1 (port_scan) TCP portscan
   * 122:2 (port_scan) TCP decoy portscan
   * 122:3 (port_scan) TCP portsweep
@@ -12151,8 +12181,6 @@ and are not applicable elsewhere.
     fingerprinting (experimental)
   * rpc (ips_option): rule option to check SUNRPC CALL parameters
   * rpc_decode (inspector): RPC inspector
-  * rule_state (basic): enable/disable and set actions for specific
-    IPS rules; deprecated, use rule state stubs with enable instead
   * s7commplus (inspector): s7commplus inspection
   * s7commplus_content (ips_option): rule option to set cursor to
     s7commplus content
