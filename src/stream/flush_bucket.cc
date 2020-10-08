@@ -27,6 +27,7 @@
 #include <random>
 
 #include "main/snort_config.h"
+#include "utils/util.h"
 
 using namespace snort;
 
@@ -114,8 +115,7 @@ StaticFlushBucket::StaticFlushBucket()
 
 RandomFlushBucket::RandomFlushBucket()
 {
-    std::random_device random_dev;
-    std::default_random_engine generator(random_dev());
+    std::default_random_engine generator(get_random_seed());
     std::uniform_int_distribution<int> distribution(128, 255);
 
     for ( int i = 0; i < NUM_FLUSH_POINTS; i++ )

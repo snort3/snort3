@@ -38,6 +38,7 @@
 #include "protocols/ipv4_options.h"
 #include "protocols/tcp.h"
 #include "sfip/sf_ipvar.h"
+#include "utils/util.h"
 
 #include "checksum.h"
 
@@ -742,13 +743,7 @@ static void ipv4_codec_gterm()
 
 static void ipv4_codec_tinit()
 {
-    std::random_device rd; // for a good seed
-    auto id = rd();
-
-    if (SnortConfig::static_hash())
-        id = 1;
-
-    thread_rand = new std::mt19937(id);
+    thread_rand = new std::mt19937(SnortConfig::static_hash() ? 1 : get_random_seed());
 }
 
 static void ipv4_codec_tterm()

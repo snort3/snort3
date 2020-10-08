@@ -53,7 +53,9 @@ extern "C" {
 #include <daq.h>
 }
 
+#include <chrono>
 #include <fstream>
+#include <random>
 
 #include "log/messages.h"
 #include "main/build.h"
@@ -457,6 +459,19 @@ bool EnterChroot(std::string& root_dir, std::string& log_dir)
     LogMessage("Chroot directory = %s\n", root_dir.c_str());
 
     return true;
+}
+
+unsigned int get_random_seed()
+{
+    unsigned int seed;
+
+    try {
+        seed = std::random_device{}();
+    } catch ( const std::exception& ) {
+        seed = std::chrono::system_clock::now().time_since_epoch().count();
+    }
+
+    return seed;
 }
 
 #if defined(NOCOREFILE)
