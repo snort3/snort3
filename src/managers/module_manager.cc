@@ -403,56 +403,6 @@ static const Parameter* get_params(
     return get_params(new_fqn, m, p, idx);
 }
 
-static bool ignored(const char* fqn)
-{
-    static const char* ignore = nullptr;
-
-    if ( !ignore )
-    {
-        ignore = getenv("SNORT_IGNORE");
-        if ( !ignore )
-            ignore = "";
-    }
-    const char* s = strstr(ignore, fqn);
-
-    if ( !s )
-        return false;
-
-    if ( s != ignore && s[-1] != ' ' )
-        return false;
-
-    s += strlen(fqn);
-
-    if ( *s && *s != ' ' )
-        return false;
-
-    return true;
-}
-
-// FIXIT-M vars may have been defined on command line. that mechanism will
-// be replaced with pulling a Lua chunk from the command line and stuffing
-// into L before setting configs; that will overwrite
-//
-// FIXIT-L presently no way to catch errors like EXTERNAL_NET = not HOME_NET
-// which becomes a bool var and is ignored.
-static bool set_var(const char* fqn, const Value& v)
-{
-    bool to_be_set = v.get_type() == Value::VT_STR;
-
-    if ( to_be_set )
-    {
-        if ( get_ips_policy() != nullptr )
-            SetVar(s_config, fqn, v.get_string());
-    }
-    else
-    {
-        if ( !ignored(fqn) )
-            ParseWarning(WARN_SYMBOLS, "unknown symbol %s", fqn);
-    }
-
-    return to_be_set;
-}
-
 static bool set_param(Module* mod, const char* fqn, Value& val)
 {
     Shell::set_config_value(fqn, val);
@@ -478,7 +428,11 @@ static bool set_value(const char* fqn, Value& v)
     Module* mod = ModuleManager::get_module(key.c_str());
 
     if ( !mod )
-        return set_var(fqn, v);
+    {
+        ParseError("can't find %s", key.c_str());
+        ++s_errors;
+        return false;
+    }
 
     const Parameter* p;
     auto a = s_pmap.find(t);

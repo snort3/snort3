@@ -234,6 +234,31 @@ If we also wanted to limit retries to at least 5 seconds, we could do:
 
     active = { max_responses = 1, min_interval = 5 }
 
+== Lua Variables
+
+The following Global Lua Variables are available when Snort is run with
+a lua config using -c option.
+
+* SNORT_VERSION: points to a string containing snort version and build as
+follows:
+
+    SNORT_VERSION = "3.0.2-x"
+
+* SNORT_MAJOR_VERSION: Snort version's major
+number.
+
+    SNORT_MAJOR_VERSION = 3
+
+* SNORT_MINOR_VERSION: Snort version's minor
+number.
+
+    SNORT_MINOR_VERSION = 0
+
+* SNORT_PATCH_VERSION: Snort version's patch
+number.
+
+    SNORT_PATCH_VERSION = 2
+
 ==== Whitelist
 
 When Snort is run with the --warn-conf-strict option, warnings will be
@@ -275,8 +300,8 @@ You can use both approaches together.
 
 ==== Includes
 
-Your configuration file file may include other files, either directly via Lua or via
-various parameters.  Snort will find relative includes in the following order:
+Your configuration file may include other files, either directly via Lua or via
+various parameters. Snort will find relative includes in the following order:
 
 1.  If you specify --include-path, this directory will be tried first.
 2.  Snort will try the directory containing the including file.

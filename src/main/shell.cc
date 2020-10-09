@@ -38,12 +38,45 @@
 #include "parser/parser.h"
 #include "utils/stats.h"
 
+#include "build.h"
+
 using namespace snort;
 using namespace std;
 
 //-------------------------------------------------------------------------
 // helper functions
 //-------------------------------------------------------------------------
+
+static const char* versions[] = {
+    "SNORT_VERSION",
+    "SNORT_MAJOR_VERSION",
+    "SNORT_MINOR_VERSION",
+    "SNORT_PATCH_VERSION",
+    nullptr
+};
+
+static void install_version_strings(lua_State* L)
+{
+    assert(versions[0]);
+
+    lua_pushstring(L, VERSION "-" BUILD);
+    lua_setglobal(L, versions[0]);
+
+    std::istringstream vs(VERSION);
+    for ( int i = 1 ; versions[i] ; i++ )
+    {
+        std::string tmp;
+        int num = 0;
+        std::getline(vs, tmp, '.');
+
+        if ( !tmp.empty() )
+            num = stoi(tmp);
+
+        lua_pushinteger(L, num);
+        lua_setglobal(L, versions[i]);
+    }
+}
+
 
 string Shell::fatal;
 std::stack<Shell*> Shell::current_shells;
@@ -330,6 +363,7 @@ Shell::Shell(const char* s, bool load_defaults) :
 
     loaded = false;
     load_string(lua, ModuleManager::get_lua_bootstrap());
+    install_version_strings(lua);
     bootstrapped = true;
 
     if ( load_defaults )

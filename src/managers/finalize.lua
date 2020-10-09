@@ -36,16 +36,8 @@ function snort_traverse(tab, fqn)
     for key,val in pairs(tab) do
         -- skip Lua reserved symbols
         if ( string.sub(key, 1, 1) ~= '_' ) then
-            if ( type(val) == 'string' ) then
-                snort_set(fqn, key, val)
-            end
-        end
-    end
-
-    for key,val in pairs(tab) do
-        -- skip Lua reserved symbols
-        if ( string.sub(key, 1, 1) ~= '_' ) then
-            if ( type(val) ~= 'string' ) then
+            --skip anything at the top level other than tables
+            if ( type(val) == 'table' or fqn ) then
                 snort_set(fqn, key, val)
             end
         end
