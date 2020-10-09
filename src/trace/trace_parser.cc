@@ -181,7 +181,7 @@ void TraceParser::init_configured_trace_options()
         #name, type, range, nullptr, #name " test");                    \
     Value name(false);                                                  \
     name.set(&name##_param);                                            \
-    name.set(value);
+    name.set(value)
 
 #define MODULE_OPTION(name, value) \
     CONFIG_OPTION(name, value, Parameter::PT_INT, "0:255")
@@ -204,13 +204,13 @@ static const TraceOption trace_options[] =
     { nullptr, 0, nullptr }
 };
 
-static Trace *m1_trace, *m2_trace;
+static const Trace *m1_trace, *m2_trace;
 
 class Module1 : public Module
 {
 public:
     Module1() : Module("mod_1", "testing trace parser module 1") { }
-    void set_trace(const Trace* t) const override { m1_trace = (Trace*)t; }
+    void set_trace(const Trace* t) const override { m1_trace = t; }
     const TraceOption* get_trace_options() const override { return trace_options; }
 
 };
@@ -219,7 +219,7 @@ class Module2 : public Module
 {
 public:
     Module2() : Module("mod_2", "testing trace parser module 2") { }
-    void set_trace(const Trace* t) const override { m2_trace = (Trace*)t; }
+    void set_trace(const Trace* t) const override { m2_trace = t; }
     const TraceOption* get_trace_options() const override { return trace_options; }
 
 };
