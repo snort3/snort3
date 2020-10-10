@@ -89,11 +89,28 @@ Flow* Stream::get_flow(
     PktType type, IpProtocol proto,
     const SfIp* srcIP, uint16_t srcPort,
     const SfIp* dstIP, uint16_t dstPort,
-    uint16_t vlan, uint32_t mplsId, uint16_t addressSpaceId)
+    uint16_t vlan, uint32_t mplsId, uint16_t addressSpaceId,
+    int16_t ingress_group, int16_t egress_group)
 {
     FlowKey key;
     const SnortConfig* sc = SnortConfig::get_conf();
-    key.init(sc, type, proto, srcIP, srcPort, dstIP, dstPort, vlan, mplsId, addressSpaceId);
+
+    key.init(sc, type, proto, srcIP, srcPort, dstIP, dstPort, vlan, mplsId,
+        addressSpaceId, ingress_group, egress_group);
+    return get_flow(&key);
+}
+
+Flow* Stream::get_flow(
+    PktType type, IpProtocol proto,
+    const SfIp* srcIP, uint16_t srcPort,
+    const SfIp* dstIP, uint16_t dstPort,
+    uint16_t vlan, uint32_t mplsId, const DAQ_PktHdr_t& pkth) 
+{
+    FlowKey key;
+    const SnortConfig* sc = SnortConfig::get_conf();
+
+    key.init(sc, type, proto, srcIP, srcPort, dstIP, dstPort, vlan, mplsId,
+        pkth);
     return get_flow(&key);
 }
 
@@ -110,7 +127,7 @@ void Stream::populate_flow_key(Packet* p, FlowKey* key)
         // if the vlan protocol bit is defined, vlan layer guaranteed to exist
         (p->proto_bits & PROTO_BIT__VLAN) ? layer::get_vlan_layer(p)->vid() : 0,
         (p->proto_bits & PROTO_BIT__MPLS) ? p->ptrs.mplsHdr.label : 0,
-        p->pkth->address_space_id);
+        *p->pkth);
 }
 
 FlowKey* Stream::get_flow_key(Packet* p)
@@ -138,12 +155,13 @@ FlowData* Stream::get_flow_data(
     const SfIp* srcIP, uint16_t srcPort,
     const SfIp* dstIP, uint16_t dstPort,
     uint16_t vlan, uint32_t mplsId,
-    uint16_t addressSpaceID, unsigned flowdata_id)
+    uint16_t addressSpaceID, unsigned flowdata_id,
+    int16_t ingress_group, int16_t egress_group)
 {
     Flow* flow = get_flow(
-        type, proto,
-        srcIP, srcPort, dstIP, dstPort,
-        vlan, mplsId, addressSpaceID);
+        type, proto, srcIP, srcPort, dstIP, dstPort,
+        vlan, mplsId, addressSpaceID, ingress_group,
+        egress_group);
 
     if (!flow)
         return nullptr;
@@ -151,6 +169,24 @@ FlowData* Stream::get_flow_data(
     return flow->get_flow_data(flowdata_id);
 }
 
+FlowData* Stream::get_flow_data(
+    PktType type, IpProtocol proto,
+    const SfIp* srcIP, uint16_t srcPort,
+    const SfIp* dstIP, uint16_t dstPort,
+    uint16_t vlan, uint32_t mplsId,
+    unsigned flowdata_id, const DAQ_PktHdr_t& pkth)
+{
+    Flow* flow = get_flow(
+        type, proto, srcIP, srcPort, dstIP, dstPort,
+        vlan, mplsId, pkth); 
+
+    if (!flow)
+        return nullptr;
+
+    return flow->get_flow_data(flowdata_id);
+}
+
+//-------------------------------------------------------------------------
 //-------------------------------------------------------------------------
 // session status
 //-------------------------------------------------------------------------

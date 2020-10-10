@@ -121,7 +121,18 @@ bool FlowKey::init(
     PktType, IpProtocol,
     const SfIp*, uint16_t,
     const SfIp*, uint16_t,
-    uint16_t, uint32_t, uint16_t)
+    uint16_t, uint32_t,
+    uint16_t, int16_t, int16_t)
+{
+   return true;
+}
+
+bool FlowKey::init(
+    const SnortConfig*,
+    PktType, IpProtocol,
+    const SfIp*, uint16_t,
+    const SfIp*, uint16_t,
+    uint16_t, uint32_t, const DAQ_PktHdr_t&)
 {
    return true;
 }
@@ -131,7 +142,18 @@ bool FlowKey::init(
     PktType, IpProtocol,
     const SfIp*, const SfIp*,
     uint32_t, uint16_t,
-    uint32_t, uint16_t)
+    uint32_t, uint16_t, int16_t,
+    int16_t)
+{
+    return true;
+}
+
+bool FlowKey::init(
+    const SnortConfig*,
+    PktType, IpProtocol,
+    const SfIp*, const SfIp*,
+    uint32_t, uint16_t,
+    uint32_t, const DAQ_PktHdr_t&) 
 {
     return true;
 }

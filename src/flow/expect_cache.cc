@@ -146,12 +146,11 @@ ExpectNode* ExpectCache::find_node_by_packet(Packet* p, FlowKey &key)
     const SfIp* dstIP = p->ptrs.ip_api.get_dst();
     uint16_t vlanId = (p->proto_bits & PROTO_BIT__VLAN) ? layer::get_vlan_layer(p)->vid() : 0;
     uint32_t mplsId = (p->proto_bits & PROTO_BIT__MPLS) ? p->ptrs.mplsHdr.label : 0;
-    uint16_t addressSpaceId = p->pkth->address_space_id;
     PktType type = p->type();
     IpProtocol ip_proto = p->get_ip_proto_next();
 
     bool reversed_key = key.init(p->context->conf, type, ip_proto, dstIP, p->ptrs.dp,
-        srcIP, p->ptrs.sp, vlanId, mplsId, addressSpaceId);
+        srcIP, p->ptrs.sp, vlanId, mplsId, *p->pkth);
 
     /*
         Lookup order:
@@ -323,11 +322,10 @@ int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_pro
         control packet until we have a use case for not doing so. */
     uint16_t vlanId = (ctrlPkt->proto_bits & PROTO_BIT__VLAN) ? layer::get_vlan_layer(ctrlPkt)->vid() : 0;
     uint32_t mplsId = (ctrlPkt->proto_bits & PROTO_BIT__MPLS) ? ctrlPkt->ptrs.mplsHdr.label : 0;
-    uint16_t addressSpaceId = ctrlPkt->pkth->address_space_id;
-
     FlowKey key;
+
     bool reversed_key = key.init(ctrlPkt->context->conf, type, ip_proto, cliIP, cliPort,
-        srvIP, srvPort, vlanId, mplsId, addressSpaceId);
+        srvIP, srvPort, vlanId, mplsId, *ctrlPkt->pkth);
 
     bool new_node = false;
     ExpectNode* node = static_cast<ExpectNode*> ( hash_table->get_user_data(&key) );

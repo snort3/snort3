@@ -42,12 +42,14 @@ static const FlowKey s_test_key =
     9,
     10,
     11,
+    0,
+    0,
+    0,
     12,
-    13,
     14,
     PktType::TCP,
     14,
-    0,
+    0
 };
 
 static struct __attribute__((__packed__)) TestDeleteMessage {
@@ -58,7 +60,7 @@ static struct __attribute__((__packed__)) TestDeleteMessage {
     {
         HA_DELETE_EVENT,
         HA_MESSAGE_VERSION,
-        0x35,
+        0x39,
         KEY_TYPE_IP6
     },
     s_test_key
@@ -74,7 +76,7 @@ static struct __attribute__((__packed__)) TestUpdateMessage {
     {
         HA_UPDATE_EVENT,
         HA_MESSAGE_VERSION,
-        0x41,
+        0x45,
         KEY_TYPE_IP6
     },
     s_test_key,

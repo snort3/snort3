@@ -33,9 +33,9 @@
 #include "protocols/protocol_ids.h"
 #include "sfip/sf_ip.h"
 
-// %s %u -> %s %u %u AS=%u ID=%u
-// IPv6 Port -> IPv6 Port Proto AS=ASNum ID=InstanceNum
-#define PT_DEBUG_SESSION_ID_SIZE ((39+1+5+1+2+1+39+1+5+1+3+1+2+1+10+1+2+1+10)+1)
+// %s %u -> %s %u %u AS=%u ID=%u GR=%hd-%hd
+// IPv6 Port -> IPv6 Port Proto AS=ASNum ID=InstanceNum GR=SrcGroupNum-DstGroupNum
+#define PT_DEBUG_SESSION_ID_SIZE ((39+1+5+1+2+1+39+1+5+1+3+1+2+1+10+1+2+1+10+32)+1)
 
 namespace snort
 {

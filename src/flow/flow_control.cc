@@ -158,7 +158,6 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
     const ip::IpApi& ip_api = p->ptrs.ip_api;
     uint32_t mplsId;
     uint16_t vlanId;
-    uint16_t addressSpaceId;
     PktType type = p->type();
     IpProtocol ip_proto = p->get_ip_proto_next();
 
@@ -172,22 +171,20 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
     else
         mplsId = 0;
 
-    addressSpaceId = p->pkth->address_space_id;
-
     if ( (p->ptrs.decode_flags & DECODE_FRAG) )
     {
         key->init(p->context->conf, type, ip_proto, ip_api.get_src(),
-            ip_api.get_dst(), ip_api.id(), vlanId, mplsId, addressSpaceId);
+            ip_api.get_dst(), ip_api.id(), vlanId, mplsId, *p->pkth);
     }
     else if ( type == PktType::ICMP )
     {
         key->init(p->context->conf, type, ip_proto, ip_api.get_src(), p->ptrs.icmph->type,
-            ip_api.get_dst(), 0, vlanId, mplsId, addressSpaceId);
+            ip_api.get_dst(), 0, vlanId, mplsId, *p->pkth);
     }
     else
     {
         key->init(p->context->conf, type, ip_proto, ip_api.get_src(), p->ptrs.sp,
-            ip_api.get_dst(), p->ptrs.dp, vlanId, mplsId, addressSpaceId);
+            ip_api.get_dst(), p->ptrs.dp, vlanId, mplsId, *p->pkth);
     }
 }
 

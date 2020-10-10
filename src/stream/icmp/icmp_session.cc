@@ -71,6 +71,7 @@ static int ProcessIcmpUnreach(Packet* p)
     const SfIp* src;
     const SfIp* dst;
     ip::IpApi iph;
+    bool reversed = false;
 
     /* Set the Ip API to the embedded IP Header. */
     if (!layer::set_api_ip_embed_icmp(p, iph))
@@ -85,7 +86,6 @@ static int ProcessIcmpUnreach(Packet* p)
     skey.pkt_type = p->type();
     skey.version = src->is_ip4() ? 4 : 6;
     skey.ip_protocol = (uint8_t)p->get_ip_proto_next();
-    skey.padding = 0;
 
     if (p->proto_bits & PROTO_BIT__TCP_EMBED_ICMP)
     {
@@ -126,6 +126,7 @@ static int ProcessIcmpUnreach(Packet* p)
         {
             skey.port_l = dport;
             skey.port_h = sport;
+            reversed = true;
         }
     }
     else
@@ -134,6 +135,7 @@ static int ProcessIcmpUnreach(Packet* p)
         COPY4(skey.ip_h, src->get_ip6_ptr());
         skey.port_l = dport;
         skey.port_h = sport;
+        reversed = true;
     }
 
     uint16_t vlan = (p->proto_bits & PROTO_BIT__VLAN) ?
@@ -145,6 +147,8 @@ static int ProcessIcmpUnreach(Packet* p)
     skey.init_vlan(sc, vlan);
     skey.init_address_space(sc, 0);
     skey.init_mpls(sc, 0);
+    skey.flags.group_used = p->is_inter_group_flow();
+    skey.init_groups(p->pkth->ingress_group, p->pkth->egress_group, reversed);
 
     switch (p->type())
     {

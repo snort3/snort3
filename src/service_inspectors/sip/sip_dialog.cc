@@ -401,7 +401,7 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
             mdataA->mport, &mdataB->maddress, mdataB->mport,
             (p->proto_bits & PROTO_BIT__VLAN) ? layer::get_vlan_layer(p)->vid() : 0,
             (p->proto_bits & PROTO_BIT__MPLS) ? p->ptrs.mplsHdr.label : 0,
-            p->pkth->address_space_id);
+            *p->pkth);
         if (ssn)
         {
             ssn->set_ignore_direction(SSN_DIR_BOTH);

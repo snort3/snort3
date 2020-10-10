@@ -278,19 +278,24 @@ void PacketTracer::add_ip_header_info(const Packet& p)
     actual_sip->ntop(sipstr, sizeof(sipstr));
     actual_dip->ntop(dipstr, sizeof(dipstr));
 
+    char gr_buf[32] = {0};
+    if (p.is_inter_group_flow()) 
+        snprintf(gr_buf, sizeof(gr_buf), " GR=%hd-%hd", p.pkth->ingress_group,
+            p.pkth->egress_group);
+
     if (shell_enabled)
     {
         PacketTracer::log("\n");
-        snprintf(debug_session, sizeof(debug_session), "%s %hu -> %s %hu %hhu AS=%hu ID=%u ",
+        snprintf(debug_session, sizeof(debug_session), "%s %hu -> %s %hu %hhu AS=%hu ID=%u%s ",
             sipstr, sport, dipstr, dport, static_cast<uint8_t>(proto),
-            p.pkth->address_space_id, get_instance_id());
+            p.pkth->address_space_id, get_instance_id(), gr_buf);
     }
     else
     {
         add_eth_header_info(p);
-        PacketTracer::log("%s:%hu -> %s:%hu proto %u AS=%hu ID=%u\n",
+        PacketTracer::log("%s:%hu -> %s:%hu proto %u AS=%hu ID=%u%s\n",
             sipstr, sport, dipstr, dport, static_cast<uint8_t>(proto),
-            p.pkth->address_space_id, get_instance_id());
+            p.pkth->address_space_id, get_instance_id(), gr_buf);
     }
     add_packet_type_info(p);
 }

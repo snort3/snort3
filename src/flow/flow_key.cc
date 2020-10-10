@@ -217,6 +217,25 @@ void FlowKey::init_address_space(const SnortConfig* sc, uint16_t addrSpaceId)
         addressSpaceId = 0;
 }
 
+void FlowKey::init_groups(int16_t ingress_group, int16_t egress_group, bool rev)
+{
+    if (flags.group_used)
+    {
+        if (rev)
+        {
+            group_l = egress_group;
+            group_h = ingress_group;
+        }
+        else
+        {
+            group_l = ingress_group;
+            group_h = egress_group;
+        }
+    }
+    else
+        group_l = group_h = DAQ_PKTHDR_UNKNOWN;
+}
+
 void FlowKey::init_mpls(const SnortConfig* sc, uint32_t mplsId)
 {
     if (sc->mpls_overlapping_ip())
@@ -230,7 +249,9 @@ bool FlowKey::init(
     PktType type, IpProtocol ip_proto,
     const SfIp *srcIP, uint16_t srcPort,
     const SfIp *dstIP, uint16_t dstPort,
-    uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId)
+    uint16_t vlanId, uint32_t mplsId,
+    uint16_t addrSpaceId, int16_t ingress_group,
+    int16_t egress_group)
 {
     bool reversed;
 
@@ -256,7 +277,55 @@ bool FlowKey::init(
 
     init_vlan(sc, vlanId);
     init_address_space(sc, addrSpaceId);
-    padding = 0;
+
+    if (ingress_group == DAQ_PKTHDR_UNKNOWN or egress_group == DAQ_PKTHDR_UNKNOWN)
+        flags.group_used = 0;
+    else
+        flags.group_used = 1;
+
+    init_groups(ingress_group, egress_group, reversed);
+
+    flags.ubits = 0;
+    return reversed;
+}
+
+bool FlowKey::init(
+    const SnortConfig* sc,
+    PktType type, IpProtocol ip_proto,
+    const SfIp *srcIP, uint16_t srcPort,
+    const SfIp *dstIP, uint16_t dstPort,
+    uint16_t vlanId, uint32_t mplsId,
+    const DAQ_PktHdr_t& pkt_hdr)
+{
+    bool reversed;
+
+    /* Because the key is going to be used for hash lookups,
+     * the key fields will be normalized such that the lower
+     * of the IP addresses is stored in ip_l and the port for
+     * that IP is stored in port_l.
+     */
+
+    if (srcIP->is_ip4() && dstIP->is_ip4())
+    {
+        version = 4;
+        reversed = init4(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId);
+    }
+    else
+    {
+        version = 6;
+        reversed = init6(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId);
+    }
+
+    pkt_type = type;
+    ip_protocol = (uint8_t)ip_proto;
+
+    init_vlan(sc, vlanId);
+    init_address_space(sc, pkt_hdr.address_space_id);
+
+    flags.group_used = ((pkt_hdr.flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS) != 0);
+    init_groups(pkt_hdr.ingress_group, pkt_hdr.egress_group, reversed);
+
+    flags.ubits = 0;
 
     return reversed;
 }
@@ -266,23 +335,26 @@ bool FlowKey::init(
     PktType type, IpProtocol ip_proto,
     const SfIp *srcIP, const SfIp *dstIP,
     uint32_t id, uint16_t vlanId,
-    uint32_t mplsId, uint16_t addrSpaceId)
+    uint32_t mplsId, uint16_t addrSpaceId,
+    int16_t ingress_group, int16_t egress_group)
 {
     // to avoid confusing 2 different datagrams or confusing a datagram
     // with a session, we don't order the addresses and we set version
+
     uint16_t srcPort = id & 0xFFFF;
     uint16_t dstPort = id >> 16;
+    bool reversed;
 
     if (srcIP->is_ip4() && dstIP->is_ip4())
     {
         version = 4;
-        init4(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
+        reversed = init4(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
         ip_protocol = (uint8_t)ip_proto;
     }
     else
     {
         version = 6;
-        init6(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
+        reversed = init6(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
         ip_protocol = 0;
     }
 
@@ -290,11 +362,60 @@ bool FlowKey::init(
 
     init_vlan(sc, vlanId);
     init_address_space(sc, addrSpaceId);
-    padding = 0;
+
+    if (ingress_group == DAQ_PKTHDR_UNKNOWN or egress_group == DAQ_PKTHDR_UNKNOWN)
+        flags.group_used = 0;
+    else
+        flags.group_used = 1;
+
+    init_groups(ingress_group, egress_group, reversed);
+
+    flags.ubits = 0;
 
     return false;
 }
 
+bool FlowKey::init(
+    const SnortConfig* sc,
+    PktType type, IpProtocol ip_proto,
+    const SfIp *srcIP, const SfIp *dstIP,
+    uint32_t id, uint16_t vlanId,
+    uint32_t mplsId, const DAQ_PktHdr_t& pkt_hdr)
+{
+    // to avoid confusing 2 different datagrams or confusing a datagram
+    // with a session, we don't order the addresses and we set version
+
+    uint16_t srcPort = id & 0xFFFF;
+    uint16_t dstPort = id >> 16;
+    bool reversed;
+
+    if (srcIP->is_ip4() && dstIP->is_ip4())
+    {
+        version = 4;
+        reversed = init4(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
+        ip_protocol = (uint8_t)ip_proto;
+    }
+    else
+    {
+        version = 6;
+        reversed = init6(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
+        ip_protocol = 0;
+    }
+
+    pkt_type = type;
+
+    init_vlan(sc, vlanId);
+    init_address_space(sc, pkt_hdr.address_space_id);
+
+    flags.group_used = ((pkt_hdr.flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS) != 0);
+    init_groups(pkt_hdr.ingress_group, pkt_hdr.egress_group, reversed);
+
+    flags.ubits = 0;
+
+    return false;
+}
+
+//-------------------------------------------------------------------------
 //-------------------------------------------------------------------------
 // hash foo
 //-------------------------------------------------------------------------
@@ -303,6 +424,9 @@ bool FlowKey::is_equal(const void* s1, const void* s2, size_t)
 {
     const uint64_t* a = (const uint64_t*)s1;
     const uint64_t* b = (const uint64_t*)s2;
+    const uint32_t* c;
+    const uint32_t* d;
+
     if (*a - *b)
         return false;               /* Compares IPv4 lo/hi
                                    Compares IPv6 low[0,1] */
@@ -331,7 +455,12 @@ bool FlowKey::is_equal(const void* s1, const void* s2, size_t)
     a++;
     b++;
     if (*a - *b)
-        return false;               /* Compares vlan,AddressSpace ID,ip_proto,type,version,8 bit pad */
+        return false;               /* Compares group lo/hi, addressSpaceId, vlan */
+
+    c = (const uint32_t*)(++a);
+    d = (const uint32_t*)(++b);
+    if (*c - *d)
+        return false;               /* ip_proto, type, version, 8 bit pad */
 
     return true;
 }
@@ -362,8 +491,12 @@ unsigned FlowHashKeyOps::do_hash(const unsigned char* k, int)
     mix(a, b, c);
 
     a += d[9];   // port lo & port hi
-    b += d[10];  // vlan tag, address space id
-    c += d[11];  // ip_proto, pkt_type, version, and 8 bits of zeroed pad
+    b += d[10];  // group lo & group hi
+    c += d[11];  // addressSpaceId, vlan
+
+    mix(a, b, c);
+    
+    a += d[12];  // ip_proto, pkt_type, version, 8 bits of zeroed pad
 
     finalize(a, b, c);
 

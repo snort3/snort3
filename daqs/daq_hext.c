@@ -262,8 +262,9 @@ static bool parse_flowstats(DAQ_MsgType type, const char* line, HextMsgDesc *des
     "%" SCNu32 " "  /* eof_timestamp.tv_sec */  \
     "%" SCNu16 " "  /* vlan_tag */      \
     "%" SCNu16 " "  /* address_space_id */  \
-    "%" SCNu8       /* protocol */
-#define FLOWSTATS_ITEMS 21
+    "%" SCNu8  " "  /* protocol */ \
+    "%" SCNu8       /* flags */
+#define FLOWSTATS_ITEMS 22
     Flow_Stats_t* f = &desc->flowstats;
     char srcaddr[INET6_ADDRSTRLEN], dstaddr[INET6_ADDRSTRLEN];
     uint32_t sof_sec, eof_sec;
@@ -272,7 +273,7 @@ static bool parse_flowstats(DAQ_MsgType type, const char* line, HextMsgDesc *des
             &f->initiatorPkts, &f->responderPkts, &f->initiatorPktsDropped, &f->responderPktsDropped,
             &f->initiatorBytesDropped, &f->responderBytesDropped, &f->isQoSAppliedOnSrcIntf,
             &sof_sec, &eof_sec, &f->vlan_tag, &f->address_space_id,
-            &f->protocol);
+            &f->protocol, &f->flags);
     if (rval != FLOWSTATS_ITEMS)
         return false;
 

@@ -26,6 +26,8 @@
 
 #include <memory>
 
+#include <daq_common.h>
+
 #include "flow/flow.h"
 
 class HostAttributesDescriptor;
@@ -185,7 +187,13 @@ public:
     static FlowData* get_flow_data(
         PktType type, IpProtocol proto,
         const snort::SfIp* a1, uint16_t p1, const snort::SfIp* a2, uint16_t p2,
-        uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId, unsigned flowdata_id);
+        uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId, unsigned flowdata_id,
+        int16_t ingress_group = DAQ_PKTHDR_UNKNOWN, int16_t egress_group = DAQ_PKTHDR_UNKNOWN);
+
+    static FlowData* get_flow_data(
+        PktType type, IpProtocol proto,
+        const snort::SfIp* a1, uint16_t p1, const snort::SfIp* a2, uint16_t p2,
+        uint16_t vlanId, uint32_t mplsId, unsigned flowdata_id, const DAQ_PktHdr_t&);
 
     // Get pointer to application data for a flow using the FlowKey as the lookup criteria
     static FlowData* get_flow_data(const FlowKey*, unsigned flowdata_id);
@@ -195,7 +203,13 @@ public:
     static Flow* get_flow(
         PktType type, IpProtocol proto,
         const snort::SfIp* a1, uint16_t p1, const snort::SfIp* a2, uint16_t p2,
-        uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId);
+        uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId,
+        int16_t ingress_group = DAQ_PKTHDR_UNKNOWN, int16_t egress_group = DAQ_PKTHDR_UNKNOWN);
+
+    static Flow* get_flow(
+        PktType type, IpProtocol proto,
+        const snort::SfIp* a1, uint16_t p1, const snort::SfIp* a2, uint16_t p2,
+        uint16_t vlanId, uint32_t mplsId, const DAQ_PktHdr_t&);
 
     // Delete the session if it is in the closed session state.
     // Handle session block pending state

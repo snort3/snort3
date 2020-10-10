@@ -315,6 +315,9 @@ struct SO_PUBLIC Packet
 
     bool is_detection_enabled(bool to_server);
 
+    bool is_inter_group_flow() const
+    { return (pkth->flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS) != 0; }
+    
     bool test_session_flags(uint32_t);
 
     SnortProtocolId get_snort_protocol_id();
