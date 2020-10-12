@@ -40,7 +40,7 @@ public:
         RnaLogger&, const char*, AppId client, AppId service);
 
     static void discover_user(const snort::Packet*, RnaTracker&, const struct in6_addr*,
-        const uint8_t* src_mac, RnaLogger&, const char* username, AppId, IpProtocol);
+        RnaLogger&, const char* username, AppId, IpProtocol);
 
 private:
     static void update_service_info(const snort::Packet*, IpProtocol, const char* vendor,

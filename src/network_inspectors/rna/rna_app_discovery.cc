@@ -115,7 +115,7 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
         AppId service;
         const char* username = appid_session_api.get_client_info(service);
         if ( service > APP_ID_NONE and username and *username )
-            discover_user(p, ht, (const struct in6_addr*) src_ip->get_ip6_ptr(), src_mac,
+            discover_user(p, ht, (const struct in6_addr*) p->ptrs.ip_api.get_dst()->get_ip6_ptr(),
                 logger, username, service, proto);
     }
 
@@ -233,12 +233,12 @@ void RnaAppDiscovery::discover_client(const Packet* p, RnaTracker& rt,
 }
 
 void RnaAppDiscovery::discover_user(const Packet* p, RnaTracker& rt,
-    const struct in6_addr* src_ip, const uint8_t* src_mac, RnaLogger& logger,
-    const char* username, AppId service, IpProtocol proto)
+    const struct in6_addr* ip, RnaLogger& logger, const char* username,
+    AppId service, IpProtocol proto)
 {
     if ( rt->update_service_user(p->flow->server_port, proto, username) )
     {
-        logger.log(RUA_EVENT, CHANGE_USER_LOGIN, p, &rt, src_ip, src_mac, username,
+        logger.log(RUA_EVENT, CHANGE_USER_LOGIN, p, &rt, ip, username,
             service, (uint32_t) packet_time());
     }
 }

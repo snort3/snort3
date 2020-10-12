@@ -48,16 +48,23 @@ using namespace snort;
 #ifdef DEBUG_MSGS
 static inline void rna_logger_message(const RnaLoggerEvent& rle)
 {
-    char macbuf[19];
-    snprintf(macbuf, 19, "%02X:%02X:%02X:%02X:%02X:%02X",
-        rle.mac[0], rle.mac[1], rle.mac[2], rle.mac[3], rle.mac[4], rle.mac[5]);
+    char macbuf[19] = { 0 };
+    if ( rle.mac )
+        snprintf(macbuf, 19, "%02X:%02X:%02X:%02X:%02X:%02X",
+            rle.mac[0], rle.mac[1], rle.mac[2], rle.mac[3], rle.mac[4], rle.mac[5]);
+
     if ( rle.ip )
     {
         SfIp ip;
         SfIpString ipbuf;
         ip.set(rle.ip); // using this instead of packet's ip to support ARP
-        debug_logf(rna_trace, nullptr, "RNA log: type %u, subtype %u, mac %s, ip %s\n",
-            rle.type, rle.subtype, macbuf, ip.ntop(ipbuf));
+        if ( rle.mac )
+            debug_logf(rna_trace, nullptr, "RNA log: type %u, subtype %u, mac %s, ip %s\n",
+                rle.type, rle.subtype, macbuf, ip.ntop(ipbuf));
+        else
+            debug_logf(rna_trace, nullptr, "RNA log: type %u, subtype %u, ip %s\n",
+                rle.type, rle.subtype, ip.ntop(ipbuf));
+
         if ( rle.hc )
         {
             if ( rle.hc->version[0] != '\0' )
@@ -107,10 +114,9 @@ void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker
 }
 
 void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
-   const struct in6_addr* src_ip, const uint8_t* src_mac, const char* user, AppId appid,
-   uint32_t event_time)
+   const struct in6_addr* ip, const char* user, AppId appid, uint32_t event_time)
 {
-    log(type, subtype, src_ip, src_mac, ht, p, event_time, 0,
+    log(type, subtype, ip, nullptr, ht, p, event_time, 0,
         nullptr, nullptr, nullptr, nullptr, nullptr, user, appid);
 }
 

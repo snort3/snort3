@@ -72,8 +72,7 @@ public:
 
     // for host user
     void log(uint16_t type, uint16_t subtype, const snort::Packet*, RnaTracker*,
-        const struct in6_addr*, const uint8_t* src_mac, const char* user,
-        AppId appid, uint32_t event_time);
+        const struct in6_addr*, const char* user, AppId appid, uint32_t event_time);
 
     // for fingerprint
     void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
