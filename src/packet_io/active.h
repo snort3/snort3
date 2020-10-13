@@ -229,7 +229,7 @@ private:
     ActiveAction* delayed_reject;    // set with set_delayed_action()
 };
 
-struct ActiveSuspendContext
+struct SO_PUBLIC ActiveSuspendContext
 {
     ActiveSuspendContext(Active::ActiveSuspendReason suspend_reason)
     { Active::suspend(suspend_reason); }

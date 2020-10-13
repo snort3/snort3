@@ -139,6 +139,8 @@ Flow* FlowControl::stale_flow_cleanup(FlowCache* cache, Flow* flow, Packet* p)
 {
     if ( p->pkth->flags & DAQ_PKT_FLAG_NEW_FLOW )
     {
+        ActiveSuspendContext act_susp(Active::ASP_TIMEOUT);
+
         if (PacketTracer::is_active())
             PacketTracer::log("Session: deleting snort session, reason: stale and not cleaned \n");
 
