@@ -30,6 +30,7 @@
 #include <string>
 
 #include "log/messages.h"
+#include "main/snort.h"
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"
 
@@ -93,6 +94,10 @@ bool RnaInspector::configure(SnortConfig* sc)
     DataBus::subscribe_global( STREAM_TCP_MIDSTREAM_EVENT, new RnaTcpMidstreamEventHandler(*pnd), sc );
     if (rna_conf && rna_conf->log_when_idle)
         DataBus::subscribe_global( THREAD_IDLE_EVENT, new RnaIdleEventHandler(*pnd), sc );
+
+    // tinit is not called during reload, so pass processor pointers to threads via reload tuner
+    if ( Snort::is_reloading() && InspectorManager::get_inspector(RNA_NAME, true) )
+        sc->register_reload_resource_tuner(new FpProcReloadTuner(*mod_conf));
 
     return true;
 }

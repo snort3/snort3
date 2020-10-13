@@ -33,7 +33,6 @@
 #include "log/messages.h"
 #include "lua/lua.h"
 #include "main/snort_config.h"
-#include "main/snort.h"
 #include "managers/module_manager.h"
 #include "utils/util.h"
 
@@ -310,9 +309,6 @@ bool RnaModule::end(const char* fqn, int index, SnortConfig* sc)
 
         if ( mod_conf->ua_processor )
             mod_conf->ua_processor->make_mpse(sc);
-
-        if ( (mod_conf->tcp_processor || mod_conf->ua_processor) && Snort::is_reloading() )
-            sc->register_reload_resource_tuner(new FpProcReloadTuner(*mod_conf));
     }
 
     if ( index > 0 and mod_conf->tcp_processor and !strcmp(fqn, "rna.tcp_fingerprints") )

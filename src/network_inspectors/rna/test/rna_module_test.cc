@@ -41,7 +41,6 @@ void set_ua_fp_processor(UaFpProcessor*) { }
 
 namespace snort
 {
-    bool Snort::is_reloading() { return false; }
     void SnortConfig::register_reload_resource_tuner(ReloadResourceTuner* rrt) { delete rrt; }
 }
 
