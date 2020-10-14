@@ -90,6 +90,9 @@ bool TcpNormalizer::strip_tcp_timestamp(
 bool TcpNormalizer::packet_dropper(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd, NormFlags f)
 {
+    if ( tsd.is_meta_ack_packet() )
+        return false;
+
     const int8_t mode = (f == NORM_TCP_BLOCK) ? tns.tcp_block : tns.opt_block;
 
     tcp_norm_stats[PC_TCP_BLOCK][mode]++;
