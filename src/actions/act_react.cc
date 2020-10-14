@@ -34,8 +34,7 @@
  *
  * This version will send a web page to the client and then reset both
  * ends of the session.  The web page may be configured or the default
- * may be used.  The web page can have the default warning message
- * inserted or the message from the rule.
+ * may be used.
  *
  * If you wish to just reset the session, use the reject keyword instead.
  */
@@ -53,7 +52,9 @@
 #include "framework/module.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "main/snort_debug.h"
 #include "packet_io/active.h"
+#include "payload_injector/payload_injector_module.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
@@ -89,6 +90,8 @@ static THREAD_LOCAL ProfileStats reactPerfStats;
     "</body>\r\n" \
     "</html>\r\n"
 
+THREAD_LOCAL const snort::Trace* react_trace = nullptr;
+
 class ReactData
 {
 public:
@@ -121,7 +124,6 @@ private:
     std::string resp_buf;      // response to send
 };
 
-
 class ReactAction : public snort::IpsAction
 {
 public:
@@ -143,19 +145,17 @@ public:
 private:
     void send(snort::Packet* p)
     {
-        EncodeFlags df = (p->is_from_server()) ? ENC_FLAG_FWD : 0;
-        EncodeFlags sent = 0;
-
-        Active* act = p->active;
-
-        if ( p->packet_flags & PKT_STREAM_EST )
-            sent = act->send_data(p, df, (const uint8_t*)config->get_resp_buf(), config->get_buf_len());
-
-        EncodeFlags rf = ENC_FLAG_SEQ | (ENC_FLAG_VAL & sent);
-        act->send_reset(p, rf);
-
-        // block the flow in case the RST is lost.
-        act->block_session(p);
+        InjectionControl control;
+        control.http_page = (const uint8_t*)config->get_resp_buf();
+        control.http_page_len = config->get_buf_len();
+        InjectionReturnStatus status = PayloadInjectorModule::inject_http_payload(p, control);
+#ifdef DEBUG_MSGS
+        if (status != INJECTION_SUCCESS)
+            debug_logf(react_trace, nullptr, "Injection error: %s\n",
+                PayloadInjectorModule::get_err_string(status));
+#else
+        UNUSED(status);
+#endif
     }
 
 private:
@@ -169,7 +169,7 @@ private:
 static const Parameter s_params[] =
 {
     { "page", Parameter::PT_STRING, nullptr, nullptr,
-      "file containing HTTP response (headers and body)" },
+      "file containing HTTP response body" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -188,6 +188,15 @@ public:
 
     Usage get_usage() const override
     { return DETECT; }
+
+    void set_trace(const snort::Trace* trace) const override
+    { react_trace = trace; }
+
+    const snort::TraceOption* get_trace_options() const override
+    {
+        static const TraceOption react_trace_options(nullptr, 0, nullptr);
+        return &react_trace_options;
+    }
 
 public:
     std::string page;
