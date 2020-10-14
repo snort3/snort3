@@ -86,50 +86,43 @@ Example:
 IPS action react enables sending an HTML page on a session and then 
 resetting it.
 
+The headers used are:
+
+    "HTTP/1.1 403 Forbidden\r\n" \
+    "Connection: close\r\n" \
+    "Content-Type: text/html; charset=utf-8\r\n" \
+    "Content-Length: 439\r\n" \
+    "\r\n"
+
 The page to be sent can be read from a file:
 
     react = { page = "customized_block_page.html", }
 
 or else the default is used:
 
-    <default_page> ::= \
-        "HTTP/1.1 403 Forbidden\r\n"
-        "Connection: close\r\n"
-        "Content-Type: text/html; charset=utf-8\r\n"
-        "\r\n"
-        "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\r\n" \
-        "    \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\r\n" \
-        "<html xmlns=\"http://www.w3.org/1999/xhtml\" 
-        xml:lang=\"en\">\r\n" \
-        "<head>\r\n" \
-        "<meta http-equiv=\"Content-Type\" content=\"text/html; 
-        charset=UTF-8\" />\r\n" \
-        "<title>Access Denied</title>\r\n" \
-        "</head>\r\n" \
-        "<body>\r\n" \
-        "<h1>Access Denied</h1>\r\n" \
-        "<p>%s</p>\r\n" \
-        "</body>\r\n" \
-        "</html>\r\n";
+    "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\r\n" \
+    "    \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\r\n" \
+    "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\r\n" \
+    "<head>\r\n" \
+    "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\r\n" \
+    "<title>Access Denied</title>\r\n" \
+    "</head>\r\n" \
+    "<body>\r\n" \
+    "<h1>Access Denied</h1>\r\n" \
+    "<p>You are attempting to access a forbidden site.<br />" \
+    "Consult your system administrator for details.</p>\r\n" \
+    "</body>\r\n" \
+    "</html>\r\n"
 
-Note that the file must contain the entire response, including any HTTP 
-headers. In fact, the response isn't strictly limited to HTTP.  You could 
-craft a binary payload of arbitrary content. 
+Note that the file contains the message body only. The headers will be added
+with an updated value for Content-Length.
 
-When the rule is configured, the page is loaded and the %s is replaced 
-with the selected message, which defaults to:
-
-        "You are attempting to access a forbidden site.<br />" \
-        "Consult your system administrator for details."
-
-Additional formatting operators beyond a single %s are prohibited, 
-including %d, %x, %s, as well as any URL encodings such as as %20 (space) 
-that may be within a reference URL.
-
+When using react, payload injector must be configured as well.
 Example:
-
+    
     react = { page = "my_block_page.html" }
-
+    payload_injector = { }
+    
     local_rules =
     [[
     react http ( msg:"Unauthorized Access Prohibited!"; flow:established, 
@@ -140,6 +133,16 @@ Example:
     {
         rules = local_rules,
     }
+
+React has debug trace functionality. It can be used to get traces in case
+injection is not successful.
+To turn it on:
+
+    trace =
+    {
+        modules = { react = { all = 1 } }
+    }
+
 
 ==== Rewrite
 
