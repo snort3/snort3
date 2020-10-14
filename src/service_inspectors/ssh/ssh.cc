@@ -37,6 +37,7 @@
 #include "stream/stream.h"
 
 #include "ssh_module.h"
+#include "ssh_splitter.h"
 
 using namespace snort;
 
@@ -67,14 +68,14 @@ SshFlowData::~SshFlowData()
     sshstats.concurrent_sessions--;
 }
 
-static SSHData* SetNewSSHData(Packet* p)
+SSHData* SetNewSSHData(Packet* p)
 {
     SshFlowData* fd = new SshFlowData;
     p->flow->set_flow_data(fd);
     return &fd->session;
 }
 
-static SSHData* get_session_data(Flow* flow)
+SSHData* get_session_data(const Flow* flow)
 {
     SshFlowData* fd = (SshFlowData*)flow->get_flow_data(SshFlowData::inspector_id);
     return fd ? &fd->session : nullptr;
@@ -126,19 +127,6 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
 
     // Attempt to get a previously allocated SSH block.
     SSHData* sessp = get_session_data(p->flow);
-
-    if (sessp == nullptr)
-    {
-        /* Check the stream session. If it does not currently
-         * have our SSH data-block attached, create one.
-         */
-        sessp = SetNewSSHData(p);
-
-        if ( !sessp )
-            // Could not get/create the session data for this packet.
-            return;
-
-    }
 
     // Don't process if we've missed packets
     if (sessp->state_flags & SSH_FLG_MISSED_PACKETS)
@@ -668,7 +656,11 @@ static unsigned int ProcessSSHKeyExchange(SSHData* sessionp, Packet* p,
              */
             if ( direction == SSH_DIR_FROM_CLIENT )
             {
-                sessionp->state_flags |= SSH_FLG_NEWKEYS_SEEN;
+                sessionp->state_flags |= SSH_FLG_CLIENT_NEWKEYS_SEEN;
+            }
+            else
+            {
+                sessionp->state_flags |= SSH_FLG_SERVER_NEWKEYS_SEEN;
             }
             break;
         default:
@@ -727,6 +719,8 @@ public:
 
     void show(const SnortConfig*) const override;
     void eval(Packet*) override;
+    class StreamSplitter* get_splitter(bool to_server) override
+    { return new SshSplitter(to_server); }
 
 private:
     SSH_PROTO_CONF* config;

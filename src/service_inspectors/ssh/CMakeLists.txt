@@ -5,6 +5,8 @@ set( FILE_LIST
     ssh_config.h
     ssh_module.cc
     ssh_module.h
+    ssh_splitter.cc
+    ssh_splitter.h
 )
 
 if (STATIC_INSPECTORS)

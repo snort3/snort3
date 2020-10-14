@@ -31,6 +31,7 @@
 // packets appear malformed/spoofed.
 
 #include "flow/flow.h"
+#include "protocols/packet.h"
 
 // FIXIT-L move these to ssh.cc
 // Session state flags for SSHData::state_flags
@@ -47,13 +48,14 @@
 #define SSH_FLG_GEX_GRP_SEEN        (0x200)
 #define SSH_FLG_GEX_INIT_SEEN       (0x400)
 #define SSH_FLG_GEX_REPLY_SEEN      (0x800)
-#define SSH_FLG_NEWKEYS_SEEN        (0x1000)
+#define SSH_FLG_CLIENT_NEWKEYS_SEEN (0x1000)
 #define SSH_FLG_SESS_ENCRYPTED      (0x2000)
 #define SSH_FLG_RESPOVERFLOW_ALERTED    (0x4000)
 #define SSH_FLG_CRC32_ALERTED       (0x8000)
 #define SSH_FLG_MISSED_PACKETS      (0x10000)
 #define SSH_FLG_REASSEMBLY_SET      (0x20000)
 #define SSH_FLG_AUTODETECTED        (0x40000)
+#define SSH_FLG_SERVER_NEWKEYS_SEEN (0x8000)
 
 // Some convenient combinations of state flags.
 #define SSH_FLG_BOTH_IDSTRING_SEEN \
@@ -71,14 +73,14 @@
 #define SSH_FLG_V2_DHOLD_DONE \
     (SSH_FLG_KEXDH_INIT_SEEN | \
     SSH_FLG_KEXDH_REPLY_SEEN | \
-    SSH_FLG_NEWKEYS_SEEN )
+    SSH_FLG_CLIENT_NEWKEYS_SEEN )
 
 #define SSH_FLG_V2_DHNEW_DONE \
     (SSH_FLG_GEX_REQ_SEEN | \
     SSH_FLG_GEX_GRP_SEEN | \
     SSH_FLG_GEX_INIT_SEEN | \
     SSH_FLG_GEX_REPLY_SEEN | \
-    SSH_FLG_NEWKEYS_SEEN )
+    SSH_FLG_CLIENT_NEWKEYS_SEEN )
 
 // SSH version values for SSHData::version
 #define SSH_VERSION_UNKNOWN (0x0)
@@ -114,6 +116,10 @@ public:
 
 // Length of SSH2 header, in bytes.
 #define SSH2_HEADERLEN      (5)
+// Length of SSH2 Padding, in bytes.
+#define SSH2_PADDING_LEN    (1)
+// Length of SSH2 packet, in bytes.
+#define SSH2_PACKET_LEN    (SSH2_HEADERLEN - SSH2_PADDING_LEN)
 #define SSH2_PACKET_MAX_SIZE    (256 * 1024)
 
 struct SSH2Packet
@@ -142,4 +148,6 @@ struct SSH2Packet
 #define SSH_DIR_FROM_SERVER (0x1)
 #define SSH_DIR_FROM_CLIENT (0x2)
 
+SSHData* get_session_data(const snort::Flow* flow);
+SSHData* SetNewSSHData(snort::Packet* p);
 #endif
