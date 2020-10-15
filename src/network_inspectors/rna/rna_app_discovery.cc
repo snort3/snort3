@@ -259,7 +259,7 @@ void RnaAppDiscovery::analyze_user_agent_fingerprint(const Packet* p, const char
         device_info, MAX_USER_AGENT_DEVICES) )
     {
         logger.log(RNA_EVENT_NEW, NEW_OS, p, &rt, (const struct in6_addr*)ip->get_ip6_ptr(),
-            src_mac, (FpFingerprint*)uafp, packet_time());
+            src_mac, (FpFingerprint*)uafp, packet_time(), device_info, jail_broken);
     }
 }
 

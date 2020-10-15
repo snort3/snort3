@@ -129,10 +129,10 @@ void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker
 
 void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
     const struct in6_addr* src_ip, const uint8_t* src_mac, const FpFingerprint* fp,
-    uint32_t event_time)
+    uint32_t event_time, const char* device_info, bool jail_broken)
 {
-    log(type, subtype, src_ip, src_mac, ht, p, event_time, 0,
-        nullptr, nullptr, fp);
+    log(type, subtype, src_ip, src_mac, ht, p, event_time, 0, nullptr, nullptr,
+        fp, nullptr, nullptr, nullptr, APP_ID_NONE, device_info, jail_broken);
 }
 
 void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
@@ -164,14 +164,15 @@ bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_
     const uint8_t* src_mac, RnaTracker* ht, const Packet* p, uint32_t event_time,
     uint16_t proto, const HostMac* hm, const HostApplication* ha,
     const FpFingerprint* fp, void* cond_var, const HostClient* hc,
-    const char* user, AppId appid)
+    const char* user, AppId appid, const char* di, bool jb)
 {
     if ( !enabled )
         return false;
 
     assert(ht);
 
-    RnaLoggerEvent rle(type, subtype, src_mac, ht, hm, proto, cond_var, ha, fp, hc, user, appid);
+    RnaLoggerEvent rle(type, subtype, src_mac, ht, hm, proto, cond_var,
+        ha, fp, hc, user, appid, di, jb);
     if ( src_ip and (!IN6_IS_ADDR_V4MAPPED(src_ip) or src_ip->s6_addr32[3]) )
         rle.ip = src_ip;
     else
