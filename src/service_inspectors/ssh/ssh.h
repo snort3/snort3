@@ -55,7 +55,7 @@
 #define SSH_FLG_MISSED_PACKETS      (0x10000)
 #define SSH_FLG_REASSEMBLY_SET      (0x20000)
 #define SSH_FLG_AUTODETECTED        (0x40000)
-#define SSH_FLG_SERVER_NEWKEYS_SEEN (0x8000)
+#define SSH_FLG_SERVER_NEWKEYS_SEEN (0x80000)
 
 // Some convenient combinations of state flags.
 #define SSH_FLG_BOTH_IDSTRING_SEEN \

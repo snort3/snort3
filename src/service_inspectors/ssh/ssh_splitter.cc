@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2020 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -22,7 +22,6 @@
 #include "config.h"
 #endif
 
-#include "ssh.h"
 #include "ssh_splitter.h"
 
 using namespace snort;
@@ -36,14 +35,14 @@ SshSplitter::SshSplitter(bool c2s) : StreamSplitter(c2s)
 
 StreamSplitter::Status SshSplitter::ssh2_key_exchange_scan(
     const uint8_t* data, uint32_t len, uint32_t* fp,
-    uint32_t &remain_bytes)
+    uint32_t& remain_bytes)
 {
     if (remain_bytes < len)
     {
         uint32_t offset = remain_bytes;
         while (offset < len)
         {
-            const SSH2Packet *sshp = (const SSH2Packet*)(data + offset);
+            const SSH2Packet* sshp = (const SSH2Packet*)(data + offset);
             uint32_t ssh_len = ntohl(sshp->packet_length);
             if (ssh_len > (len - offset))
             {
@@ -53,20 +52,19 @@ StreamSplitter::Status SshSplitter::ssh2_key_exchange_scan(
 
             switch (data[offset + SSH2_HEADERLEN])
             {
-                case SSH_MSG_KEXDH_GEX_INIT:
-                case SSH_MSG_KEXDH_GEX_GRP:
-                case SSH_MSG_KEXDH_GEX_REQ:
-                case SSH_MSG_KEXDH_REPLY:
-                case SSH_MSG_KEXDH_INIT:
-                case SSH_MSG_KEXINIT:
-                    offset += (ssh_len + SSH2_PACKET_LEN);
+            case SSH_MSG_KEXDH_GEX_INIT:
+            case SSH_MSG_KEXDH_GEX_GRP:
+            case SSH_MSG_KEXDH_GEX_REQ:
+            case SSH_MSG_KEXDH_REPLY:
+            case SSH_MSG_KEXDH_INIT:
+            case SSH_MSG_KEXINIT:
+                offset += (ssh_len + SSH2_PACKET_LEN);
                 break;
-                case SSH_MSG_NEWKEYS:
-                    offset += (ssh_len + SSH2_PACKET_LEN);
-                // fallthrough
-                default:
-                    goto exit_loop;
-
+            case SSH_MSG_NEWKEYS:
+                offset += (ssh_len + SSH2_PACKET_LEN);
+            // fallthrough
+            default:
+                goto exit_loop;
             }
         }
 exit_loop:
@@ -88,7 +86,7 @@ exit_loop:
     }
 }
 
-StreamSplitter::Status SshSplitter::ssh2_scan( SSHData* sessp,
+StreamSplitter::Status SshSplitter::ssh2_scan(SSHData* sessp,
     const uint8_t* data, uint32_t len, uint32_t flags, uint32_t* fp)
 {
     if (flags & PKT_FROM_SERVER)
@@ -116,13 +114,13 @@ StreamSplitter::Status SshSplitter::scan(
 
     if (nullptr == sessp)
     {
-       sessp  = SetNewSSHData(p);
-       if (nullptr == sessp)
-          return ABORT;
+        sessp  = SetNewSSHData(p);
+        if (nullptr == sessp)
+            return ABORT;
     }
 
     if ((sessp->state_flags & SSH_FLG_SERV_IDSTRING_SEEN)
-            && (sessp->state_flags & SSH_FLG_CLIENT_IDSTRING_SEEN))
+        and (sessp->state_flags & SSH_FLG_CLIENT_IDSTRING_SEEN))
     {
         state = SSH_PAF_KEY_EXCHANGE;
     }
@@ -132,38 +130,39 @@ StreamSplitter::Status SshSplitter::scan(
         state = SSH_PAF_ENCRYPTED;
     }
 
-    switch(state)
+    switch (state)
     {
-        case SSH_PAF_VER_EXCHANGE:
-        {
-            uint32_t n = len;
-            const uint8_t* lf = nullptr, *tmp = data;
+    case SSH_PAF_VER_EXCHANGE:
+    {
+        uint32_t n = len;
+        const uint8_t* lf = nullptr, * tmp = data;
 
-            while ((tmp = (const uint8_t*)memchr(tmp, '\n', n)))
-            {
-                lf = tmp++;
-                n = len - (tmp - data);
-            }
-            if (!lf)
-                return SEARCH;
+        while ((tmp = (const uint8_t*)memchr(tmp, '\n', n)))
+        {
+            lf = tmp++;
+            n = len - (tmp - data);
+        }
+        if (!lf)
+            return SEARCH;
 
-            *fp = lf - data + 1;
-            return FLUSH;
-        }
-        case SSH_PAF_KEY_EXCHANGE:
+        *fp = lf - data + 1;
+        return FLUSH;
+    }
+    case SSH_PAF_KEY_EXCHANGE:
+    {
+        if (sessp->version == SSH_VERSION_2)
         {
-            if (sessp->version == SSH_VERSION_2)
-            {
-                return ssh2_scan(sessp, data, len, flags, fp);
-            }
-        }
-        // fallthrough
-        default:
-        {
-            // there will not be multiple SSH payloads in single TCP PDU.
-            // for SSH1 or Encrypted PDUs flush it at data boundary.
-            *fp = len;
-            return FLUSH;
+            return ssh2_scan(sessp, data, len, flags, fp);
         }
     }
+    // fallthrough
+    default:
+    {
+        // there will not be multiple SSH payloads in single TCP PDU.
+        // for SSH1 or Encrypted PDUs flush it at data boundary.
+        *fp = len;
+        return FLUSH;
+    }
+    }
 }
+
