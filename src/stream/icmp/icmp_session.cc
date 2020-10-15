@@ -149,6 +149,7 @@ static int ProcessIcmpUnreach(Packet* p)
     skey.init_mpls(sc, 0);
     skey.flags.group_used = p->is_inter_group_flow();
     skey.init_groups(p->pkth->ingress_group, p->pkth->egress_group, reversed);
+    skey.flags.ubits = 0;
 
     switch (p->type())
     {
