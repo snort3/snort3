@@ -295,12 +295,28 @@ static void dump_sid(JsonStream& j, const SigInfo& si)
 static void dump_header(JsonStream& j, const RuleHeader* h)
 {
     assert(h);
+
+    // all rules have actions
     j.put("action", h->action);
-    j.put("src_nets", h->src_nets);
-    j.put("src_ports", h->src_ports);
-    j.put("direction", h->dir);
-    j.put("dst_nets", h->dst_nets);
-    j.put("dst_ports", h->dst_ports);
+
+    // builtin stubs only have actions
+    if ( !h->proto.empty() )
+        j.put("proto", h->proto);
+
+    if ( !h->src_nets.empty() )
+        j.put("src_nets", h->src_nets);
+
+    if ( !h->src_ports.empty() )
+        j.put("src_ports", h->src_ports);
+
+    if ( !h->dir.empty() )
+        j.put("direction", h->dir);
+
+    if ( !h->dst_nets.empty() )
+        j.put("dst_nets", h->dst_nets);
+
+    if ( !h->dst_ports.empty() )
+        j.put("dst_ports", h->dst_ports);
 }
 
 static void dump_info(JsonStream& j, const SigInfo& si)
@@ -313,7 +329,9 @@ static void dump_info(JsonStream& j, const SigInfo& si)
     size_t n = si.message.length();
     assert(n > 2 and si.message[0] == '"' and si.message[n-1] == '"');
     std::string msg = si.message.substr(1, n-2);
-    j.put("msg", msg);
+
+    if ( msg != "no msg in rule" )
+        j.put("msg", msg);
 }
 
 static void dump_services(JsonStream& json, const SigInfo& si)
@@ -360,6 +378,34 @@ static void dump_refs(JsonStream& json, const SigInfo& si)
     json.close_array();
 }
 
+static void dump_rule(JsonStream& json, const RuleHeader* h, const SigInfo& si)
+{
+    json.put("body", *si.body);
+
+    std::string s = h->action;
+
+    if ( !h->proto.empty() )
+        s += " " + h->proto;
+
+    if ( !h->src_nets.empty() )
+        s += " " + h->src_nets;
+
+    if ( !h->src_ports.empty() )
+        s += " " + h->src_ports;
+
+    if ( !h->dir.empty() )
+        s += " " + h->dir;
+
+    if ( !h->dst_nets.empty() )
+        s += " " + h->dst_nets;
+
+    if ( !h->dst_ports.empty() )
+        s += " " + h->dst_ports;
+
+    s += " " + *si.body;
+    json.put("rule", s);
+}
+
 void dump_rule_meta(const SnortConfig* sc)
 {
     GHashNode* ghn = sc->otn_map->find_first();
@@ -384,11 +430,11 @@ void dump_rule_meta(const SnortConfig* sc)
 
         dump_bits(json, "sets", setters);
         dump_bits(json, "checks", checkers);
+
         dump_refs(json, si);
+        dump_rule(json, rtn->header, si);
 
-        json.put("body", *si.body);
         json.close();
-
         ghn = sc->otn_map->find_next();
     }
 }

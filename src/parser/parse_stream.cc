@@ -499,11 +499,11 @@ static bool exec(
         parse_rule_proto(sc, tok.c_str(), rps.rtn);
         break;
     case FSM_HDR:
-        parse_rule_nets(sc, "any", true, rps.rtn);
-        parse_rule_ports(sc, "any", true, rps.rtn);
-        parse_rule_dir(sc, "->", rps.rtn);
-        parse_rule_nets(sc, "any", false, rps.rtn);
-        parse_rule_ports(sc, "any", false, rps.rtn);
+        parse_rule_nets(sc, "any", true, rps.rtn, true);
+        parse_rule_ports(sc, "any", true, rps.rtn, true);
+        parse_rule_dir(sc, "->", rps.rtn, true);
+        parse_rule_nets(sc, "any", false, rps.rtn, true);
+        parse_rule_ports(sc, "any", false, rps.rtn, true);
         rps.otn = parse_rule_open(sc, rps.rtn);
         break;
     case FSM_SIP:
@@ -513,7 +513,7 @@ static bool exec(
         parse_rule_ports(sc, tok.c_str(), true, rps.rtn);
         break;
     case FSM_SPX:
-        parse_rule_ports(sc, "any", true, rps.rtn);
+        parse_rule_ports(sc, "any", true, rps.rtn, true);
         // fall thru ...
     case FSM_DIR:
         parse_rule_dir(sc, tok.c_str(), rps.rtn);
@@ -525,7 +525,7 @@ static bool exec(
         parse_rule_ports(sc, tok.c_str(), false, rps.rtn);
         break;
     case FSM_DPX:
-        parse_rule_ports(sc, "any", false, rps.rtn);
+        parse_rule_ports(sc, "any", false, rps.rtn, true);
         // fall thru ...
     case FSM_SOB:
         rps.otn = parse_rule_open(sc, rps.rtn);

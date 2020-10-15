@@ -979,12 +979,12 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
         ParseError("unconfigured rule action '%s'", s);
 }
 
-void parse_rule_proto(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
+void parse_rule_proto(SnortConfig* sc, const char* s, RuleTreeNode& rtn, bool elided)
 {
     if ( s_ignore )
         return;
 
-    if ( !s_so_rule and rtn.header )
+    if ( !s_so_rule and !elided and rtn.header )
         rtn.header->proto = s;
 
     if ( !strcmp(s, "tcp") )
@@ -1015,7 +1015,7 @@ void parse_rule_proto(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
 }
 
 void parse_rule_nets(
-    SnortConfig* sc, const char* s, bool src, RuleTreeNode& rtn)
+    SnortConfig* sc, const char* s, bool src, RuleTreeNode& rtn, bool elided)
 {
     if ( s_so_rule )
         return;
@@ -1023,7 +1023,7 @@ void parse_rule_nets(
     if ( s_ignore )
         return;
 
-    if ( rtn.header )
+    if ( !elided and rtn.header )
     {
         if ( src )
             rtn.header->src_nets = s;
@@ -1034,7 +1034,7 @@ void parse_rule_nets(
 }
 
 void parse_rule_ports(
-    SnortConfig*, const char* s, bool src, RuleTreeNode& rtn)
+    SnortConfig*, const char* s, bool src, RuleTreeNode& rtn, bool elided)
 {
     if ( s_so_rule )
         return;
@@ -1042,7 +1042,7 @@ void parse_rule_ports(
     if ( s_ignore )
         return;
 
-    if ( rtn.header )
+    if ( !elided and rtn.header )
     {
         if ( src )
             rtn.header->src_ports = s;
@@ -1056,7 +1056,7 @@ void parse_rule_ports(
         ParseError("bad ports: '%s'", s);
 }
 
-void parse_rule_dir(SnortConfig*, const char* s, RuleTreeNode& rtn)
+void parse_rule_dir(SnortConfig*, const char* s, RuleTreeNode& rtn, bool elided)
 {
     if ( s_so_rule )
         return;
@@ -1064,7 +1064,7 @@ void parse_rule_dir(SnortConfig*, const char* s, RuleTreeNode& rtn)
     if ( s_ignore )
         return;
 
-    if ( rtn.header )
+    if ( !elided and rtn.header )
         rtn.header->dir = s;
 
     if (strcmp(s, "<>") == 0)
@@ -1136,12 +1136,12 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
 
     if ( stub )
     {
-        parse_rule_proto(sc, "tcp", rtn);
-        parse_rule_nets(sc, "any", true, rtn);
-        parse_rule_ports(sc, "any", true, rtn);
-        parse_rule_dir(sc, "->", rtn);
-        parse_rule_nets(sc, "any", false, rtn);
-        parse_rule_ports(sc, "any", false, rtn);
+        parse_rule_proto(sc, "tcp", rtn, true);
+        parse_rule_nets(sc, "any", true, rtn, true);
+        parse_rule_ports(sc, "any", true, rtn, true);
+        parse_rule_dir(sc, "->", rtn, true);
+        parse_rule_nets(sc, "any", false, rtn, true);
+        parse_rule_ports(sc, "any", false, rtn, true);
     }
     OptTreeNode* otn = new OptTreeNode;
     otn->state = new OtnState[ThreadConfig::get_instance_max()];
