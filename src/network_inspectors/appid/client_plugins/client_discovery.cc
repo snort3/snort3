@@ -348,9 +348,9 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
          asd.is_tp_appid_available() )
     {
         entry = asd.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_app_id);
-        if ( !( entry && entry->client_detector
-            && entry->client_detector == asd.client_detector
-            && (entry->flags & (APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER) ) ) )
+        if (!entry or !entry->client_detector
+            or !(entry->flags & (APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER))
+            or (asd.client_detector and (entry->client_detector != asd.client_detector)))
         {
             asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.set_client_detected();
