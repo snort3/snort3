@@ -569,7 +569,7 @@ void AppIdDiscovery::do_port_based_discovery(Packet* p, AppIdSession& asd, IpPro
 }
 
 bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, IpProtocol protocol,
-    AppidSessionDirection direction)
+    AppidSessionDirection direction, ThirdPartyAppIdContext* tp_appid_ctxt)
 {
     if (asd.get_session_flags(APPID_SESSION_HOST_CACHE_MATCHED))
         return false;
@@ -636,8 +636,13 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
-            if (asd.tpsession)
+
+            if (asd.tpsession and tp_appid_ctxt and
+                (asd.tpsession->get_ctxt_version() == tp_appid_ctxt->get_version()))
                 asd.tpsession->reset();
+            else if (asd.tpsession)
+                asd.tpsession->set_state(TP_STATE_TERMINATED);
+
             if ( asd.get_payload_id() == APP_ID_NONE)
                 asd.set_payload_id(APP_ID_UNKNOWN);
         }
@@ -692,7 +697,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
 {
     bool is_discovery_done = false;
 
-    asd.check_app_detection_restart(change_bits);
+    asd.check_app_detection_restart(change_bits, tp_appid_ctxt);
 
     if (outer_protocol != IpProtocol::PROTO_NOT_SET)
     {
@@ -841,7 +846,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
             asd.scan_flags &= ~SCAN_HTTP_URI_FLAG;
         }
 
-        if (do_host_port_based_discovery(p, asd, protocol, direction))
+        if (do_host_port_based_discovery(p, asd, protocol, direction, tp_appid_ctxt))
         {
             asd.set_port_service_id(APP_ID_NONE);
             service_id = asd.pick_service_app_id();

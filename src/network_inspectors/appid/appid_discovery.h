@@ -149,7 +149,7 @@ private:
     static void do_port_based_discovery(snort::Packet* p, AppIdSession& asd, IpProtocol protocol,
         AppidSessionDirection direction);
     static bool do_host_port_based_discovery(snort::Packet* p, AppIdSession& asd,
-        IpProtocol protocol, AppidSessionDirection direction);
+        IpProtocol protocol, AppidSessionDirection direction, ThirdPartyAppIdContext* tp_appid_ctxt);
 };
 #endif
 

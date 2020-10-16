@@ -261,7 +261,8 @@ void AppIdSession::initialize_future_session(AppIdSession& expected, uint64_t fl
     expected.client_disco_state = APPID_DISCO_STATE_FINISHED;
 }
 
-void AppIdSession::reinit_session_data(AppidChangeBits& change_bits)
+void AppIdSession::reinit_session_data(AppidChangeBits& change_bits,
+    ThirdPartyAppIdContext* tp_appid_ctxt)
 {
     misc_app_id = APP_ID_NONE;
 
@@ -295,8 +296,11 @@ void AppIdSession::reinit_session_data(AppidChangeBits& change_bits)
     free_flow_data_by_mask(APPID_SESSION_DATA_CLIENT_MODSTATE_BIT);
 
     //3rd party cleaning
-    if (tpsession)
+    if (tpsession and tp_appid_ctxt and
+        (tpsession->get_ctxt_version() == tp_appid_ctxt->get_version()))
         tpsession->reset();
+    else if (tpsession)
+        tpsession->set_state(TP_STATE_TERMINATED);
 
     init_tpPackets = 0;
     resp_tpPackets = 0;
@@ -354,7 +358,8 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
     }
 }
 
-void AppIdSession::check_ssl_detection_restart(AppidChangeBits& change_bits)
+void AppIdSession::check_ssl_detection_restart(AppidChangeBits& change_bits,
+    ThirdPartyAppIdContext* tp_appid_ctxt)
 {
     if (get_session_flags(APPID_SESSION_DECRYPTED) or !flow->is_proxied())
         return;
@@ -387,7 +392,7 @@ void AppIdSession::check_ssl_detection_restart(AppidChangeBits& change_bits)
         if (encrypted.payload_id > APP_ID_NONE)
             api.payload.set_overwritten_id(encrypted.payload_id);
 
-        reinit_session_data(change_bits);
+        reinit_session_data(change_bits, tp_appid_ctxt);
         if (appidDebug->is_active())
             LogMessage("AppIdDbg %s SSL decryption is available, restarting app detection\n",
                 appidDebug->get_debug_session());
@@ -438,9 +443,10 @@ void AppIdSession::check_tunnel_detection_restart()
 
 }
 
-void AppIdSession::check_app_detection_restart(AppidChangeBits& change_bits)
+void AppIdSession::check_app_detection_restart(AppidChangeBits& change_bits,
+    ThirdPartyAppIdContext* tp_appid_ctxt)
 {
-    check_ssl_detection_restart(change_bits);
+    check_ssl_detection_restart(change_bits, tp_appid_ctxt);
     check_tunnel_detection_restart();
 }
 
@@ -927,8 +933,11 @@ void AppIdSession::reset_session_data(AppidChangeBits& change_bits)
     tp_payload_app_id = APP_ID_UNKNOWN;
     tp_app_id = APP_ID_UNKNOWN;
 
-    if (this->tpsession)
-        this->tpsession->reset();
+    if (tpsession and pkt_thread_tp_appid_ctxt and
+        (tpsession->get_ctxt_version() == pkt_thread_tp_appid_ctxt->get_version()))
+        tpsession->reset();
+    else if (tpsession)
+        tpsession->set_state(TP_STATE_TERMINATED);
 
     change_bits.reset();
     change_bits.set(APPID_RESET_BIT);

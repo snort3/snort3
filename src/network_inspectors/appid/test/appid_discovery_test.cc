@@ -195,7 +195,7 @@ const char* AppInfoManager::get_app_name(int32_t)
 
 // Stubs for AppIdSession
 void AppIdSession::sync_with_snort_protocol_id(AppId, Packet*) {}
-void AppIdSession::check_app_detection_restart(AppidChangeBits&) {}
+void AppIdSession::check_app_detection_restart(AppidChangeBits&, ThirdPartyAppIdContext*) {}
 void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, char*) {}
 void AppIdSession::examine_rtmp_metadata(AppidChangeBits&) {}
 void AppIdSession::examine_ssl_metadata(AppidChangeBits&) {}

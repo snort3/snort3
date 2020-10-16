@@ -361,8 +361,10 @@ public:
     void set_client_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
     void set_service_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
     void set_payload_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
-    void check_app_detection_restart(AppidChangeBits& change_bits);
-    void check_ssl_detection_restart(AppidChangeBits& change_bits);
+    void check_app_detection_restart(AppidChangeBits& change_bits,
+        ThirdPartyAppIdContext* tp_appid_ctxt);
+    void check_ssl_detection_restart(AppidChangeBits& change_bits,
+        ThirdPartyAppIdContext* tp_appid_ctxt);
     void check_tunnel_detection_restart();
     void update_encrypted_app_id(AppId);
     void examine_rtmp_metadata(AppidChangeBits& change_bits);
@@ -589,7 +591,7 @@ public:
 private:
     uint16_t prev_http2_raw_packet = 0;
 
-    void reinit_session_data(AppidChangeBits& change_bits);
+    void reinit_session_data(AppidChangeBits& change_bits, ThirdPartyAppIdContext* tp_appid_ctxt);
     void delete_session_data(bool free_api = true);
 
     bool tp_app_id_deferred = false;
