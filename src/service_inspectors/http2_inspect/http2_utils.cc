@@ -50,13 +50,15 @@ uint8_t get_frame_flags(const uint8_t* frame_header_buffer)
         return NO_HEADER;
 }
 
-uint8_t get_stream_id(const uint8_t* frame_header_buffer)
+uint32_t get_stream_id_from_header(const uint8_t* frame_header_buffer)
 {
     const uint8_t stream_id_index = 5;
     assert(frame_header_buffer != nullptr);
-    return ((frame_header_buffer[stream_id_index] & 0x7f) << 24) +
-           (frame_header_buffer[stream_id_index + 1] << 16) +
-           (frame_header_buffer[stream_id_index + 2] << 8) +
-           frame_header_buffer[stream_id_index + 3];
+    return get_stream_id_from_buffer(frame_header_buffer + stream_id_index);
+
 }
 
+uint32_t get_stream_id_from_buffer(const uint8_t* buffer)
+{
+    return ((buffer[0] & 0x7f) << 24) + (buffer[1] << 16) + (buffer[2] << 8) + buffer[3];
+}

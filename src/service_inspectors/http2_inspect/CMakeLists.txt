@@ -33,6 +33,8 @@ set (FILE_LIST
     http2_inspect.h
     http2_module.cc
     http2_module.h
+    http2_push_promise_frame.cc
+    http2_push_promise_frame.h
     http2_request_line.cc
     http2_request_line.h
     http2_settings_frame.cc

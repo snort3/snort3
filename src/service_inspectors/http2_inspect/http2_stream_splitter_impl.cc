@@ -120,8 +120,6 @@ StreamSplitter::Status Http2StreamSplitter::non_data_frame_header_checks(
     
     if (type == FT_CONTINUATION and !session_data->continuation_expected[source_id])
     {
-        // FIXIT-E CONTINUATION frames can also follow PUSH_PROMISE frames, which
-        // are not currently supported
         *session_data->infractions[source_id] += INF_UNEXPECTED_CONTINUATION;
         session_data->events[source_id]->create_event(
             EVENT_UNEXPECTED_CONTINUATION);
@@ -153,6 +151,7 @@ StreamSplitter::Status Http2StreamSplitter::non_data_scan(Http2FlowData* session
     switch (type)
     {
     case FT_HEADERS:
+    case FT_PUSH_PROMISE:
         if (!(frame_flags & END_HEADERS))
         {
             session_data->continuation_expected[source_id] = true;
@@ -294,7 +293,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                         scan_frame_header[source_id]);
                     const uint32_t old_stream = session_data->current_stream[source_id];
                     session_data->current_stream[source_id] =
-                        get_stream_id(session_data->scan_frame_header[source_id]);
+                        get_stream_id_from_header(session_data->scan_frame_header[source_id]);
 
                     if (session_data->continuation_expected[source_id] && type != FT_CONTINUATION)
                     {

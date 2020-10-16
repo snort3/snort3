@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2020 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2020 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,58 +15,46 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http2_settings_frame.cc author Deepak Ramadass <deramada@cisco.com>
+// http2_push_promise_frame.h author Katura Harvey <katharve@cisco.com>
 
-#ifndef HTTP2_SETTINGS_FRAME_H
-#define HTTP2_SETTINGS_FRAME_H
+#ifndef HTTP2_PUSH_PROMISE_FRAME_H
+#define HTTP2_PUSH_PROMISE_FRAME_H
 
+#include "service_inspectors/http_inspect/http_common.h"
+#include "utils/event_gen.h"
+#include "utils/infractions.h"
+
+#include "http2_enum.h"
 #include "http2_frame.h"
 
 class Field;
-class Http2ConnectionSettings;
 class Http2Frame;
+class Http2Stream;
+class HttpFlowData;
 
-class Http2SettingsFrame : public Http2Frame
+using Http2Infractions = Infractions<Http2Enums::INF__MAX_VALUE, Http2Enums::INF__NONE>;
+using Http2EventGen = EventGen<Http2Enums::EVENT__MAX_VALUE, Http2Enums::EVENT__NONE,
+    Http2Enums::HTTP2_GID>;
+
+class Http2PushPromiseFrame : public Http2Frame
 {
 public:
+    bool valid_sequence(Http2Enums::StreamState state) override;
+    void update_stream_state() override;
+    static uint32_t get_promised_stream_id(Http2EventGen* const events,
+        Http2Infractions* const infractions, const uint8_t* data_buffer, uint32_t data_len);
+
     friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const uint32_t, const uint8_t*,
         const uint32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);
-    bool is_detection_required() const override { return false; }
 
 #ifdef REG_TEST
     void print_frame(FILE* output) override;
 #endif
 
 private:
-    Http2SettingsFrame(const uint8_t* header_buffer, const uint32_t header_len,
+    Http2PushPromiseFrame(const uint8_t* header_buffer, const uint32_t header_len,
         const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* ssn_data,
         HttpCommon::SourceId src_id, Http2Stream* stream);
-
-    void parse_settings_frame();
-    bool sanity_check();
-    bool handle_update(uint16_t id, uint32_t value);
-
-    bool bad_frame = false;
-    static const uint8_t SfAck = 0x01;
-};
-
-class Http2ConnectionSettings
-{
-public:
-    uint32_t get_param(uint16_t id);
-    void set_param(uint16_t id, uint32_t value);
-
-private:
-    void validate_param_id(uint16_t id);
-
-    static const uint16_t PARAMETER_COUNT = 6;
-    uint32_t parameters[PARAMETER_COUNT] = {
-             4096, // Header table size
-                1, // Push promise
-              100, // Max concurrent Streams
-            65535, // Window size
-            16384, // Max frame size
-       4294967295  // Max header list size
-    };
+    static const int32_t PROMISED_ID_LENGTH = 4;
 };
 #endif

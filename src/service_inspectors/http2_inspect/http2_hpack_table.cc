@@ -138,7 +138,7 @@ void HpackIndexTable::settings_table_size_update(uint32_t new_size)
 bool HpackIndexTable::hpack_table_size_update(uint32_t new_size)
 {
     encoder_set_max_size = true;
-    if (new_size <= session_data->get_connection_settings((HttpCommon::SourceId)(1 - source_id))->
+    if (new_size <= session_data->get_recipient_connection_settings(source_id)->
         get_param(HEADER_TABLE_SIZE))
     {
        dynamic_table.update_size(new_size);

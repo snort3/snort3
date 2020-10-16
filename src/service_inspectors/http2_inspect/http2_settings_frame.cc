@@ -82,8 +82,8 @@ void Http2SettingsFrame::parse_settings_frame()
             continue;
         }
 
-        handle_update(parameter_id, parameter_value);
-        session_data->connection_settings[source_id].set_param(parameter_id, parameter_value);
+        if (handle_update(parameter_id, parameter_value))
+            session_data->connection_settings[source_id].set_param(parameter_id, parameter_value);
     }
 }
 
@@ -102,7 +102,7 @@ bool Http2SettingsFrame::sanity_check()
     return !(bad_frame);
 }
 
-void Http2SettingsFrame::handle_update(uint16_t id, uint32_t value)
+bool Http2SettingsFrame::handle_update(uint16_t id, uint32_t value)
 {
     switch (id)
     {
@@ -112,9 +112,19 @@ void Http2SettingsFrame::handle_update(uint16_t id, uint32_t value)
             session_data->get_hpack_decoder((HttpCommon::SourceId) (1 - source_id))->
                 get_decode_table()->settings_table_size_update(value);
             break;
+        case ENABLE_PUSH:
+            // Only values of 0 or 1 are allowed
+            if (!(value == 0 or value == 1))
+            {
+                session_data->events[source_id]->create_event(EVENT_BAD_SETTINGS_VALUE);
+                *session_data->infractions[source_id] += INF_BAD_SETTINGS_PUSH_VALUE;
+                return false;
+            }
+            break;
         default:
             break;
     }
+    return true;
 }
 
 #ifdef REG_TEST

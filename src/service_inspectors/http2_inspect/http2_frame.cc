@@ -28,6 +28,7 @@
 #include "http2_flow_data.h"
 #include "http2_headers_frame_header.h"
 #include "http2_headers_frame_trailer.h"
+#include "http2_push_promise_frame.h"
 #include "http2_settings_frame.h"
 #include "http2_stream.h"
 #include "service_inspectors/http_inspect/http_field.h"
@@ -67,6 +68,9 @@ Http2Frame* Http2Frame::new_frame(const uint8_t* header, const uint32_t header_l
         case FT_DATA:
             return new Http2DataFrame(header, header_len, data, data_len, session_data, source_id,
                 stream);
+        case FT_PUSH_PROMISE:
+            return new Http2PushPromiseFrame(header, header_len, data, data_len, session_data,
+                source_id, stream);
         default:
             return new Http2Frame(header, header_len, data, data_len, session_data, source_id,
                 stream);

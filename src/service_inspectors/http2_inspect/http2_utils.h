@@ -35,6 +35,7 @@
 uint32_t get_frame_length(const uint8_t* frame_header_buffer);
 uint8_t get_frame_type(const uint8_t* frame_header_buffer);
 uint8_t get_frame_flags(const uint8_t* frame_header_buffer);
-uint8_t get_stream_id(const uint8_t* frame_header_buffer);
+uint32_t get_stream_id_from_header(const uint8_t* frame_header_buffer);
+uint32_t get_stream_id_from_buffer(const uint8_t* buffer);
 
 #endif

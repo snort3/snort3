@@ -53,6 +53,14 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_TRAILERS_NOT_END, "HTTP/2 trailers without END_STREAM bit" },
     { EVENT_PADDING_ON_INVALID_FRAME, "padding flag set on invalid HTTP/2 frame type" },
     { EVENT_PADDING_ON_EMPTY_FRAME, "padding flag set on HTTP/2 frame with zero length" },
+    { EVENT_C2S_PUSH, "HTTP/2 push promise frame in c2s direction" },
+    { EVENT_INVALID_PUSH_FRAME, "invalid HTTP/2 push promise frame" },
+    { EVENT_BAD_PUSH_SEQUENCE, "HTTP/2 push promise frame sent at invalid time" },
+    { EVENT_BAD_SETTINGS_VALUE, "invalid parameter value sent in HTTP/2 settings frame" },
+    { EVENT_PUSH_WHEN_PROHIBITED, "HTTP/2 push promise frame sent when prohibited by receiver" },
+    { EVENT_INVALID_PROMISED_STREAM, "HTTP/2 push promise frame with invalid promised stream id" },
+    { EVENT_INVALID_STREAM_ID, "HTTP/2 stream initiated with invalid stream id" },
+    { EVENT_INVALID_FLAG, "invalid flag set on HTTP/2 frame" },
     { 0, nullptr }
 };
 

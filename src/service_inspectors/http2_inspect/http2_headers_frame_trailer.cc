@@ -66,7 +66,14 @@ Http2HeadersFrameTrailer::Http2HeadersFrameTrailer(const uint8_t* header_buffer,
 
 bool Http2HeadersFrameTrailer::valid_sequence(Http2Enums::StreamState state)
 {
-    return (state == Http2Enums::STREAM_EXPECT_BODY) || (state == Http2Enums::STREAM_BODY);
+    if ((state == STREAM_EXPECT_BODY) || (state == STREAM_BODY))
+        return true;
+    if (state == STREAM_COMPLETE)
+    {
+        *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
+        session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
+    }
+    return false;
 }
 
 void Http2HeadersFrameTrailer::analyze_http1()

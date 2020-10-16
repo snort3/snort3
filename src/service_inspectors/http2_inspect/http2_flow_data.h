@@ -69,6 +69,7 @@ public:
     friend class Http2HeadersFrameTrailer;
     friend class Http2Hpack;
     friend class Http2Inspect;
+    friend class Http2PushPromiseFrame;
     friend class Http2RequestLine;
     friend class Http2SettingsFrame;
     friend class Http2StartLine;
@@ -92,11 +93,14 @@ public:
     };
     class Http2Stream* get_current_stream(const HttpCommon::SourceId source_id);
     uint32_t get_current_stream_id(const HttpCommon::SourceId source_id);
+    class Http2Stream* get_processing_stream(const HttpCommon::SourceId source_id);
 
     Http2HpackDecoder* get_hpack_decoder(const HttpCommon::SourceId source_id)
     { return &hpack_decoder[source_id]; }
-    Http2ConnectionSettings* get_connection_settings(const HttpCommon::SourceId source_id)
+    Http2ConnectionSettings* get_my_connection_settings(const HttpCommon::SourceId source_id)
     { return &connection_settings[source_id]; }
+    Http2ConnectionSettings* get_recipient_connection_settings(const HttpCommon::SourceId source_id)
+    { return &connection_settings[1 - source_id]; }
 
     bool is_mid_frame(const HttpCommon::SourceId source_id = HttpCommon::SRC_SERVER)
     { return (continuation_expected[source_id] || reading_frame[source_id]); }
@@ -120,8 +124,12 @@ protected:
     Http2Infractions* const infractions[2] = { new Http2Infractions, new Http2Infractions };
     Http2EventGen* const events[2] = { new Http2EventGen, new Http2EventGen };
 
-    // Stream ID of the frame currently being read in and processed
+    // Stream ID of the frame currently being processed was sent on (i.e. the stream in the frame
+    // header). This is set in scan().
     uint32_t current_stream[2] = { Http2Enums::NO_STREAM_ID, Http2Enums::NO_STREAM_ID };
+    // Stream ID of the stream responsible for processing the current frame. This will be the same
+    // as current_stream except when processing a push_promise frame. This is set in eval().
+    uint32_t processing_stream_id[2] = { Http2Enums::NO_STREAM_ID, Http2Enums::NO_STREAM_ID };
     // At any given time there may be different streams going in each direction. But only one of
     // them is the stream that http_inspect is actually processing at the moment.
     uint32_t stream_in_hi = Http2Enums::NO_STREAM_ID;

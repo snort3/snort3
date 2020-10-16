@@ -29,6 +29,7 @@
 #include "http2_enum.h"
 #include "http2_frame.h"
 #include "http2_module.h"
+#include "http2_push_promise_frame.h"
 #include "http2_start_line.h"
 #include "http2_stream.h"
 
@@ -154,6 +155,22 @@ class Http2Stream* Http2FlowData::get_hi_stream() const
 class Http2Stream* Http2FlowData::get_current_stream(const HttpCommon::SourceId source_id)
 {
     return get_stream(current_stream[source_id]);
+}
+
+// processing stream is the current stream except for push promise frames with properly formatted
+// promised stream IDs
+class Http2Stream* Http2FlowData::get_processing_stream(const HttpCommon::SourceId source_id)
+{
+    if (processing_stream_id[source_id] == NO_STREAM_ID)
+    {
+        if (frame_type[source_id] == FT_PUSH_PROMISE)
+            processing_stream_id[source_id] = Http2PushPromiseFrame::get_promised_stream_id(
+                events[source_id], infractions[source_id], frame_data[source_id],
+                frame_data_size[source_id]);
+        if (processing_stream_id[source_id] == NO_STREAM_ID)
+            processing_stream_id[source_id] = current_stream[source_id];
+    }
+    return get_stream(processing_stream_id[source_id]);
 }
 
 uint32_t Http2FlowData::get_current_stream_id(const HttpCommon::SourceId source_id)
