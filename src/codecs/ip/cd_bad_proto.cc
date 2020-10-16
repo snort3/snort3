@@ -44,9 +44,7 @@ public:
 void BadProtocalCodec::get_protocol_ids(std::vector<ProtocolId>& proto_ids)
 {
     proto_ids.emplace_back(ProtocolId::SWIPE);
-    proto_ids.emplace_back(ProtocolId::MOBILITY);
     proto_ids.emplace_back(ProtocolId::SUN_ND);
-    proto_ids.emplace_back(ProtocolId::PIM);
 }
 
 bool BadProtocalCodec::decode(const RawData&, CodecData& codec, DecodeData&)
