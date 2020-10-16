@@ -103,7 +103,7 @@ private:
     void IPV6CheckIsatap(const ip::IP6Hdr* const,
         const DecodeData&,
         const CodecData&);
-    void IPV6MiscTests(const RawData&, const DecodeData&, const CodecData&);
+    void IPV6MiscTests(const DecodeData&, const CodecData&);
     void CheckIPV6Multicast(const ip::IP6Hdr* const, const CodecData&);
     bool CheckTeredoPrefix(const ip::IP6Hdr* const hdr);
 };
@@ -213,7 +213,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         snort.ip_api.update(real_src, real_dst);
     }
 
-    IPV6MiscTests(raw, snort, codec);
+    IPV6MiscTests(snort, codec);
     CheckIPV6Multicast(ip6h, codec);
 
     if (ip6h->is_valid_next_header() == false)
@@ -251,8 +251,7 @@ void Ipv6Codec::IPV6CheckIsatap(const ip::IP6Hdr* const ip6h,
     }
 }
 
-void Ipv6Codec::IPV6MiscTests(const RawData& raw, const DecodeData& snort,
-    const CodecData& codec)
+void Ipv6Codec::IPV6MiscTests(const DecodeData& snort, const CodecData& codec)
 {
     const SfIp* ip_src = snort.ip_api.get_src();
     const SfIp* ip_dst = snort.ip_api.get_dst();
@@ -264,15 +263,7 @@ void Ipv6Codec::IPV6MiscTests(const RawData& raw, const DecodeData& snort,
      */
     if (ip_src->fast_eq6(*ip_dst))
     {
-        const DAQ_PktHdr_t* pkth = daq_msg_get_pkthdr(raw.daq_msg);
-
-        if (pkth->flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS)
-        {
-            if (pkth->ingress_group == pkth->egress_group)
-                codec_event(codec, DECODE_BAD_TRAFFIC_SAME_SRCDST);
-        }
-        else
-            codec_event(codec, DECODE_BAD_TRAFFIC_SAME_SRCDST);
+        codec_event(codec, DECODE_BAD_TRAFFIC_SAME_SRCDST);
     }
 
     if (ip_src->is_loopback() || ip_dst->is_loopback())

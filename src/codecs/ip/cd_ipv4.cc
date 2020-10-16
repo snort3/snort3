@@ -124,7 +124,7 @@ public:
 
 private:
     bool valid_checksum_from_daq(const RawData&);
-    void IP4AddrTests(const ip::IP4Hdr*, const RawData&, const CodecData&, DecodeData&);
+    void IP4AddrTests(const ip::IP4Hdr*, const CodecData&, DecodeData&);
     void IPMiscTests(const ip::IP4Hdr* const ip4h, const CodecData& codec, uint16_t len);
     void DecodeIPOptions(const uint8_t* start, uint8_t& o_len, CodecData& data);
 };
@@ -255,7 +255,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     /*
      * IP Header tests: Land attack, and Loop back test
      */
-    IP4AddrTests(iph, raw, codec, snort);
+    IP4AddrTests(iph, codec, snort);
 
     if (snort::get_network_policy()->ip_checksums() && !valid_checksum_from_daq(raw))
     {
@@ -358,23 +358,14 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 }
 
 void Ipv4Codec::IP4AddrTests(
-    const ip::IP4Hdr* iph, const RawData& raw, const CodecData& codec,
-    DecodeData& snort)
+    const ip::IP4Hdr* iph, const CodecData& codec, DecodeData& snort)
 {
     uint8_t msb_src, msb_dst;
 
     // check all 32 bits ...
     if ( iph->ip_src == iph->ip_dst )
     {
-        const DAQ_PktHdr_t* pkth = daq_msg_get_pkthdr(raw.daq_msg);
-
-        if ( pkth->flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS )
-        {
-            if ( pkth->ingress_group == pkth->egress_group )
-                codec_event(codec, DECODE_BAD_TRAFFIC_SAME_SRCDST);
-        }
-        else
-            codec_event(codec, DECODE_BAD_TRAFFIC_SAME_SRCDST);
+        codec_event(codec, DECODE_BAD_TRAFFIC_SAME_SRCDST);
     }
 
     // check all 32 bits ...
