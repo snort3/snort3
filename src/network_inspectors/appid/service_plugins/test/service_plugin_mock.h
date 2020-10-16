@@ -174,7 +174,7 @@ AppIdContext stub_ctxt(stub_config);
 static OdpContext stub_odp_ctxt(stub_config, nullptr);
 OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
 AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector& inspector,
-    OdpContext&) : snort::FlowData(inspector_id, (snort::Inspector*)&inspector),
+    OdpContext&, uint16_t) : snort::FlowData(inspector_id, (snort::Inspector*)&inspector),
     config(stub_config), api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt) { }
 AppIdSession::~AppIdSession() = default;
 void AppIdSession::free_flow_data()
@@ -201,7 +201,8 @@ bool AppInfoManager::configured()
 {
     return true;
 }
-ServiceDiscoveryState* AppIdServiceState::add(SfIp const*, IpProtocol, unsigned short, bool, bool)
+ServiceDiscoveryState* AppIdServiceState::add(SfIp const*, IpProtocol,
+    unsigned short, int16_t, uint16_t, bool, bool)
 {
   return nullptr;
 }

@@ -40,6 +40,7 @@ namespace snort
 struct AppIdSessionHA
 {
     uint16_t flags;
+    uint16_t asid;
     AppId appId[APPID_HA_SESSION_APP_NUM_MAX];
 };
 

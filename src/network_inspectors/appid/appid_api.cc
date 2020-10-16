@@ -149,6 +149,7 @@ uint32_t AppIdApi::produce_ha_state(const Flow& flow, uint8_t* buf)
         else
             appHA->appId[6] = asd->get_client_id();
         appHA->appId[7] = asd->misc_app_id;
+        appHA->asid = asd->asid;
     }
     else
         memset(appHA, 0, sizeof(*appHA));
@@ -170,7 +171,8 @@ uint32_t AppIdApi::consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t, IpP
             AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
             if (inspector)
             {
-                asd = new AppIdSession(proto, ip, port, *inspector, inspector->get_ctxt().get_odp_ctxt());
+                asd = new AppIdSession(proto, ip, port, *inspector,
+                    inspector->get_ctxt().get_odp_ctxt(), appHA->asid);
                 flow.set_flow_data(asd);
                 asd->set_service_id(appHA->appId[1], asd->get_odp_ctxt());
                 if (asd->get_service_id() == APP_ID_FTP_CONTROL)

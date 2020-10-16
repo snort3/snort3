@@ -23,6 +23,7 @@
 
 #include "file_cache.h"
 
+#include "flow/flow_key.h"
 #include "hash/hash_defs.h"
 #include "hash/xhash.h"
 #include "log/messages.h"
@@ -199,8 +200,11 @@ FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create,
     FileHashKey hashKey;
     hashKey.dip = flow->client_ip;
     hashKey.sip = flow->server_ip;
-    hashKey.padding = 0;
+    hashKey.dgroup = flow->client_group;
+    hashKey.sgroup = flow->server_group;
     hashKey.file_id = file_id;
+    hashKey.asid = flow->key->addressSpaceId;
+    hashKey.padding[0] = hashKey.padding[1] = hashKey.padding[2] = 0;
     FileContext* file = find(hashKey, timeout);
     if (to_create and !file)
         file = add(hashKey, timeout);

@@ -80,7 +80,7 @@ static AppIdContext stub_ctxt(stub_config);
 static OdpContext stub_odp_ctxt(stub_config, nullptr);
 OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
 AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t, AppIdInspector& inspector,
-    OdpContext&) : FlowData(inspector_id, &inspector), config(stub_config),
+    OdpContext&, uint16_t) : FlowData(inspector_id, &inspector), config(stub_config),
     protocol(proto), api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt)
 {
     odp_ctxt_version = odp_ctxt.get_version();

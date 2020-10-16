@@ -68,6 +68,8 @@ static inline SmbFlowKey get_flow_key(void)
     key.mplsLabel = flow_key->mplsLabel;
     key.port_l = flow_key->port_l;
     key.port_h = flow_key->port_h;
+    key.group_l = flow_key->group_l;
+    key.group_h = flow_key->group_h;
     key.vlan_tag = flow_key->vlan_tag;
     key.addressSpaceId = flow_key->addressSpaceId;
     key.ip_protocol = flow_key->ip_protocol;

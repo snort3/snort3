@@ -49,6 +49,7 @@ static const FlowKey s_test_key =
     14,
     PktType::TCP,
     14,
+    0,
     0
 };
 

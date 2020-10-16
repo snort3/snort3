@@ -231,7 +231,10 @@ struct Smb2SidHashKey
     uint32_t cip[4];
     uint32_t sip[4];
     uint64_t sid;
-    uint64_t padding;
+    int16_t cgroup;
+    int16_t sgroup;
+    uint16_t asid;
+    uint16_t padding;
 
     bool operator== (const Smb2SidHashKey &other) const
     {
@@ -243,7 +246,10 @@ struct Smb2SidHashKey
                 sip[0] == other.sip[0] and
                 sip[1] == other.sip[1] and
                 sip[2] == other.sip[2] and
-                sip[3] == other.sip[3]);
+                sip[3] == other.sip[3] and
+                cgroup == other.cgroup and
+                sgroup == other.sgroup and
+                asid == other.asid);
     }
 };
 
@@ -254,6 +260,8 @@ struct SmbFlowKey
     uint32_t mplsLabel;
     uint16_t port_l;    /* Low Port - 0 if ICMP */
     uint16_t port_h;    /* High Port - 0 if ICMP */
+    int16_t group_l;
+    int16_t group_h;
     uint16_t vlan_tag;
     uint16_t addressSpaceId;
     uint8_t ip_protocol;
@@ -274,6 +282,8 @@ struct SmbFlowKey
                mplsLabel == other.mplsLabel and
                port_l == other.port_l and
                port_h == other.port_h and
+               group_l == other.group_l and
+               group_h == other.group_h and
                vlan_tag == other.vlan_tag and
                addressSpaceId == other.addressSpaceId and
                ip_protocol == other.ip_protocol and
@@ -290,7 +300,7 @@ struct SmbKeyHash
 {
     size_t operator() (const SmbFlowKey& key) const
     {
-        return  do_hash((const uint32_t*)&key);
+        return  do_hash_flow_key((const uint32_t*)&key);
     }
 
     size_t operator() (const Smb2SidHashKey& key) const
@@ -307,6 +317,18 @@ private:
         a += d[3]; b += d[4];  c += d[5];  mix(a, b, c);
         a += d[6]; b += d[7];  c += d[8];  mix(a, b, c);
         a += d[9]; b += d[10]; c += d[11]; finalize(a, b, c);
+        return c;
+    }
+
+    size_t do_hash_flow_key(const uint32_t* d) const
+    {
+        uint32_t a, b, c;
+        a = b = c = SMB_KEY_HASH_HARDENER;
+        a += d[0]; b += d[1];  c += d[2];  mix(a, b, c);
+        a += d[3]; b += d[4];  c += d[5];  mix(a, b, c);
+        a += d[6]; b += d[7];  c += d[8];  mix(a, b, c);
+        a += d[9]; b += d[10]; c += d[11]; mix(a, b, c);
+        a += d[12]; finalize(a, b, c);
         return c;
     }
 

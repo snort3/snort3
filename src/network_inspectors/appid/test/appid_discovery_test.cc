@@ -260,7 +260,8 @@ HostPortVal* HostPortCache::find(const SfIp*, uint16_t, IpProtocol, const OdpCon
 {
     return nullptr;
 }
-void AppIdServiceState::check_reset(AppIdSession&, const SfIp*, uint16_t) {}
+void AppIdServiceState::check_reset(AppIdSession&, const SfIp*, uint16_t,
+    int16_t, uint16_t) {}
 int dns_host_scan_hostname(const uint8_t*, size_t, AppId*, AppId*)
 {
     return 0;

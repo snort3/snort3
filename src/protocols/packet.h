@@ -332,6 +332,22 @@ struct SO_PUBLIC Packet
 
     uint16_t get_flow_vlan_id() const;
 
+    int16_t get_ingress_group() const
+    {
+        if (is_inter_group_flow())
+            return pkth->ingress_group;
+        
+        return DAQ_PKTHDR_UNKNOWN;
+    }
+
+    int16_t get_egress_group() const
+    {
+        if (is_inter_group_flow())
+            return pkth->egress_group;
+        
+        return DAQ_PKTHDR_UNKNOWN;
+    }
+
 private:
     bool allocated;
 };

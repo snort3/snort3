@@ -754,15 +754,11 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                     APPID_SESSION_SERVICE_DETECTED);
                 asd.clear_session_flags(APPID_SESSION_CONTINUE);
                 if (direction == APP_ID_FROM_INITIATOR)
-                {
-                    asd.service_ip = *p->ptrs.ip_api.get_dst();
-                    asd.service_port = p->ptrs.dp;
-                }
+                    asd.set_service_info(*(p->ptrs.ip_api.get_dst()), p->ptrs.dp,
+                        p->get_egress_group());
                 else
-                {
-                    asd.service_ip = *p->ptrs.ip_api.get_src();
-                    asd.service_port = p->ptrs.sp;
-                }
+                    asd.set_service_info(*(p->ptrs.ip_api.get_src()), p->ptrs.sp,
+                        p->get_ingress_group());
             }
         }
         else if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) && asd.tsession)

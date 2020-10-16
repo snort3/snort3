@@ -363,7 +363,8 @@ void ServiceDiscovery::get_next_service(const Packet* p, const AppidSessionDirec
             {
                 asd.tried_reverse_service = true;
                 ServiceDiscoveryState* rsds = AppIdServiceState::get(p->ptrs.ip_api.get_src(),
-                    proto, p->ptrs.sp, asd.is_decrypted());
+                    proto, p->ptrs.sp, p->get_ingress_group(), p->pkth->address_space_id,
+                    asd.is_decrypted());
                 std::unordered_map<uint16_t, std::vector<ServiceDetector*>>::iterator urs_iterator;
                 if ( rsds && rsds->get_service() )
                     asd.service_candidates.emplace_back(rsds->get_service());
@@ -397,34 +398,34 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
     bool got_brute_force = false;
     const SfIp* ip;
     uint16_t port;
+    int16_t group;
 
     /* Get packet info. */
     auto proto = asd.protocol;
-    if ( asd.service_ip.is_set() )
-    {
-        ip   = &asd.service_ip;
-        port = asd.service_port;
-    }
+    if ( asd.is_service_ip_set() )
+        std::tie(ip, port, group) = asd.get_service_info();
     else
     {
         if ( dir == APP_ID_FROM_RESPONDER )
         {
             ip   = p->ptrs.ip_api.get_src();
             port = p->ptrs.sp;
+            group = p->get_ingress_group();
         }
         else
         {
             ip   = p->ptrs.ip_api.get_dst();
             port = p->ptrs.dp;
+            group = p->get_egress_group();
         }
-        asd.service_ip = *ip;
-        asd.service_port = port;
+        asd.set_service_info(*ip, port, group);
     }
 
     if ( asd.service_search_state == SESSION_SERVICE_SEARCH_STATE::START )
     {
         asd.service_search_state = SESSION_SERVICE_SEARCH_STATE::PORT;
-        sds = AppIdServiceState::add(ip, proto, port, asd.is_decrypted(), true);
+        sds = AppIdServiceState::add(ip, proto, port, group, asd.asid,
+            asd.is_decrypted(), true);
         sds->set_reset_time(0);
         ServiceState sds_state = sds->get_state();
 
@@ -524,7 +525,8 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
          !asd.service_detector and ( dir == APP_ID_FROM_RESPONDER ) ) )
     {
         if (!sds)
-            sds = AppIdServiceState::add(ip, proto, port, asd.is_decrypted(), true);
+            sds = AppIdServiceState::add(ip, proto, port, group, asd.asid,
+                asd.is_decrypted(), true);
         // Don't log this if fail service is not due to empty list
         if (appidDebug->is_active() and !(got_fail_service and asd.service_detector))
             LogMessage("AppIdDbg %s No service %s\n", appidDebug->get_debug_session(),
@@ -545,7 +547,8 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
             tmp_ip = p->ptrs.ip_api.get_src();
 
         if (!sds)
-            sds = AppIdServiceState::add(ip, proto, port, asd.is_decrypted(), true);
+            sds = AppIdServiceState::add(ip, proto, port, group, asd.asid,
+                asd.is_decrypted(), true);
 
         if (got_incompatible_service)
             sds->update_service_incompatiable(tmp_ip);
@@ -753,16 +756,18 @@ int ServiceDiscovery::incompatible_data(AppIdSession& asd, const Packet* pkt, Ap
     }
 
     const SfIp* ip = pkt->ptrs.ip_api.get_src();
-    uint16_t port = asd.service_port ? asd.service_port : pkt->ptrs.sp;
+    int16_t group = pkt->get_ingress_group();
+    uint16_t port = asd.get_service_port();
+    if (!port)
+        port = pkt->ptrs.sp;
+
     ServiceDiscoveryState* sds = AppIdServiceState::add(ip, asd.protocol, port,
-        asd.is_decrypted());     // do not touch here
+        group, pkt->pkth->address_space_id, asd.is_decrypted());     // do not touch here
     sds->set_service(service);
     sds->set_reset_time(0);
-    if ( !asd.service_ip.is_set() )
-    {
-        asd.service_ip = *ip;
-        asd.service_port = port;
-    }
+    if ( !asd.is_service_ip_set() )
+        asd.set_service_info(*ip, port, group);
+
     return APPID_SUCCESS;
 }
 
@@ -796,16 +801,19 @@ int ServiceDiscovery::fail_service(AppIdSession& asd, const Packet* pkt, AppidSe
     }
 
     const SfIp* ip = pkt->ptrs.ip_api.get_src();
-    uint16_t port = asd.service_port ? asd.service_port : pkt->ptrs.sp;
-    if (!asd.service_ip.is_set())
-    {
-        asd.service_ip = *ip;
-        asd.service_port = port;
-    }
+    uint16_t port = asd.get_service_port();
+    int16_t group = pkt->get_ingress_group();
+
+    if (!port)
+        port = pkt->ptrs.sp;
+
+    if (!asd.is_service_ip_set())
+        asd.set_service_info(*ip, port, group);
 
     if ( !sds )
     {
-        sds = AppIdServiceState::add(ip, asd.protocol, port, asd.is_decrypted());
+        sds = AppIdServiceState::add(ip, asd.protocol, port, group,
+            asd.asid, asd.is_decrypted());
         sds->set_service(service);
     }
     sds->set_reset_time(0);

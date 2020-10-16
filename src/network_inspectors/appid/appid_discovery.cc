@@ -497,19 +497,18 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
             {
                 uint16_t port = 0;
                 const SfIp* ip = nullptr;
+                int16_t group;
 
                 asd->set_session_flags(APPID_SESSION_SYN_RST);
-                if (asd->service_ip.is_set())
-                {
-                    ip = &asd->service_ip;
-                    port = asd->service_port;
-                }
+                if (asd->is_service_ip_set())
+                    std::tie(ip, port, group) = asd->get_service_info();
                 else
                 {
                     ip = p->ptrs.ip_api.get_src();
                     port = p->ptrs.sp;
+                    group = p->get_ingress_group();
                 }
-                AppIdServiceState::check_reset(*asd, ip, port);
+                AppIdServiceState::check_reset(*asd, ip, port, group, asd->asid);
                 return false;
             }
             asd->previous_tcp_flags = p->ptrs.tcph->th_flags;

@@ -36,7 +36,8 @@ THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 
 void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t port1,
     uint16_t port2, IpProtocol protocol, const int version, uint16_t address_space_id,
-    const AppIdSession* session, bool log_all_sessions)
+    const AppIdSession* session, bool log_all_sessions, int16_t group1, int16_t group2,
+    bool inter_group_flow)
 {
     if (!( log_all_sessions or
            ( info.proto_match(protocol) and
@@ -52,6 +53,8 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
     const ip::snort_in6_addr* dip;
     uint16_t sport = 0;
     uint16_t dport = 0;
+    int16_t sgroup;
+    int16_t dgroup;
     char sipstr[INET6_ADDRSTRLEN];
     char dipstr[INET6_ADDRSTRLEN];
 
@@ -61,6 +64,8 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
         dip = (const ip::snort_in6_addr*)ip2;
         sport = port1;
         dport = port2;
+        sgroup = group1;
+        dgroup = group2;
     }
     else if (session->initiator_port)
     {
@@ -70,6 +75,8 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
             dip = (const ip::snort_in6_addr*)ip2;
             sport = port1;
             dport = port2;
+            sgroup = group1;
+            dgroup = group2;
         }
         else
         {
@@ -77,6 +84,8 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
             dip = (const ip::snort_in6_addr*)ip1;
             sport = port2;
             dport = port1;
+            sgroup = group2;
+            dgroup = group1;
         }
     }
     else if (memcmp(session->get_initiator_ip().get_ip6_ptr(),
@@ -86,6 +95,8 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
         dip = (const ip::snort_in6_addr*)ip2;
         sport = port1;
         dport = port2;
+        sgroup = group1;
+        dgroup = group2;
     }
     else
     {
@@ -93,13 +104,20 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
         dip = (const ip::snort_in6_addr*)ip1;
         sport = port2;
         dport = port1;
+        sgroup = group2;
+        dgroup = group1;
     }
     snort_inet_ntop(af, &sip->u6_addr32[(af == AF_INET)? 3 : 0], sipstr, sizeof(sipstr));
     snort_inet_ntop(af, &dip->u6_addr32[(af == AF_INET)? 3 : 0], dipstr, sizeof(dipstr));
 
-    snprintf(debug_session, sizeof(debug_session), "%s %hu -> %s %hu %hhu AS=%hu ID=%u",
+    char gr_buf[32] = {0};
+    if (inter_group_flow)
+        snprintf(gr_buf, sizeof(gr_buf), " GR=%hd-%hd", sgroup, dgroup);
+
+    snprintf(debug_session, sizeof(debug_session),
+        "%s %hu -> %s %hu %hhu AS=%hu ID=%u%s",
         sipstr, sport, dipstr, dport, static_cast<uint8_t>(protocol),
-        address_space_id, get_instance_id());
+        address_space_id, get_instance_id(), gr_buf);
 }
 
 void AppIdDebug::activate(const Flow *flow, const AppIdSession* session, bool log_all_sessions)
@@ -115,7 +133,8 @@ void AppIdDebug::activate(const Flow *flow, const AppIdSession* session, bool lo
     // (e.g., IPv4 src and IPv6 dst, or vice-versa). Once it is supported, we need to pass
     // two key->version here to create the proper debug_session string.
     activate(key->ip_l, key->ip_h, key->port_l, key->port_h, (IpProtocol)(key->ip_protocol),
-        key->version, key->addressSpaceId, session, log_all_sessions);
+        key->version, key->addressSpaceId, session, log_all_sessions,
+        key->group_l, key->group_h, key->flags.group_used);
 }
 
 void AppIdDebug::set_constraints(const char *desc,

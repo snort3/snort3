@@ -55,6 +55,8 @@ struct PS_HASH_KEY
     int protocol;
     SfIp scanner;
     SfIp scanned;
+    int16_t group;
+    uint16_t asid;
 };
 PADDING_GUARD_END
 
@@ -323,6 +325,7 @@ bool PortScan::ps_tracker_lookup(
         return false;
 
     ps_pkt->proto = key.protocol;
+    key.asid = p->pkth->address_space_id;
 
     /*
     **  Let's lookup the host that is being scanned, taking into account
@@ -334,9 +337,15 @@ bool PortScan::ps_tracker_lookup(
         key.scanner.clear();
 
         if (ps_pkt->reverse_pkt)
+        {
             key.scanned = *p->ptrs.ip_api.get_src();
+            key.group = p->get_ingress_group();
+        }
         else
+        {
             key.scanned = *p->ptrs.ip_api.get_dst();
+            key.group = p->get_egress_group();
+        }
 
         *scanned = ps_tracker_get(&key);
     }
@@ -347,9 +356,15 @@ bool PortScan::ps_tracker_lookup(
         key.scanned.clear();
 
         if (ps_pkt->reverse_pkt)
+        {
             key.scanner = *p->ptrs.ip_api.get_dst();
+            key.group = p->get_egress_group();
+        }
         else
+        {
             key.scanner = *p->ptrs.ip_api.get_src();
+            key.group = p->get_ingress_group();
+        }
 
         *scanner = ps_tracker_get(&key);
     }

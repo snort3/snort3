@@ -27,6 +27,7 @@
 #include "dce_smb_utils.h"
 #include "dce_smb2_utils.h"
 #include "detection/detection_util.h"
+#include "flow/flow_key.h"
 #include "main/snort_debug.h"
 
 using namespace snort;
@@ -41,6 +42,9 @@ Smb2SidHashKey get_key(uint64_t sid)
     memcpy(key.cip, flow->client_ip.get_ip6_ptr(), 4*sizeof(uint32_t));
     memcpy(key.sip, flow->server_ip.get_ip6_ptr(), 4*sizeof(uint32_t));
     key.sid = sid;
+    key.cgroup = flow->client_group;
+    key.sgroup = flow->server_group;
+    key.asid = flow->key->addressSpaceId;
     key.padding = 0;
     return key;
 }

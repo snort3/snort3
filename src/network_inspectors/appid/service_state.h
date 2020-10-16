@@ -148,10 +148,14 @@ class AppIdServiceState
 public:
     static bool initialize(size_t memcap);
     static void clean();
-    static ServiceDiscoveryState* add(const snort::SfIp*, IpProtocol, uint16_t port, bool decrypted, bool do_touch = false);
-    static ServiceDiscoveryState* get(const snort::SfIp*, IpProtocol, uint16_t port, bool decrypted, bool do_touch = false);
-    static void remove(const snort::SfIp*, IpProtocol, uint16_t port, bool decrypted);
-    static void check_reset(AppIdSession& asd, const snort::SfIp* ip, uint16_t port);
+    static ServiceDiscoveryState* add(const snort::SfIp*, IpProtocol, uint16_t port,
+        int16_t group, uint16_t asid, bool decrypted, bool do_touch = false);
+    static ServiceDiscoveryState* get(const snort::SfIp*, IpProtocol, uint16_t port,
+        int16_t group, uint16_t asid, bool decrypted, bool do_touch = false);
+    static void remove(const snort::SfIp*, IpProtocol, uint16_t port,
+        int16_t group, uint16_t asid, bool decrypted);
+    static void check_reset(AppIdSession& asd, const snort::SfIp* ip, uint16_t port,
+        int16_t group, uint16_t asid);
     static bool prune(size_t max_memory = 0, size_t num_items = -1u);
 };
 
@@ -160,24 +164,10 @@ PADDING_GUARD_BEGIN
 class AppIdServiceStateKey
 {
 public:
-    AppIdServiceStateKey()
-    {
-        ip.clear();
-        port = 0;
-        level = 0;
-        proto = IpProtocol::PROTO_NOT_SET;
-        padding[0] = padding[1] = padding[2] = 0;
-    }
-
-    AppIdServiceStateKey(const snort::SfIp* ip_in,
-        IpProtocol proto_in, uint16_t port_in, bool decrypted)
-    {
-        ip = *ip_in;
-        port = port_in;
-        level = decrypted != 0;
-        proto = proto_in;
-        padding[0] = padding[1] = padding[2] = 0;
-    }
+    AppIdServiceStateKey(const snort::SfIp* ip,
+        IpProtocol proto, uint16_t port, int16_t group, uint16_t asid, bool decrypted) :
+        ip(*ip), port(port), group(group), asid(asid), decrypted(decrypted), proto(proto)
+    { }
 
     bool operator<(const AppIdServiceStateKey& right) const
     {
@@ -187,9 +177,10 @@ public:
 private:
     snort::SfIp ip;
     uint16_t port;
-    uint32_t level;
+    int16_t group;
+    uint16_t asid;
+    bool decrypted;
     IpProtocol proto;
-    uint8_t padding[3];
 };
 PADDING_GUARD_END
 

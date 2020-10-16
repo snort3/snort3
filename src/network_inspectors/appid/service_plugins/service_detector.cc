@@ -70,13 +70,12 @@ int ServiceDetector::service_inprocess(AppIdSession& asd, const Packet* pkt, App
         asd.get_session_flags(APPID_SESSION_IGNORE_HOST | APPID_SESSION_UDP_REVERSED))
         return APPID_SUCCESS;
 
-    if (!asd.service_ip.is_set())
+    if (!asd.is_service_ip_set())
     {
-        asd.service_ip = *(pkt->ptrs.ip_api.get_src());
-        if (!asd.service_port)
-            asd.service_port = pkt->ptrs.sp;
+        uint16_t port = asd.get_service_port();
+        asd.set_service_info(*(pkt->ptrs.ip_api.get_src()),
+            port ? port : pkt->ptrs.sp, pkt->get_ingress_group());
     }
-
     return APPID_SUCCESS;
 }
 
@@ -86,6 +85,7 @@ int ServiceDetector::update_service_data(AppIdSession& asd, const Packet* pkt,
 {
     uint16_t port = 0;
     const SfIp* ip = nullptr;
+    int16_t group;
 
     asd.service_detector = this;
     asd.set_service_vendor(vendor, change_bits);
@@ -104,14 +104,16 @@ int ServiceDetector::update_service_data(AppIdSession& asd, const Packet* pkt,
         {
             ip = pkt->ptrs.ip_api.get_dst();
             port = pkt->ptrs.dp;
+            group = pkt->get_egress_group();
         }
         else
         {
             ip = pkt->ptrs.ip_api.get_src();
             port = pkt->ptrs.sp;
+            group = pkt->get_ingress_group();
         }
-        if (asd.service_port)
-            port = asd.service_port;
+        if (asd.get_service_port()) 
+            port = asd.get_service_port();
     }
     else
     {
@@ -119,17 +121,20 @@ int ServiceDetector::update_service_data(AppIdSession& asd, const Packet* pkt,
         {
             ip = pkt->ptrs.ip_api.get_src();
             port = pkt->ptrs.sp;
+            group = pkt->get_ingress_group();
         }
         else
         {
             ip = pkt->ptrs.ip_api.get_dst();
             port = pkt->ptrs.dp;
+            group = pkt->get_egress_group();
         }
     }
 
-    asd.service_ip = *ip;
-    asd.service_port = port;
-    ServiceDiscoveryState* sds = AppIdServiceState::add(ip, asd.protocol, port, asd.is_decrypted());
+    asd.set_service_info(*ip, port, group);
+
+    ServiceDiscoveryState* sds = AppIdServiceState::add(ip, asd.protocol, port,
+        group, asd.asid, asd.is_decrypted());
     sds->set_service_id_valid(this);
 
     return APPID_SUCCESS;

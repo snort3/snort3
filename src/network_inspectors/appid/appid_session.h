@@ -25,8 +25,10 @@
 #include <map>
 #include <mutex>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 
+#include <daq_common.h>
 #include "pub_sub/appid_events.h"
 
 #include "app_info_table.h"
@@ -233,8 +235,8 @@ private:
 class AppIdSession : public snort::FlowData
 {
 public:
-    AppIdSession(IpProtocol, const snort::SfIp*, uint16_t port,
-        AppIdInspector&, OdpContext&);
+    AppIdSession(IpProtocol, const snort::SfIp*, uint16_t port, AppIdInspector&,
+        OdpContext&, uint16_t asid = 0);
     ~AppIdSession() override;
 
     static AppIdSession* allocate_session(const snort::Packet*, IpProtocol,
@@ -251,13 +253,12 @@ public:
     std::unordered_map<unsigned, AppIdFlowData*> flow_data;
     uint64_t flags = 0;
     uint16_t initiator_port = 0;
+    uint16_t asid = 0;
 
     uint16_t session_packet_count = 0;
     uint16_t init_pkts_without_reply = 0;
     uint64_t init_bytes_without_reply = 0;
 
-    snort::SfIp service_ip;
-    uint16_t service_port = 0;
     IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
     uint8_t previous_tcp_flags = 0;
 
@@ -563,6 +564,28 @@ public:
         return tp_appid_ctxt;
     }
 
+    void set_service_info(const snort::SfIp& ip, uint16_t port, int16_t group = DAQ_PKTHDR_UNKNOWN)
+    {
+        service_ip = ip;
+        service_port = port;
+        service_group = group;
+    }
+
+    std::tuple<const snort::SfIp*, uint16_t, int16_t>  get_service_info() const
+    {
+        return std::make_tuple(&service_ip, service_port, service_group);
+    }
+    
+    uint16_t get_service_port() const
+    {
+        return service_port;
+    }
+
+    bool is_service_ip_set() const
+    {
+        return service_ip.is_set();
+    }
+
 private:
     uint16_t prev_http2_raw_packet = 0;
 
@@ -575,6 +598,10 @@ private:
     // appId determined by 3rd party library
     AppId tp_app_id = APP_ID_NONE;
     AppId tp_payload_app_id = APP_ID_NONE;
+
+    snort::SfIp service_ip;
+    uint16_t service_port = 0;
+    int16_t service_group = DAQ_PKTHDR_UNKNOWN;
 
     uint16_t my_inferred_svcs_ver = 0;
     snort::AppIdSessionApi& api;

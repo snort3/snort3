@@ -88,9 +88,9 @@ OdpContext::~OdpContext() { }
 AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);
 OdpContext stub_odp_ctxt(stub_config, nullptr);
-AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector&, OdpContext&)
-    : FlowData(0), config(stub_config), api(*(new AppIdSessionApi(this, *ip))),
-    odp_ctxt(stub_odp_ctxt) { }
+AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector&,
+    OdpContext&, uint16_t) : FlowData(0), config(stub_config),
+    api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt) { }
 AppIdSession::~AppIdSession() = default;
 AppIdDiscovery::~AppIdDiscovery() {}
 void ClientDiscovery::initialize() { }
@@ -210,8 +210,8 @@ TEST(service_state_tests, appid_service_state_key_comparison_test)
     IpProtocol proto = IpProtocol::TCP;
     uint16_t port=3000;
 
-    AppIdServiceStateKey A(&ip4, proto, port, 0);
-    AppIdServiceStateKey B(&ip6, proto, port, 0);
+    AppIdServiceStateKey A(&ip4, proto, port, 0, DAQ_PKTHDR_UNKNOWN, 0);
+    AppIdServiceStateKey B(&ip6, proto, port, 0, DAQ_PKTHDR_UNKNOWN, 0);
 
     // We must never be in a situation where !( A<B ) and !( B<A ),
     // because then map will consider A=B.
@@ -238,7 +238,7 @@ TEST(service_state_tests, service_cache)
     for( size_t i = 1; i <= num_entries; i++, port++ )
     {
         const SfIp* ip = ( i%2 == 1 ? &ip4 : &ip6 );
-        ss = ServiceCache.add( AppIdServiceStateKey(ip, proto, port, 0) );
+        ss = ServiceCache.add( AppIdServiceStateKey(ip, proto, port, 0, DAQ_PKTHDR_UNKNOWN, 0) );
         CHECK_TRUE(ServiceCache.size() == ( i <= max_entries ? i : max_entries));
         ssvec.push_back(ss);
     }

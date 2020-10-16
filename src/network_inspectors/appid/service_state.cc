@@ -213,20 +213,23 @@ void AppIdServiceState::clean()
 }
 
 ServiceDiscoveryState* AppIdServiceState::add(const SfIp* ip, IpProtocol proto, uint16_t port,
-    bool decrypted, bool do_touch)
+    int16_t group, uint16_t asid, bool decrypted, bool do_touch)
 {
-    return service_state_cache->add( AppIdServiceStateKey(ip, proto, port, decrypted), do_touch );
+    return service_state_cache->add( AppIdServiceStateKey(ip, proto, port, group,
+        asid, decrypted), do_touch );
 }
 
 ServiceDiscoveryState* AppIdServiceState::get(const SfIp* ip, IpProtocol proto, uint16_t port,
-    bool decrypted, bool do_touch)
+    int16_t group, uint16_t asid, bool decrypted, bool do_touch)
 {
-    return service_state_cache->get( AppIdServiceStateKey(ip, proto, port, decrypted), do_touch);
+    return service_state_cache->get( AppIdServiceStateKey(ip, proto, port, group,
+        asid, decrypted), do_touch);
 }
 
-void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port, bool decrypted)
+void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port, 
+    int16_t group, uint16_t asid, bool decrypted)
 {
-    AppIdServiceStateKey ssk(ip, proto, port, decrypted);
+    AppIdServiceStateKey ssk(ip, proto, port, group, asid, decrypted);
     Map_t::iterator it = service_state_cache->find(ssk);
 
     if ( !service_state_cache->remove(it) )
@@ -239,17 +242,19 @@ void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port, 
     }
 }
 
-void AppIdServiceState::check_reset(AppIdSession& asd, const SfIp* ip, uint16_t port)
+void AppIdServiceState::check_reset(AppIdSession& asd, const SfIp* ip, uint16_t port,
+    int16_t group, uint16_t asid)
 {
     ServiceDiscoveryState* sds = AppIdServiceState::get(ip, IpProtocol::TCP, port,
-        asd.is_decrypted());
+        group, asid, asd.is_decrypted());
     if ( sds )
     {
         if ( !sds->get_reset_time() )
             sds->set_reset_time(packet_time() );
         else if ( ( packet_time() - sds->get_reset_time() ) >= 60 )
         {
-            AppIdServiceState::remove(ip, IpProtocol::TCP, port, asd.is_decrypted());
+            AppIdServiceState::remove(ip, IpProtocol::TCP, port, group,
+                asid, asd.is_decrypted());
             // FIXIT-RC - Remove if this flag not used anywhere
             asd.set_session_flags(APPID_SESSION_SERVICE_DELETED);
         }

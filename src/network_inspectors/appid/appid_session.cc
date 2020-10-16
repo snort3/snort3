@@ -84,7 +84,8 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
         (p->ptrs.sp != p->ptrs.dp))
         port = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
 
-    AppIdSession* asd = new AppIdSession(proto, ip, port, *inspector, odp_context);
+    AppIdSession* asd = new AppIdSession(proto, ip, port, *inspector, odp_context,
+        p->pkth->address_space_id);
     asd->flow = p->flow;
     asd->stats.first_packet_second = p->pkth->ts.tv_sec;
     asd->snort_protocol_id = asd->config.snort_proto_ids[PROTO_INDEX_UNSYNCHRONIZED];
@@ -93,14 +94,14 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
 }
 
 AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
-    AppIdInspector& inspector, OdpContext& odp_ctxt)
+    AppIdInspector& inspector, OdpContext& odp_ctxt, uint16_t asid)
     : FlowData(inspector_id, &inspector), config(inspector.get_ctxt().config),
-        protocol(proto), api(*(new AppIdSessionApi(this, *ip))),
-        odp_ctxt(odp_ctxt), tp_appid_ctxt(inspector.get_ctxt().get_tp_appid_ctxt())
+        initiator_port(port), asid(asid), protocol(proto),
+        api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(odp_ctxt),
+        odp_ctxt_version(odp_ctxt.get_version()),
+        tp_appid_ctxt(inspector.get_ctxt().get_tp_appid_ctxt())
 {
     service_ip.clear();
-    initiator_port = port;
-    odp_ctxt_version = odp_ctxt.get_version();
 
     appid_stats.total_sessions++;
 }
@@ -118,7 +119,8 @@ AppIdSession::~AppIdSession()
             APPID_SESSION_OOO) and flow)
         {
             ServiceDiscoveryState* sds =
-                AppIdServiceState::get(&service_ip, protocol, service_port, is_decrypted());
+                AppIdServiceState::get(&service_ip, protocol, service_port, service_group,
+                    asid, is_decrypted());
             if (sds)
             {
                 if (flow->server_ip.fast_eq6(service_ip))
@@ -190,7 +192,7 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     // FIXIT-RC - port parameter passed in as 0 since we may not know client port, verify
 
     AppIdSession* asd = new AppIdSession(proto, cliIp, 0, *inspector,
-        inspector->get_ctxt().get_odp_ctxt());
+        inspector->get_ctxt().get_odp_ctxt(), ctrlPkt->pkth->address_space_id);
 
     if (Stream::set_snort_protocol_id_expected(ctrlPkt, type, proto, cliIp,
         cliPort, srvIp, srvPort, snort_protocol_id, asd, swap_app_direction))
