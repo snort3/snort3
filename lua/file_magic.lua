@@ -1,7 +1,7 @@
 file_magic =
 {
     { type = 'XLW', id = 1, category = 'Office Documents', msg = 'Excel spreadsheet subheader (MS Office)', rev = 1, group = 'office', magic = { { content = '| 09 08 10 00 00 06 05 00  |', offset = 512, }, }, },
-    { type = 'POSIX_TAR', id = 2, category = 'Archive', msg = 'POSIX Tape Archive file', rev = 1, magic = { { content = '| 75 73 74 61 72 00 20 20 |', offset = 257, }, }, },
+    { type = 'POSIX_TAR', id = 2, category = 'Archive', msg = 'POSIX Tape Archive file', rev = 1, magic = { { content = '| 75 73 74 61 72 00 |', offset = 257, }, }, },
     { type = 'OLD_TAR', id = 3, category = 'Archive', msg = 'Pre-POSIX Tape Archive file', rev = 1, magic = { { content = '| 75 73 74 61 72 20 |', offset = 257, }, }, },
     { type = 'MOV', id = 4, category = 'Multimedia', msg = 'QuickTime movie file', rev = 1, group = 'video', magic = { { content = '| 66 72 65 65  |', offset = 4, }, }, },
     { type = 'MOV', id = 5, category = 'Multimedia', msg = 'QuickTime movie file', rev = 1, group = 'video', magic = { { content = '| 6D 6F 6F 76  |', offset = 4, }, }, },
