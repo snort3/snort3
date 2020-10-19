@@ -83,15 +83,24 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
             and service > APP_ID_NONE )
         {
             const char* version = appid_session_api.get_client_version();
-            discover_client(p, ht, (const struct in6_addr*) src_ip->get_ip6_ptr(), src_mac,
-                conf, logger, version, client, service);
+            if ( p->packet_flags & PKT_FROM_SERVER )
+            {
+                auto cht = host_cache.find(p->flow->client_ip);
+                if (cht)
+                    discover_client(p, cht, (const struct in6_addr*) &p->flow->client_ip,
+                        layer::get_eth_layer(p)->ether_dst, conf, logger, version, client,
+                        service);
+            }
+            else
+                discover_client(p, ht, (const struct in6_addr*) &p->flow->client_ip,
+                    src_mac, conf, logger, version, client, service);
         }
 
         if ( appid_change_bits[APPID_PAYLOAD_BIT] and payload > APP_ID_NONE and
             service > APP_ID_NONE)
         {
              discover_payload(p, proto, ht, (const struct in6_addr*) src_ip->get_ip6_ptr(),
-                 src_mac, conf, logger, service, payload);
+                 src_mac, conf, logger, service, payload, client);
         }
     }
 
@@ -168,7 +177,7 @@ void RnaAppDiscovery::discover_service(const Packet* p, IpProtocol proto, RnaTra
 
 void RnaAppDiscovery::discover_payload(const Packet* p, IpProtocol proto, RnaTracker& rt,
     const struct in6_addr* src_ip, const uint8_t* src_mac, RnaConfig* conf,
-    RnaLogger& logger, AppId service, AppId payload)
+    RnaLogger& logger, AppId service, AppId payload, AppId client)
 {
     uint16_t lookup_port;
     size_t max_payloads = 0;
@@ -181,13 +190,39 @@ void RnaAppDiscovery::discover_payload(const Packet* p, IpProtocol proto, RnaTra
     if ( conf and conf->max_payloads )
         max_payloads = conf->max_payloads;
 
-    HostApplication local_ha;
-    bool new_pld = rt->add_payload(local_ha, lookup_port, proto, payload, service, max_payloads);
-
-    if ( new_pld )
+    // Add server payload
+    if ( p->is_from_server() )
     {
-        logger.log(RNA_EVENT_CHANGE, CHANGE_CLIENT_APP_UPDATE, p, &rt, src_ip, src_mac, &local_ha);
+        HostApplication local_ha;
+        bool new_pld = rt->add_payload(local_ha, lookup_port, proto, payload, service,
+            max_payloads);
+
+        if ( new_pld )
+        {
+	        if ( proto == IpProtocol::TCP )
+	            logger.log(RNA_EVENT_CHANGE, CHANGE_TCP_SERVICE_INFO, p, &rt,
+	                (const struct in6_addr*) src_ip, src_mac, &local_ha);
+	        else
+	            logger.log(RNA_EVENT_CHANGE, CHANGE_UDP_SERVICE_INFO, p, &rt,
+	                (const struct in6_addr*) src_ip, src_mac, &local_ha);
+        }
     }
+
+    // Add client payloads
+    bool new_client_payload = false;
+    auto client_ht = host_cache.find(p->flow->client_ip);
+
+    if (!client_ht)
+        return;
+
+    HostClient hc(client, nullptr, service);
+    auto client_ip = (const struct in6_addr*) p->flow->client_ip.get_ip6_ptr();
+
+    new_client_payload = client_ht->add_client_payload(hc, payload, max_payloads);
+
+    if (new_client_payload)
+        logger.log(RNA_EVENT_CHANGE, CHANGE_CLIENT_APP_UPDATE, p, &client_ht, client_ip,
+            client_ht->get_last_seen_mac(), &hc);
 }
 
 void RnaAppDiscovery::update_service_info(const Packet* p, IpProtocol proto, const char* vendor,
@@ -225,11 +260,9 @@ void RnaAppDiscovery::discover_client(const Packet* p, RnaTracker& rt,
 
     bool is_new = false;
 
-    auto hc = rt->get_client(client, version, service, is_new);
+    auto hc = rt->find_or_add_client(client, version, service, is_new);
     if ( is_new )
-    {
         logger.log(RNA_EVENT_NEW, NEW_CLIENT_APP, p, &rt, src_ip, src_mac, &hc);
-    }
 }
 
 void RnaAppDiscovery::discover_user(const Packet* p, RnaTracker& rt,

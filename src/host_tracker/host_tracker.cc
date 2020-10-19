@@ -85,9 +85,11 @@ bool HostTracker::add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary)
     return true;
 }
 
-
-bool HostTracker::add_payload_no_lock(const AppId pld, HostApplication* ha)
+bool HostTracker::add_payload_no_lock(const AppId pld, HostApplication* ha, size_t max_payloads)
 {
+    if ( max_payloads and ha->payloads.size() >= max_payloads )
+        return false;
+
     for ( const auto& app : ha->payloads )
         if ( app == pld )
             return false;
@@ -276,6 +278,31 @@ void HostTracker::clear_service(HostApplication& ha)
     ha.info.clear();
 }
 
+bool HostTracker::add_client_payload(HostClient& hc, AppId payload, size_t max_payloads)
+{
+    std::lock_guard<std::mutex> lck(host_tracker_lock);
+
+    for ( auto& client : clients )
+        if ( client.id == hc.id and client.service == hc.service )
+        {
+            if ( max_payloads and client.payloads.size() >= max_payloads )
+                return false;
+
+            for (const auto& pld : client.payloads)
+            {
+                if ( pld == payload )
+                    return false;
+            }
+
+            client.payloads.emplace_back(payload);
+            hc.payloads = client.payloads;
+            strncpy(hc.version, client.version, INFO_SIZE);
+            return true;
+        }
+
+    return false;
+}
+
 bool HostTracker::add_service(HostApplication& app, bool* added)
 {
     host_tracker_stats.service_adds++;
@@ -348,10 +375,11 @@ bool HostTracker::add_payload(HostApplication& local_ha, Port port, IpProtocol p
 
     auto ha = find_service_no_lock(port, proto, service);
 
-    if (ha and ha->payloads.size() < max_payloads)
+    if (ha)
     {
-        bool success = add_payload_no_lock(payload, ha);
+        bool success = add_payload_no_lock(payload, ha, max_payloads);
         local_ha = *ha;
+        local_ha.payloads = ha->payloads;
         return success;
     }
 
@@ -548,7 +576,8 @@ HostClient::HostClient(AppId clientid, const char *ver, AppId ser) :
     }
 }
 
-HostClient HostTracker::get_client(AppId id, const char* version, AppId service, bool& is_new)
+HostClient HostTracker::find_or_add_client(AppId id, const char* version, AppId service,
+    bool& is_new)
 {
     lock_guard<mutex> lck(host_tracker_lock);
 
@@ -667,6 +696,15 @@ void HostTracker::stringify(string& str)
                 + ", service: " + to_string(c.service);
             if ( c.version[0] != '\0' )
                 str += ", version: " + string(c.version);
+
+            auto total_payloads = c.payloads.size();
+            if ( total_payloads )
+            {
+                str += ", payload";
+                str += (total_payloads > 1) ? "s: " : ": ";
+                for ( const auto& pld : c.payloads )
+                    str += to_string(pld) + (--total_payloads ? ", " : "");
+            }
         }
     }
 

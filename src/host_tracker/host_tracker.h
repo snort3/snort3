@@ -119,6 +119,7 @@ struct HostClient
     AppId id;
     char version[INFO_SIZE] = { 0 };
     AppId service;
+    std::vector<AppId, HostCacheAllocIp<AppId>> payloads;
 };
 
 struct DeviceFingerprint
@@ -206,6 +207,8 @@ public:
         hops = h;
     }
 
+    bool add_client_payload(HostClient&, AppId, size_t);
+
     // Returns true if a new mac entry is added, false otherwise
     bool add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary);
 
@@ -261,7 +264,8 @@ public:
     void remove_inferred_services();
 
     size_t get_client_count();
-    HostClient get_client(AppId id, const char* version, AppId service, bool& is_new);
+    HostClient find_or_add_client(AppId id, const char* version, AppId service,
+        bool& is_new);
     bool add_tcp_fingerprint(uint32_t fpid);
     bool add_ua_fingerprint(uint32_t fpid, uint32_t fp_type, bool jail_broken,
         const char* device_info, uint8_t max_devices);
@@ -347,7 +351,7 @@ private:
     // These two do not lock independently; they are used by payload discovery and called
     // from add_payload(HostApplication&, Port, IpProtocol, AppId, AppId, size_t); where the
     // lock is actually obtained
-    bool add_payload_no_lock(const AppId, HostApplication*);
+    bool add_payload_no_lock(const AppId, HostApplication*, size_t);
     HostApplication* find_service_no_lock(Port, IpProtocol, AppId);
 
     // ... and some unit tests. See Utest.h and UtestMacros.h in cpputest.

@@ -284,7 +284,7 @@ struct SO_PUBLIC Packet
 
     bool is_from_server_originally() const
     { return (!flow || flow->flags.client_initiated) ? is_from_server() : is_from_client(); }
-    
+
     bool is_from_application_client() const;
 
     bool is_from_application_server() const;
@@ -317,7 +317,7 @@ struct SO_PUBLIC Packet
 
     bool is_inter_group_flow() const
     { return (pkth->flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS) != 0; }
-    
+
     bool test_session_flags(uint32_t);
 
     SnortProtocolId get_snort_protocol_id();
@@ -336,7 +336,7 @@ struct SO_PUBLIC Packet
     {
         if (is_inter_group_flow())
             return pkth->ingress_group;
-        
+
         return DAQ_PKTHDR_UNKNOWN;
     }
 
@@ -344,7 +344,7 @@ struct SO_PUBLIC Packet
     {
         if (is_inter_group_flow())
             return pkth->egress_group;
-        
+
         return DAQ_PKTHDR_UNKNOWN;
     }
 

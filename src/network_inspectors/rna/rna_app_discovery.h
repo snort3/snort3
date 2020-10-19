@@ -33,7 +33,8 @@ public:
 
     static void discover_payload(const snort::Packet*, IpProtocol, RnaTracker&,
         const struct in6_addr*, const uint8_t*, RnaConfig*, RnaLogger&,
-        AppId service, AppId payload);
+        AppId service, AppId payload, AppId client);
+
 
     static void discover_client(const snort::Packet*, RnaTracker&,
         const struct in6_addr*, const uint8_t*, RnaConfig*,
