@@ -26,7 +26,7 @@
 
 using namespace snort;
 
-void TextConfigOutput::dump_value(const BaseConfigNode* node, const std::string& config_name)
+static void dump_value(const BaseConfigNode* node, const std::string& config_name)
 {
     const Value* value = node->get_value();
     if ( !value )
@@ -56,32 +56,29 @@ void TextConfigOutput::dump_value(const BaseConfigNode* node, const std::string&
     }
 }
 
-void TextConfigOutput::dump_modules(const BaseConfigNode* parent, const std::string& config_name)
+static void dump_tree(const BaseConfigNode* node, const std::string& config_name)
 {
-    static char buf[16];
-    int list_index = 0;
-    for ( const auto node : parent->get_children() )
+    Parameter::Type node_type = node->get_type();
+
+    if ( node_type == Parameter::PT_TABLE )
     {
-        std::string full_config_name(config_name);
-        std::string node_name = node->get_name();
-
-        if ( !node_name.empty() )
-        {
-            full_config_name += ".";
-            full_config_name += node_name;
-        }
-        else
-        {
-            sprintf(buf, "%i", list_index++);
-            full_config_name += "[";
-            full_config_name += buf;
-            full_config_name += "]";
-        }
-
-        dump_modules(node, full_config_name);
+        for ( const auto child : node->get_children() )
+            dump_tree(child, config_name + "." + child->get_name());
     }
-
-    dump_value(parent, config_name);
+    else if ( node_type == Parameter::PT_LIST )
+    {
+        char suffix[16];
+        int list_index = 0;
+        for ( const auto child : node->get_children() )
+        {
+            snprintf(suffix, 16, "[%i]", list_index);
+            const std::string full_config_name = config_name + suffix;
+            dump_tree(child, full_config_name);
+            list_index++;
+        }
+    }
+    else
+        dump_value(node, config_name);
 }
 
 void TextConfigOutput::dump(const ConfigData& config_data)
@@ -91,6 +88,6 @@ void TextConfigOutput::dump(const ConfigData& config_data)
     std::cout << output << std::endl;
 
     for ( const auto config_tree: config_data.config_trees )
-        dump_modules(config_tree, config_tree->get_name());
+        dump_tree(config_tree, config_tree->get_name());
 }
 

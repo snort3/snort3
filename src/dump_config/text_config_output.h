@@ -33,9 +33,6 @@ public:
 
 private:
     void dump(const ConfigData&) override;
-
-    void dump_modules(const BaseConfigNode* parent, const std::string& config_name);
-    void dump_value(const BaseConfigNode* parent, const std::string& config_name);
 };
 
 #endif // TEXT_CONFIG_OUTPUT_H

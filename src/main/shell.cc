@@ -244,14 +244,10 @@ void Shell::set_config_value(const std::string& fqn, const snort::Value& value)
     if ( !s_config_output || !s_current_node )
         return;
 
-    // lua interpreter does not call open_table for simple list items like (string)
-    // we have to add tree node for this item
+    // don't give names to list elements
     if ( s_current_node->get_type() == Parameter::PT_LIST )
     {
-        add_config_child_node("", Parameter::PT_TABLE);
-        s_current_node->add_child_node(new ValueConfigNode(s_current_node, value));
-        s_current_node = s_current_node->get_parent_node();
-
+        s_current_node->add_child_node(new ValueConfigNode(s_current_node, value, ""));
         return;
     }
 

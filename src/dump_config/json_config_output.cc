@@ -27,7 +27,7 @@
 
 using namespace snort;
 
-static void dump_value(JsonStream& json, const BaseConfigNode* node)
+static void dump_value(JsonStream& json, const char* node_name, const BaseConfigNode* node)
 {
     const Value* value = node->get_value();
     if ( !value )
@@ -37,11 +37,11 @@ static void dump_value(JsonStream& json, const BaseConfigNode* node)
     {
     case Parameter::PT_BOOL:
     case Parameter::PT_IMPLIED:
-        value->get_bool() ? json.put_true(node->get_name().c_str()) :
-            json.put_false(node->get_name().c_str());
+        value->get_bool() ? json.put_true(node_name) :
+            json.put_false(node_name);
         break;
     case Parameter::PT_INT:
-        json.put(node->get_name().c_str(), value->get_long());
+        json.put(node_name, value->get_long());
         break;
     case Parameter::PT_REAL:
     {
@@ -51,35 +51,40 @@ static void dump_value(JsonStream& json, const BaseConfigNode* node)
         if ( pos != std::string::npos )
             precision = value_str.size() - pos - 1;
 
-        json.put(node->get_name().c_str(), value->get_real(), precision);
+        json.put(node_name, value->get_real(), precision);
         break;
     }
     default:
-        json.put(node->get_name().c_str(), value->get_origin_string());
+        json.put(node_name, value->get_origin_string());
         break;
     }
 }
 
-static void dump_modules(JsonStream& json, const BaseConfigNode* node)
+static void dump_tree(JsonStream& json, const BaseConfigNode* node, bool list_node = false)
 {
-    Parameter::Type type = node->get_type();
-    if ( type == Parameter::PT_LIST )
-        json.open_array(node->get_name().c_str());
-    else if ( type == Parameter::PT_TABLE )
+    Parameter::Type node_type = node->get_type();
+    const std::string node_name = node->get_name();
+    const char* node_name_cstr = nullptr;
+
+    if ( !list_node )
+        node_name_cstr = node_name.c_str();
+
+    if ( node_type == Parameter::PT_TABLE )
     {
-        std::string name = node->get_name();
-        name.empty() ? json.open() : json.open(name.c_str());
+        json.open(node_name_cstr);
+        for ( const auto n : node->get_children() )
+            dump_tree(json, n);
+        json.close();
+    }
+    else if ( node_type == Parameter::PT_LIST )
+    {
+        json.open_array(node_name_cstr);
+        for ( const auto n : node->get_children() )
+            dump_tree(json, n, true);
+        json.close_array();
     }
     else
-        dump_value(json, node);
-
-    for ( const auto n : node->get_children() )
-        dump_modules(json, n);
-
-    if ( type == Parameter::PT_LIST )
-        json.close_array();
-    else if ( type == Parameter::PT_TABLE )
-        json.close();
+        dump_value(json, node_name_cstr, node);
 }
 
 JsonAllConfigOutput::JsonAllConfigOutput() :
@@ -96,7 +101,7 @@ void JsonAllConfigOutput::dump(const ConfigData& config_data)
     json.open("config");
 
     for ( const auto config_tree: config_data.config_trees )
-        dump_modules(json, config_tree);
+        dump_tree(json, config_tree);
 
     json.close();
     json.close();
@@ -107,7 +112,7 @@ void JsonTopConfigOutput::dump(const ConfigData& config_data)
     json.open();
 
     for ( const auto config_tree: config_data.config_trees )
-        dump_modules(json, config_tree);
+        dump_tree(json, config_tree);
 
     json.close();
 }
