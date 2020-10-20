@@ -232,7 +232,9 @@ void FtpDataFlowData::handle_expected(Packet* p)
         {
             OpportunisticTlsEvent evt(p, fd_svc_name);
             DataBus::publish(OPPORTUNISTIC_TLS_EVENT, evt, p->flow);
-        }   
+        }
+        else
+            DataBus::publish(SSL_SEARCH_ABANDONED, p);
     }
 }
 
@@ -261,6 +263,9 @@ public:
     StreamSplitter* get_splitter(bool to_server) override;
 
     bool can_carve_files() const override
+    { return true; }
+
+    bool can_start_tls() const override
     { return true; }
 };
 
