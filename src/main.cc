@@ -52,6 +52,8 @@
 #include "target_based/host_attributes.h"
 #include "time/periodic.h"
 #include "trace/trace_api.h"
+#include "trace/trace_config.h"
+#include "trace/trace_logger.h"
 #include "utils/util.h"
 #include "utils/safec.h"
 
@@ -381,6 +383,13 @@ int main_reload_config(lua_State* L)
         LogMessage( "host attribute table: %d hosts loaded\n", num_hosts);
     else
         LogMessage("No host attribute table loaded\n");
+
+    if ( !old or !old->trace_config or !old->trace_config->initialized )
+    {
+        LogMessage("== WARNING: Trace module was not configured during "
+            "initial startup. Ignoring the new trace configuration.\n");
+        sc->trace_config->clear();
+    }
 
     PluginManager::reload_so_plugins_cleanup(sc);
     SnortConfig::set_conf(sc);

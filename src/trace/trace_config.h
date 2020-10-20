@@ -39,13 +39,14 @@ public:
     bool set_trace(const std::string& module_name,
         const std::string& trace_option_name, uint8_t trace_level);
 
+    void clear();
     void clear_traces();
 
 public:
     snort::TraceLoggerFactory* logger_factory = nullptr;
     snort::PacketConstraints* constraints = nullptr;
     bool log_ntuple = false;
-
+    bool initialized = false;
 private:
     Traces traces;
 };

@@ -145,9 +145,17 @@ void TraceSwap::print_msg() const
 
 static int set(lua_State* L)
 {
+    const SnortConfig* sc = SnortConfig::get_conf();
+
+    if ( !sc->trace_config->initialized )
+    {
+        LogMessage("== WARNING: Trace module was not configured during "
+            "initial startup. Ignoring the new trace configuration.\n");
+        return 0;
+    }
+
     // Create an overlay TraceConfig based on the current configuration
     // It will be set in a SnortConfig during TraceSwap execution and owned by it after
-    const SnortConfig* sc = SnortConfig::get_conf();
     TraceConfig* trace_config = new TraceConfig(sc->overlay_trace_config
         ? *sc->overlay_trace_config : *sc->trace_config);
 

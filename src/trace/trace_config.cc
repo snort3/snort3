@@ -72,6 +72,14 @@ bool TraceConfig::set_trace(const std::string& module_name, const std::string& t
     return false;
 }
 
+void TraceConfig::clear()
+{
+    clear_traces();
+    initialized = false;
+    delete logger_factory;
+    logger_factory = nullptr;
+}
+
 void TraceConfig::clear_traces()
 {
     for ( auto& trace : traces )

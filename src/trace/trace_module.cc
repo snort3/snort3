@@ -239,6 +239,8 @@ bool TraceModule::end(const char* fqn, int, SnortConfig* sc)
             trace_parser->finalize_constraints();
         }
 
+        trace_parser->get_trace_config().initialized = true;
+
         delete trace_parser;
         trace_parser = nullptr;
     }

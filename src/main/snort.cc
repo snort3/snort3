@@ -68,6 +68,8 @@
 #include "target_based/host_attributes.h"
 #include "time/periodic.h"
 #include "trace/trace_api.h"
+#include "trace/trace_config.h"
+#include "trace/trace_logger.h"
 #include "utils/util.h"
 
 #ifdef PIGLET
@@ -535,8 +537,18 @@ SnortConfig* Snort::get_updated_policy(
 
     if ( fname )
     {
+        bool uninitialized_trace = !other_conf->trace_config or
+            !other_conf->trace_config->initialized;
+
         Shell sh = Shell(fname);
         sh.configure(sc, false, true);
+
+        if ( uninitialized_trace )
+        {
+            LogMessage("== WARNING: Trace module was not configured during "
+                "initial startup. Ignoring the new trace configuration.\n");
+            sc->trace_config->clear();
+        }
 
         if ( ModuleManager::get_errors() || !sc->verify() )
         {
