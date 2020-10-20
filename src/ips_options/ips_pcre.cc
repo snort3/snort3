@@ -444,7 +444,7 @@ public:
     { return (config->options & SNORT_PCRE_RELATIVE) != 0; }
 
     EvalStatus eval(Cursor&, Packet*) override;
-    bool retry(Cursor&) override;
+    bool retry(Cursor&, const Cursor&) override;
 
     PcreData* get_data()
     { return config; }
@@ -593,7 +593,7 @@ IpsOption::EvalStatus PcreOption::eval(Cursor& c, Packet* p)
 // using content, but more advanced pcre won't work for the relative /
 // overlap case.
 
-bool PcreOption::retry(Cursor&)
+bool PcreOption::retry(Cursor&, const Cursor&)
 {
     if ((config->options & (SNORT_PCRE_INVERT | SNORT_PCRE_ANCHORED)))
     {

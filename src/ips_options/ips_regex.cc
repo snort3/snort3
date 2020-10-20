@@ -87,7 +87,7 @@ public:
     bool is_relative() override
     { return config.pmd.is_relative(); }
 
-    bool retry(Cursor&) override;
+    bool retry(Cursor&, const Cursor&) override;
 
     PatternMatchData* get_pattern(SnortProtocolId, RuleDirection) override
     { return &config.pmd; }
@@ -194,7 +194,7 @@ IpsOption::EvalStatus RegexOption::eval(Cursor& c, Packet*)
     return NO_MATCH;
 }
 
-bool RegexOption::retry(Cursor&)
+bool RegexOption::retry(Cursor&, const Cursor&)
 { return !is_relative(); }
 
 //-------------------------------------------------------------------------

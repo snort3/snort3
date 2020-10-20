@@ -315,7 +315,7 @@ TEST(ips_regex_option, match_absolute)
     Cursor c(&pkt);
     CHECK(opt->eval(c, &pkt) == IpsOption::MATCH);
     CHECK(!strcmp((const char*) c.start(), " stew *"));
-    CHECK(opt->retry(c));
+    CHECK(opt->retry(c,c));
 }
 
 TEST(ips_regex_option, no_match_delta)
@@ -370,7 +370,7 @@ TEST(ips_regex_option_relative, no_match)
 
     CHECK(opt->is_relative());
     CHECK(opt->eval(c, &pkt) == IpsOption::NO_MATCH);
-    CHECK(!opt->retry(c));
+    CHECK(!opt->retry(c,c));
 }
 
 //-------------------------------------------------------------------------

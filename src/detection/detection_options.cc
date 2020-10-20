@@ -355,7 +355,7 @@ int detection_option_node_evaluate(
     RuleContext profile(state);
 
     int result = 0;
-    int rval = (int)IpsOption::NO_MATCH;  // FIXIT-L refactor to eliminate casts to int
+    int rval;
     char tmp_noalert_flag = 0;
     Cursor cursor = orig_cursor;
     bool continue_loop = true;
@@ -411,6 +411,7 @@ int detection_option_node_evaluate(
     // No, haven't evaluated this one before... Check it.
     do
     {
+        rval = (int)IpsOption::NO_MATCH;  // FIXIT-L refactor to eliminate casts to int.
         if ( node->otn )
         {
             SnortProtocolId snort_protocol_id = p->get_snort_protocol_id();
@@ -681,7 +682,7 @@ int detection_option_node_evaluate(
         if ( continue_loop && rval == (int)IpsOption::MATCH && node->relative_children )
         {
             IpsOption* opt = (IpsOption*)node->option_data;
-            continue_loop = opt->retry(cursor);
+            continue_loop = opt->retry(cursor, orig_cursor);
         }
         else
             continue_loop = false;

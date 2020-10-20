@@ -102,7 +102,7 @@ public:
     EvalStatus eval(Cursor&, snort::Packet*) override;
     uint32_t hash() const override;
     bool operator==(const snort::IpsOption& ips) const override;
-    bool retry(Cursor&) override;
+    bool retry(Cursor&, const Cursor&) override;
     static IpsOption* opt_ctor(snort::Module* m, OptTreeNode*)
         { return new HttpIpsOption((HttpCursorModule*)m); }
     static void opt_dtor(snort::IpsOption* p) { delete p; }

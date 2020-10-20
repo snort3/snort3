@@ -87,7 +87,7 @@ public:
 
     // packet threads
     virtual bool is_relative() { return false; }
-    virtual bool retry(Cursor&) { return false; }
+    virtual bool retry(Cursor&, const Cursor&) { return false; }
     virtual void action(Packet*) { }
 
     enum EvalStatus { NO_MATCH, MATCH, NO_ALERT, FAILED_BIT };

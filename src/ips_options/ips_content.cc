@@ -144,7 +144,7 @@ public:
     bool is_relative() override
     { return config->pmd.is_relative(); }
 
-    bool retry(Cursor&) override;
+    bool retry(Cursor&, const Cursor&) override;
 
     ContentData* get_data()
     { return config; }
@@ -162,7 +162,7 @@ protected:
     ContentData* config;
 };
 
-bool ContentOption::retry(Cursor& c)
+bool ContentOption::retry(Cursor& current_cursor, const Cursor& orig_cursor)
 {
     if ( config->pmd.is_negated() )
         return false;
@@ -170,11 +170,10 @@ bool ContentOption::retry(Cursor& c)
     if ( !config->pmd.depth )
         return true;
 
-    // FIXIT-L consider moving adjusting delta from eval to retry
-    assert(c.get_delta() >= config->match_delta);
-
-    unsigned min = c.get_delta() + config->pmd.pattern_size;
-    unsigned max = c.get_delta() - config->match_delta + config->pmd.offset + config->pmd.depth;
+    // Do not retry if the current pattern would extend beyond the area
+    // in which we're looking for it.
+    unsigned min = current_cursor.get_delta() + config->pmd.pattern_size;
+    unsigned max = orig_cursor.get_delta() + config->pmd.offset + config->pmd.depth;
 
     return min <= max;
 }
@@ -330,6 +329,9 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
 
         return -1;
     }
+
+    // FIXIT-M: The depth on retries should not be the same as that used
+    // on the first try.
 
     const uint8_t* base = c.buffer() + pos;
     int found = cd->searcher->search(search_handle, base, depth);
