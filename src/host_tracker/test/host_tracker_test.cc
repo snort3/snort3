@@ -134,6 +134,62 @@ TEST(host_tracker, stringify)
         "\n    port: 443, proto: 6, appid: 1122");
 }
 
+TEST(host_tracker, rediscover_host)
+{
+    test_time = 1562198400; // this time will be updated and should not be seen in stringify
+    HostTracker ht;
+
+    ht.add_service(80, IpProtocol::TCP, 676, true);
+    ht.add_service(443, IpProtocol::TCP, 1122);
+    CHECK(ht.get_service_count() == 2);
+
+    bool is_new;
+    ht.find_or_add_client(1, "one", 100, is_new);
+    ht.find_or_add_client(2, "two", 200, is_new);
+    CHECK(ht.get_client_count() == 2);
+
+    ht.set_visibility(false);
+    CHECK(ht.get_service_count() == 0);
+
+    // rediscover the host, no services and clients should be visible
+    ht.set_visibility(true);
+    CHECK(ht.get_service_count() == 0);
+    CHECK(ht.get_client_count() == 0);
+
+    // rediscover a service, that and only that should be visible
+    ht.add_service(443, IpProtocol::TCP, 1122);
+    CHECK(ht.get_service_count() == 1);
+
+    // change the appid of existing service
+    HostApplication ha(443, IpProtocol::TCP, 1133, false);
+    bool added;
+    ht.add_service(ha, &added);
+    CHECK(added);
+
+    // rediscover service using a different add service function
+    HostApplication ha2(80, IpProtocol::TCP, 676, false);
+    bool ret = ht.add_service(ha2, &added);
+    CHECK(ret);
+    CHECK(added);
+
+    // and a client
+    ht.find_or_add_client(2, "one", 200, is_new);
+    CHECK(ht.get_client_count() == 1);
+
+    string host_tracker_string;
+    ht.stringify(host_tracker_string);
+
+    string expected;
+    expected += "\n    type: Host, ttl: 0, hops: 255, time: 2019-07-04 00:00:00";
+    expected += "\nservices size: 2";
+    expected += "\n    port: 80, proto: 6, appid: 676, inferred";
+    expected += "\n    port: 443, proto: 6, appid: 1133";
+    expected += "\nclients size: 1";
+    expected += "\n    id: 2, service: 200, version: one";
+
+    STRCMP_EQUAL(expected.c_str(), host_tracker_string.c_str());
+}
+
 int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);

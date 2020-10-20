@@ -75,9 +75,13 @@ struct HostApplicationInfo
     HostApplicationInfo(const char *ver, const char *ven);
     char vendor[INFO_SIZE] = { 0 };
     char version[INFO_SIZE] = { 0 };
+    bool visibility = true;
+
+    friend class HostTracker;
 };
 
 typedef HostCacheAllocIp<HostApplicationInfo> HostAppInfoAllocator;
+typedef AppId Payload_t;
 
 struct HostApplication
 {
@@ -97,6 +101,7 @@ struct HostApplication
         last_seen = ha.last_seen;
         info = ha.info;
         payloads = ha.payloads;
+        visibility = ha.visibility;
         return *this;
     }
 
@@ -109,7 +114,12 @@ struct HostApplication
     char user[INFO_SIZE] = { 0 };
 
     std::vector<HostApplicationInfo, HostAppInfoAllocator> info;
-    std::vector<AppId, HostCacheAllocIp<AppId>> payloads;
+    std::vector<Payload_t, HostCacheAllocIp<Payload_t>> payloads;
+
+    friend class HostTracker;
+
+private:
+    bool visibility = true;
 };
 
 struct HostClient
@@ -119,7 +129,17 @@ struct HostClient
     AppId id;
     char version[INFO_SIZE] = { 0 };
     AppId service;
-    std::vector<AppId, HostCacheAllocIp<AppId>> payloads;
+    std::vector<Payload_t, HostCacheAllocIp<Payload_t>> payloads;
+
+    bool operator==(const HostClient& c) const
+    {
+        return id == c.id and service == c.service;
+    }
+
+    friend class HostTracker;
+
+private:
+    bool visibility = true;
 };
 
 struct DeviceFingerprint
@@ -151,6 +171,10 @@ typedef HostCacheAllocIp<DeviceFingerprint> HostDeviceFpAllocator;
 class SO_PUBLIC HostTracker
 {
 public:
+
+    typedef std::pair<uint16_t, bool> NetProto_t;
+    typedef std::pair<uint8_t, bool> XProto_t;
+
     HostTracker() : hops(-1)
     {
         last_seen = nat_count_start = (uint32_t) packet_time();
@@ -171,16 +195,24 @@ public:
         return last_event;
     }
 
-    std::vector<uint16_t, HostCacheAllocIp<uint16_t>> get_network_protos()
+    std::vector<uint16_t> get_network_protos()
     {
+        std::vector<uint16_t> out_protos;
         std::lock_guard<std::mutex> lck(host_tracker_lock);
-        return network_protos;
+        for (const auto& proto : network_protos)
+            if ( proto.second )
+                out_protos.emplace_back(proto.first);
+        return out_protos;
     }
 
-    std::vector<uint8_t, HostCacheAllocIp<uint8_t>> get_xport_protos()
+    std::vector<uint16_t> get_xport_protos()
     {
+        std::vector<uint16_t> out_protos;
         std::lock_guard<std::mutex> lck(host_tracker_lock);
-        return xport_protos;
+        for (const auto& proto : xport_protos)
+            if ( proto.second )
+                out_protos.emplace_back(proto.first);
+        return out_protos;
     }
 
     void set_host_type(HostType rht)
@@ -245,7 +277,7 @@ public:
     // appid detected from one flow to another flow such as BitTorrent.
     bool add_service(Port, IpProtocol,
         AppId appid = APP_ID_NONE, bool inferred_appid = false, bool* added = nullptr);
-    bool add_service(HostApplication&, bool* added = nullptr);
+    bool add_service(const HostApplication&, bool* added = nullptr);
     void clear_service(HostApplication&);
     void update_service_port(HostApplication&, Port);
     void update_service_proto(HostApplication&, IpProtocol);
@@ -315,14 +347,29 @@ public:
         return ++nat_count;
     }
 
+    bool set_visibility(bool v = true);
+
+    bool is_visible() const
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        return visibility;
+    }
+
+    // the control delete commands do not actually remove objects from
+    // the host tracker, but just mark them as invisible, until rediscovered.
+    bool set_network_proto_visibility(uint16_t proto, bool v = true);
+    bool set_xproto_visibility(uint8_t proto, bool v = true);
+    bool set_service_visibility(Port, IpProtocol, bool v = true);
+    bool set_client_visibility(const HostClient&, bool v = true);
+
 private:
     mutable std::mutex host_tracker_lock; // ensure that updates to a shared object are safe
     uint8_t hops;                 // hops from the snort inspector, e.g., zero for ARP
     uint32_t last_seen;           // the last time this host was seen
     uint32_t last_event;          // the last time an event was generated
     std::list<HostMac, HostMacAllocator> macs; // list guarantees iterator validity on insertion
-    std::vector<uint16_t, HostCacheAllocIp<uint16_t>> network_protos;
-    std::vector<uint8_t, HostCacheAllocIp<uint8_t>> xport_protos;
+    std::vector<NetProto_t, HostCacheAllocIp<NetProto_t>> network_protos;
+    std::vector<XProto_t, HostCacheAllocIp<XProto_t>> xport_protos;
     std::vector<HostApplication, HostAppAllocator> services;
     std::vector<HostClient, HostClientAllocator> clients;
     std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> tcp_fpids;
@@ -334,6 +381,11 @@ private:
     uint8_t ip_ttl = 0;
     uint32_t nat_count = 0;
     uint32_t nat_count_start;     // the time nat counting start for this host
+
+    bool visibility = true;
+
+    uint32_t num_visible_services = 0;
+    uint32_t num_visible_clients = 0;
 
     // Hide / delete the constructor from the outside world. We don't want to
     // have zombie host trackers, i.e. host tracker objects that live outside
@@ -353,6 +405,7 @@ private:
     // lock is actually obtained
     bool add_payload_no_lock(const AppId, HostApplication*, size_t);
     HostApplication* find_service_no_lock(Port, IpProtocol, AppId);
+    void update_ha_no_lock(HostApplication& dst, HostApplication& src);
 
     // ... and some unit tests. See Utest.h and UtestMacros.h in cpputest.
     friend class TEST_host_tracker_add_find_service_test_Test;

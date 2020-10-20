@@ -47,15 +47,268 @@ static int host_cache_dump(lua_State* L)
     return 0;
 }
 
+static int host_cache_delete_host(lua_State* L)
+{
+    HostCacheModule* mod = (HostCacheModule*) ModuleManager::get_module(HOST_CACHE_NAME);
+    if ( mod )
+    {
+        const char* ips = luaL_optstring(L, 1, nullptr);
+        if (ips == nullptr)
+        {
+            LogMessage("Usage: host_cache.delete_host(ip)\n");
+            return 0;
+        }
+
+        SfIp ip;
+        if (ip.set(ips) != SFIP_SUCCESS)
+        {
+            LogMessage("Bad ip %s\n", ips);
+            return 0;
+        }
+
+        auto ht = host_cache.find(ip);
+        if (ht)
+            ht->set_visibility(false);
+        else
+        {
+            LogMessage("%s not found in host cache\n", ips);
+            return 0;
+        }
+
+        LogMessage("host_cache_delete_host done\n");
+    }
+    return 0;
+}
+
+static int host_cache_delete_network_proto(lua_State* L)
+{
+    HostCacheModule* mod = (HostCacheModule*) ModuleManager::get_module(HOST_CACHE_NAME);
+    if ( mod )
+    {
+        const char* ips = luaL_optstring(L, 1, nullptr);
+        int proto = luaL_optint(L, 2, -1);
+
+        if (ips == nullptr || proto == -1)
+        {
+            LogMessage("Usage: host_cache.delete_network_proto(ip, proto)\n");
+            return 0;
+        }
+
+        SfIp ip;
+        if (ip.set(ips) != SFIP_SUCCESS)
+        {
+            LogMessage("Bad ip %s\n", ips);
+            return 0;
+        }
+
+        auto ht = host_cache.find(ip);
+        if (ht)
+        {
+            if ( !ht->set_network_proto_visibility(proto, false) )
+            {
+                LogMessage("%d not found for host %s\n", proto, ips);
+                return 0;
+            }
+        }
+        else
+        {
+            LogMessage("%s not found in host cache\n", ips);
+            return 0;
+        }
+
+        LogMessage("host_cache_delete_network_proto done\n");
+    }
+    return 0;
+}
+
+static int host_cache_delete_transport_proto(lua_State* L)
+{
+    HostCacheModule* mod = (HostCacheModule*) ModuleManager::get_module(HOST_CACHE_NAME);
+    if ( mod )
+    {
+        const char* ips = luaL_optstring(L, 1, nullptr);
+        int proto = luaL_optint(L, 2, -1);
+
+        if (ips == nullptr || proto == -1)
+        {
+            LogMessage("Usage: host_cache.delete_transport_proto(ip, proto)\n");
+            return 0;
+        }
+
+        SfIp ip;
+        if (ip.set(ips) != SFIP_SUCCESS)
+        {
+            LogMessage("Bad ip %s\n", ips);
+            return 0;
+        }
+
+        auto ht = host_cache.find(ip);
+        if (ht)
+        {
+            if ( !ht->set_xproto_visibility(proto, false) )
+            {
+                LogMessage("%d not found for host %s\n", proto, ips);
+                return 0;
+            }
+        }
+        else
+        {
+            LogMessage("%s not found in host cache\n", ips);
+            return 0;
+        }
+
+        LogMessage("host_cache_delete_transport_proto done\n");
+    }
+    return 0;
+}
+
+static int host_cache_delete_service(lua_State* L)
+{
+    HostCacheModule* mod = (HostCacheModule*) ModuleManager::get_module(HOST_CACHE_NAME);
+    if ( mod )
+    {
+        const char* ips = luaL_optstring(L, 1, nullptr);
+        int port = luaL_optint(L, 2, -1);
+        int proto = luaL_optint(L, 3, -1);
+
+        if (ips == nullptr || port == -1 || proto == -1)
+        {
+            LogMessage("Usage: host_cache.delete_service(ip, port, proto).\n");
+            return 0;
+        }
+
+        if ( !(0 <= proto and proto < 256) )
+        {
+            LogMessage("Protocol must be between 0 and 255.\n");
+            return 0;
+        }
+
+        SfIp ip;
+        if (ip.set(ips) != SFIP_SUCCESS)
+        {
+            LogMessage("Bad ip %s\n", ips);
+            return 0;
+        }
+
+        auto ht = host_cache.find(ip);
+        if (ht)
+        {
+            if ( !ht->set_service_visibility(port, (IpProtocol)proto, false) )
+            {
+                LogMessage("%d or %d not found for host %s\n", port, proto, ips);
+                return 0;
+            }
+        }
+        else
+        {
+            LogMessage("%s not found in host cache\n", ips);
+            return 0;
+        }
+
+        LogMessage("host_cache_delete_service done\n");
+    }
+    return 0;
+}
+
+static int host_cache_delete_client(lua_State* L)
+{
+    HostCacheModule* mod = (HostCacheModule*) ModuleManager::get_module(HOST_CACHE_NAME);
+    if ( mod )
+    {
+        const char* ips = luaL_optstring(L, 1, nullptr);
+        int id = luaL_optint(L, 2, -1);
+        int service = luaL_optint(L, 3, -1);
+        const char* version = luaL_optstring(L, 4, nullptr);
+
+        if (ips == nullptr || id == -1 || service == -1)
+        {
+            LogMessage("Usage: host_cache.delete_client(ip, id, service, <version>).\n");
+            return 0;
+        }
+
+        SfIp ip;
+        if (ip.set(ips) != SFIP_SUCCESS)
+        {
+            LogMessage("Bad ip %s\n", ips);
+            return 0;
+        }
+
+        auto ht = host_cache.find(ip);
+        if (ht)
+        {
+            HostClient hc(id, version, service);
+            if ( !ht->set_client_visibility(hc, false) )
+            {
+                LogMessage("Client not found for host %s\n", ips);
+                return 0;
+            }
+        }
+        else
+        {
+            LogMessage("%s not found in host cache\n", ips);
+            return 0;
+        }
+
+        LogMessage("host_cache_delete_client done\n");
+    }
+    return 0;
+}
+
 static const Parameter host_cache_cmd_params[] =
 {
     { "file_name", Parameter::PT_STRING, nullptr, nullptr, "file name to dump host cache" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const Parameter host_cache_delete_host_params[] =
+{
+    { "host_ip", Parameter::PT_STRING, nullptr, nullptr, "ip address to delete" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter host_cache_delete_network_proto_params[] =
+{
+    { "host_ip", Parameter::PT_STRING, nullptr, nullptr, "ip of host" },
+    { "proto", Parameter::PT_INT, nullptr, nullptr, "network protocol to delete" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter host_cache_delete_transport_proto_params[] =
+{
+    { "host_ip", Parameter::PT_STRING, nullptr, nullptr, "ip of host" },
+    { "proto", Parameter::PT_INT, nullptr, nullptr, "transport protocol to delete" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter host_cache_delete_service_params[] =
+{
+    { "host_ip", Parameter::PT_STRING, nullptr, nullptr, "ip of host" },
+    { "port", Parameter::PT_INT, nullptr, nullptr, "service port" },
+    { "proto", Parameter::PT_INT, nullptr, nullptr, "service protocol" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter host_cache_delete_client_params[] =
+{
+    { "host_ip", Parameter::PT_STRING, nullptr, nullptr, "ip of host" },
+    { "id", Parameter::PT_INT, nullptr, nullptr, "application id" },
+    { "service", Parameter::PT_INT, nullptr, nullptr, "service id" },
+    { "version", Parameter::PT_STRING, nullptr, nullptr, "client version" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Command host_cache_cmds[] =
 {
     { "dump", host_cache_dump, host_cache_cmd_params, "dump host cache"},
+    { "delete_host", host_cache_delete_host, host_cache_delete_host_params, "delete host from host cache"},
+    { "delete_network_proto", host_cache_delete_network_proto,
+      host_cache_delete_network_proto_params, "delete network protocol from host"},
+    { "delete_transport_proto", host_cache_delete_transport_proto,
+      host_cache_delete_transport_proto_params, "delete transport protocol from host"},
+    { "delete_service", host_cache_delete_service,
+      host_cache_delete_service_params, "delete service from host"},
+    { "delete_client", host_cache_delete_client,
+      host_cache_delete_client_params, "delete client from host"},
     { nullptr, nullptr, nullptr, nullptr }
 };
 
@@ -97,7 +350,7 @@ bool HostCacheModule::set(const char*, Value& v, SnortConfig*)
 
 bool HostCacheModule::end(const char* fqn, int, SnortConfig* sc)
 {
-    if ( memcap && !strcmp(fqn, HOST_CACHE_NAME) )
+    if ( memcap and !strcmp(fqn, HOST_CACHE_NAME) )
     {
         if ( Snort::is_reloading() )
             sc->register_reload_resource_tuner(new HostCacheReloadTuner(memcap));
@@ -159,10 +412,13 @@ void HostCacheModule::log_host_cache(const char* file_name, bool verbose)
         << lru_data.size() << " trackers" << endl << endl;
     for ( const auto& elem : lru_data )
     {
-        str = "IP: ";
-        str += elem.first.ntop(ip_str);
-        elem.second->stringify(str);
-        out_stream << str << endl << endl;
+        if (elem.second->is_visible() == true)
+        {
+            str = "IP: ";
+            str += elem.first.ntop(ip_str);
+            elem.second->stringify(str);
+            out_stream << str << endl << endl;
+        }
     }
     out_stream.close();
 

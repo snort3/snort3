@@ -70,7 +70,10 @@ void SnortConfig::register_reload_resource_tuner(ReloadResourceTuner* rrt) { del
 
 extern "C"
 {
+typedef ptrdiff_t lua_Integer;
+
 const char* luaL_optlstring(lua_State*, int, const char*, size_t*) { return nullptr; }
+int luaL_optinteger(lua_State*, int, lua_Integer) { return 0; }
 }
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }

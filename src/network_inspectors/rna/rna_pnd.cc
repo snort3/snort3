@@ -140,6 +140,13 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
 
     auto ht = host_cache.find_else_create(*src_ip, &new_host);
 
+    // If it's a new host, it's automatically visible, so we don't do anything.
+    // If it's not a new host, we're rediscovering it, so make it visible.
+    // Also if it was not new (we had it in the cache) and it went from
+    // not visible to visible, then it's as good as new.
+    if (!new_host and !ht->set_visibility(true))
+        new_host = true;
+
     uint32_t last_seen = ht->get_last_seen();
     if ( !new_host )
         ht->update_last_seen(); // this should be done always and foremost
@@ -173,7 +180,7 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
         }
     }
 
-    if ( ht->get_host_type() == HOST_TYPE_HOST and p->is_tcp() )
+    if ( p->is_tcp() and ht->get_host_type() == HOST_TYPE_HOST )
         discover_host_types_ttl(ht, p, ttl, last_seen, src_ip_ptr, src_mac);
 
     uint16_t ptype = rna_get_eth(p);
