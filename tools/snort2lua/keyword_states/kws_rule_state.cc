@@ -109,7 +109,7 @@ bool RuleState::convert(std::istringstream& data_stream)
         if ( !enable.empty() )
         {
             state_api.add_option("enable", enable);
-            state_api.add_comment("option change: 'enabled/disabled' --> 'enable'");
+            state_api.add_deleted_comment("enable");
         }
 
         if ( !action.empty() )
@@ -117,7 +117,7 @@ bool RuleState::convert(std::istringstream& data_stream)
             if ( action == "sdrop" )
             {
                 action = "drop";
-                state_api.add_comment("action change: 'sdrop' --> 'drop'");
+                state_api.add_deleted_comment("action");
             }
 
             state_api.set_action(action);

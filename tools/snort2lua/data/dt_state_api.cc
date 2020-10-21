@@ -52,10 +52,13 @@ void StateApi::add_option(const std::string& name, const std::string& val)
         curr_state->add_option(name, val);
 }
 
-void StateApi::add_comment(const std::string& comment)
+void StateApi::add_deleted_comment(const std::string& option)
 {
     if ( curr_state )
+    {
+        std::string comment = "rule_state option '" + option + "' deleted";
         curr_state->add_comment(comment);
+    }
 }
 
 void StateApi::print_states(std::ostream& out) const

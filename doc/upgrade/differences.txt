@@ -149,7 +149,6 @@ Some things Snort++ can do today that Snort can not do as well:
 * all rules must have a sid
 * sid == 0 not allowed
 * deleted activate / dynamic rules
-* deleted unused rule_state.action
 * deleted metadata engine shared
 * deleted metadata: rule-flushing (with PDU flushing rule flushing can cause
   missed attacks, the opposite of its intent)

@@ -43,33 +43,33 @@ Dir.glob("#{dir}/**/*cc").each do |file|
             end
 
             if line =~ delete_pattern
-                arr << "deleted -> #{snort_opt}: '#{$1}'"
+                arr << "deleted -> #{snort_opt.strip}: '#{$1.strip}'"
             end
 
             if line =~ diff_pattern
-                arr << "change -> #{snort_opt}: '#{$1}' ==> '#{$2}'"
+                arr << "change -> #{snort_opt.strip}: '#{$1.strip}' ==> '#{$2.strip}'"
             end
 
             if line =~ template_diff
-                arr << "change -> config '#{$1}'  ==> '#{$2}.#{$3}'"
+                arr << "change -> config '#{$1.strip}'  ==> '#{$2.strip}.#{$3.strip}'"
             end
 
             if line =~ config_delete_template
-                arr << "deleted -> config '#{$1}'"
+                arr << "deleted -> config '#{$1.strip}'"
             end
 
             # Files with special templates
 
             if line =~ paths_diff
-                arr << "change -> #{$1} ==> 'snort.--plugin_path=<path>'"
+                arr << "change -> #{$1.strip} ==> 'snort.--plugin_path=<path>'"
             end
             
             if line =~ normalizers_diff
-                arr << "change -> preprocessor 'normalize_#{$1}' ==> 'normalize.#{$1}'"
+                arr << "change -> preprocessor 'normalize_#{$1.strip}' ==> 'normalize.#{$1.strip}'"
             end
 
             if line =~ unified2_diff
-                arr << "change -> unified2: '#{$1}' ==> 'unified2'"
+                arr << "change -> unified2: '#{$1.strip}' ==> 'unified2'"
             end
 
         end

@@ -35,7 +35,7 @@ public:
     void clear();
     bool empty() const;
     void add_option(const std::string& keyword, const std::string& val);
-    void add_comment(const std::string& comment);
+    void add_deleted_comment(const std::string& option);
     void set_action(const std::string& action);
     void print_states(std::ostream& out) const;
 
