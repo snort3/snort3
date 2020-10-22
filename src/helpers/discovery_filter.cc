@@ -244,7 +244,7 @@ bool DiscoveryFilter::is_monitored(const Packet* p, FilterType type, const SfIp*
     if ( is_port_excluded(p) )
         return false;
 
-    // check interface 
+    // check interface
     if (intf_ip_list[type].empty())
         return false; // the configuration did not have this type of rule
 
@@ -382,7 +382,7 @@ TEST_CASE("Discovery Filter", "[is_monitored]")
     ofstream out_stream(conf.c_str());
     out_stream << "config Error\n"; // invalid
     out_stream << "config AnalyzeUser ::/0 0\n"; // any ipv6, interface 0
-    out_stream << "config AnalyzeApplication 1.1.1.0/24 -1\n"; // targeted ipv4, any interface 
+    out_stream << "config AnalyzeApplication 1.1.1.0/24 -1\n"; // targeted ipv4, any interface
     out_stream.close();
 
     Packet p;

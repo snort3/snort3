@@ -97,7 +97,7 @@ void ValueConfigNode::set_value(const snort::Value& v)
 BaseConfigNode* ValueConfigNode::get_node(const std::string& name)
 {
     if ( !custom_name.empty() )
-        return ((custom_name == name) and value.has_default()) ? this : nullptr; 
+        return ((custom_name == name) and value.has_default()) ? this : nullptr;
     else
         return value.is(name.c_str()) and value.has_default() ? this : nullptr;
 }
@@ -231,7 +231,7 @@ TEST_CASE("value_config_node", "[ValueConfigNode]")
 {
     BaseConfigNode* parent_node = new TreeConfigNode(nullptr, "parent_node",
         Parameter::Type::PT_TABLE);
-    
+
     const Parameter p_string("param_str", Parameter::PT_STRING, nullptr, nullptr,
         "test param PT_STRING type");
 
@@ -333,7 +333,7 @@ TEST_CASE("value_config_node", "[ValueConfigNode]")
 
     Value new_val3_multi("test3");
     value_node_multi->set_value(new_val3_multi);
-    
+
     SECTION("get_value_after_update")
     {
         CHECK(value_node_str->get_value()->get_origin_string() == "new_value");

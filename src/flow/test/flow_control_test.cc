@@ -153,7 +153,7 @@ bool FlowKey::init(
     PktType, IpProtocol,
     const SfIp*, const SfIp*,
     uint32_t, uint16_t,
-    uint32_t, const DAQ_PktHdr_t&) 
+    uint32_t, const DAQ_PktHdr_t&)
 {
     return true;
 }

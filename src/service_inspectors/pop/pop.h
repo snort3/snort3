@@ -38,7 +38,7 @@
 #define STATE_TLS_DATA         3    // Successful handshake, TLS encrypted data
 #define STATE_COMMAND          4
 #define STATE_UNKNOWN          5
-#define STATE_DECRYPTION_REQ   6   
+#define STATE_DECRYPTION_REQ   6
 
 // session flags
 #define POP_FLAG_NEXT_STATE_UNKNOWN         0x00000004

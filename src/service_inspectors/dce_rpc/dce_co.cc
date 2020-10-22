@@ -146,7 +146,7 @@ static void DCE2_CoEptMapResponse(DCE2_SsnData* sd, const DceRpcCoHdr* co_hdr,
          *        2
          * +-------------+---------+---------+---------+---------+
          * | floor count | floor 1 | floor 2 |   ...   | floor n |
-         * +-------------+---------+---------+---------+---------+ 
+         * +-------------+---------+---------+---------+---------+
          * The target is 4th & 5th floors */
 
         if (ndr_flen > dlen)
@@ -172,12 +172,11 @@ static void DCE2_CoEptMapResponse(DCE2_SsnData* sd, const DceRpcCoHdr* co_hdr,
         dce2_move(stub_data, dlen, fc_offset);
 
         /* No needed data for the pinhole creation */
-        if (floor_count < 5) 
+        if (floor_count < 5)
             continue;
 
-        floor3_start =  2 * DCE2_CO_MAP_TWR_FLOOR12_OFS +
-            DCE2_CO_MAP_FLR_COUNT_OFS;
-        
+        floor3_start =  2 * DCE2_CO_MAP_TWR_FLOOR12_OFS + DCE2_CO_MAP_FLR_COUNT_OFS;
+
         /* Skipping 1st & 2nd floors up to 3rd floor protocol id */
         proto_offset = floor3_start +
             DCE2_CO_MAP_FLR_LHS_RHS_OFS;
@@ -815,7 +814,7 @@ static void dce_co_process_ctx_result(DCE2_SsnData*, DCE2_CoTracker* cot,
         if (DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND_ACK)
             cot->got_bind = 1;
 
-        /* Need to check accepted transfer syntax 
+        /* Need to check accepted transfer syntax
          * for further EPT_MAP response parsing */
         if (!DCE2_UuidCompare(transport, &uuid_ndr64))
         {
@@ -1872,11 +1871,11 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
                 (uint16_t)(frag_len - (uint16_t)auth_len));
         }
     }
-    
+
     /* If this is the last fragment, we can proceed with stub data processing */
     if (DceRpcCoLastFrag(co_hdr))
     {
-        const uint8_t* stub_data; 
+        const uint8_t* stub_data;
         uint16_t stub_data_len;
         if (DCE2_BufferIsEmpty(cot->frag_tracker.srv_stub_buf))
         {

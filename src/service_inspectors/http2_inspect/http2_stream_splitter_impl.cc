@@ -117,7 +117,7 @@ StreamSplitter::Status Http2StreamSplitter::non_data_frame_header_checks(
         // FIXIT-M long non-data frame needs to be supported
         return StreamSplitter::ABORT;
     }
-    
+
     if (type == FT_CONTINUATION and !session_data->continuation_expected[source_id])
     {
         *session_data->infractions[source_id] += INF_UNEXPECTED_CONTINUATION;
@@ -125,7 +125,7 @@ StreamSplitter::Status Http2StreamSplitter::non_data_frame_header_checks(
             EVENT_UNEXPECTED_CONTINUATION);
         return StreamSplitter::ABORT;
     }
-    
+
     session_data->total_bytes_in_split[source_id] += FRAME_HEADER_LENGTH +
         frame_length;
 
@@ -325,7 +325,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                         session_data->stream_in_hi = NO_STREAM_ID;
                         return StreamSplitter::FLUSH;
                     }
-                    
+
                     assert(session_data->scan_remaining_frame_octets[source_id] == 0);
                     session_data->scan_remaining_frame_octets[source_id] = frame_length;
 
@@ -401,7 +401,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                     else
                         status = non_data_scan(session_data, length, flush_offset, source_id,
                             type, frame_flags, data_offset);
-                    assert(status != StreamSplitter::SEARCH or 
+                    assert(status != StreamSplitter::SEARCH or
                         session_data->scan_state[source_id] != SCAN_EMPTY_DATA);
                     break;
                 }

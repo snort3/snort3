@@ -120,7 +120,7 @@ static inline bool payload_offset_from_daq_mismatch(const uint8_t* pkt, const Ra
         (const DAQ_PktDecodeData_t*) daq_msg_get_meta(raw.daq_msg, DAQ_PKT_META_DECODE_DATA);
     if ( !pdd || (pdd->payload_offset == DAQ_PKT_DECODE_OFFSET_INVALID) )
         return false;
-    // compare payload offset from DAQ with decoded data offset 
+    // compare payload offset from DAQ with decoded data offset
     if ( raw.data - pkt != pdd->payload_offset )
         return true;
     return false;

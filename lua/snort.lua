@@ -171,7 +171,7 @@ ips =
     -- use include for rules files; be sure to set your path
     -- note that rules files can include other rules files
     --include = 'snort3-community.rules',
-    
+
     variables = default_variables
 }
 

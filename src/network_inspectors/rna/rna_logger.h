@@ -105,7 +105,7 @@ public:
         const uint8_t* src_mac, RnaTracker* ht, const snort::Packet* p = nullptr,
         uint32_t event_time = 0, uint16_t proto = 0, const snort::HostMac* hm = nullptr,
         const snort::HostApplication* ha = nullptr, const snort::FpFingerprint* fp = nullptr,
-        void* cond_var = nullptr, const snort::HostClient* hc = nullptr, 
+        void* cond_var = nullptr, const snort::HostClient* hc = nullptr,
         const char* user = nullptr, AppId appid = APP_ID_NONE, const char* device_info = nullptr,
         bool jail_broken = false);
 

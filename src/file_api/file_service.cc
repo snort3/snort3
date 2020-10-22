@@ -183,7 +183,7 @@ int64_t FileService::get_max_file_depth()
 void FileService::reset_depths()
 {
     FileConfig* file_config = get_file_config();
-    
+
     if (file_config)
         file_config->file_depth = 0;
 

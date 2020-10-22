@@ -41,7 +41,7 @@ tests =
 
         Logger.alert(p, "foo", e)
     end,
-    
+
     log = function()
         local p = packet.construct_ip4(IP4:encode_hex(), DATA)
         local e = Event.new()

@@ -83,10 +83,10 @@ RnaInspector(RnaModule* mod)
 {
     if (mod_conf)
     {
-	    delete mod_conf->tcp_processor;
-	    delete mod_conf->ua_processor;
-	    delete mod_conf;
-	}
+        delete mod_conf->tcp_processor;
+        delete mod_conf->ua_processor;
+        delete mod_conf;
+    }
 }
 
 TcpFpProcessor* get_fp_processor()

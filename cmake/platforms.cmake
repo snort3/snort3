@@ -1,7 +1,7 @@
 #
 #
 #  Library containing all of the information regarding specific platforms, and their specific libraries.
-# 
+#
 
 
 # APPLE is defined by Cmake
@@ -16,7 +16,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 
-        find_library(CLANG_CXX_LIBRARY 
+        find_library(CLANG_CXX_LIBRARY
             NAMES c++
         )
     endif()

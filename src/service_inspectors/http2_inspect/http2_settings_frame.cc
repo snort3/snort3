@@ -91,7 +91,7 @@ bool Http2SettingsFrame::sanity_check()
 {
     const bool ack = SfAck & get_flags();
 
-    // FIXIT-E this next check should possibly be moved to valid_sequence() 
+    // FIXIT-E this next check should possibly be moved to valid_sequence()
     if (get_stream_id() != 0)
         bad_frame = true;
     else if (!ack and ((data.length() % 6) != 0))

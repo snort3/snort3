@@ -147,7 +147,7 @@ bool ReputationModule::set(const char*, Value& v, SnortConfig*)
 
         if (priority == 3) // blacklist
             priority = 1;
-        
+
         else if (priority == 4) // whitelist
            priority = 2;
 

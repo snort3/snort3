@@ -38,7 +38,7 @@ struct PopStats
     PegCount max_concurrent_sessions;
     PegCount start_tls;
     PegCount ssl_search_abandoned;
-    PegCount ssl_srch_abandoned_early; 
+    PegCount ssl_srch_abandoned_early;
     snort::MimeStats mime_stats;
 };
 

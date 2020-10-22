@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.0.3 (Build 2) 2020-10-07 13:11:06 EDT TST
+Revision 3.0.3 (Build 3) 2020-10-22 13:10:50 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -765,6 +765,15 @@ Configuration:
 Commands:
 
   * host_cache.dump(file_name): dump host cache
+  * host_cache.delete_host(host_ip): delete host from host cache
+  * host_cache.delete_network_proto(host_ip, proto): delete network
+    protocol from host
+  * host_cache.delete_transport_proto(host_ip, proto): delete
+    transport protocol from host
+  * host_cache.delete_service(host_ip, port, proto): delete service
+    from host
+  * host_cache.delete_client(host_ip, id, service, version): delete
+    client from host
 
 Peg counts:
 
@@ -1636,6 +1645,7 @@ Configuration:
   * int trace.modules.gtp_inspect.all: enable all trace options {
     0:255 }
   * int trace.modules.latency.all: enable all trace options { 0:255 }
+  * int trace.modules.react.all: enable all trace options { 0:255 }
   * int trace.modules.rna.all: enable all trace options { 0:255 }
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.main: enable main trace logging { 0:255 }
@@ -3571,6 +3581,19 @@ Rules:
     type
   * 121:22 (http2_inspect) padding flag set on HTTP/2 frame with zero
     length
+  * 121:23 (http2_inspect) HTTP/2 push promise frame in c2s direction
+  * 121:24 (http2_inspect) invalid HTTP/2 push promise frame
+  * 121:25 (http2_inspect) HTTP/2 push promise frame sent at invalid
+    time
+  * 121:26 (http2_inspect) invalid parameter value sent in HTTP/2
+    settings frame
+  * 121:27 (http2_inspect) HTTP/2 push promise frame sent when
+    prohibited by receiver
+  * 121:28 (http2_inspect) HTTP/2 push promise frame with invalid
+    promised stream id
+  * 121:29 (http2_inspect) HTTP/2 stream initiated with invalid
+    stream id
+  * 121:30 (http2_inspect) invalid flag set on HTTP/2 frame
 
 Peg counts:
 
@@ -5491,8 +5514,7 @@ Usage: detect
 
 Configuration:
 
-  * string react.page: file containing HTTP response (headers and
-    body)
+  * string react.page: file containing HTTP response body
 
 
 6.2. reject
@@ -9360,8 +9382,7 @@ these libraries see the Getting Started section of the manual.
   * int rate_filter[].timeout = 1: count interval { 0:max32 }
   * enum rate_filter[].track = by_src: filter only matching source or
     destination addresses { by_src | by_dst | by_rule }
-  * string react.page: file containing HTTP response (headers and
-    body)
+  * string react.page: file containing HTTP response body
   * string reference.~ref: reference: <scheme>,<id>
   * string references[].name: name used with reference rule option
   * string references[].url: where this reference is defined
@@ -10001,6 +10022,7 @@ these libraries see the Getting Started section of the manual.
   * int trace.modules.gtp_inspect.all: enable all trace options {
     0:255 }
   * int trace.modules.latency.all: enable all trace options { 0:255 }
+  * int trace.modules.react.all: enable all trace options { 0:255 }
   * int trace.modules.rna.all: enable all trace options { 0:255 }
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
@@ -11564,6 +11586,19 @@ these libraries see the Getting Started section of the manual.
     type
   * 121:22 (http2_inspect) padding flag set on HTTP/2 frame with zero
     length
+  * 121:23 (http2_inspect) HTTP/2 push promise frame in c2s direction
+  * 121:24 (http2_inspect) invalid HTTP/2 push promise frame
+  * 121:25 (http2_inspect) HTTP/2 push promise frame sent at invalid
+    time
+  * 121:26 (http2_inspect) invalid parameter value sent in HTTP/2
+    settings frame
+  * 121:27 (http2_inspect) HTTP/2 push promise frame sent when
+    prohibited by receiver
+  * 121:28 (http2_inspect) HTTP/2 push promise frame with invalid
+    promised stream id
+  * 121:29 (http2_inspect) HTTP/2 stream initiated with invalid
+    stream id
+  * 121:30 (http2_inspect) invalid flag set on HTTP/2 frame
   * 122:1 (port_scan) TCP portscan
   * 122:2 (port_scan) TCP decoy portscan
   * 122:3 (port_scan) TCP portsweep
@@ -11855,6 +11890,15 @@ these libraries see the Getting Started section of the manual.
   * appid.reload_third_party(): reload appid third-party module
   * appid.reload_detectors(): reload appid detectors
   * host_cache.dump(file_name): dump host cache
+  * host_cache.delete_host(host_ip): delete host from host cache
+  * host_cache.delete_network_proto(host_ip, proto): delete network
+    protocol from host
+  * host_cache.delete_transport_proto(host_ip, proto): delete
+    transport protocol from host
+  * host_cache.delete_service(host_ip, port, proto): delete service
+    from host
+  * host_cache.delete_client(host_ip, id, service, version): delete
+    client from host
   * packet_capture.enable(filter): dump raw packets
   * packet_capture.disable(): stop packet dump
   * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port):

@@ -29,7 +29,7 @@ class Http2HeadersFrameHeader : public Http2HeadersFrame
 {
 public:
     ~Http2HeadersFrameHeader() override;
-    
+
     friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const uint32_t, const uint8_t*,
         const uint32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);
 

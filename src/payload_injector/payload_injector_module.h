@@ -77,7 +77,7 @@ public:
         InjectionControl& control);
 
     static const char* get_err_string(InjectionReturnStatus status);
-    
+
 #ifdef UNIT_TEST
     void set_configured(bool val) { configured = val; }
 #endif
@@ -96,8 +96,7 @@ public:
 };
 
 #ifdef UNIT_TEST
-InjectionReturnStatus write_7_bit_prefix_int(uint32_t val, uint8_t*& out,
-					     uint32_t& out_free_space);
+InjectionReturnStatus write_7_bit_prefix_int(uint32_t val, uint8_t*& out, uint32_t& out_free_space);
 #endif
 
 #endif

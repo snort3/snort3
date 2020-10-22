@@ -3,7 +3,7 @@
 # CONST REG_EX.  DO NOT CHANGE
 delete_pattern = /add_deleted_comment\(\"(.*)\"\);/
 diff_pattern = /add_diff_option_comment\(\"(.*)\",\s?\"(.*)\"\)/
-template_diff = /<\s*&(.*),\s*&(.*),\s*&(.*)>/
+template_diff = /<\s*&(.*),\s*&(.*),\s*&(.*?)(?:, true)?>/
 config_delete_template = /deleted_ctor<&(.*)>/
 paths_diff = /paths_ctor<\s*&(.*)\s*>/  # check kws_paths.cc
 normalizers_diff = /norm_sans_options_ctor<\s?&(.*)>/  # check pps_normalizers
@@ -37,7 +37,7 @@ Dir.glob("#{dir}/**/*cc").each do |file|
 
     File.open(file) do |f|
         f.each_line do |line|
-            # gets rid of all lines which dreference pointers
+            # gets rid of all lines which dereference pointers
             if line =~ star_reg
                 next
             end
@@ -63,7 +63,7 @@ Dir.glob("#{dir}/**/*cc").each do |file|
             if line =~ paths_diff
                 arr << "change -> #{$1.strip} ==> 'snort.--plugin_path=<path>'"
             end
-            
+
             if line =~ normalizers_diff
                 arr << "change -> preprocessor 'normalize_#{$1.strip}' ==> 'normalize.#{$1.strip}'"
             end

@@ -1,6 +1,6 @@
 
 add_library( target_based OBJECT
-    host_attributes.cc 
+    host_attributes.cc
     host_attributes.h
     snort_protocols.cc
 )

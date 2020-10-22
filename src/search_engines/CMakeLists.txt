@@ -5,7 +5,7 @@ set (SEARCH_ENGINE_INCLUDES
 )
 
 set (ACSMX_SOURCES
-    ac_std.cc 
+    ac_std.cc
     acsmx.cc
     acsmx.h
 )

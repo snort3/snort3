@@ -112,7 +112,7 @@ int ServiceDetector::update_service_data(AppIdSession& asd, const Packet* pkt,
             port = pkt->ptrs.sp;
             group = pkt->get_ingress_group();
         }
-        if (asd.get_service_port()) 
+        if (asd.get_service_port())
             port = asd.get_service_port();
     }
     else

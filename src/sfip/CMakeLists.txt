@@ -13,7 +13,7 @@ add_library ( sfip OBJECT
     sf_ipvar.cc
     sf_ipvar.h
     sf_vartable.cc
-    sf_vartable.h 
+    sf_vartable.h
 )
 
 install (FILES ${SFIP_INCLUDES}

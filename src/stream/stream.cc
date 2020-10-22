@@ -104,7 +104,7 @@ Flow* Stream::get_flow(
     PktType type, IpProtocol proto,
     const SfIp* srcIP, uint16_t srcPort,
     const SfIp* dstIP, uint16_t dstPort,
-    uint16_t vlan, uint32_t mplsId, const DAQ_PktHdr_t& pkth) 
+    uint16_t vlan, uint32_t mplsId, const DAQ_PktHdr_t& pkth)
 {
     FlowKey key;
     const SnortConfig* sc = SnortConfig::get_conf();
@@ -178,7 +178,7 @@ FlowData* Stream::get_flow_data(
 {
     Flow* flow = get_flow(
         type, proto, srcIP, srcPort, dstIP, dstPort,
-        vlan, mplsId, pkth); 
+        vlan, mplsId, pkth);
 
     if (!flow)
         return nullptr;

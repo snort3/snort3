@@ -373,7 +373,7 @@ uint64_t HttpMsgHeadShared::get_file_cache_index()
         if (cd_filename.length() > 0)
             file_cache_index = str_to_hash(cd_filename.start(), cd_filename.length());
     }
-    file_cache_index_computed = true; 
+    file_cache_index_computed = true;
 
     return file_cache_index;
 }

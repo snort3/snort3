@@ -118,7 +118,7 @@ Http2FlowData::Http2FlowData(snort::Flow*) :
     hpack_decoder
     {
         Http2HpackDecoder(this, SRC_CLIENT, events[SRC_CLIENT], infractions[SRC_CLIENT]),
-	Http2HpackDecoder(this, SRC_SERVER, events[SRC_SERVER], infractions[SRC_SERVER])
+        Http2HpackDecoder(this, SRC_SERVER, events[SRC_SERVER], infractions[SRC_SERVER])
     }
     { }
 Http2FlowData::~Http2FlowData() { }

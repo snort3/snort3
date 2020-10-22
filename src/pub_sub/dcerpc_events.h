@@ -29,22 +29,22 @@ public:
     const snort::Packet* get_packet() override
     { return p; }
 
-    const snort::SfIp* get_src_ip() const 
+    const snort::SfIp* get_src_ip() const
     { return src_ip; }
-    
-    const snort::SfIp* get_dst_ip() const 
+
+    const snort::SfIp* get_dst_ip() const
     { return dst_ip; }
-    
-    uint16_t get_src_port() const 
+
+    uint16_t get_src_port() const
     { return src_port; }
-    
-    uint16_t get_dst_port() const 
+
+    uint16_t get_dst_port() const
     { return dst_port; }
 
-    SnortProtocolId get_proto_id() const 
+    SnortProtocolId get_proto_id() const
     { return protocol_id; }
 
-    IpProtocol get_ip_proto() const 
+    IpProtocol get_ip_proto() const
     { return proto; }
 
 private:

@@ -8,7 +8,7 @@
 /** and type `ccmake ${PATH_TO_SOURCE}`".  Change your options in the GUI.  **/
 /** Make sure to compile and regenerate the Makefiles when you are done by  **/
 /** either exiting the GUI by typing `c` following by `g`, or by typing     **/
-/** `cmake ${PATH_TO_SOURCE}` from your build directory.                    **/  
+/** `cmake ${PATH_TO_SOURCE}` from your build directory.                    **/
 /**                                                                         **/
 /*****************************************************************************/
 

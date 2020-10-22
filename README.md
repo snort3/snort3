@@ -88,7 +88,7 @@ Follow these steps:
 
   * If you are using a github clone:
 
-    ```shell 
+    ```shell
     cd snort3/
     ```
 
@@ -98,7 +98,7 @@ Follow these steps:
     tar zxf snort-tarball
     cd snort-3.0.0*
     ```
-    
+
 2.  Setup install path:
 
     ```shell
@@ -201,7 +201,7 @@ It also covers new features not demonstrated here:
 * improved rule parsing - arbitrary whitespace, C style comments, #begin/#end comments
 * local and remote command line shell
 
-# SQUEAL 
+# SQUEAL
 `o")~`
 
 We hope you are as excited about Snort++ as we are.  Although a lot of work

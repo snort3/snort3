@@ -28,9 +28,9 @@ check_cxx_source_compiles(
     int main()
     {
         char buffer[1024];
-	/* This will not compile if strerror_r does not return a char* */
-	check(strerror_r(EACCES, buffer, sizeof(buffer))[0]);
-	return 0;
+        /* This will not compile if strerror_r does not return a char* */
+        check(strerror_r(EACCES, buffer, sizeof(buffer))[0]);
+        return 0;
     }
     "
     HAVE_GNU_STRERROR_R)

@@ -99,7 +99,7 @@ bool Http2DataCutter::http2_scan(uint32_t length, uint32_t* flush_offset, uint32
     }
 
     if (data_state == FULL_FRAME)
-        session_data->reading_frame[source_id] = false;        
+        session_data->reading_frame[source_id] = false;
 
     //FIXIT-E shouldn't need both scan_remaining_frame_octets and frame_bytes_seen
     frame_bytes_seen += (cur_pos - leftover_bytes - data_offset - leftover_padding);

@@ -577,7 +577,7 @@ public:
     {
         return std::make_tuple(&service_ip, service_port, service_group);
     }
-    
+
     uint16_t get_service_port() const
     {
         return service_port;

@@ -393,7 +393,7 @@ void Dce2Smb::eval(Packet* p)
         {
             //smb_version is DCE2_SMB_VERSION_NULL
             //This means there is no flow data and this is not an SMB packet
-            //if it is a TCP packet for smb data, the flow must have been 
+            //if it is a TCP packet for smb data, the flow must have been
             //already identified with version.
             debug_logf(dce_smb_trace, nullptr, "non-smb packet detected\n");
             return;

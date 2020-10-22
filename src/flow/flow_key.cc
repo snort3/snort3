@@ -495,7 +495,7 @@ unsigned FlowHashKeyOps::do_hash(const unsigned char* k, int)
     c += d[11];  // addressSpaceId, vlan
 
     mix(a, b, c);
-    
+
     a += d[12];  // ip_proto, pkt_type, version, 8 bits of zeroed pad
 
     finalize(a, b, c);

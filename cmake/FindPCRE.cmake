@@ -27,6 +27,6 @@ find_package_handle_standard_args(PCRE
 )
 
 mark_as_advanced(
-    PCRE_LIBRARIES 
+    PCRE_LIBRARIES
     PCRE_INCLUDE_DIR
 )

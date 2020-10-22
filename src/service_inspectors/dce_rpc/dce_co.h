@@ -286,7 +286,7 @@ struct DCE2_CoCtxIdNode
     /* Whether or not the server accepted or rejected the client bind/alter context
      * request.  Initially set to pending until server response */
     DCE2_CoCtxState state;
-    DCE2_CoCtxTransport transport; 
+    DCE2_CoCtxTransport transport;
 };
 
 enum DceRpcCoAuthLevelType
@@ -456,7 +456,7 @@ inline int DCE2_GetNdrUint32(const uint8_t* data_ptr, uint32_t& data,
     int align_offset = 0;
 
     /* Alignment */
-    if (offset % 4) 
+    if (offset % 4)
     {
         align_offset = 4 - (offset % 4);
     }
@@ -474,7 +474,7 @@ inline int DCE2_GetNdrUint64(const uint8_t* data_ptr, uint64_t& data,
     int align_offset = 0;
 
     /* Alignment */
-    if (offset % 8) 
+    if (offset % 8)
     {
         align_offset = 8 - (offset % 8);
     }

@@ -119,7 +119,7 @@ tests =
         check.raises(function() rb:read(-1, rb:size()) end)
         check.raises(function() rb:read(0, rb:size() + 1) end)
     end,
-    
+
     resize = function()
         local rb = RawBuffer.new()
         -- resize

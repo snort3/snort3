@@ -6,8 +6,8 @@ set (INCLUDES
 
 add_library (events OBJECT
     event.cc
-    event_queue.cc 
-    sfeventq.cc 
+    event_queue.cc
+    sfeventq.cc
     sfeventq.h
     ${INCLUDES}
 )

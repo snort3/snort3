@@ -442,16 +442,16 @@ static void POP_ProcessServerPacket(Packet* p, POPData* pop_ssn)
                 tmp = SnortStrcasestr((const char*)cmd_start, (eol - cmd_start), "octets");
                 if (tmp != nullptr)
                 {
-					if (!(pop_ssn->session_flags & POP_FLAG_ABANDON_EVT)
-                    	and !p->flow->flags.data_decrypted)
-                	{
-                    	pop_ssn->session_flags |= POP_FLAG_ABANDON_EVT;
-                    	DataBus::publish(SSL_SEARCH_ABANDONED, p);
-                    	popstats.ssl_search_abandoned++;
-               		}
+                    if (!(pop_ssn->session_flags & POP_FLAG_ABANDON_EVT)
+                        and !p->flow->flags.data_decrypted)
+                    {
+                        pop_ssn->session_flags |= POP_FLAG_ABANDON_EVT;
+                        DataBus::publish(SSL_SEARCH_ABANDONED, p);
+                        popstats.ssl_search_abandoned++;
+                    }
 
                     pop_ssn->state = STATE_DATA;
-				}
+                }
                 else if (pop_ssn->state == STATE_TLS_CLIENT_PEND)
                 {
                     if ((pop_ssn->session_flags & POP_FLAG_ABANDON_EVT)
@@ -463,7 +463,7 @@ static void POP_ProcessServerPacket(Packet* p, POPData* pop_ssn)
                     OpportunisticTlsEvent event(p, p->flow->service);
                     DataBus::publish(OPPORTUNISTIC_TLS_EVENT, event, p->flow);
                     popstats.start_tls++;
-                    pop_ssn->state = STATE_DECRYPTION_REQ; 
+                    pop_ssn->state = STATE_DECRYPTION_REQ;
                 }
                 else
                 {
@@ -541,8 +541,7 @@ static void snort_pop(POP_PROTO_CONF* config, Packet* p)
     if (pkt_dir == POP_PKT_FROM_CLIENT)
     {
         /* This packet should be a tls client hello */
-        if ((pop_ssn->state == STATE_TLS_CLIENT_PEND) 
-			|| (pop_ssn->state == STATE_DECRYPTION_REQ))
+        if ((pop_ssn->state == STATE_TLS_CLIENT_PEND) || (pop_ssn->state == STATE_DECRYPTION_REQ))
         {
             if (IsTlsClientHello(p->data, p->data + p->dsize))
             {

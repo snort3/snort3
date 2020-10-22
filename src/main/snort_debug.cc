@@ -191,7 +191,7 @@ TEST_CASE("debug_log, debug_logf", "[trace]")
     CHECK( (strlen(testing_dump) == 0) );
 
     testing_dump[0] = '\0';
-    debug_log(&test_trace, nullptr, "my message"); 
+    debug_log(&test_trace, nullptr, "my message");
     CHECK( !strcmp(testing_dump, "test_module:all:1: my message") );
 
     testing_dump[0] = '\0';

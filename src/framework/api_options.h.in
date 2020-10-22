@@ -12,7 +12,7 @@
 // loading (that should be true for virtuals as well).
 
 // for example, suppose we had this:
-// 
+//
 // struct SnortConfig
 // {
 //     // some member data
@@ -23,7 +23,7 @@
 // };
 
 // and then we did this:
-// 
+//
 // 1.  build and install snort with build option set A.
 // 2.  build and install external plugins.  These use A and are compatible.
 // 3.  build and install snort with build option set B (changing FOO).

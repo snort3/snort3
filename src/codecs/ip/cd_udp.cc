@@ -172,7 +172,7 @@ public:
         config = nullptr;
         return tmp;
     }
-    
+
 private:
     UdpCodecConfig* config;
 };

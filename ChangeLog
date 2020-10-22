@@ -1,3 +1,49 @@
+2020/10/22 - 3.0.3 build 3
+
+-- actions: Update react documentation
+-- actions: Use payload_injector for react
+-- appid: Add service group and asid in AppIdServiceStateKey
+-- appid: Continue appid inspection after third-party identifies an application
+-- appid: Do not reset third-party session after third-party reload
+-- build: Updates for libdaq changes that introduce significant groups in flow stats
+-- codecs: Remove PIM and Mobility from bad protocol lists
+-- dce_rpc: Add ingress/egress group and asid in SmbFlowKey and Smb2SidHashKey
+-- doc: Tweak the template regex in get_differences.rb
+-- dump_config: Don't print names for list elements
+-- file_api: Add ingress/egress group and asid in FileHashKey
+-- file_magic: Update POSIX tar archive pattern
+-- flow: Add source/dest group id in flow key
+-- flow: Stale and deleted flows due to EOF should generate would have dropped event
+-- ftp_data: Add can_start_tls() support and generate ssl search abandoned event for unencrypted data channels
+-- host_cache: Add delete host, network protocol, transport protocol, client, service, tcp fingerprint and user agent fingerprint commands
+-- host_tracker: Implement client and server delete commands
+-- http2_inspect: Handle stream creation for push promise frames
+-- ips_options: Fix retry calculation in IPS content when handling "within" field
+-- lua: Use default IPS variables in the default config
+-- main: Add lua variables for snort version and build
+-- managers: Delete obsolete variable parsing code
+-- managers: Skip snort_set lua function for non-table top level keys in finalize.lua
+-- meta: Do not dump elided header fields or default message
+-- meta: Dump full rule field
+-- meta: Dump missing port field
+-- packet: Add two new apis to parse ingress/egress group from packet's daq pkt_hdr
+-- packet_tracer: Add groups in logging based on significant groups flag
+-- port_scan: Add group and asid in PS_HASH_KEY
+-- rna: Change ip to client instead of server for login events
+-- rna: Change logic for payload discovery, eventing
+-- rna: Conditionalize reload tuner registration on get_inspector()
+-- rna: Log user-agent device information
+-- rna: Move registration of reload tuner to configure()
+-- snort2lua: Update comments for deleted rule_state options
+-- ssh: Fix code indentation and CI breakage
+-- ssh: SSH splitter implementation
+-- stream: Initialize flow key's flags.ubits with 0
+-- stream_tcp: Don't attempt to drop 'meta_ack packets', there is no wire packet for these acks
+-- style: Clean up accumulated tabs and trailing whitespace
+-- trace: Refactor the test code
+-- trace: Skip trace reload if no initial config present
+-- utils: Add a generic function to get random seeds
+
 2020/10/07 - 3.0.3 build 2
 
 -- appid: Create events for client user name, id and login success
@@ -1167,16 +1213,16 @@
    - Update sfdaq unit tests for DAQng
    - Update snort2lua to convert to new DAQ configuration
 -- filters: add peg count for when the thd_runtime XHash table gets full.
--- filters: make thd_runtime and rf_hash thread local and allocate them from thread init 
+-- filters: make thd_runtime and rf_hash thread local and allocate them from thread init
    rather than from Module::end()
--- http_inspect: fix status_code_num bug in HttpMsgHeader::update_flow() that leads to 
+-- http_inspect: fix status_code_num bug in HttpMsgHeader::update_flow() that leads to
    assert on input.length()>0 in norm_decimal_integer
 -- main: Fix File Descriptor leaks
 -- main: Include analyzer.h in snort.c
 -- packet_io: Refactor the Trough a bit
 -- perf_mon: Fixed time stamp and memory leak issue
    - Add real timestamp to empty perf_stats data
-   - Updated dbus default subscription code and perf_mon event subscirption code 
+   - Updated dbus default subscription code and perf_mon event subscirption code
      to resolve memory leak and invalid event subscription from reloading
    - Moved flow_ip_tracker to thread local
 -- perf_monitor: Fixing heap-use-after-free after reload failure

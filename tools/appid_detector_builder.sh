@@ -19,7 +19,7 @@
 ##--------------------------------------------------------------------------
 
 ##--------------------------------------------------------------------
-## Generate custom lua detector for appid 
+## Generate custom lua detector for appid
 ##--------------------------------------------------------------------
 
 echo "Snort Application Id - Detector Creation Tool"
@@ -314,7 +314,7 @@ fi
 }
 function output_port_pattern_server()
 {
-if [[ "$port" = "-1" ]]; then 
+if [[ "$port" = "-1" ]]; then
 echo -en "\t\tgDetector:addPortPatternServer($protocol_string,0,\"" >>"${INTERMEDIATEFILE_SERVER}"
 echo -n "${pattern_string}" >>"${INTERMEDIATEFILE_SERVER}"
 echo -e "\",$pattern_offset, gAppId);" >>"${INTERMEDIATEFILE_SERVER}"
@@ -589,7 +589,7 @@ case "$protocol_choice" in
 		    hex_pattern_prompt
 		    ;;
 	esac
-	offset_number_prompt 
+	offset_number_prompt
 	direction_prompt
 	case "$direction_choice" in
 		"CLIENT" )
@@ -611,7 +611,7 @@ case "$protocol_choice" in
 		    hex_pattern_prompt
 	    	;;
 	esac
-	offset_number_prompt 
+	offset_number_prompt
 	direction_prompt
 	case "$direction_choice" in
 		"CLIENT")
@@ -700,6 +700,6 @@ echo "   ${OUTPUTFILE}"
 echo "When you add the .lua file, the AppId,"
 echo -en "   \""
 echo -n "${APPIDSTRING}"
-echo -e "\"," 
+echo -e "\","
 echo "   will be the name reported as detected."
 ### end ###

@@ -33,7 +33,7 @@
 using namespace snort;
 
 DceExpSsnManager::DceExpSsnManager(const char* protocol,
-    IpProtocol proto, PktType type): proto(proto), type(type) 
+    IpProtocol proto, PktType type): proto(proto), type(type)
 {
     protocol_id = SnortConfig::get_conf()->proto_ref->add(protocol);
 }

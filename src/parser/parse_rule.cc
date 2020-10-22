@@ -1331,7 +1331,7 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
 
     if ( is_service_protocol(otn->snort_protocol_id) )
     {
-        // copy required because the call to add_service_to_otn can 
+        // copy required because the call to add_service_to_otn can
         // invalidate the service name pointer
         std::string service = sc->proto_ref->get_name(otn->snort_protocol_id);
         add_service_to_otn(sc, otn, service.c_str());

@@ -226,7 +226,7 @@ ServiceDiscoveryState* AppIdServiceState::get(const SfIp* ip, IpProtocol proto, 
         asid, decrypted), do_touch);
 }
 
-void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port, 
+void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port,
     int16_t group, uint16_t asid, bool decrypted)
 {
     AppIdServiceStateKey ssk(ip, proto, port, group, asid, decrypted);

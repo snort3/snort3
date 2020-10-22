@@ -674,7 +674,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             set_referred_payload(referredPayloadAppId, change_bits);
         }
 
-        is_payload_processed = true; 
+        is_payload_processed = true;
         asd.scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
         if ( version )
             snort_free(version);

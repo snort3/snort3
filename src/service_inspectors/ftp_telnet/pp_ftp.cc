@@ -1029,7 +1029,6 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                 session->flags &= ~FTP_PROTP_CMD_ISSUED;
                 session->flags |= FTP_PROTP_CMD_ACCEPT;
             }
-                
         }
         else if (session->data_chan_state & DATA_CHAN_PASV_CMD_ISSUED)
         {

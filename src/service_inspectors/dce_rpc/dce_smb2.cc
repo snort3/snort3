@@ -104,7 +104,7 @@ DCE2_Smb2RequestTracker::~DCE2_Smb2RequestTracker()
 
 DCE2_Smb2FileTracker::DCE2_Smb2FileTracker(uint64_t file_id_v, DCE2_Smb2TreeTracker* ttr_v,
     DCE2_Smb2SessionTracker* str_v) : file_id(file_id_v), ttr(ttr_v), str(str_v)
-{   
+{
     debug_logf(dce_smb_trace, nullptr, "file tracker %" PRIu64 " created\n", file_id);
     memory::MemoryCap::update_allocations(sizeof(*this));
 }
@@ -145,8 +145,8 @@ DCE2_Smb2TreeTracker::~DCE2_Smb2TreeTracker(void)
         {
             debug_logf(dce_smb_trace, nullptr, "mid %" PRIu64 "\n", h.first);
             removeRtracker(h.first);
-        } 
-    } 
+        }
+    }
     memory::MemoryCap::update_deallocations(sizeof(*this));
 }
 

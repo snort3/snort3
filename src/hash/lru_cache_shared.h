@@ -285,7 +285,7 @@ find_else_insert(const Key& key, std::shared_ptr<Value>& data, bool replace)
         {
             // Explicitly calling the reset so its more clear that destructor could be called for the object
             map_iter->second->second.reset();
-            map_iter->second->second = data; 
+            map_iter->second->second = data;
             stats.replaced++;
         }
         list.splice(list.begin(), list, map_iter->second); // update LRU

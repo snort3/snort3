@@ -80,7 +80,7 @@ struct SO_PUBLIC FlowKey
         const snort::SfIp *dstIP, uint16_t dstPort,
         uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId,
         int16_t group_h = DAQ_PKTHDR_UNKNOWN, int16_t group_l = DAQ_PKTHDR_UNKNOWN);
-    
+
     bool init(
         const SnortConfig*, PktType, IpProtocol,
         const snort::SfIp *srcIP, const snort::SfIp *dstIP,
@@ -93,11 +93,11 @@ struct SO_PUBLIC FlowKey
         const snort::SfIp *srcIP, uint16_t srcPort,
         const snort::SfIp *dstIP, uint16_t dstPort,
         uint16_t vlanId, uint32_t mplsId, const DAQ_PktHdr_t&);
-    
+
     bool init(
         const SnortConfig*, PktType, IpProtocol,
         const snort::SfIp *srcIP, const snort::SfIp *dstIP,
-        uint32_t id, uint16_t vlanId, uint32_t mplsId, const DAQ_PktHdr_t&); 
+        uint32_t id, uint16_t vlanId, uint32_t mplsId, const DAQ_PktHdr_t&);
 
     void init_mpls(const SnortConfig*, uint32_t);
     void init_vlan(const SnortConfig*, uint16_t);

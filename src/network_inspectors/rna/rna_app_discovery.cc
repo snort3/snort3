@@ -199,12 +199,12 @@ void RnaAppDiscovery::discover_payload(const Packet* p, IpProtocol proto, RnaTra
 
         if ( new_pld )
         {
-	        if ( proto == IpProtocol::TCP )
-	            logger.log(RNA_EVENT_CHANGE, CHANGE_TCP_SERVICE_INFO, p, &rt,
-	                (const struct in6_addr*) src_ip, src_mac, &local_ha);
-	        else
-	            logger.log(RNA_EVENT_CHANGE, CHANGE_UDP_SERVICE_INFO, p, &rt,
-	                (const struct in6_addr*) src_ip, src_mac, &local_ha);
+            if ( proto == IpProtocol::TCP )
+                logger.log(RNA_EVENT_CHANGE, CHANGE_TCP_SERVICE_INFO, p, &rt,
+                    (const struct in6_addr*) src_ip, src_mac, &local_ha);
+            else
+                logger.log(RNA_EVENT_CHANGE, CHANGE_UDP_SERVICE_INFO, p, &rt,
+                    (const struct in6_addr*) src_ip, src_mac, &local_ha);
         }
     }
 

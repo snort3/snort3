@@ -279,7 +279,7 @@ void PacketTracer::add_ip_header_info(const Packet& p)
     actual_dip->ntop(dipstr, sizeof(dipstr));
 
     char gr_buf[32] = {0};
-    if (p.is_inter_group_flow()) 
+    if (p.is_inter_group_flow())
         snprintf(gr_buf, sizeof(gr_buf), " GR=%hd-%hd", p.pkth->ingress_group,
             p.pkth->egress_group);
 
@@ -396,8 +396,7 @@ void PacketTracer::open_file()
 void PacketTracer::dump_to_daq(Packet* p)
 {
     assert(p);
-    p->daq_instance->set_packet_trace_data(p->daq_msg, 
-        (uint8_t *)buffer, buff_len + 1);
+    p->daq_instance->set_packet_trace_data(p->daq_msg, (uint8_t *)buffer, buff_len + 1);
 }
 
 void PacketTracer::reset()

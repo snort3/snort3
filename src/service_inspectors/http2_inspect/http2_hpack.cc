@@ -283,7 +283,7 @@ bool Http2HpackDecoder::decode_header_line(const uint8_t* encoded_header_buffer,
             encoded_header_length, bytes_consumed);
 
     table_size_update_allowed = false;
-    
+
     // Indexed header representation
     if (encoded_header_buffer[0] & INDEX_MASK)
         ret = decode_indexed_header(encoded_header_buffer,

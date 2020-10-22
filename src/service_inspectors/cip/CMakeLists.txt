@@ -12,10 +12,10 @@ set( FILE_LIST
     cip_session.h
     ips_cip_attribute.cc
     ips_cip_class.cc
-    ips_cip_connpathclass.cc  
+    ips_cip_connpathclass.cc
     ips_cip_enipcommand.cc
     ips_cip_enipreq.cc
-    ips_cip_eniprsp.cc   
+    ips_cip_eniprsp.cc
     ips_cip_instance.cc
     ips_cip_req.cc
     ips_cip_rsp.cc
