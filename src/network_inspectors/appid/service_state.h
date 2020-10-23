@@ -35,7 +35,7 @@
 
 class ServiceDetector;
 
-class AppIdServiceStateKey;
+struct AppIdServiceStateKey;
 class ServiceDiscoveryState;
 
 typedef std::map<AppIdServiceStateKey, ServiceDiscoveryState*> Map_t;
@@ -161,9 +161,8 @@ public:
 
 
 PADDING_GUARD_BEGIN
-class AppIdServiceStateKey
+struct AppIdServiceStateKey
 {
-public:
     AppIdServiceStateKey(const snort::SfIp* ip,
         IpProtocol proto, uint16_t port, int16_t group, uint16_t asid, bool decrypted) :
         ip(*ip), port(port), group(group), asid(asid), decrypted(decrypted), proto(proto)
@@ -174,7 +173,6 @@ public:
         return memcmp((const uint8_t*) this, (const uint8_t*) &right, sizeof(*this)) < 0;
     }
 
-private:
     snort::SfIp ip;
     uint16_t port;
     int16_t group;
