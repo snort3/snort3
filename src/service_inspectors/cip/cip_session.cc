@@ -81,11 +81,10 @@ static void prune_cip_unconnected_list(CipUnconnectedMessageList* unconnected_li
     struct timeval timestamp_diff;
 
     bool pruned = false;
-    size_t oldest_slot = 0;
+    uint32_t oldest_slot = 0;
 
     // Prune any message that has exceeded the CIP timeout.
-    size_t i;
-    for (i = 0; i < unconnected_list->list_size; ++i)
+    for (uint32_t i = 0; i < unconnected_list->list_size; ++i)
     {
         if (unconnected_list->list[i].slot_active)
         {
@@ -130,13 +129,12 @@ static void prune_cip_connection_list(CipConnectionList* connection_list,
 
     bool pruned = false;
 
-    size_t stale_slot = 0;
+    uint32_t stale_slot = 0;
     struct timeval stale_timestamp_diff;
     memset(&stale_timestamp_diff, 0, sizeof(stale_timestamp_diff));
 
     // Prune any connection that has exceeded the CIP timeout.
-    size_t i;
-    for (i = 0; i < connection_list->list_size; ++i)
+    for (uint32_t i = 0; i < connection_list->list_size; ++i)
     {
         if (connection_list->list[i].slot_active)
         {
@@ -213,8 +211,7 @@ static CipConnection* cip_find_connection_slot(CipConnectionList* connection_lis
         prune_cip_connection_list(connection_list, timestamp);
     }
 
-    size_t i;
-    for (i = 0; i < connection_list->list_size; ++i)
+    for (uint32_t i = 0; i < connection_list->list_size; ++i)
     {
         if (!connection_list->list[i].slot_active)
         {
@@ -234,8 +231,7 @@ CipConnection* cip_find_connection_by_id(
 {
     CipConnection* connection = NULL;
 
-    size_t i;
-    for (i = 0; i < connection_list->list_size; ++i)
+    for (uint32_t i = 0; i < connection_list->list_size; ++i)
     {
         if (connection_list->list[i].slot_active
             && (connection_list->list[i].established == established))
@@ -266,8 +262,7 @@ static const CipConnection* cip_find_connection_by_id_any(
 {
     const CipConnection* connection = NULL;
 
-    size_t i;
-    for (i = 0; i < connection_list->list_size; ++i)
+    for (uint32_t i = 0; i < connection_list->list_size; ++i)
     {
         if (connection_list->list[i].slot_active && connection_list->list[i].established)
         {
@@ -293,8 +288,7 @@ static const CipConnection* cip_find_connection_any(const CipConnectionList* con
 {
     const CipConnection* connection = NULL;
 
-    size_t i;
-    for (i = 0; i < connection_list->list_size; ++i)
+    for (uint32_t i = 0; i < connection_list->list_size; ++i)
     {
         if (connection_list->list[i].slot_active
             && cip_connection_signature_match(&connection_list->list[i].signature, signature))
@@ -313,8 +307,7 @@ static CipConnection* cip_find_connection(CipConnectionList* connection_list,
 {
     CipConnection* connection = NULL;
 
-    size_t i;
-    for (i = 0; i < connection_list->list_size; ++i)
+    for (uint32_t i = 0; i < connection_list->list_size; ++i)
     {
         if (connection_list->list[i].slot_active
             && (connection_list->list[i].established == established)
@@ -426,8 +419,7 @@ static CipUnconnectedMessage* find_unconnected_request_slot(
         prune_cip_unconnected_list(unconnected_list, timestamp);
     }
 
-    size_t i;
-    for (i = 0; i < unconnected_list->list_size; ++i)
+    for (uint32_t i = 0; i < unconnected_list->list_size; ++i)
     {
         if (!unconnected_list->list[i].slot_active)
         {
@@ -445,8 +437,7 @@ static CipUnconnectedMessage* find_unconnected_request(
 {
     CipUnconnectedMessage* unconnected_message = NULL;
 
-    size_t i;
-    for (i = 0; i < unconnected_list->list_size; ++i)
+    for (uint32_t i = 0; i < unconnected_list->list_size; ++i)
     {
         if (unconnected_list->list[i].slot_active
             && unconnected_list->list[i].sender_context == sender_context)

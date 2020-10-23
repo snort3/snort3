@@ -40,10 +40,10 @@ struct CipProtoConf
     uint32_t unconnected_timeout;
 
     // Maximum number of unconnected requests per TCP connection.
-    size_t max_unconnected_messages;
+    uint32_t max_unconnected_messages;
 
     // Maximum number of CIP connections per TCP connection.
-    size_t max_cip_connections;
+    uint32_t max_cip_connections;
 
     // Custom embedded packet parameters.
     bool embedded_cip_enabled;
@@ -447,12 +447,11 @@ struct CipUnconnectedMessage
 struct CipUnconnectedMessageList
 {
     CipUnconnectedMessage* list;
-    size_t list_size;
+    uint32_t list_size;
+    uint32_t count;
 
     // True if an active request was forced to be pruned.
     bool request_pruned;
-
-    size_t count;
 };
 
 // This represents a CIP connection.
@@ -486,12 +485,11 @@ struct CipConnection
 struct CipConnectionList
 {
     CipConnection* list;
-    size_t list_size;
+    uint32_t list_size;
+    uint32_t count;
 
     // True if an active connection was forced to be pruned.
     bool connection_pruned;
-
-    size_t count;
 };
 
 struct CipGlobalSessionData
