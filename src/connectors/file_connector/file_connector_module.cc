@@ -57,7 +57,7 @@ extern THREAD_LOCAL ProfileStats file_connector_perfstats;
 //-------------------------------------------------------------------------
 
 FileConnectorModule::FileConnectorModule() :
-    Module(FILE_CONNECTOR_NAME, FILE_CONNECTOR_HELP, file_connector_params)
+    Module(FILE_CONNECTOR_NAME, FILE_CONNECTOR_HELP, file_connector_params, true)
 {
     config = nullptr;
     config_set = new FileConnectorConfig::FileConnectorConfigSet;

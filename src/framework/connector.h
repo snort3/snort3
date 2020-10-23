@@ -86,6 +86,8 @@ public:
     typedef std::vector<ConnectorConfig*> ConfigSet;
     Connector::Direction direction;
     std::string connector_name;
+
+    virtual ~ConnectorConfig() = default;
 };
 
 class SO_PUBLIC ConnectorCommon

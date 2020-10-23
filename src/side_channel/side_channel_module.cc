@@ -88,7 +88,7 @@ static bool validate_config(SideChannelConfig* config)
 }
 
 SideChannelModule::SideChannelModule() :
-    Module(SIDECHANNEL_NAME, SIDECHANNEL_HELP, sc_params){}
+    Module(SIDECHANNEL_NAME, SIDECHANNEL_HELP, sc_params, true){}
 
 ProfileStats* SideChannelModule::get_profile() const
 { return &sc_perf_stats; }

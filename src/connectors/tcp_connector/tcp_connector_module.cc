@@ -57,7 +57,7 @@ extern THREAD_LOCAL ProfileStats tcp_connector_perfstats;
 //-------------------------------------------------------------------------
 
 TcpConnectorModule::TcpConnectorModule() :
-    Module(TCP_CONNECTOR_NAME, TCP_CONNECTOR_HELP, tcp_connector_params)
+    Module(TCP_CONNECTOR_NAME, TCP_CONNECTOR_HELP, tcp_connector_params, true)
 {
     config = nullptr;
     config_set = new TcpConnectorConfig::TcpConnectorConfigSet;
