@@ -573,7 +573,7 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
 {
     const uint8_t* s = args.data;
     const uint8_t* end = (args.data + args.size);
-    char tag[IMAP_TAG_MAX_LEN + 1] = { 0 };
+    char tag[IMAP_TAG_MAX_LEN + 1] = { '\0' };
 
 #ifdef APP_ID_USES_REASSEMBLED
     Stream::flush_response_flush(pkt);

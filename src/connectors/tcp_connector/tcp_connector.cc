@@ -168,7 +168,7 @@ void TcpConnector::process_receive()
         if (errno != EINTR)
         {
 
-            char error_msg[1024] = {0};
+            char error_msg[1024] = { '\0' };
             if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
                 ErrorMessage("TcpC Input Thread: Error polling on socket %d: %s\n", pfds[0].fd, error_msg);
             else
@@ -399,7 +399,7 @@ static TcpConnector* tcp_connector_tinit_answer(TcpConnectorConfig* cfg, const c
 
     if ( listen(sfd, 10) < 0 )
     {
-        char error_msg[1024] = {0};
+        char error_msg[1024] = { '\0' };
         if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
             ErrorMessage("listen() failure: %s\n", error_msg);
         else
@@ -409,7 +409,7 @@ static TcpConnector* tcp_connector_tinit_answer(TcpConnectorConfig* cfg, const c
 
     if ( (peer_sfd = accept(sfd, nullptr, nullptr )) < 0 )
     {
-        char error_msg[1024] = {0};
+        char error_msg[1024] = { '\0' };
         if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
             ErrorMessage("accept() failure: %s\n", error_msg);
         else

@@ -114,8 +114,8 @@ private:
     PatternService* service_port_pattern = nullptr;
     snort::SearchTool* tcp_pattern_matcher = nullptr;
     snort::SearchTool* udp_pattern_matcher = nullptr;
-    snort::SearchTool* tcp_port_pattern_tree[65536] = { nullptr };
-    snort::SearchTool* udp_port_pattern_tree[65536] = { nullptr };
+    snort::SearchTool* tcp_port_pattern_tree[65536] = { };
+    snort::SearchTool* udp_port_pattern_tree[65536] = { };
 };
 
 #endif

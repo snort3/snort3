@@ -73,8 +73,8 @@ struct HostApplicationInfo
 {
     HostApplicationInfo() = default;
     HostApplicationInfo(const char *ver, const char *ven);
-    char vendor[INFO_SIZE] = { 0 };
-    char version[INFO_SIZE] = { 0 };
+    char vendor[INFO_SIZE] = { '\0' };
+    char version[INFO_SIZE] = { '\0' };
     bool visibility = true;
 
     friend class HostTracker;
@@ -111,7 +111,7 @@ struct HostApplication
     bool inferred_appid = false;
     uint32_t hits = 0;
     uint32_t last_seen = 0;
-    char user[INFO_SIZE] = { 0 };
+    char user[INFO_SIZE] = { '\0' };
 
     std::vector<HostApplicationInfo, HostAppInfoAllocator> info;
     std::vector<Payload_t, HostCacheAllocIp<Payload_t>> payloads;
@@ -127,7 +127,7 @@ struct HostClient
     HostClient() = default;
     HostClient(AppId clientid, const char *ver, AppId ser);
     AppId id;
-    char version[INFO_SIZE] = { 0 };
+    char version[INFO_SIZE] = { '\0' };
     AppId service;
     std::vector<Payload_t, HostCacheAllocIp<Payload_t>> payloads;
 
@@ -148,7 +148,7 @@ struct DeviceFingerprint
     uint32_t fpid;
     uint32_t fp_type;
     bool jail_broken;
-    char device[INFO_SIZE] = { 0 };
+    char device[INFO_SIZE] = { '\0' };
 };
 
 enum HostType : std::uint32_t

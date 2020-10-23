@@ -55,7 +55,7 @@ void print_conf_client(FTP_CLIENT_PROTO_CONF* config)
         FTPBounce;
         FTPBounce = ftp_bounce_lookup_next(config->bounce_lookup, &ret))
     {
-        char buf[BUF_SIZE + 1] = {0};
+        char buf[BUF_SIZE + 1] = { '\0' };
 
         FTPBounce->ip.ntop(buf, BUF_SIZE);
 

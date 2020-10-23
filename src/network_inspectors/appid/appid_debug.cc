@@ -110,7 +110,7 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
     snort_inet_ntop(af, &sip->u6_addr32[(af == AF_INET)? 3 : 0], sipstr, sizeof(sipstr));
     snort_inet_ntop(af, &dip->u6_addr32[(af == AF_INET)? 3 : 0], dipstr, sizeof(dipstr));
 
-    char gr_buf[32] = {0};
+    char gr_buf[32] = { '\0' };
     if (inter_group_flow)
         snprintf(gr_buf, sizeof(gr_buf), " GR=%hd-%hd", sgroup, dgroup);
 

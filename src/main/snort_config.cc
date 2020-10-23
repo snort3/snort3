@@ -807,7 +807,7 @@ void SnortConfig::set_tunnel_verdicts(const char* args)
     char* tmp, * tok;
 
     tmp = snort_strdup(args);
-    char* lasts = { nullptr };
+    char* lasts = nullptr;
     tok = strtok_r(tmp, " ,", &lasts);
 
     while (tok)

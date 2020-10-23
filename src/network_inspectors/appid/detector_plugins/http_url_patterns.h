@@ -229,8 +229,8 @@ public:
     }
 
     HttpFieldIds cur_ptype;
-    const char* buffer[NUM_HTTP_FIELDS] = { nullptr };
-    uint16_t length[NUM_HTTP_FIELDS] = { 0 };
+    const char* buffer[NUM_HTTP_FIELDS] = { };
+    uint16_t length[NUM_HTTP_FIELDS] = { };
     std::list<MatchedCHPAction> chp_matches[NUM_HTTP_FIELDS];
     CHPMatchTally match_tally;
 

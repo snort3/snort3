@@ -1423,8 +1423,8 @@ static void fp_sum_service_groups(GHash* h, unsigned c[PM_TYPE_MAX])
 
 static void fp_print_service_groups(srmm_table_t* srmm)
 {
-    unsigned to_srv[PM_TYPE_MAX] = { 0 };
-    unsigned to_cli[PM_TYPE_MAX] = { 0 };
+    unsigned to_srv[PM_TYPE_MAX] = { };
+    unsigned to_cli[PM_TYPE_MAX] = { };
 
     fp_sum_service_groups(srmm->to_srv, to_srv);
     fp_sum_service_groups(srmm->to_cli, to_cli);
@@ -1460,9 +1460,9 @@ static void fp_sum_port_groups(PortTable* tab, unsigned c[PM_TYPE_MAX])
 
 static void fp_print_port_groups(RulePortTables* port_tables)
 {
-    unsigned src[PM_TYPE_MAX] = { 0 };
-    unsigned dst[PM_TYPE_MAX] = { 0 };
-    unsigned any[PM_TYPE_MAX] = { 0 };
+    unsigned src[PM_TYPE_MAX] = { };
+    unsigned dst[PM_TYPE_MAX] = { };
+    unsigned any[PM_TYPE_MAX] = { };
 
     fp_sum_port_groups(port_tables->ip.src, src);
     fp_sum_port_groups(port_tables->ip.dst, dst);

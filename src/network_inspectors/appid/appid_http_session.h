@@ -176,7 +176,7 @@ protected:
     // functions in tp_appid_utils.cc are static. Thus the public
     // set_field() functions in AppIdHttpSession. We do need set functions
     // for this array, as old pointers need to be deleted upon set().
-    const std::string* meta_data[NUM_METADATA_FIELDS] = { 0 };
+    const std::string* meta_data[NUM_METADATA_FIELDS] = { };
     pair_t meta_offset[NUM_HTTP_FIELDS];
 
     bool is_webdav = false;
@@ -189,8 +189,8 @@ protected:
     int num_matches = 0;
     int num_scans = 0;
     bool skip_simple_detect = false;
-    int ptype_req_counts[NUM_HTTP_FIELDS] = { 0 };
-    int ptype_scan_counts[NUM_HTTP_FIELDS] = { 0 };
+    int ptype_req_counts[NUM_HTTP_FIELDS] = { };
+    int ptype_scan_counts[NUM_HTTP_FIELDS] = { };
     const TunnelDest* tun_dest = nullptr;
 #if RESPONSE_CODE_PACKET_THRESHHOLD
     unsigned response_code_packets = 0;

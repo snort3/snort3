@@ -60,11 +60,11 @@ public:
     class AppIdDynamicPeg
     {
     public:
-        PegCount stats[DetectorPegs::NUM_APPID_DETECTOR_PEGS] = { 0 };
+        PegCount stats[DetectorPegs::NUM_APPID_DETECTOR_PEGS] = { };
 
         bool all_zeros()
         {
-            PegCount zeroed_peg[DetectorPegs::NUM_APPID_DETECTOR_PEGS] = { 0 };
+            PegCount zeroed_peg[DetectorPegs::NUM_APPID_DETECTOR_PEGS] = { };
             return !memcmp(stats, &zeroed_peg, sizeof(stats));
         }
 

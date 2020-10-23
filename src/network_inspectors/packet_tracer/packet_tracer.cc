@@ -278,7 +278,7 @@ void PacketTracer::add_ip_header_info(const Packet& p)
     actual_sip->ntop(sipstr, sizeof(sipstr));
     actual_dip->ntop(dipstr, sizeof(dipstr));
 
-    char gr_buf[32] = {0};
+    char gr_buf[32] = { '\0' };
     if (p.is_inter_group_flow())
         snprintf(gr_buf, sizeof(gr_buf), " GR=%hd-%hd", p.pkth->ingress_group,
             p.pkth->egress_group);

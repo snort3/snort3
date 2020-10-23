@@ -48,7 +48,7 @@ using namespace snort;
 #ifdef DEBUG_MSGS
 static inline void rna_logger_message(const RnaLoggerEvent& rle)
 {
-    char macbuf[19] = { 0 };
+    char macbuf[19] = { '\0' };
     if ( rle.mac )
         snprintf(macbuf, 19, "%02X:%02X:%02X:%02X:%02X:%02X",
             rle.mac[0], rle.mac[1], rle.mac[2], rle.mac[3], rle.mac[4], rle.mac[5]);

@@ -1033,7 +1033,7 @@ static inline const char* continue_buffer_scan(const char* start, const char* en
 void HttpPatternMatchers::identify_user_agent(const char* start, int size, AppId& service_id,
     AppId& client_id, char** version)
 {
-    char temp_ver[MAX_VERSION_SIZE] = { 0 };
+    char temp_ver[MAX_VERSION_SIZE] = { '\0' };
     MatchedPatterns* mp = nullptr;
 
     client_agent_matcher.find_all(start, size, &http_pattern_match, false, (void*)&mp);
