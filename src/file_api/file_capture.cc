@@ -156,12 +156,6 @@ void FileCapture::exit()
         delete file_storer;
         file_storer = nullptr;
     }
-
-    if (file_mempool)
-    {
-        delete file_mempool;
-        file_mempool = nullptr;
-    }
 }
 
 /*
