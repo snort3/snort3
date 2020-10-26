@@ -51,7 +51,7 @@ SnortConfig::~SnortConfig() {}
 time_t packet_time() { return 0; }
 
 // tcp fingerprint functions
-void TcpFpProcessor::push(const TcpFingerprint&) { }
+bool TcpFpProcessor::push(const TcpFingerprint&) { return true; }
 void TcpFpProcessor::make_tcp_fp_tables(TCP_FP_MODE) { }
 const TcpFingerprint* TcpFpProcessor::get_tcp_fp(const FpTcpKey&, uint8_t, TCP_FP_MODE) const
 { return nullptr; }

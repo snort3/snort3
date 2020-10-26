@@ -95,12 +95,12 @@ bool TcpFingerprint::operator==(const TcpFingerprint& y) const
         df == y.df);
 }
 
-void TcpFpProcessor::push(const TcpFingerprint& tfp)
+bool TcpFpProcessor::push(const TcpFingerprint& tfp)
 {
-    const auto& result = tcp_fps.emplace(make_pair(tfp.fpid, tfp));
+    const auto& result = tcp_fps.emplace(tfp.fpid, tfp);
     if (!result.second)
         WarningMessage("TcpFpProcessor: ignoring previously seen fingerprint id: %d\n", tfp.fpid);
-
+    return result.second;
 }
 
 void TcpFpProcessor::make_tcp_fp_tables(TCP_FP_MODE mode)
@@ -129,6 +129,109 @@ void TcpFpProcessor::make_tcp_fp_tables(TCP_FP_MODE mode)
     }
 }
 
+static inline bool is_mss_good(const FpTcpKey& key, const vector<FpElement>& tfp_mss)
+{
+    for (const auto& fpe_mss : tfp_mss)
+    {
+        switch (fpe_mss.type)
+        {
+        case FpElementType::RANGE:
+            if (key.mss >= fpe_mss.d.range.min and key.mss <= fpe_mss.d.range.max)
+                return true;
+            break;
+        case FpElementType::SYN_MATCH:
+            //if synmss is negative, it means that client didn't send MSS option
+            if ((key.synmss  >= 0) and ((!fpe_mss.d.value and key.mss <= key.synmss) or
+                (fpe_mss.d.value and ((key.synmss < fpe_mss.d.value and key.mss <= key.synmss) or
+                (key.synmss >= fpe_mss.d.value and key.mss <= fpe_mss.d.value)))))
+                return true;
+            break;
+        case FpElementType::DONT_CARE:
+        case FpElementType::SYNTS:
+            return true;
+        default:
+            break;
+        }
+    }
+    return false;
+}
+
+static inline bool is_ws_good(const FpTcpKey& key, const vector<FpElement>& tfp_ws)
+{
+    if (key.ws_pos >= 0)
+    {
+        for (const auto& fpe_ws : tfp_ws)
+        {
+            switch (fpe_ws.type)
+            {
+            case FpElementType::RANGE:
+                if (key.ws >= fpe_ws.d.range.min and key.ws <= fpe_ws.d.range.max)
+                    return true;
+                break;
+            case FpElementType::DONT_CARE:
+                return true;
+            default:
+                break;
+            }
+        }
+        return false;
+    }
+    return true;
+}
+
+static inline bool is_option_good(const int& optpos, const int& fp_optpos,
+    uint8_t* optorder, uint8_t* fp_optorder)
+{
+    if (optpos != fp_optpos)
+        return false;
+
+    for (int i = 0; i < optpos; i++)
+    {
+        if (optorder[i] != fp_optorder[i])
+            return false;
+    }
+    return true;
+}
+
+static inline bool is_ts_good(const FpTcpKey& key, const vector<FpElement>& topts,
+    const int& optpos, uint8_t* optorder, uint8_t* fp_optorder)
+{
+    if (key.syn_timestamp)
+        return false;
+
+    int i = 0;
+    for (; i < key.num_syn_tcpopts; i++)
+    {
+        if (key.syn_tcpopts[i] == (uint8_t) tcp::TcpOptCode::TIMESTAMP)
+            break;
+    }
+    if (i == key.num_syn_tcpopts)
+        return false;
+
+    int fp_optpos = 0;
+    for (const auto& fpe_topts : topts)
+    {
+        for (i = 0; i < key.num_syn_tcpopts; i++)
+        {
+            if (key.syn_tcpopts[i] == fpe_topts.d.range.min)
+            {
+                if (key.syn_tcpopts[i] != (uint8_t) tcp::TcpOptCode::TIMESTAMP)
+                    fp_optorder[fp_optpos++] = key.syn_tcpopts[i];
+                break;
+            }
+        }
+    }
+    if (optpos != fp_optpos)
+        return false;
+
+    for (i = 0; i < optpos and i < 4; i++)
+    {
+        if (optorder[i] != fp_optorder[i])
+            return false;
+    }
+    return true;
+}
+
 const TcpFingerprint* TcpFpProcessor::get_tcp_fp(const FpTcpKey& key, uint8_t ttl,
     TCP_FP_MODE mode) const
 {
@@ -148,83 +251,27 @@ const TcpFingerprint* TcpFpProcessor::get_tcp_fp(const FpTcpKey& key, uint8_t tt
             FpFingerprint::FpType::FP_TYPE_SERVER6 :
             FpFingerprint::FpType::FP_TYPE_SERVER;
     }
-    else if (mode == TCP_FP_MODE::CLIENT)
+    else
     {
         fptable = table_tcp_client;
         fptype = key.isIpv6 ?
             FpFingerprint::FpType::FP_TYPE_CLIENT6 :
             FpFingerprint::FpType::FP_TYPE_CLIENT;
     }
-    else
-    {
-        ErrorMessage("TcpFpProcessor::get_tcp_fingerprint(): Invalid mode - %d", mode);
-        return nullptr;
-    }
 
     const auto& tfpvec = fptable[key.tcp_window];
     for (const auto& tfp : tfpvec)
     {
-        if (tfp->fp_type != fptype )
-            continue;   // tfp
+        if (tfp->fp_type != fptype or !is_mss_good(key, tfp->mss))
+            continue;
 
-        for (const auto& fpe_mss : tfp->mss)
-        {
-            switch (fpe_mss.type)
-            {
-            case FpElementType::RANGE:
-                if (key.mss >= fpe_mss.d.range.min &&
-                    key.mss <= fpe_mss.d.range.max)
-                {
-                    goto mssgood;
-                }
-                break;
-            case FpElementType::SYN_MATCH:
-                //if synmss is negative, it means that client didn't send MSS option
-                if ((key.synmss  >= 0)
-                    && ((!fpe_mss.d.value && key.mss <= key.synmss)
-                        || (fpe_mss.d.value && ((key.synmss < fpe_mss.d.value && key.mss <= key.synmss)
-                        || (key.synmss >= fpe_mss.d.value && key.mss <= fpe_mss.d.value)))))
-                {
-                    goto mssgood;
-                }
-                break;
-            case FpElementType::DONT_CARE:
-            case FpElementType::SYNTS:
-                goto mssgood;
-            default:
-                break;
-            }
-        }
-        continue;  // tfp
-
-    mssgood:
         if ( (key.isIpv6 || key.df == tfp->df) &&  // don't check df for ipv6
             ttl <= tfp->ttl &&
             (tfp->ttl < MAXIMUM_FP_HOPS || ttl >= (tfp->ttl - MAXIMUM_FP_HOPS)))
         {
-            if (key.ws_pos >= 0)
-            {
-                for (const auto& fpe_ws : tfp->ws)
-                {
-                    switch (fpe_ws.type)
-                    {
-                    case FpElementType::RANGE:
-                        if (key.ws >= fpe_ws.d.range.min &&
-                            key.ws <= fpe_ws.d.range.max)
-                        {
-                            goto wsgood;
-                        }
-                        break;
-                    case FpElementType::DONT_CARE:
-                        goto wsgood;
-                    default:
-                        break;
-                    }
-                }
-                continue;  // tfp
-            }
+            if (!is_ws_good(key, tfp->ws))
+                continue;
 
-        wsgood:
             if (mode == TCP_FP_MODE::SERVER)
             {
                 //create array of options in the order seen in server packet
@@ -257,49 +304,14 @@ const TcpFingerprint* TcpFpProcessor::get_tcp_fp(const FpTcpKey& key, uint8_t tt
 
                 //if number, type, or order of option in SYN mismatch those in FP,
                 //goto next check.
-                if (optpos != fp_optpos) goto check_ts;
+                if (is_option_good(optpos, fp_optpos, optorder, fp_optorder))
+                    return tfp;
 
-                for (i=0; i<optpos; i++)
-                {
-                    if (optorder[i] != fp_optorder[i]) goto check_ts;
-                }
-                return tfp;
-
-            check_ts:
                 //number and type of options didn't match between SYN and fingerprint.
-                //Ignore Timestamp option if present in SYN. Remaining processing is
-                //the same as the block above.
-                for (i=0; i<key.num_syn_tcpopts; i++)
-                {
-                    if (key.syn_tcpopts[i] == (uint8_t) tcp::TcpOptCode::TIMESTAMP)
-                    {
-                        break;
-                    }
-                }
-                if (i >= key.num_syn_tcpopts || key.syn_timestamp)
-                    continue;    // tfp
+                //Ignore Timestamp option if present in SYN.
+                if (!is_ts_good(key, tfp->topts, optpos, optorder, fp_optorder))
+                    continue;
 
-                fp_optpos = 0;
-                for (const auto& fpe_topts : tfp->topts)
-                {
-                    for (i=0; i<key.num_syn_tcpopts; i++)
-                    {
-                        if (key.syn_tcpopts[i] == fpe_topts.d.range.min)
-                        {
-                            if (key.syn_tcpopts[i] != (uint8_t) tcp::TcpOptCode::TIMESTAMP)
-                                fp_optorder[fp_optpos++] = key.syn_tcpopts[i];
-                            break;
-                        }
-                    }
-                }
-                if (optpos != fp_optpos)
-                    continue;   // ftp
-
-                for (i=0; i<optpos; i++)
-                {
-                    if (optorder[i] != fp_optorder[i])
-                        continue; // tfp
-                }
                 return tfp;
             }
             else
@@ -623,11 +635,20 @@ TEST_CASE("get_tcp_fp", "[rna_fingerprint_tcp]")
     processor->push(rawfp);
     TcpFingerprint f2(rawfp);
 
+    // Testing the insertion case where tcp window is not range
+    rawfp.fpid = 1234;
+    rawfp.fp_type = 1;
+    rawfp.tcp_window = "SYN";
+    CHECK( processor->push(rawfp) == true );
+
+    // Testing the insertion failure for duplicate fpid
+    rawfp.fp_type = 2;
+    CHECK( processor->push(rawfp) == false );
+
     processor->make_tcp_fp_tables(TcpFpProcessor::TCP_FP_MODE::SERVER);
     processor->make_tcp_fp_tables(TcpFpProcessor::TCP_FP_MODE::CLIENT);
 
     // match time
-    const TcpFingerprint* tfp;
     uint8_t ttl = 64;
     TcpFpProcessor::TCP_FP_MODE mode = TcpFpProcessor::TCP_FP_MODE::SERVER;
 
@@ -652,7 +673,7 @@ TEST_CASE("get_tcp_fp", "[rna_fingerprint_tcp]")
     syn_tcpopts[key.sackok_pos] = (uint8_t) tcp::TcpOptCode::SACKOK;
     syn_tcpopts[key.ws_pos] = (uint8_t) tcp::TcpOptCode::WSCALE;
 
-    tfp = processor->get_tcp_fp(key, ttl, mode);
+    const TcpFingerprint* tfp = processor->get_tcp_fp(key, ttl, mode);
     CHECK( (tfp && *tfp == f110005) );
 
     // as above, except don't set timestamp option 2 4 8 3
@@ -701,6 +722,130 @@ TEST_CASE("get_tcp_fp", "[rna_fingerprint_tcp]")
 
     delete processor;
     set_tcp_fp_processor(nullptr);
+}
+
+TEST_CASE("is_mss_good", "[rna_fingerprint_tcp]")
+{
+    vector<FpElement> tfp_mss;
+    FpTcpKey key;
+
+    // Testing SYN_MATCH case
+    tfp_mss.emplace_back(FpElement("SYN-0"));
+    tfp_mss.emplace_back(FpElement("SYN-1"));
+    key.synmss = 1;
+    key.mss = 4;
+    CHECK( is_mss_good(key, tfp_mss) == false );
+
+    key.synmss = 1;
+    key.mss = 1;
+    CHECK( is_mss_good(key, tfp_mss) == true );
+
+    // Testing out of range case
+    tfp_mss.clear();
+    tfp_mss.emplace_back(FpElement("5"));
+    CHECK( is_mss_good(key, tfp_mss) == false );
+
+    // Testing default case
+    tfp_mss.clear();
+    tfp_mss.emplace_back(FpElement("R"));
+    CHECK( is_mss_good(key, tfp_mss) == false );
+}
+
+TEST_CASE("is_ws_good", "[rna_fingerprint_tcp]")
+{
+    FpTcpKey key;
+    key.ws_pos = 1;
+    key.ws = 2;
+    vector<FpElement> tfp_ws;
+
+    // Testing outside the range case
+    tfp_ws.emplace_back(FpElement("-1"));
+    CHECK( is_ws_good(key, tfp_ws) == false );
+
+    // Testing don't care case
+    tfp_ws.clear();
+    tfp_ws.emplace_back(FpElement("X"));
+    CHECK( is_ws_good(key, tfp_ws) == true );
+
+    // Testing default case
+    tfp_ws.clear();
+    tfp_ws.emplace_back(FpElement("TS"));
+    CHECK( is_ws_good(key, tfp_ws) == false );
+}
+
+TEST_CASE("is_option_good", "[rna_fingerprint_tcp]")
+{
+    int optpos = 1, fp_optpos = 1;
+    uint8_t optorder[] = { (uint8_t) tcp::TcpOptCode::WSCALE };
+    uint8_t fp_optorder[] = { (uint8_t) tcp::TcpOptCode::MAXSEG };
+
+    // Testing the case when option values are different
+    CHECK( is_option_good(optpos, fp_optpos, optorder, fp_optorder) == false );
+}
+
+TEST_CASE("is_ts_good", "[rna_fingerprint_tcp]")
+{
+    vector<FpElement> topts;
+    uint8_t optorder[4], fp_optorder[4];
+    int optpos = 0;
+    FpTcpKey key;
+
+    // Testing SYN timestamp
+    key.syn_timestamp = 123456789;
+    CHECK( is_ts_good(key, topts, optpos, optorder, fp_optorder) == false );
+
+    // Testing option code without timestamp
+    uint8_t syn_tcpopts[] = {0, 0, 0, 0};
+    key.syn_tcpopts = syn_tcpopts;
+    key.num_syn_tcpopts = 4;
+    key.syn_timestamp = 0;
+    CHECK( is_ts_good(key, topts, optpos, optorder, fp_optorder) == false );
+
+    // Testing option code with timestamp, but mismatched position
+    key.syn_tcpopts[0] = (uint8_t) tcp::TcpOptCode::TIMESTAMP;
+    FpElement fpe("X");
+    fpe.d.value = 0;
+    topts.emplace_back(fpe);
+    CHECK( is_ts_good(key, topts, optpos, optorder, fp_optorder) == false );
+
+    // Testing option code with timestamp, matched position, but mismatched order
+    optpos = 1;
+    optorder[0] = (uint8_t) tcp::TcpOptCode::MAXSEG;
+    CHECK( is_ts_good(key, topts, optpos, optorder, fp_optorder) == false );
+
+    // Testing option code with timestamp, matched position, and matched order
+    optorder[0] = (uint8_t) tcp::TcpOptCode::EOL;
+    CHECK( is_ts_good(key, topts, optpos, optorder, fp_optorder) == true );
+}
+
+TEST_CASE("get_tcp_option", "[rna_fingerprint_tcp]")
+{
+    // The following hex bytes are dumped from a packet of a random pcap with flow like this:
+    // IP 192.168.0.89:9012 -> p3nlh044.shr.prod.phx3.secureserver.net.http
+    // Flag SYN, win 8192, length 0, option 0
+    // The bytes are modified just enough to test the desired case for the option flag.
+    uint8_t cooked_pkt[] = "\x00\x21\x91\x01\xb2\x48\xaa\x00\x04\x00\x0a\x04\x08\x00\x45"
+        "\x00\x00\x28\x00\x01\x00\x00\x40\x06\x88\x96\xc0\xa8\x00\x59\x48\xa7\xe8\x90\x23"
+        "\x34\x00\x50\x00\x00\x23\x5a\x00\x00\x00\x00\x50\x02\x20\x00\x56\xcb\x00\x00\x00";
+    Packet p(false);
+    p.pkt = cooked_pkt;
+    p.ptrs.tcph = ( const tcp::TCPHdr* )( cooked_pkt + 34 );
+    p.num_layers = 1;
+    Layer cooked_layer;
+    cooked_layer.start = cooked_pkt + 34;
+    cooked_layer.length = 21; // TCP_MIN_HEADER_LEN + 1
+    auto saved_layers = p.layers;
+    p.layers = &cooked_layer;
+    int pos;
+
+    // Check the default case when the desired option does not match
+    CHECK( get_tcp_option(&p, tcp::TcpOptCode::EOL, pos) == -1 );
+
+    // Check the case when NOP option is matched
+    cooked_pkt[54] = 1; // 34 + TCP_MIN_HEADER_LEN = 54
+    CHECK( get_tcp_option(&p, tcp::TcpOptCode::NOP, pos) == 1 );
+
+    p.layers = saved_layers;
 }
 
 #endif

@@ -91,13 +91,13 @@ public:
 
     enum TCP_FP_MODE { SERVER, CLIENT };
 
-    void push(const TcpFingerprint& tfp);
+    bool push(const TcpFingerprint&);
 
-    void make_tcp_fp_tables(TCP_FP_MODE mode);
+    void make_tcp_fp_tables(TCP_FP_MODE);
 
-    const TcpFingerprint* get_tcp_fp(const FpTcpKey& key, uint8_t ttl, TCP_FP_MODE mode) const;
+    const TcpFingerprint* get_tcp_fp(const FpTcpKey&, uint8_t, TCP_FP_MODE) const;
 
-    const TcpFingerprint* get(const Packet* p, RNAFlow* flowp) const;
+    const TcpFingerprint* get(const Packet*, RNAFlow*) const;
 
     const TcpFingerprint* get(uint32_t fpid) const
     {
