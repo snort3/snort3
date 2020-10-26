@@ -47,7 +47,7 @@ class HttpMsgSection;
 class HttpInspect;
 class HttpStreamSplitter;
 
-class Http2FlowData : public snort::FlowData
+class SO_PUBLIC Http2FlowData : public snort::FlowData
 {
 public:
     Http2FlowData(snort::Flow* flow_);

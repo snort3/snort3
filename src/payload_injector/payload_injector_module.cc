@@ -60,7 +60,8 @@ static const std::map <InjectionReturnStatus, const char*> InjectionErrorToStrin
     { ERR_TRANSLATED_HDRS_SIZE,
       "HTTP/2 translated header size is bigger than expected. Update max size." },
     { ERR_HTTP2_BODY_SIZE, "HTTP/2 body is > 16k. Currently not supported." },
-    { ERR_HTTP2_EVEN_STREAM_ID, "HTTP/2 - injection to server initiated stream" }
+    { ERR_HTTP2_EVEN_STREAM_ID, "HTTP/2 - injection to server initiated stream" },
+    { ERR_PKT_FROM_SERVER, "Packet is from server" }
 };
 
 bool PayloadInjectorModule::configured = false;
@@ -135,25 +136,30 @@ InjectionReturnStatus PayloadInjectorModule::inject_http_payload(Packet* p,
 
     if (configured)
     {
-        EncodeFlags df = (p->packet_flags & PKT_FROM_SERVER) ? ENC_FLAG_FWD : 0;
-        df |= ENC_FLAG_RST_SRVR; // Send RST to server.
-
-        if (p->packet_flags & PKT_STREAM_EST)
-        {
-            if (!p->flow)
-                status = ERR_UNIDENTIFIED_PROTOCOL;
-            else if (!p->flow->gadget || strcmp(p->flow->gadget->get_name(),"http_inspect") == 0)
-            {
-                payload_injector_stats.http_injects++;
-                p->active->send_data(p, df, control.http_page, control.http_page_len);
-            }
-            else if (strcmp(p->flow->gadget->get_name(),"http2_inspect") == 0)
-                status = inject_http2_payload(p, control, df);
-            else
-                status = ERR_UNIDENTIFIED_PROTOCOL;
-        }
+        if (p->packet_flags & PKT_FROM_SERVER)
+            status =  ERR_PKT_FROM_SERVER;
         else
-            status = ERR_STREAM_NOT_ESTABLISHED;
+        {
+            EncodeFlags df = ENC_FLAG_RST_SRVR; // Send RST to server.
+
+            if (p->packet_flags & PKT_STREAM_EST)
+            {
+                if (!p->flow)
+                    status = ERR_UNIDENTIFIED_PROTOCOL;
+                else if (!p->flow->gadget || strcmp(p->flow->gadget->get_name(),"http_inspect") ==
+                    0)
+                {
+                    payload_injector_stats.http_injects++;
+                    p->active->send_data(p, df, control.http_page, control.http_page_len);
+                }
+                else if (strcmp(p->flow->gadget->get_name(),"http2_inspect") == 0)
+                    status = inject_http2_payload(p, control, df);
+                else
+                    status = ERR_UNIDENTIFIED_PROTOCOL;
+            }
+            else
+                status = ERR_STREAM_NOT_ESTABLISHED;
+        }
     }
     else
         status = ERR_INJECTOR_NOT_CONFIGURED;

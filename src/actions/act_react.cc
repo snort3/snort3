@@ -57,10 +57,13 @@
 #include "payload_injector/payload_injector_module.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+#include "service_inspectors/http2_inspect/http2_flow_data.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
 using namespace snort;
+using namespace HttpCommon;
+using namespace Http2Enums;
 
 #define s_name "react"
 
@@ -100,7 +103,7 @@ public:
     {
         if ( page.empty())
         {
-            resp_buf = DEFAULT_HTTP + std::to_string(sizeof(DEFAULT_HTML));
+            resp_buf = DEFAULT_HTTP + std::to_string(strlen(DEFAULT_HTML));
             resp_buf.append("\r\n\r\n");
             resp_buf.append(DEFAULT_HTML);
         }
@@ -148,6 +151,19 @@ private:
         InjectionControl control;
         control.http_page = (const uint8_t*)config->get_resp_buf();
         control.http_page_len = config->get_buf_len();
+        if (p->flow && p->flow->gadget &&
+            (strcmp(p->flow->gadget->get_name(), "http2_inspect") == 0))
+        {
+            Http2FlowData* const session_data =
+                (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
+            assert(session_data != nullptr);
+            const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
+            if (session_data != nullptr)
+            {
+                control.stream_id = session_data->get_current_stream_id(source_id);
+                assert(control.stream_id != NO_STREAM_ID);
+            }
+        }
         InjectionReturnStatus status = PayloadInjectorModule::inject_http_payload(p, control);
 #ifdef DEBUG_MSGS
         if (status != INJECTION_SUCCESS)

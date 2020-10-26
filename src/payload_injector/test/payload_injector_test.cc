@@ -318,6 +318,19 @@ TEST(payload_injector_test, http2_continuation_expected)
     delete flow.gadget;
 }
 
+TEST(payload_injector_test, http2_pkt_from_srvr)
+{
+    mod.set_configured(true);
+    Packet p(false);
+    p.packet_flags = PKT_FROM_SERVER;
+    flow.gadget = new MockInspector();
+    p.flow = &flow;
+    InjectionReturnStatus status = mod.inject_http_payload(&p, control);
+    CHECK(status == ERR_PKT_FROM_SERVER);
+    CHECK(flow.flow_state == Flow::FlowState::BLOCK);
+    delete flow.gadget;
+}
+
 TEST_GROUP(payload_injector_translate_err_test)
 {
     PayloadInjectorModule mod;
