@@ -91,7 +91,7 @@ The headers used are:
     "HTTP/1.1 403 Forbidden\r\n" \
     "Connection: close\r\n" \
     "Content-Type: text/html; charset=utf-8\r\n" \
-    "Content-Length: 439\r\n" \
+    "Content-Length: 438\r\n" \
     "\r\n"
 
 The page to be sent can be read from a file:
@@ -115,13 +115,26 @@ or else the default is used:
     "</html>\r\n"
 
 Note that the file contains the message body only. The headers will be added
-with an updated value for Content-Length.
+with an updated value for Content-Length. For HTTP/2 traffic Snort will
+translate the page to HTTP/2 format.
+
+Limitations for HTTP/2:
+
+* Packet will be injected against the last received stream id.
+
+* Injection triggered while server-to-client flow of traffic is in a middle
+of a frame is not supported. The traffic will be blocked, but the page will
+not be injected/displayed.
 
 When using react, payload injector must be configured as well.
+Also Snort should be in ips mode, so the rule is triggered on the client
+packet, and not delayed until the server sends ACK. To achieve this use
+the default normalizer. It will set normalizer.tcp.ips = true. 
 Example:
     
     react = { page = "my_block_page.html" }
     payload_injector = { }
+    normalizer = { }
     
     local_rules =
     [[
