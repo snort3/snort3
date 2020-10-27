@@ -464,7 +464,7 @@ static PortObject* ParsePortListTcpUdpPort(
         const char* name = port_str + 1;
 
         /* look it up  in the port var table */
-        portobject = PortVarTableFind(pvt, name);
+        portobject = PortVarTableFind(pvt, name, true);
         if ( !portobject )
             ParseAbort("***PortVar Lookup failed on '%s'.", port_str);
 

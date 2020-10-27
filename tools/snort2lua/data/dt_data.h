@@ -50,6 +50,8 @@ class Variable;
 class Comments;
 class DataApi;
 
+using var_it = std::vector<Variable*>::const_iterator;
+
 class DataApi
 {
 public:
@@ -95,7 +97,7 @@ public:
     { return vars.empty() && includes.empty(); }
 
     bool has_local_vars() const
-    { return !local_vars.empty(); }
+    { return !net_vars.empty() or !path_vars.empty() or !port_vars.empty(); }
 
     // functions specifically useful when parsing includes.
     // allows for easy swapping of data.  These two functions
@@ -109,7 +111,9 @@ public:
 
     // add a variable to this file
     void set_variable(const std::string& name, const std::string& value, bool quoted);
-    bool add_variable(const std::string& name, const std::string& value);
+    bool add_net_variable(const std::string& name, const std::string& value);
+    bool add_path_variable(const std::string& name, const std::string& value);
+    bool add_port_variable(const std::string& name, const std::string& value);
     // add a Snort style include file
     bool add_include_file(const std::string& name);
     // add a 'comment' to the Lua file. should ONLY be used when
@@ -131,6 +135,10 @@ public:
     { current_line = line; }
 
 private:
+    std::string get_file_line();
+    var_it find_var(const std::string& name) const;
+
+private:
     enum class PrintMode
     {
         DEFAULT,
@@ -145,7 +153,9 @@ private:
 
     std::vector<Variable*> vars;
     std::vector<Include*> includes;
-    std::vector<std::string> local_vars;
+    std::vector<std::string> net_vars;
+    std::vector<std::string> path_vars;
+    std::vector<std::string> port_vars;
     Comments* comments;
     Comments* errors;
     Comments* unsupported;
@@ -153,8 +163,6 @@ private:
     bool curr_data_bad = false;  // keep track whether current 'conversion' is already bad
     const std::string* current_file = nullptr;
     unsigned current_line = 0;
-
-    std::string get_file_line();
 };
 
 #endif

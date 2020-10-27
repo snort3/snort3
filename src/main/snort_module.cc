@@ -267,9 +267,6 @@ static const Parameter s_params[] =
     { "-r", Parameter::PT_STRING, nullptr, nullptr,
       "<pcap>... (same as --pcap-list)" },
 
-    { "-S", Parameter::PT_STRING, nullptr, nullptr,
-      "<x=v> set config variable x equal to value v" },
-
     { "-s", Parameter::PT_INT, "68:65535", "1518",
       "<snap> (same as --snaplen); default is 1518" },
 
@@ -772,8 +769,6 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__READ;
         Trough::add_source(Trough::SOURCE_LIST, v.get_string());
     }
-    else if ( v.is("-S") )
-        config_set_var(sc, v.get_string());
 
     else if ( v.is("-s") or v.is("--snaplen") )
         sc->daq_config->set_mru_size(v.get_uint16());

@@ -41,7 +41,7 @@ typedef snort::GHash PortVarTable;
 PortVarTable* PortVarTableCreate();
 int PortVarTableFree(PortVarTable* pvt);
 int PortVarTableAdd(PortVarTable* pvt, PortObject* po);
-PortObject* PortVarTableFind(PortVarTable* pvt, const char* name);
+PortObject* PortVarTableFind(PortVarTable* pvt, const char* name, bool add_if_not_found = false);
 
 #endif
 

@@ -245,9 +245,6 @@ SnortConfig::~SnortConfig()
     if (eth_dst )
         snort_free(eth_dst);
 
-    if ( var_list )
-        FreeVarList(var_list);
-
     if ( fast_pattern_config &&
         (!snort_conf || this == snort_conf ||
         (fast_pattern_config->get_search_api() !=
@@ -457,10 +454,6 @@ void SnortConfig::merge(SnortConfig* cmd_line)
     else if ( !cmd_line->remote_control_socket.empty() )
         remote_control_socket = cmd_line->remote_control_socket;
 #endif
-
-    // config file vars are stored differently
-    // FIXIT-M should cmd_line use the same var list / table?
-    var_list = nullptr;
 
     assert(!state);
     num_slots = offload_threads + ThreadConfig::get_instance_max();

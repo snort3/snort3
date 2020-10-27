@@ -60,9 +60,9 @@ DataApi::~DataApi()
 
 std::string DataApi::translate_variable(const std::string& var_name)
 {
-    for (auto v : vars)
-        if (var_name == v->get_name())
-            return v->get_value(this);
+    auto v = find_var(var_name);
+    if ( v != vars.end() )
+        return (*v)->get_value(this);
 
     return std::string();
 }
@@ -242,6 +242,12 @@ std::string DataApi::get_file_line()
     return error_string;
 }
 
+var_it DataApi::find_var(const std::string& name) const
+{
+    return std::find_if(vars.begin(), vars.end(),
+        [&](const Variable* v){ return v->get_name() == name; });
+}
+
 void DataApi::error(const std::string& error)
 {
     errors->add_text(error);
@@ -263,32 +269,66 @@ void DataApi::failed_conversion(const std::istringstream& stream, const std::str
         errors->add_text("^^^^ unknown_syntax=" + unknown_option);
 }
 
-static bool is_local_variable(const std::string& name)
-{
-    return name.find("_PATH") != std::string::npos
-        || name.find("_PORT") != std::string::npos
-        || name.find("_NET") != std::string::npos
-        || name.find("_SERVER") != std::string::npos;
-}
-
 void DataApi::set_variable(const std::string& name, const std::string& value, bool quoted)
 {
-    if (is_local_variable(name))
-        local_vars.push_back(name);
-
     Variable* var = new Variable(name);
     vars.push_back(var);
     var->set_value(value, quoted);
 }
 
-bool DataApi::add_variable(const std::string& name, const std::string& value)
+bool DataApi::add_net_variable(const std::string& name, const std::string& value)
 {
-    for (auto v : vars)
-        if (name == v->get_name())
-            return v->add_value(value);
+    auto v = find_var(name);
+    if ( v != vars.end() )
+        return (*v)->add_value(value);
 
-    if (is_local_variable(name))
-        local_vars.push_back(name);
+    net_vars.push_back(name);
+
+    Variable* var = new Variable(name);
+    vars.push_back(var);
+    return var->add_value(value);
+}
+
+bool DataApi::add_path_variable(const std::string& name, const std::string& value)
+{
+    auto v = find_var(name);
+    if ( v != vars.end() )
+        return (*v)->add_value(value);
+
+    Variable* var = new Variable(name);
+
+    // Since a user may specify an IP address, port or path variable with 'var' and it's valid for
+    // Snort2 we attempt to detect type based on the suffix
+    if ( name.find("PORT_") != std::string::npos || name.find("_PORT") != std::string::npos )
+    {
+        var->set_comment("treated as portvar");
+        port_vars.push_back(name);
+    }
+    else if ( name.find("NET_") != std::string::npos || name.find("_NET") != std::string::npos
+        || name.find("SERVER_") != std::string::npos || name.find("_SERVER") != std::string::npos )
+    {
+        var->set_comment("treated as ipvar");
+        net_vars.push_back(name);
+    }
+    else if ( name.find("PATH_") != std::string::npos || name.find("_PATH") != std::string::npos )
+    {
+        var->set_comment("treated as path var");
+        path_vars.push_back(name);
+    }
+    else
+        var->set_comment("treated as global var");
+
+    vars.push_back(var);
+    return var->add_value(value);
+}
+
+bool DataApi::add_port_variable(const std::string& name, const std::string& value)
+{
+    auto v = find_var(name);
+    if ( v != vars.end() )
+        return (*v)->add_value(value);
+
+    port_vars.push_back(name);
 
     Variable* var = new Variable(name);
     vars.push_back(var);
@@ -355,14 +395,27 @@ void DataApi::print_unsupported(std::ostream& out) const
         out << (*unsupported) << "\n";
 }
 
+static void print_vars(std::ostream& out, const std::string& name,
+    const std::vector<std::string>& vars)
+{
+    if ( vars.empty() )
+        return;
+
+    out << "    " << name << " =\n    {\n";
+    for ( const auto& v : vars )
+        out << "        " << v << " = " << v << ",\n";
+    out << "    },\n";
+}
+
 void DataApi::print_local_variables(std::ostream& out) const
 {
-    if (local_vars.empty())
+    if ( !has_local_vars() )
         return;
 
     out << "local_variables =\n{\n";
-    for (const auto& v : local_vars)
-        out << "    " << v << " = " << v << ",\n";
+    print_vars(out, "nets", net_vars);
+    print_vars(out, "paths", path_vars);
+    print_vars(out, "ports", port_vars);
     out << "}\n\n";
 }
 

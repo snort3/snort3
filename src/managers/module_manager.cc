@@ -44,7 +44,6 @@
 #include "main/snort_config.h"
 #include "parser/parse_conf.h"
 #include "parser/parser.h"
-#include "parser/vars.h"
 #include "profiler/profiler.h"
 #include "utils/util.h"
 

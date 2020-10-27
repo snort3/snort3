@@ -32,10 +32,12 @@ public:
     Variable(const std::string& name, int depth = 0);
     virtual ~Variable();
 
-    inline const std::string& get_name() { return name; }
+    inline const std::string& get_name() const { return name; }
     std::string get_value(DataApi*);
     bool add_value(std::string);
     void set_value(const std::string&, bool quoted);
+    void set_comment(const std::string& c)
+    { comment = c; }
 
     void set_print_whitespace(bool w)
     { print_whitespace = w; }
@@ -53,6 +55,7 @@ private:
 
     std::vector<VarData*> vars;
     std::string name;
+    std::string comment;
     int depth;
     bool print_whitespace = true;
     static const std::size_t max_line_length = 77; // leave room for additional text

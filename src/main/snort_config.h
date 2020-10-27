@@ -157,7 +157,6 @@ struct RulePortTables;
 struct SFDAQConfig;
 struct SoRules;
 struct ThresholdConfig;
-struct VarNode;
 
 namespace snort
 {
@@ -393,7 +392,6 @@ public:
     XHash* rtn_hash_table = nullptr;
 
     PolicyMap* policy_map = nullptr;
-    VarNode* var_list = nullptr;
     std::string tweaks;
 
     DataBus* global_dbus = nullptr;

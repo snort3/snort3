@@ -30,21 +30,6 @@ struct SnortConfig;
 }
 
 //-------------------------------------------------------------------------
-// var node stuff
-//-------------------------------------------------------------------------
-
-struct VarNode
-{
-    char* name;
-    char* value;
-    char* line;
-    VarNode* next;
-};
-
-void config_set_var(snort::SnortConfig*, const char*);
-void FreeVarList(VarNode*);
-
-//-------------------------------------------------------------------------
 // var table stuff
 //-------------------------------------------------------------------------
 
@@ -61,12 +46,11 @@ struct VarEntry
     VarEntry* next;
 };
 
-VarEntry* VarDefine(snort::SnortConfig*, const char* name, const char* value);
-int PortVarDefine(snort::SnortConfig*, const char* name, const char* s);
+void ParsePathVar(const char* name, const char* value);
+void ParsePortVar(const char* name, const char* value);
 
 VarEntry* VarAlloc();
 void DeleteVars(VarEntry* var_table);
-void AddVarToTable(snort::SnortConfig*, const char*, const char*);
 
 enum VarType
 {
@@ -77,10 +61,10 @@ enum VarType
 
 int VarIsIpAddr(vartable_t* ip_vartable, const char* value);
 int VarIsIpList(vartable_t* ip_vartable, const char* value);
-void DisallowCrossTableDuplicateVars(snort::SnortConfig*, const char* name, VarType var_type);
+void DisallowCrossTableDuplicateVars(const char* name, VarType var_type);
 
-const char* VarSearch(snort::SnortConfig*, const char* name);
-const char* ExpandVars(snort::SnortConfig*, const char* string);
+const char* VarSearch(const char* name);
+const char* ExpandVars(const char* string);
 
 #endif
 

@@ -38,104 +38,23 @@
 using namespace snort;
 
 //-------------------------------------------------------------------------
-// var node stuff
-//-------------------------------------------------------------------------
-
-void config_set_var(SnortConfig* sc, const char* val)
-{
-    {
-        const char* equal_ptr = strchr(val, '=');
-        VarNode* node;
-
-        if (equal_ptr == nullptr)
-        {
-            ParseError("Format for command line variable definitions "
-                "is:\n -S var=value\n");
-            return;
-        }
-
-        /* Save these and parse when snort conf is parsed so
-         * they can be added to the snort conf configuration */
-        node = (VarNode*)snort_calloc(sizeof(VarNode));
-
-        /* Make sure it's not already in the list */
-        if (sc->var_list != nullptr)
-        {
-            VarNode* tmp = sc->var_list;
-
-            while (tmp != nullptr)
-            {
-                if (strncasecmp(tmp->name, val, equal_ptr - val) == 0)
-                {
-                    ParseError("Duplicate variable name: %s.", tmp->name);
-                    snort_free(node);
-                    return;
-                }
-                tmp = tmp->next;
-            }
-        }
-
-        node->name = snort_strndup(val, equal_ptr - val);
-        node->value = snort_strdup(equal_ptr + 1);
-        node->line = snort_strdup(val);
-        node->next = sc->var_list;
-        sc->var_list = node;
-
-        /* Put line in a parser parsable form - we know the
-         * equals is already there */
-        *strchr(node->line, '=') = ' ';
-    }
-}
-
-void FreeVarList(VarNode* head)
-{
-    while (head != nullptr)
-    {
-        VarNode* tmp = head;
-
-        head = head->next;
-
-        if (tmp->name != nullptr)
-            snort_free(tmp->name);
-
-        if (tmp->value != nullptr)
-            snort_free(tmp->value);
-
-        if (tmp->line != nullptr)
-            snort_free(tmp->line);
-
-        snort_free(tmp);
-    }
-}
-
-//-------------------------------------------------------------------------
 // var table stuff
 //-------------------------------------------------------------------------
 
-/*
- * PortVarDefine
- *
- *  name - portlist name, i.e. http, smtp, ...
- *  s    - port number, port range, or a list of numbers/ranges in brackets
- *
- *  examples:
- *  portvar http [80,8080,8138,8700:8800,!8711]
- *  portvar http $http_basic
- */
-int PortVarDefine(SnortConfig* sc, const char* name, const char* s)
+void ParsePortVar(const char* name, const char* value)
 {
     PortObject* po;
     POParser pop;
     int rstat;
     PortVarTable* portVarTable = get_ips_policy()->portVarTable;
 
-    DisallowCrossTableDuplicateVars(sc, name, VAR_TYPE__PORTVAR);
+    DisallowCrossTableDuplicateVars(name, VAR_TYPE__PORTVAR);
 
-    if ( SnortStrcasestr(s,strlen(s),"any") ) /* this allows 'any' or '[any]' */
+    if ( SnortStrcasestr(value,strlen(value),"any") ) /* this allows 'any' or '[any]' */
     {
-        if (strstr(s,"!"))
+        if (strstr(value,"!"))
         {
-            ParseError("illegal use of negation and 'any': %s.", s);
+            ParseError("illegal use of negation and 'any': %s.", value);
         }
 
         po = PortObjectNew();
@@ -145,12 +64,12 @@ int PortVarDefine(SnortConfig* sc, const char* name, const char* s)
     else
     {
         /* Parse the Port List info into a PortObject  */
-        po = PortObjectParseString(portVarTable, &pop, name, s, 0);
+        po = PortObjectParseString(portVarTable, &pop, name, value, 0);
         if (!po)
         {
             const char* errstr = PortObjectParseError(&pop);
             ParseAbort("PortVar Parse error: (pos=%d,error=%s)\n>>%s\n>>%*s.",
-                pop.pos,errstr,s,pop.pos,"^");
+                pop.pos,errstr,value,pop.pos,"^");
         }
     }
 
@@ -166,21 +85,8 @@ int PortVarDefine(SnortConfig* sc, const char* name, const char* s)
         ParseWarning(WARN_VARS, "PortVar '%s', already defined.", po->name);
         PortObjectFree(po);
     }
-
-    return 0;
 }
 
-/****************************************************************************
- *
- * Function: VarAlloc()
- *
- * Purpose: allocates memory for a variable
- *
- * Arguments: none
- *
- * Returns: pointer to new VarEntry
- *
- ***************************************************************************/
 VarEntry* VarAlloc()
 {
     VarEntry* pve;
@@ -190,19 +96,6 @@ VarEntry* VarAlloc()
     return( pve);
 }
 
-/****************************************************************************
- *
- * Function: VarIsIpAddr(char *, char *)
- *
- * Purpose: Checks if a var is an IP address. Necessary since moving forward
- *          we want all IP addresses handled by the IP variable table.
- *          If a list is given, this checks each value.
- *
- * Arguments: value => the string to check
- *
- * Returns: 1 if IP address, 0 otherwise
- *
- ***************************************************************************/
 int VarIsIpAddr(vartable_t* ip_vartable, const char* value)
 {
     const char* tmp;
@@ -253,18 +146,6 @@ int VarIsIpAddr(vartable_t* ip_vartable, const char* value)
     return 0;
 }
 
-/****************************************************************************
- *
- * Function: CheckBrackets(char *)
- *
- * Purpose: Check that the brackets match up in a string that
- *          represents a list.
- *
- * Arguments: value => the string to check
- *
- * Returns: 1 if the brackets match correctly, 0 otherwise
- *
- ***************************************************************************/
 static int CheckBrackets(char* value)
 {
     int num_brackets = 0;
@@ -295,17 +176,6 @@ static int CheckBrackets(char* value)
     return 1;
 }
 
-/****************************************************************************
- *
- * Function: VarIsIpList(vartable_t *, char*)
- *
- * Purpose: Checks if a var is a list of IP addresses.
- *
- * Arguments: value => the string to check
- *
- * Returns: 1 if each item is an IP address, 0 otherwise
- *
- ***************************************************************************/
 int VarIsIpList(vartable_t* ip_vartable, const char* value)
 {
     char* copy, * item;
@@ -338,38 +208,13 @@ int VarIsIpList(vartable_t* ip_vartable, const char* value)
     return item_is_ip;
 }
 
-/****************************************************************************
- *
- * Function: DisallowCrossTableDuplicateVars(char *, int)
- *
- * Purpose: ParseErrors if the a variable name is redefined across variable
- *          types.  Enforcing this mutual exclusion prevents the
- *          catastrophe where the variable lookup fall-through (see VarSearch)
- *          finds an unintended variable from the wrong table.  Note:  VarSearch
- *          is only necessary for ExpandVars.
- *
- * Arguments: name => The name of the variable
- *            var_type => The type of the variable that is about to be defined.
- *                        The corresponding variable table will not be searched.
- *
- * Returns: void function
- *
- ***************************************************************************/
-void DisallowCrossTableDuplicateVars(
-    SnortConfig*, const char* name, VarType var_type)
+void DisallowCrossTableDuplicateVars(const char* name, VarType var_type)
 {
     IpsPolicy* dp = get_ips_policy();
     VarEntry* var_table = dp->var_table;
     PortVarTable* portVarTable = dp->portVarTable;
     vartable_t* ip_vartable = dp->ip_vartable;
     VarEntry* p = var_table;
-
-    /* If this is a faked Portvar, treat as a portvar */
-    if ((var_type == VAR_TYPE__DEFAULT) &&
-        (strstr(name, "_PORT") || strstr(name, "PORT_")))
-    {
-        var_type = VAR_TYPE__PORTVAR;
-    }
 
     switch (var_type)
     {
@@ -434,81 +279,17 @@ void DisallowCrossTableDuplicateVars(
     }
 }
 
-/****************************************************************************
- *
- * Function: VarDefine(char *, char *)
- *
- * Purpose: define the contents of a variable
- *
- * Arguments: name => the name of the variable
- *            value => the contents of the variable
- *
- * Returns: void function
- *
- ***************************************************************************/
-VarEntry* VarDefine(
-    SnortConfig* sc, const char* name, const char* value)
+void ParsePathVar(const char* name, const char* value)
 {
-    IpsPolicy* dp = get_ips_policy();
-    VarEntry* var_table = dp->var_table;
-    vartable_t* ip_vartable = dp->ip_vartable;
-    VarEntry* p;
-    uint32_t var_id = 0;
-
     if (value == nullptr)
     {
         ParseAbort("bad value in variable definition.  Make sure you don't "
             "have a '$' in the var name.");
     }
 
-    if (VarIsIpList(ip_vartable, value))
-    {
-        SfIpRet ret;
-
-        if (ip_vartable == nullptr)
-            return nullptr;
-
-        /* Verify a variable by this name is not already used as either a
-         * portvar or regular var.  Enforcing this mutual exclusion prevents the
-         * catastrophe where the variable lookup fall-through (see VarSearch)
-         * finds an unintended variable from the wrong table.  Note:  VarSearch
-         * is only necessary for ExpandVars. */
-        DisallowCrossTableDuplicateVars(sc, name, VAR_TYPE__IPVAR);
-
-        if ((ret = sfvt_define(ip_vartable, name, value)) != SFIP_SUCCESS)
-        {
-            switch (ret)
-            {
-            case SFIP_ARG_ERR:
-                ParseAbort("the following is not allowed: %s.", value);
-
-            case SFIP_DUPLICATE:
-                ParseWarning(WARN_VARS, "Var '%s' redefined.", name);
-                break;
-
-            case SFIP_CONFLICT:
-                ParseAbort("negated IP ranges that are more general than "
-                    "non-negated ranges are not allowed. Consider "
-                    "inverting the logic in %s.", name);
-
-            case SFIP_NOT_ANY:
-                ParseAbort("!any is not allowed in %s", name);
-
-            default:
-                ParseAbort("failed to parse the IP address: %s.", value);
-            }
-        }
-        return nullptr;
-    }
-    /* Check if this is a variable that stores an IP */
-    else if (*value == '$')
-    {
-        if ( sfvt_lookup_var(ip_vartable, value) )
-        {
-            sfvt_define(ip_vartable, name, value);
-            return nullptr;
-        }
-    }
+    IpsPolicy* dp = get_ips_policy();
+    VarEntry* var_table = dp->var_table;
+    uint32_t var_id = 0;
 
     /* Check to see if this variable is just being aliased */
     if (var_table != nullptr)
@@ -529,17 +310,17 @@ VarEntry* VarDefine(
         while (tmp != var_table);
     }
 
-    value = ExpandVars(sc, value);
+    value = ExpandVars(value);
     if (!value)
     {
         ParseAbort("could not expand var('%s').", name);
     }
 
-    DisallowCrossTableDuplicateVars(sc, name, VAR_TYPE__DEFAULT);
+    DisallowCrossTableDuplicateVars(name, VAR_TYPE__DEFAULT);
 
     if (var_table == nullptr)
     {
-        p = VarAlloc();
+        VarEntry* p = VarAlloc();
         p->name  = snort_strdup(name);
         p->value = snort_strdup(value);
 
@@ -550,11 +331,11 @@ VarEntry* VarDefine(
 
         p->id = dp->var_id++;
 
-        return p;
+        return;
     }
 
     /* See if an existing variable is being redefined */
-    p = var_table;
+    VarEntry* p = var_table;
 
     do
     {
@@ -565,7 +346,7 @@ VarEntry* VarDefine(
 
             p->value = snort_strdup(value);
             ParseWarning(WARN_VARS, "Var '%s' redefined\n", p->name);
-            return p;
+            return;
         }
 
         p = p->next;
@@ -585,7 +366,7 @@ VarEntry* VarDefine(
     else
         p->id = var_id;
 
-    return p;
+    return;
 }
 
 void DeleteVars(VarEntry* var_table)
@@ -610,7 +391,7 @@ void DeleteVars(VarEntry* var_table)
     }
 }
 
-const char* VarSearch(SnortConfig* sc, const char* name)
+const char* VarSearch(const char* name)
 {
     IpsPolicy* dp = get_ips_policy();
     VarEntry* var_table = dp->var_table;
@@ -619,7 +400,7 @@ const char* VarSearch(SnortConfig* sc, const char* name)
     sfip_var_t* ipvar;
 
     if ((ipvar = sfvt_lookup_var(ip_vartable, name)) != nullptr)
-        return ExpandVars(sc, ipvar->value);
+        return ExpandVars(ipvar->value);
 
     if (PortVarTableFind(portVarTable, name))
         return name;
@@ -641,7 +422,7 @@ const char* VarSearch(SnortConfig* sc, const char* name)
 
  // The expanded string.  Note that the string is returned in a
  // static variable and most likely needs to be string dup'ed.
-const char* ExpandVars(SnortConfig* sc, const char* string)
+const char* ExpandVars(const char* string)
 {
     static char estring[ 65536 ];  // FIXIT-L convert this foo to a std::string
 
@@ -727,7 +508,7 @@ const char* ExpandVars(SnortConfig* sc, const char* string)
 
                 memset((char*)varbuffer, 0, sizeof(varbuffer));
 
-                varcontents = VarSearch(sc, varname);
+                varcontents = VarSearch(varname);
 
                 switch (varmodifier)
                 {
@@ -772,60 +553,4 @@ const char* ExpandVars(SnortConfig* sc, const char* string)
 
     return estring;
 }
-
-void AddVarToTable(SnortConfig* sc, const char* name, const char* value)
-{
-    //TODO: snort.cfg and rules should use PortVar instead ...this allows compatibility for now.
-    if (strstr(name, "_PORT") || strstr(name, "PORT_"))
-    {
-        PortVarDefine(sc, name, value);
-    }
-    else
-    {
-        VarDefine(sc, name, value);
-    }
-}
-
-//--------------------------------------------------------------------------
-// unit tests
-//--------------------------------------------------------------------------
-
-#ifdef UNIT_TEST
-// FIXIT-L these var tests are inadequate
-
-TEST_CASE("config_set_var-success", "[vars]")
-{
-    SnortConfig sc;
-    sc.var_list = nullptr;
-    config_set_var(&sc, "A=B");
-
-    REQUIRE(sc.var_list->name[0] == 'A');
-    REQUIRE(sc.var_list->value[0] == 'B');
-}
-
-TEST_CASE("config_set_var-existing-success", "[vars]")
-{
-    SnortConfig sc;
-
-    config_set_var(&sc, "C=D");
-    config_set_var(&sc, "A=B");
-
-    REQUIRE(sc.var_list->name[0] == 'A');
-    REQUIRE(sc.var_list->value[0] == 'B');
-}
-
-// FIXIT-L missing CHECKs / REQUIREs
-TEST_CASE("config_set_var-duplicate-error", "[vars]")
-{
-    SnortConfig sc;
-    config_set_var(&sc, "A=B");
-}
-
-TEST_CASE("config_set_var-no_equals_sign-error", "[vars]")
-{
-    SnortConfig sc;
-    config_set_var(&sc, "A");
-}
-
-#endif
 

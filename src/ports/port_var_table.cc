@@ -86,14 +86,14 @@ int PortVarTableAdd(PortVarTable* h, PortObject* po)
     return -1;
 }
 
-PortObject* PortVarTableFind(PortVarTable* h, const char* name)
+PortObject* PortVarTableFind(PortVarTable* h, const char* name, bool add_if_not_found)
 {
     if (!h || !name)
         return nullptr;
 
     PortObject* po = (PortObject*)h->find(name);
 
-    if ( !po and SnortConfig::get_conf()->dump_rule_info() and strstr(name, "PORT") )
+    if ( !po and SnortConfig::get_conf()->dump_rule_info() and add_if_not_found )
     {
         po = PortObjectNew();
         po->name = snort_strdup(name);

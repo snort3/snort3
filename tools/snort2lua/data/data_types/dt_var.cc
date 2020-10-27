@@ -140,18 +140,18 @@ static inline void print_newline(std::ostream& out,
 
 std::ostream& operator<<(std::ostream& out, const Variable& var)
 {
-    std::string whitespace;
+    std::string whitespace =
+        ( var.print_whitespace && var.depth ) ? std::string(var.depth * 4, ' ') : "";
+
     bool first_var = true;
     std::size_t count = 0;
 
-    for (int i = 0; i < var.depth; i++)
-        whitespace += "    ";
+    if ( !var.comment.empty() )
+        out << whitespace << "-- " << var.comment << "\n";
 
-    out << (var.print_whitespace ? whitespace : "") << var.name << " = ";
+    out << whitespace << var.name << " = ";
 
-    if ( var.print_whitespace )
-        count += whitespace.size();
-
+    count += whitespace.size();
     count += var.name.size() + 3;
 
     if ( var.print_whitespace )

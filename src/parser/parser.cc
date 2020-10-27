@@ -323,8 +323,6 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, boo
     sc->tweaks = boot_conf->tweaks;
     sc->dump_config_type = boot_conf->dump_config_type;
 
-    VarNode* tmp = boot_conf->var_list;
-
     if ( !fname )
         fname = get_snort_conf();
 
@@ -340,14 +338,6 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, boo
     sc->threshold_config = ThresholdConfigNew();
     sc->rate_filter_config = RateFilter_ConfigNew();
     sc->detection_filter_config = DetectionFilterConfigNew();
-
-    /* Add command line defined variables - duplicates will already
-     * have been resolved */
-    while (tmp != nullptr)
-    {
-        AddVarToTable(sc, tmp->name, tmp->value);
-        tmp = tmp->next;
-    }
 
     // get overrides from cmd line
     Shell* sh = boot_conf->policy_map->get_shell();

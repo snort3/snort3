@@ -1168,17 +1168,31 @@ bool InspectionModule::set(const char*, Value& v, SnortConfig* sc)
 // Ips policy module
 //-------------------------------------------------------------------------
 
-static void set_var(SnortConfig* sc, const char* fqn, Value& v)
+static const char* get_var_name(const char* fqn)
 {
     const char* ptr = strrchr(fqn, '.');
     assert(ptr);
-    SetVar(sc, ptr + 1, v.get_string());
+    return ptr + 1;
 }
 
-static const Parameter variable_params[] =
+static const Parameter var_params[] =
 {
     { "$var" , Parameter::PT_STRING, nullptr, nullptr,
       "IPS policy variable" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter variable_params[] =
+{
+    { "nets" , Parameter::PT_TABLE, var_params, nullptr,
+      "net variables" },
+
+    { "paths" , Parameter::PT_TABLE, var_params, nullptr,
+      "path variables" },
+
+    { "ports" , Parameter::PT_TABLE, var_params, nullptr,
+      "port variables" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -1238,19 +1252,8 @@ public:
     { return DETECT; }
 };
 
-bool IpsModule::matches(const char* param, std::string& name)
-{
-    if ( strcmp(param, "$var") )
-        return false;
-
-    if ( name.find("_PATH") != string::npos or
-        name.find("_PORT") != string::npos or
-        name.find("_NET") != string::npos or
-        name.find("_SERVER") != string::npos )
-        return true;
-
-    return false;
-}
+bool IpsModule::matches(const char*, std::string&)
+{ return true; }
 
 bool IpsModule::set(const char* fqn, Value& v, SnortConfig* sc)
 {
@@ -1297,8 +1300,15 @@ bool IpsModule::set(const char* fqn, Value& v, SnortConfig* sc)
     }
 #endif
 
-    else if ( strstr(fqn, "variables") )
-        set_var(sc, fqn, v);
+    // FIXIT-M should only need one table with dynamically typed vars
+    else if ( strstr(fqn, "variables.nets.") )
+        ParseIpVar(get_var_name(fqn), v.get_string());
+
+    else if ( strstr(fqn, "variables.paths.") )
+        ParsePathVar(get_var_name(fqn), v.get_string());
+
+    else if ( strstr(fqn, "variables.ports.") )
+        ParsePortVar(get_var_name(fqn), v.get_string());
 
     else
         return false;

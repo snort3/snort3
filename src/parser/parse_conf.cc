@@ -186,7 +186,7 @@ const char* get_config_file(const char* arg, std::string& file)
 void parse_include(SnortConfig* sc, const char* arg)
 {
     assert(arg);
-    arg = ExpandVars(sc, arg);
+    arg = ExpandVars(arg);
     std::string file = !rules_file_depth ? get_ips_policy()->includer : get_parse_file();
 
     const char* code = get_config_file(arg, file);
@@ -201,38 +201,18 @@ void parse_include(SnortConfig* sc, const char* arg)
     pop_parse_location();
 }
 
-// FIXIT-M should only need one table with dynamically typed vars
-//
-// FIXIT-M this is a hack to tell vars by naming convention; with one table
-// this is obviated but if multiple tables are kept might want to change
-// these to a module with parameters
-void SetVar(snort::SnortConfig* sc, const char* name, const char* value)
-{
-    if ( strstr(name, "_PATH") )
-        AddVarToTable(sc, name, value);
-
-    else if ( strstr(name, "_PORT") )
-        PortVarDefine(sc, name, value);
-
-    else if ( strstr(name, "_NET") )
-        ParseIpVar(sc, name, value);
-
-    else if ( strstr(name, "_SERVER") )
-        ParseIpVar(sc, name, value);
-}
-
-void ParseIpVar(SnortConfig* sc, const char* var, const char* val)
+void ParseIpVar(const char* var, const char* value)
 {
     int ret;
     IpsPolicy* p = get_ips_policy();  // FIXIT-M double check, see below
-    DisallowCrossTableDuplicateVars(sc, var, VAR_TYPE__IPVAR);
+    DisallowCrossTableDuplicateVars(var, VAR_TYPE__IPVAR);
 
-    if ((ret = sfvt_define(p->ip_vartable, var, val)) != SFIP_SUCCESS)
+    if ((ret = sfvt_define(p->ip_vartable, var, value)) != SFIP_SUCCESS)
     {
         switch (ret)
         {
         case SFIP_ARG_ERR:
-            ParseError("the following is not allowed: %s.", val);
+            ParseError("the following is not allowed: %s.", value);
             return;
 
         case SFIP_DUPLICATE:
@@ -250,7 +230,7 @@ void ParseIpVar(SnortConfig* sc, const char* var, const char* val)
             return;
 
         default:
-            ParseError("failed to parse the IP address: %s.", val);
+            ParseError("failed to parse the IP address: %s.", value);
             return;
         }
     }
