@@ -720,7 +720,7 @@ int RnaPnd::discover_host_types_cdp(const Packet* p, const uint8_t* data, uint16
                 ht->set_host_type(HOST_TYPE_BRIDGE);
 
             logger.log(RNA_EVENT_CHANGE, CHANGE_HOST_TYPE, p, &ht,
-                (const struct in6_addr*)cdp_ip.get_ip6_ptr(), zero_mac);
+                (const struct in6_addr*)cdp_ip.get_ip6_ptr(), layer::get_eth_layer(p)->ether_src);
         }
     }
 
