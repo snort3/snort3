@@ -8,7 +8,7 @@ Snort 3 Upgrade Manual
 The Snort Team
 
 Revision History
-Revision 3.0.3 (Build 3) 2020-10-22 13:10:41 EDT TST
+Revision 3.0.3 (Build 4) 2020-10-27 14:24:05 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -422,8 +422,9 @@ Some things Snort++ can do today that Snort can not do as well:
   * stream5_tcp: prune_log_max deleted; to be replaced with histogram
   * stream5_tcp: max_active_responses, min_response_seconds moved to
     active.max_responses, min_interval
-  * ips policies support snort variables (_PATH, _PORT, _NET,
-    _SERVER), ips = { variables = { var1 = expr1, var2 = expr2, … } }
+  * ips policies support snort variables configured based on type,
+    ips = { variables = { nets = { var1 = expr1, … }, paths = { var2
+    = expr2, … }, ports = { var3 = expr3, … } } }
 
 
 2.6. Rules

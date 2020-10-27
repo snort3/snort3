@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.0.3 (Build 3) 2020-10-22 13:10:50 EDT TST
+Revision 3.0.3 (Build 4) 2020-10-27 14:24:13 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -899,7 +899,9 @@ Configuration:
     rules too)
   * string ips.uuid = 00000000-0000-0000-0000-000000000000: IPS
     policy uuid
-  * string ips.variables.$var: IPS policy variable
+  * string ips.variables.nets.$var: IPS policy variable
+  * string ips.variables.paths.$var: IPS policy variable
+  * string ips.variables.ports.$var: IPS policy variable
 
 
 2.16. latency
@@ -1301,10 +1303,10 @@ Usage: global
 
 Configuration:
 
-  * bit_list side_channel.ports: side channel message port list {
+  * bit_list side_channel[].ports: side channel message port list {
     65535 }
-  * string side_channel.connectors[].connector: connector handle
-  * string side_channel.connector: connector handle
+  * string side_channel[].connectors[].connector: connector handle
+  * string side_channel[].connector: connector handle
 
 Peg counts:
 
@@ -1356,7 +1358,6 @@ Configuration:
   * string snort.-R: <rules> include this rules file in the default
     policy
   * string snort.-r: <pcap>… (same as --pcap-list)
-  * string snort.-S: <x=v> set config variable x equal to value v
   * int snort.-s = 1518: <snap> (same as --snaplen); default is 1518
     { 68:65535 }
   * implied snort.-T: test and report on the current Snort
@@ -1674,13 +1675,15 @@ Configuration:
     traces
   * enum trace.output: output method for trace log messages { stdout
     | syslog }
-  * bool trace.log_ntuple = false: use extended trace output with
-    n-tuple packet info
+  * bool trace.ntuple = false: print packet n-tuple info with trace
+    messages
+  * bool trace.timestamp = false: print message timestamps with trace
+    messages
 
 Commands:
 
-  * trace.set(modules, constraints, log_ntuple): set modules traces,
-    constraints and log_ntuple option
+  * trace.set(modules, constraints, ntuple, timestamp): set modules
+    traces, constraints, ntuple and timestamp options
   * trace.clear(): clear modules traces and constraints
 
 
@@ -2328,10 +2331,10 @@ Usage: global
 
 Configuration:
 
-  * string file_connector.connector: connector name
-  * string file_connector.name: channel name
-  * enum file_connector.format: file format { binary | text }
-  * enum file_connector.direction: usage { receive | transmit |
+  * string file_connector[].connector: connector name
+  * string file_connector[].name: channel name
+  * enum file_connector[].format: file format { binary | text }
+  * enum file_connector[].direction: usage { receive | transmit |
     duplex }
 
 Peg counts:
@@ -2351,10 +2354,11 @@ Usage: global
 
 Configuration:
 
-  * string tcp_connector.connector: connector name
-  * string tcp_connector.address: address
-  * port tcp_connector.base_port: base port number
-  * enum tcp_connector.setup: stream establishment { call | answer }
+  * string tcp_connector[].connector: connector name
+  * string tcp_connector[].address: address
+  * port tcp_connector[].base_port: base port number
+  * enum tcp_connector[].setup: stream establishment { call | answer
+    }
 
 Peg counts:
 
@@ -8011,7 +8015,6 @@ these libraries see the Getting Started section of the manual.
   * -q quiet mode - suppress normal logging on stdout
   * -R <rules> include this rules file in the default policy
   * -r <pcap>… (same as --pcap-list)
-  * -S <x=v> set config variable x equal to value v
   * -s <snap> (same as --snaplen); default is 1518 (68:65535)
   * -T test and report on the current Snort configuration
   * -t <dir> chroots process to <dir> after initialization
@@ -8610,11 +8613,11 @@ these libraries see the Getting Started section of the manual.
     ordering incoming events { priority|content_length }
   * bool event_queue.process_all_events = false: process just first
     action group or all action groups
-  * string file_connector.connector: connector name
-  * enum file_connector.direction: usage { receive | transmit |
+  * string file_connector[].connector: connector name
+  * enum file_connector[].direction: usage { receive | transmit |
     duplex }
-  * enum file_connector.format: file format { binary | text }
-  * string file_connector.name: channel name
+  * enum file_connector[].format: file format { binary | text }
+  * string file_connector[].name: channel name
   * int file_id.b64_decode_depth = -1: base64 decoding depth (-1 no
     limit) { -1:65535 }
   * int file_id.bitenc_decode_depth = -1: Non-Encoded MIME attachment
@@ -9019,7 +9022,9 @@ these libraries see the Getting Started section of the manual.
     rules too)
   * string ips.uuid = 00000000-0000-0000-0000-000000000000: IPS
     policy uuid
-  * string ips.variables.$var: IPS policy variable
+  * string ips.variables.nets.$var: IPS policy variable
+  * string ips.variables.paths.$var: IPS policy variable
+  * string ips.variables.ports.$var: IPS policy variable
   * string isdataat.~length: num | !num
   * implied isdataat.relative: offset from cursor instead of start of
     buffer
@@ -9524,9 +9529,9 @@ these libraries see the Getting Started section of the manual.
     to start search
   * implied sha512.relative = false: offset from cursor instead of
     start of buffer
-  * string side_channel.connector: connector handle
-  * string side_channel.connectors[].connector: connector handle
-  * bit_list side_channel.ports: side channel message port list {
+  * string side_channel[].connector: connector handle
+  * string side_channel[].connectors[].connector: connector handle
+  * bit_list side_channel[].ports: side channel message port list {
     65535 }
   * int sid.~: signature id { 1:max32 }
   * bool sip.ignore_call_channel = false: enables the support for
@@ -9775,7 +9780,6 @@ these libraries see the Getting Started section of the manual.
     -s) { 68:65535 }
   * implied snort.--stdin-rules: read rules from stdin until EOF or a
     line starting with END is read
-  * string snort.-S: <x=v> set config variable x equal to value v
   * implied snort.--talos: enable Talos tweak (same as --tweaks
     talos)
   * string snort.-t: <dir> chroots process to <dir> after
@@ -9974,10 +9978,11 @@ these libraries see the Getting Started section of the manual.
   * int tag.seconds: tag for this many seconds { 1:max32 }
   * enum target.~: indicate the target of the attack { src_ip |
     dst_ip }
-  * string tcp_connector.address: address
-  * port tcp_connector.base_port: base port number
-  * string tcp_connector.connector: connector name
-  * enum tcp_connector.setup: stream establishment { call | answer }
+  * string tcp_connector[].address: address
+  * port tcp_connector[].base_port: base port number
+  * string tcp_connector[].connector: connector name
+  * enum tcp_connector[].setup: stream establishment { call | answer
+    }
   * int telnet.ayt_attack_thresh = -1: alert on this number of
     consecutive Telnet AYT commands { -1:max31 }
   * bool telnet.check_encrypted = false: check for end of encryption
@@ -9993,8 +9998,6 @@ these libraries see the Getting Started section of the manual.
     traces
   * string trace.constraints.src_ip: source IP address filter
   * int trace.constraints.src_port: source port filter { 0:65535 }
-  * bool trace.log_ntuple = false: use extended trace output with
-    n-tuple packet info
   * int trace.modules.all: enable trace for all modules { 0:255 }
   * int trace.modules.appid.all: enable all trace options { 0:255 }
   * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
@@ -10040,8 +10043,12 @@ these libraries see the Getting Started section of the manual.
   * int trace.modules.stream_user.all: enable all trace options {
     0:255 }
   * int trace.modules.wizard.all: enable all trace options { 0:255 }
+  * bool trace.ntuple = false: print packet n-tuple info with trace
+    messages
   * enum trace.output: output method for trace log messages { stdout
     | syslog }
+  * bool trace.timestamp = false: print message timestamps with trace
+    messages
   * interval ttl.~range: check if IP TTL is in the given range {
     0:255 }
   * bool udp.deep_teredo_inspection = false: look for Teredo on all
@@ -11928,8 +11935,8 @@ these libraries see the Getting Started section of the manual.
   * snort.detach(): exit shell w/o shutdown
   * snort.quit(): shutdown and dump-stats
   * snort.help(): this output
-  * trace.set(modules, constraints, log_ntuple): set modules traces,
-    constraints and log_ntuple option
+  * trace.set(modules, constraints, ntuple, timestamp): set modules
+    traces, constraints, ntuple and timestamp options
   * trace.clear(): clear modules traces and constraints
 
 

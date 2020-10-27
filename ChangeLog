@@ -1,3 +1,20 @@
+2020/10/27 - 3.0.3 build 4
+
+-- actions: Add support to react for HTTP/2
+-- appid: Fix -Wunused-private-field Clang warning in service_state.h
+-- build: Various build fixes for OS X
+-- file_api: Remove deletion of file_mempool
+-- framework: Fix ConnectorConfig dtor to be virtual
+-- ips: Move IPS variables to sub-tables which designate type
+-- lua: Update default_variables with 'nets', 'paths', and 'ports' tables in snort_defaults.lua
+-- module: Fix modules that accept their configuration as a list
+-- payload_injector: Support pages > 16k
+-- rna: Add unit tests for TCP fingerprint methods
+-- snort: Remove support for -S option
+-- src: Clean up zero-initialization of arrays
+-- tools: Update snort2lua to convert custom variables into ips.variables.nets/.paths/.ports tables
+-- trace: Add timestamps in trace log messages for stdout logger
+
 2020/10/22 - 3.0.3 build 3
 
 -- actions: Update react documentation
@@ -14,8 +31,10 @@
 -- file_magic: Update POSIX tar archive pattern
 -- flow: Add source/dest group id in flow key
 -- flow: Stale and deleted flows due to EOF should generate would have dropped event
--- ftp_data: Add can_start_tls() support and generate ssl search abandoned event for unencrypted data channels
--- host_cache: Add delete host, network protocol, transport protocol, client, service, tcp fingerprint and user agent fingerprint commands
+-- ftp_data: Add can_start_tls() support and generate ssl search abandoned event for unencrypted
+   data channels
+-- host_cache: Add delete host, network protocol, transport protocol, client, service, tcp
+   fingerprint and user agent fingerprint commands
 -- host_tracker: Implement client and server delete commands
 -- http2_inspect: Handle stream creation for push promise frames
 -- ips_options: Fix retry calculation in IPS content when handling "within" field
