@@ -45,11 +45,13 @@ static int clear(lua_State*);
 
 void TraceSwapParams::set_params(const Parameter* params)
 {
-    const Parameter* ntuple_params = Parameter::find(params, "log_ntuple");
+    const Parameter* ntuple_params = Parameter::find(params, "ntuple");
+    const Parameter* timestamp_params = Parameter::find(params, "timestamp");
     const Parameter* modules_params = Parameter::find(params, "modules");
     const Parameter* constraints_params = Parameter::find(params, "constraints");
 
     assert(ntuple_params);
+    assert(timestamp_params);
     assert(modules_params);
     assert(constraints_params);
 
@@ -61,12 +63,15 @@ void TraceSwapParams::set_params(const Parameter* params)
 
         *ntuple_params,
 
+        *timestamp_params,
+
         { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
     };
 
     static const Command commands[] =
     {
-        { "set", set, trace_params, "set modules traces, constraints and log_ntuple option" },
+        { "set", set, trace_params,
+          "set modules traces, constraints, ntuple and timestamp options" },
 
         { "clear", clear, nullptr, "clear modules traces and constraints" },
 
@@ -83,15 +88,41 @@ const Command* TraceSwapParams::get_commands()
 const Parameter* TraceSwapParams::get_params()
 { return s_params; }
 
+struct LogParams
+{
+    bool set_traces;
+    bool set_constraints;
+    bool set_ntuple;
+    bool set_timestamp;
+
+    bool is_set() const
+    { return set_traces or set_constraints or set_ntuple or set_timestamp; }
+
+    void print_msg() const
+    {
+        if ( set_traces and set_constraints )
+            LogMessage("== set modules traces and constraints\n");
+        else if ( !is_set() )
+            LogMessage("== clear modules traces and constraints\n");
+        else if ( set_traces )
+            LogMessage("== set modules traces\n");
+        else if ( set_constraints )
+            LogMessage("== set constraints\n");
+
+        if ( set_ntuple )
+            LogMessage("== set ntuple option\n");
+
+        if ( set_timestamp )
+            LogMessage("== set timestamp option\n");
+    }
+};
+
 class TraceSwap : public AnalyzerCommand
 {
 public:
-    TraceSwap(TraceConfig* tc, bool set_traces = false, bool set_constraints = false,
-        bool set_ntuple = false)
+    TraceSwap(TraceConfig* tc, const LogParams& lp)
         : trace_config(tc),
-          is_set_ntuple(set_ntuple),
-          is_set_traces(set_traces),
-          is_set_constraints(set_constraints)
+          log_params(lp)
     { assert(trace_config); }
     ~TraceSwap() override;
 
@@ -100,13 +131,8 @@ public:
     { return "TRACE_SWAP"; }
 
 private:
-    void print_msg() const;
-
-private:
     TraceConfig* trace_config = nullptr;
-    bool is_set_ntuple;
-    bool is_set_traces;
-    bool is_set_constraints;
+    LogParams log_params;
 };
 
 TraceSwap::~TraceSwap()
@@ -116,7 +142,7 @@ TraceSwap::~TraceSwap()
     TraceApi::thread_reinit(trace_config);
     SnortConfig::get_main_conf()->set_overlay_trace_config(trace_config);
 
-    print_msg();
+    log_params.print_msg();
 }
 
 bool TraceSwap::execute(Analyzer&, void**)
@@ -124,23 +150,8 @@ bool TraceSwap::execute(Analyzer&, void**)
     // Update configuration for packet threads
     TraceApi::thread_reinit(trace_config);
 
-    print_msg();
+    log_params.print_msg();
     return true;
-}
-
-void TraceSwap::print_msg() const
-{
-    if ( is_set_traces and is_set_constraints )
-        LogMessage("== set modules traces and constraints\n");
-    else if ( !is_set_traces and !is_set_constraints and !is_set_ntuple )
-        LogMessage("== clear modules traces and constraints\n");
-    else if ( is_set_traces )
-        LogMessage("== set modules traces\n");
-    else if ( is_set_constraints )
-        LogMessage("== set constraints\n");
-
-    if ( is_set_ntuple )
-        LogMessage("== set log_ntuple option\n");
 }
 
 static int set(lua_State* L)
@@ -159,14 +170,6 @@ static int set(lua_State* L)
     TraceConfig* trace_config = new TraceConfig(sc->overlay_trace_config
         ? *sc->overlay_trace_config : *sc->trace_config);
 
-    TraceParser trace_parser(*trace_config);
-
-    const Parameter* params_tree = TraceSwapParams::get_params();
-    bool parse_err = false;
-    bool set_traces = false;
-    bool set_constraints = false;
-    bool set_ntuple = false;
-
     // Passed Lua entry check
     if ( lua_gettop(L) != 1 or !lua_istable(L, 1) )
     {
@@ -178,6 +181,11 @@ static int set(lua_State* L)
         return 0;
     }
 
+    TraceParser trace_parser(*trace_config);
+    const Parameter* params_tree = TraceSwapParams::get_params();
+    LogParams log_params{};
+    bool parse_err = false;
+
     // Outer table traversal
     lua_pushnil(L);
     while ( lua_next(L, 1) )
@@ -185,17 +193,35 @@ static int set(lua_State* L)
         const char* root_element_key = luaL_checkstring(L, -2);
         const Parameter* root_parameter = Parameter::find(params_tree, root_element_key);
 
-        // extended output switcher
+        // log n-tuple
         if ( !strcmp(root_element_key, params_tree[2].name) )
         {
             if ( lua_isboolean(L, -1) and root_parameter )
             {
-                set_ntuple = true;
-                trace_parser.get_trace_config().log_ntuple = bool(lua_toboolean(L, -1));
+                log_params.set_ntuple = true;
+                trace_parser.get_trace_config().ntuple = bool(lua_toboolean(L, -1));
             }
             else
             {
-                LogMessage("== invalid value is provided: %s\n", root_element_key);
+                LogMessage("== invalid value for option: %s\n", root_element_key);
+                parse_err = true;
+            }
+
+            lua_pop(L, 1);
+            continue;
+        }
+
+        // log time stamp
+        if ( !strcmp(root_element_key, params_tree[3].name) )
+        {
+            if ( lua_isboolean(L, -1) and root_parameter )
+            {
+                log_params.set_timestamp = true;
+                trace_parser.get_trace_config().timestamp = bool(lua_toboolean(L, -1));
+            }
+            else
+            {
+                LogMessage("== invalid value for option: %s\n", root_element_key);
                 parse_err = true;
             }
 
@@ -214,7 +240,7 @@ static int set(lua_State* L)
         // "modules" table traversal
         else if ( !strcmp(root_element_key, params_tree[0].name) )
         {
-            set_traces = true;
+            log_params.set_traces = true;
             trace_parser.clear_traces();
 
             const Parameter* modules_param = (const Parameter*)root_parameter->range;
@@ -288,7 +314,7 @@ static int set(lua_State* L)
         // "constraints" table traversal
         else if ( !strcmp(root_element_key, params_tree[1].name) )
         {
-            set_constraints = true;
+            log_params.set_constraints = true;
             trace_parser.clear_constraints();
 
             const Parameter* constraints_param = (const Parameter*)root_parameter->range;
@@ -327,18 +353,17 @@ static int set(lua_State* L)
 
     if ( !parse_err )
     {
-        if ( !set_traces and !set_constraints and !set_ntuple )
+        if ( !log_params.is_set() )
         {
             trace_parser.clear_traces();
             trace_parser.clear_constraints();
         }
 
-        if ( set_constraints )
+        if ( log_params.set_constraints )
             trace_parser.finalize_constraints();
 
         main_broadcast_command(new TraceSwap(
-            &trace_parser.get_trace_config(), set_traces, set_constraints, set_ntuple),
-            true);
+            &trace_parser.get_trace_config(), log_params), true);
     }
     else
         delete trace_config;
@@ -350,7 +375,7 @@ static int clear(lua_State*)
 {
     // Create an empty overlay TraceConfig
     // It will be set in a SnortConfig during TraceSwap execution and owned by it after
-    main_broadcast_command(new TraceSwap(new TraceConfig), true);
+    main_broadcast_command(new TraceSwap(new TraceConfig, {}), true);
     return 0;
 }
 

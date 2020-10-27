@@ -28,6 +28,7 @@
 
 #include "main/thread.h"
 #include "protocols/packet.h"
+#include "utils/util.h"
 
 using namespace snort;
 
@@ -35,9 +36,9 @@ using namespace snort;
 //  Loggers
 //-----------------------------------------------
 
-static std::string get_ntuple(bool log_ntuple, const Packet* p)
+static std::string get_ntuple(bool ntuple, const Packet* p)
 {
-    if ( !log_ntuple or !p or !p->has_ip() )
+    if ( !ntuple or !p or !p->has_ip() )
         return "";
 
     SfIpString src_addr;
@@ -60,6 +61,17 @@ static std::string get_ntuple(bool log_ntuple, const Packet* p)
     ss << "AS=" << p->pkth->address_space_id << ":";
 
     return ss.str();
+}
+
+static std::string get_timestamp(bool timestamp)
+{
+    if ( !timestamp )
+        return "";
+
+    char ts[TIMEBUF_SIZE];
+    ts_print(nullptr, ts);
+
+    return std::string(ts) + ":";
 }
 
 // Stdout
@@ -98,8 +110,9 @@ StdoutTraceLogger::StdoutTraceLogger()
 void StdoutTraceLogger::log(const char* log_msg, const char* name,
     uint8_t log_level, const char* trace_option, const Packet* p)
 {
-    fprintf(file, "%c%u:%s%s:%s:%d: %s", thread_type, instance_id,
-        get_ntuple(log_ntuple, p).c_str(), name, trace_option, log_level, log_msg);
+    fprintf(file, "%s%c%u:%s%s:%s:%d: %s", get_timestamp(timestamp).c_str(),
+        thread_type, instance_id, get_ntuple(ntuple, p).c_str(),
+        name, trace_option, log_level, log_msg);
 }
 
 // Syslog
@@ -123,7 +136,7 @@ SyslogTraceLogger::SyslogTraceLogger()
 void SyslogTraceLogger::log(const char* log_msg, const char* name,
     uint8_t log_level, const char* trace_option, const Packet* p)
 {
-    syslog(priority, "%s%s:%s:%d: %s", get_ntuple(log_ntuple, p).c_str(),
+    syslog(priority, "%s%s:%s:%d: %s", get_ntuple(ntuple, p).c_str(),
         name, trace_option, log_level, log_msg);
 }
 

@@ -14,12 +14,13 @@ following parameters:
     output - configure the output method for trace messages
     modules - trace configuration for specific modules
     constraints - filter traces by the packet constraints
-    log_ntuple - on/off packet n-tuple info logging
+    ntuple - on/off packet n-tuple info logging
+    timestamp - on/off message timestamps logging
 
 The following lines, added in snort.lua, will enable trace messages for
 detection and codec modules. The messages will be printed to syslog if
 the packet filtering constraints match. Messages will be in extended format,
-including n-tuple packet info at the beginning of each trace message.
+including timestamp and n-tuple packet info at the beginning of each trace message.
 
     trace =
     {
@@ -36,7 +37,8 @@ including n-tuple packet info at the beginning of each trace message.
             src_port = 100,
             dst_port = 200
         },
-        log_ntuple = true
+        ntuple = true,
+        timestamp = true
     }
 
 The trace module supports config reloading. Also, it's possible to set or clear
@@ -210,7 +212,8 @@ The trace control channel command is a way how to configure module trace
 options and/or packet filter constraints directly during Snort run and
 without reloading the entire config.
 
-Control channel also allow adjusting trace output format by setting log_ntuple switcher.
+Control channel also allow adjusting trace output format by setting ntuple
+and timestamp switchers.
 
 After entering the Snort shell, there are two commands available for
 the trace module:
@@ -219,7 +222,9 @@ the trace module:
 
     trace.set({ modules = { all = N } }) - enable traces for all modules with verbosity level N
 
-    trace.set({ log_ntuple = true/false }) - on/off packet n-tuple info logging
+    trace.set({ ntuple = true/false }) - on/off packet n-tuple info logging
+
+    trace.set({ timestamp = true/false }) - on/off timestamp logging
 
     trace.clear() - clear modules traces and constraints
 
@@ -247,7 +252,7 @@ C – main (control) thread
 P – packet thread
 O – other thread
 
-Setting the option - *log_ntuple* allows you to change the trace message format,
+Setting the option - *ntuple* allows you to change the trace message format,
 expanding it with information about the processed packet.
 
 It will be added at the beginning, right after the thread type and instance ID,
@@ -266,6 +271,20 @@ Where:
 
 Those info can be displayed only for IP packets.
 Port defaults to zero if a packet doesn't have it.
+
+The *timestamp* option extends output format
+by logging the message time in the next format:
+
+    MM/DD-hh:mm:ss.SSSSSS
+
+Where:
+
+    M – month
+    D – day
+    h – hours
+    m – minutes
+    s – seconds
+    S – milliseconds
 
 ==== Example - Debugging rules using detection trace
 

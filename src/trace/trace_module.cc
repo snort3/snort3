@@ -147,8 +147,11 @@ void TraceModule::generate_params()
         { "output", Parameter::PT_ENUM, "stdout | syslog", nullptr,
           "output method for trace log messages" },
 
-        { "log_ntuple", Parameter::PT_BOOL, nullptr, "false",
-          "use extended trace output with n-tuple packet info" },
+        { "ntuple", Parameter::PT_BOOL, nullptr, "false",
+          "print packet n-tuple info with trace messages" },
+
+        { "timestamp", Parameter::PT_BOOL, nullptr, "false",
+          "print message timestamps with trace messages" },
 
         { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
     };
@@ -189,9 +192,14 @@ bool TraceModule::set(const char* fqn, Value& v, SnortConfig*)
         }
         return true;
     }
-    else if ( v.is("log_ntuple") )
+    else if ( v.is("ntuple") )
     {
-        trace_parser->get_trace_config().log_ntuple = v.get_bool();
+        trace_parser->get_trace_config().ntuple = v.get_bool();
+        return true;
+    }
+    else if ( v.is("timestamp") )
+    {
+        trace_parser->get_trace_config().timestamp = v.get_bool();
         return true;
     }
     else if ( strstr(fqn, "trace.modules.") == fqn )

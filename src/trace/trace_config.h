@@ -45,8 +45,11 @@ public:
 public:
     snort::TraceLoggerFactory* logger_factory = nullptr;
     snort::PacketConstraints* constraints = nullptr;
-    bool log_ntuple = false;
+
+    bool ntuple = false;
+    bool timestamp = false;
     bool initialized = false;
+
 private:
     Traces traces;
 };

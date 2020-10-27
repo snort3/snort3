@@ -52,10 +52,13 @@ static void update_constraints(PacketConstraints* new_cs)
     g_packet_constraints = new_cs;
 }
 
-static inline void set_ntuple(bool log_ntuple)
+static inline void set_logger_options(const TraceConfig* trace_config)
 {
     if ( g_trace_logger )
-        g_trace_logger->set_ntuple(log_ntuple);
+    {
+        g_trace_logger->set_ntuple(trace_config->ntuple);
+        g_trace_logger->set_timestamp(trace_config->timestamp);
+    }
 }
 
 void TraceApi::thread_init(const TraceConfig* trace_config)
@@ -63,7 +66,7 @@ void TraceApi::thread_init(const TraceConfig* trace_config)
     if ( trace_config->logger_factory )
         g_trace_logger = trace_config->logger_factory->instantiate();
 
-    set_ntuple(trace_config->log_ntuple);
+    set_logger_options(trace_config);
     update_constraints(trace_config->constraints);
     trace_config->setup_module_trace();
 }
@@ -78,7 +81,7 @@ void TraceApi::thread_term()
 
 void TraceApi::thread_reinit(const TraceConfig* trace_config)
 {
-    set_ntuple(trace_config->log_ntuple);
+    set_logger_options(trace_config);
     update_constraints(trace_config->constraints);
     trace_config->setup_module_trace();
 }

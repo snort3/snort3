@@ -31,7 +31,8 @@ This directory contains the trace logger framework.
         output - create a concrete logger factory based on the output value (stdout/syslog).
         constraints - set packet constraints to use for trace filtering.
         modules - set modules trace level verbosity.
-        log_ntuple - on/off packet n-tuple info logging.
+        ntuple - on/off packet n-tuple info logging.
+        timestamp - on/off message time stamps.
 
     This is a built-in module (from coreinit.lua)
 
@@ -46,8 +47,8 @@ This directory contains the trace logger framework.
     for setting/clearing trace configuration from the shell. Commands parameters are encapsulated in
     the TraceSwapParams class.
     Available commands:
-        1) trace.set({ modules = {}, constraints = {}, log_ntuple = true/false })
-           -- set new modules traces, constraints and log_ntuple option;
+        1) trace.set({ modules = {}, constraints = {}, ntuple = true/false, timestamp = true/false })
+           -- set new modules traces, constraints, ntuple and timestamp options;
         2) trace.clear() -- clear modules traces and constraints.
 
 * TraceSwapParams
