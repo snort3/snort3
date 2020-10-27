@@ -49,9 +49,8 @@ enum InjectionReturnStatus : int8_t
     ERR_PAGE_TRANSLATION = -5,
     ERR_HTTP2_MID_FRAME = -6,
     ERR_TRANSLATED_HDRS_SIZE = -7,
-    ERR_HTTP2_BODY_SIZE = -8,
-    ERR_HTTP2_EVEN_STREAM_ID = -9,
-    ERR_PKT_FROM_SERVER = -10,  
+    ERR_HTTP2_EVEN_STREAM_ID = -8,
+    ERR_PKT_FROM_SERVER = -9,
     // Update InjectionErrorToString when adding/removing error codes
 };
 

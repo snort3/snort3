@@ -331,6 +331,18 @@ TEST(payload_injector_test, http2_pkt_from_srvr)
     delete flow.gadget;
 }
 
+TEST(payload_injector_test, flow_is_null)
+{
+    mod.set_configured(true);
+    Packet p(false);
+    p.packet_flags = PKT_STREAM_EST;
+    InjectionReturnStatus status = mod.inject_http_payload(&p, control);
+    CHECK(counts->http_injects == 0);
+    CHECK(status == ERR_UNIDENTIFIED_PROTOCOL);
+    const char* err_string = mod.get_err_string(status);
+    CHECK(strcmp(err_string, "Unidentified protocol") == 0);
+}
+
 TEST_GROUP(payload_injector_translate_err_test)
 {
     PayloadInjectorModule mod;
@@ -387,17 +399,6 @@ TEST(payload_injector_translate_err_test, http2_hdrs_size)
     const char* err_string = mod.get_err_string(status);
     CHECK(strcmp(err_string,
         "HTTP/2 translated header size is bigger than expected. Update max size.") == 0);
-}
-
-TEST(payload_injector_translate_err_test, http2_body_size)
-{
-    Packet p(false);
-    p.packet_flags = PKT_STREAM_EST;
-    p.flow = &flow;
-    translation_status = ERR_HTTP2_BODY_SIZE;
-    status = mod.inject_http_payload(&p, control);
-    const char* err_string = mod.get_err_string(status);
-    CHECK(strcmp(err_string, "HTTP/2 body is > 16k. Currently not supported.") == 0);
 }
 
 int main(int argc, char** argv)

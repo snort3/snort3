@@ -584,19 +584,51 @@ TEST(payload_injector_translate_test, http2_hdr_too_big5)
     CHECK(status == ERR_TRANSLATED_HDRS_SIZE);
 }
 
-TEST(payload_injector_translate_test, payload_body_larger_than_max)
+TEST(payload_injector_translate_test, payload_body_is_exactly_1_data_frame)
 {
-    static const uint32_t size = (1<<14) + 1 + strlen("HTTP/1.1 403 Forbidden\r\n\r\n");
+    static const uint32_t size = (1<<14) + strlen("HTTP/1.1 200 OK\r\n\r\n");
     uint8_t http_page[size];
     memset(http_page,'a',size);
-    memcpy(http_page,"HTTP/1.1 403 Forbidden\r\n\r\n", strlen("HTTP/1.1 403 Forbidden\r\n\r\n"));
+    memcpy(http_page,"HTTP/1.1 200 OK\r\n\r\n", strlen("HTTP/1.1 200 OK\r\n\r\n"));
 
     InjectionControl control;
     control.stream_id = 1;
     control.http_page = http_page;
     control.http_page_len = size;
     status = PayloadInjectorModule::get_http2_payload(control, http2_payload, payload_len);
-    CHECK(status == ERR_HTTP2_BODY_SIZE);
+    CHECK(status == INJECTION_SUCCESS);
+    // Headers frame header + status ok + data frame header
+    uint8_t out[] = { 0, 0, 1, 1, 4, 0, 0, 0, 1, 0x88, 0, 0x40, 0, 0, 1, 0, 0, 0, 1 };
+    CHECK(memcmp(http2_payload, out, sizeof(out))==0);
+    // Data frame == http body
+    CHECK(memcmp(http2_payload + sizeof(out), http_page + strlen("HTTP/1.1 200 OK\r\n\r\n"),
+        1<<14)==0);
+    snort_free(http2_payload);
+}
+
+TEST(payload_injector_translate_test, payload_body_is_data_frame_plus_1)
+{
+    static const uint32_t size = (1<<14) + 1 + strlen("HTTP/1.1 200 OK\r\n\r\n");
+    uint8_t http_page[size];
+    memset(http_page,'a',size);
+    memcpy(http_page,"HTTP/1.1 200 OK\r\n\r\n", strlen("HTTP/1.1 200 OK\r\n\r\n"));
+
+    InjectionControl control;
+    control.stream_id = 1;
+    control.http_page = http_page;
+    control.http_page_len = size;
+    status = PayloadInjectorModule::get_http2_payload(control, http2_payload, payload_len);
+    CHECK(status == INJECTION_SUCCESS);
+    // Headers frame header + status ok + data frame header
+    uint8_t out[] = { 0, 0, 1, 1, 4, 0, 0, 0, 1, 0x88, 0, 0x40, 0, 0, 0, 0, 0, 0, 1 };
+    CHECK(memcmp(http2_payload, out, sizeof(out))==0);
+    // First data frame
+    CHECK(memcmp(http2_payload + sizeof(out), http_page + strlen("HTTP/1.1 200 OK\r\n\r\n"),
+        1<<14)==0);
+    // Second data frame header + 1 last byte of body
+    uint8_t out2[] = { 0, 0, 1, 0, 1, 0, 0, 0, 1, 'a' };
+    CHECK(memcmp(http2_payload + sizeof(out) + (1<<14), out2, sizeof(out2))==0);
+    snort_free(http2_payload);
 }
 
 TEST(payload_injector_translate_test, http_page_is_nullptr)
@@ -621,27 +653,26 @@ TEST(payload_injector_translate_test, http_page_is_0_length)
 
 TEST(payload_injector_translate_test, 7_bit_int_min_max)
 {
-   uint8_t out[6];
-   uint32_t out_free_space = sizeof(out);
+    uint8_t out[6];
+    uint32_t out_free_space = sizeof(out);
 
-   // Translate 0
-   uint8_t* cur = out;
-   InjectionReturnStatus status = write_7_bit_prefix_int(0, cur, out_free_space);
-   uint8_t expected_out[] = {0};
-   CHECK(status == INJECTION_SUCCESS);
-   CHECK(out_free_space == 5);
-   CHECK(memcmp(out, expected_out, 1) == 0);
+    // Translate 0
+    uint8_t* cur = out;
+    InjectionReturnStatus status = write_7_bit_prefix_int(0, cur, out_free_space);
+    uint8_t expected_out[] = { 0 };
+    CHECK(status == INJECTION_SUCCESS);
+    CHECK(out_free_space == 5);
+    CHECK(memcmp(out, expected_out, 1) == 0);
 
-   // Translate max uint_32
-   cur = out;
-   out_free_space = sizeof(out);
-   status = write_7_bit_prefix_int(UINT32_MAX, cur, out_free_space);
-   uint8_t expected_out2[] = {0x7f, 0x80, 0xff, 0xff, 0xff, 0xf};
-   CHECK(status == INJECTION_SUCCESS);
-   CHECK(out_free_space == 0);
-   CHECK(memcmp(out, expected_out2, 6) == 0);
+    // Translate max uint_32
+    cur = out;
+    out_free_space = sizeof(out);
+    status = write_7_bit_prefix_int(UINT32_MAX, cur, out_free_space);
+    uint8_t expected_out2[] = { 0x7f, 0x80, 0xff, 0xff, 0xff, 0xf };
+    CHECK(status == INJECTION_SUCCESS);
+    CHECK(out_free_space == 0);
+    CHECK(memcmp(out, expected_out2, 6) == 0);
 }
-
 
 int main(int argc, char** argv)
 {

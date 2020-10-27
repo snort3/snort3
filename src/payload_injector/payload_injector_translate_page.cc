@@ -260,21 +260,29 @@ InjectionReturnStatus PayloadInjectorModule::get_http2_payload(InjectionControl 
     if (status != INJECTION_SUCCESS)
         return status;
 
-    const uint32_t body_len = control.http_page_len - body_offset;
-    // FIXIT-E support larger body size
-    if (body_len > 1<<14)
-        return ERR_HTTP2_BODY_SIZE;
-
-    payload_len = 2*FRAME_HEADER_LENGTH + hdr_len + body_len;
+    uint32_t body_len = control.http_page_len - body_offset;
+    uint32_t num_data_frames = body_len / (1<<14);
+    if (body_len % (1<<14) != 0)
+        num_data_frames++;
+    payload_len = FRAME_HEADER_LENGTH*(num_data_frames + 1) + hdr_len + body_len;
     http2_payload = (uint8_t*)snort_alloc(payload_len);
 
     uint8_t* http2_payload_cur = http2_payload;
     write_frame_hdr(http2_payload_cur, hdr_len, FT_HEADERS, END_HEADERS, control.stream_id);
     memcpy(http2_payload_cur, http2_hdr, hdr_len);
     http2_payload_cur += hdr_len;
-    write_frame_hdr(http2_payload_cur, body_len, FT_DATA, END_STREAM, control.stream_id);
-    memcpy(http2_payload_cur, control.http_page + body_offset, body_len);
-
+    const uint8_t* http_body_cur = control.http_page + body_offset;
+    while (body_len)
+    {
+        const uint32_t cur_len = (body_len > 1<<14) ? 1<<14 : body_len;
+        body_len -= cur_len;
+        const uint8_t flags = (body_len == 0) ? END_STREAM : 0;
+        write_frame_hdr(http2_payload_cur, cur_len, FT_DATA, flags, control.stream_id);
+        memcpy(http2_payload_cur, http_body_cur, cur_len);
+        http2_payload_cur += cur_len;
+        http_body_cur += cur_len;
+    }
+    assert((http2_payload_cur - http2_payload) == payload_len);
     return INJECTION_SUCCESS;
 }
 
