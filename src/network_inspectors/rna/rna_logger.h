@@ -38,9 +38,9 @@ struct RnaLoggerEvent : public Event
     RnaLoggerEvent (uint16_t t, uint16_t st, const uint8_t* mc, const RnaTracker* rt,
         const snort::HostMac* hmp, uint16_t pr, void* cv, const snort::HostApplication* hap,
         const snort::FpFingerprint* fpr, const snort::HostClient* hcp, const char* u,
-        int32_t app, const char* di, bool jb) : type(t), subtype(st), mac(mc), ht(rt), hm(hmp),
-        proto(pr), cond_var(cv), ha(hap), fp(fpr), hc(hcp), user(u), appid(app),
-        device_info(di), jail_broken(jb) { }
+        int32_t app, const char* di, bool jb, const snort::Packet* p) : type(t), subtype(st),
+        mac(mc), ht(rt), hm(hmp), proto(pr), cond_var(cv), ha(hap), fp(fpr), hc(hcp),
+        user(u), appid(app), device_info(di), jail_broken(jb), pkt(p) { }
 
     uint32_t event_time = 0;
     uint16_t type;
@@ -58,6 +58,7 @@ struct RnaLoggerEvent : public Event
     AppId appid;
     const char* device_info;
     bool jail_broken;
+    const snort::Packet* pkt;
 };
 
 class RnaLogger

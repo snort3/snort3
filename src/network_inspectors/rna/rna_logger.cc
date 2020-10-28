@@ -91,6 +91,8 @@ static inline void rna_logger_message(const RnaLoggerEvent& rle)
                     debug_logf(rna_trace, nullptr, "RNA Service Info log: version: %s\n",
                         s.version);
             }
+            if ( rle.type == RNA_EVENT_CHANGE and rle.subtype == CHANGE_BANNER_UPDATE )
+                debug_logf(rna_trace, nullptr, "RNA Banner log: true\n");
         }
 
         if ( rle.user )
@@ -172,7 +174,7 @@ bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_
     assert(ht);
 
     RnaLoggerEvent rle(type, subtype, src_mac, ht, hm, proto, cond_var,
-        ha, fp, hc, user, appid, di, jb);
+        ha, fp, hc, user, appid, di, jb, p);
     if ( src_ip and (!IN6_IS_ADDR_V4MAPPED(src_ip) or src_ip->s6_addr32[3]) )
         rle.ip = src_ip;
     else

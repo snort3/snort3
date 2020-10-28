@@ -43,6 +43,8 @@ public:
     static void discover_user(const snort::Packet*, RnaTracker&, const struct in6_addr*,
         RnaLogger&, const char* username, AppId, IpProtocol);
 
+    static void discover_banner(const snort::Packet*, IpProtocol, RnaTracker&,
+        const snort::SfIp*, const uint8_t* mac, RnaLogger&, AppId);
 private:
     static void update_service_info(const snort::Packet*, IpProtocol, const char* vendor,
         const char* version, RnaTracker&, const snort::SfIp*, const uint8_t*,

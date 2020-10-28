@@ -308,6 +308,7 @@ void HostTracker::clear_service(HostApplication& ha)
     ha.last_seen = 0;
     ha.payloads.clear();
     ha.info.clear();
+    ha.banner_updated = false;
 }
 
 bool HostTracker::add_client_payload(HostClient& hc, AppId payload, size_t max_payloads)
@@ -592,6 +593,24 @@ bool HostTracker::update_service_info(HostApplication& ha, const char* vendor,
     return false;
 }
 
+bool HostTracker::update_service_banner(Port port, IpProtocol proto)
+{
+    host_tracker_stats.service_finds++;
+    lock_guard<mutex> lck(host_tracker_lock);
+    for ( auto& s : services )
+    {
+        if ( s.port == port and s.proto == proto )
+        {
+            if ( !s.visibility or s.banner_updated )
+                return false;
+
+            s.banner_updated = true;
+            return true;
+        }
+    }
+    return false;
+}
+
 bool HostTracker::update_service_user(Port port, IpProtocol proto, const char* user)
 {
     host_tracker_stats.service_finds++;
@@ -718,6 +737,7 @@ bool HostTracker::set_service_visibility(Port port, IpProtocol proto, bool v)
                 for ( auto& info : s.info )
                     info.visibility = false;
                 s.user[0] = '\0';
+                s.banner_updated = false;
             }
             return true;
         }

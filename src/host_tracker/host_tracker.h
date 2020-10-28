@@ -86,8 +86,9 @@ typedef AppId Payload_t;
 struct HostApplication
 {
     HostApplication() = default;
-    HostApplication(Port pt, IpProtocol pr, AppId ap, bool in, uint32_t ht = 0, uint32_t ls = 0) :
-        port(pt), proto(pr), appid(ap), inferred_appid(in), hits(ht), last_seen(ls) { }
+    HostApplication(Port pt, IpProtocol pr, AppId ap, bool in, uint32_t ht = 0, uint32_t ls = 0,
+        bool banner = false) : port(pt), proto(pr), appid(ap), inferred_appid(in), hits(ht),
+        last_seen(ls), banner_updated(banner) { }
     HostApplication(const HostApplication& ha): port(ha.port), proto(ha.proto), appid(ha.appid),
         inferred_appid(ha.inferred_appid), hits(ha.hits), last_seen(ha.last_seen), info(ha.info),
         payloads(ha.payloads) { }
@@ -102,6 +103,7 @@ struct HostApplication
         info = ha.info;
         payloads = ha.payloads;
         visibility = ha.visibility;
+        banner_updated = ha.banner_updated;
         return *this;
     }
 
@@ -112,6 +114,7 @@ struct HostApplication
     uint32_t hits = 0;
     uint32_t last_seen = 0;
     char user[INFO_SIZE] = { '\0' };
+    bool banner_updated = false;
 
     std::vector<HostApplicationInfo, HostAppInfoAllocator> info;
     std::vector<Payload_t, HostCacheAllocIp<Payload_t>> payloads;
@@ -292,6 +295,7 @@ public:
     void update_service(const HostApplication&);
     bool update_service_info(HostApplication&, const char* vendor, const char* version,
         uint16_t max_info);
+    bool update_service_banner(Port, IpProtocol);
     bool update_service_user(Port, IpProtocol, const char* username);
     void remove_inferred_services();
 
