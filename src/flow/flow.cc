@@ -141,6 +141,28 @@ inline void Flow::clean()
     filtering_state.clear();
 }
 
+void Flow::flush(bool do_cleanup)
+{
+    if ( session )
+    {
+        DetectionEngine::onload(this);
+
+        if ( do_cleanup )
+        {
+            DetectionEngine::set_next_packet();
+            DetectionEngine de;
+
+            session->flush();
+            de.get_context()->clear_callbacks();
+        }
+        else
+            session->clear();
+    }
+
+    if ( was_blocked() )
+        free_flow_data();
+}
+
 void Flow::reset(bool do_cleanup)
 {
     if ( session )

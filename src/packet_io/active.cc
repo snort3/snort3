@@ -549,14 +549,12 @@ void Active::update_status(const Packet* p, bool force)
     {
         update_status_actionable(p);
 
-        if(!active_status)
+        if ( !active_status )
             cant_drop();
     }
-
     else if ( force )
         active_status = AST_FORCE;
-
-    else if ( active_status != AST_FORCE)
+    else if ( active_status != AST_FORCE )
     {
         update_status_actionable(p);
     }
@@ -568,7 +566,7 @@ void Active::daq_update_status(const Packet* p)
     {
         update_status_actionable(p);
 
-        if(!active_status)
+        if ( !active_status )
             cant_drop();
     }
     else if ( active_status != AST_FORCE )
@@ -838,7 +836,7 @@ void Active::map_drop_reason_id(const char* verdict_reason, uint8_t id)
 
 void Active::set_drop_reason(const char* reason)
 {
-    if ( drop_reason == nullptr )
+    if ( !drop_reason and !is_suspended() )
         drop_reason = reason;
 }
 
@@ -853,7 +851,7 @@ int Active::get_drop_reason_id()
 
 void Active::send_reason_to_daq(Packet& p)
 {
-    if ( drop_reason == nullptr )
+    if ( !drop_reason )
         return;
 
     int reason = get_drop_reason_id();

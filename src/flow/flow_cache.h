@@ -53,7 +53,7 @@ public:
     snort::Flow* find(const snort::FlowKey*);
     snort::Flow* allocate(const snort::FlowKey*);
 
-    void release(snort::Flow*, PruneReason = PruneReason::NONE, bool do_cleanup = true);
+    bool release(snort::Flow*, PruneReason = PruneReason::NONE, bool do_cleanup = true);
 
     unsigned prune_stale(uint32_t thetime, const snort::Flow* save_me);
     unsigned prune_excess(const snort::Flow* save_me);

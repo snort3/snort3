@@ -225,7 +225,7 @@ void Stream::check_flow_closed(Packet* p)
             if (PacketTracer::is_active())
                 PacketTracer::log("Stream: pending block, drop\n");
         }
-        flow->session_state &= ~STREAM_STATE_BLOCK_PENDING;
+        flow->clear_session_state(STREAM_STATE_BLOCK_PENDING);
     }
 }
 
@@ -621,7 +621,7 @@ static void active_response(Packet* p, Flow* lwssn)
         ++lwssn->response_count;
         lwssn->set_expire(p, delay);
 
-        lwssn->session_state &= ~(STREAM_STATE_DROP_CLIENT|STREAM_STATE_DROP_SERVER);
+        lwssn->clear_session_state(STREAM_STATE_DROP_CLIENT|STREAM_STATE_DROP_SERVER);
     }
 }
 

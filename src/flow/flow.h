@@ -77,6 +77,7 @@
 #define SSNFLAG_ABORT_SERVER        0x20000000
 
 #define SSNFLAG_HARD_EXPIRATION     0x40000000
+#define SSNFLAG_KEEP_FLOW           0x80000000
 
 #define SSNFLAG_NONE                0x00000000 /* nothing, an MT bag of chips */
 
@@ -93,8 +94,8 @@
 #define STREAM_STATE_MIDSTREAM         0x0040
 #define STREAM_STATE_TIMEDOUT          0x0080
 #define STREAM_STATE_UNREACH           0x0100
-#define STREAM_STATE_CLOSED            0x0800
-#define STREAM_STATE_BLOCK_PENDING     0x1000
+#define STREAM_STATE_CLOSED            0x0200
+#define STREAM_STATE_BLOCK_PENDING     0x0400
 
 class BitOp;
 class Session;
@@ -172,6 +173,7 @@ public:
     void init(PktType);
     void term();
 
+    void flush(bool do_cleanup = true);
     void reset(bool do_cleanup = true);
     void restart(bool dump_flow_data = true);
     void clear(bool dump_flow_data = true);
@@ -229,6 +231,9 @@ public:
 
     uint32_t clear_session_flags(uint32_t ssn_flags)
     { return ssn_state.session_flags &= ~ssn_flags; }
+
+    uint32_t clear_session_state(uint32_t ssn_state)
+    { return session_state &= ~ssn_state; }
 
     void set_to_client_detection(bool enable);
     void set_to_server_detection(bool enable);

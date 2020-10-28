@@ -911,6 +911,22 @@ void TcpSession::flush_talker(Packet* p, bool final_flush)
         flush_tracker( client, p, PKT_FROM_SERVER, final_flush);
 }
 
+void TcpSession::flush()
+{
+    if ( !tcp_init )
+        return;
+
+    //FIXIT-L Cleanup tcp_init and lws_init as they have some side effect in TcpSession::clear_session
+    lws_init = false;
+    tcp_init = false;
+
+    client.reassembler.flush_queued_segments(flow, true);
+    server.reassembler.flush_queued_segments(flow, true);
+
+    lws_init = true;
+    tcp_init = true;
+}
+
 void TcpSession::set_extra_data(Packet* p, uint32_t xid)
 {
     TcpStreamTracker& st = p->ptrs.ip_api.get_src()->equals(flow->client_ip) ? server : client;
@@ -1099,17 +1115,3 @@ int TcpSession::process(Packet* p)
 
     return process_tcp_packet(tsd, p);
 }
-
-void TcpSession::flush()
-{
-    if ( ( server.reassembler.is_segment_pending_flush() ) ||
-        (client.reassembler.is_segment_pending_flush() ) )
-    {
-       // FIXIT-L flush_queued_segments is basically a noop when the 'clear' parameter
-       //         is passed in as false... review what happens in 2.9.x probably related
-       //         to ssl encryption support
-        server.reassembler.flush_queued_segments(flow, false);
-        client.reassembler.flush_queued_segments(flow, false);
-    }
-}
-

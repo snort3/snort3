@@ -218,7 +218,15 @@ void DetectionEngine::finish_inspect(Packet* p, bool inspected)
     log_events(p);
 
     if ( p->active )
+    {
+        if ( p->active->session_was_blocked() and ( p->active->keep_pruned_flow() or
+            ( p->active->keep_timedout_flow() and ( p->is_tcp() or p->pseudo_type == PSEUDO_PKT_TCP ) ) ) )
+        {
+            p->flow->ssn_state.session_flags |= SSNFLAG_KEEP_FLOW;
+        }
+
         p->active->apply_delayed_action(p);
+    }
 
     p->context->post_detection();
 

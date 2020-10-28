@@ -169,7 +169,7 @@ int ExpectCache::add_flow(const Packet*,
     return 1;
 }
 
-void FlowCache::release(Flow*, PruneReason, bool) { }
+bool FlowCache::release(Flow*, PruneReason, bool) { }
 
 TEST_GROUP(stale_flow) { };
 

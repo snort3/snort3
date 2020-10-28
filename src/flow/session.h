@@ -59,6 +59,7 @@ public:
         snort::Packet*, uint32_t /*gid*/, uint32_t /*sid*/,
         uint32_t /*event_id*/, uint32_t /*event_second*/) { return 0; }
 
+    virtual void flush() { }
     virtual void flush_client(snort::Packet*) { }
     virtual void flush_server(snort::Packet*) { }
     virtual void flush_talker(snort::Packet*, bool /*final_flush */ = false) { }

@@ -70,7 +70,6 @@ public:
     virtual void update_perf_base_state(char) = 0;
     virtual void clear_session(
         bool free_flow_data, bool flush_segments, bool restart, snort::Packet* p = nullptr) = 0;
-    virtual void flush() = 0;
     virtual TcpStreamTracker::TcpState get_talker_state(TcpSegmentDescriptor&) = 0;
     virtual TcpStreamTracker::TcpState get_listener_state(TcpSegmentDescriptor&) = 0;
     TcpStreamTracker::TcpState get_peer_state(TcpStreamTracker* me)

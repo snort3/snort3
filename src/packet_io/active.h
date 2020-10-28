@@ -73,6 +73,9 @@ public:
         s_suspend_reason = suspend_reason;
     }
 
+    static bool is_suspended()
+    { return s_suspend; }
+
     static void resume()
     {
         s_suspend = false;
@@ -152,6 +155,12 @@ public:
 
     bool can_partial_block_session() const
     { return active_status == AST_CANT and s_suspend_reason > ASP_NONE and s_suspend_reason != ASP_TIMEOUT; }
+
+    bool keep_pruned_flow() const
+    { return ( s_suspend_reason == ASP_PRUNE ) or ( s_suspend_reason == ASP_RELOAD ); }
+
+    bool keep_timedout_flow() const
+    { return ( s_suspend_reason == ASP_TIMEOUT ); }
 
     bool packet_retry_requested() const
     { return active_action == ACT_RETRY; }

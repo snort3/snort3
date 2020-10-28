@@ -60,6 +60,8 @@ void PacketTracer::log(const char*, ...) { }
 void PacketTracer::open_file() { }
 void PacketTracer::dump_to_daq(Packet*) { }
 void PacketTracer::reset() { }
+void PacketTracer::pause() { }
+void PacketTracer::unpause() { }
 void Active::set_drop_reason(char const*) { }
 Packet::Packet(bool) { }
 Packet::~Packet() { }
@@ -70,6 +72,7 @@ ExpectCache::~ExpectCache() { }
 DetectionEngine::~DetectionEngine() { }
 void Flow::init(PktType) { }
 void Flow::term() { }
+void Flow::flush(bool) { }
 void Flow::reset(bool) { }
 void Flow::free_flow_data() { }
 void set_network_policy(const SnortConfig*, unsigned) { }
