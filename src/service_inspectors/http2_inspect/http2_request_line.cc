@@ -76,8 +76,7 @@ void Http2RequestLine::process_pseudo_header(const Field& name, const Field& val
     field->set(value.length(), value_str, true);
 }
 
-// This is called on the first non-pseudo-header. Select the appropriate URI form based on the
-// provided pseudo-headers and generate the start line
+// Select the appropriate URI form based on the provided pseudo-headers and generate the start line
 bool Http2RequestLine::generate_start_line(Field& start_line)
 {
     uint32_t bytes_written = 0;
@@ -190,7 +189,7 @@ bool Http2RequestLine::generate_start_line(Field& start_line)
     {
         // FIXIT-E May want to be more lenient than RFC on generating start line
         *infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
-        events->create_event(EVENT_MISFORMATTED_HTTP2);
+        events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
         return false;
     }
 

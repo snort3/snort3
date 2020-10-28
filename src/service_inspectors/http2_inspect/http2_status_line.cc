@@ -52,7 +52,6 @@ void Http2StatusLine::process_pseudo_header(const Field& name, const Field& valu
     }
 }
 
-// This is called on the first non-pseudo-header.
 bool Http2StatusLine::generate_start_line(Field& start_line)
 {
     uint32_t bytes_written = 0;

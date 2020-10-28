@@ -36,9 +36,6 @@ class Http2FlowData;
 class Http2StartLine
 {
 public:
-    static Http2StartLine* new_start_line_generator(HttpCommon::SourceId source_id,
-        Http2EventGen* const events, Http2Infractions* const infractions);
-
     virtual ~Http2StartLine();
 
     friend class Http2Hpack;

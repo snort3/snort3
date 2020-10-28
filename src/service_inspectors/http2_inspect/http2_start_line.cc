@@ -40,13 +40,3 @@ Http2StartLine::~Http2StartLine()
 {
     delete[] start_line_buffer;
 }
-
-Http2StartLine* Http2StartLine::new_start_line_generator(SourceId source_id,
-    Http2EventGen* const events, Http2Infractions* const infractions)
-{
-    if (source_id == SRC_CLIENT)
-        return new Http2RequestLine(events, infractions);
-    else
-        return new Http2StatusLine(events, infractions);
-}
-

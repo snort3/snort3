@@ -33,7 +33,9 @@
 #include "http2_enum.h"
 #include "http2_flow_data.h"
 #include "http2_hpack.h"
+#include "http2_request_line.h"
 #include "http2_start_line.h"
+#include "http2_status_line.h"
 #include "http2_stream.h"
 
 using namespace snort;
@@ -49,8 +51,12 @@ Http2HeadersFrameHeader::Http2HeadersFrameHeader(const uint8_t* header_buffer,
     if (!process_frame)
         return;
 
-    start_line_generator = Http2StartLine::new_start_line_generator(source_id,
-        session_data->events[source_id], session_data->infractions[source_id]);
+    if (source_id == SRC_CLIENT)
+        start_line_generator = new Http2RequestLine(session_data->events[source_id],
+            session_data->infractions[source_id]);
+    else
+        start_line_generator = new Http2StatusLine(session_data->events[source_id],
+            session_data->infractions[source_id]);
 
     // Decode headers
     if (!hpack_decoder->decode_headers((data.start() + hpack_headers_offset), data.length() -

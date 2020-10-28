@@ -28,16 +28,13 @@
 class Http2StatusLine : public Http2StartLine
 {
 public:
-    void process_pseudo_header(const Field& name, const Field& value) override;
-    bool generate_start_line(Field& start_line) override;
-
-    friend Http2StartLine* Http2StartLine::new_start_line_generator(HttpCommon::SourceId source_id,
-        Http2EventGen* const events, Http2Infractions* const infractions);
-
-private:
     Http2StatusLine(Http2EventGen* const evs, Http2Infractions* const infrs) :
         Http2StartLine(evs, infrs) { }
 
+    void process_pseudo_header(const Field& name, const Field& value) override;
+    bool generate_start_line(Field& start_line) override;
+
+private:
     Field status;
 
     static const char* STATUS_NAME;

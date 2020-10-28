@@ -87,7 +87,7 @@ bool Http2Inspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
         return false;
 
     const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
-    Http2Stream* const stream = session_data->get_current_stream(source_id);
+    Http2Stream* const stream = session_data->get_processing_stream(source_id);
     const Field& buffer = stream->get_buf(id);
     if (buffer.length() <= 0)
         return false;
