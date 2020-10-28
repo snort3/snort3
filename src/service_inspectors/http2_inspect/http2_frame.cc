@@ -92,10 +92,8 @@ const Field& Http2Frame::get_buf(unsigned id)
 
 uint8_t Http2Frame::get_flags()
 {
-    if (header.length() > 0)
-        return header.start()[flags_index];
-    else
-        return 0;
+    assert(header.length() > 0);
+    return header.start()[flags_index];
 }
 
 uint32_t Http2Frame::get_stream_id()

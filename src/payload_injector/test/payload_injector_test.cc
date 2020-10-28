@@ -111,6 +111,8 @@ InjectionReturnStatus PayloadInjectorModule::get_http2_payload(InjectionControl,
 unsigned Http2FlowData::inspector_id = 0;
 Http2Stream::~Http2Stream() { }
 HpackDynamicTable::~HpackDynamicTable() { }
+Http2DataCutter::Http2DataCutter(Http2FlowData* _session_data, HttpCommon::SourceId src_id) :
+    session_data(_session_data), source_id(src_id) { }
 Http2FlowData::Http2FlowData(snort::Flow*) :
     FlowData(inspector_id),
     flow(nullptr),
@@ -119,10 +121,13 @@ Http2FlowData::Http2FlowData(snort::Flow*) :
     {
         Http2HpackDecoder(this, SRC_CLIENT, events[SRC_CLIENT], infractions[SRC_CLIENT]),
         Http2HpackDecoder(this, SRC_SERVER, events[SRC_SERVER], infractions[SRC_SERVER])
-    }
+    },
+    data_cutter { Http2DataCutter(this, SRC_CLIENT), Http2DataCutter(this, SRC_SERVER) }
     { }
 Http2FlowData::~Http2FlowData() { }
 Http2FlowData http2_flow_data(nullptr);
+void Http2FlowData::set_mid_frame(bool val) { continuation_expected[SRC_SERVER] = val; }
+bool Http2FlowData::is_mid_frame() const { return continuation_expected[SRC_SERVER]; }
 FlowData* snort::Flow::get_flow_data(unsigned int) const { return &http2_flow_data; }
 
 TEST_GROUP(payload_injector_test)
@@ -143,8 +148,7 @@ TEST_GROUP(payload_injector_test)
         control.http_page_len = 4;
         flow.set_state(Flow::FlowState::INSPECT);
         translation_status = INJECTION_SUCCESS;
-        http2_flow_data.set_continuation_expected(SRC_SERVER, false);
-        http2_flow_data.set_reading_frame(SRC_SERVER, false);
+        http2_flow_data.set_mid_frame(false);
     }
 };
 
@@ -290,7 +294,7 @@ TEST(payload_injector_test, http2_mid_frame)
     flow.gadget = new MockInspector();
     p.flow = &flow;
     control.stream_id = 1;
-    http2_flow_data.set_reading_frame(SRC_SERVER, true);
+    http2_flow_data.set_mid_frame(true);
     InjectionReturnStatus status = mod.inject_http_payload(&p, control);
     CHECK(counts->http2_mid_frame == 1);
     CHECK(status == ERR_HTTP2_MID_FRAME);
@@ -310,7 +314,7 @@ TEST(payload_injector_test, http2_continuation_expected)
     flow.gadget = new MockInspector();
     p.flow = &flow;
     control.stream_id = 1;
-    http2_flow_data.set_continuation_expected(SRC_SERVER, true);
+    http2_flow_data.set_mid_frame(true);
     InjectionReturnStatus status = mod.inject_http_payload(&p, control);
     CHECK(counts->http2_mid_frame == 1);
     CHECK(status == ERR_HTTP2_MID_FRAME);
@@ -360,8 +364,7 @@ TEST_GROUP(payload_injector_translate_err_test)
         control.http_page = (const uint8_t*)"test";
         control.http_page_len = 4;
         flow.set_state(Flow::FlowState::INSPECT);
-        http2_flow_data.set_continuation_expected(SRC_SERVER, false);
-        http2_flow_data.set_reading_frame(SRC_SERVER, false);
+        http2_flow_data.set_mid_frame(false);
         mod.set_configured(true);
         mock_api.base.name = "http2_inspect";
         flow.gadget = new MockInspector();

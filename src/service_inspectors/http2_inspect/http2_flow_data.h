@@ -20,6 +20,7 @@
 #ifndef HTTP2_FLOW_DATA_H
 #define HTTP2_FLOW_DATA_H
 
+#include <queue>
 #include <vector>
 
 #include "main/snort_types.h"
@@ -30,6 +31,7 @@
 #include "service_inspectors/http_inspect/http_field.h"
 #include "stream/stream_splitter.h"
 
+#include "http2_data_cutter.h"
 #include "http2_enum.h"
 #include "http2_hpack.h"
 #include "http2_hpack_int_decode.h"
@@ -102,14 +104,12 @@ public:
     Http2ConnectionSettings* get_recipient_connection_settings(const HttpCommon::SourceId source_id)
     { return &connection_settings[1 - source_id]; }
 
-    bool is_mid_frame(const HttpCommon::SourceId source_id = HttpCommon::SRC_SERVER)
-    { return (continuation_expected[source_id] || reading_frame[source_id]); }
+    // Used by payload injection to determine whether we are at a safe place to insert our own
+    // frame into the S2C direction of an HTTP/2 flow.
+    bool is_mid_frame() const;
 
 #ifdef UNIT_TEST
-    void set_reading_frame(HttpCommon::SourceId source_id, bool val)
-    { reading_frame[source_id] = val;}
-    void set_continuation_expected(HttpCommon::SourceId source_id, bool val)
-    { continuation_expected[source_id] = val;}
+    void set_mid_frame(bool); // Not implemented outside of unit tests
 #endif
 
 protected:
@@ -135,8 +135,7 @@ protected:
     uint32_t stream_in_hi = Http2Enums::NO_STREAM_ID;
 
     // Reassemble() data to eval()
-    uint8_t* frame_header[2] = { nullptr, nullptr };
-    uint32_t frame_header_size[2] = { 0, 0 };
+    uint8_t lead_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH];
     uint8_t* frame_data[2] = { nullptr, nullptr };
     uint32_t frame_data_size[2] = { 0, 0 };
 
@@ -153,34 +152,31 @@ protected:
     uint8_t scan_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH];
     uint32_t scan_remaining_frame_octets[2] = { 0, 0 };
     uint32_t scan_octets_seen[2] = { 0, 0 };
-    bool data_processing[2] = { false, false };
     uint8_t padding_length[2] = { 0, 0 };
-    Http2Enums::ScanState scan_state[2] = { Http2Enums::SCAN_HEADER, Http2Enums::SCAN_HEADER };
+    uint8_t remaining_data_padding[2] = { 0, 0 };
+    Http2Enums::ScanState scan_state[2] =
+        { Http2Enums::SCAN_FRAME_HEADER, Http2Enums::SCAN_FRAME_HEADER };
+
+    // Used by scan() and reassemble()
+    Http2DataCutter data_cutter[2];
 
     // Scan signals to reassemble()
     bool payload_discard[2] = { false, false };
-    uint32_t num_frame_headers[2] = { 0, 0 };
     uint32_t total_bytes_in_split[2] = { 0, 0 };
-    bool use_leftover_hdr[2] = { false, false };
-    uint8_t leftover_hdr[2][Http2Enums::FRAME_HEADER_LENGTH];
-
-    // Used by scan, reassemble
-    bool flushing_data[2] = { false, false };
 
     // Used by scan, reassemble and eval to communicate
     uint8_t frame_type[2] = { Http2Enums::FT__NONE, Http2Enums::FT__NONE };
     bool abort_flow[2] = { false, false };
+    std::queue<uint32_t> frame_lengths[2];
 
     // Internal to reassemble()
     uint32_t frame_header_offset[2] = { 0, 0 };
     uint32_t frame_data_offset[2] = { 0, 0 };
     uint32_t remaining_frame_octets[2] = { 0, 0 };
-    uint8_t remaining_padding_octets_in_frame[2] = { 0, 0 };
+    uint8_t remaining_padding_reassemble[2] = { 0, 0 };
+    bool read_frame_header[2] = { false, false };
+    bool continuation_frame[2] = { false, false };
     bool read_padding_len[2] = { false, false };
-
-    // used to signal frame wasn't fully read yet,
-    // currently used by payload injector
-    bool reading_frame[2] = { false, false };
 
 #ifdef REG_TEST
     static uint64_t instance_count;

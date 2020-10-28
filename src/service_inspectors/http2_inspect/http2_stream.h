@@ -49,17 +49,6 @@ public:
         current_frame->get_xtradata_mask() : 0; }
     Http2Frame *get_current_frame() { return current_frame; }
 
-    Http2DataCutter* get_data_cutter(HttpCommon::SourceId source_id);
-    void set_data_cutter(Http2DataCutter* cutter, HttpCommon::SourceId source_id)
-        { data_cutter[source_id] = cutter; }
-
-    void set_partial_buf_pending(HttpCommon::SourceId source_id)
-    { partial_buf_pending[source_id] = true; }
-    void reset_partial_buf_pending(HttpCommon::SourceId source_id)
-    { partial_buf_pending[source_id] = false; }
-    bool is_partial_buf_pending(HttpCommon::SourceId source_id)
-    { return partial_buf_pending[source_id]; }
-
     void set_state(HttpCommon::SourceId source_id, Http2Enums::StreamState new_state);
     Http2Enums::StreamState get_state(HttpCommon::SourceId source_id) const
         { return state[source_id]; }
@@ -81,8 +70,6 @@ private:
     Http2Frame* current_frame = nullptr;
     HttpFlowData* hi_flow_data = nullptr;
     HttpMsgSection* hi_msg_section = nullptr;
-    Http2DataCutter* data_cutter[2] = { nullptr, nullptr};
-    bool partial_buf_pending[2] = { false, false }; // used to indicate a partial buffer
     bool end_stream_on_data_flush[2] = { false, false };
     Http2Enums::StreamState state[2] =
         { Http2Enums::STREAM_EXPECT_HEADERS, Http2Enums::STREAM_EXPECT_HEADERS };

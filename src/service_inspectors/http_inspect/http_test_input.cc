@@ -25,6 +25,8 @@
 
 #include "http_test_input.h"
 
+#include "protocols/packet.h"
+
 #include "http_common.h"
 #include "http_enum.h"
 #include "http_module.h"
@@ -96,10 +98,11 @@ void HttpTestInput::reset()
 {
     flushed = false;
     last_source_id = SRC_CLIENT;
-    just_flushed = true;
+    just_flushed = false;
     tcp_closed = false;
     flush_octets = 0;
     need_break = false;
+    reassembled_octets = 0;
 
     for (int k = 0; k <= 1; k++)
     {
@@ -109,6 +112,10 @@ void HttpTestInput::reset()
         {
             fclose(include_file[k]);
             include_file[k] = nullptr;
+        }
+        while (!segments[k].empty())
+        {
+            segments[k].pop();
         }
     }
 
@@ -139,14 +146,14 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
 
     if (just_flushed)
     {
-        // Beginning of a new test or StreamSplitter just flushed and it has all been sent by
-        // reassemble(). There may or may not be leftover data from the last paragraph that was not
-        // flushed.
+        // StreamSplitter just flushed and it has all been sent by reassemble(). There may or may
+        // not be leftover data from the last paragraph that was not flushed.
         just_flushed = false;
         data = msg_buf[last_source_id];
+        assert(segments[last_source_id].empty());
         // compute the leftover data
-        end_offset[last_source_id] = (flush_octets <= end_offset[last_source_id]) ?
-            (end_offset[last_source_id] - flush_octets) : 0;
+        assert(flush_octets <= end_offset[last_source_id]);
+        end_offset[last_source_id] = (end_offset[last_source_id] - flush_octets);
         previous_offset[last_source_id] = 0;
         if (end_offset[last_source_id] > 0)
         {
@@ -165,6 +172,10 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
     else
     {
         // The data we gave StreamSplitter last time was not flushed
+        const uint32_t last_seg_length =
+            end_offset[last_source_id] - previous_offset[last_source_id];
+        if (last_seg_length > 0)
+            segments[last_source_id].push(last_seg_length);
         previous_offset[last_source_id] = end_offset[last_source_id];
         data = msg_buf[last_source_id] + previous_offset[last_source_id];
     }
@@ -370,23 +381,10 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                     memcpy(msg_buf[last_source_id] + end_offset[last_source_id], preface, sizeof(preface) - 1);
                     end_offset[last_source_id] += sizeof(preface) - 1;
                 }
-                else if (command_length > 0)
+                else
                 {
-                    // Look for a test number
-                    if (is_number(command_value, command_length))
-                    {
-                        int64_t test_number = 0;
-                        for (unsigned j=0; j < command_length; j++)
-                        {
-                            test_number = test_number * 10 + (command_value[j] - '0');
-                        }
-                        HttpTestManager::update_test_number(test_number);
-                    }
-                    else
-                    {
-                        // Bad command in test file
-                        assert(false);
-                    }
+                    // Bad command in test file
+                    assert(false);
                 }
             }
             else
@@ -485,14 +483,21 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
 
 void HttpTestInput::flush(uint32_t num_octets)
 {
+    if ((num_octets > 0) || (segments[last_source_id].size() == 0))
+    {
+        segments[last_source_id].push(num_octets);
+    }
+
     flush_octets = previous_offset[last_source_id] + num_octets;
+    reassembled_octets = 0;
     assert(flush_octets <= end_offset[last_source_id]);
     assert(flush_octets <= MAX_OCTETS);
     flushed = true;
 }
 
-void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId source_id,
-    bool& tcp_close, bool& partial_flush)
+void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, unsigned& total,
+    unsigned& offset, uint32_t& flags, SourceId source_id, bool& tcp_close,
+    bool& partial_flush)
 {
     *buffer = nullptr;
     partial_flush = false;
@@ -523,10 +528,29 @@ void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, SourceId sour
         return;
     }
 
-    *buffer = msg_buf[last_source_id];
-    length = flush_octets;
-    just_flushed = true;
-    flushed = false;
+    total = flush_octets;
+    assert(!segments[last_source_id].empty());
+    const uint32_t segment_length = segments[last_source_id].front();
+    segments[last_source_id].pop();
+
+    length = segment_length;
+    offset = reassembled_octets;
+    *buffer = msg_buf[last_source_id] + reassembled_octets;
+    reassembled_octets += length;
+    if (!segments[last_source_id].empty())
+    {
+        // Not the final TCP segment to be reassembled
+        flags &= ~PKT_PDU_TAIL;
+    }
+    else
+    {
+        // Final segment split at flush point
+        assert(total == reassembled_octets);
+        just_flushed = true;
+        flushed = false;
+    }
+
+    return;
 }
 
 static uint8_t parse_frame_type(const char buffer[], const unsigned bytes_remaining,

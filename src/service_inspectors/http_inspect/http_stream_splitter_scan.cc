@@ -288,13 +288,9 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
             {
                 assert(session_data->accelerated_blocking[source_id] == AB_INSPECT);
                 HttpModule::increment_peg_counts(PEG_SCRIPT_DETECTION);
-                init_partial_flush(flow);
+                init_partial_flush(flow, length);
 #ifdef REG_TEST
-                if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
-                {
-                    HttpTestManager::get_test_input_source()->flush(length);
-                }
-                else
+                if (!HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
 #endif
                     *flush_offset = length;
                 return status_value(StreamSplitter::FLUSH);

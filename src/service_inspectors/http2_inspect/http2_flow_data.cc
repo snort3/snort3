@@ -50,7 +50,8 @@ Http2FlowData::Http2FlowData(Flow* flow_) :
     hpack_decoder { Http2HpackDecoder(this, SRC_CLIENT, events[SRC_CLIENT],
                         infractions[SRC_CLIENT]),
                     Http2HpackDecoder(this, SRC_SERVER, events[SRC_SERVER],
-                        infractions[SRC_SERVER]) }
+                        infractions[SRC_SERVER]) },
+    data_cutter { Http2DataCutter(this, SRC_CLIENT), Http2DataCutter(this, SRC_SERVER) }
 {
     if (hi != nullptr)
     {
@@ -92,7 +93,6 @@ Http2FlowData::~Http2FlowData()
         delete events[k];
         delete hi_ss[k];
         delete[] frame_data[k];
-        delete[] frame_header[k];
     }
 }
 
@@ -152,7 +152,7 @@ class Http2Stream* Http2FlowData::get_hi_stream() const
     return find_stream(stream_in_hi);
 }
 
-class Http2Stream* Http2FlowData::get_current_stream(const HttpCommon::SourceId source_id)
+class Http2Stream* Http2FlowData::get_current_stream(HttpCommon::SourceId source_id)
 {
     return get_stream(current_stream[source_id]);
 }
@@ -187,3 +187,10 @@ void Http2FlowData::deallocate_hi_memory()
 {
     update_deallocations(HttpFlowData::get_memory_usage_estimate());
 }
+
+bool Http2FlowData::is_mid_frame() const
+{
+    return (scan_octets_seen[SRC_SERVER] != 0) || (remaining_data_padding[SRC_SERVER] != 0) ||
+        continuation_expected[SRC_SERVER];
+}
+

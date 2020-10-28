@@ -50,24 +50,16 @@ bool Http2DataFrame::valid_sequence(Http2Enums::StreamState state)
 
 void Http2DataFrame::analyze_http1()
 {
-    if ((data_length != 0) || !session_data->flushing_data[source_id])
-    {
-        Http2DummyPacket dummy_pkt;
-        dummy_pkt.flow = session_data->flow;
-        dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
-        dummy_pkt.dsize = data_length;
-        dummy_pkt.data = data_buffer;
-        dummy_pkt.xtradata_mask = 0;
-        session_data->hi->eval(&dummy_pkt);
-        detection_required = dummy_pkt.is_detection_required();
-        xtradata_mask = dummy_pkt.xtradata_mask;
-    }
-    else
-    {
-        detection_required = true;
-        HttpFlowData* const http_flow = (HttpFlowData*)session_data->get_hi_flow_data();
-        http_flow->reset_partial_flush(source_id);
-    }
+    Http2DummyPacket dummy_pkt;
+    dummy_pkt.flow = session_data->flow;
+    dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
+    dummy_pkt.dsize = data_length;
+    dummy_pkt.data = data_buffer;
+    dummy_pkt.xtradata_mask = 0;
+    // FIXIT-E no checks here
+    session_data->hi->eval(&dummy_pkt);
+    detection_required = dummy_pkt.is_detection_required();
+    xtradata_mask = dummy_pkt.xtradata_mask;
 }
 
 void Http2DataFrame::clear()
@@ -104,7 +96,6 @@ void Http2DataFrame::update_stream_state()
             }
             break;
         default:
-            // FIXIT-E build this out
             // Stream state is idle or closed - this is caught in scan so should not get here
             assert(false);
     }

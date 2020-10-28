@@ -123,9 +123,7 @@ void Http2Inspect::eval(Packet* p)
         return;
 
     // FIXIT-E Workaround for unexpected eval() calls
-    if (session_data->abort_flow[source_id] or
-        ((session_data->frame_header[source_id] == nullptr ) and
-        (session_data->frame_data[source_id] == nullptr)))
+    if (session_data->abort_flow[source_id])
     {
         return;
     }
@@ -135,17 +133,16 @@ void Http2Inspect::eval(Packet* p)
     assert(stream);
     session_data->stream_in_hi = stream->get_stream_id();
 
-    stream->eval_frame(session_data->frame_header[source_id],
-        session_data->frame_header_size[source_id], session_data->frame_data[source_id],
-        session_data->frame_data_size[source_id], source_id);
+    uint8_t* const frame_header_copy = new uint8_t[FRAME_HEADER_LENGTH];
+    memcpy(frame_header_copy, session_data->lead_frame_header[source_id], FRAME_HEADER_LENGTH);
+    stream->eval_frame(frame_header_copy, FRAME_HEADER_LENGTH,
+        session_data->frame_data[source_id], session_data->frame_data_size[source_id], source_id);
 
     if (!stream->get_current_frame()->is_detection_required())
         DetectionEngine::disable_all(p);
     p->xtradata_mask |= stream->get_xtradata_mask();
 
     // The current frame now owns these buffers, clear them from the flow data
-    session_data->frame_header[source_id] = nullptr;
-    session_data->frame_header_size[source_id] = 0;
     session_data->frame_data[source_id] = nullptr;
     session_data->frame_data_size[source_id] = 0;
 

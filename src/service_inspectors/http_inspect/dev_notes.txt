@@ -211,8 +211,8 @@ the same paragraph (splitter must split) or continuing a section in the next par
 must search and reassemble).
 
 Lines beginning with # are comments. Lines beginning with @ are commands. These do not apply to
-lines in the middle of a paragraph. Lines that begin with $ are insert commands - a special class of
-commands that may be used within a paragraph to insert data into the message buffer.
+lines in the middle of a paragraph. Lines that begin with $ are insert commands - a special class
+of commands that may be used within a paragraph to insert data into the message buffer.
 
 Commands:
   @break resets HTTP Inspect data structures and begins a new test. Use it liberally to prevent
@@ -220,7 +220,9 @@ Commands:
   @tcpclose simulates a half-duplex TCP close.
   @request and @response set the message direction. Applies to subsequent paragraphs until changed.
      The initial direction is always request and the break command resets the direction to request.
-  @partial causes a partial flush, simulating a retransmission of a detained packet
+  @partial causes a partial flush, simulating a retransmission of a detained packet. This does not
+     have any application to script detection or any other feature where the stream splitter is
+     driving partial inspections instead of stream.
   @fileset <pathname> specifies a file from which the tool will read data into the message buffer.
      This may be used to include a zipped or other binary file into a message body. Data is read
      beginning at the start of the file. The file is closed automatically whenever a new file is

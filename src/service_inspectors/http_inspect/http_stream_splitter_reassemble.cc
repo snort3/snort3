@@ -246,8 +246,9 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
             bool tcp_close;
             bool partial_flush;
             uint8_t* test_buffer;
-            HttpTestManager::get_test_input_source()->reassemble(&test_buffer, len, source_id,
-                tcp_close, partial_flush);
+            unsigned unused;
+            HttpTestManager::get_test_input_source()->reassemble(&test_buffer, len, total, unused,
+                flags, source_id, tcp_close, partial_flush);
             if (tcp_close)
             {
                 finish(flow);
@@ -264,7 +265,6 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
                 return http_buf;
             }
             data = test_buffer;
-            total = len;
         }
         else
         {

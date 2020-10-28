@@ -30,6 +30,7 @@
 
 #include "http2_data_cutter.h"
 #include "http2_dummy_packet.h"
+#include "http2_flow_data.h"
 
 using namespace HttpCommon;
 using namespace Http2Enums;
@@ -47,8 +48,6 @@ Http2Stream::~Http2Stream()
     if (hi_flow_data)
         session_data->deallocate_hi_memory();
     delete hi_flow_data;
-    delete data_cutter[SRC_CLIENT];
-    delete data_cutter[SRC_SERVER];
 }
 
 void Http2Stream::eval_frame(const uint8_t* header_buffer, uint32_t header_len,
@@ -116,13 +115,6 @@ void Http2Stream::print_frame(FILE* output)
 }
 #endif
 
-Http2DataCutter* Http2Stream::get_data_cutter(HttpCommon::SourceId source_id)
-{
-    if (!data_cutter[source_id])
-        data_cutter[source_id] = new Http2DataCutter(session_data, source_id);
-    return data_cutter[source_id];
-}
-
 bool Http2Stream::is_open(HttpCommon::SourceId source_id)
 {
     return (state[source_id] == STREAM_EXPECT_BODY) || (state[source_id] == STREAM_BODY);
@@ -142,5 +134,4 @@ void Http2Stream::finish_msg_body(HttpCommon::SourceId source_id, bool expect_tr
         &dummy_pkt, nullptr, 0, unused, &http_flush_offset);
     assert(scan_result == snort::StreamSplitter::FLUSH);
     UNUSED(scan_result);
-    session_data->data_processing[source_id] = false;
 }

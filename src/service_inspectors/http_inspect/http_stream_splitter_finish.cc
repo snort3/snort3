@@ -169,7 +169,7 @@ bool HttpStreamSplitter::finish(Flow* flow)
     return session_data->section_type[source_id] != SEC__NOT_COMPUTE;
 }
 
-bool HttpStreamSplitter::init_partial_flush(Flow* flow)
+bool HttpStreamSplitter::init_partial_flush(Flow* flow, uint32_t num_flush)
 {
     Profile profile(HttpModule::get_profile_stats());
 
@@ -195,10 +195,10 @@ bool HttpStreamSplitter::init_partial_flush(Flow* flow)
 
     // Set up to process partial message section
     uint32_t not_used;
-    prepare_flush(session_data, &not_used, session_data->type_expected[source_id], 0, 0, 0,
+    prepare_flush(session_data, &not_used, session_data->type_expected[source_id], num_flush, 0, 0,
         session_data->cutter[source_id]->get_is_broken_chunk(),
         session_data->cutter[source_id]->get_num_good_chunks(),
-        session_data->cutter[source_id]->get_octets_seen());
+        session_data->cutter[source_id]->get_octets_seen() - num_flush);
     (static_cast<HttpBodyCutter*>(session_data->cutter[source_id]))->detain_ended();
     session_data->partial_flush[source_id] = true;
     return true;

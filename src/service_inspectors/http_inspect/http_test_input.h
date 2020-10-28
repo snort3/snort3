@@ -23,6 +23,7 @@
 #ifdef REG_TEST
 
 #include <cstdio>
+#include <queue>
 
 #include "http_common.h"
 #include "http_enum.h"
@@ -35,14 +36,15 @@ public:
     ~HttpTestInput();
     void scan(uint8_t*& data, uint32_t& length, HttpCommon::SourceId source_id, uint64_t seq_num);
     void flush(uint32_t num_octets);
-    void reassemble(uint8_t** buffer, unsigned& length, HttpCommon::SourceId source_id,
-        bool& tcp_close, bool& partial_flush);
+    void reassemble(uint8_t** buffer, unsigned& length, unsigned& total, unsigned& offset,
+        uint32_t& flags, HttpCommon::SourceId source_id, bool& tcp_close, bool& partial_flush);
     bool finish();
 
 private:
     FILE* test_data_file;
-    // FIXIT-L Figure out how big this buf needs to be and revise value
+    // FIXIT-E Figure out how big this buf needs to be and revise value
     uint8_t msg_buf[2][2 * HttpEnums::MAX_OCTETS];
+    std::queue<uint32_t> segments[2];
     FILE* include_file[2] = { nullptr, nullptr };
 
     // break command has been read and we are waiting for a new underlying flow to start
@@ -59,7 +61,7 @@ private:
     HttpCommon::SourceId last_source_id = HttpCommon::SRC_CLIENT;
 
     // reassemble() just completed and all flushed octets forwarded, time to resume scan()
-    bool just_flushed = true;
+    bool just_flushed = false;
 
     // TCP connection directional close
     bool tcp_closed = false;
@@ -69,6 +71,9 @@ private:
 
     // number of octets that have been flushed and must be sent by reassemble
     uint32_t flush_octets = 0;
+
+    // Number of octets sent in previous calls to reassemble()
+    uint32_t reassembled_octets = 0;
 
     // number of characters in the buffer previously shown to splitter but not flushed yet
     uint32_t previous_offset[2] = { 0, 0 };

@@ -91,7 +91,7 @@ StreamSplitter::Status Http2StreamSplitter::data_frame_header_checks(Http2FlowDa
         if (frame_length == 0)
         {
             *flush_offset = data_offset;
-            session_data->scan_state[source_id] = SCAN_HEADER;
+            session_data->scan_state[source_id] = SCAN_FRAME_HEADER;
             return StreamSplitter::FLUSH;
         }
 
@@ -146,92 +146,40 @@ StreamSplitter::Status Http2StreamSplitter::non_data_scan(Http2FlowData* session
     }
 
     // Have the full frame
-    session_data->reading_frame[source_id] = false;
     StreamSplitter::Status status = StreamSplitter::FLUSH;
-    switch (type)
+    session_data->continuation_expected[source_id] = false;
+    if (((type == FT_HEADERS) || (type == FT_PUSH_PROMISE) || (type == FT_CONTINUATION)) &&
+        !(frame_flags & END_HEADERS))
     {
-    case FT_HEADERS:
-    case FT_PUSH_PROMISE:
-        if (!(frame_flags & END_HEADERS))
-        {
-            session_data->continuation_expected[source_id] = true;
-            status = StreamSplitter::SEARCH;
-        }
-        break;
-    case FT_CONTINUATION:
-        if (!(frame_flags & END_HEADERS))
-            status = StreamSplitter::SEARCH;
-        else
-        {
-            // continuation frame ending headers
-            session_data->continuation_expected[source_id] = false;
-        }
-        break;
-    default:
-        break;
+        session_data->continuation_expected[source_id] = true;
+        status = StreamSplitter::SEARCH;
     }
 
     data_offset += session_data->scan_remaining_frame_octets[source_id];
     *flush_offset = data_offset;
     session_data->scan_octets_seen[source_id] = 0;
     session_data->scan_remaining_frame_octets[source_id] = 0;
-    session_data->scan_state[source_id] = SCAN_HEADER;
+    session_data->scan_state[source_id] = SCAN_FRAME_HEADER;
     return status;
-}
-
-// Flush pending data
-void Http2StreamSplitter::partial_flush_data(Http2FlowData* session_data,
-    HttpCommon::SourceId source_id, uint32_t* flush_offset, uint32_t data_offset,
-    Http2Stream* const stream)
-{
-    session_data->frame_type[source_id] = FT_DATA;
-    Http2DataCutter* const data_cutter = stream->get_data_cutter(source_id);
-    if (data_cutter->is_flush_required())
-        session_data->hi_ss[source_id]->init_partial_flush(session_data->flow);
-    session_data->data_processing[source_id] = false;
-    assert(data_offset != 0);
-    *flush_offset = data_offset - 1;
-    session_data->flushing_data[source_id] = true;
-    session_data->num_frame_headers[source_id] -= 1;
 }
 
 bool Http2StreamSplitter::read_frame_hdr(Http2FlowData* session_data, const uint8_t* data,
     uint32_t length, HttpCommon::SourceId source_id, uint32_t& data_offset)
 {
-    if (!session_data->flushing_data[source_id])
-    {
-        // Frame with header
-        if (session_data->scan_octets_seen[source_id] == 0)
-        {
-            // Scanning a new frame
-            session_data->num_frame_headers[source_id] += 1;
-            session_data->reading_frame[source_id] = true;
-        }
+    // The first nine bytes are the frame header. But all nine might not all be
+    // present in the first TCP segment we receive.
+    const uint32_t remaining_header = FRAME_HEADER_LENGTH -
+        session_data->scan_octets_seen[source_id];
+    const uint32_t remaining_header_in_data = remaining_header > length - data_offset ?
+        length - data_offset : remaining_header;
+    memcpy(session_data->scan_frame_header[source_id] +
+        session_data->scan_octets_seen[source_id], data + data_offset,
+        remaining_header_in_data);
+    session_data->scan_octets_seen[source_id] += remaining_header_in_data;
+    data_offset += remaining_header_in_data;
 
-        // The first nine bytes are the frame header. But all nine might not all be
-        // present in the first TCP segment we receive.
-        const uint32_t remaining_header = FRAME_HEADER_LENGTH -
-            session_data->scan_octets_seen[source_id];
-        const uint32_t remaining_header_in_data = remaining_header > length - data_offset ?
-            length - data_offset : remaining_header;
-        memcpy(session_data->scan_frame_header[source_id] +
-            session_data->scan_octets_seen[source_id], data + data_offset,
-            remaining_header_in_data);
-        session_data->scan_octets_seen[source_id] += remaining_header_in_data;
-        data_offset += remaining_header_in_data;
-
-        if (session_data->scan_octets_seen[source_id] < FRAME_HEADER_LENGTH)
-            return false;
-    }
-    else
-    {
-        // Just finished flushing data. Use saved header, skip first byte.
-        session_data->num_frame_headers[source_id] = 1;
-        session_data->flushing_data[source_id] = false;
-        session_data->use_leftover_hdr[source_id] = true;
-        session_data->scan_octets_seen[source_id] = FRAME_HEADER_LENGTH;
-        data_offset++;
-    }
+    if (session_data->scan_octets_seen[source_id] < FRAME_HEADER_LENGTH)
+        return false;
 
     return true;
 }
@@ -239,7 +187,6 @@ bool Http2StreamSplitter::read_frame_hdr(Http2FlowData* session_data, const uint
 StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* session_data,
     const uint8_t* data, uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id)
 {
-    StreamSplitter::Status status = StreamSplitter::SEARCH;
     if (session_data->preface[source_id])
     {
         // 24-byte preface, not a real frame, no frame header
@@ -262,149 +209,155 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
             session_data->payload_discard[source_id] = true;
             return StreamSplitter::FLUSH;
         }
+        assert(false);
     }
-    else
+
+    StreamSplitter::Status status = StreamSplitter::SEARCH;
+    *flush_offset = 0;
+    uint32_t data_offset = 0;
+
+    // Need to process multiple frames in a single scan() if a single TCP segment has multiple
+    // header and continuation frames
+    while ((status == StreamSplitter::SEARCH) &&
+        ((data_offset < length) or (session_data->scan_state[source_id] == SCAN_EMPTY_DATA)))
     {
-        *flush_offset = 0;
-        uint32_t data_offset = 0;
-
-        // Need to process multiple frames in a single scan() if a single TCP segment has
-        // 1) multiple header and continuation frames or 2) multiple data frames.
-        while ((status == StreamSplitter::SEARCH) &&
-            ((data_offset < length) or (session_data->scan_state[source_id] == SCAN_EMPTY_DATA)))
+        switch(session_data->scan_state[source_id])
         {
-            switch(session_data->scan_state[source_id])
+            case SCAN_FRAME_HEADER:
             {
-                case SCAN_HEADER:
+                // Discard padding that trails previous Data frame
+                if (session_data->remaining_data_padding[source_id] > 0)
                 {
-                    if (!read_frame_hdr(session_data, data, length, source_id, data_offset))
-                        return StreamSplitter::SEARCH;
+                    const uint8_t avail =
+                        session_data->remaining_data_padding[source_id] <= (length - data_offset) ?
+                        session_data->remaining_data_padding[source_id] : (length - data_offset);
+                    session_data->remaining_data_padding[source_id] -= avail;
+                    session_data->payload_discard[source_id] = true;
+                    *flush_offset = avail;
+                    return StreamSplitter::FLUSH;
+                }
 
-                    // We have the full frame header, compute some variables
-                    const uint8_t type = get_frame_type(
-                        session_data->scan_frame_header[source_id]);
-                    // Continuation frames are collapsed into the preceding Headers or Push Promise
-                    // frame
-                    if (type != FT_CONTINUATION)
-                        session_data->frame_type[source_id] = type;
-                    const uint32_t frame_length = get_frame_length(session_data->
-                        scan_frame_header[source_id]);
-                    const uint8_t frame_flags = get_frame_flags(session_data->
-                        scan_frame_header[source_id]);
-                    const uint32_t old_stream = session_data->current_stream[source_id];
-                    session_data->current_stream[source_id] =
-                        get_stream_id_from_header(session_data->scan_frame_header[source_id]);
+                if (!read_frame_hdr(session_data, data, length, source_id, data_offset))
+                    return StreamSplitter::SEARCH;
 
-                    if (session_data->continuation_expected[source_id] && type != FT_CONTINUATION)
-                    {
-                        *session_data->infractions[source_id] += INF_MISSING_CONTINUATION;
-                        session_data->events[source_id]->create_event(EVENT_MISSING_CONTINUATION);
+                // We have the full frame header, compute some variables
+                const uint8_t type = get_frame_type(session_data->scan_frame_header[source_id]);
+                const uint32_t old_stream_id = session_data->current_stream[source_id];
+                session_data->current_stream[source_id] =
+                    get_stream_id_from_header(session_data->scan_frame_header[source_id]);
+
+                if (session_data->continuation_expected[source_id] &&
+                    ((type != FT_CONTINUATION) ||
+                     (old_stream_id != session_data->current_stream[source_id])))
+                {
+                    *session_data->infractions[source_id] += INF_MISSING_CONTINUATION;
+                    session_data->events[source_id]->create_event(EVENT_MISSING_CONTINUATION);
+                    return StreamSplitter::ABORT;
+                }
+                    
+                if (type != FT_CONTINUATION)
+                {
+                    session_data->frame_type[source_id] = type;
+                    memcpy(session_data->lead_frame_header[source_id],
+                        session_data->scan_frame_header[source_id], FRAME_HEADER_LENGTH);
+                }
+                const uint32_t frame_length = get_frame_length(session_data->
+                    scan_frame_header[source_id]);
+                session_data->frame_lengths[source_id].push(frame_length);
+                const uint8_t frame_flags = get_frame_flags(session_data->
+                    scan_frame_header[source_id]);
+
+                assert(session_data->scan_remaining_frame_octets[source_id] == 0);
+                session_data->scan_remaining_frame_octets[source_id] = frame_length;
+
+                if (frame_flags & PADDED)
+                {
+                    if (!(type == FT_DATA || type == FT_HEADERS || type == FT_PUSH_PROMISE))
+                     {
+                        *session_data->infractions[source_id] += INF_PADDING_ON_INVALID_FRAME;
+                        session_data->events[source_id]->create_event(
+                            EVENT_PADDING_ON_INVALID_FRAME);
+                        // FIXIT-E this is not a sufficient reason to abort
                         return StreamSplitter::ABORT;
                     }
-
-                    if (session_data->data_processing[source_id] &&
-                        ((type != FT_DATA) || (old_stream != session_data->current_stream[source_id])))
+                    if (frame_length == 0)
                     {
-                        // When there is unflushed data in stream we cannot bypass it to work on some
-                        // other frame. Partial flush gets it out of stream while retaining control of
-                        // message body section sizes. It also avoids extreme delays in inspecting the
-                        // data that could occur if we put this aside indefinitely while processing
-                        // other streams.
-                        const uint32_t next_stream = session_data->current_stream[source_id];
-                        session_data->current_stream[source_id] = session_data->stream_in_hi =
-                            old_stream;
-                        Http2Stream* const stream = session_data->find_stream(
-                            session_data->current_stream[source_id]);
-                        partial_flush_data(session_data, source_id, flush_offset, data_offset, stream);
-
-                        if ((type == FT_HEADERS) and
-                            (session_data->current_stream[source_id]) == next_stream)
-                        {
-                            stream->finish_msg_body(source_id, true, false);
-                        }
-                        session_data->stream_in_hi = NO_STREAM_ID;
-                        return StreamSplitter::FLUSH;
+                        *session_data->infractions[source_id] += INF_PADDING_ON_EMPTY_FRAME;
+                        session_data->events[source_id]->create_event(
+                            EVENT_PADDING_ON_EMPTY_FRAME);
+                        return StreamSplitter::ABORT;
                     }
-
-                    assert(session_data->scan_remaining_frame_octets[source_id] == 0);
-                    session_data->scan_remaining_frame_octets[source_id] = frame_length;
-
-                    if (frame_flags & PADDED)
-                    {
-                        if (!(type == FT_DATA || type == FT_HEADERS || type == FT_PUSH_PROMISE))
-                        {
-                            *session_data->infractions[source_id] += INF_PADDING_ON_INVALID_FRAME;
-                            session_data->events[source_id]->create_event(
-                                EVENT_PADDING_ON_INVALID_FRAME);
-                            return StreamSplitter::ABORT;
-                        }
-                        if (frame_length == 0)
-                        {
-                            *session_data->infractions[source_id] += INF_PADDING_ON_EMPTY_FRAME;
-                            session_data->events[source_id]->create_event(
-                                EVENT_PADDING_ON_EMPTY_FRAME);
-                            return StreamSplitter::ABORT;
-                        }
-                        session_data->scan_state[source_id] = SCAN_PADDING_LENGTH;
-                    }
-                    else if (frame_length == 0)
+                    session_data->scan_state[source_id] = SCAN_PADDING_LENGTH;
+                }
+                else
+                {
+                    session_data->padding_length[source_id] = 0;
+                    if (frame_length == 0)
                         session_data->scan_state[source_id] = SCAN_EMPTY_DATA;
                     else
                         session_data->scan_state[source_id] = SCAN_DATA;
-
-                    if (type == FT_DATA)
-                        status = data_frame_header_checks(session_data, flush_offset, source_id,
-                            frame_length, data_offset);
-                    else
-                        status = non_data_frame_header_checks(session_data, source_id,
-                            frame_length, type);
-
-                    break;
                 }
-                case SCAN_PADDING_LENGTH:
-                    assert(session_data->scan_remaining_frame_octets[source_id] > 0);
-                    session_data->padding_length[source_id] = *(data + data_offset);
-                    session_data->scan_remaining_frame_octets[source_id] -= 1;
-                    if (session_data->padding_length[source_id] >
-                        get_frame_length(session_data->scan_frame_header[source_id]) - 1)
-                    {
-                        *session_data->infractions[source_id] += INF_PADDING_LEN;
-                        session_data->events[source_id]->create_event(EVENT_PADDING_LEN);
-                        return StreamSplitter::ABORT;
-                    }
-                    data_offset++;
 
-                    if (session_data->scan_remaining_frame_octets[source_id] == 0)
-                    {
-                        assert(session_data->padding_length[source_id] == 0);
-                        session_data->scan_state[source_id] = SCAN_EMPTY_DATA;
-                    }
-                    else
-                        session_data->scan_state[source_id] = SCAN_DATA;
-                    break;
-                case SCAN_DATA:
-                case SCAN_EMPTY_DATA:
+                if (type == FT_DATA)
                 {
-                    const uint32_t frame_length = get_frame_length(session_data->
-                        scan_frame_header[source_id]);
-                    const uint8_t type = get_frame_type(
-                        session_data->scan_frame_header[source_id]);
-                    const uint8_t frame_flags = get_frame_flags(session_data->
-                        scan_frame_header[source_id]);
-                    if (session_data->frame_type[source_id] == FT_DATA)
-                    {
-                        Http2Stream* const stream = session_data->find_stream(
-                            session_data->current_stream[source_id]);
-                        Http2DataCutter* data_cutter = stream->get_data_cutter(source_id);
-                        status = data_cutter->scan(data, length, flush_offset, data_offset, frame_length, frame_flags);
-                    }
-                    else
-                        status = non_data_scan(session_data, length, flush_offset, source_id,
-                            type, frame_flags, data_offset);
-                    assert(status != StreamSplitter::SEARCH or
-                        session_data->scan_state[source_id] != SCAN_EMPTY_DATA);
-                    break;
+                    status = data_frame_header_checks(session_data, flush_offset, source_id,
+                        frame_length, data_offset);
+                    session_data->data_cutter[source_id].reset();
                 }
+                else
+                    status = non_data_frame_header_checks(session_data, source_id, frame_length,
+                        type);
+
+                break;
+            }
+            case SCAN_PADDING_LENGTH:
+                assert(session_data->scan_remaining_frame_octets[source_id] > 0);
+                session_data->padding_length[source_id] = *(data + data_offset);
+                if (session_data->frame_type[source_id] == FT_DATA)
+                {
+                    session_data->remaining_data_padding[source_id] =
+                        session_data->padding_length[source_id];
+                }
+                session_data->scan_remaining_frame_octets[source_id] -= 1;
+                if (session_data->padding_length[source_id] >
+                    session_data->frame_lengths[source_id].back() - 1)
+                {
+                    *session_data->infractions[source_id] += INF_PADDING_LEN;
+                    session_data->events[source_id]->create_event(EVENT_PADDING_LEN);
+                    return StreamSplitter::ABORT;
+                }
+                data_offset++;
+
+                if (session_data->scan_remaining_frame_octets[source_id] == 0)
+                {
+                    assert(session_data->padding_length[source_id] == 0);
+                    session_data->scan_state[source_id] = SCAN_EMPTY_DATA;
+                }
+                else
+                    session_data->scan_state[source_id] = SCAN_DATA;
+                break;
+            case SCAN_DATA:
+            case SCAN_EMPTY_DATA:
+            {
+                const uint32_t frame_length = session_data->frame_lengths[source_id].back();
+                const uint8_t type = get_frame_type(
+                    session_data->scan_frame_header[source_id]);
+                const uint8_t frame_flags = get_frame_flags(session_data->
+                    scan_frame_header[source_id]);
+                if (session_data->frame_type[source_id] == FT_DATA)
+                {
+                    status = session_data->data_cutter[source_id].scan(
+                        data, length, flush_offset, data_offset,
+                        frame_length - session_data->padding_length[source_id], frame_flags);
+                }
+                else
+                {
+                    status = non_data_scan(session_data, length, flush_offset, source_id, type,
+                        frame_flags, data_offset);
+                }
+                assert(status != StreamSplitter::SEARCH or
+                    session_data->scan_state[source_id] != SCAN_EMPTY_DATA);
+                break;
             }
         }
     }
@@ -412,8 +365,6 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
     return status;
 }
 
-// FIXIT-M If there are any errors in header decoding, this currently tells stream not to send
-// headers to detection. This behavior may need to be changed.
 const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* session_data,
     unsigned total, unsigned offset, const uint8_t* data, unsigned len, uint32_t flags,
     HttpCommon::SourceId source_id)
@@ -422,106 +373,90 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
     assert(total <= MAX_OCTETS);
 
     StreamBuffer frame_buf { nullptr, 0 };
-    Http2Stream* const stream = session_data->find_stream(
-        session_data->current_stream[source_id]);
-
-    if (offset == 0)
-    {
-        // This is the first reassemble() for this frame and we need to allocate some buffers
-        session_data->frame_header_size[source_id] = FRAME_HEADER_LENGTH *
-            session_data->num_frame_headers[source_id];
-        session_data->frame_header[source_id] =
-            new uint8_t[session_data->frame_header_size[source_id]];
-
-        session_data->frame_header_offset[source_id] = 0;
-    }
 
     if (session_data->frame_type[source_id] == FT_DATA)
     {
-        if (session_data->flushing_data[source_id])
-        {
-            assert(total > (FRAME_HEADER_LENGTH - 1));
-            const uint32_t total_data = total - (FRAME_HEADER_LENGTH - 1);
-            if (offset+len > total_data)
-            {
-                // frame header that caused the flush is included in current data
-                if (offset > total_data)
-                    len = 0; // only header bytes
-                else
-                {
-                    const uint32_t frame_hdr_bytes =  offset + len - total_data;
-                    assert(len >= frame_hdr_bytes);
-                    len -= frame_hdr_bytes;
-                }
-            }
-        }
-
         if (len != 0)
         {
-            Http2DataCutter* const data_cutter = stream->get_data_cutter(source_id);
-            StreamBuffer http_frame_buf = data_cutter->reassemble(data, len);
-            if (http_frame_buf.data)
-            {
-                // FIXIT-L this use of const_cast is worrisome
-                session_data->frame_data[source_id] = const_cast<uint8_t*>(http_frame_buf.data);
-                session_data->frame_data_size[source_id] = http_frame_buf.length;
-                if (!session_data->flushing_data[source_id] && stream->is_partial_buf_pending(
-                    source_id))
-                    stream->reset_partial_buf_pending(source_id);
-            }
+            session_data->data_cutter[source_id].reassemble(data, len);
         }
     }
     else
     {
-        uint32_t data_offset = 0;
-
         if (offset == 0)
         {
-            // This is the first reassemble() for this frame - allocate data buffer
-            if (session_data->use_leftover_hdr[source_id])
-            {
-                // total has 1 byte of header, missing 8 bytes of first header
-                session_data->frame_data_size[source_id] =
-                    total - 1 - (session_data->frame_header_size[source_id] - FRAME_HEADER_LENGTH);
-            }
-            else
-            {
-                session_data->frame_data_size[source_id] =
-                    total - session_data->frame_header_size[source_id];
-            }
+            session_data->frame_header_offset[source_id] = 0;
 
+            // This is the first reassemble() for this frame - allocate data buffer
+            session_data->frame_data_size[source_id] =
+                total - (session_data->frame_lengths[source_id].size() * FRAME_HEADER_LENGTH);
             if (session_data->frame_data_size[source_id] > 0)
                 session_data->frame_data[source_id] = new uint8_t[
                     session_data->frame_data_size[source_id]];
 
             session_data->frame_data_offset[source_id] = 0;
             session_data->remaining_frame_octets[source_id] = 0;
-            session_data->remaining_padding_octets_in_frame[source_id] = 0;
+            session_data->remaining_padding_reassemble[source_id] = 0;
+            session_data->read_frame_header[source_id] = true;
+            session_data->continuation_frame[source_id] = false;
         }
 
-        do
+        uint32_t data_offset = 0;
+        while (data_offset < len)
         {
-            uint32_t octets_to_copy;
+            // Skip frame header
+            if (session_data->read_frame_header[source_id])
+            {
+               
+                const uint32_t remaining_frame_header = FRAME_HEADER_LENGTH -
+                     session_data->frame_header_offset[source_id];
+                const uint32_t octets_to_skip = remaining_frame_header > len - data_offset ?
+                    len - data_offset : remaining_frame_header;
+                session_data->frame_header_offset[source_id] += octets_to_skip;
+                data_offset += octets_to_skip;
+
+                if (session_data->frame_header_offset[source_id] != FRAME_HEADER_LENGTH)
+                    break;
+                session_data->read_frame_header[source_id] = false;
+                session_data->frame_header_offset[source_id] = 0;
+
+                // Just passed a header: parse and update frame variables
+                assert(!session_data->frame_lengths[source_id].empty());
+                session_data->remaining_frame_octets[source_id] =
+                    session_data->frame_lengths[source_id].front();
+                session_data->frame_lengths[source_id].pop();
+
+                const uint8_t frame_flags =
+                    get_frame_flags(session_data->lead_frame_header[source_id]);
+                if ((frame_flags & PADDED) && !session_data->continuation_frame[source_id])
+                    session_data->read_padding_len[source_id] = true;
+
+                if (data_offset == len)
+                    break;
+            }
 
             // Read the padding length if necessary
             if (session_data->read_padding_len[source_id])
             {
                 session_data->read_padding_len[source_id] = false;
-                session_data->remaining_padding_octets_in_frame[source_id] = *(data + data_offset);
+                session_data->remaining_padding_reassemble[source_id] = *(data + data_offset);
                 data_offset += 1;
                 session_data->remaining_frame_octets[source_id] -= 1;
                 // Subtract the padding and padding length from the frame data size
                 session_data->frame_data_size[source_id] -=
-                    (session_data->remaining_padding_octets_in_frame[source_id] + 1);
+                    (session_data->remaining_padding_reassemble[source_id] + 1);
+
+                if (data_offset == len)
+                    break;
             }
 
             // Copy data into the frame buffer until we run out of data or reach the end of the
             // current frame's data
             const uint32_t remaining_frame_payload =
                 session_data->remaining_frame_octets[source_id] -
-                session_data->remaining_padding_octets_in_frame[source_id];
-            octets_to_copy = remaining_frame_payload > len - data_offset ? len - data_offset :
-                remaining_frame_payload;
+                session_data->remaining_padding_reassemble[source_id];
+            const uint32_t octets_to_copy = remaining_frame_payload < len - data_offset ?
+                remaining_frame_payload : len - data_offset;
             if (octets_to_copy > 0)
             {
                 memcpy(session_data->frame_data[source_id] +
@@ -536,74 +471,27 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
                 break;
 
             // Skip over any padding
-            uint32_t padding_bytes_to_skip =
-                session_data->remaining_padding_octets_in_frame[source_id] > len - data_offset ?
-                len - data_offset : session_data->remaining_padding_octets_in_frame[source_id];
+            const uint32_t padding_bytes_to_skip =
+                session_data->remaining_padding_reassemble[source_id] > len - data_offset ?
+                len - data_offset : session_data->remaining_padding_reassemble[source_id];
             session_data->remaining_frame_octets[source_id] -= padding_bytes_to_skip;
-            session_data->remaining_padding_octets_in_frame[source_id] -= padding_bytes_to_skip;
+            session_data->remaining_padding_reassemble[source_id] -= padding_bytes_to_skip;
             data_offset += padding_bytes_to_skip;
 
             if (data_offset == len)
                 break;
 
-            assert(session_data->remaining_padding_octets_in_frame[source_id] == 0);
-
-            // Copy headers
-            if (session_data->use_leftover_hdr[source_id])
-            {
-                assert(session_data->frame_header_offset[source_id] == 0);
-                memcpy(session_data->frame_header[source_id],
-                    session_data->leftover_hdr[source_id], FRAME_HEADER_LENGTH);
-                session_data->frame_header_offset[source_id] += FRAME_HEADER_LENGTH;
-                session_data->use_leftover_hdr[source_id] = false;
-                data_offset++;
-            }
-            else
-            {
-                const uint32_t remaining_frame_header =  FRAME_HEADER_LENGTH -
-                    (session_data->frame_header_offset[source_id] % FRAME_HEADER_LENGTH);
-                octets_to_copy = remaining_frame_header > len - data_offset ? len - data_offset :
-                    remaining_frame_header;
-                memcpy(session_data->frame_header[source_id] +
-                    session_data->frame_header_offset[source_id],
-                    data + data_offset, octets_to_copy);
-                session_data->frame_header_offset[source_id] += octets_to_copy;
-                data_offset += octets_to_copy;
-
-                if (session_data->frame_header_offset[source_id] % FRAME_HEADER_LENGTH != 0)
-                    break;
-            }
-
-            // If we just finished copying a header, parse and update frame variables
-            session_data->remaining_frame_octets[source_id] =
-                get_frame_length(session_data->frame_header[source_id] +
-                session_data->frame_header_offset[source_id] - FRAME_HEADER_LENGTH);
-
-            // Get the most recent frame header type
-            assert(session_data->frame_header_offset[source_id] >= FRAME_HEADER_LENGTH);
-            assert(session_data->frame_header_offset[source_id] % FRAME_HEADER_LENGTH == 0);
-            const uint8_t frame_flags = get_frame_flags(session_data->frame_header[source_id] +
-                session_data->frame_header_offset[source_id] - FRAME_HEADER_LENGTH);
-
-            if (frame_flags & PADDED)
-                session_data->read_padding_len[source_id] = true;
+            session_data->read_frame_header[source_id] = true;
+            session_data->continuation_frame[source_id] = true;
+            assert(session_data->remaining_padding_reassemble[source_id] == 0);
         }
-        while (data_offset < len);
+        assert(data_offset == len);
     }
 
     if (flags & PKT_PDU_TAIL)
     {
         session_data->total_bytes_in_split[source_id] = 0;
-        session_data->num_frame_headers[source_id] = 0;
         session_data->scan_octets_seen[source_id] = 0;
-
-        if (session_data->flushing_data[source_id])
-        {
-            stream->set_partial_buf_pending(source_id);
-            // save current header for next scan/reassemble
-            memcpy(session_data->leftover_hdr[source_id],
-                session_data->scan_frame_header[source_id], FRAME_HEADER_LENGTH);
-        }
 
         // Return 0-length non-null buffer to stream which signals detection required, but don't
         // create pkt_data buffer

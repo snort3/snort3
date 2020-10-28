@@ -267,6 +267,7 @@ void HttpFlowData::finish_h2_body(HttpCommon::SourceId source_id, HttpEnums::H2B
         partial_buffer_length[source_id] = 0;
         delete[] partial_buffer[source_id];
         partial_buffer[source_id] = nullptr;
+        body_octets[source_id] += partial_inspected_octets[source_id];
         partial_inspected_octets[source_id] = 0;
         partial_detect_length[source_id] = 0;
         delete[] partial_detect_buffer[source_id];

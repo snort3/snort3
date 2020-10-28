@@ -151,7 +151,7 @@ enum SettingsFrameIds
     MAX_HEADER_LIST_SIZE,
 };
 
-enum ScanState { SCAN_HEADER, SCAN_PADDING_LENGTH, SCAN_DATA, SCAN_EMPTY_DATA };
+enum ScanState { SCAN_FRAME_HEADER, SCAN_PADDING_LENGTH, SCAN_DATA, SCAN_EMPTY_DATA };
 } // end namespace Http2Enums
 
 #endif

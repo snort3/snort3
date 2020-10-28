@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include "http2_stream_splitter.h"
+
 #include <cassert>
 
 #include "framework/data_bus.h"
@@ -32,7 +34,6 @@
 #include "service_inspectors/http_inspect/http_test_input.h"
 #include "service_inspectors/http_inspect/http_test_manager.h"
 
-#include "http2_stream_splitter.h"
 #include "http2_module.h"
 
 using namespace snort;
@@ -47,7 +48,8 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
     // This is the session state information we share with Http2Inspect and store with stream. A
     // session is defined by a TCP connection. Since scan() is the first to see a new TCP
     // connection the new flow data object is created here.
-    Http2FlowData* session_data = (Http2FlowData*)pkt->flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* session_data =
+        (Http2FlowData*)pkt->flow->get_flow_data(Http2FlowData::inspector_id);
 
     if (session_data == nullptr)
     {
@@ -129,8 +131,8 @@ const StreamBuffer Http2StreamSplitter::reassemble(Flow* flow, unsigned total, u
         bool tcp_close;
         bool partial_flush;
         uint8_t* test_buffer;
-        HttpTestManager::get_test_input_source()->reassemble(&test_buffer, len, source_id,
-            tcp_close, partial_flush);
+        HttpTestManager::get_test_input_source()->reassemble(&test_buffer, len, total, offset,
+            flags, source_id, tcp_close, partial_flush);
         if (tcp_close)
         {
             finish(flow);
@@ -147,7 +149,6 @@ const StreamBuffer Http2StreamSplitter::reassemble(Flow* flow, unsigned total, u
             return http_buf;
         }
         data = test_buffer;
-        total = len;
     }
 #endif
 
