@@ -159,7 +159,8 @@ const StreamBuffer Http2StreamSplitter::reassemble(Flow* flow, unsigned total, u
     if (session_data->payload_discard[source_id])
     {
         StreamBuffer frame_buf { nullptr, 0 };
-        session_data->payload_discard[source_id] = false;
+        if (flags & PKT_PDU_TAIL)
+            session_data->payload_discard[source_id] = false;
 
 #ifdef REG_TEST
         if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
