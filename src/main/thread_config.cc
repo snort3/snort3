@@ -33,6 +33,7 @@
 #endif
 
 using namespace snort;
+using namespace std;
 
 static hwloc_topology_t topology = nullptr;
 static hwloc_cpuset_t process_cpuset = nullptr;
@@ -144,7 +145,7 @@ void ThreadConfig::set_thread_affinity(SThreadType type, unsigned id, CpuSet* cp
         ParseWarning(WARN_CONF, "This platform does not support setting thread affinity.\n");
 }
 
-void ThreadConfig::set_named_thread_affinity(const std::string& name, CpuSet* cpuset)
+void ThreadConfig::set_named_thread_affinity(const string& name, CpuSet* cpuset)
 {
     if (topology_support->cpubind->set_thisthread_cpubind)
     {
@@ -155,6 +156,19 @@ void ThreadConfig::set_named_thread_affinity(const std::string& name, CpuSet* cp
     }
     else
         ParseWarning(WARN_CONF, "This platform does not support setting thread affinity.\n");
+}
+
+static inline string stringify_thread(const SThreadType& type, const unsigned& id)
+{
+    string info;
+    if ( type == STHREAD_TYPE_MAIN )
+        info = "main thread ";
+    else if ( type == STHREAD_TYPE_PACKET )
+        info = "packet thread ";
+    else
+        info = "other thread ";
+    info += to_string(id) + " (TID " + to_string((int)gettid()) + ")";
+    return info;
 }
 
 void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
@@ -179,19 +193,19 @@ void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
     current_cpuset = hwloc_bitmap_alloc();
     hwloc_get_cpubind(topology, current_cpuset, HWLOC_CPUBIND_THREAD);
     if (!hwloc_bitmap_isequal(current_cpuset, desired_cpuset))
-        LogMessage("Binding thread %u (type %u) to %s.\n", id, type, s);
+        LogMessage("Binding %s to CPU %s.\n", stringify_thread(type, id).c_str(), s);
     hwloc_bitmap_free(current_cpuset);
 
     if (hwloc_set_cpubind(topology, desired_cpuset, HWLOC_CPUBIND_THREAD))
     {
-        FatalError("Failed to pin thread %u (type %u) to %s: %s (%d)\n",
-            id, type, s, get_error(errno), errno);
+        FatalError("Failed to pin %s to CPU %s: %s (%d)\n",
+            stringify_thread(type, id).c_str(), s, get_error(errno), errno);
     }
 
     free(s);
 }
 
-void ThreadConfig::implement_named_thread_affinity(const std::string& name)
+void ThreadConfig::implement_named_thread_affinity(const string& name)
 {
     if (!topology_support->cpubind->set_thisthread_cpubind)
         return;
