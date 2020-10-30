@@ -108,7 +108,7 @@ protected:
     const bool tcp_close;
 
     int64_t h2_stream_id = HttpCommon::STAT_NOT_COMPUTE;
-    uint32_t get_h2_stream_id(HttpCommon::SourceId source_id);
+    uint32_t get_h2_stream_id();
 
     // Pointers to related message sections in the same transaction
     HttpMsgRequest* request;

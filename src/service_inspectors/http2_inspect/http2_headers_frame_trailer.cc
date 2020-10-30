@@ -81,8 +81,7 @@ void Http2HeadersFrameTrailer::analyze_http1()
     if (!process_frame)
         return;
 
-    HttpFlowData* const http_flow =
-        session_data->get_current_stream(source_id)->get_hi_flow_data();
+    HttpFlowData* const http_flow = stream->get_hi_flow_data();
     assert(http_flow);
 
     if (http_flow->get_type_expected(source_id) != HttpEnums::SEC_TRAILER)
@@ -115,7 +114,7 @@ void Http2HeadersFrameTrailer::analyze_http1()
         session_data->hi->clear(&dummy_pkt);
     }
 
-    process_decoded_headers(http_flow);
+    process_decoded_headers(http_flow, source_id);
 }
 
 void Http2HeadersFrameTrailer::update_stream_state()

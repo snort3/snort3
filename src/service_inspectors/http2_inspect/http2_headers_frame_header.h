@@ -21,15 +21,13 @@
 #define HTTP2_HEADERS_FRAME_HEADER_H
 
 #include "http2_frame.h"
-#include "http2_headers_frame.h"
+#include "http2_headers_frame_with_startline.h"
 
 class Http2StartLine;
 
-class Http2HeadersFrameHeader : public Http2HeadersFrame
+class Http2HeadersFrameHeader : public Http2HeadersFrameWithStartline
 {
 public:
-    ~Http2HeadersFrameHeader() override;
-
     friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const uint32_t, const uint8_t*,
         const uint32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);
 
@@ -45,8 +43,5 @@ private:
     Http2HeadersFrameHeader(const uint8_t* header_buffer, const uint32_t header_len,
         const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* ssn_data,
         HttpCommon::SourceId src_id, Http2Stream* stream);
-
-    Http2StartLine* start_line_generator = nullptr;
-    Field start_line;
 };
 #endif

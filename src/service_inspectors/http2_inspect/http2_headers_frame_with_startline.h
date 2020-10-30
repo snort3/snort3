@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2020 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2020 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,46 +15,40 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http2_headers_frame.h author Katura Harvey <katharve@cisco.com>
+// http2_headers_frame_with_startline.h author Katura Harvey <katharve@cisco.com>
 
-#ifndef HTTP2_HEADERS_FRAME_H
-#define HTTP2_HEADERS_FRAME_H
+#ifndef HTTP2_HEADERS_FRAME_WITH_STARTLINE_H
+#define HTTP2_HEADERS_FRAME_WITH_STARTLINE_H
 
+#include "service_inspectors/http_inspect/http_common.h"
+
+#include "http2_enum.h"
 #include "http2_frame.h"
+#include "http2_headers_frame.h"
 
 class Field;
-class Http2HpackDecoder;
-class Http2StartLine;
 class Http2Frame;
 class Http2Stream;
 class HttpFlowData;
 
-class Http2HeadersFrame : public Http2Frame
+class Http2HeadersFrameWithStartline : public Http2HeadersFrame
 {
 public:
-    ~Http2HeadersFrame() override;
-    void clear() override;
-
-    const Field& get_buf(unsigned id) override;
-    uint32_t get_xtradata_mask() override { return xtradata_mask; }
-    bool is_detection_required() const override { return detection_required; }
+    ~Http2HeadersFrameWithStartline() override;
 
 #ifdef REG_TEST
     void print_frame(FILE* output) override;
 #endif
 
 protected:
-    Http2HeadersFrame(const uint8_t* header_buffer, const uint32_t header_len,
+    Http2HeadersFrameWithStartline(const uint8_t* header_buffer, const uint32_t header_len,
         const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* ssn_data,
-        HttpCommon::SourceId src_id, Http2Stream* stream);
-    void process_decoded_headers(HttpFlowData* http_flow, HttpCommon::SourceId hi_source_id);
+        HttpCommon::SourceId src_id, Http2Stream* stream_) :
+        Http2HeadersFrame(header_buffer, header_len, data_buffer, data_len, ssn_data, src_id,
+            stream_) { }
+    bool process_start_line(HttpFlowData*& http_flow, HttpCommon::SourceId hi_source_id);
 
-    uint8_t* decoded_headers = nullptr; // working buffer to store decoded headers
-    Field http1_header;                 // finalized headers to be passed to NHI
-    uint32_t xtradata_mask = 0;
-    bool detection_required = false;
-    bool process_frame = true;
-    Http2HpackDecoder* hpack_decoder;
-    uint8_t hpack_headers_offset = 0;
+    Http2StartLine* start_line_generator = nullptr;
+    Field start_line;
 };
 #endif

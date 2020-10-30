@@ -55,7 +55,7 @@ HttpMsgHeader::HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
 
 void HttpMsgHeader::publish()
 {
-    const uint32_t stream_id = get_h2_stream_id(source_id);
+    const uint32_t stream_id = get_h2_stream_id();
 
     HttpEvent http_event(this, session_data->for_http2, stream_id);
 
@@ -267,8 +267,13 @@ void HttpMsgHeader::update_flow()
                 create_event(EVENT_BAD_CONTENT_LENGTH);
             }
         }
-        session_data->type_expected[source_id] = SEC_BODY_H2;
-        prepare_body();
+        if (session_data->h2_body_state[source_id] == H2_BODY_NO_BODY)
+            session_data->half_reset(source_id);
+        else
+        {
+            session_data->type_expected[source_id] = SEC_BODY_H2;
+            prepare_body();
+        }
         return;
     }
 
@@ -423,7 +428,7 @@ void HttpMsgHeader::setup_file_processing()
     }
 
     // Generate the unique file id for multi file processing
-    set_multi_file_processing_id(get_transaction_id(), get_h2_stream_id(source_id));
+    set_multi_file_processing_id(get_transaction_id(), get_h2_stream_id());
 
     // Do we meet all the conditions for MIME file processing?
     if (source_id == SRC_CLIENT)

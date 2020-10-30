@@ -23,21 +23,24 @@
 
 #include "http2_push_promise_frame.h"
 
+#include "service_inspectors/http_inspect/http_enum.h"
+#include "service_inspectors/http_inspect/http_flow_data.h"
+
 #include "http2_flow_data.h"
 #include "http2_hpack.h"
 #include "http2_request_line.h"
-#include "http2_start_line.h"
 #include "http2_stream.h"
 #include "http2_utils.h"
 
+using namespace snort;
 using namespace HttpCommon;
 using namespace Http2Enums;
 
 Http2PushPromiseFrame::Http2PushPromiseFrame(const uint8_t* header_buffer,
     const uint32_t header_len, const uint8_t* data_buffer, const uint32_t data_len,
     Http2FlowData* session_data_, HttpCommon::SourceId source_id_, Http2Stream* stream_) :
-    Http2HeadersFrame(header_buffer, header_len, data_buffer, data_len, session_data_, source_id_,
-        stream_)
+    Http2HeadersFrameWithStartline(header_buffer, header_len, data_buffer, data_len, session_data_,
+        source_id_, stream_)
 {
     // If this was a short frame, it's being processed by the stream that sent it. We've already
     // alerted
@@ -79,11 +82,6 @@ Http2PushPromiseFrame::Http2PushPromiseFrame(const uint8_t* header_buffer,
     }
 }
 
-Http2PushPromiseFrame::~Http2PushPromiseFrame()
-{
-    delete start_line_generator;
-}
-
 bool Http2PushPromiseFrame::valid_sequence(Http2Enums::StreamState)
 {
     if (data.length() < PROMISED_ID_LENGTH)
@@ -116,15 +114,8 @@ bool Http2PushPromiseFrame::valid_sequence(Http2Enums::StreamState)
     return true;
 }
 
-// FIXIT-E current implementation for testing purposes only. Headers are not yet being sent to
-// http_inspect.
 void Http2PushPromiseFrame::analyze_http1()
 {
-    if (session_data->abort_flow[source_id])
-        return;
-    
-    detection_required = true;
-
     if (!start_line_generator->generate_start_line(start_line))
     {
         // can't send request or push-promise headers to http_inspect, but response will still
@@ -133,7 +124,15 @@ void Http2PushPromiseFrame::analyze_http1()
         return;
     }
 
-    http1_header = hpack_decoder->get_decoded_headers(decoded_headers);
+    HttpFlowData* http_flow;
+    if (!process_start_line(http_flow, SRC_CLIENT))
+        return;
+
+    // Push promise cannot have a message body
+    // FIXIT-E handle bad request lines and cases where a message body is implied
+    stream->get_hi_flow_data()->finish_h2_body(SRC_CLIENT, HttpEnums::H2_BODY_NO_BODY, false);
+
+    process_decoded_headers(http_flow, SRC_CLIENT);
 }
 
 void Http2PushPromiseFrame::update_stream_state()
@@ -164,7 +163,6 @@ uint32_t Http2PushPromiseFrame::get_promised_stream_id(Http2EventGen* const even
 void Http2PushPromiseFrame::print_frame(FILE* output)
 {
     fprintf(output, "Push_Promise frame\n");
-    start_line.print(output, "Decoded start-line");
-    Http2HeadersFrame::print_frame(output);
+    Http2HeadersFrameWithStartline::print_frame(output);
 }
 #endif

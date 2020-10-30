@@ -17,6 +17,8 @@ set (FILE_LIST
     http2_headers_frame_header.h
     http2_headers_frame_trailer.cc
     http2_headers_frame_trailer.h
+    http2_headers_frame_with_startline.cc
+    http2_headers_frame_with_startline.h
     http2_hpack.cc
     http2_hpack.h
     http2_hpack_dynamic_table.cc

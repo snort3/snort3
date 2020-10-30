@@ -26,7 +26,7 @@
 
 #include "http2_enum.h"
 #include "http2_frame.h"
-#include "http2_headers_frame.h"
+#include "http2_headers_frame_with_startline.h"
 
 class Field;
 class Http2Frame;
@@ -37,10 +37,9 @@ using Http2Infractions = Infractions<Http2Enums::INF__MAX_VALUE, Http2Enums::INF
 using Http2EventGen = EventGen<Http2Enums::EVENT__MAX_VALUE, Http2Enums::EVENT__NONE,
     Http2Enums::HTTP2_GID>;
 
-class Http2PushPromiseFrame : public Http2HeadersFrame
+class Http2PushPromiseFrame : public Http2HeadersFrameWithStartline
 {
 public:
-    ~Http2PushPromiseFrame() override;
     bool valid_sequence(Http2Enums::StreamState state) override;
     void analyze_http1() override;
     void update_stream_state() override;
@@ -59,7 +58,5 @@ private:
         const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* ssn_data,
         HttpCommon::SourceId src_id, Http2Stream* stream);
     static const int32_t PROMISED_ID_LENGTH = 4;
-    Http2StartLine* start_line_generator = nullptr;
-    Field start_line;
 };
 #endif

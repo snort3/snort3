@@ -86,8 +86,7 @@ bool Http2Inspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
     if (!session_data->frame_in_detection)
         return false;
 
-    const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
-    Http2Stream* const stream = session_data->get_processing_stream(source_id);
+    Http2Stream* const stream = session_data->get_processing_stream();
     const Field& buffer = stream->get_buf(id);
     if (buffer.length() <= 0)
         return false;
@@ -128,8 +127,9 @@ void Http2Inspect::eval(Packet* p)
         return;
     }
 
-    Http2Stream* stream = session_data->get_processing_stream(source_id);
-    assert(session_data->processing_stream_id[source_id] != NO_STREAM_ID);
+    session_data->set_processing_stream_id(source_id);
+    Http2Stream* stream = session_data->get_processing_stream();
+    assert(session_data->processing_stream_id != NO_STREAM_ID);
     assert(stream);
     session_data->stream_in_hi = stream->get_stream_id();
 
@@ -180,12 +180,10 @@ void Http2Inspect::clear(Packet* p)
 
     session_data->frame_in_detection = false;
 
-    const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
-
-    Http2Stream* stream = session_data->get_processing_stream(source_id);
+    Http2Stream* stream = session_data->get_processing_stream();
     stream->clear_frame();
     session_data->stream_in_hi = NO_STREAM_ID;
-    session_data->processing_stream_id[source_id] = NO_STREAM_ID;
+    session_data->processing_stream_id = NO_STREAM_ID;
 }
 
 #ifdef REG_TEST

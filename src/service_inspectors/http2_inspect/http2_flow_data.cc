@@ -157,23 +157,30 @@ class Http2Stream* Http2FlowData::get_current_stream(HttpCommon::SourceId source
     return get_stream(current_stream[source_id]);
 }
 
-// processing stream is the current stream except for push promise frames with properly formatted
-// promised stream IDs
-class Http2Stream* Http2FlowData::get_processing_stream(const HttpCommon::SourceId source_id)
+class Http2Stream* Http2FlowData::get_processing_stream()
 {
-    if (processing_stream_id[source_id] == NO_STREAM_ID)
-    {
-        if (frame_type[source_id] == FT_PUSH_PROMISE)
-            processing_stream_id[source_id] = Http2PushPromiseFrame::get_promised_stream_id(
-                events[source_id], infractions[source_id], frame_data[source_id],
-                frame_data_size[source_id]);
-        if (processing_stream_id[source_id] == NO_STREAM_ID)
-            processing_stream_id[source_id] = current_stream[source_id];
-    }
-    return get_stream(processing_stream_id[source_id]);
+    return get_stream(get_processing_stream_id());
 }
 
-uint32_t Http2FlowData::get_current_stream_id(const HttpCommon::SourceId source_id)
+uint32_t Http2FlowData::get_processing_stream_id() const
+{
+    return processing_stream_id;
+}
+
+// processing stream is the current stream except for push promise frames with properly formatted
+// promised stream IDs
+void Http2FlowData::set_processing_stream_id(const HttpCommon::SourceId source_id)
+{
+    assert(processing_stream_id == NO_STREAM_ID);
+    if (frame_type[source_id] == FT_PUSH_PROMISE)
+        processing_stream_id = Http2PushPromiseFrame::get_promised_stream_id(
+            events[source_id], infractions[source_id], frame_data[source_id],
+            frame_data_size[source_id]);
+    if (processing_stream_id == NO_STREAM_ID)
+        processing_stream_id = current_stream[source_id];
+}
+
+uint32_t Http2FlowData::get_current_stream_id(const HttpCommon::SourceId source_id) const
 {
     return current_stream[source_id];
 }

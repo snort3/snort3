@@ -76,7 +76,7 @@ void Http2HeadersFrame::clear()
     session_data->hi->clear(&dummy_pkt);
 }
 
-void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow)
+void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow, SourceId hi_source_id)
 {
     if (session_data->abort_flow[source_id])
         return;
@@ -91,7 +91,7 @@ void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow)
         dummy_pkt.flow = session_data->flow;
         const uint32_t unused = 0;
         const StreamSplitter::Status header_scan_result =
-            session_data->hi_ss[source_id]->scan(&dummy_pkt, http1_header.start(),
+            session_data->hi_ss[hi_source_id]->scan(&dummy_pkt, http1_header.start(),
             http1_header.length(), unused, &flush_offset);
         assert(header_scan_result == StreamSplitter::FLUSH);
         UNUSED(header_scan_result);
@@ -101,7 +101,7 @@ void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow)
     // http_inspect reassemble() of headers
     {
         unsigned copied;
-        stream_buf = session_data->hi_ss[source_id]->reassemble(session_data->flow,
+        stream_buf = session_data->hi_ss[hi_source_id]->reassemble(session_data->flow,
             http1_header.length(), 0, http1_header.start(), http1_header.length(), PKT_PDU_TAIL,
             copied);
         assert(stream_buf.data != nullptr);
@@ -112,7 +112,7 @@ void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow)
     {
         Http2DummyPacket dummy_pkt;
         dummy_pkt.flow = session_data->flow;
-        dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
+        dummy_pkt.packet_flags = (hi_source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
         dummy_pkt.dsize = stream_buf.length;
         dummy_pkt.data = stream_buf.data;
         dummy_pkt.xtradata_mask = 0;
@@ -120,7 +120,7 @@ void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow)
         // Following if condition won't get exercised until finish() (during Headers) is
         // implemented for H2I. Without finish() H2I will only flush complete header blocks. Below
         // ABORT is only possible if tcp connection closes unexpectedly in middle of a header.
-        if (http_flow->get_type_expected(source_id) == HttpEnums::SEC_ABORT)
+        if (http_flow->get_type_expected(hi_source_id) == HttpEnums::SEC_ABORT)
         {
             *session_data->infractions[source_id] += INF_INVALID_HEADER;
             session_data->events[source_id]->create_event(EVENT_INVALID_HEADER);

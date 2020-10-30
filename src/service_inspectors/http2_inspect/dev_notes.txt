@@ -1,20 +1,31 @@
 The HTTP/2 inspector (H2I) converts HTTP/2 frames into HTTP/1.1 message sections and feeds them
 to the new HTTP inspector (NHI) for further processing.
 
-The Http2StreamSplitter strips the frame headers from the frame data and stores them in separate
-buffers. As in NHI, long data frames are split into 16kb chunks for inspection. If a header frame
-is followed by continuation frames, all the header frames are flushed together for inspection. The
-frame headers from each frame are stored contiguously in the frame_header buffer. After cutting out
-the frame headers, the frame data is stored as a single block, consisting of the HPACK encoded
-HTTP/2 headers.
+The Http2StreamSplitter splits HTTP/2 traffic on frame boundaries with two exceptions.  First, any
+Continuation frames following a Headers frame are aggregated and sent through detection as a single
+header block.  Second, long Data frames are split into 16kb chunks for inspection as message bodies
+are in NHI.  The Http2StreamSplitter strips the frame headers from the frame data and stores them in
+separate buffers. In the case of a Headers frame followed by Continuation frames, the Headers frame
+header is stored and the Continuation frame headers are discarded.
+
+HTTP/2 frames are stored in frame objects for processing.
+1. Http2Frame - top level class
+2. Http2HeadersFrame : Http2Frame - common elements of frames containing headers
+3. Htt2HeadersFrameWithStartline : Http2HeadersFrame - common elements of headers with start lines
+4. Http2HeadersFrameHeader : Htt2HeadersFrameWithStartline - regular request/response headers
+5. Http2PushPromiseFrame : Htt2HeadersFrameWithStartline - server push headers
+6. Http2HeadersFrameTrailer : Http2HeadersFrame - headers frame containing trailers
+7. Http2DataFrame : Http2Frame
+8. Http2SettingsFrame : Http2Frame
 
 HTTP/2 headers frames can come at the start of a stream and contain the header block, or at the end
 of a stream and contain trailers. H2I contains headers frame subclasses Http2HeadersFrameHeader and
-Http2HeadersFrameTrailer to support these two types of headers frames. Headers frames containing the
-header block will contain pseudo-headers that must be converted into an HTTP/1.1 start line in
-addition to regular HTTP/1.1 headers. The two Http2StartLine subclasses, Http2RequestLine and
-Http2ResponseLine perform this translation and generate the start-line, which is stored in a new
-buffer inside the Http2StartLine object. Trailers may only contain regular headers. 
+Http2HeadersFrameTrailer to support these two types of headers frames. Http2PushPromise frames begin
+server pushed streams and also contain the header block.  Headers frames containing the header block
+will contain pseudo-headers that must be converted into an HTTP/1.1 start line in addition to
+regular HTTP/1.1 headers. The two Http2StartLine subclasses, Http2RequestLine and Http2ResponseLine
+perform this translation and generate the start-line, which is stored in a new buffer inside the
+Http2StartLine object. Trailers may only contain regular headers.
 
 Both headers and trailers must undergo HPACK decoding before being sent to NHI for processing. To
 perform decoding, reassemble() makes a first copy of the encoded headers, which is stored in the
