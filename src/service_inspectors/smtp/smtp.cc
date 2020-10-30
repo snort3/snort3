@@ -524,7 +524,7 @@ static void SMTP_ResetState(Flow* ssn)
 {
     SMTPData* smtp_ssn = get_session_data(ssn);
     smtp_ssn->state = STATE_COMMAND;
-    smtp_ssn->state_flags = 0;
+    smtp_ssn->state_flags = (smtp_ssn->state_flags & SMTP_FLAG_ABANDON_EVT) ? SMTP_FLAG_ABANDON_EVT : 0;
 }
 
 static inline int InspectPacket(Packet* p)
