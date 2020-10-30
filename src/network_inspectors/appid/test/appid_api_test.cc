@@ -304,6 +304,16 @@ TEST(appid_api, produce_ha_state)
     CHECK_TRUE(session->client_disco_state == APPID_DISCO_STATE_FINISHED);
     delete &session->get_api();
     delete session;
+
+    flow->set_flow_data(nullptr);
+    uint32_t val1 = appid_api.produce_ha_state(*flow, (uint8_t*)&appHA);
+    CHECK_TRUE(val1 == sizeof(appHA));
+    CHECK_TRUE(appHA.flags == 0);
+
+    val = appid_api.consume_ha_state(*flow, (uint8_t*)&appHA, 0, IpProtocol::TCP, &ip, 1066);
+    CHECK_TRUE(val == sizeof(appHA));
+    session = (AppIdSession*)flow->get_flow_data(AppIdSession::inspector_id);
+    CHECK(session == nullptr);
 }
 
 TEST(appid_api, ssl_app_group_id_lookup)
