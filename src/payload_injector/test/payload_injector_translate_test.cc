@@ -51,10 +51,8 @@ TEST(payload_injector_translate_test, basic_hdr_translation)
 
     uint8_t out[] =
     {
-        0x0, 0x0, 0x40, 0x1, 0x4, 0x0, 0x0, 0x0, 0x1, 0x0, 0x7, 0x3a, 0x73, 0x74,
-        0x61, 0x74, 0x75, 0x73, 0x3, 0x34, 0x30, 0x33, 0x0, 0xa, 0x63, 0x6f, 0x6e,
-        0x6e, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x5, 0x63, 0x6c, 0x6f, 0x73, 0x65, 0xf, 0xd,
-        0x3, 0x35, 0x30, 0x34, 0xf, 0x10, 0x18, 0x74, 0x65, 0x78, 0x74, 0x2f, 0x68, 0x74, 0x6d,
+        0x0, 0x0, 0x28, 0x1, 0x4, 0x0, 0x0, 0x0, 0x1, 0x0, 0x7, 0x3a, 0x73, 0x74,
+        0x61, 0x74, 0x75, 0x73, 0x3, 0x34, 0x30, 0x33, 0xf, 0x10, 0x18, 0x74, 0x65, 0x78, 0x74, 0x2f, 0x68, 0x74, 0x6d,
         0x6c, 0x3b, 0x20, 0x63, 0x68, 0x61, 0x72, 0x73, 0x65, 0x74, 0x3d, 0x55, 0x54, 0x46,
         0x2d, 0x38, 0x0, 0x0, 0x62, 0x0, 0x1, 0x0, 0x0, 0x0, 0x1, 0x3c, 0x21, 0x44, 0x4f,
         0x43, 0x54, 0x59, 0x50, 0x45, 0x20, 0x68, 0x74, 0x6d, 0x6c, 0x3e, 0xa, 0x3c, 0x68, 0x74,
@@ -144,11 +142,10 @@ TEST(payload_injector_translate_test, mix_n_and_rn)
 
     uint8_t out[] =
     {
-        0x0, 0x0, 0x52, 0x1, 0x4, 0x0, 0x0, 0x0, 0x1, 0x88, 0x0, 0xa, 0x63, 0x6f,
-        0x6e, 0x6e, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x5, 0x63, 0x6c, 0x6f, 0x73,
-        0x65, 0xf, 0x28, 0x1b, 0x30, 0x34, 0x66, 0x32, 0x3b, 0x20, 0x4d, 0x61, 0x78, 0x2d, 0x41,
+        0x0, 0x0, 0x3a, 0x1, 0x4, 0x0, 0x0, 0x0, 0x1, 0x88, 0xf, 0x28, 0x1b, 0x30, 0x34, 0x66,
+        0x32, 0x3b, 0x20, 0x4d, 0x61, 0x78, 0x2d, 0x41,
         0x67, 0x65, 0x3a, 0x20, 0x36, 0x30, 0x30, 0x3b, 0x20, 0x70, 0x61, 0x74, 0x68, 0x3d,
-        0x2f, 0x3b, 0xf, 0xd, 0x3, 0x39, 0x35, 0x36, 0xf, 0x10, 0x18, 0x74, 0x65, 0x78,
+        0x2f, 0x3b, 0xf, 0x10, 0x18, 0x74, 0x65, 0x78,
         0x74, 0x2f, 0x68, 0x74, 0x6d, 0x6c, 0x3b, 0x20, 0x63, 0x68, 0x61, 0x72, 0x73, 0x65, 0x74,
         0x3d, 0x55, 0x54, 0x46, 0x2d, 0x38, 0x0, 0x0, 0x1, 0x0, 0x1, 0x0, 0x0, 0x0, 0x1,
         0x62
@@ -425,7 +422,7 @@ TEST(payload_injector_translate_test, val_len3)
 // Verify correct behavior for body length is 1.
 TEST(payload_injector_translate_test, http2_hdr_is_max)
 {
-    const uint32_t size = strlen("Connection: close\r\n") * 110 + strlen("Location: ") +
+    const uint32_t size = strlen("Location: myLocation12345\r\n") * 110 + strlen("Location: ") +
         strlen("\r\n\r\nb") + 17;
     uint8_t http_page[size];
 
@@ -433,8 +430,8 @@ TEST(payload_injector_translate_test, http2_hdr_is_max)
     uint8_t* cur_pos = http_page;
     for (int i=0; i < 110; i++)
     {
-        memcpy(cur_pos, "Connection: close\r\n", strlen("Connection: close\r\n"));
-        cur_pos += strlen("Connection: close\r\n");
+        memcpy(cur_pos, "Location: myLocation12345\r\n", strlen("Location: myLocation12345\r\n"));
+        cur_pos += strlen("Location: myLocation12345\r\n");
     }
     memcpy(cur_pos, "Location: ", strlen("Location: "));
     memcpy(http_page+size-strlen("\r\n\r\nb"), "\r\n\r\nb", strlen("\r\n\r\nb"));
@@ -454,10 +451,10 @@ TEST(payload_injector_translate_test, http2_hdr_is_max)
     snort_free(http2_payload);
 }
 
-// Translated header is 2001. Goes through write_indexed code path.
+// Translated header is 2001. Fails when trying to write field value.
 TEST(payload_injector_translate_test, http2_hdr_too_big)
 {
-    const uint32_t size = strlen("Connection: close\r\n") * 110 + strlen("Location: ") +
+    const uint32_t size = strlen("Location: myLocation12345\r\n") * 110 + strlen("Location: ") +
         strlen("\r\n\r\nbody") + 18;
     uint8_t http_page[size];
 
@@ -465,8 +462,8 @@ TEST(payload_injector_translate_test, http2_hdr_too_big)
     uint8_t* cur_pos = http_page;
     for (int i=0; i < 110; i++)
     {
-        memcpy(cur_pos, "Connection: close\r\n", strlen("Connection: close\r\n"));
-        cur_pos += strlen("Connection: close\r\n");
+        memcpy(cur_pos, "Location: myLocation12345\r\n", strlen("Location: myLocation12345\r\n"));
+        cur_pos += strlen("Location: myLocation12345\r\n");
     }
     memcpy(cur_pos, "Location: ", strlen("Location: "));
     memcpy(http_page+size-strlen("\r\n\r\nbody"), "\r\n\r\nbody", strlen("\r\n\r\nbody"));
@@ -480,33 +477,11 @@ TEST(payload_injector_translate_test, http2_hdr_too_big)
     CHECK(status == ERR_TRANSLATED_HDRS_SIZE);
 }
 
-// Translated header > 2000. Goes through write_translation code path.
-TEST(payload_injector_translate_test, http2_hdr_too_big2)
-{
-    const uint32_t size = strlen("Connection: close\r\n") * 112 + strlen("\r\nbody");
-    uint8_t http_page[size];
-
-    uint8_t* cur_pos = http_page;
-    for (int i=0; i < 112; i++)
-    {
-        memcpy(cur_pos, "Connection: close\r\n", strlen("Connection: close\r\n"));
-        cur_pos += strlen("Connection: close\r\n");
-    }
-    memcpy(http_page+size-strlen("\r\nbody"), "\r\nbody", strlen("\r\nbody"));
-
-    InjectionControl control;
-    control.stream_id = 1;
-    control.http_page = http_page;
-    control.http_page_len = size;
-    status = PayloadInjectorModule::get_http2_payload(control, http2_payload, payload_len);
-    CHECK(status == ERR_TRANSLATED_HDRS_SIZE);
-}
-
 // Translated header > 2000. Fails while trying to write Location field value length - failure when
 // writing first byte of 2.
 TEST(payload_injector_translate_test, http2_hdr_too_big3)
 {
-    const uint32_t size = strlen("Connection: close\r\n") * 111 + strlen("Location: ") +
+    const uint32_t size = strlen("Location: myLocation12345\r\n") * 111 + strlen("Location: ") +
         strlen("\r\n\r\nbody") + 130;
     uint8_t http_page[size];
 
@@ -514,8 +489,8 @@ TEST(payload_injector_translate_test, http2_hdr_too_big3)
     uint8_t* cur_pos = http_page;
     for (int i=0; i < 111; i++)
     {
-        memcpy(cur_pos, "Connection: close\r\n", strlen("Connection: close\r\n"));
-        cur_pos += strlen("Connection: close\r\n");
+        memcpy(cur_pos, "Location: myLocation12345\r\n", strlen("Location: myLocation12345\r\n"));
+        cur_pos += strlen("Location: myLocation12345\r\n");
     }
     memcpy(cur_pos, "Location: ", strlen("Location: "));
     memcpy(http_page+size-strlen("\r\n\r\nbody"), "\r\n\r\nbody", strlen("\r\n\r\nbody"));
@@ -533,7 +508,7 @@ TEST(payload_injector_translate_test, http2_hdr_too_big3)
 // writing second byte of 3.
 TEST(payload_injector_translate_test, http2_hdr_too_big4)
 {
-    const uint32_t size = strlen("Connection: close\r\n") * 110 + strlen("Location: ")*2 +
+    const uint32_t size = strlen("Location: myLocation12345\r\n") * 110 + strlen("Location: ")*2 +
         strlen("\r\n\r\nbody") + 300 + 14;
     uint8_t http_page[size];
 
@@ -541,8 +516,8 @@ TEST(payload_injector_translate_test, http2_hdr_too_big4)
     uint8_t* cur_pos = http_page;
     for (int i=0; i < 110; i++)
     {
-        memcpy(cur_pos, "Connection: close\r\n", strlen("Connection: close\r\n"));
-        cur_pos += strlen("Connection: close\r\n");
+        memcpy(cur_pos, "Location: myLocation12345\r\n", strlen("Location: myLocation12345\r\n"));
+        cur_pos += strlen("Location: myLocation12345\r\n");
     }
     memcpy(cur_pos, "Location: ", strlen("Location: "));
     memcpy(cur_pos+strlen("Location: ")+14, "\r\nLocation: ", strlen("\r\nLocation: "));
@@ -560,7 +535,7 @@ TEST(payload_injector_translate_test, http2_hdr_too_big4)
 // Translated header > 2000. Fails while trying to write translation of second "Location: "
 TEST(payload_injector_translate_test, http2_hdr_too_big5)
 {
-    const uint32_t size = strlen("Connection: close\r\n") * 110 + strlen("Location: ")*2 +
+    const uint32_t size = strlen("Location: myLocation12345\r\n") * 110 + strlen("Location: ")*2 +
         strlen("\r\n\r\nbody") + 300 + 16;
     uint8_t http_page[size];
 
@@ -568,8 +543,8 @@ TEST(payload_injector_translate_test, http2_hdr_too_big5)
     uint8_t* cur_pos = http_page;
     for (int i=0; i < 110; i++)
     {
-        memcpy(cur_pos, "Connection: close\r\n", strlen("Connection: close\r\n"));
-        cur_pos += strlen("Connection: close\r\n");
+        memcpy(cur_pos, "Location: myLocation12345\r\n", strlen("Location: myLocation12345\r\n"));
+        cur_pos += strlen("Location: myLocation12345\r\n");
     }
     memcpy(cur_pos, "Location: ", strlen("Location: "));
     memcpy(cur_pos+strlen("Location: ")+16, "\r\nLocation: ", strlen("\r\nLocation: "));

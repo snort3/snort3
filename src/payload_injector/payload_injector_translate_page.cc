@@ -23,8 +23,9 @@
 // 2. Headers end with \r\n or \n
 // 3. Must have headers and body
 // 4. Translated header length <= 2000
-// 5. Supported: HTTP/1.1 200, HTTP/1.1 403, HTTP/1.1 307, Connection: close,
-//     Content-Length: , Content-Type: , Set-Cookie: , Location:
+// 5. Supported: HTTP/1.1 200, HTTP/1.1 403, HTTP/1.1 307, Content-Type: ,
+//               Set-Cookie: , Location:
+// 6. Connection: close, Content-Length: are removed during translation
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -44,8 +45,6 @@ static uint8_t status_307_h2[] = { 0, 7, ':', 's', 't', 'a', 't', 'u', 's', 3, '
 static const char status_200[] = "HTTP/1.1 200";
 static uint8_t status_200_h2[] =  { 0x88 };
 static const char connection[] = "Connection: close";
-static const uint8_t connection_h2[] = { 0, 10, 'c','o','n','n','e','c','t','i','o','n',
-                                         5, 'c', 'l', 'o', 's', 'e' };
 static const char content_length[] = "Content-Length: ";
 static const char content_type[] = "Content-Type: ";
 static const char cookie[] = "Set-Cookie: ";
@@ -145,15 +144,14 @@ static InjectionReturnStatus translate_hdr_field(const uint8_t* hdr, uint32_t le
     }
     else if (len == strlen(connection) && memcmp(hdr, connection, strlen(connection))==0)
     {
-        return write_translation(out, out_free_space, connection_h2, sizeof(connection_h2));
+        return INJECTION_SUCCESS;
     }
     // The following use literal header field without indexing.
     // The header field name index to the static table is represented using 4-bit prefix.
     else if (len > strlen(content_length) && memcmp(hdr, content_length, strlen(content_length))==
         0)
     {
-        const uint8_t ind_rep[] = { 0xf, 0xd }; // 0000 + 28 in 4 bit prefix
-        return write_indexed(hdr, len, out, out_free_space, ind_rep, sizeof(ind_rep));
+        return INJECTION_SUCCESS;
     }
     else if (len > strlen(content_type) && memcmp(hdr, content_type, strlen(content_type))==0)
     {
