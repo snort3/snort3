@@ -467,10 +467,19 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
         ++news;
         flow->flowstats.start_time = p->pkth->ts;
-        // Set the flag if the flow direction matches the DAQ direction
-        flow->flags.client_initiated =
-            (p->is_from_server() ==
-                (DAQ_PKT_FLAG_REV_FLOW == (p->packet_flags & DAQ_PKT_FLAG_REV_FLOW)));
+        // If DAQ specifies reverse flow, client initiated follows from server
+        if (p->pkth->flags & DAQ_PKT_FLAG_REV_FLOW)
+            flow->flags.client_initiated = p->is_from_server();
+        // If we are tracking on syn, client initiated follows from client
+        else if (p->context->conf->track_on_syn())
+            flow->flags.client_initiated = p->is_from_client();
+        // If not tracking on SYN and the packet is a SYN-ACK, assume the SYN did not create a
+        // session and client initiated follows from server
+        else if (p->is_tcp() && p->ptrs.tcph->is_syn_ack())
+            flow->flags.client_initiated = p->is_from_server();
+        // Otherwise, client initiated follows from client
+        else
+            flow->flags.client_initiated = p->is_from_client();
     }
 
     // This requires the packet direction to be set
