@@ -89,7 +89,7 @@ public:
     void set_service_id_valid(ServiceDetector* sd);
     void set_service_id_failed(AppIdSession& asd, const snort::SfIp* client_ip,
         unsigned invalid_delta = 0);
-    void update_service_incompatiable(const snort::SfIp* ip);
+    void update_service_incompatible(const snort::SfIp* ip);
 
     ServiceState get_state() const
     {

@@ -678,20 +678,6 @@ void* AppIdSession::get_flow_data(unsigned id) const
         return nullptr;
 }
 
-void* AppIdSession::remove_flow_data(unsigned id)
-{
-    void* data = nullptr;
-
-    AppIdFlowDataIter it = flow_data.find(id);
-    if (it != flow_data.end())
-    {
-        data = it->second->fd_data;
-        delete it->second;
-        flow_data.erase(it);
-    }
-    return data;
-}
-
 void AppIdSession::free_flow_data()
 {
     for (AppIdFlowDataIter it = flow_data.cbegin();
@@ -918,11 +904,6 @@ void AppIdSession::set_application_ids_service(AppId service_id, AppidChangeBits
     api.set_application_ids_service(service_id, change_bits);
 }
 
-bool AppIdSession::is_ssl_session_decrypted() const
-{
-    return get_session_flags(APPID_SESSION_DECRYPTED);
-}
-
 void AppIdSession::reset_session_data(AppidChangeBits& change_bits)
 {
     delete_session_data();
@@ -941,11 +922,6 @@ void AppIdSession::reset_session_data(AppidChangeBits& change_bits)
 
     change_bits.reset();
     change_bits.set(APPID_RESET_BIT);
-}
-
-bool AppIdSession::is_payload_appid_set() const
-{
-    return (api.payload.get_id() || tp_payload_app_id);
 }
 
 void AppIdSession::clear_http_flags()

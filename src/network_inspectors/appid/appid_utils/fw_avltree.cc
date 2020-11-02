@@ -55,25 +55,10 @@ static inline FwAvlNode* get_first(FwAvlNode* node)
     return node;
 }
 
-static inline FwAvlNode* get_last(FwAvlNode* node)
-{
-    while (node->right != nullptr)
-        node = node->right;
-    return node;
-}
-
 FwAvlNode* fwAvlFirst(const FwAvlTree* tree)
 {
     if ((tree != nullptr) && (tree->root != nullptr))
         return get_first(tree->root);
-    else
-        return nullptr;
-}
-
-FwAvlNode* fwAvlLast(const FwAvlTree* tree)
-{
-    if ((tree != nullptr) && (tree->root != nullptr))
-        return get_last(tree->root);
     else
         return nullptr;
 }
@@ -94,24 +79,6 @@ FwAvlNode* fwAvlNext(FwAvlNode* node)
 
         return parent;
     }
-}
-
-FwAvlNode* fwAvlPrev(FwAvlNode* node)
-{
-    FwAvlNode* parent;
-    FwAvlNode* tmp;
-
-    if (node->left != nullptr)
-    {
-        tmp = get_first(node->left);
-    }
-    else
-    {
-        tmp = node;
-        while ( ((parent = get_parent(tmp)) != nullptr) && (parent->left == tmp) )
-            tmp = parent;
-    }
-    return tmp;
 }
 
 static void rotate_left(FwAvlNode* node, FwAvlTree* tree)

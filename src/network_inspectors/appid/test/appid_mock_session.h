@@ -154,11 +154,6 @@ AppId AppIdSession::pick_ss_referred_payload_app_id() const
     return APPID_UT_ID;
 }
 
-bool AppIdSession::is_ssl_session_decrypted() const
-{
-    return is_session_decrypted;
-}
-
 AppIdHttpSession* AppIdSession::create_http_session(uint32_t)
 {
     AppIdHttpSession* hsession = new MockAppIdHttpSession(*this);

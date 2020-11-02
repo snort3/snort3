@@ -551,7 +551,7 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
                 asd.is_decrypted(), true);
 
         if (got_incompatible_service)
-            sds->update_service_incompatiable(tmp_ip);
+            sds->update_service_incompatible(tmp_ip);
 
         sds->set_service_id_failed(asd, tmp_ip);
     }

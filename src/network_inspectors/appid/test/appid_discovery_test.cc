@@ -262,10 +262,6 @@ HostPortVal* HostPortCache::find(const SfIp*, uint16_t, IpProtocol, const OdpCon
 }
 void AppIdServiceState::check_reset(AppIdSession&, const SfIp*, uint16_t,
     int16_t, uint16_t) {}
-int dns_host_scan_hostname(const uint8_t*, size_t, AppId*, AppId*)
-{
-    return 0;
-}
 bool do_tp_discovery(ThirdPartyAppIdContext& , AppIdSession&, IpProtocol,
     Packet*, AppidSessionDirection&, AppidChangeBits&)
 {
@@ -275,10 +271,6 @@ TPLibHandler* TPLibHandler::self = nullptr;
 THREAD_LOCAL AppIdStats appid_stats;
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = false; }
-AppId find_length_app_cache(const LengthKey&)
-{
-    return APP_ID_NONE;
-}
 void check_session_for_AF_indicator(Packet*, AppidSessionDirection, AppId, const OdpContext&) {}
 AppId check_session_for_AF_forecast(AppIdSession&, Packet*, AppidSessionDirection, AppId)
 {

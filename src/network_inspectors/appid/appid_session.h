@@ -336,7 +336,6 @@ public:
     void* get_flow_data(unsigned id) const;
     int add_flow_data(void* data, unsigned id, AppIdFreeFCN);
     int add_flow_data_id(uint16_t port, ServiceDetector*);
-    void* remove_flow_data(unsigned id);
     void free_flow_data_by_id(unsigned id);
     void free_flow_data_by_mask(unsigned mask);
     void free_flow_data();
@@ -356,7 +355,6 @@ public:
     void set_ss_application_ids(AppId client, AppId payload, AppidChangeBits& change_bits);
     void set_application_ids_service(AppId service_id, AppidChangeBits& change_bits);
 
-    bool is_ssl_session_decrypted() const;
     void examine_ssl_metadata(AppidChangeBits& change_bits);
     void set_client_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
     void set_service_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
@@ -371,7 +369,6 @@ public:
     void sync_with_snort_protocol_id(AppId, snort::Packet*);
     void stop_service_inspection(snort::Packet*,  AppidSessionDirection);
 
-    bool is_payload_appid_set() const;
     void clear_http_flags();
     void clear_http_data();
     void reset_session_data(AppidChangeBits& change_bits);

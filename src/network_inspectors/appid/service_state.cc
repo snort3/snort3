@@ -179,7 +179,7 @@ void ServiceDiscoveryState::set_service_id_failed(AppIdSession& asd, const SfIp*
     }
 }
 
-void ServiceDiscoveryState::update_service_incompatiable(const SfIp* ip)
+void ServiceDiscoveryState::update_service_incompatible(const SfIp* ip)
 {
     if ( invalid_client_count < STATE_ID_INVALID_CLIENT_THRESHOLD )
     {

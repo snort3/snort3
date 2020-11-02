@@ -138,11 +138,6 @@ void AppIdSession::reset_session_data(AppidChangeBits&)
 {
 }
 
-bool AppIdSession::is_payload_appid_set() const
-{
-    return true;
-}
-
 bool AppIdSession::is_tp_appid_available() const
 {
     return true;

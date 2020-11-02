@@ -54,9 +54,7 @@ FwAvlTree* fwAvlInit();
 int fwAvlInsert(uint32_t key, void* data, FwAvlTree*);
 void* fwAvlLookup(const uint32_t key, const FwAvlTree*);
 FwAvlNode* fwAvlFirst(const FwAvlTree*);
-FwAvlNode* fwAvlLast(const FwAvlTree*);
 FwAvlNode* fwAvlNext(FwAvlNode*);
-FwAvlNode* fwAvlPrev(FwAvlNode*);
 FwQNode* fwAvlSerialize(FwAvlTree*);
 void fwAvlDeleteTree(FwAvlTree*, void (* dataDelete)(void* data));
 

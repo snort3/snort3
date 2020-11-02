@@ -225,34 +225,6 @@ AppId OdpContext::get_protocol_service_id(IpProtocol proto)
     return ip_protocol[(uint16_t)proto];
 }
 
-void OdpContext::display_port_config()
-{
-    bool first = true;
-
-    for ( auto& i : tcp_port_only )
-        if (tcp_port_only[i])
-        {
-            if (first)
-            {
-                LogMessage("    TCP Port-Only Services\n");
-                first = false;
-            }
-            LogMessage("        %5u - %u\n", i, tcp_port_only[i]);
-        }
-
-    first = true;
-    for ( auto& i : udp_port_only )
-        if (udp_port_only[i])
-        {
-            if (first)
-            {
-                LogMessage("    UDP Port-Only Services\n");
-                first = false;
-            }
-            LogMessage("        %5u - %u\n", i, udp_port_only[i]);
-        }
-}
-
 void OdpContext::add_af_indicator(AppId indicator, AppId forecast, AppId target)
 {
     if (AF_indicators.find(indicator) != AF_indicators.end())

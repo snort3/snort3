@@ -203,7 +203,6 @@ public:
     void add_protocol_service_id(IpProtocol, AppId);
     AppId get_port_service_id(IpProtocol, uint16_t);
     AppId get_protocol_service_id(IpProtocol);
-    void display_port_config();
     void add_af_indicator(AppId, AppId, AppId);
 
 private:
