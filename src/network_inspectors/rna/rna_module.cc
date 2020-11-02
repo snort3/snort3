@@ -28,6 +28,7 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
+#include <string.h>
 #include <sys/stat.h>
 
 #include "log/messages.h"
@@ -46,6 +47,8 @@
 
 using namespace snort;
 using namespace std;
+
+#define MAC_STRLEN 17
 
 THREAD_LOCAL const Trace* rna_trace = nullptr;
 
@@ -82,10 +85,153 @@ bool FpProcReloadTuner::tinit()
     return false;  // no work to do after this
 }
 
+static bool get_mac_from_args(lua_State* L, uint8_t* mac_addr)
+{
+    const char* lua_in = luaL_optstring(L, 1, nullptr);
+
+    size_t input_len = strlen(lua_in);
+    if ( input_len != MAC_STRLEN)
+    {
+        LogMessage("Improperly formatted MAC address, use format aa:bb:cc:dd:ee:ff\n");
+        return false;
+    }
+
+    string in(lua_in);
+    istringstream tokinizer(in);
+    stringstream hex_parser;
+    string tok;
+    int idx = 0;
+
+    // Need to use uint16_t, otherwise stringstream sees uint_8 (char*)
+    // and converts the string to a char* (not what was intended)
+    uint16_t tmp_byte = 0;
+
+    while (getline(tokinizer, tok, ':'))
+    {
+        hex_parser << hex << tok;
+        hex_parser >> tmp_byte;
+        mac_addr[idx++] = (uint8_t) tmp_byte;
+
+	    if ( hex_parser.fail() or tok.size() != 2 )
+	    {
+	        LogMessage("Improperly formatted MAC address, use format "
+	         "aa:bb:cc:dd:ee:ff\n");
+	        return false;
+	    }
+
+        hex_parser.str(string());
+        hex_parser.clear();
+    }
+
+	if ( idx != MAC_SIZE )
+    {
+        LogMessage("Improperly formatted MAC address, use format aa:bb:cc:dd:ee:ff\n");
+        return false;
+    }
+
+    return true;
+
+}
+
+static int delete_mac_host(lua_State* L)
+{
+    RnaModule* mod = (RnaModule*) ModuleManager::get_module(RNA_NAME);
+    if ( mod )
+    {
+        uint8_t mac[MAC_SIZE] = {0};
+
+	    const char* lua_in = luaL_optstring(L, 1, nullptr);
+
+	    if ( lua_in == nullptr )
+	    {
+	        LogMessage("Usage: rna.delete_mac_host(mac)\n");
+	        return 0;
+	    }
+
+        bool valid_mac = get_mac_from_args(L, mac);
+        if (!valid_mac)
+            return 0;
+
+        MacKey search_mk(mac);
+        bool success = host_cache_mac.remove((const uint8_t*) &search_mk);
+
+        if (!success)
+        {
+            LogMessage("MAC not found in cache\n");
+            return 0;
+        }
+
+        LogMessage("rna.delete_mac_host completed successfully\n");
+    }
+    return 0;
+}
+
+static int delete_mac_host_proto(lua_State* L)
+{
+    RnaModule* mod = (RnaModule*) ModuleManager::get_module(RNA_NAME);
+    if ( mod )
+    {
+        uint8_t mac[MAC_SIZE] = {0};
+
+	    const char* lua_in = luaL_optstring(L, 1, nullptr);
+
+	    if ( lua_in == nullptr )
+	    {
+	        LogMessage("Usage: rna.delete_mac_host_proto(mac, proto)\n");
+	        return 0;
+	    }
+
+        bool valid_mac = get_mac_from_args(L, mac);
+        if (!valid_mac)
+            return 0;
+
+        MacKey search_mk(mac);
+        auto htm = host_cache_mac.find((const uint8_t*) &search_mk);
+
+        if (!htm)
+        {
+            LogMessage("MAC not found in cache\n");
+            return 0;
+        }
+
+        uint16_t proto = luaL_optnumber(L, 2, 0);
+        bool success = false;
+        if (proto != 0)
+            success = htm->delete_proto(proto);
+
+        if (success)
+            LogMessage("rna.delete_mac_host_proto completed successfully\n");
+        else
+            LogMessage("rna.delete_mac_host_proto failed to delete protocol\n");
+
+    }
+    return 0;
+}
+
+
+static const Parameter mac_delete_params[] =
+{
+    { "mac", Parameter::PT_STRING, nullptr, nullptr, "MAC address to delete, "
+        "format aa:bb:cc:dd:ee:ff"},
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter mac_delete_proto_params[] =
+{
+    { "mac", Parameter::PT_STRING, nullptr, nullptr, "MAC address with associated protocol, "
+        "format: aa:bb:cc:dd:ee:ff"},
+    { "proto", Parameter::PT_INT, nullptr, nullptr, "protocol to delete from MAC host, "
+        "format: Ethertype, in decimal" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Command rna_cmds[] =
 {
-    { "dump_macs", dump_mac_cache, nullptr,
-      "dump rna's internal MAC trackers" },
+    { "dump_macs", dump_mac_cache, nullptr, "dump rna's internal MAC trackers" },
+    { "delete_mac_host", delete_mac_host, mac_delete_params,
+        "delete a MAC from rna's MAC cache"},
+    { "delete_mac_host_proto", delete_mac_host_proto, mac_delete_proto_params,
+        "delete a protocol associated with a MAC host"},
     { nullptr, nullptr, nullptr, nullptr }
 };
 
@@ -386,7 +532,7 @@ bool RnaModule::log_mac_cache(const char* outfile)
     {
         str = "MAC: ";
         str += format_dump_mac(elem.first.mac_addr);
-        str += "\n Key: " +  to_string(hash_mac(elem.first.mac_addr));
+        str += "\n Key: " + to_string(hash_mac(elem.first.mac_addr));
         elem.second->stringify(str);
         out_stream << str << endl << endl;
     }

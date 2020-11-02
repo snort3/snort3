@@ -163,10 +163,28 @@ enum HostType : std::uint32_t
     HOST_TYPE_LB
 };
 
+class HostMac_t : public HostMac
+{
+public:
+    HostMac_t(uint8_t p_ttl, const uint8_t* p_mac, uint8_t p_primary, uint32_t p_last_seen)
+        : HostMac(p_ttl, p_mac, p_primary, p_last_seen) {}
+
+    HostMac_t& operator=(const HostMac_t& hm)
+    {
+        ttl = hm.ttl;
+        primary = hm.primary;
+        last_seen = hm.last_seen;
+        visibility = hm.visibility;
+        memcpy(mac, hm.mac, MAC_SIZE);
+        return *this;
+    }
+
+    bool visibility = true;
+};
+
 #define MIN_BOOT_TIME    10
 #define MIN_TTL_DIFF     16
 
-typedef HostCacheAllocIp<HostMac> HostMacAllocator;
 typedef HostCacheAllocIp<HostApplication> HostAppAllocator;
 typedef HostCacheAllocIp<HostClient> HostClientAllocator;
 typedef HostCacheAllocIp<DeviceFingerprint> HostDeviceFpAllocator;
@@ -371,7 +389,9 @@ private:
     uint8_t hops;                 // hops from the snort inspector, e.g., zero for ARP
     uint32_t last_seen;           // the last time this host was seen
     uint32_t last_event;          // the last time an event was generated
-    std::list<HostMac, HostMacAllocator> macs; // list guarantees iterator validity on insertion
+
+    // list guarantees iterator validity on insertion
+    std::list<HostMac_t, HostCacheAllocIp<HostMac_t>> macs;
     std::vector<NetProto_t, HostCacheAllocIp<NetProto_t>> network_protos;
     std::vector<XProto_t, HostCacheAllocIp<XProto_t>> xport_protos;
     std::vector<HostApplication, HostAppAllocator> services;
@@ -384,12 +404,20 @@ private:
     HostType host_type = HOST_TYPE_HOST;
     uint8_t ip_ttl = 0;
     uint32_t nat_count = 0;
-    uint32_t nat_count_start;     // the time nat counting start for this host
+    uint32_t nat_count_start;     // the time nat counting starts for this host
 
     bool visibility = true;
 
     uint32_t num_visible_services = 0;
     uint32_t num_visible_clients = 0;
+    uint32_t num_visible_macs = 0;
+
+    // These three do not lock independently; they are used by payload discovery and called
+    // from add_payload(HostApplication&, Port, IpProtocol, AppId, AppId, size_t); where the
+    // lock is actually obtained
+    bool add_payload_no_lock(const AppId, HostApplication*, size_t);
+    HostApplication* find_service_no_lock(Port, IpProtocol, AppId);
+    void update_ha_no_lock(HostApplication& dst, HostApplication& src);
 
     // Hide / delete the constructor from the outside world. We don't want to
     // have zombie host trackers, i.e. host tracker objects that live outside
@@ -403,13 +431,6 @@ private:
     // Only the host cache can create them ...
     template<class Key, class Value, class Hash>
     friend class LruCacheShared;
-
-    // These two do not lock independently; they are used by payload discovery and called
-    // from add_payload(HostApplication&, Port, IpProtocol, AppId, AppId, size_t); where the
-    // lock is actually obtained
-    bool add_payload_no_lock(const AppId, HostApplication*, size_t);
-    HostApplication* find_service_no_lock(Port, IpProtocol, AppId);
-    void update_ha_no_lock(HostApplication& dst, HostApplication& src);
 
     // ... and some unit tests. See Utest.h and UtestMacros.h in cpputest.
     friend class TEST_host_tracker_add_find_service_test_Test;

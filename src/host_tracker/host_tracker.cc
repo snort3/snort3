@@ -97,13 +97,40 @@ bool HostTracker::add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary)
     if ( !mac or !memcmp(mac, zero_mac, MAC_SIZE) )
         return false;
 
+    HostMac_t* invisible_swap_candidate = nullptr;
     lock_guard<mutex> lck(host_tracker_lock);
 
-    for ( const auto& hm : macs )
-        if ( !memcmp(mac, hm.mac, MAC_SIZE) )
-            return false;
+    for ( auto& hm_t : macs )
+    {
+        if ( !memcmp(mac, hm_t.mac, MAC_SIZE) )
+        {
+            if ( hm_t.visibility )
+            {
+                return false;
+            }
+
+            hm_t.visibility = true;
+            num_visible_macs++;
+            return true;
+        }
+
+        if (!invisible_swap_candidate and !hm_t.visibility)
+            invisible_swap_candidate = &hm_t;
+    }
+
+    if (invisible_swap_candidate)
+    {
+        memcpy(invisible_swap_candidate->mac, mac, MAC_SIZE);
+        invisible_swap_candidate->ttl = ttl;
+        invisible_swap_candidate->primary = primary;
+        invisible_swap_candidate->visibility = true;
+        num_visible_macs++;
+        return true;
+    }
 
     macs.emplace_back(ttl, mac, primary, last_seen);
+    num_visible_macs++;
+
     return true;
 }
 
@@ -130,7 +157,10 @@ bool HostTracker::get_hostmac(const uint8_t* mac, HostMac& hm)
     for ( auto& ahm : macs )
         if ( !memcmp(mac, ahm.mac, MAC_SIZE) )
         {
-            hm = ahm;
+            if (!ahm.visibility)
+                return false;
+
+            hm = static_cast<HostMac>(ahm);
             return true;
         }
 
@@ -140,11 +170,12 @@ bool HostTracker::get_hostmac(const uint8_t* mac, HostMac& hm)
 const uint8_t* HostTracker::get_last_seen_mac()
 {
     lock_guard<mutex> lck(host_tracker_lock);
-    const HostMac* max_hm = nullptr;
+    const HostMac_t* max_hm = nullptr;
 
     for ( const auto& hm : macs )
-        if ( !max_hm or max_hm->last_seen < hm.last_seen)
-            max_hm = &hm;
+        if ( !max_hm or max_hm->last_seen < hm.last_seen )
+            if (hm.visibility)
+                max_hm = &hm;
 
     if ( max_hm )
         return max_hm->mac;
@@ -162,7 +193,7 @@ bool HostTracker::update_mac_ttl(const uint8_t* mac, uint8_t new_ttl)
     for ( auto& hm : macs )
         if ( !memcmp(mac, hm.mac, MAC_SIZE) )
         {
-            if (hm.ttl < new_ttl)
+            if (hm.ttl < new_ttl and hm.visibility)
             {
                 hm.ttl = new_ttl;
                 return true;
@@ -179,13 +210,16 @@ bool HostTracker::make_primary(const uint8_t* mac)
     if ( !mac or !memcmp(mac, zero_mac, MAC_SIZE) )
         return false;
 
-    HostMac* hm = nullptr;
+    HostMac_t* hm = nullptr;
 
     lock_guard<mutex> lck(host_tracker_lock);
 
     for ( auto& hm_iter : macs )
         if ( !memcmp(mac, hm_iter.mac, MAC_SIZE) )
         {
+            if ( !hm_iter.visibility )
+                return false;
+
             hm = &hm_iter;
             break;
         }
@@ -207,22 +241,22 @@ HostMac* HostTracker::get_max_ttl_hostmac()
 {
     lock_guard<mutex> lck(host_tracker_lock);
 
-    HostMac* max_ttl_hm = nullptr;
+    HostMac_t* max_ttl_hm = nullptr;
     uint8_t max_ttl = 0;
 
     for ( auto& hm : macs )
     {
-        if (hm.primary)
-            return &hm;
+        if ( hm.primary and hm.visibility )
+            return static_cast<HostMac*> (&hm);
 
-        if ( hm.ttl > max_ttl )
+        if ( hm.ttl > max_ttl and hm.visibility )
         {
             max_ttl = hm.ttl;
             max_ttl_hm = &hm;
         }
     }
 
-    return max_ttl_hm;
+    return static_cast<HostMac*>(max_ttl_hm);
 }
 
 void HostTracker::update_vlan(uint16_t vth_pri_cfi_vlan, uint16_t vth_proto)
@@ -668,6 +702,11 @@ bool HostTracker::set_visibility(bool v)
         for (auto& proto : xport_protos)
             proto.second = false;
 
+        for (auto& mac_t : macs)
+            mac_t.visibility = false;
+
+        num_visible_macs = 0;
+
         for (auto& s : services)
         {
             s.visibility = false;
@@ -906,13 +945,16 @@ void HostTracker::stringify(string& str)
 
     if ( !macs.empty() )
     {
-        str += "\nmacs size: " + to_string(macs.size());
+        str += "\nmacs size: " + to_string(num_visible_macs);
         for ( const auto& m : macs )
         {
-            str += "\n    mac: " + to_mac_string(m.mac)
-                + ", ttl: " + to_string(m.ttl)
-                + ", primary: " + to_string(m.primary)
-                + ", time: " + to_time_string(m.last_seen);
+            if ( m.visibility )
+            {
+                str += "\n    mac: " + to_mac_string(m.mac)
+                    + ", ttl: " + to_string(m.ttl)
+                    + ", primary: " + to_string(m.primary)
+                    + ", time: " + to_time_string(m.last_seen);
+            }
         }
     }
 

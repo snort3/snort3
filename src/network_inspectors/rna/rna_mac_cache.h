@@ -75,6 +75,22 @@ public:
         return last_event;
     }
 
+    bool delete_proto(uint16_t proto)
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_mac_lock);
+
+        for (auto it = network_protos.begin(); it != network_protos.end(); ++it)
+        {
+            if (*it == proto)
+            {
+                network_protos.erase(it);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     void update_last_seen()
     {
         std::lock_guard<std::mutex> lck(host_tracker_mac_lock);
