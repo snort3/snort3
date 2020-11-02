@@ -250,17 +250,15 @@ void PrintStatistics()
     DropStats();
     timing_stats();
 
-    SnortConfig* sc = SnortConfig::get_main_conf();
-
     // FIXIT-L can do flag saving with RAII (much cleaner)
-    int save_quiet_flag = sc->logging_flags & LOGGING_FLAG__QUIET;
-    sc->logging_flags &= ~LOGGING_FLAG__QUIET;
+    bool origin_log_quiet = SnortConfig::log_quiet();
+    SnortConfig::set_log_quiet(false);
 
     // once more for the main thread
     Profiler::consolidate_stats();
     Profiler::show_stats();
 
-    sc->logging_flags |= save_quiet_flag;
+    SnortConfig::set_log_quiet(origin_log_quiet);
 }
 
 //-------------------------------------------------------------------------

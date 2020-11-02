@@ -152,7 +152,7 @@ void Log2ndHeader(TextLog* log, Packet* p)
     if ( SFDAQ::get_base_protocol() == DLT_EN10MB )
         LogEthHeader(log, p);
 
-    else if ( p->context->conf->log_verbose() )
+    else if ( SnortConfig::log_verbose() )
         ErrorMessage("Datalink %i (not supported)\n", SFDAQ::get_base_protocol());
 }
 

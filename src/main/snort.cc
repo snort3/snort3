@@ -161,7 +161,7 @@ void Snort::init(int argc, char** argv)
 
     PluginManager::load_so_plugins(sc);
 
-    if ( sc->logging_flags & LOGGING_FLAG__SHOW_PLUGINS )
+    if ( SnortConfig::log_show_plugins() )
     {
         ModuleManager::dump_modules();
         PluginManager::dump_plugins();
@@ -193,7 +193,7 @@ void Snort::init(int argc, char** argv)
     // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(sc) )
         ParseError("can't initialize inspectors");
-    else if ( sc->log_verbose() )
+    else if ( SnortConfig::log_verbose() )
         InspectorManager::print_config(sc);
 
     InspectorManager::prepare_controls(sc);
@@ -484,7 +484,7 @@ SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path
         return nullptr;
     }
 
-    if ( sc->log_verbose() )
+    if ( SnortConfig::log_verbose() )
         InspectorManager::print_config(sc);
 
     // FIXIT-L is this still needed?

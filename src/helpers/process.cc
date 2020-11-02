@@ -536,7 +536,7 @@ void daemonize()
     if ( errno )
         FatalError("failed to setsid - %s", get_error(errno));
 
-    if ( SnortConfig::get_conf()->log_quiet() or SnortConfig::get_conf()->log_syslog() )
+    if ( SnortConfig::log_quiet() or SnortConfig::log_syslog() )
         snuff_stdio();
 
     pid_t ppid = getppid();

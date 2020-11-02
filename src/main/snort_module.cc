@@ -756,7 +756,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__INLINE;
 
     else if ( v.is("-q") )
-        sc->set_quiet(true);
+        SnortConfig::set_log_quiet(true);
 
     else if ( v.is("-R") )
     {
@@ -789,7 +789,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         help_version(sc);
 
     else if ( v.is("-v") )
-        sc->set_verbose(true);
+        SnortConfig::enable_log_verbose();
 
     else if ( v.is("-X") )
         sc->set_dump_payload_verbose(true);
@@ -871,7 +871,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--dump-config") )
     {
-        sc->set_quiet(true);
+        SnortConfig::set_log_quiet(true);
         sc->run_flags |= RUN_FLAG__TEST;
         if ( v.get_as_string() == "all" )
             sc->dump_config_type = DUMP_CONFIG_JSON_ALL;
@@ -881,7 +881,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--dump-config-text") )
     {
-        sc->set_quiet(true);
+        SnortConfig::set_log_quiet(true);
         sc->run_flags |= RUN_FLAG__TEST;
         sc->dump_config_type = DUMP_CONFIG_TEXT;
     }
@@ -895,18 +895,18 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--dump-rule-deps") )
     {
         sc->run_flags |= (RUN_FLAG__DUMP_RULE_DEPS | RUN_FLAG__TEST);
-        sc->set_quiet(true);
+        SnortConfig::set_log_quiet(true);
     }
     else if ( v.is("--dump-rule-meta") )
     {
         sc->run_flags |= (RUN_FLAG__DUMP_RULE_META | RUN_FLAG__TEST);
         sc->output_flags |= OUTPUT_FLAG__ALERT_REFS;
-        sc->set_quiet(true);
+        SnortConfig::set_log_quiet(true);
     }
     else if ( v.is("--dump-rule-state") )
     {
         sc->run_flags |= (RUN_FLAG__DUMP_RULE_STATE | RUN_FLAG__TEST);
-        sc->set_quiet(true);
+        SnortConfig::set_log_quiet(true);
     }
     else if ( v.is("--dump-version") )
         dump_version(sc);
@@ -918,7 +918,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     {
         sc->run_flags |= (RUN_FLAG__DUMP_MSG_MAP | RUN_FLAG__TEST);
         sc->output_flags |= OUTPUT_FLAG__ALERT_REFS;
-        sc->set_quiet(true);
+        SnortConfig::set_log_quiet(true);
     }
     else if ( v.is("--help") )
         help_basic(sc, v.get_string());
@@ -1072,7 +1072,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__SHOW_FILE_CODES;
 
     else if ( v.is("--show-plugins") )
-        sc->logging_flags |= LOGGING_FLAG__SHOW_PLUGINS;
+        SnortConfig::enable_log_show_plugins();
 
     else if ( v.is("--skip") )
         sc->pkt_skip = v.get_uint64();

@@ -75,7 +75,7 @@ public:
 
     void print_config()
     {
-        if ( snort::SnortConfig::get_conf()->log_verbose() )
+        if ( snort::SnortConfig::log_verbose() )
         {
             std::lock_guard<std::mutex> cache_lock(cache_mutex);
 

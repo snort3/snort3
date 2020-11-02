@@ -439,7 +439,7 @@ bool Shell::configure(SnortConfig* sc, bool is_fatal, bool is_root)
     if ( !overrides.empty() )
         load_string(lua, overrides.c_str());
 
-    if ( SnortConfig::get_conf()->log_verbose() )
+    if ( SnortConfig::log_verbose() )
         print_whitelist();
 
     load_string(lua, ModuleManager::get_lua_finalize());

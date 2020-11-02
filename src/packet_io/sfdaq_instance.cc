@@ -172,7 +172,7 @@ bool SFDAQInstance::start()
     pool_size = mpool_info.size;
     pool_available = mpool_info.available;
     assert(pool_size == pool_available);
-    if (SnortConfig::get_conf()->log_verbose())
+    if (SnortConfig::log_verbose())
     {
         LogMessage("Instance %d daq pool size: %d\n", get_instance_id(), pool_size);
         LogMessage("Instance %d daq batch size: %d\n", get_instance_id(), batch_size);

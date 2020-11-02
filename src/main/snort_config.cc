@@ -90,6 +90,7 @@ using namespace snort;
 static THREAD_LOCAL const SnortConfig* snort_conf = nullptr;
 
 uint32_t SnortConfig::warning_flags = 0;
+uint32_t SnortConfig::logging_flags = 0;
 
 static std::vector<ScratchAllocator*> scratch_handlers;
 
@@ -352,7 +353,6 @@ void SnortConfig::merge(SnortConfig* cmd_line)
 
     run_flags |= cmd_line->run_flags;
     output_flags |= cmd_line->output_flags;
-    logging_flags |= cmd_line->logging_flags;
 
     include_path = cmd_line->include_path;
     stdin_rules = cmd_line->stdin_rules;
@@ -647,14 +647,6 @@ void SnortConfig::set_obfuscation_mask(const char* mask)
     obfuscation_net.set(mask);
 }
 
-void SnortConfig::set_quiet(bool enabled)
-{
-    if (enabled)
-        logging_flags |= LOGGING_FLAG__QUIET;
-    else
-        logging_flags &= ~LOGGING_FLAG__QUIET;
-}
-
 void SnortConfig::set_gid(const char* args)
 {
     struct group* gr;
@@ -777,16 +769,6 @@ void SnortConfig::set_utc(bool enabled)
         output_flags |= OUTPUT_FLAG__USE_UTC;
     else
         output_flags &= ~OUTPUT_FLAG__USE_UTC;
-}
-
-void SnortConfig::set_verbose(bool enabled)
-{
-    if (enabled)
-    {
-        logging_flags |= LOGGING_FLAG__VERBOSE;
-    }
-    else
-        logging_flags &= ~LOGGING_FLAG__VERBOSE;
 }
 
 void SnortConfig::set_overlay_trace_config(TraceConfig* tc)
@@ -923,7 +905,7 @@ void SnortConfig::enable_syslog()
 
     openlog("snort", LOG_PID | LOG_CONS, LOG_DAEMON);
 
-    logging_flags |= LOGGING_FLAG__SYSLOG;
+    enable_log_syslog();
     syslog_configured = true;
 }
 

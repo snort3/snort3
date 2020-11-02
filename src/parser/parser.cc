@@ -319,7 +319,6 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, boo
 
     sc->run_flags = boot_conf->run_flags;
     sc->output_flags = boot_conf->output_flags;
-    sc->logging_flags = boot_conf->logging_flags;
     sc->tweaks = boot_conf->tweaks;
     sc->dump_config_type = boot_conf->dump_config_type;
 

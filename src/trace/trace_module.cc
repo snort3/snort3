@@ -166,7 +166,7 @@ bool TraceModule::begin(const char* fqn, int, SnortConfig* sc)
         trace_parser = new TraceParser(*sc->trace_config);
 
         // Init default output type based on Snort run-mode
-        if ( sc->daemon_mode() or sc->log_syslog() )
+        if ( sc->daemon_mode() or SnortConfig::log_syslog() )
             log_output_type = OUTPUT_TYPE_SYSLOG;
         else
             log_output_type = OUTPUT_TYPE_STDOUT;
@@ -237,7 +237,7 @@ bool TraceModule::end(const char* fqn, int, SnortConfig* sc)
 
             // "output=syslog" config override case
             // do not closelog() here since it will be closed in Snort::clean_exit()
-            if ( !sc->log_syslog() and log_output_type == OUTPUT_TYPE_SYSLOG
+            if ( !SnortConfig::log_syslog() and log_output_type == OUTPUT_TYPE_SYSLOG
                 and !local_syslog )
             {
                 local_syslog = true;

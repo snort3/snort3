@@ -772,7 +772,10 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
         v.update_mask(sc->output_flags, OUTPUT_FLAG__VERBOSE_DUMP);
 
     else if ( v.is("quiet") )
-        v.update_mask(sc->logging_flags, LOGGING_FLAG__QUIET);
+    {
+        if ( v.get_bool() )
+            SnortConfig::set_log_quiet(true);
+    }
 
     else if ( v.is("logdir") )
         sc->log_dir = v.get_string();
@@ -789,7 +792,7 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("verbose") )
     {
         if ( v.get_bool() )
-            v.update_mask(sc->logging_flags, LOGGING_FLAG__VERBOSE);
+            SnortConfig::enable_log_verbose();
     }
     else if ( v.is("wide_hex_dump") )
         v.update_mask(sc->output_flags, OUTPUT_FLAG__WIDE_HEX);

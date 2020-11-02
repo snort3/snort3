@@ -201,7 +201,7 @@ void MemoryCap::print()
     if ( !MemoryModule::is_active() )
         return;
 
-    bool verbose = SnortConfig::get_conf()->log_verbose();
+    bool verbose = SnortConfig::log_verbose();
 
     if ( verbose or mem_stats.allocations )
         LogLabel("memory (heap)");

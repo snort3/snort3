@@ -208,10 +208,10 @@ public:
     void merge(SnortConfig*);
     void clone(const SnortConfig* const);
 
+private:
+    static uint32_t logging_flags;
+
 public:
-    //------------------------------------------------------
-    // non-reloadable stuff (single instance)
-    // FIXIT-L non-reloadable stuff should be made static
     static uint32_t warning_flags;
 
     //------------------------------------------------------
@@ -228,8 +228,6 @@ public:
 #else
     uint32_t output_flags = 0;
 #endif
-    uint32_t logging_flags = 0;
-
     uint32_t tagged_packet_limit = 256;
     uint16_t event_trace_max = 0;
 
@@ -475,7 +473,6 @@ public:
     void set_obfuscation_mask(const char*);
     void set_include_path(const char*);
     void set_process_all_events(bool);
-    void set_quiet(bool);
     void set_show_year(bool);
     void set_tunnel_verdicts(const char*);
     void set_treat_drop_as_alert(bool);
@@ -484,7 +481,6 @@ public:
     void set_uid(const char*);
     void set_umask(uint32_t);
     void set_utc(bool);
-    void set_verbose(bool);
     void set_overlay_trace_config(TraceConfig*);
 
     //------------------------------------------------------
@@ -553,16 +549,6 @@ public:
 
     bool adaptor_inline_test_mode() const
     { return run_flags & RUN_FLAG__INLINE_TEST; }
-
-    // logging stuff
-    bool log_syslog() const
-    { return logging_flags & LOGGING_FLAG__SYSLOG; }
-
-    bool log_verbose() const
-    { return logging_flags & LOGGING_FLAG__VERBOSE; }
-
-    bool log_quiet() const
-    { return logging_flags & LOGGING_FLAG__QUIET; }
 
     // event stuff
     uint32_t get_event_log_id() const
@@ -730,6 +716,36 @@ public:
     SO_PUBLIC void register_reload_resource_tuner(ReloadResourceTuner*);
 
     static void cleanup_fatal_error();
+
+    // logging stuff
+    static void enable_log_syslog()
+    { logging_flags |= LOGGING_FLAG__SYSLOG; }
+
+    static bool log_syslog()
+    { return logging_flags & LOGGING_FLAG__SYSLOG; }
+
+    static void set_log_quiet(bool enabled)
+    { 
+        if (enabled)
+            logging_flags |= LOGGING_FLAG__QUIET;
+        else
+            logging_flags &= ~LOGGING_FLAG__QUIET;
+    }
+
+    static bool log_quiet()
+    { return logging_flags & LOGGING_FLAG__QUIET; }
+
+    static void enable_log_verbose()
+    { logging_flags |= LOGGING_FLAG__VERBOSE; }
+
+    static bool log_verbose()
+    { return logging_flags & LOGGING_FLAG__VERBOSE; }
+
+    static void enable_log_show_plugins()
+    { logging_flags |= LOGGING_FLAG__SHOW_PLUGINS; }
+
+    static bool log_show_plugins()
+    { return logging_flags & LOGGING_FLAG__SHOW_PLUGINS; }
 };
 }
 
