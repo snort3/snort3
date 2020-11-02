@@ -48,7 +48,7 @@ struct LruCacheSharedStats
     PegCount replaced = 0;      // found entry and replaced it
 };
 
-template<typename Key, typename Value, typename Hash>
+template<typename Key, typename Value, typename Hash, typename Eq = std::equal_to<Key>>
 class LruCacheShared
 {
 public:
@@ -130,7 +130,7 @@ public:
 protected:
     using LruList = std::list<std::pair<Key, Data>>;
     using LruListIter = typename LruList::iterator;
-    using LruMap = std::unordered_map<Key, LruListIter, Hash>;
+    using LruMap = std::unordered_map<Key, LruListIter, Hash, Eq>;
     using LruMapIter = typename LruMap::iterator;
 
     static constexpr size_t mem_chunk = sizeof(Data) + sizeof(Value);
@@ -180,8 +180,8 @@ protected:
     }
 };
 
-template<typename Key, typename Value, typename Hash>
-bool LruCacheShared<Key, Value, Hash>::set_max_size(size_t newsize)
+template<typename Key, typename Value, typename Hash, typename Eq>
+bool LruCacheShared<Key, Value, Hash, Eq>::set_max_size(size_t newsize)
 {
     if (newsize == 0)
         return false;   //  Not allowed to set size to zero.
@@ -201,8 +201,8 @@ bool LruCacheShared<Key, Value, Hash>::set_max_size(size_t newsize)
     return true;
 }
 
-template<typename Key, typename Value, typename Hash>
-std::shared_ptr<Value> LruCacheShared<Key, Value, Hash>::find(const Key& key)
+template<typename Key, typename Value, typename Hash, typename Eq>
+std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq>::find(const Key& key)
 {
     LruMapIter map_iter;
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
@@ -220,14 +220,14 @@ std::shared_ptr<Value> LruCacheShared<Key, Value, Hash>::find(const Key& key)
     return map_iter->second->second;
 }
 
-template<typename Key, typename Value, typename Hash>
-std::shared_ptr<Value> LruCacheShared<Key, Value, Hash>::operator[](const Key& key)
+template<typename Key, typename Value, typename Hash, typename Eq>
+std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq>::operator[](const Key& key)
 {
     return find_else_create(key, nullptr);
 }
 
-template<typename Key, typename Value, typename Hash>
-std::shared_ptr<Value> LruCacheShared<Key, Value, Hash>::
+template<typename Key, typename Value, typename Hash, typename Eq>
+std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq>::
 find_else_create(const Key& key, bool* new_data)
 {
     LruMapIter map_iter;
@@ -268,8 +268,8 @@ find_else_create(const Key& key, bool* new_data)
     return data;
 }
 
-template<typename Key, typename Value, typename Hash>
-bool LruCacheShared<Key, Value, Hash>::
+template<typename Key, typename Value, typename Hash, typename Eq>
+bool LruCacheShared<Key, Value, Hash, Eq>::
 find_else_insert(const Key& key, std::shared_ptr<Value>& data, bool replace)
 {
     LruMapIter map_iter;
@@ -307,9 +307,9 @@ find_else_insert(const Key& key, std::shared_ptr<Value>& data, bool replace)
     return false;
 }
 
-template<typename Key, typename Value, typename Hash>
+template<typename Key, typename Value, typename Hash, typename Eq>
 std::vector< std::pair<Key, std::shared_ptr<Value>> >
-LruCacheShared<Key, Value, Hash>::get_all_data()
+LruCacheShared<Key, Value, Hash, Eq>::get_all_data()
 {
     std::vector<std::pair<Key, Data> > vec;
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
@@ -322,8 +322,8 @@ LruCacheShared<Key, Value, Hash>::get_all_data()
     return vec;
 }
 
-template<typename Key, typename Value, typename Hash>
-bool LruCacheShared<Key, Value, Hash>::remove(const Key& key)
+template<typename Key, typename Value, typename Hash, typename Eq>
+bool LruCacheShared<Key, Value, Hash, Eq>::remove(const Key& key)
 {
     LruMapIter map_iter;
 
@@ -363,8 +363,8 @@ bool LruCacheShared<Key, Value, Hash>::remove(const Key& key)
     return true;
 }
 
-template<typename Key, typename Value, typename Hash>
-bool LruCacheShared<Key, Value, Hash>::remove(const Key& key, std::shared_ptr<Value>& data)
+template<typename Key, typename Value, typename Hash, typename Eq>
+bool LruCacheShared<Key, Value, Hash, Eq>::remove(const Key& key, std::shared_ptr<Value>& data)
 {
     LruMapIter map_iter;
 

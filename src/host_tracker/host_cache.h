@@ -35,7 +35,11 @@
 #include "sfip/sf_ip.h"
 #include "utils/stats.h"
 
-//  Used to create hash of key for indexing into cache.
+// Used to create hash of key for indexing into cache.
+//
+// Note that both HashIp and IpEqualTo below ignore the IP family.
+// This means that 1.2.3.4 and ::ffff:0102:0304 will be treated
+// as equal (same host).
 struct HashIp
 {
     size_t operator()(const snort::SfIp& ip) const
@@ -46,11 +50,19 @@ struct HashIp
     }
 };
 
-template<typename Key, typename Value, typename Hash>
-class LruCacheSharedMemcap : public LruCacheShared<Key, Value, Hash>, public HostCacheInterface
+struct IpEqualTo
+{
+    bool operator()(const snort::SfIp &lhs, const snort::SfIp &rhs) const
+    {
+        return lhs.fast_eq6(rhs);
+    }
+};
+
+template<typename Key, typename Value, typename Hash, typename Eq = std::equal_to<Key>>
+class LruCacheSharedMemcap : public LruCacheShared<Key, Value, Hash, Eq>, public HostCacheInterface
 {
 public:
-    using LruBase = LruCacheShared<Key, Value, Hash>;
+    using LruBase = LruCacheShared<Key, Value, Hash, Eq>;
     using LruBase::cache_mutex;
     using LruBase::current_size;
     using LruBase::list;
@@ -66,7 +78,7 @@ public:
     LruCacheSharedMemcap(const LruCacheSharedMemcap& arg) = delete;
     LruCacheSharedMemcap& operator=(const LruCacheSharedMemcap& arg) = delete;
 
-    LruCacheSharedMemcap(const size_t initial_size) : LruCacheShared<Key, Value, Hash>(initial_size) {}
+    LruCacheSharedMemcap(const size_t initial_size) : LruCacheShared<Key, Value, Hash, Eq>(initial_size) {}
 
     size_t mem_size() override
     {
@@ -197,7 +209,7 @@ private:
     friend class TEST_host_cache_module_misc_Test; // for unit test
 };
 
-typedef LruCacheSharedMemcap<snort::SfIp, snort::HostTracker, HashIp> HostCacheIp;
+typedef LruCacheSharedMemcap<snort::SfIp, snort::HostTracker, HashIp, IpEqualTo> HostCacheIp;
 
 extern SO_PUBLIC HostCacheIp host_cache;
 
