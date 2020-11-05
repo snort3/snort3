@@ -725,7 +725,10 @@ void AppIdHttpSession::update_url(AppidChangeBits& change_bits)
     {
         if (meta_data[MISC_URL_FID])
             delete meta_data[MISC_URL_FID];
-        meta_data[MISC_URL_FID] = new std::string(std::string("http://") + *host + *uri);
+        if (asd.get_session_flags(APPID_SESSION_DECRYPTED))
+            meta_data[MISC_URL_FID] = new std::string(std::string("https://") + *host + *uri);
+        else
+            meta_data[MISC_URL_FID] = new std::string(std::string("http://") + *host + *uri);
         change_bits.set(APPID_URL_BIT);
     }
 }
