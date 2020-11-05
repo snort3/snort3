@@ -140,7 +140,7 @@ protected:
 
     // Reassemble() data to eval()
     uint8_t lead_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH];
-    uint8_t* frame_data[2] = { nullptr, nullptr };
+    const uint8_t* frame_data[2] = { nullptr, nullptr };
     uint32_t frame_data_size[2] = { 0, 0 };
 
     // Used in eval()
@@ -181,6 +181,7 @@ protected:
     bool read_frame_header[2] = { false, false };
     bool continuation_frame[2] = { false, false };
     bool read_padding_len[2] = { false, false };
+    uint8_t* frame_reassemble[2] = { nullptr, nullptr };
 
 #ifdef REG_TEST
     static uint64_t instance_count;

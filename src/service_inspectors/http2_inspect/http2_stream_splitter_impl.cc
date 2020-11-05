@@ -391,7 +391,7 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
             session_data->frame_data_size[source_id] =
                 total - (session_data->frame_lengths[source_id].size() * FRAME_HEADER_LENGTH);
             if (session_data->frame_data_size[source_id] > 0)
-                session_data->frame_data[source_id] = new uint8_t[
+                session_data->frame_reassemble[source_id] = new uint8_t[
                     session_data->frame_data_size[source_id]];
 
             session_data->frame_data_offset[source_id] = 0;
@@ -459,7 +459,7 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
                 remaining_frame_payload : len - data_offset;
             if (octets_to_copy > 0)
             {
-                memcpy(session_data->frame_data[source_id] +
+                memcpy(session_data->frame_reassemble[source_id] +
                     session_data->frame_data_offset[source_id],
                     data + data_offset, octets_to_copy);
             }
@@ -492,6 +492,12 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
     {
         session_data->total_bytes_in_split[source_id] = 0;
         session_data->scan_octets_seen[source_id] = 0;
+
+        if (session_data->frame_type[source_id] != FT_DATA)
+        {
+            session_data->frame_data[source_id] = session_data->frame_reassemble[source_id];
+            session_data->frame_reassemble[source_id] = nullptr;
+        }
 
         // Return 0-length non-null buffer to stream which signals detection required, but don't
         // create pkt_data buffer
