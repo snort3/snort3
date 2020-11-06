@@ -83,7 +83,7 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
         if ( appid_change_bits[APPID_CLIENT_BIT] and client > APP_ID_NONE
             and service > APP_ID_NONE )
         {
-            const char* version = appid_session_api.get_client_version();
+            const char* version = appid_session_api.get_client_info();
             if ( p->packet_flags & PKT_FROM_SERVER )
             {
                 auto cht = host_cache.find(p->flow->client_ip);
@@ -105,7 +105,7 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
         }
     }
 
-    if ( appid_change_bits[APPID_SERVICE_VENDOR_BIT] or appid_change_bits[APPID_VERSION_BIT] )
+    if ( appid_change_bits[APPID_SERVICE_INFO_BIT] )
     {
         const char* vendor;
         const char* version;
@@ -117,18 +117,19 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
 
     if ( conf->enable_banner_grab and p->is_from_server() and
         (appid_change_bits[APPID_RESPONSE_BIT] or
-        ((appid_change_bits[APPID_SERVICE_VENDOR_BIT] or appid_change_bits[APPID_VERSION_BIT])) or
-        (appid_change_bits[APPID_SERVICE_BIT])) )
+        appid_change_bits[APPID_SERVICE_INFO_BIT] or
+        appid_change_bits[APPID_SERVICE_BIT]) )
     {
         discover_banner(p, proto, ht, &p->flow->server_ip, src_mac, logger, service);
     }
 
     // Appid supports only login success event. Change checks once login failure and
     // logoff is supported
-    if ( appid_change_bits[APPID_CLIENT_LOGIN_SUCCEEDED_BIT] and filter.is_user_monitored(p) )
+    if ( appid_change_bits[APPID_USER_INFO_BIT] and filter.is_user_monitored(p) )
     {
-        const char* username = appid_session_api.get_client_info(service);
-        if ( service > APP_ID_NONE and username and *username )
+        bool login;
+        const char* username = appid_session_api.get_user_info(service, login);
+        if ( login and service > APP_ID_NONE and username and *username )
             discover_user(p, ht, (const struct in6_addr*) p->ptrs.ip_api.get_dst()->get_ip6_ptr(),
                 logger, username, service, proto);
     }

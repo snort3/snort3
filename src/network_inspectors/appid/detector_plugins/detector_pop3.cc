@@ -361,14 +361,18 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
             }
             else
             {
-                pop3_service_detector->add_user(asd, dd->client.username, APP_ID_POP3, true, change_bits);
-                snort_free(dd->client.username);
-                dd->client.username = nullptr;
-                dd->need_continue = 0;
-                asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
-                dd->client.got_user = 1;
-                if (dd->client.detected)
-                    asd.set_client_detected();
+                if (dd->client.state == POP3_CLIENT_STATE_TRANS)
+                {
+                    pop3_service_detector->add_user(asd, dd->client.username, APP_ID_POP3, true, change_bits);
+                    snort_free(dd->client.username);
+                    dd->client.username = nullptr;
+                    dd->need_continue = 0;
+                    asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+                    if (dd->client.detected)
+                        asd.set_client_detected();
+                }
+                else
+                    dd->client.got_user = 1;
             }
         }
         if (server && begin)

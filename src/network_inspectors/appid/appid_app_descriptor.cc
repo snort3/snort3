@@ -77,7 +77,7 @@ void ClientAppDescriptor::update_user(AppId app_id, const char* username, AppidC
     if ( my_username != username )
     {
         my_username = username;
-        change_bits.set(APPID_CLIENT_USERNAME_BIT);
+        change_bits.set(APPID_USER_INFO_BIT);
     }
 
     if ( my_user_id != app_id )
@@ -86,7 +86,7 @@ void ClientAppDescriptor::update_user(AppId app_id, const char* username, AppidC
         if ( app_id > APP_ID_NONE )
         {
             AppIdPegCounts::inc_user_count(app_id);
-            change_bits.set(APPID_CLIENT_USERID_BIT);
+            change_bits.set(APPID_USER_INFO_BIT);
         }
     }
 }

@@ -491,7 +491,7 @@ static inline void process_ftp_control(AppIdSession& asd,
         (field=attribute_data.ftp_command_user()) != nullptr)
     {
         asd.set_client_user(APP_ID_FTP_CONTROL, field->c_str(), change_bits);
-        change_bits.set(APPID_CLIENT_LOGIN_SUCCEEDED_BIT);
+        asd.set_user_logged_in();
     }
 }
 

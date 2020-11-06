@@ -381,7 +381,7 @@ void AppIdHttpSession::process_chp_buffers(AppidChangeBits& change_bits, HttpPat
             else
                 client.update_user(asd.get_service_id(), user, change_bits);
             user = nullptr;
-            change_bits.set(APPID_CLIENT_LOGIN_SUCCEEDED_BIT);
+            asd.set_user_logged_in();
         }
 
         chp_candidate = 0;
@@ -409,7 +409,11 @@ void AppIdHttpSession::set_client(AppId app_id, AppidChangeBits& change_bits, co
 
     client.set_id(app_id);
     change_bits.set(APPID_CLIENT_BIT);
-    client.set_version(version, change_bits);
+    if (version)
+    {
+        client.set_version(version);
+        change_bits.set(APPID_CLIENT_INFO_BIT);
+    }
 
     if (appidDebug->is_active())
     {
@@ -427,7 +431,7 @@ void AppIdHttpSession::set_payload(AppId app_id, AppidChangeBits& change_bits, c
 
     payload.set_id(app_id);
     change_bits.set(APPID_PAYLOAD_BIT);
-    payload.set_version(version, change_bits);
+    payload.set_version(version);
 
     if (appidDebug->is_active())
     {

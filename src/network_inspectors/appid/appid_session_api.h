@@ -106,7 +106,7 @@ public:
     AppId get_service_app_id() const;
     void get_service_info(const char*& vendor, const char*& version,
         const AppIdServiceSubtype*& subtype) const;
-    const char* get_client_info(AppId& service) const;
+    const char* get_user_info(AppId& service, bool& login) const;
     AppId get_misc_app_id(uint32_t stream_index = 0) const;
     AppId get_client_app_id(uint32_t stream_index = 0) const;
     AppId get_payload_app_id(uint32_t stream_index = 0) const;
@@ -117,7 +117,7 @@ public:
         uint32_t stream_index = 0) const;
     bool is_appid_inspecting_session() const;
     bool is_appid_available() const;
-    const char* get_client_version(uint32_t stream_index = 0) const;
+    const char* get_client_info(uint32_t stream_index = 0) const;
     uint64_t get_appid_session_attribute(uint64_t flag) const;
     const SfIp* get_initiator_ip() const;
     const AppIdDnsSession* get_dns_session() const;
@@ -145,6 +145,10 @@ public:
         return session_id;
     }
 
+    void set_user_logged_in() { user_logged_in = true; }
+
+    void clear_user_logged_in() { user_logged_in = false; }
+
 protected:
     AppIdSessionApi(const AppIdSession* asd, const SfIp& ip);
 
@@ -160,6 +164,7 @@ private:
     ServiceAppDescriptor service;
     char* tls_host = nullptr;
     std::string session_id;
+    bool user_logged_in = false;
 
     // Following two fields are used only for non-http sessions. For HTTP traffic,
     // these fields are maintained inside AppIdHttpSession.

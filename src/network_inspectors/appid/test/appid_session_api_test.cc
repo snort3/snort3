@@ -215,15 +215,15 @@ TEST(appid_session_api, is_appid_available)
     CHECK_TRUE(val);
 }
 
-TEST(appid_session_api, get_client_version)
+TEST(appid_session_api, get_client_info)
 {
     const char* val;
-    val = mock_session->get_api().get_client_version();
+    val = mock_session->get_api().get_client_info();
     STRCMP_EQUAL(val, APPID_UT_CLIENT_VERSION);
     mock_session->create_http_session();
-    val = mock_session->get_api().get_client_version(0);
+    val = mock_session->get_api().get_client_info(0);
     STRCMP_EQUAL(APPID_UT_CLIENT_VERSION, val);
-    val = mock_session->get_api().get_client_version(2);
+    val = mock_session->get_api().get_client_info(2);
     STRCMP_EQUAL(nullptr, val);
 }
 TEST(appid_session_api, get_http_session)

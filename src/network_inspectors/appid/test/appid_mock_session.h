@@ -160,7 +160,8 @@ AppIdHttpSession* AppIdSession::create_http_session(uint32_t)
     AppidChangeBits change_bits;
 
     hsession->client.set_id(APPID_UT_ID);
-    hsession->client.set_version(APPID_UT_CLIENT_VERSION, change_bits);
+    hsession->client.set_version(APPID_UT_CLIENT_VERSION);
+    change_bits.set(APPID_CLIENT_INFO_BIT);
     hsession->payload.set_id(APPID_UT_ID);
     hsession->misc_app_id = APPID_UT_ID;
     hsession->referred_payload_app_id = APPID_UT_ID;

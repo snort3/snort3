@@ -53,10 +53,10 @@ public:
         my_version.clear();
     }
 
-    virtual void update(AppId id, AppidChangeBits& change_bits, char* version)
+    virtual void update(AppId id, char* version)
     {
         set_id(id);
-        set_version(version, change_bits);
+        set_version(version);
     }
 
     virtual void update_stats(AppId id, bool increment = true) = 0;
@@ -80,13 +80,10 @@ public:
         return my_version.empty() ? nullptr : my_version.c_str();
     }
 
-    void set_version(const char* version, AppidChangeBits& change_bits)
+    void set_version(const char* version)
     {
         if ( version )
-        {
             my_version = version;
-            change_bits.set(APPID_VERSION_BIT);
-        }
     }
 
 private:
@@ -159,7 +156,7 @@ public:
         if ( vendor )
         {
             my_vendor = vendor;
-            change_bits.set(APPID_SERVICE_VENDOR_BIT);
+            change_bits.set(APPID_SERVICE_INFO_BIT);
         }
     }
 
@@ -170,7 +167,7 @@ public:
         for (tmp_subtype = &subtype; *tmp_subtype; tmp_subtype = &(*tmp_subtype)->next)
             ;
         *tmp_subtype = &more_subtype;
-        change_bits.set(APPID_SERVICE_SUBTYPE_BIT);
+        change_bits.set(APPID_SERVICE_INFO_BIT);
     }
 
     const AppIdServiceSubtype* get_subtype() const

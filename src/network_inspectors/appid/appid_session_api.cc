@@ -56,9 +56,10 @@ void AppIdSessionApi::get_service_info(const char*& vendor, const char*& version
     subtype = service.get_subtype();
 }
 
-const char* AppIdSessionApi::get_client_info(AppId& service) const
+const char* AppIdSessionApi::get_user_info(AppId& service, bool& login) const
 {
     service = client.get_user_id();
+    login = user_logged_in;
     return client.get_username();
 }
 
@@ -244,7 +245,7 @@ bool AppIdSessionApi::is_appid_available() const
         asd->get_session_flags(APPID_SESSION_NO_TPI)) );
 }
 
-const char* AppIdSessionApi::get_client_version(uint32_t stream_index) const
+const char* AppIdSessionApi::get_client_info(uint32_t stream_index) const
 {
     if (uint32_t num_hsessions = get_hsessions_size())
     {

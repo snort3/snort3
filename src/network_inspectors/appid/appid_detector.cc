@@ -83,9 +83,9 @@ void AppIdDetector::add_user(AppIdSession& asd, const char* username, AppId appI
 {
     asd.set_client_user(appId, username, change_bits);
     if ( success )
-        change_bits.set(APPID_CLIENT_LOGIN_SUCCEEDED_BIT);
+        asd.set_user_logged_in();
     else
-        change_bits.reset(APPID_CLIENT_LOGIN_SUCCEEDED_BIT);
+        asd.clear_user_logged_in();
 }
 
 void AppIdDetector::add_payload(AppIdSession& asd, AppId payload_id)

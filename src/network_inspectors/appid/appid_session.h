@@ -358,7 +358,7 @@ public:
     void examine_ssl_metadata(AppidChangeBits& change_bits);
     void set_client_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
     void set_service_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
-    void set_payload_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
+    void set_payload_appid_data(AppId, char* version = nullptr);
     void check_app_detection_restart(AppidChangeBits& change_bits,
         ThirdPartyAppIdContext* tp_appid_ctxt);
     void check_ssl_detection_restart(AppidChangeBits& change_bits,
@@ -474,7 +474,10 @@ public:
 
     void set_service_version(const char* version, AppidChangeBits& change_bits)
     {
-        api.service.set_version(version, change_bits);
+        if (!version)
+            return;
+        api.service.set_version(version);
+        change_bits.set(APPID_SERVICE_INFO_BIT);
     }
 
     void set_service_vendor(const char* vendor, AppidChangeBits& change_bits)
@@ -504,7 +507,10 @@ public:
 
     void set_client_version(const char* version, AppidChangeBits& change_bits)
     {
-        api.client.set_version(version, change_bits);
+        if (!version)
+            return;
+        api.client.set_version(version);
+        change_bits.set(APPID_CLIENT_INFO_BIT);
     }
 
     const char* get_client_user() const
@@ -583,6 +589,16 @@ public:
     bool is_service_ip_set() const
     {
         return service_ip.is_set();
+    }
+
+    void set_user_logged_in()
+    {
+        api.set_user_logged_in();
+    }
+
+    void clear_user_logged_in()
+    {
+        api.clear_user_logged_in();
     }
 
 private:

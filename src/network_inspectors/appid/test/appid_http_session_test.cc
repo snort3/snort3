@@ -126,7 +126,7 @@ void AppIdSession::set_service_appid_data(AppId, AppidChangeBits&, char*)
 {
 }
 
-void AppIdSession::set_payload_appid_data(AppId, AppidChangeBits&, char*)
+void AppIdSession::set_payload_appid_data(AppId, char*)
 {
 }
 

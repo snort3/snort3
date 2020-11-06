@@ -59,12 +59,9 @@ enum AppidChangeBit
     APPID_DNS_HOST_BIT,
 
     // other
-    APPID_VERSION_BIT,
-    APPID_SERVICE_VENDOR_BIT,
-    APPID_SERVICE_SUBTYPE_BIT,
-    APPID_CLIENT_USERNAME_BIT,
-    APPID_CLIENT_USERID_BIT,
-    APPID_CLIENT_LOGIN_SUCCEEDED_BIT,
+    APPID_SERVICE_INFO_BIT,
+    APPID_CLIENT_INFO_BIT,
+    APPID_USER_INFO_BIT,
 
     APPID_MAX_BIT
 };
@@ -103,18 +100,12 @@ inline void change_bits_to_string(AppidChangeBits& change_bits, std::string& str
         --n? str.append("referrer, ") : str.append("referrer");
     if (change_bits.test(APPID_DNS_HOST_BIT))
         --n? str.append("dns-host, ") : str.append("dns-host");
-    if (change_bits.test(APPID_VERSION_BIT))
-        --n? str.append("version, ") : str.append("version");
-    if (change_bits.test(APPID_SERVICE_VENDOR_BIT))
-        --n? str.append("service-vendor, ") : str.append("service-vendor");
-    if (change_bits.test(APPID_SERVICE_SUBTYPE_BIT))
-        --n? str.append("service-subtype, ") : str.append("service-subtype");
-    if (change_bits.test(APPID_CLIENT_USERNAME_BIT))
-        --n? str.append("client-username, ") : str.append("client-username");
-    if (change_bits.test(APPID_CLIENT_USERID_BIT))
-        --n? str.append("client-userid, ") : str.append("client-userid");
-    if (change_bits.test(APPID_CLIENT_LOGIN_SUCCEEDED_BIT))
-        --n? str.append("client-login-succeeded, ") : str.append("client-login-succeeded");
+    if (change_bits.test(APPID_SERVICE_INFO_BIT))
+        --n? str.append("service-info, ") : str.append("service-info");
+    if (change_bits.test(APPID_CLIENT_INFO_BIT))
+        --n? str.append("client-info, ") : str.append("client-info");
+    if (change_bits.test(APPID_USER_INFO_BIT))
+        --n? str.append("user-info, ") : str.append("user-info");
     if (n != 0) // make sure all bits from AppidChangeBit enum get translated
         str.append("change_bits_to_string error!");
 }

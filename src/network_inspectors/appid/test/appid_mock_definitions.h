@@ -67,8 +67,7 @@ void ClientAppDescriptor::update_user(AppId app_id, const char* username, AppidC
 {
     my_username = username;
     my_user_id = app_id;
-    change_bits.set(APPID_CLIENT_USERNAME_BIT);
-    change_bits.set(APPID_CLIENT_USERID_BIT);
+    change_bits.set(APPID_USER_INFO_BIT);
 }
 void ClientAppDescriptor::update_stats(AppId, bool) {}
 void PayloadAppDescriptor::update_stats(AppId, bool) {}

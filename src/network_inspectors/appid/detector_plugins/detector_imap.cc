@@ -300,7 +300,7 @@ static int imap_server_validate(ImapDetectorData* dd, const uint8_t* data, uint1
             if ((id->pos < (sizeof(id->tagValue) - 1))
                 && (isImapTagChar(*data)))
             {
-                id->tagValue[id->pos] = *data;
+                id->tagValue[id->pos++] = *data;
             }
             else
             {

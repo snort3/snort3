@@ -516,7 +516,7 @@ void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits)
         {
             if (api.client.get_id() == APP_ID_NONE or api.client.get_id() == APP_ID_SSL_CLIENT)
                 set_client_appid_data(client_id, change_bits);
-            set_payload_appid_data(payload_id, change_bits);
+            set_payload_appid_data(payload_id);
         }
         scan_flags &= ~SCAN_SSL_HOST_FLAG;
     }
@@ -528,7 +528,7 @@ void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits)
         {
             if (api.client.get_id() == APP_ID_NONE or api.client.get_id() == APP_ID_SSL_CLIENT)
                 set_client_appid_data(client_id, change_bits);
-            set_payload_appid_data(payload_id, change_bits);
+            set_payload_appid_data(payload_id);
         }
         scan_flags &= ~SCAN_SSL_CERTIFICATE_FLAG;
     }
@@ -539,7 +539,7 @@ void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits)
             client_id, payload_id))
         {
             set_client_appid_data(client_id, change_bits);
-            set_payload_appid_data(payload_id, change_bits);
+            set_payload_appid_data(payload_id);
         }
         tsession->set_tls_org_unit(nullptr, 0);
     }
@@ -603,10 +603,13 @@ void AppIdSession::set_client_appid_data(AppId id, AppidChangeBits& change_bits,
                 return;
         api.client.set_id(id);
     }
-    api.client.set_version(version, change_bits);
+    if (!version)
+        return;
+    api.client.set_version(version);
+    change_bits.set(APPID_CLIENT_INFO_BIT);
 }
 
-void AppIdSession::set_payload_appid_data(AppId id, AppidChangeBits& change_bits, char* version)
+void AppIdSession::set_payload_appid_data(AppId id, char* version)
 {
     if (id <= APP_ID_NONE)
         return;
@@ -615,7 +618,7 @@ void AppIdSession::set_payload_appid_data(AppId id, AppidChangeBits& change_bits
         odp_ctxt.get_app_info_mgr().get_priority(id))
         return;
     api.payload.set_id(id);
-    api.payload.set_version(version, change_bits);
+    api.payload.set_version(version);
 }
 
 void AppIdSession::set_service_appid_data(AppId id, AppidChangeBits& change_bits, char* version)
@@ -631,7 +634,9 @@ void AppIdSession::set_service_appid_data(AppId id, AppidChangeBits& change_bits
         return;
     }
 
-    api.service.update(id, change_bits, version);
+    api.service.update(id, version);
+    if (version)
+        change_bits.set(APPID_SERVICE_INFO_BIT);
 }
 
 bool AppIdSession::is_svc_taking_too_much_time() const
