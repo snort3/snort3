@@ -152,10 +152,11 @@ protected:
 
     // Internal to scan()
     bool preface[2] = { true, false };
+    uint32_t preface_octets_seen = 0;
     bool continuation_expected[2] = { false, false };
     uint8_t scan_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH];
     uint32_t scan_remaining_frame_octets[2] = { 0, 0 };
-    uint32_t scan_octets_seen[2] = { 0, 0 };
+    uint32_t header_octets_seen[2] = { 0, 0 };
     uint8_t padding_length[2] = { 0, 0 };
     uint8_t remaining_data_padding[2] = { 0, 0 };
     Http2Enums::ScanState scan_state[2] =
@@ -166,7 +167,6 @@ protected:
 
     // Scan signals to reassemble()
     bool payload_discard[2] = { false, false };
-    uint32_t total_bytes_in_split[2] = { 0, 0 };
 
     // Used by scan, reassemble and eval to communicate
     uint8_t frame_type[2] = { Http2Enums::FT__NONE, Http2Enums::FT__NONE };

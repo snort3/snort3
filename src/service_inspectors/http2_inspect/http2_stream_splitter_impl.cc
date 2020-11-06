@@ -91,6 +91,7 @@ StreamSplitter::Status Http2StreamSplitter::data_frame_header_checks(Http2FlowDa
         if (frame_length == 0)
         {
             *flush_offset = data_offset;
+            session_data->header_octets_seen[source_id] = 0;
             session_data->scan_state[source_id] = SCAN_FRAME_HEADER;
             return StreamSplitter::FLUSH;
         }
@@ -126,9 +127,6 @@ StreamSplitter::Status Http2StreamSplitter::non_data_frame_header_checks(
         return StreamSplitter::ABORT;
     }
 
-    session_data->total_bytes_in_split[source_id] += FRAME_HEADER_LENGTH +
-        frame_length;
-
     return StreamSplitter::SEARCH;
 }
 
@@ -157,7 +155,7 @@ StreamSplitter::Status Http2StreamSplitter::non_data_scan(Http2FlowData* session
 
     data_offset += session_data->scan_remaining_frame_octets[source_id];
     *flush_offset = data_offset;
-    session_data->scan_octets_seen[source_id] = 0;
+    session_data->header_octets_seen[source_id] = 0;
     session_data->scan_remaining_frame_octets[source_id] = 0;
     session_data->scan_state[source_id] = SCAN_FRAME_HEADER;
     return status;
@@ -169,16 +167,16 @@ bool Http2StreamSplitter::read_frame_hdr(Http2FlowData* session_data, const uint
     // The first nine bytes are the frame header. But all nine might not all be
     // present in the first TCP segment we receive.
     const uint32_t remaining_header = FRAME_HEADER_LENGTH -
-        session_data->scan_octets_seen[source_id];
+        session_data->header_octets_seen[source_id];
     const uint32_t remaining_header_in_data = remaining_header > length - data_offset ?
         length - data_offset : remaining_header;
     memcpy(session_data->scan_frame_header[source_id] +
-        session_data->scan_octets_seen[source_id], data + data_offset,
+        session_data->header_octets_seen[source_id], data + data_offset,
         remaining_header_in_data);
-    session_data->scan_octets_seen[source_id] += remaining_header_in_data;
+    session_data->header_octets_seen[source_id] += remaining_header_in_data;
     data_offset += remaining_header_in_data;
 
-    if (session_data->scan_octets_seen[source_id] < FRAME_HEADER_LENGTH)
+    if (session_data->header_octets_seen[source_id] < FRAME_HEADER_LENGTH)
         return false;
 
     return true;
@@ -191,20 +189,19 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
     {
         // 24-byte preface, not a real frame, no frame header
         // Verify preface is correct, else generate loss of sync event and abort
-        switch (validate_preface(data, length, session_data->scan_octets_seen[source_id]))
+        switch (validate_preface(data, length, session_data->preface_octets_seen))
         {
         case V_GOOD:
-            *flush_offset = 24 - session_data->scan_octets_seen[source_id];
+            *flush_offset = 24 - session_data->preface_octets_seen;
             session_data->preface[source_id] = false;
             session_data->payload_discard[source_id] = true;
-            session_data->scan_octets_seen[source_id] = 0;
             return StreamSplitter::FLUSH;
         case V_BAD:
             session_data->events[source_id]->create_event(EVENT_PREFACE_MATCH_FAILURE);
             return StreamSplitter::ABORT;
         case V_TBD:
-            session_data->scan_octets_seen[source_id] += length;
-            assert(session_data->scan_octets_seen[source_id] < 24);
+            session_data->preface_octets_seen += length;
+            assert(session_data->preface_octets_seen < 24);
             *flush_offset = length;
             session_data->payload_discard[source_id] = true;
             return StreamSplitter::FLUSH;
@@ -490,9 +487,6 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
 
     if (flags & PKT_PDU_TAIL)
     {
-        session_data->total_bytes_in_split[source_id] = 0;
-        session_data->scan_octets_seen[source_id] = 0;
-
         if (session_data->frame_type[source_id] != FT_DATA)
         {
             session_data->frame_data[source_id] = session_data->frame_reassemble[source_id];

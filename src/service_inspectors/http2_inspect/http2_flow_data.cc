@@ -197,7 +197,7 @@ void Http2FlowData::deallocate_hi_memory()
 
 bool Http2FlowData::is_mid_frame() const
 {
-    return (scan_octets_seen[SRC_SERVER] != 0) || (remaining_data_padding[SRC_SERVER] != 0) ||
+    return (header_octets_seen[SRC_SERVER] != 0) || (remaining_data_padding[SRC_SERVER] != 0) ||
         continuation_expected[SRC_SERVER];
 }
 

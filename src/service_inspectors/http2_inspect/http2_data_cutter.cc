@@ -104,7 +104,7 @@ StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t*
     if (data_bytes_read == data_len)
     {
         // Done with this frame, cleanup
-        session_data->scan_octets_seen[source_id] = 0;
+        session_data->header_octets_seen[source_id] = 0;
         session_data->scan_remaining_frame_octets[source_id] = 0;
         session_data->scan_state[source_id] = SCAN_FRAME_HEADER;
         frame_bytes_seen = 0;
