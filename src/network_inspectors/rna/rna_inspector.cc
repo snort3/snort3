@@ -267,7 +267,7 @@ static const InspectApi rna_inspector_api =
         rna_mod_dtor
     },
     IT_CONTROL,
-    PROTO_BIT__ALL ^ PROTO_BIT__ANY_SSN,
+    PROTO_BIT__ETH,
     nullptr, // buffers
     nullptr, // service
     rna_inspector_pinit,
