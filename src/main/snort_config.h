@@ -148,6 +148,7 @@ struct HighAvailabilityConfig;
 struct IpsActionsConfig;
 struct LatencyConfig;
 struct MemoryConfig;
+struct PayloadInjectorConfig;
 struct Plugins;
 struct PORT_RULE_MAP;
 struct RateFilterConfig;
@@ -322,6 +323,7 @@ public:
     // various modules
     FastPatternConfig* fast_pattern_config = nullptr;
     EventQueueConfig* event_queue_config = nullptr;
+    PayloadInjectorConfig* payload_injector_config = nullptr;
 
     /* policy specific? */
     ThresholdConfig* threshold_config = nullptr;

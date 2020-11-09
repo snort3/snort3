@@ -54,7 +54,7 @@
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "packet_io/active.h"
-#include "payload_injector/payload_injector_module.h"
+#include "payload_injector/payload_injector.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
@@ -164,11 +164,11 @@ private:
                 assert(control.stream_id != NO_STREAM_ID);
             }
         }
-        InjectionReturnStatus status = PayloadInjectorModule::inject_http_payload(p, control);
+        InjectionReturnStatus status = PayloadInjector::inject_http_payload(p, control);
 #ifdef DEBUG_MSGS
         if (status != INJECTION_SUCCESS)
             debug_logf(react_trace, nullptr, "Injection error: %s\n",
-                PayloadInjectorModule::get_err_string(status));
+                PayloadInjector::get_err_string(status));
 #else
         UNUSED(status);
 #endif

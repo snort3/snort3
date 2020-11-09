@@ -31,7 +31,7 @@
 #include "config.h"
 #endif
 
-#include "payload_injector_module.h"
+#include "payload_injector.h"
 
 #include "service_inspectors/http2_inspect/http2_enum.h"
 #include "utils/util.h"
@@ -244,7 +244,7 @@ static void write_frame_hdr(uint8_t*& out, uint32_t len, uint8_t type, uint8_t f
     out += Http2Enums::FRAME_HEADER_LENGTH;
 }
 
-InjectionReturnStatus PayloadInjectorModule::get_http2_payload(InjectionControl control,
+InjectionReturnStatus PayloadInjector::get_http2_payload(InjectionControl control,
     uint8_t*& http2_payload, uint32_t& payload_len)
 {
     if (control.http_page == nullptr || control.http_page_len == 0)

@@ -16,35 +16,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// payload_injector_module.h author Maya Dagon <mdagon@cisco.com>
+// payload_injector_config.h author Maya Dagon <mdagon@cisco.com>
 
-#ifndef PAYLOAD_INJECTOR_MODULE_H
-#define PAYLOAD_INJECTOR_MODULE_H
+#ifndef PAYLOAD_INJECTOR_CONFIG_H
+#define PAYLOAD_INJECTOR_CONFIG_H
 
-#include "framework/module.h"
-
-struct PayloadInjectorCounts
+struct PayloadInjectorConfig
 {
-    PegCount http_injects;
-    PegCount http2_injects;
-    PegCount http2_translate_err;
-    PegCount http2_mid_frame;
-};
-
-extern THREAD_LOCAL PayloadInjectorCounts payload_injector_stats;
-
-class SO_PUBLIC PayloadInjectorModule : public snort::Module
-{
-public:
-    PayloadInjectorModule();
-    const PegInfo* get_pegs() const override;
-    PegCount* get_counts() const override;
-
-    Usage get_usage() const override
-    { return GLOBAL; }
-
-    bool end(const char*, int, snort::SnortConfig*) override;
 };
 
 #endif
-

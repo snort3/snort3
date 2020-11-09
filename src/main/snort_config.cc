@@ -56,6 +56,7 @@
 #include "packet_io/sfdaq_config.h"
 #include "parser/parser.h"
 #include "parser/vars.h"
+#include "payload_injector/payload_injector_config.h"
 #include "ports/rule_port_tables.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
@@ -274,6 +275,7 @@ SnortConfig::~SnortConfig()
     delete so_rules;
     if ( plugins )
         delete plugins;
+    delete payload_injector_config;
     clear_reload_resource_tuner_list();
 
     trim_heap();
