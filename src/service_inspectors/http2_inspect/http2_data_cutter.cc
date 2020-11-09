@@ -37,17 +37,17 @@ Http2DataCutter::Http2DataCutter(Http2FlowData* _session_data, HttpCommon::Sourc
     session_data(_session_data), source_id(src_id)
 { }
 
-void Http2DataCutter::http2_scan(uint32_t length, uint32_t* flush_offset, uint32_t frame_len,
-    bool padded, uint32_t& data_offset)
+StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t length,
+    uint32_t* flush_offset, uint32_t& data_offset, uint32_t frame_len, uint8_t frame_flags)
 {
-    cur_data_offset = data_offset;
+    const uint32_t cur_data_offset = data_offset;
     if (frame_bytes_seen == 0)
     {
         data_len = frame_len;
         data_bytes_read = 0;
         frame_bytes_seen = FRAME_HEADER_LENGTH;
 
-        if (padded)
+        if (frame_flags & PADDED)
         {
             data_len -= 1;
             frame_bytes_seen += 1;
@@ -56,21 +56,17 @@ void Http2DataCutter::http2_scan(uint32_t length, uint32_t* flush_offset, uint32
 
     uint32_t cur_pos = data_offset;
     const uint32_t missing = data_len - data_bytes_read;
-    cur_data = (missing <= (length - cur_pos)) ? missing : (length - cur_pos);
+    const uint32_t cur_data = (missing <= (length - cur_pos)) ? missing : (length - cur_pos);
     data_bytes_read += cur_data;
     cur_pos += cur_data;
 
     frame_bytes_seen += cur_pos - data_offset;
-    // FIXIT-L In theory data_offset should be reduced for any bytes not used by HI scan() later.
-    // But currently the value is not used in the case where we flush.
     data_offset = cur_pos;
     *flush_offset = cur_pos;
     session_data->scan_remaining_frame_octets[source_id] = frame_len - frame_bytes_seen;
-}
 
-StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t* flush_offset,
-    bool end_stream)
-{
+    session_data->stream_in_hi = session_data->current_stream[source_id];
+
     StreamSplitter::Status scan_result = StreamSplitter::SEARCH;
 
     if (cur_data > 0)
@@ -87,6 +83,7 @@ StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t*
             bytes_sent_http += http_flush_offset;
             const uint32_t unused_input = cur_data - http_flush_offset;
             data_bytes_read -= unused_input;
+            data_offset -= unused_input;
             *flush_offset -= unused_input;
         }
         else if (scan_result == StreamSplitter::SEARCH)
@@ -94,11 +91,14 @@ StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t*
             bytes_sent_http += cur_data;
         }
         else if (scan_result == StreamSplitter::ABORT)
+        {
             // FIXIT-E eventually need to implement continued processing. We cannot abort just
             // because one stream went sideways. A better approach would be to put this one stream
             // into a pass through mode while continuing to process other streams. As long as we
             // can parse the framing and process most streams it is reasonable to continue.
+            session_data->stream_in_hi = NO_STREAM_ID;
             return StreamSplitter::ABORT;
+        }
     }
 
     if (data_bytes_read == data_len)
@@ -109,13 +109,14 @@ StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t*
         session_data->scan_state[source_id] = SCAN_FRAME_HEADER;
         frame_bytes_seen = 0;
 
-        if (end_stream)
+        if (frame_flags & END_STREAM)
         {
             Http2Stream* const stream = session_data->find_stream(
                 session_data->current_stream[source_id]);
-            stream->finish_msg_body(source_id, false, !bytes_sent_http);
+            stream->finish_msg_body(source_id, false, bytes_sent_http == 0);
             // FIXIT-E this flag seems to mean both END_STREAM and the end of this frame
             stream->set_end_stream_on_data_flush(source_id);
+            session_data->stream_in_hi = NO_STREAM_ID;
             return StreamSplitter::FLUSH;
         }
         else if (scan_result != StreamSplitter::FLUSH)
@@ -135,26 +136,16 @@ StreamSplitter::Status Http2DataCutter::http_scan(const uint8_t* data, uint32_t*
 
     if (scan_result != StreamSplitter::FLUSH)
         *flush_offset = 0;
-    return scan_result;
-}
 
-StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t length,
-    uint32_t* flush_offset, uint32_t& data_offset, uint32_t frame_len, uint8_t frame_flags)
-{
-    http2_scan(length, flush_offset, frame_len, frame_flags & PADDED, data_offset);
-
-    session_data->stream_in_hi = session_data->current_stream[source_id];
-    StreamSplitter::Status status = http_scan(data, flush_offset, frame_flags & END_STREAM);
     session_data->stream_in_hi = NO_STREAM_ID;
 
-    return status;
+    return scan_result;
 }
 
 void Http2DataCutter::reassemble(const uint8_t* data, unsigned len)
 {
-    session_data->stream_in_hi = session_data->current_stream[source_id];
-
-    cur_data = cur_data_offset = 0;
+    uint32_t cur_data = 0;
+    uint32_t cur_data_offset = 0;
 
     unsigned cur_pos = 0;
     while ((cur_pos < len) || (reassemble_state == SEND_EMPTY_DATA))
@@ -171,19 +162,20 @@ void Http2DataCutter::reassemble(const uint8_t* data, unsigned len)
             if (reassemble_hdr_bytes_read == FRAME_HEADER_LENGTH)
             {
                 assert(!session_data->frame_lengths[source_id].empty());
+                reassemble_hdr_bytes_read = 0;
                 reassemble_data_len = session_data->frame_lengths[source_id].front();
                 session_data->frame_lengths[source_id].pop();
-                reassemble_frame_flags =
+                const uint8_t frame_flags =
                     get_frame_flags(session_data->lead_frame_header[source_id]);
                 cur_data_offset = cur_pos;
-                if ((reassemble_frame_flags & PADDED) != 0)
+                if (frame_flags & PADDED)
                     reassemble_state = GET_PADDING_LEN;
                 else if (reassemble_data_len > 0)
                     reassemble_state = SEND_DATA;
-                else if (reassemble_frame_flags & END_STREAM)
+                else if (frame_flags & END_STREAM)
                     reassemble_state = SEND_EMPTY_DATA;
                 else
-                    reassemble_state = DONE;
+                    reassemble_state = GET_FRAME_HDR;
             }
             break;
           }
@@ -195,10 +187,10 @@ void Http2DataCutter::reassemble(const uint8_t* data, unsigned len)
             cur_data_offset++;
             if (reassemble_data_len > 0)
                 reassemble_state = SEND_DATA;
-            else if (reassemble_frame_flags & END_STREAM)
+            else if (get_frame_flags(session_data->lead_frame_header[source_id]) & END_STREAM)
                 reassemble_state = SEND_EMPTY_DATA;
             else
-                reassemble_state = DONE;
+                reassemble_state = GET_FRAME_HDR;
             break;
           }
         case SEND_EMPTY_DATA:
@@ -213,9 +205,11 @@ void Http2DataCutter::reassemble(const uint8_t* data, unsigned len)
             unsigned copied;
             const uint32_t flags = (bytes_sent_http == (cur_data + reassemble_bytes_sent)) ?
                 PKT_PDU_TAIL : 0;
+            session_data->stream_in_hi = session_data->current_stream[source_id];
             StreamBuffer frame_buf = session_data->hi_ss[source_id]->reassemble(session_data->flow,
                 bytes_sent_http, 0, data + cur_data_offset, cur_data,
                 flags, copied);
+            session_data->stream_in_hi = NO_STREAM_ID;
             assert(copied == (unsigned)cur_data);
 
             if (frame_buf.data != nullptr)
@@ -229,27 +223,15 @@ void Http2DataCutter::reassemble(const uint8_t* data, unsigned len)
                 reassemble_bytes_sent += copied;
 
             if (reassemble_data_bytes_read == reassemble_data_len)
-                reassemble_state = DONE;
+            {
+                reassemble_data_bytes_read = 0;
+                reassemble_state = GET_FRAME_HDR;
+            }
 
             break;
           }
-        case DONE:
-            assert(false);
-            break;
         }
     }
-
-    session_data->stream_in_hi = NO_STREAM_ID;
     return;
-}
-
-void Http2DataCutter::reset()
-{
-    frame_bytes_seen = 0;
-    bytes_sent_http = 0;
-    reassemble_bytes_sent = 0;
-    reassemble_hdr_bytes_read = 0;
-    reassemble_data_bytes_read = 0;
-    reassemble_state = GET_FRAME_HDR;
 }
 

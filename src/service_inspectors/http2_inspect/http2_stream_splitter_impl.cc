@@ -299,7 +299,6 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                 {
                     status = data_frame_header_checks(session_data, flush_offset, source_id,
                         frame_length, data_offset);
-                    session_data->data_cutter[source_id].reset();
                 }
                 else
                     status = non_data_frame_header_checks(session_data, source_id, frame_length,

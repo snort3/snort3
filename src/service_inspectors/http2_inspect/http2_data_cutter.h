@@ -35,7 +35,6 @@ public:
         uint32_t* flush_offset, uint32_t& data_offset, uint32_t frame_len,
         uint8_t frame_flags);
     void reassemble(const uint8_t* data, unsigned len);
-    void reset();
 
 private:
     Http2FlowData* const session_data;
@@ -49,23 +48,14 @@ private:
     uint32_t data_bytes_read;
     // total per frame - reassemble
     uint32_t reassemble_data_len;
-    uint8_t reassemble_frame_flags;
     // accumulating - reassemble
     uint32_t reassemble_bytes_sent = 0;
     uint32_t reassemble_hdr_bytes_read = 0;
     uint32_t reassemble_data_bytes_read = 0;
-    // per call
-    uint32_t cur_data;
-    uint32_t cur_data_offset;
 
     // reassemble
-    enum ReassembleState { GET_FRAME_HDR, GET_PADDING_LEN, SEND_EMPTY_DATA, SEND_DATA, DONE };
+    enum ReassembleState { GET_FRAME_HDR, GET_PADDING_LEN, SEND_EMPTY_DATA, SEND_DATA };
     enum ReassembleState reassemble_state = GET_FRAME_HDR;
-
-    void http2_scan(uint32_t length, uint32_t* flush_offset, uint32_t frame_len, bool padded,
-        uint32_t& data_offset);
-    snort::StreamSplitter::Status http_scan(const uint8_t* data, uint32_t* flush_offset,
-        bool end_stream);
 };
 
 #endif
