@@ -88,7 +88,7 @@ bool TcpStateNone::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
 
 bool TcpStateNone::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.session->is_midstream_allowed(tsd) && (tsd.has_wscale() || (tsd.is_data_segment())) )
+    if ( trk.session->is_midstream_allowed(tsd) && (tsd.has_wscale() || tsd.is_data_segment()) )
     {
         Flow* flow = tsd.get_flow();
 
@@ -108,7 +108,7 @@ bool TcpStateNone::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateNone::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.session->is_midstream_allowed(tsd) && (tsd.has_wscale() || (tsd.is_data_segment())) )
+    if ( trk.session->is_midstream_allowed(tsd) && (tsd.has_wscale() || tsd.is_data_segment()) )
     {
         Flow* flow = tsd.get_flow();
 

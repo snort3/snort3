@@ -109,19 +109,10 @@ public:
     { return pkt->dsize; }
 
     void set_len(uint16_t seg_len)
-    {
-        assert(!meta_ack_packet);
-        pkt->dsize = seg_len;
-    }
+    { pkt->dsize = seg_len; }
 
     bool is_data_segment() const
     { return pkt->dsize > 0; }
-
-    void update_len(int32_t offset)
-    {
-        assert(!meta_ack_packet);
-        pkt->dsize += offset;
-    }
 
     bool is_packet_from_client() const
     { return packet_from_client; }
@@ -131,17 +122,13 @@ public:
 
     void slide_segment_in_rcv_window(int32_t offset)
     {
-        assert(!meta_ack_packet);
         seq += offset;
         pkt->data += offset;
         pkt->dsize -= offset;
     }
 
     void set_packet_flags(uint32_t flags) const
-    {
-        assert(!meta_ack_packet);
-        pkt->packet_flags |= flags;
-    }
+    { pkt->packet_flags |= flags; }
 
     bool are_packet_flags_set(uint32_t flags) const
     { return (pkt->packet_flags & flags) == flags; }
@@ -163,7 +150,6 @@ public:
 
     void rewrite_payload(uint16_t offset, uint8_t* from, uint16_t length)
     {
-        assert(!meta_ack_packet);
         memcpy(const_cast<uint8_t*>(pkt->data + offset), from, length);
         set_packet_flags(PKT_MODIFIED);
     }

@@ -33,8 +33,7 @@ using namespace snort;
 
 TcpStateSynRecv::TcpStateSynRecv(TcpStateMachine& tsm) :
     TcpStateHandler(TcpStreamTracker::TCP_SYN_RECV, tsm)
-{
-}
+{ }
 
 bool TcpStateSynRecv::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
@@ -52,6 +51,7 @@ bool TcpStateSynRecv::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         flow->set_session_flags(SSNFLAG_SEEN_SERVER);
         trk.session->tel.set_tcp_event(EVENT_4WHS);
     }
+
     return true;
 }
 
@@ -59,6 +59,7 @@ bool TcpStateSynRecv::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     if ( tsd.is_data_segment() )
         trk.session->handle_data_on_syn(tsd);
+
     return true;
 }
 
@@ -69,6 +70,7 @@ bool TcpStateSynRecv::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
     trk.finish_server_init(tsd);
     trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
     flow->session_state |= STREAM_STATE_SYN_ACK;
+
     return true;
 }
 
@@ -87,21 +89,21 @@ bool TcpStateSynRecv::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
         if ( tsd.is_data_segment() )
             trk.session->handle_data_on_syn(tsd);
     }
+
     return true;
 }
 
 bool TcpStateSynRecv::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     if ( trk.session->tcp_config->midstream_allowed(tsd.get_pkt()) )
-    {
-        trk.session->update_session_on_ack( );
-    }
+        trk.session->update_session_on_ack();
+
     return true;
 }
 
 bool TcpStateSynRecv::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.is_ack_valid(tsd.get_ack()) )
+    if ( !tsd.is_meta_ack_packet() && trk.is_ack_valid(tsd.get_ack()) )
     {
         Flow* flow = tsd.get_flow();
 
@@ -117,6 +119,7 @@ bool TcpStateSynRecv::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         else
             trk.session->check_for_window_slam(tsd);
     }
+
     return true;
 }
 
@@ -125,6 +128,7 @@ bool TcpStateSynRecv::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker&
     trk.update_tracker_ack_sent(tsd);
     if ( trk.session->no_ack_mode_enabled() )
         trk.update_tracker_no_ack_recv(tsd);
+
     return true;
 }
 
@@ -140,6 +144,7 @@ bool TcpStateSynRecv::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker&
     }
     if ( tsd.is_data_segment() )
         trk.session->handle_data_segment(tsd);
+
     return true;
 }
 
@@ -161,6 +166,7 @@ bool TcpStateSynRecv::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
             trk.set_tcp_state(TcpStreamTracker::TCP_CLOSE_WAIT);
         }
     }
+
     return true;
 }
 
@@ -182,6 +188,7 @@ bool TcpStateSynRecv::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     // FIXIT-L might be good to create alert specific to RST with data
     if ( tsd.is_data_segment() )
         trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
+
     return true;
 }
 

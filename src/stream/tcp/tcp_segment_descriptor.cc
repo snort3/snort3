@@ -155,8 +155,6 @@ bool TcpSegmentDescriptor::has_wscale()
 
 void TcpSegmentDescriptor::set_retransmit_flag()
 {
-    assert(!meta_ack_packet);
-
     if ( PacketTracer::is_active() )
     {
         PacketTracer::log("Packet was retransmitted and %s from the retry queue.\n",

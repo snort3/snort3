@@ -36,6 +36,7 @@ TcpStateSynSent::TcpStateSynSent(TcpStateMachine& tsm) :
 bool TcpStateSynSent::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.session->check_for_repeated_syn(tsd);
+
     return true;
 }
 
@@ -45,6 +46,7 @@ bool TcpStateSynSent::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     if ( tsd.is_data_segment() )
         trk.session->handle_data_on_syn(tsd);
     trk.set_tcp_state(TcpStreamTracker::TCP_SYN_RECV);
+
     return true;
 }
 
@@ -72,13 +74,15 @@ bool TcpStateSynSent::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     trk.session->update_timestamp_tracking(tsd);
     trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
     trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
+
     return true;
 }
 
 bool TcpStateSynSent::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( tsd.is_data_segment() )
+    if ( !tsd.is_meta_ack_packet() && tsd.is_data_segment() )
         trk.session->handle_data_segment(tsd);
+
     return true;
 }
 
@@ -92,12 +96,14 @@ bool TcpStateSynSent::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker&
     trk.session->update_timestamp_tracking(tsd);
     trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
     trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
+
     return true;
 }
 
 bool TcpStateSynSent::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.session->handle_data_segment(tsd);
+
     return true;
 }
 
@@ -105,6 +111,7 @@ bool TcpStateSynSent::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     if ( tsd.is_data_segment() )
         trk.session->handle_data_segment(tsd);
+
     return true;
 }
 
@@ -122,6 +129,7 @@ bool TcpStateSynSent::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     // FIXIT-L might be good to create alert specific to RST with data
     if ( tsd.is_data_segment() )
         trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
+
     return true;
 }
 
