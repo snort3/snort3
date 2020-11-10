@@ -465,12 +465,10 @@ bool HostTracker::add_payload(HostApplication& local_ha, Port port, IpProtocol p
     return false;
 }
 
-HostApplication HostTracker::add_service(Port port, IpProtocol proto, uint32_t lseen,
-    bool& is_new, AppId appid)
+HostApplication* HostTracker::find_and_add_service_no_lock(Port port, IpProtocol proto,
+    uint32_t lseen, bool& is_new, AppId appid, uint16_t max_services)
 {
     host_tracker_stats.service_finds++;
-    lock_guard<mutex> lck(host_tracker_lock);
-
     HostApplication *available = nullptr;
 
     for ( auto& s : services )
@@ -487,6 +485,8 @@ HostApplication HostTracker::add_service(Port port, IpProtocol proto, uint32_t l
                     s.visibility = true;
                     num_visible_services++;
                 }
+                else
+                    s.hits = 0;
             }
             else if ( s.last_seen == 0 )
             {
@@ -498,7 +498,7 @@ HostApplication HostTracker::add_service(Port port, IpProtocol proto, uint32_t l
 
             s.last_seen = lseen;
 
-            return s;
+            return &s;
         }
         else if ( !available and !s.visibility )
             available = &s;
@@ -517,11 +517,23 @@ HostApplication HostTracker::add_service(Port port, IpProtocol proto, uint32_t l
         available->inferred_appid = false;
         available->user[0] = '\0';
         available->visibility = true;
-        return *available;
+        return available;
     }
 
-    services.emplace_back(port, proto, appid, false, 1, lseen);
-    return services.back();
+    if ( max_services == 0 or num_visible_services < max_services ) 
+    {
+        services.emplace_back(port, proto, appid, false, 1, lseen);
+        return &services.back();
+    }
+    return nullptr;
+}
+
+HostApplication HostTracker::add_service(Port port, IpProtocol proto, uint32_t lseen,
+    bool& is_new, AppId appid)
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+    HostApplication* ha = find_and_add_service_no_lock(port, proto, lseen, is_new, appid);
+    return *ha;
 }
 
 void HostTracker::update_service(const HostApplication& ha)
@@ -578,6 +590,9 @@ bool HostTracker::update_service_info(HostApplication& ha, const char* vendor,
         {
             if ( s.visibility == false )
                 return false;
+
+            if ( !version and !vendor )
+                return true;
 
             HostApplicationInfo* available = nullptr;
             for ( auto& i : s.info )
@@ -645,25 +660,24 @@ bool HostTracker::update_service_banner(Port port, IpProtocol proto)
     return false;
 }
 
-bool HostTracker::update_service_user(Port port, IpProtocol proto, const char* user)
+bool HostTracker::update_service_user(Port port, IpProtocol proto, const char* user,
+    uint32_t lseen, uint16_t max_services)
 {
     host_tracker_stats.service_finds++;
+    bool is_new = false;
     lock_guard<mutex> lck(host_tracker_lock);
-    for ( auto& s : services )
-    {
-        if ( s.port == port and s.proto == proto )
-        {
-            if ( s.visibility == false)
-                return false;
 
-            if ( user and strncmp(user, s.user, INFO_SIZE) )
-            {
-                strncpy(s.user, user, INFO_SIZE);
-                s.user[INFO_SIZE-1] = '\0';
-                return true;
-            }
-            return false;
-        }
+    // Appid notifies user events before service events, so use find or add service function.
+    HostApplication* ha = find_and_add_service_no_lock(port, proto, lseen, is_new, 0,
+        max_services);
+    if ( !ha or ha->visibility == false )
+        return false;
+
+    if ( user and strncmp(user, ha->user, INFO_SIZE) )
+    {
+        strncpy(ha->user, user, INFO_SIZE);
+        ha->user[INFO_SIZE-1] = '\0';
+        return true;
     }
     return false;
 }

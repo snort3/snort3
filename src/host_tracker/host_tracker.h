@@ -314,7 +314,8 @@ public:
     bool update_service_info(HostApplication&, const char* vendor, const char* version,
         uint16_t max_info);
     bool update_service_banner(Port, IpProtocol);
-    bool update_service_user(Port, IpProtocol, const char* username);
+    bool update_service_user(Port, IpProtocol, const char* username, uint32_t lseen,
+        uint16_t max_services);
     void remove_inferred_services();
 
     size_t get_client_count();
@@ -418,6 +419,9 @@ private:
     bool add_payload_no_lock(const AppId, HostApplication*, size_t);
     HostApplication* find_service_no_lock(Port, IpProtocol, AppId);
     void update_ha_no_lock(HostApplication& dst, HostApplication& src);
+    
+    HostApplication* find_and_add_service_no_lock(Port, IpProtocol, uint32_t lseen,
+        bool& is_new, AppId, uint16_t max_services = 0);
 
     // Hide / delete the constructor from the outside world. We don't want to
     // have zombie host trackers, i.e. host tracker objects that live outside

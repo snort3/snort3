@@ -27,8 +27,8 @@ class RnaAppDiscovery
 public:
     static void process(AppidEvent*, DiscoveryFilter&, RnaConfig*, RnaLogger&);
 
-    static void discover_service(const snort::Packet*, IpProtocol, RnaTracker&,
-        const struct in6_addr*, const uint8_t*, RnaConfig*, RnaLogger&, uint16_t port,
+    static bool discover_service(const snort::Packet*, IpProtocol, RnaTracker&,
+        const snort::SfIp&, const uint8_t*, RnaConfig*, RnaLogger&, uint16_t port,
         AppId service = APP_ID_NONE);
 
     static void discover_payload(const snort::Packet*, IpProtocol, RnaTracker&,
@@ -41,13 +41,13 @@ public:
         RnaLogger&, const char*, AppId client, AppId service);
 
     static void discover_user(const snort::Packet*, RnaTracker&, const struct in6_addr*,
-        RnaLogger&, const char* username, AppId, IpProtocol);
+        RnaLogger&, const char* username, AppId, IpProtocol, RnaConfig*);
 
     static void discover_banner(const snort::Packet*, IpProtocol, RnaTracker&,
         const snort::SfIp*, const uint8_t* mac, RnaLogger&, AppId);
 private:
     static void update_service_info(const snort::Packet*, IpProtocol, const char* vendor,
-        const char* version, RnaTracker&, const snort::SfIp*, const uint8_t*,
+        const char* version, RnaTracker&, const snort::SfIp&, const uint8_t*,
         RnaLogger&, RnaConfig*, AppId service);
 
     static void analyze_user_agent_fingerprint(const snort::Packet*, const char* host,

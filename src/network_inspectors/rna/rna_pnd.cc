@@ -196,14 +196,6 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
         logger.log(RNA_EVENT_NEW, NEW_XPORT_PROTOCOL, p, &ht, ptype, src_mac, src_ip_ptr,
             packet_time());
 
-    if ( p->flow->two_way_traffic() )
-    {
-        auto proto = p->get_ip_proto_next();
-        if ( proto == IpProtocol::TCP or proto == IpProtocol::UDP )
-            RnaAppDiscovery::discover_service(p, proto, ht, src_ip_ptr, src_mac, conf,
-                logger, p->flow->server_port);
-    }
-
     if ( !new_host )
         generate_change_host_update(&ht, p, src_ip, src_mac, packet_time());
 
