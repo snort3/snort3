@@ -212,13 +212,16 @@ struct FTP_DATA_SESSION
     FTP_TELNET_SESSION ft_ssn;
     snort::FlowKey ftp_key;
     char* filename;
+    uint32_t eof_seq;
     size_t path_hash;
     int data_chan;
     int file_xfer_info;
     FilePosition position;
-    bool direction;
+    uint32_t bytes_seen;
     unsigned char mode;
     unsigned char packet_flags;
+    bool direction;
+    bool mss_changed;
 };
 
 class FtpDataFlowData : public snort::FlowData
@@ -232,7 +235,7 @@ public:
 
     void handle_expected(snort::Packet*) override;
     void handle_eof(snort::Packet*) override;
-
+    void handle_retransmit(snort::Packet*) override;
     size_t size_of() override
     { return sizeof(*this); }
 
@@ -293,6 +296,8 @@ struct FtpStats
     PegCount starttls;
     PegCount ssl_search_abandoned;
     PegCount ssl_search_abandoned_too_soon;
+    PegCount total_packets_mss_changed;
+    PegCount total_sessions_mss_changed;
 };
 
 struct TelnetStats

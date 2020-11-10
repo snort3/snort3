@@ -26,6 +26,8 @@
 #include "detection/detection_engine.h"
 #include "file_api/file_flows.h"
 #include "flow/session.h"
+#include "packet_io/active.h"
+#include "protocols/tcp.h"
 #include "stream/stream.h"
 
 #include "ftpp_si.h"
@@ -49,7 +51,10 @@ StreamSplitter::Status FtpDataSplitter::scan(Packet* pkt, const uint8_t*, uint32
 {
     Flow* flow = pkt->flow;
     assert(flow);
+    FtpDataFlowData* fdfd = (FtpDataFlowData*)flow->get_flow_data(FtpDataFlowData::inspector_id);
 
+    if (!fdfd)
+        return SEARCH;
     if ( len )
     {
         if(expected_seg_size == 0)
@@ -70,11 +75,24 @@ StreamSplitter::Status FtpDataSplitter::scan(Packet* pkt, const uint8_t*, uint32
 
         if ( len != expected_seg_size )
         {
-            // Treat this as the last packet of the FTP data transfer.
-            set_ftp_flush_flag(flow);
+            ftstats.total_packets_mss_changed++;
+            fdfd->session.mss_changed = true;
+            if (fdfd->session.bytes_seen == 0)
+            {
+                // Segmented pkt is  smaller than expected_seg_size
+                set_ftp_flush_flag(flow);
+            }
+            else if (pkt->ptrs.tcph and !pkt->ptrs.tcph->is_fin())
+            {
+                Active* act = pkt->active;
+                // add packet to retry queue to consider this is not end of ftp flow
+                if (!(pkt->flow->flags.trigger_detained_packet_event))
+                    act->set_delayed_action(Active::ACT_RETRY, true);
+            }
             expected_seg_size = len;
             restart_scan();
             *fp = len;
+	        fdfd->session.bytes_seen += len;
             return FLUSH;
         }
         else
@@ -82,9 +100,11 @@ StreamSplitter::Status FtpDataSplitter::scan(Packet* pkt, const uint8_t*, uint32
             segs++;
             bytes += len;
         }
+        fdfd->session.bytes_seen += len;
 
-        if ( segs >= 2 && bytes >= min )
+        if ((segs >= 2 and bytes >= min) or (pkt->ptrs.tcph and pkt->ptrs.tcph->is_fin()))
         {
+            // Either FIN or smaller size do FLUSH to continue inspection
             restart_scan();
             *fp = len;
             return FLUSH;

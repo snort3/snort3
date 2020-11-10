@@ -30,6 +30,7 @@
 #include "packet_tracer/packet_tracer.h"
 #include "parser/parse_rule.h"
 #include "profiler/profiler.h"
+#include "protocols/tcp.h"
 #include "pub_sub/opportunistic_tls_event.h"
 #include "stream/stream.h"
 #include "utils/util.h"
@@ -238,16 +239,50 @@ void FtpDataFlowData::handle_expected(Packet* p)
     }
 }
 
+void FtpDataFlowData::handle_retransmit(Packet* p)
+{
+    FTP_DATA_SESSION* data_ssn = &session;
+
+    if ((data_ssn->eof_seq > 0) and (data_ssn->eof_seq == p->ptrs.tcph->seq() + p->dsize))
+    {
+        // only process the final data segment
+        initFilePosition(&data_ssn->position, get_file_processed_size(p->flow));
+        finalFilePosition(&data_ssn->position);
+
+        FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
+        if (file_flows)
+        {
+            file_flows->file_process(DetectionEngine::get_current_packet(),
+                p->data, 0, SNORT_FILE_END, data_ssn->direction, data_ssn->path_hash);
+
+            eof_handled = true;
+        }
+    }
+}
+
 void FtpDataFlowData::handle_eof(Packet* p)
 {
     FTP_DATA_SESSION* data_ssn = &session;
+    data_ssn->eof_seq = 0;
 
     if (!PROTO_IS_FTP_DATA(data_ssn) || !FTPDataDirection(p, data_ssn))
         return;
 
-    initFilePosition(&data_ssn->position, get_file_processed_size(p->flow));
-    finalFilePosition(&data_ssn->position);
-    eof_handled = true;
+    if (p->dsize != 0)
+    {
+        initFilePosition(&data_ssn->position, get_file_processed_size(p->flow));
+        finalFilePosition(&data_ssn->position);
+        eof_handled = true;
+    }
+    else
+    {
+        Active* act = p->active;
+        act->set_delayed_action(Active::ACT_RETRY, true);
+        data_ssn->eof_seq = p->ptrs.tcph->seq();
+    }
+
+    if (data_ssn->mss_changed)
+        ftstats.total_sessions_mss_changed++;
 }
 
 //-------------------------------------------------------------------------

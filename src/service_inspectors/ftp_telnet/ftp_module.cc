@@ -347,7 +347,8 @@ static const PegInfo ftp_pegs[] =
     { CountType::SUM, "start_tls", "total STARTTLS events generated" },
     { CountType::SUM, "ssl_search_abandoned", "total SSL search abandoned" },
     { CountType::SUM, "ssl_srch_abandoned_early", "total SSL search abandoned too soon" },
-
+    { CountType::SUM, "pkt_segment_size_changed", "total number of FTP data packets with segment size change" },
+    { CountType::SUM, "flow_segment_size_changed", "total number of FTP sessions with segment size change" },
     { CountType::END, nullptr, nullptr }
 };
 
