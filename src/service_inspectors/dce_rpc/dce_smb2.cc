@@ -215,7 +215,8 @@ static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     uint64_t sid = Smb2Sid(smb_hdr);
     uint32_t tid = Smb2Tid(smb_hdr);
 
-    debug_logf(dce_smb_trace, nullptr, "%s : mid %" PRIu64 " sid %" PRIu64 " tid %" PRIu32 "\n",
+    debug_logf(dce_smb_trace, DetectionEngine::get_current_packet(),
+        "%s : mid %" PRIu64 " sid %" PRIu64 " tid %" PRIu32 "\n",
         (command <= SMB2_COM_OPLOCK_BREAK ? smb2_command_string[command] : "unknown"),
         mid, sid, tid);
     switch (command)
@@ -311,7 +312,7 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
     if (data_len < sizeof(NbssHdr) + SMB2_HEADER_LENGTH)
     {
         dce2_smb_stats.v2_hdr_err++;
-        debug_logf(dce_smb_trace, nullptr, "Header error with data length %d\n",data_len);
+        debug_logf(dce_smb_trace, p, "Header error with data length %d\n",data_len);
         return;
     }
 
@@ -338,7 +339,7 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
             {
                 dce_alert(GID_DCE2, DCE2_SMB_BAD_NEXT_COMMAND_OFFSET,
                     (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
-                debug_logf(dce_smb_trace, nullptr, "bad next command offset\n");
+                debug_logf(dce_smb_trace, p, "bad next command offset\n");
                 dce2_smb_stats.v2_bad_next_cmd_offset++;
                 return;
             }
@@ -351,7 +352,7 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
             if (compound_request_index > DCE2_ScSmbMaxCompound((dce2SmbProtoConf*)ssd->sd.config))
             {
                 dce2_smb_stats.v2_cmpnd_req_lt_crossed++;
-                debug_logf(dce_smb_trace, nullptr, "compound req limit reached %" PRIu8 "\n",
+                debug_logf(dce_smb_trace, p, "compound req limit reached %" PRIu8 "\n",
                     compound_request_index);
                 return;
             }
@@ -361,7 +362,7 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
     else if ( ssd->ftracker_tcp and (ssd->ftracker_tcp->smb2_pdu_state ==
         DCE2_SMB_PDU_STATE__RAW_DATA))
     {
-        debug_logf(dce_smb_trace, nullptr,
+        debug_logf(dce_smb_trace, p,
             "raw data file_name_hash %" PRIu64 " fid %" PRIu64 " dir %s\n",
             ssd->ftracker_tcp->file_name_hash, ssd->ftracker_tcp->file_id,
             ssd->ftracker_tcp->upload ? "upload" : "download");

@@ -80,7 +80,8 @@ DCE2_Smb2TreeTracker* DCE2_Smb2InsertTid(DCE2_Smb2SsnData* ssd, const uint32_t t
     if (share_type == SMB2_SHARE_TYPE_DISK and
         ssd->max_file_depth == -1 and DCE2_ScSmbFileDepth((dce2SmbProtoConf*)ssd->sd.config) == -1)
     {
-        debug_logf(dce_smb_trace, nullptr, "Not inserting TID (%u) because it's "
+        debug_logf(dce_smb_trace, DetectionEngine::get_current_packet(),
+            "Not inserting TID (%u) because it's "
             "not IPC and not inspecting normal file data.\n", tid);
         return nullptr;
     }

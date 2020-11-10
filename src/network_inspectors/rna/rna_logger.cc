@@ -46,7 +46,7 @@
 using namespace snort;
 
 #ifdef DEBUG_MSGS
-static inline void rna_logger_message(const RnaLoggerEvent& rle)
+static inline void rna_logger_message(const RnaLoggerEvent& rle, const Packet* p)
 {
     char macbuf[19] = { '\0' };
     if ( rle.mac )
@@ -59,51 +59,51 @@ static inline void rna_logger_message(const RnaLoggerEvent& rle)
         SfIpString ipbuf;
         ip.set(rle.ip); // using this instead of packet's ip to support ARP
         if ( rle.mac )
-            debug_logf(rna_trace, nullptr, "RNA log: type %u, subtype %u, mac %s, ip %s\n",
+            debug_logf(rna_trace, p, "RNA log: type %u, subtype %u, mac %s, ip %s\n",
                 rle.type, rle.subtype, macbuf, ip.ntop(ipbuf));
         else
-            debug_logf(rna_trace, nullptr, "RNA log: type %u, subtype %u, ip %s\n",
+            debug_logf(rna_trace, p, "RNA log: type %u, subtype %u, ip %s\n",
                 rle.type, rle.subtype, ip.ntop(ipbuf));
 
         if ( rle.hc )
         {
             if ( rle.hc->version[0] != '\0' )
-                debug_logf(rna_trace, nullptr,
+                debug_logf(rna_trace, p,
                     "RNA client log: client %u, service %u, version %s\n",
                     rle.hc->id, rle.hc->service, rle.hc->version);
             else
-                debug_logf(rna_trace, nullptr, "RNA client log: client %u, service %u\n",
+                debug_logf(rna_trace, p, "RNA client log: client %u, service %u\n",
                     rle.hc->id, rle.hc->service);
         }
         if ( rle.ha )
         {
-            debug_logf(rna_trace, nullptr,
+            debug_logf(rna_trace, p,
                 "RNA Service Info log: appid: %d proto %u, port: %u\n",
                 rle.ha->appid, (uint32_t)rle.ha->proto, rle.ha->port);
 
             for ( auto& s: rle.ha->info )
             {
                 if ( s.vendor[0] != '\0' )
-                    debug_logf(rna_trace, nullptr, "RNA Service Info log: vendor: %s\n",
+                    debug_logf(rna_trace, p, "RNA Service Info log: vendor: %s\n",
                         s.vendor);
 
                 if ( s.version[0] != '\0' )
-                    debug_logf(rna_trace, nullptr, "RNA Service Info log: version: %s\n",
+                    debug_logf(rna_trace, p, "RNA Service Info log: version: %s\n",
                         s.version);
             }
             if ( rle.type == RNA_EVENT_CHANGE and rle.subtype == CHANGE_BANNER_UPDATE )
-                debug_logf(rna_trace, nullptr, "RNA Banner log: true\n");
+                debug_logf(rna_trace, p, "RNA Banner log: true\n");
         }
 
         if ( rle.user )
         {
             if ( rle.user and *rle.user )
-                debug_logf(rna_trace, nullptr,
+                debug_logf(rna_trace, p,
                     "RNA user login: service %u, user name %s\n", rle.appid, rle.user);
         }
     }
     else
-        debug_logf(rna_trace, nullptr, "RNA log: type %u, subtype %u, mac %s\n",
+        debug_logf(rna_trace, p, "RNA log: type %u, subtype %u, mac %s\n",
             rle.type, rle.subtype, macbuf);
 }
 #endif
@@ -189,7 +189,7 @@ bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_
     EventManager::call_loggers(nullptr, const_cast<Packet*>(p), "RNA", &rle);
 
 #ifdef DEBUG_MSGS
-    rna_logger_message(rle);
+    rna_logger_message(rle, p);
 #endif
     return true;
 }

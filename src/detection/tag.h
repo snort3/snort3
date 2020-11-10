@@ -62,7 +62,7 @@ struct TagData
 void InitTag();
 void CleanupTag();
 int CheckTagList(snort::Packet*, Event&, void**);
-void SetTags(snort::Packet*, const OptTreeNode*, uint16_t);
+void SetTags(const snort::Packet*, const OptTreeNode*, uint16_t);
 
 #endif
 

@@ -332,7 +332,7 @@ static int detection_option_tree_evaluate(detection_option_tree_root_t* root,
     Cursor c(eval_data.p);
     int rval = 0;
 
-    debug_log(detection_trace, TRACE_RULE_EVAL, nullptr, "Starting tree eval\n");
+    debug_log(detection_trace, TRACE_RULE_EVAL, eval_data.p, "Starting tree eval\n");
 
     for ( int i = 0; i < root->num_children; ++i )
     {

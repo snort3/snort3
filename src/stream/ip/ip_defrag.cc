@@ -624,7 +624,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
      */
     for ( Fragment* frag = ft->fraglist; frag; frag = frag->next )
     {
-        debug_logf(stream_ip_trace, nullptr,
+        debug_logf(stream_ip_trace, p,
             "   frag: %p\n"
             "   frag->data: %p\n"
             "   frag->offset: %d\n"
@@ -702,7 +702,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
     /*
      * process the packet through the detection engine
      */
-    debug_log(stream_ip_trace, nullptr, "Processing rebuilt packet:\n");
+    debug_log(stream_ip_trace, p, "Processing rebuilt packet:\n");
 
     ip_stats.reassembles++;
     ip_stats.reassembled_bytes += dpkt->pktlen;
@@ -721,7 +721,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
     Analyzer::get_local_analyzer()->process_rebuilt_packet(dpkt, dpkt->pkth, dpkt->pkt, dpkt->pktlen);
     de.set_encode_packet(nullptr);
 
-    debug_log(stream_ip_trace, nullptr, "Done with rebuilt packet, marking rebuilt...\n");
+    debug_log(stream_ip_trace, p, "Done with rebuilt packet, marking rebuilt...\n");
 
     ft->frag_flags |= FRAG_REBUILT;
 }

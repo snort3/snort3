@@ -123,9 +123,9 @@ static TagNode* TagAlloc(XHash*);
 static void TagFree(XHash*, TagNode*);
 static int PruneTagCache(uint32_t, int);
 static int PruneTime(XHash* tree, uint32_t thetime);
-static void TagSession(Packet*, TagData*, uint32_t, uint16_t, void*);
-static void TagHost(Packet*, TagData*, uint32_t, uint16_t, void*);
-static void AddTagNode(Packet*, TagData*, int, uint32_t, uint16_t, void*);
+static void TagSession(const Packet*, TagData*, uint32_t, uint16_t, void*);
+static void TagHost(const Packet*, TagData*, uint32_t, uint16_t, void*);
+static void AddTagNode(const Packet*, TagData*, int, uint32_t, uint16_t, void*);
 static inline void SwapTag(TagNode*);
 
 class TagSessionCache : public XHash
@@ -298,12 +298,12 @@ void CleanupTag()
     delete host_tag_cache;
 }
 
-static void TagSession(Packet* p, TagData* tag, uint32_t time, uint16_t event_id, void* log_list)
+static void TagSession(const Packet* p, TagData* tag, uint32_t time, uint16_t event_id, void* log_list)
 {
     AddTagNode(p, tag, TAG_SESSION, time, event_id, log_list);
 }
 
-static void TagHost(Packet* p, TagData* tag, uint32_t time, uint16_t event_id, void* log_list)
+static void TagHost(const Packet* p, TagData* tag, uint32_t time, uint16_t event_id, void* log_list)
 {
     int mode;
 
@@ -323,14 +323,14 @@ static void TagHost(Packet* p, TagData* tag, uint32_t time, uint16_t event_id, v
     AddTagNode(p, tag, mode, time, event_id, log_list);
 }
 
-static void AddTagNode(Packet* p, TagData* tag, int mode, uint32_t now,
+static void AddTagNode(const Packet* p, TagData* tag, int mode, uint32_t now,
     uint16_t event_id, void* log_list)
 {
     TagNode* idx;  /* index pointer */
     TagNode* returned;
     XHash* tag_cache_ptr = nullptr;
 
-    debug_log(detection_trace, TRACE_TAG, nullptr, "Adding new Tag Head\n");
+    debug_log(detection_trace, TRACE_TAG, p, "Adding new Tag Head\n");
 
     if ( tag->tag_metric & TAG_METRIC_SESSION )
     {
@@ -630,7 +630,7 @@ static int PruneTime(XHash* tree, uint32_t thetime)
     return pruned;
 }
 
-void SetTags(Packet* p, const OptTreeNode* otn, uint16_t event_id)
+void SetTags(const Packet* p, const OptTreeNode* otn, uint16_t event_id)
 {
     if (otn != nullptr && otn->tag != nullptr)
     {

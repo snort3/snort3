@@ -167,7 +167,7 @@ private:
         InjectionReturnStatus status = PayloadInjector::inject_http_payload(p, control);
 #ifdef DEBUG_MSGS
         if (status != INJECTION_SUCCESS)
-            debug_logf(react_trace, nullptr, "Injection error: %s\n",
+            debug_logf(react_trace, p, "Injection error: %s\n",
                 PayloadInjector::get_err_string(status));
 #else
         UNUSED(status);

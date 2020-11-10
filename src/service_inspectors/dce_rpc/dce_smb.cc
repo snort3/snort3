@@ -381,13 +381,13 @@ void Dce2Smb::eval(Packet* p)
         {
             //1st packet of flow in smb1 session, create smb1 session and flowdata
             dce2_smb_sess = dce2_create_new_smb_session(p, &config);
-            debug_logf(dce_smb_trace, nullptr, "smb1 session created\n");
+            debug_logf(dce_smb_trace, p, "smb1 session created\n");
         }
         else if (DCE2_SMB_VERSION_2 == smb_version)
         {
             //1st packet of flow in smb2 session, create smb2 session and flowdata
             dce2_smb2_sess = dce2_create_new_smb2_session(p, &config);
-            debug_logf(dce_smb_trace, nullptr, "smb2 session created\n");
+            debug_logf(dce_smb_trace, p, "smb2 session created\n");
         }
         else
         {
@@ -395,7 +395,7 @@ void Dce2Smb::eval(Packet* p)
             //This means there is no flow data and this is not an SMB packet
             //if it is a TCP packet for smb data, the flow must have been
             //already identified with version.
-            debug_logf(dce_smb_trace, nullptr, "non-smb packet detected\n");
+            debug_logf(dce_smb_trace, p, "non-smb packet detected\n");
             return;
         }
     }

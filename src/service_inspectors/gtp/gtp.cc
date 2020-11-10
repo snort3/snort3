@@ -26,9 +26,11 @@
 
 #include "gtp.h"
 
+#include "main/snort_debug.h"
 #include "protocols/packet.h"
 
 #include "gtp_inspect.h"
+#include "gtp_module.h"
 
 using namespace snort;
 
@@ -51,6 +53,7 @@ static inline int GTP_Process(const GTPConfig& config, Packet* p, GTP_Roptions* 
      * Using msg_id avoids initializing info_elements for every message
      * Tabled based info_elements improves information element search performance */
     gtpMsg.msg_id = ++msg_id;
+    debug_logf(gtp_inspect_trace, p, "message id: %lu\n", gtpMsg.msg_id);
 
     int status = gtp_parse(config, &gtpMsg, gtp_buff, p->dsize);
 
