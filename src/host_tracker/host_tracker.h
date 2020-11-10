@@ -81,7 +81,8 @@ struct HostApplicationInfo
 };
 
 typedef HostCacheAllocIp<HostApplicationInfo> HostAppInfoAllocator;
-typedef AppId Payload_t;
+typedef std::pair<AppId, bool> Payload_t;
+typedef std::vector<Payload_t, HostCacheAllocIp<Payload_t>> PayloadVector;
 
 struct HostApplication
 {
@@ -90,8 +91,10 @@ struct HostApplication
         bool banner = false) : port(pt), proto(pr), appid(ap), inferred_appid(in), hits(ht),
         last_seen(ls), banner_updated(banner) { }
     HostApplication(const HostApplication& ha): port(ha.port), proto(ha.proto), appid(ha.appid),
-        inferred_appid(ha.inferred_appid), hits(ha.hits), last_seen(ha.last_seen), info(ha.info),
-        payloads(ha.payloads) { }
+        inferred_appid(ha.inferred_appid), hits(ha.hits), last_seen(ha.last_seen),
+        num_visible_payloads(ha.num_visible_payloads), info(ha.info), payloads(ha.payloads),
+        visibility(ha.visibility) { }
+
     HostApplication& operator=(const HostApplication& ha)
     {
         port = ha.port;
@@ -104,6 +107,7 @@ struct HostApplication
         payloads = ha.payloads;
         visibility = ha.visibility;
         banner_updated = ha.banner_updated;
+        num_visible_payloads = ha.num_visible_payloads;
         return *this;
     }
 
@@ -115,14 +119,19 @@ struct HostApplication
     uint32_t last_seen = 0;
     char user[INFO_SIZE] = { '\0' };
     bool banner_updated = false;
+    size_t num_visible_payloads = 0;
 
     std::vector<HostApplicationInfo, HostAppInfoAllocator> info;
-    std::vector<Payload_t, HostCacheAllocIp<Payload_t>> payloads;
+    PayloadVector payloads;
 
     friend class HostTracker;
 
+// visibility is public in UT only, to avoid extra lock/unlock funcs used only by UT
+#ifndef UNIT_TEST
 private:
+#endif
     bool visibility = true;
+
 };
 
 struct HostClient
@@ -132,7 +141,8 @@ struct HostClient
     AppId id;
     char version[INFO_SIZE] = { '\0' };
     AppId service;
-    std::vector<Payload_t, HostCacheAllocIp<Payload_t>> payloads;
+    PayloadVector payloads;
+    size_t num_visible_payloads = 0;
 
     bool operator==(const HostClient& c) const
     {
@@ -385,6 +395,22 @@ public:
     bool set_service_visibility(Port, IpProtocol, bool v = true);
     bool set_client_visibility(const HostClient&, bool v = true);
 
+#ifdef UNIT_TEST
+    // Caller is responsible for checking visibility
+    std::vector<HostApplication, HostAppAllocator> get_services()
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        return services;
+    }
+
+    // Caller is responsible for checking visibility
+    std::vector<HostClient, HostClientAllocator> get_clients()
+    {
+        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        return clients;
+    }
+#endif
+
 private:
     mutable std::mutex host_tracker_lock; // ensure that updates to a shared object are safe
     uint8_t hops;                 // hops from the snort inspector, e.g., zero for ARP
@@ -422,6 +448,9 @@ private:
     
     HostApplication* find_and_add_service_no_lock(Port, IpProtocol, uint32_t lseen,
         bool& is_new, AppId, uint16_t max_services = 0);
+
+    // Sets all payloads visible or invisible
+    void set_payload_visibility_no_lock(PayloadVector& pv, bool v, size_t& num_vis);
 
     // Hide / delete the constructor from the outside world. We don't want to
     // have zombie host trackers, i.e. host tracker objects that live outside

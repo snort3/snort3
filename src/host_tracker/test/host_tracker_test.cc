@@ -76,6 +76,218 @@ TEST(host_tracker, add_find_service_test)
     CHECK(APP_ID_NONE == ht.get_appid(8080, IpProtocol::UDP));
 }
 
+//  Test HostTracker add and rediscover service payload
+//  (reuse/rediscover a deleted payload)
+TEST(host_tracker, add_rediscover_service_payload_test)
+{
+    HostTracker ht;
+    HostApplication local_ha;
+
+    ht.add_service(80, IpProtocol::TCP, 676, true);
+    ht.add_service(443, IpProtocol::TCP, 1122);
+
+    // Test adding payload
+    // Add a payload for service http (appid 676), payload == appid 261
+    // With 5 max payloads
+    ht.add_payload(local_ha, 80, IpProtocol::TCP, 261, 676, 5);
+    ht.add_payload(local_ha, 80, IpProtocol::TCP, 100, 676, 5);
+
+    auto services = ht.get_services();
+
+    // Verify we added the services, payload visibility == true
+    for (auto& srv : services)
+    {
+        CHECK(srv.visibility);
+        for (auto& pld : srv.payloads)
+            CHECK(pld.second);
+    }
+
+    // Delete the service
+    ht.set_service_visibility(80, IpProtocol::TCP, false);
+
+    // Verify that the service (and payloads) are deleted
+    services = ht.get_services();
+    for (auto& srv : services)
+    {
+        if (srv.port == 80)
+            CHECK(srv.visibility == false);
+            for ( auto& pld : srv.payloads )
+                CHECK(pld.second == false);
+    }
+
+    // Test rediscovery
+    // One payload is rediscovered as itself (existing payload with visibility = false)
+    // The other payload uses an existing slot that was freed when payload 100 was deleted
+    ht.add_service(80, IpProtocol::TCP, 676, true);
+    ht.add_payload(local_ha, 80, IpProtocol::TCP, 261, 676, 5);
+    ht.add_payload(local_ha, 80, IpProtocol::TCP, 101, 676, 5);
+
+    services = ht.get_services();
+    for (auto& srv : services)
+    {
+        if (srv.port == 80)
+            CHECK(srv.visibility == true);
+            for ( auto& pld : srv.payloads )
+                CHECK(pld.second);
+    }
+
+    CHECK(services.front().payloads.size() == 2);
+}
+
+//  Test HostTracker with max payloads and payload reuse
+// (reuse a deleted payload for a new payload)
+TEST(host_tracker, max_payloads_test)
+{
+    HostTracker ht;
+    HostApplication local_ha;
+
+    ht.add_service(80, IpProtocol::TCP, 676, true);
+
+    // These payloads aren't valid payloads, but host tracker doesn't care
+    ht.add_payload(local_ha, 80, IpProtocol::TCP, 111, 676, 5);
+    ht.add_payload(local_ha, 80, IpProtocol::TCP, 222, 676, 5);
+    ht.add_payload(local_ha, 80, IpProtocol::TCP, 333, 676, 5);
+    ht.add_payload(local_ha, 80, IpProtocol::TCP, 444, 676, 5);
+    ht.add_payload(local_ha, 80, IpProtocol::TCP, 555, 676, 5);
+
+    auto services = ht.get_services();
+
+    // Verify we added the services, payload visibility == true
+    CHECK(services.front().payloads.size() == 5);
+
+    for (auto& pld : services.front().payloads)
+        CHECK(pld.second);
+
+    // Delete the service
+    ht.set_service_visibility(80, IpProtocol::TCP, false);
+
+    // Check all payloads are invisible after service visibility is false
+    services = ht.get_services();
+    for (auto& pld : services.front().payloads)
+        CHECK(pld.second == false);
+
+    // Add a payload; we are already at max payloads, so re-use an existing slot
+    ht.add_service(80, IpProtocol::TCP, 676, true);
+    ht.add_payload(local_ha, 80, IpProtocol::TCP, 999, 676, 5);
+    bool found_new = false;
+    services = ht.get_services();
+    for (auto& pld : services.front().payloads)
+    {
+        if (pld.first == 999)
+        {
+            CHECK(pld.second);
+            found_new = true;
+        }
+        else
+        {
+            CHECK(pld.second == false);
+        }
+    }
+
+    // Check we still have only 5 payloads, and the new payload was added
+    CHECK(services.front().payloads.size() == 5 and found_new);
+    CHECK(services.front().num_visible_payloads == 1);
+}
+
+//  Test HostTracker with simple client payload rediscovery
+//  (reuse/rediscover a deleted payload)
+TEST(host_tracker, client_payload_rediscovery_test)
+{
+    HostTracker ht;
+    HostClient hc;
+    bool new_client = false;
+
+    // Create a new client, HTTP
+    hc = ht.find_or_add_client(2, "one", 676, new_client);
+    CHECK(new_client);
+
+    // Add payloads 123 and 456
+    ht.add_client_payload(hc, 123, 5);
+    ht.add_client_payload(hc, 456, 5);
+    auto clients = ht.get_clients();
+    CHECK(clients.front().payloads.size() == 2);
+
+    // Delete client, ensure payloads are also deleted
+    ht.set_client_visibility(hc, false);
+    clients = ht.get_clients();
+    for (auto& pld : clients.front().payloads)
+        CHECK(pld.second == false);
+
+    // Rediscover client, make sure payloads are still deleted
+    hc = ht.find_or_add_client(2, "one", 676, new_client);
+    clients = ht.get_clients();
+    for (auto& pld : clients.front().payloads)
+        CHECK(pld.second == false);
+
+    // Re-add payloads, ensure they're actually visible now
+    ht.add_client_payload(hc, 123, 5);
+    ht.add_client_payload(hc, 456, 5);
+    clients = ht.get_clients();
+    for (auto& pld : clients.front().payloads)
+        CHECK(pld.second == true);
+
+    CHECK(clients.front().payloads.size() == 2);
+
+    // Make sure we didn't just add an extra client and two new payloads, rather than reusing
+    CHECK(clients.size() == 1);
+}
+
+//  Test HostTracker with max payloads and payload reuse
+// (reuse an old payload for a new payload)
+TEST(host_tracker, client_payload_max_payloads_test)
+{
+    HostTracker ht;
+    HostClient hc;
+    bool new_client = false;
+
+    // Create a new client, HTTP
+    hc = ht.find_or_add_client(2, "one", 676, new_client);
+
+    // Add five (max payloads) payloads
+    ht.add_client_payload(hc, 111, 5);
+    ht.add_client_payload(hc, 222, 5);
+    ht.add_client_payload(hc, 333, 5);
+    ht.add_client_payload(hc, 444, 5);
+    ht.add_client_payload(hc, 555, 5);
+    auto clients = ht.get_clients();
+    CHECK_FALSE(ht.add_client_payload(hc, 666, 5));
+    CHECK(clients.front().payloads.size() == 5);
+
+    // Delete client, ensure payloads are also deleted
+    ht.set_client_visibility(hc, false);
+    clients = ht.get_clients();
+    for (auto& pld : clients.front().payloads)
+        CHECK(pld.second == false);
+
+   // Rediscover client, make sure payloads are still deleted
+    hc = ht.find_or_add_client(2, "one", 676, new_client);
+    clients = ht.get_clients();
+    for (auto& pld : clients.front().payloads)
+        CHECK(pld.second == false);
+
+    CHECK(clients.front().num_visible_payloads == 0);
+
+    //Re-add payloads, ensure they're actually visible now
+    ht.add_client_payload(hc, 666, 5);
+    ht.add_client_payload(hc, 777, 5);
+    clients = ht.get_clients();
+    for (auto& pld : clients.front().payloads)
+    {
+        if (pld.first == 666 or pld.first == 777)
+        {
+            CHECK(pld.second);
+        }
+        else
+        {
+            CHECK(pld.second == false);
+        }
+    }
+
+    CHECK(clients.front().payloads.size() == 5);
+    CHECK(clients.front().num_visible_payloads == 2);
+    CHECK(clients.size() == 1);
+}
+
 //  Test copying data and deleting copied list
 TEST(host_tracker, copy_data_test)
 {

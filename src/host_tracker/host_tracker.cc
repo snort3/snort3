@@ -56,7 +56,7 @@ bool HostTracker::add_network_proto(const uint16_t type)
     {
         if ( proto.first == type )
         {
-            if (proto.second == true)
+            if ( proto.second )
                 return false;
             else
             {
@@ -78,7 +78,7 @@ bool HostTracker::add_xport_proto(const uint8_t type)
     {
         if ( proto.first == type )
         {
-            if (proto.second == true)
+            if ( proto.second )
                 return false;
             else
             {
@@ -114,11 +114,11 @@ bool HostTracker::add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary)
             return true;
         }
 
-        if (!invisible_swap_candidate and !hm_t.visibility)
+        if ( !invisible_swap_candidate and !hm_t.visibility )
             invisible_swap_candidate = &hm_t;
     }
 
-    if (invisible_swap_candidate)
+    if ( invisible_swap_candidate )
     {
         memcpy(invisible_swap_candidate->mac, mac, MAC_SIZE);
         invisible_swap_candidate->ttl = ttl;
@@ -136,14 +136,42 @@ bool HostTracker::add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary)
 
 bool HostTracker::add_payload_no_lock(const AppId pld, HostApplication* ha, size_t max_payloads)
 {
-    if ( max_payloads and ha->payloads.size() >= max_payloads )
+    Payload_t* invisible_swap_candidate = nullptr;
+
+    for ( auto& p : ha->payloads )
+    {
+        if ( p.first == pld )
+        {
+            if ( p.second )
+            {
+                return false;
+            }
+            else
+            {
+                p.second = true;
+                ha->num_visible_payloads++;
+                return true;
+            }
+        }
+
+        if ( !invisible_swap_candidate and !p.second )
+            invisible_swap_candidate = &p;
+    }
+
+    if ( invisible_swap_candidate )
+    {
+        invisible_swap_candidate->first = pld;
+        invisible_swap_candidate->second = true;
+        ha->num_visible_payloads++;
+        return true;
+    }
+
+    if ( ha->payloads.size() >= max_payloads )
         return false;
 
-    for ( const auto& app : ha->payloads )
-        if ( app == pld )
-            return false;
+    ha->payloads.emplace_back(pld, true);
+    ha->num_visible_payloads++;
 
-    ha->payloads.emplace_back(pld);
     return true;
 }
 
@@ -347,23 +375,43 @@ void HostTracker::clear_service(HostApplication& ha)
 
 bool HostTracker::add_client_payload(HostClient& hc, AppId payload, size_t max_payloads)
 {
+    Payload_t* invisible_swap_candidate = nullptr;
     std::lock_guard<std::mutex> lck(host_tracker_lock);
 
     for ( auto& client : clients )
         if ( client.id == hc.id and client.service == hc.service )
         {
-            if ( max_payloads and client.payloads.size() >= max_payloads )
-                return false;
-
-            for (const auto& pld : client.payloads)
+            for ( auto& pld : client.payloads )
             {
-                if ( pld == payload )
-                    return false;
+                if ( pld.first == payload )
+                {
+                    if ( pld.second )
+                        return false;
+
+                    pld.second = true;
+                    client.num_visible_payloads++;
+                    return true;
+                }
+                if ( !invisible_swap_candidate and !pld.second )
+                    invisible_swap_candidate = &pld;
             }
 
-            client.payloads.emplace_back(payload);
+            if ( invisible_swap_candidate )
+            {
+                invisible_swap_candidate->second = true;
+                invisible_swap_candidate->first = payload;
+                client.num_visible_payloads++;
+                hc.payloads = client.payloads;
+                return true;
+            }
+
+            if ( client.payloads.size() >= max_payloads )
+                return false;
+
+            client.payloads.emplace_back(payload, true);
             hc.payloads = client.payloads;
             strncpy(hc.version, client.version, INFO_SIZE);
+            client.num_visible_payloads++;
             return true;
         }
 
@@ -387,7 +435,7 @@ bool HostTracker::add_service(const HostApplication& app, bool* added)
                     *added = true;
             }
 
-            if (s.visibility == false)
+            if ( s.visibility == false )
             {
                 if (added)
                     *added = true;
@@ -401,7 +449,7 @@ bool HostTracker::add_service(const HostApplication& app, bool* added)
 
     services.emplace_back(app.port, app.proto, app.appid, app.inferred_appid);
     num_visible_services++;
-    if (added)
+    if ( added )
         *added = true;
 
     return true;
@@ -454,7 +502,7 @@ bool HostTracker::add_payload(HostApplication& local_ha, Port port, IpProtocol p
 
     auto ha = find_service_no_lock(port, proto, service);
 
-    if (ha)
+    if ( ha )
     {
         bool success = add_payload_no_lock(payload, ha, max_payloads);
         local_ha = *ha;
@@ -566,13 +614,13 @@ void HostTracker::update_service_proto(HostApplication& app, IpProtocol proto)
 
 void HostTracker::update_ha_no_lock(HostApplication& dst, HostApplication& src)
 {
-    if (dst.appid == APP_ID_NONE)
+    if ( dst.appid == APP_ID_NONE )
         dst.appid = src.appid;
     else
         src.appid = dst.appid;
 
-    for (auto& i: src.info)
-        if (i.visibility == true)
+    for ( auto& i: src.info )
+        if ( i.visibility == true )
             dst.info.emplace_back(i.version, i.vendor);
 
     dst.hits = src.hits;
@@ -597,12 +645,12 @@ bool HostTracker::update_service_info(HostApplication& ha, const char* vendor,
             HostApplicationInfo* available = nullptr;
             for ( auto& i : s.info )
             {
-                if (((!version and i.version[0] == '\0') or
+                if ( ((!version and i.version[0] == '\0') or
                      (version and !strncmp(version, i.version, INFO_SIZE)))
                     and ((!vendor and i.vendor[0] == '\0') or
-                         (vendor and !strncmp(vendor, i.vendor, INFO_SIZE))))
+                         (vendor and !strncmp(vendor, i.vendor, INFO_SIZE))) )
                 {
-                    if (i.visibility == false)
+                    if ( i.visibility == false )
                     {
                         i.visibility = true;  // rediscover it
                         update_ha_no_lock(ha, s);
@@ -708,7 +756,7 @@ bool HostTracker::set_visibility(bool v)
 
     visibility = v;
 
-    if (visibility == false)
+    if ( visibility == false )
     {
         for (auto& proto : network_protos)
             proto.second = false;
@@ -727,11 +775,15 @@ bool HostTracker::set_visibility(bool v)
             for (auto& info : s.info)
                 info.visibility = false;
             s.user[0] = '\0';
+            set_payload_visibility_no_lock(s.payloads, v, s.num_visible_payloads);
         }
         num_visible_services = 0;
 
         for ( auto& c : clients )
+        {
             c.visibility = false;
+            set_payload_visibility_no_lock(c.payloads, v, c.num_visible_payloads);
+        }
         num_visible_clients = 0;
 
         tcp_fpids.clear();
@@ -744,9 +796,9 @@ bool HostTracker::set_visibility(bool v)
 bool HostTracker::set_network_proto_visibility(uint16_t proto, bool v)
 {
     std::lock_guard<std::mutex> lck(host_tracker_lock);
-    for (auto& pp : network_protos)
+    for ( auto& pp : network_protos )
     {
-        if (pp.first == proto)
+        if ( pp.first == proto )
         {
             pp.second = v;
             return true;
@@ -758,15 +810,30 @@ bool HostTracker::set_network_proto_visibility(uint16_t proto, bool v)
 bool HostTracker::set_xproto_visibility(uint8_t proto, bool v)
 {
     std::lock_guard<std::mutex> lck(host_tracker_lock);
-    for (auto& pp : xport_protos)
+    for ( auto& pp : xport_protos )
     {
-        if (pp.first == proto)
+        if ( pp.first == proto )
         {
             pp.second = v;
             return true;
         }
     }
     return false;
+}
+
+void HostTracker::set_payload_visibility_no_lock(PayloadVector& pv, bool v, size_t& num_vis)
+{
+    for ( auto& p : pv )
+    {
+        if ( p.second != v )
+        {
+            p.second = v;
+            if ( v )
+                num_vis++;
+            else
+                num_vis--;
+        }
+    }
 }
 
 bool HostTracker::set_service_visibility(Port port, IpProtocol proto, bool v)
@@ -792,6 +859,8 @@ bool HostTracker::set_service_visibility(Port port, IpProtocol proto, bool v)
                 s.user[0] = '\0';
                 s.banner_updated = false;
             }
+
+            set_payload_visibility_no_lock(s.payloads, v, s.num_visible_payloads);
             return true;
         }
     }
@@ -811,10 +880,11 @@ bool HostTracker::set_client_visibility(const HostClient& hc, bool v)
                 assert(num_visible_clients > 0 );
                 num_visible_clients--;
             }
-            else if (c.visibility == false and v == true)
+            else if ( c.visibility == false and v == true )
                 num_visible_clients++;
 
             c.visibility = v;
+            set_payload_visibility_no_lock(c.payloads, v, c.num_visible_payloads);
             deleted = true;
         }
     }
@@ -862,7 +932,7 @@ size_t HostTracker::get_client_count()
 HostClient::HostClient(AppId clientid, const char *ver, AppId ser) :
     id(clientid), service(ser)
 {
-    if (ver)
+    if ( ver )
     {
         strncpy(version, ver, INFO_SIZE);
         version[INFO_SIZE-1] = '\0';
@@ -889,7 +959,7 @@ HostClient HostTracker::find_or_add_client(AppId id, const char* version, AppId 
 
             return c;
         }
-        else if ( !available and !c.visibility)
+        else if ( !available and !c.visibility )
             available = &c;
     }
 
@@ -914,12 +984,12 @@ HostClient HostTracker::find_or_add_client(AppId id, const char* version, AppId 
 
 HostApplicationInfo::HostApplicationInfo(const char *ver, const char *ven)
 {
-    if (ver)
+    if ( ver )
     {
         strncpy(version, ver, INFO_SIZE);
         version[INFO_SIZE-1] = '\0';
     }
-    if (ven)
+    if ( ven )
     {
         strncpy(vendor, ven, INFO_SIZE);
         vendor[INFO_SIZE-1] = '\0';
@@ -1002,14 +1072,15 @@ void HostTracker::stringify(string& str)
                         str += ", version: " + string(i.version);
                 }
 
-            auto total_payloads = s.payloads.size();
-            if ( total_payloads > 0 )
+            auto vis_payloads = s.num_visible_payloads;
+            if ( vis_payloads > 0 )
             {
                 str += ", payload";
-                str += (total_payloads > 1) ? "s: " : ": ";
+                str += (vis_payloads > 1) ? "s: " : ": ";
                 for ( const auto& pld : s.payloads )
                 {
-                    str += to_string(pld) + (--total_payloads ? ", " : "");
+                    if ( pld.second )
+                        str += to_string(pld.first) + (--vis_payloads ? ", " : "");
                 }
             }
             if ( *s.user )
@@ -1022,7 +1093,7 @@ void HostTracker::stringify(string& str)
         str += "\nclients size: " + to_string(num_visible_clients);
         for ( const auto& c : clients )
         {
-            if (c.visibility == false)
+            if ( c.visibility == false )
                 continue;
 
             str += "\n    id: " + to_string(c.id)
@@ -1030,13 +1101,16 @@ void HostTracker::stringify(string& str)
             if ( c.version[0] != '\0' )
                 str += ", version: " + string(c.version);
 
-            auto total_payloads = c.payloads.size();
-            if ( total_payloads )
+            auto vis_payloads = c.num_visible_payloads;
+            if ( vis_payloads )
             {
                 str += ", payload";
-                str += (total_payloads > 1) ? "s: " : ": ";
+                str += (vis_payloads > 1) ? "s: " : ": ";
                 for ( const auto& pld : c.payloads )
-                    str += to_string(pld) + (--total_payloads ? ", " : "");
+                {
+                    if ( pld.second )
+                        str += to_string(pld.first) + (--vis_payloads ? ", " : "");
+                }
             }
         }
     }
