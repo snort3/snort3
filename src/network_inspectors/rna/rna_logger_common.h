@@ -44,5 +44,6 @@
 
 #define RUA_EVENT         1004
     #define CHANGE_USER_LOGIN    2
+    #define FAILED_USER_LOGIN    5
 
 #endif

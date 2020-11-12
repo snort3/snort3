@@ -126,15 +126,14 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
         discover_banner(p, proto, ht, &p->flow->server_ip, src_mac, logger, service);
     }
 
-    // Appid supports only login success event. Change checks once login failure and
-    // logoff is supported
+    // Appid supports login success/failure events, but not logoff event.
     if ( appid_change_bits[APPID_USER_INFO_BIT] and filter.is_user_monitored(p) )
     {
-        bool login;
-        const char* username = appid_session_api.get_user_info(service, login);
-        if ( login and service > APP_ID_NONE and username and *username )
+        bool login_success;
+        const char* username = appid_session_api.get_user_info(service, login_success);
+        if ( service > APP_ID_NONE and username and *username )
             discover_user(p, ht, (const struct in6_addr*) p->ptrs.ip_api.get_dst()->get_ip6_ptr(),
-                logger, username, service, proto, conf);
+                logger, username, service, proto, conf, login_success);
     }
 
     if ( p->is_from_client() and ( appid_change_bits[APPID_HOST_BIT] or
@@ -318,13 +317,13 @@ void RnaAppDiscovery::discover_client(const Packet* p, RnaTracker& rt,
 
 void RnaAppDiscovery::discover_user(const Packet* p, RnaTracker& rt,
     const struct in6_addr* ip, RnaLogger& logger, const char* username,
-    AppId service, IpProtocol proto, RnaConfig* conf)
+    AppId service, IpProtocol proto, RnaConfig* conf, bool login_success)
 {
     if ( rt->update_service_user(p->flow->server_port, proto, username,
-        (uint32_t) packet_time(), conf ? conf->max_host_services : 0) )
+        (uint32_t) packet_time(), conf ? conf->max_host_services : 0, login_success) )
     {
-        logger.log(RUA_EVENT, CHANGE_USER_LOGIN, p, &rt, ip, username,
-            service, (uint32_t) packet_time());
+        logger.log(RUA_EVENT, login_success ? CHANGE_USER_LOGIN : FAILED_USER_LOGIN,
+            p, &rt, ip, username, service, (uint32_t) packet_time());
     }
 }
 

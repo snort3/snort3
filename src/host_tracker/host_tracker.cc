@@ -32,6 +32,9 @@
 using namespace snort;
 using namespace std;
 
+#define USER_LOGIN_SUCCESS 1
+#define USER_LOGIN_FAILURE 2
+
 THREAD_LOCAL struct HostTrackerStats host_tracker_stats;
 
 const uint8_t snort::zero_mac[MAC_SIZE] = {0, 0, 0, 0, 0, 0};
@@ -564,6 +567,8 @@ HostApplication* HostTracker::find_and_add_service_no_lock(Port port, IpProtocol
         available->last_seen = lseen;
         available->inferred_appid = false;
         available->user[0] = '\0';
+        available->user_login = 0;
+        available->banner_updated = false;
         available->visibility = true;
         return available;
     }
@@ -709,7 +714,7 @@ bool HostTracker::update_service_banner(Port port, IpProtocol proto)
 }
 
 bool HostTracker::update_service_user(Port port, IpProtocol proto, const char* user,
-    uint32_t lseen, uint16_t max_services)
+    uint32_t lseen, uint16_t max_services, bool success)
 {
     host_tracker_stats.service_finds++;
     bool is_new = false;
@@ -725,9 +730,24 @@ bool HostTracker::update_service_user(Port port, IpProtocol proto, const char* u
     {
         strncpy(ha->user, user, INFO_SIZE);
         ha->user[INFO_SIZE-1] = '\0';
+        ha->user_login = success ? USER_LOGIN_SUCCESS : USER_LOGIN_FAILURE;
         return true;
     }
-    return false;
+
+    if ( success )
+    {
+        if ( ha->user_login & USER_LOGIN_SUCCESS )
+            return false;
+        ha->user_login |= USER_LOGIN_SUCCESS;
+        return true;
+    }
+    else
+    {
+        if ( ha->user_login & USER_LOGIN_FAILURE )
+            return false;
+        ha->user_login |= USER_LOGIN_FAILURE;
+        return true;
+    }
 }
 
 void HostTracker::remove_inferred_services()

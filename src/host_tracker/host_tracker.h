@@ -118,6 +118,7 @@ struct HostApplication
     uint32_t hits = 0;
     uint32_t last_seen = 0;
     char user[INFO_SIZE] = { '\0' };
+    uint8_t user_login = 0;
     bool banner_updated = false;
     size_t num_visible_payloads = 0;
 
@@ -325,7 +326,7 @@ public:
         uint16_t max_info);
     bool update_service_banner(Port, IpProtocol);
     bool update_service_user(Port, IpProtocol, const char* username, uint32_t lseen,
-        uint16_t max_services);
+        uint16_t max_services, bool success);
     void remove_inferred_services();
 
     size_t get_client_count();

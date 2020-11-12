@@ -44,6 +44,7 @@
 #endif
 
 using namespace snort;
+using namespace std;
 
 #ifdef DEBUG_MSGS
 static inline void rna_logger_message(const RnaLoggerEvent& rle, const Packet* p)
@@ -95,11 +96,18 @@ static inline void rna_logger_message(const RnaLoggerEvent& rle, const Packet* p
                 debug_logf(rna_trace, p, "RNA Banner log: true\n");
         }
 
-        if ( rle.user )
+        if ( rle.user and *rle.user )
         {
-            if ( rle.user and *rle.user )
-                debug_logf(rna_trace, p,
-                    "RNA user login: service %u, user name %s\n", rle.appid, rle.user);
+            string login_str;
+            if ( rle.type == RUA_EVENT )
+            {
+                if ( rle.subtype == CHANGE_USER_LOGIN )
+                    login_str = " login success";
+                else if ( rle.subtype == FAILED_USER_LOGIN )
+                    login_str = " login failure";
+            }
+            debug_logf(rna_trace, nullptr, "RNA user%s: service %u, user name %s\n",
+                login_str.c_str(), rle.appid, rle.user);
         }
     }
     else

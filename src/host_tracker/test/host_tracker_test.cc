@@ -288,6 +288,26 @@ TEST(host_tracker, client_payload_max_payloads_test)
     CHECK(clients.size() == 1);
 }
 
+// Test user login information updates for service
+TEST(host_tracker, update_service_user_test)
+{
+    HostTracker ht;
+
+    CHECK(ht.add_service(110, IpProtocol::TCP, 788, false) == true);
+
+    // The first discoveries of both login success and login failure are updated
+    CHECK(ht.update_service_user(110, IpProtocol::TCP, "user1", 1, 1, true) == true);
+    CHECK(ht.update_service_user(110, IpProtocol::TCP, "user1", 1, 1, false) == true);
+
+    // Subsequent discoveries for login success and login failure are not updated
+    CHECK(ht.update_service_user(110, IpProtocol::TCP, "user1", 1, 1, true) == false);
+    CHECK(ht.update_service_user(110, IpProtocol::TCP, "user1", 1, 1, false) == false);
+
+    // Discoveries for a new user name are updated
+    CHECK(ht.update_service_user(110, IpProtocol::TCP, "user2", 1, 1, false) == true);
+    CHECK(ht.update_service_user(110, IpProtocol::TCP, "user2", 1, 1, true) == true);
+}
+
 //  Test copying data and deleting copied list
 TEST(host_tracker, copy_data_test)
 {

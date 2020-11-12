@@ -41,7 +41,7 @@ public:
         RnaLogger&, const char*, AppId client, AppId service);
 
     static void discover_user(const snort::Packet*, RnaTracker&, const struct in6_addr*,
-        RnaLogger&, const char* username, AppId, IpProtocol, RnaConfig*);
+        RnaLogger&, const char* username, AppId, IpProtocol, RnaConfig*, bool);
 
     static void discover_banner(const snort::Packet*, IpProtocol, RnaTracker&,
         const snort::SfIp*, const uint8_t* mac, RnaLogger&, AppId);
