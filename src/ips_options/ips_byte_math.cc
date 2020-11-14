@@ -213,27 +213,18 @@ IpsOption::EvalStatus ByteMathOption::eval(Cursor& c, Packet* p)
     }
 
     // do the extraction
-    int ret, bytes_read;
     uint32_t value;
 
     if (!config.string_convert_flag)
     {
-        ret = byte_extract(endian, config.bytes_to_extract, ptr, start, end, &value);
-        if (ret < 0)
+        if (byte_extract(endian, config.bytes_to_extract, ptr, start, end, &value) < 0)
             return NO_MATCH;
-
-        bytes_read = config.bytes_to_extract;
     }
     else
     {
-        ret = string_extract(config.bytes_to_extract, config.base, ptr, start, end, &value);
-        if (ret < 0)
+        if (string_extract(config.bytes_to_extract, config.base, ptr, start, end, &value) < 0)
             return NO_MATCH;
-
-        bytes_read = ret;
     }
-    /* advance cursor */
-    c.add_pos(bytes_read);
 
     if (config.bitmask_val != 0)
     {
