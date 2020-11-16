@@ -110,40 +110,40 @@ void Shell::clear_config_output()
     s_current_node = nullptr;
 }
 
-bool Shell::is_whitelisted(const std::string& key)
+bool Shell::is_trusted(const std::string& key)
 {
     Shell* sh = Shell::get_current_shell();
 
     if ( !sh )
         return false;
 
-    const Whitelist& whitelist = sh->get_whitelist();
-    const Whitelist& internal_whitelist = sh->get_internal_whitelist();
-    const Whitelist& whitelist_prefixes = sh->get_whitelist_prefixes();
+    const Allowlist& allowlist = sh->get_allowlist();
+    const Allowlist& internal_allowlist = sh->get_internal_allowlist();
+    const Allowlist& allowlist_prefixes = sh->get_allowlist_prefixes();
 
-    for ( const auto& prefix : whitelist_prefixes )
+    for ( const auto& prefix : allowlist_prefixes )
     {
         if (key.compare(0, prefix.length(), prefix) == 0)
             return true;
     }
 
-    if ( whitelist.find(key) != whitelist.end() )
+    if ( allowlist.find(key) != allowlist.end() )
         return true;
 
-    if ( internal_whitelist.find(key) != internal_whitelist.end() )
+    if ( internal_allowlist.find(key) != internal_allowlist.end() )
         return true;
 
     return false;
 }
 
-void Shell::whitelist_append(const char* keyword, bool is_prefix)
+void Shell::allowlist_append(const char* keyword, bool is_prefix)
 {
     Shell* sh = Shell::get_current_shell();
 
     if ( !sh )
         return;
 
-    sh->whitelist_update(keyword, is_prefix);
+    sh->allowlist_update(keyword, is_prefix);
 }
 
 void Shell::config_open_table(bool is_root_node, bool is_list, int idx,
@@ -440,11 +440,11 @@ bool Shell::configure(SnortConfig* sc, bool is_fatal, bool is_root)
         load_string(lua, overrides.c_str());
 
     if ( SnortConfig::log_verbose() )
-        print_whitelist();
+        print_allowlist();
 
     load_string(lua, ModuleManager::get_lua_finalize());
 
-    clear_whitelist();
+    clear_allowlist();
 
     auto config_output = Shell::get_current_shell()->s_config_output;
     if ( config_output )
@@ -499,7 +499,7 @@ void Shell::execute(const char* cmd, string& rsp)
 // Helper methods
 //-------------------------------------------------------------------------
 
-static void print_list(const Shell::Whitelist& wlist, const std::string& msg)
+static void print_list(const Shell::Allowlist& wlist, const std::string& msg)
 {
     LogMessage("\t%s\n", msg.c_str());
     std::string list;
@@ -520,31 +520,31 @@ static void print_list(const Shell::Whitelist& wlist, const std::string& msg)
 // private methods
 //-------------------------------------------------------------------------
 
-void Shell::print_whitelist() const
+void Shell::print_allowlist() const
 {
     std::string output;
-    if ( !whitelist.empty() )
+    if ( !allowlist.empty() )
     {
-        output = "Lua Whitelist Keywords for " + file + ":";
-        print_list(whitelist, output);
+        output = "Lua Allowlist Keywords for " + file + ":";
+        print_list(allowlist, output);
     }
 
-    if ( !whitelist_prefixes.empty() )
+    if ( !allowlist_prefixes.empty() )
     {
-        output = "Lua Whitelist Prefixes for " + file + ":";
-        print_list(whitelist_prefixes, output);
+        output = "Lua Allowlist Prefixes for " + file + ":";
+        print_list(allowlist_prefixes, output);
     }
 }
 
-void Shell::whitelist_update(const char* s, bool is_prefix)
+void Shell::allowlist_update(const char* s, bool is_prefix)
 {
-    Whitelist* wlist = nullptr;
+    Allowlist* wlist = nullptr;
     if ( is_prefix )
-        wlist = &whitelist_prefixes;
+        wlist = &allowlist_prefixes;
     else if ( !bootstrapped )
-        wlist = &internal_whitelist;
+        wlist = &internal_allowlist;
     else
-        wlist = &whitelist;
+        wlist = &allowlist;
 
     if ( s )
         wlist->emplace(s);

@@ -166,7 +166,7 @@ TEST(appid_session_api, is_appid_inspecting_session)
     val = mock_session->get_api().is_appid_inspecting_session();
     CHECK_TRUE(val);
     mock_session->set_session_flags(APPID_SESSION_DECRYPTED);
-    mock_session->session_packet_count = SSL_WHITELIST_PKT_LIMIT;
+    mock_session->session_packet_count = SSL_ALLOWLIST_PKT_LIMIT;
     val = mock_session->get_api().is_appid_inspecting_session();
     CHECK_TRUE(val);
 

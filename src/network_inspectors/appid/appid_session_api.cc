@@ -31,7 +31,7 @@
 #include "service_plugins/service_bootp.h"
 #include "service_plugins/service_netbios.h"
 
-#define SSL_WHITELIST_PKT_LIMIT 20
+#define SSL_ALLOWLIST_PKT_LIMIT 20
 
 using namespace snort;
 
@@ -209,7 +209,7 @@ bool AppIdSessionApi::is_appid_inspecting_session() const
         asd->get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE) or
         (asd->get_session_flags(APPID_SESSION_ENCRYPTED) and
             (asd->get_session_flags(APPID_SESSION_DECRYPTED) or
-            asd->session_packet_count < SSL_WHITELIST_PKT_LIMIT)) )
+            asd->session_packet_count < SSL_ALLOWLIST_PKT_LIMIT)) )
     {
         return true;
     }

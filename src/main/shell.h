@@ -44,7 +44,7 @@ class Value;
 class Shell
 {
 public:
-    typedef std::set<std::string> Whitelist;
+    typedef std::set<std::string> Allowlist;
 
     Shell(const char* file = nullptr, bool load_defaults = false);
     ~Shell();
@@ -67,8 +67,8 @@ public:
     { return loaded; }
 
 public:
-    static bool is_whitelisted(const std::string& key);
-    static void whitelist_append(const char* keyword, bool is_prefix);
+    static bool is_trusted(const std::string& key);
+    static void allowlist_append(const char* keyword, bool is_prefix);
 
     static void config_open_table(bool is_root_node, bool is_list, int idx,
         const std::string& table_name, const snort::Parameter* p);
@@ -94,24 +94,24 @@ private:
     static bool s_close_table;
 
 private:
-    void clear_whitelist()
+    void clear_allowlist()
     {
-        whitelist.clear();
-        internal_whitelist.clear();
-        whitelist_prefixes.clear();
+        allowlist.clear();
+        internal_allowlist.clear();
+        allowlist_prefixes.clear();
     }
 
-    const Whitelist& get_whitelist() const
-    { return whitelist; }
+    const Allowlist& get_allowlist() const
+    { return allowlist; }
 
-    const Whitelist& get_internal_whitelist() const
-    { return internal_whitelist; }
+    const Allowlist& get_internal_allowlist() const
+    { return internal_allowlist; }
 
-    const Whitelist& get_whitelist_prefixes() const
-    { return whitelist_prefixes; }
+    const Allowlist& get_allowlist_prefixes() const
+    { return allowlist_prefixes; }
 
-    void print_whitelist() const;
-    void whitelist_update(const char* keyword, bool is_prefix);
+    void print_allowlist() const;
+    void allowlist_update(const char* keyword, bool is_prefix);
 
 private:
     bool loaded;
@@ -120,9 +120,9 @@ private:
     std::string file;
     std::string parse_from;
     std::string overrides;
-    Whitelist whitelist;
-    Whitelist internal_whitelist;
-    Whitelist whitelist_prefixes;
+    Allowlist allowlist;
+    Allowlist internal_allowlist;
+    Allowlist allowlist_prefixes;
     ConfigData config_data;
 };
 

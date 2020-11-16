@@ -645,12 +645,12 @@ SO_PUBLIC bool set_alias(const char* from, const char* to)
 
 SO_PUBLIC void snort_whitelist_append(const char* s)
 {
-    Shell::whitelist_append(s, false);
+    Shell::allowlist_append(s, false);
 }
 
 SO_PUBLIC void snort_whitelist_add_prefix(const char* s)
 {
-    Shell::whitelist_append(s, true);
+    Shell::allowlist_append(s, true);
 }
 
 SO_PUBLIC bool open_table(const char* s, int idx)
@@ -670,7 +670,7 @@ SO_PUBLIC bool open_table(const char* s, int idx)
 
     if ( !h || (h->api && h->api->type == PT_IPS_OPTION) )
     {
-        if ( !Shell::is_whitelisted(key) )
+        if ( !Shell::is_trusted(key) )
             ParseWarning(WARN_CONF_STRICT, "unknown table %s", key.c_str());
         return false;
     }
