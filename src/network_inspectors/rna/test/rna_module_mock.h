@@ -72,6 +72,8 @@ UaFpProcessor::~UaFpProcessor() { }
 void UaFpProcessor::make_mpse(SnortConfig*) { }
 void UaFpProcessor::push(RawFingerprint const&) { }
 
+void UdpFpProcessor::push(RawFingerprint const&) { }
+
 // inspector
 class RnaInspector
 {

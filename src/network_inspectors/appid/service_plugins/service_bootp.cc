@@ -25,12 +25,14 @@
 
 #include "service_bootp.h"
 
+#include "detection/detection_engine.h"
+#include "protocols/eth.h"
+#include "protocols/packet.h"
+#include "pub_sub/dhcp_events.h"
 #include "app_info_table.h"
 #include "appid_config.h"
 #include "appid_inspector.h"
 #include "appid_utils/ip_funcs.h"
-#include "protocols/eth.h"
-#include "protocols/packet.h"
 
 using namespace snort;
 
@@ -160,8 +162,7 @@ int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
 
                         if (option53 && op55_len && (memcmp(eh->ether_src, bh->chaddr, 6) == 0))
                         {
-                            if (add_dhcp_info(args.asd, op55_len, op55, op60_len, op60, bh->chaddr))
-                                return APPID_ENOMEM;
+                            add_dhcp_info(args.asd, op55_len, op55, op60_len, op60, bh->chaddr);
                         }
                         goto inprocess;
                     }
@@ -306,39 +307,19 @@ not_compatible:
     return APPID_NOT_COMPATIBLE;
 }
 
-void BootpServiceDetector::AppIdFreeDhcpData(DHCPData* dd)
-{
-    snort_free(dd);
-}
-
-void BootpServiceDetector::AppIdFreeDhcpInfo(DHCPInfo* dd)
-{
-    snort_free(dd);
-}
-
-int BootpServiceDetector::add_dhcp_info(AppIdSession& asd, unsigned op55_len, const uint8_t* op55,
+void BootpServiceDetector::add_dhcp_info(AppIdSession& asd, unsigned op55_len, const uint8_t* op55,
     unsigned op60_len, const uint8_t* op60, const uint8_t* mac)
 {
     if (op55_len && op55_len <= DHCP_OPTION55_LEN_MAX
         && !asd.get_session_flags(APPID_SESSION_HAS_DHCP_FP))
     {
-        DHCPData* rdd = (DHCPData*)snort_calloc(sizeof(*rdd));
-        if (asd.add_flow_data(rdd, APPID_SESSION_DATA_DHCP_FP_DATA,
-            (AppIdFreeFCN)BootpServiceDetector::AppIdFreeDhcpData))
-        {
-            BootpServiceDetector::AppIdFreeDhcpData(rdd);
-            return -1;
-        }
-
         asd.set_session_flags(APPID_SESSION_HAS_DHCP_FP);
-        rdd->op55_len = (op55_len > DHCP_OP55_MAX_SIZE) ? DHCP_OP55_MAX_SIZE : op55_len;
-        memcpy(rdd->op55, op55, rdd->op55_len);
-        rdd->op60_len =  (op60_len > DHCP_OP60_MAX_SIZE) ? DHCP_OP60_MAX_SIZE : op60_len;
-        if (op60_len)
-            memcpy(rdd->op60, op60, rdd->op60_len);
-        memcpy(rdd->eth_addr, mac, sizeof(rdd->eth_addr));
+        unsigned op55_length = (op55_len > DHCP_OP55_MAX_SIZE) ? DHCP_OP55_MAX_SIZE : op55_len;
+        unsigned op60_length = (op60_len > DHCP_OP60_MAX_SIZE) ? DHCP_OP60_MAX_SIZE : op60_len;
+        Packet* p = DetectionEngine::get_current_packet();
+        DHCPDataEvent event(p, op55_length, op60_length, op55, op60, mac);
+        DataBus::publish(DHCP_DATA_EVENT, event, p->flow);
     }
-    return 0;
 }
 
 static unsigned isIPv4HostMonitored(uint32_t, int32_t)
@@ -351,8 +332,6 @@ void BootpServiceDetector::add_new_dhcp_lease(AppIdSession& asd, const uint8_t* 
     int32_t zone,
     uint32_t subnetmask, uint32_t leaseSecs, uint32_t router)
 {
-    DHCPInfo* info;
-
     if (memcmp(mac, zeromac, 6) == 0 || ip == 0)
         return;
 
@@ -364,19 +343,9 @@ void BootpServiceDetector::add_new_dhcp_lease(AppIdSession& asd, const uint8_t* 
     if (!(flags & IPFUNCS_HOSTS_IP))
         return;
 
-    info = (DHCPInfo*)snort_calloc(sizeof(DHCPInfo));
-
-    if (asd.add_flow_data(info, APPID_SESSION_DATA_DHCP_INFO,
-        (AppIdFreeFCN)BootpServiceDetector::AppIdFreeDhcpInfo))
-    {
-        BootpServiceDetector::AppIdFreeDhcpInfo(info);
-        return;
-    }
     asd.set_session_flags(APPID_SESSION_HAS_DHCP_INFO);
-    info->ipAddr = ip;
-    memcpy(info->eth_addr, mac, sizeof(info->eth_addr));
-    info->subnetmask = subnetmask;
-    info->leaseSecs = leaseSecs;
-    info->router = router;
+    Packet* p = DetectionEngine::get_current_packet();
+    DHCPInfoEvent event(p, ip, mac, subnetmask, leaseSecs, router);
+    DataBus::publish(DHCP_INFO_EVENT,  event, p->flow);
 }
 

@@ -769,6 +769,13 @@ bool HostTracker::add_tcp_fingerprint(uint32_t fpid)
     return result.second;
 }
 
+bool HostTracker::add_udp_fingerprint(uint32_t fpid)
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+    auto result = udp_fpids.emplace(fpid);
+    return result.second;
+}
+
 bool HostTracker::set_visibility(bool v)
 {
     std::lock_guard<std::mutex> lck(host_tracker_lock);
@@ -1182,5 +1189,13 @@ void HostTracker::stringify(string& str)
                 str += ", device: " + string(fp.device);
             str += string(")") + (--total ? ", " : "");
         }
+    }
+
+    total = udp_fpids.size();
+    if ( total )
+    {
+        str += "\nudp fingerprint: ";
+        for ( const auto& fpid : udp_fpids )
+            str += to_string(fpid) + (--total ? ", " : "");
     }
 }

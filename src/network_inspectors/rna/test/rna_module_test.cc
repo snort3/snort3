@@ -38,6 +38,7 @@
 
 void set_tcp_fp_processor(TcpFpProcessor*) { }
 void set_ua_fp_processor(UaFpProcessor*) { }
+void set_udp_fp_processor(UdpFpProcessor*) { }
 
 namespace snort
 {

@@ -60,8 +60,21 @@ static inline void rna_logger_message(const RnaLoggerEvent& rle, const Packet* p
         SfIpString ipbuf;
         ip.set(rle.ip); // using this instead of packet's ip to support ARP
         if ( rle.mac )
-            debug_logf(rna_trace, p, "RNA log: type %u, subtype %u, mac %s, ip %s\n",
-                rle.type, rle.subtype, macbuf, ip.ntop(ipbuf));
+        {
+            if (rle.type == RNA_EVENT_CHANGE and rle.subtype == CHANGE_FULL_DHCP_INFO)
+            {
+                SfIp router;
+                SfIpString routerbuf;
+                router.set(rle.router);
+                debug_logf(rna_trace, p, "RNA DHCP full information log: type %u, "
+                    "subtype %u, mac %s, ip %s, lease time %u, netmask %x, router %s\n",
+                    rle.type, rle.subtype, macbuf, ip.ntop(ipbuf), rle.lease,
+                    rle.netmask, router.ntop(routerbuf));
+            }
+            else
+                debug_logf(rna_trace, p, "RNA log: type %u, subtype %u, mac %s, ip %s\n",
+                    rle.type, rle.subtype, macbuf, ip.ntop(ipbuf));
+        }
         else
             debug_logf(rna_trace, p, "RNA log: type %u, subtype %u, ip %s\n",
                 rle.type, rle.subtype, ip.ntop(ipbuf));
@@ -170,11 +183,20 @@ void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, const uint
         nullptr, nullptr, nullptr, cond_var);
 }
 
+void RnaLogger::log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
+    const struct in6_addr* src_ip, const uint8_t* src_mac, uint32_t lease, uint32_t netmask,
+    const struct in6_addr* router)
+{
+    log(type, subtype, src_ip, src_mac, ht, p, 0, 0, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, APP_ID_NONE, nullptr, false, lease, netmask, router);
+}
+
 bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_ip,
     const uint8_t* src_mac, RnaTracker* ht, const Packet* p, uint32_t event_time,
     uint16_t proto, const HostMac* hm, const HostApplication* ha,
     const FpFingerprint* fp, void* cond_var, const HostClient* hc,
-    const char* user, AppId appid, const char* di, bool jb)
+    const char* user, AppId appid, const char* di, bool jb, uint32_t lease,
+    uint32_t netmask, const struct in6_addr* router)
 {
     if ( !enabled )
         return false;
@@ -182,7 +204,7 @@ bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_
     assert(ht);
 
     RnaLoggerEvent rle(type, subtype, src_mac, ht, hm, proto, cond_var,
-        ha, fp, hc, user, appid, di, jb, p);
+        ha, fp, hc, user, appid, di, jb, lease, netmask, router, p);
     if ( src_ip and (!IN6_IS_ADDR_V4MAPPED(src_ip) or src_ip->s6_addr32[3]) )
         rle.ip = src_ip;
     else

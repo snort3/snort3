@@ -37,6 +37,7 @@
 
 #include "rna_app_discovery.h"
 #include "rna_fingerprint_tcp.h"
+#include "rna_fingerprint_udp.h"
 #include "rna_logger_common.h"
 
 #ifdef UNIT_TEST
@@ -213,6 +214,83 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
         if (tfp and ht->add_tcp_fingerprint(tfp->fpid))
             logger.log(RNA_EVENT_NEW, NEW_OS, p, &ht, src_ip_ptr, src_mac, tfp, packet_time());
     }
+}
+
+void RnaPnd::analyze_dhcp_fingerprint(DataEvent& event)
+{
+    const Packet* p = event.get_packet();
+    const DHCPDataEvent& dhcp_data_event = static_cast<DHCPDataEvent&>(event);
+    const uint8_t* src_mac = dhcp_data_event.get_eth_addr();
+    bool new_host = false;
+    bool new_mac = false;
+    const auto& src_ip = p->ptrs.ip_api.get_src();
+    auto ht = host_cache.find_else_create(*src_ip, &new_host);
+    if (!new_host)
+        ht->update_last_seen();
+
+    MacKey mk(src_mac);
+    auto hm_ptr = host_cache_mac.find_else_create(mk, &new_mac);
+    if (new_mac)
+    {
+        ht->add_mac(mk.mac_addr, p->ptrs.ip_api.ttl(), 0);
+        logger.log(RNA_EVENT_NEW, NEW_HOST, p, &ht, nullptr, mk.mac_addr);
+        hm_ptr->update_last_event(p->pkth->ts.tv_sec);
+    }
+    else
+        hm_ptr->update_last_seen(p->pkth->ts.tv_sec);
+
+    const UdpFpProcessor* processor = get_udp_fp_processor();
+    if (!processor)
+        return;
+
+    FpDHCPKey key;
+    key.dhcp55_len = dhcp_data_event.get_op55_len();
+    key.dhcp55 = dhcp_data_event.get_op55();
+    key.dhcp60_len = dhcp_data_event.get_op60_len();
+    key.dhcp60 = dhcp_data_event.get_op60();
+
+    const DHCPFingerprint* dhcp_fp = processor->match_dhcp_fingerprint(key);
+    if (dhcp_fp and ht->add_udp_fingerprint(dhcp_fp->fpid))
+    {
+        const auto& src_ip_ptr = (const struct in6_addr*) src_ip->get_ip6_ptr();
+        logger.log(RNA_EVENT_NEW, NEW_OS, p, &ht, src_ip_ptr, src_mac, dhcp_fp, packet_time());
+    }
+}
+
+/* called for processing information extracted from DHCP Ack.
+   It is called only for IPv4 since DHCPv6 is not implemented.*/
+void RnaPnd::add_dhcp_info(DataEvent& event)
+{
+    const DHCPInfoEvent& dhcp_info_event = static_cast<DHCPInfoEvent&>(event);
+    const uint8_t* src_mac = dhcp_info_event.get_eth_addr();
+    uint32_t ip_address = dhcp_info_event.get_ip_address();
+    uint32_t net_mask = dhcp_info_event.get_subnet_mask();
+    uint32_t lease = dhcp_info_event.get_lease_secs();
+    uint32_t router = dhcp_info_event.get_router();
+    const Packet* p = event.get_packet();
+
+    SfIp leased_ip = {(void*)&ip_address, AF_INET};
+    SfIp router_ip = {(void*)&router, AF_INET};
+    bool new_host = false;
+    bool new_mac = false;
+    auto ht = host_cache.find_else_create(leased_ip, &new_host);
+    if (!new_host)
+        ht->update_last_seen();
+
+    MacKey mk(src_mac);
+    auto hm_ptr = host_cache_mac.find_else_create(mk, &new_mac);
+    if (new_mac)
+    {
+        ht->add_mac(mk.mac_addr, p->ptrs.ip_api.ttl(), 0);
+        logger.log(RNA_EVENT_NEW, NEW_HOST, p, &ht, nullptr, mk.mac_addr);
+        hm_ptr->update_last_event(p->pkth->ts.tv_sec);
+    }
+    else
+        hm_ptr->update_last_seen(p->pkth->ts.tv_sec);
+
+    logger.log(RNA_EVENT_CHANGE, CHANGE_FULL_DHCP_INFO, p, &ht,
+        (const struct in6_addr*) leased_ip.get_ip6_ptr(), src_mac,
+        lease, net_mask, (const struct in6_addr*) router_ip.get_ip6_ptr());
 }
 
 inline void RnaPnd::update_vlan(const Packet* p, HostTrackerMac& hm)

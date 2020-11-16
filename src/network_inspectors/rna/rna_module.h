@@ -44,6 +44,8 @@ struct RnaStats
     PegCount tcp_midstream;
     PegCount other_packets;
     PegCount change_host_update;
+    PegCount dhcp_data;
+    PegCount dhcp_info;
 };
 
 extern THREAD_LOCAL RnaStats rna_stats;

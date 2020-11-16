@@ -82,8 +82,6 @@ not return prior to that to avoid leaking any host trackers.
 Fingerprints
 
 Fingerprints are a sequence of features in network traffic used to identify a host's operating system.
-Currently only tcp fingerprints are supported, but future work may include udp fingerprints and
-user agent fingerprints.
 
 Tcp fingerprints are specified in lua and read by snort at configure time.
 Only the SYN and SYN-ACK packets are used for fingerprint matching. We refer to the SYN packet
@@ -233,4 +231,21 @@ looks like this:
     ua_type = "device",
     user_agent = { { substring = "CPU" }, { substring = "OS 3_0" }, { substring = "My Company" } },
     device = "My Mobile",
+}
+
+UDP fingerprints are of two types, namely DHCP and SMB. Currently only DHCP fingerprints are
+supported. Similar to TCP and user-agent based fingerprints, fingerprint patterns can be specified
+in the lua configuration. DHCP fingerprint matching is based on option fields present in DHCP
+Request packet and the updated lease information is obtained from the DHCP ACK packet. Appid
+module processes the DHCP request packet, parses the option 55 and option 60 fields and publishes
+the DHCPDataEvent. This triggers RNA fingerprint matching and event generation. While processing
+DHCP ACK packet, appid extracts the leased IP, netmask and lease time and publishes the DHCPInfoEvent.
+RNA generates the CHANGE_FULL_DHCP_INFO event with updated lease information.
+A sample DHCP fingerprint is shown below:
+{
+    fpid = 111,
+    uuid = "12345678-1234-1234-1234-123456789111",
+    type = 4,
+    dhcp55 = "1 121 3 6 15 119 252",
+    dhcp60 = "dhcp 5.1.4",
 }

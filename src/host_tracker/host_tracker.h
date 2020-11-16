@@ -335,6 +335,7 @@ public:
     bool add_tcp_fingerprint(uint32_t fpid);
     bool add_ua_fingerprint(uint32_t fpid, uint32_t fp_type, bool jail_broken,
         const char* device_info, uint8_t max_devices);
+    bool add_udp_fingerprint(uint32_t fpid);
 
     //  This should be updated whenever HostTracker data members are changed
     void stringify(std::string& str);
@@ -425,6 +426,7 @@ private:
     std::vector<HostApplication, HostAppAllocator> services;
     std::vector<HostClient, HostClientAllocator> clients;
     std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> tcp_fpids;
+    std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> udp_fpids;
     std::vector<DeviceFingerprint, HostDeviceFpAllocator> ua_fps;
 
     bool vlan_tag_present = false;

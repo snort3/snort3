@@ -144,6 +144,9 @@ public:
     std::string host_name;
     std::string device;
 
+    std::string dhcp55;
+    std::string dhcp60;
+
     void clear()
     {
         fpid = 0;
@@ -160,6 +163,8 @@ public:
         user_agent.clear();
         host_name.clear();
         device.clear();
+        dhcp55.clear();
+        dhcp60.clear();
     }
 };
 

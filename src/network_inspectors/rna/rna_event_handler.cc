@@ -23,6 +23,7 @@
 #endif
 
 #include "rna_event_handler.h"
+#include "pub_sub/dhcp_events.h"
 
 using namespace snort;
 
@@ -102,4 +103,18 @@ void RnaIdleEventHandler::handle(DataEvent& event, Flow*)
     Profile profile(rna_perf_stats);
     ++rna_stats.change_host_update;
     pnd.generate_change_host_update();
+}
+
+void RnaDHCPInfoEventHandler::handle(DataEvent& event, Flow*)
+{
+    Profile profile(rna_perf_stats);
+    ++rna_stats.dhcp_info;
+    pnd.add_dhcp_info(event);
+}
+
+void RnaDHCPDataEventHandler::handle(DataEvent& event, Flow*)
+{
+    Profile profile(rna_perf_stats);
+    ++rna_stats.dhcp_data;
+    pnd.analyze_dhcp_fingerprint(event);
 }

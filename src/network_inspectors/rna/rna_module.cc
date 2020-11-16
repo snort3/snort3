@@ -39,6 +39,7 @@
 
 #include "rna_fingerprint_tcp.h"
 #include "rna_fingerprint_ua.h"
+#include "rna_fingerprint_udp.h"
 #include "rna_mac_cache.h"
 
 #ifdef UNIT_TEST
@@ -82,6 +83,7 @@ bool FpProcReloadTuner::tinit()
 {
     set_tcp_fp_processor(mod_conf.tcp_processor);
     set_ua_fp_processor(mod_conf.ua_processor);
+    set_udp_fp_processor(mod_conf.udp_processor);
     return false;  // no work to do after this
 }
 
@@ -286,6 +288,12 @@ static const Parameter rna_fp_params[] =
     { "device", Parameter::PT_STRING, nullptr, nullptr,
       "device information" },
 
+    { "dhcp55", Parameter::PT_STRING, nullptr, nullptr,
+      "dhcp option 55 values" },
+
+    { "dhcp60", Parameter::PT_STRING, nullptr, nullptr,
+      "dhcp option 60 values" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -309,6 +317,9 @@ static const Parameter rna_params[] =
     { "ua_fingerprints", Parameter::PT_LIST, rna_fp_params, nullptr,
       "list of user agent fingerprints" },
 
+    { "udp_fingerprints", Parameter::PT_LIST, rna_fp_params, nullptr,
+      "list of udp fingerprints" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -326,6 +337,8 @@ static const PegInfo rna_pegs[] =
     { CountType::SUM, "tcp_midstream", "count of TCP midstream packets received" },
     { CountType::SUM, "other_packets", "count of packets received without session tracking" },
     { CountType::SUM, "change_host_update", "count number of change host update events" },
+    { CountType::SUM, "dhcp_data", "count of DHCP data events received" },
+    { CountType::SUM, "dhcp_info", "count of new DHCP lease events received" },
     { CountType::END, nullptr, nullptr},
 };
 
@@ -367,6 +380,12 @@ bool RnaModule::begin(const char* fqn, int, SnortConfig*)
         if (!mod_conf->ua_processor)
             mod_conf->ua_processor = new UaFpProcessor;
     }
+    else if (!strcmp(fqn, "rna.udp_fingerprints"))
+    {
+        fingerprint.clear();
+        if (!mod_conf->udp_processor)
+            mod_conf->udp_processor = new UdpFpProcessor;
+    }
 
     return true;
 }
@@ -386,7 +405,7 @@ bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
         dump_file = snort_strdup(v.get_string());
     }
     else if ( fqn and ( strstr(fqn, "rna.tcp_fingerprints") or
-        strstr(fqn, "rna.ua_fingerprints") ) )
+        strstr(fqn, "rna.ua_fingerprints") or strstr(fqn, "rna.udp_fingerprints") ) )
     {
         if (v.is("fpid"))
             fingerprint.fpid = v.get_uint32();
@@ -423,6 +442,10 @@ bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
                 return false;
             fingerprint.user_agent.emplace_back(ua_part);
         }
+        else if (v.is("dhcp55"))
+            fingerprint.dhcp55 = v.get_string();
+        else if (v.is("dhcp60"))
+            fingerprint.dhcp60 = v.get_string();
         else
             return false;
     }
@@ -467,6 +490,11 @@ bool RnaModule::end(const char* fqn, int index, SnortConfig* sc)
     else if ( index > 0 and mod_conf->ua_processor and !strcmp(fqn, "rna.ua_fingerprints") )
     {
         mod_conf->ua_processor->push(fingerprint);
+        fingerprint.clear();
+    }
+    else if ( index > 0 and mod_conf->udp_processor and !strcmp(fqn, "rna.udp_fingerprints") )
+    {
+        mod_conf->udp_processor->push(fingerprint);
         fingerprint.clear();
     }
 
@@ -544,7 +572,8 @@ bool RnaModule::log_mac_cache(const char* outfile)
 bool RnaModule::is_valid_fqn(const char* fqn) const
 {
     return !strcmp(fqn, RNA_NAME) or !strcmp(fqn, "rna.tcp_fingerprints") or
-        !strcmp(fqn, "rna.ua_fingerprints") or !strcmp(fqn, "rna.ua_fingerprints.user_agent");
+        !strcmp(fqn, "rna.ua_fingerprints") or !strcmp(fqn, "rna.ua_fingerprints.user_agent") or
+        !strcmp(fqn, "rna.udp_fingerprints");
 }
 
 

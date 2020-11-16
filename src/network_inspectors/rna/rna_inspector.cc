@@ -33,10 +33,12 @@
 #include "main/snort.h"
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"
+#include "pub_sub/dhcp_events.h"
 
 #include "rna_event_handler.h"
 #include "rna_fingerprint_tcp.h"
 #include "rna_fingerprint_ua.h"
+#include "rna_fingerprint_udp.h"
 #include "rna_module.h"
 #include "rna_pnd.h"
 
@@ -72,6 +74,7 @@ RnaInspector::~RnaInspector()
     {
         delete mod_conf->tcp_processor;
         delete mod_conf->ua_processor;
+        delete mod_conf->udp_processor;
         delete mod_conf;
     }
 }
@@ -79,6 +82,8 @@ RnaInspector::~RnaInspector()
 bool RnaInspector::configure(SnortConfig* sc)
 {
     DataBus::subscribe_global( APPID_EVENT_ANY_CHANGE, new RnaAppidEventHandler(*pnd), sc );
+    DataBus::subscribe_global( DHCP_INFO_EVENT, new RnaDHCPInfoEventHandler(*pnd), sc);
+    DataBus::subscribe_global( DHCP_DATA_EVENT, new RnaDHCPDataEventHandler(*pnd), sc);
 
     DataBus::subscribe_global( STREAM_ICMP_NEW_FLOW_EVENT, new RnaIcmpNewFlowEventHandler(*pnd), sc );
     DataBus::subscribe_global( STREAM_ICMP_BIDIRECTIONAL_EVENT, new RnaIcmpBidirectionalEventHandler(*pnd), sc );
@@ -139,6 +144,7 @@ void RnaInspector::tinit()
     // thread local initialization
     set_tcp_fp_processor(mod_conf->tcp_processor);
     set_ua_fp_processor(mod_conf->ua_processor);
+    set_udp_fp_processor(mod_conf->udp_processor);
 }
 
 void RnaInspector::tterm()
@@ -199,7 +205,8 @@ void RnaInspector::load_rna_conf()
     in_stream.close();
 }
 
-void RnaInspector::get_or_create_fp_processor(TcpFpProcessor*& tfp, UaFpProcessor*& uafp)
+void RnaInspector::get_or_create_fp_processor(TcpFpProcessor*& tfp, UaFpProcessor*& uafp,
+    UdpFpProcessor*& udpfp)
 {
     if ( !mod_conf )
         return;
@@ -208,12 +215,15 @@ void RnaInspector::get_or_create_fp_processor(TcpFpProcessor*& tfp, UaFpProcesso
         mod_conf->tcp_processor = new TcpFpProcessor;
     if ( !mod_conf->ua_processor )
         mod_conf->ua_processor = new UaFpProcessor;
+    if ( !mod_conf->udp_processor )
+        mod_conf->udp_processor = new UdpFpProcessor;
 
     tfp = mod_conf->tcp_processor;
     uafp = mod_conf->ua_processor;
+    udpfp = mod_conf->udp_processor;
 }
 
-void RnaInspector::set_fp_processor(TcpFpProcessor* tfp, UaFpProcessor* uafp)
+void RnaInspector::set_fp_processor(TcpFpProcessor* tfp, UaFpProcessor* uafp, UdpFpProcessor* udpfp)
 {
     if ( !mod_conf )
         return;
@@ -223,6 +233,9 @@ void RnaInspector::set_fp_processor(TcpFpProcessor* tfp, UaFpProcessor* uafp)
 
     delete mod_conf->ua_processor;
     mod_conf->ua_processor = uafp;
+
+    delete mod_conf->udp_processor;
+    mod_conf->udp_processor = udpfp;
 }
 
 //-------------------------------------------------------------------------
@@ -307,10 +320,12 @@ TEST_CASE("RNA inspector", "[rna_inspector]")
         RnaInspector ins(&mod);
         TcpFpProcessor* tfp = nullptr;
         UaFpProcessor* uafp = nullptr;
-        ins.set_fp_processor(tfp, uafp);
-        ins.get_or_create_fp_processor(tfp, uafp);
+        UdpFpProcessor* udpfp = nullptr;
+        ins.set_fp_processor(tfp, uafp, udpfp);
+        ins.get_or_create_fp_processor(tfp, uafp, udpfp);
         CHECK(tfp != nullptr);
         CHECK(uafp != nullptr);
+        CHECK(udpfp != nullptr);
     }
 }
 #endif
