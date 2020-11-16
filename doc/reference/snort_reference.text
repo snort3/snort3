@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.0.3 (Build 4) 2020-10-27 14:24:13 EDT TST
+Revision 3.0.3 (Build 5) 2020-11-16 12:11:59 EST TST
 
 ---------------------------------------------------------------------
 
@@ -3500,6 +3500,10 @@ Peg counts:
   * ftp_server.ssl_search_abandoned: total SSL search abandoned (sum)
   * ftp_server.ssl_srch_abandoned_early: total SSL search abandoned
     too soon (sum)
+  * ftp_server.pkt_segment_size_changed: total number of FTP data
+    packets with segment size change (sum)
+  * ftp_server.flow_segment_size_changed: total number of FTP
+    sessions with segment size change (sum)
 
 
 5.22. gtp_inspect
@@ -4596,6 +4600,9 @@ Configuration:
 Commands:
 
   * rna.dump_macs(): dump rna’s internal MAC trackers
+  * rna.delete_mac_host(mac): delete a MAC from rna’s MAC cache
+  * rna.delete_mac_host_proto(mac, proto): delete a protocol
+    associated with a MAC host
 
 Peg counts:
 
@@ -10527,8 +10534,12 @@ these libraries see the Getting Started section of the manual.
   * ftp_data.packets: total packets (sum)
   * ftp_server.concurrent_sessions: total concurrent FTP sessions
     (now)
+  * ftp_server.flow_segment_size_changed: total number of FTP
+    sessions with segment size change (sum)
   * ftp_server.max_concurrent_sessions: maximum concurrent FTP
     sessions (max)
+  * ftp_server.pkt_segment_size_changed: total number of FTP data
+    packets with segment size change (sum)
   * ftp_server.ssl_search_abandoned: total SSL search abandoned (sum)
   * ftp_server.ssl_srch_abandoned_early: total SSL search abandoned
     too soon (sum)
@@ -11918,6 +11929,9 @@ these libraries see the Getting Started section of the manual.
   * perf_monitor.show_flow_ip_profiling(): show status of statistics
     on host pairs
   * rna.dump_macs(): dump rna’s internal MAC trackers
+  * rna.delete_mac_host(mac): delete a MAC from rna’s MAC cache
+  * rna.delete_mac_host_proto(mac, proto): delete a protocol
+    associated with a MAC host
   * snort.show_plugins(): show available plugins
   * snort.delete_inspector(inspector): delete an inspector from the
     default policy

@@ -1,3 +1,40 @@
+2020/11/16 - 3.0.3 build 5
+
+-- appid: Add unit test to verify HA data for flow unmonitored by appid
+-- appid: Handle cppcheck warnings
+-- appid: Prefix http/2 decrypted urls with https://
+-- appid: Support client login failure event
+-- flow: Do not remove the flow during pruning/reload during IPS event with block action
+-- flow: Flesh out swap_roles() to swap more client/server fields
+-- flow: Set client initiated flag based on DAQ reverse flow flag, track on syn config, and syn-ack
+   packet
+-- ftp: Handle FTP detection when ftp data segment size changes
+-- host_tracker: Ignore IP family when comparing SfIp keys in the host cache
+-- http2_inspect: Data frame redesign
+-- http2_inspect: Multi-segment reassemble discard bug fix
+-- http2_inspect: Perform hpack decoding on push_promise frames
+-- http2_inspect: Refactor data cutter
+-- http2_inspect: Refactor scan()
+-- http2_inspect: Remove const cast
+-- http2_inspect: Send push_promise frames through http_inspect
+-- ips_options: Don't move cursor in byte_math
+-- main: Set up logging flags globally to avoid dependencies on a particular SnortConfig object
+-- payload_injector: Refactoring
+-- payload_injector: Remove content length and connection for HTTP/2
+-- rna: Add command to delete MAC hosts and protos
+-- rna: Delete payloads when clients, services are deleted; add unit tests
+-- rna: Discover banner on service version or response events
+-- rna: Don't process packet in eval if eth bit not set
+-- rna: Log src mac from packet containing CDP message when host type change event is generated
+-- rna: Support banner discovery
+-- rna: Support change service event with null version and vendor
+-- rna: Support user login failure discovery
+-- smtp: Make sure the ssl search abandoned flag is preserved for reset
+-- stream_tcp: Remove redundant/unneeded asserts that check if tcp event is for a meta-ack
+   psuedo-packet
+-- thread_config: Show thread ID when logging binding information
+-- trace: Add missing packet information to some of the messages
+
 2020/10/27 - 3.0.3 build 4
 
 -- actions: Add support to react for HTTP/2

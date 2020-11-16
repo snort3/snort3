@@ -537,9 +537,14 @@ void Flow::set_service(Packet* pkt, const char* new_service)
 
 void Flow::swap_roles()
 {
-    flags.client_initiated = !flags.client_initiated;
-    std::swap(client_ip, server_ip);
-    std::swap(client_port, server_port);
     std::swap(flowstats.client_pkts, flowstats.server_pkts);
     std::swap(flowstats.client_bytes, flowstats.server_bytes);
+    std::swap(mpls_client, mpls_server);
+    std::swap(client_ip, server_ip);
+    std::swap(client_intf, server_intf);
+    std::swap(client_group, server_group);
+    std::swap(client_port, server_port);
+    std::swap(inner_client_ttl, inner_server_ttl);
+    std::swap(outer_client_ttl, outer_server_ttl);
+    flags.client_initiated = !flags.client_initiated;
 }
