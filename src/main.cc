@@ -369,13 +369,8 @@ int main_reload_config(lua_State* L)
         else
             current_request->respond("== reload failed - bad config\n");
 
+        HostAttributesManager::load_failure_cleanup();
         return 0;
-    }
-
-    if ( !sc->attribute_hosts_file.empty() )
-    {
-        if ( !HostAttributesManager::load_hosts_file(sc, sc->attribute_hosts_file.c_str()) )
-            current_request->respond("== reload failed - host attributes file failed to load\n");
     }
 
     int32_t num_hosts = HostAttributesManager::get_num_host_entries();

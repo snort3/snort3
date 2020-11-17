@@ -27,6 +27,7 @@
 
 #include "hash/lru_cache_shared.h"
 #include "main/shell.h"
+#include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/thread.h"
 
@@ -52,6 +53,24 @@ public:
 };
 
 typedef HostLruSharedCache<snort::SfIp, HostAttributesDescriptor, HostAttributesCacheKey> HostAttributesSharedCache;
+
+class HostAttributesReloadTuner : public snort::ReloadResourceTuner
+{
+public:
+    HostAttributesReloadTuner() = default;
+
+    bool tinit() override
+    {
+        HostAttributesManager::initialize();
+        return true;
+    }
+
+    bool tune_packet_context() override
+    { return true; }
+
+    bool tune_idle_context() override
+    { return true; }
+};
 
 static THREAD_LOCAL HostAttributesSharedCache* active_cache = nullptr;
 static HostAttributesSharedCache* swap_cache = nullptr;
@@ -120,11 +139,13 @@ bool HostAttributesManager::load_hosts_file(snort::SnortConfig* sc, const char* 
 
     Shell sh(fname);
     if ( sh.configure(sc, false, true) )
+    {
+        activate(sc);
         return true;
+    }
 
     // loading of host file failed...
-    delete next_cache;
-    next_cache = nullptr;
+    load_failure_cleanup();
     return false;
 }
 
@@ -136,21 +157,33 @@ bool HostAttributesManager::add_host(HostAttributesEntry host, snort::SnortConfi
     return next_cache->find_else_insert(host->get_ip_addr(), host, true);
 }
 
-bool HostAttributesManager::activate()
+void HostAttributesManager::activate(SnortConfig* sc)
 {
+    if ( next_cache == nullptr )
+        return;
     old_cache = active_cache;
     active_cache = next_cache;
     swap_cache = next_cache;
     next_cache = nullptr;
 
-    return ( active_cache != old_cache ) ? true : false;
+    if( active_cache != old_cache and Snort::is_reloading() )
+        sc->register_reload_resource_tuner(new HostAttributesReloadTuner);
 }
 
 void HostAttributesManager::initialize()
 { active_cache = swap_cache; }
 
+void HostAttributesManager::load_failure_cleanup()
+{
+    delete next_cache;
+    next_cache = nullptr;
+}
+
 void HostAttributesManager::swap_cleanup()
-{ delete old_cache; }
+{
+    delete old_cache;
+    old_cache = nullptr;
+}
 
 void HostAttributesManager::term()
 { delete active_cache; }

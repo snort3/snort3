@@ -143,9 +143,10 @@ class HostAttributesManager
 {
 public:
     static bool load_hosts_file(snort::SnortConfig*, const char* fname);
-    static bool activate();
+    static void activate(snort::SnortConfig*);
     static void initialize();
     static void swap_cleanup();
+    static void load_failure_cleanup();
     static void term();
 
     static bool add_host(HostAttributesEntry, snort::SnortConfig*);

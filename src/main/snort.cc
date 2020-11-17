@@ -189,6 +189,7 @@ void Snort::init(int argc, char** argv)
         if ( !HostAttributesManager::load_hosts_file(sc, sc->attribute_hosts_file.c_str()) )
             ParseError("host attributes file failed to load\n");
     }
+    HostAttributesManager::activate(sc);
 
     // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(sc) )
@@ -520,6 +521,14 @@ SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path
     }
 
     InspectorManager::update_policy(sc);
+
+    if ( !sc->attribute_hosts_file.empty() )
+    {
+        if ( !HostAttributesManager::load_hosts_file(sc, sc->attribute_hosts_file.c_str()) )
+            LogMessage("== WARNING: host attributes file failed to load\n");
+    }
+    HostAttributesManager::activate(sc);
+
     reloading = false;
     parser_term(sc);
 

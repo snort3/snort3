@@ -1835,24 +1835,6 @@ bool RateFilterModule::end(const char*, int idx, SnortConfig* sc)
 // hosts module
 //-------------------------------------------------------------------------
 
-class HostAttributesReloadTuner : public snort::ReloadResourceTuner
-{
-public:
-    HostAttributesReloadTuner() = default;
-
-    bool tinit() override
-    {
-        HostAttributesManager::initialize();
-        return true;
-    }
-
-    bool tune_packet_context() override
-    { return true; }
-
-    bool tune_idle_context() override
-    { return true; }
-};
-
 static const Parameter service_params[] =
 {
     { "name", Parameter::PT_STRING, nullptr, nullptr,
@@ -1967,14 +1949,6 @@ bool HostsModule::end(const char* fqn, int idx, SnortConfig* sc)
         if ( !HostAttributesManager::add_host(host, sc) )
             host.reset();
         host = nullptr;
-    }
-    else if ( !idx && !strcmp(fqn, "hosts"))
-    {
-        if ( HostAttributesManager::activate() )
-        {
-            if ( Snort::is_reloading() )
-                sc->register_reload_resource_tuner(new HostAttributesReloadTuner);
-        }
     }
 
     return true;
