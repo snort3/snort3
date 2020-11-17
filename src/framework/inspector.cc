@@ -115,3 +115,23 @@ void Inspector::add_ref()
 
 void Inspector::rem_ref()
 { --ref_count[slot]; }
+
+static const char* InspectorTypeNames[IT_MAX] =
+{
+    "passive",
+    "wizard",
+    "packet",
+    "stream",
+    "network",
+    "service",
+    "control",
+    "probe"
+};
+
+const char* InspectApi::get_type(InspectorType type)
+{
+    if ( (type < IT_PASSIVE) or (type >= IT_MAX) )
+        return "";
+
+    return InspectorTypeNames[type];
+}

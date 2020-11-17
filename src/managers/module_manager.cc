@@ -42,6 +42,7 @@
 #include "main/shell.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
+#include "managers/inspector_manager.h"
 #include "parser/parse_conf.h"
 #include "parser/parser.h"
 #include "profiler/profiler.h"
@@ -958,12 +959,21 @@ void ModuleManager::dump_modules()
             d.dump(mh->mod->get_name());
 }
 
-static const char* mod_type(const BaseApi* api)
+static std::string mod_type(const BaseApi* api)
 {
     if ( !api )
         return "basic";
 
-    return PluginManager::get_type_name(api->type);
+    std::string type(PluginManager::get_type_name(api->type));
+
+    if ( api->type == PT_INSPECTOR )
+    {
+        std::string itype = InspectorManager::get_inspector_type(api->name);
+        if ( !itype.empty() )
+            type += " (" + itype + ")";
+    }
+
+    return type;
 }
 
 static const char* mod_use(Module::Usage use)
@@ -1750,7 +1760,7 @@ void ModuleManager::show_modules_json()
         if ( const char* h = mod->get_help() )
             help = h;
 
-        const char* type = mod_type(mh->api);
+        std::string type = mod_type(mh->api);
         const char* usage = mod_use(mod->get_usage());
 
         json.open();

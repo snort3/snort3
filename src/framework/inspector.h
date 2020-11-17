@@ -210,6 +210,8 @@ struct InspectApi
     InspectDelFunc dtor;   // release inspector instance
     InspectSsnFunc ssn;    // get new session tracker
     InspectFunc reset;     // clear stats
+
+    static const char* get_type(InspectorType type);
 };
 
 inline const char* Inspector::get_name() const

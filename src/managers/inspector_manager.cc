@@ -309,6 +309,15 @@ std::vector<const InspectApi*> InspectorManager::get_apis()
     return v;
 }
 
+const char* InspectorManager::get_inspector_type(const char* name)
+{
+    for ( const auto* p : s_handlers )
+        if ( !strcmp(p->api.base.name, name) )
+            return p->api.get_type(p->api.type);
+
+    return "";
+}
+
 void InspectorManager::add_plugin(const InspectApi* api)
 {
     PHGlobal* g = new PHGlobal(*api);

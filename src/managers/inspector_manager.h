@@ -45,6 +45,7 @@ public:
     static void release_plugins();
 
     static std::vector<const InspectApi*> get_apis();
+    static const char* get_inspector_type(const char* name);
 
     static void new_policy(InspectionPolicy*, InspectionPolicy*);
     static void delete_policy(InspectionPolicy*, bool cloned);
