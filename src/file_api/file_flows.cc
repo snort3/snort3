@@ -294,9 +294,9 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
         context->set_file_id(file_id);
     }
 
-    if ( offset != 0 and context->is_cacheable() and
-        (FileService::get_file_cache()->cached_verdict_lookup(p, context, file_policy) !=
-            FILE_VERDICT_UNKNOWN) )
+    if ( ((offset != 0) or (position == SNORT_FILE_FULL)) and context->is_cacheable() and
+            (FileService::get_file_cache()->cached_verdict_lookup(p, context, file_policy) !=
+        FILE_VERDICT_UNKNOWN) )
     {
         context->processing_complete = true;
         remove_processed_file_context(multi_file_processing_id);
