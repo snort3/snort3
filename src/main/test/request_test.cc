@@ -36,6 +36,12 @@ void LogMessage(const char*,...) { }
 
 using namespace snort;
 
+Request& get_current_request()
+{
+    static Request my_req;
+    return my_req;
+}
+
 //--------------------------------------------------------------------------
 // Request tests
 //--------------------------------------------------------------------------

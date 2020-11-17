@@ -112,3 +112,8 @@ bool Request::send_queued_response()
     return write_response(qr);
 }
 #endif
+
+Request& get_dispatched_request()
+{
+    return get_current_request();
+}

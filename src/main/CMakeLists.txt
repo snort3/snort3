@@ -2,6 +2,7 @@
 set (INCLUDES
     analyzer_command.h
     policy.h
+    request.h
     snort.h
     snort_config.h
     snort_debug.h
@@ -30,7 +31,6 @@ add_library (main OBJECT
     oops_handler.h
     policy.cc
     request.cc
-    request.h
     shell.h
     shell.cc
     snort.cc

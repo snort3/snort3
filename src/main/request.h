@@ -27,7 +27,7 @@
 
 #include "main/snort_types.h"
 
-class Request
+class SO_PUBLIC Request
 {
 public:
     Request(int f = -1) : fd(f), bytes_read(0) { }
@@ -47,4 +47,7 @@ private:
     std::queue<const char*> queued_response;
     std::mutex queued_response_mutex;
 };
+
+SO_PUBLIC Request& get_dispatched_request();
+
 #endif
