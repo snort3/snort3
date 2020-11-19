@@ -1869,10 +1869,10 @@ static int detector_add_url_application(lua_State* L)
     int index = 1;
 
     uint32_t service_id      = lua_tointeger(L, ++index);
-    uint32_t client_app      = lua_tointeger(L, ++index);
-    /*uint32_t client_app_type =*/ lua_tointeger(L, ++index);
-    uint32_t payload_id         = lua_tointeger(L, ++index);
-    /*uint32_t payload_type    =*/ lua_tointeger(L, ++index);
+    uint32_t client_id       = lua_tointeger(L, ++index);
+    lua_tointeger(L, ++index); //client_id_type
+    uint32_t payload_id      = lua_tointeger(L, ++index);
+    lua_tointeger(L, ++index); // payload_type
 
     /* Verify that host pattern is a valid string */
     size_t host_pattern_size = 0;
@@ -1880,7 +1880,9 @@ static int detector_add_url_application(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &host_pattern_size);
     if (!tmp_string || !host_pattern_size)
     {
-        ErrorMessage("Invalid host pattern string.");
+        ErrorMessage(
+            "appid: Invalid host pattern string: service_id %u; client_id %u; payload_id %u.\n",
+            service_id, client_id, payload_id);
         return 0;
     }
     else
@@ -1892,7 +1894,9 @@ static int detector_add_url_application(lua_State* L)
     tmp_string = lua_tolstring(L, ++index, &path_pattern_size);
     if (!tmp_string || !path_pattern_size )
     {
-        ErrorMessage("Invalid path pattern string.");
+        ErrorMessage(
+            "appid: Invalid path pattern string: service_id %u; client_id %u; payload %u.\n",
+            service_id, client_id, payload_id);
         snort_free(host_pattern);
         return 0;
     }
@@ -1905,7 +1909,9 @@ static int detector_add_url_application(lua_State* L)
     tmp_string = lua_tolstring(L, ++index, &schemePatternSize);
     if (!tmp_string || !schemePatternSize )
     {
-        ErrorMessage("Invalid scheme pattern string.");
+        ErrorMessage(
+            "appid: Invalid scheme pattern string: service_id %u; client_id %u; payload %u.\n",
+            service_id, client_id, payload_id);
         snort_free(path_pattern);
         snort_free(host_pattern);
         return 0;
@@ -1925,7 +1931,7 @@ static int detector_add_url_application(lua_State* L)
     DetectorAppUrlPattern* pattern =
         (DetectorAppUrlPattern*)snort_calloc(sizeof(DetectorAppUrlPattern));
     pattern->userData.service_id        = app_info_manager.get_appid_by_service_id(service_id);
-    pattern->userData.client_id        = app_info_manager.get_appid_by_client_id(client_app);
+    pattern->userData.client_id        = app_info_manager.get_appid_by_client_id(client_id);
     pattern->userData.payload_id           = app_info_manager.get_appid_by_payload_id(payload_id);
     pattern->userData.appId             = appId;
     pattern->userData.query.pattern     = query_pattern;
@@ -1956,17 +1962,19 @@ static int detector_add_rtmp_url(lua_State* L)
     int index = 1;
 
     uint32_t service_id      = lua_tointeger(L, ++index);
-    uint32_t client_app      = lua_tointeger(L, ++index);
-    /*uint32_t client_app_type =*/ lua_tointeger(L, ++index);
+    uint32_t client_id       = lua_tointeger(L, ++index);
+    lua_tointeger(L, ++index); // client_id_type
     uint32_t payload_id         = lua_tointeger(L, ++index);
-    /*uint32_t payload_type    =*/ lua_tointeger(L, ++index);
+    lua_tointeger(L, ++index); // payload_type
 
     /* Verify that host pattern is a valid string */
     size_t host_pattern_size = 0;
     const char* tmp_string = lua_tolstring(L, ++index, &host_pattern_size);
     if (!tmp_string || !host_pattern_size)
     {
-        ErrorMessage("Invalid host pattern string.");
+        ErrorMessage(
+            "appid: Invalid RTMP host pattern string: service_id %u; client_id %u; payload_id %u.\n",
+            service_id, client_id, payload_id);
         return 0;
     }
     uint8_t* host_pattern = (uint8_t*)snort_strdup(tmp_string);
@@ -1976,7 +1984,9 @@ static int detector_add_rtmp_url(lua_State* L)
     tmp_string = lua_tolstring(L, ++index, &path_pattern_size);
     if (!tmp_string || !path_pattern_size)
     {
-        ErrorMessage("Invalid path pattern string.");
+        ErrorMessage(
+            "appid: Invalid RTMP path pattern string: service_id %u; client_id %u; payload_id %u.\n",
+            service_id, client_id, payload_id);
         snort_free(host_pattern);
         return 0;
     }
@@ -1987,7 +1997,9 @@ static int detector_add_rtmp_url(lua_State* L)
     tmp_string = lua_tolstring(L, ++index, &schemePatternSize);
     if (!tmp_string || !schemePatternSize)
     {
-        ErrorMessage("Invalid scheme pattern string.");
+        ErrorMessage(
+            "appid: Invalid RTMP scheme pattern string: service_id %u; client_id %u; payload_id %u.\n",
+            service_id, client_id, payload_id);
         snort_free(path_pattern);
         snort_free(host_pattern);
         return 0;
@@ -2010,8 +2022,8 @@ static int detector_add_rtmp_url(lua_State* L)
     /* we want to put these patterns in just like for regular Urls, but we do NOT need legacy IDs for them.
      * so just use the appID for service, client, or payload_id ID */
     pattern->userData.service_id        = service_id;
-    pattern->userData.client_id        = client_app;
-    pattern->userData.payload_id           = payload_id;
+    pattern->userData.client_id         = client_id;
+    pattern->userData.payload_id        = payload_id;
     pattern->userData.appId             = appId;
     pattern->userData.query.pattern     = query_pattern;
     pattern->userData.query.patternSize = query_pattern_size;
@@ -2201,7 +2213,7 @@ static int add_url_pattern(lua_State* L)
     int index = 1;
 
     uint32_t service_id = lua_tointeger(L, ++index);
-    uint32_t clientAppId   = lua_tointeger(L, ++index);
+    uint32_t client_id  = lua_tointeger(L, ++index);
     uint32_t payload_id = lua_tointeger(L, ++index);
 
     /* Verify that host pattern is a valid string */
@@ -2210,7 +2222,9 @@ static int add_url_pattern(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &host_pattern_size);
     if ( !tmp_string || !host_pattern_size )
     {
-        ErrorMessage("Invalid host pattern string.");
+        ErrorMessage(
+            "appid: Invalid host pattern string: service_id %u; client_id %u; payload_id %u.\n",
+            service_id, client_id, payload_id);
         return 0;
     }
     host_pattern = (uint8_t* )snort_strdup(tmp_string);
@@ -2221,7 +2235,9 @@ static int add_url_pattern(lua_State* L)
     tmp_string = lua_tolstring(L, ++index, &path_pattern_size);
     if ( !tmp_string || !path_pattern_size )
     {
-        ErrorMessage("Invalid path pattern string.");
+        ErrorMessage(
+            "appid: Invalid path pattern string: service_id %u; client_id %u; payload_id %u.\n",
+            service_id, client_id, payload_id);
         snort_free(host_pattern);
         return 0;
     }
@@ -2233,7 +2249,9 @@ static int add_url_pattern(lua_State* L)
     tmp_string = lua_tolstring(L, ++index, &schemePatternSize);
     if (!tmp_string || !schemePatternSize)
     {
-        ErrorMessage("Invalid scheme pattern string.");
+        ErrorMessage(
+            "appid: Invalid scheme pattern string: service_id %u; client_id %u; payload_id %u.\n",
+            service_id, client_id, payload_id);
         snort_free(path_pattern);
         snort_free(host_pattern);
         return 0;
@@ -2244,8 +2262,8 @@ static int add_url_pattern(lua_State* L)
     DetectorAppUrlPattern* pattern =
         (DetectorAppUrlPattern*)snort_calloc(sizeof(DetectorAppUrlPattern));
     pattern->userData.service_id        = service_id;
-    pattern->userData.client_id        = clientAppId;
-    pattern->userData.payload_id           = payload_id;
+    pattern->userData.client_id         = client_id;
+    pattern->userData.payload_id        = payload_id;
     pattern->userData.appId             = APP_ID_NONE;
     pattern->userData.query.pattern     = nullptr;
     pattern->userData.query.patternSize = 0;
@@ -2259,7 +2277,7 @@ static int add_url_pattern(lua_State* L)
 
     AppInfoManager& app_info_manager = ud->get_odp_ctxt().get_app_info_mgr();
     app_info_manager.set_app_info_active(service_id);
-    app_info_manager.set_app_info_active(clientAppId);
+    app_info_manager.set_app_info_active(client_id);
     app_info_manager.set_app_info_active(payload_id);
 
     return 0;
