@@ -803,7 +803,7 @@ void Binder::get_bindings(Flow& flow, Stuff& stuff, const char* service)
 Inspector* Binder::find_gadget(Flow& flow)
 {
     Stuff stuff;
-    get_bindings(flow, stuff);
+    get_bindings(flow, stuff, flow.service);
     return stuff.gadget;
 }
 
