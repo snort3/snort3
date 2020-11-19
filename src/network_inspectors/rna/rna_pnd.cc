@@ -47,6 +47,7 @@
 using namespace snort;
 using namespace snort::bpdu;
 using namespace snort::cdp;
+using namespace snort::icmp;
 using namespace std;
 
 #define RNA_NAT_COUNT_THRESHOLD 10
@@ -505,8 +506,8 @@ void RnaPnd::discover_network_ethernet(const Packet* p)
                 break;
 
             case SNAP_ID:
-                retval = discover_host_types_cdp(p, (const uint8_t*)llc + sizeof(RNA_LLC),
-                    p->dsize - sizeof(RNA_LLC));
+                retval = discover_network_cdp(p, (const uint8_t*)llc + sizeof(RNA_LLC),
+                    p->dsize - sizeof(RNA_LLC), rt);
                 break;
 
             default:
@@ -690,13 +691,16 @@ void RnaPnd::discover_host_types_ttl(RnaTracker& ht, const Packet *p, uint8_t pk
     ht->set_ip_ttl(pkt_ttl);
 }
 
-int RnaPnd::discover_host_types_cdp(const Packet* p, const uint8_t* data, uint16_t rlen)
+int RnaPnd::discover_network_cdp(const Packet* p, const uint8_t* data, uint16_t rlen,
+    RnaTracker& rt)
 {
     if ( !is_cdp(layer::get_eth_layer(p)->ether_dst) or rlen < sizeof(RNA_CDP) )
         return 1;
 
     if ( ntohs(((const RNA_CDP *)data)->pid) != CDP_HDLC_PROTOCOL_TYPE )
         return 1;
+
+    generate_new_host_mac(p, rt, true);
 
     data += sizeof(RNA_CDP);
     const uint8_t* end = data + rlen - sizeof(RNA_CDP);
@@ -797,17 +801,6 @@ int RnaPnd::discover_host_types_cdp(const Packet* p, const uint8_t* data, uint16
     return 0;
 }
 
-#define ICMPv6_NS_MIN_LEN 24
-#define ICMPv6_NA_MIN_LEN 24
-#define ICMPv6_RS_MIN_LEN 24
-#define ICMPv6_RA_MIN_LEN 16
-
-#define ICMPV6_OPION_SOURCE_LINKLAYER_ADDRESS 1
-#define ICMPV6_OPION_TARGET_LINKLAYER_ADDRESS 2
-#define ICMPV6_OPION_PREFIX_INFO              3
-#define ICMPV6_OPION_REDIRECT_HEADER          4
-#define ICMPV6_OPION_MTU                      5
-
 int RnaPnd::discover_host_types_icmpv6_ndp(RnaTracker& ht, const Packet* p, uint32_t last_seen,
     const struct in6_addr* src_ip, const uint8_t* src_mac)
 {
@@ -835,7 +828,7 @@ int RnaPnd::discover_host_types_icmpv6_ndp(RnaTracker& ht, const Packet* p, uint
 
                 opt_type = *data;
                 opt_len = *(data + 1);
-                if ( opt_type == ICMPV6_OPION_TARGET_LINKLAYER_ADDRESS )
+                if ( opt_type == ICMPV6_OPTION_TARGET_LINKLAYER_ADDRESS )
                     neighbor_src_mac = data + 2;
 
                 data += opt_len * 8;
@@ -857,7 +850,7 @@ int RnaPnd::discover_host_types_icmpv6_ndp(RnaTracker& ht, const Packet* p, uint
 
                 opt_type = *data;
                 opt_len = *(data + 1);
-                if ( opt_type == ICMPV6_OPION_SOURCE_LINKLAYER_ADDRESS )
+                if ( opt_type == ICMPV6_OPTION_SOURCE_LINKLAYER_ADDRESS )
                     neighbor_src_mac = data + 2;
 
                 data += opt_len * 8;

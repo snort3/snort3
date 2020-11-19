@@ -166,7 +166,8 @@ private:
     void discover_network_ethernet(const snort::Packet*);
     int discover_network_arp(const snort::Packet*, RnaTracker*);
     int discover_network_bpdu(const snort::Packet*, const uint8_t* data, RnaTracker);
-    int discover_host_types_cdp(const snort::Packet*, const uint8_t* data, uint16_t rlen);
+    int discover_network_cdp(const snort::Packet*, const uint8_t* data, uint16_t rlen,
+        RnaTracker&);
 
     int discover_switch(const snort::Packet*, RnaTracker);
 

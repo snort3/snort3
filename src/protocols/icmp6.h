@@ -29,6 +29,17 @@ namespace icmp
 constexpr uint16_t ICMP6_HEADER_MIN_LEN = 4;
 constexpr uint16_t ICMP6_HEADER_NORMAL_LEN = 8;
 
+#define ICMPv6_NS_MIN_LEN 24
+#define ICMPv6_NA_MIN_LEN 24
+#define ICMPv6_RS_MIN_LEN 24
+#define ICMPv6_RA_MIN_LEN 16
+
+#define ICMPV6_OPTION_SOURCE_LINKLAYER_ADDRESS 1
+#define ICMPV6_OPTION_TARGET_LINKLAYER_ADDRESS 2
+#define ICMPV6_OPTION_PREFIX_INFO              3
+#define ICMPV6_OPTION_REDIRECT_HEADER          4
+#define ICMPV6_OPTION_MTU                      5
+
 //enum class Icmp6Types : std::uint8_t
 enum Icmp6Types : std::uint8_t
 {
