@@ -129,7 +129,10 @@ void AppIdSessionApi::get_app_id(AppId& service, AppId& client,
     if (get_service_app_id() == APP_ID_HTTP2)
     {
         if ((stream_index != 0) and (stream_index >= get_hsessions_size()))
+        {
             service = client = payload = misc = referred = APP_ID_UNKNOWN;
+            return;
+        }
         else if (AppIdHttpSession* hsession = get_hsession(stream_index))
         {
             service = get_service_app_id();
@@ -137,13 +140,12 @@ void AppIdSessionApi::get_app_id(AppId& service, AppId& client,
             payload = hsession->payload.get_id();
             misc = hsession->misc_app_id;
             referred = hsession->referred_payload_app_id;
+            return;
         }
     }
-    else
-    {
-        get_first_stream_app_ids(service, client, payload, misc);
-        referred = get_referred_app_id();
-    }
+
+    get_first_stream_app_ids(service, client, payload, misc);
+    referred = get_referred_app_id();
 }
 
 void AppIdSessionApi::get_app_id(AppId* service, AppId* client,

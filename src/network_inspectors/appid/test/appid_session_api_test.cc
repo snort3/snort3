@@ -127,6 +127,34 @@ TEST(appid_session_api, get_referred_app_id)
     CHECK_EQUAL(APP_ID_NONE, id);
 }
 
+TEST(appid_session_api, get_app_id)
+{
+    SfIp ip;
+    AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
+    AppidChangeBits change_bits;
+    asd.set_application_ids_service(APP_ID_HTTP2, change_bits);
+
+    AppId service, client, payload, misc, referred;
+    asd.get_api().get_app_id(service, client, payload, misc, referred, 0);
+
+    CHECK_EQUAL(service, APP_ID_HTTP2);
+    CHECK_EQUAL(client, APP_ID_NONE);
+    CHECK_EQUAL(payload, APP_ID_NONE);
+    CHECK_EQUAL(misc, APP_ID_NONE);
+    CHECK_EQUAL(referred, APP_ID_NONE);
+
+    service = client = payload = misc = referred = APPID_UT_ID;
+    asd.get_api().get_app_id(&service, &client, &payload, &misc, &referred, 0);
+
+    CHECK_EQUAL(service, APP_ID_HTTP2);
+    CHECK_EQUAL(client, APP_ID_NONE);
+    CHECK_EQUAL(payload, APP_ID_NONE);
+    CHECK_EQUAL(misc, APP_ID_NONE);
+    CHECK_EQUAL(referred, APP_ID_NONE);
+
+    delete &asd.get_api();
+}
+
 TEST(appid_session_api, get_tls_host)
 {
     AppidChangeBits change_bits;

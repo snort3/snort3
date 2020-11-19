@@ -754,31 +754,31 @@ void AppIdHttpSession::clear_all_fields()
 void AppIdHttpSession::set_field(HttpFieldIds id, const std::string* str,
     AppidChangeBits& change_bits)
 {
-    delete meta_data[id];
-    meta_data[id] = str;
-    if (str)
+    if (str and !str->empty())
     {
+        delete meta_data[id];
+        meta_data[id] = str;
         set_http_change_bits(change_bits, id);
 
         if (appidDebug->is_active())
             print_field(id, str);
     }
+    else if (str)
+        delete str;
 }
 
 void AppIdHttpSession::set_field(HttpFieldIds id, const uint8_t* str, int32_t len,
     AppidChangeBits& change_bits)
 {
-    delete meta_data[id];
     if (str and len)
     {
+        delete meta_data[id];
         meta_data[id] = new std::string((const char*)str, len);
         set_http_change_bits(change_bits, id);
 
         if (appidDebug->is_active())
             print_field(id, meta_data[id]);
     }
-    else
-        meta_data[id] = nullptr;
 }
 
 void AppIdHttpSession::print_field(HttpFieldIds id, const std::string* field)

@@ -252,6 +252,20 @@ TEST(appid_http_session, http_field_ids_enum_order)
     CHECK_EQUAL(change_bits.test(APPID_USERAGENT_BIT), true);
     CHECK_EQUAL(change_bits.test(APPID_RESPONSE_BIT), true);
     CHECK_EQUAL(change_bits.test(APPID_REFERER_BIT), true);
+
+    // verify empty fields do not override existing fields
+    mock_hsession->set_field(REQ_AGENT_FID, nullptr, change_bits);
+    field = mock_hsession->get_field(REQ_AGENT_FID);
+    STRCMP_EQUAL(field->c_str(), "agent");
+    mock_hsession->set_field(REQ_AGENT_FID, new std::string(""), change_bits);
+    field = mock_hsession->get_field(REQ_AGENT_FID);
+    STRCMP_EQUAL(field->c_str(), "agent");
+    mock_hsession->set_field(REQ_AGENT_FID, nullptr, 0, change_bits);
+    field = mock_hsession->get_field(REQ_AGENT_FID);
+    STRCMP_EQUAL(field->c_str(), "agent");
+    mock_hsession->set_field(REQ_AGENT_FID, (const uint8_t*)"", 0, change_bits);
+    field = mock_hsession->get_field(REQ_AGENT_FID);
+    STRCMP_EQUAL(field->c_str(), "agent");
 }
 
 TEST(appid_http_session, set_tun_dest)
