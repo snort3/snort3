@@ -76,9 +76,11 @@ Http2PushPromiseFrame::Http2PushPromiseFrame(const uint8_t* header_buffer,
     if (!hpack_decoder->decode_headers((data.start() + hpack_headers_offset), data.length() -
         hpack_headers_offset, decoded_headers, start_line_generator, false))
     {
-        session_data->abort_flow[source_id] = true;
-        session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
-        return;
+        if (!(*session_data->infractions[source_id] & INF_TRUNCATED_HEADER_LINE))
+        {
+            session_data->abort_flow[source_id] = true;
+            session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
+        }
     }
 }
 
@@ -116,7 +118,7 @@ bool Http2PushPromiseFrame::valid_sequence(Http2Enums::StreamState)
 
 void Http2PushPromiseFrame::analyze_http1()
 {
-    if (!start_line_generator->generate_start_line(start_line))
+    if (!start_line_generator->generate_start_line(start_line, are_pseudo_headers_complete()))
     {
         // can't send request or push-promise headers to http_inspect, but response will still
         // be processed

@@ -21,6 +21,8 @@
 #define HTTP2_HPACK_H
 
 #include "service_inspectors/http_inspect/http_common.h"
+#include "utils/event_gen.h"
+#include "utils/infractions.h"
 
 #include "http2_hpack_int_decode.h"
 #include "http2_hpack_string_decode.h"
@@ -30,6 +32,10 @@ class Field;
 class Http2FlowData;
 class Http2StartLine;
 
+using Http2Infractions = Infractions<Http2Enums::INF__MAX_VALUE, Http2Enums::INF__NONE>;
+using Http2EventGen = EventGen<Http2Enums::EVENT__MAX_VALUE, Http2Enums::EVENT__NONE,
+    Http2Enums::HTTP2_GID>;
+
 // This class implements HPACK decompression. One instance is required in each direction for each
 // HTTP/2 flow
 class Http2HpackDecoder
@@ -37,7 +43,8 @@ class Http2HpackDecoder
 public:
     Http2HpackDecoder(Http2FlowData* flow_data, HttpCommon::SourceId src_id,
         Http2EventGen* const _events, Http2Infractions* const _infractions) :
-        events(_events), infractions(_infractions), decode_table(flow_data, src_id) { }
+        session_data(flow_data), events(_events), infractions(_infractions),
+        decode_table(flow_data, src_id) { }
     bool decode_headers(const uint8_t* encoded_headers, const uint32_t encoded_headers_length,
         uint8_t* decoded_headers, Http2StartLine* start_line, bool trailers);
     bool write_decoded_headers(const uint8_t* in_buffer, const uint32_t in_length,
@@ -76,11 +83,13 @@ public:
     const Field* get_start_line();
     Field get_decoded_headers(const uint8_t* const decoded_headers);
     HpackIndexTable* get_decode_table() { return &decode_table; }
+    bool are_pseudo_headers_allowed() { return pseudo_headers_allowed; }
 
 private:
     Http2StartLine* start_line;
     bool pseudo_headers_allowed;
     uint32_t decoded_headers_size;
+    Http2FlowData* session_data;
     Http2EventGen* const events;
     Http2Infractions* const infractions;
 

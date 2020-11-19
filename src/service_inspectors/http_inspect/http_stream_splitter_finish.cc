@@ -107,7 +107,6 @@ bool HttpStreamSplitter::finish(Flow* flow)
         (session_data->cutter[source_id] == nullptr)                &&
         (session_data->section_type[source_id] == SEC__NOT_COMPUTE))
     {
-        assert(!session_data->for_http2);
         // Set up to process empty header section
         uint32_t not_used;
         prepare_flush(session_data, &not_used, SEC_HEADER, 0, 0, 0, false, 0, 0);

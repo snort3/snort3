@@ -99,6 +99,7 @@ public:
     class Http2Stream* get_processing_stream();
     uint32_t get_processing_stream_id() const;
     void set_processing_stream_id(const HttpCommon::SourceId source_id);
+    bool is_processing_partial_header() const { return processing_partial_header; }
 
     Http2HpackDecoder* get_hpack_decoder(const HttpCommon::SourceId source_id)
     { return &hpack_decoder[source_id]; }
@@ -172,6 +173,7 @@ protected:
     uint8_t frame_type[2] = { Http2Enums::FT__NONE, Http2Enums::FT__NONE };
     bool abort_flow[2] = { false, false };
     std::queue<uint32_t> frame_lengths[2];
+    bool processing_partial_header = false;
 
     // Internal to reassemble()
     uint32_t frame_header_offset[2] = { 0, 0 };

@@ -31,21 +31,21 @@ using namespace snort;
 
 const RuleMap Http2Module::http2_events[] =
 {
-    { EVENT_INT_DECODE_FAILURE, "error in HPACK integer value" },
+    { EVENT_INVALID_FLAG, "invalid flag set on HTTP/2 frame" },
     { EVENT_INT_LEADING_ZEROS, "HPACK integer value has leading zeros" },
-    { EVENT_STRING_DECODE_FAILURE, "error in HPACK string value" },
+    { EVENT_INVALID_STREAM_ID, "HTTP/2 stream initiated with invalid stream id" },
     { EVENT_MISSING_CONTINUATION, "missing HTTP/2 continuation frame" },
     { EVENT_UNEXPECTED_CONTINUATION, "unexpected HTTP/2 continuation frame" },
     { EVENT_MISFORMATTED_HTTP2, "misformatted HTTP/2 traffic" },
     { EVENT_PREFACE_MATCH_FAILURE, "HTTP/2 connection preface does not match" },
     { EVENT_REQUEST_WITHOUT_REQUIRED_FIELD, "HTTP/2 request missing required header field" },
     { EVENT_RESPONSE_WITHOUT_STATUS, "HTTP/2 response has no status code" },
-    { EVENT_INVALID_HEADER, "HTTP/2 invalid header field" },
+    { EVENT_CONNECT_WITH_SCHEME_OR_PATH, "HTTP/2 CONNECT request with scheme or path" },
     { EVENT_SETTINGS_FRAME_ERROR, "error in HTTP/2 settings frame" },
     { EVENT_SETTINGS_FRAME_UNKN_PARAM, "unknown parameter in HTTP/2 settings frame" },
     { EVENT_FRAME_SEQUENCE, "invalid HTTP/2 frame sequence" },
     { EVENT_DYNAMIC_TABLE_OVERFLOW, "HTTP/2 dynamic table size limit exceeded" },
-    { EVENT_INVALID_STARTLINE, "invalid HTTP/2 start line" },
+    { EVENT_INVALID_PROMISED_STREAM, "HTTP/2 push promise frame with invalid promised stream id" },
     { EVENT_PADDING_LEN, "HTTP/2 padding length is bigger than frame data size" },
     { EVENT_PSEUDO_HEADER_AFTER_REGULAR_HEADER, "HTTP/2 pseudo-header after regular header" },
     { EVENT_PSEUDO_HEADER_IN_TRAILERS, "HTTP/2 pseudo-header in trailers" },
@@ -58,9 +58,6 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_BAD_PUSH_SEQUENCE, "HTTP/2 push promise frame sent at invalid time" },
     { EVENT_BAD_SETTINGS_VALUE, "invalid parameter value sent in HTTP/2 settings frame" },
     { EVENT_PUSH_WHEN_PROHIBITED, "HTTP/2 push promise frame sent when prohibited by receiver" },
-    { EVENT_INVALID_PROMISED_STREAM, "HTTP/2 push promise frame with invalid promised stream id" },
-    { EVENT_INVALID_STREAM_ID, "HTTP/2 stream initiated with invalid stream id" },
-    { EVENT_INVALID_FLAG, "invalid flag set on HTTP/2 frame" },
     { 0, nullptr }
 };
 

@@ -184,6 +184,7 @@ void Http2Inspect::clear(Packet* p)
     stream->clear_frame();
     session_data->stream_in_hi = NO_STREAM_ID;
     session_data->processing_stream_id = NO_STREAM_ID;
+    session_data->processing_partial_header = false;
 }
 
 #ifdef REG_TEST

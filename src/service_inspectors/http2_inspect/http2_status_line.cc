@@ -52,7 +52,7 @@ void Http2StatusLine::process_pseudo_header(const Field& name, const Field& valu
     }
 }
 
-bool Http2StatusLine::generate_start_line(Field& start_line)
+bool Http2StatusLine::generate_start_line(Field& start_line, bool pseudo_headers_complete)
 {
     uint32_t bytes_written = 0;
 
@@ -61,8 +61,11 @@ bool Http2StatusLine::generate_start_line(Field& start_line)
 
     if (status.length() <= 0)
     {
-        *infractions += INF_RESPONSE_WITHOUT_STATUS;
-        events->create_event(EVENT_RESPONSE_WITHOUT_STATUS);
+        if (pseudo_headers_complete)
+        {
+            *infractions += INF_RESPONSE_WITHOUT_STATUS;
+            events->create_event(EVENT_RESPONSE_WITHOUT_STATUS);
+        }
         return false;
     }
 

@@ -215,15 +215,33 @@ bool Http2StreamSplitter::finish(Flow* flow)
     }
 #endif
 
-    // Loop through all nonzero streams and call NHI finish()
     bool need_reassemble = false;
+
+    // First check if there is a partial header that needs to be processed. If we have a partial
+    // trailer don't call finish on that stream below
+    if (((session_data->frame_type[source_id] == FT_HEADERS) or
+            (session_data->frame_type[source_id] == FT_PUSH_PROMISE)) and
+        ((session_data->scan_remaining_frame_octets[source_id] > 0) or
+            (session_data->continuation_expected[source_id])))
+    {
+        session_data->processing_partial_header = true;
+        need_reassemble = true;
+#ifdef REG_TEST
+        if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
+            HttpTestManager::get_test_input_source()->flush(0);
+#endif
+    }
+
+    // Loop through all nonzero streams with open message bodies and call NHI finish()
     for (const Http2FlowData::StreamInfo& stream_info : session_data->streams)
     {
         if ((stream_info.id == 0)                                                 ||
             (stream_info.stream->get_state(source_id) >= STREAM_COMPLETE)         ||
             (stream_info.stream->get_hi_flow_data() == nullptr)                   ||
             (stream_info.stream->get_hi_flow_data()->get_type_expected(source_id)
-                != HttpEnums::SEC_BODY_H2))
+                != HttpEnums::SEC_BODY_H2)                                        ||
+            (session_data->processing_partial_header &&
+                (stream_info.id == session_data->current_stream[source_id])))
         {
             continue;
         }

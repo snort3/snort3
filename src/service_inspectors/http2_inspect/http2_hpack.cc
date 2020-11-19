@@ -27,6 +27,7 @@
 #include "service_inspectors/http_inspect/http_test_manager.h"
 
 #include "http2_enum.h"
+#include "http2_flow_data.h"
 #include "http2_start_line.h"
 
 using namespace HttpCommon;
@@ -66,7 +67,8 @@ bool Http2HpackDecoder::decode_string_literal(const uint8_t* encoded_header_buff
     bytes_consumed = 0;
 
     if (!decode_string.translate(encoded_header_buffer, encoded_header_length, bytes_consumed,
-        decoded_header_buffer, decoded_header_length, bytes_written, events, infractions))
+        decoded_header_buffer, decoded_header_length, bytes_written, events, infractions,
+        session_data->is_processing_partial_header()))
     {
         return false;
     }
@@ -84,7 +86,7 @@ const HpackTableEntry* Http2HpackDecoder::get_hpack_table_entry(
     bytes_consumed = 0;
 
     if (!decode_int.translate(encoded_header_buffer, encoded_header_length, bytes_consumed,
-        index, events, infractions))
+        index, events, infractions, session_data->is_processing_partial_header()))
     {
         return nullptr;
     }
@@ -235,7 +237,8 @@ bool Http2HpackDecoder::handle_dynamic_size_update(const uint8_t* encoded_header
     bytes_consumed = 0;
 
     if (!decode_int5.translate(encoded_header_buffer, encoded_header_length,
-        encoded_bytes_consumed, decoded_int, events, infractions))
+        encoded_bytes_consumed, decoded_int, events, infractions,
+        session_data->is_processing_partial_header()))
     {
         return false;
     }
@@ -365,8 +368,10 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
         decoded_headers_size += line_bytes_written;
     }
 
-    // Write the last CRLF to end the header
-    if (success)
+    // Write the last CRLF to end the header. A truncated header may not have encountered an error
+    // if the truncation is between header lines, but still shouldn't complete the header block
+    // with the final CRLF.
+    if (success and !session_data->is_processing_partial_header())
     {
         success = write_decoded_headers((const uint8_t*)"\r\n", 2, decoded_headers +
             decoded_headers_size, MAX_OCTETS - decoded_headers_size, line_bytes_written);

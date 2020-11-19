@@ -84,7 +84,14 @@ void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow, SourceI
     http1_header = hpack_decoder->get_decoded_headers(decoded_headers);
     StreamBuffer stream_buf;
 
+
     // http_inspect scan() of headers
+    // If we're processing a header truncated immediately after the start line, http1_header will
+    // be empty. Don't call scan on the empty buffer because it will create a cutter and the check
+    // for this condition in HI::finish() will fail. Truncated headers with non-empty http1_header
+    // buffers are still sent to HI::scan().
+    assert ((http1_header.length() > 0) or session_data->is_processing_partial_header());
+    if (http1_header.length() > 0)
     {
         uint32_t flush_offset;
         Http2DummyPacket dummy_pkt;
@@ -93,10 +100,18 @@ void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow, SourceI
         const StreamSplitter::Status header_scan_result =
             session_data->hi_ss[hi_source_id]->scan(&dummy_pkt, http1_header.start(),
             http1_header.length(), unused, &flush_offset);
-        assert(header_scan_result == StreamSplitter::FLUSH);
+        assert((session_data->is_processing_partial_header() and
+                (header_scan_result == StreamSplitter::SEARCH)) or
+            ((!session_data->is_processing_partial_header() and
+                (header_scan_result == StreamSplitter::FLUSH))));
+        assert(session_data->is_processing_partial_header() ^
+            ((int64_t)flush_offset == http1_header.length()));
         UNUSED(header_scan_result);
-        assert((int64_t)flush_offset == http1_header.length());
     }
+
+    // If this is a truncated headers frame, call http_inspect finish()
+    if (session_data->is_processing_partial_header())
+        session_data->hi_ss[hi_source_id]->finish(session_data->flow);
 
     // http_inspect reassemble() of headers
     {
@@ -117,15 +132,10 @@ void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow, SourceI
         dummy_pkt.data = stream_buf.data;
         dummy_pkt.xtradata_mask = 0;
         session_data->hi->eval(&dummy_pkt);
-        // Following if condition won't get exercised until finish() (during Headers) is
-        // implemented for H2I. Without finish() H2I will only flush complete header blocks. Below
-        // ABORT is only possible if tcp connection closes unexpectedly in middle of a header.
         if (http_flow->get_type_expected(hi_source_id) == HttpEnums::SEC_ABORT)
         {
-            *session_data->infractions[source_id] += INF_INVALID_HEADER;
-            session_data->events[source_id]->create_event(EVENT_INVALID_HEADER);
-            stream->set_state(source_id, STREAM_ERROR);
-            return;
+            assert(session_data->is_processing_partial_header());
+            stream->set_state(hi_source_id, STREAM_ERROR);
         }
         detection_required = dummy_pkt.is_detection_required();
         xtradata_mask = dummy_pkt.xtradata_mask;

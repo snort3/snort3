@@ -77,19 +77,23 @@ void Http2RequestLine::process_pseudo_header(const Field& name, const Field& val
 }
 
 // Select the appropriate URI form based on the provided pseudo-headers and generate the start line
-bool Http2RequestLine::generate_start_line(Field& start_line)
+bool Http2RequestLine::generate_start_line(Field& start_line, bool pseudo_headers_complete)
 {
     uint32_t bytes_written = 0;
+
+    if (method.length() <= 0)
+    {
+        if (pseudo_headers_complete)
+        {
+            *infractions += INF_REQUEST_WITHOUT_METHOD;
+            events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
+        }
+        return false;
+    }
 
     // Asterisk form - used for OPTIONS requests
     if (path.length() > 0 and path.start()[0] == '*')
     {
-        if (method.length() <= 0)
-        {
-            *infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
-            events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
-            return false;
-        }
         start_line_length = method.length() + path.length() + http_version_length +
             NUM_REQUEST_LINE_EXTRA_CHARS;
         start_line_buffer = new uint8_t[start_line_length];
@@ -113,15 +117,18 @@ bool Http2RequestLine::generate_start_line(Field& start_line)
         // FIXIT-L May want to be more lenient than RFC on generating start line
         if (authority.length() <= 0)
         {
-            *infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
-            events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
+            if (pseudo_headers_complete)
+            {
+                *infractions += INF_CONNECT_WITHOUT_AUTHORITY;
+                events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
+            }
             return false;
         }
         // Should not have a scheme or path
         if ( scheme.length() > 0 or path.length() > 0)
         {
-            *infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
-            events->create_event(EVENT_INVALID_HEADER);
+            *infractions += INF_CONNECT_WITH_SCHEME_OR_PATH;
+            events->create_event(EVENT_CONNECT_WITH_SCHEME_OR_PATH);
         }
         start_line_length = method.length() + authority.length() + http_version_length +
             NUM_REQUEST_LINE_EXTRA_CHARS;
@@ -139,7 +146,7 @@ bool Http2RequestLine::generate_start_line(Field& start_line)
         bytes_written += http_version_length;
     }
     // HTTP/2 requests with URIs in absolute or origin form must have a method, scheme, and length
-    else if (method.length() > 0 and scheme.length() > 0 and path.length() > 0)
+    else if (scheme.length() > 0 and path.length() > 0)
     {
         // If there is an authority, the URI is in absolute form
         if (authority.length() > 0)
@@ -188,8 +195,11 @@ bool Http2RequestLine::generate_start_line(Field& start_line)
     else
     {
         // FIXIT-E May want to be more lenient than RFC on generating start line
-        *infractions += INF_PSEUDO_HEADER_URI_FORM_MISMATCH;
-        events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
+        if (pseudo_headers_complete)
+        {
+            *infractions += INF_REQUEST_WITHOUT_REQUIRED_FIELD;
+            events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
+        }
         return false;
     }
 

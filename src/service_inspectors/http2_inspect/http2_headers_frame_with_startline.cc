@@ -92,8 +92,6 @@ bool Http2HeadersFrameWithStartline::process_start_line(HttpFlowData*& http_flow
         session_data->hi->eval(&dummy_pkt);
         if (http_flow->get_type_expected(hi_source_id) != HttpEnums::SEC_HEADER)
         {
-            *session_data->infractions[source_id] += INF_INVALID_STARTLINE;
-            session_data->events[source_id]->create_event(EVENT_INVALID_STARTLINE);
             stream->set_state(hi_source_id, STREAM_ERROR);
             return false;
         }
@@ -102,6 +100,14 @@ bool Http2HeadersFrameWithStartline::process_start_line(HttpFlowData*& http_flow
     return true;
 }
 
+// If we are not processing a truncated headers frame or we have seen a non-pseudoheader, we know
+// we've seen all the (valid) pseudoheaders in the frame. Otherwise we could be missing some due
+// to truncation
+bool Http2HeadersFrameWithStartline::are_pseudo_headers_complete()
+{
+    return !session_data->is_processing_partial_header() or
+        !hpack_decoder->are_pseudo_headers_allowed();
+}
 
 #ifdef REG_TEST
 void Http2HeadersFrameWithStartline::print_frame(FILE* output)

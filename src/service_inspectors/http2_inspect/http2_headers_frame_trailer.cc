@@ -59,8 +59,11 @@ Http2HeadersFrameTrailer::Http2HeadersFrameTrailer(const uint8_t* header_buffer,
     if (!hpack_decoder->decode_headers((data.start() + hpack_headers_offset), data.length() -
         hpack_headers_offset, decoded_headers, nullptr, true))
     {
-        session_data->abort_flow[source_id] = true;
-        session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
+        if (!(*session_data->infractions[source_id] & INF_TRUNCATED_HEADER_LINE))
+        {
+            session_data->abort_flow[source_id] = true;
+            session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
+        }
     }
 }
 
@@ -86,9 +89,8 @@ void Http2HeadersFrameTrailer::analyze_http1()
 
     if (http_flow->get_type_expected(source_id) != HttpEnums::SEC_TRAILER)
     {
-        // If there was no unflushed data on this stream when the trailers arrived, http_inspect
-        // will not yet be expecting trailers. Flush empty buffer through scan, reassemble, and
-        // eval to prepare http_inspect for trailers.
+        // http_inspect is not yet expecting trailers. Flush empty buffer through scan, reassemble,
+        // and eval to prepare http_inspect for trailers.
         assert(http_flow->get_type_expected(source_id) == HttpEnums::SEC_BODY_H2);
         stream->finish_msg_body(source_id, true, true); // calls http_inspect scan()
 

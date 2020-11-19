@@ -61,7 +61,7 @@ TEST(http2_hpack_int_decode_success, 10_using_5_bits)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = decode->translate(&buf, 1, bytes_processed, res, &events, &inf);
+    bool success = decode->translate(&buf, 1, bytes_processed, res, &events, &inf, false);
     // check results
     CHECK(success == true);
     CHECK(res == 10);
@@ -75,7 +75,7 @@ TEST(http2_hpack_int_decode_success, 10_using_5_bits_wtail)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = decode->translate(buf, 2, bytes_processed, res, &events, &inf);
+    bool success = decode->translate(buf, 2, bytes_processed, res, &events, &inf, false);
     // check results
     CHECK(success == true);
     CHECK(res == 10);
@@ -89,7 +89,7 @@ TEST(http2_hpack_int_decode_success, 1337_using_5_bits)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = decode->translate(buf, 3, bytes_processed, res, &events, &inf);
+    bool success = decode->translate(buf, 3, bytes_processed, res, &events, &inf, false);
     // check results
     CHECK(success == true);
     CHECK(res == 1337);
@@ -105,7 +105,7 @@ TEST(http2_hpack_int_decode_success, 42_using_8_bits)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = decode_8.translate(&buf, 1, bytes_processed, res, &events, &inf);
+    bool success = decode_8.translate(&buf, 1, bytes_processed, res, &events, &inf, false);
     // check results
     CHECK(success == true);
     CHECK(res == 42);
@@ -119,7 +119,7 @@ TEST(http2_hpack_int_decode_success, max_val_using_5_bit)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = decode->translate(buf, 11, bytes_processed, res, &events, &inf);
+    bool success = decode->translate(buf, 11, bytes_processed, res, &events, &inf, false);
     // check results
     CHECK(success == true);
     CHECK(res == 0xFFFFFFFFFFFFFFFF);
@@ -133,7 +133,7 @@ TEST(http2_hpack_int_decode_success, 31_using_5_bits)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = decode->translate(buf, 2, bytes_processed, res, &events, &inf);
+    bool success = decode->translate(buf, 2, bytes_processed, res, &events, &inf, false);
     // check results
     CHECK(success == true);
     CHECK(res == 31);
@@ -147,7 +147,7 @@ TEST(http2_hpack_int_decode_success, 0_using_5_bits)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = decode->translate(&buf, 1, bytes_processed, res, &events, &inf);
+    bool success = decode->translate(&buf, 1, bytes_processed, res, &events, &inf, false);
     // check results
     CHECK(success == true);
     CHECK(res == 0);
@@ -163,7 +163,7 @@ TEST(http2_hpack_int_decode_success, MAX_UINT32_using_7_bits)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = decode_7.translate(buf, 6, bytes_processed, res, &events, &inf);
+    bool success = decode_7.translate(buf, 6, bytes_processed, res, &events, &inf, false);
     // check results
     CHECK(success == true);
     CHECK(res == UINT32_MAX);
@@ -188,12 +188,12 @@ TEST(http2_hpack_int_decode_failure, 0_len_field)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = decode_8.translate(&buf, 0, bytes_processed, res, &local_events, &local_inf);
+    bool success = decode_8.translate(&buf, 0, bytes_processed, res, &local_events, &local_inf,
+        false);
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 0);
     CHECK(local_inf.get_raw() == (1<<INF_INT_EMPTY_BUFF));
-    CHECK(local_events.get_raw() == (1<<(EVENT_INT_DECODE_FAILURE-1)));
 }
 
 TEST(http2_hpack_int_decode_failure, too_short)
@@ -207,12 +207,12 @@ TEST(http2_hpack_int_decode_failure, too_short)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = local_decode.translate(buf, 2, bytes_processed, res, &local_events, &local_inf);
+    bool success = local_decode.translate(buf, 2, bytes_processed, res, &local_events, &local_inf,
+        false);
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 2);
     CHECK(local_inf.get_raw() == (1<<INF_INT_MISSING_BYTES));
-    CHECK(local_events.get_raw() == (1<<(EVENT_INT_DECODE_FAILURE-1)));
 }
 
 TEST(http2_hpack_int_decode_failure, multiplier_bigger_than_63)
@@ -226,12 +226,12 @@ TEST(http2_hpack_int_decode_failure, multiplier_bigger_than_63)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = local_decode.translate(buf, 13, bytes_processed, res, &local_events, &local_inf);
+    bool success = local_decode.translate(buf, 13, bytes_processed, res, &local_events, &local_inf,
+        false);
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 11);
     CHECK(local_inf.get_raw() == (1<<INF_INT_OVERFLOW));
-    CHECK(local_events.get_raw() == (1<<(EVENT_INT_DECODE_FAILURE-1)));
 }
 
 TEST(http2_hpack_int_decode_failure, add_val_overflow)
@@ -245,12 +245,12 @@ TEST(http2_hpack_int_decode_failure, add_val_overflow)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = local_decode.translate(buf, 12, bytes_processed, res, &local_events, &local_inf);
+    bool success = local_decode.translate(buf, 12, bytes_processed, res, &local_events, &local_inf,
+        false);
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 11);
     CHECK(local_inf.get_raw() == (1<<INF_INT_OVERFLOW));
-    CHECK(local_events.get_raw() == (1<<(EVENT_INT_DECODE_FAILURE-1)));
 }
 
 TEST(http2_hpack_int_decode_failure, add_val_overflow2)
@@ -264,12 +264,12 @@ TEST(http2_hpack_int_decode_failure, add_val_overflow2)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = local_decode.translate(buf, 11, bytes_processed, res, &local_events, &local_inf);
+    bool success = local_decode.translate(buf, 11, bytes_processed, res, &local_events, &local_inf,
+        false);
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 11);
     CHECK(local_inf.get_raw() == (1<<INF_INT_OVERFLOW));
-    CHECK(local_events.get_raw() == (1<<(EVENT_INT_DECODE_FAILURE-1)));
 }
 
 TEST(http2_hpack_int_decode_failure, 2_64_using_5_bit)
@@ -283,12 +283,12 @@ TEST(http2_hpack_int_decode_failure, 2_64_using_5_bit)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = local_decode.translate(buf, 11, bytes_processed, res, &local_events, &local_inf);
+    bool success = local_decode.translate(buf, 11, bytes_processed, res, &local_events, &local_inf,
+        false);
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 11);
     CHECK(local_inf.get_raw() == (1<<INF_INT_OVERFLOW));
-    CHECK(local_events.get_raw() == (1<<(EVENT_INT_DECODE_FAILURE-1)));
 }
 
 //
@@ -310,7 +310,8 @@ TEST(http2_hpack_int_decode_leading_zeros, leading_zeros)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = local_decode.translate(buf, 3, bytes_processed, res, &local_events, &local_inf);
+    bool success = local_decode.translate(buf, 3, bytes_processed, res, &local_events, &local_inf,
+        false);
     // check results
     CHECK(success == true);
     CHECK(res == 31);
@@ -331,7 +332,8 @@ TEST(http2_hpack_int_decode_leading_zeros, leading_0_byte_11)
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
-    bool success = local_decode.translate(buf, 11, bytes_processed, res, &local_events, &local_inf);
+    bool success = local_decode.translate(buf, 11, bytes_processed, res, &local_events, &local_inf,
+        false);
     // check results
     CHECK(success == true);
     CHECK(res == 0x7FFFFFFFFFFFFFFF);

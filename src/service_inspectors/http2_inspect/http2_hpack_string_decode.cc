@@ -38,15 +38,17 @@ static const uint8_t min_decode_len[HUFFMAN_LOOKUP_MAX + 1] =
 
 bool Http2HpackStringDecode::translate(const uint8_t* in_buff, const uint32_t in_len,
     uint32_t& bytes_consumed, uint8_t* out_buff, const uint32_t out_len, uint32_t& bytes_written,
-    Http2EventGen* const events, Http2Infractions* const infractions) const
+    Http2EventGen* const events, Http2Infractions* const infractions, bool partial_header) const
 {
     bytes_consumed = 0;
     bytes_written = 0;
 
     if (in_len == 0)
     {
-        *infractions += INF_STRING_EMPTY_BUFF;
-        events->create_event(EVENT_STRING_DECODE_FAILURE);
+        if (!partial_header)
+            *infractions += INF_STRING_EMPTY_BUFF;
+        else
+            *infractions += INF_TRUNCATED_HEADER_LINE;
         return false;
     }
 
@@ -54,13 +56,16 @@ bool Http2HpackStringDecode::translate(const uint8_t* in_buff, const uint32_t in
 
     // Get length
     uint64_t encoded_len;
-    if (!decode7.translate(in_buff, in_len, bytes_consumed, encoded_len, events, infractions))
+    if (!decode7.translate(in_buff, in_len, bytes_consumed, encoded_len, events, infractions,
+            partial_header))
         return false;
 
     if (encoded_len > (uint64_t)(in_len - bytes_consumed))
     {
-        *infractions += INF_STRING_MISSING_BYTES;
-        events->create_event(EVENT_STRING_DECODE_FAILURE);
+        if (!partial_header)
+            *infractions += INF_STRING_MISSING_BYTES;
+        else
+            *infractions += INF_TRUNCATED_HEADER_LINE;
         return false;
     }
 
@@ -69,20 +74,19 @@ bool Http2HpackStringDecode::translate(const uint8_t* in_buff, const uint32_t in
 
     if (!isHuffman)
         return get_string(in_buff, encoded_len, bytes_consumed, out_buff, out_len, bytes_written,
-                events, infractions);
+            infractions);
 
     return get_huffman_string(in_buff, encoded_len, bytes_consumed, out_buff, out_len,
-        bytes_written, events, infractions);
+        bytes_written, infractions);
 }
 
 bool Http2HpackStringDecode::get_string(const uint8_t* in_buff, const uint32_t encoded_len,
     uint32_t& bytes_consumed, uint8_t* out_buff, const uint32_t out_len, uint32_t& bytes_written,
-    Http2EventGen* const events, Http2Infractions* const infractions) const
+    Http2Infractions* const infractions) const
 {
     if (encoded_len > out_len)
     {
         *infractions += INF_DECODED_HEADER_BUFF_OUT_OF_SPACE;
-        events->create_event(EVENT_MISFORMATTED_HTTP2);
         return false;
     }
 
@@ -141,7 +145,7 @@ bool Http2HpackStringDecode::get_next_byte(const uint8_t* in_buff, const uint32_
 
 bool Http2HpackStringDecode::get_huffman_string(const uint8_t* in_buff, const uint32_t encoded_len,
     uint32_t& bytes_consumed, uint8_t* out_buff, const uint32_t out_len, uint32_t& bytes_written,
-    Http2EventGen* const events, Http2Infractions* const infractions) const
+    Http2Infractions* const infractions) const
 {
     const uint32_t last_encoded_byte = bytes_consumed + encoded_len;
     uint8_t byte;
@@ -155,7 +159,6 @@ bool Http2HpackStringDecode::get_huffman_string(const uint8_t* in_buff, const ui
     if (max_length > out_len)
     {
         *infractions += INF_DECODED_HEADER_BUFF_OUT_OF_SPACE;
-        events->create_event(EVENT_STRING_DECODE_FAILURE);
         return false;
     }
 
@@ -190,9 +193,7 @@ bool Http2HpackStringDecode::get_huffman_string(const uint8_t* in_buff, const ui
 
         case HUFFMAN_FAILURE:
             *infractions += INF_HUFFMAN_DECODED_EOS;
-            events->create_event(EVENT_STRING_DECODE_FAILURE);
             return false;
-            break;
 
         default:
             break;
@@ -229,14 +230,12 @@ bool Http2HpackStringDecode::get_huffman_string(const uint8_t* in_buff, const ui
         if (byte != 0xff)
         {
             *infractions += INF_HUFFMAN_BAD_PADDING;
-            events->create_event(EVENT_STRING_DECODE_FAILURE);
             return false;
         }
     }
     else if (result.state != HUFFMAN_MATCH)
     {
         *infractions += INF_HUFFMAN_INCOMPLETE_CODE_PADDING;
-        events->create_event(EVENT_STRING_DECODE_FAILURE);
         return false;
     }
 

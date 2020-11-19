@@ -47,6 +47,7 @@ protected:
         Http2HeadersFrame(header_buffer, header_len, data_buffer, data_len, ssn_data, src_id,
             stream_) { }
     bool process_start_line(HttpFlowData*& http_flow, HttpCommon::SourceId hi_source_id);
+    bool are_pseudo_headers_complete();
 
     Http2StartLine* start_line_generator = nullptr;
     Field start_line;

@@ -40,7 +40,7 @@ public:
 
     friend class Http2Hpack;
 
-    virtual bool generate_start_line(Field& start_line) = 0;
+    virtual bool generate_start_line(Field& start_line, bool pseudo_headers_complete) = 0;
     virtual void process_pseudo_header(const Field& name, const Field& value) = 0;
 
 protected:

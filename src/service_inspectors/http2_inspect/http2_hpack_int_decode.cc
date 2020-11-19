@@ -37,15 +37,17 @@ Http2HpackIntDecode::Http2HpackIntDecode(uint8_t prefix) : prefix_mask(((uint16_
 
 bool Http2HpackIntDecode::translate(const uint8_t* in_buff, const uint32_t in_len,
     uint32_t& bytes_consumed, uint64_t& result, Http2EventGen* const events,
-    Http2Infractions* const infractions) const
+    Http2Infractions* const infractions, bool partial_header) const
 {
     bytes_consumed = 0;
     result = 0;
 
     if (in_len == 0)
     {
-        *infractions += INF_INT_EMPTY_BUFF;
-        events->create_event(EVENT_INT_DECODE_FAILURE);
+        if (!partial_header)
+            *infractions += INF_INT_EMPTY_BUFF;
+        else
+            *infractions += INF_TRUNCATED_HEADER_LINE;
         return false;
     }
 
@@ -62,8 +64,10 @@ bool Http2HpackIntDecode::translate(const uint8_t* in_buff, const uint32_t in_le
     {
         if (bytes_consumed >= in_len)
         {
-            *infractions += INF_INT_MISSING_BYTES;
-            events->create_event(EVENT_INT_DECODE_FAILURE);
+            if (!partial_header)
+                *infractions += INF_INT_MISSING_BYTES;
+            else
+                *infractions += INF_TRUNCATED_HEADER_LINE;
             return false;
         }
         byte = in_buff[bytes_consumed++];
@@ -75,7 +79,6 @@ bool Http2HpackIntDecode::translate(const uint8_t* in_buff, const uint32_t in_le
                 ((result + ((uint64_t)(byte & VAL_MASK) << multiplier) + prefix_mask) < result))
             {
                 *infractions += INF_INT_OVERFLOW;
-                events->create_event(EVENT_INT_DECODE_FAILURE);
                 return false;
             }
         }
