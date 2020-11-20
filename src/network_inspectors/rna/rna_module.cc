@@ -114,18 +114,18 @@ static bool get_mac_from_args(lua_State* L, uint8_t* mac_addr)
         hex_parser >> tmp_byte;
         mac_addr[idx++] = (uint8_t) tmp_byte;
 
-	    if ( hex_parser.fail() or tok.size() != 2 )
-	    {
-	        LogMessage("Improperly formatted MAC address, use format "
-	         "aa:bb:cc:dd:ee:ff\n");
-	        return false;
-	    }
+        if ( hex_parser.fail() or tok.size() != 2 )
+        {
+            LogMessage("Improperly formatted MAC address, use format "
+             "aa:bb:cc:dd:ee:ff\n");
+            return false;
+        }
 
         hex_parser.str(string());
         hex_parser.clear();
     }
 
-	if ( idx != MAC_SIZE )
+    if ( idx != MAC_SIZE )
     {
         LogMessage("Improperly formatted MAC address, use format aa:bb:cc:dd:ee:ff\n");
         return false;
@@ -142,13 +142,13 @@ static int delete_mac_host(lua_State* L)
     {
         uint8_t mac[MAC_SIZE] = {0};
 
-	    const char* lua_in = luaL_optstring(L, 1, nullptr);
+        const char* lua_in = luaL_optstring(L, 1, nullptr);
 
-	    if ( lua_in == nullptr )
-	    {
-	        LogMessage("Usage: rna.delete_mac_host(mac)\n");
-	        return 0;
-	    }
+        if ( lua_in == nullptr )
+        {
+            LogMessage("Usage: rna.delete_mac_host(mac)\n");
+            return 0;
+        }
 
         bool valid_mac = get_mac_from_args(L, mac);
         if (!valid_mac)
@@ -175,13 +175,13 @@ static int delete_mac_host_proto(lua_State* L)
     {
         uint8_t mac[MAC_SIZE] = {0};
 
-	    const char* lua_in = luaL_optstring(L, 1, nullptr);
+        const char* lua_in = luaL_optstring(L, 1, nullptr);
 
-	    if ( lua_in == nullptr )
-	    {
-	        LogMessage("Usage: rna.delete_mac_host_proto(mac, proto)\n");
-	        return 0;
-	    }
+        if ( lua_in == nullptr )
+        {
+            LogMessage("Usage: rna.delete_mac_host_proto(mac, proto)\n");
+            return 0;
+        }
 
         bool valid_mac = get_mac_from_args(L, mac);
         if (!valid_mac)
