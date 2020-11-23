@@ -45,13 +45,6 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const uint32_
     HttpCommon::SourceId source_id_, Http2Stream* stream_) :
     Http2Frame(header_buffer, header_len, data_buffer, data_len, session_data_, source_id_, stream_)
 {
-    // FIXIT-E zero length should not be a special case
-    if (data.length() <= 0)
-    {
-        process_frame = false;
-        return;
-    }
-
     // Remove stream dependency if present
     if (get_flags() & PRIORITY)
         hpack_headers_offset = 5;
@@ -146,7 +139,7 @@ const Field& Http2HeadersFrame::get_buf(unsigned id)
 {
     switch (id)
     {
-    // FIXIT-M need to add a buffer for the decoded start line
+    // FIXIT-E need to add a buffer for the decoded start line
     case HTTP2_BUFFER_DECODED_HEADER:
         return http1_header;
     default:

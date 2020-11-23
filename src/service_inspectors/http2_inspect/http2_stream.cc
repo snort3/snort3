@@ -90,6 +90,8 @@ void Http2Stream::set_state(HttpCommon::SourceId source_id, StreamState new_stat
 {
     assert((STREAM_EXPECT_HEADERS <= new_state) && (new_state <= STREAM_ERROR));
     assert(state[source_id] < new_state);
+    assert((new_state < STREAM_EXPECT_BODY) || (new_state > STREAM_BODY) ||
+        (get_hi_flow_data() != nullptr));
     state[source_id] = new_state;
 }
 

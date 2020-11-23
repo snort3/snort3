@@ -40,7 +40,6 @@ public:
     const snort::StreamBuffer reassemble(snort::Flow* flow, unsigned total, unsigned offset, const
         uint8_t* data, unsigned len, uint32_t flags, unsigned& copied) override;
     bool finish(snort::Flow* flow) override;
-    bool init_partial_flush(snort::Flow* flow) override;
     bool is_paf() override { return true; }
 
     // FIXIT-M should return actual packet buffer size
@@ -51,9 +50,6 @@ private:
     static StreamSplitter::Status data_frame_header_checks(Http2FlowData* session_data,
         uint32_t* flush_offset, HttpCommon::SourceId source_id, uint32_t frame_length,
         uint32_t& data_offset);
-    static StreamSplitter::Status non_data_frame_header_checks(
-        Http2FlowData* session_data, HttpCommon::SourceId source_id, uint32_t frame_length,
-        uint8_t type);
     static StreamSplitter::Status non_data_scan(Http2FlowData* session_data,
         uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id, uint8_t type,
         uint8_t frame_flags, uint32_t& data_offset);

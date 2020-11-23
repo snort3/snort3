@@ -94,7 +94,7 @@ bool Http2SettingsFrame::sanity_check()
     // FIXIT-E this next check should possibly be moved to valid_sequence()
     if (get_stream_id() != 0)
         bad_frame = true;
-    else if (!ack and ((data.length() % 6) != 0))
+    else if (!ack and ((data.length() <= 0) or ((data.length() % 6) != 0)))
         bad_frame = true;
     else if (ack and data.length() > 0)
         bad_frame = true;

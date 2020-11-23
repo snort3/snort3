@@ -71,65 +71,33 @@ StreamSplitter::Status Http2StreamSplitter::data_frame_header_checks(Http2FlowDa
 
     if (!stream || !stream->is_open(source_id))
     {
-        *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
-        session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
-        // FIXIT-E We should not be aborting here
-        return StreamSplitter::ABORT;
+        if (!(stream && (stream->get_state(source_id) == STREAM_ERROR)))
+        {
+            *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
+            session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
+            if (stream)
+            {
+                // FIXIT-E need to do this even if the stream does not exist yet
+                stream->set_state(source_id, STREAM_ERROR);
+            }
+        }
+        return StreamSplitter::SEARCH;
     }
 
     HttpFlowData* const http_flow = (HttpFlowData*)stream->get_hi_flow_data();
-    if (http_flow == nullptr)
+    assert(http_flow != nullptr);
+
+    // If 0 length frame and http_inspect isn't expecting body, flush without involving HI
+    if ((frame_length == 0) && (http_flow->get_type_expected(source_id) != HttpEnums::SEC_BODY_H2))
     {
-        *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
-        session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
-        return StreamSplitter::ABORT;
-    }
-
-    if (http_flow->get_type_expected(source_id) != HttpEnums::SEC_BODY_H2)
-    {
-        // If 0 length frame and http isn't expecting body, flush without involving http
-        if (frame_length == 0)
-        {
-            *flush_offset = data_offset;
-            session_data->header_octets_seen[source_id] = 0;
-            session_data->scan_state[source_id] = SCAN_FRAME_HEADER;
-            return StreamSplitter::FLUSH;
-        }
-
-        *session_data->infractions[source_id] += INF_FRAME_SEQUENCE;
-        session_data->events[source_id]->create_event(EVENT_FRAME_SEQUENCE);
-        // FIXIT-E We should not be aborting here
-        return StreamSplitter::ABORT;
-    }
-
-    if (frame_length > MAX_OCTETS)
-        return StreamSplitter::ABORT;
-
-    return StreamSplitter::SEARCH;
-}
-
-StreamSplitter::Status Http2StreamSplitter::non_data_frame_header_checks(
-    Http2FlowData* session_data, HttpCommon::SourceId source_id, uint32_t frame_length,
-    uint8_t type)
-{
-    // Compute frame section length once per frame
-    if (frame_length + FRAME_HEADER_LENGTH > MAX_OCTETS)
-    {
-        // FIXIT-M long non-data frame needs to be supported
-        return StreamSplitter::ABORT;
-    }
-
-    if (type == FT_CONTINUATION and !session_data->continuation_expected[source_id])
-    {
-        *session_data->infractions[source_id] += INF_UNEXPECTED_CONTINUATION;
-        session_data->events[source_id]->create_event(
-            EVENT_UNEXPECTED_CONTINUATION);
-        return StreamSplitter::ABORT;
+        *flush_offset = data_offset;
+        session_data->header_octets_seen[source_id] = 0;
+        session_data->scan_state[source_id] = SCAN_FRAME_HEADER;
+        return StreamSplitter::FLUSH;
     }
 
     return StreamSplitter::SEARCH;
 }
-
 
 StreamSplitter::Status Http2StreamSplitter::non_data_scan(Http2FlowData* session_data,
     uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id, uint8_t type,
@@ -258,11 +226,25 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                     memcpy(session_data->lead_frame_header[source_id],
                         session_data->scan_frame_header[source_id], FRAME_HEADER_LENGTH);
                 }
+                else if (!session_data->continuation_expected[source_id])
+                {
+                    *session_data->infractions[source_id] += INF_UNEXPECTED_CONTINUATION;
+                    session_data->events[source_id]->create_event(EVENT_UNEXPECTED_CONTINUATION);
+                    return StreamSplitter::ABORT;
+                }
+
                 const uint32_t frame_length = get_frame_length(session_data->
                     scan_frame_header[source_id]);
                 session_data->frame_lengths[source_id].push(frame_length);
                 const uint8_t frame_flags = get_frame_flags(session_data->
                     scan_frame_header[source_id]);
+
+                if ((type != FT_DATA) && (frame_length + FRAME_HEADER_LENGTH > MAX_OCTETS))
+                {
+                    // FIXIT-E long non-data frames may need to be supported
+                    // FIXIT-E need an alert and infraction
+                    return StreamSplitter::ABORT;
+                }
 
                 assert(session_data->scan_remaining_frame_octets[source_id] == 0);
                 session_data->scan_remaining_frame_octets[source_id] = frame_length;
@@ -300,9 +282,6 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                     status = data_frame_header_checks(session_data, flush_offset, source_id,
                         frame_length, data_offset);
                 }
-                else
-                    status = non_data_frame_header_checks(session_data, source_id, frame_length,
-                        type);
 
                 break;
             }
@@ -340,16 +319,44 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                     session_data->scan_frame_header[source_id]);
                 const uint8_t frame_flags = get_frame_flags(session_data->
                     scan_frame_header[source_id]);
-                if (session_data->frame_type[source_id] == FT_DATA)
-                {
-                    status = session_data->data_cutter[source_id].scan(
-                        data, length, flush_offset, data_offset,
-                        frame_length - session_data->padding_length[source_id], frame_flags);
-                }
-                else
+                if (session_data->frame_type[source_id] != FT_DATA)
                 {
                     status = non_data_scan(session_data, length, flush_offset, source_id, type,
                         frame_flags, data_offset);
+                }
+                else
+                {
+                    Http2Stream* const stream =
+                        session_data->find_stream(session_data->current_stream[source_id]);
+                    if (stream && stream->is_open(source_id))
+                    {
+                        status = session_data->data_cutter[source_id].scan(
+                            data, length, flush_offset, data_offset,
+                            frame_length - session_data->padding_length[source_id], frame_flags);
+                    }
+                    else
+                    {
+                        // Need to skip past Data frame in a bad stream
+                        uint32_t& remaining = session_data->scan_remaining_frame_octets[source_id];
+                        if (length - data_offset < remaining)
+                        {
+                            *flush_offset = length;
+                            remaining -= length - data_offset;
+                        }
+                        else
+                        {
+                            *flush_offset = data_offset + remaining;
+                            remaining = 0;
+                            session_data->header_octets_seen[source_id] = 0;
+                            session_data->scan_state[source_id] = SCAN_FRAME_HEADER;
+                            assert(!session_data->frame_lengths[source_id].empty());
+                            session_data->frame_lengths[source_id].pop();
+                            assert(session_data->frame_lengths[source_id].empty());
+                        }
+
+                        session_data->payload_discard[source_id] = true;
+                        status = StreamSplitter::FLUSH;
+                    }
                 }
                 assert(status != StreamSplitter::SEARCH or
                     session_data->scan_state[source_id] != SCAN_EMPTY_DATA);
@@ -381,8 +388,6 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
     {
         if (offset == 0)
         {
-            session_data->frame_header_offset[source_id] = 0;
-
             // This is the first reassemble() for this frame - allocate data buffer
             session_data->frame_data_size[source_id] =
                 total - (session_data->frame_lengths[source_id].size() * FRAME_HEADER_LENGTH);

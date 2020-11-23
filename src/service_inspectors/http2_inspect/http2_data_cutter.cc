@@ -90,15 +90,8 @@ StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t lengt
         {
             bytes_sent_http += cur_data;
         }
-        else if (scan_result == StreamSplitter::ABORT)
-        {
-            // FIXIT-E eventually need to implement continued processing. We cannot abort just
-            // because one stream went sideways. A better approach would be to put this one stream
-            // into a pass through mode while continuing to process other streams. As long as we
-            // can parse the framing and process most streams it is reasonable to continue.
-            session_data->stream_in_hi = NO_STREAM_ID;
-            return StreamSplitter::ABORT;
-        }
+        else
+            assert(false);
     }
 
     if (data_bytes_read == data_len)
@@ -172,10 +165,11 @@ void Http2DataCutter::reassemble(const uint8_t* data, unsigned len)
                     reassemble_state = GET_PADDING_LEN;
                 else if (reassemble_data_len > 0)
                     reassemble_state = SEND_DATA;
-                else if (frame_flags & END_STREAM)
-                    reassemble_state = SEND_EMPTY_DATA;
                 else
-                    reassemble_state = GET_FRAME_HDR;
+                {
+                    assert(frame_flags & END_STREAM);
+                    reassemble_state = SEND_EMPTY_DATA;
+                }
             }
             break;
           }
@@ -187,10 +181,11 @@ void Http2DataCutter::reassemble(const uint8_t* data, unsigned len)
             cur_data_offset++;
             if (reassemble_data_len > 0)
                 reassemble_state = SEND_DATA;
-            else if (get_frame_flags(session_data->lead_frame_header[source_id]) & END_STREAM)
-                reassemble_state = SEND_EMPTY_DATA;
             else
-                reassemble_state = GET_FRAME_HDR;
+            {
+                assert(get_frame_flags(session_data->lead_frame_header[source_id]) & END_STREAM);
+                reassemble_state = SEND_EMPTY_DATA;
+            }
             break;
           }
         case SEND_EMPTY_DATA:

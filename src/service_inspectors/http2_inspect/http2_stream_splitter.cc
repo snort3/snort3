@@ -263,31 +263,3 @@ bool Http2StreamSplitter::finish(Flow* flow)
     return need_reassemble;
 }
 
-bool Http2StreamSplitter::init_partial_flush(Flow* flow)
-{
-    Profile profile(Http2Module::get_profile_stats());
-
-    if (source_id != SRC_SERVER)
-    {
-        assert(false);
-        return false;
-    }
-
-    Http2FlowData* session_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
-    assert(session_data != nullptr);
-    if (session_data->abort_flow[source_id])
-        return false;
-
-#ifdef REG_TEST
-    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2) &&
-        !HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
-    {
-        printf("HTTP/2 partial flush from flow data %" PRIu64 "\n", session_data->seq_num);
-        fflush(stdout);
-    }
-#endif
-
-    // FIXIT-E not supported yet
-    return false;
-}
-
