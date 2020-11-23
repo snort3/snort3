@@ -48,6 +48,7 @@ protected:
         const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* ssn_data,
         HttpCommon::SourceId src_id, Http2Stream* stream);
     void process_decoded_headers(HttpFlowData* http_flow, HttpCommon::SourceId hi_source_id);
+    uint8_t get_flags_mask() const override;
 
     uint8_t* decoded_headers = nullptr; // working buffer to store decoded headers
     Field http1_header;                 // finalized headers to be passed to NHI

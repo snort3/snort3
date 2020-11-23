@@ -60,13 +60,6 @@ Http2PushPromiseFrame::Http2PushPromiseFrame(const uint8_t* header_buffer,
         *session_data->infractions[source_id] += INF_PUSH_WHEN_PROHIBITED;
     }
 
-    // Push_promise frames only define the padded and end_headers flags
-    if (get_flags() & ~PADDED & ~END_HEADERS)
-    {
-        session_data->events[source_id]->create_event(EVENT_INVALID_FLAG);
-        *session_data->infractions[source_id] += INF_INVALID_FLAG;
-    }
-
     start_line_generator = new Http2RequestLine(session_data->events[source_id],
         session_data->infractions[source_id]);
 
@@ -160,6 +153,9 @@ uint32_t Http2PushPromiseFrame::get_promised_stream_id(Http2EventGen* const even
     // the first four bytes of the push_promise frame are the pushed stream ID
     return get_stream_id_from_buffer(data_buffer);
 }
+
+uint8_t Http2PushPromiseFrame::get_flags_mask() const
+{ return (END_HEADERS|PADDED); }
 
 #ifdef REG_TEST
 void Http2PushPromiseFrame::print_frame(FILE* output)

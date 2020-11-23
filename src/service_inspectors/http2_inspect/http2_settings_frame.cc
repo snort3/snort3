@@ -58,7 +58,7 @@ Http2SettingsFrame::Http2SettingsFrame(const uint8_t* header_buffer, const uint3
         return;
     }
 
-    if (SfAck & get_flags())
+    if (ACK & get_flags())
         return;
 
     parse_settings_frame();
@@ -89,7 +89,7 @@ void Http2SettingsFrame::parse_settings_frame()
 
 bool Http2SettingsFrame::sanity_check()
 {
-    const bool ack = SfAck & get_flags();
+    const bool ack = ACK & get_flags();
 
     // FIXIT-E this next check should possibly be moved to valid_sequence()
     if (get_stream_id() != 0)
@@ -134,7 +134,7 @@ void Http2SettingsFrame::print_frame(FILE* output)
 
     if (bad_frame)
         fprintf(output, " Error in settings frame.");
-    else if (SfAck & get_flags())
+    else if (ACK & get_flags())
         fprintf(output, " ACK");
     else
         fprintf(output, " Parameters in current frame - %d.", (data.length()/6)) ;

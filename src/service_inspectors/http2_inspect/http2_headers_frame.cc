@@ -147,6 +147,9 @@ const Field& Http2HeadersFrame::get_buf(unsigned id)
     }
 }
 
+uint8_t Http2HeadersFrame::get_flags_mask() const
+{ return (END_STREAM|END_HEADERS|PADDED|PRIORITY); }
+
 #ifdef REG_TEST
 void Http2HeadersFrame::print_frame(FILE* output)
 {

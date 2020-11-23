@@ -57,6 +57,8 @@ private:
     Http2PushPromiseFrame(const uint8_t* header_buffer, const uint32_t header_len,
         const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* ssn_data,
         HttpCommon::SourceId src_id, Http2Stream* stream);
+    uint8_t get_flags_mask() const override;
+
     static const int32_t PROMISED_ID_LENGTH = 4;
 };
 #endif

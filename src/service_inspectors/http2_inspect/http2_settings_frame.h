@@ -46,8 +46,10 @@ private:
     bool sanity_check();
     bool handle_update(uint16_t id, uint32_t value);
 
+    uint8_t get_flags_mask() const override
+    { return Http2Enums::ACK; }
+  
     bool bad_frame = false;
-    static const uint8_t SfAck = 0x01;
 };
 
 class Http2ConnectionSettings

@@ -62,6 +62,7 @@ protected:
         HttpCommon::SourceId source_id, Http2Stream* stream);
     uint8_t get_flags();
     uint32_t get_stream_id();
+    virtual uint8_t get_flags_mask() const { return 0; }
 
     Field header;
     Field data;

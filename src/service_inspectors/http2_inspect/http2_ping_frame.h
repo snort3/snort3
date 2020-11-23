@@ -15,44 +15,30 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http2_data_frame.h author Maya Dagon <mdagon@cisco.com>
+// http2_ping_frame.h author Maya Dagon <mdagon@cisco.com>
+// FIXIT-E currently only supports flags validation
 
-#ifndef HTTP2_DATA_FRAME_H
-#define HTTP2_DATA_FRAME_H
+#ifndef HTTP2_PING_FRAME_H
+#define HTTP2_PING_FRAME_H
 
 #include "http2_frame.h"
 
 class Http2Frame;
-class Http2Stream;
 
-class Http2DataFrame : public Http2Frame
+class Http2PingFrame : public Http2Frame
 {
 public:
-    ~Http2DataFrame() override {}
-    bool valid_sequence(Http2Enums::StreamState state) override;
-    void analyze_http1() override;
-    void clear() override;
-
-    uint32_t get_xtradata_mask() override { return xtradata_mask; }
-    bool is_detection_required() const override { return detection_required; }
-    void update_stream_state() override;
-
     friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const uint32_t, const uint8_t*,
         const uint32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);
 
-#ifdef REG_TEST
-    void print_frame(FILE* output) override;
-#endif
-
 private:
-    Http2DataFrame(const uint8_t* header_buffer, const uint32_t header_len,
-        const uint8_t* data_buffer_, const uint32_t data_length_, Http2FlowData* ssn_data,
-        HttpCommon::SourceId src_id, Http2Stream* stream);
-    uint8_t get_flags_mask() const override;
+    Http2PingFrame(const uint8_t* header_buffer, const uint32_t header_len,
+        const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* ssn_data,
+        HttpCommon::SourceId src_id, Http2Stream* _stream) :
+        Http2Frame(header_buffer, header_len, data_buffer, data_len, ssn_data, src_id, _stream) { }
 
-    const uint32_t data_length;
-    const uint8_t* const data_buffer;
-    uint32_t xtradata_mask = 0;
-    bool detection_required = false;
+    uint8_t get_flags_mask() const override
+    { return Http2Enums::ACK; }
 };
 #endif
+
