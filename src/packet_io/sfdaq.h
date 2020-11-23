@@ -65,7 +65,7 @@ public:
     SO_PUBLIC static int get_base_protocol();
 
     static int inject(DAQ_Msg_h, int rev, const uint8_t* buf, uint32_t len);
-    static bool forwarding_packet(const DAQ_PktHdr_t*);
+    SO_PUBLIC static bool forwarding_packet(const DAQ_PktHdr_t*);
 };
 }
 #endif
