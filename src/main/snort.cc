@@ -641,3 +641,13 @@ SnortConfig* Snort::get_updated_module(SnortConfig* other_conf, const char* name
     reloading = false;
     return sc;
 }
+
+OopsHandlerSuspend::OopsHandlerSuspend()
+{
+    remove_oops_handler();
+}
+
+OopsHandlerSuspend::~OopsHandlerSuspend()
+{
+    install_oops_handler();
+}

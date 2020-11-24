@@ -62,6 +62,13 @@ private:
     static bool privileges_dropped;
 };
 
+// RAII-style mechanism for removal and reinstallation of Snort's crash handler
+class SO_PUBLIC OopsHandlerSuspend
+{
+public:
+    OopsHandlerSuspend();
+    ~OopsHandlerSuspend();
+};
 }
 
 #endif

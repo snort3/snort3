@@ -91,8 +91,10 @@ static struct
 }
 original_sigactions[] =
 {
+    { SIGILL, { } },
     { SIGABRT, { } },
     { SIGBUS,  { } },
+    { SIGFPE,  { } },
     { SIGSEGV, { } },
     { 0, { } },
 };
@@ -104,8 +106,10 @@ static struct
 }
 original_sighandlers[] =
 {
+    { SIGILL,  SIG_DFL },
     { SIGABRT, SIG_DFL },
     { SIGBUS,  SIG_DFL },
+    { SIGFPE,  SIG_DFL },
     { SIGSEGV, SIG_DFL },
     { 0, SIG_DFL },
 };
@@ -254,11 +258,17 @@ static void oops_handler(int signal)
     const char* sigstr = "???\n";
     switch (signal)
     {
+        case SIGILL:
+            sigstr = STRINGIFY(SIGILL) " (" STRINGIFY_MX(SIGILL) ")";
+            break;
         case SIGABRT:
             sigstr = STRINGIFY(SIGABRT) " (" STRINGIFY_MX(SIGABRT) ")";
             break;
         case SIGBUS:
             sigstr = STRINGIFY(SIGBUS) " (" STRINGIFY_MX(SIGBUS) ")";
+            break;
+        case SIGFPE:
+            sigstr = STRINGIFY(SIGFPE) " (" STRINGIFY_MX(SIGFPE) ")";
             break;
         case SIGSEGV:
             sigstr = STRINGIFY(SIGSEGV) " (" STRINGIFY_MX(SIGSEGV) ")";
@@ -400,6 +410,15 @@ static bool restore_signal(int sig, bool silent)
     return true;
 }
 
+void install_oops_handler()
+{
+    add_signal(SIGILL, oops_handler);
+    add_signal(SIGABRT, oops_handler);
+    add_signal(SIGBUS, oops_handler);
+    add_signal(SIGFPE, oops_handler);
+    add_signal(SIGSEGV, oops_handler);
+}
+
 void init_signals()
 {
     sigset_t set;
@@ -408,39 +427,50 @@ void init_signals()
     // FIXIT-L this is undefined for multithreaded apps
     sigprocmask(SIG_SETMASK, &set, nullptr);
 
-    // Make this program behave nicely when signals come along.
+    // First things first, install the crash handler
+    install_oops_handler();
+
+    // Ignore SIGPIPE for now (it's not particularly actionable in a multithreaded program)
+    add_signal(SIGPIPE, SIG_IGN);
+
+    // Set up a clean exit when expected shutdown signals come along
     add_signal(SIGTERM, exit_handler);
     add_signal(SIGINT, exit_handler);
     add_signal(SIGQUIT, dirty_handler);
 
+    // Finally, set up signal handlers for custom Snort actions
     add_signal(SIGNAL_SNORT_DUMP_STATS, dump_stats_handler);
     add_signal(SIGNAL_SNORT_ROTATE_STATS, rotate_stats_handler);
     add_signal(SIGNAL_SNORT_RELOAD, reload_config_handler);
     add_signal(SIGNAL_SNORT_READ_ATTR_TBL, reload_attrib_handler);
 
-    add_signal(SIGPIPE, SIG_IGN);
-    add_signal(SIGABRT, oops_handler);
-    add_signal(SIGSEGV, oops_handler);
-    add_signal(SIGBUS, oops_handler);
-
+    // Errno will have potentially been left set from a failed handler installation
     errno = 0;
+}
+
+void remove_oops_handler()
+{
+    restore_signal(SIGILL);
+    restore_signal(SIGABRT);
+    restore_signal(SIGBUS);
+    restore_signal(SIGFPE);
+    restore_signal(SIGSEGV);
 }
 
 void term_signals()
 {
-    restore_signal(SIGTERM);
-    restore_signal(SIGINT);
-    restore_signal(SIGQUIT);
-
     restore_signal(SIGNAL_SNORT_DUMP_STATS);
     restore_signal(SIGNAL_SNORT_ROTATE_STATS);
     restore_signal(SIGNAL_SNORT_RELOAD);
     restore_signal(SIGNAL_SNORT_READ_ATTR_TBL);
 
+    restore_signal(SIGTERM);
+    restore_signal(SIGINT);
+    restore_signal(SIGQUIT);
+
     restore_signal(SIGPIPE);
-    restore_signal(SIGABRT);
-    restore_signal(SIGSEGV);
-    restore_signal(SIGBUS);
+
+    remove_oops_handler();
 }
 
 static void help_signal(unsigned n, const char* name, const char* h)

@@ -423,18 +423,6 @@ static bool get_instance(
     return false;
 }
 
-static PHInstance* get_instance_by_type(FrameworkPolicy* fp, const char* keyword)
-{
-    std::vector<PHInstance*>::iterator it;
-
-    for ( it = fp->ilist.begin(); it != fp->ilist.end(); ++it )
-    {
-        if ( !strcmp((*it)->pp_class.api.base.name, keyword) )
-            return *it;
-    }
-    return nullptr;
-}
-
 static PHInstance* get_instance_by_service(FrameworkPolicy* fp, const char* keyword)
 {
     std::vector<PHInstance*>::iterator it;
@@ -532,13 +520,6 @@ void InspectorManager::update_policy(SnortConfig* sc)
         p->set_reloaded(RELOAD_TYPE_NONE);
 }
 
-// FIXIT-M create a separate list for meta handlers?  is there really more than one?
-void InspectorManager::dispatch_meta(FrameworkPolicy* fp, int type, const uint8_t* data)
-{
-    for ( auto* p : fp->ilist )
-        p->handler->meta(type, data);
-}
-
 Binder* InspectorManager::get_binder()
 {
     InspectionPolicy* pi = get_inspection_policy();
@@ -547,29 +528,6 @@ Binder* InspectorManager::get_binder()
         return nullptr;
 
     return (Binder*)pi->framework_policy->binder;
-}
-
-bool InspectorManager::inspector_exists_in_any_policy(const char* key, SnortConfig* sc)
-{
-    PolicyMap* pm = sc->policy_map;
-
-    if (pm == nullptr)
-        return false;
-
-    for (unsigned i=0; i<pm->inspection_policy_count(); i++)
-    {
-        const InspectionPolicy* const pi = pm->get_inspection_policy(i);
-
-        if ( !pi || !pi->framework_policy )
-            continue;
-
-        const PHInstance* const p = get_instance_by_type(pi->framework_policy, key);
-
-        if ( p )
-            return true;
-    }
-
-    return false;
 }
 
 // FIXIT-P cache get_inspector() returns or provide indexed lookup

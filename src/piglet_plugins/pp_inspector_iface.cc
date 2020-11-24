@@ -111,7 +111,6 @@ static const luaL_Reg methods[] =
             return 0;
         }
     },
-    // FIXIT-M add meta() method
     // FIXIT-M add exec() method
     {
         "get_buf_from_key",

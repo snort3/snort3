@@ -82,14 +82,12 @@ public:
     static void thread_term();
 
     static void release_policy(FrameworkPolicy*);
-    static void dispatch_meta(FrameworkPolicy*, int type, const uint8_t* data);
 
     static void execute(Packet*);
     static void probe(Packet*);
 
     static void clear(Packet*);
     static void empty_trash();
-    static bool inspector_exists_in_any_policy(const char* key, SnortConfig* sc);
 
 #ifdef PIGLET
     static Inspector* instantiate(const char*, Module*, SnortConfig*);

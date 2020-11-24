@@ -39,6 +39,8 @@ const char* get_signal_name(PigSignal);
 
 void init_signals();
 void term_signals();
+void install_oops_handler();
+void remove_oops_handler();
 void help_signals();
 
 void daemonize();
