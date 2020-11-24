@@ -271,6 +271,7 @@ void TcpReassemblerPolicy::init(TcpSession* ssn, TcpStreamTracker* trk, StreamPo
 
     trs.flush_count = 0;
     trs.xtradata_mask = 0;
+    trs.alerts.clear();
 
     reassembler = TcpReassemblerFactory::get_instance(pol);
 }

@@ -22,6 +22,8 @@
 #ifndef SEGMENT_OVERLAP_EDITOR_H
 #define SEGMENT_OVERLAP_EDITOR_H
 
+#include <vector>
+
 #include "normalize/normalize.h"
 #include "stream/paf.h"
 #include "tcp_segment_node.h"
@@ -68,11 +70,12 @@ struct SegmentOverlapState
     void init_soe(TcpSegmentDescriptor& tsd, TcpSegmentNode* left, TcpSegmentNode* right);
 };
 
-/* Only track a maximum number of alerts per session */
-#define MAX_SESSION_ALERTS 8
 struct StreamAlertInfo
 {
-    /* For storing alerts that have already been seen on the session */
+    StreamAlertInfo(uint32_t gid, uint32_t sid, uint32_t seq, uint32_t id, uint32_t sec)
+        : gid(gid), sid(sid), seq(seq), event_id(id), event_second(sec)
+    {}
+
     uint32_t gid;
     uint32_t sid;
     uint32_t seq;
@@ -87,8 +90,7 @@ struct TcpReassemblerState
     TcpStreamTracker* tracker;
     uint32_t flush_count;   // number of flushed queued segments
     uint32_t xtradata_mask; // extra data available to log
-    StreamAlertInfo alerts[MAX_SESSION_ALERTS];
-    uint8_t alert_count = 0;
+    std::vector<StreamAlertInfo> alerts;
     uint8_t ignore_dir;
     uint8_t packet_dir;
     bool server_side;

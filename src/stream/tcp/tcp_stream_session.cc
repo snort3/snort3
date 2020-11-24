@@ -240,7 +240,7 @@ bool TcpStreamSession::add_alert(Packet* p, uint32_t gid, uint32_t sid)
 
 bool TcpStreamSession::check_alerted(Packet* p, uint32_t gid, uint32_t sid)
 {
-    // only check alerts on rebuilt packets
+    // only check for alert on wire packet if this when processing a rebuilt packet
     if ( !(p->packet_flags & PKT_REBUILT_STREAM) )
         return false;
 

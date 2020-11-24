@@ -221,31 +221,15 @@ void TcpReassembler::dup_reassembly_segment(
 
 bool TcpReassembler::add_alert(TcpReassemblerState& trs, uint32_t gid, uint32_t sid)
 {
-    if ( trs.alert_count >= MAX_SESSION_ALERTS)
-        return false;
-
-    StreamAlertInfo* ai = trs.alerts + trs.alert_count;
-    ai->gid = gid;
-    ai->sid = sid;
-    ai->seq = 0;
-    ai->event_id = 0;
-    ai->event_second = 0;
-
-    trs.alert_count++;
-
+    trs.alerts.emplace_back(gid, sid, 0, 0, 0);
     return true;
 }
 
 bool TcpReassembler::check_alerted(TcpReassemblerState& trs, uint32_t gid, uint32_t sid)
 {
-    for (int i = 0; i < trs.alert_count; i++)
-    {
-        /*  This is a rebuilt packet and if we've seen this alert before,
-         *  return that we have previously alerted on original packet.
-         */
-        if (trs.alerts[i].gid == gid && trs.alerts[i].sid == sid)
+    for ( auto& alert : trs.alerts )
+       if (alert.gid == gid && alert.sid == sid)
             return true;
-    }
 
     return false;
 }
@@ -256,17 +240,13 @@ int TcpReassembler::update_alert(TcpReassemblerState& trs, uint32_t gid, uint32_
     // FIXIT-M comparison of seq_num is wrong, compare value is always 0, should be seq_num of wire packet
     uint32_t seq_num = 0;
 
-    for (unsigned i = 0; i < trs.alert_count; i++)
-    {
-        StreamAlertInfo* ai = &trs.alerts[i];
-
-        if (ai->gid == gid && ai->sid == sid && SEQ_EQ(ai->seq, seq_num))
-        {
-            ai->event_id = event_id;
-            ai->event_second = event_second;
-            return 0;
-        }
-    }
+    for ( auto& alert : trs.alerts )
+       if (alert.gid == gid && alert.sid == sid && SEQ_EQ(alert.seq, seq_num))
+       {
+           alert.event_id = event_id;
+           alert.event_second = event_second;
+           return 0;
+       }
 
     return -1;
 }
@@ -275,13 +255,11 @@ void TcpReassembler::purge_alerts(TcpReassemblerState& trs)
 {
     Flow* flow = trs.sos.session->flow;
 
-    for (int i = 0; i < trs.alert_count; i++)
-    {
-        StreamAlertInfo* ai = trs.alerts + i;
-        Stream::log_extra_data(flow, trs.xtradata_mask, ai->event_id, ai->event_second);
-    }
+    for ( auto& alert : trs.alerts )
+        Stream::log_extra_data(flow, trs.xtradata_mask, alert.event_id, alert.event_second);
+
     if ( !flow->is_suspended() )
-        trs.alert_count = 0;
+        trs.alerts.clear();
 }
 
 void TcpReassembler::purge_to_seq(TcpReassemblerState& trs, uint32_t flush_seq)
