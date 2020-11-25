@@ -441,6 +441,7 @@ void Snort::reload_failure_cleanup(SnortConfig* sc)
 {
     parser_term(sc);
     delete sc;
+    set_default_policy(SnortConfig::get_conf());
     reloading = false;
 }
 
