@@ -188,7 +188,8 @@ bool Active::thread_init(const SnortConfig* sc)
 
     if ( sc->is_active_enabled() && (!SFDAQ::can_inject() || !sc->respond_device.empty()) )
     {
-        if ( sc->read_mode() || !open(sc->respond_device.c_str()) )
+        if ( sc->read_mode() ||
+            !open(sc->respond_device.empty() ? nullptr : sc->respond_device.c_str()) )
         {
             ParseWarning(WARN_DAQ, "active responses disabled since DAQ "
                 "can't inject packets.");
