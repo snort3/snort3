@@ -43,8 +43,6 @@ public:
     const Field& get_buf(unsigned id);
     HttpFlowData* get_hi_flow_data() const { return hi_flow_data; }
     void set_hi_flow_data(HttpFlowData* flow_data);
-    HttpMsgSection* get_hi_msg_section() const { return hi_msg_section; }
-    void set_hi_msg_section(HttpMsgSection* section) { hi_msg_section = section; }
     uint32_t get_xtradata_mask() { return (current_frame != nullptr) ?
         current_frame->get_xtradata_mask() : 0; }
     Http2Frame *get_current_frame() { return current_frame; }
@@ -69,7 +67,6 @@ private:
     Http2FlowData* const session_data;
     Http2Frame* current_frame = nullptr;
     HttpFlowData* hi_flow_data = nullptr;
-    HttpMsgSection* hi_msg_section = nullptr;
     bool end_stream_on_data_flush[2] = { false, false };
     Http2Enums::StreamState state[2] =
         { Http2Enums::STREAM_EXPECT_HEADERS, Http2Enums::STREAM_EXPECT_HEADERS };

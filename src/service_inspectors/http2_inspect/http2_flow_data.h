@@ -60,8 +60,9 @@ public:
     // Used by http_inspect to store its stuff
     HttpFlowData* get_hi_flow_data() const;
     void set_hi_flow_data(HttpFlowData* flow);
-    HttpMsgSection* get_hi_msg_section() const;
-    void set_hi_msg_section(HttpMsgSection* section);
+    HttpMsgSection* get_hi_msg_section() const { return hi_msg_section; }
+    void set_hi_msg_section(HttpMsgSection* section)
+        { assert((hi_msg_section == nullptr) || (section == nullptr)); hi_msg_section = section; }
 
     friend class Http2Frame;
     friend class Http2DataFrame;
@@ -138,6 +139,7 @@ protected:
     // At any given time there may be different streams going in each direction. But only one of
     // them is the stream that http_inspect is actually processing at the moment.
     uint32_t stream_in_hi = Http2Enums::NO_STREAM_ID;
+    HttpMsgSection* hi_msg_section = nullptr;
 
     // Reassemble() data to eval()
     uint8_t lead_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH];

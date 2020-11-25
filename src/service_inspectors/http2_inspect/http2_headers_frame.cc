@@ -104,7 +104,11 @@ void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow, SourceI
 
     // If this is a truncated headers frame, call http_inspect finish()
     if (session_data->is_processing_partial_header())
-        session_data->hi_ss[hi_source_id]->finish(session_data->flow);
+    {
+        const bool need_reassemble = session_data->hi_ss[hi_source_id]->finish(session_data->flow);
+        assert(need_reassemble);
+        UNUSED(need_reassemble);
+    }
 
     // http_inspect reassemble() of headers
     {
