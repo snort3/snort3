@@ -35,13 +35,6 @@ public:
     DHCPFingerprint(const RawFingerprint& rfp);
     std::vector<FpElement> dhcp55;
     std::string dhcp60;
-
-    void clear() override
-    {
-        FpFingerprint::clear();
-        dhcp55.clear();
-        dhcp60.clear();
-    }
 };
 
 struct FpDHCPKey
