@@ -761,7 +761,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
             else
                 appid_stats.tp_reload_ignored_pkts++;
         }
-        else if (!tp_appid_ctxt->get_tp_reload_in_progress())
+        else if (!ThirdPartyAppIdContext::get_tp_reload_in_progress())
             is_discovery_done = do_tp_discovery(*tp_appid_ctxt, asd, protocol, p,
                 direction, change_bits);
     }

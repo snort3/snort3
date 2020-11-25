@@ -64,8 +64,8 @@ public:
 
     virtual const ThirdPartyConfig& get_config() const { return cfg; }
 
-    void set_tp_reload_in_progress(bool value) { tp_reload_in_progress = value; }
-    bool get_tp_reload_in_progress() { return tp_reload_in_progress; }
+    static void set_tp_reload_in_progress(bool value) { tp_reload_in_progress = value; }
+    static bool get_tp_reload_in_progress() { return tp_reload_in_progress; }
 
 protected:
     const uint32_t api_version;

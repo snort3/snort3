@@ -42,6 +42,7 @@
 
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
+THREAD_LOCAL bool ThirdPartyAppIdContext::tp_reload_in_progress = false;
 void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = true; }
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 

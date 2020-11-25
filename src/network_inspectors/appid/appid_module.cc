@@ -131,20 +131,15 @@ class ACThirdPartyAppIdContextSwap : public AnalyzerCommand
 {
 public:
     bool execute(Analyzer&, void**) override;
-    ACThirdPartyAppIdContextSwap(const AppIdInspector& inspector,
-        Request& current_request, bool from_shell): inspector(inspector),
-        request(current_request), from_shell(from_shell)
+    ACThirdPartyAppIdContextSwap(const AppIdInspector& inspector): inspector(inspector)
     {
         LogMessage("== swapping third-party configuration\n");
-        request.respond("== swapping third-party configuration\n", from_shell, true);
     }
 
     ~ACThirdPartyAppIdContextSwap() override;
     const char* stringify() override { return "THIRD-PARTY_CONTEXT_SWAP"; }
 private:
     const AppIdInspector& inspector;
-    Request& request;
-    bool from_shell;
 };
 
 bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
@@ -152,16 +147,14 @@ bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
     assert(!pkt_thread_tp_appid_ctxt);
     pkt_thread_tp_appid_ctxt = inspector.get_ctxt().get_tp_appid_ctxt();
     pkt_thread_tp_appid_ctxt->tinit();
-    pkt_thread_tp_appid_ctxt->set_tp_reload_in_progress(false);
+    ThirdPartyAppIdContext::set_tp_reload_in_progress(false);
 
     return true;
 }
 
 ACThirdPartyAppIdContextSwap::~ACThirdPartyAppIdContextSwap()
 {
-    Swapper::set_reload_in_progress(false);
-    LogMessage("== reload third-party complete\n");
-    request.respond("== reload third-party complete\n", from_shell, true);
+    LogMessage("== third-party configuration swap complete\n");
 }
 
 class ACThirdPartyAppIdContextUnload : public AnalyzerCommand
@@ -183,7 +176,7 @@ private:
 bool ACThirdPartyAppIdContextUnload::execute(Analyzer& ac, void**)
 {
     assert(pkt_thread_tp_appid_ctxt);
-    pkt_thread_tp_appid_ctxt->set_tp_reload_in_progress(true);
+    ThirdPartyAppIdContext::set_tp_reload_in_progress(true);
     bool reload_in_progress;
     if (ac.is_idling())
         reload_in_progress = pkt_thread_tp_appid_ctxt->tfini(true, true);
@@ -201,8 +194,10 @@ ACThirdPartyAppIdContextUnload::~ACThirdPartyAppIdContextUnload()
     delete tp_ctxt;
     AppIdContext& ctxt = inspector.get_ctxt();
     ctxt.create_tp_appid_ctxt();
-    main_broadcast_command(new ACThirdPartyAppIdContextSwap(inspector,
-        request, from_shell), from_shell);
+    main_broadcast_command(new ACThirdPartyAppIdContextSwap(inspector));
+    LogMessage("== reload third-party complete\n");
+    request.respond("== reload third-party complete\n", from_shell, true);
+    Swapper::set_reload_in_progress(false);
 }
 
 class ACOdpContextSwap : public AnalyzerCommand

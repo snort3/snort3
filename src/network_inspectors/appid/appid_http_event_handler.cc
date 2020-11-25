@@ -61,7 +61,8 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     HttpEvent* http_event = (HttpEvent*)&event;
     AppidChangeBits change_bits;
 
-    if (asd->get_tp_appid_ctxt() && !http_event->get_is_http2())
+    if ((asd->get_tp_appid_ctxt() or ThirdPartyAppIdContext::get_tp_reload_in_progress()) and
+        !http_event->get_is_http2())
         return;
 
     if (appidDebug->is_active())
