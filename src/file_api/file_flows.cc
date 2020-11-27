@@ -83,12 +83,12 @@ void FileFlows::handle_retransmit(Packet* p)
     file->log_file_event(flow, file_policy);
 }
 
-FileFlows* FileFlows::get_file_flows(Flow* flow)
+FileFlows* FileFlows::get_file_flows(Flow* flow, bool to_create)
 {
 
     FileFlows* fd = (FileFlows*)flow->get_flow_data(FileFlows::file_flow_data_id);
 
-    if (fd)
+    if (!to_create or fd)
         return fd;
 
     FileInspect* fi = (FileInspect*)InspectorManager::get_inspector(FILE_ID_NAME, true);

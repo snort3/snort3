@@ -103,7 +103,8 @@ DCE2_Smb2RequestTracker::~DCE2_Smb2RequestTracker()
 }
 
 DCE2_Smb2FileTracker::DCE2_Smb2FileTracker(uint64_t file_id_v, DCE2_Smb2TreeTracker* ttr_v,
-    DCE2_Smb2SessionTracker* str_v) : file_id(file_id_v), ttr(ttr_v), str(str_v)
+    DCE2_Smb2SessionTracker* str_v, Flow* flow_v) : file_id(file_id_v), ttr(ttr_v),
+    str(str_v), flow(flow_v)
 {
     debug_logf(dce_smb_trace, nullptr, "file tracker %" PRIu64 " created\n", file_id);
     memory::MemoryCap::update_allocations(sizeof(*this));
@@ -114,7 +115,8 @@ DCE2_Smb2FileTracker::~DCE2_Smb2FileTracker(void)
     debug_logf(dce_smb_trace, nullptr,
         "file tracker %" PRIu64 " file name hash %" PRIu64 " terminating\n",
          file_id, file_name_hash);
-    FileFlows* file_flows = FileFlows::get_file_flows(DetectionEngine::get_current_packet()->flow);
+
+    FileFlows* file_flows = FileFlows::get_file_flows(flow, false);
     if (file_flows)
     {
         file_flows->remove_processed_file_context(file_name_hash, file_id);

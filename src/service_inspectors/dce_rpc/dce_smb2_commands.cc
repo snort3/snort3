@@ -305,7 +305,7 @@ static void DCE2_Smb2CreateResponse(DCE2_Smb2SsnData*,
     DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(fileId_persistent);
     if (!ftracker)
     {
-        ftracker = new DCE2_Smb2FileTracker(fileId_persistent, ttr, str);
+        ftracker = new DCE2_Smb2FileTracker(fileId_persistent, ttr, str, DetectionEngine::get_current_packet()->flow);
         ttr->insertFtracker(fileId_persistent, ftracker);
     }
     ftracker->file_name = rtracker->fname;
@@ -608,7 +608,7 @@ static void DCE2_Smb2ReadRequest(DCE2_Smb2SsnData* ssd,
     DCE2_Smb2FileTracker* ftracker =  ttr->findFtracker(fileId_persistent);
     if (!ftracker) // compounded create request + read request case
     {
-        ftracker = new DCE2_Smb2FileTracker(fileId_persistent, ttr, str);
+        ftracker = new DCE2_Smb2FileTracker(fileId_persistent, ttr, str, DetectionEngine::get_current_packet()->flow);
         ttr->insertFtracker(fileId_persistent, ftracker);
     }
 
@@ -761,7 +761,7 @@ static void DCE2_Smb2WriteRequest(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(fileId_persistent);
     if (!ftracker) // compounded create request + write request case
     {
-        ftracker = new DCE2_Smb2FileTracker(fileId_persistent, ttr, str);
+        ftracker = new DCE2_Smb2FileTracker(fileId_persistent, ttr, str, DetectionEngine::get_current_packet()->flow);
         ttr->insertFtracker(fileId_persistent, ftracker);
     }
     if (!ftracker->ignore) // file tracker can not be nullptr here

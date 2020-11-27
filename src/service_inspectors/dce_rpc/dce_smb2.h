@@ -138,7 +138,7 @@ public:
     DCE2_Smb2FileTracker& operator=(const DCE2_Smb2FileTracker& arg) = delete;
 
     DCE2_Smb2FileTracker(uint64_t file_id_v, DCE2_Smb2TreeTracker* ttr_v,
-         DCE2_Smb2SessionTracker* str_v);
+         DCE2_Smb2SessionTracker* str_v, snort::Flow* flow_v);
     ~DCE2_Smb2FileTracker();
 
     bool ignore = false;
@@ -153,6 +153,7 @@ public:
     DCE2_SmbPduState smb2_pdu_state;
     DCE2_Smb2TreeTracker* ttr = nullptr;
     DCE2_Smb2SessionTracker* str = nullptr;
+    snort::Flow *flow = nullptr;
 };
 
 typedef DCE2_DbMap<uint64_t, DCE2_Smb2FileTracker*, std::hash<uint64_t> > DCE2_DbMapFtracker;

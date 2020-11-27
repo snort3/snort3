@@ -63,7 +63,7 @@ public:
     void handle_retransmit(Packet*) override;
 
     // Factory method to get file flows
-    static FileFlows* get_file_flows(Flow*);
+    static FileFlows* get_file_flows(Flow*, bool to_create=true);
     static FilePolicyBase* get_file_policy(Flow*);
 
     FileContext* get_current_file_context();
