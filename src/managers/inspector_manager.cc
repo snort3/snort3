@@ -423,13 +423,15 @@ static bool get_instance(
     return false;
 }
 
-static PHInstance* get_instance_by_service(FrameworkPolicy* fp, const char* keyword)
+static PHInstance* get_instance_by_service(FrameworkPolicy* fp, const char* keyword,
+    InspectorType type)
 {
     std::vector<PHInstance*>::iterator it;
 
     for ( it = fp->ilist.begin(); it != fp->ilist.end(); ++it )
     {
-        if ( (*it)->pp_class.api.service && !strcmp((*it)->pp_class.api.service, keyword) )
+        if ( (*it)->pp_class.api.service && !strcmp((*it)->pp_class.api.service, keyword) &&
+            (*it)->pp_class.api.type == type )
             return *it;
     }
     return nullptr;
@@ -555,14 +557,14 @@ Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only, cons
     return p->handler;
 }
 
-Inspector* InspectorManager::get_inspector_by_service(const char* key)
+Inspector* InspectorManager::get_inspector_by_service(const char* key, InspectorType type)
 {
     InspectionPolicy* pi = get_inspection_policy();
 
     if ( !pi || !pi->framework_policy )
         return nullptr;
 
-    PHInstance* p = get_instance_by_service(pi->framework_policy, key);
+    PHInstance* p = get_instance_by_service(pi->framework_policy, key, type);
 
     if ( !p )
         return nullptr;

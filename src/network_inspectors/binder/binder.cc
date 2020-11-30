@@ -51,7 +51,7 @@ static Inspector* get_gadget(const Flow& flow)
     const SnortConfig* sc = SnortConfig::get_conf();
     const char* s = sc->proto_ref->get_name(flow.ssn_state.snort_protocol_id);
 
-    return InspectorManager::get_inspector_by_service(s);
+    return InspectorManager::get_inspector_by_service(s, IT_SERVICE);
 }
 
 static Inspector* get_gadget_by_service(const char* service)
@@ -60,7 +60,7 @@ static Inspector* get_gadget_by_service(const char* service)
     const SnortProtocolId id = sc->proto_ref->find(service);
     const char* s = sc->proto_ref->get_name(id);
 
-    return InspectorManager::get_inspector_by_service(s);
+    return InspectorManager::get_inspector_by_service(s, IT_SERVICE);
 }
 
 static std::string to_string(const sfip_var_t* list)
