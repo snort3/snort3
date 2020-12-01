@@ -28,6 +28,7 @@
 
 #include "rna_config.h"
 #include "rna_fingerprint.h"
+#include "rna_mac_cache.h"
 #include "rna_name.h"
 
 struct RnaStats
@@ -57,7 +58,8 @@ extern THREAD_LOCAL const snort::Trace* rna_trace;
 class FpProcReloadTuner : public snort::ReloadResourceTuner
 {
 public:
-    explicit FpProcReloadTuner(RnaModuleConfig& mod_conf) : mod_conf(mod_conf) { }
+    explicit FpProcReloadTuner(RnaModuleConfig& mod_conf, HostCacheMac* ptr = nullptr)
+	: mod_conf(mod_conf), host_cache_mac_ptr(ptr) { }
     ~FpProcReloadTuner() override = default;
 
     bool tinit() override;
@@ -70,6 +72,7 @@ public:
 
 private:
     RnaModuleConfig& mod_conf;
+    HostCacheMac* host_cache_mac_ptr = nullptr;
 };
 
 class RnaModule : public snort::Module

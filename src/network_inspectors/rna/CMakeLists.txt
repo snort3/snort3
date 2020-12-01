@@ -10,6 +10,8 @@ set (RNA_INCLUDES
 
 set ( RNA_SOURCES
     ${RNA_INCLUDES}
+    data_purge_cmd.cc
+    data_purge_cmd.h
     rna_app_discovery.cc
     rna_app_discovery.h
     rna_event_handler.cc

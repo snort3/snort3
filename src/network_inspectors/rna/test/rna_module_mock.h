@@ -21,6 +21,8 @@
 #ifndef RNA_MODULE_MOCK_H
 #define RNA_MODULE_MOCK_H
 
+#include "main/request.h"
+
 #include "../rna_mac_cache.cc"
 
 THREAD_LOCAL RnaStats rna_stats;
@@ -107,5 +109,18 @@ private:
 
 
 } // end of namespace snort
+
+static Request mock_request;
+void Request::respond(const char*, bool, bool) { }
+Request& get_dispatched_request() { return mock_request; }
+
+HostCacheMac* get_host_cache_mac() { return nullptr; }
+
+DataPurgeAC::~DataPurgeAC() { }
+bool DataPurgeAC::execute(Analyzer&, void**) { return true;}
+
+void snort::main_broadcast_command(AnalyzerCommand*, bool) { }
+void set_host_cache_mac(HostCacheMac*) { }
+
 
 #endif

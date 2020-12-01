@@ -78,7 +78,8 @@ public:
     LruCacheSharedMemcap(const LruCacheSharedMemcap& arg) = delete;
     LruCacheSharedMemcap& operator=(const LruCacheSharedMemcap& arg) = delete;
 
-    LruCacheSharedMemcap(const size_t initial_size) : LruCacheShared<Key, Value, Hash, Eq>(initial_size) {}
+    LruCacheSharedMemcap(const size_t initial_size) : LruCacheShared<Key, Value, Hash, Eq>(initial_size),
+        valid_id(invalid_id+1) {}
 
     size_t mem_size() override
     {
@@ -154,6 +155,20 @@ public:
         return false;
     }
 
+    bool is_valid(size_t id) const
+    {
+        return id == valid_id;
+    }
+
+    void invalidate()
+    {
+        valid_id++;
+    }
+
+    size_t get_valid_id() const { return valid_id; }
+
+    static constexpr size_t invalid_id = 0;
+
     template <class T>
     friend class HostCacheAllocIp;
 
@@ -204,6 +219,8 @@ private:
         assert( current_size >= mem_chunk );
         current_size -= mem_chunk;
     }
+
+    std::atomic<size_t> valid_id;
 
     std::mutex reload_mutex;
     friend class TEST_host_cache_module_misc_Test; // for unit test

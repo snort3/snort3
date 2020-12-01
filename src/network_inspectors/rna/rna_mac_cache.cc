@@ -30,8 +30,6 @@
 using namespace snort;
 using namespace std;
 
-HostCacheMac host_cache_mac(MAC_CACHE_INITIAL_SIZE);
-
 bool HostTrackerMac::add_network_proto(const uint16_t type)
 {
     lock_guard<mutex> lck(host_tracker_mac_lock);
@@ -97,6 +95,7 @@ void HostTrackerMac::stringify(string& str)
 TEST_CASE("RNA Mac Cache", "[rna_mac_cache]")
 {
     uint8_t a_mac[6] = {0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6};
+    HostCacheMac mac_cache(MAC_CACHE_INITIAL_SIZE);
 
     SECTION("HostCacheMac: store, retrieve")
     {
@@ -112,28 +111,28 @@ TEST_CASE("RNA Mac Cache", "[rna_mac_cache]")
 
         bool new_host_mac = false;
 
-        auto a_ptr = host_cache_mac.find_else_create(a, &new_host_mac);
+        auto a_ptr = mac_cache.find_else_create(a, &new_host_mac);
         CHECK(new_host_mac == true);
         CHECK(a_ptr != nullptr);
 
         new_host_mac = false;
-        auto b_ptr = host_cache_mac.find_else_create(b, &new_host_mac);
+        auto b_ptr = mac_cache.find_else_create(b, &new_host_mac);
         CHECK(new_host_mac == true);
         CHECK(b_ptr != nullptr);
 
         new_host_mac = false;
-        auto c_ptr = host_cache_mac.find_else_create(c, &new_host_mac);
+        auto c_ptr = mac_cache.find_else_create(c, &new_host_mac);
         CHECK(new_host_mac == true);
         CHECK(c_ptr != nullptr);
 
         // Try to add one of the previous macs again
         new_host_mac = false;
-        auto test_ptr = host_cache_mac.find_else_create(test, &new_host_mac);
+        auto test_ptr = mac_cache.find_else_create(test, &new_host_mac);
         CHECK(new_host_mac == false);
         CHECK(test_ptr != nullptr);
 
         // Verify macs in cache in LRU order, where test mac (i.e., b) is the most recent
-        const auto&& lru_data = host_cache_mac.get_all_data();
+        const auto&& lru_data = mac_cache.get_all_data();
         CHECK(lru_data.size() == 3);
         CHECK(lru_data[2].first == a);
         CHECK(lru_data[1].first == c);
@@ -149,7 +148,7 @@ TEST_CASE("RNA Mac Cache", "[rna_mac_cache]")
     SECTION("HostCacheMac: VLAN Tag Details")
     {
         MacKey a(a_mac);
-        auto a_ptr = host_cache_mac.find_else_create(a, nullptr);
+        auto a_ptr = mac_cache.find_else_create(a, nullptr);
 
         a_ptr->update_vlan(12345, 54321);
         uint8_t cfi, priority;

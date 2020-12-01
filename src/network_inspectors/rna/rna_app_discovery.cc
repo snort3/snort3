@@ -50,7 +50,7 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
 
     const auto& src_ip = p->ptrs.ip_api.get_src();
     auto ht = host_cache.find(*src_ip);
-    if ( !ht )
+    if ( !ht || !ht->is_visible() )
         return; // should not happen as rna would get new flow event before appid event
 
     const uint8_t* src_mac;
@@ -84,7 +84,7 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
             if ( p->packet_flags & PKT_FROM_SERVER )
             {
                 auto cht = host_cache.find(p->flow->client_ip);
-                if ( cht )
+                if ( cht && cht->is_visible() )
                     discover_client(p, cht, (const struct in6_addr*) &p->flow->client_ip,
                         layer::get_eth_layer(p)->ether_dst, conf, logger, version, client,
                         service);
@@ -168,7 +168,7 @@ bool RnaAppDiscovery::discover_service(const Packet* p, IpProtocol proto, RnaTra
     if ( p->is_from_client() )
     {
         htp = host_cache.find(ip);
-        if ( !htp )
+        if ( !htp || !htp->is_visible() )
             return false;
 
         if ( layer::get_eth_layer(p) )
@@ -238,7 +238,7 @@ void RnaAppDiscovery::discover_payload(const Packet* p, IpProtocol proto, RnaTra
     bool new_client_payload = false;
     auto client_ht = host_cache.find(p->flow->client_ip);
 
-    if (!client_ht)
+    if (!client_ht || !client_ht->is_visible())
         return;
 
     HostClient hc(client, nullptr, service);
@@ -259,7 +259,7 @@ void RnaAppDiscovery::update_service_info(const Packet* p, IpProtocol proto, con
     if ( p->is_from_client() )
     {
         htp = host_cache.find(ip);
-        if ( !htp )
+        if ( !htp || !htp->is_visible() )
             return;
 
         if ( layer::get_eth_layer(p) )

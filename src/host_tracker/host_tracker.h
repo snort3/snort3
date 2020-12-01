@@ -75,9 +75,11 @@ struct HostApplicationInfo
     HostApplicationInfo(const char *ver, const char *ven);
     char vendor[INFO_SIZE] = { '\0' };
     char version[INFO_SIZE] = { '\0' };
-    bool visibility = true;
 
     friend class HostTracker;
+private:
+    bool visibility = true;
+
 };
 
 typedef HostCacheAllocIp<HostApplicationInfo> HostAppInfoAllocator;
@@ -207,11 +209,7 @@ public:
     typedef std::pair<uint16_t, bool> NetProto_t;
     typedef std::pair<uint8_t, bool> XProto_t;
 
-    HostTracker() : hops(-1)
-    {
-        last_seen = nat_count_start = (uint32_t) packet_time();
-        last_event = -1;
-    }
+    HostTracker();
 
     void update_last_seen();
     uint32_t get_last_seen() const
@@ -384,11 +382,7 @@ public:
 
     bool set_visibility(bool v = true);
 
-    bool is_visible() const
-    {
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
-        return visibility;
-    }
+    bool is_visible() const;
 
     // the control delete commands do not actually remove objects from
     // the host tracker, but just mark them as invisible, until rediscovered.
@@ -436,7 +430,7 @@ private:
     uint32_t nat_count = 0;
     uint32_t nat_count_start;     // the time nat counting starts for this host
 
-    bool visibility = true;
+    size_t visibility;
 
     uint32_t num_visible_services = 0;
     uint32_t num_visible_clients = 0;
@@ -448,7 +442,7 @@ private:
     bool add_payload_no_lock(const AppId, HostApplication*, size_t);
     HostApplication* find_service_no_lock(Port, IpProtocol, AppId);
     void update_ha_no_lock(HostApplication& dst, HostApplication& src);
-    
+
     HostApplication* find_and_add_service_no_lock(Port, IpProtocol, uint32_t lseen,
         bool& is_new, AppId, uint16_t max_services = 0);
 

@@ -54,6 +54,8 @@ public:
         snort::UdpFpProcessor*&);
     void set_fp_processor(snort::TcpFpProcessor*, snort::UaFpProcessor*, snort::UdpFpProcessor*);
 
+    RnaPnd* get_pnd() const { return pnd; }
+
 private:
     void load_rna_conf();
     RnaModuleConfig* mod_conf = nullptr;

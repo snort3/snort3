@@ -39,6 +39,14 @@ THREAD_LOCAL struct HostTrackerStats host_tracker_stats;
 
 const uint8_t snort::zero_mac[MAC_SIZE] = {0, 0, 0, 0, 0, 0};
 
+
+HostTracker::HostTracker() : hops(-1)
+{
+    last_seen = nat_count_start = (uint32_t) packet_time();
+    last_event = -1;
+    visibility = host_cache.get_valid_id();
+}
+
 void HostTracker::update_last_seen()
 {
     lock_guard<mutex> lck(host_tracker_lock);
@@ -573,7 +581,7 @@ HostApplication* HostTracker::find_and_add_service_no_lock(Port port, IpProtocol
         return available;
     }
 
-    if ( max_services == 0 or num_visible_services < max_services ) 
+    if ( max_services == 0 or num_visible_services < max_services )
     {
         services.emplace_back(port, proto, appid, false, 1, lseen);
         return &services.back();
@@ -778,12 +786,15 @@ bool HostTracker::add_udp_fingerprint(uint32_t fpid)
 
 bool HostTracker::set_visibility(bool v)
 {
+    // get_valid_id may use its own lock, so get this outside our lock
+    size_t container_id = host_cache.get_valid_id();
+
     std::lock_guard<std::mutex> lck(host_tracker_lock);
-    bool old_visibility = visibility;
+    size_t old_visibility = visibility;
 
-    visibility = v;
+    visibility = v ? container_id : HostCacheIp::invalid_id;
 
-    if ( visibility == false )
+    if (visibility == HostCacheIp::invalid_id)
     {
         for (auto& proto : network_protos)
             proto.second = false;
@@ -802,14 +813,14 @@ bool HostTracker::set_visibility(bool v)
             for (auto& info : s.info)
                 info.visibility = false;
             s.user[0] = '\0';
-            set_payload_visibility_no_lock(s.payloads, v, s.num_visible_payloads);
+            set_payload_visibility_no_lock(s.payloads, false, s.num_visible_payloads);
         }
         num_visible_services = 0;
 
         for ( auto& c : clients )
         {
             c.visibility = false;
-            set_payload_visibility_no_lock(c.payloads, v, c.num_visible_payloads);
+            set_payload_visibility_no_lock(c.payloads, false, c.num_visible_payloads);
         }
         num_visible_clients = 0;
 
@@ -817,8 +828,15 @@ bool HostTracker::set_visibility(bool v)
         ua_fps.clear();
     }
 
-    return old_visibility;
+    return old_visibility == visibility;
 }
+
+bool HostTracker::is_visible() const
+{
+    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    return visibility == host_cache.get_valid_id();
+}
+
 
 bool HostTracker::set_network_proto_visibility(uint16_t proto, bool v)
 {

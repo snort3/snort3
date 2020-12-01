@@ -117,9 +117,8 @@ class RnaPnd
 {
 public:
 
-    RnaPnd(const bool en, const std::string& cp, RnaConfig* rc = nullptr) :
-        logger(RnaLogger(en)), filter(DiscoveryFilter(cp)), conf(rc)
-        { update_timeout = (rc ? rc->update_timeout : 0); }
+    RnaPnd(const bool en, const std::string& cp, RnaConfig* rc = nullptr);
+    ~RnaPnd();
 
     void analyze_appid_changes(snort::DataEvent&);
     void analyze_flow_icmp(const snort::Packet*);
@@ -132,6 +131,10 @@ public:
 
     // generate change event for all hosts in the ip cache
     void generate_change_host_update();
+
+    static HostCacheIp::Data find_or_create_host_tracker(const snort::SfIp&, bool&);
+
+    HostCacheMac* host_cache_mac_ptr = nullptr;
 
 private:
     // generate change event for single host
@@ -176,5 +179,8 @@ private:
     RnaConfig* conf;
     time_t update_timeout;
 };
+
+HostCacheMac* get_host_cache_mac();
+void set_host_cache_mac(HostCacheMac* mac_host);
 
 #endif

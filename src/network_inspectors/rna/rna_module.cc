@@ -31,16 +31,21 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include "host_tracker/host_cache.h"
 #include "log/messages.h"
 #include "lua/lua.h"
+#include "main/request.h"
 #include "main/snort_config.h"
+#include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "utils/util.h"
 
+#include "data_purge_cmd.h"
 #include "rna_fingerprint_tcp.h"
 #include "rna_fingerprint_ua.h"
 #include "rna_fingerprint_udp.h"
 #include "rna_mac_cache.h"
+#include "rna_pnd.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -79,11 +84,30 @@ static inline string format_dump_mac(const uint8_t mac[MAC_SIZE])
     return ss.str();
 }
 
+static int purge_data(lua_State* L)
+{
+    RnaModule* mod = (RnaModule*) ModuleManager::get_module(RNA_NAME);
+    if ( mod )
+    {
+        HostCacheMac* mac_cache = new HostCacheMac(MAC_CACHE_INITIAL_SIZE);
+        main_broadcast_command(new DataPurgeAC(mac_cache), (L != nullptr));
+
+        host_cache.invalidate();
+
+        auto& request = get_dispatched_request();
+        request.respond("data purge done\n", false, true);
+        LogMessage("data purge done\n");
+    }
+
+    return 0;
+}
+
 bool FpProcReloadTuner::tinit()
 {
     set_tcp_fp_processor(mod_conf.tcp_processor);
     set_ua_fp_processor(mod_conf.ua_processor);
     set_udp_fp_processor(mod_conf.udp_processor);
+    set_host_cache_mac(host_cache_mac_ptr);
     return false;  // no work to do after this
 }
 
@@ -155,7 +179,10 @@ static int delete_mac_host(lua_State* L)
             return 0;
 
         MacKey search_mk(mac);
-        bool success = host_cache_mac.remove((const uint8_t*) &search_mk);
+        HostCacheMac* mac_cache = get_host_cache_mac();
+        assert(mac_cache);
+
+        bool success = mac_cache->remove((const uint8_t*) &search_mk);
 
         if (!success)
         {
@@ -188,7 +215,10 @@ static int delete_mac_host_proto(lua_State* L)
             return 0;
 
         MacKey search_mk(mac);
-        auto htm = host_cache_mac.find((const uint8_t*) &search_mk);
+        HostCacheMac* mac_cache = get_host_cache_mac();
+        assert(mac_cache);
+
+        auto htm = mac_cache->find((const uint8_t*) &search_mk);
 
         if (!htm)
         {
@@ -234,6 +264,8 @@ static const Command rna_cmds[] =
         "delete a MAC from rna's MAC cache"},
     { "delete_mac_host_proto", delete_mac_host_proto, mac_delete_proto_params,
         "delete a protocol associated with a MAC host"},
+    { "purge_data", purge_data, nullptr,
+        "purge all host cache and mac cache data"},
     { nullptr, nullptr, nullptr, nullptr }
 };
 
@@ -553,8 +585,10 @@ bool RnaModule::log_mac_cache(const char* outfile)
     }
 
     string str;
-    const auto&& lru_data = host_cache_mac.get_all_data();
-    out_stream << "Current mac cache size: " << host_cache_mac.mem_size() << " bytes, "
+    HostCacheMac* host_cache_mac = get_host_cache_mac();
+    assert(host_cache_mac);
+    const auto&& lru_data = host_cache_mac->get_all_data();
+    out_stream << "Current mac cache size: " << host_cache_mac->mem_size() << " bytes, "
         << lru_data.size() << " trackers" << endl << endl;
     for ( const auto& elem : lru_data )
     {

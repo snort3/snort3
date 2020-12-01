@@ -138,11 +138,12 @@ struct HashMac
 };
 
 typedef LruCacheSharedMemcap<MacKey, HostTrackerMac, HashMac> HostCacheMac;
-extern HostCacheMac host_cache_mac;
+
+extern HostCacheMac* get_host_cache_mac();
 
 template <class T>
 HostCacheAllocMac<T>::HostCacheAllocMac()
 {
-    lru = &host_cache_mac;
+    lru = get_host_cache_mac();
 }
 #endif

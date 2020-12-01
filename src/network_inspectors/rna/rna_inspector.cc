@@ -102,7 +102,7 @@ bool RnaInspector::configure(SnortConfig* sc)
 
     // tinit is not called during reload, so pass processor pointers to threads via reload tuner
     if ( Snort::is_reloading() && InspectorManager::get_inspector(RNA_NAME, true) )
-        sc->register_reload_resource_tuner(new FpProcReloadTuner(*mod_conf));
+        sc->register_reload_resource_tuner(new FpProcReloadTuner(*mod_conf, pnd->host_cache_mac_ptr));
 
     return true;
 }
@@ -145,6 +145,7 @@ void RnaInspector::tinit()
     set_tcp_fp_processor(mod_conf->tcp_processor);
     set_ua_fp_processor(mod_conf->ua_processor);
     set_udp_fp_processor(mod_conf->udp_processor);
+    set_host_cache_mac(pnd->host_cache_mac_ptr);
 }
 
 void RnaInspector::tterm()

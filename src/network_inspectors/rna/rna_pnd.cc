@@ -53,6 +53,47 @@ using namespace std;
 #define RNA_NAT_COUNT_THRESHOLD 10
 #define RNA_NAT_TIMEOUT_THRESHOLD 10    // timeout in seconds
 
+static THREAD_LOCAL HostCacheMac* local_mac_cache_ptr = nullptr;
+
+HostCacheMac* get_host_cache_mac()
+{
+    return local_mac_cache_ptr;
+}
+
+void set_host_cache_mac(HostCacheMac* mac_host)
+{
+    local_mac_cache_ptr = mac_host;
+}
+
+HostCacheIp::Data RnaPnd::find_or_create_host_tracker(const SfIp& ip, bool& new_host)
+{
+    auto ht = host_cache.find_else_create(ip, &new_host);
+
+    // If it's a new host, it's automatically visible, so we don't do anything.
+    // If it's not a new host, we're rediscovering it, so make it visible.
+    // Also if it was not new (we had it in the cache) and it went from
+    // not visible to visible, then it's as good as new.
+    if (!new_host and !ht->set_visibility(true))
+        new_host = true;
+
+    return ht;
+}
+
+RnaPnd::RnaPnd(const bool en, const std::string& cp, RnaConfig* rc) :
+    logger(RnaLogger(en)), filter(DiscoveryFilter(cp)), conf(rc)
+{
+    update_timeout = (rc ? rc->update_timeout : 0);
+    host_cache_mac_ptr = new HostCacheMac(MAC_CACHE_INITIAL_SIZE);
+    set_host_cache_mac(host_cache_mac_ptr);
+}
+
+RnaPnd::~RnaPnd()
+{
+    delete host_cache_mac_ptr;
+    host_cache_mac_ptr = nullptr;
+    set_host_cache_mac(nullptr);
+}
+
 void RnaPnd::analyze_appid_changes(DataEvent& event)
 {
     RnaAppDiscovery::process(static_cast<AppidEvent*>(&event), filter, conf, logger);
@@ -140,14 +181,7 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
     const auto& src_ip = p->ptrs.ip_api.get_src();
     const auto& src_ip_ptr = (const struct in6_addr*) src_ip->get_ip6_ptr();
 
-    auto ht = host_cache.find_else_create(*src_ip, &new_host);
-
-    // If it's a new host, it's automatically visible, so we don't do anything.
-    // If it's not a new host, we're rediscovering it, so make it visible.
-    // Also if it was not new (we had it in the cache) and it went from
-    // not visible to visible, then it's as good as new.
-    if (!new_host and !ht->set_visibility(true))
-        new_host = true;
+    auto ht = find_or_create_host_tracker(*src_ip, new_host);
 
     uint32_t last_seen = ht->get_last_seen();
     if ( !new_host )
@@ -225,12 +259,12 @@ void RnaPnd::analyze_dhcp_fingerprint(DataEvent& event)
     bool new_host = false;
     bool new_mac = false;
     const auto& src_ip = p->ptrs.ip_api.get_src();
-    auto ht = host_cache.find_else_create(*src_ip, &new_host);
+    auto ht = find_or_create_host_tracker(*src_ip, new_host);
     if (!new_host)
         ht->update_last_seen();
 
     MacKey mk(src_mac);
-    auto hm_ptr = host_cache_mac.find_else_create(mk, &new_mac);
+    auto hm_ptr = local_mac_cache_ptr->find_else_create(mk, &new_mac);
     if (new_mac)
     {
         ht->add_mac(mk.mac_addr, p->ptrs.ip_api.ttl(), 0);
@@ -274,12 +308,12 @@ void RnaPnd::add_dhcp_info(DataEvent& event)
     SfIp router_ip = {(void*)&router, AF_INET};
     bool new_host = false;
     bool new_mac = false;
-    auto ht = host_cache.find_else_create(leased_ip, &new_host);
+    auto ht = find_or_create_host_tracker(leased_ip, new_host);
     if (!new_host)
         ht->update_last_seen();
 
     MacKey mk(src_mac);
-    auto hm_ptr = host_cache_mac.find_else_create(mk, &new_mac);
+    auto hm_ptr = local_mac_cache_ptr->find_else_create(mk, &new_mac);
     if (new_mac)
     {
         ht->add_mac(mk.mac_addr, p->ptrs.ip_api.ttl(), 0);
@@ -396,7 +430,7 @@ void RnaPnd::generate_change_host_update()
         return;
 
     auto hosts = host_cache.get_all_data();
-    auto mac_hosts = host_cache_mac.get_all_data();
+    auto mac_hosts = local_mac_cache_ptr->get_all_data();
     auto sec = time(nullptr);
 
     for ( auto & h : hosts )
@@ -416,7 +450,7 @@ void RnaPnd::generate_new_host_mac(const Packet* p, RnaTracker ht, bool discover
     bool new_host_mac = false;
     MacKey mk(layer::get_eth_layer(p)->ether_src);
 
-    auto hm_ptr = host_cache_mac.find_else_create(mk, &new_host_mac);
+    auto hm_ptr = local_mac_cache_ptr->find_else_create(mk, &new_host_mac);
 
     if ( new_host_mac )
     {
@@ -550,8 +584,9 @@ int RnaPnd::discover_network_arp(const Packet* p, RnaTracker* ht_ref)
 
     bool new_host = false;
     bool new_host_mac = false;
-    auto ht = host_cache.find_else_create(spa, &new_host);
-    auto hm_ptr = host_cache_mac.find_else_create(mk, &new_host_mac);
+    auto ht = find_or_create_host_tracker(spa, new_host);
+
+    auto hm_ptr = local_mac_cache_ptr->find_else_create(mk, &new_host_mac);
 
     if ( !new_host_mac )
         hm_ptr->update_last_seen(p->pkth->ts.tv_sec);
@@ -634,7 +669,7 @@ int RnaPnd::discover_switch(const Packet* p, RnaTracker ht_ref)
     bool new_host_mac = false;
     MacKey mk(layer::get_eth_layer(p)->ether_src);
 
-    auto hm_ptr = host_cache_mac.find_else_create(mk, &new_host_mac);
+    auto hm_ptr = local_mac_cache_ptr->find_else_create(mk, &new_host_mac);
 
     if ( new_host_mac )
     {
