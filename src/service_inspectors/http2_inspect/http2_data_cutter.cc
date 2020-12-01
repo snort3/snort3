@@ -38,14 +38,15 @@ Http2DataCutter::Http2DataCutter(Http2FlowData* _session_data, HttpCommon::Sourc
 { }
 
 StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t length,
-    uint32_t* flush_offset, uint32_t& data_offset, uint32_t frame_len, uint8_t frame_flags)
+    uint32_t* flush_offset, uint32_t& data_offset, uint8_t frame_flags)
 {
     const uint32_t cur_data_offset = data_offset;
     if (frame_bytes_seen == 0)
     {
-        data_len = frame_len;
+        assert(session_data->frame_lengths[source_id].size() == 1);
+        data_len = session_data->frame_lengths[source_id].front() -
+            session_data->padding_length[source_id];
         data_bytes_read = 0;
-        frame_bytes_seen = FRAME_HEADER_LENGTH;
 
         if (frame_flags & PADDED)
         {
@@ -63,7 +64,6 @@ StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t lengt
     frame_bytes_seen += cur_pos - data_offset;
     data_offset = cur_pos;
     *flush_offset = cur_pos;
-    session_data->scan_remaining_frame_octets[source_id] = frame_len - frame_bytes_seen;
 
     session_data->stream_in_hi = session_data->current_stream[source_id];
 
@@ -85,10 +85,12 @@ StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t lengt
             data_bytes_read -= unused_input;
             data_offset -= unused_input;
             *flush_offset -= unused_input;
+            session_data->scan_remaining_frame_octets[source_id] -= http_flush_offset;
         }
         else if (scan_result == StreamSplitter::SEARCH)
         {
             bytes_sent_http += cur_data;
+            session_data->scan_remaining_frame_octets[source_id] -= cur_data;
         }
         else
             assert(false);
@@ -98,7 +100,6 @@ StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t lengt
     {
         // Done with this frame, cleanup
         session_data->header_octets_seen[source_id] = 0;
-        session_data->scan_remaining_frame_octets[source_id] = 0;
         session_data->scan_state[source_id] = SCAN_FRAME_HEADER;
         frame_bytes_seen = 0;
 

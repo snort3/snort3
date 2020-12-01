@@ -197,6 +197,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                         session_data->remaining_data_padding[source_id] <= (length - data_offset) ?
                         session_data->remaining_data_padding[source_id] : (length - data_offset);
                     session_data->remaining_data_padding[source_id] -= avail;
+                    session_data->scan_remaining_frame_octets[source_id] -= avail;
                     session_data->payload_discard[source_id] = true;
                     *flush_offset = avail;
                     return StreamSplitter::FLUSH;
@@ -297,6 +298,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                         session_data->padding_length[source_id];
                 }
                 session_data->scan_remaining_frame_octets[source_id] -= 1;
+                assert(!session_data->frame_lengths[source_id].empty());
                 if (session_data->padding_length[source_id] >
                     session_data->frame_lengths[source_id].back() - 1)
                 {
@@ -317,9 +319,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
             case SCAN_DATA:
             case SCAN_EMPTY_DATA:
             {
-                const uint32_t frame_length = session_data->frame_lengths[source_id].back();
-                const uint8_t type = get_frame_type(
-                    session_data->scan_frame_header[source_id]);
+                const uint8_t type = get_frame_type(session_data->scan_frame_header[source_id]);
                 const uint8_t frame_flags = get_frame_flags(session_data->
                     scan_frame_header[source_id]);
                 if (session_data->frame_type[source_id] != FT_DATA)
@@ -334,8 +334,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                     if (stream && stream->is_open(source_id))
                     {
                         status = session_data->data_cutter[source_id].scan(
-                            data, length, flush_offset, data_offset,
-                            frame_length - session_data->padding_length[source_id], frame_flags);
+                            data, length, flush_offset, data_offset, frame_flags);
                     }
                     else
                     {
