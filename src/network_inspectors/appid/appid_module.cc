@@ -154,6 +154,9 @@ bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
 
 ACThirdPartyAppIdContextSwap::~ACThirdPartyAppIdContextSwap()
 {
+    const AppIdContext& ctxt = inspector.get_ctxt();
+    std::string file_path = ctxt.get_tp_appid_ctxt()->get_user_config();
+    ctxt.get_odp_ctxt().get_app_info_mgr().dump_appid_configurations(file_path);
     LogMessage("== third-party configuration swap complete\n");
 }
 

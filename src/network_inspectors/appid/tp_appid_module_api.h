@@ -67,6 +67,8 @@ public:
     static void set_tp_reload_in_progress(bool value) { tp_reload_in_progress = value; }
     static bool get_tp_reload_in_progress() { return tp_reload_in_progress; }
 
+    virtual const std::string& get_user_config() const = 0;
+
 protected:
     const uint32_t api_version;
     const std::string name;
