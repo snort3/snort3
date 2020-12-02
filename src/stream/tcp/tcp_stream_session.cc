@@ -271,7 +271,8 @@ void TcpStreamSession::set_packet_header_foo(const TcpSegmentDescriptor& tsd)
 {
     const Packet* p = tsd.get_pkt();
 
-    if ( daq_flags & DAQ_PKT_FLAG_NOT_FORWARDING )
+    if ( tsd.is_packet_from_client() || (p->pkth->egress_index == DAQ_PKTHDR_UNKNOWN
+         && p->pkth->egress_group == DAQ_PKTHDR_UNKNOWN) )
     {
         ingress_index = p->pkth->ingress_index;
         ingress_group = p->pkth->ingress_group;
@@ -279,17 +280,12 @@ void TcpStreamSession::set_packet_header_foo(const TcpSegmentDescriptor& tsd)
         egress_index = p->pkth->egress_index;
         egress_group = p->pkth->egress_group;
     }
-    else if ( tsd.is_packet_from_client() )
-    {
-        ingress_index = p->pkth->ingress_index;
-        ingress_group = p->pkth->ingress_group;
-        // ssn egress not always correct here
-    }
     else
     {
-        // ssn ingress not always correct here
         egress_index = p->pkth->ingress_index;
         egress_group = p->pkth->ingress_group;
+        ingress_index = p->pkth->egress_index;
+        ingress_group = p->pkth->egress_group;
     }
 
     daq_flags = p->pkth->flags;
@@ -298,7 +294,8 @@ void TcpStreamSession::set_packet_header_foo(const TcpSegmentDescriptor& tsd)
 
 void TcpStreamSession::get_packet_header_foo(DAQ_PktHdr_t* pkth, uint32_t dir)
 {
-    if ( (dir & PKT_FROM_CLIENT) || (daq_flags & DAQ_PKT_FLAG_NOT_FORWARDING) )
+    if ( (dir & PKT_FROM_CLIENT) || (egress_index == DAQ_PKTHDR_UNKNOWN &&
+         egress_group == DAQ_PKTHDR_UNKNOWN) )
     {
         pkth->ingress_index = ingress_index;
         pkth->ingress_group = ingress_group;
