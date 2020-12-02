@@ -92,13 +92,60 @@ function include(file)
     local cname = ffi.C.push_include_path(file)
     local fname = ffi.string(cname);
     path_push(fname)
-    dofile(fname)
+
+    if ( sandbox_env ) then
+        local file_in = assert(io.open(fname, "r"))
+        local file_content = file_in:read("*all")
+        file_in:close()
+
+        if ( file_content:byte(1) == 27 ) then
+            error("bytecode is not allowed")
+        end
+
+        local fn = assert(loadstring(file_content))
+        setfenv(fn, sandbox_env)
+        fn()
+
+        if ( sandbox_env.ips ) then
+            ips = sandbox_env.ips
+        end
+    else
+        dofile(fname)
+    end
+
     local iname = path_top()
     if ( (ips ~= nil) and (ips.includer == nil) and (iname ~= nil) ) then
         ips.includer = iname
     end
+
     path_pop()
     ffi.C.pop_include_path()
+end
+
+function sandbox_include(file)
+    assert(sandbox_env)
+    include (file)
+end
+
+function create_sandbox_env()
+    local export_to_sandbox =
+    {
+        include = sandbox_include,
+        snort_whitelist_add_prefix = snort_whitelist_add_prefix,
+        snort_whitelist_append = snort_whitelist_append,
+        SNORT_VERSION = SNORT_VERSION,
+        SNORT_MAJOR_VERSION = SNORT_MAJOR_VERSION,
+        SNORT_MINOR_VERSION = SNORT_MINOR_VERSION,
+        SNORT_PATCH_VERSION = SNORT_PATCH_VERSION,
+        tweaks = tweaks,
+    }
+
+    for k, v in pairs(export_to_sandbox) do
+        if ( sandbox_env[k] ) then
+            error(k .. " cannot be redefined")
+        end
+        sandbox_env[k] = v
+    end
 end
 
 initialize_whitelist(_G)

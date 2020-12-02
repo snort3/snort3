@@ -51,9 +51,7 @@
 #include "plugin_manager.h"
 
 // "Lua" includes
-#include "lua_bootstrap.h"
 #include "lua_coreinit.h"
-#include "lua_finalize.h"
 
 using namespace snort;
 using namespace std;
@@ -105,12 +103,6 @@ extern "C"
 //-------------------------------------------------------------------------
 // boot foo
 //-------------------------------------------------------------------------
-
-const char* ModuleManager::get_lua_bootstrap()
-{ return lua_bootstrap; }
-
-const char* ModuleManager::get_lua_finalize()
-{ return lua_finalize; }
 
 const char* ModuleManager::get_lua_coreinit()
 { return lua_coreinit; }

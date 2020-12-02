@@ -26,6 +26,7 @@
 #include <unistd.h>
 
 #include <cassert>
+#include <fstream>
 #include <stdexcept>
 
 #include "dump_config/config_output.h"
@@ -39,6 +40,8 @@
 #include "utils/stats.h"
 
 #include "build.h"
+#include "lua_bootstrap.h"
+#include "lua_finalize.h"
 
 using namespace snort;
 using namespace std;
@@ -77,12 +80,12 @@ static void install_version_strings(lua_State* L)
     }
 }
 
-
 string Shell::fatal;
 std::stack<Shell*> Shell::current_shells;
 ConfigOutput* Shell::s_config_output = nullptr;
 BaseConfigNode* Shell::s_current_node = nullptr;
 bool Shell::s_close_table = true;
+string Shell::lua_sandbox;
 
 // FIXIT-M Shell::panic() works on Linux but on OSX we can't throw from lua
 // to C++.  unprotected lua calls could be wrapped in a pcall to ensure lua
@@ -295,43 +298,90 @@ static int get_line_number(lua_State* L)
 
 #endif
 
-static bool load_config(lua_State* L, const char* file, const char* tweaks, bool is_fatal)
+void Shell::set_sandbox_env()
 {
-    Lua::ManageStack ms(L);
-    if ( luaL_loadfile(L, file) )
-    {
-        if (is_fatal)
-            FatalError("can't load %s: %s\n", file, lua_tostring(L, -1));
-        else
-            ParseError("can't load %s: %s\n", file, lua_tostring(L, -1));
-        return false;
-    }
-    if ( tweaks and *tweaks )
-    {
-        lua_pushstring(L, tweaks);
-        lua_setglobal(L, "tweaks");
-    }
+    lua_getglobal(lua, "sandbox_env");
 
-    if ( lua_pcall(L, 0, 0, 0) )
-        FatalError("can't init %s: %s\n", file, lua_tostring(L, -1));
+    if ( lua_istable(lua, -1) )
+    {
+        if ( !lua_setfenv(lua, -2) )
+            FatalError("can't set sandbox environment\n");
+    }
+    else
+        FatalError("sandbox environment not defined\n");
+}
+
+bool Shell::load_lua_sandbox()
+{
+    if (lua_sandbox.empty())
+        return false;
+
+    Lua::ManageStack ms(lua);
+
+    LogMessage("Loading lua sandbox %s:\n", lua_sandbox.c_str());
+    if ( luaL_loadfile(lua, lua_sandbox.c_str()) )
+        FatalError("can't load lua sandbox %s: %s\n", lua_sandbox.c_str(), lua_tostring(lua, -1));
+
+    if ( lua_pcall(lua, 0, 0, 0) )
+        FatalError("can't init lua sandbox %s: %s\n", lua_sandbox.c_str(), lua_tostring(lua, -1));
+    LogMessage("Finished %s:\n", lua_sandbox.c_str());
+
+    lua_getglobal(lua, "sandbox_env");
+    if ( !lua_istable(lua, -1) )
+        FatalError("sandbox_env table doesn't exist in %s: %s\n", lua_sandbox.c_str(),
+            lua_tostring(lua, -1));
+
+    lua_getglobal(lua, "create_sandbox_env");
+    if ( lua_pcall(lua, 0, 0, 0) != 0 )
+        FatalError("can't create sandbox environment %s: %s\n", lua_sandbox.c_str(),
+            lua_tostring(lua, -1));
 
     return true;
 }
 
-static void load_string(lua_State* L, const char* s)
+bool Shell::load_string(const char* s, bool load_in_sandbox, const char* message)
 {
-    Lua::ManageStack ms(L);
+    Lua::ManageStack ms(lua);
 
-    if ( luaL_loadstring(L, s) )
+    if ( luaL_loadstring(lua, s) )
+        FatalError("can't load %s: %s\n", message, lua_tostring(lua, -1));
+
+    if ( load_in_sandbox )
+        set_sandbox_env();
+
+    if ( lua_pcall(lua, 0, 0, 0) )
+        FatalError("can't init %s: %s\n", message, lua_tostring(lua, -1));
+
+    return true;
+}
+
+bool Shell::load_config(const char* file, bool load_in_sandbox, bool is_fatal)
+{
+    if ( load_in_sandbox )
     {
-        const char* err = lua_tostring(L, -1);
-        if ( strstr(err, "near '#'") )
-            ParseError("this doesn't look like Lua.  Comments start with --, not #.");
-        FatalError("can't load overrides: %s\n", err);
+        ifstream in_file(file, ifstream::in);
+        if (in_file.get() == 27 )
+            FatalError("bytecode is not allowed %s\n", file);
     }
 
-    if ( lua_pcall(L, 0, 0, 0) )
-        FatalError("can't init overrides: %s\n", lua_tostring(L, -1));
+    Lua::ManageStack ms(lua);
+
+    if ( luaL_loadfile(lua, file) )
+    {
+        if (is_fatal)
+            FatalError("can't load %s: %s\n", file, lua_tostring(lua, -1));
+        else
+            ParseError("can't load %s: %s\n", file, lua_tostring(lua, -1));
+        return false;
+    }
+
+    if ( load_in_sandbox )
+        set_sandbox_env();
+
+    if ( lua_pcall(lua, 0, 0, 0) )
+        FatalError("can't init %s: %s\n", file, lua_tostring(lua, -1));
+
+    return true;
 }
 
 //-------------------------------------------------------------------------
@@ -339,7 +389,7 @@ static void load_string(lua_State* L, const char* s)
 //-------------------------------------------------------------------------
 
 Shell::Shell(const char* s, bool load_defaults) :
-    config_data(s)
+    config_data(s), load_defaults(load_defaults)
 {
     // FIXIT-M should wrap in Lua::State
     lua = luaL_newstate();
@@ -358,12 +408,9 @@ Shell::Shell(const char* s, bool load_defaults) :
     parse_from = get_parse_file();
 
     loaded = false;
-    load_string(lua, ModuleManager::get_lua_bootstrap());
+    load_string(lua_bootstrap, false, "bootstrap");
     install_version_strings(lua);
     bootstrapped = true;
-
-    if ( load_defaults )
-        load_string(lua, ModuleManager::get_lua_coreinit());
 
     current_shells.pop();
 }
@@ -406,6 +453,17 @@ bool Shell::configure(SnortConfig* sc, bool is_fatal, bool is_root)
         set_network_policy(pt->network);
     }
 
+    if (!sc->tweaks.empty())
+    {
+        lua_pushstring(lua, sc->tweaks.c_str());
+        lua_setglobal(lua, "tweaks");
+    }
+
+    bool load_in_sandbox = load_lua_sandbox();
+
+    if ( load_defaults )
+        load_string(ModuleManager::get_lua_coreinit(), load_in_sandbox, "coreinit");
+
     std::string path = parse_from;
     const char* code;
 
@@ -430,19 +488,20 @@ bool Shell::configure(SnortConfig* sc, bool is_fatal, bool is_root)
 
     current_shells.push(this);
 
-    if (!path.empty() and !load_config(lua, path.c_str(), sc->tweaks.c_str(), is_fatal))
+    if ( !path.empty() and
+        !load_config(path.c_str(), load_in_sandbox, is_fatal) )
     {
         current_shells.pop();
         return false;
     }
 
     if ( !overrides.empty() )
-        load_string(lua, overrides.c_str());
+        load_string(overrides.c_str(), load_in_sandbox, "overrides");
 
     if ( SnortConfig::log_verbose() )
         print_allowlist();
 
-    load_string(lua, ModuleManager::get_lua_finalize());
+    load_string(lua_finalize, false, "finalize");
 
     clear_allowlist();
 

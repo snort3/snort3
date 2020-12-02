@@ -439,6 +439,9 @@ static const Parameter s_params[] =
     { "--lua", Parameter::PT_STRING, nullptr, nullptr,
       "<chunk> extend/override conf with chunk; may be repeated" },
 
+    { "--lua-sandbox", Parameter::PT_STRING, nullptr, nullptr,
+      "<file> file that contains the lua sandbox environment in which config will be loaded" },
+
     { "--logid", Parameter::PT_INT, "0:65535", nullptr,
       "<0xid> log Identifier to uniquely id events for multiple snorts (same as -G)" },
 
@@ -982,6 +985,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--lua") )
         sc->policy_map->get_shell()->set_overrides(v.get_string());
+
+    else if ( v.is("--lua-sandbox") )
+        Shell::set_lua_sandbox(v.get_string());
 
     else if ( v.is("--markup") )
         config_markup(sc, v.get_string());

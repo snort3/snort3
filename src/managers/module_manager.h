@@ -51,8 +51,6 @@ public:
     static Module* get_default_module(const char*, SnortConfig*);
     SO_PUBLIC static std::list<Module*> get_all_modules();
 
-    static const char* get_lua_bootstrap();
-    static const char* get_lua_finalize();
     static const char* get_lua_coreinit();
 
     static void list_modules(const char* = nullptr);

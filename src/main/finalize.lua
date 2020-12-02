@@ -77,27 +77,31 @@ function snort_set(fqn, key, val)
     end
 end
 
-function load_aliases()
-    for i,v in ipairs(binder) do
+function load_aliases(env)
+    for i,v in ipairs(env.binder) do
         if ( v.use and type(v.use) == "table" ) then
             if ( v.use.name and v.use.type ) then
                 ffi.C.set_alias(v.use.name, v.use.type)
-                local tab = _G[v.use.name]
+                local tab = env[v.use.name]
 
                 if ( tab ) then
                     snort_whitelist_append(v.use.name)
-                    snort_set(nil, v.use.name, _G[v.use.name])
+                    snort_set(nil, v.use.name, env[v.use.name])
                 end
             end
         end
     end
 end
 
-function snort_config(tab)
-    if ( binder and type(binder) == 'table' ) then
-        load_aliases()
+function snort_config(env)
+    if ( env.binder and type(env.binder) == 'table' ) then
+        load_aliases(env)
     end
-    snort_traverse(tab)
+    snort_traverse(env)
 end
 
-snort_config(_G)
+if (sandbox_env) then
+    snort_config(sandbox_env)
+else
+    snort_config(_G)
+end

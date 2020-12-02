@@ -79,6 +79,9 @@ public:
     static void set_config_output(ConfigOutput* config_output);
     static void clear_config_output();
 
+    static void set_lua_sandbox(const char* s)
+    { lua_sandbox = s; }
+
 private:
     static void add_config_root_node(const std::string& root_name, snort::Parameter::Type type);
 
@@ -92,6 +95,7 @@ private:
     static ConfigOutput* s_config_output;
     static BaseConfigNode* s_current_node;
     static bool s_close_table;
+    static std::string lua_sandbox;
 
 private:
     void clear_allowlist()
@@ -113,6 +117,11 @@ private:
     void print_allowlist() const;
     void allowlist_update(const char* keyword, bool is_prefix);
 
+    bool load_lua_sandbox();
+    void set_sandbox_env();
+    bool load_string(const char* s, bool load_in_sandbox, const char* message);
+    bool load_config(const char* file, bool load_in_sandbox, bool is_fatal);
+
 private:
     bool loaded;
     bool bootstrapped = false;
@@ -124,6 +133,7 @@ private:
     Allowlist internal_allowlist;
     Allowlist allowlist_prefixes;
     ConfigData config_data;
+    bool load_defaults;
 };
 
 #endif
