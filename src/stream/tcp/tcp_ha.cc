@@ -48,7 +48,10 @@ void TcpHA::deactivate_session(Flow* flow)
 {
     assert( flow );
     if ( flow->session )
-        ((TcpSession*)(flow->session))->clear_session(true, true, false);
+    {
+        flow->flush(true);
+        ((TcpSession*)(flow->session))->clear_session(true, false, false);
+    }
 
     flow->clear_session_state(STREAM_STATE_SYN | STREAM_STATE_SYN_ACK |
         STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED);

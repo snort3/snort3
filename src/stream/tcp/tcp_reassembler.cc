@@ -797,14 +797,14 @@ void TcpReassembler::final_flush(TcpReassemblerState& trs, Packet* p, uint32_t d
 
 static Packet* set_packet(Flow* flow, uint32_t flags, bool c2s)
 {
-    // FIXIT-M this implicitly relies on a fresh packet/context being pushed by Flow::reset()
-    //   calling DetectionEngine::set_next_packet() while passing a null Packet through the
-    //   cleanup routines, which is super hinky, but also why we don't need to call p->reset().
-    // The end result is a skeleton of a TCP PDU packet with no data and the IPs/ports/flow set.
-    //   We should probably be clearing more Packet fields.
+    // if not in the context of a wire packet the flush initiator must have
+    // created a packet context by calling DetectionEngine::set_next_packet()
     Packet* p = DetectionEngine::get_current_packet();
-
     assert(p->pkth == p->context->pkth);
+
+    // FIXIT-M p points to a skeleton of a TCP PDU packet with no data and we now
+    // initialize the IPs/ports/flow and other fields accessed as we reassemble
+    // and flush the PDU. There are probably other Packet fields that should be set here...
     DAQ_PktHdr_t* ph = p->context->pkth;
     memset(ph, 0, sizeof(*ph));
     packet_gettimeofday(&ph->ts);

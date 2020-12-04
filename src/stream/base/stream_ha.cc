@@ -107,6 +107,7 @@ bool StreamHAClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg, ui
         DataBus::publish(STREAM_HA_NEW_FLOW_EVENT, event, flow);
 
         flow->ha_state->clear(FlowHAState::NEW);
+        flow->ha_state->add(FlowHAState::STANDBY);
         if ( hac->flags & SessionHAContent::FLAG_LOW )
         {
             flow->server_ip.set(flow->key->ip_l);

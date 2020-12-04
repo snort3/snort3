@@ -152,19 +152,9 @@ void TcpSession::restart(Packet* p)
     tcpStats.restarts++;
 }
 
-//-------------------------------------------------------------------------
-// when client ports are configured, that means c2s and is stored on the
-// client side; when the session starts, the server policy is obtained from
-// the client side because segments are stored on the receiving side.
-//
-// this could be improved further by storing the c2s policy on the server
-// side and then obtaining server policy from the server on session
-// startup.
-//
-// either way, this client / server distinction must be kept in mind to
-// make sense of the code in this file.
-//-------------------------------------------------------------------------
-
+// if the flush_segments parameter is true and clear_session is being called while not in
+// the context of a wire packet then the caller must create a packet context by calling
+// DetectionEngine::set_next_packet() before calling clear_session
 void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool restart, Packet* p)
 {
     assert(!p or p->flow == flow);
@@ -911,6 +901,8 @@ void TcpSession::flush_talker(Packet* p, bool final_flush)
         flush_tracker( client, p, PKT_FROM_SERVER, final_flush);
 }
 
+// if not in the context of a wire packet the caller must create a packet context
+// by calling DetectionEngine::set_next_packet() before calling TcpSession::flush()
 void TcpSession::flush()
 {
     if ( !tcp_init )
