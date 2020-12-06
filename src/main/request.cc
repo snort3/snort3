@@ -113,7 +113,7 @@ bool Request::send_queued_response()
 }
 #endif
 
-Request& get_dispatched_request()
+SharedRequest get_dispatched_request()
 {
     return get_current_request();
 }

@@ -20,10 +20,10 @@
 #ifndef ANALYZER_COMMANDS_H
 #define ANALYZER_COMMANDS_H
 
-#include "main/snort_types.h"
+#include "request.h"
+#include "snort_types.h"
 
 class Analyzer;
-class Request;
 class Swapper;
 
 namespace snort
@@ -106,26 +106,26 @@ class ACSwap : public snort::AnalyzerCommand
 {
 public:
     ACSwap() = delete;
-    ACSwap(Swapper* ps, Request* req, bool from_shell);
+    ACSwap(Swapper* ps, SharedRequest req, bool from_shell);
     bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "SWAP"; }
     ~ACSwap() override;
 private:
     Swapper *ps;
-    Request* request;
+    SharedRequest request;
     bool from_shell;
 };
 
 class ACHostAttributesSwap : public snort::AnalyzerCommand
 {
 public:
-    ACHostAttributesSwap(Request* req, bool from_shell);
+    ACHostAttributesSwap(SharedRequest req, bool from_shell);
     bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "HOST_ATTRIBUTES_SWAP"; }
     ~ACHostAttributesSwap() override;
 
 private:
-    Request* request;
+    SharedRequest request;
     bool from_shell;
 };
 

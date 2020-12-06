@@ -27,7 +27,6 @@
 #include "utils/util.h"
 
 #include "control_mgmt.h"
-#include "request.h"
 #include "shell.h"
 
 using namespace snort;
@@ -42,7 +41,7 @@ ControlConn::ControlConn(int i, bool local)
     fd = i;
     local_control = local;
     sh = new Shell;
-    request = new Request(fd);
+    request = std::make_shared<Request>(fd);
     configure();
     show_prompt();
 }
@@ -52,7 +51,6 @@ ControlConn::~ControlConn()
     if( !local_control )
         close(fd);
     delete sh;
-    delete request;
 }
 
 void ControlConn::configure() const
@@ -60,7 +58,7 @@ void ControlConn::configure() const
     ModuleManager::load_commands(sh);
 }
 
-int ControlConn::shell_execute(int& current_fd, Request*& current_request)
+int ControlConn::shell_execute(int& current_fd, SharedRequest& current_request)
 {
     if ( !request->read() )
         return -1;

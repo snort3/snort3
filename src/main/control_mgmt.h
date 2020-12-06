@@ -25,6 +25,8 @@
 
 #include <vector>
 
+#include "request.h"
+
 class ControlConn;
 
 class ControlMgmt
@@ -37,8 +39,8 @@ public:
     static int socket_term();
     static int socket_conn();
 
-    static bool process_control_commands(int& current_fd, class Request*& current_request, int);
-    static bool process_control_commands(int& current_fd, class Request*& current_request);
+    static bool process_control_commands(int& current_fd, SharedRequest& current_request, int);
+    static bool process_control_commands(int& current_fd, SharedRequest& current_request);
 
     static ControlConn* find_control(int fd);
     static bool find_control(int fd, std::vector<ControlConn*>::iterator& control);
@@ -47,7 +49,7 @@ public:
     static void delete_control(int fd);
     static void delete_control(std::vector<ControlConn*>::iterator& control);
 
-    static bool service_users(int& current_fd, class Request*& current_request);
+    static bool service_users(int& current_fd, SharedRequest& current_request);
 
 private:
     static int setup_socket_family();

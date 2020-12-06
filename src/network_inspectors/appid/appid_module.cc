@@ -165,14 +165,14 @@ class ACThirdPartyAppIdContextUnload : public AnalyzerCommand
 public:
     bool execute(Analyzer&, void**) override;
     ACThirdPartyAppIdContextUnload(const AppIdInspector& inspector, ThirdPartyAppIdContext* tp_ctxt,
-        Request& current_request, bool from_shell): inspector(inspector),
+        SharedRequest current_request, bool from_shell): inspector(inspector),
         tp_ctxt(tp_ctxt), request(current_request), from_shell(from_shell) { }
     ~ACThirdPartyAppIdContextUnload() override;
     const char* stringify() override { return "THIRD-PARTY_CONTEXT_UNLOAD"; }
 private:
     const AppIdInspector& inspector;
     ThirdPartyAppIdContext* tp_ctxt =  nullptr;
-    Request& request;
+    SharedRequest request;
     bool from_shell;
 };
 
@@ -199,7 +199,7 @@ ACThirdPartyAppIdContextUnload::~ACThirdPartyAppIdContextUnload()
     ctxt.create_tp_appid_ctxt();
     main_broadcast_command(new ACThirdPartyAppIdContextSwap(inspector));
     LogMessage("== reload third-party complete\n");
-    request.respond("== reload third-party complete\n", from_shell, true);
+    request->respond("== reload third-party complete\n", from_shell, true);
     Swapper::set_reload_in_progress(false);
 }
 
@@ -208,14 +208,14 @@ class ACOdpContextSwap : public AnalyzerCommand
 public:
     bool execute(Analyzer&, void**) override;
     ACOdpContextSwap(const AppIdInspector& inspector, OdpContext& odp_ctxt,
-        Request& current_request, bool from_shell) : inspector(inspector),
+        SharedRequest current_request, bool from_shell) : inspector(inspector),
         odp_ctxt(odp_ctxt), request(current_request), from_shell(from_shell) { }
     ~ACOdpContextSwap() override;
     const char* stringify() override { return "ODP_CONTEXT_SWAP"; }
 private:
     const AppIdInspector& inspector;
     OdpContext& odp_ctxt;
-    Request& request;
+    SharedRequest request;
     bool from_shell;
 };
 
@@ -252,7 +252,7 @@ ACOdpContextSwap::~ACOdpContextSwap()
         ctxt.get_odp_ctxt().get_app_info_mgr().dump_appid_configurations(file_path);
     }
     LogMessage("== reload detectors complete\n");
-    request.respond("== reload detectors complete\n", from_shell, true);
+    request->respond("== reload detectors complete\n", from_shell, true);
     Swapper::set_reload_in_progress(false);
 }
 
@@ -301,28 +301,28 @@ static int disable_debug(lua_State*)
 static int reload_third_party(lua_State* L)
 {
     bool from_shell = ( L != nullptr );
-    Request& current_request = get_current_request();
+    SharedRequest current_request = get_current_request();
     if (Swapper::get_reload_in_progress())
     {
-        current_request.respond("== reload pending; retry\n", from_shell);
+        current_request->respond("== reload pending; retry\n", from_shell);
         return 0;
     }
-    current_request.respond(".. reloading third-party\n", from_shell);
+    current_request->respond(".. reloading third-party\n", from_shell);
     AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
     if (!inspector)
     {
-        current_request.respond("== reload third-party failed - appid not enabled\n", from_shell);
+        current_request->respond("== reload third-party failed - appid not enabled\n", from_shell);
         return 0;
     }
     const AppIdContext& ctxt = inspector->get_ctxt();
     ThirdPartyAppIdContext* old_ctxt = ctxt.get_tp_appid_ctxt();
     if (!old_ctxt)
     {
-        current_request.respond("== reload third-party failed - third-party module doesn't exist\n", from_shell);
+        current_request->respond("== reload third-party failed - third-party module doesn't exist\n", from_shell);
         return 0;
     }
     Swapper::set_reload_in_progress(true);
-    current_request.respond("== unloading old third-party configuration\n", from_shell);
+    current_request->respond("== unloading old third-party configuration\n", from_shell);
     main_broadcast_command(new ACThirdPartyAppIdContextUnload(*inspector, old_ctxt,
         current_request, from_shell), from_shell);
     return 0;
@@ -340,17 +340,17 @@ static void clear_dynamic_host_cache_services()
 static int reload_detectors(lua_State* L)
 {
     bool from_shell = ( L != nullptr );
-    Request& current_request = get_current_request();
+    SharedRequest current_request = get_current_request();
     if (Swapper::get_reload_in_progress())
     {
-        current_request.respond("== reload pending; retry\n", from_shell);
+        current_request->respond("== reload pending; retry\n", from_shell);
         return 0;
     }
-    current_request.respond(".. reloading detectors\n", from_shell);
+    current_request->respond(".. reloading detectors\n", from_shell);
     AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
     if (!inspector)
     {
-        current_request.respond("== reload detectors failed - appid not enabled\n", from_shell);
+        current_request->respond("== reload detectors failed - appid not enabled\n", from_shell);
         return 0;
     }
     Swapper::set_reload_in_progress(true);
@@ -372,7 +372,7 @@ static int reload_detectors(lua_State* L)
     odp_thread_local_ctxt->initialize(ctxt, true, true);
     odp_ctxt.initialize();
 
-    current_request.respond("== swapping detectors configuration\n", from_shell);
+    current_request->respond("== swapping detectors configuration\n", from_shell);
     main_broadcast_command(new ACOdpContextSwap(*inspector, old_odp_ctxt,
         current_request, from_shell), from_shell);
     return 0;

@@ -32,7 +32,6 @@
 #include "utils/stats.h"
 
 #include "analyzer.h"
-#include "request.h"
 #include "snort.h"
 #include "snort_config.h"
 #include "swapper.h"
@@ -95,7 +94,7 @@ ACGetStats::~ACGetStats()
     LogMessage("==================================================\n"); // Marking End of stats
 }
 
-ACSwap::ACSwap(Swapper* ps, Request* req, bool from_shell) : ps(ps), request(req), from_shell(from_shell)
+ACSwap::ACSwap(Swapper* ps, SharedRequest req, bool from_shell) : ps(ps), request(req), from_shell(from_shell)
 {
     assert(Swapper::get_reload_in_progress() == false);
     Swapper::set_reload_in_progress(true);
@@ -173,7 +172,7 @@ ACSwap::~ACSwap()
     request->respond("== reload complete\n", from_shell, true);
 }
 
-ACHostAttributesSwap::ACHostAttributesSwap(Request* req, bool from_shell)
+ACHostAttributesSwap::ACHostAttributesSwap(SharedRequest req, bool from_shell)
     : request(req), from_shell(from_shell)
 {
     assert(Swapper::get_reload_in_progress() == false);

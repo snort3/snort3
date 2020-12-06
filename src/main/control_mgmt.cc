@@ -34,7 +34,6 @@
 #include "utils/stats.h"
 #include "utils/util.h"
 #include "control.h"
-#include "request.h"
 #include "snort_config.h"
 #include "utils/util_cstring.h"
 
@@ -181,14 +180,14 @@ int ControlMgmt::socket_term()
     return 0;
 }
 
-bool ControlMgmt::process_control_commands(int& current_fd, Request*& current_request, int evnt_fd)
+bool ControlMgmt::process_control_commands(int& current_fd, SharedRequest& current_request, int evnt_fd)
 {
     auto control_conn = controls.find(evnt_fd);
 
     if (control_conn == controls.end())
         return false;
 
-    Request* old_request = current_request;
+    SharedRequest old_request = current_request;
     int fd = control_conn->second->shell_execute(current_fd, current_request);
     current_fd = -1;
     current_request = old_request;
@@ -204,7 +203,7 @@ bool ControlMgmt::process_control_commands(int& current_fd, Request*& current_re
     return true;
 }
 
-bool ControlMgmt::service_users(int& current_fd, Request*& current_request)
+bool ControlMgmt::service_users(int& current_fd, SharedRequest& current_request)
 {
     bool ret = false;
     struct epoll_event events[MAX_EPOLL_EVENTS];
@@ -336,7 +335,7 @@ int ControlMgmt::socket_term()
     return 0;
 }
 
-bool ControlMgmt::process_control_commands(int& current_fd, Request*& current_request)
+bool ControlMgmt::process_control_commands(int& current_fd, SharedRequest& current_request)
 {
     bool ret = false;
 
@@ -346,7 +345,7 @@ bool ControlMgmt::process_control_commands(int& current_fd, Request*& current_re
         int fd = (*control)->get_fd();
         if (FD_ISSET(fd, &inputs))
         {
-            Request* old_request = current_request;
+            SharedRequest old_request = current_request;
             fd = (*control)->shell_execute(current_fd, current_request);
             current_fd = -1;
             current_request = old_request;
@@ -370,7 +369,7 @@ bool ControlMgmt::process_control_commands(int& current_fd, Request*& current_re
     return ret;
 }
 
-bool ControlMgmt::service_users(int& current_fd, Request*& current_request)
+bool ControlMgmt::service_users(int& current_fd, SharedRequest& current_request)
 {
     FD_ZERO(&inputs);
     int max_fd = -1;

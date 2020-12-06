@@ -23,6 +23,7 @@
 #ifndef CONTROL_H
 #define CONTROL_H
 
+#include "main/request.h"
 #include "main/snort_types.h"
 
 class ControlConn
@@ -36,7 +37,7 @@ public:
 
     int get_fd() const { return fd; }
     class Shell* get_shell() const { return sh; }
-    class Request* get_request() const { return request; }
+    SharedRequest get_request() const { return request; }
     bool is_local_control() const { return local_control; }
 
     void block();
@@ -45,7 +46,7 @@ public:
     bool is_blocked() const { return blocked; }
 
     void configure() const;
-    int shell_execute(int& current_fd, Request*& current_request);
+    int shell_execute(int& current_fd, SharedRequest& current_request);
     bool show_prompt() const;
 
 private:
@@ -53,7 +54,7 @@ private:
     bool blocked = false;
     bool local_control;
     class Shell *sh;
-    class Request* request;
+    SharedRequest request;
 };
 
 #endif

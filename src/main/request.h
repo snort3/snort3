@@ -22,6 +22,7 @@
 #ifndef REQUEST_H
 #define REQUEST_H
 
+#include <memory>
 #include <mutex>
 #include <queue>
 
@@ -48,6 +49,8 @@ private:
     std::mutex queued_response_mutex;
 };
 
-SO_PUBLIC Request& get_dispatched_request();
+using SharedRequest = std::shared_ptr<Request>;
+
+SO_PUBLIC SharedRequest get_dispatched_request();
 
 #endif

@@ -110,9 +110,9 @@ private:
 
 } // end of namespace snort
 
-static Request mock_request;
+static SharedRequest mock_request = std::make_shared<Request>();
 void Request::respond(const char*, bool, bool) { }
-Request& get_dispatched_request() { return mock_request; }
+SharedRequest get_dispatched_request() { return mock_request; }
 
 HostCacheMac* get_host_cache_mac() { return nullptr; }
 

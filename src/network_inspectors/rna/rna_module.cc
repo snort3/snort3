@@ -94,8 +94,8 @@ static int purge_data(lua_State* L)
 
         host_cache.invalidate();
 
-        auto& request = get_dispatched_request();
-        request.respond("data purge done\n", false, true);
+        SharedRequest request = get_dispatched_request();
+        request->respond("data purge done\n", false, true);
         LogMessage("data purge done\n");
     }
 

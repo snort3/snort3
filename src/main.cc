@@ -34,7 +34,6 @@
 #include "lua/lua.h"
 #include "main/analyzer.h"
 #include "main/analyzer_command.h"
-#include "main/request.h"
 #include "main/shell.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
@@ -112,15 +111,14 @@ static int main_read()
     return pig_poke->get(-1);
 }
 
-static Request request;
-static Request* current_request = &request;
+static SharedRequest current_request = std::make_shared<Request>();
 #ifdef SHELL
 static int current_fd = -1;
 #endif
 
-Request& get_current_request()
+SharedRequest get_current_request()
 {
-    return *current_request;
+    return current_request;
 }
 
 //-------------------------------------------------------------------------
@@ -369,8 +367,13 @@ int main_reload_config(lua_State* L)
         else
             current_request->respond("== reload failed - bad config\n");
 
-        HostAttributesManager::load_failure_cleanup();
         return 0;
+    }
+
+    if ( !sc->attribute_hosts_file.empty() )
+    {
+        if ( !HostAttributesManager::load_hosts_file(sc, sc->attribute_hosts_file.c_str()) )
+            current_request->respond("== reload failed - host attributes file failed to load\n");
     }
 
     int32_t num_hosts = HostAttributesManager::get_num_host_entries();

@@ -26,7 +26,7 @@
 struct lua_State;
 
 const char* get_prompt();
-Request& get_current_request();
+SharedRequest get_current_request();
 
 // commands provided by the snort module
 int main_delete_inspector(lua_State* = nullptr);
