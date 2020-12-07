@@ -123,11 +123,15 @@ void RnaPnd::analyze_flow_tcp(const Packet* p, TcpPacketType type)
     {
         // If it's a tcp SYN packet, create a fingerprint state for
         // the SYN-ACK, but only if we're monitoring the destination (server)
-        const auto& dst_ip = p->ptrs.ip_api.get_dst();
-        if ( type == TcpPacketType::SYN and filter.is_host_monitored(p, nullptr, dst_ip) )
+        if ( type == TcpPacketType::SYN and
+            filter.is_host_monitored(p, nullptr, p->ptrs.ip_api.get_dst()) )
         {
-            RNAFlow* rna_flow = new RNAFlow();
-            p->flow->set_flow_data(rna_flow);
+            RNAFlow* rna_flow = (RNAFlow*) p->flow->get_flow_data(RNAFlow::inspector_id);
+            if ( !rna_flow )
+            {
+                rna_flow = new RNAFlow();
+                p->flow->set_flow_data(rna_flow);
+            }
             rna_flow->state.set(p);
         }
 
@@ -191,6 +195,21 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
 
     new_mac = ht->add_mac(src_mac, ttl, 0);
 
+    RNAFlow* rna_flow = nullptr;
+    if ( p->is_tcp() || p->is_udp() )
+    {
+        rna_flow = (RNAFlow*) p->flow->get_flow_data(RNAFlow::inspector_id);
+        if ( !rna_flow )
+        {
+            rna_flow = new RNAFlow();
+            p->flow->set_flow_data(rna_flow);
+        }
+        if ( p->is_from_client() )
+            rna_flow->clientht = ht;
+        else
+            rna_flow->serverht = ht;
+    }
+
     if ( new_host )
         logger.log(RNA_EVENT_NEW, NEW_HOST, p, &ht, src_ip_ptr, src_mac);
 
@@ -241,9 +260,8 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
     const TcpFpProcessor* processor;
     if ( p->is_tcp() and (processor = get_tcp_fp_processor()) != nullptr )
     {
-        RNAFlow* rna_flow = nullptr;
-        if ( p->ptrs.tcph->is_syn_ack() )
-            rna_flow = (RNAFlow*) p->flow->get_flow_data(RNAFlow::inspector_id);
+        if ( !p->ptrs.tcph->is_syn_ack() )
+            rna_flow = nullptr;
         const TcpFingerprint* tfp = processor->get(p, rna_flow);
 
         if (tfp and ht->add_tcp_fingerprint(tfp->fpid))

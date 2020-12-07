@@ -29,6 +29,7 @@
 #include "protocols/tcp.h"
 
 #include "rna_fingerprint.h"
+#include "rna_logger.h"
 
 class RNAFlow;
 
@@ -149,6 +150,8 @@ public:
     size_t size_of() override;
 
     static unsigned inspector_id;
+    RnaTracker serverht = nullptr;
+    RnaTracker clientht = nullptr;
 };
 
 #endif

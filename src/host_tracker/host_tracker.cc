@@ -658,10 +658,8 @@ bool HostTracker::update_service_info(HostApplication& ha, const char* vendor,
             HostApplicationInfo* available = nullptr;
             for ( auto& i : s.info )
             {
-                if ( ((!version and i.version[0] == '\0') or
-                     (version and !strncmp(version, i.version, INFO_SIZE)))
-                    and ((!vendor and i.vendor[0] == '\0') or
-                         (vendor and !strncmp(vendor, i.vendor, INFO_SIZE))) )
+                if ( (version and !strncmp(version, i.version, INFO_SIZE)) and
+                    (vendor and !strncmp(vendor, i.vendor, INFO_SIZE)) )
                 {
                     if ( i.visibility == false )
                     {
@@ -671,7 +669,7 @@ bool HostTracker::update_service_info(HostApplication& ha, const char* vendor,
                     }
                     return false;
                 }
-                else if (!available and i.visibility == false)
+                else if ( !available and !i.visibility )
                     available = &i;
             }
 

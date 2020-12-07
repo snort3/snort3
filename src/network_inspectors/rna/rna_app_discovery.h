@@ -19,6 +19,7 @@
 #ifndef RNA_APP_DISCOVERY_H
 #define RNA_APP_DISCOVERY_H
 
+#include "rna_fingerprint_tcp.h"
 #include "rna_fingerprint_ua.h"
 #include "rna_pnd.h"
 
@@ -27,32 +28,28 @@ class RnaAppDiscovery
 public:
     static void process(AppidEvent*, DiscoveryFilter&, RnaConfig*, RnaLogger&);
 
-    static bool discover_service(const snort::Packet*, IpProtocol, RnaTracker&,
-        const snort::SfIp&, const uint8_t*, RnaConfig*, RnaLogger&, uint16_t port,
-        AppId service = APP_ID_NONE);
+    static bool discover_service(const snort::Packet*, RNAFlow*, IpProtocol, RnaConfig*,
+        RnaLogger&, uint16_t, AppId service = APP_ID_NONE);
 
-    static void discover_payload(const snort::Packet*, IpProtocol, RnaTracker&,
-        const struct in6_addr*, const uint8_t*, RnaConfig*, RnaLogger&,
-        AppId service, AppId payload, AppId client);
+    static void discover_payload(const snort::Packet*, RNAFlow*, IpProtocol, RnaConfig*,
+        RnaLogger&, AppId service, AppId payload, AppId client);
 
+    static void discover_client(const snort::Packet*, RNAFlow*, RnaConfig*, RnaLogger&,
+        const char*, AppId client, AppId service);
 
-    static void discover_client(const snort::Packet*, RnaTracker&,
-        const struct in6_addr*, const uint8_t*, RnaConfig*,
-        RnaLogger&, const char*, AppId client, AppId service);
+    static void discover_user(const snort::Packet*, RNAFlow*, RnaLogger&, const char*,
+        AppId, IpProtocol, RnaConfig*, bool);
 
-    static void discover_user(const snort::Packet*, RnaTracker&, const struct in6_addr*,
-        RnaLogger&, const char* username, AppId, IpProtocol, RnaConfig*, bool);
-
-    static void discover_banner(const snort::Packet*, IpProtocol, RnaTracker&,
-        const snort::SfIp*, const uint8_t* mac, RnaLogger&, AppId);
+    static void discover_banner(const snort::Packet*, RNAFlow*, IpProtocol, RnaLogger&, AppId);
 private:
-    static void update_service_info(const snort::Packet*, IpProtocol, const char* vendor,
-        const char* version, RnaTracker&, const snort::SfIp&, const uint8_t*,
-        RnaLogger&, RnaConfig*, AppId service);
+    static void update_service_info(const snort::Packet*, RNAFlow*, IpProtocol,
+        const char* vendor, const char* version, RnaLogger&, RnaConfig*, AppId service);
 
-    static void analyze_user_agent_fingerprint(const snort::Packet*, const char* host,
-        const char* uagent, RnaTracker&, const snort::SfIp*, const uint8_t*,
-        RnaLogger&, snort::UaFpProcessor&);
+    static void analyze_user_agent_fingerprint(const snort::Packet*, RNAFlow*, const char* host,
+        const char* uagent, RnaLogger&, snort::UaFpProcessor&);
+
+    static RnaTracker get_server_rna_tracker(const snort::Packet*, RNAFlow*);
+    static RnaTracker get_client_rna_tracker(const snort::Packet*, RNAFlow*);
 };
 
 #endif

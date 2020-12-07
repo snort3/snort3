@@ -31,6 +31,20 @@
 
 using namespace snort;
 
+RnaTracker RnaAppDiscovery::get_server_rna_tracker(const Packet* p, RNAFlow* rna_flow)
+{
+    if ( !rna_flow->serverht )
+        rna_flow->serverht = host_cache.find(p->flow->server_ip);
+    return rna_flow->serverht;
+}
+
+RnaTracker RnaAppDiscovery::get_client_rna_tracker(const Packet* p, RNAFlow* rna_flow)
+{
+    if ( !rna_flow->clientht )
+        rna_flow->clientht = host_cache.find(p->flow->client_ip);
+    return rna_flow->clientht;
+}
+
 void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
     RnaConfig* conf, RnaLogger& logger)
 {
@@ -48,18 +62,10 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
     else
         return;
 
-    const auto& src_ip = p->ptrs.ip_api.get_src();
-    auto ht = host_cache.find(*src_ip);
-    if ( !ht || !ht->is_visible() )
-        return; // should not happen as rna would get new flow event before appid event
+    RNAFlow* rna_flow = (RNAFlow*) p->flow->get_flow_data(RNAFlow::inspector_id);
+    if ( !rna_flow )
+        return;
 
-    const uint8_t* src_mac;
-    if ( layer::get_eth_layer(p) )
-        src_mac = layer::get_eth_layer(p)->ether_src;
-    else
-        src_mac = ht->get_last_seen_mac();
-
-    ht->update_last_seen();
     const auto& appid_change_bits = appid_event->get_change_bitset();
     const auto& appid_session_api = appid_event->get_appid_session_api();
     AppId service = appid_session_api.get_service_app_id();
@@ -72,33 +78,20 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
         appid_session_api.get_app_id(nullptr, &client, &payload, nullptr, nullptr);
 
         if ( appid_change_bits[APPID_SERVICE_BIT] and service > APP_ID_NONE )
-        {
-            newservice = discover_service(p, proto, ht, p->flow->server_ip, src_mac, conf, logger,
+            newservice = discover_service(p, rna_flow, proto, conf, logger,
                 p->flow->server_port, service);
-        }
 
         if ( appid_change_bits[APPID_CLIENT_BIT] and client > APP_ID_NONE
             and service > APP_ID_NONE )
         {
             const char* version = appid_session_api.get_client_info();
-            if ( p->packet_flags & PKT_FROM_SERVER )
-            {
-                auto cht = host_cache.find(p->flow->client_ip);
-                if ( cht && cht->is_visible() )
-                    discover_client(p, cht, (const struct in6_addr*) &p->flow->client_ip,
-                        layer::get_eth_layer(p)->ether_dst, conf, logger, version, client,
-                        service);
-            }
-            else
-                discover_client(p, ht, (const struct in6_addr*) &p->flow->client_ip,
-                    src_mac, conf, logger, version, client, service);
+            discover_client(p, rna_flow, conf, logger, version, client, service);
         }
 
         if ( appid_change_bits[APPID_PAYLOAD_BIT] and payload > APP_ID_NONE
              and service > APP_ID_NONE )
         {
-            discover_payload(p, proto, ht, (const struct in6_addr*) src_ip->get_ip6_ptr(),
-                src_mac, conf, logger, service, payload, client);
+            discover_payload(p, rna_flow, proto, conf, logger, service, payload, client);
         }
     }
 
@@ -108,14 +101,12 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
         const char* version;
         const AppIdServiceSubtype* subtype;
         appid_session_api.get_service_info(vendor, version, subtype);
-        update_service_info(p, proto, vendor, version, ht, p->flow->server_ip, src_mac, logger,
-            conf, service);
+        update_service_info(p, rna_flow, proto, vendor, version, logger, conf, service);
     }
     else if ( newservice and appid_change_bits[APPID_SERVICE_BIT]
         and service > APP_ID_NONE )
     {
-        update_service_info(p, proto, nullptr, nullptr, ht, p->flow->server_ip, src_mac, logger,
-            conf, service);
+        update_service_info(p, rna_flow, proto, nullptr, nullptr, logger, conf, service);
     }
 
     if ( conf->enable_banner_grab and p->is_from_server() and
@@ -123,7 +114,7 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
         appid_change_bits[APPID_SERVICE_INFO_BIT] or
         appid_change_bits[APPID_SERVICE_BIT]) )
     {
-        discover_banner(p, proto, ht, &p->flow->server_ip, src_mac, logger, service);
+        discover_banner(p, rna_flow, proto, logger, service);
     }
 
     // Appid supports login success/failure events, but not logoff event.
@@ -132,10 +123,8 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
         bool login_success;
         const char* username = appid_session_api.get_user_info(service, login_success);
         if ( service > APP_ID_NONE and username and *username )
-            discover_user(p, ht, (const struct in6_addr*) p->ptrs.ip_api.get_dst()->get_ip6_ptr(),
-                logger, username, service, proto, conf, login_success);
+            discover_user(p, rna_flow, logger, username, service, proto, conf, login_success);
     }
-
     if ( p->is_from_client() and ( appid_change_bits[APPID_HOST_BIT] or
         appid_change_bits[APPID_USERAGENT_BIT] ) )
     {
@@ -145,7 +134,8 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
             const AppIdHttpSession* hsession;
 
             if ( appid_event->get_is_http2() )
-                hsession = appid_session_api.get_http_session(appid_event->get_http2_stream_index());
+                hsession = appid_session_api.get_http_session(
+                    appid_event->get_http2_stream_index());
             else
                 hsession = appid_session_api.get_http_session();
 
@@ -153,31 +143,21 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
             {
                 const char* host = hsession->get_cfield(REQ_HOST_FID);
                 const char* uagent = hsession->get_cfield(REQ_AGENT_FID);
-                analyze_user_agent_fingerprint(p, host, uagent, ht, src_ip, src_mac,
-                    logger, *processor);
+                analyze_user_agent_fingerprint(p, rna_flow, host, uagent, logger, *processor);
             }
         }
     }
 }
 
-bool RnaAppDiscovery::discover_service(const Packet* p, IpProtocol proto, RnaTracker& rt,
-    const SfIp& ip, const uint8_t* mac, RnaConfig* conf, RnaLogger& logger, uint16_t port,
-    AppId service)
+bool RnaAppDiscovery::discover_service(const Packet* p, RNAFlow* rna_flow, IpProtocol proto,
+    RnaConfig* conf, RnaLogger& logger, uint16_t port, AppId service)
 {
-    RnaTracker htp;
-    if ( p->is_from_client() )
-    {
-        htp = host_cache.find(ip);
-        if ( !htp || !htp->is_visible() )
-            return false;
+    RnaTracker htp = get_server_rna_tracker(p, rna_flow);
 
-        if ( layer::get_eth_layer(p) )
-            mac = layer::get_eth_layer(p)->ether_dst;
-        else
-            mac = htp->get_last_seen_mac();
-    }
-    else
-        htp = rt;
+    if ( !htp or !htp->is_visible() )
+        return false;
+
+    htp->update_last_seen();
 
     if ( conf and conf->max_host_services and conf->max_host_services <= htp->get_service_count() )
         return false;
@@ -190,10 +170,12 @@ bool RnaAppDiscovery::discover_service(const Packet* p, IpProtocol proto, RnaTra
     {
         if ( proto == IpProtocol::TCP )
             logger.log(RNA_EVENT_NEW, NEW_TCP_SERVICE, p, &htp,
-                (const struct in6_addr*) ip.get_ip6_ptr(), mac, &ha);
+                (const struct in6_addr*) p->flow->server_ip.get_ip6_ptr(),
+                htp->get_last_seen_mac(), &ha);
         else
             logger.log(RNA_EVENT_NEW, NEW_UDP_SERVICE, p, &htp,
-                (const struct in6_addr*) ip.get_ip6_ptr(), mac, &ha);
+                (const struct in6_addr*) p->flow->server_ip.get_ip6_ptr(),
+                htp->get_last_seen_mac(), &ha);
 
         ha.hits = 0; // hit count is reset after logs are written
         htp->update_service(ha);
@@ -201,18 +183,22 @@ bool RnaAppDiscovery::discover_service(const Packet* p, IpProtocol proto, RnaTra
     return is_new;
 }
 
-void RnaAppDiscovery::discover_payload(const Packet* p, IpProtocol proto, RnaTracker& rt,
-    const struct in6_addr* src_ip, const uint8_t* src_mac, RnaConfig* conf,
-    RnaLogger& logger, AppId service, AppId payload, AppId client)
+void RnaAppDiscovery::discover_payload(const Packet* p, RNAFlow* rna_flow, IpProtocol proto,
+    RnaConfig* conf, RnaLogger& logger, AppId service, AppId payload, AppId client)
 {
     uint16_t lookup_port;
     size_t max_payloads = 0;
+    RnaTracker srt = get_server_rna_tracker(p, rna_flow);
 
     if ( p->is_from_client() )
         lookup_port = p->flow->client_port;
     else
         lookup_port = p->flow->server_port;
 
+    if ( !srt or !srt->is_visible() )
+        return;
+    
+    srt->update_last_seen();
     if ( conf and conf->max_payloads )
         max_payloads = conf->max_payloads;
 
@@ -220,55 +206,47 @@ void RnaAppDiscovery::discover_payload(const Packet* p, IpProtocol proto, RnaTra
     if ( p->is_from_server() )
     {
         HostApplication local_ha;
-        bool new_pld = rt->add_payload(local_ha, lookup_port, proto, payload, service,
+        bool new_pld = srt->add_payload(local_ha, lookup_port, proto, payload, service,
             max_payloads);
 
         if ( new_pld )
         {
             if ( proto == IpProtocol::TCP )
-                logger.log(RNA_EVENT_CHANGE, CHANGE_TCP_SERVICE_INFO, p, &rt,
-                    (const struct in6_addr*) src_ip, src_mac, &local_ha);
+                logger.log(RNA_EVENT_CHANGE, CHANGE_TCP_SERVICE_INFO, p, &srt,
+                    (const struct in6_addr*) p->flow->server_ip.get_ip6_ptr(),
+                    srt->get_last_seen_mac(), &local_ha);
             else
-                logger.log(RNA_EVENT_CHANGE, CHANGE_UDP_SERVICE_INFO, p, &rt,
-                    (const struct in6_addr*) src_ip, src_mac, &local_ha);
+                logger.log(RNA_EVENT_CHANGE, CHANGE_UDP_SERVICE_INFO, p, &srt,
+                    (const struct in6_addr*) p->flow->server_ip.get_ip6_ptr(),
+                    srt->get_last_seen_mac(), &local_ha);
         }
     }
 
     // Add client payloads
-    bool new_client_payload = false;
-    auto client_ht = host_cache.find(p->flow->client_ip);
-
-    if (!client_ht || !client_ht->is_visible())
+    RnaTracker crt = get_client_rna_tracker(p, rna_flow);
+    if ( !crt or !crt->is_visible() )
         return;
 
-    HostClient hc(client, nullptr, service);
-    auto client_ip = (const struct in6_addr*) p->flow->client_ip.get_ip6_ptr();
+    crt->update_last_seen();
 
-    new_client_payload = client_ht->add_client_payload(hc, payload, max_payloads);
+    bool new_client_payload = false;
+    HostClient hc(client, nullptr, service);
+    new_client_payload = crt->add_client_payload(hc, payload, max_payloads);
 
     if (new_client_payload)
-        logger.log(RNA_EVENT_CHANGE, CHANGE_CLIENT_APP_UPDATE, p, &client_ht, client_ip,
-            client_ht->get_last_seen_mac(), &hc);
+        logger.log(RNA_EVENT_CHANGE, CHANGE_CLIENT_APP_UPDATE, p, &crt,
+            (const struct in6_addr*) p->flow->client_ip.get_ip6_ptr(),
+            crt->get_last_seen_mac(), &hc);
 }
 
-void RnaAppDiscovery::update_service_info(const Packet* p, IpProtocol proto, const char* vendor,
-    const char* version, RnaTracker& rt, const SfIp& ip, const uint8_t* mac, RnaLogger& logger,
-    RnaConfig* conf, AppId service)
+void RnaAppDiscovery::update_service_info(const Packet* p, RNAFlow* rna_flow, IpProtocol proto,
+    const char* vendor, const char* version, RnaLogger& logger, RnaConfig* conf, AppId service)
 {
-    RnaTracker htp;
-    if ( p->is_from_client() )
-    {
-        htp = host_cache.find(ip);
-        if ( !htp || !htp->is_visible() )
-            return;
+    RnaTracker htp = get_server_rna_tracker(p, rna_flow);
+    if ( !htp or !htp->is_visible() )
+        return;
 
-        if ( layer::get_eth_layer(p) )
-            mac = layer::get_eth_layer(p)->ether_dst;
-        else
-            mac = htp->get_last_seen_mac();
-    }
-    else
-        htp = rt;
+    htp->update_last_seen();
 
     HostApplication ha(p->flow->server_port, proto, service, false);
     if ( !htp->update_service_info(ha, vendor, version, conf->max_host_service_info) )
@@ -279,60 +257,101 @@ void RnaAppDiscovery::update_service_info(const Packet* p, IpProtocol proto, con
 
     if ( proto == IpProtocol::TCP )
         logger.log(RNA_EVENT_CHANGE, CHANGE_TCP_SERVICE_INFO, p, &htp,
-            (const struct in6_addr*) ip.get_ip6_ptr(), mac, &ha);
+            (const struct in6_addr*) p->flow->server_ip.get_ip6_ptr(), htp->get_last_seen_mac(),
+            &ha);
     else
         logger.log(RNA_EVENT_CHANGE, CHANGE_UDP_SERVICE_INFO, p, &htp,
-            (const struct in6_addr*) ip.get_ip6_ptr(), mac, &ha);
+            (const struct in6_addr*) p->flow->server_ip.get_ip6_ptr(), htp->get_last_seen_mac(),
+            &ha);
 
     ha.hits = 0;
     htp->update_service(ha);
 }
 
-void RnaAppDiscovery::discover_banner(const Packet* p, IpProtocol proto, RnaTracker& rt,
-    const snort::SfIp* ip, const uint8_t* mac, RnaLogger& logger, AppId service)
+void RnaAppDiscovery::discover_banner(const Packet* p, RNAFlow* rna_flow, IpProtocol proto,
+    RnaLogger& logger, AppId service)
 {
+    RnaTracker rt = get_server_rna_tracker(p, rna_flow);
+    if ( !rt or !rt->is_visible() )
+        return;
+    rt->update_last_seen();
+
     if ( !rt->update_service_banner(p->flow->server_port, proto) )
         return;
 
     HostApplication ha(p->flow->server_port, proto, service, false);
     ha.last_seen = (uint32_t) packet_time();
     logger.log(RNA_EVENT_CHANGE, CHANGE_BANNER_UPDATE, p, &rt,
-        (const struct in6_addr*) ip->get_ip6_ptr(), mac, &ha);
+        (const struct in6_addr*) p->flow->server_ip.get_ip6_ptr(), rt->get_last_seen_mac(), &ha);
 }
 
-void RnaAppDiscovery::discover_client(const Packet* p, RnaTracker& rt,
-    const struct in6_addr* src_ip, const uint8_t* src_mac, RnaConfig* conf,
+void RnaAppDiscovery::discover_client(const Packet* p, RNAFlow* rna_flow, RnaConfig* conf,
     RnaLogger& logger, const char* version, AppId client, AppId service)
 {
+    RnaTracker rt = get_client_rna_tracker(p, rna_flow);
+    if ( !rt or !rt->is_visible() )
+        return;
+    rt->update_last_seen();
+
+    const uint8_t* mac;
+    if ( layer::get_eth_layer(p) )
+    {
+        if ( p->is_from_server() )
+            mac = layer::get_eth_layer(p)->ether_dst;
+        else
+            mac = layer::get_eth_layer(p)->ether_src;
+    }
+    else
+    {
+        RnaTracker crt = get_client_rna_tracker(p, rna_flow);
+        if ( !crt or !crt->is_visible() )
+            return;
+        mac = crt->get_last_seen_mac();
+    }
+
     if (conf and conf->max_host_client_apps and
         conf->max_host_client_apps <= rt->get_client_count())
         return;
 
     bool is_new = false;
-
     auto hc = rt->find_or_add_client(client, version, service, is_new);
     if ( is_new )
-        logger.log(RNA_EVENT_NEW, NEW_CLIENT_APP, p, &rt, src_ip, src_mac, &hc);
+        logger.log(RNA_EVENT_NEW, NEW_CLIENT_APP, p, &rt,
+            (const struct in6_addr*) p->flow->client_ip.get_ip6_ptr(), mac, &hc);
 }
 
-void RnaAppDiscovery::discover_user(const Packet* p, RnaTracker& rt,
-    const struct in6_addr* ip, RnaLogger& logger, const char* username,
-    AppId service, IpProtocol proto, RnaConfig* conf, bool login_success)
+void RnaAppDiscovery::discover_user(const Packet* p, RNAFlow* rna_flow, RnaLogger& logger,
+    const char* username, AppId service, IpProtocol proto, RnaConfig* conf, bool login_success)
 {
+    RnaTracker rt;
+    if ( p->is_from_server() )
+        rt = get_server_rna_tracker(p, rna_flow);
+    else
+        rt = get_client_rna_tracker(p, rna_flow);
+    
+    if ( !rt or !rt->is_visible() )
+        return;
+    rt->update_last_seen();
+
     if ( rt->update_service_user(p->flow->server_port, proto, username,
         (uint32_t) packet_time(), conf ? conf->max_host_services : 0, login_success) )
     {
         logger.log(RUA_EVENT, login_success ? CHANGE_USER_LOGIN : FAILED_USER_LOGIN,
-            p, &rt, ip, username, service, (uint32_t) packet_time());
+            p, &rt, (const struct in6_addr*) p->ptrs.ip_api.get_dst()->get_ip6_ptr(),
+            username, service, (uint32_t) packet_time());
     }
 }
 
-void RnaAppDiscovery::analyze_user_agent_fingerprint(const Packet* p, const char* host,
-    const char* uagent, RnaTracker& rt, const SfIp* ip, const uint8_t* src_mac,
-    RnaLogger& logger, UaFpProcessor& processor)
+void RnaAppDiscovery::analyze_user_agent_fingerprint(const Packet* p, RNAFlow* rna_flow,
+    const char* host, const char* uagent, RnaLogger& logger, UaFpProcessor& processor)
 {
     if ( !host or !uagent )
         return;
+
+    RnaTracker rt = get_client_rna_tracker(p, rna_flow);
+    if ( !rt or !rt->is_visible() )
+        return;
+    rt->update_last_seen();
 
     const UaFingerprint* uafp = nullptr;
     const char* device_info = nullptr;
@@ -342,8 +361,8 @@ void RnaAppDiscovery::analyze_user_agent_fingerprint(const Packet* p, const char
     if ( uafp and rt->add_ua_fingerprint(uafp->fpid, uafp->fp_type, jail_broken,
         device_info, MAX_USER_AGENT_DEVICES) )
     {
-        logger.log(RNA_EVENT_NEW, NEW_OS, p, &rt, (const struct in6_addr*)ip->get_ip6_ptr(),
-            src_mac, (FpFingerprint*)uafp, packet_time(), device_info, jail_broken);
+        logger.log(RNA_EVENT_NEW, NEW_OS, p, &rt, 
+            (const struct in6_addr*)p->flow->client_ip.get_ip6_ptr(), rt->get_last_seen_mac(),
+            (FpFingerprint*)uafp, packet_time(), device_info, jail_broken);
     }
 }
-
