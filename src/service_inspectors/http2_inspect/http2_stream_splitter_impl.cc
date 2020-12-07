@@ -501,9 +501,13 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
             session_data->frame_reassemble[source_id] = nullptr;
         }
 
-        // Return 0-length non-null buffer to stream which signals detection required, but don't
-        // create pkt_data buffer
-        frame_buf.data = (const uint8_t*)"";
+        if (session_data->frame_type[source_id] != FT_DATA ||
+            session_data->frame_data[source_id] != nullptr)
+        {
+            // Return 0-length non-null buffer to stream which signals detection required,
+            // but don't create pkt_data buffer
+            frame_buf.data = (const uint8_t*)"";
+        }
     }
 
     return frame_buf;
