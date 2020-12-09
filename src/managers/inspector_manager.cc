@@ -218,6 +218,7 @@ void PHVector::add_control(PHInstance* p)
 struct FrameworkPolicy
 {
     PHInstanceList ilist;   // List of inspector module instances
+    PHInstanceList removed_ilist;   // List of removed inspector module instances
 
     PHVector passive;
     PHVector packet;
@@ -392,12 +393,15 @@ static void empty_trash(PHList& trash)
     while ( !trash.empty() )
     {
         auto* p = trash.front();
+        trash.pop_front();
 
         if ( !p->is_inactive() )
+        {
+            trash.emplace_back(p);
             return;
+        }
 
         InspectorManager::free_inspector(p);
-        trash.pop_front();
     }
 }
 
@@ -530,6 +534,31 @@ Binder* InspectorManager::get_binder()
         return nullptr;
 
     return (Binder*)pi->framework_policy->binder;
+}
+
+void InspectorManager::clear_removed_inspectors(SnortConfig* sc)
+{
+    FrameworkPolicy* fp = sc->policy_map->get_inspection_policy()->framework_policy;
+    for ( auto* p : fp->removed_ilist )
+        p->handler->rem_ref();
+    fp->removed_ilist.clear();
+}
+
+void InspectorManager::tear_down_removed_inspectors(const SnortConfig* old, SnortConfig* sc)
+{
+    FrameworkPolicy* fp = get_default_inspection_policy(sc)->framework_policy;
+    InspectionPolicy* old_p = get_default_inspection_policy(old);
+    FrameworkPolicy* old_fp = old_p->framework_policy;
+    for (auto it = old_fp->ilist.begin(); it != old_fp->ilist.end(); ++it)
+    {
+        PHInstance* instance = get_instance(fp, (*it)->name.c_str());
+        if (!instance)
+        {
+            fp->removed_ilist.emplace_back(*it);
+            (*it)->handler->add_ref();
+            (*it)->handler->tear_down(sc);
+        }
+    }
 }
 
 // FIXIT-P cache get_inspector() returns or provide indexed lookup
@@ -728,6 +757,26 @@ void InspectorManager::thread_reinit(const SnortConfig* sc)
     }
 }
 
+void InspectorManager::thread_stop_removed(const SnortConfig* sc)
+{
+    // pin->tinit() only called for default policy
+    InspectionPolicy* pi = get_default_inspection_policy(sc);
+
+    if ( pi && pi->framework_policy )
+    {
+        // Call pin->tterm() for anything that has been initialized and removed
+        for ( auto* p : pi->framework_policy->removed_ilist )
+        {
+            PHGlobal& phg = get_thread_local_plugin(p->pp_class.api);
+            if ( phg.instance_initialized )
+            {
+                p->handler->tterm();
+                phg.instance_initialized = false;
+            }
+        }
+    }
+}
+
 void InspectorManager::thread_stop(const SnortConfig* sc)
 {
     // If thread_init() was never called, we have nothing to do.
@@ -737,10 +786,6 @@ void InspectorManager::thread_stop(const SnortConfig* sc)
     // pin->tterm() only called for default policy
     set_default_policy(sc);
     InspectionPolicy* pi = get_inspection_policy();
-
-    // FIXIT-RC Any inspectors that were once configured/instantiated but
-    // no longer exist in the conf cannot have their instance tterm()
-    // called and will leak!
 
     if ( pi && pi->framework_policy )
     {

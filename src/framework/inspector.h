@@ -72,6 +72,12 @@ public:
     // return verification status
     virtual bool configure(SnortConfig*) { return true; }
 
+    // cleanup for inspector instance removal from the running configuration
+    // this is only called for inspectors in the default inspection policy that
+    // were present in the prior snort configuration and were removed in the snort
+    // configuration that is being loaded during a reload_config command
+    virtual void tear_down(SnortConfig*) { }
+
     // called on controls after everything is configured
     // return true if there is nothing to do ever based on config
     virtual bool disable(SnortConfig*) { return false; }

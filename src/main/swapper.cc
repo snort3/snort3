@@ -23,6 +23,8 @@
 
 #include "swapper.h"
 
+#include "managers/inspector_manager.h"
+
 #include "analyzer.h"
 #include "snort.h"
 #include "snort_config.h"
@@ -51,6 +53,8 @@ Swapper::Swapper()
 
 Swapper::~Swapper()
 {
+    if ( new_conf )
+        InspectorManager::clear_removed_inspectors(new_conf);
     if ( old_conf )
         delete old_conf;
 }
@@ -65,4 +69,10 @@ void Swapper::apply(Analyzer& analyzer)
         if ( reload )
             analyzer.reinit(new_conf);
     }
+}
+
+void Swapper::finish(Analyzer& analyzer)
+{
+    if ( new_conf )
+        analyzer.stop_removed(new_conf);
 }

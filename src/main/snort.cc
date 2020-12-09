@@ -447,7 +447,8 @@ void Snort::reload_failure_cleanup(SnortConfig* sc)
 
 // FIXIT-M refactor this so startup and reload call the same core function to
 // instantiate things that can be reloaded
-SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path)
+SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path,
+    const SnortConfig* old)
 {
     reloading = true;
     ModuleManager::reset_errors();
@@ -477,6 +478,7 @@ SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path
         return nullptr;
     }
 
+    InspectorManager::tear_down_removed_inspectors(old, sc);
     InspectorManager::prepare_controls(sc);
 
     FileService::verify_reload(sc);

@@ -346,15 +346,37 @@ void PacketTracer::add_packet_type_info(const Packet& p)
 void PacketTracer::add_eth_header_info(const Packet& p)
 {
     auto eh = layer::get_eth_layer(&p);
-    if (!(shell_enabled) && eh )
+    if (eh)
     {
-        // MAC layer
-        PacketTracer::log("%02X:%02X:%02X:%02X:%02X:%02X -> %02X:%02X:%02X:%02X:%02X:%02X %04X\n",
-            eh->ether_src[0], eh->ether_src[1], eh->ether_src[2],
-            eh->ether_src[3], eh->ether_src[4], eh->ether_src[5],
-            eh->ether_dst[0], eh->ether_dst[1], eh->ether_dst[2],
-            eh->ether_dst[3], eh->ether_dst[4], eh->ether_dst[5],
-            (uint16_t)eh->ethertype());
+        if (shell_enabled)
+        {
+            PacketTracer::log("\n");
+            char gr_buf[32] = { '\0' };
+            if (p.is_inter_group_flow())
+                snprintf(gr_buf, sizeof(gr_buf), " GR=%hd-%hd", p.pkth->ingress_group,
+                    p.pkth->egress_group);
+
+            snprintf(debug_session, sizeof(debug_session),
+                "%02X:%02X:%02X:%02X:%02X:%02X -> %02X:%02X:%02X:%02X:%02X:%02X %04X"
+                " AS=%hu ID=%u%s ",
+                eh->ether_src[0], eh->ether_src[1], eh->ether_src[2],
+                eh->ether_src[3], eh->ether_src[4], eh->ether_src[5],
+                eh->ether_dst[0], eh->ether_dst[1], eh->ether_dst[2],
+                eh->ether_dst[3], eh->ether_dst[4], eh->ether_dst[5],
+                (uint16_t)eh->ethertype(), p.pkth->address_space_id, get_instance_id(),
+                gr_buf);
+            s_pkt_trace->active = true;
+        }
+        else
+        {
+            // MAC layer
+            PacketTracer::log("%02X:%02X:%02X:%02X:%02X:%02X -> %02X:%02X:%02X:%02X:%02X:%02X %04X\n",
+                eh->ether_src[0], eh->ether_src[1], eh->ether_src[2],
+                eh->ether_src[3], eh->ether_src[4], eh->ether_src[5],
+                eh->ether_dst[0], eh->ether_dst[1], eh->ether_dst[2],
+                eh->ether_dst[3], eh->ether_dst[4], eh->ether_dst[5],
+                (uint16_t)eh->ethertype());
+        }
     }
 }
 

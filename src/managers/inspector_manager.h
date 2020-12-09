@@ -77,6 +77,7 @@ public:
 
     static void thread_init(const SnortConfig*);
     static void thread_reinit(const SnortConfig*);
+    static void thread_stop_removed(const SnortConfig*);
 
     static void thread_stop(const SnortConfig*);
     static void thread_term();
@@ -88,6 +89,8 @@ public:
 
     static void clear(Packet*);
     static void empty_trash();
+    static void tear_down_removed_inspectors(const SnortConfig*, SnortConfig*);
+    static void clear_removed_inspectors(SnortConfig*);
 
 #ifdef PIGLET
     static Inspector* instantiate(const char*, Module*, SnortConfig*);

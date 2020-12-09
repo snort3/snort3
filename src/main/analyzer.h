@@ -105,6 +105,7 @@ public:
     void resume(uint64_t msg_cnt);
     void reload_daq();
     void reinit(const snort::SnortConfig*);
+    void stop_removed(const snort::SnortConfig*);
     void rotate();
     snort::SFDAQInstance* get_daq_instance() { return daq_instance; }
 

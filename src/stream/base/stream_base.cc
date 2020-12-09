@@ -156,6 +156,8 @@ public:
     StreamBase(const StreamModuleConfig*);
     void show(const SnortConfig*) const override;
 
+    void tear_down(SnortConfig*) override;
+
     void tinit() override;
     void tterm() override;
 
@@ -167,6 +169,9 @@ public:
 
 StreamBase::StreamBase(const StreamModuleConfig* c)
 { config = *c; }
+
+void StreamBase::tear_down(SnortConfig* sc)
+{ sc->register_reload_resource_tuner(new StreamUnloadReloadResourceManager); }
 
 void StreamBase::tinit()
 {
@@ -212,6 +217,9 @@ void StreamBase::tterm()
 {
     StreamHAManager::tterm();
     FlushBucket::clear();
+    base_prep();
+    delete flow_con;
+    flow_con = nullptr;
 }
 
 void StreamBase::show(const SnortConfig* sc) const
@@ -316,10 +324,6 @@ static void base_tterm()
 {
     StreamHAManager::tterm();
     FlushBucket::clear();
-
-    // this can't happen sooner because the counts haven't been harvested yet
-    delete flow_con;
-    flow_con = nullptr;
     TcpStreamTracker::thread_term();
 }
 

@@ -292,6 +292,44 @@ bool StreamReloadResourceManager::tune_resources(unsigned work_limit)
     return ( flows_to_delete ) ? false : true;
 }
 
+bool StreamUnloadReloadResourceManager::tinit()
+{
+    unsigned max_flows = flow_con->get_flow_cache_config().max_flows;
+    if (max_flows)
+    {
+        stream_base_stats.reload_total_deletes += max_flows;
+        return true;
+    }
+    return false;
+}
+
+bool StreamUnloadReloadResourceManager::tune_packet_context()
+{
+    ++stream_base_stats.reload_tuning_packets;
+    return tune_resources(max_work);
+}
+
+bool StreamUnloadReloadResourceManager::tune_idle_context()
+{
+    ++stream_base_stats.reload_tuning_idle;
+    return tune_resources(max_work_idle);
+}
+
+bool StreamUnloadReloadResourceManager::tune_resources(unsigned work_limit)
+{
+    unsigned flows_to_delete = flow_con->get_flows_allocated();
+
+    if (!flows_to_delete)
+        return true;
+
+    if (flows_to_delete > work_limit)
+        flows_to_delete -= flow_con->delete_flows(work_limit);
+    else
+        flows_to_delete -= flow_con->delete_flows(flows_to_delete);
+
+    return (flows_to_delete) ? false : true;
+}
+
 void StreamModuleConfig::show() const
 {
     ConfigLogger::log_value("max_flows", flow_cache_cfg.max_flows);

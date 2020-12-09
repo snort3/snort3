@@ -97,7 +97,10 @@ void TcpSegmentDescriptor::setup()
 { ma_pseudo_packet = new Packet(false); }
 
 void TcpSegmentDescriptor::clear()
-{ delete ma_pseudo_packet; }
+{
+    delete ma_pseudo_packet;
+    ma_pseudo_packet = nullptr;
+}
 
 uint32_t TcpSegmentDescriptor::init_mss(uint16_t* value)
 {

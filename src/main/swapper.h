@@ -40,6 +40,7 @@ public:
     ~Swapper();
 
     void apply(Analyzer&);
+    void finish(Analyzer&);
     snort::SnortConfig* get_new_conf() { return new_conf; }
 
     static bool get_reload_in_progress() { return reload_in_progress; }

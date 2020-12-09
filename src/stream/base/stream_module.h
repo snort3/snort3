@@ -117,6 +117,19 @@ private:
     timeval reload_time{};
 };
 
+class StreamUnloadReloadResourceManager : public snort::ReloadResourceTuner
+{
+public:
+    StreamUnloadReloadResourceManager() { }
+
+    bool tinit() override;
+    bool tune_packet_context() override;
+    bool tune_idle_context() override;
+
+private:
+    bool tune_resources(unsigned work_limit);
+};
+
 class StreamModule : public snort::Module
 {
 public:

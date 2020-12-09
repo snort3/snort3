@@ -146,6 +146,7 @@ bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
             if ( reload_tuners->empty() )
             {
                 delete reload_tuners;
+                ps->finish(analyzer);
                 return true;
             }
 

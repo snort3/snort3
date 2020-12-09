@@ -200,6 +200,7 @@ void InspectorManager::thread_init(const SnortConfig*) { }
 void InspectorManager::thread_term() { }
 void InspectorManager::thread_stop(const SnortConfig*) { }
 void InspectorManager::thread_reinit(const SnortConfig*) { }
+void InspectorManager::thread_stop_removed(const SnortConfig*) { }
 void ModuleManager::accumulate() { }
 void Stream::handle_timeouts(bool) { }
 void Stream::purge_flows() { }

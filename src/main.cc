@@ -353,7 +353,7 @@ int main_reload_config(lua_State* L)
 
     current_request->respond(".. reloading configuration\n");
     const SnortConfig* old = SnortConfig::get_conf();
-    SnortConfig* sc = Snort::get_reload_config(fname, plugin_path);
+    SnortConfig* sc = Snort::get_reload_config(fname, plugin_path, old);
 
     if ( !sc )
     {

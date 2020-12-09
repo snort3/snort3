@@ -597,6 +597,11 @@ void Analyzer::reinit(const SnortConfig* sc)
     TraceApi::thread_reinit(sc->trace_config);
 }
 
+void Analyzer::stop_removed(const SnortConfig* sc)
+{
+    InspectorManager::thread_stop_removed(sc);
+}
+
 void Analyzer::term()
 {
     const SnortConfig* sc = SnortConfig::get_conf();
