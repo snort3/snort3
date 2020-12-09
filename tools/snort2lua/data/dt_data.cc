@@ -185,22 +185,17 @@ std::string DataApi::expand_vars(const std::string& string)
 
                 /* If variable not defined now, we're toast */
                 if (!varcontents || !strlen(varcontents))
-                {
                     return std::string();
-                }
 
-                if (varcontents)
-                {
-                    std::size_t l_varcontents = strlen(varcontents);
+                std::size_t l_varcontents = strlen(varcontents);
 
-                    iv = 0;
+                iv = 0;
 
-                    if (estring.size() < j + l_varcontents)
-                        estring.resize(estring.size() * 2);
+                if (estring.size() < j + l_varcontents)
+                    estring.resize(estring.size() * 2);
 
-                    while (iv < l_varcontents && j < estring.size() - 1)
-                        estring[j++] = varcontents[iv++];
-                }
+                while (iv < l_varcontents && j < estring.size() - 1)
+                    estring[j++] = varcontents[iv++];
             }
             else
             {

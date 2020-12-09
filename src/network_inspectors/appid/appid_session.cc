@@ -1028,7 +1028,7 @@ bool AppIdSession::is_tp_appid_available() const
     return true;
 }
 
-void AppIdSession::set_tp_app_id(Packet& p, AppidSessionDirection dir, AppId app_id,
+void AppIdSession::set_tp_app_id(const Packet& p, AppidSessionDirection dir, AppId app_id,
     AppidChangeBits& change_bits)
 {
     if (tp_app_id != app_id)
@@ -1044,7 +1044,7 @@ void AppIdSession::set_tp_app_id(Packet& p, AppidSessionDirection dir, AppId app
     }
 }
 
-void AppIdSession::set_tp_payload_app_id(Packet& p, AppidSessionDirection dir, AppId app_id,
+void AppIdSession::set_tp_payload_app_id(const Packet& p, AppidSessionDirection dir, AppId app_id,
     AppidChangeBits& change_bits)
 {
     if (tp_payload_app_id != app_id)

@@ -861,9 +861,7 @@ static int check_ftp_param_validity(Packet* p,
     if ((iRet != FTPP_SUCCESS) && (ThisFmt->choices))
     {
         /* Check against choices -- one of many */
-        int i;
-        int valid = 0;
-        for (i=0; i<ThisFmt->numChoices && !valid; i++)
+        for (int i = 0; i < ThisFmt->numChoices; i++)
         {
             /* Try choice [i] */
             const char* this_fmt_choice_next_param = nullptr;

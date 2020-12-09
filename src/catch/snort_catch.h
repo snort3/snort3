@@ -57,13 +57,16 @@ public:
             REQUIRE(true);
         }
 */
+#define SNORT_CATCH_UNIQUE_NAME_LINE2( name, line ) name##line
+#define SNORT_CATCH_UNIQUE_NAME_LINE( name, line ) SNORT_CATCH_UNIQUE_NAME_LINE2(name, line)
+#define SNORT_CATCH_UNIQUE_NAME( name ) SNORT_CATCH_UNIQUE_NAME_LINE(name, __LINE__)
 #define MAKE_SNORT_TEST_CASE(fun, ...) \
     static void fun(); \
-    static snort::TestCaseInstaller INTERNAL_CATCH_UNIQUE_NAME(test_case_installer)(fun, __VA_ARGS__); \
+    static snort::TestCaseInstaller SNORT_CATCH_UNIQUE_NAME(test_case_installer)(fun, __VA_ARGS__); \
     static void fun()
 
 #undef TEST_CASE
-#define TEST_CASE(...) MAKE_SNORT_TEST_CASE(INTERNAL_CATCH_UNIQUE_NAME(snort_test), __VA_ARGS__)
+#define TEST_CASE(...) MAKE_SNORT_TEST_CASE(SNORT_CATCH_UNIQUE_NAME(snort_test), __VA_ARGS__)
 }
 
 #endif

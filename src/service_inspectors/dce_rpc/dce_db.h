@@ -62,16 +62,16 @@ public:
         }
     }
 
-    void SetDoNotFree();
-    bool Insert(const Key& key, Value data);
-    Value Find(const Key& key);
-    void Remove(const Key& key);
-    int GetSize()
+    void SetDoNotFree() override;
+    bool Insert(const Key& key, Value data) override;
+    Value Find(const Key& key) override;
+    void Remove(const Key& key) override;
+    int GetSize() override
     {
         return Map.size();
     }
 
-    std::vector< std::pair<Key, Value> > get_all_entry();
+    std::vector< std::pair<Key, Value> > get_all_entry() override;
 
 private:
     std::unordered_map<Key, Value, Hash> Map;

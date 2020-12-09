@@ -361,7 +361,7 @@ void TcpReassembler::purge_flushed_ackd(TcpReassemblerState& trs)
         purge_to_seq(trs, seq);
 }
 
-void TcpReassembler::show_rebuilt_packet(TcpReassemblerState& trs, Packet* pkt)
+void TcpReassembler::show_rebuilt_packet(const TcpReassemblerState& trs, Packet* pkt)
 {
     if ( trs.sos.session->tcp_config->flags & STREAM_CONFIG_SHOW_PACKETS )
     {

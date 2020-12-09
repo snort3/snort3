@@ -188,7 +188,7 @@ struct hsContext
 
         if ( from == 0 )
             left = true;
-        else if ( from && !::isdigit((int)buf[from-1]) )
+        else if ( !::isdigit((int)buf[from-1]) )
             left = true;
 
         // validate the right side

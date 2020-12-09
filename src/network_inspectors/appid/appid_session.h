@@ -383,9 +383,9 @@ public:
     bool is_tp_processing_done() const;
     bool is_tp_appid_available() const;
 
-    void set_tp_app_id(snort::Packet& p, AppidSessionDirection dir, AppId app_id,
+    void set_tp_app_id(const snort::Packet& p, AppidSessionDirection dir, AppId app_id,
         AppidChangeBits& change_bits);
-    void set_tp_payload_app_id(snort::Packet& p, AppidSessionDirection dir, AppId app_id,
+    void set_tp_payload_app_id(const snort::Packet& p, AppidSessionDirection dir, AppId app_id,
         AppidChangeBits& change_bits);
     void publish_appid_event(AppidChangeBits&, const snort::Packet&, bool is_http2 = false,
         uint32_t http2_stream_index = 0);

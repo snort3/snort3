@@ -72,7 +72,6 @@ static u2iterator* new_iterator(char* filename)
 
 static inline void free_iterator(u2iterator* it)
 {
-
     if (!it)
         return;
 
@@ -80,8 +79,7 @@ static inline void free_iterator(u2iterator* it)
         fclose(it->file);
     if (it->filename)
         free(it->filename);
-    if (it)
-        free(it);
+    free(it);
 }
 
 static bool get_record(u2iterator* it, u2record* record)

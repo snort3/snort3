@@ -64,7 +64,7 @@ protected:
     void queue_reassembly_segment(TcpReassemblerState&, TcpSegmentNode* prev, TcpSegmentNode*);
     void init_overlap_editor(TcpReassemblerState&, TcpSegmentDescriptor&);
     bool is_segment_fasttrack(TcpReassemblerState&, TcpSegmentNode* tail, const TcpSegmentDescriptor&);
-    void show_rebuilt_packet(TcpReassemblerState&, snort::Packet*);
+    void show_rebuilt_packet(const TcpReassemblerState&, snort::Packet*);
     uint32_t get_flush_data_len(
         TcpReassemblerState&, TcpSegmentNode*, uint32_t to_seq, unsigned max);
     int flush_data_segments(

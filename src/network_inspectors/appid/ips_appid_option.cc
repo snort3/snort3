@@ -121,12 +121,13 @@ IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
         (session->get_odp_ctxt_version() != pkt_thread_odp_ctxt->get_version()))
         return NO_MATCH;
 
-    AppId app_ids[APP_PROTOID_MAX];
     AppId service_id = session->get_api().get_service_app_id();
     OdpContext& odp_ctxt = session->get_odp_ctxt();
 
     if (service_id != APP_ID_HTTP2)
     {
+        AppId app_ids[APP_PROTOID_MAX];
+
         // id order on stream api call is: service, client, payload, misc
         session->get_api().get_first_stream_app_ids(app_ids[APP_PROTOID_SERVICE], app_ids[APP_PROTOID_CLIENT],
             app_ids[APP_PROTOID_PAYLOAD], app_ids[APP_PROTOID_MISC]);

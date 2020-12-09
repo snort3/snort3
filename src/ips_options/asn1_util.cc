@@ -164,7 +164,6 @@ void asn1_free_mem()
 static int asn1_decode_tag_num_ext(ASN1_DATA* asn1_data, unsigned* tag_num)
 {
     int iExtension = 0;
-    unsigned new_tag_num;
 
     if (!asn1_data || !tag_num)
         return ASN1_ERR_NULL_MEM;
@@ -181,7 +180,7 @@ static int asn1_decode_tag_num_ext(ASN1_DATA* asn1_data, unsigned* tag_num)
         */
         iExtension = SF_ASN1_LEN_EXT(*asn1_data->data);
 
-        new_tag_num = ((*tag_num << 7) | (*asn1_data->data & 0x7f));
+        unsigned new_tag_num = ((*tag_num << 7) | (*asn1_data->data & 0x7f));
         if (*tag_num != 0 && new_tag_num <= *tag_num)
         {
             return ASN1_ERR_OVERLONG_LEN;
@@ -308,8 +307,6 @@ static int asn1_decode_len_type(const uint8_t* data)
 static int asn1_decode_len_ext(ASN1_DATA* asn1_data, unsigned* size)
 {
     int iBytes;
-    int iCtr;
-    unsigned new_size;
 
     if (!asn1_data || !size)
         return ASN1_ERR_NULL_MEM;
@@ -324,9 +321,9 @@ static int asn1_decode_len_ext(ASN1_DATA* asn1_data, unsigned* size)
         return ASN1_ERR_OOB;
     }
 
-    for (iCtr = 0; iCtr < iBytes; iCtr++)
+    for (int iCtr = 0; iCtr < iBytes; iCtr++)
     {
-        new_size = ((*size << 8) | (*asn1_data->data));
+        unsigned new_size = ((*size << 8) | (*asn1_data->data));
 
         /*
         **  If we've just added some data to the size, and

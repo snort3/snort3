@@ -198,7 +198,7 @@ static uint16_t POParserGetShort(POParser* pop)
         }
         else
         {
-            if ( c && ( c!= ':' && c != ' ' && c != ']' && c != ',' && c != '\t' && c != '\n' ) )
+            if ( c != ':' && c != ' ' && c != ']' && c != ',' && c != '\t' && c != '\n' )
             {
                 pop->errflag = POPERR_NOT_A_NUMBER;
                 return 0;
@@ -408,11 +408,8 @@ static PortObject* _POParseString(POParser* pop)
             return nullptr;
         }
 
-        if (potmp)
-        {
-            PortObjectFree(potmp);
-            potmp = nullptr;
-        }
+        PortObjectFree(potmp);
+        potmp = nullptr;
     }
 
     /* Check for mis-matched brackets */
