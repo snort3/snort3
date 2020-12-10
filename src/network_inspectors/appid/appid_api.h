@@ -34,16 +34,6 @@ class AppIdSession;
 
 namespace snort
 {
-
-#define APPID_HA_SESSION_APP_NUM_MAX 8    // maximum number of appIds replicated for a flow/session
-
-struct AppIdSessionHA
-{
-    uint16_t flags;
-    uint16_t asid;
-    AppId appId[APPID_HA_SESSION_APP_NUM_MAX];
-};
-
 // -----------------------------------------------------------------------------
 // AppId API
 // -----------------------------------------------------------------------------
@@ -58,9 +48,6 @@ public:
     const char* get_application_name(AppId app_id, const Flow& flow);
     const char* get_application_name(const Flow& flow, bool from_client);
     AppId get_application_id(const char* appName, const AppIdContext& ctxt);
-    uint32_t produce_ha_state(const Flow& flow, uint8_t* buf);
-    uint32_t consume_ha_state(Flow& flow, const uint8_t* buf, uint8_t length, IpProtocol,
-        SfIp*, uint16_t initiatorPort);
     bool ssl_app_group_id_lookup(Flow* flow, const char*, const char*, const char*,
         const char*, bool, AppId& service_id, AppId& client_id, AppId& payload_id);
     const AppIdSessionApi* get_appid_session_api(const Flow& flow) const;

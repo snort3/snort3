@@ -38,6 +38,7 @@
 #include "appid_dcerpc_event_handler.h"
 #include "appid_debug.h"
 #include "appid_discovery.h"
+#include "appid_ha.h"
 #include "appid_http_event_handler.h"
 #include "appid_peg_counts.h"
 #include "appid_session.h"
@@ -160,6 +161,8 @@ void AppIdInspector::tinit()
         pkt_thread_tp_appid_ctxt->tinit();
     if (ctxt->config.log_all_sessions)
         appidDebug->set_enabled(true);
+     if ( snort::HighAvailabilityManager::active() )
+        AppIdHAManager::tinit();
 }
 
 void AppIdInspector::tterm()
@@ -171,6 +174,8 @@ void AppIdInspector::tterm()
     odp_thread_local_ctxt = nullptr;
     if (pkt_thread_tp_appid_ctxt)
         pkt_thread_tp_appid_ctxt->tfini();
+    if ( snort::HighAvailabilityManager::active() )
+        AppIdHAManager::tterm();
 }
 
 void AppIdInspector::eval(Packet* p)

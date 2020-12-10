@@ -21,6 +21,8 @@
 #ifndef APPID_MOCK_SESSION_H
 #define APPID_MOCK_SESSION_H
 
+#include "flow/ha.h"
+
 #include "appid_dns_session.h"
 #include "appid_mock_flow.h"
 #include "appid_mock_http_session.h"
@@ -74,6 +76,8 @@ public:
 AppIdConfig::~AppIdConfig() { }
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
 OdpContext::~OdpContext() { }
+
+void FlowHAState::add(uint8_t) { }
 
 static AppIdConfig stub_config;
 static AppIdContext stub_ctxt(stub_config);

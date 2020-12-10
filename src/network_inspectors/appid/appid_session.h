@@ -562,6 +562,11 @@ public:
             api.set_tls_host(tsession->get_tls_host());
     }
 
+    void set_tls_host(const char* tls_host)
+    {
+        api.set_tls_host(tls_host);
+    }
+
     OdpContext& get_odp_ctxt() const
     {
         return odp_ctxt;
@@ -610,6 +615,11 @@ public:
         api.clear_user_logged_in();
     }
 
+    void set_consumed_ha_data(bool val)
+    {
+        consumed_ha_data = val;
+    }
+
 private:
     uint16_t prev_http2_raw_packet = 0;
 
@@ -629,6 +639,7 @@ private:
     OdpContext& odp_ctxt;
     uint32_t odp_ctxt_version;
     ThirdPartyAppIdContext* tp_appid_ctxt = nullptr;
+    bool consumed_ha_data = false;
 };
 
 #endif

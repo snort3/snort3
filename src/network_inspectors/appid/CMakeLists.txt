@@ -163,6 +163,8 @@ set ( APPID_SOURCES
     appid_discovery.cc
     appid_discovery.h
     appid_dns_session.h
+    appid_ha.cc
+    appid_ha.h
     appid_http_session.cc
     appid_http_session.h
     appid_peg_counts.h

@@ -25,6 +25,7 @@
 
 #include "appid_http_session.h"
 
+#include "flow/ha.h"
 #include "memory/memory_cap.h"
 #include "profiler/profiler.h"
 
@@ -71,9 +72,15 @@ void AppIdHttpSession::set_http_change_bits(AppidChangeBits& change_bits, HttpFi
     {
     case REQ_HOST_FID:
         change_bits.set(APPID_HOST_BIT);
+        assert(asd.flow);
+        if (asd.flow->ha_state)
+            asd.flow->ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
         break;
     case MISC_URL_FID:
         change_bits.set(APPID_URL_BIT);
+        assert(asd.flow);
+        if (asd.flow->ha_state)
+            asd.flow->ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
         break;
     case REQ_AGENT_FID:
         change_bits.set(APPID_USERAGENT_BIT);
@@ -401,14 +408,17 @@ void AppIdHttpSession::process_chp_buffers(AppidChangeBits& change_bits, HttpPat
     }
 }
 
-void AppIdHttpSession::set_client(AppId app_id, AppidChangeBits& change_bits, const char* type,
-    const char* version)
+void AppIdHttpSession::set_client(AppId app_id, AppidChangeBits& change_bits,
+    const char* type, const char* version)
 {
     if (app_id <= APP_ID_NONE or (app_id == client.get_id()))
         return;
 
     client.set_id(app_id);
     change_bits.set(APPID_CLIENT_BIT);
+    assert(asd.flow);
+    if (asd.flow->ha_state)
+        asd.flow->ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
     if (version)
     {
         client.set_version(version);
@@ -423,14 +433,17 @@ void AppIdHttpSession::set_client(AppId app_id, AppidChangeBits& change_bits, co
     }
 }
 
-void AppIdHttpSession::set_payload(AppId app_id, AppidChangeBits& change_bits, const char* type,
-    const char* version)
+void AppIdHttpSession::set_payload(AppId app_id, AppidChangeBits& change_bits,
+    const char* type, const char* version)
 {
     if (app_id == APP_ID_NONE or (app_id == payload.get_id()))
         return;
 
     payload.set_id(app_id);
     change_bits.set(APPID_PAYLOAD_BIT);
+    assert(asd.flow);
+    if (asd.flow->ha_state)
+        asd.flow->ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
     payload.set_version(version);
 
     if (appidDebug->is_active())

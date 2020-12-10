@@ -890,18 +890,21 @@ AppId AppIdSession::pick_ss_referred_payload_app_id() const
 void AppIdSession::set_ss_application_ids(AppId service_id, AppId client_id, AppId payload_id,
     AppId misc_id, AppId referred_id, AppidChangeBits& change_bits)
 {
-    api.set_ss_application_ids(service_id, client_id, payload_id, misc_id, referred_id, change_bits);
+    assert(flow);
+    api.set_ss_application_ids(service_id, client_id, payload_id, misc_id, referred_id, change_bits, *flow);
 }
 
 void AppIdSession::set_ss_application_ids(AppId client_id, AppId payload_id,
     AppidChangeBits& change_bits)
 {
-    api.set_ss_application_ids(client_id, payload_id, change_bits);
+    assert(flow);
+    api.set_ss_application_ids(client_id, payload_id, change_bits, *flow);
 }
 
 void AppIdSession::set_application_ids_service(AppId service_id, AppidChangeBits& change_bits)
 {
-    api.set_application_ids_service(service_id, change_bits);
+    assert(flow);
+    api.set_application_ids_service(service_id, change_bits, *flow);
 }
 
 void AppIdSession::reset_session_data(AppidChangeBits& change_bits)
@@ -1069,6 +1072,23 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packe
     {
         change_bits.set(APPID_CREATED_BIT);
         api.published = true;
+    }
+
+    if (consumed_ha_data)
+    {
+        AppIdHttpSession* hsession = get_http_session();
+        if (hsession)
+        {
+            if (hsession->get_field(MISC_URL_FID))
+                change_bits.set(APPID_URL_BIT);
+            if (hsession->get_field(REQ_HOST_FID))
+                change_bits.set(APPID_HOST_BIT);
+        }
+
+        if (api.get_tls_host())
+            change_bits.set(APPID_TLSHOST_BIT);
+
+        consumed_ha_data = false;
     }
 
     if (change_bits.none())

@@ -54,6 +54,7 @@ AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
 }
 
+void FlowHAState::add(uint8_t) { }
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 const char* AppInfoManager::get_app_name(AppId)
 {
@@ -106,6 +107,7 @@ static AppIdConfig stub_config;
 static AppIdContext stub_ctxt(stub_config);
 static OdpContext stub_odp_ctxt(stub_config, nullptr);
 OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
+static Flow flow;
 
 // AppIdSession mock functions
 AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector& inspector,
@@ -181,6 +183,7 @@ TEST_GROUP(appid_http_session)
     {
         SfIp sfip;
         session = new AppIdSession(IpProtocol::IP, &sfip, 0, dummy_appid_inspector, stub_odp_ctxt);
+        session->flow = &flow;
         mock_hsession = new AppIdHttpSession(*session, 0);
         appidDebug = new AppIdDebug();
     }
@@ -200,20 +203,20 @@ TEST(appid_http_session, http_field_ids_enum_order)
     // in appid_http_session.h.
     AppidChangeBits change_bits;
 
-    mock_hsession->set_field( (HttpFieldIds)0, new std::string("agent"), change_bits );
-    mock_hsession->set_field( (HttpFieldIds)1, new std::string("host"), change_bits );
-    mock_hsession->set_field( (HttpFieldIds)2, new std::string("referer"), change_bits );
-    mock_hsession->set_field( (HttpFieldIds)3, new std::string("uri"), change_bits );
-    mock_hsession->set_field( (HttpFieldIds)4, new std::string("cookie"), change_bits );
-    mock_hsession->set_field( (HttpFieldIds)5, new std::string("req_body"), change_bits );
-    mock_hsession->set_field( (HttpFieldIds)6, new std::string("content_type"), change_bits );
-    mock_hsession->set_field( (HttpFieldIds)7, new std::string("location"), change_bits );
-    mock_hsession->set_field( (HttpFieldIds)8, new std::string("rsp_body"), change_bits );
-    mock_hsession->set_field( (HttpFieldIds)9, new std::string("via"), change_bits );
-    mock_hsession->set_field( (HttpFieldIds)10, new std::string("response_code"), change_bits );
-    mock_hsession->set_field( (HttpFieldIds)11, new std::string("server"), change_bits );
-    mock_hsession->set_field( (HttpFieldIds)12, new std::string("xww"), change_bits );
-    mock_hsession->set_field( (HttpFieldIds)13, new std::string("url"), change_bits );
+    mock_hsession->set_field( (HttpFieldIds)0, new std::string("agent"), change_bits);
+    mock_hsession->set_field( (HttpFieldIds)1, new std::string("host"), change_bits);
+    mock_hsession->set_field( (HttpFieldIds)2, new std::string("referer"), change_bits);
+    mock_hsession->set_field( (HttpFieldIds)3, new std::string("uri"), change_bits);
+    mock_hsession->set_field( (HttpFieldIds)4, new std::string("cookie"), change_bits);
+    mock_hsession->set_field( (HttpFieldIds)5, new std::string("req_body"), change_bits);
+    mock_hsession->set_field( (HttpFieldIds)6, new std::string("content_type"), change_bits);
+    mock_hsession->set_field( (HttpFieldIds)7, new std::string("location"), change_bits);
+    mock_hsession->set_field( (HttpFieldIds)8, new std::string("rsp_body"), change_bits);
+    mock_hsession->set_field( (HttpFieldIds)9, new std::string("via"), change_bits);
+    mock_hsession->set_field( (HttpFieldIds)10, new std::string("response_code"), change_bits);
+    mock_hsession->set_field( (HttpFieldIds)11, new std::string("server"), change_bits);
+    mock_hsession->set_field( (HttpFieldIds)12, new std::string("xww"), change_bits);
+    mock_hsession->set_field( (HttpFieldIds)13, new std::string("url"), change_bits);
 
     const std::string* field;
     field = mock_hsession->get_field(REQ_AGENT_FID);
@@ -308,7 +311,7 @@ TEST(appid_http_session, change_bits_for_referred_appid)
     session->set_service_id(APP_ID_HTTP, odp_ctxt);
     session->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
     mock_hsession->set_skip_simple_detect(false);
-    mock_hsession->set_field( (HttpFieldIds)2, new std::string("referer"), change_bits );
+    mock_hsession->set_field( (HttpFieldIds)2, new std::string("referer"), change_bits);
     mock_hsession->process_http_packet(APP_ID_FROM_INITIATOR, change_bits, odp_ctxt.get_http_matchers());
 
     // Detect changes in referred appid

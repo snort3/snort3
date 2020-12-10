@@ -34,6 +34,7 @@ AppIdSession* mock_session = nullptr;
 AppIdSessionApi* appid_session_api = nullptr;
 static AppIdConfig config;
 static OdpContext odpctxt(config, nullptr);
+static Flow flow;
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 
@@ -53,12 +54,12 @@ namespace snort
 void AppIdSession::set_ss_application_ids(AppId service_id, AppId client_id, AppId payload_id,
     AppId misc_id, AppId referred_id, AppidChangeBits& change_bits)
 {
-    api.set_ss_application_ids(service_id, client_id, payload_id, misc_id, referred_id, change_bits);
+    api.set_ss_application_ids(service_id, client_id, payload_id, misc_id, referred_id, change_bits, *flow);
 }
 
 void AppIdSession::set_application_ids_service(AppId service_id, AppidChangeBits& change_bits)
 {
-    api.set_application_ids_service(service_id, change_bits);
+    api.set_application_ids_service(service_id, change_bits, *flow);
 }
 
 TEST_GROUP(appid_session_api)
@@ -69,6 +70,7 @@ TEST_GROUP(appid_session_api)
 
         SfIp ip;
         mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
+        mock_session->flow = &flow;
         pkt_thread_odp_ctxt = &mock_session->get_odp_ctxt();
         mock_session->set_ss_application_ids(APPID_UT_ID, APPID_UT_ID, APPID_UT_ID,
             APPID_UT_ID, APPID_UT_ID, change_bits);
@@ -131,6 +133,7 @@ TEST(appid_session_api, get_app_id)
 {
     SfIp ip;
     AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
+    asd.flow = &flow;
     AppidChangeBits change_bits;
     asd.set_application_ids_service(APP_ID_HTTP2, change_bits);
 
