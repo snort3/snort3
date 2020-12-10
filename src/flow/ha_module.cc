@@ -65,6 +65,7 @@ static const PegInfo ha_pegs[] =
     { CountType::SUM, "delete_msgs_consumed", "deletion messages consumed" },
     { CountType::SUM, "daq_stores", "states stored via daq" },
     { CountType::SUM, "daq_imports", "states imported via daq" },
+    { CountType::SUM, "key_mismatch", "messages received with a flow key mismatch" },
     { CountType::SUM, "msg_version_mismatch", "messages received with a version mismatch" },
     { CountType::SUM, "msg_length_mismatch", "messages received with an inconsistent total length" },
     { CountType::SUM, "truncated_msgs", "truncated messages received" },

@@ -450,7 +450,8 @@ static Flow* consume_ha_update_message(HAMessage& msg, const FlowKey& key, Packe
     return flow;
 }
 
-static Flow* consume_ha_message(HAMessage& msg, Packet* p = nullptr)
+static Flow* consume_ha_message(HAMessage& msg,
+    FlowKey* packet_key = nullptr, Packet* p = nullptr)
 {
     ha_stats.msgs_recv++;
 
@@ -479,6 +480,12 @@ static Flow* consume_ha_message(HAMessage& msg, Packet* p = nullptr)
     FlowKey key;
     if (read_flow_key(msg, hdr, key) == 0)
         return nullptr;
+
+    if (packet_key and !FlowKey::is_equal(packet_key, &key, 0))
+    {
+        ha_stats.key_mismatch++;
+        return nullptr;
+    }
 
     Flow* flow = nullptr;
     switch (hdr->event)
@@ -653,26 +660,20 @@ Flow* HighAvailability::process_daq_import(Packet& p, FlowKey& key)
         if (p.daq_instance->ioctl(DIOCTL_GET_FLOW_HA_STATE, &fhs, sizeof(fhs)) == DAQ_SUCCESS)
         {
             HAMessage ha_msg(fhs.data, fhs.length);
-            flow = consume_ha_message(ha_msg, &p);
+            flow = consume_ha_message(ha_msg, &key, &p);
             ha_stats.daq_imports++;
             // Validate that the imported flow matches up with the given flow key.
             if (flow)
             {
-                if (FlowKey::is_equal(&key, flow->key, 0))
+                if (flow->flow_state == Flow::FlowState::BLOCK
+                    or flow->flow_state == Flow::FlowState::RESET)
                 {
-                    if (flow->flow_state == Flow::FlowState::BLOCK
-                        or flow->flow_state == Flow::FlowState::RESET)
-                    {
-                        flow->disable_inspection();
-                        p.disable_inspect = true;
-                    }
-
-                    // Clear the standby bit so that we don't immediately trigger a new data store
-                    // FIXIT-L streamline the consume process so this doesn't have to be done here
-                    flow->ha_state->clear(FlowHAState::STANDBY);
+                    flow->disable_inspection();
+                    p.disable_inspect = true;
                 }
-                else
-                    flow = nullptr;
+                // Clear the standby bit so that we don't immediately trigger a new data store
+                // FIXIT-L streamline the consume process so this doesn't have to be done here
+                flow->ha_state->clear(FlowHAState::STANDBY);
             }
         }
     }

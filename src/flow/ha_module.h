@@ -71,6 +71,7 @@ struct HAStats
     PegCount delete_msgs_consumed;
     PegCount daq_stores;
     PegCount daq_imports;
+    PegCount key_mismatch;
     PegCount msg_version_mismatch;
     PegCount msg_length_mismatch;
     PegCount truncated_msgs;

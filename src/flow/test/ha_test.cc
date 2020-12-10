@@ -549,12 +549,24 @@ TEST(high_availability_test, consume_error_client_consume)
     CHECK(ha_stats.client_consume_errors == 1);
 }
 
+TEST(high_availability_test, consume_error_key_mismatch)
+{
+    HAMessageHeader hdr[10] = { 0, HA_MESSAGE_VERSION, 0x32, KEY_TYPE_IP4 };
+    HAMessage msg((uint8_t*) &hdr, sizeof(hdr));
+
+    FlowKey packet_key;
+    FlowKey* key = &packet_key;
+    CHECK(consume_ha_message(msg, key, &s_pkt) == nullptr);
+    CHECK(ha_stats.key_mismatch == 1);
+}
+
 TEST(high_availability_test, consume_error_truncated_msg_hdr)
 {
     HAMessageHeader hdr = { };
     HAMessage msg((uint8_t*) &hdr, sizeof(hdr) / 2);
 
-    CHECK(consume_ha_message(msg, &s_pkt) == nullptr);
+    FlowKey* key = nullptr;
+    CHECK(consume_ha_message(msg, key, &s_pkt) == nullptr);
     CHECK(ha_stats.truncated_msgs == 1);
 }
 
@@ -563,7 +575,8 @@ TEST(high_availability_test, consume_error_version_mismatch)
     HAMessageHeader hdr = { 0, HA_MESSAGE_VERSION + 1, 0, 0 };
     HAMessage msg((uint8_t*) &hdr, sizeof(hdr));
 
-    CHECK(consume_ha_message(msg, &s_pkt) == nullptr);
+    FlowKey* key = nullptr;
+    CHECK(consume_ha_message(msg, key, &s_pkt) == nullptr);
     CHECK(ha_stats.msg_version_mismatch == 1);
 }
 
@@ -572,7 +585,8 @@ TEST(high_availability_test, consume_error_length_mismatch)
     HAMessageHeader hdr = { 0, HA_MESSAGE_VERSION, 0x42, 0 };
     HAMessage msg((uint8_t*) &hdr, sizeof(hdr));
 
-    CHECK(consume_ha_message(msg, &s_pkt) == nullptr);
+    FlowKey* key = nullptr;
+    CHECK(consume_ha_message(msg, key, &s_pkt) == nullptr);
     CHECK(ha_stats.msg_length_mismatch == 1);
 }
 
