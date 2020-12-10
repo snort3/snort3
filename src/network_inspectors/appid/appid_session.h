@@ -546,6 +546,16 @@ public:
         api.initiator_ip = ip;
     }
 
+    void set_service_ip(const snort::SfIp& ip)
+    {
+        api.service.set_service_ip(ip);
+    }
+
+    void set_service_port(uint16_t port)
+    {
+        api.service.set_service_port(port);
+    }
+
     void set_tls_host(const AppidChangeBits& change_bits)
     {
         if (tsession and change_bits[APPID_TLSHOST_BIT])
@@ -567,26 +577,27 @@ public:
         return tp_appid_ctxt;
     }
 
-    void set_service_info(const snort::SfIp& ip, uint16_t port, int16_t group = DAQ_PKTHDR_UNKNOWN)
+    void set_server_info(const snort::SfIp& ip, uint16_t port, int16_t group = DAQ_PKTHDR_UNKNOWN)
     {
-        service_ip = ip;
-        service_port = port;
-        service_group = group;
+        api.service.set_service_ip(ip);
+        api.service.set_service_port(port);
+        api.service.set_service_group(group);
     }
 
-    std::tuple<const snort::SfIp*, uint16_t, int16_t>  get_service_info() const
+    std::tuple<const snort::SfIp*, uint16_t, int16_t>  get_server_info() const
     {
-        return std::make_tuple(&service_ip, service_port, service_group);
+        return std::make_tuple(&api.service.get_service_ip(), api.service.get_service_port(),
+            api.service.get_service_group());
     }
 
     uint16_t get_service_port() const
     {
-        return service_port;
+        return api.service.get_service_port();
     }
 
     bool is_service_ip_set() const
     {
-        return service_ip.is_set();
+        return api.service.is_service_ip_set();
     }
 
     void set_user_logged_in()
@@ -611,10 +622,6 @@ private:
     // appId determined by 3rd party library
     AppId tp_app_id = APP_ID_NONE;
     AppId tp_payload_app_id = APP_ID_NONE;
-
-    snort::SfIp service_ip;
-    uint16_t service_port = 0;
-    int16_t service_group = DAQ_PKTHDR_UNKNOWN;
 
     uint16_t my_inferred_svcs_ver = 0;
     snort::AppIdSessionApi& api;

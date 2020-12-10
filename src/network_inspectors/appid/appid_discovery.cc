@@ -501,7 +501,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
 
                 asd->set_session_flags(APPID_SESSION_SYN_RST);
                 if (asd->is_service_ip_set())
-                    std::tie(ip, port, group) = asd->get_service_info();
+                    std::tie(ip, port, group) = asd->get_server_info();
                 else
                 {
                     ip = p->ptrs.ip_api.get_src();

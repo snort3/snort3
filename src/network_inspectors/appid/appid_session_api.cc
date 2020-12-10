@@ -280,6 +280,16 @@ const SfIp* AppIdSessionApi::get_initiator_ip() const
     return &initiator_ip;
 }
 
+const SfIp& AppIdSessionApi::get_service_ip() const
+{
+    return service.get_service_ip();
+}
+
+uint16_t AppIdSessionApi::get_service_port() const
+{
+    return service.get_service_port();
+}
+
 const AppIdDnsSession* AppIdSessionApi::get_dns_session() const
 {
     return dsession;

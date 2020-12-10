@@ -103,7 +103,11 @@ struct AppIdServiceSubtype
 class ServiceAppDescriptor : public ApplicationDescriptor
 {
 public:
-    ServiceAppDescriptor() = default;
+    ServiceAppDescriptor()
+    {
+        service_ip.clear();
+    }
+
     ~ServiceAppDescriptor() override
     {
         AppIdServiceSubtype* tmp_subtype = subtype;
@@ -130,6 +134,9 @@ public:
             delete tmp_subtype;
             tmp_subtype = subtype;
         }
+        service_ip.clear();
+        service_port = 0;
+        service_group = DAQ_PKTHDR_UNKNOWN;
     }
 
     void update_stats(AppId id, bool increment = true) override;
@@ -175,12 +182,50 @@ public:
         return subtype;
     }
 
+    void set_service_ip(const snort::SfIp& ip)
+    {
+        service_ip = ip;
+    }
+
+    const snort::SfIp& get_service_ip() const
+    {
+        return service_ip;
+    }
+
+    bool is_service_ip_set() const
+    {
+        return service_ip.is_set();
+    }
+
+    void set_service_port(uint16_t port)
+    {
+        service_port = port;
+    }
+
+    uint16_t get_service_port() const
+    {
+        return service_port;
+    }
+
+    void set_service_group(int16_t group)
+    {
+        service_group = group;
+    }
+
+    int16_t get_service_group() const
+    {
+        return service_group;
+    }
+
 private:
     AppId port_service_id = APP_ID_NONE;
     bool deferred = false;
     using ApplicationDescriptor::set_id;
     std::string my_vendor;
     AppIdServiceSubtype* subtype = nullptr;
+    snort::SfIp service_ip;
+    uint16_t service_port = 0;
+    int16_t service_group = DAQ_PKTHDR_UNKNOWN;
 };
 
 class ClientAppDescriptor : public ApplicationDescriptor

@@ -403,7 +403,7 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
     /* Get packet info. */
     auto proto = asd.protocol;
     if ( asd.is_service_ip_set() )
-        std::tie(ip, port, group) = asd.get_service_info();
+        std::tie(ip, port, group) = asd.get_server_info();
     else
     {
         if ( dir == APP_ID_FROM_RESPONDER )
@@ -418,7 +418,7 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
             port = p->ptrs.dp;
             group = p->get_egress_group();
         }
-        asd.set_service_info(*ip, port, group);
+        asd.set_server_info(*ip, port, group);
     }
 
     if ( asd.service_search_state == SESSION_SERVICE_SEARCH_STATE::START )
@@ -766,7 +766,7 @@ int ServiceDiscovery::incompatible_data(AppIdSession& asd, const Packet* pkt, Ap
     sds->set_service(service);
     sds->set_reset_time(0);
     if ( !asd.is_service_ip_set() )
-        asd.set_service_info(*ip, port, group);
+        asd.set_server_info(*ip, port, group);
 
     return APPID_SUCCESS;
 }
@@ -808,7 +808,7 @@ int ServiceDiscovery::fail_service(AppIdSession& asd, const Packet* pkt, AppidSe
         port = pkt->ptrs.sp;
 
     if (!asd.is_service_ip_set())
-        asd.set_service_info(*ip, port, group);
+        asd.set_server_info(*ip, port, group);
 
     if ( !sds )
     {

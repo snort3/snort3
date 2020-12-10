@@ -73,7 +73,7 @@ int ServiceDetector::service_inprocess(AppIdSession& asd, const Packet* pkt, App
     if (!asd.is_service_ip_set())
     {
         uint16_t port = asd.get_service_port();
-        asd.set_service_info(*(pkt->ptrs.ip_api.get_src()),
+        asd.set_server_info(*(pkt->ptrs.ip_api.get_src()),
             port ? port : pkt->ptrs.sp, pkt->get_ingress_group());
     }
     return APPID_SUCCESS;
@@ -131,7 +131,7 @@ int ServiceDetector::update_service_data(AppIdSession& asd, const Packet* pkt,
         }
     }
 
-    asd.set_service_info(*ip, port, group);
+    asd.set_server_info(*ip, port, group);
 
     ServiceDiscoveryState* sds = AppIdServiceState::add(ip, asd.protocol, port,
         group, asd.asid, asd.is_decrypted());

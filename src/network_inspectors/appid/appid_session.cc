@@ -101,8 +101,6 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
         odp_ctxt_version(odp_ctxt.get_version()),
         tp_appid_ctxt(pkt_thread_tp_appid_ctxt)
 {
-    service_ip.clear();
-
     appid_stats.total_sessions++;
 }
 
@@ -118,12 +116,13 @@ AppIdSession::~AppIdSession()
             APPID_SESSION_UDP_REVERSED | APPID_SESSION_MID |
             APPID_SESSION_OOO) and flow)
         {
+            const SfIp& svc_ip = api.service.get_service_ip();
             ServiceDiscoveryState* sds =
-                AppIdServiceState::get(&service_ip, protocol, service_port, service_group,
-                    asid, is_decrypted());
+                AppIdServiceState::get(&svc_ip, protocol, api.service.get_service_port(),
+                    api.service.get_service_group(), asid, is_decrypted());
             if (sds)
             {
-                if (flow->server_ip.fast_eq6(service_ip))
+                if (flow->server_ip.fast_eq6(svc_ip))
                     sds->set_service_id_failed(*this, &flow->client_ip,
                         STATE_ID_INCONCLUSIVE_SERVICE_WEIGHT);
                 else
@@ -281,8 +280,6 @@ void AppIdSession::reinit_session_data(AppidChangeBits& change_bits,
     {
         api.service.reset();
         tp_app_id = APP_ID_NONE;
-        service_ip.clear();
-        service_port = 0;
         service_disco_state = APPID_DISCO_STATE_NONE;
         service_detector = nullptr;
         service_search_state = SESSION_SERVICE_SEARCH_STATE::START;
@@ -420,8 +417,6 @@ void AppIdSession::check_tunnel_detection_restart()
         api.service.set_id(APP_ID_NONE, odp_ctxt);
     api.service.set_port_service_id(APP_ID_NONE);
     api.service.reset();
-    service_ip.clear();
-    service_port = 0;
     service_disco_state = APPID_DISCO_STATE_NONE;
     service_detector = nullptr;
     free_flow_data_by_mask(APPID_SESSION_DATA_SERVICE_MODSTATE_BIT);
@@ -720,7 +715,7 @@ int AppIdSession::add_flow_data_id(uint16_t port, ServiceDetector* service)
     if (service_detector)
         return -1;
     service_detector = service;
-    service_port = port;
+    set_service_port(port);
     return 0;
 }
 
@@ -728,13 +723,13 @@ void AppIdSession::stop_service_inspection(Packet* p, AppidSessionDirection dire
 {
     if (direction == APP_ID_FROM_INITIATOR)
     {
-        service_ip = *p->ptrs.ip_api.get_dst();
-        service_port = p->ptrs.dp;
+        set_service_ip(*p->ptrs.ip_api.get_dst());
+        set_service_port(p->ptrs.dp);
     }
     else
     {
-        service_ip = *p->ptrs.ip_api.get_src();
-        service_port = p->ptrs.sp;
+        set_service_ip(*p->ptrs.ip_api.get_src());
+        set_service_port(p->ptrs.sp);
     }
 
     service_disco_state = APPID_DISCO_STATE_FINISHED;

@@ -29,7 +29,7 @@ public:
     static void process(AppidEvent*, DiscoveryFilter&, RnaConfig*, RnaLogger&);
 
     static bool discover_service(const snort::Packet*, RNAFlow*, IpProtocol, RnaConfig*,
-        RnaLogger&, uint16_t, AppId service = APP_ID_NONE);
+        RnaLogger&, uint16_t, AppId service = APP_ID_NONE, bool is_client = false);
 
     static void discover_payload(const snort::Packet*, RNAFlow*, IpProtocol, RnaConfig*,
         RnaLogger&, AppId service, AppId payload, AppId client);
@@ -42,8 +42,8 @@ public:
 
     static void discover_banner(const snort::Packet*, RNAFlow*, IpProtocol, RnaLogger&, AppId);
 private:
-    static void update_service_info(const snort::Packet*, RNAFlow*, IpProtocol,
-        const char* vendor, const char* version, RnaLogger&, RnaConfig*, AppId service);
+    static void update_service_info(const snort::Packet*, RNAFlow*, IpProtocol, uint16_t,
+        const char* vendor, const char* version, RnaLogger&, RnaConfig*, AppId service, bool is_client = false);
 
     static void analyze_user_agent_fingerprint(const snort::Packet*, RNAFlow*, const char* host,
         const char* uagent, RnaLogger&, snort::UaFpProcessor&);

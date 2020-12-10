@@ -84,7 +84,7 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t, AppIdInsp
     protocol(proto), api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt)
 {
     odp_ctxt_version = odp_ctxt.get_version();
-    service_port = APPID_UT_SERVICE_PORT;
+    set_service_port(APPID_UT_SERVICE_PORT);
     AppidChangeBits change_bits;
 
     set_client_user(APPID_UT_ID, APPID_UT_USERNAME, change_bits);
@@ -96,7 +96,9 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t, AppIdInsp
 
     tsession = new TlsSession;
 
-    service_ip.pton(AF_INET, APPID_UT_SERVICE_IP_ADDR);
+    SfIp svc_ip;
+    svc_ip.pton(AF_INET, APPID_UT_SERVICE_IP_ADDR);
+    set_service_ip(svc_ip);
     api.initiator_ip.pton(AF_INET, APPID_UT_INITIATOR_IP_ADDR);
 
     netbios_name = snort_strdup(APPID_UT_NETBIOS_NAME);

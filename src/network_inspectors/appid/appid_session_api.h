@@ -120,6 +120,8 @@ public:
     const char* get_client_info(uint32_t stream_index = 0) const;
     uint64_t get_appid_session_attribute(uint64_t flag) const;
     const SfIp* get_initiator_ip() const;
+    const SfIp& get_service_ip() const;
+    uint16_t get_service_port() const;
     const AppIdDnsSession* get_dns_session() const;
     const AppIdHttpSession* get_http_session(uint32_t stream_index = 0) const;
     const char* get_tls_host() const;
