@@ -81,7 +81,10 @@ void file_stats_print()
     }
 
     if ( !check_total )
+    {
+        memset(&file_totals,0,sizeof(file_totals));
         return;
+    }
 
     LogLabel("File Statistics");
     LogLabel("file type stats (files)");
@@ -143,7 +146,10 @@ void file_stats_print()
     }
 
     if ( !check_total )
+    {
+        memset(&file_totals,0,sizeof(file_totals));
         return;
+    }
 
     LogLabel("file signature stats");
 
@@ -166,8 +172,6 @@ void file_stats_print()
     }
     LogMessage("            Total          " FMTu64("-10") " " FMTu64("-10") " \n",
         processed_total[0], processed_total[1]);
-
-    memset(&file_totals,0,sizeof(file_totals));
 
 #if 0
     LogLabel("file type verdicts");  // FIXIT-RC should be fixed
@@ -279,5 +283,6 @@ void file_stats_print()
 #endif
     // these are global / shared by all threads
     FileCapture::print_mem_usage();
+    memset(&file_totals,0,sizeof(file_totals));
 }
 
