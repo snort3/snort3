@@ -1074,6 +1074,36 @@ void parse_rule_dir(SnortConfig*, const char* s, RuleTreeNode& rtn, bool elided)
         ParseError("illegal direction specifier: %s", s);
 }
 
+// Values of the rule options "pcre", "regex" and "sd_pattern" are already escaped
+// They are not unescaped during the rule parsing
+static bool is_already_escaped(const std::string& opt_key)
+{ return opt_key == "pcre" or opt_key == "regex" or opt_key == "sd_pattern"; }
+
+static std::string escape(const std::string& s)
+{
+    std::string res;
+
+    for ( auto it = s.begin(); it != s.end(); ++it )
+    {
+        switch ( *it )
+        {
+        case '"': res += ( it > s.begin() and it < s.end() - 1 ) ? "\\\"" : "\""; continue;
+        case '\\': res += "\\\\"; continue;
+        case '\a': res += "\\a"; continue;
+        case '\b': res += "\\b"; continue;
+        case '\f': res += "\\f"; continue;
+        case '\n': res += "\\n"; continue;
+        case '\r': res += "\\r"; continue;
+        case '\t': res += "\\t"; continue;
+        case '\v': res += "\\v"; continue;
+        }
+
+        res += *it;
+    }
+
+    return res;
+}
+
 void parse_rule_opt_begin(SnortConfig* sc, const char* key)
 {
     if ( s_ignore )
@@ -1094,10 +1124,11 @@ void parse_rule_opt_set(
     if ( s_ignore )
         return;
 
+    assert(opt);
     assert(val);
     if ( s_capture )
     {
-        s_body += opt;
+        s_body +=  is_already_escaped(key) ? opt : escape(opt);
         if ( *val )
         {
             s_body += " ";
