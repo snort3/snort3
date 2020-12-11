@@ -199,8 +199,8 @@ void Http2DataCutter::reassemble(const uint8_t* data, unsigned len)
             cur_pos += cur_data;
 
             unsigned copied;
-            const uint32_t flags = (bytes_sent_http == (cur_data + reassemble_bytes_sent)) ?
-                PKT_PDU_TAIL : 0;
+            const bool reassemble_tail = bytes_sent_http == (cur_data + reassemble_bytes_sent);
+            const uint32_t flags = reassemble_tail ? PKT_PDU_TAIL : 0;
             session_data->stream_in_hi = session_data->current_stream[source_id];
             StreamBuffer frame_buf = session_data->hi_ss[source_id]->reassemble(session_data->flow,
                 bytes_sent_http, 0, data + cur_data_offset, cur_data,
@@ -208,16 +208,20 @@ void Http2DataCutter::reassemble(const uint8_t* data, unsigned len)
             session_data->stream_in_hi = NO_STREAM_ID;
             assert(copied == (unsigned)cur_data);
 
-            if (frame_buf.data != nullptr)
+            if (reassemble_tail)
             {
-                session_data->frame_data[source_id] = frame_buf.data;
-                session_data->frame_data_size[source_id] = frame_buf.length;
                 bytes_sent_http = 0;
                 reassemble_bytes_sent = 0;
+                if (frame_buf.data != nullptr)
+                {
+                    session_data->frame_data[source_id] = frame_buf.data;
+                    session_data->frame_data_size[source_id] = frame_buf.length;
+                }
             }
             else
                 reassemble_bytes_sent += copied;
 
+            // We've reached the end of the frame
             if (reassemble_data_bytes_read == reassemble_data_len)
             {
                 reassemble_data_bytes_read = 0;
