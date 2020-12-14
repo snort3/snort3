@@ -60,9 +60,7 @@ public:
 protected:
     HttpMsgHeadShared(const uint8_t* buffer, const uint16_t buf_size,
         HttpFlowData* session_data_, HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
-        const HttpParaList* params_)
-        : HttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
-        { }
+        const HttpParaList* params_);
     ~HttpMsgHeadShared() override;
     // Get the next item in a comma-separated header value and convert it to an enum value
     static int32_t get_next_code(const Field& field, int32_t& offset, const StrCode table[]);
@@ -130,6 +128,8 @@ private:
     Field content_disposition_filename;
     uint64_t file_cache_index = 0;
     bool file_cache_index_computed = false;
+
+    bool own_msg_buffer;
 };
 
 #endif

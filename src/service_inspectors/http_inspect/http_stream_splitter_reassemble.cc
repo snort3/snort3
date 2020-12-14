@@ -386,8 +386,9 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
         assert(session_data->section_offset[source_id] == 0);
         memcpy(buffer, partial_buffer, partial_buffer_length);
         session_data->section_offset[source_id] = partial_buffer_length;
-        partial_buffer_length = 0;
         delete[] partial_buffer;
+        session_data->update_deallocations(partial_buffer_length);
+        partial_buffer_length = 0;
         partial_buffer = nullptr;
     }
 
@@ -420,6 +421,7 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
             memcpy(partial_buffer, buffer, buf_size);
             partial_buffer_length = buf_size;
             partial_raw_bytes += total;
+            session_data->update_allocations(partial_buffer_length);
         }
         else
             partial_raw_bytes = 0;

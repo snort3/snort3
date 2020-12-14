@@ -46,10 +46,6 @@ unsigned HttpFlowData::inspector_id = 0;
 uint64_t HttpFlowData::instance_count = 0;
 #endif
 
-const uint16_t HttpFlowData::memory_usage_estimate = sizeof(HttpFlowData) + sizeof(HttpTransaction)
-    + sizeof(HttpMsgRequest) + sizeof(HttpMsgStatus) + (2 * sizeof(HttpMsgHeader)) + sizeof(HttpUri)
-    + header_size_estimate + small_things;
-
 HttpFlowData::HttpFlowData() : FlowData(inspector_id)
 {
 #ifdef REG_TEST
@@ -89,7 +85,9 @@ HttpFlowData::~HttpFlowData()
         delete events[k];
         delete[] section_buffer[k];
         delete[] partial_buffer[k];
+        update_deallocations(partial_buffer_length[k]);
         delete[] partial_detect_buffer[k];
+        update_deallocations(partial_detect_length[k]);
         HttpTransaction::delete_transaction(transaction[k], nullptr);
         delete cutter[k];
         if (compress_stream[k] != nullptr)
@@ -114,6 +112,11 @@ HttpFlowData::~HttpFlowData()
         discard_list = discard_list->next;
         delete tmp;
     }
+}
+
+size_t HttpFlowData::size_of()
+{
+    return sizeof(HttpFlowData) + (2 * sizeof(HttpEventGen));
 }
 
 void HttpFlowData::half_reset(SourceId source_id)
@@ -206,6 +209,7 @@ bool HttpFlowData::add_to_pipeline(HttpTransaction* latest)
     if (pipeline == nullptr)
     {
         pipeline = new HttpTransaction*[MAX_PIPELINE];
+        HttpModule::increment_peg_counts(PEG_PIPELINED_FLOWS);
     }
     assert(!pipeline_overflow && !pipeline_underflow);
     int new_back = (pipeline_back+1) % MAX_PIPELINE;
@@ -216,6 +220,7 @@ bool HttpFlowData::add_to_pipeline(HttpTransaction* latest)
     }
     pipeline[pipeline_back] = latest;
     pipeline_back = new_back;
+    HttpModule::increment_peg_counts(PEG_PIPELINED_REQUESTS);
     return true;
 }
 
@@ -249,11 +254,6 @@ HttpInfractions* HttpFlowData::get_infractions(SourceId source_id)
     return transaction[source_id]->get_infractions(source_id);
 }
 
-uint16_t HttpFlowData::get_memory_usage_estimate()
-{
-    return memory_usage_estimate;
-}
-
 void HttpFlowData::finish_h2_body(HttpCommon::SourceId source_id, HttpEnums::H2BodyState state,
     bool clear_partial_buffer)
 {
@@ -264,14 +264,18 @@ void HttpFlowData::finish_h2_body(HttpCommon::SourceId source_id, HttpEnums::H2B
     {
         // We've already sent all data through detection so no need to reinspect. Just need to
         // prep for trailers
+        update_deallocations(partial_buffer_length[source_id]);
         partial_buffer_length[source_id] = 0;
         delete[] partial_buffer[source_id];
         partial_buffer[source_id] = nullptr;
-        body_octets[source_id] += partial_inspected_octets[source_id];
-        partial_inspected_octets[source_id] = 0;
+
+        update_deallocations(partial_detect_length[source_id]);
         partial_detect_length[source_id] = 0;
         delete[] partial_detect_buffer[source_id];
         partial_detect_buffer[source_id] = nullptr;
+
+        body_octets[source_id] += partial_inspected_octets[source_id];
+        partial_inspected_octets[source_id] = 0;
     }
 }
 

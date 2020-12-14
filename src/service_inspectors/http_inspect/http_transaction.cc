@@ -36,6 +36,10 @@ using namespace HttpCommon;
 using namespace HttpEnums;
 using namespace snort;
 
+const uint16_t HttpTransaction::transaction_memory_usage_estimate = sizeof(HttpTransaction) +
+    sizeof(HttpMsgRequest) + sizeof(HttpMsgStatus) + (2 * sizeof(HttpMsgHeader)) + sizeof(HttpUri)
+    + (2 * sizeof(HttpInfractions)) + small_things;
+
 static void delete_section_list(HttpMsgSection* section_list)
 {
     while (section_list != nullptr)
@@ -44,6 +48,13 @@ static void delete_section_list(HttpMsgSection* section_list)
         section_list = section_list->next;
         delete tmp;
     }
+}
+
+HttpTransaction::HttpTransaction(HttpFlowData* session_data_): session_data(session_data_)
+{
+    infractions[0] = nullptr;
+    infractions[1] = nullptr;
+    session_data->update_allocations(transaction_memory_usage_estimate);
 }
 
 HttpTransaction::~HttpTransaction()
@@ -58,6 +69,7 @@ HttpTransaction::~HttpTransaction()
     }
     delete_section_list(body_list);
     delete_section_list(discard_list);
+    session_data->update_deallocations(transaction_memory_usage_estimate);
 }
 
 HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_data, SourceId

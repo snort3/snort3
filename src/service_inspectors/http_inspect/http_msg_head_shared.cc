@@ -34,6 +34,15 @@ using namespace HttpCommon;
 using namespace HttpEnums;
 using namespace snort;
 
+HttpMsgHeadShared::HttpMsgHeadShared(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
+    HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
+    const HttpParaList* params_): HttpMsgSection(buffer, buf_size, session_data_, source_id_,
+    buf_owner, flow_, params_), own_msg_buffer(buf_owner)
+{
+    if (own_msg_buffer)
+        session_data->update_allocations(msg_text.length());
+}
+
 HttpMsgHeadShared::~HttpMsgHeadShared()
 {
     delete[] header_line;
@@ -47,6 +56,9 @@ HttpMsgHeadShared::~HttpMsgHeadShared()
         list_ptr = list_ptr->next;
         delete temp_ptr;
     }
+
+    if (own_msg_buffer)
+        session_data->update_deallocations(msg_text.length());
 }
 
 // All the header processing that is done for every message (i.e. not just-in-time) is done here.

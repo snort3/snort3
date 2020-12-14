@@ -69,11 +69,7 @@ public:
     HttpTransaction* next = nullptr;
 
 private:
-    HttpTransaction(HttpFlowData* session_data_) : session_data(session_data_)
-    {
-        infractions[0] = nullptr;
-        infractions[1] = nullptr;
-    }
+    HttpTransaction(HttpFlowData* session_data_);
     void discard_section(HttpMsgSection* section);
 
     HttpFlowData* const session_data;
@@ -96,6 +92,10 @@ private:
     // transaction in the fairly rare case where the request and response are received in
     // parallel.
     bool shared_ownership = false;
+
+    // Estimates of how much memory http_inspect uses to process a transaction
+    static const uint16_t small_things = 400; // minor memory costs not otherwise accounted for
+    static const uint16_t transaction_memory_usage_estimate;
 };
 
 #endif

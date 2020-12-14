@@ -170,14 +170,14 @@ uint32_t Http2FlowData::get_current_stream_id(const HttpCommon::SourceId source_
     return current_stream[source_id];
 }
 
-void Http2FlowData::allocate_hi_memory()
+void Http2FlowData::allocate_hi_memory(HttpFlowData* hi_flow_data)
 {
-    update_allocations(HttpFlowData::get_memory_usage_estimate());
+    update_allocations(hi_flow_data->size_of());
 }
 
-void Http2FlowData::deallocate_hi_memory()
+void Http2FlowData::deallocate_hi_memory(HttpFlowData* hi_flow_data)
 {
-    update_deallocations(HttpFlowData::get_memory_usage_estimate());
+    update_deallocations(hi_flow_data->size_of());
 }
 
 bool Http2FlowData::is_mid_frame() const

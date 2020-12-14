@@ -199,8 +199,8 @@ private:
 
     // When H2I allocates http_inspect flows, it bypasses the usual FlowData memory allocation
     // bookkeeping. So H2I needs to update memory allocations and deallocations itself.
-    void allocate_hi_memory();
-    void deallocate_hi_memory();
+    void allocate_hi_memory(HttpFlowData* hi_flow_data);
+    void deallocate_hi_memory(HttpFlowData* hi_flow_data);
 };
 
 #endif

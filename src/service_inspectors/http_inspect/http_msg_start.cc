@@ -27,6 +27,21 @@
 
 using namespace HttpEnums;
 
+HttpMsgStart::HttpMsgStart(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
+    HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
+    const HttpParaList* params_) : HttpMsgSection(buffer, buf_size, session_data_, source_id_,
+    buf_owner, flow_, params_), own_msg_buffer(buf_owner)
+{
+    if (own_msg_buffer)
+        session_data->update_allocations(msg_text.length());
+}
+
+HttpMsgStart::~HttpMsgStart()
+{
+    if (own_msg_buffer)
+        session_data->update_deallocations(msg_text.length());
+}
+
 void HttpMsgStart::analyze()
 {
     start_line.set(msg_text);

@@ -92,6 +92,7 @@ void HttpMsgBody::analyze()
         }
 
         delete[] partial_detect_buffer;
+        session_data->update_deallocations(partial_detect_length);
 
         if (!session_data->partial_flush[source_id])
         {
@@ -105,6 +106,7 @@ void HttpMsgBody::analyze()
             memcpy(save_partial, detect_data.start(), detect_data.length());
             partial_detect_buffer = save_partial;
             partial_detect_length = detect_data.length();
+            session_data->update_allocations(partial_detect_length);
         }
 
         set_file_data(const_cast<uint8_t*>(detect_data.start()),

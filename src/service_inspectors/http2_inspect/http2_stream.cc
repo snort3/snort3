@@ -46,7 +46,7 @@ Http2Stream::~Http2Stream()
 {
     delete current_frame;
     if (hi_flow_data)
-        session_data->deallocate_hi_memory();
+        session_data->deallocate_hi_memory(hi_flow_data);
     delete hi_flow_data;
 }
 
@@ -80,9 +80,9 @@ void Http2Stream::clear_frame()
     if ((state[SRC_CLIENT] >= STREAM_COMPLETE) && (state[SRC_SERVER] >= STREAM_COMPLETE) &&
         (hi_flow_data != nullptr))
     {
+        session_data->deallocate_hi_memory(hi_flow_data);
         delete hi_flow_data;
         hi_flow_data = nullptr;
-        session_data->deallocate_hi_memory();
     }
 }
 
@@ -99,7 +99,7 @@ void Http2Stream::set_hi_flow_data(HttpFlowData* flow_data)
 {
     assert(hi_flow_data == nullptr);
     hi_flow_data = flow_data;
-    session_data->allocate_hi_memory();
+    session_data->allocate_hi_memory(hi_flow_data);
 }
 
 const Field& Http2Stream::get_buf(unsigned id)

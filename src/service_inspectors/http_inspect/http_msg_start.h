@@ -38,14 +38,14 @@ public:
 protected:
     HttpMsgStart(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
         HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
-        const HttpParaList* params_)
-        : HttpMsgSection(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
-        { }
+        const HttpParaList* params_);
+    ~HttpMsgStart() override;
     virtual void parse_start_line() = 0;
     void derive_version_id();
 
     Field start_line;
     Field version;
+    bool own_msg_buffer;
 };
 
 #endif
