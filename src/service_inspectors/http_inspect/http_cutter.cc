@@ -765,9 +765,23 @@ ScanResult HttpBodyH2Cutter::cut(const uint8_t* /*buffer*/, uint32_t length,
             return SCAN_FOUND_PIECE;
         }
     }
+    else if (state == H2_BODY_LAST_SEG)
+    {
+        if (octets_seen + length <= flow_target)
+            num_flush = length;
+        else
+            num_flush = flow_target - octets_seen;
+	
+        total_octets_scanned += num_flush;
+        if (num_flush == length)
+            return SCAN_FOUND;
+        else
+            return SCAN_FOUND_PIECE;
+    }
     else
     {
-        // For now if end_stream is set for scan, a zero-length buffer is always sent to flush
+        // To end message body when trailers are received or a 0 length data frame with
+        // end of stream set is received, a zero-length buffer is sent to flush
         assert(length == 0);
         num_flush = 0;
         return SCAN_FOUND;

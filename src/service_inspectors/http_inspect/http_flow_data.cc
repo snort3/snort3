@@ -257,7 +257,8 @@ HttpInfractions* HttpFlowData::get_infractions(SourceId source_id)
 void HttpFlowData::finish_h2_body(HttpCommon::SourceId source_id, HttpEnums::H2BodyState state,
     bool clear_partial_buffer)
 {
-    assert(h2_body_state[source_id] == H2_BODY_NOT_COMPLETE);
+    assert((h2_body_state[source_id] == H2_BODY_NOT_COMPLETE) ||
+        (h2_body_state[source_id] == H2_BODY_LAST_SEG));
     h2_body_state[source_id] = state;
     partial_flush[source_id] = false;
     if (clear_partial_buffer)

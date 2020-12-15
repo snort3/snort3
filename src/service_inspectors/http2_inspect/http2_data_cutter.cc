@@ -75,6 +75,13 @@ StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t lengt
         Http2DummyPacket dummy_pkt;
         dummy_pkt.flow = session_data->flow;
         uint32_t unused = 0;
+        if ((data_bytes_read == data_len) && (frame_flags & END_STREAM))
+        {
+            Http2Stream* const stream =
+                session_data->find_stream(session_data->current_stream[source_id]);
+            HttpFlowData* const hi_flow = stream->get_hi_flow_data();
+            hi_flow->set_h2_body_state(source_id, HttpEnums::H2_BODY_LAST_SEG);
+        }
         scan_result = session_data->hi_ss[source_id]->scan(&dummy_pkt, data + cur_data_offset,
             cur_data, unused, &http_flush_offset);
 
@@ -107,7 +114,9 @@ StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t lengt
         {
             Http2Stream* const stream = session_data->find_stream(
                 session_data->current_stream[source_id]);
-            stream->finish_msg_body(source_id, false, bytes_sent_http == 0);
+            assert(scan_result == StreamSplitter::FLUSH || data_len == 0);
+            stream->finish_msg_body(source_id, false, data_len == 0);
+
             // FIXIT-E this flag seems to mean both END_STREAM and the end of this frame
             stream->set_end_stream_on_data_flush(source_id);
             session_data->stream_in_hi = NO_STREAM_ID;

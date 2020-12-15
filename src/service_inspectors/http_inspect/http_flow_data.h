@@ -74,6 +74,9 @@ public:
     void finish_h2_body(HttpCommon::SourceId source_id, HttpEnums::H2BodyState state,
         bool clear_partial_buffer);
 
+    void set_h2_body_state(HttpCommon::SourceId source_id, HttpEnums::H2BodyState state)
+    { h2_body_state[source_id] = state; }
+
     void reset_partial_flush(HttpCommon::SourceId source_id)
     { partial_flush[source_id] = false; }
 

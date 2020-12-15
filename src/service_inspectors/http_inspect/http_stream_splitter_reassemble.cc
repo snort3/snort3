@@ -299,6 +299,8 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
     if ((session_data->section_offset[source_id] == 0) &&
         (session_data->octets_expected[source_id] != partial_raw_bytes + total))
     {
+        assert(!session_data->for_http2);
+
         if (session_data->octets_expected[source_id] == 0)
         {
             // FIXIT-E This is a known problem. No data was scanned and yet somehow stream can
