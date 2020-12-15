@@ -397,9 +397,10 @@ void HttpMsgHeader::prepare_body()
 
     if (source_id == SRC_SERVER)
     {
+        // detained inspection not supported for HTTP/2
         if (params->script_detection)
             session_data->accelerated_blocking[source_id] = AB_INSPECT;
-        else if (params->detained_inspection)
+        else if ((params->detained_inspection) && !session_data->for_http2)
             session_data->accelerated_blocking[source_id] = AB_DETAIN;
     }
 

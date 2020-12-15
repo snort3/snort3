@@ -88,7 +88,7 @@ HttpCutter* HttpStreamSplitter::get_cutter(SectionType type,
     case SEC_BODY_H2:
         return (HttpCutter*)new HttpBodyH2Cutter(
             session_data->data_length[source_id],
-            AB_NONE,
+            session_data->accelerated_blocking[source_id],
             session_data->compression[source_id]);
     default:
         assert(false);

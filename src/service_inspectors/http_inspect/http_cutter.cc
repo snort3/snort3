@@ -716,7 +716,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
     return accelerate_this_packet ? SCAN_NOT_FOUND_ACCELERATE : SCAN_NOT_FOUND;
 }
 
-ScanResult HttpBodyH2Cutter::cut(const uint8_t* /*buffer*/, uint32_t length,
+ScanResult HttpBodyH2Cutter::cut(const uint8_t* buffer, uint32_t length,
     HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, bool /*stretch*/,
     H2BodyState state)
 {
@@ -756,12 +756,14 @@ ScanResult HttpBodyH2Cutter::cut(const uint8_t* /*buffer*/, uint32_t length,
             // Not enough data yet to create a message section
             octets_seen += length;
             total_octets_scanned += length;
-            return SCAN_NOT_FOUND;
+            return need_accelerated_blocking(buffer, length) ?
+                SCAN_NOT_FOUND_ACCELERATE : SCAN_NOT_FOUND;
         }
         else
         {
             num_flush = flow_target - octets_seen;
             total_octets_scanned += num_flush;
+            need_accelerated_blocking(buffer, num_flush);
             return SCAN_FOUND_PIECE;
         }
     }

@@ -186,8 +186,8 @@ public:
         HttpEnums::CompressId compression) :
         HttpBodyCutter(accelerated_blocking, compression), expected_body_length(expected_length)
         {}
-    HttpEnums::ScanResult cut(const uint8_t*, uint32_t, HttpInfractions*, HttpEventGen*,
-        uint32_t flow_target, bool stretch, HttpEnums::H2BodyState state) override;
+    HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length, HttpInfractions*,
+        HttpEventGen*, uint32_t flow_target, bool stretch, HttpEnums::H2BodyState state) override;
 private:
     int64_t expected_body_length;
     uint32_t total_octets_scanned = 0;
