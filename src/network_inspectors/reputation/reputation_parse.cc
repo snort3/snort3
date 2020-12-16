@@ -57,7 +57,7 @@ static char block_info[] = "blocklist";
 static char allow_info[] = "allowlist";
 static char monitor_info[] = "monitorlist";
 
-#define ALLOW_TYPE_KEYWORD       "allow"
+#define TRUST_TYPE_KEYWORD       "trust"
 #define BLOCK_TYPE_KEYWORD       "block"
 #define MONITOR_TYPE_KEYWORD     "monitor"
 
@@ -786,10 +786,10 @@ static int get_file_type(char* type_name)
 
     type_name = ignore_start_space(type_name);
 
-    if (strncasecmp(type_name, ALLOW_TYPE_KEYWORD, strlen(ALLOW_TYPE_KEYWORD)) == 0)
+    if (strncasecmp(type_name, TRUST_TYPE_KEYWORD, strlen(TRUST_TYPE_KEYWORD)) == 0)
     {
         type = ALLOW_LIST;
-        type_name += strlen(ALLOW_TYPE_KEYWORD);
+        type_name += strlen(TRUST_TYPE_KEYWORD);
     }
     else if (strncasecmp(type_name, BLOCK_TYPE_KEYWORD, strlen(BLOCK_TYPE_KEYWORD)) == 0)
     {
@@ -869,7 +869,7 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
             {
                 ErrorMessage(" %s(%d) => Unknown action specified (%s)."
                     " Please specify a value: %s | %s | %s.\n", manifest, line_number, token,
-                    ALLOW_TYPE_KEYWORD, BLOCK_TYPE_KEYWORD, MONITOR_TYPE_KEYWORD);
+                    TRUST_TYPE_KEYWORD, BLOCK_TYPE_KEYWORD, MONITOR_TYPE_KEYWORD);
                 return false;
             }
             break;
