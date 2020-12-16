@@ -120,8 +120,6 @@ bool FlowControl::prune_one(PruneReason reason, bool do_cleanup)
 
 void FlowControl::timeout_flows(time_t cur_time)
 {
-    ActiveSuspendContext act_susp(Active::ASP_TIMEOUT);
-
     cache->timeout(1, cur_time);
 }
 
@@ -139,13 +137,17 @@ Flow* FlowControl::stale_flow_cleanup(FlowCache* cache, Flow* flow, Packet* p)
 {
     if ( p->pkth->flags & DAQ_PKT_FLAG_NEW_FLOW )
     {
-        ActiveSuspendContext act_susp(Active::ASP_TIMEOUT);
-
         if (PacketTracer::is_active())
             PacketTracer::log("Session: deleting snort session, reason: stale and not cleaned \n");
 
-        cache->release(flow, PruneReason::STALE);
-        flow = nullptr;
+        ActiveSuspendContext act_susp(Active::ASP_TIMEOUT);
+
+        {
+            PacketTracerSuspend pt_susp;
+
+            cache->release(flow, PruneReason::STALE);
+            flow = nullptr;
+        }
     }
 
     return flow;

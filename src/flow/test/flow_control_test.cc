@@ -60,6 +60,8 @@ void PacketTracer::log(const char*, ...) { }
 void PacketTracer::open_file() { }
 void PacketTracer::dump_to_daq(Packet*) { }
 void PacketTracer::reset() { }
+void PacketTracer::pause() { }
+void PacketTracer::unpause() { }
 void Active::set_drop_reason(char const*) { }
 Packet::Packet(bool) { }
 Packet::~Packet() = default;

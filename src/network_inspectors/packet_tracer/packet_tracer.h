@@ -112,7 +112,7 @@ SO_PUBLIC extern THREAD_LOCAL PacketTracer* s_pkt_trace;
 inline bool PacketTracer::is_active()
 { return s_pkt_trace ? s_pkt_trace->active : false; }
 
-struct PacketTracerSuspend
+struct SO_PUBLIC PacketTracerSuspend
 {
     PacketTracerSuspend()
     { PacketTracer::pause(); }
