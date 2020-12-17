@@ -58,8 +58,8 @@ extern THREAD_LOCAL const snort::Trace* rna_trace;
 class FpProcReloadTuner : public snort::ReloadResourceTuner
 {
 public:
-    explicit FpProcReloadTuner(RnaModuleConfig& mod_conf, HostCacheMac* ptr = nullptr)
-	: mod_conf(mod_conf), host_cache_mac_ptr(ptr) { }
+    explicit FpProcReloadTuner(RnaModuleConfig& mod_conf)
+        : mod_conf(mod_conf) { }
     ~FpProcReloadTuner() override = default;
 
     bool tinit() override;
@@ -72,7 +72,6 @@ public:
 
 private:
     RnaModuleConfig& mod_conf;
-    HostCacheMac* host_cache_mac_ptr = nullptr;
 };
 
 class RnaModule : public snort::Module

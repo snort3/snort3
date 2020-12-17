@@ -122,5 +122,8 @@ bool DataPurgeAC::execute(Analyzer&, void**) { return true;}
 void snort::main_broadcast_command(AnalyzerCommand*, bool) { }
 void set_host_cache_mac(HostCacheMac*) { }
 
-
+Inspector* InspectorManager::get_inspector(const char*, bool, const SnortConfig*)
+{
+    return nullptr;
+}
 #endif

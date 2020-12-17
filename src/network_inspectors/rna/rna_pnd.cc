@@ -28,6 +28,7 @@
 
 #include <algorithm>
 
+#include "main/snort.h"
 #include "protocols/arp.h"
 #include "protocols/bpdu.h"
 #include "protocols/cdp.h"
@@ -83,16 +84,10 @@ RnaPnd::RnaPnd(const bool en, const std::string& cp, RnaConfig* rc) :
     logger(RnaLogger(en)), filter(DiscoveryFilter(cp)), conf(rc)
 {
     update_timeout = (rc ? rc->update_timeout : 0);
-    host_cache_mac_ptr = new HostCacheMac(MAC_CACHE_INITIAL_SIZE);
-    set_host_cache_mac(host_cache_mac_ptr);
 }
 
 RnaPnd::~RnaPnd()
-{
-    delete host_cache_mac_ptr;
-    host_cache_mac_ptr = nullptr;
-    set_host_cache_mac(nullptr);
-}
+{ }
 
 void RnaPnd::analyze_appid_changes(DataEvent& event)
 {

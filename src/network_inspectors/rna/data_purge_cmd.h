@@ -29,7 +29,8 @@ class DataPurgeAC : public snort::AnalyzerCommand
 {
 public:
 
-    DataPurgeAC(HostCacheMac* hcm) : host_cache_mac(hcm) { }
+    DataPurgeAC(HostCacheMac* new_cache) : mac_cache(new_cache) { }
+
     ~DataPurgeAC() override;
 
     bool execute(Analyzer&, void**) override;
@@ -37,7 +38,7 @@ public:
     const char* stringify() override { return "DATA_PURGE"; }
 
 private:
-    HostCacheMac* host_cache_mac;
+    HostCacheMac* mac_cache;
 };
 
 #endif

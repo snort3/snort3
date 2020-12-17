@@ -32,18 +32,17 @@
 
 using namespace snort;
 
+extern HostCacheMac* host_cache_mac_ptr;
+
 DataPurgeAC::~DataPurgeAC()
 {
-    auto rna_ins = (RnaInspector*) InspectorManager::get_inspector(RNA_NAME, true);
-    RnaPnd* pnd = rna_ins->get_pnd();
-    delete pnd->host_cache_mac_ptr;
-    pnd->host_cache_mac_ptr = host_cache_mac;
-    set_host_cache_mac(host_cache_mac);
+    delete host_cache_mac_ptr;
+    host_cache_mac_ptr = mac_cache;
+    set_host_cache_mac(mac_cache);
 }
 
 bool DataPurgeAC::execute(Analyzer&, void**)
 {
-    set_host_cache_mac(host_cache_mac);
+    set_host_cache_mac(mac_cache);
     return true;
 }
-

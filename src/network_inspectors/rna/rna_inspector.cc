@@ -39,6 +39,7 @@
 #include "rna_fingerprint_tcp.h"
 #include "rna_fingerprint_ua.h"
 #include "rna_fingerprint_udp.h"
+#include "rna_mac_cache.h"
 #include "rna_module.h"
 #include "rna_pnd.h"
 
@@ -55,6 +56,8 @@ THREAD_LOCAL ProfileStats rna_perf_stats;
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
+
+HostCacheMac* host_cache_mac_ptr = nullptr;
 
 RnaInspector::RnaInspector(RnaModule* mod)
 {
@@ -102,7 +105,7 @@ bool RnaInspector::configure(SnortConfig* sc)
 
     // tinit is not called during reload, so pass processor pointers to threads via reload tuner
     if ( Snort::is_reloading() && InspectorManager::get_inspector(RNA_NAME, true) )
-        sc->register_reload_resource_tuner(new FpProcReloadTuner(*mod_conf, pnd->host_cache_mac_ptr));
+        sc->register_reload_resource_tuner(new FpProcReloadTuner(*mod_conf));
 
     return true;
 }
@@ -145,7 +148,7 @@ void RnaInspector::tinit()
     set_tcp_fp_processor(mod_conf->tcp_processor);
     set_ua_fp_processor(mod_conf->ua_processor);
     set_udp_fp_processor(mod_conf->udp_processor);
-    set_host_cache_mac(pnd->host_cache_mac_ptr);
+    set_host_cache_mac(host_cache_mac_ptr);
 }
 
 void RnaInspector::tterm()
@@ -253,11 +256,14 @@ static void rna_inspector_pinit()
 {
     // global initialization
     RNAFlow::init();
+    host_cache_mac_ptr = new HostCacheMac(MAC_CACHE_INITIAL_SIZE);
+    set_host_cache_mac(host_cache_mac_ptr);
 }
 
 static void rna_inspector_pterm()
 {
     // global cleanup
+    delete host_cache_mac_ptr;
 }
 
 static Inspector* rna_inspector_ctor(Module* m)

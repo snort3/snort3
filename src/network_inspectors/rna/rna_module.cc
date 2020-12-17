@@ -64,7 +64,8 @@ THREAD_LOCAL const Trace* rna_trace = nullptr;
 static int dump_mac_cache(lua_State* L)
 {
     RnaModule* mod = (RnaModule*) ModuleManager::get_module(RNA_NAME);
-    if ( mod )
+    Inspector* rna = InspectorManager::get_inspector(RNA_NAME, true);
+    if ( rna && mod )
         mod->log_mac_cache( luaL_optstring(L, 1, nullptr) );
     return 0;
 }
@@ -86,8 +87,8 @@ static inline string format_dump_mac(const uint8_t mac[MAC_SIZE])
 
 static int purge_data(lua_State* L)
 {
-    RnaModule* mod = (RnaModule*) ModuleManager::get_module(RNA_NAME);
-    if ( mod )
+    Inspector* rna = InspectorManager::get_inspector(RNA_NAME, true);
+    if ( rna )
     {
         HostCacheMac* mac_cache = new HostCacheMac(MAC_CACHE_INITIAL_SIZE);
         main_broadcast_command(new DataPurgeAC(mac_cache), (L != nullptr));
@@ -107,7 +108,6 @@ bool FpProcReloadTuner::tinit()
     set_tcp_fp_processor(mod_conf.tcp_processor);
     set_ua_fp_processor(mod_conf.ua_processor);
     set_udp_fp_processor(mod_conf.udp_processor);
-    set_host_cache_mac(host_cache_mac_ptr);
     return false;  // no work to do after this
 }
 
@@ -161,8 +161,8 @@ static bool get_mac_from_args(lua_State* L, uint8_t* mac_addr)
 
 static int delete_mac_host(lua_State* L)
 {
-    RnaModule* mod = (RnaModule*) ModuleManager::get_module(RNA_NAME);
-    if ( mod )
+    Inspector* rna = InspectorManager::get_inspector(RNA_NAME, true);
+    if ( rna )
     {
         uint8_t mac[MAC_SIZE] = {0};
 
@@ -197,8 +197,8 @@ static int delete_mac_host(lua_State* L)
 
 static int delete_mac_host_proto(lua_State* L)
 {
-    RnaModule* mod = (RnaModule*) ModuleManager::get_module(RNA_NAME);
-    if ( mod )
+    Inspector* rna = InspectorManager::get_inspector(RNA_NAME, true);
+    if ( rna )
     {
         uint8_t mac[MAC_SIZE] = {0};
 

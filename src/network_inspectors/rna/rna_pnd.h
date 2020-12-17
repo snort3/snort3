@@ -134,8 +134,6 @@ public:
 
     static HostCacheIp::Data find_or_create_host_tracker(const snort::SfIp&, bool&);
 
-    HostCacheMac* host_cache_mac_ptr = nullptr;
-
 private:
     // generate change event for single host
     void generate_change_host_update(RnaTracker*, const snort::Packet*,
