@@ -1082,12 +1082,24 @@ static bool is_already_escaped(const std::string& opt_key)
 static std::string escape(const std::string& s)
 {
     std::string res;
+    int quotes_first = 0;
+    int quotes_last = std::count(s.begin(), s.end(), '"') - 1;
+    int quotes_count = quotes_first;
 
     for ( auto it = s.begin(); it != s.end(); ++it )
     {
         switch ( *it )
         {
-        case '"': res += ( it > s.begin() and it < s.end() - 1 ) ? "\\\"" : "\""; continue;
+        case '"':
+        {
+            if ( ( quotes_count > quotes_first ) and ( quotes_count < quotes_last ) )
+                res += "\\\"";
+            else
+                res += "\"";
+
+            ++quotes_count;
+            continue;
+        }
         case '\\': res += "\\\\"; continue;
         case '\a': res += "\\a"; continue;
         case '\b': res += "\\b"; continue;
