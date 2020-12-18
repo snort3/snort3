@@ -116,7 +116,7 @@ public:
     void get_app_id(AppId* service, AppId* client, AppId* payload, AppId* misc, AppId* referred,
         uint32_t stream_index = 0) const;
     bool is_appid_inspecting_session() const;
-    bool is_appid_available() const;
+    bool is_appid_available(uint32_t stream_index = 0) const;
     const char* get_client_info(uint32_t stream_index = 0) const;
     uint64_t get_appid_session_attribute(uint64_t flag) const;
     const SfIp* get_initiator_ip() const;
