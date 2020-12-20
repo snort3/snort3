@@ -1,3 +1,70 @@
+2020/12/20 - 3.0.3 build 6
+
+-- active: Fix falling back on using raw IP for active responses when no device is specified
+-- appid: Add support for apps, http host, url and tls host in HA
+-- appid: Allow checking appid availability for a given http/2 stream
+-- appid: Change terms used in code, logs and peg counts
+-- appid: Do not override http fields with empty values
+-- appid: Dump userappid configurations upon reloading third-party
+-- appid: For http2 flow, return service id as http2 when no streams are yet created
+-- appid: Mark reload third-party complete after unloading old library and creating new third-party
+   context
+-- appid: Print more descriptive error message when lua detector registers invalid pattern
+-- binder: Pass service to get_bindings on flow service change
+-- binder: Specify service inspector type when getting a gadget instance
+-- build: Clean up various cppcheck warnings
+-- catch: Avoid using INTERNAL_CATCH_UNIQUE_NAME in our headers
+-- catch: Update to Catch v2.13.3
+-- dce_rpc: Fixed incorrect access of FileFlows while pruning the flow
+-- file_api: Fixed stats which weren't cleared when there were no stats for signature processing
+-- file_api: Handle resume block when multiple file rules are configured with store option enabled
+-- flow: Pause logging during timeout processing
+-- helpers: Handle SIGILL and SIGFPE with the oops handler
+-- high_availability: Add check for packet key equals HA key before consume
+-- host_attributes: Better error handling for reload to eliminate double free and memory leaks
+-- http2_inspect: Check for invalid flags
+-- http2_inspect: Fix bug with exceeding inspection depth
+-- http2_inspect: Fix empty queue access and some bookkeeping
+-- http2_inspect: Handle connection close during headers frames
+-- http2_inspect: Handle discard
+-- http2_inspect: HI error handling improvements
+-- http2_inspect: Improve error handling
+-- http2_inspect: Remove 0 length scan for most cases
+-- http_inspect: Explicit memory allocation for transactions and partial inspections
+-- http_inspect: Script detection for HTTP/2
+-- inspector_manager: Remove unused inspector_exists_in_any_policy() function
+-- inspector: Remove obsolete metapacket processing functionality
+-- main: Convert Request to shared_ptr to avoid memory problems
+-- main: Fix memory leak in reload_config() caused by incorrect code merge
+-- managers: Add inspector type in the help module output
+-- managers: Don't allow a referenced inspector to stall emptying the trash
+-- managers: Track removed inspectors during reload and call tear_down and tterm to release
+   resources
+-- packet_io: Export forwarding_packet() function
+-- packet_tracer: Fix the debug session information for non-ip packets
+-- parser: Add escaping for double quotes and special chars in a rule body
+-- parser: Fix escape logic for --dump-rule-meta output
+-- reload: Reset default policies after failed reload
+-- request: Expose methods to be used in plugins
+-- rna: Do null check in the Inspector rather than the Module in the control commands
+-- rna: Generate new host event for CDP traffic
+-- rna: Make the mac cache persist over reload config
+-- rna: Reduce host cache lock usage to improve performance
+-- rna: Remove unused function
+-- rna: Replace some tabs with spaces as per style guidelines
+-- rna: Support data purge command
+-- rna: Support DHCP fingerprint matching and event generation
+-- rna: Use service ip and port provided by appid for DHCP discovery events
+-- shell: Change terms used in code, logs and peg counts
+-- shell: Support for loading configuration in lua sandbox
+-- snort: Add OopsHandlerSuspend for suspending Snort's crash handler
+-- stream: Fix stream clean up when going from enabled to disabled
+-- stream_ha: Only flush on HA deactivate if not in STANDBY, set HA state to STANDBY when new Flow
+   is created
+-- stream_tcp: Initialize the alerts array to empty when a TcpReassembler instance is initialized
+   or reset
+-- stream_tcp: Set interfaces in both directions
+
 2020/11/16 - 3.0.3 build 5
 
 -- appid: Add unit test to verify HA data for flow unmonitored by appid

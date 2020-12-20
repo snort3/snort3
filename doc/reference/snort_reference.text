@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.0.3 (Build 5) 2020-11-16 12:11:59 EST TST
+Revision 3.0.3 (Build 6) 2020-12-20 13:38:32 EST TST
 
 ---------------------------------------------------------------------
 
@@ -731,6 +731,8 @@ Peg counts:
     consumed (sum)
   * high_availability.daq_stores: states stored via daq (sum)
   * high_availability.daq_imports: states imported via daq (sum)
+  * high_availability.key_mismatch: messages received with a flow key
+    mismatch (sum)
   * high_availability.msg_version_mismatch: messages received with a
     version mismatch (sum)
   * high_availability.msg_length_mismatch: messages received with an
@@ -1457,6 +1459,8 @@ Configuration:
   * implied snort.--list-plugins: list all known plugins
   * string snort.--lua: <chunk> extend/override conf with chunk; may
     be repeated
+  * string snort.--lua-sandbox: <file> file that contains the lua
+    sandbox environment in which config will be loaded
   * int snort.--logid: <0xid> log Identifier to uniquely id events
     for multiple snorts (same as -G) { 0:65535 }
   * implied snort.--markup: output help in asciidoc compatible format
@@ -2381,7 +2385,7 @@ protocols beyond basic decoding.
 
 Help: application and service identification
 
-Type: inspector
+Type: inspector (control)
 
 Usage: context
 
@@ -2445,7 +2449,7 @@ Peg counts:
 
 Help: log selected published data to appid_listener.log
 
-Type: inspector
+Type: inspector (passive)
 
 Usage: context
 
@@ -2464,7 +2468,7 @@ Configuration:
 
 Help: detect ARP attacks and anomalies
 
-Type: inspector
+Type: inspector (network)
 
 Usage: inspect
 
@@ -2493,7 +2497,7 @@ Peg counts:
 
 Help: back orifice detection
 
-Type: inspector
+Type: inspector (network)
 
 Usage: inspect
 
@@ -2517,7 +2521,7 @@ Peg counts:
 
 Help: configure processing based on CIDRs, ports, services, etc.
 
-Type: inspector
+Type: inspector (passive)
 
 Usage: inspect
 
@@ -2582,7 +2586,7 @@ Peg counts:
 
 Help: cip inspection
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -2622,7 +2626,7 @@ Peg counts:
 
 Help: log selected published data to data.log
 
-Type: inspector
+Type: inspector (passive)
 
 Usage: inspect
 
@@ -2647,7 +2651,7 @@ Peg counts:
 
 Help: dce over http inspection - client to/from proxy
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -2667,7 +2671,7 @@ Peg counts:
 
 Help: dce over http inspection - proxy to/from server
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -2687,7 +2691,7 @@ Peg counts:
 
 Help: dce over smb inspection
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -2956,7 +2960,7 @@ Peg counts:
 
 Help: dce over tcp inspection
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -3070,7 +3074,7 @@ Peg counts:
 
 Help: dce over udp inspection
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -3131,7 +3135,7 @@ Peg counts:
 
 Help: dnp3 inspection
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -3172,7 +3176,7 @@ Peg counts:
 
 Help: dns inspection
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -3200,7 +3204,7 @@ Peg counts:
 
 Help: alert on configured HTTP domains
 
-Type: inspector
+Type: inspector (passive)
 
 Usage: inspect
 
@@ -3229,7 +3233,7 @@ Peg counts:
 
 Help: dynamic inspector example
 
-Type: inspector
+Type: inspector (network)
 
 Usage: inspect
 
@@ -3255,7 +3259,7 @@ Peg counts:
 
 Help: configure file identification
 
-Type: inspector
+Type: inspector (passive)
 
 Usage: global
 
@@ -3357,7 +3361,7 @@ Peg counts:
 
 Help: log file event to file.log
 
-Type: inspector
+Type: inspector (passive)
 
 Usage: inspect
 
@@ -3381,7 +3385,7 @@ Peg counts:
 
 Help: FTP client configuration module for use with ftp_server
 
-Type: inspector
+Type: inspector (passive)
 
 Usage: inspect
 
@@ -3409,7 +3413,7 @@ Configuration:
 
 Help: FTP data channel handler
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -3426,7 +3430,7 @@ Peg counts:
 
 Help: main FTP module; ftp_client should also be configured
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -3512,7 +3516,7 @@ Peg counts:
 
 Help: gtp control channel inspection
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -3555,7 +3559,7 @@ Peg counts:
 
 Help: HTTP/2 inspector
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -3563,9 +3567,10 @@ Instance Type: multiton
 
 Rules:
 
-  * 121:1 (http2_inspect) error in HPACK integer value
+  * 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
   * 121:2 (http2_inspect) HPACK integer value has leading zeros
-  * 121:3 (http2_inspect) error in HPACK string value
+  * 121:3 (http2_inspect) HTTP/2 stream initiated with invalid stream
+    id
   * 121:4 (http2_inspect) missing HTTP/2 continuation frame
   * 121:5 (http2_inspect) unexpected HTTP/2 continuation frame
   * 121:6 (http2_inspect) misformatted HTTP/2 traffic
@@ -3573,20 +3578,21 @@ Rules:
   * 121:8 (http2_inspect) HTTP/2 request missing required header
     field
   * 121:9 (http2_inspect) HTTP/2 response has no status code
-  * 121:10 (http2_inspect) HTTP/2 invalid header field
+  * 121:10 (http2_inspect) HTTP/2 CONNECT request with scheme or path
   * 121:11 (http2_inspect) error in HTTP/2 settings frame
   * 121:12 (http2_inspect) unknown parameter in HTTP/2 settings frame
   * 121:13 (http2_inspect) invalid HTTP/2 frame sequence
   * 121:14 (http2_inspect) HTTP/2 dynamic table size limit exceeded
-  * 121:15 (http2_inspect) invalid HTTP/2 start line
+  * 121:15 (http2_inspect) HTTP/2 push promise frame with invalid
+    promised stream id
   * 121:16 (http2_inspect) HTTP/2 padding length is bigger than frame
     data size
   * 121:17 (http2_inspect) HTTP/2 pseudo-header after regular header
   * 121:18 (http2_inspect) HTTP/2 pseudo-header in trailers
   * 121:19 (http2_inspect) invalid HTTP/2 pseudo-header
   * 121:20 (http2_inspect) HTTP/2 trailers without END_STREAM bit
-  * 121:21 (http2_inspect) padding flag set on invalid HTTP/2 frame
-    type
+  * 121:21 (http2_inspect) HTTP/2 push promise frame sent when
+    prohibited by receiver
   * 121:22 (http2_inspect) padding flag set on HTTP/2 frame with zero
     length
   * 121:23 (http2_inspect) HTTP/2 push promise frame in c2s direction
@@ -3595,13 +3601,6 @@ Rules:
     time
   * 121:26 (http2_inspect) invalid parameter value sent in HTTP/2
     settings frame
-  * 121:27 (http2_inspect) HTTP/2 push promise frame sent when
-    prohibited by receiver
-  * 121:28 (http2_inspect) HTTP/2 push promise frame with invalid
-    promised stream id
-  * 121:29 (http2_inspect) HTTP/2 stream initiated with invalid
-    stream id
-  * 121:30 (http2_inspect) invalid flag set on HTTP/2 frame
 
 Peg counts:
 
@@ -3622,7 +3621,7 @@ Peg counts:
 
 Help: HTTP inspector
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -3874,6 +3873,10 @@ Peg counts:
     cutovers to wizard (sum)
   * http_inspect.ssl_srch_abandoned_early: total SSL search abandoned
     too soon (sum)
+  * http_inspect.pipelined_flows: total HTTP connections containing
+    pipelined requests (sum)
+  * http_inspect.pipelined_requests: total requests placed in a
+    pipeline (sum)
 
 
 5.25. imap
@@ -3882,7 +3885,7 @@ Peg counts:
 
 Help: imap inspection
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -3943,7 +3946,7 @@ Peg counts:
 
 Help: for testing memory management
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -3960,7 +3963,7 @@ Peg counts:
 
 Help: modbus inspection
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -3989,7 +3992,7 @@ Peg counts:
 
 Help: netflow inspection
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -4019,7 +4022,7 @@ Peg counts:
 
 Help: packet scrubbing for inline mode
 
-Type: inspector
+Type: inspector (packet)
 
 Usage: inspect
 
@@ -4157,7 +4160,7 @@ Peg counts:
 
 Help: trace logger with a null printout
 
-Type: inspector
+Type: inspector (passive)
 
 Usage: global
 
@@ -4170,7 +4173,7 @@ Instance Type: global
 
 Help: raw packet dumping facility
 
-Type: inspector
+Type: inspector (probe)
 
 Usage: global
 
@@ -4200,7 +4203,7 @@ Peg counts:
 
 Help: performance monitoring and flow statistics collection
 
-Type: inspector
+Type: inspector (probe)
 
 Usage: global
 
@@ -4260,7 +4263,7 @@ Peg counts:
 
 Help: pop inspection
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -4322,7 +4325,7 @@ Peg counts:
 
 Help: detect various ip, icmp, tcp, and udp port or protocol scans
 
-Type: inspector
+Type: inspector (probe)
 
 Usage: global
 
@@ -4494,7 +4497,7 @@ Peg counts:
 
 Help: reputation inspection
 
-Type: inspector
+Type: inspector (network)
 
 Usage: global
 
@@ -4547,7 +4550,7 @@ Peg counts:
 Help: Real-time network awareness and OS fingerprinting
 (experimental)
 
-Type: inspector
+Type: inspector (control)
 
 Usage: context
 
@@ -4579,6 +4582,8 @@ Configuration:
     of user agent string
   * string rna.tcp_fingerprints[].host_name: host name information
   * string rna.tcp_fingerprints[].device: device information
+  * string rna.tcp_fingerprints[].dhcp55: dhcp option 55 values
+  * string rna.tcp_fingerprints[].dhcp60: dhcp option 60 values
   * int rna.ua_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
   * int rna.ua_fingerprints[].type = 0: fingerprint type { 0:max32 }
   * string rna.ua_fingerprints[].uuid: fingerprint uuid
@@ -4596,6 +4601,27 @@ Configuration:
     of user agent string
   * string rna.ua_fingerprints[].host_name: host name information
   * string rna.ua_fingerprints[].device: device information
+  * string rna.ua_fingerprints[].dhcp55: dhcp option 55 values
+  * string rna.ua_fingerprints[].dhcp60: dhcp option 60 values
+  * int rna.udp_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
+  * int rna.udp_fingerprints[].type = 0: fingerprint type { 0:max32 }
+  * string rna.udp_fingerprints[].uuid: fingerprint uuid
+  * int rna.udp_fingerprints[].ttl = 0: fingerprint ttl { 0:256 }
+  * string rna.udp_fingerprints[].tcp_window: fingerprint tcp window
+  * string rna.udp_fingerprints[].mss = X: fingerprint mss
+  * string rna.udp_fingerprints[].id = X: id
+  * string rna.udp_fingerprints[].topts: fingerprint tcp options
+  * string rna.udp_fingerprints[].ws = X: fingerprint window size
+  * bool rna.udp_fingerprints[].df = false: fingerprint don’t
+    fragment flag
+  * enum rna.udp_fingerprints[].ua_type = os: type of user agent
+    fingerprints { os | device | jail-broken | jail-broken-host }
+  * string rna.udp_fingerprints[].user_agent[].substring: a substring
+    of user agent string
+  * string rna.udp_fingerprints[].host_name: host name information
+  * string rna.udp_fingerprints[].device: device information
+  * string rna.udp_fingerprints[].dhcp55: dhcp option 55 values
+  * string rna.udp_fingerprints[].dhcp60: dhcp option 60 values
 
 Commands:
 
@@ -4603,6 +4629,7 @@ Commands:
   * rna.delete_mac_host(mac): delete a MAC from rna’s MAC cache
   * rna.delete_mac_host_proto(mac, proto): delete a protocol
     associated with a MAC host
+  * rna.purge_data(): purge all host cache and mac cache data
 
 Peg counts:
 
@@ -4622,6 +4649,8 @@ Peg counts:
     tracking (sum)
   * rna.change_host_update: count number of change host update events
     (sum)
+  * rna.dhcp_data: count of DHCP data events received (sum)
+  * rna.dhcp_info: count of new DHCP lease events received (sum)
 
 
 5.37. rpc_decode
@@ -4630,7 +4659,7 @@ Peg counts:
 
 Help: RPC inspector
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -4659,7 +4688,7 @@ Peg counts:
 
 Help: s7commplus inspection
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -4688,7 +4717,7 @@ Peg counts:
 
 Help: sip inspection
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -4789,7 +4818,7 @@ Peg counts:
 
 Help: smtp inspection
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -4899,7 +4928,7 @@ Peg counts:
 Help: a proxy inspector to track flow data from SO rules (internal
 use only)
 
-Type: inspector
+Type: inspector (passive)
 
 Usage: global
 
@@ -4912,7 +4941,7 @@ Instance Type: global
 
 Help: ssh inspection
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -4952,7 +4981,7 @@ Peg counts:
 
 Help: ssl inspection
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -5003,7 +5032,7 @@ Peg counts:
 
 Help: common flow tracking
 
-Type: inspector
+Type: inspector (stream)
 
 Usage: global
 
@@ -5092,7 +5121,7 @@ Peg counts:
 
 Help: stream inspector for file flow tracking and processing
 
-Type: inspector
+Type: inspector (stream)
 
 Usage: inspect
 
@@ -5109,7 +5138,7 @@ Configuration:
 
 Help: stream inspector for ICMP flow tracking
 
-Type: inspector
+Type: inspector (stream)
 
 Usage: inspect
 
@@ -5136,7 +5165,7 @@ Peg counts:
 
 Help: stream inspector for IP flow tracking and defragmentation
 
-Type: inspector
+Type: inspector (stream)
 
 Usage: inspect
 
@@ -5209,7 +5238,7 @@ Peg counts:
 Help: stream inspector for TCP flow tracking and stream normalization
 and reassembly
 
-Type: inspector
+Type: inspector (stream)
 
 Usage: inspect
 
@@ -5373,7 +5402,7 @@ Peg counts:
 
 Help: stream inspector for UDP flow tracking
 
-Type: inspector
+Type: inspector (stream)
 
 Usage: inspect
 
@@ -5402,7 +5431,7 @@ Peg counts:
 
 Help: stream inspector for user flow tracking and reassembly
 
-Type: inspector
+Type: inspector (stream)
 
 Usage: inspect
 
@@ -5420,7 +5449,7 @@ Configuration:
 
 Help: telnet inspection and normalization
 
-Type: inspector
+Type: inspector (service)
 
 Usage: inspect
 
@@ -5457,7 +5486,7 @@ Peg counts:
 Help: inspector that implements port-independent protocol
 identification
 
-Type: inspector
+Type: inspector (wizard)
 
 Usage: inspect
 
@@ -8103,6 +8132,8 @@ these libraries see the Getting Started section of the manual.
     type (optional)
   * --list-plugins list all known plugins
   * --lua <chunk> extend/override conf with chunk; may be repeated
+  * --lua-sandbox <file> file that contains the lua sandbox
+    environment in which config will be loaded
   * --logid <0xid> log Identifier to uniquely id events for multiple
     snorts (same as -G) (0:65535)
   * --markup output help in asciidoc compatible format
@@ -9445,6 +9476,8 @@ these libraries see the Getting Started section of the manual.
   * string rna.tcp_fingerprints[].device: device information
   * bool rna.tcp_fingerprints[].df = false: fingerprint don’t
     fragment flag
+  * string rna.tcp_fingerprints[].dhcp55: dhcp option 55 values
+  * string rna.tcp_fingerprints[].dhcp60: dhcp option 60 values
   * int rna.tcp_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
   * string rna.tcp_fingerprints[].host_name: host name information
   * string rna.tcp_fingerprints[].id = X: id
@@ -9462,6 +9495,8 @@ these libraries see the Getting Started section of the manual.
   * string rna.ua_fingerprints[].device: device information
   * bool rna.ua_fingerprints[].df = false: fingerprint don’t fragment
     flag
+  * string rna.ua_fingerprints[].dhcp55: dhcp option 55 values
+  * string rna.ua_fingerprints[].dhcp60: dhcp option 60 values
   * int rna.ua_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
   * string rna.ua_fingerprints[].host_name: host name information
   * string rna.ua_fingerprints[].id = X: id
@@ -9476,6 +9511,25 @@ these libraries see the Getting Started section of the manual.
     of user agent string
   * string rna.ua_fingerprints[].uuid: fingerprint uuid
   * string rna.ua_fingerprints[].ws = X: fingerprint window size
+  * string rna.udp_fingerprints[].device: device information
+  * bool rna.udp_fingerprints[].df = false: fingerprint don’t
+    fragment flag
+  * string rna.udp_fingerprints[].dhcp55: dhcp option 55 values
+  * string rna.udp_fingerprints[].dhcp60: dhcp option 60 values
+  * int rna.udp_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
+  * string rna.udp_fingerprints[].host_name: host name information
+  * string rna.udp_fingerprints[].id = X: id
+  * string rna.udp_fingerprints[].mss = X: fingerprint mss
+  * string rna.udp_fingerprints[].tcp_window: fingerprint tcp window
+  * string rna.udp_fingerprints[].topts: fingerprint tcp options
+  * int rna.udp_fingerprints[].ttl = 0: fingerprint ttl { 0:256 }
+  * int rna.udp_fingerprints[].type = 0: fingerprint type { 0:max32 }
+  * enum rna.udp_fingerprints[].ua_type = os: type of user agent
+    fingerprints { os | device | jail-broken | jail-broken-host }
+  * string rna.udp_fingerprints[].user_agent[].substring: a substring
+    of user agent string
+  * string rna.udp_fingerprints[].uuid: fingerprint uuid
+  * string rna.udp_fingerprints[].ws = X: fingerprint window size
   * int rpc.~app: application number { 0:max32 }
   * string rpc.~proc: procedure number or * for any
   * string rpc.~ver: version number or * for any
@@ -9718,6 +9772,8 @@ these libraries see the Getting Started section of the manual.
     for multiple snorts (same as -G) { 0:65535 }
   * string snort.--lua: <chunk> extend/override conf with chunk; may
     be repeated
+  * string snort.--lua-sandbox: <file> file that contains the lua
+    sandbox environment in which config will be loaded
   * implied snort.--markup: output help in asciidoc compatible format
   * int snort.--max-packet-threads: <count> configure maximum number
     of packet threads (same as -z) { 0:max32 }
@@ -10560,6 +10616,8 @@ these libraries see the Getting Started section of the manual.
   * high_availability.daq_stores: states stored via daq (sum)
   * high_availability.delete_msgs_consumed: deletion messages
     consumed (sum)
+  * high_availability.key_mismatch: messages received with a flow key
+    mismatch (sum)
   * high_availability.msg_length_mismatch: messages received with an
     inconsistent total length (sum)
   * high_availability.msgs_recv: total messages received (sum)
@@ -10633,6 +10691,10 @@ these libraries see the Getting Started section of the manual.
   * http_inspect.parameters: HTTP parameters inspected (sum)
   * http_inspect.partial_inspections: pre-inspections for detained
     inspection (sum)
+  * http_inspect.pipelined_flows: total HTTP connections containing
+    pipelined requests (sum)
+  * http_inspect.pipelined_requests: total requests placed in a
+    pipeline (sum)
   * http_inspect.post_requests: POST requests inspected (sum)
   * http_inspect.put_requests: PUT requests inspected (sum)
   * http_inspect.reassembles: TCP segments combined into HTTP
@@ -10851,6 +10913,8 @@ these libraries see the Getting Started section of the manual.
   * rna.appid_change: count of appid change events received (sum)
   * rna.change_host_update: count number of change host update events
     (sum)
+  * rna.dhcp_data: count of DHCP data events received (sum)
+  * rna.dhcp_info: count of new DHCP lease events received (sum)
   * rna.icmp_bidirectional: count of bidirectional ICMP flows
     received (sum)
   * rna.icmp_new: count of new ICMP flows received (sum)
@@ -11578,9 +11642,10 @@ these libraries see the Getting Started section of the manual.
     message completed
   * 119:259 (http_inspect) malformed HTTP Content-Disposition
     filename parameter
-  * 121:1 (http2_inspect) error in HPACK integer value
+  * 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
   * 121:2 (http2_inspect) HPACK integer value has leading zeros
-  * 121:3 (http2_inspect) error in HPACK string value
+  * 121:3 (http2_inspect) HTTP/2 stream initiated with invalid stream
+    id
   * 121:4 (http2_inspect) missing HTTP/2 continuation frame
   * 121:5 (http2_inspect) unexpected HTTP/2 continuation frame
   * 121:6 (http2_inspect) misformatted HTTP/2 traffic
@@ -11588,20 +11653,21 @@ these libraries see the Getting Started section of the manual.
   * 121:8 (http2_inspect) HTTP/2 request missing required header
     field
   * 121:9 (http2_inspect) HTTP/2 response has no status code
-  * 121:10 (http2_inspect) HTTP/2 invalid header field
+  * 121:10 (http2_inspect) HTTP/2 CONNECT request with scheme or path
   * 121:11 (http2_inspect) error in HTTP/2 settings frame
   * 121:12 (http2_inspect) unknown parameter in HTTP/2 settings frame
   * 121:13 (http2_inspect) invalid HTTP/2 frame sequence
   * 121:14 (http2_inspect) HTTP/2 dynamic table size limit exceeded
-  * 121:15 (http2_inspect) invalid HTTP/2 start line
+  * 121:15 (http2_inspect) HTTP/2 push promise frame with invalid
+    promised stream id
   * 121:16 (http2_inspect) HTTP/2 padding length is bigger than frame
     data size
   * 121:17 (http2_inspect) HTTP/2 pseudo-header after regular header
   * 121:18 (http2_inspect) HTTP/2 pseudo-header in trailers
   * 121:19 (http2_inspect) invalid HTTP/2 pseudo-header
   * 121:20 (http2_inspect) HTTP/2 trailers without END_STREAM bit
-  * 121:21 (http2_inspect) padding flag set on invalid HTTP/2 frame
-    type
+  * 121:21 (http2_inspect) HTTP/2 push promise frame sent when
+    prohibited by receiver
   * 121:22 (http2_inspect) padding flag set on HTTP/2 frame with zero
     length
   * 121:23 (http2_inspect) HTTP/2 push promise frame in c2s direction
@@ -11610,13 +11676,6 @@ these libraries see the Getting Started section of the manual.
     time
   * 121:26 (http2_inspect) invalid parameter value sent in HTTP/2
     settings frame
-  * 121:27 (http2_inspect) HTTP/2 push promise frame sent when
-    prohibited by receiver
-  * 121:28 (http2_inspect) HTTP/2 push promise frame with invalid
-    promised stream id
-  * 121:29 (http2_inspect) HTTP/2 stream initiated with invalid
-    stream id
-  * 121:30 (http2_inspect) invalid flag set on HTTP/2 frame
   * 122:1 (port_scan) TCP portscan
   * 122:2 (port_scan) TCP decoy portscan
   * 122:3 (port_scan) TCP portsweep
@@ -11932,6 +11991,7 @@ these libraries see the Getting Started section of the manual.
   * rna.delete_mac_host(mac): delete a MAC from rna’s MAC cache
   * rna.delete_mac_host_proto(mac, proto): delete a protocol
     associated with a MAC host
+  * rna.purge_data(): purge all host cache and mac cache data
   * snort.show_plugins(): show available plugins
   * snort.delete_inspector(inspector): delete an inspector from the
     default policy
