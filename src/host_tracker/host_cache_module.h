@@ -67,6 +67,7 @@ public:
     { return GLOBAL; }
 
     void log_host_cache(const char* file_name, bool verbose = false);
+    std::string get_host_cache_stats();
 
 private:
     const char* dump_file = nullptr;

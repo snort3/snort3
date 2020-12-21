@@ -28,6 +28,7 @@
 
 #include "host_tracker/host_cache_module.h"
 #include "host_tracker/host_cache.h"
+#include "main/request.h"
 #include "main/snort_config.h"
 #include "managers/module_manager.h"
 
@@ -43,6 +44,10 @@ using namespace snort;
 static HostCacheModule module;
 #define LOG_MAX 128
 static char logged_message[LOG_MAX+1];
+
+static SharedRequest mock_request = std::make_shared<Request>();
+void Request::respond(const char*, bool, bool) { }
+SharedRequest get_current_request() { return mock_request; }
 
 namespace snort
 {

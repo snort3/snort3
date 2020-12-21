@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 
 #include "log/messages.h"
+#include "main.h"
 #include "managers/module_manager.h"
 #include "utils/util.h"
 
@@ -44,6 +45,19 @@ static int host_cache_dump(lua_State* L)
     HostCacheModule* mod = (HostCacheModule*) ModuleManager::get_module(HOST_CACHE_NAME);
     if ( mod )
         mod->log_host_cache( luaL_optstring(L, 1, nullptr), true );
+    return 0;
+}
+
+static int host_cache_get_stats(lua_State*)
+{
+    HostCacheModule* mod = (HostCacheModule*) ModuleManager::get_module(HOST_CACHE_NAME);
+
+    if ( mod )
+    {
+        SharedRequest current_request = get_current_request();
+        string outstr = mod->get_host_cache_stats();
+        current_request->respond(outstr.c_str());
+    }
     return 0;
 }
 
@@ -67,7 +81,7 @@ static int host_cache_delete_host(lua_State* L)
         }
 
         auto ht = host_cache.find(ip);
-        if (ht)
+        if ( ht )
             ht->set_visibility(false);
         else
         {
@@ -102,7 +116,7 @@ static int host_cache_delete_network_proto(lua_State* L)
         }
 
         auto ht = host_cache.find(ip);
-        if (ht)
+        if ( ht )
         {
             if ( !ht->set_network_proto_visibility(proto, false) )
             {
@@ -129,21 +143,21 @@ static int host_cache_delete_transport_proto(lua_State* L)
         const char* ips = luaL_optstring(L, 1, nullptr);
         int proto = luaL_optint(L, 2, -1);
 
-        if (ips == nullptr || proto == -1)
+        if ( ips == nullptr || proto == -1 )
         {
             LogMessage("Usage: host_cache.delete_transport_proto(ip, proto)\n");
             return 0;
         }
 
         SfIp ip;
-        if (ip.set(ips) != SFIP_SUCCESS)
+        if ( ip.set(ips) != SFIP_SUCCESS )
         {
             LogMessage("Bad ip %s\n", ips);
             return 0;
         }
 
         auto ht = host_cache.find(ip);
-        if (ht)
+        if ( ht )
         {
             if ( !ht->set_xproto_visibility(proto, false) )
             {
@@ -171,7 +185,7 @@ static int host_cache_delete_service(lua_State* L)
         int port = luaL_optint(L, 2, -1);
         int proto = luaL_optint(L, 3, -1);
 
-        if (ips == nullptr || port == -1 || proto == -1)
+        if ( ips == nullptr || port == -1 || proto == -1 )
         {
             LogMessage("Usage: host_cache.delete_service(ip, port, proto).\n");
             return 0;
@@ -184,14 +198,14 @@ static int host_cache_delete_service(lua_State* L)
         }
 
         SfIp ip;
-        if (ip.set(ips) != SFIP_SUCCESS)
+        if ( ip.set(ips) != SFIP_SUCCESS )
         {
             LogMessage("Bad ip %s\n", ips);
             return 0;
         }
 
         auto ht = host_cache.find(ip);
-        if (ht)
+        if ( ht )
         {
             if ( !ht->set_service_visibility(port, (IpProtocol)proto, false) )
             {
@@ -260,6 +274,11 @@ static const Parameter host_cache_cmd_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const Parameter host_cache_stats_params[] =
+{
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Parameter host_cache_delete_host_params[] =
 {
     { "host_ip", Parameter::PT_STRING, nullptr, nullptr, "ip address to delete" },
@@ -309,6 +328,7 @@ static const Command host_cache_cmds[] =
       host_cache_delete_service_params, "delete service from host"},
     { "delete_client", host_cache_delete_client,
       host_cache_delete_client_params, "delete client from host"},
+    { "get_stats", host_cache_get_stats, host_cache_stats_params, "get current host cache usage and pegs"},
     { nullptr, nullptr, nullptr, nullptr }
 };
 
@@ -412,7 +432,7 @@ void HostCacheModule::log_host_cache(const char* file_name, bool verbose)
         << lru_data.size() << " trackers" << endl << endl;
     for ( const auto& elem : lru_data )
     {
-        if (elem.second->is_visible() == true)
+        if ( elem.second->is_visible() == true )
         {
             str = "IP: ";
             str += elem.first.ntop(ip_str);
@@ -424,6 +444,36 @@ void HostCacheModule::log_host_cache(const char* file_name, bool verbose)
 
     if ( verbose )
         LogMessage("Dumped host cache to %s\n", file_name);
+}
+
+
+string HostCacheModule::get_host_cache_stats()
+{
+    string str;
+
+    const auto&& lru_data = host_cache.get_all_data();
+    str = "Current host cache size: " + to_string(host_cache.mem_size()) + " bytes, "
+        + to_string(lru_data.size()) + " trackers, memcap: " + to_string(host_cache.max_size)
+        + " bytes\n";
+
+    host_cache.lock();
+
+    PegCount* counts = (PegCount*) host_cache.get_counts();
+    const PegInfo* pegs = host_cache.get_pegs();
+
+    for ( int i = 0; pegs[i].type != CountType::END; i++ )
+    {
+        if ( counts[i] )
+        {
+            str += pegs[i].name;
+            str += ": " + to_string(counts[i]) + "\n" ;
+        }
+
+    }
+
+    host_cache.unlock();
+
+    return str;
 }
 
 const PegInfo* HostCacheModule::get_pegs() const
