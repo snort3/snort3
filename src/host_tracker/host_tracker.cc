@@ -658,8 +658,8 @@ bool HostTracker::update_service_info(HostApplication& ha, const char* vendor,
             HostApplicationInfo* available = nullptr;
             for ( auto& i : s.info )
             {
-                if ( (version and !strncmp(version, i.version, INFO_SIZE)) and
-                    (vendor and !strncmp(vendor, i.vendor, INFO_SIZE)) )
+                if ( (version and !strncmp(version, i.version, INFO_SIZE-1)) and
+                    (vendor and !strncmp(vendor, i.vendor, INFO_SIZE-1)) )
                 {
                     if ( i.visibility == false )
                     {
@@ -732,7 +732,7 @@ bool HostTracker::update_service_user(Port port, IpProtocol proto, const char* u
     if ( !ha or ha->visibility == false )
         return false;
 
-    if ( user and strncmp(user, ha->user, INFO_SIZE) )
+    if ( user and strncmp(user, ha->user, INFO_SIZE-1) )
     {
         strncpy(ha->user, user, INFO_SIZE);
         ha->user[INFO_SIZE-1] = '\0';
@@ -991,7 +991,7 @@ HostClient HostTracker::find_or_add_client(AppId id, const char* version, AppId 
     {
         if ( c.id != APP_ID_NONE and c.id == id and c.service == service
             and ((c.version[0] == '\0' and !version) or
-            (version and strncmp(c.version, version, INFO_SIZE) == 0)) )
+            (version and strncmp(c.version, version, INFO_SIZE-1) == 0)) )
         {
             if ( c.visibility == false )
             {

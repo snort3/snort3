@@ -31,18 +31,14 @@
 
 using namespace snort;
 
-RnaTracker RnaAppDiscovery::get_server_rna_tracker(const Packet* p, RNAFlow* rna_flow)
+RnaTracker RnaAppDiscovery::get_server_rna_tracker(const Packet* p, RNAFlow*)
 {
-    if ( !rna_flow->serverht )
-        rna_flow->serverht = host_cache.find(p->flow->server_ip);
-    return rna_flow->serverht;
+    return host_cache.find(p->flow->server_ip);
 }
 
-RnaTracker RnaAppDiscovery::get_client_rna_tracker(const Packet* p, RNAFlow* rna_flow)
+RnaTracker RnaAppDiscovery::get_client_rna_tracker(const Packet* p, RNAFlow*)
 {
-    if ( !rna_flow->clientht )
-        rna_flow->clientht = host_cache.find(p->flow->client_ip);
-    return rna_flow->clientht;
+    return host_cache.find(p->flow->client_ip);
 }
 
 void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,

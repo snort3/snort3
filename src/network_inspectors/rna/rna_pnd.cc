@@ -199,10 +199,6 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
             rna_flow = new RNAFlow();
             p->flow->set_flow_data(rna_flow);
         }
-        if ( p->is_from_client() )
-            rna_flow->clientht = ht;
-        else
-            rna_flow->serverht = ht;
     }
 
     if ( new_host )
