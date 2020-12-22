@@ -28,7 +28,8 @@ using namespace HttpEnums;
 void HttpMsgBodyH2::update_flow()
 {
     session_data->body_octets[source_id] = body_octets;
-    if (session_data->h2_body_state[source_id] == H2_BODY_NOT_COMPLETE)
+    if (session_data->h2_body_state[source_id] == H2_BODY_NOT_COMPLETE ||
+        session_data->h2_body_state[source_id] == H2_BODY_LAST_SEG)
         update_depth();
     else if (session_data->h2_body_state[source_id] == H2_BODY_COMPLETE_EXPECT_TRAILERS)
         session_data->trailer_prep(source_id);

@@ -717,12 +717,9 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
 }
 
 ScanResult HttpBodyH2Cutter::cut(const uint8_t* buffer, uint32_t length,
-    HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, bool /*stretch*/,
+    HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, bool stretch,
     H2BodyState state)
 {
-    // FIXIT-E accelerated blocking not yet supported for HTTP/2
-    // FIXIT-E stretch not yet supported for HTTP/2 message bodies
-
     // If the headers included a content length header (expected length >= 0), check it against the
     // actual message body length. Alert if it does not match at the end of the message body or if
     // it overflows during the body (alert once then stop computing).
@@ -761,7 +758,10 @@ ScanResult HttpBodyH2Cutter::cut(const uint8_t* buffer, uint32_t length,
         }
         else
         {
-            num_flush = flow_target - octets_seen;
+            if (stretch && (octets_seen + length <= flow_target + MAX_SECTION_STRETCH))
+                num_flush = length;
+            else
+                num_flush = flow_target - octets_seen;
             total_octets_scanned += num_flush;
             need_accelerated_blocking(buffer, num_flush);
             return SCAN_FOUND_PIECE;
@@ -769,7 +769,8 @@ ScanResult HttpBodyH2Cutter::cut(const uint8_t* buffer, uint32_t length,
     }
     else if (state == H2_BODY_LAST_SEG)
     {
-        if (octets_seen + length <= flow_target)
+        const uint32_t adjusted_target = stretch ? MAX_SECTION_STRETCH + flow_target : flow_target;
+        if (octets_seen + length <= adjusted_target)
             num_flush = length;
         else
             num_flush = flow_target - octets_seen;
