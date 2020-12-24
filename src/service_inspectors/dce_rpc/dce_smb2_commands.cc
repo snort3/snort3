@@ -127,7 +127,7 @@ bool DCE2_Smb2ProcessFileData(DCE2_Smb2SsnData* ssd, const uint8_t* file_data,
     }
 
     if (!file_flows->file_process(p, ssd->ftracker_tcp->file_name_hash, file_data, data_size,
-        ssd->ftracker_tcp->file_offset, dir, ssd->ftracker_tcp->file_id))
+        ssd->ftracker_tcp->file_offset, dir, ssd->ftracker_tcp->file_id) and detection_size)
     {
         debug_logf(dce_smb_trace, p, "file_process completed\n");
 
