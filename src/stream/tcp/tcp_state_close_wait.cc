@@ -64,8 +64,18 @@ bool TcpStateCloseWait::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracke
 
 bool TcpStateCloseWait::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_tracker_ack_recv(tsd);
-    trk.session->handle_data_segment(tsd);
+    if ( SEQ_GT(tsd.get_seq(), trk.get_fin_final_seq() ) )
+    {
+        trk.session->tel.set_tcp_event(EVENT_DATA_ON_CLOSED);
+        trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
+        trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
+    }
+    else
+    {
+        trk.update_tracker_ack_recv(tsd);
+        trk.session->handle_data_segment(tsd);
+    }
+
     return true;
 }
 

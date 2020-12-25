@@ -124,7 +124,6 @@ private:
 private:
     Wizard* wizard;
     Wand wand;
-    unsigned bytes_scanned = 0;
 };
 
 class Wizard : public Inspector

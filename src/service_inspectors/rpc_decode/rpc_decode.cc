@@ -776,11 +776,29 @@ class RpcSplitter : public StreamSplitter
 public:
     RpcSplitter(bool c2s) : StreamSplitter(c2s) { }
 
-    Status scan(Packet*, const uint8_t*, uint32_t,
-        uint32_t, uint32_t*) override
-    { return SEARCH; }
+    Status scan(Packet*, const uint8_t*, uint32_t len,
+        uint32_t, uint32_t* fp) override
+    {
 
-    unsigned max(Flow*) override { return MIN_CALL_BODY_SZ; }
+        bytes_scanned += len;
+        if ( bytes_scanned < max(nullptr) )
+            return SEARCH;
+
+        *fp = len;
+        return FLUSH;
+    }
+
+    unsigned max(Flow*) override
+    { return MIN_CALL_BODY_SZ; }
+
+    // FIXIT-M this limits rpc flushes to 32 bytes per pdu, is that what we want?
+    unsigned adjust_to_fit(unsigned len) override
+    {
+        if ( len > max(nullptr) )
+            return max(nullptr);
+
+        return len;
+    }
 };
 
 //-------------------------------------------------------------------------

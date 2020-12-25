@@ -92,8 +92,7 @@ bool TcpStateListen::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& t
 
 bool TcpStateListen::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.session->tcp_config->midstream_allowed(tsd.get_pkt())
-         && (tsd.has_wscale() || tsd.is_data_segment()) )
+    if ( trk.session->tcp_config->midstream_allowed(tsd.get_pkt()) && tsd.has_wscale() )
     {
         Flow* flow = tsd.get_flow();
         flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_SYN_ACK |
@@ -113,7 +112,7 @@ bool TcpStateListen::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateListen::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.session->is_midstream_allowed(tsd) && (tsd.has_wscale() || tsd.is_data_segment()) )
+    if ( trk.session->is_midstream_allowed(tsd) && tsd.has_wscale() )
     {
         Flow* flow = tsd.get_flow();
 
@@ -185,7 +184,7 @@ bool TcpStateListen::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
 bool TcpStateListen::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( !trk.session->is_midstream_allowed(tsd) and trk.session->tcp_config->require_3whs() )
+    if ( !trk.session->is_midstream_allowed(tsd) && trk.session->tcp_config->require_3whs() )
     {
         // FIXIT-L listen gets fin triggers 129:20 ??
         trk.session->generate_no_3whs_event();

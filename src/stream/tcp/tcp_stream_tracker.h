@@ -332,7 +332,7 @@ public:
     uint32_t small_seg_count = 0;
     uint8_t order = 0;
     FinSeqNumStatus fin_seq_status = TcpStreamTracker::FIN_NOT_SEEN;
-
+    bool reinit_seg_base = false;
 
 protected:
     static const std::list<HeldPacket>::iterator null_iterator;

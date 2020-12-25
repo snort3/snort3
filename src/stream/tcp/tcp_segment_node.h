@@ -91,7 +91,7 @@ public:
             dump_me->term();
         }
 
-        head = tail = cur_rseg = cur_pseg = nullptr;
+        head = tail = cur_rseg = cur_sseg = nullptr;
         count = 0;
         return i;
     }
@@ -141,7 +141,7 @@ public:
     TcpSegmentNode* head = nullptr;
     TcpSegmentNode* tail = nullptr;
     TcpSegmentNode* cur_rseg = nullptr;
-    TcpSegmentNode* cur_pseg = nullptr;
+    TcpSegmentNode* cur_sseg = nullptr;
     uint32_t count = 0;
 };
 

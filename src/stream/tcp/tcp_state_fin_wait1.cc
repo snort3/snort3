@@ -79,10 +79,7 @@ bool TcpStateFinWait1::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker
 {
     trk.update_tracker_ack_recv(tsd);
     if ( check_for_window_slam(tsd, trk) )
-    {
-        if ( tsd.is_data_segment() )
-            trk.session->handle_data_segment(tsd);
-    }
+        trk.session->handle_data_segment(tsd);
     return true;
 }
 

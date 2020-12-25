@@ -95,8 +95,7 @@ bool TcpStateFinWait2::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker
     else
     {
         trk.update_tracker_ack_recv(tsd);
-        if ( tsd.is_data_segment() )
-            trk.session->handle_data_segment(tsd);
+        trk.session->handle_data_segment(tsd);
     }
 
     return true;

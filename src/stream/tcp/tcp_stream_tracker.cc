@@ -204,7 +204,7 @@ void TcpStreamTracker::init_tcp_state()
         TcpStreamTracker::TCP_STATE_NONE : TcpStreamTracker::TCP_LISTEN;
 
     snd_una = snd_nxt = snd_wnd = 0;
-    rcv_nxt = r_win_base = iss = 0;
+    rcv_nxt = r_win_base = iss = irs = 0;
     ts_last = ts_last_packet = 0;
     small_seg_count = 0;
     wscale = 0;
@@ -218,7 +218,7 @@ void TcpStreamTracker::init_tcp_state()
     order = 0;
     held_packet = null_iterator;
     flush_policy = STREAM_FLPOLICY_IGNORE;
-    reassembler.setup_paf();
+    reassembler.reset();
 }
 
 //-------------------------------------------------------------------------
@@ -245,10 +245,7 @@ void TcpStreamTracker::set_splitter(StreamSplitter* ss)
     if ( !splitter )
         flush_policy = STREAM_FLPOLICY_IGNORE;
     else
-    {
         reassembler.setup_paf();
-        reassembler.reset_paf_segment();
-    }
 }
 
 void TcpStreamTracker::set_splitter(const Flow* flow)
@@ -404,6 +401,7 @@ void TcpStreamTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
     r_win_base = tsd.get_ack();
     rcv_nxt = tsd.get_ack();
     reassembler.set_seglist_base_seq(tsd.get_ack());
+    reinit_seg_base = true;
 
     ts_last_packet = tsd.get_packet_timestamp();
     tf_flags |= normalizer.get_tcp_timestamp(tsd, false);

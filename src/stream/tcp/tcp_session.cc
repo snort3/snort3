@@ -736,7 +736,7 @@ bool TcpSession::check_for_window_slam(TcpSegmentDescriptor& tsd)
     }
     else if ( tsd.is_packet_from_client() && (tsd.get_wnd() <= SLAM_MAX)
         && (tsd.get_ack() == listener->get_iss() + 1)
-        && !(tsd.get_tcph()->is_fin() | tsd.get_tcph()->is_rst())
+        && !(tsd.get_tcph()->is_fin() || tsd.get_tcph()->is_rst())
         && !(flow->get_session_flags() & SSNFLAG_MIDSTREAM))
     {
         /* got a window slam alert! */
@@ -760,6 +760,13 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd)
 {
     TcpStreamTracker* listener = tsd.get_listener();
     TcpStreamTracker* talker = tsd.get_talker();
+
+    // if this session started midstream we may need to init the listener's base seq #
+    if ( listener->reinit_seg_base )
+    {
+        listener->reassembler.set_seglist_base_seq(tsd.get_seq());
+        listener->reinit_seg_base = false;
+    }
 
     if ( TcpStreamTracker::TCP_CLOSED != talker->get_tcp_state() )
     {

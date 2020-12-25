@@ -114,10 +114,7 @@ bool TcpStateSynRecv::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED );
         trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
         trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
-        if ( tsd.is_data_segment() )
-            trk.session->handle_data_segment(tsd);
-        else
-            trk.session->check_for_window_slam(tsd);
+        trk.session->check_for_window_slam(tsd);
     }
 
     return true;
@@ -142,8 +139,8 @@ bool TcpStateSynRecv::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker&
         trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
         trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
     }
-    if ( tsd.is_data_segment() )
-        trk.session->handle_data_segment(tsd);
+
+    trk.session->handle_data_segment(tsd);
 
     return true;
 }

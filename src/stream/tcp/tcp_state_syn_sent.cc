@@ -80,9 +80,7 @@ bool TcpStateSynSent::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateSynSent::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( !tsd.is_meta_ack_packet() && tsd.is_data_segment() )
-        trk.session->handle_data_segment(tsd);
-
+    trk.update_on_3whs_ack(tsd);
     return true;
 }
 
@@ -102,7 +100,8 @@ bool TcpStateSynSent::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker&
 
 bool TcpStateSynSent::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.session->handle_data_segment(tsd);
+    if ( trk.update_on_3whs_ack(tsd) )
+        trk.session->handle_data_segment(tsd);
 
     return true;
 }

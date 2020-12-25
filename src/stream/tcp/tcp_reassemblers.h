@@ -118,9 +118,6 @@ public:
     void set_norm_mode_test()
     { trs.sos.tcp_ips_data = NORM_MODE_TEST; }
 
-    void reset_paf_segment()
-    { trs.sos.seglist.cur_pseg = nullptr; }
-
     uint32_t perform_partial_flush(snort::Flow* flow)
     { return reassembler->perform_partial_flush(trs, flow); }
 
@@ -131,7 +128,13 @@ public:
     { paf_clear(&trs.paf_state); }
 
     void setup_paf()
-    { paf_setup(&trs.paf_state); }
+    {
+        paf_setup(&trs.paf_state);
+        if ( trs.sos.seglist.cur_rseg )
+            trs.sos.seglist.cur_sseg = trs.sos.seglist.cur_rseg;
+        else
+            trs.sos.seglist.cur_sseg = trs.sos.seglist.head;
+    }
 
 private:
     TcpReassembler* reassembler = nullptr;

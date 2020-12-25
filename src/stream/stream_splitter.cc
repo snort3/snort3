@@ -23,6 +23,8 @@
 
 #include "stream_splitter.h"
 
+#include <algorithm>
+
 #include "detection/detection_engine.h"
 #include "main/snort_config.h"
 #include "protocols/packet.h"
@@ -69,13 +71,22 @@ AtomSplitter::AtomSplitter(bool b, uint16_t sz) : StreamSplitter(b)
     min = base + get_flush_bucket_size();
 }
 
+unsigned AtomSplitter::adjust_to_fit(unsigned len)
+{
+    return std::min(SnortConfig::get_conf()->max_pdu - bytes_scanned, len);
+}
+
 StreamSplitter::Status AtomSplitter::scan(
     Packet*, const uint8_t*, uint32_t len, uint32_t, uint32_t* fp)
 {
-    bytes += len;
+    bytes_scanned += len;
     segs++;
 
-    if ( segs >= 2 && bytes >= min )
+    if ( bytes_scanned < scan_footprint
+        && bytes_scanned < SnortConfig::get_conf()->max_pdu )
+        return SEARCH;
+
+    if ( segs >= 2 && bytes_scanned >= min )
     {
         *fp = len;
         return FLUSH;
@@ -84,9 +95,7 @@ StreamSplitter::Status AtomSplitter::scan(
 }
 
 void AtomSplitter::reset()
-{
-    bytes = segs = 0;
-}
+{  segs = scan_footprint = bytes_scanned = 0; }
 
 void AtomSplitter::update()
 {

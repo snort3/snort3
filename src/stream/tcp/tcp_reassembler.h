@@ -63,34 +63,29 @@ protected:
     int trim_delete_reassembly_segment(TcpReassemblerState&, TcpSegmentNode*, uint32_t flush_seq);
     void queue_reassembly_segment(TcpReassemblerState&, TcpSegmentNode* prev, TcpSegmentNode*);
     void init_overlap_editor(TcpReassemblerState&, TcpSegmentDescriptor&);
-    bool is_segment_fasttrack(TcpReassemblerState&, TcpSegmentNode* tail, const TcpSegmentDescriptor&);
+    bool is_segment_fasttrack
+        (TcpReassemblerState&, TcpSegmentNode* tail, const TcpSegmentDescriptor&);
     void show_rebuilt_packet(const TcpReassemblerState&, snort::Packet*);
-    uint32_t get_flush_data_len(
-        TcpReassemblerState&, TcpSegmentNode*, uint32_t to_seq, unsigned max);
-    int flush_data_segments(
-        TcpReassemblerState&, snort::Packet*, uint32_t total, snort::Packet* pdu);
+    int flush_data_segments(TcpReassemblerState&, uint32_t flush_len, snort::Packet* pdu);
     void prep_pdu(
-        TcpReassemblerState&, snort::Flow*, snort::Packet*, uint32_t pkt_flags,
-        snort::Packet* pdu);
+        TcpReassemblerState&, snort::Flow*, snort::Packet*, uint32_t pkt_flags, snort::Packet*);
     snort::Packet* initialize_pdu(
-        TcpReassemblerState&, snort::Packet* p, uint32_t pkt_flags, struct timeval tv);
-    int _flush_to_seq(TcpReassemblerState&, uint32_t bytes, snort::Packet*, uint32_t pkt_flags);
+        TcpReassemblerState&, snort::Packet*, uint32_t pkt_flags, struct timeval);
     int flush_to_seq(TcpReassemblerState&, uint32_t bytes, snort::Packet*, uint32_t pkt_flags);
-    int do_zero_byte_flush(TcpReassemblerState&, snort::Packet* p, uint32_t pkt_flags);
+    int do_zero_byte_flush(TcpReassemblerState&, snort::Packet*, uint32_t pkt_flags);
     uint32_t get_q_footprint(TcpReassemblerState&);
     uint32_t get_q_sequenced(TcpReassemblerState&);
     bool is_q_sequenced(TcpReassemblerState&);
     void final_flush(TcpReassemblerState&, snort::Packet*, uint32_t dir);
     uint32_t get_reverse_packet_dir(TcpReassemblerState&, const snort::Packet*);
     uint32_t get_forward_packet_dir(TcpReassemblerState&, const snort::Packet*);
-    int32_t flush_pdu_ips(TcpReassemblerState&, uint32_t*, snort::Packet*);
+    int32_t scan_data_pre_ack(TcpReassemblerState&, uint32_t*, snort::Packet*);
     void fallback(TcpStreamTracker&, bool server_side);
-    int32_t flush_pdu_ackd(TcpReassemblerState&, uint32_t* flags, snort::Packet*);
+    int32_t scan_data_post_ack(TcpReassemblerState&, uint32_t* flags, snort::Packet*);
     void purge_to_seq(TcpReassemblerState&, uint32_t flush_seq);
 
     bool next_no_gap(const TcpSegmentNode&);
     void update_next(TcpReassemblerState&, const TcpSegmentNode&);
-
     uint32_t perform_partial_flush(TcpReassemblerState&, snort::Packet*, uint32_t flushed = 0);
 };
 

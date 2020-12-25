@@ -255,6 +255,7 @@ private:
 void TcpReassemblerPolicy::init(TcpSession* ssn, TcpStreamTracker* trk, StreamPolicy pol, bool server)
 {
     trs.sos.init_sos(ssn, pol);
+    setup_paf();
     trs.server_side = server;
     trs.tracker = trk;
 
