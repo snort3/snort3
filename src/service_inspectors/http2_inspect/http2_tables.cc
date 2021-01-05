@@ -68,6 +68,7 @@ const PegInfo Http2Module::peg_names[PEG_COUNT__MAX+1] =
     { CountType::MAX, "max_table_entries", "maximum entries in an HTTP/2 dynamic table" },
     { CountType::MAX, "max_concurrent_files", "maximum concurrent file transfers per HTTP/2 "
         "connection" },
+    { CountType::SUM, "total_bytes", "total HTTP/2 data bytes inspected" },
     { CountType::END, nullptr, nullptr }
 };
 

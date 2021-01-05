@@ -442,6 +442,9 @@ void HttpInspect::eval(Packet* p)
 
     HttpFlowData* session_data = http_get_flow_data(p->flow);
 
+    if (!session_data->for_http2)
+        HttpModule::increment_peg_counts(PEG_TOTAL_BYTES, p->dsize);
+
     // FIXIT-E Workaround for unexpected eval() calls. Convert to asserts when possible.
     if ((session_data->section_type[source_id] == SEC__NOT_COMPUTE) ||
         (session_data->type_expected[source_id] == SEC_ABORT)       ||

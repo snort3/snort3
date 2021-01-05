@@ -133,6 +133,9 @@ void Http2Inspect::eval(Packet* p)
     assert(stream);
     session_data->stream_in_hi = stream->get_stream_id();
 
+    Http2Module::increment_peg_counts(PEG_TOTAL_BYTES, (uint64_t)(FRAME_HEADER_LENGTH) +
+        session_data->frame_data_size[source_id]);
+
     uint8_t* const frame_header_copy = new uint8_t[FRAME_HEADER_LENGTH];
     memcpy(frame_header_copy, session_data->lead_frame_header[source_id], FRAME_HEADER_LENGTH);
     stream->eval_frame(frame_header_copy, FRAME_HEADER_LENGTH,

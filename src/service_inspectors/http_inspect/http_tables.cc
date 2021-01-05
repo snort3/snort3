@@ -440,6 +440,7 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "ssl_srch_abandoned_early", "total SSL search abandoned too soon" },
     { CountType::SUM, "pipelined_flows", "total HTTP connections containing pipelined requests" },
     { CountType::SUM, "pipelined_requests", "total requests placed in a pipeline" },
+    { CountType::SUM, "total_bytes", "total HTTP data bytes inspected" },
     { CountType::END, nullptr, nullptr }
 };
 

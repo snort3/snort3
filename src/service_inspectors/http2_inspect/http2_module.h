@@ -66,6 +66,8 @@ public:
     PegCount* get_counts() const override { return peg_counts; }
     static void increment_peg_counts(Http2Enums::PEG_COUNT counter)
         { peg_counts[counter]++; }
+    static void increment_peg_counts(Http2Enums::PEG_COUNT counter, uint64_t value)
+        { peg_counts[counter] += value; }
     static void decrement_peg_counts(Http2Enums::PEG_COUNT counter)
         { peg_counts[counter]--; }
     static PegCount get_peg_counts(Http2Enums::PEG_COUNT counter)
