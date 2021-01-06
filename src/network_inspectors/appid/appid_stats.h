@@ -24,23 +24,37 @@
 
 #include <cstdio>
 #include <ctime>
+#include <map>
 
-#include "appid_utils/fw_avltree.h"
 #include "utils/sflsq.h"
+#include "utils/util.h"
+
+#include "application_ids.h"
 
 class AppIdSession;
 class AppIdConfig;
 
+struct AppIdStatRecord
+{
+    std::string app_name;
+    uint64_t initiator_bytes = 0;
+    uint64_t responder_bytes = 0;
+
+    AppIdStatRecord(const char* app_name, uint64_t initiator_bytes, uint64_t responder_bytes) :
+        app_name(app_name), initiator_bytes(initiator_bytes), responder_bytes(responder_bytes)
+    { }
+};
+
 struct StatsBucket
 {
-    uint32_t startTime;
-    FwAvlTree* appsTree;
+    uint32_t start_time = 0;
+    std::map<AppId, AppIdStatRecord> apps_tree;
     struct
     {
-        size_t txByteCnt;
-        size_t rxByteCnt;
+        size_t tx_byte_cnt = 0;
+        size_t rx_byte_cnt = 0;
     } totalStats;
-    uint32_t appRecordCnt;
+    uint32_t app_record_cnt = 0;
 };
 
 class AppIdStatistics
@@ -60,13 +74,13 @@ private:
     time_t get_time()
     {
         auto now = time(nullptr);
-        return now - (now % bucketInterval);
+        return now - (now % bucket_interval);
     }
 
-    void start_stats_period(time_t startTime)
+    void start_stats_period(time_t start_time)
     {
-        bucketStart = startTime;
-        bucketEnd = bucketStart + bucketInterval;
+        bucket_start = start_time;
+        bucket_end = bucket_start + bucket_interval;
     }
 
     void end_stats_period();
@@ -75,14 +89,13 @@ private:
     void dump_statistics();
 
     bool enabled = false;
-    SF_LIST* currBuckets = nullptr;
-    SF_LIST* logBuckets = nullptr;
+    SF_LIST* curr_buckets = nullptr;
+    SF_LIST* log_buckets = nullptr;
     struct TextLog* log = nullptr;
-    time_t bucketStart = 0;
-    time_t bucketInterval = 0;
-    time_t bucketEnd = 0;
-    size_t rollSize = 0;
+    time_t bucket_start = 0;
+    time_t bucket_interval = 0;
+    time_t bucket_end = 0;
+    size_t roll_size = 0;
 };
 
 #endif
-

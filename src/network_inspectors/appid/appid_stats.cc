@@ -40,64 +40,49 @@ using namespace snort;
 #define URLCATBUCKETS   100
 #define URLREPBUCKETS   5
 
-struct AppIdStatRecord
-{
-    char* app_name = nullptr;
-    uint64_t initiatorBytes;
-    uint64_t responderBytes;
-};
-
 static const char appid_stats_filename[] = "appid_stats.log";
 
 static THREAD_LOCAL AppIdStatistics* appid_stats_manager = nullptr;
 
-static void delete_record(void* record)
-{
-    snort_free(((AppIdStatRecord*)record)->app_name);
-    snort_free(record);
-}
-
 void AppIdStatistics::end_stats_period()
 {
-    SF_LIST* bucketList = logBuckets;
-    logBuckets = currBuckets;
-    currBuckets = bucketList;
+    SF_LIST* bucketList = log_buckets;
+    log_buckets = curr_buckets;
+    curr_buckets = bucketList;
 }
 
-StatsBucket* AppIdStatistics::get_stats_bucket(time_t startTime)
+StatsBucket* AppIdStatistics::get_stats_bucket(time_t start_time)
 {
     StatsBucket* bucket = nullptr;
 
-    if ( !currBuckets )
-        currBuckets = sflist_new();
+    if ( !curr_buckets )
+        curr_buckets = sflist_new();
 
-    SF_LNODE* lNode = nullptr;
-    StatsBucket* lBucket = nullptr;
+    SF_LNODE* l_node = nullptr;
+    StatsBucket* l_bucket = nullptr;
 
-    for ( lBucket = (StatsBucket*)sflist_first(currBuckets, &lNode); lNode && lBucket;
-        lBucket = (StatsBucket*)sflist_next(&lNode) )
+    for ( l_bucket = (StatsBucket*)sflist_first(curr_buckets, &l_node); l_node && l_bucket;
+        l_bucket = (StatsBucket*)sflist_next(&l_node) )
     {
-        if (startTime == lBucket->startTime)
+        if (start_time == l_bucket->start_time)
         {
-            bucket = lBucket;
+            bucket = l_bucket;
             break;
         }
-        else if (startTime < lBucket->startTime)
+        else if (start_time < l_bucket->start_time)
         {
-            bucket = (StatsBucket*)snort_calloc(sizeof(StatsBucket));
-            bucket->startTime = startTime;
-            bucket->appsTree = fwAvlInit();
-            sflist_add_before(currBuckets, lNode, bucket);
+            bucket = new StatsBucket;
+            bucket->start_time = start_time;
+            sflist_add_before(curr_buckets, l_node, bucket);
             break;
         }
     }
 
-    if ( !lNode )
+    if ( !l_node )
     {
-        bucket = (StatsBucket*)snort_calloc(sizeof(StatsBucket));
-        bucket->startTime = startTime;
-        bucket->appsTree = fwAvlInit();
-        sflist_add_tail(currBuckets, bucket);
+        bucket = new StatsBucket;
+        bucket->start_time = start_time;
+        sflist_add_tail(curr_buckets, bucket);
     }
 
     return bucket;
@@ -105,12 +90,12 @@ StatsBucket* AppIdStatistics::get_stats_bucket(time_t startTime)
 
 void AppIdStatistics::open_stats_log_file()
 {
-    log = TextLog_Init(appid_stats_filename, 4096, rollSize);
+    log = TextLog_Init(appid_stats_filename, 4096, roll_size);
 }
 
 void AppIdStatistics::dump_statistics()
 {
-    if ( !logBuckets )
+    if ( !log_buckets )
         return;
 
     if ( !log )
@@ -118,25 +103,20 @@ void AppIdStatistics::dump_statistics()
 
     struct StatsBucket* bucket = nullptr;
 
-    while ((bucket = (struct StatsBucket*)sflist_remove_head(logBuckets)) != nullptr)
+    while ((bucket = (struct StatsBucket*)sflist_remove_head(log_buckets)) != nullptr)
     {
-        if ( bucket->appRecordCnt )
+        if ( bucket->app_record_cnt )
         {
-            struct FwAvlNode* node;
-
-            for (node = fwAvlFirst(bucket->appsTree); node != nullptr; node = fwAvlNext(node))
+            for (auto it : bucket->apps_tree)
             {
-                struct AppIdStatRecord* record;
-
-                record = (struct AppIdStatRecord*)node->data;
+                struct AppIdStatRecord& record = it.second;
 
                 // FIXIT-M %lu won't do time_t on 32-bit systems
                 TextLog_Print(log, "%lu,%s," STDu64 "," STDu64 "\n",
-                    packet_time(), record->app_name, record->initiatorBytes, record->responderBytes);
+                    packet_time(), record.app_name.c_str(), record.initiator_bytes, record.responder_bytes);
             }
         }
-        fwAvlDeleteTree(bucket->appsTree, delete_record);
-        snort_free(bucket);
+        delete bucket;
     }
 }
 
@@ -144,8 +124,8 @@ AppIdStatistics::AppIdStatistics(const AppIdConfig& config)
 {
     enabled = true;
 
-    rollSize = config.app_stats_rollover_size;
-    bucketInterval = config.app_stats_period;
+    roll_size = config.app_stats_rollover_size;
+    bucket_interval = config.app_stats_period;
 
     time_t now = get_time();
     start_stats_period(now);
@@ -163,17 +143,16 @@ AppIdStatistics::~AppIdStatistics()
     if ( log )
         TextLog_Term(log);
 
-    if ( logBuckets )
-        snort_free(logBuckets);
+    if ( log_buckets )
+        snort_free(log_buckets);
 
-    if ( currBuckets )
+    if ( curr_buckets )
     {
-        while (auto bucket = (StatsBucket*)sflist_remove_head(currBuckets))
+        while (auto bucket = (StatsBucket*)sflist_remove_head(curr_buckets))
         {
-            fwAvlDeleteTree(bucket->appsTree, delete_record);
-            snort_free(bucket);
+            delete bucket;
         }
-        snort_free(currBuckets);
+        snort_free(curr_buckets);
     }
 }
 
@@ -194,13 +173,10 @@ void AppIdStatistics::cleanup()
 
 static void update_stats(const AppIdSession& asd, AppId app_id, StatsBucket* bucket)
 {
-    AppIdStatRecord* record = (AppIdStatRecord*)(fwAvlLookup(app_id, bucket->appsTree));
-    if ( !record )
+    auto it = bucket->apps_tree.find(app_id);
+    if ( it == bucket->apps_tree.end() )
     {
-        char tmp_buff[MAX_EVENT_APPNAME_LEN];
         bool cooked_client = false;
-
-        record = (AppIdStatRecord*)(snort_calloc(sizeof(struct AppIdStatRecord)));
 
         if ( app_id >= 2000000000 )
             cooked_client = true;
@@ -208,30 +184,29 @@ static void update_stats(const AppIdSession& asd, AppId app_id, StatsBucket* buc
         // Skip stats for sessions using old odp context after reload detectors
         if (!pkt_thread_odp_ctxt or
             (pkt_thread_odp_ctxt->get_version() != asd.get_odp_ctxt_version()))
-        {
-            snort_free(record);
             return;
-        }
 
         OdpContext& odp_ctxt = asd.get_odp_ctxt();
         AppInfoTableEntry* entry
             = odp_ctxt.get_app_info_mgr().get_app_info_entry(app_id);
 
+        const char* app_name;
+        char tmp_buff[MAX_EVENT_APPNAME_LEN];
         if ( entry )
         {
             if (cooked_client)
             {
                 snprintf(tmp_buff, MAX_EVENT_APPNAME_LEN, "_cl_%s", entry->app_name);
-                tmp_buff[MAX_EVENT_APPNAME_LEN-1] = 0;
-                record->app_name = snort_strdup(tmp_buff);
+                tmp_buff[MAX_EVENT_APPNAME_LEN-1] = '\0';
+                app_name = tmp_buff;
             }
             else
-                record->app_name = snort_strdup(entry->app_name);
+                app_name = entry->app_name;
         }
         else if ( app_id == APP_ID_UNKNOWN )
-            record->app_name = snort_strdup("__unknown");
+            app_name = "__unknown";
         else if ( app_id == APP_ID_NONE )
-            record->app_name = snort_strdup("__none");
+            app_name = "__none";
         else
         {
             if (cooked_client)
@@ -239,26 +214,19 @@ static void update_stats(const AppIdSession& asd, AppId app_id, StatsBucket* buc
             else
                 snprintf(tmp_buff, MAX_EVENT_APPNAME_LEN, "_err_%d",app_id);
 
-            tmp_buff[MAX_EVENT_APPNAME_LEN - 1] = 0;
-            record->app_name = snort_strdup(tmp_buff);
+            tmp_buff[MAX_EVENT_APPNAME_LEN - 1] = '\0';
+            app_name = tmp_buff;
         }
 
-        if (fwAvlInsert(app_id, record, bucket->appsTree) == 0)
-        {
-            bucket->appRecordCnt += 1;
-        }
-        else
-        {
-            WarningMessage("Error saving statistics record for app id: %d", app_id);
-            snort_free(record);
-            record = nullptr;
-        }
+        bucket->apps_tree.emplace(app_id, AppIdStatRecord(app_name, asd.stats.initiator_bytes,
+            asd.stats.responder_bytes));
+        bucket->app_record_cnt += 1;
     }
-
-    if ( record )
+    else
     {
-        record->initiatorBytes += asd.stats.initiator_bytes;
-        record->responderBytes += asd.stats.responder_bytes;
+        auto& record = it->second;
+        record.initiator_bytes += asd.stats.initiator_bytes;
+        record.responder_bytes += asd.stats.responder_bytes;
     }
 }
 
@@ -266,7 +234,7 @@ void AppIdStatistics::update(const AppIdSession& asd)
 {
     time_t now = get_time();
 
-    if ( now >= bucketEnd )
+    if ( now >= bucket_end )
     {
         end_stats_period();
         dump_statistics();
@@ -274,14 +242,14 @@ void AppIdStatistics::update(const AppIdSession& asd)
     }
 
     time_t bucketTime = asd.stats.first_packet_second -
-        (asd.stats.first_packet_second % bucketInterval);
+        (asd.stats.first_packet_second % bucket_interval);
 
     StatsBucket* bucket = get_stats_bucket(bucketTime);
     if ( !bucket )
         return;
 
-    bucket->totalStats.txByteCnt += asd.stats.initiator_bytes;
-    bucket->totalStats.rxByteCnt += asd.stats.responder_bytes;
+    bucket->totalStats.tx_byte_cnt += asd.stats.initiator_bytes;
+    bucket->totalStats.rx_byte_cnt += asd.stats.responder_bytes;
 
     AppId web_app_id, service_id, client_id;
     asd.get_api().get_first_stream_app_ids(service_id, client_id, web_app_id);
@@ -304,7 +272,7 @@ void AppIdStatistics::flush()
         return;
 
     time_t now = get_time();
-    if (now >= bucketEnd)
+    if (now >= bucket_end)
     {
         end_stats_period();
         dump_statistics();
