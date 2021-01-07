@@ -203,11 +203,12 @@ bool DiscoveryFilter::is_app_monitored(const Packet* p, uint8_t* flag)
     return is_monitored(p, DF_APP, *flag, DF_APP_CHECKED, DF_APP_MONITORED);
 }
 
-bool DiscoveryFilter::is_host_monitored(const Packet* p, uint8_t* flag, const SfIp* ip)
+bool DiscoveryFilter::is_host_monitored(const Packet* p, uint8_t* flag, const SfIp* ip,
+    FlowCheckDirection flowdir)
 {
     if ( flag == nullptr )
-        return is_monitored(p, DF_HOST, ip);
-    return is_monitored(p, DF_HOST, *flag, DF_HOST_CHECKED, DF_HOST_MONITORED, ip);
+        return is_monitored(p, DF_HOST, ip, flowdir);
+    return is_monitored(p, DF_HOST, *flag, DF_HOST_CHECKED, DF_HOST_MONITORED, ip, flowdir);
 }
 
 bool DiscoveryFilter::is_user_monitored(const Packet* p, uint8_t* flag)
@@ -218,14 +219,14 @@ bool DiscoveryFilter::is_user_monitored(const Packet* p, uint8_t* flag)
 }
 
 bool DiscoveryFilter::is_monitored(const Packet* p, FilterType type, uint8_t& flag,
-    uint8_t checked, uint8_t monitored, const SfIp* ip)
+    uint8_t checked, uint8_t monitored, const SfIp* ip, FlowCheckDirection flowdir)
 {
     if ( flag & checked )
         return flag & monitored;
 
     flag |= checked;
 
-    if ( is_monitored(p, type, ip) )
+    if ( is_monitored(p, type, ip, flowdir) )
     {
         flag |= monitored;
         return true;
@@ -235,7 +236,8 @@ bool DiscoveryFilter::is_monitored(const Packet* p, FilterType type, uint8_t& fl
     return false;
 }
 
-bool DiscoveryFilter::is_monitored(const Packet* p, FilterType type, const SfIp* ip)
+bool DiscoveryFilter::is_monitored(const Packet* p, FilterType type, const SfIp* ip,
+    FlowCheckDirection flowdir)
 {
     if ( !vartable )
         return true; // when not configured, 'any' ip/port/interface are monitored by default
@@ -245,20 +247,39 @@ bool DiscoveryFilter::is_monitored(const Packet* p, FilterType type, const SfIp*
         return false;
 
     // check interface
-    if (intf_ip_list[type].empty())
+    if ( intf_ip_list[type].empty() )
         return false; // the configuration did not have this type of rule
 
-    auto intf = (int32_t)p->pkth->ingress_index;
+    int32_t intf;
+    const SfIp* host_ip;
+    if ( flowdir == FlowCheckDirection::DF_SERVER )
+    {
+        intf = (int32_t)p->flow->server_intf;
+        host_ip = &p->flow->server_ip;
+    }
+    else if ( flowdir == FlowCheckDirection::DF_CLIENT )
+    {
+        intf = (int32_t)p->flow->client_intf;
+        host_ip = &p->flow->client_ip;
+    }
+    else
+    {
+        intf = (int32_t)p->pkth->ingress_index;
+        host_ip = p->ptrs.ip_api.get_src();
+    }
+
     if ( intf == DAQ_PKTHDR_UNKNOWN or intf < 0 )
         intf = DF_ANY_INTF;
+    if ( ip )
+        host_ip = ip;
+
     auto varip = get_list(type, intf, true);
-    if (!varip and intf != DF_ANY_INTF)
+    if ( !varip and intf != DF_ANY_INTF )
         varip = get_list(type, DF_ANY_INTF, true);
 
-    if (!p->ptrs.ip_api.get_src() and !ip)
+    if ( !host_ip )
         return true; // Don't check for non-IP, non ARP
 
-    const SfIp* host_ip = (ip) ? ip : p->ptrs.ip_api.get_src();
     return sfvar_ip_in(varip, host_ip);
 }
 

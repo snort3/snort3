@@ -41,13 +41,13 @@ RnaTracker RnaAppDiscovery::get_client_rna_tracker(const Packet* p, RNAFlow*)
     return host_cache.find(p->flow->client_ip);
 }
 
-void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
-    RnaConfig* conf, RnaLogger& logger)
+void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter, RnaConfig* conf,
+    RnaLogger& logger)
 {
     const Packet* p = DetectionEngine::get_current_packet();
 
     // Published appid events may be on rebuilt packets
-    if ( !p->flow or !filter.is_host_monitored(p) )
+    if ( !p->flow )
         return;
 
     IpProtocol proto;
@@ -77,14 +77,14 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
 
         if ( appid_change_bits[APPID_SERVICE_BIT] and service > APP_ID_NONE )
         {
-            if (service == APP_ID_DHCP)
+            if ( service == APP_ID_DHCP )
             {
                 const SfIp& service_ip = appid_session_api.get_service_ip();
-                if (p->flow->client_ip.fast_eq6(service_ip))
+                if ( p->flow->client_ip.fast_eq6(service_ip) )
                     is_client = true;
                 port = appid_session_api.get_service_port();
             }
-            newservice = discover_service(p, rna_flow, proto, conf, logger,
+            newservice = discover_service(p, filter, rna_flow, proto, conf, logger,
                 port, service, is_client);
         }
 
@@ -92,13 +92,13 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
             and service > APP_ID_NONE )
         {
             const char* version = appid_session_api.get_client_info();
-            discover_client(p, rna_flow, conf, logger, version, client, service);
+            discover_client(p, filter, rna_flow, conf, logger, version, client, service);
         }
 
         if ( appid_change_bits[APPID_PAYLOAD_BIT] and payload > APP_ID_NONE
              and service > APP_ID_NONE )
         {
-            discover_payload(p, rna_flow, proto, conf, logger, service, payload, client);
+            discover_payload(p, filter, rna_flow, proto, conf, logger, service, payload, client);
         }
     }
 
@@ -108,12 +108,14 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
         const char* version;
         const AppIdServiceSubtype* subtype;
         appid_session_api.get_service_info(vendor, version, subtype);
-        update_service_info(p, rna_flow, proto, port, vendor, version, logger, conf, service, is_client);
+        update_service_info(p, filter, rna_flow, proto, port, vendor, version, logger, conf,
+            service, is_client);
     }
     else if ( newservice and appid_change_bits[APPID_SERVICE_BIT]
         and service > APP_ID_NONE )
     {
-        update_service_info(p, rna_flow, proto, port, nullptr, nullptr, logger, conf, service, is_client);
+        update_service_info(p, filter, rna_flow, proto, port, nullptr, nullptr, logger, conf,
+            service, is_client);
     }
 
     if ( conf->enable_banner_grab and p->is_from_server() and
@@ -121,7 +123,7 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
         appid_change_bits[APPID_SERVICE_INFO_BIT] or
         appid_change_bits[APPID_SERVICE_BIT]) )
     {
-        discover_banner(p, rna_flow, proto, logger, service);
+        discover_banner(p, filter, rna_flow, proto, logger, service);
     }
 
     // Appid supports login success/failure events, but not logoff event.
@@ -130,7 +132,8 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
         bool login_success;
         const char* username = appid_session_api.get_user_info(service, login_success);
         if ( service > APP_ID_NONE and username and *username )
-            discover_user(p, rna_flow, logger, username, service, proto, conf, login_success);
+            discover_user(p, filter, rna_flow, logger, username, service, proto, conf,
+                login_success);
     }
     if ( p->is_from_client() and ( appid_change_bits[APPID_HOST_BIT] or
         appid_change_bits[APPID_USERAGENT_BIT] ) )
@@ -150,23 +153,32 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter,
             {
                 const char* host = hsession->get_cfield(REQ_HOST_FID);
                 const char* uagent = hsession->get_cfield(REQ_AGENT_FID);
-                analyze_user_agent_fingerprint(p, rna_flow, host, uagent, logger, *processor);
+                analyze_user_agent_fingerprint(p, filter, rna_flow, host, uagent, logger,
+                    *processor);
             }
         }
     }
 }
 
-bool RnaAppDiscovery::discover_service(const Packet* p, RNAFlow* rna_flow, IpProtocol proto,
-    RnaConfig* conf, RnaLogger& logger, uint16_t port, AppId service, bool is_client)
+bool RnaAppDiscovery::discover_service(const Packet* p, DiscoveryFilter& filter, RNAFlow* rna_flow,
+    IpProtocol proto, RnaConfig* conf, RnaLogger& logger, uint16_t port, AppId service,
+    bool is_client)
 {
     RnaTracker htp;
     SfIp ip = p->flow->server_ip;
+
     if (!is_client)
+    {
+        if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_SERVER) )
+            return false;
         htp = get_server_rna_tracker(p, rna_flow);
+    }
     else
     {
-        htp = get_client_rna_tracker(p, rna_flow);
+        if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_CLIENT) )
+            return false;
         ip = p->flow->client_ip;
+        htp = get_client_rna_tracker(p, rna_flow);
     }
 
     if ( !htp or !htp->is_visible() )
@@ -196,8 +208,9 @@ bool RnaAppDiscovery::discover_service(const Packet* p, RNAFlow* rna_flow, IpPro
     return is_new;
 }
 
-void RnaAppDiscovery::discover_payload(const Packet* p, RNAFlow* rna_flow, IpProtocol proto,
-    RnaConfig* conf, RnaLogger& logger, AppId service, AppId payload, AppId client)
+void RnaAppDiscovery::discover_payload(const Packet* p, DiscoveryFilter& filter, RNAFlow* rna_flow,
+    IpProtocol proto, RnaConfig* conf, RnaLogger& logger, AppId service, AppId payload,
+    AppId client)
 {
     uint16_t lookup_port;
     size_t max_payloads = 0;
@@ -218,6 +231,9 @@ void RnaAppDiscovery::discover_payload(const Packet* p, RNAFlow* rna_flow, IpPro
     // Add server payload
     if ( p->is_from_server() )
     {
+        if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_SERVER) )
+            return;
+
         HostApplication local_ha;
         bool new_pld = srt->add_payload(local_ha, lookup_port, proto, payload, service,
             max_payloads);
@@ -236,6 +252,9 @@ void RnaAppDiscovery::discover_payload(const Packet* p, RNAFlow* rna_flow, IpPro
     }
 
     // Add client payloads
+    if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_CLIENT) )
+        return;
+
     RnaTracker crt = get_client_rna_tracker(p, rna_flow);
     if ( !crt or !crt->is_visible() )
         return;
@@ -252,17 +271,24 @@ void RnaAppDiscovery::discover_payload(const Packet* p, RNAFlow* rna_flow, IpPro
             crt->get_last_seen_mac(), &hc);
 }
 
-void RnaAppDiscovery::update_service_info(const Packet* p, RNAFlow* rna_flow, IpProtocol proto, uint16_t port,
-    const char* vendor, const char* version, RnaLogger& logger, RnaConfig* conf, AppId service, bool is_client)
+void RnaAppDiscovery::update_service_info(const Packet* p, DiscoveryFilter& filter,
+    RNAFlow* rna_flow, IpProtocol proto, uint16_t port, const char* vendor,
+    const char* version, RnaLogger& logger, RnaConfig* conf, AppId service, bool is_client)
 {
     RnaTracker htp;
     SfIp ip = p->flow->server_ip;
     if (!is_client)
+    {
+        if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_SERVER) )
+            return;
         htp = get_server_rna_tracker(p, rna_flow);
+    }
     else
     {
-        htp = get_client_rna_tracker(p, rna_flow);
+        if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_CLIENT) )
+            return;
         ip = p->flow->client_ip;
+        htp = get_client_rna_tracker(p, rna_flow);
     }
 
     if ( !htp or !htp->is_visible() )
@@ -288,9 +314,12 @@ void RnaAppDiscovery::update_service_info(const Packet* p, RNAFlow* rna_flow, Ip
     htp->update_service(ha);
 }
 
-void RnaAppDiscovery::discover_banner(const Packet* p, RNAFlow* rna_flow, IpProtocol proto,
-    RnaLogger& logger, AppId service)
+void RnaAppDiscovery::discover_banner(const Packet* p, DiscoveryFilter& filter, RNAFlow* rna_flow,
+    IpProtocol proto, RnaLogger& logger, AppId service)
 {
+    if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_SERVER) )
+        return;
+
     RnaTracker rt = get_server_rna_tracker(p, rna_flow);
     if ( !rt or !rt->is_visible() )
         return;
@@ -305,9 +334,12 @@ void RnaAppDiscovery::discover_banner(const Packet* p, RNAFlow* rna_flow, IpProt
         (const struct in6_addr*) p->flow->server_ip.get_ip6_ptr(), rt->get_last_seen_mac(), &ha);
 }
 
-void RnaAppDiscovery::discover_client(const Packet* p, RNAFlow* rna_flow, RnaConfig* conf,
-    RnaLogger& logger, const char* version, AppId client, AppId service)
+void RnaAppDiscovery::discover_client(const Packet* p, DiscoveryFilter& filter, RNAFlow* rna_flow,
+    RnaConfig* conf, RnaLogger& logger, const char* version, AppId client, AppId service)
 {
+    if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_CLIENT) )
+        return;
+
     RnaTracker rt = get_client_rna_tracker(p, rna_flow);
     if ( !rt or !rt->is_visible() )
         return;
@@ -340,15 +372,24 @@ void RnaAppDiscovery::discover_client(const Packet* p, RNAFlow* rna_flow, RnaCon
             (const struct in6_addr*) p->flow->client_ip.get_ip6_ptr(), mac, &hc);
 }
 
-void RnaAppDiscovery::discover_user(const Packet* p, RNAFlow* rna_flow, RnaLogger& logger,
-    const char* username, AppId service, IpProtocol proto, RnaConfig* conf, bool login_success)
+void RnaAppDiscovery::discover_user(const Packet* p, DiscoveryFilter& filter, RNAFlow* rna_flow,
+    RnaLogger& logger, const char* username, AppId service, IpProtocol proto, RnaConfig* conf,
+    bool login_success)
 {
     RnaTracker rt;
     if ( p->is_from_server() )
+    {
+        if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_SERVER) )
+            return;
         rt = get_server_rna_tracker(p, rna_flow);
+    }
     else
+    {
+        if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_CLIENT) )
+            return;
         rt = get_client_rna_tracker(p, rna_flow);
-    
+    }
+
     if ( !rt or !rt->is_visible() )
         return;
     rt->update_last_seen();
@@ -362,10 +403,12 @@ void RnaAppDiscovery::discover_user(const Packet* p, RNAFlow* rna_flow, RnaLogge
     }
 }
 
-void RnaAppDiscovery::analyze_user_agent_fingerprint(const Packet* p, RNAFlow* rna_flow,
-    const char* host, const char* uagent, RnaLogger& logger, UaFpProcessor& processor)
+void RnaAppDiscovery::analyze_user_agent_fingerprint(const Packet* p, DiscoveryFilter& filter,
+    RNAFlow* rna_flow, const char* host, const char* uagent, RnaLogger& logger,
+    UaFpProcessor& processor)
 {
-    if ( !host or !uagent )
+    if ( !host or !uagent or 
+        !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_CLIENT))
         return;
 
     RnaTracker rt = get_client_rna_tracker(p, rna_flow);

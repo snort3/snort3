@@ -28,6 +28,7 @@
 #include "sfip/sf_vartable.h"
 
 enum FilterType { DF_APP, DF_HOST, DF_USER, DF_MAX };
+enum FlowCheckDirection { DF_NONE, DF_CLIENT, DF_SERVER };
 
 typedef int32_t IntfType; // matching daq header
 #define DF_ANY_INTF INT32_MAX
@@ -42,7 +43,7 @@ public:
     // If flag is provided (preferable), results are stored in flag to avoid future lookups
     bool is_app_monitored(const snort::Packet* p, uint8_t* flag = nullptr);
     bool is_host_monitored(const snort::Packet* p, uint8_t* flag = nullptr,
-        const snort::SfIp* ip = nullptr);
+        const snort::SfIp* ip = nullptr, FlowCheckDirection flowdir = FlowCheckDirection::DF_NONE);
     bool is_user_monitored(const snort::Packet* p, uint8_t* flag = nullptr);
 
 private:
@@ -50,8 +51,10 @@ private:
     enum Direction { CLIENT, SERVER, NUM_DIRECTIONS };
 
     bool is_monitored(const snort::Packet* p, FilterType type, uint8_t& flag,
-        uint8_t checked, uint8_t monitored, const snort::SfIp* ip = nullptr);
-    bool is_monitored(const snort::Packet* p, FilterType type, const snort::SfIp* ip = nullptr);
+        uint8_t checked, uint8_t monitored, const snort::SfIp* ip = nullptr,
+        FlowCheckDirection flowdir = FlowCheckDirection::DF_NONE);
+    bool is_monitored(const snort::Packet* p, FilterType type, const snort::SfIp* ip = nullptr,
+        FlowCheckDirection flowdir = FlowCheckDirection::DF_NONE);
     void add_ip(FilterType type, IntfType intf, std::string& ip);
     sfip_var_t* get_list(FilterType type, IntfType intf, bool exclude_empty = false);
 
