@@ -74,6 +74,7 @@ class HttpRequestCutter : public HttpStartCutter
 {
 private:
     uint32_t octets_checked = 0;
+    bool check_h2 = true;
     ValidationResult validate(uint8_t octet, HttpInfractions*, HttpEventGen*) override;
 };
 

@@ -114,18 +114,42 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
     return SCAN_NOT_FOUND;
 }
 
-HttpStartCutter::ValidationResult HttpRequestCutter::validate(uint8_t octet, HttpInfractions*,
-    HttpEventGen*)
+HttpStartCutter::ValidationResult HttpRequestCutter::validate(uint8_t octet,
+    HttpInfractions* infractions, HttpEventGen*)
 {
     // Request line must begin with a method. There is no list of all possible methods because
     // extension is allowed, so there is no absolute way to tell whether something is a method.
     // Instead we verify that all its characters are drawn from the RFC list of valid token
     // characters, that it is followed by a whitespace character, and that it is at most 80
     // characters long. There is nothing special or specified about 80. It is just more than any
-    // reasonable method name would be.
+    // reasonable method name would be. Additionally we check for the first 16 bytes of the HTTP/2
+    // connection preface, which would otherwise pass the aforementioned check.
 
     static const int max_method_length = 80;
+    static const int preface_len = 16;
+    static const int h1_test_len_in_preface = 4;
+    static const uint8_t h2_connection_preface[] = { 'P', 'R', 'I', ' ', '*', ' ', 'H', 'T', 'T',
+        'P', '/', '2', '.', '0', '\r', '\n' };
 
+    if (check_h2)
+    {
+        if (octet == h2_connection_preface[octets_checked])
+        {
+            octets_checked++;
+            if (octets_checked >= preface_len)
+            {
+                *infractions += INF_HTTP2_IN_HI;
+                return V_BAD;
+            }
+            return V_TBD;
+        }
+        else
+        {
+            if (octets_checked >= h1_test_len_in_preface)
+                return V_GOOD;
+            check_h2 = false;
+        }
+    }
     if ((octet == ' ') || (octet == '\t'))
         return V_GOOD;
     if (!token_char[octet] || ++octets_checked > max_method_length)
