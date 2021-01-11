@@ -42,7 +42,7 @@ bool HttpStreamSplitter::finish(Flow* flow)
     Profile profile(HttpModule::get_profile_stats());
 
     HttpFlowData* session_data = HttpInspect::http_get_flow_data(flow);
-    if(!session_data)
+    if (!session_data)
         return false;
 
 #ifdef REG_TEST
@@ -69,14 +69,26 @@ bool HttpStreamSplitter::finish(Flow* flow)
     }
 
     session_data->tcp_close[source_id] = true;
+    if (session_data->section_type[source_id] != SEC__NOT_COMPUTE)
+        return true;
+
+    if (session_data->type_expected[source_id] == SEC_BODY_CL)
+    {
+        *session_data->get_infractions(source_id) += INF_TRUNCATED_MSG_BODY_CL;
+        session_data->events[source_id]->create_event(EVENT_TRUNCATED_MSG_BODY_CL);
+    }
+    else if (session_data->type_expected[source_id] == SEC_BODY_CHUNK)
+    {
+        *session_data->get_infractions(source_id) += INF_TRUNCATED_MSG_BODY_CHUNK;
+        session_data->events[source_id]->create_event(EVENT_TRUNCATED_MSG_BODY_CHUNK);
+    }
 
     // If there is leftover data for which we returned PAF_SEARCH and never flushed, we need to set
     // up to process because it is about to go to reassemble(). But we don't support partial start
     // lines.
-    if ((session_data->section_type[source_id] == SEC__NOT_COMPUTE) &&
-        (session_data->cutter[source_id] != nullptr)                &&
+    if ((session_data->cutter[source_id] != nullptr) &&
         (session_data->cutter[source_id]->get_octets_seen() >
-            session_data->partial_raw_bytes[source_id]))
+        session_data->partial_raw_bytes[source_id]))
     {
         if ((session_data->type_expected[source_id] == SEC_REQUEST) ||
             (session_data->type_expected[source_id] == SEC_STATUS))
@@ -104,8 +116,7 @@ bool HttpStreamSplitter::finish(Flow* flow)
     // process an empty header section to provide an inspection section. Otherwise the start line
     // won't go through detection.
     if ((session_data->type_expected[source_id] == SEC_HEADER)      &&
-        (session_data->cutter[source_id] == nullptr)                &&
-        (session_data->section_type[source_id] == SEC__NOT_COMPUTE))
+        (session_data->cutter[source_id] == nullptr))
     {
         // Set up to process empty header section
         uint32_t not_used;
@@ -114,8 +125,7 @@ bool HttpStreamSplitter::finish(Flow* flow)
     }
 
     // If there is no more data to process we need to wrap up file processing right now
-    if ((session_data->section_type[source_id] == SEC__NOT_COMPUTE) &&
-        (session_data->file_depth_remaining[source_id] > 0)        &&
+    if ((session_data->file_depth_remaining[source_id] > 0)        &&
         (session_data->cutter[source_id] != nullptr)               &&
         (session_data->cutter[source_id]->get_octets_seen() ==
             session_data->partial_raw_bytes[source_id]))
@@ -165,7 +175,7 @@ bool HttpStreamSplitter::finish(Flow* flow)
         return false;
     }
 
-    return session_data->section_type[source_id] != SEC__NOT_COMPUTE;
+    return false;
 }
 
 bool HttpStreamSplitter::init_partial_flush(Flow* flow, uint32_t num_flush)
@@ -178,9 +188,9 @@ bool HttpStreamSplitter::init_partial_flush(Flow* flow, uint32_t num_flush)
     assert(session_data->for_http2 || source_id == SRC_SERVER);
 
     assert((session_data->type_expected[source_id] == SEC_BODY_CL)      ||
-           (session_data->type_expected[source_id] == SEC_BODY_OLD)     ||
-           (session_data->type_expected[source_id] == SEC_BODY_CHUNK)   ||
-           (session_data->type_expected[source_id] == SEC_BODY_H2));
+        (session_data->type_expected[source_id] == SEC_BODY_OLD)     ||
+        (session_data->type_expected[source_id] == SEC_BODY_CHUNK)   ||
+        (session_data->type_expected[source_id] == SEC_BODY_H2));
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP) &&
