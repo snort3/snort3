@@ -45,6 +45,7 @@ public:
     void show(const snort::SnortConfig*) const override;
     void tinit() override;
     void tterm() override;
+    void tear_down(snort::SnortConfig*) override;
     void eval(snort::Packet*) override;
     AppIdContext& get_ctxt() const;
 

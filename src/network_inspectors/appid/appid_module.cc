@@ -127,6 +127,18 @@ bool AcAppIdDebug::execute(Analyzer&, void**)
     return true;
 }
 
+bool ACThirdPartyAppIdCleanup::execute(Analyzer& a, void**)
+{
+    if (!pkt_thread_tp_appid_ctxt)
+        return true;
+    bool tear_down_in_progress;
+    if (a.is_idling())
+        tear_down_in_progress = pkt_thread_tp_appid_ctxt->tfini(true);
+    else
+        tear_down_in_progress = pkt_thread_tp_appid_ctxt->tfini();
+    return !tear_down_in_progress;
+}
+
 class ACThirdPartyAppIdContextSwap : public AnalyzerCommand
 {
 public:
@@ -182,9 +194,9 @@ bool ACThirdPartyAppIdContextUnload::execute(Analyzer& ac, void**)
     ThirdPartyAppIdContext::set_tp_reload_in_progress(true);
     bool reload_in_progress;
     if (ac.is_idling())
-        reload_in_progress = pkt_thread_tp_appid_ctxt->tfini(true, true);
-    else
         reload_in_progress = pkt_thread_tp_appid_ctxt->tfini(true);
+    else
+        reload_in_progress = pkt_thread_tp_appid_ctxt->tfini();
     if (reload_in_progress)
         return false;
     pkt_thread_tp_appid_ctxt = nullptr;

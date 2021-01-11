@@ -177,6 +177,7 @@ bool AppIdInspector::configure(SnortConfig*) { return true; }
 void AppIdInspector::show(const SnortConfig*) const { }
 void AppIdInspector::tinit() { }
 void AppIdInspector::tterm() { }
+void AppIdInspector::tear_down(SnortConfig*) { }
 AppIdContext& AppIdInspector::get_ctxt() const
 {
     assert(ctxt);

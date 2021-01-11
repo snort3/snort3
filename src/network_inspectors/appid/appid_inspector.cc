@@ -28,6 +28,7 @@
 #include <openssl/crypto.h>
 
 #include "flow/flow.h"
+#include "main/analyzer_command.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "packet_tracer/packet_tracer.h"
@@ -176,6 +177,11 @@ void AppIdInspector::tterm()
         pkt_thread_tp_appid_ctxt->tfini();
     if ( snort::HighAvailabilityManager::active() )
         AppIdHAManager::tterm();
+}
+
+void AppIdInspector::tear_down(SnortConfig*)
+{
+    main_broadcast_command(new ACThirdPartyAppIdCleanup(), true);
 }
 
 void AppIdInspector::eval(Packet* p)

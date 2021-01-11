@@ -60,7 +60,7 @@ public:
     const std::string& module_name() const { return name; }
 
     virtual int tinit() = 0;
-    virtual bool tfini(bool reload = false, bool is_idling = false) = 0;
+    virtual bool tfini(bool is_idling = false) = 0;
 
     virtual const ThirdPartyConfig& get_config() const { return cfg; }
 

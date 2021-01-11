@@ -26,6 +26,8 @@
 #include <vector>
 
 #include "framework/module.h"
+#include "main/analyzer.h"
+#include "main/analyzer_command.h"
 #include "main/snort_config.h"
 
 #include "appid_config.h"
@@ -96,6 +98,13 @@ public:
 
 private:
     AppIdConfig* config;
+};
+
+class ACThirdPartyAppIdCleanup : public snort::AnalyzerCommand
+{
+public:
+    bool execute(Analyzer&, void**) override;
+    const char* stringify() override { return "THIRD_PARTY_APPID_CLEANUP"; }
 };
 
 #endif

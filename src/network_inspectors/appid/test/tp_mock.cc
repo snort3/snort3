@@ -56,7 +56,7 @@ public:
     }
 
     int tinit() override { return 0; }
-    bool tfini(bool, bool) override { return false; }
+    bool tfini(bool) override { return false; }
     const string& get_user_config() const override { return user_config; }
 
 private:
