@@ -46,8 +46,8 @@ FlowData::~FlowData() = default;
 int DetectionEngine::queue_event(unsigned int, unsigned int, Actions::Type) { return 0; }
 fd_status_t File_Decomp_StopFree(fd_session_t*) { return File_Decomp_OK; }
 uint32_t str_to_hash(const uint8_t *, size_t) { return 0; }
-void FlowData::update_allocations(unsigned long) {}
-void FlowData::update_deallocations(unsigned long) {}
+void FlowData::update_allocations(size_t) {}
+void FlowData::update_deallocations(size_t) {}
 }
 
 THREAD_LOCAL PegCount HttpModule::peg_counts[PEG_COUNT_MAX] = { };
