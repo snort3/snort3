@@ -33,6 +33,7 @@
 
 #include <sys/stat.h>
 
+#include <algorithm>
 #include <cstdarg>
 
 #include "utils/util.h"
@@ -220,19 +221,26 @@ bool TextLog_Putc(TextLog* const txt, char c)
  */
 bool TextLog_Write(TextLog* const txt, const char* str, int len)
 {
-    int avail = TextLog_Avail(txt);
-
-    if ( len >= avail )
+    do
     {
-        TextLog_Flush(txt);
-        avail = TextLog_Avail(txt);
+        int avail = TextLog_Avail(txt);
+        int n = snprintf(txt->buf+txt->pos, avail, "%.*s", len, str);
+        if ( n < avail and n < len )
+            return false;
+
+        // actual bytes written:
+        // 1) if avail is a limit, auto-appended '\0' should be truncated
+        // 2) avail could be zero from the start, keep it as 0
+        int l = std::min(n, avail > 0 ? avail - 1 : 0);
+        txt->pos += l;
+        str += l;
+        len -= l;
+
+        if ( n >= avail )
+            TextLog_Flush(txt);
     }
-    int n = snprintf(txt->buf+txt->pos, avail, "%.*s", len, str);
+    while ( len > 0 );
 
-    if ( n != len )
-        return false;
-
-    txt->pos += len;
     return true;
 }
 
@@ -269,39 +277,37 @@ bool TextLog_Print(TextLog* const txt, const char* fmt, ...)
     {
         return false;
     }
+
     txt->pos += len;
+
     return true;
 }
 
 /*-------------------------------------------------------------------
  * TextLog_Quote: write string escaping quotes
- * TBD could be smarter by counting required escapes instead of
- * checking for 3
  *-------------------------------------------------------------------
  */
 bool TextLog_Quote(TextLog* const txt, const char* qs)
 {
-    int pos = txt->pos;
+    TextLog_Putc(txt, '"');
 
-    if ( TextLog_Avail(txt) < 3 )
+    do
     {
-        TextLog_Flush(txt);
-    }
-    txt->buf[pos++] = '"';
+        int len = strlen(qs);
+        int pre = strcspn(qs, "\"\\");
 
-    while ( *qs && (txt->maxBuf - pos > 2) )
-    {
-        if ( *qs == '"' || *qs == '\\' )
+        TextLog_Write(txt, qs, pre);
+        qs += pre;
+
+        if ( pre < len )
         {
-            txt->buf[pos++] = '\\';
+            TextLog_Putc(txt, '\\');
+            TextLog_Putc(txt, *qs++);
         }
-        txt->buf[pos++] = *qs++;
     }
-    if ( *qs )
-        return false;
+    while ( *qs );
 
-    txt->buf[pos++] = '"';
-    txt->pos = pos;
+    TextLog_Putc(txt, '"');
 
     return true;
 }
