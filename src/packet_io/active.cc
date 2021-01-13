@@ -671,7 +671,8 @@ void Active::block_session(Packet* p, bool force)
     active_action = ACT_BLOCK;
     update_status(p, force);
 
-    if ( force or p->context->conf->inline_mode() or p->context->conf->treat_drop_as_ignore() )
+    if ( force or ( p->context->conf->inline_mode() and SFDAQ::forwarding_packet(p->pkth) )
+        or p->context->conf->treat_drop_as_ignore() )
         Stream::block_flow(p);
 
     p->disable_inspect = true;
@@ -687,7 +688,8 @@ void Active::reset_session(Packet* p, ActiveAction* reject, bool force)
     active_action = ACT_RESET;
     update_status(p, force);
 
-    if ( force or p->context->conf->inline_mode() or p->context->conf->treat_drop_as_ignore() )
+    if ( force or ( p->context->conf->inline_mode() and SFDAQ::forwarding_packet(p->pkth) )
+        or p->context->conf->treat_drop_as_ignore() )
         Stream::drop_flow(p);
 
     if ( p->context->conf->is_active_enabled() )
