@@ -20,6 +20,9 @@
 /* Version number of package */
 #define VERSION "@VERSION@"
 
+/* Build number for this build */
+#cmakedefine BUILD "@BUILD@"
+
 /* see configure.ac for the purpose of API_OPTIONS */
 /* there is no cmake magic yet to configure this */
 /* but luckily it is not yet needed */

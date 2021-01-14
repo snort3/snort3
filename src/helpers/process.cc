@@ -39,9 +39,9 @@
 
 #include "log/messages.h"
 #include "main.h"
-#include "main/build.h"
 #include "main/oops_handler.h"
 #include "main/snort_config.h"
+#include "utils/cpp_macros.h"
 #include "utils/stats.h"
 #include "utils/util.h"
 
@@ -276,7 +276,11 @@ static void oops_handler(int signal)
     }
     SigSafePrinter ssp(STDERR_FILENO);
     ssp.printf("\nSnort (PID %u) caught fatal signal: %s\n", getpid(), sigstr);
+#ifdef BUILD
     ssp.printf("Version: " VERSION " Build " BUILD "\n\n");
+#else
+    ssp.printf("Version: " VERSION "\n\n");
+#endif
 
 #ifdef HAVE_LIBUNWIND
     // Try to pretty-print a stack trace using libunwind to traverse the stack.

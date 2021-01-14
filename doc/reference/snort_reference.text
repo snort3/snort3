@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.0.3 (Build 6) 2020-12-20 13:38:32 EST TST
+Revision 3.1.0.0 2021-01-13 13:25:56 EST TST
 
 ---------------------------------------------------------------------
 
@@ -776,6 +776,7 @@ Commands:
     from host
   * host_cache.delete_client(host_ip, id, service, version): delete
     client from host
+  * host_cache.get_stats(): get current host cache usage and pegs
 
 Peg counts:
 
@@ -3613,6 +3614,8 @@ Peg counts:
     dynamic table (max)
   * http2_inspect.max_concurrent_files: maximum concurrent file
     transfers per HTTP/2 connection (max)
+  * http2_inspect.total_bytes: total HTTP/2 data bytes inspected
+    (sum)
 
 
 5.24. http_inspect
@@ -3827,6 +3830,9 @@ Rules:
     message completed
   * 119:259 (http_inspect) malformed HTTP Content-Disposition
     filename parameter
+  * 119:260 (http_inspect) HTTP Content-Length message body was
+    truncated
+  * 119:261 (http_inspect) HTTP chunked message body was truncated
 
 Peg counts:
 
@@ -3877,6 +3883,7 @@ Peg counts:
     pipelined requests (sum)
   * http_inspect.pipelined_requests: total requests placed in a
     pipeline (sum)
+  * http_inspect.total_bytes: total HTTP data bytes inspected (sum)
 
 
 5.25. imap
@@ -10668,6 +10675,8 @@ these libraries see the Getting Started section of the manual.
     sessions (max)
   * http2_inspect.max_table_entries: maximum entries in an HTTP/2
     dynamic table (max)
+  * http2_inspect.total_bytes: total HTTP/2 data bytes inspected
+    (sum)
   * http_inspect.chunked: chunked message bodies (sum)
   * http_inspect.concurrent_sessions: total concurrent http sessions
     (now)
@@ -10709,6 +10718,7 @@ these libraries see the Getting Started section of the manual.
     HTTP responses (sum)
   * http_inspect.ssl_srch_abandoned_early: total SSL search abandoned
     too soon (sum)
+  * http_inspect.total_bytes: total HTTP data bytes inspected (sum)
   * http_inspect.trace_requests: TRACE requests inspected (sum)
   * http_inspect.uri_coding: URIs with character coding problems
     (sum)
@@ -11642,6 +11652,9 @@ these libraries see the Getting Started section of the manual.
     message completed
   * 119:259 (http_inspect) malformed HTTP Content-Disposition
     filename parameter
+  * 119:260 (http_inspect) HTTP Content-Length message body was
+    truncated
+  * 119:261 (http_inspect) HTTP chunked message body was truncated
   * 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
   * 121:2 (http2_inspect) HPACK integer value has leading zeros
   * 121:3 (http2_inspect) HTTP/2 stream initiated with invalid stream
@@ -11976,6 +11989,7 @@ these libraries see the Getting Started section of the manual.
     from host
   * host_cache.delete_client(host_ip, id, service, version): delete
     client from host
+  * host_cache.get_stats(): get current host cache usage and pegs
   * packet_capture.enable(filter): dump raw packets
   * packet_capture.disable(): stop packet dump
   * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port):

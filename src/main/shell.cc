@@ -39,7 +39,6 @@
 #include "parser/parser.h"
 #include "utils/stats.h"
 
-#include "build.h"
 #include "lua_bootstrap.h"
 #include "lua_finalize.h"
 
@@ -55,6 +54,7 @@ static const char* versions[] = {
     "SNORT_MAJOR_VERSION",
     "SNORT_MINOR_VERSION",
     "SNORT_PATCH_VERSION",
+    "SNORT_SUBLEVEL_VERSION",
     nullptr
 };
 
@@ -62,7 +62,11 @@ static void install_version_strings(lua_State* L)
 {
     assert(versions[0]);
 
+#ifdef BUILD
     lua_pushstring(L, VERSION "-" BUILD);
+#else
+    lua_pushstring(L, VERSION);
+#endif
     lua_setglobal(L, versions[0]);
 
     std::istringstream vs(VERSION);

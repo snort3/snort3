@@ -59,7 +59,6 @@ protected:
     virtual void insert_segment_in_empty_seglist(TcpReassemblerState&, TcpSegmentDescriptor&);
     virtual void insert_segment_in_seglist(TcpReassemblerState&, TcpSegmentDescriptor&);
     virtual uint32_t get_pending_segment_count(TcpReassemblerState&, unsigned max);
-    bool flush_data_ready(TcpReassemblerState&);
     int trim_delete_reassembly_segment(TcpReassemblerState&, TcpSegmentNode*, uint32_t flush_seq);
     void queue_reassembly_segment(TcpReassemblerState&, TcpSegmentNode* prev, TcpSegmentNode*);
     void init_overlap_editor(TcpReassemblerState&, TcpSegmentDescriptor&);

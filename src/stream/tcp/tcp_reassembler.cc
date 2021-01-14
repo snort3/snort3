@@ -91,19 +91,6 @@ uint32_t TcpReassembler::get_pending_segment_count(TcpReassemblerState& trs, uns
     return n;
 }
 
-bool TcpReassembler::flush_data_ready(TcpReassemblerState& trs)
-{
-    // needed by stream_reassemble:action disable; can fire on rebuilt
-    // packets, yanking the splitter out from under us :(
-    if ( !trs.tracker->is_reassembly_enabled() )
-        return false;
-
-    if ( (trs.tracker->get_flush_policy() == STREAM_FLPOLICY_ON_DATA) || trs.tracker->is_splitter_paf() )
-        return ( is_segment_pending_flush(trs) );
-
-    return ( get_pending_segment_count(trs, 2) > 1 );  // FIXIT-L return false?
-}
-
 bool TcpReassembler::next_no_gap(const TcpSegmentNode& tsn)
 {
     return tsn.next and (tsn.next->i_seq == tsn.i_seq + tsn.i_len);

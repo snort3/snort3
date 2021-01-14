@@ -2,9 +2,14 @@ cmake_minimum_required (VERSION 3.4.3)
 project (snort CXX C)
 
 set (VERSION_MAJOR 3)
-set (VERSION_MINOR 0)
-set (VERSION_PATCH 3)
-set (VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+set (VERSION_MINOR 1)
+set (VERSION_PATCH 0)
+set (VERSION_SUBLEVEL 0)
+set (VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}.${VERSION_SUBLEVEL}")
+
+if (DEFINED VERSION_BUILD)
+    set (BUILD "${VERSION_BUILD}")
+endif ()
 
 set (CMAKE_CXX_STANDARD 14)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -79,9 +84,13 @@ add_custom_target(uninstall
 string(TOUPPER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_UPPER)
 
 message("
--------------------------------------------------------
-${CMAKE_PROJECT_NAME} version ${VERSION}
-
+-------------------------------------------------------")
+if (DEFINED BUILD)
+    message("${CMAKE_PROJECT_NAME} version ${VERSION} build ${BUILD}")
+else()
+    message("${CMAKE_PROJECT_NAME} version ${VERSION}")
+endif()
+message("
 Install options:
     prefix:     ${CMAKE_INSTALL_PREFIX}
     includes:   ${CMAKE_INSTALL_FULL_INCLUDEDIR}/${INSTALL_SUFFIX}

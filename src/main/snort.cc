@@ -83,7 +83,6 @@
 #include "control_mgmt.h"
 #endif
 
-#include "build.h"
 #include "snort_config.h"
 #include "thread_config.h"
 
@@ -127,7 +126,11 @@ void Snort::init(int argc, char** argv)
     SnortConfig::set_conf(snort_cmd_line_conf);
 
     LogMessage("--------------------------------------------------\n");
+#ifdef BUILD
     LogMessage("%s  Snort++ %s-%s\n", get_prompt(), VERSION, BUILD);
+#else
+    LogMessage("%s  Snort++ %s\n", get_prompt(), VERSION);
+#endif
     LogMessage("--------------------------------------------------\n");
 
 #ifdef PIGLET

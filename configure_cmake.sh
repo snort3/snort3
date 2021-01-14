@@ -116,15 +116,17 @@ Optional Packages:
     --with-uuid-libraries=DIR
                             libuuid library directory
 
-Some influential environment variables:
-    SIGNAL_SNORT_RELOAD=<value>
-                set the SIGNAL_SNORT_RELOAD value
-    SIGNAL_SNORT_DUMP_STATS<value>
-                set the SIGNAL_SNORT_DUMP_STATS value
-    SIGNAL_SNORT_ROTATE_STATS<value>
-                set the SIGNAL_SNORT_ROTATE_STATS value
-    SIGNAL_SNORT_READ_ATTR_TBL<value>
-                set the SIGNAL_SNORT_READ_ATTR_TBL value
+Some influential variable definitions:
+    SIGNAL_SNORT_RELOAD=<int>
+                            override the signal used to reload configuration (default: SIGHUP)
+    SIGNAL_SNORT_DUMP_STATS=<int>
+                            override the signal used to dump run-time statistics (default: SIGUSR1)
+    SIGNAL_SNORT_ROTATE_STATS=<int>
+                            override the signal used to force rotation of stats files (default: SIGUSR2)
+    SIGNAL_SNORT_READ_ATTR_TBL=<int>
+                            override the signal used to reload the host attributes table (default: SIGURG)
+    SNORT_BUILD_NUMBER=<int>
+                            define a build number for this build of Snort
 "
 
 sourcedir="$( cd "$( dirname "$0" )" && pwd )"
@@ -436,6 +438,9 @@ while [ $# -ne 0 ]; do
             ;;
         SIGNAL_SNORT_READ_ATTR_TBL=*)
             append_cache_entry SIGNAL_SNORT_READ_ATTR_TBL STRING $optarg
+            ;;
+        SNORT_BUILD_NUMBER=*)
+            append_cache_entry VERSION_BUILD STRING $optarg
             ;;
         *)
             echo "Invalid option '$1'.  Try $0 --help to see available options."

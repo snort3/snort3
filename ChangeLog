@@ -1,3 +1,29 @@
+2021/01/13 - 3.1.0.0
+
+-- appid: Store stats in map
+-- appid: Tear down third-party when appid gets disabled
+-- build: Add support for version sublevel and build via CMake
+-- dce_rpc: Handle Flow from File inspection
+-- host_cache: Add command to output host_cache usage, pegs, and memcap
+-- http2_inspect: Add total_bytes peg to track HTTP/2 data bytes inspected
+-- http_inspect: Abort on HTTP/2 connection preface
+-- http_inspect: Add total_bytes peg to track HTTP data bytes inspected
+-- http_inspect: Alert on truncated chunked and content-length message bodies
+-- http_inspect: Support stretch for Http2
+-- log: Reuse TextLog buffer for a large data
+   Thanks to Chris White for reporting the issue.
+-- packet_io: IDS mode should not give blacklist verdict for Intrusion event
+-- rna: Fix version, vendor and user string comparison at maximum length
+-- rna: Perform appropriate filter check based on the event type
+-- rna: Revert rna performance optimizations
+-- rpc_decode: Implement adjust_to_fit for RPC splitter
+-- stream_tcp: Delete redundant calls to check if the tcp packet contains a data payload
+-- stream_tcp: Fix issues causing overrun of the pdu reassembly buffer, make splitters
+   authoritative of size of the reassembled pdu
+-- stream_tcp: On midstream pickup, when first packet is a data segment, set flag on talker tracker
+   to reinit seglist base seg on first received data packet
+-- stream_tcp: Remove obsolete flush_data_ready() function
+
 2020/12/20 - 3.0.3 build 6
 
 -- active: Fix falling back on using raw IP for active responses when no device is specified

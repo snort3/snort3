@@ -58,7 +58,6 @@ extern "C" {
 #include <random>
 
 #include "log/messages.h"
-#include "main/build.h"
 #include "main/snort_config.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/packet.h"   // For NUM_IP_PROTOS
@@ -75,7 +74,11 @@ using namespace snort;
  * Store interesting data in memory that would not otherwise be visible
  * in a CORE(5) file
  ***************************************************************************/
-#define SNORT_VERSION_STRING ("### Snort Version " VERSION " Build " BUILD "\n")
+#ifdef BUILD
+    #define SNORT_VERSION_STRING ("### Snort Version " VERSION " Build " BUILD "\n")
+#else
+    #define SNORT_VERSION_STRING ("### Snort Version " VERSION "\n")
+#endif
 #define SNORT_VERSION_STRLEN sizeof(SNORT_VERSION_STRING)
 char __snort_version_string[SNORT_VERSION_STRLEN];
 
@@ -96,7 +99,11 @@ int DisplayBanner()
 
     LogMessage("\n");
     LogMessage("   ,,_     -*> Snort++ <*-\n");
+#ifdef BUILD
     LogMessage("  o\"  )~   Version %s (Build %s)\n", VERSION, BUILD);
+#else
+    LogMessage("  o\"  )~   Version %s\n", VERSION);
+#endif
     LogMessage("   ''''    By Martin Roesch & The Snort Team\n");
     LogMessage("           http://snort.org/contact#team\n");
     LogMessage("           Copyright (C) 2014-2020 Cisco and/or its affiliates."
