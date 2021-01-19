@@ -350,21 +350,38 @@ bool FileFlows::file_process(Packet* p, const uint8_t* file_data, int data_size,
     return context->process(p, file_data, data_size, position, file_policy);
 }
 
-void FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size, uint64_t file_id)
+/*
+ * Return:
+ *    true: continue processing this file
+ *    false: ignore this file
+ */
+bool FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size, uint64_t file_id,
+    uint64_t multi_file_processing_id)
 {
     FileContext* context;
     if (file_id)
-        context = get_file_context(file_id, false);
+        context = get_file_context(file_id, false, multi_file_processing_id);
     else
         context = get_current_file_context();
     if ( !context )
-        return;
+        return false;
 
     if ( !context->is_file_name_set() )
     {
         context->set_file_name((const char*)fname, name_size);
         context->log_file_event(flow, file_policy);
     }
+
+    if ((context->get_processed_bytes() == (uint64_t)FileService::get_max_file_depth()) or
+        ((context->get_file_type() != SNORT_FILE_TYPE_CONTINUE) and
+            (!context->is_file_capture_enabled()) and (!context->is_file_signature_enabled())))
+    {
+        context->processing_complete = true;
+        // this can be called by inspector also if needed instead of here based on return value
+        remove_processed_file_context(multi_file_processing_id);
+        return false;
+    }
+    return true;
 }
 
 void FileFlows::add_pending_file(uint64_t file_id)

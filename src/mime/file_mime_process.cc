@@ -836,7 +836,7 @@ uint64_t MimeSession::get_file_cache_file_id()
 // file counter
 uint64_t MimeSession::get_multiprocessing_file_id()
 {
-    if (!current_multiprocessing_file_id)
+    if (!current_multiprocessing_file_id and session_base_file_id)
     {
         const int data_len = sizeof(session_base_file_id) + sizeof(file_counter);
         uint8_t data[data_len];
@@ -872,7 +872,8 @@ void MimeSession::mime_file_process(Packet* p, const uint8_t* data, int data_siz
         file_process_offset += data_size;
         if (continue_inspecting_file and (isFileStart(position)) && log_state)
         {
-            file_flows->set_file_name((const uint8_t*)filename.c_str(), filename.length());
+            continue_inspecting_file = file_flows->set_file_name((const uint8_t*)filename.c_str(),
+                filename.length(), 0, get_multiprocessing_file_id());
             filename.clear();
         }
     }

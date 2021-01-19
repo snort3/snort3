@@ -277,9 +277,10 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
 
         const uint64_t file_index = get_header(source_id)->get_file_cache_index();
 
-        if (file_flows->file_process(p, file_index, file_data.start(), fp_length,
-            session_data->file_octets[source_id], dir,
-            get_header(source_id)->get_multi_file_processing_id(), file_position))
+        bool continue_processing_file = file_flows->file_process(p, file_index, file_data.start(),
+            fp_length, session_data->file_octets[source_id], dir,
+            get_header(source_id)->get_multi_file_processing_id(), file_position);
+        if (continue_processing_file)
         {
             session_data->file_depth_remaining[source_id] -= fp_length;
 
@@ -296,7 +297,9 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
                             get_content_disposition_filename();
                         if (cd_filename.length() > 0)
                         {
-                            file_flows->set_file_name(cd_filename.start(), cd_filename.length());
+                            continue_processing_file = file_flows->set_file_name(
+                                cd_filename.start(), cd_filename.length(), 0, 
+                                get_header(source_id)->get_multi_file_processing_id());
                             has_cd_filename = true;
                         }
                     }
@@ -305,14 +308,15 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
                         const Field& transaction_uri = request->get_uri();
                         if (transaction_uri.length() > 0)
                         {
-                            file_flows->set_file_name(transaction_uri.start(),
-                                transaction_uri.length());
+                            continue_processing_file = file_flows->set_file_name(
+                                transaction_uri.start(), transaction_uri.length(), 0,
+                                get_header(source_id)->get_multi_file_processing_id());
                         }
                     }
                 }
             }
         }
-        else
+        if (!continue_processing_file)
         {
             // file processing doesn't want any more data
             session_data->file_depth_remaining[source_id] = 0;

@@ -82,7 +82,8 @@ public:
 
     uint64_t get_new_file_instance();
 
-    void set_file_name(const uint8_t* fname, uint32_t name_size, uint64_t file_id=0);
+    bool set_file_name(const uint8_t* fname, uint32_t name_size, uint64_t file_id=0,
+        uint64_t multi_file_processing_id=0);
 
     void set_sig_gen_state( bool enable )
     {
