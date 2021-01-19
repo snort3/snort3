@@ -358,26 +358,20 @@ void InspectorManager::dump_buffers()
     }
 }
 
-#if 0
-static void dump_refs(PHList& trash)
+static void purge_trash(const PHList& trash)
 {
     for ( auto* p : trash )
-    {
-        if ( !p->is_inactive() )
-            printf("%s = %u\n", p->get_api()->base.name, p->get_ref(0));
-    }
+        if ( p->is_inactive() )
+            InspectorManager::free_inspector(p);
+        else
+            LogMessage("Still-referenced inspector found in the trash: '%s'.\n",
+                p->get_api()->base.name);
 }
-
-#endif
 
 void InspectorManager::release_plugins()
 {
-    empty_trash();
-
-#if 0
-    dump_refs(s_trash);
-    dump_refs(s_trash2);
-#endif
+    purge_trash(s_trash);
+    purge_trash(s_trash2);
 
     for ( auto* p : s_handlers )
     {
