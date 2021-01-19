@@ -141,11 +141,14 @@ particular. Often used with the OPTIONS method. This is not normalized.
 
 2. Authority: any URI used with the CONNECT method. The entire URI is treated as an authority.
 
-3. Absolute Path: a URI that begins with a slash. Consists of only an absolute path with no scheme
-or authority present.
+3. Origin: a URI that begins with a slash. Consists of only an absolute path with no scheme or
+authority present.
 
-4. Absolute URI: a URI which includes a scheme and a host as well as an absolute path. E.g.
+4. Absolute: a URI which includes a scheme and a host as well as an absolute path. E.g.
 http://example.com/path/to/resource.
+
+In addition there are malformed URIs that don't meet any of the four types. These are protocol
+errors and will trigger an alert. Because their format is unrecognized they are not normalized.
 
 Step 2: Decompose the URI into its up to six constituent pieces: scheme, host, port, path, query,
 and fragment.
@@ -159,9 +162,10 @@ will only match the query portion of the URI.
 
 Step 3: Normalize the individual pieces.
 
-The scheme and port are not normalized. The other four pieces are normalized in a fashion similar
-to 2.X with an important exception. Path-related normalizations such as eliminating directory
-traversals and squeezing out extra slashes are only done for the path.
+The port is not normalized. The scheme is normalized to lower case. The other four pieces are
+normalized in a fashion similar to 2.X with an important exception. Path-related normalizations
+such as eliminating directory traversals and squeezing out extra slashes are only done for the
+path.
 
 The normalized URI pieces can be accessed via rules. For example: http_uri: path; content:
 “foo/bar”.

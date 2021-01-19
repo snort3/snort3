@@ -50,6 +50,7 @@ public:
     const Field& get_query() { return query; }
     const Field& get_fragment() { return fragment; }
 
+    const Field& get_norm_scheme();
     const Field& get_norm_host();
     const Field& get_norm_path() { return path_norm; }
     const Field& get_norm_query() { return query_norm; }
@@ -68,6 +69,7 @@ private:
     Field query;
     Field fragment;
 
+    Field scheme_norm;
     Field host_norm;
     Field path_norm;
     Field query_norm;

@@ -500,6 +500,34 @@ const bool HttpEnums::token_char[256] =
     false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
 };
 
+// Characters allowed in the scheme portion of a URI: 0-9, a-z, A-Z, plus, minus, and period.
+const bool HttpEnums::scheme_char[256] =
+{
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false,  true, false,  true,  true, false,
+     true,  true,  true,  true,  true,  true,  true,  true,  true,  true, false, false, false, false, false, false,
+
+    false,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+     true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true, false, false, false, false, false,
+
+    false,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+     true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+};
+
 const bool HttpEnums::is_sp_tab[256] =
 {
     false, false, false, false, false, false, false, false, false,  true, false, false, false, false, false, false,

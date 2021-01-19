@@ -99,7 +99,7 @@ enum MethodId {
 
 // URI formats
 enum UriType { URI__NOT_COMPUTE=-14, URI__PROBLEMATIC=-12, URI_ASTERISK = 2, URI_AUTHORITY,
-    URI_ABSPATH, URI_ABSOLUTE };
+    URI_ORIGIN, URI_ABSOLUTE };
 
 // Body compression types
 enum CompressId { CMP_NONE=2, CMP_GZIP, CMP_DEFLATE };
@@ -150,7 +150,7 @@ enum Infraction
     INF_URI_PERCENT_UTF8_3B,
     INF_URI_PERCENT_UNRESERVED,
     INF_URI_PERCENT_UTF8_2B,
-    INF_NOT_USED_1,
+    INF_URI_NEED_NORM_SCHEME,
     INF_URI_PERCENT_OTHER,
     INF_URI_BAD_CHAR,
     INF_URI_8BIT_CHAR,
@@ -381,6 +381,7 @@ enum EventSid
 
 extern const int8_t as_hex[256];
 extern const bool token_char[256];
+extern const bool scheme_char[256];
 extern const bool is_sp_tab[256];
 extern const bool is_cr_lf[256];
 extern const bool is_sp_tab_lf[256];

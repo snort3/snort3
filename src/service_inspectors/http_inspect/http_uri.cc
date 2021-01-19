@@ -50,10 +50,10 @@ void HttpUri::parse_uri()
         authority.set(uri);
         abs_path.set(STAT_NOT_PRESENT);
     }
-    // Absolute path is a path but no scheme or authority
+    // Origin form is a path but no scheme or authority
     else if (uri.start()[0] == '/')
     {
-        uri_type = URI_ABSPATH;
+        uri_type = URI_ORIGIN;
         scheme.set(STAT_NOT_PRESENT);
         authority.set(STAT_NOT_PRESENT);
         abs_path.set(uri);
@@ -61,12 +61,18 @@ void HttpUri::parse_uri()
     // Absolute URI includes scheme, authority, and path
     else
     {
+        // <scheme>://<authority>/<path>
         // Find the "://" and then the "/"
         int j;
         int k;
-        for (j = 0; (j < uri.length()) && (uri.start()[j] != ':'); j++);
+        for (j = 0; (j < uri.length()) && (uri.start()[j] != ':') && scheme_char[uri.start()[j]];
+            j++);
         for (k = j+3; (k < uri.length()) && (uri.start()[k] != '/'); k++);
-        if ((k < uri.length()) && (uri.start()[j+1] == '/') && (uri.start()[j+2] == '/'))
+
+        // Verify that 1) we found ://, 2) we found /, 3) scheme begins with a letter, and
+        // 4) scheme consists of legal characters (RFC 3986 3.1)
+        if ((k < uri.length()) && (uri.start()[j] == ':') && (uri.start()[j+1] == '/') &&
+            (uri.start()[j+2] == '/') && (uri.start()[0] >= 'A'))
         {
             uri_type = URI_ABSOLUTE;
             scheme.set(j, uri.start());
@@ -233,7 +239,7 @@ void HttpUri::normalize()
             classic_norm.set(uri);
             return;
         }
-        case URI_ABSPATH:
+        case URI_ORIGIN:
         case URI_ABSOLUTE:
         {
             if ((path.length() > 0) &&
@@ -340,6 +346,32 @@ void HttpUri::normalize()
         default:
             return;
     }
+}
+
+const Field& HttpUri::get_norm_scheme()
+{
+    if (scheme_norm.length() != STAT_NOT_COMPUTE)
+        return scheme_norm;
+
+    // Normalize upper case to lower case
+    int k = 0;
+    for (; (k < scheme.length()) && ((scheme.start()[k] < 'A') || (scheme.start()[k] > 'Z')); k++);
+
+    if (k < scheme.length())
+    {
+        uint8_t* const buf = new uint8_t[scheme.length()];
+        *infractions += INF_URI_NEED_NORM_SCHEME;
+        for (int i=0; i < scheme.length(); i++)
+        {
+            buf[i] = scheme.start()[i] +
+                (((scheme.start()[i] < 'A') || (scheme.start()[i] > 'Z')) ? 0 : 'a' - 'A');
+        }
+        scheme_norm.set(scheme.length(), buf, true);
+    }
+    else
+        scheme_norm.set(scheme);
+
+    return scheme_norm;
 }
 
 const Field& HttpUri::get_norm_host()

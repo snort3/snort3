@@ -325,6 +325,7 @@ void HttpMsgRequest::print_section(FILE* output)
         uri->get_uri().print(output, "URI");
         fprintf(output, "URI Type: %d\n", uri->get_uri_type());
         uri->get_scheme().print(output, "Scheme");
+        uri->get_norm_scheme().print(output, "Normalized Scheme");
         uri->get_authority().print(output, "Authority");
         uri->get_host().print(output, "Host Name");
         uri->get_norm_host().print(output, "Normalized Host Name");

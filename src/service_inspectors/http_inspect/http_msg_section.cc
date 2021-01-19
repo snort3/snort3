@@ -356,7 +356,7 @@ const Field& HttpMsgSection::get_classic_buffer(Cursor& c, const HttpBufferInfo&
         switch ((UriComponent)buf.sub_id)
         {
         case UC_SCHEME:
-            return uri->get_scheme();
+            return raw ? uri->get_scheme() : uri->get_norm_scheme();
         case UC_HOST:
             return raw ? uri->get_host() : uri->get_norm_host();
         case UC_PORT:
