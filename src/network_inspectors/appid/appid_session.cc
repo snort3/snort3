@@ -1061,7 +1061,7 @@ void AppIdSession::set_tp_payload_app_id(const Packet& p, AppidSessionDirection 
 void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packet& p,
     bool is_http2, uint32_t http2_stream_index)
 {
-    if (!api.stored_in_stash and change_bits.any())
+    if (!api.stored_in_stash)
     {
         assert(p.flow and p.flow->stash);
         p.flow->stash->store(STASH_APPID_DATA, &api, false);
