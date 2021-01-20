@@ -152,13 +152,15 @@ protected:
     // decouples the current_size variable from the actual size in memory,
     // so these functions should only be called when something is actually
     // added or removed from memory (e.g. in find_else_insert, remove, etc).
-    virtual void increase_size()
+    virtual void increase_size(ValueType* value_ptr=nullptr)
     {
+        UNUSED(value_ptr);
         current_size++;
     }
 
-    virtual void decrease_size()
+    virtual void decrease_size(ValueType* value_ptr=nullptr)
     {
+        UNUSED(value_ptr);
         current_size--;
     }
 
@@ -172,7 +174,7 @@ protected:
         {
             list_iter = --list.end();
             data.emplace_back(list_iter->second); // increase reference count
-            decrease_size();
+            decrease_size(list_iter->second.get());
             map.erase(list_iter->first);
             list.erase(list_iter);
             ++stats.alloc_prunes;
@@ -258,7 +260,7 @@ find_else_create(const Key& key, bool* new_data)
 
     //  Add key/data pair to front of list.
     list.emplace_front(std::make_pair(key, data));
-    increase_size();
+    increase_size(data.get());
 
     //  Add list iterator for the new entry to map.
     map[key] = list.begin();
@@ -284,8 +286,10 @@ find_else_insert(const Key& key, std::shared_ptr<Value>& data, bool replace)
         if (replace)
         {
             // Explicitly calling the reset so its more clear that destructor could be called for the object
+            decrease_size(map_iter->second->second.get());
             map_iter->second->second.reset();
             map_iter->second->second = data;
+            increase_size(map_iter->second->second.get());
             stats.replaced++;
         }
         list.splice(list.begin(), list, map_iter->second); // update LRU
@@ -297,7 +301,7 @@ find_else_insert(const Key& key, std::shared_ptr<Value>& data, bool replace)
 
     //  Add key/data pair to front of list.
     list.emplace_front(std::make_pair(key, data));
-    increase_size();
+    increase_size(data.get());
 
     //  Add list iterator for the new entry to map.
     map[key] = list.begin();
@@ -350,7 +354,7 @@ bool LruCacheShared<Key, Value, Hash, Eq>::remove(const Key& key)
 
     data = map_iter->second->second;
 
-    decrease_size();
+    decrease_size(data.get());
     list.erase(map_iter->second);
     map.erase(map_iter);
     stats.removes++;
@@ -378,7 +382,7 @@ bool LruCacheShared<Key, Value, Hash, Eq>::remove(const Key& key, std::shared_pt
 
     data = map_iter->second->second;
 
-    decrease_size();
+    decrease_size(data.get());
     list.erase(map_iter->second);
     map.erase(map_iter);
     stats.removes++;

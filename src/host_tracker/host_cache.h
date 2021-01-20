@@ -209,13 +209,15 @@ private:
         }
     }
 
-    void increase_size() override
+    void increase_size(ValueType* value_ptr=nullptr) override
     {
+        UNUSED(value_ptr);
         current_size += mem_chunk;
     }
 
-    void decrease_size() override
+    void decrease_size(ValueType* value_ptr=nullptr) override
     {
+        UNUSED(value_ptr);
         assert( current_size >= mem_chunk );
         current_size -= mem_chunk;
     }
