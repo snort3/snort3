@@ -117,7 +117,7 @@ public:
 
 static InjectionReturnStatus translation_status = INJECTION_SUCCESS;
 InjectionReturnStatus PayloadInjector::get_http2_payload(InjectionControl,
-    uint8_t*& http2_payload, uint32_t& payload_len)
+    uint8_t*& http2_payload, uint32_t& payload_len, bool)
 {
     if (translation_status == INJECTION_SUCCESS)
     {

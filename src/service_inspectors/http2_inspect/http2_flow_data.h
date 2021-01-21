@@ -113,6 +113,14 @@ public:
     // frame into the S2C direction of an HTTP/2 flow.
     bool is_mid_frame() const;
 
+    // Used by payload injection to determine whether we should inject S2C settings frame 
+    // before injecting payload
+    bool was_server_settings_received() const
+    { return server_settings_frame_received; }
+
+    void set_server_settings_received()
+    { server_settings_frame_received = true; }
+
 #ifdef UNIT_TEST
     void set_mid_frame(bool); // Not implemented outside of unit tests
 #endif
@@ -140,6 +148,7 @@ protected:
     // them is the stream that http_inspect is actually processing at the moment.
     uint32_t stream_in_hi = Http2Enums::NO_STREAM_ID;
     HttpMsgSection* hi_msg_section = nullptr;
+    bool server_settings_frame_received = false;
 
     // Reassemble() data to eval()
     uint8_t lead_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH];

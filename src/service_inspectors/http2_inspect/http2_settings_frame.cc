@@ -61,6 +61,9 @@ Http2SettingsFrame::Http2SettingsFrame(const uint8_t* header_buffer, const uint3
     if (ACK & get_flags())
         return;
 
+    if (src_id == HttpCommon::SRC_SERVER && !ssn_data->was_server_settings_received())
+        ssn_data->set_server_settings_received();
+
     parse_settings_frame();
 }
 
@@ -94,9 +97,7 @@ bool Http2SettingsFrame::sanity_check()
     // FIXIT-E this next check should possibly be moved to valid_sequence()
     if (get_stream_id() != 0)
         bad_frame = true;
-    else if (!ack and ((data.length() <= 0) or ((data.length() % 6) != 0)))
-        bad_frame = true;
-    else if (ack and data.length() > 0)
+    else if (((data.length() % 6) != 0) or (ack and data.length() != 0))
         bad_frame = true;
 
     return !(bad_frame);

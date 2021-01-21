@@ -78,7 +78,8 @@ InjectionReturnStatus PayloadInjector::inject_http2_payload(Packet* p,
         {
             uint8_t* http2_payload;
             uint32_t payload_len;
-            status = get_http2_payload(control, http2_payload, payload_len);
+            const bool send_settings = (session_data->was_server_settings_received() == false);
+            status = get_http2_payload(control, http2_payload, payload_len, send_settings);
             if (status == INJECTION_SUCCESS)
             {
                 p->active->send_data(p, df, http2_payload, payload_len);

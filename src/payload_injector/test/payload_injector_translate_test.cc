@@ -46,7 +46,7 @@ TEST(payload_injector_translate_test, basic_hdr_translation)
     control.stream_id = 1;
     control.http_page = (uint8_t*)http_page;
     control.http_page_len = strlen(http_page);
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
     CHECK(status == INJECTION_SUCCESS);
 
     uint8_t out[] =
@@ -78,7 +78,7 @@ TEST(payload_injector_translate_test, basic_hdr_translation2)
     control.stream_id = 1;
     control.http_page = (uint8_t*)http_page;
     control.http_page_len = strlen(http_page);
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == INJECTION_SUCCESS);
 
@@ -107,7 +107,7 @@ TEST(payload_injector_translate_test, basic_hdr_translation3)
     control.stream_id = 1;
     control.http_page = (uint8_t*)http_page;
     control.http_page_len = strlen(http_page);
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == INJECTION_SUCCESS);
 
@@ -136,7 +136,7 @@ TEST(payload_injector_translate_test, mix_n_and_rn)
     control.stream_id = 1;
     control.http_page = (uint8_t*)http_page;
     control.http_page_len = strlen(http_page);
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == INJECTION_SUCCESS);
 
@@ -164,7 +164,7 @@ TEST(payload_injector_translate_test, only_body)
     control.stream_id = 1;
     control.http_page = (uint8_t*)http_page;
     control.http_page_len = strlen(http_page);
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == ERR_PAGE_TRANSLATION);
 }
@@ -178,7 +178,7 @@ TEST(payload_injector_translate_test, no_body)
     control.stream_id = 1;
     control.http_page = (uint8_t*)http_page;
     control.http_page_len = strlen(http_page);
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == ERR_PAGE_TRANSLATION);
 }
@@ -192,7 +192,7 @@ TEST(payload_injector_translate_test, missing_last_rn)
     control.stream_id = 1;
     control.http_page = (uint8_t*)http_page;
     control.http_page_len = strlen(http_page);
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == ERR_PAGE_TRANSLATION);
 }
@@ -206,7 +206,7 @@ TEST(payload_injector_translate_test, missing_space_after_colon)
     control.stream_id = 1;
     control.http_page = (uint8_t*)http_page;
     control.http_page_len = strlen(http_page);
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == ERR_PAGE_TRANSLATION);
 }
@@ -220,7 +220,7 @@ TEST(payload_injector_translate_test, extra_space_before_colon)
     control.stream_id = 1;
     control.http_page = (uint8_t*)http_page;
     control.http_page_len = strlen(http_page);
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == ERR_PAGE_TRANSLATION);
 }
@@ -234,7 +234,7 @@ TEST(payload_injector_translate_test, unsupported_status)
     control.stream_id = 1;
     control.http_page = (uint8_t*)http_page;
     control.http_page_len = strlen(http_page);
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == ERR_PAGE_TRANSLATION);
 }
@@ -248,7 +248,7 @@ TEST(payload_injector_translate_test, unsupported_hdr)
     control.stream_id = 1;
     control.http_page = (uint8_t*)http_page;
     control.http_page_len = strlen(http_page);
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == ERR_PAGE_TRANSLATION);
 }
@@ -261,7 +261,7 @@ TEST(payload_injector_translate_test, hdr_ends_wo_value)
     control.stream_id = 1;
     control.http_page = (uint8_t*)http_page;
     control.http_page_len = strlen(http_page);
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == ERR_PAGE_TRANSLATION);
 }
@@ -274,7 +274,7 @@ TEST(payload_injector_translate_test, missing_value)
     control.stream_id = 1;
     control.http_page = (uint8_t*)http_page;
     control.http_page_len = strlen(http_page);
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == ERR_PAGE_TRANSLATION);
 }
@@ -292,7 +292,7 @@ TEST(payload_injector_translate_test, val_len1)
     control.stream_id = 1;
     control.http_page = http_page;
     control.http_page_len = size;
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == INJECTION_SUCCESS);
 
@@ -329,7 +329,7 @@ TEST(payload_injector_translate_test, val_len2)
     control.stream_id = 1;
     control.http_page = http_page;
     control.http_page_len = size;
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == INJECTION_SUCCESS);
     uint8_t out[] =
@@ -364,7 +364,7 @@ TEST(payload_injector_translate_test, val_len3)
     control.stream_id = 1;
     control.http_page = http_page;
     control.http_page_len = size;
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == INJECTION_SUCCESS);
 
@@ -440,7 +440,7 @@ TEST(payload_injector_translate_test, http2_hdr_is_max)
     control.http_page = http_page;
     control.http_page_len = size;
     control.stream_id = 0xf000;
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == INJECTION_SUCCESS);
     CHECK(payload_len == 2019);
@@ -472,7 +472,7 @@ TEST(payload_injector_translate_test, http2_hdr_too_big)
     control.stream_id = 1;
     control.http_page = http_page;
     control.http_page_len = size;
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == ERR_TRANSLATED_HDRS_SIZE);
 }
@@ -499,7 +499,7 @@ TEST(payload_injector_translate_test, http2_hdr_too_big3)
     control.stream_id = 1;
     control.http_page = http_page;
     control.http_page_len = size;
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == ERR_TRANSLATED_HDRS_SIZE);
 }
@@ -527,7 +527,7 @@ TEST(payload_injector_translate_test, http2_hdr_too_big4)
     control.stream_id = 1;
     control.http_page = http_page;
     control.http_page_len = size;
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == ERR_TRANSLATED_HDRS_SIZE);
 }
@@ -554,7 +554,7 @@ TEST(payload_injector_translate_test, http2_hdr_too_big5)
     control.stream_id = 1;
     control.http_page = http_page;
     control.http_page_len = size;
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
 
     CHECK(status == ERR_TRANSLATED_HDRS_SIZE);
 }
@@ -570,7 +570,7 @@ TEST(payload_injector_translate_test, payload_body_is_exactly_1_data_frame)
     control.stream_id = 1;
     control.http_page = http_page;
     control.http_page_len = size;
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
     CHECK(status == INJECTION_SUCCESS);
     // Headers frame header + status ok + data frame header
     uint8_t out[] = { 0, 0, 1, 1, 4, 0, 0, 0, 1, 0x88, 0, 0x40, 0, 0, 1, 0, 0, 0, 1 };
@@ -592,7 +592,7 @@ TEST(payload_injector_translate_test, payload_body_is_data_frame_plus_1)
     control.stream_id = 1;
     control.http_page = http_page;
     control.http_page_len = size;
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
     CHECK(status == INJECTION_SUCCESS);
     // Headers frame header + status ok + data frame header
     uint8_t out[] = { 0, 0, 1, 1, 4, 0, 0, 0, 1, 0x88, 0, 0x40, 0, 0, 0, 0, 0, 0, 1 };
@@ -611,7 +611,7 @@ TEST(payload_injector_translate_test, http_page_is_nullptr)
     InjectionControl control;
     control.http_page = nullptr;
     control.http_page_len = 1;
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
     CHECK(status == ERR_PAGE_TRANSLATION);
 }
 
@@ -622,7 +622,7 @@ TEST(payload_injector_translate_test, http_page_is_0_length)
     InjectionControl control;
     control.http_page = http_page;
     control.http_page_len = 0;
-    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len);
+    status = PayloadInjector::get_http2_payload(control, http2_payload, payload_len, false);
     CHECK(status == ERR_PAGE_TRANSLATION);
 }
 

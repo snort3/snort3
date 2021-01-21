@@ -52,6 +52,9 @@ static const char location[] = "Location: ";
 
 static const uint32_t max_hdr_size = 2000;
 
+// Empty settings frame
+static const uint8_t empty_settings_frame[] = { 0, 0, 0, FT_SETTINGS, 0, 0, 0, 0, 0 };
+
 static InjectionReturnStatus write_translation(uint8_t*& out, uint32_t& out_free_space,
     const uint8_t* translation, uint32_t size)
 {
@@ -245,7 +248,7 @@ static void write_frame_hdr(uint8_t*& out, uint32_t len, uint8_t type, uint8_t f
 }
 
 InjectionReturnStatus PayloadInjector::get_http2_payload(InjectionControl control,
-    uint8_t*& http2_payload, uint32_t& payload_len)
+    uint8_t*& http2_payload, uint32_t& payload_len, bool send_settings)
 {
     if (control.http_page == nullptr || control.http_page_len == 0)
         return ERR_PAGE_TRANSLATION;
@@ -263,9 +266,16 @@ InjectionReturnStatus PayloadInjector::get_http2_payload(InjectionControl contro
     if (body_len % (1<<14) != 0)
         num_data_frames++;
     payload_len = FRAME_HEADER_LENGTH*(num_data_frames + 1) + hdr_len + body_len;
+    if (send_settings)
+        payload_len += sizeof(empty_settings_frame);
     http2_payload = (uint8_t*)snort_alloc(payload_len);
 
     uint8_t* http2_payload_cur = http2_payload;
+    if (send_settings)
+    {
+        memcpy(http2_payload_cur, empty_settings_frame, sizeof(empty_settings_frame));
+        http2_payload_cur += sizeof(empty_settings_frame);
+    }
     write_frame_hdr(http2_payload_cur, hdr_len, FT_HEADERS, END_HEADERS, control.stream_id);
     memcpy(http2_payload_cur, http2_hdr, hdr_len);
     http2_payload_cur += hdr_len;

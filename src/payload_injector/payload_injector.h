@@ -60,17 +60,20 @@ public:
 
 private:
     static InjectionReturnStatus inject_http2_payload(snort::Packet* p, const
-         InjectionControl& control, snort::EncodeFlags df);
+        InjectionControl& control, snort::EncodeFlags df);
 
 #ifdef UNIT_TEST
 
 public:
 #endif
-    static InjectionReturnStatus get_http2_payload(InjectionControl control, uint8_t*& http2_payload, uint32_t& payload_len);
+    static InjectionReturnStatus get_http2_payload(InjectionControl control,
+        uint8_t*& http2_payload, uint32_t& payload_len, bool send_settings);
 };
 
 #ifdef UNIT_TEST
-InjectionReturnStatus write_7_bit_prefix_int(uint32_t val, uint8_t*& out, uint32_t& out_free_space);
+InjectionReturnStatus write_7_bit_prefix_int(uint32_t val, uint8_t*& out,
+    uint32_t& out_free_space);
 #endif
 
 #endif
+
