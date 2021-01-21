@@ -147,7 +147,7 @@ PHInstance::PHInstance(PHClass& p, SnortConfig* sc, Module* mod) : pp_class(p)
     if ( handler )
     {
         handler->set_api(&p.api);
-        handler->add_ref();
+        handler->add_global_ref();
 
         if ( p.api.service )
             handler->set_service(sc->proto_ref->add(p.api.service));
@@ -157,7 +157,7 @@ PHInstance::PHInstance(PHClass& p, SnortConfig* sc, Module* mod) : pp_class(p)
 PHInstance::~PHInstance()
 {
     if ( handler )
-        handler->rem_ref();
+        handler->rem_global_ref();
 }
 
 typedef vector<PHGlobal*> PHGlobalList;
@@ -534,7 +534,7 @@ void InspectorManager::clear_removed_inspectors(SnortConfig* sc)
 {
     FrameworkPolicy* fp = sc->policy_map->get_inspection_policy()->framework_policy;
     for ( auto* p : fp->removed_ilist )
-        p->handler->rem_ref();
+        p->handler->rem_global_ref();
     fp->removed_ilist.clear();
 }
 
@@ -549,7 +549,7 @@ void InspectorManager::tear_down_removed_inspectors(const SnortConfig* old, Snor
         if (!instance)
         {
             fp->removed_ilist.emplace_back(*it);
-            (*it)->handler->add_ref();
+            (*it)->handler->add_global_ref();
             (*it)->handler->tear_down(sc);
         }
     }
@@ -967,7 +967,7 @@ Inspector* InspectorManager::acquire(const char* key, bool dflt_only)
     if ( !pi )
         FatalError("unconfigured inspector: '%s'.\n", key);
     else
-        pi->add_ref();
+        pi->add_global_ref();
 
     return pi;
 }
@@ -975,7 +975,7 @@ Inspector* InspectorManager::acquire(const char* key, bool dflt_only)
 void InspectorManager::release(Inspector* pi)
 {
     assert(pi);
-    pi->rem_ref();
+    pi->rem_global_ref();
 }
 
 bool InspectorManager::configure(SnortConfig* sc, bool cloned)

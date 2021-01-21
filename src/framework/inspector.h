@@ -110,6 +110,10 @@ public:
     void add_ref();
     void rem_ref();
 
+    // Reference counts for the inspector that are not thread specific
+    void add_global_ref();
+    void rem_global_ref();
+
     bool is_inactive();
 
     void set_service(SnortProtocolId snort_protocol_id_param)

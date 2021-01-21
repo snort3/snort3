@@ -116,6 +116,12 @@ void Inspector::add_ref()
 void Inspector::rem_ref()
 { --ref_count[slot]; }
 
+void Inspector::add_global_ref()
+{ ++ref_count[0]; }
+
+void Inspector::rem_global_ref()
+{ --ref_count[0]; }
+
 static const char* InspectorTypeNames[IT_MAX] =
 {
     "passive",
