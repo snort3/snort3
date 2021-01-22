@@ -364,7 +364,7 @@ static void purge_trash(const PHList& trash)
         if ( p->is_inactive() )
             InspectorManager::free_inspector(p);
         else
-            LogMessage("Still-referenced inspector found in the trash: '%s'.\n",
+            WarningMessage("Inspector found in the trash is still in use: '%s'.\n",
                 p->get_api()->base.name);
 }
 
