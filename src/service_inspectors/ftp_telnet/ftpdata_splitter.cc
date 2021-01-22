@@ -39,29 +39,18 @@ void FtpDataSplitter::restart_scan()
     bytes = segs = 0;
 }
 
-static void set_ftp_flush_flag(Flow* flow)
-{
-    FtpDataFlowData* fdfd = (FtpDataFlowData*)flow->get_flow_data(FtpDataFlowData::inspector_id);
-    if ( fdfd )
-        fdfd->session.packet_flags |= FTPDATA_FLG_FLUSH;
-}
-
 StreamSplitter::Status FtpDataSplitter::scan(Packet* pkt, const uint8_t*, uint32_t len,
     uint32_t, uint32_t* fp)
 {
     Flow* flow = pkt->flow;
     assert(flow);
-    FtpDataFlowData* fdfd = (FtpDataFlowData*)flow->get_flow_data(FtpDataFlowData::inspector_id);
 
-    if (!fdfd)
-        return SEARCH;
+    FtpDataFlowData* fdfd = nullptr;
+
     if ( len )
     {
         if(expected_seg_size == 0)
         {
-            // FIXIT-M: Can we do better than this guess if no MSS is specified?
-            // Malware detection won't work if expected_seg_size doesn't match
-            // the payload lengths on packets before the last packet.
             expected_seg_size = 1448;
 
             if(flow->session and flow->pkt_type == PktType::TCP)
@@ -72,43 +61,40 @@ StreamSplitter::Status FtpDataSplitter::scan(Packet* pkt, const uint8_t*, uint32
                     expected_seg_size -= tcp_options_len;
             }
         }
-
+        segs++;
+        bytes += len;
         if ( len != expected_seg_size )
         {
+            fdfd = (FtpDataFlowData*)flow->get_flow_data(FtpDataFlowData::inspector_id);
+            if (!fdfd)
+                return SEARCH;
+
             ftstats.total_packets_mss_changed++;
             fdfd->session.mss_changed = true;
-            if (fdfd->session.bytes_seen == 0)
-            {
-                // Segmented pkt is  smaller than expected_seg_size
-                set_ftp_flush_flag(flow);
-            }
-            else if (pkt->ptrs.tcph and !pkt->ptrs.tcph->is_fin())
-            {
-                Active* act = pkt->active;
-                // add packet to retry queue to consider this is not end of ftp flow
-                if (!(pkt->flow->flags.trigger_detained_packet_event))
-                    act->set_delayed_action(Active::ACT_RETRY, true);
-            }
             expected_seg_size = len;
-            restart_scan();
-            *fp = len;
-	        fdfd->session.bytes_seen += len;
-            return FLUSH;
-        }
-        else
-        {
-            segs++;
-            bytes += len;
-        }
-        fdfd->session.bytes_seen += len;
 
-        if ((segs >= 2 and bytes >= min) or (pkt->ptrs.tcph and pkt->ptrs.tcph->is_fin()))
-        {
-            // Either FIN or smaller size do FLUSH to continue inspection
-            restart_scan();
-            *fp = len;
-            return FLUSH;
+            if (pkt->ptrs.tcph and !pkt->ptrs.tcph->is_fin())
+            {
+                // set flag for signature calculation in case this is the last packet
+                fdfd->session.packet_flags |= FTPDATA_FLG_FLUSH;
+                pkt->active->hold_packet(pkt);
+                return SEARCH;
+            }
         }
+    }
+
+    if ((segs >= 2 and bytes >= min) or (pkt->ptrs.tcph and pkt->ptrs.tcph->is_fin()))
+    {
+        fdfd = (FtpDataFlowData*)flow->get_flow_data(FtpDataFlowData::inspector_id);
+        if (!fdfd)
+            return SEARCH;
+
+        restart_scan();
+        *fp = len;
+        // avoid unnecessary signature calc by clearing the flag set by detained packet
+        if (fdfd->session.packet_flags & FTPDATA_FLG_FLUSH)
+            fdfd->session.packet_flags &= ~FTPDATA_FLG_FLUSH; 
+        return FLUSH;
     }
 
     return SEARCH;

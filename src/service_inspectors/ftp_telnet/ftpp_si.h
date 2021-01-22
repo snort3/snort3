@@ -212,12 +212,10 @@ struct FTP_DATA_SESSION
     FTP_TELNET_SESSION ft_ssn;
     snort::FlowKey ftp_key;
     char* filename;
-    uint32_t eof_seq;
     size_t path_hash;
     int data_chan;
     int file_xfer_info;
     FilePosition position;
-    uint32_t bytes_seen;
     unsigned char mode;
     unsigned char packet_flags;
     bool direction;
@@ -235,7 +233,6 @@ public:
 
     void handle_expected(snort::Packet*) override;
     void handle_eof(snort::Packet*) override;
-    void handle_retransmit(snort::Packet*) override;
     size_t size_of() override
     { return sizeof(*this); }
 
