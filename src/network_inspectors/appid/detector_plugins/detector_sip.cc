@@ -318,9 +318,13 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
     if (!flow)
         return;
 
-    SipEvent& sip_event = (SipEvent&)event;
     AppIdSession* asd = appid_api.get_appid_session(*flow);
+    // Skip for sessions using old odp context after odp reload
+    if (asd and (!pkt_thread_odp_ctxt or
+        (asd->get_odp_ctxt_version() != pkt_thread_odp_ctxt->get_version())))
+        return;
 
+    SipEvent& sip_event = (SipEvent&)event;
     const Packet* p = sip_event.get_packet();
     assert(p);
     if ( !asd )
