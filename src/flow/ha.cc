@@ -445,6 +445,23 @@ static Flow* consume_ha_update_message(HAMessage& msg, const FlowKey& key, Packe
     if( p && no_flow_found && flow && flow->session )
     {
         flow->session->setup(p);
+        flow->set_direction(p);
+        flow->set_client_initiate(p);
+
+        if (p->is_from_client())
+        {
+            flow->client_intf = p->pkth->ingress_index;
+            flow->server_intf = p->pkth->egress_index;
+            flow->client_group = p->pkth->ingress_group;
+            flow->server_group = p->pkth->egress_group;
+        }
+        else
+        {
+            flow->client_intf = p->pkth->egress_index;
+            flow->server_intf = p->pkth->ingress_index;
+            flow->client_group = p->pkth->egress_group;
+            flow->server_group = p->pkth->ingress_group;
+        }
     }
 
     return flow;

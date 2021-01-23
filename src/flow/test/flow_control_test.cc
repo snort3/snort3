@@ -85,6 +85,7 @@ void DataBus::publish(const char*, const uint8_t*, unsigned, Flow*) { }
 void DataBus::publish(const char*, Packet*, Flow*) { }
 const SnortConfig* SnortConfig::get_conf() { return nullptr; }
 void FlowCache::unlink_uni(Flow*) { }
+void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
 void set_inspection_policy(const SnortConfig*, unsigned) { }
 void set_ips_policy(const SnortConfig*, unsigned) { }

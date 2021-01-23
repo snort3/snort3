@@ -31,6 +31,7 @@
 #include "ips_options/ips_flowbits.h"
 #include "memory/memory_cap.h"
 #include "protocols/packet.h"
+#include "protocols/tcp.h"
 #include "sfip/sf_ip.h"
 #include "utils/stats.h"
 #include "utils/util.h"
@@ -375,6 +376,22 @@ void Flow::markup_packet_flags(Packet* p)
         if ( p->packet_flags & PKT_STREAM_UNEST_UNI )
             p->packet_flags ^= PKT_STREAM_UNEST_UNI;
     }
+}
+
+void Flow::set_client_initiate(Packet* p)
+{
+    if (p->pkth->flags & DAQ_PKT_FLAG_REV_FLOW)
+        flags.client_initiated = p->is_from_server();
+    // If we are tracking on syn, client initiated follows from client
+    else if (p->context->conf->track_on_syn())
+        flags.client_initiated = p->is_from_client();
+    // If not tracking on SYN and the packet is a SYN-ACK, assume the SYN did not create a
+    // session and client initiated follows from server
+    else if (p->is_tcp() and p->ptrs.tcph->is_syn_ack())
+        flags.client_initiated = p->is_from_server();
+    // Otherwise, client initiated follows from client
+    else
+        flags.client_initiated = p->is_from_client();
 }
 
 void Flow::set_direction(Packet* p)

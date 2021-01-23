@@ -186,6 +186,7 @@ public:
 
     void call_handlers(Packet* p, bool eof = false);
     void markup_packet_flags(Packet*);
+    void set_client_initiate(Packet*);
     void set_direction(Packet*);
     void set_expire(const Packet*, uint32_t timeout);
     bool expired(const Packet*);

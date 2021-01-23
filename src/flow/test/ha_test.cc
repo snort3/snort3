@@ -222,6 +222,9 @@ Flow::~Flow() { delete key; delete ha_state; }
 
 FlowStash::~FlowStash() { }
 
+void Flow::set_client_initiate(Packet*) { }
+void Flow::set_direction(Packet*) { }
+
 SideChannel* SideChannelManager::get_side_channel(SCPort)
 { return &s_side_channel; }
 
