@@ -69,10 +69,11 @@ void HttpUri::parse_uri()
             j++);
         for (k = j+3; (k < uri.length()) && (uri.start()[k] != '/'); k++);
 
-        // Verify that 1) we found ://, 2) we found /, 3) scheme begins with a letter, and
-        // 4) scheme consists of legal characters (RFC 3986 3.1)
+        // Verify that 1) we found ://, 2) we found /, 3) scheme begins with a letter,
+        // 4) scheme consists of legal characters (RFC 3986 3.1) and 5) scheme is no more than 36
+        // characters in length
         if ((k < uri.length()) && (uri.start()[j] == ':') && (uri.start()[j+1] == '/') &&
-            (uri.start()[j+2] == '/') && (uri.start()[0] >= 'A'))
+            (uri.start()[j+2] == '/') && (uri.start()[0] >= 'A') && j <= MAX_SCHEME_LENGTH)
         {
             uri_type = URI_ABSOLUTE;
             scheme.set(j, uri.start());

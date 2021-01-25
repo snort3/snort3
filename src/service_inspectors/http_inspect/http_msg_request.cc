@@ -255,6 +255,12 @@ void HttpMsgRequest::gen_events()
     if (method_id == METH__OTHER)
         create_event(EVENT_UNKNOWN_METHOD);
 
+    if (uri && uri->get_scheme().length() > LONG_SCHEME_LENGTH)
+    {
+        create_event(EVENT_LONG_SCHEME);
+        add_infraction(INF_LONG_SCHEME);
+    }
+
     if (session_data->zero_nine_expected != 0)
     {
         // Previous 0.9 request on this connection should have been the last request message

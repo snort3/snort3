@@ -406,6 +406,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_MALFORMED_CD_FILENAME,      "malformed HTTP Content-Disposition filename parameter" },
     { EVENT_TRUNCATED_MSG_BODY_CL,      "HTTP Content-Length message body was truncated" },
     { EVENT_TRUNCATED_MSG_BODY_CHUNK,   "HTTP chunked message body was truncated" },
+    { EVENT_LONG_SCHEME,                "HTTP URI scheme longer than 10 characters" },
     { 0, nullptr }
 };
 

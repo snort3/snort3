@@ -26,6 +26,9 @@
 #include "http_field.h"
 #include "http_event.h"
 
+static const int MAX_SCHEME_LENGTH = 36; // schemes longer than 36 characters are malformed
+static const int LONG_SCHEME_LENGTH = 10; // schemes longer than 10 characters will alert
+
 //-------------------------------------------------------------------------
 // HttpUri class
 //-------------------------------------------------------------------------
