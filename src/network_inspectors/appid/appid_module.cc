@@ -312,28 +312,28 @@ static int disable_debug(lua_State*)
 
 static int reload_third_party(lua_State* L)
 {
-    bool from_shell = ( L != nullptr );
     SharedRequest current_request = get_current_request();
     if (Swapper::get_reload_in_progress())
     {
-        current_request->respond("== reload pending; retry\n", from_shell);
+        current_request->respond("== reload pending; retry\n");
         return 0;
     }
-    current_request->respond(".. reloading third-party\n", from_shell);
     AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
     if (!inspector)
     {
-        current_request->respond("== reload third-party failed - appid not enabled\n", from_shell);
+        current_request->respond("== reload third-party failed - appid not enabled\n");
         return 0;
     }
     const AppIdContext& ctxt = inspector->get_ctxt();
     ThirdPartyAppIdContext* old_ctxt = ctxt.get_tp_appid_ctxt();
     if (!old_ctxt)
     {
-        current_request->respond("== reload third-party failed - third-party module doesn't exist\n", from_shell);
+        current_request->respond("== reload third-party failed - third-party module doesn't exist\n");
         return 0;
     }
     Swapper::set_reload_in_progress(true);
+
+    bool from_shell = ( L != nullptr );
     current_request->respond("== unloading old third-party configuration\n", from_shell);
     main_broadcast_command(new ACThirdPartyAppIdContextUnload(*inspector, old_ctxt,
         current_request, from_shell), from_shell);
@@ -351,21 +351,21 @@ static void clear_dynamic_host_cache_services()
 
 static int reload_detectors(lua_State* L)
 {
-    bool from_shell = ( L != nullptr );
     SharedRequest current_request = get_current_request();
     if (Swapper::get_reload_in_progress())
     {
-        current_request->respond("== reload pending; retry\n", from_shell);
+        current_request->respond("== reload pending; retry\n");
         return 0;
     }
-    current_request->respond(".. reloading detectors\n", from_shell);
     AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
     if (!inspector)
     {
-        current_request->respond("== reload detectors failed - appid not enabled\n", from_shell);
+        current_request->respond("== reload detectors failed - appid not enabled\n");
         return 0;
     }
     Swapper::set_reload_in_progress(true);
+    bool from_shell = ( L != nullptr );
+    current_request->respond(".. reloading detectors\n", from_shell);
 
     AppIdContext& ctxt = inspector->get_ctxt();
     OdpContext& old_odp_ctxt = ctxt.get_odp_ctxt();
