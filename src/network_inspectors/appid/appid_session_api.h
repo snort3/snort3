@@ -49,9 +49,7 @@ namespace snort
 #define APPID_SESSION_MID                   (1ULL << 9)
 #define APPID_SESSION_OOO                   (1ULL << 10)
 #define APPID_SESSION_SYN_RST               (1ULL << 11)
-/**Service missed the first UDP packet in a flow. This causes detectors to see traffic in reverse direction.
- * Detectors should set this flag by verifying that packet from initiator is indeed a packet from responder.
- * Setting this flag without this check will cause RNA to not try other detectors in some cases (see bug 77551).*/
+// Service missed the first UDP packet in a flow. This causes detectors to see traffic in reverse direction.
 #define APPID_SESSION_UDP_REVERSED          (1ULL << 12)
 #define APPID_SESSION_HTTP_SESSION          (1ULL << 13)
 /**Service protocol was detected */

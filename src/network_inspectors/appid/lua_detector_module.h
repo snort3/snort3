@@ -64,7 +64,6 @@ public:
         return detector_flow;
     }
     void free_detector_flow();
-    // FIXIT-M: RELOAD - When reload is supported, move this variable to a separate location
     lua_State* L;
     bool insert_cb_detector(AppId app_id, LuaObject* ud);
     LuaObject* get_cb_detector(AppId app_id);

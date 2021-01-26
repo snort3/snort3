@@ -272,8 +272,6 @@ LuaObject* LuaDetectorManager::get_cb_detector(AppId app_id)
  * of memory allocated to RNA (fraction of total system memory) and number of detectors
  * loaded in database. Calculations are based on CAICCI detector and observing memory
  * consumption per tracker.
- * @param rnaMemory - total memory RNA is allowed to use. This is calculated as a fraction of
- * total system memory.
  * @param numDetectors - number of lua detectors present in database.
  */
 static inline void set_lua_tracker_size(lua_State* L, uint32_t numTrackers)
@@ -407,10 +405,6 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool isCustom)
         return;
     }
 
-    // FIXIT-M: RELOAD - When reload is supported, we might need to make these unique
-    // from one reload to the next reload, e.g., "odp_FOO_1", "odp_FOO_2", etc.
-    // Alternatively, conflicts between reload may be avoided if a new lua state is
-    // created separately, then swapped and free old state.
     char detectorName[MAX_LUA_DETECTOR_FILENAME_LEN];
 #ifdef HAVE_BASENAME_R
     char detector_res[MAX_LUA_DETECTOR_FILENAME_LEN];

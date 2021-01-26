@@ -346,7 +346,7 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
 
     SnortProtocolId tmp_snort_protocol_id = entry->snort_protocol_id;
     // A particular APP_ID_xxx may not be assigned a service_snort_key value
-    // in the rna_app.yaml file entry; so ignore the snort_protocol_id ==
+    // in the appMapping.data file entry; so ignore the snort_protocol_id ==
     // UNKNOWN_PROTOCOL_ID case.
     if (tmp_snort_protocol_id != snort_protocol_id)
     {

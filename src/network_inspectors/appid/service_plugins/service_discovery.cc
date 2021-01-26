@@ -237,10 +237,9 @@ static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 /**Perform pattern match of a packet and construct a list of services sorted in order of
  * precedence criteria. Criteria is count and then size. The first service in the list is
  * returned. The list itself is saved in ServiceDiscoveryState. If
- * appId is already identified, then use it instead of searching again. RNA will capability
+ * appId is already identified, then use it instead of searching again. AppId has capability
  * to try out other inferior matches. If appId is unknown i.e. searched and not found by FRE then
- * don't do any pattern match. This is a way degrades RNA detector selection if FRE is running on
- * this sensor.
+ * don't do any pattern match. This is a way to degrade detector if FRE is running.
 */
 void ServiceDiscovery::match_by_pattern(AppIdSession& asd, const Packet* pkt, IpProtocol proto)
 {
@@ -575,7 +574,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
     AppidSessionDirection direction, AppidChangeBits& change_bits)
 {
     bool isTpAppidDiscoveryDone = false;
-    uint32_t prevRnaServiceState = asd.service_disco_state;
+    uint32_t prev_service_state = asd.service_disco_state;
     AppId tp_app_id = asd.get_tp_app_id();
 
     if (asd.service_disco_state == APPID_DISCO_STATE_NONE && p->dsize)
@@ -627,10 +626,10 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
             asd.service_disco_state = APPID_DISCO_STATE_STATEFUL;
     }
 
-    //stop rna inspection as soon as tp has classified a valid AppId later in the session
+    //stop inspection as soon as tp has classified a valid AppId later in the session
     if ( tp_app_id > APP_ID_NONE and
          asd.service_disco_state == APPID_DISCO_STATE_STATEFUL and
-         prevRnaServiceState == APPID_DISCO_STATE_STATEFUL and
+         prev_service_state == APPID_DISCO_STATE_STATEFUL and
          !asd.get_session_flags(APPID_SESSION_NO_TPI) and
          asd.is_tp_appid_available() )
     {
@@ -677,7 +676,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
     {
         identify_service(asd, p, direction, change_bits);
         isTpAppidDiscoveryDone = true;
-        //to stop executing validator after service has been detected by RNA.
+        //to stop executing validator after service has been detected
         if (asd.get_session_flags(APPID_SESSION_SERVICE_DETECTED |
             APPID_SESSION_CONTINUE) == APPID_SESSION_SERVICE_DETECTED)
         {

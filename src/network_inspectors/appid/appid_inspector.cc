@@ -222,9 +222,7 @@ static void appid_inspector_pinit()
 
 static void appid_inspector_pterm()
 {
-//FIXIT-M: RELOAD - if app_info_table is associated with an object
     AppIdContext::pterm();
-//end of 'FIXIT-M: RELOAD' comment above
     openssl_cleanup();
     TPLibHandler::pfini();
 }

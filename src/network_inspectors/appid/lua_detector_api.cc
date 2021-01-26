@@ -844,13 +844,13 @@ static int detector_get_packet_dst_port(lua_State* L)
 }
 
 /**Get packet count. This is used mostly for printing packet sequence
- * number when RNA is being tested with a pcap file.
+ * number when appid is being tested with a pcap file.
  * Callback could be used either at init or during packet processing
  *
  * @param Lua_State* - Lua state variable.
  * @param detector/stack - detector object
  * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
- * @return packetCount/stack - Total packet processed by RNA.
+ * @return packetCount/stack - Total packet processed by appid.
 **/
 static int detector_get_packet_count(lua_State* L)
 {
@@ -994,7 +994,7 @@ static int client_add_payload(lua_State* L)
  * @param Lua_State* - Lua state variable.
  * @param detector/stack - detector object
  * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
- * @return packetCount/stack - Total packet processed by RNA.
+ * @return packetCount/stack - Total packet processed by appid.
  * @todo maintain a single copy and return the same copy with every call to Detector_getFlow().
  */
 static int detector_get_flow(lua_State* L)
@@ -2617,20 +2617,6 @@ static const luaL_Reg detector_methods[] =
                                                                      // (below)
     { "getProtocolType",          detector_get_protocol_type },      //  - "getProtocolType" is now
                                                                      // "getL4Protocol" (below)
-    { "inCompatibleData",         service_set_incompatible_data },   //  - "inCompatibleData" is
-                                                                     // now "markIncompleteData"
-                                                                     // (below)
-    { "addDataId",                service_add_data_id },             //  - "addDataId" is now
-                                                                     // "addAppIdDataToFlow"
-                                                                     // (below)
-    { "service_inCompatibleData", service_set_incompatible_data },   //  - "service_inCompatibleData"
-                                                                     // is now
-                                                                     // "service_markIncompleteData"
-                                                                     // (below)
-    { "service_addDataId",        service_add_data_id },             //  - "service_addDataId" is
-                                                                     // now
-                                                                     // "service_addAppIdDataToFlow"
-                                                                     // (below)
 
     { "getPacketSize",            detector_get_packet_size },
     { "getPacketDir",             detector_get_packet_direction },
@@ -2663,19 +2649,11 @@ static const luaL_Reg detector_methods[] =
     /*Obsolete - new detectors should not use this API */
     { "init",                     service_init },
     { "registerPattern",          service_register_pattern },
-    { "getServiceID",             service_get_service_id },
     { "addPort",                  service_add_ports },
-    { "removePort",               service_remove_ports },
-    { "setServiceName",           service_set_service_name },
-    { "getServiceName",           service_get_service_name },
-    { "isCustomDetector",         service_is_custom_detector },
-    { "setValidator",             service_set_validator },
     { "addService",               service_add_service },
     { "failService",              service_fail_service },
     { "inProcessService",         service_in_process_service },
-    { "markIncompleteData",       service_set_incompatible_data },
     { "analyzePayload",           service_analyze_payload },
-    { "addAppIdDataToFlow",       service_add_data_id },
 
     /*service API */
     { "service_init",               service_init },
@@ -2745,15 +2723,15 @@ static const luaL_Reg detector_methods[] =
 
 /* Garbage collector hook function. Called when Lua side garbage collects detector
  * api instance. Current design is to allocate one of each luaState, detector and
- * detectorUserData buffers, and hold these buffers till RNA exits. SigHups processing
- * reuses the buffers and calls DetectorInit to reinitialize. RNA ensures that
+ * detectorUserData buffers, and hold these buffers till appid exits. SigHups processing
+ * reuses the buffers and calls DetectorInit to reinitialize. AppId ensures that
  * UserData<LuaDetectionState> is not garbage collected, by creating a reference in LUA_REGISTRY
- * table. The reference is released only on RNA exit.
+ * table. The reference is released only on appid exit.
  *
  * If in future, one needs to free any of these buffers then one should consider
  * references to detector buffer in  ServiceDetector stored in flows and hostServices
  * data structures. Other detectors at this time create one static instance for the
- * lifetime of RNA, and therefore we have adopted the same principle for Lua Detectors.
+ * lifetime of appid, and therefore we have adopted the same principle for Lua Detectors.
  */
 static int Detector_gc(lua_State*)
 {

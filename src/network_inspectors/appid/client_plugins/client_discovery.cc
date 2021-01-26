@@ -305,7 +305,7 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
 {
     bool isTpAppidDiscoveryDone = false;
     AppInfoTableEntry* entry;
-    uint32_t prevRnaClientState = asd.client_disco_state;
+    uint32_t prev_client_state = asd.client_disco_state;
     bool was_service = asd.is_service_detected();
     AppId tp_app_id = asd.get_tp_app_id();
 
@@ -339,11 +339,11 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
             asd.client_disco_state = APPID_DISCO_STATE_STATEFUL;
     }
 
-    //stop rna inspection as soon as tp has classified a valid AppId
+    //stop inspection as soon as tp has classified a valid AppId
     if ( tp_app_id > APP_ID_NONE and
          ( asd.client_disco_state == APPID_DISCO_STATE_STATEFUL or
            asd.client_disco_state == APPID_DISCO_STATE_DIRECT ) and
-         asd.client_disco_state == prevRnaClientState and
+         asd.client_disco_state == prev_client_state and
          !asd.get_session_flags(APPID_SESSION_NO_TPI)  and
          asd.is_tp_appid_available() )
     {

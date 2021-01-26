@@ -143,85 +143,6 @@ static inline uint64_t convert_flags_c_to_lua(uint64_t in)
     return out;
 }
 
-/**Creates a user data for a flow.
- *
- * @param Lua_State* - Lua state variable.
- * @param detector/stack - detector object
- * @param srcAddress/stack - source address of the flow
- * @param srcPort/stack - source port of the the flow
- * @param dstAddress/stack - destination address of the flow.
- * @param dstPort/stack - detector port of the flow.
- * @param proto/stack - protocol type. See defined IPPROTO_xxxx in /usr/include/netinet/in.h
- * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
- * @return UserData<DetectorFlow>/stack - A userdata representing UserData<DetectorFlow>.
- */
-static int create_detector_flow(lua_State* L)
-{
-    SfIp saddr;
-    SfIp daddr;
-
-    AppIdDetector* ud = *UserData<AppIdDetector>::check(L, DETECTOR, 1);
-    // Verify detector user data and that we are in packet context
-    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
-
-    const char* pattern = lua_tostring(L, 2);
-    size_t patternLen = lua_strlen (L, 2);
-
-    if (patternLen == 16)
-    {
-        if (saddr.set(pattern, AF_INET6) != SFIP_SUCCESS)
-            return 0;
-    }
-    else if (patternLen == 4)
-    {
-        if (saddr.set(pattern, AF_INET) != SFIP_SUCCESS)
-            return 0;
-    }
-    else
-    {
-        return 0;
-    }
-    pattern = lua_tostring(L, 3);
-    patternLen = lua_strlen (L, 3);
-
-    if (patternLen == 16)
-    {
-        if (daddr.set(pattern, AF_INET6) != SFIP_SUCCESS)
-            return 0;
-    }
-    else if (patternLen == 4)
-    {
-        if (daddr.set(pattern, AF_INET) != SFIP_SUCCESS)
-            return 0;
-    }
-    else
-    {
-        return 0;
-    }
-
-    uint16_t sport = lua_tonumber(L, 4);
-    uint16_t dport = lua_tonumber(L, 5);
-    IpProtocol proto = (IpProtocol)lua_tonumber(L, 6);
-
-    auto detector_flow = new DetectorFlow(L, AppIdSession::create_future_session(lsd->ldp.pkt, &saddr, sport,
-        &daddr, dport, proto, 0));
-    UserData<DetectorFlow>::push(L, DETECTORFLOW, detector_flow);
-
-    lua_pushvalue(L, -1);
-    detector_flow->userDataRef = luaL_ref(L, LUA_REGISTRYINDEX);
-
-    odp_thread_local_ctxt->get_lua_detector_mgr().set_detector_flow(detector_flow);
-
-    if (!detector_flow->asd)
-    {
-        /*calloced buffer will be freed later after the current packet is processed. */
-        lua_pop(L, 1);
-        return 0;
-    }
-
-    return 1;
-}
-
 /**Sets a flow flag
  *
  * @param Lua_State* - Lua state variable.
@@ -295,46 +216,6 @@ static int clear_detector_flow_flag(lua_State* L)
     return 0;
 }
 
-/**Set service id on a flow
- * If function is implemented, then
- * verify detector user data and that we are in packet context
- *
- * @param Lua_State* - Lua state variable.
- * @param detectorFlow/stack - UserData<DetectorFlow> object
- * @param serviceId/stack - service Id to be set on a flow.
- * @return int - Number of elements on stack, which is 0.
- */
-static int set_detector_flow_service_id(lua_State*)
-{ return 0; }
-
-/**Set client application id on a flow, during packet processing
- * If function is implemented, then
- * verify detector user data and that we are in packet context
- *
- * @param Lua_State* - Lua state variable.
- * @param detectorFlow/stack - UserData<DetectorFlow> object
- * @param applId/stack - client application Id to be set on a flow.
- * @return int - Number of elements on stack, which is 0.
- */
-static int set_detecter_flow_cln_app_id(lua_State*)
-{
-    return 0;
-}
-
-/**Set client application type id on a flow, during packet processing
- * If function is implemented, then
- * verify detector user data and that we are in packet context
- *
- * @param Lua_State* - Lua state variable.
- * @param detectorFlow/stack - UserData<DetectorFlow> object
- * @param applTypeId/stack - client application type id to be set on a flow.
- * @return int - Number of elements on stack, which is 0.
- */
-static int set_detector_flow_cln_app_type(lua_State*)
-{
-    return 0;
-}
-
 /**Design: For simplicity reason I am passing flowkey (20 bytes) to lua detectors.
  * The key is used to index into local lua table and get any flow specific data that a detector needs.
  * This approach avoids embedding lua detector data into core engine flow data structure.
@@ -362,17 +243,9 @@ static int get_detector_flow_key(lua_State* L)
 
 static const luaL_Reg detector_flow_api[] =
 {
-    /* Obsolete API names.  No longer use these!  They are here for backward
-     * compatibility and will eventually be removed. */
-    /*  - "new" is now "createFlow" (below) */
-    { "new",                create_detector_flow },
-    { "createFlow",         create_detector_flow },
     { "setFlowFlag",        set_detector_flow_flag },
     { "getFlowFlag",        get_detector_flow_flag },
     { "clearFlowFlag",      clear_detector_flow_flag },
-    { "setFlowServiceId",   set_detector_flow_service_id },
-    { "setFlowClnAppId",    set_detecter_flow_cln_app_id },
-    { "setFlowClnAppType",  set_detector_flow_cln_app_type },
     { "getFlowKey",         get_detector_flow_key },
     { nullptr, nullptr }
 };
