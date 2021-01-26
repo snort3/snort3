@@ -24,14 +24,14 @@
 #include "host_tracker/host_cache.h"
 #include "host_tracker/host_tracker.h"
 
+#include "rna_flow.h"
+
 namespace snort
 {
 class Flow;
 struct Packet;
 class FpFingerprint;
 }
-
-using RnaTracker = std::shared_ptr<snort::HostTracker>;
 
 struct RnaLoggerEvent : public Event
 {

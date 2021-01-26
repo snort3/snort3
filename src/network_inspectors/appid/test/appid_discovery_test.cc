@@ -245,6 +245,8 @@ AppId HostTracker::get_appid(Port, IpProtocol, bool, bool)
     return APP_ID_NONE;
 }
 
+void HostTracker::remove_flows() {}
+
 // Stubs for ClientDiscovery
 void ClientDiscovery::initialize() {}
 void ClientDiscovery::reload() {}

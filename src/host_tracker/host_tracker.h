@@ -29,6 +29,7 @@
 #include <mutex>
 #include <list>
 #include <set>
+#include <unordered_set>
 #include <vector>
 
 #include "framework/counts.h"
@@ -47,6 +48,8 @@ struct HostTrackerStats
 };
 
 extern THREAD_LOCAL struct HostTrackerStats host_tracker_stats;
+
+class RNAFlow;
 
 namespace snort
 {
@@ -79,7 +82,6 @@ struct HostApplicationInfo
     friend class HostTracker;
 private:
     bool visibility = true;
-
 };
 
 typedef HostCacheAllocIp<HostApplicationInfo> HostAppInfoAllocator;
@@ -407,8 +409,14 @@ public:
     }
 #endif
 
+    void add_flow(RNAFlow*);
+    void remove_flows();
+    void remove_flow(RNAFlow*);
+
 private:
+
     mutable std::mutex host_tracker_lock; // ensure that updates to a shared object are safe
+    mutable std::mutex flows_lock;        // protect the flows set separately
     uint8_t hops;                 // hops from the snort inspector, e.g., zero for ARP
     uint32_t last_seen;           // the last time this host was seen
     uint32_t last_event;          // the last time an event was generated
@@ -422,6 +430,9 @@ private:
     std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> tcp_fpids;
     std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> udp_fpids;
     std::vector<DeviceFingerprint, HostDeviceFpAllocator> ua_fps;
+
+    // flows that we belong to
+    std::unordered_set<RNAFlow*> flows;
 
     bool vlan_tag_present = false;
     vlan::VlanTagHdr vlan_tag;

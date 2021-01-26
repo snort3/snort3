@@ -36,6 +36,8 @@
 #include "protocols/tcp.h"
 #include "protocols/tcp_options.h"
 
+#include "rna_flow.h"
+
 using namespace snort;
 using namespace std;
 

@@ -48,7 +48,8 @@ struct LruCacheSharedStats
     PegCount replaced = 0;      // found entry and replaced it
 };
 
-template<typename Key, typename Value, typename Hash, typename Eq = std::equal_to<Key>>
+template<typename Key, typename Value, typename Hash, typename Eq = std::equal_to<Key>,
+    typename Purgatory = std::vector<std::shared_ptr<Value>>>
 class LruCacheShared
 {
 public:
@@ -67,6 +68,7 @@ public:
 
     using Data = std::shared_ptr<Value>;
     using ValueType = Value;
+    using KeyType = Key;
 
     // Return data entry associated with key. If doesn't exist, return nullptr.
     Data find(const Key& key);
@@ -108,12 +110,12 @@ public:
 
     //  Remove entry associated with Key.
     //  Returns true if entry existed, false otherwise.
-    bool remove(const Key& key);
+    virtual bool remove(const Key& key);
 
     //  Remove entry associated with key and return removed data.
     //  Returns true and copy of data if entry existed.  Returns false if
     //  entry did not exist.
-    bool remove(const Key& key, Data& data);
+    virtual bool remove(const Key& key, Data& data);
 
     const PegInfo* get_pegs() const
     { return lru_cache_shared_peg_names; }
@@ -166,7 +168,7 @@ protected:
 
     // Caller must lock and unlock. Don't use this during snort reload for which
     // we need gradual pruning and size reduction via reload resource tuner.
-    void prune(std::vector<Data>& data)
+    void prune(Purgatory& data)
     {
         LruListIter list_iter;
         assert(data.empty());
@@ -182,8 +184,8 @@ protected:
     }
 };
 
-template<typename Key, typename Value, typename Hash, typename Eq>
-bool LruCacheShared<Key, Value, Hash, Eq>::set_max_size(size_t newsize)
+template<typename Key, typename Value, typename Hash, typename Eq, typename Purgatory>
+bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::set_max_size(size_t newsize)
 {
     if (newsize == 0)
         return false;   //  Not allowed to set size to zero.
@@ -191,7 +193,7 @@ bool LruCacheShared<Key, Value, Hash, Eq>::set_max_size(size_t newsize)
     // Like with remove(), we need local temporary references to data being
     // deleted, to avoid race condition. This data needs to self-destruct
     // after the cache_lock does.
-    std::vector<Data> data;
+    Purgatory data;
 
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
@@ -203,8 +205,8 @@ bool LruCacheShared<Key, Value, Hash, Eq>::set_max_size(size_t newsize)
     return true;
 }
 
-template<typename Key, typename Value, typename Hash, typename Eq>
-std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq>::find(const Key& key)
+template<typename Key, typename Value, typename Hash, typename Eq, typename Purgatory>
+std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq, Purgatory>::find(const Key& key)
 {
     LruMapIter map_iter;
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
@@ -222,14 +224,14 @@ std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq>::find(const Key& key
     return map_iter->second->second;
 }
 
-template<typename Key, typename Value, typename Hash, typename Eq>
-std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq>::operator[](const Key& key)
+template<typename Key, typename Value, typename Hash, typename Eq, typename Purgatory>
+std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq, Purgatory>::operator[](const Key& key)
 {
     return find_else_create(key, nullptr);
 }
 
-template<typename Key, typename Value, typename Hash, typename Eq>
-std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq>::
+template<typename Key, typename Value, typename Hash, typename Eq, typename Purgatory>
+std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq, Purgatory>::
 find_else_create(const Key& key, bool* new_data)
 {
     LruMapIter map_iter;
@@ -240,7 +242,7 @@ find_else_create(const Key& key, bool* new_data)
     // unlocking the cache_mutex, because the cache must be locked when we
     // return the data pointer (below), or else, some other thread might
     // delete it before we got a chance to return it.
-    std::vector<Data> tmp_data;
+    Purgatory tmp_data;
 
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
@@ -270,13 +272,13 @@ find_else_create(const Key& key, bool* new_data)
     return data;
 }
 
-template<typename Key, typename Value, typename Hash, typename Eq>
-bool LruCacheShared<Key, Value, Hash, Eq>::
+template<typename Key, typename Value, typename Hash, typename Eq, typename Purgatory>
+bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::
 find_else_insert(const Key& key, std::shared_ptr<Value>& data, bool replace)
 {
     LruMapIter map_iter;
 
-    std::vector<Data> tmp_data;
+    Purgatory tmp_data;
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
     map_iter = map.find(key);
@@ -311,9 +313,9 @@ find_else_insert(const Key& key, std::shared_ptr<Value>& data, bool replace)
     return false;
 }
 
-template<typename Key, typename Value, typename Hash, typename Eq>
+template<typename Key, typename Value, typename Hash, typename Eq, typename Purgatory>
 std::vector< std::pair<Key, std::shared_ptr<Value>> >
-LruCacheShared<Key, Value, Hash, Eq>::get_all_data()
+LruCacheShared<Key, Value, Hash, Eq, Purgatory>::get_all_data()
 {
     std::vector<std::pair<Key, Data> > vec;
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
@@ -326,8 +328,8 @@ LruCacheShared<Key, Value, Hash, Eq>::get_all_data()
     return vec;
 }
 
-template<typename Key, typename Value, typename Hash, typename Eq>
-bool LruCacheShared<Key, Value, Hash, Eq>::remove(const Key& key)
+template<typename Key, typename Value, typename Hash, typename Eq, typename Purgatory>
+bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::remove(const Key& key)
 {
     LruMapIter map_iter;
 
@@ -367,8 +369,9 @@ bool LruCacheShared<Key, Value, Hash, Eq>::remove(const Key& key)
     return true;
 }
 
-template<typename Key, typename Value, typename Hash, typename Eq>
-bool LruCacheShared<Key, Value, Hash, Eq>::remove(const Key& key, std::shared_ptr<Value>& data)
+template<typename Key, typename Value, typename Hash, typename Eq, typename Purgatory>
+bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::remove(const Key& key,
+    std::shared_ptr<Value>& data)
 {
     LruMapIter map_iter;
 

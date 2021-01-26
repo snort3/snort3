@@ -3,6 +3,7 @@ set (RNA_INCLUDES
     rna_fingerprint_tcp.h
     rna_fingerprint_ua.h
     rna_fingerprint_udp.h
+    rna_flow.h
     rna_inspector.h
     rna_logger.h
     rna_name.h
@@ -17,12 +18,11 @@ set ( RNA_SOURCES
     rna_event_handler.cc
     rna_event_handler.h
     rna_fingerprint.cc
-    rna_fingerprint.h
     rna_fingerprint_tcp.cc
     rna_fingerprint_ua.cc
     rna_fingerprint_udp.cc
     rna_inspector.cc
-    rna_inspector.h
+    rna_flow.cc
     rna_logger.cc
     rna_logger_common.h
     rna_mac_cache.cc

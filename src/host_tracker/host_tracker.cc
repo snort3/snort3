@@ -24,10 +24,13 @@
 
 #include <algorithm>
 
+#include "flow/flow.h"
+#include "network_inspectors/rna/rna_flow.h"
+#include "utils/util.h"
+
 #include "host_cache.h"
 #include "host_cache_allocator.cc"
 #include "host_tracker.h"
-#include "utils/util.h"
 
 using namespace snort;
 using namespace std;
@@ -1023,6 +1026,52 @@ HostClient HostTracker::find_or_add_client(AppId id, const char* version, AppId 
 
     clients.emplace_back(id, version, service);
     return clients.back();
+}
+
+void HostTracker::add_flow(RNAFlow* fd)
+{
+    lock_guard<mutex> lck(flows_lock);
+    flows.insert(fd);
+}
+
+void HostTracker::remove_flow(RNAFlow* fd)
+{
+    lock_guard<mutex> lck(flows_lock);
+    flows.erase(fd);
+}
+
+void HostTracker::remove_flows()
+{
+    // To lock, or not to lock? That is the question!
+    //
+    // The only way we get here is from LRU::update(), called by the allocator.
+    // That is, we only get here from a HT::add_<> operation. All of those
+    // operations lock the HT, so the HT is already locked when we get here.
+    // Also, none of those operations modify the HT::flows set. So we should
+    // not lock the HT (because we'd cause a deadlock), nor do we need to
+    // (because there's no contention on HT::flows from those adds).
+    //
+    // However, this HT could be part of a different rna flow, which could
+    // go out of existence exactly at the time when this thread modifies
+    // the HT::flows set. The rna flow destructor calls on this
+    // HT::remove_flow(), which does modify HT::flows. The for loop itself
+    // does not modify the HT::flows set, but flows.clear() does - whether
+    // or not we call it here explicitly. We, therefore, need to protect the
+    // HT::flows() array with a lock on this host_tracker_lock.
+    //
+    // We have identified two situations with opposite requirements:
+    // one requires locking, the other requires not locking.
+    //
+    // Now, note that the thread contention is not on the host tracker itself,
+    // but on the HT::flows set. This means we may not lock the HT here,
+    // to avoid the deadlock from the first case, but we SHOULD lock on
+    // a different mutex to protect the HT::flows set.
+    lock_guard<mutex> lck(flows_lock);
+    for (auto& rna_flow : flows)
+    {
+        rna_flow->clear_ht(*this);
+    }
+    flows.clear();
 }
 
 HostApplicationInfo::HostApplicationInfo(const char *ver, const char *ven)

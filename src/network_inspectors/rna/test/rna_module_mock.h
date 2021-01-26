@@ -126,4 +126,7 @@ Inspector* InspectorManager::get_inspector(const char*, bool, const SnortConfig*
 {
     return nullptr;
 }
+
+void HostTracker::remove_flows() { }
+
 #endif

@@ -44,6 +44,7 @@ add_cpputest( appid_http_session_test
 add_cpputest( tp_lib_handler_test
     SOURCES
         tp_lib_handler_test.cc
+        ../../../network_inspectors/rna/test/rna_flow_mock.cc
         ../tp_lib_handler.cc
     LIBS
         dl

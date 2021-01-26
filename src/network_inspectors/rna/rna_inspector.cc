@@ -39,6 +39,7 @@
 #include "rna_fingerprint_tcp.h"
 #include "rna_fingerprint_ua.h"
 #include "rna_fingerprint_udp.h"
+#include "rna_flow.h"
 #include "rna_mac_cache.h"
 #include "rna_module.h"
 #include "rna_pnd.h"

@@ -21,15 +21,16 @@
 #ifndef RNA_FINGERPRINT_TCP_H
 #define RNA_FINGERPRINT_TCP_H
 
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
 #include "main/snort_types.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
+#include "sfip/sf_ip.h"
 
 #include "rna_fingerprint.h"
-#include "rna_logger.h"
 
 class RNAFlow;
 
@@ -135,23 +136,6 @@ struct FpFingerprintState
     time_t timeout = -1;
 
     bool set(const snort::Packet*);
-};
-
-class RNAFlow : public snort::FlowData
-{
-public:
-    FpFingerprintState state;
-
-
-    RNAFlow() : FlowData(inspector_id) { }
-    ~RNAFlow() override { }
-
-    static void init();
-    size_t size_of() override;
-
-    static unsigned inspector_id;
-    RnaTracker serverht = nullptr;
-    RnaTracker clientht = nullptr;
 };
 
 #endif

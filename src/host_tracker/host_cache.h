@@ -58,11 +58,13 @@ struct IpEqualTo
     }
 };
 
-template<typename Key, typename Value, typename Hash, typename Eq = std::equal_to<Key>>
-class LruCacheSharedMemcap : public LruCacheShared<Key, Value, Hash, Eq>, public HostCacheInterface
+template<typename Key, typename Value, typename Hash, typename Eq = std::equal_to<Key>,
+    typename Purgatory = std::vector<std::shared_ptr<Value>>>
+class LruCacheSharedMemcap : public LruCacheShared<Key, Value, Hash, Eq, Purgatory>,
+    public HostCacheInterface
 {
 public:
-    using LruBase = LruCacheShared<Key, Value, Hash, Eq>;
+    using LruBase = LruCacheShared<Key, Value, Hash, Eq, Purgatory>;
     using LruBase::cache_mutex;
     using LruBase::current_size;
     using LruBase::list;
@@ -78,7 +80,7 @@ public:
     LruCacheSharedMemcap(const LruCacheSharedMemcap& arg) = delete;
     LruCacheSharedMemcap& operator=(const LruCacheSharedMemcap& arg) = delete;
 
-    LruCacheSharedMemcap(const size_t initial_size) : LruCacheShared<Key, Value, Hash, Eq>(initial_size),
+    LruCacheSharedMemcap(const size_t sz) : LruCacheShared<Key, Value, Hash, Eq, Purgatory>(sz),
         valid_id(invalid_id+1) {}
 
     size_t mem_size() override
@@ -203,7 +205,7 @@ private:
             // to hold the pruned data until after the cache is unlocked.
             // Do not change the order of data and cache_lock, as the data must
             // self destruct after cache_lock.
-            std::vector<Data> data;
+            Purgatory data;
             std::lock_guard<std::mutex> cache_lock(cache_mutex);
             LruBase::prune(data);
         }
@@ -228,7 +230,55 @@ private:
     friend class TEST_host_cache_module_misc_Test; // for unit test
 };
 
-typedef LruCacheSharedMemcap<snort::SfIp, snort::HostTracker, HashIp, IpEqualTo> HostCacheIp;
+
+class HTPurgatory
+{
+public:
+
+    ~HTPurgatory()
+    {
+        for (auto& ht : data)
+        {
+            ht->remove_flows();
+        }
+    }
+
+    bool empty() const {
+        return data.empty();
+    }
+
+    void emplace_back(std::shared_ptr<snort::HostTracker>& ht)
+    {
+        data.emplace_back(ht);
+    }
+
+    std::vector<std::shared_ptr<snort::HostTracker>> data;
+};
+
+typedef LruCacheSharedMemcap<snort::SfIp, snort::HostTracker, HashIp, IpEqualTo, HTPurgatory>
+    HostCacheIpSpec;
+
+// Since the LruCacheShared and LruCacheSharedMemcap templates make no
+// assumptions about the item, we have to derive our host cache
+// from the specialization, if we want to make use of things within the item.
+class HostCacheIp : public HostCacheIpSpec
+{
+public:
+    HostCacheIp(const size_t initial_size) : HostCacheIpSpec(initial_size) { }
+
+    bool remove(const KeyType& key)
+    {
+        LruBase::Data data;
+        return remove(key, data);
+    }
+
+    bool remove(const KeyType& key, LruBase::Data& data)
+    {
+        bool out = LruBase::remove(key, data);
+        data->remove_flows();
+        return out;
+    }
+};
 
 extern SO_PUBLIC HostCacheIp host_cache;
 

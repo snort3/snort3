@@ -39,6 +39,7 @@
 #include "rna_app_discovery.h"
 #include "rna_fingerprint_tcp.h"
 #include "rna_fingerprint_udp.h"
+#include "rna_flow.h"
 #include "rna_logger_common.h"
 
 #ifdef UNIT_TEST
@@ -199,6 +200,12 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
             rna_flow = new RNAFlow();
             p->flow->set_flow_data(rna_flow);
         }
+        ht->add_flow(rna_flow);
+
+        if ( p->is_from_client() )
+            rna_flow->set_client(ht);
+        else
+            rna_flow->set_server(ht);
     }
 
     if ( new_host )

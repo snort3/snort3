@@ -27,18 +27,19 @@
 #include "detection/detection_engine.h"
 #include "network_inspectors/appid/appid_session_api.h"
 
+#include "rna_flow.h"
 #include "rna_logger_common.h"
 
 using namespace snort;
 
-RnaTracker RnaAppDiscovery::get_server_rna_tracker(const Packet* p, RNAFlow*)
+RnaTracker RnaAppDiscovery::get_server_rna_tracker(const Packet* p, RNAFlow* rna_flow)
 {
-    return host_cache.find(p->flow->server_ip);
+    return rna_flow->get_server(p->flow->server_ip);
 }
 
-RnaTracker RnaAppDiscovery::get_client_rna_tracker(const Packet* p, RNAFlow*)
+RnaTracker RnaAppDiscovery::get_client_rna_tracker(const Packet* p, RNAFlow* rna_flow)
 {
-    return host_cache.find(p->flow->client_ip);
+    return rna_flow->get_client(p->flow->client_ip);
 }
 
 void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter, RnaConfig* conf,
@@ -223,7 +224,7 @@ void RnaAppDiscovery::discover_payload(const Packet* p, DiscoveryFilter& filter,
 
     if ( !srt or !srt->is_visible() )
         return;
-    
+
     srt->update_last_seen();
     if ( conf and conf->max_payloads )
         max_payloads = conf->max_payloads;
@@ -407,7 +408,7 @@ void RnaAppDiscovery::analyze_user_agent_fingerprint(const Packet* p, DiscoveryF
     RNAFlow* rna_flow, const char* host, const char* uagent, RnaLogger& logger,
     UaFpProcessor& processor)
 {
-    if ( !host or !uagent or 
+    if ( !host or !uagent or
         !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_CLIENT))
         return;
 
@@ -424,7 +425,7 @@ void RnaAppDiscovery::analyze_user_agent_fingerprint(const Packet* p, DiscoveryF
     if ( uafp and rt->add_ua_fingerprint(uafp->fpid, uafp->fp_type, jail_broken,
         device_info, MAX_USER_AGENT_DEVICES) )
     {
-        logger.log(RNA_EVENT_NEW, NEW_OS, p, &rt, 
+        logger.log(RNA_EVENT_NEW, NEW_OS, p, &rt,
             (const struct in6_addr*)p->flow->client_ip.get_ip6_ptr(), rt->get_last_seen_mac(),
             (FpFingerprint*)uafp, packet_time(), device_info, jail_broken);
     }
