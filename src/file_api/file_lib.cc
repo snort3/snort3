@@ -454,6 +454,8 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
             FileVerdict v = policy->type_lookup(p, this);
             if ( v != FILE_VERDICT_UNKNOWN )
             {
+                if (v == FILE_VERDICT_STOP)
+                    config_file_signature(false);
                 FileCache* file_cache = FileService::get_file_cache();
                 if (file_cache)
                     file_cache->apply_verdict(p, this, v, false, policy);
