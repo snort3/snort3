@@ -72,7 +72,8 @@ enum SNMPPDUType
     SNMP_PDU_TRAP,
     SNMP_PDU_GET_BULK_REQUEST,
     SNMP_PDU_INFORM_REQUEST,
-    SNMP_PDU_TRAPV2
+    SNMP_PDU_TRAPV2,
+    SNMP_PDU_REPORT
 };
 
 static const uint8_t SNMP_PATTERN_2[] = { 0x02, 0x01, 0x00, 0x04 };
@@ -489,7 +490,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
     break;
     case SNMP_STATE_RESPONSE:
-        if (pdu == SNMP_PDU_GET_RESPONSE)
+        if (pdu == SNMP_PDU_GET_RESPONSE || pdu == SNMP_PDU_REPORT)
         {
             if (args.dir == APP_ID_FROM_RESPONDER)
                 goto success;
@@ -509,7 +510,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto fail;
         break;
     case SNMP_STATE_R_RESPONSE:
-        if (pdu == SNMP_PDU_GET_RESPONSE)
+        if (pdu == SNMP_PDU_GET_RESPONSE || pdu == SNMP_PDU_REPORT)
         {
             if (args.dir == APP_ID_FROM_INITIATOR)
                 goto success;
