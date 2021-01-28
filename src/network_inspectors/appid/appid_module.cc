@@ -364,8 +364,7 @@ static int reload_detectors(lua_State* L)
         return 0;
     }
     Swapper::set_reload_in_progress(true);
-    bool from_shell = ( L != nullptr );
-    current_request->respond(".. reloading detectors\n", from_shell);
+    current_request->respond(".. reloading detectors\n");
 
     AppIdContext& ctxt = inspector->get_ctxt();
     OdpContext& old_odp_ctxt = ctxt.get_odp_ctxt();
@@ -384,6 +383,7 @@ static int reload_detectors(lua_State* L)
     odp_thread_local_ctxt->initialize(ctxt, true, true);
     odp_ctxt.initialize();
 
+    bool from_shell = ( L != nullptr );
     current_request->respond("== swapping detectors configuration\n", from_shell);
     main_broadcast_command(new ACOdpContextSwap(*inspector, old_odp_ctxt,
         current_request, from_shell), from_shell);
