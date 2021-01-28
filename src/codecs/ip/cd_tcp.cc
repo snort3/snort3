@@ -522,7 +522,8 @@ void TcpCodec::flag_tests(const tcp::TCPHdr* const tcph,
     {
         if ( tcph->th_flags == TH_SYN )
         {
-            if ((tcph->th_seq == naptha_seq) and (snort.ip_api.get_ip4h()->ip_id  == naptha_id))
+            if ((tcph->th_seq == naptha_seq) and snort.ip_api.is_ip4() and
+                (snort.ip_api.get_ip4h()->ip_id  == naptha_id))
             {
                 codec_event(codec, DECODE_DOS_NAPTHA);
             }
