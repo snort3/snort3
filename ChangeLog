@@ -1,3 +1,27 @@
+2021/01/28 - 3.1.1.0
+
+-- appid: Add support for snmpv3 report pdu
+-- appid: Always store container session api object in stash
+-- appid: Do not process sip event for an existing session after detector reload
+-- appid: Remove unused code; cleanup FIXIT comments related to reload
+-- appid: Send reload detectors and third-party messages to socket immediately if appid is not
+   enabled
+-- codecs: Update tcp naptha check to make sure it is ipv4 traffic
+-- file_api: Remove file context after file name set if processing is complete
+-- file_api: Stop processing signature when type verdict is 'FILE_VERDICT_STOP'
+-- flow: Update direction and interface info in HA flow
+-- ftp: Use Stream packet holding to handle ftp-data EoF
+-- http_inspect: Add chunked processing to dev notes
+-- http_inspect: Provide file_id to set file name and read new return value
+-- http_inspect: Validate and normalize scheme
+-- http_inspect: Validate URI scheme length
+-- inspector: Add a global reference count for uses that are not thread specific
+-- lrucache: Changes for memcap for support constant cache objects with variable size.
+-- managers: Clean all inactive inspectors warning about ones that are still referenced
+-- mime: Provide file_id to set file name and read new return value
+-- payload_injector: Inject settings frame
+-- rna: Minimize synchronization overhead
+
 2021/01/13 - 3.1.0.0
 
 -- appid: Store stats in map

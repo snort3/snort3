@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.0.0 2021-01-13 13:25:56 EST TST
+Revision 3.1.1.0 2021-01-28 10:50:42 EST TST
 
 ---------------------------------------------------------------------
 
@@ -3833,6 +3833,7 @@ Rules:
   * 119:260 (http_inspect) HTTP Content-Length message body was
     truncated
   * 119:261 (http_inspect) HTTP chunked message body was truncated
+  * 119:262 (http_inspect) HTTP URI scheme longer than 10 characters
 
 Peg counts:
 
@@ -11655,6 +11656,7 @@ these libraries see the Getting Started section of the manual.
   * 119:260 (http_inspect) HTTP Content-Length message body was
     truncated
   * 119:261 (http_inspect) HTTP chunked message body was truncated
+  * 119:262 (http_inspect) HTTP URI scheme longer than 10 characters
   * 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
   * 121:2 (http2_inspect) HPACK integer value has leading zeros
   * 121:3 (http2_inspect) HTTP/2 stream initiated with invalid stream
