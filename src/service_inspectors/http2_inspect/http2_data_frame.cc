@@ -85,7 +85,11 @@ void Http2DataFrame::update_stream_state()
                 }
             }
             if (stream->is_end_stream_on_data_flush(source_id))
+            {
+                if (data_length > 0)
+                    session_data->concurrent_files -= 1;
                 stream->set_state(source_id, STREAM_COMPLETE);
+            }
             break;
         case STREAM_BODY:
             if (stream->is_end_stream_on_data_flush(source_id))

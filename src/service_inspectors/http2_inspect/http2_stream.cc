@@ -83,6 +83,9 @@ void Http2Stream::clear_frame()
         session_data->deallocate_hi_memory(hi_flow_data);
         delete hi_flow_data;
         hi_flow_data = nullptr;
+
+        assert(session_data->concurrent_streams > 0);
+        session_data->concurrent_streams -= 1;
     }
 }
 

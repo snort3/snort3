@@ -57,6 +57,7 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_INVALID_PUSH_FRAME, "invalid HTTP/2 push promise frame" },
     { EVENT_BAD_PUSH_SEQUENCE, "HTTP/2 push promise frame sent at invalid time" },
     { EVENT_BAD_SETTINGS_VALUE, "invalid parameter value sent in HTTP/2 settings frame" },
+    { EVENT_TOO_MANY_STREAMS, "excessive concurrent HTTP/2 streams" },
     { 0, nullptr }
 };
 
@@ -69,6 +70,9 @@ const PegInfo Http2Module::peg_names[PEG_COUNT__MAX+1] =
     { CountType::MAX, "max_concurrent_files", "maximum concurrent file transfers per HTTP/2 "
         "connection" },
     { CountType::SUM, "total_bytes", "total HTTP/2 data bytes inspected" },
+    { CountType::MAX, "max_concurrent_streams", "maximum concurrent streams per HTTP/2 "
+        "connection" },
+    { CountType::SUM, "flows_over_stream_limit", "HTTP/2 flows exceeding 100 concurrent streams" },
     { CountType::END, nullptr, nullptr }
 };
 

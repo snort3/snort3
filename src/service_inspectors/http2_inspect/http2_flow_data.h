@@ -161,6 +161,7 @@ protected:
     Http2HpackDecoder hpack_decoder[2];
     std::list<class StreamInfo> streams;
     uint32_t concurrent_files = 0;
+    uint32_t concurrent_streams = 0;
 
     // Internal to scan()
     bool preface[2] = { true, false };

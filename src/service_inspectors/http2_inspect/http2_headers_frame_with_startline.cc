@@ -33,6 +33,7 @@
 #include "http2_enum.h"
 #include "http2_flow_data.h"
 #include "http2_hpack.h"
+#include "http2_module.h"
 #include "http2_request_line.h"
 #include "http2_start_line.h"
 #include "http2_status_line.h"
@@ -41,7 +42,6 @@
 using namespace snort;
 using namespace HttpCommon;
 using namespace Http2Enums;
-
 
 Http2HeadersFrameWithStartline::~Http2HeadersFrameWithStartline()
 {
@@ -53,6 +53,31 @@ bool Http2HeadersFrameWithStartline::process_start_line(HttpFlowData*& http_flow
 {
     if (session_data->abort_flow[source_id])
         return false;
+
+    if (!stream->get_hi_flow_data())
+    {
+        if (session_data->concurrent_streams < CONCURRENT_STREAMS_LIMIT)
+        {
+            session_data->concurrent_streams += 1;
+            if (session_data->concurrent_streams >
+                Http2Module::get_peg_counts(PEG_MAX_CONCURRENT_STREAMS))
+
+            {
+                Http2Module::increment_peg_counts(PEG_MAX_CONCURRENT_STREAMS);
+            }
+        }
+        else
+        {
+            *session_data->infractions[source_id] += INF_TOO_MANY_STREAMS;
+            session_data->events[source_id]->create_event(EVENT_TOO_MANY_STREAMS);
+            Http2Module::increment_peg_counts(PEG_FLOWS_OVER_STREAM_LIMIT);
+            session_data->abort_flow[SRC_CLIENT] = true;
+            session_data->abort_flow[SRC_SERVER] = true;
+            stream->set_state(SRC_CLIENT, STREAM_ERROR);
+            stream->set_state(SRC_SERVER, STREAM_ERROR);
+            return false;
+        }
+    }
 
     // http_inspect scan() of start line
     {

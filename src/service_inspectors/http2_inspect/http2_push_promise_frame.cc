@@ -135,7 +135,8 @@ void Http2PushPromiseFrame::update_stream_state()
     if (stream->get_state(SRC_CLIENT) == STREAM_EXPECT_HEADERS)
         stream->set_state(SRC_CLIENT, STREAM_COMPLETE);
 
-    assert(stream->get_state(SRC_SERVER) == STREAM_EXPECT_HEADERS);
+    assert(stream->get_state(SRC_SERVER) == STREAM_EXPECT_HEADERS or
+        stream->get_state(SRC_SERVER) == STREAM_ERROR);
     assert((stream->get_state(SRC_CLIENT) == STREAM_COMPLETE) or
         (stream->get_state(SRC_CLIENT) == STREAM_ERROR));
 }
