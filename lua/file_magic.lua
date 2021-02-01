@@ -131,7 +131,6 @@ file_magic =
     { type = 'PCAP', id = 145, category = 'System files', msg = 'Packet capture file', rev = 1, magic = { { content = '|A1 B2 C3 D4 |', offset = 0, }, }, },
     { type = 'PCAP', id = 146, category = 'System files', msg = 'Packet capture file', rev = 1, magic = { { content = '|A1 B2 CD 34 |', offset = 0, }, }, },
     { type = 'PCAP', id = 147, category = 'System files', msg = 'Packet capture file', rev = 1, magic = { { content = '|52 54 53 53 |', offset = 0, }, }, },
-    { type = 'PCAP', id = 325, category = 'System files', msg = 'Packet capture file', rev = 1, magic = { { content = '| 0A 0D 0D 0A |', offset = 0, }, }, },
     { type = 'BMP', id = 148, category = 'Graphics', msg = 'Bitmap image file', rev = 1, group = 'multimedia', magic = { { content = '|42  4D |', offset = 0, }, }, },
     { type = 'ICO', id = 149, category = 'Graphics', msg = 'Windows icon file', rev = 1, magic = { { content = '| 00 00 01 00 |', offset = 0, }, }, },
     { type = 'TORRENT', id = 150, category = 'Executables', msg = 'BitTorrent File', rev = 1, magic = { { content = '| 64 38 3A 61 6E 6E 6F 75 6E 63 65  |', offset = 0, }, }, },
@@ -202,6 +201,7 @@ file_magic =
     { type = 'EGG', id = 322, category = 'Archive', msg = 'Archive File for Microsoft created using software ALZip', rev = 1, magic = { { content = '| 45 47 47 41 |', offset = 0, }, }, },
     { type = 'HWP', id = 323, category = 'Office Documents', msg = 'Hangul word processor file', rev = 1, version = '3.0', magic = { { content = '| 48 57 50 20 44 6F 63 75 6D 65 6E 74 20 46 69 6C 65 |', offset = 0, }, }, },
     { type = 'SWF', id = 324, category = 'Multimedia', msg = 'Flash file', rev = 1, magic = { { content = '| 5A 57 53 |', offset = 0}, }, },
+    { type = 'PCAP', id = 325, category = 'System files', msg = 'Packet capture file', rev = 1, magic = { { content = '| 0A 0D 0D 0A |', offset = 0, }, }, },
 }
 
 snort_whitelist_append("file_magic")
