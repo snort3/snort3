@@ -131,6 +131,7 @@ file_magic =
     { type = 'PCAP', id = 145, category = 'System files', msg = 'Packet capture file', rev = 1, magic = { { content = '|A1 B2 C3 D4 |', offset = 0, }, }, },
     { type = 'PCAP', id = 146, category = 'System files', msg = 'Packet capture file', rev = 1, magic = { { content = '|A1 B2 CD 34 |', offset = 0, }, }, },
     { type = 'PCAP', id = 147, category = 'System files', msg = 'Packet capture file', rev = 1, magic = { { content = '|52 54 53 53 |', offset = 0, }, }, },
+    { type = 'PCAP', id = 325, category = 'System files', msg = 'Packet capture file', rev = 1, magic = { { content = '| 0A 0D 0D 0A |', offset = 0, }, }, },
     { type = 'BMP', id = 148, category = 'Graphics', msg = 'Bitmap image file', rev = 1, group = 'multimedia', magic = { { content = '|42  4D |', offset = 0, }, }, },
     { type = 'ICO', id = 149, category = 'Graphics', msg = 'Windows icon file', rev = 1, magic = { { content = '| 00 00 01 00 |', offset = 0, }, }, },
     { type = 'TORRENT', id = 150, category = 'Executables', msg = 'BitTorrent File', rev = 1, magic = { { content = '| 64 38 3A 61 6E 6E 6F 75 6E 63 65  |', offset = 0, }, }, },
