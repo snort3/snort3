@@ -57,18 +57,19 @@ NormPegs TcpNormalizer::get_normalization_counts(unsigned& c)
     return tcp_norm_stats;
 }
 
-void TcpNormalizer::trim_payload(
+bool TcpNormalizer::trim_payload(
     TcpNormalizerState&, TcpSegmentDescriptor& tsd, uint32_t max, NormMode mode, TcpPegCounts peg)
 {
+    tcp_norm_stats[peg][mode]++;
     if (mode == NORM_MODE_ON)
     {
         uint16_t fat = tsd.get_len() - max;
         tsd.set_len(max);
         tsd.set_packet_flags(PKT_RESIZED);
         tsd.set_end_seq(tsd.get_end_seq() - fat);
+        return true;
     }
-
-    tcp_norm_stats[peg][mode]++;
+    return false;
 }
 
 bool TcpNormalizer::strip_tcp_timestamp(
@@ -108,11 +109,12 @@ bool TcpNormalizer::packet_dropper(
     return false;
 }
 
-void TcpNormalizer::trim_syn_payload(
+bool TcpNormalizer::trim_syn_payload(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd, uint32_t max)
 {
     if (tsd.get_len() > max)
-        trim_payload(tns, tsd, max, (NormMode)tns.trim_syn, PC_TCP_TRIM_SYN);
+        return trim_payload(tns, tsd, max, (NormMode)tns.trim_syn, PC_TCP_TRIM_SYN);
+    return false;
 }
 
 void TcpNormalizer::trim_rst_payload(

@@ -84,6 +84,11 @@ class FakeHttpMsgHeader
 };
 FakeHttpMsgHeader* fake_msg_header = nullptr;
 
+AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol, AppidSessionDirection,
+    AppIdInspector*, OdpContext&)
+{
+    return nullptr;
+}
 void AppIdSession::set_application_ids_service(AppId, AppidChangeBits&) {}
 void AppIdSession::set_ss_application_ids(AppId, AppId, AppId, AppId, AppId, AppidChangeBits&) {}
 AppIdHttpSession* AppIdSession::get_http_session(uint32_t stream_index) const

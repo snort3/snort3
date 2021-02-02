@@ -53,8 +53,8 @@ public:
     bool packet_dropper(TcpSegmentDescriptor& tsd, NormFlags nflags)
     { return norm->packet_dropper(tns, tsd, nflags); }
 
-    void trim_syn_payload(TcpSegmentDescriptor& tsd, uint32_t max = 0)
-    { norm->trim_syn_payload(tns, tsd, max); }
+    bool trim_syn_payload(TcpSegmentDescriptor& tsd, uint32_t max = 0)
+    { return norm->trim_syn_payload(tns, tsd, max); }
 
     void trim_rst_payload(TcpSegmentDescriptor& tsd, uint32_t max = 0)
     { norm->trim_rst_payload(tns, tsd, max); }

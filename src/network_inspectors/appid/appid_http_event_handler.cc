@@ -37,25 +37,37 @@
 #include "appid_http_session.h"
 #include "appid_inspector.h"
 #include "appid_session.h"
-#include "utils/util.h"
 
 using namespace snort;
 
 void HttpEventHandler::handle(DataEvent& event, Flow* flow)
 {
+    if ( !pkt_thread_odp_ctxt )
+        return;
+
     assert(flow);
     AppIdSession* asd = appid_api.get_appid_session(*flow);
-    if (!asd)
-        return;
-    else
-    {
-        // Skip detection for sessions using old odp context after odp reload
-        if (!pkt_thread_odp_ctxt or
-            (asd->get_odp_ctxt_version() != pkt_thread_odp_ctxt->get_version()))
-            return;
-    }
+    Packet* p = DetectionEngine::get_current_packet();
+    assert(p);
+    auto direction = event_type == REQUEST_EVENT ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
 
-    AppidSessionDirection direction;
+    if ( !asd )
+    {
+        // The event is received before appid has seen any packet, e.g., data on SYN
+        auto inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
+        asd = AppIdSession::allocate_session( p, p->get_ip_proto_next(), direction,
+            inspector, *pkt_thread_odp_ctxt );
+        if ( appidDebug->is_enabled() )
+        {
+            appidDebug->activate(flow, asd, inspector->get_ctxt().config.log_all_sessions);
+            if ( appidDebug->is_active() )
+                LogMessage("AppIdDbg %s New AppId session at HTTP event\n",
+                    appidDebug->get_debug_session());
+        }
+    }
+    else if ( asd->get_odp_ctxt_version() != pkt_thread_odp_ctxt->get_version() )
+        return; // Skip detection for sessions using old odp context after odp reload
+
     const uint8_t* header_start;
     int32_t header_length;
     HttpEvent* http_event = (HttpEvent*)&event;
@@ -70,7 +82,6 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
             appidDebug->get_debug_session(), http_event->get_http2_stream_id());
 
     asd->set_session_flags(APPID_SESSION_HTTP_SESSION);
-    direction = event_type == REQUEST_EVENT ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
 
     AppIdHttpSession* hsession;
     if (http_event->get_is_http2())
@@ -195,8 +206,6 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     else
         asd->set_application_ids_service(APP_ID_HTTP2, change_bits);
 
-    Packet* p = DetectionEngine::get_current_packet();
-    assert(p);
     asd->publish_appid_event(change_bits, *p, http_event->get_is_http2(),
         asd->get_api().get_hsessions_size() - 1);
 }

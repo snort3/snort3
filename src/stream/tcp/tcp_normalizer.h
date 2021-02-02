@@ -79,7 +79,7 @@ public:
 
     virtual void init(State&) { }
     virtual bool packet_dropper(State&, TcpSegmentDescriptor&, NormFlags);
-    virtual void trim_syn_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0);
+    virtual bool trim_syn_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0);
     virtual void trim_rst_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0);
     virtual void trim_win_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0);
     virtual void trim_mss_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0);
@@ -98,7 +98,7 @@ public:
 protected:
     TcpNormalizer() = default;
 
-    virtual void trim_payload(State&, TcpSegmentDescriptor&, uint32_t, NormMode, TcpPegCounts);
+    virtual bool trim_payload(State&, TcpSegmentDescriptor&, uint32_t, NormMode, TcpPegCounts);
     virtual bool strip_tcp_timestamp(
         State&, TcpSegmentDescriptor&, const snort::tcp::TcpOption*, NormMode);
     virtual bool validate_rst_seq_geq(State&, TcpSegmentDescriptor&);

@@ -400,15 +400,7 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
     uint32_t seq = tsd.get_seq();
 
     if ( tcph->is_syn() )
-    {
-        if (listener->normalizer.get_os_policy() == StreamPolicy::OS_MACOS)
-            seq++;
-        else
-        {
-            listener->normalizer.trim_syn_payload(tsd);
-            return STREAM_UNALIGNED;
-        }
-    }
+        seq++;
 
     /* we're aligned, so that's nice anyway */
     if (seq == listener->rcv_nxt)
@@ -634,16 +626,11 @@ void TcpSession::update_ignored_session(TcpSegmentDescriptor& tsd)
 void TcpSession::handle_data_on_syn(TcpSegmentDescriptor& tsd)
 {
     TcpStreamTracker* listener = tsd.get_listener();
-    TcpStreamTracker* talker = tsd.get_talker();
 
-    /* MacOS accepts data on SYN, so don't alert if policy is MACOS */
-    if ( talker->normalizer.get_os_policy() == StreamPolicy::OS_MACOS )
-        handle_data_segment(tsd);
-    else
+    if ( !listener->normalizer.trim_syn_payload(tsd) )
     {
-        listener->normalizer.trim_syn_payload(tsd);
+        handle_data_segment(tsd);
         tel.set_tcp_event(EVENT_DATA_ON_SYN);
-        set_pkt_action_flag(ACTION_BAD_PKT);
     }
 }
 
