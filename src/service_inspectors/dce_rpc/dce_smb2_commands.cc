@@ -78,6 +78,17 @@ static void DCE2_Smb2CleanFtrackerTcpRef(DCE2_Smb2SessionTracker* str, uint64_t 
     }
 }
 
+DCE2_Smb2TreeTracker *find_tree_for_message(DCE2_Smb2SessionTracker *str, const uint64_t mid)
+{
+    auto all_tree_trackers = str->tree_trackers.get_all_entry();
+    for ( auto& h : all_tree_trackers )
+    {
+        if(h.second->findRtracker(mid))
+            return h.second;
+    }
+    return nullptr;
+}
+
 bool DCE2_Smb2ProcessFileData(DCE2_Smb2SsnData* ssd, const uint8_t* file_data,
     uint32_t data_size)
 {
@@ -401,6 +412,8 @@ void DCE2_Smb2Create(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             smb_data, end, SMB2_CREATE_RESPONSE_STRUC_SIZE - 1,
             dce2_smb_stats.v2_crt_resp_hdr_err, SMB2_COM_CREATE)
 
+        if(!tid)
+            ttr = find_tree_for_message(str, mid);
         if (!ttr)
         {
             debug_logf(dce_smb_trace, DetectionEngine::get_current_packet(),

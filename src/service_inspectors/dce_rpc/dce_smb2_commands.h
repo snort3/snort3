@@ -62,5 +62,7 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData*, const Smb2Hdr*,
 void DCE2_Smb2Logoff(DCE2_Smb2SsnData*, const uint8_t* smb_data,
     const uint64_t sid);
 
+DCE2_Smb2TreeTracker *find_tree_for_message(DCE2_Smb2SessionTracker*, const uint64_t);
+
 #endif
 

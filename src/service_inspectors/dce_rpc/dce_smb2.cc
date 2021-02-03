@@ -189,14 +189,18 @@ void DCE2_Smb2SessionTracker::removeSessionFromAllConnection()
 }
 
 static inline bool DCE2_Smb2FindSidTid(DCE2_Smb2SsnData* ssd, const uint64_t sid,
-    const uint32_t tid, DCE2_Smb2SessionTracker** str, DCE2_Smb2TreeTracker** ttr)
+    const uint32_t tid, const uint32_t mid, DCE2_Smb2SessionTracker** str, DCE2_Smb2TreeTracker** ttr)
 {
     *str = DCE2_Smb2FindSidInSsd(ssd, sid);
     if (!*str)
         return false;
-
-    *ttr = (*str)->findTtracker(tid);
-    if (!*ttr)
+    
+    if(!tid)
+        *ttr = find_tree_for_message(*str, mid);
+    else
+        *ttr = (*str)->findTtracker(tid);
+        
+    if(!*ttr)
         return false;
 
     return true;
@@ -229,7 +233,7 @@ static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         break;
     case SMB2_COM_READ:
         dce2_smb_stats.v2_read++;
-        if (!DCE2_Smb2FindSidTid(ssd, sid, tid, &str, &ttr) or
+        if (!DCE2_Smb2FindSidTid(ssd, sid, tid, mid, &str, &ttr) or
             SMB2_SHARE_TYPE_DISK != ttr->get_share_type())
         {
             dce2_smb_stats.v2_read_ignored++;
@@ -240,7 +244,7 @@ static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         break;
     case SMB2_COM_WRITE:
         dce2_smb_stats.v2_wrt++;
-        if (!DCE2_Smb2FindSidTid(ssd, sid, tid, &str, &ttr) or
+        if (!DCE2_Smb2FindSidTid(ssd, sid, tid, mid, &str, &ttr) or
             SMB2_SHARE_TYPE_DISK != ttr->get_share_type())
         {
             dce2_smb_stats.v2_wrt_ignored++;
@@ -251,7 +255,7 @@ static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         break;
     case SMB2_COM_SET_INFO:
         dce2_smb_stats.v2_stinf++;
-        if (!DCE2_Smb2FindSidTid(ssd, sid, tid, &str, &ttr) or
+        if (!DCE2_Smb2FindSidTid(ssd, sid, tid, mid, &str, &ttr) or
             SMB2_SHARE_TYPE_DISK != ttr->get_share_type())
         {
             dce2_smb_stats.v2_stinf_ignored++;
@@ -262,7 +266,7 @@ static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         break;
     case SMB2_COM_CLOSE:
         dce2_smb_stats.v2_cls++;
-        if (!DCE2_Smb2FindSidTid(ssd, sid, tid, &str, &ttr) or
+        if (!DCE2_Smb2FindSidTid(ssd, sid, tid, mid, &str, &ttr) or
             SMB2_SHARE_TYPE_DISK != ttr->get_share_type())
         {
             dce2_smb_stats.v2_cls_ignored++;
@@ -282,7 +286,7 @@ static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         break;
     case SMB2_COM_TREE_DISCONNECT:
         dce2_smb_stats.v2_tree_discn++;
-        if (!DCE2_Smb2FindSidTid(ssd, sid, tid, &str, &ttr))
+        if (!DCE2_Smb2FindSidTid(ssd, sid, tid, mid, &str, &ttr))
         {
             dce2_smb_stats.v2_tree_discn_ignored++;
             return;
