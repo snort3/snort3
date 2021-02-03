@@ -955,6 +955,8 @@ int32_t TcpReassembler::scan_data_post_ack(TcpReassemblerState& trs, uint32_t* f
         int32_t flush_pt = paf_check(splitter, &trs.paf_state, p, tsn->payload(),
             flush_len, total, tsn->c_seq, flags);
 
+        // Get splitter from tracker as paf check may change it.
+        splitter = trs.tracker->get_splitter();
         trs.sos.seglist.cur_sseg = tsn;
 
         if ( flush_pt >= 0 )
