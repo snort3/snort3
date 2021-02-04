@@ -77,7 +77,7 @@ private:
     // Header normalization strategies. There should be one defined for every different way we can
     // process a header field value.
     static const HeaderNormalizer NORMALIZER_BASIC;
-    static const HeaderNormalizer NORMALIZER_NO_REPEAT;
+    static const HeaderNormalizer NORMALIZER_HOST;
     static const HeaderNormalizer NORMALIZER_CASE_INSENSITIVE;
     static const HeaderNormalizer NORMALIZER_NUMBER;
     static const HeaderNormalizer NORMALIZER_TOKEN_LIST;

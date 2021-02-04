@@ -184,8 +184,8 @@ const StrCode HttpMsgHeadShared::charset_code_opt_list[] =
 const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_BASIC
     { EVENT__NONE, INF__NONE, false, nullptr, nullptr, nullptr };
 
-const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_NO_REPEAT
-    { EVENT_REPEATED_HEADER, INF_REPEATED_HEADER, false, nullptr, nullptr, nullptr };
+const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_HOST
+    { EVENT_MULTIPLE_HOST_HDRS, INF_MULTIPLE_HOST_HDRS, false, nullptr, nullptr, nullptr };
 
 const HeaderNormalizer HttpMsgHeadShared::NORMALIZER_CASE_INSENSITIVE
     { EVENT__NONE, INF__NONE, false, norm_to_lower, nullptr, nullptr };
@@ -237,7 +237,7 @@ const HeaderNormalizer* const HttpMsgHeadShared::header_norms[HEAD__MAX_VALUE + 
     &NORMALIZER_BASIC,      // HEAD_AUTHORIZATION
     &NORMALIZER_CASE_INSENSITIVE, // HEAD_EXPECT
     &NORMALIZER_BASIC,      // HEAD_FROM
-    &NORMALIZER_NO_REPEAT,  // HEAD_HOST
+    &NORMALIZER_HOST,       // HEAD_HOST
     &NORMALIZER_BASIC,      // HEAD_IF_MATCH
     &NORMALIZER_DATE,       // HEAD_IF_MODIFIED_SINCE
     &NORMALIZER_BASIC,      // HEAD_IF_NONE_MATCH
@@ -292,7 +292,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_DOUBLE_DECODE,              "double decoding attack" },
     { EVENT_U_ENCODE,                   "u encoding" },
     { EVENT_BARE_BYTE,                  "bare byte unicode encoding" },
-    { EVENT_OBSOLETE_BASE_36,           "obsolete event--deleted" },
+    // { EVENT_OBSOLETE_BASE_36,           "obsolete event--deleted" },
     { EVENT_UTF_8,                      "UTF-8 encoding" },
     { EVENT_CODE_POINT_IN_URI,          "unicode map code point encoding in URI" },
     { EVENT_MULTI_SLASH,                "multi_slash encoding" },
@@ -303,33 +303,34 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_LF_WITHOUT_CR,              "HTTP header line terminated by LF without a CR" },
     { EVENT_NON_RFC_CHAR,               "non-RFC defined char" },
     { EVENT_OVERSIZE_DIR,               "oversize request-uri directory" },
-    { EVENT_LARGE_CHUNK,                "oversize chunk encoding" },
-    { EVENT_PROXY_USE,                  "unauthorized proxy use detected" },
+    // { EVENT_LARGE_CHUNK,                "oversize chunk encoding" },
+    // { EVENT_PROXY_USE,                  "unauthorized proxy use detected" },
     { EVENT_WEBROOT_DIR,                "webroot directory traversal" },
     { EVENT_LONG_HDR,                   "long header" },
     { EVENT_MAX_HEADERS,                "max header fields" },
     { EVENT_MULTIPLE_CONTLEN,           "multiple content length" },
-    { EVENT_OBSOLETE_CHUNK_SIZE_MISMATCH, "obsolete event--deleted" },
-    { EVENT_INVALID_TRUEIP,             "invalid IP in true-client-IP/XFF header" },
-    { EVENT_MULTIPLE_HOST_HDRS,         "multiple host hdrs detected" },
-    { EVENT_LONG_HOSTNAME,              "hostname exceeds 255 characters" },
-    { EVENT_EXCEEDS_SPACES,             "too much whitespace in header (not implemented yet)" },
-    { EVENT_CONSECUTIVE_SMALL_CHUNKS,   "client consecutive small chunk sizes" },
+    // { EVENT_OBSOLETE_CHUNK_SIZE_MISMATCH, "obsolete event--deleted" },
+    // { EVENT_INVALID_TRUEIP,             "invalid IP in true-client-IP/XFF header" },
+    { EVENT_MULTIPLE_HOST_HDRS,         "Host header field appears more than once or has multiple "
+                                        "values" },
+    // { EVENT_LONG_HOSTNAME,              "hostname exceeds 255 characters" },
+    // { EVENT_EXCEEDS_SPACES,             "too much whitespace in header (not implemented yet)" },
+    // { EVENT_CONSECUTIVE_SMALL_CHUNKS,   "client consecutive small chunk sizes" },
     { EVENT_UNBOUNDED_POST,             "POST or PUT w/o content-length or chunks" },
-    { EVENT_MULTIPLE_TRUEIP_IN_SESSION, "multiple true ips in a session" },
-    { EVENT_BOTH_TRUEIP_XFF_HDRS,       "both true-client-IP and XFF hdrs present" },
+    // { EVENT_MULTIPLE_TRUEIP_IN_SESSION, "multiple true ips in a session" },
+    // { EVENT_BOTH_TRUEIP_XFF_HDRS,       "both true-client-IP and XFF hdrs present" },
     { EVENT_UNKNOWN_METHOD,             "unknown method" },
     { EVENT_SIMPLE_REQUEST,             "simple request" },
     { EVENT_UNESCAPED_SPACE_URI,        "unescaped space in HTTP URI" },
     { EVENT_PIPELINE_MAX,               "too many pipelined requests" },
-    { EVENT_OBSOLETE_ANOM_SERVER,       "obsolete event--deleted" },
+    // { EVENT_OBSOLETE_ANOM_SERVER,       "obsolete event--deleted" },
     { EVENT_INVALID_STATCODE,           "invalid status code in HTTP response" },
-    { EVENT_UNUSED_1,                   "unused event number--should not appear" },
+    // { EVENT_UNUSED_1,                   "unused event number--should not appear" },
     { EVENT_UTF_NORM_FAIL,              "HTTP response has UTF charset that failed to normalize" },
     { EVENT_UTF7,                       "HTTP response has UTF-7 charset" },
-    { EVENT_DECOMPR_FAILED,             "HTTP response gzip decompression failed" },
-    { EVENT_CONSECUTIVE_SMALL_CHUNKS_S, "server consecutive small chunk sizes" },
-    { EVENT_UNUSED_2,                   "unused event number--should not appear" },
+    // { EVENT_DECOMPR_FAILED,             "HTTP response gzip decompression failed" },
+    // { EVENT_CONSECUTIVE_SMALL_CHUNKS_S, "server consecutive small chunk sizes" },
+    // { EVENT_UNUSED_2,                   "unused event number--should not appear" },
     { EVENT_JS_OBFUSCATION_EXCD,        "javascript obfuscation levels exceeds 1" },
     { EVENT_JS_EXCESS_WS,               "javascript whitespaces exceeds max allowed" },
     { EVENT_MIXED_ENCODINGS,            "multiple encodings within javascript obfuscated data" },
