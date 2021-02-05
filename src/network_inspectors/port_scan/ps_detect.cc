@@ -351,7 +351,8 @@ bool PortScan::ps_tracker_lookup(
     }
 
     //  Let's lookup the host that is scanning.
-    if (config->detect_scan_type & PS_TYPE_PORTSWEEP)
+    if (config->detect_scan_type &
+        (PS_TYPE_PORTSWEEP | PS_TYPE_PORTSCAN | PS_TYPE_DECOYSCAN | PS_TYPE_DISTPORTSCAN))
     {
         key.scanned.clear();
 
@@ -766,14 +767,36 @@ void PortScan::ps_tracker_update_ip(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     SfIp cleared;
     cleared.clear();
 
-    if (scanned)
+    if (p->ptrs.icmph and (p->ptrs.icmph->type == ICMP_DEST_UNREACH))
     {
-        ps_proto_update(&scanned->proto, 1, 0, win, &cleared, (unsigned short)p->get_ip_proto_next(), 0);
+        if (p->ptrs.icmph->code == ICMP_PROT_UNREACH)
+        {
+            if (scanned)
+            {
+                ps_proto_update(&scanned->proto, 0, 1, win, &cleared, 0, 0);
+                scanned->priority_node = 1;
+            }
+            if(scanner)
+            {
+                ps_proto_update(&scanner->proto, 0, 1, win, &cleared, 0, 0);
+                scanner->priority_node = 1;
+            }
+        }
+        else
+            return;
     }
-
-    if (scanner)
+    else
     {
-        ps_proto_update(&scanner->proto, 1, 0, win, &cleared, (unsigned short)p->get_ip_proto_next(), 0);
+        if (scanned)
+        {
+            ps_proto_update(&scanned->proto, 1, 0, win, p->ptrs.ip_api.get_src(),
+                (unsigned short)p->get_ip_proto_next(), packet_time());
+        }
+        if (scanner)
+        {
+            ps_proto_update(&scanner->proto, 1, 0, win, p->ptrs.ip_api.get_dst(),
+                (unsigned short)p->get_ip_proto_next(), packet_time());
+        }
     }
 }
 
@@ -957,7 +980,7 @@ static bool ps_alert_one_to_one(
 }
 
 static bool ps_alert_one_to_one_decoy(
-    const PS_ALERT_CONF& conf, PS_PROTO*, PS_PROTO* scanned)
+    const PS_ALERT_CONF& conf, PS_PROTO* scanner, PS_PROTO* scanned)
 {
     if (scanned && !scanned->alerts)
     {
@@ -966,8 +989,11 @@ static bool ps_alert_one_to_one_decoy(
             if (scanned->u_ip_count >= conf.u_ip_count &&
                 scanned->u_port_count >= conf.u_port_count)
             {
-                scanned->alerts = PS_ALERT_ONE_TO_ONE_DECOY;
-                return true;
+                if (scanner && scanner->u_port_count >= conf.u_port_count)
+                {
+                    scanned->alerts = PS_ALERT_ONE_TO_ONE_DECOY;
+                    return true;
+                }
             }
         }
         if (scanned->connection_count >= conf.connection_count)
@@ -978,8 +1004,11 @@ static bool ps_alert_one_to_one_decoy(
             if (scanned->u_ip_count >= conf.u_ip_count &&
                 scanned->u_port_count >= conf.u_port_count)
             {
-                scanned->alerts = PS_ALERT_ONE_TO_ONE_DECOY_FILTERED;
-                return true;
+                if (scanner && scanner->u_port_count >= conf.u_port_count)
+                {
+                    scanned->alerts = PS_ALERT_ONE_TO_ONE_DECOY_FILTERED;
+                    return true;
+                }
             }
         }
     }
@@ -988,17 +1017,20 @@ static bool ps_alert_one_to_one_decoy(
 }
 
 static bool ps_alert_many_to_one(
-    const PS_ALERT_CONF& conf, PS_PROTO*, PS_PROTO* scanned)
+    const PS_ALERT_CONF& conf, PS_PROTO* scanner, PS_PROTO* scanned)
 {
     if (scanned && !scanned->alerts)
     {
         if (scanned->priority_count >= conf.priority_count)
         {
-            if (scanned->u_ip_count <= conf.u_ip_count &&
+            if (scanned->u_ip_count >= conf.u_ip_count &&
                 scanned->u_port_count >= conf.u_port_count)
             {
-                scanned->alerts = PS_ALERT_DISTRIBUTED;
-                return true;
+                if (scanner && scanner->u_port_count <= conf.u_port_count)
+                {
+                    scanned->alerts = PS_ALERT_DISTRIBUTED;
+                    return true;
+                }
             }
         }
         if (scanned->connection_count >= conf.connection_count)
@@ -1006,11 +1038,14 @@ static bool ps_alert_many_to_one(
             if (conf.connection_count == 0)
                 return false;
 
-            if (scanned->u_ip_count <= conf.u_ip_count &&
+            if (scanned->u_ip_count >= conf.u_ip_count &&
                 scanned->u_port_count >= conf.u_port_count)
             {
-                scanned->alerts = PS_ALERT_DISTRIBUTED_FILTERED;
-                return true;
+                if (scanner && scanner->u_port_count <= conf.u_port_count)
+                {
+                    scanned->alerts = PS_ALERT_DISTRIBUTED_FILTERED;
+                    return true;
+                }
             }
         }
     }
