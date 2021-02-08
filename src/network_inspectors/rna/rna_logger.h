@@ -39,10 +39,10 @@ struct RnaLoggerEvent : public Event
         const snort::HostMac* hmp, uint16_t pr, void* cv, const snort::HostApplication* hap,
         const snort::FpFingerprint* fpr, const snort::HostClient* hcp, const char* u,
         int32_t app, const char* di, bool jb, uint32_t ls, uint32_t nm,
-        const struct in6_addr* rtr, const snort::Packet* p) : type(t), subtype(st),
+        const struct in6_addr* rtr, const snort::Packet* p, const char* nb_name) : type(t), subtype(st),
         mac(mc), ht(rt), hm(hmp), proto(pr), cond_var(cv), ha(hap), fp(fpr), hc(hcp),
         user(u), appid(app), device_info(di), jail_broken(jb), lease(ls), netmask(nm),
-        router(rtr), pkt(p) { }
+        router(rtr), pkt(p), netbios_name(nb_name) { }
 
     uint32_t event_time = 0;
     uint16_t type;
@@ -64,6 +64,7 @@ struct RnaLoggerEvent : public Event
     uint32_t netmask;
     const struct in6_addr* router;
     const snort::Packet* pkt;
+    const char* netbios_name = nullptr;
 };
 
 class RnaLogger
@@ -119,7 +120,7 @@ public:
         void* cond_var = nullptr, const snort::HostClient* hc = nullptr,
         const char* user = nullptr, AppId appid = APP_ID_NONE, const char* device_info = nullptr,
         bool jail_broken = false, uint32_t lease = 0, uint32_t netmask = 0,
-        const struct in6_addr* router = nullptr);
+        const struct in6_addr* router = nullptr, const char* nb_name = nullptr);
 
 private:
     const bool enabled;

@@ -34,8 +34,6 @@ char const* APPID_UT_TLS_HOST = "vpn.topsecret.com";
 char const* APPID_UT_SERVICE_IP_ADDR = "192.168.0.2";
 char const* APPID_UT_INITIATOR_IP_ADDR = "192.168.0.3";
 
-char const* APPID_UT_NETBIOS_NAME = "I AM NETBIOS!";
-
 char const* APPID_ID_UT_DNS_HOST = "delphi.opendns.com";
 #define APPID_UT_DNS_HOST_OFFSET 22
 #define APPID_UT_DNS_PATTERN_CNAME_REC  5
@@ -105,8 +103,6 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t, AppIdInsp
     set_service_ip(svc_ip);
     api.initiator_ip.pton(AF_INET, APPID_UT_INITIATOR_IP_ADDR);
 
-    netbios_name = snort_strdup(APPID_UT_NETBIOS_NAME);
-
     api.dsession = new MockAppIdDnsSession;
     tp_app_id = APPID_UT_ID;
     set_service_id(APPID_UT_ID + 1, odp_ctxt);
@@ -121,8 +117,6 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t, AppIdInsp
 AppIdSession::~AppIdSession()
 {
     delete tsession;
-    if (netbios_name)
-        snort_free(netbios_name);
 }
 
 void* AppIdSession::get_flow_data(unsigned) const

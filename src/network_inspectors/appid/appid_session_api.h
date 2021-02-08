@@ -124,6 +124,7 @@ public:
     const AppIdHttpSession* get_http_session(uint32_t stream_index = 0) const;
     const char* get_tls_host() const;
     bool is_http_inspection_done() const;
+    const char* get_netbios_name() const;
 
     // For protocols such as HTTP2 which can have multiple streams within a single flow,
     // get_first_stream_* methods return the appids in the first stream seen in a packet.
@@ -163,6 +164,7 @@ private:
     snort::SfIp initiator_ip;
     ServiceAppDescriptor service;
     char* tls_host = nullptr;
+    char* netbios_name = nullptr;
     std::string session_id;
     bool user_logged_in = false;
 
@@ -178,6 +180,7 @@ private:
         AppId referred, AppidChangeBits& change_bits, Flow& flow);
     void set_ss_application_ids(AppId client, AppId payload, AppidChangeBits& change_bits, Flow& flow);
     void set_application_ids_service(AppId service_id, AppidChangeBits& change_bits, Flow& flow);
+    void set_netbios_name(AppidChangeBits& change_bits, const char* name);
 
     AppIdHttpSession* get_hsession(uint32_t stream_index = 0) const;
 
@@ -185,6 +188,7 @@ private:
     {
         delete_all_http_sessions();
         snort_free(tls_host);
+        snort_free(netbios_name);
         delete dsession;
     }
 

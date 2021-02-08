@@ -251,7 +251,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     CHECK_EQUAL(service, APPID_UT_ID);
     CHECK_EQUAL(client, APPID_UT_ID);
     CHECK_EQUAL(payload, APPID_UT_ID);
-    STRCMP_EQUAL("Published change_bits == 00000000000000000", test_log);
+    STRCMP_EQUAL("Published change_bits == 000000000000000000", test_log);
 
     service = APP_ID_NONE;
     client = APP_ID_NONE;
@@ -264,7 +264,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_first_alt_name(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
-    STRCMP_EQUAL("Published change_bits == 00000000100011000", test_log);
+    STRCMP_EQUAL("Published change_bits == 000000000100011000", test_log);
 
     mock_session->tsession->set_tls_host("www.cisco.com", 13, change_bits);
     mock_session->tsession->set_tls_cname("www.cisco.com", 13, change_bits);
@@ -280,7 +280,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_org_unit(), "Cisco");
-    STRCMP_EQUAL("Published change_bits == 00000000100011000", test_log);
+    STRCMP_EQUAL("Published change_bits == 000000000100011000", test_log);
 
     string host = "";
     val = appid_api.ssl_app_group_id_lookup(flow, (const char*)(host.c_str()), nullptr,
@@ -291,7 +291,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_org_unit(), "Google");
-    STRCMP_EQUAL("Published change_bits == 00000000100000000", test_log);
+    STRCMP_EQUAL("Published change_bits == 000000000100000000", test_log);
     mock().checkExpectations();
 }
 

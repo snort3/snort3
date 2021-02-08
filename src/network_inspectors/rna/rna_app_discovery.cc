@@ -159,6 +159,12 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter, 
             }
         }
     }
+
+    if ( appid_change_bits[APPID_NETBIOS_NAME_BIT] )
+    {
+        const char* netbios_name = appid_session_api.get_netbios_name();
+        discover_netbios_name(p, filter, rna_flow, logger, netbios_name);
+    }
 }
 
 bool RnaAppDiscovery::discover_service(const Packet* p, DiscoveryFilter& filter, RNAFlow* rna_flow,
@@ -168,7 +174,7 @@ bool RnaAppDiscovery::discover_service(const Packet* p, DiscoveryFilter& filter,
     RnaTracker htp;
     SfIp ip = p->flow->server_ip;
 
-    if (!is_client)
+    if ( !is_client )
     {
         if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_SERVER) )
             return false;
@@ -266,7 +272,7 @@ void RnaAppDiscovery::discover_payload(const Packet* p, DiscoveryFilter& filter,
     HostClient hc(client, nullptr, service);
     new_client_payload = crt->add_client_payload(hc, payload, max_payloads);
 
-    if (new_client_payload)
+    if ( new_client_payload )
         logger.log(RNA_EVENT_CHANGE, CHANGE_CLIENT_APP_UPDATE, p, &crt,
             (const struct in6_addr*) p->flow->client_ip.get_ip6_ptr(),
             crt->get_last_seen_mac(), &hc);
@@ -278,7 +284,7 @@ void RnaAppDiscovery::update_service_info(const Packet* p, DiscoveryFilter& filt
 {
     RnaTracker htp;
     SfIp ip = p->flow->server_ip;
-    if (!is_client)
+    if ( !is_client )
     {
         if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_SERVER) )
             return;
@@ -401,6 +407,39 @@ void RnaAppDiscovery::discover_user(const Packet* p, DiscoveryFilter& filter, RN
         logger.log(RUA_EVENT, login_success ? CHANGE_USER_LOGIN : FAILED_USER_LOGIN,
             p, &rt, (const struct in6_addr*) p->ptrs.ip_api.get_dst()->get_ip6_ptr(),
             username, service, (uint32_t) packet_time());
+    }
+}
+
+void RnaAppDiscovery::discover_netbios_name(const snort::Packet* p, DiscoveryFilter& filter,
+    RNAFlow* rna_flow, RnaLogger& logger, const char* nb_name)
+{
+    RnaTracker rt;
+    if ( p->is_from_server() )
+    {
+        if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_SERVER) )
+            return;
+        rt = get_server_rna_tracker(p, rna_flow);
+    }
+    else
+    {
+        if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_CLIENT) )
+            return;
+        rt = get_client_rna_tracker(p, rna_flow);
+    }
+
+    if ( !rt or !rt->is_visible() )
+        return;
+    rt->update_last_seen();
+
+    if ( rt->set_netbios_name(nb_name) )
+    {
+        const auto& src_ip = p->ptrs.ip_api.get_src();
+        const auto& src_ip_ptr = (const struct in6_addr*) src_ip->get_ip6_ptr();
+        const auto& src_mac = layer::get_eth_layer(p)->ether_src;
+
+        logger.log(RNA_EVENT_CHANGE, CHANGE_NETBIOS_NAME, src_ip_ptr, src_mac,
+            &rt, p, (uint32_t) packet_time(), 0, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, APP_ID_NONE, nullptr, false, 0, 0, nullptr, nb_name);
     }
 }
 

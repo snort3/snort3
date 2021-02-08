@@ -382,6 +382,8 @@ public:
         return ++nat_count;
     }
 
+    bool set_netbios_name(const char*);
+
     bool set_visibility(bool v = true);
 
     bool is_visible() const;
@@ -430,6 +432,7 @@ private:
     std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> tcp_fpids;
     std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> udp_fpids;
     std::vector<DeviceFingerprint, HostDeviceFpAllocator> ua_fps;
+    std::string netbios_name;
 
     // flows that we belong to
     std::unordered_set<RNAFlow*> flows;

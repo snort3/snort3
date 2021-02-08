@@ -49,6 +49,7 @@ int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, AppidSessionDir
     ServiceDetector*, ServiceDiscoveryState*) { return 0; }
 int ServiceDiscovery::add_service_port(AppIdDetector*,
     const ServiceDetectorPort&) { return APPID_EINVALID; }
+void AppIdSessionApi::set_netbios_name(AppidChangeBits&, const char*) {}
 
 TEST_GROUP(service_netbios_test){};
 

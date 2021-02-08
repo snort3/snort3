@@ -42,6 +42,10 @@ public:
 
     static void discover_banner(const snort::Packet*, DiscoveryFilter&, RNAFlow*, IpProtocol,
         RnaLogger&, AppId);
+
+    static void discover_netbios_name(const snort::Packet*, DiscoveryFilter&,
+        RNAFlow*, RnaLogger&, const char*);
+
 private:
     static void update_service_info(const snort::Packet*, DiscoveryFilter&, RNAFlow*, IpProtocol,
         uint16_t, const char* vendor, const char* version, RnaLogger&, RnaConfig*, AppId service,

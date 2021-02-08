@@ -277,8 +277,6 @@ public:
     std::map<std::string, ClientDetector*> client_candidates;
     bool tried_reverse_service = false;
 
-    // FIXIT-RC netbios_name is never set to a valid value; set when netbios_domain is set?
-    char* netbios_name = nullptr;
     char* netbios_domain = nullptr;
 
     TlsSession* tsession = nullptr;
@@ -565,6 +563,11 @@ public:
     void set_tls_host(const char* tls_host)
     {
         api.set_tls_host(tls_host);
+    }
+
+    void set_netbios_name(AppidChangeBits& change_bits, const char *name)
+    {
+        api.set_netbios_name(change_bits, name);
     }
 
     OdpContext& get_odp_ctxt() const

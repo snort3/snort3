@@ -45,11 +45,6 @@ public:
     int incompatible_data(AppIdSession&, const snort::Packet*, AppidSessionDirection dir);
     int fail_service(AppIdSession&, const snort::Packet*, AppidSessionDirection dir);
 
-    void add_host_info(AppIdSession&, SERVICE_HOST_INFO_CODE, const void*)
-    {
-        // FIXIT-L - this function is called but does nothing... what if anything should it do...
-    }
-
     void add_miscellaneous_info(AppIdSession& asd, AppId miscId)
     {
         asd.misc_app_id = miscId;

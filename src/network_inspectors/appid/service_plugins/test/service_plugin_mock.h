@@ -119,6 +119,7 @@ int AppIdSession::add_flow_data(void* data, unsigned type, AppIdFreeFCN)
     }
     return 0;
 }
+
 int dcerpc_validate(const uint8_t*, int){return 0; }
 AppIdDiscovery::~AppIdDiscovery() { }
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }

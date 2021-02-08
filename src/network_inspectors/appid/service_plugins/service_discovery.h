@@ -47,11 +47,6 @@ struct Packet;
 #define STATE_ID_NEEDED_DUPE_DETRACT_COUNT   3
 #define STATE_ID_MAX_VALID_COUNT 5
 
-enum SERVICE_HOST_INFO_CODE
-{
-    SERVICE_HOST_INFO_NETBIOS_NAME = 1
-};
-
 /* Service state stored per flow, which acts based on global ServiceState
  * at the beginning of the flow, then independently do service discovery, and
  * synchronize findings at the end of service discovery by the flow.

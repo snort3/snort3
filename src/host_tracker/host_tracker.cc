@@ -199,7 +199,7 @@ bool HostTracker::get_hostmac(const uint8_t* mac, HostMac& hm)
     for ( auto& ahm : macs )
         if ( !memcmp(mac, ahm.mac, MAC_SIZE) )
         {
-            if (!ahm.visibility)
+            if ( !ahm.visibility )
                 return false;
 
             hm = static_cast<HostMac>(ahm);
@@ -216,7 +216,7 @@ const uint8_t* HostTracker::get_last_seen_mac()
 
     for ( const auto& hm : macs )
         if ( !max_hm or max_hm->last_seen < hm.last_seen )
-            if (hm.visibility)
+            if ( hm.visibility )
                 max_hm = &hm;
 
     if ( max_hm )
@@ -235,7 +235,7 @@ bool HostTracker::update_mac_ttl(const uint8_t* mac, uint8_t new_ttl)
     for ( auto& hm : macs )
         if ( !memcmp(mac, hm.mac, MAC_SIZE) )
         {
-            if (hm.ttl < new_ttl and hm.visibility)
+            if ( hm.ttl < new_ttl and hm.visibility )
             {
                 hm.ttl = new_ttl;
                 return true;
@@ -349,7 +349,7 @@ bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inf
             {
                 s.appid = appid;
                 s.inferred_appid = inferred_appid;
-                if (added)
+                if ( added )
                     *added = true;
             }
 
@@ -367,7 +367,7 @@ bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inf
 
     services.emplace_back(port, proto, appid, inferred_appid);
     num_visible_services++;
-    if (added)
+    if ( added )
         *added = true;
 
     return true;
@@ -445,13 +445,13 @@ bool HostTracker::add_service(const HostApplication& app, bool* added)
             {
                 s.appid = app.appid;
                 s.inferred_appid = app.inferred_appid;
-                if (added)
+                if ( added )
                     *added = true;
             }
 
             if ( s.visibility == false )
             {
-                if (added)
+                if ( added )
                     *added = true;
                 s.visibility = true;
                 num_visible_services++;
@@ -498,7 +498,7 @@ HostApplication* HostTracker::find_service_no_lock(Port port, IpProtocol proto, 
     {
         if ( s.port == port and s.proto == proto )
         {
-            if (s.visibility == false)
+            if ( s.visibility == false )
                 return nullptr;
             if ( appid != APP_ID_NONE and s.appid == appid )
                 return &s;
@@ -764,7 +764,7 @@ void HostTracker::remove_inferred_services()
     lock_guard<mutex> lck(host_tracker_lock);
     for ( auto s = services.begin(); s != services.end(); )
     {
-        if (s->inferred_appid)
+        if ( s->inferred_appid )
             s = services.erase(s);
         else
             s++;
@@ -785,6 +785,18 @@ bool HostTracker::add_udp_fingerprint(uint32_t fpid)
     return result.second;
 }
 
+bool HostTracker::set_netbios_name(const char* nb_name)
+{
+    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    if ( nb_name && netbios_name != nb_name )
+    {
+        netbios_name = nb_name;
+        return true;
+    }
+    else
+        return false;
+}
+
 bool HostTracker::set_visibility(bool v)
 {
     // get_valid_id may use its own lock, so get this outside our lock
@@ -795,23 +807,23 @@ bool HostTracker::set_visibility(bool v)
 
     visibility = v ? container_id : HostCacheIp::invalid_id;
 
-    if (visibility == HostCacheIp::invalid_id)
+    if ( visibility == HostCacheIp::invalid_id )
     {
-        for (auto& proto : network_protos)
+        for ( auto& proto : network_protos )
             proto.second = false;
 
-        for (auto& proto : xport_protos)
+        for ( auto& proto : xport_protos )
             proto.second = false;
 
-        for (auto& mac_t : macs)
+        for ( auto& mac_t : macs )
             mac_t.visibility = false;
 
         num_visible_macs = 0;
 
-        for (auto& s : services)
+        for ( auto& s : services )
         {
             s.visibility = false;
-            for (auto& info : s.info)
+            for ( auto& info : s.info )
                 info.visibility = false;
             s.user[0] = '\0';
             set_payload_visibility_no_lock(s.payloads, false, s.num_visible_payloads);
@@ -1067,7 +1079,7 @@ void HostTracker::remove_flows()
     // to avoid the deadlock from the first case, but we SHOULD lock on
     // a different mutex to protect the HT::flows set.
     lock_guard<mutex> lck(flows_lock);
-    for (auto& rna_flow : flows)
+    for ( auto& rna_flow : flows )
     {
         rna_flow->clear_ht(*this);
     }
@@ -1140,7 +1152,7 @@ void HostTracker::stringify(string& str)
 
         for ( const auto& s : services )
         {
-            if (s.visibility == false)
+            if ( s.visibility == false )
                 continue;
 
             str += "\n    port: " + to_string(s.port)
@@ -1155,7 +1167,7 @@ void HostTracker::stringify(string& str)
             if ( !s.info.empty() )
                 for ( const auto& i : s.info )
                 {
-                    if (i.visibility == false)
+                    if ( i.visibility == false )
                         continue;
 
                     if ( i.vendor[0] != '\0' )
@@ -1263,4 +1275,7 @@ void HostTracker::stringify(string& str)
         for ( const auto& fpid : udp_fpids )
             str += to_string(fpid) + (--total ? ", " : "");
     }
+
+    if ( !netbios_name.empty() )
+        str += "\nnetbios name: " + netbios_name;
 }

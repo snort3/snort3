@@ -375,8 +375,7 @@ static int netbios_validate_name(const uint8_t** data,
     return 0;
 }
 
-static int netbios_validate_label(const uint8_t** data,
-    const uint8_t* const end)
+static int netbios_validate_label(const uint8_t** data, const uint8_t* const end)
 {
     const NBNSLabel* lbl;
     uint16_t tmp;
@@ -1114,7 +1113,7 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
 not_mailslot:
         if (source_name[0])
-            add_host_info(args.asd, SERVICE_HOST_INFO_NETBIOS_NAME, source_name);
+            args.asd.set_netbios_name(args.change_bits, (const char *)source_name);
         args.asd.set_session_flags(APPID_SESSION_CONTINUE);
         goto success;
     case NBDGM_TYPE_ERROR:
@@ -1186,4 +1185,3 @@ void NbdgmServiceDetector::AppIdFreeSMBData(FpSMBData* sd)
 {
     snort_free(sd);
 }
-

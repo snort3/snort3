@@ -196,7 +196,7 @@ bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_
     uint16_t proto, const HostMac* hm, const HostApplication* ha,
     const FpFingerprint* fp, void* cond_var, const HostClient* hc,
     const char* user, AppId appid, const char* di, bool jb, uint32_t lease,
-    uint32_t netmask, const struct in6_addr* router)
+    uint32_t netmask, const struct in6_addr* router, const char* nb_name)
 {
     if ( !enabled )
         return false;
@@ -204,7 +204,7 @@ bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_
     assert(ht);
 
     RnaLoggerEvent rle(type, subtype, src_mac, ht, hm, proto, cond_var,
-        ha, fp, hc, user, appid, di, jb, lease, netmask, router, p);
+        ha, fp, hc, user, appid, di, jb, lease, netmask, router, p, nb_name);
     if ( src_ip and (!IN6_IS_ADDR_V4MAPPED(src_ip) or src_ip->s6_addr32[3]) )
         rle.ip = src_ip;
     else

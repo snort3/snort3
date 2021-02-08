@@ -39,6 +39,7 @@
     #define CHANGE_HOST_UPDATE         15
     #define CHANGE_HOST_TYPE           16
     #define CHANGE_VLAN_TAG            18
+    #define CHANGE_NETBIOS_NAME        21
     #define CHANGE_BANNER_UPDATE       24
     #define CHANGE_CLIENT_APP_UPDATE   32
     #define CHANGE_FULL_DHCP_INFO      33

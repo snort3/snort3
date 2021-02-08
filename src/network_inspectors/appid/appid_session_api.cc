@@ -308,6 +308,23 @@ bool AppIdSessionApi::is_http_inspection_done() const
             (asd->service_disco_state!= APPID_DISCO_STATE_FINISHED)));
 }
 
+const char* AppIdSessionApi::get_netbios_name() const
+{
+    return netbios_name;
+}
+
+void AppIdSessionApi::set_netbios_name(AppidChangeBits& change_bits, const char* name)
+{
+    if (netbios_name)
+    {
+        if (strcmp(netbios_name, name) == 0)
+            return;
+        snort_free(netbios_name);
+    }
+    netbios_name = snort_strdup(name);
+    change_bits.set(APPID_NETBIOS_NAME_BIT);
+}
+
 void AppIdSessionApi::set_ss_application_ids(AppId service_id, AppId client_id,
     AppId payload_id, AppId misc_id, AppId referred_id, AppidChangeBits& change_bits, Flow& flow)
 {
