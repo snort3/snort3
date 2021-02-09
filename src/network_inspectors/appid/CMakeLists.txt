@@ -14,8 +14,6 @@ set (APPID_INCLUDES
 set ( APPID_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
 
 set ( CP_APPID_SOURCES
-    client_plugins/client_app_aim.cc
-    client_plugins/client_app_aim.h
     client_plugins/client_app_bit.cc
     client_plugins/client_app_bit.h
     client_plugins/client_app_bit_tracker.cc
@@ -34,8 +32,6 @@ set ( CP_APPID_SOURCES
     client_plugins/client_app_tns.h
     client_plugins/client_app_vnc.cc
     client_plugins/client_app_vnc.h
-    client_plugins/client_app_ym.cc
-    client_plugins/client_app_ym.h
     client_plugins/client_detector.cc
     client_plugins/client_detector.h
     client_plugins/client_discovery.cc
@@ -61,8 +57,6 @@ set ( SP_APPID_SOURCES
     service_plugins/service_direct_connect.h
     service_plugins/service_discovery.cc
     service_plugins/service_discovery.h
-    service_plugins/service_flap.cc
-    service_plugins/service_flap.h
     service_plugins/service_ftp.cc
     service_plugins/service_ftp.h
     service_plugins/service_irc.cc
@@ -223,7 +217,6 @@ add_library(appid OBJECT
 
 target_include_directories ( appid PRIVATE ${APPID_INCLUDE_DIR} )
 
-add_subdirectory(client_plugins/test)
 add_subdirectory(service_plugins/test)
 add_subdirectory(detector_plugins/test)
 add_subdirectory(test)

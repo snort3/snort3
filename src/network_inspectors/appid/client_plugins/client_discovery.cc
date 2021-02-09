@@ -31,7 +31,6 @@
 #include "app_info_table.h"
 #include "appid_debug.h"
 #include "appid_session.h"
-#include "client_app_aim.h"
 #include "client_app_bit_tracker.h"
 #include "client_app_bit.h"
 #include "client_app_msn.h"
@@ -53,7 +52,6 @@ using namespace snort;
 
 void ClientDiscovery::initialize()
 {
-    new AimClientDetector(this);
     new BitClientDetector(this);
     new BitTrackerClientDetector(this);
     new ImapClientDetector(this);

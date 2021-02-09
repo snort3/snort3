@@ -50,7 +50,6 @@
 #include "service_bootp.h"
 #include "service_dcerpc.h"
 #include "service_direct_connect.h"
-#include "service_flap.h"
 #include "service_ftp.h"
 #include "service_irc.h"
 #include "service_lpr.h"
@@ -95,7 +94,6 @@ void ServiceDiscovery::initialize()
     new DirectConnectServiceDetector(this);
     new DnsTcpServiceDetector(this);
     new DnsUdpServiceDetector(this);
-    new FlapServiceDetector(this);
     new FtpServiceDetector(this);
     new ImapServiceDetector(this);
     new IrcServiceDetector(this);
