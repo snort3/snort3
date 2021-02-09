@@ -107,6 +107,13 @@ public:
     unsigned long get_realized() { return realized; }
     unsigned long get_prunes() { return prunes; }
     unsigned long get_overflows() { return overflows; }
+    void reset_stats() 
+    {
+        expects = 0;
+        realized = 0;
+        prunes = 0;
+        overflows = 0;
+    }
 
 private:
     void prune_lru();

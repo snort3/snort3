@@ -145,6 +145,8 @@ bool AppIdSession::is_tp_appid_available() const
     return true;
 }
 
+void AppIdModule::reset_stats() {}
+
 // AppIdDebug mock functions
 void AppIdDebug::activate(const uint32_t*, const uint32_t*, uint16_t,
     uint16_t, IpProtocol, const int, uint16_t, const AppIdSession*, bool,

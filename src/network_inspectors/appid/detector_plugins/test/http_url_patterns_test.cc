@@ -75,6 +75,7 @@ int AppIdDiscovery::add_service_port(AppIdDetector*, ServiceDetectorPort const&)
 DnsPatternMatchers::~DnsPatternMatchers() { }
 SipPatternMatchers::~SipPatternMatchers() { }
 SslPatternMatchers::~SslPatternMatchers() { }
+void AppIdModule::reset_stats() {}
 
 TEST_GROUP(http_url_patterns_tests)
 {

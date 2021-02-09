@@ -882,6 +882,12 @@ void PacketManager::dump_stats()
         (unsigned int)pkt_names.size(), "codec");
 }
 
+void PacketManager::reset_stats()
+{
+    std::fill(std::begin(g_stats), std::end(g_stats), 0);
+    std::fill(std::begin(s_stats), std::end(s_stats), 0);
+}
+
 void PacketManager::accumulate()
 {
     static std::mutex stats_mutex;

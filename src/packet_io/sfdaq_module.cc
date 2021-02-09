@@ -258,3 +258,8 @@ void SFDAQModule::prep_counts()
     prev_daq_stats = new_daq_stats;
 }
 
+void SFDAQModule::reset_stats()
+{
+    Trough::clear_file_count();
+    Module::reset_stats();
+}

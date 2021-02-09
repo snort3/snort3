@@ -68,6 +68,14 @@ void file_stats_sum()
     }
 }
 
+void file_stats_clear()
+{
+    memset(&file_counts, 0, sizeof(file_counts));
+    memset(&file_totals, 0, sizeof(file_totals));
+    if (file_stats)
+        memset(file_stats, 0, sizeof(*file_stats));
+}
+
 void file_stats_print()
 {
     uint64_t processed_total[2];

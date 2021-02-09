@@ -168,6 +168,6 @@ private:
 extern void base_prep();
 extern void base_sum();
 extern void base_stats();
-extern void base_reset();
+extern void base_reset(bool reset_all=true);
 
 #endif

@@ -126,13 +126,19 @@ void Module::show_stats()
 
 void Module::reset_stats()
 {
+    PegCount* p = get_counts();
+    
+    if ( !p )
+        return;
+
+    const PegInfo* pegs = get_pegs();
+
+    if ( !pegs )
+        return;
+
     if ( num_counts <= 0 )
     {
         num_counts = 0;
-        const PegInfo* pegs = get_pegs();
-
-        if ( !pegs )
-            return;
 
         while ( pegs[num_counts].name )
             ++num_counts;
@@ -141,7 +147,12 @@ void Module::reset_stats()
     }
 
     for ( int i = 0; i < num_counts; i++ )
+    {
         counts[i] = 0;
+
+        if ( pegs[i].type != CountType::NOW )
+            p[i] = 0;
+    }
 }
 
 PegCount Module::get_global_count(const char* name) const

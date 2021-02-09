@@ -55,6 +55,20 @@ void AppIdPegCounts::cleanup_peg_info()
     appid_detector_pegs_idx.clear();
 }
 
+void AppIdPegCounts::cleanup_dynamic_sum()
+{
+    if ( !appid_peg_counts )
+        return;
+
+    for ( unsigned app_num = 0; app_num < AppIdPegCounts::appid_detectors_info.size(); app_num++ )
+    {
+        memset(appid_dynamic_sum[app_num].stats, 0, sizeof(PegCount) *
+            DetectorPegs::NUM_APPID_DETECTOR_PEGS);
+        memset((*appid_peg_counts)[app_num].stats, 0, sizeof(PegCount) *
+            DetectorPegs::NUM_APPID_DETECTOR_PEGS);
+    }
+}
+
 void AppIdPegCounts::add_app_peg_info(std::string app_name, AppId app_id)
 {
     std::replace(app_name.begin(), app_name.end(), ' ', '_');
@@ -68,7 +82,7 @@ void AppIdPegCounts::sum_stats()
     if (!appid_peg_counts)
         return;
 
-    const unsigned peg_num = appid_peg_counts->size() - 1;
+    const unsigned peg_num = appid_peg_counts->size() ? (appid_peg_counts->size() - 1) : 0;
     const AppIdDynamicPeg* ptr = (AppIdDynamicPeg*)appid_peg_counts->data();
 
     for ( unsigned i = 0; i < peg_num; ++i )
@@ -86,7 +100,7 @@ void AppIdPegCounts::update_service_count(AppId id, bool increment)
 {
     if (increment)
         (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::SERVICE_DETECTS]++;
-    else
+    else if ((*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::SERVICE_DETECTS])
         (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::SERVICE_DETECTS]--;
 }
 
@@ -94,7 +108,7 @@ void AppIdPegCounts::update_client_count(AppId id, bool increment)
 {
     if (increment)
         (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::CLIENT_DETECTS]++;
-    else
+    else if ((*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::CLIENT_DETECTS])
         (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::CLIENT_DETECTS]--;
 }
 
@@ -102,7 +116,7 @@ void AppIdPegCounts::update_payload_count(AppId id, bool increment)
 {
     if (increment)
         (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::PAYLOAD_DETECTS]++;
-    else
+    else if ((*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::PAYLOAD_DETECTS])
         (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::PAYLOAD_DETECTS]--;
 }
 

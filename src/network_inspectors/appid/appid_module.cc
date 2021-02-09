@@ -540,6 +540,12 @@ void AppIdModule::show_dynamic_stats()
     AppIdPegCounts::print();
 }
 
+void AppIdModule::reset_stats()
+{
+    AppIdPegCounts::cleanup_dynamic_sum();
+    Module::reset_stats();
+}
+
 bool AppIdReloadTuner::tinit()
 {
     return AppIdServiceState::initialize(memcap);

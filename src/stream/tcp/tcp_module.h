@@ -131,6 +131,8 @@ public:
 
     const snort::RuleMap* get_rules() const override;
 
+    void reset_stats() override;
+
     unsigned get_gid() const override
     { return GID_STREAM_TCP; }
 

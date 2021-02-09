@@ -74,6 +74,7 @@ void file_stats_term();
 
 void file_stats_sum();
 void file_stats_print();
+void file_stats_clear();
 
 #endif
 

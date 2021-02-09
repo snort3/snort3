@@ -28,6 +28,7 @@
 #include <mutex>
 #include <set>
 
+#include "main/analyzer_command.h"
 #include "main/snort_types.h"
 
 //-------------------------------------------------------------------------
@@ -87,6 +88,7 @@ public:
     static void accumulate();
     static void accumulate_offload(const char* name);
     static void reset_stats(SnortConfig*);
+    static void reset_stats(clear_counter_type_t);
 
     static std::set<uint32_t> gids;
     SO_PUBLIC static std::mutex stats_mutex;

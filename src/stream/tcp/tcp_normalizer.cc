@@ -422,3 +422,9 @@ uint16_t TcpNormalizer::set_urg_offset(
     return urg_offset;
 }
 
+void TcpNormalizer::reset_stats()
+{
+    for (int i = 0; i < PC_TCP_MAX; i++)
+        for (int j = 0; j < NORM_MODE_MAX; j++)
+            tcp_norm_stats[i][j] = 0;
+}

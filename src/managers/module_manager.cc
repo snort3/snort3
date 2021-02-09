@@ -46,6 +46,7 @@
 #include "parser/parse_conf.h"
 #include "parser/parser.h"
 #include "profiler/profiler.h"
+#include "protocols/packet_manager.h"
 #include "utils/util.h"
 
 #include "plugin_manager.h"
@@ -1386,6 +1387,52 @@ void ModuleManager::reset_stats(SnortConfig*)
         mh->mod->reset_stats();
     }
 }
+
+void ModuleManager::reset_stats(clear_counter_type_t type)
+{
+    if ( type != TYPE_MODULE and type != TYPE_UNKNOWN )
+    {
+        ModHook* mh = get_hook(clear_counter_type_string_map[type]);
+        if ( mh and mh->mod )
+        {
+            lock_guard<mutex> lock(stats_mutex);
+            mh->mod->reset_stats();
+        }
+    
+    }
+    else
+    { 
+        auto mod_hooks = get_all_modhooks();
+        for ( auto* mh : mod_hooks )
+        {
+            bool ignore = false;
+
+            // FIXIT-M Will remove this for loop when will come up with more
+            //  granular form of clearing module stats.
+            for ( int i = 0; i < static_cast<int>(clear_counter_type_string_map.size()); i++ )
+            {
+                if ( !strcmp(mh->mod->get_name(), clear_counter_type_string_map[i]) )
+                {
+                    ignore = true;
+                    break;
+                }
+            }
+
+            if ( type == TYPE_UNKNOWN or !ignore )
+            {
+                lock_guard<mutex> lock(stats_mutex);
+                mh->mod->reset_stats();
+            }
+        }
+    }
+    if ( type == TYPE_DAQ or type == TYPE_UNKNOWN )
+    {
+        lock_guard<mutex> lock(stats_mutex);
+        PacketManager::reset_stats();
+    }
+}
+
+
 
 //-------------------------------------------------------------------------
 // parameter loading

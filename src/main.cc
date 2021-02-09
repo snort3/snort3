@@ -320,6 +320,15 @@ int main_dump_stats(lua_State* L)
     return 0;
 }
 
+int main_reset_stats(lua_State* L)
+{
+    int type = luaL_optint(L, 1, 0);
+    bool from_shell = ( L != nullptr );
+    current_request->respond("== clearing stats\n", from_shell);
+    main_broadcast_command(new ACResetStats(static_cast<clear_counter_type_t>(type)), true);
+    return 0;
+}
+
 int main_rotate_stats(lua_State* L)
 {
     bool from_shell = ( L != nullptr );

@@ -53,6 +53,40 @@ public:
     ~ACGetStats() override;
 };
 
+typedef enum clear_counter_type
+{
+    TYPE_UNKNOWN=-1,
+    TYPE_DAQ=0,
+    TYPE_MODULE,
+    TYPE_APPID,
+    TYPE_FILE_ID,
+    TYPE_SNORT,
+    TYPE_HA
+} clear_counter_type_t;
+
+// FIXIT-M Will replace this vector with an unordered map of 
+// <clear_counter_type, clear_counter_type_string_map> when
+// will come up with more granular form of clearing module stats.
+static std::vector<const char*> clear_counter_type_string_map
+{
+    "daq",
+    "module",
+    "appid",
+    "file_id",
+    "snort",
+    "high_availability"
+};
+
+class ACResetStats : public snort::AnalyzerCommand
+{
+public:
+    explicit ACResetStats(clear_counter_type_t requested_type);
+    bool execute(Analyzer&, void**) override;
+    const char* stringify() override { return "RESET_STATS"; }
+private:
+    clear_counter_type_t requested_type;
+};
+
 class ACPause : public snort::AnalyzerCommand
 {
 public:

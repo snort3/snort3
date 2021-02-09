@@ -31,6 +31,7 @@ SharedRequest get_current_request();
 // commands provided by the snort module
 int main_delete_inspector(lua_State* = nullptr);
 int main_dump_stats(lua_State* = nullptr);
+int main_reset_stats(lua_State* = nullptr);
 int main_rotate_stats(lua_State* = nullptr);
 int main_reload_config(lua_State* = nullptr);
 int main_reload_policy(lua_State* = nullptr);

@@ -42,6 +42,7 @@ public:
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     void prep_counts() override;
+    void reset_stats() override;
 
     bool counts_need_prep() const override
     { return true; }

@@ -67,6 +67,8 @@ AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
 }
 
+void AppIdModule::reset_stats() {}
+
 class DummyInspector : public snort::Inspector
 {
 public:

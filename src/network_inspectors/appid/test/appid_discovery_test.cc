@@ -108,6 +108,7 @@ void IpApi::set(const SfIp& sip, const SfIp& dip)
 AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
 } // namespace snort
+void AppIdModule::reset_stats() {}
 
 // Stubs for publish
 void DataBus::publish(const char*, DataEvent& event, Flow*)

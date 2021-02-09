@@ -94,6 +94,15 @@ ACGetStats::~ACGetStats()
     LogMessage("==================================================\n"); // Marking End of stats
 }
 
+bool ACResetStats::execute(Analyzer&, void**)
+{
+    ModuleManager::reset_stats(requested_type);
+    return true;
+}
+
+ACResetStats::ACResetStats(clear_counter_type_t requested_type_l) : requested_type(
+        requested_type_l) { }
+
 ACSwap::ACSwap(Swapper* ps, SharedRequest req, bool from_shell) : ps(ps), request(req), from_shell(from_shell)
 {
     assert(Swapper::get_reload_in_progress() == false);

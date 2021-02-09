@@ -506,3 +506,8 @@ void FileIdModule::show_dynamic_stats()
     file_stats_print();
 }
 
+void FileIdModule::reset_stats()
+{
+    file_stats_clear();
+    Module::reset_stats();
+}

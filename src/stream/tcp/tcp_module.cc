@@ -23,6 +23,7 @@
 #endif
 
 #include "tcp_module.h"
+#include "tcp_normalizer.h"
 
 #include "main/snort_config.h"
 #include "profiler/profiler_defs.h"
@@ -380,3 +381,8 @@ const PegInfo* StreamTcpModule::get_pegs() const
 PegCount* StreamTcpModule::get_counts() const
 { return (PegCount*)&tcpStats; }
 
+void StreamTcpModule::reset_stats()
+{
+    TcpNormalizer::reset_stats();
+    Module::reset_stats();
+}

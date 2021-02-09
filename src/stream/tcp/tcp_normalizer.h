@@ -94,6 +94,7 @@ public:
 
     static const PegInfo* get_normalization_pegs();
     static NormPegs get_normalization_counts(unsigned&);
+    static void reset_stats();
 
 protected:
     TcpNormalizer() = default;

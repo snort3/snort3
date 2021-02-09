@@ -51,6 +51,8 @@ public:
 
     void load_config(FileConfig*& dst);
 
+    void reset_stats() override;
+
     Usage get_usage() const override
     { return GLOBAL; }
 

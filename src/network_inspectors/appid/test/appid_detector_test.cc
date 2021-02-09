@@ -49,6 +49,8 @@ void ApplicationDescriptor::set_id(
 
 void AppIdHttpSession::set_http_change_bits(AppidChangeBits&, HttpFieldIds) {}
 
+void AppIdModule::reset_stats() {}
+
 class TestDetector : public AppIdDetector
 {
 public:

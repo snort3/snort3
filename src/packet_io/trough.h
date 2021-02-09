@@ -48,6 +48,10 @@ public:
     {
         return file_count;
     }
+    static void clear_file_count()
+    {
+        file_count = 0;
+    }
     static unsigned get_queue_size()
     {
         return pcap_queue.size();

@@ -109,6 +109,8 @@ public:
     // print codec information.  MUST be called after thread_term.
     static void dump_stats();
 
+    static void reset_stats();
+
     // Get the name of the given protocol ID
     static const char* get_proto_name(ProtocolId);
 

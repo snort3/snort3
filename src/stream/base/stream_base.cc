@@ -113,7 +113,7 @@ void base_sum()
 {
     sum_stats((PegCount*)&g_stats, (PegCount*)&stream_base_stats,
         array_size(base_pegs) - 1);
-    base_reset();
+    base_reset(false);
 }
 
 void base_stats()
@@ -121,12 +121,23 @@ void base_stats()
     show_stats((PegCount*)&g_stats, base_pegs, array_size(base_pegs) - 1, MOD_NAME);
 }
 
-void base_reset()
+void base_reset(bool reset_all)
 {
     if ( flow_con )
         flow_con->clear_counts();
 
     memset(&stream_base_stats, 0, sizeof(stream_base_stats));
+
+    if ( reset_all )
+    {
+        if ( flow_con )
+        {
+            ExpectCache* exp_cache = flow_con->get_exp_cache();
+            if ( exp_cache )
+                exp_cache->reset_stats();
+        }
+        memset(&g_stats, 0, sizeof(g_stats));
+    }
 }
 
 //-------------------------------------------------------------------------

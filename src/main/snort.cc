@@ -182,6 +182,8 @@ void Snort::init(int argc, char** argv)
 
     HighAvailabilityManager::configure(sc->ha_config);
 
+    ModuleManager::reset_stats(sc);
+
     if (sc->alert_before_pass())
         sc->rule_order = "reset block drop alert pass log";
 
@@ -204,8 +206,6 @@ void Snort::init(int argc, char** argv)
 
     // Must be after InspectorManager::configure()
     FileService::post_init(sc);
-
-    ModuleManager::reset_stats(sc);
 
     if (sc->file_mask != 0)
         umask(sc->file_mask);

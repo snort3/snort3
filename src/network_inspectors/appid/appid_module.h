@@ -88,6 +88,8 @@ public:
 
     const AppIdConfig* get_data();
 
+    void reset_stats() override;
+
     Usage get_usage() const override
     { return CONTEXT; }
     void sum_stats(bool) override;

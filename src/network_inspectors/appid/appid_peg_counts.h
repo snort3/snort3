@@ -80,6 +80,7 @@ public:
     static void init_pegs();
     static void cleanup_pegs();
     static void cleanup_peg_info();
+    static void cleanup_dynamic_sum();
 
     static void update_service_count(AppId id, bool increment);
     static void update_client_count(AppId id, bool increment);
