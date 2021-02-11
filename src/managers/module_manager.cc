@@ -867,7 +867,7 @@ Module* ModuleManager::get_default_module(const char* s, SnortConfig* sc)
     if ( mod )
     {
         mod->verified_begin(s, 0, sc);
-        mod->verified_end(s, 0, nullptr);
+        mod->verified_end(s, 0, sc);
     }
     return mod;
 }
