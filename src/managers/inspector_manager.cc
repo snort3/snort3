@@ -951,10 +951,7 @@ static bool configure(SnortConfig* sc, FrameworkPolicy* fp, bool cloned)
     sort(fp->ilist.begin(), fp->ilist.end(), PHInstance::comp);
     fp->vectorize(sc);
 
-    // FIXIT-M checking for wizard here would avoid fatals for
-    // can't bind wizard but this exposes other issues that must
-    // be fixed first.
-    if ( fp->session.num and !fp->binder /*and fp->wizard*/ )
+    if ( !fp->binder and (fp->session.num or fp->wizard) )
         instantiate_default_binder(sc, fp);
 
     return ok;

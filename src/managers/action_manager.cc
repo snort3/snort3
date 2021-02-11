@@ -54,7 +54,6 @@ struct ActionInst
 struct IpsActionsConfig
 {
     vector<ActionInst> clist;
-    IpsAction* reject = nullptr;
 };
 
 using ACList = vector<ActionClass>;
@@ -157,11 +156,6 @@ void ActionManager::instantiate(const ActionApi* api, Module* mod, SnortConfig* 
         // Add this instance to the list of those created for this config
         sc->ips_actions_config->clist.emplace_back(*cls, act);
 
-        // FIXIT-M Either you are static or you're not, make a choice.
-        // Anyway, if we happen to instantiate an action called reject, cache that for use later.
-        if ( !sc->ips_actions_config->reject && !strcmp(act->get_name(), "reject") )
-            sc->ips_actions_config->reject = act;
-
         RuleListNode* rln = CreateRuleType(sc, api->base.name, api->type, true);
 
         // The plugin actions (e.g. reject, react, etc.) are per policy, per mode.
@@ -170,7 +164,6 @@ void ActionManager::instantiate(const ActionApi* api, Module* mod, SnortConfig* 
         Actions::Type idx = rln->mode;
         assert(ips->action[idx] == nullptr);
         ips->action[idx] = act;
-
     }
 }
 

@@ -176,15 +176,15 @@ typedef struct s_FTP_CMD_CONF
  */
 struct FTP_SERVER_PROTO_CONF
 {
-    unsigned int def_max_param_len;
-    unsigned int max_cmd_len;
+    unsigned int def_max_param_len = FTPP_UI_CONFIG_FTP_DEF_CMD_PARAM_MAX;
+    unsigned int max_cmd_len = MAX_CMD;
 
-    bool print_commands;
-    bool data_chan;
-    bool check_encrypted_data;
-    bool telnet_cmds;
-    bool ignore_telnet_erase_cmds;
-    bool detect_encrypted;
+    bool print_commands = false;
+    bool data_chan = false;
+    bool check_encrypted_data = false;
+    bool telnet_cmds = false;
+    bool ignore_telnet_erase_cmds = false;
+    bool detect_encrypted = false;
 
     CMD_LOOKUP* cmd_lookup;
 
@@ -210,7 +210,6 @@ struct FTP_CLIENT_PROTO_CONF
 {
     unsigned int max_resp_len = FTPP_UI_CONFIG_FTP_DEF_RESP_MSG_MAX;
 
-    bool data_chan = false;
     bool bounce = false;
     bool telnet_cmds = false;
     bool ignore_telnet_erase_cmds = false;

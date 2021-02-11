@@ -57,12 +57,6 @@ FTP_CLIENT_PROTO_CONF::~FTP_CLIENT_PROTO_CONF()
 FTP_SERVER_PROTO_CONF::FTP_SERVER_PROTO_CONF()
 {
     ftp_cmd_lookup_init(&cmd_lookup);
-
-    def_max_param_len = FTPP_UI_CONFIG_FTP_DEF_CMD_PARAM_MAX;
-    max_cmd_len = MAX_CMD;
-
-    print_commands = data_chan = check_encrypted_data = false;
-    telnet_cmds = ignore_telnet_erase_cmds = detect_encrypted = false;
 }
 
 FTP_SERVER_PROTO_CONF::~FTP_SERVER_PROTO_CONF()

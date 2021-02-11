@@ -35,7 +35,6 @@
 #include "binding.h"
 
 using namespace snort;
-using namespace std;
 
 THREAD_LOCAL ProfileStats bindPerfStats;
 
@@ -330,8 +329,8 @@ struct Stuff
     bool update(const Binding&);
 
     void apply_action(Flow&);
-    void apply_session(Flow&, const HostAttributesEntry);
-    void apply_service(Flow&, const HostAttributesEntry);
+    void apply_session(Flow&);
+    void apply_service(Flow&);
     void apply_assistant(Flow&, const char*);
 };
 
@@ -348,16 +347,22 @@ bool Stuff::update(const Binding& pb)
         case BindUse::BW_NONE:
             break;
         case BindUse::BW_PASSIVE:
-            data = pb.use.inspector;
+            if (!data)
+                data = pb.use.inspector;
             break;
         case BindUse::BW_CLIENT:
-            client = pb.use.inspector;
+            if (!client)
+                client = pb.use.inspector;
             break;
         case BindUse::BW_SERVER:
-            server = pb.use.inspector;
+            if (!server)
+                server = pb.use.inspector;
             break;
         case BindUse::BW_STREAM:
-            client = server = pb.use.inspector;
+            if (!client)
+                client = pb.use.inspector;
+            if (!server)
+                server = pb.use.inspector;
             break;
         case BindUse::BW_WIZARD:
             wizard = pb.use.inspector;
@@ -392,7 +397,7 @@ void Stuff::apply_action(Flow& flow)
     }
 }
 
-void Stuff::apply_session(Flow& flow, const HostAttributesEntry host)
+void Stuff::apply_session(Flow& flow)
 {
     if (client)
         flow.set_client(client);
@@ -403,27 +408,12 @@ void Stuff::apply_session(Flow& flow, const HostAttributesEntry host)
         flow.set_server(server);
     else if (flow.ssn_server)
         flow.clear_server();
-
-    switch (flow.pkt_type)
-    {
-        case PktType::IP:
-            flow.ssn_policy = host ? host->get_frag_policy() : 0;
-            break;
-        case PktType::TCP:
-            flow.ssn_policy = host ? host->get_stream_policy() : 0;
-            break;
-        default:
-            break;
-    }
 }
 
-void Stuff::apply_service(Flow& flow, const HostAttributesEntry host)
+void Stuff::apply_service(Flow& flow)
 {
     if (data)
         flow.set_data(data);
-
-    if (host)
-        Stream::set_snort_protocol_id(&flow, host, FROM_SERVER);
 
     if (!gadget)
         gadget = get_gadget(flow);
@@ -460,7 +450,7 @@ void Stuff::apply_assistant(Flow& flow, const char* service)
 class Binder : public Inspector
 {
 public:
-    Binder(vector<Binding>&, vector<Binding>&);
+    Binder(std::vector<Binding>&, std::vector<Binding>&);
     ~Binder() override;
 
     void remove_inspector_binding(SnortConfig*, const char*) override;
@@ -482,8 +472,8 @@ private:
     Inspector* find_gadget(Flow&);
 
 private:
-    vector<Binding> bindings;
-    vector<Binding> policy_bindings;
+    std::vector<Binding> bindings;
+    std::vector<Binding> policy_bindings;
     Inspector* default_ssn_inspectors[to_utype(PktType::MAX)]{};
 };
 
@@ -542,7 +532,7 @@ public:
     }
 };
 
-Binder::Binder(vector<Binding>& bv, vector<Binding>& pbv)
+Binder::Binder(std::vector<Binding>& bv, std::vector<Binding>& pbv)
 {
     bindings = std::move(bv);
     policy_bindings = std::move(pbv);
@@ -639,6 +629,32 @@ void Binder::remove_inspector_binding(SnortConfig*, const char* name)
 void Binder::handle_flow_setup(Flow& flow, bool standby)
 {
     Profile profile(bindPerfStats);
+
+    // FIXIT-M logic for applying information from the host attribute table likely doesn't belong
+    // in binder, but it *does* need to occur before the binding lookup (for service information)
+    const HostAttributesEntry host = HostAttributesManager::find_host(flow.server_ip);
+    if (host)
+    {
+        // Set the fragmentation (IP) or stream (TCP) policy from the host entry
+        switch (flow.pkt_type)
+        {
+            case PktType::IP:
+                flow.ssn_policy = host->get_frag_policy();
+                break;
+            case PktType::TCP:
+                flow.ssn_policy = host->get_stream_policy();
+                break;
+            default:
+                break;
+        }
+
+        Stream::set_snort_protocol_id(&flow, host, FROM_SERVER);
+        if (flow.ssn_state.snort_protocol_id != UNKNOWN_PROTOCOL_ID)
+        {
+            const SnortConfig* sc = SnortConfig::get_conf();
+            flow.service = sc->proto_ref->get_name(flow.ssn_state.snort_protocol_id);
+        }
+    }
 
     Stuff stuff;
     get_bindings(flow, stuff);
@@ -813,11 +829,8 @@ void Binder::apply(Flow& flow, Stuff& stuff)
     if (flow.flow_state != Flow::FlowState::INSPECT)
         return;
 
-    const HostAttributesEntry host = HostAttributesManager::find_host(flow.server_ip);
-
-    stuff.apply_session(flow, host);
-
-    stuff.apply_service(flow, host);
+    stuff.apply_session(flow);
+    stuff.apply_service(flow);
 }
 
 void Binder::apply_assistant(Flow& flow, Stuff& stuff, const char* service)
@@ -838,8 +851,8 @@ static void mod_dtor(Module* m)
 static Inspector* bind_ctor(Module* m)
 {
     BinderModule* mod = (BinderModule*)m;
-    vector<Binding>& bv = mod->get_bindings();
-    vector<Binding>& pbv = mod->get_policy_bindings();
+    std::vector<Binding>& bv = mod->get_bindings();
+    std::vector<Binding>& pbv = mod->get_policy_bindings();
     return new Binder(bv, pbv);
 }
 

@@ -610,8 +610,7 @@ static bool end(Module* m, const Parameter* p, const char* s, int idx)
 
 static bool interested(Module* m)
 {
-    if ( m->get_usage() == Module::GLOBAL &&
-         only_inspection_policy() && !default_inspection_policy() )
+    if ( m->get_usage() == Module::GLOBAL && !default_inspection_policy() )
         return false;
 
     if ( m->get_usage() != Module::INSPECT && only_inspection_policy() )

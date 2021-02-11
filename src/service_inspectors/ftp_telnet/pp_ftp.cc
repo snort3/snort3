@@ -938,10 +938,8 @@ int initialize_ftp(FTP_SESSION* session, Packet* p, int iMode)
         int iRet;
         char ignoreTelnetErase = FTPP_APPLY_TNC_ERASE_CMDS;
         /* Normalize this packet ala telnet */
-        if (((iMode == FTPP_SI_CLIENT_MODE) &&
-            session->client_conf->ignore_telnet_erase_cmds) ||
-            ((iMode == FTPP_SI_SERVER_MODE) &&
-            session->server_conf->ignore_telnet_erase_cmds) )
+        if ((iMode == FTPP_SI_CLIENT_MODE && session->client_conf->ignore_telnet_erase_cmds) ||
+            (iMode == FTPP_SI_SERVER_MODE && session->server_conf->ignore_telnet_erase_cmds))
             ignoreTelnetErase = FTPP_IGNORE_TNC_ERASE_CMDS;
 
         DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
@@ -960,8 +958,8 @@ int initialize_ftp(FTP_SESSION* session, Packet* p, int iMode)
         if ( buf.len )
         {
             /* Normalized data will always be in decode buffer */
-            if ( (iMode == FTPP_SI_CLIENT_MODE) ||
-                (iMode == FTPP_SI_SERVER_MODE) )
+            if ((iMode == FTPP_SI_CLIENT_MODE && session->client_conf->telnet_cmds) ||
+                (iMode == FTPP_SI_SERVER_MODE && session->server_conf->telnet_cmds))
             {
                 DetectionEngine::queue_event(GID_FTP, FTP_TELNET_CMD);
                 return FTPP_ALERT; /* Nothing else to do since we alerted */
