@@ -18,3 +18,9 @@ else (STATIC_INSPECTORS)
     add_dynamic_module(wizard inspectors ${FILE_LIST})
 
 endif (STATIC_INSPECTORS)
+
+add_catch_test(curses_test
+    NO_TEST_SOURCE
+    SOURCES
+        curses.cc
+)

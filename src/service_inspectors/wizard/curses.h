@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-enum DCE_States
+enum DCE_State
 {
     STATE_0 = 0,
     STATE_1,
@@ -39,13 +39,46 @@ enum DCE_States
     STATE_10
 };
 
+enum SSL_State
+{
+    BYTE_0_LEN_MSB = 0,
+    BYTE_1_LEN_LSB,
+    BYTE_2_CLIENT_HELLO,
+    BYTE_3_MAX_MINOR_VER,
+    BYTE_4_V3_MAJOR,
+    BYTE_5_SPECS_LEN_MSB,
+    BYTE_6_SPECS_LEN_LSB,
+    BYTE_7_SSNID_LEN_MSB,
+    BYTE_8_SSNID_LEN_LSB,
+    BYTE_9_CHLNG_LEN_MSB,
+    BYTE_10_CHLNG_LEN_LSB,
+    SSL_FOUND,
+    SSL_NOT_FOUND
+};
+
 class CurseTracker
 {
 public:
-    DCE_States state;
-    uint32_t helper;
+    struct DCE
+    {
+        DCE_State state;
+        uint32_t helper;
+    } dce;
 
-    CurseTracker() { state = STATE_0; }
+    struct SSL
+    {
+        SSL_State state;
+        unsigned total_len;
+        unsigned ssnid_len;
+        unsigned specs_len;
+        unsigned chlng_len;
+    } ssl;
+
+    CurseTracker()
+    {
+        dce.state = DCE_State::STATE_0;
+        ssl.state = SSL_State::BYTE_0_LEN_MSB;
+    }
 };
 
 typedef bool (* curse_alg)(const uint8_t* data, unsigned len, CurseTracker*);
