@@ -100,8 +100,17 @@ void HttpUri::parse_authority()
         port.set(STAT_NO_SOURCE);
         return;
     }
-    int32_t host_len;
-    for (host_len = 0; (host_len < authority.length()) && (authority.start()[host_len] != ':');
+    
+    int32_t host_len = 0;
+
+    // IPv6 addresses are surrounded by [] to protect embedded colons
+    if (authority.start()[0] == '[')
+    {
+        for (; (host_len < authority.length()) && (authority.start()[host_len] != ']');
+            host_len++);
+    }
+
+    for (; (host_len < authority.length()) && (authority.start()[host_len] != ':');
         host_len++);
     host.set(host_len, authority.start());
     if (host.length() < authority.length())
