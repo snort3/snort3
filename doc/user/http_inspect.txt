@@ -99,19 +99,10 @@ depth parameter entirely because that is the default.
 These limits have no effect on how much data is forwarded to file
 processing.
 
-===== detained_inspection
-
-Detained inspection is an experimental feature currently under development.
-It enables Snort to more quickly detect and block response messages
-containing malicious JavaScript. As this feature involves actively blocking
-traffic it is designed for use with inline mode operation (-Q).
-
-This feature is off by default. detained_inspection = true will activate
-it.
-
 ===== script_detection
 
-Script detection is an alternative to detained inspection. When
+Script detection is a feature that enables Snort to more quickly detect and
+block response messages containing malicious JavaScript. When
 http_inspect detects the end of a script it immediately forwards the
 available part of the message body for early detection. This enables
 malicious Javascripts to be detected more quickly but consumes somewhat
