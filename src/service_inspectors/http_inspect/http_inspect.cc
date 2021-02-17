@@ -149,7 +149,6 @@ void HttpInspect::show(const SnortConfig*) const
     ConfigLogger::log_flag("decompress_pdf", params->decompress_pdf);
     ConfigLogger::log_flag("decompress_swf", params->decompress_swf);
     ConfigLogger::log_flag("decompress_zip", params->decompress_zip);
-    ConfigLogger::log_flag("detained_inspection", params->detained_inspection);
     ConfigLogger::log_flag("script_detection", params->script_detection);
     ConfigLogger::log_flag("normalize_javascript", params->js_norm_param.normalize_javascript);
     ConfigLogger::log_value("max_javascript_whitespaces",

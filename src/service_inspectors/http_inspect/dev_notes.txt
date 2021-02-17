@@ -7,36 +7,45 @@ It serves several specialized purposes in cases where the HTTP message is trunca
 unexpectedly).
 
 The nature of splitting allows packets to be forwarded before they are aggregated into a message
-section and inspected. Detained inspection is a feature that allows the splitter to designate
-to Stream packets that are too risky to forward without being inspected. These packets are detained
-until such time as inspection is completed. The design is based on the principle that detaining
-one packet in a TCP stream effectively blocks all subsequent packets from being reassembled and
-delivered to a target application. Once a packet is detained no attempt is made to detain
-additional packets.
+section and inspected. This may lead to problems when the target consumes a partial message
+body even though the end of the message body was never received because Snort blocked it.
 
-The core functions of detained inspection are implemented in the message body cutters. They search
-for the beginning of Javascripts by finding the string "<script". The raw packet containing the 't'
-will be detained as well the beginning of every subsequent message section. No attempt is made to
-find the end of a script--it is assumed to continue through the rest of the message body. The
-cutter will decompress gzip data to search for "<script". This unzip is unrelated and in addition
-to the unzip done in reassemble(). The decision was made to accept the performance cost of
-unzipping twice to avoid using memory to store uncompressed data waiting for reassembly.
+Script detection is a feature developed to solve this problem for message bodies containing
+Javascripts. The stream splitter scan() method searches its input for the end-of-script tag
+"</script>". When necessary this requires scan() to unzip the data. This is an extra unzip as
+storage limitations preclude saving the unzipped version of the data for subsequent reassembly.
 
-Splitter init_partial_flush() is called by Stream when a previously detained packet must be dropped
-or released immediately. It sets up reassembly and inspection of a partial message section
-containing all available data. Once inspection of this partial message section is complete, for
-most of HI it is as if it never happened. scan() continues to split the original message section
-with all the original data. The inspector will perform a completely new inspection of the full
-message section. Only reassemble() knows that something different is happening. Stream only
-delivers message data for reassembly once. reassemble() stores data received for a partial
-inspection and prepends it to the buffer for the next inspection.
+When the end of a script is found and the normal flush point has not been found, the current TCP
+segment and all previous segments for the current message section are flushed using a special
+procedure known as partial inspection. From the perspective of Stream (or H2I) a partial inspection
+is a regular flush in every respect.
 
-Script detection is a different feature developed to solve the same problem. The scanning mechanism
-developed for detained inspection is repurposed to look for the end-of-script tag "</script>". When
-one is found an immediate partial inspection is performed. This avoids the adverse network
-consequences of detaining packets at the performance and memory cost of doing a much larger number
-of partial inspections. Code features that support both approaches are referred to as accelerated
-blocking.
+scan() calls prep_partial_flush() to prepare for the partial inspection. Then it returns a normal
+flush point to Stream at the end of the current TCP segment. Partial inspections perform all of the
+functions of a regular inspection including forwarding data to file processing and detection.
+
+The difference between a partial inspection and a regular inspection is reassemble() saves the
+input data for future reuse. Eventually there will be a regular full inspection of the entire
+message section. reassemble() will accomplish this by combining the input data for the partial
+inspection with later data that complete the message section.
+
+Correct and efficient execution of a full inspection following a partial inspection requires
+special handling of certain functions. Unzipping is only done once in reassemble(). The stored
+input in reassemble() has already been through dechunking and unzipping. Data is forwarded to file
+processing during the partial inspection and duplicate data will not be forwarded again. Some
+of the message body normalization steps are done once during partial inspection with work
+products saved for reuse.
+
+It is possible to do more than one partial inspection of a single message section. Each partial
+inspection is cumulative, covering the new data and all previous data.
+
+Compared to just doing a full inspection, a partial inspection followed by a partial inspection
+will not miss anything. The benefits of partial inspection are in addition to the benefits of a
+full inspection.
+
+The http_inspect partial inspection mechanism is also used by http2_inspect to manage frame
+boundaries. When inspecting HTTP/2, a partial inspection by http_inspect may occur because script
+detection triggered it, because H2I wanted it, or both. 
 
 HttpFlowData is a data class representing all HI information relating to a flow. It serves as
 persistent memory between invocations of HI by the framework. It also glues together the inspector,
@@ -288,9 +297,6 @@ Commands:
   @tcpclose simulates a half-duplex TCP close.
   @request and @response set the message direction. Applies to subsequent paragraphs until changed.
      The initial direction is always request and the break command resets the direction to request.
-  @partial causes a partial flush, simulating a retransmission of a detained packet. This does not
-     have any application to script detection or any other feature where the stream splitter is
-     driving partial inspections instead of stream.
   @fileset <pathname> specifies a file from which the tool will read data into the message buffer.
      This may be used to include a zipped or other binary file into a message body. Data is read
      beginning at the start of the file. The file is closed automatically whenever a new file is

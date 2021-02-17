@@ -267,13 +267,6 @@ void HttpTestInput::scan(uint8_t*& data, uint32_t& length, SourceId source_id, u
                     length = 0;
                     return;
                 }
-                else if ((command_length == strlen("partial")) && !memcmp(command_value,
-                    "partial", strlen("partial")))
-                {
-                    partial = true;
-                    length = 0;
-                    return;
-                }
                 else if ((command_length > strlen("fileset")) && !memcmp(command_value, "fileset",
                     strlen("fileset")))
                 {
@@ -496,11 +489,9 @@ void HttpTestInput::flush(uint32_t num_octets)
 }
 
 void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, unsigned& total,
-    unsigned& offset, uint32_t& flags, SourceId source_id, bool& tcp_close,
-    bool& partial_flush)
+    unsigned& offset, uint32_t& flags, SourceId source_id, bool& tcp_close)
 {
     *buffer = nullptr;
-    partial_flush = false;
     tcp_close = false;
 
     // Only piggyback on data moving in the same direction.
@@ -514,17 +505,9 @@ void HttpTestInput::reassemble(uint8_t** buffer, unsigned& length, unsigned& tot
         return;
     }
 
-    // Need flushed data unless it's a partial flush.
-    if (!flushed && !partial)
+    // Need flushed data
+    if (!flushed)
     {
-        return;
-    }
-
-    if (partial)
-    {
-        // Give the caller a chance to set up for a partial flush before giving him the data
-        partial_flush = true;
-        partial = false;
         return;
     }
 

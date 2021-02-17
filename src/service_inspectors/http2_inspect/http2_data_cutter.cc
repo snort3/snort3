@@ -127,7 +127,7 @@ StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t lengt
             assert(scan_result == StreamSplitter::SEARCH);
             scan_result = StreamSplitter::FLUSH;
             if (cur_data > 0)
-                session_data->hi_ss[source_id]->init_partial_flush(session_data->flow);
+                session_data->hi_ss[source_id]->prep_partial_flush(session_data->flow, 0);
             else
             {
                 session_data->payload_discard[source_id] = true;

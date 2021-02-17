@@ -45,7 +45,6 @@ public:
     bool decompress_pdf = false;
     bool decompress_swf = false;
     bool decompress_zip = false;
-    bool detained_inspection = false;
     bool script_detection = false;
 
     struct JsNormParam
@@ -136,7 +135,6 @@ public:
     static PegCount get_peg_counts(HttpEnums::PEG_COUNT counter)
         { return peg_counts[counter]; }
 
-    static void get_detain_finder(snort::LiteralSearch*&, snort::LiteralSearch::Handle*&);
     static void get_script_finder(snort::LiteralSearch*&, snort::LiteralSearch::Handle*&);
 
     snort::ProfileStats* get_profile() const override;

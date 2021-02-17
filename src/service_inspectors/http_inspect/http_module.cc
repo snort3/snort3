@@ -35,28 +35,19 @@ using namespace snort;
 using namespace HttpEnums;
 
 LiteralSearch::Handle* s_handle = nullptr;
-LiteralSearch* s_detain = nullptr;
 LiteralSearch* s_script = nullptr;
 
 HttpModule::HttpModule() : Module(HTTP_NAME, HTTP_HELP, http_params)
 {
     s_handle = LiteralSearch::setup();
-    s_detain = LiteralSearch::instantiate(s_handle, (const uint8_t*)"<SCRIPT", 7, true, true);
     s_script = LiteralSearch::instantiate(s_handle, (const uint8_t*)"</SCRIPT>", 9, true, true);
 }
 
 HttpModule::~HttpModule()
 {
     delete params;
-    delete s_detain;
     delete s_script;
     LiteralSearch::cleanup(s_handle);
-}
-
-void HttpModule::get_detain_finder(LiteralSearch*& finder, LiteralSearch::Handle*& handle)
-{
-    finder = s_detain;
-    handle = s_handle;
 }
 
 void HttpModule::get_script_finder(LiteralSearch*& finder, LiteralSearch::Handle*& handle)
@@ -87,9 +78,6 @@ const Parameter HttpModule::http_params[] =
 
     { "decompress_zip", Parameter::PT_BOOL, nullptr, "false",
       "decompress zip files in response bodies" },
-
-    { "detained_inspection", Parameter::PT_BOOL, nullptr, "false",
-      "store-and-forward as necessary to effectively block alerting JavaScript" },
 
     { "script_detection", Parameter::PT_BOOL, nullptr, "false",
       "inspect JavaScript immediately upon script end" },
@@ -209,10 +197,6 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("decompress_zip"))
     {
         params->decompress_zip = val.get_bool();
-    }
-    else if (val.is("detained_inspection"))
-    {
-        params->detained_inspection = val.get_bool();
     }
     else if (val.is("script_detection"))
     {
@@ -386,11 +370,6 @@ bool HttpModule::end(const char*, int, SnortConfig*)
     {
         ParseWarning(WARN_CONF, "Meaningless to do bare byte when not doing UTF-8");
         params->uri_param.utf8_bare_byte = false;
-    }
-
-    if (params->detained_inspection && params->script_detection)
-    {
-        ParseError("Cannot use detained inspection and script detection together.");
     }
 
     if (params->uri_param.iis_unicode)

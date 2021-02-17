@@ -37,7 +37,7 @@ public:
     void scan(uint8_t*& data, uint32_t& length, HttpCommon::SourceId source_id, uint64_t seq_num);
     void flush(uint32_t num_octets);
     void reassemble(uint8_t** buffer, unsigned& length, unsigned& total, unsigned& offset,
-        uint32_t& flags, HttpCommon::SourceId source_id, bool& tcp_close, bool& partial_flush);
+        uint32_t& flags, HttpCommon::SourceId source_id, bool& tcp_close);
     bool finish();
 
 private:
@@ -65,9 +65,6 @@ private:
 
     // TCP connection directional close
     bool tcp_closed = false;
-
-    // partial flush requested, useful for testing detained inspection
-    bool partial = false;
 
     // number of octets that have been flushed and must be sent by reassemble
     uint32_t flush_octets = 0;

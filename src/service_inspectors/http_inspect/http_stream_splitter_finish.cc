@@ -178,19 +178,11 @@ bool HttpStreamSplitter::finish(Flow* flow)
     return false;
 }
 
-bool HttpStreamSplitter::init_partial_flush(Flow* flow, uint32_t num_flush)
+bool HttpStreamSplitter::prep_partial_flush(Flow* flow, uint32_t num_flush)
 {
     Profile profile(HttpModule::get_profile_stats());
 
     HttpFlowData* session_data = HttpInspect::http_get_flow_data(flow);
-    assert(session_data != nullptr);
-
-    assert(session_data->for_http2 || source_id == SRC_SERVER);
-
-    assert((session_data->type_expected[source_id] == SEC_BODY_CL)      ||
-        (session_data->type_expected[source_id] == SEC_BODY_OLD)     ||
-        (session_data->type_expected[source_id] == SEC_BODY_CHUNK)   ||
-        (session_data->type_expected[source_id] == SEC_BODY_H2));
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP) &&
@@ -208,7 +200,6 @@ bool HttpStreamSplitter::init_partial_flush(Flow* flow, uint32_t num_flush)
         session_data->cutter[source_id]->get_is_broken_chunk(),
         session_data->cutter[source_id]->get_num_good_chunks(),
         session_data->cutter[source_id]->get_octets_seen() - num_flush);
-    (static_cast<HttpBodyCutter*>(session_data->cutter[source_id]))->detain_ended();
     session_data->partial_flush[source_id] = true;
     return true;
 }

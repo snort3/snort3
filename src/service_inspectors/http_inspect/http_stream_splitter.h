@@ -43,8 +43,7 @@ public:
     const snort::StreamBuffer reassemble(snort::Flow* flow, unsigned total, unsigned, const
         uint8_t* data, unsigned len, uint32_t flags, unsigned& copied) override;
     bool finish(snort::Flow* flow) override;
-    bool init_partial_flush(snort::Flow* flow) override { return init_partial_flush(flow, 0); }
-    bool init_partial_flush(snort::Flow* flow, uint32_t num_flush);
+    bool prep_partial_flush(snort::Flow* flow, uint32_t num_flush);
     bool is_paf() override { return true; }
     static StreamSplitter::Status status_value(StreamSplitter::Status ret_val, bool http2 = false);
 
@@ -62,7 +61,6 @@ private:
     static void decompress_copy(uint8_t* buffer, uint32_t& offset, const uint8_t* data,
         uint32_t length, HttpEnums::CompressId& compression, z_stream*& compress_stream,
         bool at_start, HttpInfractions* infractions, HttpEventGen* events);
-    static void detain_packet(snort::Packet* pkt);
 
     HttpInspect* const my_inspector;
     const HttpCommon::SourceId source_id;

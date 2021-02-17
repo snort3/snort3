@@ -278,10 +278,10 @@ ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
     return SCAN_NOT_FOUND;
 }
 
-HttpBodyCutter::HttpBodyCutter(AcceleratedBlocking accelerated_blocking_, CompressId compression_)
+HttpBodyCutter::HttpBodyCutter(bool accelerated_blocking_, CompressId compression_)
     : accelerated_blocking(accelerated_blocking_), compression(compression_)
 {
-    if (accelerated_blocking != AB_NONE)
+    if (accelerated_blocking)
     {
         if ((compression == CMP_GZIP) || (compression == CMP_DEFLATE))
         {
@@ -300,25 +300,13 @@ HttpBodyCutter::HttpBodyCutter(AcceleratedBlocking accelerated_blocking_, Compre
             }
         }
 
-        static const uint8_t detain_string[] = { '<', 's', 'c', 'r', 'i', 'p', 't' };
-        static const uint8_t detain_upper[] = { '<', 'S', 'C', 'R', 'I', 'P', 'T' };
         static const uint8_t inspect_string[] = { '<', '/', 's', 'c', 'r', 'i', 'p', 't', '>' };
         static const uint8_t inspect_upper[] = { '<', '/', 'S', 'C', 'R', 'I', 'P', 'T', '>' };
 
-        if (accelerated_blocking == AB_DETAIN)
-        {
-            match_string = detain_string;
-            match_string_upper = detain_upper;
-            string_length = sizeof(detain_string);
-            HttpModule::get_detain_finder(finder, handle);
-        }
-        else
-        {
-            match_string = inspect_string;
-            match_string_upper = inspect_upper;
-            string_length = sizeof(inspect_string);
-            HttpModule::get_script_finder(finder, handle);
-        }
+        match_string = inspect_string;
+        match_string_upper = inspect_upper;
+        string_length = sizeof(inspect_string);
+        HttpModule::get_script_finder(finder, handle);
     }
 }
 
@@ -816,50 +804,17 @@ ScanResult HttpBodyH2Cutter::cut(const uint8_t* buffer, uint32_t length,
 }
 
 // This method searches the input stream looking for a script or other dangerous content that
-// requires accelerated blocking. Exactly what we are looking for is encapsulated in dangerous().
+// requires script detection. Exactly what we are looking for is encapsulated in dangerous().
 //
 // Return value true indicates a match and enables the packet that completes the matching sequence
-// to be detained (detained inspection) or sent for partial inspection (script detection).
-//
-// Once detained inspection is activated on a message body it never goes away. The first packet
-// of every subsequent message section must be detained (detention_required). Supporting this
-// requirement requires that the calling routine submit all data including buffers that are about
-// to be flushed.
-//
-// Script detection (AB_INSPECT) is similar in that the message data must be scanned by dangerous()
-// looking for a particular string. It differs in the string being searched for and that difference
-// is built into dangerous(). Script detection does not automatically apply to subsequent message
-// sections. It only recurs when a new end-of-script tag is found.
+// to be sent for partial inspection.
 //
 // Any attempt to optimize this code should be mindful that once you skip any part of the message
 // body, dangerous() loses the ability to unzip subsequent data.
 
 bool HttpBodyCutter::need_accelerated_blocking(const uint8_t* data, uint32_t length)
 {
-    switch (accelerated_blocking)
-    {
-    case AB_DETAIN:
-        // With detained inspection we have two basic principles here: 1) having detained a packet
-        // we don't need to detain another one while the first one is still being held and 2) once
-        // we detain a packet we don't need to keep scanning content. We are always going to detain
-        // a new packet as soon as we release the previous one.
-        if (!packet_detained && (detention_required || dangerous(data, length)))
-        {
-            packet_detained = true;
-            detention_required = true;
-            return true;
-        }
-        break;
-    case AB_INSPECT:
-        // Script detection requires continuous scanning of the data because every packet is a new
-        // decision regardless of any previous determinations.
-        if (dangerous(data, length))
-            return true;
-        break;
-    case AB_NONE:
-        break;
-    }
-    return false;
+    return accelerated_blocking && dangerous(data, length);
 }
 
 bool HttpBodyCutter::find_partial(const uint8_t* input_buf, uint32_t input_length, bool end)

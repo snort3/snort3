@@ -244,24 +244,18 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
                 return http_buf;
             }
             bool tcp_close;
-            bool partial_flush;
             uint8_t* test_buffer;
             unsigned unused;
             HttpTestManager::get_test_input_source()->reassemble(&test_buffer, len, total, unused,
-                flags, source_id, tcp_close, partial_flush);
+                flags, source_id, tcp_close);
             if (tcp_close)
             {
                 finish(flow);
             }
-            if (partial_flush)
-            {
-                init_partial_flush(flow);
-            }
             if (test_buffer == nullptr)
             {
                 // Source ID does not match test data, no test data was flushed, preparing for a
-                // partial flush, preparing for a TCP connection close, or there is no more test
-                // data
+                // TCP connection close, or there is no more test data
                 return http_buf;
             }
             data = test_buffer;

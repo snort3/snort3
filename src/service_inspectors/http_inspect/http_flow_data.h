@@ -143,8 +143,7 @@ private:
     HttpEnums::CompressId compression[2] = { HttpEnums::CMP_NONE, HttpEnums::CMP_NONE };
     HttpEnums::DetectionStatus detection_status[2] = { HttpEnums::DET_ON, HttpEnums::DET_ON };
     bool stretch_section_to_packet[2] = { false, false };
-    HttpEnums::AcceleratedBlocking accelerated_blocking[2] =
-        { HttpEnums::AB_NONE, HttpEnums::AB_NONE };
+    bool accelerated_blocking[2] = { false, false };
 
     // *** Inspector's internal data about the current message
     struct FdCallbackContext

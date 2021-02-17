@@ -118,27 +118,6 @@ StreamSplitter::Status HttpStreamSplitter::status_value(StreamSplitter::Status r
     return ret_val;
 }
 
-void HttpStreamSplitter::detain_packet(Packet* pkt)
-{
-#ifdef REG_TEST
-    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
-    {
-        fprintf(HttpTestManager::get_output_file(), "Packet detain request\n");
-        fflush(HttpTestManager::get_output_file());
-    }
-
-    if (!HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
-    {
-#endif
-    pkt->active->hold_packet(pkt);
-#ifdef REG_TEST
-    }
-#endif
-
-    // Count attempted detains.
-    HttpModule::increment_peg_counts(PEG_DETAINED);
-}
-
 StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data, uint32_t length,
     uint32_t, uint32_t* flush_offset)
 {
@@ -282,19 +261,13 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
 
         if (cut_result == SCAN_NOT_FOUND_ACCELERATE)
         {
-            if (session_data->accelerated_blocking[source_id] == AB_DETAIN)
-                detain_packet(pkt);
-            else
-            {
-                assert(session_data->accelerated_blocking[source_id] == AB_INSPECT);
-                HttpModule::increment_peg_counts(PEG_SCRIPT_DETECTION);
-                init_partial_flush(flow, length);
+            HttpModule::increment_peg_counts(PEG_SCRIPT_DETECTION);
+            prep_partial_flush(flow, length);
 #ifdef REG_TEST
-                if (!HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
+            if (!HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
 #endif
-                    *flush_offset = length;
-                return status_value(StreamSplitter::FLUSH);
-            }
+                *flush_offset = length;
+            return status_value(StreamSplitter::FLUSH);
         }
 
         // Wait patiently for more data
