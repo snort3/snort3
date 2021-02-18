@@ -224,6 +224,5 @@ int ServiceDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort
 
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*)
 { }
-OdpContext::~OdpContext() { }
 
 #endif

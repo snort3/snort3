@@ -212,6 +212,4 @@ void ServiceDiscoveryState::set_service_id_valid(ServiceDetector*) { }
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*)
 { }
 
-OdpContext::~OdpContext() { }
-
 #endif

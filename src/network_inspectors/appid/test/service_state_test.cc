@@ -84,7 +84,6 @@ void ClientAppDescriptor::update_stats(AppId, bool) {}
 void PayloadAppDescriptor::update_stats(AppId, bool) {}
 AppIdConfig::~AppIdConfig() { }
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
-OdpContext::~OdpContext() { }
 AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);
 OdpContext stub_odp_ctxt(stub_config, nullptr);

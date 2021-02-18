@@ -56,7 +56,6 @@ public:
 
 AppIdConfig::~AppIdConfig() { }
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
-OdpContext::~OdpContext() { }
 
 AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);

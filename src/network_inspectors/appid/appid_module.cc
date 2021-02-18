@@ -246,7 +246,7 @@ bool ACOdpContextSwap::execute(Analyzer&, void**)
     pkt_thread_odp_ctxt = &current_odp_ctxt;
     assert(odp_thread_local_ctxt);
     delete odp_thread_local_ctxt;
-    odp_thread_local_ctxt = new OdpThreadContext();
+    odp_thread_local_ctxt = new OdpThreadContext;
     odp_thread_local_ctxt->initialize(ctxt, false, true);
     return true;
 }
@@ -375,7 +375,7 @@ static int reload_detectors(lua_State* L)
     ctxt.create_odp_ctxt();
     assert(odp_thread_local_ctxt);
     delete odp_thread_local_ctxt;
-    odp_thread_local_ctxt = new OdpThreadContext(true);
+    odp_thread_local_ctxt = new OdpThreadContext;
 
     OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
     odp_ctxt.get_client_disco_mgr().initialize();

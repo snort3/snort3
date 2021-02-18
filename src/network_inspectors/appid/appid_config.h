@@ -27,7 +27,6 @@
 
 #include "target_based/snort_protocols.h"
 
-#include "app_forecast.h"
 #include "app_info_table.h"
 #include "client_plugins/client_discovery.h"
 #include "detector_plugins/dns_patterns.h"
@@ -119,7 +118,6 @@ public:
     uint16_t max_packet_service_fail_ignore_bytes = MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES;
 
     OdpContext(const AppIdConfig&, snort::SnortConfig*);
-    ~OdpContext();
     void initialize();
     void reload();
 
@@ -194,16 +192,10 @@ public:
         return *service_pattern_detector;
     }
 
-    const std::unordered_map<AppId, AFElement>& get_af_indicators() const
-    {
-        return AF_indicators;
-    }
-
     void add_port_service_id(IpProtocol, uint16_t, AppId);
     void add_protocol_service_id(IpProtocol, AppId);
     AppId get_port_service_id(IpProtocol, uint16_t);
     AppId get_protocol_service_id(IpProtocol);
-    void add_af_indicator(AppId, AppId, AppId);
 
 private:
     AppInfoManager app_info_mgr;
@@ -217,7 +209,6 @@ private:
     SslPatternMatchers ssl_matchers;
     PatternClientDetector* client_pattern_detector;
     PatternServiceDetector* service_pattern_detector;
-    std::unordered_map<AppId, AFElement> AF_indicators;     // list of "indicator apps"
 
     std::array<AppId, APP_ID_PORT_ARRAY_SIZE> tcp_port_only = {}; // port-only TCP services
     std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only = {}; // port-only UDP services
@@ -230,7 +221,6 @@ private:
 class OdpThreadContext
 {
 public:
-    OdpThreadContext(bool is_control=false);
     ~OdpThreadContext();
     void initialize(AppIdContext& ctxt, bool is_control=false, bool reload_odp=false);
 
@@ -245,26 +235,8 @@ public:
         return *lua_detector_mgr;
     }
 
-    std::map<AFActKey, AFActVal>* get_af_actives() const
-    {
-        return AF_actives;
-    }
-
-    void add_af_actives(AFActKey key, AFActVal value)
-    {
-        assert(AF_actives);
-        AF_actives->emplace(key, value);
-    }
-
-    void erase_af_actives(AFActKey key)
-    {
-        assert(AF_actives);
-        AF_actives->erase(key);
-    }
-
 private:
     LuaDetectorManager* lua_detector_mgr = nullptr;
-    std::map<AFActKey, AFActVal>* AF_actives = nullptr; // list of hosts to watch
 };
 
 class AppIdContext

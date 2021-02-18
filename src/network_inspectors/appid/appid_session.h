@@ -308,9 +308,6 @@ public:
         AppId referred_id;
     } encrypted = { APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE };
 
-    AppId past_indicator = APP_ID_NONE;
-    AppId past_forecast = APP_ID_NONE;
-
     bool in_expected_cache = false;
     static unsigned inspector_id;
     static std::mutex inferred_svcs_lock;

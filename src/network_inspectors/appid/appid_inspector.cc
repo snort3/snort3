@@ -34,7 +34,6 @@
 #include "packet_tracer/packet_tracer.h"
 #include "profiler/profiler.h"
 
-#include "app_forecast.h"
 #include "appid_data_decrypt_event_handler.h"
 #include "appid_dcerpc_event_handler.h"
 #include "appid_debug.h"

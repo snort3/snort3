@@ -34,7 +34,6 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
-#include "app_forecast.h"
 #include "app_info_table.h"
 #include "appid_debug.h"
 #include "appid_inspector.h"
@@ -1842,23 +1841,6 @@ static int detector_add_length_app_cache(lua_State* L)
     return 1;
 }
 
-static int detector_add_af_application(lua_State* L)
-{
-    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
-    // Verify detector user data and that we are NOT in packet context
-    ud->validate_lua_state(false);
-    if (!init(L)) return 0;
-
-    int index = 1;
-
-    AppId indicator = (AppId)lua_tointeger(L, ++index);
-    AppId forecast  = (AppId)lua_tointeger(L, ++index);
-    AppId target    = (AppId)lua_tointeger(L, ++index);
-    ud->get_odp_ctxt().add_af_indicator(indicator, forecast, target);
-
-    return 0;
-}
-
 static int detector_add_url_application(lua_State* L)
 {
     // Verify detector user data and that we are NOT in packet context
@@ -2690,9 +2672,6 @@ static const luaL_Reg detector_methods[] =
     { "CHPMultiCreateApp",        detector_create_chp_multi_application }, // multiple detectors,
                                                                            // same appId
     { "CHPMultiAddAction",        detector_add_chp_multi_action },
-
-    //App Forecasting engine
-    { "AFAddApp",                 detector_add_af_application },
 
     { "portOnlyService",          detector_port_only_service },
 

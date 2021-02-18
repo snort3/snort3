@@ -31,7 +31,6 @@
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 
-#include "app_forecast.h"
 #include "appid_config.h"
 #include "appid_debug.h"
 #include "appid_detector.h"
@@ -124,8 +123,8 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     bool is_discovery_done = do_discovery(p, *asd, protocol, outer_protocol, direction, service_id,
         client_id, payload_id, misc_id, change_bits, tp_appid_ctxt);
 
-    do_post_discovery(p, *asd, direction, is_discovery_done, service_id, client_id, payload_id,
-        misc_id, change_bits);
+    do_post_discovery(p, *asd, is_discovery_done, service_id, client_id, payload_id, misc_id,
+        change_bits);
 }
 
 static inline unsigned get_ipfuncs_flags(const Packet* p, bool dst)
@@ -859,8 +858,8 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
 }
 
 void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
-    AppidSessionDirection direction, bool is_discovery_done, AppId service_id,
-    AppId client_id, AppId payload_id, AppId misc_id, AppidChangeBits& change_bits)
+    bool is_discovery_done, AppId service_id, AppId client_id, AppId payload_id, AppId misc_id,
+    AppidChangeBits& change_bits)
 {
     if (service_id > APP_ID_NONE)
     {
@@ -874,23 +873,6 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
         }
         else if (is_discovery_done and asd.get_session_flags(APPID_SESSION_DECRYPT_MONITOR))
             asd.set_session_flags(APPID_SESSION_CONTINUE);
-    }
-
-    if (service_id !=  APP_ID_NONE)
-    {
-        if (payload_id != asd.past_indicator and payload_id != APP_ID_NONE)
-        {
-            asd.past_indicator = payload_id;
-            check_session_for_AF_indicator(p, direction, (AppId)payload_id, asd.get_odp_ctxt());
-        }
-
-        if (asd.past_forecast != service_id and asd.past_forecast != APP_ID_UNKNOWN and
-             asd.get_payload_id() == APP_ID_NONE)
-        {
-            asd.past_forecast = check_session_for_AF_forecast(asd, p, direction, service_id);
-            if (asd.past_forecast != APP_ID_UNKNOWN)
-                payload_id = asd.pick_ss_payload_app_id(service_id);
-        }
     }
 
     if (asd.get_session_flags(APPID_SESSION_OOO_CHECK_TP) and asd.tpsession and

@@ -28,7 +28,6 @@
 #include <glob.h>
 #include <climits>
 
-#include "app_forecast.h"
 #include "app_info_table.h"
 #include "appid_discovery.h"
 #include "appid_http_session.h"
@@ -108,7 +107,7 @@ bool AppIdContext::init_appid(SnortConfig* sc)
         odp_ctxt = new OdpContext(config, sc);
 
     if (!odp_thread_local_ctxt)
-        odp_thread_local_ctxt = new OdpThreadContext(true);
+        odp_thread_local_ctxt = new OdpThreadContext;
 
     static bool once = false;
     if (!once)
@@ -157,11 +156,6 @@ OdpContext::OdpContext(const AppIdConfig& config, SnortConfig* sc)
     client_pattern_detector = new PatternClientDetector(&client_disco_mgr);
     service_pattern_detector = new PatternServiceDetector(&service_disco_mgr);
     version = next_version++;
-}
-
-OdpContext::~OdpContext()
-{
-    AF_indicators.clear();
 }
 
 void OdpContext::initialize()
@@ -225,26 +219,6 @@ AppId OdpContext::get_protocol_service_id(IpProtocol proto)
     return ip_protocol[(uint16_t)proto];
 }
 
-void OdpContext::add_af_indicator(AppId indicator, AppId forecast, AppId target)
-{
-    if (AF_indicators.find(indicator) != AF_indicators.end())
-    {
-        ErrorMessage("LuaDetectorApi:Attempt to add more than one AFElement per appId %d",
-            indicator);
-        return;
-    }
-
-    AFElement val = AFElement(forecast, target);
-    if (false == AF_indicators.emplace(indicator, val).second)
-        ErrorMessage("LuaDetectorApi:Failed to add AFElement for appId %d", indicator);
-}
-
-OdpThreadContext::OdpThreadContext(bool is_control)
-{
-    if (!is_control)
-        AF_actives = new std::map<AFActKey, AFActVal>;
-}
-
 void OdpThreadContext::initialize(AppIdContext& ctxt, bool is_control, bool reload_odp)
 {
     if (!is_control and reload_odp)
@@ -257,10 +231,4 @@ OdpThreadContext::~OdpThreadContext()
 {
     assert(lua_detector_mgr);
     delete lua_detector_mgr;
-
-    if (AF_actives != nullptr)
-    {
-        AF_actives->clear();
-        delete AF_actives;
-    }
 }

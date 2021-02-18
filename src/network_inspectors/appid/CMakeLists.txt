@@ -139,8 +139,6 @@ set ( UTIL_APPID_SOURCES
 )
 
 set ( APPID_SOURCES
-    app_forecast.cc
-    app_forecast.h
     appid_api.cc
     appid_api.h
     appid_app_descriptor.cc

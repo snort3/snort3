@@ -144,8 +144,8 @@ private:
         AppId& client_id, AppId& payload_id, AppId& misc_id, AppidChangeBits& change_bits,
         ThirdPartyAppIdContext* tp_appid_ctxt);
     static void do_post_discovery(snort::Packet* p, AppIdSession& asd,
-        AppidSessionDirection direction, bool is_discovery_done, AppId service_id, AppId client_id,
-        AppId payload_id, AppId misc_id, AppidChangeBits& change_bits);
+        bool is_discovery_done, AppId service_id, AppId client_id, AppId payload_id, AppId misc_id,
+        AppidChangeBits& change_bits);
     static void do_port_based_discovery(snort::Packet* p, AppIdSession& asd, IpProtocol protocol,
         AppidSessionDirection direction);
     static bool do_host_port_based_discovery(snort::Packet* p, AppIdSession& asd,

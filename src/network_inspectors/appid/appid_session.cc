@@ -38,7 +38,6 @@
 #include "target_based/snort_protocols.h"
 #include "time/packet_time.h"
 
-#include "app_forecast.h"
 #include "app_info_table.h"
 #include "appid_config.h"
 #include "appid_debug.h"
