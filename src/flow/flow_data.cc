@@ -54,7 +54,6 @@ FlowData::~FlowData()
 
 void FlowData::update_allocations(size_t n)
 {
-    memory::MemoryCap::free_space(n);
     memory::MemoryCap::update_allocations(n);
     mem_in_use += n;
 }

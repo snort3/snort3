@@ -157,6 +157,7 @@ void MemoryCap::update_allocations(size_t n)
 
     size_t k = n;
     n = fudge_it(n);
+    free_space(n);
     mem_stats.total_fudge += (n - k);
     s_tracker.allocate(n);
     auto in_use = s_tracker.used();
