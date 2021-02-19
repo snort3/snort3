@@ -261,7 +261,6 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
 
         if (cut_result == SCAN_NOT_FOUND_ACCELERATE)
         {
-            HttpModule::increment_peg_counts(PEG_SCRIPT_DETECTION);
             prep_partial_flush(flow, length);
 #ifdef REG_TEST
             if (!HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))

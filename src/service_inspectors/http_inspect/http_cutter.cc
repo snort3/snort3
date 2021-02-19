@@ -434,6 +434,13 @@ ScanResult HttpBodyOldCutter::cut(const uint8_t* buffer, uint32_t length, HttpIn
     }
 }
 
+void HttpBodyChunkCutter::transition_to_chunk_bad(bool& accelerate_this_packet)
+{
+    curr_state = CHUNK_BAD;
+    accelerate_this_packet = true;
+    zero_chunk = false;
+}
+
 ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
     HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, bool stretch,
     HttpEnums::H2BodyState)
@@ -450,6 +457,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
         switch (curr_state)
         {
         case CHUNK_NEWLINES:
+            zero_chunk = true;
             // Looking for improper CRLFs before the chunk header
             if (is_cr_lf[buffer[k]])
             {
@@ -470,7 +478,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 if (num_leading_ws == 5)
                 {
                     events->create_event(EVENT_BROKEN_CHUNK);
-                    curr_state = CHUNK_BAD;
+                    transition_to_chunk_bad(accelerate_this_packet);
                     k--;
                 }
                 break;
@@ -523,7 +531,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 // illegal character present in chunk length
                 *infractions += INF_CHUNK_BAD_CHAR;
                 events->create_event(EVENT_BROKEN_CHUNK);
-                curr_state = CHUNK_BAD;
+                transition_to_chunk_bad(accelerate_this_packet);
                 k--;
             }
             else
@@ -534,9 +542,11 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                     // overflow protection: must fit into 32 bits
                     *infractions += INF_CHUNK_TOO_LARGE;
                     events->create_event(EVENT_BROKEN_CHUNK);
-                    curr_state = CHUNK_BAD;
+                    transition_to_chunk_bad(accelerate_this_packet);
                     k--;
                 }
+                if (expected != 0)
+                    zero_chunk = false;
             }
             break;
         case CHUNK_TRAILING_WS:
@@ -563,7 +573,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 // illegal character present in chunk length
                 *infractions += INF_CHUNK_BAD_CHAR;
                 events->create_event(EVENT_BROKEN_CHUNK);
-                curr_state = CHUNK_BAD;
+                transition_to_chunk_bad(accelerate_this_packet);
                 k--;
             }
             break;
@@ -591,7 +601,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
                 // ambiguous.
                 *infractions += INF_CHUNK_LONE_CR;
                 events->create_event(EVENT_BROKEN_CHUNK);
-                curr_state = CHUNK_BAD;
+                transition_to_chunk_bad(accelerate_this_packet);
                 k--;
                 break;
             }
@@ -610,7 +620,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             {
                 *infractions += INF_CHUNK_NO_LENGTH;
                 events->create_event(EVENT_BROKEN_CHUNK);
-                curr_state = CHUNK_BAD;
+                transition_to_chunk_bad(accelerate_this_packet);
                 k--;
             }
             break;
@@ -656,7 +666,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             {
                 *infractions += INF_CHUNK_BAD_END;
                 events->create_event(EVENT_BROKEN_CHUNK);
-                curr_state = CHUNK_BAD;
+                transition_to_chunk_bad(accelerate_this_packet);
                 k--;
             }
             break;
@@ -725,7 +735,11 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
     }
 
     octets_seen += length;
-    return accelerate_this_packet ? SCAN_NOT_FOUND_ACCELERATE : SCAN_NOT_FOUND;
+
+    if (accelerate_this_packet || (zero_chunk && data_seen))
+        return SCAN_NOT_FOUND_ACCELERATE;
+
+    return SCAN_NOT_FOUND;
 }
 
 ScanResult HttpBodyH2Cutter::cut(const uint8_t* buffer, uint32_t length,
@@ -814,7 +828,10 @@ ScanResult HttpBodyH2Cutter::cut(const uint8_t* buffer, uint32_t length,
 
 bool HttpBodyCutter::need_accelerated_blocking(const uint8_t* data, uint32_t length)
 {
-    return accelerated_blocking && dangerous(data, length);
+    const bool need_accelerated_blocking = accelerated_blocking && dangerous(data, length);
+    if (need_accelerated_blocking)
+        HttpModule::increment_peg_counts(PEG_SCRIPT_DETECTION);	 
+    return need_accelerated_blocking;
 }
 
 bool HttpBodyCutter::find_partial(const uint8_t* input_buf, uint32_t input_length, bool end)

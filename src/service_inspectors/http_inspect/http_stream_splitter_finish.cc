@@ -145,8 +145,8 @@ bool HttpStreamSplitter::finish(Flow* flow)
 
             uint64_t file_index = header->get_file_cache_index();
             const uint64_t file_processing_id = header->get_multi_file_processing_id();
-            file_flows->file_process(packet, file_index, nullptr, 0, 0, dir, file_processing_id,
-                SNORT_FILE_END);
+            file_flows->file_process(packet, file_index, nullptr, 0,
+                session_data->file_octets[source_id], dir, file_processing_id, SNORT_FILE_END);
 #ifdef REG_TEST
             if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
             {

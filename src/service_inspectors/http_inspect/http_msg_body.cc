@@ -47,6 +47,34 @@ HttpMsgBody::HttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,
     get_related_sections();
 }
 
+void HttpMsgBody::bookkeeping_regular_flush(uint32_t& partial_detect_length,
+    uint8_t*& partial_detect_buffer, uint32_t& partial_js_detect_length, int32_t detect_length)
+{
+    session_data->detect_depth_remaining[source_id] -= detect_length;
+    partial_detect_buffer = nullptr;
+    partial_detect_length = 0;
+    partial_js_detect_length = 0;
+}
+
+void HttpMsgBody::clean_partial(uint32_t& partial_inspected_octets, uint32_t& partial_detect_length,
+    uint8_t*& partial_detect_buffer, uint32_t& partial_js_detect_length, int32_t detect_length)
+{
+    body_octets += msg_text.length();
+    partial_inspected_octets = session_data->partial_flush[source_id] ? msg_text.length() : 0;
+
+    if (session_data->partial_flush[source_id])
+        return;
+
+    if (session_data->detect_depth_remaining[source_id] > 0)
+    {
+        delete[] partial_detect_buffer;
+        session_data->update_deallocations(partial_detect_length);
+        assert(detect_length <= session_data->detect_depth_remaining[source_id]);
+        bookkeeping_regular_flush(partial_detect_length, partial_detect_buffer, partial_js_detect_length,
+            detect_length);
+    }
+}
+
 void HttpMsgBody::analyze()
 {
     uint32_t& partial_inspected_octets = session_data->partial_inspected_octets[source_id];
@@ -54,8 +82,17 @@ void HttpMsgBody::analyze()
     // When there have been partial inspections we focus on the part of the message we have not
     // seen before
     if (partial_inspected_octets > 0)
+    {
+        assert(msg_text.length() >= (int32_t)partial_inspected_octets);
+        // For regular flush, file processing needs to be finalized.
+        // Continue even if there is no new information
+        if ((msg_text.length() == (int32_t)partial_inspected_octets)
+            && session_data->partial_flush[source_id])
+            return;
+
         msg_text_new.set(msg_text.length() - partial_inspected_octets,
             msg_text.start() + partial_inspected_octets);
+    }
     else
         msg_text_new.set(msg_text);
 
@@ -69,43 +106,52 @@ void HttpMsgBody::analyze()
     if (session_data->detect_depth_remaining[source_id] > 0)
     {
         do_file_decompression(decoded_body, decompressed_file_body);
-        do_js_normalization(decompressed_file_body, js_norm_body);
 
         uint32_t& partial_detect_length = session_data->partial_detect_length[source_id];
         uint8_t*& partial_detect_buffer = session_data->partial_detect_buffer[source_id];
-        const int32_t total_length = partial_detect_length + js_norm_body.length();
-        const int32_t detect_length =
-            (total_length <= session_data->detect_depth_remaining[source_id]) ?
-            total_length : session_data->detect_depth_remaining[source_id];
+        uint32_t& partial_js_detect_length = session_data->partial_js_detect_length[source_id];
 
         if (partial_detect_length > 0)
         {
-            uint8_t* const detect_buffer = new uint8_t[total_length];
-            memcpy(detect_buffer, partial_detect_buffer, partial_detect_length);
-            memcpy(detect_buffer + partial_detect_length, js_norm_body.start(),
-                js_norm_body.length());
-            detect_data.set(detect_length, detect_buffer, true);
+            const int32_t total_length = partial_detect_length + decompressed_file_body.length();
+            uint8_t* const cumulative_buffer = new uint8_t[total_length];
+            memcpy(cumulative_buffer, partial_detect_buffer, partial_detect_length);
+            memcpy(cumulative_buffer + partial_detect_length, decompressed_file_body.start(),
+                decompressed_file_body.length());
+            cumulative_data.set(total_length, cumulative_buffer, true);
+            do_js_normalization(cumulative_data, js_norm_body);
+            if ((int32_t)partial_js_detect_length == js_norm_body.length())
+            {
+                clean_partial(partial_inspected_octets, partial_detect_length,
+                    partial_detect_buffer, partial_js_detect_length, js_norm_body.length());
+                return;
+            }
         }
         else
-        {
-            detect_data.set(detect_length, js_norm_body.start());
-        }
+            do_js_normalization(decompressed_file_body, js_norm_body);
+
+        const int32_t detect_length =
+            (js_norm_body.length() <= session_data->detect_depth_remaining[source_id]) ?
+            js_norm_body.length() : session_data->detect_depth_remaining[source_id];
+        detect_data.set(detect_length, js_norm_body.start());
 
         delete[] partial_detect_buffer;
         session_data->update_deallocations(partial_detect_length);
 
         if (!session_data->partial_flush[source_id])
         {
-            session_data->detect_depth_remaining[source_id] -= detect_length;
-            partial_detect_buffer = nullptr;
-            partial_detect_length = 0;
+            bookkeeping_regular_flush(partial_detect_length, partial_detect_buffer,
+                partial_js_detect_length, detect_length);
         }
         else
         {
-            uint8_t* const save_partial = new uint8_t[detect_data.length()];
-            memcpy(save_partial, detect_data.start(), detect_data.length());
+            Field* decompressed = (cumulative_data.length() > 0) ?
+                &cumulative_data : &decompressed_file_body;
+            uint8_t* const save_partial = new uint8_t[decompressed->length()];
+            memcpy(save_partial, decompressed->start(), decompressed->length());
             partial_detect_buffer = save_partial;
-            partial_detect_length = detect_data.length();
+            partial_detect_length = decompressed->length();
+            partial_js_detect_length = js_norm_body.length();
             session_data->update_allocations(partial_detect_length);
         }
 

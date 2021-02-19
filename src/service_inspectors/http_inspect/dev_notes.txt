@@ -47,6 +47,18 @@ The http_inspect partial inspection mechanism is also used by http2_inspect to m
 boundaries. When inspecting HTTP/2, a partial inspection by http_inspect may occur because script
 detection triggered it, because H2I wanted it, or both. 
 
+Some applications may be affected by blocks too late scenarios related to seeing part of the
+zero-length chunk. For example a TCP packet that ends with:
+    8<CR><LF>abcdefgh<CR><LF>0
+might be sufficient to forward the available data ("abcdefgh") to the application even though the
+final <CR><LF> has not been received.
+Note that the actual next bytes are uncertain here. The next packet might begin with <CR><LF>, but
+    100000<CR><LF>ijklmnopq ...
+is another perfectly legal possibility. There is no rule against starting a nonzero chunk length
+with a zero character and some applications reputedly do this.
+As a precaution partial inspections performed when 1) a TCP segment ends inside a possible
+zero-length chunk or 2) chunk processing fails (broken chunk).
+
 HttpFlowData is a data class representing all HI information relating to a flow. It serves as
 persistent memory between invocations of HI by the framework. It also glues together the inspector,
 the client-to-server splitter, and the server-to-client splitter which pass information through the

@@ -164,6 +164,8 @@ public:
     void soft_reset() override { num_good_chunks = 0; HttpBodyCutter::soft_reset(); }
 
 private:
+    void transition_to_chunk_bad(bool& accelerate_this_packet);
+
     uint32_t data_seen = 0;
     HttpEnums::ChunkState curr_state = HttpEnums::CHUNK_NEWLINES;
     uint32_t expected = 0;
@@ -171,6 +173,7 @@ private:
     uint32_t num_zeros = 0;
     uint32_t digits_seen = 0;
     uint32_t num_good_chunks = 0;  // that end in the current section
+    bool zero_chunk = true;
 };
 
 class HttpBodyH2Cutter : public HttpBodyCutter

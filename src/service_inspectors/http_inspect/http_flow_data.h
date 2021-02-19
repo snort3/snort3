@@ -168,6 +168,7 @@ private:
     uint32_t partial_inspected_octets[2] = { 0, 0 };
     uint8_t* partial_detect_buffer[2] = { nullptr, nullptr };
     uint32_t partial_detect_length[2] = { 0, 0 };
+    uint32_t partial_js_detect_length[2] = { 0, 0 };
     int32_t status_code_num = HttpCommon::STAT_NOT_PRESENT;
     HttpEnums::VersionId version_id[2] = { HttpEnums::VERS__NOT_PRESENT,
                                             HttpEnums::VERS__NOT_PRESENT };
