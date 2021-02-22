@@ -28,6 +28,7 @@
 #include "detection/detection_engine.h"
 #include "detection/detection_util.h"
 #include "file_api/file_api.h"
+#include "hash/hash_key_operations.h"
 #include "main/snort.h"
 #include "main/snort_debug.h"
 #include "network_inspectors/packet_tracer/packet_tracer.h"
@@ -51,13 +52,6 @@ static void DCE2_SmbFinishFileBlockVerdict(DCE2_SmbSsnData* ssd);
 /********************************************************************
  * Inline functions
  ********************************************************************/
-static inline bool DCE2_SmbIsVerdictSuspend(bool upload, FilePosition position)
-{
-    if (upload &&
-        ((position == SNORT_FILE_FULL) || (position == SNORT_FILE_END)))
-        return true;
-    return false;
-}
 
 static inline bool DCE2_SmbFileUpload(DCE2_SmbFileDirection dir)
 {
@@ -409,6 +403,7 @@ DCE2_Ret DCE2_SmbInitFileTracker(DCE2_SmbSsnData* ssd,
     ftracker->is_smb2 = false;
     ftracker->file_name = nullptr;
     ftracker->file_name_size = 0;
+    ftracker->file_name_hash = 0;
     if (is_ipc)
     {
         DCE2_CoTracker* co_tracker = (DCE2_CoTracker*)snort_calloc(sizeof(DCE2_CoTracker));
@@ -567,6 +562,7 @@ void DCE2_SmbCleanFileTracker(DCE2_SmbFileTracker* ftracker)
         snort_free((void*)ftracker->file_name);
         ftracker->file_name = nullptr;
         ftracker->file_name_size = 0;
+        ftracker->file_name_hash = 0;
     }
 
     if (ftracker->is_ipc)
@@ -1473,7 +1469,8 @@ static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd)
         if ((ftracker->ff_file_size == 0)
             && (ftracker->ff_bytes_processed != 0))
         {
-            if (file_flows->file_process(p, nullptr, 0, SNORT_FILE_END, upload))
+            if (file_flows->file_process(p, nullptr, 0, SNORT_FILE_END, upload,
+                ftracker->file_name_hash))
             {
                 if (upload)
                 {
@@ -1546,7 +1543,7 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
         return DCE2_RET__ERROR;
 
     if (!file_flows->file_process(p, data_ptr, (int)data_len, position, upload,
-        DCE2_SmbIsVerdictSuspend(upload, position)))
+        ftracker->file_name_hash))
     {
         debug_logf(dce_smb_trace, p, "File API returned FAILURE for (0x%02X) %s\n",
             ftracker->fid_v1, upload ? "UPLOAD" : "DOWNLOAD");
@@ -1884,6 +1881,8 @@ void DCE2_Update_Ftracker_from_ReqTracker(DCE2_SmbFileTracker* ftracker,
 {
     ftracker->file_name = cur_rtracker->file_name;
     ftracker->file_name_size = cur_rtracker->file_name_size;
+    ftracker->file_name_hash = str_to_hash(
+        (const uint8_t*)cur_rtracker->file_name, cur_rtracker->file_name_size);
     cur_rtracker->file_name = nullptr;
     cur_rtracker->file_name_size = 0;
 }

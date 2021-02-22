@@ -321,6 +321,7 @@ struct DCE2_SmbFileTracker
     bool is_smb2;
     char* file_name;
     uint16_t file_name_size;
+    uint64_t file_name_hash;
 
     union
     {
