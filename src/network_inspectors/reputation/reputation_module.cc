@@ -54,9 +54,6 @@ static const Parameter s_params[] =
     { "blocklist", Parameter::PT_STRING, nullptr, nullptr,
       "blocklist file name with IP lists" },
 
-    { "blacklist", Parameter::PT_STRING, nullptr, nullptr,
-      "blacklist file name with IP lists" },
-
     { "list_dir", Parameter::PT_STRING, nullptr, nullptr,
       "directory for IP lists and manifest file" },
 
@@ -66,23 +63,17 @@ static const Parameter s_params[] =
     { "nested_ip", Parameter::PT_ENUM, "inner|outer|all", "inner",
       "IP to use when there is IP encapsulation" },
 
-    { "priority", Parameter::PT_ENUM, "blocklist|allowlist|blacklist|whitelist", "allowlist",
+    { "priority", Parameter::PT_ENUM, "blocklist|allowlist", "allowlist",
       "defines priority when there is a decision conflict during run-time" },
 
     { "scan_local", Parameter::PT_BOOL, nullptr, "false",
       "inspect local address defined in RFC 1918" },
 
-    { "allow", Parameter::PT_ENUM, "do_not_block|trust|unblack", "do_not_block",
+    { "allow", Parameter::PT_ENUM, "do_not_block|trust", "do_not_block",
       "specify the meaning of allowlist" },
-
-    { "white", Parameter::PT_ENUM, "do_not_block|trust|unblack", "do_not_block",
-      "specify the meaning of whitelist" },
 
     { "allowlist", Parameter::PT_STRING, nullptr, nullptr,
       "allowlist file name with IP lists" },
-
-    { "whitelist", Parameter::PT_STRING, nullptr, nullptr,
-      "whitelist file name with IP lists" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -129,7 +120,7 @@ ProfileStats* ReputationModule::get_profile() const
 
 bool ReputationModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("blocklist") or v.is("blacklist") )
+    if ( v.is("blocklist") )
         conf->blocklist_path = v.get_string();
 
     else if ( v.is("list_dir") )
@@ -142,34 +133,15 @@ bool ReputationModule::set(const char*, Value& v, SnortConfig*)
         conf->nested_ip = (NestedIP)v.get_uint8();
 
     else if ( v.is("priority") )
-    {
-        int priority = v.get_uint8() + 1;
-
-        if (priority == 3) // blacklist
-            priority = 1;
-
-        else if (priority == 4) // whitelist
-           priority = 2;
-
-        conf->priority = (IPdecision)(priority);
-
-    }
+        conf->priority = (IPdecision)(v.get_uint8() + 1);
 
     else if ( v.is("scan_local") )
         conf->scanlocal = v.get_bool();
 
-    else if ( v.is("allow") or v.is("white") )
-    {
-        int action = v.get_uint8();
+    else if ( v.is("allow") )
+        conf->allow_action = (AllowAction)v.get_uint8();
 
-        if ( action == 2 ) // unblack
-            action = 0;
-
-        conf->allow_action = (AllowAction)action;
-
-    }
-
-    else if ( v.is("allowlist") or v.is("whitelist") )
+    else if ( v.is("allowlist") )
         conf->allowlist_path = v.get_string();
 
     else
