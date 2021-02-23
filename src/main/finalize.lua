@@ -30,6 +30,7 @@ bool set_bool(const char*, bool);
 bool set_number(const char*, double);
 bool set_string(const char*, const char*);
 bool set_alias(const char*, const char*);
+void clear_alias();
 ]]
 
 function snort_traverse(tab, fqn)
@@ -81,12 +82,15 @@ function load_aliases(env)
     for i,v in ipairs(env.binder) do
         if ( v.use and type(v.use) == "table" ) then
             if ( v.use.name and v.use.type ) then
-                ffi.C.set_alias(v.use.name, v.use.type)
-                local tab = env[v.use.name]
+                if ( ffi.C.set_alias(v.use.name, v.use.type) ) then
+                    local tab = env[v.use.name]
 
-                if ( tab ) then
-                    snort_whitelist_append(v.use.name)
-                    snort_set(nil, v.use.name, env[v.use.name])
+                    if ( tab ) then
+                        snort_whitelist_append(v.use.name)
+                        snort_set(nil, v.use.name, env[v.use.name])
+                    end
+
+                    ffi.C.clear_alias()
                 end
             end
         end

@@ -78,8 +78,8 @@ set<uint32_t> ModuleManager::gids;
 mutex ModuleManager::stats_mutex;
 
 static string s_current;
-static string s_name;
-static string s_type;
+static string s_aliased_name;
+static string s_aliased_type;
 
 // for callbacks from Lua
 static SnortConfig* s_config = nullptr;
@@ -93,7 +93,9 @@ extern "C"
     bool set_bool(const char* fqn, bool val);
     bool set_number(const char* fqn, double val);
     bool set_string(const char* fqn, const char* val);
+
     bool set_alias(const char* from, const char* to);
+    void clear_alias();
 
     const char* push_include_path(const char* file);
     void pop_include_path();
@@ -171,7 +173,7 @@ static std::string get_sub_table(const std::string& fqn)
 
 static void set_type(string& fqn)
 {
-    if ( s_type.empty() )
+    if ( s_aliased_type.empty() )
         return;
 
     size_t pos = fqn.find_first_of('.');
@@ -179,7 +181,7 @@ static void set_type(string& fqn)
     if ( pos == fqn.npos )
         pos = fqn.size();
 
-    fqn.replace(0, pos, s_type);
+    fqn.replace(0, pos, s_aliased_type);
 }
 
 static void set_top(string& fqn)
@@ -625,14 +627,39 @@ static bool interested(Module* m)
     return true;
 }
 
+
 //-------------------------------------------------------------------------
 // ffi methods
 //-------------------------------------------------------------------------
 
+SO_PUBLIC void clear_alias()
+{
+    s_aliased_name.clear();
+    s_aliased_type.clear();
+}
+
 SO_PUBLIC bool set_alias(const char* from, const char* to)
 {
-    s_name = from;
-    s_type = to;
+    const Module* m = ModuleManager::get_module(to);
+
+    if ( !m or !m->is_bindable() )
+        return false;
+
+    if ( (m->get_usage() == Module::GLOBAL) and from )
+    {
+        ParseError("global module type '%s' can't be aliased", to);
+        return false;
+    }
+
+    if (  ModuleManager::get_module(from) )
+    {
+        ParseError("alias name can't be an existing module '%s'", from);
+        return false;
+    }
+
+    s_aliased_name = from;
+    s_aliased_type = to;
+
     return true;
 }
 
@@ -671,7 +698,9 @@ SO_PUBLIC bool open_table(const char* s, int idx)
     // FIXIT-M only basic modules, inspectors and ips actions can be reloaded at present
     if ( ( Snort::is_reloading() ) and h->api
             and h->api->type != PT_INSPECTOR and h->api->type != PT_IPS_ACTION )
+    {
         return false;
+    }
 
     Module* m = h->mod;
     const Parameter* p = nullptr;
@@ -697,8 +726,8 @@ SO_PUBLIC bool open_table(const char* s, int idx)
     }
 
     string unique_key = key;
-    if ( !s_name.empty() )
-        unique_key = s_name;
+    if ( !s_aliased_name.empty() )
+        unique_key = s_aliased_name;
 
     if ( s_current != unique_key )
     {
@@ -749,17 +778,11 @@ SO_PUBLIC void close_table(const char* s, int idx)
 
         else if (h->api && top)
         {
-            if ( !s_name.empty() )
-                PluginManager::instantiate(h->api, h->mod, s_config, s_name.c_str());
+            if ( !s_aliased_name.empty() )
+                PluginManager::instantiate(h->api, h->mod, s_config, s_aliased_name.c_str());
             else
                 PluginManager::instantiate(h->api, h->mod, s_config);
         }
-    }
-
-    if ( top )
-    {
-        s_name.clear();
-        s_type.clear();
     }
 
     Shell::config_close_table();
