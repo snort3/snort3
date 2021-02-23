@@ -573,6 +573,7 @@ IpsOption::EvalStatus PcreOption::eval(Cursor& c, Packet* p)
     {
         if ( found_offset > 0 )
         {
+            found_offset += adj;
             c.set_pos(found_offset);
             c.set_delta(found_offset);
         }
