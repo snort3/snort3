@@ -58,6 +58,8 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_BAD_PUSH_SEQUENCE, "HTTP/2 push promise frame sent at invalid time" },
     { EVENT_BAD_SETTINGS_VALUE, "invalid parameter value sent in HTTP/2 settings frame" },
     { EVENT_TOO_MANY_STREAMS, "excessive concurrent HTTP/2 streams" },
+    { EVENT_INVALID_RST_STREAM_FRAME, "invalid HTTP/2 rst stream frame" },
+    { EVENT_BAD_RST_STREAM_SEQUENCE, "HTTP/2 rst stream frame sent at invalid time" },
     { 0, nullptr }
 };
 

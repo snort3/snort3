@@ -75,6 +75,7 @@ public:
     friend class Http2Inspect;
     friend class Http2PushPromiseFrame;
     friend class Http2RequestLine;
+    friend class Http2RstStreamFrame;
     friend class Http2SettingsFrame;
     friend class Http2StartLine;
     friend class Http2StatusLine;

@@ -40,6 +40,8 @@ set (FILE_LIST
     http2_push_promise_frame.h
     http2_request_line.cc
     http2_request_line.h
+    http2_rst_stream_frame.cc
+    http2_rst_stream_frame.h
     http2_settings_frame.cc
     http2_settings_frame.h
     http2_start_line.cc

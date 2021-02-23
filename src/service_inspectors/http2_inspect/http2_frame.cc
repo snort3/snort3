@@ -30,6 +30,7 @@
 #include "http2_headers_frame_trailer.h"
 #include "http2_ping_frame.h"
 #include "http2_push_promise_frame.h"
+#include "http2_rst_stream_frame.h"
 #include "http2_settings_frame.h"
 #include "http2_stream.h"
 #include "service_inspectors/http_inspect/http_field.h"
@@ -84,6 +85,10 @@ Http2Frame* Http2Frame::new_frame(const uint8_t* header, const uint32_t header_l
             frame = new Http2PingFrame(header, header_len, data, data_len, session_data,
                 source_id, stream);
 	    break;
+        case FT_RST_STREAM:
+            frame = new Http2RstStreamFrame(header, header_len, data, data_len, session_data,
+                source_id, stream);
+            break;
         default:
             frame = new Http2Frame(header, header_len, data, data_len, session_data, source_id,
                 stream);
