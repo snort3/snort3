@@ -73,6 +73,10 @@ include::http_inspect.txt[]
 
 include::http2_inspect.txt[]
 
+=== IEC104 Inspector
+
+include::iec104.txt[]
+
 === Performance Monitor
 
 include::perf_monitor.txt[]
