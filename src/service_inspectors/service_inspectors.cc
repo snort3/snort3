@@ -52,6 +52,7 @@ extern const BaseApi* sin_cip[];
 extern const BaseApi* sin_dce[];
 extern const BaseApi* sin_dnp3[];
 extern const BaseApi* sin_gtp[];
+extern const BaseApi* sin_iec104[];
 extern const BaseApi* sin_modbus[];
 extern const BaseApi* sin_netflow[];
 extern const BaseApi* sin_s7commplus[];
@@ -92,6 +93,7 @@ void load_service_inspectors()
     PluginManager::load_plugins(sin_dce);
     PluginManager::load_plugins(sin_dnp3);
     PluginManager::load_plugins(sin_gtp);
+    PluginManager::load_plugins(sin_iec104);
     PluginManager::load_plugins(sin_modbus);
     PluginManager::load_plugins(sin_netflow);
     PluginManager::load_plugins(sin_s7commplus);

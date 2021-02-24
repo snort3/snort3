@@ -8,6 +8,7 @@ add_subdirectory(ftp_telnet)
 add_subdirectory(gtp)
 add_subdirectory(http_inspect)
 add_subdirectory(http2_inspect)
+add_subdirectory(iec104)
 add_subdirectory(imap)
 add_subdirectory(modbus)
 add_subdirectory(netflow)
@@ -29,6 +30,7 @@ if (STATIC_INSPECTORS)
         $<TARGET_OBJECTS:dns>
         $<TARGET_OBJECTS:ftp_telnet>
         $<TARGET_OBJECTS:gtp_inspect>
+        $<TARGET_OBJECTS:iec104>
         $<TARGET_OBJECTS:imap>
         $<TARGET_OBJECTS:modbus>
         $<TARGET_OBJECTS:netflow>

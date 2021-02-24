@@ -57,6 +57,7 @@ dns = { }
 http_inspect = { }
 http2_inspect = { }
 imap = { }
+iec104 = { }
 modbus = { }
 netflow = {}
 normalizer = { }
@@ -116,6 +117,7 @@ binder =
     { when = { proto = 'tcp', ports = '111', role='server' }, use = { type = 'rpc_decode' } },
     { when = { proto = 'tcp', ports = '502', role='server' }, use = { type = 'modbus' } },
     { when = { proto = 'tcp', ports = '2123 2152 3386', role='server' }, use = { type = 'gtp_inspect' } },
+    { when = { proto = 'tcp', ports = '2404', role='server' }, use = { type = 'iec104' } },
 
     { when = { proto = 'tcp', service = 'dcerpc' }, use = { type = 'dce_tcp' } },
     { when = { proto = 'udp', service = 'dcerpc' }, use = { type = 'dce_udp' } },
@@ -133,6 +135,7 @@ binder =
     { when = { service = 'imap' },             use = { type = 'imap' } },
     { when = { service = 'http' },             use = { type = 'http_inspect' } },
     { when = { service = 'http2' },            use = { type = 'http2_inspect' } },
+    { when = { service = 'iec104' },           use = { type = 'iec104' } },
     { when = { service = 'modbus' },           use = { type = 'modbus' } },
     { when = { service = 'pop3' },             use = { type = 'pop' } },
     { when = { service = 'ssh' },              use = { type = 'ssh' } },

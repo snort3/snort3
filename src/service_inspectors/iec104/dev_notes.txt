@@ -1,0 +1,17 @@
+IEC 60870-5-104 (IEC104) is a protocol distributed by the International 
+Electrotechnical Commission (IEC) that provides a standardized method of
+sending telecontrol messages between central stations and outstations, 
+typically running on TCP port 2404.
+
+It is used in combination with the companion specifications in the 
+IEC 60870-5 family, most notably IEC 60870-5-101, to provide reliable
+transport via TCP/IP. 
+
+An IEC104 Application Protocol Data Unit (APDU) consists of one of three 
+Application Protocol Control Information (APCI) structures, each beginning
+with the start byte 0x68. In the case of an Information Transfer APCI, an
+Application Service Data Unit (ASDU) follows the APCI.
+
+The IEC104 inspector decodes the IEC104 protocol and provides rule options
+to access certain protocol fields and data content. This allows the user to 
+write rules for IEC104 packets without decoding the protocol. 
