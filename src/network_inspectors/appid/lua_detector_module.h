@@ -69,11 +69,11 @@ public:
     LuaObject* get_cb_detector(AppId app_id);
 
 private:
-    void initialize_lua_detectors();
+    void initialize_lua_detectors(bool reload = false);
     void activate_lua_detectors();
     void list_lua_detectors();
-    void load_detector(char* detectorName, bool isCustom);
-    void load_lua_detectors(const char* path, bool isCustom);
+    void load_detector(char* detector_name, bool is_custom, bool reload, std::string& buf);
+    void load_lua_detectors(const char* path, bool is_custom, bool reload = false);
     LuaObject* create_lua_detector(const char* detector_name, bool is_custom,
         const char* detector_filename);
 

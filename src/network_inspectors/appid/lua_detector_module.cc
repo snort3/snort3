@@ -43,6 +43,8 @@
 using namespace snort;
 using namespace std;
 
+#define MIN_LUA_DETECTOR_FILE_SIZE 50
+#define MAX_LUA_DETECTOR_FILE_SIZE 256000
 #define MAX_LUA_DETECTOR_FILENAME_LEN 1024
 #define MAX_DEFAULT_NUM_LUA_TRACKERS  10000
 #define AVG_LUA_TRACKER_SIZE_IN_BYTES 740
@@ -206,12 +208,6 @@ void LuaDetectorManager::initialize(AppIdContext& ctxt, int is_control, bool rel
         FatalError("Error - appid: can not create new luaState, instance=%u\n",
             get_instance_id());
 
-    lua_detector_mgr->initialize_lua_detectors();
-    lua_detector_mgr->activate_lua_detectors();
-
-    if (ctxt.config.list_odp_detectors)
-        lua_detector_mgr->list_lua_detectors();
-
     if (reload)
     {
         LogMessage("AppId Lua-Detectors : loading lua detectors in control thread\n");
@@ -223,9 +219,14 @@ void LuaDetectorManager::initialize(AppIdContext& ctxt, int is_control, bool rel
             if (!lua_detector_mgr_list[i]->L)
                 FatalError("Error - appid: can not create new luaState, instance=%u\n", i);
 
-            lua_detector_mgr_list[i]->initialize_lua_detectors();
         }
     }
+
+    lua_detector_mgr->initialize_lua_detectors(reload);
+    lua_detector_mgr->activate_lua_detectors();
+
+    if (ctxt.config.list_odp_detectors)
+        lua_detector_mgr->list_lua_detectors();
 }
 
 void LuaDetectorManager::init_thread_manager(const AppIdContext& ctxt)
@@ -396,23 +397,48 @@ LuaObject* LuaDetectorManager::create_lua_detector(const char* detector_name,
     return nullptr;
 }
 
-void LuaDetectorManager::load_detector(char* detector_filename, bool isCustom)
+static int dump(lua_State*, const void* buf,size_t size, void* data)
 {
-    if (luaL_loadfile(L, detector_filename))
+    std::string* s = static_cast<std::string*>(data);
+    s->append(static_cast<const char*>(buf), size);
+    return 0;
+}
+
+void LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, bool reload, std::string& buf)
+{
+    if (reload and !buf.empty())
     {
-        if (init(L))
-            ErrorMessage("Error - appid: can not load Lua detector, %s\n", lua_tostring(L, -1));
-        return;
+        if (luaL_loadbuffer(L, buf.c_str(), buf.length(), detector_filename))
+        {
+            if (init(L))
+                ErrorMessage("Error - appid: can not load Lua detector, %s\n", lua_tostring(L, -1));
+            return;
+        }
+    }
+    else
+    {
+        if (luaL_loadfile(L, detector_filename))
+        {
+            if (init(L))
+                ErrorMessage("Error - appid: can not load Lua detector, %s\n", lua_tostring(L, -1));
+            return;
+        }
+        if (reload and lua_dump(L, dump, &buf))
+        {
+            if (init(L))
+                ErrorMessage("Error - appid: can not compile Lua detector, %s\n", lua_tostring(L, -1));
+            return;
+        }
     }
 
     char detectorName[MAX_LUA_DETECTOR_FILENAME_LEN];
 #ifdef HAVE_BASENAME_R
     char detector_res[MAX_LUA_DETECTOR_FILENAME_LEN];
     snprintf(detectorName, MAX_LUA_DETECTOR_FILENAME_LEN, "%s_%s",
-        (isCustom ? "custom" : "odp"), basename_r(detector_filename, detector_res));
+        (is_custom ? "custom" : "odp"), basename_r(detector_filename, detector_res));
 #else
     snprintf(detectorName, MAX_LUA_DETECTOR_FILENAME_LEN, "%s_%s",
-        (isCustom ? "custom" : "odp"), basename(detector_filename));
+        (is_custom ? "custom" : "odp"), basename(detector_filename));
 #endif
 
     // create a new function environment and store it in the registry
@@ -433,12 +459,12 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool isCustom)
         return;
     }
 
-    LuaObject* lua_object = create_lua_detector(detectorName, isCustom, detector_filename);
+    LuaObject* lua_object = create_lua_detector(detectorName, is_custom, detector_filename);
     if (lua_object)
         allocated_objects.push_front(lua_object);
 }
 
-void LuaDetectorManager::load_lua_detectors(const char* path, bool isCustom)
+void LuaDetectorManager::load_lua_detectors(const char* path, bool is_custom, bool reload)
 {
     char pattern[PATH_MAX];
     snprintf(pattern, sizeof(pattern), "%s/*", path);
@@ -448,8 +474,35 @@ void LuaDetectorManager::load_lua_detectors(const char* path, bool isCustom)
     int rval = glob(pattern, 0, nullptr, &globs);
     if (rval == 0 )
     {
+        std::string buf;
         for (unsigned n = 0; n < globs.gl_pathc; n++)
-            load_detector(globs.gl_pathv[n], isCustom);
+        {
+            ifstream file(globs.gl_pathv[n], ios::ate);
+            int size = file.tellg();
+            //do not load empty lua files
+            if (size < MIN_LUA_DETECTOR_FILE_SIZE)
+            {
+                file.close();
+                continue;
+            }
+            if (size > MAX_LUA_DETECTOR_FILE_SIZE)
+            {
+                ErrorMessage("Error - appid: can not load Lua detector %s : \
+                    size exceeded maximum limit\n", globs.gl_pathv[n]);
+                file.close();
+                continue;
+            }
+            file.close();
+
+            load_detector(globs.gl_pathv[n], is_custom, reload, buf);
+
+            if (reload)
+            {
+                for (auto& lua_detector_mgr : lua_detector_mgr_list)
+                    lua_detector_mgr->load_detector(globs.gl_pathv[n], is_custom, reload, buf);
+                buf.clear();
+            }
+        }
 
         globfree(&globs);
     }
@@ -461,7 +514,7 @@ void LuaDetectorManager::load_lua_detectors(const char* path, bool isCustom)
             pattern, rval);
 }
 
-void LuaDetectorManager::initialize_lua_detectors()
+void LuaDetectorManager::initialize_lua_detectors(bool reload)
 {
     char path[PATH_MAX];
     const char* dir = ctxt.config.app_detector_dir;
@@ -470,11 +523,16 @@ void LuaDetectorManager::initialize_lua_detectors()
         return;
 
     snprintf(path, sizeof(path), "%s/odp/lua", dir);
-    load_lua_detectors(path, false);
+    load_lua_detectors(path, false, reload);
     num_odp_detectors = allocated_objects.size();
 
+    if (reload)
+    {
+        for (auto& lua_detector_mgr : lua_detector_mgr_list)
+            lua_detector_mgr->num_odp_detectors = lua_detector_mgr->allocated_objects.size();
+    }
     snprintf(path, sizeof(path), "%s/custom/lua", dir);
-    load_lua_detectors(path, true);
+    load_lua_detectors(path, true, reload);
 }
 
 void LuaDetectorManager::activate_lua_detectors()
