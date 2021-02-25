@@ -640,6 +640,9 @@ SO_PUBLIC void clear_alias()
 
 SO_PUBLIC bool set_alias(const char* from, const char* to)
 {
+    if ( !from or !to )
+        return false;
+
     const Module* m = ModuleManager::get_module(to);
 
     if ( !m or !m->is_bindable() )
