@@ -60,7 +60,7 @@ static Iec104ApciTypeMap iec104_apci_type_map[] =
     { "information_transfer_format", IEC104_APCI_TYPE_I },    // information transfer format
 };
 
-static bool get_apci_type(const char* s, long &n)
+static bool get_apci_type(const char* s, long& n)
 {
     constexpr size_t max = (sizeof(iec104_apci_type_map) / sizeof(Iec104ApciTypeMap));
 
@@ -109,14 +109,14 @@ uint32_t Iec104ApciTypeOption::hash() const
     return c;
 }
 
-bool Iec104ApciTypeOption::operator==(const IpsOption &ips) const
+bool Iec104ApciTypeOption::operator==(const IpsOption& ips) const
 {
     if (!IpsOption::operator==(ips))
     {
         return false;
     }
 
-    const Iec104ApciTypeOption &rhs = (const Iec104ApciTypeOption&) ips;
+    const Iec104ApciTypeOption& rhs = (const Iec104ApciTypeOption&) ips;
     return (apci_type == rhs.apci_type);
 }
 
@@ -183,7 +183,7 @@ public:
     uint8_t apci_type = IEC104_NO_APCI;
 };
 
-bool Iec104ApciTypeModule::set(const char*, Value &v, SnortConfig*)
+bool Iec104ApciTypeModule::set(const char*, Value& v, SnortConfig*)
 {
     if (!v.is("~"))
     {

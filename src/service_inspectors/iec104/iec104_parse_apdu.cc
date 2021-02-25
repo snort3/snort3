@@ -1330,7 +1330,7 @@ static void parseIec104GenericIOGroup(const GenericIec104AsduIOGroup* genericIOG
 
 static void parseIec104GenericAsdu(uint32_t asduType, const Iec104ApciI* apci)
 {
-    uint8_t verifiedNumberOfElements = parseIec104Vsq(apci);
+    uint32_t verifiedNumberOfElements = parseIec104Vsq(apci);
     parseIec104CauseOfTx(apci);
     parseIec104TwoOctetCommonAddress(apci);
 
@@ -1339,1187 +1339,1190 @@ static void parseIec104GenericAsdu(uint32_t asduType, const Iec104ApciI* apci)
     genericIOGroup.asduType = asduType;
     genericIOGroup.apduSize = apci->header.length;
 
-    // iterate over the reported number of elements overlaying the structures
-    for (uint32_t i = 0; i < verifiedNumberOfElements; i++)
-    {
-
-        // 
-        // Handle Structure Qualifier == 1
-        //
-        if (apci->asdu.variableStructureQualifier.sq)
+    // make sure the number of elements value is acceptable
+    if (verifiedNumberOfElements > 0 && verifiedNumberOfElements <= 255) {
+        // iterate over the reported number of elements overlaying the structures
+        for (uint32_t i = 0; i < verifiedNumberOfElements; i++)
         {
-            // IOA should only be printed on the first iteration in SQ1
-            if (i == 0)
+
+            // 
+            // Handle Structure Qualifier == 1
+            //
+            if (apci->asdu.variableStructureQualifier.sq)
             {
-                genericIOGroup.includeIOA = true;
+                // IOA should only be printed on the first iteration in SQ1
+                if (i == 0)
+                {
+                    genericIOGroup.includeIOA = true;
+                }
+                else
+                {
+                    genericIOGroup.includeIOA = false;
+                }
+
+                // fill genericIOGroup with the appropriate asdu depending on the type
+                switch (asduType)
+                {
+                case IEC104_ASDU_M_SP_NA_1:
+                {
+                    // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
+                    genericIOGroup.m_sp_na_1IOGroup = &apci->asdu.m_sp_na_1;
+
+                    // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
+                    // since `i` will be 0 on the first go round this works for all iterations
+                    // since C adds based on the pointer type we only need to cast and increment
+                    const Iec104M_SP_NA_1_IO_Subgroup* curIo = &apci->asdu.m_sp_na_1.subgroup + i;
+                    genericIOGroup.m_sp_na_1IOSubgroup = curIo;
+
+                    break;
+                }
+
+                // case IEC104_ASDU_M_SP_TA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                case IEC104_ASDU_M_DP_NA_1:
+                {
+                    // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
+                    genericIOGroup.m_dp_na_1IOGroup = &apci->asdu.m_dp_na_1;
+
+                    // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
+                    // since `i` will be 0 on the first go round this works for all iterations
+                    // since C adds based on the pointer type we only need to cast and increment
+                    const Iec104M_DP_NA_1_IO_Subgroup* curIo = &apci->asdu.m_dp_na_1.subgroup + i;
+                    genericIOGroup.m_dp_na_1IOSubgroup = curIo;
+
+                    break;
+                }
+
+                // case IEC104_ASDU_M_DP_TA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                case IEC104_ASDU_M_ST_NA_1:
+                {
+                    // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
+                    genericIOGroup.m_st_na_1IOGroup = &apci->asdu.m_st_na_1;
+
+                    // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
+                    // since `i` will be 0 on the first go round this works for all iterations
+                    // since C adds based on the pointer type we only need to cast and increment
+                    const Iec104M_ST_NA_1_IO_Subgroup* curIo = &apci->asdu.m_st_na_1.subgroup + i;
+                    genericIOGroup.m_st_na_1IOSubgroup = curIo;
+
+                    break;
+                }
+
+                // case IEC104_ASDU_M_ST_TA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                case IEC104_ASDU_M_BO_NA_1:
+                {
+                    // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
+                    genericIOGroup.m_bo_na_1IOGroup = &apci->asdu.m_bo_na_1;
+
+                    // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
+                    // since `i` will be 0 on the first go round this works for all iterations
+                    // since C adds based on the pointer type we only need to cast and increment
+                    const Iec104M_BO_NA_1_IO_Subgroup* curIo = &apci->asdu.m_bo_na_1.subgroup + i;
+                    genericIOGroup.m_bo_na_1IOSubgroup = curIo;
+
+                    break;
+                }
+
+                // case IEC104_ASDU_M_BO_TA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                case IEC104_ASDU_M_ME_NA_1:
+                {
+                    // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
+                    genericIOGroup.m_me_na_1IOGroup = &apci->asdu.m_me_na_1;
+
+                    // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
+                    // since `i` will be 0 on the first go round this works for all iterations
+                    // since C adds based on the pointer type we only need to cast and increment
+                    const Iec104M_ME_NA_1_IO_Subgroup* curIo = &apci->asdu.m_me_na_1.subgroup + i;
+                    genericIOGroup.m_me_na_1IOSubgroup = curIo;
+
+                    break;
+                }
+
+                // case IEC104_ASDU_M_ME_TA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                case IEC104_ASDU_M_ME_NB_1:
+                {
+                    // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
+                    genericIOGroup.m_me_nb_1IOGroup = &apci->asdu.m_me_nb_1;
+
+                    // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
+                    // since `i` will be 0 on the first go round this works for all iterations
+                    // since C adds based on the pointer type we only need to cast and increment
+                    const Iec104M_ME_NB_1_IO_Subgroup* curIo = &apci->asdu.m_me_nb_1.subgroup + i;
+                    genericIOGroup.m_me_nb_1IOSubgroup = curIo;
+
+                    break;
+                }
+
+                // case IEC104_ASDU_M_ME_TB_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                case IEC104_ASDU_M_ME_NC_1:
+                {
+                    // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
+                    genericIOGroup.m_me_nc_1IOGroup = &apci->asdu.m_me_nc_1;
+
+                    // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
+                    // since `i` will be 0 on the first go round this works for all iterations
+                    // since C adds based on the pointer type we only need to cast and increment
+                    const Iec104M_ME_NC_1_IO_Subgroup* curIo = &apci->asdu.m_me_nc_1.subgroup + i;
+                    genericIOGroup.m_me_nc_1IOSubgroup = curIo;
+
+                    break;
+                }
+
+                // case IEC104_ASDU_M_ME_TC_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                case IEC104_ASDU_M_IT_NA_1:
+                {
+                    // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
+                    genericIOGroup.m_it_na_1IOGroup = &apci->asdu.m_it_na_1;
+
+                    // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
+                    // since `i` will be 0 on the first go round this works for all iterations
+                    // since C adds based on the pointer type we only need to cast and increment
+                    const Iec104M_IT_NA_1_IO_Subgroup* curIo = &apci->asdu.m_it_na_1.subgroup + i;
+                    genericIOGroup.m_it_na_1IOSubgroup = curIo;
+
+                    break;
+                }
+
+                // case IEC104_ASDU_M_IT_TA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_M_EP_TA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_M_EP_TB_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_M_EP_TC_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                case IEC104_ASDU_M_PS_NA_1:
+                {
+                    // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
+                    genericIOGroup.m_ps_na_1IOGroup = &apci->asdu.m_ps_na_1;
+
+                    // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
+                    // since `i` will be 0 on the first go round this works for all iterations
+                    // since C adds based on the pointer type we only need to cast and increment
+                    const Iec104M_PS_NA_1_IO_Subgroup* curIo = &apci->asdu.m_ps_na_1.subgroup + i;
+                    genericIOGroup.m_ps_na_1IOSubgroup = curIo;
+
+                    break;
+                }
+
+                case IEC104_ASDU_M_ME_ND_1:
+                {
+                    // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
+                    genericIOGroup.m_me_nd_1IOGroup = &apci->asdu.m_me_nd_1;
+
+                    // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
+                    // since `i` will be 0 on the first go round this works for all iterations
+                    // since C adds based on the pointer type we only need to cast and increment
+                    const Iec104M_ME_ND_1_IO_Subgroup* curIo = &apci->asdu.m_me_nd_1.subgroup + i;
+                    genericIOGroup.m_me_nd_1IOSubgroup = curIo;
+
+                    break;
+                }
+
+                // case IEC104_ASDU_M_SP_TB_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_M_DP_TB_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_M_ST_TB_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_M_BO_TB_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_M_ME_TD_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_M_ME_TE_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_M_ME_TF_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_M_IT_TB_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_M_EP_TD_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_M_EP_TE_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_M_EP_TF_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_SC_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_DC_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_RC_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_SE_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_SE_NB_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_SE_NC_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_BO_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_SC_TA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_DC_TA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_RC_TA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_SE_TA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_SE_TB_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_SE_TC_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_BO_TA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_M_EI_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_IC_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_CI_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_RD_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_CS_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_TS_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_RP_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_CD_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_C_TS_TA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                //case IEC104_ASDU_P_ME_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                //case IEC104_ASDU_P_ME_NB_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                //case IEC104_ASDU_P_ME_NC_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_P_AC_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_F_FR_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_F_SR_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_F_SC_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_F_LS_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_F_AF_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                // case IEC104_ASDU_F_SG_NA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                case IEC104_ASDU_F_DR_TA_1:
+                {
+                    // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
+                    genericIOGroup.f_dr_ta_1IOGroup = &apci->asdu.f_dr_ta_1;
+
+                    // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
+                    // since `i` will be 0 on the first go round this works for all iterations
+                    // since C adds based on the pointer type we only need to cast and increment
+                    const Iec104F_DR_TA_1_IO_Subgroup* curIo = &apci->asdu.f_dr_ta_1.subgroup + i;
+                    genericIOGroup.f_dr_ta_1IOSubgroup = curIo;
+
+                    break;
+                }
+
+                // case IEC104_ASDU_F_SC_NB_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                default:
+                {
+                    // SQ1 ASDU parsing not implemented for this type
+                }
+                }
+
+                // parse the new subgroup
+                parseIec104GenericIOGroup(&genericIOGroup);
+
             }
+            //
+            // Handle Structure Qualifier == 0
+            //
             else
             {
-                genericIOGroup.includeIOA = false;
+                // the IOA should always be included for SQ0
+                genericIOGroup.includeIOA = true;
+
+                // fill genericIOGroup with the appropriate asdu depending on the type
+                switch (asduType)
+                {
+                case IEC104_ASDU_M_SP_NA_1:
+                {
+                    // increment the information object block pointer by the size of the M_SP_NA_1_IO_Group struct
+                    const Iec104M_SP_NA_1_IO_Group* curIo =
+                        (const Iec104M_SP_NA_1_IO_Group*) &apci->asdu.m_sp_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_sp_na_1IOGroup = curIo;
+                    genericIOGroup.m_sp_na_1IOSubgroup = &curIo->subgroup;
+
+                    break;
+                }
+
+                case IEC104_ASDU_M_SP_TA_1:
+                {
+                    // increment the information object block pointer by the size of the M_SP_TA_1_IO_Group struct
+                    const Iec104M_SP_TA_1_IO_Group* curIo =
+                        (const Iec104M_SP_TA_1_IO_Group*) &apci->asdu.m_sp_ta_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_sp_ta_1IOGroup = curIo;
+                    genericIOGroup.m_sp_ta_1IOSubgroup = &curIo->subgroup;
+
+                    break;
+                }
+
+                case IEC104_ASDU_M_DP_NA_1:
+                {
+                    // increment the information object block pointer by the size of the M_DP_NA_1_IO_Group struct
+                    const Iec104M_DP_NA_1_IO_Group* curIo =
+                        (const Iec104M_DP_NA_1_IO_Group*) &apci->asdu.m_dp_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_dp_na_1IOGroup = curIo;
+                    genericIOGroup.m_dp_na_1IOSubgroup = &curIo->subgroup;
+
+                    break;
+                }
+
+                case IEC104_ASDU_M_DP_TA_1:
+                {
+                    // increment the information object block pointer by the size of the M_DP_TA_1_IO_Group struct
+                    const Iec104M_DP_TA_1_IO_Group* curIo =
+                        (const Iec104M_DP_TA_1_IO_Group*) &apci->asdu.m_dp_ta_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_dp_ta_1IOGroup = curIo;
+                    genericIOGroup.m_dp_ta_1IOSubgroup = &curIo->subgroup;
+
+                    break;
+                }
+
+                case IEC104_ASDU_M_ST_NA_1:
+                {
+                    // increment the information object block pointer by the size of the M_ST_NA_1_IO_Group struct
+                    const Iec104M_ST_NA_1_IO_Group* curIo =
+                        (const Iec104M_ST_NA_1_IO_Group*) &apci->asdu.m_st_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_st_na_1IOGroup = curIo;
+                    genericIOGroup.m_st_na_1IOSubgroup = &curIo->subgroup;
+
+                    break;
+                }
+
+                case IEC104_ASDU_M_ST_TA_1:
+                {
+                    // increment the information object block pointer by the size of the M_ST_TA_1_IO_Group struct
+                    const Iec104M_ST_TA_1_IO_Group* curIo =
+                        (const Iec104M_ST_TA_1_IO_Group*) &apci->asdu.m_st_ta_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_st_ta_1IOGroup = curIo;
+                    genericIOGroup.m_st_ta_1IOSubgroup = &curIo->subgroup;
+
+                    break;
+                }
+
+                case IEC104_ASDU_M_BO_NA_1:
+                {
+                    // increment the information object block pointer by the size of the M_BO_NA_1_IO_Group struct
+                    const Iec104M_BO_NA_1_IO_Group* curIo =
+                        (const Iec104M_BO_NA_1_IO_Group*) &apci->asdu.m_bo_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_bo_na_1IOGroup = curIo;
+                    genericIOGroup.m_bo_na_1IOSubgroup = &curIo->subgroup;
+
+                    break;
+                }
+
+                case IEC104_ASDU_M_BO_TA_1:
+                {
+                    // increment the information object block pointer by the size of the M_BO_TA_1_IO_Group struct
+                    const Iec104M_BO_TA_1_IO_Group* curIo =
+                        (const Iec104M_BO_TA_1_IO_Group*) &apci->asdu.m_bo_ta_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_bo_ta_1IOGroup = curIo;
+                    genericIOGroup.m_bo_ta_1IOSubgroup = &curIo->subgroup;
+
+                    break;
+                }
+
+                case IEC104_ASDU_M_ME_NA_1:
+                {
+                    // increment the information object block pointer by the size of the M_ME_NA_1_IO_Group struct
+                    const Iec104M_ME_NA_1_IO_Group* curIo =
+                        (const Iec104M_ME_NA_1_IO_Group*) &apci->asdu.m_me_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_me_na_1IOGroup = curIo;
+                    genericIOGroup.m_me_na_1IOSubgroup = &curIo->subgroup;
+
+                    break;
+                }
+
+                case IEC104_ASDU_M_ME_TA_1:
+                {
+                    // increment the information object block pointer by the size of the M_ME_TA_1_IO_Group struct
+                    const Iec104M_ME_TA_1_IO_Group* curIo =
+                        (const Iec104M_ME_TA_1_IO_Group*) &apci->asdu.m_me_ta_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_me_ta_1IOGroup = curIo;
+                    genericIOGroup.m_me_ta_1IOSubgroup = &curIo->subgroup;
+
+                    break;
+                }
+
+                case IEC104_ASDU_M_ME_NB_1:
+                {
+                    // increment the information object block pointer by the size of the M_ME_NB_1_IO_Group struct
+                    const Iec104M_ME_NB_1_IO_Group* curIo =
+                        (const Iec104M_ME_NB_1_IO_Group*) &apci->asdu.m_me_nb_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_me_nb_1IOGroup = curIo;
+                    genericIOGroup.m_me_nb_1IOSubgroup = &curIo->subgroup;
+
+                    break;
+                }
+
+                case IEC104_ASDU_M_ME_TB_1:
+                {
+                    // increment the information object block pointer by the size of the M_ME_TB_1_IO_Group struct
+                    const Iec104M_ME_TB_1_IO_Group* curIo =
+                        (const Iec104M_ME_TB_1_IO_Group*) &apci->asdu.m_me_tb_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_me_tb_1IOGroup = curIo;
+                    genericIOGroup.m_me_tb_1IOSubgroup = &curIo->subgroup;
+
+                    break;
+                }
+
+                case IEC104_ASDU_M_ME_NC_1:
+                {
+                    // increment the information object block pointer by the size of the M_ME_NC_1_IO_Group struct
+                    const Iec104M_ME_NC_1_IO_Group* curIo =
+                        (const Iec104M_ME_NC_1_IO_Group*) &apci->asdu.m_me_nc_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_me_nc_1IOGroup = curIo;
+                    genericIOGroup.m_me_nc_1IOSubgroup = &curIo->subgroup;
+
+                    break;
+                }
+
+                case IEC104_ASDU_M_ME_TC_1:
+                {
+                    // increment the information object block pointer by the size of the M_ME_TC_1_IO_Group struct
+                    const Iec104M_ME_TC_1_IO_Group* curIo =
+                        (const Iec104M_ME_TC_1_IO_Group*) &apci->asdu.m_me_tc_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_me_tc_1IOGroup = curIo;
+                    genericIOGroup.m_me_tc_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_IT_NA_1:
+                {
+                    // increment the information object block pointer by the size of the M_IT_NA_1_IO_Group struct
+                    const Iec104M_IT_NA_1_IO_Group* curIo =
+                        (const Iec104M_IT_NA_1_IO_Group*) &apci->asdu.m_it_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_it_na_1IOGroup = curIo;
+                    genericIOGroup.m_it_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_IT_TA_1:
+                {
+                    // increment the information object block pointer by the size of the M_IT_TA_1_IO_Group struct
+                    const Iec104M_IT_TA_1_IO_Group* curIo =
+                        (const Iec104M_IT_TA_1_IO_Group*) &apci->asdu.m_it_ta_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_it_ta_1IOGroup = curIo;
+                    genericIOGroup.m_it_ta_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_EP_TA_1:
+                {
+                    // increment the information object block pointer by the size of the M_EP_TA_1_IO_Group struct
+                    const Iec104M_EP_TA_1_IO_Group* curIo =
+                        (const Iec104M_EP_TA_1_IO_Group*) &apci->asdu.m_ep_ta_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_ep_ta_1IOGroup = curIo;
+                    genericIOGroup.m_ep_ta_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_EP_TB_1:
+                {
+                    // increment the information object block pointer by the size of the M_EP_TB_1_IO_Group struct
+                    const Iec104M_EP_TB_1_IO_Group* curIo =
+                        (const Iec104M_EP_TB_1_IO_Group*) &apci->asdu.m_ep_tb_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_ep_tb_1IOGroup = curIo;
+                    genericIOGroup.m_ep_tb_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_EP_TC_1:
+                {
+                    // increment the information object block pointer by the size of the M_EP_TC_1_IO_Group struct
+                    const Iec104M_EP_TC_1_IO_Group* curIo =
+                        (const Iec104M_EP_TC_1_IO_Group*) &apci->asdu.m_ep_tc_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_ep_tc_1IOGroup = curIo;
+                    genericIOGroup.m_ep_tc_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_PS_NA_1:
+                {
+                    // increment the information object block pointer by the size of the M_PS_NA_1_IO_Group struct
+                    const Iec104M_PS_NA_1_IO_Group* curIo =
+                        (const Iec104M_PS_NA_1_IO_Group*) &apci->asdu.m_ps_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_ps_na_1IOGroup = curIo;
+                    genericIOGroup.m_ps_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_ME_ND_1:
+                {
+                    // increment the information object block pointer by the size of the M_ME_ND_1_IO_Group struct
+                    const Iec104M_ME_ND_1_IO_Group* curIo =
+                        (const Iec104M_ME_ND_1_IO_Group*) &apci->asdu.m_me_nd_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_me_nd_1IOGroup = curIo;
+                    genericIOGroup.m_me_nd_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_SP_TB_1:
+                {
+                    // increment the information object block pointer by the size of the M_SP_TB_1_IO_Group struct
+                    const Iec104M_SP_TB_1_IO_Group* curIo =
+                        (const Iec104M_SP_TB_1_IO_Group*) &apci->asdu.m_sp_tb_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_sp_tb_1IOGroup = curIo;
+                    genericIOGroup.m_sp_tb_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_DP_TB_1:
+                {
+                    // increment the information object block pointer by the size of the M_DP_TB_1_IO_Group struct
+                    const Iec104M_DP_TB_1_IO_Group* curIo =
+                        (const Iec104M_DP_TB_1_IO_Group*) &apci->asdu.m_dp_tb_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_dp_tb_1IOGroup = curIo;
+                    genericIOGroup.m_dp_tb_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_ST_TB_1:
+                {
+                    // increment the information object block pointer by the size of the M_ST_TB_1_IO_Group struct
+                    const Iec104M_ST_TB_1_IO_Group* curIo =
+                        (const Iec104M_ST_TB_1_IO_Group*) &apci->asdu.m_st_tb_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_st_tb_1IOGroup = curIo;
+                    genericIOGroup.m_st_tb_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_BO_TB_1:
+                {
+                    // increment the information object block pointer by the size of the M_BO_TB_1_IO_Group struct
+                    const Iec104M_BO_TB_1_IO_Group* curIo =
+                        (const Iec104M_BO_TB_1_IO_Group*) &apci->asdu.m_bo_tb_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_bo_tb_1IOGroup = curIo;
+                    genericIOGroup.m_bo_tb_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_ME_TD_1:
+                {
+                    // increment the information object block pointer by the size of the M_ME_TD_1_IO_Group struct
+                    const Iec104M_ME_TD_1_IO_Group* curIo =
+                        (const Iec104M_ME_TD_1_IO_Group*) &apci->asdu.m_me_td_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_me_td_1IOGroup = curIo;
+                    genericIOGroup.m_me_td_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_ME_TE_1:
+                {
+                    // increment the information object block pointer by the size of the M_ME_TE_1_IO_Group struct
+                    const Iec104M_ME_TE_1_IO_Group* curIo =
+                        (const Iec104M_ME_TE_1_IO_Group*) &apci->asdu.m_me_te_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_me_te_1IOGroup = curIo;
+                    genericIOGroup.m_me_te_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_ME_TF_1:
+                {
+                    // increment the information object block pointer by the size of the M_ME_TF_1_IO_Group struct
+                    const Iec104M_ME_TF_1_IO_Group* curIo =
+                        (const Iec104M_ME_TF_1_IO_Group*) &apci->asdu.m_me_tf_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_me_tf_1IOGroup = curIo;
+                    genericIOGroup.m_me_tf_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_IT_TB_1:
+                {
+                    // increment the information object block pointer by the size of the M_IT_TB_1_IO_Group struct
+                    const Iec104M_IT_TB_1_IO_Group* curIo =
+                        (const Iec104M_IT_TB_1_IO_Group*) &apci->asdu.m_it_tb_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_it_tb_1IOGroup = curIo;
+                    genericIOGroup.m_it_tb_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_EP_TD_1:
+                {
+                    // increment the information object block pointer by the size of the M_EP_TD_1_IO_Group struct
+                    const Iec104M_EP_TD_1_IO_Group* curIo =
+                        (const Iec104M_EP_TD_1_IO_Group*) &apci->asdu.m_ep_td_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_ep_td_1IOGroup = curIo;
+                    genericIOGroup.m_ep_td_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_EP_TE_1:
+                {
+                    // increment the information object block pointer by the size of the M_EP_TE_1_IO_Group struct
+                    const Iec104M_EP_TE_1_IO_Group* curIo =
+                        (const Iec104M_EP_TE_1_IO_Group*) &apci->asdu.m_ep_te_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_ep_te_1IOGroup = curIo;
+                    genericIOGroup.m_ep_te_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_EP_TF_1:
+                {
+                    // increment the information object block pointer by the size of the M_EP_TF_1_IO_Group struct
+                    const Iec104M_EP_TF_1_IO_Group* curIo =
+                        (const Iec104M_EP_TF_1_IO_Group*) &apci->asdu.m_ep_tf_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_ep_tf_1IOGroup = curIo;
+                    genericIOGroup.m_ep_tf_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_SC_NA_1:
+                {
+                    // increment the information object block pointer by the size of the C_SC_NA_1_IO_Group struct
+                    const Iec104C_SC_NA_1_IO_Group* curIo =
+                        (const Iec104C_SC_NA_1_IO_Group*) &apci->asdu.c_sc_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_sc_na_1IOGroup = curIo;
+                    genericIOGroup.c_sc_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_DC_NA_1:
+                {
+                    // increment the information object block pointer by the size of the C_DC_NA_1_IO_Group struct
+                    const Iec104C_DC_NA_1_IO_Group* curIo =
+                        (const Iec104C_DC_NA_1_IO_Group*) &apci->asdu.c_dc_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_dc_na_1IOGroup = curIo;
+                    genericIOGroup.c_dc_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_RC_NA_1:
+                {
+                    // increment the information object block pointer by the size of the C_RC_NA_1_IO_Group struct
+                    const Iec104C_RC_NA_1_IO_Group* curIo =
+                        (const Iec104C_RC_NA_1_IO_Group*) &apci->asdu.c_rc_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_rc_na_1IOGroup = curIo;
+                    genericIOGroup.c_rc_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_SE_NA_1:
+                {
+                    // increment the information object block pointer by the size of the C_SE_NA_1_IO_Group struct
+                    const Iec104C_SE_NA_1_IO_Group* curIo =
+                        (const Iec104C_SE_NA_1_IO_Group*) &apci->asdu.c_se_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_se_na_1IOGroup = curIo;
+                    genericIOGroup.c_se_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_SE_NB_1:
+                {
+                    // increment the information object block pointer by the size of the C_SE_NB_1_IO_Group struct
+                    const Iec104C_SE_NB_1_IO_Group* curIo =
+                        (const Iec104C_SE_NB_1_IO_Group*) &apci->asdu.c_se_nb_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_se_nb_1IOGroup = curIo;
+                    genericIOGroup.c_se_nb_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_SE_NC_1:
+                {
+                    // increment the information object block pointer by the size of the C_SE_NC_1_IO_Group struct
+                    const Iec104C_SE_NC_1_IO_Group* curIo =
+                        (const Iec104C_SE_NC_1_IO_Group*) &apci->asdu.c_se_nc_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_se_nc_1IOGroup = curIo;
+                    genericIOGroup.c_se_nc_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_BO_NA_1:
+                {
+                    // increment the information object block pointer by the size of the C_BO_NA_1_IO_Group struct
+                    const Iec104C_BO_NA_1_IO_Group* curIo =
+                        (const Iec104C_BO_NA_1_IO_Group*) &apci->asdu.c_bo_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_bo_na_1IOGroup = curIo;
+                    genericIOGroup.c_bo_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_SC_TA_1:
+                {
+                    // increment the information object block pointer by the size of the C_SC_TA_1_IO_Group struct
+                    const Iec104C_SC_TA_1_IO_Group* curIo =
+                        (const Iec104C_SC_TA_1_IO_Group*) &apci->asdu.c_sc_ta_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_sc_ta_1IOGroup = curIo;
+                    genericIOGroup.c_sc_ta_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_DC_TA_1:
+                {
+                    // increment the information object block pointer by the size of the C_DC_TA_1_IO_Group struct
+                    const Iec104C_DC_TA_1_IO_Group* curIo =
+                        (const Iec104C_DC_TA_1_IO_Group*) &apci->asdu.c_dc_ta_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_dc_ta_1IOGroup = curIo;
+                    genericIOGroup.c_dc_ta_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_RC_TA_1:
+                {
+                    // increment the information object block pointer by the size of the C_RC_TA_1_IO_Group struct
+                    const Iec104C_RC_TA_1_IO_Group* curIo =
+                        (const Iec104C_RC_TA_1_IO_Group*) &apci->asdu.c_rc_ta_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_rc_ta_1IOGroup = curIo;
+                    genericIOGroup.c_rc_ta_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_SE_TA_1:
+                {
+                    // increment the information object block pointer by the size of the C_SE_TA_1_IO_Group struct
+                    const Iec104C_SE_TA_1_IO_Group* curIo =
+                        (const Iec104C_SE_TA_1_IO_Group*) &apci->asdu.c_se_ta_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_se_ta_1IOGroup = curIo;
+                    genericIOGroup.c_se_ta_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_SE_TB_1:
+                {
+                    // increment the information object block pointer by the size of the C_SE_TB_1_IO_Group struct
+                    const Iec104C_SE_TB_1_IO_Group* curIo =
+                        (const Iec104C_SE_TB_1_IO_Group*) &apci->asdu.c_se_tb_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_se_tb_1IOGroup = curIo;
+                    genericIOGroup.c_se_tb_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_SE_TC_1:
+                {
+                    // increment the information object block pointer by the size of the C_SE_TC_1_IO_Group struct
+                    const Iec104C_SE_TC_1_IO_Group* curIo =
+                        (const Iec104C_SE_TC_1_IO_Group*) &apci->asdu.c_se_tc_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_se_tc_1IOGroup = curIo;
+                    genericIOGroup.c_se_tc_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_BO_TA_1:
+                {
+                    // increment the information object block pointer by the size of the C_BO_TA_1_IO_Group struct
+                    const Iec104C_BO_TA_1_IO_Group* curIo =
+                        (const Iec104C_BO_TA_1_IO_Group*) &apci->asdu.c_bo_ta_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_bo_ta_1IOGroup = curIo;
+                    genericIOGroup.c_bo_ta_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_M_EI_NA_1:
+                {
+                    // increment the information object block pointer by the size of the M_EI_NA_1_IO_Group struct
+                    const Iec104M_EI_NA_1_IO_Group* curIo =
+                        (const Iec104M_EI_NA_1_IO_Group*) &apci->asdu.m_ei_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.m_ei_na_1IOGroup = curIo;
+                    genericIOGroup.m_ei_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_IC_NA_1:
+                {
+                    // increment the information object block pointer by the size of the C_IC_NA_1_IO_Group struct
+                    const Iec104C_IC_NA_1_IO_Group* curIo =
+                        (const Iec104C_IC_NA_1_IO_Group*) &apci->asdu.c_ic_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_ic_na_1IOGroup = curIo;
+                    genericIOGroup.c_ic_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_CI_NA_1:
+                {
+                    // increment the information object block pointer by the size of the C_CI_NA_1_IO_Group struct
+                    const Iec104C_CI_NA_1_IO_Group* curIo =
+                        (const Iec104C_CI_NA_1_IO_Group*) &apci->asdu.c_ci_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_ci_na_1IOGroup = curIo;
+                    genericIOGroup.c_ci_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_RD_NA_1:
+                {
+                    // increment the information object block pointer by the size of the C_RD_NA_1_IO_Group struct
+                    const Iec104C_RD_NA_1_IO_Group* curIo =
+                        (const Iec104C_RD_NA_1_IO_Group*) &apci->asdu.c_rd_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_rd_na_1IOGroup = curIo;
+                    genericIOGroup.c_rd_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_CS_NA_1:
+                {
+                    // increment the information object block pointer by the size of the C_CS_NA_1_IO_Group struct
+                    const Iec104C_CS_NA_1_IO_Group* curIo =
+                        (const Iec104C_CS_NA_1_IO_Group*) &apci->asdu.c_cs_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_cs_na_1IOGroup = curIo;
+                    genericIOGroup.c_cs_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_TS_NA_1:
+                {
+                    // increment the information object block pointer by the size of the C_TS_NA_1_IO_Group struct
+                    const Iec104C_TS_NA_1_IO_Group* curIo =
+                        (const Iec104C_TS_NA_1_IO_Group*) &apci->asdu.c_ts_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_ts_na_1IOGroup = curIo;
+                    genericIOGroup.c_ts_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_RP_NA_1:
+                {
+                    // increment the information object block pointer by the size of the C_RP_NA_1_IO_Group struct
+                    const Iec104C_RP_NA_1_IO_Group* curIo =
+                        (const Iec104C_RP_NA_1_IO_Group*) &apci->asdu.c_rp_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_rp_na_1IOGroup = curIo;
+                    genericIOGroup.c_rp_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_CD_NA_1:
+                {
+                    // increment the information object block pointer by the size of the C_CD_NA_1_IO_Group struct
+                    const Iec104C_CD_NA_1_IO_Group* curIo =
+                        (const Iec104C_CD_NA_1_IO_Group*) &apci->asdu.c_cd_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_cd_na_1IOGroup = curIo;
+                    genericIOGroup.c_cd_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_C_TS_TA_1:
+                {
+                    // increment the information object block pointer by the size of the C_TS_TA_1_IO_Group struct
+                    const Iec104C_TS_TA_1_IO_Group* curIo =
+                        (const Iec104C_TS_TA_1_IO_Group*) &apci->asdu.c_ts_ta_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.c_ts_ta_1IOGroup = curIo;
+                    genericIOGroup.c_ts_ta_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_P_ME_NA_1:
+                {
+                    // increment the information object block pointer by the size of the P_ME_NA_1_IO_Group struct
+                    const Iec104P_ME_NA_1_IO_Group* curIo =
+                        (const Iec104P_ME_NA_1_IO_Group*) &apci->asdu.p_me_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.p_me_na_1IOGroup = curIo;
+                    genericIOGroup.p_me_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_P_ME_NB_1:
+                {
+                    // increment the information object block pointer by the size of the P_ME_NB_1_IO_Group struct
+                    const Iec104P_ME_NB_1_IO_Group* curIo =
+                        (const Iec104P_ME_NB_1_IO_Group*) &apci->asdu.p_me_nb_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.p_me_nb_1IOGroup = curIo;
+                    genericIOGroup.p_me_nb_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_P_ME_NC_1:
+                {
+                    // increment the information object block pointer by the size of the P_ME_NC_1_IO_Group struct
+                    const Iec104P_ME_NC_1_IO_Group* curIo =
+                        (const Iec104P_ME_NC_1_IO_Group*) &apci->asdu.p_me_nc_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.p_me_nc_1IOGroup = curIo;
+                    genericIOGroup.p_me_nc_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_P_AC_NA_1:
+                {
+                    // increment the information object block pointer by the size of the P_AC_NA_1_IO_Group struct
+                    const Iec104P_AC_NA_1_IO_Group* curIo =
+                        (const Iec104P_AC_NA_1_IO_Group*) &apci->asdu.p_ac_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.p_ac_na_1IOGroup = curIo;
+                    genericIOGroup.p_ac_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_F_FR_NA_1:
+                {
+                    // increment the information object block pointer by the size of the F_FR_NA_1_IO_Group struct
+                    const Iec104F_FR_NA_1_IO_Group* curIo =
+                        (const Iec104F_FR_NA_1_IO_Group*) &apci->asdu.f_fr_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.f_fr_na_1IOGroup = curIo;
+                    genericIOGroup.f_fr_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_F_SR_NA_1:
+                {
+                    // increment the information object block pointer by the size of the F_SR_NA_1_IO_Group struct
+                    const Iec104F_SR_NA_1_IO_Group* curIo =
+                        (const Iec104F_SR_NA_1_IO_Group*) &apci->asdu.f_sr_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.f_sr_na_1IOGroup = curIo;
+                    genericIOGroup.f_sr_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_F_SC_NA_1:
+                {
+                    // increment the information object block pointer by the size of the F_SC_NA_1_IO_Group struct
+                    const Iec104F_SC_NA_1_IO_Group* curIo =
+                        (const Iec104F_SC_NA_1_IO_Group*) &apci->asdu.f_sc_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.f_sc_na_1IOGroup = curIo;
+                    genericIOGroup.f_sc_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_F_LS_NA_1:
+                {
+                    // increment the information object block pointer by the size of the F_LS_NA_1_IO_Group struct
+                    const Iec104F_LS_NA_1_IO_Group* curIo =
+                        (const Iec104F_LS_NA_1_IO_Group*) &apci->asdu.f_ls_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.f_ls_na_1IOGroup = curIo;
+                    genericIOGroup.f_ls_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_F_AF_NA_1:
+                {
+                    // increment the information object block pointer by the size of the F_AF_NA_1_IO_Group struct
+                    const Iec104F_AF_NA_1_IO_Group* curIo =
+                        (const Iec104F_AF_NA_1_IO_Group*) &apci->asdu.f_af_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.f_af_na_1IOGroup = curIo;
+                    genericIOGroup.f_af_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                case IEC104_ASDU_F_SG_NA_1:
+                {
+                    // increment the information object block pointer by the size of the F_SG_NA_1_IO_Group struct
+                    const Iec104F_SG_NA_1_IO_Group* curIo =
+                        (const Iec104F_SG_NA_1_IO_Group*) &apci->asdu.f_sg_na_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.f_sg_na_1IOGroup = curIo;
+                    genericIOGroup.f_sg_na_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                // case IEC104_ASDU_F_DR_TA_1
+                // path doesn't happen as it gets caught during the ASDU check
+
+                case IEC104_ASDU_F_SC_NB_1:
+                {
+                    // increment the information object block pointer by the size of the F_SC_NB_1_IO_Group struct
+                    const Iec104F_SC_NB_1_IO_Group* curIo =
+                        (const Iec104F_SC_NB_1_IO_Group*) &apci->asdu.f_sc_nb_1 + i;
+
+                    // print the SQ0 IO block
+                    genericIOGroup.f_sc_nb_1IOGroup = curIo;
+                    genericIOGroup.f_sc_nb_1IOSubgroup = &curIo->subgroup;
+                    break;
+                }
+
+                default:
+                {
+                    // SQ0 ASDU parsing not implemented for this type
+                }
+                }
+
+                // parse the group
+                parseIec104GenericIOGroup(&genericIOGroup);
             }
-
-            // fill genericIOGroup with the appropriate asdu depending on the type
-            switch (asduType)
-            {
-            case IEC104_ASDU_M_SP_NA_1:
-            {
-                // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
-                genericIOGroup.m_sp_na_1IOGroup = &apci->asdu.m_sp_na_1;
-
-                // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
-                // since `i` will be 0 on the first go round this works for all iterations
-                // since C adds based on the pointer type we only need to cast and increment
-                const Iec104M_SP_NA_1_IO_Subgroup* curIo = &apci->asdu.m_sp_na_1.subgroup + i;
-                genericIOGroup.m_sp_na_1IOSubgroup = curIo;
-
-                break;
-            }
-
-            // case IEC104_ASDU_M_SP_TA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            case IEC104_ASDU_M_DP_NA_1:
-            {
-                // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
-                genericIOGroup.m_dp_na_1IOGroup = &apci->asdu.m_dp_na_1;
-
-                // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
-                // since `i` will be 0 on the first go round this works for all iterations
-                // since C adds based on the pointer type we only need to cast and increment
-                const Iec104M_DP_NA_1_IO_Subgroup* curIo = &apci->asdu.m_dp_na_1.subgroup + i;
-                genericIOGroup.m_dp_na_1IOSubgroup = curIo;
-
-                break;
-            }
-
-            // case IEC104_ASDU_M_DP_TA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            case IEC104_ASDU_M_ST_NA_1:
-            {
-                // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
-                genericIOGroup.m_st_na_1IOGroup = &apci->asdu.m_st_na_1;
-
-                // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
-                // since `i` will be 0 on the first go round this works for all iterations
-                // since C adds based on the pointer type we only need to cast and increment
-                const Iec104M_ST_NA_1_IO_Subgroup* curIo = &apci->asdu.m_st_na_1.subgroup + i;
-                genericIOGroup.m_st_na_1IOSubgroup = curIo;
-
-                break;
-            }
-
-            // case IEC104_ASDU_M_ST_TA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            case IEC104_ASDU_M_BO_NA_1:
-            {
-                // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
-                genericIOGroup.m_bo_na_1IOGroup = &apci->asdu.m_bo_na_1;
-
-                // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
-                // since `i` will be 0 on the first go round this works for all iterations
-                // since C adds based on the pointer type we only need to cast and increment
-                const Iec104M_BO_NA_1_IO_Subgroup* curIo = &apci->asdu.m_bo_na_1.subgroup + i;
-                genericIOGroup.m_bo_na_1IOSubgroup = curIo;
-
-                break;
-            }
-
-            // case IEC104_ASDU_M_BO_TA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            case IEC104_ASDU_M_ME_NA_1:
-            {
-                // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
-                genericIOGroup.m_me_na_1IOGroup = &apci->asdu.m_me_na_1;
-
-                // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
-                // since `i` will be 0 on the first go round this works for all iterations
-                // since C adds based on the pointer type we only need to cast and increment
-                const Iec104M_ME_NA_1_IO_Subgroup* curIo = &apci->asdu.m_me_na_1.subgroup + i;
-                genericIOGroup.m_me_na_1IOSubgroup = curIo;
-
-                break;
-            }
-
-            // case IEC104_ASDU_M_ME_TA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            case IEC104_ASDU_M_ME_NB_1:
-            {
-                // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
-                genericIOGroup.m_me_nb_1IOGroup = &apci->asdu.m_me_nb_1;
-
-                // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
-                // since `i` will be 0 on the first go round this works for all iterations
-                // since C adds based on the pointer type we only need to cast and increment
-                const Iec104M_ME_NB_1_IO_Subgroup* curIo = &apci->asdu.m_me_nb_1.subgroup + i;
-                genericIOGroup.m_me_nb_1IOSubgroup = curIo;
-
-                break;
-            }
-
-            // case IEC104_ASDU_M_ME_TB_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            case IEC104_ASDU_M_ME_NC_1:
-            {
-                // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
-                genericIOGroup.m_me_nc_1IOGroup = &apci->asdu.m_me_nc_1;
-
-                // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
-                // since `i` will be 0 on the first go round this works for all iterations
-                // since C adds based on the pointer type we only need to cast and increment
-                const Iec104M_ME_NC_1_IO_Subgroup* curIo = &apci->asdu.m_me_nc_1.subgroup + i;
-                genericIOGroup.m_me_nc_1IOSubgroup = curIo;
-
-                break;
-            }
-
-            // case IEC104_ASDU_M_ME_TC_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            case IEC104_ASDU_M_IT_NA_1:
-            {
-                // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
-                genericIOGroup.m_it_na_1IOGroup = &apci->asdu.m_it_na_1;
-
-                // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
-                // since `i` will be 0 on the first go round this works for all iterations
-                // since C adds based on the pointer type we only need to cast and increment
-                const Iec104M_IT_NA_1_IO_Subgroup* curIo = &apci->asdu.m_it_na_1.subgroup + i;
-                genericIOGroup.m_it_na_1IOSubgroup = curIo;
-
-                break;
-            }
-
-            // case IEC104_ASDU_M_IT_TA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_M_EP_TA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_M_EP_TB_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_M_EP_TC_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            case IEC104_ASDU_M_PS_NA_1:
-            {
-                // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
-                genericIOGroup.m_ps_na_1IOGroup = &apci->asdu.m_ps_na_1;
-
-                // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
-                // since `i` will be 0 on the first go round this works for all iterations
-                // since C adds based on the pointer type we only need to cast and increment
-                const Iec104M_PS_NA_1_IO_Subgroup* curIo = &apci->asdu.m_ps_na_1.subgroup + i;
-                genericIOGroup.m_ps_na_1IOSubgroup = curIo;
-
-                break;
-            }
-
-            case IEC104_ASDU_M_ME_ND_1:
-            {
-                // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
-                genericIOGroup.m_me_nd_1IOGroup = &apci->asdu.m_me_nd_1;
-
-                // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
-                // since `i` will be 0 on the first go round this works for all iterations
-                // since C adds based on the pointer type we only need to cast and increment
-                const Iec104M_ME_ND_1_IO_Subgroup* curIo = &apci->asdu.m_me_nd_1.subgroup + i;
-                genericIOGroup.m_me_nd_1IOSubgroup = curIo;
-
-                break;
-            }
-
-            // case IEC104_ASDU_M_SP_TB_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_M_DP_TB_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_M_ST_TB_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_M_BO_TB_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_M_ME_TD_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_M_ME_TE_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_M_ME_TF_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_M_IT_TB_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_M_EP_TD_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_M_EP_TE_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_M_EP_TF_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_SC_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_DC_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_RC_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_SE_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_SE_NB_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_SE_NC_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_BO_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_SC_TA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_DC_TA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_RC_TA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_SE_TA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_SE_TB_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_SE_TC_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_BO_TA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_M_EI_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_IC_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_CI_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_RD_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_CS_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_TS_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_RP_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_CD_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_C_TS_TA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            //case IEC104_ASDU_P_ME_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            //case IEC104_ASDU_P_ME_NB_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            //case IEC104_ASDU_P_ME_NC_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_P_AC_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_F_FR_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_F_SR_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_F_SC_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_F_LS_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_F_AF_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            // case IEC104_ASDU_F_SG_NA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            case IEC104_ASDU_F_DR_TA_1:
-            {
-                // Since there is only one full IOGroup structure in SQ1 this can stay for all cases
-                genericIOGroup.f_dr_ta_1IOGroup = &apci->asdu.f_dr_ta_1;
-
-                // the subgroup pointer can be calculated by incrementing the first subgroup pointer by the iteration times the size of the subgroup pointer
-                // since `i` will be 0 on the first go round this works for all iterations
-                // since C adds based on the pointer type we only need to cast and increment
-                const Iec104F_DR_TA_1_IO_Subgroup* curIo = &apci->asdu.f_dr_ta_1.subgroup + i;
-                genericIOGroup.f_dr_ta_1IOSubgroup = curIo;
-
-                break;
-            }
-
-            // case IEC104_ASDU_F_SC_NB_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            default:
-            {
-                // SQ1 ASDU parsing not implemented for this type
-            }
-            }
-
-            // parse the new subgroup
-            parseIec104GenericIOGroup(&genericIOGroup);
-
-        }
-        //
-        // Handle Structure Qualifier == 0
-        //
-        else
-        {
-            // the IOA should always be included for SQ0
-            genericIOGroup.includeIOA = true;
-
-            // fill genericIOGroup with the appropriate asdu depending on the type
-            switch (asduType)
-            {
-            case IEC104_ASDU_M_SP_NA_1:
-            {
-                // increment the information object block pointer by the size of the M_SP_NA_1_IO_Group struct
-                const Iec104M_SP_NA_1_IO_Group* curIo =
-                    (const Iec104M_SP_NA_1_IO_Group*) &apci->asdu.m_sp_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_sp_na_1IOGroup = curIo;
-                genericIOGroup.m_sp_na_1IOSubgroup = &curIo->subgroup;
-
-                break;
-            }
-
-            case IEC104_ASDU_M_SP_TA_1:
-            {
-                // increment the information object block pointer by the size of the M_SP_TA_1_IO_Group struct
-                const Iec104M_SP_TA_1_IO_Group* curIo =
-                    (const Iec104M_SP_TA_1_IO_Group*) &apci->asdu.m_sp_ta_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_sp_ta_1IOGroup = curIo;
-                genericIOGroup.m_sp_ta_1IOSubgroup = &curIo->subgroup;
-
-                break;
-            }
-
-            case IEC104_ASDU_M_DP_NA_1:
-            {
-                // increment the information object block pointer by the size of the M_DP_NA_1_IO_Group struct
-                const Iec104M_DP_NA_1_IO_Group* curIo =
-                    (const Iec104M_DP_NA_1_IO_Group*) &apci->asdu.m_dp_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_dp_na_1IOGroup = curIo;
-                genericIOGroup.m_dp_na_1IOSubgroup = &curIo->subgroup;
-
-                break;
-            }
-
-            case IEC104_ASDU_M_DP_TA_1:
-            {
-                // increment the information object block pointer by the size of the M_DP_TA_1_IO_Group struct
-                const Iec104M_DP_TA_1_IO_Group* curIo =
-                    (const Iec104M_DP_TA_1_IO_Group*) &apci->asdu.m_dp_ta_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_dp_ta_1IOGroup = curIo;
-                genericIOGroup.m_dp_ta_1IOSubgroup = &curIo->subgroup;
-
-                break;
-            }
-
-            case IEC104_ASDU_M_ST_NA_1:
-            {
-                // increment the information object block pointer by the size of the M_ST_NA_1_IO_Group struct
-                const Iec104M_ST_NA_1_IO_Group* curIo =
-                    (const Iec104M_ST_NA_1_IO_Group*) &apci->asdu.m_st_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_st_na_1IOGroup = curIo;
-                genericIOGroup.m_st_na_1IOSubgroup = &curIo->subgroup;
-
-                break;
-            }
-
-            case IEC104_ASDU_M_ST_TA_1:
-            {
-                // increment the information object block pointer by the size of the M_ST_TA_1_IO_Group struct
-                const Iec104M_ST_TA_1_IO_Group* curIo =
-                    (const Iec104M_ST_TA_1_IO_Group*) &apci->asdu.m_st_ta_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_st_ta_1IOGroup = curIo;
-                genericIOGroup.m_st_ta_1IOSubgroup = &curIo->subgroup;
-
-                break;
-            }
-
-            case IEC104_ASDU_M_BO_NA_1:
-            {
-                // increment the information object block pointer by the size of the M_BO_NA_1_IO_Group struct
-                const Iec104M_BO_NA_1_IO_Group* curIo =
-                    (const Iec104M_BO_NA_1_IO_Group*) &apci->asdu.m_bo_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_bo_na_1IOGroup = curIo;
-                genericIOGroup.m_bo_na_1IOSubgroup = &curIo->subgroup;
-
-                break;
-            }
-
-            case IEC104_ASDU_M_BO_TA_1:
-            {
-                // increment the information object block pointer by the size of the M_BO_TA_1_IO_Group struct
-                const Iec104M_BO_TA_1_IO_Group* curIo =
-                    (const Iec104M_BO_TA_1_IO_Group*) &apci->asdu.m_bo_ta_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_bo_ta_1IOGroup = curIo;
-                genericIOGroup.m_bo_ta_1IOSubgroup = &curIo->subgroup;
-
-                break;
-            }
-
-            case IEC104_ASDU_M_ME_NA_1:
-            {
-                // increment the information object block pointer by the size of the M_ME_NA_1_IO_Group struct
-                const Iec104M_ME_NA_1_IO_Group* curIo =
-                    (const Iec104M_ME_NA_1_IO_Group*) &apci->asdu.m_me_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_me_na_1IOGroup = curIo;
-                genericIOGroup.m_me_na_1IOSubgroup = &curIo->subgroup;
-
-                break;
-            }
-
-            case IEC104_ASDU_M_ME_TA_1:
-            {
-                // increment the information object block pointer by the size of the M_ME_TA_1_IO_Group struct
-                const Iec104M_ME_TA_1_IO_Group* curIo =
-                    (const Iec104M_ME_TA_1_IO_Group*) &apci->asdu.m_me_ta_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_me_ta_1IOGroup = curIo;
-                genericIOGroup.m_me_ta_1IOSubgroup = &curIo->subgroup;
-
-                break;
-            }
-
-            case IEC104_ASDU_M_ME_NB_1:
-            {
-                // increment the information object block pointer by the size of the M_ME_NB_1_IO_Group struct
-                const Iec104M_ME_NB_1_IO_Group* curIo =
-                    (const Iec104M_ME_NB_1_IO_Group*) &apci->asdu.m_me_nb_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_me_nb_1IOGroup = curIo;
-                genericIOGroup.m_me_nb_1IOSubgroup = &curIo->subgroup;
-
-                break;
-            }
-
-            case IEC104_ASDU_M_ME_TB_1:
-            {
-                // increment the information object block pointer by the size of the M_ME_TB_1_IO_Group struct
-                const Iec104M_ME_TB_1_IO_Group* curIo =
-                    (const Iec104M_ME_TB_1_IO_Group*) &apci->asdu.m_me_tb_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_me_tb_1IOGroup = curIo;
-                genericIOGroup.m_me_tb_1IOSubgroup = &curIo->subgroup;
-
-                break;
-            }
-
-            case IEC104_ASDU_M_ME_NC_1:
-            {
-                // increment the information object block pointer by the size of the M_ME_NC_1_IO_Group struct
-                const Iec104M_ME_NC_1_IO_Group* curIo =
-                    (const Iec104M_ME_NC_1_IO_Group*) &apci->asdu.m_me_nc_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_me_nc_1IOGroup = curIo;
-                genericIOGroup.m_me_nc_1IOSubgroup = &curIo->subgroup;
-
-                break;
-            }
-
-            case IEC104_ASDU_M_ME_TC_1:
-            {
-                // increment the information object block pointer by the size of the M_ME_TC_1_IO_Group struct
-                const Iec104M_ME_TC_1_IO_Group* curIo =
-                    (const Iec104M_ME_TC_1_IO_Group*) &apci->asdu.m_me_tc_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_me_tc_1IOGroup = curIo;
-                genericIOGroup.m_me_tc_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_IT_NA_1:
-            {
-                // increment the information object block pointer by the size of the M_IT_NA_1_IO_Group struct
-                const Iec104M_IT_NA_1_IO_Group* curIo =
-                    (const Iec104M_IT_NA_1_IO_Group*) &apci->asdu.m_it_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_it_na_1IOGroup = curIo;
-                genericIOGroup.m_it_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_IT_TA_1:
-            {
-                // increment the information object block pointer by the size of the M_IT_TA_1_IO_Group struct
-                const Iec104M_IT_TA_1_IO_Group* curIo =
-                    (const Iec104M_IT_TA_1_IO_Group*) &apci->asdu.m_it_ta_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_it_ta_1IOGroup = curIo;
-                genericIOGroup.m_it_ta_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_EP_TA_1:
-            {
-                // increment the information object block pointer by the size of the M_EP_TA_1_IO_Group struct
-                const Iec104M_EP_TA_1_IO_Group* curIo =
-                    (const Iec104M_EP_TA_1_IO_Group*) &apci->asdu.m_ep_ta_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_ep_ta_1IOGroup = curIo;
-                genericIOGroup.m_ep_ta_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_EP_TB_1:
-            {
-                // increment the information object block pointer by the size of the M_EP_TB_1_IO_Group struct
-                const Iec104M_EP_TB_1_IO_Group* curIo =
-                    (const Iec104M_EP_TB_1_IO_Group*) &apci->asdu.m_ep_tb_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_ep_tb_1IOGroup = curIo;
-                genericIOGroup.m_ep_tb_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_EP_TC_1:
-            {
-                // increment the information object block pointer by the size of the M_EP_TC_1_IO_Group struct
-                const Iec104M_EP_TC_1_IO_Group* curIo =
-                    (const Iec104M_EP_TC_1_IO_Group*) &apci->asdu.m_ep_tc_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_ep_tc_1IOGroup = curIo;
-                genericIOGroup.m_ep_tc_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_PS_NA_1:
-            {
-                // increment the information object block pointer by the size of the M_PS_NA_1_IO_Group struct
-                const Iec104M_PS_NA_1_IO_Group* curIo =
-                    (const Iec104M_PS_NA_1_IO_Group*) &apci->asdu.m_ps_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_ps_na_1IOGroup = curIo;
-                genericIOGroup.m_ps_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_ME_ND_1:
-            {
-                // increment the information object block pointer by the size of the M_ME_ND_1_IO_Group struct
-                const Iec104M_ME_ND_1_IO_Group* curIo =
-                    (const Iec104M_ME_ND_1_IO_Group*) &apci->asdu.m_me_nd_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_me_nd_1IOGroup = curIo;
-                genericIOGroup.m_me_nd_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_SP_TB_1:
-            {
-                // increment the information object block pointer by the size of the M_SP_TB_1_IO_Group struct
-                const Iec104M_SP_TB_1_IO_Group* curIo =
-                    (const Iec104M_SP_TB_1_IO_Group*) &apci->asdu.m_sp_tb_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_sp_tb_1IOGroup = curIo;
-                genericIOGroup.m_sp_tb_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_DP_TB_1:
-            {
-                // increment the information object block pointer by the size of the M_DP_TB_1_IO_Group struct
-                const Iec104M_DP_TB_1_IO_Group* curIo =
-                    (const Iec104M_DP_TB_1_IO_Group*) &apci->asdu.m_dp_tb_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_dp_tb_1IOGroup = curIo;
-                genericIOGroup.m_dp_tb_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_ST_TB_1:
-            {
-                // increment the information object block pointer by the size of the M_ST_TB_1_IO_Group struct
-                const Iec104M_ST_TB_1_IO_Group* curIo =
-                    (const Iec104M_ST_TB_1_IO_Group*) &apci->asdu.m_st_tb_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_st_tb_1IOGroup = curIo;
-                genericIOGroup.m_st_tb_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_BO_TB_1:
-            {
-                // increment the information object block pointer by the size of the M_BO_TB_1_IO_Group struct
-                const Iec104M_BO_TB_1_IO_Group* curIo =
-                    (const Iec104M_BO_TB_1_IO_Group*) &apci->asdu.m_bo_tb_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_bo_tb_1IOGroup = curIo;
-                genericIOGroup.m_bo_tb_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_ME_TD_1:
-            {
-                // increment the information object block pointer by the size of the M_ME_TD_1_IO_Group struct
-                const Iec104M_ME_TD_1_IO_Group* curIo =
-                    (const Iec104M_ME_TD_1_IO_Group*) &apci->asdu.m_me_td_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_me_td_1IOGroup = curIo;
-                genericIOGroup.m_me_td_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_ME_TE_1:
-            {
-                // increment the information object block pointer by the size of the M_ME_TE_1_IO_Group struct
-                const Iec104M_ME_TE_1_IO_Group* curIo =
-                    (const Iec104M_ME_TE_1_IO_Group*) &apci->asdu.m_me_te_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_me_te_1IOGroup = curIo;
-                genericIOGroup.m_me_te_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_ME_TF_1:
-            {
-                // increment the information object block pointer by the size of the M_ME_TF_1_IO_Group struct
-                const Iec104M_ME_TF_1_IO_Group* curIo =
-                    (const Iec104M_ME_TF_1_IO_Group*) &apci->asdu.m_me_tf_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_me_tf_1IOGroup = curIo;
-                genericIOGroup.m_me_tf_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_IT_TB_1:
-            {
-                // increment the information object block pointer by the size of the M_IT_TB_1_IO_Group struct
-                const Iec104M_IT_TB_1_IO_Group* curIo =
-                    (const Iec104M_IT_TB_1_IO_Group*) &apci->asdu.m_it_tb_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_it_tb_1IOGroup = curIo;
-                genericIOGroup.m_it_tb_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_EP_TD_1:
-            {
-                // increment the information object block pointer by the size of the M_EP_TD_1_IO_Group struct
-                const Iec104M_EP_TD_1_IO_Group* curIo =
-                    (const Iec104M_EP_TD_1_IO_Group*) &apci->asdu.m_ep_td_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_ep_td_1IOGroup = curIo;
-                genericIOGroup.m_ep_td_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_EP_TE_1:
-            {
-                // increment the information object block pointer by the size of the M_EP_TE_1_IO_Group struct
-                const Iec104M_EP_TE_1_IO_Group* curIo =
-                    (const Iec104M_EP_TE_1_IO_Group*) &apci->asdu.m_ep_te_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_ep_te_1IOGroup = curIo;
-                genericIOGroup.m_ep_te_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_EP_TF_1:
-            {
-                // increment the information object block pointer by the size of the M_EP_TF_1_IO_Group struct
-                const Iec104M_EP_TF_1_IO_Group* curIo =
-                    (const Iec104M_EP_TF_1_IO_Group*) &apci->asdu.m_ep_tf_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_ep_tf_1IOGroup = curIo;
-                genericIOGroup.m_ep_tf_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_SC_NA_1:
-            {
-                // increment the information object block pointer by the size of the C_SC_NA_1_IO_Group struct
-                const Iec104C_SC_NA_1_IO_Group* curIo =
-                    (const Iec104C_SC_NA_1_IO_Group*) &apci->asdu.c_sc_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_sc_na_1IOGroup = curIo;
-                genericIOGroup.c_sc_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_DC_NA_1:
-            {
-                // increment the information object block pointer by the size of the C_DC_NA_1_IO_Group struct
-                const Iec104C_DC_NA_1_IO_Group* curIo =
-                    (const Iec104C_DC_NA_1_IO_Group*) &apci->asdu.c_dc_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_dc_na_1IOGroup = curIo;
-                genericIOGroup.c_dc_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_RC_NA_1:
-            {
-                // increment the information object block pointer by the size of the C_RC_NA_1_IO_Group struct
-                const Iec104C_RC_NA_1_IO_Group* curIo =
-                    (const Iec104C_RC_NA_1_IO_Group*) &apci->asdu.c_rc_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_rc_na_1IOGroup = curIo;
-                genericIOGroup.c_rc_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_SE_NA_1:
-            {
-                // increment the information object block pointer by the size of the C_SE_NA_1_IO_Group struct
-                const Iec104C_SE_NA_1_IO_Group* curIo =
-                    (const Iec104C_SE_NA_1_IO_Group*) &apci->asdu.c_se_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_se_na_1IOGroup = curIo;
-                genericIOGroup.c_se_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_SE_NB_1:
-            {
-                // increment the information object block pointer by the size of the C_SE_NB_1_IO_Group struct
-                const Iec104C_SE_NB_1_IO_Group* curIo =
-                    (const Iec104C_SE_NB_1_IO_Group*) &apci->asdu.c_se_nb_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_se_nb_1IOGroup = curIo;
-                genericIOGroup.c_se_nb_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_SE_NC_1:
-            {
-                // increment the information object block pointer by the size of the C_SE_NC_1_IO_Group struct
-                const Iec104C_SE_NC_1_IO_Group* curIo =
-                    (const Iec104C_SE_NC_1_IO_Group*) &apci->asdu.c_se_nc_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_se_nc_1IOGroup = curIo;
-                genericIOGroup.c_se_nc_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_BO_NA_1:
-            {
-                // increment the information object block pointer by the size of the C_BO_NA_1_IO_Group struct
-                const Iec104C_BO_NA_1_IO_Group* curIo =
-                    (const Iec104C_BO_NA_1_IO_Group*) &apci->asdu.c_bo_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_bo_na_1IOGroup = curIo;
-                genericIOGroup.c_bo_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_SC_TA_1:
-            {
-                // increment the information object block pointer by the size of the C_SC_TA_1_IO_Group struct
-                const Iec104C_SC_TA_1_IO_Group* curIo =
-                    (const Iec104C_SC_TA_1_IO_Group*) &apci->asdu.c_sc_ta_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_sc_ta_1IOGroup = curIo;
-                genericIOGroup.c_sc_ta_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_DC_TA_1:
-            {
-                // increment the information object block pointer by the size of the C_DC_TA_1_IO_Group struct
-                const Iec104C_DC_TA_1_IO_Group* curIo =
-                    (const Iec104C_DC_TA_1_IO_Group*) &apci->asdu.c_dc_ta_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_dc_ta_1IOGroup = curIo;
-                genericIOGroup.c_dc_ta_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_RC_TA_1:
-            {
-                // increment the information object block pointer by the size of the C_RC_TA_1_IO_Group struct
-                const Iec104C_RC_TA_1_IO_Group* curIo =
-                    (const Iec104C_RC_TA_1_IO_Group*) &apci->asdu.c_rc_ta_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_rc_ta_1IOGroup = curIo;
-                genericIOGroup.c_rc_ta_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_SE_TA_1:
-            {
-                // increment the information object block pointer by the size of the C_SE_TA_1_IO_Group struct
-                const Iec104C_SE_TA_1_IO_Group* curIo =
-                    (const Iec104C_SE_TA_1_IO_Group*) &apci->asdu.c_se_ta_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_se_ta_1IOGroup = curIo;
-                genericIOGroup.c_se_ta_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_SE_TB_1:
-            {
-                // increment the information object block pointer by the size of the C_SE_TB_1_IO_Group struct
-                const Iec104C_SE_TB_1_IO_Group* curIo =
-                    (const Iec104C_SE_TB_1_IO_Group*) &apci->asdu.c_se_tb_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_se_tb_1IOGroup = curIo;
-                genericIOGroup.c_se_tb_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_SE_TC_1:
-            {
-                // increment the information object block pointer by the size of the C_SE_TC_1_IO_Group struct
-                const Iec104C_SE_TC_1_IO_Group* curIo =
-                    (const Iec104C_SE_TC_1_IO_Group*) &apci->asdu.c_se_tc_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_se_tc_1IOGroup = curIo;
-                genericIOGroup.c_se_tc_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_BO_TA_1:
-            {
-                // increment the information object block pointer by the size of the C_BO_TA_1_IO_Group struct
-                const Iec104C_BO_TA_1_IO_Group* curIo =
-                    (const Iec104C_BO_TA_1_IO_Group*) &apci->asdu.c_bo_ta_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_bo_ta_1IOGroup = curIo;
-                genericIOGroup.c_bo_ta_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_M_EI_NA_1:
-            {
-                // increment the information object block pointer by the size of the M_EI_NA_1_IO_Group struct
-                const Iec104M_EI_NA_1_IO_Group* curIo =
-                    (const Iec104M_EI_NA_1_IO_Group*) &apci->asdu.m_ei_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.m_ei_na_1IOGroup = curIo;
-                genericIOGroup.m_ei_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_IC_NA_1:
-            {
-                // increment the information object block pointer by the size of the C_IC_NA_1_IO_Group struct
-                const Iec104C_IC_NA_1_IO_Group* curIo =
-                    (const Iec104C_IC_NA_1_IO_Group*) &apci->asdu.c_ic_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_ic_na_1IOGroup = curIo;
-                genericIOGroup.c_ic_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_CI_NA_1:
-            {
-                // increment the information object block pointer by the size of the C_CI_NA_1_IO_Group struct
-                const Iec104C_CI_NA_1_IO_Group* curIo =
-                    (const Iec104C_CI_NA_1_IO_Group*) &apci->asdu.c_ci_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_ci_na_1IOGroup = curIo;
-                genericIOGroup.c_ci_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_RD_NA_1:
-            {
-                // increment the information object block pointer by the size of the C_RD_NA_1_IO_Group struct
-                const Iec104C_RD_NA_1_IO_Group* curIo =
-                    (const Iec104C_RD_NA_1_IO_Group*) &apci->asdu.c_rd_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_rd_na_1IOGroup = curIo;
-                genericIOGroup.c_rd_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_CS_NA_1:
-            {
-                // increment the information object block pointer by the size of the C_CS_NA_1_IO_Group struct
-                const Iec104C_CS_NA_1_IO_Group* curIo =
-                    (const Iec104C_CS_NA_1_IO_Group*) &apci->asdu.c_cs_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_cs_na_1IOGroup = curIo;
-                genericIOGroup.c_cs_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_TS_NA_1:
-            {
-                // increment the information object block pointer by the size of the C_TS_NA_1_IO_Group struct
-                const Iec104C_TS_NA_1_IO_Group* curIo =
-                    (const Iec104C_TS_NA_1_IO_Group*) &apci->asdu.c_ts_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_ts_na_1IOGroup = curIo;
-                genericIOGroup.c_ts_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_RP_NA_1:
-            {
-                // increment the information object block pointer by the size of the C_RP_NA_1_IO_Group struct
-                const Iec104C_RP_NA_1_IO_Group* curIo =
-                    (const Iec104C_RP_NA_1_IO_Group*) &apci->asdu.c_rp_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_rp_na_1IOGroup = curIo;
-                genericIOGroup.c_rp_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_CD_NA_1:
-            {
-                // increment the information object block pointer by the size of the C_CD_NA_1_IO_Group struct
-                const Iec104C_CD_NA_1_IO_Group* curIo =
-                    (const Iec104C_CD_NA_1_IO_Group*) &apci->asdu.c_cd_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_cd_na_1IOGroup = curIo;
-                genericIOGroup.c_cd_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_C_TS_TA_1:
-            {
-                // increment the information object block pointer by the size of the C_TS_TA_1_IO_Group struct
-                const Iec104C_TS_TA_1_IO_Group* curIo =
-                    (const Iec104C_TS_TA_1_IO_Group*) &apci->asdu.c_ts_ta_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.c_ts_ta_1IOGroup = curIo;
-                genericIOGroup.c_ts_ta_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_P_ME_NA_1:
-            {
-                // increment the information object block pointer by the size of the P_ME_NA_1_IO_Group struct
-                const Iec104P_ME_NA_1_IO_Group* curIo =
-                    (const Iec104P_ME_NA_1_IO_Group*) &apci->asdu.p_me_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.p_me_na_1IOGroup = curIo;
-                genericIOGroup.p_me_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_P_ME_NB_1:
-            {
-                // increment the information object block pointer by the size of the P_ME_NB_1_IO_Group struct
-                const Iec104P_ME_NB_1_IO_Group* curIo =
-                    (const Iec104P_ME_NB_1_IO_Group*) &apci->asdu.p_me_nb_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.p_me_nb_1IOGroup = curIo;
-                genericIOGroup.p_me_nb_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_P_ME_NC_1:
-            {
-                // increment the information object block pointer by the size of the P_ME_NC_1_IO_Group struct
-                const Iec104P_ME_NC_1_IO_Group* curIo =
-                    (const Iec104P_ME_NC_1_IO_Group*) &apci->asdu.p_me_nc_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.p_me_nc_1IOGroup = curIo;
-                genericIOGroup.p_me_nc_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_P_AC_NA_1:
-            {
-                // increment the information object block pointer by the size of the P_AC_NA_1_IO_Group struct
-                const Iec104P_AC_NA_1_IO_Group* curIo =
-                    (const Iec104P_AC_NA_1_IO_Group*) &apci->asdu.p_ac_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.p_ac_na_1IOGroup = curIo;
-                genericIOGroup.p_ac_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_F_FR_NA_1:
-            {
-                // increment the information object block pointer by the size of the F_FR_NA_1_IO_Group struct
-                const Iec104F_FR_NA_1_IO_Group* curIo =
-                    (const Iec104F_FR_NA_1_IO_Group*) &apci->asdu.f_fr_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.f_fr_na_1IOGroup = curIo;
-                genericIOGroup.f_fr_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_F_SR_NA_1:
-            {
-                // increment the information object block pointer by the size of the F_SR_NA_1_IO_Group struct
-                const Iec104F_SR_NA_1_IO_Group* curIo =
-                    (const Iec104F_SR_NA_1_IO_Group*) &apci->asdu.f_sr_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.f_sr_na_1IOGroup = curIo;
-                genericIOGroup.f_sr_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_F_SC_NA_1:
-            {
-                // increment the information object block pointer by the size of the F_SC_NA_1_IO_Group struct
-                const Iec104F_SC_NA_1_IO_Group* curIo =
-                    (const Iec104F_SC_NA_1_IO_Group*) &apci->asdu.f_sc_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.f_sc_na_1IOGroup = curIo;
-                genericIOGroup.f_sc_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_F_LS_NA_1:
-            {
-                // increment the information object block pointer by the size of the F_LS_NA_1_IO_Group struct
-                const Iec104F_LS_NA_1_IO_Group* curIo =
-                    (const Iec104F_LS_NA_1_IO_Group*) &apci->asdu.f_ls_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.f_ls_na_1IOGroup = curIo;
-                genericIOGroup.f_ls_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_F_AF_NA_1:
-            {
-                // increment the information object block pointer by the size of the F_AF_NA_1_IO_Group struct
-                const Iec104F_AF_NA_1_IO_Group* curIo =
-                    (const Iec104F_AF_NA_1_IO_Group*) &apci->asdu.f_af_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.f_af_na_1IOGroup = curIo;
-                genericIOGroup.f_af_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            case IEC104_ASDU_F_SG_NA_1:
-            {
-                // increment the information object block pointer by the size of the F_SG_NA_1_IO_Group struct
-                const Iec104F_SG_NA_1_IO_Group* curIo =
-                    (const Iec104F_SG_NA_1_IO_Group*) &apci->asdu.f_sg_na_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.f_sg_na_1IOGroup = curIo;
-                genericIOGroup.f_sg_na_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            // case IEC104_ASDU_F_DR_TA_1
-            // path doesn't happen as it gets caught during the ASDU check
-
-            case IEC104_ASDU_F_SC_NB_1:
-            {
-                // increment the information object block pointer by the size of the F_SC_NB_1_IO_Group struct
-                const Iec104F_SC_NB_1_IO_Group* curIo =
-                    (const Iec104F_SC_NB_1_IO_Group*) &apci->asdu.f_sc_nb_1 + i;
-
-                // print the SQ0 IO block
-                genericIOGroup.f_sc_nb_1IOGroup = curIo;
-                genericIOGroup.f_sc_nb_1IOSubgroup = &curIo->subgroup;
-                break;
-            }
-
-            default:
-            {
-                // SQ0 ASDU parsing not implemented for this type
-            }
-            }
-
-            // parse the group
-            parseIec104GenericIOGroup(&genericIOGroup);
         }
     }
 }
@@ -2607,9 +2610,7 @@ void parseIec104ApciI(const Iec104ApciI* apci)
         curAsduCheck.sq0Allowed = true;
         curAsduCheck.sq1Allowed = false;
         curAsduCheck.multipleIOAllowed = false;
-        curAsduCheck.checkCauseOfTx = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-                                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-                                        0, 0, 0, 0, 0, 0, 0 };
+        curAsduCheck.checkCauseOfTx = { };
 
         // select the appropriate asdu based on typeId value
         switch (apci->asdu.typeId)

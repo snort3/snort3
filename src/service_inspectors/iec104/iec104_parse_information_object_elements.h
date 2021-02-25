@@ -46,7 +46,7 @@ void parseIec104Srq(const Iec104SrqType* srq);
 void parseIec104Scq(const Iec104ScqType* scq);
 void parseIec104Lsq(const Iec104LsqType* lsq);
 void parseIec104Afq(const Iec104AfqType* afq);
-uint8_t parseIec104Vsq(const Iec104ApciI* apci);
+uint32_t parseIec104Vsq(const Iec104ApciI* apci);
 void parseIec104CauseOfTx(const Iec104ApciI* apci);
 void parseIec104TwoOctetCommonAddress(const Iec104ApciI* apci);
 void parseIec104InformationObjectAddressWithThreeOctets(

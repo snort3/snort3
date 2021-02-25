@@ -127,7 +127,7 @@ static Iec104AsduFuncMap iec104_asdu_func_map[] =
     // 128-256 reserved
     };
 
-static bool get_func(const char* s, long &n)
+static bool get_func(const char* s, long& n)
 {
     constexpr size_t max = (sizeof(iec104_asdu_func_map) / sizeof(Iec104AsduFuncMap));
 
@@ -176,14 +176,14 @@ uint32_t Iec104AsduFuncOption::hash() const
     return c;
 }
 
-bool Iec104AsduFuncOption::operator==(const IpsOption &ips) const
+bool Iec104AsduFuncOption::operator==(const IpsOption& ips) const
 {
     if (!IpsOption::operator==(ips))
     {
         return false;
     }
 
-    const Iec104AsduFuncOption &rhs = (const Iec104AsduFuncOption&) ips;
+    const Iec104AsduFuncOption& rhs = (const Iec104AsduFuncOption&) ips;
     return (func == rhs.func);
 }
 
@@ -256,7 +256,7 @@ public:
     uint8_t func = IEC104_NO_ASDU;
 };
 
-bool Iec104AsduFuncModule::set(const char*, Value &v, SnortConfig*)
+bool Iec104AsduFuncModule::set(const char*, Value& v, SnortConfig*)
 {
     if (!v.is("~"))
     {

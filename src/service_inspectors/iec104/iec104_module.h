@@ -66,11 +66,6 @@ public:
     const snort::TraceOption* get_trace_options() const override;
 };
 
-#endif
-
-#ifndef IEC104_RULES
-#define IEC104_RULES
-
 #define IEC104_BAD_LENGTH 1
 #define IEC104_BAD_START 2
 #define IEC104_RESERVED_ASDU_TYPE 3

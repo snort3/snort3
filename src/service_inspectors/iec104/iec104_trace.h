@@ -24,7 +24,6 @@
 
 // Detection trace utility
 
-#include "framework/cursor.h"
 #include "main/snort_types.h"
 #include "main/thread.h"
 
@@ -42,7 +41,7 @@ enum
 };
 
 #ifdef DEBUG_MSGS
-#define print_debug_information(p, msg) debug_log(iec104_trace, TRACE_IEC104_IDENTIFICATION, p, msg);
+#define print_debug_information(p, msg) debug_log(iec104_trace, TRACE_IEC104_IDENTIFICATION, p, msg)
 #else
 #define print_debug_information(...)
 #endif

@@ -24,7 +24,7 @@
 
 #include "iec104_parse_information_object_elements.h"
 
-#include <math.h>
+#include <cmath>
 
 #include "detection/detection_engine.h"
 #include "events/event_queue.h"
@@ -191,18 +191,10 @@ void parseIec104Afq(const Iec104AfqType* afq)
     }
 }
 
-uint8_t parseIec104Vsq(const Iec104ApciI* apci)
+uint32_t parseIec104Vsq(const Iec104ApciI* apci)
 {
     // number of elements == 0 is caught in check apdu
-
-    // make sure the reported number of elements would not exceed the packet size
-    // * take the apci->header.length value
-    // * subtract off type id, vsq, cause of tx, and 2-byte common address sizes
-    // * if the sq bit is set, subtract off the IOA
-    // * use a switch statement with cases of each message type to get the size of one group
-    // * divide the result of the earlier calculation by this group size to get the maximum allowable groups without overflowing
-
-    uint8_t maxNumberOfElements = 0;
+    
     uint32_t informationObjectSubgroupSize = 0;
 
     // determine the size of the current message type group
@@ -545,31 +537,42 @@ uint8_t parseIec104Vsq(const Iec104ApciI* apci)
         }
     }
 
+    // make sure the reported number of elements would not exceed the packet size
+    // * take the apci->header.length value
+    // * subtract off type id, vsq, cause of tx, and 2-byte common address sizes
+    // * if the sq bit is set, subtract off the IOA
+    // * use a switch statement with cases of each message type to get the size of one group
+    // * divide the result of the earlier calculation by this group size to get the maximum allowable groups without overflowing
+    uint8_t maxNumberOfElements = 0;
+
     if (informationObjectSubgroupSize) 
     {
-        if (apci->asdu.variableStructureQualifier.sq == 0) 
-        {
-            uint32_t informationObjectGroupSize = informationObjectSubgroupSize + sizeof(const Iec104InformationObjectAddressThreeOctetType);
-            maxNumberOfElements = (apci->header.length 
-                                   - sizeof(uint8_t)  // type id
-                                   - sizeof(const Iec104VariableStructureQualifierType) 
-                                   - sizeof(const Iec104CauseOfTransmissionType)
-                                   - sizeof(const Iec104CommonAddressOfAsduType)
-                                   ) / informationObjectGroupSize;
-        } 
-        else 
-        {
-            maxNumberOfElements = (apci->header.length 
-                                   - sizeof(uint8_t)  // type id
-                                   - sizeof(const Iec104VariableStructureQualifierType) 
-                                   - sizeof(const Iec104CauseOfTransmissionType)
-                                   - sizeof(const Iec104CommonAddressOfAsduType)
-                                   - sizeof(const Iec104InformationObjectAddressThreeOctetType)
-                                   ) / informationObjectSubgroupSize;
+        uint32_t reported_msg_len = apci->header.length;
+        if (reported_msg_len >= IEC104_APCI_TYPE_I_MIN_LEN) { 
+            if (apci->asdu.variableStructureQualifier.sq == 0) 
+            {
+                uint32_t informationObjectGroupSize = informationObjectSubgroupSize + sizeof(const Iec104InformationObjectAddressThreeOctetType);
+                maxNumberOfElements = (reported_msg_len
+                                       - sizeof(uint8_t)  // type id
+                                       - sizeof(const Iec104VariableStructureQualifierType) 
+                                       - sizeof(const Iec104CauseOfTransmissionType)
+                                       - sizeof(const Iec104CommonAddressOfAsduType)
+                                       ) / informationObjectGroupSize;
+            } 
+            else 
+            {
+                maxNumberOfElements = (reported_msg_len 
+                                       - sizeof(uint8_t)  // type id
+                                       - sizeof(const Iec104VariableStructureQualifierType) 
+                                       - sizeof(const Iec104CauseOfTransmissionType)
+                                       - sizeof(const Iec104CommonAddressOfAsduType)
+                                       - sizeof(const Iec104InformationObjectAddressThreeOctetType)
+                                       ) / informationObjectSubgroupSize;
+            }
         }
     }
 
-    uint8_t verifiedNumberOfElements = apci->asdu.variableStructureQualifier.numberOfElements;
+    uint32_t verifiedNumberOfElements = apci->asdu.variableStructureQualifier.numberOfElements;
     if (verifiedNumberOfElements > 0 and verifiedNumberOfElements <= maxNumberOfElements) 
     {
         // do nothing
