@@ -275,11 +275,6 @@ TPLibHandler* TPLibHandler::self = nullptr;
 THREAD_LOCAL AppIdStats appid_stats;
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = false; }
-void check_session_for_AF_indicator(Packet*, AppidSessionDirection, AppId, const OdpContext&) {}
-AppId check_session_for_AF_forecast(AppIdSession&, Packet*, AppidSessionDirection, AppId)
-{
-    return APP_ID_UNKNOWN;
-}
 
 bool AppIdReloadTuner::tinit() { return false; }
 
