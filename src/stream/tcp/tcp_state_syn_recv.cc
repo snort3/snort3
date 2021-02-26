@@ -154,8 +154,7 @@ bool TcpStateSynRecv::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         trk.update_tracker_ack_recv(tsd);
         trk.session->set_pkt_action_flag(trk.normalizer.handle_paws(tsd));
         flow->session_state |= STREAM_STATE_ACK;
-        if ( tsd.is_data_segment() )
-            trk.session->handle_data_segment(tsd);
+        trk.perform_fin_recv_flush(tsd);
 
         if ( trk.update_on_fin_recv(tsd) )
         {

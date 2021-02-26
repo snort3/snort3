@@ -99,8 +99,7 @@ bool TcpStateFinWait1::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
         bool is_ack_valid = false;
         if ( check_for_window_slam(tsd, trk, &is_ack_valid) )
         {
-            if ( tsd.is_data_segment() )
-                trk.session->handle_data_segment(tsd);
+            trk.perform_fin_recv_flush(tsd);
 
             if ( !flow->two_way_traffic() )
                 trk.set_tf_flags(TF_FORCE_FLUSH);

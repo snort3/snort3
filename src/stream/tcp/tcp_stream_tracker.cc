@@ -636,6 +636,14 @@ bool TcpStreamTracker::set_held_packet(Packet* p)
     return true;
 }
 
+void TcpStreamTracker::perform_fin_recv_flush(TcpSegmentDescriptor& tsd)
+{
+    if ( tsd.is_data_segment() )
+        session->handle_data_segment(tsd);
+    else if ( flush_policy == STREAM_FLPOLICY_ON_DATA and SEQ_EQ(tsd.get_seq(), rcv_nxt) )
+        reassembler.flush_queued_segments(tsd.get_flow(), true, tsd.get_pkt());
+}
+
 uint32_t TcpStreamTracker::perform_partial_flush()
 {
     uint32_t flushed = 0;

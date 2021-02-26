@@ -102,8 +102,7 @@ bool TcpStateCloseWait::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
     {
         if ( !flow->two_way_traffic() )
             trk.set_tf_flags(TF_FORCE_FLUSH);
-        if ( tsd.is_data_segment() )
-            trk.session->handle_data_segment(tsd);
+        trk.perform_fin_recv_flush(tsd);
     }
 
     return true;

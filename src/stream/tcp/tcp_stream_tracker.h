@@ -289,6 +289,7 @@ public:
     bool is_retransmit_of_held_packet(snort::Packet*);
     void finalize_held_packet(snort::Packet*);
     void finalize_held_packet(snort::Flow*);
+    void perform_fin_recv_flush(TcpSegmentDescriptor&);
     uint32_t perform_partial_flush();
     bool is_holding_packet() const { return held_packet != null_iterator; }
 

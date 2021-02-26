@@ -73,8 +73,8 @@ bool TcpStateTimeWait::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
         trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
         trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
     }
-    else if ( tsd.is_data_segment() )
-        trk.session->handle_data_segment(tsd);
+    else
+        trk.perform_fin_recv_flush(tsd);
 
     return true;
 }

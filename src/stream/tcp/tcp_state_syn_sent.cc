@@ -108,9 +108,7 @@ bool TcpStateSynSent::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker&
 
 bool TcpStateSynSent::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( tsd.is_data_segment() )
-        trk.session->handle_data_segment(tsd);
-
+    trk.perform_fin_recv_flush(tsd);
     return true;
 }
 
