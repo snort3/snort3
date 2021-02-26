@@ -89,8 +89,10 @@ bool HostAttributesDescriptor::update_service
         if ( s.ipproto == protocol && (uint16_t)s.port == port )
         {
             if ( s.snort_protocol_id != snort_protocol_id )
+            {
+                s.snort_protocol_id = snort_protocol_id;
                 s.appid_service = is_appid_service;
-            s.snort_protocol_id = snort_protocol_id;
+            }
             updated = true;
             return true;
         }
@@ -119,19 +121,21 @@ void HostAttributesDescriptor::clear_appid_services()
     }
 }
 
-SnortProtocolId HostAttributesDescriptor::get_snort_protocol_id(int ipprotocol, uint16_t port) const
+void HostAttributesDescriptor::get_host_attributes(uint16_t port,HostAttriInfo* host_info) const
 {
-    std::lock_guard<std::mutex> lck(host_attributes_lock);
-
+    std::lock_guard<std::mutex> slk(host_attributes_lock);
+    host_info->frag_policy = policies.fragPolicy;
+    host_info->stream_policy = policies.streamPolicy;
+    host_info->snort_protocol_id = UNKNOWN_PROTOCOL_ID;
     for ( auto& s : services )
     {
-        if ( (s.ipproto == ipprotocol) && (s.port == port) )
-            return s.snort_protocol_id;
+        if ( s.port == port )
+        {
+            host_info->snort_protocol_id = s.snort_protocol_id;
+            return;
+        }
     }
-
-    return UNKNOWN_PROTOCOL_ID;
 }
-
 bool HostAttributesManager::load_hosts_file(snort::SnortConfig* sc, const char* fname)
 {
     delete next_cache;
@@ -188,12 +192,18 @@ void HostAttributesManager::swap_cleanup()
 void HostAttributesManager::term()
 { delete active_cache; }
 
-HostAttributesEntry HostAttributesManager::find_host(const snort::SfIp& host_ip)
+bool HostAttributesManager::get_host_attributes(const snort::SfIp& host_ip, uint16_t port, HostAttriInfo* host_info)
 {
-    if ( active_cache )
-        return active_cache->find(host_ip);
+    if ( !active_cache )
+        return false;
 
-    return nullptr;
+    HostAttributesEntry h = active_cache->find(host_ip);
+    if (h)
+    {
+        h->get_host_attributes(port, host_info);
+        return true;
+    }
+    return false;
 }
 
 void HostAttributesManager::update_service(const snort::SfIp& host_ip, uint16_t port,
@@ -207,7 +217,6 @@ void HostAttributesManager::update_service(const snort::SfIp& host_ip, uint16_t 
         {
             if ( created )
             {
-                host->set_ip_addr(host_ip);
                 host_attribute_stats.dynamic_host_adds++;
             }
 

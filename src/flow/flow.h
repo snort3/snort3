@@ -474,8 +474,8 @@ public:  // FIXIT-M privatize if possible
         bool trigger_detained_packet_event : 1;
         bool trigger_finalize_event : 1;
         bool use_direct_inject : 1;
-        bool data_decrypted : 1;    // indicate data in current flow is decrypted TLS application
-                                    //data
+        bool data_decrypted : 1;    // indicate data in current flow is decrypted TLS application data
+        bool snort_proto_id_set_by_ha : 1;
     } flags;
 
     FlowState flow_state;

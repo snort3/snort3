@@ -64,7 +64,8 @@ public:
     SO_PUBLIC static Inspector* get_inspector(
         const char* key, bool dflt_only = false, const SnortConfig* = nullptr);
 
-    SO_PUBLIC static Inspector* get_inspector_by_service(const char*, InspectorType type = IT_SERVICE);
+    static Inspector* get_service_inspector_by_service(const char*);
+    static Inspector* get_service_inspector_by_id(const SnortProtocolId);
 
     SO_PUBLIC static Binder* get_binder();
 

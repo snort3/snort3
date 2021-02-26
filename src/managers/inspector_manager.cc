@@ -231,10 +231,49 @@ struct FrameworkPolicy
     Inspector* binder;
     Inspector* wizard;
 
+    std::unordered_map<SnortProtocolId, Inspector*> inspector_cache_by_id;
+    std::unordered_map<std::string, Inspector*> inspector_cache_by_service;
+
     bool default_binder;
 
     void vectorize(SnortConfig*);
+    void add_inspector_to_cache(PHInstance*, SnortConfig*);
+    void remove_inspector_from_cache(Inspector*);
 };
+
+void FrameworkPolicy::add_inspector_to_cache(PHInstance* p, SnortConfig* sc)
+{
+    if (p->pp_class.api.type == IT_SERVICE and p->pp_class.api.service and p->handler)
+    {
+        SnortProtocolId id = sc->proto_ref->find(p->pp_class.api.service);
+        if (id != UNKNOWN_PROTOCOL_ID)
+            inspector_cache_by_id[id] = p->handler;
+        inspector_cache_by_service[p->pp_class.api.service] = p->handler;
+    }
+}
+
+void FrameworkPolicy::remove_inspector_from_cache(Inspector* ins)
+{
+    if (!ins)
+        return;
+
+    for(auto i = inspector_cache_by_id.begin(); i != inspector_cache_by_id.end(); i++)
+    {
+        if (ins == i->second)
+        {
+            inspector_cache_by_id.erase(i);
+            break;
+        }
+    }
+    for(auto i = inspector_cache_by_service.begin(); i != inspector_cache_by_service.end(); i++)
+    {
+        if (ins == i->second)
+        {
+            inspector_cache_by_service.erase(i);
+            break;
+        }
+    }
+}
 
 void FrameworkPolicy::vectorize(SnortConfig* sc)
 {
@@ -421,20 +460,6 @@ static bool get_instance(
     return false;
 }
 
-static PHInstance* get_instance_by_service(FrameworkPolicy* fp, const char* keyword,
-    InspectorType type)
-{
-    std::vector<PHInstance*>::iterator it;
-
-    for ( it = fp->ilist.begin(); it != fp->ilist.end(); ++it )
-    {
-        if ( (*it)->pp_class.api.service && !strcmp((*it)->pp_class.api.service, keyword) &&
-            (*it)->pp_class.api.type == type )
-            return *it;
-    }
-    return nullptr;
-}
-
 static PHInstance* get_instance(FrameworkPolicy* fp, const char* keyword)
 {
     std::vector<PHInstance*>::iterator it;
@@ -580,19 +605,26 @@ Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only, cons
     return p->handler;
 }
 
-Inspector* InspectorManager::get_inspector_by_service(const char* key, InspectorType type)
+Inspector* InspectorManager::get_service_inspector_by_service(const char* key)
 {
     InspectionPolicy* pi = get_inspection_policy();
 
     if ( !pi || !pi->framework_policy )
         return nullptr;
 
-    PHInstance* p = get_instance_by_service(pi->framework_policy, key, type);
+    auto g = pi->framework_policy->inspector_cache_by_service.find(key);
+    return (g != pi->framework_policy->inspector_cache_by_service.end()) ? g->second : nullptr;
+}
 
-    if ( !p )
+Inspector* InspectorManager::get_service_inspector_by_id(const SnortProtocolId protocol_id)
+{
+    InspectionPolicy* pi = get_inspection_policy();
+
+    if ( !pi || !pi->framework_policy )
         return nullptr;
-
-    return p->handler;
+ 
+    auto g = pi->framework_policy->inspector_cache_by_id.find(protocol_id);
+    return (g != pi->framework_policy->inspector_cache_by_id.end()) ? g->second : nullptr;
 }
 
 bool InspectorManager::delete_inspector(SnortConfig* sc, const char* iname)
@@ -604,6 +636,7 @@ bool InspectorManager::delete_inspector(SnortConfig* sc, const char* iname)
     if ( get_instance(fp, iname, old_it) )
     {
         (*old_it)->set_reloaded(RELOAD_TYPE_DELETED);
+        fp->remove_inspector_from_cache((*old_it)->handler);
         fp->ilist.erase(old_it);
         ok = true;
         std::vector<PHInstance*>::iterator bind_it;
@@ -950,6 +983,12 @@ static bool configure(SnortConfig* sc, FrameworkPolicy* fp, bool cloned)
 
     sort(fp->ilist.begin(), fp->ilist.end(), PHInstance::comp);
     fp->vectorize(sc);
+
+    // create cache
+    fp->inspector_cache_by_id.clear();
+    fp->inspector_cache_by_service.clear();
+    for ( auto* p : fp->ilist )
+        fp->add_inspector_to_cache(p, sc);
 
     if ( !fp->binder and (fp->session.num or fp->wizard) )
         instantiate_default_binder(sc, fp);

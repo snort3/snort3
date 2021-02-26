@@ -42,24 +42,12 @@ THREAD_LOCAL ProfileStats bindPerfStats;
 // helpers
 //-------------------------------------------------------------------------
 
-static Inspector* get_gadget(const Flow& flow)
+static Inspector* get_gadget(const SnortProtocolId protocol_id)
 {
-    if (flow.ssn_state.snort_protocol_id == UNKNOWN_PROTOCOL_ID)
+    if (protocol_id == UNKNOWN_PROTOCOL_ID)
         return nullptr;
 
-    const SnortConfig* sc = SnortConfig::get_conf();
-    const char* s = sc->proto_ref->get_name(flow.ssn_state.snort_protocol_id);
-
-    return InspectorManager::get_inspector_by_service(s, IT_SERVICE);
-}
-
-static Inspector* get_gadget_by_service(const char* service)
-{
-    const SnortConfig* sc = SnortConfig::get_conf();
-    const SnortProtocolId id = sc->proto_ref->find(service);
-    const char* s = sc->proto_ref->get_name(id);
-
-    return InspectorManager::get_inspector_by_service(s, IT_SERVICE);
+    return InspectorManager::get_service_inspector_by_id(protocol_id);
 }
 
 static std::string to_string(const sfip_var_t* list)
@@ -416,7 +404,7 @@ void Stuff::apply_service(Flow& flow)
         flow.set_data(data);
 
     if (!gadget)
-        gadget = get_gadget(flow);
+        gadget = get_gadget(flow.ssn_state.snort_protocol_id);
 
     if (gadget)
     {
@@ -437,7 +425,7 @@ void Stuff::apply_service(Flow& flow)
 void Stuff::apply_assistant(Flow& flow, const char* service)
 {
     if (!gadget)
-        gadget = get_gadget_by_service(service);
+        gadget = InspectorManager::get_service_inspector_by_service(service);
 
     if (gadget)
         flow.set_assistant_gadget(gadget);
@@ -632,23 +620,27 @@ void Binder::handle_flow_setup(Flow& flow, bool standby)
 
     // FIXIT-M logic for applying information from the host attribute table likely doesn't belong
     // in binder, but it *does* need to occur before the binding lookup (for service information)
-    const HostAttributesEntry host = HostAttributesManager::find_host(flow.server_ip);
-    if (host)
+    HostAttriInfo host;
+    HostAttriInfo* p_host = nullptr;
+    if ( HostAttributesManager::get_host_attributes(flow.server_ip, flow.server_port, &host) )
+        p_host = &host;
+
+    if (p_host)
     {
         // Set the fragmentation (IP) or stream (TCP) policy from the host entry
         switch (flow.pkt_type)
         {
             case PktType::IP:
-                flow.ssn_policy = host->get_frag_policy();
+                flow.ssn_policy = p_host->frag_policy;
                 break;
             case PktType::TCP:
-                flow.ssn_policy = host->get_stream_policy();
+                flow.ssn_policy = p_host->stream_policy;
                 break;
             default:
                 break;
         }
 
-        Stream::set_snort_protocol_id(&flow, host, FROM_SERVER);
+        Stream::set_snort_protocol_id_from_ha(&flow, p_host->snort_protocol_id);
         if (flow.ssn_state.snort_protocol_id != UNKNOWN_PROTOCOL_ID)
         {
             const SnortConfig* sc = SnortConfig::get_conf();

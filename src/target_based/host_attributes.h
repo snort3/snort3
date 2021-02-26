@@ -77,6 +77,13 @@ struct HostPolicyDescriptor
     uint8_t fragPolicy = 0;
 };
 
+struct HostAttriInfo
+{
+    SnortProtocolId snort_protocol_id = UNKNOWN_PROTOCOL_ID;
+    uint8_t stream_policy = 0;
+    uint8_t frag_policy = 0;
+};
+
 class HostAttributesDescriptor
 {
 public:
@@ -86,32 +93,24 @@ public:
     bool update_service(uint16_t port, uint16_t protocol, SnortProtocolId, bool& updated,
         bool is_appid_service = false);
     void clear_appid_services();
-    SnortProtocolId get_snort_protocol_id(int ipprotocol, uint16_t port) const;
+    void get_host_attributes(uint16_t, HostAttriInfo*) const;
 
+    // Note: the following get/set are only called from main thread on a temp LRU table
     const snort::SfIp& get_ip_addr() const
     { return ip_address; }
 
     void set_ip_addr(const snort::SfIp& host_ip_addr)
     {
-        std::lock_guard<std::mutex> lck(host_attributes_lock);
         ip_address = host_ip_addr;
     }
 
-    uint8_t get_frag_policy() const
-    { return policies.fragPolicy; }
-
     void set_frag_policy(const uint8_t frag_policy)
     {
-        std::lock_guard<std::mutex> lck(host_attributes_lock);
         policies.fragPolicy = frag_policy;
     }
 
-    uint8_t get_stream_policy() const
-    { return policies.streamPolicy; }
-
     void set_stream_policy(uint8_t stream_policy)
     {
-        std::lock_guard<std::mutex> lck(host_attributes_lock);
         policies.streamPolicy = stream_policy;
     }
 
@@ -150,7 +149,7 @@ public:
     static void term();
 
     static bool add_host(HostAttributesEntry, snort::SnortConfig*);
-    static HostAttributesEntry find_host(const snort::SfIp&);
+    static bool get_host_attributes(const snort::SfIp&, uint16_t, HostAttriInfo*);
     static void update_service(const snort::SfIp&, uint16_t port, uint16_t protocol,
         SnortProtocolId, bool is_appid_service = false);
     static void clear_appid_services();

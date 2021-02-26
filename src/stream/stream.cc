@@ -426,37 +426,22 @@ int Stream::set_snort_protocol_id_expected(
         swap_app_direction);
 }
 
-void Stream::set_snort_protocol_id(
-    Flow* flow, const HostAttributesEntry& host, int /*direction*/)
+void Stream::set_snort_protocol_id_from_ha(
+    Flow* flow, const SnortProtocolId snort_protocol_id)
 {
-    SnortProtocolId snort_protocol_id;
-
     if (!flow )
         return;
 
-    /* Cool, its already set! */
     if (flow->ssn_state.snort_protocol_id != UNKNOWN_PROTOCOL_ID)
         return;
 
     if (flow->ssn_state.ipprotocol == 0)
-    {
         set_ip_protocol(flow);
-    }
-
-    snort_protocol_id = host->get_snort_protocol_id
-        (flow->ssn_state.ipprotocol, flow->server_port);
-
-#if 0
-    // FIXIT-M from client doesn't imply need to swap
-    if (direction == FROM_CLIENT)
-    {
-        if ( snort_protocol_id &&
-            (flow->ssn_state.session_flags & SSNFLAG_MIDSTREAM) )
-            flow->ssn_state.session_flags |= SSNFLAG_CLIENT_SWAP;
-    }
-#endif
 
     flow->ssn_state.snort_protocol_id = snort_protocol_id;
+    if ( snort_protocol_id != UNKNOWN_PROTOCOL_ID &&
+         snort_protocol_id != INVALID_PROTOCOL_ID )
+        flow->flags.snort_proto_id_set_by_ha = true;
 }
 
 SnortProtocolId Stream::get_snort_protocol_id(Flow* flow)
@@ -477,17 +462,18 @@ SnortProtocolId Stream::get_snort_protocol_id(Flow* flow)
     if (flow->ssn_state.ipprotocol == 0)
         set_ip_protocol(flow);
 
-    if ( HostAttributesEntry host = HostAttributesManager::find_host(flow->server_ip) )
+    HostAttriInfo host;
+    if (HostAttributesManager::get_host_attributes(flow->server_ip, flow->server_port, &host))
     {
-        set_snort_protocol_id(flow, host, FROM_SERVER);
+        set_snort_protocol_id_from_ha(flow, host.snort_protocol_id);
 
         if (flow->ssn_state.snort_protocol_id != UNKNOWN_PROTOCOL_ID)
             return flow->ssn_state.snort_protocol_id;
     }
 
-    if ( HostAttributesEntry host = HostAttributesManager::find_host(flow->client_ip) )
+    if (HostAttributesManager::get_host_attributes(flow->client_ip, flow->client_port, &host))
     {
-        set_snort_protocol_id(flow, host, FROM_CLIENT);
+        set_snort_protocol_id_from_ha(flow, host.snort_protocol_id);
 
         if (flow->ssn_state.snort_protocol_id != UNKNOWN_PROTOCOL_ID)
             return flow->ssn_state.snort_protocol_id;
@@ -502,12 +488,15 @@ SnortProtocolId Stream::set_snort_protocol_id(Flow* flow, SnortProtocolId id, bo
     if (!flow)
         return UNKNOWN_PROTOCOL_ID;
 
+    if (flow->ssn_state.snort_protocol_id != id)
+        flow->flags.snort_proto_id_set_by_ha = false;
+
     flow->ssn_state.snort_protocol_id = id;
 
     if (!flow->ssn_state.ipprotocol)
         set_ip_protocol(flow);
 
-    if ( !flow->is_proxied() )
+    if ( !flow->is_proxied() and !flow->flags.snort_proto_id_set_by_ha )
     {
         HostAttributesManager::update_service
             (flow->server_ip, flow->server_port, flow->ssn_state.ipprotocol, id, is_appid_service);

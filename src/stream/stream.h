@@ -221,8 +221,7 @@ public:
     //  Populate a session key from the Packet
     static void populate_flow_key(Packet*, FlowKey*);
 
-    static void set_snort_protocol_id(
-        Flow*, const HostAttributesEntry&, int direction);
+    static void set_snort_protocol_id_from_ha(Flow*, const SnortProtocolId);
 
     static bool is_midstream(Flow* flow)
     { return ((flow->ssn_state.session_flags & SSNFLAG_MIDSTREAM) != 0); }
