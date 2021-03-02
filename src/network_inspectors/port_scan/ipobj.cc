@@ -23,6 +23,11 @@
 #include "config.h"
 #endif
 
+#include <algorithm>
+#include <cstring>
+#include <string>
+#include <vector>
+
 #include "ipobj.h"
 
 #include "protocols/packet.h"
@@ -30,6 +35,7 @@
 #include "utils/util_cstring.h"
 
 using namespace snort;
+using namespace std;
 
 /*
    IP COLLECTION INTERFACE
@@ -160,6 +166,75 @@ static int portset_add(PORTSET* portset, unsigned port_lo, unsigned port_hi)
     return 0;
 }
 
+static bool search_mask(char* token, bool is_ipv6)
+{
+    return (strchr(token, '/') or
+        (!is_ipv6 and strchr(token, ':')));
+}
+
+static bool search_mask_delim(char* token, bool is_ipv6)
+{
+    return (token[strlen(token)-1] == '/' or
+        (!is_ipv6 and token[strlen(token)-1] == ':'));
+}
+
+static bool check_ipv6(char* token)
+{
+    if (count(token, token + strlen(token), ':') > 1)
+        return true;
+    else
+        return false;
+}
+
+// Formats:
+// ip/:mask/bit or ip /: mask/bit or ip /:mask/bit
+// or ip mask
+// eg 1.1.1.1/32, 1.1.1.1 : 0.0.0.0, 1.1.1.1 0.0.0.0, 1.1.1.1 /32
+// mask, port optional
+static char* check_delimiter(char* ipstr)
+{
+    string prev;
+    char* saveptr     = nullptr;
+    char* saveptr_sub = nullptr;
+    vector<char*> subtokens;
+    bool is_ipv6 = false;
+
+    char* token = strtok_r(ipstr, ",", &saveptr);
+    while (token)
+    {
+        size_t i = 0, port_index = 1;
+        char* tmp_subtoken = strtok_r(token, " \t", &saveptr_sub);
+        if (tmp_subtoken)
+            is_ipv6 = check_ipv6(tmp_subtoken);
+        while (tmp_subtoken)
+        {
+            subtokens.emplace_back(tmp_subtoken);
+            if (search_mask_delim(tmp_subtoken, is_ipv6))
+                port_index = i + 2;
+            else if (search_mask(tmp_subtoken, is_ipv6))
+                port_index = i + 1;
+            else if ((i == 1) and strchr(tmp_subtoken, '.'))
+                port_index = i + 1;
+            i++;
+            tmp_subtoken = strtok_r(nullptr, " \t", &saveptr_sub);
+        }
+        for (i = 0; i < subtokens.size(); i++)
+        {
+            if (i < port_index)
+                prev += string(subtokens[i]);
+            else
+                prev += string("#") + subtokens[i];
+        }
+        subtokens.clear();
+        prev += string(",");
+        token = strtok_r(nullptr, ",", &saveptr);
+    }
+    prev.pop_back();
+    char *tmp_ipstr = new char[prev.length() + 1];
+    strcpy(tmp_ipstr, prev.c_str());
+    return tmp_ipstr;
+}
+
 static int port_parse(char* portstr, PORTSET* portset)
 {
     char* port_begin = snort_strdup(portstr);
@@ -251,15 +326,15 @@ static int ip_parse(char* ipstr, SfCidr* ip, char* not_flag, PORTSET* portset, c
         *end_bracket = '\0';
     }
 
-    if (ip->set(ipstr) != SFIP_SUCCESS)
-        return -1;
-
     /* Just to get the IP string out of the way */
     char* lasts = nullptr;
-    strtok_r(ipstr, " \t", &lasts);
+    char* ip_str = strtok_r(ipstr, "#", &lasts);
 
-    /* Is either the port after the 1st space, or null */
-    port_str = strtok_r(nullptr, " \t", &lasts);
+    if (ip->set(ip_str) != SFIP_SUCCESS)
+        return -1;
+
+    /* The port is after the # */
+    port_str = strtok_r(nullptr, "#", &lasts);
 
     while (port_str)
     {
@@ -278,7 +353,7 @@ static int ip_parse(char* ipstr, SfCidr* ip, char* not_flag, PORTSET* portset, c
         }
 
         port_parse(port_str, portset);
-        port_str = strtok_r(nullptr, " \t", &lasts);
+        port_str = strtok_r(nullptr, "#", &lasts);
     }
 
     if (portset->port_list.count == 0)
@@ -317,7 +392,8 @@ int ipset_parse(IPSET* ipset, const char* ipstr)
     SfCidr ip;
     PORTSET portset;
 
-    copy = snort_strdup(ipstr);
+    char* tmp_copy = snort_strdup(ipstr);
+    copy = check_delimiter(tmp_copy);
     startIP = copy;
 
     if (*startIP == '!')
@@ -346,13 +422,15 @@ int ipset_parse(IPSET* ipset, const char* ipstr)
 
         if (ip_parse(startIP, &ip, &item_not_flag, &portset, &endIP) != 0)
         {
-            snort_free(copy);
+            snort_free(tmp_copy);
+            delete[] copy;
             return -5;
         }
 
         if (ipset_add(ipset, &ip, &portset, (item_not_flag ^ set_not_flag)) != 0)
         {
-            snort_free(copy);
+            snort_free(tmp_copy);
+            delete[] copy;
             return -6;
         }
 
@@ -366,7 +444,8 @@ int ipset_parse(IPSET* ipset, const char* ipstr)
         startIP = endIP;
     }
 
-    snort_free(copy);
+    snort_free(tmp_copy);
+    delete[] copy;
 
     if (!parse_count)
         return -7;
