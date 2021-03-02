@@ -108,12 +108,13 @@ static bool open_pcap_dumper()
 }
 
 // for unit test
-static void _packet_capture_enable(const string& f)
+static void _packet_capture_enable(const string& f, const int16_t g = -1)
 {
     if ( !config.enabled )
     {
         config.filter = f;
         config.enabled = true;
+        config.group = g;
     }
 }
 
@@ -121,6 +122,7 @@ static void _packet_capture_enable(const string& f)
 static void _packet_capture_disable()
 {
     config.enabled = false;
+    config.group = -1;
     LogMessage("Packet capture disabled\n");
 }
 
@@ -128,10 +130,10 @@ static void _packet_capture_disable()
 // non-static functions
 // -----------------------------------------------------------------------------
 
-void packet_capture_enable(const string& f)
+void packet_capture_enable(const string& f, const int16_t g)
 {
 
-    _packet_capture_enable(f);
+    _packet_capture_enable(f, g);
 
     if ( !capture_initialized() )
     {
@@ -209,6 +211,11 @@ void PacketCapture::eval(Packet* p)
 
     if ( config.enabled )
     {
+        if ( (config.group != -1) and
+            !((config.group == p->pkth->ingress_group) or
+            (config.group == p->pkth->egress_group)) )
+            return;
+
         if ( !capture_initialized() )
             if ( !capture_init() )
                 return;
@@ -495,6 +502,8 @@ TEST_CASE("bpf filter", "[PacketCapture]")
     p_non_match.pktlen = sizeof(match);
 
     daq_hdr.pktlen = sizeof(match);
+    daq_hdr.ingress_group = -1;
+    daq_hdr.egress_group = -1;
 
     CaptureModule mod;
     MockPacketCapture cap(&mod);

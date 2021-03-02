@@ -29,6 +29,7 @@
 struct CaptureConfig
 {
     bool enabled;
+    int16_t group;
     std::string filter;
 };
 

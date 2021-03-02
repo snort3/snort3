@@ -45,12 +45,26 @@ static const Parameter s_capture[] =
     { "filter", Parameter::PT_STRING, nullptr, nullptr,
       "bpf filter to use for packet dump" },
 
+    { "group", Parameter::PT_INT, "-1:32767", "-1",
+      "group filter to use for the packet dump" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter capture_params[] =
+{
+    { "filter", Parameter::PT_STRING, nullptr, nullptr,
+      "bpf filter to use for packet dump" },
+
+    { "group", Parameter::PT_INT, "-1:32767", "-1",
+      "group filter to use for the packet dump" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 static const Command cap_cmds[] =
 {
-    { "enable", enable, &s_capture[1], "dump raw packets"},
+    { "enable", enable, capture_params, "dump raw packets"},
     { "disable", disable, nullptr, "stop packet dump"},
     { nullptr, nullptr, nullptr, nullptr }
 };
@@ -71,12 +85,13 @@ THREAD_LOCAL ProfileStats cap_prof_stats;
 class PacketCaptureDebug : public AnalyzerCommand
 {
 public:
-    PacketCaptureDebug(const char* f);
+    PacketCaptureDebug(const char* f, const int16_t g);
     bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "PACKET_CAPTURE_DEBUG"; }
 private:
     bool enable = false;
     std::string filter;
+    int16_t group = -1;
 };
 
 // -----------------------------------------------------------------------------
@@ -84,13 +99,14 @@ private:
 // -----------------------------------------------------------------------------
 static int enable(lua_State* L)
 {
-    main_broadcast_command(new PacketCaptureDebug(lua_tostring(L, 1)), true);
+    main_broadcast_command(new PacketCaptureDebug(lua_tostring(L, 1),
+        luaL_optint(L, 2, 0)), true);
     return 0;
 }
 
 static int disable(lua_State*)
 {
-    main_broadcast_command(new PacketCaptureDebug(nullptr), true);
+    main_broadcast_command(new PacketCaptureDebug(nullptr, -1), true);
     return 0;
 }
 
@@ -98,11 +114,12 @@ static int disable(lua_State*)
 // non-static functions
 // -----------------------------------------------------------------------------
 
-PacketCaptureDebug::PacketCaptureDebug(const char* f)
+PacketCaptureDebug::PacketCaptureDebug(const char* f, const int16_t g)
 {
     if (f)
     {
         filter = f;
+        group = g;
         enable = true;
     }
 }
@@ -110,7 +127,7 @@ PacketCaptureDebug::PacketCaptureDebug(const char* f)
 bool PacketCaptureDebug::execute(Analyzer&, void**)
 {
     if (enable)
-        packet_capture_enable(filter);
+        packet_capture_enable(filter, group);
     else
         packet_capture_disable();
 
@@ -119,7 +136,10 @@ bool PacketCaptureDebug::execute(Analyzer&, void**)
 
 CaptureModule::CaptureModule() :
     Module(CAPTURE_NAME, CAPTURE_HELP, s_capture)
-{ config.enabled = false; }
+{
+    config.enabled = false;
+    config.group = -1;
+}
 
 bool CaptureModule::set(const char*, Value& v, SnortConfig*)
 {
@@ -128,6 +148,9 @@ bool CaptureModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("filter") )
         config.filter = v.get_string();
+
+    else if ( v.is("group") )
+        config.group = v.get_int16();
 
     else
         return false;
