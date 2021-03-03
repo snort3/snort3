@@ -32,6 +32,7 @@ void JSONFormatter::init_output(FILE* fh)
 {
     fwrite("[", 1, 1, fh);
     first_write = true;
+    initialized = true;
 }
 
 void JSONFormatter::write(FILE* fh, time_t cur_time)
@@ -126,7 +127,13 @@ void JSONFormatter::write(FILE* fh, time_t cur_time)
 }
 
 void JSONFormatter::finalize_output(FILE* fh)
-{ fwrite("]\n", 2, 1, fh); }
+{
+    if ( initialized )
+    {
+        fwrite("]\n", 2, 1, fh);
+        initialized = false;
+    }
+}
 
 #ifdef CATCH_TEST_BUILD
 

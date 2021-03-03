@@ -40,6 +40,7 @@ public:
 
 private:
     bool first_write = true;
+    bool initialized = false;
 };
 
 #endif

@@ -92,19 +92,21 @@ PerfTracker::PerfTracker(PerfConfig* config, const char* tracker_name)
 
 PerfTracker::~PerfTracker()
 {
-    formatter->finalize_output(fh);
-    delete formatter;
+    close();
 
-    if (fh && fh != stdout)
-        fclose(fh);
+    delete formatter;
 }
 
 void PerfTracker::close()
 {
-    if (fh && fh != stdout)
+    if (fh)
     {
-        fclose(fh);
-        fh = nullptr;
+        formatter->finalize_output(fh);
+        if (fh != stdout)
+        {
+            fclose(fh);
+            fh = nullptr;
+        }
     }
 }
 
