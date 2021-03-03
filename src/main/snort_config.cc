@@ -726,22 +726,6 @@ void SnortConfig::set_show_year(bool enabled)
         output_flags &= ~OUTPUT_FLAG__INCLUDE_YEAR;
 }
 
-void SnortConfig::set_treat_drop_as_alert(bool enabled)
-{
-    if (enabled)
-        run_flags |= RUN_FLAG__TREAT_DROP_AS_ALERT;
-    else
-        run_flags &= ~RUN_FLAG__TREAT_DROP_AS_ALERT;
-}
-
-void SnortConfig::set_treat_drop_as_ignore(bool enabled)
-{
-    if (enabled)
-        run_flags |= RUN_FLAG__TREAT_DROP_AS_IGNORE;
-    else
-        run_flags &= ~RUN_FLAG__TREAT_DROP_AS_IGNORE;
-}
-
 void SnortConfig::set_process_all_events(bool enabled)
 {
     if (enabled)

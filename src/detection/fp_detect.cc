@@ -580,9 +580,7 @@ static inline int fpSessionAlerted(Packet* p, const OptTreeNode* otn)
 **    event.  Otherwise if the ordering has it that pass rule events are
 **    processed after a drop or alert you will see the drops and alerts,
 **    and the pass event just causes us to stop processing any more events
-**    on the packet, but the packet does not pass.  Also, the --treat-drop-as-alert
-**    flag causes any drop/block/reset rules to be loaded as alert rules.
-**    The default has been to ignore them on parsing.
+**    on the packet, but the packet does not pass.
 **
 **    If this is less than clear, here's the $.02 version:
 **    default order -> pass drop alert log ( --alert-before-pass reverts
@@ -592,8 +590,6 @@ static inline int fpSessionAlerted(Packet* p, const OptTreeNode* otn)
 **    the -o flag is useless, but accepted, for now.
 **    the max_events and log fields are reduced to only needing the log
 **    events field. max_fields is harmless.
-**    ( drop rules may be honored as alerts in IDS mode (no -Q) by using
-**    the --treat-drop-as-alert)
 **
 **  FORMAL INPUTS
 **    OtnxMatchData * - omd to select event from.

@@ -556,12 +556,6 @@ static const Parameter s_params[] =
     { "--talos", Parameter::PT_IMPLIED, nullptr, nullptr,
       "enable Talos tweak (same as --tweaks talos)", },
 
-    { "--treat-drop-as-alert", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "converts drop, block, and reset rules into alert rules when loaded" },
-
-    { "--treat-drop-as-ignore", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "use drop, block, and reset rules to ignore session traffic when not inline" },
-
     { "--tweaks", Parameter::PT_STRING, nullptr, nullptr,
       "tune configuration" },
 
@@ -1089,12 +1083,6 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("--talos") )
         sc->set_tweaks("talos");
-
-    else if ( v.is("--treat-drop-as-alert") )
-        sc->set_treat_drop_as_alert(true);
-
-    else if ( v.is("--treat-drop-as-ignore") )
-        sc->set_treat_drop_as_ignore(true);
 
     else if ( v.is("--tweaks") )
         sc->set_tweaks(v.get_string());
