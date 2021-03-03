@@ -590,7 +590,7 @@ void Ipv4Codec::log(TextLog* const text_log, const uint8_t* raw_pkt, const uint1
     bool mf_set = false;
 
     TextLog_Print(text_log, "Next:0x%02X TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
-        ip4h->proto(), ip4h->ttl(), ip4h->tos(),
+        static_cast<uint8_t>(ip4h->proto()), ip4h->ttl(), ip4h->tos(),
         ip4h->id(), hlen, len);
 
     /* print the reserved bit if it's set */

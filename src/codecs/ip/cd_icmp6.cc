@@ -336,7 +336,7 @@ void Icmp6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const uint16_t /*lyr_len*/)
 {
     const icmp::Icmp6Hdr* const icmph = reinterpret_cast<const icmp::Icmp6Hdr*>(raw_pkt);
-    TextLog_Print(text_log, "sType:%d  Code:%d  ", icmph->type, icmph->code);
+    TextLog_Print(text_log, "sType:%d  Code:%d  ", icmph->type, static_cast<uint8_t>(icmph->code));
 }
 
 /******************************************************************

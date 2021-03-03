@@ -137,7 +137,7 @@ static void LogGREHeader(TextLog* log, Packet* p)
         return;
 
     TextLog_Print(log, "GRE version:%u flags:0x%02X ether-type:0x%04X\n",
-        greh->get_version(), greh->flags, greh->proto());
+        greh->get_version(), greh->flags, static_cast<uint16_t>(greh->proto()));
 }
 
 /*--------------------------------------------------------------------
@@ -225,7 +225,7 @@ static void LogIpOptions(TextLog* log, const ip::IpOptionIterator& options)
         default:
             // the only cases where op.len is invalid were handled aboved
             // op.len includes code and length bytes but data does not
-            TextLog_Print(log, "Type %u, Len %u", op.code, op.len);
+            TextLog_Print(log, "Type %u, Len %u", static_cast<uint8_t>(op.code), op.len);
 
             if ( op.len <= 2 )
                 break;
@@ -538,7 +538,7 @@ static void LogTcpOptions(TextLog* log, const tcp::TcpOptIterator& opt_iter)
             break;
 
         default:
-            TextLog_Print(log, " Kind %u, Len %u", opt.code, opt.len);
+            TextLog_Print(log, " Kind %u, Len %u", static_cast<uint8_t>(opt.code), opt.len);
 
             if ( opt.len <= 2 )
                 break;
@@ -756,7 +756,7 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet* p)
             LogIPHeader(log, orig);
 
             TextLog_Print(log, "Protocol: 0x%X (unknown or "
-                "header truncated)", orig->ptrs.ip_api.proto());
+                "header truncated)", static_cast<uint8_t>(orig->ptrs.ip_api.proto()));
             break;
         }
         } /* switch */

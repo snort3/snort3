@@ -150,7 +150,7 @@ void LlcCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 
         TextLog_Print(text_log, " ORG:0x%02X%02X%02X PROTO:0x%04X",
             other->org_code[0], other->org_code[1], other->org_code[2],
-            proto);
+            static_cast<uint16_t>(proto));
     }
 }
 

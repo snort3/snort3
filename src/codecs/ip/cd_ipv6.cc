@@ -564,7 +564,7 @@ void Ipv6Codec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     TextLog_Putc(text_log, '\t');
 
     TextLog_Print(text_log, "Next:0x%02X TTL:%u TOS:0x%X DgmLen:%u",
-        ip6h->next(), ip6h->hop_lim(), ip6h->tos(),
+        static_cast<uint8_t>(ip6h->next()), ip6h->hop_lim(), ip6h->tos(),
         ip6h->len());
 }
 

@@ -285,7 +285,7 @@ void GreCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 
     TextLog_Print(text_log, "version:%u flags:0x%02X ethertype:(0x%04X)",
         greh->get_version(), greh->flags,
-        greh->proto());
+        static_cast<uint16_t>(greh->proto()));
 }
 
 //-------------------------------------------------------------------------

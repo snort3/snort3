@@ -79,10 +79,32 @@ void DaqMessageEventHandler::handle(DataEvent& event, Flow*)
     src.ntop(shost, sizeof(shost));
     dst.ntop(dhost, sizeof(dhost));
 
-    int vlan_tag = fs->vlan_tag == 0xfff ?  0 : fs->vlan_tag;
+    uint16_t vlan_tag = (fs->vlan_tag == 0xfff) ?  0 : fs->vlan_tag;
 
     TextLog_Print(hext_log,
-        "\n$%s %hd %hd %d %d %s %d %s %d %u %lu %lu %lu %lu %lu %lu %d %lu %lu %d %hd %d\n",
+        "\n$%s "        // type (sof or eof)
+        "%hd "          // ingressGroup
+        "%hd "          // egressGroup
+        "%d "           // ingressIntf
+        "%d "           // egressIntf
+        "%s "           // initiatorIp (stringified)
+        "%d "           // initiatorPort (host order)
+        "%s "           // responderIp (stringified)
+        "%d "           // responderPort (host order)
+        "%u "           // opaque
+        "%" PRIu64 " "  // initiatorPkts
+        "%" PRIu64 " "  // responderPkts
+        "%" PRIu64 " "  // initiatorPktsDropped
+        "%" PRIu64 " "  // responderPktsDropped
+        "%" PRIu64 " "  // initiatorBytesDropped
+        "%" PRIu64 " "  // responderBytesDropped
+        "%hhu "         // isQoSAppliedOnSrcIntf
+        "%ld "          // sof_timestamp.tv_sec
+        "%ld "          // eof_timestamp.tv_sec
+        "%hu "          // vlan_tag
+        "%hu "          // address_space_id
+        "%hhu"          // protocol
+        "\n",
         cmd,
         fs->ingressGroup,
         fs->egressGroup,

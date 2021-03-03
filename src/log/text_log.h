@@ -55,7 +55,7 @@ SO_PUBLIC void TextLog_Term(TextLog*);
 SO_PUBLIC bool TextLog_Putc(TextLog* const, char);
 SO_PUBLIC bool TextLog_Quote(TextLog* const, const char*);
 SO_PUBLIC bool TextLog_Write(TextLog* const, const char*, int len);
-SO_PUBLIC bool TextLog_Print(TextLog* const, const char* format, ...);
+SO_PUBLIC bool TextLog_Print(TextLog* const, const char* format, ...) __attribute__((format (printf, 2, 3)));
 
 SO_PUBLIC bool TextLog_Flush(TextLog* const);
 SO_PUBLIC int TextLog_Avail(TextLog* const);

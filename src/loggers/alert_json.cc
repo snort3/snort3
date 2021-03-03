@@ -262,7 +262,7 @@ static bool ff_flowstart_time(const Args& a)
     if (a.pkt->flow)
     {
         print_label(a, "flowstart_time");
-        TextLog_Print(json_log, "%lu", a.pkt->flow->flowstats.start_time.tv_sec);
+        TextLog_Print(json_log, "%ld", a.pkt->flow->flowstats.start_time.tv_sec);
         return true;
     }
     return false;
@@ -433,7 +433,7 @@ static bool ff_rule(const Args& a)
 static bool ff_seconds(const Args& a)
 {
     print_label(a, "seconds");
-    TextLog_Print(json_log, "%lu",  a.pkt->pkth->ts.tv_sec);
+    TextLog_Print(json_log, "%ld",  a.pkt->pkth->ts.tv_sec);
     return true;
 }
 

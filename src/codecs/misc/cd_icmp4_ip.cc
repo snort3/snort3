@@ -177,7 +177,7 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 
     TextLog_Print(text_log, "Next:%s(%02X) TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
         PacketManager::get_proto_name(ip4h->proto()),
-        ip4h->proto(), ip4h->ttl(), ip4h->tos(),
+        static_cast<uint8_t>(ip4h->proto()), ip4h->ttl(), ip4h->tos(),
         ip4h->id(), hlen, len);
 
     /* print the reserved bit if it's set */
@@ -295,7 +295,7 @@ void Icmp4IpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     {
         TextLog_Print(text_log, "Protocol:%s(%02X)",
             PacketManager::get_proto_name(ip4h->proto()),
-            ip4h->proto());
+            static_cast<uint8_t>(ip4h->proto()));
         break;
     }
     }

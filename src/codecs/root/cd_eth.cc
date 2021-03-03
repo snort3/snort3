@@ -138,9 +138,9 @@ void EthCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const ProtocolId prot_id = eh->ethertype();
 
     if (to_utype(prot_id) <= to_utype(ProtocolId::ETHERTYPE_MINIMUM))
-        TextLog_Print(text_log, "  len:0x%04X", prot_id);
+        TextLog_Print(text_log, "  len:0x%04X", static_cast<uint16_t>(prot_id));
     else
-        TextLog_Print(text_log, "  type:0x%04X", prot_id);
+        TextLog_Print(text_log, "  type:0x%04X", static_cast<uint16_t>(prot_id));
 }
 
 //-------------------------------------------------------------------------

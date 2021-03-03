@@ -207,7 +207,7 @@ static void ff_eth_type(const Args& a)
 static void ff_flowstart_time(const Args& a)
 {
     if (a.pkt->flow)
-        TextLog_Print(csv_log, "%lu", a.pkt->flow->flowstats.start_time.tv_sec);
+        TextLog_Print(csv_log, "%ld", a.pkt->flow->flowstats.start_time.tv_sec);
 }
 
 static void ff_gid(const Args& a)
@@ -318,7 +318,7 @@ static void ff_rule(const Args& a)
 
 static void ff_seconds(const Args& a)
 {
-    TextLog_Print(csv_log, "%lu",  a.pkt->pkth->ts.tv_sec);
+    TextLog_Print(csv_log, "%ld",  a.pkt->pkth->ts.tv_sec);
 }
 
 static void ff_server_bytes(const Args& a)

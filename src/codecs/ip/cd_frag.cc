@@ -137,7 +137,7 @@ void Ipv6FragCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const uint16_t offlg = fragh->off();
 
     TextLog_Print(text_log, "Next:0x%02X Off:%u ID:%u",
-        fragh->ip6f_nxt, offlg, fragh->id());
+        static_cast<uint8_t>(fragh->ip6f_nxt), offlg, fragh->id());
 
     if (fragh->mf())
         TextLog_Puts(text_log, " MF");
