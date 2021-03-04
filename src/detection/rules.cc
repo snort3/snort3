@@ -32,6 +32,9 @@
 #include "main/snort_config.h"
 #include "parser/parse_conf.h"
 #include "parser/parser.h"
+#include "parser/parse_rule.h"
+#include "ports/port_object.h"
+#include "ports/port_var_table.h"
 #include "sfip/sf_ipvar.h"
 #include "sfip/sf_vartable.h"
 
@@ -86,30 +89,58 @@ void RuleStateMap::apply(
     SnortConfig* sc, OptTreeNode* otn, unsigned ips_num, const RuleState& s)
 {
     IpsPolicy* policy = nullptr;
-    RuleTreeNode* rtn = getRtnFromOtn(otn, ips_num);
+    RuleTreeNode* b_rtn = getRtnFromOtn(otn, ips_num);
 
-    if ( !rtn )
-        if ( ips_num and (rtn = getRtnFromOtn(otn, 0)) )
-            policy = sc->policy_map->get_ips_policy(ips_num);
+    if ( !b_rtn and ips_num and (b_rtn = getRtnFromOtn(otn, 0)) )
+        policy = sc->policy_map->get_ips_policy(ips_num);
 
-    if ( !rtn )
+    if ( !b_rtn )
         return;
 
     if ( policy )
         policy->rules_shared++;
 
-    rtn = dup_rtn(rtn);
-    update_rtn(rtn, s);
-    addRtnToOtn(sc, otn, rtn, ips_num);
+    RuleTreeNode* t_rtn = dup_rtn(b_rtn, policy);
+    update_rtn(t_rtn, s);
+
+    auto bspo = b_rtn->src_portobject;
+    auto bdpo = b_rtn->dst_portobject;
+    auto tspo = t_rtn->src_portobject;
+    auto tdpo = t_rtn->dst_portobject;
+
+    if ( (bspo and tspo and !PortObjectEqual(bspo, tspo)) or
+         (bdpo and tdpo and !PortObjectEqual(bdpo, tdpo)) )
+        parse_rule_finish_portlist(sc, t_rtn, otn);
+
+    addRtnToOtn(sc, otn, t_rtn, ips_num);
 }
 
-RuleTreeNode* RuleStateMap::dup_rtn(RuleTreeNode* rtn)
+RuleTreeNode* RuleStateMap::dup_rtn(RuleTreeNode* rtn, IpsPolicy* policy)
 {
     RuleTreeNode* ret = new RuleTreeNode(*rtn);
 
+    auto ipvt = policy ? policy->ip_vartable : nullptr;
+    auto povt = policy ? policy->portVarTable : nullptr;
+
+    auto sip = sfvt_lookup_var(ipvt, rtn->sip->name);
+    auto dip = sfvt_lookup_var(ipvt, rtn->dip->name);
+    auto spo = rtn->src_portobject
+        ? PortVarTableFind(povt, rtn->src_portobject->name, false) : nullptr;
+    auto dpo = rtn->dst_portobject
+        ? PortVarTableFind(povt, rtn->dst_portobject->name, false) : nullptr;
+
+    ret->sip = sip
+        ? sfvar_create_alias(sip, sip->name)
+        : sfvar_deep_copy(rtn->sip);
+
+    ret->dip = dip
+        ? sfvar_create_alias(dip, dip->name)
+        : sfvar_deep_copy(rtn->dip);
+
+    ret->src_portobject = spo ? spo : ret->src_portobject;
+    ret->dst_portobject = dpo ? dpo : ret->dst_portobject;
+
     ret->otnRefCount = 0;
-    ret->sip = sfvar_deep_copy(rtn->sip);
-    ret->dip = sfvar_deep_copy(rtn->dip);
 
     RuleFpList* from = rtn->rule_func;
 

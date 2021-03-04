@@ -300,6 +300,7 @@ void SnortConfig::setup()
         rule_states = nullptr;
     }
 
+    ParseRulesFinish(this);
     ShowPolicyStats(this);
 
     /* Need to do this after dynamic detection stuff is initialized, too */

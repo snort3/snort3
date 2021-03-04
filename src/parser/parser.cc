@@ -463,12 +463,14 @@ void ParseRules(SnortConfig* sc)
         p->rules_loaded = get_policy_loaded_rule_count();
         p->rules_shared = get_policy_shared_rule_count();
     }
+}
 
+void ParseRulesFinish(SnortConfig* sc)
+{
     set_ips_policy(sc, 0);
 
     /* Compile/Finish and Print the PortList Tables */
     PortTablesFinish(sc->port_tables, sc->fast_pattern_config);
-
     parse_rule_print();
 }
 

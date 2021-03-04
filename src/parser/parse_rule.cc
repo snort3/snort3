@@ -1382,9 +1382,7 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
 
     validate_services(sc, otn);
     OtnLookupAdd(sc->otn_map, otn);
-
-    if ( FinishPortListRule(sc->port_tables, new_rtn, otn, sc->fast_pattern_config) )
-        ParseError("Failed to finish a port list rule.");
+    parse_rule_finish_portlist(sc, new_rtn, otn);
 
     if ( s_capture )
     {
@@ -1395,3 +1393,9 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
     ClearIpsOptionsVars();
 }
 
+void parse_rule_finish_portlist(SnortConfig* sc, RuleTreeNode* rtn, OptTreeNode* otn)
+{
+    if ( FinishPortListRule(sc->port_tables, rtn, otn, sc->fast_pattern_config) )
+        ParseError("%u:%u rule failed to finish a port list.",
+            otn->sigInfo.gid, otn->sigInfo.sid);
+}

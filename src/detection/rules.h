@@ -96,7 +96,7 @@ public:
     void apply(snort::SnortConfig*);
 
 private:
-    RuleTreeNode* dup_rtn(RuleTreeNode*);
+    RuleTreeNode* dup_rtn(RuleTreeNode*, IpsPolicy*);
     void update_rtn(RuleTreeNode*, const RuleState&);
     void apply(snort::SnortConfig*, OptTreeNode*, unsigned ips_num, const RuleState&);
 
