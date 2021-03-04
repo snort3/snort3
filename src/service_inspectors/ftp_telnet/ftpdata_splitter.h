@@ -38,6 +38,7 @@ public:
 
     Status scan(snort::Packet*, const uint8_t*, uint32_t len, uint32_t flags, uint32_t* fp ) override;
     bool finish(snort::Flow*) override;
+    bool init_partial_flush(snort::Flow*) override { return true; }
 
     bool is_paf() override
     { return true; }

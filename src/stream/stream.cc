@@ -356,6 +356,7 @@ void Stream::drop_flow(const Packet* p)
     if (!flow)
         return;
 
+    flow->session_state |= STREAM_STATE_BLOCK_PENDING;
     flow->session->clear();
     flow->set_state(Flow::FlowState::BLOCK);
 
