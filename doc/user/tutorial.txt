@@ -227,6 +227,12 @@ There are multiple ways to load rules too:
 
 * Use --lua to specify one or more rules as a command line argument.
 
+Ips states are similar to ips rules, except that they are parsed after the rules.
+That way rules can be overwritten in custom policies.
+
+States without the 'enable' option are loaded as stub rules with default gid:0, sid:0.
+A user should specify 'gid', 'sid', 'enable' options to avoid dummy rules.
+
 Output Files
 
 To make it simple to configure outputs when you run with multiple packet
