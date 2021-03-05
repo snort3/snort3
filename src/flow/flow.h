@@ -477,6 +477,7 @@ public:  // FIXIT-M privatize if possible
         bool use_direct_inject : 1;
         bool data_decrypted : 1;    // indicate data in current flow is decrypted TLS application data
         bool snort_proto_id_set_by_ha : 1;
+        bool efd_flow : 1;  // Indicate that current flow is an elephant flow
     } flags;
 
     FlowState flow_state;
