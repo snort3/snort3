@@ -216,7 +216,7 @@ void ServiceAppDescriptor::update_stats(AppId, bool){}
 void ClientAppDescriptor::update_user(AppId, const char*, AppidChangeBits&){}
 void ClientAppDescriptor::update_stats(AppId, bool) {}
 void PayloadAppDescriptor::update_stats(AppId, bool) {}
-void ServiceDiscovery::initialize() {}
+void ServiceDiscovery::initialize(AppIdInspector&) {}
 void ServiceDiscovery::reload() {}
 
 int ServiceDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&)

@@ -27,7 +27,6 @@
 
 #include "log/text_log.h"
 #include "log/unified2.h"
-#include "managers/inspector_manager.h"
 #include "time/packet_time.h"
 
 #include "appid_config.h"

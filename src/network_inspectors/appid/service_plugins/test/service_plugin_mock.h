@@ -84,11 +84,11 @@ SslPatternMatchers::~SslPatternMatchers() { }
 SipPatternMatchers::~SipPatternMatchers() { }
 HttpPatternMatchers::~HttpPatternMatchers() { }
 DnsPatternMatchers::~DnsPatternMatchers() { }
-void ClientDiscovery::initialize() {}
+void ClientDiscovery::initialize(AppIdInspector&) {}
 void ClientDiscovery::reload() {}
 FpSMBData* smb_data = nullptr;
 
-int AppIdDetector::initialize(){return 0;}
+int AppIdDetector::initialize(AppIdInspector&){return 0;}
 void AppIdDetector::reload() { }
 int AppIdDetector::data_add(AppIdSession&, void*, AppIdFreeFCN){return 0;}
 void* AppIdDetector::data_get(AppIdSession&) {return nullptr;}

@@ -31,6 +31,8 @@ namespace snort
 class SearchTool;
 }
 
+class AppIdInspector;
+
 struct PortPatternNode
 {
     AppId appId;
@@ -78,7 +80,7 @@ public:
     ~PatternClientDetector() override;
 
     void insert_client_port_pattern(PortPatternNode*);
-    void finalize_client_port_patterns();
+    void finalize_client_port_patterns(AppIdInspector&);
     void reload_client_port_patterns();
 
     int validate(AppIdDiscoveryArgs&) override;
@@ -100,7 +102,7 @@ public:
     ~PatternServiceDetector() override;
 
     void insert_service_port_pattern(PortPatternNode*);
-    void finalize_service_port_patterns();
+    void finalize_service_port_patterns(AppIdInspector&);
     void reload_service_port_patterns();
 
     int validate(AppIdDiscoveryArgs&) override;

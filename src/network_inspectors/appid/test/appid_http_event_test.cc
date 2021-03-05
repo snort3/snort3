@@ -51,9 +51,6 @@ using namespace snort;
 namespace snort
 {
 AppIdApi appid_api;
-Inspector* InspectorManager::get_inspector(
-    char const*, bool, const snort::SnortConfig*) { return nullptr; }
-
 Packet::Packet(bool) { }
 Packet::~Packet() { }
 
@@ -85,7 +82,7 @@ class FakeHttpMsgHeader
 FakeHttpMsgHeader* fake_msg_header = nullptr;
 
 AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol, AppidSessionDirection,
-    AppIdInspector*, OdpContext&)
+    AppIdInspector&, OdpContext&)
 {
     return nullptr;
 }
@@ -276,7 +273,7 @@ TEST_GROUP(appid_http_event)
 TEST(appid_http_event, handle_null_appid_data)
 {
     HttpEvent event(nullptr, false, 0);
-    HttpEventHandler event_handler(HttpEventHandler::REQUEST_EVENT);
+    HttpEventHandler event_handler(HttpEventHandler::REQUEST_EVENT, dummy_appid_inspector);
     mock().expectOneCall("get_appid_session");
     event_handler.handle(event, flow);
     mock().checkExpectations();
@@ -285,7 +282,7 @@ TEST(appid_http_event, handle_null_appid_data)
 TEST(appid_http_event, handle_null_msg_header)
 {
     HttpEvent event(nullptr, false, 0);
-    HttpEventHandler event_handler(HttpEventHandler::REQUEST_EVENT);
+    HttpEventHandler event_handler(HttpEventHandler::REQUEST_EVENT, dummy_appid_inspector);
 
     mock().strictOrder();
     mock().expectOneCall("get_appid_session");
@@ -317,7 +314,7 @@ static void run_event_handler(TestData test_data, TestData* expect_data = nullpt
 {
     HttpEvent event(nullptr, false, 0);
     FakeHttpMsgHeader http_msg_header;
-    HttpEventHandler event_handler(test_data.type);
+    HttpEventHandler event_handler(test_data.type, dummy_appid_inspector);
     fake_msg_header = &http_msg_header;
 
     host = test_data.host;
@@ -392,7 +389,7 @@ TEST(appid_http_event, handle_msg_header_cookie)
 TEST(appid_http_event, handle_msg_header_host_and_uri)
 {
     TestData test_data;
-    test_data.scan_flags = SCAN_HTTP_HOST_URL_FLAG;
+    test_data.scan_flags = SCAN_HTTP_HOST_URL_FLAG | SCAN_HTTP_URI_FLAG;
     test_data.host = HOST;
     test_data.uri = URI;
 
@@ -522,7 +519,7 @@ TEST(appid_http_event, handle_msg_header_all_request_headers)
     TestData test_data;
     test_data.type = HttpEventHandler::REQUEST_EVENT;
     test_data.scan_flags = SCAN_HTTP_VIA_FLAG | SCAN_HTTP_USER_AGENT_FLAG |
-        SCAN_HTTP_HOST_URL_FLAG;
+        SCAN_HTTP_HOST_URL_FLAG | SCAN_HTTP_URI_FLAG;
     test_data.uri = URI;
     test_data.cookie = COOKIE;
     test_data.host = HOST;

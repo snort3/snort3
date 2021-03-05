@@ -378,10 +378,10 @@ static int reload_detectors(lua_State* L)
     odp_thread_local_ctxt = new OdpThreadContext;
 
     OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
-    odp_ctxt.get_client_disco_mgr().initialize();
-    odp_ctxt.get_service_disco_mgr().initialize();
+    odp_ctxt.get_client_disco_mgr().initialize(*inspector);
+    odp_ctxt.get_service_disco_mgr().initialize(*inspector);
     odp_thread_local_ctxt->initialize(ctxt, true, true);
-    odp_ctxt.initialize();
+    odp_ctxt.initialize(*inspector);
 
     bool from_shell = ( L != nullptr );
     current_request->respond("== swapping detectors configuration\n", from_shell);

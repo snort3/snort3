@@ -102,7 +102,7 @@ public:
 
     static void tterm();
 
-    virtual void initialize() = 0;
+    virtual void initialize(AppIdInspector&) = 0;
     virtual void reload() = 0;
     virtual void register_detector(const std::string&, AppIdDetector*,  IpProtocol);
     virtual void add_pattern_data(AppIdDetector*, snort::SearchTool&, int position,

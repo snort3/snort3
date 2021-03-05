@@ -34,6 +34,7 @@ namespace snort
 class Flow;
 }
 
+class AppIdInspector;
 class SipEventHandler;
 
 class SipUdpClientDetector : public ClientDetector
@@ -69,27 +70,22 @@ private:
 class SipEventHandler : public snort::DataHandler
 {
 public:
-
-    static SipEventHandler* create()
-    {
-        return new SipEventHandler;
-    }
+    SipEventHandler(AppIdInspector& inspector) :
+        DataHandler(MOD_NAME), inspector(inspector)
+    { }
 
     static void set_client(SipUdpClientDetector* cd) { SipEventHandler::client = cd; }
     static void set_service(SipServiceDetector* sd) { SipEventHandler::service = sd; }
 
-    void subscribe(snort::SnortConfig* sc)
-    { snort::DataBus::subscribe_global(SIP_EVENT_TYPE_SIP_DIALOG_KEY, this, sc); }
-
     void handle(snort::DataEvent&, snort::Flow*) override;
 
 private:
-    SipEventHandler() : DataHandler(MOD_NAME) { }
     void client_handler(SipEvent&, AppIdSession&, AppidChangeBits&);
     void service_handler(SipEvent&, AppIdSession&, AppidChangeBits&);
 
     static SipUdpClientDetector* client;
     static SipServiceDetector* service;
+    AppIdInspector& inspector;
 };
 #endif
 

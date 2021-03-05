@@ -33,6 +33,8 @@ namespace snort
 class Flow;
 }
 
+class AppIdInspector;
+
 class HttpEventHandler : public snort::DataHandler
 {
 public:
@@ -42,15 +44,15 @@ public:
         RESPONSE_EVENT,
     };
 
-    HttpEventHandler(HttpEventType type) : DataHandler(MOD_NAME)
-    {
-        event_type = type;
-    }
+    HttpEventHandler(HttpEventType type, AppIdInspector& inspector) :
+        DataHandler(MOD_NAME), event_type(type), inspector(inspector)
+    { }
 
     void handle(snort::DataEvent&, snort::Flow*) override;
 
 private:
     HttpEventType event_type;
+    AppIdInspector& inspector;
 };
 
 #endif

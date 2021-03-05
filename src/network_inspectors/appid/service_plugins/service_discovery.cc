@@ -35,6 +35,7 @@
 #include "appid_config.h"
 #include "appid_debug.h"
 #include "appid_dns_session.h"
+#include "appid_inspector.h"
 #include "appid_session.h"
 #include "detector_plugins/detector_dns.h"
 #include "detector_plugins/detector_imap.h"
@@ -84,7 +85,7 @@ using namespace snort;
 
 static ServiceDetector* ftp_service;
 
-void ServiceDiscovery::initialize()
+void ServiceDiscovery::initialize(AppIdInspector& inspector)
 {
     new BattleFieldServiceDetector(this);
     new BgpServiceDetector(this);
@@ -133,12 +134,12 @@ void ServiceDiscovery::initialize()
 
     for ( auto kv : tcp_detectors )
     {
-        kv.second->initialize();
+        kv.second->initialize(inspector);
         service_detector_list.emplace_back(kv.second);
     }
     for ( auto kv : udp_detectors )
     {
-        kv.second->initialize();
+        kv.second->initialize(inspector);
         service_detector_list.emplace_back(kv.second);
     }
 }

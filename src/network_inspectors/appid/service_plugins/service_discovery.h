@@ -33,6 +33,7 @@
 
 #include "appid_types.h"
 
+class AppIdInspector;
 class AppIdSession;
 class ServiceDetector;
 class ServiceDiscoveryState;
@@ -63,7 +64,7 @@ class ServiceDiscovery : public AppIdDiscovery
 {
 public:
     ~ServiceDiscovery() override { }
-    void initialize() override;
+    void initialize(AppIdInspector&) override;
     void reload() override;
     void finalize_service_patterns();
     void reload_service_patterns();

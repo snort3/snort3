@@ -50,7 +50,7 @@ using namespace snort;
 
 #define MAX_CANDIDATE_CLIENTS 10
 
-void ClientDiscovery::initialize()
+void ClientDiscovery::initialize(AppIdInspector& inspector)
 {
     new BitClientDetector(this);
     new BitTrackerClientDetector(this);
@@ -68,10 +68,10 @@ void ClientDiscovery::initialize()
     new VncClientDetector(this);
 
     for ( auto kv : tcp_detectors )
-        kv.second->initialize();
+        kv.second->initialize(inspector);
 
     for ( auto kv : udp_detectors )
-        kv.second->initialize();
+        kv.second->initialize(inspector);
 }
 
 void ClientDiscovery::reload()

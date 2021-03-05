@@ -25,7 +25,6 @@
 
 #include "appid_detector.h"
 
-#include "managers/inspector_manager.h"
 #include "protocols/packet.h"
 
 #include "app_info_table.h"
@@ -36,7 +35,7 @@
 
 using namespace snort;
 
-int AppIdDetector::initialize()
+int AppIdDetector::initialize(AppIdInspector& inspector)
 {
     if ( !tcp_patterns.empty() )
         for (auto& pat : tcp_patterns)
@@ -48,9 +47,7 @@ int AppIdDetector::initialize()
 
     if (!appid_registry.empty())
     {
-        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
-        assert(inspector);
-        AppIdContext& ctxt = inspector->get_ctxt();
+        AppIdContext& ctxt = inspector.get_ctxt();
         for (auto& id : appid_registry)
             register_appid(id.appId, id.additionalInfo, ctxt.get_odp_ctxt());
       }

@@ -391,7 +391,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
 
     if (!asd)
     {
-        asd = AppIdSession::allocate_session(p, protocol, direction, &inspector, odp_ctxt);
+        asd = AppIdSession::allocate_session(p, protocol, direction, inspector, odp_ctxt);
         if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
         {
             flow_flags |= APPID_SESSION_MID;

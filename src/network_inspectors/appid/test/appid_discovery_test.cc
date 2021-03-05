@@ -205,7 +205,7 @@ void AppIdSession::update_encrypted_app_id(AppId) {}
 bool AppIdSession::is_tp_processing_done() const {return 0;}
 AppId AppIdSession::pick_ss_payload_app_id(AppId) const { return get_payload_id(); }
 AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
-    AppidSessionDirection, AppIdInspector*, OdpContext&)
+    AppidSessionDirection, AppIdInspector&, OdpContext&)
 {
     return nullptr;
 }
@@ -219,7 +219,7 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packe
 void AppIdHttpSession::set_tun_dest(){}
 
 // Stubs for ServiceDiscovery
-void ServiceDiscovery::initialize() {}
+void ServiceDiscovery::initialize(AppIdInspector&) {}
 void ServiceDiscovery::reload() {}
 void ServiceDiscovery::finalize_service_patterns() {}
 void ServiceDiscovery::match_by_pattern(AppIdSession&, const Packet*, IpProtocol) {}
@@ -249,7 +249,7 @@ AppId HostTracker::get_appid(Port, IpProtocol, bool, bool)
 void HostTracker::remove_flows() {}
 
 // Stubs for ClientDiscovery
-void ClientDiscovery::initialize() {}
+void ClientDiscovery::initialize(AppIdInspector&) {}
 void ClientDiscovery::reload() {}
 void ClientDiscovery::finalize_client_patterns() {}
 static ClientDiscovery* c_discovery_manager = new ClientDiscovery();

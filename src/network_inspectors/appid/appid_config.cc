@@ -100,7 +100,7 @@ void AppIdContext::pterm()
     odp_thread_local_ctxt = nullptr;
 }
 
-bool AppIdContext::init_appid(SnortConfig* sc)
+bool AppIdContext::init_appid(SnortConfig* sc, AppIdInspector& inspector)
 {
     // do not reload ODP on reload_config()
     if (!odp_ctxt)
@@ -112,10 +112,10 @@ bool AppIdContext::init_appid(SnortConfig* sc)
     static bool once = false;
     if (!once)
     {
-        odp_ctxt->get_client_disco_mgr().initialize();
-        odp_ctxt->get_service_disco_mgr().initialize();
+        odp_ctxt->get_client_disco_mgr().initialize(inspector);
+        odp_ctxt->get_service_disco_mgr().initialize(inspector);
         odp_thread_local_ctxt->initialize(*this, true);
-        odp_ctxt->initialize();
+        odp_ctxt->initialize(inspector);
 
         // do not reload third party on reload_config()
         if (!tp_appid_ctxt)
@@ -158,10 +158,10 @@ OdpContext::OdpContext(const AppIdConfig& config, SnortConfig* sc)
     version = next_version++;
 }
 
-void OdpContext::initialize()
+void OdpContext::initialize(AppIdInspector& inspector)
 {
-    service_pattern_detector->finalize_service_port_patterns();
-    client_pattern_detector->finalize_client_port_patterns();
+    service_pattern_detector->finalize_service_port_patterns(inspector);
+    client_pattern_detector->finalize_client_port_patterns(inspector);
     service_disco_mgr.finalize_service_patterns();
     client_disco_mgr.finalize_client_patterns();
     http_matchers.finalize_patterns();

@@ -73,7 +73,7 @@ const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
 }
 
 AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
-    AppidSessionDirection direction, AppIdInspector* inspector, OdpContext& odp_context)
+    AppidSessionDirection direction, AppIdInspector& inspector, OdpContext& odp_context)
 {
     uint16_t port = 0;
 
@@ -83,7 +83,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
         (p->ptrs.sp != p->ptrs.dp))
         port = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
 
-    AppIdSession* asd = new AppIdSession(proto, ip, port, *inspector, odp_context,
+    AppIdSession* asd = new AppIdSession(proto, ip, port, inspector, odp_context,
         p->pkth->address_space_id);
     asd->flow = p->flow;
     asd->stats.first_packet_second = p->pkth->ts.tv_sec;

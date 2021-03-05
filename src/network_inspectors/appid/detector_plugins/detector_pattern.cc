@@ -27,7 +27,6 @@
 
 #include "log/messages.h"
 #include "main/snort_debug.h"
-#include "managers/inspector_manager.h"
 #include "protocols/packet.h"
 #include "search_engines/search_tool.h"
 
@@ -73,7 +72,8 @@ static void free_pattern_service(PatternService* ps)
     }
 }
 
-static void read_patterns(PortPatternNode* portPatternList, PatternService** serviceList)
+static void read_patterns(PortPatternNode* portPatternList, PatternService** serviceList,
+    AppIdInspector& inspector)
 {
     PatternService* ps = nullptr;
     char* lastName = nullptr;
@@ -117,10 +117,7 @@ static void read_patterns(PortPatternNode* portPatternList, PatternService** ser
         pattern->next = ps->pattern;
         ps->pattern = pattern;
 
-        // FIXIT-M: Tp support ODP reload, store ODP context in PatternService
-        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
-        assert(inspector);
-        AppIdContext& ctxt = inspector->get_ctxt();
+        AppIdContext& ctxt = inspector.get_ctxt();
 
         ctxt.get_odp_ctxt().get_app_info_mgr().set_app_info_active(ps->id);
     }
@@ -404,9 +401,9 @@ void PatternServiceDetector::insert_service_port_pattern(PortPatternNode* pPatte
     }
 }
 
-void PatternServiceDetector::finalize_service_port_patterns()
+void PatternServiceDetector::finalize_service_port_patterns(AppIdInspector& inspector)
 {
-    read_patterns(lua_injected_patterns, &service_port_pattern);
+    read_patterns(lua_injected_patterns, &service_port_pattern, inspector);
     install_ports(service_port_pattern);
     create_service_pattern_trees();
     register_service_patterns();
@@ -638,9 +635,9 @@ void PatternClientDetector::register_client_patterns()
         udp_pattern_matcher->prep();
 }
 
-void PatternClientDetector::finalize_client_port_patterns()
+void PatternClientDetector::finalize_client_port_patterns(AppIdInspector& inspector)
 {
-    read_patterns(lua_injected_patterns, &service_port_pattern);
+    read_patterns(lua_injected_patterns, &service_port_pattern, inspector);
     create_client_pattern_trees();
     register_client_patterns();
     dump_patterns("Client", service_port_pattern);

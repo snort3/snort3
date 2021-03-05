@@ -118,16 +118,15 @@ bool AppIdInspector::configure(SnortConfig* sc)
 
     ctxt = new AppIdContext(const_cast<AppIdConfig&>(*config));
 
-    my_seh = SipEventHandler::create();
-    my_seh->subscribe(sc);
+    ctxt->init_appid(sc, *this);
 
-    ctxt->init_appid(sc);
+    DataBus::subscribe_global(SIP_EVENT_TYPE_SIP_DIALOG_KEY, new SipEventHandler(*this), sc);
 
     DataBus::subscribe_global(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(
-        HttpEventHandler::REQUEST_EVENT), sc);
+        HttpEventHandler::REQUEST_EVENT, *this), sc);
 
     DataBus::subscribe_global(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(
-        HttpEventHandler::RESPONSE_EVENT), sc);
+        HttpEventHandler::RESPONSE_EVENT, *this), sc);
 
     DataBus::subscribe_global(DATA_DECRYPT_EVENT, new DataDecryptEventHandler(), sc);
 

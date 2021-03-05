@@ -31,7 +31,7 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
-void ServiceDiscovery::initialize() {}
+void ServiceDiscovery::initialize(AppIdInspector&) {}
 void ServiceDiscovery::reload() {}
 void ServiceDiscovery::finalize_service_patterns() {}
 void ServiceDiscovery::match_by_pattern(AppIdSession&, const Packet*, IpProtocol) {}

@@ -28,7 +28,6 @@
 #include "appid_debug.h"
 #include "appid_inspector.h"
 #include "app_info_table.h"
-#include "managers/inspector_manager.h"
 #include "protocols/packet.h"
 
 using namespace snort;
@@ -331,8 +330,8 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
     {
         IpProtocol protocol = p->is_tcp() ? IpProtocol::TCP : IpProtocol::UDP;
         AppidSessionDirection direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
-        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
-        asd = AppIdSession::allocate_session(p, protocol, direction, inspector, inspector->get_ctxt().get_odp_ctxt());
+        asd = AppIdSession::allocate_session(p, protocol, direction, inspector,
+            inspector.get_ctxt().get_odp_ctxt());
     }
 
     AppidChangeBits change_bits;

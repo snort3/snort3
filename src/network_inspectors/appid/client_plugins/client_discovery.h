@@ -29,6 +29,7 @@
 #include "appid_types.h"
 
 class ClientDetector;
+class AppIdInspector;
 class AppIdSession;
 
 struct ClientAppMatch
@@ -41,7 +42,7 @@ struct ClientAppMatch
 class ClientDiscovery : public AppIdDiscovery
 {
 public:
-    void initialize() override;
+    void initialize(AppIdInspector&) override;
     void reload() override;
 
     void finalize_client_patterns();

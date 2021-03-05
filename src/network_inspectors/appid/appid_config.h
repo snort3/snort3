@@ -62,6 +62,7 @@ enum SnortProtoIdIndex
     PROTO_INDEX_MAX
 };
 
+class AppIdInspector;
 class PatternClientDetector;
 class PatternServiceDetector;
 
@@ -118,7 +119,7 @@ public:
     uint16_t max_packet_service_fail_ignore_bytes = MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES;
 
     OdpContext(const AppIdConfig&, snort::SnortConfig*);
-    void initialize();
+    void initialize(AppIdInspector& inspector);
     void reload();
 
     uint32_t get_version() const
@@ -261,7 +262,7 @@ public:
 
     void create_odp_ctxt();
     void create_tp_appid_ctxt();
-    bool init_appid(snort::SnortConfig*);
+    bool init_appid(snort::SnortConfig*, AppIdInspector&);
     static void pterm();
     void show() const;
 

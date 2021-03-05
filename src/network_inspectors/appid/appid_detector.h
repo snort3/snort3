@@ -32,6 +32,7 @@
 #include "service_state.h"
 
 class AppIdContext;
+class AppIdInspector;
 class LuaStateDescriptor;
 
 namespace snort
@@ -110,7 +111,7 @@ public:
     AppIdDetector() = default;
     virtual ~AppIdDetector() = default;
 
-    virtual int initialize();
+    virtual int initialize(AppIdInspector&);
     virtual void reload();
     virtual void do_custom_init() { }
     virtual void do_custom_reload() { }

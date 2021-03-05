@@ -30,7 +30,6 @@
 #include <cassert>
 
 #include "detection/detection_engine.h"
-#include "managers/inspector_manager.h"
 #include "app_info_table.h"
 #include "appid_debug.h"
 #include "appid_discovery.h"
@@ -54,12 +53,11 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     if ( !asd )
     {
         // The event is received before appid has seen any packet, e.g., data on SYN
-        auto inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
         asd = AppIdSession::allocate_session( p, p->get_ip_proto_next(), direction,
             inspector, *pkt_thread_odp_ctxt );
         if ( appidDebug->is_enabled() )
         {
-            appidDebug->activate(flow, asd, inspector->get_ctxt().config.log_all_sessions);
+            appidDebug->activate(flow, asd, inspector.get_ctxt().config.log_all_sessions);
             if ( appidDebug->is_active() )
                 LogMessage("AppIdDbg %s New AppId session at HTTP event\n",
                     appidDebug->get_debug_session());
@@ -117,13 +115,14 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         {
             hsession->set_field(REQ_HOST_FID, header_start, header_length, change_bits);
             asd->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
+        }
 
-            header_start = http_event->get_uri(header_length);
-            if (header_length > 0)
-            {
-                hsession->set_field(REQ_URI_FID, header_start, header_length, change_bits);
-                hsession->update_url(change_bits);
-            }
+        header_start = http_event->get_uri(header_length);
+        if (header_length > 0)
+        {
+            hsession->set_field(REQ_URI_FID, header_start, header_length, change_bits);
+            asd->scan_flags |= SCAN_HTTP_URI_FLAG;
+            hsession->update_url(change_bits);
         }
 
         header_start = http_event->get_user_agent(header_length);

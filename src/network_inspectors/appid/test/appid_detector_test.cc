@@ -38,8 +38,6 @@
 
 namespace snort
 {
-Inspector* InspectorManager::get_inspector(
-    char const*, bool, const snort::SnortConfig*) { return nullptr; }
 AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
 }
