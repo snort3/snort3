@@ -49,7 +49,7 @@ const PegInfo reputation_peg_names[] =
 { CountType::SUM, "trusted", "number of packets trusted" },
 { CountType::SUM, "monitored", "number of packets monitored" },
 { CountType::SUM, "memory_allocated", "total memory allocated" },
-
+{ CountType::SUM, "total_alerts", "total alerts triggered" },
 { CountType::END, nullptr, nullptr }
 };
 
@@ -277,6 +277,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         act->block_session(p, true);
         act->set_drop_reason("reputation");
         reputationstats.blocked++;
+        reputationstats.total_alerts++;
         if (PacketTracer::is_active())
             PacketTracer::log("Reputation: packet blocked, drop\n");
     }
@@ -294,6 +295,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
 
         DetectionEngine::queue_event(GID_REPUTATION, monitor_event);
         reputationstats.monitored++;
+        reputationstats.total_alerts++;
     }
 
     else if (TRUSTED_SRC == decision or TRUSTED_DST == decision)
@@ -310,6 +312,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         DetectionEngine::queue_event(GID_REPUTATION, allowlist_event);
         act->trust_session(p, true);
         reputationstats.trusted++;
+        reputationstats.total_alerts++;
     }
 }
 
