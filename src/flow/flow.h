@@ -96,6 +96,7 @@
 #define STREAM_STATE_UNREACH           0x0100
 #define STREAM_STATE_CLOSED            0x0200
 #define STREAM_STATE_BLOCK_PENDING     0x0400
+#define STREAM_STATE_RELEASING         0x0800
 
 class BitOp;
 class Session;

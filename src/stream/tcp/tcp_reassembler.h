@@ -34,7 +34,7 @@ public:
     virtual int flush_stream(
         TcpReassemblerState&, snort::Packet* p, uint32_t dir, bool final_flush = false);
     virtual void flush_queued_segments(
-        TcpReassemblerState&, snort::Flow* flow, bool clear, snort::Packet* p = nullptr);
+        TcpReassemblerState&, snort::Flow* flow, bool clear, const snort::Packet* = nullptr);
     virtual bool is_segment_pending_flush(TcpReassemblerState&);
     virtual int flush_on_data_policy(TcpReassemblerState&, snort::Packet*);
     virtual int flush_on_ack_policy(TcpReassemblerState&, snort::Packet*);
@@ -65,6 +65,8 @@ protected:
     bool is_segment_fasttrack
         (TcpReassemblerState&, TcpSegmentNode* tail, const TcpSegmentDescriptor&);
     void show_rebuilt_packet(const TcpReassemblerState&, snort::Packet*);
+    void flush_queued_segments(
+        TcpReassemblerState&, snort::Flow* flow, bool clear, snort::Packet*);
     int flush_data_segments(TcpReassemblerState&, uint32_t flush_len, snort::Packet* pdu);
     void prep_pdu(
         TcpReassemblerState&, snort::Flow*, snort::Packet*, uint32_t pkt_flags, snort::Packet*);

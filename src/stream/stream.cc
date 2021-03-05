@@ -195,8 +195,10 @@ void Stream::check_flow_closed(Packet* p)
 {
     Flow* flow = p->flow;
 
-    if ( !flow )
+    if ( !flow or (flow->session_state & STREAM_STATE_RELEASING) )
         return;
+
+    flow->session_state |= STREAM_STATE_RELEASING;
 
     if (flow->session_state & STREAM_STATE_CLOSED)
     {
@@ -227,6 +229,8 @@ void Stream::check_flow_closed(Packet* p)
         }
         flow->clear_session_state(STREAM_STATE_BLOCK_PENDING);
     }
+
+    flow->session_state &= ~STREAM_STATE_RELEASING;
 }
 
 int Stream::ignore_flow(

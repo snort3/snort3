@@ -70,7 +70,7 @@ public:
     int flush_stream(snort::Packet* p, uint32_t dir, bool final_flush = false)
     { return reassembler->flush_stream(trs, p, dir, final_flush); }
 
-    void flush_queued_segments(snort::Flow* flow, bool clear, snort::Packet* p = nullptr)
+    void flush_queued_segments(snort::Flow* flow, bool clear, const snort::Packet* p = nullptr)
     { reassembler->flush_queued_segments(trs, flow, clear, p); }
 
     bool is_segment_pending_flush()

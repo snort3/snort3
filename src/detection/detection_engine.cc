@@ -196,6 +196,9 @@ Packet* DetectionEngine::set_next_packet(Packet* parent)
         shutdown_active.reset();
     }
 
+    if ( parent )
+        p->packet_flags |= PKT_HAS_PARENT;
+
     p->reset();
     return p;
 }
@@ -233,7 +236,10 @@ void DetectionEngine::finish_inspect(Packet* p, bool inspected)
     // clear closed sessions here after inspection since non-stream
     // inspectors may depend on flow information
     // this also handles block pending state
-    Stream::check_flow_closed(p);
+    // must only be done for terminal packets to avoid yoinking stream_tcp state
+    // while processing a PDU
+    if ( !p->has_parent() )
+        Stream::check_flow_closed(p);
 
     if ( inspected and !p->context->next() )
         InspectorManager::clear(p);

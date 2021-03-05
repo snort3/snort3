@@ -660,10 +660,11 @@ int PacketManager::format_tcp(
     EncodeFlags, const Packet* p, Packet* c, PseudoPacketType type,
     const DAQ_PktHdr_t* phdr, uint32_t opaque)
 {
+    uint32_t cflags = c->packet_flags;
     c->reset();
     init_daq_pkthdr(p, c, phdr, opaque);
 
-    c->packet_flags |= PKT_PSEUDO;
+    c->packet_flags = cflags | PKT_PSEUDO;
     c->pseudo_type = type;
 
     // cooked packet gets same policy as raw

@@ -485,7 +485,8 @@ void TcpReassembler::prep_pdu(
 Packet* TcpReassembler::initialize_pdu(
     TcpReassemblerState& trs, Packet* p, uint32_t pkt_flags, struct timeval tv)
 {
-    Packet* pdu = DetectionEngine::set_next_packet(p);
+    // partial flushes already set the pdu for http_inspect splitter processing
+    Packet* pdu = p->was_set() ? p : DetectionEngine::set_next_packet(p);
 
     EncodeFlags enc_flags = 0;
     DAQ_PktHdr_t pkth;
@@ -496,6 +497,8 @@ Packet* TcpReassembler::initialize_pdu(
     pdu->context->pkth->ts = tv;
     pdu->dsize = 0;
     pdu->data = nullptr;
+    pdu->ip_proto_next = (IpProtocol)p->flow->ip_proto;
+
     return pdu;
 }
 
@@ -712,16 +715,10 @@ void TcpReassembler::final_flush(TcpReassemblerState& trs, Packet* p, uint32_t d
     trs.tracker->clear_tf_flags(TF_FORCE_FLUSH);
 }
 
-static Packet* set_packet(Flow* flow, uint32_t flags, bool c2s)
+static Packet* get_packet(Flow* flow, uint32_t flags, bool c2s)
 {
-    // if not in the context of a wire packet the flush initiator must have
-    // created a packet context by calling DetectionEngine::set_next_packet()
-    Packet* p = DetectionEngine::get_current_packet();
-    assert(p->pkth == p->context->pkth);
+    Packet* p = DetectionEngine::set_next_packet();
 
-    // FIXIT-M p points to a skeleton of a TCP PDU packet with no data and we now
-    // initialize the IPs/ports/flow and other fields accessed as we reassemble
-    // and flush the PDU. There are probably other Packet fields that should be set here...
     DAQ_PktHdr_t* ph = p->context->pkth;
     memset(ph, 0, sizeof(*ph));
     packet_gettimeofday(&ph->ts);
@@ -761,16 +758,27 @@ static Packet* set_packet(Flow* flow, uint32_t flags, bool c2s)
 void TcpReassembler::flush_queued_segments(
     TcpReassemblerState& trs, Flow* flow, bool clear, Packet* p)
 {
-    // if flushing outside the context of wire packet p will be null, initialize
-    // Packet object allocated for the current IpsContext
-    if ( !p )
-        p = set_packet(flow, trs.packet_dir, trs.server_side);
-
     bool pending = clear and paf_initialized(&trs.paf_state)
         and (!trs.tracker->get_splitter() || trs.tracker->get_splitter()->finish(flow) );
 
     if ( pending and !(flow->ssn_state.ignore_direction & trs.ignore_dir) )
         final_flush(trs, p, trs.packet_dir);
+}
+
+void TcpReassembler::flush_queued_segments(
+    TcpReassemblerState& trs, Flow* flow, bool clear, const Packet* p)
+{
+    Packet* pdu = get_packet(flow, trs.packet_dir, trs.server_side);
+
+    if ( p )
+        flush_queued_segments(trs, flow, clear, pdu);
+
+    else
+    {
+        // if we weren't given a packet, we must establish a context
+        DetectionEngine de;
+        flush_queued_segments(trs, flow, clear, pdu);
+    }
 }
 
 // this is for post-ack flushing
@@ -999,7 +1007,8 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
                     break;
 
                 flushed += flush_to_seq(trs, flush_amt, p, flags);
-            } while( trs.sos.seglist.head );
+            }
+            while ( trs.sos.seglist.head and !p->flow->is_inspection_disabled() );
 
             if ( !flags && trs.tracker->is_splitter_paf() )
             {
@@ -1063,7 +1072,8 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
             // ideally we would purge just once after this loop but that throws off base
             if ( trs.sos.seglist.head )
                 purge_to_seq(trs, trs.sos.seglist_base_seq);
-        } while ( trs.sos.seglist.head );
+        }
+        while ( trs.sos.seglist.head and !p->flow->is_inspection_disabled() );
 
         if ( (trs.paf_state.paf == StreamSplitter::ABORT) && trs.tracker->is_splitter_paf() )
         {
@@ -1220,11 +1230,8 @@ void TcpReassembler::queue_packet_for_reassembly(
 
 uint32_t TcpReassembler::perform_partial_flush(TcpReassemblerState& trs, Flow* flow)
 {
-    // Call this first, to create a context before creating a packet:
-    DetectionEngine::set_next_packet();
-    DetectionEngine de;
+    Packet* p = get_packet(flow, (trs.packet_dir|PKT_WAS_SET), trs.server_side);
 
-    Packet* p = set_packet(flow, trs.packet_dir, trs.server_side);
     uint32_t result = perform_partial_flush(trs, p);
 
     // If the held_packet hasn't been released by perform_partial_flush(),

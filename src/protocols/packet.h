@@ -80,7 +80,10 @@ class SFDAQInstance;
 #define PKT_RETRANSMIT       0x01000000  // packet is a re-transmitted pkt.
 #define PKT_RETRY            0x02000000  /* this packet is being re-evaluated from the internal retry queue */
 #define PKT_USE_DIRECT_INJECT 0x04000000  /* Use ioctl when injecting. */
-#define PKT_UNUSED_FLAGS     0xf8000000
+#define PKT_HAS_PARENT       0x08000000  /* derived pseudo packet from current wire packet */
+
+#define PKT_WAS_SET          0x10000000  /* derived pseudo packet (PDU) from current wire packet */
+#define PKT_UNUSED_FLAGS     0xE0000000
 
 #define PKT_TS_OFFLOADED        0x01
 
@@ -312,6 +315,12 @@ struct SO_PUBLIC Packet
 
     void clear_offloaded()
     { ts_packet_flags &= (~PKT_TS_OFFLOADED); }
+
+    bool has_parent() const
+    { return (packet_flags & PKT_HAS_PARENT) != 0; }
+
+    bool was_set() const
+    { return (packet_flags & PKT_WAS_SET) != 0; }
 
     bool is_detection_enabled(bool to_server);
 
