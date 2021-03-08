@@ -31,6 +31,7 @@ struct Event;
 namespace snort
 {
 struct Packet;
+namespace eth { struct EtherHdr; }
 namespace ip { struct IP4Hdr; }
 namespace tcp { struct TCPHdr; }
 
@@ -51,6 +52,7 @@ SO_PUBLIC void LogTCPHeader(TextLog*, Packet*);
 SO_PUBLIC void LogUDPHeader(TextLog*, Packet*);
 SO_PUBLIC void LogICMPHeader(TextLog*, Packet*);
 
+SO_PUBLIC void LogEthAddrs(TextLog*, const eth::EtherHdr*);
 SO_PUBLIC void LogIpAddrs(TextLog*, Packet*);
 SO_PUBLIC void LogIPHeader(TextLog*, Packet*);
 

@@ -191,13 +191,13 @@ const ConvertMap* max_metadata_services_map = &max_metadata_services_api;
  *************************************************/
 
 static const std::string max_mpls_labelchain_len = "max_mpls_labelchain_len";
-static const std::string max_mpls_stack_depth = "max_mpls_stack_depth";
+static const std::string max_stack_depth = "max_stack_depth";
 static const ConvertMap max_mpls_labelchain_len_api =
 {
     max_mpls_labelchain_len,
     config_int_ctor<&max_mpls_labelchain_len,
         &mpls,
-        &max_mpls_stack_depth,
+        &max_stack_depth,
         255>,
 };
 

@@ -52,33 +52,31 @@ enum RunFlag
 
     RUN_FLAG__ALERT_BEFORE_PASS   = 0x00000100,
     RUN_FLAG__CONF_ERROR_OUT      = 0x00000200,
-    RUN_FLAG__MPLS_MULTICAST      = 0x00000400,
-    RUN_FLAG__MPLS_OVERLAPPING_IP = 0x00000800,
+    RUN_FLAG__PROCESS_ALL_EVENTS  = 0x00000400,
+    RUN_FLAG__INLINE_TEST         = 0x00000800,
 
-    RUN_FLAG__PROCESS_ALL_EVENTS  = 0x00001000,
-    RUN_FLAG__INLINE_TEST         = 0x00002000,
-    RUN_FLAG__PCAP_SHOW           = 0x00004000,
-    RUN_FLAG__SHOW_FILE_CODES     = 0x00008000,
+    RUN_FLAG__PCAP_SHOW           = 0x00001000,
+    RUN_FLAG__SHOW_FILE_CODES     = 0x00002000,
+    RUN_FLAG__PAUSE               = 0x00004000,
+    RUN_FLAG__NO_PCRE             = 0x00008000,
 
-    RUN_FLAG__PAUSE               = 0x00010000,
-    RUN_FLAG__NO_PCRE             = 0x00020000,
     /* If stream is configured, the STATEFUL flag is set.  This is
      * somewhat misnamed and is used to assure a session is established */
-    RUN_FLAG__ASSURE_EST          = 0x00040000,
-    RUN_FLAG__DUMP_RULE_DEPS      = 0x00080000,
+    RUN_FLAG__ASSURE_EST          = 0x00010000,
+    RUN_FLAG__DUMP_RULE_DEPS      = 0x00020000,
+    RUN_FLAG__TEST                = 0x00040000,
+    RUN_FLAG__MEM_CHECK           = 0x00080000,
 
-    RUN_FLAG__TEST                = 0x00100000,
+    RUN_FLAG__TRACK_ON_SYN        = 0x00100000,
+    RUN_FLAG__IP_FRAGS_ONLY       = 0x00200000,
+    RUN_FLAG__DUMP_RULE_STATE     = 0x00400000,
+
 #ifdef SHELL
-    RUN_FLAG__SHELL               = 0x00200000,
+    RUN_FLAG__SHELL               = 0x00800000,
 #endif
 #ifdef PIGLET
-    RUN_FLAG__PIGLET              = 0x00400000,
+    RUN_FLAG__PIGLET              = 0x01000000,
 #endif
-    RUN_FLAG__MEM_CHECK           = 0x00800000,
-
-    RUN_FLAG__TRACK_ON_SYN        = 0x01000000,
-    RUN_FLAG__IP_FRAGS_ONLY       = 0x02000000,
-    RUN_FLAG__DUMP_RULE_STATE     = 0x04000000,
 };
 
 enum OutputFlag
@@ -279,9 +277,6 @@ public:
 
     //------------------------------------------------------
     // decode module stuff
-    int mpls_stack_depth = 0;
-
-    uint8_t mpls_payload_type = 0;
     uint8_t num_layers = 0;
     uint8_t max_ip6_extensions = 0;
     uint8_t max_ip_layers = 0;
@@ -308,8 +303,9 @@ public:
 
     //------------------------------------------------------
     // packet module stuff
+    bool asid_agnostic = false;
+    bool mpls_agnostic = true;
     bool vlan_agnostic = false;
-    bool addressspace_agnostic = false;
 
     uint64_t pkt_cnt = 0;           /* -n */
     uint64_t pkt_skip = 0;
@@ -484,18 +480,6 @@ public:
     //------------------------------------------------------
     // accessor methods
 
-    long int get_mpls_stack_depth() const
-    { return mpls_stack_depth; }
-
-    long int get_mpls_payload_type() const
-    { return mpls_payload_type; }
-
-    bool mpls_overlapping_ip() const
-    { return run_flags & RUN_FLAG__MPLS_OVERLAPPING_IP; }
-
-    bool mpls_multicast() const
-    { return run_flags & RUN_FLAG__MPLS_MULTICAST; }
-
     bool esp_decoding() const
     { return enable_esp; }
 
@@ -658,11 +642,14 @@ public:
     int get_gid() const
     { return group_id; }
 
+    bool get_mpls_agnostic() const
+    { return mpls_agnostic; }
+
     bool get_vlan_agnostic() const
     { return vlan_agnostic; }
 
     bool address_space_agnostic() const
-    { return addressspace_agnostic; }
+    { return asid_agnostic; }
 
     bool change_privileges() const
     { return user_id != -1 || group_id != -1 || !chroot_dir.empty(); }

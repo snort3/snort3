@@ -101,10 +101,6 @@ enum PseudoPacketType
     PSEUDO_PKT_MAX
 };
 
-/* default mpls flags */
-#define DEFAULT_MPLS_PAYLOADTYPE      MPLS_PAYLOADTYPE_IPV4
-#define DEFAULT_LABELCHAIN_LENGTH    (-1)
-
 constexpr int32_t MAX_PORTS = 65536;
 constexpr uint16_t NUM_IP_PROTOS = 256;
 constexpr uint8_t TCP_OPTLENMAX = 40; /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */

@@ -369,7 +369,7 @@ static bool ff_mpls(const Args& a)
         return false;
 
     print_label(a, "mpls");
-    TextLog_Print(json_log, "%u", ntohl(mpls));
+    TextLog_Print(json_log, "%u", mpls);
     return true;
 }
 

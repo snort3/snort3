@@ -163,7 +163,6 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
         max_attribute_services_per_host = DEFAULT_MAX_ATTRIBUTE_SERVICES_PER_HOST;
 
         max_metadata_services = DEFAULT_MAX_METADATA_SERVICES;
-        mpls_stack_depth = DEFAULT_LABELCHAIN_LENGTH;
 
         daq_config = new SFDAQConfig();
         ActionManager::new_config(this);
@@ -433,20 +432,6 @@ void SnortConfig::merge(SnortConfig* cmd_line)
         metadata_filter = cmd_line->metadata_filter;
 
     daq_config->overlay(cmd_line->daq_config);
-
-    if (cmd_line->mpls_stack_depth != DEFAULT_LABELCHAIN_LENGTH)
-        mpls_stack_depth = cmd_line->mpls_stack_depth;
-
-    /* Set MPLS payload type here if it hasn't been defined */
-    if ((cmd_line->mpls_payload_type == 0) &&
-        (mpls_payload_type == 0))
-    {
-        mpls_payload_type = DEFAULT_MPLS_PAYLOADTYPE;
-    }
-    else if (cmd_line->mpls_payload_type != 0)
-    {
-        mpls_payload_type = cmd_line->mpls_payload_type;
-    }
 
     if (cmd_line->run_flags & RUN_FLAG__PROCESS_ALL_EVENTS)
         event_queue_config->process_all_events = 1;

@@ -108,17 +108,11 @@ struct SO_PUBLIC FlowKey
     static bool is_equal(const void* k1, const void* k2, size_t);
 
 private:
-    bool init4(
-        const SnortConfig*, IpProtocol,
-        const snort::SfIp *srcIP, uint16_t srcPort,
-        const snort::SfIp *dstIP, uint16_t dstPort,
-        uint32_t mplsId, bool order = true);
+    bool init4(IpProtocol, const snort::SfIp *srcIP, uint16_t srcPort,
+        const snort::SfIp *dstIP, uint16_t dstPort, bool order = true);
 
-    bool init6(
-        const SnortConfig*, IpProtocol,
-        const snort::SfIp *srcIP, uint16_t srcPort,
-        const snort::SfIp *dstIP, uint16_t dstPort,
-        uint32_t mplsId, bool order = true);
+    bool init6(IpProtocol, const snort::SfIp *srcIP, uint16_t srcPort,
+        const snort::SfIp *dstIP, uint16_t dstPort, bool order = true);
 };
 PADDING_GUARD_END
 

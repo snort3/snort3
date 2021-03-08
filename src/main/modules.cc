@@ -907,8 +907,11 @@ static const Parameter packets_params[] =
     { "skip", Parameter::PT_INT, "0:max53", "0",
       "number of packets to skip before before processing" },
 
+    { "mpls_agnostic", Parameter::PT_BOOL, nullptr, "true",
+      "determines whether MPLS labels are used to track fragments and connections" },
+
     { "vlan_agnostic", Parameter::PT_BOOL, nullptr, "false",
-      "determines whether VLAN info is used to track fragments and connections" },
+      "determines whether VLAN tags are used to track fragments and connections" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -929,7 +932,7 @@ public:
 bool PacketsModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( v.is("address_space_agnostic") )
-        sc->addressspace_agnostic = v.get_bool();
+        sc->asid_agnostic = v.get_bool();
 
     else if ( v.is("bpf_file") )
         sc->bpf_file = v.get_string();
@@ -937,14 +940,14 @@ bool PacketsModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("limit") )
         sc->pkt_cnt = v.get_uint64();
 
+    else if ( v.is("mpls_agnostic") )
+        sc->mpls_agnostic = v.get_bool();
+
     else if ( v.is("skip") )
         sc->pkt_skip = v.get_uint64();
 
     else if ( v.is("vlan_agnostic") )
         sc->vlan_agnostic = v.get_bool();
-
-    else
-        return false;
 
     return true;
 }

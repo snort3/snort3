@@ -234,19 +234,6 @@ static const ConvertMap dump_payload_verbose_api =
 const ConvertMap* dump_payload_verbose_map = &dump_payload_verbose_api;
 
 /*************************************************
- ************  enable_mpls_multicast  ************
- *************************************************/
-
-static const std::string enable_mpls_multicast = "enable_mpls_multicast";
-static const ConvertMap enable_mpls_multicast_api =
-{
-    enable_mpls_multicast,
-    config_true_no_opt_ctor<& enable_mpls_multicast, & mpls>
-};
-
-const ConvertMap* enable_mpls_multicast_map = &enable_mpls_multicast_api;
-
-/*************************************************
  ********  enable_deep_teredo_inspection  ********
  *************************************************/
 
@@ -267,10 +254,11 @@ const ConvertMap* enable_deep_teredo_inspection_map = &enable_deep_teredo_inspec
  *************************************************/
 
 static const std::string enable_mpls_overlapping_ip = "enable_mpls_overlapping_ip";
+static const std::string mpls_agnostic = "mpls_agnostic";
 static const ConvertMap enable_mpls_overlapping_ip_api =
 {
     enable_mpls_overlapping_ip,
-    config_true_no_opt_ctor<& enable_mpls_overlapping_ip, & mpls>
+    config_false_no_opt_ctor<& enable_mpls_overlapping_ip, & packets, & mpls_agnostic>,
 };
 
 const ConvertMap* enable_mpls_overlapping_ip_map = &enable_mpls_overlapping_ip_api;

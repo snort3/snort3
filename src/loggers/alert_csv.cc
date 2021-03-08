@@ -274,7 +274,7 @@ static void ff_mpls(const Args& a)
     else
         return;
 
-    TextLog_Print(csv_log, "%u", ntohl(mpls));
+    TextLog_Print(csv_log, "%u", mpls);
 }
 
 static void ff_pkt_gen(const Args& a)

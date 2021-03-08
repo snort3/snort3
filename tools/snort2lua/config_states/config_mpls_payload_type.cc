@@ -49,20 +49,20 @@ bool MplsPayloadType::convert(std::istringstream& data_stream)
     if (type == "ethernet")
     {
         table_api.add_diff_option_comment("config mpls_payload_type: ethernet",
-            "mpls_payload_type = eth");
-        retval = table_api.add_option("mpls_payload_type", "eth");
+            "payload_type = eth");
+        retval = table_api.add_option("payload_type", "eth");
     }
     else if (type == "ipv4")
     {
         table_api.add_diff_option_comment("config mpls_payload_type: ipv4",
-            "mpls_payload_type = ip4");
-        retval = table_api.add_option("mpls_payload_type", "ip4");
+            "payload_type = ip4");
+        retval = table_api.add_option("payload_type", "ip4");
     }
     else if (type == "ipv6")
     {
         table_api.add_diff_option_comment("config mpls_payload_type: ipv6",
-            "mpls_payload_type = ip6");
-        retval = table_api.add_option("mpls_payload_type", "ip6");
+            "payload_type = ip6");
+        retval = table_api.add_option("payload_type", "ip6");
     }
     else
         return false;

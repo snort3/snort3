@@ -26,7 +26,7 @@
 
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
-#include "log/text_log.h"
+#include "log/log_text.h"
 #include "main/snort_config.h"
 #include "protocols/eth.h"
 #include "protocols/packet_manager.h"
@@ -125,15 +125,7 @@ void EthCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 {
     const eth::EtherHdr* eh = reinterpret_cast<const eth::EtherHdr*>(raw_pkt);
 
-    /* src addr */
-    TextLog_Print(text_log, "%02X:%02X:%02X:%02X:%02X:%02X -> ", eh->ether_src[0],
-        eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
-        eh->ether_src[4], eh->ether_src[5]);
-
-    /* dest addr */
-    TextLog_Print(text_log, "%02X:%02X:%02X:%02X:%02X:%02X", eh->ether_dst[0],
-        eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
-        eh->ether_dst[4], eh->ether_dst[5]);
+    LogEthAddrs(text_log, eh);
 
     const ProtocolId prot_id = eh->ethertype();
 

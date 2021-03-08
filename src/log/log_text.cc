@@ -104,29 +104,30 @@ bool LogAppID(TextLog* log, Packet* p)
  *--------------------------------------------------------------------
  */
 
+void LogEthAddrs(TextLog* log, const eth::EtherHdr* eh)
+{
+    TextLog_Print(log, "%02X:%02X:%02X:%02X:%02X:%02X -> %02X:%02X:%02X:%02X:%02X:%02X",
+        eh->ether_src[0], eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
+        eh->ether_src[4], eh->ether_src[5], eh->ether_dst[0], eh->ether_dst[1],
+        eh->ether_dst[2], eh->ether_dst[3], eh->ether_dst[4], eh->ether_dst[5]);
+}
+
 static void LogEthHeader(TextLog* log, Packet* p)
 {
     const eth::EtherHdr* eh = layer::get_eth_layer(p);
 
-    /* src addr */
-    TextLog_Print(log, "%02X:%02X:%02X:%02X:%02X:%02X -> ", eh->ether_src[0],
-        eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
-        eh->ether_src[4], eh->ether_src[5]);
-
-    /* dest addr */
-    TextLog_Print(log, "%02X:%02X:%02X:%02X:%02X:%02X ", eh->ether_dst[0],
-        eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
-        eh->ether_dst[4], eh->ether_dst[5]);
+    /* src and dst addrs */
+    LogEthAddrs(log, eh);
 
     /* protocol and pkt size */
-    TextLog_Print(log, "type:0x%X len:0x%X\n", ntohs(eh->ether_type),
+    TextLog_Print(log, " type:0x%X len:0x%X\n", ntohs(eh->ether_type),
         p->pkth->pktlen);
 }
 
 static void LogMPLSHeader(TextLog* log, Packet* p)
 {
-    TextLog_Print(log,"label:0x%05X exp:0x%X bos:0x%X ttl:0x%X\n",
-        p->ptrs.mplsHdr.label, p->ptrs.mplsHdr.exp, p->ptrs.mplsHdr.bos, p->ptrs.mplsHdr.ttl);
+    TextLog_Print(log,"label:0x%05X tc:0x%X bos:0x%X ttl:0x%X\n",
+        p->ptrs.mplsHdr.label, p->ptrs.mplsHdr.tc, p->ptrs.mplsHdr.bos, p->ptrs.mplsHdr.ttl);
 }
 
 static void LogGREHeader(TextLog* log, Packet* p)

@@ -599,4 +599,17 @@ static const ConvertMap no_promisc_api =
 
 const ConvertMap* no_promisc_map = &no_promisc_api;
 
+/*************************************************
+ ************  enable_mpls_multicast  ************
+ *************************************************/
+
+static const std::string enable_mpls_multicast = "enable_mpls_multicast";
+static const ConvertMap enable_mpls_multicast_api =
+{
+    enable_mpls_multicast,
+    deleted_ctor<& enable_mpls_multicast>,
+};
+
+const ConvertMap* enable_mpls_multicast_map = &enable_mpls_multicast_api;
+
 } // namespace config

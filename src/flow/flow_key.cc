@@ -91,11 +91,8 @@ static inline void update_icmp6(const SfIp*& srcIP, uint16_t& srcPort,
 //-------------------------------------------------------------------------
 // init foo
 //-------------------------------------------------------------------------
-inline bool FlowKey::init4(
-    const SnortConfig* sc, IpProtocol ip_proto,
-    const SfIp *srcIP, uint16_t srcPort,
-    const SfIp *dstIP, uint16_t dstPort,
-    uint32_t mplsId, bool order)
+inline bool FlowKey::init4(IpProtocol ip_proto, const SfIp *srcIP, uint16_t srcPort,
+    const SfIp *dstIP, uint16_t dstPort, bool order)
 {
     uint32_t src;
     uint32_t dst;
@@ -139,20 +136,12 @@ inline bool FlowKey::init4(
         port_h = srcPort;
         reversed = true;
     }
-    if (sc->mpls_overlapping_ip() &&
-        ip::isPrivateIP(src) && ip::isPrivateIP(dst))
-        mplsLabel = mplsId;
-    else
-        mplsLabel = 0;
 
     return reversed;
 }
 
-inline bool FlowKey::init6(
-    const SnortConfig* sc, IpProtocol ip_proto,
-    const SfIp *srcIP, uint16_t srcPort,
-    const SfIp *dstIP, uint16_t dstPort,
-    uint32_t mplsId, bool order)
+inline bool FlowKey::init6(IpProtocol ip_proto, const SfIp *srcIP, uint16_t srcPort,
+    const SfIp *dstIP, uint16_t dstPort, bool order)
 {
     bool reversed = false;
 
@@ -192,11 +181,6 @@ inline bool FlowKey::init6(
         port_h = srcPort;
         reversed = true;
     }
-
-    if (sc->mpls_overlapping_ip())
-        mplsLabel = mplsId;
-    else
-        mplsLabel = 0;
 
     return reversed;
 }
@@ -238,7 +222,7 @@ void FlowKey::init_groups(int16_t ingress_group, int16_t egress_group, bool rev)
 
 void FlowKey::init_mpls(const SnortConfig* sc, uint32_t mplsId)
 {
-    if (sc->mpls_overlapping_ip())
+    if (!sc->get_mpls_agnostic())
         mplsLabel = mplsId;
     else
         mplsLabel = 0;
@@ -264,12 +248,12 @@ bool FlowKey::init(
     if (srcIP->is_ip4() && dstIP->is_ip4())
     {
         version = 4;
-        reversed = init4(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId);
+        reversed = init4(ip_proto, srcIP, srcPort, dstIP, dstPort);
     }
     else
     {
         version = 6;
-        reversed = init6(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId);
+        reversed = init6(ip_proto, srcIP, srcPort, dstIP, dstPort);
     }
 
     pkt_type = type;
@@ -277,6 +261,7 @@ bool FlowKey::init(
 
     init_vlan(sc, vlanId);
     init_address_space(sc, addrSpaceId);
+    init_mpls(sc, mplsId);
 
     if (ingress_group == DAQ_PKTHDR_UNKNOWN or egress_group == DAQ_PKTHDR_UNKNOWN)
         flags.group_used = 0;
@@ -308,12 +293,12 @@ bool FlowKey::init(
     if (srcIP->is_ip4() && dstIP->is_ip4())
     {
         version = 4;
-        reversed = init4(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId);
+        reversed = init4(ip_proto, srcIP, srcPort, dstIP, dstPort);
     }
     else
     {
         version = 6;
-        reversed = init6(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId);
+        reversed = init6(ip_proto, srcIP, srcPort, dstIP, dstPort);
     }
 
     pkt_type = type;
@@ -321,6 +306,7 @@ bool FlowKey::init(
 
     init_vlan(sc, vlanId);
     init_address_space(sc, pkt_hdr.address_space_id);
+    init_mpls(sc, mplsId);
 
     flags.group_used = ((pkt_hdr.flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS) != 0);
     init_groups(pkt_hdr.ingress_group, pkt_hdr.egress_group, reversed);
@@ -348,13 +334,13 @@ bool FlowKey::init(
     if (srcIP->is_ip4() && dstIP->is_ip4())
     {
         version = 4;
-        reversed = init4(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
+        reversed = init4(ip_proto, srcIP, srcPort, dstIP, dstPort, false);
         ip_protocol = (uint8_t)ip_proto;
     }
     else
     {
         version = 6;
-        reversed = init6(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
+        reversed = init6(ip_proto, srcIP, srcPort, dstIP, dstPort, false);
         ip_protocol = 0;
     }
 
@@ -362,6 +348,7 @@ bool FlowKey::init(
 
     init_vlan(sc, vlanId);
     init_address_space(sc, addrSpaceId);
+    init_mpls(sc, mplsId);
 
     if (ingress_group == DAQ_PKTHDR_UNKNOWN or egress_group == DAQ_PKTHDR_UNKNOWN)
         flags.group_used = 0;
@@ -392,13 +379,13 @@ bool FlowKey::init(
     if (srcIP->is_ip4() && dstIP->is_ip4())
     {
         version = 4;
-        reversed = init4(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
+        reversed = init4(ip_proto, srcIP, srcPort, dstIP, dstPort, false);
         ip_protocol = (uint8_t)ip_proto;
     }
     else
     {
         version = 6;
-        reversed = init6(sc, ip_proto, srcIP, srcPort, dstIP, dstPort, mplsId, false);
+        reversed = init6(ip_proto, srcIP, srcPort, dstIP, dstPort, false);
         ip_protocol = 0;
     }
 
@@ -406,6 +393,7 @@ bool FlowKey::init(
 
     init_vlan(sc, vlanId);
     init_address_space(sc, pkt_hdr.address_space_id);
+    init_mpls(sc, mplsId);
 
     flags.group_used = ((pkt_hdr.flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS) != 0);
     init_groups(pkt_hdr.ingress_group, pkt_hdr.egress_group, reversed);

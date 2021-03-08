@@ -16,7 +16,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// cd_mpls.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// cd_mpls.cc author Michael Altizer <mialtize@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -25,6 +25,7 @@
 #include "codecs/codec_module.h"
 #include "flow/flow.h"
 #include "framework/codec.h"
+#include "log/text_log.h"
 #include "main/snort_config.h"
 #include "utils/safec.h"
 
@@ -35,19 +36,22 @@ using namespace snort;
 
 namespace
 {
+enum MplsPayloadType : uint8_t
+{
+    // Entries must align with mpls_payload_type enum parameter in mpls_params
+    MPLS_PAYLOADTYPE_AUTODETECT = 0,
+    MPLS_PAYLOADTYPE_ETHERNET,
+    MPLS_PAYLOADTYPE_IPV4,
+    MPLS_PAYLOADTYPE_IPV6
+};
+
 static const Parameter mpls_params[] =
 {
-    { "enable_mpls_multicast", Parameter::PT_BOOL, nullptr, "false",
-      "enables support for MPLS multicast" },
+    { "max_stack_depth", Parameter::PT_INT, "-1:255", "-1",
+      "set maximum MPLS stack depth" },
 
-    { "enable_mpls_overlapping_ip", Parameter::PT_BOOL, nullptr, "false",
-      "enable if private network addresses overlap and must be differentiated by MPLS label(s)" },
-
-    { "max_mpls_stack_depth", Parameter::PT_INT, "-1:255", "-1",
-      "set MPLS stack depth" },
-
-    { "mpls_payload_type", Parameter::PT_ENUM, "eth | ip4 | ip6", "ip4",
-      "set encapsulated payload type" },
+    { "payload_type", Parameter::PT_ENUM, "auto | eth | ip4 | ip6", "auto",
+      "force encapsulated payload type" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -55,28 +59,20 @@ static const Parameter mpls_params[] =
 static const RuleMap mpls_rules[] =
 {
     { DECODE_BAD_MPLS, "bad MPLS frame" },
-    { DECODE_BAD_MPLS_LABEL0, "MPLS label 0 appears in non-bottom header" },
+    { DECODE_BAD_MPLS_LABEL0, "MPLS label 0 appears in bottom header when not decoding as ip4" },
     { DECODE_BAD_MPLS_LABEL1, "MPLS label 1 appears in bottom header" },
-    { DECODE_BAD_MPLS_LABEL2, "MPLS label 2 appears in non-bottom header" },
+    { DECODE_BAD_MPLS_LABEL2, "MPLS label 2 appears in bottom header when not decoding as ip6" },
     { DECODE_BAD_MPLS_LABEL3, "MPLS label 3 appears in header" },
     { DECODE_MPLS_RESERVED_LABEL, "MPLS label 4, 5,.. or 15 appears in header" },
     { DECODE_MPLS_LABEL_STACK, "too many MPLS headers" },
     { 0, nullptr }
 };
 
-static const PegInfo mpls_pegs[] =
+struct MplsCodecConfig
 {
-    { CountType::SUM, "total_packets", "total mpls labeled packets processed" },
-    { CountType::SUM, "total_bytes", "total mpls labeled bytes processed" },
-    { CountType::END, nullptr, nullptr }
+    int stack_depth = -1;
+    uint8_t payload_type = MPLS_PAYLOADTYPE_AUTODETECT;
 };
-
-struct MplsStats
-{
-    PegCount total_packets;
-    PegCount total_bytes;
-};
-static THREAD_LOCAL MplsStats mpls_stats;
 
 class MplsModule : public BaseCodecModule
 {
@@ -86,44 +82,33 @@ public:
     const RuleMap* get_rules() const override
     { return mpls_rules; }
 
-    bool set(const char*, Value& v, SnortConfig* sc) override
+    bool begin(const char*, int, SnortConfig*) override
     {
-        if ( v.is("enable_mpls_multicast") )
-        {
-            if ( v.get_bool() )
-                sc->run_flags |= RUN_FLAG__MPLS_MULTICAST; // FIXIT-L move to existing bitfield
-        }
-        else if ( v.is("enable_mpls_overlapping_ip") )
-        {
-            if ( v.get_bool() )
-                sc->run_flags |= RUN_FLAG__MPLS_OVERLAPPING_IP; // FIXIT-L move to existing
-                                                                // bitfield
-        }
-        else if ( v.is("max_mpls_stack_depth") )
-        {
-            sc->mpls_stack_depth = v.get_int16();
-        }
-        else if ( v.is("mpls_payload_type") )
-        {
-            sc->mpls_payload_type = v.get_uint8() + 1;
-        }
-        else
-            return false;
+        config = { };
+        return true;
+    }
+
+    bool set(const char*, Value& v, SnortConfig*) override
+    {
+        if ( v.is("max_stack_depth") )
+            config.stack_depth = v.get_int16();
+        else if ( v.is("payload_type") )
+            config.payload_type = v.get_uint8();
 
         return true;
     }
 
-    const PegInfo* get_pegs() const override
-    { return mpls_pegs; }
+    const MplsCodecConfig& get_data()
+    { return config; }
 
-    PegCount* get_counts() const override
-    { return (PegCount*)&mpls_stats; }
+private:
+    MplsCodecConfig config;
 };
 
 class MplsCodec : public Codec
 {
 public:
-    MplsCodec() : Codec(CD_MPLS_NAME) { }
+    MplsCodec(const MplsCodecConfig& config = { }) : Codec(CD_MPLS_NAME), config(config) { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
@@ -132,12 +117,14 @@ public:
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 
 private:
-    int checkMplsHdr(const CodecData&, uint32_t label, uint8_t bos);
+    bool validate_reserved_label(const CodecData&, uint32_t label, uint8_t bos);
+
+private:
+    MplsCodecConfig config;
 };
 
 constexpr int MPLS_HEADER_LEN = 4;
 constexpr int NUM_RESERVED_LABELS = 16;
-constexpr int MPLS_PAYLOADTYPE_ERROR = -1;
 } // namespace
 
 void MplsCodec::get_protocol_ids(std::vector<ProtocolId>& v)
@@ -147,19 +134,35 @@ void MplsCodec::get_protocol_ids(std::vector<ProtocolId>& v)
     v.emplace_back(ProtocolId::MPLS_IP);
 }
 
+static inline void decode_mpls_entry(const uint32_t* entry, uint32_t& label, uint8_t& tc, uint8_t& bos, uint8_t& ttl)
+{
+    //                  https://tools.ietf.org/html/rfc5462
+    //  0                   1                   2                   3
+    //  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ Label
+    // |                Label                  | TC  |S|       TTL     | Stack
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ Entry
+    //
+    //                     Label:  Label Value, 20 bits
+    //                     TC:     Traffic Class field, 3 bits
+    //                     S:      Bottom of Stack, 1 bit
+    //                     TTL:    Time to Live, 8 bits
+
+    uint32_t mpls_h = ntohl(*entry);
+    ttl = (uint8_t)(mpls_h & 0x000000FF);
+    mpls_h = mpls_h >> 8;
+    bos = (uint8_t)(mpls_h & 0x00000001);
+    tc = (uint8_t)(mpls_h & 0x0000000E);
+    label = (mpls_h >> 4) & 0x000FFFFF;
+}
+
 bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     uint8_t bos = 0;
-    uint8_t chainLen = 0;
+    uint8_t depth = 0;
     uint32_t stack_len = raw.len;
 
-    int iRet = 0;
-
-    mpls_stats.total_packets++;
-    mpls_stats.total_bytes += raw.len + 4; //4 bytes for CRC
-
-    const uint32_t* tmpMplsHdr =
-        reinterpret_cast<const uint32_t*>(raw.data);
+    const uint32_t* mpls_entry = reinterpret_cast<const uint32_t*>(raw.data);
 
     while (!bos)
     {
@@ -169,79 +172,87 @@ bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
             return false;
         }
 
-        uint32_t mpls_h = ntohl(*tmpMplsHdr);
-        uint8_t ttl = (uint8_t)(mpls_h & 0x000000FF);
-        mpls_h = mpls_h>>8;
-        bos = (uint8_t)(mpls_h & 0x00000001);
-        uint8_t exp = (uint8_t)(mpls_h & 0x0000000E);
-        uint32_t label = (mpls_h>>4) & 0x000FFFFF;
+        uint32_t label;
+        uint8_t tc;
+        uint8_t ttl;
 
-        if ((label<NUM_RESERVED_LABELS)&&((iRet = checkMplsHdr(codec, label, bos)) < 0))
+        decode_mpls_entry(mpls_entry, label, tc, bos, ttl);
+
+        if ((label < NUM_RESERVED_LABELS) && !validate_reserved_label(codec, label, bos))
             return false;
 
-        if ( bos )
+        if (bos)
         {
             snort.mplsHdr.label = label;
-            snort.mplsHdr.exp = exp;
+            snort.mplsHdr.tc = tc;
             snort.mplsHdr.bos = bos;
             snort.mplsHdr.ttl = ttl;
-            /**
-            p->mpls = &(snort.mplsHdr);
-      **/
+
             codec.proto_bits |= PROTO_BIT__MPLS;
-            if (!iRet)
-            {
-                iRet = codec.conf->get_mpls_payload_type();
-            }
         }
-        tmpMplsHdr++;
+        mpls_entry++;
         stack_len -= MPLS_HEADER_LEN;
 
-        if ((codec.conf->get_mpls_stack_depth() != -1) &&
-            (chainLen++ >= codec.conf->get_mpls_stack_depth()))
+        if ((config.stack_depth != -1) && (++depth > config.stack_depth))
         {
             codec_event(codec, DECODE_MPLS_LABEL_STACK);
 
             codec.proto_bits &= ~PROTO_BIT__MPLS;
             return false;
         }
-    }   /* while bos not 1, peel off more labels */
+    }   /* peel off labels until we find the bottom of the stack */
 
     if (codec.conf->tunnel_bypass_enabled(TUNNEL_MPLS))
         codec.tunnel_bypass = true;
 
-    codec.lyr_len = (const uint8_t*)tmpMplsHdr - raw.data;
+    codec.lyr_len = (const uint8_t*) mpls_entry - raw.data;
 
-    switch (iRet)
-    {
-    case MPLS_PAYLOADTYPE_IPV4:
+    uint8_t dplt = config.payload_type;
+    if (snort.mplsHdr.label == 0)
         codec.next_prot_id = ProtocolId::ETHERTYPE_IPV4;
-        break;
-
-    case MPLS_PAYLOADTYPE_IPV6:
+    else if (snort.mplsHdr.label == 2)
         codec.next_prot_id = ProtocolId::ETHERTYPE_IPV6;
-        break;
-
-    case MPLS_PAYLOADTYPE_ETHERNET:
+    else if (dplt == MPLS_PAYLOADTYPE_IPV4)
+        codec.next_prot_id = ProtocolId::ETHERTYPE_IPV4;
+    else if (dplt == MPLS_PAYLOADTYPE_IPV6)
+        codec.next_prot_id = ProtocolId::ETHERTYPE_IPV6;
+    else if (dplt == MPLS_PAYLOADTYPE_ETHERNET)
         codec.next_prot_id = ProtocolId::ETHERTYPE_TRANS_ETHER_BRIDGING;
-        break;
-
-    default:
-        break;
+    else
+    {
+        // Default to first nibble autodetection
+        //  This heuristic is obviously vulnerable to corner cases where the next layer is actually
+        //  Ethernet and the first nibble of the destination MAC address is 4 or 6.
+        if (codec.lyr_len == raw.len)
+            return false;
+        uint8_t first_nibble = (*(raw.data + codec.lyr_len) >> 4) & 0x0F;
+        switch (first_nibble)
+        {
+            case 4:
+                codec.next_prot_id = ProtocolId::ETHERTYPE_IPV4;
+                break;
+            case 6:
+                codec.next_prot_id = ProtocolId::ETHERTYPE_IPV6;
+                break;
+            default:
+                codec.next_prot_id = ProtocolId::ETHERTYPE_TRANS_ETHER_BRIDGING;
+                break;
+        }
     }
 
     return true;
 }
+
 bool MplsCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
         EncState& enc, Buffer& buf, Flow* pflow)
 {
     uint16_t hdr_len = raw_len;
     const uint8_t* hdr_start = raw_in;
-    if( pflow )
+    if (pflow)
     {
         Layer mpls_lyr = pflow->get_mpls_layer_per_dir(enc.forward());
 
-        if( mpls_lyr.length )
+        if (mpls_lyr.length)
         {
             hdr_len = mpls_lyr.length;
             hdr_start = mpls_lyr.start;
@@ -262,102 +273,64 @@ bool MplsCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
 /*
  * check if reserved labels are used properly
  */
-int MplsCodec::checkMplsHdr(const CodecData& codec, uint32_t label, uint8_t bos)
+bool MplsCodec::validate_reserved_label(const CodecData& codec, uint32_t label, uint8_t bos)
 {
-    int iRet = 0;
+    uint8_t plt = config.payload_type;
+
     switch (label)
     {
-    case 0:
-    case 2:
-        //if this label is the bottom of the stack
-        if (bos)
-        {
-            if ( label == 0 )
-                iRet = MPLS_PAYLOADTYPE_IPV4;
-            else if ( label == 2 )
-                iRet = MPLS_PAYLOADTYPE_IPV6;
+        case 0:
+            // Label 0 is the "IPv4 Explicit NULL Label", which indicates encapsulated IPv4 when at BoS
+            //      RFC 3032 removed the BoS restriction for this label
+            if (bos && plt && plt != MPLS_PAYLOADTYPE_IPV4)
+                codec_event(codec, DECODE_BAD_MPLS_LABEL0);
+            break;
 
-            /* when label == 2, IPv6 is expected;
-             * when label == 0, IPv4 is expected */
-            if ( (label && ( codec.conf->get_mpls_payload_type() != MPLS_PAYLOADTYPE_IPV6) )
-                || ( (!label) && (codec.conf->get_mpls_payload_type() != MPLS_PAYLOADTYPE_IPV4)))
+        case 1:
+            // Label 1 is the "Router Alert Label", which cannot occur at the bottom of the stack
+            if (bos)
             {
-                if ( !label )
-                    codec_event(codec, DECODE_BAD_MPLS_LABEL0);
-                else
-                    codec_event(codec, DECODE_BAD_MPLS_LABEL2);
+                codec_event(codec, DECODE_BAD_MPLS_LABEL1);
+                return false;
             }
             break;
-        }
-        //if bos is false we are believed to NOT be at the bottom of the stack
-        //and if we arent at the bottom of the stack then we should NOT see
-        //label 0 or 2 (according to RFC 3032)
-        else
-        {
-             if ( label == 0 )
-                    codec_event(codec, DECODE_BAD_MPLS_LABEL0);
-            //it MUST be label 2
-             else
-                    codec_event(codec, DECODE_BAD_MPLS_LABEL2);
-        }
-#if 0
-        /* This is valid per RFC 4182.  Just pop this label off, ignore it
-         * and move on to the next one.
-         */
-        if ( !label )
-            codec_event(codec, DECODE_BAD_MPLS_LABEL0);
-        else
-            codec_event(codec, DECODE_BAD_MPLS_LABEL2);
 
-        p->iph = NULL;
-        p->family = NO_IP;
-        return(-1);
-#endif
-        break;
-    case 1:
-        if (!bos)
+        case 2:
+            // Label 2 is the "IPv6 Explicit NULL Label", which indicates encapsulated IPv6 when at BoS
+            //      RFC 3032 removed the BoS restriction for this label
+            if (bos && plt && plt != MPLS_PAYLOADTYPE_IPV6)
+                codec_event(codec, DECODE_BAD_MPLS_LABEL2);
             break;
 
-        codec_event(codec, DECODE_BAD_MPLS_LABEL1);
+        case 3:
+            // Label 3 is the "Implicit NULL Label", which should never actually appear in a stack
+            codec_event(codec, DECODE_BAD_MPLS_LABEL3);
+            return false;
 
-        iRet = MPLS_PAYLOADTYPE_ERROR;
-        break;
-
-    case 3:
-        codec_event(codec, DECODE_BAD_MPLS_LABEL3);
-
-        iRet = MPLS_PAYLOADTYPE_ERROR;
-        break;
-    case 4:
-    case 5:
-    case 6:
-    case 7:
-    case 8:
-    case 9:
-    case 10:
-    case 11:
-    case 12:
-    case 13:
-    case 14:
-    case 15:
-        codec_event(codec, DECODE_MPLS_RESERVED_LABEL);
-        break;
-    default:
-        break;
+        default:
+            // Labels 4-15 are reserved without any current special meaning
+            codec_event(codec, DECODE_MPLS_RESERVED_LABEL);
+            break;
     }
-    if ( !iRet )
-    {
-        iRet = codec.conf->get_mpls_payload_type();
-    }
-    return iRet;
+
+    return true;
 }
 
-void MplsCodec::log(TextLog* const /*text_log*/, const uint8_t* /*raw_pkt*/,
+void MplsCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const uint16_t /*lyr_len*/)
 {
-// FIXIT-L  MPLS needs to be updated throughout Snort++
-//  TextLog_Print(text_log,"label:0x%05X exp:0x%X bos:0x%X ttl:0x%X\n",
-//      p->ptrs.mplsHdr.label, p->ptrs.mplsHdr.exp, p->ptrs.mplsHdr.bos, p->ptrs.mplsHdr.ttl);
+    const uint32_t* mpls_entry = reinterpret_cast<const uint32_t*>(raw_pkt);
+    uint8_t bos = 0;
+    while (!bos)
+    {
+        uint32_t label;
+        uint8_t tc;
+        uint8_t ttl;
+
+        decode_mpls_entry(mpls_entry, label, tc, bos, ttl);
+        TextLog_Print(text_log, "\n\tlabel:0x%05X tc:0x%hhX bos:0x%hhX ttl:0x%hhX", label, tc, bos, ttl);
+        mpls_entry++;
+    }
 }
 
 //-------------------------------------------------------------------------
@@ -370,8 +343,15 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static Codec* ctor(Module*)
-{ return new MplsCodec(); }
+static Codec* ctor(Module* m)
+{
+    if (m)
+    {
+        MplsModule* mod = (MplsModule*) m;
+        return new MplsCodec(mod->get_data());
+    }
+    return new MplsCodec();
+}
 
 static void dtor(Codec* cd)
 { delete cd; }

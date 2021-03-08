@@ -23,6 +23,7 @@
 
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
+#include "log/log_text.h"
 #include "protocols/eth.h"
 
 using namespace snort;
@@ -39,6 +40,7 @@ public:
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
+    void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 };
 } // anonymous namespace
 
@@ -65,6 +67,21 @@ bool TransbridgeCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     codec.codec_flags |= CODEC_ETHER_NEXT;
 
     return true;
+}
+
+void TransbridgeCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
+    const uint16_t /*len*/)
+{
+    const eth::EtherHdr* eh = reinterpret_cast<const eth::EtherHdr*>(raw_pkt);
+
+    LogEthAddrs(text_log, eh);
+
+    const ProtocolId prot_id = eh->ethertype();
+
+    if (to_utype(prot_id) <= to_utype(ProtocolId::ETHERTYPE_MINIMUM))
+        TextLog_Print(text_log, "  len:0x%04X", static_cast<uint16_t>(prot_id));
+    else
+        TextLog_Print(text_log, "  type:0x%04X", static_cast<uint16_t>(prot_id));
 }
 
 //-------------------------------------------------------------------------

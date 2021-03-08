@@ -29,16 +29,11 @@ namespace mpls
 struct MplsHdr
 {
     uint32_t label;
-    uint8_t exp;
+    uint8_t tc;
     uint8_t bos;
     uint8_t ttl;
 };
 } // namespace mpls
-
-// FIXIT-L constexpr != const, they are orthogonal keywords
-constexpr int MPLS_PAYLOADTYPE_ETHERNET = 1;
-constexpr int MPLS_PAYLOADTYPE_IPV4 = 2;
-constexpr int MPLS_PAYLOADTYPE_IPV6 = 3;
 }
 #endif
 
