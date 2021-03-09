@@ -308,15 +308,15 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     /* mask off the high bits in the fragment offset field */
     frag_off &= 0x1FFF;
 
-    // to get the real frag_off, we need to multiply by 8. However, since
-    // the actual frag_off is never used, we can comment this out
-//    frag_off = frag_off << 3;
+    if ( frag_off )
+    {
+        if ( codec.codec_flags & CODEC_DF )
+            codec_event(codec, DECODE_IP4_DF_OFFSET);
 
-    if ( (codec.codec_flags & CODEC_DF) && frag_off )
-        codec_event(codec, DECODE_IP4_DF_OFFSET);
-
-    if ( frag_off + ip_len > IP_MAXPACKET )
-        codec_event(codec, DECODE_IP4_LEN_OFFSET);
+        // to get the real fragment offset, we need to multiply by 8
+        if ( (frag_off << 3) + ip_len > IP_MAXPACKET )
+            codec_event(codec, DECODE_IP4_LEN_OFFSET);
+    }
 
     if ( frag_off || (snort.decode_flags & DECODE_MF))
     {
@@ -327,9 +327,7 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         snort.decode_flags |= DECODE_FRAG;
     }
     else
-    {
         snort.decode_flags &= ~DECODE_FRAG;
-    }
 
     if ( (snort.decode_flags & DECODE_MF) && (codec.codec_flags & CODEC_DF))
         codec_event(codec, DECODE_BAD_FRAGBITS);
