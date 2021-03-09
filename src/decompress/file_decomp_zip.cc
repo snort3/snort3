@@ -15,7 +15,6 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-
 // file_decomp_zip.cc author Brandon Stultz <brastult@cisco.com>
 
 #ifdef HAVE_CONFIG_H
@@ -23,6 +22,8 @@
 #endif
 
 #include "file_decomp_zip.h"
+
+#include "helpers/boyer_moore_search.h"
 #include "utils/util.h"
 
 using namespace snort;
@@ -98,12 +99,12 @@ fd_status_t File_Decomp_Init_ZIP(fd_session_t* SessionPtr)
     SessionPtr->ZIP = (fd_ZIP_t*)snort_calloc(sizeof(fd_ZIP_t));
 
     // file_decomp.cc already matched the local header
-    // skip the version and bitflag (4 bytes)
+    // skip the version (2 bytes)
     SessionPtr->ZIP->State = ZIP_STATE_SKIP;
-    SessionPtr->ZIP->Length = 4;
+    SessionPtr->ZIP->Length = 2;
 
-    // land on compression method
-    SessionPtr->ZIP->Next = ZIP_STATE_METHOD;
+    // land on bitflag
+    SessionPtr->ZIP->Next = ZIP_STATE_BITFLAG;
     SessionPtr->ZIP->Next_Length = 2;
 
     return File_Decomp_OK;
@@ -118,6 +119,12 @@ fd_status_t File_Decomp_End_ZIP(fd_session_t* SessionPtr)
     // end zlib decompression if we are processing a stream
     if ( SessionPtr->ZIP->State == ZIP_STATE_INFLATE )
         Inflate_End(SessionPtr);
+
+    if ( SessionPtr->ZIP->header_searcher )
+    {
+        delete SessionPtr->ZIP->header_searcher;
+        SessionPtr->ZIP->header_searcher = nullptr;
+    }
 
     // File_Decomp_Free() will free SessionPtr->ZIP
     return File_Decomp_OK;
@@ -155,6 +162,8 @@ fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
 
                 // reset ZIP fields
                 parser->local_header = 0;
+                parser->bitflag = 0;
+                parser->data_descriptor = false;
                 parser->method = 0;
                 parser->compressed_size = 0;
                 parser->filename_length = 0;
@@ -163,18 +172,39 @@ fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
                 // reset decompression progress
                 parser->progress = 0;
 
-                // skip the version and bitflag (4 bytes)
+                // skip the version (2 bytes)
                 parser->State = ZIP_STATE_SKIP;
-                parser->Length = 4;
+                parser->Length = 2;
 
-                // land on compression method
-                parser->Next = ZIP_STATE_METHOD;
+                // land on bitflag
+                parser->Next = ZIP_STATE_BITFLAG;
                 parser->Next_Length = 2;
                 continue;
             }
             // read the local header
             byte = *SessionPtr->Next_In;
-            parser->local_header |= byte << parser->Index*8;
+            parser->local_header |= byte << (parser->Index * 8);
+            break;
+        // bitflag
+        case ZIP_STATE_BITFLAG:
+            // check if we are done with the bitflag
+            if ( parser->Index == parser->Length )
+            {
+                // read the bitflag, reset the index
+                parser->Index = 0;
+
+                // check the data descriptor bit
+                if ( parser->bitflag & DATA_DESC_BIT )
+                    parser->data_descriptor = true;
+
+                // read the compression method next
+                parser->State = ZIP_STATE_METHOD;
+                parser->Length = 2;
+                continue;
+            }
+            // read the bitflag
+            byte = *SessionPtr->Next_In;
+            parser->bitflag |= byte << (parser->Index * 8);
             break;
         // compression method
         case ZIP_STATE_METHOD:
@@ -196,7 +226,7 @@ fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
             }
             // read the method
             byte = *SessionPtr->Next_In;
-            parser->method |= byte << parser->Index*8;
+            parser->method |= byte << (parser->Index * 8);
             break;
         // compressed size
         case ZIP_STATE_COMPSIZE:
@@ -217,7 +247,7 @@ fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
             }
             // read the compressed size
             byte = *SessionPtr->Next_In;
-            parser->compressed_size |= byte << parser->Index*8;
+            parser->compressed_size |= byte << (parser->Index * 8);
             break;
         // filename length
         case ZIP_STATE_FILENAMELEN:
@@ -234,7 +264,7 @@ fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
             }
             // read the filename length
             byte = *SessionPtr->Next_In;
-            parser->filename_length |= byte << parser->Index*8;
+            parser->filename_length |= byte << (parser->Index * 8);
             break;
         // extra length
         case ZIP_STATE_EXTRALEN:
@@ -254,11 +284,20 @@ fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
                     // the compression type is deflate (8),
                     // land on the compressed stream, init zlib
                     parser->Next = ZIP_STATE_INFLATE_INIT;
-                    parser->Next_Length = parser->compressed_size;
+                    parser->Next_Length = 0;
                     continue;
                 }
 
-                // no output space or compression type isn't deflate, skip the stream
+                // no output space or compression type isn't deflate
+                if ( parser->data_descriptor )
+                {
+                    // search for the next file
+                    parser->Next = ZIP_STATE_SEARCH;
+                    parser->Next_Length = 0;
+                    continue;
+                }
+
+                // skip the stream
                 parser->Length += parser->compressed_size;
 
                 // land on another local header
@@ -268,7 +307,7 @@ fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
             }
             // read the extra length
             byte = *SessionPtr->Next_In;
-            parser->extra_length |= byte << parser->Index*8;
+            parser->extra_length |= byte << (parser->Index * 8);
             break;
         // initialize zlib inflate
         case ZIP_STATE_INFLATE_INIT:
@@ -295,6 +334,17 @@ fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
             if ( status == File_Decomp_BlockOut )
             {
                 // ran out of output space
+                if ( parser->data_descriptor )
+                {
+                    // close the inflate stream
+                    Inflate_End(SessionPtr);
+
+                    // search for next file
+                    parser->State = ZIP_STATE_SEARCH;
+                    parser->Length = 0;
+                    continue;
+                }
+
                 // progress should be < compressed_size
                 if ( parser->progress >= parser->compressed_size )
                     return File_Decomp_Error;
@@ -318,6 +368,14 @@ fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
                 // close the inflate stream
                 Inflate_End(SessionPtr);
 
+                if ( parser->data_descriptor )
+                {
+                    // search for the next file
+                    parser->State = ZIP_STATE_SEARCH;
+                    parser->Length = 0;
+                    continue;
+                }
+
                 // parse next local header
                 parser->State = ZIP_STATE_LH;
                 parser->Length = 4;
@@ -328,12 +386,47 @@ fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
             // circle back for more input
             return File_Decomp_OK;
         }
+        // search state
+        case ZIP_STATE_SEARCH:
+        {
+            if ( parser->header_searcher == nullptr )
+            {
+                // initialize local file header searcher
+                parser->header_searcher = new BoyerMooreSearchCase(
+                    header_pattern, sizeof(header_pattern));
+            }
+
+            // search for the next local file header
+            int pos = parser->header_searcher->search(
+                SessionPtr->Next_In, SessionPtr->Avail_In);
+
+            if ( pos < 0 )
+            {
+                // not found, skip the rest of this flush
+                parser->State = ZIP_STATE_SKIP;
+                parser->Length = SessionPtr->Avail_In;
+
+                // search for next file
+                parser->Next = ZIP_STATE_SEARCH;
+                parser->Next_Length = 0;
+                continue;
+            }
+
+            // found, skip the rest of this file
+            parser->State = ZIP_STATE_SKIP;
+            parser->Length = pos;
+
+            // land on local header
+            parser->Next = ZIP_STATE_LH;
+            parser->Next_Length = 4;
+            continue;
+        }
         // skip state
         case ZIP_STATE_SKIP:
             // check if we need to skip
             if ( parser->Index < parser->Length )
             {
-                unsigned skip = parser->Length - parser->Index;
+                uint32_t skip = parser->Length - parser->Index;
 
                 // check if we can skip within this flush
                 if ( SessionPtr->Avail_In < skip )
@@ -341,7 +434,7 @@ fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
                     // the available input is < skip
                     parser->Index += SessionPtr->Avail_In;
 
-                    unsigned min = SessionPtr->Avail_In < SessionPtr->Avail_Out ?
+                    uint32_t min = SessionPtr->Avail_In < SessionPtr->Avail_Out ?
                                    SessionPtr->Avail_In : SessionPtr->Avail_Out;
 
                     // copy what we can

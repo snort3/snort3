@@ -192,7 +192,7 @@ inline bool Get_1(fd_session_t* SessionPtr, uint8_t* c)
 
 /* If available, get N bytes from the input queue.  All N must be
    available for this call to succeed. */
-inline bool Get_N(fd_session_t* SessionPtr, const uint8_t** c, uint16_t N)
+inline bool Get_N(fd_session_t* SessionPtr, const uint8_t** c, uint32_t N)
 {
     if ( (SessionPtr->Next_In != nullptr) && (SessionPtr->Avail_In >= N) )
     {
@@ -222,7 +222,7 @@ inline bool Put_1(fd_session_t* SessionPtr, uint8_t c)
 
 /* If the output queue has room available, place N bytes onto the queue.
    The output queue must have space for N bytes for this call to succeed. */
-inline bool Put_N(fd_session_t* SessionPtr, const uint8_t* c, uint16_t N)
+inline bool Put_N(fd_session_t* SessionPtr, const uint8_t* c, uint32_t N)
 {
     if ( (SessionPtr->Next_Out != nullptr) && (SessionPtr->Avail_Out >= N) )
     {
@@ -244,8 +244,8 @@ inline bool Move_1(fd_session_t* SessionPtr)
         (SessionPtr->Next_In != nullptr) && (SessionPtr->Avail_In > 0) )
     {
         *(SessionPtr->Next_Out) = *(SessionPtr->Next_In);
-        SessionPtr->Next_Out += 1;
         SessionPtr->Next_In += 1;
+        SessionPtr->Next_Out += 1;
         SessionPtr->Avail_In -= 1;
         SessionPtr->Avail_Out -= 1;
         SessionPtr->Total_In += 1;
@@ -258,14 +258,14 @@ inline bool Move_1(fd_session_t* SessionPtr)
 
 /* If the input queue has at least N bytes available AND there's at
    space for at least N bytes in the output queue, then move all N bytes. */
-inline bool Move_N(fd_session_t* SessionPtr, uint16_t N)
+inline bool Move_N(fd_session_t* SessionPtr, uint32_t N)
 {
     if ( (SessionPtr->Next_Out != nullptr) && (SessionPtr->Avail_Out >= N) &&
         (SessionPtr->Next_In != nullptr) && (SessionPtr->Avail_In >= N) )
     {
         memcpy( (char*)SessionPtr->Next_Out, (const char*)SessionPtr->Next_In, N);
-        SessionPtr->Next_Out += N;
         SessionPtr->Next_In += N;
+        SessionPtr->Next_Out += N;
         SessionPtr->Avail_In -= N;
         SessionPtr->Avail_Out -= N;
         SessionPtr->Total_In += N;

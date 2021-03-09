@@ -15,17 +15,23 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-
 // file_decomp_zip.h author Brandon Stultz <brastult@cisco.com>
 
 #ifndef FILE_DECOMP_ZIP_H
 #define FILE_DECOMP_ZIP_H
 
-#include "file_decomp.h"
-
 #include <zlib.h>
 
+#include "file_decomp.h"
+
+namespace snort
+{
+class BoyerMooreSearchCase;
+}
+
 static const uint32_t ZIP_LOCAL_HEADER = 0x04034B50;
+static const uint8_t header_pattern[4] = { 0x50, 0x4B, 0x03, 0x04 };
+static const uint8_t DATA_DESC_BIT = 0x08;
 
 enum fd_ZIP_states
 {
@@ -33,8 +39,8 @@ enum fd_ZIP_states
 
     // skipped:
     // ZIP_STATE_VER,         // version (2 bytes)
-    // ZIP_STATE_BITFLAG,     // bitflag (2 bytes)
 
+    ZIP_STATE_BITFLAG,        // bitflag (2 bytes)
     ZIP_STATE_METHOD,         // compression method (2 bytes)
 
     // skipped:
@@ -57,6 +63,7 @@ enum fd_ZIP_states
 
     ZIP_STATE_INFLATE_INIT,   // initialize zlib inflate
     ZIP_STATE_INFLATE,        // perform zlib inflate
+    ZIP_STATE_SEARCH,         // search for local header
     ZIP_STATE_SKIP            // skip state
 };
 
@@ -66,25 +73,30 @@ struct fd_ZIP_t
     z_stream Stream;
 
     // decompression progress
-    unsigned progress;
+    uint32_t progress;
 
     // ZIP fields
     uint32_t local_header;
+    uint16_t bitflag;
+    bool data_descriptor;
     uint16_t method;
     uint32_t compressed_size;
     uint16_t filename_length;
     uint16_t extra_length;
 
     // field index
-    unsigned Index;
+    uint32_t Index;
 
     // current parser state
     fd_ZIP_states State;
-    unsigned Length;
+    uint32_t Length;
 
     // next parser state
     fd_ZIP_states Next;
-    unsigned Next_Length;
+    uint32_t Next_Length;
+
+    // local file header searcher
+    snort::BoyerMooreSearchCase* header_searcher;
 };
 
 // allocate and set initial ZIP state
