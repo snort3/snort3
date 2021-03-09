@@ -322,6 +322,9 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
         PacketTracer::dump(p);
     }
 
+    if (PacketTracer::is_daq_activated())
+        PacketTracer::daq_dump(p);
+
     HighAvailabilityManager::process_update(p->flow, p);
 
     if (verdict != MAX_DAQ_VERDICT)

@@ -32,6 +32,8 @@
 #include "protocols/ipv6.h"
 #include "protocols/protocol_ids.h"
 #include "sfip/sf_ip.h"
+#include "time/clock_defs.h"
+#include "time/stopwatch.h"
 
 // %s %u -> %s %u %u AS=%u ID=%u GR=%hd-%hd
 // IPv6 Port -> IPv6 Port Proto AS=ASNum ID=InstanceNum GR=SrcGroupNum-DstGroupNum
@@ -57,6 +59,7 @@ public:
 
     static void dump(char* output_buff, unsigned int len);
     static void dump(Packet*);
+    static void daq_dump(Packet*);
 
     static void configure(bool status, const std::string& file_name);
     static void set_constraints(const PacketConstraints* constraints);
@@ -66,11 +69,15 @@ public:
     static SO_PUBLIC void unpause();
     static SO_PUBLIC bool is_paused();
     static SO_PUBLIC bool is_active();
+    static SO_PUBLIC bool is_daq_activated();
 
     static SO_PUBLIC TracerMute get_mute();
 
     static SO_PUBLIC void log(const char* format, ...) __attribute__((format (printf, 1, 2)));
     static SO_PUBLIC void log(TracerMute, const char* format, ...) __attribute__((format (printf, 2, 3)));
+
+    static SO_PUBLIC void daq_log(const char* format, ...) __attribute__((format (printf, 1, 2)));
+    static SO_PUBLIC void pt_timer_start();
 
 protected:
 
@@ -80,6 +87,8 @@ protected:
     std::vector<bool> mutes;
     char buffer[max_buff_size];
     unsigned buff_len = 0;
+    char daq_buffer[max_buff_size];
+    unsigned daq_buff_len = 0;
 
     unsigned pause_count = 0;
     bool user_enabled = false;
@@ -94,7 +103,8 @@ protected:
     template<typename T = PacketTracer> static void _thread_init();
 
     // non-static functions
-    void log_va(const char*, va_list);
+    void log_va(const char*, va_list, bool);
+    void populate_buf(const char*, va_list, char*, uint32_t&);
     void add_ip_header_info(const snort::Packet&);
     void add_eth_header_info(const snort::Packet&);
     void add_packet_type_info(const snort::Packet&);
@@ -103,14 +113,17 @@ protected:
 
     virtual void open_file();
     virtual void dump_to_daq(Packet*);
-    virtual void reset();
-
+    virtual void reset(bool);
 };
 
 SO_PUBLIC extern THREAD_LOCAL PacketTracer* s_pkt_trace;
+SO_PUBLIC extern THREAD_LOCAL Stopwatch<SnortClock>* pt_timer;
 
 inline bool PacketTracer::is_active()
 { return s_pkt_trace ? s_pkt_trace->active : false; }
+
+inline bool PacketTracer::is_daq_activated()
+{ return s_pkt_trace ? s_pkt_trace->daq_activated : false; }
 
 struct SO_PUBLIC PacketTracerSuspend
 {

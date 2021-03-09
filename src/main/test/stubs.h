@@ -171,6 +171,7 @@ void PacketTracer::thread_init() { }
 void PacketTracer::thread_term() { }
 void PacketTracer::log(const char*, ...) { }
 void PacketTracer::dump(Packet*) { }
+void PacketTracer::daq_dump(Packet*) { }
 void PacketTracer::activate(const Packet&) { }
 void TraceApi::thread_init(const TraceConfig*) { }
 void TraceApi::thread_term() { }

@@ -53,6 +53,8 @@ using namespace snort;
 // FIXIT-M refactor the way this is used so all methods are members called against this pointer
 THREAD_LOCAL PacketTracer* snort::s_pkt_trace = nullptr;
 
+THREAD_LOCAL Stopwatch<SnortClock>* snort::pt_timer = nullptr;
+
 // so modules can register regardless of when packet trace is activated
 static THREAD_LOCAL struct{ unsigned val = 0; } global_mutes;
 
@@ -72,6 +74,9 @@ template<typename T> void PacketTracer::_thread_init()
     if ( s_pkt_trace == nullptr )
         s_pkt_trace = new T();
 
+    if ( pt_timer == nullptr )
+        pt_timer = new Stopwatch<SnortClock>;
+
     s_pkt_trace->mutes.resize(global_mutes.val, false);
     s_pkt_trace->open_file();
     s_pkt_trace->user_enabled = config_status;
@@ -88,6 +93,12 @@ void PacketTracer::thread_term()
         delete s_pkt_trace;
         s_pkt_trace = nullptr;
     }
+
+    if (pt_timer)
+    {
+        delete pt_timer;
+        pt_timer = nullptr;
+    }
 }
 
 void PacketTracer::dump(char* output_buff, unsigned int len)
@@ -99,16 +110,13 @@ void PacketTracer::dump(char* output_buff, unsigned int len)
         memcpy(output_buff, s_pkt_trace->buffer,
             (len < s_pkt_trace->buff_len + 1 ? len : s_pkt_trace->buff_len + 1));
 
-    s_pkt_trace->reset();
+    s_pkt_trace->reset(false);
 }
 
 void PacketTracer::dump(Packet* p)
 {
     if (is_paused())
         return;
-
-    if (s_pkt_trace->daq_activated)
-        s_pkt_trace->dump_to_daq(p);
 
     if ((s_pkt_trace->buff_len > 0)
         and (s_pkt_trace->user_enabled or s_pkt_trace->shell_enabled))
@@ -119,7 +127,29 @@ void PacketTracer::dump(Packet* p)
         LogMessage(s_pkt_trace->log_fh, "%s\n", s_pkt_trace->buffer);
     }
 
-    s_pkt_trace->reset();
+    s_pkt_trace->reset(false);
+}
+
+void PacketTracer::daq_dump(Packet *p)
+{
+    if (is_paused())
+        return;
+
+    if (s_pkt_trace->daq_activated)
+        s_pkt_trace->dump_to_daq(p);
+
+    s_pkt_trace->reset(true);
+}
+
+void PacketTracer::daq_log(const char* format, ...)
+{
+    if (is_paused())
+        return;
+
+    va_list ap;
+    va_start(ap, format);
+    s_pkt_trace->log_va(format, ap, true);
+    va_end(ap);
 }
 
 void PacketTracer::log(const char* format, ...)
@@ -129,7 +159,7 @@ void PacketTracer::log(const char* format, ...)
 
     va_list ap;
     va_start(ap, format);
-    s_pkt_trace->log_va(format, ap);
+    s_pkt_trace->log_va(format, ap, false);
     va_end(ap);
 }
 
@@ -140,7 +170,7 @@ void PacketTracer::log(TracerMute mute, const char* format, ...)
 
     va_list ap;
     va_start(ap, format);
-    s_pkt_trace->log_va(format, ap);
+    s_pkt_trace->log_va(format, ap, false);
     va_end(ap);
 
     s_pkt_trace->mutes[mute] = true;
@@ -203,7 +233,7 @@ void PacketTracer::activate(const Packet& p)
     else
         s_pkt_trace->daq_activated = false;
 
-    if (s_pkt_trace->daq_activated or s_pkt_trace->user_enabled or s_pkt_trace->shell_enabled)
+    if (s_pkt_trace->user_enabled or s_pkt_trace->shell_enabled)
     {
         if (!p.ptrs.ip_api.is_ip())
         {
@@ -226,6 +256,12 @@ void PacketTracer::activate(const Packet& p)
         s_pkt_trace->active = false;
 }
 
+void PacketTracer::pt_timer_start()
+{
+    pt_timer->reset();
+    pt_timer->start();
+}
+
 // -----------------------------------------------------------------------------
 // non-static functions
 // -----------------------------------------------------------------------------
@@ -240,11 +276,22 @@ PacketTracer::~PacketTracer()
     }
 }
 
-void PacketTracer::log_va(const char* format, va_list ap)
+void PacketTracer::populate_buf(const char* format, va_list ap, char* buffer, uint32_t& buff_len)
+{
+    const int buff_space = max_buff_size - buff_len;
+    const int len = vsnprintf(buffer + buff_len, buff_space, format, ap);
+
+    if (len >= 0 and len < buff_space)
+        buff_len += len;
+    else
+        buff_len = max_buff_size - 1;
+}
+
+void PacketTracer::log_va(const char* format, va_list ap, bool daq_log)
 {
     // FIXIT-L Need to find way to add 'PktTracerDbg' string as part of format string.
     std::string dbg_str;
-    if (shell_enabled) // only add debug string during shell execution
+    if (shell_enabled and !daq_log) // only add debug string during shell execution
     {
         dbg_str = "PktTracerDbg ";
         if (strcmp(format, "\n") != 0)
@@ -253,13 +300,10 @@ void PacketTracer::log_va(const char* format, va_list ap)
         format = dbg_str.c_str();
     }
 
-    const int buff_space = max_buff_size - buff_len;
-    const int len = vsnprintf(buffer + buff_len, buff_space, format, ap);
-
-    if (len >= 0 and len < buff_space)
-        buff_len += len;
+    if (daq_log)
+        s_pkt_trace->populate_buf(format, ap, daq_buffer, daq_buff_len);
     else
-        buff_len = max_buff_size - 1;
+        s_pkt_trace->populate_buf(format, ap, buffer, buff_len);
 }
 
 void PacketTracer::add_ip_header_info(const Packet& p)
@@ -418,17 +462,26 @@ void PacketTracer::open_file()
 void PacketTracer::dump_to_daq(Packet* p)
 {
     assert(p);
-    p->daq_instance->set_packet_trace_data(p->daq_msg, (uint8_t *)buffer, buff_len + 1);
+    p->daq_instance->set_packet_trace_data(p->daq_msg, (uint8_t *)daq_buffer, daq_buff_len + 1);
 }
 
-void PacketTracer::reset()
+void PacketTracer::reset(bool daq_log)
 {
-    buff_len = 0;
-    buffer[0] = '\0';
+    if ( daq_log )
+    {
+        daq_buff_len = 0;
+        daq_buffer[0] = '\0';
+    }
+    else
+    {
+        buff_len = 0;
+        buffer[0] = '\0';
 
-    for ( unsigned i = 0; i < mutes.size(); i++ )
-        mutes[i] = false;
+        for ( unsigned i = 0; i < mutes.size(); i++ )
+            mutes[i] = false;
+    }
 }
+
 // --------------------------------------------------------------------------
 // unit tests
 // --------------------------------------------------------------------------
@@ -448,6 +501,12 @@ public:
 
     static unsigned int get_buff_len()
     { return ((TestPacketTracer*)s_pkt_trace)->buff_len; }
+
+    static char* get_daq_buff()
+    { return ((TestPacketTracer*)s_pkt_trace)->daq_buffer; }
+
+    static unsigned int get_daq_buff_len()
+    { return ((TestPacketTracer*)s_pkt_trace)->daq_buff_len; }
 
     static void set_user_enable(bool status)
     { ((TestPacketTracer*)s_pkt_trace)->user_enabled = status; }
@@ -497,26 +556,59 @@ TEST_CASE("basic log", "[PacketTracer]")
     TestPacketTracer::thread_term();
 }
 
+TEST_CASE("basic daq log", "[PacketTracer]")
+{
+    char test_str[] = "1234567890";
+    // instantiate a packet tracer
+    TestPacketTracer::thread_init();
+    TestPacketTracer::pt_timer_start();
+    TestPacketTracer::set_daq_enable(true);
+    TestPacketTracer::daq_log("%s", test_str);
+    CHECK(!(strcmp(TestPacketTracer::get_daq_buff(), test_str)));
+    CHECK((TestPacketTracer::get_daq_buff_len() == 10));
+    TestPacketTracer::daq_log("%s", "ABCDEFG");
+    CHECK((strcmp(TestPacketTracer::get_daq_buff(), "1234567890ABCDEFG") == 0));
+    CHECK((TestPacketTracer::get_daq_buff_len() == strlen(TestPacketTracer::get_daq_buff())));
+
+    // log empty string won't change existed buffer
+    unsigned int curr_len = TestPacketTracer::get_daq_buff_len();
+    char empty_str[] = "";
+    TestPacketTracer::daq_log("%s", empty_str);
+    CHECK((TestPacketTracer::get_daq_buff_len() == curr_len));
+
+    TestPacketTracer::thread_term();
+}
+
 TEST_CASE("corner cases", "[PacketTracer]")
 {
     char test_str[] = "1234567890", empty_str[] = "";
     TestPacketTracer::thread_init();
     TestPacketTracer::set_user_enable(true);
+    TestPacketTracer::set_daq_enable(true);
     // init length check
     CHECK((TestPacketTracer::get_buff_len() == 0));
+    CHECK((TestPacketTracer::get_daq_buff_len() == 0));
     // logging empty string to start with
     TestPacketTracer::log("%s", empty_str);
     CHECK((TestPacketTracer::get_buff_len() == 0));
+    TestPacketTracer::daq_log("%s", empty_str);
+    CHECK((TestPacketTracer::get_daq_buff_len() == 0));
 
     // log messages larger than buffer size
     for(int i=0; i<1024; i++)
+    {
         TestPacketTracer::log("%s", test_str);
+        TestPacketTracer::daq_log("%s", test_str);
+    }
     // when buffer limit is  reached, buffer length will stopped at max_buff_size-1
     CHECK((TestPacketTracer::get_buff_len() == (TestPacketTracer::max_buff_size-1)));
+    CHECK((TestPacketTracer::get_daq_buff_len() == (TestPacketTracer::max_buff_size-1)));
 
     // continue logging will not change anything
     TestPacketTracer::log("%s", test_str);
     CHECK((TestPacketTracer::get_buff_len() == (TestPacketTracer::max_buff_size-1)));
+    TestPacketTracer::daq_log("%s", test_str);
+    CHECK((TestPacketTracer::get_daq_buff_len() == (TestPacketTracer::max_buff_size-1)));
 
     TestPacketTracer::thread_term();
 }
