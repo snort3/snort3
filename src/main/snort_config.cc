@@ -336,113 +336,120 @@ void SnortConfig::clone(const SnortConfig* const conf)
 }
 
 // merge in everything from the command line config
-void SnortConfig::merge(SnortConfig* cmd_line)
+void SnortConfig::merge(const SnortConfig* cmd_line_conf)
 {
-    if ( !cmd_line->log_dir.empty() )
-        log_dir = cmd_line->log_dir;
+    // -D / -H / -Q / -r / -T / -x / --alert-before-pass / --create-pidfile / --enable-inline-test / --mem-check /
+    // --nolock-pidfile / --pause / --pcap-file / --pcap-dir / --pcap-list / --pcap-show / --pedantic / --piglet /
+    // --shell / --show-file-codes
+    run_flags |= cmd_line_conf->run_flags;
 
-    if ( log_dir.empty() )
-        log_dir = DEFAULT_LOG_DIR;
+    // -A / -C / -d / -e / -f / -O / -U / -X / -y / --nostamps
+    output_flags |= cmd_line_conf->output_flags;
 
-    run_prefix = cmd_line->run_prefix;
-    id_offset = cmd_line->id_offset;
-    id_subdir = cmd_line->id_subdir;
-    id_zero = cmd_line->id_zero;
+    // -B
+    if (cmd_line_conf->obfuscation_net.get_family() != 0)
+        memcpy(&obfuscation_net, &cmd_line_conf->obfuscation_net, sizeof(obfuscation_net));
 
-    /* Used because of a potential chroot */
-    orig_log_dir = log_dir;
-    event_log_id = cmd_line->event_log_id;
+    // -g
+    if (cmd_line_conf->group_id != -1)
+        group_id = cmd_line_conf->group_id;
 
-    run_flags |= cmd_line->run_flags;
-    output_flags |= cmd_line->output_flags;
+    // -G / --logid
+    event_log_id = cmd_line_conf->event_log_id;
 
-    include_path = cmd_line->include_path;
-    stdin_rules = cmd_line->stdin_rules;
+    // -i / -s / --daq / --daq-batch-size / --daq-dir / --daq-list / --daq-mode / --daq-var / --snaplen
+    daq_config->overlay(cmd_line_conf->daq_config);
 
-    // only set by cmd_line to override other conf output settings
-    output = cmd_line->output;
-
-    /* Merge checksum flags.  If command line modified them, use from the
-     * command line, else just use from config_file. */
-
-    int cl_chk = cmd_line->policy_map->get_network_policy()->checksum_eval;
-    int cl_drop = cmd_line->policy_map->get_network_policy()->checksum_drop;
-
-    NetworkPolicy* nw_policy = nullptr;
-
-    for ( unsigned idx = 0; idx < policy_map->network_policy_count(); ++idx )
+    // -k (only configures eval, not drop)
+    int cl_chk = cmd_line_conf->policy_map->get_network_policy()->checksum_eval;
+    if (!(cl_chk & CHECKSUM_FLAG__DEF))
     {
-        nw_policy = policy_map->get_network_policy(idx);
-
-        if ( !(cl_chk & CHECKSUM_FLAG__DEF) )
-            nw_policy->checksum_eval = cl_chk;
-
-        if ( !(cl_drop & CHECKSUM_FLAG__DEF) )
-            nw_policy->checksum_drop = cl_drop;
+        for (unsigned idx = 0; idx < policy_map->network_policy_count(); ++idx)
+        {
+            NetworkPolicy* nw_policy = policy_map->get_network_policy(idx);
+            if (!(cl_chk & CHECKSUM_FLAG__DEF))
+                nw_policy->checksum_eval = cl_chk;
+        }
     }
 
-    /* FIXIT-L do these belong in network policy? */
-    if (cmd_line->num_layers != 0)
-        num_layers = cmd_line->num_layers;
+    // -l
+    if ( !cmd_line_conf->log_dir.empty() )
+        log_dir = cmd_line_conf->log_dir;
 
-    if (cmd_line->max_ip6_extensions != 0)
-        max_ip6_extensions = cmd_line->max_ip6_extensions;
+    // -L (output is only set by cmd_line_conf to override other conf output settings)
+    output = cmd_line_conf->output;
 
-    if (cmd_line->max_ip_layers != 0)
-        max_ip_layers = cmd_line->max_ip_layers;
+    // -m
+    if (cmd_line_conf->file_mask != 0)
+        file_mask = cmd_line_conf->file_mask;
 
-    if (cmd_line->obfuscation_net.get_family() != 0)
-        memcpy(&obfuscation_net, &cmd_line->obfuscation_net, sizeof(obfuscation_net));
+    // -n
+    if (cmd_line_conf->pkt_cnt != 0)
+        pkt_cnt = cmd_line_conf->pkt_cnt;
 
-    if (cmd_line->homenet.get_family() != 0)
-        memcpy(&homenet, &cmd_line->homenet, sizeof(homenet));
+    // -t
+    if (!cmd_line_conf->chroot_dir.empty())
+        chroot_dir = cmd_line_conf->chroot_dir;
 
-    if ( !cmd_line->bpf_file.empty() )
-        bpf_file = cmd_line->bpf_file;
+    // -u
+    if (cmd_line_conf->user_id != -1)
+        user_id = cmd_line_conf->user_id;
 
-    if ( !cmd_line->bpf_filter.empty() )
-        bpf_filter = cmd_line->bpf_filter;
+    // --bpf
+    if (!cmd_line_conf->bpf_filter.empty())
+        bpf_filter = cmd_line_conf->bpf_filter;
 
-    if (cmd_line->pkt_cnt != 0)
-        pkt_cnt = cmd_line->pkt_cnt;
+    // --dirty-pig
+    if (cmd_line_conf->dirty_pig)
+        dirty_pig = cmd_line_conf->dirty_pig;
 
-    if (cmd_line->pkt_skip != 0)
-        pkt_skip = cmd_line->pkt_skip;
+    // --id-offset
+    id_offset = cmd_line_conf->id_offset;
+    // --id-subdir
+    id_subdir = cmd_line_conf->id_subdir;
+    // --id-zero
+    id_zero = cmd_line_conf->id_zero;
 
-    if (cmd_line->pkt_pause_cnt != 0)
-        pkt_pause_cnt = cmd_line->pkt_pause_cnt;
+    // --include-path
+    include_path = cmd_line_conf->include_path;
 
-    if (cmd_line->group_id != -1)
-        group_id = cmd_line->group_id;
+    // --metadata-filter
+    if (!cmd_line_conf->metadata_filter.empty())
+        metadata_filter = cmd_line_conf->metadata_filter;
 
-    if (cmd_line->user_id != -1)
-        user_id = cmd_line->user_id;
+    // --pause-after-n
+    if (cmd_line_conf->pkt_pause_cnt != 0)
+        pkt_pause_cnt = cmd_line_conf->pkt_pause_cnt;
 
-    /* Only configurable on command line */
-    if (cmd_line->file_mask != 0)
-        file_mask = cmd_line->file_mask;
-
-    if ( !cmd_line->chroot_dir.empty() )
-        chroot_dir = cmd_line->chroot_dir;
-
-    if ( cmd_line->dirty_pig )
-        dirty_pig = cmd_line->dirty_pig;
-
-    if ( !cmd_line->metadata_filter.empty() )
-        metadata_filter = cmd_line->metadata_filter;
-
-    daq_config->overlay(cmd_line->daq_config);
-
-    if (cmd_line->run_flags & RUN_FLAG__PROCESS_ALL_EVENTS)
+    // --process-all-events
+    if (cmd_line_conf->run_flags & RUN_FLAG__PROCESS_ALL_EVENTS)
         event_queue_config->process_all_events = 1;
 
+    // --run-prefix
+    run_prefix = cmd_line_conf->run_prefix;
+
+    // --skip
+    if (cmd_line_conf->pkt_skip != 0)
+        pkt_skip = cmd_line_conf->pkt_skip;
+
+    // --stdin-rules
+    stdin_rules = cmd_line_conf->stdin_rules;
+
 #ifdef SHELL
-    if ( cmd_line->remote_control_port )
-        remote_control_port = cmd_line->remote_control_port;
-    else if ( !cmd_line->remote_control_socket.empty() )
-        remote_control_socket = cmd_line->remote_control_socket;
+    // -j
+    if (cmd_line_conf->remote_control_port)
+        remote_control_port = cmd_line_conf->remote_control_port;
+    // --control-socket
+    else if (!cmd_line_conf->remote_control_socket.empty())
+        remote_control_socket = cmd_line_conf->remote_control_socket;
 #endif
 
+    // Finalize the log directory, save a copy in case we need to chroot
+    if ( log_dir.empty() )
+        log_dir = DEFAULT_LOG_DIR;
+    orig_log_dir = log_dir;
+
+    // Initialize the slotted state memory for threads
     assert(!state);
     num_slots = offload_threads + ThreadConfig::get_instance_max();
     state = new std::vector<void*>[num_slots];

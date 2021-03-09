@@ -28,6 +28,7 @@
 #include "framework/module.h"
 #include "log/messages.h"
 #include "managers/module_manager.h"
+#include "protocols/packet_manager.h"
 #include "target_based/host_attributes.h"
 #include "utils/stats.h"
 
@@ -77,10 +78,10 @@ bool ACRotate::execute(Analyzer& analyzer, void**)
 
 bool ACGetStats::execute(Analyzer&, void**)
 {
-
     // FIXIT-P This incurs locking on all threads to retrieve stats.  It
     // could be reimplemented to optimize for large thread counts by
     // retrieving stats in the command and accumulating in the main thread.
+    PacketManager::accumulate();
     ModuleManager::accumulate();
     return true;
 }

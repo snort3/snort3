@@ -150,7 +150,7 @@ void Log2ndHeader(TextLog* log, Packet* p)
     if ( !p or !p->num_layers )
         return;
 
-    if ( SFDAQ::get_base_protocol() == DLT_EN10MB )
+    if ( p->is_eth() )
         LogEthHeader(log, p);
 
     else if ( SnortConfig::log_verbose() )

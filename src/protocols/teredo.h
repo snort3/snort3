@@ -22,6 +22,8 @@
 
 #include <cstdint>
 
+namespace snort
+{
 namespace teredo
 {
 constexpr uint16_t TEREDO_PORT = 3544;
@@ -34,6 +36,7 @@ constexpr uint16_t MIN_HDR_LEN = 2;
 inline bool is_teredo_port(uint16_t port)
 { return port == TEREDO_PORT; }
 } // namespace teredo
+} // namespace snort
 
 #endif
 

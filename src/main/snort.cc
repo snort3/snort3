@@ -152,10 +152,7 @@ void Snort::init(int argc, char** argv)
     parser_init();
     SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf);
 
-    /* Merge the command line and config file confs to take care of
-     * command line overriding config file.
-     * Set the global snort_conf that will be used during run time */
-    sc->merge(snort_cmd_line_conf);
+    /* Set the global snort_conf that will be used during run time */
     SnortConfig::set_conf(sc);
 
     // This call must be immediately after "SnortConfig::set_conf(sc)"
@@ -460,7 +457,6 @@ SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path
 
     parser_init();
     SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf, fname, false);
-    sc->merge(snort_cmd_line_conf);
 
     if ( get_parse_errors() || ModuleManager::get_errors() || !sc->verify() )
     {

@@ -35,10 +35,10 @@
 using namespace snort;
 using namespace std;
 
-SnortProtocolId ProtocolReference::get_count()
+SnortProtocolId ProtocolReference::get_count() const
 { return protocol_number; }
 
-const char* ProtocolReference::get_name(SnortProtocolId id)
+const char* ProtocolReference::get_name(SnortProtocolId id) const
 {
     if ( id >= id_map.size() )
         id = 0;
@@ -86,7 +86,7 @@ SnortProtocolId ProtocolReference::add(const char* protocol)
     return snort_protocol_id;
 }
 
-SnortProtocolId ProtocolReference::find(const char* protocol)
+SnortProtocolId ProtocolReference::find(const char* protocol) const
 {
     auto protocol_ref = ref_table.find(protocol);
     if ( protocol_ref != ref_table.end() )
@@ -95,7 +95,7 @@ SnortProtocolId ProtocolReference::find(const char* protocol)
     return UNKNOWN_PROTOCOL_ID;
 }
 
-void ProtocolReference::init(ProtocolReference* old_proto_ref)
+void ProtocolReference::init(const ProtocolReference* old_proto_ref)
 {
     if ( !old_proto_ref )
     {
@@ -109,7 +109,7 @@ void ProtocolReference::init(ProtocolReference* old_proto_ref)
     }
     else
     {
-        for(SnortProtocolId id = 0; id < old_proto_ref->get_count(); id++)
+        for (SnortProtocolId id = 0; id < old_proto_ref->get_count(); id++)
             add(old_proto_ref->get_name(id));
     }
 }

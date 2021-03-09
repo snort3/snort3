@@ -134,11 +134,13 @@ public:
     static ProtocolIndex proto_idx(ProtocolId prot_id)
     { return CodecManager::s_proto_map[to_utype(prot_id)]; }
 
-private:
-    // The only time we should accumulate is when CodecManager tells us too
-    friend void CodecManager::thread_term();
     static void accumulate();
+
+private:
+    static bool push_layer(Packet*, CodecData&, ProtocolId, const uint8_t* hdr_start, uint32_t len);
+    static Codec* get_layer_codec(const Layer&, int idx);
     static void pop_teredo(Packet*, RawData&);
+    static void handle_decode_failure(Packet*, RawData&, const CodecData&, const DecodeData&, ProtocolId);
 
     static bool encode(const Packet*, EncodeFlags,
         uint8_t lyr_start, IpProtocol next_prot, Buffer& buf);
@@ -148,7 +150,8 @@ private:
     static const uint8_t total_processed = 0;
     static const uint8_t other_codecs = 1;
     static const uint8_t discards = 2;
-    static const uint8_t stat_offset = 3;
+    static const uint8_t depth_exceeded = 3;
+    static const uint8_t stat_offset = 4;
 
     // declared in header so it can access s_protocols
     static THREAD_LOCAL std::array<PegCount, stat_offset +

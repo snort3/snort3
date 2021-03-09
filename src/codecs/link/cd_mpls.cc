@@ -38,7 +38,7 @@ namespace
 {
 enum MplsPayloadType : uint8_t
 {
-    // Entries must align with mpls_payload_type enum parameter in mpls_params
+    // Entries must align with payload_type enum parameter in mpls_params
     MPLS_PAYLOADTYPE_AUTODETECT = 0,
     MPLS_PAYLOADTYPE_ETHERNET,
     MPLS_PAYLOADTYPE_IPV4,

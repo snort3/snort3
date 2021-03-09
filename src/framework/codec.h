@@ -28,6 +28,7 @@
 
 #include "framework/base_api.h"
 #include "framework/decode_data.h"
+#include "protocols/layer.h"
 #include "utils/cpp_macros.h"
 
 struct TextLog;
@@ -55,7 +56,6 @@ struct ICMPHdr;
 }
 
 class Flow;
-struct Layer;
 
 // Used by root codecs to add their DLT to their HELP string
 #define ADD_DLT(help, x) help " (DLT " STRINGIFY_MX(x) ")"
@@ -112,26 +112,36 @@ constexpr uint16_t CODEC_IP6_EXT_OOO = 0x0400;
 constexpr uint16_t CODEC_IP6_BAD_OPT = 0x0800;
 
 constexpr uint16_t CODEC_ETHER_NEXT = 0x1000;
+constexpr uint16_t CODEC_COMPOUND = 0x2000;
+constexpr uint16_t CODEC_LAYERS_EXCEEDED = 0x400;
 
 constexpr uint16_t CODEC_IPOPT_FLAGS = (CODEC_IPOPT_RR_SEEN |
     CODEC_IPOPT_RTRALT_SEEN | CODEC_IPOPT_LEN_THREE);
 
 struct SnortConfig;
 
+constexpr uint8_t COMPOUND_LAYERS_MAX = 8;
+
+struct CompoundLayer
+{
+    Layer layer;
+    uint32_t proto_bits;
+};
+
 struct CodecData
 {
     const SnortConfig* conf;
 
     /* This section will get reset before every decode() function call */
-    ProtocolId next_prot_id;      /* protocol type of the next layer */
-    uint16_t lyr_len = 0;           /* The length of the valid part layer */
-    uint16_t invalid_bytes = 0;     /* the length of the INVALID part of this layer */
+    ProtocolId next_prot_id;        /* protocol type of the next layer */
+    uint16_t lyr_len = 0;           /* length of the valid portion of this layer */
+    uint16_t invalid_bytes = 0;     /* length of the INVALID part of this layer */
+    uint32_t proto_bits = 0;        /* protocols contained within this packet
+                                        -- will be propogated to Snort++ Packet struct*/
 
     /* Reset before each decode of packet begins */
 
     /*  Codec specific fields.  These fields are only relevant to codecs. */
-    uint32_t proto_bits = 0;    /* protocols contained within this packet
-                                 -- will be propogated to Snort++ Packet struct*/
     uint16_t codec_flags = 0;   /* flags used while decoding */
     uint8_t ip_layer_cnt = 0;
 
@@ -139,6 +149,9 @@ struct CodecData
     uint8_t curr_ip6_extension = 0;
     IpProtocol ip6_csum_proto = IpProtocol::IP;   /* Used for IPv6 checksums */
     bool tunnel_bypass = false;
+
+    CompoundLayer compound_layers[COMPOUND_LAYERS_MAX]{};
+    uint8_t compound_layer_cnt = 0;
 
     CodecData(const SnortConfig* sc, ProtocolId init_prot) : conf(sc), next_prot_id(init_prot)
     { }

@@ -63,7 +63,8 @@ const std::array<const char*, PacketManager::stat_offset> PacketManager::stat_na
     {
         "total",
         "other",
-        "discards"
+        "discards",
+        "depth_exceeded"
     }
 };
 
@@ -85,17 +86,38 @@ void PacketManager::thread_term()
 // Private helper functions
 //-------------------------------------------------------------------------
 
-static inline void push_layer(Packet* p,
-    ProtocolId prot_id,
-    const uint8_t* hdr_start,
-    uint32_t len)
+inline bool PacketManager::push_layer(Packet* p, CodecData& codec_data, ProtocolId prot_id,
+    const uint8_t* hdr_start, uint32_t len)
 {
-    // We check to ensure num_layer < MAX_LAYERS before this function call
+    if ( p->num_layers == CodecManager::get_max_layers() )
+    {
+        if (!(codec_data.codec_flags & CODEC_LAYERS_EXCEEDED))
+        {
+            codec_data.codec_flags |= CODEC_LAYERS_EXCEEDED;
+            DetectionEngine::queue_event(GID_DECODE, DECODE_TOO_MANY_LAYERS);
+            s_stats[depth_exceeded]++;
+        }
+        return false;
+    }
+
     Layer& lyr = p->layers[p->num_layers++];
     lyr.prot_id = prot_id;
     lyr.start = hdr_start;
     lyr.length = (uint16_t)len;
 //    lyr.invalid_bits = p->byte_skip;  -- currently unused
+
+    return true;
+}
+
+inline Codec* PacketManager::get_layer_codec(const Layer& lyr, int idx)
+{
+    ProtocolIndex mapped_prot;
+    // prot_id == ProtocolId::FINISHED_DECODE is a special case for root codecs not registering a protocol ID
+    if (idx == 0 && (lyr.prot_id == CodecManager::grinder_id || lyr.prot_id == ProtocolId::FINISHED_DECODE))
+        mapped_prot = CodecManager::grinder;
+    else
+        mapped_prot = CodecManager::s_proto_map[to_utype(lyr.prot_id)];
+    return CodecManager::s_protocols[mapped_prot];
 }
 
 void PacketManager::pop_teredo(Packet* p, RawData& raw)
@@ -112,6 +134,56 @@ void PacketManager::pop_teredo(Packet* p, RawData& raw)
     const uint16_t lyr_len = raw.data - lyr.start;
     raw.data = lyr.start;
     raw.len += lyr_len;
+}
+
+void PacketManager::handle_decode_failure(Packet* p, RawData& raw, const CodecData& codec_data,
+    const DecodeData& unsure_encap_ptrs, ProtocolId prev_prot_id)
+{
+    if (codec_data.codec_flags & CODEC_UNSURE_ENCAP)
+    {
+        p->ptrs = unsure_encap_ptrs;
+
+        switch (p->layers[p->num_layers - 1].prot_id)
+        {
+            case ProtocolId::ESP:
+                // Hardcoding ESP because we trust iff the layer
+                // immediately preceding the fail is ESP.
+                p->ptrs.decode_flags |= DECODE_PKT_TRUST;
+                break;
+
+            case ProtocolId::TEREDO:
+                // if we just decoded teredo and the next
+                // layer fails, we made a mistake. Therefore,
+                // remove this bit.
+                pop_teredo(p, raw);
+                break;
+            default:
+                break;
+        }
+        return;
+    }
+
+    if ( (p->num_layers > 0) && (p->layers[p->num_layers - 1].prot_id == ProtocolId::TEREDO) &&
+        (prev_prot_id == ProtocolId::IPV6) )
+    {
+        pop_teredo(p, raw);
+    }
+
+    // if the codec exists, it failed
+    if (CodecManager::s_proto_map[to_utype(prev_prot_id)])
+    {
+        s_stats[discards]++;
+    }
+    else
+    {
+        s_stats[other_codecs]++;
+
+        if ( (to_utype(ProtocolId::MIN_UNASSIGNED_IP_PROTO) <= to_utype(prev_prot_id)) &&
+                (to_utype(prev_prot_id) <= std::numeric_limits<uint8_t>::max()) )
+        {
+            DetectionEngine::queue_event(GID_DECODE, DECODE_IP_UNASSIGNED_PROTO);
+        }
+    }
 }
 
 static inline bool payload_offset_from_daq_mismatch(const uint8_t* pkt, const RawData& raw)
@@ -153,7 +225,7 @@ void PacketManager::decode(
     RawData raw(p->daq_msg, pkt, pktlen);
     CodecData codec_data(p->context->conf, ProtocolId::FINISHED_DECODE);
 
-    if ( cooked )
+    if (cooked)
         codec_data.codec_flags |= CODEC_STREAM_REBUILT;
 
     // initialize all Packet information
@@ -170,20 +242,82 @@ void PacketManager::decode(
     // loop until the protocol id is no longer valid
     while (CodecManager::s_protocols[mapped_prot]->decode(raw, codec_data, p->ptrs))
     {
-        debug_logf(decode_trace, nullptr, "Codec %s (protocol_id: %hu) "
-            "ip header starts at: %p, length is %d\n",
+        debug_logf(decode_trace, nullptr,
+            "Codec %s (0x%0*hx) starts at %u, length is %hu\n",
             CodecManager::s_protocols[mapped_prot]->get_name(),
-            static_cast<uint16_t>(codec_data.next_prot_id), pkt, codec_data.lyr_len);
+            (static_cast<uint16_t>(prev_prot_id) < 0xFF) ? 2 : 4,
+            static_cast<uint16_t>(prev_prot_id),
+            pktlen - raw.len, codec_data.lyr_len);
 
-        if ( codec_data.tunnel_bypass )
+        if (codec_data.codec_flags & CODEC_COMPOUND)
+        {
+            for (int idx = 0; idx < codec_data.compound_layer_cnt; idx++)
+            {
+                CompoundLayer* clyr = &codec_data.compound_layers[idx];
+
+                // If this was an IP layer, stash the next protocol in the Packet for later
+                if (clyr->proto_bits & (PROTO_BIT__IP | PROTO_BIT__IP6_EXT) &&
+                    idx + 1 < codec_data.compound_layer_cnt)
+                {
+                    CompoundLayer* nclyr = &codec_data.compound_layers[idx + 1];
+                    p->ip_proto_next = convert_protocolid_to_ipprotocol(nclyr->layer.prot_id);
+                }
+                p->proto_bits |= clyr->proto_bits;
+
+                // If we have reached the MAX_LAYERS, we keep decoding
+                // but no longer keep track of the layers.
+                if (!push_layer(p, codec_data, clyr->layer.prot_id, clyr->layer.start, clyr->layer.length))
+                    continue;
+
+                // Cache the index of the vlan layer for quick access.
+                if (clyr->proto_bits == PROTO_BIT__VLAN)
+                    p->vlan_idx = p->num_layers - 1;
+            }
+            codec_data.codec_flags &= ~CODEC_COMPOUND;
+        }
+        else
+        {
+            // If this was an IP layer, stash the next protocol in the Packet for later
+            if (codec_data.proto_bits & (PROTO_BIT__IP | PROTO_BIT__IP6_EXT))
+            {
+                // FIXIT-M refactor when ip_proto's become an array
+                if (p->is_fragment())
+                {
+                    if (prev_prot_id == ProtocolId::FRAGMENT)
+                    {
+                        const ip::IP6Frag* const fragh = reinterpret_cast<const ip::IP6Frag*>(raw.data);
+                        p->ip_proto_next = fragh->next();
+                    }
+                    else
+                        p->ip_proto_next = p->ptrs.ip_api.get_ip4h()->proto();
+                }
+                else
+                {
+                    if (codec_data.next_prot_id != ProtocolId::FINISHED_DECODE)
+                        p->ip_proto_next = convert_protocolid_to_ipprotocol(codec_data.next_prot_id);
+                }
+            }
+
+            // If we have reached the MAX_LAYERS, we keep decoding
+            // but no longer keep track of the layers.
+            if (push_layer(p, codec_data, prev_prot_id, raw.data, codec_data.lyr_len))
+            {
+                // Cache the index of the vlan layer for quick access.
+                if (codec_data.proto_bits == PROTO_BIT__VLAN)
+                    p->vlan_idx = p->num_layers - 1;
+            }
+        }
+
+        if (codec_data.tunnel_bypass)
         {
             p->active->set_tunnel_bypass();
             codec_data.tunnel_bypass = false;
         }
 
-        if ( codec_data.codec_flags & CODEC_ETHER_NEXT )
+        // Sanity check the next protocol ID is a valid ethertype
+        if (codec_data.codec_flags & CODEC_ETHER_NEXT)
         {
-            if ( codec_data.next_prot_id < ProtocolId::ETHERTYPE_MINIMUM )
+            if (codec_data.next_prot_id < ProtocolId::ETHERTYPE_MINIMUM)
             {
                 DetectionEngine::queue_event(GID_DECODE, DECODE_BAD_ETHER_TYPE);
                 break;
@@ -202,125 +336,39 @@ void PacketManager::decode(
             codec_data.codec_flags &= ~CODEC_SAVE_LAYER;
             unsure_encap_ptrs = p->ptrs;
         }
-        else
-        {
+        else if (codec_data.codec_flags & CODEC_UNSURE_ENCAP)
             codec_data.codec_flags &= ~CODEC_UNSURE_ENCAP;
-        }
-
-        if (codec_data.proto_bits & (PROTO_BIT__IP | PROTO_BIT__IP6_EXT))
-        {
-            // FIXIT-M refactor when ip_proto's become an array
-            if ( p->is_fragment() )
-            {
-                if ( prev_prot_id == ProtocolId::FRAGMENT )
-                {
-                    const ip::IP6Frag* const fragh =
-                        reinterpret_cast<const ip::IP6Frag*>(raw.data);
-                    p->ip_proto_next = fragh->next();
-                }
-                else
-                {
-                    p->ip_proto_next = p->ptrs.ip_api.get_ip4h()->proto();
-                }
-            }
-            else
-            {
-                if(codec_data.next_prot_id != ProtocolId::FINISHED_DECODE)
-                    p->ip_proto_next = convert_protocolid_to_ipprotocol(codec_data.next_prot_id);
-            }
-        }
-
-        // If we have reached the MAX_LAYERS, we keep decoding
-        // but no longer keep track of the layers.
-        if ( p->num_layers == CodecManager::max_layers )
-            DetectionEngine::queue_event(GID_DECODE, DECODE_TOO_MANY_LAYERS);
-        else
-        {
-            push_layer(p, prev_prot_id, raw.data, codec_data.lyr_len);
-
-            // Cache the index of the vlan layer for quick access.
-            if ( codec_data.proto_bits == PROTO_BIT__VLAN )
-                p->vlan_idx = p->num_layers-1;
-        }
 
         // internal statistics and record keeping
         s_stats[mapped_prot + stat_offset]++; // add correct decode for previous layer
         mapped_prot = CodecManager::s_proto_map[to_utype(codec_data.next_prot_id)];
         prev_prot_id = codec_data.next_prot_id;
 
-        // set for next call
+        // Shrink the buffer of undecoded data
         const uint16_t curr_lyr_len = codec_data.lyr_len + codec_data.invalid_bytes;
         assert(curr_lyr_len <= raw.len);
         raw.len -= curr_lyr_len;
         raw.data += curr_lyr_len;
+
         p->proto_bits |= codec_data.proto_bits;
+
+        // Reset the volatile part of the codec data for the next codec to decode into
         codec_data.next_prot_id = ProtocolId::FINISHED_DECODE;
         codec_data.lyr_len = 0;
         codec_data.invalid_bytes = 0;
         codec_data.proto_bits = 0;
     }
 
-    debug_logf(decode_trace, nullptr, "Codec %s (protocol_id: %hu) ip header"
-        " starts at: %p, length is %lu\n",
-        CodecManager::s_protocols[mapped_prot]->get_name(),
-        static_cast<uint16_t>(prev_prot_id), pkt, (unsigned long)codec_data.lyr_len);
+    debug_logf(decode_trace, nullptr, "Payload starts at %u, length is %u\n", pktlen - raw.len, raw.len);
 
-    if ( p->num_layers > 0 )
+    if (p->num_layers > 0)
         s_stats[mapped_prot + stat_offset]++;
 
     // if the final protocol ID is not the default codec, a Codec failed
-    if (prev_prot_id != ProtocolId::FINISHED_DECODE or p->num_layers == 0 )
-    {
-        if (codec_data.codec_flags & CODEC_UNSURE_ENCAP)
-        {
-            p->ptrs = unsure_encap_ptrs;
+    if (prev_prot_id != ProtocolId::FINISHED_DECODE || p->num_layers == 0 )
+        handle_decode_failure(p, raw, codec_data, unsure_encap_ptrs, prev_prot_id);
 
-            switch (p->layers[p->num_layers-1].prot_id)
-            {
-            case ProtocolId::ESP:
-                // Hardcoding ESP because we trust iff the layer
-                // immediately preceding the fail is ESP.
-                p->ptrs.decode_flags |= DECODE_PKT_TRUST;
-                break;
-
-            case ProtocolId::TEREDO:
-                // if we just decoded teredo and the next
-                // layer fails, we made a mistake. Therefore,
-                // remove this bit.
-                pop_teredo(p, raw);
-                break;
-            default:
-                ;
-            } /* switch */
-        }
-        else
-        {
-            if ( (p->num_layers > 0) &&
-                (p->layers[p->num_layers-1].prot_id == ProtocolId::TEREDO) &&
-                (prev_prot_id == ProtocolId::IPV6) )
-            {
-                pop_teredo(p, raw);
-            }
-
-            // if the codec exists, it failed
-            if (CodecManager::s_proto_map[to_utype(prev_prot_id)])
-            {
-                s_stats[discards]++;
-            }
-            else
-            {
-                s_stats[other_codecs]++;
-
-                if ( (to_utype(ProtocolId::MIN_UNASSIGNED_IP_PROTO) <= to_utype(prev_prot_id)) &&
-                    (to_utype(prev_prot_id) <= std::numeric_limits<uint8_t>::max()) )
-                {
-                    DetectionEngine::queue_event(GID_DECODE, DECODE_IP_UNASSIGNED_PROTO);
-                }
-            }
-        }
-    }
-
-    if ( payload_offset_from_daq_mismatch(pkt, raw) )
+    if (payload_offset_from_daq_mismatch(pkt, raw))
         p->active->set_tunnel_bypass();
 
     // set any final Packet fields
@@ -328,7 +376,7 @@ void PacketManager::decode(
     p->dsize = (uint16_t)raw.len;
     p->proto_bits |= codec_data.proto_bits;
 
-    if ( !p->proto_bits )
+    if (!p->proto_bits)
         p->proto_bits = PROTO_BIT__OTHER;
 }
 
@@ -419,12 +467,9 @@ bool PacketManager::encode(const Packet* p,
         for (int i = outer_layer; i > inner_layer; --i)
         {
             const Layer& l = lyrs[i];
-            ProtocolIndex mapped_prot =
-                i ? CodecManager::s_proto_map[to_utype(l.prot_id)] : CodecManager::grinder;
-            if (!CodecManager::s_protocols[mapped_prot]->encode(l.start, l.length, enc, buf, p->flow))
-            {
+            Codec* cd = get_layer_codec(l, i);
+            if (!cd->encode(l.start, l.length, enc, buf, p->flow))
                 return false;
-            }
         }
         outer_layer = inner_layer;
         // inner_layer is set in 'layer::set_inner_ip_api'
@@ -436,13 +481,9 @@ bool PacketManager::encode(const Packet* p,
     for (int i = outer_layer; i >= 0; --i)
     {
         const Layer& l = lyrs[i];
-        ProtocolIndex mapped_prot =
-            i ? CodecManager::s_proto_map[to_utype(l.prot_id)] : CodecManager::grinder;
-
-        if (!CodecManager::s_protocols[mapped_prot]->encode(l.start, l.length, enc, buf, p->flow))
-        {
+        Codec* cd = get_layer_codec(l, i);
+        if (!cd->encode(l.start, l.length, enc, buf, p->flow))
             return false;
-        }
     }
 
     return true;
@@ -719,7 +760,7 @@ int PacketManager::encode_format(
     init_daq_pkthdr(p, c, phdr, opaque);
 
     // copy raw packet data to clone
-    Layer* lyr = (Layer*)p->layers + num_layers - 1;
+    Layer* lyr = &p->layers[num_layers - 1];
     int len = lyr->start - p->pkt + lyr->length;
     memcpy((void*)c->pkt, p->pkt, len);
 
@@ -729,7 +770,7 @@ int PacketManager::encode_format(
     for ( int i = 0; i < num_layers; i++ )
     {
         const uint8_t* b = c->pkt + (p->layers[i].start - p->pkt); // == c->pkt + p->layers[i].len
-        lyr = c->layers + i;
+        lyr = &c->layers[i];
 
         lyr->prot_id = p->layers[i].prot_id;
         lyr->length = p->layers[i].length;
@@ -737,16 +778,13 @@ int PacketManager::encode_format(
 
         // NOTE: this must always go from outer to inner
         //       to ensure a valid ip header
-        ProtocolIndex mapped_prot =
-            i ? CodecManager::s_proto_map[to_utype(lyr->prot_id)] : CodecManager::grinder;
-
-        CodecManager::s_protocols[mapped_prot]->format(
-            reverse, const_cast<uint8_t*>(lyr->start), c->ptrs);
+        Codec* cd = get_layer_codec(*lyr, i);
+        cd->format(reverse, const_cast<uint8_t*>(lyr->start), c->ptrs);
     }
 
     if ( update_ip4_len )
     {
-        lyr = (Layer*)c->layers + num_layers - 1;
+        lyr = &c->layers[num_layers - 1];
         ip::IP4Hdr* ip4h = reinterpret_cast<ip::IP4Hdr*>(const_cast<uint8_t*>(lyr->start));
         lyr->length = ip::IP4_HEADER_LEN;
         ip4h->set_ip_len(ip::IP4_HEADER_LEN);
@@ -818,11 +856,8 @@ void PacketManager::encode_update(Packet* p)
         for (int i = outer_layer; i > inner_layer; --i)
         {
             const Layer& l = lyr[i];
-            ProtocolIndex mapped_prot = i ?
-                CodecManager::s_proto_map[to_utype(l.prot_id)] : CodecManager::grinder;
-
-            CodecManager::s_protocols[mapped_prot]->update(
-                tmp_api, flags, const_cast<uint8_t*>(l.start), l.length, len);
+            Codec* cd = get_layer_codec(l, i);
+            cd->update(tmp_api, flags, const_cast<uint8_t*>(l.start), l.length, len);
         }
         outer_layer = inner_layer;
         // inner_layer is set in 'layer::set_inner_ip_api'
@@ -870,7 +905,7 @@ void PacketManager::dump_stats()
     std::vector<const char*> pkt_names;
 
     // zero out the default codecs
-    g_stats[3] = 0;
+    g_stats[stat_offset] = 0;
     g_stats[CodecManager::s_proto_map[to_utype(ProtocolId::FINISHED_DECODE)] + stat_offset] = 0;
 
     for (unsigned int i = 0; i < stat_names.size(); i++)
@@ -913,20 +948,24 @@ void PacketManager::log_protocols(TextLog* const text_log,
 
     if (num_layers != 0)
     {
-        // Grinder is not in the layer array
-        Codec* cd = CodecManager::s_protocols[CodecManager::grinder];
+        int i = 0;
+        // Special case for root codecs not registering a protocol ID
+        if (lyr[0].prot_id == CodecManager::grinder_id || lyr[0].prot_id == ProtocolId::FINISHED_DECODE)
+        {
+            Codec* cd = CodecManager::s_protocols[CodecManager::grinder];
+            TextLog_Print(text_log, "%s(DLT):  ", cd->get_name());
+            cd->log(text_log, lyr[0].start, lyr[0].length);
+            i++;
+        }
 
-        TextLog_Print(text_log, "%-.6s(DLT):  ", cd->get_name());
-        cd->log(text_log, lyr[0].start, lyr[0].length);
-
-        for (int i = 1; i < num_layers; i++)
+        for (; i < num_layers; i++)
         {
             const auto protocol = to_utype(lyr[i].prot_id);
             const uint8_t codec_offset =  CodecManager::s_proto_map[protocol];
-            cd = CodecManager::s_protocols[codec_offset];
+            Codec* cd = CodecManager::s_protocols[codec_offset];
 
             TextLog_NewLine(text_log);
-            TextLog_Print(text_log, "%-.*s", 6, cd->get_name());
+            TextLog_Print(text_log, "%s", cd->get_name());
 
             if (protocol <= 0xFF)
                 TextLog_Print(text_log, "(0x%02x)", protocol);

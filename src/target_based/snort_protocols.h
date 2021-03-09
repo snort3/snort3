@@ -70,13 +70,13 @@ public:
     ProtocolReference(const ProtocolReference&)  = delete;
     ProtocolReference& operator=(const ProtocolReference&)  = delete;
 
-    SnortProtocolId get_count();
+    SnortProtocolId get_count() const;
 
-    const char* get_name(SnortProtocolId id);
+    const char* get_name(SnortProtocolId id) const;
     const char* get_name_sorted(SnortProtocolId id);
 
     SnortProtocolId add(const char* protocol);
-    SnortProtocolId find(const char* protocol);
+    SnortProtocolId find(const char* protocol) const;
 
     bool operator()(SnortProtocolId a, SnortProtocolId b);
 
@@ -87,7 +87,7 @@ private:
 
     SnortProtocolId protocol_number = 0;
 
-    void init(ProtocolReference* old_proto_ref);
+    void init(const ProtocolReference* old_proto_ref);
 };
 }
 #endif

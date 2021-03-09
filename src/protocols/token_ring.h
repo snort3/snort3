@@ -24,6 +24,8 @@
 
 #include "protocols/protocol_ids.h"
 
+namespace snort
+{
 namespace token_ring
 {
 /* LLC structure */
@@ -98,6 +100,7 @@ inline const Trh_mr* get_trhmr(const Trh_llc* llc)
     return nullptr;
 }
 } // namespace token_ring
+} // namespace snort
 
 #endif
 

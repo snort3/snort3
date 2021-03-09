@@ -202,7 +202,7 @@ public:
     void post_setup();
     bool verify() const;
 
-    void merge(SnortConfig*);
+    void merge(const SnortConfig*);
     void clone(const SnortConfig* const);
 
 private:

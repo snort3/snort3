@@ -20,6 +20,8 @@
 #ifndef PROTOCOLS_EAPOL_H
 #define PROTOCOLS_EAPOL_H
 
+namespace snort
+{
 namespace eapol
 {
 struct EtherEapol
@@ -80,7 +82,8 @@ struct EapolKey
 #define EAP_TYPE_OTP        0x05
 #define EAP_TYPE_GTC        0x06
 #define EAP_TYPE_TLS        0x0d
-}
+} // namespace eapol
+} // namespace snort
 
 #endif /* EAPOL_H */
 

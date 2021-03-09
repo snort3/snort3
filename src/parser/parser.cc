@@ -313,14 +313,15 @@ void parser_term(SnortConfig*)
     ruleIndexMap = nullptr;
 }
 
-SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, bool is_fatal)
+SnortConfig* ParseSnortConf(const SnortConfig* cmd_line_conf, const char* fname, bool is_fatal)
 {
-    SnortConfig* sc = new SnortConfig(SnortConfig::get_conf()->proto_ref);
+    const SnortConfig* current_conf = SnortConfig::get_conf();
+    SnortConfig* sc = new SnortConfig(current_conf->proto_ref);
 
-    sc->run_flags = boot_conf->run_flags;
-    sc->output_flags = boot_conf->output_flags;
-    sc->tweaks = boot_conf->tweaks;
-    sc->dump_config_type = boot_conf->dump_config_type;
+    sc->run_flags = cmd_line_conf->run_flags;
+    sc->output_flags = cmd_line_conf->output_flags;
+    sc->tweaks = cmd_line_conf->tweaks;
+    sc->dump_config_type = cmd_line_conf->dump_config_type;
 
     if ( !fname )
         fname = get_snort_conf();
@@ -339,7 +340,7 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, boo
     sc->detection_filter_config = DetectionFilterConfigNew();
 
     // get overrides from cmd line
-    Shell* sh = boot_conf->policy_map->get_shell();
+    Shell* sh = cmd_line_conf->policy_map->get_shell();
     sc->policy_map->get_shell()->set_overrides(sh);
 
     if ( *fname )
@@ -349,8 +350,8 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, boo
     }
 
     bool parse_file_failed = false;
-    auto output = SnortConfig::get_conf()->create_config_output();
-    bool is_top = SnortConfig::get_conf()->dump_config_type == DUMP_CONFIG_JSON_TOP;
+    auto output = current_conf->create_config_output();
+    bool is_top = current_conf->dump_config_type == DUMP_CONFIG_JSON_TOP;
     for ( unsigned i = 0; true; i++ )
     {
         sh = sc->policy_map->get_shell(i);
@@ -374,6 +375,9 @@ SnortConfig* ParseSnortConf(const SnortConfig* boot_conf, const char* fname, boo
 
     if ( !parse_file_failed )
         set_default_policy(sc);
+
+    // Merge in any overrides from the command line
+    sc->merge(cmd_line_conf);
 
     return sc;
 }

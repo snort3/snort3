@@ -20,6 +20,8 @@
 #ifndef PROTOCOLS_LINUX_SLL_H
 #define PROTOCOLS_LINUX_SLL_H
 
+namespace snort
+{
 namespace linux_sll
 {
 /* 'Linux cooked captures' data
@@ -39,7 +41,7 @@ struct SLLHdr
 };
 
 /*
- * ssl_pkttype values.
+ * sll_pkttype values.
  */
 
 #define LINUX_SLL_HOST          0
@@ -48,11 +50,12 @@ struct SLLHdr
 #define LINUX_SLL_OTHERHOST     3
 #define LINUX_SLL_OUTGOING      4
 
-/* ssl protocol values */
+/* sll protocol values */
 
 #define LINUX_SLL_P_802_3       0x0001  /* Novell 802.3 frames without 802.2 LLC header */
 #define LINUX_SLL_P_802_2       0x0004  /* 802.2 frames (not D/I/X Ethernet) */
-} // namespace ssl
+} // namespace linux_sll
+} // namespace snort
 
 #endif /* LINUX_SLL_H */
 
