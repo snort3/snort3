@@ -844,14 +844,10 @@ int SmtpServiceDetector::validate(AppIdDiscoveryArgs& args)
             {
                 dd->client.flags |= CLIENT_FLAG_STARTTLS_SUCCESS;
 
-                #ifndef REG_TEST
-                if (args.asd.get_session_flags(APPID_SESSION_DECRYPT_MONITOR))
-                #endif
+                if (args.asd.get_session_flags(APPID_SESSION_OPPORTUNISTIC_TLS))
                     dd->client.decryption_countdown = SSL_WAIT_PACKETS; // start a countdown
-                #ifndef REG_TEST
                 else
                     dd->client.decryption_countdown = 1;
-                #endif
 
                 add_service(args.change_bits, args.asd, args.pkt, args.dir,  APP_ID_SMTPS);
 

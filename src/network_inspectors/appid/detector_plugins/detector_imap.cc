@@ -108,6 +108,7 @@ enum IMAPState
 };
 
 static const char IMAP_PATTERN[] = "* OK";
+static const char CAPA_PATTERN[] = "* CAPABILITY";
 
 enum IMAPClientState
 {
@@ -837,7 +838,8 @@ ImapServiceDetector::ImapServiceDetector(ServiceDiscovery* sd)
 
     tcp_patterns =
     {
-        { (const uint8_t*)IMAP_PATTERN, sizeof(IMAP_PATTERN) - 1, 0, 0, 0 }
+        { (const uint8_t*)IMAP_PATTERN, sizeof(IMAP_PATTERN) - 1, 0, 0, 0 },
+        { (const uint8_t*)CAPA_PATTERN, sizeof(CAPA_PATTERN) - 1, 0, 1, 0 }
     };
 
     appid_registry =
