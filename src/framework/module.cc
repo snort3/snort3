@@ -67,6 +67,24 @@ Module::Module(const char* s, const char* h, const Parameter* p, bool is_list)
     params = p;
 }
 
+void Module::clear_global_active_counters()
+{
+    PegCount* p = get_counts();
+
+    if ( !p )
+        return;
+
+    const PegInfo* q = get_pegs();
+
+    assert(q);
+
+    for ( int i = 0; i < num_counts; i++ )
+    {
+        if ( q[i].type == CountType::NOW )
+            counts[i] = 0;
+    }
+}
+
 void Module::sum_stats(bool accumulate_now_stats)
 {
     if ( num_counts < 0 )

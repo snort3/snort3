@@ -1413,6 +1413,17 @@ void ModuleManager::reset_stats(SnortConfig*)
     }
 }
 
+void ModuleManager::clear_global_active_counters()
+{
+    auto mod_hooks = get_all_modhooks();
+
+    for ( auto* mh : mod_hooks )
+    {
+        lock_guard<mutex> lock(stats_mutex);
+        mh->mod->clear_global_active_counters();
+    }
+}
+
 void ModuleManager::reset_stats(clear_counter_type_t type)
 {
     if ( type != TYPE_MODULE and type != TYPE_UNKNOWN )

@@ -90,6 +90,8 @@ public:
     static void reset_stats(SnortConfig*);
     static void reset_stats(clear_counter_type_t);
 
+    static void clear_global_active_counters();
+
     static std::set<uint32_t> gids;
     SO_PUBLIC static std::mutex stats_mutex;
 };

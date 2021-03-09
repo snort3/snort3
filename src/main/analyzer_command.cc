@@ -93,6 +93,7 @@ ACGetStats::~ACGetStats()
     // shell instead of the logs when initiated by a shell command
     DropStats();
     LogMessage("==================================================\n"); // Marking End of stats
+    ModuleManager::clear_global_active_counters();
 }
 
 bool ACResetStats::execute(Analyzer&, void**)
