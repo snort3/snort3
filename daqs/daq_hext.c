@@ -53,7 +53,7 @@ typedef struct _hext_msg_desc
 {
     DAQ_Msg_t msg;
     DAQ_PktHdr_t pkthdr;
-    Flow_Stats_t flowstats;
+    DAQ_FlowStats_t flowstats;
     DAQ_UsrHdr_t pci;
     uint8_t* data;
     struct _hext_msg_desc* next;
@@ -242,22 +242,22 @@ static void IpAddr(uint32_t* addr, char const* ip)
 static bool parse_flowstats(DAQ_MsgType type, const char* line, HextMsgDesc *desc)
 {
 #define FLOWSTATS_FORMAT \
-    "%" SCNi16 " "  /* ingressGroup */  \
-    "%" SCNi16 " "  /* egressGroup */   \
-    "%" SCNi32 " "  /* ingressIntf */   \
-    "%" SCNi32 " "  /* egressIntf */    \
+    "%" SCNi16 " "  /* ingress_group */  \
+    "%" SCNi16 " "  /* egress_group */   \
+    "%" SCNi32 " "  /* ingress_intf */   \
+    "%" SCNi32 " "  /* egress_intf */    \
     "%s "           /* srcAddr */       \
-    "%" SCNu16 " "  /* initiatorPort */ \
+    "%" SCNu16 " "  /* initiator_port */ \
     "%s "           /* dstAddr */       \
-    "%" SCNu16 " "  /* responderPort */ \
+    "%" SCNu16 " "  /* responder_port */ \
     "%" SCNu32 " "  /* opaque */        \
-    "%" SCNu64 " "  /* initiatorPkts */ \
-    "%" SCNu64 " "  /* responderPkts */ \
-    "%" SCNu64 " "  /* initiatorPktsDropped */  \
-    "%" SCNu64 " "  /* responderPktsDropped */  \
-    "%" SCNu64 " "  /* initiatorBytesDropped */ \
-    "%" SCNu64 " "  /* responderBytesDropped */ \
-    "%" SCNu8  " "  /* isQoSAppliedOnSrcIntf */ \
+    "%" SCNu64 " "  /* initiator_pkts */ \
+    "%" SCNu64 " "  /* responder_pkts */ \
+    "%" SCNu64 " "  /* initiator_pkts_dropped */  \
+    "%" SCNu64 " "  /* responder_pkts_dropped */  \
+    "%" SCNu64 " "  /* initiator_bytes_dropped */ \
+    "%" SCNu64 " "  /* responder_bytes_dropped */ \
+    "%" SCNu8  " "  /* is_qos_applied_on_src_intf */ \
     "%" SCNu32 " "  /* sof_timestamp.tv_sec */  \
     "%" SCNu32 " "  /* eof_timestamp.tv_sec */  \
     "%" SCNu16 " "  /* vlan_tag */      \
@@ -265,13 +265,13 @@ static bool parse_flowstats(DAQ_MsgType type, const char* line, HextMsgDesc *des
     "%" SCNu8  " "  /* protocol */ \
     "%" SCNu8       /* flags */
 #define FLOWSTATS_ITEMS 22
-    Flow_Stats_t* f = &desc->flowstats;
+    DAQ_FlowStats_t* f = &desc->flowstats;
     char srcaddr[INET6_ADDRSTRLEN], dstaddr[INET6_ADDRSTRLEN];
     uint32_t sof_sec, eof_sec;
-    int rval = sscanf(line, FLOWSTATS_FORMAT, &f->ingressGroup, &f->egressGroup, &f->ingressIntf,
-            &f->egressIntf, srcaddr, &f->initiatorPort, dstaddr, &f->responderPort, &f->opaque,
-            &f->initiatorPkts, &f->responderPkts, &f->initiatorPktsDropped, &f->responderPktsDropped,
-            &f->initiatorBytesDropped, &f->responderBytesDropped, &f->isQoSAppliedOnSrcIntf,
+    int rval = sscanf(line, FLOWSTATS_FORMAT, &f->ingress_group, &f->egress_group, &f->ingress_intf,
+            &f->egress_intf, srcaddr, &f->initiator_port, dstaddr, &f->responder_port, &f->opaque,
+            &f->initiator_pkts, &f->responder_pkts, &f->initiator_pkts_dropped, &f->responder_pkts_dropped,
+            &f->initiator_bytes_dropped, &f->responder_bytes_dropped, &f->is_qos_applied_on_src_intf,
             &sof_sec, &eof_sec, &f->vlan_tag, &f->address_space_id,
             &f->protocol, &f->flags);
     if (rval != FLOWSTATS_ITEMS)
@@ -286,10 +286,10 @@ static bool parse_flowstats(DAQ_MsgType type, const char* line, HextMsgDesc *des
     desc->msg.data_len = 0;
     desc->msg.data = NULL;
 
-    IpAddr((uint32_t*)&f->initiatorIp, srcaddr);
-    f->initiatorPort = htons(f->initiatorPort);
-    IpAddr((uint32_t*)&f->responderIp, dstaddr);
-    f->responderPort = htons(f->responderPort);
+    IpAddr((uint32_t*)&f->initiator_ip, srcaddr);
+    f->initiator_port = htons(f->initiator_port);
+    IpAddr((uint32_t*)&f->responder_ip, dstaddr);
+    f->responder_port = htons(f->responder_port);
     f->sof_timestamp.tv_usec = 0;
     f->eof_timestamp.tv_usec = 0;
     if (f->vlan_tag == 0)

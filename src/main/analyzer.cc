@@ -165,7 +165,7 @@ void Analyzer::set_main_hook(MainHook_f f)
 
 static void process_daq_sof_eof_msg(DAQ_Msg_h msg, DAQ_Verdict& verdict)
 {
-    const Flow_Stats_t *stats = (const Flow_Stats_t *) daq_msg_get_hdr(msg);
+    const DAQ_FlowStats_t *stats = (const DAQ_FlowStats_t*) daq_msg_get_hdr(msg);
     const char* key;
 
     if (daq_msg_get_type(msg) == DAQ_MSG_TYPE_EOF)

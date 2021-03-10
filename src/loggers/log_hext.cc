@@ -67,14 +67,14 @@ void DaqMessageEventHandler::handle(DataEvent& event, Flow*)
             return;
     }
 
-    const Flow_Stats_t* fs = (const Flow_Stats_t*) dme->get_header();
+    const DAQ_FlowStats_t* fs = (const DAQ_FlowStats_t*) dme->get_header();
 
     SfIp src, dst;
     char shost[INET6_ADDRSTRLEN];
     char dhost[INET6_ADDRSTRLEN];
 
-    src.set(fs->initiatorIp);
-    dst.set(fs->responderIp);
+    src.set(fs->initiator_ip);
+    dst.set(fs->responder_ip);
 
     src.ntop(shost, sizeof(shost));
     dst.ntop(dhost, sizeof(dhost));
@@ -83,22 +83,22 @@ void DaqMessageEventHandler::handle(DataEvent& event, Flow*)
 
     TextLog_Print(hext_log,
         "\n$%s "        // type (sof or eof)
-        "%hd "          // ingressGroup
-        "%hd "          // egressGroup
-        "%d "           // ingressIntf
-        "%d "           // egressIntf
-        "%s "           // initiatorIp (stringified)
-        "%d "           // initiatorPort (host order)
-        "%s "           // responderIp (stringified)
-        "%d "           // responderPort (host order)
+        "%hd "          // ingress_group
+        "%hd "          // egress_group
+        "%d "           // ingress_intf
+        "%d "           // egress_intf
+        "%s "           // initiator_ip (stringified)
+        "%d "           // initiator_port (host order)
+        "%s "           // responder_ip (stringified)
+        "%d "           // responder_port (host order)
         "%u "           // opaque
-        "%" PRIu64 " "  // initiatorPkts
-        "%" PRIu64 " "  // responderPkts
-        "%" PRIu64 " "  // initiatorPktsDropped
-        "%" PRIu64 " "  // responderPktsDropped
-        "%" PRIu64 " "  // initiatorBytesDropped
-        "%" PRIu64 " "  // responderBytesDropped
-        "%hhu "         // isQoSAppliedOnSrcIntf
+        "%" PRIu64 " "  // initiator_pkts
+        "%" PRIu64 " "  // responder_pkts
+        "%" PRIu64 " "  // initiator_pkts_dropped
+        "%" PRIu64 " "  // responder_pkts_dropped
+        "%" PRIu64 " "  // initiator_bytes_dropped
+        "%" PRIu64 " "  // responder_bytes_dropped
+        "%hhu "         // is_qos_applied_on_src_intf
         "%ld "          // sof_timestamp.tv_sec
         "%ld "          // eof_timestamp.tv_sec
         "%hu "          // vlan_tag
@@ -106,20 +106,20 @@ void DaqMessageEventHandler::handle(DataEvent& event, Flow*)
         "%hhu"          // protocol
         "\n",
         cmd,
-        fs->ingressGroup,
-        fs->egressGroup,
-        fs->ingressIntf,
-        fs->egressIntf,
-        shost, ntohs(fs->initiatorPort),
-        dhost, ntohs(fs->responderPort),
+        fs->ingress_group,
+        fs->egress_group,
+        fs->ingress_intf,
+        fs->egress_intf,
+        shost, ntohs(fs->initiator_port),
+        dhost, ntohs(fs->responder_port),
         fs->opaque,
-        fs->initiatorPkts,
-        fs->responderPkts,
-        fs->initiatorPktsDropped,
-        fs->responderPktsDropped,
-        fs->initiatorBytesDropped,
-        fs->responderBytesDropped,
-        fs->isQoSAppliedOnSrcIntf,
+        fs->initiator_pkts,
+        fs->responder_pkts,
+        fs->initiator_pkts_dropped,
+        fs->responder_pkts_dropped,
+        fs->initiator_bytes_dropped,
+        fs->responder_bytes_dropped,
+        fs->is_qos_applied_on_src_intf,
         fs->sof_timestamp.tv_sec,
         fs->eof_timestamp.tv_sec,
         vlan_tag,

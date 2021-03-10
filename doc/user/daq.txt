@@ -275,8 +275,8 @@ command or a blank line.  Data after a blank line will start another packet
 with the same tuple as the prior one.
 
 $sof and $eof commands generate Start of Flow and End of Flow metapackets
-respectively. They are followed by a definition of a Flow_Stats_t data structure
-which will be fed into Snort via the metadata callback.
+respectively. They are followed by a definition of a DAQ_FlowStats_t data
+structure which will be fed into Snort via the metadata callback.
 
 Strings may contain the following escape sequences:
 
