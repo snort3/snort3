@@ -220,7 +220,7 @@ int SFDAQInstance::ioctl(DAQ_IoctlCmd, void*, size_t) { return DAQ_SUCCESS; }
 Flow::Flow() { ha_state = new FlowHAState; key = new FlowKey; }
 Flow::~Flow() { delete key; delete ha_state; }
 
-FlowStash::~FlowStash() { }
+FlowStash::~FlowStash() = default;
 
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }

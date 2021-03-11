@@ -246,7 +246,7 @@ public:
     AppIdContext(AppIdConfig& config) : config(config)
     { }
 
-    ~AppIdContext() { }
+    ~AppIdContext() = default;
 
     OdpContext& get_odp_ctxt() const
     {

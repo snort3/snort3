@@ -42,7 +42,7 @@ int ServiceDiscovery::identify_service(AppIdSession&, Packet*, AppidSessionDirec
     AppidChangeBits&) { return 0; }
 int ServiceDiscovery::add_ftp_service_state(AppIdSession&) { return 0; }
 bool ServiceDiscovery::do_service_discovery(AppIdSession&, Packet*, AppidSessionDirection,
-    AppidChangeBits&) { return 0; }
+    AppidChangeBits&) { return false; }
 int ServiceDiscovery::incompatible_data(AppIdSession&, const Packet*,AppidSessionDirection,
     ServiceDetector*) { return 0; }
 int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, AppidSessionDirection,

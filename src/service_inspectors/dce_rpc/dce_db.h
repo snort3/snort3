@@ -49,7 +49,7 @@ class DCE2_DbMap : public DCE2_Db<Key, Value, Hash>
 {
 public:
 
-    DCE2_DbMap() { }
+    DCE2_DbMap() = default;
 
     ~DCE2_DbMap()
     {

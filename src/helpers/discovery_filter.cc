@@ -132,7 +132,7 @@ DiscoveryFilter::DiscoveryFilter(const string& conf_path)
             string dir_str, proto_str, port_str, ip;
             line_stream >> dir_str >> proto_str >> port_str >> ip;
 
-            uint16_t port = strtol(port_str.c_str(), NULL, 10);
+            uint16_t port = strtol(port_str.c_str(), nullptr, 10);
             if ( port == 0 )
             {
                 WarningMessage("Discovery Filter: Invalid port at line %u from %s;",

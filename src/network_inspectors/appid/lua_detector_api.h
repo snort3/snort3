@@ -142,7 +142,7 @@ public:
     LuaServiceObject(AppIdDiscovery* sdm, const std::string& detector_name,
         const std::string& log_name, bool is_custom, IpProtocol protocol, lua_State* L,
         OdpContext& odp_ctxt);
-    ServiceDetector* get_detector()
+    ServiceDetector* get_detector() override
     { return sd; }
 };
 
@@ -153,7 +153,7 @@ public:
     LuaClientObject(const std::string& detector_name,
         const std::string& log_name, bool is_custom, IpProtocol protocol, lua_State* L,
         OdpContext& odp_ctxt);
-    ClientDetector* get_detector()
+    ClientDetector* get_detector() override
     { return cd; }
 };
 

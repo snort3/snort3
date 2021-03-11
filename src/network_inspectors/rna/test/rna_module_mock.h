@@ -54,7 +54,7 @@ void Module::show_interval_stats(std::vector<unsigned int, std::allocator<unsign
 void LogMessage(const char*,...) {}
 void WarningMessage(const char*,...) {}
 SnortConfig::SnortConfig(SnortConfig const*) {}
-SnortConfig::~SnortConfig() {}
+SnortConfig::~SnortConfig() = default;
 time_t packet_time() { return 0; }
 
 // tcp fingerprint functions
@@ -70,7 +70,7 @@ void set_tcp_fp_processor(TcpFpProcessor*) { }
 TcpFingerprint::TcpFingerprint(const RawFingerprint&) { }
 bool TcpFingerprint::operator==(const TcpFingerprint&) const { return true; }
 
-UaFpProcessor::~UaFpProcessor() { }
+UaFpProcessor::~UaFpProcessor() = default;
 void UaFpProcessor::make_mpse(SnortConfig*) { }
 void UaFpProcessor::push(RawFingerprint const&) { }
 
@@ -116,7 +116,7 @@ SharedRequest get_dispatched_request() { return mock_request; }
 
 HostCacheMac* get_host_cache_mac() { return nullptr; }
 
-DataPurgeAC::~DataPurgeAC() { }
+DataPurgeAC::~DataPurgeAC() = default;
 bool DataPurgeAC::execute(Analyzer&, void**) { return true;}
 
 void snort::main_broadcast_command(AnalyzerCommand*, bool) { }

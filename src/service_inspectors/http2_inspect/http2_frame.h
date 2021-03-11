@@ -39,7 +39,7 @@ class Http2Stream;
 class Http2Frame
 {
 public:
-    virtual ~Http2Frame() { }
+    virtual ~Http2Frame() = default;
     static Http2Frame* new_frame(const uint8_t* header_buffer, const uint32_t header_len,
         const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* session_data,
         HttpCommon::SourceId source_id, Http2Stream* stream);

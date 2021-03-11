@@ -34,8 +34,7 @@ TcpStreamSession::TcpStreamSession(Flow* f)
     : Session(f), client(true), server(false)
 { }
 
-TcpStreamSession::~TcpStreamSession()
-{ }
+TcpStreamSession::~TcpStreamSession() = default;
 
 void TcpStreamSession::init_new_tcp_session(TcpSegmentDescriptor& tsd)
 {

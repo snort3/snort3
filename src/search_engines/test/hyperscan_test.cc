@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include <string.h>
+#include <cstring>
 
 #include "framework/base_api.h"
 #include "framework/counts.h"

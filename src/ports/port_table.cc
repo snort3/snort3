@@ -451,12 +451,12 @@ static void PortTableCompileMergePortObjects(PortTable* p)
     PortObject** pol = upA.get();
 
     // Create a Merged Port Object Table - hash by ports, no user keys, don't free data
-    GHash* mhash = new GHash(PO_HASH_TBL_ROWS, sizeof(PortObject*), 0, nullptr);
+    GHash* mhash = new GHash(PO_HASH_TBL_ROWS, sizeof(PortObject*), false, nullptr);
     mhash->set_hashkey_ops(new PortObjectHashKeyOps(PO_HASH_TBL_ROWS));
     p->pt_mpo_hash = mhash;
 
     // Create a Merged Port Object Table - hash by pointers, no user keys, don't free data
-    GHash* mhashx = new GHash(PO_HASH_TBL_ROWS, sizeof(plx_t*), 0, nullptr);
+    GHash* mhashx = new GHash(PO_HASH_TBL_ROWS, sizeof(plx_t*), false, nullptr);
     mhashx->set_hashkey_ops(new PlxHashKeyOps(PO_HASH_TBL_ROWS));
 
     p->pt_mpxo_hash = mhashx;

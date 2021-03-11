@@ -23,10 +23,11 @@
 
 #include "messages.h"
 
+#include <syslog.h>
+
 #include <cassert>
 #include <cstdarg>
-#include <string.h>
-#include <syslog.h>
+#include <cstring>
 
 #include "main/snort_config.h"
 #include "parser/parser.h"

@@ -52,7 +52,7 @@ const char* smb2_command_string[SMB2_COM_MAX] = {
     "SMB2_COM_SET_INFO",
     "SMB2_COM_OPLOCK_BREAK"};
 
-static inline SmbFlowKey get_flow_key(void)
+static inline SmbFlowKey get_flow_key()
 {
     SmbFlowKey key;
     const FlowKey* flow_key = DetectionEngine::get_current_packet()->flow->key;
@@ -110,7 +110,7 @@ DCE2_Smb2FileTracker::DCE2_Smb2FileTracker(uint64_t file_id_v, DCE2_Smb2TreeTrac
     memory::MemoryCap::update_allocations(sizeof(*this));
 }
 
-DCE2_Smb2FileTracker::~DCE2_Smb2FileTracker(void)
+DCE2_Smb2FileTracker::~DCE2_Smb2FileTracker()
 {
     debug_logf(dce_smb_trace, nullptr,
         "file tracker %" PRIu64 " file name hash %" PRIu64 " terminating\n",
@@ -135,7 +135,7 @@ DCE2_Smb2TreeTracker::DCE2_Smb2TreeTracker (uint32_t tid_v, uint8_t share_type_v
     memory::MemoryCap::update_allocations(sizeof(*this));
 }
 
-DCE2_Smb2TreeTracker::~DCE2_Smb2TreeTracker(void)
+DCE2_Smb2TreeTracker::~DCE2_Smb2TreeTracker()
 {
     debug_logf(dce_smb_trace, nullptr, "tree tracker %" PRIu32 " terminating\n", tid);
 
@@ -158,7 +158,7 @@ DCE2_Smb2SessionTracker::DCE2_Smb2SessionTracker()
     memory::MemoryCap::update_allocations(sizeof(*this));
 }
 
-DCE2_Smb2SessionTracker::~DCE2_Smb2SessionTracker(void)
+DCE2_Smb2SessionTracker::~DCE2_Smb2SessionTracker()
 {
     debug_logf(dce_smb_trace, nullptr, "session tracker %" PRIu64 " terminating\n", session_id);
     removeSessionFromAllConnection();

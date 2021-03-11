@@ -101,7 +101,7 @@ struct TcpReassemblerState
 class SegmentOverlapEditor
 {
 protected:
-    SegmentOverlapEditor() { }
+    SegmentOverlapEditor() = default;
     virtual ~SegmentOverlapEditor() = default;
 
     void eval_left(TcpReassemblerState&);

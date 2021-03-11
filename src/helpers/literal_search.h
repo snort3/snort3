@@ -38,12 +38,12 @@ public:
 
     static LiteralSearch* instantiate(
             Handle*, const uint8_t* pattern, unsigned pattern_len, bool no_case = false, bool hs = false);
-    virtual ~LiteralSearch() { }
+    virtual ~LiteralSearch() = default;
 
     virtual int search(Handle*, const uint8_t* buffer, unsigned buffer_len) const = 0;
 
 protected:
-    LiteralSearch() { }
+    LiteralSearch() = default;
 };
 
 }

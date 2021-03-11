@@ -80,10 +80,10 @@ AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
 }
 
-SslPatternMatchers::~SslPatternMatchers() { }
-SipPatternMatchers::~SipPatternMatchers() { }
-HttpPatternMatchers::~HttpPatternMatchers() { }
-DnsPatternMatchers::~DnsPatternMatchers() { }
+SslPatternMatchers::~SslPatternMatchers() = default;
+SipPatternMatchers::~SipPatternMatchers() = default;
+HttpPatternMatchers::~HttpPatternMatchers() = default;
+DnsPatternMatchers::~DnsPatternMatchers() = default;
 void ClientDiscovery::initialize(AppIdInspector&) {}
 void ClientDiscovery::reload() {}
 FpSMBData* smb_data = nullptr;
@@ -121,7 +121,7 @@ int AppIdSession::add_flow_data(void* data, unsigned type, AppIdFreeFCN)
 }
 
 int dcerpc_validate(const uint8_t*, int){return 0; }
-AppIdDiscovery::~AppIdDiscovery() { }
+AppIdDiscovery::~AppIdDiscovery() = default;
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 AppIdConfig config;

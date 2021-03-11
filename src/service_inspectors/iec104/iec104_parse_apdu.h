@@ -21,7 +21,7 @@
 #ifndef IEC104_PARSE_APCI_H
 #define IEC104_PARSE_APCI_H
 
-#include <stdint.h>
+#include <cstdint>
 
 void parseIec104ApciU(const struct Iec104ApciU* apci);
 void parseIec104ApciS(const struct Iec104ApciS* apci);

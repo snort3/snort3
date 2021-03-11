@@ -27,7 +27,7 @@
 #include "search_engines/search_tool.h"
 #undef private
 
-#include <string.h>
+#include <cstring>
 
 #include "detection/fp_config.h"
 #include "framework/base_api.h"

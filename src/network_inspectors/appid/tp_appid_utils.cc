@@ -89,7 +89,7 @@ static inline void process_http_session(AppIdSession& asd,
     AppIdHttpSession* hsession = asd.get_http_session(0);
     if (!hsession)
         hsession = asd.create_http_session();
-    string* field=0;
+    string* field=nullptr;
     bool own=true;
 
     hsession->reset_ptype_scan_counts();
@@ -328,7 +328,7 @@ static inline void process_rtmp(AppIdSession& asd,
     bool own = true;
     uint16_t size = 0;
 
-    const string* field=0;
+    const string* field=nullptr;
 
     if ( !hsession->get_field(MISC_URL_FID) )
     {
@@ -424,7 +424,7 @@ static inline void process_ssl(AppIdSession& asd,
 {
     AppId tmpAppId = APP_ID_NONE;
     int tmpConfidence = 0;
-    const string* field = 0;
+    const string* field = nullptr;
     int reinspect_ssl_appid = 0;
 
     if (asd.get_session_flags(APPID_SESSION_HTTP_TUNNEL))
@@ -486,7 +486,7 @@ static inline void process_ssl(AppIdSession& asd,
 static inline void process_ftp_control(AppIdSession& asd,
     ThirdPartyAppIDAttributeData& attribute_data, AppidChangeBits& change_bits)
 {
-    const string* field=0;
+    const string* field=nullptr;
     if (!asd.get_odp_ctxt().ftp_userid_disabled &&
         (field=attribute_data.ftp_command_user()) != nullptr)
     {
@@ -498,7 +498,7 @@ static inline void process_ftp_control(AppIdSession& asd,
 static inline void process_quic(AppIdSession& asd,
     ThirdPartyAppIDAttributeData& attribute_data, AppidChangeBits& change_bits)
 {
-    const string* field = 0;
+    const string* field = nullptr;
     if ( !asd.tsession )
         asd.tsession = new TlsSession();
 

@@ -51,7 +51,7 @@ int Flow::set_flow_data(FlowData* fd)
     return 0;
 }
 
-FlowStash::~FlowStash() { }
+FlowStash::~FlowStash() = default;
 
 #endif
 

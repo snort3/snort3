@@ -94,7 +94,7 @@ typedef AppIdDetectors::iterator AppIdDetectorsIterator;
 class AppIdDiscovery
 {
 public:
-    AppIdDiscovery() { }
+    AppIdDiscovery() = default;
     virtual ~AppIdDiscovery();
 
     AppIdDiscovery(const AppIdDiscovery&) = delete;

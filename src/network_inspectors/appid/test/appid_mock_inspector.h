@@ -47,7 +47,7 @@ PegCount Module::get_global_count(char const*) const { return 0; }
 }
 
 AppIdModule::AppIdModule(): snort::Module("appid_mock", "appid_mock_help") {}
-AppIdModule::~AppIdModule() {}
+AppIdModule::~AppIdModule() = default;
 void AppIdModule::sum_stats(bool) {}
 void AppIdModule::show_dynamic_stats() {}
 bool AppIdModule::begin(char const*, int, snort::SnortConfig*) { return true; }
@@ -60,7 +60,7 @@ snort::ProfileStats* AppIdModule::get_profile() const { return nullptr; }
 void AppIdModule::set_trace(const Trace*) const { }
 const TraceOption* AppIdModule::get_trace_options() const { return nullptr; }
 
-AppIdInspector::~AppIdInspector() { }
+AppIdInspector::~AppIdInspector() = default;
 void AppIdInspector::eval(snort::Packet*) { }
 bool AppIdInspector::configure(snort::SnortConfig*) { return true; }
 void AppIdInspector::show(const SnortConfig*) const { }

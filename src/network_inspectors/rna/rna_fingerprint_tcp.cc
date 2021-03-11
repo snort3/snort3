@@ -402,7 +402,7 @@ const TcpFingerprint* TcpFpProcessor::get(const Packet* p, RNAFlow* flowp) const
 
     /* build a key for the lookup */
     if (p->is_ip6())
-        fpk.isIpv6 = 1;
+        fpk.isIpv6 = true;
     else if (p->ptrs.ip_api.get_ip4h()->df())
         fpk.df = true;
 
@@ -414,7 +414,7 @@ const TcpFingerprint* TcpFpProcessor::get(const Packet* p, RNAFlow* flowp) const
         get_tcp_option(p, tcp::TcpOptCode::SACKOK, fpk.sackok_pos);
         fpk.ws = get_tcp_option(p, tcp::TcpOptCode::WSCALE, fpk.ws_pos);
         get_tcp_option(p, tcp::TcpOptCode::TIMESTAMP, fpk.timestamp_pos);
-        mssOptionPresent = 1;
+        mssOptionPresent = true;
     }
 
     TCP_FP_MODE traffic_source = p->ptrs.tcph->is_ack() ? TCP_FP_MODE::SERVER : TCP_FP_MODE::CLIENT;
@@ -508,7 +508,7 @@ TEST_CASE("clear_fingerprint", "[rna_fingerprint_tcp]")
     rawfp.id = "X";
     rawfp.topts = "2 3 4 8";
     rawfp.ws = "6";
-    rawfp.df = 1;
+    rawfp.df = true;
 
     TcpFingerprint tfp(rawfp);
     tfp.clear();
@@ -543,7 +543,7 @@ TEST_CASE("raw_to_tcp_fp", "[rna_fingerprint_tcp]")
     rawfp.id = "X";
     rawfp.topts = "2 3 4 8";
     rawfp.ws = "6";
-    rawfp.df = 1;
+    rawfp.df = true;
 
     TcpFingerprint tfpe;
     tfpe.fpid = rawfp.fpid;
@@ -581,7 +581,7 @@ TEST_CASE("get_tcp_fp", "[rna_fingerprint_tcp]")
     rawfp.id = "X";
     rawfp.topts = "2 3 4 8";
     rawfp.ws = "6";
-    rawfp.df = 1;
+    rawfp.df = true;
     processor->push(rawfp);
     TcpFingerprint f948(rawfp);
 
@@ -594,7 +594,7 @@ TEST_CASE("get_tcp_fp", "[rna_fingerprint_tcp]")
     rawfp.id = "X";
     rawfp.topts = "2 4 8 3";
     rawfp.ws = "8";
-    rawfp.df = 1;
+    rawfp.df = true;
     processor->push(rawfp);
     TcpFingerprint f30962(rawfp);
 
@@ -607,7 +607,7 @@ TEST_CASE("get_tcp_fp", "[rna_fingerprint_tcp]")
     rawfp.id = "X";
     rawfp.topts = "2 4 8 3";
     rawfp.ws = "7";
-    rawfp.df = 0;
+    rawfp.df = false;
     processor->push(rawfp);
     TcpFingerprint f110005(rawfp);
 
@@ -620,7 +620,7 @@ TEST_CASE("get_tcp_fp", "[rna_fingerprint_tcp]")
     rawfp.id = "X";
     rawfp.topts = "2 4 8 3";
     rawfp.ws = "7";
-    rawfp.df = 0;
+    rawfp.df = false;
     processor->push(rawfp);
     TcpFingerprint f120001(rawfp);
 
@@ -633,7 +633,7 @@ TEST_CASE("get_tcp_fp", "[rna_fingerprint_tcp]")
     rawfp.id = "X";
     rawfp.topts = "2";
     rawfp.ws = "0-1";
-    rawfp.df = 0;
+    rawfp.df = false;
     processor->push(rawfp);
     TcpFingerprint f2(rawfp);
 
@@ -668,8 +668,8 @@ TEST_CASE("get_tcp_fp", "[rna_fingerprint_tcp]")
     key.sackok_pos = 1;        // SACKOK = 4 in position 1
     key.timestamp_pos = 2;     // TIMESTAMP = 8 in position 2
     key.ws_pos = 3;            // WSCALE = 3 in position 3
-    key.df = 0;
-    key.isIpv6 = 1;
+    key.df = false;
+    key.isIpv6 = true;
     syn_tcpopts[key.mss_pos] = (uint8_t) tcp::TcpOptCode::MAXSEG;
     syn_tcpopts[key.timestamp_pos] = (uint8_t) tcp::TcpOptCode::TIMESTAMP;
     syn_tcpopts[key.sackok_pos] = (uint8_t) tcp::TcpOptCode::SACKOK;
@@ -706,8 +706,8 @@ TEST_CASE("get_tcp_fp", "[rna_fingerprint_tcp]")
     key.sackok_pos = 1;        // SACKOK = 4 in position 1
     key.timestamp_pos = 2;     // TIMESTAMP = 8 in position 2
     key.ws_pos = 3;            // WSCALE = 3 in position 3
-    key.df = 1;
-    key.isIpv6 = 0;
+    key.df = true;
+    key.isIpv6 = false;
     syn_tcpopts[key.mss_pos] = (uint8_t) tcp::TcpOptCode::MAXSEG;
     syn_tcpopts[key.timestamp_pos] = (uint8_t) tcp::TcpOptCode::TIMESTAMP;
     syn_tcpopts[key.sackok_pos] = (uint8_t) tcp::TcpOptCode::SACKOK;

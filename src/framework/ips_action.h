@@ -44,7 +44,7 @@ struct Packet;
 class SO_PUBLIC IpsAction : public ActiveAction
 {
 public:
-    virtual void exec(Packet*) override = 0;
+    void exec(Packet*) override = 0;
     const char* get_name() const { return name; }
 
 protected:

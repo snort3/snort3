@@ -46,7 +46,7 @@ PortVarTable* PortVarTableCreate()
      * so 1000 entries is ok, worst that happens is somewhat slower
      * config/rule processing.
      */
-    GHash* h = new GHash(1000, 0, 0, PortObjectFree);
+    GHash* h = new GHash(1000, 0, false, PortObjectFree);
     PortObject* po = PortObjectNew();       // Create default port objects
     PortObjectAddPortAny(po);   // Default has an ANY port
     PortVarTableAdd(h, po);     // Add ANY to the table

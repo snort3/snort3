@@ -351,7 +351,7 @@ TEST_CASE ("Validate error check for raw_len greater than GRE_HEADER_LEN", "[cd_
     uint16_t size = 1;
     uint8_t t = 0;
     Buffer buf(&t, size);
-    Flow *flow = NULL;
+    Flow *flow = nullptr;
 
     CHECK (grecodec.encode(&raw_in,raw_len,enc,buf,flow) == false);
 }

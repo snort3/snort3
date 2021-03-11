@@ -69,7 +69,7 @@ void FileMagicRule::clear()
 
 void FileIdentifier::init_merge_hash()
 {
-    identifier_merge_hash = new GHash(1000, sizeof(MergeNode), 0, nullptr);
+    identifier_merge_hash = new GHash(1000, sizeof(MergeNode), false, nullptr);
 }
 
 FileIdentifier::~FileIdentifier()

@@ -56,7 +56,7 @@ using namespace snort;
 static GHash* alloc_srvmap()
 {
     // nodes are lists,free them in ghash_delete
-    return new GHash(1000, 0, 0, (void (*)(void*))sflist_free);
+    return new GHash(1000, 0, false, (void (*)(void*))sflist_free);
 }
 
 static void free_srvmap(GHash* table)
@@ -96,7 +96,7 @@ static void delete_pg(void* pv)
 static GHash* alloc_spgmm()
 {
     // 1000 rows, ascii key
-    return new GHash(1000, 0, 0, delete_pg);
+    return new GHash(1000, 0, false, delete_pg);
 }
 
 static void free_spgmm(GHash* table)

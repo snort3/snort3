@@ -752,7 +752,7 @@ bool Imap::configure(SnortConfig*)
     config->decode_conf.sync_all_depths();
 
     if (config->decode_conf.get_file_depth() > -1)
-        config->log_config.log_filename = 1;
+        config->log_config.log_filename = true;
 
     IMAP_SearchInit();
     return true;

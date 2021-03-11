@@ -23,8 +23,8 @@
 
 #include "http2_request_line.h"
 
-#include <string.h>
 #include <cstdlib>
+#include <cstring>
 
 #include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_field.h"

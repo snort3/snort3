@@ -129,7 +129,7 @@ void AppIdHttpSession::set_tun_dest()
         host_end = port_str;
         if (*(++port_str) != '\0')
         {
-            char *end = NULL;
+            char *end = nullptr;
             long ret = strtol(port_str, &end, 10);
             if (end != port_str && *end == '\0' && ret >= 1 && ret <= PORT_MAX)
             {
@@ -392,7 +392,7 @@ void AppIdHttpSession::process_chp_buffers(AppidChangeBits& change_bits, HttpPat
         }
 
         chp_candidate = 0;
-        chp_hold_flow = 0;
+        chp_hold_flow = false;
         asd.scan_flags &= ~SCAN_HTTP_VIA_FLAG;
         asd.scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
         asd.scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;

@@ -80,8 +80,7 @@ class HashKeyOperations
 {
 public:
     HashKeyOperations(int rows);
-    virtual ~HashKeyOperations()
-    { }
+    virtual ~HashKeyOperations() = default;
 
     virtual unsigned do_hash(const unsigned char* key, int len);
     virtual bool key_compare(const void* key1, const void* key2, size_t len);

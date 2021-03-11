@@ -71,7 +71,7 @@ public:
     }
 };
 
-AppIdConfig::~AppIdConfig() { }
+AppIdConfig::~AppIdConfig() = default;
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
 
 void FlowHAState::add(uint8_t) { }

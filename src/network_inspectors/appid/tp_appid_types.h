@@ -149,7 +149,7 @@ class ThirdPartyAppIDAttributeData
     // FIXIT-L: make these private too. Figure out how these get set in tp.
 
 public:
-    ThirdPartyAppIDAttributeData() { }
+    ThirdPartyAppIDAttributeData() = default;
 
     ~ThirdPartyAppIDAttributeData()
     {

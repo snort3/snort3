@@ -87,8 +87,7 @@ RnaPnd::RnaPnd(const bool en, const std::string& cp, RnaConfig* rc) :
     update_timeout = (rc ? rc->update_timeout : 0);
 }
 
-RnaPnd::~RnaPnd()
-{ }
+RnaPnd::~RnaPnd() = default;
 
 void RnaPnd::analyze_appid_changes(DataEvent& event)
 {

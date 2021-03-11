@@ -41,7 +41,7 @@ public:
 
 protected:
 
-    HostCacheInterface* lru = 0;
+    HostCacheInterface* lru = nullptr;
 };
 
 template <class T>

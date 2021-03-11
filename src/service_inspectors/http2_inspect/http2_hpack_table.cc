@@ -25,7 +25,7 @@
 #include "http2_flow_data.h"
 #include "http2_hpack_table.h"
 
-#include <string.h>
+#include <cstring>
 
 #define MAKE_TABLE_ENTRY(name, value) \
     HpackTableEntry(strlen(name), (const uint8_t*)name, strlen(value), (const uint8_t*)value)

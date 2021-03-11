@@ -24,8 +24,8 @@
 
 #include "network_inspectors/appid/appid_debug.cc"
 
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 
 #include "flow/flow.h"
 #include "network_inspectors/appid/appid_session.h"
@@ -54,7 +54,7 @@ public:
     AppIdInspector() = default;
 };
 
-AppIdConfig::~AppIdConfig() { }
+AppIdConfig::~AppIdConfig() = default;
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
 
 AppIdConfig stub_config;

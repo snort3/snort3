@@ -38,10 +38,7 @@ public:
     {
 
     }
-    virtual ~StashGenericObject()
-    {
-
-    }
+    virtual ~StashGenericObject() = default;
     int get_object_type() const
     {
         return object_type;

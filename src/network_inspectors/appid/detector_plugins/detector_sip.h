@@ -41,7 +41,7 @@ class SipUdpClientDetector : public ClientDetector
 {
 public:
     SipUdpClientDetector(ClientDiscovery*);
-    ~SipUdpClientDetector() override { }
+    ~SipUdpClientDetector() override = default;
 
     int validate(AppIdDiscoveryArgs&) override;
 };

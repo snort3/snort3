@@ -56,7 +56,7 @@ void ParseWarning(WarningGroup, const char*, ...) { }
 
 void LogLabel(const char*, FILE*) {}
 SearchTool::SearchTool(char const*, bool) { }
-SearchTool::~SearchTool() { }
+SearchTool::~SearchTool() = default;
 }
 
 void ApplicationDescriptor::set_id(AppId app_id){ my_id = app_id;}
@@ -72,7 +72,7 @@ void ClientAppDescriptor::update_user(AppId app_id, const char* username, AppidC
 void ClientAppDescriptor::update_stats(AppId, bool) {}
 void PayloadAppDescriptor::update_stats(AppId, bool) {}
 
-AppIdDiscovery::~AppIdDiscovery() { }
+AppIdDiscovery::~AppIdDiscovery() = default;
 void ClientDiscovery::initialize(AppIdInspector&) { }
 void ClientDiscovery::reload() { }
 void AppIdDiscovery::register_detector(const string&, AppIdDetector*, IpProtocol) { }
@@ -80,10 +80,10 @@ void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool&, int, u
 void AppIdDiscovery::register_tcp_pattern(AppIdDetector*, unsigned char const*, unsigned int, int, unsigned int) { }
 void AppIdDiscovery::register_udp_pattern(AppIdDetector*, unsigned char const*, unsigned int, int, unsigned int) { }
 int AppIdDiscovery::add_service_port(AppIdDetector*, ServiceDetectorPort const&) { return 0; }
-DnsPatternMatchers::~DnsPatternMatchers() { }
-HttpPatternMatchers::~HttpPatternMatchers() { }
-SipPatternMatchers::~SipPatternMatchers() { }
-SslPatternMatchers::~SslPatternMatchers() { }
+DnsPatternMatchers::~DnsPatternMatchers() = default;
+HttpPatternMatchers::~HttpPatternMatchers() = default;
+SipPatternMatchers::~SipPatternMatchers() = default;
+SslPatternMatchers::~SslPatternMatchers() = default;
 
 void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
 {

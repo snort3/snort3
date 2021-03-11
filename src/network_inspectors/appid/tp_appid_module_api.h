@@ -54,7 +54,7 @@ public:
         return version;
     }
 
-    virtual ~ThirdPartyAppIdContext() { }
+    virtual ~ThirdPartyAppIdContext() = default;
 
     uint32_t get_api_version() const { return api_version; }
     const std::string& module_name() const { return name; }

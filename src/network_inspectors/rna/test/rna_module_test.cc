@@ -77,7 +77,7 @@ TEST(rna_module_test, push_tcp_fingerprints)
     rawfp.id = "X";
     rawfp.topts = "2 3 4 8";
     rawfp.ws = "6";
-    rawfp.df = 1;
+    rawfp.df = true;
 
     // expected
     TcpFingerprint tfpe;

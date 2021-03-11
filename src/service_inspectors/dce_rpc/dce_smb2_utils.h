@@ -38,7 +38,7 @@ public:
     SmbSessionCache_map(const size_t initial_size) : LruCacheShared<Key, Value, Hash>(initial_size)
     {
     }
-    virtual ~SmbSessionCache_map() { }
+    ~SmbSessionCache_map() override = default;
 };
 
 typedef SmbSessionCache_map<Smb2SidHashKey, DCE2_Smb2SessionTracker, SmbKeyHash> SmbSessionCache;

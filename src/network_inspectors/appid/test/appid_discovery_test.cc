@@ -44,7 +44,7 @@ namespace snort
 {
 // Stubs for packet
 Packet::Packet(bool) {}
-Packet::~Packet() {}
+Packet::~Packet() = default;
 bool Packet::get_ip_proto_next(unsigned char&, IpProtocol&) const { return true; }
 
 // Stubs for inspector
@@ -87,7 +87,7 @@ time_t packet_time() { return std::time(nullptr); }
 
 // Stubs for search_tool
 SearchTool::SearchTool(const char*, bool) {}
-SearchTool::~SearchTool() {}
+SearchTool::~SearchTool() = default;
 void SearchTool::add(const char*, unsigned, int, bool) {}
 void SearchTool::add(const char*, unsigned, void*, bool) {}
 void SearchTool::add(const uint8_t*, unsigned, int, bool) {}
@@ -122,11 +122,11 @@ void DataBus::publish(const char*, DataEvent& event, Flow*)
 
 // Stubs for matchers
 static HttpPatternMatchers* http_matchers;
-DnsPatternMatchers::~DnsPatternMatchers() { }
-HttpPatternMatchers::~HttpPatternMatchers() {}
+DnsPatternMatchers::~DnsPatternMatchers() = default;
+HttpPatternMatchers::~HttpPatternMatchers() = default;
 void HttpPatternMatchers::get_http_offsets(Packet*, AppIdHttpSession*) {}
-SipPatternMatchers::~SipPatternMatchers() { }
-SslPatternMatchers::~SslPatternMatchers() { }
+SipPatternMatchers::~SipPatternMatchers() = default;
+SslPatternMatchers::~SslPatternMatchers() = default;
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 void ApplicationDescriptor::set_id(AppId app_id){my_id = app_id;}
@@ -143,7 +143,7 @@ void PayloadAppDescriptor::update_stats(AppId, bool) {}
 
 // Stubs for AppIdModule
 AppIdModule::AppIdModule(): Module("appid_mock", "appid_mock_help") {}
-AppIdModule::~AppIdModule() {}
+AppIdModule::~AppIdModule() = default;
 void AppIdModule::sum_stats(bool) {}
 void AppIdModule::show_dynamic_stats() {}
 bool AppIdModule::begin(char const*, int, SnortConfig*) { return true; }
@@ -202,7 +202,7 @@ void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, char*) {}
 void AppIdSession::examine_rtmp_metadata(AppidChangeBits&) {}
 void AppIdSession::examine_ssl_metadata(AppidChangeBits&) {}
 void AppIdSession::update_encrypted_app_id(AppId) {}
-bool AppIdSession::is_tp_processing_done() const {return 0;}
+bool AppIdSession::is_tp_processing_done() const {return false;}
 AppId AppIdSession::pick_ss_payload_app_id(AppId) const { return get_payload_id(); }
 AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
     AppidSessionDirection, AppIdInspector&, OdpContext&)
@@ -229,7 +229,7 @@ int ServiceDiscovery::identify_service(AppIdSession&, Packet*, AppidSessionDirec
     AppidChangeBits&) { return 0; }
 int ServiceDiscovery::add_ftp_service_state(AppIdSession&) { return 0; }
 bool ServiceDiscovery::do_service_discovery(AppIdSession&, Packet*, AppidSessionDirection,
-    AppidChangeBits&) { return 0; }
+    AppidChangeBits&) { return false; }
 int ServiceDiscovery::incompatible_data(AppIdSession&, const Packet*,AppidSessionDirection,
     ServiceDetector*) { return 0; }
 int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, AppidSessionDirection,

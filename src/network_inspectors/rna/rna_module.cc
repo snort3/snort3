@@ -25,10 +25,10 @@
 #include "rna_module.h"
 
 #include <cassert>
+#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
-#include <string.h>
 #include <sys/stat.h>
 
 #include "host_tracker/host_cache.h"
@@ -568,14 +568,14 @@ bool RnaModule::log_mac_cache(const char* outfile)
     if ( !outfile )
     {
         LogMessage("File name is needed!\n");
-        return 0;
+        return false;
     }
 
     struct stat file_stat;
     if ( stat(outfile, &file_stat) == 0 )
     {
         LogMessage("File %s already exists!\n", outfile);
-        return 0;
+        return false;
     }
 
     ofstream out_stream(outfile);
@@ -600,7 +600,7 @@ bool RnaModule::log_mac_cache(const char* outfile)
     }
     out_stream.close();
 
-    return 0;
+    return false;
 }
 
 bool RnaModule::is_valid_fqn(const char* fqn) const

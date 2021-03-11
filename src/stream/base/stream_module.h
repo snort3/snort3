@@ -87,7 +87,7 @@ struct StreamModuleConfig
 class StreamReloadResourceManager : public snort::ReloadResourceTuner
 {
 public:
-    StreamReloadResourceManager() {}
+    StreamReloadResourceManager() = default;
 
     bool tinit() override;
     bool tune_packet_context() override;
@@ -120,7 +120,7 @@ private:
 class StreamUnloadReloadResourceManager : public snort::ReloadResourceTuner
 {
 public:
-    StreamUnloadReloadResourceManager() { }
+    StreamUnloadReloadResourceManager() = default;
 
     bool tinit() override;
     bool tune_packet_context() override;

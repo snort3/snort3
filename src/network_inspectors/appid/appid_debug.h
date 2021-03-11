@@ -22,7 +22,7 @@
 #ifndef APPID_DEBUG_H
 #define APPID_DEBUG_H
 
-#include <string.h>
+#include <cstring>
 
 #include <daq_common.h>
 

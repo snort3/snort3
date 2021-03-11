@@ -60,11 +60,11 @@ Flow::Flow()
     flow_state = Flow::FlowState::SETUP;
 }
 
-Flow::~Flow() { }
+Flow::~Flow() = default;
 IpsContext::IpsContext(unsigned int) { }
-IpsContext::~IpsContext() { }
+IpsContext::~IpsContext() = default;
 SnortConfig::SnortConfig(snort::SnortConfig const*) { }
-SnortConfig::~SnortConfig() { }
+SnortConfig::~SnortConfig() = default;
 
 IpsContext ips_context;
 SnortConfig conf;
@@ -80,9 +80,9 @@ Packet::Packet(bool)
 static void set_not_configured() { conf.payload_injector_config = nullptr; }
 static void set_configured() { conf.payload_injector_config = &pi_conf; }
 
-Packet::~Packet() { }
+Packet::~Packet() = default;
 int DetectionEngine::queue_event(unsigned int, unsigned int, snort::Actions::Type) { return 0; }
-FlowData::~FlowData() { }
+FlowData::~FlowData() = default;
 FlowData::FlowData(unsigned int, snort::Inspector*) { }
 
 // Inspector mocks, used by MockInspector class
@@ -107,8 +107,8 @@ class MockInspector : public snort::Inspector
 {
 public:
 
-    MockInspector() { }
-    ~MockInspector() override { }
+    MockInspector() = default;
+    ~MockInspector() override = default;
     void eval(snort::Packet*) override { }
     bool configure(snort::SnortConfig*) override { return true; }
 };
@@ -131,8 +131,8 @@ InjectionReturnStatus PayloadInjector::get_http2_payload(InjectionControl,
 // Mocks for snort::Flow::get_flow_data
 
 unsigned Http2FlowData::inspector_id = 0;
-Http2Stream::~Http2Stream() { }
-HpackDynamicTable::~HpackDynamicTable() { }
+Http2Stream::~Http2Stream() = default;
+HpackDynamicTable::~HpackDynamicTable() = default;
 Http2DataCutter::Http2DataCutter(Http2FlowData* _session_data, HttpCommon::SourceId src_id) :
     session_data(_session_data), source_id(src_id) { }
 Http2FlowData::Http2FlowData(snort::Flow*) :
@@ -146,7 +146,7 @@ Http2FlowData::Http2FlowData(snort::Flow*) :
     },
     data_cutter {Http2DataCutter(this, SRC_CLIENT), Http2DataCutter(this, SRC_SERVER)}
 { }
-Http2FlowData::~Http2FlowData() { }
+Http2FlowData::~Http2FlowData() = default;
 Http2FlowData http2_flow_data(nullptr);
 void Http2FlowData::set_mid_frame(bool val) { continuation_expected[SRC_SERVER] = val; }
 bool Http2FlowData::is_mid_frame() const { return continuation_expected[SRC_SERVER]; }

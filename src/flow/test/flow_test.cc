@@ -71,7 +71,7 @@ IpsContext* DetectionEngine::get_context() { return nullptr; }
 
 DetectionEngine::DetectionEngine() = default;
 
-DetectionEngine::~DetectionEngine() {}
+DetectionEngine::~DetectionEngine() = default;
 
 bool layer::set_outer_ip_api(const Packet* const, ip::IpApi&, int8_t&)
 { return false; }

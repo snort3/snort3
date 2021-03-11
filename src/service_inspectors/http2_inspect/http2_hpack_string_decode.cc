@@ -26,7 +26,7 @@
 #include "http2_enum.h"
 #include "http2_huffman_state_machine.h"
 
-#include <math.h>
+#include <cmath>
 
 using namespace Http2Enums;
 

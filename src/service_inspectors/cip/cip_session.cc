@@ -27,11 +27,12 @@
 
 #include "cip_session.h"
 
-#include <math.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <string.h>
 #include <sys/time.h>
+
+#include <cmath>
+#include <cstddef>
+#include <cstring>
+
 #include "time/timersub.h"     // For TIMERSUB
 
 #include "cip_parsing.h"  // For CIP constants
@@ -203,7 +204,7 @@ static bool cip_connection_signature_match(const CipConnectionSignature* left,
 static CipConnection* cip_find_connection_slot(CipConnectionList* connection_list,
     const struct timeval* timestamp)
 {
-    CipConnection* connection = NULL;
+    CipConnection* connection = nullptr;
 
     // Prune old connections if the list is at max capacity.
     if (connection_list->count == connection_list->list_size)
@@ -229,7 +230,7 @@ CipConnection* cip_find_connection_by_id(
     uint32_t connection_id,
     bool established)
 {
-    CipConnection* connection = NULL;
+    CipConnection* connection = nullptr;
 
     for (uint32_t i = 0; i < connection_list->list_size; ++i)
     {
@@ -260,7 +261,7 @@ static const CipConnection* cip_find_connection_by_id_any(
     uint32_t ot_connection_id,
     uint32_t to_connection_id)
 {
-    const CipConnection* connection = NULL;
+    const CipConnection* connection = nullptr;
 
     for (uint32_t i = 0; i < connection_list->list_size; ++i)
     {
@@ -286,7 +287,7 @@ static const CipConnection* cip_find_connection_by_id_any(
 static const CipConnection* cip_find_connection_any(const CipConnectionList* connection_list,
     const CipConnectionSignature* signature)
 {
-    const CipConnection* connection = NULL;
+    const CipConnection* connection = nullptr;
 
     for (uint32_t i = 0; i < connection_list->list_size; ++i)
     {
@@ -305,7 +306,7 @@ static CipConnection* cip_find_connection(CipConnectionList* connection_list,
     const CipConnectionSignature* signature,
     bool established)
 {
-    CipConnection* connection = NULL;
+    CipConnection* connection = nullptr;
 
     for (uint32_t i = 0; i < connection_list->list_size; ++i)
     {
@@ -411,7 +412,7 @@ static CipUnconnectedMessage* find_unconnected_request_slot(
     CipUnconnectedMessageList* unconnected_list,
     const struct timeval* timestamp)
 {
-    CipUnconnectedMessage* unconnected_message = NULL;
+    CipUnconnectedMessage* unconnected_message = nullptr;
 
     // Prune old messages if the list is at max capacity.
     if (unconnected_list->count == unconnected_list->list_size)
@@ -435,7 +436,7 @@ static CipUnconnectedMessage* find_unconnected_request(
     CipUnconnectedMessageList* unconnected_list,
     uint64_t sender_context)
 {
-    CipUnconnectedMessage* unconnected_message = NULL;
+    CipUnconnectedMessage* unconnected_message = nullptr;
 
     for (uint32_t i = 0; i < unconnected_list->list_size; ++i)
     {

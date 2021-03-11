@@ -24,8 +24,8 @@
 
 #include "sip_splitter.h"
 
-#include <ctype.h>
-#include <string.h>
+#include <cctype>
+#include <cstring>
 
 using namespace snort;
 

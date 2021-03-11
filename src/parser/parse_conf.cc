@@ -25,10 +25,10 @@
 
 #include "parse_conf.h"
 
-#include <limits.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <climits>
 #include <fstream>
 #include <stack>
 

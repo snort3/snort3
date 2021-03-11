@@ -24,8 +24,8 @@
 #ifndef CIP_SESSION_H
 #define CIP_SESSION_H
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <cstdint>
+
 #include "main/snort_config.h"
 #include "main/snort_types.h"
 

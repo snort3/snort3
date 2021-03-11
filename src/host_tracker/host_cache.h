@@ -266,13 +266,13 @@ class HostCacheIp : public HostCacheIpSpec
 public:
     HostCacheIp(const size_t initial_size) : HostCacheIpSpec(initial_size) { }
 
-    bool remove(const KeyType& key)
+    bool remove(const KeyType& key) override
     {
         LruBase::Data data;
         return remove(key, data);
     }
 
-    bool remove(const KeyType& key, LruBase::Data& data)
+    bool remove(const KeyType& key, LruBase::Data& data) override
     {
         bool out = LruBase::remove(key, data);
         data->remove_flows();

@@ -170,7 +170,7 @@ void memory::MemoryCap::update_deallocations(size_t) { }
 
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
 
-AppIdConfig::~AppIdConfig() { }
+AppIdConfig::~AppIdConfig() = default;
 
 unsigned AppIdSession::inspector_id = 0;
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;

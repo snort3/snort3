@@ -837,7 +837,7 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
 
     list_item->intfs.clear();
 
-    while ((token = strtok_r(next_ptr, MANIFEST_SEPARATORS, &next_ptr)) != NULL)
+    while ((token = strtok_r(next_ptr, MANIFEST_SEPARATORS, &next_ptr)) != nullptr)
     {
         char* end_str;
         long intf_id;

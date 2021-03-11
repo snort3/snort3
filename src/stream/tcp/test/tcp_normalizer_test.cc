@@ -48,7 +48,7 @@ public:
 };
 
 TcpSession::TcpSession( Flow* ) : Session( flow ) { }
-TcpSession::~TcpSession( void ) { }
+TcpSession::~TcpSession() = default;
 bool TcpSession::setup(Packet*){ return true; }
 void TcpSession::update_direction(char, SfIp const*, unsigned short){ }
 int TcpSession::process(Packet*){ return 0; }
@@ -75,7 +75,7 @@ class TcpSessionMock : public TcpSession
 {
 public:
     TcpSessionMock( Flow* flow ) : TcpSession( flow ), client( true ), server( false ) { }
-    ~TcpSessionMock( void ) { }
+    ~TcpSessionMock() = default;
 
     TcpStreamTracker client;
     TcpStreamTracker server;

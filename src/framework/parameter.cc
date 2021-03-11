@@ -638,7 +638,7 @@ const_string_tests[] =
     { false, valid_select, "blue", "red | green | yellow" },
     { false, valid_select, "green", nullptr },
 
-    { false, nullptr, 0, nullptr }
+    { false, nullptr, nullptr, nullptr }
 // __STRDUMP_ENABLE__
 };
 
@@ -688,7 +688,7 @@ string_tests[] =
     { false, valid_bit_list, "1 2 3 4", "3" },
     { false, valid_bit_list, "128", "3" },
 
-    { false, nullptr, 0, nullptr }
+    { false, nullptr, nullptr, nullptr }
 // __STRDUMP_ENABLE__
 };
 

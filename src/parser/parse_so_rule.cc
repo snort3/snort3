@@ -35,7 +35,7 @@
 class SoRuleParser
 {
 public:
-    SoRuleParser() { }
+    SoRuleParser() = default;
 
     bool parse_so_rule(const char* in, std::string& stub, std::string& opts);
 

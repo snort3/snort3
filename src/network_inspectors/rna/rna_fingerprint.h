@@ -65,7 +65,7 @@ public:
     std::string fpuuid;
     uint8_t ttl = 0;
 
-    virtual ~FpFingerprint() { }
+    virtual ~FpFingerprint() = default;
 
     virtual void clear()
     {

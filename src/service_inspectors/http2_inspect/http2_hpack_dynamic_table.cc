@@ -24,7 +24,7 @@
 #include "http2_hpack_dynamic_table.h"
 #include "http2_module.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "http2_hpack_table.h"
 

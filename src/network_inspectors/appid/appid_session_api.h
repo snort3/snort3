@@ -132,7 +132,7 @@ public:
     void get_first_stream_app_ids(AppId& service, AppId& client, AppId& payload, AppId& misc) const;
     void get_first_stream_app_ids(AppId& service, AppId& client, AppId& payload) const;
 
-    ~AppIdSessionApi()
+    ~AppIdSessionApi() override
     {
         delete_session_data();
     }

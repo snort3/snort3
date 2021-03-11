@@ -55,7 +55,7 @@ THREAD_LOCAL Active::ActiveSuspendReason Active::s_suspend_reason = Active::ASP_
 THREAD_LOCAL PacketTracer* snort::s_pkt_trace = nullptr;
 
 void Active::drop_packet(snort::Packet const*, bool) { }
-PacketTracer::~PacketTracer() { }
+PacketTracer::~PacketTracer() = default;
 void PacketTracer::log(const char*, ...) { }
 void PacketTracer::open_file() { }
 void PacketTracer::dump_to_daq(Packet*) { }
@@ -64,12 +64,12 @@ void PacketTracer::pause() { }
 void PacketTracer::unpause() { }
 void Active::set_drop_reason(char const*) { }
 Packet::Packet(bool) { }
-Packet::~Packet() { }
+Packet::~Packet() = default;
 Flow::Flow() { memset(this, 0, sizeof(*this)); }
-Flow::~Flow() { }
-DetectionEngine::DetectionEngine() { }
-ExpectCache::~ExpectCache() { }
-DetectionEngine::~DetectionEngine() { }
+Flow::~Flow() = default;
+DetectionEngine::DetectionEngine() = default;
+ExpectCache::~ExpectCache() = default;
+DetectionEngine::~DetectionEngine() = default;
 void Flow::init(PktType) { }
 void Flow::term() { }
 void Flow::flush(bool) { }

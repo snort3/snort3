@@ -124,7 +124,7 @@ public:
         Module(name, "trace_test_help"), test_trace_options(trace_options)
     { }
 
-    virtual const TraceOption* get_trace_options() const
+    const TraceOption* get_trace_options() const override
     { return test_trace_options; }
 
 private:

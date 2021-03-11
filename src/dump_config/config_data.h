@@ -63,13 +63,13 @@ public:
         const snort::Parameter::Type node_type);
 
 private:
-    virtual std::string get_name() const override
+    std::string get_name() const override
     { return name; }
 
-    virtual snort::Parameter::Type get_type() const override
+    snort::Parameter::Type get_type() const override
     { return type; }
 
-    virtual BaseConfigNode* get_node(const std::string& name) override;
+    BaseConfigNode* get_node(const std::string& name) override;
 
 private:
     std::string name;
@@ -83,17 +83,17 @@ public:
         const std::string& name = "");
 
 private:
-    virtual std::string get_name() const override
+    std::string get_name() const override
     { return !custom_name.empty() ? custom_name : value.get_name(); }
 
-    virtual snort::Parameter::Type get_type() const override
+    snort::Parameter::Type get_type() const override
     { return value.get_param_type(); }
 
-    virtual const snort::Value* get_value() const override
+    const snort::Value* get_value() const override
     { return &value; }
 
-    virtual void set_value(const snort::Value& v) override;
-    virtual BaseConfigNode* get_node(const std::string& name) override;
+    void set_value(const snort::Value& v) override;
+    BaseConfigNode* get_node(const std::string& name) override;
 
 private:
     snort::Value value;

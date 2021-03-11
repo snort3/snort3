@@ -227,7 +227,7 @@ public:
         return ss;
     }
 
-    ServiceDiscoveryState* get(const AppIdServiceStateKey& k, bool do_touch = 0)
+    ServiceDiscoveryState* get(const AppIdServiceStateKey& k, bool do_touch = false)
     {
         Map_t::const_iterator it = m.find(k);
         if ( it != m.end() ) {

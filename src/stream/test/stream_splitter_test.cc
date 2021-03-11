@@ -46,7 +46,7 @@ static StreamSplitter* next_splitter = nullptr;
 
 Flow::Flow() = default;
 Packet::Packet(bool) { }
-Packet::~Packet() { }
+Packet::~Packet() = default;
 
 struct Packet* DetectionEngine::get_current_packet()
 { return nullptr; }

@@ -28,7 +28,7 @@ class Http2Stream;
 class Http2DataFrame : public Http2Frame
 {
 public:
-    ~Http2DataFrame() override {}
+    ~Http2DataFrame() override = default;
     bool valid_sequence(Http2Enums::StreamState state) override;
     void analyze_http1() override;
     void clear() override;

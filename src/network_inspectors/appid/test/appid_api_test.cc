@@ -55,7 +55,7 @@ class Inspector* InspectorManager::get_inspector(const char*, bool, const SnortC
 { return &dummy_appid_inspector; }
 
 Packet::Packet(bool) { }
-Packet::~Packet() { }
+Packet::~Packet() = default;
 
 Packet* DetectionEngine::get_current_packet()
 {

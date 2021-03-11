@@ -46,8 +46,8 @@ struct RnaConfig
     uint16_t max_payloads = 100;
     uint16_t max_host_services = 100;
     uint16_t max_host_service_info = 16;
-    bool enable_banner_grab = 0;
-    bool log_when_idle = 0;
+    bool enable_banner_grab = false;
+    bool log_when_idle = false;
 };
 
 #endif

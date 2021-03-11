@@ -70,7 +70,7 @@ class SO_PUBLIC RuleFlowData : public FlowData
 protected:
     RuleFlowData(unsigned u);
 public:
-    virtual ~RuleFlowData() { }
+    ~RuleFlowData() override = default;
 };
 
 }

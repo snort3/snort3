@@ -42,7 +42,7 @@ public:
     {
         ctxt_version = ctxt.get_version();
     }
-    virtual ~ThirdPartyAppIdSession() { }
+    virtual ~ThirdPartyAppIdSession() = default;
 
     virtual void reset() = 0;            // just reset state
     virtual void delete_with_ctxt() = 0;

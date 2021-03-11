@@ -110,7 +110,7 @@ PortObject2* PortObject2New(int nrules)
 {
     PortObject2* po = (PortObject2*)snort_calloc(sizeof(PortObject2));
     po->item_list = sflist_new();
-    po->rule_hash = new GHash(nrules, sizeof(int), 0, snort_free);
+    po->rule_hash = new GHash(nrules, sizeof(int), false, snort_free);
     po->rule_hash->set_hashkey_ops(new PortObject2HashKeyOps(nrules));
 
     return po;

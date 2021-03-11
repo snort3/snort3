@@ -175,7 +175,7 @@ static void OtnFree(void* data)
 
 GHash* OtnLookupNew()
 {
-    return new GHash(10000, sizeof(OtnKey), 0, OtnFree);
+    return new GHash(10000, sizeof(OtnKey), false, OtnFree);
 }
 
 void OtnLookupAdd(GHash* otn_map, OptTreeNode* otn)

@@ -1466,7 +1466,7 @@ bool Smtp::configure(SnortConfig*)
     config->decode_conf.sync_all_depths();
 
     if (config->decode_conf.get_file_depth() > -1)
-        config->log_config.log_filename = 1;
+        config->log_config.log_filename = true;
 
     SMTP_ResponseSearchInit();
     SMTP_CommandSearchInit(config);
@@ -1625,7 +1625,7 @@ TEST_CASE("handle_header_line", "[smtp]")
     // Setup
     MailLogConfig log_config;
     DecodeConfig decode_conf;
-    log_config.log_email_hdrs = 0;
+    log_config.log_email_hdrs = false;
     SmtpMime mime_ssn(&decode_conf, &log_config);
     smtp_normalizing = true;
     SmtpProtoConf config;

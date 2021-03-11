@@ -19,7 +19,7 @@ public:
     };
 
     DataDecryptEvent(const StateEventType& type)  : m_type(type)  { }
-    StateEventType get_type(void) const { return m_type; }
+    StateEventType get_type() const { return m_type; }
 
 private:
     StateEventType m_type;

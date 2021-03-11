@@ -51,7 +51,7 @@ char* snort_strdup(const char* str)
     memcpy(p, str, n);
     return p;
 }
-time_t packet_time() { return std::time(0); }
+time_t packet_time() { return std::time(nullptr); }
 
 AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
@@ -82,7 +82,7 @@ void ServiceAppDescriptor::set_port_service_id(AppId){}
 void ClientAppDescriptor::update_user(AppId, const char*, AppidChangeBits&){}
 void ClientAppDescriptor::update_stats(AppId, bool) {}
 void PayloadAppDescriptor::update_stats(AppId, bool) {}
-AppIdConfig::~AppIdConfig() { }
+AppIdConfig::~AppIdConfig() = default;
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
 AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);
@@ -91,7 +91,7 @@ AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector&
     OdpContext&, uint16_t) : FlowData(0), config(stub_config),
     api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt) { }
 AppIdSession::~AppIdSession() = default;
-AppIdDiscovery::~AppIdDiscovery() {}
+AppIdDiscovery::~AppIdDiscovery() = default;
 void ClientDiscovery::initialize(AppIdInspector&) { }
 void ClientDiscovery::reload() { }
 void AppIdDiscovery::register_detector(const std::string&, AppIdDetector*,  IpProtocol) {}
@@ -113,26 +113,26 @@ int ServiceDiscovery::identify_service(AppIdSession&, Packet*, AppidSessionDirec
     AppidChangeBits&) { return 0; }
 int ServiceDiscovery::add_ftp_service_state(AppIdSession&) { return 0; }
 bool ServiceDiscovery::do_service_discovery(AppIdSession&, Packet*, AppidSessionDirection,
-    AppidChangeBits&) { return 0; }
+    AppidChangeBits&) { return false; }
 int ServiceDiscovery::incompatible_data(AppIdSession&, const Packet*,AppidSessionDirection,
     ServiceDetector*) { return 0; }
 int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, AppidSessionDirection,
     ServiceDetector*, ServiceDiscoveryState*) { return 0; }
 int ServiceDiscovery::add_service_port(AppIdDetector*,
     const ServiceDetectorPort&) { return APPID_EINVALID; }
-DnsPatternMatchers::~DnsPatternMatchers() { }
-HttpPatternMatchers::~HttpPatternMatchers() { }
-SipPatternMatchers::~SipPatternMatchers() { }
-SslPatternMatchers::~SslPatternMatchers() { }
+DnsPatternMatchers::~DnsPatternMatchers() = default;
+HttpPatternMatchers::~HttpPatternMatchers() = default;
+SipPatternMatchers::~SipPatternMatchers() = default;
+SslPatternMatchers::~SslPatternMatchers() = default;
 snort::SearchTool::SearchTool(char const*, bool) { }
-snort::SearchTool::~SearchTool() { }
+snort::SearchTool::~SearchTool() = default;
 
 TEST_GROUP(service_state_tests)
 {
     void setup() override
     {
         appidDebug = new AppIdDebug();
-        appidDebug->activate(nullptr, nullptr, 0);
+        appidDebug->activate(nullptr, nullptr, false);
     }
 
     void teardown() override
@@ -190,8 +190,8 @@ TEST(service_state_tests, set_service_id_failed_with_valid)
 
     // Testing 3+ failures to exceed STATE_ID_NEEDED_DUPE_DETRACT_COUNT with valid_count > 1
     sds.set_state(ServiceState::VALID);
-    sds.set_service_id_valid(0);
-    sds.set_service_id_valid(0);
+    sds.set_service_id_valid(nullptr);
+    sds.set_service_id_valid(nullptr);
     sds.set_service_id_failed(asd, &client_ip, 0);
     sds.set_service_id_failed(asd, &client_ip, 0);
     sds.set_service_id_failed(asd, &client_ip, 0);
@@ -209,8 +209,8 @@ TEST(service_state_tests, appid_service_state_key_comparison_test)
     IpProtocol proto = IpProtocol::TCP;
     uint16_t port=3000;
 
-    AppIdServiceStateKey A(&ip4, proto, port, 0, DAQ_PKTHDR_UNKNOWN, 0);
-    AppIdServiceStateKey B(&ip6, proto, port, 0, DAQ_PKTHDR_UNKNOWN, 0);
+    AppIdServiceStateKey A(&ip4, proto, port, 0, DAQ_PKTHDR_UNKNOWN, false);
+    AppIdServiceStateKey B(&ip6, proto, port, 0, DAQ_PKTHDR_UNKNOWN, false);
 
     // We must never be in a situation where !( A<B ) and !( B<A ),
     // because then map will consider A=B.
@@ -237,7 +237,7 @@ TEST(service_state_tests, service_cache)
     for( size_t i = 1; i <= num_entries; i++, port++ )
     {
         const SfIp* ip = ( i%2 == 1 ? &ip4 : &ip6 );
-        ss = ServiceCache.add( AppIdServiceStateKey(ip, proto, port, 0, DAQ_PKTHDR_UNKNOWN, 0) );
+        ss = ServiceCache.add( AppIdServiceStateKey(ip, proto, port, 0, DAQ_PKTHDR_UNKNOWN, false) );
         CHECK_TRUE(ServiceCache.size() == ( i <= max_entries ? i : max_entries));
         ssvec.push_back(ss);
     }

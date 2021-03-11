@@ -111,7 +111,7 @@ Cursor::Cursor(Packet* p)
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 
-OptTreeNode::~OptTreeNode() { }
+OptTreeNode::~OptTreeNode() = default;
 
 //-------------------------------------------------------------------------
 // helpers

@@ -63,7 +63,7 @@ enum SESSION_SERVICE_SEARCH_STATE
 class ServiceDiscovery : public AppIdDiscovery
 {
 public:
-    ~ServiceDiscovery() override { }
+    ~ServiceDiscovery() override = default;
     void initialize(AppIdInspector&) override;
     void reload() override;
     void finalize_service_patterns();

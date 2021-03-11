@@ -52,7 +52,7 @@ namespace snort
 {
 AppIdApi appid_api;
 Packet::Packet(bool) { }
-Packet::~Packet() { }
+Packet::~Packet() = default;
 
 Packet* DetectionEngine::get_current_packet()
 {
@@ -256,7 +256,7 @@ TEST_GROUP(appid_http_event)
         mock_session->create_http_session();
         flow->set_flow_data(mock_session);
         appidDebug = new AppIdDebug();
-        appidDebug->activate(nullptr, nullptr, 0);
+        appidDebug->activate(nullptr, nullptr, false);
     }
 
     void teardown() override

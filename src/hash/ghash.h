@@ -24,7 +24,7 @@
 
 // generic hash table - stores and maps key + data pairs
 
-#include <string.h>
+#include <cstring>
 #include "hash_key_operations.h"
 #include "main/snort_types.h"
 

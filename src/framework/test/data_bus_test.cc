@@ -34,7 +34,7 @@ using namespace snort;
 // mocks
 //--------------------------------------------------------------------------
 InspectionPolicy::InspectionPolicy(unsigned int) {}
-InspectionPolicy::~InspectionPolicy() {}
+InspectionPolicy::~InspectionPolicy() = default;
 namespace snort
 {
 SnortConfig::SnortConfig(snort::SnortConfig const*)

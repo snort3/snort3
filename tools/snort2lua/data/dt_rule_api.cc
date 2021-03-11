@@ -232,7 +232,7 @@ void RuleApi::add_suboption(const std::string& keyword,
         DataApi::developer_error("Add some header data before adding content!!");
 }
 
-void RuleApi::reset_sticky(void)
+void RuleApi::reset_sticky()
 {
     if (curr_rule)
         curr_rule->reset_sticky();

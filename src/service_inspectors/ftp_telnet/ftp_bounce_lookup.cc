@@ -129,13 +129,13 @@ FTP_BOUNCE_TO* ftp_bounce_lookup_first(BOUNCE_LOOKUP* BounceLookup, int* iError)
 
     if (!iError)
     {
-        return NULL;
+        return nullptr;
     }
 
     if (!BounceLookup)
     {
         *iError = FTPP_INVALID_ARG;
-        return NULL;
+        return nullptr;
     }
 
     *iError = FTPP_SUCCESS;
@@ -155,13 +155,13 @@ FTP_BOUNCE_TO* ftp_bounce_lookup_next(BOUNCE_LOOKUP* BounceLookup, int* iError)
 
     if (!iError)
     {
-        return NULL;
+        return nullptr;
     }
 
     if (!BounceLookup)
     {
         *iError = FTPP_INVALID_ARG;
-        return NULL;
+        return nullptr;
     }
 
     *iError = FTPP_SUCCESS;

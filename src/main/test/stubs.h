@@ -68,7 +68,7 @@ void Profiler::start() { }
 void Profiler::stop(uint64_t) { }
 void Profiler::consolidate_stats() { }
 void Swapper::apply(Analyzer&) { }
-Swapper::~Swapper() { }
+Swapper::~Swapper() = default;
 void OopsHandler::tinit() { }
 void OopsHandler::tterm() { }
 uint16_t get_run_num() { return 0; }
@@ -77,7 +77,7 @@ void set_instance_id(unsigned) { }
 void set_thread_type(SThreadType) { }
 void ContextSwitcher::push(snort::IpsContext*) { }
 void ContextSwitcher::stop() { }
-ContextSwitcher::~ContextSwitcher() { }
+ContextSwitcher::~ContextSwitcher() = default;
 snort::IpsContext* ContextSwitcher::get_context() const { return nullptr; }
 void ContextSwitcher::start() { }
 void InitTag() { }
@@ -126,7 +126,7 @@ THREAD_LOCAL PacketCount pc;
 
 void packet_gettimeofday(struct timeval* tv) { *tv = s_packet_time; }
 MemoryContext::MemoryContext(MemoryTracker&) : saved(nullptr) { }
-MemoryContext::~MemoryContext() { }
+MemoryContext::~MemoryContext() = default;
 Packet::Packet(bool)
 {
     memset(this , 0, sizeof(*this));
@@ -138,7 +138,7 @@ IpsPolicy* get_ips_policy() { return nullptr; }
 void DataBus::publish(const char*, Packet*, Flow*) { }
 void DataBus::publish(const char*, DataEvent&, Flow*) { }
 SFDAQInstance::SFDAQInstance(const char*, unsigned, const SFDAQConfig*) { }
-SFDAQInstance::~SFDAQInstance() { }
+SFDAQInstance::~SFDAQInstance() = default;
 void SFDAQInstance::reload() { }
 bool SFDAQInstance::start() { return false; }
 bool SFDAQInstance::stop() { return false; }
@@ -154,8 +154,8 @@ int SFDAQ::inject(DAQ_Msg_h, int, const uint8_t*, uint32_t) { return -1; }
 bool SFDAQ::can_inject() { return false; }
 bool SFDAQ::can_inject_raw() { return false; }
 int SFDAQInstance::set_packet_verdict_reason(DAQ_Msg_h, uint8_t) { return 0; }
-DetectionEngine::DetectionEngine() { }
-DetectionEngine::~DetectionEngine() { }
+DetectionEngine::DetectionEngine() = default;
+DetectionEngine::~DetectionEngine() = default;
 void DetectionEngine::onload() { }
 void DetectionEngine::thread_init() { }
 void DetectionEngine::thread_term() { }
@@ -212,7 +212,7 @@ void Stream::block_flow(const Packet*) { }
 IpsContext::IpsContext(unsigned) { }
 NetworkPolicy* get_network_policy() { return nullptr; }
 InspectionPolicy* get_inspection_policy() { return nullptr; }
-Flow::Flow() { }
-Flow::~Flow() { }
+Flow::Flow() = default;
+Flow::~Flow() = default;
 void ThreadConfig::implement_thread_affinity(SThreadType, unsigned) { }
 }
