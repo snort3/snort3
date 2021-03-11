@@ -8,7 +8,7 @@ Snort 3 Upgrade Manual
 The Snort Team
 
 Revision History
-Revision 3.1.1.0 2021-01-28 10:50:31 EST TST
+Revision 3.1.2.0 2021-03-11 14:56:52 EST TST
 
 ---------------------------------------------------------------------
 
@@ -828,6 +828,7 @@ change -> config 'checksum_mode'  ==> 'network.checksum_eval'
 change -> config 'daq_dir'  ==> 'daq.module_dirs'
 change -> config 'detection_filter'  ==> 'alerts.detection_filter_memcap'
 change -> config 'enable_deep_teredo_inspection'  ==> 'udp.deep_teredo_inspection'
+change -> config 'enable_mpls_overlapping_ip'  ==> 'packets.mpls_agnostic'
 change -> config 'event_filter'  ==> 'alerts.event_filter_memcap'
 change -> config 'max_attribute_hosts'  ==> 'attribute_table.max_hosts'
 change -> config 'max_attribute_services_per_host'  ==> 'attribute_table.max_services_per_host'
@@ -1045,6 +1046,7 @@ deleted -> config 'enable_decode_oversized_alerts'
 deleted -> config 'enable_decode_oversized_drops'
 deleted -> config 'enable_gtp'
 deleted -> config 'enable_ipopt_drops'
+deleted -> config 'enable_mpls_multicast'
 deleted -> config 'enable_tcpopt_drops'
 deleted -> config 'enable_tcpopt_experimental_drops'
 deleted -> config 'enable_tcpopt_obsolete_drops'

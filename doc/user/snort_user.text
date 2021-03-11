@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.1.0 2021-01-28 10:50:32 EST TST
+Revision 3.1.2.0 2021-03-11 14:56:53 EST TST
 
 ---------------------------------------------------------------------
 
@@ -73,14 +73,15 @@ Table of Contents
     6.9. FTP
     6.10. HTTP Inspector
     6.11. HTTP/2 Inspector
-    6.12. Performance Monitor
-    6.13. POP and IMAP
-    6.14. Port Scan
-    6.15. Sensitive Data Filtering
-    6.16. SMTP
-    6.17. Telnet
-    6.18. Trace
-    6.19. Wizard
+    6.12. IEC104 Inspector
+    6.13. Performance Monitor
+    6.14. POP and IMAP
+    6.15. Port Scan
+    6.16. Sensitive Data Filtering
+    6.17. SMTP
+    6.18. Telnet
+    6.19. Trace
+    6.20. Wizard
 
 7. DAQ Configuration and Modules
 
@@ -1206,6 +1207,14 @@ There are multiple ways to load rules too:
   * Use --stdin-rules with command line redirection.
   * Use --lua to specify one or more rules as a command line
     argument.
+
+Ips states are similar to ips rules, except that they are parsed
+after the rules. That way rules can be overwritten in custom
+policies.
+
+States without the enable option are loaded as stub rules with
+default gid:0, sid:0. A user should specify gid, sid, enable options
+to avoid dummy rules.
 
 Output Files
 
@@ -3847,29 +3856,19 @@ omit the depth parameter entirely because that is the default.
 These limits have no effect on how much data is forwarded to file
 processing.
 
-6.10.2.2. detained_inspection
+6.10.2.2. script_detection
 
-Detained inspection is an experimental feature currently under
-development. It enables Snort to more quickly detect and block
-response messages containing malicious JavaScript. As this feature
-involves actively blocking traffic it is designed for use with inline
-mode operation (-Q).
-
-This feature is off by default. detained_inspection = true will
-activate it.
-
-6.10.2.3. script_detection
-
-Script detection is an alternative to detained inspection. When
-http_inspect detects the end of a script it immediately forwards the
-available part of the message body for early detection. This enables
-malicious Javascripts to be detected more quickly but consumes
-somewhat more of the sensor’s resources.
+Script detection is a feature that enables Snort to more quickly
+detect and block response messages containing malicious JavaScript.
+When http_inspect detects the end of a script it immediately forwards
+the available part of the message body for early detection. This
+enables malicious Javascripts to be detected more quickly but
+consumes somewhat more of the sensor’s resources.
 
 This feature is off by default. script_detection = true will activate
 it.
 
-6.10.2.4. gzip
+6.10.2.3. gzip
 
 http_inspect by default decompresses deflate and gzip message bodies
 before inspecting them. This feature can be turned off by unzip =
@@ -3878,14 +3877,14 @@ improvement but at a very high price. It is unlikely that any
 meaningful inspection of message bodies will be possible. Effectively
 HTTP processing would be limited to the headers.
 
-6.10.2.5. normalize_utf
+6.10.2.4. normalize_utf
 
 http_inspect will decode utf-8, utf-7, utf-16le, utf-16be, utf-32le,
 and utf-32be in response message bodies based on the Content-Type
 header. This feature is on by default: normalize_utf = false will
 deactivate it.
 
-6.10.2.6. decompress_pdf
+6.10.2.5. decompress_pdf
 
 decompress_pdf = true will enable decompression of compressed
 portions of PDF files encountered in a response body. http_inspect
@@ -3894,7 +3893,7 @@ locate PDF streams with a single /FlateDecode filter. The compressed
 content is decompressed and made available through the file data rule
 option.
 
-6.10.2.7. decompress_swf
+6.10.2.6. decompress_swf
 
 decompress_swf = true will enable decompression of compressed SWF
 (Adobe Flash content) files encountered in a response body. The
@@ -3904,7 +3903,7 @@ LZMA. The compressed content is decompressed and made available
 through the file data rule option. The compressed SWF file signature
 is converted to FWS to indicate an uncompressed file.
 
-6.10.2.8. normalize_javascript
+6.10.2.7. normalize_javascript
 
 normalize_javascript = true will enable normalization of JavaScript
 within the HTTP response body. http_inspect looks for JavaScript by
@@ -3916,7 +3915,7 @@ decodeURIComponent are %XX, %uXXXX, XX and uXXXXi. http_inspect also
 replaces consecutive whitespaces with a single space and normalizes
 the plus by concatenating the strings.
 
-6.10.2.9. xff_headers
+6.10.2.8. xff_headers
 
 This configuration supports defining custom x-forwarded-for type
 headers. In a multi-vendor world, it is quite possible that the
@@ -3931,7 +3930,7 @@ they are defined, e.g "x-forwarded-for" will be preferred than
 "true-client-ip" if both headers are present in the stream. The
 header names should be delimited by a space.
 
-6.10.2.10. URI processing
+6.10.2.9. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize
@@ -4467,7 +4466,134 @@ http_inspect to provide full inspection of the individual HTTP/1.1
 streams.
 
 
-6.12. Performance Monitor
+6.12. IEC104 Inspector
+
+--------------
+
+iec104 inspector is a service inspector for the IEC 60870-5-104
+protocol.
+
+6.12.1. Overview
+
+IEC 60870-5-104 (iec104) is a protocol distributed by the
+International Electrotechnical Commission (IEC) that provides a
+standardized method of sending telecontrol messages between central
+stations and outstations, typically running on TCP port 2404.
+
+It is used in combination with the companion specifications in the
+IEC 60870-5 family, most notably IEC 60870-5-101, to provide reliable
+transport via TCP/IP.
+
+An iec104 Application Protocol Data Unit (APDU) consists of one of
+three Application Protocol Control Information (APCI) structures,
+each beginning with the start byte 0x68. In the case of an
+Information Transfer APCI, an Application Service Data Unit (ASDU)
+follows the APCI.
+
+The iec104 inspector decodes the iec104 protocol and provides rule
+options to access certain protocol fields and data content. This
+allows the user to write rules for iec104 packets without decoding
+the protocol.
+
+6.12.2. Configuration
+
+iec104 messages can be normalized to either combine a message spread
+across multiple frames, or to split apart multiple messages within
+one frame. No manual configuration is necessary to leverage this
+functionality.
+
+6.12.3. Quick Guide
+
+A typical iec104 configuration looks like this:
+
+binder =
+{
+    {
+        when =
+        {
+            proto = 'tcp',
+            ports = '2404'
+        },
+        use =
+        {
+            type = 'iec104'
+        },
+    },
+}
+
+iec104 = { }
+
+In this example, the tcp inspector is defined based on port. All
+configurations are default.
+
+Debug logging can be enabled with the following additional
+configuration:
+
+trace =
+{
+    modules =
+    {
+        iec104 =
+        {
+            all = 1
+        }
+    }
+}
+
+6.12.4. Rule Options
+
+New rule options are supported by enabling the iec104 inspector:
+
+  * iec104_apci_type
+  * iec104_asdu_func
+
+6.12.4.1. iec104_apci_type
+
+Determining the APCI type of an iec104 message involves checking the
+state of one to two bits in the message’s first control field octet.
+This can be completed with a byte_test in a plaintext rule, however
+it adds unnecessary complexity to the rule. Since most rules
+inspecting iec104 traffic will target APCI Type I messages, this
+option was created to alleviate the need to manually check the type
+and subsequently reduce the complexity of the rule.
+
+This option takes one argument with three acceptable configurations.
+
+Examples:
+
+iec104_apci_type:unnumbered_control_function;
+iec104_apci_type:S;
+iec104_apci_type:i;
+
+This option is used to verify that the message being processed is of
+the specified type. The argument passed to this rule option can be
+specified in one of three ways: the full type name, the lowercase
+type abbreviation, or the uppercase type abbreviation.
+
+6.12.4.2. iec104_asdu_func
+
+Determining the ASDU function of an iec104 message can be completed
+with a plaintext rule that checks a single byte in the message,
+however it also requires verifying that the message’s APCI is of Type
+I. Since a rule writer may not necessarily know that this additional
+check must be made, this option was created to simplify the process
+of verifying the function type and subsequently reduce the complexity
+of the rule.
+
+This option takes one argument with two acceptable configurations.
+
+Examples:
+
+iec104_asdu_func:M_SP_NA_1;
+iec104_asdu_func:m_ps_na_1;
+
+This option is used to verify that the message being processed is
+using the specified ASDU function. The argument passed to this rule
+option can be specified in one of two ways: the uppercase function
+name, or the lowercase function name.
+
+
+6.13. Performance Monitor
 
 --------------
 
@@ -4476,14 +4602,14 @@ down by too many flows? perf_monitor! Why are certain TCP segments
 being dropped without hitting a rule? perf_monitor! Why is a sensor
 leaking water? Not perf_monitor, check with stream…
 
-6.12.1. Overview
+6.13.1. Overview
 
 The Snort performance monitor is the built-in utility for monitoring
 system and traffic statistics. All statistics are separated by
 processing thread. perf_monitor supports several trackers for
 monitoring such data:
 
-6.12.2. Base Tracker
+6.13.2. Base Tracker
 
 The base tracker is used to gather running statistics about Snort and
 its running modules. All Snort modules gather, at the very least,
@@ -4540,7 +4666,7 @@ perf_monitor =
 Note: Event stats from prior Snorts are now located within base
 statistics.
 
-6.12.3. Flow Tracker
+6.13.3. Flow Tracker
 
 Flow tracks statistics regarding traffic and L3/L4 protocol
 distributions. This data can be used to build a profile of traffic
@@ -4550,7 +4676,7 @@ To enable:
 
 perf_monitor = { flow = true }
 
-6.12.4. FlowIP Tracker
+6.13.4. FlowIP Tracker
 
 FlowIP provides statistics for individual hosts within a network.
 This data can be used for identifying communication habits, such as
@@ -4562,7 +4688,7 @@ To enable:
 
 perf_monitor = { flow_ip = true }
 
-6.12.5. CPU Tracker
+6.13.5. CPU Tracker
 
 This tracker monitors the CPU and wall time spent by a given
 processing thread.
@@ -4571,7 +4697,7 @@ To enable:
 
 perf_monitor = { cpu = true }
 
-6.12.6. Formatters
+6.13.6. Formatters
 
 Performance monitor allows statistics to be output in a few formats.
 Along with human readable text (as seen at shutdown) and csv formats,
@@ -4585,14 +4711,14 @@ used by Performance monitor, see the developer notes for Performance
 monitor or the code provided for fbstreamer.
 
 
-6.13. POP and IMAP
+6.14. POP and IMAP
 
 --------------
 
 POP inspector is a service inspector for POP3 protocol and IMAP
 inspector is for IMAP4 protocol.
 
-6.13.1. Overview
+6.14.1. Overview
 
 POP and IMAP inspectors examine data traffic and find POP and IMAP
 commands and responses. The inspectors also identify the command,
@@ -4600,7 +4726,7 @@ header, body sections and extract the MIME attachments and decode it
 appropriately. The pop and imap also identify and whitelist the pop
 and imap traffic.
 
-6.13.2. Configuration
+6.14.2. Configuration
 
 POP inspector and IMAP inspector offer same set of configuration
 options for MIME decoding depth. These depths range from 0 to 65535
@@ -4610,27 +4736,27 @@ be decoded. If you do not specify the default value is 1460 bytes.
 
 The depth limits apply per attachment. They are:
 
-6.13.2.1. b64_decode_depth
+6.14.2.1. b64_decode_depth
 
 Set the base64 decoding depth used to decode the base64-encoded MIME
 attachments.
 
-6.13.2.2. qp_decode_depth
+6.14.2.2. qp_decode_depth
 
 Set the Quoted-Printable (QP) decoding depth used to decode
 QP-encoded MIME attachments.
 
-6.13.2.3. bitenc_decode_depth
+6.14.2.3. bitenc_decode_depth
 
 Set the non-encoded MIME extraction depth used for non-encoded MIME
 attachments.
 
-6.13.2.4. uu_decode_depth
+6.14.2.4. uu_decode_depth
 
 Set the Unix-to-Unix (UU) decoding depth used to decode UU-encoded
 attachments.
 
-6.13.2.5. Examples
+6.14.2.5. Examples
 
 stream = { }
 
@@ -4664,13 +4790,13 @@ pop =
 }
 
 
-6.14. Port Scan
+6.15. Port Scan
 
 --------------
 
 A module to detect port scanning
 
-6.14.1. Overview
+6.15.1. Overview
 
 This module is designed to detect the first phase in a network
 attack: Reconnaissance. In the Reconnaissance phase, an attacker
@@ -4770,7 +4896,7 @@ however, Portscan will only track open ports after the alert has been
 triggered. Open port events are not individual alerts, but tags based
 off the original scan alert.
 
-6.14.2. Scan levels
+6.15.2. Scan levels
 
 There are 3 default scan levels that can be set.
 
@@ -4824,7 +4950,7 @@ setting will catch some slow scans because of the continuous
 monitoring, but is very sensitive to active hosts. This most
 definitely will require the user to tune Portscan.
 
-6.14.3. Tuning Portscan
+6.15.3. Tuning Portscan
 
 The most important aspect in detecting portscans is tuning the
 detection engine for your network(s). Here are some tuning tips:
@@ -4901,7 +5027,7 @@ require the least tuning. The low sensitivity level does not catch
 filtered scans, since these are more prone to false positives.
 
 
-6.15. Sensitive Data Filtering
+6.16. Sensitive Data Filtering
 
 --------------
 
@@ -4911,21 +5037,21 @@ credit card numbers, U.S. Social Security numbers, and email
 addresses. A rich regular expression syntax is available for defining
 your own PII.
 
-6.15.1. Hyperscan
+6.16.1. Hyperscan
 
 The sd_pattern rule option is powered by the open source Hyperscan
 library from Intel. It provides a regex grammar which is mostly PCRE
 compatible. To learn more about Hyperscan see https://intel.github.io
 /hyperscan/dev-reference/
 
-6.15.2. Syntax
+6.16.2. Syntax
 
 Snort provides sd_pattern as IPS rule option with no additional
 inspector overhead. The Rule option takes the following syntax.
 
 sd_pattern: "<pattern>"[, threshold <count>];
 
-6.15.2.1. Pattern
+6.16.2.1. Pattern
 
 Pattern is the most important and is the only required parameter to
 sd_pattern. It supports 3 built in patterns which are configured by
@@ -4963,7 +5089,7 @@ but would not match 1@ourdomain.com ab12@ourdomain.com or
 Note: This is just an example, this pattern is not suitable to detect
 many correctly formatted emails.
 
-6.15.2.2. Threshold
+6.16.2.2. Threshold
 
 Threshold is an optional parameter allowing you to change built in
 default value (default value is 1). The following two instances are
@@ -4981,7 +5107,7 @@ This example requires 300 matches of the pattern "This is a string
 literal" to qualify as a positive match. That is, if the string only
 occurred 299 times in a packet, you will not see an event.
 
-6.15.2.3. Obfuscating Credit Cards and Social Security Numbers
+6.16.2.3. Obfuscating Credit Cards and Social Security Numbers
 
 Snort provides discreet logging for the built in patterns
 "credit_card", "us_social" and "us_social_nodashes". Enabling
@@ -4994,7 +5120,7 @@ output =
     obfuscate_pii = true
 }
 
-6.15.3. Example
+6.16.3. Example
 
 A complete Snort IPS rule
 
@@ -5010,7 +5136,7 @@ Logged output when running Snort in "cmg" alert format.
 58 58 58 58 58 58 58 58 58 58 58 58 39 32 39 34              XXXXXXXXXXXX9294
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-6.15.4. Caveats
+6.16.4. Caveats
 
  1. Snort currently requires setting the fast pattern engine to use
     "hyperscan" in order for sd_pattern ips option to function
@@ -5027,13 +5153,13 @@ Logged output when running Snort in "cmg" alert format.
     (This is a known bug).
 
 
-6.16. SMTP
+6.17. SMTP
 
 --------------
 
 SMTP inspector is a service inspector for SMTP protocol.
 
-6.16.1. Overview
+6.17.1. Overview
 
 The SMTP inspector examines SMTP connections looking for commands and
 responses. It also identifies the command, header and body sections,
@@ -5043,7 +5169,7 @@ identifies and whitelists the SMTP traffic.
 SMTP inspector logs the filename, email addresses, attachment names
 when configured.
 
-6.16.2. Configuration
+6.17.2. Configuration
 
 SMTP command lines can be normalized to remove extraneous spaces.
 TLS-encrypted traffic can be ignored, which improves performance. In
@@ -5052,7 +5178,7 @@ performance boost.
 
 The configuration options are described below:
 
-6.16.2.1. normalize and normalize_cmds
+6.17.2.1. normalize and normalize_cmds
 
 Normalization checks for more than one space character after a
 command. Space characters are defined as space (ASCII 0x20) or tab
@@ -5063,34 +5189,34 @@ example:
 
 smtp = { normalize = 'cmds', normalize_cmds = 'RCPT VRFY EXPN' }
 
-6.16.2.2. ignore_data
+6.17.2.2. ignore_data
 
 Set it to true to ignore data section of mail (except for mail
 headers) when processing rules.
 
-6.16.2.3. ignore_tls_data
+6.17.2.3. ignore_tls_data
 
 Set it to true to ignore TLS-encrypted data when processing rules.
 
-6.16.2.4. max_command_line_len
+6.17.2.4. max_command_line_len
 
 Alert if an SMTP command line is longer than this value. Absence of
 this option or a "0" means never alert on command line length. RFC
 2821 recommends 512 as a maximum command line length.
 
-6.16.2.5. max_header_line_len
+6.17.2.5. max_header_line_len
 
 Alert if an SMTP DATA header line is longer than this value. Absence
 of this option or a "0" means never alert on data header line length.
 RFC 2821 recommends 1024 as a maximum data header line length.
 
-6.16.2.6. max_response_line_len
+6.17.2.6. max_response_line_len
 
 Alert if an SMTP response line is longer than this value. Absence of
 this option or a "0" means never alert on response line length. RFC
 2821 recommends 512 as a maximum response line length.
 
-6.16.2.7. alt_max_command_line_len
+6.17.2.7. alt_max_command_line_len
 
 Overrides max_command_line_len for specific commands For example:
 
@@ -5106,11 +5232,11 @@ alt_max_command_line_len =
     },
 }
 
-6.16.2.8. invalid_cmds
+6.17.2.8. invalid_cmds
 
 Alert if this command is sent from client side.
 
-6.16.2.9. valid_cmds
+6.17.2.9. valid_cmds
 
 List of valid commands. We do not alert on commands in this list.
 
@@ -5120,36 +5246,36 @@ HELO HELP IDENT MAIL NOOP ONEX QUEU QUIT RCPT RSET SAML SEND SIZE
 STARTTLS SOML TICK TIME TURN TURNME VERB VRFY X-EXPS X-LINK2STATE
 XADR XAUTH XCIR XEXCH50 XGEN XLICENSE XQUE XSTA XTRN XUSR ]]
 
-6.16.2.10. data_cmds
+6.17.2.10. data_cmds
 
 List of commands that initiate sending of data with an end of data
 delimiter the same as that of the DATA command per RFC 5321 - "
 <CRLF>.<CRLF>".
 
-6.16.2.11. binary_data_cmds
+6.17.2.11. binary_data_cmds
 
 List of commands that initiate sending of data and use a length value
 after the command to indicate the amount of data to be sent, similar
 to that of the BDAT command per RFC 3030.
 
-6.16.2.12. auth_cmds
+6.17.2.12. auth_cmds
 
 List of commands that initiate an authentication exchange between
 client and server.
 
-6.16.2.13. xlink2state
+6.17.2.13. xlink2state
 
 Enable/disable xlink2state alert, options are {disable | alert |
 drop}. See CVE-2005-0560 for a description of the vulnerability.
 
-6.16.2.14. MIME processing depth parameters
+6.17.2.14. MIME processing depth parameters
 
 These four MIME processing depth parameters are identical to their
 POP and IMAP counterparts. See that section for further details.
 
 b64_decode_depth qp_decode_depth bitenc_decode_depth uu_decode_depth
 
-6.16.2.15. Log Options
+6.17.2.15. Log Options
 
 Following log options allow SMTP inspector to log email addresses and
 filenames. Please note, this is logged only with the unified2 output
@@ -5192,7 +5318,7 @@ This option specifies the depth for logging email headers. The
 allowed range for this option is 0 - 20480. A value of 0 will disable
 email headers logging. The default value for this option is 1464.
 
-6.16.3. Example
+6.17.3. Example
 
 smtp =
 {
@@ -5245,7 +5371,7 @@ smtp =
 }
 
 
-6.17. Telnet
+6.18. Telnet
 
 --------------
 
@@ -5255,7 +5381,7 @@ command sequences per RFC 854. It will also determine when a telnet
 connection is encrypted, per the use of the telnet encryption option
 per RFC 2946.
 
-6.17.1. Configuring the inspector to block exploits and attacks
+6.18.1. Configuring the inspector to block exploits and attacks
 
 ayt_attack_thresh number
 
@@ -5264,7 +5390,7 @@ the threshold number specified. This addresses a few specific
 vulnerabilities relating to bsd-based implementations of telnet.
 
 
-6.18. Trace
+6.19. Trace
 
 --------------
 
@@ -5277,7 +5403,7 @@ enable debug tracing, Snort must be configured at build time with
 wizard and snort.inspector_manager) are providing non-debug trace
 messages in normal production builds.
 
-6.18.1. Trace module
+6.19.1. Trace module
 
 The trace module is responsible for configuring traces and supports
 the following parameters:
@@ -5317,7 +5443,7 @@ The trace module supports config reloading. Also, it’s possible to
 set or clear modules traces and packet filter constraints via the
 control channel command.
 
-6.18.2. Trace module - configuring traces
+6.19.2. Trace module - configuring traces
 
 The trace module has the modules option - a table with trace
 configuration for specific modules. The following lines placed in
@@ -5399,7 +5525,7 @@ trace =
     }
 }
 
-6.18.3. Trace module - configuring packet filter constraints for
+6.19.3. Trace module - configuring packet filter constraints for
 packet related trace messages
 
 There is a capability to filter traces by the packet constraints. The
@@ -5454,7 +5580,7 @@ trace =
     }
 }
 
-6.18.4. Trace module - configuring trace output method
+6.19.4. Trace module - configuring trace output method
 
 There is a capability to configure the output method for trace
 messages. The trace module has the output option with two acceptable
@@ -5483,7 +5609,7 @@ trace =
 As a result, each trace message will be printed into syslog (the
 Snort run-mode will be ignored).
 
-6.18.5. Configuring traces via control channel command
+6.19.5. Configuring traces via control channel command
 
 There is a capability to configure module trace options and packet
 constraints via the control channel command by using a Snort shell.
@@ -5518,7 +5644,7 @@ trace.set({modules = {...}}) - set only module trace options keeping old filteri
 
 trace.set({}) - disable traces and constraints (set to empty)
 
-6.18.6. Trace messages format
+6.19.6. Trace messages format
 
 Each tracing message has a standard format:
 
@@ -5567,7 +5693,7 @@ m – minutes
 s – seconds
 S – milliseconds
 
-6.18.7. Example - Debugging rules using detection trace
+6.19.7. Example - Debugging rules using detection trace
 
 The detection engine is responsible for rule evaluation. Turning on
 the trace for it can help with debugging new rules.
@@ -5695,7 +5821,7 @@ detection:rule_eval:1: Matched rule gid:sid:rev 1:3:0
 detection:rule_vars:1: Rule options variables: var[0]=1 var[1]=10 var[2]=0
 04/22-20:21:40.905630, 1, TCP, raw, 56, C2S, 127.0.0.1:1234, 127.0.0.1:5678, 1:3:0, allow
 
-6.18.8. Example - Protocols decoding trace
+6.19.8. Example - Protocols decoding trace
 
 Turning on decode trace will print out information about the packets
 decoded protocols. Can be useful in case of tunneling.
@@ -5719,7 +5845,7 @@ decode:all:1: Codec ipv6 (protocol_id: 1) ip header starts at: 0x7f70800110f0, l
 decode:all:1: Codec icmp4 (protocol_id: 256) ip header starts at: 0x7f70800110f0, length is 8
 decode:all:1: Codec unknown (protocol_id: 256) ip header starts at: 0x7f70800110f0, length is 0
 
-6.18.9. Example - Track the time packet spends in each inspector
+6.19.9. Example - Track the time packet spends in each inspector
 
 There is a capability to track which inspectors evaluate a packet,
 and how much time the inspector consumes doing so. These trace
@@ -5760,7 +5886,7 @@ snort:inspector_manager:1: post detection inspection, raw, packet 1, context 1
 snort:inspector_manager:1: end inspection, raw, packet 1, context 1, total time: 0 usec
 snort:main:1: [0] Destroying completed command RUN
 
-6.18.10. Example - trace filtering by packet constraints:
+6.19.10. Example - trace filtering by packet constraints:
 
 In snort.lua, the following lines were added:
 
@@ -5822,7 +5948,7 @@ detection:rule_eval:1: packet 4 UNK 10.1.1.2:200 10.2.1.1:100 (non-fast-patterns
 The trace messages for two last packets (numbers 5 and 6) weren’t
 printed.
 
-6.18.11. Example - configuring traces via trace.set() command
+6.19.11. Example - configuring traces via trace.set() command
 
 In snort.lua, the following lines were added:
 
@@ -5905,7 +6031,7 @@ The new configuration was applied. decode:all:1 messages aren’t
 filtered because they don’t include a packet (a packet isn’t
 well-formed at the point when the message is printing).
 
-6.18.12. Other available traces
+6.19.12. Other available traces
 
 There are more trace options supported by detection:
 
@@ -5932,7 +6058,7 @@ developer. Some are for corner cases, others for complex data
 structures.
 
 
-6.19. Wizard
+6.20. Wizard
 
 --------------
 
@@ -6268,7 +6394,7 @@ another packet with the same tuple as the prior one.
 
 $sof and $eof commands generate Start of Flow and End of Flow
 metapackets respectively. They are followed by a definition of a
-Flow_Stats_t data structure which will be fed into Snort via the
+DAQ_FlowStats_t data structure which will be fed into Snort via the
 metadata callback.
 
 Strings may contain the following escape sequences:

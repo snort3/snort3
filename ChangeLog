@@ -1,3 +1,83 @@
+2021/03/11 - 3.1.2.0
+
+-- action_manager: Remove unused cached reject action
+-- appid: Always get appid inspector from default inspection policy
+-- appid: Fixes for cppcheck warnings
+-- appid: Get uri from http event even when http host is not present
+-- appid: Load lua detectors for packet threads from compiled lua bytecode during detector reload
+-- appid: Remove app forecast method
+-- appid: Remove detectors for obsolete apps - AOL instant messenger and Yahoo messenger
+-- appid: Send reloading detectors message to socket immediately
+-- appid: Update IMAP service detector pattern
+-- appid: Use opportunistic tls event to set decryption countdown for SMTP detector
+-- binder: Apply host attribute table information at the beginning of flow setup
+-- binder: Clean up std namespace usage
+-- binder: Use service inspector caching to improve get_gadget() performance
+-- binder: Use the first match for non-terminal binding usage
+-- build: Do one more pass of modernizing the C++ code
+-- dce_rpc: Handle async responses in smbv2
+-- dce_rpc: Pass proper file id in file api from smb1
+-- decompress: Add support for streaming ZIPs
+-- detection: Use IP and port variables from the targeted policy
+-- doc: Remove http detained inspection from user manual
+-- doc: Update documentation for ips.states
+-- file_magic: Add pattern for pcapng
+-- flow: Add new flag to indicate elephant flow
+-- ftp_telnet: Implement init_partial_flush for ftp data
+-- ftp_telnet: Respect telnet_cmds config for raising 125:1
+-- host_attributes: Update api to reduce use of shared_pointer
+-- http2_inspect: Limit number of concurrent streams
+-- http2_inspect: Process rst_stream frame
+-- http_inspect: IPv6 authority in URI
+-- http_inspect: Javascript support cleanup
+-- http_inspect: Partial inspection for 0 length chunk
+-- http_inspect: Remove detained inspection
+-- http_inspect: Remove unused events
+-- http_inspect: Temporarily restore detained_inspection parameter
+-- iec104: Add documentation for iec104 service inspector
+-- iec104: Additional input sanitization, syntax, and style changes
+-- iec104: Integrate new iec104 protocol service inspector
+-- inspector_manager: Instantiate default binder as long as a wizard or stream are present
+-- ips_options: Update cursor position for relative pcre
+-- ipv4: Correct the calculation for illegal fragment offset checks
+-- log: Add printf format attribute to TextLog_Print() and clean up the fallout
+-- log: Base logging the Ethernet header on proto bits rather than DLT
+-- loggers: Fix excessive byte reordering when printing MPLS labels in CSV and JSON
+-- main: Fix accumulating and printing codec stats at run time
+-- managers: Enforce strict parsing for binder aliases
+-- managers: Pass the configuration to default module's end()
+-- managers: Perform sanity checks on set_alias() parameters
+-- memory: Free memory space while updating allocation
+-- module: Introduced new api to clear global active module counters
+-- module_manager: Enforce interest in global modules only in the default policy
+-- mpls: Add next layer autodetection and implement codec logging
+-- mpls: Refactor mpls.enable_mpls_overlapping_ip into packet.mpls_agnostic
+-- mpls: Remove enable_mpls_multicast option
+-- packet_capture: Add group filter for packet capture
+-- packet_tracer: Add daq buffer to hold daq logs
+-- perf_monitor: Fix finalizing JSON output files for trackers
+-- portscan: Fix decoy and distributed scan logic
+-- portscan: Fix delimiter for ports in config
+-- portscan: Fix IP scans not alerting
+-- protocols: Add initial support for multilayer compound codecs
+-- protocols: Add peg count for decodes that exceeded the max layers
+-- protocols: Consistently encapsulate exported protocol headers in the snort namespace
+-- reputation: Add peg count for total alerts
+-- reputation: Remove deprecated redundant terms
+-- rna: Discover NetBIOS name
+-- snort: Clear snort counter for modules, daq, file_id, appid
+-- snort: Update for DAQ_FlowStats_t structure and field name changes
+-- snort_config: Clean up and annotate command line config merge process
+-- snort_config: Remove unnecessary command line options
+-- stream: Always use latest splitter from tracker after paf_check
+-- stream: Do not update service from appid to host attributes if nothing is changed
+-- stream: Set block pending flag when a flow is dropped
+-- stream_tcp: Ensure flows aren't pruned while processing a PDU
+-- stream_tcp: Flush queued segments when FIN is received
+-- stream_tcp: Support data on SYN by default with or without Fast Open option
+-- trans_bridge: Lift the log() implementation from the root Ethernet codec
+-- wizard: Add support for sslv2 detection
+
 2021/01/28 - 3.1.1.0
 
 -- appid: Add support for snmpv3 report pdu

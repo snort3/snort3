@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.1.0 2021-01-28 10:50:42 EST TST
+Revision 3.1.2.0 2021-03-11 14:57:04 EST TST
 
 ---------------------------------------------------------------------
 
@@ -109,34 +109,35 @@ Table of Contents
     5.22. gtp_inspect
     5.23. http2_inspect
     5.24. http_inspect
-    5.25. imap
-    5.26. mem_test
-    5.27. modbus
-    5.28. netflow
-    5.29. normalizer
-    5.30. null_trace_logger
-    5.31. packet_capture
-    5.32. perf_monitor
-    5.33. pop
-    5.34. port_scan
-    5.35. reputation
-    5.36. rna
-    5.37. rpc_decode
-    5.38. s7commplus
-    5.39. sip
-    5.40. smtp
-    5.41. so_proxy
-    5.42. ssh
-    5.43. ssl
-    5.44. stream
-    5.45. stream_file
-    5.46. stream_icmp
-    5.47. stream_ip
-    5.48. stream_tcp
-    5.49. stream_udp
-    5.50. stream_user
-    5.51. telnet
-    5.52. wizard
+    5.25. iec104
+    5.26. imap
+    5.27. mem_test
+    5.28. modbus
+    5.29. netflow
+    5.30. normalizer
+    5.31. null_trace_logger
+    5.32. packet_capture
+    5.33. perf_monitor
+    5.34. pop
+    5.35. port_scan
+    5.36. reputation
+    5.37. rna
+    5.38. rpc_decode
+    5.39. s7commplus
+    5.40. sip
+    5.41. smtp
+    5.42. so_proxy
+    5.43. ssh
+    5.44. ssl
+    5.45. stream
+    5.46. stream_file
+    5.47. stream_icmp
+    5.48. stream_ip
+    5.49. stream_tcp
+    5.50. stream_udp
+    5.51. stream_user
+    5.52. telnet
+    5.53. wizard
 
 6. IPS Action Modules
 
@@ -216,54 +217,56 @@ Table of Contents
     7.68. icmp_seq
     7.69. icode
     7.70. id
-    7.71. ip_proto
-    7.72. ipopts
-    7.73. isdataat
-    7.74. itype
-    7.75. md5
-    7.76. metadata
-    7.77. modbus_data
-    7.78. modbus_func
-    7.79. modbus_unit
-    7.80. msg
-    7.81. mss
-    7.82. pcre
-    7.83. pkt_data
-    7.84. pkt_num
-    7.85. priority
-    7.86. raw_data
-    7.87. reference
-    7.88. regex
-    7.89. rem
-    7.90. replace
-    7.91. rev
-    7.92. rpc
-    7.93. s7commplus_content
-    7.94. s7commplus_func
-    7.95. s7commplus_opcode
-    7.96. sd_pattern
-    7.97. seq
-    7.98. service
-    7.99. sha256
-    7.100. sha512
-    7.101. sid
-    7.102. sip_body
-    7.103. sip_header
-    7.104. sip_method
-    7.105. sip_stat_code
-    7.106. so
-    7.107. soid
-    7.108. ssl_state
-    7.109. ssl_version
-    7.110. stream_reassemble
-    7.111. stream_size
-    7.112. tag
-    7.113. target
-    7.114. tos
-    7.115. ttl
-    7.116. urg
-    7.117. window
-    7.118. wscale
+    7.71. iec104_apci_type
+    7.72. iec104_asdu_func
+    7.73. ip_proto
+    7.74. ipopts
+    7.75. isdataat
+    7.76. itype
+    7.77. md5
+    7.78. metadata
+    7.79. modbus_data
+    7.80. modbus_func
+    7.81. modbus_unit
+    7.82. msg
+    7.83. mss
+    7.84. pcre
+    7.85. pkt_data
+    7.86. pkt_num
+    7.87. priority
+    7.88. raw_data
+    7.89. reference
+    7.90. regex
+    7.91. rem
+    7.92. replace
+    7.93. rev
+    7.94. rpc
+    7.95. s7commplus_content
+    7.96. s7commplus_func
+    7.97. s7commplus_opcode
+    7.98. sd_pattern
+    7.99. seq
+    7.100. service
+    7.101. sha256
+    7.102. sha512
+    7.103. sid
+    7.104. sip_body
+    7.105. sip_header
+    7.106. sip_method
+    7.107. sip_stat_code
+    7.108. so
+    7.109. soid
+    7.110. ssl_state
+    7.111. ssl_version
+    7.112. stream_reassemble
+    7.113. stream_size
+    7.114. tag
+    7.115. target
+    7.116. tos
+    7.117. ttl
+    7.118. urg
+    7.119. window
+    7.120. wscale
 
 8. Search Engine Modules
 9. SO Rule Modules
@@ -1090,8 +1093,10 @@ Configuration:
     before stopping (0 is unlimited) { 0:max53 }
   * int packets.skip = 0: number of packets to skip before before
     processing { 0:max53 }
-  * bool packets.vlan_agnostic = false: determines whether VLAN info
-    is used to track fragments and connections
+  * bool packets.mpls_agnostic = true: determines whether MPLS labels
+    are used to track fragments and connections
+  * bool packets.vlan_agnostic = false: determines whether VLAN tags
+    are used to track fragments and connections
 
 
 2.22. payload_injector
@@ -1521,10 +1526,6 @@ Configuration:
     line starting with END is read
   * implied snort.--talos: enable Talos tweak (same as --tweaks
     talos)
-  * implied snort.--treat-drop-as-alert: converts drop, block, and
-    reset rules into alert rules when loaded
-  * implied snort.--treat-drop-as-ignore: use drop, block, and reset
-    rules to ignore session traffic when not inline
   * string snort.--tweaks: tune configuration
   * implied snort.--version: show version number (same as -V)
   * implied snort.--warn-all: enable all warnings
@@ -1557,6 +1558,7 @@ Commands:
   * snort.delete_inspector(inspector): delete an inspector from the
     default policy
   * snort.dump_stats(): show summary statistics
+  * snort.reset_stats(): clear summary statistics
   * snort.rotate_stats(): roll perfmonitor log files
   * snort.reload_config(filename): load new configuration
   * snort.reload_policy(filename): reload part or all of the default
@@ -1650,6 +1652,9 @@ Configuration:
   * int trace.modules.dpx.all: enable all trace options { 0:255 }
   * int trace.modules.gtp_inspect.all: enable all trace options {
     0:255 }
+  * int trace.modules.iec104.all: enable all trace options { 0:255 }
+  * int trace.modules.iec104.identification: enable IEC104 APDU
+    identification trace logging { 0:255 }
   * int trace.modules.latency.all: enable all trace options { 0:255 }
   * int trace.modules.react.all: enable all trace options { 0:255 }
   * int trace.modules.rna.all: enable all trace options { 0:255 }
@@ -2120,30 +2125,22 @@ Usage: context
 
 Configuration:
 
-  * bool mpls.enable_mpls_multicast = false: enables support for MPLS
-    multicast
-  * bool mpls.enable_mpls_overlapping_ip = false: enable if private
-    network addresses overlap and must be differentiated by MPLS
-    label(s)
-  * int mpls.max_mpls_stack_depth = -1: set MPLS stack depth { -1:255
-    }
-  * enum mpls.mpls_payload_type = ip4: set encapsulated payload type
-    { eth | ip4 | ip6 }
+  * int mpls.max_stack_depth = -1: set maximum MPLS stack depth {
+    -1:255 }
+  * enum mpls.payload_type = auto: force encapsulated payload type {
+    auto | eth | ip4 | ip6 }
 
 Rules:
 
   * 116:170 (mpls) bad MPLS frame
-  * 116:171 (mpls) MPLS label 0 appears in non-bottom header
+  * 116:171 (mpls) MPLS label 0 appears in bottom header when not
+    decoding as ip4
   * 116:172 (mpls) MPLS label 1 appears in bottom header
-  * 116:173 (mpls) MPLS label 2 appears in non-bottom header
+  * 116:173 (mpls) MPLS label 2 appears in bottom header when not
+    decoding as ip6
   * 116:174 (mpls) MPLS label 3 appears in header
   * 116:175 (mpls) MPLS label 4, 5,.. or 15 appears in header
   * 116:176 (mpls) too many MPLS headers
-
-Peg counts:
-
-  * mpls.total_packets: total mpls labeled packets processed (sum)
-  * mpls.total_bytes: total mpls labeled bytes processed (sum)
 
 
 3.19. pbb
@@ -3602,6 +3599,10 @@ Rules:
     time
   * 121:26 (http2_inspect) invalid parameter value sent in HTTP/2
     settings frame
+  * 121:27 (http2_inspect) excessive concurrent HTTP/2 streams
+  * 121:28 (http2_inspect) invalid HTTP/2 rst stream frame
+  * 121:29 (http2_inspect) HTTP/2 rst stream frame sent at invalid
+    time
 
 Peg counts:
 
@@ -3616,6 +3617,10 @@ Peg counts:
     transfers per HTTP/2 connection (max)
   * http2_inspect.total_bytes: total HTTP/2 data bytes inspected
     (sum)
+  * http2_inspect.max_concurrent_streams: maximum concurrent streams
+    per HTTP/2 connection (max)
+  * http2_inspect.flows_over_stream_limit: HTTP/2 flows exceeding 100
+    concurrent streams (sum)
 
 
 5.24. http_inspect
@@ -3646,8 +3651,8 @@ Configuration:
     response bodies
   * bool http_inspect.decompress_zip = false: decompress zip files in
     response bodies
-  * bool http_inspect.detained_inspection = false: store-and-forward
-    as necessary to effectively block alerting JavaScript
+  * bool http_inspect.detained_inspection = false: obsolete, do not
+    configure
   * bool http_inspect.script_detection = false: inspect JavaScript
     immediately upon script end
   * bool http_inspect.normalize_javascript = false: normalize
@@ -3694,7 +3699,6 @@ Rules:
   * 119:2 (http_inspect) double decoding attack
   * 119:3 (http_inspect) u encoding
   * 119:4 (http_inspect) bare byte unicode encoding
-  * 119:5 (http_inspect) obsolete event—deleted
   * 119:6 (http_inspect) UTF-8 encoding
   * 119:7 (http_inspect) unicode map code point encoding in URI
   * 119:8 (http_inspect) multi_slash encoding
@@ -3706,35 +3710,21 @@ Rules:
     CR
   * 119:14 (http_inspect) non-RFC defined char
   * 119:15 (http_inspect) oversize request-uri directory
-  * 119:16 (http_inspect) oversize chunk encoding
-  * 119:17 (http_inspect) unauthorized proxy use detected
   * 119:18 (http_inspect) webroot directory traversal
   * 119:19 (http_inspect) long header
   * 119:20 (http_inspect) max header fields
   * 119:21 (http_inspect) multiple content length
-  * 119:22 (http_inspect) obsolete event—deleted
-  * 119:23 (http_inspect) invalid IP in true-client-IP/XFF header
-  * 119:24 (http_inspect) multiple host hdrs detected
-  * 119:25 (http_inspect) hostname exceeds 255 characters
-  * 119:26 (http_inspect) too much whitespace in header (not
-    implemented yet)
-  * 119:27 (http_inspect) client consecutive small chunk sizes
+  * 119:24 (http_inspect) Host header field appears more than once or
+    has multiple values
   * 119:28 (http_inspect) POST or PUT w/o content-length or chunks
-  * 119:29 (http_inspect) multiple true ips in a session
-  * 119:30 (http_inspect) both true-client-IP and XFF hdrs present
   * 119:31 (http_inspect) unknown method
   * 119:32 (http_inspect) simple request
   * 119:33 (http_inspect) unescaped space in HTTP URI
   * 119:34 (http_inspect) too many pipelined requests
-  * 119:101 (http_inspect) obsolete event—deleted
   * 119:102 (http_inspect) invalid status code in HTTP response
-  * 119:103 (http_inspect) unused event number—should not appear
   * 119:104 (http_inspect) HTTP response has UTF charset that failed
     to normalize
   * 119:105 (http_inspect) HTTP response has UTF-7 charset
-  * 119:106 (http_inspect) HTTP response gzip decompression failed
-  * 119:107 (http_inspect) server consecutive small chunk sizes
-  * 119:108 (http_inspect) unused event number—should not appear
   * 119:109 (http_inspect) javascript obfuscation levels exceeds 1
   * 119:110 (http_inspect) javascript whitespaces exceeds max allowed
   * 119:111 (http_inspect) multiple encodings within javascript
@@ -3867,12 +3857,10 @@ Peg counts:
     (now)
   * http_inspect.max_concurrent_sessions: maximum concurrent http
     sessions (max)
-  * http_inspect.detains_requested: packet hold requests for detained
-    inspection (sum)
   * http_inspect.script_detections: early inspections of scripts in
     HTTP responses (sum)
-  * http_inspect.partial_inspections: pre-inspections for detained
-    inspection (sum)
+  * http_inspect.partial_inspections: early inspections done for
+    script detection (sum)
   * http_inspect.excess_parameters: repeat parameters exceeding max
     (sum)
   * http_inspect.parameters: HTTP parameters inspected (sum)
@@ -3887,7 +3875,146 @@ Peg counts:
   * http_inspect.total_bytes: total HTTP data bytes inspected (sum)
 
 
-5.25. imap
+5.25. iec104
+
+--------------
+
+Help: iec104 inspection
+
+Type: inspector (service)
+
+Usage: inspect
+
+Instance Type: multiton
+
+Rules:
+
+  * 151:1 (iec104) (spp_iec104): Length in IEC104 APCI header does
+    not match the length needed for the given IEC104 ASDU type id.
+  * 151:2 (iec104) (spp_iec104): IEC104 Start byte does not match
+    0x68.
+  * 151:3 (iec104) (spp_iec104): Reserved IEC104 ASDU type id in use.
+  * 151:4 (iec104) (spp_iec104): IEC104 APCI U Reserved field
+    contains a non-default value.
+  * 151:5 (iec104) (spp_iec104): IEC104 APCI U message type was set
+    to an invalid value.
+  * 151:6 (iec104) (spp_iec104): IEC104 APCI S Reserved field
+    contains a non-default value.
+  * 151:7 (iec104) (spp_iec104): IEC104 APCI I number of elements set
+    to zero.
+  * 151:8 (iec104) (spp_iec104): IEC104 APCI I SQ bit set on an ASDU
+    that does not support the feature.
+  * 151:9 (iec104) (spp_iec104): IEC104 APCI I number of elements set
+    to greater than one on an ASDU that does not support the feature.
+  * 151:10 (iec104) (spp_iec104): IEC104 APCI I Cause of
+    Initialization set to a reserved value.
+  * 151:11 (iec104) (spp_iec104): IEC104 APCI I Qualifier of
+    Interrogation Command set to a reserved value.
+  * 151:12 (iec104) (spp_iec104): IEC104 APCI I Qualifier of Counter
+    Interrogation Command request parameter set to a reserved value.
+  * 151:13 (iec104) (spp_iec104): IEC104 APCI I Qualifier of
+    Parameter of Measured Values kind of parameter set to a reserved
+    value.
+  * 151:14 (iec104) (spp_iec104): IEC104 APCI I Qualifier of
+    Parameter of Measured Values local parameter change set to a
+    technically valid but unused value.
+  * 151:15 (iec104) (spp_iec104): IEC104 APCI I Qualifier of
+    Parameter of Measured Values parameter option set to a
+    technically valid but unused value.
+  * 151:16 (iec104) (spp_iec104): IEC104 APCI I Qualifier of
+    Parameter Activation set to a reserved value.
+  * 151:17 (iec104) (spp_iec104): IEC104 APCI I Qualifier of Command
+    set to a reserved value.
+  * 151:18 (iec104) (spp_iec104): IEC104 APCI I Qualifier of Reset
+    Process set to a reserved value.
+  * 151:19 (iec104) (spp_iec104): IEC104 APCI I File Ready Qualifier
+    set to a reserved value.
+  * 151:20 (iec104) (spp_iec104): IEC104 APCI I Section Ready
+    Qualifier set to a reserved value.
+  * 151:21 (iec104) (spp_iec104): IEC104 APCI I Select and Call
+    Qualifier set to a reserved value.
+  * 151:22 (iec104) (spp_iec104): IEC104 APCI I Last Section or
+    Segment Qualifier set to a reserved value.
+  * 151:23 (iec104) (spp_iec104): IEC104 APCI I Acknowledge File or
+    Section Qualifier set to a reserved value.
+  * 151:24 (iec104) (spp_iec104): IEC104 APCI I Structure Qualifier
+    set on a message where it should have no effect.
+  * 151:25 (iec104) (spp_iec104): IEC104 APCI I Single Point
+    Information Reserved field contains a non-default value.
+  * 151:26 (iec104) (spp_iec104): IEC104 APCI I Double Point
+    Information Reserved field contains a non-default value.
+  * 151:27 (iec104) (spp_iec104): IEC104 APCI I Cause of Transmission
+    set to a reserved value.
+  * 151:28 (iec104) (spp_iec104): IEC104 APCI I Cause of Transmission
+    set to a value not allowed for the ASDU.
+  * 151:29 (iec104) (spp_iec104): IEC104 APCI I invalid two octet
+    common address value detected.
+  * 151:30 (iec104) (spp_iec104): IEC104 APCI I Quality Descriptor
+    Structure Reserved field contains a non-default value.
+  * 151:31 (iec104) (spp_iec104): IEC104 APCI I Quality Descriptor
+    for Events of Protection Equipment Structure Reserved field
+    contains a non-default value.
+  * 151:32 (iec104) (spp_iec104): IEC104 APCI I IEEE STD 754 value
+    results in NaN.
+  * 151:33 (iec104) (spp_iec104): IEC104 APCI I IEEE STD 754 value
+    results in infinity.
+  * 151:34 (iec104) (spp_iec104): IEC104 APCI I Single Event of
+    Protection Equipment Structure Reserved field contains a
+    non-default value.
+  * 151:35 (iec104) (spp_iec104): IEC104 APCI I Start Event of
+    Protection Equipment Structure Reserved field contains a
+    non-default value.
+  * 151:36 (iec104) (spp_iec104): IEC104 APCI I Output Circuit
+    Information Structure Reserved field contains a non-default
+    value.
+  * 151:37 (iec104) (spp_iec104): IEC104 APCI I Abnormal Fixed Test
+    Bit Pattern detected.
+  * 151:38 (iec104) (spp_iec104): IEC104 APCI I Single Command
+    Structure Reserved field contains a non-default value.
+  * 151:39 (iec104) (spp_iec104): IEC104 APCI I Double Command
+    Structure contains an invalid value.
+  * 151:40 (iec104) (spp_iec104): IEC104 APCI I Regulating Step
+    Command Structure Reserved field contains a non-default value.
+  * 151:41 (iec104) (spp_iec104): IEC104 APCI I Time2a Millisecond
+    set outside of the allowable range.
+  * 151:42 (iec104) (spp_iec104): IEC104 APCI I Time2a Minute set
+    outside of the allowable range.
+  * 151:43 (iec104) (spp_iec104): IEC104 APCI I Time2a Minute
+    Reserved field contains a non-default value.
+  * 151:44 (iec104) (spp_iec104): IEC104 APCI I Time2a Hours set
+    outside of the allowable range.
+  * 151:45 (iec104) (spp_iec104): IEC104 APCI I Time2a Hours Reserved
+    field contains a non-default value.
+  * 151:46 (iec104) (spp_iec104): IEC104 APCI I Time2a Day of Month
+    set outside of the allowable range.
+  * 151:47 (iec104) (spp_iec104): IEC104 APCI I Time2a Month set
+    outside of the allowable range.
+  * 151:48 (iec104) (spp_iec104): IEC104 APCI I Time2a Month Reserved
+    field contains a non-default value.
+  * 151:49 (iec104) (spp_iec104): IEC104 APCI I Time2a Year set
+    outside of the allowable range.
+  * 151:50 (iec104) (spp_iec104): IEC104 APCI I Time2a Year Reserved
+    field contains a non-default value.
+  * 151:51 (iec104) (spp_iec104): IEC104 APCI I a null Length of
+    Segment value has been detected.
+  * 151:52 (iec104) (spp_iec104): IEC104 APCI I an invalid Length of
+    Segment value has been detected.
+  * 151:53 (iec104) (spp_iec104): IEC104 APCI I Status of File set to
+    a reserved value.
+  * 151:54 (iec104) (spp_iec104): IEC104 APCI I Qualifier of Set
+    Point Command ql field set to a reserved value.
+
+Peg counts:
+
+  * iec104.sessions: total sessions processed (sum)
+  * iec104.frames: total IEC104 messages (sum)
+  * iec104.concurrent_sessions: total concurrent IEC104 sessions
+    (now)
+  * iec104.max_concurrent_sessions: maximum concurrent IEC104
+    sessions (max)
+
+
+5.26. imap
 
 --------------
 
@@ -3948,7 +4075,7 @@ Peg counts:
   * imap.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-5.26. mem_test
+5.27. mem_test
 
 --------------
 
@@ -3965,7 +4092,7 @@ Peg counts:
   * mem_test.packets: total packets (sum)
 
 
-5.27. modbus
+5.28. modbus
 
 --------------
 
@@ -3994,7 +4121,7 @@ Peg counts:
     sessions (max)
 
 
-5.28. netflow
+5.29. netflow
 
 --------------
 
@@ -4024,7 +4151,7 @@ Peg counts:
   * netflow.unique_flows: count of unique netflow flows (sum)
 
 
-5.29. normalizer
+5.30. normalizer
 
 --------------
 
@@ -4162,7 +4289,7 @@ Peg counts:
   * normalizer.tcp_block: blocked segments (sum)
 
 
-5.30. null_trace_logger
+5.31. null_trace_logger
 
 --------------
 
@@ -4175,7 +4302,7 @@ Usage: global
 Instance Type: global
 
 
-5.31. packet_capture
+5.32. packet_capture
 
 --------------
 
@@ -4192,10 +4319,12 @@ Configuration:
   * bool packet_capture.enable = false: initially enable packet
     dumping
   * string packet_capture.filter: bpf filter to use for packet dump
+  * int packet_capture.group = -1: group filter to use for the packet
+    dump { -1:32767 }
 
 Commands:
 
-  * packet_capture.enable(filter): dump raw packets
+  * packet_capture.enable(filter, group): dump raw packets
   * packet_capture.disable(): stop packet dump
 
 Peg counts:
@@ -4205,7 +4334,7 @@ Peg counts:
     filter (sum)
 
 
-5.32. perf_monitor
+5.33. perf_monitor
 
 --------------
 
@@ -4265,7 +4394,7 @@ Peg counts:
     by new flows (sum)
 
 
-5.33. pop
+5.34. pop
 
 --------------
 
@@ -4327,7 +4456,7 @@ Peg counts:
   * pop.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-5.34. port_scan
+5.35. port_scan
 
 --------------
 
@@ -4499,7 +4628,7 @@ Peg counts:
     to reduced memcap (sum)
 
 
-5.35. reputation
+5.36. reputation
 
 --------------
 
@@ -4514,7 +4643,6 @@ Instance Type: global
 Configuration:
 
   * string reputation.blocklist: blocklist file name with IP lists
-  * string reputation.blacklist: blacklist file name with IP lists
   * string reputation.list_dir: directory for IP lists and manifest
     file
   * int reputation.memcap = 500: maximum total MB of memory allocated
@@ -4522,16 +4650,12 @@ Configuration:
   * enum reputation.nested_ip = inner: IP to use when there is IP
     encapsulation { inner|outer|all }
   * enum reputation.priority = allowlist: defines priority when there
-    is a decision conflict during run-time { blocklist|allowlist|
-    blacklist|whitelist }
+    is a decision conflict during run-time { blocklist|allowlist }
   * bool reputation.scan_local = false: inspect local address defined
     in RFC 1918
   * enum reputation.allow = do_not_block: specify the meaning of
-    allowlist { do_not_block|trust|unblack }
-  * enum reputation.white = do_not_block: specify the meaning of
-    whitelist { do_not_block|trust|unblack }
+    allowlist { do_not_block|trust }
   * string reputation.allowlist: allowlist file name with IP lists
-  * string reputation.whitelist: whitelist file name with IP lists
 
 Rules:
 
@@ -4549,9 +4673,10 @@ Peg counts:
   * reputation.trusted: number of packets trusted (sum)
   * reputation.monitored: number of packets monitored (sum)
   * reputation.memory_allocated: total memory allocated (sum)
+  * reputation.total_alerts: total alerts triggered (sum)
 
 
-5.36. rna
+5.37. rna
 
 --------------
 
@@ -4661,7 +4786,7 @@ Peg counts:
   * rna.dhcp_info: count of new DHCP lease events received (sum)
 
 
-5.37. rpc_decode
+5.38. rpc_decode
 
 --------------
 
@@ -4690,7 +4815,7 @@ Peg counts:
     sessions (max)
 
 
-5.38. s7commplus
+5.39. s7commplus
 
 --------------
 
@@ -4719,7 +4844,7 @@ Peg counts:
     sessions (max)
 
 
-5.39. sip
+5.40. sip
 
 --------------
 
@@ -4820,7 +4945,7 @@ Peg counts:
   * sip.code_9xx: 9xx (sum)
 
 
-5.40. smtp
+5.41. smtp
 
 --------------
 
@@ -4929,7 +5054,7 @@ Peg counts:
   * smtp.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-5.41. so_proxy
+5.42. so_proxy
 
 --------------
 
@@ -4943,7 +5068,7 @@ Usage: global
 Instance Type: global
 
 
-5.42. ssh
+5.43. ssh
 
 --------------
 
@@ -4983,7 +5108,7 @@ Peg counts:
     (max)
 
 
-5.43. ssl
+5.44. ssl
 
 --------------
 
@@ -5034,7 +5159,7 @@ Peg counts:
     (max)
 
 
-5.44. stream
+5.45. stream
 
 --------------
 
@@ -5123,7 +5248,7 @@ Peg counts:
     deleted by config reloads (sum)
 
 
-5.45. stream_file
+5.46. stream_file
 
 --------------
 
@@ -5140,7 +5265,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-5.46. stream_icmp
+5.47. stream_icmp
 
 --------------
 
@@ -5167,7 +5292,7 @@ Peg counts:
   * stream_icmp.prunes: icmp session prunes (sum)
 
 
-5.47. stream_ip
+5.48. stream_ip
 
 --------------
 
@@ -5239,7 +5364,7 @@ Peg counts:
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
 
 
-5.48. stream_tcp
+5.49. stream_tcp
 
 --------------
 
@@ -5404,7 +5529,7 @@ Peg counts:
     service stream splitter (sum)
 
 
-5.49. stream_udp
+5.50. stream_udp
 
 --------------
 
@@ -5433,7 +5558,7 @@ Peg counts:
   * stream_udp.ignored: udp packets ignored (sum)
 
 
-5.50. stream_user
+5.51. stream_user
 
 --------------
 
@@ -5451,7 +5576,7 @@ Configuration:
     1:max31 }
 
 
-5.51. telnet
+5.52. telnet
 
 --------------
 
@@ -5487,7 +5612,7 @@ Peg counts:
     sessions (max)
 
 
-5.52. wizard
+5.53. wizard
 
 --------------
 
@@ -5520,7 +5645,7 @@ Configuration:
   * string wizard.spells[].to_client[].spell: sequence of data with
     wild cards (*)
   * multi wizard.curses: enable service identification based on
-    internal algorithm { dce_smb | dce_udp | dce_tcp }
+    internal algorithm { dce_smb | dce_udp | dce_tcp | sslv2 }
 
 Peg counts:
 
@@ -6881,7 +7006,37 @@ Configuration:
     }
 
 
-7.71. ip_proto
+7.71. iec104_apci_type
+
+--------------
+
+Help: rule option to check iec104 apci type
+
+Type: ips_option
+
+Usage: detect
+
+Configuration:
+
+  * string iec104_apci_type.~: APCI type to match
+
+
+7.72. iec104_asdu_func
+
+--------------
+
+Help: rule option to check iec104 function code
+
+Type: ips_option
+
+Usage: detect
+
+Configuration:
+
+  * string iec104_asdu_func.~: function code to match
+
+
+7.73. ip_proto
 
 --------------
 
@@ -6896,7 +7051,7 @@ Configuration:
   * string ip_proto.~proto: [!|>|<] name or number
 
 
-7.72. ipopts
+7.74. ipopts
 
 --------------
 
@@ -6912,7 +7067,7 @@ Configuration:
     lsrre|ssrr|satid|any }
 
 
-7.73. isdataat
+7.75. isdataat
 
 --------------
 
@@ -6929,7 +7084,7 @@ Configuration:
     buffer
 
 
-7.74. itype
+7.76. itype
 
 --------------
 
@@ -6945,7 +7100,7 @@ Configuration:
     0:255 }
 
 
-7.75. md5
+7.77. md5
 
 --------------
 
@@ -6965,7 +7120,7 @@ Configuration:
     of buffer
 
 
-7.76. metadata
+7.78. metadata
 
 --------------
 
@@ -6982,7 +7137,7 @@ Configuration:
     pairs
 
 
-7.77. modbus_data
+7.79. modbus_data
 
 --------------
 
@@ -6993,7 +7148,7 @@ Type: ips_option
 Usage: detect
 
 
-7.78. modbus_func
+7.80. modbus_func
 
 --------------
 
@@ -7008,7 +7163,7 @@ Configuration:
   * string modbus_func.~: function code to match
 
 
-7.79. modbus_unit
+7.81. modbus_unit
 
 --------------
 
@@ -7023,7 +7178,7 @@ Configuration:
   * int modbus_unit.~: Modbus unit ID { 0:255 }
 
 
-7.80. msg
+7.82. msg
 
 --------------
 
@@ -7038,7 +7193,7 @@ Configuration:
   * string msg.~: message describing rule
 
 
-7.81. mss
+7.83. mss
 
 --------------
 
@@ -7054,7 +7209,7 @@ Configuration:
     }
 
 
-7.82. pcre
+7.84. pcre
 
 --------------
 
@@ -7076,7 +7231,7 @@ Peg counts:
   * pcre.pcre_negated: total pcre rules using negation syntax (sum)
 
 
-7.83. pkt_data
+7.85. pkt_data
 
 --------------
 
@@ -7088,7 +7243,7 @@ Type: ips_option
 Usage: detect
 
 
-7.84. pkt_num
+7.86. pkt_num
 
 --------------
 
@@ -7104,7 +7259,7 @@ Configuration:
     { 1: }
 
 
-7.85. priority
+7.87. priority
 
 --------------
 
@@ -7120,7 +7275,7 @@ Configuration:
     1:max31 }
 
 
-7.86. raw_data
+7.88. raw_data
 
 --------------
 
@@ -7131,7 +7286,7 @@ Type: ips_option
 Usage: detect
 
 
-7.87. reference
+7.89. reference
 
 --------------
 
@@ -7146,7 +7301,7 @@ Configuration:
   * string reference.~ref: reference: <scheme>,<id>
 
 
-7.88. regex
+7.90. regex
 
 --------------
 
@@ -7170,7 +7325,7 @@ Configuration:
     instead of start of buffer
 
 
-7.89. rem
+7.91. rem
 
 --------------
 
@@ -7185,7 +7340,7 @@ Configuration:
   * string rem.~: comment
 
 
-7.90. replace
+7.92. replace
 
 --------------
 
@@ -7200,7 +7355,7 @@ Configuration:
   * string replace.~: byte code to replace with
 
 
-7.91. rev
+7.93. rev
 
 --------------
 
@@ -7215,7 +7370,7 @@ Configuration:
   * int rev.~: revision { 1:max32 }
 
 
-7.92. rpc
+7.94. rpc
 
 --------------
 
@@ -7232,7 +7387,7 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-7.93. s7commplus_content
+7.95. s7commplus_content
 
 --------------
 
@@ -7243,7 +7398,7 @@ Type: ips_option
 Usage: detect
 
 
-7.94. s7commplus_func
+7.96. s7commplus_func
 
 --------------
 
@@ -7258,7 +7413,7 @@ Configuration:
   * string s7commplus_func.~: function code to match
 
 
-7.95. s7commplus_opcode
+7.97. s7commplus_opcode
 
 --------------
 
@@ -7273,7 +7428,7 @@ Configuration:
   * string s7commplus_opcode.~: opcode code to match
 
 
-7.96. sd_pattern
+7.98. sd_pattern
 
 --------------
 
@@ -7297,7 +7452,7 @@ Peg counts:
   * sd_pattern.terminated: hyperscan terminated (sum)
 
 
-7.97. seq
+7.99. seq
 
 --------------
 
@@ -7313,7 +7468,7 @@ Configuration:
     range { 0: }
 
 
-7.98. service
+7.100. service
 
 --------------
 
@@ -7328,7 +7483,7 @@ Configuration:
   * string service.*: one or more comma-separated service names
 
 
-7.99. sha256
+7.101. sha256
 
 --------------
 
@@ -7348,7 +7503,7 @@ Configuration:
     start of buffer
 
 
-7.100. sha512
+7.102. sha512
 
 --------------
 
@@ -7368,7 +7523,7 @@ Configuration:
     start of buffer
 
 
-7.101. sid
+7.103. sid
 
 --------------
 
@@ -7383,7 +7538,7 @@ Configuration:
   * int sid.~: signature id { 1:max32 }
 
 
-7.102. sip_body
+7.104. sip_body
 
 --------------
 
@@ -7394,7 +7549,7 @@ Type: ips_option
 Usage: detect
 
 
-7.103. sip_header
+7.105. sip_header
 
 --------------
 
@@ -7406,7 +7561,7 @@ Type: ips_option
 Usage: detect
 
 
-7.104. sip_method
+7.106. sip_method
 
 --------------
 
@@ -7421,7 +7576,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-7.105. sip_stat_code
+7.107. sip_stat_code
 
 --------------
 
@@ -7436,7 +7591,7 @@ Configuration:
   * int sip_stat_code.*code: status code { 1:999 }
 
 
-7.106. so
+7.108. so
 
 --------------
 
@@ -7453,7 +7608,7 @@ Configuration:
     buffer
 
 
-7.107. soid
+7.109. soid
 
 --------------
 
@@ -7469,7 +7624,7 @@ Configuration:
     like 3_45678_9
 
 
-7.108. ssl_state
+7.110. ssl_state
 
 --------------
 
@@ -7498,7 +7653,7 @@ Configuration:
     unknown
 
 
-7.109. ssl_version
+7.111. ssl_version
 
 --------------
 
@@ -7525,7 +7680,7 @@ Configuration:
     tls1.2
 
 
-7.110. stream_reassemble
+7.112. stream_reassemble
 
 --------------
 
@@ -7546,7 +7701,7 @@ Configuration:
     remainder of the session
 
 
-7.111. stream_size
+7.113. stream_size
 
 --------------
 
@@ -7564,7 +7719,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-7.112. tag
+7.114. tag
 
 --------------
 
@@ -7583,7 +7738,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1:max32 }
 
 
-7.113. target
+7.115. target
 
 --------------
 
@@ -7599,7 +7754,7 @@ Configuration:
     dst_ip }
 
 
-7.114. tos
+7.116. tos
 
 --------------
 
@@ -7614,7 +7769,7 @@ Configuration:
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
 
 
-7.115. ttl
+7.117. ttl
 
 --------------
 
@@ -7630,7 +7785,7 @@ Configuration:
     0:255 }
 
 
-7.116. urg
+7.118. urg
 
 --------------
 
@@ -7646,7 +7801,7 @@ Configuration:
     { 0:65535 }
 
 
-7.117. window
+7.119. window
 
 --------------
 
@@ -7662,7 +7817,7 @@ Configuration:
     range { 0:65535 }
 
 
-7.118. wscale
+7.120. wscale
 
 --------------
 
@@ -8195,10 +8350,6 @@ these libraries see the Getting Started section of the manual.
   * --stdin-rules read rules from stdin until EOF or a line starting
     with END is read
   * --talos enable Talos tweak (same as --tweaks talos)
-  * --treat-drop-as-alert converts drop, block, and reset rules into
-    alert rules when loaded
-  * --treat-drop-as-ignore use drop, block, and reset rules to ignore
-    session traffic when not inline
   * --tweaks tune configuration
   * --version show version number (same as -V)
   * --warn-all enable all warnings
@@ -8878,8 +9029,8 @@ these libraries see the Getting Started section of the manual.
     response bodies
   * bool http_inspect.decompress_zip = false: decompress zip files in
     response bodies
-  * bool http_inspect.detained_inspection = false: store-and-forward
-    as necessary to effectively block alerting JavaScript
+  * bool http_inspect.detained_inspection = false: obsolete, do not
+    configure
   * string http_inspect.ignore_unreserved: do not alert when the
     specified unreserved characters are percent-encoded in a
     URI.Unreserved characters are 0-9, a-z, A-Z, period, underscore,
@@ -9028,6 +9179,8 @@ these libraries see the Getting Started section of the manual.
     0:255 }
   * interval id.~range: check if the IP ID is in the given range { 0:
     }
+  * string iec104_apci_type.~: APCI type to match
+  * string iec104_asdu_func.~: function code to match
   * int imap.b64_decode_depth = -1: base64 decoding depth (-1 no
     limit) { -1:65535 }
   * int imap.bitenc_decode_depth = -1: non-Encoded MIME attachment
@@ -9116,15 +9269,10 @@ these libraries see the Getting Started section of the manual.
     pairs
   * string modbus_func.~: function code to match
   * int modbus_unit.~: Modbus unit ID { 0:255 }
-  * bool mpls.enable_mpls_multicast = false: enables support for MPLS
-    multicast
-  * bool mpls.enable_mpls_overlapping_ip = false: enable if private
-    network addresses overlap and must be differentiated by MPLS
-    label(s)
-  * int mpls.max_mpls_stack_depth = -1: set MPLS stack depth { -1:255
-    }
-  * enum mpls.mpls_payload_type = ip4: set encapsulated payload type
-    { eth | ip4 | ip6 }
+  * int mpls.max_stack_depth = -1: set maximum MPLS stack depth {
+    -1:255 }
+  * enum mpls.payload_type = auto: force encapsulated payload type {
+    auto | eth | ip4 | ip6 }
   * string msg.~: message describing rule
   * interval mss.~range: check if TCP MSS is in given range { 0:65535
     }
@@ -9213,16 +9361,20 @@ these libraries see the Getting Started section of the manual.
   * bool packet_capture.enable = false: initially enable packet
     dumping
   * string packet_capture.filter: bpf filter to use for packet dump
+  * int packet_capture.group = -1: group filter to use for the packet
+    dump { -1:32767 }
   * bool packets.address_space_agnostic = false: determines whether
     DAQ address space info is used to track fragments and connections
   * string packets.bpf_file: file with BPF to select traffic for
     Snort
   * int packets.limit = 0: maximum number of packets to process
     before stopping (0 is unlimited) { 0:max53 }
+  * bool packets.mpls_agnostic = true: determines whether MPLS labels
+    are used to track fragments and connections
   * int packets.skip = 0: number of packets to skip before before
     processing { 0:max53 }
-  * bool packets.vlan_agnostic = false: determines whether VLAN info
-    is used to track fragments and connections
+  * bool packets.vlan_agnostic = false: determines whether VLAN tags
+    are used to track fragments and connections
   * bool packet_tracer.enable = false: enable summary output of state
     that determined packet verdict
   * enum packet_tracer.output = console: select where to send packet
@@ -9453,9 +9605,8 @@ these libraries see the Getting Started section of the manual.
   * string rem.~: comment
   * string replace.~: byte code to replace with
   * enum reputation.allow = do_not_block: specify the meaning of
-    allowlist { do_not_block|trust|unblack }
+    allowlist { do_not_block|trust }
   * string reputation.allowlist: allowlist file name with IP lists
-  * string reputation.blacklist: blacklist file name with IP lists
   * string reputation.blocklist: blocklist file name with IP lists
   * string reputation.list_dir: directory for IP lists and manifest
     file
@@ -9464,13 +9615,9 @@ these libraries see the Getting Started section of the manual.
   * enum reputation.nested_ip = inner: IP to use when there is IP
     encapsulation { inner|outer|all }
   * enum reputation.priority = allowlist: defines priority when there
-    is a decision conflict during run-time { blocklist|allowlist|
-    blacklist|whitelist }
+    is a decision conflict during run-time { blocklist|allowlist }
   * bool reputation.scan_local = false: inspect local address defined
     in RFC 1918
-  * enum reputation.white = do_not_block: specify the meaning of
-    whitelist { do_not_block|trust|unblack }
-  * string reputation.whitelist: whitelist file name with IP lists
   * int rev.~: revision { 1:max32 }
   * bool rewrite.disable_replace = false: disable replace of packet
     contents with rewrite rules
@@ -9855,10 +10002,6 @@ these libraries see the Getting Started section of the manual.
     talos)
   * string snort.-t: <dir> chroots process to <dir> after
     initialization
-  * implied snort.--treat-drop-as-alert: converts drop, block, and
-    reset rules into alert rules when loaded
-  * implied snort.--treat-drop-as-ignore: use drop, block, and reset
-    rules to ignore session traffic when not inline
   * implied snort.-T: test and report on the current Snort
     configuration
   * string snort.--tweaks: tune configuration
@@ -10095,6 +10238,9 @@ these libraries see the Getting Started section of the manual.
   * int trace.modules.dpx.all: enable all trace options { 0:255 }
   * int trace.modules.gtp_inspect.all: enable all trace options {
     0:255 }
+  * int trace.modules.iec104.all: enable all trace options { 0:255 }
+  * int trace.modules.iec104.identification: enable IEC104 APDU
+    identification trace logging { 0:255 }
   * int trace.modules.latency.all: enable all trace options { 0:255 }
   * int trace.modules.react.all: enable all trace options { 0:255 }
   * int trace.modules.rna.all: enable all trace options { 0:255 }
@@ -10137,7 +10283,7 @@ these libraries see the Getting Started section of the manual.
   * interval window.~range: check if TCP window size is in given
     range { 0:65535 }
   * multi wizard.curses: enable service identification based on
-    internal algorithm { dce_smb | dce_udp | dce_tcp }
+    internal algorithm { dce_smb | dce_udp | dce_tcp | sslv2 }
   * bool wizard.hexes[].client_first = true: which end initiates data
     transfer
   * select wizard.hexes[].proto = tcp: protocol to scan { tcp | udp }
@@ -10670,10 +10816,14 @@ these libraries see the Getting Started section of the manual.
   * http2_inspect.concurrent_sessions: total concurrent HTTP/2
     sessions (now)
   * http2_inspect.flows: HTTP/2 connections inspected (sum)
+  * http2_inspect.flows_over_stream_limit: HTTP/2 flows exceeding 100
+    concurrent streams (sum)
   * http2_inspect.max_concurrent_files: maximum concurrent file
     transfers per HTTP/2 connection (max)
   * http2_inspect.max_concurrent_sessions: maximum concurrent HTTP/2
     sessions (max)
+  * http2_inspect.max_concurrent_streams: maximum concurrent streams
+    per HTTP/2 connection (max)
   * http2_inspect.max_table_entries: maximum entries in an HTTP/2
     dynamic table (max)
   * http2_inspect.total_bytes: total HTTP/2 data bytes inspected
@@ -10685,8 +10835,6 @@ these libraries see the Getting Started section of the manual.
   * http_inspect.connect_tunnel_cutovers: CONNECT tunnel flow
     cutovers to wizard (sum)
   * http_inspect.delete_requests: DELETE requests inspected (sum)
-  * http_inspect.detains_requested: packet hold requests for detained
-    inspection (sum)
   * http_inspect.excess_parameters: repeat parameters exceeding max
     (sum)
   * http_inspect.flows: HTTP connections inspected (sum)
@@ -10699,8 +10847,8 @@ these libraries see the Getting Started section of the manual.
   * http_inspect.other_requests: other request methods inspected
     (sum)
   * http_inspect.parameters: HTTP parameters inspected (sum)
-  * http_inspect.partial_inspections: pre-inspections for detained
-    inspection (sum)
+  * http_inspect.partial_inspections: early inspections done for
+    script detection (sum)
   * http_inspect.pipelined_flows: total HTTP connections containing
     pipelined requests (sum)
   * http_inspect.pipelined_requests: total requests placed in a
@@ -10730,6 +10878,12 @@ these libraries see the Getting Started section of the manual.
   * icmp4.checksum_bypassed: checksum calculations bypassed (sum)
   * icmp6.bad_icmp6_checksum: nonzero icmp6 checksums (sum)
   * icmp6.checksum_bypassed: checksum calculations bypassed (sum)
+  * iec104.concurrent_sessions: total concurrent IEC104 sessions
+    (now)
+  * iec104.frames: total IEC104 messages (sum)
+  * iec104.max_concurrent_sessions: maximum concurrent IEC104
+    sessions (max)
+  * iec104.sessions: total sessions processed (sum)
   * imap.b64_attachments: total base64 attachments decoded (sum)
   * imap.b64_decoded_bytes: total base64 decoded bytes (sum)
   * imap.concurrent_sessions: total concurrent imap sessions (now)
@@ -10773,8 +10927,6 @@ these libraries see the Getting Started section of the manual.
   * modbus.max_concurrent_sessions: maximum concurrent modbus
     sessions (max)
   * modbus.sessions: total sessions processed (sum)
-  * mpls.total_bytes: total mpls labeled bytes processed (sum)
-  * mpls.total_packets: total mpls labeled packets processed (sum)
   * netflow.invalid_netflow_pkts: count of invalid netflow packets
     (sum)
   * netflow.packets: total packets processed (sum)
@@ -10920,6 +11072,7 @@ these libraries see the Getting Started section of the manual.
   * reputation.memory_allocated: total memory allocated (sum)
   * reputation.monitored: number of packets monitored (sum)
   * reputation.packets: total packets processed (sum)
+  * reputation.total_alerts: total alerts triggered (sum)
   * reputation.trusted: number of packets trusted (sum)
   * rna.appid_change: count of appid change events received (sum)
   * rna.change_host_update: count number of change host update events
@@ -11306,6 +11459,7 @@ these libraries see the Getting Started section of the manual.
   * 148: cip
   * 149: s7commplus
   * 150: file_id
+  * 151: iec104
   * 175: domain_filter
   * 256: dpx
 
@@ -11372,9 +11526,11 @@ these libraries see the Getting Started section of the manual.
   * 116:164 (gre) invalid GRE v.1 PPTP header
   * 116:165 (gre) GRE trans header length > payload length
   * 116:170 (mpls) bad MPLS frame
-  * 116:171 (mpls) MPLS label 0 appears in non-bottom header
+  * 116:171 (mpls) MPLS label 0 appears in bottom header when not
+    decoding as ip4
   * 116:172 (mpls) MPLS label 1 appears in bottom header
-  * 116:173 (mpls) MPLS label 2 appears in non-bottom header
+  * 116:173 (mpls) MPLS label 2 appears in bottom header when not
+    decoding as ip6
   * 116:174 (mpls) MPLS label 3 appears in header
   * 116:175 (mpls) MPLS label 4, 5,.. or 15 appears in header
   * 116:176 (mpls) too many MPLS headers
@@ -11517,7 +11673,6 @@ these libraries see the Getting Started section of the manual.
   * 119:2 (http_inspect) double decoding attack
   * 119:3 (http_inspect) u encoding
   * 119:4 (http_inspect) bare byte unicode encoding
-  * 119:5 (http_inspect) obsolete event—deleted
   * 119:6 (http_inspect) UTF-8 encoding
   * 119:7 (http_inspect) unicode map code point encoding in URI
   * 119:8 (http_inspect) multi_slash encoding
@@ -11529,35 +11684,21 @@ these libraries see the Getting Started section of the manual.
     CR
   * 119:14 (http_inspect) non-RFC defined char
   * 119:15 (http_inspect) oversize request-uri directory
-  * 119:16 (http_inspect) oversize chunk encoding
-  * 119:17 (http_inspect) unauthorized proxy use detected
   * 119:18 (http_inspect) webroot directory traversal
   * 119:19 (http_inspect) long header
   * 119:20 (http_inspect) max header fields
   * 119:21 (http_inspect) multiple content length
-  * 119:22 (http_inspect) obsolete event—deleted
-  * 119:23 (http_inspect) invalid IP in true-client-IP/XFF header
-  * 119:24 (http_inspect) multiple host hdrs detected
-  * 119:25 (http_inspect) hostname exceeds 255 characters
-  * 119:26 (http_inspect) too much whitespace in header (not
-    implemented yet)
-  * 119:27 (http_inspect) client consecutive small chunk sizes
+  * 119:24 (http_inspect) Host header field appears more than once or
+    has multiple values
   * 119:28 (http_inspect) POST or PUT w/o content-length or chunks
-  * 119:29 (http_inspect) multiple true ips in a session
-  * 119:30 (http_inspect) both true-client-IP and XFF hdrs present
   * 119:31 (http_inspect) unknown method
   * 119:32 (http_inspect) simple request
   * 119:33 (http_inspect) unescaped space in HTTP URI
   * 119:34 (http_inspect) too many pipelined requests
-  * 119:101 (http_inspect) obsolete event—deleted
   * 119:102 (http_inspect) invalid status code in HTTP response
-  * 119:103 (http_inspect) unused event number—should not appear
   * 119:104 (http_inspect) HTTP response has UTF charset that failed
     to normalize
   * 119:105 (http_inspect) HTTP response has UTF-7 charset
-  * 119:106 (http_inspect) HTTP response gzip decompression failed
-  * 119:107 (http_inspect) server consecutive small chunk sizes
-  * 119:108 (http_inspect) unused event number—should not appear
   * 119:109 (http_inspect) javascript obfuscation levels exceeds 1
   * 119:110 (http_inspect) javascript whitespaces exceeds max allowed
   * 119:111 (http_inspect) multiple encodings within javascript
@@ -11691,6 +11832,10 @@ these libraries see the Getting Started section of the manual.
     time
   * 121:26 (http2_inspect) invalid parameter value sent in HTTP/2
     settings frame
+  * 121:27 (http2_inspect) excessive concurrent HTTP/2 streams
+  * 121:28 (http2_inspect) invalid HTTP/2 rst stream frame
+  * 121:29 (http2_inspect) HTTP/2 rst stream frame sent at invalid
+    time
   * 122:1 (port_scan) TCP portscan
   * 122:2 (port_scan) TCP decoy portscan
   * 122:3 (port_scan) TCP portsweep
@@ -11968,6 +12113,120 @@ these libraries see the Getting Started section of the manual.
   * 149:2 (s7commplus) S7commplus protocol ID is non-zero
   * 149:3 (s7commplus) reserved S7commplus function code in use
   * 150:1 (file_id) file not processed due to per flow limit
+  * 151:1 (iec104) (spp_iec104): Length in IEC104 APCI header does
+    not match the length needed for the given IEC104 ASDU type id.
+  * 151:2 (iec104) (spp_iec104): IEC104 Start byte does not match
+    0x68.
+  * 151:3 (iec104) (spp_iec104): Reserved IEC104 ASDU type id in use.
+  * 151:4 (iec104) (spp_iec104): IEC104 APCI U Reserved field
+    contains a non-default value.
+  * 151:5 (iec104) (spp_iec104): IEC104 APCI U message type was set
+    to an invalid value.
+  * 151:6 (iec104) (spp_iec104): IEC104 APCI S Reserved field
+    contains a non-default value.
+  * 151:7 (iec104) (spp_iec104): IEC104 APCI I number of elements set
+    to zero.
+  * 151:8 (iec104) (spp_iec104): IEC104 APCI I SQ bit set on an ASDU
+    that does not support the feature.
+  * 151:9 (iec104) (spp_iec104): IEC104 APCI I number of elements set
+    to greater than one on an ASDU that does not support the feature.
+  * 151:10 (iec104) (spp_iec104): IEC104 APCI I Cause of
+    Initialization set to a reserved value.
+  * 151:11 (iec104) (spp_iec104): IEC104 APCI I Qualifier of
+    Interrogation Command set to a reserved value.
+  * 151:12 (iec104) (spp_iec104): IEC104 APCI I Qualifier of Counter
+    Interrogation Command request parameter set to a reserved value.
+  * 151:13 (iec104) (spp_iec104): IEC104 APCI I Qualifier of
+    Parameter of Measured Values kind of parameter set to a reserved
+    value.
+  * 151:14 (iec104) (spp_iec104): IEC104 APCI I Qualifier of
+    Parameter of Measured Values local parameter change set to a
+    technically valid but unused value.
+  * 151:15 (iec104) (spp_iec104): IEC104 APCI I Qualifier of
+    Parameter of Measured Values parameter option set to a
+    technically valid but unused value.
+  * 151:16 (iec104) (spp_iec104): IEC104 APCI I Qualifier of
+    Parameter Activation set to a reserved value.
+  * 151:17 (iec104) (spp_iec104): IEC104 APCI I Qualifier of Command
+    set to a reserved value.
+  * 151:18 (iec104) (spp_iec104): IEC104 APCI I Qualifier of Reset
+    Process set to a reserved value.
+  * 151:19 (iec104) (spp_iec104): IEC104 APCI I File Ready Qualifier
+    set to a reserved value.
+  * 151:20 (iec104) (spp_iec104): IEC104 APCI I Section Ready
+    Qualifier set to a reserved value.
+  * 151:21 (iec104) (spp_iec104): IEC104 APCI I Select and Call
+    Qualifier set to a reserved value.
+  * 151:22 (iec104) (spp_iec104): IEC104 APCI I Last Section or
+    Segment Qualifier set to a reserved value.
+  * 151:23 (iec104) (spp_iec104): IEC104 APCI I Acknowledge File or
+    Section Qualifier set to a reserved value.
+  * 151:24 (iec104) (spp_iec104): IEC104 APCI I Structure Qualifier
+    set on a message where it should have no effect.
+  * 151:25 (iec104) (spp_iec104): IEC104 APCI I Single Point
+    Information Reserved field contains a non-default value.
+  * 151:26 (iec104) (spp_iec104): IEC104 APCI I Double Point
+    Information Reserved field contains a non-default value.
+  * 151:27 (iec104) (spp_iec104): IEC104 APCI I Cause of Transmission
+    set to a reserved value.
+  * 151:28 (iec104) (spp_iec104): IEC104 APCI I Cause of Transmission
+    set to a value not allowed for the ASDU.
+  * 151:29 (iec104) (spp_iec104): IEC104 APCI I invalid two octet
+    common address value detected.
+  * 151:30 (iec104) (spp_iec104): IEC104 APCI I Quality Descriptor
+    Structure Reserved field contains a non-default value.
+  * 151:31 (iec104) (spp_iec104): IEC104 APCI I Quality Descriptor
+    for Events of Protection Equipment Structure Reserved field
+    contains a non-default value.
+  * 151:32 (iec104) (spp_iec104): IEC104 APCI I IEEE STD 754 value
+    results in NaN.
+  * 151:33 (iec104) (spp_iec104): IEC104 APCI I IEEE STD 754 value
+    results in infinity.
+  * 151:34 (iec104) (spp_iec104): IEC104 APCI I Single Event of
+    Protection Equipment Structure Reserved field contains a
+    non-default value.
+  * 151:35 (iec104) (spp_iec104): IEC104 APCI I Start Event of
+    Protection Equipment Structure Reserved field contains a
+    non-default value.
+  * 151:36 (iec104) (spp_iec104): IEC104 APCI I Output Circuit
+    Information Structure Reserved field contains a non-default
+    value.
+  * 151:37 (iec104) (spp_iec104): IEC104 APCI I Abnormal Fixed Test
+    Bit Pattern detected.
+  * 151:38 (iec104) (spp_iec104): IEC104 APCI I Single Command
+    Structure Reserved field contains a non-default value.
+  * 151:39 (iec104) (spp_iec104): IEC104 APCI I Double Command
+    Structure contains an invalid value.
+  * 151:40 (iec104) (spp_iec104): IEC104 APCI I Regulating Step
+    Command Structure Reserved field contains a non-default value.
+  * 151:41 (iec104) (spp_iec104): IEC104 APCI I Time2a Millisecond
+    set outside of the allowable range.
+  * 151:42 (iec104) (spp_iec104): IEC104 APCI I Time2a Minute set
+    outside of the allowable range.
+  * 151:43 (iec104) (spp_iec104): IEC104 APCI I Time2a Minute
+    Reserved field contains a non-default value.
+  * 151:44 (iec104) (spp_iec104): IEC104 APCI I Time2a Hours set
+    outside of the allowable range.
+  * 151:45 (iec104) (spp_iec104): IEC104 APCI I Time2a Hours Reserved
+    field contains a non-default value.
+  * 151:46 (iec104) (spp_iec104): IEC104 APCI I Time2a Day of Month
+    set outside of the allowable range.
+  * 151:47 (iec104) (spp_iec104): IEC104 APCI I Time2a Month set
+    outside of the allowable range.
+  * 151:48 (iec104) (spp_iec104): IEC104 APCI I Time2a Month Reserved
+    field contains a non-default value.
+  * 151:49 (iec104) (spp_iec104): IEC104 APCI I Time2a Year set
+    outside of the allowable range.
+  * 151:50 (iec104) (spp_iec104): IEC104 APCI I Time2a Year Reserved
+    field contains a non-default value.
+  * 151:51 (iec104) (spp_iec104): IEC104 APCI I a null Length of
+    Segment value has been detected.
+  * 151:52 (iec104) (spp_iec104): IEC104 APCI I an invalid Length of
+    Segment value has been detected.
+  * 151:53 (iec104) (spp_iec104): IEC104 APCI I Status of File set to
+    a reserved value.
+  * 151:54 (iec104) (spp_iec104): IEC104 APCI I Qualifier of Set
+    Point Command ql field set to a reserved value.
   * 175:1 (domain_filter) configured domain detected
   * 256:1 (dpx) too much data sent to port
 
@@ -11992,7 +12251,7 @@ these libraries see the Getting Started section of the manual.
   * host_cache.delete_client(host_ip, id, service, version): delete
     client from host
   * host_cache.get_stats(): get current host cache usage and pegs
-  * packet_capture.enable(filter): dump raw packets
+  * packet_capture.enable(filter, group): dump raw packets
   * packet_capture.disable(): stop packet dump
   * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port):
     enable packet tracer debugging
@@ -12012,6 +12271,7 @@ these libraries see the Getting Started section of the manual.
   * snort.delete_inspector(inspector): delete an inspector from the
     default policy
   * snort.dump_stats(): show summary statistics
+  * snort.reset_stats(): clear summary statistics
   * snort.rotate_stats(): roll perfmonitor log files
   * snort.reload_config(filename): load new configuration
   * snort.reload_policy(filename): reload part or all of the default
@@ -12241,6 +12501,11 @@ and are not applicable elsewhere.
   * icmp_seq (ips_option): rule option to check ICMP sequence number
   * icode (ips_option): rule option to check ICMP code
   * id (ips_option): rule option to check the IP ID field
+  * iec104 (inspector): iec104 inspection
+  * iec104_apci_type (ips_option): rule option to check iec104 apci
+    type
+  * iec104_asdu_func (ips_option): rule option to check iec104
+    function code
   * igmp (codec): support for Internet group management protocol
   * imap (inspector): imap inspection
   * inspection (basic): configure basic inspection policy parameters
@@ -12480,6 +12745,7 @@ and are not applicable elsewhere.
   * inspector::gtp_inspect: gtp control channel inspection
   * inspector::http2_inspect: the HTTP/2 inspector
   * inspector::http_inspect: the new HTTP inspector!
+  * inspector::iec104: iec104 inspection
   * inspector::imap: imap inspection
   * inspector::mem_test: for testing memory management
   * inspector::modbus: modbus inspection
@@ -12636,6 +12902,10 @@ and are not applicable elsewhere.
   * ips_option::icmp_seq: rule option to check ICMP sequence number
   * ips_option::icode: rule option to check ICMP code
   * ips_option::id: rule option to check the IP ID field
+  * ips_option::iec104_apci_type: rule option to check iec104 apci
+    type
+  * ips_option::iec104_asdu_func: rule option to check iec104
+    function code
   * ips_option::ip_proto: rule option to check the IP protocol number
   * ips_option::ipopts: rule option to check for IP options
   * ips_option::isdataat: rule option to check for the presence of
