@@ -235,6 +235,13 @@ void PacketTracer::activate(const Packet& p)
 
     if (s_pkt_trace->user_enabled or s_pkt_trace->shell_enabled)
     {
+        if (s_pkt_trace->shell_enabled and
+                !s_pkt_trace->constraints.packet_match(p))
+        {
+            s_pkt_trace->active = false;
+            return;
+        }
+
         if (!p.ptrs.ip_api.is_ip())
         {
             s_pkt_trace->add_eth_header_info(p);
@@ -242,12 +249,6 @@ void PacketTracer::activate(const Packet& p)
         }
         else
         {
-            if (s_pkt_trace->shell_enabled and
-                !s_pkt_trace->constraints.packet_match(p))
-            {
-                s_pkt_trace->active = false;
-                return;
-            }
             s_pkt_trace->active = true;
             s_pkt_trace->add_ip_header_info(p);
         }

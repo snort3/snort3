@@ -61,7 +61,12 @@ bool PacketConstraints::packet_match(const Packet& p) const
         return false;
 
     if ( !p.has_ip() )
-        return false;
+    {
+        if ( set_bits & (SetBits::IP_PROTO|SetBits::SRC_PORT|SetBits::DST_PORT|SetBits::SRC_IP|SetBits::DST_IP) )
+            return false;
+        else
+            return true;
+    }
 
     if ( (set_bits & SetBits::IP_PROTO) and (p.get_ip_proto_next() != ip_proto) )
         return false;
