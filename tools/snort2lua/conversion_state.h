@@ -20,6 +20,7 @@
 #ifndef CONVERSION_STATE_H
 #define CONVERSION_STATE_H
 
+#include <map>
 #include <sstream>
 
 #include "helpers/converter.h"
@@ -180,6 +181,49 @@ protected:
 
         table_api.add_comment("snort.conf missing argument for: " + opt_name + " <int>");
         return false;
+    }
+
+    // parse and add a curly bracketed list to the table
+    inline bool parse_curly_bracket_precedence_list(const std::string& list_name,
+            std::istringstream& stream, int max)
+    {
+        std::string elem, tmp;
+        bool retval = true;
+        std::map<int, std::string> order;
+        int dig;
+
+        if (!(stream >> elem) || (elem != "{"))
+            return false;
+
+        while (stream >> elem && elem != "}")
+        {
+            if ( elem == "[" || elem == "]")
+                continue;
+
+            if (stream >> dig)
+            {
+                if (dig <= max)
+                {
+                    order.insert(std::pair<int, std::string>(dig, elem));
+                }
+                else
+                { 
+                    table_api.add_comment("Unable to add " + elem +
+                        ". Max precedence value is " + std::to_string(max));
+                }
+            }
+        }
+        for (auto i = order.begin(); i != order.end(); i++)
+        {
+            tmp += " " + i->second;
+        }
+
+        // remove the extra space at the beginning of the string
+        if (!tmp.empty())
+            tmp.erase(tmp.begin());
+
+        table_api.add_option(list_name, tmp);
+        return retval;
     }
 
     // parse and add a curly bracketed list to the table

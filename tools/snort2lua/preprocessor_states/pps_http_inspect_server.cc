@@ -24,6 +24,8 @@
 #include "helpers/s2l_util.h"
 #include "helpers/util_binder.h"
 
+#define MAX_XFF_HEADER 8
+
 namespace preprocessors
 {
 namespace
@@ -329,7 +331,7 @@ bool HttpInspectServer::convert(std::istringstream& data_stream)
         else if (keyword == "profile")
             parse_deleted_option("profile", data_stream);
         else if ( keyword == "xff_headers" )
-            tmpval = parse_bracketed_unsupported_list("xff_headers", data_stream);
+            tmpval = parse_curly_bracket_precedence_list("xff_headers", data_stream, MAX_XFF_HEADER);
         else
         {
             tmpval = false;

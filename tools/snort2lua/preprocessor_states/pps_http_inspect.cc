@@ -95,6 +95,12 @@ bool HttpInspect::convert(std::istringstream& data_stream)
         else if (keyword == "uu_decode_depth")
             parse_deleted_option("uu_decode_depth", data_stream);
 
+        else if (keyword == "normalize_random_nulls_in_text")
+            parse_deleted_option("normalize_random_nulls_in_text", data_stream);
+
+        else if (keyword == "fast_blocking")
+            parse_deleted_option("fast_blocking", data_stream);
+
         else if (keyword == "iis_unicode_map")
         {
             std::string codemap;
