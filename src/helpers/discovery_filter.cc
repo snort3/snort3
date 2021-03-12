@@ -250,23 +250,22 @@ bool DiscoveryFilter::is_monitored(const Packet* p, FilterType type, const SfIp*
     if ( intf_ip_list[type].empty() )
         return false; // the configuration did not have this type of rule
 
-    int32_t intf;
+    int32_t intf = p->pkth->ingress_index;
     const SfIp* host_ip;
     if ( flowdir == FlowCheckDirection::DF_SERVER )
     {
-        intf = (int32_t)p->flow->server_intf;
+        if ( p->flow->server_intf != DAQ_PKTHDR_UNKNOWN )
+            intf = p->flow->server_intf;
         host_ip = &p->flow->server_ip;
     }
     else if ( flowdir == FlowCheckDirection::DF_CLIENT )
     {
-        intf = (int32_t)p->flow->client_intf;
+        if ( p->flow->client_intf != DAQ_PKTHDR_UNKNOWN )
+            intf = p->flow->client_intf;
         host_ip = &p->flow->client_ip;
     }
     else
-    {
-        intf = (int32_t)p->pkth->ingress_index;
         host_ip = p->ptrs.ip_api.get_src();
-    }
 
     if ( intf == DAQ_PKTHDR_UNKNOWN or intf < 0 )
         intf = DF_ANY_INTF;
