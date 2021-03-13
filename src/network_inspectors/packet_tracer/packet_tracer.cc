@@ -257,12 +257,6 @@ void PacketTracer::activate(const Packet& p)
         s_pkt_trace->active = false;
 }
 
-void PacketTracer::pt_timer_start()
-{
-    pt_timer->reset();
-    pt_timer->start();
-}
-
 // -----------------------------------------------------------------------------
 // non-static functions
 // -----------------------------------------------------------------------------
@@ -562,7 +556,6 @@ TEST_CASE("basic daq log", "[PacketTracer]")
     char test_str[] = "1234567890";
     // instantiate a packet tracer
     TestPacketTracer::thread_init();
-    TestPacketTracer::pt_timer_start();
     TestPacketTracer::set_daq_enable(true);
     TestPacketTracer::daq_log("%s", test_str);
     CHECK(!(strcmp(TestPacketTracer::get_daq_buff(), test_str)));
