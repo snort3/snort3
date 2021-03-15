@@ -227,6 +227,9 @@ static const Parameter s_params[] =
     { "-H", Parameter::PT_IMPLIED, nullptr, nullptr,
       "make hash tables deterministic" },
 
+    { "-h", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "show help overview (same as --help)" },
+
     { "-i", Parameter::PT_STRING, nullptr, nullptr,
       "<iface>... list of interfaces" },
 
@@ -377,7 +380,7 @@ static const Parameter s_params[] =
       "dump configured rules in gen-msg.map format for use by other tools" },
 
     { "--help", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "list command line options" },
+      "show help overview" },
 
     { "--help-commands", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output matching commands" },
@@ -717,6 +720,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("-H") )
         sc->run_flags |= RUN_FLAG__STATIC_HASH;
+
+    else if ( v.is("-h") )
+        help_basic(sc, v.get_string());
 
     else if ( v.is("-i") )
         sc->daq_config->add_input(v.get_string());
