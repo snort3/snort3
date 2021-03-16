@@ -515,7 +515,7 @@ void PortObjectPrintPortsRaw(PortObject* po)
      * 30 bytes.  For the entire list, need room for spaces and brackets and
      * potential negations. Or:
      *      list_size * (30 + 1space_for_each_element, +
-     *       1potential_negation) + surrounding_whitespace + brackets + NULL */
+     *       1potential_negation) + surrounding_whitespace + brackets + null */
 
     bufsize = po->item_list->count * (30 + 1 + 1) + 5;
     buf = (char*)snort_calloc(bufsize);

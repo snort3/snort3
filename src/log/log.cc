@@ -40,7 +40,7 @@ using namespace snort;
 
 namespace snort
 {
-// Input is packet and an nine-byte (including NULL) character array.  Results
+// Input is packet and an nine-byte (including null) character array.  Results
 // are put into the character array.
 void CreateTCPFlagString(const tcp::TCPHdr* const tcph, char* flagBuffer)
 {

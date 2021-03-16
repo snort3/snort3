@@ -583,7 +583,7 @@ void LogTCPHeader(TextLog* log, Packet* p)
     }
     /* print TCP flags */
     CreateTCPFlagString(tcph, tcpFlags);
-    TextLog_Puts(log, tcpFlags); /* We don't care about the NULL */
+    TextLog_Puts(log, tcpFlags); /* We don't care about the null */
 
     /* print other TCP info */
     TextLog_Print(log, " Seq: 0x%lX  Ack: 0x%lX  Win: 0x%X  TcpLen: %d",
@@ -778,7 +778,7 @@ static void LogICMPEmbeddedIP(TextLog* log, Packet* p)
  */
 void LogICMPHeader(TextLog* log, Packet* p)
 {
-    /* 32 digits plus 7 colons and a NULL byte */
+    /* 32 digits plus 7 colons and a null byte */
     char buf[8*4 + 7 + 1];
 
     if (p->ptrs.icmph == nullptr)

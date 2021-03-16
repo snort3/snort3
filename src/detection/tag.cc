@@ -205,7 +205,7 @@ static inline unsigned int memory_per_node(XHash* hash)
  * @param hash - pointer to XHash that should point to either ssn_tag_cache_ptr
  * or host_tag_cache_ptr.
  *
- * @returns a pointer to new TagNode or NULL if memory couldn't * be allocated
+ * @returns a pointer to new TagNode or null if memory couldn't * be allocated
  */
 static TagNode* TagAlloc(
     XHash* hash

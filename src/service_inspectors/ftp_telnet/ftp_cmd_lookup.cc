@@ -111,7 +111,7 @@ int ftp_cmd_lookup_add(CMD_LOOKUP* CmdLookup, const char* cmd, int len,
  * Returns: int => return code indicating error or success
  *
  * Returns: FTP_CMD_CONF* => Pointer to cmd configuration structure
- *                            matching IP if found, NULL otherwise.
+ *                            matching IP if found, null otherwise.
  *
  */
 FTP_CMD_CONF* ftp_cmd_lookup_find(CMD_LOOKUP* CmdLookup,

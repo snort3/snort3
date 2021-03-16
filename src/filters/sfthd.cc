@@ -83,7 +83,7 @@ XHash* sfthd_local_new(unsigned bytes)
         sizeof(THD_IP_NODE));
 
 #ifdef THD_DEBUG
-    if (local_hash == NULL)
+    if ( !local_hash )
         printf("Could not allocate the sfxhash table\n");
 #endif
 
@@ -98,7 +98,7 @@ XHash* sfthd_global_new(unsigned bytes)
         sizeof(THD_IP_NODE));
 
 #ifdef THD_DEBUG
-    if (global_hash == NULL)
+    if ( !global_hash )
         printf("Could not allocate the sfxhash table\n");
 #endif
 

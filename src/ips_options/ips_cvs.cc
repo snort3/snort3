@@ -213,7 +213,7 @@ static int CvsDecode(const uint8_t* data, uint16_t data_len,
 **  NAME
 **    CvsCmdCompare
 **       Compares two pointers to char to see if they are equal.
-**       The first arg is NULL terminated.  The second is not and
+**       The first arg is null terminated.  The second is not and
 **       it's length is passed in.
 **
 */
@@ -245,7 +245,7 @@ static int CvsCmdCompare(const char* cmd, const uint8_t* pkt_cmd, int pkt_cmd_le
 **       the replacement '\0' is put into the structure's command
 **       argument member.  If there isn't a space, the entire line
 **       is put in the command and the command argument is set to
-**       NULL.
+**       null.
 **
 */
 /**

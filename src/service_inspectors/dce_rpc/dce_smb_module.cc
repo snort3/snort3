@@ -519,7 +519,7 @@ bool Dce2SmbModule::set(const char*, Value& v, SnortConfig*)
 
 void Dce2SmbModule::get_data(dce2SmbProtoConf& dce2_smb_config)
 {
-    dce2_smb_config = config; // includes pointer copy so set to NULL
+    dce2_smb_config = config; // includes pointer copy so set to null
     config.smb_invalid_shares = nullptr;
 }
 

@@ -47,7 +47,6 @@ public:
     static void do_pidfile();
     static void cleanup();
 
-    static bool is_starting();
     static bool has_dropped_privileges();
     SO_PUBLIC static bool is_reloading();
 

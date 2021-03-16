@@ -35,10 +35,10 @@ struct SIP_Roptions
 
     uint16_t status_code;       // sip_stat_code data
 
-    const uint8_t* header_data; // Set to NULL if not applicable
+    const uint8_t* header_data; // Set to null if not applicable
     uint16_t header_len;
 
-    const uint8_t* body_data;   // Set to NULL if not applicable
+    const uint8_t* body_data;   // Set to null if not applicable
     uint16_t body_len;
 };
 

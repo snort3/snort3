@@ -553,7 +553,7 @@ static DCE2_Ret DCE2_SmbUpdateTransRequest(DCE2_SmbSsnData* ssd,
         // Not implemented according to MS-CIFS
         case TRANS_RAW_READ_NMPIPE:
 
-        // Can only write 2 NULL bytes and subsequent writes return pipe disconnected
+        // Can only write 2 null bytes and subsequent writes return pipe disconnected
         case TRANS_RAW_WRITE_NMPIPE:
 
         // Can at most do a DCE/RPC bind

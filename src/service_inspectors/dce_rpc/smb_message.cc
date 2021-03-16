@@ -732,7 +732,7 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
         && (DCE2_SsnGetPolicy(&ssd->sd) == DCE2_POLICY__SAMBA))
     {
         // Current Samba errors on a zero byte count Transaction because it
-        // uses it to get the Name string and if zero Name will be NULL and
+        // uses it to get the Name string and if zero Name will be null and
         // it won't process it.
         com_info.cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
     }

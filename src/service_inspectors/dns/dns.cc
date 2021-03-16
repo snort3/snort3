@@ -596,7 +596,7 @@ static uint16_t CheckRRTypeTXTVuln(
             dnsSessionData->curr_txt.txt_len = (uint8_t)*data;
             dnsSessionData->curr_txt.txt_count++;
 
-            /* include the NULL */
+            /* include the null */
             dnsSessionData->curr_txt.total_txt_len += dnsSessionData->curr_txt.txt_len + 1;
 
             if (!dnsSessionData->curr_txt.alerted)

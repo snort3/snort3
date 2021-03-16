@@ -245,24 +245,6 @@ int Stream::ignore_flow(
         ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort, direction, fd);
 }
 
-void Stream::proxy_started(Flow* flow, unsigned dir)
-{
-    if (!flow)
-        return;
-
-    TcpSession* tcpssn = (TcpSession*)flow->session;
-    tcpssn->flush();
-
-    if ( dir & SSN_DIR_FROM_SERVER )
-        set_splitter(flow, true, new LogSplitter(true));
-
-    if ( dir & SSN_DIR_FROM_CLIENT )
-        set_splitter(flow, false, new LogSplitter(false));
-
-    tcpssn->start_proxy();
-    flow->set_proxied();
-}
-
 void Stream::stop_inspection(
     Flow* flow, Packet* p, char dir,
     int32_t /*bytes*/, int /*response*/)
@@ -296,24 +278,6 @@ void Stream::stop_inspection(
 
     DetectionEngine::disable_all(p);
     flow->set_state(Flow::FlowState::ALLOW);
-}
-
-void Stream::resume_inspection(Flow* flow, char dir)
-{
-    if (!flow)
-        return;
-
-    switch (dir)
-    {
-    case SSN_DIR_BOTH:
-    case SSN_DIR_FROM_CLIENT:
-    case SSN_DIR_FROM_SERVER:
-        if (flow->ssn_state.ignore_direction & dir)
-        {
-            flow->ssn_state.ignore_direction &= ~dir;
-        }
-        break;
-    }
 }
 
 uint32_t Stream::get_packet_direction(Packet* p)

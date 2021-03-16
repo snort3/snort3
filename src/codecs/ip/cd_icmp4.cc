@@ -337,7 +337,7 @@ void Icmp4Codec::log(TextLog* const log, const uint8_t* raw_pkt,
 {
     const icmp::ICMPHdr* const icmph = reinterpret_cast<const ICMPHdr*>(raw_pkt);
 
-    /* 32 digits plus 7 colons and a NULL byte */
+    /* 32 digits plus 7 colons and a null byte */
     char buf[8*4 + 7 + 1];
     TextLog_Print(log, "Type:%d  Code:%d  ", icmph->type, icmph->code);
     TextLog_Puts(log, "\n\t");

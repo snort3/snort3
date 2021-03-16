@@ -193,7 +193,7 @@ inline bool DCE2_IsConfigEndChar(const char c)
  *
  * Arguments:
  *  char *
- *      NULL terminated string to prune.
+ *      null terminated string to prune.
  *  int
  *      length of string
  *
@@ -202,7 +202,7 @@ inline bool DCE2_IsConfigEndChar(const char c)
  *           still points within the original string.
  *
  * Side effects: Spaces at the end of the string passed in as an
- *               argument are replaced by NULL bytes.
+ *               argument are replaced by null bytes.
  *
  ********************************************************************/
 inline char* DCE2_PruneWhiteSpace(char* str)
@@ -212,7 +212,7 @@ inline char* DCE2_PruneWhiteSpace(char* str)
     if (str == nullptr)
         return nullptr;
 
-    /* Put end a char before NULL byte */
+    /* Put end a char before null byte */
     end = str + (strlen(str) - 1);
 
     while (isspace((int)*str))
@@ -230,14 +230,14 @@ inline char* DCE2_PruneWhiteSpace(char* str)
 /********************************************************************
  * Function: DCE2_IsEmptyStr()
  *
- * Checks if string is NULL, empty or just spaces.
+ * Checks if string is null, empty or just spaces.
  * String must be 0 terminated.
  *
  * Arguments: None
  *  char * - string to check
  *
  * Returns:
- *  true  if string is NULL, empty or just spaces
+ *  true  if string is null, empty or just spaces
  *  false  otherwise
  *
  ********************************************************************/

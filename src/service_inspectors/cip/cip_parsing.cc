@@ -19,7 +19,7 @@
 // cip_parsing.cc author RA/Cisco
 
 /* Description: Data parsing for EtherNet/IP and CIP formats.
-   Note: No pointer parameters to these functions can be passed as NULL. */
+   Note: No pointer parameters to these functions can be passed as null. */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

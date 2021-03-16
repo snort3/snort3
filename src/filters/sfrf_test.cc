@@ -862,7 +862,7 @@ static EventData evData[] =
 static void PrintTests()
 {
     unsigned i;
-    EventData* prev = NULL;
+    EventData* prev = nullptr;
 
     for ( i = 0; i < NUM_EVENTS; i++ )
     {

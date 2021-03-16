@@ -28,7 +28,7 @@ class AppIdConfig;
 class OdpContext;
 
 // This needs to be exported by any third party .so library.
-// Must return NULL if it fails to create the object.
+// Must return null if it fails to create the object.
 typedef ThirdPartyAppIdContext* (* TpAppIdCreateCtxt)(ThirdPartyConfig& );
 typedef ThirdPartyAppIdSession* (* TpAppIdCreateSession)(ThirdPartyAppIdContext& ctxt);
 typedef int (* TpAppIdPfini)();

@@ -49,7 +49,7 @@ table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,  long data_size,
     /*The first allocation always return 0*/
     if (!table_ptr)
     {
-        //  return NULL;
+        //  return nullptr;
     }
 #endif
 

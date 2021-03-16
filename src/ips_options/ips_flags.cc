@@ -245,7 +245,7 @@ static void flags_parse_test(const char* rule, TcpFlagCheckData* idx)
         default:
             ParseError(
                 "bad TCP flag = '%c'"
-                "Valid options: UAPRSFCE or 0 for NO flags (e.g. NULL scan),"
+                "Valid options: UAPRSFCE or 0 for NO flags (e.g. null scan),"
                 " and !, + or * for modifiers",
                 *fptr);
             return;

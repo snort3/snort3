@@ -663,7 +663,7 @@ void DCE2_SmbRemoveFileTrackerFromRequestTrackers(DCE2_SmbSsnData* ssd,
     if (ftracker == nullptr)
         return;
 
-    // NULL out file trackers of any outstanding requests
+    // null out file trackers of any outstanding requests
     // that reference this file tracker
     if (ssd->rtracker.ftracker == ftracker)
         ssd->rtracker.ftracker = nullptr;
@@ -1168,7 +1168,7 @@ Packet* DCE2_SmbGetRpkt(DCE2_SmbSsnData* ssd,
  *
  * Arguments:
  *  DCE2_SmbBuffer **
- *      Pointer to pointer of buffer to add data to.  If NULL
+ *      Pointer to pointer of buffer to add data to.  If null
  *      a new buffer will be allocated.
  *  uint8_t *
  *      Pointer to the current data cursor in packet.

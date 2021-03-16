@@ -116,8 +116,8 @@ static void pcre_check_anchored(PcreData* pcre_data)
     switch (rc)
     {
     /* pcre_fullinfo fails for the following:
-     * PCRE_ERROR_NULL - the argument code was NULL
-     *                   the argument where was NULL
+     * PCRE_ERROR_NULL - the argument code was null
+     *                   the argument where was null
      * PCRE_ERROR_BADMAGIC - the "magic number" was not found
      * PCRE_ERROR_BADOPTION - the value of what was invalid
      * so a failure here means we passed in bad values and we should
@@ -128,7 +128,7 @@ static void pcre_check_anchored(PcreData* pcre_data)
         break;
 
     case PCRE_ERROR_NULL:
-        ParseError("pcre_fullinfo: code and/or where were NULL.");
+        ParseError("pcre_fullinfo: code and/or where were null.");
         return;
 
     case PCRE_ERROR_BADMAGIC:

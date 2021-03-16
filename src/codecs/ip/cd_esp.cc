@@ -111,7 +111,7 @@ bool EspCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
     /* The Authentication Data at the end of the packet is variable-length.
        RFC 2406 says that Encryption and Authentication algorithms MUST NOT
-       both be NULL, so we assume NULL Encryption and some other Authentication.
+       both be null, so we assume null Encryption and some other Authentication.
 
        The mandatory algorithms for Authentication are HMAC-MD5-96 and
        HMAC-SHA-1-96, so we assume a 12-byte authentication data at the end. */

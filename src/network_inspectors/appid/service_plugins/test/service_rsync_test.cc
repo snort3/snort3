@@ -37,13 +37,13 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
-ServiceRSYNCData* fake_rsync_data = NULL;
+ServiceRSYNCData* fake_rsync_data = nullptr;
 
 TEST_GROUP(service_rsync)
 {
     void setup()
     {
-        fake_rsync_data = NULL;
+        fake_rsync_data = nullptr;
     }
 
     void teardown()

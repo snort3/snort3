@@ -69,7 +69,6 @@ const std::array<const char*, PacketManager::stat_offset> PacketManager::stat_na
 };
 
 // Encoder Foo
-static THREAD_LOCAL PegCount total_rebuilt_pkts = 0;
 static THREAD_LOCAL std::array<uint8_t, Codec::PKT_MAX>* s_pkt;
 
 void PacketManager::thread_init()
@@ -720,7 +719,6 @@ int PacketManager::format_tcp(
     c->context->pkth->pktlen = 0;
     c->context->pkth->ts = p->pkth->ts;
 
-    total_rebuilt_pkts++;
     return 0;
 }
 
@@ -816,7 +814,6 @@ int PacketManager::encode_format(
     c->context->pkth->ts = p->pkth->ts;
 
     layer::set_packet_pointer(c);  // ensure we are looking at the new packet
-    total_rebuilt_pkts++;
     return 0;
 }
 
@@ -887,9 +884,6 @@ void PacketManager::encode_update(Packet* p)
 //-------------------------------------------------------------------------
 // codec support and statistics
 //-------------------------------------------------------------------------
-
-PegCount PacketManager::get_rebuilt_packet_count()
-{ return total_rebuilt_pkts; }
 
 uint16_t PacketManager::encode_get_max_payload(const Packet* p)
 {

@@ -40,7 +40,7 @@
 **       sfeventq_event_alloc() allocates the memory for storing the event.
 **       sfeventq_add() adds the event and prioritizes the event in the queue.
 **       You should only allocate and add one event at a time.  Otherwise,
-**       event_alloc() will return NULL on memory exhaustion.
+**       event_alloc() will return null on memory exhaustion.
 **
 **  3. Event actions
 **       sfeventq_action() will call the provided function on the initialized
@@ -88,13 +88,13 @@ SF_EVENTQ* sfeventq_new(int max_nodes, int log_nodes, int event_size)
 **  Allocate the memory for an event to add to the event queue.  This
 **  function is meant to be called first, the event structure filled in,
 **  and then added to the queue.  While you can allocate several times before
-**  adding to the queue, this is not recommended as you may get a NULL ptr
+**  adding to the queue, this is not recommended as you may get a null ptr
 **  if you allocate more than the max node number.
 **
 **  @return  void *
 **
-**  @retval  NULL unable to allocate memory.
-**  @retval !NULL ptr to memory.
+**  @retval  null - unable to allocate memory.
+**  @retval !null - ptr to memory.
 */
 void* sfeventq_event_alloc(SF_EVENTQ* eq)
 {
@@ -167,8 +167,8 @@ void sfeventq_free(SF_EVENTQ* eq)
 **
 **  @return SF_EVENTQ_NODE *
 **
-**  @retval NULL resource exhaustion and event is lower priority than last node
-**  @retval !NULL ptr to node memory.
+**  @retval null - resource exhaustion and event is lower priority than last node
+**  @retval !null - ptr to node memory.
 */
 static SF_EVENTQ_NODE* get_eventq_node(SF_EVENTQ* eq, void*)
 {
@@ -195,7 +195,7 @@ int sfeventq_add(SF_EVENTQ* eq, void* event)
     assert(event);
 
     /*
-    **  If get_eventq_node() returns NULL, this means that
+    **  If get_eventq_node() returns null, this means that
     **  we have exhausted the eventq and the incoming event
     **  is lower in priority then the last ranked event.
     **  So we just drop it.

@@ -187,7 +187,7 @@ int SnortStrnlen(const char* buf, int buf_size)
 /*
  * Find first occurrence of char of accept in s, limited by slen.
  * A 'safe' version of strpbrk that won't read past end of buffer s
- * in cases that s is not NULL terminated.
+ * in cases that s is not null terminated.
  *
  * This code assumes 'accept' is a static string.
  */
@@ -212,7 +212,7 @@ const char* SnortStrnPbrk(const char* s, int slen, const char* accept)
 /*
  * Find first occurrence of searchstr in s, limited by slen.
  * A 'safe' version of strstr that won't read past end of buffer s
- * in cases that s is not NULL terminated.
+ * in cases that s is not null terminated.
  */
 const char* SnortStrnStr(const char* s, int slen, const char* searchstr)
 {

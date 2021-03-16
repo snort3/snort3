@@ -404,7 +404,7 @@ static int pmx_create_tree(SnortConfig* sc, void* id, void** existing_tree, Mpse
         if ( !*existing_tree )
             return -1;
 
-        /* NULL input id (PMX *), last call for this pattern state */
+        /* null input id (PMX *), last call for this pattern state */
         return finalize_detection_option_tree(sc, (detection_option_tree_root_t*)*existing_tree);
     }
 

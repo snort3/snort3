@@ -315,7 +315,7 @@ static inline fd_status_t Pop_State(fd_PDF_Parse_t* p)
     return File_Decomp_OK;
 }
 
-/* If there's a previous state on the stack, return a pointer to it, else return NULL */
+/* If there's a previous state on the stack, return a pointer to it, else return null */
 static inline fd_PDF_Parse_Stack_t* Get_Previous_State(fd_PDF_Parse_t* p)
 {
     if ( p->Parse_Stack_Index == 0 )

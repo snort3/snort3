@@ -443,8 +443,8 @@ inline uint16_t SmbAndXOff2(const SmbAndXCommon* andx)
 }
 
 /* SMB formats (smb_fmt) Dialect, Pathname and ASCII are all
- * NULL terminated ASCII strings unless Unicode is specified
- * in the NT LM 1.0 SMB header in which case they are NULL
+ * null terminated ASCII strings unless Unicode is specified
+ * in the NT LM 1.0 SMB header in which case they are null
  * terminated unicode strings
  */
 #define SMB_FMT__DATA_BLOCK  1

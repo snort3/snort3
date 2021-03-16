@@ -434,7 +434,7 @@ static int _dir_sub_insert(IPLOOKUP* ip, int length, int cur_len, INFO ptr,
         DIR_Entry* entry = (DIR_Entry*)(&base[sub_table->entries]);
 
         /* Check if we need to alloc a new sub table.
-         * If next_sub was 0/NULL, there's no entry at this index
+         * If next_sub was 0/null, there's no entry at this index
          * If the length is non-zero, there is an entry */
         if (!entry[index].value || entry[index].length)
         {

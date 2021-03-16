@@ -101,9 +101,6 @@ public:
     // packet_flags field of the Packet struct to indicate the direction determined.
     static uint32_t get_packet_direction(Packet*);
 
-    // Sets the stream session into proxy mode.
-    static void proxy_started(Flow*, unsigned dir);  // FIXIT-L method name is misleading
-
     // Stop inspection on a flow for up to count bytes (-1 to ignore for life or until resume).
     // If response flag is set, automatically resume inspection up to count bytes when a data
     // packet in the other direction is seen.  Also marks the packet to be ignored
@@ -116,10 +113,6 @@ public:
     static int ignore_flow(
         const Packet* ctrlPkt, PktType, IpProtocol, const snort::SfIp* srcIP, uint16_t srcPort,
         const snort::SfIp* dstIP, uint16_t dstPort, char direction, FlowData* fd);
-
-    // Resume inspection for flow.
-    // FIXIT-L does resume work only for a flow that has been stopped by call to stop_inspection?
-    static void resume_inspection(Flow*, char dir);
 
     // Set Active status to force drop the current packet and set flow state to drop
     // subsequent packets arriving from the direction specified.

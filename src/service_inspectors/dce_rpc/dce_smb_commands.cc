@@ -1276,7 +1276,7 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
                         return DCE2_RET__SUCCESS;
                     }
 
-                    // Move past NULL string terminator
+                    // Move past null string terminator
                     dce2_move(nb_ptr, nb_len, increment);
                 }
             }
@@ -1592,7 +1592,7 @@ DCE2_Ret DCE2_SmbNegotiate(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
             if (nb_len == 0)
                 break;
 
-            // Just a NULL byte - acceptable by Samba and Windows
+            // Just a null byte - acceptable by Samba and Windows
             if (term_ptr == nb_ptr)
                 continue;
 
@@ -1600,7 +1600,7 @@ DCE2_Ret DCE2_SmbNegotiate(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
                 && (strncmp((const char*)nb_ptr, SMB_DIALECT_NT_LM_012, term_ptr - nb_ptr) == 0))
                 break;
 
-            // Move past string and NULL byte
+            // Move past string and null byte
             dce2_move(nb_ptr, nb_len, (term_ptr - nb_ptr) + 1);
 
             ntlm_index++;
@@ -1674,7 +1674,7 @@ DCE2_Ret DCE2_SmbTreeConnectAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             while ((bs = (const uint8_t*)memchr(nb_ptr, '\\', nb_len)) != nullptr)
                 dce2_move(nb_ptr, nb_len, (bs - nb_ptr) + 1);
 
-            // Move past NULL byte if unicode
+            // Move past null byte if unicode
             if (SmbUnicode(smb_hdr) && (nb_len != 0))
                 dce2_move(nb_ptr, nb_len, 1);
 

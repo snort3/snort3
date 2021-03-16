@@ -324,7 +324,7 @@ void sfrt_cleanup(table_t* table, sfrt_iterator_callback cleanup_func)
             cleanup_func(table->data[index]);
 
             /* cleanup_func is supposed to free memory associated with this
-             * table->data[index].  Set that to NULL.
+             * table->data[index].  Set that to null.
              */
             table->data[index] = nullptr;
 

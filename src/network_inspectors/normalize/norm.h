@@ -42,7 +42,7 @@ struct NormalizerConfig
     uint8_t normalizer_options[32];
 
     // these must be in the same order PROTO_IDs are defined!
-    // if entry is NULL, proto doesn't have normalization or it is disabled
+    // if entry is null, proto doesn't have normalization or it is disabled
     NormalFunc normalizers[snort::PacketManager::max_protocols()];
 };
 

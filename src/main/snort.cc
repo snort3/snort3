@@ -279,9 +279,7 @@ bool Snort::drop_privileges()
             return false;
     }
 
-    initializing = false;
     privileges_dropped = true;
-
     return true;
 }
 
@@ -316,8 +314,6 @@ void Snort::term()
     already_exiting = true;
 
     const SnortConfig* sc = SnortConfig::get_conf();
-
-    initializing = false;  // just in case we cut out early
 
     memory::MemoryCap::print();
 
@@ -380,12 +376,8 @@ void Snort::clean_exit(int)
 // public methods
 //-------------------------------------------------------------------------
 
-bool Snort::initializing = true;
 bool Snort::reloading = false;
 bool Snort::privileges_dropped = false;
-
-bool Snort::is_starting()
-{ return initializing; }
 
 bool Snort::is_reloading()
 { return reloading; }

@@ -569,7 +569,7 @@ void TcpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 
     /* print TCP flags */
     CreateTCPFlagString(tcph, tcpFlags);
-    TextLog_Puts(text_log, tcpFlags); /* We don't care about the NULL */
+    TextLog_Puts(text_log, tcpFlags); /* We don't care about the null */
 
     /* print other TCP info */
     TextLog_Print(text_log, "  SrcPort:%u  DstPort:%u\n\tSeq: 0x%lX  Ack: 0x%lX  "

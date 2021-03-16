@@ -226,7 +226,7 @@ SfIpRet SfIp::set(const char* src, uint16_t* srcBits)
     /* check for and extract a mask in CIDR form */
     if ( (mask = strchr(ip, (int)'/')) != nullptr )
     {
-        /* NULL out this character so inet_pton will see the
+        /* Null out this character so inet_pton will see the
          * correct ending to the IP string */
         char* end = mask++;
         while ( (end > ip) && isspace((int)end[-1]) )

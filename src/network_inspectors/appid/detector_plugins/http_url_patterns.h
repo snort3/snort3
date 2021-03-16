@@ -101,7 +101,7 @@ struct DetectorHTTPPattern
     {
         if( !pat )
         {
-            snort::ErrorMessage("HTTP pattern string is NULL.");
+            snort::ErrorMessage("HTTP pattern string is null.");
             return false;
         }
 

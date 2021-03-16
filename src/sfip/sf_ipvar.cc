@@ -309,7 +309,7 @@ static sfip_node_t* merge_lists(sfip_node_t* list1, sfip_node_t* list2, uint16_t
         return list1;
     }
 
-    /*Both lists are sorted and not NULL. If list1 or list2 contains "any", free the other list*/
+    /*Both lists are sorted and not null. If list1 or list2 contains "any", free the other list*/
     if (list1->flags & SFIP_ANY)
     {
         merge_len = list1_len;
@@ -324,7 +324,7 @@ static sfip_node_t* merge_lists(sfip_node_t* list1, sfip_node_t* list2, uint16_t
         return list2;
     }
 
-    /*Iterate till one of the list is NULL. Append each node to merge_list*/
+    /*Iterate till one of the list is null. Append each node to merge_list*/
     while (list1 && list2)
     {
         if ( num_nodes )
@@ -388,7 +388,7 @@ static sfip_node_t* merge_lists(sfip_node_t* list1, sfip_node_t* list2, uint16_t
         num_nodes++;
     }
 
-    /*list2 is NULL. Append list1*/
+    /*list2 is null. Append list1*/
     while ( list1 )
     {
         tmp = list1->next;
@@ -401,7 +401,7 @@ static sfip_node_t* merge_lists(sfip_node_t* list1, sfip_node_t* list2, uint16_t
         list1 = tmp;
     }
 
-    /*list1 is NULL. Append list2*/
+    /*list1 is null. Append list2*/
     while ( list2 )
     {
         tmp = list2->next;
@@ -600,11 +600,11 @@ static SfIpRet sfvar_list_compare(sfip_node_t* list1, sfip_node_t* list2)
 /* Check's if two variables have the same nodes */
 SfIpRet sfvar_compare(const sfip_var_t* one, const sfip_var_t* two)
 {
-    /* If both NULL, consider equal */
+    /* If both null, consider equal */
     if (!one && !two)
         return SFIP_EQUAL;
 
-    /* If one NULL and not the other, consider unequal */
+    /* If one null and not the other, consider unequal */
     if ((one && !two) || (!one && two))
         return SFIP_FAILURE;
 

@@ -142,7 +142,7 @@ void* DCE2_QueueLast(DCE2_Queue*);
  * Returns:
  *  bool
  *      true if the list has zero nodes in it or the list object
- *          passed in is NULL.
+ *          passed in is null.
  *      false if the list has one or more nodes in it.
  *
  ********************************************************************/

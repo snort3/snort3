@@ -100,9 +100,6 @@ public:
 
     /* codec support and statistics */
 
-    // get the number of packets which have been rebuilt by this thread
-    static PegCount get_rebuilt_packet_count();
-
     // get the max payload for the current packet
     static uint16_t encode_get_max_payload(const Packet*);
 

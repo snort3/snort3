@@ -227,7 +227,7 @@ int normalize_telnet(
                 /* wind it back a line? */
                 if (ignoreEraseCmds == FTPP_APPLY_TNC_ERASE_CMDS)
                 {
-                    /* Go back to previous CR NULL or CR LF? */
+                    /* Go back to previous CR null or CR LF? */
                     while (write_ptr > start)
                     {
                         /* Go to previous char */
@@ -333,7 +333,7 @@ int normalize_telnet(
                 {
                     read_ptr++;
                     if (*read_ptr != 0x00)
-                    /* Encryption type is not NULL */
+                    /* Encryption type is not null */
                     {
                         /* printf("Encryption being negotiated by
                          * telnet client\n"); */

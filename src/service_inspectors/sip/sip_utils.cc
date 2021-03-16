@@ -84,7 +84,7 @@ int SIP_TrimSP(const char* start, const char* end, const char** new_start, const
  *  int           - length of the method name
  *
  * Returns:
- *  SIPMethodNode*- the founded method node, or NULL if not founded
+ *  SIPMethodNode*- the founded method node, or null if not founded
  *
  ********************************************************************/
 
@@ -113,7 +113,7 @@ SIPMethodNode* SIP_FindMethod(SIPMethodlist methods, const char* methodName, uns
  *  int: length of the string
  *
  * Returns:
- *  1  if string is NULL, empty or just spaces
+ *  1  if string is null, empty or just spaces
  *  0  otherwise
  *
  ********************************************************************/

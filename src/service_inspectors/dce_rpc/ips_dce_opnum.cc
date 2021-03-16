@@ -298,7 +298,7 @@ static DCE2_Ret DCE2_OpnumParse(char* args, DCE2_Opnum* opnum)
     uint16_t num_opnums = 0;
     unsigned int i;
 
-    /* Include NULL byte for parsing */
+    /* Include null byte for parsing */
     args_end = args + (strlen(args) + 1);
     memset(opnum_mask, 0, sizeof(opnum_mask));
 

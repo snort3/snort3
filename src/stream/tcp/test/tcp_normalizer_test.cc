@@ -107,7 +107,7 @@ TEST_GROUP(tcp_normalizers)
 TEST(tcp_normalizers, os_policy)
 {
     StreamPolicy os_policy;
-    Flow* flow = new FlowMock;
+    Flow* flow = new Flow;
     TcpSession* session = new TcpSessionMock( flow );
     TcpNormalizerState tns;
 
@@ -126,7 +126,7 @@ TEST(tcp_normalizers, os_policy)
 TEST(tcp_normalizers, paws_fudge_config)
 {
     StreamPolicy os_policy;
-    Flow* flow = new FlowMock;
+    Flow* flow = new Flow;
     TcpSession* session = new TcpSessionMock( flow );
     TcpNormalizerState tns;
 
@@ -154,7 +154,7 @@ TEST(tcp_normalizers, paws_fudge_config)
 TEST(tcp_normalizers, paws_drop_zero_ts_config)
 {
     StreamPolicy os_policy;
-    Flow* flow = new FlowMock;
+    Flow* flow = new Flow;
     TcpSession* session = new TcpSessionMock( flow );
     TcpNormalizerState tns;
 
@@ -186,7 +186,7 @@ TEST(tcp_normalizers, paws_drop_zero_ts_config)
 TEST(tcp_normalizers, norm_options_enabled)
 {
     StreamPolicy os_policy;
-    Flow* flow = new FlowMock;
+    Flow* flow = new Flow;
     TcpSession* session = new TcpSessionMock( flow );
 
     norm_enabled = true;

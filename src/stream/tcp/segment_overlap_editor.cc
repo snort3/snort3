@@ -377,7 +377,7 @@ void SegmentOverlapEditor::full_right_overlap_truncate_new(TcpReassemblerState& 
 
         // Set seq to end of right since overlap was greater than or equal to right->size and
         // inserted seq has been truncated to beginning of right and reset trunc length to 0
-        // since we may fall out of loop if next right is NULL
+        // since we may fall out of loop if next right is null
         trs.sos.seq = trs.sos.right->i_seq + trs.sos.right->i_len;
         trs.sos.left = trs.sos.right;
         trs.sos.right = trs.sos.right->next;

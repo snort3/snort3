@@ -333,7 +333,7 @@ static int AddCmd(SmtpProtoConf* config, const char* name, SMTPCmdTypeEnum type)
 
     config->num_cmds++;
 
-    /* allocate enough memory for new command - alloc one extra for NULL entry */
+    /* allocate enough memory for new command - alloc one extra for null entry */
     // FIXIT-L this constant reallocation is not necessary; use vector
     cmds = (SMTPToken*)snort_calloc((config->num_cmds + 1) * sizeof(*cmds));
     cmd_config = (SMTPCmdConfig*)snort_calloc((config->num_cmds + 1) * sizeof(*cmd_config));

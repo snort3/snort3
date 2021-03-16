@@ -106,7 +106,7 @@ void SIP_SetDefaultMethods(SIP_PROTO_CONF* config)
  *      after parsing the methods list.
  *  SIPMethods*
  *      Flag for the methods.
- *      NULL flag if not a valid method type
+ *      Null flag if not a valid method type
  * Returns:
  *
  ********************************************************************/

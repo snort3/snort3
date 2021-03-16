@@ -56,7 +56,7 @@ struct SIPMsg
     SIP_MediaSession* mediaSession;
     const char* authorization;
     const uint8_t* header;
-    const uint8_t* body_data; // Set to NULL if not applicable
+    const uint8_t* body_data; // Set to null if not applicable
     uint64_t cseqnum;
 
     uint16_t userNameLen;

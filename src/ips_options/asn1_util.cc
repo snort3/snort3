@@ -91,8 +91,8 @@ static void asn1_init_node_index()
 **
 **  @return ASN1_TYPE *
 **
-**  @retval NULL memory allocation failed
-**  @retval !NULL function successful
+**  @retval null -  memory allocation failed
+**  @retval !null - function successful
 */
 static ASN1_TYPE* asn1_node_alloc()
 {
@@ -159,7 +159,7 @@ void asn1_free_mem()
 **  @retval ASN1_OK function successful
 **  @retval ASN1_ERR_OVERLONG_LEN tag number too large
 **  @retval ASN1_ERR_OOB encoding goes out of bounds
-**  @retval ASN1_ERR_NULL_MEM function arguments are NULL
+**  @retval ASN1_ERR_NULL_MEM function arguments are null
 */
 static int asn1_decode_tag_num_ext(ASN1_DATA* asn1_data, unsigned* tag_num)
 {
@@ -210,7 +210,7 @@ static int asn1_decode_tag_num_ext(ASN1_DATA* asn1_data, unsigned* tag_num)
 **
 **  @return integer
 **
-**  @retval ASN1_ERR_NULL_MEM function arguments are NULL
+**  @retval ASN1_ERR_NULL_MEM function arguments are null
 **  @retval ASN1_ERR_OOB buffer out of bounds
 **  @retval ASN1_ERR_INVALID_BER_TAG_LEN tag num too large or bad encoding
 **  @retval ASN1_OK function ok
@@ -299,7 +299,7 @@ static int asn1_decode_len_type(const uint8_t* data)
 **
 **  @return integer
 **
-**  @retval ASN1_ERR_NULL_MEM function arguments NULL
+**  @retval ASN1_ERR_NULL_MEM function arguments null
 **  @retval ASN1_ERR_OVERLONG_LEN length to long for us to decode
 **  @retval ASN1_ERR_OOB out of bounds condition
 **  @retval ASN1_OK function successful
@@ -364,7 +364,7 @@ static int asn1_decode_len_ext(ASN1_DATA* asn1_data, unsigned* size)
 **
 **  @return integer
 **
-**  @retval ASN1_ERR_NULL_MEM function arguments NULL
+**  @retval ASN1_ERR_NULL_MEM function arguments null
 **  @retval ASN1_ERR_FATAL should never get this
 **  @retval ASN1_ERR_OOB out of bounds condition
 **  @retval ASN1_OK function successful
@@ -498,7 +498,7 @@ static int asn1_decode_type(const uint8_t** data, unsigned* len, ASN1_TYPE** asn
     /*
     **  Check len first, because if it's 0, then we already decoded a valid
     **  construct.  We let the caller know this, by returning OK, but setting
-    **  the asn1_type ptr to NULL.
+    **  the asn1_type ptr to null.
     */
     if (*len == 0)
         return ASN1_OK;
