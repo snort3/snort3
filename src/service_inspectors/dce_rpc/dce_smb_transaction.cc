@@ -290,7 +290,7 @@ static DCE2_Ret DCE2_SmbNtTransactCreateReq(DCE2_SmbSsnData* ssd,
     dce2_move(param_ptr, param_len, pad);
 
     ssd->cur_rtracker->file_name =
-      DCE2_SmbGetFileName(param_ptr, file_name_length, unicode, &ssd->cur_rtracker->file_name_size);
+      get_smb_file_name(param_ptr, file_name_length, unicode, &ssd->cur_rtracker->file_name_size);
 
     return DCE2_RET__SUCCESS;
 }
@@ -958,7 +958,7 @@ static DCE2_Ret DCE2_SmbTrans2Open2Req(DCE2_SmbSsnData* ssd,
     dce2_move(param_ptr, param_len, sizeof(SmbTrans2Open2ReqParams));
 
     ssd->cur_rtracker->file_name =
-      DCE2_SmbGetFileName(param_ptr, param_len, unicode, &ssd->cur_rtracker->file_name_size);
+      get_smb_file_name(param_ptr, param_len, unicode, &ssd->cur_rtracker->file_name_size);
 
     return DCE2_RET__SUCCESS;
 }

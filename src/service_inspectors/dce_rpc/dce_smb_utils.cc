@@ -94,47 +94,6 @@ bool DCE2_SmbIsTidIPC(DCE2_SmbSsnData* ssd, const uint16_t tid)
     return false;
 }
 
-// Extract file name from data. Supports ASCII and UTF-16LE.
-// Returns byte stream (ASCII or UTF-16LE with BOM)
-char* DCE2_SmbGetFileName(const uint8_t* data, uint32_t data_len, bool unicode,
-    uint16_t* file_name_len)
-{
-    const uint8_t inc = unicode ? 2 : 1;
-    if (data_len < inc)
-        return nullptr;
-
-    const uint32_t max_len =  unicode ? data_len - 1 : data_len;
-    // Move forward.  Don't know if the end of data is actually
-    // the end of the string.
-    uint32_t i;
-    for (i = 0; i < max_len; i += inc)
-    {
-        uint16_t uchar = unicode ? extract_16bits(data + i) : data[i];
-        if (uchar == 0)
-            break;
-    }
-
-    char* fname = nullptr;
-    const uint32_t real_len = i;
-
-    if (unicode)
-    {
-        fname = (char*)snort_calloc(real_len + UTF_16_LE_BOM_LEN + 2);
-        memcpy(fname, UTF_16_LE_BOM, UTF_16_LE_BOM_LEN);//Prepend with BOM
-        memcpy(fname + UTF_16_LE_BOM_LEN, data, real_len);
-        *file_name_len = real_len + UTF_16_LE_BOM_LEN;
-    }
-    else
-    {
-        fname = (char*)snort_alloc(real_len + 1);
-        memcpy(fname, data, real_len);
-        fname[real_len] = 0;
-        *file_name_len = real_len;
-    }
-
-    return fname;
-}
-
 int DCE2_SmbUidTidFidCompare(const void* a, const void* b)
 {
     int x = (int)(uintptr_t)a;
@@ -1797,9 +1756,10 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
             }
             else if (ftracker->ff_file_offset < ftracker->ff_bytes_processed)
             {
-                debug_logf(dce_smb_trace, nullptr, "File offset %" PRIu64 " is "
-                    "less than bytes processed %" PRIu64 " - aborting.\n",
-                    ftracker->ff_file_offset, ftracker->ff_bytes_processed);
+                debug_logf(dce_smb_trace, DetectionEngine::get_current_packet(),
+                    "File offset %" PRIu64 " is less than bytes processed %"
+                    PRIu64 " - aborting.\n", ftracker->ff_file_offset,
+                    ftracker->ff_bytes_processed);
 
                 DCE2_SmbAbortFileAPI(ssd);
                 DCE2_SmbSetNewFileAPIFileTracker(ssd);

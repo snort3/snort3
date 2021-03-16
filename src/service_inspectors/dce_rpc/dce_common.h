@@ -224,7 +224,7 @@ public:
     void reset();
 };
 
-inline void DCE2_ResetRopts(DCE2_SsnData* sd, snort::Packet* p)
+inline void DCE2_ResetRopts(DCE2_SsnData* sd, const snort::Packet* p)
 {
     sd->ropts.first_frag = DCE2_SENTINEL;
     sd->ropts.opnum = DCE2_SENTINEL;

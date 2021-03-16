@@ -567,7 +567,7 @@ DCE2_Ret DCE2_SmbOpen(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         dce2_move(nb_ptr, nb_len, 1);
 
         ssd->cur_rtracker->file_name =
-            DCE2_SmbGetFileName(nb_ptr, nb_len, SmbUnicode(smb_hdr),
+            get_smb_file_name(nb_ptr, nb_len, SmbUnicode(smb_hdr),
             &ssd->cur_rtracker->file_name_size);
     }
 
@@ -625,7 +625,7 @@ DCE2_Ret DCE2_SmbCreate(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         dce2_move(nb_ptr, nb_len, 1);
 
         ssd->cur_rtracker->file_name =
-            DCE2_SmbGetFileName(nb_ptr, nb_len, SmbUnicode(smb_hdr),
+            get_smb_file_name(nb_ptr, nb_len, SmbUnicode(smb_hdr),
             &ssd->cur_rtracker->file_name_size);
     }
 
@@ -856,7 +856,7 @@ DCE2_Ret DCE2_SmbCreateNew(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         dce2_move(nb_ptr, nb_len, 1);
 
         ssd->cur_rtracker->file_name =
-            DCE2_SmbGetFileName(nb_ptr, nb_len, SmbUnicode(smb_hdr),
+            get_smb_file_name(nb_ptr, nb_len, SmbUnicode(smb_hdr),
             &ssd->cur_rtracker->file_name_size);
     }
 
@@ -1069,7 +1069,7 @@ DCE2_Ret DCE2_SmbOpenAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (ssd->cur_rtracker->file_name == nullptr)
         {
             ssd->cur_rtracker->file_name =
-                DCE2_SmbGetFileName(nb_ptr, nb_len, unicode, &ssd->cur_rtracker->file_name_size);
+                get_smb_file_name(nb_ptr, nb_len, unicode, &ssd->cur_rtracker->file_name_size);
         }
     }
 
@@ -1930,7 +1930,7 @@ DCE2_Ret DCE2_SmbNtCreateAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (ssd->cur_rtracker->file_name == nullptr)
         {
             ssd->cur_rtracker->file_name =
-                DCE2_SmbGetFileName(nb_ptr, file_name_length, unicode,
+                get_smb_file_name(nb_ptr, file_name_length, unicode,
                 &ssd->cur_rtracker->file_name_size);
         }
 

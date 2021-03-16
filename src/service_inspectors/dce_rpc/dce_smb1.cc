@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2020 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2021 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,32 +16,15 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// dce_smb.cc author Rashmi Pitre <rrp@cisco.com>
+// dce_smb1.cc author Bhargava Jandhyala <bjandhya@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "dce_smb.h"
-
-#include "detection/detection_engine.h"
-#include "file_api/file_service.h"
-#include "main/snort_debug.h"
-#include "managers/inspector_manager.h"
-#include "protocols/packet.h"
-
-#include "dce_context_data.h"
-#include "dce_smb_commands.h"
-#include "dce_smb_module.h"
-#include "dce_smb_paf.h"
-#include "dce_smb_transaction.h"
-#include "dce_smb2.h"
-#include "dce_smb2_utils.h"
+#include "dce_smb1.h"
 
 using namespace snort;
-
-THREAD_LOCAL dce2SmbStats dce2_smb_stats;
-THREAD_LOCAL ProfileStats dce2_smb_pstat_main;
 
 //-------------------------------------------------------------------------
 // debug stuff
@@ -312,205 +295,27 @@ const char* get_smb_com_string(uint8_t b)
 { return smb_com_strings[b]; }
 #endif
 
-//-------------------------------------------------------------------------
-// class stuff
-//-------------------------------------------------------------------------
-
-class Dce2Smb : public Inspector
+Dce2Smb1SessionData::Dce2Smb1SessionData(const Packet* p,
+    const dce2SmbProtoConf* proto) : Dce2SmbSessionData(p, proto)
 {
-public:
-    Dce2Smb(const dce2SmbProtoConf&);
-    ~Dce2Smb() override;
-
-    void show(const SnortConfig*) const override;
-    void eval(Packet*) override;
-    void clear(Packet*) override;
-
-    StreamSplitter* get_splitter(bool c2s) override
-    { return new Dce2SmbSplitter(c2s); }
-
-    bool can_carve_files() const override
-    { return true; }
-
-private:
-    dce2SmbProtoConf config;
-};
-
-Dce2Smb::Dce2Smb(const dce2SmbProtoConf& pc)
-{
-    config = pc;
+    ssd = { };
+    ssd.max_outstanding_requests = 10;  // Until Negotiate/SessionSetupAndX
+    ssd.cli_data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
+    ssd.srv_data_state = DCE2_SMB_DATA_STATE__NETBIOS_HEADER;
+    ssd.pdu_state = DCE2_SMB_PDU_STATE__COMMAND;
+    ssd.uid = DCE2_SENTINEL;
+    ssd.tid = DCE2_SENTINEL;
+    ssd.ftracker.fid_v1 = DCE2_SENTINEL;
+    ssd.rtracker.mid = DCE2_SENTINEL;
+    ssd.dialect_index = dialect_index;
+    ssd.max_file_depth = max_file_depth;
+    ssd.sd = sd;
+    ssd.policy = policy;
+    debug_logf(dce_smb_trace, p, "smb1 session created\n");
 }
 
-Dce2Smb::~Dce2Smb()
+void Dce2Smb1SessionData::process()
 {
-    if (config.smb_invalid_shares)
-    {
-        DCE2_ListDestroy(config.smb_invalid_shares);
-    }
+    DCE2_Smb1Process(&ssd);
 }
-
-void Dce2Smb::show(const SnortConfig*) const
-{
-    print_dce2_smb_conf(config);
-}
-
-void Dce2Smb::eval(Packet* p)
-{
-    DCE2_SmbSsnData* dce2_smb_sess = nullptr;
-    DCE2_Smb2SsnData* dce2_smb2_sess = nullptr;
-    DCE2_SmbVersion smb_version = DCE2_SMB_VERSION_NULL;
-    Profile profile(dce2_smb_pstat_main);
-
-    assert(p->has_tcp_data());
-    assert(p->flow);
-
-    Dce2SmbFlowData *smb_flowdata = (Dce2SmbFlowData*)p->flow->get_flow_data(Dce2SmbFlowData::inspector_id);
-    if (smb_flowdata and smb_flowdata->dce2_smb_session_data)
-    {
-        smb_version = smb_flowdata->smb_version;
-        if (DCE2_SMB_VERSION_1 == smb_version)
-            dce2_smb_sess = (DCE2_SmbSsnData*)smb_flowdata->dce2_smb_session_data;
-        else
-            dce2_smb2_sess = (DCE2_Smb2SsnData*)smb_flowdata->dce2_smb_session_data;
-    }
-    else
-    {
-        smb_version = DCE2_Smb2Version(p);
-
-        if (DCE2_SMB_VERSION_1 == smb_version)
-        {
-            //1st packet of flow in smb1 session, create smb1 session and flowdata
-            dce2_smb_sess = dce2_create_new_smb_session(p, &config);
-            debug_logf(dce_smb_trace, p, "smb1 session created\n");
-        }
-        else if (DCE2_SMB_VERSION_2 == smb_version)
-        {
-            //1st packet of flow in smb2 session, create smb2 session and flowdata
-            dce2_smb2_sess = dce2_create_new_smb2_session(p, &config);
-            debug_logf(dce_smb_trace, p, "smb2 session created\n");
-        }
-        else
-        {
-            //smb_version is DCE2_SMB_VERSION_NULL
-            //This means there is no flow data and this is not an SMB packet
-            //if it is a TCP packet for smb data, the flow must have been
-            //already identified with version.
-            debug_logf(dce_smb_trace, p, "non-smb packet detected\n");
-            return;
-        }
-    }
-
-    //  By this time we must know the smb version, have correct smb session data and created flowdata
-    p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
-    dce2_detected = 0;
-    p->endianness = new DceEndianness();
-
-    if (DCE2_SMB_VERSION_1 == smb_version)
-    {
-        DCE2_Smb1Process(dce2_smb_sess);
-        if (!dce2_detected)
-            DCE2_Detect(&dce2_smb_sess->sd);
-    }
-    else
-    {
-        DCE2_Smb2Process(dce2_smb2_sess);
-        if (!dce2_detected)
-            DCE2_Detect(&dce2_smb2_sess->sd);
-    }
-
-    delete(p->endianness);
-    p->endianness = nullptr;
-}
-
-void Dce2Smb::clear(Packet* p)
-{
-    DCE2_SsnData* sd = get_dce2_session_data(p->flow);
-    if ( sd )
-        DCE2_ResetRopts(sd, p);
-}
-
-//-------------------------------------------------------------------------
-// api stuff
-//-------------------------------------------------------------------------
-
-static Module* mod_ctor()
-{
-    return new Dce2SmbModule;
-}
-
-static void mod_dtor(Module* m)
-{
-    delete m;
-}
-
-static void dce2_smb_init()
-{
-    Dce2SmbFlowData::init();
-    DCE2_SmbInitGlobals();
-    DCE2_SmbInitDeletePdu();
-    DceContextData::init(DCE2_TRANS_TYPE__SMB);
-}
-
-static void dce2_smb_thread_int()
-{
-    DCE2_SmbSessionCacheInit(session_cache_size);
-}
-
-static void dce_smb_thread_term()
-{
-    delete smb2_session_cache;
-}
-
-static size_t get_max_smb_session(dce2SmbProtoConf* config)
-{
-    size_t smb_sess_storage_req = (sizeof(DCE2_Smb2SessionTracker) +
-        sizeof(DCE2_Smb2TreeTracker) +  sizeof(DCE2_Smb2RequestTracker) +
-        (sizeof(DCE2_Smb2FileTracker) * SMB_AVG_FILES_PER_SESSION));
-
-    size_t max_smb_sess = DCE2_ScSmbMemcap(config);
-
-    return (max_smb_sess/smb_sess_storage_req);
-}
-
-static Inspector* dce2_smb_ctor(Module* m)
-{
-    Dce2SmbModule* mod = (Dce2SmbModule*)m;
-    dce2SmbProtoConf config;
-    mod->get_data(config);
-    session_cache_size = get_max_smb_session(&config);
-    return new Dce2Smb(config);
-}
-
-static void dce2_smb_dtor(Inspector* p)
-{
-    delete p;
-}
-
-const InspectApi dce2_smb_api =
-{
-    {
-        PT_INSPECTOR,
-        sizeof(InspectApi),
-        INSAPI_VERSION,
-        0,
-        API_RESERVED,
-        API_OPTIONS,
-        DCE2_SMB_NAME,
-        DCE2_SMB_HELP,
-        mod_ctor,
-        mod_dtor
-    },
-    IT_SERVICE,
-    PROTO_BIT__PDU,
-    nullptr,  // buffers
-    "netbios-ssn",
-    dce2_smb_init,
-    nullptr, // pterm
-    dce2_smb_thread_int, // tinit
-    dce_smb_thread_term, // tterm
-    dce2_smb_ctor,
-    dce2_smb_dtor,
-    nullptr, // ssn
-    nullptr  // reset
-};
 

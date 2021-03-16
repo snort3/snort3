@@ -28,7 +28,7 @@
 #include "utils/util.h"
 
 #include "dce_expected_session.h"
-#include "dce_smb.h"
+#include "dce_smb1.h"
 #include "dce_smb_module.h"
 #include "dce_smb_utils.h"
 #include "dce_tcp.h"

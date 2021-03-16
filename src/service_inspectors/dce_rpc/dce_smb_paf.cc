@@ -25,7 +25,7 @@
 
 #include "dce_smb_paf.h"
 
-#include "dce_smb.h"
+#include "dce_smb_common.h"
 
 namespace
 {
@@ -45,8 +45,8 @@ using namespace snort;
  *          junk states, header type must be Session Message.
  *
  *********************************************************************/
-static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk, const SmbNtHdr* nt_hdr,
-    uint32_t* nb_len)
+static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk,
+    const SmbNtHdr* nt_hdr, uint32_t* nb_len)
 {
     uint8_t type = (uint8_t)(nb_hdr >> 24);
     uint8_t bit = (uint8_t)((nb_hdr & 0x00ff0000) >> 16);
@@ -78,7 +78,7 @@ static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk, cons
     //See [MS-SMB] 2.1 Transport. There is no such limit for SMB2 or SMB3
     if (smb_id == DCE2_SMB_ID)
     {
-        if ((bit != 0x00) && (bit != 0x01))
+        if ((bit != 0x00) and (bit != 0x01))
             return false;
     }
     nbs_hdr = htonl(nb_hdr);
@@ -106,8 +106,8 @@ static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk, cons
  *          state 7 until this is the case.
  *
  *********************************************************************/
-static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, const uint8_t* data,
-    uint32_t len, uint32_t, uint32_t* fp)
+static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow,
+    const uint8_t* data, uint32_t len, uint32_t, uint32_t* fp)
 {
     uint32_t n = 0;
     StreamSplitter::Status ps = StreamSplitter::SEARCH;

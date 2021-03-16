@@ -32,6 +32,8 @@
 #include "dce_context_data.h"
 #include "dce_http_proxy_module.h"
 #include "dce_http_server_module.h"
+#include "dce_smb1.h"
+#include "dce_smb_common.h"
 #include "dce_smb_utils.h"
 #include "dce_tcp.h"
 #include "dce_udp.h"
@@ -141,6 +143,7 @@ bool dce2_paf_abort(DCE2_SsnData* sd)
 
 void DCE2_Detect(DCE2_SsnData* sd)
 {
+    if (!sd) return ;
     DceContextData::set_current_ropts(sd);
     if ( using_rpkt )
     {
