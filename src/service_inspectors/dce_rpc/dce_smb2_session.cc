@@ -105,9 +105,11 @@ void Dce2Smb2SessionTracker::process(uint16_t command, uint8_t command_type,
                 smb2_command_string[command]);
             tree = connect_tree(tree_id);
             if (!tree)
+            {
                 debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
                     "%s_REQ: insert tree tracker failed\n",
                     smb2_command_string[command]);
+            }
         }
     // fallthrough
     default:

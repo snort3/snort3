@@ -82,7 +82,9 @@ void Dce2Smb::eval(Packet* p)
         p->endianness = nullptr;
     }
     else
+    {
         debug_logf(dce_smb_trace, p, "non-smb packet detected\n");
+    }
 }
 
 void Dce2Smb::clear(Packet* p)
