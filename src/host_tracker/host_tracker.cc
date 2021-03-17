@@ -404,6 +404,8 @@ bool HostTracker::add_client_payload(HostClient& hc, AppId payload, size_t max_p
 
                     pld.second = true;
                     client.num_visible_payloads++;
+                    hc.payloads = client.payloads;
+                    strncpy(hc.version, client.version, INFO_SIZE);
                     return true;
                 }
                 if ( !invisible_swap_candidate and !pld.second )
@@ -416,6 +418,7 @@ bool HostTracker::add_client_payload(HostClient& hc, AppId payload, size_t max_p
                 invisible_swap_candidate->first = payload;
                 client.num_visible_payloads++;
                 hc.payloads = client.payloads;
+                strncpy(hc.version, client.version, INFO_SIZE);
                 return true;
             }
 

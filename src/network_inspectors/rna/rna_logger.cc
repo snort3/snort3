@@ -81,13 +81,34 @@ static inline void rna_logger_message(const RnaLoggerEvent& rle, const Packet* p
 
         if ( rle.hc )
         {
+            string payload_ids;
+
+            for ( const auto& pld : rle.hc->payloads )
+            {
+                if (pld.second)
+                    payload_ids += payload_ids.size() ? "," : "" + to_string(pld.first);
+            }
+
             if ( rle.hc->version[0] != '\0' )
-                debug_logf(rna_trace, p,
-                    "RNA client log: client %u, service %u, version %s\n",
-                    rle.hc->id, rle.hc->service, rle.hc->version);
+            {
+                if ( rle.hc->payloads.size() )
+                    debug_logf(rna_trace, p,
+                        "RNA client log: client %u, service %u, version %s, payloads: %s\n",
+                        rle.hc->id, rle.hc->service, rle.hc->version, payload_ids.c_str());
+                else
+                    debug_logf(rna_trace, p,
+                        "RNA client log: client %u, service %u, version %s\n",
+                        rle.hc->id, rle.hc->service, rle.hc->version);
+            }
             else
-                debug_logf(rna_trace, p, "RNA client log: client %u, service %u\n",
-                    rle.hc->id, rle.hc->service);
+            {
+                if ( rle.hc->payloads.size() )
+                    debug_logf(rna_trace, p, "RNA client log: client %u, service %u,"
+                        " payloads: %s\n", rle.hc->id, rle.hc->service, payload_ids.c_str());
+                else
+                    debug_logf(rna_trace, p, "RNA client log: client %u, service %u\n",
+                        rle.hc->id, rle.hc->service);
+            }
         }
         if ( rle.ha )
         {
