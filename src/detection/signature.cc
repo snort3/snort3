@@ -417,8 +417,13 @@ void dump_rule_meta(const SnortConfig* sc)
         const RuleTreeNode* rtn = otn->proto_nodes[0];
         const SigInfo& si = otn->sigInfo;
 
-        json.open();
+        if ( !rtn )
+        {
+            ghn = sc->otn_map->find_next();
+            continue;
+        }
 
+        json.open();
         dump_sid(json, si);
         dump_header(json, rtn->header);
         dump_info(json, si);
