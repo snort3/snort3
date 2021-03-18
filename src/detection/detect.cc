@@ -38,6 +38,7 @@
 #include "packet_io/active.h"
 #include "ports/port_object.h"
 #include "profiler/profiler_defs.h"
+#include "reputation/reputation_common.h"
 #include "sfip/sf_ipvar.h"
 #include "stream/stream.h"
 #include "utils/stats.h"
@@ -103,14 +104,11 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
 
     pc.total_alert_pkts++;
 
-#if 0
-    // FIXIT-RC DELETE THIS this should be a generic feature of otn
     if ( otn->sigInfo.gid != GID_REPUTATION )
     {
         /* Don't include IP Reputation events in count */
         pc.alert_pkts++;
     }
-#endif
 
     OutputSet* idx = head ? head->AlertList : nullptr;
     EventManager::call_alerters(idx, p, otn->sigInfo.message.c_str(), event);
