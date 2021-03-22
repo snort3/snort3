@@ -126,6 +126,7 @@ public:
     const char* get_tls_host() const;
     bool is_http_inspection_done() const;
     const char* get_netbios_name() const;
+    const char* get_netbios_domain() const;
 
     // For protocols such as HTTP2 which can have multiple streams within a single flow,
     // get_first_stream_* methods return the appids in the first stream seen in a packet.
@@ -166,6 +167,7 @@ private:
     ServiceAppDescriptor service;
     char* tls_host = nullptr;
     char* netbios_name = nullptr;
+    char* netbios_domain = nullptr;
     std::string session_id;
     bool user_logged_in = false;
 
@@ -182,6 +184,7 @@ private:
     void set_ss_application_ids(AppId client, AppId payload, AppidChangeBits& change_bits, Flow& flow);
     void set_application_ids_service(AppId service_id, AppidChangeBits& change_bits, Flow& flow);
     void set_netbios_name(AppidChangeBits& change_bits, const char* name);
+    void set_netbios_domain(AppidChangeBits& change_bits, const char* domain);
 
     AppIdHttpSession* get_hsession(uint32_t stream_index = 0) const;
 
@@ -190,6 +193,7 @@ private:
         delete_all_http_sessions();
         snort_free(tls_host);
         snort_free(netbios_name);
+        snort_free(netbios_domain);
         delete dsession;
     }
 

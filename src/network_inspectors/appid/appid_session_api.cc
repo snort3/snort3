@@ -313,6 +313,11 @@ const char* AppIdSessionApi::get_netbios_name() const
     return netbios_name;
 }
 
+const char* AppIdSessionApi::get_netbios_domain() const
+{
+    return netbios_domain;
+}
+
 void AppIdSessionApi::set_netbios_name(AppidChangeBits& change_bits, const char* name)
 {
     if (netbios_name)
@@ -323,6 +328,18 @@ void AppIdSessionApi::set_netbios_name(AppidChangeBits& change_bits, const char*
     }
     netbios_name = snort_strdup(name);
     change_bits.set(APPID_NETBIOS_NAME_BIT);
+}
+
+void AppIdSessionApi::set_netbios_domain(AppidChangeBits& change_bits, const char* domain)
+{
+    if (netbios_domain)
+    {
+        if (strcmp(netbios_domain, domain) == 0)
+            return;
+        snort_free(netbios_domain);
+    }
+    netbios_domain = snort_strdup(domain);
+    change_bits.set(APPID_NETBIOS_DOMAIN_BIT);
 }
 
 void AppIdSessionApi::set_ss_application_ids(AppId service_id, AppId client_id,

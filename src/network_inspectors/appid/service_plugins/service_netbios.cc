@@ -218,6 +218,7 @@ struct ServiceSMBTransactionHeader
 /* sc * 2 to get to the transaction name */
 
 #define SERVICE_SMB_STATUS_SUCCESS              0x00000000
+#define SERVICE_SMB_MORE_PROCESSING_REQUIRED    0xc0000016
 #define SERVICE_SMB_TRANSACTION_COMMAND         0x25
 #define SERVICE_SMB_COMMAND_SESSION_SETUP_ANDX_RESPONSE 0x73
 #define SERVICE_SMB_COMMAND_NEGOTIATE_PROTOCOL          0x72
@@ -316,11 +317,11 @@ static int netbios_validate_name_and_decode(const uint8_t** data,
     for (i=0; i<(NBNS_NAME_LEN/2); i++)
     {
         int j = 2 * i;
-        if (lbl_data->data[j] < 'A' || lbl_data->data[j] > 'Z')
+        if (lbl_data->data[j] < 'A' or lbl_data->data[j] > 'Z')
             return -1;
         name[i] = (uint8_t)(((uint8_t)(lbl_data->data[j] - 'A')) << 4);
         j++;
-        if (lbl_data->data[i] < 'A' || lbl_data->data[i] > 'Z')
+        if (lbl_data->data[i] < 'A' or lbl_data->data[i] > 'Z')
             return -1;
         name[i] |= (uint8_t)(lbl_data->data[j] - 'A');
     }
@@ -370,7 +371,7 @@ static int netbios_validate_name(const uint8_t** data,
     if (lbl_data->zero)
         return -1;
     for (i=0; i<NBNS_NAME_LEN; i++)
-        if (lbl_data->data[i] < 'A' || lbl_data->data[i] > 'Z')
+        if (lbl_data->data[i] < 'A' or lbl_data->data[i] > 'Z')
             return -1;
     return 0;
 }
@@ -385,7 +386,7 @@ static int netbios_validate_label(const uint8_t** data, const uint8_t* const end
     lbl = (const NBNSLabel*)(*data);
     *data += sizeof(NBNSLabel);
     tmp = ntohs(lbl->type);
-    if (tmp != NBNS_NB && tmp != NBNS_NBSTAT)
+    if (tmp != NBNS_NB and tmp != NBNS_NBSTAT)
         return -1;
     return 0;
 }
@@ -467,9 +468,9 @@ int NbnsServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (size < sizeof(NBNSHeader))
         goto fail;
     hdr = (const NBNSHeader*)data;
-    if ((hdr->Opcode > NBNS_OPCODE_QUERY &&
-        hdr->Opcode < NBNS_OPCODE_REGISTRATION) ||
-        (hdr->Opcode > NBNS_OPCODE_REFRESHALT &&
+    if ((hdr->Opcode > NBNS_OPCODE_QUERY and
+        hdr->Opcode < NBNS_OPCODE_REGISTRATION) or
+        (hdr->Opcode > NBNS_OPCODE_REFRESHALT and
         hdr->Opcode < NBNS_OPCODE_MHREGISTRATION))
     {
         goto fail;
@@ -574,7 +575,7 @@ static inline void smb_domain_skip_string(const uint8_t** data, uint16_t* size, 
 {
     if (unicode)
     {
-        if (*size != 0 && ((*offset) % 2))
+        if (*size != 0 and ((*offset) % 2))
         {
             (*offset)++;
             (*data)++;
@@ -614,8 +615,8 @@ static inline void smb_domain_skip_string(const uint8_t** data, uint16_t* size, 
     }
 }
 
-static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int,
-    AppIdSession& asd)
+static inline void smb_find_domain(const uint8_t* data, uint16_t size,
+    AppIdSession& asd, AppidChangeBits& change_bits)
 {
     const ServiceSMBHeader* smb;
     const ServiceSMBAndXResponse* resp;
@@ -631,7 +632,8 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
     if (size < sizeof(*smb) + sizeof(wc))
         return;
     smb = (const ServiceSMBHeader*)data;
-    if (smb->status != SERVICE_SMB_STATUS_SUCCESS)
+    if (smb->status != SERVICE_SMB_STATUS_SUCCESS and 
+        smb->status != SERVICE_SMB_MORE_PROCESSING_REQUIRED)
         return;
     if (!(smb->flags[0] & SERVICE_SMB_FLAGS_RESPONSE))
         return;
@@ -641,7 +643,7 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
     resp = (const ServiceSMBAndXResponse*)data;
     np = (const ServiceSMBNegotiateProtocolResponse*)data;
     wc = 2 * (uint16_t)*data;
-    offset = 1;
+    offset = 0;
     data++;
     size--;
     if (size < (wc + sizeof(byte_count)))
@@ -669,7 +671,7 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
             return;
         smb_domain_skip_string(&data, &byte_count, &offset, unicode);
         smb_domain_skip_string(&data, &byte_count, &offset, unicode);
-        if (byte_count != 0 && (offset % 2))
+        if (byte_count != 0 and (offset % 2))
         {
             data++;
             byte_count--;
@@ -682,7 +684,7 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
             capabilities = LETOHL_UNALIGNED(&np->capabilities);
             if (capabilities & SERVICE_SMB_CAPABILITIES_EXTENDED_SECURITY)
                 return;
-            unicode = (capabilities & SERVICE_SMB_CAPABILITIES_UNICODE) || unicode;
+            unicode = (capabilities & SERVICE_SMB_CAPABILITIES_UNICODE) or unicode;
         }
         else if (wc != 26)
             return;
@@ -719,11 +721,12 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
                 data++;
             }
         }
-        if (!found && byte_count == 1 && *data == 0)
+        if (!found and byte_count == 1 and *data == 0)
         {
             byte_count--;
         }
-        if (byte_count && smb->command != SERVICE_SMB_COMMAND_NEGOTIATE_PROTOCOL)
+        if (byte_count and smb->command != SERVICE_SMB_COMMAND_NEGOTIATE_PROTOCOL and
+            smb->command != SERVICE_SMB_COMMAND_SESSION_SETUP_ANDX_RESPONSE)
             return;
     }
     else
@@ -747,12 +750,12 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size, const int
                 data++;
             }
         }
-        if (byte_count && smb->command != SERVICE_SMB_COMMAND_NEGOTIATE_PROTOCOL)
+        if (byte_count and smb->command != SERVICE_SMB_COMMAND_NEGOTIATE_PROTOCOL)
             return;
     }
 
-    if ( pos && (!asd.netbios_domain) )
-        asd.netbios_domain = snort_strdup(domain);
+    if (pos)
+        asd.set_netbios_domain(change_bits, (const char *)domain);
 }
 
 NbssServiceDetector::NbssServiceDetector(ServiceDiscovery* sd)
@@ -823,16 +826,16 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
             switch (hdr->type)
             {
             case NBSS_TYPE_RESP_POSITIVE:
-                if (hdr->flags || hdr->length)
+                if (hdr->flags or hdr->length)
                     goto fail;
                 nd->state = NBSS_STATE_FLOW;
                 break;
             case NBSS_TYPE_RESP_NEGATIVE:
-                if (hdr->flags || ntohs(hdr->length) != 1)
+                if (hdr->flags or ntohs(hdr->length) != 1)
                     goto fail;
                 if (data >= end)
                     goto fail;
-                if (*data < 0x80 || (*data > 0x83 && *data < 0x8F) || *data > 0x8F)
+                if (*data < 0x80 or (*data > 0x83 and *data < 0x8F) or *data > 0x8F)
                     goto fail;
                 data++;
                 break;
@@ -842,8 +845,8 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
                 nd->length = ((uint32_t)(hdr->flags & 0x01)) << 16;
                 nd->length |= (uint32_t)ntohs(hdr->length);
                 tmp = end - data;
-                if (tmp >= sizeof(NB_SMB_BANNER) &&
-                    nd->length >= sizeof(NB_SMB_BANNER) &&
+                if (tmp >= sizeof(NB_SMB_BANNER) and
+                    nd->length >= sizeof(NB_SMB_BANNER) and
                     !memcmp(data, NB_SMB_BANNER, sizeof(NB_SMB_BANNER)))
                 {
                     if (nd->serviceAppId != APP_ID_DCE_RPC)
@@ -854,11 +857,11 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
                     if (nd->length <= tmp)
                     {
                         smb_find_domain(data + sizeof(NB_SMB_BANNER),
-                            nd->length - sizeof(NB_SMB_BANNER), dir, args.asd);
+                            nd->length - sizeof(NB_SMB_BANNER), args.asd, args.change_bits);
                     }
                 }
-                else if (tmp >= 4 && nd->length >= 4 &&
-                    !(*((const uint32_t*)data)) &&
+                else if (tmp >= 4 and nd->length >= 4 and
+                    !(*((const uint32_t*)data)) and
                     dcerpc_validate(data+4, ((int)std::min(tmp, nd->length)) - 4) > 0)
                 {
                     nd->serviceAppId = APP_ID_DCE_RPC;
@@ -879,7 +882,7 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
                 }
                 break;
             case NBSS_TYPE_RESP_RETARGET:
-                if (hdr->flags || ntohs(hdr->length) != 6)
+                if (hdr->flags or ntohs(hdr->length) != 6)
                     goto fail;
                 if (end - data < 6)
                     goto fail;
@@ -897,7 +900,7 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
             switch (hdr->type)
             {
             case NBSS_TYPE_KEEP_ALIVE:
-                if (hdr->flags || hdr->length)
+                if (hdr->flags or hdr->length)
                     goto fail;
                 break;
             case NBSS_TYPE_MESSAGE:
@@ -906,8 +909,8 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
                 nd->length = ((uint32_t)(hdr->flags & 0x01)) << 16;
                 nd->length += (uint32_t)ntohs(hdr->length);
                 tmp = end - data;
-                if (tmp >= sizeof(NB_SMB_BANNER) &&
-                    nd->length >= sizeof(NB_SMB_BANNER) &&
+                if (tmp >= sizeof(NB_SMB_BANNER) and
+                    nd->length >= sizeof(NB_SMB_BANNER) and
                     !memcmp(data, NB_SMB_BANNER, sizeof(NB_SMB_BANNER)))
                 {
                     if (nd->serviceAppId != APP_ID_DCE_RPC)
@@ -916,11 +919,12 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
                     }
                     if (nd->length <= tmp)
                     {
-                        smb_find_domain(data + sizeof(NB_SMB_BANNER), nd->length, dir, args.asd);
+                        smb_find_domain(data + sizeof(NB_SMB_BANNER), nd->length, args.asd,
+                            args.change_bits);
                     }
                 }
-                else if (tmp >= 4 && nd->length >= 4 &&
-                    !(*((const uint32_t*)data)) &&
+                else if (tmp >= 4 and nd->length >= 4 and
+                    !(*((const uint32_t*)data)) and
                     !(dcerpc_validate(data+4, ((int)std::min(tmp, nd->length)) - 4) > 0))
                 {
                     nd->serviceAppId = APP_ID_DCE_RPC;
@@ -1045,7 +1049,7 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
     data += sizeof(NBDgmHeader);
     if (hdr->zero)
         goto fail;
-    if (!hdr->first || hdr->more)
+    if (!hdr->first or hdr->more)
         goto fail;
 
     switch (hdr->type)
@@ -1072,7 +1076,7 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto fail;
         if (data >= end)
             goto fail;
-        if (end-data >= (int)sizeof(NB_SMB_BANNER) &&
+        if (end-data >= (int)sizeof(NB_SMB_BANNER) and
             !memcmp(data, NB_SMB_BANNER, sizeof(NB_SMB_BANNER)))
         {
             if (!args.asd.is_service_detected())
@@ -1103,7 +1107,7 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
                 goto not_mailslot;
             data += sizeof(mailslot);
             browser = (const ServiceSMBBrowserHeader*)data;
-            if (browser->command != SERVICE_SMB_MAILSLOT_HOST &&
+            if (browser->command != SERVICE_SMB_MAILSLOT_HOST and
                 browser->command != SERVICE_SMB_MAILSLOT_LOCAL_MASTER)
             {
                 goto not_mailslot;
@@ -1123,7 +1127,7 @@ not_mailslot:
         data += sizeof(NBDgmError);
         if (end != data)
             goto fail;
-        if (err->code < NBDGM_ERROR_CODE_MIN ||
+        if (err->code < NBDGM_ERROR_CODE_MIN or
             err->code > NBDGM_ERROR_CODE_MAX)
         {
             goto fail;

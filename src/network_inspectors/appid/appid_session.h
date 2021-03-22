@@ -277,8 +277,6 @@ public:
     std::map<std::string, ClientDetector*> client_candidates;
     bool tried_reverse_service = false;
 
-    char* netbios_domain = nullptr;
-
     TlsSession* tsession = nullptr;
     unsigned scan_flags = 0;
     ThirdPartyAppIdSession* tpsession = nullptr;
@@ -565,6 +563,11 @@ public:
     void set_netbios_name(AppidChangeBits& change_bits, const char *name)
     {
         api.set_netbios_name(change_bits, name);
+    }
+
+    void set_netbios_domain(AppidChangeBits& change_bits, const char *domain)
+    {
+        api.set_netbios_domain(change_bits, domain);
     }
 
     OdpContext& get_odp_ctxt() const

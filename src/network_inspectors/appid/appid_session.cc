@@ -646,8 +646,6 @@ void AppIdSession::delete_session_data(bool free_api)
     api.client.reset();
     api.payload.reset();
 
-    snort_free(netbios_domain);
-
     if (tsession)
         delete tsession;
 
@@ -908,7 +906,6 @@ void AppIdSession::set_application_ids_service(AppId service_id, AppidChangeBits
 void AppIdSession::reset_session_data(AppidChangeBits& change_bits)
 {
     delete_session_data();
-    netbios_domain = nullptr;
     api.hsessions.clear();
 
     tp_payload_app_id = APP_ID_UNKNOWN;
