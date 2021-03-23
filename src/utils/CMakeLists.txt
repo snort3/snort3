@@ -15,18 +15,28 @@ set( UTIL_INCLUDES
     util.h
     util_ber.h
     util_cstring.h
-    util_jsnorm.h
     util_unfold.h
     util_utf.h
+)
+
+set (FLEX_EXECUTABLE flex++)
+
+FLEX_TARGET ( js_tokenizer ${CMAKE_CURRENT_SOURCE_DIR}/js_tokenizer.l
+    ${CMAKE_CURRENT_BINARY_DIR}/js_tokenizer.cc
+    COMPILE_FLAGS -Ca
 )
 
 add_library ( utils OBJECT
     ${UTIL_INCLUDES}
     ${SNPRINTF_SOURCES}
+    ${FLEX_js_tokenizer_OUTPUTS}
     boyer_moore.cc
     dnet_header.h
     dyn_array.cc
     dyn_array.h
+    js_normalizer.cc
+    js_normalizer.h
+    js_tokenizer.h
     kmap.cc
     segment_mem.cc
     sflsq.cc
@@ -36,6 +46,7 @@ add_library ( utils OBJECT
     util_ber.cc
     util_cstring.cc
     util_jsnorm.cc
+    util_jsnorm.h
     util_net.cc
     util_net.h
     util_unfold.cc

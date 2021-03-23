@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 1998-2013 Sourcefire, Inc.
+// Copyright (C) 2021-2021 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,32 +15,28 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// util_jsnorm.h author Bhagyashree Bantwal <bbantwal@sourcefire.com>
+// js_normalizer.cc author Oleksandr Serhiienko <oserhiie@cisco.com>
 
-#ifndef UTIL_JSNORM_H
-#define UTIL_JSNORM_H
-
-// Javascript Normalization
-
-#include "main/snort_types.h"
-
-namespace snort
-{
-#define ALERT_SPACES_EXCEEDED   0x1
-#define ALERT_LEVELS_EXCEEDED   0x2
-#define ALERT_MIXED_ENCODINGS   0x4
-
-#define MAX_ALLOWED_OBFUSCATION 1
-
-struct JSState
-{
-    int allowed_spaces;
-    int allowed_levels;
-    uint16_t alerts;
-};
-
-int JSNormalizeDecode(
-    const char*, uint16_t, char*, uint16_t destlen, const char**, int*, JSState*, uint8_t*);
-}
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
+
+#include "js_normalizer.h"
+
+#include <FlexLexer.h>
+
+#include "js_tokenizer.h"
+
+using namespace snort;
+
+int JSNormalizer::normalize(const char* srcbuf, uint16_t srclen, char* dstbuf, uint16_t dstlen,
+        const char** ptr, int* bytes_copied, int norm_depth)
+{
+    std::stringstream in, out;
+
+    in.rdbuf()->pubsetbuf(const_cast<char*>(srcbuf), (norm_depth >= srclen) ? srclen : norm_depth);
+    JSTokenizer tokenizer(in, out, dstbuf, dstlen, ptr, bytes_copied);
+
+    return tokenizer.yylex();
+}
 

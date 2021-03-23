@@ -23,28 +23,85 @@
 
 #include "http_js_norm.h"
 
-#include "utils/util_jsnorm.h"
+#include "utils/js_normalizer.h"
 #include "utils/safec.h"
+#include "utils/util_jsnorm.h"
 
 #include "http_enum.h"
 
 using namespace HttpEnums;
 using namespace snort;
 
-HttpJsNorm::HttpJsNorm(int max_javascript_whitespaces_, const HttpParaList::UriParam& uri_param_) :
-    max_javascript_whitespaces(max_javascript_whitespaces_), uri_param(uri_param_),
-    javascript_search_mpse(nullptr), htmltype_search_mpse(nullptr) {}
+class JsNormBase
+{
+public:
+    virtual ~JsNormBase() = default;
+
+    virtual int normalize(const char*, uint16_t, char*, uint16_t, const char**, int*, JSState*,
+    uint8_t*) = 0;
+
+};
+
+class UtilJsNorm : public JsNormBase
+{
+public:
+    UtilJsNorm() : JsNormBase() {}
+
+protected:
+    virtual int normalize(const char* src, uint16_t srclen, char* dst, uint16_t destlen,
+        const char** ptr, int* bytes_copied, JSState* js, uint8_t* iis_unicode_map) override
+    {
+        return JSNormalizeDecode(src, srclen, dst, destlen, ptr, bytes_copied, js, iis_unicode_map);
+    }
+
+};
+
+class JsNorm : public JsNormBase
+{
+public:
+    JsNorm(int normalization_depth)
+        : JsNormBase(),
+          norm_depth(normalization_depth)
+    {}
+
+protected:
+    virtual int normalize(const char* src, uint16_t srclen, char* dst, uint16_t destlen,
+        const char** ptr, int* bytes_copied, JSState*, uint8_t*) override
+    {
+        return JSNormalizer::normalize(src, srclen, dst, destlen, ptr, bytes_copied, norm_depth);
+    }
+
+private:
+    int norm_depth;
+
+};
+
+HttpJsNorm::HttpJsNorm(int max_javascript_whitespaces_, const HttpParaList::UriParam& uri_param_,
+    int normalization_depth) :
+    normalizer(nullptr), max_javascript_whitespaces(max_javascript_whitespaces_),
+    uri_param(uri_param_), normalization_depth(normalization_depth),
+    javascript_search_mpse(nullptr), htmltype_search_mpse(nullptr)
+{}
 
 HttpJsNorm::~HttpJsNorm()
 {
+    delete normalizer;
     delete javascript_search_mpse;
     delete htmltype_search_mpse;
 }
 
 void HttpJsNorm::configure()
 {
-    if ( javascript_search_mpse || htmltype_search_mpse )
+    if ( configure_once )
         return;
+
+    // Based on this option configuration, default or whitespace normalizer will be initialized
+    // normalization_depth = 0 means to initialize default normalizer
+    // normalization_depth != 0 means to initialize whitespace normalizer with specified depth
+    if ( normalization_depth != 0 )
+        normalizer = new JsNorm(normalization_depth);
+    else
+        normalizer = new UtilJsNorm;
 
     javascript_search_mpse = new SearchTool;
     htmltype_search_mpse = new SearchTool;
@@ -72,6 +129,8 @@ void HttpJsNorm::configure()
         htmltype_search_mpse->add(tmp->name, tmp->name_len, tmp->search_id);
     }
     htmltype_search_mpse->prep();
+
+    configure_once = true;
 }
 
 void HttpJsNorm::normalize(const Field& input, Field& output, HttpInfractions* infractions,
@@ -100,7 +159,7 @@ void HttpJsNorm::normalize(const Field& input, Field& output, HttpInfractions* i
             const char* js_start = ptr + mindex;
             const char* const angle_bracket =
                 (const char*)SnortStrnStr(js_start, end - js_start, ">");
-            if (angle_bracket == nullptr)
+            if (angle_bracket == nullptr || (end - angle_bracket) == 0)
                 break;
 
             bool type_js = false;
@@ -110,7 +169,7 @@ void HttpJsNorm::normalize(const Field& input, Field& output, HttpInfractions* i
                 const int script_found = htmltype_search_mpse->find(
                     js_start, (angle_bracket-js_start), search_html_found, false, &mid);
 
-                js_start = angle_bracket;
+                js_start = angle_bracket + 1;
                 if (script_found > 0)
                 {
                     switch (mid)
@@ -144,7 +203,7 @@ void HttpJsNorm::normalize(const Field& input, Field& output, HttpInfractions* i
             if (!type_js)
                 continue;
 
-            JSNormalizeDecode(js_start, (uint16_t)(end-js_start), (char*)buffer+index,
+            normalizer->normalize(js_start, (uint16_t)(end-js_start), (char*)buffer+index,
                 (uint16_t)(input.length() - index), &ptr, &bytes_copied, &js,
                 uri_param.iis_unicode ? uri_param.unicode_map : nullptr);
 

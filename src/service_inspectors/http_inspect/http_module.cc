@@ -89,6 +89,9 @@ const Parameter HttpModule::http_params[] =
     { "normalize_javascript", Parameter::PT_BOOL, nullptr, "false",
       "normalize JavaScript in response bodies" },
 
+    { "normalization_depth", Parameter::PT_INT, "-1:65535", "0",
+      "number of input JavaScript bytes to normalize" },
+
     { "max_javascript_whitespaces", Parameter::PT_INT, "1:65535", "200",
       "maximum consecutive whitespaces allowed within the JavaScript obfuscated data" },
 
@@ -213,6 +216,11 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("normalize_javascript"))
     {
         params->js_norm_param.normalize_javascript = val.get_bool();
+    }
+    else if (val.is("normalization_depth"))
+    {
+        int v = val.get_int32();
+        params->js_norm_param.normalization_depth = (v == -1) ? 65535 : v;
     }
     else if (val.is("max_javascript_whitespaces"))
     {
@@ -393,7 +401,8 @@ bool HttpModule::end(const char*, int, SnortConfig*)
     if (params->js_norm_param.normalize_javascript)
     {
         params->js_norm_param.js_norm =
-            new HttpJsNorm(params->js_norm_param.max_javascript_whitespaces, params->uri_param);
+            new HttpJsNorm(params->js_norm_param.max_javascript_whitespaces, params->uri_param,
+            params->js_norm_param.normalization_depth);
     }
 
     prepare_http_header_list(params);

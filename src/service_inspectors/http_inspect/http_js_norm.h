@@ -32,15 +32,22 @@
 // HttpJsNorm class
 //-------------------------------------------------------------------------
 
+class JsNormBase;
+
 class HttpJsNorm
 {
 public:
-    HttpJsNorm(int max_javascript_whitespaces_, const HttpParaList::UriParam& uri_param_);
+    HttpJsNorm(int max_javascript_whitespaces_, const HttpParaList::UriParam& uri_param_,
+        int normalization_depth);
     ~HttpJsNorm();
     void normalize(const Field& input, Field& output, HttpInfractions* infractions,
         HttpEventGen* events) const;
     void configure();
 private:
+    bool configure_once = false;
+
+    JsNormBase* normalizer;
+
     enum JsSearchId { JS_JAVASCRIPT };
     enum HtmlSearchId { HTML_JS, HTML_EMA, HTML_VB };
 
@@ -49,6 +56,7 @@ private:
 
     const int max_javascript_whitespaces;
     const HttpParaList::UriParam& uri_param;
+    const int normalization_depth;
 
     snort::SearchTool* javascript_search_mpse;
     snort::SearchTool* htmltype_search_mpse;
