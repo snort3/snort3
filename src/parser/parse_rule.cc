@@ -1382,7 +1382,9 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
 
     validate_services(sc, otn);
     OtnLookupAdd(sc->otn_map, otn);
-    parse_rule_finish_portlist(sc, new_rtn, otn);
+
+    if ( FinishPortListRule(sc->port_tables, new_rtn, otn, sc->fast_pattern_config) )
+        ParseError("Failed to finish a port list rule.");
 
     if ( s_capture )
     {
@@ -1393,9 +1395,34 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
     ClearIpsOptionsVars();
 }
 
-void parse_rule_finish_portlist(SnortConfig* sc, RuleTreeNode* rtn, OptTreeNode* otn)
+void parse_rule_process_rtn(SnortConfig* sc, RuleTreeNode* rtn, OptTreeNode* otn)
 {
+    if (rtn->sip->head && rtn->sip->head->flags & SFIP_ANY)
+        rtn->flags |= RuleTreeNode::ANY_SRC_IP;
+    else
+        rtn->flags &= ~RuleTreeNode::ANY_SRC_IP;
+
+    if (rtn->dip->head && rtn->dip->head->flags & SFIP_ANY)
+        rtn->flags |= RuleTreeNode::ANY_DST_IP;
+    else
+        rtn->flags &= ~RuleTreeNode::ANY_DST_IP;
+
+    ValidateIPList(rtn->sip, rtn->sip->name);
+    ValidateIPList(rtn->dip, rtn->dip->name);
+
+    if ( PortObjectHasAny(rtn->src_portobject) )
+        rtn->flags |= RuleTreeNode::ANY_SRC_PORT;
+    else
+        rtn->flags &= ~RuleTreeNode::ANY_SRC_PORT;
+
+    if ( PortObjectHasAny(rtn->dst_portobject) )
+        rtn->flags |= RuleTreeNode::ANY_DST_PORT;
+    else
+        rtn->flags &= ~RuleTreeNode::ANY_DST_PORT;
+
+    head_count++;
+    SetupRTNFuncList(rtn);
+
     if ( FinishPortListRule(sc->port_tables, rtn, otn, sc->fast_pattern_config) )
-        ParseError("%u:%u rule failed to finish a port list.",
-            otn->sigInfo.gid, otn->sigInfo.sid);
+        ParseError("%u:%u rule failed to finish a port list.", otn->sigInfo.gid, otn->sigInfo.sid);
 }

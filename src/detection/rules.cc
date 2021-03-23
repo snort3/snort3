@@ -100,22 +100,13 @@ void RuleStateMap::apply(
     if ( policy )
         policy->rules_shared++;
 
-    RuleTreeNode* t_rtn = dup_rtn(b_rtn, policy);
+    RuleTreeNode* t_rtn = dup_rtn(sc, otn, b_rtn, policy);
     update_rtn(t_rtn, s);
-
-    auto bspo = b_rtn->src_portobject;
-    auto bdpo = b_rtn->dst_portobject;
-    auto tspo = t_rtn->src_portobject;
-    auto tdpo = t_rtn->dst_portobject;
-
-    if ( (bspo and tspo and !PortObjectEqual(bspo, tspo)) or
-         (bdpo and tdpo and !PortObjectEqual(bdpo, tdpo)) )
-        parse_rule_finish_portlist(sc, t_rtn, otn);
-
     addRtnToOtn(sc, otn, t_rtn, ips_num);
 }
 
-RuleTreeNode* RuleStateMap::dup_rtn(RuleTreeNode* rtn, IpsPolicy* policy)
+RuleTreeNode* RuleStateMap::dup_rtn(
+    SnortConfig* sc, OptTreeNode* otn, RuleTreeNode* rtn, IpsPolicy* policy)
 {
     RuleTreeNode* ret = new RuleTreeNode(*rtn);
 
@@ -132,15 +123,19 @@ RuleTreeNode* RuleStateMap::dup_rtn(RuleTreeNode* rtn, IpsPolicy* policy)
     ret->sip = sip
         ? sfvar_create_alias(sip, sip->name)
         : sfvar_deep_copy(rtn->sip);
-
     ret->dip = dip
         ? sfvar_create_alias(dip, dip->name)
         : sfvar_deep_copy(rtn->dip);
-
     ret->src_portobject = spo ? spo : ret->src_portobject;
     ret->dst_portobject = dpo ? dpo : ret->dst_portobject;
-
     ret->otnRefCount = 0;
+
+    if ( sip or dip or spo or dpo )
+    {
+        ret->rule_func = nullptr;
+        parse_rule_process_rtn(sc, ret, otn);
+        return ret;
+    }
 
     RuleFpList* from = rtn->rule_func;
 
