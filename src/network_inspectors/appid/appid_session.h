@@ -65,7 +65,6 @@ const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
 #define MAX_SFTP_PACKET_COUNT   55
 
 #define APPID_SESSION_DATA_NONE                  0
-#define APPID_SESSION_DATA_SMB_DATA              4
 #define APPID_SESSION_DATA_SERVICE_MODSTATE_BIT  0x20000000
 #define APPID_SESSION_DATA_CLIENT_MODSTATE_BIT   0x40000000
 #define APPID_SESSION_DATA_DETECTOR_MODSTATE_BIT 0x80000000

@@ -147,6 +147,10 @@ public:
     std::string dhcp55;
     std::string dhcp60;
 
+    int16_t smb_major;
+    int16_t smb_minor;
+    uint32_t smb_flags;
+
     void clear()
     {
         fpid = 0;
@@ -165,6 +169,9 @@ public:
         device.clear();
         dhcp55.clear();
         dhcp60.clear();
+        smb_major = 0;
+        smb_minor = 0;
+        smb_flags=0;
     }
 };
 

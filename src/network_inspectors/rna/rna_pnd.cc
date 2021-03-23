@@ -37,6 +37,7 @@
 #include "protocols/protocol_ids.h"
 
 #include "rna_app_discovery.h"
+#include "rna_fingerprint_smb.h"
 #include "rna_fingerprint_tcp.h"
 #include "rna_fingerprint_udp.h"
 #include "rna_flow.h"
@@ -341,6 +342,38 @@ void RnaPnd::add_dhcp_info(DataEvent& event)
     logger.log(RNA_EVENT_CHANGE, CHANGE_FULL_DHCP_INFO, p, &ht,
         (const struct in6_addr*) leased_ip.get_ip6_ptr(), src_mac,
         lease, net_mask, (const struct in6_addr*) router_ip.get_ip6_ptr());
+}
+
+void RnaPnd::analyze_smb_fingerprint(DataEvent& event)
+{
+    const SmbFpProcessor* processor = get_smb_fp_processor();
+    if (!processor)
+        return;
+
+    const Packet* p = event.get_packet();
+    RNAFlow* rna_flow = (RNAFlow*) p->flow->get_flow_data(RNAFlow::inspector_id);
+    if ( !rna_flow )
+        return;
+
+    RnaTracker rt = rna_flow->get_tracker(p, filter);
+    if ( !rt or !rt->is_visible() )
+        return;
+
+    const FpSMBDataEvent& fp_smb_data_event = static_cast<FpSMBDataEvent&>(event);
+    unsigned major = fp_smb_data_event.get_fp_smb_major();
+    unsigned minor = fp_smb_data_event.get_fp_smb_minor();
+    uint32_t flags = fp_smb_data_event.get_fp_smb_flags();
+
+    const SmbFingerprint* fp = processor->find({major, minor, flags});
+
+    if ( fp && rt->add_smb_fingerprint(fp->fpid) )
+    {
+        const auto& src_ip = p->ptrs.ip_api.get_src();
+        const auto& src_ip_ptr = (const struct in6_addr*) src_ip->get_ip6_ptr();
+        const auto& src_mac = layer::get_eth_layer(p)->ether_src;
+
+        logger.log(RNA_EVENT_NEW, NEW_OS, p, &rt, src_ip_ptr, src_mac, fp, packet_time());
+    }
 }
 
 inline void RnaPnd::update_vlan(const Packet* p, HostTrackerMac& hm)
@@ -956,4 +989,5 @@ TEST_CASE("RNA pnd", "[non-ip]")
         CHECK(is_eligible_packet(&p) == true);
     }
 }
+
 #endif

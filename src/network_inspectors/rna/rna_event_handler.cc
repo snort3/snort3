@@ -24,6 +24,7 @@
 
 #include "rna_event_handler.h"
 #include "pub_sub/dhcp_events.h"
+#include "pub_sub/smb_events.h"
 
 using namespace snort;
 
@@ -117,4 +118,11 @@ void RnaDHCPDataEventHandler::handle(DataEvent& event, Flow*)
     Profile profile(rna_perf_stats);
     ++rna_stats.dhcp_data;
     pnd.analyze_dhcp_fingerprint(event);
+}
+
+void RnaFpSMBEventHandler::handle(DataEvent& event, Flow*)
+{
+    Profile profile(rna_perf_stats);
+    ++rna_stats.smb;
+    pnd.analyze_smb_fingerprint(event);
 }

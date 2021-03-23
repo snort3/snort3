@@ -144,4 +144,13 @@ private:
     RnaPnd& pnd;
 };
 
+class RnaFpSMBEventHandler : public snort::DataHandler
+{
+public:
+    RnaFpSMBEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
+    void handle(snort::DataEvent&, snort::Flow*) override;
+private:
+    RnaPnd& pnd;
+};
+
 #endif

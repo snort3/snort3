@@ -41,6 +41,7 @@
 #include "utils/util.h"
 
 #include "data_purge_cmd.h"
+#include "rna_fingerprint_smb.h"
 #include "rna_fingerprint_tcp.h"
 #include "rna_fingerprint_ua.h"
 #include "rna_fingerprint_udp.h"
@@ -326,6 +327,15 @@ static const Parameter rna_fp_params[] =
     { "dhcp60", Parameter::PT_STRING, nullptr, nullptr,
       "dhcp option 60 values" },
 
+    { "major", Parameter::PT_INT, "0:max31", nullptr,
+      "smb major version" },
+
+    { "minor", Parameter::PT_INT, "0:max31", nullptr,
+      "smb minor version" },
+
+    { "flags", Parameter::PT_INT, "0:max32", nullptr,
+      "smb flags" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -352,6 +362,9 @@ static const Parameter rna_params[] =
     { "udp_fingerprints", Parameter::PT_LIST, rna_fp_params, nullptr,
       "list of udp fingerprints" },
 
+    { "smb_fingerprints", Parameter::PT_LIST, rna_fp_params, nullptr,
+      "list of smb fingerprints" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -371,6 +384,7 @@ static const PegInfo rna_pegs[] =
     { CountType::SUM, "change_host_update", "count number of change host update events" },
     { CountType::SUM, "dhcp_data", "count of DHCP data events received" },
     { CountType::SUM, "dhcp_info", "count of new DHCP lease events received" },
+    { CountType::SUM, "smb", "count of new SMB events received" },
     { CountType::END, nullptr, nullptr},
 };
 
@@ -418,6 +432,12 @@ bool RnaModule::begin(const char* fqn, int, SnortConfig*)
         if (!mod_conf->udp_processor)
             mod_conf->udp_processor = new UdpFpProcessor;
     }
+    else if (!strcmp(fqn, "rna.smb_fingerprints"))
+    {
+        fingerprint.clear();
+        if (!mod_conf->smb_processor)
+            mod_conf->smb_processor = new SmbFpProcessor;
+    }
 
     return true;
 }
@@ -437,7 +457,8 @@ bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
         dump_file = snort_strdup(v.get_string());
     }
     else if ( fqn and ( strstr(fqn, "rna.tcp_fingerprints") or
-        strstr(fqn, "rna.ua_fingerprints") or strstr(fqn, "rna.udp_fingerprints") ) )
+        strstr(fqn, "rna.ua_fingerprints") or strstr(fqn, "rna.udp_fingerprints")
+        or strstr(fqn, "rna.smb_fingerprints") ) )
     {
         if (v.is("fpid"))
             fingerprint.fpid = v.get_uint32();
@@ -478,6 +499,12 @@ bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
             fingerprint.dhcp55 = v.get_string();
         else if (v.is("dhcp60"))
             fingerprint.dhcp60 = v.get_string();
+        else if (v.is("major"))
+            fingerprint.smb_major = v.get_int16();
+        else if (v.is("minor"))
+            fingerprint.smb_minor = v.get_int16();
+        else if (v.is("flags"))
+            fingerprint.smb_flags = v.get_uint32();
         else
             return false;
     }
@@ -510,6 +537,7 @@ bool RnaModule::end(const char* fqn, int index, SnortConfig* sc)
 
         if ( mod_conf->ua_processor )
             mod_conf->ua_processor->make_mpse(sc);
+
     }
 
     if ( index > 0 and mod_conf->tcp_processor and !strcmp(fqn, "rna.tcp_fingerprints") )
@@ -527,6 +555,11 @@ bool RnaModule::end(const char* fqn, int index, SnortConfig* sc)
     else if ( index > 0 and mod_conf->udp_processor and !strcmp(fqn, "rna.udp_fingerprints") )
     {
         mod_conf->udp_processor->push(fingerprint);
+        fingerprint.clear();
+    }
+    else if ( index > 0 and mod_conf->smb_processor and !strcmp(fqn, "rna.smb_fingerprints") )
+    {
+        mod_conf->smb_processor->push(fingerprint);
         fingerprint.clear();
     }
 
@@ -607,7 +640,7 @@ bool RnaModule::is_valid_fqn(const char* fqn) const
 {
     return !strcmp(fqn, RNA_NAME) or !strcmp(fqn, "rna.tcp_fingerprints") or
         !strcmp(fqn, "rna.ua_fingerprints") or !strcmp(fqn, "rna.ua_fingerprints.user_agent") or
-        !strcmp(fqn, "rna.udp_fingerprints");
+        !strcmp(fqn, "rna.udp_fingerprints") or !strcmp(fqn, "rna.smb_fingerprints");
 }
 
 

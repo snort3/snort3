@@ -31,6 +31,7 @@
 #include "protocols/vlan.h"
 #include "pub_sub/appid_events.h"
 #include "pub_sub/dhcp_events.h"
+#include "pub_sub/smb_events.h"
 #include "sfip/sf_ip.h"
 
 #include "rna_config.h"
@@ -128,6 +129,7 @@ public:
     void analyze_flow_udp(const snort::Packet*);
     void analyze_dhcp_fingerprint(snort::DataEvent&);
     void add_dhcp_info(snort::DataEvent&);
+    void analyze_smb_fingerprint(snort::DataEvent&);
 
     // generate change event for all hosts in the ip cache
     void generate_change_host_update();

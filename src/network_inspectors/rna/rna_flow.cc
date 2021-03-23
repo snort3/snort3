@@ -24,7 +24,13 @@
 
 #include "rna_flow.h"
 
+#include "helpers/discovery_filter.h"
 #include "host_tracker/host_cache.h"
+#include "protocols/packet.h"
+
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
 
 using namespace snort;
 using namespace std;
@@ -80,6 +86,19 @@ RnaTracker RNAFlow::get_client(const SfIp& ip)
     return loc_ht;
 }
 
+RnaTracker RNAFlow::get_tracker(const Packet* p, DiscoveryFilter& filter)
+{
+    RnaTracker rt;
+    if ( p->is_from_server() && filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_SERVER) )
+        rt = get_server(p->flow->server_ip);
+    else if (p->is_from_client() && filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_CLIENT) )
+        rt = get_client(p->flow->server_ip);
+
+    if ( rt && rt->is_visible() )
+        rt->update_last_seen();
+    return rt;
+}
+
 void RNAFlow::set_server(RnaTracker& ht)
 {
     rna_mutex.lock();
@@ -93,3 +112,48 @@ void RNAFlow::set_client(RnaTracker& ht)
     clientht = ht;
     rna_mutex.unlock();
 }
+
+
+#ifdef UNIT_TEST
+
+TEST_CASE("RNA Flow", "[get_tracker]")
+{
+    timeval curr_time;
+    Packet p;
+    Flow flow;
+    p.flow=&flow;
+
+    DiscoveryFilter filter("");
+    RnaTracker ht(new HostTracker);
+
+    RNAFlow::init();
+    RNAFlow* rna_flow = new RNAFlow();
+    p.flow->set_flow_data(rna_flow);
+
+    RnaTracker rt;
+    uint32_t last_seen;
+
+    // test the server path
+    curr_time.tv_sec = 12345678;
+    packet_time_update(&curr_time);
+    p.packet_flags = PKT_FROM_SERVER;
+    rna_flow->set_server(ht);
+    rt = rna_flow->get_tracker(&p, filter);
+    CHECK(rt == ht);
+    last_seen = ht->get_last_seen();
+    CHECK(last_seen == curr_time.tv_sec);
+
+    // and the client path
+    curr_time.tv_sec = 23456789;
+    packet_time_update(&curr_time);
+    p.packet_flags = PKT_FROM_CLIENT;
+    rna_flow->set_client(ht);
+    rt = rna_flow->get_tracker(&p, filter);
+    CHECK(rt == ht);
+    last_seen = ht->get_last_seen();
+    CHECK(last_seen == curr_time.tv_sec);
+
+    flow.free_flow_data();
+}
+
+#endif

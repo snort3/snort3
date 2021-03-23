@@ -800,6 +800,13 @@ bool HostTracker::set_netbios_name(const char* nb_name)
         return false;
 }
 
+bool HostTracker::add_smb_fingerprint(uint32_t fpid)
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+    auto result = smb_fpids.emplace(fpid);
+    return result.second;
+}
+
 bool HostTracker::set_visibility(bool v)
 {
     // get_valid_id may use its own lock, so get this outside our lock
@@ -1276,6 +1283,14 @@ void HostTracker::stringify(string& str)
     {
         str += "\nudp fingerprint: ";
         for ( const auto& fpid : udp_fpids )
+            str += to_string(fpid) + (--total ? ", " : "");
+    }
+
+    total = smb_fpids.size();
+    if ( total )
+    {
+        str += "\nsmb fingerprint: ";
+        for ( const auto& fpid : smb_fpids )
             str += to_string(fpid) + (--total ? ", " : "");
     }
 

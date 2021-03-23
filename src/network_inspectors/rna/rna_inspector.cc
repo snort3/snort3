@@ -34,8 +34,10 @@
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"
 #include "pub_sub/dhcp_events.h"
+#include "pub_sub/smb_events.h"
 
 #include "rna_event_handler.h"
+#include "rna_fingerprint_smb.h"
 #include "rna_fingerprint_tcp.h"
 #include "rna_fingerprint_ua.h"
 #include "rna_fingerprint_udp.h"
@@ -79,6 +81,7 @@ RnaInspector::~RnaInspector()
         delete mod_conf->tcp_processor;
         delete mod_conf->ua_processor;
         delete mod_conf->udp_processor;
+        delete mod_conf->smb_processor;
         delete mod_conf;
     }
 }
@@ -88,6 +91,7 @@ bool RnaInspector::configure(SnortConfig* sc)
     DataBus::subscribe_global( APPID_EVENT_ANY_CHANGE, new RnaAppidEventHandler(*pnd), sc );
     DataBus::subscribe_global( DHCP_INFO_EVENT, new RnaDHCPInfoEventHandler(*pnd), sc);
     DataBus::subscribe_global( DHCP_DATA_EVENT, new RnaDHCPDataEventHandler(*pnd), sc);
+    DataBus::subscribe_global( FP_SMB_DATA_EVENT, new RnaFpSMBEventHandler(*pnd), sc);
 
     DataBus::subscribe_global( STREAM_ICMP_NEW_FLOW_EVENT, new RnaIcmpNewFlowEventHandler(*pnd), sc );
     DataBus::subscribe_global( STREAM_ICMP_BIDIRECTIONAL_EVENT, new RnaIcmpBidirectionalEventHandler(*pnd), sc );
@@ -149,6 +153,7 @@ void RnaInspector::tinit()
     set_tcp_fp_processor(mod_conf->tcp_processor);
     set_ua_fp_processor(mod_conf->ua_processor);
     set_udp_fp_processor(mod_conf->udp_processor);
+    set_smb_fp_processor(mod_conf->smb_processor);
     set_host_cache_mac(host_cache_mac_ptr);
 }
 

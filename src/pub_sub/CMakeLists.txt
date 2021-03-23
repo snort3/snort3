@@ -10,6 +10,7 @@ set (PUB_SUB_INCLUDES
     http_events.h
     opportunistic_tls_event.h
     sip_events.h
+    smb_events.h
 )
 
 add_library( pub_sub OBJECT

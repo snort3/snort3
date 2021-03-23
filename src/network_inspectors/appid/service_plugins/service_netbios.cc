@@ -25,7 +25,9 @@
 
 #include "service_netbios.h"
 
+#include "detection/detection_engine.h"
 #include "protocols/packet.h"
+#include "pub_sub/smb_events.h"
 #include "utils/endian.h"
 
 #include "app_info_table.h"
@@ -1165,27 +1167,12 @@ inprocess:
 void NbdgmServiceDetector::add_smb_info(AppIdSession& asd, unsigned major, unsigned minor,
     uint32_t flags)
 {
-    FpSMBData* sd;
-
     if ( flags & FINGERPRINT_UDP_FLAGS_XENIX )
         return;
     if ( asd.get_session_flags(APPID_SESSION_HAS_SMB_INFO) )
         return;
-    sd = (FpSMBData*)snort_calloc(sizeof(FpSMBData));
-
-    if ( asd.add_flow_data(sd, APPID_SESSION_DATA_SMB_DATA, (AppIdFreeFCN)AppIdFreeSMBData) )
-    {
-        AppIdFreeSMBData(sd);
-        return;
-    }
-
     asd.set_session_flags(APPID_SESSION_HAS_SMB_INFO);
-    sd->major = major;
-    sd->minor = minor;
-    sd->flags = flags & FINGERPRINT_UDP_FLAGS_MASK;
-}
-
-void NbdgmServiceDetector::AppIdFreeSMBData(FpSMBData* sd)
-{
-    snort_free(sd);
+    Packet* p = DetectionEngine::get_current_packet();
+    FpSMBDataEvent event(p, major, minor, (flags & FINGERPRINT_UDP_FLAGS_MASK));
+    DataBus::publish(FP_SMB_DATA_EVENT, event, p->flow);
 }

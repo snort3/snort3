@@ -383,23 +383,10 @@ void RnaAppDiscovery::discover_user(const Packet* p, DiscoveryFilter& filter, RN
     RnaLogger& logger, const char* username, AppId service, IpProtocol proto, RnaConfig* conf,
     bool login_success)
 {
-    RnaTracker rt;
-    if ( p->is_from_server() )
-    {
-        if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_SERVER) )
-            return;
-        rt = get_server_rna_tracker(p, rna_flow);
-    }
-    else
-    {
-        if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_CLIENT) )
-            return;
-        rt = get_client_rna_tracker(p, rna_flow);
-    }
-
+    assert(rna_flow);
+    RnaTracker rt = rna_flow->get_tracker(p, filter);
     if ( !rt or !rt->is_visible() )
         return;
-    rt->update_last_seen();
 
     if ( rt->update_service_user(p->flow->server_port, proto, username,
         (uint32_t) packet_time(), conf ? conf->max_host_services : 0, login_success) )
@@ -413,23 +400,9 @@ void RnaAppDiscovery::discover_user(const Packet* p, DiscoveryFilter& filter, RN
 void RnaAppDiscovery::discover_netbios_name(const snort::Packet* p, DiscoveryFilter& filter,
     RNAFlow* rna_flow, RnaLogger& logger, const char* nb_name)
 {
-    RnaTracker rt;
-    if ( p->is_from_server() )
-    {
-        if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_SERVER) )
-            return;
-        rt = get_server_rna_tracker(p, rna_flow);
-    }
-    else
-    {
-        if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_CLIENT) )
-            return;
-        rt = get_client_rna_tracker(p, rna_flow);
-    }
-
-    if ( !rt or !rt->is_visible() )
+    RnaTracker rt = rna_flow->get_tracker(p, filter);
+    if ( !rt or !rt->is_visible())
         return;
-    rt->update_last_seen();
 
     if ( rt->set_netbios_name(nb_name) )
     {

@@ -76,6 +76,10 @@ void UaFpProcessor::push(RawFingerprint const&) { }
 
 void UdpFpProcessor::push(RawFingerprint const&) { }
 
+SmbFingerprint::SmbFingerprint(const RawFingerprint&) { }
+bool SmbFingerprint::operator==(const SmbFingerprint&) const { return true; }
+bool SmbFpProcessor::push(SmbFingerprint const&) { return true; }
+
 // inspector
 class RnaInspector
 {

@@ -80,10 +80,10 @@ AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
 }
 
-SslPatternMatchers::~SslPatternMatchers() = default;
-SipPatternMatchers::~SipPatternMatchers() = default;
-HttpPatternMatchers::~HttpPatternMatchers() = default;
-DnsPatternMatchers::~DnsPatternMatchers() = default;
+SslPatternMatchers::~SslPatternMatchers() { }
+SipPatternMatchers::~SipPatternMatchers() { }
+HttpPatternMatchers::~HttpPatternMatchers() { }
+DnsPatternMatchers::~DnsPatternMatchers() { }
 void ClientDiscovery::initialize(AppIdInspector&) {}
 void ClientDiscovery::reload() {}
 FpSMBData* smb_data = nullptr;
@@ -110,18 +110,9 @@ void AppIdDiscovery::register_udp_pattern(AppIdDetector*, const uint8_t* const, 
     int, unsigned){}
 int AppIdDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&){return 0;}
 void ApplicationDescriptor::set_id(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&){}
-int AppIdSession::add_flow_data(void* data, unsigned type, AppIdFreeFCN)
-{
-    if ( type == APPID_SESSION_DATA_SMB_DATA )
-    {
-        smb_data = (FpSMBData*)data;
-        set_session_flags(APPID_SESSION_HAS_SMB_INFO);
-    }
-    return 0;
-}
-
+int AppIdSession::add_flow_data(void*, unsigned, AppIdFreeFCN) { return 0; }
 int dcerpc_validate(const uint8_t*, int){return 0; }
-AppIdDiscovery::~AppIdDiscovery() = default;
+AppIdDiscovery::~AppIdDiscovery() { }
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 AppIdConfig config;

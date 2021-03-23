@@ -46,6 +46,9 @@ public:
     static void discover_netbios_name(const snort::Packet*, DiscoveryFilter&,
         RNAFlow*, RnaLogger&, const char*);
 
+    static RnaTracker get_server_rna_tracker(const snort::Packet*, RNAFlow*);
+    static RnaTracker get_client_rna_tracker(const snort::Packet*, RNAFlow*);
+
 private:
     static void update_service_info(const snort::Packet*, DiscoveryFilter&, RNAFlow*, IpProtocol,
         uint16_t, const char* vendor, const char* version, RnaLogger&, RnaConfig*, AppId service,
@@ -54,8 +57,6 @@ private:
     static void analyze_user_agent_fingerprint(const snort::Packet*, DiscoveryFilter&, RNAFlow*,
         const char* host, const char* uagent, RnaLogger&, snort::UaFpProcessor&);
 
-    static RnaTracker get_server_rna_tracker(const snort::Packet*, RNAFlow*);
-    static RnaTracker get_client_rna_tracker(const snort::Packet*, RNAFlow*);
 };
 
 #endif

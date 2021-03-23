@@ -47,6 +47,7 @@ struct RnaStats
     PegCount change_host_update;
     PegCount dhcp_data;
     PegCount dhcp_info;
+    PegCount smb;
 };
 
 extern THREAD_LOCAL RnaStats rna_stats;

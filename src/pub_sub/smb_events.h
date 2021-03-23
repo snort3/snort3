@@ -15,56 +15,43 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// smb_events.h author Sreeja Athirkandathil Narayanan <sathirka@cisco.com>
 
-// rna_flow.h author Silviu Minut <sminut@cisco.com>
+#ifndef SMB_EVENTS_H
+#define SMB_EVENTS_H
 
-#ifndef RNA_FLOW_H
-#define RNA_FLOW_H
+#include "framework/data_bus.h"
 
-#include <memory>
-#include <mutex>
-
-#include "flow/flow_data.h"
-#include "host_tracker/host_tracker.h"
-#include "sfip/sf_ip.h"
-
-#include "rna_fingerprint_tcp.h"
+#define FP_SMB_DATA_EVENT "fp_smb_data_event"
 
 namespace snort
 {
-struct Packet;
-}
 
-class DiscoveryFilter;
-
-using RnaTracker = std::shared_ptr<snort::HostTracker>;
-
-class RNAFlow : public snort::FlowData
+class FpSMBDataEvent : public snort::DataEvent
 {
 public:
-    FpFingerprintState state;
+    FpSMBDataEvent(const snort::Packet* p, unsigned major, unsigned minor,
+        uint32_t flags) : pkt(p), major_version(major), minor_version(minor), flags(flags) { }
 
-    RNAFlow() : FlowData(inspector_id) { }
-    ~RNAFlow() override;
+    const snort::Packet* get_packet() override
+    { return pkt; }
 
-    static void init();
-    size_t size_of() override;
+    unsigned get_fp_smb_major() const
+    { return major_version; }
 
-    void clear_ht(snort::HostTracker& ht);
+    unsigned get_fp_smb_minor() const
+    { return minor_version; }
 
-    static unsigned inspector_id;
-    RnaTracker serverht = nullptr;
-    RnaTracker clientht = nullptr;
+    uint32_t get_fp_smb_flags() const
+    { return flags; }
 
-    std::mutex rna_mutex;
-
-    RnaTracker get_server(const snort::SfIp&);
-    RnaTracker get_client(const snort::SfIp&);
-    RnaTracker get_tracker(const snort::Packet*, DiscoveryFilter&);
-
-    void set_server(RnaTracker& ht);
-    void set_client(RnaTracker& ht);
-
+private:
+    const snort::Packet* pkt;
+    unsigned major_version;
+    unsigned minor_version;
+    uint32_t flags;
 };
 
-#endif
+}
+
+#endif // SMB_EVENTS_H
