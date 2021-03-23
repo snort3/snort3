@@ -360,11 +360,11 @@ void RnaPnd::analyze_smb_fingerprint(DataEvent& event)
         return;
 
     const FpSMBDataEvent& fp_smb_data_event = static_cast<FpSMBDataEvent&>(event);
-    unsigned major = fp_smb_data_event.get_fp_smb_major();
-    unsigned minor = fp_smb_data_event.get_fp_smb_minor();
+    unsigned smb_major = fp_smb_data_event.get_fp_smb_major();
+    unsigned smb_minor = fp_smb_data_event.get_fp_smb_minor();
     uint32_t flags = fp_smb_data_event.get_fp_smb_flags();
 
-    const SmbFingerprint* fp = processor->find({major, minor, flags});
+    const SmbFingerprint* fp = processor->find({smb_major, smb_minor, flags});
 
     if ( fp && rt->add_smb_fingerprint(fp->fpid) )
     {

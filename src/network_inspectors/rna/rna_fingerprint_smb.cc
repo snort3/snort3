@@ -51,7 +51,7 @@ namespace snort
 {
 
 SmbFingerprint::SmbFingerprint(unsigned maj, unsigned min, uint32_t f)
-    : major(maj), minor(min), flags(f) { }
+    : smb_major(maj), smb_minor(min), flags(f) { }
 
 SmbFingerprint::SmbFingerprint(const RawFingerprint& rfp)
 {
@@ -60,8 +60,8 @@ SmbFingerprint::SmbFingerprint(const RawFingerprint& rfp)
     fpuuid = rfp.fpuuid;
     ttl = rfp.ttl;
 
-    major = rfp.smb_major;
-    minor = rfp.smb_minor;
+    smb_major = rfp.smb_major;
+    smb_minor = rfp.smb_minor;
     flags = rfp.smb_flags;
 }
 
@@ -71,8 +71,8 @@ bool SmbFingerprint::operator==(const SmbFingerprint& y) const
         (fp_type == y.fp_type) &&
         (fpuuid == y.fpuuid) &&
         (ttl == y.ttl) &&
-        (major == y.major) &&
-        (minor == y.minor) &&
+        (smb_major == y.smb_major) &&
+        (smb_minor == y.smb_minor) &&
         (flags == y.flags) );
 }
 
@@ -102,14 +102,14 @@ TEST_CASE("get_smb_fp_processor", "[rna_fingerprint_smb]")
     SmbFpProcessor* processor = get_smb_fp_processor();
     CHECK(processor == &smb_processor);
 
-    unsigned major = 6;
-    unsigned minor = 4;
+    unsigned smb_major = 6;
+    unsigned smb_minor = 4;
     uint32_t flags = 4096;
-    SmbFingerprint fp(major, minor, flags);
+    SmbFingerprint fp(smb_major, smb_minor, flags);
     processor->push(fp);
 
     // positive test:
-    const SmbFingerprint* fpptr = processor->find({major, minor, flags});
+    const SmbFingerprint* fpptr = processor->find({smb_major, smb_minor, flags});
     CHECK(fpptr != nullptr);
     CHECK(*fpptr == fp);
 

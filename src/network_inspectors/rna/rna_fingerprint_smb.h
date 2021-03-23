@@ -44,8 +44,8 @@ public:
     SmbFingerprint(unsigned maj = 0, unsigned min = 0, uint32_t f = 0);
     SmbFingerprint(const RawFingerprint& rfp);
 
-    unsigned major;
-    unsigned minor;
+    unsigned smb_major;
+    unsigned smb_minor;
     uint32_t flags;
 
     bool operator==(const SmbFingerprint& y) const;
@@ -59,9 +59,9 @@ public:
     {
         size_t operator()(const SmbFingerprint & key) const noexcept
         {
-            std::hash<decltype(SmbFingerprint::major)> hm;
+            std::hash<decltype(SmbFingerprint::smb_major)> hm;
             std::hash<decltype(SmbFingerprint::flags)> hf;
-            auto const h = hm(key.major) ^ (hm(key.minor) << 1) ^ (hf(key.flags) << 2);
+            auto const h = hm(key.smb_major) ^ (hm(key.smb_minor) << 1) ^ (hf(key.flags) << 2);
             return h;
         }
     };
@@ -70,7 +70,7 @@ public:
     {
         bool operator() (const SmbFingerprint& x, const SmbFingerprint& y) const
         {
-            return x.major == y.major && x.minor == y.minor && x.flags == y.flags;
+            return x.smb_major == y.smb_major && x.smb_minor == y.smb_minor && x.flags == y.flags;
         }
     };
 
