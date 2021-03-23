@@ -167,6 +167,7 @@ bool SFDAQModule::end(const char* fqn, int idx, SnortConfig* sc)
     return true;
 }
 
+static_assert(MAX_DAQ_VERDICT == 6, "Verdict peg counts must align with MAX_DAQ_VERDICT");
 const PegInfo daq_names[] =
 {
     { CountType::MAX, "pcaps", "total files and interfaces processed" },
@@ -176,13 +177,14 @@ const PegInfo daq_names[] =
     { CountType::SUM, "filtered", "packets filtered out" },
     { CountType::SUM, "outstanding", "packets unprocessed" },
     { CountType::SUM, "injected", "active responses or replacements" },
+
+    // Must align with MAX_DAQ_VERDICT (one for each, in order)
     { CountType::SUM, "allow", "total allow verdicts" },
     { CountType::SUM, "block", "total block verdicts" },
     { CountType::SUM, "replace", "total replace verdicts" },
     { CountType::SUM, "whitelist", "total whitelist verdicts" },
     { CountType::SUM, "blacklist", "total blacklist verdicts" },
     { CountType::SUM, "ignore", "total ignore verdicts" },
-    { CountType::SUM, "retry", "total retry verdicts" },
 
     // FIXIT-L these are not exactly DAQ counts - but they are related
     { CountType::SUM, "internal_blacklist",
