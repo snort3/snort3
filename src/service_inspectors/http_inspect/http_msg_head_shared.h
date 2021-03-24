@@ -51,6 +51,8 @@ public:
     static const StrCode content_code_list[];
     static const StrCode charset_code_list[];
     static const StrCode charset_code_opt_list[];
+    static const StrCode transfer_encoding_list[];
+    static const StrCode upgrade_list[];
 
     // The file_cache_index is used along with the source ip and destination ip to cache file
     // verdicts.

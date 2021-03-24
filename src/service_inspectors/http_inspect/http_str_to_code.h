@@ -32,5 +32,10 @@ int32_t str_to_code(const char* text, const StrCode table[]);
 int32_t str_to_code(const uint8_t* text, const int32_t text_len, const StrCode table[]);
 int32_t substr_to_code(const uint8_t* text, const int32_t text_len, const StrCode table[]);
 
+// Convert the first value in a comma-separated list into a code. consumed is the number of bytes
+// used from the list or -1 if there are no more list entries.
+int32_t get_code_from_token_list(const uint8_t* token_list, const int32_t text_len,
+    int32_t& bytes_consumed, const StrCode table[]);
+
 #endif
 

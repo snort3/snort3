@@ -487,10 +487,6 @@ http_header when no specific header is specified.
 
 This is the body of a request or response message. It will be dechunked
 and unzipped if applicable but will not be normalized in any other way.
-The difference between http_raw_body and packet data is a rule that uses
-packet data will search and may match an HTTP header, but http_raw_body
-is limited to the message body. Thus the latter is more efficient and
-more accurate for most uses.
 
 ===== http_method
 
@@ -524,14 +520,11 @@ request message those are http_method, http_raw_uri, and http_version. For
 a response message those are http_version, http_stat_code, and
 http_stat_msg.
 
-===== file_data and packet data
+===== file_data
 
 file_data contains the normalized message body. This is the normalization
 described above under gzip, normalize_utf, decompress_pdf, decompress_swf,
 and normalize_javascript.
-
-The unnormalized message content is available in the packet data. If gzip
-is configured the packet data will be unzipped.
 
 ==== Timing issues and combining rule options
 

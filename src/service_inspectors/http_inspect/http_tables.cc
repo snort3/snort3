@@ -139,6 +139,7 @@ const StrCode HttpMsgHeadShared::header_list[] =
     { HEAD_MIME_VERSION,              "mime-version" },
     { HEAD_PROXY_AGENT,               "proxy-agent" },
     { HEAD_CONTENT_DISPOSITION,       "content-disposition" },
+    { HEAD_HTTP2_SETTINGS,            "http2-settings" },
     { 0,                              nullptr }
 };
 
@@ -178,6 +179,21 @@ const StrCode HttpMsgHeadShared::charset_code_opt_list[] =
 {
     { CHARSET_UNKNOWN,       "charset=utf-" },
     { CHARSET_IRRELEVANT,    "charset=" },
+    { 0,                     nullptr }
+};
+
+const StrCode HttpMsgHeadShared::upgrade_list[] =
+{
+    { UP_H2C,                "h2c" },
+    { UP_H2,                 "h2" },
+    { UP_HTTP20,             "http/2.0" },
+    { 0,                     nullptr }
+};
+
+const StrCode HttpMsgHeadShared::transfer_encoding_list[] =
+{
+    { TE_CHUNKED,            "chunked" },
+    { TE_IDENTITY,           "identity" },
     { 0,                     nullptr }
 };
 
@@ -224,10 +240,10 @@ const HeaderNormalizer* const HttpMsgHeadShared::header_norms[HEAD__MAX_VALUE + 
     &NORMALIZER_DATE,       // HEAD_DATE
     &NORMALIZER_TOKEN_LIST, // HEAD_PRAGMA
     &NORMALIZER_TOKEN_LIST, // HEAD_TRAILER
-    &NORMALIZER_BASIC,      //HEAD_COOKIE
-    &NORMALIZER_BASIC,      //HEAD_SET_COOKIE
+    &NORMALIZER_BASIC,      // HEAD_COOKIE
+    &NORMALIZER_BASIC,      // HEAD_SET_COOKIE
     &NORMALIZER_TOKEN_LIST, // HEAD_TRANSFER_ENCODING
-    &NORMALIZER_BASIC,      // HEAD_UPGRADE
+    &NORMALIZER_TOKEN_LIST, // HEAD_UPGRADE
     &NORMALIZER_BASIC,      // HEAD_VIA
     &NORMALIZER_BASIC,      // HEAD_WARNING
     &NORMALIZER_TOKEN_LIST, // HEAD_ACCEPT
@@ -275,6 +291,7 @@ const HeaderNormalizer* const HttpMsgHeadShared::header_norms[HEAD__MAX_VALUE + 
     &NORMALIZER_BASIC,      // HEAD_MIME_VERSION
     &NORMALIZER_BASIC,      // HEAD_PROXY_AGENT
     &NORMALIZER_BASIC,      // HEAD_CONTENT_DISPOSITION
+    &NORMALIZER_TOKEN_LIST, // HEAD_HTTP2_SETTINGS
     &NORMALIZER_BASIC,      // HEAD__MAX_VALUE
     &NORMALIZER_BASIC,      // HEAD_CUSTOM_XFF_HEADER
     &NORMALIZER_BASIC,      // HEAD_CUSTOM_XFF_HEADER
@@ -408,6 +425,8 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_TRUNCATED_MSG_BODY_CL,      "HTTP Content-Length message body was truncated" },
     { EVENT_TRUNCATED_MSG_BODY_CHUNK,   "HTTP chunked message body was truncated" },
     { EVENT_LONG_SCHEME,                "HTTP URI scheme longer than 10 characters" },
+    { EVENT_HTTP2_UPGRADE_REQUEST,      "HTTP/1 client requested HTTP/2 upgrade" },
+    { EVENT_HTTP2_UPGRADE_RESPONSE,     "HTTP/1 server granted HTTP/2 upgrade" },
     { 0, nullptr }
 };
 

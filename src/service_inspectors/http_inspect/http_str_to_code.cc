@@ -50,7 +50,8 @@ int32_t substr_to_code(const uint8_t* text, const int32_t text_len, const StrCod
 {
     for (int32_t k=0; table[k].name != nullptr; k++)
     {
-        int32_t len =  (text_len <= (int)strlen(table[k].name) ) ? text_len : (int)strlen(table[k].name);
+        int32_t len = (text_len <= (int)strlen(table[k].name) ) ? text_len :
+            (int)strlen(table[k].name);
 
         if (memcmp(text, table[k].name, len) == 0)
         {
@@ -58,5 +59,15 @@ int32_t substr_to_code(const uint8_t* text, const int32_t text_len, const StrCod
         }
     }
     return HttpCommon::STAT_OTHER;
+}
+
+int32_t get_code_from_token_list(const uint8_t* token_list, const int32_t text_len,
+    int32_t& consumed, const StrCode table[])
+{
+    int32_t k;
+    for (k = consumed; (k < text_len) and (token_list[k] != ','); k++);
+    const int32_t code = str_to_code(token_list + consumed, k - consumed, table);
+    consumed = (k < text_len) ? k + 1 : -1;
+    return code;
 }
 

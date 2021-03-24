@@ -155,6 +155,37 @@ void HttpMsgHeader::gen_events()
         add_infraction(INF_CTE_HEADER);
         create_event(EVENT_CTE_HEADER);
     }
+
+    // We don't support HTTP/1 to HTTP/2 upgrade and we alert on any attempt to do it
+    if (get_header_count(HEAD_HTTP2_SETTINGS) > 0)
+    {
+        add_infraction(INF_HTTP2_SETTINGS);
+        if (source_id == SRC_CLIENT)
+            create_event(EVENT_HTTP2_UPGRADE_REQUEST);
+        else
+            create_event(EVENT_HTTP2_UPGRADE_RESPONSE);
+    }
+    if ((get_header_count(HEAD_UPGRADE) > 0) &&
+        ((source_id == SRC_CLIENT) || (status_code_num == 101)))
+    {
+        const Field& up_header = get_header_value_norm(HEAD_UPGRADE);
+        int32_t consumed = 0;
+        do
+        {
+            const int32_t upgrade = get_code_from_token_list(up_header.start(), up_header.length(),
+                consumed, upgrade_list);
+            if ((upgrade == UP_H2C) || (upgrade == UP_H2) || (upgrade == UP_HTTP20))
+            {
+                add_infraction(INF_UPGRADE_HEADER_HTTP2);
+                if (source_id == SRC_CLIENT)
+                    create_event(EVENT_HTTP2_UPGRADE_REQUEST);
+                else
+                    create_event(EVENT_HTTP2_UPGRADE_RESPONSE);
+                break;
+            }
+        }
+        while (consumed != -1);
+    }
 }
 
 void HttpMsgHeader::update_flow()
@@ -253,12 +284,15 @@ void HttpMsgHeader::update_flow()
     if (session_data->for_http2)
     {
         // The only transfer-encoding header we should see for HTTP/2 traffic is "identity"
-        const int IDENTITY_SIZE = 8;
-        if ((te_header.length() > 0) && ( (te_header.length() != IDENTITY_SIZE) ||
-            memcmp(te_header.start(), "identity", IDENTITY_SIZE) != 0))
+        if (te_header.length() > 0)
         {
-            add_infraction(INF_H2_NON_IDENTITY_TE);
-            create_event(EVENT_H2_NON_IDENTITY_TE);
+            int32_t consumed = 0;
+            if ((get_code_from_token_list(te_header.start(), te_header.length(), consumed,
+                transfer_encoding_list) != TE_IDENTITY) || (consumed != -1))
+            {
+                add_infraction(INF_H2_NON_IDENTITY_TE);
+                create_event(EVENT_H2_NON_IDENTITY_TE);
+            }
         }
         if (get_header_value_norm(HEAD_CONTENT_LENGTH).length() > 0)
         {
@@ -293,34 +327,35 @@ void HttpMsgHeader::update_flow()
         // If there is a Transfer-Encoding header, it should be "chunked" without any other
         // encodings being listed. The RFC allows other encodings to come before chunked but
         // no one does this in real life.
-        const int CHUNKED_SIZE = 7;
-        bool is_chunked = false;
-
-        if ((te_header.length() == CHUNKED_SIZE) &&
-            !memcmp(te_header.start(), "chunked", CHUNKED_SIZE))
+        unsigned token_count = 0;
+        int32_t consumed = 0;
+        int32_t transfer_encoding;
+        do
         {
-            is_chunked = true;
+            transfer_encoding = get_code_from_token_list(te_header.start(), te_header.length(),
+                consumed, transfer_encoding_list);
+            token_count++;
         }
-        else if ((te_header.length() > CHUNKED_SIZE) &&
-            !memcmp(te_header.start() + (te_header.length() - (CHUNKED_SIZE+1)),
-                ",chunked", CHUNKED_SIZE+1))
-        {
-            add_infraction(INF_PADDED_TE_HEADER);
-            create_event(EVENT_PADDED_TE_HEADER);
-            is_chunked = true;
-        }
+        while (consumed != -1);
 
-        if (is_chunked)
+        if (transfer_encoding != TE_CHUNKED)
         {
+            add_infraction(INF_BAD_TE_HEADER);
+            create_event(EVENT_BAD_TE_HEADER);
+        }
+        else
+        {
+            // Last Transfer-Encoding is chunked ...
+            if (token_count > 1)
+            {
+                // ... but there were others before it
+                add_infraction(INF_PADDED_TE_HEADER);
+                create_event(EVENT_PADDED_TE_HEADER);
+            }
             session_data->type_expected[source_id] = SEC_BODY_CHUNK;
             HttpModule::increment_peg_counts(PEG_CHUNKED);
             prepare_body();
             return;
-        }
-        else
-        {
-            add_infraction(INF_BAD_TE_HEADER);
-            create_event(EVENT_BAD_TE_HEADER);
         }
     }
 
