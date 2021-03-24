@@ -60,6 +60,7 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_TOO_MANY_STREAMS, "excessive concurrent HTTP/2 streams" },
     { EVENT_INVALID_RST_STREAM_FRAME, "invalid HTTP/2 rst stream frame" },
     { EVENT_BAD_RST_STREAM_SEQUENCE, "HTTP/2 rst stream frame sent at invalid time" },
+    { EVENT_HEADER_UPPERCASE, "uppercase HTTP/2 header field name" },
     { 0, nullptr }
 };
 

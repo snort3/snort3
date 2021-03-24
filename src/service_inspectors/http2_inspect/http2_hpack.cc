@@ -149,6 +149,17 @@ bool Http2HpackDecoder::decode_literal_header_line(const uint8_t* encoded_header
                 bytes_consumed, partial_bytes_consumed, decoded_header_buffer,
                 decoded_header_length, partial_bytes_written, name))
             return false;
+
+        const uint8_t* buff = name.start();
+        for (int i = 0; i < name.length(); i++)
+        {
+            if (buff[i] >= 'A' and buff[i] <= 'Z')
+            {
+                *infractions += INF_HEADER_UPPERCASE;
+                events->create_event(EVENT_HEADER_UPPERCASE);
+                break;
+            }
+        }
     }
     bytes_consumed += partial_bytes_consumed;
     bytes_written += partial_bytes_written;
