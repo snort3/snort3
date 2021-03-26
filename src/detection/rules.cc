@@ -101,7 +101,8 @@ void RuleStateMap::apply(
         policy->rules_shared++;
 
     RuleTreeNode* t_rtn = dup_rtn(sc, otn, b_rtn, policy);
-    update_rtn(t_rtn, s);
+    update_rtn(sc, t_rtn, s);
+
     addRtnToOtn(sc, otn, t_rtn, ips_num);
 }
 
@@ -156,7 +157,7 @@ RuleTreeNode* RuleStateMap::dup_rtn(
     return ret;
 }
 
-void RuleStateMap::update_rtn(RuleTreeNode* rtn, const RuleState& s)
+void RuleStateMap::update_rtn(SnortConfig* sc, RuleTreeNode* rtn, const RuleState& s)
 {
     switch ( s.enable )
     {
@@ -164,6 +165,12 @@ void RuleStateMap::update_rtn(RuleTreeNode* rtn, const RuleState& s)
     case IpsPolicy::ENABLED: rtn->set_enabled(); break;
     case IpsPolicy::INHERIT_ENABLE: break;
     }
+
+    ListHead* new_listhead = get_rule_list(sc, s.rule_action.c_str());
+
+    if ( new_listhead and ( rtn->listhead != new_listhead ) )
+        rtn->listhead = new_listhead;
+
     rtn->action = s.action;
 
     if ( rtn->header )

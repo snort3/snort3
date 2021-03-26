@@ -178,8 +178,6 @@ ips =
     variables = default_variables
 }
 
-rewrite = { }
-
 -- use these to configure additional rule actions
 -- react = { }
 -- reject = { }

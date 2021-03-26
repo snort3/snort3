@@ -27,6 +27,8 @@
 
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "managers/module_manager.h"
+#include "managers/plugin_manager.h"
 #include "packet_io/active.h"
 #include "parser/parser.h"
 
@@ -57,8 +59,13 @@ struct IpsActionsConfig
 };
 
 using ACList = vector<ActionClass>;
+using ACTypeList = unordered_map<string, Actions::Type>;
+using ACPriorityList = map<IpsAction::IpsActionPriority, string, std::greater<int>>;
 
 static ACList s_actors;
+static ACTypeList s_act_types;
+static ACPriorityList s_act_priorities;
+static Actions::Type s_act_index = 0;
 
 static THREAD_LOCAL ACList* s_tl_actors = nullptr;
 
@@ -70,16 +77,67 @@ static THREAD_LOCAL ACList* s_tl_actors = nullptr;
 void ActionManager::add_plugin(const ActionApi* api)
 {
     s_actors.emplace_back(api);
+    s_act_types.emplace(api->base.name, s_act_index++);
+    s_act_priorities.emplace(api->priority, api->base.name);
+}
+
+std::string ActionManager::get_action_string(Actions::Type action)
+{
+    if ( action < s_act_index )
+    {
+        for ( const auto& type : s_act_types )
+        {
+            if ( type.second == action )
+                return type.first;
+        }
+    }
+
+    return "ERROR";
 }
 
 Actions::Type ActionManager::get_action_type(const char* s)
 {
-    for ( auto& p : s_actors )
+    auto type = s_act_types.find(s);
+
+    if (type != s_act_types.end())
+        return type->second;
+
+    return get_max_action_types();
+}
+
+Actions::Type ActionManager::get_max_action_types()
+{
+    return s_act_index;
+}
+
+std::string ActionManager::get_action_priorities(bool alert_before_pass)
+{
+    std::string priorities;
+
+    for (auto iter = s_act_priorities.begin(); iter != s_act_priorities.end(); )
     {
-        if ( !strcmp(p.api->base.name, s) )
-            return p.api->type;
+        if ( alert_before_pass )
+        {
+            if ( iter->second == "pass" )
+            {
+                iter++;
+                continue;
+            }
+            else if ( iter->second == "alert" )
+            {
+                priorities += "alert pass ";
+                iter++;
+                continue;
+            }
+        }
+
+        priorities += iter->second;
+
+        if ( ++iter != s_act_priorities.end() )
+            priorities += " ";
     }
-    return Actions::NONE;
+
+    return priorities;
 }
 
 void ActionManager::dump_plugins()
@@ -144,26 +202,49 @@ void ActionManager::delete_config(SnortConfig* sc)
     sc->ips_actions_config = nullptr;
 }
 
-void ActionManager::instantiate(const ActionApi* api, Module* mod, SnortConfig* sc)
+void ActionManager::instantiate(const ActionApi* api, Module* mod, SnortConfig* sc, IpsPolicy* ips)
 {
     ActionClass* cls = get_action_class(api, sc->ips_actions_config);
+
     assert(cls != nullptr);
 
     IpsAction* act = cls->api->ctor(mod);
 
     if ( act )
     {
-        // Add this instance to the list of those created for this config
-        sc->ips_actions_config->clist.emplace_back(*cls, act);
 
-        RuleListNode* rln = CreateRuleType(sc, api->base.name, api->type, true);
+        RuleListNode* rln = CreateRuleType(sc, api->base.name, get_action_type(api->base.name));
 
         // The plugin actions (e.g. reject, react, etc.) are per policy, per mode.
         // At logging time, they have to be retrieved the way we store them here.
-        IpsPolicy* ips = get_ips_policy();
+        if ( !ips )
+            ips = get_ips_policy();
+
         Actions::Type idx = rln->mode;
-        assert(ips->action[idx] == nullptr);
-        ips->action[idx] = act;
+        if (ips->action[idx] == nullptr)
+        {
+            ips->action[idx] = act;
+            // Add this instance to the list of those created for this config
+            sc->ips_actions_config->clist.emplace_back(*cls, act);
+        }
+        else
+        {
+            cls->api->dtor(act);
+        }
+    }
+}
+
+void ActionManager::initialize_policies(SnortConfig* sc)
+{
+    for (unsigned i = 0; i < sc->policy_map->ips_policy_count(); i++)
+    {
+        auto policy = sc->policy_map->get_ips_policy(i);
+
+        if ( !policy )
+            continue;
+
+        for ( auto actor : s_actors )
+            ActionManager::instantiate(actor.api, nullptr, sc, policy);
     }
 }
 

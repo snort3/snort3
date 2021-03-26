@@ -58,14 +58,13 @@ struct ListHead
     OutputSet* LogList;
     OutputSet* AlertList;
     struct RuleListNode* ruleListNode;
-    bool is_plugin_action = false;
 };
 
 // for top-level rule lists by type (alert, drop, etc.)
 struct RuleListNode
 {
     ListHead* RuleList;   /* The rule list associated with this node */
-    snort::Actions::Type mode;        /* the rule mode */
+    Actions::Type mode;        /* the rule mode */
     unsigned evalIndex;        /* eval index for this rule set */
     char* name;           /* name of this rule list */
     RuleListNode* next;   /* the next RuleListNode */
@@ -83,7 +82,7 @@ struct RuleKey
 struct RuleState
 {
     std::string rule_action;
-    snort::Actions::Type action;
+    uint8_t action;
     IpsPolicy::Enable enable;
 };
 
@@ -97,7 +96,7 @@ public:
 
 private:
     RuleTreeNode* dup_rtn(snort::SnortConfig*, OptTreeNode*, RuleTreeNode*, IpsPolicy*);
-    void update_rtn(RuleTreeNode*, const RuleState&);
+    void update_rtn(snort::SnortConfig*, RuleTreeNode*, const RuleState&);
     void apply(snort::SnortConfig*, OptTreeNode*, unsigned ips_num, const RuleState&);
 
 private:

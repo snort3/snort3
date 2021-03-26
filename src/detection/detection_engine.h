@@ -25,7 +25,6 @@
 // packet (PDU), first call set_next_packet().  If rebuild is successful,
 // then instantiate a new DetectionEngine to detect that packet.
 
-#include "actions/actions.h"
 #include "detection/detection_util.h"
 #include "detection/ips_context.h"
 #include "main/snort_types.h"
@@ -87,7 +86,7 @@ public:
     static bool inspect(Packet*);
 
     static int queue_event(const struct OptTreeNode*);
-    static int queue_event(unsigned gid, unsigned sid, Actions::Type = Actions::NONE);
+    static int queue_event(unsigned gid, unsigned sid);
 
     static void disable_all(Packet*);
     static bool all_disabled(Packet*);

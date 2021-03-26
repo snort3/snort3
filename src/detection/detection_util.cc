@@ -24,6 +24,7 @@
 
 #include "detection_util.h"
 
+#include "actions/actions.h"
 #include "events/event.h"
 #include "log/text_log.h"
 #include "protocols/packet.h"
@@ -74,16 +75,16 @@ static void LogBuffer(const char* s, const uint8_t* p, unsigned n)
     }
 }
 
-void EventTrace_Log(const Packet* p, const OptTreeNode* otn, int action)
+void EventTrace_Log(const Packet* p, const OptTreeNode* otn, Actions::Type action)
 {
-    const char* acts = Actions::get_string((Actions::Type)action);
+    std::string acts = Actions::get_string(action);
 
     if ( !tlog )
         return;
 
     TextLog_Print(tlog,
         "\nEvt=%u, Gid=%u, Sid=%u, Rev=%u, Act=%s\n",
-        event_id, otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, acts);
+        event_id, otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, acts.c_str());
 
     TextLog_Print(tlog,
         "Pkt=" STDu64 ", Sec=%lu.%6lu, Len=%u, Cap=%u\n",

@@ -36,7 +36,7 @@ using namespace snort;
 // FIXIT-M needs to be updated for addition of get_fp_buf()
 template<typename T>
 static inline bool get_buf(
-    Inspector& i, T v, Packet& p, std::string& rb)
+    Inspector& i, T v, snort::Packet& p, std::string& rb)
 {
     struct InspectionBuffer ib;
     bool result = i.get_buf(v, &p, ib);

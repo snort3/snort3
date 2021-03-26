@@ -38,7 +38,7 @@ static const luaL_Reg methods[] =
             auto& p = PacketIface.get(L);
             auto& self = IpsActionIface.get(L);
 
-            self.exec(&p);
+            self.exec(&p, nullptr);
 
             return 0;
         }

@@ -107,7 +107,7 @@ void InspectionPolicy::configure()
 // detection policy
 //-------------------------------------------------------------------------
 
-IpsPolicy::IpsPolicy(PolicyId id) : action(Actions::Type::MAX, nullptr)
+IpsPolicy::IpsPolicy(PolicyId id) : action(Actions::get_max_types(), nullptr)
 {
     policy_id = id;
     user_policy_id = 0;

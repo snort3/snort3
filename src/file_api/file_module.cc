@@ -464,14 +464,10 @@ bool FileIdModule::begin(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
-bool FileIdModule::end(const char* fqn, int idx, SnortConfig* sc)
+bool FileIdModule::end(const char* fqn, int idx, SnortConfig*)
 {
     if (!idx)
-    {
-        if ( need_active )
-            sc->set_active_enabled();
         return true;
-    }
 
     if ( !strcmp(fqn, "file_id.file_rules") )
     {

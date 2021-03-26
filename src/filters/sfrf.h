@@ -95,7 +95,7 @@ struct tSFRFConfigNode
     unsigned seconds;
 
     // Action that replaces original rule action on reaching threshold
-    snort::Actions::Type newAction;
+    Actions::Type newAction;
 
     // Threshold action duration in seconds before reverting to original rule action
     unsigned timeout;

@@ -45,6 +45,7 @@
 #include "main/modules.h"
 #include "main/shell.h"
 #include "main/snort_config.h"
+#include "managers/action_manager.h"
 #include "managers/event_manager.h"
 #include "managers/module_manager.h"
 #include "ports/port_object.h"
@@ -289,6 +290,7 @@ static bool parse_file(SnortConfig* sc, Shell* sh, bool is_fatal, bool is_root)
         return false;
 
     bool success = sh->configure(sc, is_fatal, is_root);
+
     return success;
 }
 
@@ -378,6 +380,8 @@ SnortConfig* ParseSnortConf(const SnortConfig* cmd_line_conf, const char* fname,
 
     // Merge in any overrides from the command line
     sc->merge(cmd_line_conf);
+
+    ActionManager::initialize_policies(sc);
 
     return sc;
 }
@@ -551,10 +555,9 @@ void ShowPolicyStats(const SnortConfig* sc)
  * Returns: the ListHead for the rule type
  *
  ***************************************************************************/
-RuleListNode* CreateRuleType(SnortConfig* sc, const char* name, Actions::Type mode, bool is_plugin_action)
+RuleListNode* CreateRuleType(SnortConfig* sc, const char* name, Actions::Type mode)
 {
     RuleListNode* node;
-    unsigned evalIndex = 0;
 
     if (sc == nullptr)
         return nullptr;
@@ -580,7 +583,6 @@ RuleListNode* CreateRuleType(SnortConfig* sc, const char* name, Actions::Type mo
                 return tmp;
             }
 
-            evalIndex++;
             last = tmp;
             tmp = tmp->next;
         }
@@ -591,12 +593,9 @@ RuleListNode* CreateRuleType(SnortConfig* sc, const char* name, Actions::Type mo
 
     node->RuleList = (ListHead*)snort_calloc(sizeof(ListHead));
     node->RuleList->ruleListNode = node;
-    node->RuleList->is_plugin_action = is_plugin_action;
     node->mode = mode;
     node->name = snort_strdup(name);
-    node->evalIndex = evalIndex;
 
-    sc->evalOrder[node->mode] =  evalIndex;
     sc->num_rule_types++;
 
     return node;
@@ -629,10 +628,14 @@ void OrderRuleLists(SnortConfig* sc)
 {
     int evalIndex = 0;
     RuleListNode* ordered_list = nullptr;
+    std::string default_priorities;
 
     const char* order = sc->rule_order.c_str();
     if ( !*order )
-        order = "pass drop alert log";  // FIXIT-M apply builtin module defaults
+    {
+        default_priorities = Actions::get_default_priorities();  // FIXIT-M apply builtin module defaults
+        order = default_priorities.c_str();
+    }
 
     std::stringstream ss(order);
     std::string tok;
@@ -670,7 +673,7 @@ void OrderRuleLists(SnortConfig* sc)
         RuleListNode* node = sc->rule_lists;
         sc->rule_lists = node->next;
         ordered_list = addNodeToOrderedList(ordered_list, node, evalIndex++);
-        sc->evalOrder[node->mode] =  evalIndex;
+        sc->evalOrder[node->mode] = evalIndex;
     }
 
     sc->rule_lists = ordered_list;

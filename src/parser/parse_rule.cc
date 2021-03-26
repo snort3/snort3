@@ -23,6 +23,7 @@
 
 #include "parse_rule.h"
 
+#include "actions/actions.h"
 #include "detection/detect.h"
 #include "detection/fp_config.h"
 #include "detection/fp_utils.h"
@@ -955,13 +956,17 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
     if ( s_so_rule )
         return;
 
-    rtn.action = get_rule_type(s);
+    assert(s);
 
-    if ( rtn.action == Actions::NONE )
+    rtn.action = Actions::get_type(s);
+
+    if ( !Actions::is_valid_action(rtn.action) )
     {
         s_ignore = true;
+        ParseError("unknown rule action '%s'", s);
         return;
     }
+
     if ( sc->dump_rule_meta() )
         rtn.header = new RuleHeader(s);
 
@@ -972,11 +977,9 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
         CreateRuleType(sc, s, rtn.action);
         rtn.listhead = get_rule_list(sc, s);
     }
+
     if ( sc->get_default_rule_state() )
         rtn.set_enabled();
-
-    if ( !rtn.listhead )
-        ParseError("unconfigured rule action '%s'", s);
 }
 
 void parse_rule_proto(SnortConfig* sc, const char* s, RuleTreeNode& rtn, bool elided)

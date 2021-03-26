@@ -61,6 +61,8 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
+#include "actions.h"
+
 using namespace snort;
 using namespace HttpCommon;
 using namespace Http2Enums;
@@ -93,7 +95,7 @@ static THREAD_LOCAL ProfileStats reactPerfStats;
     "</body>\r\n" \
     "</html>\r\n"
 
-THREAD_LOCAL const snort::Trace* react_trace = nullptr;
+THREAD_LOCAL const Trace* react_trace = nullptr;
 
 class ReactData
 {
@@ -127,56 +129,89 @@ private:
     std::string resp_buf;      // response to send
 };
 
-class ReactAction : public snort::IpsAction
+//-------------------------------------------------------------------------
+// active action
+//-------------------------------------------------------------------------
+
+class ReactActiveAction : public ActiveAction
+{
+public:
+    ReactActiveAction(ReactData* c)
+        : ActiveAction( ActionPriority::AP_PROXY ), config(c)
+    { }
+
+    void delayed_exec(Packet* p) override;
+
+private:
+    void send(Packet* p);
+    ReactData* config;
+};
+
+void ReactActiveAction::delayed_exec(Packet* p)
+{
+    Profile profile(reactPerfStats);
+
+    if ( p->active->is_reset_candidate(p) )
+        send(p);
+}
+
+void ReactActiveAction::send(Packet* p)
+{
+    InjectionControl control;
+    control.http_page = (const uint8_t*)config->get_resp_buf();
+    control.http_page_len = config->get_buf_len();
+    if (p->flow && p->flow->gadget &&
+        (strcmp(p->flow->gadget->get_name(), "http2_inspect") == 0))
+    {
+        Http2FlowData* const session_data =
+            (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
+        assert(session_data != nullptr);
+        const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
+        if (session_data != nullptr)
+        {
+            control.stream_id = session_data->get_current_stream_id(source_id);
+            assert(control.stream_id != NO_STREAM_ID);
+        }
+    }
+    InjectionReturnStatus status = PayloadInjector::inject_http_payload(p, control);
+#ifdef DEBUG_MSGS
+    if (status != INJECTION_SUCCESS)
+        debug_logf(react_trace, p, "Injection error: %s\n",
+            PayloadInjector::get_err_string(status));
+#else
+    UNUSED(status);
+#endif
+}
+
+//-------------------------------------------------------------------------
+// ips action
+//-------------------------------------------------------------------------
+
+class ReactAction : public IpsAction
 {
 public:
     ReactAction(ReactData* c)
-        : IpsAction(s_name, ActionType::ACT_PROXY), config(c)
+        : IpsAction(s_name, &react_act_action), config(c), react_act_action(c)
     { }
 
     ~ReactAction() override
     { delete config; }
 
-    void exec(snort::Packet* p) override
-    {
-        Profile profile(reactPerfStats);
-
-        if ( p->active->is_reset_candidate(p) )
-            send(p);
-    }
-
-private:
-    void send(snort::Packet* p)
-    {
-        InjectionControl control;
-        control.http_page = (const uint8_t*)config->get_resp_buf();
-        control.http_page_len = config->get_buf_len();
-        if (p->flow && p->flow->gadget &&
-            (strcmp(p->flow->gadget->get_name(), "http2_inspect") == 0))
-        {
-            Http2FlowData* const session_data =
-                (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
-            assert(session_data != nullptr);
-            const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
-            if (session_data != nullptr)
-            {
-                control.stream_id = session_data->get_current_stream_id(source_id);
-                assert(control.stream_id != NO_STREAM_ID);
-            }
-        }
-        InjectionReturnStatus status = PayloadInjector::inject_http_payload(p, control);
-#ifdef DEBUG_MSGS
-        if (status != INJECTION_SUCCESS)
-            debug_logf(react_trace, p, "Injection error: %s\n",
-                PayloadInjector::get_err_string(status));
-#else
-        UNUSED(status);
-#endif
-    }
+    void exec(Packet*, const OptTreeNode* otn) override;
+    bool drops_traffic() override { return true; }
 
 private:
     ReactData* config;
+    ReactActiveAction react_act_action;
 };
+
+void ReactAction::exec(Packet* p, const OptTreeNode* otn)
+{
+    p->active->drop_packet(p);
+    p->active->set_drop_reason("ips");
+    if ( otn )
+        Actions::alert(p, otn);
+}
 
 //-------------------------------------------------------------------------
 // module
@@ -205,19 +240,19 @@ public:
     Usage get_usage() const override
     { return DETECT; }
 
-    void set_trace(const snort::Trace* trace) const override
+    void set_trace(const Trace* trace) const override
     { react_trace = trace; }
 
-    const snort::TraceOption* get_trace_options() const override
+    const TraceOption* get_trace_options() const override
     {
         static const TraceOption react_trace_options(nullptr, 0, nullptr);
         return &react_trace_options;
     }
 
-public:
-    std::string page;
+    std::string get_data();
 
 private:
+    std::string page;
     bool getpage(const char* file);
 };
 
@@ -234,10 +269,9 @@ bool ReactModule::getpage(const char* file)
     return true;
 }
 
-bool ReactModule::begin(const char*, int, SnortConfig* sc)
+bool ReactModule::begin(const char*, int, SnortConfig*)
 {
     page.clear();
-    sc->set_active_enabled();
     return true;
 }
 
@@ -247,6 +281,13 @@ bool ReactModule::set(const char*, Value& v, SnortConfig*)
         return getpage(v.get_string());
 
     return true;
+}
+
+std::string ReactModule::get_data()
+{
+    std::string tmp = page;
+    page.clear();
+    return tmp;
 }
 
 //-------------------------------------------------------------------------
@@ -261,10 +302,14 @@ static void mod_dtor(Module* m)
 
 static IpsAction* react_ctor(Module* p)
 {
-    ReactModule* m = (ReactModule*)p;
-    ReactData* rd = new ReactData(m->page);
+    std::string react_page;
+    if ( p )
+    {
+        ReactModule* m = (ReactModule*)p;
+        react_page = m->get_data();
+    }
 
-    return new ReactAction(rd);
+    return new ReactAction(new ReactData(react_page));
 }
 
 static void react_dtor(IpsAction* p)
@@ -284,7 +329,7 @@ static const ActionApi react_api =
         mod_ctor,
         mod_dtor
     },
-    Actions::DROP,
+    IpsAction::IpsActionPriority(IpsAction::IAP_DROP + 1),
     nullptr,  // pinit
     nullptr,  // pterm
     nullptr,  // tinit

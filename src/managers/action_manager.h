@@ -36,6 +36,8 @@ struct SnortConfig;
 struct Packet;
 }
 
+struct IpsPolicy;
+
 //-------------------------------------------------------------------------
 
 #ifdef PIGLET
@@ -63,10 +65,16 @@ public:
     static void dump_plugins();
 
     static void new_config(snort::SnortConfig*);
-    static snort::Actions::Type get_action_type(const char*);
     static void delete_config(snort::SnortConfig*);
 
-    static void instantiate(const snort::ActionApi*, snort::Module*, snort::SnortConfig*);
+    static void instantiate(const snort::ActionApi*, snort::Module*,
+            snort::SnortConfig*, IpsPolicy* ips = nullptr );
+    static void initialize_policies(snort::SnortConfig*);
+
+    static std::string get_action_string(Actions::Type);
+    static Actions::Type get_action_type(const char*);
+    static Actions::Type get_max_action_types(void);
+    static std::string get_action_priorities(bool);
 
     static void thread_init(const snort::SnortConfig*);
     static void thread_reinit(const snort::SnortConfig*);

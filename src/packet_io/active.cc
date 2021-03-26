@@ -47,9 +47,9 @@ using namespace snort;
 class ResetAction : public snort::ActiveAction
 {
 public:
-    ResetAction() : ActiveAction(ActionType::ACT_RESET) { }
+    ResetAction() : ActiveAction(ActionPriority::AP_RESET) { }
 
-    void exec(snort::Packet* p) override
+    void delayed_exec(snort::Packet* p) override
     {
         p->active->kill_session(p, ENC_FLAG_FWD);
     }
@@ -183,10 +183,10 @@ bool Active::thread_init(const SnortConfig* sc)
     if ( s_attempts > MAX_ATTEMPTS )
         s_attempts = MAX_ATTEMPTS;
 
-    if ( sc->is_active_enabled() && !s_attempts )
+    if ( !s_attempts )
         s_attempts = 1;
 
-    if ( sc->is_active_enabled() && (!SFDAQ::can_inject() || !sc->respond_device.empty()) )
+    if ( !SFDAQ::can_inject() || !sc->respond_device.empty() )
     {
         if ( sc->read_mode() ||
             !open(sc->respond_device.empty() ? nullptr : sc->respond_device.c_str()) )
@@ -695,16 +695,13 @@ void Active::reset_session(Packet* p, ActiveAction* reject, bool force)
     if ( force or (p->context->conf->inline_mode() and SFDAQ::forwarding_packet(p->pkth)))
         Stream::drop_flow(p);
 
-    if ( p->context->conf->is_active_enabled() )
-    {
-        if (reject)
-            Active::queue(reject, p);
+    if (reject)
+        Active::queue(reject, p);
 
-        if ( p->flow )
-        {
-            Stream::init_active_response(p, p->flow);
-            p->flow->set_state(Flow::FlowState::RESET);
-        }
+    if ( p->flow )
+    {
+        Stream::init_active_response(p, p->flow);
+        p->flow->set_state(Flow::FlowState::RESET);
     }
 
     p->disable_inspect = true;
@@ -818,7 +815,7 @@ void Active::execute(Packet* p)
 {
     if ( *p->action )
     {
-        (*p->action)->exec(p);
+        (*p->action)->delayed_exec(p);
         *p->action = nullptr;
     }
 

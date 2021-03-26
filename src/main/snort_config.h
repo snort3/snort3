@@ -29,6 +29,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "actions/actions.h"
 #include "events/event_queue.h"
 #include "framework/bits.h"
 #include "helpers/scratch_allocator.h"
@@ -356,7 +357,7 @@ public:
 
     unsigned num_rule_types = 0;
     RuleListNode* rule_lists = nullptr;
-    int evalOrder[Actions::MAX + 1];
+    int* evalOrder = nullptr;
 
     IpsActionsConfig* ips_actions_config = nullptr;
     FrameworkConfig* framework_config = nullptr;
@@ -427,7 +428,6 @@ public:
 
     DumpConfigType dump_config_type = DUMP_CONFIG_NONE;
 private:
-    bool active_enabled = false;
     std::list<ReloadResourceTuner*> reload_tuners;
 
 public:
@@ -603,13 +603,6 @@ public:
 
     bool assure_established() const
     { return run_flags & RUN_FLAG__ASSURE_EST; }
-
-    // active stuff
-    void set_active_enabled()
-    { active_enabled = true; }
-
-    bool is_active_enabled() const
-    { return active_enabled; }
 
     // other stuff
     uint8_t min_ttl() const

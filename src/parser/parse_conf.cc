@@ -28,13 +28,13 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <cassert>
 #include <climits>
 #include <fstream>
 #include <stack>
 
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "managers/action_manager.h"
 #include "managers/module_manager.h"
 #include "sfip/sf_vartable.h"
 #include "target_based/snort_protocols.h"
@@ -263,30 +263,6 @@ void add_service_to_otn(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
 
     SignatureServiceInfo si(svc_name, svc_id);
     otn->sigInfo.services.emplace_back(si);
-}
-
-Actions::Type get_rule_type(const char* s)
-{
-    Actions::Type rt = Actions::get_type(s);
-
-    if ( rt == Actions::NONE )
-        rt = ActionManager::get_action_type(s);
-
-    switch ( rt )
-    {
-    case Actions::DROP:
-    case Actions::BLOCK:
-    case Actions::RESET:
-        return rt;
-
-    case Actions::NONE:
-        ParseError("unknown rule type '%s'", s);
-        break;
-
-    default:
-        break;
-    }
-    return rt;
 }
 
 ListHead* get_rule_list(SnortConfig* sc, const char* s)

@@ -611,7 +611,6 @@ bool ReferencesModule::set(const char*, Value& v, SnortConfig*)
 //-------------------------------------------------------------------------
 // alerts module
 //-------------------------------------------------------------------------
-
 static const Parameter alerts_params[] =
 {
     { "alert_with_interface_name", Parameter::PT_BOOL, nullptr, "false",
@@ -626,7 +625,7 @@ static const Parameter alerts_params[] =
     { "log_references", Parameter::PT_BOOL, nullptr, "false",
       "include rule references in alert info (full only)" },
 
-    { "order", Parameter::PT_STRING, nullptr, "pass reset block drop alert log",
+    { "order", Parameter::PT_STRING, nullptr, nullptr,
       "change the order of rule action application" },
 
     { "rate_filter_memcap", Parameter::PT_INT, "0:max32", "1048576",
@@ -873,12 +872,7 @@ bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
         sc->set_dst_mac(v.get_string());
 
     else if ( v.is("max_responses") )
-    {
         sc->max_responses = v.get_uint8();
-
-        if ( sc->max_responses )
-            sc->set_active_enabled();
-    }
 
     else if ( v.is("min_interval") )
         sc->min_interval = v.get_uint8();
@@ -1711,6 +1705,9 @@ bool EventFilterModule::end(const char*, int idx, SnortConfig* sc)
 // rate_filter module
 //-------------------------------------------------------------------------
 
+function<const char*()> get_action_types = []()
+{ return PluginManager::get_available_plugins(PT_IPS_ACTION); };
+
 static const Parameter rate_filter_params[] =
 {
     { "gid", Parameter::PT_INT, "0:max32", "1",
@@ -1728,10 +1725,7 @@ static const Parameter rate_filter_params[] =
     { "seconds", Parameter::PT_INT, "0:max32", "1",
       "count interval" },
 
-    { "new_action", Parameter::PT_ENUM,
-      // FIXIT-L new_action options must match Actions::Type and
-      // should include pluggable actions as well
-      "log | pass | alert | drop | block | reset", "alert",
+    { "new_action", Parameter::PT_DYNAMIC, (void*)&get_action_types, "alert",
       "take this action on future hits until timeout" },
 
     { "timeout", Parameter::PT_INT, "0:max32", "1",
@@ -1811,7 +1805,13 @@ bool RateFilterModule::set(const char*, Value& v, SnortConfig*)
         thdx.applyTo = sfip_var_from_string(v.get_string(), "rate_filter");
 
     else if ( v.is("new_action") )
-        thdx.newAction = (Actions::Type)(v.get_uint8() + 1);
+    {
+        thdx.newAction = Actions::get_type(v.get_string());
+
+        if ( !Actions::is_valid_action(thdx.newAction) )
+            ParseError("unknown new_action type rate_filter configuration %s",
+                    v.get_string());
+    }
 
     else
         return false;

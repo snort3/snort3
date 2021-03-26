@@ -182,7 +182,7 @@ void Snort::init(int argc, char** argv)
     ModuleManager::reset_stats(sc);
 
     if (sc->alert_before_pass())
-        sc->rule_order = "reset block drop alert pass log";
+        sc->rule_order = Actions::get_default_priorities(true);
 
     sc->setup();
 

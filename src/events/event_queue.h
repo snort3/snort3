@@ -20,7 +20,6 @@
 #ifndef EVENT_QUEUE_H
 #define EVENT_QUEUE_H
 
-#include "actions/actions.h"
 #include "main/snort_types.h"
 
 #define SNORT_EVENTQ_PRIORITY    1
@@ -38,7 +37,6 @@ struct EventNode
 {
     const struct OptTreeNode* otn;
     const struct RuleTreeNode* rtn;
-    snort::Actions::Type type;
 };
 
 EventQueueConfig* EventQueueConfigNew();

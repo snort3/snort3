@@ -135,6 +135,20 @@ static const ConvertMap disable_ipopt_drops_api =
 const ConvertMap* disable_ipopt_drops_map = &disable_ipopt_drops_api;
 
 /*************************************************
+ ****************  disable_replace ***************
+ *************************************************/
+
+static const std::string disable_replace = "disable_replace";
+static const ConvertMap disable_replace_api =
+{
+    disable_replace,
+    deleted_ctor<& disable_replace>,
+};
+
+const ConvertMap* disable_replace_map = &disable_replace_api;
+
+
+/*************************************************
  ************  disable_tcpopt_alerts  ************
  *************************************************/
 

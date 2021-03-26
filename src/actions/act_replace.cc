@@ -24,9 +24,10 @@
 #include "detection/detection_engine.h"
 #include "framework/ips_action.h"
 #include "framework/module.h"
-#include "main/snort_config.h"
 #include "packet_io/active.h"
 #include "protocols/packet.h"
+
+#include "actions.h"
 
 using namespace snort;
 
@@ -72,83 +73,46 @@ static void Replace_ModifyPacket(Packet* p)
 }
 
 //-------------------------------------------------------------------------
-// replace module
+// active action
 //-------------------------------------------------------------------------
-
-static const Parameter s_params[] =
-{
-    { "disable_replace", Parameter::PT_BOOL, nullptr, "false",
-      "disable replace of packet contents with rewrite rules" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-class ReplaceModule : public Module
+class ReplaceActiveAction : public ActiveAction
 {
 public:
-    ReplaceModule() : Module(s_name, s_help, s_params) { }
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-
-    Usage get_usage() const override
-    { return DETECT; }
-
-public:
-    bool disable_replace;
+    ReplaceActiveAction() : ActiveAction(ActionPriority::AP_MODIFY) { }
+    void delayed_exec(Packet*) override;
 };
 
-bool ReplaceModule::set(const char*, Value& v, SnortConfig*)
+void ReplaceActiveAction::delayed_exec(Packet* p)
 {
-    if ( v.is("disable_replace") )
-        disable_replace = v.get_bool();
-    else
-        return false;
-
-    return true;
-}
-
-bool ReplaceModule::begin(const char*, int, SnortConfig* sc)
-{
-    disable_replace = false;
-    sc->set_active_enabled();
-    return true;
-}
-
-//-------------------------------------------------------------------------
-class ReplaceAction : public snort::IpsAction
-{
-public:
-    ReplaceAction(bool disable_replace);
-
-    void exec(snort::Packet*) override;
-private:
-    bool disable_replace = false;
-};
-
-ReplaceAction::ReplaceAction(bool dr) :
-    IpsAction(s_name, ACT_RESET)
-{
-    disable_replace = dr;
-}
-
-void ReplaceAction::exec(Packet* p)
-{
-    if ( p->is_rebuilt() || disable_replace )
+    if ( p->is_rebuilt() )
         return;
 
     Replace_ModifyPacket(p);
 }
 
 //-------------------------------------------------------------------------
+// ips action
+//-------------------------------------------------------------------------
+class ReplaceAction : public IpsAction
+{
+public:
+    ReplaceAction() : IpsAction(s_name, &rep_act_action) { }
 
-static Module* mod_ctor()
-{ return new ReplaceModule; }
+    void exec(Packet*, const OptTreeNode* otn) override;
 
-static void mod_dtor(Module* m)
-{ delete m; }
+private:
+    ReplaceActiveAction rep_act_action;
+};
 
-static IpsAction* rep_ctor(Module* m)
-{ return new ReplaceAction( ((ReplaceModule*)m)->disable_replace); }
+void ReplaceAction::exec(Packet* p, const OptTreeNode* otn)
+{
+    Actions::alert(p, otn);
+}
+
+//-------------------------------------------------------------------------
+
+static IpsAction* rep_ctor(Module*)
+{ return new ReplaceAction; }
 
 static void rep_dtor(IpsAction* p)
 { delete p; }
@@ -164,10 +128,10 @@ static ActionApi rep_api
         API_OPTIONS,
         s_name,
         s_help,
-        mod_ctor,
-        mod_dtor
+        nullptr,  // mod_ctor
+        nullptr,  // mod_dtor
     },
-    Actions::ALERT,
+    IpsAction::IAP_REWRITE,
     nullptr,
     nullptr,
     nullptr,
@@ -176,11 +140,7 @@ static ActionApi rep_api
     rep_dtor
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-#else
 const BaseApi* act_replace[] =
-#endif
 {
     &rep_api.base,
     nullptr

@@ -54,6 +54,8 @@
 #include "packet_io/active.h"
 #include "profiler/profiler.h"
 
+#include "actions.h"
+
 using namespace snort;
 
 #define s_name "reject"
@@ -76,25 +78,21 @@ enum
 
 THREAD_LOCAL ProfileStats rejPerfStats;
 
-class RejectAction : public snort::IpsAction
+//-------------------------------------------------------------------------
+// active action
+//-------------------------------------------------------------------------
+
+class RejectActiveAction : public ActiveAction
 {
 public:
-    RejectAction(uint32_t f);
-    void exec(snort::Packet*) override;
+    RejectActiveAction(uint32_t f) : ActiveAction (ActionPriority::AP_RESET) , mask(f) { }
+    void delayed_exec(Packet*) override;
 
 private:
     uint32_t mask;
 };
 
-//-------------------------------------------------------------------------
-// class methods
-//-------------------------------------------------------------------------
-
-RejectAction::RejectAction(uint32_t f) : IpsAction(s_name, ActionType::ACT_RESET), mask(f)
-{ }
-
-
-void RejectAction::exec(Packet* p)
+void RejectActiveAction::delayed_exec(Packet* p)
 {
     if ( !p->ptrs.ip_api.is_ip() )
         return;
@@ -149,6 +147,35 @@ void RejectAction::exec(Packet* p)
 }
 
 //-------------------------------------------------------------------------
+// ips action
+//-------------------------------------------------------------------------
+
+class RejectAction : public IpsAction
+{
+public:
+    RejectAction(uint32_t f = REJ_RST_BOTH);
+
+    void exec(Packet*, const OptTreeNode* otn) override;
+
+private:
+    RejectActiveAction rej_act_action;
+};
+
+//-------------------------------------------------------------------------
+// class methods
+//-------------------------------------------------------------------------
+
+RejectAction::RejectAction(uint32_t f) : IpsAction(s_name, &rej_act_action) , rej_act_action(f)
+{ }
+
+void RejectAction::exec(Packet* p, const OptTreeNode* otn)
+{
+    p->active->reset_session(p, get_active_action());
+    if ( otn )
+        Actions::alert(p, otn);
+}
+
+//-------------------------------------------------------------------------
 // module
 //-------------------------------------------------------------------------
 
@@ -177,14 +204,15 @@ public:
     Usage get_usage() const override
     { return DETECT; }
 
-public:
+    uint32_t get_data();
+
+private:
     uint32_t flags;
 };
 
-bool RejectModule::begin(const char*, int, SnortConfig* sc)
+bool RejectModule::begin(const char*, int, SnortConfig*)
 {
     flags = 0;
-    sc->set_active_enabled();
     return true;
 }
 
@@ -226,6 +254,11 @@ bool RejectModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
+uint32_t RejectModule::get_data()
+{
+    return flags;
+}
+
 //-------------------------------------------------------------------------
 // api methods
 //-------------------------------------------------------------------------
@@ -242,8 +275,13 @@ static void mod_dtor(Module* m)
 
 static IpsAction* rej_ctor(Module* p)
 {
-    RejectModule* m = (RejectModule*)p;
-    return new RejectAction(m->flags);
+    if ( p )
+    {
+        RejectModule* m = (RejectModule*)p;
+        return new RejectAction(m->get_data());
+    }
+    else
+        return new RejectAction();
 }
 
 static void rej_dtor(IpsAction* p)
@@ -265,7 +303,7 @@ static const ActionApi rej_api =
         mod_ctor,
         mod_dtor
     },
-    Actions::RESET,
+    IpsAction::IAP_REJECT,
     nullptr,
     nullptr,
     nullptr,
@@ -274,11 +312,7 @@ static const ActionApi rej_api =
     rej_dtor
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-#else
 const BaseApi* act_reject[] =
-#endif
 {
     &rej_api.base,
     nullptr

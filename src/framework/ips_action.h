@@ -25,34 +25,55 @@
 // These can be used to execute external controls like updating an external
 // firewall.
 
-#include "actions/actions.h"
 #include "framework/base_api.h"
 #include "main/snort_types.h"
 #include "packet_io/active_action.h"
 
 // this is the current version of the api
-#define ACTAPI_VERSION ((BASE_API_VERSION << 16) | 0)
+#define ACTAPI_VERSION ((BASE_API_VERSION << 16) | 1)
 
 //-------------------------------------------------------------------------
 // api for class
 //-------------------------------------------------------------------------
 
+struct OptTreeNode;
 namespace snort
 {
 struct Packet;
 
-class SO_PUBLIC IpsAction : public ActiveAction
+class SO_PUBLIC IpsAction
 {
 public:
-    void exec(Packet*) override = 0;
+    enum IpsActionPriority : uint16_t
+    {
+        IAP_LOG = 10,
+        IAP_ALERT = 20,
+        IAP_REWRITE = 30,
+        IAP_DROP = 40,
+        IAP_BLOCK = 50,
+        IAP_REJECT = 60,
+        IAP_PASS = 70,
+        IAP_MAX = IAP_PASS
+    };
+
+public:
+    virtual ~IpsAction() = default;
     const char* get_name() const { return name; }
+    ActiveAction* get_active_action() const { return active_action; }
+
+    virtual void exec(Packet*, const OptTreeNode* otn = nullptr) = 0;
+    virtual bool drops_traffic() { return false; }
 
 protected:
-    IpsAction(const char* s, ActionType a) : ActiveAction(a)
-    { name = s; }
+    IpsAction(const char* s, ActiveAction* a)
+    {
+        active_action = a;
+        name = s;
+    }
 
 private:
     const char* name;
+    ActiveAction* active_action;
 };
 
 typedef void (* IpsActFunc)();
@@ -62,7 +83,8 @@ typedef void (* ActDelFunc)(IpsAction*);
 struct ActionApi
 {
     BaseApi base;
-    Actions::Type type;
+
+    IpsAction::IpsActionPriority priority;
 
     IpsActFunc pinit;
     IpsActFunc pterm;

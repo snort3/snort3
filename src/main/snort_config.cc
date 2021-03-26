@@ -27,6 +27,7 @@
 #include <pwd.h>
 #include <syslog.h>
 
+#include "actions/ips_actions.h"
 #include "detection/detect.h"
 #include "detection/detection_engine.h"
 #include "detection/fp_config.h"
@@ -178,7 +179,6 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
         thread_config = new ThreadConfig();
         global_dbus = new DataBus();
 
-        memset(evalOrder, 0, sizeof(evalOrder));
         proto_ref = new ProtocolReference(protocol_reference);
         so_rules = new SoRules;
         trace_config = new TraceConfig;
@@ -271,6 +271,7 @@ SnortConfig::~SnortConfig()
     delete memory;
     delete daq_config;
     delete proto_ref;
+    delete[] evalOrder;
     delete so_rules;
     if ( plugins )
         delete plugins;
@@ -290,6 +291,10 @@ void SnortConfig::setup()
 
     init_policies(this);
     ParseRules(this);
+
+    // Allocate evalOrder before calling the OrderRuleLists
+    evalOrder = new int[Actions::get_max_types()]();
+
     OrderRuleLists(this);
 
     if ( rule_states )

@@ -24,7 +24,9 @@ plugins:
 
     react = { }
     reject = { }
-    rewrite = { }
+
+When these active responses are not configured the default configuration
+is used.
 
 Active responses will be performed for reject, react or rewrite IPS rule 
 actions, and response packets are encoded based on the triggering packet. 
@@ -164,7 +166,6 @@ option in the rules.
 
 For example:
 
-    rewrite = { }
     local_rules =
     [[
     rewrite tcp 10.1.1.87 any -> 10.1.1.0/24 80
@@ -183,12 +184,3 @@ For example:
 
 this rule replaces "index.php" with "indax.php", and rewrite action 
 updates that packet.
-
-to enable rewrite action:
-
-    rewrite = { }
-
-the replace operation can be disabled by changing the configuration:
-
-    rewrite = { disable_replace = true }
-

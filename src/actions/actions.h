@@ -22,6 +22,7 @@
 // Define action types and provide hooks to apply a given action to a packet
 
 #include <cstdint>
+#include <string>
 
 #include "main/snort_types.h"
 
@@ -30,25 +31,22 @@ struct OptTreeNode;
 namespace snort
 {
 struct Packet;
+}
 
 class SO_PUBLIC Actions
 {
 public:
-    // FIXIT-L if Type is changed, RateFilterModule and type in actions.cc must be updated
-    enum Type : uint8_t
-    { NONE = 0, LOG, PASS, ALERT, DROP, BLOCK, RESET, MAX };
-
-    static const char* get_string(Type);
+    using Type = uint8_t;
+public:
+    static std::string get_string(Type);
     static Type get_type(const char*);
+    static Type get_max_types();
+    static bool is_valid_action(Type);
+    static std::string get_default_priorities(bool alert_before_pass = false);
 
-    static void execute(Type, struct Packet*, const struct OptTreeNode*,
-        uint16_t event_id);
-
-    static void apply(Type, struct Packet*);
-
-    static inline bool is_pass(Type a)
-    { return ( a == PASS ); }
+    static void pass();
+    static void log(snort::Packet*, const OptTreeNode*);
+    static void alert(snort::Packet*, const OptTreeNode*);
 };
-}
 #endif
 

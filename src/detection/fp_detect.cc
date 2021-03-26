@@ -41,6 +41,7 @@
 
 #include <vector>
 
+#include "actions/actions.h"
 #include "events/event.h"
 #include "filters/rate_filter.h"
 #include "filters/sfthreshold.h"
@@ -107,29 +108,26 @@ static inline void init_match_info(const IpsContext* c)
 // called by fpLogEvent(), which does the filtering etc.
 // this handles the non-rule-actions (responses).
 static inline void fpLogOther(
-    Packet* p, const RuleTreeNode* rtn, const OptTreeNode* otn, int action)
+    Packet* p, const RuleTreeNode* rtn, const OptTreeNode* otn, Actions::Type action)
 {
     if ( EventTrace_IsEnabled(p->context->conf) )
         EventTrace_Log(p, otn, action);
 
     if ( PacketTracer::is_active() )
     {
+        std::string act = Actions::get_string(action);
         PacketTracer::log("Event: %u:%u:%u, Action %s\n",
             otn->sigInfo.gid, otn->sigInfo.sid,
-            otn->sigInfo.rev, Actions::get_string((Actions::Type)action));
+            otn->sigInfo.rev, act.c_str());
     }
 
     // rule option actions are queued here (eg replace)
     otn_trigger_actions(otn, p);
 
-    // rule actions are queued here (eg reject)
-    if ( rtn->listhead->is_plugin_action )
-    {
-        Actions::Type idx = rtn->listhead->ruleListNode->mode;
-        ActiveAction * act = get_ips_policy()->action[idx];
-        if ( act )
-            Active::queue(act, p);
-    }
+    IpsAction* act = get_ips_policy()->action[rtn->action];
+    ActiveAction* active_act = act->get_active_action();
+    if ( active_act )
+        Active::queue(act->get_active_action(), p);
 }
 
 /*
@@ -142,9 +140,6 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
 {
     int action = -1, rateAction = -1;
     int override, filterEvent = 0;
-
-    if ( Actions::is_pass(rtn->action) )
-        p->packet_flags |= PKT_PASS_RULE;
 
     if ( otn->stateless() )
     {
@@ -166,16 +161,17 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
     {
         // We still want to drop packets that are drop rules.
         // We just don't want to see the alert.
-        Actions::apply(rtn->action, p);
+        IpsAction * act = get_ips_policy()->action[rtn->action];
+        act->exec(p);
         fpLogOther(p, rtn, otn, rtn->action);
         return 1;
     }
 
     // perform rate filtering tests - impacts action taken
     rateAction = RateFilter_Test(otn, p);
-    override = ( rateAction >= Actions::MAX );
+    override = ( rateAction >= Actions::get_max_types() );
     if ( override )
-        rateAction -= Actions::MAX;
+        rateAction -= Actions::get_max_types();
 
     // internal events are no-ops
     if ( (rateAction < 0) && EventIsInternal(otn->sigInfo.gid) )
@@ -209,7 +205,8 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
         **  If InlineMode is on, then we still want to drop packets
         **  that are drop rules.  We just don't want to see the alert.
         */
-        Actions::apply((Actions::Type)action, p);
+        IpsAction * act = get_ips_policy()->action[action];
+        act->exec(p);
         fpLogOther(p, rtn, otn, action);
         pc.event_limit++;
         return 1;
@@ -222,7 +219,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
     const SnortConfig* sc = p->context->conf;
 
     if ( (p->packet_flags & PKT_PASS_RULE) &&
-        (sc->get_eval_index(rtn->action) > sc->get_eval_index(Actions::PASS)) )
+        (sc->get_eval_index(rtn->action) > sc->get_eval_index(Actions::get_type("pass"))) )
     {
         fpLogOther(p, rtn, otn, rtn->action);
         return 1;
@@ -231,7 +228,11 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
     otn->state[get_instance_id()].alerts++;
 
     event_id++;
-    Actions::execute((Actions::Type)action, p, otn, event_id);
+
+    IpsAction * act = get_ips_policy()->action[action];
+    act->exec(p, otn);
+    SetTags(p, otn, event_id);
+
     fpLogOther(p, rtn, otn, action);
 
     return 0;
@@ -639,7 +640,7 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
                 const OptTreeNode* otn = omd->matchInfo[i].MatchArray[j];
                 RuleTreeNode* rtn = getRtnFromOtn(otn);
 
-                if ( otn && rtn && Actions::is_pass(rtn->action) )
+                if ( otn && rtn && ( p->packet_flags & PKT_PASS_RULE ) )
                 {
                     /* Already acted on rules, so just don't act on anymore */
                     if ( tcnt > 0 )
@@ -680,11 +681,8 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
                 }
 
                 /* only log/count one pass */
-                if ( otn && rtn && Actions::is_pass(rtn->action) )
-                {
-                    p->packet_flags |= PKT_PASS_RULE;
+                if ( otn && rtn && ( p->packet_flags & PKT_PASS_RULE ) )
                     return 1;
-                }
             }
         }
     }

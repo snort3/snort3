@@ -27,14 +27,14 @@ namespace snort
 {
 struct Packet;
 
-enum ActionType
+enum ActionPriority
 {
-    ACT_LOCAL,
-    ACT_MODIFY,
-    ACT_PROXY,
-    ACT_RESET,
-    ACT_REMOTE,
-    ACT_MAX
+    AP_LOCAL,
+    AP_MODIFY,
+    AP_PROXY,
+    AP_RESET,
+    AP_REMOTE,
+    AP_MAX
 };
 
 // These are injection actions (e.g. send a RST packet, or respond to a query
@@ -45,15 +45,15 @@ enum ActionType
 class SO_PUBLIC ActiveAction
 {
 public:
-    ActiveAction(ActionType a = ActionType::ACT_MAX) : action(a) {}
+    ActiveAction(ActionPriority a = ActionPriority::AP_MAX) : action(a) {}
     virtual ~ActiveAction() = default;
 
-    virtual void exec(Packet*) = 0;
+    virtual void delayed_exec(Packet* ) { }
 
-    ActionType get_action() const { return action; }
+    ActionPriority get_action() const { return action; }
 
 protected:
-    ActionType action;
+    ActionPriority action;
 
 };
 

@@ -23,26 +23,24 @@
 #include "actions.h"
 
 #include "detection/detect.h"
-#include "detection/tag.h"
-#include "packet_io/active.h"
-#include "packet_io/active_action.h"
+#include "managers/action_manager.h"
 #include "parser/parser.h"
 #include "utils/stats.h"
 
 using namespace snort;
 
-static void pass()
+void Actions::pass()
 {
     pc.pass_pkts++;
 }
 
-static void log(Packet* p, const OptTreeNode* otn)
+void Actions::log(Packet* p, const OptTreeNode* otn)
 {
     RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
     CallLogFuncs(p, otn, rtn->listhead);
 }
 
-static void alert(Packet* p, const OptTreeNode* otn)
+void Actions::alert(Packet* p, const OptTreeNode* otn)
 {
     RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
 
@@ -60,108 +58,30 @@ static void alert(Packet* p, const OptTreeNode* otn)
     CallLogFuncs(p, otn, rtn->listhead);
 }
 
-static const char* const type[Actions::MAX] =
+std::string Actions::get_string(Actions::Type action)
 {
-    "none", "log", "pass", "alert", "drop", "block", "reset"
-};
-
-const char* Actions::get_string(Actions::Type action)
-{
-    if ( action < Actions::MAX )
-        return type[action];
-
-    return "ERROR";
+    return ActionManager::get_action_string(action);
 }
 
 Actions::Type Actions::get_type(const char* s)
 {
-    if ( !s )
-        return Actions::NONE;
-
-    else if ( !strcasecmp(s, Actions::get_string(Actions::LOG)) )
-        return Actions::LOG;
-
-    else if ( !strcasecmp(s, Actions::get_string(Actions::PASS)) )
-        return Actions::PASS;
-
-    else if ( !strcasecmp(s, Actions::get_string(Actions::ALERT)) )
-        return Actions::ALERT;
-
-    else if ( !strcasecmp(s, Actions::get_string(Actions::DROP)) )
-        return Actions::DROP;
-
-    else if ( !strcasecmp(s, Actions::get_string(Actions::BLOCK)) )
-        return Actions::BLOCK;
-
-    else if ( !strcasecmp(s, Actions::get_string(Actions::RESET)) )
-        return Actions::RESET;
-
-    return Actions::NONE;
+    return ActionManager::get_action_type(s);
 }
 
-void Actions::execute(Actions::Type action, Packet* p, const OptTreeNode* otn,
-    uint16_t event_id)
+Actions::Type Actions::get_max_types()
 {
-    switch (action)
-    {
-    case Actions::PASS:
-        pass();
-        SetTags(p, otn, event_id);
-        break;
-
-    case Actions::ALERT:
-        alert(p, otn);
-        SetTags(p, otn, event_id);
-        break;
-
-    case Actions::LOG:
-        log(p, otn);
-        SetTags(p, otn, event_id);
-        break;
-
-    case Actions::DROP:
-        p->active->drop_packet(p);
-        p->active->set_drop_reason("ips");
-        alert(p, otn);
-        SetTags(p, otn, event_id);
-        break;
-
-    case Actions::BLOCK:
-        p->active->block_session(p);
-        p->active->set_drop_reason("ips");
-        alert(p, otn);
-        SetTags(p, otn, event_id);
-        break;
-
-    case Actions::RESET:
-        p->active->reset_session(p, get_ips_policy()->action[action]);
-        alert(p, otn);
-        SetTags(p, otn, event_id);
-        break;
-
-    default:
-        break;
-    }
+    return ActionManager::get_max_action_types();
 }
 
-void Actions::apply(Actions::Type action, Packet* p)
+bool Actions::is_valid_action(Actions::Type action)
 {
-    switch ( action )
-    {
-    case Actions::DROP:
-        p->active->drop_packet(p);
-        break;
+    if ( action < get_max_types() )
+        return true;
 
-    case Actions::BLOCK:
-        p->active->block_session(p);
-        break;
-
-    case Actions::RESET:
-        p->active->reset_session(p, get_ips_policy()->action[action]);
-        break;
-
-    default:
-        break;
-    }
+    return false;
 }
 
+std::string Actions::get_default_priorities(bool alert_before_pass)
+{
+    return ActionManager::get_action_priorities(alert_before_pass);
+}

@@ -28,6 +28,7 @@
 
 #include "main/thread.h"
 #include "detection/rules.h"
+#include "framework/ips_action.h"
 #include "hash/ghash.h"
 #include "hash/hash_defs.h"
 #include "hash/xhash.h"
@@ -402,9 +403,13 @@ static int SFRF_TestObject(
     // but the decrement will never come so we "fix" it here
     // if the count were not incremented in such cases, the
     // threshold would never be exceeded.
-    if ( !cfgNode->seconds && dynNode->count > cfgNode->count )
-        if ( cfgNode->newAction == Actions::DROP )
+    if ( !cfgNode->seconds && (dynNode->count > cfgNode->count)
+      && Actions::is_valid_action(cfgNode->newAction) )
+    {
+        IpsAction* act = get_ips_policy()->action[cfgNode->newAction];
+        if ( act->drops_traffic() )
             dynNode->count--;
+    }
 
 #ifdef SFRF_DEBUG
     printf("--SFRF_DEBUG: %d-%u-%u: %u Packet IP %s, op: %d, count %u, action %d\n",
@@ -742,7 +747,7 @@ static int _checkThreshold(
     fflush(stdout);
 #endif
 
-    return Actions::MAX + cfgNode->newAction;
+    return Actions::get_max_types() + cfgNode->newAction;
 }
 
 static void _updateDependentThresholds(

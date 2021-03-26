@@ -48,7 +48,7 @@ void Value::get_bits(std::bitset<256ul>&) const {}
 void Value::set_first_token() {}
 bool Value::get_next_token(std::string& ) { return false; }
 
-int DetectionEngine::queue_event(unsigned int, unsigned int, Actions::Type) { return 0; }
+int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }
 LiteralSearch::Handle* LiteralSearch::setup() { return nullptr; }
 void LiteralSearch::cleanup(LiteralSearch::Handle*) {}
 LiteralSearch* LiteralSearch::instantiate(LiteralSearch::Handle*, const uint8_t*, unsigned, bool,

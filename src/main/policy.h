@@ -43,7 +43,7 @@ namespace snort
 {
 class GHash;
 struct SnortConfig;
-class ActiveAction;
+class IpsAction;
 }
 
 struct PortTable;
@@ -184,9 +184,8 @@ public:
 
     bool obfuscate_pii;
 
-    // Holds plugin actions associated with this policy (e.g. reject, react, etc.)
-    // Indexed by Actions::Type.
-    std::vector<snort::ActiveAction*> action;
+    // Holds all plugin actions associated with this policy
+    std::vector<snort::IpsAction*> action;
 };
 
 //-------------------------------------------------------------------------

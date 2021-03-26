@@ -81,7 +81,7 @@ static void set_not_configured() { conf.payload_injector_config = nullptr; }
 static void set_configured() { conf.payload_injector_config = &pi_conf; }
 
 Packet::~Packet() = default;
-int DetectionEngine::queue_event(unsigned int, unsigned int, snort::Actions::Type) { return 0; }
+int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }
 FlowData::~FlowData() = default;
 FlowData::FlowData(unsigned int, snort::Inspector*) { }
 

@@ -133,7 +133,7 @@ struct RuleTreeNode
     // Multiple OTNs can reference this RTN with the same policy.
     unsigned int otnRefCount = 0; // FIXIT-L shared_ptr?
 
-    snort::Actions::Type action = snort::Actions::Type::NONE;
+    Actions::Type action = 0;
 
     uint8_t flags = 0;
 

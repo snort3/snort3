@@ -1,31 +1,34 @@
-IPS actions allow you to execute custom responses to events.
-Unlike loggers, these are invoked before thresholding and can be used to
-control external agents (including loggers).
+IPS actions allow you to execute custom responses to events. Unlike loggers,
+these are invoked before thresholding and can be used to control external agents
+(including loggers).
 
 IPS rules have an associated type that determines what kind of action they
 trigger. The rule types defined in this module are:
 
-* log
-* pass
-* alert
-* drop
-* block
-* reset
-
-There is also a "none" rule type, which is a no-op.
+* log pass alert drop block
 
 It also defines 3 active responses:
-* react
-* reject
-* rewrite
+* react reject rewrite
 
-Reject performs active response to shutdown hostile network 
-session by injecting TCP resets (TCP connections) or ICMP unreachable 
-packets.
+Reject performs active response to shutdown hostile network session by injecting
+TCP resets (TCP connections) or ICMP unreachable packets.
 
-React sends an HTML page to the client, a RST to the server
-and blocks the flow. It is using payload_injector utilty.
-payload_injector should be configured when react is used.
+React sends an HTML page to the client, a RST to the server and blocks the flow.
+It is using payload_injector utilty. payload_injector should be configured when
+react is used.
 
-Rewrite enables overwrite packet contents based on "replace" 
-option in the rules.
+Rewrite enables overwrite packet contents based on "replace" option in the
+rules.
+
+Ips actions are all pluggable and implemented as subclasses of IpsAction action.
+Each ips action instance has an instance of the active action that is used to
+perform the active response.
+
+IpsAction::exec represents the action taken by the ips actions after rule
+evaluation during packet processing. This may include logging, alerting  marking
+the packet as passed, etc. IpsActions::exec when called without the otn will do
+the active action such as drop/block/reset without alerting/logging or marking
+the packet as passed.
+
+ActiveAction::delayed_exec is called during the post processing of a packet to
+send active responses.

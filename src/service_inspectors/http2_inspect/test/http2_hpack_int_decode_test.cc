@@ -32,7 +32,7 @@
 namespace snort
 {
 // Stubs whose sole purpose is to make the test code link
-int DetectionEngine::queue_event(unsigned int, unsigned int, Actions::Type) { return 0; }
+int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }
 }
 
 using namespace Http2Enums;

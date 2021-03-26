@@ -74,10 +74,6 @@ static ConversionState* ctor(Converter& c)
         "Changing ruletype '" + old_action + "' to 'rewrite' "
         "because the rule has 'replace' option.");
 
-    // include a rewrite plugin
-    c.get_table_api().open_table("rewrite");
-    c.get_table_api().close_table();
-
     // update the rule type
     c.get_rule_api().update_rule_action("rewrite");
 

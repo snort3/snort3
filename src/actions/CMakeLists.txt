@@ -7,12 +7,17 @@ set (IPS_ACTION_SOURCES
     actions.cc
     ips_actions.cc
     ips_actions.h
+    act_alert.cc
+    act_block.cc
+    act_drop.cc
+    act_log.cc
+    act_pass.cc
+    act_reject.cc
     act_replace.cc
 )
 
 set( PLUGIN_LIST
     act_react.cc
-    act_reject.cc
     )
 
 if (STATIC_IPS_ACTIONS)
@@ -28,7 +33,6 @@ else (STATIC_IPS_ACTIONS)
     )
 
     add_dynamic_module(act_react ips_actions act_react.cc)
-    add_dynamic_module(act_reject ips_actions act_reject.cc)
 
 endif (STATIC_IPS_ACTIONS)
 

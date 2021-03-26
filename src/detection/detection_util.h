@@ -24,6 +24,7 @@
 // this is a legacy junk-drawer file that needs to be refactored
 // it provides file and alt data and event trace foo.
 
+#include "actions/actions.h"
 #include "main/snort_config.h"
 
 #define DECODE_BLEN 65535
@@ -44,7 +45,7 @@ struct DataBuffer
 void EventTrace_Init();
 void EventTrace_Term();
 
-void EventTrace_Log(const snort::Packet*, const OptTreeNode*, int action);
+void EventTrace_Log(const snort::Packet*, const OptTreeNode*, Actions::Type action);
 
 inline int EventTrace_IsEnabled(const snort::SnortConfig* sc)
 {

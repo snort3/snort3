@@ -364,11 +364,8 @@ bool SmtpModule::begin(const char*, int, SnortConfig*)
     return true;
 }
 
-bool SmtpModule::end(const char* fqn, int idx, SnortConfig* sc)
+bool SmtpModule::end(const char* fqn, int idx, SnortConfig*)
 {
-    if ( !strcmp(fqn, "smtp") and config->xlink2state )
-        sc->set_active_enabled();
-
     if ( !idx )
         return true;
 

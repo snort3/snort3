@@ -649,7 +649,7 @@ int DetectionEngine::queue_event(const OptTreeNode* otn)
     return 0;
 }
 
-int DetectionEngine::queue_event(unsigned gid, unsigned sid, Actions::Type type)
+int DetectionEngine::queue_event(unsigned gid, unsigned sid)
 {
     OptTreeNode* otn = GetOTN(gid, sid);
 
@@ -664,7 +664,6 @@ int DetectionEngine::queue_event(unsigned gid, unsigned sid, Actions::Type type)
 
     en->otn = otn;
     en->rtn = nullptr;  // lookup later after ips policy selection
-    en->type = type;
 
     if ( sfeventq_add(pq, en) )
         return -1;

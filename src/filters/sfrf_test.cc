@@ -952,8 +952,8 @@ static int EventTest(EventData* p)
     status = SFRF_TestThreshold(
         rfc, p->gid, p->sid, &sip, &dip, curtime, op);
 
-    if ( status >= Actions::MAX )
-        status -= Actions::MAX;
+    if ( status >= Actions::get_max_types() )
+        status -= Actions::get_max_types();
 
     return status;
 }
