@@ -1,3 +1,37 @@
+2021/03/27 - 3.1.3.0
+
+-- actions: Dynamically construct the default eval order for all the loaded IPS actions
+-- actions: Make all IPS actions pluggable
+-- appid: Make netbios domain available through appid API
+-- appid: SMB fingerprinting support
+-- cmake: Add flex build dependency
+-- dce_rpc: Refactor SMB code
+-- detection: Update detection.alert, to be used instead of reputation.total_alerts
+-- detection: Update dump_rule_meta function to only print rules from default IPS policy
+-- detection: Update the rtn's listHead to reflect the new action set in the rule state
+-- doc: Update http_inspect feature documentation
+-- flow: Add packet tracer output to DAQ expected flow requests
+-- host_tracker: Fully populate local hostclient before logging
+-- http2_inspect: Alert on uppercase header name encoded in HPACK
+-- http_inspect: Add JavaScript whitespace normalization
+-- http_inspect: Add normalization_depth config option
+-- http_inspect: Alert on HTTP/2 upgrade attempts
+-- http_inspect: Integrate JSNormalizer (whitespace normalization) keeping the old one
+-- packet_io: Update for the removal of the RETRY DAQ verdict
+-- packet_tracer: Do not log non-IP packets when enabled from shell and a constraint is set
+-- parser: Support duped RTN if its header has been changed
+-- rate_filter: Get the available IPS actions dynamically to configure the new_action
+-- rna: Make discovery filter use client and server interfaces if they are not unknown
+-- rna: SMB fingerprinting support
+-- snort2lua: Delete conversion of disable_replace option
+-- snort2lua: Fix lua conversion of http preproc options
+-- snort: Add -h to output the help overview (same as --help)
+-- snort_config: Remove is_active_enabled and set_active_enabled functions
+-- style: Change C++ comment NULL to null
+-- style: Remove unnecessary cruft
+-- style: Remove unused cruft
+-- utils: Add JSNormalizer
+
 2021/03/11 - 3.1.2.0
 
 -- action_manager: Remove unused cached reject action

@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.2.0 2021-03-11 14:57:04 EST TST
+Revision 3.1.3.0 2021-03-27 11:49:00 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -143,7 +143,6 @@ Table of Contents
 
     6.1. react
     6.2. reject
-    6.3. rewrite
 
 7. IPS Option Modules
 
@@ -412,8 +411,7 @@ Configuration:
     memory for event_filters { 0:max32 }
   * bool alerts.log_references = false: include rule references in
     alert info (full only)
-  * string alerts.order = pass reset block drop alert log: change the
-    order of rule action application
+  * string alerts.order: change the order of rule action application
   * int alerts.rate_filter_memcap = 1048576: set available MB of
     memory for rate_filters { 0:max32 }
   * string alerts.reference_net: set the CIDR for homenet (for use
@@ -503,7 +501,6 @@ Peg counts:
   * daq.whitelist: total whitelist verdicts (sum)
   * daq.blacklist: total blacklist verdicts (sum)
   * daq.ignore: total ignore verdicts (sum)
-  * daq.retry: total retry verdicts (sum)
   * daq.internal_blacklist: packets blacklisted internally due to
     lack of DAQ support (sum)
   * daq.internal_whitelist: packets whitelisted internally due to
@@ -1205,8 +1202,9 @@ Configuration:
   * int rate_filter[].count = 1: number of events in interval before
     tripping { 0:max32 }
   * int rate_filter[].seconds = 1: count interval { 0:max32 }
-  * enum rate_filter[].new_action = alert: take this action on future
-    hits until timeout { log | pass | alert | drop | block | reset }
+  * dynamic rate_filter[].new_action = alert: take this action on
+    future hits until timeout { alert | block | drop | log | pass |
+    react | reject | rewrite }
   * int rate_filter[].timeout = 1: count interval { 0:max32 }
   * string rate_filter[].apply_to: restrict filter to these addresses
     according to track
@@ -1349,6 +1347,7 @@ Configuration:
   * string snort.-g: <gname> run snort gid as <gname> group (or gid)
     after initialization
   * implied snort.-H: make hash tables deterministic
+  * implied snort.-h: show help overview (same as --help)
   * string snort.-i: <iface>… list of interfaces
   * port snort.-j: <port> to listen for Telnet connections
   * enum snort.-k = all: <mode> checksum mode; default is all { all|
@@ -1427,7 +1426,7 @@ Configuration:
     Operation
   * implied snort.--gen-msg-map: dump configured rules in gen-msg.map
     format for use by other tools
-  * implied snort.--help: list command line options
+  * implied snort.--help: show help overview
   * string snort.--help-commands: [<module prefix>] output matching
     commands { (optional) }
   * string snort.--help-config: [<module prefix>] output matching
@@ -2879,17 +2878,15 @@ Peg counts:
   * dce_smb.v2_wrt: total number of SMBv2 write packets seen (sum)
   * dce_smb.v2_wrt_err_resp: total number of SMBv2 write error
     response packets seen (sum)
-  * dce_smb.v2_wrt_ignored: total number of SMBv2 write packets
-    ignored due to missing trackers or invalid share type (sum)
   * dce_smb.v2_wrt_inv_str_sz: total number of SMBv2 write packets
     seen with invalid structure size (sum)
   * dce_smb.v2_wrt_req_hdr_err: total number of SMBv2 write request
     packets ignored due to corrupted header (sum)
+  * dce_smb.v2_wrt_resp_hdr_err: total number of SMBv2 write response
+    packets ignored due to corrupted header (sum)
   * dce_smb.v2_read: total number of SMBv2 read packets seen (sum)
   * dce_smb.v2_read_err_resp: total number of SMBv2 read error
     response packets seen (sum)
-  * dce_smb.v2_read_ignored: total number of SMBv2 write packets
-    ignored due to missing trackers or invalid share type (sum)
   * dce_smb.v2_read_inv_str_sz: total number of SMBv2 read packets
     seen with invalid structure size (sum)
   * dce_smb.v2_read_rtrkr_misng: total number of SMBv2 read response
@@ -2898,12 +2895,10 @@ Peg counts:
     packets ignored due to corrupted header (sum)
   * dce_smb.v2_read_req_hdr_err: total number of SMBv2 read request
     packets ignored due to corrupted header (sum)
-  * dce_smb.v2_stinf: total number of SMBv2 set info packets seen
+  * dce_smb.v2_setinfo: total number of SMBv2 set info packets seen
     (sum)
   * dce_smb.v2_stinf_err_resp: total number of SMBv2 set info error
     response packets seen (sum)
-  * dce_smb.v2_stinf_ignored: total number of SMBv2 set info packets
-    ignored due to missing trackers or invalid share type (sum)
   * dce_smb.v2_stinf_inv_str_sz: total number of SMBv2 set info
     packets seen with invalid structure size (sum)
   * dce_smb.v2_stinf_req_ftrkr_misng: total number of SMBv2 set info
@@ -2913,8 +2908,6 @@ Peg counts:
   * dce_smb.v2_cls: total number of SMBv2 close packets seen (sum)
   * dce_smb.v2_cls_err_resp: total number of SMBv2 close error
     response packets seen (sum)
-  * dce_smb.v2_cls_ignored: total number of SMBv2 close packets
-    ignored due to missing trackers or invalid share type (sum)
   * dce_smb.v2_cls_inv_str_sz: total number of SMBv2 close packets
     seen with invalid structure size (sum)
   * dce_smb.v2_cls_req_ftrkr_misng: total number of SMBv2 close
@@ -2937,8 +2930,6 @@ Peg counts:
     corrupted hdr (sum)
   * dce_smb.v2_bad_next_cmd_offset: total number of SMBv2 packets
     seen with invalid next command offset (sum)
-  * dce_smb.v2_extra_file_data_err: total number of SMBv2 packets
-    seen with where file data beyond file size is observed (sum)
   * dce_smb.v2_inv_file_ctx_err: total number of times null file
     context are seen resulting in not being able to set file size
     (sum)
@@ -2947,6 +2938,10 @@ Peg counts:
   * dce_smb.v2_cmpnd_req_lt_crossed: total number of SMBv2 packets
     seen where compound requests exceed the smb_max_compound limit
     (sum)
+  * dce_smb.v2_tree_ignored: total number of packets ignored due to
+    missing tree tracker (sum)
+  * dce_smb.v2_session_ignored: total number of packets ignored due
+    to missing session tracker (sum)
   * dce_smb.concurrent_sessions: total concurrent sessions (now)
   * dce_smb.max_concurrent_sessions: maximum concurrent sessions
     (max)
@@ -3603,6 +3598,7 @@ Rules:
   * 121:28 (http2_inspect) invalid HTTP/2 rst stream frame
   * 121:29 (http2_inspect) HTTP/2 rst stream frame sent at invalid
     time
+  * 121:30 (http2_inspect) uppercase HTTP/2 header field name
 
 Peg counts:
 
@@ -3657,6 +3653,8 @@ Configuration:
     immediately upon script end
   * bool http_inspect.normalize_javascript = false: normalize
     JavaScript in response bodies
+  * int http_inspect.normalization_depth = 0: number of input
+    JavaScript bytes to normalize { -1:65535 }
   * int http_inspect.max_javascript_whitespaces = 200: maximum
     consecutive whitespaces allowed within the JavaScript obfuscated
     data { 1:65535 }
@@ -3824,6 +3822,8 @@ Rules:
     truncated
   * 119:261 (http_inspect) HTTP chunked message body was truncated
   * 119:262 (http_inspect) HTTP URI scheme longer than 10 characters
+  * 119:263 (http_inspect) HTTP/1 client requested HTTP/2 upgrade
+  * 119:264 (http_inspect) HTTP/1 server granted HTTP/2 upgrade
 
 Peg counts:
 
@@ -4673,7 +4673,6 @@ Peg counts:
   * reputation.trusted: number of packets trusted (sum)
   * reputation.monitored: number of packets monitored (sum)
   * reputation.memory_allocated: total memory allocated (sum)
-  * reputation.total_alerts: total alerts triggered (sum)
 
 
 5.37. rna
@@ -4717,6 +4716,9 @@ Configuration:
   * string rna.tcp_fingerprints[].device: device information
   * string rna.tcp_fingerprints[].dhcp55: dhcp option 55 values
   * string rna.tcp_fingerprints[].dhcp60: dhcp option 60 values
+  * int rna.tcp_fingerprints[].major: smb major version { 0:max31 }
+  * int rna.tcp_fingerprints[].minor: smb minor version { 0:max31 }
+  * int rna.tcp_fingerprints[].flags: smb flags { 0:max32 }
   * int rna.ua_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
   * int rna.ua_fingerprints[].type = 0: fingerprint type { 0:max32 }
   * string rna.ua_fingerprints[].uuid: fingerprint uuid
@@ -4736,6 +4738,9 @@ Configuration:
   * string rna.ua_fingerprints[].device: device information
   * string rna.ua_fingerprints[].dhcp55: dhcp option 55 values
   * string rna.ua_fingerprints[].dhcp60: dhcp option 60 values
+  * int rna.ua_fingerprints[].major: smb major version { 0:max31 }
+  * int rna.ua_fingerprints[].minor: smb minor version { 0:max31 }
+  * int rna.ua_fingerprints[].flags: smb flags { 0:max32 }
   * int rna.udp_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
   * int rna.udp_fingerprints[].type = 0: fingerprint type { 0:max32 }
   * string rna.udp_fingerprints[].uuid: fingerprint uuid
@@ -4755,6 +4760,31 @@ Configuration:
   * string rna.udp_fingerprints[].device: device information
   * string rna.udp_fingerprints[].dhcp55: dhcp option 55 values
   * string rna.udp_fingerprints[].dhcp60: dhcp option 60 values
+  * int rna.udp_fingerprints[].major: smb major version { 0:max31 }
+  * int rna.udp_fingerprints[].minor: smb minor version { 0:max31 }
+  * int rna.udp_fingerprints[].flags: smb flags { 0:max32 }
+  * int rna.smb_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
+  * int rna.smb_fingerprints[].type = 0: fingerprint type { 0:max32 }
+  * string rna.smb_fingerprints[].uuid: fingerprint uuid
+  * int rna.smb_fingerprints[].ttl = 0: fingerprint ttl { 0:256 }
+  * string rna.smb_fingerprints[].tcp_window: fingerprint tcp window
+  * string rna.smb_fingerprints[].mss = X: fingerprint mss
+  * string rna.smb_fingerprints[].id = X: id
+  * string rna.smb_fingerprints[].topts: fingerprint tcp options
+  * string rna.smb_fingerprints[].ws = X: fingerprint window size
+  * bool rna.smb_fingerprints[].df = false: fingerprint don’t
+    fragment flag
+  * enum rna.smb_fingerprints[].ua_type = os: type of user agent
+    fingerprints { os | device | jail-broken | jail-broken-host }
+  * string rna.smb_fingerprints[].user_agent[].substring: a substring
+    of user agent string
+  * string rna.smb_fingerprints[].host_name: host name information
+  * string rna.smb_fingerprints[].device: device information
+  * string rna.smb_fingerprints[].dhcp55: dhcp option 55 values
+  * string rna.smb_fingerprints[].dhcp60: dhcp option 60 values
+  * int rna.smb_fingerprints[].major: smb major version { 0:max31 }
+  * int rna.smb_fingerprints[].minor: smb minor version { 0:max31 }
+  * int rna.smb_fingerprints[].flags: smb flags { 0:max32 }
 
 Commands:
 
@@ -4784,6 +4814,7 @@ Peg counts:
     (sum)
   * rna.dhcp_data: count of DHCP data events received (sum)
   * rna.dhcp_info: count of new DHCP lease events received (sum)
+  * rna.smb: count of new SMB events received (sum)
 
 
 5.38. rpc_decode
@@ -5706,22 +5737,6 @@ Configuration:
     none|source|dest|both }
   * enum reject.control = none: send ICMP unreachable(s) { none|
     network|host|port|forward|all }
-
-
-6.3. rewrite
-
---------------
-
-Help: overwrite packet contents
-
-Type: ips_action
-
-Usage: detect
-
-Configuration:
-
-  * bool rewrite.disable_replace = false: disable replace of packet
-    contents with rewrite rules
 
 
 ---------------------------------------------------------------------
@@ -8200,6 +8215,7 @@ these libraries see the Getting Started section of the manual.
   * -g <gname> run snort gid as <gname> group (or gid) after
     initialization
   * -H make hash tables deterministic
+  * -h show help overview (same as --help)
   * -i <iface>… list of interfaces
   * -j <port> to listen for Telnet connections
   * -k <mode> checksum mode; default is all (all|noip|notcp|noudp|
@@ -8262,7 +8278,7 @@ these libraries see the Getting Started section of the manual.
   * --enable-inline-test enable Inline-Test Mode Operation
   * --gen-msg-map dump configured rules in gen-msg.map format for use
     by other tools
-  * --help list command line options
+  * --help show help overview
   * --help-commands [<module prefix>] output matching commands
     (optional)
   * --help-config [<module prefix>] output matching config options
@@ -8443,8 +8459,7 @@ these libraries see the Getting Started section of the manual.
   * int alert_sfsocket.rules[].sid = 1: rule signature ID { 1:max32 }
   * bool alerts.log_references = false: include rule references in
     alert info (full only)
-  * string alerts.order = pass reset block drop alert log: change the
-    order of rule action application
+  * string alerts.order: change the order of rule action application
   * int alerts.rate_filter_memcap = 1048576: set available MB of
     memory for rate_filters { 0:max32 }
   * string alerts.reference_net: set the CIDR for homenet (for use
@@ -9046,6 +9061,8 @@ these libraries see the Getting Started section of the manual.
   * int http_inspect.max_javascript_whitespaces = 200: maximum
     consecutive whitespaces allowed within the JavaScript obfuscated
     data { 1:65535 }
+  * int http_inspect.normalization_depth = 0: number of input
+    JavaScript bytes to normalize { -1:65535 }
   * bool http_inspect.normalize_javascript = false: normalize
     JavaScript in response bodies
   * bool http_inspect.normalize_utf = true: normalize charset utf
@@ -9578,8 +9595,9 @@ these libraries see the Getting Started section of the manual.
   * int rate_filter[].count = 1: number of events in interval before
     tripping { 0:max32 }
   * int rate_filter[].gid = 1: rule generator ID { 0:max32 }
-  * enum rate_filter[].new_action = alert: take this action on future
-    hits until timeout { log | pass | alert | drop | block | reset }
+  * dynamic rate_filter[].new_action = alert: take this action on
+    future hits until timeout { alert | block | drop | log | pass |
+    react | reject | rewrite }
   * int rate_filter[].seconds = 1: count interval { 0:max32 }
   * int rate_filter[].sid = 1: rule signature ID { 0:max32 }
   * int rate_filter[].timeout = 1: count interval { 0:max32 }
@@ -9619,8 +9637,6 @@ these libraries see the Getting Started section of the manual.
   * bool reputation.scan_local = false: inspect local address defined
     in RFC 1918
   * int rev.~: revision { 1:max32 }
-  * bool rewrite.disable_replace = false: disable replace of packet
-    contents with rewrite rules
   * string rna.dump_file: file name to dump RNA mac cache on
     shutdown; won’t dump by default
   * bool rna.enable_logger = true: enable or disable writing
@@ -9628,14 +9644,39 @@ these libraries see the Getting Started section of the manual.
   * bool rna.log_when_idle = false: enable host update logging when
     snort is idle
   * string rna.rna_conf_path: path to rna configuration
+  * string rna.smb_fingerprints[].device: device information
+  * bool rna.smb_fingerprints[].df = false: fingerprint don’t
+    fragment flag
+  * string rna.smb_fingerprints[].dhcp55: dhcp option 55 values
+  * string rna.smb_fingerprints[].dhcp60: dhcp option 60 values
+  * int rna.smb_fingerprints[].flags: smb flags { 0:max32 }
+  * int rna.smb_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
+  * string rna.smb_fingerprints[].host_name: host name information
+  * string rna.smb_fingerprints[].id = X: id
+  * int rna.smb_fingerprints[].major: smb major version { 0:max31 }
+  * int rna.smb_fingerprints[].minor: smb minor version { 0:max31 }
+  * string rna.smb_fingerprints[].mss = X: fingerprint mss
+  * string rna.smb_fingerprints[].tcp_window: fingerprint tcp window
+  * string rna.smb_fingerprints[].topts: fingerprint tcp options
+  * int rna.smb_fingerprints[].ttl = 0: fingerprint ttl { 0:256 }
+  * int rna.smb_fingerprints[].type = 0: fingerprint type { 0:max32 }
+  * enum rna.smb_fingerprints[].ua_type = os: type of user agent
+    fingerprints { os | device | jail-broken | jail-broken-host }
+  * string rna.smb_fingerprints[].user_agent[].substring: a substring
+    of user agent string
+  * string rna.smb_fingerprints[].uuid: fingerprint uuid
+  * string rna.smb_fingerprints[].ws = X: fingerprint window size
   * string rna.tcp_fingerprints[].device: device information
   * bool rna.tcp_fingerprints[].df = false: fingerprint don’t
     fragment flag
   * string rna.tcp_fingerprints[].dhcp55: dhcp option 55 values
   * string rna.tcp_fingerprints[].dhcp60: dhcp option 60 values
+  * int rna.tcp_fingerprints[].flags: smb flags { 0:max32 }
   * int rna.tcp_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
   * string rna.tcp_fingerprints[].host_name: host name information
   * string rna.tcp_fingerprints[].id = X: id
+  * int rna.tcp_fingerprints[].major: smb major version { 0:max31 }
+  * int rna.tcp_fingerprints[].minor: smb minor version { 0:max31 }
   * string rna.tcp_fingerprints[].mss = X: fingerprint mss
   * string rna.tcp_fingerprints[].tcp_window: fingerprint tcp window
   * string rna.tcp_fingerprints[].topts: fingerprint tcp options
@@ -9652,9 +9693,12 @@ these libraries see the Getting Started section of the manual.
     flag
   * string rna.ua_fingerprints[].dhcp55: dhcp option 55 values
   * string rna.ua_fingerprints[].dhcp60: dhcp option 60 values
+  * int rna.ua_fingerprints[].flags: smb flags { 0:max32 }
   * int rna.ua_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
   * string rna.ua_fingerprints[].host_name: host name information
   * string rna.ua_fingerprints[].id = X: id
+  * int rna.ua_fingerprints[].major: smb major version { 0:max31 }
+  * int rna.ua_fingerprints[].minor: smb minor version { 0:max31 }
   * string rna.ua_fingerprints[].mss = X: fingerprint mss
   * string rna.ua_fingerprints[].tcp_window: fingerprint tcp window
   * string rna.ua_fingerprints[].topts: fingerprint tcp options
@@ -9671,9 +9715,12 @@ these libraries see the Getting Started section of the manual.
     fragment flag
   * string rna.udp_fingerprints[].dhcp55: dhcp option 55 values
   * string rna.udp_fingerprints[].dhcp60: dhcp option 60 values
+  * int rna.udp_fingerprints[].flags: smb flags { 0:max32 }
   * int rna.udp_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
   * string rna.udp_fingerprints[].host_name: host name information
   * string rna.udp_fingerprints[].id = X: id
+  * int rna.udp_fingerprints[].major: smb major version { 0:max31 }
+  * int rna.udp_fingerprints[].minor: smb minor version { 0:max31 }
   * string rna.udp_fingerprints[].mss = X: fingerprint mss
   * string rna.udp_fingerprints[].tcp_window: fingerprint tcp window
   * string rna.udp_fingerprints[].topts: fingerprint tcp options
@@ -9887,7 +9934,6 @@ these libraries see the Getting Started section of the manual.
     counts { (optional) }
   * implied snort.--help-limits: print the int upper bounds denoted
     by max*
-  * implied snort.--help: list command line options
   * string snort.--help-module: <module> output description of given
     module
   * implied snort.--help-modules-json: dump description of all
@@ -9898,8 +9944,10 @@ these libraries see the Getting Started section of the manual.
     command line option quick help (same as -?) { (optional) }
   * implied snort.--help-plugins: list all available plugins with
     brief help
+  * implied snort.--help: show help overview
   * implied snort.--help-signals: dump available control signals
   * implied snort.-H: make hash tables deterministic
+  * implied snort.-h: show help overview (same as --help)
   * int snort.--id-offset = 0: offset to add to instance IDs when
     logging to files { 0:65535 }
   * implied snort.--id-subdir: create/use instance subdirectories in
@@ -10396,7 +10444,6 @@ these libraries see the Getting Started section of the manual.
   * daq.retries_processed: messages processed from the retry queue
     (sum)
   * daq.retries_queued: messages queued for retry (sum)
-  * daq.retry: total retry verdicts (sum)
   * daq.rx_bytes: total bytes received (sum)
   * daq.skipped: packets skipped at startup (sum)
   * daq.sof_messages: start of flow messages received from DAQ (sum)
@@ -10470,8 +10517,6 @@ these libraries see the Getting Started section of the manual.
     seen with invalid next command offset (sum)
   * dce_smb.v2_cls_err_resp: total number of SMBv2 close error
     response packets seen (sum)
-  * dce_smb.v2_cls_ignored: total number of SMBv2 close packets
-    ignored due to missing trackers or invalid share type (sum)
   * dce_smb.v2_cls_inv_str_sz: total number of SMBv2 close packets
     seen with invalid structure size (sum)
   * dce_smb.v2_cls_req_ftrkr_misng: total number of SMBv2 close
@@ -10499,8 +10544,6 @@ these libraries see the Getting Started section of the manual.
   * dce_smb.v2_crt: total number of SMBv2 create packets seen (sum)
   * dce_smb.v2_crt_tree_trkr_misng: total number of SMBv2 create
     response packets ignored due to missing tree tracker (sum)
-  * dce_smb.v2_extra_file_data_err: total number of SMBv2 packets
-    seen with where file data beyond file size is observed (sum)
   * dce_smb.v2_hdr_err: total number of SMBv2 packets seen with
     corrupted hdr (sum)
   * dce_smb.v2_inv_file_ctx_err: total number of times null file
@@ -10513,8 +10556,6 @@ these libraries see the Getting Started section of the manual.
     where command is not being inspected (sum)
   * dce_smb.v2_read_err_resp: total number of SMBv2 read error
     response packets seen (sum)
-  * dce_smb.v2_read_ignored: total number of SMBv2 write packets
-    ignored due to missing trackers or invalid share type (sum)
   * dce_smb.v2_read_inv_str_sz: total number of SMBv2 read packets
     seen with invalid structure size (sum)
   * dce_smb.v2_read_req_hdr_err: total number of SMBv2 read request
@@ -10524,6 +10565,10 @@ these libraries see the Getting Started section of the manual.
   * dce_smb.v2_read_rtrkr_misng: total number of SMBv2 read response
     packets ignored due to missing read request tracker (sum)
   * dce_smb.v2_read: total number of SMBv2 read packets seen (sum)
+  * dce_smb.v2_session_ignored: total number of packets ignored due
+    to missing session tracker (sum)
+  * dce_smb.v2_setinfo: total number of SMBv2 set info packets seen
+    (sum)
   * dce_smb.v2_setup_err_resp: total number of SMBv2 setup error
     response packets seen (sum)
   * dce_smb.v2_setup_inv_str_sz: total number of SMBv2 setup packets
@@ -10533,16 +10578,12 @@ these libraries see the Getting Started section of the manual.
   * dce_smb.v2_setup: total number of SMBv2 setup packets seen (sum)
   * dce_smb.v2_stinf_err_resp: total number of SMBv2 set info error
     response packets seen (sum)
-  * dce_smb.v2_stinf_ignored: total number of SMBv2 set info packets
-    ignored due to missing trackers or invalid share type (sum)
   * dce_smb.v2_stinf_inv_str_sz: total number of SMBv2 set info
     packets seen with invalid structure size (sum)
   * dce_smb.v2_stinf_req_ftrkr_misng: total number of SMBv2 set info
     request packets ignored due to missing file tracker (sum)
   * dce_smb.v2_stinf_req_hdr_err: total number of SMBv2 set info
     request packets ignored due to corrupted header (sum)
-  * dce_smb.v2_stinf: total number of SMBv2 set info packets seen
-    (sum)
   * dce_smb.v2_tree_cnct_err_resp: total number of SMBv2 tree connect
     error response packets seen (sum)
   * dce_smb.v2_tree_cnct_ignored: total number of SMBv2 setup
@@ -10563,13 +10604,15 @@ these libraries see the Getting Started section of the manual.
     disconnect request packets ignored due to corrupted header (sum)
   * dce_smb.v2_tree_discn: total number of SMBv2 tree disconnect
     packets seen (sum)
+  * dce_smb.v2_tree_ignored: total number of packets ignored due to
+    missing tree tracker (sum)
   * dce_smb.v2_wrt_err_resp: total number of SMBv2 write error
     response packets seen (sum)
-  * dce_smb.v2_wrt_ignored: total number of SMBv2 write packets
-    ignored due to missing trackers or invalid share type (sum)
   * dce_smb.v2_wrt_inv_str_sz: total number of SMBv2 write packets
     seen with invalid structure size (sum)
   * dce_smb.v2_wrt_req_hdr_err: total number of SMBv2 write request
+    packets ignored due to corrupted header (sum)
+  * dce_smb.v2_wrt_resp_hdr_err: total number of SMBv2 write response
     packets ignored due to corrupted header (sum)
   * dce_smb.v2_wrt: total number of SMBv2 write packets seen (sum)
   * dce_tcp.alter_context_responses: total connection-oriented alter
@@ -11072,7 +11115,6 @@ these libraries see the Getting Started section of the manual.
   * reputation.memory_allocated: total memory allocated (sum)
   * reputation.monitored: number of packets monitored (sum)
   * reputation.packets: total packets processed (sum)
-  * reputation.total_alerts: total alerts triggered (sum)
   * reputation.trusted: number of packets trusted (sum)
   * rna.appid_change: count of appid change events received (sum)
   * rna.change_host_update: count number of change host update events
@@ -11086,6 +11128,7 @@ these libraries see the Getting Started section of the manual.
   * rna.ip_new: count of new IP flows received (sum)
   * rna.other_packets: count of packets received without session
     tracking (sum)
+  * rna.smb: count of new SMB events received (sum)
   * rna.tcp_midstream: count of TCP midstream packets received (sum)
   * rna.tcp_syn_ack: count of TCP SYN-ACK packets received (sum)
   * rna.tcp_syn: count of TCP SYN packets received (sum)
@@ -11798,6 +11841,8 @@ these libraries see the Getting Started section of the manual.
     truncated
   * 119:261 (http_inspect) HTTP chunked message body was truncated
   * 119:262 (http_inspect) HTTP URI scheme longer than 10 characters
+  * 119:263 (http_inspect) HTTP/1 client requested HTTP/2 upgrade
+  * 119:264 (http_inspect) HTTP/1 server granted HTTP/2 upgrade
   * 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
   * 121:2 (http2_inspect) HPACK integer value has leading zeros
   * 121:3 (http2_inspect) HTTP/2 stream initiated with invalid stream
@@ -11836,6 +11881,7 @@ these libraries see the Getting Started section of the manual.
   * 121:28 (http2_inspect) invalid HTTP/2 rst stream frame
   * 121:29 (http2_inspect) HTTP/2 rst stream frame sent at invalid
     time
+  * 121:30 (http2_inspect) uppercase HTTP/2 header field name
   * 122:1 (port_scan) TCP portscan
   * 122:2 (port_scan) TCP decoy portscan
   * 122:3 (port_scan) TCP portsweep
@@ -12582,7 +12628,6 @@ and are not applicable elsewhere.
   * reputation (inspector): reputation inspection
   * rev (ips_option): rule option to indicate current revision of
     signature
-  * rewrite (ips_action): overwrite packet contents
   * rna (inspector): Real-time network awareness and OS
     fingerprinting (experimental)
   * rpc (ips_option): rule option to check SUNRPC CALL parameters
@@ -12783,6 +12828,12 @@ and are not applicable elsewhere.
   * inspector::telnet: telnet inspection and normalization
   * inspector::wizard: inspector that implements port-independent
     protocol identification
+  * ips_action::alert: generate alert on the current packet
+  * ips_action::block: block current packet and all the subsequent
+    packets in this flow
+  * ips_action::drop: drop the current packet
+  * ips_action::log: log the current packet
+  * ips_action::pass: mark the current packet as passed
   * ips_action::react: send response to client and terminate session
   * ips_action::reject: terminate session with TCP reset or ICMP
     unreachable

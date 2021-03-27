@@ -8,7 +8,7 @@ Snort 3 Upgrade Manual
 The Snort Team
 
 Revision History
-Revision 3.1.2.0 2021-03-11 14:56:52 EST TST
+Revision 3.1.3.0 2021-03-27 11:48:49 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1030,6 +1030,7 @@ deleted -> config 'disable_decode_drops'
 deleted -> config 'disable_inline_init_failopen'
 deleted -> config 'disable_ipopt_alerts'
 deleted -> config 'disable_ipopt_drops'
+deleted -> config 'disable_replace'
 deleted -> config 'disable_tcpopt_alerts'
 deleted -> config 'disable_tcpopt_drops'
 deleted -> config 'disable_tcpopt_experimental_alerts'
