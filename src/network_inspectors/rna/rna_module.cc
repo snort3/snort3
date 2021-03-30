@@ -500,9 +500,9 @@ bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
         else if (v.is("dhcp60"))
             fingerprint.dhcp60 = v.get_string();
         else if (v.is("major"))
-            fingerprint.smb_major = v.get_int16();
+            fingerprint.smb_major = v.get_uint16();
         else if (v.is("minor"))
-            fingerprint.smb_minor = v.get_int16();
+            fingerprint.smb_minor = v.get_uint16();
         else if (v.is("flags"))
             fingerprint.smb_flags = v.get_uint32();
         else

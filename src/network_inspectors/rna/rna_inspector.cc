@@ -216,7 +216,7 @@ void RnaInspector::load_rna_conf()
 }
 
 void RnaInspector::get_or_create_fp_processor(TcpFpProcessor*& tfp, UaFpProcessor*& uafp,
-    UdpFpProcessor*& udpfp)
+    UdpFpProcessor*& udpfp, SmbFpProcessor*& smbfp)
 {
     if ( !mod_conf )
         return;
@@ -227,13 +227,17 @@ void RnaInspector::get_or_create_fp_processor(TcpFpProcessor*& tfp, UaFpProcesso
         mod_conf->ua_processor = new UaFpProcessor;
     if ( !mod_conf->udp_processor )
         mod_conf->udp_processor = new UdpFpProcessor;
+    if ( !mod_conf->smb_processor )
+        mod_conf->smb_processor = new SmbFpProcessor;
 
     tfp = mod_conf->tcp_processor;
     uafp = mod_conf->ua_processor;
     udpfp = mod_conf->udp_processor;
+    smbfp = mod_conf->smb_processor;
 }
 
-void RnaInspector::set_fp_processor(TcpFpProcessor* tfp, UaFpProcessor* uafp, UdpFpProcessor* udpfp)
+void RnaInspector::set_fp_processor(TcpFpProcessor* tfp, UaFpProcessor* uafp, UdpFpProcessor* udpfp,
+    SmbFpProcessor* smbfp)
 {
     if ( !mod_conf )
         return;
@@ -246,6 +250,9 @@ void RnaInspector::set_fp_processor(TcpFpProcessor* tfp, UaFpProcessor* uafp, Ud
 
     delete mod_conf->udp_processor;
     mod_conf->udp_processor = udpfp;
+
+    delete mod_conf->smb_processor;
+    mod_conf->smb_processor = smbfp;
 }
 
 //-------------------------------------------------------------------------
@@ -334,11 +341,13 @@ TEST_CASE("RNA inspector", "[rna_inspector]")
         TcpFpProcessor* tfp = nullptr;
         UaFpProcessor* uafp = nullptr;
         UdpFpProcessor* udpfp = nullptr;
-        ins.set_fp_processor(tfp, uafp, udpfp);
-        ins.get_or_create_fp_processor(tfp, uafp, udpfp);
+        SmbFpProcessor* smbfp = nullptr;
+        ins.set_fp_processor(tfp, uafp, udpfp, smbfp);
+        ins.get_or_create_fp_processor(tfp, uafp, udpfp, smbfp);
         CHECK(tfp != nullptr);
         CHECK(uafp != nullptr);
         CHECK(udpfp != nullptr);
+        CHECK(smbfp != nullptr);
     }
 }
 #endif

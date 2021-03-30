@@ -31,6 +31,7 @@ struct Packet;
 class TcpFpProcessor;
 class UaFpProcessor;
 class UdpFpProcessor;
+class SmbFpProcessor;
 }
 
 struct RnaConfig;
@@ -51,8 +52,9 @@ public:
     void tterm() override;
 
     void get_or_create_fp_processor(snort::TcpFpProcessor*&, snort::UaFpProcessor*&,
-        snort::UdpFpProcessor*&);
-    void set_fp_processor(snort::TcpFpProcessor*, snort::UaFpProcessor*, snort::UdpFpProcessor*);
+        snort::UdpFpProcessor*&, snort::SmbFpProcessor*&);
+    void set_fp_processor(snort::TcpFpProcessor*, snort::UaFpProcessor*,
+        snort::UdpFpProcessor*, snort::SmbFpProcessor*);
 
     RnaPnd* get_pnd() const { return pnd; }
 
