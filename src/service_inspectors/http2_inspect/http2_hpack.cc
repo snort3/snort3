@@ -80,9 +80,8 @@ bool Http2HpackDecoder::decode_string_literal(const uint8_t* encoded_header_buff
 
 const HpackTableEntry* Http2HpackDecoder::get_hpack_table_entry(
     const uint8_t* encoded_header_buffer, const uint32_t encoded_header_length,
-    const Http2HpackIntDecode& decode_int, uint32_t& bytes_consumed)
+    const Http2HpackIntDecode& decode_int, uint32_t& bytes_consumed, uint64_t &index)
 {
-    uint64_t index;
     bytes_consumed = 0;
 
     if (!decode_int.translate(encoded_header_buffer, encoded_header_length, bytes_consumed,
@@ -102,12 +101,13 @@ const HpackTableEntry* Http2HpackDecoder::get_hpack_table_entry(
 bool Http2HpackDecoder::decode_indexed_name(const uint8_t* encoded_header_buffer,
     const uint32_t encoded_header_length, const Http2HpackIntDecode& decode_int,
     uint32_t& bytes_consumed, uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
-    uint32_t& bytes_written, Field& name)
+    uint32_t& bytes_written, Field& name, bool with_indexing)
 {
     bytes_written = bytes_consumed = 0;
 
+    uint64_t index;
     const HpackTableEntry* entry = get_hpack_table_entry(encoded_header_buffer,
-        encoded_header_length, decode_int, bytes_consumed);
+        encoded_header_length, decode_int, bytes_consumed, index);
     if (!entry)
         return false;
 
@@ -117,7 +117,16 @@ bool Http2HpackDecoder::decode_indexed_name(const uint8_t* encoded_header_buffer
         return false;
     }
 
-    name.set(entry->name);
+    // If this header will be added to the dynamic table and was from the dynamic table, we need to
+    // make a copy because the original table entry may be pruned and freed
+    if (with_indexing and index > HpackIndexTable::STATIC_MAX_INDEX)
+    {
+        uint8_t* name_copy = new uint8_t[entry->name.length()];
+        memcpy(name_copy, entry->name.start(), entry->name.length());
+        name.set(entry->name.length(), name_copy, true);
+    }
+    else
+        name.set(entry->name);
     return true;
 }
 
@@ -135,7 +144,7 @@ bool Http2HpackDecoder::decode_literal_header_line(const uint8_t* encoded_header
     {
         if (!decode_indexed_name(encoded_header_buffer, encoded_header_length, decode_int,
                 partial_bytes_consumed, decoded_header_buffer, decoded_header_length,
-                partial_bytes_written, name))
+                partial_bytes_written, name, with_indexing))
             return false;
     }
 
@@ -204,8 +213,9 @@ bool Http2HpackDecoder::decode_indexed_header(const uint8_t* encoded_header_buff
     uint32_t partial_bytes_written = 0;
     bytes_written = bytes_consumed = 0;
 
+    uint64_t index;
     const HpackTableEntry* const entry = get_hpack_table_entry(encoded_header_buffer,
-        encoded_header_length, decode_int, bytes_consumed);
+        encoded_header_length, decode_int, bytes_consumed, index);
     if (!entry)
         return false;
     name.set(entry->name);
