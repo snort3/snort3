@@ -93,7 +93,6 @@ inline void set_control(lua_State* L, int is_control)
 {
     lua_pushboolean (L, is_control); // push flag to stack
     lua_setglobal(L, "is_control"); // create global key to store value
-    lua_pop(L, 1);
 }
 
 static lua_State* create_lua_state(const AppIdConfig& config, int is_control)
@@ -164,6 +163,10 @@ LuaDetectorManager::LuaDetectorManager(AppIdContext& ctxt, int is_control) :
 LuaDetectorManager::~LuaDetectorManager()
 {
     auto L = this->L;
+    if (lua_gettop(L))
+        WarningMessage("appid: leak of %d lua stack elements before detector unload\n",
+            lua_gettop(L));
+
     if (L)
     {
         if (init(L))
@@ -177,8 +180,6 @@ LuaDetectorManager::~LuaDetectorManager()
             lua_getfield(L, -1, lsd->package_info.cleanFunctionName.c_str());
             if ( lua_isfunction(L, -1) )
             {
-                // FIXIT-M: RELOAD - use lua references to get user data object from stack
-                // first parameter is DetectorUserData
                 std::string name = lsd->package_info.name + "_";
                 lua_getglobal(L, name.c_str());
 
@@ -188,6 +189,7 @@ LuaDetectorManager::~LuaDetectorManager()
                         lsd->package_info.name.c_str(), lua_tostring(L, -1));
                 }
             }
+            lua_settop(L, 0);
             delete lua_object;
         }
         lua_close(L);
@@ -412,6 +414,7 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, 
         {
             if (init(L))
                 ErrorMessage("Error - appid: can not load Lua detector, %s\n", lua_tostring(L, -1));
+            lua_pop(L, 1);
             return;
         }
     }
@@ -421,12 +424,14 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, 
         {
             if (init(L))
                 ErrorMessage("Error - appid: can not load Lua detector, %s\n", lua_tostring(L, -1));
+            lua_pop(L, 1);
             return;
         }
         if (reload and lua_dump(L, dump, &buf))
         {
             if (init(L))
                 ErrorMessage("Error - appid: can not compile Lua detector, %s\n", lua_tostring(L, -1));
+            lua_pop(L, 1);
             return;
         }
     }
@@ -456,6 +461,7 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, 
     {
         ErrorMessage("Error - appid: can not set env of Lua detector %s : %s\n",
             detector_filename, lua_tostring(L, -1));
+        lua_pop(L, 1);
         return;
     }
 
@@ -474,6 +480,10 @@ void LuaDetectorManager::load_lua_detectors(const char* path, bool is_custom, bo
     int rval = glob(pattern, 0, nullptr, &globs);
     if (rval == 0 )
     {
+        if (lua_gettop(L))
+            WarningMessage("appid: leak of %d lua stack elements before detector load\n",
+                lua_gettop(L));
+
         std::string buf;
         for (unsigned n = 0; n < globs.gl_pathc; n++)
         {
@@ -502,6 +512,7 @@ void LuaDetectorManager::load_lua_detectors(const char* path, bool is_custom, bo
                     lua_detector_mgr->load_detector(globs.gl_pathv[n], is_custom, reload, buf);
                 buf.clear();
             }
+            lua_settop(L, 0);
         }
 
         globfree(&globs);
@@ -541,6 +552,10 @@ void LuaDetectorManager::activate_lua_detectors()
         allocated_objects.size());
     std::list<LuaObject*>::iterator lo = allocated_objects.begin();
 
+    if (lua_gettop(L))
+        WarningMessage("appid: leak of %d lua stack elements before detector activate\n",
+            lua_gettop(L));
+
     while (lo != allocated_objects.end())
     {
         LuaStateDescriptor* lsd = (*lo)->validate_lua_state(false);
@@ -553,12 +568,12 @@ void LuaDetectorManager::activate_lua_detectors()
                     (*lo)->get_detector()->get_name().c_str());
             if (!(*lo)->get_detector()->is_custom_detector())
                 num_odp_detectors--;
+            lua_settop(L, 0);
             delete *lo;
             lo = allocated_objects.erase(lo);
             continue;
         }
 
-        //FIXIT-M: RELOAD - use lua references to get user data object from stack
         /*first parameter is DetectorUserData */
         std::string name = lsd->package_info.name + "_";
         lua_getglobal(L, name.c_str());
@@ -571,6 +586,7 @@ void LuaDetectorManager::activate_lua_detectors()
                 ErrorMessage("Error - appid: can not run DetectorInit, %s\n", lua_tostring(L, -1));
             if (!(*lo)->get_detector()->is_custom_detector())
                 num_odp_detectors--;
+            lua_settop(L, 0);
             delete *lo;
             lo = allocated_objects.erase(lo);
             continue;
@@ -578,6 +594,7 @@ void LuaDetectorManager::activate_lua_detectors()
 
         lua_getfield(L, LUA_REGISTRYINDEX, lsd->package_info.name.c_str());
         set_lua_tracker_size(L, lua_tracker_size);
+        lua_settop(L, 0);
         ++lo;
     }
 }

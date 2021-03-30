@@ -306,8 +306,11 @@ static int detector_log_message(lua_State* L)
         break;
 
     case LUA_LOG_ERR:
-    case LUA_LOG_WARN:
         ErrorMessage("%s:%s\n", name.c_str(), message);
+        break;
+
+    case LUA_LOG_WARN:
+        WarningMessage("%s:%s\n", name.c_str(), message);
         break;
 
     case LUA_LOG_NOTICE:
@@ -680,7 +683,7 @@ static int detector_get_pcre_groups(lua_State* L)
     int rc = pcre_exec(re,            // compiled pattern
         nullptr,                      // no extra data
         (const char*)lsd->ldp.data,   // subject string
-        lsd->ldp.size,                 // length of the subject
+        lsd->ldp.size,                // length of the subject
         offset,                       // offset 0
         0,                            // default options
         ovector,                      // output vector for substring information
@@ -695,7 +698,12 @@ static int detector_get_pcre_groups(lua_State* L)
             WarningMessage("ovector only has room for %d captured substrings\n", rc - 1);
         }
 
-        lua_checkstack(L, rc);
+        if (!lua_checkstack(L, rc))
+        {
+            WarningMessage("Cannot grow Lua stack by %d slots to hold PCRE matches\n", rc);
+            return 0;
+        }
+
         for (int i = 0; i < rc; i++)
         {
             lua_pushlstring(L, (const char*)lsd->ldp.data + ovector[2*i], ovector[2*i+1] -
@@ -735,7 +743,6 @@ static int detector_memcmp(lua_State* L)
     unsigned int patternLen = lua_tonumber(L, 3);
     unsigned int offset = lua_tonumber(L, 4);     /*offset can be zero, no check necessary. */
     int rc = memcmp(lsd->ldp.data + offset, pattern, patternLen);
-    lua_checkstack (L, 1);
     lua_pushnumber(L, rc);
     return 1;
 }
@@ -754,13 +761,10 @@ static int detector_get_protocol_type(lua_State* L)
 
     if ( !lsd->ldp.pkt->has_ip() )
     {
-        // FIXIT-M J why the inconsistent use of checkstack?
-        lua_checkstack (L, 1);
         lua_pushnumber(L, 0);
         return 1;
     }
 
-    lua_checkstack (L, 1);
     // FIXIT-M is this conversion to double valid?
     lua_pushnumber(L, (double)lsd->ldp.pkt->get_ip_proto_next() );
     return 1;
@@ -780,7 +784,6 @@ static int detector_get_packet_src_addr(lua_State* L)
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     const SfIp* ipAddr = lsd->ldp.pkt->ptrs.ip_api.get_src();
-    lua_checkstack (L, 1);
     lua_pushnumber(L, ipAddr->get_ip4_value());
     return 1;
 }
@@ -799,7 +802,6 @@ static int detector_get_packet_dst_addr(lua_State* L)
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     const SfIp* ipAddr = lsd->ldp.pkt->ptrs.ip_api.get_dst();
-    lua_checkstack (L, 1);
     lua_pushnumber(L, ipAddr->get_ip4_value());
     return 1;
 }
@@ -818,7 +820,6 @@ static int detector_get_packet_src_port(lua_State* L)
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     unsigned int port = lsd->ldp.pkt->ptrs.sp;
-    lua_checkstack (L, 1);
     lua_pushnumber(L, port);
     return 1;
 }
@@ -837,7 +838,6 @@ static int detector_get_packet_dst_port(lua_State* L)
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     unsigned int port = lsd->ldp.pkt->ptrs.dp;
-    lua_checkstack (L, 1);
     lua_pushnumber(L, port);
     return 1;
 }
@@ -853,7 +853,6 @@ static int detector_get_packet_dst_port(lua_State* L)
 **/
 static int detector_get_packet_count(lua_State* L)
 {
-    lua_checkstack (L, 1);
     lua_pushnumber(L, appid_stats.processed_packets);
     return 1;
 }
@@ -1247,7 +1246,7 @@ static int register_callback(lua_State* L, LuaObject& ud, AppInfoFlags flag)
 
     const char* callback = lua_tostring(L, 3);
 
-    if (!callback)
+    if (!callback or (callback[0] == '\0'))
     {
         lua_pushnumber(L, -1);
         return 1; // number of results
@@ -1316,15 +1315,14 @@ static int detector_callback(const uint8_t* data, uint16_t size, AppidSessionDir
 
     LuaDetectorManager& lua_detector_mgr = odp_thread_local_ctxt->get_lua_detector_mgr();
     auto my_lua_state = lua_detector_mgr.L;
+    // when an ODP detector triggers the detector callback to be called, there are some elements
+    // in the stack. Checking here to make sure the number of elements is not too many
+    if (lua_gettop(my_lua_state) > 20)
+        WarningMessage("appid: leak of %d lua stack elements before detector callback\n",
+            lua_gettop(my_lua_state));
+
     const string& cb_fn_name = ud.get_cb_fn_name();
     const char* detector_name = ud.get_detector()->get_name().c_str();
-
-    if ((cb_fn_name.empty()) || !(lua_checkstack(my_lua_state, 1)))
-    {
-        ErrorMessage("Detector %s: invalid LUA %s\n", detector_name, lua_tostring(my_lua_state, -1));
-        ud.lsd.ldp.pkt = nullptr;
-        return -10;
-    }
 
     lua_getfield(my_lua_state, LUA_REGISTRYINDEX, ud.lsd.package_info.name.c_str());
 
@@ -1340,6 +1338,7 @@ static int detector_callback(const uint8_t* data, uint16_t size, AppidSessionDir
     {
         ErrorMessage("Detector %s: Error validating %s\n", detector_name, lua_tostring(my_lua_state, -1));
         ud.lsd.ldp.pkt = nullptr;
+        lua_settop(my_lua_state, 0);
         return -10;
     }
 
@@ -1352,12 +1351,14 @@ static int detector_callback(const uint8_t* data, uint16_t size, AppidSessionDir
     {
         ErrorMessage("Detector %s: Validator returned non-numeric value\n", detector_name);
         ud.lsd.ldp.pkt = nullptr;
+        lua_settop(my_lua_state, 0);
         return -10;
     }
 
     int ret = lua_tonumber(my_lua_state, -1);
     lua_pop(my_lua_state, 1);  // pop returned value
     ud.lsd.ldp.pkt = nullptr;
+    lua_settop(my_lua_state, 0);
 
     return ret;
 }
@@ -2507,9 +2508,6 @@ static int is_http_tunnel(lua_State* L)
     // Verify detector user data and that we are in packet context
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    if (!lua_checkstack(L, 1))
-        return 0;
-
     const AppIdHttpSession* hsession = lsd->ldp.asd->get_http_session();
 
     if (hsession)
@@ -2539,9 +2537,6 @@ static int get_http_tunneled_ip(lua_State* L)
     // Verify detector user data and that we are in packet context
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    if (!lua_checkstack(L, 1))
-        return 0;
-
     const AppIdHttpSession* hsession = lsd->ldp.asd->get_http_session();
     if (hsession)
     {
@@ -2570,9 +2565,6 @@ static int get_http_tunneled_port(lua_State* L)
     auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
     // Verify detector user data and that we are in packet context
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
-
-    if (!lua_checkstack(L, 1))
-        return 0;
 
     const AppIdHttpSession* hsession = lsd->ldp.asd->get_http_session();
     if (hsession)
@@ -2768,6 +2760,7 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
     if (!my_lua_state)
     {
         ErrorMessage("lua detector %s: no LUA state\n", package_info.name.c_str());
+        lua_settop(my_lua_state, 0);
         return APPID_ENULL;
     }
 
@@ -2784,19 +2777,8 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
     if ( (!validateFn) || (validateFn[0] == '\0'))
     {
         ldp.pkt = nullptr;
+        lua_settop(my_lua_state, 0);
         return APPID_NOMATCH;
-    }
-    else if ( !lua_checkstack(my_lua_state, 1) )
-    {
-        static bool logged_stack_error = false;
-        if (!logged_stack_error)
-        {
-            logged_stack_error = true;
-            ErrorMessage("lua detector %s: LUA stack can not grow, %s\n",
-                package_info.name.c_str(), lua_tostring(my_lua_state, -1));
-        }
-        ldp.pkt = nullptr;
-        return APPID_ENOMEM;
     }
 
     lua_getfield(my_lua_state, -1, validateFn); // get the function we want to call
@@ -2810,6 +2792,7 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
             package_info.name.c_str(), lua_tostring(my_lua_state, -1));
         ldp.pkt = nullptr;
         lua_detector_mgr.free_detector_flow();
+        lua_settop(my_lua_state, 0);
         return APPID_ENULL;
     }
 
@@ -2822,12 +2805,15 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
     {
         ErrorMessage("lua detector %s: returned non-numeric value\n", package_info.name.c_str());
         ldp.pkt = nullptr;
+        lua_settop(my_lua_state, 0);
         return APPID_ENULL;
     }
 
     int rc = lua_tonumber(my_lua_state, -1);
     lua_pop(my_lua_state, 1);
     ldp.pkt = nullptr;
+    lua_settop(my_lua_state, 0);
+
     return rc;
 }
 
@@ -2894,10 +2880,6 @@ LuaServiceObject::LuaServiceObject(AppIdDiscovery* sdm, const std::string& detec
 
     lua_pushvalue(L, -1);
 
-    // FIXIT-E: RELOAD - go back to using lua reference
-    // instead of using a string for lookups
-    // lsd.detector_user_data_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-
     // FIXIT-E: The control and thread states have the same initialization
     // sequence, the stack index shouldn't change between the states, maybe
     // use a common index for a detector between all the states
@@ -2907,9 +2889,11 @@ LuaServiceObject::LuaServiceObject(AppIdDiscovery* sdm, const std::string& detec
 
 int LuaServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    //FIXIT-M: RELOAD - use lua references to get user data object from stack
     auto my_lua_state = odp_thread_local_ctxt->get_lua_detector_mgr().L;
-    lua_settop(my_lua_state,0);
+    if (lua_gettop(my_lua_state))
+        WarningMessage("appid: leak of %d lua stack elements before service validate\n",
+            lua_gettop(my_lua_state));
+
     std::string name = this->name + "_";
     lua_getglobal(my_lua_state, name.c_str());
     auto& ud = *UserData<LuaServiceObject>::check(my_lua_state, DETECTOR, 1);
@@ -2965,10 +2949,6 @@ LuaClientObject::LuaClientObject(const std::string& detector_name,
 
     lua_pushvalue(L, -1);
 
-    // FIXIT-E: RELOAD - go back to using lua reference
-    // instead of using a string for lookups
-    // lsd.detector_user_data_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-
     // FIXIT-E: The control and thread states have the same initialization
     // sequence, the stack index shouldn't change between the states, maybe
     // use a common index for a detector between all the states
@@ -2985,10 +2965,12 @@ LuaStateDescriptor* LuaObject::validate_lua_state(bool packet_context)
 
 int LuaClientDetector::validate(AppIdDiscoveryArgs& args)
 {
-    //FIXIT-M: RELOAD - use lua references to get user data object from stack
     auto my_lua_state = odp_thread_local_ctxt->get_lua_detector_mgr().L;
+    if (lua_gettop(my_lua_state))
+        WarningMessage("appid: leak of %d lua stack elements before client validate\n",
+            lua_gettop(my_lua_state));
+
     std::string name = this->name + "_";
-    lua_settop(my_lua_state,0); //set stack index to 0
     lua_getglobal(my_lua_state, name.c_str());
     auto& ud = *UserData<LuaClientObject>::check(my_lua_state, DETECTOR, 1);
     return ud->lsd.lua_validate(args);

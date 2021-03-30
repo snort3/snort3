@@ -76,9 +76,6 @@ class LuaStateDescriptor
 {
 public:
     LuaDetectorParameters ldp;
-    // FIXIT-M: RELOAD - When reload is supported, update this whenever lua-state is changed
-    // move it to the detector classes
-    //int detector_user_data_ref = 0;    // key into LUA_REGISTRYINDEX
     DetectorPackageInfo package_info;
     AppId service_id = APP_ID_UNKNOWN;
     int lua_validate(AppIdDiscoveryArgs&);
@@ -101,7 +98,6 @@ public:
 };
 
 
-// FIXIT-M: RELOAD - Don't use this class, required now to store LSD objects
 class LuaObject {
 
 public:
@@ -166,4 +162,3 @@ void check_detector_callback(const snort::Packet& p, AppIdSession& asd, AppidSes
     AppId app_id, AppidChangeBits& change_bits, AppInfoTableEntry* entry = nullptr);
 
 #endif
-
