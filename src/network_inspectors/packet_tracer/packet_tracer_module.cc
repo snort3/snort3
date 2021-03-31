@@ -124,7 +124,7 @@ static int enable(lua_State* L)
 
     PacketConstraints constraints = {};
 
-    if (proto)
+    if (proto and (IpProtocol)proto < IpProtocol::PROTO_NOT_SET)
     {
         constraints.ip_proto = (IpProtocol)proto;
         constraints.set_bits |= PacketConstraints::SetBits::IP_PROTO;
