@@ -241,6 +241,7 @@ public:
 
     static bool set_packet_action_to_hold(Packet*);
     static void set_no_ack_mode(Flow*, bool);
+    static void partial_flush(Flow*, bool to_server);
 
 private:
     static void set_ip_protocol(Flow*);

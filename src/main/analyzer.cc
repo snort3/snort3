@@ -51,6 +51,7 @@
 #include "managers/ips_manager.h"
 #include "managers/event_manager.h"
 #include "managers/module_manager.h"
+#include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/sfdaq_config.h"
@@ -285,27 +286,43 @@ static DAQ_Verdict distill_verdict(Packet* p)
     return verdict;
 }
 
+void Analyzer::add_to_retry_queue(DAQ_Msg_h daq_msg)
+{
+    // Temporarily increase memcap until message is finalized in case
+    // DAQ makes a copy of the data buffer.
+    memory::MemoryCap::update_allocations(daq_msg_get_data_len(daq_msg));
+    retry_queue->put(daq_msg);
+}
+
 /*
  * Private message processing methods
  */
 void Analyzer::post_process_daq_pkt_msg(Packet* p)
 {
+    bool msg_was_held = false;
+
     Active::execute(p);
 
     DAQ_Verdict verdict = MAX_DAQ_VERDICT;
 
     if (p->active->packet_retry_requested())
     {
-        retry_queue->put(p->daq_msg);
+        add_to_retry_queue(p->daq_msg);
         daq_stats.retries_queued++;
     }
-    else if (p->active->is_packet_held() and Stream::set_packet_action_to_hold(p))
-    {
-        if (p->flow->flags.trigger_detained_packet_event)
-            DataBus::publish(DETAINED_PACKET_EVENT, p);
-    }
     else
-        verdict = distill_verdict(p);
+    {
+        msg_was_held = (p->active->is_packet_held() and Stream::set_packet_action_to_hold(p));
+        if (msg_was_held)
+        {
+            if (p->flow->flags.trigger_detained_packet_event)
+            {
+                DataBus::publish(DETAINED_PACKET_EVENT, p);
+            }
+        }
+        else
+            verdict = distill_verdict(p);
+    }
 
     if (PacketTracer::is_active())
     {
@@ -315,7 +332,7 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
 
         if (p->active->packet_retry_requested())
             PacketTracer::log("Verdict: Queuing for Retry\n");
-        else if (p->active->is_packet_held())
+        else if (msg_was_held)
             PacketTracer::log("Verdict: Holding for Detection\n");
         else
             PacketTracer::log("Verdict: %s\n", SFDAQ::verdict_to_string(verdict));
@@ -426,6 +443,9 @@ void Analyzer::process_retry_queue()
         {
             process_daq_msg(msg, true);
             daq_stats.retries_processed++;
+
+            // Decrease memcap now that msg has been finalized.
+            memory::MemoryCap::update_deallocations(daq_msg_get_data_len(msg));
         }
     }
 }

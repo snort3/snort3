@@ -26,7 +26,9 @@
 #include "stubs.h"
 
 #include "main/analyzer.h"
+#include "memory/memory_cap.h"
 #include "packet_io/sfdaq_instance.h"
+#include "packet_io/sfdaq.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -45,7 +47,12 @@ void DeferredTrust::set_deferred_trust(unsigned, bool on)
     deferred_trust = on ? TRUST_DEFER_ON : TRUST_DEFER_OFF;
 }
 void Flow::trust() { }
+
+SFDAQInstance* SFDAQ::get_local_instance() { return nullptr; }
 }
+
+void memory::MemoryCap::update_allocations(size_t) { }
+void memory::MemoryCap::update_deallocations(size_t) { }
 
 using namespace snort;
 

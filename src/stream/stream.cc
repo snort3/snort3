@@ -807,6 +807,17 @@ void Stream::set_no_ack_mode(Flow* flow, bool on_off)
     tcp_session->set_no_ack(on_off);
 }
 
+void Stream::partial_flush(Flow* flow, bool to_server)
+{
+    if ( flow->pkt_type == PktType::TCP )
+    {
+        if ( to_server )
+            ((TcpStreamSession*)flow->session)->server.perform_partial_flush();
+        else
+            ((TcpStreamSession*)flow->session)->client.perform_partial_flush();
+    }
+}
+
 #ifdef UNIT_TEST
 
 #include "catch/snort_catch.h"

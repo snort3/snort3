@@ -24,7 +24,7 @@
 
 #include "dce_smb2_session.h"
 
-inline uint32_t Smb2Tid(const Smb2Hdr* hdr)
+uint32_t Smb2Tid(const Smb2Hdr* hdr)
 {
     return snort::alignedNtohl(&(((const Smb2SyncHdr*)hdr)->tree_id));
 }
