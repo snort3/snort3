@@ -43,17 +43,6 @@ using namespace snort;
 THREAD_LOCAL NetflowStats netflow_stats;
 THREAD_LOCAL ProfileStats netflow_perf_stats;
 
-//  Used to create hash of key for indexing into cache.
-struct NetflowHash
-{
-    size_t operator()(const snort::SfIp& ip) const
-    {
-        const uint64_t* ip64 = (const uint64_t*) ip.get_ip6_ptr();
-        return std::hash<uint64_t>() (ip64[0]) ^
-               std::hash<uint64_t>() (ip64[1]);
-    }
-};
-
 // compare struct to use with ip sort
 struct IpCompare
 {
@@ -78,6 +67,37 @@ static NetflowCache* dump_cache = nullptr;
 // -----------------------------------------------------------------------------
 // static functions
 // -----------------------------------------------------------------------------
+static bool filter_record(const NetflowRules* rules, const int zone,
+    const SfIp* src, const SfIp* dst)
+{
+    const SfIp* addr[2] = {src, dst};
+
+    for( auto const & address : addr )
+    {
+        for( auto const& rule : rules->exclude )
+        {
+            if ( rule.filter_match(address, zone) )
+            {
+                return false;
+            }
+        }
+    }
+
+    for( auto const & address : addr )
+    {
+        for( auto const& rule : rules->include )
+        {
+            if ( rule.filter_match(address, zone) )
+            {
+                // check i.create_host i.create_service
+                // and publish events
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 // FIXIT-M - keeping only few checks right now
 static bool decode_netflow_v9(const unsigned char* data, uint16_t size)
 {
@@ -97,7 +117,8 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size)
     return true;
 }
 
-static bool decode_netflow_v5(const unsigned char* data, uint16_t size)
+static bool decode_netflow_v5(const unsigned char* data, uint16_t size,
+    const Packet* p, const NetflowConfig* cfg)
 {
     Netflow5Hdr header;
     const Netflow5Hdr *pheader;
@@ -112,6 +133,15 @@ static bool decode_netflow_v5(const unsigned char* data, uint16_t size)
     // invalid header flow count
     if( header.flow_count  < NETFLOW_MIN_COUNT or header.flow_count  > NETFLOW_MAX_COUNT )
         return false;
+
+    const NetflowRules* p_rules = nullptr;
+    auto d = cfg->device_rule_map.find(*p->ptrs.ip_api.get_src());
+    if ( d != cfg->device_rule_map.end() )
+        p_rules = &(d->second);
+    
+    if ( p_rules == nullptr )
+        return false;
+    const int zone = p->pkth->ingress_group;
 
     data += sizeof(Netflow5Hdr);
     precord = (const Netflow5RecordHdr *)data;
@@ -150,6 +180,9 @@ static bool decode_netflow_v5(const unsigned char* data, uint16_t size)
         if ( record.next_hop_ip.set(&precord->next_hop_addr, AF_INET) != SFIP_SUCCESS )
             return false;
 
+        if ( !filter_record(p_rules, zone, &record.initiator_ip, &record.responder_ip) )
+            continue;
+
         record.initiator_port = ntohs(precord->src_port);
         record.responder_port = ntohs(precord->dst_port);
         record.proto = precord->flow_protocol;
@@ -180,7 +213,7 @@ static bool decode_netflow_v5(const unsigned char* data, uint16_t size)
     return true;
 }
 
-static bool validate_netflow(const Packet* p)
+static bool validate_netflow(const Packet* p, const NetflowConfig* cfg)
 {
     uint16_t size = p->dsize;
     const unsigned char* data = p->data;
@@ -195,7 +228,7 @@ static bool validate_netflow(const Packet* p)
 
     if( version == 5 )
     {
-        retval = decode_netflow_v5(data, size);
+        retval = decode_netflow_v5(data, size, p, cfg);
         if ( retval )
         {
             ++netflow_stats.packets;
@@ -229,6 +262,7 @@ public:
     void tterm() override;
 
     void eval(snort::Packet*) override;
+    void show(const snort::SnortConfig*) const override;
 
 private:
     const NetflowConfig *config;
@@ -236,6 +270,84 @@ private:
     bool log_netflow_cache();
     void stringify(std::ofstream&);
 };
+
+static std::string to_string(const std::vector <snort::SfCidr>& networks)
+{
+    std::string nets;
+    if ( networks.empty() )
+    {
+        nets = "any";
+    }
+    else
+    {
+        for( auto const& n : networks )
+        {
+            SfIpString s;
+            n.ntop(s);
+            nets += s;
+            auto bits = n.get_bits();
+            bits -= (n.get_family() == AF_INET and bits) ? 96 : 0;
+            nets += "/" + std::to_string(bits);
+            nets += " ";
+        }
+    }
+    return nets;
+}
+
+static std::string to_string(const std::vector <int>& zones)
+{
+    std::string zs;
+    if ( zones.empty() )
+    {
+        zs = "any";
+    }
+    else
+    {
+        for( auto const& z : zones )
+        {
+            if ( z == NETFLOW_ANY_ZONE )
+            {
+                zs = "any";
+                break;
+            }
+            else
+                zs += std::to_string(z) + " ";
+        }
+    }
+    return zs;
+}
+
+static void show_device(const NetflowRule& d, bool is_exclude)
+{
+    ConfigLogger::log_flag("exclude", is_exclude, true);
+    ConfigLogger::log_flag("create_host", d.create_host, true);
+    ConfigLogger::log_flag("create_service", d.create_service, true);
+    ConfigLogger::log_value("networks", to_string(d.networks).c_str(), true);
+    ConfigLogger::log_value("zones", to_string(d.zones).c_str(), true);
+}
+
+void NetflowInspector::show(const SnortConfig*) const
+{
+    ConfigLogger::log_value("dump_file", config->dump_file);
+    ConfigLogger::log_value("update_timeout", config->update_timeout);
+    std::once_flag d_once;
+    for ( auto const& d : config->device_rule_map )
+    {
+        std::call_once(d_once, []{ ConfigLogger::log_option("rules"); });
+        SfIpString addr_str;
+        d.first.ntop(addr_str);
+        for( auto const& r : d.second.exclude )
+        {
+            ConfigLogger::log_value("device_ip", addr_str);
+            show_device(r, true);
+        }
+        for( auto const& r : d.second.include )
+        {
+            ConfigLogger::log_value("device_ip", addr_str);
+            show_device(r, false);
+        }
+    }
+}
 
 void NetflowInspector::stringify(std::ofstream& file_stream)
 {
@@ -367,7 +479,7 @@ void NetflowInspector::eval(Packet* p)
     assert((p->is_udp() and p->dsize and p->data));
     assert(netflow_cache);
 
-    if ( ! validate_netflow(p) )
+    if ( ! validate_netflow(p, config) )
         ++netflow_stats.invalid_netflow_pkts;
 }
 
