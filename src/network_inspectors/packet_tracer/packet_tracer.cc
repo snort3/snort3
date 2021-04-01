@@ -257,6 +257,12 @@ void PacketTracer::activate(const Packet& p)
         s_pkt_trace->active = false;
 }
 
+void PacketTracer::pt_timer_start()
+{
+    pt_timer->reset();
+    pt_timer->start();
+}
+
 // -----------------------------------------------------------------------------
 // non-static functions
 // -----------------------------------------------------------------------------

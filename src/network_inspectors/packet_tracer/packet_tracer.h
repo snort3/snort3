@@ -77,6 +77,7 @@ public:
     static SO_PUBLIC void log(TracerMute, const char* format, ...) __attribute__((format (printf, 2, 3)));
 
     static SO_PUBLIC void daq_log(const char* format, ...) __attribute__((format (printf, 1, 2)));
+    static SO_PUBLIC void pt_timer_start();
 
 protected:
 
