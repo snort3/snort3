@@ -393,6 +393,7 @@ int main_reload_config(lua_State* L)
     }
 
     PluginManager::reload_so_plugins_cleanup(sc);
+    sc->update_reload_id();
     SnortConfig::set_conf(sc);
     TraceApi::thread_reinit(sc->trace_config);
     proc_stats.conf_reloads++;
@@ -435,6 +436,7 @@ int main_reload_policy(lua_State* L)
         current_request->respond("== reload failed\n");
         return 0;
     }
+    sc->update_reload_id();
     SnortConfig::set_conf(sc);
     proc_stats.policy_reloads++;
 
@@ -476,6 +478,7 @@ int main_reload_module(lua_State* L)
         current_request->respond("== reload failed\n");
         return 0;
     }
+    sc->update_reload_id();
     SnortConfig::set_conf(sc);
     proc_stats.policy_reloads++;
 

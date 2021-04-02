@@ -213,6 +213,7 @@ void Snort::init(int argc, char** argv)
     IpsManager::global_init(sc);
 
     sc->post_setup();
+    sc->update_reload_id();
 
     const MpseApi* search_api = sc->fast_pattern_config->get_search_api();
     const MpseApi* offload_search_api = sc->fast_pattern_config->get_offload_search_api();

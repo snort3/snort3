@@ -33,7 +33,6 @@ public:
 
 private:
     ReputationConfig config;
-    unsigned reputation_id;
 };
 
 #endif

@@ -128,6 +128,7 @@ static const char* InspectorTypeNames[IT_MAX] =
     "wizard",
     "packet",
     "stream",
+    "first",
     "network",
     "service",
     "control",

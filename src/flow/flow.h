@@ -439,7 +439,7 @@ public:  // FIXIT-M privatize if possible
     unsigned inspection_policy_id;
     unsigned ips_policy_id;
     unsigned network_policy_id;
-    unsigned reputation_id;
+    unsigned reload_id;
 
     uint32_t default_session_timeout;
 

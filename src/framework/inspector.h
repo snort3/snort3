@@ -189,7 +189,8 @@ enum InspectorType
     IT_WIZARD,   // guesses service inspector
     IT_PACKET,   // processes raw packets only (eg normalize, capture)
     IT_STREAM,   // flow tracking and reassembly (eg ip, tcp, udp)
-    IT_NETWORK,  // process packets w/o service (eg arp, bo, rep)
+    IT_FIRST,    // analyze 1st pkt of new flow and 1st pkt after reload of ongoing flow (eg rep)
+    IT_NETWORK,  // process packets w/o service (eg arp, bo)
     IT_SERVICE,  // extract and analyze service PDUs (eg dce, http, ssl)
     IT_CONTROL,  // process all packets before detection (eg appid)
     IT_PROBE,    // process all packets after detection (eg perf_monitor, port_scan)

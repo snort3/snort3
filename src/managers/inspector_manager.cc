@@ -222,6 +222,7 @@ struct FrameworkPolicy
 
     PHVector passive;
     PHVector packet;
+    PHVector first;
     PHVector network;
     PHVector session;
     PHVector service;
@@ -279,6 +280,7 @@ void FrameworkPolicy::vectorize(SnortConfig* sc)
 {
     passive.alloc(ilist.size());
     packet.alloc(ilist.size());
+    first.alloc(ilist.size());
     network.alloc(ilist.size());
     session.alloc(ilist.size());
     service.alloc(ilist.size());
@@ -298,6 +300,10 @@ void FrameworkPolicy::vectorize(SnortConfig* sc)
 
         case IT_PACKET:
             packet.add(p);
+            break;
+
+        case IT_FIRST:
+            first.add(p);
             break;
 
         case IT_NETWORK:
@@ -1251,6 +1257,13 @@ void InspectorManager::internal_execute(Packet* p)
 
     if ( !p->flow )
     {
+        if ( fp_dft != fp )
+            ::execute<T>(p, fp_dft->first.vec, fp_dft->first.num);
+        ::execute<T>(p, fp->first.vec, fp->first.num);
+
+        if ( p->disable_inspect )
+            return;
+
         if (fp_dft != fp)
             ::execute<T>(p, fp_dft->network.vec, fp_dft->network.num);
         ::execute<T>(p, fp->network.vec, fp->network.num);
@@ -1264,6 +1277,17 @@ void InspectorManager::internal_execute(Packet* p)
     {
         if ( !p->has_paf_payload() and p->flow->flow_state == Flow::FlowState::INSPECT )
             p->flow->session->process(p);
+
+        if ( p->flow->reload_id != sc->reload_id )
+        {
+            if ( fp_dft != fp )
+                ::execute<T>(p, fp_dft->first.vec, fp_dft->first.num);
+            ::execute<T>(p, fp->first.vec, fp->first.num);
+
+            p->flow->reload_id = sc->reload_id;
+            if ( p->disable_inspect )
+                return;
+        }
 
         if ( !p->flow->service )
         {

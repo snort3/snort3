@@ -312,14 +312,6 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
     }
 }
 
-static unsigned create_reputation_id()
-{
-    static unsigned reputation_id_tracker = 0;
-    if (++reputation_id_tracker == 0)
-        ++reputation_id_tracker;
-    return reputation_id_tracker;
-}
-
 static const char* to_string(NestedIP nip)
 {
     switch (nip)
@@ -385,7 +377,6 @@ static const char* to_string(IPdecision ipd)
 
 Reputation::Reputation(ReputationConfig* pc)
 {
-    reputation_id = create_reputation_id();
     config = *pc;
     ReputationConfig* conf = &config;
     if (!config.list_dir.empty())
@@ -425,14 +416,6 @@ void Reputation::eval(Packet* p)
 
     if (p->is_rebuilt())
         return;
-
-    if (p->flow)
-    {
-        if (p->flow->reputation_id == reputation_id) // reputation previously checked
-            return;
-        else
-            p->flow->reputation_id = reputation_id; // disable future reputation checking
-    }
 
     snort_reputation(&config, p);
     ++reputationstats.packets;
@@ -475,7 +458,7 @@ const InspectApi reputation_api =
         mod_ctor,
         mod_dtor
     },
-    IT_NETWORK,
+    IT_FIRST,
     PROTO_BIT__ANY_IP,
     nullptr, // buffers
     nullptr, // service

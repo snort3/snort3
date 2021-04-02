@@ -425,6 +425,7 @@ public:
     bool cloned = false;
     Plugins* plugins = nullptr;
     SoRules* so_rules = nullptr;
+    unsigned reload_id = 0;
 
     DumpConfigType dump_config_type = DUMP_CONFIG_NONE;
 private:
@@ -663,6 +664,8 @@ public:
     { return reload_tuners; }
 
     void clear_reload_resource_tuner_list();
+
+    void update_reload_id();
 
     bool get_default_rule_state() const;
 

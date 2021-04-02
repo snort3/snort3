@@ -984,6 +984,12 @@ void SnortConfig::clear_reload_resource_tuner_list()
     reload_tuners.clear();
 }
 
+void SnortConfig::update_reload_id()
+{
+    static unsigned reload_id_tracker = 0;
+    reload_id = ++reload_id_tracker;
+}
+
 void SnortConfig::cleanup_fatal_error()
 {
     // FIXIT-L need a generic way to manage type other threads
