@@ -262,7 +262,7 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
             rna_flow = nullptr;
         const TcpFingerprint* tfp = processor->get(p, rna_flow);
 
-        if (tfp and ht->add_tcp_fingerprint(tfp->fpid))
+        if ( tfp and ht->add_tcp_fingerprint(tfp->fpid) )
             logger.log(RNA_EVENT_NEW, NEW_OS, p, &ht, src_ip_ptr, src_mac, tfp, packet_time());
     }
 }
