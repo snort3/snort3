@@ -33,7 +33,7 @@
 
 using namespace snort;
 
-#define FTP_PORT    21
+#define FTP_PORT 21
 
 enum FTPState
 {
@@ -110,8 +110,8 @@ FtpServiceDetector::FtpServiceDetector(ServiceDiscovery* sd)
 
     tcp_patterns =
     {
-        { (const uint8_t*)FTP_PATTERN1, sizeof(FTP_PATTERN1) - 1, 0,  0, 0 },
-        { (const uint8_t*)FTP_PATTERN2, sizeof(FTP_PATTERN2) - 1, 0,  0, 0 },
+        { (const uint8_t*)FTP_PATTERN1, sizeof(FTP_PATTERN1) - 1, 0, 0, 0 },
+        { (const uint8_t*)FTP_PATTERN2, sizeof(FTP_PATTERN2) - 1, 0, 0, 0 },
         { (const uint8_t*)FTP_PATTERN3, sizeof(FTP_PATTERN3) - 1, -1, 0, 0 },
         { (const uint8_t*)FTP_PATTERN4, sizeof(FTP_PATTERN4) - 1, -1, 0, 0 }
     };
@@ -119,9 +119,9 @@ FtpServiceDetector::FtpServiceDetector(ServiceDiscovery* sd)
     appid_registry =
     {
         { APP_ID_FTP_CONTROL, APPINFO_FLAG_SERVICE_ADDITIONAL },
-        { APP_ID_FTP_ACTIVE,  APPINFO_FLAG_SERVICE_ADDITIONAL },
+        { APP_ID_FTP_ACTIVE, APPINFO_FLAG_SERVICE_ADDITIONAL },
         { APP_ID_FTP_PASSIVE, APPINFO_FLAG_SERVICE_ADDITIONAL },
-        { APP_ID_FTPS,        APPINFO_FLAG_SERVICE_ADDITIONAL }
+        { APP_ID_FTPS, APPINFO_FLAG_SERVICE_ADDITIONAL }
     };
 
     service_ports =
@@ -135,7 +135,7 @@ FtpServiceDetector::FtpServiceDetector(ServiceDiscovery* sd)
 static inline void CopyVendorString(ServiceFTPData& fd, const uint8_t* vendor, unsigned int
     vendorLen)
 {
-    unsigned int copyLen = vendorLen < sizeof(fd.vendor)-1 ? vendorLen : sizeof(fd.vendor)-1;
+    unsigned int copyLen = vendorLen < sizeof(fd.vendor) - 1 ? vendorLen : sizeof(fd.vendor) - 1;
     memcpy(fd.vendor, vendor, copyLen);
     fd.vendor[copyLen] = '\0';
 }
@@ -143,8 +143,9 @@ static inline void CopyVendorString(ServiceFTPData& fd, const uint8_t* vendor, u
 static inline void CopyVersionString(ServiceFTPData& fd, const uint8_t* version, unsigned int
     versionLen)
 {
-    unsigned int copyLen = versionLen < sizeof(fd.version)-1 ? versionLen : sizeof(fd.version)-1;
-    while (copyLen > 0 && !isalnum(version[copyLen-1]))
+    unsigned int copyLen = versionLen < sizeof(fd.version) - 1 ? versionLen :
+        sizeof(fd.version) - 1;
+    while (copyLen > 0 && !isalnum(version[copyLen - 1]))
     {
         copyLen--;
     }
@@ -176,7 +177,7 @@ static int VendorVersionParse(const uint8_t* data, uint16_t init_offset,
     int ret = 0; // no match
 
     p = &data[init_offset];
-    end = &data[offset-1];
+    end = &data[offset - 1];
     /* Search for the vendorCandidate string */
     if (vvp_parse_type == VVP_PARSE_WU)
     {
@@ -191,14 +192,14 @@ static int VendorVersionParse(const uint8_t* data, uint16_t init_offset,
             ver = p + versionLen;
             p = ver;
             verlen = 0;
-            while (p < end && *p && *p != ' ' )
+            while (p < end && *p && *p != ' ')
             {
                 p++; verlen++;
             }
             CopyVersionString(fd, ver, verlen);
         }
     }
-    else if ((p=service_strstr(p, end-p, vendorCandidate, vendorCandidateLen)))
+    else if ((p = service_strstr(p, end - p, vendorCandidate, vendorCandidateLen)))
     {
         /* Found vendorCandidate string */
         CopyVendorString(fd, vendorCandidate, vendorCandidateLen);
@@ -208,7 +209,7 @@ static int VendorVersionParse(const uint8_t* data, uint16_t init_offset,
         if (optionalVersion)
         {
             /* Search for the version string */
-            if ((p = service_strstr(p, end-p, optionalVersion, versionLen)))
+            if ((p = service_strstr(p, end - p, optionalVersion, versionLen)))
             {
                 /* Found the version string.  Move just past the version string */
                 ver = p + versionLen;
@@ -229,13 +230,13 @@ static int VendorVersionParse(const uint8_t* data, uint16_t init_offset,
                     }
                     break;
                 case VVP_PARSE_MS:
-                    while (p < end && *p && *p != ')' )
+                    while (p < end && *p && *p != ')')
                     {
                         p++; verlen++;
                     }
                     break;
                 case VVP_PARSE_PRO_FTPD:
-                    while (p < end && *p && *p != ' ' )
+                    while (p < end && *p && *p != ' ')
                     {
                         p++; verlen++;
                     }
@@ -272,37 +273,37 @@ static int CheckVendorVersion(const uint8_t* data, uint16_t init_offset,
     {
     case VVP_PARSE_HP:
         return VendorVersionParse(data, init_offset, offset,fd,
-            ven_hp, sizeof(ven_hp)-1,
-            ver_hp, sizeof(ver_hp)-1,
+            ven_hp, sizeof(ven_hp) - 1,
+            ver_hp, sizeof(ver_hp) - 1,
             VVP_PARSE_HP);
     case VVP_PARSE_FILEZILLA:
         return VendorVersionParse(data, init_offset, offset,fd,
-            ven_fzilla, sizeof(ven_fzilla)-1,
-            ver_fzilla, sizeof(ver_fzilla)-1,
+            ven_fzilla, sizeof(ven_fzilla) - 1,
+            ver_fzilla, sizeof(ver_fzilla) - 1,
             VVP_PARSE_FILEZILLA);
     case VVP_PARSE_MS:
         return VendorVersionParse(data, init_offset, offset,fd,
-            ven_ms, sizeof(ven_ms)-1,
-            ver_ms, sizeof(ver_ms)-1,
+            ven_ms, sizeof(ven_ms) - 1,
+            ver_ms, sizeof(ver_ms) - 1,
             VVP_PARSE_MS);
     case VVP_PARSE_WU:
         return VendorVersionParse(data, init_offset, offset,fd,
-            ven_wu, sizeof(ven_wu)-1,
-            ver_wu, sizeof(ver_wu)-1,
+            ven_wu, sizeof(ven_wu) - 1,
+            ver_wu, sizeof(ver_wu) - 1,
             VVP_PARSE_WU);
     case VVP_PARSE_PRO_FTPD:
         return VendorVersionParse(data, init_offset, offset,fd,
-            ven_proftpd, sizeof(ven_proftpd)-1,
-            (const uint8_t*)" ", sizeof(" ")-1,
+            ven_proftpd, sizeof(ven_proftpd) - 1,
+            (const uint8_t*)" ", sizeof(" ") - 1,
             VVP_PARSE_PRO_FTPD);
     case VVP_PARSE_PURE_FTPD:
         return VendorVersionParse(data, init_offset, offset,fd,
-            ven_pureftpd, sizeof(ven_pureftpd)-1,
+            ven_pureftpd, sizeof(ven_pureftpd) - 1,
             nullptr, 0,
             VVP_PARSE_PURE_FTPD);
     case VVP_PARSE_NC_FTPD:
         return VendorVersionParse(data, init_offset, offset,fd,
-            ven_ncftpd, sizeof(ven_ncftpd)-1,
+            ven_ncftpd, sizeof(ven_ncftpd) - 1,
             nullptr, 0,
             VVP_PARSE_NC_FTPD);
     }
@@ -337,7 +338,8 @@ static FtpEolReturn ftp_parse_response(const uint8_t* data, uint16_t& offset,
     return FTP_NOT_FOUND_EOL;
 }
 
-static bool check_ret_digit_code(const uint8_t* code_raw, int start_digit_place, int end_digit_place, int& code, const ServiceFTPData& fd)
+static bool check_ret_digit_code(const uint8_t* code_raw, int start_digit_place,
+    int end_digit_place, int& code, const ServiceFTPData& fd)
 {
     bool ret = true;
     for (int index = 0; start_digit_place >= end_digit_place; start_digit_place--, index++)
@@ -345,21 +347,23 @@ static bool check_ret_digit_code(const uint8_t* code_raw, int start_digit_place,
         switch (start_digit_place)
         {
         case 3:
-            if (code_raw[index] >='1' and code_raw[index] <= '5')
+            if (code_raw[index] >= '1' and code_raw[index] <= '5')
                 code += (code_raw[index] - '0') * 100;
             else
                 ret = false;
             break;
         case 2:
-            if (ret and fd.rstate == FTP_REPLY_BEGIN and  code_raw[index ] >='0' and code_raw[index] <= '5')
+            if (ret and fd.rstate == FTP_REPLY_BEGIN and code_raw[index] >='0' 
+                and code_raw[index] <= '5')
                 code += (code_raw[index] - '0') * 10;
-            else if (ret and fd.rstate != FTP_REPLY_BEGIN and  code_raw[index ] >='1' and code_raw[index] <= '5')
+            else if (ret and fd.rstate != FTP_REPLY_BEGIN and code_raw[index] >='1'
+                and code_raw[index] <= '5')
                 code += (code_raw[index] - '0') * 10;
             else
                 ret = false;
             break;
         case 1:
-            if (ret and isdigit(code_raw[index ]))
+            if (ret and isdigit(code_raw[index]))
                 code += (code_raw[index] - '0') ;
             else
                 ret = false;
@@ -372,12 +376,13 @@ static bool check_ret_digit_code(const uint8_t* code_raw, int start_digit_place,
     return ret;
 }
 
-static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
-    uint16_t size, ServiceFTPData& fd)
+static int ftp_validate_reply(const uint8_t* data, uint16_t& offset, uint16_t size,
+    ServiceFTPData& fd)
 {
     const ServiceFTPCode* code_hdr;
-    int tmp = 0 ;
+    int tmp = 0;
     bool ret_code;
+    FtpEolReturn parse_ret;
     FTPReplyState tmp_state;
 
     for (; offset < size; ++offset)
@@ -398,7 +403,7 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
             code_hdr = (const ServiceFTPCode*)(data + offset);
 
             fd.code = 0;
-            ret_code = check_ret_digit_code(code_hdr->code, 3,1, fd.code, fd );
+            ret_code = check_ret_digit_code(code_hdr->code, 3, 1, fd.code, fd);
 
             if(!ret_code)
                 return -1;
@@ -429,7 +434,7 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
                         const unsigned char* end;
                         const unsigned char* p;
                         const unsigned char* ver;
-                        end = &data[size-1];
+                        end = &data[size - 1];
                         for (p=&data[offset]; p<end and *p and *p!='('; p++)
                             ;
                         if (p < end)
@@ -437,19 +442,14 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
                             p++;
                             const unsigned char* ven = p;
 
-                            for (; p<end and *p and *p!=' '; p++)
-                                ;
+                            for (; p<end and *p and *p!=' '; p++);
                             if (p < end and *p)
                             {
                                 CopyVendorString(fd, ven, p-ven);
                                 ver = p + 1;
-                                for (p=ver; p<end and *p and *p!=':'; p++)
-                                    ;
+                                for (p=ver; p<end and *p and *p!=':'; p++);
                                 if (p>=end or !(*p))
-                                {
-                                    for (p=ver; p<end and *p and *p!=')'; p++)
-                                        ;
-                                }
+                                    for (p=ver; p<end and *p and *p!=')'; p++);
                                 if (p < end and *p)
                                 {
                                     CopyVersionString(fd, ver, p-ver);
@@ -468,7 +468,7 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
 
             fd.rstate = FTP_REPLY_MID;
 
-            if ( ftp_parse_response(data, offset, size, fd, tmp_state ) == FTP_INCORRECT_EOL)
+            if (ftp_parse_response(data, offset, size, fd, tmp_state) == FTP_INCORRECT_EOL)
                 return -1;
             if (fd.rstate == FTP_REPLY_MID)
                 fd.rstate = FTP_REPLY_LONG;
@@ -479,19 +479,21 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
             {
                 fd.rstate = FTP_REPLY_MID;
                 int temp = offset;
-                FtpEolReturn parse_ret = ftp_parse_response(data, offset, size, fd, FTP_REPLY_MULTI);
-                if( parse_ret == FTP_INCORRECT_EOL)
+                parse_ret = ftp_parse_response(data, offset, size, fd,
+                    FTP_REPLY_MULTI);
+                if (parse_ret == FTP_INCORRECT_EOL)
                     return -1;
                 else if (parse_ret == FTP_PARTIAL_EOL)
                     fd.rstate = FTP_REPLY_PARTIAL_EOL;
                 else if (parse_ret == FTP_NOT_FOUND_EOL)
                 {
-                    ret_code = check_ret_digit_code((data+temp), 3, 4 - (size - (temp)), fd.part_code_resp, fd );
+                    ret_code = check_ret_digit_code((data+temp), 3, 4 - (size - (temp)),
+                        fd.part_code_resp, fd );
                     if(!ret_code)
                         return -1;
 
                     fd.rstate = FTP_REPLY_PARTIAL_RESP;
-                    fd.part_code_len = 3 - (size - (temp ));
+                    fd.part_code_len = 3 - (size - (temp));
                 }
 
                 if (fd.rstate == FTP_REPLY_MID)
@@ -503,7 +505,8 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
                 code_hdr = (const ServiceFTPCode*)(data + offset);
                 tmp = 0;
 
-                if (check_ret_digit_code(code_hdr->code, 3,1, tmp, fd) and (code_hdr->sp == ' ' or code_hdr->sp == 0x09))
+                if (check_ret_digit_code(code_hdr->code, 3, 1, tmp, fd) and (code_hdr->sp == ' '
+                    or code_hdr->sp == 0x09))
                 {
                     if (tmp == fd.code)
                     {
@@ -525,7 +528,8 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
             if (fd.rstate != FTP_REPLY_PARTIAL_RESP)
             {
                 fd.rstate = FTP_REPLY_MID;
-                if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_LONG)== FTP_INCORRECT_EOL)
+                parse_ret = ftp_parse_response(data, offset, size, fd, FTP_REPLY_LONG);
+                if (parse_ret == FTP_INCORRECT_EOL)
                     return -1;
                 if (++offset >= size)
                 {
@@ -541,7 +545,8 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
             if (size - offset < (int)sizeof(ServiceFTPCode))
             {
                 fd.rstate = FTP_REPLY_MID;
-                if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_LONG)  == FTP_INCORRECT_EOL)
+                parse_ret = ftp_parse_response(data, offset, size, fd, FTP_REPLY_LONG);
+                if (parse_ret == FTP_INCORRECT_EOL)
                     return -1;
                 if (fd.rstate == FTP_REPLY_MID)
                     fd.rstate = FTP_REPLY_LONG;
@@ -551,13 +556,14 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
                 if (fd.rstate == FTP_REPLY_PARTIAL_RESP)
                 {
                     tmp = 0;
-                    ret_code = check_ret_digit_code(data + offset, fd.part_code_len ,1, tmp, fd);
+                    ret_code = check_ret_digit_code(data + offset, fd.part_code_len , 1, tmp, fd);
 
                     if(!ret_code)
                         return -1;
                     fd.code = tmp + fd.part_code_resp;
                     fd.part_code_resp = 0;
-                    if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_LONG)  == FTP_INCORRECT_EOL)
+                    parse_ret = ftp_parse_response(data, offset, size, fd, FTP_REPLY_LONG);
+                    if (parse_ret == FTP_INCORRECT_EOL)
                         return -1;
 
                 }
@@ -572,13 +578,15 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset,
                         if (code_hdr->sp == ' ' or code_hdr->sp == 0x09)
                         {
                             fd.rstate = FTP_REPLY_MID;
-                            if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_BEGIN) == FTP_INCORRECT_EOL)
+                            parse_ret = ftp_parse_response(data, offset, size, fd, FTP_REPLY_BEGIN);
+                            if (parse_ret == FTP_INCORRECT_EOL)
                                 return -1;
                         }
                         else if (code_hdr->sp == '-')
                         {
                             fd.rstate = FTP_REPLY_MID;
-                            if (ftp_parse_response(data, offset, size, fd, FTP_REPLY_MULTI) == FTP_INCORRECT_EOL)
+                            parse_ret = ftp_parse_response(data, offset, size, fd, FTP_REPLY_MULTI);
+                            if (parse_ret == FTP_INCORRECT_EOL)
                                 return -1;
                         }
                         if (fd.rstate == FTP_REPLY_MID)
@@ -615,8 +623,8 @@ static inline int _ftp_decode_number32(const uint8_t** data, const uint8_t* end,
 {
     const uint8_t* local_data;
     uint32_t local_number = 0;
-    for (local_data = *data; local_data < end && *local_data == ' '; local_data++)
-        ;
+    for (local_data = *data; local_data < end && *local_data == ' '; local_data++);
+
     if (local_data < end && *local_data == delimiter)
     {
         *number = 0;
@@ -639,7 +647,7 @@ static inline int _ftp_decode_number32(const uint8_t** data, const uint8_t* end,
         return -1;
     }
     *number = local_number;
-    *data = local_data+1;
+    *data = local_data + 1;
     return 0;
 }
 
@@ -669,8 +677,7 @@ static int ftp_decode_port_number(const uint8_t** data, const uint8_t* end, uint
     return 0;
 }
 
-static int ftp_validate_pasv(const uint8_t* data, uint16_t size,
-    uint32_t* address, uint16_t* port)
+static int ftp_validate_pasv(const uint8_t* data, uint16_t size, uint32_t* address, uint16_t* port)
 {
     const uint8_t* end;
     uint32_t tmp;
@@ -681,8 +688,8 @@ static int ftp_validate_pasv(const uint8_t* data, uint16_t size,
     end = data + size;
     data += sizeof(ServiceFTPCode);
 
-    for (; data<end && *data!='('; data++)
-        ;
+    for (; data<end && *data!='('; data++);
+
     data++;
     if (data >= end)
         return 1;
@@ -708,8 +715,7 @@ static int ftp_validate_pasv(const uint8_t* data, uint16_t size,
     return 0;
 }
 
-static int ftp_validate_epsv(const uint8_t* data, uint16_t size,
-    uint16_t* port)
+static int ftp_validate_epsv(const uint8_t* data, uint16_t size, uint16_t* port)
 {
     const uint8_t* end;
     uint8_t delimiter;
@@ -719,8 +725,8 @@ static int ftp_validate_epsv(const uint8_t* data, uint16_t size,
     end = data + size;
     data += sizeof(ServiceFTPCode);
 
-    for (; data<end && *data!='('; data++)
-        ;
+    for (; data<end && *data!='('; data++);
+
     data++;
     if (data >= end)
         return 1;
@@ -729,14 +735,14 @@ static int ftp_validate_epsv(const uint8_t* data, uint16_t size,
     if (data >= end)
         return 1;
 
-    for (; data<end && *data!=delimiter; data++)
-        ;
+    for (; data<end && *data!=delimiter; data++);
+
     data++;
     if (data >= end)
         return 1;
 
-    for (; data<end && *data!=delimiter; data++)
-        ;
+    for (; data<end && *data!=delimiter; data++);
+
     data++;
     if (data >= end)
         return 1;
@@ -753,8 +759,7 @@ static int ftp_validate_epsv(const uint8_t* data, uint16_t size,
     return 0;
 }
 
-static int ftp_validate_port(const uint8_t* data, uint16_t size,
-    SfIp* address, uint16_t* port)
+static int ftp_validate_port(const uint8_t* data, uint16_t size, SfIp* address, uint16_t* port)
 {
     const uint8_t* end;
     const uint8_t* p;
@@ -842,7 +847,7 @@ static int ftp_validate_eprt(const uint8_t* data, uint16_t size, SfIp* address, 
     for (index = 0; !addrFamilySupported && RFC2428_known_address_families[index].eprt_fam != 0;
         index++)
     {
-        if ( RFC2428_known_address_families[index].eprt_fam == (uint16_t)tmp )
+        if (RFC2428_known_address_families[index].eprt_fam == (uint16_t)tmp)
         {
             addrFamilySupported = RFC2428_known_address_families[index].sfaddr_fam;
         }
@@ -953,11 +958,11 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
         if (data[size-1] != 0x0a)
             goto inprocess;
 
-        if (size > sizeof(FTP_PORT_CMD)-1 &&
-            strncasecmp((const char*)data, FTP_PORT_CMD, sizeof(FTP_PORT_CMD)-1) == 0)
+        if (size > sizeof(FTP_PORT_CMD) - 1 &&
+            strncasecmp((const char*)data, FTP_PORT_CMD, sizeof(FTP_PORT_CMD) - 1) == 0)
         {
-            if (ftp_validate_port(data+(sizeof(FTP_PORT_CMD)-1),
-                size-(sizeof(FTP_PORT_CMD)-1),
+            if (ftp_validate_port(data + (sizeof(FTP_PORT_CMD) - 1),
+                size - (sizeof(FTP_PORT_CMD) - 1),
                 &fd->address, &fd->port) == 0)
             {
                 const SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
@@ -966,11 +971,11 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 WatchForCommandResult(fd, args.asd, FTP_CMD_PORT_EPRT);
             }
         }
-        else if (size > sizeof(FTP_EPRT_CMD)-1 &&
-            strncasecmp((const char*)data, FTP_EPRT_CMD, sizeof(FTP_EPRT_CMD)-1) == 0)
+        else if (size > sizeof(FTP_EPRT_CMD) - 1 &&
+            strncasecmp((const char*)data, FTP_EPRT_CMD, sizeof(FTP_EPRT_CMD) - 1) == 0)
         {
-            if (ftp_validate_eprt(data+(sizeof(FTP_EPRT_CMD)-1),
-                size-(sizeof(FTP_EPRT_CMD)-1),
+            if (ftp_validate_eprt(data+(sizeof(FTP_EPRT_CMD) - 1),
+                size - (sizeof(FTP_EPRT_CMD) - 1),
                 &fd->address, &fd->port) == 0)
             {
                 const SfIp* dip = args.pkt->ptrs.ip_api.get_dst();
@@ -979,10 +984,9 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 WatchForCommandResult(fd, args.asd, FTP_CMD_PORT_EPRT);
             }
         }
-        else if ( size > sizeof(FTP_PASV_CMD)-1 &&
-            ( strncasecmp((const char*)data, FTP_PASV_CMD, sizeof(FTP_PASV_CMD)-1) == 0 ||
-            strncasecmp((const char*)data, FTP_EPSV_CMD, sizeof(FTP_EPSV_CMD)-1) == 0 )
-            )
+        else if (size > sizeof(FTP_PASV_CMD) - 1 &&
+            (strncasecmp((const char*)data, FTP_PASV_CMD, sizeof(FTP_PASV_CMD) - 1) == 0 ||
+            strncasecmp((const char*)data, FTP_EPSV_CMD, sizeof(FTP_EPSV_CMD) - 1) == 0))
         {
             WatchForCommandResult(fd, args.asd, FTP_CMD_PASV_EPSV);
         }
@@ -993,7 +997,7 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
     while (offset < size)
     {
         init_offset = offset;
-        if ((code=ftp_validate_reply(data, offset, size, *fd)) < 0)
+        if ((code = ftp_validate_reply(data, offset, size, *fd)) < 0)
             goto fail;
         if (!code)
             goto inprocess;
@@ -1229,7 +1233,7 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
             case 227:
             {
                 code = ftp_validate_pasv(data + init_offset,
-                    (uint16_t)(offset-init_offset),
+                    (uint16_t)(offset - init_offset),
                     &address, &port);
                 if (!code)
                 {
@@ -1259,7 +1263,7 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
             case 229:
             {
                 code = ftp_validate_epsv(data + init_offset,
-                    (uint16_t)(offset-init_offset), &port);
+                    (uint16_t)(offset - init_offset), &port);
 
                 if (!code)
                 {
@@ -1318,9 +1322,13 @@ inprocess:
 
     case APPID_NOMATCH:
 fail:
-        if (!args.asd.is_service_detected())
-            fail_service(args.asd, args.pkt, args.dir);
-        args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
+        if (args.asd.is_service_detected())
+        {
+            args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
+            return APPID_SUCCESS;
+        }
+
+        fail_service(args.asd, args.pkt, args.dir);
         return APPID_NOMATCH;
     }
 }
