@@ -261,9 +261,15 @@ int TcpStreamSession::update_alert(Packet* p, uint32_t gid, uint32_t sid,
 bool TcpStreamSession::set_packet_action_to_hold(Packet* p)
 {
     if ( p->is_from_client() )
+    {
+        held_packet_dir = SSN_DIR_FROM_CLIENT;
         return server.set_held_packet(p);
+    }
     else
+    {
+        held_packet_dir = SSN_DIR_FROM_SERVER;
         return client.set_held_packet(p);
+    }
 }
 
 void TcpStreamSession::set_packet_header_foo(const TcpSegmentDescriptor& tsd)

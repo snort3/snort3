@@ -818,6 +818,33 @@ void Stream::partial_flush(Flow* flow, bool to_server)
     }
 }
 
+bool Stream::get_held_pkt_seq(Flow* flow, uint32_t& seq)
+{
+    if (!flow or !flow->session or !(flow->pkt_type == PktType::TCP))
+        return false;
+
+    TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
+
+    if (tcp_session->held_packet_dir == SSN_DIR_NONE) 
+        return false;
+
+    if (tcp_session->held_packet_dir == SSN_DIR_FROM_CLIENT)
+    {
+        seq = tcp_session->server.held_pkt_seq;
+        tcp_session->held_packet_dir = SSN_DIR_NONE;
+        return true;
+    }
+
+    if (tcp_session->held_packet_dir == SSN_DIR_FROM_SERVER)
+    {
+        seq = tcp_session->client.held_pkt_seq;
+        tcp_session->held_packet_dir = SSN_DIR_NONE;
+        return true;
+    }
+
+    return false;
+}
+
 #ifdef UNIT_TEST
 
 #include "catch/snort_catch.h"

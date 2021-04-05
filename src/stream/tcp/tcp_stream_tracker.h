@@ -316,6 +316,7 @@ public:
     uint16_t snd_up = 0;  // SND.UP  - send urgent pointer
     uint16_t rcv_up = 0;  // RCV.UP  - receive urgent pointer
 
+    uint32_t held_pkt_seq = 0;
     TcpState tcp_state;
     TcpEvent tcp_event = TCP_MAX_EVENTS;
 

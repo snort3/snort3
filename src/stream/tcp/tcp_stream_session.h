@@ -121,6 +121,7 @@ public:
     TcpStreamConfig* tcp_config = nullptr;
     TcpEventLogger tel;
     bool cleaning = false;
+    uint8_t held_packet_dir = SSN_DIR_NONE;
 
 private:
     bool no_ack = false;

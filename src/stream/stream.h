@@ -243,6 +243,8 @@ public:
     static void set_no_ack_mode(Flow*, bool);
     static void partial_flush(Flow*, bool to_server);
 
+    static bool get_held_pkt_seq(Flow*, uint32_t&);
+
 private:
     static void set_ip_protocol(Flow*);
 };

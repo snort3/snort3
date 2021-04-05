@@ -635,6 +635,7 @@ bool TcpStreamTracker::set_held_packet(Packet* p)
     memory::MemoryCap::update_allocations(daq_msg_get_data_len(p->daq_msg));
 
     held_packet = hpq->append(p->daq_msg, p->ptrs.tcph->seq(), *this);
+    held_pkt_seq = p->ptrs.tcph->seq();
 
     tcpStats.total_packets_held++;
     if ( ++tcpStats.current_packets_held > tcpStats.max_packets_held )
@@ -699,6 +700,9 @@ void TcpStreamTracker::finalize_held_packet(Packet* cp)
                 Analyzer::get_local_analyzer()->finalize_daq_message(msg, DAQ_VERDICT_PASS);
                 tcpStats.held_packets_passed++;
             }
+
+            TcpStreamSession* tcp_session = (TcpStreamSession*)cp->flow->session;
+            tcp_session->held_packet_dir = SSN_DIR_NONE;
         }
 
         memory::MemoryCap::update_deallocations(msglen);
@@ -728,6 +732,8 @@ void TcpStreamTracker::finalize_held_packet(Flow* flow)
         }
         else
         {
+            TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
+            tcp_session->held_packet_dir = SSN_DIR_NONE;
             Analyzer::get_local_analyzer()->finalize_daq_message(msg, DAQ_VERDICT_PASS);
             tcpStats.held_packets_passed++;
         }

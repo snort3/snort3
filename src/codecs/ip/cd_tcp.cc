@@ -33,6 +33,7 @@
 #include "protocols/tcp.h"
 #include "protocols/tcp_options.h"
 #include "sfip/sf_ipvar.h"
+#include "stream/stream.h"
 #include "utils/util.h"
 
 #include "checksum.h"
@@ -607,7 +608,7 @@ void TcpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 //-------------------------------------------------------------------------
 
 bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
-    EncState& enc, Buffer& buf, Flow*)
+    EncState& enc, Buffer& buf, Flow* flow)
 {
     const tcp::TCPHdr* const hi = reinterpret_cast<const tcp::TCPHdr*>(raw_in);
 
@@ -624,7 +625,14 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
 
         // th_seq depends on whether the data passes or drops
         if (enc.flags & ENC_FLAG_INLINE)
-            tcph_out->th_seq = hi->th_seq;
+        {
+            uint32_t seq = 0;
+            
+            if(Stream::get_held_pkt_seq(flow, seq))
+                tcph_out->th_seq = htonl(seq);
+            else
+                tcph_out->th_seq = hi->th_seq;
+        }
         else
             tcph_out->th_seq = htonl(ntohl(hi->th_seq) + enc.dsize + ctl);
 
