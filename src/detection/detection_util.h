@@ -31,6 +31,8 @@
 
 struct DataPointer
 {
+    DataPointer(const uint8_t* d, unsigned l) :
+        data(d), len(l) {}
     const uint8_t* data;
     unsigned len;
 };

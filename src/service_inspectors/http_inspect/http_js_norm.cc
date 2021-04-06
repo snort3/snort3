@@ -32,60 +32,13 @@
 using namespace HttpEnums;
 using namespace snort;
 
-class JsNormBase
-{
-public:
-    virtual ~JsNormBase() = default;
-
-    virtual int normalize(const char*, uint16_t, char*, uint16_t, const char**, int*, JSState*,
-    uint8_t*) = 0;
-
-};
-
-class UtilJsNorm : public JsNormBase
-{
-public:
-    UtilJsNorm() : JsNormBase() {}
-
-protected:
-    virtual int normalize(const char* src, uint16_t srclen, char* dst, uint16_t destlen,
-        const char** ptr, int* bytes_copied, JSState* js, uint8_t* iis_unicode_map) override
-    {
-        return JSNormalizeDecode(src, srclen, dst, destlen, ptr, bytes_copied, js, iis_unicode_map);
-    }
-
-};
-
-class JsNorm : public JsNormBase
-{
-public:
-    JsNorm(int normalization_depth)
-        : JsNormBase(),
-          norm_depth(normalization_depth)
-    {}
-
-protected:
-    virtual int normalize(const char* src, uint16_t srclen, char* dst, uint16_t destlen,
-        const char** ptr, int* bytes_copied, JSState*, uint8_t*) override
-    {
-        return JSNormalizer::normalize(src, srclen, dst, destlen, ptr, bytes_copied, norm_depth);
-    }
-
-private:
-    int norm_depth;
-
-};
-
-HttpJsNorm::HttpJsNorm(int max_javascript_whitespaces_, const HttpParaList::UriParam& uri_param_,
-    int normalization_depth) :
-    normalizer(nullptr), max_javascript_whitespaces(max_javascript_whitespaces_),
-    uri_param(uri_param_), normalization_depth(normalization_depth),
-    javascript_search_mpse(nullptr), htmltype_search_mpse(nullptr)
+HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_) :
+    uri_param(uri_param_), javascript_search_mpse(nullptr),
+    htmltype_search_mpse(nullptr)
 {}
 
 HttpJsNorm::~HttpJsNorm()
 {
-    delete normalizer;
     delete javascript_search_mpse;
     delete htmltype_search_mpse;
 }
@@ -94,14 +47,6 @@ void HttpJsNorm::configure()
 {
     if ( configure_once )
         return;
-
-    // Based on this option configuration, default or whitespace normalizer will be initialized
-    // normalization_depth = 0 means to initialize default normalizer
-    // normalization_depth != 0 means to initialize whitespace normalizer with specified depth
-    if ( normalization_depth != 0 )
-        normalizer = new JsNorm(normalization_depth);
-    else
-        normalizer = new UtilJsNorm;
 
     javascript_search_mpse = new SearchTool;
     htmltype_search_mpse = new SearchTool;
@@ -133,8 +78,86 @@ void HttpJsNorm::configure()
     configure_once = true;
 }
 
-void HttpJsNorm::normalize(const Field& input, Field& output, HttpInfractions* infractions,
-    HttpEventGen* events) const
+void HttpJsNorm::enhanced_normalize(const Field& input, Field& output,
+    int64_t js_normalization_depth) const
+{
+    bool js_present = false;
+    int index = 0;
+    const char* ptr = (const char*)input.start();
+    const char* const end = ptr + input.length();
+
+    uint8_t* buffer = new uint8_t[input.length()];
+
+    while (ptr < end)
+    {
+        int bytes_copied = 0;
+        int mindex;
+
+        // Search for beginning of a javascript
+        if (javascript_search_mpse->find(ptr, end-ptr, search_js_found, false, &mindex) > 0)
+        {
+            const char* js_start = ptr + mindex;
+            const char* const angle_bracket =
+                (const char*)SnortStrnStr(js_start, end - js_start, ">");
+            if (angle_bracket == nullptr || (end - angle_bracket) == 0)
+                break;
+
+            bool type_js = false;
+            if (angle_bracket > js_start)
+            {
+                int mid;
+                const int script_found = htmltype_search_mpse->find(
+                    js_start, (angle_bracket-js_start), search_html_found, false, &mid);
+
+                js_start = angle_bracket + 1;
+                if (script_found > 0)
+                {
+                    switch (mid)
+                    {
+                    case HTML_JS:
+                        js_present = true;
+                        type_js = true;
+                        break;
+                    default:
+                        type_js = false;
+                        break;
+                    }
+                }
+                else
+                {
+                    // if no type or language is found we assume it is a javascript
+                    js_present = true;
+                    type_js = true;
+                }
+            }
+            // Save before the <script> begins
+            if (js_start > ptr)
+            {
+                if ((js_start - ptr) > (input.length() - index))
+                    break;
+            }
+
+            ptr = js_start;
+            if (!type_js)
+                continue;
+
+            JSNormalizer::normalize(js_start, (uint16_t)(end-js_start), (char*)buffer+index,
+                (uint16_t)(input.length() - index), &ptr, &bytes_copied, js_normalization_depth);
+
+            index += bytes_copied;
+        }
+        else
+            break;
+    }
+
+    if (js_present)
+        output.set(index, buffer, true);
+    else
+        delete[] buffer;
+}
+
+void HttpJsNorm::legacy_normalize(const Field& input, Field& output, HttpInfractions* infractions,
+    HttpEventGen* events, int max_javascript_whitespaces) const
 {
     bool js_present = false;
     int index = 0;
@@ -203,7 +226,7 @@ void HttpJsNorm::normalize(const Field& input, Field& output, HttpInfractions* i
             if (!type_js)
                 continue;
 
-            normalizer->normalize(js_start, (uint16_t)(end-js_start), (char*)buffer+index,
+            JSNormalizeDecode(js_start, (uint16_t)(end-js_start), (char*)buffer+index,
                 (uint16_t)(input.length() - index), &ptr, &bytes_copied, &js,
                 uri_param.iis_unicode ? uri_param.unicode_map : nullptr);
 

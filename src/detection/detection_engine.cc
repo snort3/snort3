@@ -101,7 +101,10 @@ void DetectionEngine::thread_term()
 DetectionEngine::DetectionEngine()
 {
     context = Analyzer::get_switcher()->interrupt();
-    context->file_data = { nullptr, 0 };
+
+    context->file_data = DataPointer(nullptr, 0);
+    context->script_data = DataPointer(nullptr, 0);
+
     reset();
 }
 
@@ -289,6 +292,12 @@ void DetectionEngine::set_file_data(const DataPointer& dp)
 
 DataPointer& DetectionEngine::get_file_data(IpsContext* c)
 { return c->file_data; }
+
+void DetectionEngine::set_script_data(const DataPointer& dp)
+{ Analyzer::get_switcher()->get_context()->script_data = dp; }
+
+DataPointer& DetectionEngine::get_script_data(IpsContext* c)
+{ return c->script_data; }
 
 void DetectionEngine::set_data(unsigned id, IpsContextData* p)
 { Analyzer::get_switcher()->get_context()->set_context_data(id, p); }

@@ -87,10 +87,11 @@ const Parameter HttpModule::http_params[] =
       "inspect JavaScript immediately upon script end" },
 
     { "normalize_javascript", Parameter::PT_BOOL, nullptr, "false",
-      "normalize JavaScript in response bodies" },
+      "use legacy normalizer to normalize JavaScript in response bodies" },
 
-    { "normalization_depth", Parameter::PT_INT, "-1:65535", "0",
-      "number of input JavaScript bytes to normalize" },
+    { "js_normalization_depth", Parameter::PT_INT, "-1:max53", "0",
+      "number of input JavaScript bytes to normalize with enhanced normalizer "
+      "(-1 max allowed value) (experimental)" },
 
     { "max_javascript_whitespaces", Parameter::PT_INT, "1:65535", "200",
       "maximum consecutive whitespaces allowed within the JavaScript obfuscated data" },
@@ -216,11 +217,20 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("normalize_javascript"))
     {
         params->js_norm_param.normalize_javascript = val.get_bool();
+
+        if ( !params->js_norm_param.is_javascript_normalization )
+            params->js_norm_param.is_javascript_normalization =
+                params->js_norm_param.normalize_javascript;
     }
-    else if (val.is("normalization_depth"))
+    else if (val.is("js_normalization_depth"))
     {
-        int v = val.get_int32();
-        params->js_norm_param.normalization_depth = (v == -1) ? 65535 : v;
+        int64_t v = val.get_int64();
+        params->js_norm_param.js_normalization_depth = (v == -1) ?
+          Parameter::get_int("max53") : v;
+
+        if ( !params->js_norm_param.is_javascript_normalization )
+            params->js_norm_param.is_javascript_normalization =
+                (params->js_norm_param.js_normalization_depth > 0);
     }
     else if (val.is("max_javascript_whitespaces"))
     {
@@ -398,12 +408,13 @@ bool HttpModule::end(const char*, int, SnortConfig*)
                 params->uri_param.iis_unicode_map_file.c_str(),
                 params->uri_param.iis_unicode_code_page);
     }
-    if (params->js_norm_param.normalize_javascript)
-    {
-        params->js_norm_param.js_norm =
-            new HttpJsNorm(params->js_norm_param.max_javascript_whitespaces, params->uri_param,
-            params->js_norm_param.normalization_depth);
-    }
+
+    if ( params->js_norm_param.normalize_javascript and
+      params->js_norm_param.js_normalization_depth )
+        ParseError("Cannot use normalize_javascript and js_normalization_depth together.");
+
+    if ( params->js_norm_param.is_javascript_normalization )
+        params->js_norm_param.js_norm = new HttpJsNorm(params->uri_param);
 
     prepare_http_header_list(params);
 

@@ -133,6 +133,7 @@ void HttpMsgBody::analyze()
         const int32_t detect_length =
             (js_norm_body.length() <= session_data->detect_depth_remaining[source_id]) ?
             js_norm_body.length() : session_data->detect_depth_remaining[source_id];
+
         detect_data.set(detect_length, js_norm_body.start());
 
         delete[] partial_detect_buffer;
@@ -278,14 +279,26 @@ void HttpMsgBody::fd_event_callback(void* context, int event)
 
 void HttpMsgBody::do_js_normalization(const Field& input, Field& output)
 {
-    if (!params->js_norm_param.normalize_javascript || source_id == SRC_CLIENT)
+    if ( !params->js_norm_param.is_javascript_normalization or source_id == SRC_CLIENT )
+        output.set(input);
+    else if ( params->js_norm_param.normalize_javascript )
+        params->js_norm_param.js_norm->legacy_normalize(input, output,
+            transaction->get_infractions(source_id), session_data->events[source_id],
+            params->js_norm_param.max_javascript_whitespaces);
+    else if ( params->js_norm_param.js_normalization_depth )
     {
         output.set(input);
-        return;
-    }
 
-    params->js_norm_param.js_norm->normalize(input, output,
-        transaction->get_infractions(source_id), session_data->events[source_id]);
+        params->js_norm_param.js_norm->enhanced_normalize(input, enhanced_js_norm_body,
+            params->js_norm_param.js_normalization_depth);
+
+        const int32_t norm_length =
+            (enhanced_js_norm_body.length() <= session_data->detect_depth_remaining[source_id]) ?
+            enhanced_js_norm_body.length() : session_data->detect_depth_remaining[source_id];
+
+        if ( norm_length > 0 )
+            set_script_data(enhanced_js_norm_body.start(), (unsigned int)norm_length);
+    }
 }
 
 void HttpMsgBody::do_file_processing(const Field& file_data)

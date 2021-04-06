@@ -77,6 +77,9 @@ PmType get_pm_type(CursorActionType cat)
     case CAT_SET_COOKIE:
         return PM_TYPE_COOKIE;
 
+    case CAT_SET_SCRIPT:
+        return PM_TYPE_SCRIPT;
+
     case CAT_SET_STAT_MSG:
         return PM_TYPE_STAT_MSG;
 
@@ -226,6 +229,7 @@ void validate_services(SnortConfig* sc, OptTreeNode* otn)
 {
     std::string svc;
     bool file = false;
+    bool script = false;
 
     for (OptFpList* ofl = otn->opt_func; ofl; ofl = ofl->next)
     {
@@ -243,6 +247,12 @@ void validate_services(SnortConfig* sc, OptTreeNode* otn)
         if ( !strcmp(s, "file_data") )
         {
             file = true;
+            continue;
+        }
+
+        if ( !strcmp(s, "script_data") )
+        {
+            script = true;
             continue;
         }
 
@@ -275,8 +285,13 @@ void validate_services(SnortConfig* sc, OptTreeNode* otn)
     {
         ParseWarning(WARN_RULES, "%u:%u:%u has no service with file_data",
             otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev);
-
         add_service_to_otn(sc, otn, "file");
+    }
+    if ( otn->sigInfo.services.empty() and script )
+    {
+        ParseWarning(WARN_RULES, "%u:%u:%u has no service with script_data",
+            otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev);
+        add_service_to_otn(sc, otn, "http");
     }
 }
 

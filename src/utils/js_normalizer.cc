@@ -30,7 +30,7 @@
 using namespace snort;
 
 int JSNormalizer::normalize(const char* srcbuf, uint16_t srclen, char* dstbuf, uint16_t dstlen,
-        const char** ptr, int* bytes_copied, int norm_depth)
+        const char** ptr, int* bytes_copied, int64_t norm_depth)
 {
     std::stringstream in, out;
 

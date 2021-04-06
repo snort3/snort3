@@ -929,24 +929,40 @@ static int fp_search(PortGroup* port_group, Packet* p, bool srvc)
         search_buffer(
             gadget, buf, buf.IBT_COOKIE, p, port_group, PM_TYPE_COOKIE, pc.cookie_searches);
     }
+
+    if ( MpseGroup* so = port_group->mpsegrp[PM_TYPE_SCRIPT] )
     {
-        // file searches file only
-        if ( MpseGroup* so = port_group->mpsegrp[PM_TYPE_FILE] )
+        // FIXIT-M script data should be obtained from
+        // inspector gadget as is done with search_buffer
+        DataPointer script_data = p->context->script_data;
+
+        if ( script_data.len )
         {
-            // FIXIT-M file data should be obtained from
-            // inspector gadget as is done with search_buffer
-            DataPointer file_data = p->context->file_data;
+            debug_logf(detection_trace, TRACE_FP_SEARCH, p,
+                "%" PRIu64 " fp search %s[%d]\n", p->context->packet_number,
+                pm_type_strings[PM_TYPE_SCRIPT], script_data.len);
 
-            if ( file_data.len )
-            {
-                debug_logf(detection_trace, TRACE_FP_SEARCH, p,
-                    "%" PRIu64 " fp search %s[%d]\n", p->context->packet_number,
-                    pm_type_strings[PM_TYPE_FILE], file_data.len);
-
-                batch_search(so, p, file_data.data, file_data.len, pc.file_searches);
-            }
+            batch_search(so, p, script_data.data, script_data.len, pc.script_searches);
         }
     }
+
+    // file searches file only
+    if ( MpseGroup* so = port_group->mpsegrp[PM_TYPE_FILE] )
+    {
+        // FIXIT-M file data should be obtained from
+        // inspector gadget as is done with search_buffer
+        DataPointer file_data = p->context->file_data;
+
+        if ( file_data.len )
+        {
+            debug_logf(detection_trace, TRACE_FP_SEARCH, p,
+                "%" PRIu64 " fp search %s[%d]\n", p->context->packet_number,
+                pm_type_strings[PM_TYPE_FILE], file_data.len);
+
+            batch_search(so, p, file_data.data, file_data.len, pc.file_searches);
+        }
+    }
+
     return 0;
 }
 

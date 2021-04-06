@@ -73,6 +73,7 @@ private:
     Field cumulative_data;
     Field js_norm_body;
     Field detect_data;
+    Field enhanced_js_norm_body;
     Field classic_client_body;   // URI normalization applied
 };
 

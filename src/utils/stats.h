@@ -47,6 +47,7 @@ struct PacketCount
     PegCount raw_key_searches;
     PegCount raw_header_searches;
     PegCount method_searches;
+    PegCount script_searches;
     PegCount stat_code_searches;
     PegCount stat_msg_searches;
     PegCount cookie_searches;
