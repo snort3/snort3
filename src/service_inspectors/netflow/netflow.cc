@@ -141,7 +141,7 @@ static bool decode_netflow_v5(const unsigned char* data, uint16_t size,
     
     if ( p_rules == nullptr )
         return false;
-    const int zone = p->pkth->ingress_group;
+    const int zone = p->pkth->ingress_index;
 
     data += sizeof(Netflow5Hdr);
     precord = (const Netflow5RecordHdr *)data;
