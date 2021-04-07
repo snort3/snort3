@@ -145,28 +145,32 @@ an uncompressed file.
 
 ===== normalize_javascript
 
-normalize_javascript = true will enable normalization of JavaScript within
+normalize_javascript = true will enable legacy normalizer of JavaScript within
 the HTTP response body. http_inspect looks for JavaScript by searching for
 the <script> tag without a type. Obfuscated data within the JavaScript
 functions such as unescape, String.fromCharCode, decodeURI, and
 decodeURIComponent are normalized. The different encodings handled within
 the unescape, decodeURI, or decodeURIComponent are %XX, %uXXXX, XX and
 uXXXXi. http_inspect also replaces consecutive whitespaces with a single
-space and normalizes the plus by concatenating the strings.
-Such normalizations refer to basic JavaScript normalization.
+space and normalizes the plus by concatenating the strings. Such normalizations
+refer to basic JavaScript normalization. Cannot be used together with
+js_normalization_depth (doing so will cause Snort to fail to load). This is
+planned to be deprecated at some point.
 
-===== normalization_depth
+===== js_normalization_depth
 
-normalization_depth = N {-1 : 65535} will set a number of input JavaScript
-bytes to normalize and enable the whitespace normalizer instead of the
-basic one. Meanwhile, normalize_javascript = true must be configured as
-well. When the depth is reached, normalization will be stopped. It's
-implemented per-script. normalization_depth = -1 will configure max depth
-value. By default, the value is set to 0. Configure this option to enable
-more precise whitespace normalization of JavaScript, that removes all
-redundant whitespaces and line terminators from the JavaScript syntax point
-of view (between identifier and punctuator, between identifier and operator,
-etc.) according to ECMAScript 5.1 standard.
+js_normalization_depth = N {-1 : max53} will set a number of input
+JavaScript bytes to normalize and enable the enhanced normalizer. The enhanced
+and legacy normalizers have mutual exclusion behaviour, so you cannot enable
+both at the same time (doing so will cause Snort to fail to load). When the
+depth is reached, normalization will be stopped. It's implemented per-script.
+js_normalization_depth = -1, will set the max allowed depth value. By default,
+the value is set to 0 which means that normalizer is disabled. The enhanced
+normalizer provides more precise whitespace normalization of JavaScript, that
+removes all redundant whitespaces and line terminators from the JavaScript
+syntax point of view (between identifier and punctuator, between identifier and
+operator, etc.) according to ECMAScript 5.1 standard. This is currently
+experimental and still under development.
 
 ===== xff_headers
 
@@ -522,9 +526,19 @@ http_stat_msg.
 
 ===== file_data
 
-file_data contains the normalized message body. This is the normalization
-described above under gzip, normalize_utf, decompress_pdf, decompress_swf,
-and normalize_javascript.
+The file_data contains the normalized message body. This is the normalization
+described above under gzip, normalize_utf, decompress_pdf, decompress_swf, and
+normalize_javascript.
+
+===== script_data
+
+The script_data ips option is used as sticky buffer and contains only the
+normalized JavaScript HTTP response body without 'script' tags. In scope of
+rules the script_data option takes place with enabled new enhanced normalizer,
+so it is used in combination with http_inspect = { js_normalization_depth = N }.
+The js_normalization_depth option is described above. In rules the script_data
+can be used with file_data option where file_data would contain the whole HTTP
+response body for content matching.
 
 ==== Timing issues and combining rule options
 
