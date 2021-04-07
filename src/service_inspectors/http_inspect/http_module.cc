@@ -79,10 +79,6 @@ const Parameter HttpModule::http_params[] =
     { "decompress_zip", Parameter::PT_BOOL, nullptr, "false",
       "decompress zip files in response bodies" },
 
-    // FIXIT-D remove
-    { "detained_inspection", Parameter::PT_BOOL, nullptr, "false",
-      "obsolete, do not configure" },
-
     { "script_detection", Parameter::PT_BOOL, nullptr, "false",
       "inspect JavaScript immediately upon script end" },
 
@@ -205,10 +201,6 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("decompress_zip"))
     {
         params->decompress_zip = val.get_bool();
-    }
-    else if (val.is("detained_inspection"))
-    {
-        // obsolete parameter FIXIT-D
     }
     else if (val.is("script_detection"))
     {
