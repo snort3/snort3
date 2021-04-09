@@ -65,6 +65,8 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     }
     else if ( asd->get_odp_ctxt_version() != pkt_thread_odp_ctxt->get_version() )
         return; // Skip detection for sessions using old odp context after odp reload
+    if (!asd->get_session_flags(APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED))
+        return;
 
     const uint8_t* header_start;
     int32_t header_length;

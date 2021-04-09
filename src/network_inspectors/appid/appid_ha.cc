@@ -34,6 +34,8 @@
 #define APPID_HA_FLAGS_TP_DONE ( 1 << 0 )
 #define APPID_HA_FLAGS_SVC_DONE ( 1 << 1 )
 #define APPID_HA_FLAGS_HTTP ( 1 << 2 )
+#define APPID_HA_FLAGS_DISC_APP ( 1 << 3 )
+#define APPID_HA_FLAGS_SPL_MONI ( 1 << 4 )
 
 using namespace snort;
 
@@ -125,6 +127,10 @@ bool AppIdHAAppsClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
 
     if (appHA->flags & APPID_HA_FLAGS_HTTP)
         asd->set_session_flags(APPID_SESSION_HTTP_SESSION);
+    if (appHA->flags & APPID_HA_FLAGS_DISC_APP)
+        asd->set_session_flags(APPID_SESSION_DISCOVER_APP);
+    if (appHA->flags & APPID_HA_FLAGS_SPL_MONI)
+        asd->set_session_flags(APPID_SESSION_SPECIAL_MONITORED);
     asd->set_service_id(appHA->appId[APPID_HA_APP_SERVICE], asd->get_odp_ctxt());
     AppIdHttpSession* hsession = nullptr;
     if (appHA->appId[APPID_HA_APP_SERVICE] == APP_ID_HTTP or
@@ -171,6 +177,10 @@ bool AppIdHAAppsClient::produce(Flow& flow, HAMessage& msg)
         appHA->flags |= APPID_HA_FLAGS_SVC_DONE;
     if (asd->get_session_flags(APPID_SESSION_HTTP_SESSION))
         appHA->flags |= APPID_HA_FLAGS_HTTP;
+    if (asd->get_session_flags(APPID_SESSION_DISCOVER_APP))
+        appHA->flags |= APPID_HA_FLAGS_DISC_APP;
+    if (asd->get_session_flags(APPID_SESSION_SPECIAL_MONITORED))
+        appHA->flags |= APPID_HA_FLAGS_SPL_MONI;
     appHA->appId[APPID_HA_APP_SERVICE] = asd->get_service_id();
     const AppIdHttpSession* hsession = asd->get_http_session(0);
     if (hsession)

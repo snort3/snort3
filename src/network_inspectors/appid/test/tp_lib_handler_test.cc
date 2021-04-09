@@ -47,6 +47,7 @@ snort::SearchTool::SearchTool(char const*, bool) { }
 snort::SearchTool::~SearchTool() = default;
 
 AppIdDiscovery::~AppIdDiscovery() = default;
+DiscoveryFilter::~DiscoveryFilter(){}
 void ClientDiscovery::initialize(AppIdInspector&) { }
 void ClientDiscovery::reload() { }
 void AppIdDiscovery::register_detector(const string&, AppIdDetector*, IpProtocol) { }

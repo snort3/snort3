@@ -907,7 +907,7 @@ void FtpServiceDetector::create_expected_session(AppIdSession& asd, const Packet
             fp->set_service_id(APP_ID_FTP_DATA, asd.get_odp_ctxt());
         }
 
-        asd.initialize_future_session(*fp, APPID_SESSION_IGNORE_ID_FLAGS | encrypted_flags, dir);
+        asd.initialize_future_session(*fp, APPID_SESSION_IGNORE_ID_FLAGS | encrypted_flags);
     }
 }
 

@@ -43,6 +43,7 @@
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
 THREAD_LOCAL bool ThirdPartyAppIdContext::tp_reload_in_progress = false;
+bool DiscoveryFilter::is_app_monitored(const snort::Packet*, uint8_t*){return true;}
 void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = true; }
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 
@@ -255,6 +256,7 @@ TEST_GROUP(appid_http_event)
         pkt_thread_odp_ctxt = &mock_session->get_odp_ctxt();
         mock_session->create_http_session();
         flow->set_flow_data(mock_session);
+        mock_session->flags = APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED;
         appidDebug = new AppIdDebug();
         appidDebug->activate(nullptr, nullptr, false);
     }

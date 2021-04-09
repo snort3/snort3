@@ -86,7 +86,7 @@ char* snort_strdup(const char* str)
     return p;
 }
 }
-
+DiscoveryFilter::~DiscoveryFilter(){}
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 

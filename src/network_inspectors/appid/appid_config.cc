@@ -130,6 +130,8 @@ bool AppIdContext::init_appid(SnortConfig* sc, AppIdInspector& inspector)
     }
 
     map_app_names_to_snort_ids(sc, config);
+    if (config.enable_rna_filter)
+        discovery_filter = new DiscoveryFilter(config.rna_conf_path);
     return true;
 }
 

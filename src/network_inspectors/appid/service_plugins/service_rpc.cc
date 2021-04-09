@@ -416,11 +416,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
                             pf->add_flow_data_id((uint16_t)tmp, this);
                             pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
                             pf->set_session_flags(asd.get_session_flags(
-                                APPID_SESSION_RESPONDER_MONITORED |
-                                APPID_SESSION_INITIATOR_MONITORED |
                                 APPID_SESSION_SPECIAL_MONITORED |
-                                APPID_SESSION_RESPONDER_CHECKED |
-                                APPID_SESSION_INITIATOR_CHECKED |
                                 APPID_SESSION_DISCOVER_APP |
                                 APPID_SESSION_DISCOVER_USER));
                         }

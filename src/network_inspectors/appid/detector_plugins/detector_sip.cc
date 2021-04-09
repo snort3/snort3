@@ -190,10 +190,9 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
 
         // FIXIT-M : snort 2.9.x updated the flag to APPID_SESSION_EXPECTED_EVALUATE.
         // Check if it is needed here as well.
-        // asd.initialize_future_session(*fp, APPID_SESSION_EXPECTED_EVALUATE, APP_ID_APPID_SESSION_DIRECTION_MAX);
+        // asd.initialize_future_session(*fp, APPID_SESSION_EXPECTED_EVALUATE);
 
-        asd.initialize_future_session(*fp, APPID_SESSION_IGNORE_ID_FLAGS,
-            APP_ID_APPID_SESSION_DIRECTION_MAX);
+        asd.initialize_future_session(*fp, APPID_SESSION_IGNORE_ID_FLAGS);
     }
 
     // create an RTCP flow as well
@@ -209,10 +208,9 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
         fp2->set_service_id(APP_ID_RTCP, asd.get_odp_ctxt());
 
         // FIXIT-M : same comment as above
-        // asd.initialize_future_session(*fp2, APPID_SESSION_EXPECTED_EVALUATE, APP_ID_APPID_SESSION_DIRECTION_MAX);
+        // asd.initialize_future_session(*fp2, APPID_SESSION_EXPECTED_EVALUATE);
 
-        asd.initialize_future_session(*fp2, APPID_SESSION_IGNORE_ID_FLAGS,
-            APP_ID_APPID_SESSION_DIRECTION_MAX);
+        asd.initialize_future_session(*fp2, APPID_SESSION_IGNORE_ID_FLAGS);
     }
 }
 
@@ -326,6 +324,7 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
     SipEvent& sip_event = (SipEvent&)event;
     const Packet* p = sip_event.get_packet();
     assert(p);
+
     if ( !asd )
     {
         IpProtocol protocol = p->is_tcp() ? IpProtocol::TCP : IpProtocol::UDP;
@@ -333,6 +332,8 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
         asd = AppIdSession::allocate_session(p, protocol, direction, inspector,
             inspector.get_ctxt().get_odp_ctxt());
     }
+    if (!asd->get_session_flags(APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED))
+        return;
 
     AppidChangeBits change_bits;
     client_handler(sip_event, *asd, change_bits);

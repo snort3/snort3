@@ -57,6 +57,7 @@ AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
 }
 
+DiscoveryFilter::~DiscoveryFilter(){}
 // Stubs for AppInfoManager
 AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId)
 {

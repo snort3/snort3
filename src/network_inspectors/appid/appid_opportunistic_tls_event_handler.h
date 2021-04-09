@@ -34,8 +34,9 @@ public:
     {
         assert(flow);
         AppIdSession* asd = snort::appid_api.get_appid_session(*flow);
-        if (!asd)
-            return;
+        if (!asd or
+            !asd->get_session_flags(APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED))
+                return;
 
         // Skip sessions using old odp context after reload detectors
         if (!pkt_thread_odp_ctxt or

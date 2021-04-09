@@ -89,6 +89,10 @@ static const Parameter s_params[] =
       "print third party configuration on startup" },
     { "log_all_sessions", Parameter::PT_BOOL, nullptr, "false",
       "enable logging of all appid sessions" },
+    { "enable_rna_filter", Parameter::PT_BOOL, nullptr, "false",
+      "monitor only the networks specified in rna configuration" },
+    { "rna_conf_path", Parameter::PT_STRING, nullptr, nullptr,
+      "path to rna configuration file" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -486,6 +490,10 @@ bool AppIdModule::set(const char*, Value& v, SnortConfig*)
         config->list_odp_detectors = v.get_bool();
     else if ( v.is("log_all_sessions") )
         config->log_all_sessions = v.get_bool();
+    else if ( v.is("enable_rna_filter") )
+        config->enable_rna_filter = v.get_bool();
+    else if ( v.is("rna_conf_path") )
+        config->rna_conf_path = std::string(v.get_string());
 
     return true;
 }

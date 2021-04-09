@@ -176,8 +176,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
                 }
                 pf->scan_flags |= SCAN_HOST_PORT_FLAG;
                 args.asd.initialize_future_session(*pf, APPID_SESSION_CONTINUE | APPID_SESSION_REXEC_STDERR | APPID_SESSION_NO_TPI |
-                    APPID_SESSION_NOT_A_SERVICE | APPID_SESSION_PORT_SERVICE_DONE,
-                    APP_ID_FROM_RESPONDER);
+                    APPID_SESSION_NOT_A_SERVICE | APPID_SESSION_PORT_SERVICE_DONE);
 
                 pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
                 rd->child = tmp_rd;

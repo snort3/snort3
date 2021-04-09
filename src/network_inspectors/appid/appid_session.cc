@@ -72,6 +72,37 @@ const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
     return nullptr;
 }
 
+static inline bool is_special_session_monitored(const Packet* p)
+{
+    if (p->is_ip4())
+    {
+        if (p->is_udp() && ((p->ptrs.sp == 68 && p->ptrs.dp == 67)
+            || (p->ptrs.sp == 67 &&  p->ptrs.dp == 68)))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+static void is_session_monitored(uint64_t& flow_flags, const Packet* p,
+    AppIdInspector& inspector)
+{
+
+    DiscoveryFilter* filter = inspector.get_ctxt().get_discovery_filter();
+    if (filter and filter->is_app_monitored(p))
+    {
+        flow_flags |= APPID_SESSION_DISCOVER_APP;
+        flow_flags |= APPID_SESSION_DISCOVER_USER;
+        if (is_special_session_monitored(p))
+            flow_flags |= APPID_SESSION_SPECIAL_MONITORED;
+    }
+    else if (!filter)
+        flow_flags |= (APPID_SESSION_SPECIAL_MONITORED | APPID_SESSION_DISCOVER_USER |
+            APPID_SESSION_DISCOVER_APP);
+
+}
+
 AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
     AppidSessionDirection direction, AppIdInspector& inspector, OdpContext& odp_context)
 {
@@ -85,6 +116,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
 
     AppIdSession* asd = new AppIdSession(proto, ip, port, inspector, odp_context,
         p->pkth->address_space_id);
+    is_session_monitored(asd->flags, p, inspector);
     asd->flow = p->flow;
     asd->stats.first_packet_second = p->pkth->ts.tv_sec;
     asd->snort_protocol_id = asd->config.snort_proto_ids[PROTO_INDEX_UNSYNCHRONIZED];
@@ -223,32 +255,8 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     return asd;
 }
 
-void AppIdSession::initialize_future_session(AppIdSession& expected, uint64_t flags,
-    AppidSessionDirection dir)
+void AppIdSession::initialize_future_session(AppIdSession& expected, uint64_t flags)
 {
-    if (dir == APP_ID_FROM_INITIATOR)
-    {
-        expected.set_session_flags(flags |
-            get_session_flags(
-            APPID_SESSION_INITIATOR_CHECKED |
-            APPID_SESSION_INITIATOR_MONITORED |
-            APPID_SESSION_RESPONDER_CHECKED |
-            APPID_SESSION_RESPONDER_MONITORED));
-    }
-    else if (dir == APP_ID_FROM_RESPONDER)
-    {
-        if (get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
-            flags |= APPID_SESSION_RESPONDER_CHECKED;
-
-        if (get_session_flags(APPID_SESSION_INITIATOR_MONITORED))
-            flags |= APPID_SESSION_RESPONDER_MONITORED;
-
-        if (get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
-            flags |= APPID_SESSION_INITIATOR_CHECKED;
-
-        if (get_session_flags(APPID_SESSION_RESPONDER_MONITORED))
-            flags |= APPID_SESSION_INITIATOR_MONITORED;
-    }
 
     expected.set_session_flags(flags |
         get_session_flags(

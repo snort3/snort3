@@ -58,7 +58,7 @@ void LogLabel(const char*, FILE*) {}
 SearchTool::SearchTool(char const*, bool) { }
 SearchTool::~SearchTool() = default;
 }
-
+DiscoveryFilter::~DiscoveryFilter(){}
 void ApplicationDescriptor::set_id(AppId app_id){ my_id = app_id;}
 void ServiceAppDescriptor::set_id(AppId app_id, OdpContext&){ set_id(app_id); }
 void ServiceAppDescriptor::update_stats(AppId, bool){}

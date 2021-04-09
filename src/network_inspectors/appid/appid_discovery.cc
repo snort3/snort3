@@ -127,43 +127,6 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
         change_bits);
 }
 
-static inline unsigned get_ipfuncs_flags(const Packet* p, bool dst)
-{
-    const SfIp* sf_ip;
-
-    if (!dst)
-    {
-        sf_ip = p->ptrs.ip_api.get_src();
-    }
-    else
-    {
-        int32_t intf = (p->pkth->egress_index == DAQ_PKTHDR_UNKNOWN) ?
-            p->pkth->ingress_index : p->pkth->egress_index;
-        if (intf == DAQ_PKTHDR_FLOOD)
-            return 0;
-        sf_ip = p->ptrs.ip_api.get_dst();
-    }
-
-    if (sf_ip->is_ip4() && sf_ip->get_ip4_value() == 0xFFFFFFFF)
-        return IPFUNCS_CHECKED;
-
-    // FIXIT-M Defaulting to checking everything everywhere until RNA config is reimplemented
-    return IPFUNCS_HOSTS_IP | IPFUNCS_USER_IP | IPFUNCS_APPLICATION | IPFUNCS_CHECKED;
-}
-
-static inline bool is_special_session_monitored(const Packet* p)
-{
-    if (p->is_ip4())
-    {
-        if (p->is_udp() && ((p->ptrs.sp == 68 && p->ptrs.dp == 67)
-            || (p->ptrs.sp == 67 &&  p->ptrs.dp == 68)))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
 static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& protocol,
     IpProtocol& outer_protocol, AppidSessionDirection& direction)
 {
@@ -220,139 +183,6 @@ static bool is_packet_ignored(Packet* p)
     return false;
 }
 
-static uint64_t is_session_monitored(const AppIdSession& asd, const Packet* p,
-    AppidSessionDirection dir)
-{
-    uint64_t flags;
-    uint64_t flow_flags = APPID_SESSION_DISCOVER_APP;
-
-    flow_flags |= asd.flags;
-
-    // FIXIT-M - Re-check a flow after snort is reloaded. RNA policy might have changed
-    if (asd.get_session_flags(APPID_SESSION_BIDIRECTIONAL_CHECKED) ==
-        APPID_SESSION_BIDIRECTIONAL_CHECKED)
-        return flow_flags;
-
-    if (dir == APP_ID_FROM_INITIATOR)
-    {
-        if (!asd.get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
-        {
-            flags = get_ipfuncs_flags(p, false);
-            flow_flags |= APPID_SESSION_INITIATOR_CHECKED;
-            if (flags & IPFUNCS_HOSTS_IP)
-                flow_flags |= APPID_SESSION_INITIATOR_MONITORED;
-            if (flags & IPFUNCS_USER_IP)
-                flow_flags |= APPID_SESSION_DISCOVER_USER;
-            if (flags & IPFUNCS_APPLICATION)
-                flow_flags |= APPID_SESSION_DISCOVER_APP;
-            if (is_special_session_monitored(p))
-                flow_flags |= APPID_SESSION_SPECIAL_MONITORED;
-        }
-
-        if (!(flow_flags & APPID_SESSION_DISCOVER_APP)
-            && !asd.get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
-        {
-            flags = get_ipfuncs_flags(p, true);
-            if (flags & IPFUNCS_CHECKED)
-                flow_flags |= APPID_SESSION_RESPONDER_CHECKED;
-            if (flags & IPFUNCS_HOSTS_IP)
-                flow_flags |= APPID_SESSION_RESPONDER_MONITORED;
-            if (flags & IPFUNCS_APPLICATION)
-                flow_flags |= APPID_SESSION_DISCOVER_APP;
-            if (is_special_session_monitored(p))
-                flow_flags |= APPID_SESSION_SPECIAL_MONITORED;
-        }
-    }
-    else
-    {
-        if (!asd.get_session_flags(APPID_SESSION_RESPONDER_CHECKED))
-        {
-            flags = get_ipfuncs_flags(p, false);
-            flow_flags |= APPID_SESSION_RESPONDER_CHECKED;
-            if (flags & IPFUNCS_HOSTS_IP)
-                flow_flags |= APPID_SESSION_RESPONDER_MONITORED;
-            if (flags & IPFUNCS_APPLICATION)
-                flow_flags |= APPID_SESSION_DISCOVER_APP;
-            if (is_special_session_monitored(p))
-                flow_flags |= APPID_SESSION_SPECIAL_MONITORED;
-        }
-
-        if (!(flow_flags & APPID_SESSION_DISCOVER_APP)
-            && !asd.get_session_flags(APPID_SESSION_INITIATOR_CHECKED))
-        {
-            flags = get_ipfuncs_flags(p, true);
-            if (flags & IPFUNCS_CHECKED)
-                flow_flags |= APPID_SESSION_INITIATOR_CHECKED;
-            if (flags & IPFUNCS_HOSTS_IP)
-                flow_flags |= APPID_SESSION_INITIATOR_MONITORED;
-            if (flags & IPFUNCS_USER_IP)
-                flow_flags |= APPID_SESSION_DISCOVER_USER;
-            if (flags & IPFUNCS_APPLICATION)
-                flow_flags |= APPID_SESSION_DISCOVER_APP;
-            if (is_special_session_monitored(p))
-                flow_flags |= APPID_SESSION_SPECIAL_MONITORED;
-        }
-    }
-
-    return flow_flags;
-}
-
-static uint64_t is_session_monitored(const Packet* p, AppidSessionDirection dir)
-{
-    uint64_t flags;
-    uint64_t flow_flags = APPID_SESSION_DISCOVER_APP;
-
-    if (dir == APP_ID_FROM_INITIATOR)
-    {
-        flags = get_ipfuncs_flags(p, false);
-        flow_flags |= APPID_SESSION_INITIATOR_CHECKED;
-        if (flags & IPFUNCS_HOSTS_IP)
-            flow_flags |= APPID_SESSION_INITIATOR_MONITORED;
-        if (flags & IPFUNCS_USER_IP)
-            flow_flags |= APPID_SESSION_DISCOVER_USER;
-        if (flags & IPFUNCS_APPLICATION)
-            flow_flags |= APPID_SESSION_DISCOVER_APP;
-        if (!(flow_flags & APPID_SESSION_DISCOVER_APP))
-        {
-            flags = get_ipfuncs_flags(p, true);
-            if (flags & IPFUNCS_CHECKED)
-                flow_flags |= APPID_SESSION_RESPONDER_CHECKED;
-            if (flags & IPFUNCS_HOSTS_IP)
-                flow_flags |= APPID_SESSION_RESPONDER_MONITORED;
-            if (flags & IPFUNCS_APPLICATION)
-                flow_flags |= APPID_SESSION_DISCOVER_APP;
-        }
-        if (is_special_session_monitored(p))
-            flow_flags |= APPID_SESSION_SPECIAL_MONITORED;
-    }
-    else
-    {
-        flags = get_ipfuncs_flags(p, false);
-        flow_flags |= APPID_SESSION_RESPONDER_CHECKED;
-        if (flags & IPFUNCS_HOSTS_IP)
-            flow_flags |= APPID_SESSION_RESPONDER_MONITORED;
-        if (flags & IPFUNCS_APPLICATION)
-            flow_flags |= APPID_SESSION_DISCOVER_APP;
-        if (!(flow_flags & APPID_SESSION_DISCOVER_APP))
-        {
-            flags = get_ipfuncs_flags(p, true);
-            if (flags & IPFUNCS_CHECKED)
-                flow_flags |= APPID_SESSION_INITIATOR_CHECKED;
-            if (flags & IPFUNCS_HOSTS_IP)
-                flow_flags |= APPID_SESSION_INITIATOR_MONITORED;
-            if (flags & IPFUNCS_USER_IP)
-                flow_flags |= APPID_SESSION_DISCOVER_USER;
-            if (flags & IPFUNCS_APPLICATION)
-                flow_flags |= APPID_SESSION_DISCOVER_APP;
-        }
-
-        if (is_special_session_monitored(p))
-            flow_flags |= APPID_SESSION_SPECIAL_MONITORED;
-    }
-
-    return flow_flags;
-}
-
 // Return false if the packet or the session doesn't need to be inspected
 bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspector& inspector,
     IpProtocol& protocol, IpProtocol& outer_protocol, AppidSessionDirection& direction,
@@ -380,21 +210,12 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
     if (is_packet_ignored(p))
         return false;
 
-    uint64_t flow_flags;
-    if (asd)
-        flow_flags = is_session_monitored(*asd, p, direction);
-    else
-        flow_flags = is_session_monitored(p, direction);
-
-    if ( !(flow_flags & (APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED)) )
-        return false;
-
     if (!asd)
     {
         asd = AppIdSession::allocate_session(p, protocol, direction, inspector, odp_ctxt);
         if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
         {
-            flow_flags |= APPID_SESSION_MID;
+            asd->flags |= APPID_SESSION_MID;
             if (appidDebug->is_active())
                 LogMessage("AppIdDbg %s New AppId mid-stream session\n",
                     appidDebug->get_debug_session());
@@ -402,6 +223,8 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
         else if (appidDebug->is_active())
             LogMessage("AppIdDbg %s New AppId session\n", appidDebug->get_debug_session());
     }
+    if (!asd->get_session_flags(APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED))
+        return false;
 
     // FIXIT-L - from this point on we always have a valid ptr to a Packet
     //           refactor to pass this as ref and delete any checks for null
@@ -427,7 +250,6 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
         }
     }
 
-    asd->flags = flow_flags;
     if (!asd->get_session_flags(APPID_SESSION_PAYLOAD_SEEN) and p->dsize)
         asd->set_session_flags(APPID_SESSION_PAYLOAD_SEEN);
 

@@ -25,6 +25,7 @@
 #include <array>
 #include <string>
 
+#include "helpers/discovery_filter.h"
 #include "target_based/snort_protocols.h"
 
 #include "app_info_table.h"
@@ -90,6 +91,8 @@ public:
     size_t memcap = 0;
     bool list_odp_detectors = false;
     bool log_all_sessions = false;
+    bool enable_rna_filter = false;
+    std::string rna_conf_path = "";
     SnortProtocolId snort_proto_ids[PROTO_INDEX_MAX];
     void show() const;
 };
@@ -246,12 +249,20 @@ public:
     AppIdContext(AppIdConfig& config) : config(config)
     { }
 
-    ~AppIdContext() = default;
+    ~AppIdContext()
+    {
+        if (discovery_filter)
+            delete discovery_filter;
+    }
 
     OdpContext& get_odp_ctxt() const
     {
         assert(odp_ctxt);
         return *odp_ctxt;
+    }
+    DiscoveryFilter* get_discovery_filter() const
+    {
+        return discovery_filter;
     }
 
     ThirdPartyAppIdContext* get_tp_appid_ctxt() const
@@ -269,6 +280,7 @@ public:
     AppIdConfig& config;
 
 private:
+    DiscoveryFilter* discovery_filter = nullptr;
     static OdpContext* odp_ctxt;
     static ThirdPartyAppIdContext* tp_appid_ctxt;
 };

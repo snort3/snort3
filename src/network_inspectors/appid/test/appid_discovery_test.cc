@@ -23,6 +23,7 @@
 
 #define APPID_MOCK_INSPECTOR_H // avoiding mocked inspector
 
+#include "helpers/discovery_filter.h"
 #include "host_tracker/host_cache.h"
 #include "network_inspectors/appid/appid_discovery.cc"
 #include "network_inspectors/appid/appid_peg_counts.h"
@@ -109,7 +110,7 @@ AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
 } // namespace snort
 void AppIdModule::reset_stats() {}
-
+DiscoveryFilter::~DiscoveryFilter() {}
 // Stubs for publish
 void DataBus::publish(const char*, DataEvent& event, Flow*)
 {
@@ -184,6 +185,7 @@ AppIdContext& AppIdInspector::get_ctxt() const
     assert(ctxt);
     return *ctxt;
 }
+bool DiscoveryFilter::is_app_monitored(const snort::Packet*, uint8_t*){return true;}
 
 // Stubs for AppInfoManager
 AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId)
@@ -365,6 +367,8 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
     AppIdModule app_module;
     AppIdInspector ins(app_module);
     AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt());
+    asd->flags |= APPID_SESSION_SPECIAL_MONITORED | APPID_SESSION_DISCOVER_USER |
+        APPID_SESSION_DISCOVER_APP;
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
     p.flow = flow;
@@ -398,6 +402,8 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
     AppIdModule app_module;
     AppIdInspector ins(app_module);
     AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt());
+    asd->flags |= APPID_SESSION_SPECIAL_MONITORED | APPID_SESSION_DISCOVER_USER |
+        APPID_SESSION_DISCOVER_APP;
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
     p.flow = flow;
@@ -456,6 +462,8 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     AppIdModule app_module;
     AppIdInspector ins(app_module);
     AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt());
+    asd->flags |= APPID_SESSION_SPECIAL_MONITORED | APPID_SESSION_DISCOVER_USER |
+        APPID_SESSION_DISCOVER_APP;
     Flow* flow = new Flow;
     flow->set_flow_data(asd);
     p.flow = flow;

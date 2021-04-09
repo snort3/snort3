@@ -169,6 +169,7 @@ AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector&
     OdpContext&, uint16_t) : snort::FlowData(inspector_id, (snort::Inspector*)&inspector),
     config(stub_config), api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt) { }
 AppIdSession::~AppIdSession() = default;
+DiscoveryFilter::~DiscoveryFilter(){}
 void AppIdSession::free_flow_data()
 {
     snort_free(smb_data);

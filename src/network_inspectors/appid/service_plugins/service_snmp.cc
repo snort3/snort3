@@ -482,7 +482,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 tmp_sd->state = SNMP_STATE_ERROR;
                 return APPID_ENULL;
             }
-            args.asd.initialize_future_session(*pf, APPID_SESSION_EXPECTED_EVALUATE, APP_ID_APPID_SESSION_DIRECTION_MAX);
+            args.asd.initialize_future_session(*pf, APPID_SESSION_EXPECTED_EVALUATE);
             pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
             pf->scan_flags |= SCAN_HOST_PORT_FLAG;
             pf->set_initiator_ip(*sip);

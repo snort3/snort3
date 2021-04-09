@@ -1142,14 +1142,14 @@ static int detector_add_host_port_application(lua_State* L)
     ud->validate_lua_state(false);
     if (!init(L)) return 0;
 
-    SfIp ip_addr;
+    SfIp ip_address;
     int index = 1;
 
     uint8_t type = lua_tointeger(L, ++index);
     AppId app_id  = (AppId)lua_tointeger(L, ++index);
     size_t ipaddr_size = 0;
     const char* ip_str= lua_tolstring(L, ++index, &ipaddr_size);
-    if (!ip_str || !ipaddr_size || !convert_string_to_address(ip_str, &ip_addr))
+    if (!ip_str || !ipaddr_size || !convert_string_to_address(ip_str, &ip_address))
     {
         ErrorMessage("%s: Invalid IP address: %s\n",__func__, ip_str);
         return 0;
@@ -1160,7 +1160,7 @@ static int detector_add_host_port_application(lua_State* L)
     if (toipprotocol(L, ++index, proto))
         return 0;
 
-    if (!ud->get_odp_ctxt().host_port_cache_add(&ip_addr, (uint16_t)port, proto, type, app_id))
+    if (!ud->get_odp_ctxt().host_port_cache_add(&ip_address, (uint16_t)port, proto, type, app_id))
         ErrorMessage("%s:Failed to backend call\n",__func__);
 
     return 0;
@@ -1175,7 +1175,7 @@ static int detector_add_host_port_dynamic(lua_State* L)
     if (!ud->get_odp_ctxt().is_host_port_app_cache_runtime)
         return 0;
 
-    SfIp ip_addr;
+    SfIp ip_address;
     int index = 1;
 
     uint8_t type = lua_tointeger(L, ++index);
@@ -1186,7 +1186,7 @@ static int detector_add_host_port_dynamic(lua_State* L)
     AppId appid  = (AppId)lua_tointeger(L, ++index);
     size_t ipaddr_size = 0;
     const char* ip_str = lua_tolstring(L, ++index, &ipaddr_size);
-    if (!ip_str || !ipaddr_size || !convert_string_to_address(ip_str, &ip_addr))
+    if (!ip_str || !ipaddr_size || !convert_string_to_address(ip_str, &ip_address))
         return 0;
 
     unsigned port = lua_tointeger(L, ++index);
@@ -1196,7 +1196,7 @@ static int detector_add_host_port_dynamic(lua_State* L)
 
     bool added = false;
     std::lock_guard<std::mutex> lck(AppIdSession::inferred_svcs_lock);
-    host_cache[ip_addr]->add_service(port, proto, appid, true, &added);
+    host_cache[ip_address]->add_service(port, proto, appid, true, &added);
 
     if (added)
     {
