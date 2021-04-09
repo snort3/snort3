@@ -23,7 +23,6 @@
 
 #include "http_module.h"
 
-#include "helpers/literal_search.h"
 #include "log/messages.h"
 
 #include "http_enum.h"
@@ -34,26 +33,15 @@
 using namespace snort;
 using namespace HttpEnums;
 
-LiteralSearch::Handle* s_handle = nullptr;
-LiteralSearch* s_script = nullptr;
-
-HttpModule::HttpModule() : Module(HTTP_NAME, HTTP_HELP, http_params)
+HttpModule::HttpModule() : Module(HTTP_NAME, HTTP_HELP, http_params),
+    script_detection_handle(LiteralSearch::setup())
 {
-    s_handle = LiteralSearch::setup();
-    s_script = LiteralSearch::instantiate(s_handle, (const uint8_t*)"</SCRIPT>", 9, true, true);
 }
 
 HttpModule::~HttpModule()
 {
     delete params;
-    delete s_script;
-    LiteralSearch::cleanup(s_handle);
-}
-
-void HttpModule::get_script_finder(LiteralSearch*& finder, LiteralSearch::Handle*& handle)
-{
-    finder = s_script;
-    handle = s_handle;
+    LiteralSearch::cleanup(script_detection_handle);
 }
 
 const Parameter HttpModule::http_params[] =
@@ -408,8 +396,9 @@ bool HttpModule::end(const char*, int, SnortConfig*)
     if ( params->js_norm_param.is_javascript_normalization )
         params->js_norm_param.js_norm = new HttpJsNorm(params->uri_param);
 
-    prepare_http_header_list(params);
+    params->script_detection_handle = script_detection_handle;
 
+    prepare_http_header_list(params);
     return true;
 }
 

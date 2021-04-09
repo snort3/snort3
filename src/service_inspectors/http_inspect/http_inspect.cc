@@ -124,6 +124,11 @@ HttpInspect::HttpInspect(const HttpParaList* params_) :
         HttpTestManager::set_show_scan(params->show_scan);
     }
 #endif
+
+    if (params->script_detection)
+    {
+        script_finder = new ScriptFinder(params->script_detection_handle);
+    }
 }
 
 bool HttpInspect::configure(SnortConfig* )

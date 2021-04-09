@@ -23,10 +23,9 @@
 #include <cassert>
 #include <zlib.h>
 
-#include "helpers/literal_search.h"
-
 #include "http_enum.h"
 #include "http_event.h"
+#include "http_module.h"
 
 //-------------------------------------------------------------------------
 // HttpCutter class and subclasses
@@ -102,7 +101,8 @@ private:
 class HttpBodyCutter : public HttpCutter
 {
 public:
-    HttpBodyCutter(bool accelerated_blocking_, HttpEnums::CompressId compression_);
+    HttpBodyCutter(bool accelerated_blocking_, ScriptFinder* finder,
+        HttpEnums::CompressId compression_);
     ~HttpBodyCutter() override;
     void soft_reset() override { octets_seen = 0; }
 
@@ -118,8 +118,7 @@ private:
     HttpEnums::CompressId compression;
     z_stream* compress_stream = nullptr;
     bool decompress_failed = false;
-    snort::LiteralSearch* finder = nullptr;
-    snort::LiteralSearch::Handle* handle = nullptr;
+    ScriptFinder* const finder;
     const uint8_t* match_string;
     const uint8_t* match_string_upper;
     uint8_t string_length;
@@ -130,8 +129,9 @@ class HttpBodyClCutter : public HttpBodyCutter
 public:
     HttpBodyClCutter(int64_t expected_length,
         bool accelerated_blocking,
+        ScriptFinder* finder,
         HttpEnums::CompressId compression) :
-        HttpBodyCutter(accelerated_blocking, compression), remaining(expected_length)
+        HttpBodyCutter(accelerated_blocking, finder, compression), remaining(expected_length)
         { assert(remaining > 0); }
     HttpEnums::ScanResult cut(const uint8_t*, uint32_t length, HttpInfractions*, HttpEventGen*,
         uint32_t flow_target, bool stretch, HttpEnums::H2BodyState) override;
@@ -143,8 +143,9 @@ private:
 class HttpBodyOldCutter : public HttpBodyCutter
 {
 public:
-    HttpBodyOldCutter(bool accelerated_blocking, HttpEnums::CompressId compression) :
-        HttpBodyCutter(accelerated_blocking, compression)
+    HttpBodyOldCutter(bool accelerated_blocking, ScriptFinder* finder,
+        HttpEnums::CompressId compression) :
+        HttpBodyCutter(accelerated_blocking, finder, compression)
         {}
     HttpEnums::ScanResult cut(const uint8_t*, uint32_t, HttpInfractions*, HttpEventGen*,
         uint32_t flow_target, bool stretch, HttpEnums::H2BodyState) override;
@@ -153,8 +154,9 @@ public:
 class HttpBodyChunkCutter : public HttpBodyCutter
 {
 public:
-    HttpBodyChunkCutter(bool accelerated_blocking, HttpEnums::CompressId compression) :
-        HttpBodyCutter(accelerated_blocking, compression)
+    HttpBodyChunkCutter(bool accelerated_blocking, ScriptFinder* finder,
+        HttpEnums::CompressId compression) :
+        HttpBodyCutter(accelerated_blocking, finder, compression)
         {}
     HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
         HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, bool stretch,
@@ -181,8 +183,10 @@ class HttpBodyH2Cutter : public HttpBodyCutter
 public:
     HttpBodyH2Cutter(int64_t expected_length,
         bool accelerated_blocking,
+        ScriptFinder* finder,
         HttpEnums::CompressId compression) :
-        HttpBodyCutter(accelerated_blocking, compression), expected_body_length(expected_length)
+        HttpBodyCutter(accelerated_blocking, finder, compression),
+            expected_body_length(expected_length)
         {}
     HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length, HttpInfractions*,
         HttpEventGen*, uint32_t flow_target, bool stretch, HttpEnums::H2BodyState state) override;
