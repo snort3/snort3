@@ -55,6 +55,10 @@ static const uint32_t max_hdr_size = 2000;
 // Empty settings frame
 static const uint8_t empty_settings_frame[] = { 0, 0, 0, FT_SETTINGS, 0, 0, 0, 0, 0 };
 
+// Goaway frame header
+static const uint8_t goaway_frame_len = 8; // 4 bytes stream id + 4 bytes error code
+static const uint8_t goaway_frame_header[] = { 0, 0, goaway_frame_len, FT_GOAWAY, 0, 0, 0, 0, 0};
+
 static InjectionReturnStatus write_translation(uint8_t*& out, uint32_t& out_free_space,
     const uint8_t* translation, uint32_t size)
 {
@@ -244,7 +248,18 @@ static void write_frame_hdr(uint8_t*& out, uint32_t len, uint8_t type, uint8_t f
     out[4] = flags;
     stream_id = htonl(stream_id);
     memcpy(out+5, &stream_id, 4);
-    out += Http2Enums::FRAME_HEADER_LENGTH;
+    out += FRAME_HEADER_LENGTH;
+}
+
+static void write_goaway_frame(uint8_t*& out, uint32_t stream_id)
+{
+    memcpy(out, goaway_frame_header, FRAME_HEADER_LENGTH);
+    out += FRAME_HEADER_LENGTH;
+    stream_id = htonl(stream_id);
+    memcpy(out, &stream_id, 4);
+    const uint32_t error_code = 0;
+    memcpy(out+4, &error_code, 4);
+    out += goaway_frame_len;
 }
 
 InjectionReturnStatus PayloadInjector::get_http2_payload(InjectionControl control,
@@ -265,7 +280,8 @@ InjectionReturnStatus PayloadInjector::get_http2_payload(InjectionControl contro
     uint32_t num_data_frames = body_len / (1<<14);
     if (body_len % (1<<14) != 0)
         num_data_frames++;
-    payload_len = FRAME_HEADER_LENGTH*(num_data_frames + 1) + hdr_len + body_len;
+    payload_len = FRAME_HEADER_LENGTH*(num_data_frames + 1) + hdr_len + body_len; // block page
+    payload_len += FRAME_HEADER_LENGTH + goaway_frame_len; // goaway frame
     if (send_settings)
         payload_len += sizeof(empty_settings_frame);
     http2_payload = (uint8_t*)snort_alloc(payload_len);
@@ -290,6 +306,7 @@ InjectionReturnStatus PayloadInjector::get_http2_payload(InjectionControl contro
         http2_payload_cur += cur_len;
         http_body_cur += cur_len;
     }
+    write_goaway_frame(http2_payload_cur, control.stream_id);
     assert((http2_payload_cur - http2_payload) == payload_len);
     return INJECTION_SUCCESS;
 }
