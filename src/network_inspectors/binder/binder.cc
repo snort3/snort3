@@ -457,7 +457,7 @@ private:
     void get_bindings(Flow&, Stuff&, const char* service = nullptr);
     void apply(Flow&, Stuff&);
     void apply_assistant(Flow&, Stuff&, const char*);
-    Inspector* find_gadget(Flow&);
+    Inspector* find_gadget(Flow&, Inspector*& data);
 
 private:
     std::vector<Binding> bindings;
@@ -664,9 +664,10 @@ void Binder::handle_flow_service_change(Flow& flow)
     Profile profile(bindPerfStats);
 
     Inspector* ins = nullptr;
+    Inspector* data = nullptr;
     if (flow.service)
     {
-        ins = find_gadget(flow);
+        ins = find_gadget(flow, data);
         if (flow.gadget != ins)
         {
             if (flow.gadget)
@@ -675,6 +676,13 @@ void Binder::handle_flow_service_change(Flow& flow)
             {
                 flow.set_gadget(ins);
                 flow.ssn_state.snort_protocol_id = ins->get_service();
+                if (data and data != flow.data)
+                {
+                    if (flow.data)
+                        flow.clear_data();
+
+                    flow.set_data(data);
+                }
                 DataBus::publish(SERVICE_INSPECTOR_CHANGE_EVENT, DetectionEngine::get_current_packet());
             }
             else
@@ -808,10 +816,11 @@ void Binder::get_bindings(Flow& flow, Stuff& stuff, const char* service)
     bstats.no_match++;
 }
 
-Inspector* Binder::find_gadget(Flow& flow)
+Inspector* Binder::find_gadget(Flow& flow, Inspector*& data)
 {
     Stuff stuff;
     get_bindings(flow, stuff, flow.service);
+    data = stuff.data;
     return stuff.gadget;
 }
 
