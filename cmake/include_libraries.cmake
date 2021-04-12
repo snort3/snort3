@@ -3,7 +3,7 @@
 find_package(Threads REQUIRED)
 find_package(DAQ REQUIRED)
 find_package(DNET REQUIRED)
-find_package(FLEX REQUIRED)
+find_package(FlexLexer REQUIRED)
 find_package(HWLOC REQUIRED)
 find_package(LuaJIT REQUIRED)
 find_package(OpenSSL REQUIRED)

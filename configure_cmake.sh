@@ -107,6 +107,10 @@ Optional Packages:
                             flatbuffers include directory
     --with-flatbuffers-libraries=DIR
                             flatbuffers library directory
+    --with-flex-prefix=DIR
+                            flex prefix directory
+    --with-flex-includes=DIR
+                            flex include directory
     --with-iconv-includes=DIR
                             libiconv include directory
     --with-iconv-libraries=DIR
@@ -414,6 +418,12 @@ while [ $# -ne 0 ]; do
             ;;
         --with-flatbuffers-libraries=*)
             append_cache_entry FLATBUFFERS_LIBRARIES_DIR_HINT PATH $optarg
+            ;;
+        --with-flex-prefix=*)
+            append_cache_entry CMAKE_PREFIX_PATH PATH $optarg
+            ;;
+        --with-flex-includes=*)
+            append_cache_entry FLEX_INCLUDE_DIR_HINT PATH $optarg
             ;;
         --with-iconv-includes=*)
             append_cache_entry ICONV_INCLUDE_DIR_HINT PATH $optarg

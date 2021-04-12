@@ -19,8 +19,6 @@ set( UTIL_INCLUDES
     util_utf.h
 )
 
-set (FLEX_EXECUTABLE flex++)
-
 FLEX_TARGET ( js_tokenizer ${CMAKE_CURRENT_SOURCE_DIR}/js_tokenizer.l
     ${CMAKE_CURRENT_BINARY_DIR}/js_tokenizer.cc
     COMPILE_FLAGS -Ca

@@ -22,6 +22,8 @@
 %option yyclass="JSTokenizer"
 /* Disable yywrap() generation */
 %option noyywrap
+/* Generate C++ scanner */
+%option c++
 
 %{
     #ifdef HAVE_CONFIG_H
