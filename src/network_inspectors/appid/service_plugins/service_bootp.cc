@@ -230,7 +230,7 @@ int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
                         goto fail;
 
                     if (option53 && (memcmp(eh->ether_dst, bh->chaddr, 6) == 0))
-                        add_new_dhcp_lease(args.asd, bh->chaddr, bh->yiaddr, pkt->pkth->ingress_group,
+                        add_new_dhcp_lease(args.asd, bh->chaddr, bh->yiaddr,
                             ntohl(subnet), ntohl(leaseTime),
                             router);
                     goto success;
@@ -323,7 +323,6 @@ void BootpServiceDetector::add_dhcp_info(AppIdSession& asd, unsigned op55_len, c
 }
 
 void BootpServiceDetector::add_new_dhcp_lease(AppIdSession& asd, const uint8_t* mac, uint32_t ip,
-    int32_t zone,
     uint32_t subnetmask, uint32_t leaseSecs, uint32_t router)
 {
     if (memcmp(mac, zeromac, 6) == 0 || ip == 0)
