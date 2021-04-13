@@ -568,6 +568,27 @@ void AppIdSession::examine_rtmp_metadata(AppidChangeBits& change_bits)
     if (!hsession)
         return;
 
+    const string* field;
+    if ((scan_flags & SCAN_HTTP_USER_AGENT_FLAG) and
+        hsession->client.get_id() <= APP_ID_NONE and
+        (field = hsession->get_field(REQ_AGENT_FID)))
+    {
+        char *version = nullptr;
+        HttpPatternMatchers& http_matchers = get_odp_ctxt().get_http_matchers();
+
+        http_matchers.identify_user_agent(field->c_str(), field->size(), service_id,
+            client_id, &version);
+
+        hsession->set_client(client_id, change_bits, "User Agent", version);
+
+        // do not overwrite a previously-set service
+        if ( api.service.get_id() <= APP_ID_NONE )
+            set_service_appid_data(service_id, change_bits);
+
+        scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
+        snort_free(version);
+    }
+
     if (const char* url = hsession->get_cfield(MISC_URL_FID))
     {
         HttpPatternMatchers& http_matchers = odp_ctxt.get_http_matchers();

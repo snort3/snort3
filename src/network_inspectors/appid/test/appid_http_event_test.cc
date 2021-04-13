@@ -107,11 +107,44 @@ void AppIdSession::delete_all_http_sessions()
 }
 
 void AppIdHttpSession::set_http_change_bits(AppidChangeBits&, HttpFieldIds) {}
+
+void AppIdHttpSession::set_scan_flags(HttpFieldIds id)
+{
+    switch (id)
+    {
+    case REQ_URI_FID:
+        asd.scan_flags |= SCAN_HTTP_URI_FLAG;
+        break;
+    case MISC_VIA_FID:
+        asd.scan_flags |= SCAN_HTTP_VIA_FLAG;
+        break;
+    case REQ_AGENT_FID:
+        asd.scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
+        break;
+    case RSP_CONTENT_TYPE_FID:
+        asd.scan_flags |= SCAN_HTTP_CONTENT_TYPE_FLAG;
+        break;
+    case MISC_SERVER_FID:
+        asd.scan_flags |= SCAN_HTTP_VENDOR_FLAG;
+        break;
+    case MISC_XWW_FID:
+        asd.scan_flags |= SCAN_HTTP_XWORKINGWITH_FLAG;
+        break;
+    case REQ_HOST_FID:
+    case MISC_URL_FID:
+        asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
+        break;
+    default:
+        break;
+    }
+}
+
 void AppIdHttpSession::set_field(HttpFieldIds id, const std::string* str,
     AppidChangeBits&)
 {
     delete meta_data[id];
     meta_data[id] = str;
+    set_scan_flags(id);
 }
 
 void AppIdHttpSession::set_field(HttpFieldIds id, const uint8_t* str, int32_t len,
@@ -119,7 +152,10 @@ void AppIdHttpSession::set_field(HttpFieldIds id, const uint8_t* str, int32_t le
 {
     delete meta_data[id];
     if (str and len)
+    {
         meta_data[id] = new std::string((const char*)str, len);
+        set_scan_flags(id);
+    }
     else
         meta_data[id] = nullptr;
 }

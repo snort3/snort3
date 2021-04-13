@@ -45,12 +45,10 @@
 #include "detector_plugins/detector_sip.h"
 #include "detector_plugins/detector_smtp.h"
 #include "lua_detector_api.h"
-#include "service_battle_field.h"
 #include "service_bgp.h"
 #include "service_bit.h"
 #include "service_bootp.h"
 #include "service_dcerpc.h"
-#include "service_direct_connect.h"
 #include "service_ftp.h"
 #include "service_irc.h"
 #include "service_lpr.h"
@@ -87,12 +85,10 @@ static ServiceDetector* ftp_service;
 
 void ServiceDiscovery::initialize(AppIdInspector& inspector)
 {
-    new BattleFieldServiceDetector(this);
     new BgpServiceDetector(this);
     new BitServiceDetector(this);
     new BootpServiceDetector(this);
     new DceRpcServiceDetector(this);
-    new DirectConnectServiceDetector(this);
     new DnsTcpServiceDetector(this);
     new DnsUdpServiceDetector(this);
     new FtpServiceDetector(this);

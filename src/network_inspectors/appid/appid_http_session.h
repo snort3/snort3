@@ -166,6 +166,7 @@ protected:
     void process_chp_buffers(AppidChangeBits&, HttpPatternMatchers&);
     void free_chp_matches(ChpMatchDescriptor& cmd, unsigned max_matches);
     void set_http_change_bits(AppidChangeBits& change_bits, HttpFieldIds id);
+    void set_scan_flags(HttpFieldIds id);
     void print_field(HttpFieldIds id, const std::string* str);
 
     AppIdSession& asd;

@@ -41,8 +41,6 @@ set ( CP_APPID_SOURCES
 set ( SP_APPID_SOURCES
     service_plugins/dcerpc.cc
     service_plugins/dcerpc.h
-    service_plugins/service_battle_field.cc
-    service_plugins/service_battle_field.h
     service_plugins/service_bgp.cc
     service_plugins/service_bgp.h
     service_plugins/service_bit.cc
@@ -53,8 +51,6 @@ set ( SP_APPID_SOURCES
     service_plugins/service_dcerpc.h
     service_plugins/service_detector.cc
     service_plugins/service_detector.h
-    service_plugins/service_direct_connect.cc
-    service_plugins/service_direct_connect.h
     service_plugins/service_discovery.cc
     service_plugins/service_discovery.h
     service_plugins/service_ftp.cc

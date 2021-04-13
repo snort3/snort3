@@ -117,7 +117,6 @@ static inline void process_http_session(AppIdSession& asd,
                 hsession->set_chp_finished(false);
 
             hsession->set_field(MISC_URL_FID, url, change_bits);
-            asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
 
         if (spdyRequestHost)
@@ -129,7 +128,6 @@ static inline void process_http_session(AppIdSession& asd,
             hsession->set_offset(REQ_HOST_FID,
                 attribute_data.spdy_request_host_begin(),
                 attribute_data.spdy_request_host_end());
-            asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
 
         if (spdyRequestPath)
@@ -155,7 +153,6 @@ static inline void process_http_session(AppIdSession& asd,
             hsession->set_offset(REQ_HOST_FID,
                 attribute_data.http_request_host_begin(),
                 attribute_data.http_request_host_end());
-            asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
 
         if ( (field=attribute_data.http_request_url(own)) != nullptr )
@@ -177,7 +174,6 @@ static inline void process_http_session(AppIdSession& asd,
                 field->insert(4, 1, 's');
             }
             hsession->set_field(MISC_URL_FID, field, change_bits);
-            asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
 
         if ( (field=attribute_data.http_request_uri(own)) != nullptr)
@@ -190,7 +186,6 @@ static inline void process_http_session(AppIdSession& asd,
             hsession->set_offset(REQ_URI_FID,
                 attribute_data.http_request_uri_begin(),
                 attribute_data.http_request_uri_end());
-            asd.scan_flags |= SCAN_HTTP_URI_FLAG;
         }
     }
 
@@ -202,7 +197,6 @@ static inline void process_http_session(AppIdSession& asd,
                 hsession->set_chp_finished(false);
 
         hsession->set_field(MISC_VIA_FID, field, change_bits);
-        asd.scan_flags |= SCAN_HTTP_VIA_FLAG;
     }
     else if ( (field=attribute_data.http_response_via(own)) != nullptr )
     {
@@ -211,7 +205,6 @@ static inline void process_http_session(AppIdSession& asd,
                 hsession->set_chp_finished(false);
 
         hsession->set_field(MISC_VIA_FID, field, change_bits);
-        asd.scan_flags |= SCAN_HTTP_VIA_FLAG;
     }
 
     if ( (field=attribute_data.http_request_user_agent(own)) != nullptr )
@@ -224,7 +217,6 @@ static inline void process_http_session(AppIdSession& asd,
         hsession->set_offset(REQ_AGENT_FID,
             attribute_data.http_request_user_agent_begin(),
             attribute_data.http_request_user_agent_end());
-        asd.scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
     }
 
     if ( (field=attribute_data.http_response_code(own)) != nullptr )
@@ -267,7 +259,6 @@ static inline void process_http_session(AppIdSession& asd,
                 hsession->set_chp_finished(false);
 
         hsession->set_field(RSP_CONTENT_TYPE_FID, field, change_bits);
-        asd.scan_flags |= SCAN_HTTP_CONTENT_TYPE_FLAG;
     }
 
     if (hsession->get_ptype_scan_count(RSP_LOCATION_FID) &&
@@ -303,16 +294,10 @@ static inline void process_http_session(AppIdSession& asd,
     }
 
     if ( (field=attribute_data.http_response_server(own)) != nullptr)
-    {
         hsession->set_field(MISC_SERVER_FID, field, change_bits);
-        asd.scan_flags |= SCAN_HTTP_VENDOR_FLAG;
-    }
 
     if ( (field=attribute_data.http_request_x_working_with(own)) != nullptr )
-    {
         hsession->set_field(MISC_XWW_FID, field, change_bits);
-        asd.scan_flags |= SCAN_HTTP_XWORKINGWITH_FLAG;
-    }
 }
 
 static inline void process_rtmp(AppIdSession& asd,
@@ -321,22 +306,13 @@ static inline void process_rtmp(AppIdSession& asd,
     AppIdHttpSession* hsession = asd.get_http_session();
     if (!hsession)
         hsession = asd.create_http_session();
-    AppId service_id = 0;
-    AppId client_id = 0;
-    AppId payload_id = 0;
-    AppId referred_payload_app_id = APP_ID_NONE;
     bool own = true;
-    uint16_t size = 0;
-
-    const string* field=nullptr;
+    const string* field = nullptr;
 
     if ( !hsession->get_field(MISC_URL_FID) )
     {
         if ( ( field=attribute_data.http_request_url(own) ) != nullptr )
-        {
             hsession->set_field(MISC_URL_FID, field, change_bits);
-            asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
-        }
     }
 
     if ( !asd.get_odp_ctxt().referred_appId_disabled &&
@@ -356,61 +332,14 @@ static inline void process_rtmp(AppIdSession& asd,
             hsession->set_offset(REQ_AGENT_FID,
                 attribute_data.http_request_user_agent_begin(),
                 attribute_data.http_request_user_agent_end());
-
-            asd.scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
         }
     }
 
-    if ( ( asd.scan_flags & SCAN_HTTP_USER_AGENT_FLAG ) and
-         asd.get_client_id() <= APP_ID_NONE and
-         ( field = hsession->get_field(REQ_AGENT_FID) ) and
-         ( size = attribute_data.http_request_user_agent_end() -
-           attribute_data.http_request_user_agent_begin() ) > 0 )
-    {
-        char *version = nullptr;
-        HttpPatternMatchers& http_matchers = asd.get_odp_ctxt().get_http_matchers();
-
-        http_matchers.identify_user_agent(field->c_str(), size, service_id,
-            client_id, &version);
-
-        hsession->set_client(client_id, change_bits, "User Agent", version);
-
-        // do not overwrite a previously-set service
-        if ( asd.get_service_id() <= APP_ID_NONE )
-            asd.set_service_appid_data(service_id, change_bits);
-
-        asd.scan_flags |= ~SCAN_HTTP_USER_AGENT_FLAG;
-        snort_free(version);
-    }
+    asd.examine_rtmp_metadata(change_bits);
 
     if ( hsession->get_field(MISC_URL_FID) || (confidence == 100 &&
         asd.session_packet_count > asd.get_odp_ctxt().rtmp_max_packets) )
     {
-        const std::string* url;
-        if ( ( url = hsession->get_field(MISC_URL_FID) ) != nullptr )
-        {
-            HttpPatternMatchers& http_matchers = asd.get_odp_ctxt().get_http_matchers();
-            const char* referer = hsession->get_cfield(REQ_REFERER_FID);
-            if ( ( ( http_matchers.get_appid_from_url(nullptr, url->c_str(),
-                nullptr, referer, &client_id, &service_id,
-                &payload_id, &referred_payload_app_id, true, asd.get_odp_ctxt()) )
-                ||
-                ( http_matchers.get_appid_from_url(nullptr, url->c_str(),
-                nullptr, referer, &client_id, &service_id,
-                &payload_id, &referred_payload_app_id, false, asd.get_odp_ctxt()) ) ) == 1 )
-            {
-                // do not overwrite a previously-set client or service
-                if ( hsession->client.get_id() <= APP_ID_NONE )
-                    hsession->set_client(client_id, change_bits, "URL");
-                if ( asd.get_service_id() <= APP_ID_NONE )
-                    asd.set_service_appid_data(service_id, change_bits);
-
-                // DO overwrite a previously-set payload
-                hsession->set_payload(payload_id, change_bits, "URL");
-                hsession->set_referred_payload(referred_payload_app_id, change_bits);
-            }
-        }
-
         asd.tpsession->disable_flags(
             TP_SESSION_FLAG_ATTRIBUTE | TP_SESSION_FLAG_TUNNELING |
             TP_SESSION_FLAG_FUTUREFLOW);
