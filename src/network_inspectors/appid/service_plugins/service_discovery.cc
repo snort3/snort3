@@ -703,6 +703,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
             asd.get_odp_ctxt().get_dns_matchers().scan_hostname((const uint8_t*)(dsession->get_host()),
                 dsession->get_host_len(), client_id, payload_id);
             asd.set_client_appid_data(client_id, change_bits);
+            asd.set_payload_appid_data(payload_id);
         }
         else if (asd.get_service_id() == APP_ID_RTMP)
             asd.examine_rtmp_metadata(change_bits);
