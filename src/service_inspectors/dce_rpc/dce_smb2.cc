@@ -398,7 +398,23 @@ void Dce2Smb2SessionData::process_command(const Smb2Hdr* smb_hdr,
         else
             dce2_smb_stats.v2_session_ignored++;
         break;
-
+    case SMB2_COM_IOCTL:
+        if (session)
+        {
+            if (SMB2_COMMAND_TYPE(IOCTL, REQUEST))
+            {
+                SMB2_HANDLE_HEADER_ERROR(IOCTL, REQUEST, ioctl_req)
+                session->process(command, SMB2_CMD_TYPE_REQUEST, smb_hdr, end);
+            }
+            else if ( SMB2_COMMAND_TYPE(IOCTL, RESPONSE))
+            {
+                SMB2_HANDLE_HEADER_ERROR(IOCTL, RESPONSE, ioctl_resp)
+                session->process(command, SMB2_CMD_TYPE_RESPONSE, smb_hdr, end);
+            }
+            else
+                SMB2_HANDLE_INVALID_STRUC_SIZE(ioctl)
+        }
+        break;
     default:
         dce2_smb_stats.v2_msgs_uninspected++;
         break;
@@ -468,9 +484,51 @@ void Dce2Smb2SessionData::process()
     {
         debug_logf(dce_smb_trace, p, "processing raw data for file id %" PRIu64 "\n",
             tcp_file_tracker->get_file_id());
-        
+
         if (!tcp_file_tracker->process_data(data_ptr, data_len))
             tcp_file_tracker->get_parent()->close_file(tcp_file_tracker->get_file_id());
+    }
+}
+
+void Dce2Smb2SessionData::set_reassembled_data(uint8_t* nb_ptr, uint16_t co_len)
+{
+    NbssHdr* nb_hdr = (NbssHdr*)nb_ptr;
+    SmbNtHdr* smb_hdr = (SmbNtHdr*)((uint8_t*)nb_hdr + sizeof(NbssHdr));
+
+    uint32_t tid = (tcp_file_tracker) ? tcp_file_tracker->get_parent()->get_tree_id() : 0;
+    smb_hdr->smb_tid = alignedNtohl((const uint32_t*)&tid);
+
+    if (DetectionEngine::get_current_packet()->is_from_client())
+    {
+        Smb2WriteRequestHdr* write = (Smb2WriteRequestHdr*)((uint8_t*)smb_hdr + sizeof(SmbNtHdr));
+        uint32_t nb_len = sizeof(SmbNtHdr) + sizeof(Smb2WriteRequestHdr) + co_len;
+
+        if (nb_len > UINT16_MAX)
+            nb_len = UINT16_MAX;
+        write->structure_size = SMB2_WRITE_REQUEST_STRUC_SIZE;
+        nb_hdr->length = htons((uint16_t)nb_len);
+        if (tcp_file_tracker)
+        {
+            uint64_t fid = tcp_file_tracker->get_file_id();
+            write->fileId_persistent = alignedNtohq(&fid);
+            write->fileId_volatile = alignedNtohq(&fid);
+        }
+        else
+            write->fileId_persistent = write->fileId_volatile = 0;
+
+        write->length = alignedNtohs(&co_len);
+    }
+    else
+    {
+        Smb2ReadResponseHdr* read = (Smb2ReadResponseHdr*)((uint8_t*)smb_hdr + sizeof(SmbNtHdr));
+        uint32_t nb_len = sizeof(SmbNtHdr) + sizeof(Smb2ReadResponseHdr) + co_len;
+
+        if (nb_len > UINT16_MAX)
+            nb_len = UINT16_MAX;
+
+        nb_hdr->length = htons((uint16_t)nb_len);
+        read->structure_size = SMB2_READ_RESPONSE_STRUC_SIZE;
+        read->length = alignedNtohs(&co_len);
     }
 }
 

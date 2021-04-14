@@ -27,6 +27,7 @@
 #include "file_api/file_flows.h"
 #include "hash/hash_key_operations.h"
 
+#include "dce_co.h"
 #include "dce_smb2_session.h"
 #include "dce_smb2_tree.h"
 
@@ -100,6 +101,18 @@ bool Dce2Smb2FileTracker::process_data(const uint8_t* file_data,
     uint32_t data_size)
 {
     Dce2Smb2SessionData* current_flow = parent_tree->get_parent()->get_current_flow();
+
+    if (parent_tree->get_share_type() != SMB2_SHARE_TYPE_DISK)
+    {
+        if (data_size > UINT16_MAX)
+        {
+            data_size = UINT16_MAX;
+        }
+        DCE2_CoProcess(current_flow->get_dce2_session_data(), get_parent()->get_cotracker(),
+            file_data, data_size);
+        return true;
+    }
+
     int64_t file_detection_depth = current_flow->get_smb_file_depth();
     int64_t detection_size = 0;
 
@@ -153,8 +166,8 @@ bool Dce2Smb2FileTracker::process_data(const uint8_t* file_data,
 
 Dce2Smb2FileTracker::~Dce2Smb2FileTracker(void)
 {
-    debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "file tracker %" PRIu64
-        " file name hash %" PRIu64 " terminating\n", file_id, file_name_hash);
+    debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
+        "file tracker %" PRIu64 " file name hash %" PRIu64 " terminating\n", file_id, file_name_hash);
 
     if (file_name)
         snort_free((void*)file_name);

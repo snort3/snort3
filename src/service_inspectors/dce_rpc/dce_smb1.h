@@ -277,6 +277,7 @@ public:
     { DCE2_SmbDataFree(&ssd); }
     void process() override;
     void handle_retransmit(FilePosition, FileVerdict) override { }
+    void set_reassembled_data(uint8_t*, uint16_t) override;
 
 private:
     DCE2_SmbSsnData ssd;

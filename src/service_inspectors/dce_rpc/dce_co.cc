@@ -29,6 +29,7 @@
 
 #include "dce_expected_session.h"
 #include "dce_smb1.h"
+#include "dce_smb_common.h"
 #include "dce_smb_module.h"
 #include "dce_smb_utils.h"
 #include "dce_tcp.h"
@@ -230,6 +231,14 @@ void DCE2_CoInitTracker(DCE2_CoTracker* cot)
     cot->frag_tracker.expected_call_id = DCE2_SENTINEL;
     cot->frag_tracker.expected_opnum = DCE2_SENTINEL;
     cot->frag_tracker.expected_ctx_id = DCE2_SENTINEL;
+    cot->ctx_ids = nullptr;
+    cot->pending_ctx_ids = nullptr;
+    cot->frag_tracker.cli_stub_buf = nullptr;
+    cot->frag_tracker.srv_stub_buf = nullptr;
+    cot->cli_seg.buf = nullptr;
+    cot->cli_seg.frag_len = 0;
+    cot->srv_seg.buf = nullptr;
+    cot->srv_seg.frag_len = 0;
 }
 
 /********************************************************************
@@ -1350,8 +1359,7 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     {
     case DCE2_RPKT_TYPE__SMB_CO_FRAG:
     case DCE2_RPKT_TYPE__SMB_CO_SEG:
-        DCE2_SmbSetRdata((DCE2_SmbSsnData*)sd, wrdata,
-            (uint16_t)(rpkt->dsize - smb_hdr_len));
+        set_smb_reassembled_data(wrdata, (uint16_t)(rpkt->dsize - smb_hdr_len));
 
         if (rpkt_type == DCE2_RPKT_TYPE__SMB_CO_FRAG)
         {
@@ -2209,7 +2217,7 @@ static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
         if ( !rpkt )
             return nullptr;
 
-        DCE2_SmbSetRdata((DCE2_SmbSsnData*)sd, const_cast<uint8_t*>(rpkt->data),
+        set_smb_reassembled_data(const_cast<uint8_t*>(rpkt->data),
             (uint16_t)(rpkt->dsize - smb_hdr_len));
         break;
 

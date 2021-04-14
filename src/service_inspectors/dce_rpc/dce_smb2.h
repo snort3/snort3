@@ -265,6 +265,9 @@ struct Smb2TreeConnectResponseHdr
 #define SMB2_LOGOFF_REQUEST_STRUC_SIZE 4
 #define SMB2_LOGOFF_RESPONSE_STRUC_SIZE 4
 
+#define SMB2_IOCTL_REQUEST_STRUC_SIZE 57
+#define SMB2_IOCTL_RESPONSE_STRUC_SIZE 49
+
 #define GET_CURRENT_PACKET snort::DetectionEngine::get_current_packet()
 
 class Dce2Smb2FileTracker;
@@ -419,6 +422,7 @@ public:
     void reset_matching_tcp_file_tracker(Dce2Smb2FileTracker*);
     void set_tcp_file_tracker(Dce2Smb2FileTracker* file_tracker)
     { tcp_file_tracker = file_tracker; }
+    void set_reassembled_data(uint8_t*, uint16_t) override;
 
 private:
     void process_command(const Smb2Hdr*, const uint8_t*);

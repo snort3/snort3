@@ -188,9 +188,12 @@ void Dce2Smb2TreeTracker::process_create_response(uint64_t message_id,
                 file_tracker = new Dce2Smb2FileTracker(file_id, this);
                 opened_files.insert(std::make_pair(file_id, file_tracker));
             }
-            file_tracker->set_info(create_request->get_file_name(),
-                create_request->get_file_name_size(), file_size, true);
-            create_request->reset_file_name();
+            if (share_type == SMB2_SHARE_TYPE_DISK)
+            {
+                file_tracker->set_info(create_request->get_file_name(),
+                    create_request->get_file_name_size(), file_size, true);
+                create_request->reset_file_name();
+            }
         }
         else
         {
@@ -241,8 +244,11 @@ void Dce2Smb2TreeTracker::process_create_request(uint64_t message_id,
         if (!file_tracker)
         {
             file_tracker = new Dce2Smb2FileTracker(file_id, this);
-            file_tracker->set_info(file_name, name_len, 0, true);
-            create_request->reset_file_name();
+            if (share_type == SMB2_SHARE_TYPE_DISK)
+            {
+                file_tracker->set_info(file_name, name_len, 0, true);
+                create_request->reset_file_name();
+            }
             opened_files.insert(std::make_pair(file_id, file_tracker));
         }
     }
@@ -345,6 +351,24 @@ void Dce2Smb2TreeTracker::process_write_request(uint64_t message_id,
     }
 }
 
+void Dce2Smb2TreeTracker::process_ioctl_command(uint8_t command_type, const Smb2Hdr* smb_header,
+    const uint8_t* end)
+{
+    const uint8_t* smb_data = (const uint8_t*)smb_header + SMB2_HEADER_LENGTH;
+    const uint8_t structure_size = (command_type == SMB2_CMD_TYPE_REQUEST) ?
+        SMB2_IOCTL_REQUEST_STRUC_SIZE : SMB2_IOCTL_RESPONSE_STRUC_SIZE;
+
+    const uint8_t* file_data = (const uint8_t*)smb_data + structure_size - 1;
+    int data_size = end - file_data;
+    Dce2Smb2SessionData* current_flow = parent_session->get_current_flow();
+    if (data_size > UINT16_MAX)
+    {
+        data_size = UINT16_MAX;
+    }
+
+    DCE2_CoProcess(current_flow->get_dce2_session_data(), co_tracker, file_data, data_size);
+}
+
 void Dce2Smb2TreeTracker::process(uint16_t command, uint8_t command_type,
     const Smb2Hdr* smb_header, const uint8_t* end)
 {
@@ -356,7 +380,7 @@ void Dce2Smb2TreeTracker::process(uint16_t command, uint8_t command_type,
             "%s_REQ: max req exceeded\n", smb2_command_string[command]);
         dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, (dce2CommonStats*)&dce2_smb_stats,
             *current_flow->get_dce2_session_data());
-        
+
         return;
     }
     uint64_t message_id = Smb2Mid(smb_header);
@@ -375,9 +399,8 @@ void Dce2Smb2TreeTracker::process(uint16_t command, uint8_t command_type,
             if (SMB2_SHARE_TYPE_DISK != share_type)
             {
                 debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "%s_REQ:"
-                    " ignored for ipc share\n", smb2_command_string[command]);
+                    "processed for ipc share\n", smb2_command_string[command]);
                 dce2_smb_stats.v2_crt_req_ipc++;
-                return;
             }
             process_create_request(message_id, smb_header, end);
         }
@@ -418,6 +441,17 @@ void Dce2Smb2TreeTracker::process(uint16_t command, uint8_t command_type,
         else if (SMB2_CMD_TYPE_REQUEST == command_type)
             process_write_request(message_id, smb_header, end);
         break;
+    case SMB2_COM_IOCTL:
+        if (SMB2_CMD_TYPE_ERROR_RESPONSE == command_type)
+        {
+            debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
+                "%s_RESP: error\n", smb2_command_string[command]);
+        }
+        else if (SMB2_SHARE_TYPE_DISK != share_type)
+        {
+            process_ioctl_command(command_type, smb_header, end);
+        }
+        break;
     }
     if (SMB2_CMD_TYPE_RESPONSE == command_type or SMB2_CMD_TYPE_ERROR_RESPONSE == command_type)
         remove_request(message_id);
@@ -427,6 +461,13 @@ Dce2Smb2TreeTracker::~Dce2Smb2TreeTracker(void)
 {
     debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
         "tree tracker %" PRIu32 " terminating\n", tree_id);
+
+    if (co_tracker != nullptr)
+    {
+        DCE2_CoCleanTracker(co_tracker);
+        snort_free((void*)co_tracker);
+        co_tracker = nullptr;
+    }
     if (active_requests.size())
     {
         debug_logf(dce_smb_trace, GET_CURRENT_PACKET,

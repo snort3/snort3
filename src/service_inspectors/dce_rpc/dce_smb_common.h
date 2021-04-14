@@ -191,6 +191,11 @@ struct dce2SmbStats
     PegCount v2_cmpnd_req_lt_crossed;
     PegCount v2_tree_ignored;
     PegCount v2_session_ignored;
+    PegCount v2_ioctl;
+    PegCount v2_ioctl_err_resp;
+    PegCount v2_ioctl_inv_str_sz;
+    PegCount v2_ioctl_req_hdr_err;
+    PegCount v2_ioctl_resp_hdr_err;
     PegCount concurrent_sessions;
     PegCount max_concurrent_sessions;
 };
@@ -220,6 +225,7 @@ public:
 
     virtual void process() = 0;
     virtual void handle_retransmit(FilePosition, FileVerdict) = 0;
+    virtual void set_reassembled_data(uint8_t*, uint16_t) = 0;
 
     DCE2_SsnData* get_dce2_session_data()
     { return &sd; }
@@ -244,7 +250,7 @@ public:
     uint16_t get_smb_max_compound()
     {
         return sd.config ? ((dce2SmbProtoConf*)sd.config)->smb_max_compound :
-            SMB_DEFAULT_MAX_COMPOUND_REQ;
+               SMB_DEFAULT_MAX_COMPOUND_REQ;
     }
 
 protected:
@@ -285,6 +291,7 @@ DCE2_SsnData* get_dce2_session_data(snort::Flow*);
 snort::FileContext* get_smb_file_context(const snort::Packet*);
 snort::FileContext* get_smb_file_context(uint64_t, uint64_t, bool);
 char* get_smb_file_name(const uint8_t*, uint32_t, bool, uint16_t*);
+void set_smb_reassembled_data(uint8_t*, uint16_t);
 
 #endif
 

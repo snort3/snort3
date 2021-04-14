@@ -99,8 +99,7 @@ Dce2SmbSessionData::Dce2SmbSessionData(const Packet* p,
 static inline DCE2_SmbVersion get_smb_version(const Packet* p)
 {
     // Only check reassembled SMB2 packet
-    if ( p->has_paf_payload() and
-        (p->dsize > sizeof(NbssHdr) + DCE2_SMB_ID_SIZE))
+    if ( p->has_paf_payload() and (p->dsize > sizeof(NbssHdr) + DCE2_SMB_ID_SIZE))
     {
         const SmbNtHdr* smb_hdr = (const SmbNtHdr*)(p->data + sizeof(NbssHdr));
         uint32_t smb_version_id = SmbId(smb_hdr);
@@ -194,5 +193,20 @@ char* get_smb_file_name(const uint8_t* data, uint32_t data_len, bool unicode,
         *file_name_len = real_len;
     }
     return fname;
+}
+
+void set_smb_reassembled_data(uint8_t* nb_ptr, uint16_t co_len)
+{
+    snort::Flow* flow = DetectionEngine::get_current_packet()->flow;
+    if (flow)
+    {
+        Dce2SmbFlowData* fd = (Dce2SmbFlowData*)flow->get_flow_data(
+            Dce2SmbFlowData::inspector_id);
+       if (fd)
+       {
+           Dce2SmbSessionData* smb_ssn_data = fd->get_smb_session_data();
+           smb_ssn_data->set_reassembled_data(nb_ptr, co_len);
+       }
+    }
 }
 

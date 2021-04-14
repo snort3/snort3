@@ -24,6 +24,8 @@
 
 #include "dce_smb1.h"
 
+#include "dce_smb_utils.h"
+
 using namespace snort;
 
 //-------------------------------------------------------------------------
@@ -317,5 +319,10 @@ Dce2Smb1SessionData::Dce2Smb1SessionData(const Packet* p,
 void Dce2Smb1SessionData::process()
 {
     DCE2_Smb1Process(&ssd);
+}
+
+void Dce2Smb1SessionData::set_reassembled_data(uint8_t* nb_ptr,uint16_t co_len)
+{
+    DCE2_SmbSetRdata(&ssd, nb_ptr, co_len);
 }
 

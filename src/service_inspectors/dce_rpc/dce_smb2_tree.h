@@ -24,6 +24,7 @@
 // This provides tree trackers for SMBv2.
 // Tree trackers are used to identify and track an opened share
 
+#include "dce_co.h"
 #include "dce_smb2.h"
 #include "dce_smb2_file.h"
 #include "dce_smb2_request.h"
@@ -45,6 +46,15 @@ public:
         debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
             "tree tracker %" PRIu32 " created\n", tree_id);
         memory::MemoryCap::update_allocations(sizeof(*this));
+        if (share_type != SMB2_SHARE_TYPE_DISK)
+        {
+            co_tracker = (DCE2_CoTracker*)snort_calloc(sizeof(DCE2_CoTracker));
+            DCE2_CoInitTracker(co_tracker);
+        }
+        else
+        {
+            co_tracker = nullptr;
+        }
     }
 
     ~Dce2Smb2TreeTracker();
@@ -55,6 +65,9 @@ public:
     Dce2Smb2RequestTracker* find_request(uint64_t);
     void process(uint16_t, uint8_t, const Smb2Hdr*, const uint8_t*);
     Dce2Smb2SessionTracker* get_parent() { return parent_session; }
+    DCE2_CoTracker* get_cotracker() { return co_tracker; }
+    uint32_t get_tree_id() { return tree_id; }
+    uint8_t get_share_type() { return share_type; }
 
 private:
     void process_set_info_request(const Smb2Hdr*);
@@ -66,11 +79,13 @@ private:
     void process_write_request(uint64_t, const Smb2Hdr*, const uint8_t*);
     uint64_t get_durable_file_id(const Smb2CreateRequestHdr*, const uint8_t*);
     bool remove_request(uint64_t);
+    void process_ioctl_command(uint8_t, const Smb2Hdr*, const uint8_t*);
     void store_request(uint64_t message_id, Dce2Smb2RequestTracker* request)
     { active_requests.insert(std::make_pair(message_id, request)); }
 
     uint32_t tree_id;
     uint8_t share_type;
+    DCE2_CoTracker* co_tracker; // Connection-oriented DCE/RPC tracker
     Dce2Smb2FileTrackerMap opened_files;
     Dce2Smb2RequestTrackerMap active_requests;
     Dce2Smb2SessionTracker* parent_session;
