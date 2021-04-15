@@ -83,22 +83,12 @@ public:
     friend class Http2StreamSplitter;
     friend void finish_msg_body(Http2FlowData* session_data, HttpCommon::SourceId source_id);
 
-    size_t size_of() override
-    { return sizeof(*this); }
+    size_t size_of() override;
 
-    // Stream access
-    class StreamInfo
-    {
-    public:
-        const uint32_t id;
-        class Http2Stream* stream;
-
-        StreamInfo(uint32_t _id, class Http2Stream* ptr) : id(_id), stream(ptr) { assert(ptr); }
-        ~StreamInfo() { delete stream; }
-    };
-    class Http2Stream* get_current_stream(const HttpCommon::SourceId source_id);
+    Http2Stream* find_current_stream(const HttpCommon::SourceId source_id) const;
     uint32_t get_current_stream_id(const HttpCommon::SourceId source_id) const;
-    class Http2Stream* get_processing_stream();
+    Http2Stream* get_processing_stream(const HttpCommon::SourceId source_id);
+    Http2Stream* find_processing_stream() const;
     uint32_t get_processing_stream_id() const;
     void set_processing_stream_id(const HttpCommon::SourceId source_id);
     bool is_processing_partial_header() const { return processing_partial_header; }
@@ -160,9 +150,11 @@ protected:
     bool frame_in_detection = false;
     Http2ConnectionSettings connection_settings[2];
     Http2HpackDecoder hpack_decoder[2];
-    std::list<class StreamInfo> streams;
+    std::list<Http2Stream*> streams;
     uint32_t concurrent_files = 0;
     uint32_t concurrent_streams = 0;
+    uint32_t max_stream_id[2] = {0, 0};
+    bool delete_stream = false;
 
     // Internal to scan()
     bool preface[2] = { true, false };
@@ -204,9 +196,10 @@ protected:
 #endif
 
 private:
-    class Http2Stream* get_stream(uint32_t key);
-    class Http2Stream* get_hi_stream() const;
-    class Http2Stream* find_stream(uint32_t key) const;
+    Http2Stream* get_stream(const uint32_t key, const HttpCommon::SourceId source_id);
+    Http2Stream* get_hi_stream() const;
+    Http2Stream* find_stream(const uint32_t key) const;
+    void delete_processing_stream();
 
     // When H2I allocates http_inspect flows, it bypasses the usual FlowData memory allocation
     // bookkeeping. So H2I needs to update memory allocations and deallocations itself.

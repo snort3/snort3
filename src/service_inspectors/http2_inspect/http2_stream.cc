@@ -77,15 +77,15 @@ void Http2Stream::clear_frame()
     delete current_frame;
     current_frame = nullptr;
 
-    if ((state[SRC_CLIENT] >= STREAM_COMPLETE) && (state[SRC_SERVER] >= STREAM_COMPLETE) &&
-        (hi_flow_data != nullptr))
+    if ((state[SRC_CLIENT] >= STREAM_COMPLETE) && (state[SRC_SERVER] >= STREAM_COMPLETE))
     {
-        session_data->deallocate_hi_memory(hi_flow_data);
-        delete hi_flow_data;
-        hi_flow_data = nullptr;
-
-        assert(session_data->concurrent_streams > 0);
-        session_data->concurrent_streams -= 1;
+        if (hi_flow_data != nullptr)
+        {
+            session_data->deallocate_hi_memory(hi_flow_data);
+            delete hi_flow_data;
+            hi_flow_data = nullptr;
+        }
+        session_data->delete_stream = true;
     }
 }
 

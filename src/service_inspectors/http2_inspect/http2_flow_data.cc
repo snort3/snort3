@@ -94,6 +94,9 @@ Http2FlowData::~Http2FlowData()
         delete hi_ss[k];
         delete[] frame_data[k];
     }
+
+    for (Http2Stream* stream : streams)
+        delete stream;
 }
 
 HttpFlowData* Http2FlowData::get_hi_flow_data() const
@@ -110,41 +113,125 @@ void Http2FlowData::set_hi_flow_data(HttpFlowData* flow)
     stream->set_hi_flow_data(flow);
 }
 
-class Http2Stream* Http2FlowData::find_stream(uint32_t key) const
+size_t Http2FlowData::size_of()
 {
-    for (const StreamInfo& stream_info : streams)
+    // There are MAX_CONCURRENT_STREAMS + 1 (for stream id 0).
+    // Each stream will have class Http2Stream allocated and a node in streams list
+    const size_t max_streams_size = (MAX_CONCURRENT_STREAMS + 1) *
+        (sizeof(std::_List_node<Http2Stream*>) + sizeof(class Http2Stream));
+    return sizeof(*this) + max_streams_size;
+}
+
+Http2Stream* Http2FlowData::find_stream(const uint32_t key) const
+{
+    for (Http2Stream* stream : streams)
     {
-        if (stream_info.id == key)
-            return stream_info.stream;
+        if (stream->get_stream_id() == key)
+            return stream;
     }
 
     return nullptr;
 }
 
-class Http2Stream* Http2FlowData::get_stream(uint32_t key)
+Http2Stream* Http2FlowData::get_stream(const uint32_t key, const SourceId source_id)
 {
     class Http2Stream* stream = find_stream(key);
     if (!stream)
     {
+        if (concurrent_streams >= CONCURRENT_STREAMS_LIMIT)
+        {
+            *infractions[source_id] += INF_TOO_MANY_STREAMS;
+            events[source_id]->create_event(EVENT_TOO_MANY_STREAMS);
+            Http2Module::increment_peg_counts(PEG_FLOWS_OVER_STREAM_LIMIT);
+            abort_flow[SRC_CLIENT] = true;
+            abort_flow[SRC_SERVER] = true;
+            return nullptr;
+        }
+
+        // Verify stream id is bigger than all previous streams initiated by same side
+        if (key != 0)
+        {
+            const bool non_housekeeping_frame = frame_type[source_id] == FT_HEADERS ||
+                                                frame_type[source_id] == FT_DATA ||
+                                                frame_type[source_id] == FT_PUSH_PROMISE;
+            if (non_housekeeping_frame)
+            {
+                // If we see both sides of traffic, odd stream id should be initiated by client,
+                // even by server. If we can't see one side, can't guarantee order
+                const bool is_on_expected_side = (key % 2 != 0 && source_id == SRC_CLIENT) ||
+                                                 (key % 2 == 0 && source_id == SRC_SERVER);
+                if (is_on_expected_side)
+                {
+                    if (key <= max_stream_id[source_id])
+                    {
+                        *infractions[source_id] += INF_INVALID_STREAM_ID;
+                        events[source_id]->create_event(EVENT_INVALID_STREAM_ID);
+                        return nullptr;
+                    }
+                    else
+                        max_stream_id[source_id] = key;
+                }
+            }
+            else // housekeeping frame
+            {
+                // Delete stream after this frame is evaluated.
+                // Prevents recreating and keeping already completed streams for
+                // housekeeping frames
+                delete_stream = true;
+            }
+        }
+
+        // Allocate new stream
         stream = new Http2Stream(key, this);
-        streams.emplace_front(key, stream);
+        streams.emplace_front(stream);
+
+        // stream 0 does not count against stream limit
+        if (key > 0)
+        {
+            concurrent_streams += 1;
+            if (concurrent_streams > Http2Module::get_peg_counts(PEG_MAX_CONCURRENT_STREAMS))
+                Http2Module::increment_peg_counts(PEG_MAX_CONCURRENT_STREAMS);
+        }
     }
     return stream;
 }
 
-class Http2Stream* Http2FlowData::get_hi_stream() const
+void Http2FlowData::delete_processing_stream()
+{
+    std::list<Http2Stream*>::iterator it;
+    for (it = streams.begin(); it != streams.end(); ++it)
+    {
+        if ((*it)->get_stream_id() == processing_stream_id)
+        {
+            delete *it;
+            streams.erase(it);
+            delete_stream = false;
+            assert(concurrent_streams > 0);
+            concurrent_streams -= 1;
+            return;
+        }
+    }
+    assert(false);
+}
+
+Http2Stream* Http2FlowData::get_hi_stream() const
 {
     return find_stream(stream_in_hi);
 }
 
-class Http2Stream* Http2FlowData::get_current_stream(HttpCommon::SourceId source_id)
+Http2Stream* Http2FlowData::find_current_stream(const SourceId source_id) const
 {
-    return get_stream(current_stream[source_id]);
+    return find_stream(current_stream[source_id]);
 }
 
-class Http2Stream* Http2FlowData::get_processing_stream()
+Http2Stream* Http2FlowData::find_processing_stream() const
 {
-    return get_stream(get_processing_stream_id());
+    return find_stream(get_processing_stream_id());
+}
+
+Http2Stream* Http2FlowData::get_processing_stream(const SourceId source_id)
+{
+    return get_stream(get_processing_stream_id(), source_id);
 }
 
 uint32_t Http2FlowData::get_processing_stream_id() const
@@ -154,7 +241,7 @@ uint32_t Http2FlowData::get_processing_stream_id() const
 
 // processing stream is the current stream except for push promise frames with properly formatted
 // promised stream IDs
-void Http2FlowData::set_processing_stream_id(const HttpCommon::SourceId source_id)
+void Http2FlowData::set_processing_stream_id(const SourceId source_id)
 {
     assert(processing_stream_id == NO_STREAM_ID);
     if (frame_type[source_id] == FT_PUSH_PROMISE)
@@ -165,7 +252,7 @@ void Http2FlowData::set_processing_stream_id(const HttpCommon::SourceId source_i
         processing_stream_id = current_stream[source_id];
 }
 
-uint32_t Http2FlowData::get_current_stream_id(const HttpCommon::SourceId source_id) const
+uint32_t Http2FlowData::get_current_stream_id(const SourceId source_id) const
 {
     return current_stream[source_id];
 }

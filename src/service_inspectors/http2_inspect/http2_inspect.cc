@@ -86,7 +86,8 @@ bool Http2Inspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
     if (!session_data->frame_in_detection)
         return false;
 
-    Http2Stream* const stream = session_data->get_processing_stream();
+    Http2Stream* const stream = session_data->find_processing_stream();
+    assert(stream != nullptr);
     const Field& buffer = stream->get_buf(id);
     if (buffer.length() <= 0)
         return false;
@@ -128,9 +129,17 @@ void Http2Inspect::eval(Packet* p)
     }
 
     session_data->set_processing_stream_id(source_id);
-    Http2Stream* stream = session_data->get_processing_stream();
+    Http2Stream* stream = session_data->get_processing_stream(source_id);
+    if (!stream)
+    {
+        delete[] session_data->frame_data[source_id];
+        session_data->frame_data[source_id] = nullptr;
+        session_data->frame_data_size[source_id] = 0;
+        session_data->processing_stream_id = NO_STREAM_ID;
+        return;
+    }
+
     assert(session_data->processing_stream_id != NO_STREAM_ID);
-    assert(stream);
     session_data->stream_in_hi = stream->get_stream_id();
 
     Http2Module::increment_peg_counts(PEG_TOTAL_BYTES, (uint64_t)(FRAME_HEADER_LENGTH) +
@@ -183,8 +192,11 @@ void Http2Inspect::clear(Packet* p)
 
     session_data->frame_in_detection = false;
 
-    Http2Stream* stream = session_data->get_processing_stream();
+    Http2Stream* stream = session_data->find_processing_stream();
+    assert(stream != nullptr);
     stream->clear_frame();
+    if (session_data->delete_stream)
+        session_data->delete_processing_stream();
     session_data->stream_in_hi = NO_STREAM_ID;
     session_data->processing_stream_id = NO_STREAM_ID;
     session_data->processing_partial_header = false;
