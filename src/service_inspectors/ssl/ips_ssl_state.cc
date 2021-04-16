@@ -102,7 +102,7 @@ IpsOption::EvalStatus SslStateOption::eval(Cursor&, Packet* pkt)
     if (!pkt->flow)
         return NO_MATCH;
 
-    SSLData* sd = get_ssl_session_data(pkt->flow);
+    SSLData* sd = SslBaseFlowData::get_ssl_session_data(pkt->flow);
 
     if (!sd)
         return NO_MATCH;

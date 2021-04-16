@@ -1,3 +1,6 @@
+set (SSL_INCLUDES
+    ssl_flow_data.h
+)
 
 set( FILE_LIST
     ips_ssl_state.cc
@@ -5,10 +8,12 @@ set( FILE_LIST
     ssl_config.h
     ssl_inspector.cc
     ssl_inspector.h
+    ssl_flow_data.cc
     ssl_module.cc
     ssl_module.h
     ssl_splitter.cc
     ssl_splitter.h
+    ${SSL_INCLUDES}
 )
 
 # can't be be linked dynamically yet
@@ -20,3 +25,6 @@ set( FILE_LIST
 
 #endif (STATIC_INSPECTORS)
 
+install(FILES ${SSL_INCLUDES}
+    DESTINATION "${INCLUDE_INSTALL_PATH}/service_inspectors/ssl/"
+)

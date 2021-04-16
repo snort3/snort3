@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,37 +16,45 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef SSL_INSPECTOR_H
-#define SSL_INSPECTOR_H
+#ifndef SSL_FLOW_DATA_H
+#define SSL_FLOW_DATA_H
 
-// Implementation header with definitions, datatypes and flowdata class for SSL service inspector.
+#include "flow/flow_data.h"
 
-#include "flow/flow.h"
-#include "ssl_flow_data.h"
+#define GID_SSL 137
 
-class SslFlowData : public SslBaseFlowData
+#define     SSL_INVALID_CLIENT_HELLO               1
+#define     SSL_INVALID_SERVER_HELLO               2
+#define     SSL_ALERT_HB_REQUEST                   3
+#define     SSL_ALERT_HB_RESPONSE                  4
+
+struct SSLData
+{
+    uint32_t ssn_flags;
+    uint16_t partial_rec_len[4];
+};
+
+namespace snort
+{
+    class Flow;
+}
+
+class SO_PUBLIC SslBaseFlowData : public snort::FlowData
 {
 public:
-    SslFlowData();
-    ~SslFlowData() override;
+    SslBaseFlowData() : snort::FlowData(inspector_id) {}
 
-    static void init()
-    { assign_ssl_inspector_id(snort::FlowData::create_flow_data_id()); }
-
-    size_t size_of() override
-    { return sizeof(*this); }
-
-    SSLData& get_session() override
-    { return session; }
+    virtual SSLData& get_session() = 0;
 
 public:
-    struct {
-        bool orig_flag : 1;
-        bool switch_in : 1;
-    } finalize_info;
+    static SSLData* get_ssl_session_data(snort::Flow* flow);
+    static unsigned get_ssl_inspector_id() { return inspector_id; }
+
+protected:
+    static void assign_ssl_inspector_id(unsigned u) { inspector_id = u; }
 
 private:
-    SSLData session;
+    static unsigned inspector_id;
 };
 
 #endif

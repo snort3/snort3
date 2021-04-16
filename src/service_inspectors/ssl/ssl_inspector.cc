@@ -43,10 +43,15 @@
 
 using namespace snort;
 
+#define SSLPP_ENCRYPTED_FLAGS \
+    (SSL_HS_SDONE_FLAG | SSL_CLIENT_KEYX_FLAG | \
+    SSL_CAPP_FLAG | SSL_SAPP_FLAG)
+#define SSLPP_ENCRYPTED_FLAGS2 \
+    (SSL_HS_SDONE_FLAG | SSL_CHANGE_CIPHER_FLAG | \
+    SSL_CAPP_FLAG | SSL_SAPP_FLAG)
+
 THREAD_LOCAL ProfileStats sslPerfStats;
 THREAD_LOCAL SslStats sslstats;
-
-unsigned SslFlowData::inspector_id = 0;
 
 const PegInfo ssl_peg_names[] =
 {
@@ -74,7 +79,7 @@ const PegInfo ssl_peg_names[] =
     { CountType::END, nullptr, nullptr }
 };
 
-SslFlowData::SslFlowData() : FlowData(inspector_id)
+SslFlowData::SslFlowData() : SslBaseFlowData()
 {
     memset(&session, 0, sizeof(session));
     finalize_info = {};
@@ -93,13 +98,7 @@ static SSLData* SetNewSSLData(Packet* p)
 {
     SslFlowData* fd = new SslFlowData;
     p->flow->set_flow_data(fd);
-    return &fd->session;
-}
-
-SSLData* get_ssl_session_data(Flow* flow)
-{
-    SslFlowData* fd = (SslFlowData*)flow->get_flow_data(SslFlowData::inspector_id);
-    return fd ? &fd->session : nullptr;
+    return &fd->get_session();
 }
 
 static void SSL_UpdateCounts(const uint32_t new_flags)
@@ -287,7 +286,7 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
     Profile profile(sslPerfStats);
 
     /* Attempt to get a previously allocated SSL block. */
-    SSLData* sd = get_ssl_session_data(p->flow);
+    SSLData* sd = SslBaseFlowData::get_ssl_session_data(p->flow);
 
     if (sd == nullptr)
     {
@@ -449,7 +448,7 @@ public:
     {
         FinalizePacketEvent* fp_event = (FinalizePacketEvent*)&e;
         const Packet* pkt = fp_event->get_packet();
-        SslFlowData* fd = (SslFlowData*)pkt->flow->get_flow_data(SslFlowData::inspector_id);
+        SslFlowData* fd = (SslFlowData*)pkt->flow->get_flow_data(SslBaseFlowData::get_ssl_inspector_id());
         if (fd and fd->finalize_info.switch_in)
         {
             pkt->flow->flags.trigger_finalize_event = fd->finalize_info.orig_flag;
