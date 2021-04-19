@@ -243,6 +243,7 @@ find_else_create(const Key& key, bool* new_data)
     // return the data pointer (below), or else, some other thread might
     // delete it before we got a chance to return it.
     Purgatory tmp_data;
+    Data data = Data(new Value);
 
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
@@ -258,7 +259,6 @@ find_else_create(const Key& key, bool* new_data)
     stats.adds++;
     if ( new_data )
         *new_data = true;
-    Data data = Data(new Value);
 
     //  Add key/data pair to front of list.
     list.emplace_front(std::make_pair(key, data));
