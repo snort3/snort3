@@ -116,6 +116,9 @@ void Dce2Smb2TreeTracker::process_close_request(const Smb2Hdr* smb_header)
     }
     if (file_tracker->close())
         close_file(file_id);
+
+    if (share_type != SMB2_SHARE_TYPE_DISK)
+        DCE2_CoCleanTracker(co_tracker);
 }
 
 uint64_t Dce2Smb2TreeTracker::get_durable_file_id(
