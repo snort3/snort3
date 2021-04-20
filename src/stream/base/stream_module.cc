@@ -37,6 +37,7 @@ using namespace snort;
 using namespace std;
 
 THREAD_LOCAL const Trace* stream_trace = nullptr;
+static THREAD_LOCAL timeval reload_time { };
 
 //-------------------------------------------------------------------------
 // stream module

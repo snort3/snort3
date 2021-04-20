@@ -114,7 +114,6 @@ public:
 
 private:
     uint32_t held_packet_timeout;
-    timeval reload_time{};
 };
 
 class StreamUnloadReloadResourceManager : public snort::ReloadResourceTuner
