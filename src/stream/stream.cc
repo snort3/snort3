@@ -796,6 +796,9 @@ uint8_t Stream::get_tcp_options_len(Flow* flow, bool to_server)
 
 bool Stream::set_packet_action_to_hold(Packet* p)
 {
+    if ( !p or !p->flow or !p->flow->session )
+        return false;
+
     return p->flow->session->set_packet_action_to_hold(p);
 }
 
