@@ -172,7 +172,7 @@ while [ $# -ne 0 ]; do
             CMakeGenerator="$optarg"
             ;;
         --prefix=*)
-            prefix=$optarg
+            prefix="$optarg"
             append_cache_entry CMAKE_INSTALL_PREFIX PATH $optarg
             ;;
         --enable-code-coverage)
