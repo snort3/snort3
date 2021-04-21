@@ -1,3 +1,55 @@
+2021/04/21 - 3.1.4.0
+
+-- appid: (fix style) Local variable 'version' shadows outer variable
+-- appid: Delete third-party connections with context only if third-party reload is not in progress
+-- appid: clean up lua stack on C->lua function exit
+-- appid: clean-up parameters in service_bootp
+-- appid: detect payload based on dns host
+-- appid: in continue state for ftp traffic, do not change service to unknown on validation failure
+-- appid: monitor only the networks specified in rna configuration
+-- appid: refactor to set http scan flags in one place
+-- appid: remove detectors which are available in odp
+-- appid: remove duplicate rtmp code
+-- binder: update flow data inspector on a service change
+-- build: add better support for flex lexer; Thanks to Özkan KIRIK and Moin for reporting the issue.
+-- codecs: use held packet SYN in Tcp header creation
+-- copyright: Update year to 2021
+-- dce_rpc: Added a cleanup condition for DCERPC in close request
+-- dce_rpc: DCERPC Support over SMBv2
+-- dce_rpc: Fixed prototype mismatch. Smb2Tid doesn't need to be inline.
+-- doc: add documentation for script_data ips option
+-- doc: revert documentation related to script_data ips option
+-- framework: Adding IT_FIRST inspector type to analyze the first packet of a flow
+-- hash: prepond object creation in LRU cache find_else_create
+-- host_tracker: fix bug in set_visibility
+-- http2_inspect: fix possible read-after-free in hpack decoder
+-- http2_inspect: free streams in completed/error state
+-- http_inspect: fix end of script match after reload
+-- http_inspect: remove detained inspection config
+-- ips: allow null detection trees with negated lists
+-- ips_options: add sticky buffer script_data ips option within normalized javascripts payload
+-- main: Adding reload id to track config/module/policy reloads
+-- main: Log holding verdict only if packet was actually held.
+-- main: Update memcap for detained packets.
+-- netflow: add device list configuration
+-- netflow: add filter matching for v5 decoder
+-- netflow: get correct zone info from packet
+-- packet_io: If packet has no daq_instance, use thread-local daq_instance.
+-- packet_tracer: Appid daq trace log
+-- packet_tracer: fix trace condition for setting IP_PROTO
+-- payload_injector: send go away frame
+-- pcre: revert change that disabled jit
+-- reputation: Registering inspector to the IT_FIRST type
+-- rna: add the smb fingerprint processor to the get_or_create / set processor api
+-- ssl: refactoring SSLData out so it can be reused
+-- stream: Add held packet to retry queue when requested.
+-- stream: Add partial_flush. Flush one side of flow immediately.
+-- stream: IP frag packets won't have a flow so do not try to hold them.
+-- stream: fetch held packet SYN
+-- stream: fix race condition in HPQReloadTuner
+-- stream: store held packet SYN
+-- utils: enable Flex C++ mode via its option
+
 2021/03/27 - 3.1.3.0
 
 -- actions: Dynamically construct the default eval order for all the loaded IPS actions

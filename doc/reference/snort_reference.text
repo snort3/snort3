@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.3.0 2021-03-27 11:49:00 EDT TST
+Revision 3.1.4.0 2021-04-21 12:58:32 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -243,29 +243,30 @@ Table of Contents
     7.95. s7commplus_content
     7.96. s7commplus_func
     7.97. s7commplus_opcode
-    7.98. sd_pattern
-    7.99. seq
-    7.100. service
-    7.101. sha256
-    7.102. sha512
-    7.103. sid
-    7.104. sip_body
-    7.105. sip_header
-    7.106. sip_method
-    7.107. sip_stat_code
-    7.108. so
-    7.109. soid
-    7.110. ssl_state
-    7.111. ssl_version
-    7.112. stream_reassemble
-    7.113. stream_size
-    7.114. tag
-    7.115. target
-    7.116. tos
-    7.117. ttl
-    7.118. urg
-    7.119. window
-    7.120. wscale
+    7.98. script_data
+    7.99. sd_pattern
+    7.100. seq
+    7.101. service
+    7.102. sha256
+    7.103. sha512
+    7.104. sid
+    7.105. sip_body
+    7.106. sip_header
+    7.107. sip_method
+    7.108. sip_stat_code
+    7.109. so
+    7.110. soid
+    7.111. ssl_state
+    7.112. ssl_version
+    7.113. stream_reassemble
+    7.114. stream_size
+    7.115. tag
+    7.116. target
+    7.117. tos
+    7.118. ttl
+    7.119. urg
+    7.120. window
+    7.121. wscale
 
 8. Search Engine Modules
 9. SO Rule Modules
@@ -605,6 +606,8 @@ Peg counts:
   * detection.raw_header_searches: fast pattern searches in raw
     header buffer (sum)
   * detection.method_searches: fast pattern searches in method buffer
+    (sum)
+  * detection.script_searches: fast pattern searches in script buffer
     (sum)
   * detection.stat_code_searches: fast pattern searches in status
     code buffer (sum)
@@ -2411,6 +2414,9 @@ Configuration:
     on startup
   * bool appid.log_all_sessions = false: enable logging of all appid
     sessions
+  * bool appid.enable_rna_filter = false: monitor only the networks
+    specified in rna configuration
+  * string appid.rna_conf_path: path to rna configuration file
 
 Commands:
 
@@ -2942,6 +2948,15 @@ Peg counts:
     missing tree tracker (sum)
   * dce_smb.v2_session_ignored: total number of packets ignored due
     to missing session tracker (sum)
+  * dce_smb.v2_ioctl: total number of ioctl calls (sum)
+  * dce_smb.v2_ioctl_err_resp: total number of ioctl errors responses
+    (sum)
+  * dce_smb.v2_ioctl_inv_str_sz: total number of ioctl invalid
+    structure size (sum)
+  * dce_smb.v2_ioctl_req_hdr_err: total number of ioctl request
+    header errors (sum)
+  * dce_smb.v2_ioctl_resp_hdr_err: total number of ioctl response
+    header errors (sum)
   * dce_smb.concurrent_sessions: total concurrent sessions (now)
   * dce_smb.max_concurrent_sessions: maximum concurrent sessions
     (max)
@@ -3647,14 +3662,13 @@ Configuration:
     response bodies
   * bool http_inspect.decompress_zip = false: decompress zip files in
     response bodies
-  * bool http_inspect.detained_inspection = false: obsolete, do not
-    configure
   * bool http_inspect.script_detection = false: inspect JavaScript
     immediately upon script end
-  * bool http_inspect.normalize_javascript = false: normalize
-    JavaScript in response bodies
-  * int http_inspect.normalization_depth = 0: number of input
-    JavaScript bytes to normalize { -1:65535 }
+  * bool http_inspect.normalize_javascript = false: use legacy
+    normalizer to normalize JavaScript in response bodies
+  * int http_inspect.js_normalization_depth = 0: number of input
+    JavaScript bytes to normalize with enhanced normalizer (-1 max
+    allowed value) (experimental) { -1:max53 }
   * int http_inspect.max_javascript_whitespaces = 200: maximum
     consecutive whitespaces allowed within the JavaScript obfuscated
     data { 1:65535 }
@@ -4137,6 +4151,21 @@ Configuration:
 
   * string netflow.dump_file: file name to dump netflow cache on
     shutdown; won’t dump by default
+  * int netflow.update_timeout = 3600: the interval at which the
+    system updates host cache information { 0:max32 }
+  * addr netflow.rules[].device_ip: restrict the NetFlow devices from
+    which Snort will analyze packets
+  * bool netflow.rules[].exclude = false: exclude the NetFlow records
+    that match this rule
+  * string netflow.rules[].zones: generate events only for NetFlow
+    packets that originate from these zones
+  * string netflow.rules[].networks: generate events for NetFlow
+    records that contain an initiator or responder IP from these
+    networks
+  * bool netflow.rules[].create_host = false: generate a new host
+    event
+  * bool netflow.rules[].create_service = false: generate a new or
+    changed service event
 
 Peg counts:
 
@@ -4634,7 +4663,7 @@ Peg counts:
 
 Help: reputation inspection
 
-Type: inspector (network)
+Type: inspector (first)
 
 Usage: global
 
@@ -5547,6 +5576,8 @@ Peg counts:
     timed out (sum)
   * stream_tcp.held_packet_purges: number of held packets that were
     purged without flushing (sum)
+  * stream_tcp.held_packet_retries: number of held packets that were
+    added to the retry queue (sum)
   * stream_tcp.cur_packets_held: number of packets currently held
     (now)
   * stream_tcp.max_packets_held: maximum number of packets held
@@ -7443,7 +7474,18 @@ Configuration:
   * string s7commplus_opcode.~: opcode code to match
 
 
-7.98. sd_pattern
+7.98. script_data
+
+--------------
+
+Help: rule option to set detection cursor to normalized script data
+
+Type: ips_option
+
+Usage: detect
+
+
+7.99. sd_pattern
 
 --------------
 
@@ -7467,7 +7509,7 @@ Peg counts:
   * sd_pattern.terminated: hyperscan terminated (sum)
 
 
-7.99. seq
+7.100. seq
 
 --------------
 
@@ -7483,7 +7525,7 @@ Configuration:
     range { 0: }
 
 
-7.100. service
+7.101. service
 
 --------------
 
@@ -7498,7 +7540,7 @@ Configuration:
   * string service.*: one or more comma-separated service names
 
 
-7.101. sha256
+7.102. sha256
 
 --------------
 
@@ -7518,7 +7560,7 @@ Configuration:
     start of buffer
 
 
-7.102. sha512
+7.103. sha512
 
 --------------
 
@@ -7538,7 +7580,7 @@ Configuration:
     start of buffer
 
 
-7.103. sid
+7.104. sid
 
 --------------
 
@@ -7553,7 +7595,7 @@ Configuration:
   * int sid.~: signature id { 1:max32 }
 
 
-7.104. sip_body
+7.105. sip_body
 
 --------------
 
@@ -7564,7 +7606,7 @@ Type: ips_option
 Usage: detect
 
 
-7.105. sip_header
+7.106. sip_header
 
 --------------
 
@@ -7576,7 +7618,7 @@ Type: ips_option
 Usage: detect
 
 
-7.106. sip_method
+7.107. sip_method
 
 --------------
 
@@ -7591,7 +7633,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-7.107. sip_stat_code
+7.108. sip_stat_code
 
 --------------
 
@@ -7606,7 +7648,7 @@ Configuration:
   * int sip_stat_code.*code: status code { 1:999 }
 
 
-7.108. so
+7.109. so
 
 --------------
 
@@ -7623,7 +7665,7 @@ Configuration:
     buffer
 
 
-7.109. soid
+7.110. soid
 
 --------------
 
@@ -7639,7 +7681,7 @@ Configuration:
     like 3_45678_9
 
 
-7.110. ssl_state
+7.111. ssl_state
 
 --------------
 
@@ -7668,7 +7710,7 @@ Configuration:
     unknown
 
 
-7.111. ssl_version
+7.112. ssl_version
 
 --------------
 
@@ -7695,7 +7737,7 @@ Configuration:
     tls1.2
 
 
-7.112. stream_reassemble
+7.113. stream_reassemble
 
 --------------
 
@@ -7716,7 +7758,7 @@ Configuration:
     remainder of the session
 
 
-7.113. stream_size
+7.114. stream_size
 
 --------------
 
@@ -7734,7 +7776,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-7.114. tag
+7.115. tag
 
 --------------
 
@@ -7753,7 +7795,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1:max32 }
 
 
-7.115. target
+7.116. target
 
 --------------
 
@@ -7769,7 +7811,7 @@ Configuration:
     dst_ip }
 
 
-7.116. tos
+7.117. tos
 
 --------------
 
@@ -7784,7 +7826,7 @@ Configuration:
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
 
 
-7.117. ttl
+7.118. ttl
 
 --------------
 
@@ -7800,7 +7842,7 @@ Configuration:
     0:255 }
 
 
-7.118. urg
+7.119. urg
 
 --------------
 
@@ -7816,7 +7858,7 @@ Configuration:
     { 0:65535 }
 
 
-7.119. window
+7.120. window
 
 --------------
 
@@ -7832,7 +7874,7 @@ Configuration:
     range { 0:65535 }
 
 
-7.120. wscale
+7.121. wscale
 
 --------------
 
@@ -8482,6 +8524,8 @@ these libraries see the Getting Started section of the manual.
     logging appid statistics { 1:max32 }
   * int appid.app_stats_rollover_size = 20971520: max file size for
     appid stats before rolling over the log file { 0:max32 }
+  * bool appid.enable_rna_filter = false: monitor only the networks
+    specified in rna configuration
   * string appid_listener.file: output data to given file
   * bool appid_listener.json_logging = false: log appid data in json
     format
@@ -8492,6 +8536,7 @@ these libraries see the Getting Started section of the manual.
   * bool appid.log_stats = false: enable logging of appid statistics
   * int appid.memcap = 1048576: max size of the service cache before
     we start pruning the cache { 1024:maxSZ }
+  * string appid.rna_conf_path: path to rna configuration file
   * string appids.~: comma separated list of application names
   * bool appid.tp_appid_config_dump: print third party configuration
     on startup
@@ -9044,8 +9089,6 @@ these libraries see the Getting Started section of the manual.
     response bodies
   * bool http_inspect.decompress_zip = false: decompress zip files in
     response bodies
-  * bool http_inspect.detained_inspection = false: obsolete, do not
-    configure
   * string http_inspect.ignore_unreserved: do not alert when the
     specified unreserved characters are percent-encoded in a
     URI.Unreserved characters are 0-9, a-z, A-Z, period, underscore,
@@ -9058,13 +9101,14 @@ these libraries see the Getting Started section of the manual.
     mapping to normalize characters
   * string http_inspect.iis_unicode_map_file: file containing code
     points for IIS unicode. { (optional) }
+  * int http_inspect.js_normalization_depth = 0: number of input
+    JavaScript bytes to normalize with enhanced normalizer (-1 max
+    allowed value) (experimental) { -1:max53 }
   * int http_inspect.max_javascript_whitespaces = 200: maximum
     consecutive whitespaces allowed within the JavaScript obfuscated
     data { 1:65535 }
-  * int http_inspect.normalization_depth = 0: number of input
-    JavaScript bytes to normalize { -1:65535 }
-  * bool http_inspect.normalize_javascript = false: normalize
-    JavaScript in response bodies
+  * bool http_inspect.normalize_javascript = false: use legacy
+    normalizer to normalize JavaScript in response bodies
   * bool http_inspect.normalize_utf = true: normalize charset utf
     encodings in response bodies
   * int http_inspect.oversize_dir_length = 300: maximum length for
@@ -9295,6 +9339,21 @@ these libraries see the Getting Started section of the manual.
     }
   * string netflow.dump_file: file name to dump netflow cache on
     shutdown; won’t dump by default
+  * bool netflow.rules[].create_host = false: generate a new host
+    event
+  * bool netflow.rules[].create_service = false: generate a new or
+    changed service event
+  * addr netflow.rules[].device_ip: restrict the NetFlow devices from
+    which Snort will analyze packets
+  * bool netflow.rules[].exclude = false: exclude the NetFlow records
+    that match this rule
+  * string netflow.rules[].networks: generate events for NetFlow
+    records that contain an initiator or responder IP from these
+    networks
+  * string netflow.rules[].zones: generate events only for NetFlow
+    packets that originate from these zones
+  * int netflow.update_timeout = 3600: the interval at which the
+    system updates host cache information { 0:max32 }
   * multi network.checksum_drop = none: drop if checksum is bad { all
     | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
   * multi network.checksum_eval = all: checksums to verify { all | ip
@@ -10549,6 +10608,15 @@ these libraries see the Getting Started section of the manual.
   * dce_smb.v2_inv_file_ctx_err: total number of times null file
     context are seen resulting in not being able to set file size
     (sum)
+  * dce_smb.v2_ioctl_err_resp: total number of ioctl errors responses
+    (sum)
+  * dce_smb.v2_ioctl_inv_str_sz: total number of ioctl invalid
+    structure size (sum)
+  * dce_smb.v2_ioctl_req_hdr_err: total number of ioctl request
+    header errors (sum)
+  * dce_smb.v2_ioctl_resp_hdr_err: total number of ioctl response
+    header errors (sum)
+  * dce_smb.v2_ioctl: total number of ioctl calls (sum)
   * dce_smb.v2_logoff_inv_str_sz: total number of SMBv2 logoff
     packets seen with invalid structure size (sum)
   * dce_smb.v2_logoff: total number of SMBv2 logoff (sum)
@@ -10747,6 +10815,8 @@ these libraries see the Getting Started section of the manual.
   * detection.raw_key_searches: fast pattern searches in raw key
     buffer (sum)
   * detection.raw_searches: fast pattern searches in raw packet data
+    (sum)
+  * detection.script_searches: fast pattern searches in script buffer
     (sum)
   * detection.stat_code_searches: fast pattern searches in status
     code buffer (sum)
@@ -11344,6 +11414,8 @@ these libraries see the Getting Started section of the manual.
   * stream_tcp.gaps: missing data between PDUs (sum)
   * stream_tcp.held_packet_purges: number of held packets that were
     purged without flushing (sum)
+  * stream_tcp.held_packet_retries: number of held packets that were
+    added to the retry queue (sum)
   * stream_tcp.held_packet_rexmits: number of retransmits of held
     packets (sum)
   * stream_tcp.held_packets_dropped: number of held packets dropped
@@ -12639,6 +12711,8 @@ and are not applicable elsewhere.
     function code
   * s7commplus_opcode (ips_option): rule option to check s7commplus
     opcode code
+  * script_data (ips_option): rule option to set detection cursor to
+    normalized script data
   * sd_pattern (ips_option): rule option for detecting sensitive data
   * search_engine (basic): configure fast pattern matcher
   * seq (ips_option): rule option to check TCP sequence number
@@ -12996,6 +13070,8 @@ and are not applicable elsewhere.
     function code
   * ips_option::s7commplus_opcode: rule option to check s7commplus
     opcode code
+  * ips_option::script_data: rule option to set detection cursor to
+    normalized script data
   * ips_option::sd_pattern: rule option for detecting sensitive data
   * ips_option::seq: rule option to check TCP sequence number
   * ips_option::service: rule option to specify list of services for
