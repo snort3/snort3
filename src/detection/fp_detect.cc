@@ -350,10 +350,7 @@ static void rule_tree_match(
 {
     PMX* pmx = (PMX*)user;
 
-    detection_option_tree_root_t* root = (detection_option_tree_root_t*)tree;
     detection_option_eval_data_t eval_data;
-    NCListNode* ncl;
-
     eval_data.p = context->packet;
     eval_data.pmd = pmx->pmd;
     eval_data.flowbit_failed = 0;
@@ -367,7 +364,7 @@ static void rule_tree_match(
          * may muck with an unintended rule */
 
         /* Set flag for not contents so they aren't evaluated */
-        for (ncl = (NCListNode*)neg_list; ncl != nullptr; ncl = ncl->next)
+        for ( NCListNode* ncl = (NCListNode*)neg_list; ncl != nullptr; ncl = ncl->next)
         {
             PMX* neg_pmx = (PMX*)ncl->pmx;
             assert(neg_pmx->pmd->last_check);
@@ -382,6 +379,10 @@ static void rule_tree_match(
             last_check->rebuild_flag = (eval_data.p->packet_flags & PKT_REBUILT_STREAM);
         }
 
+        if ( !tree )
+            return;
+
+        detection_option_tree_root_t* root = (detection_option_tree_root_t*)tree;
         int ret = detection_option_tree_evaluate(root, eval_data);
 
         if ( ret )
@@ -729,7 +730,7 @@ private:
 bool MpseStash::push(void* user, void* tree, int index, void* context, void* list)
 {
     detection_option_tree_root_t* root = (detection_option_tree_root_t*)tree;
-    bool checker = root->otn->checks_flowbits();
+    bool checker = !root or root->otn->checks_flowbits();
     MatchStore& store = checker ? defer : queue;
 
     for ( auto it = store.rbegin(); it != store.rend(); it++ )
