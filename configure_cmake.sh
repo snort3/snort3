@@ -173,7 +173,7 @@ while [ $# -ne 0 ]; do
             ;;
         --prefix=*)
             prefix="$optarg"
-            append_cache_entry CMAKE_INSTALL_PREFIX PATH $optarg
+            append_cache_entry CMAKE_INSTALL_PREFIX PATH "$optarg"
             ;;
         --enable-code-coverage)
             append_cache_entry ENABLE_CODE_COVERAGE     BOOL true
