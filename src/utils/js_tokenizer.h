@@ -24,6 +24,8 @@
 
 #include "log/messages.h"
 
+#include "js_norm_state.h"
+
 class JSTokenizer : public yyFlexLexer
 {
 private:
@@ -35,14 +37,13 @@ private:
         PUNCTUATOR,
         OPERATOR,
         LITERAL,
-        DIRECTIVE,
-        TAG_SCRIPT_OPEN
+        DIRECTIVE
     };
 
 public:
     // we need an out stream because yyFlexLexer API strongly requires that
     JSTokenizer(std::stringstream& in, std::stringstream& out, char* dstbuf,
-        const uint16_t dstlen, const char** ptr, int* bytes_copied);
+        const uint16_t dstlen, const char** ptr, int* bytes_copied, snort::JSNormState& state);
     ~JSTokenizer() override;
 
     // so, Flex will treat this class as yyclass
@@ -66,11 +67,11 @@ private:
     bool eval_string_literal(const char* match_prefix, const char quotes);
     bool eval_regex_literal(const char* match_prefix);
     bool eval_eof();
-    void skip_single_line_comment();
-    void skip_multi_line_comment();
+    bool eval_single_line_comment();
+    bool eval_multi_line_comment();
 
     bool parse_literal(const std::string& match_prefix, const char sentinel_ch,
-        std::string& result, bool is_regex = false);
+        std::string& result, bool& is_alert, bool is_regex = false);
 
     // main lexeme handler
     // all scanned tokens must pass here
@@ -80,7 +81,6 @@ private:
     bool normalize_punctuator(const JSToken prev_tok, const char* lexeme);
     bool normalize_operator(const JSToken prev_tok, const char* lexeme);
     bool normalize_directive(const JSToken prev_tok, const char* lexeme);
-    bool normalize_tag_script_open(const JSToken prev_tok, const char* lexeme);
     bool normalize_undefined(const JSToken prev_tok, const char* lexeme);
     bool normalize_lexeme(const JSToken prev_tok, const char* lexeme);
 
@@ -99,6 +99,8 @@ private:
     std::stringstream temporal;
 
     JSToken prev_tok = UNDEFINED;
+
+    snort::JSNormState& state;
 
 };
 

@@ -357,6 +357,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_PDF_UNSUP_COMP_TYPE,        "PDF file unsupported compression type" },
     { EVENT_PDF_CASC_COMP,              "PDF file cascaded compression" },
     { EVENT_PDF_PARSE_FAILURE,          "PDF file parse failure" },
+    { EVENT_JS_UNEXPECTED_TAG,          "unexpected script tag within inline javascript" },
     { EVENT_LOSS_OF_SYNC,               "not HTTP traffic" },
     { EVENT_CHUNK_ZEROS,                "chunk length has excessive leading zeros" },
     { EVENT_WS_BETWEEN_MSGS,            "white space before or between messages" },
@@ -463,6 +464,7 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "pipelined_flows", "total HTTP connections containing pipelined requests" },
     { CountType::SUM, "pipelined_requests", "total requests placed in a pipeline" },
     { CountType::SUM, "total_bytes", "total HTTP data bytes inspected" },
+    { CountType::SUM, "js_inline_scripts", "total number of inline JavaScripts processed" },
     { CountType::END, nullptr, nullptr }
 };
 

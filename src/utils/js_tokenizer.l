@@ -31,6 +31,10 @@
     #endif
 
     #include "utils/js_tokenizer.h"
+
+    #include <cassert>
+
+    #include "utils/util_cstring.h"
 %}
 
 /* The following grammar was created based on ECMAScript specification */
@@ -869,9 +873,9 @@ LITERAL_INFINITY              Infinity|\xE2\x88\x9E
 LITERAL_NAN                   NaN
 LITERAL                       {LITERAL_NULL}|{LITERAL_BOOLEAN}|{LITERAL_DECIMAL}|{LITERAL_HEX_INTEGER}|{LITERAL_UNDEFINED}|{LITERAL_INFINITY}|{LITERAL_NAN}
 
-HTML_COMMENT_OPEN    <!--
-TAG_SCRIPT_OPEN      (?i:<script)
-TAG_SCRIPT_CLOSE     (?i:<\/script>)
+HTML_COMMENT_OPEN         <!--
+HTML_TAG_SCRIPT_OPEN      (?i:<script)
+HTML_TAG_SCRIPT_CLOSE     (?i:<\/script>)
 
 /* from 0x000 to 0x10FFFD to match undefined tokens */
 /* UTF-8 ranges generated with https://lists.gnu.org/archive/html/help-flex/2005-01/msg00043.html */
@@ -889,11 +893,11 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <*>{WHITESPACES}                                        { /* skip */ }
 <*>{CHAR_ESCAPE_SEQUENCES}                              { /* skip */ }
 <*>{LINE_TERMINATORS}                                   { BEGIN(regex); }
-<*>{TAG_SCRIPT_OPEN}                                    { if ( !eval(TAG_SCRIPT_OPEN, YYText()) ) { update_ptr(); return 1; } }
-<*>{TAG_SCRIPT_CLOSE}                                   { update_ptr(); *ptr -= YYLeng(); return 0; }
-<*>{HTML_COMMENT_OPEN}                                  { skip_single_line_comment(); }
-<*>{SINGLE_LINE_COMMENT}                                { skip_single_line_comment(); }
-<*>{MULTI_LINE_COMMENT}                                 { skip_multi_line_comment(); }
+<*>{HTML_TAG_SCRIPT_OPEN}                               { state.alerts |= ALERT_UNEXPECTED_TAG; update_ptr(); return 1; }
+<*>{HTML_TAG_SCRIPT_CLOSE}                              { update_ptr(); *ptr -= YYLeng(); return 0; }
+<*>{HTML_COMMENT_OPEN}                                  { if ( !eval_single_line_comment() ) { update_ptr(); return 1; } }
+<*>{SINGLE_LINE_COMMENT}                                { if ( !eval_single_line_comment() ) { update_ptr(); return 1; } }
+<*>{MULTI_LINE_COMMENT}                                 { if ( !eval_multi_line_comment() ) { update_ptr(); return 1; } }
 <*>{USE_STRICT_DIRECTIVE}                               { if ( !eval(DIRECTIVE, YYText()) ) { update_ptr(); return 1; } }
 <*>{KEYWORD}                                            { if ( !eval(KEYWORD, YYText()) ) { update_ptr(); return 1; } BEGIN(regex); }
 <*>{CLOSING_BRACES}                                     { if ( !eval(PUNCTUATOR, YYText()) ) { update_ptr(); return 1; } BEGIN(div_op); }
@@ -908,8 +912,6 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <*>.|{ALL_UNICODE}                                      { if ( !eval(UNDEFINED, YYText()) ) { update_ptr(); return 1; } }
 <<EOF>>                                                 { if ( eval_eof() ) { update_ptr(); return 0; } }
 %%
-
-#include <cassert>
 
 // static helper functions
 
@@ -985,6 +987,40 @@ static std::string unescape_unicode(const char* lexeme)
     return res;
 }
 
+static bool contains_script_tags(const std::string& str)
+{
+    static constexpr const char* script = "SCRIPT";
+    static constexpr const int script_len = sizeof("SCRIPT") - 1;
+
+    const char* start = str.c_str();
+    const char* end = start + str.size();
+    const char* it = start;
+
+    while ( it )
+    {
+        it = snort::SnortStrcasestr(it, (end - it), script);
+        if ( it )
+        {
+            int d = it - start;
+            if ( d == 1 )
+            {
+                if ( *(it - 1) == '<' )
+                    return true;
+            }
+            else if ( d >= 2 )
+            {
+                if ( (*(it - 1) == '/' and *(it - 2) == '<') or
+                    (*(it - 1) == '<' and *(it - 2) != '\\') )
+                {
+                    return true;
+                }
+            }
+            it += script_len;
+        }
+    }
+    return false;
+}
+
 // JSTokenizer members
 
 struct JSTokenizer::ScanBuffers
@@ -994,12 +1030,13 @@ struct JSTokenizer::ScanBuffers
 };
 
 JSTokenizer::JSTokenizer(std::stringstream& in, std::stringstream& out, char* dstbuf,
-    uint16_t dstlen, const char** ptr, int* bytes_copied)
+    uint16_t dstlen, const char** ptr, int* bytes_copied, snort::JSNormState& state)
     : yyFlexLexer(in, out),
       dstbuf(dstbuf),
       dstlen(dstlen),
       ptr(ptr),
-      bytes_copied(bytes_copied)
+      bytes_copied(bytes_copied),
+      state(state)
 {
     assert(bytes_copied);
     init();
@@ -1049,7 +1086,11 @@ bool JSTokenizer::eval_identifier(const char* lexeme)
 bool JSTokenizer::eval_string_literal(const char* match_prefix, const char quotes)
 {
     std::string s;
-    bool is_ok = parse_literal(match_prefix, quotes, s);
+    bool is_alert = false;
+    bool is_ok = parse_literal(match_prefix, quotes, s, is_alert);
+
+    if ( is_alert )
+        return false;
 
     return eval(is_ok ? LITERAL : UNDEFINED, s.c_str());
 }
@@ -1059,7 +1100,11 @@ bool JSTokenizer::eval_regex_literal(const char* match_prefix)
     static const std::string regex_flags = "gimsuy";
 
     std::string s;
-    bool is_ok = parse_literal(match_prefix, '/', s, true);
+    bool is_alert = false;
+    bool is_ok = parse_literal(match_prefix, '/', s, is_alert, true);
+
+    if ( is_alert )
+        return false;
 
     // append regex flags
     char c;
@@ -1095,23 +1140,35 @@ bool JSTokenizer::eval_eof()
     return true;
 }
 
-void JSTokenizer::skip_single_line_comment()
+bool JSTokenizer::eval_single_line_comment()
 {
     char c;
+    std::string result;
 
     while ( (c = yyinput()) != 0 )
     {
+        result += c;
         if ( c == '\n' )
             break;
     }
+
+    if ( contains_script_tags(result) )
+    {
+        state.alerts |= ALERT_UNEXPECTED_TAG;
+        return false;
+    }
+    else
+        return true;
 }
 
-void JSTokenizer::skip_multi_line_comment()
+bool JSTokenizer::eval_multi_line_comment()
 {
     char c;
+    std::string result;
 
     while ( (c = yyinput()) != 0 )
     {
+        result += c;
         if ( c == '*' )
         {
             if ( (c = yyinput()) == '/' )
@@ -1120,6 +1177,14 @@ void JSTokenizer::skip_multi_line_comment()
                 unput(c);
         }
     }
+
+    if ( contains_script_tags(result) )
+    {
+        state.alerts |= ALERT_UNEXPECTED_TAG;
+        return false;
+    }
+    else
+        return true;
 }
 
 // Unicode line terminators
@@ -1133,7 +1198,7 @@ void JSTokenizer::skip_multi_line_comment()
 // Call this method when lexer meets those literals
 // match_prefix is a lexeme part already matched by the lexer (with sentinel char)
 bool JSTokenizer::parse_literal(const std::string& match_prefix, const char sentinel_ch,
-    std::string& result, bool is_regex)
+    std::string& result, bool& is_alert, bool is_regex)
 {
     bool is_ok = true;
     char c;
@@ -1206,6 +1271,12 @@ bool JSTokenizer::parse_literal(const std::string& match_prefix, const char sent
     if ( result.find(LS) != std::string::npos or result.find(PS) != std::string::npos )
         is_ok = false;
 
+    if ( contains_script_tags(result) )
+    {
+        is_alert = true;
+        state.alerts |= ALERT_UNEXPECTED_TAG;
+    }
+
     return is_ok;
 }
 
@@ -1237,10 +1308,6 @@ bool JSTokenizer::eval(const JSToken tok, const char* lexeme)
 
     case DIRECTIVE:
         ret = normalize_directive(prev_tok, lexeme);
-    break;
-
-    case TAG_SCRIPT_OPEN:
-        ret = normalize_tag_script_open(prev_tok, lexeme);
     break;
 
     case UNDEFINED:
@@ -1276,7 +1343,6 @@ bool JSTokenizer::normalize_operator(const JSToken prev_tok, const char* lexeme)
     case PUNCTUATOR:
     case LITERAL:
     case DIRECTIVE:
-    case TAG_SCRIPT_OPEN:
     case UNDEFINED:
         return write_output(lexeme);
     break;
@@ -1299,12 +1365,6 @@ bool JSTokenizer::normalize_directive(const JSToken prev_tok, const char* lexeme
     return normalize_lexeme(prev_tok, str.c_str());
 }
 
-bool JSTokenizer::normalize_tag_script_open(const JSToken, const char* lexeme)
-{
-    // FIXIT-L add builtin alert here
-    return write_output(lexeme);
-}
-
 bool JSTokenizer::normalize_undefined(const JSToken, const char* lexeme)
 { return write_output(lexeme); }
 
@@ -1322,7 +1382,6 @@ bool JSTokenizer::normalize_lexeme(const JSToken prev_tok, const char* lexeme)
     case IDENTIFIER:
     case KEYWORD:
     case LITERAL:
-    case TAG_SCRIPT_OPEN:
         return write_output(" " + std::string(lexeme));
     break;
     }

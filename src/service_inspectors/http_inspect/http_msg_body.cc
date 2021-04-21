@@ -290,6 +290,7 @@ void HttpMsgBody::do_js_normalization(const Field& input, Field& output)
         output.set(input);
 
         params->js_norm_param.js_norm->enhanced_normalize(input, enhanced_js_norm_body,
+            transaction->get_infractions(source_id), session_data->events[source_id],
             params->js_norm_param.js_normalization_depth);
 
         const int32_t norm_length =

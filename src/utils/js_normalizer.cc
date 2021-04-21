@@ -30,13 +30,13 @@
 using namespace snort;
 
 int JSNormalizer::normalize(const char* srcbuf, uint16_t srclen, char* dstbuf, uint16_t dstlen,
-        const char** ptr, int* bytes_copied, int64_t norm_depth)
+        const char** ptr, int* bytes_copied, JSNormState& state)
 {
     std::stringstream in, out;
+    in.rdbuf()->pubsetbuf(const_cast<char*>(srcbuf),
+        (state.norm_depth >= srclen) ? srclen : state.norm_depth);
 
-    in.rdbuf()->pubsetbuf(const_cast<char*>(srcbuf), (norm_depth >= srclen) ? srclen : norm_depth);
-    JSTokenizer tokenizer(in, out, dstbuf, dstlen, ptr, bytes_copied);
-
+    JSTokenizer tokenizer(in, out, dstbuf, dstlen, ptr, bytes_copied, state);
     return tokenizer.yylex();
 }
 

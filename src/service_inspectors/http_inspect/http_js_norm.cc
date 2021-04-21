@@ -23,6 +23,7 @@
 
 #include "http_js_norm.h"
 
+#include "utils/js_norm_state.h"
 #include "utils/js_normalizer.h"
 #include "utils/safec.h"
 #include "utils/util_jsnorm.h"
@@ -40,6 +41,7 @@ HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_) :
 HttpJsNorm::~HttpJsNorm()
 {
     delete javascript_search_mpse;
+    delete js_src_attr_search_mpse;
     delete htmltype_search_mpse;
 }
 
@@ -49,10 +51,14 @@ void HttpJsNorm::configure()
         return;
 
     javascript_search_mpse = new SearchTool;
+    js_src_attr_search_mpse = new SearchTool;
     htmltype_search_mpse = new SearchTool;
 
     javascript_search_mpse->add(script_start, script_start_length, JS_JAVASCRIPT);
     javascript_search_mpse->prep();
+
+    js_src_attr_search_mpse->add(script_src_attr, script_src_attr_length, JS_ATTR_SRC);
+    js_src_attr_search_mpse->prep();
 
     struct HiSearchToken
     {
@@ -78,8 +84,8 @@ void HttpJsNorm::configure()
     configure_once = true;
 }
 
-void HttpJsNorm::enhanced_normalize(const Field& input, Field& output,
-    int64_t js_normalization_depth) const
+void HttpJsNorm::enhanced_normalize(const Field& input, Field& output, HttpInfractions* infractions,
+    HttpEventGen* events, int64_t js_normalization_depth) const
 {
     bool js_present = false;
     int index = 0;
@@ -87,6 +93,10 @@ void HttpJsNorm::enhanced_normalize(const Field& input, Field& output,
     const char* const end = ptr + input.length();
 
     uint8_t* buffer = new uint8_t[input.length()];
+
+    JSNormState state;
+    state.norm_depth = js_normalization_depth;
+    state.alerts = 0;
 
     while (ptr < end)
     {
@@ -103,11 +113,14 @@ void HttpJsNorm::enhanced_normalize(const Field& input, Field& output,
                 break;
 
             bool type_js = false;
+            bool external_js = false;
             if (angle_bracket > js_start)
             {
                 int mid;
                 const int script_found = htmltype_search_mpse->find(
                     js_start, (angle_bracket-js_start), search_html_found, false, &mid);
+
+                external_js = is_external_script(js_start, angle_bracket);
 
                 js_start = angle_bracket + 1;
                 if (script_found > 0)
@@ -138,11 +151,13 @@ void HttpJsNorm::enhanced_normalize(const Field& input, Field& output,
             }
 
             ptr = js_start;
-            if (!type_js)
+            if (!type_js or external_js)
                 continue;
 
             JSNormalizer::normalize(js_start, (uint16_t)(end-js_start), (char*)buffer+index,
-                (uint16_t)(input.length() - index), &ptr, &bytes_copied, js_normalization_depth);
+                (uint16_t)(input.length() - index), &ptr, &bytes_copied, state);
+
+            HttpModule::increment_peg_counts(PEG_JS_INLINE);
 
             index += bytes_copied;
         }
@@ -151,7 +166,14 @@ void HttpJsNorm::enhanced_normalize(const Field& input, Field& output,
     }
 
     if (js_present)
+    {
+        if (state.alerts & ALERT_UNEXPECTED_TAG)
+        {
+            *infractions += INF_JS_UNEXPECTED_TAG;
+            events->create_event(EVENT_JS_UNEXPECTED_TAG);
+        }
         output.set(index, buffer, true);
+    }
     else
         delete[] buffer;
 }
@@ -276,9 +298,36 @@ int HttpJsNorm::search_js_found(void*, void*, int index, void* index_ptr, void*)
     *((int*) index_ptr) = index - script_start_length;
     return 1;
 }
+int HttpJsNorm::search_js_src_attr_found(void*, void*, int index, void* index_ptr, void*)
+{
+    *((int*) index_ptr) = index - script_src_attr_length;
+    return 1;
+}
 int HttpJsNorm::search_html_found(void* id, void*, int, void* id_ptr, void*)
 {
     *((int*) id_ptr)  = (int)(uintptr_t)id;
     return 1;
+}
+
+bool HttpJsNorm::is_external_script(const char* it, const char* script_tag_end) const
+{
+    int src_pos;
+
+    while (js_src_attr_search_mpse->find(it, (script_tag_end - it),
+        search_js_src_attr_found, false, &src_pos))
+    {
+        it += (src_pos + script_src_attr_length - 1);
+        while (++it < script_tag_end)
+        {
+            if (*it == ' ')
+                continue;
+            else if (*it == '=')
+                return true;
+            else
+                break;
+        }
+    }
+
+    return false;
 }
 

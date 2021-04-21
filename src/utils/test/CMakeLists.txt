@@ -14,5 +14,6 @@ add_catch_test( js_normalizer_test
     SOURCES
         ${FLEX_js_tokenizer_OUTPUTS}
         ../js_normalizer.cc
+        ../util_cstring.cc
 )
 

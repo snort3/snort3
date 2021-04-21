@@ -42,15 +42,26 @@ using namespace snort;
     char dstbuf[sizeof(expected)];                                         \
     int bytes_copied;                                                      \
     const char* ptr = srcbuf;                                              \
-    int norm_depth = NORM_DEPTH;                                           \
+    JSNormState state;                                                     \
+    state.norm_depth = NORM_DEPTH;                                         \
+    state.alerts = 0;                                                      \
     int ret = JSNormalizer::normalize(srcbuf, sizeof(srcbuf),              \
-        dstbuf, sizeof(dstbuf), &ptr, &bytes_copied, norm_depth);
+        dstbuf, sizeof(dstbuf), &ptr, &bytes_copied, state);
 
 #define VALIDATE(srcbuf, expected)                    \
     CHECK(ret == 0);                                  \
     CHECK((ptr - srcbuf) == sizeof(srcbuf));          \
     CHECK(bytes_copied == sizeof(expected) - 1);      \
     CHECK(!memcmp(dstbuf, expected, bytes_copied));
+
+#define VALIDATE_FAIL(srcbuf, expected, ret_code, ptr_offset)      \
+    CHECK(ret == ret_code);                                        \
+    CHECK((ptr - srcbuf) == ptr_offset);                           \
+    CHECK(bytes_copied == sizeof(expected) - 1);                   \
+    CHECK(!memcmp(dstbuf, expected, bytes_copied));
+
+#define VALIDATE_ALERT(alert)       \
+    CHECK(state.alerts & alert);
 
 // ClamAV test cases
 static const char clamav_buf0[] =
@@ -308,15 +319,6 @@ static const char all_patterns_expected5[] =
     "$2abc _2abc abc $__$ 肖晗 XÆA12 \u0041abc \u00FBdef \u1234ghi ab ww "
     "ab ww ab ww ab ∞ ww 2 abc";
 
-static const char all_patterns_buf6[] =
-    "var a = 1;\n"
-    "<script>\n"
-    "<script var>\n"
-    "var b = 2 ;\n";
-
-static const char all_patterns_expected6[] =
-    "var a=1;<script><script var>var b=2;";
-
 TEST_CASE("all patterns", "[JSNormalizer]")
 {
     SECTION("whitespaces and special characters")
@@ -350,18 +352,20 @@ TEST_CASE("all patterns", "[JSNormalizer]")
         const char* ptr2 = srcbuf2;
         const char* ptr3 = srcbuf3;
         const char* ptr4 = srcbuf4;
-        int norm_depth = NORM_DEPTH;
+        JSNormState state;
+        state.norm_depth = NORM_DEPTH;
+        state.alerts = 0;
 
         int ret0 = JSNormalizer::normalize(srcbuf0, sizeof(srcbuf0), dstbuf0, sizeof(dstbuf0),
-            &ptr0, &bytes_copied0, norm_depth);
+            &ptr0, &bytes_copied0, state);
         int ret1 = JSNormalizer::normalize(srcbuf1, sizeof(srcbuf1), dstbuf1, sizeof(dstbuf1),
-            &ptr1, &bytes_copied1, norm_depth);
+            &ptr1, &bytes_copied1, state);
         int ret2 = JSNormalizer::normalize(srcbuf2, sizeof(srcbuf2), dstbuf2, sizeof(dstbuf2),
-            &ptr2, &bytes_copied2, norm_depth);
+            &ptr2, &bytes_copied2, state);
         int ret3 = JSNormalizer::normalize(srcbuf3, sizeof(srcbuf3), dstbuf3, sizeof(dstbuf3),
-            &ptr3, &bytes_copied3, norm_depth);
+            &ptr3, &bytes_copied3, state);
         int ret4 = JSNormalizer::normalize(srcbuf4, sizeof(srcbuf4), dstbuf4, sizeof(dstbuf4),
-            &ptr4, &bytes_copied4, norm_depth);
+            &ptr4, &bytes_copied4, state);
 
         CHECK(ret0 == 0);
         CHECK((ptr0 - srcbuf0) == sizeof(srcbuf0));
@@ -407,11 +411,6 @@ TEST_CASE("all patterns", "[JSNormalizer]")
     {
         NORMALIZE(all_patterns_buf5, all_patterns_expected5);
         VALIDATE(all_patterns_buf5, all_patterns_expected5);
-    }
-    SECTION("tag script open")
-    {
-        NORMALIZE(all_patterns_buf6, all_patterns_expected6);
-        VALIDATE(all_patterns_buf6, all_patterns_expected6);
     }
 }
 
@@ -828,9 +827,11 @@ TEST_CASE("norm_depth is specified", "[JSNormalizer]")
     char dstbuf[7];
     int bytes_copied;
     const char* ptr = srcbuf;
-    int norm_depth = 7;
+    JSNormState state;
+    state.norm_depth = 7;
+    state.alerts = 0;
     int ret = JSNormalizer::normalize(srcbuf, sizeof(srcbuf), dstbuf, sizeof(dstbuf), &ptr,
-        &bytes_copied, norm_depth);
+        &bytes_copied, state);
 
     CHECK(ret == 0);
     CHECK(bytes_copied == sizeof(expected) - 1);
@@ -849,9 +850,11 @@ TEST_CASE("tag script end is specified", "[JSNormalizer]")
     char dstbuf[sizeof(expected)];
     int bytes_copied;
     const char* ptr = srcbuf;
-    int norm_depth = NORM_DEPTH;
+    JSNormState state;
+    state.norm_depth = NORM_DEPTH;
+    state.alerts = 0;
     int ret = JSNormalizer::normalize(srcbuf, sizeof(srcbuf), dstbuf, sizeof(dstbuf), &ptr,
-        &bytes_copied, norm_depth);
+        &bytes_copied, state);
 
     CHECK(ret == 0);
     CHECK(bytes_copied == sizeof(expected) - 1);
@@ -870,13 +873,371 @@ TEST_CASE("parsing errors", "[JSNormalizer]")
         char dstbuf[7];
         int bytes_copied;
         const char* ptr = srcbuf;
-        int norm_depth = NORM_DEPTH;
+        JSNormState state;
+        state.norm_depth = NORM_DEPTH;
+        state.alerts = 0;
         int ret = JSNormalizer::normalize(srcbuf, sizeof(srcbuf), dstbuf, sizeof(dstbuf), &ptr,
-            &bytes_copied, norm_depth);
+            &bytes_copied, state);
 
         CHECK(ret == 1);
         CHECK(bytes_copied == sizeof(expected) - 1);
         CHECK(!memcmp(dstbuf, expected, bytes_copied));
+    }
+}
+
+static const char unexpected_tag_buf0[] =
+    "var a = 1;\n"
+    "<script>\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected0[] =
+    "var a=1;";
+
+static const char unexpected_tag_buf1[] =
+    "var a = 1;\n"
+    "<script type=application/javascript>\n"
+    "var b = 2;\r\n";;
+
+static const char unexpected_tag_expected1[] =
+    "var a=1;";
+
+static const char unexpected_tag_buf2[] =
+    "var a = 1;\n"
+    "var str = '<script> something';\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected2[] =
+    "var a=1;var str=";
+
+static const char unexpected_tag_buf3[] =
+    "var a = 1;\n"
+    "var str = 'something <script> something';\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected3[] =
+    "var a=1;var str=";
+
+static const char unexpected_tag_buf4[] =
+    "var a = 1;\n"
+    "var str = 'something <script>';\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected4[] =
+    "var a=1;var str=";
+
+static const char unexpected_tag_buf5[] =
+    "var a = 1;\n"
+    "var str = '</script> something';\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected5[] =
+    "var a=1;var str=";
+
+static const char unexpected_tag_buf6[] =
+    "var a = 1;\n"
+    "var str = 'something </script> something';\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected6[] =
+    "var a=1;var str=";
+
+static const char unexpected_tag_buf7[] =
+    "var a = 1;\n"
+    "var str = 'something </script>';\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected7[] =
+    "var a=1;var str=";
+
+static const char unexpected_tag_buf8[] =
+    "var a = 1;\n"
+    "var str = 'something \\<script\\> something';\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected8[] =
+    "var a=1;var str='something \\<script\\> something';var b=2;";
+
+static const char unexpected_tag_buf9[] =
+    "var a = 1;\n"
+    "var str = 'something \\<\\/script\\> something';\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected9[] =
+    "var a=1;var str='something \\<\\/script\\> something';var b=2;";
+
+static const char unexpected_tag_buf10[] =
+    "var a = 1;\n"
+    "//<script> something\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected10[] =
+    "var a=1;";
+
+static const char unexpected_tag_buf11[] =
+    "var a = 1;\n"
+    "//something <script> something\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected11[] =
+    "var a=1;";
+
+static const char unexpected_tag_buf12[] =
+    "var a = 1;\n"
+    "//something <script>\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected12[] =
+    "var a=1;";
+
+static const char unexpected_tag_buf13[] =
+    "var a = 1;\n"
+    "/*<script> something*/\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected13[] =
+    "var a=1;";
+
+static const char unexpected_tag_buf14[] =
+    "var a = 1;\n"
+    "/*something <script> something*/\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected14[] =
+    "var a=1;";
+
+static const char unexpected_tag_buf15[] =
+    "var a = 1;\n"
+    "/*something <script>*/\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected15[] =
+    "var a=1;";
+
+static const char unexpected_tag_buf16[] =
+    "var a = 1;\n"
+    "//</script> something\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected16[] =
+    "var a=1;";
+
+static const char unexpected_tag_buf17[] =
+    "var a = 1;\n"
+    "<!--something </script> something//-->\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected17[] =
+    "var a=1;";
+
+static const char unexpected_tag_buf18[] =
+    "var a = 1;\n"
+    "//something </script>\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected18[] =
+    "var a=1;";
+
+static const char unexpected_tag_buf19[] =
+    "var a = 1;\n"
+    "/*</script>\n"
+    "something*/\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected19[] =
+    "var a=1;";
+
+static const char unexpected_tag_buf20[] =
+    "var a = 1;\n"
+    "/*something\n"
+    "</script>\n"
+    "something*/\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected20[] =
+    "var a=1;";
+
+static const char unexpected_tag_buf21[] =
+    "var a = 1;\n"
+    "/*something\n"
+    "</script>*/\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected21[] =
+    "var a=1;";
+
+static const char unexpected_tag_buf22[] =
+    "var a = 1;\n"
+    "var str = 'script somescript /script something';\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected22[] =
+    "var a=1;var str='script somescript /script something';var b=2;";
+
+static const char unexpected_tag_buf23[] =
+    "var a = 1;\n"
+    "var str = 'script somescript /script something <script>';\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected23[] =
+    "var a=1;var str=";
+
+static const char unexpected_tag_buf24[] =
+    "var a = 1;\n"
+    "var str = 'something <sCrIpT>';\n"
+    "var b = 2;\r\n";
+
+static const char unexpected_tag_expected24[] =
+    "var a=1;var str=";
+
+TEST_CASE("unexpected script tag alert", "[JSNormalizer]")
+{
+    const int ret_code = 1;
+    SECTION("explicit open tag - simple")
+    {
+        NORMALIZE(unexpected_tag_buf0, unexpected_tag_expected0);
+        VALIDATE_FAIL(unexpected_tag_buf0, unexpected_tag_expected0, ret_code, 18);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("explicit open tag - complex")
+    {
+        NORMALIZE(unexpected_tag_buf1, unexpected_tag_expected1);
+        VALIDATE_FAIL(unexpected_tag_buf1, unexpected_tag_expected1, ret_code, 18);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("open tag within literal - start")
+    {
+        NORMALIZE(unexpected_tag_buf2, unexpected_tag_expected2);
+        VALIDATE_FAIL(unexpected_tag_buf2, unexpected_tag_expected2, ret_code, 41);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("open tag within literal - mid")
+    {
+        NORMALIZE(unexpected_tag_buf3, unexpected_tag_expected3);
+        VALIDATE_FAIL(unexpected_tag_buf3, unexpected_tag_expected3, ret_code, 51);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("open tag within literal - end")
+    {
+        NORMALIZE(unexpected_tag_buf4, unexpected_tag_expected4);
+        VALIDATE_FAIL(unexpected_tag_buf4, unexpected_tag_expected4, ret_code, 41);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("close tag within literal - start")
+    {
+        NORMALIZE(unexpected_tag_buf5, unexpected_tag_expected5);
+        VALIDATE_FAIL(unexpected_tag_buf5, unexpected_tag_expected5, ret_code, 42);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("close tag within literal - mid")
+    {
+        NORMALIZE(unexpected_tag_buf6, unexpected_tag_expected6);
+        VALIDATE_FAIL(unexpected_tag_buf6, unexpected_tag_expected6, ret_code, 52);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("close tag within literal - end")
+    {
+        NORMALIZE(unexpected_tag_buf7, unexpected_tag_expected7);
+        VALIDATE_FAIL(unexpected_tag_buf7, unexpected_tag_expected7, ret_code, 42);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("open tag within literal - escaped")
+    {
+        NORMALIZE(unexpected_tag_buf8, unexpected_tag_expected8);
+        VALIDATE(unexpected_tag_buf8, unexpected_tag_expected8);
+    }
+    SECTION("close tag within literal - escaped")
+    {
+        NORMALIZE(unexpected_tag_buf9, unexpected_tag_expected9);
+        VALIDATE(unexpected_tag_buf9, unexpected_tag_expected9);
+    }
+    SECTION("open tag within single-line comment - start")
+    {
+        NORMALIZE(unexpected_tag_buf10, unexpected_tag_expected10);
+        VALIDATE_FAIL(unexpected_tag_buf10, unexpected_tag_expected10, ret_code, 32);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("open tag within single-line comment - mid")
+    {
+        NORMALIZE(unexpected_tag_buf11, unexpected_tag_expected11);
+        VALIDATE_FAIL(unexpected_tag_buf11, unexpected_tag_expected11, ret_code, 42);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("open tag within single-line comment - end")
+    {
+        NORMALIZE(unexpected_tag_buf12, unexpected_tag_expected12);
+        VALIDATE_FAIL(unexpected_tag_buf12, unexpected_tag_expected12, ret_code, 32);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("open tag within multi-line comment - start")
+    {
+        NORMALIZE(unexpected_tag_buf13, unexpected_tag_expected13);
+        VALIDATE_FAIL(unexpected_tag_buf13, unexpected_tag_expected13, ret_code, 33);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("open tag within multi-line comment - mid")
+    {
+        NORMALIZE(unexpected_tag_buf14, unexpected_tag_expected14);
+        VALIDATE_FAIL(unexpected_tag_buf14, unexpected_tag_expected14, ret_code, 43);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("open tag within multi-line comment - end")
+    {
+        NORMALIZE(unexpected_tag_buf15, unexpected_tag_expected15);
+        VALIDATE_FAIL(unexpected_tag_buf15, unexpected_tag_expected15, ret_code, 33);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("close tag within single-line comment - start")
+    {
+        NORMALIZE(unexpected_tag_buf16, unexpected_tag_expected16);
+        VALIDATE_FAIL(unexpected_tag_buf16, unexpected_tag_expected16, ret_code, 33);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("close tag within single-line comment - mid")
+    {
+        NORMALIZE(unexpected_tag_buf17, unexpected_tag_expected17);
+        VALIDATE_FAIL(unexpected_tag_buf17, unexpected_tag_expected17, ret_code, 50);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("close tag within single-line comment - end")
+    {
+        NORMALIZE(unexpected_tag_buf18, unexpected_tag_expected18);
+        VALIDATE_FAIL(unexpected_tag_buf18, unexpected_tag_expected18, ret_code, 33);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("close tag within multi-line comment - start")
+    {
+        NORMALIZE(unexpected_tag_buf19, unexpected_tag_expected19);
+        VALIDATE_FAIL(unexpected_tag_buf19, unexpected_tag_expected19, ret_code, 34);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("close tag within multi-line comment - mid")
+    {
+        NORMALIZE(unexpected_tag_buf20, unexpected_tag_expected20);
+        VALIDATE_FAIL(unexpected_tag_buf20, unexpected_tag_expected20, ret_code, 44);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("close tag within multi-line comment - end")
+    {
+        NORMALIZE(unexpected_tag_buf21, unexpected_tag_expected21);
+        VALIDATE_FAIL(unexpected_tag_buf21, unexpected_tag_expected21, ret_code, 34);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("multiple patterns - not matched")
+    {
+        NORMALIZE(unexpected_tag_buf22, unexpected_tag_expected22);
+        VALIDATE(unexpected_tag_buf22, unexpected_tag_expected22);
+    }
+    SECTION("multiple patterns - matched")
+    {
+        NORMALIZE(unexpected_tag_buf23, unexpected_tag_expected23);
+        VALIDATE_FAIL(unexpected_tag_buf23, unexpected_tag_expected23, ret_code, 67);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+    }
+    SECTION("mixed lower and upper case")
+    {
+        NORMALIZE(unexpected_tag_buf24, unexpected_tag_expected24);
+        VALIDATE_FAIL(unexpected_tag_buf24, unexpected_tag_expected24, ret_code, 41);
+        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
     }
 }
 

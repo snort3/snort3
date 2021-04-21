@@ -15,24 +15,23 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// js_normalizer.h author Oleksandr Serhiienko <oserhiie@cisco.com>
+// js_norm_state.h author Oleksandr Serhiienko <oserhiie@cisco.com>
 
-#ifndef JS_NORMALIZER_H
-#define JS_NORMALIZER_H
+#ifndef JS_NORM_STATE_H
+#define JS_NORM_STATE_H
 
 #include "main/snort_types.h"
 
-#include "js_norm_state.h"
-
 namespace snort
 {
-class JSNormalizer
+#define ALERT_UNEXPECTED_TAG 0x1
+
+struct JSNormState
 {
-public:
-    static int normalize(const char* srcbuf, uint16_t srclen, char* dstbuf, uint16_t dstlen,
-        const char** ptr, int* bytes_copied, JSNormState& state);
+    int64_t norm_depth;
+    uint16_t alerts;
 };
 }
 
-#endif //JS_NORMALIZER_H
+#endif // JS_NORM_STATE_H
 

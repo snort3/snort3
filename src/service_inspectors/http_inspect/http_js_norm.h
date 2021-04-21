@@ -39,26 +39,33 @@ public:
     ~HttpJsNorm();
     void legacy_normalize(const Field& input, Field& output, HttpInfractions* infractions,
         HttpEventGen* events, int max_javascript_whitespaces) const;
-    void enhanced_normalize(const Field& input, Field& output,
-        int64_t js_normalization_depth) const;
+    void enhanced_normalize(const Field& input, Field& output, HttpInfractions* infractions,
+        HttpEventGen* events, int64_t js_normalization_depth) const;
 
     void configure();
 private:
     bool configure_once = false;
 
     enum JsSearchId { JS_JAVASCRIPT };
+    enum JsSrcAttrSearchId { JS_ATTR_SRC };
     enum HtmlSearchId { HTML_JS, HTML_EMA, HTML_VB };
 
     static constexpr const char* script_start = "<SCRIPT";
     static constexpr int script_start_length = sizeof("<SCRIPT") - 1;
+    static constexpr const char* script_src_attr = "SRC";
+    static constexpr int script_src_attr_length = sizeof("SRC") - 1;
 
     const HttpParaList::UriParam& uri_param;
 
     snort::SearchTool* javascript_search_mpse;
+    snort::SearchTool* js_src_attr_search_mpse;
     snort::SearchTool* htmltype_search_mpse;
 
     static int search_js_found(void*, void*, int index, void*, void*);
+    static int search_js_src_attr_found(void*, void*, int index, void*, void*);
     static int search_html_found(void* id, void*, int, void*, void*);
+
+    bool is_external_script(const char* it, const char* script_tag_end) const;
 };
 
 #endif
