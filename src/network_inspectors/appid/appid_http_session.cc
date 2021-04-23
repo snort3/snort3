@@ -512,7 +512,6 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
     const std::string* host = meta_data[REQ_HOST_FID];
     const std::string* referer = meta_data[REQ_REFERER_FID];
     const std::string* uri = meta_data[REQ_URI_FID];
-    bool is_payload_processed = false;
 
     // For fragmented HTTP headers, do not process if none of the fields are set.
     // These fields will get set when the HTTP header is reassembled.

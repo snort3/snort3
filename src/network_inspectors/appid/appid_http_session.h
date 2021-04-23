@@ -198,6 +198,7 @@ protected:
     unsigned response_code_packets = 0;
 #endif
     uint32_t http2_stream_id = 0;
+    bool is_payload_processed = false;
 };
 
 #endif
