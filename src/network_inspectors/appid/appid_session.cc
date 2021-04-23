@@ -224,6 +224,7 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
 
     AppIdSession* asd = new AppIdSession(proto, cliIp, 0, *inspector,
         inspector->get_ctxt().get_odp_ctxt(), ctrlPkt->pkth->address_space_id);
+    is_session_monitored(asd->flags, ctrlPkt, *inspector);
 
     if (Stream::set_snort_protocol_id_expected(ctrlPkt, type, proto, cliIp,
         cliPort, srvIp, srvPort, snort_protocol_id, asd, swap_app_direction))
