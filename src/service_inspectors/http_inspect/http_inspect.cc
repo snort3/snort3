@@ -605,7 +605,7 @@ void HttpInspect::clear(Packet* p)
     if (h2i_flow_data != nullptr)
     {
         current_section = h2i_flow_data->get_hi_msg_section();
-        // assert(current_section != nullptr); // FIXIT-E fix H2I so that this is correct
+        assert(current_section != nullptr);
         h2i_flow_data->set_hi_msg_section(nullptr);
     }
     else
