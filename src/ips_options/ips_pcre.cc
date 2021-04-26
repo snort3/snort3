@@ -47,7 +47,7 @@ using namespace snort;
 #define PCRE_STUDY_JIT_COMPILE 0
 #endif
 
-//#define NO_JIT // uncomment to disable JIT for Xcode
+#define NO_JIT // uncomment to disable JIT for Xcode
 
 #ifdef NO_JIT
 #define PCRE_STUDY_FLAGS 0
