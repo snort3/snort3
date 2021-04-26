@@ -30,6 +30,9 @@ static const int FRAME_HEADER_LENGTH = 9;
 static const uint32_t NO_STREAM_ID = 0xFFFFFFFF;
 static const uint32_t CONCURRENT_STREAMS_LIMIT = 100;
 
+// Perform memory allocation and deallocation tracking for Http2Stream objects in increments of 25
+static const uint32_t STREAM_MEMORY_TRACKING_INCREMENT = 25;
+
 static const uint32_t HTTP2_GID = 121;
 
 // Frame type codes (fourth octet of frame header)

@@ -153,6 +153,7 @@ protected:
     std::list<Http2Stream*> streams;
     uint32_t concurrent_files = 0;
     uint32_t concurrent_streams = 0;
+    uint32_t stream_memory_allocations_tracked = Http2Enums::STREAM_MEMORY_TRACKING_INCREMENT;
     uint32_t max_stream_id[2] = {0, 0};
     bool delete_stream = false;
 
@@ -205,6 +206,11 @@ private:
     // bookkeeping. So H2I needs to update memory allocations and deallocations itself.
     void allocate_hi_memory(HttpFlowData* hi_flow_data);
     void deallocate_hi_memory(HttpFlowData* hi_flow_data);
+    // Memory for streams is tracked in increments of 25 to minimize tracking overhead
+    void update_stream_memory_allocations();
+    void update_stream_memory_deallocations();
+    static const size_t stream_memory_size;
+    static const size_t stream_increment_memory_size;
 };
 
 #endif
