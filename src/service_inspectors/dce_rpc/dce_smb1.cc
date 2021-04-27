@@ -24,6 +24,8 @@
 
 #include "dce_smb1.h"
 
+#include "memory/memory_cap.h"
+
 #include "dce_smb_utils.h"
 
 using namespace snort;
@@ -314,6 +316,13 @@ Dce2Smb1SessionData::Dce2Smb1SessionData(const Packet* p,
     ssd.sd = sd;
     ssd.policy = policy;
     debug_logf(dce_smb_trace, p, "smb1 session created\n");
+    memory::MemoryCap::update_allocations(sizeof(*this));
+}
+
+Dce2Smb1SessionData::~Dce2Smb1SessionData()
+{
+    DCE2_SmbDataFree(&ssd);
+    memory::MemoryCap::update_deallocations(sizeof(*this));
 }
 
 void Dce2Smb1SessionData::process()

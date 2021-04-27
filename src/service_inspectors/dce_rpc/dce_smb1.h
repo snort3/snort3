@@ -273,8 +273,7 @@ class Dce2Smb1SessionData : public Dce2SmbSessionData
 public:
     Dce2Smb1SessionData() = delete;
     Dce2Smb1SessionData(const snort::Packet*, const dce2SmbProtoConf* proto);
-    ~Dce2Smb1SessionData() override
-    { DCE2_SmbDataFree(&ssd); }
+    ~Dce2Smb1SessionData() override;
     void process() override;
     void handle_retransmit(FilePosition, FileVerdict) override { }
     void set_reassembled_data(uint8_t*, uint16_t) override;
