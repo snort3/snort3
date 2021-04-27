@@ -775,23 +775,26 @@ static void SetupRTNFuncList(RuleTreeNode* rtn)
 }
 
 // if it doesn't match any of the existing nodes, make a new node and
-// stick it at the end of the list
+// stick it at the end of the list. Write every rtn in dump mode
+// to retain uninitialized variables.
 static RuleTreeNode* ProcessHeadNode(SnortConfig* sc, RuleTreeNode* test_node)
 {
-    RuleTreeNode* rtn = findHeadNode(
-        sc, test_node, get_ips_policy()->policy_id);
-
-    if ( rtn )
-        FreeRuleTreeNode(test_node);
-
-    else
+    RuleTreeNode* rtn;
+    if ( !sc->dump_rule_info() )
     {
-        head_count++;
-        rtn = new RuleTreeNode;
-        XferHeader(test_node, rtn);
-        SetupRTNFuncList(rtn);
-    }
+         rtn = findHeadNode(
+            sc, test_node, get_ips_policy()->policy_id);
 
+        if ( rtn )
+        {
+            FreeRuleTreeNode(test_node);
+            return rtn;
+        }
+    }
+    head_count++;
+    rtn = new RuleTreeNode;
+    XferHeader(test_node, rtn);
+    SetupRTNFuncList(rtn);
     return rtn;
 }
 
