@@ -115,7 +115,7 @@ StreamSplitter::Status Http2StreamSplitter::non_data_scan(Http2FlowData* session
     StreamSplitter::Status status = StreamSplitter::FLUSH;
     session_data->continuation_expected[source_id] = false;
     if (((type == FT_HEADERS) || (type == FT_PUSH_PROMISE) || (type == FT_CONTINUATION)) &&
-        !(frame_flags & END_HEADERS))
+        !(frame_flags & FLAG_END_HEADERS))
     {
         session_data->continuation_expected[source_id] = true;
         status = StreamSplitter::SEARCH;
@@ -243,7 +243,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
 		    }
 		    // Do flags check for continuation frame, since it is not saved
                     // as lead frame for later.
-                    if ((frame_flags & END_HEADERS) != frame_flags)
+                    if ((frame_flags & FLAG_END_HEADERS) != frame_flags)
                     {
                         *session_data->infractions[source_id] += INF_INVALID_FLAG;
                         session_data->events[source_id]->create_event(EVENT_INVALID_FLAG);
@@ -260,7 +260,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                 assert(session_data->scan_remaining_frame_octets[source_id] == 0);
                 session_data->scan_remaining_frame_octets[source_id] = frame_length;
 
-                if ((frame_flags & PADDED) &&
+                if ((frame_flags & FLAG_PADDED) &&
                     (type == FT_DATA || type == FT_HEADERS || type == FT_PUSH_PROMISE))
                 {
                     if (frame_length == 0)
@@ -432,7 +432,7 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
                 const uint8_t frame_flags =
                     get_frame_flags(session_data->lead_frame_header[source_id]);
                 const uint8_t type = session_data->frame_type[source_id];
-                if ((frame_flags & PADDED) && !session_data->continuation_frame[source_id] &&
+                if ((frame_flags & FLAG_PADDED) && !session_data->continuation_frame[source_id] &&
                     (type == FT_HEADERS || type == FT_PUSH_PROMISE))
                     session_data->read_padding_len[source_id] = true;
 

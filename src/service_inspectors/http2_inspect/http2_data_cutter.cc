@@ -48,7 +48,7 @@ StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t lengt
             session_data->padding_length[source_id];
         data_bytes_read = 0;
 
-        if (frame_flags & PADDED)
+        if (frame_flags & FLAG_PADDED)
         {
             data_len -= 1;
             frame_bytes_seen += 1;
@@ -75,7 +75,7 @@ StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t lengt
         Http2DummyPacket dummy_pkt;
         dummy_pkt.flow = session_data->flow;
         uint32_t unused = 0;
-        if ((data_bytes_read == data_len) && (frame_flags & END_STREAM))
+        if ((data_bytes_read == data_len) && (frame_flags & FLAG_END_STREAM))
         {
             Http2Stream* const stream =
                 session_data->find_stream(session_data->current_stream[source_id]);
@@ -110,7 +110,7 @@ StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t lengt
         session_data->scan_state[source_id] = SCAN_FRAME_HEADER;
         frame_bytes_seen = 0;
 
-        if (frame_flags & END_STREAM)
+        if (frame_flags & FLAG_END_STREAM)
         {
             Http2Stream* const stream = session_data->find_stream(
                 session_data->current_stream[source_id]);
@@ -171,13 +171,13 @@ void Http2DataCutter::reassemble(const uint8_t* data, unsigned len)
                 const uint8_t frame_flags =
                     get_frame_flags(session_data->lead_frame_header[source_id]);
                 cur_data_offset = cur_pos;
-                if (frame_flags & PADDED)
+                if (frame_flags & FLAG_PADDED)
                     reassemble_state = GET_PADDING_LEN;
                 else if (reassemble_data_len > 0)
                     reassemble_state = SEND_DATA;
                 else
                 {
-                    assert(frame_flags & END_STREAM);
+                    assert(frame_flags & FLAG_END_STREAM);
                     reassemble_state = SEND_EMPTY_DATA;
                 }
             }
@@ -193,7 +193,7 @@ void Http2DataCutter::reassemble(const uint8_t* data, unsigned len)
                 reassemble_state = SEND_DATA;
             else
             {
-                assert(get_frame_flags(session_data->lead_frame_header[source_id]) & END_STREAM);
+                assert(get_frame_flags(session_data->lead_frame_header[source_id]) & FLAG_END_STREAM);
                 reassemble_state = SEND_EMPTY_DATA;
             }
             break;

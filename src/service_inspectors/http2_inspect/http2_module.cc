@@ -28,6 +28,8 @@ using namespace Http2Enums;
 
 const Parameter Http2Module::http2_params[] =
 {
+    { "concurrent_streams_limit", Parameter::PT_INT, "100:1000", "100",
+      "Maximum number of concurrent streams allowed in a single HTTP/2 flow" },
 #ifdef REG_TEST
     { "test_input", Parameter::PT_BOOL, nullptr, "false",
       "read HTTP/2 messages from text file" },
@@ -67,8 +69,12 @@ bool Http2Module::begin(const char*, int, SnortConfig*)
 
 bool Http2Module::set(const char*, Value& val, SnortConfig*)
 {
+    if (val.is("concurrent_streams_limit"))
+    {
+        params->concurrent_streams_limit = val.get_uint32();
+    }
 #ifdef REG_TEST
-    if (val.is("test_input"))
+    else if (val.is("test_input"))
     {
         params->test_input = val.get_bool();
     }
@@ -92,15 +98,12 @@ bool Http2Module::set(const char*, Value& val, SnortConfig*)
     {
         params->show_scan = val.get_bool();
     }
+#endif
     else
     {
         return false;
     }
     return true;
-#else
-    UNUSED(val);
-    return false;
-#endif
 }
 
 bool Http2Module::end(const char*, int, SnortConfig*)

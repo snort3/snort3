@@ -129,7 +129,7 @@ void Http2Inspect::eval(Packet* p)
     }
 
     session_data->set_processing_stream_id(source_id);
-    Http2Stream* stream = session_data->get_processing_stream(source_id);
+    Http2Stream* stream = session_data->get_processing_stream(source_id, params->concurrent_streams_limit);
     if (!stream)
     {
         delete[] session_data->frame_data[source_id];
@@ -200,6 +200,12 @@ void Http2Inspect::clear(Packet* p)
     session_data->stream_in_hi = NO_STREAM_ID;
     session_data->processing_stream_id = NO_STREAM_ID;
     session_data->processing_partial_header = false;
+}
+
+void Http2Inspect::show(const SnortConfig*) const
+{
+    assert(params);
+    ConfigLogger::log_value("concurrent_streams_limit", params->concurrent_streams_limit);
 }
 
 #ifdef REG_TEST

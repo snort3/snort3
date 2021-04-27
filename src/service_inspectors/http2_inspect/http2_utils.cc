@@ -47,7 +47,7 @@ uint8_t get_frame_flags(const uint8_t* frame_header_buffer)
     if (frame_header_buffer)
         return frame_header_buffer[frame_flags_index];
     else
-        return NO_HEADER;
+        return FLAG_NO_HEADER;
 }
 
 uint32_t get_stream_id_from_header(const uint8_t* frame_header_buffer)

@@ -292,7 +292,7 @@ InjectionReturnStatus PayloadInjector::get_http2_payload(InjectionControl contro
         memcpy(http2_payload_cur, empty_settings_frame, sizeof(empty_settings_frame));
         http2_payload_cur += sizeof(empty_settings_frame);
     }
-    write_frame_hdr(http2_payload_cur, hdr_len, FT_HEADERS, END_HEADERS, control.stream_id);
+    write_frame_hdr(http2_payload_cur, hdr_len, FT_HEADERS, FLAG_END_HEADERS, control.stream_id);
     memcpy(http2_payload_cur, http2_hdr, hdr_len);
     http2_payload_cur += hdr_len;
     const uint8_t* http_body_cur = control.http_page + body_offset;
@@ -300,7 +300,7 @@ InjectionReturnStatus PayloadInjector::get_http2_payload(InjectionControl contro
     {
         const uint32_t cur_len = (body_len > 1<<14) ? 1<<14 : body_len;
         body_len -= cur_len;
-        const uint8_t flags = (body_len == 0) ? END_STREAM : 0;
+        const uint8_t flags = (body_len == 0) ? FLAG_END_STREAM : 0;
         write_frame_hdr(http2_payload_cur, cur_len, FT_DATA, flags, control.stream_id);
         memcpy(http2_payload_cur, http_body_cur, cur_len);
         http2_payload_cur += cur_len;

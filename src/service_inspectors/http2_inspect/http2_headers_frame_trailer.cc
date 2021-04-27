@@ -48,7 +48,7 @@ Http2HeadersFrameTrailer::Http2HeadersFrameTrailer(const uint8_t* header_buffer,
     if (!process_frame)
         return;
 
-    if (!(get_flags() & END_STREAM))
+    if (!(get_flags() & FLAG_END_STREAM))
     {
         // Trailers without END_STREAM flag set.
         *session_data->infractions[source_id] += INF_TRAILERS_NOT_END;

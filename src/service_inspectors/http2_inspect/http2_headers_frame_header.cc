@@ -87,7 +87,7 @@ void Http2HeadersFrameHeader::analyze_http1()
         return;
 
     // if END_STREAM flag set on headers, tell http_inspect not to expect a message body
-    if (get_flags() & END_STREAM)
+    if (get_flags() & FLAG_END_STREAM)
         stream->get_hi_flow_data()->finish_h2_body(source_id, HttpEnums::H2_BODY_NO_BODY, false);
 
     process_decoded_headers(http_flow, source_id);
@@ -97,7 +97,7 @@ void Http2HeadersFrameHeader::update_stream_state()
 {
     if (stream->get_state(source_id) == STREAM_ERROR)
         return;
-    if (get_flags() & END_STREAM)
+    if (get_flags() & FLAG_END_STREAM)
         stream->set_state(source_id, STREAM_COMPLETE);
     else
         stream->set_state(source_id, STREAM_EXPECT_BODY);

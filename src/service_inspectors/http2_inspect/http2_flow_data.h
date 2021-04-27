@@ -87,7 +87,7 @@ public:
 
     Http2Stream* find_current_stream(const HttpCommon::SourceId source_id) const;
     uint32_t get_current_stream_id(const HttpCommon::SourceId source_id) const;
-    Http2Stream* get_processing_stream(const HttpCommon::SourceId source_id);
+    Http2Stream* get_processing_stream(const HttpCommon::SourceId source_id, uint32_t concurrent_streams_limit);
     Http2Stream* find_processing_stream() const;
     uint32_t get_processing_stream_id() const;
     void set_processing_stream_id(const HttpCommon::SourceId source_id);
@@ -197,7 +197,6 @@ protected:
 #endif
 
 private:
-    Http2Stream* get_stream(const uint32_t key, const HttpCommon::SourceId source_id);
     Http2Stream* get_hi_stream() const;
     Http2Stream* find_stream(const uint32_t key) const;
     void delete_processing_stream();

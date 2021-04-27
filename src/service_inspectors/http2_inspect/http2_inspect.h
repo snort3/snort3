@@ -45,6 +45,7 @@ public:
     bool get_fp_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p,
         snort::InspectionBuffer& b) override;
     bool configure(snort::SnortConfig*) override;
+    void show(const snort::SnortConfig*) const override;
     void eval(snort::Packet* p) override;
     void clear(snort::Packet* p) override;
 

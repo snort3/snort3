@@ -47,7 +47,7 @@ private:
     bool handle_update(uint16_t id, uint32_t value);
 
     uint8_t get_flags_mask() const override
-    { return Http2Enums::ACK; }
+    { return Http2Enums::FLAG_ACK; }
   
     bool bad_frame = false;
 };

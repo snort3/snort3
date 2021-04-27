@@ -54,7 +54,7 @@ Http2PushPromiseFrame::Http2PushPromiseFrame(const uint8_t* header_buffer,
         session_data->events[source_id]->create_event(EVENT_INVALID_STREAM_ID);
     }
 
-    if (session_data->get_recipient_connection_settings(source_id)->get_param(ENABLE_PUSH) == 0)
+    if (session_data->get_recipient_connection_settings(source_id)->get_param(SFID_ENABLE_PUSH) == 0)
     {
         session_data->events[source_id]->create_event(EVENT_PUSH_WHEN_PROHIBITED);
         *session_data->infractions[source_id] += INF_PUSH_WHEN_PROHIBITED;
@@ -157,7 +157,7 @@ uint32_t Http2PushPromiseFrame::get_promised_stream_id(Http2EventGen* const even
 }
 
 uint8_t Http2PushPromiseFrame::get_flags_mask() const
-{ return (END_HEADERS|PADDED); }
+{ return (FLAG_END_HEADERS|FLAG_PADDED); }
 
 #ifdef REG_TEST
 void Http2PushPromiseFrame::print_frame(FILE* output)

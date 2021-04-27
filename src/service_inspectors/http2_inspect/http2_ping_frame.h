@@ -38,7 +38,7 @@ private:
         Http2Frame(header_buffer, header_len, data_buffer, data_len, ssn_data, src_id, _stream) { }
 
     uint8_t get_flags_mask() const override
-    { return Http2Enums::ACK; }
+    { return Http2Enums::FLAG_ACK; }
 };
 #endif
 

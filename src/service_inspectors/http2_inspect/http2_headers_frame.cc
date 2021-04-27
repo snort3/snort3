@@ -46,7 +46,7 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const uint32_
     Http2Frame(header_buffer, header_len, data_buffer, data_len, session_data_, source_id_, stream_)
 {
     // Remove stream dependency if present
-    if (get_flags() & PRIORITY)
+    if (get_flags() & FLAG_PRIORITY)
         hpack_headers_offset = 5;
 
     // Set up HPACK decoding
@@ -152,7 +152,7 @@ const Field& Http2HeadersFrame::get_buf(unsigned id)
 }
 
 uint8_t Http2HeadersFrame::get_flags_mask() const
-{ return (END_STREAM|END_HEADERS|PADDED|PRIORITY); }
+{ return (FLAG_END_STREAM|FLAG_END_HEADERS|FLAG_PADDED|FLAG_PRIORITY); }
 
 #ifdef REG_TEST
 void Http2HeadersFrame::print_frame(FILE* output)

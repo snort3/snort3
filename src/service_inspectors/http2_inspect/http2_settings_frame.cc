@@ -58,7 +58,7 @@ Http2SettingsFrame::Http2SettingsFrame(const uint8_t* header_buffer, const uint3
         return;
     }
 
-    if (ACK & get_flags())
+    if (FLAG_ACK & get_flags())
         return;
 
     if (src_id == HttpCommon::SRC_SERVER && !ssn_data->was_server_settings_received())
@@ -78,7 +78,7 @@ void Http2SettingsFrame::parse_settings_frame()
 
         data_pos += SfSize;
 
-        if (parameter_id < HEADER_TABLE_SIZE or parameter_id > MAX_HEADER_LIST_SIZE)
+        if (parameter_id < SFID_HEADER_TABLE_SIZE or parameter_id > SFID_MAX_HEADER_LIST_SIZE)
         {
             session_data->events[source_id]->create_event(EVENT_SETTINGS_FRAME_UNKN_PARAM);
             *session_data->infractions[source_id] += INF_SETTINGS_FRAME_UNKN_PARAM;
@@ -92,7 +92,7 @@ void Http2SettingsFrame::parse_settings_frame()
 
 bool Http2SettingsFrame::sanity_check()
 {
-    const bool ack = ACK & get_flags();
+    const bool ack = FLAG_ACK & get_flags();
 
     // FIXIT-E this next check should possibly be moved to valid_sequence()
     if (get_stream_id() != 0)
@@ -107,13 +107,13 @@ bool Http2SettingsFrame::handle_update(uint16_t id, uint32_t value)
 {
     switch (id)
     {
-        case HEADER_TABLE_SIZE:
+        case SFID_HEADER_TABLE_SIZE:
             // Sending a table size parameter informs the receiver the maximum hpack dynamic
             // table size they may use.
             session_data->get_hpack_decoder((HttpCommon::SourceId) (1 - source_id))->
                 get_decode_table()->settings_table_size_update(value);
             break;
-        case ENABLE_PUSH:
+        case SFID_ENABLE_PUSH:
             // Only values of 0 or 1 are allowed
             if (!(value == 0 or value == 1))
             {
@@ -135,7 +135,7 @@ void Http2SettingsFrame::print_frame(FILE* output)
 
     if (bad_frame)
         fprintf(output, " Error in settings frame.");
-    else if (ACK & get_flags())
+    else if (FLAG_ACK & get_flags())
         fprintf(output, " ACK");
     else
         fprintf(output, " Parameters in current frame - %d.", (data.length()/6)) ;
@@ -147,16 +147,16 @@ void Http2SettingsFrame::print_frame(FILE* output)
 
 uint32_t Http2ConnectionSettings::get_param(uint16_t id)
 {
-    assert(id >= HEADER_TABLE_SIZE);
-    assert(id <= MAX_HEADER_LIST_SIZE);
+    assert(id >= SFID_HEADER_TABLE_SIZE);
+    assert(id <= SFID_MAX_HEADER_LIST_SIZE);
 
     return parameters[id - 1];
 }
 
 void Http2ConnectionSettings::set_param(uint16_t id, uint32_t value)
 {
-    assert(id >= HEADER_TABLE_SIZE);
-    assert(id <= MAX_HEADER_LIST_SIZE);
+    assert(id >= SFID_HEADER_TABLE_SIZE);
+    assert(id <= SFID_MAX_HEADER_LIST_SIZE);
 
     parameters[id - 1] = value;
 }

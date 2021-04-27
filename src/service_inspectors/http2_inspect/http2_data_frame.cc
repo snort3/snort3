@@ -105,7 +105,7 @@ void Http2DataFrame::update_stream_state()
     }
 }
 
-uint8_t Http2DataFrame::get_flags_mask() const { return (END_STREAM|PADDED); }
+uint8_t Http2DataFrame::get_flags_mask() const { return (FLAG_END_STREAM|FLAG_PADDED); }
 
 #ifdef REG_TEST
 void Http2DataFrame::print_frame(FILE* output)

@@ -155,12 +155,13 @@ Http2Stream* Http2FlowData::find_stream(const uint32_t key) const
     return nullptr;
 }
 
-Http2Stream* Http2FlowData::get_stream(const uint32_t key, const SourceId source_id)
+Http2Stream* Http2FlowData::get_processing_stream(const SourceId source_id, uint32_t concurrent_streams_limit)
 {
+    const uint32_t key = processing_stream_id;
     class Http2Stream* stream = find_stream(key);
     if (!stream)
     {
-        if (concurrent_streams >= CONCURRENT_STREAMS_LIMIT)
+        if (concurrent_streams >= concurrent_streams_limit)
         {
             *infractions[source_id] += INF_TOO_MANY_STREAMS;
             events[source_id]->create_event(EVENT_TOO_MANY_STREAMS);
@@ -251,11 +252,6 @@ Http2Stream* Http2FlowData::find_current_stream(const SourceId source_id) const
 Http2Stream* Http2FlowData::find_processing_stream() const
 {
     return find_stream(get_processing_stream_id());
-}
-
-Http2Stream* Http2FlowData::get_processing_stream(const SourceId source_id)
-{
-    return get_stream(get_processing_stream_id(), source_id);
 }
 
 uint32_t Http2FlowData::get_processing_stream_id() const
