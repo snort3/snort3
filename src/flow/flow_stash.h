@@ -21,10 +21,14 @@
 #ifndef FLOW_STASH_H
 #define FLOW_STASH_H
 
+#include <list>
 #include <map>
 #include <string>
+#include <unordered_map>
 
+#include "main/snort_config.h"
 #include "main/snort_types.h"
+#include "sfip/sf_ip.h"
 
 #include "stash_item.h"
 
@@ -46,8 +50,11 @@ public:
     void store(const std::string& key, std::string* val);
     void store(const std::string& key, StashGenericObject* val, bool publish = true);
 
+    bool store(const snort::SfIp&, const SnortConfig* sc = nullptr);
+
 private:
-    std::map<std::string, StashItem*> container;
+    std::list<snort::SfIp> aux_ip_fifo;
+    std::unordered_map<std::string, StashItem*> container;
 
     template<typename T>
     bool get(const std::string& key, T& val, StashItemType type);

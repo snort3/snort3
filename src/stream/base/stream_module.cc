@@ -70,17 +70,17 @@ static const Parameter s_params[] =
 {
 #ifdef REG_TEST
     { "footprint", Parameter::PT_INT, "0:max32", "0",
-        "use zero for production, non-zero for testing at given size (for TCP and user)" },
+      "use zero for production, non-zero for testing at given size (for TCP and user)" },
 #endif
 
     { "ip_frags_only", Parameter::PT_BOOL, nullptr, "false",
-            "don't process non-frag flows" },
+      "don't process non-frag flows" },
 
     { "max_flows", Parameter::PT_INT, "2:max32", "476288",
-                "maximum simultaneous flows tracked before pruning" },
+      "maximum simultaneous flows tracked before pruning" },
 
     { "pruning_timeout", Parameter::PT_INT, "1:max32", "30",
-                    "minimum inactive time before being eligible for pruning" },
+      "minimum inactive time before being eligible for pruning" },
 
     { "held_packet_timeout", Parameter::PT_INT, "1:max32", "1000",
       "timeout in milliseconds for held packets" },
@@ -334,6 +334,7 @@ bool StreamUnloadReloadResourceManager::tune_resources(unsigned work_limit)
 void StreamModuleConfig::show() const
 {
     ConfigLogger::log_value("max_flows", flow_cache_cfg.max_flows);
+    ConfigLogger::log_value("max_aux_ip", SnortConfig::get_conf()->max_aux_ip);
     ConfigLogger::log_value("pruning_timeout", flow_cache_cfg.pruning_timeout);
 
     for (int i = to_utype(PktType::IP); i < to_utype(PktType::MAX); ++i)

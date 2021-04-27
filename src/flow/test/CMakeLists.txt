@@ -6,6 +6,7 @@ add_cpputest( deferred_trust_test
 
 add_cpputest( flow_stash_test
     SOURCES ../flow_stash.cc
+            ../../sfip/sf_ip.cc
 )
 
 add_cpputest( flow_control_test

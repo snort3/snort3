@@ -47,11 +47,11 @@ class HttpPatternMatchers;
 struct TunnelDest
 {
     snort::SfIp ip;
-    uint16_t port;
+    uint16_t port = 0;
     TunnelDest(const char* string_srcip, uint16_t tun_port)
     {
-        ip.set(string_srcip);
-        port = tun_port;
+        if ( ip.set(string_srcip) == SFIP_SUCCESS )
+            port = tun_port;
     }
 };
 

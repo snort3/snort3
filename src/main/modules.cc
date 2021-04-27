@@ -1107,6 +1107,10 @@ static const Parameter inspection_params[] =
     { "mode", Parameter::PT_ENUM, "inline | inline-test", "inline-test",
       "set policy mode" },
 
+    { "max_aux_ip", Parameter::PT_INT, "-1:127", "16",
+      "maximum number of auxiliary IPs per flow to detect and save "
+      "(-1 = disable, 0 = detect but don't save, 1+ = save in FIFO manner)" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -1157,6 +1161,12 @@ bool InspectionModule::set(const char*, Value& v, SnortConfig* sc)
             default:
                 break;
         }
+    }
+
+    else if ( v.is("max_aux_ip") )
+    {
+        sc->max_aux_ip = v.get_int16();
+        return true;
     }
 
     else

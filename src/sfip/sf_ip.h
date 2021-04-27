@@ -25,6 +25,8 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
+#include <cassert>
+#include <cstring>
 #include <sstream>
 
 #include "main/snort_types.h"
@@ -33,6 +35,9 @@
 namespace snort
 {
 using SfIpString = char[INET6_ADDRSTRLEN];
+
+// INET6_ADDRSTRLEN without IPv4-mapped IPv6
+#define MAX_INET6_STRLEN_NO_IPV4_MAP 40
 
 struct SfCidr;
 
@@ -459,6 +464,72 @@ inline bool SfIp::operator==(const SfIp& ip2) const
 }
 
 /* End of member function definitions */
+
+/* Support functions */
+// note that an ip6 address may have a trailing dotted quad form
+// but that it always has at least 2 ':'s; furthermore there is
+// no valid ip4 format (including mask) with 2 ':'s
+// we don't have to figure out if the format is entirely legal
+// we just have to be able to tell correct formats apart
+static inline int sfip_str_to_fam(const char* str)
+{
+    const char* s;
+    assert(str);
+    s = strchr(str, (int)':');
+    if ( s && strchr(s+1, (int)':') )
+        return AF_INET6;
+    if ( strchr(str, (int)'.') )
+        return AF_INET;
+    return AF_UNSPEC;
+}
+
+static inline bool parse_ip_from_uri(std::string& ip_str, SfIp& ip)
+{
+    auto host_start = ip_str.find("://");
+    if ( host_start != std::string::npos )
+    {
+        host_start += 3;
+        if ( host_start >= ip_str.size() )
+            return false;
+    }
+    else
+        host_start = 0;
+
+    auto host_end = host_start;
+    int family = sfip_str_to_fam(ip_str.c_str() + host_start);
+
+    if ( family == AF_INET )
+    {
+        while ( host_end < ip_str.size() and ip_str[host_end] != ':' and ip_str[host_end] != '/' )
+            ++host_end;
+    }
+    else if ( family == AF_INET6 )
+    {
+        if ( ip_str[host_start] == '[' )
+        {
+            ++host_start;
+            ++host_end;
+        }
+        while ( host_end < ip_str.size() and ip_str[host_end] != ']' and ip_str[host_end] != '/')
+            ++host_end;
+    }
+    else
+        return false;
+
+    if ( host_end <= host_start or (host_end - host_start) > MAX_INET6_STRLEN_NO_IPV4_MAP )
+        return false;
+
+    if ( host_start != 0 or host_end != ip_str.size() )
+    {
+        const std::string host_str = ip_str.substr(host_start, host_end - host_start);
+        if ( ip.set(host_str.c_str()) != SFIP_SUCCESS )
+            return false;
+    }
+    else if ( ip.set(ip_str.c_str()) != SFIP_SUCCESS )
+        return false;
+
+    return true;
+}
 
 SO_PUBLIC const char* sfip_ntop(const SfIp* ip, char* buf, int bufsize);
 

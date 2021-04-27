@@ -393,6 +393,8 @@ public:
 
     uint16_t tunnel_mask = 0;
 
+    int16_t max_aux_ip = 16;
+
     // FIXIT-L this is temporary for legacy paf_max required only for HI;
     // it is not appropriate for multiple stream_tcp with different
     // paf_max; the HI splitter should pull from there
@@ -486,6 +488,9 @@ public:
 
     bool is_address_anomaly_check_enabled() const
     { return address_anomaly_check_enabled; }
+
+    bool aux_ip_is_enabled() const
+    { return max_aux_ip >= 0; }
 
     // mode related
     bool dump_config_mode() const

@@ -27,7 +27,6 @@
 
 #include "sf_ip.h"
 
-#include <cassert>
 #include <cmath> // For ceil
 
 #include "main/thread.h"
@@ -37,24 +36,6 @@
 #include "sf_cidr.h"
 
 using namespace snort;
-
-/* Support function */
-// note that an ip6 address may have a trailing dotted quad form
-// but that it always has at least 2 ':'s; furthermore there is
-// no valid ip4 format (including mask) with 2 ':'s
-// we don't have to figure out if the format is entirely legal
-// we just have to be able to tell correct formats apart
-static inline int sfip_str_to_fam(const char* str)
-{
-    const char* s;
-    assert(str);
-    s = strchr(str, (int)':');
-    if ( s && strchr(s+1, (int)':') )
-        return AF_INET6;
-    if ( strchr(str, (int)'.') )
-        return AF_INET;
-    return AF_UNSPEC;
-}
 
 /* Masks off 'val' bits from the IP contained within 'ip' */
 inline int SfIp::cidr_mask(int val)

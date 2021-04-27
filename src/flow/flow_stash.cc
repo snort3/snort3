@@ -26,6 +26,7 @@
 
 #include <cassert>
 
+#include "pub_sub/auxiliary_ip_event.h"
 #include "pub_sub/stash_events.h"
 
 using namespace snort;
@@ -38,7 +39,7 @@ FlowStash::~FlowStash()
 
 void FlowStash::reset()
 {
-    for(map<string, StashItem*>::iterator it = container.begin(); it != container.end(); ++it)
+    for(auto it = container.begin(); it != container.end(); ++it)
     {
         delete it->second;
     }
@@ -91,7 +92,7 @@ void FlowStash::store(const string& key, StashGenericObject* &val, StashItemType
     UNUSED(type);
 #endif
     auto item = new StashItem(val);
-    auto it_and_status = container.emplace(make_pair(key, item));
+    auto it_and_status = container.emplace(key, item);
 
     if (!it_and_status.second)
     {
@@ -139,7 +140,7 @@ void FlowStash::store(const string& key, T& val, StashItemType type)
     UNUSED(type);
 #endif
     auto item = new StashItem(val);
-    auto it_and_status = container.emplace(make_pair(key, item));
+    auto it_and_status = container.emplace(key, item);
 
     if (!it_and_status.second)
     {
@@ -150,4 +151,29 @@ void FlowStash::store(const string& key, T& val, StashItemType type)
 
     StashEvent e(item);
     DataBus::publish(key.c_str(), e);
+}
+
+bool FlowStash::store(const SfIp& ip, const SnortConfig* sc)
+{
+    if ( !sc )
+        sc = SnortConfig::get_conf();
+
+    if ( sc->max_aux_ip < 0 )
+        return false;
+
+    if ( sc->max_aux_ip > 0 )
+    {
+        for ( const auto& aip : aux_ip_fifo )
+            if ( aip == ip )
+                return false;
+
+        if ( aux_ip_fifo.size() == (unsigned)sc->max_aux_ip )
+            aux_ip_fifo.pop_back();
+
+        aux_ip_fifo.emplace_front(ip);
+    }
+
+    AuxiliaryIpEvent event(ip);
+    DataBus::publish(AUXILIARY_IP_EVENT, event);
+    return true;
 }

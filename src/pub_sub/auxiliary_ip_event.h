@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2021 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,26 +15,26 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// auxiliary_ip_event.h author Masud Hasan <mashasan@cisco.com>
 
-#ifndef REPUTATION_INSPECT_H
-#define REPUTATION_INSPECT_H
+#ifndef AUXILIARY_IP_EVENT_H
+#define AUXILIARY_IP_EVENT_H
 
-#include "flow/flow.h"
+#include "framework/data_bus.h"
+#include "sfip/sf_ip.h"
 
-#include "reputation_module.h"
+#define AUXILIARY_IP_EVENT "auxiliary_ip_event"
 
-class Reputation : public snort::Inspector
+class AuxiliaryIpEvent : public snort::DataEvent
 {
 public:
-    Reputation(ReputationConfig*);
+   AuxiliaryIpEvent(const snort::SfIp& aux_ip) : ip(aux_ip) { }
 
-    void show(const snort::SnortConfig*) const override;
-    void eval(snort::Packet*) override;
-    bool configure(snort::SnortConfig*) override;
+   const snort::SfIp* get_ip()
+   { return &ip; }
 
 private:
-    ReputationConfig config;
+   const snort::SfIp& ip;
 };
 
 #endif
-

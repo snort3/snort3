@@ -22,6 +22,7 @@
 
 #include "flow/flow_stash.h"
 #include "pub_sub/stash_events.h"
+#include "utils/util.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -129,7 +130,23 @@ void DataBus::_publish(const char* key, DataEvent& e, Flow* f)
 }
 // end DataBus mock.
 
+static SnortConfig snort_conf;
 
+namespace snort
+{
+SnortConfig::SnortConfig(const SnortConfig* const) { }
+SnortConfig::~SnortConfig() = default;
+const SnortConfig* SnortConfig::get_conf() { return &snort_conf; }
+
+char* snort_strdup(const char* str)
+{
+    assert(str);
+    size_t n = strlen(str) + 1;
+    char* p = (char*)snort_alloc(n);
+    memcpy(p, str, n);
+    return p;
+}
+}
 
 TEST_GROUP(stash_tests)
 {
@@ -338,6 +355,41 @@ TEST(stash_tests, mixed_items)
     CHECK(stash.get("item_4", retrieved_object));
     POINTERS_EQUAL(test_object, retrieved_object);
     CHECK_EQUAL(test_object->get_object_type(), ((TestStashObject*)retrieved_object)->get_object_type());
+}
+
+TEST(stash_tests, store_ip)
+{
+    FlowStash stash;
+    SfIp ip;
+    CHECK(ip.set("1.1.1.1") == SFIP_SUCCESS);
+
+    // Disabled
+    snort_conf.max_aux_ip = -1;
+    CHECK_FALSE(stash.store(ip));
+
+    // Enabled without stashing, no duplicate IP checking
+    snort_conf.max_aux_ip = 0;
+    CHECK_TRUE(stash.store(ip));
+    CHECK_TRUE(stash.store(ip));
+
+    // Enabled with FIFO stashing, duplicate IP checking
+    snort_conf.max_aux_ip = 2;
+    CHECK_TRUE(stash.store(ip));
+    CHECK_FALSE(stash.store(ip));
+
+    SfIp ip2;
+    CHECK(ip2.set("1.1.1.2") == SFIP_SUCCESS);
+    CHECK_TRUE(stash.store(ip2));
+    CHECK_FALSE(stash.store(ip2));
+
+    SfIp ip3;
+    CHECK(ip3.set("1111::8888") == SFIP_SUCCESS);
+    CHECK_TRUE(stash.store(ip3));
+    CHECK_FALSE(stash.store(ip3));
+    CHECK_FALSE(stash.store(ip2));
+    CHECK_TRUE(stash.store(ip));
+    CHECK_FALSE(stash.store(ip));
+    CHECK_FALSE(stash.store(ip3));
 }
 
 int main(int argc, char** argv)

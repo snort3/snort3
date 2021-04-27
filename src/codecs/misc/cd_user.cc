@@ -69,9 +69,8 @@ static void set_key(CodecData& codec, DecodeData& snort)
 {
     // FIXIT-L make configurable
     SfIp sip, dip;
-    sip.set("192.168.1.1");
-    dip.set("192.168.2.2");
-    snort.ip_api.set(sip, dip);
+    if ( sip.set("192.168.1.1") == SFIP_SUCCESS and dip.set("192.168.2.2") == SFIP_SUCCESS )
+        snort.ip_api.set(sip, dip);
 
     snort.sp = 12345;
     snort.dp = 54321;
