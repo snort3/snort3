@@ -135,7 +135,8 @@ bool TcpStateClosed::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpStr
         TcpStreamTracker::TcpState talker_state = trk.session->get_talker_state(tsd);
         Flow* flow = tsd.get_flow();
 
-        if ( ( talker_state == TcpStreamTracker::TCP_TIME_WAIT ) || !flow->two_way_traffic() )
+        if ( ( talker_state == TcpStreamTracker::TCP_TIME_WAIT or
+               talker_state == TcpStreamTracker::TCP_CLOSED ) or !flow->two_way_traffic() )
         {
             // The last ACK is a part of the session. Delete the session after processing is
             // complete.

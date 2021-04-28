@@ -252,10 +252,9 @@ bool TcpNormalizer::validate_rst_end_seq_geq(
 bool TcpNormalizer::validate_rst_seq_eq(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
-    uint32_t expected_seq = tns.tracker->rcv_nxt + tns.tracker->get_fin_seq_adjust();
+    uint32_t expected_seq = tns.tracker->r_win_base + tns.tracker->get_fin_seq_adjust();
 
-    // FIXIT-M check for rcv_nxt == 0 is hack for uninitialized rcv_nxt
-    if ( ( tns.tracker->rcv_nxt == 0 ) || SEQ_EQ(tsd.get_seq(), expected_seq) )
+    if ( SEQ_EQ(tsd.get_seq(), expected_seq) )
         return true;
 
     return false;
