@@ -31,7 +31,15 @@
 class AppIdDnsSession
 {
 public:
-    virtual ~AppIdDnsSession() = default;
+    AppIdDnsSession()
+    {
+        memory::MemoryCap::update_allocations(sizeof(*this));
+    }
+
+    ~AppIdDnsSession()
+    {
+        memory::MemoryCap::update_deallocations(sizeof(*this));
+    }
 
     void reset()
     {

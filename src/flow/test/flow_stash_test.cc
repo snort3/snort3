@@ -33,6 +33,9 @@ using namespace std;
 
 static DataBus* DB = nullptr;
 
+void memory::MemoryCap::update_allocations(size_t) { }
+void memory::MemoryCap::update_deallocations(size_t) { }
+
 class TestStashObject : public StashGenericObject
 {
 public:
@@ -40,6 +43,9 @@ public:
     {
 
     }
+
+    size_t size_of() const override
+    { return sizeof(*this); }
 };
 
 

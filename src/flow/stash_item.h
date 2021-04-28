@@ -24,6 +24,8 @@
 #include <cstdint>
 #include <string>
 
+#include "memory/memory_cap.h"
+
 #define STASH_APPID_DATA "appid_data"
 
 #define STASH_GENERIC_OBJECT_APPID 1
@@ -43,6 +45,8 @@ public:
     {
         return object_type;
     }
+    virtual size_t size_of() const = 0;
+
 private:
     int object_type;
 };
@@ -94,6 +98,7 @@ public:
     {
         type = STASH_ITEM_TYPE_GENERIC_OBJECT;
         val.generic_obj_val = obj;
+        memory::MemoryCap::update_allocations(sizeof(*this) + obj->size_of());
     }
 
     ~StashItem()
@@ -104,6 +109,7 @@ public:
             delete val.str_val;
             break;
         case STASH_ITEM_TYPE_GENERIC_OBJECT:
+            memory::MemoryCap::update_deallocations(sizeof(*this) + val.generic_obj_val->size_of());
             delete val.generic_obj_val;
         default:
             break;

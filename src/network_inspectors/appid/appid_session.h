@@ -108,8 +108,14 @@ enum MatchedTlsType
 class TlsSession
 {
 public:
+    TlsSession()
+    {
+        memory::MemoryCap::update_allocations(sizeof(*this));
+    }
+
     ~TlsSession()
     {
+        memory::MemoryCap::update_deallocations(sizeof(*this));
         if (tls_host)
             snort_free(tls_host);
         if (tls_first_alt_name)

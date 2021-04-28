@@ -42,6 +42,7 @@ public:
     {
         ctxt_version = ctxt.get_version();
     }
+
     virtual ~ThirdPartyAppIdSession() = default;
 
     virtual void reset() = 0;            // just reset state
@@ -57,6 +58,7 @@ public:
     virtual void clear_attr(TPSessionAttr) = 0;
     virtual void set_attr(TPSessionAttr) = 0;
     virtual unsigned get_attr(TPSessionAttr) = 0;
+    virtual size_t size_of() const = 0;
     virtual AppId get_appid(int& conf) { conf=confidence; return appid; }
     virtual const ThirdPartyAppIdContext& get_ctxt() const
     { return ctxt; }

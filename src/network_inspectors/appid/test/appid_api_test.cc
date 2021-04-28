@@ -48,6 +48,9 @@ using namespace snort;
 
 static SnortProtocolId dummy_http2_protocol_id = 1;
 
+void memory::MemoryCap::update_allocations(size_t) { }
+void memory::MemoryCap::update_deallocations(size_t) { }
+
 namespace snort
 {
 

@@ -49,6 +49,9 @@ void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDir
 
 using namespace snort;
 
+void memory::MemoryCap::update_allocations(size_t) { }
+void memory::MemoryCap::update_deallocations(size_t) { }
+
 namespace snort
 {
 AppIdApi appid_api;
