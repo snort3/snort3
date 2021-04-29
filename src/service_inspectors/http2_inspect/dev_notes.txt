@@ -1,13 +1,15 @@
+*** HTTP/2 frame processing overview ***
 The HTTP/2 inspector (H2I) converts HTTP/2 frames into HTTP/1.1 message sections and feeds them
 to the new HTTP inspector (NHI) for further processing.
 
-The Http2StreamSplitter splits HTTP/2 traffic on frame boundaries with two exceptions.  First, any
+The Http2StreamSplitter splits HTTP/2 traffic on frame boundaries with two exceptions. First, any
 Continuation frames following a Headers frame are aggregated and sent through detection as a single
-header block.  Second, long Data frames are split into 16kb chunks for inspection as message bodies
-are in NHI.  The Http2StreamSplitter strips the frame headers from the frame data and stores them in
+header block. Second, long Data frames are split into 16kb chunks for inspection as message bodies
+are in NHI. The Http2StreamSplitter strips the frame headers from the frame data and stores them in
 separate buffers. In the case of a Headers frame followed by Continuation frames, the Headers frame
 header is stored and the Continuation frame headers are discarded.
 
+*** HTTP/2 Frame Classes ***
 HTTP/2 frames are stored in frame objects for processing.
 1. Http2Frame - top level class
 2. Http2HeadersFrame : Http2Frame - common elements of frames containing headers
@@ -17,11 +19,41 @@ HTTP/2 frames are stored in frame objects for processing.
 6. Http2HeadersFrameTrailer : Http2HeadersFrame - headers frame containing trailers
 7. Http2DataFrame : Http2Frame
 8. Http2SettingsFrame : Http2Frame
+9. Http2RstStreamFrame : Http2Frame
+10. Http2WindowUpdateFrame: Http2Frame
 
+Http2Frame virtual methods:
+1. bool valid_sequence(Http2Enums::StreamState state) - Returns if the current frame has been sent
+   on a valid stream in a valid state for the frame.
+2. void analyze_http1() - Contains the interface with http_inspect if necessary for the frame type
+3. void clear() - Cleanup after processing is complete
+4. const Field& get_buf(unsigned id) - Returns any buffers associated with this frame type
+5. void update_stream_state() - Updates the state of the current stream based on the contents of 
+   the current packet.
+6. bool is_detection_required() - Returns if the data in this frame be sent through the detection
+   engine.
+
+*** HTTP/2 Stream States ***
+Http2 stream states are directional and take the form {<C2S state>, <S2C state>}. States can have
+the following values:
+1. STREAM_EXPECT_HEADERS - No frames have yet been seen on this stream in this direction. A stream
+   with state {STREAM_EXPECT_HEADERS, STREAM_EXPECT_HEADERS} is what the HTTP/2 RFC refers to as
+   "idle."
+2. STREAM_EXPECT_BODY - Headers are complete and we are expecting to see a Data frame
+3. STREAM_BODY - There has been at least one Data frame in this direction already, but we have not
+   yet seen the END_STREAM flag so are still expecting more Data or Headers frames.
+4. STREAM_COMPLETE - The END_STREAM flag has been seen. No more Data or Headers frames are
+   expected.
+5. STREAM_ERROR - An error has occurred processing this stream. This is a terminal stream state.
+   Further frames on this stream in this direction may be checked for proper formatting, but will
+   not impact the stream state or interact with http_inspect. For information on error processing
+   see the section below.
+
+*** HTTP/2 Header Decoding ***
 HTTP/2 headers frames can come at the start of a stream and contain the header block, or at the end
 of a stream and contain trailers. H2I contains headers frame subclasses Http2HeadersFrameHeader and
 Http2HeadersFrameTrailer to support these two types of headers frames. Http2PushPromise frames begin
-server pushed streams and also contain the header block.  Headers frames containing the header block
+server pushed streams and also contain the header block. Headers frames containing the header block
 will contain pseudo-headers that must be converted into an HTTP/1.1 start line in addition to
 regular HTTP/1.1 headers. The two Http2StartLine subclasses, Http2RequestLine and Http2ResponseLine
 perform this translation and generate the start-line, which is stored in a new buffer inside the
@@ -44,6 +76,7 @@ literal. The resulting header line is then added to the dynamic table. The third
 is literal not to be indexed, which is the same as literal to be indexed, except the header line is
 not added to the dynamic table.
 
+*** Error Processing ***
 H2I has two levels of failure for flow processing. Fatal errors include failures in frame splitting
 and errors in header decoding that compromise the HPACK dictionary. A fatal error will trigger an
 immediate EVENT_MISFORMATTED_HTTP2 and will cause scan() to return ABORT the next time it is called
@@ -56,7 +89,8 @@ processing of that stream in that direction will end.
 
 H2I supports the NHI test tool. See ../http_inspect/dev_notes.txt for usage instructions.
 
-Memory requirements: Http2FlowData represents all H2I information in a flow. It does not account 
+*** Memory requirements ***
+Http2FlowData represents all H2I information in a flow. It does not account 
 for the entries in the hpack dynamic table. The formula below estimates the size of an entry 
 in the dynamic table:
 name.length() + value.length() + RFC_ENTRY_OVERHEAD (32 as defined by the RFC)

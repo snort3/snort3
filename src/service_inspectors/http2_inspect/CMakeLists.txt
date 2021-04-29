@@ -56,6 +56,8 @@ set (FILE_LIST
     http2_tables.cc
     http2_utils.cc
     http2_utils.h
+    http2_window_update_frame.cc
+    http2_window_update_frame.h
     ips_http2.cc
     ips_http2.h
 )

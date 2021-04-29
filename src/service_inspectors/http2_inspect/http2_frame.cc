@@ -33,6 +33,7 @@
 #include "http2_rst_stream_frame.h"
 #include "http2_settings_frame.h"
 #include "http2_stream.h"
+#include "http2_window_update_frame.h"
 #include "service_inspectors/http_inspect/http_field.h"
 
 using namespace HttpCommon;
@@ -72,21 +73,25 @@ Http2Frame* Http2Frame::new_frame(const uint8_t* header, const uint32_t header_l
         case FT_SETTINGS:
             frame = new Http2SettingsFrame(header, header_len, data, data_len, session_data,
                 source_id, stream);
-	    break;
+            break;
         case FT_DATA:
             frame = new Http2DataFrame(header, header_len, data, data_len, session_data, source_id,
                 stream);
-	    break;
+            break;
         case FT_PUSH_PROMISE:
             frame = new Http2PushPromiseFrame(header, header_len, data, data_len, session_data,
                 source_id, stream);
-	    break;
+            break;
         case FT_PING:
             frame = new Http2PingFrame(header, header_len, data, data_len, session_data,
                 source_id, stream);
-	    break;
+            break;
         case FT_RST_STREAM:
             frame = new Http2RstStreamFrame(header, header_len, data, data_len, session_data,
+                source_id, stream);
+            break;
+        case FT_WINDOW_UPDATE:
+            frame = new Http2WindowUpdateFrame(header, header_len, data, data_len, session_data,
                 source_id, stream);
             break;
         default:

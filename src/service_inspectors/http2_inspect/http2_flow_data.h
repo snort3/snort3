@@ -81,6 +81,7 @@ public:
     friend class Http2StatusLine;
     friend class Http2Stream;
     friend class Http2StreamSplitter;
+    friend class Http2WindowUpdateFrame;
     friend void finish_msg_body(Http2FlowData* session_data, HttpCommon::SourceId source_id);
 
     size_t size_of() override;

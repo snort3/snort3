@@ -43,8 +43,7 @@ public:
     static Http2Frame* new_frame(const uint8_t* header_buffer, const uint32_t header_len,
         const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* session_data,
         HttpCommon::SourceId source_id, Http2Stream* stream);
-    virtual bool valid_sequence(Http2Enums::StreamState state)
-        { return state != Http2Enums::STREAM_ERROR; }
+    virtual bool valid_sequence(Http2Enums::StreamState) { return true; }
     virtual void analyze_http1() { }
     virtual void clear() { }
     virtual const Field& get_buf(unsigned id);
