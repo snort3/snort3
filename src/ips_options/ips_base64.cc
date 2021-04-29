@@ -66,6 +66,9 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
+    bool is_relative() override
+    { return config.flags & BASE64DECODE_RELATIVE_FLAG; }
+
     EvalStatus eval(Cursor&, Packet*) override;
 
 private:
