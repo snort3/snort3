@@ -100,14 +100,13 @@ void RuleStateMap::apply(
     if ( policy )
         policy->rules_shared++;
 
-    RuleTreeNode* t_rtn = dup_rtn(sc, otn, b_rtn, policy);
+    RuleTreeNode* t_rtn = dup_rtn(b_rtn, policy);
     update_rtn(sc, t_rtn, s);
 
     addRtnToOtn(sc, otn, t_rtn, ips_num);
 }
 
-RuleTreeNode* RuleStateMap::dup_rtn(
-    SnortConfig* sc, OptTreeNode* otn, RuleTreeNode* rtn, IpsPolicy* policy)
+RuleTreeNode* RuleStateMap::dup_rtn(RuleTreeNode* rtn, IpsPolicy* policy)
 {
     RuleTreeNode* ret = new RuleTreeNode(*rtn);
 
@@ -134,7 +133,7 @@ RuleTreeNode* RuleStateMap::dup_rtn(
     if ( sip or dip or spo or dpo )
     {
         ret->rule_func = nullptr;
-        parse_rule_process_rtn(sc, ret, otn);
+        parse_rule_process_rtn(ret);
         return ret;
     }
 

@@ -105,187 +105,6 @@ struct SoRule
 
 static SoRule* s_so_rule = nullptr;
 
-/*
- * Finish adding the rule to the port tables
- *
- * 1) find the table this rule should belong to (src/dst/any-any tcp,udp,icmp,ip or nocontent)
- * 2) find an index for the gid:sid pair
- * 3) add all no content rules to a single no content port object, the ports are irrelevant so
- *    make it a any-any port object.
- * 4) if it's an any-any rule with content, add to an any-any port object
- * 5) find if we have a port object with these ports defined, if so get it, otherwise create it.
- *    a)do this for src and dst port
- *    b)add the rule index/id to the portobject(s)
- *    c)if the rule is bidir add the rule and port-object to both src and dst tables
- */
-static int FinishPortListRule(
-    RulePortTables* port_tables, RuleTreeNode* rtn, OptTreeNode* otn, FastPatternConfig* fp)
-{
-    int large_port_group = 0;
-    PortTable* dstTable;
-    PortTable* srcTable;
-    PortObject* aaObject;
-    rule_count_t* prc;
-    uint32_t orig_flags = rtn->flags;
-
-    /* Select the Target PortTable for this rule, based on protocol, src/dst
-     * dir, and if there is rule content */
-    switch ( otn->snort_protocol_id )
-    {
-    case SNORT_PROTO_IP:
-        dstTable = port_tables->ip.dst;
-        srcTable = port_tables->ip.src;
-        aaObject = port_tables->ip.any;
-        prc = &ipCnt;
-        break;
-
-    case SNORT_PROTO_ICMP:
-        dstTable = port_tables->icmp.dst;
-        srcTable = port_tables->icmp.src;
-        aaObject = port_tables->icmp.any;
-        prc = &icmpCnt;
-        break;
-
-    case SNORT_PROTO_TCP:
-        dstTable = port_tables->tcp.dst;
-        srcTable = port_tables->tcp.src;
-        aaObject = port_tables->tcp.any;
-        prc = &tcpCnt;
-        break;
-
-    case SNORT_PROTO_UDP:
-        dstTable = port_tables->udp.dst;
-        srcTable = port_tables->udp.src;
-        aaObject = port_tables->udp.any;
-        prc = &udpCnt;
-        break;
-
-    default:
-        rtn->flags |= RuleTreeNode::ANY_SRC_PORT|RuleTreeNode::ANY_DST_PORT;
-        dstTable = srcTable = nullptr;
-        aaObject = port_tables->svc_any;
-        prc = &svcCnt;
-    }
-
-    if ( !rtn->any_src_port() and !rtn->any_dst_port() )
-        prc->both++;
-
-    int src_cnt = rtn->any_src_port() ? 65535 : PortObjectPortCount(rtn->src_portobject);
-    int dst_cnt = rtn->any_dst_port() ? 65535 : PortObjectPortCount(rtn->dst_portobject);
-
-    /* If not an any-any rule test for port bleedover, if we are using a
-     * single rule group, don't bother */
-    if ( !fp->get_single_rule_group() and !rtn->any_any_port() )
-    {
-        if (src_cnt >= fp->get_bleed_over_port_limit())
-            ++large_port_group;
-
-        if (dst_cnt >= fp->get_bleed_over_port_limit())
-            ++large_port_group;
-
-        if (large_port_group == 2 && fp->get_bleed_over_warnings())
-        {
-            LogMessage("***Bleedover Port Limit(%d) Exceeded for rule %u:%u "
-                "(%d)ports: ", fp->get_bleed_over_port_limit(),
-                otn->sigInfo.gid, otn->sigInfo.sid,
-                (src_cnt > dst_cnt) ? src_cnt : dst_cnt);
-
-            /* If logging to syslog, this will be all multiline */
-            fflush(stdout); fflush(stderr);
-            PortObjectPrintPortsRaw(rtn->src_portobject);
-            LogMessage(" -> ");
-            PortObjectPrintPortsRaw(rtn->dst_portobject);
-            LogMessage(" adding to any-any group\n");
-            fflush(stdout); fflush(stderr);
-        }
-    }
-
-    /* If an any-any rule add rule index to any-any port object
-     * both content and no-content type rules go here if they are
-     * any-any port rules...
-     * If we have an any-any rule or a large port group or
-     * were using a single rule group we make it an any-any rule. */
-    if ( rtn->any_any_port() or large_port_group == 2 or fp->get_single_rule_group() )
-    {
-        if (otn->snort_protocol_id == SNORT_PROTO_IP)
-        {
-            PortObjectAddRule(port_tables->icmp.any, otn->ruleIndex);
-            icmpCnt.any++;
-
-            PortObjectAddRule(port_tables->tcp.any, otn->ruleIndex);
-            tcpCnt.any++;
-
-            PortObjectAddRule(port_tables->udp.any, otn->ruleIndex);
-            udpCnt.any++;
-        }
-        /* For all protocols-add to the any any group */
-        PortObjectAddRule(aaObject, otn->ruleIndex);
-        prc->any++;
-        rtn->flags = orig_flags;
-        return 0; /* done */
-    }
-
-    bool both_dirs = false;
-
-    /* add rule index to dst table if we have a specific dst port or port list */
-    if ( dst_cnt < fp->get_bleed_over_port_limit() and dst_cnt <= src_cnt )
-    {
-        prc->dst++;
-
-        /* find the proper port object */
-        PortObject* pox = PortTableFindInputPortObjectPorts(dstTable, rtn->dst_portobject);
-        if ( !pox )
-        {
-            /* Add the port object to the table, and add the rule to the port object */
-            pox = PortObjectDupPorts(rtn->dst_portobject);
-            PortTableAddObject(dstTable, pox);
-        }
-
-        PortObjectAddRule(pox, otn->ruleIndex);
-
-        /* if bidir, add this rule and port group to the src table */
-        if ( rtn->flags & RuleTreeNode::BIDIRECTIONAL )
-        {
-            pox = PortTableFindInputPortObjectPorts(srcTable, rtn->dst_portobject);
-            if ( !pox )
-            {
-                pox = PortObjectDupPorts(rtn->dst_portobject);
-                PortTableAddObject(srcTable, pox);
-            }
-
-            PortObjectAddRule(pox, otn->ruleIndex);
-            both_dirs = true;
-        }
-    }
-
-    /* add rule index to src table if we have a specific src port or port list */
-    if ( src_cnt < fp->get_bleed_over_port_limit() and src_cnt < dst_cnt )
-    {
-        prc->src++;
-        PortObject* pox = PortTableFindInputPortObjectPorts(srcTable, rtn->src_portobject);
-        if ( !pox )
-        {
-            pox = PortObjectDupPorts(rtn->src_portobject);
-            PortTableAddObject(srcTable, pox);
-        }
-
-        PortObjectAddRule(pox, otn->ruleIndex);
-
-        /* if bidir, add this rule and port group to the dst table */
-        if ( !both_dirs and rtn->flags & RuleTreeNode::BIDIRECTIONAL )
-        {
-            pox = PortTableFindInputPortObjectPorts(dstTable, rtn->src_portobject);
-            if ( !pox )
-            {
-                pox = PortObjectDupPorts(rtn->src_portobject);
-                PortTableAddObject(dstTable, pox);
-            }
-            PortObjectAddRule(pox, otn->ruleIndex);
-        }
-    }
-    return 0;
-}
-
 static int ValidateIPList(sfip_var_t* addrset, const char* token)
 {
     if (!addrset || !(addrset->head||addrset->neg_head))
@@ -614,18 +433,6 @@ bool same_headers(RuleTreeNode* rule, RuleTreeNode* rtn)
     return true;
 }
 
-static RuleTreeNode* findHeadNode(
-    SnortConfig* sc, RuleTreeNode* testNode, PolicyId policyId)
-{
-    if ( sc->rtn_hash_table )
-    {
-        RuleTreeNodeKey key { testNode, policyId };
-        return (RuleTreeNode*)sc->rtn_hash_table->get_user_data(&key);
-    }
-
-    return nullptr;
-}
-
 static void XferHeader(RuleTreeNode* from, RuleTreeNode* to)
 {
     to->flags = from->flags;
@@ -774,26 +581,12 @@ static void SetupRTNFuncList(RuleTreeNode* rtn)
     AddRuleFuncToList(RuleListEnd, rtn);
 }
 
-// if it doesn't match any of the existing nodes, make a new node and
-// stick it at the end of the list. Write every rtn in dump mode
-// to retain uninitialized variables.
-static RuleTreeNode* ProcessHeadNode(SnortConfig* sc, RuleTreeNode* test_node)
+// make a new node and stick it at the end of the list
+static RuleTreeNode* transfer_rtn(RuleTreeNode* tmpl)
 {
-    RuleTreeNode* rtn;
-    if ( !sc->dump_rule_info() )
-    {
-         rtn = findHeadNode(
-            sc, test_node, get_ips_policy()->policy_id);
-
-        if ( rtn )
-        {
-            FreeRuleTreeNode(test_node);
-            return rtn;
-        }
-    }
     head_count++;
-    rtn = new RuleTreeNode;
-    XferHeader(test_node, rtn);
+    auto rtn = new RuleTreeNode;
+    XferHeader(tmpl, rtn);
     SetupRTNFuncList(rtn);
     return rtn;
 }
@@ -1314,11 +1107,8 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
         return;
     }
 
-    /* The IPs in the test node get freed in ProcessHeadNode if there is
-     * already a matching RTN.  The portobjects will get freed when the
-     * port var table is freed */
     RuleTreeNode* tmp = s_so_rule ? s_so_rule->rtn : &rtn;
-    RuleTreeNode* new_rtn = ProcessHeadNode(sc, tmp);
+    RuleTreeNode* new_rtn = transfer_rtn(tmp);
     addRtnToOtn(sc, otn, new_rtn);
 
     OptTreeNode* otn_dup =
@@ -1389,9 +1179,6 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
     validate_services(sc, otn);
     OtnLookupAdd(sc->otn_map, otn);
 
-    if ( FinishPortListRule(sc->port_tables, new_rtn, otn, sc->fast_pattern_config) )
-        ParseError("Failed to finish a port list rule.");
-
     if ( s_capture )
     {
         s_body += " )";
@@ -1401,7 +1188,7 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
     ClearIpsOptionsVars();
 }
 
-void parse_rule_process_rtn(SnortConfig* sc, RuleTreeNode* rtn, OptTreeNode* otn)
+void parse_rule_process_rtn(RuleTreeNode* rtn)
 {
     if (rtn->sip->head && rtn->sip->head->flags & SFIP_ANY)
         rtn->flags |= RuleTreeNode::ANY_SRC_IP;
@@ -1428,7 +1215,192 @@ void parse_rule_process_rtn(SnortConfig* sc, RuleTreeNode* rtn, OptTreeNode* otn
 
     head_count++;
     SetupRTNFuncList(rtn);
+}
 
-    if ( FinishPortListRule(sc->port_tables, rtn, otn, sc->fast_pattern_config) )
-        ParseError("%u:%u rule failed to finish a port list.", otn->sigInfo.gid, otn->sigInfo.sid);
+/*
+ * Finish adding the rule to the port tables
+ *
+ * 1) find the table this rule should belong to (src/dst/any-any tcp,udp,icmp,ip or nocontent)
+ * 2) find an index for the gid:sid pair
+ * 3) add all no content rules to a single no content port object, the ports are irrelevant so
+ *    make it a any-any port object.
+ * 4) if it's an any-any rule with content, add to an any-any port object
+ * 5) find if we have a port object with these ports defined, if so get it, otherwise create it.
+ *    a)do this for src and dst port
+ *    b)add the rule index/id to the portobject(s)
+ *    c)if the rule is bidir add the rule and port-object to both src and dst tables
+ */
+int parse_rule_finish_ports(SnortConfig* sc, RuleTreeNode* rtn, OptTreeNode* otn)
+{
+    RulePortTables* port_tables = sc->port_tables;
+    FastPatternConfig* fp = sc->fast_pattern_config;
+
+    int large_port_group = 0;
+    PortTable* dstTable;
+    PortTable* srcTable;
+    PortObject* aaObject;
+    rule_count_t* prc;
+    uint32_t orig_flags = rtn->flags;
+
+    /* Select the Target PortTable for this rule, based on protocol, src/dst
+     * dir, and if there is rule content */
+    switch ( otn->snort_protocol_id )
+    {
+    case SNORT_PROTO_IP:
+        dstTable = port_tables->ip.dst;
+        srcTable = port_tables->ip.src;
+        aaObject = port_tables->ip.any;
+        prc = &ipCnt;
+        break;
+
+    case SNORT_PROTO_ICMP:
+        dstTable = port_tables->icmp.dst;
+        srcTable = port_tables->icmp.src;
+        aaObject = port_tables->icmp.any;
+        prc = &icmpCnt;
+        break;
+
+    case SNORT_PROTO_TCP:
+        dstTable = port_tables->tcp.dst;
+        srcTable = port_tables->tcp.src;
+        aaObject = port_tables->tcp.any;
+        prc = &tcpCnt;
+        break;
+
+    case SNORT_PROTO_UDP:
+        dstTable = port_tables->udp.dst;
+        srcTable = port_tables->udp.src;
+        aaObject = port_tables->udp.any;
+        prc = &udpCnt;
+        break;
+
+    default:
+        rtn->flags |= RuleTreeNode::ANY_SRC_PORT|RuleTreeNode::ANY_DST_PORT;
+        dstTable = srcTable = nullptr;
+        aaObject = port_tables->svc_any;
+        prc = &svcCnt;
+    }
+
+    if ( !rtn->any_src_port() and !rtn->any_dst_port() )
+        prc->both++;
+
+    int src_cnt = rtn->any_src_port() ? 65535 : PortObjectPortCount(rtn->src_portobject);
+    int dst_cnt = rtn->any_dst_port() ? 65535 : PortObjectPortCount(rtn->dst_portobject);
+
+    /* If not an any-any rule test for port bleedover, if we are using a
+     * single rule group, don't bother */
+    if ( !fp->get_single_rule_group() and !rtn->any_any_port() )
+    {
+        if (src_cnt >= fp->get_bleed_over_port_limit())
+            ++large_port_group;
+
+        if (dst_cnt >= fp->get_bleed_over_port_limit())
+            ++large_port_group;
+
+        if (large_port_group == 2 && fp->get_bleed_over_warnings())
+        {
+            LogMessage("***Bleedover Port Limit(%d) Exceeded for rule %u:%u "
+                "(%d)ports: ", fp->get_bleed_over_port_limit(),
+                otn->sigInfo.gid, otn->sigInfo.sid,
+                (src_cnt > dst_cnt) ? src_cnt : dst_cnt);
+
+            /* If logging to syslog, this will be all multiline */
+            fflush(stdout); fflush(stderr);
+            PortObjectPrintPortsRaw(rtn->src_portobject);
+            LogMessage(" -> ");
+            PortObjectPrintPortsRaw(rtn->dst_portobject);
+            LogMessage(" adding to any-any group\n");
+            fflush(stdout); fflush(stderr);
+        }
+    }
+
+    /* If an any-any rule add rule index to any-any port object
+     * both content and no-content type rules go here if they are
+     * any-any port rules...
+     * If we have an any-any rule or a large port group or
+     * were using a single rule group we make it an any-any rule. */
+    if ( rtn->any_any_port() or large_port_group == 2 or fp->get_single_rule_group() )
+    {
+        if (otn->snort_protocol_id == SNORT_PROTO_IP)
+        {
+            PortObjectAddRule(port_tables->icmp.any, otn->ruleIndex);
+            icmpCnt.any++;
+
+            PortObjectAddRule(port_tables->tcp.any, otn->ruleIndex);
+            tcpCnt.any++;
+
+            PortObjectAddRule(port_tables->udp.any, otn->ruleIndex);
+            udpCnt.any++;
+        }
+        /* For all protocols-add to the any any group */
+        PortObjectAddRule(aaObject, otn->ruleIndex);
+        prc->any++;
+        rtn->flags = orig_flags;
+        return 0; /* done */
+    }
+
+    bool both_dirs = false;
+
+    /* add rule index to dst table if we have a specific dst port or port list */
+    if ( dst_cnt < fp->get_bleed_over_port_limit() and dst_cnt <= src_cnt )
+    {
+        prc->dst++;
+
+        /* find the proper port object */
+        PortObject* pox = PortTableFindInputPortObjectPorts(dstTable, rtn->dst_portobject);
+        if ( !pox )
+        {
+            /* Add the port object to the table, and add the rule to the port object */
+            pox = PortObjectDupPorts(rtn->dst_portobject);
+            PortTableAddObject(dstTable, pox);
+        }
+
+        PortObjectAddRule(pox, otn->ruleIndex);
+
+        /* if bidir, add this rule and port group to the src table */
+        if ( rtn->flags & RuleTreeNode::BIDIRECTIONAL )
+        {
+            pox = PortTableFindInputPortObjectPorts(srcTable, rtn->dst_portobject);
+            if ( !pox )
+            {
+                pox = PortObjectDupPorts(rtn->dst_portobject);
+                PortTableAddObject(srcTable, pox);
+            }
+
+            PortObjectAddRule(pox, otn->ruleIndex);
+            both_dirs = true;
+        }
+    }
+
+    /* add rule index to src table if we have a specific src port or port list */
+    if ( src_cnt < fp->get_bleed_over_port_limit() and src_cnt < dst_cnt )
+    {
+        prc->src++;
+        PortObject* pox = PortTableFindInputPortObjectPorts(srcTable, rtn->src_portobject);
+        if ( !pox )
+        {
+            pox = PortObjectDupPorts(rtn->src_portobject);
+            PortTableAddObject(srcTable, pox);
+        }
+
+        PortObjectAddRule(pox, otn->ruleIndex);
+
+        /* if bidir, add this rule and port group to the dst table */
+        if ( !both_dirs and rtn->flags & RuleTreeNode::BIDIRECTIONAL )
+        {
+            pox = PortTableFindInputPortObjectPorts(dstTable, rtn->src_portobject);
+            if ( !pox )
+            {
+                pox = PortObjectDupPorts(rtn->src_portobject);
+                PortTableAddObject(dstTable, pox);
+            }
+            PortObjectAddRule(pox, otn->ruleIndex);
+        }
+    }
+    return 0;
+}
+
+void parse_rule_dec_head_count()
+{
+    head_count--;
 }

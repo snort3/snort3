@@ -49,7 +49,9 @@ void parse_rule_opt_end(snort::SnortConfig*, const char* key, OptTreeNode*);
 
 OptTreeNode* parse_rule_open(snort::SnortConfig*, RuleTreeNode&, bool stub = false);
 void parse_rule_close(snort::SnortConfig*, RuleTreeNode&, OptTreeNode*);
-void parse_rule_process_rtn(snort::SnortConfig*, RuleTreeNode*, OptTreeNode*);
+void parse_rule_process_rtn(RuleTreeNode*);
+int parse_rule_finish_ports(snort::SnortConfig*, RuleTreeNode*, OptTreeNode*);
+void parse_rule_dec_head_count();
 
 #endif
 
