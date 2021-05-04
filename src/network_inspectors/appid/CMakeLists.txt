@@ -1,6 +1,7 @@
 set (APPID_INCLUDES
     appid_api.h
     appid_app_descriptor.h
+    appid_debug.h
     appid_dns_session.h
     appid_http_session.h
     appid_session_api.h

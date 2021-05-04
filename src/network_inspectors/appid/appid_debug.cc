@@ -145,7 +145,7 @@ void AppIdDebug::set_constraints(const char *desc,
         char sipstr[INET6_ADDRSTRLEN];
         char dipstr[INET6_ADDRSTRLEN];
 
-        info.set(*constraints);
+        info = *constraints;
         info.sip.ntop(sipstr, sizeof(sipstr));
         info.dip.ntop(dipstr, sizeof(dipstr));
         LogMessage("Debugging %s with %s-%hu and %s-%hu %hhu\n", desc,

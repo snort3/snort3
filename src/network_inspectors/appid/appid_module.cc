@@ -36,6 +36,7 @@
 #include "main/swapper.h"
 #include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
+#include "pub_sub/appid_debug_log_event.h"
 #include "src/main.h"
 #include "target_based/host_attributes.h"
 #include "trace/trace.h"
@@ -112,7 +113,7 @@ AcAppIdDebug::AcAppIdDebug(AppIdDebugSessionConstraints* cs)
 {
     if (cs)
     {
-        constraints.set(*cs);
+        constraints = *cs;
         enable = true;
     }
 }
@@ -303,6 +304,9 @@ static int enable_debug(lua_State* L)
     constraints.sport = sport;
     constraints.dport = dport;
 
+    AppIdDebugLogEvent event(&constraints, "AppIdDbg");
+    DataBus::publish(APPID_DEBUG_LOG_EVENT, event);
+
     main_broadcast_command(new AcAppIdDebug(&constraints), true);
 
     return 0;
@@ -310,6 +314,8 @@ static int enable_debug(lua_State* L)
 
 static int disable_debug(lua_State*)
 {
+    AppIdDebugLogEvent event(nullptr, "");
+    DataBus::publish(APPID_DEBUG_LOG_EVENT, event);
     main_broadcast_command(new AcAppIdDebug(nullptr), true);
     return 0;
 }

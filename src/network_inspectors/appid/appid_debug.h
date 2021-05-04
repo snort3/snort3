@@ -44,9 +44,9 @@ namespace snort
 struct AppIdDebugSessionConstraints
 {
     snort::SfIp sip;
-    int sip_flag = 0;
+    bool sip_flag = false;
     snort::SfIp dip;
-    int dip_flag = 0;
+    bool dip_flag = false;
     uint16_t sport;
     uint16_t dport;
     IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
@@ -64,19 +64,7 @@ struct AppIdDebugSessionConstraints
             ((!sip_flag or !memcmp(sip.get_ip6_ptr(), ip1, sizeof(snort::ip::snort_in6_addr))) and
              (!dip_flag or !memcmp(dip.get_ip6_ptr(), ip2, sizeof(snort::ip::snort_in6_addr))));
     }
-    void set(const AppIdDebugSessionConstraints& src);
 };
-
-inline void AppIdDebugSessionConstraints::set(const AppIdDebugSessionConstraints& src)
-{
-    if ((sip_flag = src.sip_flag))
-        sip = src.sip;
-    if ((dip_flag = src.dip_flag))
-        dip = src.dip;
-    sport = src.sport;
-    dport = src.dport;
-    protocol = src.protocol;
-}
 
 class AppIdDebug
 {

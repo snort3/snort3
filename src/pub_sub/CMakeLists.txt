@@ -1,4 +1,5 @@
 set (PUB_SUB_INCLUDES
+    appid_debug_log_event.h
     appid_events.h
     cip_events.h
     data_decrypt_event.h
