@@ -111,12 +111,15 @@ struct NetflowConfig
 
 struct NetflowStats
 {
+    PegCount invalid_netflow_record;
     PegCount packets;
     PegCount records;
+    PegCount unique_flows;
+    PegCount v9_missing_template;
+    PegCount v9_options_template;
+    PegCount v9_templates;
     PegCount version_5;
     PegCount version_9;
-    PegCount invalid_netflow_pkts;
-    PegCount unique_flows;
 };
 
 extern THREAD_LOCAL NetflowStats netflow_stats;

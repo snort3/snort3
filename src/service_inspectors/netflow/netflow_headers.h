@@ -28,6 +28,33 @@
 #define NETFLOW_MAX_COUNT 256
 #define MAX_TIME 2145916799
 
+enum NetflowFieldTypes : uint16_t
+{
+    NETFLOW_IN_BYTES = 1,
+    NETFLOW_IN_PKTS = 2,
+    NETFLOW_PROTOCOL = 4,
+    NETFLOW_SRC_TOS = 5,
+    NETFLOW_TCP_FLAGS = 6,
+    NETFLOW_SRC_PORT = 7,
+    NETFLOW_SRC_IP = 8,
+    NETFLOW_SRC_MASK = 9,
+    NETFLOW_SNMP_IN = 10,
+    NETFLOW_DST_PORT = 11,
+    NETFLOW_DST_IP = 12,
+    NETFLOW_DST_MASK = 13,
+    NETFLOW_SNMP_OUT = 14,
+    NETFLOW_IPV4_NEXT_HOP = 15,
+    NETFLOW_SRC_AS = 16,
+    NETFLOW_DST_AS = 17,
+    NETFLOW_LAST_PKT = 21,
+    NETFLOW_FIRST_PKT = 22,
+    NETFLOW_SRC_IPV6 = 27,
+    NETFLOW_DST_IPV6 = 28,
+    NETFLOW_SRC_MASK_IPV6 = 29,
+    NETFLOW_DST_MASK_IPV6 = 30,
+    NETFLOW_DST_TOS = 55
+};
+
 struct NetflowSessionRecord
 {
     snort::SfIp initiator_ip;
@@ -42,12 +69,12 @@ struct NetflowSessionRecord
     uint64_t responder_pkts;
     uint64_t initiator_bytes;
     uint64_t responder_bytes;
-    uint16_t tcp_flags;
+    uint8_t tcp_flags;
 
     uint32_t nf_src_as;
     uint32_t nf_dst_as;
-    uint16_t nf_snmp_in;
-    uint16_t nf_snmp_out;
+    uint32_t nf_snmp_in;
+    uint32_t nf_snmp_out;
     uint8_t nf_src_tos;
     uint8_t nf_dst_tos;
     uint8_t nf_src_mask;
@@ -101,4 +128,26 @@ struct Netflow9Hdr
     uint32_t source_id;             // A 32-bit value that identifies the Exporter Observation Domain
 };
 
+struct Netflow9FlowSet
+{
+    uint16_t field_id;
+    uint16_t field_length;
+};
+
+struct Netflow9Template
+{
+    uint16_t template_id;
+    uint16_t template_field_count;
+};
+
+struct Netflow9TemplateField
+{
+    uint16_t field_type;
+    uint16_t field_length;
+
+    Netflow9TemplateField(uint16_t type, uint16_t length)
+        : field_type(type)
+        , field_length(length)
+    {}
+};
 #endif

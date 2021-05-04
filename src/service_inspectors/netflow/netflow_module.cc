@@ -70,12 +70,15 @@ static const Parameter netflow_params[] =
 
 static const PegInfo netflow_pegs[] =
 {
+    { CountType::SUM, "invalid_netflow_record", "count of invalid netflow records" },
     { CountType::SUM, "packets", "total packets processed" },
     { CountType::SUM, "records", "total records found in netflow data" },
+    { CountType::SUM, "unique_flows", "count of unique netflow flows" },
+    { CountType::SUM, "v9_missing_template", "count of data records that are missing templates" },
+    { CountType::SUM, "v9_options_template", "count of options template flowset" },
+    { CountType::SUM, "v9_templates", "count of total version 9 templates" },
     { CountType::SUM, "version_5", "count of netflow version 5 packets received" },
     { CountType::SUM, "version_9", "count of netflow version 9 packets received" },
-    { CountType::SUM, "invalid_netflow_pkts", "count of invalid netflow packets" },
-    { CountType::SUM, "unique_flows", "count of unique netflow flows" },
     { CountType::END, nullptr, nullptr},
 };
 
