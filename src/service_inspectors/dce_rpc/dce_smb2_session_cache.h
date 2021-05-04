@@ -43,7 +43,10 @@ public:
     Value* find_session(Key key)
     { return this->find(key).get(); }
     Value* find_else_create_session(Key key)
-    { return this->find_else_create(key, nullptr).get(); }
+    {
+        std::shared_ptr<Value> new_session = std::shared_ptr<Value>(new Value());
+        return this->find_else_insert(key, new_session, nullptr).get();
+    }
 };
 
 using Dce2Smb2SessionCache =

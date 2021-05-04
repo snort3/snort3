@@ -48,6 +48,12 @@ struct LruCacheSharedStats
     PegCount replaced = 0;      // found entry and replaced it
 };
 
+enum class LcsInsertStatus {
+    LCS_ITEM_PRESENT,
+    LCS_ITEM_INSERTED,
+    LCS_ITEM_REPLACED
+};
+
 template<typename Key, typename Value, typename Hash, typename Eq = std::equal_to<Key>,
     typename Purgatory = std::vector<std::shared_ptr<Value>>>
 class LruCacheShared
@@ -81,6 +87,9 @@ public:
 
     // Returns true if found or replaced, takes a ref to a user managed entry
     bool find_else_insert(const Key& key, std::shared_ptr<Value>& data, bool replace = false);
+
+    // Returns the found or inserted data, takes a ref to user managed entry.
+    Data find_else_insert(const Key&, Data&, LcsInsertStatus*, bool = false);
 
     // Return all data from the LruCache in order (most recently used to least)
     std::vector<std::pair<Key, Data> > get_all_data();
@@ -243,7 +252,6 @@ find_else_create(const Key& key, bool* new_data)
     // return the data pointer (below), or else, some other thread might
     // delete it before we got a chance to return it.
     Purgatory tmp_data;
-    Data data = Data(new Value);
 
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
@@ -259,6 +267,7 @@ find_else_create(const Key& key, bool* new_data)
     stats.adds++;
     if ( new_data )
         *new_data = true;
+    Data data = Data(new Value);
 
     //  Add key/data pair to front of list.
     list.emplace_front(std::make_pair(key, data));
@@ -311,6 +320,50 @@ find_else_insert(const Key& key, std::shared_ptr<Value>& data, bool replace)
     prune(tmp_data);
 
     return false;
+}
+
+template<typename Key, typename Value, typename Hash, typename Eq, typename Purgatory>
+std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq, Purgatory>::
+find_else_insert(const Key& key, std::shared_ptr<Value>& data, LcsInsertStatus* status, bool replace)
+{
+    LruMapIter map_iter;
+
+    Purgatory tmp_data;
+    std::lock_guard<std::mutex> cache_lock(cache_mutex);
+
+    map_iter = map.find(key);
+    if (map_iter != map.end())
+    {
+        stats.find_hits++;
+        if (status) *status = LcsInsertStatus::LCS_ITEM_PRESENT;
+        if (replace)
+        {
+            // Explicitly calling the reset so its more clear that destructor could be called for the object
+            decrease_size(map_iter->second->second.get());
+            map_iter->second->second.reset();
+            map_iter->second->second = data;
+            increase_size(map_iter->second->second.get());
+            stats.replaced++;
+            if (status) *status = LcsInsertStatus::LCS_ITEM_REPLACED;
+        }
+        list.splice(list.begin(), list, map_iter->second); // update LRU
+        return map_iter->second->second;
+    }
+
+    stats.find_misses++;
+    stats.adds++;
+    if (status) *status = LcsInsertStatus::LCS_ITEM_INSERTED;
+
+    //  Add key/data pair to front of list.
+    list.emplace_front(std::make_pair(key, data));
+    increase_size(data.get());
+
+    //  Add list iterator for the new entry to map.
+    map[key] = list.begin();
+
+    prune(tmp_data);
+
+    return data;
 }
 
 template<typename Key, typename Value, typename Hash, typename Eq, typename Purgatory>

@@ -147,13 +147,28 @@ TEST(lru_cache_shared, remove_test)
 TEST(lru_cache_shared, find_else_insert)
 {
     std::shared_ptr<std::string> data(new std::string("12345"));
-    LruCacheShared<int, std::string, std::hash<int> > lru_cache(1);
+    std::shared_ptr<std::string> data2(new std::string("54321"));
+    LruCacheShared<int, std::string, std::hash<int> > lru_cache(2);
+    LcsInsertStatus status;
 
     CHECK(false == lru_cache.find_else_insert(1,data));
     CHECK(1 == lru_cache.size());
 
     CHECK(true == lru_cache.find_else_insert(1,data));
     CHECK(1 == lru_cache.size());
+
+    CHECK(data == lru_cache.find_else_insert(1,data,&status));
+    CHECK(status == LcsInsertStatus::LCS_ITEM_PRESENT);
+    CHECK(1 == lru_cache.size());
+
+    CHECK(data2 == lru_cache.find_else_insert(2,data2,&status));
+    CHECK(status == LcsInsertStatus::LCS_ITEM_INSERTED);
+    CHECK(2 == lru_cache.size());
+
+    CHECK(data2 == lru_cache.find_else_insert(1,data2,&status, true));
+    CHECK(status == LcsInsertStatus::LCS_ITEM_REPLACED);
+    CHECK(*(lru_cache.find(1)) == "54321");
+    CHECK(2 == lru_cache.size());
 }
 
 //  Test statistics counters.
