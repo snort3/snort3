@@ -22,6 +22,7 @@
 #endif
 
 #include "protocols/eth.h"
+#include "protocols/ipv6.h"
 #include "detection/ips_context.h"
 #include "detection/signature.h"
 #include "events/event.h"
@@ -82,6 +83,7 @@ SO_PUBLIC const SnortPacket* get_packet()
     lua_packet.num = packet->context->packet_number;
     lua_packet.sp = packet->ptrs.sp;
     lua_packet.dp = packet->ptrs.dp;
+    lua_packet.dst_addr = "";
 
     if ( !(packet->proto_bits & PROTO_BIT__ETH) ) {
         lua_packet.ether_dst = lua_packet.ether_src = "";
@@ -110,6 +112,12 @@ SO_PUBLIC const SnortPacket* get_packet()
         lua_packet.ether_dst = (const char*)eth_dst;
     } else {
         lua_packet.ether_dst = "";
+    }
+
+    if ( packet->has_ip() or packet->is_data() ) {
+        static THREAD_LOCAL char ip[ip::IP6_MAX_STR_LEN];
+        packet->ptrs.ip_api.get_dst()->ntop(ip, ip::IP6_MAX_STR_LEN);
+        lua_packet.dst_addr = ip;
     }
 
     return &lua_packet;
