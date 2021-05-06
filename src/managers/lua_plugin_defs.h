@@ -55,6 +55,8 @@ struct SnortPacket
     uint64_t num;
     unsigned sp;
     unsigned dp;
+    const char* ether_src;
+    const char* ether_dst;
 };
 
 extern "C"
