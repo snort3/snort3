@@ -75,7 +75,7 @@ static void populate_trace_data(FileContext* context)
     std::string file_name = ss.str();
 
     PacketTracer::daq_log("file+%" PRId64"++File Type[%s]/File ID[%lu] with name[%s] and size[%lu] detected."
-                "File sha is [%s], with verdict[%s]$",
+                "File SHA is [%s], with verdict[%s]$",
                 TO_NSECS(pt_timer->get()),
                 file_type_name(context->get_file_type()).c_str(),
                 context->get_file_id(),
