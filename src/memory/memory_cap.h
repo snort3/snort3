@@ -32,6 +32,8 @@ class SO_PUBLIC MemoryCap
 {
 public:
     static bool free_space(size_t);
+    // The following functions perform internal rounding. Allocations and deallocations must be
+    // performed in identical increments or leakage may occur.
     static void update_allocations(size_t);
     static void update_deallocations(size_t);
 

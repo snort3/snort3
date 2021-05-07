@@ -1,33 +1,11 @@
-This directory provides:
+This directory provides a simple mechanism for implementing a memory cap.
+Modules can use the MemoryCap::update_allocations() and
+update_deallocations() calls to self-report when they allocate or free
+heap memory. If the total memory allocations exceed the configured memory
+cap, flow pruning is done to free up additional memory.
 
-- Facilities for tracking and managing memory usage throughout the program
-- ::operator new and ::operator delete replacements that use the above facilities
-
-The memory interface (found in memory_manager.cc) is templated to accept
-two different components: the Cap and the Allocator.
-
-The Allocator is intended to be a thin interface to the underlying
-heap allocation and deallocation functions (i.e. malloc() and free()).
-They are expected to have the same semantics as malloc() and free().
-
-The Cap is intended to provide callbacks for updating memory allocation
-statistics and a callback that attempts to free a given amount of memory.
-
-During allocation, the Interface first calls Cap::free_space().
-Cap::free_space() is intended as a hook for a function which
-attempts to free space if a memory cap is reached, or to do nothing
-otherwise. Cap::free_space() returns a boolean indicating success
-or failure. If it was successful, then Allocator::allocate() is
-called, followed by Cap::update_allocations().
-
-During deallocation the Interface calls Allocator::deallocate(),
-followed by Cap::update_deallocations().
-
-By swapping out the template parameters for Cap and Allocator,
-the Interface user can implement unit tests with no side-effects,
-or change the behavior of the Interface at compile time. By
-default the allocator and cap located in memory_allocator.h and
-memory_cap.h, respectively, are used in the new/delete replacements.
+This mechanism is approximate and does not directly reflect the activities
+of the memory allocator or the OOM killer.
 
 TODO:
 

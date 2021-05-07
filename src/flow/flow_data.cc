@@ -50,19 +50,31 @@ FlowData::~FlowData()
         handler->rem_ref();
 
     assert(mem_in_use == 0);
+    assert(net_allocation_calls == 0);
 }
 
 void FlowData::update_allocations(size_t n)
 {
     memory::MemoryCap::update_allocations(n);
-    mem_in_use += n;
+
+    if (n > 0)
+    {
+        mem_in_use += n;
+        net_allocation_calls++;
+    }
 }
 
 void FlowData::update_deallocations(size_t n)
 {
-    assert(mem_in_use >= n);
     memory::MemoryCap::update_deallocations(n);
-    mem_in_use -= n;
+
+    if (n > 0)
+    {
+        assert(mem_in_use >= n);
+        mem_in_use -= n;
+        assert(net_allocation_calls > 0);
+        net_allocation_calls--;
+    }
 }
 
 RuleFlowData::RuleFlowData(unsigned u) :
