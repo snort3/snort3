@@ -36,6 +36,7 @@
 #include "managers/inspector_manager.h"
 #include "managers/mpse_manager.h"
 #include "packet_io/active.h"
+#include "packet_tracer/packet_tracer.h"
 #include "parser/parser.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
@@ -222,6 +223,9 @@ void DetectionEngine::finish_inspect_with_latency(Packet* p)
 void DetectionEngine::finish_inspect(Packet* p, bool inspected)
 {
     log_events(p);
+
+    if ( PacketTracer::is_daq_activated() )
+        populate_trace_data();
 
     if ( p->active )
     {
@@ -615,6 +619,9 @@ bool DetectionEngine::inspect(Packet* p)
 
             if ( !all_disabled(p) )
             {
+                if ( PacketTracer::is_daq_activated() )
+                    PacketTracer::pt_timer_start();
+
                 if ( detect(p, true) )
                     return false; // don't finish out offloaded packets
             }

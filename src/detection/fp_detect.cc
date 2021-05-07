@@ -94,8 +94,26 @@ enum FPTask : uint8_t
 THREAD_LOCAL ProfileStats mpsePerfStats;
 THREAD_LOCAL ProfileStats rulePerfStats;
 
+#define CONTEXT_LEN    1024
+static THREAD_LOCAL char tr_context[CONTEXT_LEN];
+static THREAD_LOCAL uint32_t tr_len = 0;
+
 static void fp_immediate(Packet*);
 static void fp_immediate(MpseGroup*, Packet*, const uint8_t*, unsigned);
+
+void populate_trace_data()
+{
+    if ( tr_len > 0 )
+    {
+        tr_context[tr_len-1] = ' ';
+        PacketTracer::daq_log("IPS+%" PRId64"++%s$",
+            TO_NSECS(pt_timer->get()),
+            tr_context);
+
+        tr_len = 0;
+        tr_context[0] = '\0';
+    }
+}
 
 static inline void init_match_info(const IpsContext* c)
 {
@@ -119,6 +137,16 @@ static inline void fpLogOther(
         PacketTracer::log("Event: %u:%u:%u, Action %s\n",
             otn->sigInfo.gid, otn->sigInfo.sid,
             otn->sigInfo.rev, act.c_str());
+    }
+
+    if ( PacketTracer::is_daq_activated() )
+    {
+        std::string act = Actions::get_string(action);
+        tr_len += snprintf(tr_context+tr_len, sizeof(tr_context) - tr_len, 
+                      "gid:%u, sid:%u, rev:%u, action:%s, msg:%s\n", 
+                      otn->sigInfo.gid, otn->sigInfo.sid,
+                      otn->sigInfo.rev, act.c_str(),
+                      otn->sigInfo.message.c_str());
     }
 
     // rule option actions are queued here (eg replace)

@@ -52,6 +52,7 @@ struct RuleTreeNode;
 int fpLogEvent(const RuleTreeNode*, const OptTreeNode*, snort::Packet*);
 bool fp_eval_rtn(RuleTreeNode*, snort::Packet*, int check_ports);
 int fp_eval_option(void*, Cursor&, snort::Packet*);
+void populate_trace_data();
 
 #define MAX_NUM_RULE_TYPES 16   // max number of allowed rule types
 
