@@ -759,7 +759,8 @@ void FileContext::print_file_name(std::ostream& log)
     char* outbuf = get_UTF8_fname(&fname_len);
     const char* fname  = (outbuf != nullptr) ? outbuf : file_name.c_str();
 
-    log << "File name: ";
+    if (!PacketTracer::is_daq_activated())
+    	log << "File name: ";
 
     size_t pos = 0;
     while (pos < fname_len)
@@ -786,7 +787,9 @@ void FileContext::print_file_name(std::ostream& log)
             log << "|" << std::dec;
         }
     }
-    log << std::endl;
+
+    if (!PacketTracer::is_daq_activated())
+    	log << std::endl;
 
     if (outbuf)
         snort_free(outbuf);

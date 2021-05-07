@@ -33,6 +33,7 @@
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
+#include "packet_tracer/packet_tracer.h"
 #include "protocols/packet.h"
 
 #include "file_cache.h"
@@ -65,6 +66,23 @@ namespace snort
 
         return position;
     }
+}
+
+static void populate_trace_data(FileContext* context)
+{
+    std::stringstream ss;
+    context->print_file_name(ss);
+    std::string file_name = ss.str();
+
+    PacketTracer::daq_log("file+%" PRId64"++File Type[%s]/File ID[%lu] with name[%s] and size[%lu] detected."
+                "File sha is [%s], with verdict[%s]$",
+                TO_NSECS(pt_timer->get()),
+                file_type_name(context->get_file_type()).c_str(),
+                context->get_file_id(),
+                file_name.c_str(),
+                context->get_file_size(),
+                (context->get_file_sig_sha256() ? context->sha_to_string(context->get_file_sig_sha256()).c_str(): "null"),
+                VerdictName[context->verdict].c_str());
 }
 
 void FileFlows::handle_retransmit(Packet* p)
@@ -283,6 +301,9 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
     if (!context)
         return false;
 
+    if (PacketTracer::is_daq_activated())
+        PacketTracer::pt_timer_start();
+
     if (!cacheable)
         context->set_not_cacheable();
 
@@ -300,6 +321,8 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
     {
         context->processing_complete = true;
         remove_processed_file_context(multi_file_processing_id);
+        if (PacketTracer::is_daq_activated())
+            populate_trace_data(context);
         return false;
     }
 
@@ -315,6 +338,8 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
                     file_policy);
             if (context->processing_complete)
                 remove_processed_file_context(multi_file_processing_id);
+            if (PacketTracer::is_daq_activated())
+                populate_trace_data(context);
             return continue_processing;
         }
     }
@@ -322,6 +347,8 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
     continue_processing = context->process(p, file_data, data_size, offset, file_policy, position);
     if (context->processing_complete)
         remove_processed_file_context(multi_file_processing_id);
+    if (PacketTracer::is_daq_activated())
+        populate_trace_data(context);
     return continue_processing;
 }
 
@@ -342,12 +369,18 @@ bool FileFlows::file_process(Packet* p, const uint8_t* file_data, int data_size,
     if (position == SNORT_FILE_POSITION_UNKNOWN)
         return false;
 
+    if (PacketTracer::is_daq_activated())
+        PacketTracer::pt_timer_start();
+
     context = find_main_file_context(position, direction, file_index);
 
     set_current_file_context(context);
 
     context->set_signature_state(gen_signature);
-    return context->process(p, file_data, data_size, position, file_policy);
+    bool file_process_ret = context->process(p, file_data, data_size, position, file_policy);
+    if (PacketTracer::is_daq_activated())
+        populate_trace_data(context);
+    return file_process_ret;
 }
 
 /*

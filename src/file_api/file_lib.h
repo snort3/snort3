@@ -33,6 +33,9 @@
 #define SNORT_FILE_TYPE_UNKNOWN          UINT16_MAX
 #define SNORT_FILE_TYPE_CONTINUE         0
 
+const std::string VerdictName[] =
+{"Unknown", "Log", "Stop", "Block", "Reset", "Pending", "Stop Capture", "INVALID"};
+
 class FileConfig;
 class FileSegments;
 
