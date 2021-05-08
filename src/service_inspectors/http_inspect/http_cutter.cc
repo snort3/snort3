@@ -769,6 +769,9 @@ ScanResult HttpBodyH2Cutter::cut(const uint8_t* buffer, uint32_t length,
     {
         num_flush = length;
         total_octets_scanned += length;
+        if (state != H2_BODY_NOT_COMPLETE)
+            return SCAN_DISCARD;
+
         return SCAN_DISCARD_PIECE;
     }
 

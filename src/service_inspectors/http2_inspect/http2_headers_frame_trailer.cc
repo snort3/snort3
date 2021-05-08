@@ -98,22 +98,24 @@ void Http2HeadersFrameTrailer::analyze_http1()
         const StreamBuffer stream_buf =
             session_data->hi_ss[source_id]->reassemble(session_data->flow,
             0, 0, nullptr, 0, PKT_PDU_TAIL, copied);
-        assert(stream_buf.data != nullptr);
         assert(copied == 0);
 
-        Http2DummyPacket dummy_pkt;
-        dummy_pkt.flow = session_data->flow;
-        dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
-        dummy_pkt.dsize = stream_buf.length;
-        dummy_pkt.data = stream_buf.data;
-        session_data->hi->eval(&dummy_pkt);
-        assert (http_flow->get_type_expected(source_id) == HttpEnums::SEC_TRAILER);
-        if (http_flow->get_type_expected(source_id) == HttpEnums::SEC_ABORT)
+        if (stream_buf.data != nullptr)
         {
-            stream->set_state(source_id, STREAM_ERROR);
-            return;
+            Http2DummyPacket dummy_pkt;
+            dummy_pkt.flow = session_data->flow;
+            dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
+            dummy_pkt.dsize = stream_buf.length;
+            dummy_pkt.data = stream_buf.data;
+            session_data->hi->eval(&dummy_pkt);
+            assert (http_flow->get_type_expected(source_id) == HttpEnums::SEC_TRAILER);
+            if (http_flow->get_type_expected(source_id) == HttpEnums::SEC_ABORT)
+            {
+                stream->set_state(source_id, STREAM_ERROR);
+                return;
+            }
+            session_data->hi->clear(&dummy_pkt);
         }
-        session_data->hi->clear(&dummy_pkt);
     }
 
     process_decoded_headers(http_flow, source_id);
@@ -139,6 +141,7 @@ void Http2HeadersFrameTrailer::print_frame(FILE* output)
 {
     fprintf(output, "Trailers frame\n");
     Http2HeadersFrame::print_frame(output);
-
 }
+
 #endif
+

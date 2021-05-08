@@ -346,8 +346,9 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
                 {
                     session_data->half_reset(source_id);
                 }
-                // FIXIT-M update this to include H2 message once H2I supports trailers and finish()
-                else if (session_data->type_expected[source_id] == SEC_BODY_CHUNK)
+                else if (session_data->type_expected[source_id] == SEC_BODY_CHUNK ||
+                        (session_data->type_expected[source_id] == SEC_BODY_H2 &&
+                        session_data->h2_body_state[source_id] == H2_BODY_COMPLETE_EXPECT_TRAILERS))
                 {
                     session_data->trailer_prep(source_id);
                 }
