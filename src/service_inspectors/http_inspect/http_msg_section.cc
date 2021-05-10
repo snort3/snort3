@@ -92,7 +92,8 @@ void HttpMsgSection::update_depth() const
     const int64_t& detect_depth_remaining = session_data->detect_depth_remaining[source_id];
 
     if ((detect_depth_remaining <= 0) &&
-        (session_data->detection_status[source_id] == DET_ON))
+        (session_data->detection_status[source_id] == DET_ON) &&
+        !session_data->for_http2)
     {
         session_data->detection_status[source_id] = DET_DEACTIVATING;
     }
