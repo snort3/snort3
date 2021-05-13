@@ -36,8 +36,13 @@ struct dce2TcpProtoConf;
 class DceExpSsnManager
 {
 public:
-    DceExpSsnManager(const char*, IpProtocol, PktType);
+    DceExpSsnManager(IpProtocol p, PktType t) :
+        proto(p), type(t) {}
+
     virtual ~DceExpSsnManager() = default;
+
+    void set_proto_id(SnortProtocolId id)
+    { protocol_id = id; }
 
     SnortProtocolId get_proto_id() const
     { return protocol_id; }
@@ -56,7 +61,7 @@ private:
         PktType, IpProtocol, SnortProtocolId) = 0;
 
 private:
-    SnortProtocolId protocol_id;
+    SnortProtocolId protocol_id = UNKNOWN_PROTOCOL_ID;
     IpProtocol proto;
     PktType type;
 };

@@ -139,6 +139,7 @@ class Dce2Tcp : public snort::Inspector
 public:
     Dce2Tcp(const dce2TcpProtoConf&);
 
+    bool configure(snort::SnortConfig*) override;
     void show(const snort::SnortConfig*) const override;
     void eval(snort::Packet*) override;
     void clear(snort::Packet*) override;

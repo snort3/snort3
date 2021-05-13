@@ -32,12 +32,6 @@
 
 using namespace snort;
 
-DceExpSsnManager::DceExpSsnManager(const char* protocol,
-    IpProtocol proto, PktType type): proto(proto), type(type)
-{
-    protocol_id = SnortConfig::get_conf()->proto_ref->add(protocol);
-}
-
 void DceExpSsnManager::create_expected_session(const SfIp* ept_ip,
     uint16_t ept_port, const char* mod_name)
 {
@@ -62,8 +56,7 @@ void DceExpSsnManager::create_expected_session(const SfIp* ept_ip,
 }
 
 DceTcpExpSsnManager::DceTcpExpSsnManager(const dce2TcpProtoConf& config) :
-    DceExpSsnManager("dce-tcp", IpProtocol::TCP, PktType::TCP),
-    pc(config) { }
+    DceExpSsnManager(IpProtocol::TCP, PktType::TCP), pc(config) {}
 
 int DceTcpExpSsnManager::create_expected_session_impl(Packet* pkt,
     const snort::SfIp* src_ip, uint16_t src_port,

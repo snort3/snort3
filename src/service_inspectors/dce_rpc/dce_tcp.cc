@@ -111,7 +111,13 @@ static DCE2_TcpSsnData* dce2_handle_tcp_session(Packet* p, dce2TcpProtoConf* con
 // class stuff
 //-------------------------------------------------------------------------
 Dce2Tcp::Dce2Tcp(const dce2TcpProtoConf& pc) :
-    config(pc), esm(config) { }
+    config(pc), esm(config) {}
+
+bool Dce2Tcp::configure(snort::SnortConfig* sc)
+{
+    esm.set_proto_id(sc->proto_ref->add(DCE_RPC_SERVICE_NAME));
+    return true;
+}
 
 void Dce2Tcp::show(const SnortConfig*) const
 {
