@@ -586,3 +586,552 @@ const BaseApi* ips_byte_jump[] =
     nullptr
 };
 
+#ifdef UNIT_TEST
+#include <iostream>
+#include <climits>
+
+#include "framework/value.h"
+#include "framework/parameter.h"
+
+#include "catch/snort_catch.h"
+
+#define NO_MATCH snort::IpsOption::EvalStatus::NO_MATCH
+#define MATCH snort::IpsOption::EvalStatus::MATCH
+
+void SetByteJumpData(ByteJumpData &byte_jump, int value)
+{
+    byte_jump.bytes_to_grab = value; 
+    byte_jump.offset = value;
+    byte_jump.relative_flag = value; 
+    byte_jump.data_string_convert_flag = value; 
+    byte_jump.from_beginning_flag = value;
+    byte_jump.align_flag = value; 
+    byte_jump.endianness = value;
+    byte_jump.base = value; 
+    byte_jump.multiplier = value;
+    byte_jump.post_offset = value;
+    byte_jump.bitmask_val = value;
+    byte_jump.offset_var = value; 
+    byte_jump.from_end_flag = value; 
+    byte_jump.post_offset_var = value; 
+};
+
+void SetByteJumpMaxValue(ByteJumpData &byte_jump)
+{
+    byte_jump.bytes_to_grab = UINT_MAX; 
+    byte_jump.offset = INT_MAX;
+    byte_jump.relative_flag = UCHAR_MAX; 
+    byte_jump.data_string_convert_flag = UCHAR_MAX; 
+    byte_jump.from_beginning_flag = UCHAR_MAX;
+    byte_jump.align_flag = UCHAR_MAX; 
+    byte_jump.endianness = UCHAR_MAX;
+    byte_jump.base = UINT_MAX; 
+    byte_jump.multiplier = UINT_MAX;
+    byte_jump.post_offset = INT_MAX;
+    byte_jump.bitmask_val = UINT_MAX;
+    byte_jump.offset_var = SCHAR_MAX; 
+    byte_jump.from_end_flag = UCHAR_MAX; 
+    byte_jump.post_offset_var = SCHAR_MAX; 
+};
+
+class StubIpsOption : public IpsOption
+{
+public:
+    StubIpsOption(const char* name, option_type_t option_type) : 
+        IpsOption(name, option_type) 
+    { };
+
+};
+
+class StubEndianness : public Endianness
+{
+public:
+    StubEndianness() = default;
+    virtual bool get_offset_endianness(int32_t offset, uint8_t& endian) override
+    { return false; } 
+};
+
+
+TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
+{
+    ByteJumpData byte_jump;
+    SetByteJumpData(byte_jump, 1);
+    snort::IpsOption::set_buffer("hello_world");
+
+    SECTION("method hash")
+    {
+        ByteJumpOption hash_test(byte_jump);
+        ByteJumpOption hash_test_equal(byte_jump);
+        
+        SECTION("Testing hash with very low values")
+        {
+            SECTION("Hash has same source")
+            {
+                REQUIRE((hash_test.hash() == hash_test.hash()) == true);
+                REQUIRE((hash_test.hash() == hash_test_equal.hash()) == true);
+
+            }
+
+            SECTION("Compare hash from different source")
+            {
+                SetByteJumpData(byte_jump, 4);
+                ByteJumpOption hash_test_diff(byte_jump);
+                CHECK((hash_test.hash() == hash_test_diff.hash()) == false); 
+            }
+        }
+
+        SECTION("Testing hash with maximum values")
+        {
+            SetByteJumpMaxValue(byte_jump);
+            ByteJumpOption hash_test_max(byte_jump);
+            ByteJumpOption hash_test_equal_max(byte_jump);
+
+            SECTION("Hash has same source")
+            {
+                CHECK((hash_test_max.hash() == hash_test_max.hash()) == true);
+                CHECK((hash_test_max.hash() == hash_test_equal_max.hash()) == true);
+            }
+
+            SECTION("Compare hash from different source")
+            {
+                SetByteJumpMaxValue(byte_jump);
+                ByteJumpOption hash_test_max(byte_jump);
+                CHECK((hash_test.hash() == hash_test_max.hash()) == false); 
+            }
+        }
+    }
+
+    SECTION("operator ==")
+    {
+        ByteJumpOption jump(byte_jump);
+
+        SECTION("Compare IpsOptions with different names")
+        {       
+            StubIpsOption case_diff_name("not_hello_world", 
+                option_type_t::RULE_OPTION_TYPE_BUFFER_USE);
+            REQUIRE((jump==case_diff_name) == false);        
+        }
+  
+        SECTION("Compare IpsOptions with different buffer")
+        {
+            StubIpsOption case_diff_option("hello_world", 
+                option_type_t::RULE_OPTION_TYPE_CONTENT);
+            REQUIRE((jump==case_diff_option) == false);        
+        }
+        SECTION("Compare IpsOptions with buffet n/a")
+        {
+            StubIpsOption case_option_na("hello_world", 
+                option_type_t::RULE_OPTION_TYPE_OTHER); 
+            REQUIRE((jump==case_option_na) == false);        
+        }
+
+        ByteJumpData byte_jump2;
+        SetByteJumpData(byte_jump2, 1); 
+
+        SECTION("Compare between equals instans")
+        {
+            ByteJumpOption jump_1(byte_jump);    
+            REQUIRE((jump==jump_1) == true);
+        }
+        
+        SECTION("bytes_to_grab is different")
+        {
+            byte_jump2.bytes_to_grab = 2;
+            ByteJumpOption jump_2_1(byte_jump2);
+            REQUIRE((jump==jump_2_1) == false);
+            byte_jump2.bytes_to_grab = 1;
+        }
+
+        SECTION("offset is different")
+        {
+            byte_jump2.offset = 2;
+            ByteJumpOption jump_2_2(byte_jump2);
+            REQUIRE((jump==jump_2_2) == false);
+            byte_jump2.offset = 1;
+        }
+
+        SECTION("relative_flag is different")
+        {
+            byte_jump2.relative_flag = 0;
+            ByteJumpOption jump_2_3(byte_jump2);
+            REQUIRE((jump==jump_2_3) == false);
+            byte_jump2.relative_flag = 1;
+        }
+
+        SECTION("data_string_convert_flag is different")
+        {
+            byte_jump2.data_string_convert_flag = 0;
+            ByteJumpOption jump_2_4(byte_jump2);
+            REQUIRE((jump==jump_2_4) == false);
+            byte_jump2.data_string_convert_flag = 1;
+        }
+        
+        SECTION("from_beginning_flag is different")
+        {
+            byte_jump2.from_beginning_flag = 0;
+            ByteJumpOption jump_2_5(byte_jump2);
+            REQUIRE((jump==jump_2_5) == false);
+            byte_jump2.from_beginning_flag = 1;
+        }
+
+        SECTION("align_flag is different")
+        {
+            byte_jump2.align_flag = 0;
+            ByteJumpOption jump_2_6(byte_jump2);
+            REQUIRE((jump==jump_2_6) == false);
+            byte_jump2.align_flag = 1;
+        }
+
+        SECTION("endianness is different")
+        {
+            byte_jump2.endianness = 0;
+            ByteJumpOption jump_2_7(byte_jump2);
+            REQUIRE((jump==jump_2_7) == false);
+            byte_jump2.endianness = 1;
+        }
+
+        SECTION("base is different")
+        {
+            byte_jump2.base = 2;
+            ByteJumpOption jump_2_8(byte_jump2);
+            REQUIRE((jump==jump_2_8) == false);
+            byte_jump2.base = 1;
+        }
+
+        SECTION("multiplier is different")
+        {
+            byte_jump2.multiplier = 2;
+            ByteJumpOption jump_2_9(byte_jump2);
+            REQUIRE((jump==jump_2_9) == false);
+            byte_jump2.multiplier = 1;
+        }
+
+        SECTION("post_offset is different")
+        {
+            byte_jump2.post_offset = 2;
+            ByteJumpOption jump_2_10(byte_jump2);
+            REQUIRE((jump==jump_2_10) == false);
+            byte_jump2.post_offset = 1;
+        }
+
+        SECTION("bitmask_val is different")
+        {
+            byte_jump2.bitmask_val = 2;
+            ByteJumpOption jump_2_11(byte_jump2);
+            REQUIRE((jump==jump_2_11) == false);
+            byte_jump2.bitmask_val = 0;
+        }
+
+        SECTION("offset_var is different")
+        {
+            byte_jump2.offset_var = 0;
+            ByteJumpOption jump_2_12(byte_jump2);
+            REQUIRE((jump==jump_2_12) == false);
+            byte_jump2.offset_var = 1;
+        }
+
+        SECTION("from_end_flag is different")
+        {
+            byte_jump2.from_end_flag = 0;
+            ByteJumpOption jump_2_13(byte_jump2);
+            REQUIRE((jump==jump_2_13) == false);
+            byte_jump2.from_end_flag = 1;
+        }
+
+        SECTION("post_offset_var is different")
+        {
+            byte_jump2.post_offset_var = 0;
+            ByteJumpOption jump_2_14(byte_jump2);
+            REQUIRE((jump==jump_2_14) == false);
+            byte_jump2.post_offset_var = 1;
+        }
+      
+    }
+
+    SECTION("method eval")
+    {
+        Packet test_packet;
+        Cursor current_cursor;
+        SetByteJumpData(byte_jump, 1);
+        
+        SECTION("Incorrect Endianness")
+        {
+            StubEndianness* stub_endinness = new StubEndianness();
+            byte_jump.offset_var = -1;
+            test_packet.endianness = stub_endinness; 
+            byte_jump.endianness = 4;
+            byte_jump.post_offset_var = -1;
+            ByteJumpOption test_1(byte_jump);
+            REQUIRE((test_1.eval(current_cursor, &test_packet)) == NO_MATCH);
+        }
+
+        SECTION("Cursor not setted correct for string_extract")
+        {
+            ByteJumpOption test_2(byte_jump);
+            REQUIRE((test_2.eval(current_cursor, &test_packet)) == NO_MATCH);
+        }
+
+        SECTION("Extract too much (1000000) bytes from in byte_extract")
+        {
+            uint8_t buff = 0; 
+            byte_jump.data_string_convert_flag = 0;
+            byte_jump.bytes_to_grab = 1000000;
+            current_cursor.set("hello_world_long_name", &buff, 50);
+            ByteJumpOption test_3(byte_jump);
+            REQUIRE((test_3.eval(current_cursor, &test_packet)) == NO_MATCH);
+        }
+        
+        SECTION("Cursor not setted correct")
+        {
+            uint8_t buff = 0; 
+            current_cursor.set("hello_world_long_name", &buff, 1);
+            byte_jump.data_string_convert_flag = 0;
+            byte_jump.from_beginning_flag = 0;
+            byte_jump.from_end_flag = 1; 
+            byte_jump.bytes_to_grab = 1;
+            byte_jump.post_offset_var = 12;
+            ByteJumpOption test_4(byte_jump);
+            REQUIRE((test_4.eval(current_cursor, &test_packet)) == NO_MATCH);
+        }
+
+        SECTION("Match")
+        {
+            uint8_t buff = 0; 
+            byte_jump.data_string_convert_flag = 0;
+            byte_jump.from_beginning_flag = 0;
+            byte_jump.from_end_flag = 0; 
+            current_cursor.set("hello_world_long_name", &buff, 50);
+            ByteJumpOption test_5(byte_jump);
+            REQUIRE((test_5.eval(current_cursor, &test_packet)) == MATCH);
+
+            byte_jump.from_beginning_flag = 1; 
+            byte_jump.bitmask_val = 2;
+            ByteJumpOption test_5_1(byte_jump);
+            REQUIRE((test_5_1.eval(current_cursor, &test_packet)) == MATCH);
+        }
+    }
+}
+
+TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
+{
+    ByteJumpModule module_jump;
+    ByteJumpData byte_jump;
+    SetByteJumpData(byte_jump, 1);
+
+    SECTION("method end")
+    {
+        std::string buff = "tmp";
+
+        SECTION("Undefined rule option for var")
+        {
+            module_jump.var = buff;
+            byte_jump.offset_var = -1;
+            module_jump.data = byte_jump;
+            REQUIRE(module_jump.end("tmp", 0, nullptr) == false);
+        }
+
+        SECTION("Undefined rule option for offset_var")
+        {
+            module_jump.var.clear();
+            module_jump.post_var = buff;
+            byte_jump.post_offset_var = -1;
+            module_jump.data = byte_jump;
+            REQUIRE(module_jump.end("tmp", 0, nullptr) == false);        
+        }
+        
+        SECTION("From_beginning and from_end options together")        
+        {
+            byte_jump.endianness = 0;
+            module_jump.data = byte_jump;
+            REQUIRE(module_jump.end("tmp", 0, nullptr) == false);  
+        }
+
+        SECTION("Number of bytes in \"bitmask\" value is greater than bytes to extract")
+        {
+            byte_jump.from_beginning_flag = 0;
+            byte_jump.bytes_to_grab = 0;
+            module_jump.data = byte_jump;
+            REQUIRE(module_jump.end("tmp", 0, nullptr) == false);
+        }
+
+        SECTION("byte_jump rule option cannot extract more than %d bytes without valid string prefix")
+        {
+            byte_jump.from_beginning_flag = 0;
+            byte_jump.bytes_to_grab = 5;
+            byte_jump.data_string_convert_flag = 0;
+            module_jump.data = byte_jump;
+            REQUIRE(module_jump.end("tmp", 0, nullptr) == false);
+        }
+        
+        SECTION("Case with returned value true")
+        {
+            byte_jump.from_beginning_flag = 0;
+            module_jump.data = byte_jump;
+            REQUIRE(module_jump.end("tmp", 0, nullptr) == true);
+        }
+    }
+
+    SECTION("method set")
+    {
+        Value value(false);
+
+        SECTION("All params incorrect")
+        {
+            REQUIRE(module_jump.set(nullptr, value, nullptr) == false);
+        }
+
+        SECTION("Case param \"~count\"")
+        {
+            Parameter param("~count", snort::Parameter::Type::PT_BOOL, 
+                nullptr, "default", "help");
+            value.set(&param);
+            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+        }
+
+        SECTION("Case param \"~offset\"") 
+        {
+            SECTION("Value doesn't have a str")
+            {
+                Parameter param("~offset", snort::Parameter::Type::PT_BOOL, 
+                    nullptr, "default", "help");
+                value.set(&param);
+                REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+            }
+            
+            SECTION("When value has a str")
+            {
+                Value value_tmp("123");
+                Parameter param("~offset", snort::Parameter::Type::PT_BOOL, 
+                    nullptr, "default", "help");
+                value_tmp.set(&param);
+                REQUIRE(module_jump.set(nullptr, value_tmp, nullptr) == true);
+            }
+        }
+
+        SECTION("Case param \"relative\"") 
+        { 
+            Parameter param("relative", snort::Parameter::Type::PT_BOOL, 
+                    nullptr, "default", "help"); 
+            value.set(&param);
+            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+        }
+
+        SECTION("Param \"from_beginning\" correct")
+        {
+            Parameter param("from_beginning", snort::Parameter::Type::PT_BOOL, 
+                nullptr, "default", "help");
+            value.set(&param);
+            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+        }
+
+        SECTION("Case param \"from_end\"") 
+        { 
+            Parameter param("from_end", snort::Parameter::Type::PT_BOOL, 
+                    nullptr, "default", "help"); 
+            value.set(&param);
+            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+        } 
+
+        SECTION("Case param \"align\"") 
+        { 
+            Parameter param("align", snort::Parameter::Type::PT_BOOL, 
+                    nullptr, "default", "help"); 
+            value.set(&param);
+            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+        } 
+        
+        SECTION("Case param \"multiplier\"") 
+        { 
+            Parameter param("multiplier", snort::Parameter::Type::PT_BOOL, 
+                    nullptr, "default", "help"); 
+            value.set(&param);
+            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+        } 
+
+        SECTION("Case param \"post_offset\"") 
+        {
+            SECTION("Value doesn't have a str")
+            {
+                Parameter param("post_offset", snort::Parameter::Type::PT_BOOL, 
+                    nullptr, "default", "help");
+                value.set(&param);
+                REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+            }
+            
+            SECTION("When value has a str")
+            {
+                Value value_tmp("123");
+                Parameter param("post_offset", snort::Parameter::Type::PT_BOOL, 
+                    nullptr, "default", "help");
+                value_tmp.set(&param);
+                REQUIRE(module_jump.set(nullptr, value_tmp, nullptr) == true);
+            }
+        }
+
+        SECTION("Case param \"big\"") 
+        { 
+            Parameter param("big", snort::Parameter::Type::PT_BOOL, 
+                    nullptr, "default", "help"); 
+            value.set(&param);
+            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+        }  
+
+        SECTION("Case param \"little\"") 
+        { 
+            Parameter param("little", snort::Parameter::Type::PT_BOOL, 
+                    nullptr, "default", "help"); 
+            value.set(&param);
+            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+        }
+
+        SECTION("Case param \"dce\"") 
+        { 
+            Parameter param("dce", snort::Parameter::Type::PT_BOOL, 
+                    nullptr, "default", "help"); 
+            value.set(&param);
+            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+        }
+
+        SECTION("Case param \"string\"") 
+        { 
+            Parameter param("string", snort::Parameter::Type::PT_BOOL, 
+                    nullptr, "default", "help"); 
+            value.set(&param);
+            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+        }
+
+        SECTION("Case param \"dec\"") 
+        { 
+            Parameter param("dec", snort::Parameter::Type::PT_BOOL, 
+                    nullptr, "default", "help"); 
+            value.set(&param);
+            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+        }
+
+        SECTION("Case param \"hex\"") 
+        { 
+            Parameter param("hex", snort::Parameter::Type::PT_BOOL, 
+                    nullptr, "default", "help"); 
+            value.set(&param);
+            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+        } 
+
+        SECTION("Case param \"oct\"") 
+        { 
+            Parameter param("oct", snort::Parameter::Type::PT_BOOL, 
+                    nullptr, "default", "help"); 
+            value.set(&param);
+            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+        } 
+
+        SECTION("Case param \"bitmask\"") 
+        { 
+            Parameter param("bitmask", snort::Parameter::Type::PT_BOOL, 
+                    nullptr, "default", "help"); 
+            value.set(&param);
+            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+        } 
+    }
+}
+
+#endif
