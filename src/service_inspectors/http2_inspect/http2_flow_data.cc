@@ -44,7 +44,8 @@ uint64_t Http2FlowData::instance_count = 0;
 #endif
 
 // Each stream will have class Http2Stream allocated and a node in streams list
-const size_t Http2FlowData::stream_memory_size = sizeof(std::_List_node<Http2Stream*>) + sizeof(class Http2Stream);
+const size_t Http2FlowData::stream_memory_size = sizeof(class Http2Stream) +
+    stream_extra_memory;
 const size_t Http2FlowData::stream_increment_memory_size = stream_memory_size *
     STREAM_MEMORY_TRACKING_INCREMENT;
 

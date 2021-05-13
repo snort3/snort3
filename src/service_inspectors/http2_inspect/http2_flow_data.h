@@ -211,6 +211,9 @@ private:
     void update_stream_memory_deallocations();
     static const size_t stream_memory_size;
     static const size_t stream_increment_memory_size;
+    // Per-stream extra memory estimate to account for the std::list streams. Actual memory usage
+    // is implementation dependent
+    static const size_t stream_extra_memory = 24;
 };
 
 #endif
