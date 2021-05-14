@@ -328,7 +328,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 }
 
 static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
-    const Packet* p, const NetflowConfig* cfg)
+    const Packet* p, const NetflowRules* p_rules)
 {
     Netflow9Hdr header;
     const Netflow9Hdr *pheader;
@@ -356,15 +356,6 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
     header.sys_uptime =  ntohl(pheader->sys_uptime) / 1000;
     header.unix_secs = ntohl(pheader->unix_secs);
     header.unix_secs -= header.sys_uptime;
-
-    const NetflowRules* p_rules = nullptr;
-    auto d = cfg->device_rule_map.find(*p->ptrs.ip_api.get_src());
-
-    if ( d != cfg->device_rule_map.end() )
-        p_rules = &(d->second);
-
-    if ( p_rules == nullptr )
-        return false;
 
     const int zone = p->pkth->ingress_index;
 
@@ -545,7 +536,7 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
 }
 
 static bool decode_netflow_v5(const unsigned char* data, uint16_t size,
-    const Packet* p, const NetflowConfig* cfg)
+    const Packet* p, const NetflowRules* p_rules)
 {
     Netflow5Hdr header;
     const Netflow5Hdr *pheader;
@@ -561,13 +552,6 @@ static bool decode_netflow_v5(const unsigned char* data, uint16_t size,
     if( header.flow_count  < NETFLOW_MIN_COUNT or header.flow_count  > NETFLOW_MAX_COUNT )
         return false;
 
-    const NetflowRules* p_rules = nullptr;
-    auto d = cfg->device_rule_map.find(*p->ptrs.ip_api.get_src());
-    if ( d != cfg->device_rule_map.end() )
-        p_rules = &(d->second);
-
-    if ( p_rules == nullptr )
-        return false;
     const int zone = p->pkth->ingress_index;
 
     data += sizeof(Netflow5Hdr);
@@ -640,7 +624,7 @@ static bool decode_netflow_v5(const unsigned char* data, uint16_t size,
     return true;
 }
 
-static bool validate_netflow(const Packet* p, const NetflowConfig* cfg)
+static bool validate_netflow(const Packet* p, const NetflowRules* p_rules)
 {
     uint16_t size = p->dsize;
     const unsigned char* data = p->data;
@@ -655,7 +639,7 @@ static bool validate_netflow(const Packet* p, const NetflowConfig* cfg)
 
     if( version == 5 )
     {
-        retval = decode_netflow_v5(data, size, p, cfg);
+        retval = decode_netflow_v5(data, size, p, p_rules);
         if ( retval )
         {
             ++netflow_stats.packets;
@@ -664,7 +648,7 @@ static bool validate_netflow(const Packet* p, const NetflowConfig* cfg)
     }
     else if ( version == 9 )
     {
-        retval = decode_netflow_v9(data, size, p, cfg);
+        retval = decode_netflow_v9(data, size, p, p_rules);
         if ( retval )
         {
             ++netflow_stats.packets;
@@ -906,8 +890,15 @@ void NetflowInspector::eval(Packet* p)
     assert((p->is_udp() and p->dsize and p->data));
     assert(netflow_cache);
 
-    if ( ! validate_netflow(p, config) )
-        ++netflow_stats.invalid_netflow_record;
+    auto d = config->device_rule_map.find(*p->ptrs.ip_api.get_src());
+
+    if ( d != config->device_rule_map.end() )
+    {
+        const NetflowRules* p_rules = &(d->second);
+
+        if ( ! validate_netflow(p, p_rules) )
+            ++netflow_stats.invalid_netflow_record;
+    }
 }
 
 void NetflowInspector::tinit()
