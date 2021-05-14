@@ -70,13 +70,9 @@ void Http2Stream::eval_frame(const uint8_t* header_buffer, uint32_t header_len,
     }
 }
 
-void Http2Stream::clear_frame()
+// check if stream is completed, do cleanup if it is
+void Http2Stream::check_and_cleanup_completed()
 {
-    assert(current_frame != nullptr);
-    current_frame->clear();
-    delete current_frame;
-    current_frame = nullptr;
-
     if ((state[SRC_CLIENT] >= STREAM_COMPLETE) && (state[SRC_SERVER] >= STREAM_COMPLETE))
     {
         if (hi_flow_data != nullptr)
@@ -87,6 +83,16 @@ void Http2Stream::clear_frame()
         }
         session_data->delete_stream = true;
     }
+}
+
+void Http2Stream::clear_frame()
+{
+    assert(current_frame != nullptr);
+    current_frame->clear();
+    delete current_frame;
+    current_frame = nullptr;
+
+    check_and_cleanup_completed();
 }
 
 void Http2Stream::set_state(HttpCommon::SourceId source_id, StreamState new_state)

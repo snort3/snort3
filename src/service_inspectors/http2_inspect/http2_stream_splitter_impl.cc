@@ -508,8 +508,31 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
             // but don't create pkt_data buffer
             frame_buf.data = (const uint8_t*)"";
         }
+        else
+            discarded_data_frame_cleanup(session_data, source_id);
     }
 
     return frame_buf;
 }
 
+void Http2StreamSplitter::discarded_data_frame_cleanup(Http2FlowData* session_data, HttpCommon::SourceId source_id)
+{
+    Http2Stream* const stream = session_data->find_current_stream(source_id);
+
+    if (!stream || stream->get_state(source_id) == STREAM_ERROR)
+        return;
+
+    if (stream->is_end_stream_on_data_flush(source_id))
+    {
+        if (session_data->concurrent_files > 0)
+            session_data->concurrent_files -= 1;
+        stream->set_state(source_id, STREAM_COMPLETE);
+        stream->check_and_cleanup_completed();
+        if (session_data->delete_stream)
+        {
+            session_data->processing_stream_id = session_data->get_current_stream_id(source_id);
+            session_data->delete_processing_stream();
+            session_data->processing_stream_id = NO_STREAM_ID;
+        }
+    }
+}

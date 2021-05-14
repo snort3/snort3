@@ -39,6 +39,7 @@ public:
     uint32_t get_stream_id() const { return stream_id; }
     void eval_frame(const uint8_t* header_buffer, uint32_t header_len, const uint8_t* data_buffer,
         uint32_t data_len, HttpCommon::SourceId source_id);
+    void check_and_cleanup_completed();
     void clear_frame();
     const Field& get_buf(unsigned id);
     HttpFlowData* get_hi_flow_data() const { return hi_flow_data; }

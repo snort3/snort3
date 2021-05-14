@@ -60,6 +60,7 @@ private:
         HttpCommon::SourceId source_id);
     static bool read_frame_hdr(Http2FlowData* session_data, const uint8_t* data,
         uint32_t length, HttpCommon::SourceId source_id, uint32_t& data_offset);
+    static void discarded_data_frame_cleanup(Http2FlowData* session_data, HttpCommon::SourceId source_id);
 };
 
 
