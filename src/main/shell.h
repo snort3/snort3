@@ -53,7 +53,7 @@ public:
     void set_overrides(const char*);
     void set_overrides(Shell*);
 
-    bool configure(snort::SnortConfig*, bool is_fatal = true, bool is_root = false);
+    bool configure(snort::SnortConfig*, bool is_root = false);
     void install(const char*, const struct luaL_Reg*);
     void execute(const char*, std::string&);
 
@@ -118,9 +118,9 @@ private:
     void allowlist_update(const char* keyword, bool is_prefix);
 
     bool load_lua_sandbox();
-    void set_sandbox_env();
+    bool set_sandbox_env();
     bool load_string(const char* s, bool load_in_sandbox, const char* message);
-    bool load_config(const char* file, bool load_in_sandbox, bool is_fatal);
+    bool load_config(const char* file, bool load_in_sandbox);
 
 private:
     bool loaded;

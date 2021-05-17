@@ -42,8 +42,7 @@ void push_parse_location(
 void pop_parse_location();
 void inc_parse_position();
 
-snort::SnortConfig* ParseSnortConf(const snort::SnortConfig*, const char* fname = nullptr,
-    bool is_fatal = true);
+snort::SnortConfig* ParseSnortConf(const snort::SnortConfig*, const char* fname = nullptr);
 void ParseRules(snort::SnortConfig*);
 void ParseRulesFinish(snort::SnortConfig*);
 void ShowPolicyStats(const snort::SnortConfig*);

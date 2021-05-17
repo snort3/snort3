@@ -282,14 +282,14 @@ static RuleListNode* addNodeToOrderedList
     return ordered_list;
 }
 
-static bool parse_file(SnortConfig* sc, Shell* sh, bool is_fatal, bool is_root)
+static bool parse_file(SnortConfig* sc, Shell* sh, bool is_root)
 {
     const char* fname = sh->get_file();
 
     if ( !fname || !*fname )
         return false;
 
-    bool success = sh->configure(sc, is_fatal, is_root);
+    bool success = sh->configure(sc, is_root);
 
     return success;
 }
@@ -315,7 +315,7 @@ void parser_term(SnortConfig*)
     ruleIndexMap = nullptr;
 }
 
-SnortConfig* ParseSnortConf(const SnortConfig* cmd_line_conf, const char* fname, bool is_fatal)
+SnortConfig* ParseSnortConf(const SnortConfig* cmd_line_conf, const char* fname)
 {
     const SnortConfig* current_conf = SnortConfig::get_conf();
     SnortConfig* sc = new SnortConfig(current_conf->proto_ref);
@@ -365,7 +365,7 @@ SnortConfig* ParseSnortConf(const SnortConfig* cmd_line_conf, const char* fname,
         Shell::set_config_output(shell_output);
         set_policies(sc, sh);
 
-        if (!parse_file(sc, sh, is_fatal, (i == 0)))
+        if (!parse_file(sc, sh, (i == 0)))
         {
             parse_file_failed = true;
             break;

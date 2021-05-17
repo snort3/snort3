@@ -302,43 +302,59 @@ static int get_line_number(lua_State* L)
 
 #endif
 
-void Shell::set_sandbox_env()
+bool Shell::set_sandbox_env()
 {
     lua_getglobal(lua, "sandbox_env");
 
     if ( lua_istable(lua, -1) )
     {
         if ( !lua_setfenv(lua, -2) )
-            FatalError("can't set sandbox environment\n");
+        {
+            ParseError("can't set sandbox environment\n");
+            return false;
+        }
     }
     else
-        FatalError("sandbox environment not defined\n");
+    {
+        ParseError("sandbox environment not defined\n");
+        return false;
+    }
+    return true;
 }
 
 bool Shell::load_lua_sandbox()
 {
-    if (lua_sandbox.empty())
-        return false;
-
     Lua::ManageStack ms(lua);
 
     LogMessage("Loading lua sandbox %s:\n", lua_sandbox.c_str());
     if ( luaL_loadfile(lua, lua_sandbox.c_str()) )
-        FatalError("can't load lua sandbox %s: %s\n", lua_sandbox.c_str(), lua_tostring(lua, -1));
+    {
+        ParseError("can't load lua sandbox %s: %s\n", lua_sandbox.c_str(), lua_tostring(lua, -1));
+        return false;
+    }
 
     if ( lua_pcall(lua, 0, 0, 0) )
-        FatalError("can't init lua sandbox %s: %s\n", lua_sandbox.c_str(), lua_tostring(lua, -1));
+    {
+        ParseError("can't init lua sandbox %s: %s\n", lua_sandbox.c_str(), lua_tostring(lua, -1));
+        return false;
+    }
     LogMessage("Finished %s:\n", lua_sandbox.c_str());
 
     lua_getglobal(lua, "sandbox_env");
     if ( !lua_istable(lua, -1) )
-        FatalError("sandbox_env table doesn't exist in %s: %s\n", lua_sandbox.c_str(),
+    {
+        ParseError("sandbox_env table doesn't exist in %s: %s\n", lua_sandbox.c_str(),
             lua_tostring(lua, -1));
+        return false;
+    }
 
     lua_getglobal(lua, "create_sandbox_env");
     if ( lua_pcall(lua, 0, 0, 0) != 0 )
-        FatalError("can't create sandbox environment %s: %s\n", lua_sandbox.c_str(),
+    {
+        ParseError("can't create sandbox environment %s: %s\n", lua_sandbox.c_str(),
             lua_tostring(lua, -1));
+        return false;
+    }
 
     return true;
 }
@@ -348,42 +364,52 @@ bool Shell::load_string(const char* s, bool load_in_sandbox, const char* message
     Lua::ManageStack ms(lua);
 
     if ( luaL_loadstring(lua, s) )
-        FatalError("can't load %s: %s\n", message, lua_tostring(lua, -1));
+    {
+        ParseError("can't load %s: %s\n", message, lua_tostring(lua, -1));
+        return false;
+    }
 
-    if ( load_in_sandbox )
-        set_sandbox_env();
+    if ( load_in_sandbox && !set_sandbox_env() )
+        return false;
+
 
     if ( lua_pcall(lua, 0, 0, 0) )
-        FatalError("can't init %s: %s\n", message, lua_tostring(lua, -1));
+    {
+        ParseError("can't init %s: %s\n", message, lua_tostring(lua, -1));
+        return false;
+    }
 
     return true;
 }
 
-bool Shell::load_config(const char* file, bool load_in_sandbox, bool is_fatal)
+bool Shell::load_config(const char* file, bool load_in_sandbox)
 {
     if ( load_in_sandbox )
     {
         ifstream in_file(file, ifstream::in);
         if (in_file.get() == 27 )
-            FatalError("bytecode is not allowed %s\n", file);
+        {
+            ParseError("bytecode is not allowed %s\n", file);
+            return false;
+        }
     }
 
     Lua::ManageStack ms(lua);
 
     if ( luaL_loadfile(lua, file) )
     {
-        if (is_fatal)
-            FatalError("can't load %s: %s\n", file, lua_tostring(lua, -1));
-        else
-            ParseError("can't load %s: %s\n", file, lua_tostring(lua, -1));
+        ParseError("can't load %s: %s\n", file, lua_tostring(lua, -1));
         return false;
     }
 
-    if ( load_in_sandbox )
-        set_sandbox_env();
+    if ( load_in_sandbox && !set_sandbox_env() )
+        return false;
 
     if ( lua_pcall(lua, 0, 0, 0) )
-        FatalError("can't init %s: %s\n", file, lua_tostring(lua, -1));
+    {
+        ParseError("can't init %s: %s\n", file, lua_tostring(lua, -1));
+        return false;
+    }
 
     return true;
 }
@@ -440,7 +466,7 @@ void Shell::set_overrides(Shell* sh)
     overrides += sh->overrides;
 }
 
-bool Shell::configure(SnortConfig* sc, bool is_fatal, bool is_root)
+bool Shell::configure(SnortConfig* sc, bool is_root)
 {
     assert(file.size());
     ModuleManager::set_config(sc);
@@ -463,7 +489,12 @@ bool Shell::configure(SnortConfig* sc, bool is_fatal, bool is_root)
         lua_setglobal(lua, "tweaks");
     }
 
-    bool load_in_sandbox = load_lua_sandbox();
+    bool load_in_sandbox = true;
+  
+    if ( lua_sandbox.empty() )
+        load_in_sandbox = false;
+    else if ( !load_lua_sandbox() )
+        return false;
 
     if ( load_defaults )
         load_string(ModuleManager::get_lua_coreinit(), load_in_sandbox, "coreinit");
@@ -481,10 +512,7 @@ bool Shell::configure(SnortConfig* sc, bool is_fatal, bool is_root)
 
     if ( !code )
     {
-        if ( is_fatal )
-            FatalError("can't find %s\n", file.c_str());
-        else
-            ParseError("can't find %s\n", file.c_str());
+        ParseError("can't find %s\n", file.c_str());
         return false;
     }
 
@@ -493,7 +521,7 @@ bool Shell::configure(SnortConfig* sc, bool is_fatal, bool is_root)
     current_shells.push(this);
 
     if ( !path.empty() and
-        !load_config(path.c_str(), load_in_sandbox, is_fatal) )
+        !load_config(path.c_str(), load_in_sandbox) )
     {
         current_shells.pop();
         return false;

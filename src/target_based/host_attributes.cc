@@ -142,7 +142,7 @@ bool HostAttributesManager::load_hosts_file(snort::SnortConfig* sc, const char* 
     next_cache = new HostAttributesSharedCache(sc->max_attribute_hosts);
 
     Shell sh(fname);
-    if ( sh.configure(sc, false, true) )
+    if ( sh.configure(sc, true) )
     {
         activate(sc);
         return true;

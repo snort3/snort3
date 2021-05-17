@@ -449,7 +449,7 @@ SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path
     trim_heap();
 
     parser_init();
-    SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf, fname, false);
+    SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf, fname);
 
     if ( get_parse_errors() || ModuleManager::get_errors() || !sc->verify() )
     {
@@ -545,7 +545,7 @@ SnortConfig* Snort::get_updated_policy(
             !other_conf->trace_config->initialized;
 
         Shell sh = Shell(fname);
-        sh.configure(sc, false, true);
+        sh.configure(sc, true);
 
         if ( uninitialized_trace )
         {
