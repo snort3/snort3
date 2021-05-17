@@ -28,7 +28,7 @@
  *
  * Arguments:
  *      Required:
- *      <bytes_to_grab>: number of bytes to pick up from the packet
+ *      <bytes_to_extract>: number of bytes to pick up from the packet
  *      <offset>: number of bytes into the payload to grab the bytes
  *      Optional:
  *      ["relative"]: offset relative to last pattern match
@@ -81,11 +81,10 @@
 #include "framework/endianness.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
-#include "hash/hash_key_operations.h"
 #include "log/messages.h"
+#include "hash/hash_key_operations.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
-
 #include "extract.h"
 
 using namespace snort;
@@ -97,26 +96,27 @@ static THREAD_LOCAL ProfileStats byteJumpPerfStats;
 
 typedef struct _ByteJumpData
 {
-    uint32_t bytes_to_grab;
+    uint32_t bytes_to_extract;
     int32_t offset;
-    uint8_t relative_flag;
-    uint8_t data_string_convert_flag;
-    uint8_t from_beginning_flag;
-    uint8_t align_flag;
+    bool relative_flag;
+    bool string_convert_flag;
+    bool from_beginning_flag;
+    bool align_flag;
     uint8_t endianness;
     uint32_t base;
     uint32_t multiplier;
     int32_t post_offset;
     uint32_t bitmask_val;
     int8_t offset_var;
-    uint8_t from_end_flag;
+    bool from_end_flag;
     int8_t post_offset_var;
 } ByteJumpData;
 
 class ByteJumpOption : public IpsOption
 {
 public:
-    ByteJumpOption(const ByteJumpData& c) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
+    ByteJumpOption(const ByteJumpData& c) : IpsOption(s_name, 
+        RULE_OPTION_TYPE_BUFFER_USE)
     { config = c; }
 
 
@@ -141,14 +141,14 @@ private:
 
 uint32_t ByteJumpOption::hash() const
 {
-    uint32_t a = config.bytes_to_grab;
+    uint32_t a = config.bytes_to_extract;
     uint32_t b = config.offset;
     uint32_t c = config.base;
 
     mix(a,b,c);
 
     a += (config.relative_flag << 24 |
-        config.data_string_convert_flag << 16 |
+        config.string_convert_flag << 16 |
         config.from_beginning_flag << 8 |
         config.align_flag);
     b += config.endianness;
@@ -157,7 +157,8 @@ uint32_t ByteJumpOption::hash() const
     mix(a,b,c);
 
     a += config.post_offset;
-    b += config.from_end_flag << 16 | (uint32_t) config.offset_var << 8 | config.post_offset_var;
+    b += config.from_end_flag << 16 | (uint32_t) config.offset_var << 8 
+        | config.post_offset_var;
     c += config.bitmask_val;
 
     mix(a,b,c);
@@ -169,26 +170,27 @@ uint32_t ByteJumpOption::hash() const
 
 bool ByteJumpOption::operator==(const IpsOption& ips) const
 {
+
     if ( !IpsOption::operator==(ips) )
         return false;
-
+    
     const ByteJumpOption& rhs = (const ByteJumpOption&)ips;
     const ByteJumpData* left = &config;
     const ByteJumpData* right = &rhs.config;
 
-    if (( left->bytes_to_grab == right->bytes_to_grab) &&
-        ( left->offset == right->offset) &&
-        ( left->offset_var == right->offset_var) &&
-        ( left->relative_flag == right->relative_flag) &&
-        ( left->data_string_convert_flag == right->data_string_convert_flag) &&
-        ( left->from_beginning_flag == right->from_beginning_flag) &&
-        ( left->align_flag == right->align_flag) &&
-        ( left->endianness == right->endianness) &&
-        ( left->base == right->base) &&
-        ( left->multiplier == right->multiplier) &&
-        ( left->post_offset == right->post_offset) &&
-        ( left->bitmask_val == right->bitmask_val) &&
-        ( left->from_end_flag == right->from_end_flag) &&
+    if (( left->bytes_to_extract == right->bytes_to_extract) and
+        ( left->offset == right->offset) and
+        ( left->offset_var == right->offset_var) and
+        ( left->relative_flag == right->relative_flag) and
+        ( left->string_convert_flag == right->string_convert_flag) and
+        ( left->from_beginning_flag == right->from_beginning_flag) and
+        ( left->align_flag == right->align_flag) and
+        ( left->endianness == right->endianness) and
+        ( left->base == right->base) and
+        ( left->multiplier == right->multiplier) and
+        ( left->post_offset == right->post_offset) and
+        ( left->bitmask_val == right->bitmask_val) and
+        ( left->from_end_flag == right->from_end_flag) and
         ( left->post_offset_var == right->post_offset_var))
     {
         return true;
@@ -207,7 +209,7 @@ IpsOption::EvalStatus ByteJumpOption::eval(Cursor& c, Packet* p)
     int32_t post_offset = 0;
 
     // Get values from byte_extract variables, if present.
-    if (bjd->offset_var >= 0 && bjd->offset_var < NUM_IPS_OPTIONS_VARS)
+    if (bjd->offset_var >= 0 and bjd->offset_var < NUM_IPS_OPTIONS_VARS)
     {
         uint32_t extract_offset;
         GetVarValueByIndex(&extract_offset, bjd->offset_var);
@@ -217,7 +219,8 @@ IpsOption::EvalStatus ByteJumpOption::eval(Cursor& c, Packet* p)
     {
         offset = bjd->offset;
     }
-    if (bjd->post_offset_var >= 0 && bjd->post_offset_var < NUM_IPS_OPTIONS_VARS)
+    if (bjd->post_offset_var >= 0 and 
+            bjd->post_offset_var < NUM_IPS_OPTIONS_VARS)
     {
         uint32_t extract_post_offset;
         GetVarValueByIndex(&extract_post_offset, bjd->post_offset_var);
@@ -228,71 +231,35 @@ IpsOption::EvalStatus ByteJumpOption::eval(Cursor& c, Packet* p)
         post_offset = bjd->post_offset;
     }
 
-    const uint8_t* const start_ptr = c.buffer();
-    const uint8_t* const end_ptr = start_ptr + c.size();
-    const uint8_t* const base_ptr = offset +
-        ((bjd->relative_flag) ? c.start() : start_ptr);
+    ExtractionSettings extract_config{
+        config.bytes_to_extract, offset, config.relative_flag,
+        config.string_convert_flag, config.base, config.endianness,
+        config.bitmask_val
+    };
+
+    const uint8_t *start_ptr, *end_ptr, *base_ptr;
+
+    set_cursor_bounds(extract_config, c, start_ptr, base_ptr, end_ptr);
 
     uint32_t jump = 0;
-    uint32_t payload_bytes_grabbed = 0;
-    uint8_t endian = bjd->endianness;
+    uint32_t payload_bytes_grabbed = data_extraction(extract_config, p, 
+        jump, start_ptr, base_ptr, end_ptr);
 
-    if (endian == ENDIAN_FUNC)
+    if( NO_MATCH == payload_bytes_grabbed)
     {
-        if (!p->endianness ||
-            !p->endianness->get_offset_endianness(base_ptr - p->data, endian))
-            return NO_MATCH;
+        return NO_MATCH;
     }
 
-    // Both of the extraction functions contain checks to ensure the data
-    // is inbounds and will return no match if it isn't
-    if (bjd->bytes_to_grab)
+    if (bjd->multiplier)
+        jump *= bjd->multiplier;
+
+    // if we need to align on 32-bit boundaries, 
+    //round up to the next 32-bit value
+    if (bjd->align_flag)
     {
-        if ( !bjd->data_string_convert_flag )
+        if ((jump % 4) != 0)
         {
-            if ( byte_extract(
-                endian, bjd->bytes_to_grab,
-                base_ptr, start_ptr, end_ptr, &jump) )
-                return NO_MATCH;
-
-            payload_bytes_grabbed = bjd->bytes_to_grab;
-        }
-        else
-        {
-            int32_t tmp = string_extract(
-                bjd->bytes_to_grab, bjd->base,
-                base_ptr, start_ptr, end_ptr, &jump);
-
-            if (tmp < 0)
-                return NO_MATCH;
-
-            payload_bytes_grabbed = tmp;
-        }
-
-        // Negative offsets that put us outside the buffer should have been caught
-        // in the extraction routines
-        assert(base_ptr >= c.buffer());
-
-        if (bjd->bitmask_val != 0 )
-        {
-            uint32_t num_tailing_zeros_bitmask = getNumberTailingZerosInBitmask(bjd->bitmask_val);
-            jump = jump & bjd->bitmask_val;
-            if (jump && num_tailing_zeros_bitmask )
-            {
-                jump = jump >> num_tailing_zeros_bitmask;
-            }
-        }
-
-        if (bjd->multiplier)
-            jump *= bjd->multiplier;
-
-        // if we need to align on 32-bit boundaries, round up to the next 32-bit value
-        if (bjd->align_flag)
-        {
-            if ((jump % 4) != 0)
-            {
-                jump += (4 - (jump % 4));
-            }
+            jump += (4 - (jump % 4));
         }
     }
 
@@ -340,10 +307,12 @@ static const Parameter s_params[] =
       "scale extracted value by given amount" },
 
     { "align", Parameter::PT_INT, "0:4", "0",
-      "round the number of converted bytes up to the next 2- or 4-byte boundary" },
+      "round the number of converted bytes up to the next " \
+      "2- or 4-byte boundary" },
 
     { "post_offset", Parameter::PT_STRING, nullptr, nullptr,
-      "skip forward or backward (positive or negative value) by variable name or number of " \
+      "skip forward or backward (positive or negative value) " \
+      "by variable name or number of " \
       "bytes after the other jump options have been applied" },
 
     { "big", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -379,7 +348,8 @@ static const Parameter s_params[] =
 class ByteJumpModule : public Module
 {
 public:
-    ByteJumpModule() : Module(s_name, s_help, s_params) { data.multiplier = 1; }
+    ByteJumpModule() : Module(s_name, s_help, s_params) 
+    { data.multiplier = 1; }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
@@ -435,23 +405,26 @@ bool ByteJumpModule::end(const char*, int, SnortConfig*)
     if ( !data.endianness )
         data.endianness = ENDIAN_BIG;
 
-    if (data.from_beginning_flag && data.from_end_flag)
+    if (data.from_beginning_flag and data.from_end_flag)
     {
         ParseError("from_beginning and from_end options together in a rule\n");
         return false;
     }
 
-    if ( data.bitmask_val && (numBytesInBitmask(data.bitmask_val) > data.bytes_to_grab))
+    if ( data.bitmask_val and 
+        (numBytesInBitmask(data.bitmask_val) > data.bytes_to_extract))
     {
-        ParseError("Number of bytes in \"bitmask\" value is greater than bytes to extract.");
+        ParseError("Number of bytes in \"bitmask\" value " \
+            "is greater than bytes to extract.");
         return false;
     }
 
-    if ((data.bytes_to_grab > MAX_BYTES_TO_GRAB) && !data.data_string_convert_flag)
+    if ((data.bytes_to_extract > MAX_BYTES_TO_GRAB) and 
+        !data.string_convert_flag)
     {
         ParseError(
-            "byte_jump rule option cannot extract more than %d bytes without valid string prefix.",
-            MAX_BYTES_TO_GRAB);
+            "byte_jump rule option cannot extract more than %d bytes without "\
+            "valid string prefix.", MAX_BYTES_TO_GRAB);
         return false;
     }
 
@@ -461,7 +434,7 @@ bool ByteJumpModule::end(const char*, int, SnortConfig*)
 bool ByteJumpModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~count") )
-        data.bytes_to_grab = v.get_uint8();
+        data.bytes_to_extract = v.get_uint8();
 
     else if ( v.is("~offset") )
     {
@@ -502,7 +475,7 @@ bool ByteJumpModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("string") )
     {
-        data.data_string_convert_flag = 1;
+        data.string_convert_flag = 1;
         data.base = 10;
     }
     else if ( v.is("dec") )
@@ -600,10 +573,10 @@ const BaseApi* ips_byte_jump[] =
 
 void SetByteJumpData(ByteJumpData &byte_jump, int value)
 {
-    byte_jump.bytes_to_grab = value; 
+    byte_jump.bytes_to_extract = value; 
     byte_jump.offset = value;
     byte_jump.relative_flag = value; 
-    byte_jump.data_string_convert_flag = value; 
+    byte_jump.string_convert_flag = value; 
     byte_jump.from_beginning_flag = value;
     byte_jump.align_flag = value; 
     byte_jump.endianness = value;
@@ -618,10 +591,10 @@ void SetByteJumpData(ByteJumpData &byte_jump, int value)
 
 void SetByteJumpMaxValue(ByteJumpData &byte_jump)
 {
-    byte_jump.bytes_to_grab = UINT_MAX; 
+    byte_jump.bytes_to_extract = UINT_MAX; 
     byte_jump.offset = INT_MAX;
     byte_jump.relative_flag = UCHAR_MAX; 
-    byte_jump.data_string_convert_flag = UCHAR_MAX; 
+    byte_jump.string_convert_flag = UCHAR_MAX; 
     byte_jump.from_beginning_flag = UCHAR_MAX;
     byte_jump.align_flag = UCHAR_MAX; 
     byte_jump.endianness = UCHAR_MAX;
@@ -710,20 +683,7 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
             StubIpsOption case_diff_name("not_hello_world", 
                 option_type_t::RULE_OPTION_TYPE_BUFFER_USE);
             REQUIRE((jump==case_diff_name) == false);        
-        }
-  
-        SECTION("Compare IpsOptions with different buffer")
-        {
-            StubIpsOption case_diff_option("hello_world", 
-                option_type_t::RULE_OPTION_TYPE_CONTENT);
-            REQUIRE((jump==case_diff_option) == false);        
-        }
-        SECTION("Compare IpsOptions with buffet n/a")
-        {
-            StubIpsOption case_option_na("hello_world", 
-                option_type_t::RULE_OPTION_TYPE_OTHER); 
-            REQUIRE((jump==case_option_na) == false);        
-        }
+        }  
 
         ByteJumpData byte_jump2;
         SetByteJumpData(byte_jump2, 1); 
@@ -734,12 +694,12 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
             REQUIRE((jump==jump_1) == true);
         }
         
-        SECTION("bytes_to_grab is different")
+        SECTION("bytes_to_extract is different")
         {
-            byte_jump2.bytes_to_grab = 2;
+            byte_jump2.bytes_to_extract = 2;
             ByteJumpOption jump_2_1(byte_jump2);
             REQUIRE((jump==jump_2_1) == false);
-            byte_jump2.bytes_to_grab = 1;
+            byte_jump2.bytes_to_extract = 1;
         }
 
         SECTION("offset is different")
@@ -758,12 +718,12 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
             byte_jump2.relative_flag = 1;
         }
 
-        SECTION("data_string_convert_flag is different")
+        SECTION("string_convert_flag is different")
         {
-            byte_jump2.data_string_convert_flag = 0;
+            byte_jump2.string_convert_flag = 0;
             ByteJumpOption jump_2_4(byte_jump2);
             REQUIRE((jump==jump_2_4) == false);
-            byte_jump2.data_string_convert_flag = 1;
+            byte_jump2.string_convert_flag = 1;
         }
         
         SECTION("from_beginning_flag is different")
@@ -853,17 +813,6 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
         Packet test_packet;
         Cursor current_cursor;
         SetByteJumpData(byte_jump, 1);
-        
-        SECTION("Incorrect Endianness")
-        {
-            StubEndianness* stub_endinness = new StubEndianness();
-            byte_jump.offset_var = -1;
-            test_packet.endianness = stub_endinness; 
-            byte_jump.endianness = 4;
-            byte_jump.post_offset_var = -1;
-            ByteJumpOption test_1(byte_jump);
-            REQUIRE((test_1.eval(current_cursor, &test_packet)) == NO_MATCH);
-        }
 
         SECTION("Cursor not setted correct for string_extract")
         {
@@ -874,8 +823,8 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
         SECTION("Extract too much (1000000) bytes from in byte_extract")
         {
             uint8_t buff = 0; 
-            byte_jump.data_string_convert_flag = 0;
-            byte_jump.bytes_to_grab = 1000000;
+            byte_jump.string_convert_flag = 0;
+            byte_jump.bytes_to_extract = 1000000;
             current_cursor.set("hello_world_long_name", &buff, 50);
             ByteJumpOption test_3(byte_jump);
             REQUIRE((test_3.eval(current_cursor, &test_packet)) == NO_MATCH);
@@ -885,10 +834,10 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
         {
             uint8_t buff = 0; 
             current_cursor.set("hello_world_long_name", &buff, 1);
-            byte_jump.data_string_convert_flag = 0;
+            byte_jump.string_convert_flag = 0;
             byte_jump.from_beginning_flag = 0;
             byte_jump.from_end_flag = 1; 
-            byte_jump.bytes_to_grab = 1;
+            byte_jump.bytes_to_extract = 1;
             byte_jump.post_offset_var = 12;
             ByteJumpOption test_4(byte_jump);
             REQUIRE((test_4.eval(current_cursor, &test_packet)) == NO_MATCH);
@@ -897,7 +846,7 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
         SECTION("Match")
         {
             uint8_t buff = 0; 
-            byte_jump.data_string_convert_flag = 0;
+            byte_jump.string_convert_flag = 0;
             byte_jump.from_beginning_flag = 0;
             byte_jump.from_end_flag = 0; 
             current_cursor.set("hello_world_long_name", &buff, 50);
@@ -949,7 +898,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
         SECTION("Number of bytes in \"bitmask\" value is greater than bytes to extract")
         {
             byte_jump.from_beginning_flag = 0;
-            byte_jump.bytes_to_grab = 0;
+            byte_jump.bytes_to_extract = 0;
             module_jump.data = byte_jump;
             REQUIRE(module_jump.end("tmp", 0, nullptr) == false);
         }
@@ -957,8 +906,8 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
         SECTION("byte_jump rule option cannot extract more than %d bytes without valid string prefix")
         {
             byte_jump.from_beginning_flag = 0;
-            byte_jump.bytes_to_grab = 5;
-            byte_jump.data_string_convert_flag = 0;
+            byte_jump.bytes_to_extract = 5;
+            byte_jump.string_convert_flag = 0;
             module_jump.data = byte_jump;
             REQUIRE(module_jump.end("tmp", 0, nullptr) == false);
         }

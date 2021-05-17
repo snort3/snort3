@@ -73,7 +73,7 @@ struct ByteMathData
     bool relative_flag;
     bool string_convert_flag;
     uint8_t base;
-    uint8_t endianess;
+    uint8_t endianness;
     int8_t result_var;
     int8_t rvalue_var;
     int8_t offset_var;
@@ -101,6 +101,9 @@ public:
 
 private:
     const ByteMathData config;
+
+private:
+    int perform_math_operation(uint32_t& value, const uint32_t rvalue);
 };
 
 uint32_t ByteMathOption::hash() const
@@ -115,7 +118,7 @@ uint32_t ByteMathOption::hash() const
     b += ((uint32_t) config.rvalue_var << 24 |
         (uint32_t) config.offset_var << 16 |
         (uint32_t) config.result_var << 8 |
-        config.endianess);
+        config.endianness);
     c += config.base;
 
     mix(a,b,c);
@@ -141,17 +144,17 @@ bool ByteMathOption::operator==(const IpsOption& ips) const
     const ByteMathData* left = &config;
     const ByteMathData* right = &rhs.config;
 
-    if (( left->bytes_to_extract == right->bytes_to_extract) &&
-        ( left->rvalue == right->rvalue) &&
-        ( left->oper == right->oper) &&
-        ( left->offset == right->offset) &&
-        ( left->relative_flag == right->relative_flag) &&
-        ( left->string_convert_flag == right->string_convert_flag) &&
-        ( left->endianess == right->endianess) &&
-        ( left->base == right->base) &&
-        ( left->bitmask_val == right->bitmask_val) &&
-        ( left->rvalue_var == right->rvalue_var) &&
-        ( left->offset_var == right->offset_var) &&
+    if (( left->bytes_to_extract == right->bytes_to_extract) and
+        ( left->rvalue == right->rvalue) and
+        ( left->oper == right->oper) and
+        ( left->offset == right->offset) and
+        ( left->relative_flag == right->relative_flag) and
+        ( left->string_convert_flag == right->string_convert_flag) and
+        ( left->endianness == right->endianness) and
+        ( left->base == right->base) and
+        ( left->bitmask_val == right->bitmask_val) and
+        ( left->rvalue_var == right->rvalue_var) and
+        ( left->offset_var == right->offset_var) and
         ( left->result_var == right->result_var))
     {
         return true;
@@ -168,34 +171,24 @@ IpsOption::EvalStatus ByteMathOption::eval(Cursor& c, Packet* p)
 {
     RuleProfile profile(byteMathPerfStats);
 
-    if (p == nullptr)
-        return NO_MATCH;
-
-    const uint8_t* start = c.buffer();
-    int dsize = c.size();
-
-    const uint8_t* ptr = config.relative_flag ? c.start() : c.buffer();
-    const uint8_t* end = start + dsize;
-
     /* Get values from ips options variables, if present. */
     uint32_t rvalue;
-    if (config.rvalue_var >= 0 && config.rvalue_var < NUM_IPS_OPTIONS_VARS)
+    if (config.rvalue_var >= 0 and config.rvalue_var < NUM_IPS_OPTIONS_VARS)
     {
         GetVarValueByIndex(&rvalue, config.rvalue_var);
-        if (rvalue == 0 and config.oper == BM_DIVIDE)
-            return NO_MATCH;
+        if (rvalue == 0 and config.oper == BM_DIVIDE) return NO_MATCH;
     }
     else
         rvalue = config.rvalue;
 
     int32_t offset;
-    if (config.offset_var >= 0 && config.offset_var < NUM_IPS_OPTIONS_VARS)
+    if (config.offset_var >= 0 and config.offset_var < NUM_IPS_OPTIONS_VARS)
     {
         // Rule options variables are kept as uint32_t,
         // in order to support full range for unsigned options.
         // Signed options do a cast to int32_t after getting the value.
-        // The range limitation should be taken into consideration when writing a rule
-        // with an option that is read from a variable.
+        // The range limitation should be taken into consideration when writing
+        // a rule with an option that is read from a variable.
         uint32_t extract_offset;
         GetVarValueByIndex(&extract_offset, config.offset_var);
         offset = (int32_t)extract_offset;
@@ -203,90 +196,71 @@ IpsOption::EvalStatus ByteMathOption::eval(Cursor& c, Packet* p)
     else
         offset = config.offset;
 
-    ptr += offset;
+    ExtractionSettings extract_config{
+        config.bytes_to_extract, offset, config.relative_flag,
+        config.string_convert_flag, config.base, config.endianness,
+        config.bitmask_val};
+    
+    uint32_t value = 0;
+    int bytes_read = extract_data(extract_config, c, p, value);
+    if (bytes_read == NO_MATCH) return NO_MATCH;
 
-    // check bounds
-    if (ptr < start || ptr >= end)
-        return NO_MATCH;
+    if (perform_math_operation(value, rvalue) == NO_MATCH) return NO_MATCH;
 
-    uint8_t endian = config.endianess;
-    if (config.endianess == ENDIAN_FUNC)
-    {
-        if (!p->endianness ||
-            !p->endianness->get_offset_endianness(ptr - p->data, endian))
-            return NO_MATCH;
-    }
+    SetVarValueByIndex(value, config.result_var);
 
-    // do the extraction
-    uint32_t value;
+    return MATCH;
+}
 
-    if (!config.string_convert_flag)
-    {
-        if (byte_extract(endian, config.bytes_to_extract, ptr, start, end, &value) < 0)
-            return NO_MATCH;
-    }
-    else
-    {
-        if (string_extract(config.bytes_to_extract, config.base, ptr, start, end, &value) < 0)
-            return NO_MATCH;
-    }
-
-    if (config.bitmask_val != 0)
-    {
-        uint32_t num_tailing_zeros_bitmask = getNumberTailingZerosInBitmask(config.bitmask_val);
-        value = value & config.bitmask_val;
-        if ( value && num_tailing_zeros_bitmask )
-        {
-            value = value >> num_tailing_zeros_bitmask;
-        }
-    }
-
+int ByteMathOption::perform_math_operation(uint32_t& value, const uint32_t rvalue)
+{
     // Note: all of the operations are done on uint32_t.
     // If the rule isn't written correctly, there is a risk for wrap around.
     switch (config.oper)
     {
-    case BM_PLUS:
-        if( value + rvalue < value )
-        {
-            return NO_MATCH;
-        }
-        else
-        {
-            value += rvalue;
-            break;
-        }
-    case BM_MINUS:
-        if( value < rvalue )
-        {
-            return NO_MATCH;
-        }
-        else
-        {
-            value -= rvalue;
-            break;
-        }
-    case BM_MULTIPLY:
-        if ( value != 0 and rvalue != 0 and (((value * rvalue) / rvalue) != value) )
-        {
-            return NO_MATCH;
-        }
-        else
-        {
-            value *= rvalue;
-            break;
-        }
-    case BM_DIVIDE: value /= rvalue;
+        case BM_PLUS:
+            if (value + rvalue < value)
+            {
+                return NO_MATCH;
+            }
+            else
+            {
+                value += rvalue;
+                break;
+            }
+        case BM_MINUS:
+            if (value < rvalue)
+            {
+                return NO_MATCH;
+            }
+            else
+            {
+                value -= rvalue;
+                break;
+            }
+        case BM_MULTIPLY:
+            if (value != 0 and rvalue != 0 and
+                (((value * rvalue) / rvalue) != value))
+            {
+                return NO_MATCH;
+            }
+            else
+            {
+                value *= rvalue;
+                break;
+            }
+        case BM_DIVIDE:
+            value /= rvalue;
             break;
 
-    case BM_LEFT_SHIFT: value <<= rvalue;
+        case BM_LEFT_SHIFT:
+            value <<= rvalue;
             break;
 
-    case BM_RIGHT_SHIFT: value >>= rvalue;
+        case BM_RIGHT_SHIFT:
+            value >>= rvalue;
             break;
     }
-
-    SetVarValueByIndex(value, config.result_var);
-
     return MATCH;
 }
 
@@ -305,7 +279,7 @@ static void parse_endian(uint8_t value, ByteMathData& idx)
 {
     assert(value <= 1);
     int endian[] = { ENDIAN_BIG, ENDIAN_LITTLE };
-    set_byte_order(idx.endianess, endian[value], "byte_math");
+    set_byte_order(idx.endianness, endian[value], "byte_math");
 }
 
 //-------------------------------------------------------------------------
@@ -409,7 +383,7 @@ bool ByteMathModule::set(const char*, Value& v, SnortConfig*)
         data.relative_flag = true;
 
     else if ( v.is("dce") )
-        set_byte_order(data.endianess, ENDIAN_FUNC, "byte_math");
+        set_byte_order(data.endianness, ENDIAN_FUNC, "byte_math");
 
     else if ( v.is("string") )
     {
@@ -447,7 +421,7 @@ static bool ByteMathVerify(ByteMathData* data)
         return false;
     }
 
-    if ( ((data->oper == BM_LEFT_SHIFT) || (data->oper == BM_RIGHT_SHIFT)) &&
+    if ( ((data->oper == BM_LEFT_SHIFT) or (data->oper == BM_RIGHT_SHIFT)) and
         (data->rvalue > 32))
     {
         ParseError("Number of bits in rvalue input [%u] should be less than 32 "
@@ -455,7 +429,7 @@ static bool ByteMathVerify(ByteMathData* data)
         return false;
     }
 
-    if (((data->oper == BM_LEFT_SHIFT) || (data->oper == BM_RIGHT_SHIFT)) &&
+    if (((data->oper == BM_LEFT_SHIFT) or (data->oper == BM_RIGHT_SHIFT)) and
         (data->bytes_to_extract > 4))
     {
         ParseError("for operators << and  >> valid bytes_to_extract input range is"
@@ -463,7 +437,7 @@ static bool ByteMathVerify(ByteMathData* data)
         return false;
     }
 
-    if (data->bytes_to_extract > MAX_BYTES_TO_GRAB && !data->string_convert_flag)
+    if (data->bytes_to_extract > MAX_BYTES_TO_GRAB and !data->string_convert_flag)
     {
         ParseError("byte_math rule option cannot extract more than %d bytes without valid"
             " string prefix.", MAX_BYTES_TO_GRAB);
@@ -507,8 +481,8 @@ bool ByteMathModule::end(const char*, int, SnortConfig*)
         }
     }
 
-    if ( !data.endianess )
-        data.endianess = ENDIAN_BIG;
+    if ( !data.endianness )
+        data.endianness = ENDIAN_BIG;
 
     return ByteMathVerify(&data);
 }
@@ -597,16 +571,16 @@ class ByteMathDataMatcher
 
     bool match(ByteMathData const& rhs) const override
     {
-        return ((m_value.bytes_to_extract == rhs.bytes_to_extract) &&
-                (m_value.rvalue == rhs.rvalue) && (m_value.oper == rhs.oper) &&
-                (m_value.offset == rhs.offset) &&
-                (m_value.relative_flag == rhs.relative_flag) &&
-                (m_value.string_convert_flag == rhs.string_convert_flag) &&
-                (m_value.endianess == rhs.endianess) &&
-                (m_value.base == rhs.base) &&
-                (m_value.bitmask_val == rhs.bitmask_val) &&
-                (m_value.rvalue_var == rhs.rvalue_var) &&
-                (m_value.offset_var == rhs.offset_var) &&
+        return ((m_value.bytes_to_extract == rhs.bytes_to_extract) and
+                (m_value.rvalue == rhs.rvalue) and (m_value.oper == rhs.oper) and
+                (m_value.offset == rhs.offset) and
+                (m_value.relative_flag == rhs.relative_flag) and
+                (m_value.string_convert_flag == rhs.string_convert_flag) and
+                (m_value.endianness == rhs.endianness) and
+                (m_value.base == rhs.base) and
+                (m_value.bitmask_val == rhs.bitmask_val) and
+                (m_value.rvalue_var == rhs.rvalue_var) and
+                (m_value.offset_var == rhs.offset_var) and
                 (m_value.result_var == rhs.result_var));
     }
 
@@ -620,7 +594,7 @@ class ByteMathDataMatcher
         ss << "offset : " << m_value.offset << ";\n";
         ss << "relative_flag : " << m_value.relative_flag << ";\n";
         ss << "string_convert_flag : " << m_value.string_convert_flag << ";\n";
-        ss << "endianess : " << m_value.endianess << ";\n";
+        ss << "endianness : " << m_value.endianness << ";\n";
         ss << "base : " << m_value.base << ";\n";
         ss << "bitmask_val : " << m_value.bitmask_val << ";\n";
         ss << "rvalue_var : " << m_value.rvalue_var << ";\n";
@@ -651,7 +625,7 @@ class SetBufferOptionHelper : public IpsOption
 // option tests
 //-------------------------------------------------------------------------
 
-TEST_CASE("ByteMathOption::operator== valid", "[byte_math_tests]")
+TEST_CASE("ByteMathOption::operator== valid", "[ips_byte_math]")
 {
     SetBufferOptionHelper set_buf("test");
 
@@ -672,7 +646,7 @@ TEST_CASE("ByteMathOption::operator== valid", "[byte_math_tests]")
     CHECK(rhs == lhs);
 }
 
-TEST_CASE("ByteMathOption::operator== invalid", "[byte_math_tests]")
+TEST_CASE("ByteMathOption::operator== invalid", "[ips_byte_math]")
 {
     SetBufferOptionHelper set_buf("test");
 
@@ -772,7 +746,7 @@ TEST_CASE("ByteMathOption::operator== invalid", "[byte_math_tests]")
         CHECK(!(lhs == rhs));
         CHECK(!(rhs == lhs));
     }
-    SECTION("endianess is differ")
+    SECTION("endianness is differ")
     {
         ByteMathData data_rhs = {0, 25, 0, 0, rhs_name, BM_PLUS, 0, 0, 0, ENDIAN_LITTLE,
             IPS_OPTIONS_NO_VAR, IPS_OPTIONS_NO_VAR, IPS_OPTIONS_NO_VAR};
@@ -806,7 +780,7 @@ TEST_CASE("ByteMathOption::operator== invalid", "[byte_math_tests]")
     }
 }
 
-TEST_CASE("ByteMathOption::hash", "[byte_math_tests]")
+TEST_CASE("ByteMathOption::hash", "[ips_byte_math]")
 {
     SetBufferOptionHelper set_buf("test");
 
@@ -829,7 +803,7 @@ TEST_CASE("ByteMathOption::hash", "[byte_math_tests]")
     }
 }
 
-TEST_CASE("ByteMathOption::eval valid", "[byte_math_tests]")
+TEST_CASE("ByteMathOption::eval valid", "[ips_byte_math]")
 {
     Packet p;
     p.data = (const uint8_t*)"Lorem 12345";
@@ -922,51 +896,6 @@ TEST_CASE("ByteMathOption::eval valid", "[byte_math_tests]")
         GetVarValueByIndex(&res, 0);
         CHECK(res == 61);
     }
-    SECTION("2 byte read, bitmask 1100110011100011, operation \"+\", rvalue 1")
-    {
-        ByteMathData data = {2, 1, 0, 52451, name, BM_PLUS, 0, 0, 0,
-            ENDIAN_BIG, 0, IPS_OPTIONS_NO_VAR, IPS_OPTIONS_NO_VAR};
-        ByteMathOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::MATCH);
-        uint32_t res = 0;
-        GetVarValueByIndex(&res, 0);
-        CHECK(res == 19556);
-    }
-    SECTION("2 byte read, bitmask 1100110011100000, operation \"-\", rvalue 5")
-    {
-        ByteMathData data = {2, 5, 0, 52448, name, BM_MINUS, 0, 0, 0,
-            ENDIAN_BIG, 0, IPS_OPTIONS_NO_VAR, IPS_OPTIONS_NO_VAR};
-        ByteMathOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::MATCH);
-        uint32_t res = 0;
-        GetVarValueByIndex(&res, 0);
-        CHECK(res == 606);
-    }
-    SECTION("4 bytes read, ENDIAN_LITTLE, operation \"-\", rvalue 5")
-    {
-        ByteMathData data = {4, 5, 0, 0, name, BM_MINUS, 0, 0, 0, 
-            ENDIAN_LITTLE, 0, IPS_OPTIONS_NO_VAR, IPS_OPTIONS_NO_VAR};
-        ByteMathOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::MATCH);
-        uint32_t res = 0;
-        GetVarValueByIndex(&res, 0);
-        CHECK(res == 1701998407);
-    }
-    SECTION("4 bytes read, ENDIAN_FUNC, packet.endianness = "
-        "DCERPC_BO_FLAG__LITTLE_ENDIAN, operation \"/\", rvalue 2")
-    {
-        DceEndianness* auto_endian = new DceEndianness();
-        auto_endian->hdr_byte_order = DCERPC_BO_FLAG__LITTLE_ENDIAN;
-        auto_endian->data_byte_order = DCERPC_BO_FLAG__LITTLE_ENDIAN;
-        p.endianness = auto_endian;
-        ByteMathData data = {4, 2, 0, 0, name, BM_DIVIDE, 0, 0, 0,
-            ENDIAN_FUNC, 0, IPS_OPTIONS_NO_VAR, IPS_OPTIONS_NO_VAR};
-        ByteMathOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::MATCH);
-        uint32_t res = 0;
-        GetVarValueByIndex(&res, 0);
-        CHECK(res == 850999206);
-    }
     SECTION("2 bytes read, operation \">>\", result_var = 0, rvalue_var = 1")
     {
         SetVarValueByIndex(3, 1);
@@ -991,7 +920,7 @@ TEST_CASE("ByteMathOption::eval valid", "[byte_math_tests]")
     }
 }
 
-TEST_CASE("ByteMathOption::eval invalid", "[byte_math_tests]")
+TEST_CASE("ByteMathOption::eval invalid", "[ips_byte_math]")
 {
     Packet p;
     p.data = (const uint8_t*)"Lorem 9876";
@@ -1007,65 +936,6 @@ TEST_CASE("ByteMathOption::eval invalid", "[byte_math_tests]")
     char* name = new char[5];
     strcpy(name, "test");
 
-    SECTION("packet = nullptr")
-    {
-        ByteMathData data = {1, 1, 0, 0, name, BM_PLUS, 0, 0, 0,
-            ENDIAN_BIG, 0, IPS_OPTIONS_NO_VAR, IPS_OPTIONS_NO_VAR};
-        ByteMathOption opt(data);
-        CHECK(opt.eval(c, nullptr) == IpsOption::NO_MATCH);
-    }
-    SECTION("read more than 4 bytes")
-    {
-        ByteMathData data = {6, 1, 0, 0, name, BM_PLUS, 0, 0, 0, ENDIAN_BIG,
-            0, IPS_OPTIONS_NO_VAR, IPS_OPTIONS_NO_VAR};
-        ByteMathOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
-    }
-    SECTION("check bounds of packet, offset > packet size")
-    {
-        ByteMathData data = {1, 1, 20, 0, name, BM_PLUS, 0, 0, 0, ENDIAN_BIG,
-            0, IPS_OPTIONS_NO_VAR, IPS_OPTIONS_NO_VAR};
-        ByteMathOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
-    }
-    SECTION("negative offset, without relative flag")
-    {
-        ByteMathData data = {1, 1, -20, 0, name, BM_PLUS, 0, 0, 0, ENDIAN_BIG,
-            0, IPS_OPTIONS_NO_VAR, IPS_OPTIONS_NO_VAR};
-        ByteMathOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
-    }
-    SECTION("negative offset, out of bounds")
-    {
-        ByteMathData data = {1, 1, -20, 0, name, BM_PLUS, 1, 0, 0, ENDIAN_BIG,
-            0, IPS_OPTIONS_NO_VAR, IPS_OPTIONS_NO_VAR};
-        ByteMathOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
-    }
-    SECTION("check bounds of packet, read 2 bytes, empty packet")
-    {
-        p.data = (const uint8_t*)"";
-        p.dsize = 0;
-        Cursor c2(&p);
-        ByteMathData data = {2, 1, 0, 0, name, BM_PLUS, 0, 0, 0, ENDIAN_BIG,
-            0, IPS_OPTIONS_NO_VAR, IPS_OPTIONS_NO_VAR};
-        ByteMathOption opt(data);
-        CHECK(opt.eval(c2, &p) == IpsOption::NO_MATCH);
-    }
-    SECTION("ENDIAN_FUNC, without definition of endianness in packet")
-    {
-        ByteMathData data = {1, 1, 0, 0, name, BM_PLUS, 0, 0, 0, ENDIAN_FUNC,
-            0, IPS_OPTIONS_NO_VAR, IPS_OPTIONS_NO_VAR};
-        ByteMathOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
-    }
-    SECTION("conversion from string, decimal number, base = 8")
-    {
-        ByteMathData data = {3, 1, 6, 0, name, BM_PLUS, 0, 1, 8, ENDIAN_BIG,
-            0, IPS_OPTIONS_NO_VAR, IPS_OPTIONS_NO_VAR};
-        ByteMathOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
-    }
     SECTION("rvalue_variable didn't exist")
     {
         ByteMathData data = {1, 1, 0, 0, name, BM_PLUS, 0,
@@ -1141,7 +1011,7 @@ TEST_CASE("ByteMathOption::eval invalid", "[byte_math_tests]")
 // module tests
 //-------------------------------------------------------------------------
 
-TEST_CASE("ByteMathModule::begin", "[byte_math_tests]")
+TEST_CASE("ByteMathModule::begin", "[ips_byte_math]")
 {
     ByteMathModule obj;
     SECTION("test of \"begin\" method")
@@ -1153,7 +1023,7 @@ TEST_CASE("ByteMathModule::begin", "[byte_math_tests]")
     }
 }
 
-TEST_CASE("ByteMathModule::end", "[byte_math_tests]")
+TEST_CASE("ByteMathModule::end", "[ips_byte_math]")
 {
     ByteMathModule obj;
 
@@ -1256,7 +1126,7 @@ TEST_CASE("ByteMathModule::end", "[byte_math_tests]")
     delete name;
 }
 
-TEST_CASE("Test of byte_math_ctor", "[byte_math_tests]")
+TEST_CASE("Test of byte_math_ctor", "[ips_byte_math]")
 {
     ClearIpsOptionsVars();
 
@@ -1283,7 +1153,7 @@ TEST_CASE("Test of byte_math_ctor", "[byte_math_tests]")
     }
 }
 
-TEST_CASE("ByteMathModule::set valid", "[byte_math_tests]")
+TEST_CASE("ByteMathModule::set valid", "[ips_byte_math]")
 {
     ByteMathModule obj;
     obj.begin(nullptr, 0, nullptr);
@@ -1409,7 +1279,7 @@ TEST_CASE("ByteMathModule::set valid", "[byte_math_tests]")
         CHECK(obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
-    SECTION("set endianess \"big\"")
+    SECTION("set endianness \"big\"")
     {
         Value v(0.0);
         Parameter p = {"endian", Parameter::PT_ENUM, "big|little", nullptr,
@@ -1421,7 +1291,7 @@ TEST_CASE("ByteMathModule::set valid", "[byte_math_tests]")
         CHECK(obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
-    SECTION("set endianess \"little\"")
+    SECTION("set endianness \"little\"")
     {
         Value v(1.0);
         Parameter p = {"endian", Parameter::PT_ENUM, "big|little", nullptr,
@@ -1436,7 +1306,7 @@ TEST_CASE("ByteMathModule::set valid", "[byte_math_tests]")
     {
         Value v(true);
         Parameter p = {"dce", Parameter::PT_IMPLIED, nullptr, nullptr,
-            "dcerpc2 determines endianess"};
+            "dcerpc2 determines endianness"};
         v.set(&p);
         ByteMathData expected = {0, 0, 0, 0, 0, BM_PLUS, 0, 
             0, 0, ENDIAN_FUNC, 0, 0, 0};
@@ -1509,7 +1379,7 @@ TEST_CASE("ByteMathModule::set valid", "[byte_math_tests]")
     }
 }
 
-TEST_CASE("ByteMathModule::set invalid", "[byte_math_tests]")
+TEST_CASE("ByteMathModule::set invalid", "[ips_byte_math]")
 {
     ByteMathModule obj;
     obj.begin(nullptr, 0, nullptr);
@@ -1541,7 +1411,7 @@ TEST_CASE("ByteMathModule::set invalid", "[byte_math_tests]")
 // api tests
 //-------------------------------------------------------------------------
 
-TEST_CASE("ByteMathVerify valid", "[byte_math_tests]")
+TEST_CASE("ByteMathVerify valid", "[ips_byte_math]")
 {
     ByteMathData obj;
     char* name = new char[5];
@@ -1572,7 +1442,7 @@ TEST_CASE("ByteMathVerify valid", "[byte_math_tests]")
     delete name;
 }
 
-TEST_CASE("ByteMathVerify invalid", "[byte_math_tests]")
+TEST_CASE("ByteMathVerify invalid", "[ips_byte_math]")
 {
     char* name = new char[5];
     strcpy(name, "test");
@@ -1602,7 +1472,7 @@ TEST_CASE("ByteMathVerify invalid", "[byte_math_tests]")
         obj.oper = BM_RIGHT_SHIFT;
         CHECK((!ByteMathVerify(&obj)));
     }
-    SECTION("shift && bytes_to_extract > 4  checks")
+    SECTION("shift and bytes_to_extract > 4  checks")
     {
         obj.bytes_to_extract = MAX_BYTES_TO_GRAB + 1;
 
@@ -1612,7 +1482,7 @@ TEST_CASE("ByteMathVerify invalid", "[byte_math_tests]")
         obj.oper = BM_RIGHT_SHIFT;
         CHECK((!ByteMathVerify(&obj)));
     }
-    SECTION("no string conversion && bytes_to_extract > 4  checks")
+    SECTION("no string conversion and bytes_to_extract > 4  checks")
     {
         obj.bytes_to_extract = MAX_BYTES_TO_GRAB + 1;
         CHECK((!ByteMathVerify(&obj)));

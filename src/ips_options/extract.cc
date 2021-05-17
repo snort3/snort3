@@ -31,9 +31,11 @@
 #include "utils/snort_bounds.h"
 #include "utils/util_cstring.h"
 #include "utils/util.h"
+#include "framework/ips_option.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
+#include "service_inspectors/dce_rpc/dce_common.h"
 #endif
 
 using namespace snort;
@@ -46,6 +48,7 @@ static THREAD_LOCAL uint8_t extracted_values_cnt = 0;
 
 namespace snort
 {
+
 /* Given a variable name, retrieve its index.*/
 int8_t GetVarByName(const char* name)
 {
@@ -96,7 +99,7 @@ void ClearIpsOptionsVars()
   used at this point */
 int GetVarValueByIndex(uint32_t* dst, uint8_t var_number)
 {
-    if (dst == nullptr || var_number >= NUM_IPS_OPTIONS_VARS)
+    if (dst == nullptr or var_number >= NUM_IPS_OPTIONS_VARS)
         return IPS_OPTIONS_NO_VAR;
 
     *dst = extracted_values[var_number];
@@ -143,7 +146,7 @@ int byte_extract(int endianness, int bytes_to_grab, const uint8_t* ptr,
     const uint8_t* start, const uint8_t* end,
     uint32_t* value)
 {
-    if (endianness != ENDIAN_LITTLE && endianness != ENDIAN_BIG)
+    if (endianness != ENDIAN_LITTLE and endianness != ENDIAN_BIG)
     {
         /* we only support 2 byte formats */
         return -2;
@@ -239,7 +242,7 @@ int string_extract(int bytes_to_grab, int base, const uint8_t* ptr,
     char* parse_helper;
     int x; /* counter */
 
-    if (bytes_to_grab > (TEXTLEN - 1) || bytes_to_grab <= 0)
+    if (bytes_to_grab > (TEXTLEN - 1) or bytes_to_grab <= 0)
     {
         return -1;
     }
@@ -267,13 +270,90 @@ int string_extract(int bytes_to_grab, int base, const uint8_t* ptr,
 
 #ifdef TEST_BYTE_EXTRACT
     printf("[----]\n");
-    for (x=0; (x<TEXTLEN) && (byte_array[x] != '\0'); x++)
+    for (x=0; (x<TEXTLEN) and (byte_array[x] != '\0'); x++)
         printf("%c", byte_array[x]);
     printf("\n");
 
-    printf("converted value: 0x%08X (%u) %s\n", *value, *value, (char*)byte_array);
+    printf("converted value: 0x%08X (%u) %s\n", *value, *value, 
+    (char*)byte_array);
 #endif /* TEST_BYTE_EXTRACT */
-    return(parse_helper - byte_array);  /* Return the number of bytes actually extracted */
+    return(parse_helper - byte_array);  
+    /* Return the number of bytes actually extracted */
+}
+
+void set_cursor_bounds(const ExtractionSettings& settings, Cursor& c,
+    const uint8_t*& start, const uint8_t*& ptr, const uint8_t*& end)
+{
+    start = c.buffer();
+    end = start + c.size();
+
+    ptr = settings.relative_flag ? c.start() : c.buffer();
+    ptr += settings.offset;
+}
+
+int32_t data_extraction(const ExtractionSettings& settings, Packet* p,
+    uint32_t& result_var, const uint8_t* start, 
+    const uint8_t* ptr, const uint8_t* end)
+{
+    if (p == nullptr)
+        return IpsOption::NO_MATCH;
+
+    // check bounds
+    if (ptr < start or ptr >= end)
+        return IpsOption::NO_MATCH;
+
+    uint8_t endian = settings.endianess;
+    if (settings.endianess == ENDIAN_FUNC)
+    {
+        if (!p->endianness or
+            !p->endianness->get_offset_endianness(ptr - p->data, endian))
+            return IpsOption::NO_MATCH;
+    }
+
+    // do the extraction
+    int32_t bytes_read = 0;
+    uint32_t value;
+    if (!settings.string_convert_flag)
+    {
+        int ret = 0;
+        ret = byte_extract(endian, settings.bytes_to_extract, ptr, start, 
+        end, &value);
+        if (ret < 0)
+            return IpsOption::NO_MATCH;
+
+        bytes_read = settings.bytes_to_extract;
+    }
+    else 
+    {
+        bytes_read = string_extract(settings.bytes_to_extract, settings.base,
+            ptr, start, end, &value);
+        if (bytes_read < 0)
+            return IpsOption::NO_MATCH;
+    }
+
+    if (settings.bitmask_val != 0)
+    {
+        uint32_t num_tailing_zeros_bitmask = 
+            getNumberTailingZerosInBitmask(settings.bitmask_val);
+        value = value & settings.bitmask_val;
+        if ( value and num_tailing_zeros_bitmask )
+        {
+            value = value >> num_tailing_zeros_bitmask;
+        }
+    }
+
+    result_var = value;
+    return bytes_read;
+}
+
+int32_t extract_data(const ExtractionSettings& settings, Cursor& c, Packet* p,
+    uint32_t& result_var)
+{
+    const uint8_t* start = nullptr;
+    const uint8_t* ptr = nullptr;
+    const uint8_t* end = nullptr;
+    set_cursor_bounds(settings, c, start, ptr, end);
+    return data_extraction(settings, p, result_var, start, ptr, end);
 }
 
 uint32_t getNumberTailingZerosInBitmask(uint32_t bitmask)
@@ -344,8 +424,247 @@ TEST_CASE("ips options vars")
     REQUIRE((GetVarByName(nullptr) == IPS_OPTIONS_NO_VAR));
     REQUIRE((GetVarValueByIndex(nullptr, 0) == IPS_OPTIONS_NO_VAR));
     uint32_t dst;
-    REQUIRE((GetVarValueByIndex(&dst, NUM_IPS_OPTIONS_VARS) == IPS_OPTIONS_NO_VAR));
-    REQUIRE((SetVarValueByIndex(0, NUM_IPS_OPTIONS_VARS) == IPS_OPTIONS_NO_VAR));
+    REQUIRE((GetVarValueByIndex(&dst, NUM_IPS_OPTIONS_VARS) 
+        == IPS_OPTIONS_NO_VAR));
+    REQUIRE((SetVarValueByIndex(0, NUM_IPS_OPTIONS_VARS) 
+        == IPS_OPTIONS_NO_VAR));
+}
+
+TEST_CASE("set_cursor_bounds", "[byte_extraction_tests]")
+{
+    Packet p;
+    p.data = (const uint8_t*)"Lorem 010 12345 0x75";
+    p.dsize = 21;
+    Cursor c(&p);
+    uint32_t res = 0;
+    const uint8_t* start = nullptr;
+    const uint8_t* ptr = nullptr;
+    const uint8_t* end = nullptr;
+
+    SECTION("4 bytes read, no offset")
+    {
+        ExtractionSettings settings = {4, 0, 0, 0, 0, ENDIAN_BIG, 0};
+        set_cursor_bounds(settings, c, start, ptr, end);
+        CHECK(start == p.data);
+        CHECK(ptr == p.data);
+        CHECK(end == p.data + 21);
+    }
+    SECTION("4 byte read, offset = 4")
+    {
+        ExtractionSettings settings = {4, 4, 0, 0, 0, ENDIAN_BIG, 0};
+        set_cursor_bounds(settings, c, start, ptr, end);
+        CHECK(start == p.data);
+        CHECK(ptr == p.data + 4);
+        CHECK(end == p.data + 21);
+    }
+    SECTION("4 bytes read, cursor move without relative flag")
+    {
+        c.set_pos(3);
+        ExtractionSettings settings = {4, 0, 0, 0, 0, ENDIAN_BIG, 0};
+        set_cursor_bounds(settings, c, start, ptr, end);
+        CHECK(start == p.data);
+        CHECK(ptr == p.data);
+        CHECK(end == p.data + 21);
+    }
+    SECTION("4 bytes read, cursor move with relative flag")
+    {
+        c.set_pos(3);
+        ExtractionSettings settings = {4, 0, true, 0, 0, ENDIAN_BIG, 0};
+        set_cursor_bounds(settings, c, start, ptr, end);
+        CHECK(start == p.data);
+        CHECK(ptr == p.data + 3);
+        CHECK(end == p.data + 21);
+    }
+}
+
+TEST_CASE("extract_data valid", "[byte_extraction_tests]")
+{
+    Packet p;
+    p.data = (const uint8_t*)"Lorem 010 12345 0x75";
+    p.dsize = 21;
+    Cursor c(&p);
+    uint32_t res = 0;
+
+    SECTION("1 byte read, all - off")
+    {
+        ExtractionSettings settings = {1, 0, 0, 0, 0, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == 1);
+        CHECK(res == 76);
+    }
+    SECTION("2 bytes read, all - off")
+    {
+        ExtractionSettings settings = {2, 0, 0, 0, 0, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == 2);
+        CHECK(res == 19567);
+    }
+    SECTION("3 bytes read, all - off")
+    {
+        ExtractionSettings settings = {3, 0, 0, 0, 0, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == 3);
+        CHECK(res == 5009266);
+    }
+    SECTION("4 bytes read, all - off")
+    {
+        ExtractionSettings settings = {4, 0, 0, 0, 0, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == 4);
+        CHECK(res == 1282372197);
+    }
+    SECTION("1 byte read, offset 3")
+    {
+        ExtractionSettings settings = {1, 3, 0, 0, 0, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == 1);
+        CHECK(res == 101);
+    }
+    SECTION("1 byte read, offset 3, relative")
+    {
+        ExtractionSettings settings = {1, 3, 1, 0, 0, ENDIAN_BIG, 0};
+        c.set_pos(3);
+        CHECK(extract_data(settings, c, &p, res) == 1);
+        CHECK(res == 48);
+    }
+    SECTION("cursor 3, 1 byte read, offset -3, relative")
+    {
+        ExtractionSettings settings = {1, -3, 1, 0, 0, ENDIAN_BIG, 0};
+        c.set_pos(3);
+        CHECK(extract_data(settings, c, &p, res) == 1);
+        CHECK(res == 76);
+    }
+    SECTION("1 byte read, offset 6, string conv, base 10")
+    {
+        ExtractionSettings settings = {1, 10, 0, 1, 10, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == 1);
+        CHECK(res == 1);
+    }
+    SECTION("2 bytes read, offset 6, string conv, base 8 without prefix")
+    {
+        ExtractionSettings settings = {2, 10, 0, 1, 8, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == 2);
+        CHECK(res == 10);
+    }
+    SECTION("2 bytes read, offset 6, string conv, base 10")
+    {
+        ExtractionSettings settings = {2, 10, 0, 1, 10, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == 2);
+        CHECK(res == 12);
+    }
+    SECTION("2 bytes read, offset 6, string conv, base 16 without prefix")
+    {
+        ExtractionSettings settings = {2, 10, 0, 1, 16, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == 2);
+        CHECK(res == 18);
+    }
+    SECTION("3 bytes read, offset 6, string conv, base 8 with prefix")
+    {
+        ExtractionSettings settings = {3, 6, 0, 1, 8, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == 3);
+        CHECK(res == 8);
+    }
+    SECTION("4 bytes read, offset 6, string conv, base 16 with prefix")
+    {
+        ExtractionSettings settings = {4, 16, 0, 1, 16, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == 4);
+        CHECK(res == 117);
+    }
+    SECTION("2 byte read, bitmask 1100110011100011")
+    {
+        ExtractionSettings settings = {2, 0, 0, 0, 0, ENDIAN_BIG, 52451};
+        CHECK(extract_data(settings, c, &p, res) == 2);
+        CHECK(res == 19555);
+    }
+    SECTION("2 byte read, bitmask 1100110011100000")
+    {
+        ExtractionSettings settings = {2, 0, 0, 0, 0, ENDIAN_BIG, 52448};
+        CHECK(extract_data(settings, c, &p, res) == 2);
+        CHECK(res == 611);
+    }
+    SECTION("4 bytes read, ENDIAN_LITTLE")
+    {
+        ExtractionSettings settings = {4, 0, 0, 0, 0, ENDIAN_LITTLE, 0};
+        CHECK(extract_data(settings, c, &p, res) == 4);
+        CHECK(res == 1701998412);
+    }
+    SECTION("4 bytes read, ENDIAN_FUNC, packet.endianness " \
+        "= DCERPC_BO_FLAG__LITTLE_ENDIAN")
+    {
+        DceEndianness* auto_endian = new DceEndianness();
+        auto_endian->hdr_byte_order = DCERPC_BO_FLAG__LITTLE_ENDIAN;
+        auto_endian->data_byte_order = DCERPC_BO_FLAG__LITTLE_ENDIAN;
+        p.endianness = auto_endian;
+        ExtractionSettings settings = {4, 0, 0, 0, 0, ENDIAN_FUNC, 0};
+        CHECK(extract_data(settings, c, &p, res) == 4);
+        CHECK(res == 1701998412);
+    }
+}
+
+TEST_CASE("extract_data invalid", "[byte_extraction_tests]")
+{
+    Packet p;
+    p.data = (const uint8_t*)"Lorem 9876";
+    p.dsize = 11;
+    Cursor c(&p);
+    uint32_t res = 0;
+
+    SECTION("packet = nullptr")
+    {
+        ExtractionSettings settings = {1, 0, 0, 0, 0, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, nullptr, res) == IpsOption::NO_MATCH);
+    }
+    SECTION("read more than 4 bytes")
+    {
+        ExtractionSettings settings = {6, 0, 0, 0, 0, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == IpsOption::NO_MATCH);
+    }
+    SECTION("check bounds of packet, offset > packet size")
+    {
+        ExtractionSettings settings = {1, 20, 0, 0, 0, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == IpsOption::NO_MATCH);
+    }
+    SECTION("negative offset, without relative flag")
+    {
+        ExtractionSettings settings = {1, -20, 0, 0, 0, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == IpsOption::NO_MATCH);
+    }
+    SECTION("negative offset, out of bounds")
+    {
+        ExtractionSettings settings = {1, -20, 1, 0, 0, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == IpsOption::NO_MATCH);
+    }
+    SECTION("check bounds of packet, offset > packet size, empty packet")
+    {
+        p.data = (const uint8_t*)"";
+        p.dsize = 0;
+        Cursor c2(&p);
+        ExtractionSettings settings = {1, 20, 0, 0, 0, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c2, &p, res) == IpsOption::NO_MATCH);
+    }
+    SECTION("check bounds of packet, read 2 bytes, empty packet")
+    {
+        p.data = (const uint8_t*)"";
+        p.dsize = 0;
+        Cursor c2(&p);
+        ExtractionSettings settings = {2, 0, 0, 0, 0, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c2, &p, res) == IpsOption::NO_MATCH);
+    }
+    SECTION("ENDIAN_FUNC, without definition of endianness in packet")
+    {
+        ExtractionSettings settings = {3, 0, 0, 0, 0, ENDIAN_FUNC, 0};
+        CHECK(extract_data(settings, c, &p, res) == IpsOption::NO_MATCH);
+    }
+    SECTION("conversion from string, decimal number, base = 8")
+    {
+        ExtractionSettings settings = {3, 6, 0, 1, 8, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == IpsOption::NO_MATCH);
+    }
+    SECTION("conversion from string but the input is symbol")
+    {
+        ExtractionSettings settings = {1, 0, 0, 1, 10, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == IpsOption::NO_MATCH);
+    }
+    SECTION("cursor behind the packet size")
+    {
+        c.set_pos(15);
+        ExtractionSettings settings = {1, 0, 0, 1, 10, ENDIAN_BIG, 0};
+        CHECK(extract_data(settings, c, &p, res) == IpsOption::NO_MATCH);
+    }
 }
 #endif
-

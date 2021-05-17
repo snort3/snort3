@@ -52,13 +52,13 @@ static THREAD_LOCAL ProfileStats byteExtractPerfStats;
 
 struct ByteExtractData
 {
-    uint32_t bytes_to_grab;
+    uint32_t bytes_to_extract;
     int32_t offset;
-    uint8_t relative_flag;
-    uint8_t data_string_convert_flag;
+    bool relative_flag;
+    bool string_convert_flag;
     uint8_t align;
     uint8_t endianness;
-    uint32_t base;
+    uint8_t base;
     uint32_t multiplier;
     uint32_t bitmask_val;
     int8_t var_number;
@@ -87,6 +87,9 @@ public:
 
 private:
     ByteExtractData config;
+
+private:
+    void apply_alignment(uint32_t& value);
 };
 
 //-------------------------------------------------------------------------
@@ -95,14 +98,14 @@ private:
 
 uint32_t ByteExtractOption::hash() const
 {
-    uint32_t a = config.bytes_to_grab;
+    uint32_t a = config.bytes_to_extract;
     uint32_t b = config.offset;
     uint32_t c = config.base;
 
     mix(a,b,c);
 
     a += (config.relative_flag << 24 |
-        config.data_string_convert_flag << 16 |
+        config.string_convert_flag << 16 |
         config.align << 8 |
         config.endianness);
     b += config.multiplier;
@@ -128,15 +131,15 @@ bool ByteExtractOption::operator==(const IpsOption& ips) const
     const ByteExtractData* left = &config;
     const ByteExtractData* right = &rhs.config;
 
-    if ((left->bytes_to_grab == right->bytes_to_grab) &&
-        (left->offset == right->offset) &&
-        (left->relative_flag == right->relative_flag) &&
-        (left->data_string_convert_flag == right->data_string_convert_flag) &&
-        (left->align == right->align) &&
-        (left->endianness == right->endianness) &&
-        (left->base == right->base) &&
-        (left->multiplier == right->multiplier) &&
-        (left->var_number == right->var_number) &&
+    if ((left->bytes_to_extract == right->bytes_to_extract) and
+        (left->offset == right->offset) and
+        (left->relative_flag == right->relative_flag) and
+        (left->string_convert_flag == right->string_convert_flag) and
+        (left->align == right->align) and
+        (left->endianness == right->endianness) and
+        (left->base == right->base) and
+        (left->multiplier == right->multiplier) and
+        (left->var_number == right->var_number) and
         (left->bitmask_val == right->bitmask_val))
     {
         return true;
@@ -149,83 +152,40 @@ IpsOption::EvalStatus ByteExtractOption::eval(Cursor& c, Packet* p)
 {
     RuleProfile profile(byteExtractPerfStats);
 
-    ByteExtractData* data = &config;
+    ExtractionSettings extract_config{
+        config.bytes_to_extract, config.offset, config.relative_flag,
+        config.string_convert_flag, config.base, config.endianness,
+        config.bitmask_val
+    };
 
-    if (data == nullptr || p == nullptr)
-        return NO_MATCH;
+    uint32_t value = 0;
+    int bytes_read = extract_data(extract_config, c, p, value);
+    if (bytes_read == NO_MATCH) return NO_MATCH;
 
-    const uint8_t* start = c.buffer();
-    int dsize = c.size();
+    value *= config.multiplier;
 
-    const uint8_t* ptr = data->relative_flag ? c.start() : c.buffer();
-    ptr += data->offset;
+    apply_alignment(value);
 
-    const uint8_t* end = start + dsize;
+    SetVarValueByIndex(value, config.var_number);
 
-    // check bounds
-    if (ptr < start || ptr >= end)
-        return NO_MATCH;
+    c.add_pos(config.offset + bytes_read);
 
-    uint8_t endian = data->endianness;
-    if (data->endianness == ENDIAN_FUNC)
-    {
-        if (!p->endianness ||
-            !p->endianness->get_offset_endianness(ptr - p->data, endian))
-            return NO_MATCH;
-    }
+    // this rule option always "matches" if the read is performed correctly
+    return MATCH;
+}
 
-    // do the extraction
-    int ret = 0;
-    int bytes_read = 0;
-    uint32_t value;
-    if (data->data_string_convert_flag == 0)
-    {
-        ret = byte_extract(endian, data->bytes_to_grab, ptr, start, end, &value);
-        if (ret < 0)
-            return NO_MATCH;
-
-        bytes_read = data->bytes_to_grab;
-    }
-    else
-    {
-        ret = string_extract(data->bytes_to_grab, data->base, ptr, start, end, &value);
-        if (ret < 0)
-            return NO_MATCH;
-
-        bytes_read = ret;
-    }
-
-    if (data->bitmask_val != 0 )
-    {
-        uint32_t num_tailing_zeros_bitmask = getNumberTailingZerosInBitmask(data->bitmask_val);
-        value = value & data->bitmask_val;
-        if ( value && num_tailing_zeros_bitmask )
-        {
-            value = value >> num_tailing_zeros_bitmask;
-        }
-    }
-
-    /* multiply */
-    value *= data->multiplier;
-
-    /* align to next 32-bit or 16-bit boundary */
-    if ((data->align == 4) && (value % 4))
+void ByteExtractOption::apply_alignment(uint32_t& value)
+{
+    if ((config.align == 4) and (value % 4))
     {
         value = value + 4 - (value % 4);
     }
-    else if ((data->align == 2) && (value % 2))
+    else if ((config.align == 2) and (value % 2))
     {
         value = value + 2 - (value % 2);
     }
-
-    SetVarValueByIndex(value, data->var_number);
-
-    /* advance cursor */
-    c.add_pos(data->offset + bytes_read);
-
-    /* this rule option always "matches" if the read is performed correctly */
-    return MATCH;
 }
+
 
 //-------------------------------------------------------------------------
 // api
@@ -234,28 +194,28 @@ IpsOption::EvalStatus ByteExtractOption::eval(Cursor& c, Packet* p)
 /* Checks a ByteExtractData instance for errors. */
 static bool ByteExtractVerify(ByteExtractData* data)
 {
-    if (data->bytes_to_grab > MAX_BYTES_TO_GRAB && data->data_string_convert_flag == 0)
+    if (data->bytes_to_extract > MAX_BYTES_TO_GRAB and data->string_convert_flag == 0)
     {
         ParseError("byte_extract rule option cannot extract more than %d bytes.",
             MAX_BYTES_TO_GRAB);
         return false;
     }
 
-    if (data->bytes_to_grab > PARSELEN && data->data_string_convert_flag == 1)
+    if (data->bytes_to_extract > PARSELEN and data->string_convert_flag == 1)
     {
         ParseError("byte_extract rule cannot process more than %d bytes for "
             "string extraction.",  PARSELEN);
         return false;
     }
 
-    if (data->align != 0 && data->align != 2 && data->align != 4)
+    if (data->align != 0 and data->align != 2 and data->align != 4)
     {
         ParseError("byte_extract rule option has an invalid argument "
             "to 'align'. Valid arguments are '2' and '4'.");
         return false;
     }
 
-    if (data->offset < 0 && data->relative_flag == 0)
+    if (data->offset < 0 and data->relative_flag == 0)
     {
         ParseError("byte_extract rule option has a negative offset, but does "
             "not use the 'relative' option.");
@@ -275,7 +235,7 @@ static bool ByteExtractVerify(ByteExtractData* data)
         return false;
     }
 
-    if (data->base && !data->data_string_convert_flag)
+    if (data->base and !data->string_convert_flag)
     {
         ParseError("byte_extract rule option has a string conversion type "
             "(dec, hex, or oct) without the \"string\" "
@@ -283,7 +243,7 @@ static bool ByteExtractVerify(ByteExtractData* data)
         return false;
     }
 
-    if (numBytesInBitmask(data->bitmask_val) > data->bytes_to_grab)
+    if (numBytesInBitmask(data->bitmask_val) > data->bytes_to_extract)
     {
         ParseError("Number of bytes in \"bitmask\" value is greater than bytes to extract.");
         return false;
@@ -379,7 +339,7 @@ bool ExtractModule::end(const char*, int, SnortConfig*)
 bool ExtractModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~count") )
-        data.bytes_to_grab = v.get_uint8();
+        data.bytes_to_extract = v.get_uint8();
 
     else if ( v.is("~offset") )
         data.offset = v.get_int32();
@@ -407,7 +367,7 @@ bool ExtractModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("string") )
     {
-        data.data_string_convert_flag = 1;
+        data.string_convert_flag = 1;
         data.base = 10;
     }
     else if ( v.is("dec") )
@@ -514,15 +474,15 @@ class ByteExtractDataMatcher
 
     bool match(ByteExtractData const& rhs) const override
     {
-        return ((m_value.bytes_to_grab == rhs.bytes_to_grab) &&
-                (m_value.offset == rhs.offset) &&
-                (m_value.relative_flag == rhs.relative_flag) &&
-                (m_value.data_string_convert_flag == rhs.data_string_convert_flag) &&
-                (m_value.align == rhs.align) &&
-                (m_value.endianness == rhs.endianness) &&
-                (m_value.base == rhs.base) &&
-                (m_value.multiplier == rhs.multiplier) &&
-                (m_value.var_number == rhs.var_number) &&
+        return ((m_value.bytes_to_extract == rhs.bytes_to_extract) and
+                (m_value.offset == rhs.offset) and
+                (m_value.relative_flag == rhs.relative_flag) and
+                (m_value.string_convert_flag == rhs.string_convert_flag) and
+                (m_value.align == rhs.align) and
+                (m_value.endianness == rhs.endianness) and
+                (m_value.base == rhs.base) and
+                (m_value.multiplier == rhs.multiplier) and
+                (m_value.var_number == rhs.var_number) and
                 (m_value.bitmask_val == rhs.bitmask_val));
     }
 
@@ -530,10 +490,10 @@ class ByteExtractDataMatcher
     {
         std::ostringstream ss;
         ss << "settings is equals to:\n";
-        ss << "bytes_to_grab : " << m_value.bytes_to_grab << ";\n";
+        ss << "bytes_to_extract : " << m_value.bytes_to_extract << ";\n";
         ss << "offset : " << m_value.offset << ";\n";
         ss << "relative_flag : " << m_value.relative_flag << ";\n";
-        ss << "data_string_convert_flag : " << m_value.data_string_convert_flag << ";\n";
+        ss << "string_convert_flag : " << m_value.string_convert_flag << ";\n";
         ss << "align : " << m_value.align << ";\n";
         ss << "endianness : " << m_value.endianness << ";\n";
         ss << "base : " << m_value.base << ";\n";
@@ -565,7 +525,7 @@ class SetBufferOptionHelper : public IpsOption
 // option tests
 //-------------------------------------------------------------------------
 
-TEST_CASE("ByteExtractOption::operator== valid", "[byte_extract_tests]")
+TEST_CASE("ByteExtractOption::operator== valid", "[ips_byte_extract]")
 {
     SetBufferOptionHelper set_buf("test");
 
@@ -584,7 +544,7 @@ TEST_CASE("ByteExtractOption::operator== valid", "[byte_extract_tests]")
     CHECK(rhs == lhs);
 }
 
-TEST_CASE("ByteExtractOption::operator== invalid", "[byte_extract_tests]")
+TEST_CASE("ByteExtractOption::operator== invalid", "[ips_byte_extract]")
 {
     SetBufferOptionHelper set_buf("test");
 
@@ -602,7 +562,7 @@ TEST_CASE("ByteExtractOption::operator== invalid", "[byte_extract_tests]")
         CHECK(!(lhs == rhs));
         CHECK(!(rhs == lhs));
     }
-    SECTION("bytes_to_grab is differ")
+    SECTION("bytes_to_extract is differ")
     {
         ByteExtractData data_rhs = {1, 0, 0, 0, 0, 0, 0, 1, 0, 0, lhs_name};
         ByteExtractOption rhs(data_rhs);
@@ -623,7 +583,7 @@ TEST_CASE("ByteExtractOption::operator== invalid", "[byte_extract_tests]")
         CHECK(!(lhs == rhs));
         CHECK(!(rhs == lhs));
     }
-    SECTION("data_string_convert_flag is differ")
+    SECTION("string_convert_flag is differ")
     {
         ByteExtractData data_rhs = {0, 0, 0, true, 0, 0, 0, 1, 0, 0, lhs_name};
         ByteExtractOption rhs(data_rhs);
@@ -685,7 +645,7 @@ TEST_CASE("ByteExtractOption::operator== invalid", "[byte_extract_tests]")
     }
 }
 
-TEST_CASE("ByteExtractOption::hash", "[byte_extract_tests]")
+TEST_CASE("ByteExtractOption::hash", "[ips_byte_extract]")
 {
     SetBufferOptionHelper set_buf("test");
 
@@ -702,7 +662,7 @@ TEST_CASE("ByteExtractOption::hash", "[byte_extract_tests]")
     }
 }
 
-TEST_CASE("ByteExtractOption::eval valid", "[byte_extract_tests]")
+TEST_CASE("ByteExtractOption::eval valid", "[ips_byte_extract]")
 {
     Packet p;
     p.data = (const uint8_t*)"Lorem 12345";
@@ -718,58 +678,6 @@ TEST_CASE("ByteExtractOption::eval valid", "[byte_extract_tests]")
     char* name = new char[5];
     strcpy(name, "test");
 
-    SECTION("1 byte read, all off")
-    {
-        ByteExtractData data = {1, 0, 0, 0, 0, ENDIAN_BIG, 0, 1, 0, 0, name};
-        ByteExtractOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::MATCH);
-        uint32_t res = 0;
-        GetVarValueByIndex(&res, 0);
-        CHECK(res == 76);
-        CHECK(c.get_pos() == 1);
-    }
-    SECTION("1 byte read, offset 3")
-    {
-        ByteExtractData data = {1, 3, 0, 0, 0, ENDIAN_BIG, 0, 1, 0, 0, name};
-        ByteExtractOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::MATCH);
-        uint32_t res = 0;
-        GetVarValueByIndex(&res, 0);
-        CHECK(res == 101);
-        CHECK(c.get_pos() == 4);
-    }
-    SECTION("1 byte read, offset 3, relative, cursor 3")
-    {
-        ByteExtractData data = {1, 3, 1, 0, 0, ENDIAN_BIG, 0, 1, 0, 0, name};
-        ByteExtractOption opt(data);
-        c.set_pos(3);
-        CHECK(opt.eval(c, &p) == IpsOption::MATCH);
-        uint32_t res = 0;
-        GetVarValueByIndex(&res, 0);
-        CHECK(res == 49);
-        CHECK(c.get_pos() == 7);
-    }
-    SECTION("1 byte read, offset -3, relative, cursor 3")
-    {
-        ByteExtractData data = {1, -3, 1, 0, 0, ENDIAN_BIG, 0, 1, 0, 0, name};
-        ByteExtractOption opt(data);
-        c.set_pos(3);
-        CHECK(opt.eval(c, &p) == IpsOption::MATCH);
-        uint32_t res = 0;
-        GetVarValueByIndex(&res, 0);
-        CHECK(res == 76);
-        CHECK(c.get_pos() == 1);
-    }
-    SECTION("1 byte read, offset 6, string conv, base 10")
-    {
-        ByteExtractData data = {1, 6, 0, 1, 0, ENDIAN_BIG, 10, 1, 0, 0, name};
-        ByteExtractOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::MATCH);
-        uint32_t res = 0;
-        GetVarValueByIndex(&res, 0);
-        CHECK(res == 1);
-        CHECK(c.get_pos() == 7);
-    }
     SECTION("1 byte read, offset 6, string conv, base 10, align 2")
     {
         ByteExtractData data = {1, 6, 0, 1, 2, ENDIAN_BIG, 10, 1, 0, 0, name};
@@ -810,65 +718,9 @@ TEST_CASE("ByteExtractOption::eval valid", "[byte_extract_tests]")
         CHECK(res == 508);
         CHECK(c.get_pos() == 4);
     }
-    SECTION("1 byte read, offset 6, string conv, base 10, mult 7")
-    {
-        ByteExtractData data = {1, 6, 0, 1, 0, ENDIAN_BIG, 10, 7, 0, 0, name};
-        ByteExtractOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::MATCH);
-        uint32_t res = 0;
-        GetVarValueByIndex(&res, 0);
-        CHECK(res == 7);
-        CHECK(c.get_pos() == 7);
-    }
-    SECTION("2 byte read, bitmask 1100110011100011")
-    {
-        ByteExtractData data = {2, 0, 0, 0, 0, ENDIAN_BIG, 0, 1, 52451, 0, name};
-        ByteExtractOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::MATCH);
-        uint32_t res = 0;
-        GetVarValueByIndex(&res, 0);
-        CHECK(res == 19555);
-        CHECK(c.get_pos() == 2);
-    }
-    SECTION("2 byte read, bitmask 1100110011100000")
-    {
-        ByteExtractData data = {2, 0, 0, 0, 0, ENDIAN_BIG, 0, 1, 52448, 0, name};
-        ByteExtractOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::MATCH);
-        uint32_t res = 0;
-        GetVarValueByIndex(&res, 0);
-        CHECK(res == 611);
-        CHECK(c.get_pos() == 2);
-    }
-    SECTION("4 bytes read, ENDIAN_LITTLE")
-    {
-        ByteExtractData data = {4, 0, 0, 0, 0, ENDIAN_LITTLE, 0, 1, 0, 0, name};
-        ByteExtractOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::MATCH);
-        uint32_t res = 0;
-        GetVarValueByIndex(&res, 0);
-        CHECK(res == 1701998412);
-        CHECK(c.get_pos() == 4);
-    }
-    SECTION(
-        "4 bytes read, ENDIAN_FUNC, packet.endianness = "
-        "DCERPC_BO_FLAG__LITTLE_ENDIAN")
-    {
-        DceEndianness* auto_endian = new DceEndianness();
-        auto_endian->hdr_byte_order = DCERPC_BO_FLAG__LITTLE_ENDIAN;
-        auto_endian->data_byte_order = DCERPC_BO_FLAG__LITTLE_ENDIAN;
-        p.endianness = auto_endian;
-        ByteExtractData data = {4, 0, 0, 0, 0, ENDIAN_FUNC, 0, 1, 0, 0, name};
-        ByteExtractOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::MATCH);
-        uint32_t res = 0;
-        GetVarValueByIndex(&res, 0);
-        CHECK(res == 1701998412);
-        CHECK(c.get_pos() == 4);
-    }
 }
 
-TEST_CASE("ByteExtractOption::eval invalid", "[byte_extract_tests]")
+TEST_CASE("ByteExtractOption::eval invalid", "[ips_byte_extract]")
 {
     Packet p;
     p.data = (const uint8_t*)"Lorem 9876";
@@ -884,50 +736,6 @@ TEST_CASE("ByteExtractOption::eval invalid", "[byte_extract_tests]")
     char* name = new char[5];
     strcpy(name, "test");
 
-    SECTION("packet = nullptr")
-    {
-        ByteExtractData data = {1, 6, 0, 0, 0, ENDIAN_BIG, 0, 1, 0, 0, name};
-        ByteExtractOption opt(data);
-        CHECK(opt.eval(c, nullptr) == IpsOption::NO_MATCH);
-    }
-    SECTION("read more than 4 bytes")
-    {
-        ByteExtractData data = {6, 0, 0, 0, 0, ENDIAN_BIG, 0, 1, 0, 0, name};
-        ByteExtractOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
-        CHECK(c.get_pos() == 0);
-    }
-    SECTION("check bounds of packet, offset > packet size")
-    {
-        ByteExtractData data = {1, 20, 0, 0, 0, ENDIAN_BIG, 0, 1, 0, 0, name};
-        ByteExtractOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
-        CHECK(c.get_pos() == 0);
-    }
-    SECTION("negative offset, without relative flag")
-    {
-        ByteExtractData data = {1, -20, 0, 0, 0, ENDIAN_BIG, 0, 1, 0, 0, name};
-        ByteExtractOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
-        CHECK(c.get_pos() == 0);
-    }
-    SECTION("negative offset, out of bounds")
-    {
-        ByteExtractData data = {1, -20, 1, 0, 0, ENDIAN_BIG, 0, 1, 0, 0, name};
-        ByteExtractOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
-        CHECK(c.get_pos() == 0);
-    }
-    SECTION("check bounds of packet, read 2 bytes, empty packet")
-    {
-        p.data = (const uint8_t*)"";
-        p.dsize = 0;
-        Cursor c2(&p);
-        ByteExtractData data = {2, 0, 0, 0, 0, ENDIAN_BIG, 0, 1, 0, 0, name};
-        ByteExtractOption opt(data);
-        CHECK(opt.eval(c2, &p) == IpsOption::NO_MATCH);
-        CHECK(c2.get_pos() == 0);
-    }
     SECTION("align value to 1")
     {
         ByteExtractData data = {1, 0, 0, 0, 1, ENDIAN_BIG, 0, 1, 0, 0, name};
@@ -948,27 +756,13 @@ TEST_CASE("ByteExtractOption::eval invalid", "[byte_extract_tests]")
         CHECK(res == 76);
         CHECK(c.get_pos() == 1);
     }
-    SECTION("ENDIAN_FUNC, without definition of endianness in packet")
-    {
-        ByteExtractData data = {3, 0, 0, 0, 0, ENDIAN_FUNC, 0, 1, 0, 0, name};
-        ByteExtractOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
-        CHECK(c.get_pos() == 0);
-    }
-    SECTION("conversion from string, decimal number, base = 8")
-    {
-        ByteExtractData data = {3, 6, 0, 1, 0, ENDIAN_BIG, 8, 1, 0, 0, name};
-        ByteExtractOption opt(data);
-        CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
-        CHECK(c.get_pos() == 0);
-    }
 }
 
 //-------------------------------------------------------------------------
 // module tests
 //-------------------------------------------------------------------------
 
-TEST_CASE("ExtractModule lifecycle", "[byte_extract_tests]")
+TEST_CASE("ExtractModule lifecycle", "[ips_byte_extract]")
 {
     ExtractModule obj;
 
@@ -1010,7 +804,7 @@ TEST_CASE("ExtractModule lifecycle", "[byte_extract_tests]")
     }
 }
 
-TEST_CASE("Test of byte_extract_ctor", "[byte_extract_tests]")
+TEST_CASE("Test of byte_extract_ctor", "[ips_byte_extract]")
 {
     ClearIpsOptionsVars();
 
@@ -1037,12 +831,12 @@ TEST_CASE("Test of byte_extract_ctor", "[byte_extract_tests]")
     }
 }
 
-TEST_CASE("ExtractModule::set", "[byte_extract_tests]")
+TEST_CASE("ExtractModule::set", "[ips_byte_extract]")
 {
     ExtractModule obj;
     obj.begin(nullptr, 0, nullptr);
 
-    SECTION("set bytes_to_grab")
+    SECTION("set bytes_to_extract")
     {
         Value v(4.0);
         Parameter p = {"~count", Parameter::PT_INT, "1:10", nullptr,
@@ -1212,7 +1006,7 @@ TEST_CASE("ExtractModule::set", "[byte_extract_tests]")
 // api tests
 //-------------------------------------------------------------------------
 
-TEST_CASE("ByteExtractVerify_valid", "[byte_extract_tests]")
+TEST_CASE("ByteExtractVerify_valid", "[ips_byte_extract]")
 {
     ByteExtractData obj;
     char* name = new char[5];
@@ -1244,19 +1038,19 @@ TEST_CASE("ByteExtractVerify_valid", "[byte_extract_tests]")
     delete name;
 }
 
-TEST_CASE("ByteExtractVerify_invalid", "[byte_extract_tests]")
+TEST_CASE("ByteExtractVerify_invalid", "[ips_byte_extract]")
 {
     char* name = new char[5];
     strcpy(name, "test");
     ByteExtractData obj = {2, 7, 0, 0, 2, ENDIAN_FUNC, 0, 1, 0, 0, name};
 
-    SECTION("bytes_to_grab checks")
+    SECTION("bytes_to_extract checks")
     {
-        obj.bytes_to_grab = MAX_BYTES_TO_GRAB + 1;
+        obj.bytes_to_extract = MAX_BYTES_TO_GRAB + 1;
         CHECK((!ByteExtractVerify(&obj)));
 
-        obj.data_string_convert_flag = true;
-        obj.bytes_to_grab = PARSELEN + 1;
+        obj.string_convert_flag = true;
+        obj.bytes_to_extract = PARSELEN + 1;
         CHECK((!ByteExtractVerify(&obj)));
     }
     SECTION("align checks")
@@ -1290,7 +1084,7 @@ TEST_CASE("ByteExtractVerify_invalid", "[byte_extract_tests]")
     }
     SECTION("bitmask checks")
     {
-        obj.bytes_to_grab = 2;
+        obj.bytes_to_extract = 2;
         obj.bitmask_val = 1048575;
         CHECK((!ByteExtractVerify(&obj)));
     }

@@ -22,6 +22,9 @@
 
 #include "main/thread.h"
 #include "main/snort_types.h"
+#include "framework/cursor.h"
+#include "framework/endianness.h"
+#include "protocols/packet.h"
 
 #define ENDIAN_BIG    0x1
 #define ENDIAN_LITTLE 0x2
@@ -36,6 +39,17 @@
 
 namespace snort
 {
+
+struct ExtractionSettings {
+    uint32_t bytes_to_extract;
+    int32_t offset;
+    bool relative_flag;
+    bool string_convert_flag;
+    uint8_t base;
+    uint8_t endianess;
+    uint32_t bitmask_val;
+};
+
 SO_PUBLIC int string_extract(
     int bytes_to_grab, int base, const uint8_t* ptr,
     const uint8_t* start, const uint8_t* end, uint32_t* value);
@@ -43,6 +57,16 @@ SO_PUBLIC int string_extract(
 SO_PUBLIC int byte_extract(
     int endianness, int bytes_to_grab, const uint8_t* ptr,
     const uint8_t* start, const uint8_t* end, uint32_t* value);
+
+SO_PUBLIC void set_cursor_bounds(const ExtractionSettings& settings, Cursor& c,
+    const uint8_t*& start, const uint8_t*& ptr, const uint8_t*& end);
+
+SO_PUBLIC int32_t data_extraction(const ExtractionSettings& settings, Packet* p,
+    uint32_t& result_var, const uint8_t*start, 
+    const uint8_t* ptr, const uint8_t* end);
+
+SO_PUBLIC int32_t extract_data(const ExtractionSettings& settings, Cursor& c, Packet* p,
+    uint32_t& result_var);
 
 SO_PUBLIC void set_byte_order(uint8_t& order, uint8_t flag, const char* opt);
 
@@ -59,4 +83,3 @@ SO_PUBLIC int GetVarValueByIndex(uint32_t* dst, uint8_t var_number);
 SO_PUBLIC int SetVarValueByIndex(uint32_t value, uint8_t var_number);
 }
 #endif
-

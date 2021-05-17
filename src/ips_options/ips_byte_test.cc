@@ -103,6 +103,11 @@
 #include "protocols/packet.h"
 #include "utils/util.h"
 
+#ifdef UNIT_TEST
+#include <climits>
+#include "catch/snort_catch.h"
+#endif
+
 #include "extract.h"
 
 using namespace snort;
@@ -131,7 +136,7 @@ struct ByteTestData
     int32_t offset;
     bool not_flag;
     bool relative_flag;
-    bool data_string_convert_flag;
+    bool string_convert_flag;
     uint8_t endianness;
     uint32_t base;
     uint32_t bitmask_val;
@@ -143,22 +148,31 @@ struct ByteTestData
 // static functions
 // -----------------------------------------------------------------------------
 
-static inline bool byte_test_check(ByteTestOper op, uint32_t val, uint32_t cmp, bool not_flag)
+static inline bool byte_test_check(ByteTestOper op, uint32_t val, uint32_t cmp,
+    bool not_flag)
 {
     bool success = false;
 
     switch ( op )
     {
+    case CHECK_EQ:
+        success = (val == cmp);
+        break;
+    
     case CHECK_LT:
         success = (val < cmp);
         break;
 
-    case CHECK_EQ:
-        success = (val == cmp);
-        break;
-
     case CHECK_GT:
         success = (val > cmp);
+        break;
+
+    case CHECK_LTE:
+        success = (val <= cmp);
+        break;
+
+    case CHECK_GTE:
+        success = (val >= cmp);
         break;
 
     case CHECK_AND:
@@ -167,14 +181,6 @@ static inline bool byte_test_check(ByteTestOper op, uint32_t val, uint32_t cmp, 
 
     case CHECK_XOR:
         success = ((val ^ cmp) > 0);
-        break;
-
-    case CHECK_GTE:
-        success = (val >= cmp);
-        break;
-
-    case CHECK_LTE:
-        success = (val <= cmp);
         break;
     }
 
@@ -189,7 +195,8 @@ static inline bool byte_test_check(ByteTestOper op, uint32_t val, uint32_t cmp, 
 class ByteTestOption : public IpsOption
 {
 public:
-    ByteTestOption(const ByteTestData& c) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
+    ByteTestOption(const ByteTestData& c) : IpsOption(s_name,
+        RULE_OPTION_TYPE_BUFFER_USE)
     { config = c; }
 
     uint32_t hash() const override;
@@ -219,7 +226,7 @@ uint32_t ByteTestOption::hash() const
     a += config.offset;
     b += config.not_flag ? (1 << 24) : 0;
     b += config.relative_flag ? (1 << 16) : 0;
-    b += config.data_string_convert_flag ? (1 << 8) : 0;
+    b += config.string_convert_flag ? (1 << 8) : 0;
     b += config.endianness;
     c += config.base;
 
@@ -247,17 +254,17 @@ bool ByteTestOption::operator==(const IpsOption& ips) const
     const ByteTestData* left = &config;
     const ByteTestData* right = &rhs.config;
 
-    if (( left->bytes_to_compare == right->bytes_to_compare) &&
-        ( left->cmp_value == right->cmp_value) &&
-        ( left->opcode == right->opcode) &&
-        ( left->offset == right->offset) &&
-        ( left->not_flag == right->not_flag) &&
-        ( left->relative_flag == right->relative_flag) &&
-        ( left->data_string_convert_flag == right->data_string_convert_flag) &&
-        ( left->endianness == right->endianness) &&
-        ( left->base == right->base) &&
-        ( left->cmp_value_var == right->cmp_value_var) &&
-        ( left->offset_var == right->offset_var) &&
+    if (( left->bytes_to_compare == right->bytes_to_compare) and
+        ( left->cmp_value == right->cmp_value) and
+        ( left->opcode == right->opcode) and
+        ( left->offset == right->offset) and
+        ( left->not_flag == right->not_flag) and
+        ( left->relative_flag == right->relative_flag) and
+        ( left->string_convert_flag == right->string_convert_flag) and
+        ( left->endianness == right->endianness) and
+        ( left->base == right->base) and
+        ( left->cmp_value_var == right->cmp_value_var) and
+        ( left->offset_var == right->offset_var) and
         ( left->bitmask_val == right->bitmask_val))
     {
         return true;
@@ -274,7 +281,7 @@ IpsOption::EvalStatus ByteTestOption::eval(Cursor& c, Packet* p)
     uint32_t cmp_value = 0;
 
     // Get values from byte_extract variables, if present.
-    if (btd->cmp_value_var >= 0 && btd->cmp_value_var < NUM_IPS_OPTIONS_VARS)
+    if (btd->cmp_value_var >= 0 and btd->cmp_value_var < NUM_IPS_OPTIONS_VARS)
     {
         uint32_t val;
         GetVarValueByIndex(&val, btd->cmp_value_var);
@@ -285,7 +292,7 @@ IpsOption::EvalStatus ByteTestOption::eval(Cursor& c, Packet* p)
 
     int offset = 0;
 
-    if (btd->offset_var >= 0 && btd->offset_var < NUM_IPS_OPTIONS_VARS)
+    if (btd->offset_var >= 0 and btd->offset_var < NUM_IPS_OPTIONS_VARS)
     {
         uint32_t val;
         GetVarValueByIndex(&val, btd->offset_var);
@@ -293,51 +300,19 @@ IpsOption::EvalStatus ByteTestOption::eval(Cursor& c, Packet* p)
     }
     else
         offset = btd->offset;
-
-    const uint8_t* start_ptr = btd->relative_flag ? c.start() : c.buffer();
-    start_ptr += offset;
-
-    uint8_t endian = btd->endianness;
-    if (endian == ENDIAN_FUNC)
-    {
-        if (!p->endianness ||
-            !p->endianness->get_offset_endianness(start_ptr - p->data, endian))
-            return NO_MATCH;
-    }
+    
+    ExtractionSettings extract_config{
+        config.bytes_to_compare, offset, config.relative_flag,
+        config.string_convert_flag, config.base, config.endianness,
+        config.bitmask_val
+    };
 
     uint32_t value = 0;
+    int32_t payload_bytes_grabbed = extract_data(extract_config, c, p, value);
 
-    if (!btd->data_string_convert_flag)
+    if ( payload_bytes_grabbed == NO_MATCH )
     {
-        if ( byte_extract(
-            endian, btd->bytes_to_compare,
-            start_ptr, c.buffer(), c.endo(), &value))
-            return NO_MATCH;
-    }
-    else
-    {
-        unsigned len = btd->relative_flag ? c.length() : c.size();
-
-        if ( len > btd->bytes_to_compare )
-            len = btd->bytes_to_compare;
-
-        int payload_bytes_grabbed = string_extract(
-            len, btd->base, start_ptr, c.buffer(), c.endo(), &value);
-
-        if ( payload_bytes_grabbed < 0 )
-        {
-            return NO_MATCH;
-        }
-    }
-
-    if (btd->bitmask_val != 0 )
-    {
-        uint32_t num_tailing_zeros_bitmask = getNumberTailingZerosInBitmask(btd->bitmask_val);
-        value = value & btd->bitmask_val;
-        if ( value && num_tailing_zeros_bitmask )
-        {
-            value = value >> num_tailing_zeros_bitmask;
-        }
+        return NO_MATCH;
     }
 
     if ( byte_test_check(btd->opcode, value, cmp_value, btd->not_flag) )
@@ -360,7 +335,7 @@ static void parse_operator(const char* oper, ByteTestData& idx)
         cptr++;
     }
 
-    if (idx.not_flag && strlen(cptr) == 0)
+    if (idx.not_flag and strlen(cptr) == 0)
     {
         idx.opcode = CHECK_EQ;
     }
@@ -426,7 +401,7 @@ static const Parameter s_params[] =
       "variable name or value to test the converted result against" },
 
     { "~offset", Parameter::PT_STRING, nullptr, nullptr,
-      "variable name or number of bytes into the payload to start processing" },
+      "variable name or number of bytes into the payload to start processing"},
 
     { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
       "offset from cursor instead of start of buffer" },
@@ -521,7 +496,8 @@ bool ByteTestModule::end(const char*, int, SnortConfig*)
 
     if (numBytesInBitmask(data.bitmask_val) > data.bytes_to_compare)
     {
-        ParseError("Number of bytes in \"bitmask\" value is greater than bytes to extract.");
+        ParseError("Number of bytes in \"bitmask\" value is greater " \
+            "than bytes to extract.");
         return false;
     }
 
@@ -566,7 +542,7 @@ bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("string") )
     {
-        data.data_string_convert_flag = true;
+        data.string_convert_flag = true;
         data.base = 10;
     }
     else if ( v.is("dec") )
@@ -664,7 +640,7 @@ void SetByteTestData(ByteTestData &byte_test, int value, ByteTestOper code = CHE
     byte_test.offset = value; 
     byte_test.not_flag = value; 
     byte_test.relative_flag = value;
-    byte_test.data_string_convert_flag = value;
+    byte_test.string_convert_flag = value;
     byte_test.endianness = value;
     byte_test.base = value; 
     byte_test.bitmask_val = value;
@@ -680,7 +656,7 @@ void SetByteTestDataMax(ByteTestData& byte_test)
     byte_test.offset = INT_MAX; 
     byte_test.not_flag = true; 
     byte_test.relative_flag = true;
-    byte_test.data_string_convert_flag = true;
+    byte_test.string_convert_flag = true;
     byte_test.endianness = UCHAR_MAX;
     byte_test.base = UINT_MAX; 
     byte_test.bitmask_val = UINT_MAX;
@@ -819,20 +795,6 @@ TEST_CASE("ByteTestOption test", "[ips_byte_test]")
             REQUIRE((test==case_diff_name) == false);
         }       
                
-        SECTION("Compare IpsOptions with different buffer")
-        {
-            StubIpsOption case_diff_option("hello_world", 
-                option_type_t::RULE_OPTION_TYPE_CONTENT);
-            REQUIRE((test==case_diff_option) == false); 
-        }
-               
-        SECTION("Compare IpsOptions with buffet n/a")
-        {
-            StubIpsOption case_option_na("hello_world", 
-                option_type_t::RULE_OPTION_TYPE_OTHER); 
-            REQUIRE((test==case_option_na) == false);        
-        }
-
         SECTION("Compare between equals instans")
         {
             ByteTestOption test_1(byte_test);    
@@ -881,9 +843,9 @@ TEST_CASE("ByteTestOption test", "[ips_byte_test]")
             REQUIRE((test==test_2_6) == false);
         }
 
-        SECTION("data_string_convert_flag is different")
+        SECTION("string_convert_flag is different")
         {
-            byte_test.data_string_convert_flag = 0;
+            byte_test.string_convert_flag = 0;
             ByteTestOption test_2_7(byte_test);
             REQUIRE((test==test_2_7) == false);
         }
@@ -930,27 +892,18 @@ TEST_CASE("ByteTestOption test", "[ips_byte_test]")
         Cursor current_cursor;
         SetByteTestData(byte_test, 1);
 
-        SECTION("Incorrect Endianness")
-        {
-            StubEndianness* stub_endinness = new StubEndianness();
-            test_packet.endianness = stub_endinness;
-            byte_test.endianness = 4; 
-            ByteTestOption test_1(byte_test);
-            REQUIRE((test_1.eval(current_cursor, &test_packet)) == NO_MATCH);
-        }
-
         SECTION("Cursor not setted correct for byte_extract")
         {
             byte_test.cmp_value_var = 3;
             byte_test.offset_var = 3;
-            byte_test.data_string_convert_flag = 0;
+            byte_test.string_convert_flag = 0;
             ByteTestOption test_2(byte_test);
             REQUIRE((test_2.eval(current_cursor, &test_packet)) == NO_MATCH);
         }
 
         SECTION("Byte_to_compare setted to zero for string_extract")
         {
-            byte_test.data_string_convert_flag = 1;
+            byte_test.string_convert_flag = 1;
             byte_test.bytes_to_compare = 0;
             ByteTestOption test_3(byte_test);
             uint8_t buff = 0;
@@ -960,7 +913,7 @@ TEST_CASE("ByteTestOption test", "[ips_byte_test]")
 
         SECTION("Byte_test_check with extract value not equal to need one")
         {
-            byte_test.data_string_convert_flag = 0;
+            byte_test.string_convert_flag = 0;
             byte_test.relative_flag = 0;
             uint8_t buff = 0;
             current_cursor.set("hello_world_long_name", &buff, 50);
@@ -970,7 +923,7 @@ TEST_CASE("ByteTestOption test", "[ips_byte_test]")
 
         SECTION("Correct match")
         {
-            byte_test.data_string_convert_flag = 0;
+            byte_test.string_convert_flag = 0;
             byte_test.relative_flag = 0;
             byte_test.opcode = ByteTestOper(7);
             byte_test.not_flag = 1;
