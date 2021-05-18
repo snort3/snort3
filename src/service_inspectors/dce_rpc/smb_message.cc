@@ -1032,7 +1032,7 @@ static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData* ssd, const SmbNt
     int smb_com = SmbCom(smb_hdr);
 
     if (smb_com < 0 or smb_com > 255) return nullptr;
-    
+
     debug_logf(dce_smb_trace, DetectionEngine::get_current_packet(),
         "SMB command: %s (0x%02X)\n", get_smb_com_string(smb_com), smb_com);
 

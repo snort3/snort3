@@ -297,7 +297,10 @@ static void snort_reputation_aux_ip(ReputationConfig* config, Packet* p, const S
         else if (decision == MONITORED)
         {
             if (p->flow)
+            {
                 p->flow->flags.reputation_monitor = true;
+                p->flow->iplist_monitor_id = p->iplist_id;
+            }
 
             DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_MONITOR_DST);
             reputationstats.aux_ip_monitored++;

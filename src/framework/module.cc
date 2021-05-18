@@ -145,7 +145,7 @@ void Module::show_stats()
 void Module::reset_stats()
 {
     PegCount* p = get_counts();
-    
+
     if ( !p )
         return;
 

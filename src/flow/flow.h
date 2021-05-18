@@ -441,6 +441,8 @@ public:  // FIXIT-M privatize if possible
     unsigned network_policy_id;
     unsigned reload_id;
 
+    uint32_t iplist_monitor_id;
+
     uint32_t default_session_timeout;
 
     int32_t client_intf;

@@ -1434,10 +1434,9 @@ void ModuleManager::reset_stats(clear_counter_type_t type)
             lock_guard<mutex> lock(stats_mutex);
             mh->mod->reset_stats();
         }
-    
     }
     else
-    { 
+    {
         auto mod_hooks = get_all_modhooks();
         for ( auto* mh : mod_hooks )
         {

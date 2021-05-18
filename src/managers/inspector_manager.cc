@@ -628,7 +628,7 @@ Inspector* InspectorManager::get_service_inspector_by_id(const SnortProtocolId p
 
     if ( !pi || !pi->framework_policy )
         return nullptr;
- 
+
     auto g = pi->framework_policy->inspector_cache_by_id.find(protocol_id);
     return (g != pi->framework_policy->inspector_cache_by_id.end()) ? g->second : nullptr;
 }

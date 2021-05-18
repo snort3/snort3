@@ -627,7 +627,7 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         if (enc.flags & ENC_FLAG_INLINE)
         {
             uint32_t seq = 0;
-            
+
             if(Stream::get_held_pkt_seq(flow, seq))
                 tcph_out->th_seq = htonl(seq);
             else
