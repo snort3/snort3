@@ -331,14 +331,14 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                 {
                     Http2Stream* const stream =
                         session_data->find_stream(session_data->current_stream[source_id]);
-                    if (stream && stream->is_open(source_id))
+                    if (stream && stream->is_open(source_id) && !stream->is_discard_set(source_id))
                     {
                         status = session_data->data_cutter[source_id].scan(
                             data, length, flush_offset, data_offset, frame_flags);
                     }
                     else
                     {
-                        // Need to skip past Data frame in a bad stream
+                        // Need to skip past Data frame in a bad stream or if passed flow depth
                         uint32_t& remaining = session_data->scan_remaining_frame_octets[source_id];
                         if (length - data_offset < remaining)
                         {
@@ -351,9 +351,18 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                             remaining = 0;
                             session_data->header_octets_seen[source_id] = 0;
                             session_data->scan_state[source_id] = SCAN_FRAME_HEADER;
-                            assert(!session_data->frame_lengths[source_id].empty());
-                            session_data->frame_lengths[source_id].pop();
-                            assert(session_data->frame_lengths[source_id].empty());
+
+                            if (!session_data->frame_lengths[source_id].empty())
+                            {
+                                session_data->frame_lengths[source_id].pop();
+                                assert(session_data->frame_lengths[source_id].empty());
+                            }
+
+                            if (stream && ((frame_flags & FLAG_END_STREAM) != 0))
+                            {
+                                stream->set_end_stream_on_data_flush(source_id);
+                                discarded_data_frame_cleanup(session_data, source_id, stream);
+                            }
                         }
 
                         session_data->payload_discard[source_id] = true;
@@ -501,38 +510,42 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
             session_data->frame_reassemble[source_id] = nullptr;
         }
 
-        if (session_data->frame_type[source_id] != FT_DATA ||
-            session_data->frame_data[source_id] != nullptr)
+        if (session_data->frame_type[source_id] == FT_DATA &&
+            session_data->frame_data[source_id] == nullptr)
+        {
+            Http2Stream* const stream =
+                session_data->find_stream(session_data->current_stream[source_id]);
+            if (stream)
+            {
+                stream->set_discard(source_id);
+                discarded_data_frame_cleanup(session_data, source_id, stream);
+            }
+        }
+        else
         {
             // Return 0-length non-null buffer to stream which signals detection required,
             // but don't create pkt_data buffer
             frame_buf.data = (const uint8_t*)"";
         }
-        else
-            discarded_data_frame_cleanup(session_data, source_id);
     }
 
     return frame_buf;
 }
 
-void Http2StreamSplitter::discarded_data_frame_cleanup(Http2FlowData* session_data, HttpCommon::SourceId source_id)
+void Http2StreamSplitter::discarded_data_frame_cleanup(Http2FlowData* session_data, HttpCommon::SourceId source_id, Http2Stream* stream)
 {
-    Http2Stream* const stream = session_data->find_current_stream(source_id);
-
-    if (!stream || stream->get_state(source_id) == STREAM_ERROR)
+    if (stream->get_state(source_id) == STREAM_ERROR ||
+        !stream->is_end_stream_on_data_flush(source_id))
         return;
 
-    if (stream->is_end_stream_on_data_flush(source_id))
+    if (session_data->concurrent_files > 0)
+        session_data->concurrent_files -= 1;
+    stream->set_state(source_id, STREAM_COMPLETE);
+    stream->check_and_cleanup_completed();
+    if (session_data->delete_stream)
     {
-        if (session_data->concurrent_files > 0)
-            session_data->concurrent_files -= 1;
-        stream->set_state(source_id, STREAM_COMPLETE);
-        stream->check_and_cleanup_completed();
-        if (session_data->delete_stream)
-        {
-            session_data->processing_stream_id = session_data->get_current_stream_id(source_id);
-            session_data->delete_processing_stream();
-            session_data->processing_stream_id = NO_STREAM_ID;
-        }
+        session_data->processing_stream_id = session_data->get_current_stream_id(source_id);
+        session_data->delete_processing_stream();
+        session_data->processing_stream_id = NO_STREAM_ID;
     }
 }
