@@ -159,7 +159,7 @@ const StreamBuffer Http2StreamSplitter::reassemble(Flow* flow, unsigned total, u
 #ifdef REG_TEST
         if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
         {
-            fprintf(HttpTestManager::get_output_file(), "Discarded %u octets\n\n", len);
+            fprintf(HttpTestManager::get_output_file(), "HTTP/2 discarded %u octets\n\n", len);
             fflush(HttpTestManager::get_output_file());
         }
 #endif
