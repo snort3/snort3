@@ -124,25 +124,22 @@ size_t MemoryCap::preemptive_threshold = 0;
 // public interface
 // -----------------------------------------------------------------------------
 
-bool MemoryCap::free_space(size_t n)
+void MemoryCap::free_space(size_t n)
 {
     if ( !is_packet_thread() )
-        return true;
+        return;
 
     if ( !thread_cap )
-        return true;
+        return;
 
     static THREAD_LOCAL bool entered = false;
-    assert(!entered);
-
+    
     if ( entered )
-        return false;
+        return;
 
     entered = true;
-    bool avail = memory::free_space(n, thread_cap, s_tracker, prune_handler);
+    memory::free_space(n, thread_cap, s_tracker, prune_handler);
     entered = false;
-
-    return avail;
 }
 
 static size_t fudge_it(size_t n)
