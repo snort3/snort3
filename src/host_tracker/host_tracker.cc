@@ -124,12 +124,16 @@ bool HostTracker::add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary)
             }
 
             hm_t.visibility = true;
+            hm_t.last_seen = last_seen;
             num_visible_macs++;
             return true;
         }
 
         if ( !invisible_swap_candidate and !hm_t.visibility )
+        {
             invisible_swap_candidate = &hm_t;
+            break;
+        }
     }
 
     if ( invisible_swap_candidate )
@@ -138,6 +142,7 @@ bool HostTracker::add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary)
         invisible_swap_candidate->ttl = ttl;
         invisible_swap_candidate->primary = primary;
         invisible_swap_candidate->visibility = true;
+        invisible_swap_candidate->last_seen = last_seen;
         num_visible_macs++;
         return true;
     }

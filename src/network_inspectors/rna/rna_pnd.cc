@@ -77,7 +77,10 @@ HostCacheIp::Data RnaPnd::find_or_create_host_tracker(const SfIp& ip, bool& new_
     // Also if it was not new (we had it in the cache) and it went from
     // not visible to visible, then it's as good as new.
     if (!new_host and !ht->set_visibility(true))
+    {
+        ht->update_last_seen();
         new_host = true;
+    }
 
     return ht;
 }
