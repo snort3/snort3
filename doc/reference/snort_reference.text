@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.4.0 2021-04-21 12:58:32 EDT TST
+Revision 3.1.5.0 2021-05-20 14:02:39 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -873,6 +873,9 @@ Configuration:
   * string inspection.uuid: correlate events by uuid
   * enum inspection.mode = inline-test: set policy mode { inline |
     inline-test }
+  * int inspection.max_aux_ip = 16: maximum number of auxiliary IPs
+    per flow to detect and save (-1 = disable, 0 = detect but don’t
+    save, 1+ = save in FIFO manner) { -1:127 }
 
 
 2.15. ips
@@ -3573,6 +3576,12 @@ Usage: inspect
 
 Instance Type: multiton
 
+Configuration:
+
+  * int http2_inspect.concurrent_streams_limit = 100: Maximum number
+    of concurrent streams allowed in a single HTTP/2 flow { 100:1000
+    }
+
 Rules:
 
   * 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
@@ -3614,6 +3623,9 @@ Rules:
   * 121:29 (http2_inspect) HTTP/2 rst stream frame sent at invalid
     time
   * 121:30 (http2_inspect) uppercase HTTP/2 header field name
+  * 121:31 (http2_inspect) invalid HTTP/2 window update frame
+  * 121:32 (http2_inspect) HTTP/2 window update frame with zero
+    increment
 
 Peg counts:
 
@@ -3747,6 +3759,8 @@ Rules:
   * 119:115 (http_inspect) PDF file unsupported compression type
   * 119:116 (http_inspect) PDF file cascaded compression
   * 119:117 (http_inspect) PDF file parse failure
+  * 119:118 (http_inspect) unexpected script tag within inline
+    javascript
   * 119:201 (http_inspect) not HTTP traffic
   * 119:202 (http_inspect) chunk length has excessive leading zeros
   * 119:203 (http_inspect) white space before or between messages
@@ -3887,6 +3901,8 @@ Peg counts:
   * http_inspect.pipelined_requests: total requests placed in a
     pipeline (sum)
   * http_inspect.total_bytes: total HTTP data bytes inspected (sum)
+  * http_inspect.js_inline_scripts: total number of inline
+    JavaScripts processed (sum)
 
 
 5.25. iec104
@@ -4169,15 +4185,20 @@ Configuration:
 
 Peg counts:
 
+  * netflow.invalid_netflow_record: count of invalid netflow records
+    (sum)
   * netflow.packets: total packets processed (sum)
   * netflow.records: total records found in netflow data (sum)
+  * netflow.unique_flows: count of unique netflow flows (sum)
+  * netflow.v9_missing_template: count of data records that are
+    missing templates (sum)
+  * netflow.v9_options_template: count of options template flowset
+    (sum)
+  * netflow.v9_templates: count of total version 9 templates (sum)
   * netflow.version_5: count of netflow version 5 packets received
     (sum)
   * netflow.version_9: count of netflow version 9 packets received
     (sum)
-  * netflow.invalid_netflow_pkts: count of invalid netflow packets
-    (sum)
-  * netflow.unique_flows: count of unique netflow flows (sum)
 
 
 5.30. normalizer
@@ -4702,6 +4723,12 @@ Peg counts:
   * reputation.trusted: number of packets trusted (sum)
   * reputation.monitored: number of packets monitored (sum)
   * reputation.memory_allocated: total memory allocated (sum)
+  * reputation.aux_ip_blocked: number of auxiliary ip packets blocked
+    (sum)
+  * reputation.aux_ip_trusted: number of auxiliary ip packets trusted
+    (sum)
+  * reputation.aux_ip_monitored: number of auxiliary ip packets
+    monitored (sum)
 
 
 5.37. rna
@@ -9061,6 +9088,9 @@ these libraries see the Getting Started section of the manual.
   * port host_tracker[].services[].port: port number
   * enum host_tracker[].services[].proto: IP protocol { ip | tcp |
     udp }
+  * int http2_inspect.concurrent_streams_limit = 100: Maximum number
+    of concurrent streams allowed in a single HTTP/2 flow { 100:1000
+    }
   * implied http_cookie.request: match against the cookie from the
     request message even when examining the response
   * implied http_cookie.with_body: parts of this rule examine HTTP
@@ -9258,6 +9288,9 @@ these libraries see the Getting Started section of the manual.
     limit) { -1:65535 }
   * int inspection.id = 0: correlate policy and events with other
     items in configuration { 0:65535 }
+  * int inspection.max_aux_ip = 16: maximum number of auxiliary IPs
+    per flow to detect and save (-1 = disable, 0 = detect but don’t
+    save, 1+ = save in FIFO manner) { -1:127 }
   * enum inspection.mode = inline-test: set policy mode { inline |
     inline-test }
   * string inspection.uuid: correlate events by uuid
@@ -10954,6 +10987,8 @@ these libraries see the Getting Started section of the manual.
   * http_inspect.get_requests: GET requests inspected (sum)
   * http_inspect.head_requests: HEAD requests inspected (sum)
   * http_inspect.inspections: total message sections inspected (sum)
+  * http_inspect.js_inline_scripts: total number of inline
+    JavaScripts processed (sum)
   * http_inspect.max_concurrent_sessions: maximum concurrent http
     sessions (max)
   * http_inspect.options_requests: OPTIONS requests inspected (sum)
@@ -11040,11 +11075,16 @@ these libraries see the Getting Started section of the manual.
   * modbus.max_concurrent_sessions: maximum concurrent modbus
     sessions (max)
   * modbus.sessions: total sessions processed (sum)
-  * netflow.invalid_netflow_pkts: count of invalid netflow packets
+  * netflow.invalid_netflow_record: count of invalid netflow records
     (sum)
   * netflow.packets: total packets processed (sum)
   * netflow.records: total records found in netflow data (sum)
   * netflow.unique_flows: count of unique netflow flows (sum)
+  * netflow.v9_missing_template: count of data records that are
+    missing templates (sum)
+  * netflow.v9_options_template: count of options template flowset
+    (sum)
+  * netflow.v9_templates: count of total version 9 templates (sum)
   * netflow.version_5: count of netflow version 5 packets received
     (sum)
   * netflow.version_9: count of netflow version 9 packets received
@@ -11181,6 +11221,12 @@ these libraries see the Getting Started section of the manual.
     (sum)
   * rate_filter.no_memory: number of times rate filter ran out of
     memory (sum)
+  * reputation.aux_ip_blocked: number of auxiliary ip packets blocked
+    (sum)
+  * reputation.aux_ip_monitored: number of auxiliary ip packets
+    monitored (sum)
+  * reputation.aux_ip_trusted: number of auxiliary ip packets trusted
+    (sum)
   * reputation.blocked: number of packets blocked (sum)
   * reputation.memory_allocated: total memory allocated (sum)
   * reputation.monitored: number of packets monitored (sum)
@@ -11824,6 +11870,8 @@ these libraries see the Getting Started section of the manual.
   * 119:115 (http_inspect) PDF file unsupported compression type
   * 119:116 (http_inspect) PDF file cascaded compression
   * 119:117 (http_inspect) PDF file parse failure
+  * 119:118 (http_inspect) unexpected script tag within inline
+    javascript
   * 119:201 (http_inspect) not HTTP traffic
   * 119:202 (http_inspect) chunk length has excessive leading zeros
   * 119:203 (http_inspect) white space before or between messages
@@ -11954,6 +12002,9 @@ these libraries see the Getting Started section of the manual.
   * 121:29 (http2_inspect) HTTP/2 rst stream frame sent at invalid
     time
   * 121:30 (http2_inspect) uppercase HTTP/2 header field name
+  * 121:31 (http2_inspect) invalid HTTP/2 window update frame
+  * 121:32 (http2_inspect) HTTP/2 window update frame with zero
+    increment
   * 122:1 (port_scan) TCP portscan
   * 122:2 (port_scan) TCP decoy portscan
   * 122:3 (port_scan) TCP portsweep

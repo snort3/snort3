@@ -1,3 +1,41 @@
+2021/05/20 - 3.1.5.0
+
+appid: Publish an event when appid debug command is issued
+appid: do memory accounting of api stash object, dns/tls/third-party sessions
+appid: mark payload detection as done after either http request or response is inspected
+appid: set monitor flags on future flows
+dce_rpc: fix expected session protocol id
+dce_rpc: update memory tracking for smb session data
+dce_rpc: use find_else_insert in smb session cache to avoid deadlock
+file_api: fix spell source error
+flow: Adding stash API to save auxiliary IP
+flow: Enhancing APIs to stash auxiliary IP
+flow: memory tracking updates
+hash: add new insert method in lru_cache_shared
+http2_inspect: add assert in clear
+http2_inspect: concurrent streams limit is configurable
+http2_inspect: fix non-standard c++
+http2_inspect: handle trailer after reaching flow depth
+http2_inspect: implement window_update frame
+http2_inspect: optimize processing after reaching flow depth
+http2_inspect: track stream memory incrementally instead of all up front
+http2_inspect: update discard print
+http2_inspect: update state and delete streams after reaching flow depth
+http_inspect: IP reputation support
+http_inspect: don't disable detection for flow if it's an HTTP/2 flow
+ips_options: fix relative base64_decode
+memory: free_space cleanup
+netflow: additional check before v5/v9 decode
+netflow: version 9 decoding and filtering
+packet_tracer: IPS daq trace log
+packet_tracer: file daq trace log
+parser: Remove rule merge in dump mode
+parser: reduce RTNs only after states applied
+reputation: track monitor ID via flow; minor code cleanup
+shell: exit gracefully when sanbox lua is misconfigured
+stream_tcp: Deleting session when both talker and listener are closed
+stream_tcp: Using window base for reset validation
+
 2021/04/21 - 3.1.4.0
 
 -- appid: (fix style) Local variable 'version' shadows outer variable
