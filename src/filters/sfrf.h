@@ -163,6 +163,7 @@ int SFRF_TestThreshold(
     RateFilterConfig *config,
     unsigned gid,
     unsigned sid,
+    PolicyId policyid,
     const snort::SfIp *sip,
     const snort::SfIp *dip,
     time_t curTime,

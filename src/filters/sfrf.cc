@@ -445,6 +445,7 @@ int SFRF_TestThreshold(
     RateFilterConfig* config,
     unsigned gid,
     unsigned sid,
+    PolicyId policy_id,
     const SfIp* sip,
     const SfIp* dip,
     time_t curTime,
@@ -457,8 +458,6 @@ int SFRF_TestThreshold(
     int newStatus = -1;
     int status = -1;
     tSFRFGenHashKey key;
-
-    PolicyId policy_id = get_ips_policy()->policy_id;
 
 #ifdef SFRF_DEBUG
     printf("--%d-%u-%u: %s() entering\n", 0, gid, sid, __func__);
@@ -769,7 +768,7 @@ static void _updateDependentThresholds(
         // 4.    |       _updateDependentThresholds(gid internal, sid ADD)
         // 5.    continue with regularly scheduled programming (ie step 1)
 
-        SFRF_TestThreshold(config, gid, SESSION_EVENT_SETUP,
+        SFRF_TestThreshold(config, gid, SESSION_EVENT_SETUP, get_network_policy()->policy_id,
             sip, dip, curTime, SFRF_COUNT_DECREMENT);
         return;
     }

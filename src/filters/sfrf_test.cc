@@ -949,8 +949,8 @@ static int EventTest(EventData* p)
     sip.set(p->sip);
     dip.set(p->dip);
 
-    status = SFRF_TestThreshold(
-        rfc, p->gid, p->sid, &sip, &dip, curtime, op);
+    status = SFRF_TestThreshold(rfc, p->gid, p->sid, get_network_policy()->policy_id,
+        &sip, &dip, curtime, op);
 
     if ( status >= Actions::get_max_types() )
         status -= Actions::get_max_types();
