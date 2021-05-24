@@ -63,6 +63,7 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_HEADER_UPPERCASE, "uppercase HTTP/2 header field name" },
     { EVENT_INVALID_WINDOW_UPDATE_FRAME, "invalid HTTP/2 window update frame" },
     { EVENT_WINDOW_UPDATE_FRAME_ZERO_INCREMENT, "HTTP/2 window update frame with zero increment" },
+    { EVENT_REQUEST_WITHOUT_METHOD, "HTTP/2 request without a method" },
     { 0, nullptr }
 };
 

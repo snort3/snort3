@@ -40,25 +40,29 @@ private:
     Field scheme;
     Field authority;
 
-    static const char* AUTHORITY_NAME;
-    static const uint32_t AUTHORITY_NAME_LENGTH = 10;
-    static const char* METHOD_NAME;
-    static const uint32_t METHOD_NAME_LENGTH = 7;
-    static const char* PATH_NAME;
-    static const uint32_t PATH_NAME_LENGTH = 5;
-    static const char* SCHEME_NAME;
-    static const uint32_t SCHEME_NAME_LENGTH = 7;
+    static const char* authority_name;
+    static const uint32_t authority_name_length = 10;
+    static const char* method_name;
+    static const uint32_t method_name_length = 7;
+    static const char* path_name;
+    static const uint32_t path_name_length = 5;
+    static const char* scheme_name;
+    static const uint32_t scheme_name_length = 7;
 
-    // Methods that have special URI forms. Subtract 1 from the sizeof for the terminating null byte
-    static const char* OPTIONS;
-    static const int32_t OPTIONS_LENGTH = 7;
-    static const char* CONNECT;
-    static const int32_t CONNECT_LENGTH = 7;
+    // Constants used for special checks
+    static const char* method_connect;
+    static const int32_t connect_length = 7;
+    static const char* method_options;
+    static const int32_t options_length = 7;
+    static const char* scheme_http;
+    static const int32_t http_length = 4;
+    static const char* scheme_https;
+    static const int32_t https_length = 5;
 
     // Account for two spaces, and trailing crlf
-    static const uint8_t NUM_REQUEST_LINE_EXTRA_CHARS = 4;
+    static const uint8_t num_request_line_extra_chars = 4;
     // absolute form adds '://' between scheme and authority
-    static const uint32_t NUM_ABSOLUTE_FORM_EXTRA_CHARS = 3;
+    static const uint32_t num_absolute_form_extra_chars = 3;
 };
 
 #endif

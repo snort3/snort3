@@ -35,33 +35,35 @@
 using namespace HttpCommon;
 using namespace Http2Enums;
 
-const char* Http2RequestLine::AUTHORITY_NAME = ":authority";
-const char* Http2RequestLine::METHOD_NAME = ":method";
-const char* Http2RequestLine::PATH_NAME = ":path";
-const char* Http2RequestLine::SCHEME_NAME = ":scheme";
-const char* Http2RequestLine::OPTIONS = "OPTIONS";
-const char* Http2RequestLine::CONNECT = "CONNECT";
+const char* Http2RequestLine::authority_name = ":authority";
+const char* Http2RequestLine::method_name = ":method";
+const char* Http2RequestLine::path_name = ":path";
+const char* Http2RequestLine::scheme_name = ":scheme";
+const char* Http2RequestLine::method_connect = "CONNECT";
+const char* Http2RequestLine::method_options = "OPTIONS";
+const char* Http2RequestLine::scheme_http = "http";
+const char* Http2RequestLine::scheme_https = "https";
 
 void Http2RequestLine::process_pseudo_header(const Field& name, const Field& value)
 {
     Field *field;
-    if ((name.length() == AUTHORITY_NAME_LENGTH) and
-        (memcmp(name.start(), AUTHORITY_NAME, name.length()) == 0) and (authority.length() <= 0))
+    if ((name.length() == authority_name_length) and
+        (memcmp(name.start(), authority_name, name.length()) == 0) and (authority.length() <= 0))
     {
         field = &authority;
     }
-    else if ((name.length() == METHOD_NAME_LENGTH) and
-        (memcmp(name.start(), METHOD_NAME, name.length()) == 0) and (method.length() <= 0))
+    else if ((name.length() == method_name_length) and
+        (memcmp(name.start(), method_name, name.length()) == 0) and (method.length() <= 0))
     {
         field = &method;
     }
-    else if ((name.length() == PATH_NAME_LENGTH) and
-        (memcmp(name.start(), PATH_NAME, name.length()) == 0) and (path.length() <= 0))
+    else if ((name.length() == path_name_length) and
+        (memcmp(name.start(), path_name, name.length()) == 0) and (path.length() <= 0))
     {
         field = &path;
     }
-    else if ((name.length() == SCHEME_NAME_LENGTH) and
-        (memcmp(name.start(), SCHEME_NAME, name.length()) == 0) and (scheme.length() <= 0))
+    else if ((name.length() == scheme_name_length) and
+        (memcmp(name.start(), scheme_name, name.length()) == 0) and (scheme.length() <= 0))
     {
         field = &scheme;
     }
@@ -76,7 +78,19 @@ void Http2RequestLine::process_pseudo_header(const Field& name, const Field& val
     field->set(value.length(), value_str, true);
 }
 
-// Select the appropriate URI form based on the provided pseudo-headers and generate the start line
+// Create an HTTP/1.1 request line based on the pseudoheaders present. If there is no method, the
+// request is malformed and will not be forwarded on to http_inspect. Requests are generated as
+// follows:
+// 1. Method followed by one space
+// 2. URI:
+//      a) If the method is CONNECT, only the authority is used
+//      b) If the method is OPTIONS and the path is *, the full URI is '*'
+//      c) Otherwise:
+//          i) If there is an authority and scheme, the URI will start <scheme>://<authority>
+//          ii) Otherwise if either the scheme or authority are there, it is omitted
+//      d) If there is a path, it is appended. If the path exists and does not start with '/',
+//         prepend a slash to the path.
+// 3. One space followed by the string 'HTTP/1.1'
 bool Http2RequestLine::generate_start_line(Field& start_line, bool pseudo_headers_complete)
 {
     uint32_t bytes_written = 0;
@@ -86,122 +100,129 @@ bool Http2RequestLine::generate_start_line(Field& start_line, bool pseudo_header
         if (pseudo_headers_complete)
         {
             *infractions += INF_REQUEST_WITHOUT_METHOD;
-            events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
+            events->create_event(EVENT_REQUEST_WITHOUT_METHOD);
         }
         return false;
     }
 
-    // Asterisk form - used for OPTIONS requests
-    if (path.length() > 0 and path.start()[0] == '*')
-    {
-        start_line_length = method.length() + path.length() + http_version_length +
-            NUM_REQUEST_LINE_EXTRA_CHARS;
-        start_line_buffer = new uint8_t[start_line_length];
+    // Compute the length of the URI
+    uint32_t uri_len = 0;
+    bool use_scheme = false;
+    bool use_authority = false;
+    bool use_path = false;
+    bool add_slash = false;
 
-        memcpy(start_line_buffer, method.start(), method.length());
-        bytes_written += method.length();
-        memcpy(start_line_buffer + bytes_written, " ", 1);
-        bytes_written += 1;
-        memcpy(start_line_buffer + bytes_written, path.start(), path.length());
-        bytes_written += path.length();
-        memcpy(start_line_buffer + bytes_written, " ", 1);
-        bytes_written += 1;
-        memcpy(start_line_buffer + bytes_written, http_version_string, http_version_length);
-        bytes_written += http_version_length;
-    }
-    // Authority form - used for CONNECT requests
-    else if (method.length() == CONNECT_LENGTH and memcmp(method.start(),
-        CONNECT, method.length()) == 0)
+    // CONNECT requests
+    if (method.length() == connect_length and memcmp(method.start(),
+        method_connect, method.length()) == 0)
     {
-        // Must have an authority
-        // FIXIT-L May want to be more lenient than RFC on generating start line
-        if (authority.length() <= 0)
+        if (authority.length() <= 0 and pseudo_headers_complete)
         {
-            if (pseudo_headers_complete)
-            {
-                *infractions += INF_CONNECT_WITHOUT_AUTHORITY;
-                events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
-            }
-            return false;
+            *infractions += INF_CONNECT_WITHOUT_AUTHORITY;
+            events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
         }
-        // Should not have a scheme or path
+        else
+        {
+            use_authority = true;
+            uri_len = authority.length();
+        }
+
         if ( scheme.length() > 0 or path.length() > 0)
         {
             *infractions += INF_CONNECT_WITH_SCHEME_OR_PATH;
             events->create_event(EVENT_CONNECT_WITH_SCHEME_OR_PATH);
         }
-        start_line_length = method.length() + authority.length() + http_version_length +
-            NUM_REQUEST_LINE_EXTRA_CHARS;
-        start_line_buffer = new uint8_t[start_line_length];
-
-        memcpy(start_line_buffer, method.start(), method.length());
-        bytes_written += method.length();
-        memcpy(start_line_buffer + bytes_written, " ", 1);
-        bytes_written += 1;
-        memcpy(start_line_buffer + bytes_written, authority.start(), authority.length());
-        bytes_written += authority.length();
-        memcpy(start_line_buffer + bytes_written, " ", 1);
-        bytes_written += 1;
-        memcpy(start_line_buffer + bytes_written, http_version_string, http_version_length);
-        bytes_written += http_version_length;
-    }
-    // HTTP/2 requests with URIs in absolute or origin form must have a method, scheme, and length
-    else if (scheme.length() > 0 and path.length() > 0)
-    {
-        // If there is an authority, the URI is in absolute form
-        if (authority.length() > 0)
-        {
-            start_line_length = method.length() + scheme.length() + authority.length() +
-                path.length() + http_version_length + NUM_REQUEST_LINE_EXTRA_CHARS +
-                NUM_ABSOLUTE_FORM_EXTRA_CHARS;
-            start_line_buffer = new uint8_t[start_line_length];
-
-            memcpy(start_line_buffer, method.start(), method.length());
-            bytes_written += method.length();
-            memcpy(start_line_buffer + bytes_written, " ", 1);
-            bytes_written += 1;
-            memcpy(start_line_buffer + bytes_written, scheme.start(), scheme.length());
-            bytes_written += scheme.length();
-            memcpy(start_line_buffer + bytes_written, "://", 3);
-            bytes_written += 3;
-            memcpy(start_line_buffer + bytes_written, authority.start(), authority.length());
-            bytes_written += authority.length();
-            memcpy(start_line_buffer + bytes_written, path.start(), path.length());
-            bytes_written += path.length();
-            memcpy(start_line_buffer + bytes_written, " ", 1);
-            bytes_written += 1;
-            memcpy(start_line_buffer + bytes_written, http_version_string, http_version_length);
-            bytes_written += http_version_length;
-        }
-        // If there is no authority, the URI is in origin form
-        else
-        {
-            start_line_length = method.length() + path.length() + http_version_length +
-                NUM_REQUEST_LINE_EXTRA_CHARS;
-            start_line_buffer = new uint8_t[start_line_length];
-
-            memcpy(start_line_buffer, method.start(), method.length());
-            bytes_written += method.length();
-            memcpy(start_line_buffer + bytes_written, " ", 1);
-            bytes_written += 1;
-            memcpy(start_line_buffer + bytes_written, path.start(), path.length());
-            bytes_written += path.length();
-            memcpy(start_line_buffer + bytes_written, " ", 1);
-            bytes_written += 1;
-            memcpy(start_line_buffer + bytes_written, http_version_string, http_version_length);
-            bytes_written += http_version_length;
-        }
     }
     else
     {
-        // FIXIT-E May want to be more lenient than RFC on generating start line
+        if ((method.length() == options_length and memcmp(method.start(),
+                    method_options, method.length()) == 0) and
+            (path.length() == 1 and path.start()[0] == '*'))
+        {
+            // OPTIONS * HTTP/1.1
+            use_path = true;
+            uri_len = 1;
+        }
+        else
+        {
+            if (authority.length() > 0 and scheme.length() > 0)
+            {
+                uri_len += scheme.length() + authority.length() + num_absolute_form_extra_chars;
+                use_scheme = true;
+                use_authority = true;
+            }
+            if (path.length() > 0)
+            {
+                // If path does not start with slash, prepend slash so http_inspect normalization
+                // will be performed
+                if (path.start()[0] != '/')
+                {
+                    add_slash = true;
+                    uri_len += 1;
+                }
+                uri_len += path.length();
+                use_path = true;
+            }
+        }
+
+        // Non-CONNECT requests must have a scheme and http/https schemes must have a path
         if (pseudo_headers_complete)
         {
-            *infractions += INF_REQUEST_WITHOUT_REQUIRED_FIELD;
-            events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
+            const bool is_http = ((scheme.length() == http_length) and
+                memcmp(scheme.start(), scheme_http, scheme.length()) == 0) or
+                ((scheme.length() == https_length) and
+                 memcmp(scheme.start(), scheme_https, scheme.length()) == 0);
+            if (scheme.length() <= 0 or (is_http and (path.length() <= 0)))
+            {
+                *infractions += INF_REQUEST_WITHOUT_REQUIRED_FIELD;
+                events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
+            }
         }
-        return false;
     }
+    
+    start_line_length = method.length() + uri_len + http_version_length +
+        num_request_line_extra_chars;
+    start_line_buffer = new uint8_t[start_line_length];
+    
+    // Method    
+    memcpy(start_line_buffer, method.start(), method.length());
+    bytes_written += method.length();
+    memcpy(start_line_buffer + bytes_written, " ", 1);
+    bytes_written += 1;
+
+    // URI
+    if (use_scheme)
+    {
+        assert(scheme.length() > 0);
+        assert(use_authority);
+        memcpy(start_line_buffer + bytes_written, scheme.start(), scheme.length());
+        bytes_written += scheme.length();
+        memcpy(start_line_buffer + bytes_written, "://", 3);
+        bytes_written += 3;
+    }
+    if (use_authority)
+    {
+        assert(authority.length() > 0);
+        memcpy(start_line_buffer + bytes_written, authority.start(), authority.length());
+        bytes_written += authority.length();
+    }
+    if (use_path)
+    {
+        assert(path.length() > 0);
+        if (add_slash)
+        {
+            memcpy(start_line_buffer + bytes_written, "/", 1);
+            bytes_written += 1;
+        }
+        memcpy(start_line_buffer + bytes_written, path.start(), path.length());
+        bytes_written += path.length();
+    }
+
+    // space plus HTTP/1.1 version string
+    memcpy(start_line_buffer + bytes_written, " ", 1);
+    bytes_written += 1;
+    memcpy(start_line_buffer + bytes_written, http_version_string, http_version_length);
+    bytes_written += http_version_length;
 
     memcpy(start_line_buffer + bytes_written, "\r\n", 2);
     bytes_written += 2;
