@@ -138,9 +138,8 @@ static void timing_stats()
     TIMERSUB(&endtime, &starttime, &difftime);
 
     uint32_t tmp = (uint32_t)difftime.tv_sec;
-    uint32_t total_secs = tmp;
-    if ( total_secs < 1 )
-        total_secs = 1;
+    double total_secs = (double)tmp;
+    total_secs += (double)difftime.tv_usec/1000000.0;
 
     uint32_t hrs  = tmp / SECONDS_PER_HOUR;
     tmp  = tmp % SECONDS_PER_HOUR;
@@ -161,11 +160,11 @@ static void timing_stats()
     uint64_t num_pkts = (uint64_t)daq->get_global_count("analyzed");
     uint64_t num_byts = (uint64_t)daq->get_global_count("rx_bytes");
 
-    if ( uint64_t pps = (num_pkts / total_secs) )
-        LogMessage("%25.25s: " STDu64 "\n", "pkts/sec", pps);
+    if ( double pps = (num_pkts / total_secs) )
+        LogMessage("%25.25s: " STDu64 "\n", "pkts/sec", (uint64_t)pps);
 
-    if ( uint64_t mbps = 8 * num_byts / total_secs / 1024 / 1024 )
-        LogMessage("%25.25s: " STDu64 "\n", "Mbits/sec", mbps);
+    if ( double mbps = 8 * num_byts / total_secs / 1024 / 1024 )
+        LogMessage("%25.25s: " STDu64 "\n", "Mbits/sec", (uint64_t)mbps);
 }
 
 //-------------------------------------------------------------------------
