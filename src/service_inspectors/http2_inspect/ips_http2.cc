@@ -81,6 +81,7 @@ IpsOption::EvalStatus Http2IpsOption::eval(Cursor& c, Packet* p)
     return MATCH;
 }
 
+#ifdef REG_TEST
 //-------------------------------------------------------------------------
 // http2_frame_header
 //-------------------------------------------------------------------------
@@ -120,7 +121,9 @@ static const IpsApi frame_header_api =
     Http2IpsOption::opt_dtor,
     nullptr
 };
+#endif
 
+#ifdef REG_TEST
 //-------------------------------------------------------------------------
 // http2_decoded_header
 //-------------------------------------------------------------------------
@@ -160,11 +163,13 @@ static const IpsApi decoded_header_api =
     Http2IpsOption::opt_dtor,
     nullptr
 };
+#endif
 
 //-------------------------------------------------------------------------
 // plugins
 //-------------------------------------------------------------------------
-
+#ifdef REG_TEST
 const BaseApi* ips_http2_frame_header = &frame_header_api.base;
 const BaseApi* ips_http2_decoded_header = &decoded_header_api.base;
+#endif
 

@@ -6,19 +6,6 @@ You can configure it by adding:
 
 to your snort.lua configuration file.
 
-Everything has a beginning and for http2_inspect this is the beginning of
-the beginning.
-
-Currently http2_inspect will divide an HTTP/2 connection into individual
-frames. Two new rule options are available for looking at HTTP/2 frames:
-http2_frame_header provides the 9-octet frame header.
-
-    alert tcp any any -> any any (msg:"Frame type"; flow:established,
-    to_client; http2_frame_header; content:"|06|", offset 3, depth 1;
-    sid:1; rev:1; )
-
-This will match if the Type byte of the frame header is 6 (PING).
-
 To smooth the transition to inspecting HTTP/2, rules that specify 
 service:http will be treated as if they also specify service:http2. 
 Thus:
@@ -42,7 +29,4 @@ This feature makes it easy to add HTTP/2 inspection without modifying
 large numbers of existing rules. New rules should explicitly specify 
 "service http,http2;" if that is the desired behavior. Eventually 
 support for http implies http2 may be deprecated and removed.
-
-In the future, http2_inspect will be fully integrated with http_inspect to
-provide full inspection of the individual HTTP/1.1 streams.
 

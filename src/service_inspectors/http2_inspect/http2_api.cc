@@ -38,9 +38,10 @@ Inspector* Http2Api::http2_ctor(Module* mod)
 
 const char* Http2Api::classic_buffer_names[] =
 {
-    "http2_frame_type",
-    "http2_raw_frame",
+#ifdef REG_TEST
+    "http2_frame_header",
     "http2_decoded_header",
+#endif
     nullptr
 };
 
@@ -72,8 +73,10 @@ const InspectApi Http2Api::http2_api =
     nullptr
 };
 
+#ifdef REG_TEST
 extern const BaseApi* ips_http2_frame_header;
 extern const BaseApi* ips_http2_decoded_header;
+#endif
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
@@ -82,8 +85,10 @@ const BaseApi* sin_http2[] =
 #endif
 {
     &Http2Api::http2_api.base,
+#ifdef REG_TEST
     ips_http2_frame_header,
     ips_http2_decoded_header,
+#endif
     nullptr
 };
 
