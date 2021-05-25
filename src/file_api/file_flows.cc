@@ -309,7 +309,10 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
 
     set_current_file_context(context);
 
-    if (!context->get_processed_bytes())
+    // Only increase file count when there are no queued segments
+    // This will ensure we only count a file once in case it has
+    // processed bytes 0 but many queued segments
+    if (!context->get_processed_bytes() and !context->segments_queued())
     {
         context->check_policy(flow, dir, file_policy);
         context->set_file_id(file_id);

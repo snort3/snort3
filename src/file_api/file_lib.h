@@ -140,6 +140,7 @@ public:
     char* get_UTF8_fname(size_t* converted_len);
     void set_not_cacheable() { cacheable = false; }
     bool is_cacheable() { return cacheable; }
+    bool segments_queued() { return (file_segments != nullptr); }
 
 private:
     uint64_t processed_bytes = 0;
