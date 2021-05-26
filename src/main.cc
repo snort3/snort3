@@ -312,6 +312,16 @@ void snort::main_broadcast_command(AnalyzerCommand* ac, bool from_shell)
         orphan_commands.push(ac);
 }
 
+#ifdef REG_TEST
+void snort::main_unicast_command(AnalyzerCommand* ac, unsigned target, bool from_shell)
+{
+    assert(target < max_pigs);
+    ac = get_command(ac, from_shell);
+    if (!pigs[target].queue_command(ac))
+        orphan_commands.push(ac);
+}
+#endif
+
 int main_dump_stats(lua_State* L)
 {
     bool from_shell = ( L != nullptr );
@@ -618,6 +628,11 @@ int main_resume(lua_State* L)
 {
     bool from_shell = ( L != nullptr );
     uint64_t pkt_num = 0;
+
+    #ifdef REG_TEST
+    int target = -1;
+    #endif
+
     if (from_shell)
     {
         const int num_of_args = lua_gettop(L);
@@ -629,10 +644,30 @@ int main_resume(lua_State* L)
                 current_request->respond("Invalid usage of resume(n), n should be a number > 0\n");
                 return 0;
             }
+            #ifdef REG_TEST
+            if (num_of_args > 1)
+            {
+                target = lua_tointeger(L, 2);
+                if (target < 0 or unsigned(target) >= max_pigs)
+                {
+                    current_request->respond(
+                        "Invalid usage of resume(n,m), m should be a number >= 0 and less than number of threads\n");
+                    return 0;
+                }
+            }
+            #endif
         }
     }
     current_request->respond("== resuming\n", from_shell);
+
+    #ifdef REG_TEST
+    if (target >= 0)
+        main_unicast_command(new ACResume(pkt_num), target, from_shell);
+    else
+        main_broadcast_command(new ACResume(pkt_num), from_shell);
+    #else
     main_broadcast_command(new ACResume(pkt_num), from_shell);
+    #endif
     paused = false;
     return 0;
 }

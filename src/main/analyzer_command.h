@@ -175,6 +175,9 @@ namespace snort
 {
 // from main.cc
 SO_PUBLIC void main_broadcast_command(snort::AnalyzerCommand* ac, bool from_shell = false);
+#ifdef REG_TEST
+void main_unicast_command(AnalyzerCommand* ac, unsigned target, bool from_shell = false);
+#endif
 }
 
 #endif
