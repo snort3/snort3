@@ -273,11 +273,14 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
 void RnaPnd::analyze_dhcp_fingerprint(DataEvent& event)
 {
     const Packet* p = event.get_packet();
+    const auto& src_ip = p->ptrs.ip_api.get_src();
+    if ( !filter.is_host_monitored(p, nullptr, src_ip) )
+        return;
+
     const DHCPDataEvent& dhcp_data_event = static_cast<DHCPDataEvent&>(event);
     const uint8_t* src_mac = dhcp_data_event.get_eth_addr();
     bool new_host = false;
     bool new_mac = false;
-    const auto& src_ip = p->ptrs.ip_api.get_src();
     auto ht = find_or_create_host_tracker(*src_ip, new_host);
     if (!new_host)
         ht->update_last_seen();
@@ -316,14 +319,17 @@ void RnaPnd::analyze_dhcp_fingerprint(DataEvent& event)
 void RnaPnd::add_dhcp_info(DataEvent& event)
 {
     const DHCPInfoEvent& dhcp_info_event = static_cast<DHCPInfoEvent&>(event);
-    const uint8_t* src_mac = dhcp_info_event.get_eth_addr();
     uint32_t ip_address = dhcp_info_event.get_ip_address();
+    SfIp leased_ip = {(void*)&ip_address, AF_INET};
+    const Packet* p = event.get_packet();
+    if ( !filter.is_host_monitored(p, nullptr, &leased_ip) )
+        return;
+
+    const uint8_t* src_mac = dhcp_info_event.get_eth_addr();
     uint32_t net_mask = dhcp_info_event.get_subnet_mask();
     uint32_t lease = dhcp_info_event.get_lease_secs();
     uint32_t router = dhcp_info_event.get_router();
-    const Packet* p = event.get_packet();
 
-    SfIp leased_ip = {(void*)&ip_address, AF_INET};
     SfIp router_ip = {(void*)&router, AF_INET};
     bool new_host = false;
     bool new_mac = false;
@@ -957,10 +963,14 @@ int RnaPnd::discover_host_types_icmpv6_ndp(RnaTracker& ht, const Packet* p, uint
     if ( memcmp(src_mac, neighbor_src_mac, MAC_SIZE) )
         return 1;
 
-    if ( is_router and ((ht->get_host_type() != HOST_TYPE_ROUTER) and (ht->get_host_type() != HOST_TYPE_BRIDGE)) )
+    if ( is_router )
     {
-        ht->set_host_type(HOST_TYPE_ROUTER);
-        logger.log(RNA_EVENT_CHANGE, CHANGE_HOST_TYPE, p, &ht, src_ip, neighbor_src_mac);
+        auto host_type = ht->get_host_type();
+        if ( host_type != HOST_TYPE_ROUTER and host_type != HOST_TYPE_BRIDGE )
+        {
+            ht->set_host_type(HOST_TYPE_ROUTER);
+            logger.log(RNA_EVENT_CHANGE, CHANGE_HOST_TYPE, p, &ht, src_ip, neighbor_src_mac);
+        }
     }
 
     if ( ht->make_primary(src_mac) )

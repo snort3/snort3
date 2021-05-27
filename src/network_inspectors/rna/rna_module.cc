@@ -92,12 +92,13 @@ static int purge_data(lua_State* L)
     if ( rna )
     {
         HostCacheMac* mac_cache = new HostCacheMac(MAC_CACHE_INITIAL_SIZE);
-        main_broadcast_command(new DataPurgeAC(mac_cache), (L != nullptr));
+        bool from_shell = ( L != nullptr );
+        main_broadcast_command(new DataPurgeAC(mac_cache), from_shell);
 
         host_cache.invalidate();
 
         SharedRequest request = get_dispatched_request();
-        request->respond("data purge done\n", false, true);
+        request->respond("data purge done\n", from_shell, true);
         LogMessage("data purge done\n");
     }
 
