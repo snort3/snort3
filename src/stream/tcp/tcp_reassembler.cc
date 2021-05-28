@@ -717,7 +717,7 @@ void TcpReassembler::final_flush(TcpReassemblerState& trs, Packet* p, uint32_t d
 
 static Packet* get_packet(Flow* flow, uint32_t flags, bool c2s)
 {
-    Packet* p = DetectionEngine::set_next_packet();
+    Packet* p = DetectionEngine::set_next_packet(nullptr, flow);
 
     DAQ_PktHdr_t* ph = p->context->pkth;
     memset(ph, 0, sizeof(*ph));

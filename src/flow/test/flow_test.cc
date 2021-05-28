@@ -65,7 +65,7 @@ void FlowStash::reset() {}
 
 void DetectionEngine::onload(Flow*) {}
 
-Packet* DetectionEngine::set_next_packet(Packet*) { return nullptr; }
+Packet* DetectionEngine::set_next_packet(Packet*, Flow*) { return nullptr; }
 
 IpsContext* DetectionEngine::get_context() { return nullptr; }
 

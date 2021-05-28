@@ -146,13 +146,16 @@ Packet* DetectionEngine::get_encode_packet()
 // we need to stay in the current context until rebuild is successful
 // any events while rebuilding will be logged against the current packet
 // however, rebuild is always in the next context, not current.
-Packet* DetectionEngine::set_next_packet(Packet* parent)
+Packet* DetectionEngine::set_next_packet(Packet* parent, Flow* flow)
 {
     static THREAD_LOCAL Active shutdown_active;
     static THREAD_LOCAL ActiveAction* shutdown_action = nullptr;
 
     wait_for_context();
     IpsContext* c = Analyzer::get_switcher()->get_next();
+
+    Packet* p = c->packet;
+
     if ( parent )
     {
         if ( parent->flow )
@@ -162,11 +165,11 @@ Packet* DetectionEngine::set_next_packet(Packet* parent)
     }
     else
     {
+        if ( flow )
+            p->context->snapshot_flow(flow);
         c->packet_number = get_packet_number();
         c->wire_packet = nullptr;
     }
-
-    Packet* p = c->packet;
 
     p->pkth = c->pkth;
     p->data = c->buf;
