@@ -52,6 +52,9 @@ public:
 
     bool store(const snort::SfIp&, const SnortConfig* sc = nullptr);
 
+    std::list<snort::SfIp>& get_aux_ip_list()
+    { return aux_ip_fifo; }
+
 private:
     std::list<snort::SfIp> aux_ip_fifo;
     std::unordered_map<std::string, StashItem*> container;

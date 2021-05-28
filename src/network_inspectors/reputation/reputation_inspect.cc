@@ -247,10 +247,12 @@ static IPdecision reputation_decision(ReputationConfig* config, Packet* p)
     return decision_final;
 }
 
-static void snort_reputation_aux_ip(ReputationConfig* config, Packet* p, const SfIp* ip)
+static IPdecision snort_reputation_aux_ip(ReputationConfig* config, Packet* p, const SfIp* ip)
 {
+    IPdecision decision = DECISION_NULL;
+
     if (!config->ip_list)
-        return;
+        return decision;
 
     uint32_t ingress_intf = 0;
     uint32_t egress_intf = 0;
@@ -267,7 +269,7 @@ static void snort_reputation_aux_ip(ReputationConfig* config, Packet* p, const S
     IPrepInfo* result = reputation_lookup(config, ip);
     if (result)
     {
-        IPdecision decision = get_reputation(config, result, &p->iplist_id, ingress_intf,
+        decision = get_reputation(config, result, &p->iplist_id, ingress_intf,
             egress_intf);
 
         if (decision == BLOCKED)
@@ -315,6 +317,7 @@ static void snort_reputation_aux_ip(ReputationConfig* config, Packet* p, const S
             reputationstats.aux_ip_trusted++;
         }
     }
+    return decision;
 }
 
 static void snort_reputation(ReputationConfig* config, Packet* p)
@@ -327,10 +330,7 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
     decision = reputation_decision(config, p);
     Active* act = p->active;
 
-    if (DECISION_NULL == decision)
-        return;
-
-    else if (BLOCKED_SRC == decision or BLOCKED_DST == decision)
+    if (BLOCKED_SRC == decision or BLOCKED_DST == decision)
     {
         unsigned blocklist_event = (BLOCKED_SRC == decision) ?
             REPUTATION_EVENT_BLOCKLIST_SRC : REPUTATION_EVENT_BLOCKLIST_DST;
@@ -351,6 +351,22 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         reputationstats.blocked++;
         if (PacketTracer::is_active())
             PacketTracer::log("Reputation: packet blocked, drop\n");
+        return;
+    }
+
+    else if ( p->flow and p->flow->reload_id > 0 )
+    {
+        const auto& aux_ip_list =  p->flow->stash->get_aux_ip_list();
+        for ( const auto& ip : aux_ip_list )
+        {
+            if ( BLOCKED == snort_reputation_aux_ip(config, p, &ip) )
+                return;
+        }
+    }
+
+    if (DECISION_NULL == decision)
+    {
+        return;
     }
 
     else if (MONITORED_SRC == decision or MONITORED_DST == decision)
