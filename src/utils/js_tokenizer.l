@@ -946,7 +946,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <bcomm>{BLOCK_COMMENT_SKIP}         { }
 <bcomm><<EOF>>                      { return SCRIPT_CONTINUE; }
 
-       {LITERAL_DQ_STRING_START}    { EXEC(do_spacing(LITERAL)); ECHO; BEGIN(dqstr); }
+       {LITERAL_DQ_STRING_START}    { EXEC(do_spacing(LITERAL)) ECHO; BEGIN(dqstr); }
 <dqstr>{LITERAL_DQ_STRING_END}      { ECHO; BEGIN(divop); }
 <dqstr>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); return CLOSING_TAG; }
 <dqstr>\\{CR}{LF}                   { }
@@ -957,7 +957,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <dqstr>.                            { ECHO; }
 <dqstr><<EOF>>                      { return SCRIPT_CONTINUE; }
 
-       {LITERAL_SQ_STRING_START}    { EXEC(do_spacing(LITERAL)); ECHO; BEGIN(sqstr); }
+       {LITERAL_SQ_STRING_START}    { EXEC(do_spacing(LITERAL)) ECHO; BEGIN(sqstr); }
 <sqstr>{LITERAL_SQ_STRING_END}      { ECHO; BEGIN(divop); }
 <sqstr>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); return CLOSING_TAG; }
 <sqstr>\\{CR}{LF}                   { }
@@ -968,7 +968,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <sqstr>.                            { ECHO; }
 <sqstr><<EOF>>                      { return SCRIPT_CONTINUE; }
 
-<regst>{LITERAL_REGEX_START}        { EXEC(do_spacing(LITERAL)); yyout << '/'; yyless(1); BEGIN(regex); }
+<regst>{LITERAL_REGEX_START}        { EXEC(do_spacing(LITERAL)) yyout << '/'; yyless(1); BEGIN(regex); }
 <regex>{LITERAL_REGEX_END}          { ECHO; BEGIN(divop); }
 <regex>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); return CLOSING_TAG; }
 <regex>{LITERAL_REGEX_SKIP}         { ECHO; }
@@ -984,15 +984,15 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 {CLOSING_BRACES}                    { ECHO; token = PUNCTUATOR; BEGIN(divop); }
 {PUNCTUATOR}                        { ECHO; token = PUNCTUATOR; BEGIN(regst); }
 
-{USE_STRICT_DIRECTIVE}              { EXEC(do_spacing(DIRECTIVE)); ECHO; BEGIN(INITIAL); yyout << ';'; }
-{USE_STRICT_DIRECTIVE_SC}           { EXEC(do_spacing(DIRECTIVE)); ECHO; BEGIN(INITIAL); }
-{KEYWORD}                           { EXEC(do_spacing(KEYWORD)); ECHO; BEGIN(regst); }
-{OPERATOR}                          { EXEC(do_operator_spacing(OPERATOR)); ECHO; BEGIN(divop); }
-{LITERAL}                           { EXEC(do_spacing(LITERAL)); ECHO; BEGIN(divop); }
-{IDENTIFIER}                        { if (unescape(YYText())) { EXEC(do_spacing(IDENTIFIER)); ECHO; }; BEGIN(divop); }
+{USE_STRICT_DIRECTIVE}              { EXEC(do_spacing(DIRECTIVE)) ECHO; BEGIN(INITIAL); yyout << ';'; }
+{USE_STRICT_DIRECTIVE_SC}           { EXEC(do_spacing(DIRECTIVE)) ECHO; BEGIN(INITIAL); }
+{KEYWORD}                           { EXEC(do_spacing(KEYWORD)) ECHO; BEGIN(regst); }
+{OPERATOR}                          { EXEC(do_operator_spacing(OPERATOR)) ECHO; BEGIN(divop); }
+{LITERAL}                           { EXEC(do_spacing(LITERAL)) ECHO; BEGIN(divop); }
+{IDENTIFIER}                        { if (unescape(YYText())) { EXEC(do_spacing(IDENTIFIER)) ECHO; } BEGIN(divop); }
 
 .|{ALL_UNICODE}                     { ECHO; token = UNDEFINED; BEGIN(INITIAL); }
-<<EOF>>                             { EXEC(eval_eof()); }
+<<EOF>>                             { EXEC(eval_eof()) }
 
 %%
 
