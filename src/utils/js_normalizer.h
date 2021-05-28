@@ -22,16 +22,45 @@
 
 #include "main/snort_types.h"
 
-#include "js_norm_state.h"
+#include <FlexLexer.h>
+
+#include "js_tokenizer.h"
 
 namespace snort
 {
+
 class JSNormalizer
 {
 public:
-    static int normalize(const char* srcbuf, uint16_t srclen, char* dstbuf, uint16_t dstlen,
-        const char** ptr, int* bytes_copied, JSNormState& state);
+    JSNormalizer();
+
+    const char* get_src_next() const
+    { return src_next; }
+
+    char* get_dst_next() const // this can go beyond dst length, but no writing happens outside of dst
+    { return dst_next; }
+
+    void reset_depth()
+    { rem_bytes = depth; }
+
+    void set_depth(size_t depth);
+
+    JSTokenizer::JSRet normalize(const char* src, size_t src_len, char* dst, size_t dst_len);
+
+    static size_t size();
+
+private:
+    size_t depth;
+    size_t rem_bytes;
+    bool unlim;
+    const char* src_next;
+    char* dst_next;
+
+    std::stringstream in;
+    std::stringstream out;
+    JSTokenizer tokenizer;
 };
+
 }
 
 #endif //JS_NORMALIZER_H

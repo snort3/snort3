@@ -197,20 +197,16 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("normalize_javascript"))
     {
         params->js_norm_param.normalize_javascript = val.get_bool();
-
-        if ( !params->js_norm_param.is_javascript_normalization )
-            params->js_norm_param.is_javascript_normalization =
-                params->js_norm_param.normalize_javascript;
+        params->js_norm_param.is_javascript_normalization =
+            params->js_norm_param.is_javascript_normalization
+            or params->js_norm_param.normalize_javascript;
     }
     else if (val.is("js_normalization_depth"))
     {
         int64_t v = val.get_int64();
-        params->js_norm_param.js_normalization_depth = (v == -1) ?
-          Parameter::get_int("max53") : v;
-
-        if ( !params->js_norm_param.is_javascript_normalization )
-            params->js_norm_param.is_javascript_normalization =
-                (params->js_norm_param.js_normalization_depth > 0);
+        params->js_norm_param.js_normalization_depth = v;
+        params->js_norm_param.is_javascript_normalization =
+            params->js_norm_param.is_javascript_normalization or (v != 0);
     }
     else if (val.is("max_javascript_whitespaces"))
     {
@@ -394,7 +390,7 @@ bool HttpModule::end(const char*, int, SnortConfig*)
         ParseError("Cannot use normalize_javascript and js_normalization_depth together.");
 
     if ( params->js_norm_param.is_javascript_normalization )
-        params->js_norm_param.js_norm = new HttpJsNorm(params->uri_param);
+        params->js_norm_param.js_norm = new HttpJsNorm(params->uri_param, params->js_norm_param.js_normalization_depth);
 
     params->script_detection_handle = script_detection_handle;
 

@@ -24,6 +24,7 @@
 #include "http_flow_data.h"
 
 #include "decompress/file_decomp.h"
+#include "utils/js_normalizer.h"
 
 #include "http_cutter.h"
 #include "http_common.h"
@@ -79,6 +80,14 @@ HttpFlowData::~HttpFlowData()
     if (HttpModule::get_peg_counts(PEG_CONCURRENT_SESSIONS) > 0)
         HttpModule::decrement_peg_counts(PEG_CONCURRENT_SESSIONS);
 
+#ifndef UNIT_TEST_BUILD
+    if (js_normalizer)
+    {
+        update_deallocations(JSNormalizer::size());
+        delete js_normalizer;
+    }
+#endif
+
     for (int k=0; k <= 1; k++)
     {
         delete infractions[k];
@@ -88,6 +97,8 @@ HttpFlowData::~HttpFlowData()
         update_deallocations(partial_buffer_length[k]);
         delete[] partial_detect_buffer[k];
         update_deallocations(partial_detect_length[k]);
+        delete[] js_detect_buffer[k];
+        update_deallocations(js_detect_length[k]);
         HttpTransaction::delete_transaction(transaction[k], nullptr);
         delete cutter[k];
         if (compress_stream[k] != nullptr)
@@ -203,6 +214,32 @@ void HttpFlowData::garbage_collect()
             current = &(*current)->next;
     }
 }
+
+#ifndef UNIT_TEST_BUILD
+snort::JSNormalizer& HttpFlowData::acquire_js_ctx()
+{
+    if (js_normalizer)
+        return *js_normalizer;
+
+    js_normalizer = new JSNormalizer();
+    update_allocations(JSNormalizer::size());
+
+    return *js_normalizer;
+}
+
+void HttpFlowData::release_js_ctx()
+{
+    if (!js_normalizer)
+        return;
+
+    update_deallocations(JSNormalizer::size());
+    delete js_normalizer;
+    js_normalizer = nullptr;
+}
+#else
+snort::JSNormalizer& HttpFlowData::acquire_js_ctx() { return *js_normalizer; }
+void HttpFlowData::release_js_ctx() {}
+#endif
 
 bool HttpFlowData::add_to_pipeline(HttpTransaction* latest)
 {

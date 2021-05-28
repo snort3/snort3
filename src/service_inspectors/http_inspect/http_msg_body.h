@@ -58,7 +58,7 @@ private:
     void do_file_processing(const Field& file_data);
     void do_utf_decoding(const Field& input, Field& output);
     void do_file_decompression(const Field& input, Field& output);
-    void do_js_normalization(const Field& input, Field& output);
+    void do_js_normalization(const Field& input, Field& output, bool partial_detect);
     void clean_partial(uint32_t& partial_inspected_octets, uint32_t& partial_detect_length,
         uint8_t*& partial_detect_buffer,  uint32_t& partial_js_detect_length,
         int32_t detect_length);

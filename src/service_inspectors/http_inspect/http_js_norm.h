@@ -25,6 +25,7 @@
 #include "search_engines/search_tool.h"
 
 #include "http_field.h"
+#include "http_flow_data.h"
 #include "http_event.h"
 #include "http_module.h"
 
@@ -35,37 +36,40 @@
 class HttpJsNorm
 {
 public:
-    HttpJsNorm(const HttpParaList::UriParam& uri_param_);
+    HttpJsNorm(const HttpParaList::UriParam&, int64_t normalization_depth);
     ~HttpJsNorm();
-    void legacy_normalize(const Field& input, Field& output, HttpInfractions* infractions,
-        HttpEventGen* events, int max_javascript_whitespaces) const;
-    void enhanced_normalize(const Field& input, Field& output, HttpInfractions* infractions,
-        HttpEventGen* events, int64_t js_normalization_depth) const;
+
+    void legacy_normalize(const Field& input, Field& output, HttpInfractions*, HttpEventGen*,
+        int max_javascript_whitespaces) const;
+    void enhanced_normalize(const Field& input, Field& output, HttpInfractions*, HttpFlowData*) const;
 
     void configure();
+
 private:
-    bool configure_once = false;
+    enum AttrId { AID_GT, AID_SRC, AID_JS, AID_ECMA, AID_VB };
 
-    enum JsSearchId { JS_JAVASCRIPT };
-    enum JsSrcAttrSearchId { JS_ATTR_SRC };
-    enum HtmlSearchId { HTML_JS, HTML_EMA, HTML_VB };
-
-    static constexpr const char* script_start = "<SCRIPT";
-    static constexpr int script_start_length = sizeof("<SCRIPT") - 1;
-    static constexpr const char* script_src_attr = "SRC";
-    static constexpr int script_src_attr_length = sizeof("SRC") - 1;
+    struct MatchContext
+    {
+        const char* next;
+        bool is_javascript;
+        bool is_external;
+    };
 
     const HttpParaList::UriParam& uri_param;
+    int64_t normalization_depth;
+    bool configure_once = false;
 
-    snort::SearchTool* javascript_search_mpse;
-    snort::SearchTool* js_src_attr_search_mpse;
-    snort::SearchTool* htmltype_search_mpse;
+    snort::SearchTool* mpse_otag;
+    snort::SearchTool* mpse_attr;
+    snort::SearchTool* mpse_type; // legacy only
 
-    static int search_js_found(void*, void*, int index, void*, void*);
-    static int search_js_src_attr_found(void*, void*, int index, void*, void*);
-    static int search_html_found(void* id, void*, int, void*, void*);
+    static int search_js_found(void*, void*, int index, void*, void*);  // legacy only
+    static int search_html_found(void* id, void*, int, void*, void*); // legacy only
+    static int match_otag(void*, void*, int, void*, void*);
+    static int match_attr(void*, void*, int, void*, void*);
 
-    bool is_external_script(const char* it, const char* script_tag_end) const;
+    bool alive_ctx(const HttpFlowData* ssn) const
+    { return ssn->js_normalizer; }
 };
 
 #endif

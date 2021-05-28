@@ -36,32 +36,36 @@ namespace snort
 
 using namespace snort;
 
-#define NORM_DEPTH 65535
+#define DEPTH 65535
 
-#define NORMALIZE(srcbuf, expected)                                        \
-    char dstbuf[sizeof(expected)];                                         \
-    int bytes_copied;                                                      \
-    const char* ptr = srcbuf;                                              \
-    JSNormState state;                                                     \
-    state.norm_depth = NORM_DEPTH;                                         \
-    state.alerts = 0;                                                      \
-    int ret = JSNormalizer::normalize(srcbuf, sizeof(srcbuf),              \
-        dstbuf, sizeof(dstbuf), &ptr, &bytes_copied, state);
+#define NORMALIZE(src, expected)                                    \
+    char dst[sizeof(expected)];                                     \
+    JSNormalizer norm;                                              \
+    norm.set_depth(DEPTH);                                          \
+    auto ret = norm.normalize(src, sizeof(src), dst, sizeof(dst));  \
+    const char* ptr = norm.get_src_next();                          \
+    int act_len = norm.get_dst_next() - dst;                        \
 
-#define VALIDATE(srcbuf, expected)                    \
-    CHECK(ret == 0);                                  \
-    CHECK((ptr - srcbuf) == sizeof(srcbuf));          \
-    CHECK(bytes_copied == sizeof(expected) - 1);      \
-    CHECK(!memcmp(dstbuf, expected, bytes_copied));
+#define VALIDATE(src, expected)                 \
+    CHECK(ret == JSTokenizer::SCRIPT_CONTINUE); \
+    CHECK((ptr - src) == sizeof(src));          \
+    CHECK(act_len == sizeof(expected) - 1);     \
+    CHECK(!memcmp(dst, expected, act_len));
 
-#define VALIDATE_FAIL(srcbuf, expected, ret_code, ptr_offset)      \
-    CHECK(ret == ret_code);                                        \
-    CHECK((ptr - srcbuf) == ptr_offset);                           \
-    CHECK(bytes_copied == sizeof(expected) - 1);                   \
-    CHECK(!memcmp(dstbuf, expected, bytes_copied));
+#define VALIDATE_FAIL(src, expected, ret_code, ptr_offset)  \
+    CHECK(ret == ret_code);                                 \
+    CHECK((ptr - src) == ptr_offset);                       \
+    CHECK(act_len == sizeof(expected) - 1);                 \
+    CHECK(!memcmp(dst, expected, act_len));
 
-#define VALIDATE_ALERT(alert)       \
-    CHECK(state.alerts & alert);
+#define NORMALIZE_L(src, src_len, dst, dst_len, depth, ret, ptr, len)   \
+    {                                                                   \
+        JSNormalizer norm;                                              \
+        norm.set_depth(depth);                                          \
+        ret = norm.normalize(src, src_len, dst, dst_len);               \
+        ptr = norm.get_src_next();                                      \
+        len = norm.get_dst_next() - dst;                                \
+    }                                                                   \
 
 // ClamAV test cases
 static const char clamav_buf0[] =
@@ -256,6 +260,9 @@ TEST_CASE("clamav tests", "[JSNormalizer]")
     SECTION("test_case_14")
     {
         NORMALIZE(clamav_buf14, clamav_expected14);
+        // trailing \0 is included as a part of the string
+        // to utilize available macros we alter the read length
+        act_len -= 1;
         VALIDATE(clamav_buf14, clamav_expected14);
     }
 }
@@ -333,64 +340,56 @@ TEST_CASE("all patterns", "[JSNormalizer]")
     }
     SECTION("directives")
     {
-        const char srcbuf0[] = "'use strict'\nvar a = 1;";
-        const char srcbuf1[] = "\"use strict\"\nvar a = 1;";
-        const char srcbuf2[] = "'use strict';var a = 1;";
-        const char srcbuf3[] = "\"use strict\";var a = 1;";
-        const char srcbuf4[] = "var a = 1 'use strict';";
+        const char src0[] = "'use strict'\nvar a = 1;";
+        const char src1[] = "\"use strict\"\nvar a = 1;";
+        const char src2[] = "'use strict';var a = 1;";
+        const char src3[] = "\"use strict\";var a = 1;";
+        const char src4[] = "var a = 1 'use strict';";
+
         const char expected0[] = "'use strict';var a=1;";
         const char expected1[] = "\"use strict\";var a=1;";
         const char expected2[] = "var a=1 'use strict';";
-        char dstbuf0[sizeof(expected0)];
-        char dstbuf1[sizeof(expected1)];
-        char dstbuf2[sizeof(expected0)];
-        char dstbuf3[sizeof(expected1)];
-        char dstbuf4[sizeof(expected2)];
-        int bytes_copied0, bytes_copied1, bytes_copied2, bytes_copied3, bytes_copied4;
-        const char* ptr0 = srcbuf0;
-        const char* ptr1 = srcbuf1;
-        const char* ptr2 = srcbuf2;
-        const char* ptr3 = srcbuf3;
-        const char* ptr4 = srcbuf4;
-        JSNormState state;
-        state.norm_depth = NORM_DEPTH;
-        state.alerts = 0;
 
-        int ret0 = JSNormalizer::normalize(srcbuf0, sizeof(srcbuf0), dstbuf0, sizeof(dstbuf0),
-            &ptr0, &bytes_copied0, state);
-        int ret1 = JSNormalizer::normalize(srcbuf1, sizeof(srcbuf1), dstbuf1, sizeof(dstbuf1),
-            &ptr1, &bytes_copied1, state);
-        int ret2 = JSNormalizer::normalize(srcbuf2, sizeof(srcbuf2), dstbuf2, sizeof(dstbuf2),
-            &ptr2, &bytes_copied2, state);
-        int ret3 = JSNormalizer::normalize(srcbuf3, sizeof(srcbuf3), dstbuf3, sizeof(dstbuf3),
-            &ptr3, &bytes_copied3, state);
-        int ret4 = JSNormalizer::normalize(srcbuf4, sizeof(srcbuf4), dstbuf4, sizeof(dstbuf4),
-            &ptr4, &bytes_copied4, state);
+        char dst0[sizeof(expected0)];
+        char dst1[sizeof(expected1)];
+        char dst2[sizeof(expected0)];
+        char dst3[sizeof(expected1)];
+        char dst4[sizeof(expected2)];
 
-        CHECK(ret0 == 0);
-        CHECK((ptr0 - srcbuf0) == sizeof(srcbuf0));
-        CHECK(bytes_copied0 == sizeof(expected0) - 1);
-        CHECK(!memcmp(dstbuf0, expected0, bytes_copied0));
+        int ret0, ret1, ret2, ret3, ret4;
+        const char *ptr0, *ptr1, *ptr2, *ptr3, *ptr4;
+        int act_len0, act_len1, act_len2, act_len3, act_len4;
 
-        CHECK(ret1 == 0);
-        CHECK((ptr1 - srcbuf1) == sizeof(srcbuf1));
-        CHECK(bytes_copied1 == sizeof(expected1) - 1);
-        CHECK(!memcmp(dstbuf1, expected1, bytes_copied1));
+        NORMALIZE_L(src0, sizeof(src0), dst0, sizeof(dst0), DEPTH, ret0, ptr0, act_len0);
+        NORMALIZE_L(src1, sizeof(src1), dst1, sizeof(dst1), DEPTH, ret1, ptr1, act_len1);
+        NORMALIZE_L(src2, sizeof(src2), dst2, sizeof(dst2), DEPTH, ret2, ptr2, act_len2);
+        NORMALIZE_L(src3, sizeof(src3), dst3, sizeof(dst3), DEPTH, ret3, ptr3, act_len3);
+        NORMALIZE_L(src4, sizeof(src4), dst4, sizeof(dst4), DEPTH, ret4, ptr4, act_len4);
 
-        CHECK(ret2 == 0);
-        CHECK((ptr2 - srcbuf2) == sizeof(srcbuf2));
-        CHECK(bytes_copied2 == sizeof(expected0) - 1);
-        CHECK(!memcmp(dstbuf2, expected0, bytes_copied2));
+        CHECK(ret0 == JSTokenizer::SCRIPT_CONTINUE);
+        CHECK((ptr0 - src0) == sizeof(src0));
+        CHECK(act_len0 == sizeof(expected0) - 1);
+        CHECK(!memcmp(dst0, expected0, act_len0));
 
-        CHECK(ret3 == 0);
-        CHECK((ptr3 - srcbuf3) == sizeof(srcbuf3));
-        CHECK(bytes_copied3 == sizeof(expected1) - 1);
-        CHECK(!memcmp(dstbuf3, expected1, bytes_copied3));
+        CHECK(ret1 == JSTokenizer::SCRIPT_CONTINUE);
+        CHECK((ptr1 - src1) == sizeof(src1));
+        CHECK(act_len1 == sizeof(expected1) - 1);
+        CHECK(!memcmp(dst1, expected1, act_len1));
 
-        CHECK(ret4 == 0);
-        CHECK((ptr4 - srcbuf4) == sizeof(srcbuf4));
-        CHECK(bytes_copied4 == sizeof(expected2) - 1);
-        CHECK(!memcmp(dstbuf4, expected2, bytes_copied4));
+        CHECK(ret2 == JSTokenizer::SCRIPT_CONTINUE);
+        CHECK((ptr2 - src2) == sizeof(src2));
+        CHECK(act_len2 == sizeof(expected0) - 1);
+        CHECK(!memcmp(dst2, expected0, act_len2));
+
+        CHECK(ret3 == JSTokenizer::SCRIPT_CONTINUE);
+        CHECK((ptr3 - src3) == sizeof(src3));
+        CHECK(act_len3 == sizeof(expected1) - 1);
+        CHECK(!memcmp(dst3, expected1, act_len3));
+
+        CHECK(ret4 == JSTokenizer::SCRIPT_CONTINUE);
+        CHECK((ptr4 - src4) == sizeof(src4));
+        CHECK(act_len4 == sizeof(expected2) - 1);
+        CHECK(!memcmp(dst4, expected2, act_len4));
     }
     SECTION("punctuators")
     {
@@ -673,43 +672,51 @@ static const char syntax_cases_expected14[] =
     "var a=b% -c;"
     "var a=b+ -c;";
 
+// In the following cases:
+//   a reading cursor will be after the literal
+//   a malformed literal is not present in the output
+
 static const char syntax_cases_buf15[] =
-    "var str1 = 'abc\u2028 def' ;\n"
-    "var str2 = 'abc\u2029 def' ;\n\r";
+    "var invalid_str = 'abc\u2028 def' ;\n";
 
 static const char syntax_cases_expected15[] =
-    "var str1='abc\u2028 def';"
-    "var str2='abc\u2029 def';";
+    "var invalid_str='abc";
 
 static const char syntax_cases_buf16[] =
     "var invalid_str = \"abc\n def\"";
 
 static const char syntax_cases_expected16[] =
-    "var invalid_str=\"abc\"def \"";
+    "var invalid_str=\"abc";
 
 static const char syntax_cases_buf17[] =
     "var invalid_str = 'abc\r def'";
 
 static const char syntax_cases_expected17[] =
-    "var invalid_str='abc'def '";
+    "var invalid_str='abc";
 
 static const char syntax_cases_buf18[] =
     "var invalid_str = 'abc\\\n\r def'";
 
 static const char syntax_cases_expected18[] =
-    "var invalid_str='abc'def '";
+    "var invalid_str='abc";
 
 static const char syntax_cases_buf19[] =
     "var invalid_re = /abc\\\n def/";
 
 static const char syntax_cases_expected19[] =
-    "var invalid_re=/abc/def/";
+    "var invalid_re=/abc";
 
 static const char syntax_cases_buf20[] =
     "var invalid_re = /abc\\\r\n def/";
 
 static const char syntax_cases_expected20[] =
-    "var invalid_re=/abc/def/";
+    "var invalid_re=/abc";
+
+static const char syntax_cases_buf21[] =
+    "var invalid_str = 'abc\u2029 def' ;\n\r";
+
+static const char syntax_cases_expected21[] =
+    "var invalid_str='abc";
 
 TEST_CASE("syntax cases", "[JSNormalizer]")
 {
@@ -788,100 +795,115 @@ TEST_CASE("syntax cases", "[JSNormalizer]")
         NORMALIZE(syntax_cases_buf14, syntax_cases_expected14);
         VALIDATE(syntax_cases_buf14, syntax_cases_expected14);
     }
-    SECTION("LS and PS chars within literal")
+}
+
+TEST_CASE("bad tokens", "[JSNormalizer]")
+{
+    SECTION("LS chars within literal")
     {
         NORMALIZE(syntax_cases_buf15, syntax_cases_expected15);
-        VALIDATE(syntax_cases_buf15, syntax_cases_expected15);
+        VALIDATE_FAIL(syntax_cases_buf15, syntax_cases_expected15, JSTokenizer::BAD_TOKEN, 25);
+    }
+    SECTION("PS chars within literal")
+    {
+        NORMALIZE(syntax_cases_buf21, syntax_cases_expected21);
+        VALIDATE_FAIL(syntax_cases_buf21, syntax_cases_expected21, JSTokenizer::BAD_TOKEN, 25);
     }
     SECTION("explicit LF within literal")
     {
         NORMALIZE(syntax_cases_buf16, syntax_cases_expected16);
-        VALIDATE(syntax_cases_buf16, syntax_cases_expected16);
+        VALIDATE_FAIL(syntax_cases_buf16, syntax_cases_expected16, JSTokenizer::BAD_TOKEN, 23);
     }
     SECTION("explicit CR within literal")
     {
         NORMALIZE(syntax_cases_buf17, syntax_cases_expected17);
-        VALIDATE(syntax_cases_buf17, syntax_cases_expected17);
+        VALIDATE_FAIL(syntax_cases_buf17, syntax_cases_expected17, JSTokenizer::BAD_TOKEN, 23);
     }
     SECTION("escaped LF-CR sequence within literal")
     {
         NORMALIZE(syntax_cases_buf18, syntax_cases_expected18);
-        VALIDATE(syntax_cases_buf18, syntax_cases_expected18);
+        VALIDATE_FAIL(syntax_cases_buf18, syntax_cases_expected18, JSTokenizer::BAD_TOKEN, 25);
     }
     SECTION("escaped LF within regex literal")
     {
         NORMALIZE(syntax_cases_buf19, syntax_cases_expected19);
-        VALIDATE(syntax_cases_buf19, syntax_cases_expected19);
+        VALIDATE_FAIL(syntax_cases_buf19, syntax_cases_expected19, JSTokenizer::BAD_TOKEN, 23);
     }
     SECTION("escaped CR-LF within regex literal")
     {
         NORMALIZE(syntax_cases_buf20, syntax_cases_expected20);
-        VALIDATE(syntax_cases_buf20, syntax_cases_expected20);
+        VALIDATE_FAIL(syntax_cases_buf20, syntax_cases_expected20, JSTokenizer::BAD_TOKEN, 23);
     }
 }
 
-TEST_CASE("norm_depth is specified", "[JSNormalizer]")
+TEST_CASE("endings", "[JSNormalizer]")
 {
-    const char srcbuf[] = "var abc = 123;\n\r";
-    const char expected[] = "var abc";
-    char dstbuf[7];
-    int bytes_copied;
-    const char* ptr = srcbuf;
-    JSNormState state;
-    state.norm_depth = 7;
-    state.alerts = 0;
-    int ret = JSNormalizer::normalize(srcbuf, sizeof(srcbuf), dstbuf, sizeof(dstbuf), &ptr,
-        &bytes_copied, state);
-
-    CHECK(ret == 0);
-    CHECK(bytes_copied == sizeof(expected) - 1);
-    CHECK(!memcmp(dstbuf, expected, bytes_copied));
-}
-
-TEST_CASE("tag script end is specified", "[JSNormalizer]")
-{
-    const char srcbuf[] =
-        "var a = 1 ;\n" // 12 bytes
-        "var b = 2 ;\n" // 12 bytes --> ptr_offset = 24
-        "</script>\n"
-        "var c = 3 ;\n";
-    const int ptr_offset = 24;
-    const char expected[] = "var a=1;var b=2;";
-    char dstbuf[sizeof(expected)];
-    int bytes_copied;
-    const char* ptr = srcbuf;
-    JSNormState state;
-    state.norm_depth = NORM_DEPTH;
-    state.alerts = 0;
-    int ret = JSNormalizer::normalize(srcbuf, sizeof(srcbuf), dstbuf, sizeof(dstbuf), &ptr,
-        &bytes_copied, state);
-
-    CHECK(ret == 0);
-    CHECK(bytes_copied == sizeof(expected) - 1);
-    CHECK((ptr - srcbuf) == ptr_offset);
-    CHECK(!memcmp(dstbuf, expected, bytes_copied));
-}
-
-// Tests for JavaScript parsing errors and anomalies
-
-TEST_CASE("parsing errors", "[JSNormalizer]")
-{
-    SECTION("dstlen is too small")
+    SECTION("script closing tag is present", "[JSNormalizer]")
     {
-        const char srcbuf[] = "var abc = 123;\n\r";
-        const char expected[] = "var abc";
-        char dstbuf[7];
-        int bytes_copied;
-        const char* ptr = srcbuf;
-        JSNormState state;
-        state.norm_depth = NORM_DEPTH;
-        state.alerts = 0;
-        int ret = JSNormalizer::normalize(srcbuf, sizeof(srcbuf), dstbuf, sizeof(dstbuf), &ptr,
-            &bytes_copied, state);
+        const char src[] =
+            "var a = 1 ;\n" // 12 bytes
+            "var b = 2 ;\n" // 12 bytes
+            "</script>\n"   // ptr_offset is here = 33
+            "var c = 3 ;\n";
+        const int ptr_offset = 33;
+        const char expected[] = "var a=1;var b=2;";
+        char dst[sizeof(expected)];
+        int act_len;
+        const char* ptr;
+        int ret;
 
-        CHECK(ret == 1);
-        CHECK(bytes_copied == sizeof(expected) - 1);
-        CHECK(!memcmp(dstbuf, expected, bytes_copied));
+        NORMALIZE_L(src, sizeof(src), dst, sizeof(dst), DEPTH, ret, ptr, act_len);
+
+        CHECK(ret == JSTokenizer::SCRIPT_ENDED);
+        CHECK(act_len == sizeof(expected) - 1);
+        CHECK((ptr - src) == ptr_offset);
+        CHECK(!memcmp(dst, expected, act_len));
+    }
+    SECTION("depth reached", "[JSNormalizer]")
+    {
+        const char src[] = "var abc = 123;\n\r";
+        const char src2[] = "var foo = 321;\n\r";
+        const char expected[] = "var abc";
+        char dst[sizeof(src)];
+        int act_len;
+        const char* ptr;
+        int ret;
+
+        JSNormalizer norm;
+
+        norm.set_depth(7);
+        ret = norm.normalize(src, sizeof(src), dst, sizeof(dst));
+        ptr = norm.get_src_next();
+        act_len = norm.get_dst_next() - dst;
+
+        CHECK(ret == JSTokenizer::EOS);
+        CHECK(ptr == src + 7);
+        CHECK(act_len == sizeof(expected) - 1);
+        CHECK(!memcmp(dst, expected, act_len));
+
+        ret = norm.normalize(src2, sizeof(src2), dst, sizeof(dst));
+        ptr = norm.get_src_next();
+        act_len = norm.get_dst_next() - dst;
+
+        CHECK(ret == JSTokenizer::EOS);
+        CHECK(ptr == src2 + sizeof(src2));
+        CHECK(act_len == 0);
+    }
+    SECTION("dst size is less then src size")
+    {
+        const char src[] = "var abc = 123;\n\r";
+        const char expected[sizeof(src)] = "var abc";
+        char dst[7];
+        int act_len;
+        const char* ptr;
+        int ret;
+
+        NORMALIZE_L(src, sizeof(src), dst, sizeof(dst), DEPTH, ret, ptr, act_len);
+
+        CHECK(ret == JSTokenizer::SCRIPT_CONTINUE);
+        CHECK(ptr == src + sizeof(src));
+        CHECK(act_len == 12); // size of normalized src
+        CHECK(!memcmp(dst, expected, sizeof(dst)));
     }
 }
 
@@ -896,7 +918,7 @@ static const char unexpected_tag_expected0[] =
 static const char unexpected_tag_buf1[] =
     "var a = 1;\n"
     "<script type=application/javascript>\n"
-    "var b = 2;\r\n";;
+    "var b = 2;\r\n";
 
 static const char unexpected_tag_expected1[] =
     "var a=1;";
@@ -907,7 +929,7 @@ static const char unexpected_tag_buf2[] =
     "var b = 2;\r\n";
 
 static const char unexpected_tag_expected2[] =
-    "var a=1;var str=";
+    "var a=1;var str='";
 
 static const char unexpected_tag_buf3[] =
     "var a = 1;\n"
@@ -915,7 +937,7 @@ static const char unexpected_tag_buf3[] =
     "var b = 2;\r\n";
 
 static const char unexpected_tag_expected3[] =
-    "var a=1;var str=";
+    "var a=1;var str='something ";
 
 static const char unexpected_tag_buf4[] =
     "var a = 1;\n"
@@ -923,7 +945,7 @@ static const char unexpected_tag_buf4[] =
     "var b = 2;\r\n";
 
 static const char unexpected_tag_expected4[] =
-    "var a=1;var str=";
+    "var a=1;var str='something ";
 
 static const char unexpected_tag_buf5[] =
     "var a = 1;\n"
@@ -931,7 +953,7 @@ static const char unexpected_tag_buf5[] =
     "var b = 2;\r\n";
 
 static const char unexpected_tag_expected5[] =
-    "var a=1;var str=";
+    "var a=1;var str='";
 
 static const char unexpected_tag_buf6[] =
     "var a = 1;\n"
@@ -939,7 +961,7 @@ static const char unexpected_tag_buf6[] =
     "var b = 2;\r\n";
 
 static const char unexpected_tag_expected6[] =
-    "var a=1;var str=";
+    "var a=1;var str='something ";
 
 static const char unexpected_tag_buf7[] =
     "var a = 1;\n"
@@ -947,7 +969,7 @@ static const char unexpected_tag_buf7[] =
     "var b = 2;\r\n";
 
 static const char unexpected_tag_expected7[] =
-    "var a=1;var str=";
+    "var a=1;var str='something ";
 
 static const char unexpected_tag_buf8[] =
     "var a = 1;\n"
@@ -955,7 +977,7 @@ static const char unexpected_tag_buf8[] =
     "var b = 2;\r\n";
 
 static const char unexpected_tag_expected8[] =
-    "var a=1;var str='something \\<script\\> something';var b=2;";
+    "var a=1;var str='something \\";
 
 static const char unexpected_tag_buf9[] =
     "var a = 1;\n"
@@ -1079,7 +1101,7 @@ static const char unexpected_tag_buf23[] =
     "var b = 2;\r\n";
 
 static const char unexpected_tag_expected23[] =
-    "var a=1;var str=";
+    "var a=1;var str='script somescript /script something ";
 
 static const char unexpected_tag_buf24[] =
     "var a = 1;\n"
@@ -1087,63 +1109,54 @@ static const char unexpected_tag_buf24[] =
     "var b = 2;\r\n";
 
 static const char unexpected_tag_expected24[] =
-    "var a=1;var str=";
+    "var a=1;var str='something ";
 
-TEST_CASE("unexpected script tag alert", "[JSNormalizer]")
+TEST_CASE("nested script tags", "[JSNormalizer]")
 {
-    const int ret_code = 1;
     SECTION("explicit open tag - simple")
     {
         NORMALIZE(unexpected_tag_buf0, unexpected_tag_expected0);
-        VALIDATE_FAIL(unexpected_tag_buf0, unexpected_tag_expected0, ret_code, 18);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf0, unexpected_tag_expected0, JSTokenizer::OPENING_TAG, 18);
     }
     SECTION("explicit open tag - complex")
     {
         NORMALIZE(unexpected_tag_buf1, unexpected_tag_expected1);
-        VALIDATE_FAIL(unexpected_tag_buf1, unexpected_tag_expected1, ret_code, 18);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf1, unexpected_tag_expected1, JSTokenizer::OPENING_TAG, 18);
     }
     SECTION("open tag within literal - start")
     {
         NORMALIZE(unexpected_tag_buf2, unexpected_tag_expected2);
-        VALIDATE_FAIL(unexpected_tag_buf2, unexpected_tag_expected2, ret_code, 41);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf2, unexpected_tag_expected2, JSTokenizer::OPENING_TAG, 29);
     }
     SECTION("open tag within literal - mid")
     {
         NORMALIZE(unexpected_tag_buf3, unexpected_tag_expected3);
-        VALIDATE_FAIL(unexpected_tag_buf3, unexpected_tag_expected3, ret_code, 51);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf3, unexpected_tag_expected3, JSTokenizer::OPENING_TAG, 39);
     }
     SECTION("open tag within literal - end")
     {
         NORMALIZE(unexpected_tag_buf4, unexpected_tag_expected4);
-        VALIDATE_FAIL(unexpected_tag_buf4, unexpected_tag_expected4, ret_code, 41);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf4, unexpected_tag_expected4, JSTokenizer::OPENING_TAG, 39);
     }
     SECTION("close tag within literal - start")
     {
         NORMALIZE(unexpected_tag_buf5, unexpected_tag_expected5);
-        VALIDATE_FAIL(unexpected_tag_buf5, unexpected_tag_expected5, ret_code, 42);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf5, unexpected_tag_expected5, JSTokenizer::CLOSING_TAG, 31);
     }
     SECTION("close tag within literal - mid")
     {
         NORMALIZE(unexpected_tag_buf6, unexpected_tag_expected6);
-        VALIDATE_FAIL(unexpected_tag_buf6, unexpected_tag_expected6, ret_code, 52);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf6, unexpected_tag_expected6, JSTokenizer::CLOSING_TAG, 41);
     }
     SECTION("close tag within literal - end")
     {
         NORMALIZE(unexpected_tag_buf7, unexpected_tag_expected7);
-        VALIDATE_FAIL(unexpected_tag_buf7, unexpected_tag_expected7, ret_code, 42);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf7, unexpected_tag_expected7, JSTokenizer::CLOSING_TAG, 41);
     }
     SECTION("open tag within literal - escaped")
     {
         NORMALIZE(unexpected_tag_buf8, unexpected_tag_expected8);
-        VALIDATE(unexpected_tag_buf8, unexpected_tag_expected8);
+        VALIDATE_FAIL(unexpected_tag_buf8, unexpected_tag_expected8, JSTokenizer::OPENING_TAG, 40);
     }
     SECTION("close tag within literal - escaped")
     {
@@ -1153,74 +1166,62 @@ TEST_CASE("unexpected script tag alert", "[JSNormalizer]")
     SECTION("open tag within single-line comment - start")
     {
         NORMALIZE(unexpected_tag_buf10, unexpected_tag_expected10);
-        VALIDATE_FAIL(unexpected_tag_buf10, unexpected_tag_expected10, ret_code, 32);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf10, unexpected_tag_expected10, JSTokenizer::OPENING_TAG, 20);
     }
     SECTION("open tag within single-line comment - mid")
     {
         NORMALIZE(unexpected_tag_buf11, unexpected_tag_expected11);
-        VALIDATE_FAIL(unexpected_tag_buf11, unexpected_tag_expected11, ret_code, 42);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf11, unexpected_tag_expected11, JSTokenizer::OPENING_TAG, 30);
     }
     SECTION("open tag within single-line comment - end")
     {
         NORMALIZE(unexpected_tag_buf12, unexpected_tag_expected12);
-        VALIDATE_FAIL(unexpected_tag_buf12, unexpected_tag_expected12, ret_code, 32);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf12, unexpected_tag_expected12, JSTokenizer::OPENING_TAG, 30);
     }
     SECTION("open tag within multi-line comment - start")
     {
         NORMALIZE(unexpected_tag_buf13, unexpected_tag_expected13);
-        VALIDATE_FAIL(unexpected_tag_buf13, unexpected_tag_expected13, ret_code, 33);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf13, unexpected_tag_expected13, JSTokenizer::OPENING_TAG, 20);
     }
     SECTION("open tag within multi-line comment - mid")
     {
         NORMALIZE(unexpected_tag_buf14, unexpected_tag_expected14);
-        VALIDATE_FAIL(unexpected_tag_buf14, unexpected_tag_expected14, ret_code, 43);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf14, unexpected_tag_expected14, JSTokenizer::OPENING_TAG, 30);
     }
     SECTION("open tag within multi-line comment - end")
     {
         NORMALIZE(unexpected_tag_buf15, unexpected_tag_expected15);
-        VALIDATE_FAIL(unexpected_tag_buf15, unexpected_tag_expected15, ret_code, 33);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf15, unexpected_tag_expected15, JSTokenizer::OPENING_TAG, 30);
     }
     SECTION("close tag within single-line comment - start")
     {
         NORMALIZE(unexpected_tag_buf16, unexpected_tag_expected16);
-        VALIDATE_FAIL(unexpected_tag_buf16, unexpected_tag_expected16, ret_code, 33);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf16, unexpected_tag_expected16, JSTokenizer::CLOSING_TAG, 22);
     }
     SECTION("close tag within single-line comment - mid")
     {
         NORMALIZE(unexpected_tag_buf17, unexpected_tag_expected17);
-        VALIDATE_FAIL(unexpected_tag_buf17, unexpected_tag_expected17, ret_code, 50);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf17, unexpected_tag_expected17, JSTokenizer::CLOSING_TAG, 34);
     }
     SECTION("close tag within single-line comment - end")
     {
         NORMALIZE(unexpected_tag_buf18, unexpected_tag_expected18);
-        VALIDATE_FAIL(unexpected_tag_buf18, unexpected_tag_expected18, ret_code, 33);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf18, unexpected_tag_expected18, JSTokenizer::CLOSING_TAG, 32);
     }
     SECTION("close tag within multi-line comment - start")
     {
         NORMALIZE(unexpected_tag_buf19, unexpected_tag_expected19);
-        VALIDATE_FAIL(unexpected_tag_buf19, unexpected_tag_expected19, ret_code, 34);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf19, unexpected_tag_expected19, JSTokenizer::CLOSING_TAG, 22);
     }
     SECTION("close tag within multi-line comment - mid")
     {
         NORMALIZE(unexpected_tag_buf20, unexpected_tag_expected20);
-        VALIDATE_FAIL(unexpected_tag_buf20, unexpected_tag_expected20, ret_code, 44);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf20, unexpected_tag_expected20, JSTokenizer::CLOSING_TAG, 32);
     }
     SECTION("close tag within multi-line comment - end")
     {
         NORMALIZE(unexpected_tag_buf21, unexpected_tag_expected21);
-        VALIDATE_FAIL(unexpected_tag_buf21, unexpected_tag_expected21, ret_code, 34);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf21, unexpected_tag_expected21, JSTokenizer::CLOSING_TAG, 32);
     }
     SECTION("multiple patterns - not matched")
     {
@@ -1230,14 +1231,11 @@ TEST_CASE("unexpected script tag alert", "[JSNormalizer]")
     SECTION("multiple patterns - matched")
     {
         NORMALIZE(unexpected_tag_buf23, unexpected_tag_expected23);
-        VALIDATE_FAIL(unexpected_tag_buf23, unexpected_tag_expected23, ret_code, 67);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf23, unexpected_tag_expected23, JSTokenizer::OPENING_TAG, 65);
     }
     SECTION("mixed lower and upper case")
     {
         NORMALIZE(unexpected_tag_buf24, unexpected_tag_expected24);
-        VALIDATE_FAIL(unexpected_tag_buf24, unexpected_tag_expected24, ret_code, 41);
-        VALIDATE_ALERT(ALERT_UNEXPECTED_TAG);
+        VALIDATE_FAIL(unexpected_tag_buf24, unexpected_tag_expected24, JSTokenizer::OPENING_TAG, 39);
     }
 }
-

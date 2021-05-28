@@ -119,7 +119,9 @@ void HttpMsgBody::analyze()
             memcpy(cumulative_buffer + partial_detect_length, decompressed_file_body.start(),
                 decompressed_file_body.length());
             cumulative_data.set(total_length, cumulative_buffer, true);
-            do_js_normalization(cumulative_data, js_norm_body);
+
+            do_js_normalization(cumulative_data, js_norm_body, true);
+
             if ((int32_t)partial_js_detect_length == js_norm_body.length())
             {
                 clean_partial(partial_inspected_octets, partial_detect_length,
@@ -128,7 +130,7 @@ void HttpMsgBody::analyze()
             }
         }
         else
-            do_js_normalization(decompressed_file_body, js_norm_body);
+            do_js_normalization(decompressed_file_body, js_norm_body, false);
 
         const int32_t detect_length =
             (js_norm_body.length() <= session_data->detect_depth_remaining[source_id]) ?
@@ -277,28 +279,57 @@ void HttpMsgBody::fd_event_callback(void* context, int event)
     }
 }
 
-void HttpMsgBody::do_js_normalization(const Field& input, Field& output)
+void HttpMsgBody::do_js_normalization(const Field& input, Field& output, bool partial_detect)
 {
-    if ( !params->js_norm_param.is_javascript_normalization or source_id == SRC_CLIENT )
+    if (!params->js_norm_param.is_javascript_normalization or source_id == SRC_CLIENT)
         output.set(input);
-    else if ( params->js_norm_param.normalize_javascript )
+    else if (params->js_norm_param.normalize_javascript)
         params->js_norm_param.js_norm->legacy_normalize(input, output,
             transaction->get_infractions(source_id), session_data->events[source_id],
             params->js_norm_param.max_javascript_whitespaces);
-    else if ( params->js_norm_param.js_normalization_depth )
+    else if (params->js_norm_param.js_normalization_depth)
     {
         output.set(input);
 
+        bool js_continuation = session_data->js_normalizer;
+        uint8_t*& buf = session_data->js_detect_buffer[source_id];
+        uint32_t& len = session_data->js_detect_length[source_id];
+
+        if (partial_detect)
+            session_data->release_js_ctx();
+        else
+        {
+            session_data->update_deallocations(len);
+            delete[] buf;
+            buf = nullptr;
+            len = 0;
+        }
+
         params->js_norm_param.js_norm->enhanced_normalize(input, enhanced_js_norm_body,
-            transaction->get_infractions(source_id), session_data->events[source_id],
-            params->js_norm_param.js_normalization_depth);
+            transaction->get_infractions(source_id), session_data);
 
         const int32_t norm_length =
             (enhanced_js_norm_body.length() <= session_data->detect_depth_remaining[source_id]) ?
             enhanced_js_norm_body.length() : session_data->detect_depth_remaining[source_id];
 
         if ( norm_length > 0 )
+        {
             set_script_data(enhanced_js_norm_body.start(), (unsigned int)norm_length);
+
+            if (partial_detect)
+                return;
+
+            if (js_continuation)
+            {
+                auto nscript_len = enhanced_js_norm_body.length();
+                uint8_t* nscript = new uint8_t[nscript_len];
+
+                memcpy(nscript, enhanced_js_norm_body.start(), nscript_len);
+                buf = nscript;
+                len = nscript_len;
+                session_data->update_allocations(len);
+            }
+        }
     }
 }
 

@@ -39,6 +39,11 @@ class HttpMsgSection;
 class HttpCutter;
 class HttpQueryParser;
 
+namespace snort
+{
+class JSNormalizer;
+}
+
 class HttpFlowData : public snort::FlowData
 {
 public:
@@ -49,6 +54,7 @@ public:
     size_t size_of() override;
 
     friend class HttpInspect;
+    friend class HttpJsNorm;
     friend class HttpMsgSection;
     friend class HttpMsgStart;
     friend class HttpMsgRequest;
@@ -169,6 +175,8 @@ private:
     uint8_t* partial_detect_buffer[2] = { nullptr, nullptr };
     uint32_t partial_detect_length[2] = { 0, 0 };
     uint32_t partial_js_detect_length[2] = { 0, 0 };
+    uint8_t* js_detect_buffer[2] = { nullptr, nullptr };
+    uint32_t js_detect_length[2] = { 0, 0 };
     int32_t status_code_num = HttpCommon::STAT_NOT_PRESENT;
     HttpEnums::VersionId version_id[2] = { HttpEnums::VERS__NOT_PRESENT,
                                             HttpEnums::VERS__NOT_PRESENT };
@@ -176,6 +184,12 @@ private:
 
     bool cutover_on_clear = false;
     bool ssl_search_abandoned = false;
+
+    // *** HttpJsNorm
+    snort::JSNormalizer* js_normalizer = nullptr;
+
+    snort::JSNormalizer& acquire_js_ctx();
+    void release_js_ctx();
 
     // *** Transaction management including pipelining
     static const int MAX_PIPELINE = 100;  // requests seen - responses seen <= MAX_PIPELINE

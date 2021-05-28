@@ -23,20 +23,57 @@
 
 #include "js_normalizer.h"
 
-#include <FlexLexer.h>
-
-#include "js_tokenizer.h"
-
 using namespace snort;
 
-int JSNormalizer::normalize(const char* srcbuf, uint16_t srclen, char* dstbuf, uint16_t dstlen,
-        const char** ptr, int* bytes_copied, JSNormState& state)
+JSNormalizer::JSNormalizer()
+    : depth(-1),
+      rem_bytes(-1),
+      unlim(true),
+      src_next(nullptr),
+      dst_next(nullptr),
+      tokenizer(in, out)
 {
-    std::stringstream in, out;
-    in.rdbuf()->pubsetbuf(const_cast<char*>(srcbuf),
-        (state.norm_depth >= srclen) ? srclen : state.norm_depth);
-
-    JSTokenizer tokenizer(in, out, dstbuf, dstlen, ptr, bytes_copied, state);
-    return tokenizer.yylex();
 }
 
+void JSNormalizer::set_depth(size_t new_depth)
+{
+    if (depth == new_depth)
+        return;
+
+    depth = new_depth;
+    rem_bytes = depth;
+    unlim = depth == (size_t)-1;
+}
+
+JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len, char* dst, size_t dst_len)
+{
+    if (rem_bytes == 0 && !unlim)
+    {
+        src_next = src + src_len;
+        dst_next = dst;
+        return JSTokenizer::EOS;
+    }
+
+    size_t len = unlim ? src_len :
+        src_len < rem_bytes ? src_len : rem_bytes;
+    in.rdbuf()->pubsetbuf(const_cast<char*>(src), len);
+    out.rdbuf()->pubsetbuf(dst, dst_len);
+
+    JSTokenizer::JSRet ret = (JSTokenizer::JSRet)tokenizer.yylex();
+    in.clear();
+    out.clear();
+    size_t r_bytes = in.tellg();
+    size_t w_bytes = out.tellp();
+
+    if (!unlim)
+        rem_bytes -= r_bytes;
+    src_next = src + r_bytes;
+    dst_next = dst + w_bytes;
+
+    return rem_bytes ? ret : JSTokenizer::EOS;
+}
+
+size_t JSNormalizer::size()
+{
+    return sizeof(JSNormalizer) + 16834; // the default YY_BUF_SIZE
+}

@@ -32,7 +32,6 @@ add_library ( utils OBJECT
     dnet_header.h
     dyn_array.cc
     dyn_array.h
-    js_norm_state.h
     js_normalizer.cc
     js_normalizer.h
     js_tokenizer.h

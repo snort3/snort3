@@ -23,159 +23,164 @@
 
 #include "http_js_norm.h"
 
-#include "utils/js_norm_state.h"
 #include "utils/js_normalizer.h"
 #include "utils/safec.h"
 #include "utils/util_jsnorm.h"
 
+#include "http_common.h"
 #include "http_enum.h"
 
 using namespace HttpEnums;
 using namespace snort;
 
-HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_) :
-    uri_param(uri_param_), javascript_search_mpse(nullptr),
-    htmltype_search_mpse(nullptr)
+HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_, int64_t normalization_depth_) :
+    uri_param(uri_param_),
+    normalization_depth(normalization_depth_),
+    mpse_otag(nullptr),
+    mpse_attr(nullptr),
+    mpse_type(nullptr)
 {}
 
 HttpJsNorm::~HttpJsNorm()
 {
-    delete javascript_search_mpse;
-    delete js_src_attr_search_mpse;
-    delete htmltype_search_mpse;
+    delete mpse_otag;
+    delete mpse_attr;
+    delete mpse_type;
 }
 
 void HttpJsNorm::configure()
 {
-    if ( configure_once )
+    if (configure_once)
         return;
 
-    javascript_search_mpse = new SearchTool;
-    js_src_attr_search_mpse = new SearchTool;
-    htmltype_search_mpse = new SearchTool;
+    mpse_otag = new SearchTool;
+    mpse_attr = new SearchTool;
+    mpse_type = new SearchTool;
 
-    javascript_search_mpse->add(script_start, script_start_length, JS_JAVASCRIPT);
-    javascript_search_mpse->prep();
+    static constexpr const char* otag_start = "<SCRIPT";
+    static constexpr const char* attr_gt = ">";
+    static constexpr const char* attr_src = "SRC";
+    static constexpr const char* attr_js1 = "JAVASCRIPT";
+    static constexpr const char* attr_js2 = "ECMASCRIPT";
+    static constexpr const char* attr_vb = "VBSCRIPT";
 
-    js_src_attr_search_mpse->add(script_src_attr, script_src_attr_length, JS_ATTR_SRC);
-    js_src_attr_search_mpse->prep();
+    mpse_otag->add(otag_start, strlen(otag_start), 0);
+    mpse_attr->add(attr_gt, strlen(attr_gt), AID_GT);
+    mpse_attr->add(attr_src, strlen(attr_src), AID_SRC);
+    mpse_attr->add(attr_js1, strlen(attr_js1), AID_JS);
+    mpse_attr->add(attr_js2, strlen(attr_js2), AID_ECMA);
+    mpse_attr->add(attr_vb, strlen(attr_vb), AID_VB);
+    mpse_type->add(attr_js1, strlen(attr_js1), AID_JS);
+    mpse_type->add(attr_js2, strlen(attr_js2), AID_ECMA);
+    mpse_type->add(attr_vb, strlen(attr_vb), AID_VB);
 
-    struct HiSearchToken
-    {
-        const char* name;
-        int name_len;
-        int search_id;
-    };
-
-    const HiSearchToken html_patterns[] =
-    {
-        { "JAVASCRIPT",      10, HTML_JS },
-        { "ECMASCRIPT",      10, HTML_EMA },
-        { "VBSCRIPT",         8, HTML_VB },
-        { nullptr,            0, 0 }
-    };
-
-    for (const HiSearchToken* tmp = &html_patterns[0]; tmp->name != nullptr; tmp++)
-    {
-        htmltype_search_mpse->add(tmp->name, tmp->name_len, tmp->search_id);
-    }
-    htmltype_search_mpse->prep();
+    mpse_otag->prep();
+    mpse_attr->prep();
+    mpse_type->prep();
 
     configure_once = true;
 }
 
-void HttpJsNorm::enhanced_normalize(const Field& input, Field& output, HttpInfractions* infractions,
-    HttpEventGen* events, int64_t js_normalization_depth) const
+void HttpJsNorm::enhanced_normalize(const Field& input, Field& output,
+    HttpInfractions* infractions, HttpFlowData* ssn) const
 {
-    bool js_present = false;
-    int index = 0;
     const char* ptr = (const char*)input.start();
     const char* const end = ptr + input.length();
 
-    uint8_t* buffer = new uint8_t[input.length()];
+    HttpEventGen* events = ssn->events[HttpCommon::SRC_SERVER];
 
-    JSNormState state;
-    state.norm_depth = js_normalization_depth;
-    state.alerts = 0;
+    char* buffer = nullptr;
+    char* dst = nullptr;
+    const char* dst_end = nullptr;
+
+    bool script_continue = alive_ctx(ssn);
 
     while (ptr < end)
     {
-        int bytes_copied = 0;
-        int mindex;
-
-        // Search for beginning of a javascript
-        if (javascript_search_mpse->find(ptr, end-ptr, search_js_found, false, &mindex) > 0)
+        if (!script_continue)
         {
-            const char* js_start = ptr + mindex;
-            const char* const angle_bracket =
-                (const char*)SnortStrnStr(js_start, end - js_start, ">");
-            if (angle_bracket == nullptr || (end - angle_bracket) == 0)
+            if (!mpse_otag->find(ptr, end - ptr, match_otag, false, &ptr))
+                break;
+            if (ptr >= end)
                 break;
 
-            bool type_js = false;
-            bool external_js = false;
-            if (angle_bracket > js_start)
-            {
-                int mid;
-                const int script_found = htmltype_search_mpse->find(
-                    js_start, (angle_bracket-js_start), search_html_found, false, &mid);
+            MatchContext sctx = {ptr, true, false};
 
-                external_js = is_external_script(js_start, angle_bracket);
-
-                js_start = angle_bracket + 1;
-                if (script_found > 0)
-                {
-                    switch (mid)
-                    {
-                    case HTML_JS:
-                        js_present = true;
-                        type_js = true;
-                        break;
-                    default:
-                        type_js = false;
-                        break;
-                    }
-                }
-                else
-                {
-                    // if no type or language is found we assume it is a javascript
-                    js_present = true;
-                    type_js = true;
-                }
-            }
-            // Save before the <script> begins
-            if (js_start > ptr)
+            if (ptr[0] == '>')
+                ptr++;
+            else
             {
-                if ((js_start - ptr) > (input.length() - index))
-                    break;
+                if (!mpse_attr->find(ptr, end - ptr, match_attr, false, &sctx))
+                    break; // the opening tag never ends
+                ptr = sctx.next;
             }
 
-            ptr = js_start;
-            if (!type_js or external_js)
+            if (!sctx.is_javascript || sctx.is_external)
                 continue;
 
-            JSNormalizer::normalize(js_start, (uint16_t)(end-js_start), (char*)buffer+index,
-                (uint16_t)(input.length() - index), &ptr, &bytes_copied, state);
-
+            // script found
             HttpModule::increment_peg_counts(PEG_JS_INLINE);
-
-            index += bytes_copied;
         }
-        else
-            break;
-    }
 
-    if (js_present)
-    {
-        if (state.alerts & ALERT_UNEXPECTED_TAG)
+        if (!buffer)
         {
-            *infractions += INF_JS_UNEXPECTED_TAG;
-            events->create_event(EVENT_JS_UNEXPECTED_TAG);
+            uint8_t* nbuf = ssn->js_detect_buffer[HttpCommon::SRC_SERVER];
+            uint32_t nlen = ssn->js_detect_length[HttpCommon::SRC_SERVER];
+
+            auto len = nlen + (end - ptr); // not more then the remaining raw data
+            buffer = new char[len];
+            if (nbuf)
+                memcpy(buffer, nbuf, nlen);
+            dst = buffer + nlen;
+            dst_end = buffer + len;
         }
-        output.set(index, buffer, true);
+
+        auto& ctx = ssn->acquire_js_ctx();
+        ctx.set_depth(normalization_depth);
+
+        auto ret = ctx.normalize(ptr, end - ptr, dst, dst_end - dst);
+        ptr = ctx.get_src_next();
+        dst = ctx.get_dst_next();
+
+        switch (ret)
+        {
+        case JSTokenizer::EOS:
+            ctx.reset_depth();
+            script_continue = false;
+            break;
+        case JSTokenizer::SCRIPT_ENDED:
+            script_continue = false;
+            break;
+        case JSTokenizer::SCRIPT_CONTINUE:
+            script_continue = true;
+            break;
+        case JSTokenizer::OPENING_TAG:
+            *infractions += INF_JS_OPENING_TAG;
+            events->create_event(EVENT_JS_OPENING_TAG);
+            script_continue = false;
+            break;
+        case JSTokenizer::CLOSING_TAG:
+            *infractions += INF_JS_CLOSING_TAG;
+            events->create_event(EVENT_JS_CLOSING_TAG);
+            script_continue = false;
+            break;
+        case JSTokenizer::BAD_TOKEN:
+            *infractions += INF_JS_BAD_TOKEN;
+            events->create_event(EVENT_JS_BAD_TOKEN);
+            script_continue = false;
+            break;
+        default:
+            assert(false);
+            script_continue = false;
+            break;
+        }
     }
-    else
-        delete[] buffer;
+
+    if (!script_continue)
+        ssn->release_js_ctx();
+
+    if (buffer)
+        output.set(dst - buffer, (const uint8_t*)buffer, true);
 }
 
 void HttpJsNorm::legacy_normalize(const Field& input, Field& output, HttpInfractions* infractions,
@@ -199,7 +204,7 @@ void HttpJsNorm::legacy_normalize(const Field& input, Field& output, HttpInfract
         int mindex;
 
         // Search for beginning of a javascript
-        if (javascript_search_mpse->find(ptr, end-ptr, search_js_found, false, &mindex) > 0)
+        if (mpse_otag->find(ptr, end-ptr, search_js_found, false, &mindex) > 0)
         {
             const char* js_start = ptr + mindex;
             const char* const angle_bracket =
@@ -211,7 +216,7 @@ void HttpJsNorm::legacy_normalize(const Field& input, Field& output, HttpInfract
             if (angle_bracket > js_start)
             {
                 int mid;
-                const int script_found = htmltype_search_mpse->find(
+                const int script_found = mpse_type->find(
                     js_start, (angle_bracket-js_start), search_html_found, false, &mid);
 
                 js_start = angle_bracket + 1;
@@ -219,7 +224,7 @@ void HttpJsNorm::legacy_normalize(const Field& input, Field& output, HttpInfract
                 {
                     switch (mid)
                     {
-                    case HTML_JS:
+                    case AID_JS:
                         js_present = true;
                         type_js = true;
                         break;
@@ -292,42 +297,59 @@ void HttpJsNorm::legacy_normalize(const Field& input, Field& output, HttpInfract
     }
 }
 
-/* Returning non-zero stops search, which is okay since we only look for one at a time */
 int HttpJsNorm::search_js_found(void*, void*, int index, void* index_ptr, void*)
 {
+    static constexpr int script_start_length = sizeof("<SCRIPT") - 1;
     *((int*) index_ptr) = index - script_start_length;
     return 1;
 }
-int HttpJsNorm::search_js_src_attr_found(void*, void*, int index, void* index_ptr, void*)
-{
-    *((int*) index_ptr) = index - script_src_attr_length;
-    return 1;
-}
+
 int HttpJsNorm::search_html_found(void* id, void*, int, void* id_ptr, void*)
 {
     *((int*) id_ptr)  = (int)(uintptr_t)id;
     return 1;
 }
 
-bool HttpJsNorm::is_external_script(const char* it, const char* script_tag_end) const
+int HttpJsNorm::match_otag(void*, void*, int index, void* ptr, void*)
 {
-    int src_pos;
-
-    while (js_src_attr_search_mpse->find(it, (script_tag_end - it),
-        search_js_src_attr_found, false, &src_pos))
-    {
-        it += (src_pos + script_src_attr_length - 1);
-        while (++it < script_tag_end)
-        {
-            if (*it == ' ')
-                continue;
-            else if (*it == '=')
-                return true;
-            else
-                break;
-        }
-    }
-
-    return false;
+    *(char**)ptr += index;
+    return 1;
 }
 
+int HttpJsNorm::match_attr(void* pid, void*, int index, void* sctx, void*)
+{
+    MatchContext* ctx = (MatchContext*)sctx;
+    AttrId id = (AttrId)(uintptr_t)pid;
+    const char* c;
+
+    switch (id)
+    {
+    case AID_GT:
+        ctx->next += index;
+        return 1;
+
+    case AID_SRC:
+        c = ctx->next + index;
+        while (*c == ' ') c++;
+        ctx->is_external = ctx->is_external || *c == '=';
+        return 0;
+
+    case AID_JS:
+        ctx->is_javascript = true;
+        return 0;
+
+    case AID_ECMA:
+        ctx->is_javascript = true;
+        return 0;
+
+    case AID_VB:
+        ctx->is_javascript = false;
+        return 0;
+
+    default:
+        ctx->next += index;
+        ctx->is_external = false;
+        ctx->is_javascript = false;
+        return 1;
+    }
+}

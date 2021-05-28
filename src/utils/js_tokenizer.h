@@ -24,8 +24,6 @@
 
 #include "log/messages.h"
 
-#include "js_norm_state.h"
-
 class JSTokenizer : public yyFlexLexer
 {
 private:
@@ -41,15 +39,20 @@ private:
     };
 
 public:
-    // we need an out stream because yyFlexLexer API strongly requires that
-    JSTokenizer(std::stringstream& in, std::stringstream& out, char* dstbuf,
-        const uint16_t dstlen, const char** ptr, int* bytes_copied, snort::JSNormState& state);
+    enum JSRet
+    {
+        EOS = 0,
+        SCRIPT_ENDED,
+        SCRIPT_CONTINUE,
+        OPENING_TAG,
+        CLOSING_TAG,
+        BAD_TOKEN
+    };
+
+    JSTokenizer(std::istream& in, std::ostream& out);
     ~JSTokenizer() override;
 
-    // so, Flex will treat this class as yyclass
-    // must come with yyclass Flex option
-    // don't need to define this method, it'll be substituted by Flex
-    // returns 0 if OK, 1 otherwise
+    // returns JSRet
     int yylex() override;
 
 protected:
@@ -57,51 +60,19 @@ protected:
     { snort::FatalError("%s", msg); }
 
 private:
-    void init();
-
-    // scan buffers control
-    void switch_to_temporal(const std::string& data);
     void switch_to_initial();
-
-    bool eval_identifier(const char* lexeme);
-    bool eval_string_literal(const char* match_prefix, const char quotes);
-    bool eval_regex_literal(const char* match_prefix);
-    bool eval_eof();
-    bool eval_single_line_comment();
-    bool eval_multi_line_comment();
-
-    bool parse_literal(const std::string& match_prefix, const char sentinel_ch,
-        std::string& result, bool& is_alert, bool is_regex = false);
-
-    // main lexeme handler
-    // all scanned tokens must pass here
-    bool eval(const JSToken tok, const char* lexeme);
-
-    bool normalize_identifier(const JSToken prev_tok, const char* lexeme);
-    bool normalize_punctuator(const JSToken prev_tok, const char* lexeme);
-    bool normalize_operator(const JSToken prev_tok, const char* lexeme);
-    bool normalize_directive(const JSToken prev_tok, const char* lexeme);
-    bool normalize_undefined(const JSToken prev_tok, const char* lexeme);
-    bool normalize_lexeme(const JSToken prev_tok, const char* lexeme);
-
-    bool write_output(const std::string& str);
-
-    void update_ptr();
+    void switch_to_temporal(const std::string& data);
+    JSRet eval_eof();
+    JSRet do_spacing(JSToken cur_token);
+    JSRet do_operator_spacing(JSToken cur_token);
+    bool unescape(const char* lexeme);
 
 private:
-    char* dstbuf;
-    const uint16_t dstlen;
-    const char** ptr;
-    int* bytes_copied;
+    void* cur_buffer;
+    void* tmp_buffer = nullptr;
+    std::stringstream tmp;
 
-    struct ScanBuffers;
-    ScanBuffers* buffers = nullptr;
-    std::stringstream temporal;
-
-    JSToken prev_tok = UNDEFINED;
-
-    snort::JSNormState& state;
-
+    JSToken token = UNDEFINED;
 };
 
 #endif // JS_TOKENIZER_H

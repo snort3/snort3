@@ -64,8 +64,9 @@ int32_t substr_to_code(const uint8_t*, const int32_t, const StrCode []) { return
 long HttpTestManager::print_amount {};
 bool HttpTestManager::print_hex {};
 
-HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_) :
-    uri_param(uri_param_), javascript_search_mpse(nullptr), htmltype_search_mpse(nullptr) {}
+HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_, int64_t normalization_depth_) :
+    uri_param(uri_param_), normalization_depth(normalization_depth_),
+    mpse_otag(nullptr), mpse_attr(nullptr), mpse_type(nullptr) {}
 HttpJsNorm::~HttpJsNorm() = default;
 void HttpJsNorm::configure(){}
 int64_t Parameter::get_int(char const*) { return 0; }
