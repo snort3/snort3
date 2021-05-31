@@ -1114,6 +1114,31 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                     delete fd;
                                     session->datassn = nullptr;
                                 }
+
+                                if (!session->serverIP.equals(*p->ptrs.ip_api.get_src()))
+                                {
+                                    FtpDataFlowData* fd1 = new FtpDataFlowData(p);
+                                    FTP_DATA_SESSION* ftpdata1 = &fd1->session;
+
+                                    ftpdata1->mode = FTPP_XFER_PASSIVE;
+                                    ftpdata1->data_chan = session->server_conf->data_chan;
+
+                                    if (p->flow->flags.data_decrypted and
+                                        (session->flags & FTP_PROTP_CMD_ACCEPT))
+                                        fd1->in_tls = true;
+
+                                    result = Stream::set_snort_protocol_id_expected(
+                                        p, PktType::TCP, IpProtocol::TCP,
+                                        &session->clientIP, session->clientPort,
+                                        p->ptrs.ip_api.get_src(), session->serverPort,
+                                        ftp_data_snort_protocol_id, fd1);
+
+                                    if (result < 0)
+                                    {
+                                        delete fd1;
+                                        session->datassn = nullptr;
+                                    }
+                                }
                             }
                             else if (session->server_conf->data_chan)
                             {
