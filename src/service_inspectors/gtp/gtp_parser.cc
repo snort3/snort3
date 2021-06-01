@@ -117,6 +117,22 @@ static void printInfoElements(GTP_IEData* info_elements, GTPMsg* msg)
 }
 #endif
 
+static bool checkPrime(uint8_t version, uint8_t flags, int msg_type)
+{
+    // check hdr_flag bit 5 for protocol type
+    if (version < 2 && !(flags & 0x10))
+        return true;
+
+    // prime only supports 1-7, 240, 241 msg_type
+    // FIXIT-L for msg_type 1-3 method to identify prime as gtp also
+    // supports these types
+    if (version == 2 && ((msg_type >= 4 && msg_type <= 7)
+	    || msg_type == 240 || msg_type == 241))
+	    return true;
+
+    return false;
+}
+
 static int gtp_processInfoElements(
     const GTPConfig& config, GTPMsg* msg, const uint8_t* buff, uint16_t len)
 {
@@ -424,8 +440,8 @@ int gtp_parse(const GTPConfig& config, GTPMsg* msg, const uint8_t* buff, uint16_
     if (msg->version > MAX_GTP_VERSION_CODE)
         return false;
 
-    /*Check whether this is GTP or GTP', Exit if GTP'*/
-    if (!(hdr->flag & 0x10))
+    /*Check whether this is GTP or GTP' based on version, flag and msg_type. Exit if GTP'*/
+    if (checkPrime(msg->version, hdr->flag, msg->msg_type))
         return false;
 
     const GTP_MsgType* msgType = &config.msgv[msg->version][msg->msg_type];
