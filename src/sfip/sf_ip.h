@@ -483,7 +483,7 @@ static inline int sfip_str_to_fam(const char* str)
     return AF_UNSPEC;
 }
 
-static inline bool parse_ip_from_uri(std::string& ip_str, SfIp& ip)
+static inline bool parse_ip_from_uri(const std::string& ip_str, SfIp& ip)
 {
     auto host_start = ip_str.find("://");
     if ( host_start != std::string::npos )

@@ -83,7 +83,7 @@ static inline int check_ssl_appid_for_reinspect(AppId app_id, OdpContext& odp_ct
 // set functions to copy the tp buffers directly into the appropriate observer.
 //
 // Or, replace ThirdParty with 1st Party http_inspect.
-static inline void process_http_session(AppIdSession& asd,
+static inline void process_http_session(const Packet& p, AppIdSession& asd,
     ThirdPartyAppIDAttributeData& attribute_data, AppidChangeBits& change_bits)
 {
     AppIdHttpSession* hsession = asd.get_http_session(0);
@@ -102,15 +102,15 @@ static inline void process_http_session(AppIdSession& asd,
 
         if (spdyRequestScheme && spdyRequestHost && spdyRequestPath )
         {
-            std::string* url;
+            string* url;
             if (asd.get_session_flags(APPID_SESSION_DECRYPTED)
                 && *spdyRequestScheme == "http")
             {
-                url = new std::string("http://" + *spdyRequestHost + *spdyRequestPath);
+                url = new string("http://" + *spdyRequestHost + *spdyRequestPath);
             }
             else
             {
-                url = new std::string("https://" + *spdyRequestHost + *spdyRequestPath);
+                url = new string("https://" + *spdyRequestHost + *spdyRequestPath);
             }
 
             if ( hsession->get_field(MISC_URL_FID) )
@@ -298,6 +298,18 @@ static inline void process_http_session(AppIdSession& asd,
 
     if ( (field=attribute_data.http_request_x_working_with(own)) != nullptr )
         hsession->set_field(MISC_XWW_FID, field, change_bits);
+
+    if (SnortConfig::get_conf()->aux_ip_is_enabled())
+    {
+        const string* uri = hsession->get_field(REQ_URI_FID);
+
+        if (uri and uri->size())
+        {
+            SfIp aux_ip;
+            if (parse_ip_from_uri(*uri, aux_ip))
+                p.flow->stash->store(aux_ip);
+        }
+    }
 }
 
 static inline void process_rtmp(AppIdSession& asd,
@@ -441,7 +453,7 @@ static inline void process_quic(AppIdSession& asd,
     }
 }
 
-static inline void process_third_party_results(AppIdSession& asd, int confidence,
+static inline void process_third_party_results(const Packet& p, AppIdSession& asd, int confidence,
     const vector<AppId>& proto_list, ThirdPartyAppIDAttributeData& attribute_data,
     AppidChangeBits& change_bits)
 {
@@ -467,7 +479,7 @@ static inline void process_third_party_results(AppIdSession& asd, int confidence
         process_ssl(asd, attribute_data, change_bits);
 
     if (asd.get_session_flags(APPID_SESSION_HTTP_SESSION))
-        process_http_session(asd, attribute_data, change_bits);
+        process_http_session(p, asd, attribute_data, change_bits);
 
     else if (contains(proto_list, APP_ID_RTMP) ||
         contains(proto_list, APP_ID_RTSP) )
@@ -609,7 +621,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
             appidDebug->get_debug_session(), app_name ? app_name : "unknown", tp_app_id);
     }
 
-    process_third_party_results(asd, tp_confidence, tp_proto_list, tp_attribute_data, change_bits);
+    process_third_party_results(*p, asd, tp_confidence, tp_proto_list, tp_attribute_data, change_bits);
 
     AppIdHttpSession* hsession = nullptr;
     if (asd.get_session_flags(APPID_SESSION_HTTP_SESSION))
