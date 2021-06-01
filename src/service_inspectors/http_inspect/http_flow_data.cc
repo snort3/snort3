@@ -247,6 +247,7 @@ bool HttpFlowData::add_to_pipeline(HttpTransaction* latest)
     {
         pipeline = new HttpTransaction*[MAX_PIPELINE];
         HttpModule::increment_peg_counts(PEG_PIPELINED_FLOWS);
+        update_allocations(sizeof(HttpTransaction*) * MAX_PIPELINE);
     }
     assert(!pipeline_overflow && !pipeline_underflow);
     int new_back = (pipeline_back+1) % MAX_PIPELINE;
@@ -279,6 +280,8 @@ void HttpFlowData::delete_pipeline()
     {
         delete pipeline[k];
     }
+    if (pipeline != nullptr)
+        update_deallocations(sizeof(HttpTransaction*) * MAX_PIPELINE);
     delete[] pipeline;
 }
 

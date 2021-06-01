@@ -20,11 +20,13 @@
 #ifndef HTTP_URI_H
 #define HTTP_URI_H
 
-#include "http_str_to_code.h"
-#include "http_module.h"
-#include "http_uri_norm.h"
-#include "http_field.h"
 #include "http_event.h"
+#include "http_field.h"
+#include "http_module.h"
+#include "http_str_to_code.h"
+#include "http_uri_norm.h"
+
+class HttpFlowData;
 
 static const int MAX_SCHEME_LENGTH = 36; // schemes longer than 36 characters are malformed
 static const int LONG_SCHEME_LENGTH = 10; // schemes longer than 10 characters will alert
@@ -38,10 +40,8 @@ class HttpUri
 public:
     HttpUri(const uint8_t* start, int32_t length, HttpEnums::MethodId method_id_,
         const HttpParaList::UriParam& uri_param_, HttpInfractions* infractions_,
-        HttpEventGen* events_) :
-        uri(length, start), infractions(infractions_), events(events_), method_id(method_id_),
-        uri_param(uri_param_)
-        { normalize(); }
+        HttpEventGen* events_, HttpFlowData* session_data_);
+    ~HttpUri();
     const Field& get_uri() const { return uri; }
     HttpEnums::UriType get_uri_type() { return uri_type; }
     const Field& get_scheme() { return scheme; }
@@ -83,6 +83,7 @@ private:
     HttpEnums::UriType uri_type = HttpEnums::URI__NOT_COMPUTE;
     const HttpEnums::MethodId method_id;
     const HttpParaList::UriParam& uri_param;
+    HttpFlowData* const session_data;
 
     void normalize();
     void parse_uri();

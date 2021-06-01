@@ -132,6 +132,7 @@ private:
     bool file_cache_index_computed = false;
 
     bool own_msg_buffer;
+    const uint32_t extra_memory_allocations;
 };
 
 #endif
