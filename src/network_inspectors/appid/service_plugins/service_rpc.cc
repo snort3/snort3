@@ -106,7 +106,7 @@ struct ServiceRPCPortmap
 {
     uint32_t program;
     uint32_t version;
-    IpProtocol proto;
+    uint32_t proto;
     uint32_t port;
 };
 
@@ -350,7 +350,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
                 if (end-data < (int)sizeof(ServiceRPCPortmap))
                     return APPID_NOT_COMPATIBLE;
                 pm = (const ServiceRPCPortmap*)data;
-                rd->proto = pm->proto;
+                rd->proto = (IpProtocol)ntohl(pm->proto);
                 break;
             default:
                 break;
@@ -408,8 +408,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
 
                         AppIdSession* pf = AppIdSession::create_future_session(
                             pkt, dip, 0, sip, (uint16_t)tmp,
-                            (IpProtocol)ntohl((uint32_t)rd->proto),
-                            asd.config.snort_proto_ids[PROTO_INDEX_SUNRPC]);
+                            rd->proto,asd.config.snort_proto_ids[PROTO_INDEX_SUNRPC]);
 
                         if (pf)
                         {
