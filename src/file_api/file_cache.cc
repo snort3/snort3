@@ -207,7 +207,11 @@ FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create,
     hashKey.padding[0] = hashKey.padding[1] = hashKey.padding[2] = 0;
     FileContext* file = find(hashKey, timeout);
     if (to_create and !file)
+    {
         file = add(hashKey, timeout);
+        if (file)
+            file->set_processing_flow(flow);
+    }
 
     return file;
 }
@@ -256,6 +260,7 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
     bool resume, FilePolicyBase* policy)
 {
     Flow* flow = p->flow;
+    Flow* processing_flow = file_ctx->get_processing_flow();
     Active* act = p->active;
     struct timeval now = {0, 0};
     struct timeval add_time;
@@ -271,7 +276,7 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
         return false;
     case FILE_VERDICT_LOG:
         if (resume)
-            policy->log_file_action(flow, file_ctx, FILE_RESUME_LOG);
+            policy->log_file_action(processing_flow, file_ctx, FILE_RESUME_LOG);
         return false;
     case FILE_VERDICT_BLOCK:
         // can't block session inside a session
@@ -302,7 +307,7 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
                 act->set_delayed_action(Active::ACT_RESET, true);
 
             if (resume)
-                policy->log_file_action(flow, file_ctx, FILE_RESUME_BLOCK);
+                policy->log_file_action(processing_flow, file_ctx, FILE_RESUME_BLOCK);
             else
                 file_ctx->verdict = FILE_VERDICT_LOG;
 
@@ -337,7 +342,7 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
             act->set_delayed_action(Active::ACT_RETRY, true);
 
             if (resume)
-                policy->log_file_action(flow, file_ctx, FILE_RESUME_BLOCK);
+                policy->log_file_action(processing_flow, file_ctx, FILE_RESUME_BLOCK);
             else if (store_verdict(flow, file_ctx, lookup_timeout) != 0)
                 act->set_delayed_action(Active::ACT_DROP, true);
             else
@@ -355,7 +360,7 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
     if (resume)
     {
         file_ctx->log_file_event(flow, policy);
-        policy->log_file_action(flow, file_ctx, FILE_RESUME_BLOCK);
+        policy->log_file_action(processing_flow, file_ctx, FILE_RESUME_BLOCK);
     }
     else if (file_ctx->is_cacheable())
         store_verdict(flow, file_ctx, block_timeout);
@@ -378,7 +383,9 @@ FileVerdict FileCache::cached_verdict_lookup(Packet* p, FileInfo* file,
 
     if (file_found)
     {
-        /*Query the file policy in case verdict has been changed*/
+	    // file_found might be a new context, set the flow here
+	    file_found->set_processing_flow(flow);
+        //Query the file policy in case verdict has been changed
         verdict = check_verdict(p, file_found, policy);
         apply_verdict(p, file_found, verdict, true, policy);
         // Update the current file context from cached context

@@ -115,6 +115,7 @@ void FileInfo::copy(const FileInfo& other)
     file_capture_enabled = other.file_capture_enabled;
     file_state = other.file_state;
     pending_expire_time = other.pending_expire_time;
+    processing_flow = other.processing_flow;
     // only one copy of file capture
     file_capture = nullptr;
 }
@@ -315,7 +316,7 @@ void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
         }
 
         if (policy and log_needed)
-            policy->log_file_action(flow, this, FILE_ACTION_DEFAULT);
+            policy->log_file_action(processing_flow, this, FILE_ACTION_DEFAULT);
 
         if ( config->trace_type )
             print(std::cout);

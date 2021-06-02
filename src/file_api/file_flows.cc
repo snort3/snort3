@@ -187,6 +187,7 @@ FileContext* FileFlows::find_main_file_context(FilePosition pos, FileDirection d
     }
 
     context = new FileContext;
+    context->set_processing_flow(flow);
     main_context = context;
     context->check_policy(flow, dir, file_policy);
 
@@ -239,6 +240,8 @@ FileContext* FileFlows::get_file_context(
         else
         {
             context = new FileContext;
+            context->set_processing_flow(flow);
+
             partially_processed_contexts[multi_file_processing_id] = context;
             if (partially_processed_contexts.size() > file_counts.max_concurrent_files_per_flow)
                 file_counts.max_concurrent_files_per_flow = partially_processed_contexts.size();
