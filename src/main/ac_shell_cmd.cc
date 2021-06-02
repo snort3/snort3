@@ -25,40 +25,25 @@
 
 #include <cassert>
 
-#include "control_mgmt.h"
-#include "control.h"
+#include "control/control.h"
 
-ACShellCmd::ACShellCmd(int fd, AnalyzerCommand *ac) : ac(ac)
+ACShellCmd::ACShellCmd(ControlConn* ctrlcon, AnalyzerCommand* ac) : ctrlcon(ctrlcon), ac(ac)
 {
     assert(ac);
 
-    ControlConn* control_conn = ControlMgmt::find_control(fd);
-
-    if( control_conn )
-    {
-        control_conn->block();
-        control_fd = fd;
-    }
+    if (ctrlcon)
+        ctrlcon->block();
 }
 
 bool ACShellCmd::execute(Analyzer& analyzer, void** state)
 {
-    ControlConn* control_conn = ControlMgmt::find_control(control_fd);
-
-    if( control_conn )
-        control_conn->send_queued_response();
-
     return ac->execute(analyzer, state);
 }
 
 ACShellCmd::~ACShellCmd()
 {
     delete ac;
-    ControlConn* control = ControlMgmt::find_control(control_fd);
 
-    if( control )
-    {
-        control->send_queued_response();
-        control->unblock();
-    }
+    if (ctrlcon)
+        ctrlcon->unblock();
 }

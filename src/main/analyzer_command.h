@@ -20,10 +20,12 @@
 #ifndef ANALYZER_COMMANDS_H
 #define ANALYZER_COMMANDS_H
 
-#include "request.h"
-#include "snort_types.h"
+#include <vector>
+
+#include "main/snort_types.h"
 
 class Analyzer;
+class ControlConn;
 class Swapper;
 
 namespace snort
@@ -140,27 +142,25 @@ class ACSwap : public snort::AnalyzerCommand
 {
 public:
     ACSwap() = delete;
-    ACSwap(Swapper* ps, SharedRequest req, bool from_shell);
+    ACSwap(Swapper* ps, ControlConn* ctrlcon);
     bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "SWAP"; }
     ~ACSwap() override;
 private:
     Swapper *ps;
-    SharedRequest request;
-    bool from_shell;
+    ControlConn* ctrlcon;
 };
 
 class ACHostAttributesSwap : public snort::AnalyzerCommand
 {
 public:
-    ACHostAttributesSwap(SharedRequest req, bool from_shell);
+    ACHostAttributesSwap(ControlConn* ctrlcon);
     bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "HOST_ATTRIBUTES_SWAP"; }
     ~ACHostAttributesSwap() override;
 
 private:
-    SharedRequest request;
-    bool from_shell;
+    ControlConn* ctrlcon;
 };
 
 class ACDAQSwap : public snort::AnalyzerCommand
@@ -174,10 +174,10 @@ public:
 namespace snort
 {
 // from main.cc
-SO_PUBLIC void main_broadcast_command(snort::AnalyzerCommand* ac, bool from_shell = false);
 #ifdef REG_TEST
-void main_unicast_command(AnalyzerCommand* ac, unsigned target, bool from_shell = false);
+void main_unicast_command(AnalyzerCommand* ac, unsigned target, ControlConn* ctrlcon = nullptr);
 #endif
+SO_PUBLIC void main_broadcast_command(snort::AnalyzerCommand* ac, ControlConn* ctrlcon = nullptr);
 }
 
 #endif

@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// control_mgmt.h author Bhagya Tholpady <bbantwal@cisco.com>
+// ac_shell_cmd.h author Bhagya Tholpady <bbantwal@cisco.com>
 //
 // This provides functions to create and control remote/local connections,
 // socket creation/deletion/management functions, and shell commands used by the analyzer.
@@ -26,17 +26,19 @@
 #include "main/analyzer.h"
 #include "main/analyzer_command.h"
 
+class ControlConn;
+
 class ACShellCmd : public snort::AnalyzerCommand
 {
 public:
     ACShellCmd() = delete;
-    ACShellCmd(int fd, snort::AnalyzerCommand* ac_cmd);
+    ACShellCmd(ControlConn*, snort::AnalyzerCommand*);
     bool execute(Analyzer&, void**) override;
     const char* stringify() override { return ac->stringify(); }
     ~ACShellCmd() override;
 
 private:
-    int control_fd = -1;
+    ControlConn* ctrlcon;
     snort::AnalyzerCommand* ac;
 };
 

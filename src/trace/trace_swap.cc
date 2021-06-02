@@ -25,6 +25,7 @@
 
 #include <lua.hpp>
 
+#include "control/control.h"
 #include "framework/module.h"
 #include "framework/packet_constraints.h"
 #include "log/messages.h"
@@ -362,8 +363,8 @@ static int set(lua_State* L)
         if ( log_params.set_constraints )
             trace_parser.finalize_constraints();
 
-        main_broadcast_command(new TraceSwap(
-            &trace_parser.get_trace_config(), log_params), true);
+        ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+        main_broadcast_command(new TraceSwap(&trace_parser.get_trace_config(), log_params), ctrlcon);
     }
     else
         delete trace_config;
@@ -371,11 +372,12 @@ static int set(lua_State* L)
     return 0;
 }
 
-static int clear(lua_State*)
+static int clear(lua_State* L)
 {
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     // Create an empty overlay TraceConfig
     // It will be set in a SnortConfig during TraceSwap execution and owned by it after
-    main_broadcast_command(new TraceSwap(new TraceConfig, {}), true);
+    main_broadcast_command(new TraceSwap(new TraceConfig, {}), ctrlcon);
     return 0;
 }
 

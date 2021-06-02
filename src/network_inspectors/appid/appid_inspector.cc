@@ -192,7 +192,7 @@ void AppIdInspector::tterm()
 
 void AppIdInspector::tear_down(SnortConfig*)
 {
-    main_broadcast_command(new ACThirdPartyAppIdCleanup(), true);
+    main_broadcast_command(new ACThirdPartyAppIdCleanup());
 }
 
 void AppIdInspector::eval(Packet* p)

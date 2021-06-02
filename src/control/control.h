@@ -23,38 +23,54 @@
 #ifndef CONTROL_H
 #define CONTROL_H
 
-#include "main/request.h"
+#include <cstdarg>
+#include <queue>
+#include <string>
+
 #include "main/snort_types.h"
+
+struct lua_State;
 
 class ControlConn
 {
 public:
-    ControlConn(int fd, bool local_control = false);
+    ControlConn(int fd, bool local);
     ~ControlConn();
 
     ControlConn(const ControlConn&) = delete;
     ControlConn& operator=(const ControlConn&) = delete;
 
     int get_fd() const { return fd; }
-    class Shell* get_shell() const { return sh; }
-    SharedRequest get_request() const { return request; }
-    bool is_local_control() const { return local_control; }
+    class Shell* get_shell() const { return shell; }
 
     void block();
     void unblock();
-    void send_queued_response();
+
     bool is_blocked() const { return blocked; }
+    bool is_closed() const { return (fd == -1); }
+    SO_PUBLIC bool is_local() const { return local; }
+
+    bool has_pending_command() const { return !pending_commands.empty(); }
 
     void configure() const;
-    int shell_execute(int& current_fd, SharedRequest& current_request);
-    bool show_prompt() const;
+    int read_commands();
+    int execute_commands();
+    SO_PUBLIC bool respond(const char* format, va_list& ap);
+    SO_PUBLIC bool respond(const char* format, ...) __attribute__((format (printf, 2, 3)));
+    void shutdown();
+
+    SO_PUBLIC static ControlConn* query_from_lua(const lua_State*);
 
 private:
+    bool show_prompt();
+
+private:
+    std::queue<std::string> pending_commands;
+    std::string next_command;
+    class Shell *shell;
     int fd;
+    bool local;
     bool blocked = false;
-    bool local_control;
-    class Shell *sh;
-    SharedRequest request;
 };
 
 #endif

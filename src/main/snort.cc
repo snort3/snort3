@@ -79,8 +79,8 @@
 #endif
 
 #ifdef SHELL
+#include "control/control_mgmt.h"
 #include "ac_shell_cmd.h"
-#include "control_mgmt.h"
 #endif
 
 #include "snort_config.h"

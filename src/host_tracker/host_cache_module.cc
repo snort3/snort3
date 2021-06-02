@@ -28,8 +28,8 @@
 #include <lua.hpp>
 #include <sys/stat.h>
 
+#include "control/control.h"
 #include "log/messages.h"
-#include "main.h"
 #include "managers/module_manager.h"
 #include "utils/util.h"
 
@@ -48,15 +48,15 @@ static int host_cache_dump(lua_State* L)
     return 0;
 }
 
-static int host_cache_get_stats(lua_State*)
+static int host_cache_get_stats(lua_State* L)
 {
     HostCacheModule* mod = (HostCacheModule*) ModuleManager::get_module(HOST_CACHE_NAME);
 
     if ( mod )
     {
-        SharedRequest current_request = get_current_request();
+        ControlConn* ctrlcon = ControlConn::query_from_lua(L);
         string outstr = mod->get_host_cache_stats();
-        current_request->respond(outstr.c_str());
+        ctrlcon->respond("%s", outstr.c_str());
     }
     return 0;
 }

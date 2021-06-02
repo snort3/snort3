@@ -25,7 +25,7 @@
 
 #include <thread>
 
-#include "control/idle_processing.h"
+#include "control/control.h"
 #include "detection/signature.h"
 #include "framework/module.h"
 #include "helpers/process.h"
@@ -65,7 +65,7 @@
 #endif
 
 #ifdef SHELL
-#include "main/control_mgmt.h"
+#include "control/control_mgmt.h"
 #include "main/ac_shell_cmd.h"
 #endif
 
@@ -109,16 +109,6 @@ static int main_read()
 {
     std::lock_guard<std::mutex> lock(poke_mutex);
     return pig_poke->get(-1);
-}
-
-static SharedRequest current_request = std::make_shared<Request>();
-#ifdef SHELL
-static int current_fd = -1;
-#endif
-
-SharedRequest get_current_request()
-{
-    return current_request;
 }
 
 //-------------------------------------------------------------------------
@@ -283,23 +273,31 @@ static Pig* get_lazy_pig(unsigned max)
 // main commands
 //-------------------------------------------------------------------------
 
-static AnalyzerCommand* get_command(AnalyzerCommand* ac, bool from_shell)
+static AnalyzerCommand* get_command(AnalyzerCommand* ac, ControlConn* ctrlcon)
 {
 #ifndef SHELL
-    UNUSED(from_shell);
+    UNUSED(ctrlcon);
 #else
-    if ( from_shell )
-        return ( new ACShellCmd(current_fd, ac) );
+    if (ctrlcon)
+        return ( new ACShellCmd(ctrlcon, ac) );
     else
 #endif
         return ac;
 }
 
-void snort::main_broadcast_command(AnalyzerCommand* ac, bool from_shell)
+static void send_response(ControlConn* ctrlcon, const char* response)
+{
+    if (ctrlcon)
+        ctrlcon->respond("%s", response);
+    else
+        LogMessage("%s", response);
+}
+
+void snort::main_broadcast_command(AnalyzerCommand* ac, ControlConn* ctrlcon)
 {
     unsigned dispatched = 0;
 
-    ac = get_command(ac, from_shell);
+    ac = get_command(ac, ctrlcon);
     debug_logf(snort_trace, TRACE_MAIN, nullptr, "Broadcasting %s command\n", ac->stringify());
 
     for (unsigned idx = 0; idx < max_pigs; ++idx)
@@ -313,10 +311,10 @@ void snort::main_broadcast_command(AnalyzerCommand* ac, bool from_shell)
 }
 
 #ifdef REG_TEST
-void snort::main_unicast_command(AnalyzerCommand* ac, unsigned target, bool from_shell)
+void snort::main_unicast_command(AnalyzerCommand* ac, unsigned target,  ControlConn* ctrlcon)
 {
     assert(target < max_pigs);
-    ac = get_command(ac, from_shell);
+    ac = get_command(ac, ctrlcon);
     if (!pigs[target].queue_command(ac))
         orphan_commands.push(ac);
 }
@@ -324,34 +322,35 @@ void snort::main_unicast_command(AnalyzerCommand* ac, unsigned target, bool from
 
 int main_dump_stats(lua_State* L)
 {
-    bool from_shell = ( L != nullptr );
-    current_request->respond("== dumping stats\n", from_shell);
-    main_broadcast_command(new ACGetStats(), from_shell);
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    send_response(ctrlcon, "== dumping stats\n");
+    main_broadcast_command(new ACGetStats(), ctrlcon);
     return 0;
 }
 
 int main_reset_stats(lua_State* L)
 {
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     int type = luaL_optint(L, 1, 0);
-    bool from_shell = ( L != nullptr );
-    current_request->respond("== clearing stats\n", from_shell);
-    main_broadcast_command(new ACResetStats(static_cast<clear_counter_type_t>(type)), true);
+    ctrlcon->respond("== clearing stats\n");
+    main_broadcast_command(new ACResetStats(static_cast<clear_counter_type_t>(type)), ctrlcon);
     return 0;
 }
 
 int main_rotate_stats(lua_State* L)
 {
-    bool from_shell = ( L != nullptr );
-    current_request->respond("== rotating stats\n", from_shell);
-    main_broadcast_command(new ACRotate(), from_shell);
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    send_response(ctrlcon, "== rotating stats\n");
+    main_broadcast_command(new ACRotate(), ctrlcon);
     return 0;
 }
 
 int main_reload_config(lua_State* L)
 {
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     if ( Swapper::get_reload_in_progress() )
     {
-        current_request->respond("== reload pending; retry\n");
+        send_response(ctrlcon, "== reload pending; retry\n");
         return 0;
     }
     const char* fname =  nullptr;
@@ -366,11 +365,11 @@ int main_reload_config(lua_State* L)
             plugin_path = luaL_checkstring(L, 2);
             std::ostringstream plugin_path_msg;
             plugin_path_msg << "-- reload plugin_path: " << plugin_path << "\n";
-            current_request->respond(plugin_path_msg.str().c_str());
+            send_response(ctrlcon, plugin_path_msg.str().c_str());
         }
     }
 
-    current_request->respond(".. reloading configuration\n");
+    send_response(ctrlcon, ".. reloading configuration\n");
     const SnortConfig* old = SnortConfig::get_conf();
     SnortConfig* sc = Snort::get_reload_config(fname, plugin_path, old);
 
@@ -380,12 +379,13 @@ int main_reload_config(lua_State* L)
         {
             std::string response_message = "== reload failed - restart required - ";
             response_message += get_reload_errors_description() + "\n";
-            current_request->respond(response_message.c_str());
+            send_response(ctrlcon, response_message.c_str());
             reset_reload_errors();
         }
         else
-            current_request->respond("== reload failed - bad config\n");
+            send_response(ctrlcon, "== reload failed - bad config\n");
 
+        HostAttributesManager::load_failure_cleanup();
         return 0;
     }
 
@@ -408,18 +408,18 @@ int main_reload_config(lua_State* L)
     TraceApi::thread_reinit(sc->trace_config);
     proc_stats.conf_reloads++;
 
-    bool from_shell = ( L != nullptr );
-    current_request->respond(".. swapping configuration\n", from_shell);
-    main_broadcast_command(new ACSwap(new Swapper(old, sc), current_request, from_shell), from_shell);
+    send_response(ctrlcon, ".. swapping configuration\n");
+    main_broadcast_command(new ACSwap(new Swapper(old, sc), ctrlcon), ctrlcon);
 
     return 0;
 }
 
 int main_reload_policy(lua_State* L)
 {
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     if ( Swapper::get_reload_in_progress() )
     {
-        current_request->respond("== reload pending; retry\n");
+        send_response(ctrlcon, "== reload pending; retry\n");
         return 0;
     }
     const char* fname =  nullptr;
@@ -431,10 +431,10 @@ int main_reload_policy(lua_State* L)
     }
 
     if ( fname and *fname )
-        current_request->respond(".. reloading policy\n");
+        send_response(ctrlcon, ".. reloading policy\n");
     else
     {
-        current_request->respond("== filename required\n");
+        send_response(ctrlcon, "== filename required\n");
         return 0;
     }
 
@@ -443,25 +443,25 @@ int main_reload_policy(lua_State* L)
 
     if ( !sc )
     {
-        current_request->respond("== reload failed\n");
+        send_response(ctrlcon, "== reload failed\n");
         return 0;
     }
     sc->update_reload_id();
     SnortConfig::set_conf(sc);
     proc_stats.policy_reloads++;
 
-    bool from_shell = ( L != nullptr );
-    current_request->respond(".. swapping policy\n", from_shell);
-    main_broadcast_command(new ACSwap(new Swapper(old, sc), current_request, from_shell), from_shell);
+    send_response(ctrlcon, ".. swapping policy\n");
+    main_broadcast_command(new ACSwap(new Swapper(old, sc), ctrlcon), ctrlcon);
 
     return 0;
 }
 
 int main_reload_module(lua_State* L)
 {
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     if ( Swapper::get_reload_in_progress() )
     {
-        current_request->respond("== reload pending; retry\n");
+        send_response(ctrlcon, "== reload pending; retry\n");
         return 0;
     }
     const char* fname =  nullptr;
@@ -473,10 +473,10 @@ int main_reload_module(lua_State* L)
     }
 
     if ( fname and *fname )
-        current_request->respond(".. reloading module\n");
+        send_response(ctrlcon, ".. reloading module\n");
     else
     {
-        current_request->respond("== module name required\n");
+        send_response(ctrlcon, "== module name required\n");
         return 0;
     }
 
@@ -485,25 +485,24 @@ int main_reload_module(lua_State* L)
 
     if ( !sc )
     {
-        current_request->respond("== reload failed\n");
+        send_response(ctrlcon, "== reload failed\n");
         return 0;
     }
     sc->update_reload_id();
     SnortConfig::set_conf(sc);
     proc_stats.policy_reloads++;
 
-    bool from_shell = ( L != nullptr );
-    current_request->respond(".. swapping module\n", from_shell);
-    main_broadcast_command(new ACSwap(new Swapper(old, sc), current_request, from_shell), from_shell);
+    send_response(ctrlcon, ".. swapping module\n");
+    main_broadcast_command(new ACSwap(new Swapper(old, sc), ctrlcon), ctrlcon);
 
     return 0;
 }
 
 int main_reload_daq(lua_State* L)
 {
-    bool from_shell = ( L != nullptr );
-    current_request->respond(".. reloading daq module\n", from_shell);
-    main_broadcast_command(new ACDAQSwap(), from_shell);
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    send_response(ctrlcon, ".. reloading daq module\n");
+    main_broadcast_command(new ACDAQSwap(), ctrlcon);
     proc_stats.daq_reloads++;
 
     return 0;
@@ -511,22 +510,21 @@ int main_reload_daq(lua_State* L)
 
 int main_reload_hosts(lua_State* L)
 {
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     if ( Swapper::get_reload_in_progress() )
     {
         WarningMessage("Reload in progress. Cannot reload host attribute table.\n");
-        current_request->respond("== reload pending; retry\n");
+        send_response(ctrlcon, "== reload pending; retry\n");
         return 0;
     }
 
     SnortConfig* sc = SnortConfig::get_main_conf();
-    bool from_shell = false;
     const char* fname;
 
     if ( L )
     {
         Lua::ManageStack(L, 1);
         fname = luaL_optstring(L, 1, sc->attribute_hosts_file.c_str());
-        from_shell = true;
     }
     else
         fname = sc->attribute_hosts_file.c_str();
@@ -534,19 +532,19 @@ int main_reload_hosts(lua_State* L)
     if ( fname and *fname )
     {
         LogMessage("Reloading Host attribute table from %s.\n", fname);
-        current_request->respond(".. reloading hosts table\n");
+        send_response(ctrlcon, ".. reloading hosts table\n");
     }
     else
     {
         ErrorMessage("Reload failed. Host attribute table filename required.\n");
-        current_request->respond("== filename required\n");
+        send_response(ctrlcon, "== filename required\n");
         return 0;
     }
 
     if ( !HostAttributesManager::load_hosts_file(sc, fname) )
     {
         ErrorMessage("Host attribute table reload from %s failed.\n", fname);
-        current_request->respond("== reload failed\n");
+        send_response(ctrlcon, "== reload failed\n");
         return 0;
     }
 
@@ -555,17 +553,18 @@ int main_reload_hosts(lua_State* L)
     assert( num_hosts >= 0 );
     LogMessage("Host attribute table: %d hosts loaded successfully.\n", num_hosts);
 
-    current_request->respond(".. swapping hosts table\n", from_shell);
-    main_broadcast_command(new ACHostAttributesSwap(current_request, from_shell), from_shell);
+    send_response(ctrlcon, ".. swapping hosts table\n");
+    main_broadcast_command(new ACHostAttributesSwap(ctrlcon), ctrlcon);
 
     return 0;
 }
 
 int main_delete_inspector(lua_State* L)
 {
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     if ( Swapper::get_reload_in_progress() )
     {
-        current_request->respond("== delete pending; retry\n");
+        send_response(ctrlcon, "== delete pending; retry\n");
         return 0;
     }
     const char* iname =  nullptr;
@@ -577,10 +576,10 @@ int main_delete_inspector(lua_State* L)
     }
 
     if ( iname and *iname )
-        current_request->respond(".. deleting inspector\n");
+        send_response(ctrlcon, ".. deleting inspector\n");
     else
     {
-        current_request->respond("== inspector name required\n");
+        send_response(ctrlcon, "== inspector name required\n");
         return 0;
     }
 
@@ -589,51 +588,51 @@ int main_delete_inspector(lua_State* L)
 
     if ( !sc )
     {
-        current_request->respond("== reload failed\n");
+        send_response(ctrlcon, "== reload failed\n");
         return 0;
     }
     SnortConfig::set_conf(sc);
     proc_stats.inspector_deletions++;
 
-    bool from_shell = ( L != nullptr );
-    current_request->respond(".. deleted inspector\n", from_shell);
-    main_broadcast_command(new ACSwap(new Swapper(old, sc), current_request, from_shell), from_shell);
+    send_response(ctrlcon, ".. deleted inspector\n");
+    main_broadcast_command(new ACSwap(new Swapper(old, sc), ctrlcon), ctrlcon);
 
     return 0;
 }
 
 int main_process(lua_State* L)
 {
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     const char* f = lua_tostring(L, 1);
     if ( !f )
     {
-        current_request->respond("== pcap filename required\n");
+        send_response(ctrlcon, "== pcap filename required\n");
         return 0;
     }
-    current_request->respond("== queuing pcap\n");
+    send_response(ctrlcon, "== queuing pcap\n");
     Trough::add_source(Trough::SOURCE_LIST, f);
     return 0;
 }
 
 int main_pause(lua_State* L)
 {
-    bool from_shell = ( L != nullptr );
-    current_request->respond("== pausing\n", from_shell);
-    main_broadcast_command(new ACPause(), from_shell);
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    send_response(ctrlcon, "== pausing\n");
+    main_broadcast_command(new ACPause(), ctrlcon);
     paused = true;
     return 0;
 }
 
 int main_resume(lua_State* L)
 {
-    bool from_shell = ( L != nullptr );
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     uint64_t pkt_num = 0;
 
     #ifdef REG_TEST
     int target = -1;
     #endif
 
-    if (from_shell)
+    if (L)
     {
         const int num_of_args = lua_gettop(L);
         if (num_of_args)
@@ -641,7 +640,7 @@ int main_resume(lua_State* L)
             pkt_num = lua_tointeger(L, 1);
             if (pkt_num < 1)
             {
-                current_request->respond("Invalid usage of resume(n), n should be a number > 0\n");
+                send_response(ctrlcon, "Invalid usage of resume(n), n should be a number > 0\n");
                 return 0;
             }
             #ifdef REG_TEST
@@ -650,7 +649,7 @@ int main_resume(lua_State* L)
                 target = lua_tointeger(L, 2);
                 if (target < 0 or unsigned(target) >= max_pigs)
                 {
-                    current_request->respond(
+                    send_response(ctrlcon,
                         "Invalid usage of resume(n,m), m should be a number >= 0 and less than number of threads\n");
                     return 0;
                 }
@@ -658,24 +657,26 @@ int main_resume(lua_State* L)
             #endif
         }
     }
-    current_request->respond("== resuming\n", from_shell);
+    send_response(ctrlcon, "== resuming\n");
 
     #ifdef REG_TEST
     if (target >= 0)
-        main_unicast_command(new ACResume(pkt_num), target, from_shell);
+        main_unicast_command(new ACResume(pkt_num), target, ctrlcon);
     else
-        main_broadcast_command(new ACResume(pkt_num), from_shell);
+        main_broadcast_command(new ACResume(pkt_num), ctrlcon);
     #else
-    main_broadcast_command(new ACResume(pkt_num), from_shell);
+    main_broadcast_command(new ACResume(pkt_num), ctrlcon);
     #endif
     paused = false;
     return 0;
 }
 
 #ifdef SHELL
-int main_detach(lua_State*)
+int main_detach(lua_State* L)
 {
-    current_request->respond("== detaching\n");
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    send_response(ctrlcon, "== detaching\n");
+    ctrlcon->shutdown();
     return 0;
 }
 
@@ -685,31 +686,43 @@ int main_dump_plugins(lua_State*)
     PluginManager::dump_plugins();
     return 0;
 }
-
 #endif
 
 int main_quit(lua_State* L)
 {
-    bool from_shell = ( L != nullptr );
-    current_request->respond("== stopping\n", from_shell);
-    main_broadcast_command(new ACStop(), from_shell);
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    send_response(ctrlcon, "== stopping\n");
+    main_broadcast_command(new ACStop(), ctrlcon);
     exit_requested = true;
     return 0;
 }
 
-int main_help(lua_State*)
+int main_help(lua_State* L)
 {
-    const Command* cmd = get_snort_module()->get_commands();
-
-    while ( cmd->name )
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    std::list<Module*> modules = ModuleManager::get_all_modules();
+    for (const auto& m : modules)
     {
-        std::string info = cmd->name;
-        info += cmd->get_arg_list();
-        info += ": ";
-        info += cmd->help;
-        info += "\n";
-        current_request->respond(info.c_str());
-        ++cmd;
+        const Command* cmd = m->get_commands();
+        if (!cmd)
+            continue;
+        std::string prefix;
+        if (strcmp(m->get_name(), "snort"))
+        {
+            prefix = m->get_name();
+            prefix += '.';
+        }
+        while (cmd->name)
+        {
+            std::string info = prefix;
+            info += cmd->name;
+            info += cmd->get_arg_list();
+            info += ": ";
+            info += cmd->help;
+            info += "\n";
+            send_response(ctrlcon, info.c_str());
+            ++cmd;
+        }
     }
     return 0;
 }
@@ -785,8 +798,6 @@ static bool house_keeping()
 
     reap_commands();
 
-    IdleProcessing::execute();
-
     Periodic::check();
 
     InspectorManager::empty_trash();
@@ -797,7 +808,7 @@ static bool house_keeping()
 static void service_check()
 {
 #ifdef SHELL
-    if (all_pthreads_started && ControlMgmt::service_users(current_fd, current_request) )
+    if (all_pthreads_started && ControlMgmt::service_users() )
         return;
 #endif
 
@@ -903,14 +914,6 @@ static bool set_mode()
     }
     else
         LogMessage("Commencing packet processing\n");
-
-#ifdef SHELL
-    if ( use_shell(sc) )
-    {
-        LogMessage("Entering command shell\n");
-        ControlMgmt::add_control(STDOUT_FILENO, true);
-    }
-#endif
 
     return true;
 }
@@ -1034,10 +1037,19 @@ static void main_loop()
             const unsigned num_threads = (!Trough::has_next()) ? swine : max_pigs;
             for (unsigned i = 0; i < num_threads; i++)
                 all_pthreads_started &= pigs_started[i];
-#ifdef REG_TEST
             if (all_pthreads_started)
+            {
+#ifdef REG_TEST
                 LogMessage("All pthreads started\n");
 #endif
+#ifdef SHELL
+                if (use_shell(SnortConfig::get_conf()))
+                {
+                    LogMessage("Entering command shell\n");
+                    ControlMgmt::add_control(STDOUT_FILENO, true);
+                }
+#endif
+            }
         }
 
         if ( !exit_requested and (swine < max_pigs) and (src = Trough::get_next()) )
@@ -1054,7 +1066,7 @@ static void main_loop()
 static void snort_main()
 {
 #ifdef SHELL
-    ControlMgmt::socket_init();
+    ControlMgmt::socket_init(SnortConfig::get_conf());
 #endif
 
     SnortConfig::get_conf()->thread_config->implement_thread_affinity(

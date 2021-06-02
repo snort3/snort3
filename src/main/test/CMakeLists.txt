@@ -1,9 +1,4 @@
 if ( ENABLE_SHELL )
-    add_cpputest(request_test
-        SOURCES
-            ../request.cc
-    )
-
     add_cpputest(distill_verdict_test
         SOURCES
             stubs.h

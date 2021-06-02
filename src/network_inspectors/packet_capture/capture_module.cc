@@ -26,6 +26,7 @@
 
 #include <lua.hpp>
 
+#include "control/control.h"
 #include "main/analyzer_command.h"
 #include "profiler/profiler.h"
 
@@ -100,13 +101,13 @@ private:
 static int enable(lua_State* L)
 {
     main_broadcast_command(new PacketCaptureDebug(lua_tostring(L, 1),
-        luaL_optint(L, 2, 0)), true);
+        luaL_optint(L, 2, 0)), ControlConn::query_from_lua(L));
     return 0;
 }
 
-static int disable(lua_State*)
+static int disable(lua_State* L)
 {
-    main_broadcast_command(new PacketCaptureDebug(nullptr, -1), true);
+    main_broadcast_command(new PacketCaptureDebug(nullptr, -1), ControlConn::query_from_lua(L));
     return 0;
 }
 

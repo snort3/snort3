@@ -22,14 +22,15 @@
 #include "config.h"
 #endif
 
-#include <lua.hpp>
-
 #include "packet_tracer_module.h"
 
+#include <lua.hpp>
+
+#include "control/control.h"
+#include "log/messages.h"
+#include "main/analyzer_command.h"
 #include "main/snort_config.h"
 #include "profiler/profiler.h"
-#include "main/analyzer_command.h"
-#include "log/messages.h"
 #include "sfip/sf_ip.h"
 
 #include "packet_tracer.h"
@@ -148,13 +149,13 @@ static int enable(lua_State* L)
         constraints.set_bits |= PacketConstraints::SetBits::SRC_PORT;
     if ( dport )
         constraints.set_bits |= PacketConstraints::SetBits::DST_PORT;
-    main_broadcast_command(new PacketTracerDebug(&constraints), true);
+    main_broadcast_command(new PacketTracerDebug(&constraints), ControlConn::query_from_lua(L));
     return 0;
 }
 
-static int disable(lua_State*)
+static int disable(lua_State* L)
 {
-    main_broadcast_command(new PacketTracerDebug(nullptr), true);
+    main_broadcast_command(new PacketTracerDebug(nullptr), ControlConn::query_from_lua(L));
     return 0;
 }
 

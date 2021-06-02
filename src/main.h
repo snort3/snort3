@@ -21,12 +21,9 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include "main/request.h"
-
 struct lua_State;
 
 const char* get_prompt();
-SharedRequest get_current_request();
 
 // commands provided by the snort module
 int main_delete_inspector(lua_State* = nullptr);

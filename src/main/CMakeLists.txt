@@ -2,7 +2,6 @@
 set (INCLUDES
     analyzer_command.h
     policy.h
-    request.h
     snort.h
     snort_config.h
     snort_debug.h
@@ -18,10 +17,8 @@ set (LOCAL_INCLUDES
 )
 
 if ( ENABLE_SHELL )
-    set ( SHELL_SOURCES control.cc control.h control_mgmt.cc control_mgmt.h ac_shell_cmd.h ac_shell_cmd.cc)
+    set ( SHELL_SOURCES ac_shell_cmd.h ac_shell_cmd.cc)
 endif ( ENABLE_SHELL )
-
-add_subdirectory(test)
 
 add_library (main OBJECT
     analyzer.cc
@@ -34,7 +31,6 @@ add_library (main OBJECT
     oops_handler.cc
     oops_handler.h
     policy.cc
-    request.cc
     shell.h
     shell.cc
     snort.cc

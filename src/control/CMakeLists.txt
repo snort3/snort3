@@ -1,11 +1,13 @@
+set ( CONTROL_INCLUDES  control.h )
+
+if ( ENABLE_SHELL )
+    set ( SHELL_SOURCES control.cc control_mgmt.cc control_mgmt.h )
+endif ( ENABLE_SHELL )
 
 add_library ( control OBJECT
-    idle_processing.h
-    idle_processing.cc
+    ${SHELL_SOURCES}
 )
 
-add_catch_test( idle_processing_test
-    NO_TEST_SOURCE
-    SOURCES
-        idle_processing.cc
+install (FILES ${CONTROL_INCLUDES}
+    DESTINATION ${INCLUDE_INSTALL_PATH}/control
 )

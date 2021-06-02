@@ -264,7 +264,6 @@ void AppIdStatistics::update(const AppIdSession& asd)
         update_stats(asd, client_id, bucket);
 }
 
-// Currently not registered to IdleProcessing
 void AppIdStatistics::flush()
 {
     if ( !enabled )

@@ -21,8 +21,6 @@
 #ifndef RNA_MODULE_MOCK_H
 #define RNA_MODULE_MOCK_H
 
-#include "main/request.h"
-
 #include "../rna_mac_cache.cc"
 
 THREAD_LOCAL RnaStats rna_stats;
@@ -111,19 +109,20 @@ private:
     RnaModuleConfig* mod_conf = nullptr;
 };
 
-
 } // end of namespace snort
 
-static SharedRequest mock_request = std::make_shared<Request>();
-void Request::respond(const char*, bool, bool) { }
-SharedRequest get_dispatched_request() { return mock_request; }
+void snort::main_broadcast_command(snort::AnalyzerCommand*, ControlConn*) {}
+static ControlConn s_ctrlcon(1, true);
+ControlConn::ControlConn(int, bool) {}
+ControlConn::~ControlConn() {}
+ControlConn* ControlConn::query_from_lua(const lua_State*) { return &s_ctrlcon; }
+bool ControlConn::respond(const char*, ...) { return true; }
 
 HostCacheMac* get_host_cache_mac() { return nullptr; }
 
 DataPurgeAC::~DataPurgeAC() = default;
 bool DataPurgeAC::execute(Analyzer&, void**) { return true;}
 
-void snort::main_broadcast_command(AnalyzerCommand*, bool) { }
 void set_host_cache_mac(HostCacheMac*) { }
 
 Inspector* InspectorManager::get_inspector(const char*, bool, const SnortConfig*)

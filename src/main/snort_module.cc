@@ -120,9 +120,9 @@ static const Command snort_cmds[] =
     { "pause", main_pause, nullptr, "suspend packet processing" },
 
     { "resume", main_resume, s_pktnum, "continue packet processing. "
-      "If number of packet is specified, will resume for n packets and pause" },
+      "If number of packets is specified, will resume for n packets and pause" },
 
-    { "detach", main_detach, nullptr, "exit shell w/o shutdown" },
+    { "detach", main_detach, nullptr, "detach from control shell (without shutting down)" },
     { "quit", main_quit, nullptr, "shutdown and dump-stats" },
     { "help", main_help, nullptr, "this output" },
 

@@ -17,41 +17,33 @@
 //--------------------------------------------------------------------------
 // control_mgmt.h author Bhagya Tholpady <bbantwal@cisco.com>
 //                author Devendra Dahiphale <ddahipha@cisco.com>
+//                author Michael Altizer <mialtize@cisco.com>
 // This provides functions to create and control remote/local connections,
 // socket creation/deletion/management functions, and shell commands used by the analyzer.
 
 #ifndef CONTROL_MGMT_H
 #define CONTROL_MGMT_H
 
-#include <vector>
-
-#include "request.h"
-
 class ControlConn;
+struct lua_State;
+
+namespace snort
+{
+struct SnortConfig;
+}
 
 class ControlMgmt
 {
 public:
-    static void add_control(int fd, bool local_control);
+    static bool add_control(int fd, bool local_control);
     static void reconfigure_controls();
 
-    static int socket_init();
-    static int socket_term();
-    static int socket_conn();
+    static int socket_init(const snort::SnortConfig*);
+    static void socket_term();
 
-    static bool process_control_commands(int& current_fd, SharedRequest& current_request, int);
-    static bool process_control_commands(int& current_fd, SharedRequest& current_request);
+    static ControlConn* find_control(const lua_State*);
 
-    static ControlConn* find_control(int fd);
-    static bool find_control(int fd, std::vector<ControlConn*>::iterator& control);
-
-    static void delete_controls();
-    static void delete_control(int fd);
-    static void delete_control(std::vector<ControlConn*>::iterator& control);
-
-    static bool service_users(int& current_fd, SharedRequest& current_request);
-
-private:
-    static int setup_socket_family();
+    static bool service_users();
 };
+
 #endif

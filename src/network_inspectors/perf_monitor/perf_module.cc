@@ -26,6 +26,7 @@
 
 #include <lua.hpp>
 
+#include "control/control.h"
 #include "log/messages.h"
 #include "main/analyzer_command.h"
 #include "main/snort.h"
@@ -155,8 +156,8 @@ static int enable_flow_ip_profiling(lua_State* L)
     auto* new_constraints = new PerfConstraints(true, luaL_optint(L, 1, 0),
         luaL_optint(L, 2, 0));
 
-    main_broadcast_command(new PerfMonFlowIPDebug(new_constraints, true, perf_monitor),
-        true);
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    main_broadcast_command(new PerfMonFlowIPDebug(new_constraints, true, perf_monitor), ctrlcon);
 
     LogMessage("Enabling flow ip profiling with sample interval %d packet count %d\n",
         new_constraints->sample_interval, new_constraints->pkt_cnt);
@@ -164,7 +165,7 @@ static int enable_flow_ip_profiling(lua_State* L)
     return 0;
 }
 
-static int disable_flow_ip_profiling(lua_State*)
+static int disable_flow_ip_profiling(lua_State* L)
 {
     PerfMonitor* perf_monitor =
         (PerfMonitor*)InspectorManager::get_inspector(PERF_NAME, true);
@@ -185,8 +186,8 @@ static int disable_flow_ip_profiling(lua_State*)
 
     auto* new_constraints = perf_monitor->get_original_constraints();
 
-    main_broadcast_command(new PerfMonFlowIPDebug(new_constraints, false, perf_monitor),
-        true);
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    main_broadcast_command(new PerfMonFlowIPDebug(new_constraints, false, perf_monitor), ctrlcon);
 
     LogMessage("Disabling flow ip profiling\n");
 

@@ -66,6 +66,9 @@ public:
     bool get_loaded() const
     { return loaded; }
 
+    lua_State* get_lua() const
+    { return lua; }
+
 public:
     static bool is_trusted(const std::string& key);
     static void allowlist_append(const char* keyword, bool is_prefix);
