@@ -22,10 +22,12 @@
 #endif
 
 #include "file_api/file_flows.h"
+#include "pub_sub/http_request_body_event.h"
 
 #include "http_common.h"
 #include "http_cutter.h"
 #include "http_enum.h"
+#include "http_field.h"
 #include "http_inspect.h"
 #include "http_module.h"
 #include "http_msg_header.h"
@@ -124,50 +126,73 @@ bool HttpStreamSplitter::finish(Flow* flow)
         return true;
     }
 
-    // If there is no more data to process we need to wrap up file processing right now
-    if ((session_data->file_depth_remaining[source_id] > 0)        &&
-        (session_data->cutter[source_id] != nullptr)               &&
+    // If there is no more data to process we may need to tell other components
+    if ((session_data->cutter[source_id] != nullptr) &&
         (session_data->cutter[source_id]->get_octets_seen() ==
             session_data->partial_raw_bytes[source_id]))
     {
-        Packet* packet = DetectionEngine::get_current_packet();
-        if (!session_data->mime_state[source_id])
+        // Wrap up file processing
+        if (session_data->file_depth_remaining[source_id] > 0)
         {
-            FileFlows* file_flows = FileFlows::get_file_flows(flow);
-            if (!file_flows)
-                return false;
+            Packet* packet = DetectionEngine::get_current_packet();
+            if (!session_data->mime_state[source_id])
+            {
+                FileFlows* file_flows = FileFlows::get_file_flows(flow);
+                if (!file_flows)
+                    return false;
 
-            const FileDirection dir = (source_id == SRC_SERVER) ? FILE_DOWNLOAD : FILE_UPLOAD;
+                const FileDirection dir = (source_id == SRC_SERVER) ? FILE_DOWNLOAD :
+                    FILE_UPLOAD;
 
-            assert(session_data->transaction[source_id] != nullptr);
-            HttpMsgHeader* header = session_data->transaction[source_id]->get_header(source_id);
-            assert(header);
+                assert(session_data->transaction[source_id] != nullptr);
+                HttpMsgHeader* header = session_data->transaction[source_id]->
+                    get_header(source_id);
+                assert(header);
 
-            uint64_t file_index = header->get_file_cache_index();
-            const uint64_t file_processing_id = header->get_multi_file_processing_id();
-            file_flows->file_process(packet, file_index, nullptr, 0,
-                session_data->file_octets[source_id], dir, file_processing_id, SNORT_FILE_END);
+                uint64_t file_index = header->get_file_cache_index();
+                const uint64_t file_processing_id = header->get_multi_file_processing_id();
+                file_flows->file_process(packet, file_index, nullptr, 0,
+                    session_data->file_octets[source_id], dir, file_processing_id,
+                    SNORT_FILE_END);
+#ifdef REG_TEST
+                if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
+                {
+                    fprintf(HttpTestManager::get_output_file(),
+                        "File processing finalization during finish()\n");
+                    fflush(HttpTestManager::get_output_file());
+                }
+#endif
+            }
+            else
+            {
+                // FIXIT-M The following call does not actually accomplish anything. The MIME
+                // interface needs to be enhanced so that we can communicate end-of-data
+                // without side effects.
+                session_data->mime_state[source_id]->process_mime_data(packet, nullptr, 0, true,
+                    SNORT_FILE_POSITION_UNKNOWN);
+                delete session_data->mime_state[source_id];
+                session_data->mime_state[source_id] = nullptr;
+#ifdef REG_TEST
+                if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
+                {
+                    fprintf(HttpTestManager::get_output_file(),
+                        "MIME finalization during finish()\n");
+                    fflush(HttpTestManager::get_output_file());
+                }
+#endif
+            }
+        }
+        // If we were publishing a request body need to publish that body is complete
+        if (session_data->publish_depth_remaining[source_id] > 0)
+        {
+            HttpRequestBodyEvent http_request_body_event(nullptr,
+                session_data->publish_octets[source_id], true, session_data);
+            DataBus::publish(HTTP2_REQUEST_BODY_EVENT_KEY, http_request_body_event, flow);
 #ifdef REG_TEST
             if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
             {
                 fprintf(HttpTestManager::get_output_file(),
-                    "File processing finalization during finish()\n");
-                fflush(HttpTestManager::get_output_file());
-            }
-#endif
-        }
-        else
-        {
-            // FIXIT-M The following call does not actually accomplish anything. The MIME interface
-            // needs to be enhanced so that we can communicate end-of-data without side effects.
-            session_data->mime_state[source_id]->process_mime_data(packet, nullptr, 0, true,
-                SNORT_FILE_POSITION_UNKNOWN);
-            delete session_data->mime_state[source_id];
-            session_data->mime_state[source_id] = nullptr;
-#ifdef REG_TEST
-            if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
-            {
-                fprintf(HttpTestManager::get_output_file(), "MIME finalization during finish()\n");
+                    "Request body event published during finish()\n");
                 fflush(HttpTestManager::get_output_file());
             }
 #endif

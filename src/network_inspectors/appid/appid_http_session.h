@@ -73,6 +73,8 @@ public:
     void update_url(AppidChangeBits& change_bits);
     void set_field(HttpFieldIds id, const std::string* str, AppidChangeBits& change_bits);
     void set_field(HttpFieldIds id, const uint8_t* str, int32_t len, AppidChangeBits& change_bits);
+    void set_req_body_field(HttpFieldIds id, const uint8_t* str, int32_t len,
+        AppidChangeBits& change_bits);
 
     const std::string* get_field(HttpFieldIds id) const
     { return meta_data[id]; }
@@ -158,6 +160,14 @@ public:
     {
         return http2_stream_id;
     }
+    void set_rcvd_full_req_body(bool req_full_body)
+    {
+        rcvd_full_req_body = req_full_body;
+    }
+    bool get_rcvd_full_req_body()
+    {
+        return rcvd_full_req_body;
+    }
 
 protected:
 
@@ -199,6 +209,7 @@ protected:
 #endif
     uint32_t http2_stream_id = 0;
     bool is_payload_processed = false;
+    bool rcvd_full_req_body = false;
 };
 
 #endif

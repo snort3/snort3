@@ -28,6 +28,7 @@
 #include "service_inspectors/http_inspect/http_flow_data.h"
 #include "service_inspectors/http_inspect/http_module.h"
 #include "service_inspectors/http_inspect/http_transaction.h"
+#include "service_inspectors/http2_inspect/http2_flow_data.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -48,7 +49,11 @@ fd_status_t File_Decomp_StopFree(fd_session_t*) { return File_Decomp_OK; }
 uint32_t str_to_hash(const uint8_t *, size_t) { return 0; }
 void FlowData::update_allocations(size_t) {}
 void FlowData::update_deallocations(size_t) {}
+FlowData* Flow::get_flow_data(uint32_t) const { return nullptr; }
 }
+
+unsigned Http2FlowData::inspector_id = 0;
+uint32_t Http2FlowData::get_processing_stream_id() const { return 0; }
 
 THREAD_LOCAL PegCount HttpModule::peg_counts[PEG_COUNT_MAX] = { };
 
@@ -63,7 +68,7 @@ public:
 
 TEST_GROUP(http_transaction_test)
 {
-    HttpFlowData* const flow_data = new HttpFlowData;
+    HttpFlowData* const flow_data = new HttpFlowData(nullptr);
     SectionType* const section_type = HttpUnitTestSetup::get_section_type(flow_data);
     SectionType* const type_expected = HttpUnitTestSetup::get_type_expected(flow_data);
 

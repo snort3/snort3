@@ -30,6 +30,7 @@
 #include "file_api/file_service.h"
 #include "hash/hash_key_operations.h"
 #include "pub_sub/http_events.h"
+#include "pub_sub/http_request_body_event.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
 #include "sfip/sf_ip.h"
 
@@ -55,14 +56,14 @@ HttpMsgHeader::HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
 
 void HttpMsgHeader::publish()
 {
-    const uint32_t stream_id = get_h2_stream_id();
+    const uint32_t stream_id = session_data->get_h2_stream_id();
 
-    HttpEvent http_event(this, session_data->for_http2, stream_id);
+    HttpEvent http_header_event(this, session_data->for_http2, stream_id);
 
     const char* key = (source_id == SRC_CLIENT) ?
         HTTP_REQUEST_HEADER_EVENT_KEY : HTTP_RESPONSE_HEADER_EVENT_KEY;
 
-    DataBus::publish(key, http_event, flow);
+    DataBus::publish(key, http_header_event, flow);
 }
 
 const Field& HttpMsgHeader::get_true_ip()
@@ -429,6 +430,11 @@ void HttpMsgHeader::prepare_body()
     const int64_t& depth = (source_id == SRC_CLIENT) ? params->request_depth :
         params->response_depth;
     session_data->detect_depth_remaining[source_id] = (depth != -1) ? depth : INT64_MAX;
+    if ((source_id == SRC_CLIENT) and params->publish_request_body and session_data->for_http2)
+    {
+        session_data->publish_octets[source_id] = 0;
+        session_data->publish_depth_remaining[source_id] = REQUEST_PUBLISH_DEPTH;
+    }
     setup_file_processing();
     setup_encoding_decompression();
     setup_utf_decoding();
@@ -463,7 +469,7 @@ void HttpMsgHeader::setup_file_processing()
     }
 
     // Generate the unique file id for multi file processing
-    set_multi_file_processing_id(get_transaction_id(), get_h2_stream_id());
+    set_multi_file_processing_id(get_transaction_id(), session_data->get_h2_stream_id());
 
     // Do we meet all the conditions for MIME file processing?
     if (source_id == SRC_CLIENT)

@@ -138,7 +138,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
 
     if (session_data == nullptr)
     {
-        HttpInspect::http_set_flow_data(flow, session_data = new HttpFlowData);
+        HttpInspect::http_set_flow_data(flow, session_data = new HttpFlowData(flow));
         HttpModule::increment_peg_counts(PEG_FLOW);
     }
 

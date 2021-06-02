@@ -27,6 +27,7 @@ namespace HttpEnums
 static const int MAX_OCTETS = 63780;
 static const int GZIP_BLOCK_SIZE = 2048;
 static const int MAX_SECTION_STRETCH = 1460;
+static const int REQUEST_PUBLISH_DEPTH = 2000;
 
 static const uint32_t HTTP_GID = 119;
 static const int GZIP_WINDOW_BITS = 31;

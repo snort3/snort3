@@ -827,6 +827,34 @@ void AppIdHttpSession::set_field(HttpFieldIds id, const uint8_t* str, int32_t le
     }
 }
 
+void AppIdHttpSession::set_req_body_field(HttpFieldIds id, const uint8_t* str, int32_t len,
+    AppidChangeBits& change_bits)
+{
+    if (str and len)
+    {
+        if (rcvd_full_req_body)
+        {
+            delete meta_data[id];
+            meta_data[id] = nullptr;
+            rcvd_full_req_body = false;
+        }
+
+        if (!meta_data[id])
+            meta_data[id] = new std::string((const char*)str, len);
+        else
+        {
+            std::string *req_body = new std::string(*meta_data[id]);
+            delete meta_data[id];
+            req_body->append((const char*)str);
+            meta_data[id] = req_body;
+        }
+        set_http_change_bits(change_bits, id);
+        set_scan_flags(id);
+
+        if (appidDebug->is_active())
+            print_field(id, meta_data[id]);
+    }
+}
 void AppIdHttpSession::print_field(HttpFieldIds id, const std::string* field)
 {
     string field_name;

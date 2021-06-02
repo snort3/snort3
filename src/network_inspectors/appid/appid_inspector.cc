@@ -40,6 +40,7 @@
 #include "appid_discovery.h"
 #include "appid_ha.h"
 #include "appid_http_event_handler.h"
+#include "appid_http2_req_body_event_handler.h"
 #include "appid_opportunistic_tls_event_handler.h"
 #include "appid_peg_counts.h"
 #include "appid_session.h"
@@ -138,6 +139,9 @@ bool AppIdInspector::configure(SnortConfig* sc)
 
     DataBus::subscribe_global(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(
         HttpEventHandler::RESPONSE_EVENT, *this), sc);
+
+    DataBus::subscribe_global(HTTP2_REQUEST_BODY_EVENT_KEY, new AppIdHttp2ReqBodyEventHandler(),
+        sc);
 
     DataBus::subscribe_global(DATA_DECRYPT_EVENT, new DataDecryptEventHandler(), sc);
 

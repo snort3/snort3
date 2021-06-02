@@ -174,6 +174,7 @@ void HttpInspect::show(const SnortConfig*) const
     ConfigLogger::log_flag("plus_to_space", params->uri_param.plus_to_space);
     ConfigLogger::log_flag("simplify_path", params->uri_param.simplify_path);
     ConfigLogger::log_value("xff_headers", xff_headers.c_str());
+    ConfigLogger::log_flag("request_body_app_detection", params->publish_request_body);
 }
 
 InspectSection HttpInspect::get_latest_is(const Packet* p)
@@ -428,14 +429,14 @@ HttpFlowData* HttpInspect::http_get_flow_data(const Flow* flow)
 
 void HttpInspect::http_set_flow_data(Flow* flow, HttpFlowData* flow_data)
 {
-    Http2FlowData* h2i_flow_data = nullptr;
-    if (Http2FlowData::inspector_id != 0)
-        h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
-    if (h2i_flow_data == nullptr)
+    // for_http2 set in HttpFlowData constructor after checking for h2i_flow_data
+    if (!flow_data->for_http2)
         flow->set_flow_data(flow_data);
     else
     {
-        flow_data->for_http2 = true;
+        Http2FlowData* h2i_flow_data =
+            (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+        assert(h2i_flow_data);
         h2i_flow_data->set_hi_flow_data(flow_data);
     }
 }

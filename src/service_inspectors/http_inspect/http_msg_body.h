@@ -39,8 +39,11 @@ public:
     HttpMsgBody* get_body() override { return this; }
     const Field& get_classic_client_body();
     const Field& get_detect_data() { return detect_data; }
+    const Field& get_msg_text_new() const { return msg_text_new; }
     static void fd_event_callback(void* context, int event);
     bool is_first() { return first_body; }
+    void publish() override;
+    int32_t get_publish_length() const;
 
 protected:
     HttpMsgBody(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
@@ -75,6 +78,8 @@ private:
     Field detect_data;
     Field enhanced_js_norm_body;
     Field classic_client_body;   // URI normalization applied
+
+    int32_t publish_length = HttpCommon::STAT_NOT_PRESENT;
 };
 
 #endif

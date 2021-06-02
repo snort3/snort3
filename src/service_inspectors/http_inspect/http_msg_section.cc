@@ -90,6 +90,7 @@ void HttpMsgSection::update_depth() const
 {
     const int64_t& file_depth_remaining = session_data->file_depth_remaining[source_id];
     const int64_t& detect_depth_remaining = session_data->detect_depth_remaining[source_id];
+    const int32_t& publish_depth_remaining = session_data->publish_depth_remaining[source_id];
 
     if ((detect_depth_remaining <= 0) &&
         (session_data->detection_status[source_id] == DET_ON) &&
@@ -103,16 +104,16 @@ void HttpMsgSection::update_depth() const
 
     if (detect_depth_remaining <= 0)
     {
-        if (file_depth_remaining <= 0)
+        if ((file_depth_remaining <= 0) && (publish_depth_remaining <= 0))
         {
             // Don't need any more of the body
             session_data->section_size_target[source_id] = 0;
         }
         else
         {
-            // Just for file processing.
-            session_data->section_size_target[source_id] = target_size;
+            // Need data for file processing or publishing
             session_data->stretch_section_to_packet[source_id] = true;
+            session_data->section_size_target[source_id] = target_size;
         }
         return;
     }
@@ -394,23 +395,6 @@ void HttpMsgSection::get_related_sections()
     header[SRC_SERVER] = transaction->get_header(SRC_SERVER);
     trailer[SRC_CLIENT] = transaction->get_trailer(SRC_CLIENT);
     trailer[SRC_SERVER] = transaction->get_trailer(SRC_SERVER);
-}
-
-uint32_t HttpMsgSection::get_h2_stream_id()
-{
-    if (h2_stream_id != STAT_NOT_COMPUTE)
-        return h2_stream_id;
-    
-    h2_stream_id = 0;
-    if (session_data->for_http2)
-    {
-        Http2FlowData* h2i_flow_data =
-            (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
-        assert(h2i_flow_data);
-        if (h2i_flow_data)
-            h2_stream_id = h2i_flow_data->get_processing_stream_id();
-    }
-    return h2_stream_id;
 }
 
 void HttpMsgSection::clear()

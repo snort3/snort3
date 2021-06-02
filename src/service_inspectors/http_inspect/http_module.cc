@@ -123,6 +123,11 @@ const Parameter HttpModule::http_params[] =
     { "xff_headers", Parameter::PT_STRING, nullptr, "x-forwarded-for true-client-ip",
       "specifies the xff type headers to parse and consider in the same order "
       "of preference as defined" },
+
+    { "request_body_app_detection", Parameter::PT_BOOL, nullptr, "false",
+      "make HTTP/2 request message bodies available for application detection "
+          "(detection requires AppId)" },
+
 #ifdef REG_TEST
     { "test_input", Parameter::PT_BOOL, nullptr, "false",
       "read HTTP messages from text file" },
@@ -308,6 +313,11 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
         }
         params->xff_headers[hdr_idx] = end_header;
     }
+    else if (val.is("request_body_app_detection"))
+    {
+        params->publish_request_body = val.get_bool();
+    }
+
 #ifdef REG_TEST
     else if (val.is("test_input"))
     {

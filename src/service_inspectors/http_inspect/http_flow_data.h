@@ -47,7 +47,7 @@ class JSNormalizer;
 class HttpFlowData : public snort::FlowData
 {
 public:
-    HttpFlowData();
+    HttpFlowData(snort::Flow* flow);
     ~HttpFlowData() override;
     static unsigned inspector_id;
     static void init() { inspector_id = snort::FlowData::create_flow_data_id(); }
@@ -86,11 +86,14 @@ public:
     void reset_partial_flush(HttpCommon::SourceId source_id)
     { partial_flush[source_id] = false; }
 
+    uint32_t get_h2_stream_id() const;
+
 private:
     // HTTP/2 handling
     bool for_http2 = false;
     HttpEnums::H2BodyState h2_body_state[2] = { HttpEnums::H2_BODY_NOT_COMPLETE,
          HttpEnums::H2_BODY_NOT_COMPLETE };
+    uint32_t h2_stream_id = 0;
 
     // Convenience routines
     void half_reset(HttpCommon::SourceId source_id);
@@ -165,12 +168,15 @@ private:
         HttpCommon::STAT_NOT_PRESENT };
     int64_t detect_depth_remaining[2] = { HttpCommon::STAT_NOT_PRESENT,
         HttpCommon::STAT_NOT_PRESENT };
+    int32_t publish_depth_remaining[2] = { HttpCommon::STAT_NOT_PRESENT,
+        HttpCommon::STAT_NOT_PRESENT };
     uint64_t expected_trans_num[2] = { 1, 1 };
 
     // number of user data octets seen so far (regular body or chunks)
     int64_t body_octets[2] = { HttpCommon::STAT_NOT_PRESENT, HttpCommon::STAT_NOT_PRESENT };
     // normalized octets forwarded to file or MIME processing
     int64_t file_octets[2] = { HttpCommon::STAT_NOT_PRESENT, HttpCommon::STAT_NOT_PRESENT };
+    int32_t publish_octets[2] = { HttpCommon::STAT_NOT_PRESENT, HttpCommon::STAT_NOT_PRESENT };
     uint32_t partial_inspected_octets[2] = { 0, 0 };
     uint8_t* partial_detect_buffer[2] = { nullptr, nullptr };
     uint32_t partial_detect_length[2] = { 0, 0 };
