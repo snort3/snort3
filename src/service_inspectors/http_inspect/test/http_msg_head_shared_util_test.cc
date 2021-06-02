@@ -37,8 +37,8 @@ using namespace snort;
 // Stubs whose sole purpose is to make the test code link
 long HttpTestManager::print_amount {};
 bool HttpTestManager::print_hex {};
-void FlowData::update_allocations(unsigned long) {}
-void FlowData::update_deallocations(unsigned long) {}
+void FlowData::update_allocations(size_t) {}
+void FlowData::update_deallocations(size_t) {}
 
 // Tests for get_next_code()
 TEST_GROUP(get_next_code)
