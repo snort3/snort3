@@ -74,6 +74,7 @@ const char* AllowActionOption[] =
  * Function prototype(s)
  */
 static void snort_reputation(ReputationConfig* GlobalConf, Packet* p);
+static void populate_trace_data(IPdecision& decision, Packet* p);
 
 static inline IPrepInfo* reputation_lookup(ReputationConfig* config, const SfIp* ip)
 {
@@ -351,6 +352,10 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         reputationstats.blocked++;
         if (PacketTracer::is_active())
             PacketTracer::log("Reputation: packet blocked, drop\n");
+
+        if (PacketTracer::is_daq_activated())
+            populate_trace_data(decision, p);
+
         return;
     }
 
@@ -399,6 +404,9 @@ static void snort_reputation(ReputationConfig* config, Packet* p)
         act->trust_session(p, true);
         reputationstats.trusted++;
     }
+
+    if (PacketTracer::is_daq_activated())
+        populate_trace_data(decision, p);
 }
 
 static const char* to_string(NestedIP nip)
@@ -458,6 +466,27 @@ static const char* to_string(IPdecision ipd)
     default:
         return "";
     }
+}
+
+static void populate_trace_data(IPdecision& decision, Packet* p)
+{
+    char addr[INET6_ADDRSTRLEN];
+    const SfIp* ip = nullptr;
+
+    if (BLOCKED_SRC == decision or MONITORED_SRC == decision or TRUSTED_SRC == decision)
+    {
+        ip = p->ptrs.ip_api.get_src();
+    }
+    else if (BLOCKED_DST == decision or MONITORED_DST == decision or TRUSTED_DST == decision)
+    {
+        ip = p->ptrs.ip_api.get_dst();
+    }
+
+    sfip_ntop(ip, addr, sizeof(addr));
+
+    PacketTracer::daq_log("SI-IP+%" PRId64"++Matched ip %s, action %s$",
+        TO_NSECS(pt_timer->get()),
+        addr, to_string(decision));
 }
 
 class AuxiliaryIpRepHandler : public DataHandler
@@ -522,6 +551,9 @@ void Reputation::eval(Packet* p)
 
     if (p->is_rebuilt())
         return;
+
+    if (PacketTracer::is_daq_activated())
+        PacketTracer::pt_timer_start();
 
     snort_reputation(&config, p);
     ++reputationstats.packets;
