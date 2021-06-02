@@ -78,8 +78,8 @@ public:
         char direction, snort::FlowData*);
 
     int add_expected(const snort::Packet* ctrlPkt, PktType, IpProtocol, const snort::SfIp *srcIP,
-        uint16_t srcPort, const snort::SfIp *dstIP, uint16_t dstPort,
-        SnortProtocolId snort_protocol_id, snort::FlowData*, bool swap_app_direction = false);
+        uint16_t srcPort, const snort::SfIp *dstIP, uint16_t dstPort, SnortProtocolId snort_protocol_id,
+        snort::FlowData*, bool swap_app_direction = false, bool expect_multi = false);
 
     class ExpectCache* get_exp_cache()
     { return exp_cache; }

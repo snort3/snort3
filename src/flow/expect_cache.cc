@@ -316,8 +316,8 @@ ExpectCache::~ExpectCache()
  *
  */
 int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_proto,
-    const SfIp* cliIP, uint16_t cliPort, const SfIp* srvIP, uint16_t srvPort,
-    char direction, FlowData* fd, SnortProtocolId snort_protocol_id, bool swap_app_direction)
+    const SfIp* cliIP, uint16_t cliPort, const SfIp* srvIP, uint16_t srvPort, char direction,
+    FlowData* fd, SnortProtocolId snort_protocol_id, bool swap_app_direction, bool expect_multi)
 {
     /* Just pull the VLAN ID, MPLS ID, and Address Space ID from the
         control packet until we have a use case for not doing so. */
@@ -392,8 +392,11 @@ int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_pro
                 PacketTracer::log("Create expected channel request sent with %s -> %s %hu %hhu\n",
                         dipstr, sipstr, srvPort, static_cast<uint8_t>(ip_proto));
             }
+            unsigned flag = 0;
+            if (expect_multi)
+                flag |= DAQ_EFLOW_ALLOW_MULTIPLE;
             ctrlPkt->daq_instance->add_expected(ctrlPkt, cliIP, cliPort, srvIP, srvPort,
-                    ip_proto, 1000, 0);
+                    ip_proto, 1000, flag);
         }
     }
 

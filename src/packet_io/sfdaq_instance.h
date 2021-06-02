@@ -80,7 +80,7 @@ public:
     int set_packet_trace_data(DAQ_Msg_h, uint8_t* buff, uint32_t buff_len);
     int add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16_t cliPort,
             const SfIp* srvIP, uint16_t srvPort, IpProtocol, unsigned timeout_ms,
-            unsigned /* flags */);
+            unsigned flags);
     bool get_tunnel_bypass(uint16_t proto);
 
 private:

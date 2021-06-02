@@ -341,7 +341,7 @@ int SFDAQInstance::set_packet_trace_data(DAQ_Msg_h msg, uint8_t* buff, uint32_t 
 // FIXIT-L X Add Snort flag definitions for callers to use and translate/pass them through to
 // the DAQ module
 int SFDAQInstance::add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16_t cliPort,
-        const SfIp* srvIP, uint16_t srvPort, IpProtocol protocol, unsigned timeout_ms, unsigned /* flags */)
+        const SfIp* srvIP, uint16_t srvPort, IpProtocol protocol, unsigned timeout_ms, unsigned flags)
 {
     DIOCTL_CreateExpectedFlow d_cef;
 
@@ -386,6 +386,10 @@ int SFDAQInstance::add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16
     key->vlan_cnots = 1;
 
     d_cef.flags = 0;
+
+    if (flags & DAQ_EFLOW_ALLOW_MULTIPLE)
+        d_cef.flags |= DAQ_EFLOW_ALLOW_MULTIPLE;
+
 /*
     if (flags & DAQ_DC_FLOAT)
         d_cef.flags |= DAQ_EFLOW_FLOAT;
