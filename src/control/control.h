@@ -34,6 +34,7 @@ struct lua_State;
 class ControlConn
 {
 public:
+#ifdef SHELL
     ControlConn(int fd, bool local);
     ~ControlConn();
 
@@ -48,17 +49,16 @@ public:
 
     bool is_blocked() const { return blocked; }
     bool is_closed() const { return (fd == -1); }
-    SO_PUBLIC bool is_local() const { return local; }
-
     bool has_pending_command() const { return !pending_commands.empty(); }
 
     void configure() const;
     int read_commands();
     int execute_commands();
-    SO_PUBLIC bool respond(const char* format, va_list& ap);
-    SO_PUBLIC bool respond(const char* format, ...) __attribute__((format (printf, 2, 3)));
     void shutdown();
 
+    SO_PUBLIC bool is_local() const { return local; }
+    SO_PUBLIC bool respond(const char* format, va_list& ap);
+    SO_PUBLIC bool respond(const char* format, ...) __attribute__((format (printf, 2, 3)));
     SO_PUBLIC static ControlConn* query_from_lua(const lua_State*);
 
 private:
@@ -71,6 +71,12 @@ private:
     int fd;
     bool local;
     bool blocked = false;
+#else
+    SO_PUBLIC bool is_local() const { return false; }
+    SO_PUBLIC bool respond(const char* format, va_list& ap) { return false;}
+    SO_PUBLIC bool respond(const char* format, ...) __attribute__((format (printf, 2, 3))) { return false; }
+    SO_PUBLIC static ControlConn* query_from_lua(const lua_State*) { return nullptr; }
+#endif
 };
 
 #endif

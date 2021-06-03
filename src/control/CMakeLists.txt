@@ -5,6 +5,7 @@ if ( ENABLE_SHELL )
 endif ( ENABLE_SHELL )
 
 add_library ( control OBJECT
+    control.h
     ${SHELL_SOURCES}
 )
 
