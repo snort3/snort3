@@ -45,12 +45,15 @@ Http2RstStreamFrame::Http2RstStreamFrame(const uint8_t* header_buffer, const uin
 
 bool Http2RstStreamFrame::valid_sequence(Http2Enums::StreamState)
 {
+    // FIXIT-E uncomment once we track completed streams
+    /*
     if (stream->get_state(SRC_CLIENT) == STREAM_EXPECT_HEADERS and
         stream->get_state(SRC_SERVER) == STREAM_EXPECT_HEADERS)
     {
         session_data->events[source_id]->create_event(EVENT_BAD_RST_STREAM_SEQUENCE);
         *session_data->infractions[source_id] += INF_BAD_RST_STREAM_SEQUENCE;
     }
+    */
     return true;
 }
 
