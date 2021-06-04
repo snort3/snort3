@@ -204,7 +204,7 @@ bool Ipv6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     snort.ip_api.set(ip6h);
     // update to real IP when needed
     const DAQ_NAPTInfo_t* napti = (const DAQ_NAPTInfo_t*) daq_msg_get_meta(raw.daq_msg, DAQ_PKT_META_NAPT_INFO);
-    if (napti && codec.ip_layer_cnt == 1)
+    if (napti && codec.ip_layer_cnt == napti->ip_layer)
     {
         SfIp real_src;
         SfIp real_dst;
