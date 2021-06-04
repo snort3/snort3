@@ -41,7 +41,8 @@ class HpackIndexTable
 {
 public:
     HpackIndexTable(Http2FlowData* flow_data, HttpCommon::SourceId src_id) :
-        session_data(flow_data), source_id(src_id) { }
+        dynamic_table(flow_data), session_data(flow_data), source_id(src_id)
+        { }
     const HpackTableEntry* lookup(uint64_t index) const;
     bool add_index(const Field& name, const Field& value);
     bool hpack_table_size_update(const uint32_t size);
