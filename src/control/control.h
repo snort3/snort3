@@ -73,8 +73,8 @@ private:
     bool blocked = false;
 #else
     SO_PUBLIC bool is_local() const { return false; }
-    SO_PUBLIC bool respond(const char* format, va_list& ap) { return false;}
-    SO_PUBLIC bool respond(const char* format, ...) __attribute__((format (printf, 2, 3))) { return false; }
+    SO_PUBLIC bool respond(const char*, va_list&) { return false;}
+    SO_PUBLIC bool respond(const char*, ...) __attribute__((format (printf, 2, 3))) { return false; }
     SO_PUBLIC static ControlConn* query_from_lua(const lua_State*) { return nullptr; }
 #endif
 };

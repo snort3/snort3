@@ -44,13 +44,13 @@ using namespace snort;
 static HostCacheModule module;
 #define LOG_MAX 128
 static char logged_message[LOG_MAX+1];
-
+#ifdef SHELL
 static ControlConn ctrlcon(1, true);
 ControlConn::ControlConn(int, bool) {}
 ControlConn::~ControlConn() {}
 ControlConn* ControlConn::query_from_lua(const lua_State*) { return &ctrlcon; }
 bool ControlConn::respond(const char*, ...) { return true; }
-
+#endif
 namespace snort
 {
 const SnortConfig* SnortConfig::get_conf()
