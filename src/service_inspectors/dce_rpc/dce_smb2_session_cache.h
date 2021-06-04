@@ -29,35 +29,76 @@
 
 #define SMB_AVG_FILES_PER_SESSION 5
 
-template<typename Key, typename Value, typename Hash>
-class Dce2Smb2SharedCache : public LruCacheShared<Key, Value, Hash>
+template<typename Key, typename Value, typename Hash, typename Eq = std::equal_to<Key>,
+    typename Purgatory = std::vector<std::shared_ptr<Value> > >
+class Dce2Smb2SharedCache : public LruCacheShared<Key, Value, Hash, Eq, Purgatory>
 {
 public:
     Dce2Smb2SharedCache() = delete;
     Dce2Smb2SharedCache(const Dce2Smb2SharedCache& arg) = delete;
     Dce2Smb2SharedCache& operator=(const Dce2Smb2SharedCache& arg) = delete;
     Dce2Smb2SharedCache(const size_t initial_size) :
-        LruCacheShared<Key, Value, Hash>(initial_size) { }
-    virtual ~Dce2Smb2SharedCache() { }
+        LruCacheShared<Key, Value, Hash, Eq, Purgatory>(initial_size) { }
 
-    Value* find_session(Key key)
-    { return this->find(key).get(); }
-    Value* find_else_create_session(Key key)
+    Value* find_session(Key key, Dce2Smb2SessionData* ssd)
     {
-        std::shared_ptr<Value> new_session = std::shared_ptr<Value>(new Value());
-        return this->find_else_insert(key, new_session, nullptr).get();
+        flow_mutex.lock();
+        Value* session = this->find(key).get();
+        if (session)
+            session->attach_flow(ssd->get_flow_key(), ssd);
+        flow_mutex.unlock();
+        return session;
+    }
+
+    Value* find_else_create_session(Key& key, Dce2Smb2SessionData* ssd)
+    {
+        std::shared_ptr<Value> new_session = std::shared_ptr<Value>(new Value(key));
+        flow_mutex.lock();
+        Value* session = this->find_else_insert(key, new_session, nullptr).get();
+        session->attach_flow(ssd->get_flow_key(), ssd);
+        flow_mutex.unlock();
+        return session;
+    }
+
+    size_t mem_size() override
+    {
+        return current_size;
+    }
+
+    void increase_size(size_t size)
+    {
+        current_size += size;
+    }
+
+    void decrease_size(size_t size)
+    {
+        assert(current_size >= size);
+        current_size -= size;
+    }
+
+private:
+    using LruCacheShared<Key, Value, Hash, Eq, Purgatory>::current_size;
+    using LruCacheShared<Key, Value, Hash, Eq, Purgatory>::cache_mutex;
+    std::mutex flow_mutex;
+    void increase_size(Value* value_ptr=nullptr) override
+    {
+        if (value_ptr) current_size += sizeof(*value_ptr);
+    }
+
+    void decrease_size(Value* value_ptr=nullptr) override
+    {
+        if (value_ptr)
+        {
+            assert(current_size >= sizeof(*value_ptr) );
+            current_size -= sizeof(*value_ptr);
+        }
     }
 };
 
 using Dce2Smb2SessionCache =
     Dce2Smb2SharedCache<Smb2SessionKey, Dce2Smb2SessionTracker, Smb2KeyHash>;
 
-extern THREAD_LOCAL Dce2Smb2SessionCache* smb2_session_cache;
-
-inline void DCE2_SmbSessionCacheInit(const size_t cache_size)
-{
-    smb2_session_cache = new Dce2Smb2SessionCache(cache_size);
-}
+extern Dce2Smb2SessionCache smb2_session_cache;
 
 #endif
 

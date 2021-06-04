@@ -38,25 +38,22 @@ public:
         : fname(nullptr), fname_len(0), file_id(file_id_v), offset(offset_v)
     {
         debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "request tracker created\n");
-        memory::MemoryCap::update_allocations(sizeof(*this));
     }
 
     Dce2Smb2RequestTracker(char* fname_v, uint16_t fname_len_v)
         : fname(fname_v), fname_len(fname_len_v), file_id(0), offset(0)
     {
         debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "request tracker created\n");
-        memory::MemoryCap::update_allocations(sizeof(*this));
     }
 
     ~Dce2Smb2RequestTracker()
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "request tracker terminating\n");
+        if (smb_module_is_up)
+            debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "request tracker terminating\n");
         if (fname)
             snort_free(fname);
-        memory::MemoryCap::update_deallocations(sizeof(*this));
     }
 
-    void reset_file_name() { fname = nullptr; fname_len = 0; }
     uint64_t get_offset() { return offset; }
     uint64_t get_file_id() { return file_id; }
     char* get_file_name() { return fname; }
@@ -70,7 +67,7 @@ private:
 };
 
 using Dce2Smb2RequestTrackerMap =
-    std::unordered_map<uint64_t, Dce2Smb2RequestTracker*, std::hash<uint64_t> >;
+    std::unordered_map<Smb2MessageKey, Dce2Smb2RequestTracker*, Smb2KeyHash>;
 
 #endif
 

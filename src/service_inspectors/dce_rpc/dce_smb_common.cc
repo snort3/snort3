@@ -46,7 +46,14 @@ Dce2SmbFlowData::Dce2SmbFlowData(Dce2SmbSessionData* ssd_v) : FlowData(inspector
     if (dce2_smb_stats.max_concurrent_sessions < dce2_smb_stats.concurrent_sessions)
         dce2_smb_stats.max_concurrent_sessions = dce2_smb_stats.concurrent_sessions;
     ssd = ssd_v;
-    memory::MemoryCap::update_allocations(sizeof(*this));
+}
+
+void Dce2SmbFlowData::handle_expected(Packet* p)
+{
+    //we have a fd, but ssd not set, set it here in this flow
+    if (ssd)
+        delete ssd;
+    ssd = new Dce2Smb2SessionData(p, config);
 }
 
 Dce2SmbSessionData* Dce2SmbFlowData::upgrade(const Packet* p)
@@ -70,10 +77,10 @@ void Dce2SmbFlowData::handle_retransmit(Packet* p)
 
 Dce2SmbFlowData::~Dce2SmbFlowData()
 {
-    delete ssd;
+    if (ssd)
+        delete ssd;
     assert(dce2_smb_stats.concurrent_sessions > 0);
     dce2_smb_stats.concurrent_sessions--;
-    memory::MemoryCap::update_deallocations(sizeof(*this));
 }
 
 //Dce2SmbSessionData members
@@ -113,6 +120,16 @@ static inline DCE2_SmbVersion get_smb_version(const Packet* p)
     return DCE2_SMB_VERSION_NULL;
 }
 
+Dce2SmbFlowData* create_expected_smb_flow_data(const Packet* p, dce2SmbProtoConf* config)
+{
+    DCE2_SmbVersion smb_version = get_smb_version(p);
+    if (DCE2_SMB_VERSION_2 == smb_version)
+    {
+        return new Dce2SmbFlowData(config);
+    }
+    return nullptr;
+}
+
 Dce2SmbSessionData* create_new_smb_session(const Packet* p,
     dce2SmbProtoConf* config)
 {
@@ -143,10 +160,10 @@ inline FileContext* get_smb_file_context(const Packet* p)
     return file_flows ? file_flows->get_current_file_context() : nullptr;
 }
 
-FileContext* get_smb_file_context(uint64_t file_id,
+FileContext* get_smb_file_context(Flow* flow, uint64_t file_id,
     uint64_t multi_file_processing_id, bool to_create)
 {
-    FileFlows* file_flows = FileFlows::get_file_flows(DetectionEngine::get_current_packet()->flow);
+    FileFlows* file_flows = FileFlows::get_file_flows(flow);
 
     if ( !file_flows )
     {
@@ -202,11 +219,11 @@ void set_smb_reassembled_data(uint8_t* nb_ptr, uint16_t co_len)
     {
         Dce2SmbFlowData* fd = (Dce2SmbFlowData*)flow->get_flow_data(
             Dce2SmbFlowData::inspector_id);
-       if (fd)
-       {
-           Dce2SmbSessionData* smb_ssn_data = fd->get_smb_session_data();
-           smb_ssn_data->set_reassembled_data(nb_ptr, co_len);
-       }
+        if (fd)
+        {
+            Dce2SmbSessionData* smb_ssn_data = fd->get_smb_session_data();
+            smb_ssn_data->set_reassembled_data(nb_ptr, co_len);
+        }
     }
 }
 

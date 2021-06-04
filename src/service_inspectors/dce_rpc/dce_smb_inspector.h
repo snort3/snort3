@@ -32,6 +32,7 @@ public:
     Dce2Smb(const dce2SmbProtoConf&);
     ~Dce2Smb() override;
 
+    bool configure(snort::SnortConfig*) override;
     void show(const snort::SnortConfig*) const override;
     void eval(snort::Packet*) override;
     void clear(snort::Packet*) override;

@@ -28,6 +28,7 @@
 #include "main/thread_config.h"
 #include "memory/memory_cap.h"
 #include "utils/util.h"
+#include <mutex>
 
 #include "dce_smb_common.h"
 
@@ -99,6 +100,23 @@ struct Smb2SyncHdr
     uint32_t tree_id;         /* identifies the tree connect for the command */
     uint64_t session_id;      /* identifies the established session for the command*/
     uint8_t signature[16];    /* signature of the message */
+};
+
+struct Smb2NegotiateResponseHdr
+{
+    uint16_t structure_size;
+    uint16_t security_mode;
+    uint16_t dialect_revision;
+    uint16_t negotiate_context_count;
+    uint64_t servier_guid[2];
+    uint32_t capabilities;
+    uint32_t max_transaction_size;
+    uint32_t max_read_size;
+    uint32_t max_write_size;
+    uint64_t system_time;
+    uint64_t server_start_time;
+    uint16_t security_buffer_offset;
+    uint16_t security_buffer_length;
 };
 
 struct Smb2WriteRequestHdr
@@ -237,6 +255,9 @@ struct Smb2TreeConnectResponseHdr
 
 #define SMB2_ERROR_RESPONSE_STRUC_SIZE 9
 
+#define SMB2_NEGOTIATE_REQUEST_STRUC_SIZE 36
+#define SMB2_NEGOTIATE_RESPONSE_STRUC_SIZE 65
+
 #define SMB2_CREATE_REQUEST_STRUC_SIZE 57
 #define SMB2_CREATE_RESPONSE_STRUC_SIZE 89
 
@@ -257,8 +278,6 @@ struct Smb2TreeConnectResponseHdr
 #define SMB2_TREE_DISCONNECT_REQUEST_STRUC_SIZE 4
 #define SMB2_TREE_DISCONNECT_RESPONSE_STRUC_SIZE 4
 
-#define SMB2_FILE_ENDOFFILE_INFO 0x14
-
 #define SMB2_SETUP_REQUEST_STRUC_SIZE 25
 #define SMB2_SETUP_RESPONSE_STRUC_SIZE 9
 
@@ -267,6 +286,9 @@ struct Smb2TreeConnectResponseHdr
 
 #define SMB2_IOCTL_REQUEST_STRUC_SIZE 57
 #define SMB2_IOCTL_RESPONSE_STRUC_SIZE 49
+
+#define SMB2_FILE_ENDOFFILE_INFO 0x14
+#define SMB2_GLOBAL_CAP_MULTI_CHANNEL 0x08
 
 #define GET_CURRENT_PACKET snort::DetectionEngine::get_current_packet()
 
@@ -319,27 +341,18 @@ struct Smb2FlowKey
     uint8_t pkt_type;
     uint8_t version;
     uint8_t padding;
+};
 
-    bool operator==(const Smb2FlowKey& other) const
+struct Smb2MessageKey
+{
+    uint64_t mid;
+    uint32_t flow_key;
+    uint32_t padding;
+
+    bool operator==(const Smb2MessageKey& other) const
     {
-        return (ip_l[0] == other.ip_l[0] and
-               ip_l[1] == other.ip_l[1] and
-               ip_l[2] == other.ip_l[2] and
-               ip_l[3] == other.ip_l[3] and
-               ip_h[0] == other.ip_h[0] and
-               ip_l[1] == other.ip_l[1] and
-               ip_l[2] == other.ip_l[2] and
-               ip_l[3] == other.ip_l[3] and
-               mplsLabel == other.mplsLabel and
-               port_l == other.port_l and
-               port_h == other.port_h and
-               group_l == other.group_l and
-               group_h == other.group_h and
-               vlan_tag == other.vlan_tag and
-               addressSpaceId == other.addressSpaceId and
-               ip_protocol == other.ip_protocol and
-               pkt_type == other.pkt_type and
-               version == other.version);
+        return (mid == other.mid and
+               flow_key == other.flow_key);
     }
 };
 PADDING_GUARD_END
@@ -357,6 +370,11 @@ struct Smb2KeyHash
     size_t operator()(const Smb2SessionKey& key) const
     {
         return do_hash_session_key((const uint32_t*)&key);
+    }
+
+    size_t operator()(const Smb2MessageKey& key) const
+    {
+        return do_hash_message_key((const uint32_t*)&key);
     }
 
 private:
@@ -380,6 +398,15 @@ private:
         a += d[3]; b += d[4];  c += d[5];  mix(a, b, c);
         a += d[6]; b += d[7];  c += d[8];  mix(a, b, c);
         a += d[9]; b += d[10]; c += d[11]; finalize(a, b, c);
+        return c;
+    }
+
+    size_t do_hash_message_key(const uint32_t* d) const
+    {
+        uint32_t a, b, c;
+        a = b = c = SMB_KEY_HASH_HARDENER;
+        a += d[0]; b += d[1]; c += d[2]; mix(a, b, c);
+        finalize(a, b, c);
         return c;
     }
 
@@ -408,7 +435,7 @@ private:
     }
 };
 
-Smb2FlowKey get_smb2_flow_key(void);
+uint32_t get_smb2_flow_key(const snort::FlowKey*);
 
 class Dce2Smb2SessionData : public Dce2SmbSessionData
 {
@@ -420,9 +447,13 @@ public:
     void remove_session(uint64_t);
     void handle_retransmit(FilePosition, FileVerdict) override { }
     void reset_matching_tcp_file_tracker(Dce2Smb2FileTracker*);
-    void set_tcp_file_tracker(Dce2Smb2FileTracker* file_tracker)
-    { tcp_file_tracker = file_tracker; }
     void set_reassembled_data(uint8_t*, uint16_t) override;
+    uint32_t get_flow_key() { return flow_key; }
+    void set_tcp_file_tracker(Dce2Smb2FileTracker* file_tracker)
+    {
+        std::lock_guard<std::mutex> guard(session_data_mutex);
+        tcp_file_tracker = file_tracker;
+    }
 
 private:
     void process_command(const Smb2Hdr*, const uint8_t*);
@@ -430,13 +461,15 @@ private:
     Dce2Smb2SessionTracker* create_session(uint64_t);
     Dce2Smb2SessionTracker* find_session(uint64_t);
 
-    Smb2FlowKey flow_key;
+    uint32_t flow_key;
     Dce2Smb2FileTracker* tcp_file_tracker;
     Dce2Smb2SessionTrackerMap connected_sessions;
+    std::mutex session_data_mutex;
+    std::mutex tcp_file_tracker_mutex;
 };
 
 using Dce2Smb2SessionDataMap =
-    std::unordered_map<Smb2FlowKey, Dce2Smb2SessionData*, Smb2KeyHash>;
+    std::unordered_map<uint32_t, Dce2Smb2SessionData*, std::hash<uint32_t> >;
 
 #endif  /* _DCE_SMB2_H_ */
 

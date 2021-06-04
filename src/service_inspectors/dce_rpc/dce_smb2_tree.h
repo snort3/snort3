@@ -45,7 +45,6 @@ public:
     {
         debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
             "tree tracker %" PRIu32 " created\n", tree_id);
-        memory::MemoryCap::update_allocations(sizeof(*this));
         if (share_type != SMB2_SHARE_TYPE_DISK)
         {
             co_tracker = (DCE2_CoTracker*)snort_calloc(sizeof(DCE2_CoTracker));
@@ -59,11 +58,11 @@ public:
 
     ~Dce2Smb2TreeTracker();
 
-    void open_file(uint64_t);
+    Dce2Smb2FileTracker* open_file(const uint64_t, const uint32_t);
     void close_file(uint64_t, bool=true);
     Dce2Smb2FileTracker* find_file(uint64_t);
-    Dce2Smb2RequestTracker* find_request(uint64_t);
-    void process(uint16_t, uint8_t, const Smb2Hdr*, const uint8_t*);
+    Dce2Smb2RequestTracker* find_request(const uint64_t, const uint32_t);
+    void process(uint16_t, uint8_t, const Smb2Hdr*, const uint8_t*, const uint32_t);
     Dce2Smb2SessionTracker* get_parent() { return parent_session; }
     DCE2_CoTracker* get_cotracker() { return co_tracker; }
     uint32_t get_tree_id() { return tree_id; }
@@ -71,17 +70,22 @@ public:
 
 private:
     void process_set_info_request(const Smb2Hdr*);
-    void process_close_request(const Smb2Hdr*);
-    void process_create_response(uint64_t, const Smb2Hdr*);
-    void process_create_request(uint64_t, const Smb2Hdr*, const uint8_t*);
-    void process_read_response(uint64_t, const Smb2Hdr*, const uint8_t*);
-    void process_read_request(uint64_t, const Smb2Hdr*);
-    void process_write_request(uint64_t, const Smb2Hdr*, const uint8_t*);
+    void process_close_request(const Smb2Hdr*, const uint32_t);
+    void process_create_response(const uint64_t, const uint32_t, const Smb2Hdr*);
+    void process_create_request(const uint64_t, const uint32_t, const Smb2Hdr*, const uint8_t*);
+    void process_read_response(const uint64_t, const uint32_t, const Smb2Hdr*, const uint8_t*);
+    void process_read_request(const uint64_t, const uint32_t, const Smb2Hdr*);
+    void process_write_request(const uint64_t, const uint32_t, const Smb2Hdr*, const uint8_t*);
     uint64_t get_durable_file_id(const Smb2CreateRequestHdr*, const uint8_t*);
-    bool remove_request(uint64_t);
-    void process_ioctl_command(uint8_t, const Smb2Hdr*, const uint8_t*);
-    void store_request(uint64_t message_id, Dce2Smb2RequestTracker* request)
-    { active_requests.insert(std::make_pair(message_id, request)); }
+    bool remove_request(const uint64_t, const uint32_t);
+    void process_ioctl_command(const uint8_t, const uint32_t, const Smb2Hdr*, const uint8_t*);
+    bool store_request(const uint64_t message_id, const uint32_t current_flow_key,
+        Dce2Smb2RequestTracker* request)
+    {
+        Smb2MessageKey message_key = { message_id, current_flow_key, 0 };
+        std::lock_guard<std::mutex> guard(tree_tracker_mutex);
+        return active_requests.insert(std::make_pair(message_key, request)).second;
+    }
 
     uint32_t tree_id;
     uint8_t share_type;
@@ -89,6 +93,7 @@ private:
     Dce2Smb2FileTrackerMap opened_files;
     Dce2Smb2RequestTrackerMap active_requests;
     Dce2Smb2SessionTracker* parent_session;
+    std::mutex tree_tracker_mutex;
 };
 
 using Dce2Smb2TreeTrackerMap =

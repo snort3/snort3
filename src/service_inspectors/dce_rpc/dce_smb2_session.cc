@@ -24,56 +24,53 @@
 
 #include "dce_smb2_session.h"
 
+#include "dce_smb2_session_cache.h"
+
+#include "file_api/file_flows.h"
+
 uint32_t Smb2Tid(const Smb2Hdr* hdr)
 {
     return snort::alignedNtohl(&(((const Smb2SyncHdr*)hdr)->tree_id));
 }
 
-//init must be called when a session tracker is created.
-void Dce2Smb2SessionTracker::init(uint64_t sid,
-    const Smb2SessionKey& session_key_v)
+Dce2Smb2SessionData* Dce2Smb2SessionTracker::get_flow(uint32_t flow_key)
 {
-    session_id = sid;
-    session_key = session_key_v;
-    debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "session tracker %" PRIu64
-        " created\n", session_id);
-}
-
-Dce2Smb2SessionData* Dce2Smb2SessionTracker::get_current_flow()
-{
-    Smb2FlowKey flow_key = get_smb2_flow_key();
+    std::lock_guard<std::mutex> guard(attached_flows_mutex);
     auto it_flow = attached_flows.find(flow_key);
     return (it_flow != attached_flows.end()) ? it_flow->second : nullptr;
 }
 
 Dce2Smb2TreeTracker* Dce2Smb2SessionTracker::find_tree_for_message(
-    uint64_t message_id)
+    const uint64_t message_id, const uint32_t flow_key)
 {
+    std::lock_guard<std::mutex> guard(connected_trees_mutex);
     for (auto it_tree : connected_trees)
     {
-        Dce2Smb2RequestTracker* request = it_tree.second->find_request(message_id);
+        Dce2Smb2RequestTracker* request = it_tree.second->find_request(message_id, flow_key);
         if (request)
             return it_tree.second;
     }
     return nullptr;
 }
 
-void Dce2Smb2SessionTracker::process(uint16_t command, uint8_t command_type,
-    const Smb2Hdr* smb_header, const uint8_t* end)
+void Dce2Smb2SessionTracker::process(const uint16_t command, uint8_t command_type,
+    const Smb2Hdr* smb_header, const uint8_t* end, const uint32_t current_flow_key)
 {
     Dce2Smb2TreeTracker* tree = nullptr;
     uint32_t tree_id = Smb2Tid(smb_header);
 
     if (tree_id)
     {
+        connected_trees_mutex.lock();
         auto it_tree = connected_trees.find(tree_id);
         if (it_tree != connected_trees.end())
             tree = it_tree->second;
+        connected_trees_mutex.unlock();
     }
     else
     {
         //async response case
-        tree = find_tree_for_message(Smb2Mid(smb_header));
+        tree = find_tree_for_message(Smb2Mid(smb_header), current_flow_key);
     }
 
     switch (command)
@@ -82,15 +79,16 @@ void Dce2Smb2SessionTracker::process(uint16_t command, uint8_t command_type,
     {
         uint8_t share_type = ((const Smb2TreeConnectResponseHdr*)
             ((const uint8_t*)smb_header + SMB2_HEADER_LENGTH))->share_type;
-        connect_tree(tree_id, share_type);
+        connect_tree(tree_id, current_flow_key, share_type);
     }
     break;
-
     case SMB2_COM_TREE_DISCONNECT:
         if (tree)
         {
             delete tree;
+            connected_trees_mutex.lock();
             connected_trees.erase(tree_id);
+            connected_trees_mutex.unlock();
         }
         else
             dce2_smb_stats.v2_tree_discn_ignored++;
@@ -103,7 +101,7 @@ void Dce2Smb2SessionTracker::process(uint16_t command, uint8_t command_type,
             debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
                 "%s_REQ: mid-stream session detected\n",
                 smb2_command_string[command]);
-            tree = connect_tree(tree_id);
+            tree = connect_tree(tree_id, current_flow_key);
             if (!tree)
             {
                 debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
@@ -114,7 +112,7 @@ void Dce2Smb2SessionTracker::process(uint16_t command, uint8_t command_type,
     // fallthrough
     default:
         if (tree)
-            tree->process(command, command_type, smb_header, end);
+            tree->process(command, command_type, smb_header, end, current_flow_key);
         else
         {
             debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
@@ -125,11 +123,12 @@ void Dce2Smb2SessionTracker::process(uint16_t command, uint8_t command_type,
     }
 }
 
-Dce2Smb2TreeTracker* Dce2Smb2SessionTracker::connect_tree(uint32_t tree_id,
-    uint8_t share_type)
+Dce2Smb2TreeTracker* Dce2Smb2SessionTracker::connect_tree(const uint32_t tree_id,
+    const uint32_t current_flow_key, const uint8_t share_type)
 {
-    Dce2Smb2SessionData* current_flow = get_current_flow();
-    if ((SMB2_SHARE_TYPE_DISK == share_type) and (-1 == current_flow->get_max_file_depth()) and
+    Dce2Smb2SessionData* current_flow = get_flow(current_flow_key);
+    if ((SMB2_SHARE_TYPE_DISK == share_type) and current_flow and
+        (-1 == current_flow->get_max_file_depth()) and
         (-1 == current_flow->get_smb_file_depth()))
     {
         debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "Not inserting TID (%u) "
@@ -138,34 +137,54 @@ Dce2Smb2TreeTracker* Dce2Smb2SessionTracker::connect_tree(uint32_t tree_id,
         return nullptr;
     }
     Dce2Smb2TreeTracker* tree = nullptr;
+    connected_trees_mutex.lock();
     auto it_tree = connected_trees.find(tree_id);
     if (it_tree != connected_trees.end())
         tree = it_tree->second;
+    connected_trees_mutex.unlock();
     if (!tree)
     {
         tree = new Dce2Smb2TreeTracker(tree_id, this, share_type);
+        connected_trees_mutex.lock();
         connected_trees.insert(std::make_pair(tree_id, tree));
+        connected_trees_mutex.unlock();
+        increase_size(sizeof(Dce2Smb2TreeTracker));
     }
     return tree;
 }
 
-void Dce2Smb2SessionTracker::attach_flow(Smb2FlowKey flow_key,
-    Dce2Smb2SessionData* ssd)
+void Dce2Smb2SessionTracker::clean_file_context_from_flow(Dce2Smb2FileTracker* file_tracker,
+    uint64_t file_id, uint64_t file_name_hash)
 {
-    attached_flows.insert(std::make_pair(flow_key,ssd));
+    for (auto it_flow : attached_flows)
+    {
+        snort::FileFlows* file_flows = snort::FileFlows::get_file_flows(
+            it_flow.second->get_tcp_flow(), false);
+        if (file_flows)
+            file_flows->remove_processed_file_context(file_name_hash, file_id);
+        it_flow.second->reset_matching_tcp_file_tracker(file_tracker);
+    }
 }
 
-bool Dce2Smb2SessionTracker::detach_flow(Smb2FlowKey& flow_key)
+void Dce2Smb2SessionTracker::increase_size(const size_t size)
 {
-    attached_flows.erase(flow_key);
-    return (0 == attached_flows.size());
+    smb2_session_cache.increase_size(size);
+}
+
+void Dce2Smb2SessionTracker::decrease_size(const size_t size)
+{
+    smb2_session_cache.decrease_size(size);
 }
 
 // Session Tracker is created and destroyed only from session cache
 Dce2Smb2SessionTracker::~Dce2Smb2SessionTracker(void)
 {
-    debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "session tracker %" PRIu64
-        " terminating\n", session_id);
+    if (smb_module_is_up)
+    {
+        debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
+            "session tracker %" PRIu64 " terminating\n", session_id);
+    }
+
     auto it_tree = connected_trees.begin();
     while (it_tree != connected_trees.end())
     {
@@ -176,7 +195,5 @@ Dce2Smb2SessionTracker::~Dce2Smb2SessionTracker(void)
 
     for (auto it_flow : attached_flows)
         it_flow.second->remove_session(session_id);
-
-    memory::MemoryCap::update_deallocations(sizeof(*this));
 }
 
