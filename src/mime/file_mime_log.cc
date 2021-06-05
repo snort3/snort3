@@ -223,7 +223,7 @@ bool MailLogState::is_email_to_present() const
     return log_flags & MIME_FLAG_RCPT_TO_PRESENT;
 }
 
-MailLogState::MailLogState(MailLogConfig* conf)
+MailLogState::MailLogState(MailLogConfig* conf) : StashGenericObject(STASH_GENERIC_OBJECT_MIME)
 {
     if (conf && (conf->log_email_hdrs || conf->log_filename
             || conf->log_mailfrom || conf->log_rcptto))

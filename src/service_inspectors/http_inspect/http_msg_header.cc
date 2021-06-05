@@ -479,14 +479,14 @@ void HttpMsgHeader::setup_file_processing()
         {
             if (boundary_present(content_type))
             {
-                session_data->mime_state[source_id] = new MimeSession(&FileService::decode_conf,
+                Packet* p = DetectionEngine::get_current_packet();
+                session_data->mime_state[source_id] = new MimeSession(p, &FileService::decode_conf,
                     &mime_conf, get_multi_file_processing_id(), true);
                 // Show file processing the Content-Type header as if it were regular data.
                 // This will enable it to find the boundary string.
                 // FIXIT-L develop a proper interface for passing the boundary string.
                 // This interface is a leftover from when OHI pushed whole messages through
                 // this interface.
-                Packet* p = DetectionEngine::get_current_packet();
                 session_data->mime_state[source_id]->process_mime_data(p,
                     content_type.start(), content_type.length(), true,
                     SNORT_FILE_POSITION_UNKNOWN);

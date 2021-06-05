@@ -802,12 +802,13 @@ void MimeSession::exit()
         delete mime_hdr_search_mpse;
 }
 
-MimeSession::MimeSession(DecodeConfig* dconf, MailLogConfig* lconf, uint64_t base_file_id,
+MimeSession::MimeSession(Packet* p, DecodeConfig* dconf, MailLogConfig* lconf, uint64_t base_file_id,
     bool session_is_http)
 {
     decode_conf = dconf;
     log_config =  lconf;
     log_state = new MailLogState(log_config);
+    p->flow->stash->store(STASH_EXTRADATA_MIME, log_state);
     session_base_file_id = base_file_id;
     is_http = session_is_http;
     reset_mime_paf_state(&mime_boundary);
@@ -817,9 +818,6 @@ MimeSession::~MimeSession()
 {
     if ( decode_state )
         delete(decode_state);
-
-    if ( log_state )
-        delete(log_state);
 }
 
 // File verdicts get cached with key (file_id, sip, dip). File_id is hash of filename if available.

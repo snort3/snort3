@@ -55,7 +55,7 @@ namespace snort
 class SO_PUBLIC MimeSession
 {
 public:
-    MimeSession(DecodeConfig*, MailLogConfig*, uint64_t base_file_id=0, bool session_is_http=false);
+    MimeSession(Packet*, DecodeConfig*, MailLogConfig*, uint64_t base_file_id=0, bool session_is_http=false);
     virtual ~MimeSession();
 
     MimeSession(const MimeSession&) = delete;

@@ -233,7 +233,7 @@ static SMTPData* SetNewSMTPData(SmtpProtoConf* config, Packet* p)
     p->flow->set_flow_data(fd);
     smtp_ssn = &fd->session;
 
-    smtp_ssn->mime_ssn = new SmtpMime(&(config->decode_conf), &(config->log_config));
+    smtp_ssn->mime_ssn = new SmtpMime(p, &(config->decode_conf), &(config->log_config));
     smtp_ssn->mime_ssn->config = config;
     smtp_ssn->mime_ssn->set_mime_stats(&(smtpstats.mime_stats));
 
@@ -1625,15 +1625,21 @@ TEST_CASE("handle_header_line", "[smtp]")
     // Setup
     MailLogConfig log_config;
     DecodeConfig decode_conf;
+    const SnortConfig* sc = SnortConfig::get_conf();
+    SnortConfig::set_conf(sc);
     log_config.log_email_hdrs = false;
-    SmtpMime mime_ssn(&decode_conf, &log_config);
+    Packet p;
+    Flow flow;
+    p.flow = &flow;
+    FlowStash stash;
+    p.flow->stash = &stash;
+    p.context = new IpsContext(1);
+    SmtpMime mime_ssn(&p, &decode_conf, &log_config);
     smtp_normalizing = true;
     SmtpProtoConf config;
     mime_ssn.config = &config;
     uint8_t ptr[68] = "Date: Tue, 1 Mar 2016 22:37:56 -0500\r\nFrom: acc2 <acc2@localhost>\r\n";
     uint8_t* eol = ptr + 38;
-    Packet p;
-    p.context = new IpsContext(1);
     SMTP_ResetAltBuffer(&p);
     int res = mime_ssn.handle_header_line(ptr, eol, 0, &p);
     REQUIRE((res == 0));
@@ -1651,14 +1657,20 @@ TEST_CASE("normalize_data", "[smtp]")
     // Setup
     MailLogConfig log_config;
     DecodeConfig decode_conf;
-    SmtpMime mime_ssn(&decode_conf, &log_config);
+    const SnortConfig* sc = SnortConfig::get_conf();
+    SnortConfig::set_conf(sc);
+    Packet p;
+    Flow flow;
+    p.flow =& flow;
+    FlowStash stash;
+    p.flow->stash = &stash;
+    p.context = new IpsContext(1);
+    SmtpMime mime_ssn(&p, &decode_conf, &log_config);
     smtp_normalizing = true;
     SmtpProtoConf config;
     mime_ssn.config = &config;
     uint8_t ptr[23] = "\r\n--wac7ysb48OaltWcw\r\n";
     uint8_t* data_end = ptr + 22;
-    Packet p;
-    p.context = new IpsContext(1);
     SMTP_ResetAltBuffer(&p);
     int res = mime_ssn.normalize_data(ptr, data_end, &p);
     REQUIRE((res == 0));

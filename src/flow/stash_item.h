@@ -29,6 +29,7 @@
 #define STASH_APPID_DATA "appid_data"
 
 #define STASH_GENERIC_OBJECT_APPID 1
+#define STASH_GENERIC_OBJECT_MIME 2
 
 namespace snort
 {

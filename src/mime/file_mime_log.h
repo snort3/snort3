@@ -26,6 +26,8 @@
 
 #include <cstdint>
 #include "main/snort_types.h"
+#include "flow/flow_stash.h"
+#define STASH_EXTRADATA_MIME "mime_data"
 
 namespace snort
 {
@@ -46,11 +48,11 @@ struct MailLogConfig
 
 class Flow;
 
-class SO_PUBLIC MailLogState
+class SO_PUBLIC MailLogState : public snort::StashGenericObject 
 {
 public:
     MailLogState(MailLogConfig* conf);
-    ~MailLogState();
+    ~MailLogState() override;
 
     /* accumulate MIME attachment filenames. The filenames are appended by commas */
     int log_file_name(const uint8_t* start, int length);
@@ -66,6 +68,8 @@ public:
     bool is_email_hdrs_present() const;
     bool is_email_from_present() const;
     bool is_email_to_present() const;
+    size_t size_of() const override
+    { return sizeof(*this); }
 
 private:
     int log_flags = 0;
