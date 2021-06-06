@@ -49,7 +49,9 @@ public:
     ~Dce2Smb2RequestTracker()
     {
         if (smb_module_is_up)
+        {
             debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "request tracker terminating\n");
+        }
         if (fname)
             snort_free(fname);
     }

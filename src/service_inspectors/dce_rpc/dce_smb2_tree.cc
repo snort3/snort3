@@ -494,8 +494,10 @@ void Dce2Smb2TreeTracker::process(uint16_t command, uint8_t command_type,
 Dce2Smb2TreeTracker::~Dce2Smb2TreeTracker(void)
 {
     if (smb_module_is_up)
+    {
         debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "tree tracker %" PRIu32 " terminating\n",
             tree_id);
+    }
 
     if (co_tracker != nullptr)
     {
