@@ -113,7 +113,10 @@ void HttpMsgSection::update_depth() const
         {
             // Need data for file processing or publishing
             session_data->stretch_section_to_packet[source_id] = true;
-            session_data->section_size_target[source_id] = target_size;
+            const int64_t max_remaining = (file_depth_remaining > publish_depth_remaining) ?
+                file_depth_remaining : publish_depth_remaining;
+            session_data->section_size_target[source_id] = (max_remaining <= target_size) ?
+                max_remaining : target_size;
         }
         return;
     }
