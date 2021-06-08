@@ -101,7 +101,7 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
             decompress_copy(buffer, session_data->section_offset[source_id], data+k, skip_amount,
                 session_data->compression[source_id], session_data->compress_stream[source_id],
                 at_start, session_data->get_infractions(source_id),
-                session_data->events[source_id]);
+                session_data->events[source_id], session_data);
             if ((expected -= skip_amount) == 0)
                 curr_state = CHUNK_DCRLF1;
             k += skip_amount-1;
@@ -131,7 +131,7 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
             decompress_copy(buffer, session_data->section_offset[source_id], data+k, skip_amount,
                 session_data->compression[source_id], session_data->compress_stream[source_id],
                 at_start, session_data->get_infractions(source_id),
-                session_data->events[source_id]);
+                session_data->events[source_id], session_data);
             k += skip_amount-1;
             break;
           }
@@ -141,7 +141,7 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
 
 void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, const uint8_t* data,
     uint32_t length, HttpEnums::CompressId& compression, z_stream*& compress_stream,
-    bool at_start, HttpInfractions* infractions, HttpEventGen* events)
+    bool at_start, HttpInfractions* infractions, HttpEventGen* events, HttpFlowData* session_data)
 {
     if ((compression == CMP_GZIP) || (compression == CMP_DEFLATE))
     {
@@ -179,6 +179,7 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
                 inflateEnd(compress_stream);
                 delete compress_stream;
                 compress_stream = nullptr;
+                session_data->update_deallocations(session_data->zlib_inflate_memory);
             }
             return;
         }
@@ -195,7 +196,7 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
 
             // Start over at the beginning
             decompress_copy(buffer, offset, data, length, compression, compress_stream, false,
-                infractions, events);
+                infractions, events, session_data);
             return;
         }
         else
@@ -206,6 +207,7 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
             inflateEnd(compress_stream);
             delete compress_stream;
             compress_stream = nullptr;
+            session_data->update_deallocations(session_data->zlib_inflate_memory);
             // Since we failed to uncompress the data, fall through
         }
     }
@@ -396,7 +398,7 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
         decompress_copy(buffer, session_data->section_offset[source_id], data, len,
             session_data->compression[source_id], session_data->compress_stream[source_id],
             at_start, session_data->get_infractions(source_id),
-            session_data->events[source_id]);
+            session_data->events[source_id], session_data);
     }
     else
     {

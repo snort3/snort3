@@ -115,6 +115,7 @@ HttpFlowData::~HttpFlowData()
         {
             inflateEnd(compress_stream[k]);
             delete compress_stream[k];
+            update_deallocations(zlib_inflate_memory);
         }
         if (mime_state[k] != nullptr)
         {
@@ -164,6 +165,7 @@ void HttpFlowData::half_reset(SourceId source_id)
         inflateEnd(compress_stream[source_id]);
         delete compress_stream[source_id];
         compress_stream[source_id] = nullptr;
+        update_deallocations(zlib_inflate_memory);
     }
     if (mime_state[source_id] != nullptr)
     {
@@ -207,6 +209,7 @@ void HttpFlowData::trailer_prep(SourceId source_id)
         inflateEnd(compress_stream[source_id]);
         delete compress_stream[source_id];
         compress_stream[source_id] = nullptr;
+        update_deallocations(zlib_inflate_memory);
     }
     detection_status[source_id] = DET_REACTIVATING;
 }

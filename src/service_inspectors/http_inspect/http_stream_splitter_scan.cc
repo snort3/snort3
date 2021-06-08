@@ -61,7 +61,7 @@ void HttpStreamSplitter::prepare_flush(HttpFlowData* session_data, uint32_t* flu
 }
 
 HttpCutter* HttpStreamSplitter::get_cutter(SectionType type,
-    const HttpFlowData* session_data) const
+    HttpFlowData* session_data) const
 {
     switch (type)
     {
@@ -77,23 +77,23 @@ HttpCutter* HttpStreamSplitter::get_cutter(SectionType type,
             session_data->data_length[source_id],
             session_data->accelerated_blocking[source_id],
             my_inspector->script_finder,
-            session_data->compression[source_id]);
+            session_data->compression[source_id], session_data);
     case SEC_BODY_CHUNK:
         return (HttpCutter*)new HttpBodyChunkCutter(
             session_data->accelerated_blocking[source_id],
             my_inspector->script_finder,
-            session_data->compression[source_id]);
+            session_data->compression[source_id], session_data);
     case SEC_BODY_OLD:
         return (HttpCutter*)new HttpBodyOldCutter(
             session_data->accelerated_blocking[source_id],
             my_inspector->script_finder,
-            session_data->compression[source_id]);
+            session_data->compression[source_id], session_data);
     case SEC_BODY_H2:
         return (HttpCutter*)new HttpBodyH2Cutter(
             session_data->data_length[source_id],
             session_data->accelerated_blocking[source_id],
             my_inspector->script_finder,
-            session_data->compression[source_id]);
+            session_data->compression[source_id], session_data);
     default:
         assert(false);
         return nullptr;

@@ -25,6 +25,7 @@
 
 #include "http_common.h"
 #include "http_enum.h"
+#include "http_flow_data.h"
 #include "http_module.h"
 
 using namespace HttpEnums;
@@ -279,8 +280,9 @@ ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
 }
 
 HttpBodyCutter::HttpBodyCutter(bool accelerated_blocking_, ScriptFinder* finder_,
-    CompressId compression_)
-    : accelerated_blocking(accelerated_blocking_), compression(compression_), finder(finder_)
+    CompressId compression_, HttpFlowData* ssn_data)
+    : accelerated_blocking(accelerated_blocking_), compression(compression_), finder(finder_),
+    session_data(ssn_data)
 {
     if (accelerated_blocking)
     {
@@ -291,7 +293,8 @@ HttpBodyCutter::HttpBodyCutter(bool accelerated_blocking_, ScriptFinder* finder_
             compress_stream->zfree = Z_NULL;
             compress_stream->next_in = Z_NULL;
             compress_stream->avail_in = 0;
-            const int window_bits = (compression == CMP_GZIP) ? GZIP_WINDOW_BITS : DEFLATE_WINDOW_BITS;
+            const int window_bits = (compression == CMP_GZIP) ?
+                GZIP_WINDOW_BITS : DEFLATE_WINDOW_BITS;
             if (inflateInit2(compress_stream, window_bits) != Z_OK)
             {
                 assert(false);
@@ -299,6 +302,9 @@ HttpBodyCutter::HttpBodyCutter(bool accelerated_blocking_, ScriptFinder* finder_
                 delete compress_stream;
                 compress_stream = nullptr;
             }
+            else
+                session_data->update_allocations(session_data->zlib_inflate_memory);
+
         }
 
         static const uint8_t inspect_string[] = { '<', '/', 's', 'c', 'r', 'i', 'p', 't', '>' };
@@ -316,6 +322,7 @@ HttpBodyCutter::~HttpBodyCutter()
     {
         inflateEnd(compress_stream);
         delete compress_stream;
+        session_data->update_deallocations(session_data->zlib_inflate_memory);
     }
 }
 

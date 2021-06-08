@@ -53,6 +53,7 @@ public:
     static void init() { inspector_id = snort::FlowData::create_flow_data_id(); }
     size_t size_of() override;
 
+    friend class HttpBodyCutter;
     friend class HttpInspect;
     friend class HttpJsNorm;
     friend class HttpMsgSection;
@@ -144,9 +145,9 @@ private:
     // *** Inspector => StreamSplitter (facts about the message section that is coming next)
     HttpEnums::SectionType type_expected[2] = { HttpEnums::SEC_REQUEST, HttpEnums::SEC_STATUS };
     uint64_t last_request_was_connect = false;
-    // length of the data from Content-Length field
     z_stream* compress_stream[2] = { nullptr, nullptr };
     uint64_t zero_nine_expected = 0;
+    // length of the data from Content-Length field
     int64_t data_length[2] = { HttpCommon::STAT_NOT_PRESENT, HttpCommon::STAT_NOT_PRESENT };
     uint32_t section_size_target[2] = { 0, 0 };
     HttpEnums::CompressId compression[2] = { HttpEnums::CMP_NONE, HttpEnums::CMP_NONE };
@@ -213,6 +214,11 @@ private:
 
     // Transactions with uncleared sections awaiting deletion
     HttpTransaction* discard_list = nullptr;
+
+
+    // Memory footprint required by zlib inflation. Formula from https://zlib.net/zlib_tech.html
+    // Accounts for a 32k sliding window and 11520 bytes of inflate_huft allocations
+    static const size_t zlib_inflate_memory = (1 << 15) + 1440*2*sizeof(int);
 
 #ifdef REG_TEST
     static uint64_t instance_count;
