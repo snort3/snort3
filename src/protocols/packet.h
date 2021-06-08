@@ -172,40 +172,40 @@ struct SO_PUBLIC Packet
     static const uint32_t max_dsize = IP_MAXPACKET;
 
     /*  Boolean functions - general information about this packet */
-    inline bool is_eth() const
+    bool is_eth() const
     { return ((proto_bits & PROTO_BIT__ETH) != 0); }
 
-    inline bool has_ip() const
+    bool has_ip() const
     { return ptrs.ip_api.is_ip(); }
 
-    inline bool is_ip4() const
+    bool is_ip4() const
     { return ptrs.ip_api.is_ip4(); }
 
-    inline bool is_ip6() const
+    bool is_ip6() const
     { return ptrs.ip_api.is_ip6(); }
 
-    inline bool is_ip() const
+    bool is_ip() const
     { return ptrs.get_pkt_type() == PktType::IP; }
 
-    inline bool is_tcp() const
+    bool is_tcp() const
     { return ptrs.get_pkt_type() == PktType::TCP; }
 
-    inline bool is_udp() const
+    bool is_udp() const
     { return ptrs.get_pkt_type() == PktType::UDP; }
 
-    inline bool is_icmp() const
+    bool is_icmp() const
     { return ptrs.get_pkt_type() == PktType::ICMP; }
 
-    inline bool is_data() const
+    bool is_data() const
     { return (ptrs.get_pkt_type() == PktType::PDU) or (ptrs.get_pkt_type() == PktType::FILE); }
 
-    inline bool is_cooked() const
+    bool is_cooked() const
     { return ((packet_flags & PKT_PSEUDO) != 0); }
 
-    inline bool is_fragment() const
+    bool is_fragment() const
     { return ptrs.decode_flags & DECODE_FRAG; }
 
-    inline bool is_udp_tunneled() const
+    bool is_udp_tunneled() const
     {
         if (proto_bits & PROTO_BIT__UDP_TUNNELED)
         {
@@ -216,14 +216,17 @@ struct SO_PUBLIC Packet
         return false;
     }
 
-    inline bool has_tcp_data() const
+    bool has_ip_hdr() const
+    { return ((proto_bits & PROTO_BIT__ANY_IP) != 0); }
+
+    bool has_tcp_data() const
     { return (proto_bits & PROTO_BIT__TCP) and data and dsize; }
 
-    inline bool has_udp_data() const
+    bool has_udp_data() const
     { return (proto_bits & PROTO_BIT__UDP) and data and dsize; }
 
     /* Get general, non-boolean information */
-    inline PktType type() const
+    PktType type() const
     { return ptrs.get_pkt_type(); } // defined in codec.h
 
     void set_detect_limit(uint16_t n)
@@ -246,7 +249,7 @@ struct SO_PUBLIC Packet
      *     eth::ip4::udp::teredo::ip6::hop_opts::ipv6_routing::tcp
      * this function return 6 == IPPROTO_TCP == IPPROTO_ID_TCP
      */
-    inline IpProtocol get_ip_proto_next() const
+    IpProtocol get_ip_proto_next() const
     { return ip_proto_next; }
 
     /* Similar to above. However, this function

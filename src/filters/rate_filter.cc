@@ -113,7 +113,7 @@ int RateFilter_Test(const OptTreeNode* otn, Packet* p)
     const SfIp* dip;
     SfIp cleared;
 
-    if ( p->ptrs.ip_api.is_ip() )
+    if ( p->has_ip_hdr() )
     {
         sip = p->ptrs.ip_api.get_src();
         dip = p->ptrs.ip_api.get_dst();
