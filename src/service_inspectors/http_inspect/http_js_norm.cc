@@ -33,6 +33,16 @@
 using namespace HttpEnums;
 using namespace snort;
 
+static inline JSTokenizer::JSRet js_normalize(JSNormalizer& ctx, const char* const end,
+    const char* dst_end, const char*& ptr, char*& dst)
+{
+    auto ret = ctx.normalize(ptr, end - ptr, dst, dst_end - dst);
+    ptr = ctx.get_src_next();
+    dst = ctx.get_dst_next();
+
+    return ret;
+}
+
 HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_, int64_t normalization_depth_) :
     uri_param(uri_param_),
     normalization_depth(normalization_depth_),
@@ -81,7 +91,73 @@ void HttpJsNorm::configure()
     configure_once = true;
 }
 
-void HttpJsNorm::enhanced_normalize(const Field& input, Field& output,
+void HttpJsNorm::enhanced_external_normalize(const Field& input, Field& output,
+    HttpInfractions* infractions, HttpFlowData* ssn) const
+{
+    if (ssn->js_built_in_event)
+        return;
+
+    const char* ptr = (const char*)input.start();
+    const char* const end = ptr + input.length();
+
+    HttpEventGen* events = ssn->events[HttpCommon::SRC_SERVER];
+
+    char* buffer = nullptr;
+    char* dst = nullptr;
+    const char* dst_end = nullptr;
+
+    if (!alive_ctx(ssn))
+        HttpModule::increment_peg_counts(PEG_JS_EXTERNAL);
+
+    while (ptr < end)
+    {
+        if (!buffer)
+        {
+            auto len = end - ptr; // not more than the remaining raw data
+            buffer = new char[len];
+            dst = buffer;
+            dst_end = buffer + len;
+        }
+
+        auto& ctx = ssn->acquire_js_ctx();
+        ctx.set_depth(normalization_depth);
+        auto ret = js_normalize(ctx, end, dst_end, ptr, dst);
+
+        switch (ret)
+        {
+        case JSTokenizer::EOS:
+        case JSTokenizer::SCRIPT_CONTINUE:
+            break;
+        case JSTokenizer::SCRIPT_ENDED:
+        case JSTokenizer::CLOSING_TAG:
+            *infractions += INF_JS_CLOSING_TAG;
+            events->create_event(EVENT_JS_CLOSING_TAG);
+            ssn->js_built_in_event = true;
+            break;
+        case JSTokenizer::OPENING_TAG:
+            *infractions += INF_JS_OPENING_TAG;
+            events->create_event(EVENT_JS_OPENING_TAG);
+            ssn->js_built_in_event = true;
+            break;
+        case JSTokenizer::BAD_TOKEN:
+            *infractions += INF_JS_BAD_TOKEN;
+            events->create_event(EVENT_JS_BAD_TOKEN);
+            ssn->js_built_in_event = true;
+            break;
+        default:
+            assert(false);
+            break;
+        }
+
+        if (ssn->js_built_in_event)
+            break;
+    }
+
+    if (buffer)
+        output.set(dst - buffer, (const uint8_t*)buffer, true);
+}
+
+void HttpJsNorm::enhanced_inline_normalize(const Field& input, Field& output,
     HttpInfractions* infractions, HttpFlowData* ssn) const
 {
     const char* ptr = (const char*)input.start();
@@ -94,6 +170,7 @@ void HttpJsNorm::enhanced_normalize(const Field& input, Field& output,
     const char* dst_end = nullptr;
 
     bool script_continue = alive_ctx(ssn);
+    bool script_external = false;
 
     while (ptr < end)
     {
@@ -115,11 +192,14 @@ void HttpJsNorm::enhanced_normalize(const Field& input, Field& output,
                 ptr = sctx.next;
             }
 
-            if (!sctx.is_javascript || sctx.is_external)
+            if (!sctx.is_javascript)
                 continue;
 
+            script_external = sctx.is_external;
+
             // script found
-            HttpModule::increment_peg_counts(PEG_JS_INLINE);
+            if (!script_external)
+                HttpModule::increment_peg_counts(PEG_JS_INLINE);
         }
 
         if (!buffer)
@@ -127,7 +207,7 @@ void HttpJsNorm::enhanced_normalize(const Field& input, Field& output,
             uint8_t* nbuf = ssn->js_detect_buffer[HttpCommon::SRC_SERVER];
             uint32_t nlen = ssn->js_detect_length[HttpCommon::SRC_SERVER];
 
-            auto len = nlen + (end - ptr); // not more then the remaining raw data
+            auto len = nlen + (end - ptr); // not more than the remaining raw data
             buffer = new char[len];
             if (nbuf)
                 memcpy(buffer, nbuf, nlen);
@@ -137,10 +217,8 @@ void HttpJsNorm::enhanced_normalize(const Field& input, Field& output,
 
         auto& ctx = ssn->acquire_js_ctx();
         ctx.set_depth(normalization_depth);
-
-        auto ret = ctx.normalize(ptr, end - ptr, dst, dst_end - dst);
-        ptr = ctx.get_src_next();
-        dst = ctx.get_dst_next();
+        auto dst_before = dst;
+        auto ret = js_normalize(ctx, end, dst_end, ptr, dst);
 
         switch (ret)
         {
@@ -173,6 +251,12 @@ void HttpJsNorm::enhanced_normalize(const Field& input, Field& output,
             assert(false);
             script_continue = false;
             break;
+        }
+
+        if (script_external && dst_before != dst)
+        {
+            *infractions += INF_JS_CODE_IN_EXTERNAL;
+            events->create_event(EVENT_JS_CODE_IN_EXTERNAL);
         }
     }
 

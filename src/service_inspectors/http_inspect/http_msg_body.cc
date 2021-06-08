@@ -341,8 +341,13 @@ void HttpMsgBody::do_js_normalization(const Field& input, Field& output, bool pa
             len = 0;
         }
 
-        params->js_norm_param.js_norm->enhanced_normalize(input, enhanced_js_norm_body,
-            transaction->get_infractions(source_id), session_data);
+        auto http_header = get_header(source_id);
+        if (http_header and http_header->is_external_js())
+            params->js_norm_param.js_norm->enhanced_external_normalize(input, enhanced_js_norm_body,
+                transaction->get_infractions(source_id), session_data);
+        else
+            params->js_norm_param.js_norm->enhanced_inline_normalize(input, enhanced_js_norm_body,
+                transaction->get_infractions(source_id), session_data);
 
         const int32_t norm_length =
             (enhanced_js_norm_body.length() <= session_data->detect_depth_remaining[source_id]) ?

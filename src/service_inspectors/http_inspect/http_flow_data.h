@@ -193,6 +193,7 @@ private:
 
     // *** HttpJsNorm
     snort::JSNormalizer* js_normalizer = nullptr;
+    bool js_built_in_event = false;
 
     snort::JSNormalizer& acquire_js_ctx();
     void release_js_ctx();

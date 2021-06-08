@@ -41,7 +41,8 @@ public:
 
     void legacy_normalize(const Field& input, Field& output, HttpInfractions*, HttpEventGen*,
         int max_javascript_whitespaces) const;
-    void enhanced_normalize(const Field& input, Field& output, HttpInfractions*, HttpFlowData*) const;
+    void enhanced_inline_normalize(const Field& input, Field& output, HttpInfractions*, HttpFlowData*) const;
+    void enhanced_external_normalize(const Field& input, Field& output, HttpInfractions*, HttpFlowData*) const;
 
     void configure();
 

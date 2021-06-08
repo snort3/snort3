@@ -357,9 +357,6 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_PDF_UNSUP_COMP_TYPE,        "PDF file unsupported compression type" },
     { EVENT_PDF_CASC_COMP,              "PDF file cascaded compression" },
     { EVENT_PDF_PARSE_FAILURE,          "PDF file parse failure" },
-    { EVENT_JS_BAD_TOKEN,               "bad token in JavaScript" },
-    { EVENT_JS_OPENING_TAG,             "unexpected script opening tag in JavaScript" },
-    { EVENT_JS_CLOSING_TAG,             "unexpected script closing tag in JavaScript" },
     { EVENT_LOSS_OF_SYNC,               "not HTTP traffic" },
     { EVENT_CHUNK_ZEROS,                "chunk length has excessive leading zeros" },
     { EVENT_WS_BETWEEN_MSGS,            "white space before or between messages" },
@@ -430,6 +427,10 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_LONG_SCHEME,                "HTTP URI scheme longer than 10 characters" },
     { EVENT_HTTP2_UPGRADE_REQUEST,      "HTTP/1 client requested HTTP/2 upgrade" },
     { EVENT_HTTP2_UPGRADE_RESPONSE,     "HTTP/1 server granted HTTP/2 upgrade" },
+    { EVENT_JS_BAD_TOKEN,               "bad token in JavaScript" },
+    { EVENT_JS_OPENING_TAG,             "unexpected script opening tag in JavaScript" },
+    { EVENT_JS_CLOSING_TAG,             "unexpected script closing tag in JavaScript" },
+    { EVENT_JS_CODE_IN_EXTERNAL,        "JavaScript code under the external script tags" },
     { 0, nullptr }
 };
 
@@ -467,6 +468,7 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "pipelined_requests", "total requests placed in a pipeline" },
     { CountType::SUM, "total_bytes", "total HTTP data bytes inspected" },
     { CountType::SUM, "js_inline_scripts", "total number of inline JavaScripts processed" },
+    { CountType::SUM, "js_external_scripts", "total number of external JavaScripts processed" },
     { CountType::END, nullptr, nullptr }
 };
 

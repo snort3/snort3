@@ -84,6 +84,58 @@ HttpMsgHeadShared::~HttpMsgHeadShared()
     session_data->update_deallocations(extra_memory_allocations);
 }
 
+bool HttpMsgHeadShared::is_external_js()
+{
+    if (js_external != STAT_NOT_COMPUTE)
+        return js_external;
+
+    const Field& content_type = get_header_value_raw(HEAD_CONTENT_TYPE);
+    const char* cur = (const char*)content_type.start();
+    int len = content_type.length();
+    if (SnortStrcasestr(cur, len, "application/"))
+    {
+        if (SnortStrcasestr(cur, len, "javascript"))
+        {
+            js_external = 1;
+            return true;
+        }
+
+        if (SnortStrcasestr(cur, len, "ecmascript"))
+        {
+            js_external = 1;
+            return true;
+        }
+    }
+    else if (SnortStrcasestr(cur, len, "text/"))
+    {
+        if (SnortStrcasestr(cur, len, "javascript"))
+        {
+            js_external = 1;
+            return true;
+        }
+
+        if (SnortStrcasestr(cur, len, "ecmascript"))
+        {
+            js_external = 1;
+            return true;
+        }
+
+        if (SnortStrcasestr(cur, len, "jscript"))
+        {
+            js_external = 1;
+            return true;
+        }
+
+        if (SnortStrcasestr(cur, len, "livescript"))
+        {
+            js_external = 1;
+            return true;
+        }
+    }
+    js_external = 0;
+    return js_external;
+}
+
 // All the header processing that is done for every message (i.e. not just-in-time) is done here.
 void HttpMsgHeadShared::analyze()
 {
