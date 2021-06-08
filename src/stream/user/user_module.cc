@@ -66,8 +66,12 @@ void StreamUserModule::set_trace(const Trace* trace) const
 
 const TraceOption* StreamUserModule::get_trace_options() const
 {
+#ifndef DEBUG_MSGS
+    return nullptr;
+#else
     static const TraceOption stream_user_trace_options(nullptr, 0, nullptr);
     return &stream_user_trace_options;
+#endif
 }
 
 bool StreamUserModule::set(const char*, Value& v, SnortConfig*)

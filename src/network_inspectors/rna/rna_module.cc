@@ -592,8 +592,12 @@ void RnaModule::set_trace(const Trace* trace) const
 
 const TraceOption* RnaModule::get_trace_options() const
 {
+#ifndef DEBUG_MSGS
+    return nullptr;
+#else
     static const TraceOption rna_trace_options(nullptr, 0, nullptr);
     return &rna_trace_options;
+#endif
 }
 
 bool RnaModule::log_mac_cache(const char* outfile)

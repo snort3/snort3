@@ -133,8 +133,12 @@ void GtpInspectModule::set_trace(const Trace* trace) const
 
 const TraceOption* GtpInspectModule::get_trace_options() const
 {
+#ifndef DEBUG_MSGS
+    return nullptr;
+#else
     static const TraceOption gtp_inspect_trace_options(nullptr, 0, nullptr);
     return &gtp_inspect_trace_options;
+#endif
 }
 
 bool GtpInspectModule::set(const char*, Value& v, SnortConfig*)

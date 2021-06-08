@@ -245,8 +245,12 @@ public:
 
     const TraceOption* get_trace_options() const override
     {
+#ifndef DEBUG_MSGS
+        return nullptr;
+#else
         static const TraceOption react_trace_options(nullptr, 0, nullptr);
         return &react_trace_options;
+#endif
     }
 
     std::string get_data();

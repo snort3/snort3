@@ -140,8 +140,12 @@ void StreamIpModule::set_trace(const Trace* trace) const
 
 const TraceOption* StreamIpModule::get_trace_options() const
 {
+#ifndef DEBUG_MSGS
+    return nullptr;
+#else
     static const TraceOption stream_ip_trace_options(nullptr, 0, nullptr);
     return &stream_ip_trace_options;
+#endif
 }
 
 const RuleMap* StreamIpModule::get_rules() const

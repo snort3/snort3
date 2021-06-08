@@ -179,8 +179,12 @@ void LatencyModule::set_trace(const Trace* trace) const
 
 const TraceOption* LatencyModule::get_trace_options() const
 {
+#ifndef DEBUG_MSGS
+    return nullptr;
+#else
     static const TraceOption latency_trace_options(nullptr, 0, nullptr);
     return &latency_trace_options;
+#endif
 }
 
 bool LatencyModule::set(const char* fqn, Value& v, SnortConfig* sc)

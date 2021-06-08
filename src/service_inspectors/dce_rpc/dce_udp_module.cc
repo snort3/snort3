@@ -93,8 +93,12 @@ void Dce2UdpModule::set_trace(const Trace* trace) const
 
 const TraceOption* Dce2UdpModule::get_trace_options() const
 {
+#ifndef DEBUG_MSGS
+    return nullptr;
+#else
     static const TraceOption dce_udp_trace_options(nullptr, 0, nullptr);
     return &dce_udp_trace_options;
+#endif
 }
 
 const RuleMap* Dce2UdpModule::get_rules() const
