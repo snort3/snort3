@@ -6,4 +6,5 @@ add_cpputest( rna_module_test
         $<TARGET_OBJECTS:catch_tests>
     LIBS
         ${DNET_LIBRARIES}
+        ${LUAJIT_LIBRARIES}
 )

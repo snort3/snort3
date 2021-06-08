@@ -75,14 +75,6 @@ bool Snort::is_reloading() { return false; }
 void SnortConfig::register_reload_resource_tuner(ReloadResourceTuner* rrt) { delete rrt; }
 } // end of namespace snort
 
-extern "C"
-{
-typedef ptrdiff_t lua_Integer;
-
-const char* luaL_optlstring(lua_State*, int, const char*, size_t*) { return nullptr; }
-lua_Integer luaL_optinteger(lua_State*, int, lua_Integer) { return 0; }
-}
-
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 

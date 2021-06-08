@@ -26,13 +26,6 @@
 THREAD_LOCAL RnaStats rna_stats;
 THREAD_LOCAL ProfileStats rna_perf_stats;
 
-const char* luaL_optlstring(lua_State*, int, const char*, size_t*) { return nullptr; }
-
-extern "C"
-{
-    lua_Number luaL_optnumber(lua_State*, int, lua_Number) { return 0; }
-}
-
 namespace snort
 {
 Module* ModuleManager::get_module(const char*)

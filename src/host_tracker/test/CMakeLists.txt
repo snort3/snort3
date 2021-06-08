@@ -20,6 +20,7 @@ add_cpputest( host_cache_module_test
         $<TARGET_OBJECTS:catch_tests>
     LIBS
         ${CMAKE_THREAD_LIBS_INIT}
+        ${LUAJIT_LIBRARIES}
 )
 
 add_cpputest( host_tracker_test
