@@ -22,9 +22,11 @@
 
 #include <cstdint>
 
+#include "main/snort_types.h"
+
 using PeriodicHook = void (*)(void*);
 
-class Periodic
+class SO_PUBLIC Periodic
 {
 public:
     // lower number is higher priority

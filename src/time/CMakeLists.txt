@@ -1,6 +1,7 @@
 set ( TIME_INCLUDES
     clock_defs.h
     packet_time.h
+    periodic.h
     stopwatch.h
 )
 
