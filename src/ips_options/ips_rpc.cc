@@ -132,7 +132,7 @@ bool RpcOption::is_match(Packet* p)
 {
     const uint8_t* packet_data = p->data;
 
-    if ( p->is_tcp() )
+    if ( p->is_tcp() || p->is_data() )
         packet_data += 4;  // skip unused frag header
 
     packet_data += 4;  // skip unused xid
@@ -162,7 +162,7 @@ uint32_t RpcOption::get_int(const uint8_t*& data)
 // check if the packet type and size are valid
 bool RpcOption::is_valid(Packet* p)
 {
-    if ( p->is_tcp() )
+    if ( p->is_tcp() || p->is_data() )
         return p->dsize >= 28;
 
     else if ( p->is_udp() )
