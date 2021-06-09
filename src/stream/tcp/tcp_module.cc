@@ -42,7 +42,6 @@ THREAD_LOCAL ProfileStats s5TcpPerfStats;
 
 THREAD_LOCAL const Trace* stream_tcp_trace = nullptr;
 
-#ifdef DEBUG_MSGS
 static const TraceOption stream_tcp_trace_options[] =
 {
     { "segments", TRACE_SEGMENTS, "enable stream TCP segments trace logging" },
@@ -50,7 +49,6 @@ static const TraceOption stream_tcp_trace_options[] =
 
     { nullptr, 0, nullptr }
 };
-#endif
 
 const PegInfo tcp_pegs[] =
 {
@@ -260,13 +258,7 @@ void StreamTcpModule::set_trace(const Trace* trace) const
 { stream_tcp_trace = trace; }
 
 const TraceOption* StreamTcpModule::get_trace_options() const
-{
-#ifndef DEBUG_MSGS
-    return nullptr;
-#else
-    return stream_tcp_trace_options;
-#endif
-}
+{ return stream_tcp_trace_options; }
 
 const RuleMap* StreamTcpModule::get_rules() const
 { return stream_tcp_rules; }

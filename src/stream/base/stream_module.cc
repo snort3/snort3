@@ -116,12 +116,8 @@ void StreamModule::set_trace(const Trace* trace) const
 
 const TraceOption* StreamModule::get_trace_options() const
 {
-#ifndef DEBUG_MSGS
-    return nullptr;
-#else
     static const TraceOption stream_trace_options(nullptr, 0, nullptr);
     return &stream_trace_options;
-#endif
 }
 
 const PegInfo* StreamModule::get_pegs() const

@@ -181,9 +181,7 @@ static const Command snort_cmds[] =
 
 static const TraceOption snort_trace_options[] =
 {
-#ifdef DEBUG_MSGS
     { "main", TRACE_MAIN, "enable main trace logging" },
-#endif
     { "inspector_manager", TRACE_INSPECTOR_MANAGER, "enable inspector manager trace logging" },
 
     { nullptr, 0, nullptr }

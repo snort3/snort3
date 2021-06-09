@@ -442,12 +442,8 @@ void AppIdModule::set_trace(const Trace* trace) const
 
 const TraceOption* AppIdModule::get_trace_options() const
 {
-#ifndef DEBUG_MSGS
-    return nullptr;
-#else
     static const TraceOption appid_trace_options(nullptr, 0, nullptr);
     return &appid_trace_options;
-#endif
 }
 
 ProfileStats* AppIdModule::get_profile() const
