@@ -40,21 +40,23 @@ public:
     Dce2Smb2SharedCache(const size_t initial_size) :
         LruCacheShared<Key, Value, Hash, Eq, Purgatory>(initial_size) { }
 
-    Value* find_session(Key key, Dce2Smb2SessionData* ssd)
+    using Data = std::shared_ptr<Value>;
+
+    Data find_session(Key key, Dce2Smb2SessionData* ssd)
     {
         flow_mutex.lock();
-        Value* session = this->find(key).get();
+        Data session = this->find(key);
         if (session)
             session->attach_flow(ssd->get_flow_key(), ssd);
         flow_mutex.unlock();
         return session;
     }
 
-    Value* find_else_create_session(Key& key, Dce2Smb2SessionData* ssd)
+    Data find_else_create_session(Key& key, Dce2Smb2SessionData* ssd)
     {
-        std::shared_ptr<Value> new_session = std::shared_ptr<Value>(new Value(key));
+        Data new_session = Data(new Value(key));
         flow_mutex.lock();
-        Value* session = this->find_else_insert(key, new_session, nullptr).get();
+        Data session = this->find_else_insert(key, new_session, nullptr);
         session->attach_flow(ssd->get_flow_key(), ssd);
         flow_mutex.unlock();
         return session;
@@ -76,9 +78,38 @@ public:
         current_size -= size;
     }
 
+    // Since decrease_size() does not account for associated objects in smb2_session_cache,
+    // we will over-prune when we reach the new_size here, as more space will be freed up
+    // when actual objects are destroyed. We might need to do gradual pruning like how
+    // host cache does. For now over pruning is ok.
+    void reload_prune(size_t new_size)
+    {
+        Purgatory data;
+        std::lock_guard<std::mutex> cache_lock(cache_mutex);
+        max_size = new_size;
+        while (current_size > max_size && !list.empty())
+        {
+            LruListIter list_iter = --list.end();
+            data.emplace_back(list_iter->second); // increase reference count
+            // This instructs the session_tracker to take a lock before detaching
+            // from ssd, when it is getting destroyed.
+            list_iter->second->set_reload_prune();
+            decrease_size(list_iter->second.get());
+            map.erase(list_iter->first);
+            list.erase(list_iter);
+            ++stats.reload_prunes;
+        }
+    }
+
 private:
-    using LruCacheShared<Key, Value, Hash, Eq, Purgatory>::current_size;
-    using LruCacheShared<Key, Value, Hash, Eq, Purgatory>::cache_mutex;
+    using LruBase = LruCacheShared<Key, Value, Hash, Eq, Purgatory>;
+    using LruBase::cache_mutex;
+    using LruBase::current_size;
+    using LruBase::list;
+    using LruBase::map;
+    using LruBase::max_size;
+    using LruBase::stats;
+    using LruListIter = typename LruBase::LruListIter;
     std::mutex flow_mutex;
     void increase_size(Value* value_ptr=nullptr) override
     {
@@ -91,6 +122,8 @@ private:
         {
             assert(current_size >= sizeof(*value_ptr) );
             current_size -= sizeof(*value_ptr);
+            //This is going down, remove references from flow here
+            value_ptr->unlink();
         }
     }
 };

@@ -142,21 +142,21 @@ Smb2SessionKey Dce2Smb2SessionData::get_session_key(uint64_t session_id)
     return key;
 }
 
-Dce2Smb2SessionTracker* Dce2Smb2SessionData::find_session(uint64_t session_id)
+Dce2Smb2SessionTrackerPtr Dce2Smb2SessionData::find_session(uint64_t session_id)
 {
     std::lock_guard<std::mutex> guard(session_data_mutex);
     auto it_session = connected_sessions.find(session_id);
 
     if (it_session != connected_sessions.end())
     {
-        Dce2Smb2SessionTracker* session = it_session->second;
+        Dce2Smb2SessionTrackerPtr session = it_session->second;
         //we already have the session, but call find to update the LRU
         smb2_session_cache.find_session(session->get_key(), this);
         return session;
     }
     else
     {
-        Dce2Smb2SessionTracker* session = smb2_session_cache.find_session(
+        Dce2Smb2SessionTrackerPtr session = smb2_session_cache.find_session(
             get_session_key(session_id), this);
         if (session)
             connected_sessions.insert(std::make_pair(session_id,session));
@@ -165,18 +165,20 @@ Dce2Smb2SessionTracker* Dce2Smb2SessionData::find_session(uint64_t session_id)
 }
 
 // Caller must ensure that the session is not already present in flow
-Dce2Smb2SessionTracker* Dce2Smb2SessionData::create_session(uint64_t session_id)
+Dce2Smb2SessionTrackerPtr Dce2Smb2SessionData::create_session(uint64_t session_id)
 {
     Smb2SessionKey session_key = get_session_key(session_id);
     std::lock_guard<std::mutex> guard(session_data_mutex);
-    Dce2Smb2SessionTracker* session = smb2_session_cache.find_else_create_session(session_key, this);
+    Dce2Smb2SessionTrackerPtr session = smb2_session_cache.find_else_create_session(session_key, this);
     connected_sessions.insert(std::make_pair(session_id, session));
     return session;
 }
 
-void Dce2Smb2SessionData::remove_session(uint64_t session_id)
+void Dce2Smb2SessionData::remove_session(uint64_t session_id, bool sync)
 {
+    if (sync) session_data_mutex.lock();
     connected_sessions.erase(session_id);
+    if (sync) session_data_mutex.unlock();
 }
 
 void Dce2Smb2SessionData::process_command(const Smb2Hdr* smb_hdr,
@@ -235,7 +237,7 @@ void Dce2Smb2SessionData::process_command(const Smb2Hdr* smb_hdr,
         flow_key, Smb2Mid(smb_hdr), session_id, Smb2Tid(smb_hdr));
     // Try to find the session.
     // The case when session is not available will be handled per command.
-    Dce2Smb2SessionTracker* session = find_session(session_id);
+    Dce2Smb2SessionTrackerPtr session = find_session(session_id);
 
     switch (command)
     {

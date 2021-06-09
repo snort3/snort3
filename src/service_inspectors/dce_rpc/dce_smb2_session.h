@@ -35,6 +35,7 @@ public:
     {
         session_id = key.sid;
         session_key = key;
+        reload_prune = false;
         debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "session tracker %" PRIu64
             " created\n", session_id);
     }
@@ -64,10 +65,12 @@ public:
 
     Smb2SessionKey get_key() { return session_key; }
     void clean_file_context_from_flow(Dce2Smb2FileTracker*, uint64_t, uint64_t);
+    void unlink();
     Dce2Smb2SessionData* get_flow(uint32_t);
     void process(const uint16_t, uint8_t, const Smb2Hdr*, const uint8_t*, const uint32_t);
     void increase_size(const size_t size);
     void decrease_size(const size_t size);
+    void set_reload_prune() { reload_prune = true; }
 
 private:
     Dce2Smb2TreeTracker* find_tree_for_message(const uint64_t, const uint32_t);
@@ -75,6 +78,7 @@ private:
     Smb2SessionKey session_key;
     Dce2Smb2SessionDataMap attached_flows;
     Dce2Smb2TreeTrackerMap connected_trees;
+    std::atomic<bool> reload_prune;
     std::mutex connected_trees_mutex;
     std::mutex attached_flows_mutex;
 };

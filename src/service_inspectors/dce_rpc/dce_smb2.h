@@ -295,8 +295,9 @@ struct Smb2TreeConnectResponseHdr
 class Dce2Smb2FileTracker;
 class Dce2Smb2SessionTracker;
 
+using Dce2Smb2SessionTrackerPtr = std::shared_ptr<Dce2Smb2SessionTracker>;
 using Dce2Smb2SessionTrackerMap =
-    std::unordered_map<uint64_t, Dce2Smb2SessionTracker*, std::hash<uint64_t> >;
+    std::unordered_map<uint64_t, Dce2Smb2SessionTrackerPtr, std::hash<uint64_t> >;
 
 PADDING_GUARD_BEGIN
 struct Smb2SessionKey
@@ -444,7 +445,7 @@ public:
     Dce2Smb2SessionData(const snort::Packet*, const dce2SmbProtoConf* proto);
     ~Dce2Smb2SessionData() override;
     void process() override;
-    void remove_session(uint64_t);
+    void remove_session(uint64_t, bool = false);
     void handle_retransmit(FilePosition, FileVerdict) override { }
     void reset_matching_tcp_file_tracker(Dce2Smb2FileTracker*);
     void set_reassembled_data(uint8_t*, uint16_t) override;
@@ -458,8 +459,8 @@ public:
 private:
     void process_command(const Smb2Hdr*, const uint8_t*);
     Smb2SessionKey get_session_key(uint64_t);
-    Dce2Smb2SessionTracker* create_session(uint64_t);
-    Dce2Smb2SessionTracker* find_session(uint64_t);
+    Dce2Smb2SessionTrackerPtr create_session(uint64_t);
+    Dce2Smb2SessionTrackerPtr find_session(uint64_t);
 
     uint32_t flow_key;
     Dce2Smb2FileTracker* tcp_file_tracker;

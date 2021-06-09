@@ -176,6 +176,14 @@ void Dce2Smb2SessionTracker::decrease_size(const size_t size)
     smb2_session_cache.decrease_size(size);
 }
 
+void Dce2Smb2SessionTracker::unlink()
+{
+    attached_flows_mutex.lock();
+    for (auto it_flow : attached_flows)
+        it_flow.second->remove_session(session_id, reload_prune.load());
+    attached_flows_mutex.unlock();
+}
+
 // Session Tracker is created and destroyed only from session cache
 Dce2Smb2SessionTracker::~Dce2Smb2SessionTracker(void)
 {
@@ -185,15 +193,20 @@ Dce2Smb2SessionTracker::~Dce2Smb2SessionTracker(void)
             "session tracker %" PRIu64 " terminating\n", session_id);
     }
 
+    std::vector<Dce2Smb2TreeTracker*> all_trees;
+    connected_trees_mutex.lock();
     auto it_tree = connected_trees.begin();
     while (it_tree != connected_trees.end())
     {
-        Dce2Smb2TreeTracker* tree = it_tree->second;
+        all_trees.push_back(it_tree->second);
         it_tree = connected_trees.erase(it_tree);
+    }
+    connected_trees_mutex.unlock();
+
+    for (Dce2Smb2TreeTracker* tree : all_trees)
+    {
         delete tree;
     }
 
-    for (auto it_flow : attached_flows)
-        it_flow.second->remove_session(session_id);
 }
 

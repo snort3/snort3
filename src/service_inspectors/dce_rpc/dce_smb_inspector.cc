@@ -129,7 +129,7 @@ static Inspector* dce2_smb_ctor(Module* m)
     mod->get_data(config);
     size_t max_smb_mem = DCE2_ScSmbMemcap(&config);
     smb_module_is_up = true;
-    smb2_session_cache.set_max_size(max_smb_mem);
+    smb2_session_cache.reload_prune(max_smb_mem);
     return new Dce2Smb(config);
 }
 
