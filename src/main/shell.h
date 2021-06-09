@@ -76,7 +76,8 @@ public:
     static void config_open_table(bool is_root_node, bool is_list, int idx,
         const std::string& table_name, const snort::Parameter* p);
     static void set_config_value(const std::string& fqn, const snort::Value& value);
-    static void add_config_child_node(const std::string& node_name, snort::Parameter::Type type);
+    static void add_config_child_node(const std::string& node_name, snort::Parameter::Type type,
+        bool is_root_list_item);
     static void update_current_config_node(const std::string& node_name = "");
     static void config_close_table();
     static void set_config_output(ConfigOutput* config_output);

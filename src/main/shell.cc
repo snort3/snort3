@@ -180,19 +180,20 @@ void Shell::config_open_table(bool is_root_node, bool is_list, int idx,
             if ( idx )
                 node_type = Parameter::PT_TABLE;
 
-            add_config_child_node(table_name, node_type);
+            add_config_child_node(table_name, node_type, idx);
         }
     }
 }
 
-void Shell::add_config_child_node(const std::string& node_name, snort::Parameter::Type type)
+void Shell::add_config_child_node(const std::string& node_name, snort::Parameter::Type type,
+    bool is_root_list_item)
 {
     if ( !s_config_output || !s_current_node )
         return;
 
-    std::string name;
-    if ( s_current_node->get_name() != node_name )
-        name = node_name;
+    // element of the top-level list is anonymous
+    std::string name = ( !is_root_list_item && s_current_node->get_name() != node_name ) ?
+        node_name : "";
 
     auto new_node = new TreeConfigNode(s_current_node, name, type);
     s_current_node->add_child_node(new_node);
