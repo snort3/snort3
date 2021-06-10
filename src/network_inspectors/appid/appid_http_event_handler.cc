@@ -112,7 +112,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
 
     if (direction == APP_ID_FROM_INITIATOR)
     {
-        header_start = http_event->get_host(header_length);
+        header_start = http_event->get_authority(header_length);
         if (header_length > 0)
             hsession->set_field(REQ_HOST_FID, header_start, header_length, change_bits);
 
