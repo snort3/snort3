@@ -25,9 +25,10 @@
 
 #include "pub_sub/http_events.h"
 #include "service_inspectors/http_inspect/http_common.h"
+#include "service_inspectors/http_inspect/http_field.h"
 #include "service_inspectors/http_inspect/http_msg_header.h"
 #include "service_inspectors/http_inspect/http_msg_section.h"
-#include "service_inspectors/http_inspect/http_field.h"
+#include "service_inspectors/http_inspect/http_uri.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -55,6 +56,7 @@ const Field& HttpMsgHeader::get_true_ip_addr()
     Field *out = (Field*)mock().getData("output").getObjectPointer();
     return (*out);
 }
+int32_t HttpUri::find_host_len(const Field&) { return 0; }
 
 TEST_GROUP(pub_sub_http_event_test)
 {

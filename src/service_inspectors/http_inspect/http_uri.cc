@@ -108,17 +108,9 @@ void HttpUri::parse_uri()
     }
 }
 
-void HttpUri::parse_authority()
+int32_t HttpUri::find_host_len(const Field& authority)
 {
-    if (authority.length() <= 0)
-    {
-        host.set(STAT_NO_SOURCE);
-        port.set(STAT_NO_SOURCE);
-        return;
-    }
-    
     int32_t host_len = 0;
-
     // IPv6 addresses are surrounded by [] to protect embedded colons
     if (authority.start()[0] == '[')
     {
@@ -128,6 +120,20 @@ void HttpUri::parse_authority()
 
     for (; (host_len < authority.length()) && (authority.start()[host_len] != ':');
         host_len++);
+
+    return host_len;
+}
+
+void HttpUri::parse_authority()
+{
+    if (authority.length() <= 0)
+    {
+        host.set(STAT_NO_SOURCE);
+        port.set(STAT_NO_SOURCE);
+        return;
+    }
+
+    int32_t host_len = find_host_len(authority);
     host.set(host_len, authority.start());
     if (host.length() < authority.length())
     {

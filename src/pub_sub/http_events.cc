@@ -28,13 +28,14 @@
 
 #include "service_inspectors/http_inspect/http_msg_header.h"
 #include "service_inspectors/http_inspect/http_msg_request.h"
+#include "service_inspectors/http_inspect/http_uri.h"
 
 using namespace snort;
 
 const uint8_t* HttpEvent::get_header(unsigned id, uint64_t sub_id, int32_t& length)
 {
     const Field& field = http_msg_header->get_classic_buffer(id, sub_id, 0);
-    if(field.length() > 0)
+    if (field.length() > 0)
     {
         length = field.length();
         return field.start();
@@ -74,6 +75,27 @@ const uint8_t* HttpEvent::get_authority(int32_t& length)
     }
     // Otherwise use host header
     return get_header(HttpEnums::HTTP_BUFFER_HEADER, HttpEnums::HEAD_HOST, length);
+}
+
+const uint8_t* HttpEvent::get_uri_host(int32_t &length)
+{
+    const uint8_t* uri_host = get_header(HttpEnums::HTTP_BUFFER_URI, HttpEnums::UC_HOST, length);
+    if (length > 0)
+        return uri_host;
+
+    // If there is no authority in the URI parse the host from the Host header
+    const Field& host_header = http_msg_header->get_classic_buffer(HttpEnums::HTTP_BUFFER_HEADER,
+        HttpEnums::HEAD_HOST, length);
+    if (host_header.length() > 0)
+    {
+        length = HttpUri::find_host_len(host_header);
+        return host_header.start();
+    }
+    else
+    {
+        length = 0;
+        return nullptr;
+    }
 }
 
 const uint8_t* HttpEvent::get_location(int32_t& length)

@@ -60,6 +60,8 @@ public:
     const Field& get_norm_fragment() { return fragment_norm; }
     const Field& get_norm_classic() { return classic_norm; }
 
+    static int32_t find_host_len(const Field& authority);
+
 private:
     const Field uri;
 
