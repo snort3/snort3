@@ -67,6 +67,15 @@ This directory contains the trace logger framework.
 
     TraceApi placed into "trace_api.h/trace_api.cc"
 
+* TraceOption
+
+    Represents a targeted module's trace option.
+    The targeted module provides a list of its trace options,
+    which control the verbosity level of the module's trace messages.
+    Since the messages can be present in release-build and/or debug-build,
+    one should pay attention which option should be in the options list.
+    TraceOptionID indexes (for the module's trace options) must start from zero.
+
 * Trace
 
     This class encapsulates trace verbosity functionality.

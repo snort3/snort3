@@ -38,8 +38,8 @@ snort::Module* get_snort_module();
 
 enum
 {
-    TRACE_MAIN = 0,
-    TRACE_INSPECTOR_MANAGER
+    TRACE_INSPECTOR_MANAGER = 0,
+    TRACE_MAIN,
 };
 
 #endif

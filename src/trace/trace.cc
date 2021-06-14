@@ -69,7 +69,9 @@ bool Trace::set(const std::string& trace_option_name, uint8_t trace_level)
     {
         if ( trace_option_name == option_name(index) )
         {
-            option_levels[options[index].id] = trace_level;
+            auto option_id = options[index].id;
+            assert(option_id < size);
+            option_levels[option_id] = trace_level;
             return true;
         }
     }

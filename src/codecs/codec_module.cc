@@ -44,8 +44,12 @@ void CodecModule::set_trace(const Trace* trace) const
 
 const TraceOption* CodecModule::get_trace_options() const
 {
+#ifndef DEBUG_MSGS
+    return nullptr;
+#else
     static const TraceOption codec_trace_options(nullptr, 0, nullptr);
     return &codec_trace_options;
+#endif
 }
 
 static const RuleMap general_decode_rules[] =
