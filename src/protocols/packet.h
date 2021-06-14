@@ -339,6 +339,7 @@ struct SO_PUBLIC Packet
     }
 
     uint16_t get_flow_vlan_id() const;
+    uint32_t get_flow_geneve_vni() const;
 
     int16_t get_ingress_group() const
     {

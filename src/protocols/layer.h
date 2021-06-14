@@ -55,6 +55,11 @@ namespace eth
 struct EtherHdr;
 }
 
+namespace geneve
+{
+struct GeneveHdr;
+}
+
 namespace gre
 {
 struct GREHdr;
@@ -107,6 +112,7 @@ SO_PUBLIC const arp::EtherARP* get_arp_layer(const Packet*);
 SO_PUBLIC const cisco_meta_data::CiscoMetaDataHdr* get_cisco_meta_data_layer(const Packet* const);
 SO_PUBLIC const eapol::EtherEapol* get_eapol_layer(const Packet*);
 SO_PUBLIC const eth::EtherHdr* get_eth_layer(const Packet*);
+SO_PUBLIC const geneve::GeneveHdr* get_geneve_layer(const Packet*);
 SO_PUBLIC const gre::GREHdr* get_gre_layer(const Packet*);
 SO_PUBLIC const vlan::VlanTagHdr* get_vlan_layer(const Packet*);
 SO_PUBLIC const wlan::WifiHdr* get_wifi_layer(const Packet*);

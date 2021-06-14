@@ -12,6 +12,7 @@ set (PROTOCOL_HEADERS
     ipv4.h
     ipv4_options.h
     ipv6.h
+    geneve.h
     gre.h
     layer.h
     linux_sll.h

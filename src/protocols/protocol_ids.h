@@ -133,6 +133,7 @@ enum class ProtocolId : std::uint16_t
     ETHERNET_802_11 = 0x0106,
     ETHERNET_LLC = 0x0107,
     VXLAN = 0x0108,
+    GENEVE = 0x0109,
 
     /*
      * Below is a partial list of ethertypes.

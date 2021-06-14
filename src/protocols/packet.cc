@@ -32,6 +32,7 @@
 
 #include "packet_manager.h"
 #include "vlan.h"
+#include "geneve.h"
 
 namespace snort
 {
@@ -262,6 +263,16 @@ uint16_t Packet::get_flow_vlan_id() const
         vid = layer::get_vlan_layer(this)->vid();
 
     return vid;
+}
+
+uint32_t Packet::get_flow_geneve_vni() const
+{
+    uint32_t vni = 0;
+
+    if (proto_bits & PROTO_BIT__GENEVE)
+        vni = layer::get_geneve_layer(this)->vni();
+
+    return vni;
 }
 
 bool Packet::is_from_application_client() const

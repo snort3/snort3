@@ -70,6 +70,9 @@ static const Parameter udp_params[] =
     { "vxlan_ports", Parameter::PT_BIT_LIST, "65535",
       "4789", "set VXLAN ports" },
 
+    { "geneve_ports", Parameter::PT_BIT_LIST, "65535",
+      "6081", "set Geneve ports" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -88,6 +91,7 @@ static const RuleMap udp_rules[] =
 constexpr uint16_t GTP_U_PORT = 2152;
 constexpr uint16_t GTP_U_PORT_V0 = 3386;
 constexpr uint16_t VXLAN_U_PORT = 4789;
+constexpr uint16_t GENEVE_U_PORT = 6081;
 
 class UdpCodecConfig
 {
@@ -97,6 +101,7 @@ public:
         gtp_ports.set(GTP_U_PORT);
         gtp_ports.set(GTP_U_PORT_V0);
         vxlan_ports.set(VXLAN_U_PORT);
+        geneve_ports.set(GENEVE_U_PORT);
     }
 
     bool deep_teredo_inspection()
@@ -114,8 +119,14 @@ public:
     bool vxlan_decoding()
     { return vxlan_decode; }
 
+    bool geneve_decoding()
+    { return geneve_decode; }
+
     bool is_vxlan_port(uint16_t port)
     { return vxlan_ports.test(port); }
+
+    bool is_geneve_port(uint16_t port)
+    { return geneve_ports.test(port); }
 
     void set_gtp_ports(const PortBitSet& ports)
     {
@@ -129,12 +140,20 @@ public:
         vxlan_decode = ports.any();
     }
 
+    void set_geneve_ports(const PortBitSet& ports)
+    {
+        geneve_ports = ports;
+        geneve_decode = ports.any();
+    }
+
 private:
     bool enable_teredo = false;
     PortBitSet gtp_ports;
     PortBitSet vxlan_ports;
+    PortBitSet geneve_ports;
     bool gtp_decode = true;
     bool vxlan_decode = true;
+    bool geneve_decode = true;
 };
 
 class UdpModule : public BaseCodecModule
@@ -194,6 +213,11 @@ bool UdpModule::set(const char*, Value& v, SnortConfig*)
     {
         v.get_bits(ports);
         config->set_vxlan_ports(ports);
+    }
+    else if ( v.is("geneve_ports") )
+    {
+        v.get_bits(ports);
+        config->set_geneve_ports(ports);
     }
     else
         return false;
@@ -430,6 +454,11 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         (config->is_vxlan_port(src_port) || config->is_vxlan_port(dst_port)))
     {
         codec.next_prot_id = ProtocolId::VXLAN;
+    }
+    else if (config->geneve_decoding() and
+        (config->is_geneve_port(src_port) || config->is_geneve_port(dst_port)))
+    {
+        codec.next_prot_id = ProtocolId::GENEVE;
     }
 
     if (codec.next_prot_id != ProtocolId::FINISHED_DECODE)

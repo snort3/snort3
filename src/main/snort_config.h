@@ -119,7 +119,8 @@ enum TunnelFlags
     TUNNEL_6IN6   = 0x20,
     TUNNEL_GRE    = 0x40,
     TUNNEL_MPLS   = 0x80,
-    TUNNEL_VXLAN  = 0x100
+    TUNNEL_VXLAN  = 0x100,
+    TUNNEL_GENEVE = 0x200
 };
 
 enum DumpConfigType

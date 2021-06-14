@@ -115,6 +115,15 @@ const arp::EtherARP* get_arp_layer(const Packet* const p)
             ProtocolId::ETHERTYPE_REVARP));
 }
 
+const geneve::GeneveHdr* get_geneve_layer(const Packet* const p)
+{
+    uint8_t num_layers = p->num_layers;
+    const Layer* lyr = p->layers;
+
+    return reinterpret_cast<const geneve::GeneveHdr*>(
+        find_inner_layer(lyr, num_layers, ProtocolId::GENEVE));
+}
+
 const gre::GREHdr* get_gre_layer(const Packet* const p)
 {
     uint8_t num_layers = p->num_layers;

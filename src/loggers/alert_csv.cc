@@ -47,6 +47,7 @@
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
 #include "protocols/vlan.h"
+#include "protocols/geneve.h"
 #include "utils/stats.h"
 
 using namespace snort;
@@ -208,6 +209,12 @@ static void ff_flowstart_time(const Args& a)
 {
     if (a.pkt->flow)
         TextLog_Print(csv_log, "%ld", a.pkt->flow->flowstats.start_time.tv_sec);
+}
+
+static void ff_geneve_vni(const Args& a)
+{
+    if (a.pkt->proto_bits & PROTO_BIT__GENEVE)
+        TextLog_Print(csv_log, "%u", a.pkt->get_flow_geneve_vni());
 }
 
 static void ff_gid(const Args& a)
@@ -472,7 +479,7 @@ static const CsvFunc csv_func[] =
 {
     ff_action, ff_class, ff_b64_data, ff_client_bytes, ff_client_pkts, ff_dir,
     ff_dst_addr, ff_dst_ap, ff_dst_port, ff_eth_dst, ff_eth_len, ff_eth_src,
-    ff_eth_type, ff_flowstart_time, ff_gid, ff_icmp_code, ff_icmp_id, ff_icmp_seq,
+    ff_eth_type, ff_flowstart_time, ff_geneve_vni, ff_gid, ff_icmp_code, ff_icmp_id, ff_icmp_seq,
     ff_icmp_type, ff_iface, ff_ip_id, ff_ip_len, ff_msg, ff_mpls, ff_pkt_gen, ff_pkt_len,
     ff_pkt_num, ff_priority, ff_proto, ff_rev, ff_rule, ff_seconds, ff_server_bytes,
     ff_server_pkts, ff_service, ff_sgt, ff_sid, ff_src_addr, ff_src_ap, ff_src_port,
@@ -483,7 +490,7 @@ static const CsvFunc csv_func[] =
 #define csv_range \
     "action | class | b64_data | client_bytes | client_pkts | dir | " \
     "dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | " \
-    "eth_type | flowstart_time | gid | icmp_code | icmp_id | icmp_seq | " \
+    "eth_type | flowstart_time | geneve_vni | gid | icmp_code | icmp_id | icmp_seq | " \
     "icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | " \
     "pkt_num | priority | proto | rev | rule | seconds | server_bytes | " \
     "server_pkts | service | sgt| sid | src_addr | src_ap | src_port | " \

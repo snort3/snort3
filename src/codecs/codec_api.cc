@@ -46,6 +46,7 @@ extern const BaseApi* cd_esp[];
 extern const BaseApi* cd_eth[];
 extern const BaseApi* cd_fabricpath[];
 extern const BaseApi* cd_frag[];
+extern const BaseApi* cd_geneve[];
 extern const BaseApi* cd_gre[];
 extern const BaseApi* cd_gtp[];
 extern const BaseApi* cd_icmp4[];
@@ -89,6 +90,7 @@ void load_codecs()
     PluginManager::load_plugins(cd_eth);
     PluginManager::load_plugins(cd_fabricpath);
     PluginManager::load_plugins(cd_frag);
+    PluginManager::load_plugins(cd_geneve);
     PluginManager::load_plugins(cd_gre);
     PluginManager::load_plugins(cd_gtp);
     PluginManager::load_plugins(cd_icmp4);
