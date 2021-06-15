@@ -533,8 +533,8 @@ normalize_javascript.
 
 ===== script_data
 
-The script_data is a sticky buffer, which contains normalized JavaScript text
-collected from the whole PDU. It requires the Enhanced Normalizer enabled:
+The script_data contains normalized JavaScript text collected from the whole PDU
+(inline or external scripts). It requires the Enhanced Normalizer enabled:
 http_inspect = { js_normalization_depth = N },
 js_normalization_depth option is described above.
 Despite what script_data has, file_data still contains the whole HTTP body
