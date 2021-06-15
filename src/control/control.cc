@@ -37,7 +37,12 @@ using namespace snort;
 
 ControlConn* ControlConn::query_from_lua(const lua_State* L)
 {
+#ifdef SHELL
     return ControlMgmt::find_control(L);
+#else
+    UNUSED(L);
+    return nullptr;
+#endif
 }
 
 //------------------------------------------------------------------------

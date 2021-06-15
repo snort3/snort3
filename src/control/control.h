@@ -34,7 +34,6 @@ struct lua_State;
 class ControlConn
 {
 public:
-#ifdef SHELL
     ControlConn(int fd, bool local);
     ~ControlConn();
 
@@ -69,14 +68,8 @@ private:
     std::string next_command;
     class Shell *shell;
     int fd;
-    bool local;
+    bool local = false;
     bool blocked = false;
-#else
-    SO_PUBLIC bool is_local() const { return false; }
-    SO_PUBLIC bool respond(const char*, va_list&) { return false;}
-    SO_PUBLIC bool respond(const char*, ...) __attribute__((format (printf, 2, 3))) { return false; }
-    SO_PUBLIC static ControlConn* query_from_lua(const lua_State*) { return nullptr; }
-#endif
 };
 
 #endif

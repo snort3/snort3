@@ -105,13 +105,13 @@ private:
 } // end of namespace snort
 
 void snort::main_broadcast_command(snort::AnalyzerCommand*, ControlConn*) {}
-#ifdef SHELL
+
 static ControlConn s_ctrlcon(1, true);
 ControlConn::ControlConn(int, bool) {}
 ControlConn::~ControlConn() {}
 ControlConn* ControlConn::query_from_lua(const lua_State*) { return &s_ctrlcon; }
 bool ControlConn::respond(const char*, ...) { return true; }
-#endif
+
 HostCacheMac* get_host_cache_mac() { return nullptr; }
 
 DataPurgeAC::~DataPurgeAC() = default;
