@@ -42,11 +42,6 @@ using namespace snort;
 AppIdHttpSession::AppIdHttpSession(AppIdSession& asd, uint32_t http2_stream_id)
     : asd(asd), http2_stream_id(http2_stream_id)
 {
-    for ( int i = 0; i < NUM_HTTP_FIELDS; i++)
-    {
-        meta_offset[i].first = 0;
-        meta_offset[i].second = 0;
-    }
     memory::MemoryCap::update_allocations(sizeof(AppIdHttpSession));
 }
 

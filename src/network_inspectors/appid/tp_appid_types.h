@@ -25,6 +25,8 @@
 #include <cstdint>
 #include <string>
 
+#define MAX_ATTR_LEN 2048
+
 using std::string;
 
 enum TPFlags
@@ -54,6 +56,23 @@ enum TPSessionAttr
     TP_ATTR_COPY_RESPONSE_BODY      = (1 << 3),
 };
 
+static void set_attr(string*& attr, const char* buf, size_t len, bool flush, size_t max_len)
+{
+    if (!attr)
+        attr = new string(buf, len > max_len ? max_len : len);
+    else if (flush)
+    {
+        delete attr;
+        attr = new string(buf, len > max_len ? max_len : len);
+    }
+    else if (attr->size() < max_len)
+    {
+        size_t max_copy_len = max_len - attr->size();
+        attr->append(buf, len > max_copy_len ? max_copy_len : len);
+    }
+    // else, skip copy because the buffer is filled up to its limit
+}
+
 #define TPAD_GET(func)                                          \
     string* func(bool caller_owns_it = false)                   \
     {                                                           \
@@ -63,22 +82,11 @@ enum TPSessionAttr
         return tmp;                                             \
     }
 
-#define TPAD_SET_OFFSET(func)                                   \
-    void set_ ## func(const char* buf, size_t len, uint16_t offset, uint16_t endOffset)                                                         \
-    {                                                           \
-        if (func ## _buf)                                       \
-            delete func ## _buf;                                \
-        func ## _buf=new string(buf,len);                       \
-        func ## _offset=offset;                                 \
-        func ## _end_offset=endOffset;                          \
-    }
-
-#define TPAD_SET(func)                                          \
-    void set_ ## func(const char* buf, size_t len)              \
-    {                                                           \
-        if (func ## _buf)                                       \
-            delete func ## _buf;                                \
-        func ## _buf=new string(buf,len);                       \
+#define TPAD_SET(func)                                                  \
+    void set_ ## func(const char* buf, size_t len, bool last_fragment, size_t max_len = MAX_ATTR_LEN) \
+    {                                                                   \
+        set_attr(func ## _buf, buf, len, func ## _flush, max_len);      \
+        func ## _flush = last_fragment;                                 \
     }
 
 // The ThirdPartyAppIDAttributeData class acts as a per packet cache for
@@ -125,26 +133,30 @@ class ThirdPartyAppIDAttributeData
     string* ftp_command_user_buf = nullptr;
     string* quic_sni_buf = nullptr;
 
-    uint16_t http_request_uri_offset = 0;
-    uint16_t http_request_uri_end_offset = 0;
-
-    uint16_t http_request_cookie_offset = 0;
-    uint16_t http_request_cookie_end_offset = 0;
-
-    uint16_t http_request_user_agent_offset = 0;
-    uint16_t http_request_user_agent_end_offset = 0;
-
-    uint16_t http_request_host_offset = 0;
-    uint16_t http_request_host_end_offset = 0;
-
-    uint16_t http_request_referer_offset = 0;
-    uint16_t http_request_referer_end_offset = 0;
-
-    uint16_t spdy_request_host_offset = 0;
-    uint16_t spdy_request_host_end_offset = 0;
-
-    uint16_t spdy_request_path_offset = 0;
-    uint16_t spdy_request_path_end_offset = 0;
+    // will be set to true after last fragment for a metadata field is received
+    bool spdy_request_path_flush = true;
+    bool spdy_request_scheme_flush = true;
+    bool spdy_request_host_flush = true;
+    bool http_request_url_flush = true;
+    bool http_request_uri_flush = true;
+    bool http_request_host_flush = true;
+    bool http_request_cookie_flush = true;
+    bool http_request_via_flush = true;
+    bool http_response_via_flush = true;
+    bool http_request_user_agent_flush = true;
+    bool http_response_code_flush = true;
+    bool http_response_content_flush = true;
+    bool http_response_location_flush = true;
+    bool http_response_body_flush = true;
+    bool http_request_body_flush = true;
+    bool http_response_server_flush = true;
+    bool http_request_x_working_with_flush = true;
+    bool tls_host_flush = true;
+    bool tls_cname_flush = true;
+    bool tls_org_unit_flush = true;
+    bool http_request_referer_flush = true;
+    bool ftp_command_user_flush = true;
+    bool quic_sni_flush = true;
 
     // FIXIT-L: make these private too. Figure out how these get set in tp.
 
@@ -204,38 +216,17 @@ public:
     TPAD_GET(ftp_command_user)
     TPAD_GET(quic_sni)
 
-    uint16_t http_request_uri_begin() { return http_request_uri_offset; }
-    uint16_t http_request_uri_end() { return http_request_uri_end_offset; }
-
-    uint16_t http_request_cookie_begin() { return http_request_cookie_offset; }
-    uint16_t http_request_cookie_end() { return http_request_cookie_end_offset; }
-
-    uint16_t http_request_user_agent_begin() { return http_request_user_agent_offset; }
-    uint16_t http_request_user_agent_end() { return http_request_user_agent_end_offset; }
-
-    uint16_t http_request_host_begin() { return http_request_host_offset; }
-    uint16_t http_request_host_end() { return http_request_host_end_offset; }
-
-    uint16_t http_request_referer_begin() { return http_request_referer_offset; }
-    uint16_t http_request_referer_end() { return http_request_referer_end_offset; }
-
-    uint16_t spdy_request_host_begin() { return spdy_request_host_offset; }
-    uint16_t spdy_request_host_end() { return spdy_request_host_end_offset; }
-
-    uint16_t spdy_request_path_begin() { return spdy_request_path_offset; }
-    uint16_t spdy_request_path_end() { return spdy_request_path_end_offset; }
-
     // set functions
-    TPAD_SET_OFFSET(spdy_request_path)
+    TPAD_SET(spdy_request_path)
     TPAD_SET(spdy_request_scheme)
-    TPAD_SET_OFFSET(spdy_request_host)
+    TPAD_SET(spdy_request_host)
     TPAD_SET(http_request_url)
-    TPAD_SET_OFFSET(http_request_uri)
-    TPAD_SET_OFFSET(http_request_host)
-    TPAD_SET_OFFSET(http_request_cookie)
+    TPAD_SET(http_request_uri)
+    TPAD_SET(http_request_host)
+    TPAD_SET(http_request_cookie)
     TPAD_SET(http_request_via)
     TPAD_SET(http_response_via)
-    TPAD_SET_OFFSET(http_request_user_agent)
+    TPAD_SET(http_request_user_agent)
     TPAD_SET(http_response_code)
     TPAD_SET(http_response_content)
     TPAD_SET(http_response_location)
@@ -246,7 +237,7 @@ public:
     TPAD_SET(tls_host)
     TPAD_SET(tls_cname)
     TPAD_SET(tls_org_unit)
-    TPAD_SET_OFFSET(http_request_referer)
+    TPAD_SET(http_request_referer)
     TPAD_SET(ftp_command_user)
     TPAD_SET(quic_sni)
 };

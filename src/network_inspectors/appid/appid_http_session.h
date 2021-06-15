@@ -82,28 +82,6 @@ public:
     const char* get_cfield(HttpFieldIds id) const
     { return meta_data[id] != nullptr ? meta_data[id]->c_str() : nullptr; }
 
-    bool get_offset(int id, uint16_t& start, uint16_t& end) const
-    {
-        if ( REQ_AGENT_FID <= id and id < NUM_HTTP_FIELDS )
-        {
-            start = meta_offset[id].first;
-            end = meta_offset[id].second;
-            return true;
-        }
-        return false;
-    }
-
-    bool set_offset(int id, uint16_t start, uint16_t end)
-    {
-        if ( REQ_AGENT_FID <= id and id < NUM_HTTP_FIELDS )
-        {
-            meta_offset[id].first = start;
-            meta_offset[id].second = end;
-            return true;
-        }
-        return false;
-    }
-
     void set_is_webdav(bool webdav)
     { is_webdav = webdav; }
 
@@ -189,7 +167,6 @@ protected:
     // set_field() functions in AppIdHttpSession. We do need set functions
     // for this array, as old pointers need to be deleted upon set().
     const std::string* meta_data[NUM_METADATA_FIELDS] = { };
-    pair_t meta_offset[NUM_HTTP_FIELDS];
 
     bool is_webdav = false;
     bool chp_finished = false;

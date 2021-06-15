@@ -58,8 +58,6 @@ using AppIdFreeFCN = void (*)(void*);
 const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
     const uint8_t* needle, unsigned needle_len);
 
-#define MAX_ATTR_LEN           1024
-
 #define SF_DEBUG_FILE   stdout
 #define MIN_SFTP_PACKET_COUNT   30
 #define MAX_SFTP_PACKET_COUNT   55

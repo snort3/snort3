@@ -190,9 +190,6 @@ const uint8_t* service_strstr(const uint8_t* p, unsigned,
     return nullptr;
 }
 
-// Stubs for appid_http_session.cc
-static bool test_field_offset_set_done = false;
-
 // Stubs for app_info_table.cc
 AppInfoTableEntry* AppInfoManager::get_app_info_entry(int)
 {

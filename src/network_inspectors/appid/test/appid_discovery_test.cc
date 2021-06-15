@@ -128,7 +128,6 @@ void DataBus::publish(const char*, DataEvent& event, Flow*)
 static HttpPatternMatchers* http_matchers;
 DnsPatternMatchers::~DnsPatternMatchers() = default;
 HttpPatternMatchers::~HttpPatternMatchers() = default;
-void HttpPatternMatchers::get_http_offsets(Packet*, AppIdHttpSession*) {}
 SipPatternMatchers::~SipPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;
 

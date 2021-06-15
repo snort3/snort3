@@ -748,66 +748,6 @@ void HttpPatternMatchers::reload_patterns()
         chp_matchers[i].reload();
 }
 
-typedef struct fieldPatternData_t
-{
-    const uint8_t* payload;
-    unsigned length;
-    AppIdHttpSession* hsession;
-} FieldPatternData;
-
-static int http_field_pattern_match(void* id, void*, int match_end_pos, void* data, void*)
-{
-    static const uint8_t crlf[] = "\r\n";
-    static unsigned crlfLen = sizeof(crlf)-1;
-    FieldPatternData* pFieldData = (FieldPatternData*)data;
-    FieldPattern* target = (FieldPattern*)id;
-    const uint8_t* p;
-    unsigned fieldOffset = match_end_pos;
-    unsigned remainingLength = pFieldData->length - fieldOffset;
-
-    if (!(p = (const uint8_t*)service_strstr(&pFieldData->payload[fieldOffset], remainingLength,
-            crlf, crlfLen)))
-    {
-        return 1;
-    }
-
-    pFieldData->hsession->set_offset(target->patternType, fieldOffset, p-pFieldData->payload);
-
-    return 1;
-}
-
-// FIXIT-RC: Is this still necessary now that we use inspection events?
-void HttpPatternMatchers::get_http_offsets(Packet* pkt, AppIdHttpSession* hsession)
-{
-    constexpr auto MIN_HTTP_REQ_HEADER_SIZE = (sizeof("GET /\r\n\r\n") - 1);
-    static const uint8_t crlfcrlf[] = "\r\n\r\n";
-    static unsigned crlfcrlfLen = sizeof(crlfcrlf) - 1;
-    const uint8_t* headerEnd;
-    FieldPatternData patternMatchData;
-
-    for (int fieldId = REQ_AGENT_FID; fieldId <= REQ_COOKIE_FID; fieldId++)
-    {
-        pair_t off;
-        if ( hsession->get_offset(fieldId, off.first, off.second) )
-            hsession->set_offset(fieldId, 0, off.second);
-    }
-
-    if (!pkt->data || pkt->dsize < MIN_HTTP_REQ_HEADER_SIZE)
-        return;
-
-    patternMatchData.hsession = hsession;
-    patternMatchData.payload = pkt->data;
-
-    if (!(headerEnd = (const uint8_t*)service_strstr(pkt->data, pkt->dsize, crlfcrlf,
-            crlfcrlfLen)))
-        return;
-
-    headerEnd += crlfcrlfLen;
-    patternMatchData.length = (unsigned)(headerEnd - pkt->data);
-    field_matcher.find_all((const char*)pkt->data, patternMatchData.length,
-        &http_field_pattern_match, false, (void*)(&patternMatchData));
-}
-
 static inline void free_matched_patterns(MatchedPatterns* mp)
 {
     while (mp)

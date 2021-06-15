@@ -621,10 +621,7 @@ void AppInfoManager::dump_appid_configurations(const std::string& file_path) con
 {
     std::ifstream conf_file(file_path);
     if (!conf_file.is_open())
-    {
-        ParseError("appid: could not open %s", file_path.c_str());
         return;
-    }
 
     LogMessage("AppId: Configuration file %s\n", file_path.c_str());
     std::string line;

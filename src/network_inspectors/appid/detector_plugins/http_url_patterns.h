@@ -306,7 +306,6 @@ public:
     AppId get_appid_by_content_type(const char*, int);
     void get_server_vendor_version(const char*, int, char**, char**, AppIdServiceSubtype**);
     void identify_user_agent(const char*, int, AppId&, AppId&, char**);
-    void get_http_offsets(snort::Packet*, AppIdHttpSession*);
     uint32_t parse_multiple_http_patterns(const char* pattern, tMlmpPattern*,
         uint32_t numPartLimit, int level);
 

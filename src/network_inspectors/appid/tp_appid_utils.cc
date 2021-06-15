@@ -125,9 +125,6 @@ static inline void process_http_session(const Packet& p, AppIdSession& asd,
                 hsession->set_chp_finished(false);
 
             hsession->set_field(REQ_HOST_FID, spdyRequestHost, change_bits);
-            hsession->set_offset(REQ_HOST_FID,
-                attribute_data.spdy_request_host_begin(),
-                attribute_data.spdy_request_host_end());
         }
 
         if (spdyRequestPath)
@@ -136,9 +133,6 @@ static inline void process_http_session(const Packet& p, AppIdSession& asd,
                 hsession->set_chp_finished(false);
 
             hsession->set_field(REQ_URI_FID, spdyRequestPath, change_bits);
-            hsession->set_offset(REQ_URI_FID,
-                attribute_data.spdy_request_path_begin(),
-                attribute_data.spdy_request_path_end());
         }
     }
     else
@@ -150,9 +144,6 @@ static inline void process_http_session(const Packet& p, AppIdSession& asd,
                     hsession->set_chp_finished(false);
 
             hsession->set_field(REQ_HOST_FID, field, change_bits);
-            hsession->set_offset(REQ_HOST_FID,
-                attribute_data.http_request_host_begin(),
-                attribute_data.http_request_host_end());
         }
 
         if ( (field=attribute_data.http_request_url(own)) != nullptr )
@@ -183,9 +174,6 @@ static inline void process_http_session(const Packet& p, AppIdSession& asd,
                     hsession->set_chp_finished(false);
 
             hsession->set_field(REQ_URI_FID, field, change_bits);
-            hsession->set_offset(REQ_URI_FID,
-                attribute_data.http_request_uri_begin(),
-                attribute_data.http_request_uri_end());
         }
     }
 
@@ -214,9 +202,6 @@ static inline void process_http_session(const Packet& p, AppIdSession& asd,
                 hsession->set_chp_finished(false);
 
         hsession->set_field(REQ_AGENT_FID, field, change_bits);
-        hsession->set_offset(REQ_AGENT_FID,
-            attribute_data.http_request_user_agent_begin(),
-            attribute_data.http_request_user_agent_end());
     }
 
     if ( (field=attribute_data.http_response_code(own)) != nullptr )
@@ -235,9 +220,6 @@ static inline void process_http_session(const Packet& p, AppIdSession& asd,
                 hsession->set_chp_finished(false);
 
         hsession->set_field(REQ_REFERER_FID, field, change_bits);
-        hsession->set_offset(REQ_REFERER_FID,
-            attribute_data.http_request_referer_begin(),
-            attribute_data.http_request_referer_end());
     }
 
     if ( (field=attribute_data.http_request_cookie(own)) != nullptr )
@@ -247,9 +229,6 @@ static inline void process_http_session(const Packet& p, AppIdSession& asd,
                 hsession->set_chp_finished(false);
 
         hsession->set_field(REQ_COOKIE_FID, field, change_bits);
-        hsession->set_offset(REQ_COOKIE_FID,
-            attribute_data.http_request_cookie_begin(),
-            attribute_data.http_request_cookie_end());
     }
 
     if ( (field=attribute_data.http_response_content(own)) != nullptr )
@@ -321,31 +300,18 @@ static inline void process_rtmp(AppIdSession& asd,
     bool own = true;
     const string* field = nullptr;
 
-    if ( !hsession->get_field(MISC_URL_FID) )
-    {
-        if ( ( field=attribute_data.http_request_url(own) ) != nullptr )
-            hsession->set_field(MISC_URL_FID, field, change_bits);
-    }
+    if (!hsession->get_field(MISC_URL_FID) and
+        ((field = attribute_data.http_request_url(own)) != nullptr))
+        hsession->set_field(MISC_URL_FID, field, change_bits);
 
-    if ( !asd.get_odp_ctxt().referred_appId_disabled &&
-        !hsession->get_field(REQ_REFERER_FID) )
-    {
-        if ( ( field=attribute_data.http_request_referer(own) ) != nullptr )
-        {
-            hsession->set_field(REQ_REFERER_FID, field, change_bits);
-        }
-    }
+    if (!asd.get_odp_ctxt().referred_appId_disabled and
+        !hsession->get_field(REQ_REFERER_FID) and
+        ((field = attribute_data.http_request_referer(own)) != nullptr))
+        hsession->set_field(REQ_REFERER_FID, field, change_bits);
 
-    if ( !hsession->get_field(REQ_AGENT_FID) )
-    {
-        if ( ( field=attribute_data.http_request_user_agent(own) ) != nullptr )
-        {
-            hsession->set_field(REQ_AGENT_FID, field, change_bits);
-            hsession->set_offset(REQ_AGENT_FID,
-                attribute_data.http_request_user_agent_begin(),
-                attribute_data.http_request_user_agent_end());
-        }
-    }
+    if (!hsession->get_field(REQ_AGENT_FID) and
+        ((field = attribute_data.http_request_user_agent(own)) != nullptr))
+        hsession->set_field(REQ_AGENT_FID, field, change_bits);
 
     asd.examine_rtmp_metadata(change_bits);
 

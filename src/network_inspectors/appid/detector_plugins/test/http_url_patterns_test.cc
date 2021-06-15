@@ -93,31 +93,6 @@ TEST_GROUP(http_url_patterns_tests)
     }
 };
 
-TEST(http_url_patterns_tests, http_field_pattern_match)
-{
-    FieldPatternData fpd;
-    FieldPattern fp;
-    pair_t off;
-
-    // verify service_strstr getting called
-    fp.patternType = REQ_HOST_FID;
-    fpd.payload = (const uint8_t*)"Google";
-    fpd.length = 6;
-    fpd.hsession = &mock_hsession;
-
-    test_service_strstr_enabled = false;
-    test_field_offset_set_done = false;
-    mock_hsession.set_offset(fp.patternType, 0, 5);
-    CHECK_EQUAL(1, http_field_pattern_match(&fp, nullptr, 0, &fpd, nullptr));
-    mock_hsession.get_offset(fp.patternType, off.first, off.second);
-    CHECK_EQUAL(5, off.second);     // check offset did not change
-
-    test_service_strstr_enabled = true;
-    CHECK_EQUAL(1, http_field_pattern_match(&fp, nullptr, 0, &fpd, nullptr));
-    mock_hsession.get_offset(fp.patternType, off.first, off.second);
-    CHECK_EQUAL(0, off.second);     // if it changed, service_strstr was called
-}
-
 TEST(http_url_patterns_tests, match_query_elements)
 {
     // null check
@@ -149,33 +124,6 @@ TEST(http_url_patterns_tests, chp_add_candidate_to_tally)
     match_tally.emplace_back(chc);
     chp_add_candidate_to_tally(match_tally, &chpapp);
     CHECK_EQUAL(match_tally[0].key_pattern_countdown, 0);
-}
-
-TEST(http_url_patterns_tests, get_http_offsets)
-{
-    // field_offset is set for small payload
-    test_field_offset_set_done = false;
-    pkt.data = (const uint8_t*)"Go";
-    pkt.dsize = 2;
-
-    pair_t off;
-    mock_hsession.set_offset(REQ_AGENT_FID, 5, 0);
-    hm->get_http_offsets(&pkt, &mock_hsession);
-    mock_hsession.get_offset(REQ_AGENT_FID, off.first, off.second);
-    CHECK_EQUAL(0, off.first);
-
-    // find_all is not called for bigger payload when service_strstr returns nullptr
-    test_service_strstr_enabled = false;
-    test_find_all_done = false;
-    pkt.data = (const uint8_t*)"GET http://www.w3.org HTTP/1.1";
-    pkt.dsize = strlen((const char*)pkt.data);
-    hm->get_http_offsets(&pkt, &mock_hsession);
-    CHECK_EQUAL(false, test_find_all_done);
-
-    // find_all is called for bigger payload when service_strstr returns something
-    test_service_strstr_enabled = true;
-    hm->get_http_offsets(&pkt, &mock_hsession);
-    CHECK_EQUAL(true, test_find_all_done);
 }
 
 TEST(http_url_patterns_tests, normalize_userid)

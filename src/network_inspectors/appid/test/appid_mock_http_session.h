@@ -93,11 +93,6 @@ public:
         meta_data[MISC_SERVER_FID] = new std::string(SERVER);
         meta_data[MISC_XWW_FID] = new std::string(X_WORKING_WITH);
         meta_data[MISC_URL_FID] = new std::string(URL);
-
-        meta_offset[REQ_URI_FID].first = URI_OFFSET;
-        meta_offset[REQ_URI_FID].second = URI_OFFSET + strlen(URI);
-        meta_offset[REQ_COOKIE_FID].first = COOKIE_OFFSET;
-        meta_offset[REQ_COOKIE_FID].second = COOKIE_OFFSET + strlen(NEW_COOKIE);
     }
 
     void reset()
