@@ -194,7 +194,7 @@ public:
         if ( ( snd_una == 0 ) && ( snd_nxt == 0 ) )
             return true;
 
-        bool valid = SEQ_GEQ(cur, snd_una) && SEQ_LEQ(cur, snd_nxt);
+        bool valid = SEQ_LEQ(cur, snd_nxt);
         if ( !valid )
             tcpStats.invalid_ack++;
 
