@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.5.0 2021-05-20 14:02:00 EDT TST
+Revision 3.1.6.0 2021-06-16 07:30:48 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -3919,13 +3919,14 @@ enhanced and legacy normalizers have mutual exclusion behaviour, so
 you cannot enable both at the same time (doing so will cause Snort to
 fail to load). When the depth is reached, normalization will be
 stopped. It’s implemented per-script. js_normalization_depth = -1,
-will set the max allowed depth value. By default, the value is set to
-0 which means that normalizer is disabled. The enhanced normalizer
-provides more precise whitespace normalization of JavaScript, that
-removes all redundant whitespaces and line terminators from the
-JavaScript syntax point of view (between identifier and punctuator,
-between identifier and operator, etc.) according to ECMAScript 5.1
-standard. This is currently experimental and still under development.
+will set unlimited depth. By default, the value is set to 0 which
+means that normalizer is disabled. The enhanced normalizer provides
+more precise whitespace normalization of JavaScript, that removes all
+redundant whitespaces and line terminators from the JavaScript syntax
+point of view (between identifier and punctuator, between identifier
+and operator, etc.) according to ECMAScript 5.1 standard. The
+normalized data is available through the script_data rule option.
+This is currently experimental and still under development.
 
 6.10.2.9. xff_headers
 
@@ -4313,14 +4314,12 @@ decompress_pdf, decompress_swf, and normalize_javascript.
 
 6.10.4.14. script_data
 
-The script_data ips option is used as sticky buffer and contains only
-the normalized JavaScript HTTP response body without script tags. In
-scope of rules the script_data option takes place with enabled new
-enhanced normalizer, so it is used in combination with http_inspect =
-{ js_normalization_depth = N }. The js_normalization_depth option is
-described above. In rules the script_data can be used with file_data
-option where file_data would contain the whole HTTP response body for
-content matching.
+The script_data contains normalized JavaScript text collected from
+the whole PDU (inline or external scripts). It requires the Enhanced
+Normalizer enabled: http_inspect = { js_normalization_depth = N },
+js_normalization_depth option is described above. Despite what
+script_data has, file_data still contains the whole HTTP body with an
+original JavaScript in it.
 
 6.10.5. Timing issues and combining rule options
 
@@ -4440,19 +4439,6 @@ http2_inspect = {}
 
 to your snort.lua configuration file.
 
-Everything has a beginning and for http2_inspect this is the
-beginning of the beginning.
-
-Currently http2_inspect will divide an HTTP/2 connection into
-individual frames. Two new rule options are available for looking at
-HTTP/2 frames: http2_frame_header provides the 9-octet frame header.
-
-alert tcp any any -> any any (msg:"Frame type"; flow:established,
-to_client; http2_frame_header; content:"|06|", offset 3, depth 1;
-sid:1; rev:1; )
-
-This will match if the Type byte of the frame header is 6 (PING).
-
 To smooth the transition to inspecting HTTP/2, rules that specify
 service:http will be treated as if they also specify service:http2.
 Thus:
@@ -4477,10 +4463,6 @@ This feature makes it easy to add HTTP/2 inspection without modifying
 large numbers of existing rules. New rules should explicitly specify
 "service http,http2;" if that is the desired behavior. Eventually
 support for http implies http2 may be deprecated and removed.
-
-In the future, http2_inspect will be fully integrated with
-http_inspect to provide full inspection of the individual HTTP/1.1
-streams.
 
 
 6.12. IEC104 Inspector

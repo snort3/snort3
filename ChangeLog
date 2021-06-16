@@ -1,3 +1,72 @@
+2021/06/16 - 3.1.6.0
+
+appid: extract auxiliary ip when uri is provided by third-party
+appid: perform detection on request body for HTTP2 traffic.
+appid: remove error message when userappid.conf is not present
+appid: remove unused metadata offset functionality
+appid: support fragmented metadata
+appid: use 32 bits for storing protocol field in RPC port map message
+codecs: geneve - add support for Geneve encapsulation
+codecs: geneve - add vni to alert_csv and alert_json
+codecs: support inner flow NAT
+control: allow compile with shell disabled
+control: clean up cppcheck issues
+control: expose ContrlConn API
+control: refactor control channel management to better handle control responses
+control: remove SHELL compile flag from header
+control: remove unused IdleProcessing functionality
+dce_rpc: SMB multichannel - add smb multichannel file support
+dce_rpc: SMB multichannel - handle negotiate command to create expected flow
+dce_rpc: SMB multichannel - introduce locks
+dce_rpc: SMB multichannel - make session cache global
+dce_rpc: SMB multichannel - own memory tracking in global cache
+dce_rpc: fix warnings
+dce_rpc: handle reload prune for smb session cache
+dce_rpc: store shared pointer of session tracker
+doc: update JS normalizer options
+file_api: increase file count only once per file
+file_api: store processing flow in context
+filters: change rate filter to use network policy id instead of ips policy id
+filters: support rate filter to work with PDUs
+flow: enable support for multiple expected sessions
+ftp: create additional expected session if negotiated IP is different from server IP on packet
+gtp : check protocol type according to gtp version
+host_cache: remove unused lua mock code from the tests
+http2_inspect: don't perform valid sequence check on rst_stream frame
+http2_inspect: improve request line generation and checks
+http2_inspect: rule options and doc clean up
+http2_inspect: track dynamic table memory allocation
+http_inspect: add JS Normalizer to dev_notes
+http_inspect: add JS normalization for external scripts
+http_inspect: additional memory tracking
+http_inspect: extend built-in alerts for Javascript processing
+http_inspect: improve MPSE in HttpJsNorm (script start conditions)
+http_inspect: limit section size target for file processing
+http_inspect: publish event for http/2 request bodies
+http_inspect: support partial detect for Javascripts
+http_inspect: track memory footprint of zlib inflation
+http_inspect: update test mock api
+iec104: delete trailing spaces
+ips_options: fix intrusion alerts generation for tcp rpc PORTMAP traffic when rpc_decode is bound to the flow
+main: add support for resuming particular thread
+main: fix config dump for list-based inspector aliases
+mime: store extra data in stash
+packet_io: enable expected session flags
+protocols: remove inline specifiers for functions defined within a structure declaration
+pub_sub: add get_uri_host() to HttpEvent
+pub_sub: update HttpEvent::get_host to get_authority - now always includes port if there is one
+reputation: daq trace log
+reputation: support auxiliary IP matching upon reload
+rna: filter DHCP events and some refactoring
+rna: update last seen time on deleted host rediscovery
+stream: enable support for multiple expected sessions
+stream_tcp: populate flow contents in context for non-wire packets
+time: make Periodic class SO_PUBLIC
+trace: place trace options under the DEBUG_MSGS macro
+utils: fix warning about empty statement
+utils: refactor JSTokenizer
+utils: rework JSNormalizer class
+
 2021/05/20 - 3.1.5.0
 
 appid: Publish an event when appid debug command is issued
