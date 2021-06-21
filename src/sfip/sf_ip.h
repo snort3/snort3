@@ -101,6 +101,8 @@ struct SO_PUBLIC SfIp
 
     void obfuscate(const SfCidr* ob);
 
+    static bool test_features;
+
 private:
     int cidr_mask(int val);
     bool _is_equals(const SfIp& rhs) const;

@@ -1206,6 +1206,8 @@ TEST_CASE("SfIpVarListMerge", "[SfIpVar]")
     sfip_var_t* var1;
     sfip_var_t* var2;
 
+    SfIp::test_features = true;
+
     SECTION("basic list merge")
     {
         table = sfvt_alloc_table();
@@ -1232,6 +1234,7 @@ TEST_CASE("SfIpVarListMerge", "[SfIpVar]")
         CHECK(sfvt_add_str(table, "my_cidr [ 192.168.0.0/16, f0:e0:d0:c0::8/64, 10.10.1.8/19,"
             " f0:e0:d1:c1::1/32]", &var2) == SFIP_SUCCESS);
         print_var_list(var2->head);
+
         CHECK(!strcmp("10.10.0.0,192.168.0.0,00f0:00e0:0000:0000:0000:0000:0000:0000",
             sfipvar_test_buff));
 
@@ -1300,6 +1303,9 @@ TEST_CASE("SfIpVarListMerge", "[SfIpVar]")
 
     SECTION("merge contained IPs and negated-IPs")
     {
+
+        SfIp::test_features = true;
+
         table = sfvt_alloc_table();
 
         CHECK(sfvt_add_str(table, "foo 1.2.3.4, cafe:feed:beef::0/48", &var1) == SFIP_SUCCESS);
@@ -1312,6 +1318,7 @@ TEST_CASE("SfIpVarListMerge", "[SfIpVar]")
 
         /* Check merged IP lists */
         print_var_list(var1->head);
+
         CHECK(!strcmp("1.2.0.0,cafe:0000:0000:0000:0000:0000:0000:0000", sfipvar_test_buff));
         print_var_list(var1->neg_head);
         CHECK(!strcmp("!9.0.0.0,!dead:beef:0000:0000:0000:0000:0000:0000", sfipvar_test_buff));

@@ -72,11 +72,13 @@ enum RunFlag
     RUN_FLAG__IP_FRAGS_ONLY       = 0x00200000,
     RUN_FLAG__DUMP_RULE_STATE     = 0x00400000,
 
+    RUN_FLAG__TEST_FEATURES       = 0x00800000,
+
 #ifdef SHELL
-    RUN_FLAG__SHELL               = 0x00800000,
+    RUN_FLAG__SHELL               = 0x01000000,
 #endif
 #ifdef PIGLET
-    RUN_FLAG__PIGLET              = 0x01000000,
+    RUN_FLAG__PIGLET              = 0x02000000,
 #endif
 };
 
@@ -610,6 +612,9 @@ public:
 
     bool assure_established() const
     { return run_flags & RUN_FLAG__ASSURE_EST; }
+
+    bool test_features() const
+    { return run_flags & RUN_FLAG__TEST_FEATURES; }
 
     // other stuff
     uint8_t min_ttl() const

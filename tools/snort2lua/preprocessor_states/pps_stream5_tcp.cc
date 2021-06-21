@@ -374,11 +374,7 @@ bool StreamTcp::convert(std::istringstream& data_stream)
         }
         else if (keyword == "use_static_footprint_sizes")
         {
-            table_api.add_diff_option_comment("use_static_footprint_sizes",
-                "stream.footprint = 192");
-            table_api.close_table();
-            table_api.open_top_level_table("stream");
-            table_api.add_option("footprint", 192);
+            table_api.add_deleted_comment("use_static_footprint_sizes");
             table_api.close_table();
             table_api.open_table("stream_tcp");
         }

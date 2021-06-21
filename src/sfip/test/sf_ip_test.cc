@@ -248,6 +248,8 @@ static FuncTest ftests[] =
 
 static int RunFunc(const char* func, const char* arg1, const char* arg2)
 {
+    SfIp::test_features = true;
+
     SfCidr cidr1, cidr2;
     const SfIp* ip1, * ip2;
     int result = SFIP_FAILURE;

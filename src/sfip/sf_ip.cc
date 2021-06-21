@@ -37,6 +37,8 @@
 
 using namespace snort;
 
+bool SfIp::test_features{ false };
+
 /* Masks off 'val' bits from the IP contained within 'ip' */
 inline int SfIp::cidr_mask(int val)
 {
@@ -405,46 +407,49 @@ const char* snort_inet_ntop(int family, const void* ip_raw, char* buf, int bufsi
         return buf;
     }
 
-#if !defined(REG_TEST) && !defined(CATCH_TEST_BUILD)
-    if (!inet_ntop(family, ip_raw, buf, bufsize))
-        snprintf(buf, bufsize, "ERROR");
-#else
-    /* 4 fields of at most 3 characters each */
-    if (family == AF_INET)
+    if ( !SfIp::test_features )
     {
-        int i;
-        const uint8_t* p = (const uint8_t*)ip_raw;
-
-        for (i=0; p < ((const uint8_t*)ip_raw) + 4; p++)
-        {
-            i += sprintf(&buf[i], "%d", *p);
-
-            /* If this is the last iteration, this could technically cause one
-             *  extra byte to be written past the end. */
-            if (i < bufsize && ((p + 1) < ((const uint8_t*)ip_raw+4)))
-                buf[i] = '.';
-
-            i++;
-        }
+        if (!inet_ntop(family, ip_raw, buf, bufsize))
+            snprintf(buf, bufsize, "ERROR");
     }
     else
     {
-        int i;
-        const uint16_t* p = (const uint16_t*)ip_raw;
-
-        for (i=0; p < ((const uint16_t*)ip_raw) + 8; p++)
+        /* 4 fields of at most 3 characters each */
+        if (family == AF_INET)
         {
-            i += sprintf(&buf[i], "%04x", ntohs(*p));
+            int i;
+            const uint8_t* p = (const uint8_t*)ip_raw;
 
-            /* If this is the last iteration, this could technically cause one
-             *  extra byte to be written past the end. */
-            if (i < bufsize && ((p + 1) < ((const uint16_t*)ip_raw) + 8))
-                buf[i] = ':';
+            for (i=0; p < ((const uint8_t*)ip_raw) + 4; p++)
+            {
+                i += sprintf(&buf[i], "%d", *p);
 
-            i++;
+                /* If this is the last iteration, this could technically cause one
+                 *  extra byte to be written past the end. */
+                if (i < bufsize && ((p + 1) < ((const uint8_t*)ip_raw+4)))
+                    buf[i] = '.';
+
+                i++;
+            }
+        }
+        else
+        {
+            int i;
+            const uint16_t* p = (const uint16_t*)ip_raw;
+
+            for (i=0; p < ((const uint16_t*)ip_raw) + 8; p++)
+            {
+                i += sprintf(&buf[i], "%04x", ntohs(*p));
+
+                /* If this is the last iteration, this could technically cause one
+                 *  extra byte to be written past the end. */
+                if (i < bufsize && ((p + 1) < ((const uint16_t*)ip_raw) + 8))
+                    buf[i] = ':';
+
+                i++;
+            }
         }
     }
-#endif
     return buf;
 }
 
