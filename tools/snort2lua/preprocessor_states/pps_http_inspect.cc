@@ -96,10 +96,10 @@ bool HttpInspect::convert(std::istringstream& data_stream)
             parse_deleted_option("uu_decode_depth", data_stream);
 
         else if (keyword == "normalize_random_nulls_in_text")
-            parse_deleted_option("normalize_random_nulls_in_text", data_stream);
+            table_api.add_deleted_comment("normalize_random_nulls_in_text");
 
         else if (keyword == "fast_blocking")
-            parse_deleted_option("fast_blocking", data_stream);
+            table_api.add_deleted_comment("fast_blocking");
 
         else if (keyword == "iis_unicode_map")
         {
