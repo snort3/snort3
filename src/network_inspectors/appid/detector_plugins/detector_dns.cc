@@ -51,6 +51,7 @@ using namespace snort;
 #define PATTERN_MX_REC    15
 #define PATTERN_SOA_REC    6
 #define PATTERN_NS_REC     2
+#define PATTERN_ANY_REC  255
 #define PATTERN_PTR_REC   12
 
 #pragma pack(1)
@@ -355,6 +356,7 @@ int DnsValidator::dns_validate_query(const uint8_t* data, uint16_t* offset, uint
             case PATTERN_MX_REC:
             case PATTERN_SOA_REC:
             case PATTERN_NS_REC:
+            case PATTERN_ANY_REC:
                 ret = add_dns_query_info(asd, id, host, host_len, host_offset, record_type, change_bits);
                 break;
             case PATTERN_PTR_REC:
