@@ -31,6 +31,7 @@
 #include "framework/module.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "network_inspectors/appid/appid_api.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
@@ -231,8 +232,16 @@ static void AlertSyslog(
             SnortSnprintfAppend(event_string, sizeof(event_string),
                 "<%s> ", SFDAQ::get_input_spec());
         }
+        if (p->flow)
+        {
+            const char* app_name = appid_api.get_application_name(*p->flow, p->is_from_client());
+            if (app_name)
+            {
+                SnortSnprintfAppend(event_string, sizeof(event_string), "[AppID: %s] ", app_name);
+            }
+        }
     }
-    if ((p != nullptr) && p->ptrs.ip_api.is_ip())
+    if ((p != nullptr) && (p->ptrs.ip_api.is_ip() || p->ptrs.ip_api.is_data()))
     {
         IpProtocol ip_proto = p->get_ip_proto_next();
         if (protocol_names[to_utype(ip_proto)] != nullptr)

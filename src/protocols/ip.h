@@ -92,6 +92,9 @@ public:
     inline bool is_ip() const
     { return is_ip4() or is_ip6(); }
 
+    inline bool is_data() const
+    { return  (type == IAT_DATA); }
+
     inline const IP4Hdr* get_ip4h() const
     { return (type == IAT_4) ? (const IP4Hdr*)iph : nullptr; }
 
