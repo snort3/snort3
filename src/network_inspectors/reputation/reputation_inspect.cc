@@ -481,12 +481,13 @@ static void populate_trace_data(IPdecision& decision, Packet* p)
     {
         ip = p->ptrs.ip_api.get_dst();
     }
-
+    
     sfip_ntop(ip, addr, sizeof(addr));
 
-    PacketTracer::daq_log("SI-IP+%" PRId64"++Matched ip %s, action %s$",
-        TO_NSECS(pt_timer->get()),
-        addr, to_string(decision));
+    PacketTracer::daq_log("SI-IP+%" PRId64"+%s list id %u+Matched ip %s, action %s$",
+        TO_NSECS(pt_timer->get()), 
+        (TRUSTED_SRC == decision or TRUSTED_DST == decision)?"Do_not_block":"Block", 
+        p->iplist_id, addr, to_string(decision));
 }
 
 class AuxiliaryIpRepHandler : public DataHandler
