@@ -1,13 +1,38 @@
-Snort 3 is developing an inspector for HTTP/2.
+New in Snort 3, the HTTP/2 inspector enables Snort to process HTTP/2 traffic.
 
-You can configure it by adding:
+==== Overview
+
+Despite the name, it is better to think of HTTP/2 not as a newer version of HTTP/1.1, but rather a
+separate protocol layer that runs under HTTP/1.1 and on top of TLS or TCP. It supports several new
+features with the goal of improving the performance of HTTP requests, notably the ability to
+multiplex many requests over a single TCP connection, HTTP header compression, and server push.
+
+HTTP/2 is a perfect fit for the new Snort 3 PDU-based inspection architecture. The HTTP/2 inspector
+parses and strips the HTTP/2 protocol framing and outputs HTTP/1.1 messages, exactly what
+http_inspect wants to input. The HTTP/2 traffic then undergoes the same processing as regular
+HTTP/1.1 traffic discussed above. So if you haven't already, take a look at the HTTP Inspector
+section; those features also apply to HTTP/2 traffic.
+
+==== Configuration
+
+You can configure the HTTP/2 inspector with the default configuration by adding:
 
     http2_inspect = {}
 
-to your snort.lua configuration file.
+to your snort.lua configuration file. Since processing HTTP/2 traffic relies on the HTTP inspector,
+http_inspect must also be configured. Keep in mind that the http_inspect configuration will also
+impact HTTP/2 traffic.
 
-To smooth the transition to inspecting HTTP/2, rules that specify 
-service:http will be treated as if they also specify service:http2. 
+===== concurrent_streams_limit
+This limits the maximum number of HTTP/2 streams Snort will process concurrently in a single HTTP/2
+flow. The default and minimum configurable value is 100. It can be configured up to a maximum of
+1000.
+
+==== Detection rules
+
+Since HTTP/2 traffic is processed through the HTTP inspector, all of the rule options discussed
+above are also available for HTTP/2 traffic. To smooth the transition to inspecting HTTP/2, rules
+that specify service:http will be treated as if they also specify service:http2. 
 Thus:
 
     alert tcp any any -> any any (flow:established, to_server;

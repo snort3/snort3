@@ -40,14 +40,6 @@ Want to ask questions that involve both the client request and the server
 response? Or different requests in the same session? These things are
 possible.
 
-Another new feature on the horizon is HTTP/2 analysis. HTTP/2 derives from
-Google’s SPDY project and is in the process of being standardized. Despite
-the name, it is better to think of HTTP/2 not as a newer version of
-HTTP/1.1, but rather a separate protocol layer that runs under HTTP/1.1 and
-on top of TLS or TCP. It’s a perfect fit for the new Snort 3 architecture
-because a new HTTP/2 inspector would naturally output HTTP/1.1 messages but
-not any underlying packets. Exactly what http_inspect wants to input.
-
 http_inspect is taking a very different approach to HTTP header fields. The
 classic preprocessor divides all the HTTP headers following the start line
 into cookies and everything else. It normalizes the two pieces using a
