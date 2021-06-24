@@ -33,6 +33,10 @@ public:
     NbssServiceDetector(ServiceDiscovery*);
 
     int validate(AppIdDiscoveryArgs&) override;
+
+private:
+    void parse_type_message(AppIdDiscoveryArgs& args, const uint8_t* data,
+        uint32_t tmp);
 };
 
 class NbnsServiceDetector : public ServiceDetector
