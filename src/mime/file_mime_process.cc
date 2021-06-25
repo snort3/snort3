@@ -30,6 +30,7 @@
 #include "file_api/file_flows.h"
 #include "hash/hash_key_operations.h"
 #include "log/messages.h"
+#include "memory/memory_cap.h"
 #include "search_engines/search_tool.h"
 #include "utils/util_cstring.h"
 
@@ -812,10 +813,12 @@ MimeSession::MimeSession(Packet* p, DecodeConfig* dconf, MailLogConfig* lconf, u
     session_base_file_id = base_file_id;
     is_http = session_is_http;
     reset_mime_paf_state(&mime_boundary);
+    memory::MemoryCap::update_allocations(sizeof(*this));
 }
 
 MimeSession::~MimeSession()
 {
+    memory::MemoryCap::update_deallocations(sizeof(*this));
     if ( decode_state )
         delete(decode_state);
 }
