@@ -38,7 +38,7 @@ using namespace snort;
 ControlConn* ControlConn::query_from_lua(const lua_State* L)
 {
 #ifdef SHELL
-    return ControlMgmt::find_control(L);
+    return ( L ? ControlMgmt::find_control(L) : nullptr );
 #else
     UNUSED(L);
     return nullptr;
@@ -64,6 +64,8 @@ ControlConn::~ControlConn()
 
 void ControlConn::shutdown()
 {
+    if (is_closed())
+        return;
     if (!local)
         close(fd);
     fd = -1;
@@ -140,6 +142,11 @@ void ControlConn::block()
     blocked = true;
 }
 
+void ControlConn::remove()
+{
+    removed = true;
+}
+
 void ControlConn::unblock()
 {
     if (blocked)
@@ -185,7 +192,7 @@ bool ControlConn::respond(const char* format, va_list& ap)
 
 bool ControlConn::respond(const char* format, ...)
 {
-    if (is_closed())
+    if (is_closed() or is_removed())
         return false;
 
     va_list ap;

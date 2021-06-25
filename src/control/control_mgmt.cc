@@ -53,6 +53,13 @@ static struct sockaddr_in in_addr;
 static struct sockaddr_un unix_addr;
 static std::unordered_map<int, ControlConn*> controls;
 
+#define READY 1
+#define DEAD  2
+struct FdEvents{
+    int fd;
+    unsigned flag;
+};
+
 #ifdef __linux__
 
 //-------------------------------------------------------------------------
@@ -105,7 +112,7 @@ static void unregister_control_fd(const int, const int curr_fd)
     nfds--;
 }
 
-static bool poll_control_fds(int ready[MAX_CONTROL_FDS], unsigned& nready, int dead[MAX_CONTROL_FDS], unsigned& ndead)
+static bool poll_control_fds(FdEvents ready[MAX_CONTROL_FDS], unsigned& nready)
 {
     if (epoll_fd == -1 || nfds == 0)
         return false;
@@ -118,18 +125,19 @@ static bool poll_control_fds(int ready[MAX_CONTROL_FDS], unsigned& nready, int d
             ErrorMessage("Failed to poll control descriptors: %s\n", get_error(errno));
         return false;
     }
-    nready = ndead = 0;
+    nready = ret;
     for (int i = 0; i < ret; i++)
     {
         struct epoll_event* ev = &events[i];
-        int fd = ev->data.fd;
+        ready[i].fd = ev->data.fd;
+        ready[i].flag = 0;
         if (ev->events & POLLIN)
-            ready[nready++] = fd;
+            ready[i].flag |= READY;
         if (ev->events & (POLLHUP | POLLERR))
         {
             if (ev->events & POLLERR)
-                ErrorMessage("Failed to poll control descriptor %d!\n", fd);
-            dead[ndead++] = fd;
+                ErrorMessage("Failed to poll control descriptor %d!\n", ev->data.fd);
+            ready[i].flag |= DEAD;
         }
     }
 
@@ -188,7 +196,7 @@ static void unregister_control_fd(const int orig_fd, const int)
     }
 }
 
-static bool poll_control_fds(int ready[MAX_CONTROL_FDS], unsigned& nready, int dead[MAX_CONTROL_FDS], unsigned& ndead)
+static bool poll_control_fds(FdEvents ready[MAX_CONTROL_FDS], unsigned& nready)
 {
     if (npfds == 0)
         return false;
@@ -200,19 +208,21 @@ static bool poll_control_fds(int ready[MAX_CONTROL_FDS], unsigned& nready, int d
             ErrorMessage("Failed to poll control descriptors: %s\n", get_error(errno));
         return false;
     }
-    nready = ndead = 0;
-    for (unsigned i = 0; i < MAX_CONTROL_FDS; i++)
+    nready = ret;
+    for (unsigned i = 0; i < ret; i++)
     {
         struct pollfd* pfd = &pfds[i];
         int fd = pfd->fd;
+        ready[i].fd = fd;
+        ready[i].flag = 0;
         if (pfd->revents & (POLLHUP | POLLERR | POLLNVAL))
         {
             if (pfd->revents & (POLLERR | POLLNVAL))
                 ErrorMessage("Failed to poll control descriptor %d!\n", fd);
-            dead[ndead++] = fd;
+            ready[i].flag |= DEAD;
         }
         if (pfd->revents & POLLIN)
-            ready[nready++] = fd;
+            ready[i].flag |= READY;
     }
     return true;
 }
@@ -295,13 +305,17 @@ static bool accept_conn()
 static void delete_control(const std::unordered_map<int, ControlConn*>::const_iterator& iter)
 {
     ControlConn* ctrlcon = iter->second;
-
-    // FIXIT-L hacky way to keep the control around until it's no longer being referenced
-    if (ctrlcon->is_blocked())
-        return;
-
     unregister_control_fd(iter->first, ctrlcon->get_fd());
-    delete ctrlcon;
+
+    if (ctrlcon->is_blocked())
+    {
+        ctrlcon->remove();
+    }
+    else
+    {
+        delete ctrlcon;
+    }
+
     controls.erase(iter);
 }
 
@@ -445,29 +459,34 @@ void ControlMgmt::socket_term()
 
 bool ControlMgmt::service_users()
 {
-    static int ready[MAX_CONTROL_FDS], dead[MAX_CONTROL_FDS];
-    unsigned nready, ndead;
+    static FdEvents event[MAX_CONTROL_FDS];
+    unsigned nevent;
 
-    if (!poll_control_fds(ready, nready, dead, ndead))
+    if (!poll_control_fds(event, nevent))
         return false;
 
-    // Process ready descriptors first, even if they're dead, to honor their last request
     unsigned serviced = 0;
-    for (unsigned i = 0; i < nready; i++)
+    for (unsigned i = 0; i < nevent; i++)
     {
-        int fd = ready[i];
-        if (fd == listener)
+        int fd = event[i].fd;
+        if (event[i].flag & READY)
         {
-            // Got a new connection request, attempt to accept it and store it in controls
-            if (accept_conn())
+            // Process ready descriptors first, even if they're dead, to honor their last request
+            if (fd == listener)
+            {
+                // Got a new connection request, attempt to accept it and store it in controls
+                if (accept_conn())
+                    serviced++;
+            }
+            else if (process_control_commands(fd))
                 serviced++;
         }
-        else if (process_control_commands(fd))
+        if (event[i].flag & DEAD)
+        {
+            delete_control(fd);
             serviced++;
+        }
     }
-
-    for (unsigned i = 0; i < ndead; i++)
-        delete_control(dead[i]);
 
     return (serviced > 0);
 }
