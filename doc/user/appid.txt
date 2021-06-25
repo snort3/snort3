@@ -26,16 +26,18 @@ networks by providing the following features:
 
 For proper functioning of the AppId inspector, at a minimum stream flow
 tracking must be enabled. In addition, to identify TCP-based or UDP-based
-applications then the appropriate stream inspector must be enabled, e.g.
+applications, the appropriate stream inspector must be enabled, e.g.
 stream_tcp or stream_udp.
 
-In addition, in order to identify HTTP-based applications, the HTTP
-inspector must be enabled. Otherwise, only non-HTTP applications will be
-identified.
+In order to identify HTTP-based applications, the HTTP inspector must be
+enabled. Otherwise, only non-HTTP applications will be identified.
 
 AppId subscribes to the inspection events published by other inspectors,
 such as the HTTP and SSL inspectors, to gain access to the data needed. It
 uses that data to help determine the application ID.
+
+AppId subscribes to the events published by SIP and DCE/RPC inspectors to
+detect applications on expected flows.
 
 ==== Configuration
 
@@ -143,16 +145,12 @@ ODP is a package that contains the following artifacts:
 
 * Application detectors in the Lua language.
 
-* Port detectors, which are port only application detectors, in meta-data in
-  YAML format.
-
 * appMapping.data file containing application metadata. This file should not
   be modified.  The first column contains application identifier and second
   column contains application name.  Other columns contain internal
   information.
 
-* Lua library files DetectorCommon.lua, flowTrackerModule.lua and
-  hostServiceTrackerModule.lua
+* Lua library file DetectorCommon.lua.
 
 A user can install the ODP package in any directory and configure this
 directory via the app_detector_dir option in the appid preprocessor
@@ -161,7 +159,6 @@ custom, where user-created detectors are located.
 
 When installed, ODP will create following sub-directories:
 
-    * odp/port    //Cisco port-only detectors
     * odp/lua     //Cisco Lua detectors
     * odp/libs    //Cisco Lua modules
 
@@ -175,7 +172,6 @@ detector creation tool described in the next section.
 Users must organize their Lua detectors and libraries by creating the
 following directory structure, under the ODP installation directory.
 
-    * custom/port    //port-only detectors
     * custom/lua     //Lua detectors
     * custom/libs    //Lua modules
 
@@ -192,6 +188,13 @@ So the path to the user-created lua files would be
 
 None of the directories below /usr/local/lib/openappid/ would be added for
 you.
+
+==== Application Detector Reload
+
+Both ODP detectors and user created detectors can be reloaded using the command
+appid.reload_detectors(). Detectors are expected to be updated in the path
+appid.app_detector_dir before this command is issued. The command takes no
+parameters.
 
 ==== Application Detector Creation Tool
 
