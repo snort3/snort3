@@ -25,6 +25,7 @@
 #include "payload_injector.h"
 
 #include "detection/detection_engine.h"
+#include "flow/session.h"
 #include "packet_io/active.h"
 #include "protocols/packet.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
@@ -48,7 +49,8 @@ static const std::map <InjectionReturnStatus, const char*> InjectionErrorToStrin
     { ERR_TRANSLATED_HDRS_SIZE,
       "HTTP/2 translated header size is bigger than expected. Update max size." },
     { ERR_HTTP2_EVEN_STREAM_ID, "HTTP/2 - injection to server initiated stream" },
-    { ERR_PKT_FROM_SERVER, "Packet is from server" }
+    { ERR_PKT_FROM_SERVER, "Packet is from server" },
+    { ERR_CONFLICTING_S2C_TRAFFIC, "Conflicting S2C HTTP traffic in progress" }
 };
 
 InjectionReturnStatus PayloadInjector::inject_http2_payload(Packet* p,
@@ -73,6 +75,11 @@ InjectionReturnStatus PayloadInjector::inject_http2_payload(Packet* p,
             payload_injector_stats.http2_mid_frame++;
             // FIXIT-E mid-frame injection not supported
             status = ERR_HTTP2_MID_FRAME;
+        }
+        else if (p->flow->session and
+            p->flow->session->are_client_segments_queued())
+        {
+            status = ERR_CONFLICTING_S2C_TRAFFIC;
         }
         else
         {
@@ -120,8 +127,17 @@ InjectionReturnStatus PayloadInjector::inject_http_payload(Packet* p,
                 else if (!p->flow->gadget || strcmp(p->flow->gadget->get_name(),"http_inspect") ==
                     0)
                 {
-                    payload_injector_stats.http_injects++;
-                    p->active->send_data(p, df, control.http_page, control.http_page_len);
+                    if (p->flow->session and
+                        p->flow->session->are_client_segments_queued())
+                    {
+                        status = ERR_CONFLICTING_S2C_TRAFFIC;
+                        p->active->send_data(p, df, nullptr, 0);    // To send reset
+                    }
+                    else
+                    {
+                        payload_injector_stats.http_injects++;
+                        p->active->send_data(p, df, control.http_page, control.http_page_len);
+                    }
                 }
                 else if (strcmp(p->flow->gadget->get_name(),"http2_inspect") == 0)
                     status = inject_http2_payload(p, control, df);

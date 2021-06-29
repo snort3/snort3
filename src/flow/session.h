@@ -72,6 +72,7 @@ public:
 
     virtual bool is_sequenced(uint8_t /*dir*/) { return true; }
     virtual bool are_packets_missing(uint8_t /*dir*/) { return true; }
+    virtual bool are_client_segments_queued() { return false; }
 
     virtual void disable_reassembly(snort::Flow*) { }
     virtual uint8_t get_reassembly_direction() { return SSN_DIR_NONE; }

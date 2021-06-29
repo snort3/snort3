@@ -49,6 +49,7 @@ public:
     void disable_reassembly(snort::Flow*) override;
     uint8_t get_reassembly_direction() override;
     uint8_t missing_in_reassembled(uint8_t dir) override;
+    bool are_client_segments_queued() override;
 
     bool add_alert(snort::Packet*, uint32_t gid, uint32_t sid) override;
     bool check_alerted(snort::Packet*, uint32_t gid, uint32_t sid) override;

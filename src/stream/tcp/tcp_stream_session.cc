@@ -229,6 +229,11 @@ bool TcpStreamSession::are_packets_missing(uint8_t dir)
     return false;
 }
 
+bool TcpStreamSession::are_client_segments_queued()
+{
+    return client.reassembler.get_seg_count() > 0;
+}
+
 bool TcpStreamSession::add_alert(Packet* p, uint32_t gid, uint32_t sid)
 {
     TcpReassemblerPolicy& trp = p->ptrs.ip_api.get_src()->equals(flow->client_ip) ?

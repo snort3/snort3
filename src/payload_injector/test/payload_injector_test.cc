@@ -430,6 +430,18 @@ TEST(payload_injector_translate_err_test, http2_hdrs_size)
         "HTTP/2 translated header size is bigger than expected. Update max size.") == 0);
 }
 
+TEST(payload_injector_translate_err_test, conflicting_s2c_traffic)
+{
+    Packet p(false);
+    set_configured();
+    p.packet_flags = PKT_STREAM_EST;
+    p.flow = &flow;
+    translation_status = ERR_CONFLICTING_S2C_TRAFFIC;
+    status = PayloadInjector::inject_http_payload(&p, control);
+    const char* err_string = PayloadInjector::get_err_string(status);
+    CHECK(strcmp(err_string,
+        "Conflicting S2C HTTP traffic in progress") == 0);
+}
 int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);

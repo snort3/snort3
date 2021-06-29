@@ -40,6 +40,7 @@ enum InjectionReturnStatus : int8_t
     ERR_TRANSLATED_HDRS_SIZE = -7,
     ERR_HTTP2_EVEN_STREAM_ID = -8,
     ERR_PKT_FROM_SERVER = -9,
+    ERR_CONFLICTING_S2C_TRAFFIC = -10,
     // Update InjectionErrorToString when adding/removing error codes
 };
 
