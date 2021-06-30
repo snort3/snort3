@@ -234,14 +234,14 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                         session_data->scan_frame_header[source_id], FRAME_HEADER_LENGTH);
                 }
                 else
-		{
-		    if (!session_data->continuation_expected[source_id])
+                {
+                    if (!session_data->continuation_expected[source_id])
                     {
                         *session_data->infractions[source_id] += INF_UNEXPECTED_CONTINUATION;
                         session_data->events[source_id]->create_event(EVENT_UNEXPECTED_CONTINUATION);
                         return StreamSplitter::ABORT;
-		    }
-		    // Do flags check for continuation frame, since it is not saved
+                    }
+                    // Do flags check for continuation frame, since it is not saved
                     // as lead frame for later.
                     if ((frame_flags & FLAG_END_HEADERS) != frame_flags)
                     {
@@ -532,8 +532,11 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
     return frame_buf;
 }
 
-void Http2StreamSplitter::discarded_data_frame_cleanup(Http2FlowData* session_data, HttpCommon::SourceId source_id, Http2Stream* stream)
+void Http2StreamSplitter::discarded_data_frame_cleanup(Http2FlowData* session_data,
+    HttpCommon::SourceId source_id, Http2Stream* stream)
 {
+    session_data->data_cutter[source_id].discard_cleanup();
+
     if (stream->get_state(source_id) == STREAM_ERROR ||
         !stream->is_end_stream_on_data_flush(source_id))
         return;

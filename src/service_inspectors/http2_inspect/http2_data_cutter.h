@@ -34,6 +34,7 @@ public:
     snort::StreamSplitter::Status scan(const uint8_t* data, uint32_t length,
         uint32_t* flush_offset, uint32_t& data_offset, uint8_t frame_flags);
     void reassemble(const uint8_t* data, unsigned len);
+    void discard_cleanup();
 
 private:
     Http2FlowData* const session_data;

@@ -244,3 +244,9 @@ void Http2DataCutter::reassemble(const uint8_t* data, unsigned len)
     return;
 }
 
+void Http2DataCutter::discard_cleanup()
+{
+    frame_bytes_seen = 0;
+    reassemble_data_bytes_read = 0;
+    reassemble_state = GET_FRAME_HDR;
+}
