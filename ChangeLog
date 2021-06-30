@@ -1,3 +1,20 @@
+2021/06/30 - 3.1.7.0
+
+appid: enhance netbios service detector to identify SMB versions as web app
+appid: update documentation
+appid: update the DNS detector to support the all record request
+control: resolve socket issues due to race conditions
+doc: updates for http2_inspect
+framework: update base API version to 3
+main: implement test_features run flag to enable debug-like output
+mime: track memory for mime sessions
+payload_injector: don't inject if there are unflushed S2C TCP packets queued
+reputation: include list id for daq trace log
+sfip: fix unit tests for non-regtest builds
+snort2lua: fix lua conversion of unsupported http preproc options without parameters
+snort2lua: remove footprint size config
+stream: fix is_ack_valid to return true even when current ack is to the left of snd_una, per RFC793
+
 2021/06/16 - 3.1.6.0
 
 appid: extract auxiliary ip when uri is provided by third-party

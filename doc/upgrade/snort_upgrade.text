@@ -8,7 +8,7 @@ Snort 3 Upgrade Manual
 The Snort Team
 
 Revision History
-Revision 3.1.6.0 2021-06-16 07:30:48 EDT TST
+Revision 3.1.7.0 2021-06-30 09:58:50 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1086,6 +1086,8 @@ deleted -> ftp_telnet_protocol: 'detect_anomalies'
 deleted -> full: '<filename> can no longer be specific'
 deleted -> http_inspect: 'detect_anomalous_servers'
 deleted -> http_inspect: 'disabled'
+deleted -> http_inspect: 'fast_blocking'
+deleted -> http_inspect: 'normalize_random_nulls_in_text'
 deleted -> http_inspect: 'proxy_alert'
 deleted -> http_inspect_server: 'allow_proxy_use'
 deleted -> http_inspect_server: 'enable_cookie'
@@ -1163,6 +1165,7 @@ deleted -> stream5_tcp: 'ignore_any_rules'
 deleted -> stream5_tcp: 'log_asymmetric_traffic'
 deleted -> stream5_tcp: 'policy noack'
 deleted -> stream5_tcp: 'policy unknown'
+deleted -> stream5_tcp: 'use_static_footprint_sizes'
 deleted -> stream5_udp: 'ignore_any_rules'
 deleted -> tcpdump: '<filename> can no longer be specific'
 deleted -> test: 'file'

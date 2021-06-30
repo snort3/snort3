@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.6.0 2021-06-16 07:30:59 EDT TST
+Revision 3.1.7.0 2021-06-30 09:59:01 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1429,6 +1429,8 @@ Configuration:
     version, and only the version
   * implied snort.--enable-inline-test: enable Inline-Test Mode
     Operation
+  * implied snort.--enable-test-features: enable features used in
+    testing
   * implied snort.--gen-msg-map: dump configured rules in gen-msg.map
     format for use by other tools
   * implied snort.--help: show help overview
@@ -8310,6 +8312,7 @@ these libraries see the Getting Started section of the manual.
   * --dump-version output the version, the whole version, and only
     the version
   * --enable-inline-test enable Inline-Test Mode Operation
+  * --enable-test-features enable features used in testing
   * --gen-msg-map dump configured rules in gen-msg.map format for use
     by other tools
   * --help show help overview
@@ -9980,6 +9983,8 @@ these libraries see the Getting Started section of the manual.
   * implied snort.-e: display the second layer header info
   * implied snort.--enable-inline-test: enable Inline-Test Mode
     Operation
+  * implied snort.--enable-test-features: enable features used in
+    testing
   * implied snort.-f: turn off fflush() calls after binary log writes
   * int snort.-G: <0xid> (same as --logid) { 0:65535 }
   * implied snort.--gen-msg-map: dump configured rules in gen-msg.map
