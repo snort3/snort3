@@ -166,10 +166,13 @@ void Active::kill_session(Packet* p, EncodeFlags flags)
         break;
 
     default:
-        if ( packet_force_dropped() )
-            send_unreach(p, UnreachResponse::FWD);
-        else
-            send_unreach(p, UnreachResponse::PORT);
+        if (is_unreachable_candidate(p))
+        {
+            if ( packet_force_dropped() )
+                send_unreach(p, UnreachResponse::FWD);
+            else
+                send_unreach(p, UnreachResponse::PORT);
+        }
         break;
     }
 }
