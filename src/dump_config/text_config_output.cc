@@ -58,6 +58,12 @@ static void dump_value(const BaseConfigNode* node, const std::string& config_nam
 
 static void dump_tree(const BaseConfigNode* node, const std::string& config_name)
 {
+    if ( node->get_children().empty() and !node->get_parent_node() )
+    {
+        std::cout << config_name << std::endl;
+        return;
+    }
+
     Parameter::Type node_type = node->get_type();
 
     if ( node_type == Parameter::PT_TABLE )
