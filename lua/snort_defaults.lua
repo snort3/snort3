@@ -388,7 +388,7 @@ default_wizard =
           to_client = { '220*SMTP', '220*MAIL' } },
 
         { service = 'ssh', proto = 'tcp', client_first = true,
-          to_server = { '*SSH' }, to_client = { '*SSH' } },
+          to_server = { 'SSH-' }, to_client = { 'SSH-' } },
 
         { service = 'dce_http_server', proto = 'tcp', client_first = false,
           to_client = { 'ncacn_http' } },
