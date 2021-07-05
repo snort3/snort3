@@ -248,7 +248,7 @@ void Dce2Smb2SessionData::process_command(const Smb2Hdr* smb_hdr,
             const Smb2NegotiateResponseHdr* neg_resp_hdr = (const Smb2NegotiateResponseHdr*)smb_data;
             if (neg_resp_hdr->capabilities & SMB2_GLOBAL_CAP_MULTI_CHANNEL)
             {
-                Packet *p = DetectionEngine::get_current_packet();
+                Packet* p = DetectionEngine::get_current_packet();
                 Dce2SmbFlowData* fd =
                     create_expected_smb_flow_data(p, (dce2SmbProtoConf *)sd.config);
                 if (fd)
@@ -439,7 +439,9 @@ void Dce2Smb2SessionData::process_command(const Smb2Hdr* smb_hdr,
                 session->process(command, SMB2_CMD_TYPE_RESPONSE, smb_hdr, end, flow_key);
             }
             else
+            {
                 SMB2_HANDLE_INVALID_STRUC_SIZE(ioctl)
+            }
         }
         break;
     default:
@@ -509,11 +511,16 @@ void Dce2Smb2SessionData::process()
     else
     {
         tcp_file_tracker_mutex.lock();
-        if ( tcp_file_tracker and tcp_file_tracker->accepting_raw_data())
+        if ( tcp_file_tracker and tcp_file_tracker->accepting_raw_data_from(flow_key))
         {
             debug_logf(dce_smb_trace, p, "processing raw data for file id %" PRIu64 "\n",
                 tcp_file_tracker->get_file_id());
             tcp_file_tracker->process_data(flow_key, data_ptr, data_len);
+            tcp_file_tracker->stop_accepting_raw_data_from(flow_key);
+        }
+        else
+        {
+            debug_logf(dce_smb_trace, p, "not processing raw data\n");
         }
         tcp_file_tracker_mutex.unlock();
     }

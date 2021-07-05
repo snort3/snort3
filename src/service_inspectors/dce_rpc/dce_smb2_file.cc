@@ -35,13 +35,29 @@ using namespace snort;
 
 #define UNKNOWN_FILE_SIZE  (~0)
 
-void Dce2Smb2FileTracker::accept_raw_data_from(Dce2Smb2SessionData* flow)
+void Dce2Smb2FileTracker::accept_raw_data_from(Dce2Smb2SessionData* flow, uint64_t offset)
 {
     if (flow)
     {
-        smb2_pdu_state = DCE2_SMB_PDU_STATE__RAW_DATA;
+        uint32_t current_flow_key = flow->get_flow_key();
+        std::lock_guard<std::mutex> guard(flow_state_mutex);
+        tcp_flow_state& current_flow_state = flow_state[current_flow_key];
+        if ( (current_flow_state.pdu_state == DCE2_SMB_PDU_STATE__RAW_DATA) and
+             (current_flow_state.file_offset == current_flow_state.max_offset))
+        {
+            current_flow_state.file_offset = offset;
+        }
+
+        current_flow_state.pdu_state = DCE2_SMB_PDU_STATE__RAW_DATA;
         flow->set_tcp_file_tracker(this);
     }
+}
+void Dce2Smb2FileTracker::stop_accepting_raw_data_from(uint32_t current_flow_key)
+{
+    std::lock_guard<std::mutex> guard(flow_state_mutex);
+    tcp_flow_state& current_flow_state = flow_state[current_flow_key];
+    if(current_flow_state.file_offset == current_flow_state.max_offset)
+        current_flow_state.pdu_state = DCE2_SMB_PDU_STATE__COMMAND;
 }
 
 inline void Dce2Smb2FileTracker::file_detect()
@@ -102,7 +118,9 @@ void Dce2Smb2FileTracker::set_info(char* file_name_v, uint16_t name_len_v, uint6
 
 bool Dce2Smb2FileTracker::close(const uint32_t current_flow_key)
 {
-    uint64_t file_offset = file_offsets[current_flow_key];
+    flow_state_mutex.lock();
+    uint64_t file_offset = flow_state[current_flow_key].file_offset;
+    flow_state_mutex.unlock();
     if (!ignore and !file_size and file_offset)
     {
         file_size = file_offset;
@@ -117,9 +135,13 @@ bool Dce2Smb2FileTracker::close(const uint32_t current_flow_key)
 }
 
 bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const uint8_t* file_data,
-    uint32_t data_size, const uint64_t offset)
+    uint32_t data_size, const uint64_t offset, uint64_t max_offset)
 {
-    file_offsets[current_flow_key] = offset;
+    flow_state_mutex.lock();
+    tcp_flow_state& current_flow_state = flow_state[current_flow_key];
+    current_flow_state.file_offset = offset;
+    current_flow_state.max_offset = offset + max_offset;
+    flow_state_mutex.unlock();
     return process_data(current_flow_key, file_data, data_size);
 }
 
@@ -141,7 +163,10 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
 
     int64_t file_detection_depth = current_flow->get_smb_file_depth();
     int64_t detection_size = 0;
-    uint64_t file_offset = file_offsets[current_flow_key];
+    Packet* p = DetectionEngine::get_current_packet();
+    flow_state_mutex.lock();
+    uint64_t file_offset = flow_state[current_flow_key].file_offset;
+    flow_state_mutex.unlock();
 
     if (file_detection_depth == 0)
         detection_size = data_size;
@@ -162,8 +187,6 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
 
     if (ignore)
         return true;
-
-    Packet* p = DetectionEngine::get_current_packet();
 
     if (file_size and file_offset > file_size)
     {
@@ -202,7 +225,9 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
     }
 
     file_offset += data_size;
-    file_offsets[current_flow_key] = file_offset;
+    flow_state_mutex.lock();
+    flow_state[current_flow_key].file_offset = file_offset;
+    flow_state_mutex.unlock();
     return true;
 }
 

@@ -61,14 +61,13 @@ void FileSegments::clear()
 }
 
 // Update the segment list based on new data
-void FileSegments::add(const uint8_t* file_data, uint64_t data_size, uint64_t offset)
+void FileSegments::add(const uint8_t* file_data, int64_t data_size, uint64_t offset)
 {
-    FileSegment* new_segment = new FileSegment();
-    new_segment->offset = offset;
-    new_segment->data = new std::string((const char*)file_data, data_size);
-
     if (!head)
     {
+        FileSegment* new_segment = new FileSegment();
+        new_segment->offset = offset;
+        new_segment->data = new std::string((const char*)file_data, data_size);
         head = new_segment;
         return;
     }
@@ -80,7 +79,6 @@ void FileSegments::add(const uint8_t* file_data, uint64_t data_size, uint64_t of
     FileSegment* left = nullptr;
     FileSegment* previous = nullptr;
     bool find_left = false;
-    bool is_overlap = false;
 
     // Find left boundary, left points to segment that needs update
     while (current_segment)
@@ -99,40 +97,64 @@ void FileSegments::add(const uint8_t* file_data, uint64_t data_size, uint64_t of
     // New segment should be at the end of link list
     if (!find_left)
     {
-        previous->next = new_segment;
+        left = previous;
+        if (left->offset +left->data->size() >start)
+        {
+            offset = left->offset + left->data->size();
+            data_size = end -offset;
+            file_data = file_data + offset - start;
+        }
     }
     // New segment should be at the start of link list
     else if (!left)
     {
-        if (end <= head->offset)
+        if (end > head->offset)
         {
-            new_segment->next = head;
-            head = new_segment;
-        }
-        else
-        {
-            is_overlap = true;
+            /* Overlap, trim off extra data from end */
+            data_size = head->offset - offset;
         }
     }
     else
     {
-        if ((left->offset + left->data->size() > start) ||
-            (left->next->offset < end))
+        //Left Overlap
+        if ( (left->offset + left->data->size() > start)  )
         {
-            is_overlap = true;
+            offset = left->offset + left->data->size();
+            data_size = end - offset;
+            file_data = file_data + offset - start;
         }
-        else
+        //Right Overlap
+        if ( (left->next->offset < end) )
         {
-            new_segment->next = left->next;
-            left->next = new_segment;
+            data_size = left->next->offset - offset;
         }
+
     }
 
     // ignore overlap case
-    if (is_overlap)
+    if (data_size <= 0)
     {
-        delete new_segment;
         return;
+    }
+
+    FileSegment* new_segment = new FileSegment();
+    new_segment->offset = offset;
+    new_segment->data = new std::string((const char*)file_data, data_size);
+
+    if (!find_left)
+    {
+        previous->next = new_segment;
+
+    }
+    else if (!left)
+    {
+        new_segment->next = head;
+        head = new_segment;
+    }
+    else
+    {
+        new_segment->next = left->next;
+        left->next = new_segment;
     }
 }
 

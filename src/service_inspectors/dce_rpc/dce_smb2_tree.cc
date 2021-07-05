@@ -309,8 +309,12 @@ void Dce2Smb2TreeTracker::process_read_response(const uint64_t message_id,
     {
         const uint8_t* file_data =  (const uint8_t*)read_resp_hdr +
             SMB2_READ_RESPONSE_STRUC_SIZE - 1;
-        int data_size = end - file_data;
-        if (file_tracker->process_data(current_flow_key, file_data, data_size, read_request->get_offset()))
+        // we may not have enough data in some case, use best effort to process file for whatever
+        // data we have till now.
+        int data_size = (read_resp_hdr->length > (end - file_data)) ?
+            (end - file_data) : read_resp_hdr->length;
+        if (file_tracker->process_data(current_flow_key, file_data, data_size,
+            read_request->get_offset(), read_resp_hdr->length))
         {
             if ((uint32_t)data_size < alignedNtohl((const uint32_t*)&(read_resp_hdr->length)))
             {
@@ -337,6 +341,19 @@ void Dce2Smb2TreeTracker::process_read_request(const uint64_t message_id,
     {
         debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "SMB2_COM_READ_REQ: store failed\n");
         delete read_request;
+    }
+    Dce2Smb2FileTracker* file_tracker = find_file(file_id);
+    Dce2Smb2SessionData* current_flow = parent_session->get_flow(current_flow_key);
+    if (file_tracker)
+    {
+        debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
+            "SMB2_COM_READ_REQ: start accepting Raw Data\n");
+        file_tracker->accept_raw_data_from(current_flow,offset);
+    }
+    else
+    {
+        debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
+            "SMB2_COM_READ_REQ: file tracker missing\n");
     }
 }
 
@@ -365,9 +382,13 @@ void Dce2Smb2TreeTracker::process_write_request(const uint64_t message_id,
     if (file_tracker)
     {
         file_tracker->set_direction(FILE_UPLOAD);
-        int data_size = end - file_data;
+        // we may not have enough data in some case, use best effort to process file for whatever
+        // data we have till now.
+        int data_size = (write_req_hdr->length > (end - file_data)) ?
+            (end - file_data) : write_req_hdr->length;
         uint64_t offset = alignedNtohq((const uint64_t*)(&(write_req_hdr->offset)));
-        if (file_tracker->process_data(current_flow_key, file_data, data_size, offset))
+        if (file_tracker->process_data(current_flow_key, file_data, data_size, offset,
+            write_req_hdr->length))
         {
             if ((uint32_t)data_size < alignedNtohl((const uint32_t*)&(write_req_hdr->length)))
             {

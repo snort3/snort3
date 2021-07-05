@@ -62,7 +62,7 @@ private:
     uint64_t current_offset;
     snort::FileContext* context = nullptr;
 
-    void add(const uint8_t* file_data, uint64_t data_size, uint64_t offset);
+    void add(const uint8_t* file_data, int64_t data_size, uint64_t offset);
     FilePosition get_file_position(uint64_t data_size, uint64_t file_size);
     int process_one(snort::Packet*, const uint8_t* file_data, int data_size, snort::FilePolicyBase*,
         FilePosition position=SNORT_FILE_POSITION_UNKNOWN);
