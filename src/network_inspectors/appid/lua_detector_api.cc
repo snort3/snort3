@@ -43,6 +43,7 @@
 #include "detector_plugins/detector_pattern.h"
 #include "detector_plugins/detector_sip.h"
 #include "detector_plugins/http_url_patterns.h"
+#include "detector_plugins/ssh_patterns.h"
 #include "host_port_app_cache.h"
 #include "lua_detector_flow_api.h"
 #include "lua_detector_module.h"
@@ -1235,6 +1236,30 @@ static int detector_add_content_type_pattern(lua_State* L)
     detector.app_id = appId;
     ud->get_odp_ctxt().get_http_matchers().insert_content_type_pattern(detector);
     ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(appId);
+
+    return 0;
+}
+
+
+static int detector_add_ssh_client_pattern(lua_State* L)
+{
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    ud->validate_lua_state(false);
+    if (!init(L)) return 0;
+
+    size_t string_size = 0;
+    int index = 1;
+
+    const char* tmp_string = lua_tolstring(L, ++index, &string_size);
+    if (!tmp_string || !string_size)
+    {
+        ErrorMessage("Invalid SSH Client string");
+        return 0;
+    }
+    std::string pattern(tmp_string);
+    AppId app_id = lua_tointeger(L, ++index);
+    ud->get_odp_ctxt().get_ssh_matchers().add_ssh_pattern(pattern, app_id);
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(app_id);
 
     return 0;
 }
@@ -2614,6 +2639,7 @@ static const luaL_Reg detector_methods[] =
     { "addSipUserAgent",          detector_add_sip_user_agent },
     { "addSipServer",             detector_add_sip_server },
     { "addSSLCnamePattern",       detector_add_ssl_cname_pattern },
+    { "addSSHPattern",            detector_add_ssh_client_pattern},
     { "addHostPortApp",           detector_add_host_port_application },
     { "addHostPortAppDynamic",    detector_add_host_port_dynamic },
     { "addDNSHostPattern",        detector_add_dns_host_pattern },

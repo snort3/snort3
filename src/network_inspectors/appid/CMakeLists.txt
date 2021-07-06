@@ -125,6 +125,8 @@ set ( DP_APPID_SOURCES
     detector_plugins/http_url_patterns.h
     detector_plugins/sip_patterns.cc
     detector_plugins/sip_patterns.h
+    detector_plugins/ssh_patterns.cc
+    detector_plugins/ssh_patterns.h
     detector_plugins/ssl_patterns.cc
     detector_plugins/ssl_patterns.h
 )

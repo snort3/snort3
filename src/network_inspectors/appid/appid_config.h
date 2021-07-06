@@ -39,6 +39,7 @@
 #include "lua_detector_flow_api.h"
 #include "lua_detector_module.h"
 #include "service_plugins/service_discovery.h"
+#include "detector_plugins/ssh_patterns.h"
 #include "tp_appid_module_api.h"
 #include "utils/sflsq.h"
 
@@ -186,6 +187,11 @@ public:
         return ssl_matchers;
     }
 
+    SshPatternMatchers& get_ssh_matchers()
+    {
+        return ssh_matchers;
+    }
+
     PatternClientDetector& get_client_pattern_detector()
     {
         return *client_pattern_detector;
@@ -211,6 +217,7 @@ private:
     ServiceDiscovery service_disco_mgr;
     SipPatternMatchers sip_matchers;
     SslPatternMatchers ssl_matchers;
+    SshPatternMatchers ssh_matchers;
     PatternClientDetector* client_pattern_detector;
     PatternServiceDetector* service_pattern_detector;
 

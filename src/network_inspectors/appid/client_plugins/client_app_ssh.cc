@@ -25,6 +25,9 @@
 
 #include "client_app_ssh.h"
 
+#include <cstring>
+#include <string>
+
 #include "app_info_table.h"
 #include "application_ids.h"
 
@@ -51,20 +54,6 @@ static const char PUTTY_BANNER[] = "PuTTY";
 #define SSH2                        2
 #define SSH1                        1
 
-enum SSHClientState
-{
-    SSH_CLIENT_STATE_BANNER = 0,
-    SSH_CLIENT_STATE_ID_PROTO_VERSION,
-    SSH_CLIENT_STATE_LOOKING_FOR_DASH,
-    SSH_CLIENT_STATE_ID_CLIENT,
-    SSH_CLIENT_STATE_CHECK_OPENSSH,
-    SSH_CLIENT_STATE_CHECK_PUTTY,
-    SSH_CLIENT_STATE_CHECK_LSH,
-    SSH_CLIENT_STATE_CHECK_DROPBEAR,
-    SSH_CLIENT_STATE_ID_SOFTWARE_VERSION,
-    SSH_CLIENT_STATE_ID_REST_OF_LINE,
-    SSH_CLIENT_STATE_KEY
-};
 
 enum SSH2HeaderState
 {
@@ -90,7 +79,6 @@ enum SSH1HeaderState
 
 struct ClientSSHData
 {
-    SSHClientState state;
     SSH2HeaderState hstate;
     SSH1HeaderState oldhstate;
     unsigned len;
@@ -108,6 +96,9 @@ struct ClientSSHData
     uint8_t plen;
     uint8_t code;
     uint32_t client_id;
+    uint8_t proto_string[SSH_MAX_BANNER_LEN];
+    uint8_t proto_strlen;
+    bool proto_string_done;
 };
 
 #pragma pack(1)
@@ -372,186 +363,79 @@ static inline int ssh_client_validate_pubkey(uint16_t offset, const uint8_t* dat
     return APPID_INPROCESS;
 }
 
-static inline int ssh_client_sm(const uint8_t* data, uint16_t size,
-    ClientSSHData* fd)
-{
-    uint16_t offset = 0;
+static inline int ssh_client_sm(AppIdDiscoveryArgs& args, ClientSSHData* fd)
+{   
+    const char *pattern_begin;
+    const char *pattern_end;
+    uint8_t d;
 
-    while (offset < size)
+    if (strncmp((const char*)fd->proto_string, SSH_CLIENT_BANNER, SSH_CLIENT_BANNER_LEN) != 0)
     {
-        uint8_t d = data[offset];
-        switch (fd->state)
+        return APPID_EINVALID;
+    }
+
+    d = fd->proto_string[SSH_CLIENT_BANNER_MAXPOS+1];
+    if (d == '1')
+        fd->ssh_version = SSH1;
+    else if (d == '2')
+        fd->ssh_version = SSH2;
+    else
+    {
+        return APPID_EINVALID;
+    }
+    
+    
+    pattern_begin = strchr((const char*)(fd->proto_string + SSH_CLIENT_BANNER_MAXPOS + 1), '-');
+    if (pattern_begin != nullptr)
+    {
+        pattern_begin++;
+    }
+    else
+    {
+        return APPID_EINVALID;
+    }
+    
+    pattern_end = strpbrk(pattern_begin, "_-");
+    if (pattern_end != nullptr)
+    {
+        size_t pattern_len = (size_t)(pattern_end - pattern_begin);
+        string pattern(pattern_begin, pattern_len);
+        SshPatternMatchers& table = args.asd.get_odp_ctxt().get_ssh_matchers();
+    
+        if (table.has_pattern(pattern))
         {
-        case SSH_CLIENT_STATE_BANNER:
-            if (d != SSH_CLIENT_BANNER[fd->pos])
-                return APPID_EINVALID;
-            if (fd->pos >= SSH_CLIENT_BANNER_MAXPOS)
-                fd->state = SSH_CLIENT_STATE_ID_PROTO_VERSION;
-            else
-                fd->pos++;
-            break;
-
-        case SSH_CLIENT_STATE_ID_PROTO_VERSION:
-            if (d == '1')
-                fd->ssh_version = SSH1;
-            else if (d == '2')
-                fd->ssh_version = SSH2;
-            else
-                return APPID_EINVALID;
-            fd->state = SSH_CLIENT_STATE_LOOKING_FOR_DASH;
-            break;
-
-        case SSH_CLIENT_STATE_LOOKING_FOR_DASH:
-            if (d == '-')
+            fd->client_id = table.get_appid(pattern);
+        }
+        else
+        {
+            fd->client_id = APP_ID_SSH;
+        }
+        while (pattern_end - (const char*)fd->proto_string < fd->proto_strlen)
+        {
+            d = *pattern_end;
+            if (d == ' ' || d == '\n')
             {
-                fd->state = SSH_CLIENT_STATE_ID_CLIENT;
                 break;
             }
-            break;
-
-        case SSH_CLIENT_STATE_ID_CLIENT:
-            switch (d)
-            {
-            case 'O':
-                fd->state = SSH_CLIENT_STATE_CHECK_OPENSSH;
-                break;
-            case 'P':
-                fd->state = SSH_CLIENT_STATE_CHECK_PUTTY;
-                break;
-            case 'l':
-                fd->state = SSH_CLIENT_STATE_CHECK_LSH;
-                break;
-            case 'd':
-                fd->state = SSH_CLIENT_STATE_CHECK_DROPBEAR;
-                break;
-            default:
-                fd->state = SSH_CLIENT_STATE_ID_REST_OF_LINE;
-                fd->client_id = APP_ID_SSH;
-            }
-            /*the next thing we want to see is the SECOND character... */
-            fd->pos = 1;
-            break;
-
-        case SSH_CLIENT_STATE_CHECK_OPENSSH:
-            if (d != OPENSSH_BANNER[fd->pos])
-            {
-                fd->client_id = APP_ID_SSH;
-                fd->state = SSH_CLIENT_STATE_ID_REST_OF_LINE;
-            }
-            else if (fd->pos >= OPENSSH_BANNER_MAXPOS)
-            {
-                fd->client_id = APP_ID_OPENSSH;
-                fd->state = SSH_CLIENT_STATE_ID_SOFTWARE_VERSION;
-                fd->pos = 0;
-            }
-            else
-                fd->pos++;
-            break;
-
-        case SSH_CLIENT_STATE_CHECK_PUTTY:
-            if (d != PUTTY_BANNER[fd->pos])
-            {
-                fd->client_id = APP_ID_SSH;
-                fd->state = SSH_CLIENT_STATE_ID_REST_OF_LINE;
-            }
-            else if (fd->pos >= PUTTY_BANNER_MAXPOS)
-            {
-                fd->client_id = APP_ID_PUTTY;
-                fd->state = SSH_CLIENT_STATE_ID_SOFTWARE_VERSION;
-                fd->pos = 0;
-            }
-            else
-                fd->pos++;
-            break;
-
-        case SSH_CLIENT_STATE_CHECK_LSH:
-            if (d != LSH_BANNER[fd->pos])
-            {
-                fd->client_id = APP_ID_SSH;
-                fd->state = SSH_CLIENT_STATE_ID_REST_OF_LINE;
-            }
-            else if (fd->pos >= LSH_BANNER_MAXPOS)
-            {
-                fd->client_id = APP_ID_LSH;
-                fd->state = SSH_CLIENT_STATE_ID_SOFTWARE_VERSION;
-                fd->pos = 0;
-            }
-            else
-                fd->pos++;
-            break;
-
-        case SSH_CLIENT_STATE_CHECK_DROPBEAR:
-            if (d != DROPBEAR_BANNER[fd->pos])
-            {
-                fd->client_id = APP_ID_SSH;
-                fd->state = SSH_CLIENT_STATE_ID_REST_OF_LINE;
-            }
-            else if (fd->pos >= DROPBEAR_BANNER_MAXPOS)
-            {
-                fd->client_id = APP_ID_DROPBEAR;
-                fd->state = SSH_CLIENT_STATE_ID_SOFTWARE_VERSION;
-                fd->pos = 0;
-            }
-            else
-                fd->pos++;
-            break;
-
-        case SSH_CLIENT_STATE_ID_SOFTWARE_VERSION:
-            if (d == '\n')
-            {
-                fd->version[fd->pos] = 0;
-                fd->pos = 0;
-                fd->state = SSH_CLIENT_STATE_KEY;
-                break;
-            }
-            if (d == ' ')
-            {
-                fd->version[fd->pos] = 0;
-                fd->state = SSH_CLIENT_STATE_ID_REST_OF_LINE;
-                break;
-            }
-            if (fd->pos < SSH_MAX_BANNER_LEN - 1 && d != '\r' && d != '-' && d != '_')
+            if (d != '\r' && d != '-' && d != '_')
             {
                 fd->version[fd->pos++] = d;
             }
-            break;
-
-        case SSH_CLIENT_STATE_ID_REST_OF_LINE:
-            if (d == '\n')
-            {
-                fd->pos = 0;
-                fd->state = SSH_CLIENT_STATE_KEY;
-                break;
-            }
-            break;
-
-        case SSH_CLIENT_STATE_KEY:
-            switch (fd->ssh_version)
-            {
-            case SSH2:
-                return ssh_client_validate_keyx(offset, data, size, fd);
-                break;
-            case SSH1:
-                return ssh_client_validate_pubkey(offset, data, size, fd);
-                break;
-            default:
-                return APPID_EINVALID;
-                break;
-            }
-            break;
-
-        default:
-            return APPID_EINVALID;
+            pattern_end++;
         }
-        offset++;
     }
+    else
+    {
+        fd->client_id = APP_ID_SSH;
+    }
+    fd->pos = 0;       
     return APPID_INPROCESS;
 }
 
 int SshClientDetector::validate(AppIdDiscoveryArgs& args)
 {
     ClientSSHData* fd;
-    int sm_ret;
+    int sm_ret = APPID_INPROCESS;
 
     if (!args.size || args.dir != APP_ID_FROM_INITIATOR)
         return APPID_INPROCESS;
@@ -561,14 +445,67 @@ int SshClientDetector::validate(AppIdDiscoveryArgs& args)
     {
         fd = (ClientSSHData*)snort_calloc(sizeof(ClientSSHData));
         data_add(args.asd, fd, &snort_free);
-        fd->state = SSH_CLIENT_STATE_BANNER;
         fd->hstate = SSH2_HEADER_BEGIN;
         fd->oldhstate = SSH1_HEADER_BEGIN;
+        fd->proto_string_done = false;
+    }
+    
+    uint16_t offset = 0;
+    if (!(fd->proto_string_done))
+    {
+        const uint8_t *line_end = (const uint8_t *)memchr(args.data, '\n', args.size);
+        size_t append_len;
+        if (line_end != nullptr) 
+        {
+            append_len = (size_t)(line_end - args.data + 1);
+            fd->proto_string_done = true;
+        }
+        else
+        {
+            append_len = args.size;
+        }
+
+        if (fd->proto_strlen + append_len < SSH_MAX_BANNER_LEN)
+        {
+            strncat((char*)fd->proto_string, (const char*)args.data, append_len);
+            fd->proto_strlen += append_len;
+        }
+        else
+        {
+            return APPID_EINVALID;
+        }
+
+        if (line_end == nullptr)
+        {
+            return APPID_INPROCESS;
+        }
+
+        fd->proto_string_done = true;
+        sm_ret = ssh_client_sm(args, fd);
+        if (sm_ret != APPID_INPROCESS)
+        {
+            return sm_ret;
+        }
+        offset = (uint16_t)(line_end - args.data + 1);
     }
 
-    sm_ret = ssh_client_sm(args.data, args.size, fd);
+    switch (fd->ssh_version)
+    {
+        case SSH2:
+            sm_ret = ssh_client_validate_keyx(offset, args.data, args.size, fd);
+            break;
+        case SSH1:
+            sm_ret = ssh_client_validate_pubkey(offset, args.data, args.size, fd);
+            break;
+        default:
+            sm_ret = APPID_EINVALID;
+            break;
+    }
+
     if (sm_ret != APPID_SUCCESS)
+    {
         return sm_ret;
+    }
 
     add_app(args.asd, APP_ID_SSH, fd->client_id, (const char*)fd->version, args.change_bits);
     return APPID_SUCCESS;
