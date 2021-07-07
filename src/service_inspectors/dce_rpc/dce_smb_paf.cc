@@ -190,6 +190,9 @@ StreamSplitter::Status Dce2SmbSplitter::scan(
     uint32_t flags, uint32_t* fp)
 {
     DCE2_PafSmbData* pfdata = &state;
-    return dce2_smb_paf(pfdata, pkt->flow, data, len, flags, fp);
+    StreamSplitter::Status ps =  dce2_smb_paf(pfdata, pkt->flow, data, len, flags, fp);
+    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, pkt,
+        "Dce2SmbSplitter scan with length %u and status %d\n", len, ps);
+    return ps;
 }
 

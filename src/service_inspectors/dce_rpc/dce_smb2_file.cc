@@ -84,6 +84,8 @@ std::pair<bool, Dce2Smb2SessionData*> Dce2Smb2FileTracker::update_processing_flo
             processing_flow = (Dce2Smb2SessionData*)current_flow_data->get_smb_session_data();
         }
         file_flow_key = processing_flow->get_flow_key();
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, GET_CURRENT_PACKET, 
+            "updating the processing flow key to %u\n", file_flow_key);
     }
     return std::make_pair(switched, processing_flow);
 }
@@ -101,7 +103,7 @@ void Dce2Smb2FileTracker::set_info(char* file_name_v, uint16_t name_len_v, uint6
     auto updated_flow = update_processing_flow();
     Flow* flow = updated_flow.second->get_tcp_flow();
     FileContext* file = get_smb_file_context(flow, file_name_hash, file_id, true);
-    debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "set file info: file size %"
+    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, GET_CURRENT_PACKET, "set file info: file size %"
         PRIu64 " fid %" PRIu64 " file_name_hash %" PRIu64 " file context "
         "%sfound\n", size_v, file_id, file_name_hash, (file ? "" : "not "));
     if (file)
@@ -186,11 +188,15 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
     }
 
     if (ignore)
+    {
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, p,
+            "file name not set , ignored\n");
         return true;
+    }
 
     if (file_size and file_offset > file_size)
     {
-        debug_logf(dce_smb_trace, p, "file_process: bad offset\n");
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, p, "file_process: bad offset\n");
         dce_alert(GID_DCE2, DCE2_SMB_INVALID_FILE_OFFSET, (dce2CommonStats*)
             &dce2_smb_stats, *(current_flow->get_dce2_session_data()));
     }
@@ -198,13 +204,16 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
     auto updated_flow = update_processing_flow(current_flow);
     Dce2Smb2SessionData* processing_flow = updated_flow.second;
 
-    debug_logf(dce_smb_trace, p, "file_process fid %" PRIu64 " data_size %"
+    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,"file_process fid %" PRIu64 " data_size %"
         PRIu32 " offset %" PRIu64 "\n", file_id, data_size, file_offset);
 
     FileFlows* file_flows = FileFlows::get_file_flows(processing_flow->get_tcp_flow());
 
     if (!file_flows)
+    {
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, p, "file_flows not found\n");
         return true;
+    }
 
     if (updated_flow.first)
     {
@@ -220,7 +229,7 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
     process_file_mutex.unlock();
     if (!continue_processing)
     {
-        debug_logf(dce_smb_trace, p, "file_process completed\n");
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p, "file_process completed\n");
         return false;
     }
 
@@ -235,7 +244,7 @@ Dce2Smb2FileTracker::~Dce2Smb2FileTracker(void)
 {
     if (smb_module_is_up)
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "file tracker %" PRIu64
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET, "file tracker %" PRIu64
             " file name hash %" PRIu64 " terminating\n", file_id, file_name_hash);
     }
 

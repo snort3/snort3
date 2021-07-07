@@ -113,13 +113,15 @@ void Dce2Smb2TreeTracker::process_set_info_request(const Smb2Hdr* smb_header)
         else
         {
             dce2_smb_stats.v2_stinf_req_ftrkr_misng++;
-            debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "%s_REQ: ftracker missing\n",
+	        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, 
+                GET_CURRENT_PACKET, "%s_REQ: ftracker missing\n",
                 smb2_command_string[SMB2_COM_SET_INFO]);
         }
     }
     else
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "%s_REQ: header error\n",
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, 
+            GET_CURRENT_PACKET, "%s_REQ: header error\n",
             smb2_command_string[SMB2_COM_SET_INFO]);
         dce2_smb_stats.v2_stinf_req_hdr_err++;
     }
@@ -135,7 +137,8 @@ void Dce2Smb2TreeTracker::process_close_request(const Smb2Hdr* smb_header,
     if (!file_tracker)
     {
         dce2_smb_stats.v2_cls_req_ftrkr_misng++;
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "%s_REQ: ftracker missing %" PRIu64 "\n",
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, 
+	        GET_CURRENT_PACKET, "%s_REQ: ftracker missing %" PRIu64 "\n",
             smb2_command_string[SMB2_COM_CLOSE], file_id);
         return;
     }
@@ -201,8 +204,9 @@ void Dce2Smb2TreeTracker::process_create_response(const uint64_t message_id,
         file_size = alignedNtohq((const uint64_t*)(&(create_res_hdr->end_of_file)));
     if (create_res_hdr->file_attributes & SMB2_CREATE_RESPONSE_DIRECTORY)
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "%s_RESP: not processing for directory\n",
-            smb2_command_string[SMB2_COM_CREATE]);
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, 
+            GET_CURRENT_PACKET, "%s_RESP: not processing for directory\n",
+        smb2_command_string[SMB2_COM_CREATE]);
         close_file(file_id);
     }
     else
@@ -222,7 +226,7 @@ void Dce2Smb2TreeTracker::process_create_response(const uint64_t message_id,
         }
         else
         {
-            debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "%s_RESP: req tracker missing\n",
+            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, GET_CURRENT_PACKET, "%s_RESP: req tracker missing\n",
                 smb2_command_string[SMB2_COM_CREATE]);
             dce2_smb_stats.v2_crt_rtrkr_misng++;
         }
@@ -236,8 +240,9 @@ void Dce2Smb2TreeTracker::process_create_request(const uint64_t message_id,
     const Smb2CreateRequestHdr* create_req_hdr = (const Smb2CreateRequestHdr*)smb_data;
     if (alignedNtohs(&(create_req_hdr->name_offset)) <= SMB2_HEADER_LENGTH)
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "%s_REQ: name_offset %" PRIu16 "\n",
-            smb2_command_string[SMB2_COM_CREATE], create_req_hdr->name_offset);
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
+            GET_CURRENT_PACKET, "%s_REQ: name_offset %" PRIu16 "\n",
+        smb2_command_string[SMB2_COM_CREATE], create_req_hdr->name_offset);
         dce2_smb_stats.v2_crt_req_hdr_err++;
         return;
     }
@@ -247,7 +252,7 @@ void Dce2Smb2TreeTracker::process_create_request(const uint64_t message_id,
     if (!file_name_size or (file_name_offset >= end) or
         (file_name_offset + file_name_size > end))
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, GET_CURRENT_PACKET,
             "%s_REQ: invalid file name data seen with size %" PRIu16 "\n",
             smb2_command_string[SMB2_COM_CREATE], file_name_size);
         dce2_smb_stats.v2_crt_inv_file_data++;
@@ -260,7 +265,8 @@ void Dce2Smb2TreeTracker::process_create_request(const uint64_t message_id,
     Dce2Smb2RequestTracker* create_request = new Dce2Smb2RequestTracker(file_name, name_len);
     if (!store_request(message_id, current_flow_key, create_request))
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "SMB2_COM_CREATE_REQ: store failed\n");
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL,
+            GET_CURRENT_PACKET, "SMB2_COM_CREATE_REQ: store failed\n");
         delete create_request;
     }
     //check if file_id is available form a durable reconnect request.
@@ -269,6 +275,8 @@ void Dce2Smb2TreeTracker::process_create_request(const uint64_t message_id,
     uint64_t file_id = get_durable_file_id(create_req_hdr, end);
     if (file_id)
     {
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+            GET_CURRENT_PACKET, "requested file_id %lu\n", file_id);
         Dce2Smb2FileTracker* file_tracker = find_file(file_id);
         if (!file_tracker)
         {
@@ -290,16 +298,18 @@ void Dce2Smb2TreeTracker::process_read_response(const uint64_t message_id,
     Dce2Smb2RequestTracker* read_request = find_request(message_id, current_flow_key);
     if (!read_request)
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
-            "SMB2_COM_READ_RESP: request tracker missing\n");
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
+            GET_CURRENT_PACKET, "SMB2_COM_READ_RESP: request tracker missing\n");
         dce2_smb_stats.v2_read_rtrkr_misng++;
         return;
     }
+
     uint16_t data_offset = alignedNtohs((const uint16_t*)(&(read_resp_hdr->data_offset)));
     Dce2Smb2SessionData* current_flow = parent_session->get_flow(current_flow_key);
     if (data_offset + (const uint8_t*)smb_header > end)
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "SMB2_COM_READ_RESP: bad offset\n");
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
+            GET_CURRENT_PACKET, "SMB2_COM_READ_RESP: bad offset\n");
         if (current_flow)
             dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats,
                 *current_flow->get_dce2_session_data());
@@ -324,8 +334,8 @@ void Dce2Smb2TreeTracker::process_read_response(const uint64_t message_id,
     }
     else
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
-            "SMB2_COM_READ_RESP: file tracker missing\n");
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
+	        GET_CURRENT_PACKET, "SMB2_COM_READ_RESP: file tracker missing\n");
     }
 }
 
@@ -339,21 +349,22 @@ void Dce2Smb2TreeTracker::process_read_request(const uint64_t message_id,
     Dce2Smb2RequestTracker* read_request = new Dce2Smb2RequestTracker(file_id, offset);
     if (!store_request(message_id, current_flow_key, read_request))
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "SMB2_COM_READ_REQ: store failed\n");
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL,
+	        GET_CURRENT_PACKET, "SMB2_COM_READ_REQ: store failed\n");
         delete read_request;
     }
     Dce2Smb2FileTracker* file_tracker = find_file(file_id);
     Dce2Smb2SessionData* current_flow = parent_session->get_flow(current_flow_key);
     if (file_tracker)
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
-            "SMB2_COM_READ_REQ: start accepting Raw Data\n");
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+            GET_CURRENT_PACKET, "SMB2_COM_READ_REQ: start accepting Raw Data\n");
         file_tracker->accept_raw_data_from(current_flow,offset);
     }
     else
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
-            "SMB2_COM_READ_REQ: file tracker missing\n");
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
+            GET_CURRENT_PACKET, "SMB2_COM_READ_REQ: file tracker missing\n");
     }
 }
 
@@ -367,6 +378,8 @@ void Dce2Smb2TreeTracker::process_write_request(const uint64_t message_id,
     if ((alignedNtohs((const uint16_t*)(&(write_req_hdr->data_offset))) +
         (const uint8_t*)smb_header > end) and current_flow)
     {
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
+            GET_CURRENT_PACKET, "SMB2_COM_WRITE_REQ: bad offset\n");
         dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats,
             *current_flow->get_dce2_session_data());
     }
@@ -374,7 +387,8 @@ void Dce2Smb2TreeTracker::process_write_request(const uint64_t message_id,
     Dce2Smb2RequestTracker* write_request = new Dce2Smb2RequestTracker(file_id);
     if (!store_request(message_id, current_flow_key, write_request))
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "SMB2_COM_WRITE_REQ: store failed\n");
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
+	        GET_CURRENT_PACKET, "SMB2_COM_WRITE_REQ: store failed\n");
         delete write_request;
     }
     const uint8_t* file_data = (const uint8_t*)write_req_hdr + SMB2_WRITE_REQUEST_STRUC_SIZE - 1;
@@ -398,8 +412,8 @@ void Dce2Smb2TreeTracker::process_write_request(const uint64_t message_id,
     }
     else
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
-            "SMB2_COM_WRITE_REQ: file tracker missing\n");
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
+	        GET_CURRENT_PACKET,"SMB2_COM_WRITE_REQ: file tracker missing\n");
     }
 }
 
@@ -431,8 +445,8 @@ void Dce2Smb2TreeTracker::process(uint16_t command, uint8_t command_type,
     if (SMB2_CMD_TYPE_REQUEST == command_type and current_flow and
         pending_requests >= current_flow->get_max_outstanding_requests())
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
-            "%s_REQ: max req exceeded\n", smb2_command_string[command]);
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
+	        GET_CURRENT_PACKET, "%s_REQ: max req exceeded\n", smb2_command_string[command])
         dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, (dce2CommonStats*)&dce2_smb_stats,
             *current_flow->get_dce2_session_data());
         return;
@@ -446,15 +460,15 @@ void Dce2Smb2TreeTracker::process(uint16_t command, uint8_t command_type,
         if (SMB2_CMD_TYPE_ERROR_RESPONSE == command_type)
         {
             dce2_smb_stats.v2_crt_err_resp++;
-            debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
-                "%s_RESP: error\n", smb2_command_string[command]);
+	        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+	            GET_CURRENT_PACKET, "%s_RESP: error\n", smb2_command_string[command]);
         }
         else if (SMB2_CMD_TYPE_REQUEST == command_type)
         {
             if (SMB2_SHARE_TYPE_DISK != share_type)
             {
-                debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "%s_REQ:"
-                    "processed for ipc share\n", smb2_command_string[command]);
+		        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+		            GET_CURRENT_PACKET, "%s_REQ: processed for ipc share\n", smb2_command_string[command]);
                 dce2_smb_stats.v2_crt_req_ipc++;
             }
             process_create_request(message_id, current_flow_key, smb_header, end);
@@ -472,8 +486,8 @@ void Dce2Smb2TreeTracker::process(uint16_t command, uint8_t command_type,
         if (SMB2_CMD_TYPE_ERROR_RESPONSE == command_type)
         {
             dce2_smb_stats.v2_read_err_resp++;
-            debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
-                "%s_RESP: error\n", smb2_command_string[command]);
+	        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+	            GET_CURRENT_PACKET, "%s_RESP: error\n", smb2_command_string[command]);
             Dce2Smb2RequestTracker* request = find_request(message_id, current_flow_key);
             if (request)
                 close_file(request->get_file_id());
@@ -487,8 +501,8 @@ void Dce2Smb2TreeTracker::process(uint16_t command, uint8_t command_type,
         if (SMB2_CMD_TYPE_ERROR_RESPONSE == command_type)
         {
             dce2_smb_stats.v2_wrt_err_resp++;
-            debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
-                "%s_RESP: error\n", smb2_command_string[command]);
+	        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+                GET_CURRENT_PACKET, "%s_RESP: error\n", smb2_command_string[command]);
             Dce2Smb2RequestTracker* request = find_request(message_id, current_flow_key);
             if (request)
                 close_file(request->get_file_id());
@@ -499,8 +513,8 @@ void Dce2Smb2TreeTracker::process(uint16_t command, uint8_t command_type,
     case SMB2_COM_IOCTL:
         if (SMB2_CMD_TYPE_ERROR_RESPONSE == command_type)
         {
-            debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
-                "%s_RESP: error\n", smb2_command_string[command]);
+	        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+                GET_CURRENT_PACKET, "%s_RESP: error\n", smb2_command_string[command]);
         }
         else if (SMB2_SHARE_TYPE_DISK != share_type)
         {
@@ -516,8 +530,8 @@ Dce2Smb2TreeTracker::~Dce2Smb2TreeTracker(void)
 {
     if (smb_module_is_up)
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "tree tracker %" PRIu32 " terminating\n",
-            tree_id);
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+	        GET_CURRENT_PACKET, "tree tracker %" PRIu32 " terminating\n", tree_id);
     }
 
     if (co_tracker != nullptr)
@@ -533,15 +547,15 @@ Dce2Smb2TreeTracker::~Dce2Smb2TreeTracker(void)
     {
         if (smb_module_is_up)
         {
-            debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
-                "cleanup pending requests for below MIDs:\n");
+            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+	            GET_CURRENT_PACKET, "cleanup pending requests for below MIDs:\n");
         }
         for (auto it_request : active_requests)
         {
             if (smb_module_is_up)
             {
-                debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "mid %" PRIu64 "\n",
-                    it_request.first.mid);
+		        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+		            GET_CURRENT_PACKET, "mid %" PRIu64 "\n", it_request.first.mid);
             }
             delete it_request.second;
         }

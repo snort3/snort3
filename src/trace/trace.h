@@ -27,6 +27,10 @@
 #include "main/thread.h"
 
 #define DEFAULT_TRACE_LOG_LEVEL 1
+#define TRACE_CRITICAL_LEVEL 2
+#define TRACE_ERROR_LEVEL 3
+#define TRACE_INFO_LEVEL 6
+#define TRACE_DEBUG_LEVEL 7
 #define DEFAULT_TRACE_OPTION_ID 0
 #define DEFAULT_TRACE_OPTION_NAME "all"
 

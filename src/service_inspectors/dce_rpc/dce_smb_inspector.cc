@@ -89,7 +89,8 @@ void Dce2Smb::eval(Packet* p)
     }
     else
     {
-        debug_logf(dce_smb_trace, p, "non-smb packet detected\n");
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+	        p, "non-smb packet detected with dsize as %u\n", p->dsize);
     }
 }
 

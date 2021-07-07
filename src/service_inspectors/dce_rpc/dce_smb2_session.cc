@@ -98,13 +98,15 @@ void Dce2Smb2SessionTracker::process(const uint16_t command, uint8_t command_typ
     case SMB2_COM_CREATE:
         if (!tree and SMB2_CMD_TYPE_REQUEST == command_type)
         {
-            debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
+	        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, 
+	            TRACE_INFO_LEVEL, GET_CURRENT_PACKET,
                 "%s_REQ: mid-stream session detected\n",
                 smb2_command_string[command]);
             tree = connect_tree(tree_id, current_flow_key);
             if (!tree)
             {
-                debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
+                SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID,
+                    TRACE_INFO_LEVEL, GET_CURRENT_PACKET,
                     "%s_REQ: insert tree tracker failed\n",
                     smb2_command_string[command]);
             }
@@ -115,7 +117,8 @@ void Dce2Smb2SessionTracker::process(const uint16_t command, uint8_t command_typ
             tree->process(command, command_type, smb_header, end, current_flow_key);
         else
         {
-            debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
+            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, 
+                TRACE_ERROR_LEVEL, GET_CURRENT_PACKET,
                 "%s: tree tracker missing\n", smb2_command_string[command]);
             dce2_smb_stats.v2_tree_ignored++;
         }
@@ -131,7 +134,8 @@ Dce2Smb2TreeTracker* Dce2Smb2SessionTracker::connect_tree(const uint32_t tree_id
         (-1 == current_flow->get_max_file_depth()) and
         (-1 == current_flow->get_smb_file_depth()))
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "Not inserting TID (%u) "
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, 
+	    TRACE_INFO_LEVEL, GET_CURRENT_PACKET, "Not inserting TID (%u) "
             "because it's not IPC and not inspecting normal file data.\n", tree_id);
         dce2_smb_stats.v2_tree_cnct_ignored++;
         return nullptr;
@@ -189,7 +193,8 @@ Dce2Smb2SessionTracker::~Dce2Smb2SessionTracker(void)
 {
     if (smb_module_is_up)
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, 
+	        TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
             "session tracker %" PRIu64 " terminating\n", session_id);
     }
 

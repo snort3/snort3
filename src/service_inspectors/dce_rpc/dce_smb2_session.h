@@ -36,8 +36,8 @@ public:
         session_id = key.sid;
         session_key = key;
         reload_prune = false;
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET, "session tracker %" PRIu64
-            " created\n", session_id);
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET, 
+            "session tracker %" PRIu64 "created\n", session_id);
     }
 
     ~Dce2Smb2SessionTracker();

@@ -43,8 +43,8 @@ public:
     Dce2Smb2TreeTracker(uint32_t tree_id_v, Dce2Smb2SessionTracker* p_session, uint8_t sharetype)
         : tree_id(tree_id_v), share_type(sharetype), parent_session(p_session)
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
-            "tree tracker %" PRIu32 " created\n", tree_id);
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+	        GET_CURRENT_PACKET, "tree tracker %" PRIu32 " created\n", tree_id);
         if (share_type != SMB2_SHARE_TYPE_DISK)
         {
             co_tracker = (DCE2_CoTracker*)snort_calloc(sizeof(DCE2_CoTracker));

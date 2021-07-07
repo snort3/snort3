@@ -36,6 +36,9 @@
 #define DCE2_SMB_NAME "dce_smb"
 #define DCE2_SMB_HELP "dce over smb inspection"
 
+#define SMB_DEBUG(module_name, module_id, log_level, p, ...) \
+    trace_logf(log_level, module_name , module_id, p, __VA_ARGS__);
+
 #define DCE2_SMB_ID   0xff534d42  /* \xffSMB */
 #define DCE2_SMB2_ID  0xfe534d42  /* \xfeSMB */
 #define DCE2_SMB_ID_SIZE 4

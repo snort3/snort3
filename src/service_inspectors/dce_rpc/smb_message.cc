@@ -804,8 +804,9 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         com_info.cmd_size = 0;
         com_info.byte_count = 0;
         DCE2_SmbCheckCommand(ssd, smb_hdr, smb_com, nb_ptr, nb_len, com_info);
-        debug_logf(dce_smb_trace, DetectionEngine::get_current_packet(),
-            "Processing command: %s (0x%02X)\n", get_smb_com_string(smb_com), smb_com);
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+	        DetectionEngine::get_current_packet(),
+	        "Processing command: %s (0x%02X)\n", get_smb_com_string(smb_com), smb_com);
 
         // Note that even if the command shouldn't be processed, some of
         // the command functions need to know and do cleanup or some other
@@ -829,8 +830,9 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         if (smb_com2 == SMB_COM_NO_ANDX_COMMAND)
             break;
 
-        debug_logf(dce_smb_trace, DetectionEngine::get_current_packet(),
-            "Chained SMB command: %s\n", get_smb_com_string(smb_com2));
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+	    DetectionEngine::get_current_packet(),
+	    "Chained SMB command: %s\n", get_smb_com_string(smb_com2));
 
         num_chained++;
         if (DCE2_ScSmbMaxChain((dce2SmbProtoConf*)ssd->sd.config) &&
@@ -1033,8 +1035,9 @@ static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData* ssd, const SmbNt
 
     if (smb_com < 0 or smb_com > 255) return nullptr;
 
-    debug_logf(dce_smb_trace, DetectionEngine::get_current_packet(),
-        "SMB command: %s (0x%02X)\n", get_smb_com_string(smb_com), smb_com);
+    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+        DetectionEngine::get_current_packet(),
+	"SMB command: %s (0x%02X)\n", get_smb_com_string(smb_com), smb_com);
 
     if (smb_com_funcs[smb_com] == nullptr)
     {
@@ -1554,7 +1557,8 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                 if (!DCE2_GcIsLegacyMode((dce2SmbProtoConf*)ssd->sd.config))
                 {
                     // Upgrade connection to SMBv2
-                    debug_log(dce_smb_trace, p, "upgrading to smb2 session\n");
+		            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+		                p, "upgrading to smb2 session\n");
                     Dce2SmbFlowData* fd = (Dce2SmbFlowData*)p->flow->get_flow_data(
                         Dce2SmbFlowData::inspector_id);
                     if (fd)
@@ -1572,7 +1576,8 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             rtracker = DCE2_SmbInspect(ssd, smb_hdr);
             if (rtracker == nullptr)
             {
-                debug_log(dce_smb_trace, p, "Not inspecting SMB packet.\n");
+		        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+		            p, "Not inspecting SMB packet.\n");
 
                 if (DCE2_BufferIsEmpty(*seg_buf))
                 {

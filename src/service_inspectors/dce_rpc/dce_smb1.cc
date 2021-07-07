@@ -34,7 +34,6 @@ using namespace snort;
 // debug stuff
 //-------------------------------------------------------------------------
 
-#ifdef DEBUG_MSGS
 static const char* smb_com_strings[SMB_MAX_NUM_COMS] =
 {
     "Create Directory",            // 0x00
@@ -297,7 +296,6 @@ static const char* smb_com_strings[SMB_MAX_NUM_COMS] =
 
 const char* get_smb_com_string(uint8_t b)
 { return smb_com_strings[b]; }
-#endif
 
 Dce2Smb1SessionData::Dce2Smb1SessionData(const Packet* p,
     const dce2SmbProtoConf* proto) : Dce2SmbSessionData(p, proto)
@@ -315,7 +313,7 @@ Dce2Smb1SessionData::Dce2Smb1SessionData(const Packet* p,
     ssd.max_file_depth = max_file_depth;
     ssd.sd = sd;
     ssd.policy = policy;
-    debug_logf(dce_smb_trace, p, "smb1 session created\n");
+    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p, "smb1 session created\n");
     memory::MemoryCap::update_allocations(sizeof(*this));
 }
 

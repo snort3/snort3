@@ -47,7 +47,7 @@ public:
         file_id(file_idv), file_size(0), file_name_hash(0), file_name(nullptr),
         direction(FILE_DOWNLOAD), parent_tree(p_tree)
     {
-        debug_logf(dce_smb_trace, GET_CURRENT_PACKET,
+	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
             "file tracker %" PRIu64 " created\n", file_id);
     }
 
