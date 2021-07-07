@@ -234,7 +234,7 @@ If we also wanted to limit retries to at least 5 seconds, we could do:
 
     active = { max_responses = 1, min_interval = 5 }
 
-== Lua Variables
+==== Lua Variables
 
 The following Global Lua Variables are available when Snort is run with
 a lua config using -c option.

@@ -290,10 +290,10 @@ generate 119:202 regardless of whether the chunk length eventually turns out to 
 4. The chunk length in hexadecimal format. The chunk length may be zero (see above) but it must be
 present. Both upper and lower case hex letters are acceptable. The 0x prefix for hex numbers is not
 acceptable.
-
++
 The goal here is a hexadecimal number followed by CRLF ending the chunk header. Many things may go
 wrong:
-
++
 * More than 8 hex digits other than the leading zeros. The number is limited by Snort to fit into
   32 bits and if it does not that is a fatal error.
 * The CR may be missing, leaving a bare LF as the separator. That generates 119:235 after which
@@ -374,7 +374,7 @@ Insert commands:
   $h2frameheader <frame_type> <frame_length> <flags> <stream_id> generates an HTTP/2 frame header.
     The frame type may be the frame type name in all lowercase or the numeric frame type code:
       (data|headers|priority|rst_stream|settings|push_promise|ping|goaway|window_update|
-      continuation|{0:9})
+      continuation|\{0:9\})
     The frame length is the length of the frame payload, may be in decimal or test tool hex value
       (\xnn, see below under escape sequence for more details)
     The frame flags are represented as a single test tool hex byte (\xnn)
