@@ -431,6 +431,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_JS_OPENING_TAG,             "unexpected script opening tag in JavaScript" },
     { EVENT_JS_CLOSING_TAG,             "unexpected script closing tag in JavaScript" },
     { EVENT_JS_CODE_IN_EXTERNAL,        "JavaScript code under the external script tags" },
+    { EVENT_JS_SHORTENED_TAG,           "script opening tag in a short form" },
     { 0, nullptr }
 };
 

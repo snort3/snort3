@@ -47,13 +47,14 @@ public:
     void configure();
 
 private:
-    enum AttrId { AID_GT, AID_SRC, AID_JS, AID_ECMA, AID_VB };
+    enum AttrId { AID_SLASH, AID_GT, AID_SRC, AID_JS, AID_ECMA, AID_VB };
 
     struct MatchContext
     {
         const char* next;
         bool is_javascript;
         bool is_external;
+        bool is_shortened;
     };
 
     const HttpParaList::UriParam& uri_param;

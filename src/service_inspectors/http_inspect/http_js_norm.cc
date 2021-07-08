@@ -68,6 +68,7 @@ void HttpJsNorm::configure()
     mpse_type = new SearchTool;
 
     static constexpr const char* otag_start = "<SCRIPT";
+    static constexpr const char* attr_slash = "/";
     static constexpr const char* attr_gt = ">";
     static constexpr const char* attr_src = "SRC";
     static constexpr const char* attr_js1 = "JAVASCRIPT";
@@ -75,6 +76,7 @@ void HttpJsNorm::configure()
     static constexpr const char* attr_vb = "VBSCRIPT";
 
     mpse_otag->add(otag_start, strlen(otag_start), 0);
+    mpse_attr->add(attr_slash, strlen(attr_slash), AID_SLASH);
     mpse_attr->add(attr_gt, strlen(attr_gt), AID_GT);
     mpse_attr->add(attr_src, strlen(attr_src), AID_SRC);
     mpse_attr->add(attr_js1, strlen(attr_js1), AID_JS);
@@ -181,7 +183,7 @@ void HttpJsNorm::enhanced_inline_normalize(const Field& input, Field& output,
             if (ptr >= end)
                 break;
 
-            MatchContext sctx = {ptr, true, false};
+            MatchContext sctx = {ptr, true, false, false};
 
             if (ptr[0] == '>')
                 ptr++;
@@ -190,6 +192,13 @@ void HttpJsNorm::enhanced_inline_normalize(const Field& input, Field& output,
                 if (!mpse_attr->find(ptr, end - ptr, match_attr, false, &sctx))
                     break; // the opening tag never ends
                 ptr = sctx.next;
+            }
+
+            if (sctx.is_shortened)
+            {
+                *infractions += INF_JS_SHORTENED_TAG;
+                events->create_event(EVENT_JS_SHORTENED_TAG);
+                continue;
             }
 
             if (!sctx.is_javascript)
@@ -408,6 +417,19 @@ int HttpJsNorm::match_attr(void* pid, void*, int index, void* sctx, void*)
 
     switch (id)
     {
+    case AID_SLASH:
+        if (*(ctx->next + index) == '>')
+        {
+            ctx->is_shortened = true;
+            ctx->next += index;
+            return 1;
+        }
+        else
+        {
+            ctx->is_shortened = false;
+            return 0;
+        }
+
     case AID_GT:
         ctx->next += index;
         return 1;
@@ -431,9 +453,9 @@ int HttpJsNorm::match_attr(void* pid, void*, int index, void* sctx, void*)
         return 0;
 
     default:
-        ctx->next += index;
         ctx->is_external = false;
         ctx->is_javascript = false;
+        ctx->next += index;
         return 1;
     }
 }
