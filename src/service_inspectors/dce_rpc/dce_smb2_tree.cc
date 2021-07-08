@@ -446,7 +446,7 @@ void Dce2Smb2TreeTracker::process(uint16_t command, uint8_t command_type,
         pending_requests >= current_flow->get_max_outstanding_requests())
     {
 	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
-	        GET_CURRENT_PACKET, "%s_REQ: max req exceeded\n", smb2_command_string[command])
+	        GET_CURRENT_PACKET, "%s_REQ: max req exceeded\n", smb2_command_string[command]);
         dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, (dce2CommonStats*)&dce2_smb_stats,
             *current_flow->get_dce2_session_data());
         return;
