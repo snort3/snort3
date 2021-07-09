@@ -61,7 +61,7 @@ bool IsDataAt::convert(std::istringstream& data_stream)
                 rule_api.add_suboption("relative");
 
             else if (value == "rawbytes")
-                rule_api.set_curr_options_buffer("pkt_data");
+                rule_api.set_curr_options_buffer("raw_data");
 
             else
                 rule_api.bad_rule(data_stream, value + " - unknown modifier!!");

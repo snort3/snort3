@@ -13,6 +13,7 @@ until explicitly reset by other rule options.
 Snort2 implemented the following list of "sticky" buffer rule options:
 
 * pkt_data
+* raw_data
 * file_data
 * dce_stub_fdata
 * dnp3_data
