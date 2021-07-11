@@ -250,8 +250,7 @@ void Dce2Smb2SessionData::process_command(const Smb2Hdr* smb_hdr,
             if (neg_resp_hdr->capabilities & SMB2_GLOBAL_CAP_MULTI_CHANNEL)
             {
                 Packet* p = DetectionEngine::get_current_packet();
-                Dce2SmbFlowData* fd =
-                    create_expected_smb_flow_data(p, (dce2SmbProtoConf *)sd.config);
+                Dce2SmbFlowData* fd = create_expected_smb_flow_data(p);
                 if (fd)
                 {
                     int result = Stream::set_snort_protocol_id_expected(p, PktType::TCP,
@@ -462,18 +461,17 @@ void Dce2Smb2SessionData::process()
     const uint8_t* data_ptr = p->data;
     uint16_t data_len = p->dsize;
 
-    // Check header length
-    if (data_len < sizeof(NbssHdr) + SMB2_HEADER_LENGTH)
-    {
-	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, 
-	    p, "Header error with data length %d\n",data_len);
-        dce2_smb_stats.v2_hdr_err++;
-        return;
-    }
-
     // Process the header
     if (p->is_pdu_start())
     {
+        // Check header length
+        if (data_len < sizeof(NbssHdr) + SMB2_HEADER_LENGTH)
+        {
+            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, 
+                p, "Header error with data length %d\n",data_len);
+            dce2_smb_stats.v2_hdr_err++;
+            return;
+        }
         const Smb2Hdr* smb_hdr = (const Smb2Hdr*)(data_ptr + sizeof(NbssHdr));
         uint32_t next_command_offset;
         uint8_t compound_request_index = 0;

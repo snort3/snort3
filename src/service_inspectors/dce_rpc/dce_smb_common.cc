@@ -48,14 +48,6 @@ Dce2SmbFlowData::Dce2SmbFlowData(Dce2SmbSessionData* ssd_v) : FlowData(inspector
     ssd = ssd_v;
 }
 
-void Dce2SmbFlowData::handle_expected(Packet* p)
-{
-    //we have a fd, but ssd not set, set it here in this flow
-    if (ssd)
-        delete ssd;
-    ssd = new Dce2Smb2SessionData(p, config);
-}
-
 Dce2SmbSessionData* Dce2SmbFlowData::upgrade(const Packet* p)
 {
     dce2SmbProtoConf* config =
@@ -120,14 +112,25 @@ static inline DCE2_SmbVersion get_smb_version(const Packet* p)
     return DCE2_SMB_VERSION_NULL;
 }
 
-Dce2SmbFlowData* create_expected_smb_flow_data(const Packet* p, dce2SmbProtoConf* config)
+Dce2SmbFlowData* create_expected_smb_flow_data(const Packet* p)
 {
     DCE2_SmbVersion smb_version = get_smb_version(p);
     if (DCE2_SMB_VERSION_2 == smb_version)
     {
-        return new Dce2SmbFlowData(config);
+        return new Dce2SmbFlowData();
     }
     return nullptr;
+}
+
+Dce2SmbSessionData* create_smb_session_data(Dce2SmbFlowData* flow_data, const Packet* p,
+    dce2SmbProtoConf* config)
+{
+    DCE2_SmbVersion smb_version = get_smb_version(p);
+    if (DCE2_SMB_VERSION_2 != smb_version)
+        return nullptr;
+    Dce2SmbSessionData* ssd = (Dce2SmbSessionData*)new Dce2Smb2SessionData(p, config);
+    flow_data->update_smb_session_data(ssd);
+    return ssd;
 }
 
 Dce2SmbSessionData* create_new_smb_session(const Packet* p,
@@ -151,7 +154,8 @@ Dce2SmbSessionData* create_new_smb_session(const Packet* p,
 DCE2_SsnData* get_dce2_session_data(snort::Flow* flow)
 {
     Dce2SmbFlowData* fd = (Dce2SmbFlowData*)flow->get_flow_data(Dce2SmbFlowData::inspector_id);
-    return fd ? fd->get_smb_session_data()->get_dce2_session_data() : nullptr;
+    return fd ? fd->get_smb_session_data() ? fd->get_smb_session_data()->get_dce2_session_data() :
+        nullptr : nullptr;
 }
 
 inline FileContext* get_smb_file_context(const Packet* p)

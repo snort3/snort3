@@ -69,7 +69,14 @@ void Dce2Smb::eval(Packet* p)
 
     Dce2SmbSessionData* smb_session_data;
     if (smb_flowdata)
+    {
         smb_session_data = smb_flowdata->get_smb_session_data();
+        // if flow data present but session data is not, it is an expected session
+        // try to update the session data, will only do for SMBv2. Ideally it should
+        // be done in handle_expected, but we dont have access to the config there.
+        if (!smb_session_data)
+            smb_session_data = create_smb_session_data(smb_flowdata, p, &config);
+    }
     else
         smb_session_data = create_new_smb_session(p, &config);
 
