@@ -331,7 +331,7 @@ public:
     //------------------------------------------------------
     // FIXIT-L command line only stuff, add to conf / module
 
-    uint32_t event_log_id = 0;
+    uint16_t event_log_id = 0;
     SfCidr obfuscation_net;
     std::string bpf_filter;
     std::string metadata_filter;
@@ -545,7 +545,7 @@ public:
     { return run_flags & RUN_FLAG__INLINE_TEST; }
 
     // event stuff
-    uint32_t get_event_log_id() const
+    uint16_t get_event_log_id() const
     { return event_log_id; }
 
     bool process_all_events() const

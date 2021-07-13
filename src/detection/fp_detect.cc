@@ -255,11 +255,11 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
 
     otn->state[get_instance_id()].alerts++;
 
-    event_id++;
+    incr_event_id();
 
     IpsAction * act = get_ips_policy()->action[action];
     act->exec(p, otn);
-    SetTags(p, otn, event_id);
+    SetTags(p, otn, get_event_id());
 
     fpLogOther(p, rtn, otn, action);
 

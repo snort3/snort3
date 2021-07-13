@@ -54,8 +54,8 @@ SO_PUBLIC const SnortEvent* get_event()
     lua_event.sid = event->sig_info->sid;
     lua_event.rev = event->sig_info->rev;
 
-    lua_event.event_id = event->event_id;
-    lua_event.event_ref = event->event_reference;
+    lua_event.event_id = event->get_event_id();
+    lua_event.event_ref = event->get_event_reference();
 
     if ( !event->sig_info->message.empty() )
         lua_event.msg = event->sig_info->message.c_str();

@@ -168,7 +168,7 @@ static void alert_event(Packet* p, const char*, Unified2Config* config, const Ev
 
     u2_event.snort_id = 0;  // FIXIT-H alert_event define / use
 
-    u2_event.event_id = htonl(event->event_id);
+    u2_event.event_id = htonl(event->get_event_id());
     u2_event.event_second = htonl(event->ref_time.tv_sec);
     u2_event.event_microsecond = htonl(event->ref_time.tv_usec);
 
@@ -346,7 +346,7 @@ static void _Unified2LogPacketAlert(
 
     if (event != nullptr)
     {
-        logheader.event_id = htonl(event->event_reference);
+        logheader.event_id = htonl(event->get_event_reference());
         logheader.event_second = htonl(event->ref_time.tv_sec);
     }
     else
@@ -617,7 +617,7 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, const E
 
     memset(&alertdata, 0, sizeof(alertdata));
 
-    alertdata.event_id = htonl(event->event_id);
+    alertdata.event_id = htonl(event->get_event_id());
     alertdata.event_second = htonl(event->ref_time.tv_sec);
     alertdata.event_microsecond = htonl(event->ref_time.tv_usec);
     alertdata.generator_id = htonl(event->sig_info->gid);
@@ -703,7 +703,7 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, const E
 
     memset(&alertdata, 0, sizeof(alertdata));
 
-    alertdata.event_id = htonl(event->event_id);
+    alertdata.event_id = htonl(event->get_event_id());
     alertdata.event_second = htonl(event->ref_time.tv_sec);
     alertdata.event_microsecond = htonl(event->ref_time.tv_usec);
     alertdata.generator_id = htonl(event->sig_info->gid);
@@ -922,10 +922,10 @@ void U2Logger::alert_legacy(Packet* p, const char* msg, const Event& event)
         if (p->ptrs.ip_api.is_ip6())
         {
             const SfIp* ip = p->ptrs.ip_api.get_src();
-            _WriteExtraData(&config, event.event_id, event.ref_time.tv_sec,
+            _WriteExtraData(&config, event.get_event_id(), event.ref_time.tv_sec,
                 (const uint8_t*) ip->get_ip6_ptr(), sizeof(struct in6_addr), EVENT_INFO_IPV6_SRC);
             ip = p->ptrs.ip_api.get_dst();
-            _WriteExtraData(&config, event.event_id, event.ref_time.tv_sec,
+            _WriteExtraData(&config, event.get_event_id(), event.ref_time.tv_sec,
                 (const uint8_t*) ip->get_ip6_ptr(), sizeof(struct in6_addr), EVENT_INFO_IPV6_DST);
         }
     }
@@ -937,7 +937,7 @@ void U2Logger::alert_legacy(Packet* p, const char* msg, const Event& event)
     if ( p->flow )
         Stream::update_flow_alert(
             p->flow, p, event.sig_info->gid, event.sig_info->sid,
-            event.event_id, event.ref_time.tv_sec);
+            event.get_event_id(), event.ref_time.tv_sec);
 
     if ( p->xtradata_mask )
     {
@@ -947,7 +947,7 @@ void U2Logger::alert_legacy(Packet* p, const char* msg, const Event& event)
         if ( max_count > 0 )
             AlertExtraData(
                 p->flow, &config, log_funcs, max_count, p->xtradata_mask,
-                event.event_id, event.ref_time.tv_sec);
+                event.get_event_id(), event.ref_time.tv_sec);
     }
 }
 
@@ -963,7 +963,7 @@ void U2Logger::alert(Packet* p, const char* msg, const Event& event)
     if ( p->flow )
         Stream::update_flow_alert(
             p->flow, p, event.sig_info->gid, event.sig_info->sid,
-            event.event_id, event.ref_time.tv_sec);
+            event.get_event_id(), event.ref_time.tv_sec);
 
     if ( p->xtradata_mask )
     {
@@ -973,7 +973,7 @@ void U2Logger::alert(Packet* p, const char* msg, const Event& event)
         if ( max_count > 0 )
             AlertExtraData(
                 p->flow, &config, log_funcs, max_count, p->xtradata_mask,
-                event.event_id, event.ref_time.tv_sec);
+                event.get_event_id(), event.ref_time.tv_sec);
     }
 }
 
