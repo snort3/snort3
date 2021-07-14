@@ -41,12 +41,8 @@ static void set_fields(lua_State* L, int tindex, Event& self)
 {
     Lua::Table table(L, tindex);
 
-    uint32_t value = 0;
-    table.get_field("event_id", value);
-    self.set_event_id(value);
-
-    table.get_field("event_reference", value);
-    self.set_event_reference(value);
+    table.get_field("event_id", self.event_id);
+    table.get_field("event_reference", self.event_reference);
 
     const char* s = nullptr;
     if ( table.get_field("alt_msg", s) && s )  // FIXIT-L shouldn't need both conditions
@@ -61,8 +57,8 @@ static void get_fields(lua_State* L, int tindex, Event& self)
 {
     Lua::Table table(L, tindex);
 
-    table.set_field("event_id", self.get_event_id());
-    table.set_field("event_reference", self.get_event_reference());
+    table.set_field("event_id", self.event_id);
+    table.set_field("event_reference", self.event_reference);
 
     if ( self.alt_msg )
         table.set_field("alt_msg", self.alt_msg);
