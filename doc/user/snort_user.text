@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.7.0 2021-06-30 09:58:50 EDT TST
+Revision 3.1.8.0 2021-07-15 06:38:10 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -18,77 +18,70 @@ Table of Contents
 
     1.1. First Steps
     1.2. Configuration
+    1.3. Output
 
-2. Lua Variables
+2. Concepts
 
-    2.1. Whitelist
-    2.2. Rules
-    2.3. Includes
-    2.4. Converting Your 2.X Configuration
-    2.5. Output
+    2.1. Terminology
+    2.2. Modules
+    2.3. Parameters
+    2.4. Plugins
+    2.5. Operation
+    2.6. Rules
+    2.7. Pattern Matching
 
-3. Concepts
+3. Tutorial
 
-    3.1. Terminology
-    3.2. Modules
-    3.3. Parameters
-    3.4. Plugins
-    3.5. Operation
-    3.6. Rules
-    3.7. Pattern Matching
+    3.1. Dependencies
+    3.2. Building
+    3.3. Running
+    3.4. Tips
+    3.5. Common Errors
+    3.6. Gotchas
+    3.7. Known Issues
 
-4. Tutorial
+4. Usage
 
-    4.1. Dependencies
-    4.2. Building
-    4.3. Running
-    4.4. Tips
-    4.5. Common Errors
-    4.6. Gotchas
-    4.7. Known Issues
+    4.1. Help
+    4.2. Sniffing and Logging
+    4.3. Configuration
+    4.4. IDS mode
+    4.5. Plugins
+    4.6. Output Files
+    4.7. DAQ Alternatives
+    4.8. Logger Alternatives
+    4.9. Shell
+    4.10. Signals
 
-5. Usage
+5. Features
 
-    5.1. Help
-    5.2. Sniffing and Logging
-    5.3. Configuration
-    5.4. IDS mode
-    5.5. Plugins
-    5.6. Output Files
-    5.7. DAQ Alternatives
-    5.8. Logger Alternatives
-    5.9. Shell
-    5.10. Signals
+    5.1. Active Response
+    5.2. AppId
+    5.3. Binder
+    5.4. Byte rule options
+    5.5. Consolidated Config
+    5.6. DCE Inspectors
+    5.7. File Processing
+    5.8. High Availability
+    5.9. FTP
+    5.10. HTTP Inspector
+    5.11. HTTP/2 Inspector
+    5.12. IEC104 Inspector
+    5.13. Performance Monitor
+    5.14. POP and IMAP
+    5.15. Port Scan
+    5.16. Sensitive Data Filtering
+    5.17. SMTP
+    5.18. Telnet
+    5.19. Trace
+    5.20. Wizard
 
-6. Features
+6. DAQ Configuration and Modules
 
-    6.1. Active Response
-    6.2. AppId
-    6.3. Binder
-    6.4. Byte rule options
-    6.5. Consolidated Config
-    6.6. DCE Inspectors
-    6.7. File Processing
-    6.8. High Availability
-    6.9. FTP
-    6.10. HTTP Inspector
-    6.11. HTTP/2 Inspector
-    6.12. IEC104 Inspector
-    6.13. Performance Monitor
-    6.14. POP and IMAP
-    6.15. Port Scan
-    6.16. Sensitive Data Filtering
-    6.17. SMTP
-    6.18. Telnet
-    6.19. Trace
-    6.20. Wizard
-
-7. DAQ Configuration and Modules
-
-    7.1. Building the DAQ Library and Its Bundled DAQ Modules
-    7.2. Configuration
-    7.3. Interaction With Multiple Packet Threads
-    7.4. DAQ Modules Included With Snort 3
+    6.1. Building the DAQ Library and Its Bundled DAQ Modules
+    6.2. Configuration
+    6.3. Interaction With Multiple Packet Threads
+    6.4. DAQ Modules Included With Snort 3
 
 Snorty
 
@@ -347,12 +340,7 @@ do:
 
 active = { max_responses = 1, min_interval = 5 }
 
-
----------------------------------------------------------------------
-
-2. Lua Variables
-
----------------------------------------------------------------------
+1.2.3. Lua Variables
 
 The following Global Lua Variables are available when Snort is run
 with a lua config using -c option.
@@ -374,10 +362,7 @@ with a lua config using -c option.
 
     SNORT_PATCH_VERSION = 2
 
-
-2.1. Whitelist
-
---------------
+1.2.4. Whitelist
 
 When Snort is run with the --warn-conf-strict option, warnings will
 be generated for all Lua tables present in the configuration files
@@ -397,10 +382,7 @@ snort_whitelist_add_prefix("local_ foobar_")
 The accumulated contents of the whitelist (both exact and prefix)
 will be dumped when Snort is run in verbose mode (-v).
 
-
-2.2. Rules
-
---------------
+1.2.5. Rules
 
 Rules determine what Snort is looking for. They can be put directly
 in your Lua configuration file with the ips module, on the command
@@ -419,10 +401,7 @@ $ sort -c snort.lua -R rules.txt
 
 You can use both approaches together.
 
-
-2.3. Includes
-
---------------
+1.2.6. Includes
 
 Your configuration file may include other files, either directly via
 Lua or via various parameters. Snort will find relative includes in
@@ -445,10 +424,7 @@ Some things to keep in mind:
     relative to the working directory. These will be updated in a
     future release.
 
-
-2.4. Converting Your 2.X Configuration
-
---------------
+1.2.7. Converting Your 2.X Configuration
 
 If you have a working 2.X configuration snort2lua makes it easy to
 get up and running with Snort 3. This tool will convert your
@@ -464,7 +440,7 @@ sophisticated use cases, see the Snort2Lua section later in the
 manual.
 
 
-2.5. Output
+1.3. Output
 
 --------------
 
@@ -472,7 +448,7 @@ Snort can produce quite a lot of data. In the following we will
 summarize the key aspects of the core output types. Additional data
 such as from appid is covered later.
 
-2.5.1. Basic Statistics
+1.3.1. Basic Statistics
 
 At shutdown, Snort will output various counts depending on
 configuration and the traffic processed. Generally, you may see:
@@ -494,7 +470,7 @@ available counts:
 
 $ snort --help-counts
 
-2.5.2. Alerts
+1.3.2. Alerts
 
 If you configured rules, you will need to configure alerts to see the
 details of detection events. Use the -A option like this:
@@ -518,7 +494,7 @@ To see the available alert types, you can run this command:
 
 $ snort --list-plugins | grep logger
 
-2.5.3. Files and Paths
+1.3.3. Files and Paths
 
 Note that output is specific to each packet thread. If you run 4
 packet threads with u2 output, you will get 4 different u2 files. The
@@ -541,7 +517,7 @@ Additional considerations:
     issues with multiple packet threads.
   * All text mode outputs default to stdout
 
-2.5.4. Performance Statistics
+1.3.4. Performance Statistics
 
 Still more data is available beyond the above.
 
@@ -557,7 +533,7 @@ Still more data is available beyond the above.
 
 ---------------------------------------------------------------------
 
-3. Concepts
+2. Concepts
 
 ---------------------------------------------------------------------
 
@@ -565,7 +541,7 @@ This section provides background on essential aspects of Snort’s
 operation.
 
 
-3.1. Terminology
+2.1. Terminology
 
 --------------
 
@@ -625,7 +601,7 @@ operation.
     binding. See hex and spell.
 
 
-3.2. Modules
+2.2. Modules
 
 --------------
 
@@ -668,7 +644,7 @@ Other things to note about modules:
     the snort module.
 
 
-3.3. Parameters
+2.3. Parameters
 
 --------------
 
@@ -737,7 +713,7 @@ Parameter limits:
   * maxSZ = 9007199254740992
 
 
-3.4. Plugins
+2.4. Plugins
 
 --------------
 
@@ -770,7 +746,7 @@ example, an inspector will typically be packaged together with any
 associated rule options.
 
 
-3.5. Operation
+2.5. Operation
 
 --------------
 
@@ -807,7 +783,7 @@ The steps are:
     resulting from the earlier steps. More generally, this is where
     other actions can be taken as well such as blocking the packet.
 
-3.5.1. Snort 2 Processing
+2.5.1. Snort 2 Processing
 
 The preprocess step in Snort 2 is highly configurable. Arbitrary
 preprocessors can be loaded dynamically at startup, configured in
@@ -832,7 +808,7 @@ pass some HTTP and SIP preprocessor data to appID. However, it
 remains a peripheral feature and still requires the production of
 data that may not be consumed.
 
-3.5.2. Snort 3 Processing
+2.5.2. Snort 3 Processing
 
 One of the goals of Snort 3 is to provide a more flexible framework
 for packet processing by implementing an event-driven approach.
@@ -875,7 +851,7 @@ stuffers allow Snort to work smarter, not harder. These capabilities
 will be leveraged more and more as Snort development continues.
 
 
-3.6. Rules
+2.6. Rules
 
 --------------
 
@@ -934,7 +910,7 @@ $ snort --list-builtin
 For details on these and other options, see the reference section.
 
 
-3.7. Pattern Matching
+2.7. Pattern Matching
 
 --------------
 
@@ -942,7 +918,7 @@ Snort evaluates rules in a two-step process which includes a fast
 pattern search and full evaluation of the signature. More details on
 this process follow.
 
-3.7.1. Rule Groups
+2.7.1. Rule Groups
 
 When Snort starts or reloads configuration, rules are grouped by
 protocol, port and service. For example, all TCP rules using the
@@ -956,7 +932,7 @@ balances speed and memory. For a faster search at the expense of
 significantly more memory, use ac_full. For best performance and
 reasonable memory, download the hyperscan source from Intel.
 
-3.7.2. Fast Patterns
+2.7.2. Fast Patterns
 
 Fast patterns are content strings that have the fast_pattern option
 or which have been selected by Snort automatically to be used as a
@@ -973,7 +949,7 @@ Specifically, if a content is negated, then if it is also relative to
 another content, case sensitive, or has non-zero offset or depth,
 then it is not eligible to be used as a fast pattern.
 
-3.7.3. Rule Evaluation
+2.7.3. Rule Evaluation
 
 For each fast pattern match, the corresponding rule(s) are evaluated
 left-to-right. Rule evaluation requires checking each detection
@@ -989,7 +965,7 @@ cases. This is one less thing for the rule writer to worry about.
 
 ---------------------------------------------------------------------
 
-4. Tutorial
+3. Tutorial
 
 ---------------------------------------------------------------------
 
@@ -998,7 +974,7 @@ not exhaustive but, once you master this material, you should be able
 to figure out more advanced usage.
 
 
-4.1. Dependencies
+3.1. Dependencies
 
 --------------
 
@@ -1053,7 +1029,7 @@ Optional:
   * uuid from uuid-dev package for unique identifiers
 
 
-4.2. Building
+3.2. Building
 
 --------------
 
@@ -1098,7 +1074,7 @@ Optional:
     export CXX=g++
 
 
-4.3. Running
+3.3. Running
 
 --------------
 
@@ -1139,7 +1115,7 @@ Examples:
 For more examples, see the usage section.
 
 
-4.4. Tips
+3.4. Tips
 
 --------------
 
@@ -1233,7 +1209,7 @@ you can use the options below to format the paths:
   * all text mode outputs default to stdout
 
 
-4.5. Common Errors
+3.5. Common Errors
 
 --------------
 
@@ -1282,7 +1258,7 @@ WARNING: unknown symbol x
     export SNORT_IGNORE="x y z"
 
 
-4.6. Gotchas
+3.6. Gotchas
 
 --------------
 
@@ -1307,7 +1283,7 @@ WARNING: unknown symbol x
     semantic error but it will tell you the fully qualified name.
 
 
-4.7. Known Issues
+3.7. Known Issues
 
 --------------
 
@@ -1331,7 +1307,7 @@ WARNING: unknown symbol x
     Uninstall gperftools 2.5 provided by the distribution and install gperftools
     2.7 before building Snort.
 
-4.7.1. Reload Limitations
+3.7.1. Reload Limitations
 
 The following parameters can’t be changed during reload, and require
 a restart:
@@ -1370,7 +1346,7 @@ in use.
 
 ---------------------------------------------------------------------
 
-5. Usage
+4. Usage
 
 ---------------------------------------------------------------------
 
@@ -1379,7 +1355,7 @@ the Snort install directory. Additionally, it is assumed that
 "$my_path/bin" is in your PATH.
 
 
-5.1. Help
+4.1. Help
 
 --------------
 
@@ -1409,7 +1385,7 @@ Snort stops reading command-line options after the "--help-" and
 "--list-" options, so any other options should be placed before them.
 
 
-5.2. Sniffing and Logging
+4.2. Sniffing and Logging
 
 --------------
 
@@ -1440,7 +1416,7 @@ Log packets to a directory:
 snort --pcap-dir /path/to/pcap/dir --pcap-filter '*.pcap' -L dump -l /path/to/log/dir
 
 
-5.3. Configuration
+4.3. Configuration
 
 --------------
 
@@ -1465,7 +1441,7 @@ Tell Snort where to look for additional Lua scripts:
 snort --script-path /path/to/script/dir
 
 
-5.4. IDS mode
+4.4. IDS mode
 
 --------------
 
@@ -1510,7 +1486,7 @@ snort -c $my_path/etc/snort/snort.lua --daq afpacket -i "eth0:eth1" \
     -A cmg
 
 
-5.5. Plugins
+4.5. Plugins
 
 --------------
 
@@ -1531,7 +1507,7 @@ alert tcp any any -> any 80 (
 END
 
 
-5.6. Output Files
+4.6. Output Files
 
 --------------
 
@@ -1571,7 +1547,7 @@ based on module name that writes the file. All text mode outputs
 default to stdout. These options can be combined.
 
 
-5.7. DAQ Alternatives
+4.7. DAQ Alternatives
 
 --------------
 
@@ -1604,7 +1580,7 @@ snort -c $my_path/etc/snort/snort.lua \
     --daq-dir $my_path/lib/snort/daqs --daq socket
 
 
-5.8. Logger Alternatives
+4.8. Logger Alternatives
 
 --------------
 
@@ -1623,7 +1599,7 @@ snort -c $my_path/etc/snort/snort.lua \
     --lua "alert_csv = { fields = 'pkt_num gid sid rev', separator = '\t' }"
 
 
-5.9. Shell
+4.9. Shell
 
 --------------
 
@@ -1658,7 +1634,7 @@ The command line interface is still under development. Suggestions
 are welcome.
 
 
-5.10. Signals
+4.10. Signals
 
 --------------
 
@@ -1695,14 +1671,14 @@ The available signals may vary from platform to platform.
 
 ---------------------------------------------------------------------
 
-6. Features
+5. Features
 
 ---------------------------------------------------------------------
 
 This section explains how to use key features of Snort.
 
 
-6.1. Active Response
+5.1. Active Response
 
 --------------
 
@@ -1711,7 +1687,7 @@ responses to shutdown offending sessions. When active responses is
 enabled, snort will send TCP RST or ICMP unreachable when dropping a
 session.
 
-6.1.1. Changes from Snort 2.9
+5.1.1. Changes from Snort 2.9
 
   * stream5_global:max_active_responses and min_response_seconds are
     now active.max_responses and active.min_interval.
@@ -1723,7 +1699,7 @@ session.
     means don’t forward the current packet only whereas block means
     don’t forward this or any following packet on the flow.
 
-6.1.2. Configure Active
+5.1.2. Configure Active
 
 Active response is enabled by configuring one of following IPS action
 plugins:
@@ -1767,7 +1743,7 @@ active =
     dst_mac = "00:06:76:DD:5F:E3",
 }
 
-6.1.3. Reject
+5.1.3. Reject
 
 IPS action reject perform active response to shutdown hostile network
 session by injecting TCP resets (TCP connections) or ICMP unreachable
@@ -1788,7 +1764,7 @@ ips =
     rules = local_rules,
 }
 
-6.1.4. React
+5.1.4. React
 
 IPS action react enables sending an HTML page on a session and then
 resetting it.
@@ -1861,7 +1837,7 @@ trace =
     modules = { react = { all = 1 } }
 }
 
-6.1.5. Rewrite
+5.1.5. Rewrite
 
 IPS action rewrite enables overwrite packet contents based on
 "replace" option in the rules.
@@ -1888,7 +1864,7 @@ this rule replaces "index.php" with "indax.php", and rewrite action
 updates that packet.
 
 
-6.2. AppId
+5.2. AppId
 
 --------------
 
@@ -1899,7 +1875,7 @@ administrator to create rules for applications as needed by the
 business. The rules can be used to take action based on the
 application, such as block, allow or alert.
 
-6.2.1. Overview
+5.2.1. Overview
 
 The AppId inspector provides an application level view when managing
 networks by providing the following features:
@@ -1917,7 +1893,7 @@ networks by providing the following features:
     detectors are provided by the Snort team and can be downloaded
     from snort.org.
 
-6.2.2. Dependency Requirements
+5.2.2. Dependency Requirements
 
 For proper functioning of the AppId inspector, at a minimum stream
 flow tracking must be enabled. In addition, to identify TCP-based or
@@ -1935,7 +1911,7 @@ ID.
 AppId subscribes to the events published by SIP and DCE/RPC
 inspectors to detect applications on expected flows.
 
-6.2.3. Configuration
+5.2.3. Configuration
 
 The AppId feature can be enabled via configuration. To enable it with
 the default settings use:
@@ -2003,7 +1979,7 @@ ips =
     rules = local_rules,
 }
 
-6.2.4. Session Application Identifiers
+5.2.4. Session Application Identifiers
 
 There are up to four AppIds stored in a session as defined below:
 
@@ -2027,14 +2003,14 @@ The same logic is followed for packets originating from the server
 with one exception. The order of matching is changed to make
 serviceAppId come before clientAppId.
 
-6.2.5. AppId Usage Statistics
+5.2.5. AppId Usage Statistics
 
 The AppId inspector prints application network usage periodically in
 the snort log directory in unified2 format. File name, time interval
 for statistic and file rollover are controlled by appId inspection
 configuration.
 
-6.2.6. Open Detector Package (ODP) Installation
+5.2.6. Open Detector Package (ODP) Installation
 
 Application detectors from Snort team will be delivered in a separate
 package called the Open Detector Package (ODP) that can be downloaded
@@ -2058,7 +2034,7 @@ When installed, ODP will create following sub-directories:
   * odp/lua //Cisco Lua detectors
   * odp/libs //Cisco Lua modules
 
-6.2.7. User Created Application Detectors
+5.2.7. User Created Application Detectors
 
 Users can detect new applications by adding detectors in the Lua
 language. A document will be posted on the Snort Website with details
@@ -2086,14 +2062,14 @@ openappid/custom/lua/
 None of the directories below /usr/local/lib/openappid/ would be
 added for you.
 
-6.2.8. Application Detector Reload
+5.2.8. Application Detector Reload
 
 Both ODP detectors and user created detectors can be reloaded using
 the command appid.reload_detectors(). Detectors are expected to be
 updated in the path appid.app_detector_dir before this command is
 issued. The command takes no parameters.
 
-6.2.9. Application Detector Creation Tool
+5.2.9. Application Detector Creation Tool
 
 For rudimentary Lua detectors, there is a tool provided called
 appid_detector_builder.sh. This is a simple, menu-driven bash script
@@ -2130,7 +2106,7 @@ The resulting .lua file will need to be placed in the directory,
 called "User Created Application Detectors"
 
 
-6.3. Binder
+5.3. Binder
 
 --------------
 
@@ -2183,11 +2159,11 @@ can contain any combination of criteria and binder.use can specify an
 action, config file, or inspector configuration.
 
 
-6.4. Byte rule options
+5.4. Byte rule options
 
 --------------
 
-6.4.1. byte_test
+5.4.1. byte_test
 
 This rule option tests a byte field against a specific value (with
 operator). Capable of testing binary values or converting
@@ -2209,7 +2185,7 @@ converted. The result will be right-shifted by the number of bits
 equal to the number of trailing zeros in the mask. This applies for
 the other rule options as well.
 
-6.4.1.1. Examples
+5.4.1.1. Examples
 
 alert tcp (byte_test:2, =, 568, 0, bitmask 0x3FF0;)
 
@@ -2222,7 +2198,7 @@ alert udp (byte_test:4, =, 1234, 0, string, dec;
 alert udp (byte_test:8, =, 0xdeadbeef, 0, string, hex;
     msg:"got DEADBEEF!";)
 
-6.4.2. byte_jump
+5.4.2. byte_jump
 
 The byte_jump rule option allows rules to be written for length
 encoded protocols trivially. By having an option that reads the
@@ -2231,7 +2207,7 @@ packet, rules can be written that skip over specific portions of
 length-encoded protocols and perform detection in very specific
 locations.
 
-6.4.2.1. Examples
+5.4.2.1. Examples
 
 alert tcp (content:"Begin";
     byte_jump:0, 0, from_end, post_offset -6;
@@ -2243,7 +2219,7 @@ alert tcp (content:"catalog";
     byte_test:2, =, 968, 0, relative;
     msg:"Bitmask applied on the 2 bytes extracted for byte_jump";)
 
-6.4.3. byte_extract
+5.4.3. byte_extract
 
 The byte_extract keyword is another useful option for writing rules
 against length-encoded protocols. It reads in some number of bytes
@@ -2251,7 +2227,7 @@ from the packet payload and saves it to a variable. These variables
 can be referenced later in the rule, instead of using hard-coded
 values.
 
-6.4.3.1. Other options which use byte_extract variables
+5.4.3.1. Other options which use byte_extract variables
 
 A byte_extract rule option detects nothing by itself. Its use is in
 extracting packet data for use in other rule options.
@@ -2263,7 +2239,7 @@ Here is a list of places where byte_extract variables can be used:
   * byte_jump: offset, post_offset
   * isdataat: offset
 
-6.4.3.2. Examples
+5.4.3.2. Examples
 
 alert tcp (byte_extract:1, 0, str_offset;
     byte_extract:1, 1, str_depth;
@@ -2287,7 +2263,7 @@ alert tcp (content:"|04 63 34 35|", offset 4, depth 4;
     byte_test: 2, =, var_match, 2, relative;
     msg:"Test value match, after applying bitmask on bytes extracted";)
 
-6.4.4. byte_math
+5.4.4. byte_math
 
 Perform a mathematical operation on an extracted value and a
 specified value or existing variable, and store the outcome in a new
@@ -2306,7 +2282,7 @@ Byte_math operations are performed on unsigned 32-bit values. When
 writing a rule it should be taken into consideration to avoid wrap
 around.
 
-6.4.4.1. Examples
+5.4.4.1. Examples
 
 alert tcp ( byte_math: bytes 2, offset 0, oper *, rvalue 10, result area;
    byte_test:2,>,area,16;)
@@ -2319,7 +2295,7 @@ Let’s consider 2 bytes of extracted data is 5. The rvalue is 10.
 Result variable area is 50 ( 5 * 10 ). Area variable can be used in
 either byte_test offset/value options.
 
-6.4.5. Testing Numerical Values
+5.4.5. Testing Numerical Values
 
 The rule options byte_test and byte_jump were written to support
 writing rules for protocols that have length encoded data. RPC was
@@ -2476,7 +2452,7 @@ content:"|00 00 00 01 00 00 00 01|", offset 20, depth 8;
 byte_test:4,>,200,36;
 
 
-6.5. Consolidated Config
+5.5. Consolidated Config
 
 --------------
 
@@ -2534,7 +2510,7 @@ wizard =
     }
 }
 
-6.5.1. Text Format
+5.5.1. Text Format
 
 The --dump-config-text option verifies the configuration and dumps it
 to stdout in text format. The output contains a config of the main
@@ -2583,7 +2559,7 @@ wizard.spells[0].to_server[0].spell="INVITE"
 For lists, the index next to the option name designates an element
 parsing order.
 
-6.5.2. JSON Format
+5.5.2. JSON Format
 
 The --dump-config=all command-line option verifies the configuration
 and dumps it to stdout in JSON format. The output contains a config
@@ -2777,7 +2753,7 @@ Example: snort -c snort.lua --dump-config=top | jq .
 }
 
 
-6.6. DCE Inspectors
+5.6. DCE Inspectors
 
 --------------
 
@@ -2785,7 +2761,7 @@ The main purpose of these inspector are to perform SMB desegmentation
 and DCE/RPC defragmentation to avoid rule evasion using these
 techniques.
 
-6.6.1. Overview
+5.6.1. Overview
 
 The following transports are supported for DCE/RPC: SMB, TCP, and
 UDP. New rule options have been implemented to improve performance,
@@ -2801,7 +2777,7 @@ defragmentation, are copied into each inspector configuration. The
 address/port mapping is handled by the binder. Autodetect
 functionality is replaced by wizard curses.
 
-6.6.2. Quick Guide
+5.6.2. Quick Guide
 
 A typical dcerpce configuration looks like this:
 
@@ -2851,7 +2827,7 @@ dce_udp = { }
 In this example, it defines smb, tcp and udp inspectors based on
 port. All the configurations are default.
 
-6.6.3. Target Based
+5.6.3. Target Based
 
 There are enough important differences between Windows and Samba
 versions that a target based approach has been implemented. Some
@@ -2880,7 +2856,7 @@ different policy. Here are the list of policies supported:
   * Samba-3.0.22
   * Samba-3.0.20
 
-6.6.4. Reassembling
+5.6.4. Reassembling
 
 Both SMB inspector and TCP inspector support reassemble. Reassemble
 threshold specifies a minimum number of bytes in the DCE/RPC
@@ -2891,13 +2867,13 @@ before full defragmentation is done. A value of 0 s supplied as an
 argument to this option will, in effect, disable this option. Default
 is disabled.
 
-6.6.5. SMB
+5.6.5. SMB
 
 SMB inspector is one of the most complex inspectors. In addition to
 supporting rule options and lots of inspector rule events, it also
 supports file processing for both SMB version 1, 2, and 3.
 
-6.6.5.1. Finger Print Policy
+5.6.5.1. Finger Print Policy
 
 In the initial phase of an SMB session, the client needs to
 authenticate with a SessionSetupAndX. Both the request and response
@@ -2905,7 +2881,7 @@ to this command contain OS and version information that can allow the
 inspector to dynamically set the policy for a session which allows
 for better protection against Windows and Samba specific evasions.
 
-6.6.5.2. File Inspection
+5.6.5.2. File Inspection
 
 SMB inspector supports file inspection. A typical configuration looks
 like this:
@@ -2960,16 +2936,16 @@ inspection in rules. An argument of 0 to "file_depth" means
 unlimited. Default is "off", i.e. no SMB file inspection is done in
 the inspector.
 
-6.6.6. TCP
+5.6.6. TCP
 
 dce_tcp inspector supports defragmentation, reassembling, and policy
 that is similar to SMB.
 
-6.6.7. UDP
+5.6.7. UDP
 
 dce_udp is a very simple inspector that only supports defragmentation
 
-6.6.8. Rule Options
+5.6.8. Rule Options
 
 New rule options are supported by enabling the dcerpc2 inspectors:
 
@@ -2982,7 +2958,7 @@ New modifiers to existing byte_test and byte_jump rule options:
   * byte_test: dce
   * byte_jump: dce
 
-6.6.8.1. dce_iface
+5.6.8.1. dce_iface
 
 For DCE/RPC based rules it has been necessary to set flow-bits based
 on a client bind to a service to avoid false positives. It is
@@ -3093,7 +3069,7 @@ longest) pattern will be used. If a content in the rule uses the
 fast_pattern rule option, it will unequivocally be used over the
 above mentioned patterns.
 
-6.6.8.2. dce_opnum
+5.6.8.2. dce_opnum
 
 The opnum represents a specific function call to an interface. After
 is has been determined that a client has bound to a specific
@@ -3115,7 +3091,7 @@ opnum of a DCE/RPC request will be matched against the opnums
 specified with this option. This option matches if any one of the
 opnums specified match the opnum of the DCE/RPC request.
 
-6.6.8.3. dce_stub_data
+5.6.8.3. dce_stub_data
 
 Since most DCE/RPC based rules had to do protocol decoding only to
 get to the DCE/RPC stub data, i.e. the remote procedure call or
@@ -3144,7 +3120,7 @@ that does not specify a relative modifier will be evaluated from the
 start of the stub data buffer. To leave the stub data buffer and
 return to the main payload buffer, use the "pkt_data" rule option.
 
-6.6.8.4. byte_test and byte_jump
+5.6.8.4. byte_test and byte_jump
 
 A DCE/RPC request can specify whether numbers are represented in big
 or little endian. These rule options will take as a new argument
@@ -3170,7 +3146,7 @@ byte_jump arguments will not be allowed: "big", "little", "string",
 "hex", "dec", "oct" and "from_beginning"
 
 
-6.7. File Processing
+5.7. File Processing
 
 --------------
 
@@ -3179,7 +3155,7 @@ network file inspection becomes more and more important. This feature
 will provide file type identification, file signature creation, and
 file capture capabilities to help users deal with those challenges.
 
-6.7.1. Overview
+5.7.1. Overview
 
 There are two parts of file services: file APIs and file policy. File
 APIs provides all the file inspection functionalities, such as file
@@ -3194,7 +3170,7 @@ file policy along with file event log.
   * Supported protocols: HTTP, SMTP, IMAP, POP3, FTP, and SMB.
   * Supported file signature calculation: SHA256
 
-6.7.2. Quick Guide
+5.7.2. Quick Guide
 
 A very simple configuration has been included in lua/snort.lua file.
 A typical file configuration looks like this:
@@ -3233,7 +3209,7 @@ There are 3 steps to enable file processing:
   * At last, enable file_log to get detailed information about file
     event
 
-6.7.3. Pre-packaged File Magic Rules
+5.7.3. Pre-packaged File Magic Rules
 
 A set of file magic rules is packaged with Snort. They can be located
 at "lua/file_magic.lua". To use this feature, it is recommended that
@@ -3256,7 +3232,7 @@ look at content at particular file offset to identify the file type.
 In this case, two magics look at the beginning of the file. You can
 use character if it is printable or hex value in between "|".
 
-6.7.4. File Policy
+5.7.4. File Policy
 
 You can enabled file type, file signature, or file capture by
 configuring file_id. In addition, you can enable trace to see file
@@ -3282,7 +3258,7 @@ In this example, it enables this policy:
   * For all file types identified, they will be logged with
     signature, and also captured onto log folder.
 
-6.7.5. File Capture
+5.7.5. File Capture
 
 File can be captured and stored to log folder. We use SHA as file
 name instead of actual file name to avoid conflicts. You can capture
@@ -3298,7 +3274,7 @@ or enable it for some file or file type in your file policy:
 
 The above rule will enable PDF file capture.
 
-6.7.6. File Events
+5.7.6. File Events
 
 File inspect preprocessor also works as a dynamic output plugin for
 file events. It logs basic information about file. The log file is in
@@ -3320,14 +3296,14 @@ File event example:
 [Size: 1039328]
 
 
-6.8. High Availability
+5.8. High Availability
 
 --------------
 
 High Availability includes the HA flow synchronization and the
 SideChannel messaging subsystems.
 
-6.8.1. HA
+5.8.1. HA
 
 HighAvailability (or HA) is a Snort module that provides state
 coherency between two partner snort instances. It uses SideChannel
@@ -3372,7 +3348,7 @@ message content. The stream HA content is always present in the
 messages while the ancillary module content is only present when
 requested via a status change request.
 
-6.8.2. Connector
+5.8.2. Connector
 
 Connectors are a set of modules that are used to exchange
 message-oriented data among Snort threads and the external world. A
@@ -3383,7 +3359,7 @@ forms of message transport.
 
 Connectors are a Snort plugin type.
 
-6.8.2.1. Connector (parent plugin class)
+5.8.2.1. Connector (parent plugin class)
 
 Connectors may either be a simplex channel and perform unidirectional
 communications. Or may be duplex and perform bidirectional
@@ -3401,7 +3377,7 @@ There are currently two implementations of Connectors:
   * FileConnector - Write messages to files and read messages from
     files.
 
-6.8.2.2. TcpConnector
+5.8.2.2. TcpConnector
 
 TcpConnector is a subclass of Connector and implements a DUPLEX type
 Connector, able to send and receive messages over a tcp session.
@@ -3428,7 +3404,7 @@ tcp_connector =
     },
 }
 
-6.8.2.3. FileConnector
+5.8.2.3. FileConnector
 
 FileConnector implements a Connector that can either read from files
 or write to files. FileConnector’s are simplex and must be configured
@@ -3471,7 +3447,7 @@ file_connector =
     },
 }
 
-6.8.3. Side Channel
+5.8.3. Side Channel
 
 SideChannel is a Snort module that uses Connectors to implement a
 messaging infrastructure that is used to communicate between Snort
@@ -3537,7 +3513,7 @@ file_connector =
 }
 
 
-6.9. FTP
+5.9. FTP
 
 --------------
 
@@ -3547,9 +3523,9 @@ codes and messages. It will enforce correctness of the parameters,
 determine when an FTP command connection is encrypted, and determine
 when an FTP data channel is opened.
 
-6.9.1. Configuring the inspector to block exploits and attacks
+5.9.1. Configuring the inspector to block exploits and attacks
 
-6.9.1.1. ftp_server configuration
+5.9.1.1. ftp_server configuration
 
   * ftp_cmds
 
@@ -3714,7 +3690,7 @@ to large file transfers from a trusted source — by ignoring traffic.
 If your rule set includes virus-type rules, it is recommended that
 this option not be used.
 
-6.9.1.2. ftp_client configuration
+5.9.1.2. ftp_client configuration
 
   * max_resp_len
 
@@ -3736,7 +3712,7 @@ character (TNC EAC) and erase line (TNC EAL) when normalizing FTP
 command channel. Some FTP clients do not process those telnet escape
 sequences.
 
-6.9.1.3. ftp_data
+5.9.1.3. ftp_data
 
 In order to enable file inspection for ftp, the following should be
 added to the configuration:
@@ -3744,14 +3720,14 @@ added to the configuration:
 ftp_data = {}
 
 
-6.10. HTTP Inspector
+5.10. HTTP Inspector
 
 --------------
 
 One of the major undertakings for Snort 3 is developing a completely
 new HTTP inspector.
 
-6.10.1. Overview
+5.10.1. Overview
 
 You can configure it by adding:
 
@@ -3805,7 +3781,7 @@ user to write rules against it. If for example a header is supposed
 to be a date then normalization means put that date in a standard
 format.
 
-6.10.2. Configuration
+5.10.2. Configuration
 
 Configuration can be as simple as adding:
 
@@ -3816,7 +3792,7 @@ inspection and may be all that you need. But there are some options
 that provide extra features, tweak how things are done, or conserve
 resources by doing less.
 
-6.10.2.1. request_depth and response_depth
+5.10.2.1. request_depth and response_depth
 
 These replace the flow depth parameters used by the old HTTP
 inspector but they work differently.
@@ -3844,7 +3820,7 @@ omit the depth parameter entirely because that is the default.
 These limits have no effect on how much data is forwarded to file
 processing.
 
-6.10.2.2. script_detection
+5.10.2.2. script_detection
 
 Script detection is a feature that enables Snort to more quickly
 detect and block response messages containing malicious JavaScript.
@@ -3856,7 +3832,7 @@ consumes somewhat more of the sensor’s resources.
 This feature is off by default. script_detection = true will activate
 it.
 
-6.10.2.3. gzip
+5.10.2.3. gzip
 
 http_inspect by default decompresses deflate and gzip message bodies
 before inspecting them. This feature can be turned off by unzip =
@@ -3865,14 +3841,14 @@ improvement but at a very high price. It is unlikely that any
 meaningful inspection of message bodies will be possible. Effectively
 HTTP processing would be limited to the headers.
 
-6.10.2.4. normalize_utf
+5.10.2.4. normalize_utf
 
 http_inspect will decode utf-8, utf-7, utf-16le, utf-16be, utf-32le,
 and utf-32be in response message bodies based on the Content-Type
 header. This feature is on by default: normalize_utf = false will
 deactivate it.
 
-6.10.2.5. decompress_pdf
+5.10.2.5. decompress_pdf
 
 decompress_pdf = true will enable decompression of compressed
 portions of PDF files encountered in a response body. http_inspect
@@ -3881,7 +3857,7 @@ locate PDF streams with a single /FlateDecode filter. The compressed
 content is decompressed and made available through the file data rule
 option.
 
-6.10.2.6. decompress_swf
+5.10.2.6. decompress_swf
 
 decompress_swf = true will enable decompression of compressed SWF
 (Adobe Flash content) files encountered in a response body. The
@@ -3891,7 +3867,7 @@ LZMA. The compressed content is decompressed and made available
 through the file data rule option. The compressed SWF file signature
 is converted to FWS to indicate an uncompressed file.
 
-6.10.2.7. normalize_javascript
+5.10.2.7. normalize_javascript
 
 normalize_javascript = true will enable legacy normalizer of
 JavaScript within the HTTP response body. http_inspect looks for
@@ -3906,7 +3882,7 @@ normalizations refer to basic JavaScript normalization. Cannot be
 used together with js_normalization_depth (doing so will cause Snort
 to fail to load). This is planned to be deprecated at some point.
 
-6.10.2.8. js_normalization_depth
+5.10.2.8. js_normalization_depth
 
 js_normalization_depth = N {-1 : max53} will set a number of input
 JavaScript bytes to normalize and enable the enhanced normalizer. The
@@ -3923,7 +3899,7 @@ and operator, etc.) according to ECMAScript 5.1 standard. The
 normalized data is available through the script_data rule option.
 This is currently experimental and still under development.
 
-6.10.2.9. xff_headers
+5.10.2.9. xff_headers
 
 This configuration supports defining custom x-forwarded-for type
 headers. In a multi-vendor world, it is quite possible that the
@@ -3938,7 +3914,7 @@ they are defined, e.g "x-forwarded-for" will be preferred than
 "true-client-ip" if both headers are present in the stream. The
 header names should be delimited by a space.
 
-6.10.2.10. URI processing
+5.10.2.10. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize
@@ -4034,7 +4010,7 @@ allow directories to be separated by backslashes:
 backslash_to_slash is turned on by default. It replaces all the
 backslashes with slashes during normalization.
 
-6.10.3. CONNECT processing
+5.10.3. CONNECT processing
 
 The HTTP CONNECT method is used by a client to establish a tunnel to
 a destination via an HTTP proxy server. If the connection is
@@ -4065,7 +4041,7 @@ tactic, the HTTP inspector will not cut over to the wizard if it sees
 any early client-to-server traffic, but will continue normal HTTP
 processing of the flow regardless of the eventual server response.
 
-6.10.4. Detection rules
+5.10.4. Detection rules
 
 http_inspect parses HTTP messages into their components and makes
 them available to the detection engine through rule options. Let’s
@@ -4136,7 +4112,7 @@ list.
 In addition to the headers there are rule options for virtually every
 part of the HTTP message.
 
-6.10.4.1. http_uri and http_raw_uri
+5.10.4.1. http_uri and http_raw_uri
 
 These provide the URI of the request message. The raw form is exactly
 as it appeared in the message and the normalized form is determined
@@ -4196,7 +4172,7 @@ Note: this section uses informal language to explain some things.
 Nothing here is intended to conflict with the technical language of
 the HTTP RFCs and the implementation follows the RFCs.
 
-6.10.4.2. http_header and http_raw_header
+5.10.4.2. http_header and http_raw_header
 
 These cover all the header lines except the first one. You may
 specify an individual header by name using the field option as shown
@@ -4226,7 +4202,7 @@ In most cases specifying individual headers creates a more efficient
 and accurate rule. It is recommended that new rules be written using
 individual headers whenever possible.
 
-6.10.4.3. http_trailer and http_raw_trailer
+5.10.4.3. http_trailer and http_raw_trailer
 
 HTTP permits header lines to appear after a chunked body ends.
 Typically they contain information about the message content that was
@@ -4238,7 +4214,7 @@ counterparts except they apply to these end headers. If you want a
 rule to inspect both kinds of headers you need to write two rules,
 one using header and one using trailer.
 
-6.10.4.4. http_cookie and http_raw_cookie
+5.10.4.4. http_cookie and http_raw_cookie
 
 These provide the value of the Cookie header for a request message
 and the Set-Cookie for a response message. If multiple cookies are
@@ -4247,7 +4223,7 @@ present they will be concatenated into a comma-separated list.
 Normalization for http_cookie is the same URI-style normalization
 applied to http_header when no specific header is specified.
 
-6.10.4.5. http_true_ip
+5.10.4.5. http_true_ip
 
 This provides the original IP address of the client sending the
 request as it was stored by a proxy in the request message headers.
@@ -4256,42 +4232,42 @@ True-Client-IP or any other custom x-forwarded-for type header. If
 multiple headers are present the preference defined in xff_headers
 configuration is considered.
 
-6.10.4.6. http_client_body
+5.10.4.6. http_client_body
 
 This is the body of a request message such as POST or PUT.
 Normalization for http_client_body is the same URI-like normalization
 applied to http_header when no specific header is specified.
 
-6.10.4.7. http_raw_body
+5.10.4.7. http_raw_body
 
 This is the body of a request or response message. It will be
 dechunked and unzipped if applicable but will not be normalized in
 any other way.
 
-6.10.4.8. http_method
+5.10.4.8. http_method
 
 The method field of a request message. Common values are "GET",
 "POST", "OPTIONS", "HEAD", "DELETE", "PUT", "TRACE", and "CONNECT".
 
-6.10.4.9. http_stat_code
+5.10.4.9. http_stat_code
 
 The status code field of a response message. This is normally a
 3-digit number between 100 and 599. In this example it is 200.
 
 HTTP/1.1 200 OK
 
-6.10.4.10. http_stat_msg
+5.10.4.10. http_stat_msg
 
 The reason phrase field of a response message. This is the
 human-readable text following the status code. "OK" in the previous
 example.
 
-6.10.4.11. http_version
+5.10.4.11. http_version
 
 The protocol version information that appears on the first line of an
 HTTP message. This is usually "HTTP/1.0" or "HTTP/1.1".
 
-6.10.4.12. http_raw_request and http_raw_status
+5.10.4.12. http_raw_request and http_raw_status
 
 These are the unmodified first header line of the HTTP request and
 response messages respectively. These rule options are a safety valve
@@ -4301,13 +4277,13 @@ first header line. For a request message those are http_method,
 http_raw_uri, and http_version. For a response message those are
 http_version, http_stat_code, and http_stat_msg.
 
-6.10.4.13. file_data
+5.10.4.13. file_data
 
 The file_data contains the normalized message body. This is the
 normalization described above under gzip, normalize_utf,
 decompress_pdf, decompress_swf, and normalize_javascript.
 
-6.10.4.14. script_data
+5.10.4.14. script_data
 
 The script_data contains normalized JavaScript text collected from
 the whole PDU (inline or external scripts). It requires the Enhanced
@@ -4316,7 +4292,7 @@ js_normalization_depth option is described above. Despite what
 script_data has, file_data still contains the whole HTTP body with an
 original JavaScript in it.
 
-6.10.5. Timing issues and combining rule options
+5.10.5. Timing issues and combining rule options
 
 HTTP inspector is stateful. That means it is aware of a bigger
 picture than the packet in front of it. It knows what all the pieces
@@ -4422,14 +4398,14 @@ are received. Headers may be combined with later items but the body
 cannot.
 
 
-6.11. HTTP/2 Inspector
+5.11. HTTP/2 Inspector
 
 --------------
 
 New in Snort 3, the HTTP/2 inspector enables Snort to process HTTP/2
 traffic.
 
-6.11.1. Overview
+5.11.1. Overview
 
 Despite the name, it is better to think of HTTP/2 not as a newer
 version of HTTP/1.1, but rather a separate protocol layer that runs
@@ -4446,7 +4422,7 @@ same processing as regular HTTP/1.1 traffic discussed above. So if
 you haven’t already, take a look at the HTTP Inspector section; those
 features also apply to HTTP/2 traffic.
 
-6.11.2. Configuration
+5.11.2. Configuration
 
 You can configure the HTTP/2 inspector with the default configuration
 by adding:
@@ -4458,14 +4434,14 @@ relies on the HTTP inspector, http_inspect must also be configured.
 Keep in mind that the http_inspect configuration will also impact
 HTTP/2 traffic.
 
-6.11.2.1. concurrent_streams_limit
+5.11.2.1. concurrent_streams_limit
 
 This limits the maximum number of HTTP/2 streams Snort will process
 concurrently in a single HTTP/2 flow. The default and minimum
 configurable value is 100. It can be configured up to a maximum of
 1000.
 
-6.11.3. Detection rules
+5.11.3. Detection rules
 
 Since HTTP/2 traffic is processed through the HTTP inspector, all of
 the rule options discussed above are also available for HTTP/2
@@ -4495,14 +4471,14 @@ large numbers of existing rules. New rules should explicitly specify
 support for http implies http2 may be deprecated and removed.
 
 
-6.12. IEC104 Inspector
+5.12. IEC104 Inspector
 
 --------------
 
 iec104 inspector is a service inspector for the IEC 60870-5-104
 protocol.
 
-6.12.1. Overview
+5.12.1. Overview
 
 IEC 60870-5-104 (iec104) is a protocol distributed by the
 International Electrotechnical Commission (IEC) that provides a
@@ -4524,14 +4500,14 @@ options to access certain protocol fields and data content. This
 allows the user to write rules for iec104 packets without decoding
 the protocol.
 
-6.12.2. Configuration
+5.12.2. Configuration
 
 iec104 messages can be normalized to either combine a message spread
 across multiple frames, or to split apart multiple messages within
 one frame. No manual configuration is necessary to leverage this
 functionality.
 
-6.12.3. Quick Guide
+5.12.3. Quick Guide
 
 A typical iec104 configuration looks like this:
 
@@ -4569,14 +4545,14 @@ trace =
     }
 }
 
-6.12.4. Rule Options
+5.12.4. Rule Options
 
 New rule options are supported by enabling the iec104 inspector:
 
   * iec104_apci_type
   * iec104_asdu_func
 
-6.12.4.1. iec104_apci_type
+5.12.4.1. iec104_apci_type
 
 Determining the APCI type of an iec104 message involves checking the
 state of one to two bits in the message’s first control field octet.
@@ -4599,7 +4575,7 @@ the specified type. The argument passed to this rule option can be
 specified in one of three ways: the full type name, the lowercase
 type abbreviation, or the uppercase type abbreviation.
 
-6.12.4.2. iec104_asdu_func
+5.12.4.2. iec104_asdu_func
 
 Determining the ASDU function of an iec104 message can be completed
 with a plaintext rule that checks a single byte in the message,
@@ -4622,7 +4598,7 @@ option can be specified in one of two ways: the uppercase function
 name, or the lowercase function name.
 
 
-6.13. Performance Monitor
+5.13. Performance Monitor
 
 --------------
 
@@ -4631,14 +4607,14 @@ down by too many flows? perf_monitor! Why are certain TCP segments
 being dropped without hitting a rule? perf_monitor! Why is a sensor
 leaking water? Not perf_monitor, check with stream…
 
-6.13.1. Overview
+5.13.1. Overview
 
 The Snort performance monitor is the built-in utility for monitoring
 system and traffic statistics. All statistics are separated by
 processing thread. perf_monitor supports several trackers for
 monitoring such data:
 
-6.13.2. Base Tracker
+5.13.2. Base Tracker
 
 The base tracker is used to gather running statistics about Snort and
 its running modules. All Snort modules gather, at the very least,
@@ -4695,7 +4671,7 @@ perf_monitor =
 Note: Event stats from prior Snorts are now located within base
 statistics.
 
-6.13.3. Flow Tracker
+5.13.3. Flow Tracker
 
 Flow tracks statistics regarding traffic and L3/L4 protocol
 distributions. This data can be used to build a profile of traffic
@@ -4705,7 +4681,7 @@ To enable:
 
 perf_monitor = { flow = true }
 
-6.13.4. FlowIP Tracker
+5.13.4. FlowIP Tracker
 
 FlowIP provides statistics for individual hosts within a network.
 This data can be used for identifying communication habits, such as
@@ -4717,7 +4693,7 @@ To enable:
 
 perf_monitor = { flow_ip = true }
 
-6.13.5. CPU Tracker
+5.13.5. CPU Tracker
 
 This tracker monitors the CPU and wall time spent by a given
 processing thread.
@@ -4726,7 +4702,7 @@ To enable:
 
 perf_monitor = { cpu = true }
 
-6.13.6. Formatters
+5.13.6. Formatters
 
 Performance monitor allows statistics to be output in a few formats.
 Along with human readable text (as seen at shutdown) and csv formats,
@@ -4740,14 +4716,14 @@ used by Performance monitor, see the developer notes for Performance
 monitor or the code provided for fbstreamer.
 
 
-6.14. POP and IMAP
+5.14. POP and IMAP
 
 --------------
 
 POP inspector is a service inspector for POP3 protocol and IMAP
 inspector is for IMAP4 protocol.
 
-6.14.1. Overview
+5.14.1. Overview
 
 POP and IMAP inspectors examine data traffic and find POP and IMAP
 commands and responses. The inspectors also identify the command,
@@ -4755,7 +4731,7 @@ header, body sections and extract the MIME attachments and decode it
 appropriately. The pop and imap also identify and whitelist the pop
 and imap traffic.
 
-6.14.2. Configuration
+5.14.2. Configuration
 
 POP inspector and IMAP inspector offer same set of configuration
 options for MIME decoding depth. These depths range from 0 to 65535
@@ -4765,27 +4741,27 @@ be decoded. If you do not specify the default value is 1460 bytes.
 
 The depth limits apply per attachment. They are:
 
-6.14.2.1. b64_decode_depth
+5.14.2.1. b64_decode_depth
 
 Set the base64 decoding depth used to decode the base64-encoded MIME
 attachments.
 
-6.14.2.2. qp_decode_depth
+5.14.2.2. qp_decode_depth
 
 Set the Quoted-Printable (QP) decoding depth used to decode
 QP-encoded MIME attachments.
 
-6.14.2.3. bitenc_decode_depth
+5.14.2.3. bitenc_decode_depth
 
 Set the non-encoded MIME extraction depth used for non-encoded MIME
 attachments.
 
-6.14.2.4. uu_decode_depth
+5.14.2.4. uu_decode_depth
 
 Set the Unix-to-Unix (UU) decoding depth used to decode UU-encoded
 attachments.
 
-6.14.2.5. Examples
+5.14.2.5. Examples
 
 stream = { }
 
@@ -4819,13 +4795,13 @@ pop =
 }
 
 
-6.15. Port Scan
+5.15. Port Scan
 
 --------------
 
 A module to detect port scanning
 
-6.15.1. Overview
+5.15.1. Overview
 
 This module is designed to detect the first phase in a network
 attack: Reconnaissance. In the Reconnaissance phase, an attacker
@@ -4925,7 +4901,7 @@ however, Portscan will only track open ports after the alert has been
 triggered. Open port events are not individual alerts, but tags based
 off the original scan alert.
 
-6.15.2. Scan levels
+5.15.2. Scan levels
 
 There are 3 default scan levels that can be set.
 
@@ -4979,7 +4955,7 @@ setting will catch some slow scans because of the continuous
 monitoring, but is very sensitive to active hosts. This most
 definitely will require the user to tune Portscan.
 
-6.15.3. Tuning Portscan
+5.15.3. Tuning Portscan
 
 The most important aspect in detecting portscans is tuning the
 detection engine for your network(s). Here are some tuning tips:
@@ -5056,7 +5032,7 @@ require the least tuning. The low sensitivity level does not catch
 filtered scans, since these are more prone to false positives.
 
 
-6.16. Sensitive Data Filtering
+5.16. Sensitive Data Filtering
 
 --------------
 
@@ -5066,21 +5042,21 @@ credit card numbers, U.S. Social Security numbers, and email
 addresses. A rich regular expression syntax is available for defining
 your own PII.
 
-6.16.1. Hyperscan
+5.16.1. Hyperscan
 
 The sd_pattern rule option is powered by the open source Hyperscan
 library from Intel. It provides a regex grammar which is mostly PCRE
 compatible. To learn more about Hyperscan see https://intel.github.io
 /hyperscan/dev-reference/
 
-6.16.2. Syntax
+5.16.2. Syntax
 
 Snort provides sd_pattern as IPS rule option with no additional
 inspector overhead. The Rule option takes the following syntax.
 
 sd_pattern: "<pattern>"[, threshold <count>];
 
-6.16.2.1. Pattern
+5.16.2.1. Pattern
 
 Pattern is the most important and is the only required parameter to
 sd_pattern. It supports 3 built in patterns which are configured by
@@ -5118,7 +5094,7 @@ but would not match 1@ourdomain.com ab12@ourdomain.com or
 Note: This is just an example, this pattern is not suitable to detect
 many correctly formatted emails.
 
-6.16.2.2. Threshold
+5.16.2.2. Threshold
 
 Threshold is an optional parameter allowing you to change built in
 default value (default value is 1). The following two instances are
@@ -5136,7 +5112,7 @@ This example requires 300 matches of the pattern "This is a string
 literal" to qualify as a positive match. That is, if the string only
 occurred 299 times in a packet, you will not see an event.
 
-6.16.2.3. Obfuscating Credit Cards and Social Security Numbers
+5.16.2.3. Obfuscating Credit Cards and Social Security Numbers
 
 Snort provides discreet logging for the built in patterns
 "credit_card", "us_social" and "us_social_nodashes". Enabling
@@ -5149,7 +5125,7 @@ output =
     obfuscate_pii = true
 }
 
-6.16.3. Example
+5.16.3. Example
 
 A complete Snort IPS rule
 
@@ -5165,7 +5141,7 @@ Logged output when running Snort in "cmg" alert format.
 58 58 58 58 58 58 58 58 58 58 58 58 39 32 39 34              XXXXXXXXXXXX9294
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-6.16.4. Caveats
+5.16.4. Caveats
 
  1. Snort currently requires setting the fast pattern engine to use
     "hyperscan" in order for sd_pattern ips option to function
@@ -5182,13 +5158,13 @@ Logged output when running Snort in "cmg" alert format.
     (This is a known bug).
 
 
-6.17. SMTP
+5.17. SMTP
 
 --------------
 
 SMTP inspector is a service inspector for SMTP protocol.
 
-6.17.1. Overview
+5.17.1. Overview
 
 The SMTP inspector examines SMTP connections looking for commands and
 responses. It also identifies the command, header and body sections,
@@ -5198,7 +5174,7 @@ identifies and whitelists the SMTP traffic.
 SMTP inspector logs the filename, email addresses, attachment names
 when configured.
 
-6.17.2. Configuration
+5.17.2. Configuration
 
 SMTP command lines can be normalized to remove extraneous spaces.
 TLS-encrypted traffic can be ignored, which improves performance. In
@@ -5207,7 +5183,7 @@ performance boost.
 
 The configuration options are described below:
 
-6.17.2.1. normalize and normalize_cmds
+5.17.2.1. normalize and normalize_cmds
 
 Normalization checks for more than one space character after a
 command. Space characters are defined as space (ASCII 0x20) or tab
@@ -5218,34 +5194,34 @@ example:
 
 smtp = { normalize = 'cmds', normalize_cmds = 'RCPT VRFY EXPN' }
 
-6.17.2.2. ignore_data
+5.17.2.2. ignore_data
 
 Set it to true to ignore data section of mail (except for mail
 headers) when processing rules.
 
-6.17.2.3. ignore_tls_data
+5.17.2.3. ignore_tls_data
 
 Set it to true to ignore TLS-encrypted data when processing rules.
 
-6.17.2.4. max_command_line_len
+5.17.2.4. max_command_line_len
 
 Alert if an SMTP command line is longer than this value. Absence of
 this option or a "0" means never alert on command line length. RFC
 2821 recommends 512 as a maximum command line length.
 
-6.17.2.5. max_header_line_len
+5.17.2.5. max_header_line_len
 
 Alert if an SMTP DATA header line is longer than this value. Absence
 of this option or a "0" means never alert on data header line length.
 RFC 2821 recommends 1024 as a maximum data header line length.
 
-6.17.2.6. max_response_line_len
+5.17.2.6. max_response_line_len
 
 Alert if an SMTP response line is longer than this value. Absence of
 this option or a "0" means never alert on response line length. RFC
 2821 recommends 512 as a maximum response line length.
 
-6.17.2.7. alt_max_command_line_len
+5.17.2.7. alt_max_command_line_len
 
 Overrides max_command_line_len for specific commands For example:
 
@@ -5261,11 +5237,11 @@ alt_max_command_line_len =
     },
 }
 
-6.17.2.8. invalid_cmds
+5.17.2.8. invalid_cmds
 
 Alert if this command is sent from client side.
 
-6.17.2.9. valid_cmds
+5.17.2.9. valid_cmds
 
 List of valid commands. We do not alert on commands in this list.
 
@@ -5275,36 +5251,36 @@ HELO HELP IDENT MAIL NOOP ONEX QUEU QUIT RCPT RSET SAML SEND SIZE
 STARTTLS SOML TICK TIME TURN TURNME VERB VRFY X-EXPS X-LINK2STATE
 XADR XAUTH XCIR XEXCH50 XGEN XLICENSE XQUE XSTA XTRN XUSR ]]
 
-6.17.2.10. data_cmds
+5.17.2.10. data_cmds
 
 List of commands that initiate sending of data with an end of data
 delimiter the same as that of the DATA command per RFC 5321 - "
 <CRLF>.<CRLF>".
 
-6.17.2.11. binary_data_cmds
+5.17.2.11. binary_data_cmds
 
 List of commands that initiate sending of data and use a length value
 after the command to indicate the amount of data to be sent, similar
 to that of the BDAT command per RFC 3030.
 
-6.17.2.12. auth_cmds
+5.17.2.12. auth_cmds
 
 List of commands that initiate an authentication exchange between
 client and server.
 
-6.17.2.13. xlink2state
+5.17.2.13. xlink2state
 
 Enable/disable xlink2state alert, options are {disable | alert |
 drop}. See CVE-2005-0560 for a description of the vulnerability.
 
-6.17.2.14. MIME processing depth parameters
+5.17.2.14. MIME processing depth parameters
 
 These four MIME processing depth parameters are identical to their
 POP and IMAP counterparts. See that section for further details.
 
 b64_decode_depth qp_decode_depth bitenc_decode_depth uu_decode_depth
 
-6.17.2.15. Log Options
+5.17.2.15. Log Options
 
 Following log options allow SMTP inspector to log email addresses and
 filenames. Please note, this is logged only with the unified2 output
@@ -5347,7 +5323,7 @@ This option specifies the depth for logging email headers. The
 allowed range for this option is 0 - 20480. A value of 0 will disable
 email headers logging. The default value for this option is 1464.
 
-6.17.3. Example
+5.17.3. Example
 
 smtp =
 {
@@ -5400,7 +5376,7 @@ smtp =
 }
 
 
-6.18. Telnet
+5.18. Telnet
 
 --------------
 
@@ -5410,7 +5386,7 @@ command sequences per RFC 854. It will also determine when a telnet
 connection is encrypted, per the use of the telnet encryption option
 per RFC 2946.
 
-6.18.1. Configuring the inspector to block exploits and attacks
+5.18.1. Configuring the inspector to block exploits and attacks
 
 ayt_attack_thresh number
 
@@ -5419,7 +5395,7 @@ the threshold number specified. This addresses a few specific
 vulnerabilities relating to bsd-based implementations of telnet.
 
 
-6.19. Trace
+5.19. Trace
 
 --------------
 
@@ -5432,7 +5408,7 @@ enable debug tracing, Snort must be configured at build time with
 wizard and snort.inspector_manager) are providing non-debug trace
 messages in normal production builds.
 
-6.19.1. Trace module
+5.19.1. Trace module
 
 The trace module is responsible for configuring traces and supports
 the following parameters:
@@ -5472,7 +5448,7 @@ The trace module supports config reloading. Also, it’s possible to
 set or clear modules traces and packet filter constraints via the
 control channel command.
 
-6.19.2. Trace module - configuring traces
+5.19.2. Trace module - configuring traces
 
 The trace module has the modules option - a table with trace
 configuration for specific modules. The following lines placed in
@@ -5554,7 +5530,7 @@ trace =
     }
 }
 
-6.19.3. Trace module - configuring packet filter constraints for
+5.19.3. Trace module - configuring packet filter constraints for
 packet related trace messages
 
 There is a capability to filter traces by the packet constraints. The
@@ -5609,7 +5585,7 @@ trace =
     }
 }
 
-6.19.4. Trace module - configuring trace output method
+5.19.4. Trace module - configuring trace output method
 
 There is a capability to configure the output method for trace
 messages. The trace module has the output option with two acceptable
@@ -5638,7 +5614,7 @@ trace =
 As a result, each trace message will be printed into syslog (the
 Snort run-mode will be ignored).
 
-6.19.5. Configuring traces via control channel command
+5.19.5. Configuring traces via control channel command
 
 There is a capability to configure module trace options and packet
 constraints via the control channel command by using a Snort shell.
@@ -5673,7 +5649,7 @@ trace.set({modules = {...}}) - set only module trace options keeping old filteri
 
 trace.set({}) - disable traces and constraints (set to empty)
 
-6.19.6. Trace messages format
+5.19.6. Trace messages format
 
 Each tracing message has a standard format:
 
@@ -5722,7 +5698,7 @@ m – minutes
 s – seconds
 S – milliseconds
 
-6.19.7. Example - Debugging rules using detection trace
+5.19.7. Example - Debugging rules using detection trace
 
 The detection engine is responsible for rule evaluation. Turning on
 the trace for it can help with debugging new rules.
@@ -5850,7 +5826,7 @@ detection:rule_eval:1: Matched rule gid:sid:rev 1:3:0
 detection:rule_vars:1: Rule options variables: var[0]=1 var[1]=10 var[2]=0
 04/22-20:21:40.905630, 1, TCP, raw, 56, C2S, 127.0.0.1:1234, 127.0.0.1:5678, 1:3:0, allow
 
-6.19.8. Example - Protocols decoding trace
+5.19.8. Example - Protocols decoding trace
 
 Turning on decode trace will print out information about the packets
 decoded protocols. Can be useful in case of tunneling.
@@ -5874,7 +5850,7 @@ decode:all:1: Codec ipv6 (protocol_id: 1) ip header starts at: 0x7f70800110f0, l
 decode:all:1: Codec icmp4 (protocol_id: 256) ip header starts at: 0x7f70800110f0, length is 8
 decode:all:1: Codec unknown (protocol_id: 256) ip header starts at: 0x7f70800110f0, length is 0
 
-6.19.9. Example - Track the time packet spends in each inspector
+5.19.9. Example - Track the time packet spends in each inspector
 
 There is a capability to track which inspectors evaluate a packet,
 and how much time the inspector consumes doing so. These trace
@@ -5915,7 +5891,7 @@ snort:inspector_manager:1: post detection inspection, raw, packet 1, context 1
 snort:inspector_manager:1: end inspection, raw, packet 1, context 1, total time: 0 usec
 snort:main:1: [0] Destroying completed command RUN
 
-6.19.10. Example - trace filtering by packet constraints:
+5.19.10. Example - trace filtering by packet constraints:
 
 In snort.lua, the following lines were added:
 
@@ -5977,7 +5953,7 @@ detection:rule_eval:1: packet 4 UNK 10.1.1.2:200 10.2.1.1:100 (non-fast-patterns
 The trace messages for two last packets (numbers 5 and 6) weren’t
 printed.
 
-6.19.11. Example - configuring traces via trace.set() command
+5.19.11. Example - configuring traces via trace.set() command
 
 In snort.lua, the following lines were added:
 
@@ -6060,7 +6036,7 @@ The new configuration was applied. decode:all:1 messages aren’t
 filtered because they don’t include a packet (a packet isn’t
 well-formed at the point when the message is printing).
 
-6.19.12. Other available traces
+5.19.12. Other available traces
 
 There are more trace options supported by detection:
 
@@ -6087,7 +6063,7 @@ developer. Some are for corner cases, others for complex data
 structures.
 
 
-6.20. Wizard
+5.20. Wizard
 
 --------------
 
@@ -6125,7 +6101,7 @@ Additional Details:
 
 ---------------------------------------------------------------------
 
-7. DAQ Configuration and Modules
+6. DAQ Configuration and Modules
 
 ---------------------------------------------------------------------
 
@@ -6147,7 +6123,7 @@ modules developed by third parties to facilitate the usage of their
 own hardware and software platforms exist.
 
 
-7.1. Building the DAQ Library and Its Bundled DAQ Modules
+6.1. Building the DAQ Library and Its Bundled DAQ Modules
 
 --------------
 
@@ -6156,7 +6132,7 @@ how to build the library and modules as well as details on
 configuring and using the bundled DAQ modules.
 
 
-7.2. Configuration
+6.2. Configuration
 
 --------------
 
@@ -6221,12 +6197,12 @@ default can be overridden with the --daq-batch-size command line
 option or daq.batch_size property. The message pool size requested
 from the DAQ module will be four times this batch size.
 
-7.2.1. Command Line Example
+6.2.1. Command Line Example
 
     snort --daq-dir /usr/local/lib/daq --daq-dir /opt/lib/daq --daq afpacket
 --daq-var debug --daq-var fanout_type=hash -i eth1:eth2 -Q
 
-7.2.2. Configuration File Example
+6.2.2. Configuration File Example
 
 The following is the equivalent of the above command line DAQ
 configuration in Lua form:
@@ -6260,7 +6236,7 @@ daq =
 The daq.snaplen property was included for completeness and may be
 omitted if the default value is acceptable.
 
-7.2.3. DAQ Module Configuration Stacks
+6.2.3. DAQ Module Configuration Stacks
 
 Like briefly mentioned above, a DAQ configuration consists of a base
 DAQ module and zero or more wrapper DAQ modules. DAQ wrapper modules
@@ -6297,7 +6273,7 @@ configure via a Lua configuration file rather than using the command
 line options.
 
 
-7.3. Interaction With Multiple Packet Threads
+6.3. Interaction With Multiple Packet Threads
 
 --------------
 
@@ -6324,11 +6300,11 @@ falling back to the first if the number of packet threads exceeds the
 number of inputs.
 
 
-7.4. DAQ Modules Included With Snort 3
+6.4. DAQ Modules Included With Snort 3
 
 --------------
 
-7.4.1. Socket Module
+6.4.1. Socket Module
 
 The socket module provides provides a stream socket server that will
 accept up to 2 simultaneous connections and bridge them together
@@ -6360,7 +6336,7 @@ To use the socket DAQ, start Snort like this:
     with Snort 2.
   * This module is primarily for development and test.
 
-7.4.2. File Module
+6.4.2. File Module
 
 The file module provides the ability to process files directly
 without having to extract them from pcaps. Use the file module with
@@ -6377,7 +6353,7 @@ threads with these Snort options:
     with Snort 2.
   * This module is primarily for development and test.
 
-7.4.3. Hext Module
+6.4.3. Hext Module
 
 The hext module generates packets suitable for processing by Snort
 from hex/plain text. Raw packets include full headers and are

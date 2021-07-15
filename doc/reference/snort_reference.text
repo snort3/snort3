@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.7.0 2021-06-30 09:59:01 EDT TST
+Revision 3.1.8.0 2021-07-15 06:38:22 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1633,6 +1633,7 @@ Usage: global
 Configuration:
 
   * int trace.modules.all: enable trace for all modules { 0:255 }
+  * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
   * int trace.modules.dpx.all: enable all trace options { 0:255 }
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
@@ -3841,6 +3842,7 @@ Rules:
     JavaScript
   * 119:268 (http_inspect) JavaScript code under the external script
     tags
+  * 119:269 (http_inspect) script opening tag in a short form
 
 Peg counts:
 
@@ -10326,6 +10328,7 @@ these libraries see the Getting Started section of the manual.
   * string trace.constraints.src_ip: source IP address filter
   * int trace.constraints.src_port: source port filter { 0:65535 }
   * int trace.modules.all: enable trace for all modules { 0:255 }
+  * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
   * int trace.modules.dpx.all: enable all trace options { 0:255 }
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
@@ -11908,6 +11911,7 @@ these libraries see the Getting Started section of the manual.
     JavaScript
   * 119:268 (http_inspect) JavaScript code under the external script
     tags
+  * 119:269 (http_inspect) script opening tag in a short form
   * 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
   * 121:2 (http2_inspect) HPACK integer value has leading zeros
   * 121:3 (http2_inspect) HTTP/2 stream initiated with invalid stream

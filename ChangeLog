@@ -1,3 +1,20 @@
+2021/07/15 - 3.1.8.0
+
+appid: support SSH client detection through lua detector
+dce_rpc: fix crash when expected session comes after snort reload
+dce_rpc: handling raw packets
+dce_smb: added trace messages and multiple level logging for SMB module
+dce_smb: fixed macro definition for SMB_DEBUG
+doc: fix build warnings. Thanks to jiangrj (github.com/jiangrij) for reporting the issue.
+dump_config: support modules without config options in text format
+file_api: handling overlap segments
+http2_inspect: clean data cutter internal state after exhausting flow depth
+http_inspect: add built-in alert for script tags in a short form
+packet_io: check if unreachable_candidate before sending unreachable
+packet_io: unreachable packets shouldn't be sent for ICMP
+snort2lua: set raw_data buffer for rawbytes and B flag in PCRE
+wizard: make SSH spell more specific
+
 2021/06/30 - 3.1.7.0
 
 appid: enhance netbios service detector to identify SMB versions as web app
