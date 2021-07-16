@@ -97,7 +97,7 @@ void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow, SourceI
                 (header_scan_result == StreamSplitter::SEARCH)) or
             ((!session_data->is_processing_partial_header() and
                 (header_scan_result == StreamSplitter::FLUSH))));
-        assert(session_data->is_processing_partial_header() ^
+        assert(session_data->is_processing_partial_header() or
             ((int64_t)flush_offset == http1_header.length()));
         UNUSED(header_scan_result);
     }
