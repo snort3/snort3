@@ -52,6 +52,8 @@ char* snort_strdup(const char* str)
 void ErrorMessage(const char*,...) { }
 void WarningMessage(const char*,...) { }
 void LogMessage(const char*,...) { }
+void LogText(const char*, FILE*) {}
+
 void ParseWarning(WarningGroup, const char*, ...) { }
 
 void LogLabel(const char*, FILE*) {}

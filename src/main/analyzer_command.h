@@ -50,9 +50,12 @@ private:
 class ACGetStats : public snort::AnalyzerCommand
 {
 public:
+    ACGetStats(ControlConn* conn) : ctrlcon(conn) {}
     bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "GET_STATS"; }
     ~ACGetStats() override;
+private:
+    ControlConn* ctrlcon;
 };
 
 typedef enum clear_counter_type

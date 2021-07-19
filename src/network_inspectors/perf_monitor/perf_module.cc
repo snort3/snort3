@@ -194,18 +194,19 @@ static int disable_flow_ip_profiling(lua_State* L)
     return 0;
 }
 
-static int show_flow_ip_profiling(lua_State*)
+static int show_flow_ip_profiling(lua_State* L)
 {
     bool status = false;
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
 
     PerfMonitor* perf_monitor = (PerfMonitor*)InspectorManager::get_inspector(PERF_NAME, true);
 
     if (perf_monitor)
         status = perf_monitor->is_flow_ip_enabled();
     else
-        LogMessage("perf_monitor is not configured\n");
+        LogRespond(ctrlcon, "perf_monitor is not configured\n");
 
-    LogMessage("Snort flow ip profiling is %s\n", status ? "enabled" : "disabled");
+    LogRespond(ctrlcon, "Snort flow ip profiling is %s\n", status ? "enabled" : "disabled");
 
     return 0;
 }

@@ -324,7 +324,7 @@ int main_dump_stats(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     send_response(ctrlcon, "== dumping stats\n");
-    main_broadcast_command(new ACGetStats(), ctrlcon);
+    main_broadcast_command(new ACGetStats(ctrlcon), ctrlcon);
     return 0;
 }
 

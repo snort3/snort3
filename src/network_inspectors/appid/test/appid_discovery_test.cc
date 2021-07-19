@@ -73,6 +73,8 @@ PegCount Module::get_global_count(char const*) const { return 0; }
 void LogMessage(const char*,...) {}
 void ErrorMessage(const char*,...) {}
 void LogLabel(const char*, FILE*) {}
+void LogText(const char*, FILE*) {}
+
 
 // Stubs for utils
 char* snort_strdup(const char* str)

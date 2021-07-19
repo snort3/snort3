@@ -75,5 +75,7 @@ private:
     bool removed = false;
 };
 
-#endif
+#define LogRespond(cn, ...)       if (cn) cn->respond(__VA_ARGS__); else LogMessage(__VA_ARGS__)
+#define LogfRespond(cn, fh, ...)  if (cn) cn->respond(__VA_ARGS__); else LogMessage(fh, __VA_ARGS__)
 
+#endif

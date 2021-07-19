@@ -161,8 +161,10 @@ void AppIdPegCounts::print()
     LogLabel("Appid Statistics");
     LogLabel("detected apps and services");
 
-    LogMessage("%25.25s: %-10s %-10s %-10s %-10s %-10s %-10s %-10s\n",
+    char buff[120];
+    snprintf(buff, sizeof(buff), "%25.25s: %-10s %-10s %-10s %-10s %-10s %-10s %-10s",
         "Application", "Flows", "Clients", "Users", "Payloads", "Misc", "Incompat.", "Failed");
+    LogText(buff);
 
     for (unsigned i = 0; i < app_num; i++)
     {
@@ -171,14 +173,13 @@ void AppIdPegCounts::print()
             continue;
 
         std::string app_name = AppIdPegCounts::appid_detectors_info[i];
-        LogMessage("%25.25s:", app_name.c_str());
-        pegs->print();
+        pegs->print(app_name.c_str(), buff, sizeof(buff));
+        LogText(buff);
     }
 
     if (!unknown_pegs->all_zeros())
     {
-        LogMessage("%25.25s:", "unknown");
-        unknown_pegs->print();
+        unknown_pegs->print("unknown", buff, sizeof(buff));
+        LogText(buff);
     }
 }
-

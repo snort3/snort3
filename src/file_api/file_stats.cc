@@ -97,34 +97,37 @@ void file_stats_print()
     LogLabel("File Statistics");
     LogLabel("file type stats (files)");
 
-    LogMessage("         Type              Download   Upload \n");
+    LogLabel("         Type              Download   Upload ");
 
     processed_total[0] = 0;
     processed_total[1] = 0;
     processed_data_total[0] = 0;
     processed_data_total[1] = 0;
 
+    char buff[128];
     for (unsigned i = 0; i < FILE_ID_MAX; i++)
     {
         std::string type_name = file_type_name(i);
         if (type_name.length() &&
             (file_totals.files_processed[i][0] || file_totals.files_processed[i][1] ))
         {
-            LogMessage("%12s(%3d)          " FMTu64("-10") " " FMTu64("-10") " \n",
+            snprintf(buff, sizeof(buff), "%12s(%3d)          " FMTu64("-10") " " FMTu64("-10") " ",
                 type_name.c_str(), i,
                 file_totals.files_processed[i][0],
                 file_totals.files_processed[i][1]);
+            LogText(buff);
             processed_total[0]+= file_totals.files_processed[i][0];
             processed_total[1]+= file_totals.files_processed[i][1];
         }
     }
 
-    LogMessage("            Total          " FMTu64("-10") " " FMTu64("-10") " \n",
+    snprintf(buff, sizeof(buff), "            Total          " FMTu64("-10") " " FMTu64("-10") " ",
         processed_total[0], processed_total[1]);
+    LogText(buff);
 
     LogLabel("file type stats (bytes)");
 
-    LogMessage("         Type              Download   Upload \n");
+    LogLabel("         Type              Download   Upload ");
 
     for (unsigned i = 0; i < FILE_ID_MAX; i++)
     {
@@ -132,18 +135,20 @@ void file_stats_print()
         if (type_name.length() &&
             (file_totals.files_processed[i][0] || file_totals.files_processed[i][1] ))
         {
-            LogMessage("%12s(%3d)          " FMTu64("-10") " " FMTu64("-10") " \n",
+            snprintf(buff, sizeof(buff), "%12s(%3d)          " FMTu64("-10") " " FMTu64("-10") " ",
                 type_name.c_str(), i,
                 file_totals.data_processed[i][0],
                 file_totals.data_processed[i][1]);
+            LogText(buff);
 
             processed_data_total[0]+= file_totals.data_processed[i][0];
             processed_data_total[1]+= file_totals.data_processed[i][1];
         }
     }
 
-    LogMessage("            Total          " FMTu64("-10") " " FMTu64("-10") " \n",
+    snprintf(buff, sizeof(buff), "            Total          " FMTu64("-10") " " FMTu64("-10") " ",
         processed_data_total[0], processed_data_total[1]);
+    LogText(buff);
 
     check_total = 0;
 
@@ -161,7 +166,7 @@ void file_stats_print()
 
     LogLabel("file signature stats");
 
-    LogMessage("         Type              Download   Upload \n");
+    LogLabel("         Type              Download   Upload ");
 
     processed_total[0] = 0;
     processed_total[1] = 0;
@@ -171,15 +176,17 @@ void file_stats_print()
         if (type_name.length() &&
             (file_totals.signatures_processed[i][0] || file_totals.signatures_processed[i][1] ))
         {
-            LogMessage("%12s(%3d)          " FMTu64("-10") " " FMTu64("-10") " \n",
+            snprintf(buff, sizeof(buff), "%12s(%3d)          " FMTu64("-10") " " FMTu64("-10") " ",
                 type_name.c_str(), i,
                 file_totals.signatures_processed[i][0], file_totals.signatures_processed[i][1]);
+            LogText(buff);
             processed_total[0]+= file_totals.signatures_processed[i][0];
             processed_total[1]+= file_totals.signatures_processed[i][1];
         }
     }
-    LogMessage("            Total          " FMTu64("-10") " " FMTu64("-10") " \n",
+    snprintf(buff, sizeof(buff), "            Total          " FMTu64("-10") " " FMTu64("-10") " ",
         processed_total[0], processed_total[1]);
+    LogText(buff);
 
 #if 0
     LogLabel("file type verdicts");  // FIXIT-RC should be fixed

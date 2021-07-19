@@ -25,6 +25,7 @@
 
 #include <cassert>
 
+#include "control/control.h"
 #include "detection/detection_engine.h"
 #include "file_api/file_stats.h"
 #include "filters/sfthreshold.h"
@@ -51,48 +52,60 @@ namespace snort
 {
 
 THREAD_LOCAL PacketCount pc;
+static THREAD_LOCAL ControlConn* s_ctrlcon = nullptr;
 
 //-------------------------------------------------------------------------
 
 static inline void LogSeparator(FILE* fh = stdout)
 {
-    LogMessage(fh, "%s\n", STATS_SEPARATOR);
+    LogfRespond(s_ctrlcon, fh, "%s\n", STATS_SEPARATOR);
+}
+
+void LogText(const char* s, FILE* fh)
+{
+    LogfRespond(s_ctrlcon, fh, "%s\n", s);
 }
 
 void LogLabel(const char* s, FILE* fh)
 {
     if ( *s == ' ' )
     {
-        LogMessage(fh, "%s\n", s);
+        LogfRespond(s_ctrlcon, fh, "%s\n", s);
     }
     else
     {
         LogSeparator(fh);
-        LogMessage(fh, "%s\n", s);
+        LogfRespond(s_ctrlcon, fh, "%s\n", s);
     }
 }
 
 void LogValue(const char* s, const char* v, FILE* fh)
 {
-    LogMessage(fh, "%25.25s: %s\n", s, v);
+    LogfRespond(s_ctrlcon, fh, "%25.25s: %s\n", s, v);
 }
 
 void LogCount(const char* s, uint64_t c, FILE* fh)
 {
     if ( c )
-        LogMessage(fh, "%25.25s: " STDu64 "\n", s, c);
+    {
+        LogfRespond(s_ctrlcon, fh, "%25.25s: " STDu64 "\n", s, c);
+    }
 }
 
 void LogStat(const char* s, uint64_t n, uint64_t tot, FILE* fh)
 {
     if ( n )
-        LogMessage(fh, "%25.25s: " FMTu64("-12") "\t(%7.3f%%)\n", s, n, CalcPct(n, tot));
+    {
+        LogfRespond(s_ctrlcon, fh, "%25.25s: " FMTu64("-12") "\t(%7.3f%%)\n", s, n, CalcPct(n, tot));
+    }
 }
 
 void LogStat(const char* s, double d, FILE* fh)
 {
     if ( d )
-        LogMessage(fh, "%25.25s: %g\n", s, d);
+    {
+        LogfRespond(s_ctrlcon, fh, "%25.25s: %g\n", s, d);
+    }
 }
 }
 
@@ -228,8 +241,9 @@ const PegInfo proc_names[] =
 
 //-------------------------------------------------------------------------
 
-void DropStats()
+void DropStats(ControlConn* ctrlcon)
 {
+    s_ctrlcon = ctrlcon;
     LogLabel("Packet Statistics");
     ModuleManager::get_module("daq")->show_stats();
 
@@ -242,6 +256,7 @@ void DropStats()
 
     LogLabel("Summary Statistics");
     show_stats((PegCount*)&proc_stats, proc_names, array_size(proc_names)-1, "process");
+    s_ctrlcon = nullptr;
 }
 
 //-------------------------------------------------------------------------

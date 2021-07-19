@@ -92,8 +92,9 @@ ACGetStats::~ACGetStats()
 
     // FIXIT-L This should track the owner so it can dump stats to the
     // shell instead of the logs when initiated by a shell command
-    DropStats();
-    LogMessage("==================================================\n"); // Marking End of stats
+    DropStats(ctrlcon);
+    LogRespond(ctrlcon, "==================================================\n"); // Marking End of stats
+
     ModuleManager::clear_global_active_counters();
 }
 

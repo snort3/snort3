@@ -68,10 +68,10 @@ public:
             return !memcmp(stats, &zeroed_peg, sizeof(stats));
         }
 
-        void print()
+        void print(const char* app, char* buf, int buf_size)
         {
-            snort::LogMessage(" " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10")
-                " " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10")"\n",
+            snprintf(buf, buf_size, "%25.25s: " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10")
+                " " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10"), app, 
                 stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], stats[6]);
         }
     };

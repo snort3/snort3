@@ -31,6 +31,8 @@
 
 using IndexVec = std::vector<unsigned>;
 
+class ControlConn;
+
 // FIXIT-L split this out into appropriate modules
 struct PacketCount
 {
@@ -99,6 +101,7 @@ extern SO_PUBLIC THREAD_LOCAL PacketCount pc;
 SO_PUBLIC inline PegCount get_packet_number() { return pc.analyzed_pkts; }
 
 SO_PUBLIC void LogLabel(const char*, FILE* = stdout);
+SO_PUBLIC void LogText(const char*, FILE* = stdout);
 SO_PUBLIC void LogValue(const char*, const char*, FILE* = stdout);
 SO_PUBLIC void LogCount(const char*, uint64_t, FILE* = stdout);
 
@@ -116,7 +119,7 @@ void sum_stats(SimpleStats* sums, SimpleStats* counts);
 void show_stats(SimpleStats*, const char* module_name);
 
 double CalcPct(uint64_t, uint64_t);
-void DropStats();
+void DropStats(ControlConn* ctrlcon = nullptr);
 void PrintStatistics();
 void TimeStart();
 void TimeStop();

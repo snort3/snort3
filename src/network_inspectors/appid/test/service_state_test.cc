@@ -44,6 +44,8 @@ void LogMessage(const char* format,...)
 }
 void ErrorMessage(const char*,...) {}
 void LogLabel(const char*, FILE*) {}
+void LogText(const char* s, FILE*) { LogMessage("%s\n", s); }
+
 
 // Stubs for utils
 char* snort_strdup(const char* str)
