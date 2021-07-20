@@ -51,6 +51,7 @@ public:
     bool is_closed() const { return (fd == -1); }
     bool is_removed() const { return removed; }
     bool has_pending_command() const { return !pending_commands.empty(); }
+    time_t get_touched() const;
 
     void configure() const;
     int read_commands();
@@ -64,6 +65,7 @@ public:
 private:
     bool respond(const char* format, va_list& ap);
     bool show_prompt();
+    void touch();
 
 private:
     std::queue<std::string> pending_commands;
@@ -73,6 +75,7 @@ private:
     bool local = false;
     bool blocked = false;
     bool removed = false;
+    time_t touched;
 };
 
 #define LogRespond(cn, ...)       if (cn) cn->respond(__VA_ARGS__); else LogMessage(__VA_ARGS__)

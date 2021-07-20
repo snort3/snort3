@@ -51,6 +51,7 @@ ControlConn* ControlConn::query_from_lua(const lua_State* L)
 
 ControlConn::ControlConn(int fd, bool local) : fd(fd), local(local)
 {
+    touch();
     shell = new Shell;
     configure();
     show_prompt();
@@ -114,7 +115,7 @@ int ControlConn::read_commands()
     }
     if (n == 0 && commands_found == 0)
         return -1;
-
+    touch();
     return commands_found;
 }
 
@@ -145,6 +146,16 @@ void ControlConn::block()
 void ControlConn::remove()
 {
     removed = true;
+}
+
+void ControlConn::touch()
+{
+    touched = time(nullptr);
+}
+
+time_t ControlConn::get_touched() const
+{
+    return touched;
 }
 
 void ControlConn::unblock()
@@ -187,6 +198,7 @@ bool ControlConn::respond(const char* format, va_list& ap)
         else
             bytes_written += n;
     }
+    touch();
     return true;
 }
 

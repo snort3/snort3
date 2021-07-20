@@ -45,6 +45,7 @@
 using namespace snort;
 
 static constexpr unsigned MAX_CONTROL_FDS = 16;
+static constexpr unsigned MAX_CONTROL_IDLE_TIME = 60;
 
 static int listener = -1;
 static socklen_t sock_addr_size = 0;
@@ -71,6 +72,8 @@ struct FdEvents{
 static int epoll_fd = -1;
 static unsigned nfds;
 
+static void delete_expired_controls();
+
 static bool init_controls()
 {
     epoll_fd = epoll_create1(0);
@@ -85,6 +88,9 @@ static bool init_controls()
 
 static bool register_control_fd(const int fd)
 {
+    if (nfds + 2 >= MAX_CONTROL_FDS)
+        delete_expired_controls();
+
     if (nfds == MAX_CONTROL_FDS)
     {
         WarningMessage("Failed to add file descriptor, exceed max (%d)\n", nfds);
@@ -366,6 +372,23 @@ static void clear_controls()
         delete ctrlcon;
     }
     controls.clear();
+}
+
+static void delete_expired_controls()
+{
+    int fds[MAX_CONTROL_FDS], n=0;
+    time_t curr_time = time(nullptr);
+    for (const auto& p : controls)
+    {
+        ControlConn* ctrlcon = p.second;
+        if (!ctrlcon->is_local() and (curr_time - ctrlcon->get_touched()) >= MAX_CONTROL_IDLE_TIME)
+            fds[n++] = p.first;
+    }
+    for(int i=0; i<n; i++)
+    {
+        LogMessage("Control: closing fd=%d that was idle for more than %d seconds.\n", fds[i], MAX_CONTROL_IDLE_TIME);
+        delete_control(fds[i]);
+    }
 }
 
 //-------------------------------------------------------------------------
