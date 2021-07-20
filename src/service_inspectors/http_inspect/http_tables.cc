@@ -470,6 +470,7 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "total_bytes", "total HTTP data bytes inspected" },
     { CountType::SUM, "js_inline_scripts", "total number of inline JavaScripts processed" },
     { CountType::SUM, "js_external_scripts", "total number of external JavaScripts processed" },
+    { CountType::SUM, "js_bytes", "total number of JavaScript bytes processed" },
     { CountType::END, nullptr, nullptr }
 };
 
