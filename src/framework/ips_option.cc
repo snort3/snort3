@@ -65,3 +65,82 @@ bool IpsOption::operator==(const IpsOption& ips) const
         !strcmp(get_buffer(), ips.get_buffer());
 }
 
+//-------------------------------------------------------------------------
+// UNIT TESTS
+//-------------------------------------------------------------------------
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+
+class StubIpsOption : public IpsOption
+{
+public:
+    StubIpsOption(const char* name, option_type_t option_type) :
+        IpsOption(name, option_type)
+    { }
+};
+
+TEST_CASE("IpsOption test", "[ips_option]")
+{
+    StubIpsOption main_ips("ips_test",
+        option_type_t::RULE_OPTION_TYPE_OTHER);
+
+    SECTION("IpsOperator == test")
+    {
+        StubIpsOption case_diff_name("not_hello_world",
+            option_type_t::RULE_OPTION_TYPE_BUFFER_USE);
+        REQUIRE((main_ips == case_diff_name) == false);
+
+        StubIpsOption case_diff_option("hello_world",
+            option_type_t::RULE_OPTION_TYPE_CONTENT);
+        REQUIRE((main_ips == case_diff_option) == false);
+
+        StubIpsOption case_option_na("hello_world",
+            option_type_t::RULE_OPTION_TYPE_OTHER);
+        REQUIRE((main_ips == case_option_na) == false);
+    }
+
+    SECTION("hash test")
+    {
+        StubIpsOption main_ips("ips_test",
+            option_type_t::RULE_OPTION_TYPE_OTHER);
+
+        SECTION("hash test with short string")
+        {
+            StubIpsOption main_ips_short("ips_test",
+                option_type_t::RULE_OPTION_TYPE_OTHER);
+            REQUIRE((main_ips.hash() == main_ips_short.hash()) == true);
+
+            StubIpsOption main_ips_short_diff("not_ips_test",
+                option_type_t::RULE_OPTION_TYPE_OTHER);
+            REQUIRE((main_ips.hash() == main_ips_short_diff.hash()) == false);
+        }
+
+        SECTION("hash test with long string")
+        {
+            std::string really_long_string =
+                "101010101010101010101010101010101010101010101010101010101010101" \
+                "101010101010101010101010101010101010101010101010101010101010101" \
+                "101010101010101010101010101010101010101010101010101010101010101" \
+                "101010101010101010101010101010101010101010101010101010101010101" \
+                "101010101010101010101010101010101010101010101010101010101010101" \
+                "101010101010101010101010101010101010101010101010101010101010101" \
+                "101010101010101010101010101010101010101010101010101010101010101" \
+                "101010101010101010101010101010101010101010101010101010101010101" \
+                "101010101010101010101010101010101010101010101010101010101010101" \
+                "101010101010101010101010101010101010101010101010101010101010101" \
+                "101010101010101010101010101010101010101010101010101010101010101" \
+                "101010101010101010101010101010101010101010101010101010101010101" \
+                "101010101010101010101010101010101010101010101010101010101010101";
+
+            StubIpsOption main_ips_long_first(really_long_string.c_str(),
+                option_type_t::RULE_OPTION_TYPE_OTHER);
+            StubIpsOption main_ips_long_second(really_long_string.c_str(),
+                option_type_t::RULE_OPTION_TYPE_OTHER);
+            REQUIRE(main_ips_long_first.hash() == main_ips_long_second.hash());
+
+            REQUIRE(main_ips_long_first.hash() != main_ips.hash());
+        }
+    }
+}
+
+#endif

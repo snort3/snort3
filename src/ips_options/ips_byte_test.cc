@@ -103,6 +103,11 @@
 #include "protocols/packet.h"
 #include "utils/util.h"
 
+#ifdef UNIT_TEST
+#include <climits>
+#include "catch/snort_catch.h"
+#endif
+
 #include "extract.h"
 
 using namespace snort;
@@ -123,18 +128,11 @@ enum ByteTestOper
     CHECK_XOR
 };
 
-struct ByteTestData
+struct ByteTestData : public ByteData
 {
-    uint32_t bytes_to_compare;
     uint32_t cmp_value;
     ByteTestOper opcode;
-    int32_t offset;
     bool not_flag;
-    bool relative_flag;
-    bool data_string_convert_flag;
-    uint8_t endianness;
-    uint32_t base;
-    uint32_t bitmask_val;
     int8_t cmp_value_var;
     int8_t offset_var;
 };
@@ -143,22 +141,31 @@ struct ByteTestData
 // static functions
 // -----------------------------------------------------------------------------
 
-static inline bool byte_test_check(ByteTestOper op, uint32_t val, uint32_t cmp, bool not_flag)
+static inline bool byte_test_check(ByteTestOper op, uint32_t val, uint32_t cmp,
+    bool not_flag)
 {
     bool success = false;
 
     switch ( op )
     {
-    case CHECK_LT:
-        success = (val < cmp);
-        break;
-
     case CHECK_EQ:
         success = (val == cmp);
         break;
 
+    case CHECK_LT:
+        success = (val < cmp);
+        break;
+
     case CHECK_GT:
         success = (val > cmp);
+        break;
+
+    case CHECK_LTE:
+        success = (val <= cmp);
+        break;
+
+    case CHECK_GTE:
+        success = (val >= cmp);
         break;
 
     case CHECK_AND:
@@ -168,17 +175,9 @@ static inline bool byte_test_check(ByteTestOper op, uint32_t val, uint32_t cmp, 
     case CHECK_XOR:
         success = ((val ^ cmp) > 0);
         break;
-
-    case CHECK_GTE:
-        success = (val >= cmp);
-        break;
-
-    case CHECK_LTE:
-        success = (val <= cmp);
-        break;
     }
 
-    if ( not_flag )
+    if (not_flag)
     {
         success = !success;
     }
@@ -189,8 +188,9 @@ static inline bool byte_test_check(ByteTestOper op, uint32_t val, uint32_t cmp, 
 class ByteTestOption : public IpsOption
 {
 public:
-    ByteTestOption(const ByteTestData& c) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
-    { config = c; }
+    ByteTestOption(const ByteTestData& c) : IpsOption(s_name,
+        RULE_OPTION_TYPE_BUFFER_USE), config(c)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -210,7 +210,7 @@ private:
 
 uint32_t ByteTestOption::hash() const
 {
-    uint32_t a = config.bytes_to_compare;
+    uint32_t a = config.bytes_to_extract;
     uint32_t b = config.cmp_value;
     uint32_t c = config.opcode;
 
@@ -219,7 +219,7 @@ uint32_t ByteTestOption::hash() const
     a += config.offset;
     b += config.not_flag ? (1 << 24) : 0;
     b += config.relative_flag ? (1 << 16) : 0;
-    b += config.data_string_convert_flag ? (1 << 8) : 0;
+    b += config.string_convert_flag ? (1 << 8) : 0;
     b += config.endianness;
     c += config.base;
 
@@ -240,24 +240,24 @@ uint32_t ByteTestOption::hash() const
 
 bool ByteTestOption::operator==(const IpsOption& ips) const
 {
-    if ( !IpsOption::operator==(ips) )
+    if (!IpsOption::operator==(ips))
         return false;
 
     const ByteTestOption& rhs = (const ByteTestOption&)ips;
     const ByteTestData* left = &config;
     const ByteTestData* right = &rhs.config;
 
-    if (( left->bytes_to_compare == right->bytes_to_compare) &&
-        ( left->cmp_value == right->cmp_value) &&
-        ( left->opcode == right->opcode) &&
-        ( left->offset == right->offset) &&
-        ( left->not_flag == right->not_flag) &&
-        ( left->relative_flag == right->relative_flag) &&
-        ( left->data_string_convert_flag == right->data_string_convert_flag) &&
-        ( left->endianness == right->endianness) &&
-        ( left->base == right->base) &&
-        ( left->cmp_value_var == right->cmp_value_var) &&
-        ( left->offset_var == right->offset_var) &&
+    if (( left->bytes_to_extract == right->bytes_to_extract) and
+        ( left->cmp_value == right->cmp_value) and
+        ( left->opcode == right->opcode) and
+        ( left->offset == right->offset) and
+        ( left->not_flag == right->not_flag) and
+        ( left->relative_flag == right->relative_flag) and
+        ( left->string_convert_flag == right->string_convert_flag) and
+        ( left->endianness == right->endianness) and
+        ( left->base == right->base) and
+        ( left->cmp_value_var == right->cmp_value_var) and
+        ( left->offset_var == right->offset_var) and
         ( left->bitmask_val == right->bitmask_val))
     {
         return true;
@@ -274,7 +274,7 @@ IpsOption::EvalStatus ByteTestOption::eval(Cursor& c, Packet* p)
     uint32_t cmp_value = 0;
 
     // Get values from byte_extract variables, if present.
-    if (btd->cmp_value_var >= 0 && btd->cmp_value_var < NUM_IPS_OPTIONS_VARS)
+    if (btd->cmp_value_var >= 0 and btd->cmp_value_var < NUM_IPS_OPTIONS_VARS)
     {
         uint32_t val;
         GetVarValueByIndex(&val, btd->cmp_value_var);
@@ -285,7 +285,7 @@ IpsOption::EvalStatus ByteTestOption::eval(Cursor& c, Packet* p)
 
     int offset = 0;
 
-    if (btd->offset_var >= 0 && btd->offset_var < NUM_IPS_OPTIONS_VARS)
+    if (btd->offset_var >= 0 and btd->offset_var < NUM_IPS_OPTIONS_VARS)
     {
         uint32_t val;
         GetVarValueByIndex(&val, btd->offset_var);
@@ -294,53 +294,21 @@ IpsOption::EvalStatus ByteTestOption::eval(Cursor& c, Packet* p)
     else
         offset = btd->offset;
 
-    const uint8_t* start_ptr = btd->relative_flag ? c.start() : c.buffer();
-    start_ptr += offset;
+    unsigned len = btd->relative_flag ? c.length() : c.size();
+    if (len > btd->bytes_to_extract)
+            len = btd->bytes_to_extract;
 
-    uint8_t endian = btd->endianness;
-    if (endian == ENDIAN_FUNC)
-    {
-        if (!p->endianness ||
-            !p->endianness->get_offset_endianness(start_ptr - p->data, endian))
-            return NO_MATCH;
-    }
+    ByteTestData extract_config = *btd;
+    extract_config.bytes_to_extract = len;
+    extract_config.offset = offset;
 
     uint32_t value = 0;
+    int32_t payload_bytes_grabbed = extract_data(extract_config, c, p, value);
 
-    if (!btd->data_string_convert_flag)
-    {
-        if ( byte_extract(
-            endian, btd->bytes_to_compare,
-            start_ptr, c.buffer(), c.endo(), &value))
-            return NO_MATCH;
-    }
-    else
-    {
-        unsigned len = btd->relative_flag ? c.length() : c.size();
+    if (payload_bytes_grabbed == NO_MATCH)
+        return NO_MATCH;
 
-        if ( len > btd->bytes_to_compare )
-            len = btd->bytes_to_compare;
-
-        int payload_bytes_grabbed = string_extract(
-            len, btd->base, start_ptr, c.buffer(), c.endo(), &value);
-
-        if ( payload_bytes_grabbed < 0 )
-        {
-            return NO_MATCH;
-        }
-    }
-
-    if (btd->bitmask_val != 0 )
-    {
-        uint32_t num_tailing_zeros_bitmask = getNumberTailingZerosInBitmask(btd->bitmask_val);
-        value = value & btd->bitmask_val;
-        if ( value && num_tailing_zeros_bitmask )
-        {
-            value = value >> num_tailing_zeros_bitmask;
-        }
-    }
-
-    if ( byte_test_check(btd->opcode, value, cmp_value, btd->not_flag) )
+    if (byte_test_check(btd->opcode, value, cmp_value, btd->not_flag))
         return MATCH;
 
     return NO_MATCH;
@@ -360,7 +328,7 @@ static void parse_operator(const char* oper, ByteTestData& idx)
         cptr++;
     }
 
-    if (idx.not_flag && strlen(cptr) == 0)
+    if (idx.not_flag and strlen(cptr) == 0)
     {
         idx.opcode = CHECK_EQ;
     }
@@ -426,7 +394,7 @@ static const Parameter s_params[] =
       "variable name or value to test the converted result against" },
 
     { "~offset", Parameter::PT_STRING, nullptr, nullptr,
-      "variable name or number of bytes into the payload to start processing" },
+      "variable name or number of bytes into the payload to start processing"},
 
     { "relative", Parameter::PT_IMPLIED, nullptr, nullptr,
       "offset from cursor instead of start of buffer" },
@@ -492,7 +460,7 @@ bool ByteTestModule::begin(const char*, int, SnortConfig*)
 
 bool ByteTestModule::end(const char*, int, SnortConfig*)
 {
-    if ( off_var.empty() )
+    if (off_var.empty())
         data.offset_var = IPS_OPTIONS_NO_VAR;
     else
     {
@@ -504,7 +472,7 @@ bool ByteTestModule::end(const char*, int, SnortConfig*)
             return false;
         }
     }
-    if ( cmp_var.empty() )
+    if (cmp_var.empty())
         data.cmp_value_var = IPS_OPTIONS_NO_VAR;
     else
     {
@@ -516,12 +484,13 @@ bool ByteTestModule::end(const char*, int, SnortConfig*)
             return false;
         }
     }
-    if ( !data.endianness )
+    if (!data.endianness)
         data.endianness = ENDIAN_BIG;
 
-    if (numBytesInBitmask(data.bitmask_val) > data.bytes_to_compare)
+    if (numBytesInBitmask(data.bitmask_val) > data.bytes_to_extract)
     {
-        ParseError("Number of bytes in \"bitmask\" value is greater than bytes to extract.");
+        ParseError("Number of bytes in \"bitmask\" value is greater " \
+            "than bytes to extract.");
         return false;
     }
 
@@ -530,55 +499,55 @@ bool ByteTestModule::end(const char*, int, SnortConfig*)
 
 bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("~count") )
-        data.bytes_to_compare = v.get_uint8();
+    if (v.is("~count"))
+        data.bytes_to_extract = v.get_uint8();
 
-    else if ( v.is("~operator") )
+    else if (v.is("~operator"))
         parse_operator(v.get_string(), data);
 
-    else if ( v.is("~compare") )
+    else if (v.is("~compare"))
     {
         long n;
-        if ( v.strtol(n) )
+        if (v.strtol(n))
             data.cmp_value = n;
         else
             cmp_var = v.get_string();
     }
-    else if ( v.is("~offset") )
+    else if (v.is("~offset"))
     {
         long n;
-        if ( v.strtol(n) )
+        if (v.strtol(n))
             data.offset = n;
         else
             off_var = v.get_string();
     }
-    else if ( v.is("relative") )
+    else if (v.is("relative"))
         data.relative_flag = true;
 
-    else if ( v.is("big") )
+    else if (v.is("big"))
         set_byte_order(data.endianness, ENDIAN_BIG, "byte_test");
 
-    else if ( v.is("little") )
+    else if (v.is("little"))
         set_byte_order(data.endianness, ENDIAN_LITTLE, "byte_test");
 
-    else if ( v.is("dce") )
+    else if (v.is("dce"))
         set_byte_order(data.endianness, ENDIAN_FUNC, "byte_test");
 
-    else if ( v.is("string") )
+    else if (v.is("string"))
     {
-        data.data_string_convert_flag = true;
+        data.string_convert_flag = true;
         data.base = 10;
     }
-    else if ( v.is("dec") )
+    else if (v.is("dec"))
         data.base = 10;
 
-    else if ( v.is("hex") )
+    else if (v.is("hex"))
         data.base = 16;
 
-    else if ( v.is("oct") )
+    else if (v.is("oct"))
         data.base = 8;
 
-    else if ( v.is("bitmask") )
+    else if (v.is("bitmask"))
         data.bitmask_val = v.get_uint32();
 
     else
@@ -647,3 +616,496 @@ const BaseApi* ips_byte_test[] =
     nullptr
 };
 
+//-------------------------------------------------------------------------
+// UNIT TESTS
+//-------------------------------------------------------------------------
+#ifdef UNIT_TEST
+#include <climits>
+
+#include "catch/snort_catch.h"
+
+#define NO_MATCH snort::IpsOption::EvalStatus::NO_MATCH
+#define MATCH snort::IpsOption::EvalStatus::MATCH
+
+void SetByteTestData(ByteTestData &byte_test, int value, ByteTestOper code = CHECK_EQ)
+{
+    byte_test.bytes_to_extract = value;
+    byte_test.cmp_value = value;
+    byte_test.opcode = code;
+    byte_test.offset = value;
+    byte_test.not_flag = value;
+    byte_test.relative_flag = value;
+    byte_test.string_convert_flag = value;
+    byte_test.endianness = value;
+    byte_test.base = value;
+    byte_test.bitmask_val = value;
+    byte_test.cmp_value_var = value;
+    byte_test.offset_var = value;
+}
+
+void SetByteTestDataMax(ByteTestData& byte_test)
+{
+    byte_test.bytes_to_extract = UINT_MAX;
+    byte_test.cmp_value = UINT_MAX;
+    byte_test.opcode = CHECK_XOR;
+    byte_test.offset = INT_MAX;
+    byte_test.not_flag = true;
+    byte_test.relative_flag = true;
+    byte_test.string_convert_flag = true;
+    byte_test.endianness = UCHAR_MAX;
+    byte_test.base = UINT_MAX;
+    byte_test.bitmask_val = UINT_MAX;
+    byte_test.cmp_value_var = CHAR_MAX;
+    byte_test.offset_var = CHAR_MAX;
+}
+
+class StubIpsOption : public IpsOption
+{
+public:
+    StubIpsOption(const char* name, option_type_t option_type) :
+        IpsOption(name, option_type)
+    { };
+
+};
+
+class StubEndianness : public Endianness
+{
+public:
+    StubEndianness() = default;
+    virtual bool get_offset_endianness(int32_t, uint8_t& ) override
+    { return false; }
+};
+
+TEST_CASE("byte_test_check test", "[ips_byte_test]")
+{
+    SECTION("Incorrect ByteTestOper, other data correct")
+    {
+        REQUIRE(byte_test_check(ByteTestOper(7), 1, 1, 0) == false);
+    }
+
+    SECTION("Incorrect ByteTestOper, true not_flag")
+    {
+        REQUIRE(byte_test_check(ByteTestOper(7), 1, 1, 1) == true);
+    }
+
+    SECTION("CHECK_EQ both true && false situation")
+    {
+        REQUIRE(byte_test_check(ByteTestOper(0), 1, 1, 0) == true);
+        REQUIRE(byte_test_check(ByteTestOper(0), 1, 2, 0) == false);
+    }
+
+    SECTION("CHECK_LT both true && false situation")
+    {
+        REQUIRE(byte_test_check(ByteTestOper(1), 1, 2, 0) == true);
+        REQUIRE(byte_test_check(ByteTestOper(1), 4, 1, 0) == false);
+    }
+
+    SECTION("CHECK_GT both true && false situation")
+    {
+        REQUIRE(byte_test_check(ByteTestOper(2), 2, 1, 0) == true);
+        REQUIRE(byte_test_check(ByteTestOper(2), 1, 4, 0) == false);
+    }
+
+    SECTION("CHECK_LTE both true && false situation")
+    {
+        REQUIRE(byte_test_check(ByteTestOper(3), 0, 1, 0) == true);
+        REQUIRE(byte_test_check(ByteTestOper(3), 4, 1, 0) == false);
+    }
+
+    SECTION("CHECK_GTE both true && false situation")
+    {
+        REQUIRE(byte_test_check(ByteTestOper(4), 1, 0, 0) == true);
+        REQUIRE(byte_test_check(ByteTestOper(4), 0, 4, 0) == false);
+    }
+
+    SECTION("CHECK_AND for bites both true && false situation")
+    {
+        REQUIRE(byte_test_check(ByteTestOper(5), 1, 1, 0) == true);
+        REQUIRE(byte_test_check(ByteTestOper(5), 1, 0, 0) == false);
+    }
+
+    SECTION("CHECK_XOR for bites both true && false situation")
+    {
+        REQUIRE(byte_test_check(ByteTestOper(6), 1, 0, 0) == true);
+        REQUIRE(byte_test_check(ByteTestOper(6), 1, 1, 0) == false);
+    }
+}
+
+TEST_CASE("ByteTestOption test", "[ips_byte_test]")
+{
+    ByteTestData byte_test;
+    SetByteTestData(byte_test, 1);
+    snort::IpsOption::set_buffer("hello_world");
+
+    SECTION("method hash")
+    {
+        ByteTestOption hash_test(byte_test);
+        ByteTestOption hash_test_equal(byte_test);
+
+        SECTION("Testing hash with very low values")
+        {
+            SECTION("Hash has same source")
+            {
+                CHECK(hash_test.hash() == hash_test_equal.hash());
+            }
+
+            SECTION("Compare hash from different source")
+            {
+                SetByteTestData(byte_test, 4);
+                ByteTestOption hash_test_diff(byte_test);
+                CHECK(hash_test.hash() != hash_test_diff.hash());
+            }
+        }
+
+        SECTION("Testing hash with maximum values")
+        {
+            SetByteTestDataMax(byte_test);
+            ByteTestOption hash_test_max(byte_test);
+            ByteTestOption hash_test_equal_max(byte_test);
+
+            SECTION("Hash has same source")
+            {
+                CHECK(hash_test_max.hash() == hash_test_equal_max.hash());
+            }
+
+            SECTION("Testing hash with maximum values from different source")
+            {
+                SetByteTestDataMax(byte_test);
+                ByteTestOption hash_test_max(byte_test);
+                CHECK(hash_test.hash() != hash_test_max.hash());
+            }
+        }
+    }
+
+    SECTION("operator ==")
+    {
+        ByteTestOption test(byte_test);
+
+        SECTION("Compare IpsOptions with different names")
+        {
+            StubIpsOption case_diff_name("not_hello_world",
+                option_type_t::RULE_OPTION_TYPE_BUFFER_USE);
+            REQUIRE(test != case_diff_name);
+        }
+
+        SECTION("Compare between equals objects")
+        {
+            ByteTestOption test_1(byte_test);
+            REQUIRE(test == test_1);
+        }
+
+        SECTION("byte_to_compare is different")
+        {
+            byte_test.bytes_to_extract = 2;
+            ByteTestOption test_2_1(byte_test);
+            REQUIRE(test != test_2_1);
+        }
+
+        SECTION("cmp_value is different")
+        {
+            byte_test.cmp_value = 2;
+            ByteTestOption test_2_2(byte_test);
+            REQUIRE(test != test_2_2);
+        }
+
+        SECTION("cmp_value is different")
+        {
+            byte_test.opcode = CHECK_LT;
+            ByteTestOption test_2_3(byte_test);
+            REQUIRE(test != test_2_3);
+        }
+
+        SECTION("offset is different")
+        {
+            byte_test.offset = 2;
+            ByteTestOption test_2_4(byte_test);
+            REQUIRE(test != test_2_4);
+        }
+
+        SECTION("not_flag is different")
+        {
+            byte_test.not_flag = 0;
+            ByteTestOption test_2_5(byte_test);
+            REQUIRE(test != test_2_5);
+        }
+
+        SECTION("relative_flag is different")
+        {
+            byte_test.relative_flag = 0;
+            ByteTestOption test_2_6(byte_test);
+            REQUIRE(test != test_2_6);
+        }
+
+        SECTION("string_convert_flag is different")
+        {
+            byte_test.string_convert_flag = 0;
+            ByteTestOption test_2_7(byte_test);
+            REQUIRE(test != test_2_7);
+        }
+
+        SECTION("endianness is different")
+        {
+            byte_test.endianness = 0;
+            ByteTestOption test_2_8(byte_test);
+            REQUIRE(test != test_2_8);
+        }
+
+        SECTION("base is different")
+        {
+            byte_test.base = 2;
+            ByteTestOption test_2_9(byte_test);
+            REQUIRE(test != test_2_9);
+        }
+
+        SECTION("bitmask_val is different")
+        {
+            byte_test.bitmask_val = 2;
+            ByteTestOption test_2_10(byte_test);
+            REQUIRE(test != test_2_10);
+        }
+
+        SECTION("cmp_value_var is different")
+        {
+            byte_test.cmp_value_var = 0;
+            ByteTestOption test_2_13(byte_test);
+            REQUIRE(test != test_2_13);
+        }
+
+        SECTION("cmp_value_var is different")
+        {
+            byte_test.offset_var = 0;
+            ByteTestOption test_2_12(byte_test);
+            REQUIRE(test != test_2_12);
+        }
+    }
+
+    SECTION("method eval")
+    {
+        Packet test_packet;
+        Cursor current_cursor;
+        SetByteTestData(byte_test, 1);
+
+        SECTION("Cursor not set correct for byte_extract")
+        {
+            byte_test.cmp_value_var = 3;
+            byte_test.offset_var = 3;
+            byte_test.string_convert_flag = 0;
+            ByteTestOption test_2(byte_test);
+            REQUIRE((test_2.eval(current_cursor, &test_packet)) == NO_MATCH);
+        }
+
+        SECTION("Byte_to_compare set to zero for string_extract")
+        {
+            byte_test.string_convert_flag = 1;
+            byte_test.bytes_to_extract = 0;
+            ByteTestOption test_3(byte_test);
+            uint8_t buff = 0;
+            current_cursor.set("hello_world_long_name", &buff, 50);
+            REQUIRE((test_3.eval(current_cursor, &test_packet)) == NO_MATCH);
+        }
+
+        SECTION("Byte_test_check with extract value not equal to need one")
+        {
+            byte_test.string_convert_flag = 0;
+            byte_test.relative_flag = 0;
+            uint8_t buff = 0;
+            current_cursor.set("hello_world_long_name", &buff, 50);
+            ByteTestOption test_4(byte_test);
+            REQUIRE((test_4.eval(current_cursor, &test_packet)) == NO_MATCH);
+        }
+
+        SECTION("Correct match")
+        {
+            byte_test.string_convert_flag = 0;
+            byte_test.relative_flag = 0;
+            byte_test.opcode = ByteTestOper(7);
+            byte_test.not_flag = 1;
+            uint8_t buff = 0;
+            current_cursor.set("hello_world_long_name", &buff, 50);
+            ByteTestOption test_5(byte_test);
+            REQUIRE((test_5.eval(current_cursor, &test_packet)) == MATCH);
+        }
+    }
+
+}
+
+TEST_CASE("ByteTestModule test", "[ips_byte_test]")
+{
+    ByteTestModule module_test;
+    ByteTestData byte_test;
+    SetByteTestData(byte_test, 1);
+
+    SECTION("method end")
+    {
+        std::string buff = "tmp";
+
+        SECTION("Undefined rule option for var")
+        {
+            module_test.cmp_var = buff;
+            module_test.data = byte_test;
+            REQUIRE(module_test.end("tmp", 0, nullptr) == false);
+        }
+
+        SECTION("Undefined rule option for offset_var")
+        {
+            module_test.cmp_var.clear();
+            module_test.off_var = buff;
+            module_test.data = byte_test;
+            REQUIRE(module_test.end("tmp", 0, nullptr) == false);
+        }
+
+        SECTION("Number of bytes in \"bitmask\" value is greater than bytes to extract")
+        {
+            byte_test.endianness = 0;
+            byte_test.bytes_to_extract = 0;
+            module_test.data = byte_test;
+            REQUIRE(module_test.end("tmp", 0, nullptr) == false);
+        }
+
+        SECTION("Case with returned value true")
+        {
+            module_test.data = byte_test;
+            REQUIRE(module_test.end("tmp", 0, nullptr) == true);
+        }
+    }
+
+    SECTION("method set")
+    {
+        Value value(false);
+
+        SECTION("All params incorrect")
+        {
+            REQUIRE(module_test.set(nullptr, value, nullptr) == false);
+        }
+
+        SECTION("Case param \"~count\"")
+        {
+            Parameter param("~count", snort::Parameter::Type::PT_BOOL,
+                nullptr, "default", "help");
+            value.set(&param);
+            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+        }
+
+        SECTION("Param \"~operator\" correct")
+        {
+            Parameter param("~operator", snort::Parameter::Type::PT_BOOL,
+                nullptr, "default", "help");
+            value.set(&param);
+            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+        }
+
+        SECTION("Case param \"~compare\"")
+        {
+            SECTION("Value doesn't have a str")
+            {
+                Parameter param("~compare", snort::Parameter::Type::PT_BOOL,
+                    nullptr, "default", "help");
+                value.set(&param);
+                REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+            }
+
+            SECTION("When value has a str")
+            {
+                Value value_tmp("123");
+                Parameter param("~compare", snort::Parameter::Type::PT_BOOL,
+                    nullptr, "default", "help");
+                value_tmp.set(&param);
+                REQUIRE(module_test.set(nullptr, value_tmp, nullptr) == true);
+            }
+        }
+
+        SECTION("Case param \"~offset\"")
+        {
+            SECTION("Value doesn't have a str")
+            {
+                Parameter param("~offset", snort::Parameter::Type::PT_BOOL,
+                    nullptr, "default", "help");
+                value.set(&param);
+                REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+            }
+
+            SECTION("When value has a str")
+            {
+                Value value_tmp("123");
+                Parameter param("~offset", snort::Parameter::Type::PT_BOOL,
+                    nullptr, "default", "help");
+                value_tmp.set(&param);
+                REQUIRE(module_test.set(nullptr, value_tmp, nullptr) == true);
+            }
+        }
+
+        SECTION("Case param \"relative\"")
+        {
+            Parameter param("relative", snort::Parameter::Type::PT_BOOL,
+                nullptr, "default", "help");
+            value.set(&param);
+            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+        }
+
+        SECTION("Case param \"big\"")
+        {
+            Parameter param("big", snort::Parameter::Type::PT_BOOL,
+                nullptr, "default", "help");
+            value.set(&param);
+            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+        }
+
+        SECTION("Case param \"little\"")
+        {
+            Parameter param("little", snort::Parameter::Type::PT_BOOL,
+                nullptr, "default", "help");
+            value.set(&param);
+            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+        }
+
+        SECTION("Case param \"dce\"")
+        {
+            Parameter param("dce", snort::Parameter::Type::PT_BOOL,
+                nullptr, "default", "help");
+            value.set(&param);
+            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+        }
+
+        SECTION("Case param \"string\"")
+        {
+            Parameter param("string", snort::Parameter::Type::PT_BOOL,
+                nullptr, "default", "help");
+            value.set(&param);
+            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+        }
+
+        SECTION("Case param \"dec\"")
+        {
+            Parameter param("dec", snort::Parameter::Type::PT_BOOL,
+                nullptr, "default", "help");
+            value.set(&param);
+            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+        }
+
+        SECTION("Case param \"hex\"")
+        {
+            Parameter param("hex", snort::Parameter::Type::PT_BOOL,
+                nullptr, "default", "help");
+            value.set(&param);
+            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+        }
+
+        SECTION("Case param \"oct\"")
+        {
+            Parameter param("oct", snort::Parameter::Type::PT_BOOL,
+                nullptr, "default", "help");
+            value.set(&param);
+            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+        }
+
+        SECTION("Case param \"bitmask\"")
+        {
+            Parameter param("bitmask", snort::Parameter::Type::PT_BOOL,
+                nullptr, "default", "help");
+            value.set(&param);
+            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+        }
+    }
+}
+
+#endif
