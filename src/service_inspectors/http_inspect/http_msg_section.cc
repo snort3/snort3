@@ -321,6 +321,11 @@ const Field& HttpMsgSection::get_classic_buffer(Cursor& c, const HttpBufferInfo&
         return (header[buffer_side] != nullptr) ? header[buffer_side]->get_classic_raw_header() :
             Field::FIELD_NULL;
       }
+    case HTTP_BUFFER_RAW_HEADER_COMPLETE:
+      {
+        return (header[buffer_side] != nullptr) ? header[buffer_side]->msg_text :
+            Field::FIELD_NULL;
+      }
     case HTTP_BUFFER_RAW_REQUEST:
       {
         return (request != nullptr) ? request->msg_text : Field::FIELD_NULL;

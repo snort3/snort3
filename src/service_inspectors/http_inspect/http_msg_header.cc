@@ -681,6 +681,8 @@ void HttpMsgHeader::print_section(FILE* output)
         HttpApi::classic_buffer_names[HTTP_BUFFER_RAW_COOKIE-1]);
     get_classic_buffer(HTTP_BUFFER_RAW_HEADER, 0, 0).print(output,
         HttpApi::classic_buffer_names[HTTP_BUFFER_RAW_HEADER-1]);
+    get_classic_buffer(HTTP_BUFFER_RAW_HEADER_COMPLETE, 0, 0).print(output,
+        HttpApi::classic_buffer_names[HTTP_BUFFER_RAW_HEADER_COMPLETE-1]);
     HttpMsgSection::print_section_wrapup(output);
 }
 #endif
