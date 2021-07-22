@@ -564,7 +564,7 @@ const BaseApi* ips_byte_jump[] =
 #define NO_MATCH snort::IpsOption::EvalStatus::NO_MATCH
 #define MATCH snort::IpsOption::EvalStatus::MATCH
 
-void SetByteJumpData(ByteJumpData &byte_jump, int value)
+static void SetByteJumpData(ByteJumpData &byte_jump, int value)
 {
     byte_jump.bytes_to_extract = value;
     byte_jump.offset = value;
@@ -582,7 +582,7 @@ void SetByteJumpData(ByteJumpData &byte_jump, int value)
     byte_jump.post_offset_var = value;
 }
 
-void SetByteJumpMaxValue(ByteJumpData &byte_jump)
+static void SetByteJumpMaxValue(ByteJumpData &byte_jump)
 {
     byte_jump.bytes_to_extract = UINT_MAX;
     byte_jump.offset = INT_MAX;

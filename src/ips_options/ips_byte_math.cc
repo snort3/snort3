@@ -571,7 +571,7 @@ const BaseApi* ips_byte_math[] =
     obj.offset_var = offset_var_value; \
     obj.result_var = result_var_value; \
     obj.rvalue_var = rvalue_var_value; \
-    obj.result_name = result_name_value;
+    obj.result_name = result_name_value
 
 class ByteMathDataMatcher
     : public Catch::Matchers::Impl::MatcherBase<ByteMathData>
@@ -617,7 +617,7 @@ private:
     ByteMathData m_value;
 };
 
-ByteMathDataMatcher ByteMathDataEquals(const ByteMathData& value)
+static ByteMathDataMatcher ByteMathDataEquals(const ByteMathData& value)
 {
     return {value};
 }

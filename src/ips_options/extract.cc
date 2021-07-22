@@ -374,7 +374,7 @@ uint8_t numBytesInBitmask(uint32_t bitmask_value)
     obj.offset = offset_value; \
     obj.endianness = endianness_value; \
     obj.relative_flag = relative_flag_value; \
-    obj.string_convert_flag = string_convert_flag_value;
+    obj.string_convert_flag = string_convert_flag_value
 
 TEST_CASE("ips options bitmask utils")
 {

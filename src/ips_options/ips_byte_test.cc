@@ -627,7 +627,7 @@ const BaseApi* ips_byte_test[] =
 #define NO_MATCH snort::IpsOption::EvalStatus::NO_MATCH
 #define MATCH snort::IpsOption::EvalStatus::MATCH
 
-void SetByteTestData(ByteTestData &byte_test, int value, ByteTestOper code = CHECK_EQ)
+static void SetByteTestData(ByteTestData &byte_test, int value, ByteTestOper code = CHECK_EQ)
 {
     byte_test.bytes_to_extract = value;
     byte_test.cmp_value = value;
@@ -643,7 +643,7 @@ void SetByteTestData(ByteTestData &byte_test, int value, ByteTestOper code = CHE
     byte_test.offset_var = value;
 }
 
-void SetByteTestDataMax(ByteTestData& byte_test)
+static void SetByteTestDataMax(ByteTestData& byte_test)
 {
     byte_test.bytes_to_extract = UINT_MAX;
     byte_test.cmp_value = UINT_MAX;

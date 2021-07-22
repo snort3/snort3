@@ -465,7 +465,7 @@ const BaseApi* ips_byte_extract[] =
     obj.multiplier = multiplier_value; \
     obj.align = align_value; \
     obj.var_number = var_number_value; \
-    obj.name = name_value;
+    obj.name = name_value
 
 class ByteExtractDataMatcher
     : public Catch::Matchers::Impl::MatcherBase<ByteExtractData>
@@ -508,7 +508,7 @@ private:
     ByteExtractData m_value;
 };
 
-ByteExtractDataMatcher ByteExtractDataEquals(const ByteExtractData& value)
+static ByteExtractDataMatcher ByteExtractDataEquals(const ByteExtractData& value)
 {
     return {value};
 }
