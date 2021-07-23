@@ -98,7 +98,7 @@ public:
     { return &hpack_decoder[source_id]; }
     Http2ConnectionSettings* get_my_connection_settings(const HttpCommon::SourceId source_id)
     { return &connection_settings[source_id]; }
-    Http2ConnectionSettings* get_recipient_connection_settings(const HttpCommon::SourceId source_id)
+    Http2ConnectionSettings* get_remote_connection_settings(const HttpCommon::SourceId source_id)
     { return &connection_settings[1 - source_id]; }
 
     // Used by payload injection to determine whether we are at a safe place to insert our own

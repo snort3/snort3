@@ -121,29 +121,3 @@ bool HpackIndexTable::add_index(const Field& name, const Field& value)
 {
     return dynamic_table.add_entry(name, value);
 }
-
-void HpackIndexTable::settings_table_size_update(uint32_t new_size)
-{
-    if (!encoder_set_max_size)
-        dynamic_table.update_size(new_size);
-    else if (new_size < dynamic_table.get_max_size())
-    {
-        encoder_set_max_size = false;
-        dynamic_table.update_size(new_size);
-    }
-}
-
-// A dynamic table size update sent in an HPACK encoder cannot be larger than last
-// HEADER_TABLE_SIZE settings frame parameter sent by the decoder
-bool HpackIndexTable::hpack_table_size_update(uint32_t new_size)
-{
-    encoder_set_max_size = true;
-    if (new_size <= session_data->get_recipient_connection_settings(source_id)->
-        get_param(SFID_HEADER_TABLE_SIZE))
-    {
-       dynamic_table.update_size(new_size);
-       return true;
-    }
-    else
-        return false;
-}

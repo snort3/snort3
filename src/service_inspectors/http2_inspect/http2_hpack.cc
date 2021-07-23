@@ -255,6 +255,7 @@ bool Http2HpackDecoder::handle_dynamic_size_update(const uint8_t* encoded_header
 {
     uint64_t decoded_int;
     uint32_t encoded_bytes_consumed;
+    bool valid_update = true;
     bytes_consumed = 0;
 
     if (!decode_int5.translate(encoded_header_buffer, encoded_header_length,
@@ -266,23 +267,30 @@ bool Http2HpackDecoder::handle_dynamic_size_update(const uint8_t* encoded_header
     bytes_consumed += encoded_bytes_consumed;
 
     // Table size update shenanigans are dangerous because we cannot be sure how the target will
-    // interpret them.
+    // interpret them. We generate alerts for illegal updates, but then ignore them and attempt to
+    // keep processing
     if (!table_size_update_allowed)
     {
-        *infractions += INF_TABLE_SIZE_UPDATE_WITHIN_HEADER;
-        return false;
+        *infractions += INF_TABLE_SIZE_UPDATE_NOT_AT_HEADER_START;
+        events->create_event(EVENT_TABLE_SIZE_UPDATE_NOT_AT_HEADER_START);
+        valid_update = false;
     }
     if (++num_table_size_updates > 2)
     {
-        *infractions += INF_TOO_MANY_TABLE_SIZE_UPDATES;
-        return false;
+        *infractions += INF_MORE_THAN_2_TABLE_SIZE_UPDATES;
+        events->create_event(EVENT_MORE_THAN_2_TABLE_SIZE_UPDATES);
+        valid_update = false;
+    }
+    if (decoded_int > session_data->get_remote_connection_settings(source_id)->
+        get_param(SFID_HEADER_TABLE_SIZE))
+    {
+        *infractions += INF_HPACK_TABLE_SIZE_UPDATE_EXCEEDS_MAX;
+        events->create_event(EVENT_HPACK_TABLE_SIZE_UPDATE_EXCEEDS_MAX);
+        valid_update = false;
     }
 
-    if (!decode_table.hpack_table_size_update(decoded_int))
-    {
-        *infractions += INF_INVALID_TABLE_SIZE_UPDATE;
-        return false;
-    }
+    if (valid_update)
+       decode_table.get_dynamic_table().update_size(decoded_int);
 
     return true;
 }
@@ -400,6 +408,21 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     }
 
     return success;
+}
+
+void Http2HpackDecoder::settings_table_size_update(uint32_t new_size)
+{
+    if (new_size < decode_table.get_dynamic_table().get_max_size())
+    {
+        // If the Settings parameter table size update changed the size of the table, an HPACK
+        // table size update is required. Remember the lowest value and validate we see a dynamic
+        // size update no greater than it.
+        expect_table_size_update = true;
+        if (new_size < min_settings_table_size_received)
+            min_settings_table_size_received = new_size;
+    }
+
+    decode_table.get_dynamic_table().update_size(new_size);
 }
 
 Field Http2HpackDecoder::get_decoded_headers(const uint8_t* const decoded_headers)

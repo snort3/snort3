@@ -43,7 +43,7 @@ class Http2HpackDecoder
 public:
     Http2HpackDecoder(Http2FlowData* flow_data, HttpCommon::SourceId src_id,
         Http2EventGen* const _events, Http2Infractions* const _infractions) :
-        session_data(flow_data), events(_events), infractions(_infractions),
+        session_data(flow_data), events(_events), infractions(_infractions), source_id(src_id),
         decode_table(flow_data, src_id) { }
     bool decode_headers(const uint8_t* encoded_headers, const uint32_t encoded_headers_length,
         uint8_t* decoded_headers, Http2StartLine* start_line, bool trailers);
@@ -82,8 +82,8 @@ public:
     bool finalize_start_line();
     const Field* get_start_line();
     Field get_decoded_headers(const uint8_t* const decoded_headers);
-    HpackIndexTable* get_decode_table() { return &decode_table; }
     bool are_pseudo_headers_allowed() { return pseudo_headers_allowed; }
+    void settings_table_size_update(const uint32_t size);
 
 private:
     Http2StartLine* start_line;
@@ -92,6 +92,7 @@ private:
     Http2FlowData* session_data;
     Http2EventGen* const events;
     Http2Infractions* const infractions;
+    const HttpCommon::SourceId source_id;
 
     static Http2HpackIntDecode decode_int7;
     static Http2HpackIntDecode decode_int6;
@@ -103,6 +104,8 @@ private:
     bool table_size_update_allowed = true;
     uint8_t num_table_size_updates = 0;
     bool is_trailers = false;
+    bool expect_table_size_update = false;
+    uint32_t min_settings_table_size_received = UINT32_MAX;
 };
 
 #endif

@@ -111,7 +111,7 @@ bool Http2SettingsFrame::handle_update(uint16_t id, uint32_t value)
             // Sending a table size parameter informs the receiver the maximum hpack dynamic
             // table size they may use.
             session_data->get_hpack_decoder((HttpCommon::SourceId) (1 - source_id))->
-                get_decode_table()->settings_table_size_update(value);
+                settings_table_size_update(value);
             break;
         case SFID_ENABLE_PUSH:
             // Only values of 0 or 1 are allowed
