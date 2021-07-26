@@ -664,8 +664,7 @@ class StubIpsOption : public IpsOption
 public:
     StubIpsOption(const char* name, option_type_t option_type) :
         IpsOption(name, option_type)
-    { };
-
+    { }
 };
 
 class StubEndianness : public Endianness
