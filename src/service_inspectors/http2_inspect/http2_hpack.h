@@ -44,7 +44,7 @@ public:
     Http2HpackDecoder(Http2FlowData* flow_data, HttpCommon::SourceId src_id,
         Http2EventGen* const _events, Http2Infractions* const _infractions) :
         session_data(flow_data), events(_events), infractions(_infractions), source_id(src_id),
-        decode_table(flow_data, src_id) { }
+        decode_table(flow_data) { }
     bool decode_headers(const uint8_t* encoded_headers, const uint32_t encoded_headers_length,
         uint8_t* decoded_headers, Http2StartLine* start_line, bool trailers);
     bool write_decoded_headers(const uint8_t* in_buffer, const uint32_t in_length,
