@@ -544,12 +544,7 @@ int CheckTagList(Packet* p, Event& event, void** log_list)
         if ( create_event )
         {
             /* set the event info */
-            SetEvent(event, GID_TAG, TAG_LOG_PKT, 1, 1, 1, returned->event_id);
-
-            /* set event reference details */
-            event.ref_time.tv_sec = returned->event_time.tv_sec;
-            event.ref_time.tv_usec = returned->event_time.tv_usec;
-            event.event_reference = returned->event_id | p->context->conf->get_event_log_id();
+            event.set_event(GID_TAG, TAG_LOG_PKT, 1, 1, 1, returned->event_id, p->context->conf->get_event_log_id(), returned->event_time);
             *log_list = returned->log_list;
         }
 

@@ -718,7 +718,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->output_flags |= OUTPUT_FLAG__LINE_BUFFER;
 
     else if ( v.is("-G") || v.is("--logid") )
-        sc->event_log_id = v.get_uint16() << 16;
+        sc->event_log_id = v.get_uint16();
 
     else if ( v.is("-g") )
         sc->set_gid(v.get_string());

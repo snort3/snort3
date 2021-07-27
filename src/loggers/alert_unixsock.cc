@@ -128,8 +128,8 @@ static void get_alert_pkt(
     us.alert.class_id = event.sig_info->class_id;
     us.alert.priority = event.sig_info->priority;
 
-    us.alert.event_id = event.event_id;
-    us.alert.event_ref = event.event_reference;
+    us.alert.event_id = event.get_event_id();
+    us.alert.event_ref = event.get_event_reference();
     us.alert.ref_time = event.ref_time;
 
     if (p && p->pkt)

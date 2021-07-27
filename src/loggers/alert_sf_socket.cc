@@ -294,7 +294,7 @@ static void load_sar(Packet* packet, const Event& event, SnortActionRequest& sar
         return;
 
     /* construct the action request */
-    sar.event_id = event.event_id;
+    sar.event_id = event.get_event_id();
     sar.tv_sec = packet->pkth->ts.tv_sec;
     sar.gid = event.sig_info->gid;
     sar.sid = event.sig_info->sid;

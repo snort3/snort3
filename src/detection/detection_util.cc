@@ -84,7 +84,7 @@ void EventTrace_Log(const Packet* p, const OptTreeNode* otn, Actions::Type actio
 
     TextLog_Print(tlog,
         "\nEvt=%u, Gid=%u, Sid=%u, Rev=%u, Act=%s\n",
-        event_id, otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, acts.c_str());
+        get_event_id(), otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, acts.c_str());
 
     TextLog_Print(tlog,
         "Pkt=" STDu64 ", Sec=%lu.%6lu, Len=%u, Cap=%u\n",

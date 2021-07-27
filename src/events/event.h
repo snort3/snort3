@@ -24,7 +24,6 @@
 #include "main/thread.h"
 
 struct SigInfo;
-extern THREAD_LOCAL uint16_t event_id;
 
 /* we must use fixed size of 32 bits, because on-disk
  * format of savefiles uses 32-bit tv_sec (and tv_usec)
@@ -38,20 +37,35 @@ struct sf_timeval32
 struct Event
 {
     SigInfo* sig_info = nullptr;
-    uint32_t event_id = 0;
-    uint32_t event_reference = 0; // reference to other events that have gone off,
-                              // such as in the case of tagged packets...
     struct sf_timeval32 ref_time = { 0, 0 };   /* reference time for the event reference */
     const char* alt_msg = nullptr;
 
     Event() = default;
     Event(SigInfo& si)
     { sig_info = &si; }
+
+    uint32_t get_event_id() const { return event_id; }
+    void set_event_id(uint32_t id) { event_id = id; }
+
+    uint32_t get_event_reference() const { return event_reference; }
+    void set_event_reference(uint32_t ref) { event_reference = ref; }
+
+    void update_event_id(uint16_t log_id);
+    void update_event_id_and_ref(uint16_t log_id);
+
+    void set_event(uint32_t gid, uint32_t sid, uint32_t rev,
+        uint32_t classification, uint32_t priority, uint16_t event_ref,
+        uint16_t log_id, const struct timeval& tv);
+
+
+private:
+    uint32_t event_id = 0;
+    uint32_t event_reference = 0; // reference to other events that have gone off,
+                                  // such as in the case of tagged packets...
 };
 
-void SetEvent(
-    Event&, uint32_t gid, uint32_t sid, uint32_t rev,
-    uint32_t classification, uint32_t priority, uint32_t event_ref);
+uint16_t get_event_id();
+void incr_event_id();
 
 #endif
 
