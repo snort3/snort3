@@ -126,7 +126,9 @@ public:
     void trust_session(Packet*, bool force = false);
     void block_session(Packet*, bool force = false);
     void reset_session(Packet*, bool force = false);
-    void reset_session(Packet*, snort::ActiveAction* r, bool force = false);
+    void reset_session(Packet*, snort::ActiveAction* r, bool force = false,
+        bool skip_update_status = false);
+    void update_reset_status(Packet*, bool force);
 
     static void queue(snort::ActiveAction* a, snort::Packet* p);
     static void clear_queue(snort::Packet*);

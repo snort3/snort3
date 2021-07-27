@@ -170,9 +170,11 @@ RejectAction::RejectAction(uint32_t f) : IpsAction(s_name, &rej_act_action) , re
 
 void RejectAction::exec(Packet* p, const OptTreeNode* otn)
 {
-    p->active->reset_session(p, get_active_action());
+    p->active->update_reset_status(p, false);
     if ( otn )
         Actions::alert(p, otn);
+
+    p->active->reset_session(p, get_active_action(), false, true);
 }
 
 //-------------------------------------------------------------------------

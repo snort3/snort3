@@ -679,12 +679,18 @@ void Active::reset_session(Packet* p, bool force)
     reset_session(p, &default_reset, force);
 }
 
-void Active::reset_session(Packet* p, ActiveAction* reject, bool force)
+void Active::update_reset_status(Packet* p, bool force)
 {
     active_action = ACT_RESET;
     update_status(p, force);
+}
 
-    if ( force or (p->context->conf->inline_mode() and SFDAQ::forwarding_packet(p->pkth)))
+void Active::reset_session(Packet* p, ActiveAction* reject, bool force, bool skip_update_status)
+{
+    if ( !skip_update_status )
+        update_reset_status(p, force);
+
+    if ( force or (p->context->conf->inline_mode() and SFDAQ::forwarding_packet(p->pkth)) )
         Stream::drop_flow(p);
 
     if (reject)
