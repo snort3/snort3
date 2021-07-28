@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.8.0 2021-07-15 06:38:10 EDT TST
+Revision 3.1.9.0 2021-07-28 06:22:15 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -4172,7 +4172,7 @@ Note: this section uses informal language to explain some things.
 Nothing here is intended to conflict with the technical language of
 the HTTP RFCs and the implementation follows the RFCs.
 
-5.10.4.2. http_header and http_raw_header
+5.10.4.2. http_header, http_raw_header, and http_raw_header_complete
 
 These cover all the header lines except the first one. You may
 specify an individual header by name using the field option as shown
@@ -4189,14 +4189,16 @@ mixture of upper and lower case.
 With http_header the individual header value is normalized in a way
 that is appropriate for that header.
 
-Specifying an individual header is not available for http_raw_header.
+Specifying an individual header is not available for http_raw_header
+and http_raw_header_complete.
 
-If you don’t specify a header you get all of the headers except for
-the cookie headers Cookie and Set-Cookie. http_raw_header includes
-the unmodified header names and values as they appeared in the
-original message. http_header is the same except percent encodings
-are removed and paths are simplified exactly as if the headers were a
-URI.
+If you don’t specify a header you get all of the headers.
+http_raw_header_complete includes cookie headers Cookie and
+Set-Cookie. http_header and http_raw_header don’t. http_raw_header
+and http_raw_header_complete include the unmodified header names and
+values as they appeared in the original message. http_header is the
+same except percent encodings are removed and paths are simplified
+exactly as if the headers were a URI.
 
 In most cases specifying individual headers creates a more efficient
 and accurate rule. It is recommended that new rules be written using

@@ -1,3 +1,23 @@
+2021/07/28 - 3.1.9.0
+
+actions: allow session data to stay accessible for loggers for reject rule action
+byte_options: address compiler warnings
+control: add idle expire removal to control channels
+dump_stats: direct output back to command channel
+events: use instance_id to make event_id unique across threads
+file_api: handle file_cache inspection for non-zero offset
+http2_inspect: change xor to or in assert that was failing due to uninitialized variable
+http2_inspect: fix HPACK dynamic table size update management
+http2_inspect: remove unused variables
+http_inspect: add peg count for script bytes processed
+http_inspect: add rule option http_raw_header_complete
+http_inspect: don't allocate 0-length partial inspection buffer
+ips_options: add catch tests for byte_test, byte_jump, byte_math, byte_extract
+ips_options: address compiler warnings
+ips_options: refactor byte_extract, byte_test, byte_math, byte_jump and related tests
+lua: update HTTP/2 default_wizard hex with S2C pattern match
+stats: update file and appid stats to use Log functions provided from stats.cc
+
 2021/07/15 - 3.1.8.0
 
 appid: support SSH client detection through lua detector
