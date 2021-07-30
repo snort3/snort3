@@ -33,11 +33,14 @@
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "packet_io/active.h"
+#include "trace/trace.h"
 
 #include "file_service.h"
 #include "file_stats.h"
 
 using namespace snort;
+
+THREAD_LOCAL const Trace* file_trace = nullptr;
 
 static const Parameter file_magic_params[] =
 {
@@ -226,6 +229,15 @@ FileIdModule::~FileIdModule()
 {
     if (fc)
         delete fc;
+}
+
+void FileIdModule::set_trace(const Trace* trace) const
+{ file_trace = trace; }
+
+const TraceOption* FileIdModule::get_trace_options() const
+{
+    static const TraceOption filetrace_options(nullptr, 0, nullptr);
+    return &filetrace_options;
 }
 
 const PegInfo* FileIdModule::get_pegs() const

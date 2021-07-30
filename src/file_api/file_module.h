@@ -27,12 +27,20 @@
 #include "file_config.h"
 #include "file_identifier.h"
 #include "file_policy.h"
-
+#include "main/snort_debug.h"
+#include "utils/util.h"
 //-------------------------------------------------------------------------
 // file_id module
 //-------------------------------------------------------------------------
 
 static const uint32_t FILE_ID_GID = 150;
+
+#define FILE_DEBUG(module_name, module_id, log_level, p, ...) \
+    trace_logf(log_level, module_name , module_id, p, __VA_ARGS__)
+
+#define GET_CURRENT_PACKET snort::DetectionEngine::get_current_packet()
+
+extern THREAD_LOCAL const snort::Trace* file_trace;
 
 class FileIdModule : public snort::Module
 {
@@ -61,6 +69,8 @@ public:
     unsigned get_gid() const override
     { return FILE_ID_GID; }
 
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
     const snort::RuleMap* get_rules() const override;
 
 private:

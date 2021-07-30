@@ -24,6 +24,9 @@
 #include "file_segment.h"
 
 #include "file_lib.h"
+#include "file_module.h"
+
+#include "detection/detection_engine.h"
 
 using namespace snort;
 
@@ -68,6 +71,9 @@ void FileSegments::add(const uint8_t* file_data, int64_t data_size, uint64_t off
         FileSegment* new_segment = new FileSegment();
         new_segment->offset = offset;
         new_segment->data = new std::string((const char*)file_data, data_size);
+        FILE_DEBUG(file_trace , DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+            GET_CURRENT_PACKET , "Adding segment, offset : %u data_size : %lu\n", 
+            new_segment->offset, data_size);
         head = new_segment;
         return;
     }
@@ -134,6 +140,8 @@ void FileSegments::add(const uint8_t* file_data, int64_t data_size, uint64_t off
     // ignore overlap case
     if (data_size <= 0)
     {
+        FILE_DEBUG(file_trace , DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
+            GET_CURRENT_PACKET, "Complete overlap while adding segments\n");
         return;
     }
 
@@ -141,6 +149,9 @@ void FileSegments::add(const uint8_t* file_data, int64_t data_size, uint64_t off
     new_segment->offset = offset;
     new_segment->data = new std::string((const char*)file_data, data_size);
 
+    FILE_DEBUG(file_trace , DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+        GET_CURRENT_PACKET, "Adding offset : %u data_size : %lu\n", new_segment->offset,
+        data_size);
     if (!find_left)
     {
         previous->next = new_segment;
@@ -190,6 +201,9 @@ int FileSegments::process_all(Packet* p, FilePolicyBase* policy)
     FileSegment* current_segment = head;
     while (current_segment && (current_offset == current_segment->offset))
     {
+        FILE_DEBUG(file_trace,  DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+          p, "processing the current offset %lu\n", current_offset);
+
         ret = process_one(p, (const uint8_t*)current_segment->data->data(),
             current_segment->data->size(), policy);
 
@@ -230,6 +244,9 @@ int FileSegments::process(Packet* p, const uint8_t* file_data, uint64_t data_siz
         }
         else
         {
+            FILE_DEBUG(file_trace , DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+                p, "not adding to file segment queue offset %lu , current_offset %lu\n", 
+                offset , current_offset);
             return 1;
         }
     }

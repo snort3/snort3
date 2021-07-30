@@ -148,6 +148,8 @@ FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout)
          * for key.  This means bigger problems, but fail
          * gracefully.
          */
+        FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, GET_CURRENT_PACKET,
+            "add:Insert failed in file cache, returning\n"); 
         file_counts.cache_add_fails++;
         delete new_node.file;
         return nullptr;
@@ -227,6 +229,9 @@ FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
     assert(file);
 
     FileVerdict verdict = policy->type_lookup(p, file);
+    FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+        "check_verdict:verdict after type lookup %d\n", verdict);
+
     if (verdict == FILE_VERDICT_STOP_CAPTURE)
     {
         verdict = FILE_VERDICT_UNKNOWN;
@@ -237,6 +242,8 @@ FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
         verdict = policy->signature_lookup(p, file);
     }
 
+    FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+        "check_verdict:verdict being returned %d\n", verdict);
     return verdict;
 }
 
@@ -246,7 +253,11 @@ int FileCache::store_verdict(Flow* flow, FileInfo* file, int64_t timeout)
     uint64_t file_id = file->get_file_id();
 
     if (!file_id)
+    {
+        FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, GET_CURRENT_PACKET,
+            "store_verdict: file context doesn't have file id\n");
         return 0;
+    }
 
     FileContext* file_got = get_file(flow, file_id, true, timeout);
     if (file_got)
@@ -269,9 +280,11 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
         timerclear(&file_ctx->pending_expire_time);
 
     file_ctx->verdict = verdict;
+    FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,
+        "apply_verdict %d\n", verdict);
+
     switch (verdict)
     {
-
     case FILE_VERDICT_UNKNOWN:
         return false;
     case FILE_VERDICT_LOG:
@@ -280,12 +293,16 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
         return false;
     case FILE_VERDICT_BLOCK:
         // can't block session inside a session
+        FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+            "apply_verdict:FILE_VERDICT_BLOCK with action block\n");
         act->set_delayed_action(Active::ACT_BLOCK, true);
         act->set_drop_reason("file");
         break;
 
     case FILE_VERDICT_REJECT:
         // can't reset session inside a session
+        FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+            "apply_verdict:FILE_VERDICT_REJECT with action reset\n");
         act->set_delayed_action(Active::ACT_RESET, true);
         act->set_drop_reason("file");
         break;
@@ -304,12 +321,20 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
             //  Block session on timeout if configured, otherwise use the
             //  current action.
             if (fc->block_timeout_lookup)
+            {
+                FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+                    "apply_verdict:FILE_VERDICT_PENDING with action reset\n");
                 act->set_delayed_action(Active::ACT_RESET, true);
+            }
 
             if (resume)
                 policy->log_file_action(processing_flow, file_ctx, FILE_RESUME_BLOCK);
             else
                 file_ctx->verdict = FILE_VERDICT_LOG;
+
+            FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,
+                "File signature lookup: timed out after %" PRIi64 "ms.\n",
+                time_elapsed_ms(&now, &file_ctx->pending_expire_time, lookup_timeout));
 
             if (PacketTracer::is_active())
             {
@@ -325,6 +350,9 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
                 add_time = { static_cast<time_t>(lookup_timeout), 0 };
                 timeradd(&now, &add_time, &file_ctx->pending_expire_time);
 
+                FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,
+                    "File signature lookup: adding new packet to retry queue.\n");
+
                 if (PacketTracer::is_active())
                     PacketTracer::log("File signature lookup: adding new packet to retry queue.\n");
             }
@@ -336,20 +364,35 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
                 if (!(p->packet_flags & PKT_RETRANSMIT) or p->is_retry())
                 {
                     PacketTracer::log("File signature lookup: adding packet to retry queue. Resume=%d, Waited %" PRIi64 "ms.\n", resume, time_elapsed_ms(&now, &file_ctx->pending_expire_time, lookup_timeout));
+
+                    FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,
+                        "File signature lookup adding packet to retry queue"
+                        "Resume=%d, Waited %" PRIi64 "ms.\n", resume,	
+                        time_elapsed_ms(&now, &file_ctx->pending_expire_time, lookup_timeout));
                 }
             }
 
             act->set_delayed_action(Active::ACT_RETRY, true);
+            FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+                "apply_verdict:FILE_VERDICT_PENDING with action retry\n");
 
             if (resume)
                 policy->log_file_action(processing_flow, file_ctx, FILE_RESUME_BLOCK);
             else if (store_verdict(flow, file_ctx, lookup_timeout) != 0)
+            {
+                FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+                    "apply_verdict:FILE_VERDICT_PENDING with action drop\n");
                 act->set_delayed_action(Active::ACT_DROP, true);
+            }
             else
             {
                 FileFlows* files = FileFlows::get_file_flows(flow);
                 if (files)
+                {
                     files->add_pending_file(file_ctx->get_file_id());
+                    FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+                        "apply_verdict:Adding file id to pending\n");
+                }
             }
         }
         return true;
@@ -359,11 +402,17 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
 
     if (resume)
     {
+        FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+            "apply_verdict:Resume block file\n");
         file_ctx->log_file_event(flow, policy);
         policy->log_file_action(processing_flow, file_ctx, FILE_RESUME_BLOCK);
     }
     else if (file_ctx->is_cacheable())
+    {
         store_verdict(flow, file_ctx, block_timeout);
+        FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+            "apply_verdict:storing the file verdict\n");
+    }
 
     return true;
 }
@@ -377,16 +426,22 @@ FileVerdict FileCache::cached_verdict_lookup(Packet* p, FileInfo* file,
     assert(file);
     uint64_t file_id = file->get_file_id();
     if (!file_id)
+    {
+        FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, p,
+            "cached_verdict_lookup:File id not found, returning\n");
         return verdict;
+    }
 
     FileContext* file_found = get_file(flow, file_id, false);
 
     if (file_found)
     {
-	    // file_found might be a new context, set the flow here
-	    file_found->set_processing_flow(flow);
+        // file_found might be a new context, set the flow here
+        file_found->set_processing_flow(flow);
         //Query the file policy in case verdict has been changed
         verdict = check_verdict(p, file_found, policy);
+        FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+            "cached_verdict_lookup:Verdict received from cached_verdict_lookup %d\n", verdict);
         apply_verdict(p, file_found, verdict, true, policy);
         // Update the current file context from cached context
         *file = *(FileInfo*)file_found;

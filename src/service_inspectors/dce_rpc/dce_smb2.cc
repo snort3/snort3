@@ -253,6 +253,8 @@ void Dce2Smb2SessionData::process_command(const Smb2Hdr* smb_hdr,
                 Dce2SmbFlowData* fd = create_expected_smb_flow_data(p);
                 if (fd)
                 {
+                    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, GET_CURRENT_PACKET,
+                        "Requesting for expected smb flow\n");
                     int result = Stream::set_snort_protocol_id_expected(p, PktType::TCP,
                         IpProtocol::TCP, p->ptrs.ip_api.get_dst() , 0 ,p->ptrs.ip_api.get_src(),
                         p->flow->server_port , snort_protocol_id_smb, fd, false, true);
@@ -263,6 +265,11 @@ void Dce2Smb2SessionData::process_command(const Smb2Hdr* smb_hdr,
                             "Failed to create expected smb flow\n");
                         delete fd;
                     }
+                }
+                else
+                {
+                    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, GET_CURRENT_PACKET,
+                        "fd is null in negotiate , failed to create pinhole\n");
                 }
             }
         }

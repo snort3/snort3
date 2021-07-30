@@ -59,6 +59,9 @@ void Dce2Smb::show(const SnortConfig*) const
 
 void Dce2Smb::eval(Packet* p)
 {
+    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+        p, "smb packet detected with dsize as %u\n", p->dsize);
+
     Profile profile(dce2_smb_pstat_main);
 
     assert(p->has_tcp_data());
