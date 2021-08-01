@@ -28,6 +28,32 @@ macro (add_dynamic_module libname install_path)
     )
 endmacro (add_dynamic_module)
 
+macro (add_dynamic_daq_module libname )
+    set (sources ${ARGN})
+
+    add_library ( ${libname} MODULE ${sources} )
+    set_target_properties (
+        ${libname}
+        PROPERTIES
+            COMPILE_FLAGS "-DBUILDING_SO"
+            PREFIX ""
+    )
+
+    if (APPLE)
+        set_target_properties (
+            ${libname}
+            PROPERTIES
+                LINK_FLAGS "-undefined dynamic_lookup"
+        )
+    endif()
+
+    install (
+        TARGETS ${libname}
+        LIBRARY
+            DESTINATION "${LIB_INSTALL_PATH}/daq"
+    )
+endmacro (add_dynamic_daq_module)
+
 
 function (add_cpputest testname)
     if ( ENABLE_UNIT_TESTS )
