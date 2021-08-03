@@ -562,7 +562,10 @@ Dce2Smb2TreeTracker::~Dce2Smb2TreeTracker(void)
     }
 
     for (auto it_file : opened_files)
+    {
         delete it_file.second;
+        parent_session->decrease_size(sizeof(Dce2Smb2FileTracker));
+    }
 
     tree_tracker_mutex.unlock();
 
