@@ -45,7 +45,7 @@ using namespace std;
 static const Parameter s_params[] =
 {
     { "ayt_attack_thresh", Parameter::PT_INT, "-1:max31", "-1",
-      "alert on this number of consecutive Telnet AYT commands" },
+      "alert beyond this number of consecutive Telnet AYT commands (-1 is disabled)" },
 
     { "check_encrypted", Parameter::PT_BOOL, nullptr, "false",
       "check for end of encryption" },

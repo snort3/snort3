@@ -52,7 +52,8 @@ public:
     MagicBook& operator=(const MagicBook&) = delete;
 
     virtual bool add_spell(const char* key, const char*& val) = 0;
-    virtual const char* find_spell(const uint8_t*, unsigned len, const MagicPage*&) const = 0;
+    virtual const char* find_spell(const uint8_t*, unsigned len, unsigned max,
+        const MagicPage*&) const = 0;
 
     const MagicPage* page1()
     { return root; }
@@ -73,7 +74,8 @@ public:
     SpellBook();
 
     bool add_spell(const char*, const char*&) override;
-    const char* find_spell(const uint8_t*, unsigned len, const MagicPage*&) const override;
+    const char* find_spell(const uint8_t*, unsigned len, unsigned max,
+        const MagicPage*&) const override;
 
 private:
     bool translate(const char*, HexVector&);
@@ -92,7 +94,8 @@ public:
     HexBook() = default;
 
     bool add_spell(const char*, const char*&) override;
-    const char* find_spell(const uint8_t*, unsigned len, const MagicPage*&) const override;
+    const char* find_spell(const uint8_t*, unsigned len, unsigned,
+        const MagicPage*&) const override;
 
 private:
     bool translate(const char*, HexVector&);

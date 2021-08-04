@@ -32,10 +32,6 @@
 #define SMTP_PKT_FROM_CLIENT   1
 #define SMTP_PKT_FROM_SERVER   2
 
-// Inspection type
-#define SMTP_STATELESS  0
-#define SMTP_STATEFUL   1
-
 #define SEARCH_CMD       0
 #define SEARCH_RESP      1
 #define SEARCH_HDR       2

@@ -22,13 +22,6 @@
  * This file contains functions to select server configurations
  * and begin the FTPTelnet process.
  *
- * The session Inspection Module interfaces with the Stream Inspection
- * Module and the User Interface Module to select the appropriate
- * FTPTelnet configuration and in the case of stateful inspection the
- * session Inspection Module retrieves the user-data from the Stream
- * Module.  For stateless inspection, the session Inspection Module uses
- * the same structure for use by each packet.
- *
  * The main responsibility of this module is to supply the appropriate
  * data structures and configurations for the rest of the FTPTelnet
  * process.  The module also determines what type of data is being
@@ -135,14 +128,10 @@ static int TelnetStatefulsessionInspection(Packet* p,
  *          configuration for the session, and the type of inspection
  *          to be performed (client or server.)
  *
- *          When the session Inspection module is in stateful mode, it
- *          checks to see if there is a TELNET_SESSION pointer already
+ *          Checks to see if there is a TELNET_SESSION pointer already
  *          associated with the stream.  If there is, then it uses that
  *          session pointer, otherwise it calculates the server configuration
- *          using the FTP_SI_INPUT and returns a TELNET_SESSION pointer.  In
- *          stateful mode, this means that memory is allocated, but in
- *          stateless mode, the same session pointer is used for all packets
- *          to reduce the allocation overhead.
+ *          using the FTP_SI_INPUT and returns a TELNET_SESSION pointer.
  *
  *          The inspection mode can be either client or server.
  *
@@ -486,14 +475,11 @@ static int FTPStatefulsessionInspection(
  *          configuration for the session, and the type of inspection to
  *          be performed (client or server.)
  *
- *          When the session Inspection module is in stateful mode, it
- *          checks to see if there is a FTP_SESSION pointer already
+ *          Checks to see if there is a FTP_SESSION pointer already
  *          associated with the stream.  If there is, then it uses that
  *          session pointer, otherwise it calculates the server
  *          configuration using the FTP_SI_INPUT and returns a FTP_SESSION
- *          pointer.  In stateful mode, this means that memory is allocated,
- *          but in stateless mode, the same session pointer is used for all
- *          packets to reduce the allocation overhead.
+ *          pointer.
  *
  *          The inspection mode can be either client or server.
  */

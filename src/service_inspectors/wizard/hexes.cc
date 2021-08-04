@@ -164,8 +164,11 @@ const MagicPage* HexBook::find_spell(
 }
 
 const char* HexBook::find_spell(
-    const uint8_t* data, unsigned len, const MagicPage*& p) const
+    const uint8_t* data, unsigned len, unsigned max, const MagicPage*& p) const
 {
+    if ( max and len > max )
+        len = max;
+
     p = find_spell(data, len, p, 0);
 
     if ( p and !p->value.empty() )

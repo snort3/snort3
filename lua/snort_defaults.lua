@@ -340,14 +340,15 @@ http_methods =  -- build from default_http_methods
     'UPDATEREDIRECTREF', 'PROPFIND', 'PROPPATCH', 'MKCOL', 'COPY',
     'MOVE', 'LOCK', 'UNLOCK', 'SEARCH', 'BCOPY', 'BDELETE', 'BMOVE',
     'BPROPFIND', 'BPROPPATCH', 'POLL', 'UNSUBSCRIBE', 'X_MS_ENUMATTS',
-    --'NOTIFY', 'OPTIONS', 'SUBSCRIBE', 'UPDATE'
+    'OPTIONS * HTTP/',
+    --'NOTIFY', 'SUBSCRIBE', 'UPDATE'
 }
 
-sip_methods =
+sip_requests =
 {
-    'INVITE', 'CANCEL', 'ACK', 'BYE', 'REGISTER', 'REFER', 'SUBSCRIBE',
-    'UPDATE', 'JOIN', 'INFO', 'MESSAGE', 'NOTIFY', 'PRACK'
-    --'OPTIONS',
+    'INVITE * SIP/', 'CANCEL * SIP/', 'ACK * SIP/', 'BYE * SIP/', 'REGISTER * SIP/',
+    'REFER * SIP/', 'SUBSCRIBE * SIP/', 'UPDATE * SIP/', 'INFO * SIP/', 'MESSAGE * SIP/',
+    'NOTIFY * SIP/', 'PRACK * SIP/', 'OPTIONS * SIP/'
 }
 
 telnet_commands =
@@ -381,7 +382,7 @@ default_wizard =
           to_client = { '+OK', '-ERR' } },
 
         { service = 'sip', client_first = true,
-          to_server = sip_methods, to_client = { 'SIP/' } },
+          to_server = sip_requests, to_client = { 'SIP/' } },
 
         { service = 'smtp', proto = 'tcp', client_first = true,
           to_server = { 'HELO', 'EHLO' },
@@ -1191,7 +1192,7 @@ default_low_port_scan =
 default_whitelist =
 [[
     ftp_command_specs default_ftp_server smtp_default_alt_max_command_lines
-    default_smtp http_methods sip_methods telnet_commands default_wizard
+    default_smtp http_methods sip_requests telnet_commands default_wizard
     default_references default_classifications gtp_v0_msg gtp_v1_msg gtp_v2_msg
     gtp_v0_info gtp_v1_info gtp_v2_info default_gtp tcp_low_ports
     tcp_low_decoy tcp_low_sweep tcp_low_dist tcp_med_ports

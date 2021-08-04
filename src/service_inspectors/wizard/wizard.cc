@@ -150,6 +150,7 @@ public:
     MagicBook* s2c_spells;
 
     CurseBook* curses;
+    uint16_t max_pattern;
 };
 
 //-------------------------------------------------------------------------
@@ -215,6 +216,7 @@ Wizard::Wizard(WizardModule* m)
     s2c_spells = m->get_book(false, false);
 
     curses = m->get_curse_book();
+    max_pattern = m->get_max_pattern();
 }
 
 Wizard::~Wizard()
@@ -291,7 +293,7 @@ StreamSplitter* Wizard::get_splitter(bool c2s)
 bool Wizard::spellbind(
     const MagicPage*& m, Flow* f, const uint8_t* data, unsigned len)
 {
-    f->service = m->book.find_spell(data, len, m);
+    f->service = m->book.find_spell(data, len, max_pattern, m);
     return ( f->service != nullptr );
 }
 

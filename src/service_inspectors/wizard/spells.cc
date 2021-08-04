@@ -163,13 +163,11 @@ const MagicPage* SpellBook::find_spell(
 }
 
 const char* SpellBook::find_spell(
-    const uint8_t* data, unsigned len, const MagicPage*& p) const
+    const uint8_t* data, unsigned len, unsigned max, const MagicPage*& p) const
 {
-    // FIXIT-L make configurable upper bound to limit globbing
-    unsigned max = 64;
     assert(p);
 
-    if ( len > max )
+    if ( max and len > max )
         len = max;
 
     p = find_spell(data, len, p, 0);

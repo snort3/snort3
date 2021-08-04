@@ -106,17 +106,13 @@ static const Parameter s_params[] =
     { "curses", Parameter::PT_MULTI, "dce_smb | dce_udp | dce_tcp | sslv2", nullptr,
       "enable service identification based on internal algorithm" },
 
+    { "max_pattern", Parameter::PT_INT, "0:65535", "64",
+      "maximum scan depth per segment (0 is unlimited)" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-WizardModule::WizardModule() : Module(WIZ_NAME, WIZ_HELP, s_params)
-{
-    c2s_hexes = nullptr;
-    s2c_hexes = nullptr;
-    c2s_spells = nullptr;
-    s2c_spells = nullptr;
-    curses = nullptr;
-}
+WizardModule::WizardModule() : Module(WIZ_NAME, WIZ_HELP, s_params) { }
 
 WizardModule::~WizardModule()
 {
@@ -162,6 +158,9 @@ bool WizardModule::set(const char*, Value& v, SnortConfig*)
     }
     else if ( v.is("curses") )
         curses->add_curse(v.get_string());
+
+    else if ( v.is("max_pattern") )
+        max_pattern = v.get_uint16();
 
     return true;
 }
