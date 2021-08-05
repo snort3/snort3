@@ -29,6 +29,7 @@
 #include "protocols/packet.h"
 #include "pub_sub/smb_events.h"
 #include "utils/endian.h"
+#include "utils/util_cstring.h"
 
 #include "app_info_table.h"
 #include "dcerpc.h"
@@ -183,6 +184,52 @@ struct ServiceSMBHeader
     uint16_t mid;
 };
 
+struct ServiceSMB2Header
+{
+    uint16_t length;
+    uint16_t cc;
+    uint32_t status;
+    uint16_t command;
+    uint16_t cr;
+    uint32_t flags;
+    uint32_t nc;
+    uint32_t msg_id[2];
+    uint32_t proc;
+    uint32_t tree_id;
+    uint32_t session_id[2];
+    uint32_t sig[4];
+};
+
+struct ServiceSMB2SetupResponse
+{
+    uint16_t struct_size;
+    uint16_t flags;
+    uint16_t sec_offset;
+    uint16_t sec_length;
+};
+
+struct ServiceSMB2NtlmChallenge
+{
+    uint8_t signature[8];
+    uint32_t msg_type;
+    uint16_t target_name_len;
+    uint16_t target_name_max_len;
+    uint32_t target_name_offset;
+    uint32_t negotiate_flags;
+    uint8_t server_challenge[8];
+    uint8_t reserved[8];
+    uint16_t target_info_len;
+    uint16_t target_info_max_len;
+    uint32_t target_info_offset;
+    uint8_t version[8];
+};
+
+struct ServiceSMB2NtlmAttr
+{
+    uint16_t type;
+    uint16_t length;
+};
+
 struct ServiceSMBAndXResponse
 {
     uint8_t wc;
@@ -244,7 +291,11 @@ struct ServiceSMBTransactionHeader
 #define SERVICE_SMB_MAILSLOT_LOCAL_MASTER       0x0f
 #define SERVICE_SMB_MAILSLOT_SERVER_TYPE_XENIX  0x00000800
 #define SERVICE_SMB_MAILSLOT_SERVER_TYPE_NT     0x00001000
+#define SERVICE_SMB2_SESSION_SETUP              0x0001
+#define NTLM_CHALLENGE                          0x00000002
+#define NTLM_DOMAIN_FLAG                        0x0002
 static char mailslot[] = "\\MAILSLOT\\BROWSE";
+static char ntlmssp[] = "NTLMSSP";
 
 struct ServiceSMBBrowserHeader
 {
@@ -264,6 +315,7 @@ struct ServiceNBSSData
     uint32_t length;
     AppId serviceAppId;
     AppId miscAppId;
+    AppId payloadAppId;
 };
 
 struct NBDgmHeader
@@ -628,7 +680,72 @@ static inline void smb_domain_skip_string(const uint8_t** data, uint16_t* size, 
     }
 }
 
-static inline void smb_find_domain(const uint8_t* data, uint16_t size,
+static void smb2_find_domain(const uint8_t* data, uint16_t size,
+    AppIdSession& asd, AppidChangeBits& change_bits)
+{
+    if (size < sizeof(ServiceSMB2Header))
+        return;
+    const ServiceSMB2Header* smb2 = (const ServiceSMB2Header*)data;
+    if (smb2->command != SERVICE_SMB2_SESSION_SETUP)
+        return;
+    data += sizeof(*smb2);
+    size -= sizeof(*smb2);
+    if (size < sizeof(ServiceSMB2SetupResponse))
+        return;
+    const ServiceSMB2SetupResponse* resp = (const ServiceSMB2SetupResponse*)data;
+    if (resp->struct_size != 9 or resp->sec_length < 1)
+        return;
+    data += sizeof(*resp);
+    size -= sizeof(*resp);
+    if (size < resp->sec_length)
+        return;
+    const uint8_t* ptr = (const uint8_t*)SnortStrnStr((const char*)data, size, ntlmssp);
+    if (!ptr)
+        return;
+    size -= ptr - data;
+    data = ptr;
+    if (size < sizeof(ServiceSMB2NtlmChallenge))
+        return;
+    const ServiceSMB2NtlmChallenge* ntlm = (const ServiceSMB2NtlmChallenge*)data;
+    if (ntlm->msg_type != NTLM_CHALLENGE)
+        return;
+    data += sizeof(*ntlm);
+    size -= sizeof(*ntlm);
+    if (size < ntlm->target_name_len or ntlm->target_name_len < 1 or ntlm->target_info_len < 1)
+        return;
+    data += ntlm->target_name_len;
+    size -= ntlm->target_name_len;
+    const ServiceSMB2NtlmAttr* info;
+    while (true)
+    {
+        if (size < sizeof(ServiceSMB2NtlmAttr))
+            return;
+        info = (const ServiceSMB2NtlmAttr*)data;
+        data += sizeof(*info);
+        size -= sizeof(*info);
+        if (size < info->length or info->length == 0)
+            return;
+        if (info->type == NTLM_DOMAIN_FLAG)
+            break;
+        data += info->length;
+        size -= info->length;
+    }
+    char domain[NBNS_NAME_LEN+1];
+    unsigned pos = 0;
+    while (pos < (info->length)/2 and pos < NBNS_NAME_LEN)
+    {
+        domain[pos] = *data;
+        pos++;
+        domain[pos] = 0;
+        data++;
+        if (*data != 0)
+            return;
+        data++;
+    }
+    asd.set_netbios_domain(change_bits, (const char*)domain);
+}
+
+static void smb_find_domain(const uint8_t* data, uint16_t size,
     AppIdSession& asd, AppidChangeBits& change_bits)
 {
     const ServiceSMBHeader* smb;
@@ -768,70 +885,63 @@ static inline void smb_find_domain(const uint8_t* data, uint16_t size,
     }
 
     if (pos)
-        asd.set_netbios_domain(change_bits, (const char *)domain);
+        asd.set_netbios_domain(change_bits, (const char*)domain);
 }
 
-void NbssServiceDetector::parse_type_message(AppIdDiscoveryArgs& args, 
+void NbssServiceDetector::parse_type_message(AppIdDiscoveryArgs& args,
     const uint8_t* data, uint32_t tmp)
 {
     ServiceNBSSData* nd = (ServiceNBSSData*)data_get(args.asd);
 
-    if (tmp >= sizeof(NB_SMB_BANNER) and                                                
-        nd->length >= sizeof(NB_SMB_BANNER) and                                         
-        !memcmp(data, NB_SMB_BANNER, sizeof(NB_SMB_BANNER)))                            
-    {                                                                                   
-        if (nd->serviceAppId != APP_ID_DCE_RPC)                                         
-        {                                                                               
-            nd->serviceAppId = APP_ID_NETBIOS_SSN;                                      
-            add_payload(args.asd, APP_ID_SMB_VERSION_1);                                
-        }                                                                               
-                                                                                        
-        if (nd->length <= tmp)                                                          
-        {                                                                               
-            smb_find_domain(data + sizeof(NB_SMB_BANNER),                               
-                nd->length - sizeof(NB_SMB_BANNER), args.asd, args.change_bits);        
-        }                                                                               
-    }                                                                                   
-    else if (tmp >= sizeof(NB_SMB2_BANNER) and                                          
-        nd->length >= sizeof(NB_SMB2_BANNER) and                                        
-        !memcmp(data, NB_SMB2_BANNER, sizeof(NB_SMB2_BANNER)))                          
-    {                                                                                   
-        if (nd->serviceAppId != APP_ID_DCE_RPC)                                         
-        {                                                                               
-            nd->serviceAppId = APP_ID_NETBIOS_SSN;                                      
-            add_payload(args.asd, APP_ID_SMB_VERSION_2);                                
-        }                                                                               
-                                                                                        
-        if (nd->length <= tmp)                                                          
-        {                                                                               
-            smb_find_domain(data + sizeof(NB_SMB2_BANNER),                              
-                nd->length - sizeof(NB_SMB2_BANNER), args.asd, args.change_bits);       
-        }                                                                               
-    }                     
-    else if (tmp >= sizeof(NB_SMB2_TRANSFORM_BANNER) and                                
-        nd->length >= sizeof(NB_SMB2_TRANSFORM_BANNER) and                              
-        !memcmp(data, NB_SMB2_TRANSFORM_BANNER, sizeof(NB_SMB2_TRANSFORM_BANNER)))                
-    {                                                                                   
-        if (nd->serviceAppId != APP_ID_DCE_RPC)                                         
-        {                                                                               
-            nd->serviceAppId = APP_ID_NETBIOS_SSN;                                      
-            add_payload(args.asd, APP_ID_SMB_VERSION_3);                                
-        }                                                                               
-                                                                                        
-        if (nd->length <= tmp)                                                          
-        {                                                                               
-            smb_find_domain(data + sizeof(NB_SMB2_TRANSFORM_BANNER),                    
-                nd->length - sizeof(NB_SMB2_TRANSFORM_BANNER), args.asd,                
-                args.change_bits);                                                      
-        }                                                                               
-    }                                                                                   
-    else if (tmp >= 4 and nd->length >= 4 and                                           
-        !(*((const uint32_t*)data)) and                                                 
-        dcerpc_validate(data+4, ((int)std::min(tmp, nd->length)) - 4) > 0)              
-    {                                                                                   
-        nd->serviceAppId = APP_ID_DCE_RPC;                                              
-        nd->miscAppId = APP_ID_NETBIOS_SSN;                                             
-    }                                                                                                       
+    if (tmp >= sizeof(NB_SMB_BANNER) and
+        nd->length >= sizeof(NB_SMB_BANNER) and
+        !memcmp(data, NB_SMB_BANNER, sizeof(NB_SMB_BANNER)))
+    {
+        if (nd->serviceAppId != APP_ID_DCE_RPC)
+        {
+            nd->serviceAppId = APP_ID_NETBIOS_SSN;
+            nd->payloadAppId = APP_ID_SMB_VERSION_1;
+        }
+
+        if (nd->length <= tmp)
+        {
+            smb_find_domain(data + sizeof(NB_SMB_BANNER),
+                tmp - sizeof(NB_SMB_BANNER), args.asd, args.change_bits);
+        }
+    }
+    else if (tmp >= sizeof(NB_SMB2_BANNER) and
+        nd->length >= sizeof(NB_SMB2_BANNER) and
+        !memcmp(data, NB_SMB2_BANNER, sizeof(NB_SMB2_BANNER)))
+    {
+        if (nd->serviceAppId != APP_ID_DCE_RPC)
+        {
+            nd->serviceAppId = APP_ID_NETBIOS_SSN;
+            nd->payloadAppId = APP_ID_SMB_VERSION_2;
+        }
+
+        if (nd->length <= tmp)
+        {
+            smb2_find_domain(data + sizeof(NB_SMB2_BANNER),
+                tmp - sizeof(NB_SMB2_BANNER), args.asd, args.change_bits);
+        }
+    }
+    else if (tmp >= sizeof(NB_SMB2_TRANSFORM_BANNER) and
+        nd->length >= sizeof(NB_SMB2_TRANSFORM_BANNER) and
+        !memcmp(data, NB_SMB2_TRANSFORM_BANNER, sizeof(NB_SMB2_TRANSFORM_BANNER)))
+    {
+        if (nd->serviceAppId != APP_ID_DCE_RPC)
+        {
+            nd->serviceAppId = APP_ID_NETBIOS_SSN;
+            nd->payloadAppId = APP_ID_SMB_VERSION_3;
+        }
+    }
+    else if (tmp >= 4 and nd->length >= 4 and
+        !(*((const uint32_t*)data)) and
+        dcerpc_validate(data+4, ((int)std::min(tmp, nd->length)) - 4) > 0)
+    {
+        nd->serviceAppId = APP_ID_DCE_RPC;
+        nd->miscAppId = APP_ID_NETBIOS_SSN;
+    }
 }
 
 NbssServiceDetector::NbssServiceDetector(ServiceDiscovery* sd)
@@ -862,7 +972,6 @@ NbssServiceDetector::NbssServiceDetector(ServiceDiscovery* sd)
 
     handler->register_detector(name, this, proto);
 }
-
 
 int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -1014,21 +1123,24 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto fail;
         }
     }
-    if ( retval == -1 )
+    if (retval == -1)
         goto inprocess;
 
-    if ( !args.asd.is_service_detected() )
-        if ( add_service(args.change_bits, args.asd, args.pkt, dir, nd->serviceAppId) == APPID_SUCCESS )
+    if (!args.asd.is_service_detected())
+        if (add_service(args.change_bits, args.asd, args.pkt, dir, nd->serviceAppId) == APPID_SUCCESS)
+        {
             add_miscellaneous_info(args.asd, nd->miscAppId);
+            add_payload(args.asd, nd->payloadAppId);
+        }
     return APPID_SUCCESS;
 
 inprocess:
-    if ( !args.asd.is_service_detected() )
+    if (!args.asd.is_service_detected())
         service_inprocess(args.asd, args.pkt, dir);
     return APPID_INPROCESS;
 
 fail:
-    if ( !args.asd.is_service_detected() )
+    if (!args.asd.is_service_detected())
         fail_service(args.asd, args.pkt, dir);
     return APPID_NOMATCH;
 }
@@ -1152,7 +1264,7 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
 not_mailslot:
         if (source_name[0])
-            args.asd.set_netbios_name(args.change_bits, (const char *)source_name);
+            args.asd.set_netbios_name(args.change_bits, (const char*)source_name);
         args.asd.set_session_flags(APPID_SESSION_CONTINUE);
         goto success;
     case NBDGM_TYPE_ERROR:
@@ -1173,7 +1285,7 @@ not_mailslot:
     }
 
 fail:
-    if (!args.asd.is_service_detected() )
+    if (!args.asd.is_service_detected())
     {
         fail_service(args.asd, args.pkt, dir);
     }
@@ -1181,18 +1293,18 @@ fail:
     return APPID_NOMATCH;
 
 success:
-    if ( !args.asd.is_service_detected() )
+    if (!args.asd.is_service_detected())
     {
-        if ( dir == APP_ID_FROM_RESPONDER )
+        if (dir == APP_ID_FROM_RESPONDER)
         {
-            if ( add_service(args.change_bits, args.asd, args.pkt, dir, serviceAppId) == APPID_SUCCESS )
+            if (add_service(args.change_bits, args.asd, args.pkt, dir, serviceAppId) == APPID_SUCCESS)
                 add_miscellaneous_info(args.asd, miscAppId);
         }
     }
     return APPID_SUCCESS;
 
 inprocess:
-    if ( !args.asd.is_service_detected() )
+    if (!args.asd.is_service_detected())
         service_inprocess(args.asd, args.pkt, dir);
     return APPID_INPROCESS;
 }
@@ -1200,9 +1312,9 @@ inprocess:
 void NbdgmServiceDetector::add_smb_info(AppIdSession& asd, unsigned major, unsigned minor,
     uint32_t flags)
 {
-    if ( flags & FINGERPRINT_UDP_FLAGS_XENIX )
+    if (flags & FINGERPRINT_UDP_FLAGS_XENIX)
         return;
-    if ( asd.get_session_flags(APPID_SESSION_HAS_SMB_INFO) )
+    if (asd.get_session_flags(APPID_SESSION_HAS_SMB_INFO))
         return;
     asd.set_session_flags(APPID_SESSION_HAS_SMB_INFO);
     Packet* p = DetectionEngine::get_current_packet();
