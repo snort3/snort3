@@ -124,7 +124,7 @@ const Parameter HttpModule::http_params[] =
       "specifies the xff type headers to parse and consider in the same order "
       "of preference as defined" },
 
-    { "request_body_app_detection", Parameter::PT_BOOL, nullptr, "false",
+    { "request_body_app_detection", Parameter::PT_BOOL, nullptr, "true",
       "make HTTP/2 request message bodies available for application detection "
           "(detection requires AppId)" },
 

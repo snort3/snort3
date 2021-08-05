@@ -47,7 +47,7 @@ public:
     bool decompress_zip = false;
     bool script_detection = false;
     snort::LiteralSearch::Handle* script_detection_handle = nullptr;
-    bool publish_request_body = false;
+    bool publish_request_body = true;
 
     struct JsNormParam
     {
