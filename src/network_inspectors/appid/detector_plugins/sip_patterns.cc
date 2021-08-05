@@ -111,6 +111,7 @@ int SipPatternMatchers::add_server_pattern(AppId client_id, const char* client_v
         pattern);
 }
 
+#ifndef SIP_UNIT_TEST
 void SipPatternMatchers::finalize_patterns(OdpContext& odp_ctxt)
 {
     int num_patterns;
@@ -156,6 +157,7 @@ int SipPatternMatchers::get_client_from_ua(const char* pattern, uint32_t pattern
 {
     return get_sip_client_app(sip_ua_matcher, pattern, pattern_len, client_id, client_version);
 }
+#endif
 
 int SipPatternMatchers::get_client_from_server(const char* pattern, uint32_t pattern_len,
     AppId& client_id, char*& client_version)

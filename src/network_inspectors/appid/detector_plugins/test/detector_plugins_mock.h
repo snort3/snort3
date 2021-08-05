@@ -47,23 +47,12 @@ bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return true; 
 class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
 
 // Stubs for search_tool.cc
-SearchTool::SearchTool(const char*, bool) { }
 SearchTool::~SearchTool() = default;
 void SearchTool::add(const char*, unsigned, int, bool) { }
 void SearchTool::add(const char*, unsigned, void*, bool) { }
 void SearchTool::add(const uint8_t*, unsigned, int, bool) { }
 void SearchTool::add(const uint8_t*, unsigned, void*, bool) { }
 void SearchTool::prep() { }
-static bool test_find_all_done = false;
-static bool test_find_all_enabled = false;
-static MatchedPatterns* mock_mp = nullptr;
-int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void* mp_arg)
-{
-    test_find_all_done = true;
-    if (test_find_all_enabled)
-        memcpy(mp_arg, &mock_mp, sizeof(MatchedPatterns*));
-    return 0;
-}
 
 // Stubs for util.cc
 char* snort_strndup(const char* src, size_t dst_size)
@@ -90,17 +79,21 @@ DiscoveryFilter::~DiscoveryFilter(){}
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 
+#ifndef SIP_UNIT_TEST
 class AppIdInspector : public snort::Inspector
 {
 public:
     AppIdInspector(AppIdModule&) { }
     ~AppIdInspector() override = default;
     void eval(Packet*) override { }
-    bool configure(snort::SnortConfig*) override { return true; }
+    bool configure(snort::SnortConfig*) override;
     void show(const SnortConfig*) const override { }
     void tinit() override { }
     void tterm() override { }
+private:
+    AppIdContext* ctxt = nullptr;
 };
+#endif
 
 // Stubs for modules, config
 AppIdConfig::~AppIdConfig() = default;
@@ -151,9 +144,12 @@ AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);
 OdpContext stub_odp_ctxt(stub_config, nullptr);
 AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector& inspector,
-    OdpContext&, uint16_t) : snort::FlowData(inspector_id, (snort::Inspector*)&inspector), config(stub_config),
-        api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt) { }
-AppIdSession::~AppIdSession() = default;
+    OdpContext& odpctxt, uint16_t) : snort::FlowData(inspector_id, (snort::Inspector*)&inspector),
+        config(stub_config), api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(odpctxt)
+{
+    this->set_session_flags(APPID_SESSION_DISCOVER_APP);
+}
+AppIdSession::~AppIdSession() { delete &api; }
 AppIdHttpSession::AppIdHttpSession(AppIdSession& asd, uint32_t http2_stream_id)
   : asd(asd), http2_stream_id(http2_stream_id)
 {
@@ -222,4 +218,5 @@ int ServiceDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*)
 { }
 
+THREAD_LOCAL OdpContext* pkt_thread_odp_ctxt = nullptr;
 #endif

@@ -63,7 +63,18 @@ namespace snort
 {
 AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
+SearchTool::SearchTool(const char*, bool) { }
 void SearchTool::reload() { }
+static bool test_find_all_done = false;
+static bool test_find_all_enabled = false;
+static MatchedPatterns* mock_mp = nullptr;
+int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void* mp_arg)
+{
+    test_find_all_done = true;
+    if (test_find_all_enabled)
+        memcpy(mp_arg, &mock_mp, sizeof(MatchedPatterns*));
+    return 0;
+}
 }
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
@@ -79,6 +90,7 @@ DnsPatternMatchers::~DnsPatternMatchers() = default;
 SipPatternMatchers::~SipPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;
 void AppIdModule::reset_stats() {}
+bool AppIdInspector::configure(snort::SnortConfig*) { return true; }
 
 TEST_GROUP(http_url_patterns_tests)
 {
