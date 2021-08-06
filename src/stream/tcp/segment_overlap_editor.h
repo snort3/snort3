@@ -47,7 +47,6 @@ struct SegmentOverlapState
     uint32_t total_bytes_queued;    /* total bytes queued (life of session) */
     uint32_t total_segs_queued;     /* number of segments queued (life) */
     uint32_t overlap_count;         /* overlaps encountered */
-    uint32_t scan_total;
 
     uint32_t seq;
     uint32_t seq_end;

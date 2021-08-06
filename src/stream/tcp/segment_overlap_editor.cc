@@ -48,7 +48,6 @@ void SegmentOverlapState::init_sos(TcpSession* ssn, StreamPolicy pol)
     total_bytes_queued = 0;
     total_segs_queued = 0;
     overlap_count = 0;
-    scan_total = 0;
 
     tsd = nullptr;
     left = nullptr;
