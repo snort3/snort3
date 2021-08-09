@@ -25,23 +25,14 @@
 
 using namespace snort;
 
-JSNormalizer::JSNormalizer()
-    : depth(-1),
-      rem_bytes(-1),
+JSNormalizer::JSNormalizer(JSIdentifierCtxBase& js_ident_ctx, size_t norm_depth)
+    : depth(norm_depth),
+      rem_bytes(norm_depth),
       unlim(true),
       src_next(nullptr),
       dst_next(nullptr),
-      tokenizer(in, out)
+      tokenizer(in, out, js_ident_ctx)
 {
-}
-
-void JSNormalizer::set_depth(size_t new_depth)
-{
-    if (depth == new_depth)
-        return;
-
-    depth = new_depth;
-    rem_bytes = depth;
     unlim = depth == (size_t)-1;
 }
 
@@ -68,7 +59,9 @@ JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len, char
     if (!unlim)
         rem_bytes -= r_bytes;
     src_next = src + r_bytes;
-    dst_next = dst + w_bytes;
+
+    // avoid heap overflow if number of written bytes bigger than accepted dst_len
+    dst_next = (w_bytes <= dst_len) ? dst + w_bytes : dst + dst_len;
 
     return rem_bytes ? ret : JSTokenizer::EOS;
 }

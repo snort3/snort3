@@ -74,8 +74,13 @@ const Parameter HttpModule::http_params[] =
       "use legacy normalizer to normalize JavaScript in response bodies" },
 
     { "js_normalization_depth", Parameter::PT_INT, "-1:max53", "0",
-      "number of input JavaScript bytes to normalize with enhanced normalizer "
-      "(-1 max allowed value) (experimental)" },
+      "enable enhanced normalizer (0 is disabled); "
+      "number of input JavaScript bytes to normalize (-1 unlimited) "
+      "(experimental)" },
+
+    // range of accepted identifier names is (a0:z9999), so the max is 26 * 10000 = 260000
+    { "js_norm_identifier_depth", Parameter::PT_INT, "0:260000", "260000",
+      "max number of unique JavaScript identifiers to normalize" },
 
     { "max_javascript_whitespaces", Parameter::PT_INT, "1:65535", "200",
       "maximum consecutive whitespaces allowed within the JavaScript obfuscated data" },
@@ -205,6 +210,10 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
         params->js_norm_param.is_javascript_normalization =
             params->js_norm_param.is_javascript_normalization
             or params->js_norm_param.normalize_javascript;
+    }
+    else if (val.is("js_norm_identifier_depth"))
+    {
+        params->js_norm_param.js_identifier_depth = val.get_int32();
     }
     else if (val.is("js_normalization_depth"))
     {
@@ -400,7 +409,8 @@ bool HttpModule::end(const char*, int, SnortConfig*)
         ParseError("Cannot use normalize_javascript and js_normalization_depth together.");
 
     if ( params->js_norm_param.is_javascript_normalization )
-        params->js_norm_param.js_norm = new HttpJsNorm(params->uri_param, params->js_norm_param.js_normalization_depth);
+        params->js_norm_param.js_norm = new HttpJsNorm(params->uri_param,
+        params->js_norm_param.js_normalization_depth, params->js_norm_param.js_identifier_depth);
 
     params->script_detection_handle = script_detection_handle;
 

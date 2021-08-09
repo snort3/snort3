@@ -30,6 +30,7 @@
     #include "config.h"
     #endif
 
+    #include "utils/js_identifier_ctx.h"
     #include "utils/js_tokenizer.h"
 
     #include <cassert>
@@ -989,7 +990,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 {KEYWORD}                           { EXEC(do_spacing(KEYWORD)) ECHO; BEGIN(regst); }
 {OPERATOR}                          { EXEC(do_operator_spacing(OPERATOR)) ECHO; BEGIN(divop); }
 {LITERAL}                           { EXEC(do_spacing(LITERAL)) ECHO; BEGIN(divop); }
-{IDENTIFIER}                        { if (unescape(YYText())) { EXEC(do_spacing(IDENTIFIER)) ECHO; } BEGIN(divop); }
+{IDENTIFIER}                        { if (unescape(YYText())) { EXEC(do_spacing(IDENTIFIER)) EXEC(do_identifier_substitution(YYText())) } BEGIN(divop); }
 
 .|{ALL_UNICODE}                     { ECHO; token = UNDEFINED; BEGIN(INITIAL); }
 <<EOF>>                             { EXEC(eval_eof()) }
@@ -1072,8 +1073,9 @@ static std::string unescape_unicode(const char* lexeme)
 
 // JSTokenizer members
 
-JSTokenizer::JSTokenizer(std::istream& in, std::ostream& out)
-    : yyFlexLexer(in, out)
+JSTokenizer::JSTokenizer(std::istream& in, std::ostream& out, JSIdentifierCtxBase& ident_ctx)
+    : yyFlexLexer(in, out),
+      ident_ctx(ident_ctx)
 {
     BEGIN(regst);
 }
@@ -1162,6 +1164,19 @@ JSTokenizer::JSRet JSTokenizer::do_operator_spacing(JSToken cur_token)
     assert(false);
 
     return BAD_TOKEN;
+}
+
+JSTokenizer::JSRet JSTokenizer::do_identifier_substitution(const char* lexeme)
+{
+    const char* ident = ident_ctx.substitute(lexeme);
+
+    if (ident)
+    {
+        yyout << ident;
+        return EOS;
+    }
+
+    return IDENTIFIER_OVERFLOW;
 }
 
 bool JSTokenizer::unescape(const char* lexeme)

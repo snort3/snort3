@@ -24,6 +24,8 @@
 
 #include "log/messages.h"
 
+class JSIdentifierCtxBase;
+
 class JSTokenizer : public yyFlexLexer
 {
 private:
@@ -46,10 +48,11 @@ public:
         SCRIPT_CONTINUE,
         OPENING_TAG,
         CLOSING_TAG,
-        BAD_TOKEN
+        BAD_TOKEN,
+        IDENTIFIER_OVERFLOW
     };
 
-    JSTokenizer(std::istream& in, std::ostream& out);
+    JSTokenizer(std::istream& in, std::ostream& out, JSIdentifierCtxBase& ident_ctx);
     ~JSTokenizer() override;
 
     // returns JSRet
@@ -65,6 +68,7 @@ private:
     JSRet eval_eof();
     JSRet do_spacing(JSToken cur_token);
     JSRet do_operator_spacing(JSToken cur_token);
+    JSRet do_identifier_substitution(const char* lexeme);
     bool unescape(const char* lexeme);
 
 private:
@@ -73,6 +77,7 @@ private:
     std::stringstream tmp;
 
     JSToken token = UNDEFINED;
+    JSIdentifierCtxBase& ident_ctx;
 };
 
 #endif // JS_TOKENIZER_H

@@ -160,6 +160,7 @@ void HttpInspect::show(const SnortConfig*) const
         params->js_norm_param.max_javascript_whitespaces);
     ConfigLogger::log_value("js_normalization_depth",
         params->js_norm_param.js_normalization_depth);
+    ConfigLogger::log_value("js_norm_identifier_depth", params->js_norm_param.js_identifier_depth);
     ConfigLogger::log_value("bad_characters", bad_chars.c_str());
     ConfigLogger::log_value("ignore_unreserved", unreserved_chars.c_str());
     ConfigLogger::log_flag("percent_u", params->uri_param.percent_u);

@@ -15,51 +15,44 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// js_normalizer.h author Oleksandr Serhiienko <oserhiie@cisco.com>
+// js_identifier_ctx.h author Oleksandr Serhiienko <oserhiie@cisco.com>
 
-#ifndef JS_NORMALIZER_H
-#define JS_NORMALIZER_H
+#ifndef JS_IDENTIFIER_CTX
+#define JS_IDENTIFIER_CTX
 
-#include "main/snort_types.h"
+#include <string>
+#include <unordered_map>
 
-#include <FlexLexer.h>
-
-#include "js_tokenizer.h"
-
-namespace snort
-{
-
-class JSNormalizer
+class JSIdentifierCtxBase
 {
 public:
-    JSNormalizer(JSIdentifierCtxBase& js_ident_ctx, size_t depth);
+    virtual ~JSIdentifierCtxBase() = default;
 
-    const char* get_src_next() const
-    { return src_next; }
-
-    char* get_dst_next() const // this can go beyond dst length, but no writing happens outside of dst
-    { return dst_next; }
-
-    void reset_depth()
-    { rem_bytes = depth; }
-
-    JSTokenizer::JSRet normalize(const char* src, size_t src_len, char* dst, size_t dst_len);
-
-    static size_t size();
-
-private:
-    size_t depth;
-    size_t rem_bytes;
-    bool unlim;
-    const char* src_next;
-    char* dst_next;
-
-    std::stringstream in;
-    std::stringstream out;
-    JSTokenizer tokenizer;
+    virtual const char* substitute(const char* identifier) = 0;
+    virtual void reset() = 0;
+    virtual size_t size() const = 0;
 };
 
-}
+class JSIdentifierCtx : public JSIdentifierCtxBase
+{
+public:
+    JSIdentifierCtx(int32_t depth) : depth(depth) {}
 
-#endif //JS_NORMALIZER_H
+    const char* substitute(const char* identifier) override;
+    void reset() override;
+
+    // approximated to 500 unique mappings insertions
+    size_t size() const override
+    { return (sizeof(JSIdentifierCtx) + (sizeof(std::string) * 2 * 500)); }
+
+private:
+    int ident_first_name = 0;
+    int ident_last_name = -1;
+    int32_t unique_ident_cnt = 0;
+    int32_t depth;
+
+    std::unordered_map<std::string, std::string> ident_names;
+};
+
+#endif // JS_IDENTIFIER_CTX
 

@@ -25,6 +25,7 @@
 
 #include "decompress/file_decomp.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
+#include "utils/js_identifier_ctx.h"
 #include "utils/js_normalizer.h"
 
 #include "http_cutter.h"
@@ -91,6 +92,11 @@ HttpFlowData::~HttpFlowData()
         HttpModule::decrement_peg_counts(PEG_CONCURRENT_SESSIONS);
 
 #ifndef UNIT_TEST_BUILD
+    if (js_ident_ctx)
+    {
+        update_deallocations(js_ident_ctx->size());
+        delete js_ident_ctx;
+    }
     if (js_normalizer)
     {
         update_deallocations(JSNormalizer::size());
@@ -231,12 +237,24 @@ void HttpFlowData::garbage_collect()
 }
 
 #ifndef UNIT_TEST_BUILD
-snort::JSNormalizer& HttpFlowData::acquire_js_ctx()
+void HttpFlowData::reset_js_ident_ctx()
+{
+    if (js_ident_ctx)
+        js_ident_ctx->reset();
+}
+
+snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t ident_depth, size_t norm_depth)
 {
     if (js_normalizer)
         return *js_normalizer;
 
-    js_normalizer = new JSNormalizer();
+    if (!js_ident_ctx)
+    {
+        js_ident_ctx = new JSIdentifierCtx(ident_depth);
+        update_allocations(js_ident_ctx->size());
+    }
+
+    js_normalizer = new JSNormalizer(*js_ident_ctx, norm_depth);
     update_allocations(JSNormalizer::size());
 
     return *js_normalizer;
@@ -252,7 +270,9 @@ void HttpFlowData::release_js_ctx()
     js_normalizer = nullptr;
 }
 #else
-snort::JSNormalizer& HttpFlowData::acquire_js_ctx() { return *js_normalizer; }
+void HttpFlowData::reset_js_ident_ctx() {}
+snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t, size_t)
+{ return *js_normalizer; }
 void HttpFlowData::release_js_ctx() {}
 #endif
 

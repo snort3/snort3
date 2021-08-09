@@ -38,6 +38,7 @@ class HttpJsNorm;
 class HttpMsgSection;
 class HttpCutter;
 class HttpQueryParser;
+class JSIdentifierCtxBase;
 
 namespace snort
 {
@@ -193,10 +194,12 @@ private:
     bool ssl_search_abandoned = false;
 
     // *** HttpJsNorm
+    JSIdentifierCtxBase* js_ident_ctx = nullptr;
     snort::JSNormalizer* js_normalizer = nullptr;
     bool js_built_in_event = false;
 
-    snort::JSNormalizer& acquire_js_ctx();
+    void reset_js_ident_ctx();
+    snort::JSNormalizer& acquire_js_ctx(int32_t ident_depth, size_t norm_depth);
     void release_js_ctx();
 
     // *** Transaction management including pipelining

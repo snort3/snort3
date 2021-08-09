@@ -53,9 +53,11 @@ LiteralSearch* LiteralSearch::instantiate(LiteralSearch::Handle*, const uint8_t*
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 
-HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_, int64_t normalization_depth_) :
+HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_, int64_t normalization_depth_,
+    int32_t identifier_depth_) :
     uri_param(uri_param_), normalization_depth(normalization_depth_),
-    mpse_otag(nullptr), mpse_attr(nullptr), mpse_type(nullptr) {}
+    identifier_depth(identifier_depth_), mpse_otag(nullptr), mpse_attr(nullptr),
+    mpse_type(nullptr) {}
 HttpJsNorm::~HttpJsNorm() = default;
 void HttpJsNorm::configure() {}
 int64_t Parameter::get_int(char const*) { return 0; }

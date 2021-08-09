@@ -432,6 +432,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_JS_CLOSING_TAG,             "unexpected script closing tag in JavaScript" },
     { EVENT_JS_CODE_IN_EXTERNAL,        "JavaScript code under the external script tags" },
     { EVENT_JS_SHORTENED_TAG,           "script opening tag in a short form" },
+    { EVENT_JS_IDENTIFIER_OVERFLOW,     "max number of unique JavaScript identifiers reached" },
     { 0, nullptr }
 };
 
@@ -471,6 +472,9 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "js_inline_scripts", "total number of inline JavaScripts processed" },
     { CountType::SUM, "js_external_scripts", "total number of external JavaScripts processed" },
     { CountType::SUM, "js_bytes", "total number of JavaScript bytes processed" },
+    { CountType::SUM, "js_identifiers", "total number of unique JavaScript identifiers processed" },
+    { CountType::SUM, "js_identifier_overflows", "total number of unique JavaScript identifier "
+        "limit overflows" },
     { CountType::END, nullptr, nullptr }
 };
 

@@ -25,6 +25,7 @@
 
 #include <cstring>
 
+#include "utils/js_identifier_ctx.h"
 #include "utils/js_normalizer.h"
 
 namespace snort
@@ -34,17 +35,28 @@ namespace snort
 { exit(EXIT_FAILURE); }
 }
 
+class JSIdentifierCtxTest : public JSIdentifierCtxBase
+{
+public:
+    JSIdentifierCtxTest() = default;
+
+    const char* substitute(const char* identifier) override
+    { return identifier; }
+    void reset() override {}
+    size_t size() const override {}
+};
+
 using namespace snort;
 
 #define DEPTH 65535
 
-#define NORMALIZE(src, expected)                                    \
-    char dst[sizeof(expected)];                                     \
-    JSNormalizer norm;                                              \
-    norm.set_depth(DEPTH);                                          \
-    auto ret = norm.normalize(src, sizeof(src), dst, sizeof(dst));  \
-    const char* ptr = norm.get_src_next();                          \
-    int act_len = norm.get_dst_next() - dst;                        \
+#define NORMALIZE(src, expected)                                   \
+    char dst[sizeof(expected)];                                    \
+    JSIdentifierCtxTest ident_ctx;                                 \
+    JSNormalizer norm(ident_ctx, DEPTH);                           \
+    auto ret = norm.normalize(src, sizeof(src), dst, sizeof(dst)); \
+    const char* ptr = norm.get_src_next();                         \
+    int act_len = norm.get_dst_next() - dst;
 
 #define VALIDATE(src, expected)                 \
     CHECK(ret == JSTokenizer::SCRIPT_CONTINUE); \
@@ -52,20 +64,20 @@ using namespace snort;
     CHECK(act_len == sizeof(expected) - 1);     \
     CHECK(!memcmp(dst, expected, act_len));
 
-#define VALIDATE_FAIL(src, expected, ret_code, ptr_offset)  \
-    CHECK(ret == ret_code);                                 \
-    CHECK((ptr - src) == ptr_offset);                       \
-    CHECK(act_len == sizeof(expected) - 1);                 \
+#define VALIDATE_FAIL(src, expected, ret_code, ptr_offset) \
+    CHECK(ret == ret_code);                                \
+    CHECK((ptr - src) == ptr_offset);                      \
+    CHECK(act_len == sizeof(expected) - 1);                \
     CHECK(!memcmp(dst, expected, act_len));
 
-#define NORMALIZE_L(src, src_len, dst, dst_len, depth, ret, ptr, len)   \
-    {                                                                   \
-        JSNormalizer norm;                                              \
-        norm.set_depth(depth);                                          \
-        ret = norm.normalize(src, src_len, dst, dst_len);               \
-        ptr = norm.get_src_next();                                      \
-        len = norm.get_dst_next() - dst;                                \
-    }                                                                   \
+#define NORMALIZE_L(src, src_len, dst, dst_len, depth, ret, ptr, len) \
+    {                                                                 \
+        JSIdentifierCtxTest ident_ctx;                                \
+        JSNormalizer norm(ident_ctx, depth);                          \
+        ret = norm.normalize(src, src_len, dst, dst_len);             \
+        ptr = norm.get_src_next();                                    \
+        len = norm.get_dst_next() - dst;                              \
+    }
 
 // ClamAV test cases
 static const char clamav_buf0[] =
@@ -869,9 +881,8 @@ TEST_CASE("endings", "[JSNormalizer]")
         const char* ptr;
         int ret;
 
-        JSNormalizer norm;
-
-        norm.set_depth(7);
+        JSIdentifierCtxTest ident_ctx;
+        JSNormalizer norm(ident_ctx, 7);
         ret = norm.normalize(src, sizeof(src), dst, sizeof(dst));
         ptr = norm.get_src_next();
         act_len = norm.get_dst_next() - dst;
@@ -902,7 +913,7 @@ TEST_CASE("endings", "[JSNormalizer]")
 
         CHECK(ret == JSTokenizer::SCRIPT_CONTINUE);
         CHECK(ptr == src + sizeof(src));
-        CHECK(act_len == 12); // size of normalized src
+        CHECK(act_len == 7); // size of normalized src
         CHECK(!memcmp(dst, expected, sizeof(dst)));
     }
 }
@@ -1239,3 +1250,4 @@ TEST_CASE("nested script tags", "[JSNormalizer]")
         VALIDATE_FAIL(unexpected_tag_buf24, unexpected_tag_expected24, JSTokenizer::OPENING_TAG, 39);
     }
 }
+
