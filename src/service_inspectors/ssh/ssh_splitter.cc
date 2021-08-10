@@ -119,14 +119,20 @@ StreamSplitter::Status SshSplitter::scan(
             return ABORT;
     }
 
-    if ((sessp->state_flags & SSH_FLG_SERV_IDSTRING_SEEN)
-        and (sessp->state_flags & SSH_FLG_CLIENT_IDSTRING_SEEN))
+    if (sessp->state_flags & SSH_FLG_SESS_ENCRYPTED)
+    {
+        state = SSH_PAF_ENCRYPTED;
+    }
+    else if (((flags & PKT_FROM_SERVER) 
+        and (sessp->state_flags & SSH_FLG_SERV_IDSTRING_SEEN))
+        or ((flags & PKT_FROM_CLIENT)
+        and (sessp->state_flags & SSH_FLG_CLIENT_IDSTRING_SEEN)))
     {
         state = SSH_PAF_KEY_EXCHANGE;
     }
-
-    if (sessp->state_flags & SSH_FLG_SESS_ENCRYPTED)
+    else if (!(isprint(data[0]) or isspace(data[0])))
     {
+        sessp->state_flags |= SSH_FLG_MISSED_PACKETS;
         state = SSH_PAF_ENCRYPTED;
     }
 
@@ -134,19 +140,13 @@ StreamSplitter::Status SshSplitter::scan(
     {
     case SSH_PAF_VER_EXCHANGE:
     {
-        uint32_t n = len;
-        const uint8_t* lf = nullptr, * tmp = data;
-
-        while ((tmp = (const uint8_t*)memchr(tmp, '\n', n)))
+        const uint8_t *lf = (const uint8_t*)memchr(data, '\n', len);
+        if (lf)
         {
-            lf = tmp++;
-            n = len - (tmp - data);
+            *fp = lf - data + 1;
+            return FLUSH;
         }
-        if (!lf)
-            return SEARCH;
-
-        *fp = lf - data + 1;
-        return FLUSH;
+        return SEARCH;
     }
     case SSH_PAF_KEY_EXCHANGE:
     {
