@@ -34,6 +34,7 @@
 #include "stream/stream.h"
 
 #include "dns_module.h"
+#include "dns_splitter.h"
 
 using namespace snort;
 
@@ -1012,6 +1013,7 @@ public:
     Dns(DnsModule*);
 
     void eval(Packet*) override;
+    StreamSplitter* get_splitter(bool) override;
 };
 
 Dns::Dns(DnsModule*)
@@ -1025,6 +1027,11 @@ void Dns::eval(Packet* p)
 
     ++dnsstats.packets;
     snort_dns(p);
+}
+
+StreamSplitter* Dns::get_splitter(bool c2s)
+{
+    return new DnsSplitter(c2s);
 }
 
 //-------------------------------------------------------------------------

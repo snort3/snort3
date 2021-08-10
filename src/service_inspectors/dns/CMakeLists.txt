@@ -4,6 +4,8 @@ set( FILE_LIST
     dns.h
     dns_module.cc
     dns_module.h
+    dns_splitter.cc
+    dns_splitter.h
 )
 
 if (STATIC_INSPECTORS)
