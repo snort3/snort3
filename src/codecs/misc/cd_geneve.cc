@@ -59,10 +59,10 @@ struct GeneveOpt
     { return (g_type); }
 
     uint8_t olen() const
-    { return (sizeof(GeneveOpt) + (g_len * 4)); }
+    { return (sizeof(GeneveOpt) + ((g_len & 0x1f) * 4)); }
 
     uint8_t len() const
-    { return (g_len * 4); }
+    { return ((g_len & 0x1f) * 4); }
 };
 
 static const RuleMap geneve_rules[] =
