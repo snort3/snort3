@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.9.0 2021-07-28 06:22:26 EDT TST
+Revision 3.1.10.0 2021-08-11 07:53:39 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1636,6 +1636,7 @@ Configuration:
   * int trace.modules.all: enable trace for all modules { 0:255 }
   * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
   * int trace.modules.dpx.all: enable all trace options { 0:255 }
+  * int trace.modules.file_id.all: enable all trace options { 0:255 }
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
     manager trace logging { 0:255 }
@@ -3667,9 +3668,11 @@ Configuration:
     immediately upon script end
   * bool http_inspect.normalize_javascript = false: use legacy
     normalizer to normalize JavaScript in response bodies
-  * int http_inspect.js_normalization_depth = 0: number of input
-    JavaScript bytes to normalize with enhanced normalizer (-1 max
-    allowed value) (experimental) { -1:max53 }
+  * int http_inspect.js_normalization_depth = 0: enable enhanced
+    normalizer (0 is disabled); number of input JavaScript bytes to
+    normalize (-1 unlimited) (experimental) { -1:max53 }
+  * int http_inspect.js_norm_identifier_depth = 260000: max number of
+    unique JavaScript identifiers to normalize { 0:260000 }
   * int http_inspect.max_javascript_whitespaces = 200: maximum
     consecutive whitespaces allowed within the JavaScript obfuscated
     data { 1:65535 }
@@ -3705,7 +3708,7 @@ Configuration:
   * string http_inspect.xff_headers = x-forwarded-for true-client-ip:
     specifies the xff type headers to parse and consider in the same
     order of preference as defined
-  * bool http_inspect.request_body_app_detection = false: make HTTP/2
+  * bool http_inspect.request_body_app_detection = true: make HTTP/2
     request message bodies available for application detection
     (detection requires AppId)
 
@@ -3850,6 +3853,8 @@ Rules:
   * 119:268 (http_inspect) JavaScript code under the external script
     tags
   * 119:269 (http_inspect) script opening tag in a short form
+  * 119:270 (http_inspect) max number of unique JavaScript
+    identifiers reached
 
 Peg counts:
 
@@ -3905,6 +3910,10 @@ Peg counts:
     JavaScripts processed (sum)
   * http_inspect.js_bytes: total number of JavaScript bytes processed
     (sum)
+  * http_inspect.js_identifiers: total number of unique JavaScript
+    identifiers processed (sum)
+  * http_inspect.js_identifier_overflows: total number of unique
+    JavaScript identifier limit overflows (sum)
 
 
 5.25. iec104
@@ -5681,8 +5690,8 @@ Instance Type: multiton
 
 Configuration:
 
-  * int telnet.ayt_attack_thresh = -1: alert on this number of
-    consecutive Telnet AYT commands { -1:max31 }
+  * int telnet.ayt_attack_thresh = -1: alert beyond this number of
+    consecutive Telnet AYT commands (-1 is disabled) { -1:max31 }
   * bool telnet.check_encrypted = false: check for end of encryption
   * bool telnet.encrypted_traffic = false: check for encrypted Telnet
   * bool telnet.normalize = false: eliminate escape sequences
@@ -5737,6 +5746,8 @@ Configuration:
     wild cards (*)
   * multi wizard.curses: enable service identification based on
     internal algorithm { dce_smb | dce_udp | dce_tcp | sslv2 }
+  * int wizard.max_pattern = 64: maximum scan depth per segment (0 is
+    unlimited) { 0:65535 }
 
 Peg counts:
 
@@ -9133,9 +9144,11 @@ these libraries see the Getting Started section of the manual.
     mapping to normalize characters
   * string http_inspect.iis_unicode_map_file: file containing code
     points for IIS unicode. { (optional) }
-  * int http_inspect.js_normalization_depth = 0: number of input
-    JavaScript bytes to normalize with enhanced normalizer (-1 max
-    allowed value) (experimental) { -1:max53 }
+  * int http_inspect.js_normalization_depth = 0: enable enhanced
+    normalizer (0 is disabled); number of input JavaScript bytes to
+    normalize (-1 unlimited) (experimental) { -1:max53 }
+  * int http_inspect.js_norm_identifier_depth = 260000: max number of
+    unique JavaScript identifiers to normalize { 0:260000 }
   * int http_inspect.max_javascript_whitespaces = 200: maximum
     consecutive whitespaces allowed within the JavaScript obfuscated
     data { 1:65535 }
@@ -9149,7 +9162,7 @@ these libraries see the Getting Started section of the manual.
     encodings
   * bool http_inspect.plus_to_space = true: replace + with <sp> when
     normalizing URIs
-  * bool http_inspect.request_body_app_detection = false: make HTTP/2
+  * bool http_inspect.request_body_app_detection = true: make HTTP/2
     request message bodies available for application detection
     (detection requires AppId)
   * int http_inspect.request_depth = -1: maximum request message body
@@ -10352,8 +10365,8 @@ these libraries see the Getting Started section of the manual.
   * string tcp_connector[].connector: connector name
   * enum tcp_connector[].setup: stream establishment { call | answer
     }
-  * int telnet.ayt_attack_thresh = -1: alert on this number of
-    consecutive Telnet AYT commands { -1:max31 }
+  * int telnet.ayt_attack_thresh = -1: alert beyond this number of
+    consecutive Telnet AYT commands (-1 is disabled) { -1:max31 }
   * bool telnet.check_encrypted = false: check for end of encryption
   * bool telnet.encrypted_traffic = false: check for encrypted Telnet
   * bool telnet.normalize = false: eliminate escape sequences
@@ -10370,6 +10383,7 @@ these libraries see the Getting Started section of the manual.
   * int trace.modules.all: enable trace for all modules { 0:255 }
   * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
   * int trace.modules.dpx.all: enable all trace options { 0:255 }
+  * int trace.modules.file_id.all: enable all trace options { 0:255 }
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
     manager trace logging { 0:255 }
@@ -10407,6 +10421,8 @@ these libraries see the Getting Started section of the manual.
     chars (?)
   * string wizard.hexes[].to_server[].hex: sequence of data with wild
     chars (?)
+  * int wizard.max_pattern = 64: maximum scan depth per segment (0 is
+    unlimited) { 0:65535 }
   * bool wizard.spells[].client_first = true: which end initiates
     data transfer
   * select wizard.spells[].proto = tcp: protocol to scan { tcp | udp
@@ -10966,6 +10982,10 @@ these libraries see the Getting Started section of the manual.
     (sum)
   * http_inspect.js_external_scripts: total number of external
     JavaScripts processed (sum)
+  * http_inspect.js_identifier_overflows: total number of unique
+    JavaScript identifier limit overflows (sum)
+  * http_inspect.js_identifiers: total number of unique JavaScript
+    identifiers processed (sum)
   * http_inspect.js_inline_scripts: total number of inline
     JavaScripts processed (sum)
   * http_inspect.max_concurrent_sessions: maximum concurrent http
@@ -11954,6 +11974,8 @@ these libraries see the Getting Started section of the manual.
   * 119:268 (http_inspect) JavaScript code under the external script
     tags
   * 119:269 (http_inspect) script opening tag in a short form
+  * 119:270 (http_inspect) max number of unique JavaScript
+    identifiers reached
   * 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
   * 121:2 (http2_inspect) HPACK integer value has leading zeros
   * 121:3 (http2_inspect) HTTP/2 stream initiated with invalid stream

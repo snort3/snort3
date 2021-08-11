@@ -1,3 +1,22 @@
+2021/08/11 - 3.1.10.0
+
+appid: update netbios-ss (SMB) detector to extract SMB domain from SMBv2, and more intelligently handle payload appid detection
+appid: use packet thread odp context while creating SIP session
+build: install DAQ modules and Snort plugins in separate folders
+dce_smb: restore file tracker size post deletion
+dns: add DNS splitter
+doc: update user manual for identifier normalization
+file_api: add infra and file debugs to existing debugging framework
+ftp: remove unused defines and crufty comments
+http_inspect: add JavaScript identifiers normalization
+http_inspect: change the default value of request_body_app_detection config parameter to true
+smtp: remove unused defines
+ssh: handle traffic with invalid version string
+ssh: handle version string packets that also contain key exchange data
+stream_tcp: skip unordered segments if last flushed position already moved past
+telnet: correct help for ayt_attack_thresh
+wizard: add wizard max_pattern option and update HTTP/SIP aware methods patterns
+
 2021/07/28 - 3.1.9.0
 
 actions: allow session data to stay accessible for loggers for reject rule action

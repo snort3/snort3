@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.9.0 2021-07-28 06:22:15 EDT TST
+Revision 3.1.10.0 2021-08-11 07:53:28 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -3895,11 +3895,30 @@ means that normalizer is disabled. The enhanced normalizer provides
 more precise whitespace normalization of JavaScript, that removes all
 redundant whitespaces and line terminators from the JavaScript syntax
 point of view (between identifier and punctuator, between identifier
-and operator, etc.) according to ECMAScript 5.1 standard. The
-normalized data is available through the script_data rule option.
-This is currently experimental and still under development.
+and operator, etc.) according to ECMAScript 5.1 standard.
+Additionally, it performs normalization of JavaScript identifiers
+making a substitution of unique names with unified names
+representation: a0 → z9999. The identifiers are variables and
+function names. The normalized data is available through the
+script_data rule option. This is currently experimental and still
+under development.
 
-5.10.2.9. xff_headers
+5.10.2.9. js_norm_identifier_depth
+
+js_norm_identifier_depth = N {0 : 260000} will set a number of unique
+JavaScript identifiers to normalize. When the depth is reached, a
+built-in alert is generated. It’s implemented per HTTP transaction
+(request/response), so the context of identifier substitutions is
+shared between all the scripts in the payload. By default, the value
+is set to 260000, which is the max allowed number of unique
+identifiers. The generated names are in the range from a0 to z9999.
+Thus, the number of unique identifiers cannot be greater than 26 *
+10000 = 260000. This option takes effect only if
+js_normalization_depth is set to a non-zero value, enabling the
+enhanced normalizer. This is currently experimental and still under
+development.
+
+5.10.2.10. xff_headers
 
 This configuration supports defining custom x-forwarded-for type
 headers. In a multi-vendor world, it is quite possible that the
@@ -3914,7 +3933,7 @@ they are defined, e.g "x-forwarded-for" will be preferred than
 "true-client-ip" if both headers are present in the stream. The
 header names should be delimited by a space.
 
-5.10.2.10. URI processing
+5.10.2.11. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize
