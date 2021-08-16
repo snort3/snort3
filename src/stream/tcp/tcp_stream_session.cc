@@ -231,7 +231,7 @@ bool TcpStreamSession::are_packets_missing(uint8_t dir)
 
 bool TcpStreamSession::are_client_segments_queued()
 {
-    return client.reassembler.get_seg_count() > 0;
+    return client.reassembler.is_segment_pending_flush();
 }
 
 bool TcpStreamSession::add_alert(Packet* p, uint32_t gid, uint32_t sid)

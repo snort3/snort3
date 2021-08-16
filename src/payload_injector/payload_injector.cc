@@ -120,12 +120,12 @@ InjectionReturnStatus PayloadInjector::inject_http_payload(Packet* p,
         {
             EncodeFlags df = ENC_FLAG_RST_SRVR; // Send RST to server.
 
-            if (p->packet_flags & PKT_STREAM_EST)
+            if (!p->flow)
+                status = ERR_UNIDENTIFIED_PROTOCOL;
+            else if (p->flow->ssn_state.session_flags & SSNFLAG_ESTABLISHED)
             {
-                if (!p->flow)
-                    status = ERR_UNIDENTIFIED_PROTOCOL;
-                else if (!p->flow->gadget || strcmp(p->flow->gadget->get_name(),"http_inspect") ==
-                    0)
+                // FIXIT-M should we be supporting injection when there is no gadget on the flow?
+                if (!p->flow->gadget || strcmp(p->flow->gadget->get_name(), "http_inspect") == 0)
                 {
                     if (p->flow->session and
                         p->flow->session->are_client_segments_queued())

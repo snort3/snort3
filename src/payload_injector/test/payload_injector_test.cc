@@ -172,6 +172,7 @@ TEST_GROUP(payload_injector_test)
         control.http_page = (const uint8_t*)"test";
         control.http_page_len = 4;
         flow.set_state(Flow::FlowState::INSPECT);
+        flow.set_session_flags(SSNFLAG_ESTABLISHED);
         translation_status = INJECTION_SUCCESS;
         http2_flow_data.set_mid_frame(false);
     }
@@ -194,7 +195,6 @@ TEST(payload_injector_test, not_configured_stream_established)
 {
     Packet p(false);
     set_not_configured();
-    p.packet_flags = PKT_STREAM_EST;
     p.flow = &flow;
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
     CHECK(counts->http_injects == 0);
@@ -207,6 +207,7 @@ TEST(payload_injector_test, configured_stream_not_established)
     Packet p(false);
     set_configured();
     p.flow = &flow;
+    flow.update_session_flags(0);
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
     CHECK(counts->http_injects == 0);
     CHECK(status == ERR_STREAM_NOT_ESTABLISHED);
@@ -219,7 +220,6 @@ TEST(payload_injector_test, configured_stream_established)
 {
     Packet p(false);
     set_configured();
-    p.packet_flags = PKT_STREAM_EST;
     mock_api.base.name = "http_inspect";
     flow.gadget = new MockInspector();
     p.flow = &flow;
@@ -235,7 +235,6 @@ TEST(payload_injector_test, http2_stream0)
 {
     Packet p(false);
     set_configured();
-    p.packet_flags = PKT_STREAM_EST;
     mock_api.base.name = "http2_inspect";
     flow.gadget = new MockInspector();
     p.flow = &flow;
@@ -252,7 +251,6 @@ TEST(payload_injector_test, http2_even_stream_id)
 {
     Packet p(false);
     set_configured();
-    p.packet_flags = PKT_STREAM_EST;
     mock_api.base.name = "http2_inspect";
     flow.gadget = new MockInspector();
     p.flow = &flow;
@@ -270,7 +268,6 @@ TEST(payload_injector_test, http2_success)
 {
     Packet p(false);
     set_configured();
-    p.packet_flags = PKT_STREAM_EST;
     mock_api.base.name = "http2_inspect";
     flow.gadget = new MockInspector();
     p.flow = &flow;
@@ -287,7 +284,6 @@ TEST(payload_injector_test, unidentified_gadget_is_null)
 {
     Packet p(false);
     set_configured();
-    p.packet_flags = PKT_STREAM_EST;
     p.flow = &flow;
     p.active = &active;
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
@@ -300,7 +296,6 @@ TEST(payload_injector_test, unidentified_gadget_name)
 {
     Packet p(false);
     set_configured();
-    p.packet_flags = PKT_STREAM_EST;
     mock_api.base.name = "inspector";
     flow.gadget = new MockInspector();
     p.flow = &flow;
@@ -314,7 +309,6 @@ TEST(payload_injector_test, http2_mid_frame)
 {
     Packet p(false);
     set_configured();
-    p.packet_flags = PKT_STREAM_EST;
     mock_api.base.name = "http2_inspect";
     flow.gadget = new MockInspector();
     p.flow = &flow;
@@ -334,7 +328,6 @@ TEST(payload_injector_test, http2_continuation_expected)
 {
     Packet p(false);
     set_configured();
-    p.packet_flags = PKT_STREAM_EST;
     mock_api.base.name = "http2_inspect";
     flow.gadget = new MockInspector();
     p.flow = &flow;
@@ -364,7 +357,6 @@ TEST(payload_injector_test, flow_is_null)
 {
     Packet p(false);
     set_configured();
-    p.packet_flags = PKT_STREAM_EST;
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
     CHECK(counts->http_injects == 0);
     CHECK(status == ERR_UNIDENTIFIED_PROTOCOL);
@@ -389,6 +381,7 @@ TEST_GROUP(payload_injector_translate_err_test)
         control.http_page = (const uint8_t*)"test";
         control.http_page_len = 4;
         flow.set_state(Flow::FlowState::INSPECT);
+        flow.set_session_flags(SSNFLAG_ESTABLISHED);
         http2_flow_data.set_mid_frame(false);
         mock_api.base.name = "http2_inspect";
         flow.gadget = new MockInspector();
@@ -408,7 +401,6 @@ TEST(payload_injector_translate_err_test, http2_page_translation_err)
 {
     Packet p(false);
     set_configured();
-    p.packet_flags = PKT_STREAM_EST;
     p.flow = &flow;
     translation_status = ERR_PAGE_TRANSLATION;
     status = PayloadInjector::inject_http_payload(&p, control);
@@ -421,7 +413,6 @@ TEST(payload_injector_translate_err_test, http2_hdrs_size)
 {
     Packet p(false);
     set_configured();
-    p.packet_flags = PKT_STREAM_EST;
     p.flow = &flow;
     translation_status = ERR_TRANSLATED_HDRS_SIZE;
     status = PayloadInjector::inject_http_payload(&p, control);
@@ -434,7 +425,6 @@ TEST(payload_injector_translate_err_test, conflicting_s2c_traffic)
 {
     Packet p(false);
     set_configured();
-    p.packet_flags = PKT_STREAM_EST;
     p.flow = &flow;
     translation_status = ERR_CONFLICTING_S2C_TRAFFIC;
     status = PayloadInjector::inject_http_payload(&p, control);
