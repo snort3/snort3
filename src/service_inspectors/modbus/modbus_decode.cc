@@ -101,7 +101,7 @@ struct modbus_header_t
 static void ModbusCheckRequestLengths(modbus_session_data_t* session, Packet* p)
 {
     uint16_t modbus_payload_len = p->dsize - MODBUS_MIN_LEN;
-    uint8_t tmp_count;
+    uint8_t byte_count;
     bool check_passed = false;
 
     switch (session->func)
@@ -129,9 +129,9 @@ static void ModbusCheckRequestLengths(modbus_session_data_t* session, Packet* p)
     case MODBUS_FUNC_WRITE_MULTIPLE_REGISTERS:
         if (modbus_payload_len >= MODBUS_WRITE_MULTIPLE_MIN_SIZE)
         {
-            tmp_count = *(p->data + MODBUS_MIN_LEN +
+            byte_count = *(p->data + MODBUS_MIN_LEN +
                 MODBUS_WRITE_MULTIPLE_BYTE_COUNT_OFFSET);
-            if (modbus_payload_len == tmp_count + MODBUS_WRITE_MULTIPLE_MIN_SIZE)
+            if (modbus_payload_len == byte_count + MODBUS_WRITE_MULTIPLE_MIN_SIZE)
                 check_passed = true;
         }
         break;
@@ -144,9 +144,9 @@ static void ModbusCheckRequestLengths(modbus_session_data_t* session, Packet* p)
     case MODBUS_FUNC_READ_WRITE_MULTIPLE_REGISTERS:
         if (modbus_payload_len >= MODBUS_READ_WRITE_MULTIPLE_MIN_SIZE)
         {
-            tmp_count = *(p->data + MODBUS_MIN_LEN +
+            byte_count = *(p->data + MODBUS_MIN_LEN +
                 MODBUS_READ_WRITE_MULTIPLE_BYTE_COUNT_OFFSET);
-            if (modbus_payload_len == MODBUS_READ_WRITE_MULTIPLE_MIN_SIZE + tmp_count)
+            if (modbus_payload_len == MODBUS_READ_WRITE_MULTIPLE_MIN_SIZE + byte_count)
                 check_passed = true;
         }
         break;
@@ -179,9 +179,9 @@ static void ModbusCheckRequestLengths(modbus_session_data_t* session, Packet* p)
            by a set of 7-byte sub-requests. */
         if (modbus_payload_len >= MODBUS_BYTE_COUNT_SIZE)
         {
-            tmp_count = *(p->data + MODBUS_MIN_LEN);
-            if ((tmp_count == modbus_payload_len - MODBUS_BYTE_COUNT_SIZE) &&
-                (tmp_count % MODBUS_FILE_RECORD_SUB_REQUEST_SIZE == 0))
+            byte_count = *(p->data + MODBUS_MIN_LEN);
+            if ((byte_count == modbus_payload_len - MODBUS_BYTE_COUNT_SIZE) &&
+                (byte_count % MODBUS_FILE_RECORD_SUB_REQUEST_SIZE == 0))
             {
                 check_passed = true;
             }
@@ -195,36 +195,37 @@ static void ModbusCheckRequestLengths(modbus_session_data_t* session, Packet* p)
 
         if (modbus_payload_len >= MODBUS_BYTE_COUNT_SIZE)
         {
-            tmp_count = *(p->data + MODBUS_MIN_LEN);
-            if (tmp_count == modbus_payload_len - MODBUS_BYTE_COUNT_SIZE)
+            byte_count = *(p->data + MODBUS_MIN_LEN);
+            if (byte_count == modbus_payload_len - MODBUS_BYTE_COUNT_SIZE)
             {
                 uint16_t bytes_processed = 0;
 
-                while (bytes_processed < (uint16_t)tmp_count)
+                while (bytes_processed < (uint16_t)byte_count)
                 {
-                    uint16_t record_length = 0;
-
                     /* Check space for sub-request header info */
                     if ((modbus_payload_len - bytes_processed) <
                         MODBUS_FILE_RECORD_SUB_REQUEST_SIZE)
                         break;
 
                     /* Extract record length. */
-                    record_length = *(p->data + MODBUS_MIN_LEN +
+                    /* sub-request record length is 2 bytes, but shouldn't be bigger
+                       than byte_count (request total data length) which is uint8_t. */
+                    const uint8_t extra_byte = *(p->data + MODBUS_MIN_LEN +
                         MODBUS_BYTE_COUNT_SIZE + bytes_processed +
                         MODBUS_FILE_RECORD_SUB_REQUEST_LEN_OFFSET);
 
-                    record_length = record_length << 8;
+                    if (extra_byte != 0)
+                        break;
 
-                    record_length |= *(p->data + MODBUS_MIN_LEN +
+                    const uint8_t record_length = *(p->data + MODBUS_MIN_LEN +
                         MODBUS_BYTE_COUNT_SIZE + bytes_processed +
                         MODBUS_FILE_RECORD_SUB_REQUEST_LEN_OFFSET + 1);
 
-                    /* Jump over record data. */
+                    /* Jump over record data. record_length is in words, multiplied by 2. */
                     bytes_processed += MODBUS_FILE_RECORD_SUB_REQUEST_SIZE +
-                        2*record_length;
+                        2*(uint16_t)record_length;
 
-                    if (bytes_processed == (uint16_t)tmp_count)
+                    if (bytes_processed == (uint16_t)byte_count)
                         check_passed = true;
                 }
             }
@@ -243,7 +244,7 @@ static void ModbusCheckRequestLengths(modbus_session_data_t* session, Packet* p)
 static void ModbusCheckResponseLengths(modbus_session_data_t* session, Packet* p)
 {
     uint16_t modbus_payload_len = p->dsize - MODBUS_MIN_LEN;
-    uint8_t tmp_count;
+    uint8_t byte_count;
     bool check_passed = false;
 
     switch (session->func)
@@ -254,8 +255,8 @@ static void ModbusCheckResponseLengths(modbus_session_data_t* session, Packet* p
     case MODBUS_FUNC_READ_WRITE_MULTIPLE_REGISTERS:
         if (modbus_payload_len >= MODBUS_BYTE_COUNT_SIZE)
         {
-            tmp_count = *(p->data + MODBUS_MIN_LEN);     /* byte count */
-            if (modbus_payload_len == MODBUS_BYTE_COUNT_SIZE + tmp_count)
+            byte_count = *(p->data + MODBUS_MIN_LEN);
+            if (modbus_payload_len == MODBUS_BYTE_COUNT_SIZE + byte_count)
                 check_passed = true;
         }
         break;
@@ -265,8 +266,8 @@ static void ModbusCheckResponseLengths(modbus_session_data_t* session, Packet* p
         if (modbus_payload_len >= MODBUS_BYTE_COUNT_SIZE)
         {
             /* count of 2-byte registers*/
-            tmp_count = *(p->data + MODBUS_MIN_LEN);
-            if (modbus_payload_len == MODBUS_BYTE_COUNT_SIZE + tmp_count)
+            byte_count = *(p->data + MODBUS_MIN_LEN);
+            if (modbus_payload_len == MODBUS_BYTE_COUNT_SIZE + byte_count)
                 check_passed = true;
         }
         break;
@@ -294,12 +295,12 @@ static void ModbusCheckResponseLengths(modbus_session_data_t* session, Packet* p
     case MODBUS_FUNC_READ_FIFO_QUEUE:
         if (modbus_payload_len >= MODBUS_DOUBLE_BYTE_COUNT_SIZE)
         {
-            uint16_t tmp_count_16;
+            uint16_t byte_count_16;
 
             /* This function uses a 2-byte byte count!! */
-            tmp_count_16 = *(const uint16_t*)(p->data + MODBUS_MIN_LEN);
-            tmp_count_16 = ntohs(tmp_count_16);
-            if (modbus_payload_len == MODBUS_DOUBLE_BYTE_COUNT_SIZE + tmp_count_16)
+            byte_count_16 = *(const uint16_t*)(p->data + MODBUS_MIN_LEN);
+            byte_count_16 = ntohs(byte_count_16);
+            if (modbus_payload_len == MODBUS_DOUBLE_BYTE_COUNT_SIZE + byte_count_16)
                 check_passed = true;
         }
         break;
