@@ -48,10 +48,11 @@ static inline JSTokenizer::JSRet js_normalize(JSNormalizer& ctx, const char* con
 }
 
 HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_, int64_t normalization_depth_,
-    int32_t identifier_depth_) :
+    int32_t identifier_depth_, uint8_t max_template_nesting_) :
     uri_param(uri_param_),
     normalization_depth(normalization_depth_),
     identifier_depth(identifier_depth_),
+    max_template_nesting(max_template_nesting_),
     mpse_otag(nullptr),
     mpse_attr(nullptr),
     mpse_type(nullptr)
@@ -127,7 +128,7 @@ void HttpJsNorm::enhanced_external_normalize(const Field& input, Field& output,
             dst_end = buffer + len;
         }
 
-        auto& ctx = ssn->acquire_js_ctx(identifier_depth, normalization_depth);
+        auto& ctx = ssn->acquire_js_ctx(identifier_depth, normalization_depth, max_template_nesting);
         auto ret = js_normalize(ctx, end, dst_end, ptr, dst);
 
         switch (ret)
@@ -155,6 +156,11 @@ void HttpJsNorm::enhanced_external_normalize(const Field& input, Field& output,
             HttpModule::increment_peg_counts(PEG_JS_IDENTIFIER_OVERFLOW);
             *infractions += INF_JS_IDENTIFIER_OVERFLOW;
             events->create_event(EVENT_JS_IDENTIFIER_OVERFLOW);
+            ssn->js_built_in_event = true;
+            break;
+        case JSTokenizer::TEMPLATE_NESTING_OVERFLOW:
+            *infractions += INF_JS_TMPL_NEST_OVFLOW;
+            events->create_event(EVENT_JS_TMPL_NEST_OVFLOW);
             ssn->js_built_in_event = true;
             break;
         default:
@@ -235,7 +241,7 @@ void HttpJsNorm::enhanced_inline_normalize(const Field& input, Field& output,
             dst_end = buffer + len;
         }
 
-        auto& ctx = ssn->acquire_js_ctx(identifier_depth, normalization_depth);
+        auto& ctx = ssn->acquire_js_ctx(identifier_depth, normalization_depth, max_template_nesting);
         auto dst_before = dst;
         auto ret = js_normalize(ctx, end, dst_end, ptr, dst);
 
@@ -270,6 +276,11 @@ void HttpJsNorm::enhanced_inline_normalize(const Field& input, Field& output,
             HttpModule::increment_peg_counts(PEG_JS_IDENTIFIER_OVERFLOW);
             *infractions += INF_JS_IDENTIFIER_OVERFLOW;
             events->create_event(EVENT_JS_IDENTIFIER_OVERFLOW);
+            script_continue = false;
+            break;
+        case JSTokenizer::TEMPLATE_NESTING_OVERFLOW:
+            *infractions += INF_JS_TMPL_NEST_OVFLOW;
+            events->create_event(EVENT_JS_TMPL_NEST_OVFLOW);
             script_continue = false;
             break;
         default:

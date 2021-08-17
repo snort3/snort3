@@ -49,11 +49,12 @@ public:
 using namespace snort;
 
 #define DEPTH 65535
+#define MAX_TEMPLATE_NESTNIG 4
 
 #define NORMALIZE(src, expected)                                   \
     char dst[sizeof(expected)];                                    \
     JSIdentifierCtxTest ident_ctx;                                 \
-    JSNormalizer norm(ident_ctx, DEPTH);                           \
+    JSNormalizer norm(ident_ctx, DEPTH, MAX_TEMPLATE_NESTNIG);     \
     auto ret = norm.normalize(src, sizeof(src), dst, sizeof(dst)); \
     const char* ptr = norm.get_src_next();                         \
     int act_len = norm.get_dst_next() - dst;
@@ -73,7 +74,7 @@ using namespace snort;
 #define NORMALIZE_L(src, src_len, dst, dst_len, depth, ret, ptr, len) \
     {                                                                 \
         JSIdentifierCtxTest ident_ctx;                                \
-        JSNormalizer norm(ident_ctx, depth);                          \
+        JSNormalizer norm(ident_ctx, depth, MAX_TEMPLATE_NESTNIG);    \
         ret = norm.normalize(src, src_len, dst, dst_len);             \
         ptr = norm.get_src_next();                                    \
         len = norm.get_dst_next() - dst;                              \
@@ -322,13 +323,13 @@ static const char all_patterns_buf4[] =
     "/regex/g undefined null true false 2 23 2.3 2.23 .2 .02 4. +2 -2 "
     "+3.3 -3.3 +23 -32 2.3E45 3.E34 -2.3E45 -3.E34 +2.3E45 +3.E34 0x1234 0XFFFF Infinity "
     "\xE2\x88\x9E NaN \"\" \"double string\" \"d\" '' 'single string' 's' x=/regex/gs "
-    "x=2/2/1";
+    "x=2/2/1 `\ntemplate\n`";
 
 static const char all_patterns_expected4[] =
     "/regex/g undefined null true false 2 23 2.3 2.23 .2 .02 4.+2-2"
     "+3.3-3.3+23-32 2.3E45 3.E34-2.3E45-3.E34+2.3E45+3.E34 0x1234 0XFFFF Infinity "
     "\xE2\x88\x9E NaN \"\" \"double string\" \"d\" '' 'single string' 's' x=/regex/gs "
-    "x=2/2/1";
+    "x=2/2/1 `\ntemplate\n`";
 
 static const char all_patterns_buf5[] =
     "$2abc _2abc abc $__$ 肖晗 XÆA12 \\u0041abc \\u00FBdef \\u1234ghi ab\xE2\x80\xA8ww "
@@ -337,6 +338,13 @@ static const char all_patterns_buf5[] =
 static const char all_patterns_expected5[] =
     "$2abc _2abc abc $__$ 肖晗 XÆA12 \u0041abc \u00FBdef \u1234ghi ab ww "
     "ab ww ab ww ab ∞ ww 2 abc";
+
+static const char all_patterns_buf6[] =
+    "tag` template\n   ${ a   +   b }   template`";
+
+static const char all_patterns_expected6[] =
+    "tag ` template\n   ${a+b}   template`";
+
 
 TEST_CASE("all patterns", "[JSNormalizer]")
 {
@@ -422,6 +430,11 @@ TEST_CASE("all patterns", "[JSNormalizer]")
     {
         NORMALIZE(all_patterns_buf5, all_patterns_expected5);
         VALIDATE(all_patterns_buf5, all_patterns_expected5);
+    }
+    SECTION("template literals")
+    {
+        NORMALIZE(all_patterns_buf6, all_patterns_expected6);
+        VALIDATE(all_patterns_buf6, all_patterns_expected6);
     }
 }
 
@@ -730,6 +743,19 @@ static const char syntax_cases_buf21[] =
 static const char syntax_cases_expected21[] =
     "var invalid_str='abc";
 
+static const char syntax_cases_buf22[] =
+    "tag`template\n \\\\\\${   }   \\\\${   a  + ` template ${ 1 + c  }`  }`";
+
+static const char syntax_cases_expected22[] =
+    "tag `template\n \\\\\\${   }   \\\\${a+` template ${1+c}`}`";
+
+static const char syntax_cases_buf23[] =
+    "`${`${`${`${`${}`}`}`}`}`}";
+
+static const char syntax_cases_expected23[] =
+    "`${`${`${`${`";
+
+
 TEST_CASE("syntax cases", "[JSNormalizer]")
 {
     SECTION("variables")
@@ -807,6 +833,11 @@ TEST_CASE("syntax cases", "[JSNormalizer]")
         NORMALIZE(syntax_cases_buf14, syntax_cases_expected14);
         VALIDATE(syntax_cases_buf14, syntax_cases_expected14);
     }
+    SECTION("template literals")
+    {
+        NORMALIZE(syntax_cases_buf22, syntax_cases_expected22);
+        VALIDATE(syntax_cases_buf22, syntax_cases_expected22);
+    }
 }
 
 TEST_CASE("bad tokens", "[JSNormalizer]")
@@ -848,6 +879,16 @@ TEST_CASE("bad tokens", "[JSNormalizer]")
     }
 }
 
+TEST_CASE("template literal overflow", "[JSNormalizer]")
+{
+    SECTION("exceeding template literal limit")
+    {
+        NORMALIZE(syntax_cases_buf23, syntax_cases_expected23);
+        VALIDATE_FAIL(syntax_cases_buf23, syntax_cases_expected23,
+            JSTokenizer::TEMPLATE_NESTING_OVERFLOW, 15);
+    }
+}
+
 TEST_CASE("endings", "[JSNormalizer]")
 {
     SECTION("script closing tag is present", "[JSNormalizer]")
@@ -882,7 +923,7 @@ TEST_CASE("endings", "[JSNormalizer]")
         int ret;
 
         JSIdentifierCtxTest ident_ctx;
-        JSNormalizer norm(ident_ctx, 7);
+        JSNormalizer norm(ident_ctx, 7, MAX_TEMPLATE_NESTNIG);
         ret = norm.normalize(src, sizeof(src), dst, sizeof(dst));
         ptr = norm.get_src_next();
         act_len = norm.get_dst_next() - dst;

@@ -57,6 +57,7 @@ public:
         bool is_javascript_normalization = false;
         int64_t js_normalization_depth = 0;
         int32_t js_identifier_depth = 0;
+        uint8_t max_template_nesting = 32;
         int max_javascript_whitespaces = 200;
         class HttpJsNorm* js_norm = nullptr;
     };

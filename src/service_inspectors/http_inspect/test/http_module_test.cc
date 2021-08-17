@@ -65,10 +65,10 @@ long HttpTestManager::print_amount {};
 bool HttpTestManager::print_hex {};
 
 HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_, int64_t normalization_depth_,
-    int32_t identifier_depth_) :
+    int32_t identifier_depth_, uint8_t max_template_nesting_) :
     uri_param(uri_param_), normalization_depth(normalization_depth_),
-    identifier_depth(identifier_depth_), mpse_otag(nullptr), mpse_attr(nullptr),
-    mpse_type(nullptr) {}
+    identifier_depth(identifier_depth_), max_template_nesting(max_template_nesting_),
+    mpse_otag(nullptr), mpse_attr(nullptr), mpse_type(nullptr) {}
 HttpJsNorm::~HttpJsNorm() = default;
 void HttpJsNorm::configure(){}
 int64_t Parameter::get_int(char const*) { return 0; }

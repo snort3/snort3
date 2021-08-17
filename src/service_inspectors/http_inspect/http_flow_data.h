@@ -199,7 +199,8 @@ private:
     bool js_built_in_event = false;
 
     void reset_js_ident_ctx();
-    snort::JSNormalizer& acquire_js_ctx(int32_t ident_depth, size_t norm_depth);
+    snort::JSNormalizer& acquire_js_ctx(int32_t ident_depth, size_t norm_depth,
+     uint8_t max_template_nesting);
     void release_js_ctx();
 
     // *** Transaction management including pipelining

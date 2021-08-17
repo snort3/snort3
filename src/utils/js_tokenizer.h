@@ -21,6 +21,8 @@
 #define JS_TOKENIZER_H
 
 #include <sstream>
+#include <stack>
+#include <vector>
 
 #include "log/messages.h"
 
@@ -49,10 +51,11 @@ public:
         OPENING_TAG,
         CLOSING_TAG,
         BAD_TOKEN,
-        IDENTIFIER_OVERFLOW
+        IDENTIFIER_OVERFLOW,
+        TEMPLATE_NESTING_OVERFLOW
     };
 
-    JSTokenizer(std::istream& in, std::ostream& out, JSIdentifierCtxBase& ident_ctx);
+    JSTokenizer(std::istream& in, std::ostream& out, JSIdentifierCtxBase& ident_ctx, uint8_t max_template_nesting);
     ~JSTokenizer() override;
 
     // returns JSRet
@@ -70,12 +73,16 @@ private:
     JSRet do_operator_spacing(JSToken cur_token);
     JSRet do_identifier_substitution(const char* lexeme);
     bool unescape(const char* lexeme);
+    void process_punctuator();
+    void process_closing_bracket();
+    JSRet process_subst_open();
 
 private:
     void* cur_buffer;
     void* tmp_buffer = nullptr;
     std::stringstream tmp;
-
+    uint8_t max_template_nesting;
+    std::stack<uint16_t, std::vector<uint16_t>> bracket_depth;
     JSToken token = UNDEFINED;
     JSIdentifierCtxBase& ident_ctx;
 };

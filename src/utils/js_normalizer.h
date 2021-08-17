@@ -32,7 +32,7 @@ namespace snort
 class JSNormalizer
 {
 public:
-    JSNormalizer(JSIdentifierCtxBase& js_ident_ctx, size_t depth);
+    JSNormalizer(JSIdentifierCtxBase& js_ident_ctx, size_t depth, uint8_t max_template_nesting);
 
     const char* get_src_next() const
     { return src_next; }

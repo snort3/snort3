@@ -94,7 +94,9 @@ KEYWORD    break|case|debugger|in|import|protected|do|else|function|try|implemen
 /* punctuators */
 /* according to https://ecma-international.org/ecma-262/5.1/#sec-7.7 */
 CLOSING_BRACES             ")"|"]"
-PUNCTUATOR                 "{"|"}"|"("|"["|">="|"=="|"!="|"==="|"!=="|"."|";"|","|"<"|">"|"<="|"<<"|">>"|">>>"|"&"|"|"|"^"|"!"|"&&"|"||"|"?"|":"|"="|"+="|"-="|"*="|"%="|"<<="|">>="|">>>="|"&="|"|="|"^="|"~"
+OPEN_BRACKET               "{"
+CLOSE_BRACKET              "}"
+PUNCTUATOR                 "("|"["|">="|"=="|"!="|"==="|"!=="|"."|";"|","|"<"|">"|"<="|"<<"|">>"|">>>"|"&"|"|"|"^"|"!"|"&&"|"||"|"?"|":"|"="|"+="|"-="|"*="|"%="|"<<="|">>="|">>>="|"&="|"|="|"^="|"~"
 OPERATOR                   "+"|"-"|"*"|"++"|"--"|"%"
 DIV_OPERATOR               "/"
 DIV_ASSIGNMENT_OPERATOR    "/="
@@ -882,6 +884,9 @@ LITERAL_DQ_STRING_SKIP        \\\"
 LITERAL_SQ_STRING_START       \'
 LITERAL_SQ_STRING_END         \'
 LITERAL_SQ_STRING_SKIP        \\\'
+LITERAL_TEMPLATE_START        \`
+LITERAL_TEMPLATE_END          \`
+LITERAL_TEMPLATE_SUBST_START  \$\{
 LITERAL_REGEX_START           \/[^*\/]
 LITERAL_REGEX_END             \/[gimsuy]*
 LITERAL_REGEX_SKIP            \\\/
@@ -919,6 +924,9 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 
 /* in a double-quoted string */
 %x dqstr
+
+/* in a literal part of a template string */
+%x tmpll
 
 /* in a regular expression */
 %x regex
@@ -969,6 +977,18 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <sqstr>.                            { ECHO; }
 <sqstr><<EOF>>                      { return SCRIPT_CONTINUE; }
 
+{OPEN_BRACKET}                      { if (not bracket_depth.empty()) bracket_depth.top()++; process_punctuator(); }
+{CLOSE_BRACKET}                     { process_closing_bracket(); }
+
+       {LITERAL_TEMPLATE_START}                  { EXEC(do_spacing(LITERAL)) ECHO; BEGIN(tmpll); }
+<tmpll>(\\\\)*{LITERAL_TEMPLATE_END}             { ECHO; BEGIN(divop); }
+<tmpll>(\\\\)*{LITERAL_TEMPLATE_SUBST_START}     { EXEC(process_subst_open()) }
+<tmpll>{HTML_TAG_SCRIPT_CLOSE}                   { BEGIN(regst); return CLOSING_TAG; }
+<tmpll>(\\\\)*\\{LITERAL_TEMPLATE_SUBST_START}   | /* escaped template substitution */
+<tmpll>(\\\\)*\\{LITERAL_TEMPLATE_END}           | /* escaped backtick */
+<tmpll>.                                         { ECHO; }
+<tmpll><<EOF>>                                   { return SCRIPT_CONTINUE; }
+
 <regst>{LITERAL_REGEX_START}        { EXEC(do_spacing(LITERAL)) yyout << '/'; yyless(1); BEGIN(regex); }
 <regex>{LITERAL_REGEX_END}          { ECHO; BEGIN(divop); }
 <regex>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); return CLOSING_TAG; }
@@ -983,7 +1003,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <divop>{DIV_ASSIGNMENT_OPERATOR}    { ECHO; token = PUNCTUATOR; BEGIN(INITIAL); }
 
 {CLOSING_BRACES}                    { ECHO; token = PUNCTUATOR; BEGIN(divop); }
-{PUNCTUATOR}                        { ECHO; token = PUNCTUATOR; BEGIN(regst); }
+{PUNCTUATOR}                        { process_punctuator(); }
 
 {USE_STRICT_DIRECTIVE}              { EXEC(do_spacing(DIRECTIVE)) ECHO; BEGIN(INITIAL); yyout << ';'; }
 {USE_STRICT_DIRECTIVE_SC}           { EXEC(do_spacing(DIRECTIVE)) ECHO; BEGIN(INITIAL); }
@@ -1073,8 +1093,10 @@ static std::string unescape_unicode(const char* lexeme)
 
 // JSTokenizer members
 
-JSTokenizer::JSTokenizer(std::istream& in, std::ostream& out, JSIdentifierCtxBase& ident_ctx)
+JSTokenizer::JSTokenizer(std::istream& in, std::ostream& out, JSIdentifierCtxBase& ident_ctx,
+    uint8_t max_template_nesting)
     : yyFlexLexer(in, out),
+      max_template_nesting(max_template_nesting),
       ident_ctx(ident_ctx)
 {
     BEGIN(regst);
@@ -1189,4 +1211,39 @@ bool JSTokenizer::unescape(const char* lexeme)
     }
 
     return true;
+}
+
+void JSTokenizer::process_punctuator()
+{
+    ECHO;
+    token = PUNCTUATOR;
+    BEGIN(regst);
+}
+
+void JSTokenizer::process_closing_bracket()
+{
+    if ( not bracket_depth.empty() ) 
+    {
+        if ( bracket_depth.top() )
+            bracket_depth.top()--;
+        else
+        {
+            bracket_depth.pop();
+            ECHO;
+            BEGIN(tmpll);
+            return;
+        }
+    }
+    process_punctuator();
+}
+
+JSTokenizer::JSRet JSTokenizer::process_subst_open()
+{
+    if ( bracket_depth.size() >= max_template_nesting )
+        return TEMPLATE_NESTING_OVERFLOW;
+    bracket_depth.push(0);
+    token = PUNCTUATOR;
+    ECHO;
+    BEGIN(divop); 
+    return EOS;
 }

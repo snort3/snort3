@@ -243,7 +243,8 @@ void HttpFlowData::reset_js_ident_ctx()
         js_ident_ctx->reset();
 }
 
-snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t ident_depth, size_t norm_depth)
+snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t ident_depth, size_t norm_depth,
+     uint8_t max_template_nesting)
 {
     if (js_normalizer)
         return *js_normalizer;
@@ -254,7 +255,7 @@ snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t ident_depth, size_t no
         update_allocations(js_ident_ctx->size());
     }
 
-    js_normalizer = new JSNormalizer(*js_ident_ctx, norm_depth);
+    js_normalizer = new JSNormalizer(*js_ident_ctx, norm_depth, max_template_nesting);
     update_allocations(JSNormalizer::size());
 
     return *js_normalizer;
@@ -271,7 +272,7 @@ void HttpFlowData::release_js_ctx()
 }
 #else
 void HttpFlowData::reset_js_ident_ctx() {}
-snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t, size_t)
+snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t, size_t, uint8_t)
 { return *js_normalizer; }
 void HttpFlowData::release_js_ctx() {}
 #endif

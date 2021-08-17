@@ -25,15 +25,15 @@
 
 using namespace snort;
 
-JSNormalizer::JSNormalizer(JSIdentifierCtxBase& js_ident_ctx, size_t norm_depth)
+JSNormalizer::JSNormalizer(JSIdentifierCtxBase& js_ident_ctx, size_t norm_depth,
+    uint8_t max_template_nesting)
     : depth(norm_depth),
       rem_bytes(norm_depth),
-      unlim(true),
+      unlim(norm_depth == (size_t) - 1),
       src_next(nullptr),
       dst_next(nullptr),
-      tokenizer(in, out, js_ident_ctx)
+      tokenizer(in, out, js_ident_ctx, max_template_nesting)
 {
-    unlim = depth == (size_t)-1;
 }
 
 JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len, char* dst, size_t dst_len)

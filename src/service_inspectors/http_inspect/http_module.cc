@@ -82,6 +82,10 @@ const Parameter HttpModule::http_params[] =
     { "js_norm_identifier_depth", Parameter::PT_INT, "0:260000", "260000",
       "max number of unique JavaScript identifiers to normalize" },
 
+    { "js_norm_max_tmpl_nest", Parameter::PT_INT, "0:255", "32",
+      "maximum depth of template literal nesting that enhanced javascript normalizer "
+      "will process (experimental)" },
+
     { "max_javascript_whitespaces", Parameter::PT_INT, "1:65535", "200",
       "maximum consecutive whitespaces allowed within the JavaScript obfuscated data" },
 
@@ -221,6 +225,10 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
         params->js_norm_param.js_normalization_depth = v;
         params->js_norm_param.is_javascript_normalization =
             params->js_norm_param.is_javascript_normalization or (v != 0);
+    }
+    else if (val.is("js_norm_max_tmpl_nest"))
+    {
+        params->js_norm_param.max_template_nesting = val.get_uint8();
     }
     else if (val.is("max_javascript_whitespaces"))
     {
@@ -410,7 +418,8 @@ bool HttpModule::end(const char*, int, SnortConfig*)
 
     if ( params->js_norm_param.is_javascript_normalization )
         params->js_norm_param.js_norm = new HttpJsNorm(params->uri_param,
-        params->js_norm_param.js_normalization_depth, params->js_norm_param.js_identifier_depth);
+        params->js_norm_param.js_normalization_depth, params->js_norm_param.js_identifier_depth,
+        params->js_norm_param.max_template_nesting);
 
     params->script_detection_handle = script_detection_handle;
 
