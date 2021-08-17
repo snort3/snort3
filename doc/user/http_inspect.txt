@@ -181,6 +181,18 @@ a0 to z9999. Thus, the number of unique identifiers cannot be greater than
 set to a non-zero value, enabling the enhanced normalizer.
 This is currently experimental and still under development.
 
+===== js_norm_max_tmpl_nest
+
+js_norm_max_tmpl_nest = N {0 : 255} (default 32) is an option of the enhanced
+JavaScript normalizer that determines the deepest level of nested template literals
+to be processed. Introduced in ES6, template literals provide syntax to define
+a literal multiline string, which can have arbitrary JavaScript substitutions,
+that will be evaluated and inserted into the string. Such substitutions can be
+nested, and require keeping track of every layer for proper normalization. This option
+is present to limit the amount of memory dedicated to this tracking. This option
+is used only when js_normalization_depth is not 0. This feature
+is currently experimental and still under development.
+
 ===== xff_headers
 
 This configuration supports defining custom x-forwarded-for type headers. In a
