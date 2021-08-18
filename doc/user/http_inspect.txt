@@ -462,8 +462,8 @@ upper and lower case.
 With http_header the individual header value is normalized in a way that is
 appropriate for that header.
 
-Specifying an individual header is not available for http_raw_header and
-http_raw_header_complete.
+Specifying an individual header is not available for http_raw_header_complete, use
+http_raw_header instead.
 
 If you don't specify a header you get all of the headers. http_raw_header_complete
 includes cookie headers Cookie and Set-Cookie. http_header and http_raw_header don't.

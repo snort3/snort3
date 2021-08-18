@@ -618,6 +618,8 @@ static const IpsApi raw_cookie_api =
 
 static const Parameter http_raw_header_params[] =
 {
+    { "field", Parameter::PT_STRING, nullptr, nullptr,
+        "restrict to given header. Header name is case insensitive." },
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against the headers from the request message even when examining the response" },
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -824,6 +826,8 @@ static const IpsApi raw_status_api =
 
 static const Parameter http_raw_trailer_params[] =
 {
+    { "field", Parameter::PT_STRING, nullptr, nullptr,
+        "restrict to given trailer. Trailer name is case insensitive." },
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against the trailers from the request message even when examining the response" },
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,

@@ -34,8 +34,8 @@ set (FILE_LIST
     http_param.h
     http_query_parser.cc
     http_query_parser.h
-    http_header_normalizer.cc
-    http_header_normalizer.h
+    http_normalized_header.cc
+    http_normalized_header.h
     http_uri.cc
     http_uri.h
     http_uri_norm.cc

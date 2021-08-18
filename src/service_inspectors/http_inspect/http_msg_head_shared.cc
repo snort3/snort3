@@ -330,7 +330,7 @@ void HttpMsgHeadShared::derive_header_name_id(int index)
     delete[] lower_name;
 }
 
-HttpMsgHeadShared::NormalizedHeader* HttpMsgHeadShared::get_header_node(HeaderId header_id) const
+NormalizedHeader* HttpMsgHeadShared::get_header_node(HeaderId header_id) const
 {
     if (!headers_present[header_id])
         return nullptr;
@@ -424,15 +424,26 @@ const Field& HttpMsgHeadShared::get_header_value_raw(HeaderId header_id) const
     return Field::FIELD_NULL;
 }
 
+// Get raw header values. If the same header field appears more than once the
+// values are converted into a comma-separated list
+const Field& HttpMsgHeadShared::get_all_header_values_raw(HeaderId header_id)
+{
+    NormalizedHeader* node = get_header_node(header_id);
+    if (node == nullptr)
+        return Field::FIELD_NULL;
+
+    return node->get_comma_separated_raw(*this, transaction->get_infractions(source_id),
+        session_data->events[source_id], header_name_id, header_value, num_headers);
+}
+
 const Field& HttpMsgHeadShared::get_header_value_norm(HeaderId header_id)
 {
     NormalizedHeader* node = get_header_node(header_id);
     if (node == nullptr)
         return Field::FIELD_NULL;
-    header_norms[header_id]->normalize(header_id, node->count,
-        transaction->get_infractions(source_id), session_data->events[source_id],
-        header_name_id, header_value, num_headers, node->norm);
-    return node->norm;
+
+    return node->get_norm(transaction->get_infractions(source_id),
+        session_data->events[source_id], header_name_id, header_value, num_headers);
 }
 
 // For downloads we use the hash of the URL if it exists. For uploads we use a hash of the filename

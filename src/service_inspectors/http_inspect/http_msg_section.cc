@@ -185,7 +185,6 @@ const Field& HttpMsgSection::get_classic_buffer(Cursor& c, const HttpBufferInfo&
     case HTTP_BUFFER_HEADER:
     case HTTP_BUFFER_TRAILER:
       {
-        // FIXIT-L Someday want to be able to return field name or raw field value
         HttpMsgHeadShared* const head = (buf.type == HTTP_BUFFER_HEADER) ?
             (HttpMsgHeadShared*)header[buffer_side] : (HttpMsgHeadShared*)trailer[buffer_side];
         if (head == nullptr)
@@ -317,9 +316,15 @@ const Field& HttpMsgSection::get_classic_buffer(Cursor& c, const HttpBufferInfo&
         return (get_body() != nullptr) ? get_body()->msg_text : Field::FIELD_NULL;
       }
     case HTTP_BUFFER_RAW_HEADER:
+    case HTTP_BUFFER_RAW_TRAILER:
       {
-        return (header[buffer_side] != nullptr) ? header[buffer_side]->get_classic_raw_header() :
-            Field::FIELD_NULL;
+        HttpMsgHeadShared* const head = (buf.type == HTTP_BUFFER_RAW_HEADER) ?
+            (HttpMsgHeadShared*)header[buffer_side] : (HttpMsgHeadShared*)trailer[buffer_side];
+        if (head == nullptr)
+            return Field::FIELD_NULL;
+        if (buf.sub_id == 0)
+            return head->get_classic_raw_header();
+        return head->get_all_header_values_raw((HeaderId)buf.sub_id);
       }
     case HTTP_BUFFER_RAW_HEADER_COMPLETE:
       {
@@ -333,11 +338,6 @@ const Field& HttpMsgSection::get_classic_buffer(Cursor& c, const HttpBufferInfo&
     case HTTP_BUFFER_RAW_STATUS:
       {
         return (status != nullptr) ? status->msg_text : Field::FIELD_NULL;
-      }
-    case HTTP_BUFFER_RAW_TRAILER:
-      {
-        return (trailer[buffer_side] != nullptr) ? trailer[buffer_side]->get_classic_raw_header() :
-            Field::FIELD_NULL;
       }
     case HTTP_BUFFER_STAT_CODE:
       {

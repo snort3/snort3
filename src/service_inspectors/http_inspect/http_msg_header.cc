@@ -40,6 +40,7 @@
 #include "http_inspect.h"
 #include "http_msg_request.h"
 #include "http_msg_body.h"
+#include "http_normalizers.h"
 
 using namespace snort;
 using namespace HttpCommon;
