@@ -242,7 +242,7 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
 
 Dce2Smb2FileTracker::~Dce2Smb2FileTracker(void)
 {
-    if (smb_module_is_up)
+    if (smb_module_is_up and (is_packet_thread()))
     {
 	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET, "file tracker %" PRIu64
             " file name hash %" PRIu64 " terminating\n", file_id, file_name_hash);

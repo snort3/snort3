@@ -528,7 +528,7 @@ void Dce2Smb2TreeTracker::process(uint16_t command, uint8_t command_type,
 
 Dce2Smb2TreeTracker::~Dce2Smb2TreeTracker(void)
 {
-    if (smb_module_is_up)
+    if (smb_module_is_up and (is_packet_thread()))
     {
 	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
 	        GET_CURRENT_PACKET, "tree tracker %" PRIu32 " terminating\n", tree_id);
@@ -545,14 +545,14 @@ Dce2Smb2TreeTracker::~Dce2Smb2TreeTracker(void)
 
     if (active_requests.size())
     {
-        if (smb_module_is_up)
+        if (smb_module_is_up and (is_packet_thread()))
         {
             SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
 	            GET_CURRENT_PACKET, "cleanup pending requests for below MIDs:\n");
         }
         for (auto it_request : active_requests)
         {
-            if (smb_module_is_up)
+            if (smb_module_is_up and (is_packet_thread()))
             {
 		        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
 		            GET_CURRENT_PACKET, "mid %" PRIu64 "\n", it_request.first.mid);

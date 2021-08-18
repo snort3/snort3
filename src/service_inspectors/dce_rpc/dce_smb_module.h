@@ -60,8 +60,8 @@ extern THREAD_LOCAL const snort::Trace* dce_smb_trace;
     "SMB - excessive tree connect requests with pending tree connect responses"
 #define DCE2_SMB_EXCESSIVE_READS_STR  "SMB - excessive read requests with pending read responses"
 #define DCE2_SMB_EXCESSIVE_CHAINING_STR  "SMB - excessive command chaining"
-#define DCE2_SMB_MULT_CHAIN_SS_STR   "SMB - multiple chained tree connect requests"
-#define DCE2_SMB_MULT_CHAIN_TC_STR   "SMB - multiple chained tree connect requests"
+#define DCE2_SMB_MULT_CHAIN_SS_STR   "SMB - Multiple chained login requests"
+#define DCE2_SMB_MULT_CHAIN_TC_STR   "SMB - Multiple chained tree connect requests"
 #define DCE2_SMB_CHAIN_SS_LOGOFF_STR   "SMB - chained/compounded login followed by logoff"
 #define DCE2_SMB_CHAIN_TC_TDIS_STR \
     "SMB - chained/compounded tree connect followed by tree disconnect"

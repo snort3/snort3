@@ -191,7 +191,7 @@ void Dce2Smb2SessionTracker::unlink()
 // Session Tracker is created and destroyed only from session cache
 Dce2Smb2SessionTracker::~Dce2Smb2SessionTracker(void)
 {
-    if (smb_module_is_up)
+    if (smb_module_is_up and (snort::is_packet_thread()))
     {
 	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, 
 	        TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
