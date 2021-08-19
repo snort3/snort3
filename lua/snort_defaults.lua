@@ -340,15 +340,13 @@ http_methods =  -- build from default_http_methods
     'UPDATEREDIRECTREF', 'PROPFIND', 'PROPPATCH', 'MKCOL', 'COPY',
     'MOVE', 'LOCK', 'UNLOCK', 'SEARCH', 'BCOPY', 'BDELETE', 'BMOVE',
     'BPROPFIND', 'BPROPPATCH', 'POLL', 'UNSUBSCRIBE', 'X_MS_ENUMATTS',
-    'OPTIONS * HTTP/',
-    --'NOTIFY', 'SUBSCRIBE', 'UPDATE'
+    'NOTIFY * HTTP/', 'SUBSCRIBE * HTTP/', 'UPDATE * HTTP/', 'OPTIONS * HTTP/'
 }
 
 sip_requests =
 {
-    'INVITE * SIP/', 'CANCEL * SIP/', 'ACK * SIP/', 'BYE * SIP/', 'REGISTER * SIP/',
-    'REFER * SIP/', 'SUBSCRIBE * SIP/', 'UPDATE * SIP/', 'INFO * SIP/', 'MESSAGE * SIP/',
-    'NOTIFY * SIP/', 'PRACK * SIP/', 'OPTIONS * SIP/'
+    'INVITE', 'CANCEL', 'BYE', 'REGISTER', 'PRACK', 'PUBLISH', 'REFER', 'INFO', 'MESSAGE',
+    'ACK * SIP/', 'SUBSCRIBE * SIP/', 'UPDATE * SIP/', 'NOTIFY * SIP/', 'OPTIONS * SIP/'
 }
 
 telnet_commands =
