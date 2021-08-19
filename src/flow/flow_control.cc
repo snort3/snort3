@@ -460,6 +460,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         // process expected flows
         check_expected_flow(flow, p);
 
+        flow->set_client_initiate(p);
         DataBus::publish(FLOW_STATE_SETUP_EVENT, p);
 
         if ( flow->flow_state == Flow::FlowState::SETUP ||
@@ -469,7 +470,6 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
         ++news;
         flow->flowstats.start_time = p->pkth->ts;
-        flow->set_client_initiate(p);
     }
 
     // This requires the packet direction to be set
