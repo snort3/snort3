@@ -37,11 +37,14 @@ static inline JSTokenizer::JSRet js_normalize(JSNormalizer& ctx, const char* con
     const char* dst_end, const char*& ptr, char*& dst)
 {
     auto ret = ctx.normalize(ptr, end - ptr, dst, dst_end - dst);
-    
     auto next = ctx.get_src_next();
-    HttpModule::increment_peg_counts(PEG_JS_BYTES, next - ptr);
 
-    ptr = next;   
+    if (next > ptr)
+        HttpModule::increment_peg_counts(PEG_JS_BYTES, next - ptr);
+    else
+        next = end; // Normalizer has failed, thus aborting the remaining input
+
+    ptr = next;
     dst = ctx.get_dst_next();
 
     return ret;

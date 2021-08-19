@@ -26,18 +26,20 @@
 %option c++
 
 %{
-    #ifdef HAVE_CONFIG_H
-    #include "config.h"
-    #endif
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-    #include "utils/js_identifier_ctx.h"
-    #include "utils/js_tokenizer.h"
+#include "utils/js_tokenizer.h"
 
-    #include <cassert>
+#include <cassert>
 
-    #include "utils/util_cstring.h"
+#include "utils/js_identifier_ctx.h"
+#include "utils/util_cstring.h"
 
-    #define EXEC(f) { auto r = (f); if (r) { BEGIN(regst); return r; } }
+#define YY_USER_ACTION { states_push(); }
+#define EXEC(f) { auto r = (f); if (r) { BEGIN(regst); return r; } }
+#define EEOF(f) { auto r = (f); if (r) { if (r != SCRIPT_CONTINUE) BEGIN(regst); return r; } }
 %}
 
 /* The following grammar was created based on ECMAScript specification */
@@ -881,12 +883,15 @@ LITERAL_HEX_INTEGER           0x[0-9a-fA-F]*|0X[0-9a-fA-F]*
 LITERAL_DQ_STRING_START       \"
 LITERAL_DQ_STRING_END         \"
 LITERAL_DQ_STRING_SKIP        \\\"
+LITERAL_DQ_STRING_TEXT        .
 LITERAL_SQ_STRING_START       \'
 LITERAL_SQ_STRING_END         \'
 LITERAL_SQ_STRING_SKIP        \\\'
+LITERAL_SQ_STRING_TEXT        .
 LITERAL_TEMPLATE_START        \`
 LITERAL_TEMPLATE_END          \`
 LITERAL_TEMPLATE_SUBST_START  \$\{
+LITERAL_TEMPLATE_OTHER        .
 LITERAL_REGEX_START           \/[^*\/]
 LITERAL_REGEX_END             \/[gimsuy]*
 LITERAL_REGEX_SKIP            \\\/
@@ -946,14 +951,14 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <lcomm>{LINE_COMMENT_END3}          { BEGIN(regst); return OPENING_TAG; }
 <lcomm>{LINE_COMMENT_END4}          { BEGIN(regst); return CLOSING_TAG; }
 <lcomm>{LINE_COMMENT_SKIP}          { }
-<lcomm><<EOF>>                      { return SCRIPT_CONTINUE; }
+<lcomm><<EOF>>                      { states_apply(); return SCRIPT_CONTINUE; }
 
        {BLOCK_COMMENT_START}        { BEGIN(bcomm); }
 <bcomm>{BLOCK_COMMENT_END1}         { BEGIN(regst); }
 <bcomm>{BLOCK_COMMENT_END2}         { BEGIN(regst); return OPENING_TAG; }
 <bcomm>{BLOCK_COMMENT_END3}         { BEGIN(regst); return CLOSING_TAG; }
 <bcomm>{BLOCK_COMMENT_SKIP}         { }
-<bcomm><<EOF>>                      { return SCRIPT_CONTINUE; }
+<bcomm><<EOF>>                      { states_apply(); return SCRIPT_CONTINUE; }
 
        {LITERAL_DQ_STRING_START}    { EXEC(do_spacing(LITERAL)) ECHO; BEGIN(dqstr); }
 <dqstr>{LITERAL_DQ_STRING_END}      { ECHO; BEGIN(divop); }
@@ -963,8 +968,8 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <dqstr>\\{CR}                       { }
 <dqstr>{LINE_TERMINATORS}           { BEGIN(regst); return BAD_TOKEN; }
 <dqstr>{LITERAL_DQ_STRING_SKIP}     { ECHO; }
-<dqstr>.                            { ECHO; }
-<dqstr><<EOF>>                      { return SCRIPT_CONTINUE; }
+<dqstr>{LITERAL_DQ_STRING_TEXT}     { ECHO; }
+<dqstr><<EOF>>                      { states_apply(); return SCRIPT_CONTINUE; }
 
        {LITERAL_SQ_STRING_START}    { EXEC(do_spacing(LITERAL)) ECHO; BEGIN(sqstr); }
 <sqstr>{LITERAL_SQ_STRING_END}      { ECHO; BEGIN(divop); }
@@ -974,10 +979,10 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <sqstr>\\{CR}                       { }
 <sqstr>{LINE_TERMINATORS}           { BEGIN(regst); return BAD_TOKEN; }
 <sqstr>{LITERAL_SQ_STRING_SKIP}     { ECHO; }
-<sqstr>.                            { ECHO; }
-<sqstr><<EOF>>                      { return SCRIPT_CONTINUE; }
+<sqstr>{LITERAL_SQ_STRING_TEXT}     { ECHO; }
+<sqstr><<EOF>>                      { states_apply(); return SCRIPT_CONTINUE; }
 
-{OPEN_BRACKET}                      { if (not bracket_depth.empty()) bracket_depth.top()++; process_punctuator(); }
+{OPEN_BRACKET}                      { if (!bracket_depth.empty()) bracket_depth.top()++; process_punctuator(); }
 {CLOSE_BRACKET}                     { process_closing_bracket(); }
 
        {LITERAL_TEMPLATE_START}                  { EXEC(do_spacing(LITERAL)) ECHO; BEGIN(tmpll); }
@@ -986,10 +991,10 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <tmpll>{HTML_TAG_SCRIPT_CLOSE}                   { BEGIN(regst); return CLOSING_TAG; }
 <tmpll>(\\\\)*\\{LITERAL_TEMPLATE_SUBST_START}   | /* escaped template substitution */
 <tmpll>(\\\\)*\\{LITERAL_TEMPLATE_END}           | /* escaped backtick */
-<tmpll>.                                         { ECHO; }
+<tmpll>{LITERAL_TEMPLATE_OTHER}                  { ECHO; }
 <tmpll><<EOF>>                                   { return SCRIPT_CONTINUE; }
 
-<regst>{LITERAL_REGEX_START}        { EXEC(do_spacing(LITERAL)) yyout << '/'; yyless(1); BEGIN(regex); }
+<regst>{LITERAL_REGEX_START}        { EXEC(do_spacing(LITERAL)) yyout << '/'; states_correct(1); yyless(1); BEGIN(regex); }
 <regex>{LITERAL_REGEX_END}          { ECHO; BEGIN(divop); }
 <regex>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); return CLOSING_TAG; }
 <regex>{LITERAL_REGEX_SKIP}         { ECHO; }
@@ -997,7 +1002,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <regex>\\{CR}                       |
 <regex>{LINE_TERMINATORS}           { BEGIN(regst); return BAD_TOKEN; }
 <regex>[^<{LF}{CR}{LS}{PS}\\\/]+    { ECHO; }
-<regex><<EOF>>                      { return SCRIPT_CONTINUE; }
+<regex><<EOF>>                      { states_apply(); return SCRIPT_CONTINUE; }
 
 <divop>{DIV_OPERATOR}               |
 <divop>{DIV_ASSIGNMENT_OPERATOR}    { ECHO; token = PUNCTUATOR; BEGIN(INITIAL); }
@@ -1013,7 +1018,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 {IDENTIFIER}                        { if (unescape(YYText())) { EXEC(do_spacing(IDENTIFIER)) EXEC(do_identifier_substitution(YYText())) } BEGIN(divop); }
 
 .|{ALL_UNICODE}                     { ECHO; token = UNDEFINED; BEGIN(INITIAL); }
-<<EOF>>                             { EXEC(eval_eof()) }
+<<EOF>>                             { EEOF(eval_eof()) }
 
 %%
 
@@ -1023,18 +1028,18 @@ static std::string unicode_to_utf8(const unsigned int code)
 {
     std::string res;
 
-    if ( code <= 0x7f )
+    if (code <= 0x7f)
         res += (char)code;
-    else if ( code <= 0x7ff )
+    else if (code <= 0x7ff)
     {
-        res += ( 0xc0 | (code >> 6) );
-        res += ( 0x80 | (code & 0x3f) );
+        res += 0xc0 | (code >> 6);
+        res += 0x80 | (code & 0x3f);
     }
-    else if ( code <= 0xffff )
+    else if (code <= 0xffff)
     {
-        res += ( 0xe0 | (code >> 12) );
-        res += ( 0x80 | ((code >> 6) & 0x3f) );
-        res += ( 0x80 | (code & 0x3f) );
+        res += 0xe0 | (code >> 12);
+        res += 0x80 | ((code >> 6) & 0x3f);
+        res += 0x80 | (code & 0x3f);
     }
 
     return res;
@@ -1052,17 +1057,17 @@ static std::string unescape_unicode(const char* lexeme)
     short digits_left = 4;
     std::string unicode_str;
 
-    for ( const auto& ch : lex )
+    for (const auto& ch : lex)
     {
-        if ( ch == '\\' )
+        if (ch == '\\')
         {
             is_unescape = true;
             continue;
         }
 
-        if ( is_unescape )
+        if (is_unescape)
         {
-            if ( ch == 'u' )
+            if (ch == 'u')
             {
                 is_unicode = true;
                 continue;
@@ -1070,10 +1075,10 @@ static std::string unescape_unicode(const char* lexeme)
             is_unescape = false;
         }
 
-        if ( is_unicode )
+        if (is_unicode)
         {
             unicode_str += ch;
-            if ( !(--digits_left) )
+            if (!(--digits_left))
             {
                 const unsigned int unicode = std::stoi(unicode_str, nullptr, 16);
                 res += unicode_to_utf8(unicode);
@@ -1093,11 +1098,15 @@ static std::string unescape_unicode(const char* lexeme)
 
 // JSTokenizer members
 
-JSTokenizer::JSTokenizer(std::istream& in, std::ostream& out, JSIdentifierCtxBase& ident_ctx,
-    uint8_t max_template_nesting)
+JSTokenizer::JSTokenizer(std::istream& in, std::ostream& out,
+    JSIdentifierCtxBase& mapper, uint8_t max_template_nesting,
+    char*& buf, size_t& buf_size, int cap_size)
     : yyFlexLexer(in, out),
       max_template_nesting(max_template_nesting),
-      ident_ctx(ident_ctx)
+      ident_ctx(mapper),
+      tmp_buf(buf),
+      tmp_buf_size(buf_size),
+      tmp_cap_size(cap_size)
 {
     BEGIN(regst);
 }
@@ -1105,6 +1114,9 @@ JSTokenizer::JSTokenizer(std::istream& in, std::ostream& out, JSIdentifierCtxBas
 JSTokenizer::~JSTokenizer()
 {
     yy_delete_buffer((YY_BUFFER_STATE)tmp_buffer);
+    delete[] tmp_buf;
+    tmp_buf = nullptr;
+    tmp_buf_size = 0;
 }
 
 void JSTokenizer::switch_to_temporal(const std::string& data)
@@ -1130,13 +1142,15 @@ JSTokenizer::JSRet JSTokenizer::eval_eof()
 {
     // If the temporal scan buffer reaches EOF, cleanup and
     // continue with the initial one
-    if ( tmp_buffer )
+    if (tmp_buffer)
     {
         switch_to_initial();
         return EOS;
     }
 
     // Normal termination
+    states_apply();
+
     return SCRIPT_CONTINUE;
 }
 
@@ -1203,7 +1217,7 @@ JSTokenizer::JSRet JSTokenizer::do_identifier_substitution(const char* lexeme)
 
 bool JSTokenizer::unescape(const char* lexeme)
 {
-    if ( strstr(lexeme, "\\u") )
+    if (strstr(lexeme, "\\u"))
     {
         const std::string unescaped_lex = unescape_unicode(lexeme);
         switch_to_temporal(unescaped_lex);
@@ -1222,9 +1236,9 @@ void JSTokenizer::process_punctuator()
 
 void JSTokenizer::process_closing_bracket()
 {
-    if ( not bracket_depth.empty() ) 
+    if (!bracket_depth.empty())
     {
-        if ( bracket_depth.top() )
+        if (bracket_depth.top())
             bracket_depth.top()--;
         else
         {
@@ -1239,11 +1253,63 @@ void JSTokenizer::process_closing_bracket()
 
 JSTokenizer::JSRet JSTokenizer::process_subst_open()
 {
-    if ( bracket_depth.size() >= max_template_nesting )
+    if (bracket_depth.size() >= max_template_nesting)
         return TEMPLATE_NESTING_OVERFLOW;
     bracket_depth.push(0);
     token = PUNCTUATOR;
     ECHO;
-    BEGIN(divop); 
+    BEGIN(divop);
     return EOS;
+}
+
+void JSTokenizer::states_push()
+{
+    assert(yyleng != 0);
+
+    sp++;
+    sp %= JSTOKENIZER_MAX_STATES;
+    auto& state = states[sp];
+
+    state.token = token;
+    state.length = yyleng;
+    state.sc = yy_start;
+}
+
+void JSTokenizer::states_correct(int take_off)
+{
+    auto& state = states[sp];
+    state.length -= yyleng - take_off;
+}
+
+void JSTokenizer::states_apply()
+{
+    int tail_size = 0;
+
+    for (int i = JSTOKENIZER_MAX_STATES; i > 0 && tail_size < tmp_cap_size; --i)
+    {
+        auto idx = sp + i;
+        idx %= JSTOKENIZER_MAX_STATES;
+        auto& state = states[idx];
+
+        if (state.length == 0)
+            continue;
+
+        token = state.token;
+        yy_start = state.sc;
+        tail_size += state.length;
+        tail_size = tail_size < tmp_cap_size ? tail_size : tmp_cap_size;
+    }
+
+    for (int i = 0; i < JSTOKENIZER_MAX_STATES; ++i)
+        states[i].length = 0;
+
+    char* buf = new char[tail_size];
+
+    yyin.seekg(-tail_size, std::ios_base::end);
+    yyin.clear();
+    yyin.read(buf, tail_size);
+
+    delete[] tmp_buf;
+    tmp_buf = buf;
+    tmp_buf_size = tail_size;
 }

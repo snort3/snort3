@@ -24,16 +24,28 @@
 #include "js_normalizer.h"
 
 using namespace snort;
+using namespace std;
 
 JSNormalizer::JSNormalizer(JSIdentifierCtxBase& js_ident_ctx, size_t norm_depth,
-    uint8_t max_template_nesting)
+    uint8_t max_template_nesting, int tmp_cap_size)
     : depth(norm_depth),
       rem_bytes(norm_depth),
-      unlim(norm_depth == (size_t) - 1),
+      unlim(norm_depth == static_cast<size_t>(-1)),
       src_next(nullptr),
       dst_next(nullptr),
-      tokenizer(in, out, js_ident_ctx, max_template_nesting)
+      tmp_buf(nullptr),
+      tmp_buf_size(0),
+      in(&in_buf),
+      out(&out_buf),
+      tokenizer(in, out, js_ident_ctx, max_template_nesting, tmp_buf, tmp_buf_size, tmp_cap_size)
 {
+}
+
+JSNormalizer::~JSNormalizer()
+{
+    delete[] tmp_buf;
+    tmp_buf = nullptr;
+    tmp_buf_size = 0;
 }
 
 JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len, char* dst, size_t dst_len)
@@ -47,13 +59,14 @@ JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len, char
 
     size_t len = unlim ? src_len :
         src_len < rem_bytes ? src_len : rem_bytes;
-    in.rdbuf()->pubsetbuf(const_cast<char*>(src), len);
-    out.rdbuf()->pubsetbuf(dst, dst_len);
 
-    JSTokenizer::JSRet ret = (JSTokenizer::JSRet)tokenizer.yylex();
+    in_buf.pubsetbuf(tmp_buf, tmp_buf_size, const_cast<char*>(src), len);
+    out_buf.pubsetbuf(dst, dst_len);
+
+    JSTokenizer::JSRet ret = static_cast<JSTokenizer::JSRet>(tokenizer.yylex());
     in.clear();
     out.clear();
-    size_t r_bytes = in.tellg();
+    size_t r_bytes = in_buf.glued() ? static_cast<size_t>(in.tellg()) : 0;
     size_t w_bytes = out.tellp();
 
     if (!unlim)

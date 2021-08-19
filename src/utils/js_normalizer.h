@@ -29,10 +29,85 @@
 namespace snort
 {
 
+class gluebuf : public std::stringbuf
+{
+public:
+    gluebuf() :
+        std::stringbuf(), once(true),
+        src1(nullptr), len1(0), src2(nullptr), len2(0)
+    { }
+
+    std::streambuf* pubsetbuf(char* buf1, std::streamsize buf1_len,
+        char* buf2, std::streamsize buf2_len)
+    {
+        once = !(buf1 && buf1_len);
+
+        if (once)
+        {
+            setbuf(buf2, buf2_len);
+            current_src_len = buf2_len;
+        }
+        else
+        {
+            setbuf(buf1, buf1_len);
+            current_src_len = buf1_len;
+        }
+        src1 = buf1;
+        len1 = buf1_len;
+        src2 = buf2;
+        len2 = buf2_len;
+        return this;
+    }
+
+    bool glued() const
+    {
+        return once;
+    }
+
+protected:
+    virtual std::streampos seekoff(std::streamoff off,
+        std::ios_base::seekdir way, std::ios_base::openmode which) override
+    {
+        if (way != std::ios_base::end)
+            return std::stringbuf::seekoff(off, way, which);
+
+        if (current_src_len + off < 0 and once)
+        {
+            off += current_src_len;
+            once = false;
+            setbuf(src1, len1);
+            current_src_len = len1;
+        }
+
+        return std::stringbuf::seekoff(off, way, which);
+    }
+
+    virtual int underflow() override
+    {
+        if (once)
+            return EOF;
+
+        once = true;
+        setbuf(src2, len2);
+        current_src_len = len2;
+        return sgetc();
+    }
+
+private:
+    bool once;
+    std::streamsize current_src_len;
+    char* src1;
+    std::streamsize len1;
+    char* src2;
+    std::streamsize len2;
+};
+
 class JSNormalizer
 {
 public:
-    JSNormalizer(JSIdentifierCtxBase& js_ident_ctx, size_t depth, uint8_t max_template_nesting);
+    JSNormalizer(JSIdentifierCtxBase& js_ident_ctx, size_t depth,
+        uint8_t max_template_nesting, int tmp_cap_size = JSTOKENIZER_BUF_MAX_SIZE);
+    ~JSNormalizer();
 
     const char* get_src_next() const
     { return src_next; }
@@ -54,12 +129,16 @@ private:
     const char* src_next;
     char* dst_next;
 
-    std::stringstream in;
-    std::stringstream out;
+    char* tmp_buf;
+    size_t tmp_buf_size;
+
+    gluebuf in_buf;
+    std::stringbuf out_buf;
+    std::istream in;
+    std::ostream out;
     JSTokenizer tokenizer;
 };
 
 }
 
 #endif //JS_NORMALIZER_H
-
