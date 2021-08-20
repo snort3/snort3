@@ -52,6 +52,8 @@ public:
         (infractions & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
     uint64_t get_raw2() const { return
         ((infractions >> 64) & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
+    uint64_t get_raw3() const { return
+        ((infractions >> 128) & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
 
 private:
     std::bitset<MAX> infractions = 0;

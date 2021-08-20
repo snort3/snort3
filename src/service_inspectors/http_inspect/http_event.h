@@ -52,6 +52,9 @@ public:
     uint64_t get_raw3() const { return
        ((events_generated >> BASE_2XX_EVENTS) & bitmask).to_ulong(); }
 
+    uint64_t get_raw4() const { return
+       ((events_generated >> (BASE_2XX_EVENTS + 64)) & bitmask).to_ulong(); }
+
 private:
     static const unsigned BASE_1XX_EVENTS = 100;
     static const unsigned BASE_2XX_EVENTS = 200;

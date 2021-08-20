@@ -421,10 +421,12 @@ void HttpMsgSection::print_section_title(FILE* output, const char* title) const
 
 void HttpMsgSection::print_section_wrapup(FILE* output) const
 {
-    fprintf(output, "Infractions: %016" PRIx64 " %016" PRIx64 ", Events: %016" PRIx64 " %016"
-        PRIx64 " %016" PRIx64 ", TCP Close: %s\n\n",
+    fprintf(output, "Infractions: %016" PRIx64 " %016" PRIx64 " %016" PRIx64 ", Events: %016"
+        PRIx64 " %016" PRIx64 " %016" PRIx64 " %016" PRIx64 ", TCP Close: %s\n\n",
+        transaction->get_infractions(source_id)->get_raw3(),
         transaction->get_infractions(source_id)->get_raw2(),
         transaction->get_infractions(source_id)->get_raw(),
+        session_data->events[source_id]->get_raw4(),
         session_data->events[source_id]->get_raw3(),
         session_data->events[source_id]->get_raw2(),
         session_data->events[source_id]->get_raw(),
