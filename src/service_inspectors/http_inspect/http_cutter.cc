@@ -544,13 +544,19 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             else
             {
                 expected = expected * 16 + as_hex[buffer[k]];
-                if (++digits_seen > 8)
+                if ((++digits_seen > 8) || (expected > maximum_chunk_length))
                 {
-                    // overflow protection: must fit into 32 bits
-                    *infractions += INF_CHUNK_TOO_LARGE;
-                    events->create_event(EVENT_BROKEN_CHUNK);
-                    transition_to_chunk_bad(accelerate_this_packet);
-                    k--;
+                    // alert for exceeding configurable limit
+                    *infractions += INF_CHUNK_OVER_MAXIMUM;
+                    events->create_event(EVENT_LARGE_CHUNK);
+                    if (digits_seen > 8)
+                    {
+                        // overflow protection: absolutely must fit into 32 bits
+                        *infractions += INF_CHUNK_TOO_LARGE;
+                        events->create_event(EVENT_BROKEN_CHUNK);
+                        transition_to_chunk_bad(accelerate_this_packet);
+                        k--;
+                    }
                 }
                 if (expected != 0)
                     zero_chunk = false;

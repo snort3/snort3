@@ -55,6 +55,12 @@ const Parameter HttpModule::http_params[] =
     { "unzip", Parameter::PT_BOOL, nullptr, "true",
       "decompress gzip and deflate message bodies" },
 
+    { "maximum_host_length", Parameter::PT_INT, "-1:max53", "-1",
+      "maximum allowed length for Host header value (-1 no limit)" },
+
+    { "maximum_chunk_length", Parameter::PT_INT, "0:4294967295", "4294967295",
+      "maximum allowed length for a message body chunk" },
+
     { "normalize_utf", Parameter::PT_BOOL, nullptr, "true",
       "normalize charset utf encodings in response bodies" },
 
@@ -191,6 +197,14 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("normalize_utf"))
     {
         params->normalize_utf = val.get_bool();
+    }
+    else if (val.is("maximum_host_length"))
+    {
+        params->maximum_host_length = val.get_int64();
+    }
+    else if (val.is("maximum_chunk_length"))
+    {
+        params->maximum_chunk_length = val.get_int64();
     }
     else if (val.is("decompress_pdf"))
     {

@@ -80,6 +80,7 @@ HttpCutter* HttpStreamSplitter::get_cutter(SectionType type,
             session_data->compression[source_id], session_data);
     case SEC_BODY_CHUNK:
         return (HttpCutter*)new HttpBodyChunkCutter(
+            my_inspector->params->maximum_chunk_length,
             session_data->accelerated_blocking[source_id],
             my_inspector->script_finder,
             session_data->compression[source_id], session_data);

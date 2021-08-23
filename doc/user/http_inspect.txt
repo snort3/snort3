@@ -207,6 +207,21 @@ inspector as they are defined, e.g "x-forwarded-for" will be preferred than
 "true-client-ip" if both headers are present in the stream. The header names
 should be delimited by a space.
 
+===== maximum_host_length
+
+Setting maximum_host_length causes http_inspect to generate 119:25 if the
+Host header value including optional white space exceeds the specified length.
+In the abnormal case of multiple Host headers, the total length of the combined
+values is used. The default value is -1, meaning do not perform this check.
+
+===== maximum_chunk_length
+
+http_inspect strictly limits individual chunks within a chunked message
+body to be less than four gigabytes.
+
+A lower limit may be configured by setting maximum_chunk_length. Any chunk
+longer than maximum chunk length will generate a 119:16 alert.
+
 ===== URI processing
 
 Normalization and inspection of the URI in the HTTP request message is a

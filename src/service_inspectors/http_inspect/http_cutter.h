@@ -159,9 +159,10 @@ public:
 class HttpBodyChunkCutter : public HttpBodyCutter
 {
 public:
-    HttpBodyChunkCutter(bool accelerated_blocking, ScriptFinder* finder,
-        HttpEnums::CompressId compression, HttpFlowData* ssn_data) :
-        HttpBodyCutter(accelerated_blocking, finder, compression, ssn_data)
+    HttpBodyChunkCutter(int64_t maximum_chunk_length_, bool accelerated_blocking,
+        ScriptFinder* finder, HttpEnums::CompressId compression, HttpFlowData* ssn_data) :
+        HttpBodyCutter(accelerated_blocking, finder, compression, ssn_data),
+        maximum_chunk_length(maximum_chunk_length_)
         {}
     HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
         HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, bool stretch,
@@ -172,6 +173,8 @@ public:
 
 private:
     void transition_to_chunk_bad(bool& accelerate_this_packet);
+
+    const int64_t maximum_chunk_length;
 
     uint32_t data_seen = 0;
     HttpEnums::ChunkState curr_state = HttpEnums::CHUNK_NEWLINES;

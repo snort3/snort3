@@ -150,6 +150,16 @@ void HttpMsgHeader::gen_events()
     if (source_id == SRC_CLIENT)
         get_header_value_norm(HEAD_HOST);
 
+    // Host header value too long
+    if ((params->maximum_host_length != -1) && (source_id == SRC_CLIENT))
+    {
+        if (get_all_header_values_raw(HEAD_HOST).length() > params->maximum_host_length)
+        {
+            add_infraction(INF_LONG_HOST_VALUE);
+            create_event(EVENT_LONG_HOSTNAME);
+        }
+    }
+
     // Content-Transfer-Encoding is a MIME header not sanctioned by HTTP. Which may not prevent
     // some clients from recognizing it and applying a decoding that Snort does not expect.
     if (get_header_count(HEAD_CONTENT_TRANSFER_ENCODING) > 0)

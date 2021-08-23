@@ -273,6 +273,8 @@ enum Infraction
     INF_JS_SHORTENED_TAG,
     INF_JS_IDENTIFIER_OVERFLOW,
     INF_JS_TMPL_NEST_OVFLOW,
+    INF_CHUNK_OVER_MAXIMUM,
+    INF_LONG_HOST_VALUE,
     INF__MAX_VALUE
 };
 
@@ -283,7 +285,7 @@ enum EventSid
     EVENT_DOUBLE_DECODE = 2,
     EVENT_U_ENCODE = 3,
     EVENT_BARE_BYTE = 4,
-    // EVENT_OBSOLETE_BASE_36 = 5,   // Previously used, do not reuse this number
+    // EVENT_BASE_36 = 5,                        // Retired. Do not reuse this number
     EVENT_UTF_8 = 6,
     EVENT_CODE_POINT_IN_URI = 7,
     EVENT_MULTI_SLASH = 8,
@@ -294,34 +296,34 @@ enum EventSid
     EVENT_LF_WITHOUT_CR = 13,
     EVENT_NON_RFC_CHAR = 14,
     EVENT_OVERSIZE_DIR = 15,
-    // EVENT_LARGE_CHUNK = 16,
-    // EVENT_PROXY_USE = 17,
+    EVENT_LARGE_CHUNK = 16,
+    // EVENT_PROXY_USE = 17,                     // Retired. Do not reuse this number
     EVENT_WEBROOT_DIR = 18,
     EVENT_LONG_HDR = 19,
     EVENT_MAX_HEADERS = 20,
     EVENT_MULTIPLE_CONTLEN = 21,
-    // EVENT_OBSOLETE_CHUNK_SIZE_MISMATCH = 22,   // Previously used, do not reuse this number
-    // EVENT_INVALID_TRUEIP = 23,
+    // EVENT_CHUNK_SIZE_MISMATCH = 22,           // Retired. Do not reuse this number
+    // EVENT_INVALID_TRUEIP = 23,                // Retired. Do not reuse this number
     EVENT_MULTIPLE_HOST_HDRS = 24,
-    // EVENT_LONG_HOSTNAME = 25,
-    // EVENT_EXCEEDS_SPACES = 26,
-    // EVENT_CONSECUTIVE_SMALL_CHUNKS = 27,
+    EVENT_LONG_HOSTNAME = 25,
+    // EVENT_EXCEEDS_SPACES = 26,                // Retired. Do not reuse this number
+    // EVENT_CONSECUTIVE_SMALL_CHUNKS = 27,      // Retired. Do not reuse this number
     EVENT_UNBOUNDED_POST = 28,
-    // EVENT_MULTIPLE_TRUEIP_IN_SESSION = 29,
-    // EVENT_BOTH_TRUEIP_XFF_HDRS = 30,
+    // EVENT_MULTIPLE_TRUEIP_IN_SESSION = 29,    // Retired. Do not reuse this number
+    // EVENT_BOTH_TRUEIP_XFF_HDRS = 30,          // Retired. Do not reuse this number
     EVENT_UNKNOWN_METHOD = 31,
     EVENT_SIMPLE_REQUEST = 32,
     EVENT_UNESCAPED_SPACE_URI = 33,
     EVENT_PIPELINE_MAX = 34,
 
-    // EVENT_OBSOLETE_ANOM_SERVER = 101,      // Previously used, do not reuse this number
+    // EVENT_ANOM_SERVER = 101,                  // Retired. Do not reuse this number
     EVENT_INVALID_STATCODE = 102,
-    // EVENT_UNUSED_1 = 103,
+    // EVENT_UNUSED_1 = 103,                     // Retired. Do not reuse this number
     EVENT_UTF_NORM_FAIL = 104,
     EVENT_UTF7 = 105,
-    // EVENT_DECOMPR_FAILED = 106,
-    // EVENT_CONSECUTIVE_SMALL_CHUNKS_S = 107,
-    // EVENT_UNUSED_2 = 108,
+    // EVENT_DECOMPR_FAILED = 106,               // Retired. Do not reuse this number
+    // EVENT_CONSECUTIVE_SMALL_CHUNKS_S = 107,   // Retired. Do not reuse this number
+    // EVENT_UNUSED_2 = 108,                     // Retired. Do not reuse this number
     EVENT_JS_OBFUSCATION_EXCD = 109,
     EVENT_JS_EXCESS_WS = 110,
     EVENT_MIXED_ENCODINGS = 111,
