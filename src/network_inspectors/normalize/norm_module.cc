@@ -137,9 +137,6 @@ static const Parameter norm_tcp_params[] =
     { "trim_mss", Parameter::PT_BOOL, nullptr, "false",
       "trim data to MSS" },
 
-    { "trim", Parameter::PT_BOOL, nullptr, "false",
-      "enable all of the TCP trim options" },
-
     { "opts", Parameter::PT_BOOL, nullptr, "false",
       "clear all options except mss, wscale, timestamp, and any explicitly allowed" },
 
@@ -284,13 +281,6 @@ bool NormalizeModule::set_tcp(const char*, const Value& v, SnortConfig*)
     else if ( v.is("trim_mss") )
         Norm_Set(&config, NORM_TCP_TRIM_MSS, v.get_bool());
 
-    else if ( v.is("trim") )
-    {
-        Norm_Set(&config, NORM_TCP_TRIM_SYN, v.get_bool());
-        Norm_Set(&config, NORM_TCP_TRIM_RST, v.get_bool());
-        Norm_Set(&config, NORM_TCP_TRIM_WIN, v.get_bool());
-        Norm_Set(&config, NORM_TCP_TRIM_MSS, v.get_bool());
-    }
     else if ( v.is("ecn") )
     {
         if ( !strcmp(v.get_string(), "packet") )

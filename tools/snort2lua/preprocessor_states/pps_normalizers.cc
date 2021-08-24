@@ -169,7 +169,7 @@ bool TcpNormalizer::convert(std::istringstream& data_stream)
             table_api.add_option("ips", true);
 
         else if (keyword == "trim")
-            table_api.add_option("trim", true);
+            table_api.add_deleted_comment(keyword);
 
         else if (keyword == "opts")
             table_api.add_option("opts", true);
