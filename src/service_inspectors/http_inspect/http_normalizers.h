@@ -38,6 +38,7 @@ NormFunc norm_remove_quotes_lws;
 // Other normalization-related utilities
 void get_last_token(const Field& input, Field& last_token, char ichar);
 int64_t norm_decimal_integer(const Field& input);
+bool has_consecutive_commas(const Field& input);
 
 #endif
 

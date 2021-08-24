@@ -198,6 +198,14 @@ void HttpMsgHeader::gen_events()
         }
         while (consumed != -1);
     }
+
+    // Check for an empty value in Accept-Encoding (two consecutive commas)
+    if (has_consecutive_commas(get_header_value_norm(HEAD_ACCEPT_ENCODING)))
+    {
+        add_infraction(INF_ACCEPT_ENCODING_CONSECUTIVE_COMMAS);
+        create_event(EVENT_ACCEPT_ENCODING_CONSECUTIVE_COMMAS);
+    }
+
 }
 
 void HttpMsgHeader::update_flow()

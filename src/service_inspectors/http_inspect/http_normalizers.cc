@@ -104,3 +104,13 @@ void get_last_token(const Field& input, Field& last_token, char ichar)
     last_start++;
     last_token.set(input.length() - (last_start - input.start()), last_start);
 }
+
+bool has_consecutive_commas(const Field& input)
+{
+    for (int32_t k = 0; k + 1 < input.length(); k++)
+    {
+        if ((input.start()[k] == ',') && (input.start()[k+1] == ','))
+            return true;
+    }
+    return false;
+}

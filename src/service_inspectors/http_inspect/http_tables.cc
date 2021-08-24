@@ -315,6 +315,8 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_JS_SHORTENED_TAG,           "script opening tag in a short form" },
     { EVENT_JS_IDENTIFIER_OVERFLOW,     "max number of unique JavaScript identifiers reached" },
     { EVENT_JS_TMPL_NEST_OVFLOW,        "JavaScript template literal nesting is over capacity" },
+    { EVENT_ACCEPT_ENCODING_CONSECUTIVE_COMMAS, "Consecutive commas in HTTP Accept-Encoding "
+                                        "header" },
     { 0, nullptr }
 };
 
