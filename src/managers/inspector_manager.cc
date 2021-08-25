@@ -1175,7 +1175,7 @@ void InspectorManager::full_inspection(Packet* p)
 {
     Flow* flow = p->flow;
 
-    if ( flow->service and flow->clouseau and !p->is_cooked() )
+    if ( flow->service and flow->clouseau and (!(p->is_cooked()) or p->is_defrag()) )
         bumble(p);
 
     // For reassembled PDUs, a null data buffer signals no detection. Detection can be required

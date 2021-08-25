@@ -303,6 +303,9 @@ struct SO_PUBLIC Packet
     bool is_rebuilt() const
     { return (packet_flags & (PKT_REBUILT_STREAM|PKT_REBUILT_FRAG)) != 0; }
 
+    bool is_defrag() const
+    { return (packet_flags & PKT_REBUILT_FRAG) != 0; }
+
     bool is_retry() const
     { return (packet_flags & PKT_RETRY) != 0; }
 
