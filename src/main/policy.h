@@ -33,6 +33,7 @@ typedef unsigned char uuid_t[16];
 #endif
 
 #include <algorithm>
+#include <map>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -183,6 +184,9 @@ public:
     Enable default_rule_state = INHERIT_ENABLE;
 
     bool obfuscate_pii;
+
+    std::string action_override;
+    std::map<std::string, std::string> action_map;
 
     // Holds all plugin actions associated with this policy
     std::vector<snort::IpsAction*> action;

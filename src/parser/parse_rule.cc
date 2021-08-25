@@ -746,6 +746,16 @@ void parse_rule_print()
 
 void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
 {
+    IpsPolicy* p = get_ips_policy();
+
+    if ( !p->action_override.empty() )
+        s = p->action_override.c_str();
+
+    auto it = p->action_map.find(s);
+
+    if ( it != p->action_map.end() )
+        s = it->second.c_str();
+
     s_type = s;
     rtn = RuleTreeNode();
 
