@@ -317,7 +317,8 @@ ExpectCache::~ExpectCache()
  */
 int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_proto,
     const SfIp* cliIP, uint16_t cliPort, const SfIp* srvIP, uint16_t srvPort, char direction,
-    FlowData* fd, SnortProtocolId snort_protocol_id, bool swap_app_direction, bool expect_multi)
+    FlowData* fd, SnortProtocolId snort_protocol_id, bool swap_app_direction, bool expect_multi,
+    bool bidirectional)
 {
     /* Just pull the VLAN ID, MPLS ID, and Address Space ID from the
         control packet until we have a use case for not doing so. */
@@ -395,6 +396,10 @@ int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_pro
             unsigned flag = 0;
             if (expect_multi)
                 flag |= DAQ_EFLOW_ALLOW_MULTIPLE;
+
+            if (bidirectional)
+                flag |= DAQ_EFLOW_BIDIRECTIONAL;
+
             ctrlPkt->daq_instance->add_expected(ctrlPkt, cliIP, cliPort, srvIP, srvPort,
                     ip_proto, 1000, flag);
         }

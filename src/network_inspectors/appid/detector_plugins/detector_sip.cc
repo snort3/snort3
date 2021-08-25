@@ -181,7 +181,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
 {
     AppIdSession* fp = AppIdSession::create_future_session(
         pkt, cliIp, cliPort, srvIp, srvPort, protocol,
-        asd.config.snort_proto_ids[PROTO_INDEX_SIP]);
+        asd.config.snort_proto_ids[PROTO_INDEX_SIP], false, true);
 
     if ( fp )
     {
@@ -200,7 +200,7 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
 
     AppIdSession* fp2 = AppIdSession::create_future_session(
         pkt, cliIp, cliPort + 1, srvIp, srvPort + 1, protocol,
-        asd.config.snort_proto_ids[PROTO_INDEX_SIP]);
+        asd.config.snort_proto_ids[PROTO_INDEX_SIP], false, true);
 
     if ( fp2 )
     {
@@ -235,8 +235,6 @@ void SipServiceDetector::addFutureRtpFlows(SipEvent& event, AppIdSession& asd)
     {
         createRtpFlow(asd, event.get_packet(), media_a->get_address(), media_a->get_port(),
             media_b->get_address(), media_b->get_port(), IpProtocol::UDP);
-        createRtpFlow(asd, event.get_packet(), media_b->get_address(), media_b->get_port(),
-            media_a->get_address(), media_b->get_port(), IpProtocol::UDP);
 
         media_a = session_a->next_media_data();
         media_b = session_b->next_media_data();

@@ -390,6 +390,8 @@ int SFDAQInstance::add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16
     if (flags & DAQ_EFLOW_ALLOW_MULTIPLE)
         d_cef.flags |= DAQ_EFLOW_ALLOW_MULTIPLE;
 
+    if (flags & DAQ_EFLOW_BIDIRECTIONAL)
+        d_cef.flags |= DAQ_EFLOW_BIDIRECTIONAL;
 /*
     if (flags & DAQ_DC_FLOAT)
         d_cef.flags |= DAQ_EFLOW_FLOAT;

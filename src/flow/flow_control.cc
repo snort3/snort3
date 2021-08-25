@@ -573,10 +573,11 @@ int FlowControl::add_expected_ignore( const Packet* ctrlPkt, PktType type, IpPro
 
 int FlowControl::add_expected( const Packet* ctrlPkt, PktType type, IpProtocol ip_proto,
     const SfIp *srcIP, uint16_t srcPort, const SfIp *dstIP, uint16_t dstPort,
-    SnortProtocolId snort_protocol_id, FlowData* fd, bool swap_app_direction, bool expect_multi)
+    SnortProtocolId snort_protocol_id, FlowData* fd, bool swap_app_direction, bool expect_multi,
+    bool bidirectional)
 {
     return exp_cache->add_flow( ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort,
-        SSN_DIR_BOTH, fd, snort_protocol_id, swap_app_direction, expect_multi);
+        SSN_DIR_BOTH, fd, snort_protocol_id, swap_app_direction, expect_multi, bidirectional);
 }
 
 bool FlowControl::is_expected(Packet* p)

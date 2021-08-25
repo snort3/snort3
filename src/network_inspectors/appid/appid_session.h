@@ -236,7 +236,8 @@ public:
     static AppIdSession* allocate_session(const snort::Packet*, IpProtocol,
         AppidSessionDirection, AppIdInspector&, OdpContext&);
     static AppIdSession* create_future_session(const snort::Packet*, const snort::SfIp*, uint16_t,
-        const snort::SfIp*, uint16_t, IpProtocol, SnortProtocolId, bool swap_app_direction=false);
+        const snort::SfIp*, uint16_t, IpProtocol, SnortProtocolId, bool swap_app_direction=false,
+        bool bidirectional=false);
     void initialize_future_session(AppIdSession&, uint64_t);
 
     size_t size_of() override
