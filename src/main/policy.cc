@@ -293,20 +293,33 @@ InspectionPolicy* get_inspection_policy()
 IpsPolicy* get_ips_policy()
 { return s_detection_policy; }
 
-IpsPolicy* get_ips_policy(const SnortConfig* sc, unsigned i)
+void set_network_policy(NetworkPolicy* p)
+{ s_traffic_policy = p; }
+
+void set_inspection_policy(InspectionPolicy* p)
+{ s_inspection_policy = p; }
+
+void set_ips_policy(IpsPolicy* p)
+{ s_detection_policy = p; }
+
+NetworkPolicy* get_user_network_policy(const SnortConfig* sc, unsigned policy_id)
 {
-    return sc && i < sc->policy_map->ips_policy_count() ?
-        sc->policy_map->get_ips_policy(i) : nullptr;
+    return sc->policy_map->get_user_network(policy_id);
+}
+
+InspectionPolicy* get_user_inspection_policy(const SnortConfig* sc, unsigned policy_id)
+{
+    return sc->policy_map->get_user_inspection(policy_id);
 }
 
 InspectionPolicy* get_default_inspection_policy(const SnortConfig* sc)
 { return sc->policy_map->get_inspection_policy(0); }
 
-void set_ips_policy(IpsPolicy* p)
-{ s_detection_policy = p; }
-
-void set_network_policy(NetworkPolicy* p)
-{ s_traffic_policy = p; }
+IpsPolicy* get_ips_policy(const SnortConfig* sc, unsigned i)
+{
+    return sc && i < sc->policy_map->ips_policy_count() ?
+        sc->policy_map->get_ips_policy(i) : nullptr;
+}
 
 IpsPolicy* get_user_ips_policy(const SnortConfig* sc, unsigned policy_id)
 {
@@ -317,11 +330,6 @@ IpsPolicy* get_empty_ips_policy(const SnortConfig* sc)
 {
     return sc->policy_map->get_empty_ips();
 }
-
-NetworkPolicy* get_user_network_policy(const SnortConfig* sc, unsigned policy_id)
-{
-    return sc->policy_map->get_user_network(policy_id);
-}
 } // namespace snort
 
 void set_network_policy(const SnortConfig* sc, unsigned i)
@@ -331,9 +339,6 @@ void set_network_policy(const SnortConfig* sc, unsigned i)
     if ( i < pm->network_policy_count() )
         set_network_policy(pm->get_network_policy(i));
 }
-
-void set_inspection_policy(InspectionPolicy* p)
-{ s_inspection_policy = p; }
 
 void set_inspection_policy(const SnortConfig* sc, unsigned i)
 {
@@ -372,6 +377,15 @@ void set_default_policy(const SnortConfig* sc)
     set_ips_policy(sc->policy_map->get_ips_policy(0));
 }
 
+bool only_network_policy()
+{ return get_network_policy() && !get_ips_policy() && !get_inspection_policy(); }
+
+bool only_inspection_policy()
+{ return get_inspection_policy() && !get_ips_policy() && !get_network_policy(); }
+
+bool only_ips_policy()
+{ return get_ips_policy() && !get_inspection_policy() && !get_network_policy(); }
+
 bool default_inspection_policy()
 {
     if ( !get_inspection_policy() )
@@ -382,13 +396,4 @@ bool default_inspection_policy()
 
     return true;
 }
-
-bool only_inspection_policy()
-{ return get_inspection_policy() && !get_ips_policy() && !get_network_policy(); }
-
-bool only_ips_policy()
-{ return get_ips_policy() && !get_inspection_policy() && !get_network_policy(); }
-
-bool only_network_policy()
-{ return get_network_policy() && !get_ips_policy() && !get_inspection_policy(); }
 

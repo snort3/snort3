@@ -72,19 +72,24 @@ private:
 class UTestHandler : public DataHandler
 {
 public:
-    UTestHandler() : DataHandler("unit_test")
-    { }
+    UTestHandler(unsigned u = 0) : DataHandler("unit_test")
+    { if ( u ) order = u; }
 
     void handle(DataEvent&, Flow*) override;
 
     int evt_msg = 0;
+    unsigned seq = 99;
 };
+
+static unsigned s_next = 0;
 
 void UTestHandler::handle(DataEvent& event, Flow*)
 {
     UTestEvent* evt = (UTestEvent*)&event;
     evt_msg = evt->get_message();
+    seq = ++s_next;
 }
+
 #define DB_UTEST_EVENT "unit.test.event"
 
 //--------------------------------------------------------------------------
@@ -149,6 +154,62 @@ TEST(data_bus, subscribe)
     CHECK(200 == h->evt_msg); // unsubscribed!
 
     delete h;
+}
+
+TEST(data_bus, order1)
+{
+    UTestHandler* h0 = new UTestHandler();
+    DataBus::subscribe(DB_UTEST_EVENT, h0);
+
+    UTestHandler* h1 = new UTestHandler(1);
+    DataBus::subscribe(DB_UTEST_EVENT, h1);
+
+    UTestHandler* h9 = new UTestHandler(9);
+    DataBus::subscribe(DB_UTEST_EVENT, h9);
+
+    s_next = 0;
+    UTestEvent event(100);
+    DataBus::publish(DB_UTEST_EVENT, event);
+
+    CHECK(1 == h1->seq);
+    CHECK(2 == h9->seq);
+    CHECK(3 == h0->seq);
+
+    DataBus::unsubscribe(DB_UTEST_EVENT, h0);
+    DataBus::unsubscribe(DB_UTEST_EVENT, h1);
+    DataBus::unsubscribe(DB_UTEST_EVENT, h9);
+
+    delete h0;
+    delete h1;
+    delete h9;
+}
+
+TEST(data_bus, order2)
+{
+    UTestHandler* h0 = new UTestHandler(0);
+    DataBus::subscribe(DB_UTEST_EVENT, h0);
+
+    UTestHandler* h9 = new UTestHandler(9);
+    DataBus::subscribe(DB_UTEST_EVENT, h9);
+
+    UTestHandler* h1 = new UTestHandler(1);
+    DataBus::subscribe(DB_UTEST_EVENT, h1);
+
+    s_next = 0;
+    UTestEvent event(100);
+    DataBus::publish(DB_UTEST_EVENT, event);
+
+    CHECK(1 == h1->seq);
+    CHECK(2 == h9->seq);
+    CHECK(3 == h0->seq);
+
+    DataBus::unsubscribe(DB_UTEST_EVENT, h0);
+    DataBus::unsubscribe(DB_UTEST_EVENT, h1);
+    DataBus::unsubscribe(DB_UTEST_EVENT, h9);
+
+    delete h0;
+    delete h1;
+    delete h9;
 }
 
 //-------------------------------------------------------------------------

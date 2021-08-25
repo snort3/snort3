@@ -77,6 +77,10 @@ public:
     const char* module_name;
     bool cloned;
 
+    // order is desired position in the call sequence of handlers: 1 = first, 0 = last
+    // the sequence among subscribers with the same order is not specified
+    unsigned order = 0;
+
 protected:
     DataHandler(std::nullptr_t) = delete;
     DataHandler(const char* mod_name) : module_name(mod_name), cloned(false) { }

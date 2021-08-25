@@ -468,7 +468,8 @@ private:
 class FlowStateSetupHandler : public DataHandler
 {
 public:
-    FlowStateSetupHandler() : DataHandler(BIND_NAME) { }
+    FlowStateSetupHandler() : DataHandler(BIND_NAME)
+    { order = 100; }
 
     void handle(DataEvent&, Flow* flow) override
     {

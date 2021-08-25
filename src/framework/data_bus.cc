@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <algorithm>
+
 #include "data_bus.h"
 
 #include "main/policy.h"
@@ -142,10 +144,22 @@ void DataBus::publish(const char* key, Packet* p, Flow* f)
 // private methods
 //--------------------------------------------------------------------------
 
+static bool compare(DataHandler* a, DataHandler* b)
+{
+    if ( a->order and b->order )
+        return a->order < b->order;
+
+    if ( a->order )
+        return true;
+
+    return false;
+}
+
 void DataBus::_subscribe(const char* key, DataHandler* h)
 {
     DataList& v = map[key];
     v.emplace_back(h);
+    std::sort(v.begin(), v.end(), compare);
 }
 
 void DataBus::_unsubscribe(const char* key, DataHandler* h)
