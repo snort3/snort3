@@ -45,7 +45,7 @@ Optional Features:
     --enable-shell          enable command line shell support
     --enable-large-pcap     enable support for pcaps larger than 2 GB
     --enable-stdlog         use file descriptor 3 instead of stdout for alerts
-    --enable-tsc-clock      use timestamp counter register clock (x86 only)
+    --enable-tsc-clock      use timestamp counter register clock (x86 and arm only)
     --enable-debug-msgs     enable debug printing options (bugreports and
                             developers only)
     --enable-debug          enable debugging options (bugreports and developers

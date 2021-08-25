@@ -20,7 +20,7 @@
 // modeled after modbus_paf.cc (author Ryan Jordan)
 // modeled after s7comm_paf.cc (author Pradeep Damodharan <prdamodh@cisco.com>)
 
-// Protocol-Aware Flushing (PAF) code for the IEC104 preprocessor.
+// Protocol-Aware Flushing (PAF) code for the IEC104 inspector.
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

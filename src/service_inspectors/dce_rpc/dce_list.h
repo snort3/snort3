@@ -19,7 +19,7 @@
 
 /****************************************************************************
 * Provides list, queue and stack data structures and methods for use
-* with the preprocessor.
+* with the inspector.
 *
 * 8/17/2008 - Initial implementation ... Todd Wease <twease@sourcefire.com>
 *

@@ -23,7 +23,7 @@
 #ifndef IEC104_PAF__H
 #define IEC104_PAF__H
 
-// Protocol-Aware Flushing (PAF) code for the IEC104 preprocessor.
+// Protocol-Aware Flushing (PAF) code for the IEC104 inspector.
 
 #include "stream/stream_splitter.h"
 

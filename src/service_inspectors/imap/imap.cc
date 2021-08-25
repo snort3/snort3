@@ -567,16 +567,8 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
     }
 }
 
-/* Main runtime entry point for IMAP preprocessor.
- * Analyzes IMAP packets for anomalies/exploits.
- *
- * PARAMETERS:
- *
- * p:    Pointer to current packet to process.
- * contextp:    Pointer to context block, not used.
- *
- * RETURNS:     Nothing.
- */
+// Analyzes IMAP packets for anomalies/exploits.
+
 static void snort_imap(IMAP_PROTO_CONF* config, Packet* p)
 {
     /* Attempt to get a previously allocated IMAP block. */

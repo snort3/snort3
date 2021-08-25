@@ -150,7 +150,7 @@ struct DNSNameState
 #define DNS_RESP_STATE_ADD_RR           0x60
 
 // Per-session data block containing current state
-// of the DNS preprocessor for the session.
+// of the DNS inspector for the session.
 struct DNSData
 {
     uint32_t state;               // The current state of the session.

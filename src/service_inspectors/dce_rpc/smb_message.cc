@@ -1013,7 +1013,7 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
  * Function: DCE2_SmbInspect()
  *
  * Purpose:
- *  Determines whether the SMB command is something the preprocessor
+ *  Determines whether the SMB command is something the inspector
  *  needs to inspect.
  *  This function returns a DCE2_SmbRequestTracker which tracks command
  *  requests / responses.
@@ -1926,9 +1926,9 @@ void DCE2_SmbInitGlobals()
             DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 16);
 
             // \PIPE\LANMAN
-            // Not something the preprocessor is looking at as it
+            // Not something the inspector is looking at as it
             // doesn't carry DCE/RPC but don't want to false positive
-            // on the preprocessor event.
+            // on the inspector event.
             DCE2_SmbSetValidWordCount((uint8_t)com, SMB_TYPE__REQUEST, 14);
 
             // Word count depends on setup count

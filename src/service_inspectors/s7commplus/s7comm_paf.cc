@@ -18,7 +18,7 @@
 
 // s7comm_paf.cc author Pradeep Damodharan <prdamodh@cisco.com>
 // based on work by Jeffrey Gu <jgu@cisco.com>
-// Protocol-Aware Flushing (PAF) code for the S7commplus preprocessor.
+// Protocol-Aware Flushing (PAF) code for the S7commplus inspector.
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

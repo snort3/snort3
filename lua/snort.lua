@@ -98,6 +98,8 @@ appid =
 reputation =
 {
     -- configure one or both of these, then uncomment reputation
+    -- (see also related path vars at the top of snort_defaults.lua)
+
     --blacklist = 'blacklist file name with ip lists'
     --whitelist = 'whitelist file name with ip lists'
 }
@@ -173,7 +175,7 @@ ips =
 
     -- use include for rules files; be sure to set your path
     -- note that rules files can include other rules files
-    --include = 'snort3-community.rules',
+    -- (see also related path vars at the top of snort_defaults.lua)
 
     variables = default_variables
 }

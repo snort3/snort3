@@ -17,22 +17,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/* pp_ftp.c
- *
- * Purpose:  FTP sessions contain commands and responses.  Certain
- *           commands are vectors of attack.  This module checks
- *           those FTP client commands and their parameter values, as
- *           well as the server responses per the configuration.
- *
- * Arguments:  None
- *
- * Effect:  Alerts may be raised
- *
- * Comments:
- *
- */
-
-/* your preprocessor header file goes here */
+// FTP sessions contain commands and responses.  Certain commands are
+// vectors of attack.  This module checks those FTP client commands and
+// their parameter values, as well as the server responses per the
+// configuration.
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

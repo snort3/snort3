@@ -18,28 +18,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/* Snort Preprocessor for Telnet Negotiation Normalization*/
 
-/* pp_telnet.c
- *
- * Purpose:  Telnet sessions can contain telnet negotiation strings
- *           that can disrupt pattern matching.  This plugin detects
- *           negotiation strings in stream and "normalizes" them much like
- *           the http_decode preprocessor normalizes encoded URLs
- *
- *
- * official registry of options
- * http://www.iana.org/assignments/telnet-options
- *
- * Arguments:  None
- *
- * Effect:  The telnet negotiation data is removed from the data
- *
- * Comments:
- *
- */
-
-/* your preprocessor header file goes here */
+// Telnet sessions can contain telnet negotiation strings that can disrupt
+// pattern matching.  This plugin detects negotiation strings in stream and
+// normalizes them much like the http_inspect normalizes encoded URLs.
+//
+// official registry of options
+// http://www.iana.org/assignments/telnet-options
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -79,19 +64,6 @@ const uint8_t* get_telnet_buffer(Packet* p, unsigned& len)
     return len ? buf.data : nullptr;
 }
 
-/*
- * Function: normalize_telnet(Packet *)
- *
- * Purpose: Perform the preprocessor's intended function.  This can be
- *          simple (statistics collection) or complex (IP defragmentation)
- *          as you like.  Try not to destroy the performance of the whole
- *          system by trying to do too much....
- *
- * Arguments: p => pointer to the current packet data struct
- *
- * Returns: void function
- *
- */
 int normalize_telnet(
     TELNET_SESSION* tnssn, Packet* p, DataBuffer& buf,
     int iMode, char ignoreEraseCmds, bool on_ftp_channel)

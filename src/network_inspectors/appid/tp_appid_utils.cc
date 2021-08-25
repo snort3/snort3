@@ -626,8 +626,8 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
         (Stream::get_snort_protocol_id(p->flow) ==
             asd.config.snort_proto_ids[PROTO_INDEX_FTP_DATA]))
     {
-        //  If we see SSL on an FTP data channel set tpAppId back
-        //  to APP_ID_NONE so the FTP preprocessor picks up the flow.
+        // If we see SSL on an FTP data channel set tpAppId back
+        // to APP_ID_NONE so the FTP inspector picks up the flow.
         tp_app_id = APP_ID_NONE;
     }
 

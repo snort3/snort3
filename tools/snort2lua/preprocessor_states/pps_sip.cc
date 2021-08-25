@@ -95,7 +95,8 @@ bool Sip::convert(std::istringstream& data_stream)
 
         else if (keyword == "max_requestName_len")
         {
-            tmpval = parse_int_option("max_requestName_len", arg_stream, false);
+            tmpval = parse_int_option("max_request_name_len", arg_stream, false);
+            table_api.add_diff_option_comment("max_requestName_len", "max_request_name_len");
         }
 
         else if (keyword == "max_sessions")

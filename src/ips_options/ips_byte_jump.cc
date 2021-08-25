@@ -36,7 +36,7 @@
  *                             <value> and skip forward that number of bytes
  *      ["big"]: process data as big endian (default)
  *      ["little"]: process data as little endian
- *      ["dce"]: let the DCE/RPC 2 preprocessor determine the byte order of the
+ *      ["dce"]: let the DCE/RPC 2 inspector determine the byte order of the
  *               value to be converted
  *      ["string"]: converted bytes represented as a string needing conversion
  *      ["hex"]: converted string data is represented in hexadecimal

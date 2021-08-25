@@ -467,7 +467,7 @@ int SFRF_TestThreshold(
     if ( gid >= SFRF_MAX_GENID )
         return status; /* bogus gid */
 
-    // Some events (like 'TCP connection closed' raised by preprocessor may
+    // Some events (like 'TCP connection closed' raised by inspector may
     // not have any configured threshold but may impact thresholds for other
     // events (like 'TCP connection opened'
     _updateDependentThresholds(config, gid, sid, sip, dip, curTime);

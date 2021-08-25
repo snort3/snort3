@@ -526,7 +526,7 @@ void Dce2Smb2TreeTracker::process(uint16_t command, uint8_t command_type,
         remove_request(message_id, current_flow_key);
 }
 
-Dce2Smb2TreeTracker::~Dce2Smb2TreeTracker(void)
+Dce2Smb2TreeTracker::~Dce2Smb2TreeTracker()
 {
     if (smb_module_is_up and (is_packet_thread()))
     {

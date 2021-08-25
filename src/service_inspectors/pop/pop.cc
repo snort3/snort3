@@ -506,16 +506,8 @@ static void POP_ProcessServerPacket(Packet* p, POPData* pop_ssn)
     }
 }
 
-/* Main runtime entry point for POP preprocessor.
- * Analyzes POP packets for anomalies/exploits.
- *
- * PARAMETERS:
- *
- * p:    Pointer to current packet to process.
- * contextp:    Pointer to context block, not used.
- *
- * RETURNS:     Nothing.
- */
+// Analyzes POP packets for anomalies/exploits.
+ 
 static void snort_pop(POP_PROTO_CONF* config, Packet* p)
 {
     /* Attempt to get a previously allocated POP block. */

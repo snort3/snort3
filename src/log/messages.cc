@@ -188,16 +188,7 @@ static void WriteLogMessage(FILE* fh, bool prefer_fh, const char* format, va_lis
     syslog(LOG_DAEMON | LOG_NOTICE, "%s", buf);
 }
 
-/*
- * Function: LogMessage(const char *, ...)
- *
- * Purpose: Print a message to stdout or with logfacility.
- *
- * Arguments: format => the formatted error string to print out
- *            ... => format commands/fillers
- *
- * Returns: void function
- */
+// print an info message to stdout or syslog
 void LogMessage(const char* format,...)
 {
     if ( SnortConfig::log_quiet() )
@@ -224,16 +215,7 @@ void LogMessage(FILE* fh, const char* format,...)
     va_end(ap);
 }
 
-/*
- * Function: WarningMessage(const char *, ...)
- *
- * Purpose: Print a message to stderr or with logfacility.
- *
- * Arguments: format => the formatted error string to print out
- *            ... => format commands/fillers
- *
- * Returns: void function
- */
+// print a warning message to stderr or syslog
 void WarningMessage(const char* format,...)
 {
     va_list ap;
@@ -255,16 +237,7 @@ void WarningMessage(const char* format,...)
     va_end(ap);
 }
 
-/*
- * Function: ErrorMessage(const char *, ...)
- *
- * Purpose: Print a message to stderr.
- *
- * Arguments: format => the formatted error string to print out
- *            ... => format commands/fillers
- *
- * Returns: void function
- */
+// print a warning message to stderr or syslog
 void ErrorMessage(const char* format,...)
 {
     va_list ap;
@@ -285,17 +258,8 @@ void ErrorMessage(const char* format,...)
     va_end(ap);
 }
 
-/*
- * Function: FatalError(const char *, ...)
- *
- * Purpose: When a fatal error occurs, this function prints the error message
- *          and cleanly shuts down the program
- *
- * Arguments: format => the formatted error string to print out
- *            ... => format commands/fillers
- *
- * Returns: void function
- */
+// when a fatal error occurs, this function prints the error message
+// and cleanly shuts down the program
 [[noreturn]] void FatalError(const char* format,...)
 {
     char buf[STD_BUF+1];

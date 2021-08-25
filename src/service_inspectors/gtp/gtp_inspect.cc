@@ -17,7 +17,6 @@
 //--------------------------------------------------------------------------
 
 // gtp_inspect.cc author Russ Combs <rucombs@cisco.com>
-// adapt 2x preprocessor code to 3x inspector
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

@@ -109,7 +109,7 @@ Dce2Smb2SessionData::Dce2Smb2SessionData(const Packet* p,
     memory::MemoryCap::update_allocations(sizeof(*this));
 }
 
-Dce2Smb2SessionData::~Dce2Smb2SessionData(void)
+Dce2Smb2SessionData::~Dce2Smb2SessionData()
 {
     session_data_mutex.lock();
     for (auto it_session : connected_sessions)

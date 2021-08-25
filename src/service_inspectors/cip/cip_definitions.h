@@ -18,7 +18,7 @@
 
 // cip_definitions.h author RA/Cisco
 
-/* Description: Common types for the CIP preprocessor. */
+/* Description: Common types for the CIP inspector. */
 
 #ifndef CIP_DEFINITIONS_H
 #define CIP_DEFINITIONS_H
@@ -33,7 +33,7 @@ struct Packet;
 #define MSEC_PER_SEC (1000)
 #define USEC_PER_SEC (1000000)
 
-// CIP preprocessor configuration
+// CIP inspector configuration
 struct CipProtoConf
 {
     // Unconnected timeout, seconds.

@@ -241,7 +241,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
     }
 
     /* If this packet has been passed based on detection rules,
-     * check the decoder/preprocessor events (they have been added to Event queue already).
+     * check the builtin events (they have been added to Event queue already).
      * If its order is lower than 'pass', it should have been passed.
      * This is consistent with other detection rules */
     const SnortConfig* sc = p->context->conf;

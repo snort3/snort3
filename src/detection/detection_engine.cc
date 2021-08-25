@@ -714,8 +714,8 @@ static int log_events(void* event, void* user)
 /*
 **  We return whether we logged events or not.  We've add a eventq user
 **  structure so we can track whether the events logged were rule events
-**  or preprocessor/decoder events.  The reason being that we don't want
-**  to flush a TCP stream for preprocessor/decoder events, and cause
+**  or builtin events.  The reason being that we don't want
+**  to flush a TCP stream for builtin events, and cause
 **  early flushing of the stream.
 */
 int DetectionEngine::log_events(Packet* p)

@@ -73,7 +73,7 @@ public:
 
     static std::string get_action_string(Actions::Type);
     static Actions::Type get_action_type(const char*);
-    static Actions::Type get_max_action_types(void);
+    static Actions::Type get_max_action_types();
     static std::string get_action_priorities(bool);
 
     static void thread_init(const snort::SnortConfig*);

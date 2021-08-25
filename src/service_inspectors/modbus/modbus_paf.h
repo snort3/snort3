@@ -22,7 +22,7 @@
 #ifndef MODBUS_PAF__H
 #define MODBUS_PAF__H
 
-// Protocol-Aware Flushing (PAF) code for the Modbus preprocessor.
+// Protocol-Aware Flushing (PAF) code for the Modbus inspector.
 
 #include "stream/stream_splitter.h"
 

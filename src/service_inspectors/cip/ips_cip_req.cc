@@ -18,7 +18,7 @@
 
 // ips_cip_req.cc author Jian Wu <jiawu2@cisco.com>
 
-/* Description: Rule options for CIP preprocessor */
+/* Description: Rule options for CIP inspector */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

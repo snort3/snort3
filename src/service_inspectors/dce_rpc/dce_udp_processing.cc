@@ -24,7 +24,7 @@
 // functionality for tracking sub-sessions or activities within a
 // connectionless conversation and for tracking and reassembling fragments
 // within each activity.  Also sets appropriate data for use with
-// preprocessor rule options.
+// inspector rule options.
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

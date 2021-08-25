@@ -18,7 +18,7 @@
 //--------------------------------------------------------------------------
 
 // modbus_paf.cc author Ryan Jordan
-// Protocol-Aware Flushing (PAF) code for the Modbus preprocessor.
+// Protocol-Aware Flushing (PAF) code for the Modbus inspector.
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

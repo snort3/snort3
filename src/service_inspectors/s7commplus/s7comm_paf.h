@@ -22,7 +22,7 @@
 #ifndef S7COMM_PAF__H
 #define S7COMM_PAF__H
 
-// Protocol-Aware Flushing (PAF) code for the S7commplus preprocessor.
+// Protocol-Aware Flushing (PAF) code for the S7commplus inspector.
 
 #include "stream/stream_splitter.h"
 

@@ -89,7 +89,7 @@ static THREAD_LOCAL ProfileStats dce2_opnum_perf_stats;
  * Function: DCE2_IsOpnumChar()
  *
  * Determines if the character passed in is a character that
- * the preprocessor considers a to be a valid character for a
+ * the inspector considers a to be a valid character for a
  * DCE/RPC opnum.
  *
  * Arguments:

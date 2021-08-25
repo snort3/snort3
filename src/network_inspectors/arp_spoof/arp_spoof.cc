@@ -18,13 +18,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/* Snort ARPspoof Preprocessor Plugin
+/* Snort ARPspoof Plugin
  *   by Jeff Nathan <jeff@snort.org>
  *   Version 0.1.4
  *
  * Purpose:
  *
- * This preprocessor looks for anomalies in ARP traffic and attempts to
+ * This inspector looks for anomalies in ARP traffic and attempts to
  * maliciously overwrite  ARP cache information on hosts.
  *
  * Arguments:

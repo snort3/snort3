@@ -18,7 +18,7 @@
 //--------------------------------------------------------------------------
 
 // gtp.cc author Hui Cao <hcao@sourcefire.com>
-// This is the main entry point for this preprocessor
+// This is the main entry point for this inspector
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -78,7 +78,7 @@ static GTP_Roptions* GTPGetNewSession(Packet* packetp)
     return pRopts;
 }
 
-// Main runtime entry point for GTP preprocessor.
+// Main runtime entry point for GTP inspector.
 void GTPmain(const GTPConfig& config, Packet* packetp)
 {
     /* Attempt to get a previously allocated GTP block. */

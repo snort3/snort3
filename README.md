@@ -37,10 +37,10 @@ Here are some key features of Snort++:
 * Autogenerate reference documentation
 * Provide better cross platform support
 * Facilitate component testing
+* Use a shared network map
 
 Additional features on the roadmap include:
 
-* Use a shared network map
 * Support pipelining of packet processing
 * Support hardware offload and data plane integration
 * Support proxy mode
@@ -124,7 +124,9 @@ Follow these steps:
 
 # RUN SNORT
 
-Here are some examples.
+Here are some examples. If you are using Talos rules and/or configs, you
+should first set any needed variables at the top of snort.lua and
+snort_defaults.lua.
 
 * Snort++ provides lots of help from the command line, including:
 
@@ -205,8 +207,7 @@ It also covers new features not demonstrated here:
 # SQUEAL
 `o")~`
 
-We hope you are as excited about Snort++ as we are.  Although a lot of work
-remains, we wanted to give you a chance to try it out and let us know what
-you think on the snort-users list.  In the meantime, we'll keep our snout
-to the grindstone.
+We hope you are as excited about Snort++ as we are.  Let us know what you
+think on the snort-users list.  In the meantime, we'll keep our snout to
+the grindstone.
 

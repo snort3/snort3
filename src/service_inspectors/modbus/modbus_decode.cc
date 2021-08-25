@@ -164,7 +164,7 @@ static void ModbusCheckRequestLengths(modbus_session_data_t* session, Packet* p)
             /* MEI Type 0x0E is covered under the Modbus spec as
                "Read Device Identification". Type 0x0D is defined in
                the spec as "CANopen General Reference Request and Response PDU"
-               and falls outside the scope of the Modbus preprocessor.
+               and falls outside the scope of the Modbus inspector.
 
                Other values are reserved.
             */
@@ -315,7 +315,7 @@ static void ModbusCheckResponseLengths(modbus_session_data_t* session, Packet* p
             /* MEI Type 0x0E is covered under the Modbus spec as
                "Read Device Identification". Type 0x0D is defined in
                the spec as "CANopen General Reference Request and Response PDU"
-               and falls outside the scope of the Modbus preprocessor.
+               and falls outside the scope of the Modbus inspector.
 
                Other values are reserved.
             */

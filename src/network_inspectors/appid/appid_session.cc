@@ -323,7 +323,7 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
     if (newAppId  <= APP_ID_NONE or newAppId >= SF_APPID_MAX)
         return;
 
-    // Certain AppIds are not useful to identifying snort preprocessor choices
+    // Certain AppIds are not useful to identifying snort inspector choices
     switch (newAppId)
     {
     case APP_ID_FTPS:

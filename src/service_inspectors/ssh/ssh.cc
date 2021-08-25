@@ -18,7 +18,7 @@
 //--------------------------------------------------------------------------
 
 /*
- * SSH preprocessor
+ * SSH inspector
  * Author: Chris Sherwin
  * Contributors: Adam Keeton, Ryan Jordan
  */
@@ -111,16 +111,8 @@ static unsigned int SSHPacket_GetLength(const SSH2Packet* p, size_t buflen)
     return ssh_length;
 }
 
-/* Main runtime entry point for SSH preprocessor.
- * Analyzes SSH packets for anomalies/exploits.
- *
- * PARAMETERS:
- *
- * p:    Pointer to current packet to process.
- * contextp:    Pointer to context block, not used.
- *
- * RETURNS:     Nothing.
- */
+// Main runtime entry point for SSH inspector.
+
 static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
 {
     Profile profile(sshPerfStats);
@@ -130,11 +122,6 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
 
     // Don't process if we've missed packets
     if (sessp->state_flags & SSH_FLG_MISSED_PACKETS)
-        return;
-
-    // Make sure this preprocessor should run.
-    // check if we're waiting on stream reassembly
-    if ( p->packet_flags & PKT_STREAM_INSERT )
         return;
 
     // If we picked up mid-stream or missed any packets (midstream pick up

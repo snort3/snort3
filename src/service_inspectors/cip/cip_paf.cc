@@ -18,7 +18,7 @@
 
 // cip_paf.cc author RA/Cisco
 
-/* Description: Protocol-Aware Flushing (PAF) code for the CIP preprocessor.*/
+/* Description: Protocol-Aware Flushing (PAF) code for the CIP inspector. */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

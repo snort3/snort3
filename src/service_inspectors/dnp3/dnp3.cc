@@ -196,7 +196,6 @@ static void process_dnp3(const dnp3ProtoConf& config, Packet* p)
     else
         dnp3_sess->direction = DNP3_SERVER;
 
-    /* Do preprocessor-specific detection stuff here */
     if (p->has_tcp_data())
     {
         ++dnp3_stats.tcp_pdus;

@@ -271,16 +271,8 @@ static inline void SSLPP_process_other(SSL_PROTO_CONF* config, SSLData* sd, uint
     }
 }
 
-/* Main runtime entry point for SSL preprocessor.
- * Analyzes SSL packets for anomalies/exploits.
- *
- * PARAMETERS:
- *
- * p:    Pointer to current packet to process.
- * contextp:    Pointer to context block, not used.
- *
- * RETURNS:     Nothing.
- */
+// Analyzes SSL packets for anomalies/exploits.
+
 static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
 {
     Profile profile(sslPerfStats);

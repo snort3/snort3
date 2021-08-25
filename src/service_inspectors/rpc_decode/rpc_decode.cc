@@ -22,7 +22,7 @@
  *
  * Purpose:
  *
- * This preprocessor normalizes the RPC requests from remote machines by
+ * This inspector normalizes the RPC requests from remote machines by
  * converting all fragments into one continuous stream.
  * This is very useful for doing things like defeating hostile attackers
  * trying to stealth themselves from IDSs by fragmenting the request so the
@@ -564,7 +564,7 @@ static RpcSsnData* RpcSsnDataNew(Packet* p)
  * The minimum "valid" packet for us is 8 fields * 4 bytes
  *
  * This decoder is ignorant of TCP state so we'll have to assume
- * that reassembled TCP stuff is reinjected to the preprocessor
+ * that reassembled TCP stuff is reinjected to the inspector
  * chain
  *
  * This decoder is also ignorant of multiple RPC requests in a

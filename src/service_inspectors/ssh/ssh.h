@@ -88,7 +88,7 @@
 #define SSH_VERSION_2       (0x2)
 
 // Per-session data block containing current state
-// of the SSH preprocessor for the session.
+// of the SSH inspector for the session.
 struct SSHData
 {
     uint8_t version = SSH_VERSION_UNKNOWN; // Version of SSH detected for this session

@@ -240,7 +240,7 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
     return true;
 }
 
-Dce2Smb2FileTracker::~Dce2Smb2FileTracker(void)
+Dce2Smb2FileTracker::~Dce2Smb2FileTracker()
 {
     if (smb_module_is_up and (is_packet_thread()))
     {

@@ -1157,13 +1157,6 @@ static void SMTP_ProcessServerPacket(
     }
 }
 
-/*
- * Entry point to snort preprocessor for each packet
- *
- * @param   packet  standard Packet structure
- *
- * @return  none
- */
 static void snort_smtp(SmtpProtoConf* config, Packet* p)
 {
     int pkt_dir;
