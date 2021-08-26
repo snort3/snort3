@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.10.0 2021-08-11 07:53:39 EDT TST
+Revision 3.1.11.0 2021-08-26 11:41:00 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -890,6 +890,10 @@ Usage: detect
 
 Configuration:
 
+  * string ips.action_map[].replace: action you want to change
+  * string ips.action_map[].with: action you want to use instead
+  * string ips.action_override: use this action for all rules
+    (applied before action_map)
   * enum ips.default_rule_state = inherit: enable or disable ips
     rules { no | yes | inherit }
   * bool ips.enable_builtin_rules = false: enable events from builtin
@@ -2747,8 +2751,8 @@ Rules:
   * 133:19 (dce_smb) SMB - excessive read requests with pending read
     responses
   * 133:20 (dce_smb) SMB - excessive command chaining
-  * 133:21 (dce_smb) SMB - multiple chained tree connect requests
-  * 133:22 (dce_smb) SMB - multiple chained tree connect requests
+  * 133:21 (dce_smb) SMB - Multiple chained login requests
+  * 133:22 (dce_smb) SMB - Multiple chained tree connect requests
   * 133:23 (dce_smb) SMB - chained/compounded login followed by
     logoff
   * 133:24 (dce_smb) SMB - chained/compounded tree connect followed
@@ -3656,6 +3660,10 @@ Configuration:
     body bytes to examine (-1 no limit) { -1:max53 }
   * bool http_inspect.unzip = true: decompress gzip and deflate
     message bodies
+  * int http_inspect.maximum_host_length = -1: maximum allowed length
+    for Host header value (-1 no limit) { -1:max53 }
+  * int http_inspect.maximum_chunk_length = 4294967295: maximum
+    allowed length for a message body chunk { 0:4294967295 }
   * bool http_inspect.normalize_utf = true: normalize charset utf
     encodings in response bodies
   * bool http_inspect.decompress_pdf = false: decompress pdf files in
@@ -3673,6 +3681,9 @@ Configuration:
     normalize (-1 unlimited) (experimental) { -1:max53 }
   * int http_inspect.js_norm_identifier_depth = 260000: max number of
     unique JavaScript identifiers to normalize { 0:260000 }
+  * int http_inspect.js_norm_max_tmpl_nest = 32: maximum depth of
+    template literal nesting that enhanced javascript normalizer will
+    process (experimental) { 0:255 }
   * int http_inspect.max_javascript_whitespaces = 200: maximum
     consecutive whitespaces allowed within the JavaScript obfuscated
     data { 1:65535 }
@@ -3729,12 +3740,14 @@ Rules:
     CR
   * 119:14 (http_inspect) non-RFC defined char
   * 119:15 (http_inspect) oversize request-uri directory
+  * 119:16 (http_inspect) oversize chunk encoding
   * 119:18 (http_inspect) webroot directory traversal
   * 119:19 (http_inspect) long header
   * 119:20 (http_inspect) max header fields
   * 119:21 (http_inspect) multiple content length
   * 119:24 (http_inspect) Host header field appears more than once or
     has multiple values
+  * 119:25 (http_inspect) Host header value is too long
   * 119:28 (http_inspect) POST or PUT w/o content-length or chunks
   * 119:31 (http_inspect) unknown method
   * 119:32 (http_inspect) simple request
@@ -3855,6 +3868,10 @@ Rules:
   * 119:269 (http_inspect) script opening tag in a short form
   * 119:270 (http_inspect) max number of unique JavaScript
     identifiers reached
+  * 119:271 (http_inspect) JavaScript template literal nesting is
+    over capacity
+  * 119:272 (http_inspect) Consecutive commas in HTTP Accept-Encoding
+    header
 
 Peg counts:
 
@@ -4249,8 +4266,6 @@ Configuration:
     packet
   * bool normalizer.tcp.trim_win = false: trim data to window
   * bool normalizer.tcp.trim_mss = false: trim data to MSS
-  * bool normalizer.tcp.trim = false: enable all of the TCP trim
-    options
   * bool normalizer.tcp.opts = false: clear all options except mss,
     wscale, timestamp, and any explicitly allowed
   * bool normalizer.tcp.req_urg = false: clear the urgent pointer if
@@ -4967,8 +4982,10 @@ Configuration:
   * int sip.max_dialogs = 4: maximum number of dialogs within one
     stream session { 1:max32 }
   * int sip.max_from_len = 256: maximum from field size { 0:65535 }
-  * int sip.max_requestName_len = 20: maximum request name field size
-    { 0:65535 }
+  * int sip.max_request_name_len = 20: maximum request name field
+    size { 0:65535 }
+  * int sip.max_requestName_len = 20: deprecated - use
+    max_request_name_len instead { 0:65535 }
   * int sip.max_to_len = 256: maximum to field size { 0:65535 }
   * int sip.max_uri_len = 256: maximum request uri field size {
     0:65535 }
@@ -6774,6 +6791,8 @@ Usage: detect
 
 Configuration:
 
+  * string http_raw_header.field: restrict to given header. Header
+    name is case insensitive.
   * implied http_raw_header.request: match against the headers from
     the request message even when examining the response
   * implied http_raw_header.with_header: this rule is limited to
@@ -6860,6 +6879,8 @@ Usage: detect
 
 Configuration:
 
+  * string http_raw_trailer.field: restrict to given trailer. Trailer
+    name is case insensitive.
   * implied http_raw_trailer.request: match against the trailers from
     the request message even when examining the response
   * implied http_raw_trailer.with_header: parts of this rule examine
@@ -9149,6 +9170,13 @@ these libraries see the Getting Started section of the manual.
     normalize (-1 unlimited) (experimental) { -1:max53 }
   * int http_inspect.js_norm_identifier_depth = 260000: max number of
     unique JavaScript identifiers to normalize { 0:260000 }
+  * int http_inspect.js_norm_max_tmpl_nest = 32: maximum depth of
+    template literal nesting that enhanced javascript normalizer will
+    process (experimental) { 0:255 }
+  * int http_inspect.maximum_chunk_length = 4294967295: maximum
+    allowed length for a message body chunk { 0:4294967295 }
+  * int http_inspect.maximum_host_length = -1: maximum allowed length
+    for Host header value (-1 no limit) { -1:max53 }
   * int http_inspect.max_javascript_whitespaces = 200: maximum
     consecutive whitespaces allowed within the JavaScript obfuscated
     data { 1:65535 }
@@ -9207,6 +9235,8 @@ these libraries see the Getting Started section of the manual.
     limited to examining HTTP message headers
   * implied http_raw_header_complete.with_trailer: parts of this rule
     examine HTTP message trailers
+  * string http_raw_header.field: restrict to given header. Header
+    name is case insensitive.
   * implied http_raw_header.request: match against the headers from
     the request message even when examining the response
   * implied http_raw_header.with_body: parts of this rule examine
@@ -9225,6 +9255,8 @@ these libraries see the Getting Started section of the manual.
     HTTP message body
   * implied http_raw_status.with_trailer: parts of this rule examine
     HTTP message trailers
+  * string http_raw_trailer.field: restrict to given trailer. Trailer
+    name is case insensitive.
   * implied http_raw_trailer.request: match against the trailers from
     the request message even when examining the response
   * implied http_raw_trailer.with_body: parts of this rule examine
@@ -9323,6 +9355,10 @@ these libraries see the Getting Started section of the manual.
   * select ipopts.~opt: output format { rr|eol|nop|ts|sec|esec|lsrr|
     lsrre|ssrr|satid|any }
   * string ip_proto.~proto: [!|>|<] name or number
+  * string ips.action_map[].replace: action you want to change
+  * string ips.action_map[].with: action you want to use instead
+  * string ips.action_override: use this action for all rules
+    (applied before action_map)
   * enum ips.default_rule_state = inherit: enable or disable ips
     rules { no | yes | inherit }
   * bool ips.enable_builtin_rules = false: enable events from builtin
@@ -9464,8 +9500,6 @@ these libraries see the Getting Started section of the manual.
     urgent pointer is not set
   * bool normalizer.tcp.rsv = false: clear the reserved bits in the
     TCP header
-  * bool normalizer.tcp.trim = false: enable all of the TCP trim
-    options
   * bool normalizer.tcp.trim_mss = false: trim data to MSS
   * bool normalizer.tcp.trim_rst = false: remove any data from RST
     packet
@@ -9926,8 +9960,10 @@ these libraries see the Getting Started section of the manual.
   * int sip.max_dialogs = 4: maximum number of dialogs within one
     stream session { 1:max32 }
   * int sip.max_from_len = 256: maximum from field size { 0:65535 }
-  * int sip.max_requestName_len = 20: maximum request name field size
-    { 0:65535 }
+  * int sip.max_requestName_len = 20: deprecated - use
+    max_request_name_len instead { 0:65535 }
+  * int sip.max_request_name_len = 20: maximum request name field
+    size { 0:65535 }
   * int sip.max_to_len = 256: maximum to field size { 0:65535 }
   * int sip.max_uri_len = 256: maximum request uri field size {
     0:65535 }
@@ -11850,12 +11886,14 @@ these libraries see the Getting Started section of the manual.
     CR
   * 119:14 (http_inspect) non-RFC defined char
   * 119:15 (http_inspect) oversize request-uri directory
+  * 119:16 (http_inspect) oversize chunk encoding
   * 119:18 (http_inspect) webroot directory traversal
   * 119:19 (http_inspect) long header
   * 119:20 (http_inspect) max header fields
   * 119:21 (http_inspect) multiple content length
   * 119:24 (http_inspect) Host header field appears more than once or
     has multiple values
+  * 119:25 (http_inspect) Host header value is too long
   * 119:28 (http_inspect) POST or PUT w/o content-length or chunks
   * 119:31 (http_inspect) unknown method
   * 119:32 (http_inspect) simple request
@@ -11976,6 +12014,10 @@ these libraries see the Getting Started section of the manual.
   * 119:269 (http_inspect) script opening tag in a short form
   * 119:270 (http_inspect) max number of unique JavaScript
     identifiers reached
+  * 119:271 (http_inspect) JavaScript template literal nesting is
+    over capacity
+  * 119:272 (http_inspect) Consecutive commas in HTTP Accept-Encoding
+    header
   * 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
   * 121:2 (http2_inspect) HPACK integer value has leading zeros
   * 121:3 (http2_inspect) HTTP/2 stream initiated with invalid stream
@@ -12157,8 +12199,8 @@ these libraries see the Getting Started section of the manual.
   * 133:19 (dce_smb) SMB - excessive read requests with pending read
     responses
   * 133:20 (dce_smb) SMB - excessive command chaining
-  * 133:21 (dce_smb) SMB - multiple chained tree connect requests
-  * 133:22 (dce_smb) SMB - multiple chained tree connect requests
+  * 133:21 (dce_smb) SMB - Multiple chained login requests
+  * 133:22 (dce_smb) SMB - Multiple chained tree connect requests
   * 133:23 (dce_smb) SMB - chained/compounded login followed by
     logoff
   * 133:24 (dce_smb) SMB - chained/compounded tree connect followed

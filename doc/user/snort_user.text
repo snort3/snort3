@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.10.0 2021-08-11 07:53:28 EDT TST
+Revision 3.1.11.0 2021-08-26 11:40:49 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -3918,7 +3918,21 @@ js_normalization_depth is set to a non-zero value, enabling the
 enhanced normalizer. This is currently experimental and still under
 development.
 
-5.10.2.10. xff_headers
+5.10.2.10. js_norm_max_tmpl_nest
+
+js_norm_max_tmpl_nest = N {0 : 255} (default 32) is an option of the
+enhanced JavaScript normalizer that determines the deepest level of
+nested template literals to be processed. Introduced in ES6, template
+literals provide syntax to define a literal multiline string, which
+can have arbitrary JavaScript substitutions, that will be evaluated
+and inserted into the string. Such substitutions can be nested, and
+require keeping track of every layer for proper normalization. This
+option is present to limit the amount of memory dedicated to this
+tracking. This option is used only when js_normalization_depth is not
+0. This feature is currently experimental and still under
+development.
+
+5.10.2.11. xff_headers
 
 This configuration supports defining custom x-forwarded-for type
 headers. In a multi-vendor world, it is quite possible that the
@@ -3933,7 +3947,23 @@ they are defined, e.g "x-forwarded-for" will be preferred than
 "true-client-ip" if both headers are present in the stream. The
 header names should be delimited by a space.
 
-5.10.2.11. URI processing
+5.10.2.12. maximum_host_length
+
+Setting maximum_host_length causes http_inspect to generate 119:25 if
+the Host header value including optional white space exceeds the
+specified length. In the abnormal case of multiple Host headers, the
+total length of the combined values is used. The default value is -1,
+meaning do not perform this check.
+
+5.10.2.13. maximum_chunk_length
+
+http_inspect strictly limits individual chunks within a chunked
+message body to be less than four gigabytes.
+
+A lower limit may be configured by setting maximum_chunk_length. Any
+chunk longer than maximum chunk length will generate a 119:16 alert.
+
+5.10.2.14. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize
@@ -4208,8 +4238,8 @@ mixture of upper and lower case.
 With http_header the individual header value is normalized in a way
 that is appropriate for that header.
 
-Specifying an individual header is not available for http_raw_header
-and http_raw_header_complete.
+Specifying an individual header is not available for
+http_raw_header_complete, use http_raw_header instead.
 
 If you don’t specify a header you get all of the headers.
 http_raw_header_complete includes cookie headers Cookie and

@@ -1,3 +1,42 @@
+2021/08/26 - 3.1.11.0
+
+build: update help for --enable-tsc-clock to include arm. Thanks to liangxwa01 for reporting the issue.
+codec: geneve: fix incorrect parsing of option header length
+data_bus: support ordered call of handlers
+dns, ssh: remove obsolete stream insert checks
+doc: Add js_norm_max_template_nesting description
+flow: introduce bidirectional flag for expected session.
+flow: set the client initiated flag before publishing the flow state setup event
+framework: update base API version to 8
+framework: version rollback
+http_inspect: add builtin rule for consecutive commas in accept-encoding header
+http_inspect: Add JavaScript template literals normalization
+http_inspect: check if Normalizer has consumed input
+http_inspect: hard-code infraction enum numbers
+http_inspect: http_raw_header, http_raw_trailer field support
+http_inspect: refactor NormalizedHeader
+http_inspect: support more infractions and events
+http_inspect: two new built-in rules
+inspection: process wizard matches on defragged packets
+ips: add action_map table to map rule types, eg block -> alert
+ips: add action_override which applies to all rules
+lua: update comments in the default config
+modbus: check record length for write file record command
+normalize: remove tcp.trim config
+payload_injector: check if stream is established on flow rather than the packet flag to handle retries
+policy: put inspection policy accessors in public space
+policy: reorganize for sanity
+README: mention vars in default config
+sip: deprecate max_requestName_len in favor of max_request_name_len
+smb: Invoke SMB debug in destructor when packet thread available
+stream_tcp: update API called by payload_injector to check for unflushed queued TCP segments
+style: remove crufty comments
+style: remove C style (void) arglists
+style: remove or update crufty preprocessor comments
+utils: address compiler warning
+utils: support streamed processing of JS text
+wizard: support more HTTP and SIP methods
+
 2021/08/11 - 3.1.10.0
 
 appid: update netbios-ss (SMB) detector to extract SMB domain from SMBv2, and more intelligently handle payload appid detection
