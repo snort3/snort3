@@ -323,13 +323,8 @@ const Field& HttpMsgSection::get_classic_buffer(Cursor& c, const HttpBufferInfo&
         if (head == nullptr)
             return Field::FIELD_NULL;
         if (buf.sub_id == 0)
-            return head->get_classic_raw_header();
+            return head->msg_text;
         return head->get_all_header_values_raw((HeaderId)buf.sub_id);
-      }
-    case HTTP_BUFFER_RAW_HEADER_COMPLETE:
-      {
-        return (header[buffer_side] != nullptr) ? header[buffer_side]->msg_text :
-            Field::FIELD_NULL;
       }
     case HTTP_BUFFER_RAW_REQUEST:
       {

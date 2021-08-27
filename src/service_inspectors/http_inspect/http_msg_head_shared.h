@@ -38,7 +38,6 @@ class HttpMsgHeadShared : public HttpMsgSection
 public:
     void analyze() override;
 
-    const Field& get_classic_raw_header();
     const Field& get_classic_raw_cookie();
     const Field& get_classic_norm_header();
     const Field& get_classic_norm_cookie();
@@ -87,6 +86,7 @@ private:
     void parse_header_lines();
     void create_norm_head_list();
     void derive_header_name_id(int index);
+    const Field& get_classic_raw_header();
 
     Field classic_raw_header;    // raw headers with cookies spliced out
     Field classic_norm_header;   // URI normalization applied
