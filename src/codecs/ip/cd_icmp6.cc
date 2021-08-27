@@ -152,8 +152,9 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     if ( snort::get_network_policy()->icmp_checksums() && !valid_checksum_from_daq(raw))
     {
         checksum::Pseudoheader6 ph6;
-        COPY4(ph6.hdr.sip, snort.ip_api.get_src()->get_ip6_ptr());
-        COPY4(ph6.hdr.dip, snort.ip_api.get_dst()->get_ip6_ptr());
+        const ip::IP6Hdr* const ip6h = snort.ip_api.get_ip6h();
+        COPY4(ph6.hdr.sip, ip6h->get_src()->u6_addr32);
+        COPY4(ph6.hdr.dip, ip6h->get_dst()->u6_addr32);
         ph6.hdr.zero = 0;
         ph6.hdr.protocol = codec.ip6_csum_proto;
         ph6.hdr.len = htons((uint16_t)raw.len);
