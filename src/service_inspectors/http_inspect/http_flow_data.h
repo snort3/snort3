@@ -190,19 +190,6 @@ private:
                                             HttpEnums::VERS__NOT_PRESENT };
     HttpEnums::MethodId method_id = HttpEnums::METH__NOT_PRESENT;
 
-    bool cutover_on_clear = false;
-    bool ssl_search_abandoned = false;
-
-    // *** HttpJsNorm
-    JSIdentifierCtxBase* js_ident_ctx = nullptr;
-    snort::JSNormalizer* js_normalizer = nullptr;
-    bool js_built_in_event = false;
-
-    void reset_js_ident_ctx();
-    snort::JSNormalizer& acquire_js_ctx(int32_t ident_depth, size_t norm_depth,
-     uint8_t max_template_nesting);
-    void release_js_ctx();
-
     // *** Transaction management including pipelining
     static const int MAX_PIPELINE = 100;  // requests seen - responses seen <= MAX_PIPELINE
     HttpTransaction* transaction[2] = { nullptr, nullptr };
@@ -223,6 +210,19 @@ private:
     // Memory footprint required by zlib inflation. Formula from https://zlib.net/zlib_tech.html
     // Accounts for a 32k sliding window and 11520 bytes of inflate_huft allocations
     static const size_t zlib_inflate_memory = (1 << 15) + 1440*2*sizeof(int);
+
+    // *** HttpJsNorm
+    JSIdentifierCtxBase* js_ident_ctx = nullptr;
+    snort::JSNormalizer* js_normalizer = nullptr;
+    bool js_built_in_event = false;
+
+    void reset_js_ident_ctx();
+    snort::JSNormalizer& acquire_js_ctx(int32_t ident_depth, size_t norm_depth,
+        uint8_t max_template_nesting);
+    void release_js_ctx();
+
+    bool cutover_on_clear = false;
+    bool ssl_search_abandoned = false;
 
 #ifdef REG_TEST
     static uint64_t instance_count;
