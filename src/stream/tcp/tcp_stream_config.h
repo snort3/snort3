@@ -61,8 +61,8 @@ public:
     uint32_t max_window = 0;
     uint32_t overlap_limit = 0;
 
-    uint32_t max_queued_bytes = STREAM_DEFAULT_MAX_QUEUED_BYTES;
-    uint32_t max_queued_segs = STREAM_DEFAULT_MAX_QUEUED_SEGS;
+    uint32_t max_queued_bytes = 4194304;
+    uint32_t max_queued_segs = 3072;
 
     uint32_t max_consec_small_segs = STREAM_DEFAULT_CONSEC_SMALL_SEGS;
     uint32_t max_consec_small_seg_size = STREAM_DEFAULT_MAX_SMALL_SEG_SIZE;

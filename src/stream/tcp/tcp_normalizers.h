@@ -59,8 +59,8 @@ public:
     void trim_rst_payload(TcpSegmentDescriptor& tsd, uint32_t max = 0)
     { norm->trim_rst_payload(tns, tsd, max); }
 
-    void trim_win_payload(TcpSegmentDescriptor& tsd, uint32_t max = 0)
-    { norm->trim_win_payload(tns, tsd, max); }
+    void trim_win_payload(TcpSegmentDescriptor& tsd, uint32_t max = 0, bool force = false)
+    { norm->trim_win_payload(tns, tsd, max, force); }
 
     void trim_mss_payload(TcpSegmentDescriptor& tsd, uint32_t max = 0)
     { norm->trim_mss_payload(tns, tsd, max); }

@@ -295,7 +295,7 @@ void TcpSession::update_perf_base_state(char newState)
         DataBus::publish(FLOW_STATE_EVENT, nullptr, flow);
 }
 
-bool TcpSession::flow_exceeds_config_thresholds(const TcpSegmentDescriptor& tsd)
+bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
 {
     TcpStreamTracker* listener = tsd.get_listener();
 
@@ -317,20 +317,61 @@ bool TcpSession::flow_exceeds_config_thresholds(const TcpSegmentDescriptor& tsd)
             tel.set_tcp_event(EVENT_MAX_SMALL_SEGS_EXCEEDED);
     }
 
-    if ( tcp_config->max_queued_bytes
-        && ( listener->reassembler.get_seg_bytes_total() > tcp_config->max_queued_bytes ) )
+    if ( tcp_config->max_queued_bytes )
     {
-        tcpStats.exceeded_max_bytes++;
-        // FIXIT-M add one alert per flow per above
-        return true;
+        int32_t space_left =
+            tcp_config->max_queued_bytes - listener->reassembler.get_seg_bytes_total();
+
+        if ( space_left < (int32_t)tsd.get_len() )
+        {
+            tcpStats.exceeded_max_bytes++;
+            bool inline_mode = tsd.is_policy_inline();
+            bool ret_val = true;
+
+            if ( space_left > 0 )
+                ret_val = !inline_mode; // For partial trim, reassemble only if we can force an inject
+            else
+                space_left = 0;
+
+            if ( inline_mode )
+            {
+                if ( listener->max_queue_exceeded == MQ_NONE )
+                {
+                    listener->max_queue_seq_nxt = tsd.get_seq() + space_left;
+                    listener->max_queue_exceeded = MQ_BYTES;
+                }
+                else
+                    (const_cast<tcp::TCPHdr*>(tsd.get_pkt()->ptrs.tcph))->set_seq(listener->max_queue_seq_nxt);
+            }
+            listener->normalizer.trim_win_payload(tsd, space_left, inline_mode);
+            return ret_val;
+        }
+        else if ( listener->max_queue_exceeded == MQ_BYTES )
+            listener->max_queue_exceeded = MQ_NONE;
     }
 
-    if ( tcp_config->max_queued_segs
-        && ( listener->reassembler.get_seg_count() + 1 > tcp_config->max_queued_segs ) )
+    if ( tcp_config->max_queued_segs )
     {
-        tcpStats.exceeded_max_segs++;
-        // FIXIT-M add one alert per flow per above
-        return true;
+        if ( listener->reassembler.get_seg_count() + 1 > tcp_config->max_queued_segs )
+        {
+            tcpStats.exceeded_max_segs++;
+            bool inline_mode = tsd.is_policy_inline();
+
+            if ( inline_mode )
+            {
+                if ( listener->max_queue_exceeded == MQ_NONE )
+                {
+                    listener->max_queue_seq_nxt = tsd.get_seq();
+                    listener->max_queue_exceeded = MQ_SEGS;
+                }
+                else
+                    (const_cast<tcp::TCPHdr*>(tsd.get_pkt()->ptrs.tcph))->set_seq(listener->max_queue_seq_nxt);
+            }
+            listener->normalizer.trim_win_payload(tsd, 0, inline_mode);
+            return true;
+        }
+        else if ( listener->max_queue_exceeded == MQ_SEGS )
+            listener->max_queue_exceeded = MQ_NONE;
     }
 
     return false;

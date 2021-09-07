@@ -152,6 +152,12 @@ void TcpReassembler::queue_reassembly_segment(
     trs.sos.seg_bytes_total += tsn->i_len;
     trs.sos.total_segs_queued++;
     tcpStats.segs_queued++;
+
+    if ( trs.sos.seg_count > tcpStats.max_segs )
+        tcpStats.max_segs = trs.sos.seg_count;
+
+    if ( trs.sos.seg_bytes_total > tcpStats.max_bytes )
+        tcpStats.max_bytes = trs.sos.seg_bytes_total;
 }
 
 bool TcpReassembler::is_segment_fasttrack(

@@ -77,7 +77,7 @@ private:
     void process_tcp_stream(TcpSegmentDescriptor&);
     int process_tcp_data(TcpSegmentDescriptor&);
     void set_os_policy() override;
-    bool flow_exceeds_config_thresholds(const TcpSegmentDescriptor&);
+    bool flow_exceeds_config_thresholds(TcpSegmentDescriptor&);
     void update_stream_order(const TcpSegmentDescriptor&, bool aligned);
     void swap_trackers();
     void init_session_on_syn(TcpSegmentDescriptor&);

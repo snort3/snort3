@@ -173,6 +173,9 @@ struct TCPHdr
 
     inline void set_raw_urp(uint16_t new_urp)
     { th_urp = new_urp; }
+
+    inline void set_seq(uint32_t new_seq)
+    { th_seq = htonl(new_seq); }
 };
 }  // namespace tcp
 }  // namespace snort

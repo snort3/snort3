@@ -500,8 +500,13 @@ void TcpStreamTracker::update_tracker_ack_sent(TcpSegmentDescriptor& tsd)
     if ( SEQ_GT(tsd.get_end_seq(), snd_nxt) )
         snd_nxt = tsd.get_end_seq();
 
-    if ( SEQ_GT(tsd.get_ack(), r_win_base) )
-        r_win_base = tsd.get_ack();
+    if ( SEQ_GEQ(tsd.get_ack(), r_win_base) )
+    {
+        if ( SEQ_GT(tsd.get_ack(), r_win_base) )
+            r_win_base = tsd.get_ack();
+
+        snd_wnd = tsd.get_wnd();
+    }
 
     if ( ( fin_seq_status == TcpStreamTracker::FIN_WITH_SEQ_SEEN )
         && SEQ_EQ(r_win_base, fin_final_seq) )
@@ -509,7 +514,6 @@ void TcpStreamTracker::update_tracker_ack_sent(TcpSegmentDescriptor& tsd)
         fin_seq_status = TcpStreamTracker::FIN_WITH_SEQ_ACKED;
     }
 
-    snd_wnd = tsd.get_wnd();
     reassembler.flush_on_ack_policy(tsd.get_pkt());
 }
 

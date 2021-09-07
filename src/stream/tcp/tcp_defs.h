@@ -52,9 +52,9 @@ struct Packet;
 #define STREAM_UNALIGNED       0
 #define STREAM_ALIGNED         1
 
-#define STREAM_DEFAULT_MAX_QUEUED_BYTES 1048576 /* 1 MB */
-#define AVG_PKT_SIZE            400
-#define STREAM_DEFAULT_MAX_QUEUED_SEGS ( STREAM_DEFAULT_MAX_QUEUED_BYTES / AVG_PKT_SIZE )
+#define MQ_NONE    0
+#define MQ_BYTES   1
+#define MQ_SEGS    2
 
 #define STREAM_DEFAULT_MAX_SMALL_SEG_SIZE 0    /* disabled */
 #define STREAM_DEFAULT_CONSEC_SMALL_SEGS 0     /* disabled */

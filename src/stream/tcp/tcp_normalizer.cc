@@ -57,11 +57,15 @@ NormPegs TcpNormalizer::get_normalization_counts(unsigned& c)
     return tcp_norm_stats;
 }
 
-bool TcpNormalizer::trim_payload(
-    TcpNormalizerState&, TcpSegmentDescriptor& tsd, uint32_t max, NormMode mode, TcpPegCounts peg)
+bool TcpNormalizer::trim_payload(TcpNormalizerState&, TcpSegmentDescriptor& tsd, uint32_t max,
+    NormMode mode, TcpPegCounts peg, bool force)
 {
+    if ( force )
+        mode = NORM_MODE_ON;
+
     tcp_norm_stats[peg][mode]++;
-    if (mode == NORM_MODE_ON)
+
+    if ( mode == NORM_MODE_ON )
     {
         uint16_t fat = tsd.get_len() - max;
         tsd.set_len(max);
@@ -125,10 +129,10 @@ void TcpNormalizer::trim_rst_payload(
 }
 
 void TcpNormalizer::trim_win_payload(
-    TcpNormalizerState& tns, TcpSegmentDescriptor& tsd, uint32_t max)
+    TcpNormalizerState& tns, TcpSegmentDescriptor& tsd, uint32_t max, bool force)
 {
     if (tsd.get_len() > max)
-        trim_payload(tns, tsd, max, (NormMode)tns.trim_win, PC_TCP_TRIM_WIN);
+        trim_payload(tns, tsd, max, (NormMode)tns.trim_win, PC_TCP_TRIM_WIN, force);
 }
 
 void TcpNormalizer::trim_mss_payload(
