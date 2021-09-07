@@ -33,6 +33,14 @@
 #define HTTP_NAME "http_inspect"
 #define HTTP_HELP "HTTP inspector"
 
+namespace snort
+{
+class Trace;
+struct SnortConfig;
+}
+
+extern THREAD_LOCAL const snort::Trace* http_trace;
+
 struct HttpParaList
 {
 public:
@@ -171,6 +179,9 @@ public:
 
     bool is_bindable() const override
     { return true; }
+
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
 
 #ifdef REG_TEST
     static const PegInfo* get_peg_names() { return peg_names; }

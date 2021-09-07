@@ -25,6 +25,10 @@
 #include <vector>
 
 #include "log/messages.h"
+#include "main/snort_debug.h"
+#include "service_inspectors/http_inspect/http_enum.h"
+
+extern THREAD_LOCAL const snort::Trace* http_trace;
 
 // The longest pattern has 9 characters " < / s c r i p t > ",
 // 8 of them can reside in 1st chunk
@@ -61,7 +65,8 @@ public:
         CLOSING_TAG,
         BAD_TOKEN,
         IDENTIFIER_OVERFLOW,
-        TEMPLATE_NESTING_OVERFLOW
+        TEMPLATE_NESTING_OVERFLOW,
+        MAX
     };
 
     JSTokenizer(std::istream& in, std::ostream& out, JSIdentifierCtxBase& ident_ctx,

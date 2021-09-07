@@ -52,6 +52,9 @@ JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len, char
 {
     if (rem_bytes == 0 && !unlim)
     {
+        debug_log(5, http_trace, TRACE_JS_PROC, nullptr,
+            "depth limit reached\n");
+
         src_next = src + src_len;
         dst_next = dst;
         return JSTokenizer::EOS;
@@ -59,6 +62,9 @@ JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len, char
 
     size_t len = unlim ? src_len :
         src_len < rem_bytes ? src_len : rem_bytes;
+
+    debug_logf(4, http_trace, TRACE_JS_DUMP, nullptr,
+        "tmp buffer[%zu]: %.*s\n", tmp_buf_size, static_cast<int>(tmp_buf_size), tmp_buf);
 
     in_buf.pubsetbuf(tmp_buf, tmp_buf_size, const_cast<char*>(src), len);
     out_buf.pubsetbuf(dst, dst_len);

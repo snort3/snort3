@@ -251,9 +251,6 @@ though the already-processed data remains in the output buffer.
 Enhanced Normalizer supports scripts over multiple PDUs.
 So, if the script is not ended, Normalizer's context is saved in HttpFlowData.
 The script continuation will be processed with the saved context.
-This has some limitations, like:
- * split in the middle of the identifier will result in two identifiers in the output
- * "<script" or "</script>" sequences split over two PDU will not be detected
 
 In order to support Script Detection feature for inline scripts, Normalizer ensures
 that after reaching the script end (legitimate closing tag or bad token),
@@ -416,3 +413,27 @@ developer to get it right.
 The test tool is designed for single-threaded operation only.
 
 The test tool is only available when compiled with REG_TEST.
+
+NHI has some trace messages available. Trace options follow:
+
+* trace.module.http_inspect.js_proc turns on messages from script processing flow.
++
+Verbosity levels:
++
+1. Script opening tag detected (available in release build)
+2. Attributes of detected script (available in release build)
+3. Normalizer return code (available in release build)
+4. Contexts management (debug build only)
+5. Parser states (debug build only)
+6. Input stream states (debug build only)
+
+* trace.module.http_inspect.js_dump dumps script data from processing layers.
++
+Verbosity levels:
++
+1. script_data buffer as it is being passed to detection (available in release build)
+2. Current normalized script (available in release build)
+3. Payload passed to Normalizer (available in release build)
+4. Temporary buffer (debug build only)
+5. Matched token (debug build only)
+6. Identifier substitution (debug build only)

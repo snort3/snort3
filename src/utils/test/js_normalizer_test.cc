@@ -28,12 +28,18 @@
 #include "utils/js_identifier_ctx.h"
 #include "utils/js_normalizer.h"
 
+// Mock functions
+
 namespace snort
 {
-// Mock for JSTokenizer
 [[noreturn]] void FatalError(const char*, ...)
 { exit(EXIT_FAILURE); }
+void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) {}
+uint8_t TraceApi::get_constraints_generation() { return 0; }
+void TraceApi::filter(const Packet&) {}
 }
+
+THREAD_LOCAL const snort::Trace* http_trace = nullptr;
 
 class JSIdentifierCtxTest : public JSIdentifierCtxBase
 {
@@ -45,6 +51,8 @@ public:
     void reset() override {}
     size_t size() const override { return 0; }
 };
+
+// Test cases
 
 using namespace snort;
 

@@ -22,6 +22,12 @@
 
 #include <cstdint>
 
+enum
+{
+    TRACE_JS_PROC = 0,
+    TRACE_JS_DUMP
+};
+
 namespace HttpEnums
 {
 static const int MAX_OCTETS = 63780;

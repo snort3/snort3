@@ -23,6 +23,7 @@
 
 #include "http_js_norm.h"
 
+#include "main/snort_debug.h"
 #include "utils/js_normalizer.h"
 #include "utils/safec.h"
 #include "utils/util_jsnorm.h"
@@ -33,19 +34,48 @@
 using namespace HttpEnums;
 using namespace snort;
 
+static const char* jsret_codes[] =
+{
+    "end of stream",
+    "script ended",
+    "script continues",
+    "opening tag",
+    "closing tag",
+    "bad token",
+    "identifier overflow",
+    "template nesting overflow",
+    "unknown"
+};
+
+static const char* ret2str(JSTokenizer::JSRet ret)
+{
+    ret = ret < JSTokenizer::JSRet::MAX ? ret : JSTokenizer::JSRet::MAX;
+    return jsret_codes[ret];
+}
+
 static inline JSTokenizer::JSRet js_normalize(JSNormalizer& ctx, const char* const end,
     const char* dst_end, const char*& ptr, char*& dst)
 {
+    trace_logf(3, http_trace, TRACE_JS_DUMP, nullptr,
+        "original[%zu]: %.*s\n", end - ptr, static_cast<int>(end - ptr), ptr);
+
     auto ret = ctx.normalize(ptr, end - ptr, dst, dst_end - dst);
-    auto next = ctx.get_src_next();
+    auto src_next = ctx.get_src_next();
+    auto dst_next = ctx.get_dst_next();
 
-    if (next > ptr)
-        HttpModule::increment_peg_counts(PEG_JS_BYTES, next - ptr);
+    trace_logf(3, http_trace, TRACE_JS_PROC, nullptr,
+        "normalizer returned with %d '%s'\n", ret, ret2str(ret));
+
+    trace_logf(2, http_trace, TRACE_JS_DUMP, nullptr,
+        "normalized[%zu]: %.*s\n", dst_next - dst, static_cast<int>(dst_next - dst), dst);
+
+    if (src_next > ptr)
+        HttpModule::increment_peg_counts(PEG_JS_BYTES, src_next - ptr);
     else
-        next = end; // Normalizer has failed, thus aborting the remaining input
+        src_next = end; // Normalizer has failed, thus aborting the remaining input
 
-    ptr = next;
-    dst = ctx.get_dst_next();
+    ptr = src_next;
+    dst = dst_next;
 
     return ret;
 }
@@ -123,6 +153,12 @@ void HttpJsNorm::enhanced_external_normalize(const Field& input, Field& output,
 
     while (ptr < end)
     {
+        trace_logf(1, http_trace, TRACE_JS_PROC, nullptr,
+            "external script at %zd offset\n", ptr - (const char*)input.start());
+
+        trace_logf(2, http_trace, TRACE_JS_PROC, nullptr,
+            "script %s\n", alive_ctx(ssn) ? "continues" : "starts");
+
         if (!buffer)
         {
             auto len = end - ptr; // not more than the remaining raw data
@@ -176,7 +212,12 @@ void HttpJsNorm::enhanced_external_normalize(const Field& input, Field& output,
     }
 
     if (buffer)
+    {
         output.set(dst - buffer, (const uint8_t*)buffer, true);
+
+        trace_logf(1, http_trace, TRACE_JS_DUMP, nullptr,
+            "script_data[%zu]: %.*s\n", dst - buffer, static_cast<int>(dst - buffer), buffer);
+    }
 }
 
 void HttpJsNorm::enhanced_inline_normalize(const Field& input, Field& output,
@@ -213,6 +254,15 @@ void HttpJsNorm::enhanced_inline_normalize(const Field& input, Field& output,
                     break; // the opening tag never ends
                 ptr = sctx.next;
             }
+
+            trace_logf(1, http_trace, TRACE_JS_PROC, nullptr,
+                "opening tag at %zd offset\n", ptr - (const char*)input.start());
+
+            trace_logf(2, http_trace, TRACE_JS_PROC, nullptr,
+                "script attributes [%s, %s, %s]\n",
+                sctx.is_shortened ? "shortened form" : "full form",
+                sctx.is_javascript ? "JavaScript type" : "unknown type",
+                sctx.is_external ? "external source" : "inline");
 
             if (sctx.is_shortened)
             {
@@ -303,7 +353,12 @@ void HttpJsNorm::enhanced_inline_normalize(const Field& input, Field& output,
         ssn->release_js_ctx();
 
     if (buffer)
+    {
         output.set(dst - buffer, (const uint8_t*)buffer, true);
+
+        trace_logf(1, http_trace, TRACE_JS_DUMP, nullptr,
+            "script_data[%zu]: %.*s\n", dst - buffer, static_cast<int>(dst - buffer), buffer);
+    }
 }
 
 void HttpJsNorm::legacy_normalize(const Field& input, Field& output, HttpInfractions* infractions,

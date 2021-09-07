@@ -73,6 +73,10 @@ protected:
 
         if (current_src_len + off < 0 and once)
         {
+            debug_logf(6, http_trace, TRACE_JS_PROC, nullptr,
+                "seek offset %ld, %p:%zu => %p:%zu\n",
+                off, src2, len2, src1, len1);
+
             off += current_src_len;
             once = false;
             setbuf(src1, len1);
@@ -85,7 +89,15 @@ protected:
     virtual int underflow() override
     {
         if (once)
+        {
+            debug_log(6, http_trace, TRACE_JS_PROC, nullptr,
+                "underflow, no buffer to switch to\n");
             return EOF;
+        }
+
+        debug_logf(6, http_trace, TRACE_JS_PROC, nullptr,
+            "underflow, %p:%zu => %p:%zu\n",
+            src1, len1, src2, len2);
 
         once = true;
         setbuf(src2, len2);

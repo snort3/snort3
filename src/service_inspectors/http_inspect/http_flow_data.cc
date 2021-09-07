@@ -24,6 +24,7 @@
 #include "http_flow_data.h"
 
 #include "decompress/file_decomp.h"
+#include "main/snort_debug.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
 #include "utils/js_identifier_ctx.h"
 #include "utils/js_normalizer.h"
@@ -96,11 +97,17 @@ HttpFlowData::~HttpFlowData()
     {
         update_deallocations(js_ident_ctx->size());
         delete js_ident_ctx;
+
+        debug_log(4, http_trace, TRACE_JS_PROC, nullptr,
+            "js_ident_ctx deleted\n");
     }
     if (js_normalizer)
     {
         update_deallocations(JSNormalizer::size());
         delete js_normalizer;
+
+        debug_log(4, http_trace, TRACE_JS_PROC, nullptr,
+            "js_normalizer deleted\n");
     }
 #endif
 
@@ -240,7 +247,11 @@ void HttpFlowData::garbage_collect()
 void HttpFlowData::reset_js_ident_ctx()
 {
     if (js_ident_ctx)
+    {
         js_ident_ctx->reset();
+        debug_log(4, http_trace, TRACE_JS_PROC, nullptr,
+            "js_ident_ctx reset\n");
+    }
 }
 
 snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t ident_depth, size_t norm_depth,
@@ -253,10 +264,17 @@ snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t ident_depth, size_t no
     {
         js_ident_ctx = new JSIdentifierCtx(ident_depth);
         update_allocations(js_ident_ctx->size());
+
+        debug_logf(4, http_trace, TRACE_JS_PROC, nullptr,
+            "js_ident_ctx created (ident_depth %d)\n", ident_depth);
     }
 
     js_normalizer = new JSNormalizer(*js_ident_ctx, norm_depth, max_template_nesting);
     update_allocations(JSNormalizer::size());
+
+    debug_logf(4, http_trace, TRACE_JS_PROC, nullptr,
+        "js_normalizer created (norm_depth %zd, max_template_nesting %d)\n",
+        norm_depth, max_template_nesting);
 
     return *js_normalizer;
 }
@@ -269,6 +287,9 @@ void HttpFlowData::release_js_ctx()
     update_deallocations(JSNormalizer::size());
     delete js_normalizer;
     js_normalizer = nullptr;
+
+    debug_log(4, http_trace, TRACE_JS_PROC, nullptr,
+        "js_normalizer deleted\n");
 }
 #else
 void HttpFlowData::reset_js_ident_ctx() {}

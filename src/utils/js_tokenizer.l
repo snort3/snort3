@@ -37,7 +37,17 @@
 #include "utils/js_identifier_ctx.h"
 #include "utils/util_cstring.h"
 
-#define YY_USER_ACTION { states_push(); }
+#define YY_USER_ACTION                                      \
+    {                                                       \
+        debug_logf(5, http_trace, TRACE_JS_PROC, nullptr,   \
+            "pattern #%d, sc %d\n", yy_act, YY_START);      \
+                                                            \
+        debug_logf(5, http_trace, TRACE_JS_DUMP, nullptr,   \
+            "text '%s'\n", YYText());                       \
+                                                            \
+        states_push();                                      \
+    }
+
 #define EXEC(f) { auto r = (f); if (r) { BEGIN(regst); return r; } }
 #define EEOF(f) { auto r = (f); if (r) { if (r != SCRIPT_CONTINUE) BEGIN(regst); return r; } }
 %}
@@ -1208,9 +1218,15 @@ JSTokenizer::JSRet JSTokenizer::do_identifier_substitution(const char* lexeme)
 
     if (ident)
     {
+        debug_logf(6, http_trace, TRACE_JS_DUMP, nullptr,
+            "'%s' => '%s'\n", lexeme, ident);
+
         yyout << ident;
         return EOS;
     }
+
+    debug_logf(6, http_trace, TRACE_JS_DUMP, nullptr,
+        "'%s' => IDENTIFIER_OVERFLOW\n", lexeme);
 
     return IDENTIFIER_OVERFLOW;
 }

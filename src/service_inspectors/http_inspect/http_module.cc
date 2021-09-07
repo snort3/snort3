@@ -24,6 +24,7 @@
 #include "http_module.h"
 
 #include "log/messages.h"
+#include "trace/trace.h"
 
 #include "http_enum.h"
 #include "http_js_norm.h"
@@ -172,6 +173,25 @@ ProfileStats* HttpModule::get_profile() const
 { return &http_profile; }
 
 THREAD_LOCAL PegCount HttpModule::peg_counts[PEG_COUNT_MAX] = { };
+
+THREAD_LOCAL const Trace* http_trace = nullptr;
+
+static const TraceOption http_trace_options[] =
+{
+    { "js_proc",  TRACE_JS_PROC,  "enable JavaScript processing logging" },
+    { "js_dump",  TRACE_JS_DUMP,  "enable JavaScript data logging" },
+    { nullptr, 0, nullptr }
+};
+
+void HttpModule::set_trace(const Trace* trace) const
+{
+    http_trace = trace;
+}
+
+const TraceOption* HttpModule::get_trace_options() const
+{
+    return http_trace_options;
+}
 
 bool HttpModule::begin(const char*, int, SnortConfig*)
 {

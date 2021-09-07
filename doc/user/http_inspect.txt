@@ -335,6 +335,35 @@ server. Due to this potential evasion tactic, the HTTP inspector will not cut ov
 it sees any early client-to-server traffic, but will continue normal HTTP processing of the flow
 regardless of the eventual server response.
 
+==== Trace messages
+
+When a user needs help to sort out things going on inside HTTP inspector, Trace module becomes handy.
+
+    $ snort --help-module trace | grep http_inspect
+
+Messages for the enhanced JavaScript Normalizer follow
+(more verbosity available in debug build):
+
+===== trace.module.http_inspect.js_proc
+
+Messages from script processing flow and their verbosity levels:
+
+1. Script opening tag location.
+
+2. Attributes of the detected script.
+
+3. Return codes from Normalizer.
+
+===== trace.module.http_inspect.js_dump
+
+Script data dump and verbosity levels:
+
+1. script_data buffer as it is passed to detection.
+
+2. Current script in normalized form.
+
+3. Current script as it is passed to Normalizer.
+
 ==== Detection rules
 
 http_inspect parses HTTP messages into their components and makes them
