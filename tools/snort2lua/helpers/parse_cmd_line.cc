@@ -277,9 +277,10 @@ static void enable_markup(const char* /*key*/, const char* /*val*/)
 static void set_ips_pattern(const char* /*key*/, const char* val)
 { Converter::set_ips_pattern(val); }
 
-static void print_version(const char* /*key*/, const char* /*val*/)
+[[noreturn]] static void print_version(const char* /*key*/, const char* /*val*/)
 {
-    std::cout << "Snort2Lua\t0.2.0";
+    std::cout << "Snort2Lua\t0.2.0\n";
+    exit(0);
 }
 
 static void dont_convert_max_session(const char* /*key*/, const char* /*val*/)
