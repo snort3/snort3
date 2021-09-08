@@ -159,7 +159,7 @@ static void ServiceMapAddOtnRaw(GHash* table, const char* servicename, OptTreeNo
  *  service name.
  */
 static void ServiceMapAddOtn(
-    srmm_table_t* srmm, SnortProtocolId, const char* servicename, OptTreeNode* otn)
+    srmm_table_t* srmm, const char* servicename, OptTreeNode* otn)
 {
     assert(servicename and otn);
 
@@ -196,27 +196,19 @@ void fpCreateServiceMaps(SnortConfig* sc)
          hashNode = sc->otn_map->find_next())
     {
         OptTreeNode* otn = (OptTreeNode*)hashNode->data;
-        for (PolicyId policyId = 0;
-             policyId < otn->proto_node_num;
-             policyId++ )
+
+        // skip builtin rules
+        if ( otn->sigInfo.builtin )
+            continue;
+
+        /* Not enabled, don't do the FP content */
+        if ( !otn->enabled_somewhere() )
+            continue;
+
+        for ( const auto& svc : otn->sigInfo.services )
         {
-            RuleTreeNode* rtn = getRtnFromOtn(otn, policyId);
-            if ( rtn )
-            {
-                // skip builtin rules
-                if ( otn->sigInfo.builtin )
-                    continue;
-
-                /* Not enabled, don't do the FP content */
-                if ( !rtn->enabled() )
-                    continue;
-
-                for ( const auto& svc : otn->sigInfo.services )
-                {
-                    const char* s = svc.service.c_str();
-                    ServiceMapAddOtn(sc->srmmTable, rtn->snort_protocol_id, s, otn);
-                }
-            }
+            const char* s = svc.service.c_str();
+            ServiceMapAddOtn(sc->srmmTable, s, otn);
         }
     }
 }

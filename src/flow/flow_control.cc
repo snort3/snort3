@@ -437,8 +437,10 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     if ( flow->flow_state != Flow::FlowState::SETUP )
     {
         flow->set_direction(p);
+
         // This call can reset the flow state to SETUP in lazy flow timeout cases
-        flow->session->precheck(p);
+        if ( flow->flow_state != Flow::FlowState::ALLOW )
+            flow->session->precheck(p);
     }
 
     if ( flow->flow_state != Flow::FlowState::SETUP )
