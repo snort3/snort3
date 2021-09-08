@@ -791,7 +791,7 @@ static const Parameter http_raw_trailer_params[] =
 
 static Module* raw_trailer_mod_ctor()
 {
-    return new HttpCursorModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_RAW_TRAILER, CAT_SET_OTHER,
+    return new HttpCursorModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_RAW_TRAILER, CAT_SET_RAW_HEADER,
         PSI_RAW_TRAILER, http_raw_trailer_params);
 }
 
