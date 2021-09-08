@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.11.0 2021-08-26 11:41:00 EDT TST
+Revision 3.1.12.0 2021-09-08 07:41:47 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -201,72 +201,71 @@ Table of Contents
     7.52. http_raw_body
     7.53. http_raw_cookie
     7.54. http_raw_header
-    7.55. http_raw_header_complete
-    7.56. http_raw_request
-    7.57. http_raw_status
-    7.58. http_raw_trailer
-    7.59. http_raw_uri
-    7.60. http_stat_code
-    7.61. http_stat_msg
-    7.62. http_trailer
-    7.63. http_true_ip
-    7.64. http_uri
-    7.65. http_version
-    7.66. icmp_id
-    7.67. icmp_seq
-    7.68. icode
-    7.69. id
-    7.70. iec104_apci_type
-    7.71. iec104_asdu_func
-    7.72. ip_proto
-    7.73. ipopts
-    7.74. isdataat
-    7.75. itype
-    7.76. md5
-    7.77. metadata
-    7.78. modbus_data
-    7.79. modbus_func
-    7.80. modbus_unit
-    7.81. msg
-    7.82. mss
-    7.83. pcre
-    7.84. pkt_data
-    7.85. pkt_num
-    7.86. priority
-    7.87. raw_data
-    7.88. reference
-    7.89. regex
-    7.90. rem
-    7.91. replace
-    7.92. rev
-    7.93. rpc
-    7.94. s7commplus_content
-    7.95. s7commplus_func
-    7.96. s7commplus_opcode
-    7.97. script_data
-    7.98. sd_pattern
-    7.99. seq
-    7.100. service
-    7.101. sha256
-    7.102. sha512
-    7.103. sid
-    7.104. sip_body
-    7.105. sip_header
-    7.106. sip_method
-    7.107. sip_stat_code
-    7.108. so
-    7.109. soid
-    7.110. ssl_state
-    7.111. ssl_version
-    7.112. stream_reassemble
-    7.113. stream_size
-    7.114. tag
-    7.115. target
-    7.116. tos
-    7.117. ttl
-    7.118. urg
-    7.119. window
-    7.120. wscale
+    7.55. http_raw_request
+    7.56. http_raw_status
+    7.57. http_raw_trailer
+    7.58. http_raw_uri
+    7.59. http_stat_code
+    7.60. http_stat_msg
+    7.61. http_trailer
+    7.62. http_true_ip
+    7.63. http_uri
+    7.64. http_version
+    7.65. icmp_id
+    7.66. icmp_seq
+    7.67. icode
+    7.68. id
+    7.69. iec104_apci_type
+    7.70. iec104_asdu_func
+    7.71. ip_proto
+    7.72. ipopts
+    7.73. isdataat
+    7.74. itype
+    7.75. md5
+    7.76. metadata
+    7.77. modbus_data
+    7.78. modbus_func
+    7.79. modbus_unit
+    7.80. msg
+    7.81. mss
+    7.82. pcre
+    7.83. pkt_data
+    7.84. pkt_num
+    7.85. priority
+    7.86. raw_data
+    7.87. reference
+    7.88. regex
+    7.89. rem
+    7.90. replace
+    7.91. rev
+    7.92. rpc
+    7.93. s7commplus_content
+    7.94. s7commplus_func
+    7.95. s7commplus_opcode
+    7.96. script_data
+    7.97. sd_pattern
+    7.98. seq
+    7.99. service
+    7.100. sha256
+    7.101. sha512
+    7.102. sid
+    7.103. sip_body
+    7.104. sip_header
+    7.105. sip_method
+    7.106. sip_stat_code
+    7.107. so
+    7.108. soid
+    7.109. ssl_state
+    7.110. ssl_version
+    7.111. stream_reassemble
+    7.112. stream_size
+    7.113. tag
+    7.114. target
+    7.115. tos
+    7.116. ttl
+    7.117. urg
+    7.118. window
+    7.119. wscale
 
 8. Search Engine Modules
 9. SO Rule Modules
@@ -1641,6 +1640,12 @@ Configuration:
   * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
   * int trace.modules.dpx.all: enable all trace options { 0:255 }
   * int trace.modules.file_id.all: enable all trace options { 0:255 }
+  * int trace.modules.http_inspect.all: enable all trace options {
+    0:255 }
+  * int trace.modules.http_inspect.js_proc: enable JavaScript
+    processing logging { 0:255 }
+  * int trace.modules.http_inspect.js_dump: enable JavaScript data
+    logging { 0:255 }
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
     manager trace logging { 0:255 }
@@ -5515,10 +5520,12 @@ Configuration:
     after given seconds from start up; -1 tracks all { -1:max31 }
   * bool stream_tcp.show_rebuilt_packets = false: enable cmg like
     output of reassembled packets
-  * int stream_tcp.queue_limit.max_bytes = 1048576: don’t queue more
-    than given bytes per session and direction { 0:max32 }
-  * int stream_tcp.queue_limit.max_segments = 2621: don’t queue more
-    than given segments per session and direction { 0:max32 }
+  * int stream_tcp.queue_limit.max_bytes = 4194304: don’t queue more
+    than given bytes per session and direction, 0 = unlimited {
+    0:max32 }
+  * int stream_tcp.queue_limit.max_segments = 3072: don’t queue more
+    than given segments per session and direction, 0 = unlimited {
+    0:max32 }
   * int stream_tcp.small_segments.count = 0: number of consecutive
     TCP small segments considered to be excessive (129:12) { 0:2048 }
   * int stream_tcp.small_segments.maximum_size = 0: minimum bytes for
@@ -5644,6 +5651,10 @@ Peg counts:
     service inspector (sum)
   * stream_tcp.partial_fallbacks: count of fallbacks from assigned
     service stream splitter (sum)
+  * stream_tcp.max_segs: maximum number of segments queued in any
+    flow (max)
+  * stream_tcp.max_bytes: maximum number of bytes queued in any flow
+    (max)
 
 
 5.50. stream_udp
@@ -6803,30 +6814,7 @@ Configuration:
     HTTP message trailers
 
 
-7.55. http_raw_header_complete
-
---------------
-
-Help: rule option to set the detection cursor to the unnormalized
-headers including cookies
-
-Type: ips_option
-
-Usage: detect
-
-Configuration:
-
-  * implied http_raw_header_complete.request: match against the
-    headers from the request message even when examining the response
-  * implied http_raw_header_complete.with_header: this rule is
-    limited to examining HTTP message headers
-  * implied http_raw_header_complete.with_body: parts of this rule
-    examine HTTP message body
-  * implied http_raw_header_complete.with_trailer: parts of this rule
-    examine HTTP message trailers
-
-
-7.56. http_raw_request
+7.55. http_raw_request
 
 --------------
 
@@ -6847,7 +6835,7 @@ Configuration:
     HTTP message trailers
 
 
-7.57. http_raw_status
+7.56. http_raw_status
 
 --------------
 
@@ -6866,7 +6854,7 @@ Configuration:
     HTTP message trailers
 
 
-7.58. http_raw_trailer
+7.57. http_raw_trailer
 
 --------------
 
@@ -6889,7 +6877,7 @@ Configuration:
     HTTP response message body (must be combined with request)
 
 
-7.59. http_raw_uri
+7.58. http_raw_uri
 
 --------------
 
@@ -6918,7 +6906,7 @@ Configuration:
     URI only
 
 
-7.60. http_stat_code
+7.59. http_stat_code
 
 --------------
 
@@ -6936,7 +6924,7 @@ Configuration:
     HTTP message trailers
 
 
-7.61. http_stat_msg
+7.60. http_stat_msg
 
 --------------
 
@@ -6955,7 +6943,7 @@ Configuration:
     HTTP message trailers
 
 
-7.62. http_trailer
+7.61. http_trailer
 
 --------------
 
@@ -6977,7 +6965,7 @@ Configuration:
     message body (must be combined with request)
 
 
-7.63. http_true_ip
+7.62. http_true_ip
 
 --------------
 
@@ -6998,7 +6986,7 @@ Configuration:
     HTTP message trailers
 
 
-7.64. http_uri
+7.63. http_uri
 
 --------------
 
@@ -7026,7 +7014,7 @@ Configuration:
     only
 
 
-7.65. http_version
+7.64. http_version
 
 --------------
 
@@ -7048,7 +7036,7 @@ Configuration:
     HTTP message trailers
 
 
-7.66. icmp_id
+7.65. icmp_id
 
 --------------
 
@@ -7064,7 +7052,7 @@ Configuration:
     0:65535 }
 
 
-7.67. icmp_seq
+7.66. icmp_seq
 
 --------------
 
@@ -7080,7 +7068,7 @@ Configuration:
     given range { 0:65535 }
 
 
-7.68. icode
+7.67. icode
 
 --------------
 
@@ -7096,7 +7084,7 @@ Configuration:
     0:255 }
 
 
-7.69. id
+7.68. id
 
 --------------
 
@@ -7112,7 +7100,7 @@ Configuration:
     }
 
 
-7.70. iec104_apci_type
+7.69. iec104_apci_type
 
 --------------
 
@@ -7127,7 +7115,7 @@ Configuration:
   * string iec104_apci_type.~: APCI type to match
 
 
-7.71. iec104_asdu_func
+7.70. iec104_asdu_func
 
 --------------
 
@@ -7142,7 +7130,7 @@ Configuration:
   * string iec104_asdu_func.~: function code to match
 
 
-7.72. ip_proto
+7.71. ip_proto
 
 --------------
 
@@ -7157,7 +7145,7 @@ Configuration:
   * string ip_proto.~proto: [!|>|<] name or number
 
 
-7.73. ipopts
+7.72. ipopts
 
 --------------
 
@@ -7173,7 +7161,7 @@ Configuration:
     lsrre|ssrr|satid|any }
 
 
-7.74. isdataat
+7.73. isdataat
 
 --------------
 
@@ -7190,7 +7178,7 @@ Configuration:
     buffer
 
 
-7.75. itype
+7.74. itype
 
 --------------
 
@@ -7206,7 +7194,7 @@ Configuration:
     0:255 }
 
 
-7.76. md5
+7.75. md5
 
 --------------
 
@@ -7226,7 +7214,7 @@ Configuration:
     of buffer
 
 
-7.77. metadata
+7.76. metadata
 
 --------------
 
@@ -7243,7 +7231,7 @@ Configuration:
     pairs
 
 
-7.78. modbus_data
+7.77. modbus_data
 
 --------------
 
@@ -7254,7 +7242,7 @@ Type: ips_option
 Usage: detect
 
 
-7.79. modbus_func
+7.78. modbus_func
 
 --------------
 
@@ -7269,7 +7257,7 @@ Configuration:
   * string modbus_func.~: function code to match
 
 
-7.80. modbus_unit
+7.79. modbus_unit
 
 --------------
 
@@ -7284,7 +7272,7 @@ Configuration:
   * int modbus_unit.~: Modbus unit ID { 0:255 }
 
 
-7.81. msg
+7.80. msg
 
 --------------
 
@@ -7299,7 +7287,7 @@ Configuration:
   * string msg.~: message describing rule
 
 
-7.82. mss
+7.81. mss
 
 --------------
 
@@ -7315,7 +7303,7 @@ Configuration:
     }
 
 
-7.83. pcre
+7.82. pcre
 
 --------------
 
@@ -7337,7 +7325,7 @@ Peg counts:
   * pcre.pcre_negated: total pcre rules using negation syntax (sum)
 
 
-7.84. pkt_data
+7.83. pkt_data
 
 --------------
 
@@ -7349,7 +7337,7 @@ Type: ips_option
 Usage: detect
 
 
-7.85. pkt_num
+7.84. pkt_num
 
 --------------
 
@@ -7365,7 +7353,7 @@ Configuration:
     { 1: }
 
 
-7.86. priority
+7.85. priority
 
 --------------
 
@@ -7381,7 +7369,7 @@ Configuration:
     1:max31 }
 
 
-7.87. raw_data
+7.86. raw_data
 
 --------------
 
@@ -7392,7 +7380,7 @@ Type: ips_option
 Usage: detect
 
 
-7.88. reference
+7.87. reference
 
 --------------
 
@@ -7407,7 +7395,7 @@ Configuration:
   * string reference.~ref: reference: <scheme>,<id>
 
 
-7.89. regex
+7.88. regex
 
 --------------
 
@@ -7431,7 +7419,7 @@ Configuration:
     instead of start of buffer
 
 
-7.90. rem
+7.89. rem
 
 --------------
 
@@ -7446,7 +7434,7 @@ Configuration:
   * string rem.~: comment
 
 
-7.91. replace
+7.90. replace
 
 --------------
 
@@ -7461,7 +7449,7 @@ Configuration:
   * string replace.~: byte code to replace with
 
 
-7.92. rev
+7.91. rev
 
 --------------
 
@@ -7476,7 +7464,7 @@ Configuration:
   * int rev.~: revision { 1:max32 }
 
 
-7.93. rpc
+7.92. rpc
 
 --------------
 
@@ -7493,7 +7481,7 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-7.94. s7commplus_content
+7.93. s7commplus_content
 
 --------------
 
@@ -7504,7 +7492,7 @@ Type: ips_option
 Usage: detect
 
 
-7.95. s7commplus_func
+7.94. s7commplus_func
 
 --------------
 
@@ -7519,7 +7507,7 @@ Configuration:
   * string s7commplus_func.~: function code to match
 
 
-7.96. s7commplus_opcode
+7.95. s7commplus_opcode
 
 --------------
 
@@ -7534,7 +7522,7 @@ Configuration:
   * string s7commplus_opcode.~: opcode code to match
 
 
-7.97. script_data
+7.96. script_data
 
 --------------
 
@@ -7545,7 +7533,7 @@ Type: ips_option
 Usage: detect
 
 
-7.98. sd_pattern
+7.97. sd_pattern
 
 --------------
 
@@ -7569,7 +7557,7 @@ Peg counts:
   * sd_pattern.terminated: hyperscan terminated (sum)
 
 
-7.99. seq
+7.98. seq
 
 --------------
 
@@ -7585,7 +7573,7 @@ Configuration:
     range { 0: }
 
 
-7.100. service
+7.99. service
 
 --------------
 
@@ -7600,7 +7588,7 @@ Configuration:
   * string service.*: one or more comma-separated service names
 
 
-7.101. sha256
+7.100. sha256
 
 --------------
 
@@ -7620,7 +7608,7 @@ Configuration:
     start of buffer
 
 
-7.102. sha512
+7.101. sha512
 
 --------------
 
@@ -7640,7 +7628,7 @@ Configuration:
     start of buffer
 
 
-7.103. sid
+7.102. sid
 
 --------------
 
@@ -7655,7 +7643,7 @@ Configuration:
   * int sid.~: signature id { 1:max32 }
 
 
-7.104. sip_body
+7.103. sip_body
 
 --------------
 
@@ -7666,7 +7654,7 @@ Type: ips_option
 Usage: detect
 
 
-7.105. sip_header
+7.104. sip_header
 
 --------------
 
@@ -7678,7 +7666,7 @@ Type: ips_option
 Usage: detect
 
 
-7.106. sip_method
+7.105. sip_method
 
 --------------
 
@@ -7693,7 +7681,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-7.107. sip_stat_code
+7.106. sip_stat_code
 
 --------------
 
@@ -7708,7 +7696,7 @@ Configuration:
   * int sip_stat_code.*code: status code { 1:999 }
 
 
-7.108. so
+7.107. so
 
 --------------
 
@@ -7725,7 +7713,7 @@ Configuration:
     buffer
 
 
-7.109. soid
+7.108. soid
 
 --------------
 
@@ -7741,7 +7729,7 @@ Configuration:
     like 3_45678_9
 
 
-7.110. ssl_state
+7.109. ssl_state
 
 --------------
 
@@ -7770,7 +7758,7 @@ Configuration:
     unknown
 
 
-7.111. ssl_version
+7.110. ssl_version
 
 --------------
 
@@ -7797,7 +7785,7 @@ Configuration:
     tls1.2
 
 
-7.112. stream_reassemble
+7.111. stream_reassemble
 
 --------------
 
@@ -7818,7 +7806,7 @@ Configuration:
     remainder of the session
 
 
-7.113. stream_size
+7.112. stream_size
 
 --------------
 
@@ -7836,7 +7824,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-7.114. tag
+7.113. tag
 
 --------------
 
@@ -7855,7 +7843,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1:max32 }
 
 
-7.115. target
+7.114. target
 
 --------------
 
@@ -7871,7 +7859,7 @@ Configuration:
     dst_ip }
 
 
-7.116. tos
+7.115. tos
 
 --------------
 
@@ -7886,7 +7874,7 @@ Configuration:
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
 
 
-7.117. ttl
+7.116. ttl
 
 --------------
 
@@ -7902,7 +7890,7 @@ Configuration:
     0:255 }
 
 
-7.118. urg
+7.117. urg
 
 --------------
 
@@ -7918,7 +7906,7 @@ Configuration:
     { 0:65535 }
 
 
-7.119. window
+7.118. window
 
 --------------
 
@@ -7934,7 +7922,7 @@ Configuration:
     range { 0:65535 }
 
 
-7.120. wscale
+7.119. wscale
 
 --------------
 
@@ -9227,14 +9215,6 @@ these libraries see the Getting Started section of the manual.
     examining HTTP message headers
   * implied http_raw_cookie.with_trailer: parts of this rule examine
     HTTP message trailers
-  * implied http_raw_header_complete.request: match against the
-    headers from the request message even when examining the response
-  * implied http_raw_header_complete.with_body: parts of this rule
-    examine HTTP message body
-  * implied http_raw_header_complete.with_header: this rule is
-    limited to examining HTTP message headers
-  * implied http_raw_header_complete.with_trailer: parts of this rule
-    examine HTTP message trailers
   * string http_raw_header.field: restrict to given header. Header
     name is case insensitive.
   * implied http_raw_header.request: match against the headers from
@@ -10354,10 +10334,12 @@ these libraries see the Getting Started section of the manual.
     characteristics like reassembly { first | last | linux |
     old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 |
     windows | win_2003 | vista | proxy }
-  * int stream_tcp.queue_limit.max_bytes = 1048576: don’t queue more
-    than given bytes per session and direction { 0:max32 }
-  * int stream_tcp.queue_limit.max_segments = 2621: don’t queue more
-    than given segments per session and direction { 0:max32 }
+  * int stream_tcp.queue_limit.max_bytes = 4194304: don’t queue more
+    than given bytes per session and direction, 0 = unlimited {
+    0:max32 }
+  * int stream_tcp.queue_limit.max_segments = 3072: don’t queue more
+    than given segments per session and direction, 0 = unlimited {
+    0:max32 }
   * bool stream_tcp.reassemble_async = true: queue data for
     reassembly before traffic is seen in both directions
   * int stream_tcp.require_3whs = -1: don’t track midstream sessions
@@ -10420,6 +10402,12 @@ these libraries see the Getting Started section of the manual.
   * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
   * int trace.modules.dpx.all: enable all trace options { 0:255 }
   * int trace.modules.file_id.all: enable all trace options { 0:255 }
+  * int trace.modules.http_inspect.all: enable all trace options {
+    0:255 }
+  * int trace.modules.http_inspect.js_dump: enable JavaScript data
+    logging { 0:255 }
+  * int trace.modules.http_inspect.js_proc: enable JavaScript
+    processing logging { 0:255 }
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
     manager trace logging { 0:255 }
@@ -11516,9 +11504,13 @@ these libraries see the Getting Started section of the manual.
     number (sum)
   * stream_tcp.invalid_seq_num: tcp packets received with an invalid
     sequence number (sum)
+  * stream_tcp.max_bytes: maximum number of bytes queued in any flow
+    (max)
   * stream_tcp.max: max tcp sessions (max)
   * stream_tcp.max_packets_held: maximum number of packets held
     simultaneously (max)
+  * stream_tcp.max_segs: maximum number of segments queued in any
+    flow (max)
   * stream_tcp.memory: current memory in use (now)
   * stream_tcp.meta_acks: number of meta acks processed (sum)
   * stream_tcp.no_flags_set: tcp packets received with no TCP flags
@@ -12702,8 +12694,6 @@ and are not applicable elsewhere.
     cursor to the unnormalized cookie
   * http_raw_header (ips_option): rule option to set the detection
     cursor to the unnormalized headers
-  * http_raw_header_complete (ips_option): rule option to set the
-    detection cursor to the unnormalized headers including cookies
   * http_raw_request (ips_option): rule option to set the detection
     cursor to the unnormalized request line
   * http_raw_status (ips_option): rule option to set the detection
@@ -13114,8 +13104,6 @@ and are not applicable elsewhere.
     cursor to the unnormalized cookie
   * ips_option::http_raw_header: rule option to set the detection
     cursor to the unnormalized headers
-  * ips_option::http_raw_header_complete: rule option to set the
-    detection cursor to the unnormalized headers including cookies
   * ips_option::http_raw_request: rule option to set the detection
     cursor to the unnormalized request line
   * ips_option::http_raw_status: rule option to set the detection

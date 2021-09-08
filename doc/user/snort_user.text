@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.11.0 2021-08-26 11:40:49 EDT TST
+Revision 3.1.12.0 2021-09-08 07:41:38 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -4090,7 +4090,33 @@ tactic, the HTTP inspector will not cut over to the wizard if it sees
 any early client-to-server traffic, but will continue normal HTTP
 processing of the flow regardless of the eventual server response.
 
-5.10.4. Detection rules
+5.10.4. Trace messages
+
+When a user needs help to sort out things going on inside HTTP
+inspector, Trace module becomes handy.
+
+$ snort --help-module trace | grep http_inspect
+
+Messages for the enhanced JavaScript Normalizer follow (more
+verbosity available in debug build):
+
+5.10.4.1. trace.module.http_inspect.js_proc
+
+Messages from script processing flow and their verbosity levels:
+
+ 1. Script opening tag location.
+ 2. Attributes of the detected script.
+ 3. Return codes from Normalizer.
+
+5.10.4.2. trace.module.http_inspect.js_dump
+
+Script data dump and verbosity levels:
+
+ 1. script_data buffer as it is passed to detection.
+ 2. Current script in normalized form.
+ 3. Current script as it is passed to Normalizer.
+
+5.10.5. Detection rules
 
 http_inspect parses HTTP messages into their components and makes
 them available to the detection engine through rule options. Let’s
@@ -4161,7 +4187,7 @@ list.
 In addition to the headers there are rule options for virtually every
 part of the HTTP message.
 
-5.10.4.1. http_uri and http_raw_uri
+5.10.5.1. http_uri and http_raw_uri
 
 These provide the URI of the request message. The raw form is exactly
 as it appeared in the message and the normalized form is determined
@@ -4221,7 +4247,7 @@ Note: this section uses informal language to explain some things.
 Nothing here is intended to conflict with the technical language of
 the HTTP RFCs and the implementation follows the RFCs.
 
-5.10.4.2. http_header, http_raw_header, and http_raw_header_complete
+5.10.5.2. http_header and http_raw_header
 
 These cover all the header lines except the first one. You may
 specify an individual header by name using the field option as shown
@@ -4238,22 +4264,17 @@ mixture of upper and lower case.
 With http_header the individual header value is normalized in a way
 that is appropriate for that header.
 
-Specifying an individual header is not available for
-http_raw_header_complete, use http_raw_header instead.
-
 If you don’t specify a header you get all of the headers.
-http_raw_header_complete includes cookie headers Cookie and
-Set-Cookie. http_header and http_raw_header don’t. http_raw_header
-and http_raw_header_complete include the unmodified header names and
-values as they appeared in the original message. http_header is the
-same except percent encodings are removed and paths are simplified
+http_raw_header includes the unmodified header names and values as
+they appeared in the original message. http_header is the same except
+percent encodings and cookies are removed and paths are simplified
 exactly as if the headers were a URI.
 
 In most cases specifying individual headers creates a more efficient
 and accurate rule. It is recommended that new rules be written using
 individual headers whenever possible.
 
-5.10.4.3. http_trailer and http_raw_trailer
+5.10.5.3. http_trailer and http_raw_trailer
 
 HTTP permits header lines to appear after a chunked body ends.
 Typically they contain information about the message content that was
@@ -4265,7 +4286,7 @@ counterparts except they apply to these end headers. If you want a
 rule to inspect both kinds of headers you need to write two rules,
 one using header and one using trailer.
 
-5.10.4.4. http_cookie and http_raw_cookie
+5.10.5.4. http_cookie and http_raw_cookie
 
 These provide the value of the Cookie header for a request message
 and the Set-Cookie for a response message. If multiple cookies are
@@ -4274,7 +4295,7 @@ present they will be concatenated into a comma-separated list.
 Normalization for http_cookie is the same URI-style normalization
 applied to http_header when no specific header is specified.
 
-5.10.4.5. http_true_ip
+5.10.5.5. http_true_ip
 
 This provides the original IP address of the client sending the
 request as it was stored by a proxy in the request message headers.
@@ -4283,42 +4304,42 @@ True-Client-IP or any other custom x-forwarded-for type header. If
 multiple headers are present the preference defined in xff_headers
 configuration is considered.
 
-5.10.4.6. http_client_body
+5.10.5.6. http_client_body
 
 This is the body of a request message such as POST or PUT.
 Normalization for http_client_body is the same URI-like normalization
 applied to http_header when no specific header is specified.
 
-5.10.4.7. http_raw_body
+5.10.5.7. http_raw_body
 
 This is the body of a request or response message. It will be
 dechunked and unzipped if applicable but will not be normalized in
 any other way.
 
-5.10.4.8. http_method
+5.10.5.8. http_method
 
 The method field of a request message. Common values are "GET",
 "POST", "OPTIONS", "HEAD", "DELETE", "PUT", "TRACE", and "CONNECT".
 
-5.10.4.9. http_stat_code
+5.10.5.9. http_stat_code
 
 The status code field of a response message. This is normally a
 3-digit number between 100 and 599. In this example it is 200.
 
 HTTP/1.1 200 OK
 
-5.10.4.10. http_stat_msg
+5.10.5.10. http_stat_msg
 
 The reason phrase field of a response message. This is the
 human-readable text following the status code. "OK" in the previous
 example.
 
-5.10.4.11. http_version
+5.10.5.11. http_version
 
 The protocol version information that appears on the first line of an
 HTTP message. This is usually "HTTP/1.0" or "HTTP/1.1".
 
-5.10.4.12. http_raw_request and http_raw_status
+5.10.5.12. http_raw_request and http_raw_status
 
 These are the unmodified first header line of the HTTP request and
 response messages respectively. These rule options are a safety valve
@@ -4328,13 +4349,13 @@ first header line. For a request message those are http_method,
 http_raw_uri, and http_version. For a response message those are
 http_version, http_stat_code, and http_stat_msg.
 
-5.10.4.13. file_data
+5.10.5.13. file_data
 
 The file_data contains the normalized message body. This is the
 normalization described above under gzip, normalize_utf,
 decompress_pdf, decompress_swf, and normalize_javascript.
 
-5.10.4.14. script_data
+5.10.5.14. script_data
 
 The script_data contains normalized JavaScript text collected from
 the whole PDU (inline or external scripts). It requires the Enhanced
@@ -4343,7 +4364,7 @@ js_normalization_depth option is described above. Despite what
 script_data has, file_data still contains the whole HTTP body with an
 original JavaScript in it.
 
-5.10.5. Timing issues and combining rule options
+5.10.6. Timing issues and combining rule options
 
 HTTP inspector is stateful. That means it is aware of a bigger
 picture than the packet in front of it. It knows what all the pieces

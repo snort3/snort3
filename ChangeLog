@@ -1,3 +1,14 @@
+2021/09/08 - 3.1.12.0
+
+decoder: icmp6 - use source and destination addresses from packet to compute icmp6 checksum when NAT is in effect
+http_inspect: enable traces for JS Normalizer
+http_inspect: include cookies in http_raw_header
+http_inspect: reduce void space in HttpFlowData
+stream_tcp: add pegs for maximum observed queue size
+stream_tcp: normalize data when queue limits are enabled
+stream_tcp: only update window on right edge acks
+stream_tcp: set sequence number in trimmed packets up to the queue limit and increase defaults
+
 2021/08/26 - 3.1.11.0
 
 build: update help for --enable-tsc-clock to include arm. Thanks to liangxwa01 for reporting the issue.
