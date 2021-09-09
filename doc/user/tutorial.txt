@@ -182,6 +182,10 @@ General Use
 * Unit tests are configured with --enable-unit-tests.  They can then be run
   with snort --catch-test [tags]|all.
 
+* Benchmark tests are configured with --enable-benchmark-tests.  They can then
+  be run with snort --catch-test [tags]|all or built as a separate executable.
+  It is also preferred to configure a non-debug build with optimizations enabled.
+
 Lua Configuration
 
 * Configure the wizard and default bindings will be created based on configured
