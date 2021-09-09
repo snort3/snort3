@@ -40,7 +40,7 @@
 #include "parser/vars.h"
 #include "trace/trace_config.h"
 
-#ifdef UNIT_TEST
+#if defined(UNIT_TEST) || defined(BENCHMARK_TEST)
 #include "catch/unit_test.h"
 #endif
 
@@ -567,9 +567,9 @@ static const Parameter s_params[] =
     { "--tweaks", Parameter::PT_STRING, nullptr, nullptr,
       "tune configuration" },
 
-#ifdef UNIT_TEST
+#if defined(UNIT_TEST) || defined(BENCHMARK_TEST)
     { "--catch-test", Parameter::PT_STRING, nullptr, nullptr,
-      "comma separated list of cat unit test tags or 'all'" },
+      "comma separated list of Catch test tags or 'all'" },
 #endif
     { "--version", Parameter::PT_IMPLIED, nullptr, nullptr,
       "show version number (same as -V)" },
@@ -1104,7 +1104,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--tweaks") )
         sc->set_tweaks(v.get_string());
 
-#ifdef UNIT_TEST
+#if defined(UNIT_TEST) || defined(BENCHMARK_TEST)
     else if ( v.is("--catch-test") )
         catch_set_filter(v.get_string());
 #endif

@@ -70,7 +70,7 @@ endfunction (add_cpputest)
 
 
 function (add_catch_test testname)
-    if ( ENABLE_UNIT_TESTS )
+    if ( ENABLE_UNIT_TESTS OR ENABLE_BENCHMARK_TESTS )
         set(options NO_TEST_SOURCE)
         set(multiValueArgs SOURCES LIBS)
         cmake_parse_arguments(Catch "${options}" "" "${multiValueArgs}" ${ARGN})
@@ -83,9 +83,11 @@ function (add_catch_test testname)
             ${Catch_SOURCES}
             $<TARGET_OBJECTS:catch_main>
         )
-        target_compile_options(${testname} PRIVATE "-DCATCH_TEST_BUILD")
+        if ( ENABLE_UNIT_TESTS )
+            target_compile_options(${testname} PRIVATE "-DCATCH_TEST_BUILD")
+        endif ( ENABLE_UNIT_TESTS )
         target_link_libraries(${testname} PRIVATE ${Catch_LIBS})
         add_test(${testname} ${testname})
         add_dependencies(check ${testname})
-    endif ( ENABLE_UNIT_TESTS )
+    endif ( ENABLE_UNIT_TESTS OR ENABLE_BENCHMARK_TESTS )
 endfunction (add_catch_test)

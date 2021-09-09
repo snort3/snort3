@@ -74,11 +74,14 @@ include_directories(AFTER ${EXTERNAL_INCLUDES})
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(BEFORE network_inspectors)
 
-if (ENABLE_UNIT_TESTS)
+if ( ENABLE_UNIT_TESTS )
     enable_testing()
+endif ( ENABLE_UNIT_TESTS )
+
+if ( ENABLE_UNIT_TESTS OR ENABLE_BENCHMARK_TESTS )
     set( UNIT_TESTS_LIBRARIES $<TARGET_OBJECTS:catch_tests>)
     add_subdirectory(catch)
-endif (ENABLE_UNIT_TESTS)
+endif ( ENABLE_UNIT_TESTS OR ENABLE_BENCHMARK_TESTS )
 
 if ( ENABLE_PIGLET )
     set ( PIGLET_LIBRARIES $<TARGET_OBJECTS:piglet> $<TARGET_OBJECTS:piglet_plugins> )

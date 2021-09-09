@@ -23,7 +23,7 @@
 
 #include "js_identifier_ctx.h"
 
-#ifndef CATCH_TEST_BUILD
+#if !defined(CATCH_TEST_BUILD) && !defined(BENCHMARK_TEST)
 #include "service_inspectors/http_inspect/http_enum.h"
 #include "service_inspectors/http_inspect/http_module.h"
 #else

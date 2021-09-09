@@ -1,6 +1,12 @@
-==== Unit Test
+==== Unit and Benchmark Tests
 
-This directory contains the unit-test interface.
+This directory contains unit-test and benchmark-test interfaces.
+
+In order to enable unit tests, configure snort with --enable-unit-tests.
+
+To enable benchmark tests, configure snort with --enable-benchmark-tests.
+For benchmarking is also preferred to configure a non-debug build with
+optimizations.
 
 catch.hpp is from https://github.com/philsquared/Catch.
 

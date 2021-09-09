@@ -1,5 +1,5 @@
 
-if ( ENABLE_UNIT_TESTS )
+if ( ENABLE_UNIT_TESTS OR ENABLE_BENCHMARK_TESTS )
 
     set (CATCH_INCLUDES
         catch.hpp
@@ -21,4 +21,4 @@ if ( ENABLE_UNIT_TESTS )
         catch_main.cc
     )
 
-endif()
+endif( ENABLE_UNIT_TESTS OR ENABLE_BENCHMARK_TESTS )

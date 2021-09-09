@@ -57,8 +57,11 @@ include_directories (${PROJECT_SOURCE_DIR})
 
 if (ENABLE_UNIT_TESTS)
     include(CTest)
-    add_custom_target (check COMMAND ${CMAKE_CTEST_COMMAND})
 endif (ENABLE_UNIT_TESTS)
+
+if (ENABLE_UNIT_TESTS OR ENABLE_BENCHMARK_TESTS)
+    add_custom_target (check COMMAND ${CMAKE_CTEST_COMMAND})
+endif (ENABLE_UNIT_TESTS OR ENABLE_BENCHMARK_TESTS)
 
 add_subdirectory (src)
 add_subdirectory (tools)

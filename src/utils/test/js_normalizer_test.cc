@@ -58,6 +58,11 @@ using namespace snort;
 
 #define DEPTH 65535
 #define MAX_TEMPLATE_NESTNIG 4
+
+// Unit tests
+
+#ifdef CATCH_TEST_BUILD
+
 #define DST_SIZE 512
 
 #define NORMALIZE(src, expected)                                   \
@@ -204,7 +209,7 @@ using namespace snort;
         CLOSE();                                                        \
     }
 
-// ClamAV test cases
+// ClamAV test vectors from: https://github.com/Cisco-Talos/clamav/blob/main/unit_tests/check_jsnorm.c
 static const char clamav_buf0[] =
     "function foo(a, b) {\n"
     "var x = 1.9e2*2*a/ 4.;\n"
@@ -324,77 +329,78 @@ static const char clamav_expected14[] =
 
 TEST_CASE("clamav tests", "[JSNormalizer]")
 {
-    SECTION("test_case_0")
+    SECTION("test_case_0 - mixed identifiers and comments")
     {
         NORMALIZE(clamav_buf0, clamav_expected0);
         VALIDATE(clamav_buf0, clamav_expected0);
     }
-    SECTION("test_case_1")
+    SECTION("test_case_1 - escaped unicode in identifier")
     {
         NORMALIZE(clamav_buf1, clamav_expected1);
         VALIDATE(clamav_buf1, clamav_expected1);
     }
-    SECTION("test_case_2")
+    SECTION("test_case_2 - accumulated string assignment")
     {
         NORMALIZE(clamav_buf2, clamav_expected2);
         VALIDATE(clamav_buf2, clamav_expected2);
     }
-    SECTION("test_case_3")
+    SECTION("test_case_3 - percent-encoded string")
     {
         NORMALIZE(clamav_buf3, clamav_expected3);
         VALIDATE(clamav_buf3, clamav_expected3);
     }
-    SECTION("test_case_4")
+    SECTION("test_case_4 - percent-encoded string")
     {
         NORMALIZE(clamav_buf4, clamav_expected4);
         VALIDATE(clamav_buf4, clamav_expected4);
     }
-    SECTION("test_case_5")
+    SECTION("test_case_5 - obfuscated script")
     {
         NORMALIZE(clamav_buf5, clamav_expected5);
         VALIDATE(clamav_buf5, clamav_expected5);
     }
-    SECTION("test_case_6")
+    SECTION("test_case_6 - obfuscated script")
     {
         NORMALIZE(clamav_buf6, clamav_expected6);
         VALIDATE(clamav_buf6, clamav_expected6);
     }
-    SECTION("test_case_7")
+    SECTION("test_case_7 - single quotes string")
     {
         NORMALIZE(clamav_buf7, clamav_expected7);
         VALIDATE(clamav_buf7, clamav_expected7);
     }
-    SECTION("test_case_8")
+    SECTION("test_case_8 - double quotes string")
     {
         NORMALIZE(clamav_buf8, clamav_expected8);
         VALIDATE(clamav_buf8, clamav_expected8);
     }
-    SECTION("test_case_9")
+    SECTION("test_case_9 - obfuscated script")
     {
         NORMALIZE(clamav_buf9, clamav_expected9);
         VALIDATE(clamav_buf9, clamav_expected9);
     }
-    SECTION("test_case_10")
+    SECTION("test_case_10 - obfuscated script")
     {
         NORMALIZE(clamav_buf10, clamav_expected10);
         VALIDATE(clamav_buf10, clamav_expected10);
     }
-    SECTION("test_case_11")
+    SECTION("test_case_11 - integer literal")
     {
         NORMALIZE(clamav_buf11, clamav_expected11);
         VALIDATE(clamav_buf11, clamav_expected11);
     }
-    SECTION("test_case_12")
+    SECTION("test_case_12 - escaped unicode in string literal")
     {
         NORMALIZE(clamav_buf12, clamav_expected12);
         VALIDATE(clamav_buf12, clamav_expected12);
     }
-    SECTION("test_case_13")
+    // FIXIT-L this should be revisited
+    SECTION("test_case_13 - invalid escape sequence")
     {
         NORMALIZE(clamav_buf13, clamav_expected13);
         VALIDATE(clamav_buf13, clamav_expected13);
     }
-    SECTION("test_case_14")
+    SECTION("test_case_14 - EOF in the middle of string literal")
     {
         NORMALIZE(clamav_buf14, clamav_expected14);
         // trailing \0 is included as a part of the string
@@ -404,7 +410,7 @@ TEST_CASE("clamav tests", "[JSNormalizer]")
     }
 }
 
-// Test cases for all match patterns
+// Test vectors for all match patterns
 static const char all_patterns_buf0[] =
     "var  \x9\xB\xC\x20\xA0\x8\xA\xD\xEF\xBB\xBF\xE2\x80\xA8\xE2\x80\xA9\n"
     "  \n\t\r\v  a; \0";
@@ -468,7 +474,6 @@ static const char all_patterns_buf6[] =
 
 static const char all_patterns_expected6[] =
     "tag ` template\n   ${a+b}   template`";
-
 
 TEST_CASE("all patterns", "[JSNormalizer]")
 {
@@ -562,7 +567,7 @@ TEST_CASE("all patterns", "[JSNormalizer]")
     }
 }
 
-// Tests for different syntax cases
+// Test vectors for different syntax cases
 static const char syntax_cases_buf0[] =
     "var a;\n"
     "var b = \"init this    stuff\";\n"
@@ -878,7 +883,6 @@ static const char syntax_cases_buf23[] =
 
 static const char syntax_cases_expected23[] =
     "`${`${`${`${`";
-
 
 TEST_CASE("syntax cases", "[JSNormalizer]")
 {
@@ -1870,3 +1874,106 @@ TEST_CASE("memcap", "[JSNormalizer]")
         NORM_LIMITED(5, dat1, dat2, exp1, exp2);
     }
 }
+
+#endif // CATCH_TEST_BUILD
+
+// Benchmark tests
+
+#ifdef BENCHMARK_TEST
+
+#define UNLIM_DEPTH -1
+
+static constexpr const char* s_closing_tag = "</script>";
+
+#define MAKE_INPUT(src, src_len, start, mid, end, depth) \
+    std::string input_##src(start); \
+    input_##src.append(depth - strlen(start) - strlen(end) - strlen(s_closing_tag), mid); \
+    input_##src.append(end, strlen(end)); \
+    input_##src.append(s_closing_tag, strlen(s_closing_tag)); \
+    const char* src = input_##src.c_str(); \
+    size_t src_len = input_##src.size()
+
+TEST_CASE("benchmarking - ::normalize() - literals", "[JSNormalizer]")
+{
+    JSIdentifierCtxTest ident_ctx;
+    JSNormalizer normalizer(ident_ctx, UNLIM_DEPTH, MAX_TEMPLATE_NESTNIG);
+    char dst[DEPTH];
+
+    MAKE_INPUT(src_ws, src_ws_len, "", ' ', "", DEPTH);
+    MAKE_INPUT(src_bcomm, src_bcomm_len, "/*", ' ', "*/", DEPTH);
+    MAKE_INPUT(src_dqstr, src_dqstr_len, "\"", ' ', "\"", DEPTH);
+
+    BENCHMARK("memcpy - whitespaces - 65535 bytes")
+    {
+        return memcpy(dst, src_ws, src_ws_len);
+    };
+    BENCHMARK("whitespaces - 65535 bytes")
+    {
+        return normalizer.normalize(src_ws, src_ws_len, dst, DEPTH);
+    };
+    BENCHMARK("block comment - 65535 bytes")
+    {
+        return normalizer.normalize(src_bcomm, src_bcomm_len, dst, DEPTH);
+    };
+    BENCHMARK("double quotes string - 65535 bytes")
+    {
+        return normalizer.normalize(src_dqstr, src_dqstr_len, dst, DEPTH);
+    };
+
+    constexpr size_t dpeth_8k = 8192;
+
+    MAKE_INPUT(src_ws_8k, src_ws_len_8k, "", ' ', "", dpeth_8k);
+    MAKE_INPUT(src_bcomm_8k, src_bcomm_len_8k, "/*", ' ', "*/", dpeth_8k);
+    MAKE_INPUT(src_dqstr_8k, src_dqstr_len_8k, "\"", ' ', "\"", dpeth_8k);
+
+    BENCHMARK("memcpy - whitespaces - 8192 bytes")
+    {
+        return memcpy(dst, src_ws_8k, src_ws_len_8k);
+    };
+    BENCHMARK("whitespaces - 8192 bytes")
+    {
+        return normalizer.normalize(src_ws_8k, src_ws_len_8k, dst, DEPTH);
+    };
+    BENCHMARK("block comment - 8192 bytes")
+    {
+        return normalizer.normalize(src_bcomm_8k, src_bcomm_len_8k, dst, DEPTH);
+    };
+    BENCHMARK("double quotes string - 8192 bytes")
+    {
+        return normalizer.normalize(src_dqstr_8k, src_dqstr_len_8k, dst, DEPTH);
+    };
+}
+
+TEST_CASE("benchmarking - ::normalize() - identifiers")
+{
+    // around 11 000 identifiers
+    std::string input;
+    for (int it = 0; it < DEPTH; ++it)
+        input.append("n" + std::to_string(it) + " ");
+
+    input.resize(DEPTH - strlen(s_closing_tag));
+    input.append(s_closing_tag, strlen(s_closing_tag));
+    const char* src = input.c_str();
+    size_t src_len = input.size();
+
+    char dst[DEPTH];
+
+    JSIdentifierCtxTest ident_ctx_mock;
+    JSNormalizer normalizer_wo_ident(ident_ctx_mock, UNLIM_DEPTH, MAX_TEMPLATE_NESTNIG);
+
+    BENCHMARK("without substitution")
+    {
+        return normalizer_wo_ident.normalize(src, src_len, dst, DEPTH);
+    };
+
+    JSIdentifierCtx ident_ctx(DEPTH);
+    JSNormalizer normalizer_w_ident(ident_ctx, UNLIM_DEPTH, MAX_TEMPLATE_NESTNIG);
+
+    BENCHMARK("with substitution")
+    {
+        return normalizer_w_ident.normalize(src, src_len, dst, DEPTH);
+    };
+}
+
+#endif // BENCHMARK_TEST
+

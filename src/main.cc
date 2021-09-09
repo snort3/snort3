@@ -56,7 +56,7 @@
 #include "utils/util.h"
 #include "utils/safec.h"
 
-#ifdef UNIT_TEST
+#if defined(UNIT_TEST) || defined(BENCHMARK_TEST)
 #include "catch/unit_test.h"
 #endif
 
@@ -851,7 +851,7 @@ static bool set_mode()
         return false;
     }
 #endif
-#ifdef UNIT_TEST
+#if defined(UNIT_TEST) || defined(BENCHMARK_TEST)
     // FIXIT-M X we should move this out of set_mode and not do Snort bring up/teardown at all
     if ( catch_enabled() )
     {

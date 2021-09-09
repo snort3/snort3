@@ -325,6 +325,12 @@ while [ $# -ne 0 ]; do
         --disable-unit-tests)
             append_cache_entry ENABLE_UNIT_TESTS        BOOL false
             ;;
+        --enable-benchmark-tests)
+            append_cache_entry ENABLE_BENCHMARK_TESTS   BOOL true
+            ;;
+        --disable-benchmark-tests)
+            append_cache_entry ENABLE_BENCHMARK_TESTS   BOOL false
+            ;;
         --enable-piglet)
             append_cache_entry ENABLE_PIGLET            BOOL true
             ;;
