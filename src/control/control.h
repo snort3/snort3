@@ -24,6 +24,7 @@
 #define CONTROL_H
 
 #include <cstdarg>
+#include <ctime>
 #include <queue>
 #include <string>
 
