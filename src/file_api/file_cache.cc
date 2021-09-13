@@ -209,11 +209,7 @@ FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create,
     hashKey.padding[0] = hashKey.padding[1] = hashKey.padding[2] = 0;
     FileContext* file = find(hashKey, timeout);
     if (to_create and !file)
-    {
         file = add(hashKey, timeout);
-        if (file)
-            file->set_processing_flow(flow);
-    }
 
     return file;
 }
@@ -271,7 +267,6 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
     bool resume, FilePolicyBase* policy)
 {
     Flow* flow = p->flow;
-    Flow* processing_flow = file_ctx->get_processing_flow();
     Active* act = p->active;
     struct timeval now = {0, 0};
     struct timeval add_time;
@@ -289,7 +284,7 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
         return false;
     case FILE_VERDICT_LOG:
         if (resume)
-            policy->log_file_action(processing_flow, file_ctx, FILE_RESUME_LOG);
+            policy->log_file_action(flow, file_ctx, FILE_RESUME_LOG);
         return false;
     case FILE_VERDICT_BLOCK:
         // can't block session inside a session
@@ -328,7 +323,7 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
             }
 
             if (resume)
-                policy->log_file_action(processing_flow, file_ctx, FILE_RESUME_BLOCK);
+                policy->log_file_action(flow, file_ctx, FILE_RESUME_BLOCK);
             else
                 file_ctx->verdict = FILE_VERDICT_LOG;
 
@@ -377,7 +372,7 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
                 "apply_verdict:FILE_VERDICT_PENDING with action retry\n");
 
             if (resume)
-                policy->log_file_action(processing_flow, file_ctx, FILE_RESUME_BLOCK);
+                policy->log_file_action(flow, file_ctx, FILE_RESUME_BLOCK);
             else if (store_verdict(flow, file_ctx, lookup_timeout) != 0)
             {
                 FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
@@ -405,7 +400,7 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
             "apply_verdict:Resume block file\n");
         file_ctx->log_file_event(flow, policy);
-        policy->log_file_action(processing_flow, file_ctx, FILE_RESUME_BLOCK);
+        policy->log_file_action(flow, file_ctx, FILE_RESUME_BLOCK);
     }
     else if (file_ctx->is_cacheable())
     {
@@ -436,9 +431,7 @@ FileVerdict FileCache::cached_verdict_lookup(Packet* p, FileInfo* file,
 
     if (file_found)
     {
-        // file_found might be a new context, set the flow here
-        file_found->set_processing_flow(flow);
-        //Query the file policy in case verdict has been changed
+        /*Query the file policy in case verdict has been changed*/
         verdict = check_verdict(p, file_found, policy);
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
             "cached_verdict_lookup:Verdict received from cached_verdict_lookup %d\n", verdict);

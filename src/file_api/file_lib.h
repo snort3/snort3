@@ -85,8 +85,6 @@ public:
     FileVerdict verdict = FILE_VERDICT_UNKNOWN;
     bool processing_complete = false;
     struct timeval pending_expire_time = {0, 0};
-    void set_processing_flow(Flow* flow) { processing_flow = flow; }
-    Flow* get_processing_flow() { return processing_flow; }
 
 protected:
     std::string file_name;
@@ -97,7 +95,6 @@ protected:
     uint8_t* sha256 = nullptr;
     uint64_t file_id = 0;
     FileCapture* file_capture = nullptr;
-    Flow* processing_flow = nullptr;
     bool file_type_enabled = false;
     bool file_signature_enabled = false;
     bool file_capture_enabled = false;

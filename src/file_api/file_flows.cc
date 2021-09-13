@@ -198,7 +198,6 @@ FileContext* FileFlows::find_main_file_context(FilePosition pos, FileDirection d
     }
 
     context = new FileContext;
-    context->set_processing_flow(flow);
     main_context = context;
     context->check_policy(flow, dir, file_policy);
 
@@ -255,8 +254,6 @@ FileContext* FileFlows::get_file_context(
         else
         {
             context = new FileContext;
-            context->set_processing_flow(flow);
-
             partially_processed_contexts[multi_file_processing_id] = context;
             FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
                 "get_file_context:creating new context\n"); 
