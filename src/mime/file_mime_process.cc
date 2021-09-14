@@ -804,14 +804,16 @@ void MimeSession::exit()
 }
 
 MimeSession::MimeSession(Packet* p, DecodeConfig* dconf, MailLogConfig* lconf, uint64_t base_file_id,
-    bool session_is_http)
+    bool session_is_http, const uint8_t* uri, const int32_t uri_length):
+    decode_conf(dconf),
+    log_config(lconf),
+    log_state(new MailLogState(log_config)),
+    is_http(session_is_http),
+    session_base_file_id(base_file_id),
+    uri(uri),
+    uri_length(uri_length)
 {
-    decode_conf = dconf;
-    log_config =  lconf;
-    log_state = new MailLogState(log_config);
     p->flow->stash->store(STASH_EXTRADATA_MIME, log_state);
-    session_base_file_id = base_file_id;
-    is_http = session_is_http;
     reset_mime_paf_state(&mime_boundary);
     memory::MemoryCap::update_allocations(sizeof(*this));
 }
@@ -874,7 +876,7 @@ void MimeSession::mime_file_process(Packet* p, const uint8_t* data, int data_siz
         if (continue_inspecting_file and (isFileStart(position)) && log_state)
         {
             continue_inspecting_file = file_flows->set_file_name((const uint8_t*)filename.c_str(),
-                filename.length(), 0, get_multiprocessing_file_id());
+                filename.length(), 0, get_multiprocessing_file_id(), uri, uri_length);
             filename.clear();
         }
     }

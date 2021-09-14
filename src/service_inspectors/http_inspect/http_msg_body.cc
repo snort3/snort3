@@ -33,6 +33,7 @@
 #include "http_msg_header.h"
 #include "http_msg_request.h"
 #include "http_test_manager.h"
+#include "http_uri.h"
 
 using namespace snort;
 using namespace HttpCommon;
@@ -405,7 +406,6 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
             return;
 
         const FileDirection dir = source_id == SRC_SERVER ? FILE_DOWNLOAD : FILE_UPLOAD;
-        Field cont_disp_filename;
 
         const uint64_t file_index = get_header(source_id)->get_file_cache_index();
 
@@ -416,35 +416,21 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
         {
             session_data->file_depth_remaining[source_id] -= fp_length;
 
-            // With the first piece of the file we must provide the "name". If an upload contains a
-            // filename in a Content-Disposition header, we use that. Otherwise the name is the URI.
+            // With the first piece of the file we must provide the filename and URI
             if (front)
             {
                 if (request != nullptr)
                 {
-                    bool has_cd_filename = false;
-                    if (dir == FILE_UPLOAD)
-                    {
-                        const Field& cd_filename = get_header(source_id)->
-                            get_content_disposition_filename();
-                        if (cd_filename.length() > 0)
-                        {
-                            continue_processing_file = file_flows->set_file_name(
-                                cd_filename.start(), cd_filename.length(), 0, 
-                                get_header(source_id)->get_multi_file_processing_id());
-                            has_cd_filename = true;
-                        }
-                    }
-                    if (!has_cd_filename)
-                    {
-                        const Field& transaction_uri = request->get_uri();
-                        if (transaction_uri.length() > 0)
-                        {
-                            continue_processing_file = file_flows->set_file_name(
-                                transaction_uri.start(), transaction_uri.length(), 0,
-                                get_header(source_id)->get_multi_file_processing_id());
-                        }
-                    }
+                    const uint8_t* filename_buffer;
+                    const uint8_t* uri_buffer;
+                    uint32_t filename_length;
+                    uint32_t uri_length;
+                    get_file_info(dir, filename_buffer, filename_length, uri_buffer, uri_length);
+
+                    continue_processing_file = file_flows->set_file_name(filename_buffer,
+                        filename_length, 0,
+                        get_header(source_id)->get_multi_file_processing_id(), uri_buffer,
+                        uri_length);
                 }
             }
         }
@@ -462,6 +448,56 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
         session_data->mime_state[source_id]->process_mime_data(p, file_data.start(),
             file_data.length(), true, SNORT_FILE_POSITION_UNKNOWN);
         session_data->file_octets[source_id] += file_data.length();
+    }
+}
+
+// Parses out the filename and URI associated with this file.
+// For the filename, if the message has a Content-Disposition header with a filename attribute,
+// use that. Otherwise use the segment of the URI path after the last '/' but not including the
+// query or fragment. For the uri, use the request raw uri. If there is no URI or nothing in the
+// path after the last slash, the filename and uri buffers may be empty. The normalized URI is used.
+void HttpMsgBody::get_file_info(FileDirection dir, const uint8_t*& filename_buffer,
+    uint32_t& filename_length, const uint8_t*& uri_buffer, uint32_t& uri_length)
+{
+    filename_buffer = uri_buffer = nullptr;
+    filename_length = uri_length = 0;
+    HttpUri* http_uri = request->get_http_uri();
+
+    // First handle the content-disposition case
+    if (dir == FILE_UPLOAD)
+    {
+        const Field& cd_filename = get_header(source_id)->get_content_disposition_filename();
+        if (cd_filename.length() > 0)
+        {
+            filename_buffer = cd_filename.start();
+            filename_length = cd_filename.length();
+        }
+    }
+
+    if (http_uri)
+    {
+        const Field& uri_field = http_uri->get_norm_classic();
+        if (uri_field.length() > 0)
+        {
+            uri_buffer = uri_field.start();
+            uri_length = uri_field.length();
+        }
+
+        // Don't overwrite the content-disposition filename
+        if (filename_length > 0)
+            return;
+
+        const Field& path = http_uri->get_norm_path(); 
+        if (path.length() > 0)
+        {
+            const uint8_t* last_slash = (const uint8_t*)memrchr(path.start(), '/', path.length());
+            if (last_slash)
+            {
+                filename_length = (path.start() + path.length()) - (last_slash + 1);
+                if (filename_length > 0)
+                    filename_buffer = last_slash + 1;
+            }
+        }
     }
 }
 

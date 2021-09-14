@@ -68,6 +68,8 @@ private:
     void bookkeeping_regular_flush(uint32_t& partial_detect_length,
         uint8_t*& partial_detect_buffer, uint32_t& partial_js_detect_length,
         int32_t detect_length);
+    void get_file_info( FileDirection dir, const uint8_t*& filename_buffer,
+        uint32_t& filename_length, const uint8_t*& uri_buffer, uint32_t& uri_length);
 
     // In order of generation
     Field msg_text_new;

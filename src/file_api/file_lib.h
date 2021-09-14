@@ -54,9 +54,12 @@ public:
     FileInfo& operator=(const FileInfo& other);
     uint32_t get_file_type() const;
     void set_file_name(const char* file_name, uint32_t name_size);
+    void set_url(const char* url, uint32_t url_size);
     std::string& get_file_name();
+    std::string& get_url();
     // Whether file name has been set (could be empty file name)
     bool is_file_name_set() const { return file_name_set; }
+    bool is_url_set() const { return url_set; }
 
     void set_file_size(uint64_t size);
     uint64_t get_file_size() const;
@@ -89,6 +92,8 @@ public:
 protected:
     std::string file_name;
     bool file_name_set = false;
+    std::string url;
+    bool url_set = false;
     uint64_t file_size = 0;
     FileDirection direction = FILE_DOWNLOAD;
     uint32_t file_type_id = SNORT_FILE_TYPE_CONTINUE;

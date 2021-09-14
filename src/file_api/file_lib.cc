@@ -110,6 +110,8 @@ void FileInfo::copy(const FileInfo& other)
     file_id = other.file_id;
     file_name = other.file_name;
     file_name_set = other.file_name_set;
+    url = other.url;
+    url_set = other.url_set;
     verdict = other.verdict;
     file_type_enabled = other.file_type_enabled;
     file_signature_enabled = other.file_signature_enabled;
@@ -147,9 +149,24 @@ void FileInfo::set_file_name(const char* name, uint32_t name_size)
     file_name_set = true;
 }
 
+void FileInfo::set_url(const char* url_name, uint32_t url_size)
+{
+    if (url_name and url_size)
+    {
+        url.assign(url_name, url_size);
+    }
+
+    url_set = true;
+}
+
 std::string& FileInfo::get_file_name()
 {
     return file_name;
+}
+
+std::string& FileInfo::get_url()
+{
+    return url;
 }
 
 void FileInfo::set_file_size(uint64_t size)
@@ -840,6 +857,8 @@ void FileContext::print_file_name(std::ostream& log)
 void FileContext::print(std::ostream& log)
 {
     print_file_name(log);
+    if (url.length() > 0)
+        log << "File URI: "<< url << std::endl;
     log << "File type: " << config->file_type_name(file_type_id)
         << '('<< file_type_id  << ')' << std::endl;
     log << "File size: " << file_size << std::endl;
