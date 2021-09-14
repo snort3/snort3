@@ -151,6 +151,8 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
     uint32_t data_size)
 {
     Dce2Smb2SessionData* current_flow = parent_tree->get_parent()->get_flow(current_flow_key);
+    if (!current_flow)
+        return true;
 
     if (parent_tree->get_share_type() != SMB2_SHARE_TYPE_DISK)
     {
