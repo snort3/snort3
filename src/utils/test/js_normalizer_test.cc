@@ -1920,11 +1920,11 @@ TEST_CASE("benchmarking - ::normalize() - literals", "[JSNormalizer]")
         return normalizer.normalize(src_dqstr, src_dqstr_len, dst, DEPTH);
     };
 
-    constexpr size_t dpeth_8k = 8192;
+    constexpr size_t depth_8k = 8192;
 
-    MAKE_INPUT(src_ws_8k, src_ws_len_8k, "", ' ', "", dpeth_8k);
-    MAKE_INPUT(src_bcomm_8k, src_bcomm_len_8k, "/*", ' ', "*/", dpeth_8k);
-    MAKE_INPUT(src_dqstr_8k, src_dqstr_len_8k, "\"", ' ', "\"", dpeth_8k);
+    MAKE_INPUT(src_ws_8k, src_ws_len_8k, "", ' ', "", depth_8k);
+    MAKE_INPUT(src_bcomm_8k, src_bcomm_len_8k, "/*", ' ', "*/", depth_8k);
+    MAKE_INPUT(src_dqstr_8k, src_dqstr_len_8k, "\"", ' ', "\"", depth_8k);
 
     BENCHMARK("memcpy - whitespaces - 8192 bytes")
     {
