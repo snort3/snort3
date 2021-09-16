@@ -66,14 +66,17 @@ JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len, char
     debug_logf(4, http_trace, TRACE_JS_DUMP, nullptr,
         "tmp buffer[%zu]: %.*s\n", tmp_buf_size, static_cast<int>(tmp_buf_size), tmp_buf);
 
-    in_buf.pubsetbuf(tmp_buf, tmp_buf_size, const_cast<char*>(src), len);
-    out_buf.pubsetbuf(dst, dst_len);
+    in_buf.str(tmp_buf, tmp_buf_size, const_cast<char*>(src), len);
+    size_t w_bytes = out.tellp();
 
     JSTokenizer::JSRet ret = static_cast<JSTokenizer::JSRet>(tokenizer.yylex());
+
+    out_buf.sgetn(dst, dst_len);
+
     in.clear();
     out.clear();
     size_t r_bytes = in_buf.glued() ? static_cast<size_t>(in.tellg()) : 0;
-    size_t w_bytes = out.tellp();
+    w_bytes = (size_t)out.tellp() - w_bytes;
 
     if (!unlim)
         rem_bytes -= r_bytes;

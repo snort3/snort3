@@ -37,19 +37,19 @@ public:
         src1(nullptr), len1(0), src2(nullptr), len2(0)
     { }
 
-    std::streambuf* pubsetbuf(char* buf1, std::streamsize buf1_len,
+    std::streambuf* str(char* buf1, std::streamsize buf1_len,
         char* buf2, std::streamsize buf2_len)
     {
         once = !(buf1 && buf1_len);
 
         if (once)
         {
-            setbuf(buf2, buf2_len);
+            std::stringbuf::str(std::string(buf2, buf2_len));
             current_src_len = buf2_len;
         }
         else
         {
-            setbuf(buf1, buf1_len);
+            std::stringbuf::str(std::string(buf1, buf1_len));
             current_src_len = buf1_len;
         }
         src1 = buf1;
@@ -79,7 +79,7 @@ protected:
 
             off += current_src_len;
             once = false;
-            setbuf(src1, len1);
+            std::stringbuf::str(std::string(src1, len1));
             current_src_len = len1;
         }
 
@@ -100,7 +100,7 @@ protected:
             src1, len1, src2, len2);
 
         once = true;
-        setbuf(src2, len2);
+        std::stringbuf::str(std::string(src2, len2));
         current_src_len = len2;
         return sgetc();
     }
