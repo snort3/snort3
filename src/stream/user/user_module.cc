@@ -37,7 +37,7 @@ THREAD_LOCAL const Trace* stream_user_trace = nullptr;
 
 static const Parameter s_params[] =
 {
-    { "session_timeout", Parameter::PT_INT, "1:max31", "30",
+    { "session_timeout", Parameter::PT_INT, "1:max31", "60",
       "session tracking timeout" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }

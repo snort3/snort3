@@ -217,7 +217,7 @@ static const Parameter s_params[] =
     { "small_segments", Parameter::PT_TABLE, stream_tcp_small_params, nullptr,
       "limit number of small segments queued" },
 
-    { "session_timeout", Parameter::PT_INT, "1:max31", "30",
+    { "session_timeout", Parameter::PT_INT, "1:max31", "180",
       "session tracking timeout" },
 
     { "track_only", Parameter::PT_BOOL, nullptr, "false",

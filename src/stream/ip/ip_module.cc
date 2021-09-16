@@ -118,7 +118,7 @@ static const Parameter s_params[] =
     { "policy", Parameter::PT_ENUM, IP_POLICIES, "linux",
       "fragment reassembly policy" },
 
-    { "session_timeout", Parameter::PT_INT, "1:max31", "30",
+    { "session_timeout", Parameter::PT_INT, "1:max31", "60",
       "session tracking timeout" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
