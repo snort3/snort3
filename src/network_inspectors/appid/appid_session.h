@@ -70,7 +70,6 @@ const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
 enum APPID_DISCOVERY_STATE
 {
     APPID_DISCO_STATE_NONE = 0,
-    APPID_DISCO_STATE_DIRECT,
     APPID_DISCO_STATE_STATEFUL,
     APPID_DISCO_STATE_FINISHED
 };

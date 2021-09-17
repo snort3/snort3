@@ -301,29 +301,39 @@ void ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p,
 bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
     AppidSessionDirection direction, AppidChangeBits& change_bits)
 {
-    bool isTpAppidDiscoveryDone = false;
+    bool is_discovery_done = false;
     AppInfoTableEntry* entry;
-    uint32_t prev_client_state = asd.client_disco_state;
     bool was_service = asd.is_service_detected();
     AppId tp_app_id = asd.get_tp_app_id();
 
-    if ( asd.client_disco_state == APPID_DISCO_STATE_NONE
-        && p->dsize && direction == APP_ID_FROM_INITIATOR )
+    if (asd.client_disco_state == APPID_DISCO_STATE_NONE and
+        p->dsize and direction == APP_ID_FROM_INITIATOR)
     {
         if ( p->flow->get_session_flags() & SSNFLAG_MIDSTREAM )
             asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
-        else if ( tp_app_id > APP_ID_NONE and asd.is_tp_appid_available() )
+        else if ( asd.get_session_flags(APPID_SESSION_HTTP_SESSION) )
+            asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
+        else
         {
-            // Third party has positively identified appId; Dig deeper only if our
-            // detector identifies additional information
+            get_detector_candidates_list(asd, p, direction);
+            is_discovery_done = true;
+            asd.client_disco_state = APPID_DISCO_STATE_STATEFUL;
+        }
+    }
+
+    if (asd.client_disco_state == APPID_DISCO_STATE_STATEFUL)
+    {
+        if (asd.client_candidates.empty() and tp_app_id > APP_ID_NONE and
+            asd.is_tp_appid_available())
+        {
+            // Third party has positively identified appId and we don't have a candidate
             entry = asd.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_app_id);
-            if ( entry && entry->client_detector
-                && ( ( entry->flags & ( APPINFO_FLAG_CLIENT_ADDITIONAL |
-                APPINFO_FLAG_CLIENT_USER ) )
-                && asd.get_session_flags(APPID_SESSION_DISCOVER_USER) ) )
+            if ( entry and entry->client_detector and
+                ( ( entry->flags & ( APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER ) ) and
+                    asd.get_session_flags(APPID_SESSION_DISCOVER_USER) ) )
             {
+                // Dig deeper only if our detector identifies additional information
                 asd.client_detector = entry->client_detector;
-                asd.client_disco_state = APPID_DISCO_STATE_DIRECT;
             }
             else
             {
@@ -331,31 +341,14 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
                 asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
             }
         }
-        else if ( asd.get_session_flags(APPID_SESSION_HTTP_SESSION) )
-            asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
-        else
-            asd.client_disco_state = APPID_DISCO_STATE_STATEFUL;
-    }
-
-    //stop inspection as soon as tp has classified a valid AppId
-    if ( tp_app_id > APP_ID_NONE and
-         ( asd.client_disco_state == APPID_DISCO_STATE_STATEFUL or
-           asd.client_disco_state == APPID_DISCO_STATE_DIRECT ) and
-         asd.client_disco_state == prev_client_state and
-         !asd.get_session_flags(APPID_SESSION_NO_TPI)  and
-         asd.is_tp_appid_available() )
-    {
-        entry = asd.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_app_id);
-        if (!entry or !entry->client_detector
-            or !(entry->flags & (APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER))
-            or (asd.client_detector and (entry->client_detector != asd.client_detector)))
+        else if (asd.client_candidates.empty())
         {
-            asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.set_client_detected();
+            asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
         }
     }
 
-    if ( asd.client_disco_state == APPID_DISCO_STATE_DIRECT )
+    if (asd.client_disco_state == APPID_DISCO_STATE_STATEFUL)
     {
         if ( direction == APP_ID_FROM_INITIATOR )
         {
@@ -369,31 +362,9 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
             exec_client_detectors(asd, p, direction, change_bits);
         }
     }
-    else if ( asd.client_disco_state == APPID_DISCO_STATE_STATEFUL )
-    {
-        get_detector_candidates_list(asd, p, direction);
-        isTpAppidDiscoveryDone = true;
-        if ( !asd.client_candidates.empty() )
-        {
-            if ( direction == APP_ID_FROM_INITIATOR )
-            {
-                /* get out if we've already tried to validate a client app */
-                if (!asd.is_client_detected())
-                    exec_client_detectors(asd, p, direction, change_bits);
-            }
-            else if ( asd.service_disco_state != APPID_DISCO_STATE_STATEFUL
-                && asd.get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS) )
-                exec_client_detectors(asd, p, direction, change_bits);
-        }
-        else
-        {
-            asd.set_client_detected();
-            asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
-        }
-    }
 
     if ( !was_service && asd.is_service_detected() )
         asd.sync_with_snort_protocol_id(asd.get_service_id(), p);
 
-    return isTpAppidDiscoveryDone;
+    return is_discovery_done;
 }
