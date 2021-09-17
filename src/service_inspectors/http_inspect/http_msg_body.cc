@@ -490,12 +490,18 @@ void HttpMsgBody::get_file_info(FileDirection dir, const uint8_t*& filename_buff
         const Field& path = http_uri->get_norm_path(); 
         if (path.length() > 0)
         {
-            const uint8_t* last_slash = (const uint8_t*)memrchr(path.start(), '/', path.length());
-            if (last_slash)
+            int last_slash_index = path.length() - 1;
+            while (last_slash_index >= 0)
             {
-                filename_length = (path.start() + path.length()) - (last_slash + 1);
+                if (path.start()[last_slash_index] == '/')
+                    break;
+                last_slash_index--;
+            }
+            if (last_slash_index >= 0)
+            {
+                filename_length = (path.length() - (last_slash_index + 1));
                 if (filename_length > 0)
-                    filename_buffer = last_slash + 1;
+                    filename_buffer = path.start() + last_slash_index + 1;
             }
         }
     }
