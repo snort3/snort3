@@ -18,7 +18,9 @@ It is using payload_injector utilty. payload_injector should be configured when
 react is used.
 
 Rewrite enables overwrite packet contents based on "replace" option in the
-rules.
+rules. Note that using "rewrite" action without "replace" option will raise
+the appropriate rule alert but will not overwrite the packet payload.
+Rewrite/replace works for raw packets only.
 
 Ips actions are all pluggable and implemented as subclasses of IpsAction action.
 Each ips action instance has an instance of the active action that is used to

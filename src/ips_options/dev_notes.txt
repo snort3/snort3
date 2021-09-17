@@ -19,3 +19,15 @@ https://intel.github.io/hyperscan/dev-reference
 
 The "sd_pattern" will be used as a fast pattern in the future (like "regex")
 for performance. 
+
+"replace" option has the following restrictions:
+- Content and replacement are aligned to the right side of the matching
+content and are limited not by the size of the matching content, but
+by the boundaries of the packet.
+- Be aware that after the match there should be enough room left for the
+"replace" content in the matched packet. If there is not enough space
+for the "replace" content the rule will not match.
+- Only the first occurrence of the content will be replaced.
+- "replace" works for raw packets only. So, TCP data must either fit
+under the "pkt_data" buffer requirements or one should enable detection
+on TCP payload before reassembly: search_engine.detect_raw_tcp=true.

@@ -34,7 +34,7 @@ using namespace snort;
 #define s_name "rewrite"
 
 #define s_help \
-    "overwrite packet contents"
+    "overwrite packet contents with the \"replace\" option content"
 
 //--------------------------------------------------------------------------
 // queue foo

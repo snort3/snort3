@@ -188,7 +188,7 @@ static const Parameter s_params[] =
 };
 
 #define s_help \
-    "rule option to overwrite payload data; use with rewrite action"
+    "rule option to overwrite payload data; use with \"rewrite\" action; works for raw packets only"
 
 class ReplModule : public Module
 {
