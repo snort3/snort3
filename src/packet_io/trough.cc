@@ -42,7 +42,7 @@ std::string Trough::pcap_filter = "*.*cap*";
 std::vector<std::string>::const_iterator Trough::pcap_queue_iter;
 
 unsigned Trough::pcap_loop_count = 0;
-unsigned Trough::file_count = 0;
+std::atomic<unsigned> Trough::file_count{0};
 
 bool Trough::add_pcaps_dir(const std::string& dirname, const std::string& filter)
 {

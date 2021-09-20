@@ -109,7 +109,6 @@ public:
 
     size_t get_max_size()
     {
-        std::lock_guard<std::mutex> cache_lock(cache_mutex);
         return max_size;
     }
 
@@ -146,8 +145,8 @@ protected:
 
     static constexpr size_t mem_chunk = sizeof(Data) + sizeof(Value);
 
-    size_t max_size;   // Once max_size elements are in the cache, start to
-                       // remove the least-recently-used elements.
+    std::atomic<size_t> max_size; // Once max_size elements are in the cache, start to
+                                  // remove the least-recently-used elements.
 
     std::atomic<size_t> current_size;// Number of entries currently in the cache.
 

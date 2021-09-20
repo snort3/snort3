@@ -32,6 +32,8 @@
 
 using namespace snort;
 
+static THREAD_LOCAL uint8_t mac_addr[MAC_SIZE];
+
 RnaTracker RnaAppDiscovery::get_server_rna_tracker(const Packet* p, RNAFlow* rna_flow)
 {
     return rna_flow->get_server(p->flow->server_ip);
@@ -204,10 +206,10 @@ bool RnaAppDiscovery::discover_service(const Packet* p, DiscoveryFilter& filter,
     {
         if ( proto == IpProtocol::TCP )
             logger.log(RNA_EVENT_NEW, NEW_TCP_SERVICE, p, &htp,
-                (const struct in6_addr*) ip.get_ip6_ptr(), htp->get_last_seen_mac(), &ha);
+                (const struct in6_addr*) ip.get_ip6_ptr(), htp->get_last_seen_mac(mac_addr), &ha);
         else
             logger.log(RNA_EVENT_NEW, NEW_UDP_SERVICE, p, &htp,
-                (const struct in6_addr*) ip.get_ip6_ptr(), htp->get_last_seen_mac(), &ha);
+                (const struct in6_addr*) ip.get_ip6_ptr(), htp->get_last_seen_mac(mac_addr), &ha);
 
         ha.hits = 0; // hit count is reset after logs are written
         htp->update_service(ha);
@@ -250,11 +252,11 @@ void RnaAppDiscovery::discover_payload(const Packet* p, DiscoveryFilter& filter,
             if ( proto == IpProtocol::TCP )
                 logger.log(RNA_EVENT_CHANGE, CHANGE_TCP_SERVICE_INFO, p, &srt,
                     (const struct in6_addr*) p->flow->server_ip.get_ip6_ptr(),
-                    srt->get_last_seen_mac(), &local_ha);
+                    srt->get_last_seen_mac(mac_addr), &local_ha);
             else
                 logger.log(RNA_EVENT_CHANGE, CHANGE_UDP_SERVICE_INFO, p, &srt,
                     (const struct in6_addr*) p->flow->server_ip.get_ip6_ptr(),
-                    srt->get_last_seen_mac(), &local_ha);
+                    srt->get_last_seen_mac(mac_addr), &local_ha);
         }
     }
 
@@ -275,7 +277,7 @@ void RnaAppDiscovery::discover_payload(const Packet* p, DiscoveryFilter& filter,
     if ( new_client_payload )
         logger.log(RNA_EVENT_CHANGE, CHANGE_CLIENT_APP_UPDATE, p, &crt,
             (const struct in6_addr*) p->flow->client_ip.get_ip6_ptr(),
-            crt->get_last_seen_mac(), &hc);
+            crt->get_last_seen_mac(mac_addr), &hc);
 }
 
 void RnaAppDiscovery::update_service_info(const Packet* p, DiscoveryFilter& filter,
@@ -312,10 +314,10 @@ void RnaAppDiscovery::update_service_info(const Packet* p, DiscoveryFilter& filt
 
     if ( proto == IpProtocol::TCP )
         logger.log(RNA_EVENT_CHANGE, CHANGE_TCP_SERVICE_INFO, p, &htp,
-            (const struct in6_addr*) ip.get_ip6_ptr(), htp->get_last_seen_mac(), &ha);
+            (const struct in6_addr*) ip.get_ip6_ptr(), htp->get_last_seen_mac(mac_addr), &ha);
     else
         logger.log(RNA_EVENT_CHANGE, CHANGE_UDP_SERVICE_INFO, p, &htp,
-            (const struct in6_addr*) ip.get_ip6_ptr(), htp->get_last_seen_mac(), &ha);
+            (const struct in6_addr*) ip.get_ip6_ptr(), htp->get_last_seen_mac(mac_addr), &ha);
 
     ha.hits = 0;
     htp->update_service(ha);
@@ -338,7 +340,8 @@ void RnaAppDiscovery::discover_banner(const Packet* p, DiscoveryFilter& filter, 
     HostApplication ha(p->flow->server_port, proto, service, false);
     ha.last_seen = (uint32_t) packet_time();
     logger.log(RNA_EVENT_CHANGE, CHANGE_BANNER_UPDATE, p, &rt,
-        (const struct in6_addr*) p->flow->server_ip.get_ip6_ptr(), rt->get_last_seen_mac(), &ha);
+        (const struct in6_addr*) p->flow->server_ip.get_ip6_ptr(),
+        rt->get_last_seen_mac(mac_addr), &ha);
 }
 
 void RnaAppDiscovery::discover_client(const Packet* p, DiscoveryFilter& filter, RNAFlow* rna_flow,
@@ -365,7 +368,7 @@ void RnaAppDiscovery::discover_client(const Packet* p, DiscoveryFilter& filter, 
         RnaTracker crt = get_client_rna_tracker(p, rna_flow);
         if ( !crt or !crt->is_visible() )
             return;
-        mac = crt->get_last_seen_mac();
+        mac = crt->get_last_seen_mac(mac_addr);
     }
 
     if (conf and conf->max_host_client_apps and
@@ -438,7 +441,8 @@ void RnaAppDiscovery::analyze_user_agent_fingerprint(const Packet* p, DiscoveryF
         device_info, MAX_USER_AGENT_DEVICES) )
     {
         logger.log(RNA_EVENT_NEW, NEW_OS, p, &rt,
-            (const struct in6_addr*)p->flow->client_ip.get_ip6_ptr(), rt->get_last_seen_mac(),
-            (FpFingerprint*)uafp, packet_time(), device_info, jail_broken);
+            (const struct in6_addr*)p->flow->client_ip.get_ip6_ptr(),
+            rt->get_last_seen_mac(mac_addr), (FpFingerprint*)uafp, packet_time(),
+            device_info, jail_broken);
     }
 }

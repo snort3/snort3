@@ -20,6 +20,7 @@
 #ifndef TROUGH_H
 #define TROUGH_H
 
+#include <atomic>
 #include <string>
 #include <vector>
 
@@ -80,7 +81,7 @@ private:
     static std::string pcap_filter;
 
     static unsigned pcap_loop_count;
-    static unsigned file_count;
+    static std::atomic<unsigned> file_count;
 };
 
 #endif

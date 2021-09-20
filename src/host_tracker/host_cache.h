@@ -92,10 +92,8 @@ public:
     {
         if ( snort::SnortConfig::log_verbose() )
         {
-            std::lock_guard<std::mutex> cache_lock(cache_mutex);
-
             snort::LogLabel("host_cache");
-            snort::LogMessage("    memcap: %zu bytes\n", max_size);
+            snort::LogMessage("    memcap: %zu bytes\n", max_size.load());
         }
 
     }
@@ -107,7 +105,6 @@ public:
         if ( current_size > new_size )
             return true;
 
-        std::lock_guard<std::mutex> cache_lock(cache_mutex);
         max_size = new_size;
         return false;
     }
@@ -132,9 +129,7 @@ public:
 
             if ( !list.empty() )
             {
-                // A data race when reload changes max_size while other threads read this may
-                // delay pruning by one round. Yet, we are avoiding mutex for better performance.
-                max_size = current_size;
+                max_size.store(current_size);
                 if ( max_size > new_size )
                 {
                     LruListIter list_iter = --list.end();

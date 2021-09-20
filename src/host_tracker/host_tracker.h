@@ -286,16 +286,17 @@ public:
     bool add_payload(HostApplication&, Port, IpProtocol, const AppId payload,
         const AppId service, size_t max_payloads);
 
-    // Returns the hostmac pointer with the highest TTL
-    HostMac* get_max_ttl_hostmac();
+    // Returns true after resetting hops if there is a primary mac
+    bool reset_hops_if_primary();
 
     // Returns true and copy of the matching HostMac, false if no match...
     bool get_hostmac(const uint8_t* mac, HostMac& hm);
 
-    const uint8_t* get_last_seen_mac();
+    const uint8_t* get_last_seen_mac(uint8_t*);
 
     void update_vlan(uint16_t vth_pri_cfi_vlan, uint16_t vth_proto);
     bool has_vlan();
+    bool has_same_vlan(uint16_t);
     uint16_t get_vlan();
     void get_vlan_details(uint8_t& cfi, uint8_t& priority, uint16_t& vid);
 

@@ -63,6 +63,12 @@ bool HostTrackerMac::has_vlan()
     return vlan_tag_present;
 }
 
+bool HostTrackerMac::has_same_vlan(uint16_t pvlan)
+{
+    lock_guard<mutex> lck(host_tracker_mac_lock);
+    return vlan_tag_present and ( vlan_tag.vth_pri_cfi_vlan == pvlan );
+}
+
 uint16_t HostTrackerMac::get_vlan()
 {
     lock_guard<mutex> lck(host_tracker_mac_lock);

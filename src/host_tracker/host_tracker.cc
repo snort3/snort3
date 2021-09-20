@@ -214,7 +214,7 @@ bool HostTracker::get_hostmac(const uint8_t* mac, HostMac& hm)
     return false;
 }
 
-const uint8_t* HostTracker::get_last_seen_mac()
+const uint8_t* HostTracker::get_last_seen_mac(uint8_t* mac_addr)
 {
     lock_guard<mutex> lck(host_tracker_lock);
     const HostMac_t* max_hm = nullptr;
@@ -225,7 +225,10 @@ const uint8_t* HostTracker::get_last_seen_mac()
                 max_hm = &hm;
 
     if ( max_hm )
-        return max_hm->mac;
+    {
+        memcpy(mac_addr, max_hm->mac, MAC_SIZE);
+        return mac_addr;
+    }
 
     return zero_mac;
 }
@@ -284,30 +287,25 @@ bool HostTracker::make_primary(const uint8_t* mac)
     return false;
 }
 
-HostMac* HostTracker::get_max_ttl_hostmac()
+bool HostTracker::reset_hops_if_primary()
 {
     lock_guard<mutex> lck(host_tracker_lock);
 
-    HostMac_t* max_ttl_hm = nullptr;
-    uint8_t max_ttl = 0;
-
     for ( auto& hm : macs )
-    {
         if ( hm.primary and hm.visibility )
-            return static_cast<HostMac*> (&hm);
-
-        if ( hm.ttl > max_ttl and hm.visibility )
         {
-            max_ttl = hm.ttl;
-            max_ttl_hm = &hm;
+            if ( !hops )
+                return false;
+            hops = 0;
+            return true;
         }
-    }
 
-    return static_cast<HostMac*>(max_ttl_hm);
+    return false;
 }
 
 void HostTracker::update_vlan(uint16_t vth_pri_cfi_vlan, uint16_t vth_proto)
 {
+    lock_guard<mutex> lck(host_tracker_lock);
     vlan_tag_present = true;
     vlan_tag.vth_pri_cfi_vlan = vth_pri_cfi_vlan;
     vlan_tag.vth_proto = vth_proto;
@@ -315,16 +313,25 @@ void HostTracker::update_vlan(uint16_t vth_pri_cfi_vlan, uint16_t vth_proto)
 
 bool HostTracker::has_vlan()
 {
+    lock_guard<mutex> lck(host_tracker_lock);
     return vlan_tag_present;
+}
+
+bool HostTracker::has_same_vlan(uint16_t pvlan)
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+    return vlan_tag_present and ( vlan_tag.vth_pri_cfi_vlan == pvlan );
 }
 
 uint16_t HostTracker::get_vlan()
 {
+    lock_guard<mutex> lck(host_tracker_lock);
     return vlan_tag.vth_pri_cfi_vlan;
 }
 
 void HostTracker::get_vlan_details(uint8_t& cfi, uint8_t& priority, uint16_t& vid)
 {
+    lock_guard<mutex> lck(host_tracker_lock);
     cfi = vlan_tag.cfi();
     priority = vlan_tag.priority();
     vid = vlan_tag.vid();

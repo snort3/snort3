@@ -53,6 +53,7 @@ public:
     void update_last_seen(uint32_t p_last_seen);
     void update_vlan(uint16_t vth_pri_cfi_vlan, uint16_t vth_proto);
     bool has_vlan();
+    bool has_same_vlan(uint16_t);
     void get_vlan_details(uint8_t& cfi, uint8_t& priority, uint16_t& vid);
 
     std::vector<uint16_t, HostCacheAllocMac<uint16_t>> get_network_protos()

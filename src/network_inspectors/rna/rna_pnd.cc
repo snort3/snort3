@@ -228,12 +228,8 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
         logger.log(RNA_EVENT_CHANGE, CHANGE_MAC_INFO, p, &ht, src_ip_ptr, src_mac,
             ht->get_hostmac(src_mac, hm) ? &hm : nullptr, packet_time());
 
-        HostMac* hm_max_ttl = ht->get_max_ttl_hostmac();
-        if (hm_max_ttl and hm_max_ttl->primary and ht->get_hops())
-        {
-            ht->update_hops(0);
+        if ( ht->reset_hops_if_primary() )
             logger.log(RNA_EVENT_CHANGE, CHANGE_HOPS, p, &ht, src_ip_ptr, src_mac, packet_time());
-        }
     }
 
     if ( p->is_tcp() and ht->get_host_type() == HOST_TYPE_HOST )
@@ -407,7 +403,7 @@ void RnaPnd::generate_change_vlan_update(RnaTracker *rt, const Packet* p,
     if ( !vh )
         return;
 
-    if ( isnew or !hm.has_vlan() or (hm.get_vlan() != vh->vth_pri_cfi_vlan) )
+    if ( isnew or !hm.has_same_vlan(vh->vth_pri_cfi_vlan) )
     {
         if ( !isnew )
             update_vlan(p, hm);
@@ -427,7 +423,7 @@ void RnaPnd::generate_change_vlan_update(RnaTracker *rt, const Packet* p,
     if ( !vh )
         return;
 
-    if ( isnew or !rt->get()->has_vlan() or (rt->get()->get_vlan() != vh->vth_pri_cfi_vlan) )
+    if ( isnew or !rt->get()->has_same_vlan(vh->vth_pri_cfi_vlan) )
     {
         rt->get()->update_vlan(vh->vth_pri_cfi_vlan, vh->vth_proto);
         logger.log(RNA_EVENT_CHANGE, CHANGE_VLAN_TAG, p, rt,
@@ -916,13 +912,13 @@ int RnaPnd::discover_host_types_icmpv6_ndp(RnaTracker& ht, const Packet* p, uint
 
             while ( data_len >= 2 )
             {
-                uint8_t opt_type, opt_len;
-
-                opt_type = *data;
-                opt_len = *(data + 1);
+                uint8_t opt_type = *data;
                 if ( opt_type == ICMPV6_OPTION_TARGET_LINKLAYER_ADDRESS )
                     neighbor_src_mac = data + 2;
 
+                uint8_t opt_len = *(data + 1);
+                if ( opt_len == 0 )
+                    break;
                 data += opt_len * 8;
                 data_len -= opt_len * 8;
             }
@@ -938,13 +934,13 @@ int RnaPnd::discover_host_types_icmpv6_ndp(RnaTracker& ht, const Packet* p, uint
 
             while ( data_len >= 2 )
             {
-                uint8_t opt_type, opt_len;
-
-                opt_type = *data;
-                opt_len = *(data + 1);
+                uint8_t opt_type = *data;
                 if ( opt_type == ICMPV6_OPTION_SOURCE_LINKLAYER_ADDRESS )
                     neighbor_src_mac = data + 2;
 
+                uint8_t opt_len = *(data + 1);
+                if ( opt_len == 0 )
+                    break;
                 data += opt_len * 8;
                 data_len -= opt_len * 8;
             }
