@@ -50,6 +50,19 @@ struct NetflowHash
     }
 };
 
+// Generate hash of template id and device ip
+struct TemplateIpHash
+{
+    size_t operator()(const std::pair<uint16_t, snort::SfIp> &ti) const
+    {
+        const uint64_t* ip64 = (const uint64_t*) ti.second.get_ip6_ptr();
+
+        return std::hash<uint64_t>() (ip64[0]) ^
+               std::hash<uint64_t>() (ip64[1]) ^
+               std::hash<uint64_t>() ((uint64_t)ti.first);
+    }
+};
+
 struct NetflowRule
 {
     NetflowRule() { reset(); }

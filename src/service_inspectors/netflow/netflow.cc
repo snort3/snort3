@@ -65,7 +65,7 @@ static THREAD_LOCAL NetflowCache* netflow_cache = nullptr;
 static NetflowCache* dump_cache = nullptr;
 
 // Netflow version 9 Template fields cache.
-typedef std::unordered_map<uint16_t, std::vector<Netflow9TemplateField>> TemplateFieldCache;
+typedef std::unordered_map<std::pair<uint16_t, snort::SfIp>, std::vector<Netflow9TemplateField>, TemplateIpHash> TemplateFieldCache;
 static THREAD_LOCAL TemplateFieldCache* template_cache = nullptr;
 
 // -----------------------------------------------------------------------------
@@ -358,6 +358,7 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
     header.unix_secs -= header.sys_uptime;
 
     const int zone = p->pkth->ingress_index;
+    const snort::SfIp device_ip = *p->ptrs.ip_api.get_src();
 
     data += sizeof(Netflow9Hdr);
 
@@ -384,11 +385,13 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
         // field id
         f_id = ntohs(flowset->field_id);
 
+        auto ti_key = std::make_pair(f_id, device_ip);
+
         // It's a data flowset
-        if ( f_id > 255 && template_cache->count(f_id) > 0 )
+        if ( f_id > 255 && template_cache->count(ti_key) > 0 )
         {
             std::vector<Netflow9TemplateField> tf;
-            tf = template_cache->at(f_id);
+            tf = template_cache->at(ti_key);
 
             while( data < flowset_end && records )
             {
@@ -482,15 +485,17 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
 
                 if ( field_count > 0 )
                 {
+                    auto t_key = std::make_pair(t_id, device_ip);
+
                     // remove if there any entry exists for this template
-                    auto is_erased = template_cache->erase(t_id);
+                    auto is_erased = template_cache->erase(t_key);
 
                     // count only unique templates
                     if ( is_erased == 1 )
                         --netflow_stats.v9_templates;
 
                     // add template to cache
-                    template_cache->emplace(t_id, tf);
+                    template_cache->emplace(t_key, tf);
 
                     // update the total templates count
                     ++netflow_stats.v9_templates;
