@@ -151,7 +151,8 @@ enum HelpType
     HT_IPS, HT_LST, HT_MOD, HT_PEG, HT_PLG
 };
 
-[[noreturn]] static void show_help(SnortConfig* sc, const char* val, HelpType ht)
+[[noreturn]] static void show_help(
+    SnortConfig* sc, const char* val, HelpType ht, const char* opts = nullptr)
 {
     SnortConfig::set_conf(new SnortConfig);
     ScriptManager::load_scripts(sc->script_paths);
@@ -171,7 +172,7 @@ enum HelpType
         ModuleManager::show_commands(val);
         break;
     case HT_DBR:
-        ModuleManager::dump_rules(val);
+        ModuleManager::dump_rules(val, opts);
         break;
     case HT_DDR:
         SoManager::dump_rule_stubs(val, sc);
@@ -308,9 +309,9 @@ void config_markup(SnortConfig*, const char*)
     show_help(sc, val, HT_DFL);
 }
 
-[[noreturn]] void dump_builtin_rules(SnortConfig* sc, const char* val)
+[[noreturn]] void dump_builtin_rules(SnortConfig* sc, const char* val, const char* opts)
 {
-    show_help(sc, val, HT_DBR);
+    show_help(sc, val, HT_DBR, opts);
 }
 
 [[noreturn]] void dump_dynamic_rules(SnortConfig* sc, const char* val)

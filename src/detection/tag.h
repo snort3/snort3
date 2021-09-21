@@ -37,6 +37,9 @@ struct Packet;
 struct OptTreeNode;
 struct Event;
 
+#define GID_TAG       2
+#define TAG_LOG_PKT   1
+
 #define TAG_SESSION   1
 #define TAG_HOST      2
 #define TAG_HOST_SRC  3

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # run this from build/doc/ to create an all in one html manual
 # with embedded images in base64 format for use in places where

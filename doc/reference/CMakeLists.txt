@@ -13,7 +13,6 @@ set (
 
 set (
     LIST_SOURCES
-    builtin.txt
     gids.txt
 )
 
@@ -33,6 +32,7 @@ set (
     UNBUILT_SOURCES
     appendix.txt
     building.txt
+    builtin_stubs.txt
     enviro.txt
     snort_reference.txt
 )
@@ -83,6 +83,14 @@ add_custom_command (
     COMMENT "Documents: building version.txt"
 )
 list ( APPEND BUILT_SOURCES version.txt )
+
+add_custom_command (
+    OUTPUT builtin.txt
+    COMMAND ${CMAKE_CURRENT_LIST_DIR}/scripts/generate_builtin.sh $<TARGET_FILE:snort> $ENV{SNORT_PLUGIN_PATH} ${CMAKE_CURRENT_LIST_DIR}/builtin_stubs.txt builtin.txt
+    DEPENDS snort
+    COMMENT "Documents: building builtin.txt"
+)
+list ( APPEND BUILT_SOURCES builtin.txt )
 
 foreach ( file_name ${BUILT_SOURCES} )
     list (

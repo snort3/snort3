@@ -1,0 +1,2430 @@
+2:1
+
+A tagged packet was logged.
+
+105:1
+
+(back_orifice) BO traffic detected
+
+105:2
+
+(back_orifice) BO client traffic detected
+
+105:3
+
+(back_orifice) BO server traffic detected
+
+105:4
+
+(back_orifice) BO Snort buffer attack
+
+106:1
+
+(rpc_decode) fragmented RPC records
+
+106:2
+
+(rpc_decode) multiple RPC records
+
+106:3
+
+(rpc_decode) large RPC record fragment
+
+106:4
+
+(rpc_decode) incomplete RPC segment
+
+106:5
+
+(rpc_decode) zero-length RPC fragment
+
+112:1
+
+(arp_spoof) unicast ARP request
+
+112:2
+
+(arp_spoof) ethernet/ARP mismatch request for source
+
+112:3
+
+(arp_spoof) ethernet/ARP mismatch request for destination
+
+112:4
+
+(arp_spoof) attempted ARP cache overwrite attack
+
+116:1
+
+(ipv4) not IPv4 datagram
+
+116:2
+
+(ipv4) IPv4 header length < minimum
+
+116:3
+
+(ipv4) IPv4 datagram length < header field
+
+116:4
+
+(ipv4) IPv4 options found with bad lengths
+
+116:5
+
+(ipv4) truncated IPv4 options
+
+116:6
+
+(ipv4) IPv4 datagram length > captured length
+
+116:45
+
+(tcp) TCP packet length is smaller than 20 bytes
+
+116:46
+
+(tcp) TCP data offset is less than 5
+
+116:47
+
+(tcp) TCP header length exceeds packet length
+
+116:54
+
+(tcp) TCP options found with bad lengths
+
+116:55
+
+(tcp) truncated TCP options
+
+116:56
+
+(tcp) T/TCP detected
+
+116:57
+
+(tcp) obsolete TCP options found
+
+116:58
+
+(tcp) experimental TCP options found
+
+116:59
+
+(tcp) TCP window scale option found with length > 14
+
+116:95
+
+(udp) truncated UDP header
+
+116:96
+
+(udp) invalid UDP header, length field < 8
+
+116:97
+
+(udp) short UDP packet, length field > payload length
+
+116:98
+
+(udp) long UDP packet, length field < payload length
+
+116:105
+
+(icmp4) ICMP header truncated
+
+116:106
+
+(icmp4) ICMP timestamp header truncated
+
+116:107
+
+(icmp4) ICMP address header truncated
+
+116:109
+
+(arp) truncated ARP
+
+116:110
+
+(eapol) truncated EAP header
+
+116:111
+
+(eapol) EAP key truncated
+
+116:112
+
+(eapol) EAP header truncated
+
+116:120
+
+(pppoe) bad PPPOE frame detected
+
+116:130
+
+(vlan) bad VLAN frame
+
+116:131
+
+(llc) bad LLC header
+
+116:132
+
+(llc) bad extra LLC info
+
+116:133
+
+(wlan) bad 802.11 LLC header
+
+116:134
+
+(wlan) bad 802.11 extra LLC info
+
+116:140
+
+(token_ring) bad Token Ring header
+
+116:141
+
+(token_ring) bad Token Ring ETHLLC header
+
+116:142
+
+(token_ring) bad Token Ring MRLEN header
+
+116:143
+
+(token_ring) bad Token Ring MR header
+
+116:150
+
+(decode) loopback IP
+
+116:151
+
+(decode) same src/dst IP
+
+116:160
+
+(gre) GRE header length > payload length
+
+116:161
+
+(gre) multiple encapsulations in packet
+
+116:162
+
+(gre) invalid GRE version
+
+116:163
+
+(gre) invalid GRE header
+
+116:164
+
+(gre) invalid GRE v.1 PPTP header
+
+116:165
+
+(gre) GRE trans header length > payload length
+
+116:170
+
+(mpls) bad MPLS frame
+
+116:171
+
+(mpls) MPLS label 0 appears in bottom header when not decoding as ip4
+
+116:172
+
+(mpls) MPLS label 1 appears in bottom header
+
+116:173
+
+(mpls) MPLS label 2 appears in bottom header when not decoding as ip6
+
+116:174
+
+(mpls) MPLS label 3 appears in header
+
+116:175
+
+(mpls) MPLS label 4, 5,.. or 15 appears in header
+
+116:176
+
+(mpls) too many MPLS headers
+
+116:180
+
+(geneve) insufficient room for geneve header
+
+116:181
+
+(geneve) invalid version
+
+116:182
+
+(geneve) invalid header
+
+116:183
+
+(geneve) invalid flags
+
+116:184
+
+(geneve) invalid options
+
+116:250
+
+(icmp4) ICMP original IP header truncated
+
+116:251
+
+(icmp4) ICMP version and original IP header versions differ
+
+116:252
+
+(icmp4) ICMP original datagram length < original IP header length
+
+116:253
+
+(icmp4) ICMP original IP payload < 64 bits
+
+116:254
+
+(icmp4) ICMP original IP payload > 576 bytes
+
+116:255
+
+(icmp4) ICMP original IP fragmented and offset not 0
+
+116:270
+
+(ipv6) IPv6 packet below TTL limit
+
+116:271
+
+(ipv6) IPv6 header claims to not be IPv6
+
+116:272
+
+(ipv6) IPv6 truncated extension header
+
+116:273
+
+(ipv6) IPv6 truncated header
+
+116:274
+
+(ipv6) IPv6 datagram length < header field
+
+116:275
+
+(ipv6) IPv6 datagram length > captured length
+
+116:276
+
+(ipv6) IPv6 packet with destination address ::0
+
+116:277
+
+(ipv6) IPv6 packet with multicast source address
+
+116:278
+
+(ipv6) IPv6 packet with reserved multicast destination address
+
+116:279
+
+(ipv6) IPv6 header includes an undefined option type
+
+116:280
+
+(ipv6) IPv6 address includes an unassigned multicast scope value
+
+116:281
+
+(ipv6) IPv6 header includes an invalid value for the 'next header' field
+
+116:282
+
+(ipv6) IPv6 header includes a routing extension header followed by a hop-by-hop header
+
+116:283
+
+(ipv6) IPv6 header includes two routing extension headers
+
+116:285
+
+(icmp6) ICMPv6 packet of type 2 (message too big) with MTU field < 1280
+
+116:286
+
+(icmp6) ICMPv6 packet of type 1 (destination unreachable) with non-RFC 2463 code
+
+116:287
+
+(icmp6) ICMPv6 router solicitation packet with a code not equal to 0
+
+116:288
+
+(icmp6) ICMPv6 router advertisement packet with a code not equal to 0
+
+116:289
+
+(icmp6) ICMPv6 router solicitation packet with the reserved field not equal to 0
+
+116:290
+
+(icmp6) ICMPv6 router advertisement packet with the reachable time field set > 1 hour
+
+116:291
+
+(ipv6) IPV6 tunneled over IPv4, IPv6 header truncated, possible Linux kernel attack
+
+116:292
+
+(ipv6) IPv6 header has destination options followed by a routing header
+
+116:293
+
+(decode) two or more IP (v4 and/or v6) encapsulation layers present
+
+116:294
+
+(esp) truncated encapsulated security payload header
+
+116:295
+
+(ipv6) IPv6 header includes an option which is too big for the containing header
+
+116:296
+
+(ipv6) IPv6 packet includes out-of-order extension headers
+
+116:297
+
+(gtp) two or more GTP encapsulation layers present
+
+116:298
+
+(gtp) GTP header length is invalid
+
+116:400
+
+(tcp) XMAS attack detected
+
+116:401
+
+(tcp) Nmap XMAS attack detected
+
+116:402
+
+(tcp) DOS NAPTHA vulnerability detected
+
+116:403
+
+(tcp) SYN to multicast address
+
+116:404
+
+(ipv4) IPv4 packet with zero TTL
+
+116:405
+
+(ipv4) IPv4 packet with bad frag bits (both MF and DF set)
+
+116:406
+
+(udp) invalid IPv6 UDP packet, checksum zero
+
+116:407
+
+(ipv4) IPv4 packet frag offset + length exceed maximum
+
+116:408
+
+(ipv4) IPv4 packet from 'current net' source address
+
+116:409
+
+(ipv4) IPv4 packet to 'current net' dest address
+
+116:410
+
+(ipv4) IPv4 packet from multicast source address
+
+116:411
+
+(ipv4) IPv4 packet from reserved source address
+
+116:412
+
+(ipv4) IPv4 packet to reserved dest address
+
+116:413
+
+(ipv4) IPv4 packet from broadcast source address
+
+116:414
+
+(ipv4) IPv4 packet to broadcast dest address
+
+116:415
+
+(icmp4) ICMP4 packet to multicast dest address
+
+116:416
+
+(icmp4) ICMP4 packet to broadcast dest address
+
+116:418
+
+(icmp4) ICMP4 type other
+
+116:419
+
+(tcp) TCP urgent pointer exceeds payload length or no payload
+
+116:420
+
+(tcp) TCP SYN with FIN
+
+116:421
+
+(tcp) TCP SYN with RST
+
+116:422
+
+(tcp) TCP PDU missing ack for established session
+
+116:423
+
+(tcp) TCP has no SYN, ACK, or RST
+
+116:424
+
+(eth) truncated ethernet header
+
+116:424
+
+(pbb) truncated ethernet header
+
+116:425
+
+(ipv4) truncated IPv4 header
+
+116:426
+
+(icmp4) truncated ICMP4 header
+
+116:427
+
+(icmp6) truncated ICMPv6 header
+
+116:428
+
+(ipv4) IPv4 packet below TTL limit
+
+116:429
+
+(ipv6) IPv6 packet has zero hop limit
+
+116:430
+
+(ipv4) IPv4 packet both DF and offset set
+
+116:431
+
+(icmp6) ICMPv6 type not decoded
+
+116:432
+
+(icmp6) ICMPv6 packet to multicast address
+
+116:433
+
+(tcp) DDOS shaft SYN flood
+
+116:434
+
+(icmp4) ICMP ping Nmap
+
+116:435
+
+(icmp4) ICMP icmpenum v1.1.1
+
+116:436
+
+(icmp4) ICMP redirect host
+
+116:437
+
+(icmp4) ICMP redirect net
+
+116:438
+
+(icmp4) ICMP traceroute ipopts
+
+116:439
+
+(icmp4) ICMP source quench
+
+116:440
+
+(icmp4) broadscan smurf scanner
+
+116:441
+
+(icmp4) ICMP destination unreachable communication administratively prohibited
+
+116:442
+
+(icmp4) ICMP destination unreachable communication with destination host is administratively prohibited
+
+116:443
+
+(icmp4) ICMP destination unreachable communication with destination network is administratively prohibited
+
+116:444
+
+(ipv4) IPv4 option set
+
+116:445
+
+(udp) large UDP packet (> 4000 bytes)
+
+116:446
+
+(tcp) TCP port 0 traffic
+
+116:447
+
+(udp) UDP port 0 traffic
+
+116:448
+
+(ipv4) IPv4 reserved bit set
+
+116:449
+
+(decode) unassigned/reserved IP protocol
+
+116:450
+
+(decode) bad IP protocol
+
+116:451
+
+(icmp4) ICMP path MTU denial of service attempt
+
+116:452
+
+(icmp4) Linux ICMP header DOS attempt
+
+116:453
+
+(ipv6) ISATAP-addressed IPv6 traffic spoofing attempt
+
+116:454
+
+(pgm) PGM nak list overflow attempt
+
+116:455
+
+(igmp) DOS IGMP IP options validation attempt
+
+116:456
+
+(ipv6) too many IPv6 extension headers
+
+116:457
+
+(icmp6) ICMPv6 packet of type 1 (destination unreachable) with non-RFC 4443 code
+
+116:458
+
+(ipv6) bogus fragmentation packet, possible BSD attack
+
+116:459
+
+(decode) fragment with zero length
+
+116:460
+
+(icmp6) ICMPv6 node info query/response packet with a code greater than 2
+
+116:461
+
+(ipv6) IPv6 routing type 0 extension header
+
+116:462
+
+(erspan2) ERSpan header version mismatch
+
+116:463
+
+(erspan2) captured length < ERSpan type2 header length
+
+116:464
+
+(erspan3) captured < ERSpan type3 header length
+
+116:465
+
+(auth) truncated authentication header
+
+116:466
+
+(auth) bad authentication header length
+
+116:467
+
+(fabricpath) truncated FabricPath header
+
+116:468
+
+(ciscometadata) truncated Cisco Metadata header
+
+116:469
+
+(ciscometadata) invalid Cisco Metadata option length
+
+116:470
+
+(ciscometadata) invalid Cisco Metadata option type
+
+116:471
+
+(ciscometadata) invalid Cisco Metadata security group tag
+
+116:472
+
+(decode) too many protocols present
+
+116:473
+
+(decode) ether type out of range
+
+116:474
+
+(icmp6) ICMPv6 not encapsulated in IPv6
+
+116:475
+
+(ipv6) IPv6 mobility header includes an invalid value for the 'payload protocol' field
+
+119:1
+
+(http_inspect) ascii encoding
+
+119:2
+
+(http_inspect) double decoding attack
+
+119:3
+
+(http_inspect) u encoding
+
+119:4
+
+(http_inspect) bare byte unicode encoding
+
+119:6
+
+(http_inspect) UTF-8 encoding
+
+119:7
+
+(http_inspect) unicode map code point encoding in URI
+
+119:8
+
+(http_inspect) multi_slash encoding
+
+119:9
+
+(http_inspect) backslash used in URI path
+
+119:10
+
+(http_inspect) self directory traversal
+
+119:11
+
+(http_inspect) directory traversal
+
+119:12
+
+(http_inspect) apache whitespace (tab)
+
+119:13
+
+(http_inspect) HTTP header line terminated by LF without a CR
+
+119:14
+
+(http_inspect) non-RFC defined char
+
+119:15
+
+(http_inspect) oversize request-uri directory
+
+119:16
+
+(http_inspect) oversize chunk encoding
+
+119:18
+
+(http_inspect) webroot directory traversal
+
+119:19
+
+(http_inspect) long header
+
+119:20
+
+(http_inspect) max header fields
+
+119:21
+
+(http_inspect) multiple content length
+
+119:24
+
+(http_inspect) Host header field appears more than once or has multiple values
+
+119:25
+
+(http_inspect) Host header value is too long
+
+119:28
+
+(http_inspect) POST or PUT w/o content-length or chunks
+
+119:31
+
+(http_inspect) unknown method
+
+119:32
+
+(http_inspect) simple request
+
+119:33
+
+(http_inspect) unescaped space in HTTP URI
+
+119:34
+
+(http_inspect) too many pipelined requests
+
+119:102
+
+(http_inspect) invalid status code in HTTP response
+
+119:104
+
+(http_inspect) HTTP response has UTF charset that failed to normalize
+
+119:105
+
+(http_inspect) HTTP response has UTF-7 charset
+
+119:109
+
+(http_inspect) javascript obfuscation levels exceeds 1
+
+119:110
+
+(http_inspect) javascript whitespaces exceeds max allowed
+
+119:111
+
+(http_inspect) multiple encodings within javascript obfuscated data
+
+119:112
+
+(http_inspect) SWF file zlib decompression failure
+
+119:113
+
+(http_inspect) SWF file LZMA decompression failure
+
+119:114
+
+(http_inspect) PDF file deflate decompression failure
+
+119:115
+
+(http_inspect) PDF file unsupported compression type
+
+119:116
+
+(http_inspect) PDF file cascaded compression
+
+119:117
+
+(http_inspect) PDF file parse failure
+
+119:201
+
+(http_inspect) not HTTP traffic
+
+119:202
+
+(http_inspect) chunk length has excessive leading zeros
+
+119:203
+
+(http_inspect) white space before or between messages
+
+119:204
+
+(http_inspect) request message without URI
+
+119:205
+
+(http_inspect) control character in reason phrase
+
+119:206
+
+(http_inspect) illegal extra whitespace in start line
+
+119:207
+
+(http_inspect) corrupted HTTP version
+
+119:208
+
+(http_inspect) unknown HTTP version
+
+119:209
+
+(http_inspect) format error in HTTP header
+
+119:210
+
+(http_inspect) chunk header options present
+
+119:211
+
+(http_inspect) URI badly formatted
+
+119:212
+
+(http_inspect) unrecognized type of percent encoding in URI
+
+119:213
+
+(http_inspect) HTTP chunk misformatted
+
+119:214
+
+(http_inspect) white space adjacent to chunk length
+
+119:215
+
+(http_inspect) white space within header name
+
+119:216
+
+(http_inspect) excessive gzip compression
+
+119:217
+
+(http_inspect) gzip decompression failed
+
+119:218
+
+(http_inspect) HTTP 0.9 requested followed by another request
+
+119:219
+
+(http_inspect) HTTP 0.9 request following a normal request
+
+119:220
+
+(http_inspect) message has both Content-Length and Transfer-Encoding
+
+119:221
+
+(http_inspect) status code implying no body combined with Transfer-Encoding or nonzero Content-Length
+
+119:222
+
+(http_inspect) Transfer-Encoding not ending with chunked
+
+119:223
+
+(http_inspect) Transfer-Encoding with encodings before chunked
+
+119:224
+
+(http_inspect) misformatted HTTP traffic
+
+119:225
+
+(http_inspect) unsupported Content-Encoding used
+
+119:226
+
+(http_inspect) unknown Content-Encoding used
+
+119:227
+
+(http_inspect) multiple Content-Encodings applied
+
+119:228
+
+(http_inspect) server response before client request
+
+119:229
+
+(http_inspect) PDF/SWF/ZIP decompression of server response too big
+
+119:230
+
+(http_inspect) nonprinting character in HTTP message header name
+
+119:231
+
+(http_inspect) bad Content-Length value in HTTP header
+
+119:232
+
+(http_inspect) HTTP header line wrapped
+
+119:233
+
+(http_inspect) HTTP header line terminated by CR without a LF
+
+119:234
+
+(http_inspect) chunk terminated by nonstandard separator
+
+119:235
+
+(http_inspect) chunk length terminated by LF without CR
+
+119:236
+
+(http_inspect) more than one response with 100 status code
+
+119:237
+
+(http_inspect) 100 status code not in response to Expect header
+
+119:238
+
+(http_inspect) 1XX status code other than 100 or 101
+
+119:239
+
+(http_inspect) Expect header sent without a message body
+
+119:240
+
+(http_inspect) HTTP 1.0 message with Transfer-Encoding header
+
+119:241
+
+(http_inspect) Content-Transfer-Encoding used as HTTP header
+
+119:242
+
+(http_inspect) illegal field in chunked message trailers
+
+119:243
+
+(http_inspect) header field inappropriately appears twice or has two values
+
+119:244
+
+(http_inspect) invalid value chunked in Content-Encoding header
+
+119:245
+
+(http_inspect) 206 response sent to a request without a Range header
+
+119:246
+
+(http_inspect) 'HTTP' in version field not all upper case
+
+119:247
+
+(http_inspect) white space embedded in critical header value
+
+119:248
+
+(http_inspect) gzip compressed data followed by unexpected non-gzip data
+
+119:249
+
+(http_inspect) excessive HTTP parameter key repeats
+
+119:250
+
+(http_inspect) HTTP/2 Transfer-Encoding header other than identity
+
+119:251
+
+(http_inspect) HTTP/2 message body overruns Content-Length header value
+
+119:252
+
+(http_inspect) HTTP/2 message body smaller than Content-Length header value
+
+119:253
+
+(http_inspect) HTTP CONNECT request with a message body
+
+119:254
+
+(http_inspect) HTTP client-to-server traffic after CONNECT request but before CONNECT response
+
+119:255
+
+(http_inspect) HTTP CONNECT 2XX response with Content-Length header
+
+119:256
+
+(http_inspect) HTTP CONNECT 2XX response with Transfer-Encoding header
+
+119:257
+
+(http_inspect) HTTP CONNECT response with 1XX status code
+
+119:258
+
+(http_inspect) HTTP CONNECT response before request message completed
+
+119:259
+
+(http_inspect) malformed HTTP Content-Disposition filename parameter
+
+119:260
+
+(http_inspect) HTTP Content-Length message body was truncated
+
+119:261
+
+(http_inspect) HTTP chunked message body was truncated
+
+119:262
+
+(http_inspect) HTTP URI scheme longer than 10 characters
+
+119:263
+
+(http_inspect) HTTP/1 client requested HTTP/2 upgrade
+
+119:264
+
+(http_inspect) HTTP/1 server granted HTTP/2 upgrade
+
+119:265
+
+(http_inspect) bad token in JavaScript
+
+119:266
+
+(http_inspect) unexpected script opening tag in JavaScript
+
+119:267
+
+(http_inspect) unexpected script closing tag in JavaScript
+
+119:268
+
+(http_inspect) JavaScript code under the external script tags
+
+119:269
+
+(http_inspect) script opening tag in a short form
+
+119:270
+
+(http_inspect) max number of unique JavaScript identifiers reached
+
+119:271
+
+(http_inspect) JavaScript template literal nesting is over capacity
+
+119:272
+
+(http_inspect) Consecutive commas in HTTP Accept-Encoding header
+
+121:1
+
+(http2_inspect) invalid flag set on HTTP/2 frame
+
+121:2
+
+(http2_inspect) HPACK integer value has leading zeros
+
+121:3
+
+(http2_inspect) HTTP/2 stream initiated with invalid stream id
+
+121:4
+
+(http2_inspect) missing HTTP/2 continuation frame
+
+121:5
+
+(http2_inspect) unexpected HTTP/2 continuation frame
+
+121:6
+
+(http2_inspect) misformatted HTTP/2 traffic
+
+121:7
+
+(http2_inspect) HTTP/2 connection preface does not match
+
+121:8
+
+(http2_inspect) HTTP/2 request missing required header field
+
+121:9
+
+(http2_inspect) HTTP/2 response has no status code
+
+121:10
+
+(http2_inspect) HTTP/2 CONNECT request with scheme or path
+
+121:11
+
+(http2_inspect) error in HTTP/2 settings frame
+
+121:12
+
+(http2_inspect) unknown parameter in HTTP/2 settings frame
+
+121:13
+
+(http2_inspect) invalid HTTP/2 frame sequence
+
+121:14
+
+(http2_inspect) HTTP/2 dynamic table size limit exceeded
+
+121:15
+
+(http2_inspect) HTTP/2 push promise frame with invalid promised stream id
+
+121:16
+
+(http2_inspect) HTTP/2 padding length is bigger than frame data size
+
+121:17
+
+(http2_inspect) HTTP/2 pseudo-header after regular header
+
+121:18
+
+(http2_inspect) HTTP/2 pseudo-header in trailers
+
+121:19
+
+(http2_inspect) invalid HTTP/2 pseudo-header
+
+121:20
+
+(http2_inspect) HTTP/2 trailers without END_STREAM bit
+
+121:21
+
+(http2_inspect) HTTP/2 push promise frame sent when prohibited by receiver
+
+121:22
+
+(http2_inspect) padding flag set on HTTP/2 frame with zero length
+
+121:23
+
+(http2_inspect) HTTP/2 push promise frame in c2s direction
+
+121:24
+
+(http2_inspect) invalid HTTP/2 push promise frame
+
+121:25
+
+(http2_inspect) HTTP/2 push promise frame sent at invalid time
+
+121:26
+
+(http2_inspect) invalid parameter value sent in HTTP/2 settings frame
+
+121:27
+
+(http2_inspect) excessive concurrent HTTP/2 streams
+
+121:28
+
+(http2_inspect) invalid HTTP/2 rst stream frame
+
+121:29
+
+(http2_inspect) HTTP/2 rst stream frame sent at invalid time
+
+121:30
+
+(http2_inspect) uppercase HTTP/2 header field name
+
+121:31
+
+(http2_inspect) invalid HTTP/2 window update frame
+
+121:32
+
+(http2_inspect) HTTP/2 window update frame with zero increment
+
+121:33
+
+(http2_inspect) HTTP/2 request without a method
+
+121:34
+
+(http2_inspect) HTTP/2 HPACK table size update not at the start of a header block
+
+121:35
+
+(http2_inspect) More than two HTTP/2 HPACK table size updates in a single header block
+
+121:36
+
+(http2_inspect) HTTP/2 HPACK table size update exceeds max value set by decoder in SETTINGS frame
+
+122:1
+
+(port_scan) TCP portscan
+
+122:2
+
+(port_scan) TCP decoy portscan
+
+122:3
+
+(port_scan) TCP portsweep
+
+122:4
+
+(port_scan) TCP distributed portscan
+
+122:5
+
+(port_scan) TCP filtered portscan
+
+122:6
+
+(port_scan) TCP filtered decoy portscan
+
+122:7
+
+(port_scan) TCP filtered portsweep
+
+122:8
+
+(port_scan) TCP filtered distributed portscan
+
+122:9
+
+(port_scan) IP protocol scan
+
+122:10
+
+(port_scan) IP decoy protocol scan
+
+122:11
+
+(port_scan) IP protocol sweep
+
+122:12
+
+(port_scan) IP distributed protocol scan
+
+122:13
+
+(port_scan) IP filtered protocol scan
+
+122:14
+
+(port_scan) IP filtered decoy protocol scan
+
+122:15
+
+(port_scan) IP filtered protocol sweep
+
+122:16
+
+(port_scan) IP filtered distributed protocol scan
+
+122:17
+
+(port_scan) UDP portscan
+
+122:18
+
+(port_scan) UDP decoy portscan
+
+122:19
+
+(port_scan) UDP portsweep
+
+122:20
+
+(port_scan) UDP distributed portscan
+
+122:21
+
+(port_scan) UDP filtered portscan
+
+122:22
+
+(port_scan) UDP filtered decoy portscan
+
+122:23
+
+(port_scan) UDP filtered portsweep
+
+122:24
+
+(port_scan) UDP filtered distributed portscan
+
+122:25
+
+(port_scan) ICMP sweep
+
+122:26
+
+(port_scan) ICMP filtered sweep
+
+122:27
+
+(port_scan) open port
+
+123:1
+
+(stream_ip) inconsistent IP options on fragmented packets
+
+123:2
+
+(stream_ip) teardrop attack
+
+123:3
+
+(stream_ip) short fragment, possible DOS attempt
+
+123:4
+
+(stream_ip) fragment packet ends after defragmented packet
+
+123:5
+
+(stream_ip) zero-byte fragment packet
+
+123:6
+
+(stream_ip) bad fragment size, packet size is negative
+
+123:7
+
+(stream_ip) bad fragment size, packet size is greater than 65536
+
+123:8
+
+(stream_ip) fragmentation overlap
+
+123:11
+
+(stream_ip) TTL value less than configured minimum, not using for reassembly
+
+123:12
+
+(stream_ip) excessive fragment overlap
+
+123:13
+
+(stream_ip) tiny fragment
+
+124:1
+
+(smtp) attempted command buffer overflow
+
+124:2
+
+(smtp) attempted data header buffer overflow
+
+124:3
+
+(smtp) attempted response buffer overflow
+
+124:4
+
+(smtp) attempted specific command buffer overflow
+
+124:5
+
+(smtp) unknown command
+
+124:6
+
+(smtp) illegal command
+
+124:7
+
+(smtp) attempted header name buffer overflow
+
+124:8
+
+(smtp) attempted X-Link2State command buffer overflow
+
+124:10
+
+(smtp) base64 decoding failed
+
+124:11
+
+(smtp) quoted-printable decoding failed
+
+124:13
+
+(smtp) Unix-to-Unix decoding failed
+
+124:14
+
+(smtp) Cyrus SASL authentication attack
+
+124:15
+
+(smtp) attempted authentication command buffer overflow
+
+124:16
+
+(smtp) file decompression failed
+
+125:1
+
+(ftp_server) TELNET cmd on FTP command channel
+
+125:2
+
+(ftp_server) invalid FTP command
+
+125:3
+
+(ftp_server) FTP command parameters were too long
+
+125:4
+
+(ftp_server) FTP command parameters were malformed
+
+125:5
+
+(ftp_server) FTP command parameters contained potential string format
+
+125:6
+
+(ftp_server) FTP response message was too long
+
+125:7
+
+(ftp_server) FTP traffic encrypted
+
+125:8
+
+(ftp_server) FTP bounce attempt
+
+125:9
+
+(ftp_server) evasive (incomplete) TELNET cmd on FTP command channel
+
+126:1
+
+(telnet) consecutive Telnet AYT commands beyond threshold
+
+126:2
+
+(telnet) Telnet traffic encrypted
+
+126:3
+
+(telnet) Telnet subnegotiation begin command without subnegotiation end
+
+128:1
+
+(ssh) challenge-response overflow exploit
+
+128:2
+
+(ssh) SSH1 CRC32 exploit
+
+128:3
+
+(ssh) server version string overflow
+
+128:5
+
+(ssh) bad message direction
+
+128:6
+
+(ssh) payload size incorrect for the given payload
+
+128:7
+
+(ssh) failed to detect SSH version string
+
+129:1
+
+(stream_tcp) SYN on established session
+
+129:2
+
+(stream_tcp) data on SYN packet
+
+129:3
+
+(stream_tcp) data sent on stream not accepting data
+
+129:4
+
+(stream_tcp) TCP timestamp is outside of PAWS window
+
+129:5
+
+(stream_tcp) bad segment, adjusted size <= 0 (deprecated)
+
+129:6
+
+(stream_tcp) window size (after scaling) larger than policy allows
+
+129:7
+
+(stream_tcp) limit on number of overlapping TCP packets reached
+
+129:8
+
+(stream_tcp) data sent on stream after TCP reset sent
+
+129:9
+
+(stream_tcp) TCP client possibly hijacked, different ethernet address
+
+129:10
+
+(stream_tcp) TCP server possibly hijacked, different ethernet address
+
+129:11
+
+(stream_tcp) TCP data with no TCP flags set
+
+129:12
+
+(stream_tcp) consecutive TCP small segments exceeding threshold
+
+129:13
+
+stream_tcp detected a 4-way handshake, which includes a TCP SYN (without ACK) in response to
+the initiating client SYN. stream_tcp.require_3whs = 0 should be set to ensure this can be
+detected in all cases.
+
+129:14
+
+(stream_tcp) TCP timestamp is missing
+
+129:15
+
+(stream_tcp) reset outside window
+
+129:16
+
+(stream_tcp) FIN number is greater than prior FIN
+
+129:17
+
+(stream_tcp) ACK number is greater than prior FIN
+
+129:18
+
+(stream_tcp) data sent on stream after TCP reset received
+
+129:19
+
+(stream_tcp) TCP window closed before receiving data
+
+129:20
+
+(stream_tcp) TCP session without 3-way handshake
+
+131:1
+
+(dns) obsolete DNS RR types
+
+131:2
+
+(dns) experimental DNS RR types
+
+131:3
+
+(dns) DNS client rdata txt overflow
+
+133:2
+
+(dce_smb) SMB - bad NetBIOS session service session type
+
+133:3
+
+(dce_smb) SMB - bad SMB message type
+
+133:4
+
+(dce_smb) SMB - bad SMB Id (not \xffSMB for SMB1 or not \xfeSMB for SMB2)
+
+133:5
+
+(dce_smb) SMB - bad word count or structure size
+
+133:6
+
+(dce_smb) SMB - bad byte count
+
+133:7
+
+(dce_smb) SMB - bad format type
+
+133:8
+
+(dce_smb) SMB - bad offset
+
+133:9
+
+(dce_smb) SMB - zero total data count
+
+133:10
+
+(dce_smb) SMB - NetBIOS data length less than SMB header length
+
+133:11
+
+(dce_smb) SMB - remaining NetBIOS data length less than command length
+
+133:12
+
+(dce_smb) SMB - remaining NetBIOS data length less than command byte count
+
+133:13
+
+(dce_smb) SMB - remaining NetBIOS data length less than command data size
+
+133:14
+
+(dce_smb) SMB - remaining total data count less than this command data size
+
+133:15
+
+(dce_smb) SMB - total data sent (STDu64) greater than command total data expected
+
+133:16
+
+(dce_smb) SMB - byte count less than command data size (STDu64)
+
+133:17
+
+(dce_smb) SMB - invalid command data size for byte count
+
+133:18
+
+(dce_smb) SMB - excessive tree connect requests with pending tree connect responses
+
+133:19
+
+(dce_smb) SMB - excessive read requests with pending read responses
+
+133:20
+
+(dce_smb) SMB - excessive command chaining
+
+133:21
+
+(dce_smb) SMB - Multiple chained login requests
+
+133:22
+
+(dce_smb) SMB - Multiple chained tree connect requests
+
+133:23
+
+(dce_smb) SMB - chained/compounded login followed by logoff
+
+133:24
+
+(dce_smb) SMB - chained/compounded tree connect followed by tree disconnect
+
+133:25
+
+(dce_smb) SMB - chained/compounded open pipe followed by close pipe
+
+133:26
+
+(dce_smb) SMB - invalid share access
+
+133:27
+
+(dce_tcp) connection oriented DCE/RPC - invalid major version
+
+133:28
+
+(dce_tcp) connection oriented DCE/RPC - invalid minor version
+
+133:29
+
+(dce_tcp) connection-oriented DCE/RPC - invalid PDU type
+
+133:30
+
+(dce_tcp) connection-oriented DCE/RPC - fragment length less than header size
+
+133:31
+
+(dce_tcp) connection-oriented DCE/RPC - remaining fragment length less than size needed
+
+133:32
+
+(dce_tcp) connection-oriented DCE/RPC - no context items specified
+
+133:33
+
+(dce_tcp) connection-oriented DCE/RPC -no transfer syntaxes specified
+
+133:34
+
+(dce_tcp) connection-oriented DCE/RPC - fragment length on non-last fragment less than maximum negotiated fragment transmit size for client
+
+133:35
+
+(dce_tcp) connection-oriented DCE/RPC - fragment length greater than maximum negotiated fragment transmit size
+
+133:36
+
+(dce_tcp) connection-oriented DCE/RPC - alter context byte order different from bind
+
+133:37
+
+(dce_tcp) connection-oriented DCE/RPC - call id of non first/last fragment different from call id established for fragmented request
+
+133:38
+
+(dce_tcp) connection-oriented DCE/RPC - opnum of non first/last fragment different from opnum established for fragmented request
+
+133:39
+
+(dce_tcp) connection-oriented DCE/RPC - context id of non first/last fragment different from context id established for fragmented request
+
+133:40
+
+(dce_udp) connection-less DCE/RPC - invalid major version
+
+133:41
+
+(dce_udp) connection-less DCE/RPC - invalid PDU type
+
+133:42
+
+(dce_udp) connection-less DCE/RPC - data length less than header size
+
+133:43
+
+(dce_udp) connection-less DCE/RPC - bad sequence number
+
+133:44
+
+(dce_smb) SMB - invalid SMB version 1 seen
+
+133:45
+
+(dce_smb) SMB - invalid SMB version 2 seen
+
+133:46
+
+(dce_smb) SMB - invalid user, tree connect, file binding
+
+133:47
+
+(dce_smb) SMB - excessive command compounding
+
+133:48
+
+(dce_smb) SMB - zero data count
+
+133:50
+
+(dce_smb) SMB - maximum number of outstanding requests exceeded
+
+133:51
+
+(dce_smb) SMB - outstanding requests with same MID
+
+133:52
+
+(dce_smb) SMB - deprecated dialect negotiated
+
+133:53
+
+(dce_smb) SMB - deprecated command used
+
+133:54
+
+(dce_smb) SMB - unusual command used
+
+133:55
+
+(dce_smb) SMB - invalid setup count for command
+
+133:56
+
+(dce_smb) SMB - client attempted multiple dialect negotiations on session
+
+133:57
+
+(dce_smb) SMB - client attempted to create or set a file's attributes to readonly/hidden/system
+
+133:58
+
+(dce_smb) SMB - file offset provided is greater than file size specified
+
+133:59
+
+(dce_smb) SMB - next command specified in SMB2 header is beyond payload boundary
+
+134:1
+
+(latency) rule tree suspended due to latency
+
+134:2
+
+(latency) rule tree re-enabled after suspend timeout
+
+134:3
+
+(latency) packet fastpathed due to latency
+
+135:1
+
+(stream) TCP SYN received
+
+135:2
+
+(stream) TCP session established
+
+135:3
+
+(stream) TCP session cleared
+
+136:1
+
+(reputation) packets blocked based on source
+
+136:2
+
+(reputation) packets trusted based on source
+
+136:3
+
+(reputation) packets monitored based on source
+
+136:4
+
+(reputation) packets blocked based on destination
+
+136:5
+
+(reputation) packets trusted based on destination
+
+136:6
+
+(reputation) packets monitored based on destination
+
+137:1
+
+(ssl) invalid client HELLO after server HELLO detected
+
+137:2
+
+(ssl) invalid server HELLO without client HELLO detected
+
+137:3
+
+(ssl) heartbeat read overrun attempt detected
+
+137:4
+
+(ssl) large heartbeat response detected
+
+140:2
+
+(sip) empty request URI
+
+140:3
+
+(sip) URI is too long
+
+140:4
+
+(sip) empty call-Id
+
+140:5
+
+(sip) Call-Id is too long
+
+140:6
+
+(sip) CSeq number is too large or negative
+
+140:7
+
+(sip) request name in CSeq is too long
+
+140:8
+
+(sip) empty From header
+
+140:9
+
+(sip) From header is too long
+
+140:10
+
+(sip) empty To header
+
+140:11
+
+(sip) To header is too long
+
+140:12
+
+(sip) empty Via header
+
+140:13
+
+(sip) Via header is too long
+
+140:14
+
+(sip) empty Contact
+
+140:15
+
+(sip) contact is too long
+
+140:16
+
+(sip) content length is too large or negative
+
+140:17
+
+(sip) multiple SIP messages in a packet
+
+140:18
+
+(sip) content length mismatch
+
+140:19
+
+(sip) request name is invalid
+
+140:20
+
+(sip) Invite replay attack
+
+140:21
+
+(sip) illegal session information modification
+
+140:22
+
+(sip) response status code is not a 3 digit number
+
+140:23
+
+(sip) empty Content-type header
+
+140:24
+
+(sip) SIP version is invalid
+
+140:25
+
+(sip) mismatch in METHOD of request and the CSEQ header
+
+140:26
+
+(sip) method is unknown
+
+140:27
+
+(sip) maximum dialogs within a session reached
+
+141:1
+
+(imap) unknown IMAP3 command
+
+141:2
+
+(imap) unknown IMAP3 response
+
+141:4
+
+(imap) base64 decoding failed
+
+141:5
+
+(imap) quoted-printable decoding failed
+
+141:7
+
+(imap) Unix-to-Unix decoding failed
+
+141:8
+
+(imap) file decompression failed
+
+142:1
+
+(pop) unknown POP3 command
+
+142:2
+
+(pop) unknown POP3 response
+
+142:4
+
+(pop) base64 decoding failed
+
+142:5
+
+(pop) quoted-printable decoding failed
+
+142:7
+
+(pop) Unix-to-Unix decoding failed
+
+142:8
+
+(pop) file decompression failed
+
+143:1
+
+(gtp_inspect) message length is invalid
+
+143:2
+
+(gtp_inspect) information element length is invalid
+
+143:3
+
+(gtp_inspect) information elements are out of order
+
+143:4
+
+(gtp_inspect) TEID is missing
+
+144:1
+
+(modbus) length in Modbus MBAP header does not match the length needed for the given function
+
+144:2
+
+(modbus) Modbus protocol ID is non-zero
+
+144:3
+
+(modbus) reserved Modbus function code in use
+
+145:1
+
+(dnp3) DNP3 link-layer frame contains bad CRC
+
+145:2
+
+(dnp3) DNP3 link-layer frame was dropped
+
+145:3
+
+(dnp3) DNP3 transport-layer segment was dropped during reassembly
+
+145:4
+
+(dnp3) DNP3 reassembly buffer was cleared without reassembling a complete message
+
+145:5
+
+(dnp3) DNP3 link-layer frame uses a reserved address
+
+145:6
+
+(dnp3) DNP3 application-layer fragment uses a reserved function code
+
+148:1
+
+(cip) CIP data is malformed
+
+148:2
+
+(cip) CIP data is non-conforming to ODVA standard
+
+148:3
+
+(cip) CIP connection limit exceeded. Least recently used connection removed
+
+148:4
+
+(cip) CIP unconnected request limit exceeded. Oldest request removed
+
+149:1
+
+(s7commplus) length in S7commplus MBAP header does not match the length needed for the given S7commplus function
+
+149:2
+
+(s7commplus) S7commplus protocol ID is non-zero
+
+149:3
+
+(s7commplus) reserved S7commplus function code in use
+
+150:1
+
+(file_id) file not processed due to per flow limit
+
+151:1
+
+(iec104) Length in IEC104 APCI header does not match the length needed for the given IEC104 ASDU type id
+
+151:2
+
+(iec104) IEC104 Start byte does not match 0x68
+
+151:3
+
+(iec104) Reserved IEC104 ASDU type id in use
+
+151:4
+
+(iec104) IEC104 APCI U Reserved field contains a non-default value
+
+151:5
+
+(iec104) IEC104 APCI U message type was set to an invalid value
+
+151:6
+
+(iec104) IEC104 APCI S Reserved field contains a non-default value
+
+151:7
+
+(iec104) IEC104 APCI I number of elements set to zero
+
+151:8
+
+(iec104) IEC104 APCI I SQ bit set on an ASDU that does not support the feature
+
+151:9
+
+(iec104) IEC104 APCI I number of elements set to greater than one on an ASDU that does not support the feature
+
+151:10
+
+(iec104) IEC104 APCI I Cause of Initialization set to a reserved value
+
+151:11
+
+(iec104) IEC104 APCI I Qualifier of Interrogation Command set to a reserved value
+
+151:12
+
+(iec104) IEC104 APCI I Qualifier of Counter Interrogation Command request parameter set to a reserved value
+
+151:13
+
+(iec104) IEC104 APCI I Qualifier of Parameter of Measured Values kind of parameter set to a reserved value
+
+151:14
+
+(iec104) IEC104 APCI I Qualifier of Parameter of Measured Values local parameter change set to a technically valid but unused value
+
+151:15
+
+(iec104) IEC104 APCI I Qualifier of Parameter of Measured Values parameter option set to a technically valid but unused value
+
+151:16
+
+(iec104) IEC104 APCI I Qualifier of Parameter Activation set to a reserved value
+
+151:17
+
+(iec104) IEC104 APCI I Qualifier of Command set to a reserved value
+
+151:18
+
+(iec104) IEC104 APCI I Qualifier of Reset Process set to a reserved value
+
+151:19
+
+(iec104) IEC104 APCI I File Ready Qualifier set to a reserved value
+
+151:20
+
+(iec104) IEC104 APCI I Section Ready Qualifier set to a reserved value
+
+151:21
+
+(iec104) IEC104 APCI I Select and Call Qualifier set to a reserved value
+
+151:22
+
+(iec104) IEC104 APCI I Last Section or Segment Qualifier set to a reserved value
+
+151:23
+
+(iec104) IEC104 APCI I Acknowledge File or Section Qualifier set to a reserved value
+
+151:24
+
+(iec104) IEC104 APCI I Structure Qualifier set on a message where it should have no effect
+
+151:25
+
+(iec104) IEC104 APCI I Single Point Information Reserved field contains a non-default value
+
+151:26
+
+(iec104) IEC104 APCI I Double Point Information Reserved field contains a non-default value
+
+151:27
+
+(iec104) IEC104 APCI I Cause of Transmission set to a reserved value
+
+151:28
+
+(iec104) IEC104 APCI I Cause of Transmission set to a value not allowed for the ASDU
+
+151:29
+
+(iec104) IEC104 APCI I invalid two octet common address value detected
+
+151:30
+
+(iec104) IEC104 APCI I Quality Descriptor Structure Reserved field contains a non-default value
+
+151:31
+
+(iec104) IEC104 APCI I Quality Descriptor for Events of Protection Equipment Structure Reserved field contains a non-default value
+
+151:32
+
+(iec104) IEC104 APCI I IEEE STD 754 value results in NaN
+
+151:33
+
+(iec104) IEC104 APCI I IEEE STD 754 value results in infinity
+
+151:34
+
+(iec104) IEC104 APCI I Single Event of Protection Equipment Structure Reserved field contains a non-default value
+
+151:35
+
+(iec104) IEC104 APCI I Start Event of Protection Equipment Structure Reserved field contains a non-default value
+
+151:36
+
+(iec104) IEC104 APCI I Output Circuit Information Structure Reserved field contains a non-default value
+
+151:37
+
+(iec104) IEC104 APCI I Abnormal Fixed Test Bit Pattern detected
+
+151:38
+
+(iec104) IEC104 APCI I Single Command Structure Reserved field contains a non-default value
+
+151:39
+
+(iec104) IEC104 APCI I Double Command Structure contains an invalid value
+
+151:40
+
+(iec104) IEC104 APCI I Regulating Step Command Structure Reserved field contains a non-default value
+
+151:41
+
+(iec104) IEC104 APCI I Time2a Millisecond set outside of the allowable range
+
+151:42
+
+(iec104) IEC104 APCI I Time2a Minute set outside of the allowable range
+
+151:43
+
+(iec104) IEC104 APCI I Time2a Minute Reserved field contains a non-default value
+
+151:44
+
+(iec104) IEC104 APCI I Time2a Hours set outside of the allowable range
+
+151:45
+
+(iec104) IEC104 APCI I Time2a Hours Reserved field contains a non-default value
+
+151:46
+
+(iec104) IEC104 APCI I Time2a Day of Month set outside of the allowable range
+
+151:47
+
+(iec104) IEC104 APCI I Time2a Month set outside of the allowable range
+
+151:48
+
+(iec104) IEC104 APCI I Time2a Month Reserved field contains a non-default value
+
+151:49
+
+(iec104) IEC104 APCI I Time2a Year set outside of the allowable range
+
+151:50
+
+(iec104) IEC104 APCI I Time2a Year Reserved field contains a non-default value
+
+151:51
+
+(iec104) IEC104 APCI I a null Length of Segment value has been detected
+
+151:52
+
+(iec104) IEC104 APCI I an invalid Length of Segment value has been detected
+
+151:53
+
+(iec104) IEC104 APCI I Status of File set to a reserved value
+
+151:54
+
+(iec104) IEC104 APCI I Qualifier of Set Point Command ql field set to a reserved value
+
+175:1
+
+(domain_filter) configured domain detected
+
+256:1
+
+(dpx) too much data sent to port
+

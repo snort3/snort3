@@ -24,6 +24,8 @@
 
 #include "snort_module.h"
 
+#include <string>
+
 #include "detection/detect.h"
 #include "detection/fp_detect.h"
 #include "framework/module.h"
@@ -346,6 +348,9 @@ static const Parameter s_params[] =
 
     { "--dirty-pig", Parameter::PT_IMPLIED, nullptr, nullptr,
       "don't flush packets on shutdown" },
+
+    { "--dump-builtin-options", Parameter::PT_STRING, nullptr, nullptr,
+      "additional options to include with --dump-builtin-rules stubs" },
 
     { "--dump-builtin-rules", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output stub rules for selected modules" },
@@ -671,6 +676,7 @@ private:
     SFDAQModuleConfig* module_config;
     bool no_warn_flowbits = false;
     bool no_warn_rules = false;
+    std::string stub_opts;
 };
 
 void SnortModule::set_trace(const Trace* trace) const
@@ -875,8 +881,11 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--dirty-pig") )
         sc->set_dirty_pig(true);
 
+    else if ( v.is("--dump-builtin-options") )
+        stub_opts = v.get_string();
+
     else if ( v.is("--dump-builtin-rules") )
-        dump_builtin_rules(sc, v.get_string());
+        dump_builtin_rules(sc, v.get_string(), stub_opts.c_str());
 
     else if ( v.is("--dump-config") )
     {

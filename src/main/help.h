@@ -53,7 +53,7 @@ void help_args(const char* pfx);
 [[noreturn]] void list_modules(snort::SnortConfig* sc, const char*);
 [[noreturn]] void list_plugins(snort::SnortConfig* sc, const char*);
 
-[[noreturn]] void dump_builtin_rules(snort::SnortConfig* sc, const char*);
+[[noreturn]] void dump_builtin_rules(snort::SnortConfig* sc, const char*, const char*);
 [[noreturn]] void dump_defaults(snort::SnortConfig* sc, const char*);
 [[noreturn]] void dump_dynamic_rules(snort::SnortConfig* sc, const char*);
 [[noreturn]] void dump_rule_hex(snort::SnortConfig* sc, const char*);

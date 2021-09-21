@@ -1316,14 +1316,16 @@ void ModuleManager::load_commands(Shell* sh)
 //       (but ip winds up in all others)
 // FIXIT-L if msg has C escaped embedded quotes, we break
 //ss << "alert tcp any any -> any any ( ";
-static void make_rule(ostream& os, const Module* m, const RuleMap* r)
+static void make_rule(ostream& os, const Module* m, const RuleMap* r, const char* opts = nullptr)
 {
     os << "alert ( ";
     os << "gid:" << m->get_gid() << "; ";
     os << "sid:" << r->sid << "; ";
-    os << "rev:1; priority:3; ";
     os << "msg:\"" << "(" << m->get_name() << ") ";
-    os << r->msg << "\"; )";
+    os << r->msg << "\";";
+    if ( opts and *opts )
+        os << " " << opts;
+    os << " )";
     os << endl;
 }
 
@@ -1350,7 +1352,8 @@ void ModuleManager::load_rules(SnortConfig* sc)
         while ( r->msg )
         {
             ss.str("");
-            make_rule(ss, m, r);
+            const char* historical_opts = "rev:1; priority:3;";
+            make_rule(ss, m, r, historical_opts);
 
             // note:  you can NOT do ss.str().c_str() here
             const string& rule = ss.str();
@@ -1590,12 +1593,12 @@ static std::vector<RulePtr> get_rules(const char* pfx, bool exact = false)
     return rule_set;
 }
 
-void ModuleManager::dump_rules(const char* pfx)
+void ModuleManager::dump_rules(const char* pfx, const char* opts)
 {
     std::vector<RulePtr> rule_set = get_rules(pfx);
 
     for ( auto rp : rule_set )
-        make_rule(cout, rp.mod, rp.rule);
+        make_rule(cout, rp.mod, rp.rule, opts);
 
     if ( !rule_set.size() )
         cout << "no match" << endl;

@@ -54,9 +54,6 @@ using namespace snort;
 #define TAG_PRUNE_QUANTUM   300
 #define TAG_MEMCAP          4194304  /* 4MB */
 
-#define GID_TAG             2
-#define TAG_LOG_PKT         1
-
 /*  D A T A   S T R U C T U R E S  **********************************/
 /**Key used for identifying a session or host.
  */
@@ -543,8 +540,9 @@ int CheckTagList(Packet* p, Event& event, void** log_list)
 
         if ( create_event )
         {
-            /* set the event info */
-            event.set_event(GID_TAG, TAG_LOG_PKT, 1, 1, 1, returned->event_id, p->context->conf->get_event_log_id(), returned->event_time);
+            event.set_event(GID_TAG, TAG_LOG_PKT, 1, 1, 1, returned->event_id,
+                p->context->conf->get_event_log_id(), returned->event_time);
+
             *log_list = returned->log_list;
         }
 

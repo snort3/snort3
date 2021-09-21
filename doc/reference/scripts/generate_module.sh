@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 SNORT_BINARY="$1"
 OUTPUT_FILE="$2"

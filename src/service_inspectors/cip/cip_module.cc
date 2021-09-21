@@ -31,11 +31,11 @@
 using namespace snort;
 using namespace std;
 
-#define CIP_MALFORMED_STR "CIP data is malformed."
-#define CIP_NON_CONFORMING_STR "CIP data is non-conforming to ODVA standard."
+#define CIP_MALFORMED_STR "CIP data is malformed"
+#define CIP_NON_CONFORMING_STR "CIP data is non-conforming to ODVA standard"
 #define CIP_CONNECTION_LIMIT_STR \
-    "CIP connection limit exceeded. Least recently used connection removed."
-#define CIP_REQUEST_LIMIT_STR "CIP unconnected request limit exceeded. Oldest request removed."
+    "CIP connection limit exceeded. Least recently used connection removed"
+#define CIP_REQUEST_LIMIT_STR "CIP unconnected request limit exceeded. Oldest request removed"
 
 static const Parameter c_params[] =
 {

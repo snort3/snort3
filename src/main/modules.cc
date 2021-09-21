@@ -30,6 +30,7 @@
 #include "detection/detection_module.h"
 #include "detection/fp_config.h"
 #include "detection/rules.h"
+#include "detection/tag.h"
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfrf.h"
@@ -749,6 +750,12 @@ static const Parameter output_params[] =
 #define output_help \
     "configure general output parameters"
 
+static const RuleMap output_rules[] =
+{
+    { TAG_LOG_PKT, "tagged packet" },
+    { 0, nullptr }
+};
+
 class OutputModule : public Module
 {
 public:
@@ -757,6 +764,12 @@ public:
 
     Usage get_usage() const override
     { return GLOBAL; }
+
+    unsigned get_gid() const override
+    { return GID_TAG; }
+
+    const RuleMap* get_rules() const override
+    { return output_rules; }
 };
 
 bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
