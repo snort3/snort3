@@ -830,6 +830,8 @@ done:
 inprocess:
         if (!args.asd.is_service_detected())
             service_inprocess(args.asd, pkt, dir);
+        else
+            return APPID_SUCCESS;
         return APPID_INPROCESS;
 
     case APPID_SUCCESS:
@@ -862,9 +864,12 @@ inprocess:
 
     case APPID_NOMATCH:
 fail:
-        if (!args.asd.is_service_detected())
-            fail_service(args.asd, pkt, dir);
-        args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
+        if (args.asd.is_service_detected())
+        {
+            args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
+            return APPID_SUCCESS;
+        }
+        fail_service(args.asd, pkt, dir);
         return APPID_NOMATCH;
     default:
         return retval;
