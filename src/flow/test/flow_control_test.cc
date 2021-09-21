@@ -53,6 +53,7 @@ THREAD_LOCAL bool Active::s_suspend = false;
 THREAD_LOCAL Active::ActiveSuspendReason Active::s_suspend_reason = Active::ASP_NONE;
 
 THREAD_LOCAL PacketTracer* snort::s_pkt_trace = nullptr;
+THREAD_LOCAL bool FlowCache::pruning_in_progress = false;
 
 void Active::drop_packet(snort::Packet const*, bool) { }
 PacketTracer::~PacketTracer() = default;

@@ -29,6 +29,7 @@
 #include <type_traits>
 
 #include "framework/counts.h"
+#include "main/thread.h"
 
 #include "flow_config.h"
 #include "prune_stats.h"
@@ -96,6 +97,9 @@ public:
     unsigned get_flows_allocated() const
     { return flows_allocated; }
 
+    static bool is_pruning_in_progress()
+    { return pruning_in_progress; }
+
 private:
     void delete_uni();
     void push(snort::Flow*);
@@ -107,6 +111,7 @@ private:
         (unsigned mode, unsigned num_to_delete, unsigned &deleted);
 
 private:
+    static THREAD_LOCAL bool pruning_in_progress;
     static const unsigned cleanup_flows = 1;
     FlowCacheConfig config;
     uint32_t flags;

@@ -53,6 +53,8 @@ static const unsigned ALL_FLOWS = 3;
 // FlowCache stuff
 //-------------------------------------------------------------------------
 
+THREAD_LOCAL bool FlowCache::pruning_in_progress = false;
+
 FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg)
 {
     hash_table = new ZHash(config.max_flows, sizeof(FlowKey));
@@ -174,12 +176,16 @@ void FlowCache::remove(Flow* flow)
 
 bool FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
 {
+    assert(!pruning_in_progress);
+    pruning_in_progress = true;
+
     if ( !flow->was_blocked() )
     {
         flow->flush(do_cleanup);
         if ( flow->ssn_state.session_flags & SSNFLAG_KEEP_FLOW )
         {
             flow->ssn_state.session_flags &= ~SSNFLAG_KEEP_FLOW;
+            pruning_in_progress = false;
             return false;
         }
     }
@@ -187,6 +193,7 @@ bool FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
     flow->reset(do_cleanup);
     prune_stats.update(reason);
     remove(flow);
+    pruning_in_progress = false;
     return true;
 }
 
@@ -482,12 +489,14 @@ unsigned FlowCache::purge()
     FlagContext<decltype(flags)>(flags, SESSION_CACHE_FLAG_PURGING);
 
     unsigned retired = 0;
-
+    assert(!pruning_in_progress);
+    pruning_in_progress = true;
     while ( auto flow = static_cast<Flow*>(hash_table->lru_first()) )
     {
         retire(flow);
         ++retired;
     }
+    pruning_in_progress = false;
 
     while ( Flow* flow = (Flow*)hash_table->pop() )
     {

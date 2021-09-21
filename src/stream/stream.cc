@@ -27,6 +27,7 @@
 #include <mutex>
 
 #include "detection/detection_engine.h"
+#include "flow/flow_cache.h"
 #include "flow/flow_control.h"
 #include "flow/flow_key.h"
 #include "flow/ha.h"
@@ -374,7 +375,7 @@ void Stream::handle_timeouts(bool idle)
 
 void Stream::prune_flows()
 {
-    if ( flow_con )
+    if ( flow_con && !FlowCache::is_pruning_in_progress())
         flow_con->prune_one(PruneReason::MEMCAP, false);
 }
 
