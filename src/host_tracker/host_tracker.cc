@@ -311,22 +311,10 @@ void HostTracker::update_vlan(uint16_t vth_pri_cfi_vlan, uint16_t vth_proto)
     vlan_tag.vth_proto = vth_proto;
 }
 
-bool HostTracker::has_vlan()
-{
-    lock_guard<mutex> lck(host_tracker_lock);
-    return vlan_tag_present;
-}
-
 bool HostTracker::has_same_vlan(uint16_t pvlan)
 {
     lock_guard<mutex> lck(host_tracker_lock);
     return vlan_tag_present and ( vlan_tag.vth_pri_cfi_vlan == pvlan );
-}
-
-uint16_t HostTracker::get_vlan()
-{
-    lock_guard<mutex> lck(host_tracker_lock);
-    return vlan_tag.vth_pri_cfi_vlan;
 }
 
 void HostTracker::get_vlan_details(uint8_t& cfi, uint8_t& priority, uint16_t& vid)

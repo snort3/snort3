@@ -295,9 +295,7 @@ public:
     const uint8_t* get_last_seen_mac(uint8_t*);
 
     void update_vlan(uint16_t vth_pri_cfi_vlan, uint16_t vth_proto);
-    bool has_vlan();
     bool has_same_vlan(uint16_t);
-    uint16_t get_vlan();
     void get_vlan_details(uint8_t& cfi, uint8_t& priority, uint16_t& vid);
 
     // The caller owns and deletes the copied list of mac addresses
