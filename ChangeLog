@@ -1,3 +1,38 @@
+2021/09/22 - 3.1.13.0
+
+appid: prioritize appid's client detection over third-party
+appid: stay in success state after RPC is detected.
+builtins: add --dump-builtin-options
+catch: enable benchmarking
+cip, iec104: update stub rule messages for consistent format
+control: explicitly include ctime header in control.h
+detection: add fast patterns only once per service group
+doc: add support for details on builtin rules in the reference
+doc: update reference for 2:1 and 129:13
+doc: update the documentation of "replace" option and "rewrite" action
+doc: update user tutorial with '--enable-benchmark-tests' option
+file_api: new api added for url
+file_api: revert store processing flow in context
+flow: don't do memcap pruning if pruning is in progress
+host_cache: Avoid data race in cache size access
+host_tracker: Removing unused methods
+http_inspect: http_raw_trailer fast pattern
+http_inspect: pass file_api the uri with the filename and extract the filename from the uri path
+http_inspect: remove memrchr for portability
+netflow: use device ip and template id to ensure that the template cache keys are unique
+output: adopt the orphaned tag alert (2:1)
+rna: Avoid data races in vlan and mac address
+rna: Avoid infinite loop in ICMPv6 options
+smb: added a null check when current_flow is not present
+snort2lua: Fixed version output (issue #213). Thanks to A-Pisani for the fix.
+stream: change session_timeout default for tcp, ip, icmp and user
+stream: fix session timeout of expired flows
+trough: Avoid data race in file count
+utils: add benchmark tests for JSNormalizer
+utils: add reference and description for ClamAV test cases
+utils: avoid using pubsetbuf which is STL implementation dependent
+utils: fix typo in js_normalizer_test
+
 2021/09/08 - 3.1.12.0
 
 decoder: icmp6 - use source and destination addresses from packet to compute icmp6 checksum when NAT is in effect

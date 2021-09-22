@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.12.0 2021-09-08 07:41:38 EDT TST
+Revision 3.1.13.0 2021-09-22 09:10:49 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1141,6 +1141,10 @@ General Use
     --max-threads option.
   * Unit tests are configured with --enable-unit-tests. They can then
     be run with snort --catch-test [tags]|all.
+  * Benchmark tests are configured with --enable-benchmark-tests.
+    They can then be run with snort --catch-test [tags]|all or built
+    as a separate executable. It is also preferred to configure a
+    non-debug build with optimizations enabled.
 
 Lua Configuration
 
@@ -1839,8 +1843,10 @@ trace =
 
 5.1.5. Rewrite
 
-IPS action rewrite enables overwrite packet contents based on
-"replace" option in the rules.
+IPS action "rewrite" enables overwrite packet contents based on
+"replace" option in the rules. Note that using "rewrite" action
+without "replace" option will raise corresponding rule alert, but
+will not overwrite the packet payload.
 
 For example:
 
@@ -1860,8 +1866,65 @@ ips =
     rules = local_rules,
 }
 
-this rule replaces "index.php" with "indax.php", and rewrite action
-updates that packet.
+this rule replaces the first occurrence of "index.php" with
+"indax.php", and "rewrite" action updates that packet.
+
+Content and replacement are aligned to the right side of the matching
+content and are limited not by the size of the matching content, but
+by the boundaries of the packet.
+
+Example:
+
+rewrite http any any -> any any
+(
+    msg:"Small replace";
+    content:"content";
+    replace:"text";
+    sid:1000002;
+)
+
+this rule replaces "malicious content" to "malicious context".
+
+Example:
+
+rewrite http any any -> any any
+(
+    msg:"Big replace";
+    content:"content";
+    replace:"y favorite page!";
+    sid:1000002;
+)
+
+this rule replaces "malicious content" to "my favorite page!".
+
+Be aware that after the match there should be enough room left for
+the "replace" content in the matched packet. If there is not enough
+space for the "replace" content the rule will not match.
+
+"replace" works for raw packets only. So, TCP data must either fit
+under the "pkt_data" buffer requirements or one should enable
+detection on TCP payload before reassembly:
+search_engine.detect_raw_tcp=true. For example:
+
+Rule that does not require search_engine.detect_raw_tcp=true:
+
+rewrite udp any any -> any any
+(
+    msg:"TEST 1";
+    sid:1000002;
+    content:"attack";
+    replace:"abc123";
+)
+
+Rule that does require search_engine.detect_raw_tcp=true:
+
+rewrite http any any -> any any
+(
+    msg:"TEST 2";
+    content:"/content.html";
+    replace:"/replace.html";
+    sid:1000002;
+)
 
 
 5.2. AppId
