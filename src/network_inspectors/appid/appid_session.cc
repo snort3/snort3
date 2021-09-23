@@ -849,6 +849,11 @@ AppId AppIdSession::pick_ss_client_app_id() const
     if (tmp_id > APP_ID_NONE)
         return tmp_id;
 
+    if (api.client.get_efp_client_app_id() > APP_ID_NONE and
+        (api.client.get_id() == APP_ID_SSL_CLIENT or
+            api.client.get_id() <= APP_ID_NONE))
+        return api.client.get_efp_client_app_id();
+
     if (api.client.get_id() > APP_ID_NONE)
         return api.client.get_id();
 

@@ -87,6 +87,7 @@ void AppIdDiscovery::register_tcp_pattern(AppIdDetector*, unsigned char const*, 
 void AppIdDiscovery::register_udp_pattern(AppIdDetector*, unsigned char const*, unsigned int, int, unsigned int) { }
 int AppIdDiscovery::add_service_port(AppIdDetector*, ServiceDetectorPort const&) { return 0; }
 DnsPatternMatchers::~DnsPatternMatchers() = default;
+EfpCaPatternMatchers::~EfpCaPatternMatchers() = default;
 SipPatternMatchers::~SipPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;
 void AppIdModule::reset_stats() {}

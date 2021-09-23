@@ -254,9 +254,20 @@ public:
 
     void update_stats(AppId id, bool increment = true) override;
 
+    void set_efp_client_app_id(AppId id)
+    {
+        efp_client_app_id = id;
+    }
+
+    AppId get_efp_client_app_id() const
+    {
+        return efp_client_app_id;
+    }
+
 private:
     std::string my_username;
     AppId my_user_id = APP_ID_NONE;
+    AppId efp_client_app_id = APP_ID_NONE;
 };
 
 class PayloadAppDescriptor : public ApplicationDescriptor

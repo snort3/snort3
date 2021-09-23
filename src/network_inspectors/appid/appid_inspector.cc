@@ -38,6 +38,7 @@
 #include "appid_dcerpc_event_handler.h"
 #include "appid_debug.h"
 #include "appid_discovery.h"
+#include "appid_efp_process_event_handler.h"
 #include "appid_ha.h"
 #include "appid_http_event_handler.h"
 #include "appid_http2_req_body_event_handler.h"
@@ -148,6 +149,8 @@ bool AppIdInspector::configure(SnortConfig* sc)
     DataBus::subscribe_global(DCERPC_EXP_SESSION_EVENT_KEY, new DceExpSsnEventHandler(), sc);
 
     DataBus::subscribe_global(OPPORTUNISTIC_TLS_EVENT, new AppIdOpportunisticTlsEventHandler(), sc);
+
+    DataBus::subscribe_global(EFP_PROCESS_EVENT, new AppIdEfpProcessEventHandler(), sc);
 
     return true;
 }

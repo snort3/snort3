@@ -84,6 +84,7 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t, AppIdInsp
     OdpContext&, uint16_t) : FlowData(inspector_id, &inspector), config(stub_config),
     protocol(proto), api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt)
 {
+    this->set_session_flags(APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED);
     odp_ctxt_version = odp_ctxt.get_version();
     set_service_port(APPID_UT_SERVICE_PORT);
     AppidChangeBits change_bits;

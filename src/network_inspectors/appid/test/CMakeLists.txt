@@ -41,6 +41,10 @@ add_cpputest( appid_http_session_test
     SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
 )
 
+add_cpputest( appid_efp_process_event_handler_test
+    SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
+)
+
 add_cpputest( tp_lib_handler_test
     SOURCES
         tp_lib_handler_test.cc

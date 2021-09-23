@@ -167,6 +167,7 @@ void OdpContext::initialize(AppIdInspector& inspector)
     service_disco_mgr.finalize_service_patterns();
     client_disco_mgr.finalize_client_patterns();
     http_matchers.finalize_patterns();
+    efp_ca_matchers.finalize_patterns();
     // sip patterns need to be finalized after http patterns because they
     // are dependent on http patterns
     sip_matchers.finalize_patterns(*this);
@@ -183,6 +184,7 @@ void OdpContext::reload()
     client_pattern_detector->reload_client_port_patterns();
     service_disco_mgr.reload_service_patterns();
     client_disco_mgr.reload_client_patterns();
+    efp_ca_matchers.reload_patterns();
     http_matchers.reload_patterns();
     sip_matchers.reload_patterns();
     ssl_matchers.reload_patterns();

@@ -37,6 +37,8 @@ set ( CP_APPID_SOURCES
     client_plugins/client_detector.h
     client_plugins/client_discovery.cc
     client_plugins/client_discovery.h
+    client_plugins/efp_ca_patterns.cc
+    client_plugins/efp_ca_patterns.h
 )
 
 set ( SP_APPID_SOURCES
@@ -152,6 +154,8 @@ set ( APPID_SOURCES
     appid_discovery.cc
     appid_discovery.h
     appid_dns_session.h
+    appid_efp_process_event_handler.cc
+    appid_efp_process_event_handler.h
     appid_ha.cc
     appid_ha.h
     appid_http_session.cc
@@ -218,6 +222,7 @@ target_include_directories ( appid PRIVATE ${APPID_INCLUDE_DIR} )
 
 add_subdirectory(service_plugins/test)
 add_subdirectory(detector_plugins/test)
+add_subdirectory(client_plugins/test)
 add_subdirectory(test)
 
 install (FILES ${APPID_INCLUDES}

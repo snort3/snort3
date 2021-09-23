@@ -114,7 +114,7 @@ static inline int convert_string_to_address(const char* string, SfIp* address)
 
 static inline bool lua_params_validator(LuaDetectorParameters& ldp, bool packet_context)
 {
-    if ( packet_context )
+    if (packet_context)
     {
         assert(ldp.asd);
         assert(ldp.pkt);
@@ -231,7 +231,7 @@ static int service_register_pattern(lua_State* L)
     size_t size = lua_tonumber(L, ++index);
     unsigned int position = lua_tonumber(L, ++index);
 
-    if ( protocol == IpProtocol::TCP)
+    if (protocol == IpProtocol::TCP)
         ud->get_odp_ctxt().get_service_disco_mgr().register_tcp_pattern(ud->sd, (const uint8_t*)pattern,
             size, position, 0);
     else
@@ -254,7 +254,7 @@ static int common_register_application_id(lua_State* L)
     int index = 1;
     AppId appId = lua_tonumber(L, ++index);
 
-    if ( ad->is_client() )
+    if (ad->is_client())
         ad->register_appid(appId, APPINFO_FLAG_CLIENT_ADDITIONAL, ud->get_odp_ctxt());
     else
         ad->register_appid(appId, APPINFO_FLAG_SERVICE_ADDITIONAL, ud->get_odp_ctxt());
@@ -300,7 +300,7 @@ static int detector_log_message(lua_State* L)
     unsigned int level = lua_tonumber(L, 2);
     const char* message = lua_tostring(L, 3);
 
-    switch ( level )
+    switch (level)
     {
     case LUA_LOG_CRITICAL:
         FatalError("%s:%s\n", name.c_str(), message);
@@ -392,13 +392,13 @@ static int service_add_ports(lua_State* L)
     pp.port = lua_tonumber(L, 3);
     pp.reversed_validation = lua_tonumber(L, 5);
 
-    if ( ((pp.proto != IpProtocol::UDP) && (pp.proto != IpProtocol::TCP)) || !pp.port )
+    if (((pp.proto != IpProtocol::UDP) and (pp.proto != IpProtocol::TCP)) or !pp.port)
     {
         lua_pushnumber(L, -1);
         return 1;
     }
 
-    if ( ud->sd->get_handler().add_service_port(ud->sd, pp) )
+    if (ud->sd->get_handler().add_service_port(ud->sd, pp))
     {
         lua_pushnumber(L, -1);
         return 1;
@@ -690,7 +690,7 @@ static int detector_get_pcre_groups(lua_State* L)
         ovector,                      // output vector for substring information
         OVECCOUNT);                   // number of elements in the output vector
 
-    if ( rc >= 0 )
+    if (rc >= 0)
     {
         if (rc == 0)
         {
@@ -714,7 +714,7 @@ static int detector_get_pcre_groups(lua_State* L)
     else
     {
         // log errors except no matches
-        if ( rc != PCRE_ERROR_NOMATCH)
+        if (rc != PCRE_ERROR_NOMATCH)
             WarningMessage("PCRE regular expression group match failed. rc: %d\n", rc);
         rc = 0;
     }
@@ -760,14 +760,14 @@ static int detector_get_protocol_type(lua_State* L)
     // Verify detector user data and that we are in packet context
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    if ( !lsd->ldp.pkt->has_ip() )
+    if (!lsd->ldp.pkt->has_ip())
     {
         lua_pushnumber(L, 0);
         return 1;
     }
 
     // FIXIT-M is this conversion to double valid?
-    lua_pushnumber(L, (double)lsd->ldp.pkt->get_ip_proto_next() );
+    lua_pushnumber(L, (double)lsd->ldp.pkt->get_ip_proto_next());
     return 1;
 }
 
@@ -884,7 +884,7 @@ static int client_register_pattern(lua_State* L)
 
     /*mpse library does not hold reference to pattern therefore we don't need to allocate it. */
 
-    if ( protocol == IpProtocol::TCP)
+    if (protocol == IpProtocol::TCP)
         ud->get_odp_ctxt().get_client_disco_mgr().register_tcp_pattern(ud->cd, (const uint8_t*)pattern,
             size, position, 0);
     else
@@ -922,7 +922,7 @@ static int service_add_client(lua_State* L)
     AppId service_id = lua_tonumber(L, 3);
     const char* version = lua_tostring(L, 4);
 
-    if ( !version )
+    if (!version)
     {
         lua_pushnumber(L, -1);
         return 1;
@@ -986,6 +986,40 @@ static int client_add_payload(lua_State* L)
     return 1;
 }
 
+/** Add a fp process to client app mapping.
+ *  @param Lua_State* - Lua state variable.
+ *  @param appid/stack - the AppId to map the fp data to
+ *  @param process_name/stack - encrypted fingerprint process name
+ *  @param process_score - encrypted fingerprint process_score
+ */
+static int client_add_fingerprint_process(lua_State* L)
+{
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are NOT in packet context
+    ud->validate_lua_state(false);
+    if (!init(L)) return 0;
+    int index = 1;
+
+    uint32_t appid = lua_tointeger(L, ++index);
+
+    // Verify that process_name is a valid string
+    const char* tmp_string = lua_tostring(L, ++index);
+    if (!tmp_string)
+    {
+        ErrorMessage("appid: Invalid efp process_name string: appid %u.\n", appid);
+        return 0;
+    }
+    const std::string process_name(tmp_string);
+    uint8_t process_score = lua_tointeger(L, ++index);
+
+    ud->get_odp_ctxt().get_efp_ca_matchers().add_efp_ca_pattern(appid, process_name,
+        process_score);
+
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(appid);
+
+    return 0;
+}
+
 /**Get flow object from a detector object. The flow object is then used with flowApi.
  * A new copy of flow object is provided with every call. This can be optimized by maintaining
  * a single copy.
@@ -1024,7 +1058,7 @@ static int detector_add_http_pattern(lua_State* L)
     int index = 1;
 
     enum httpPatternType pat_type = (enum httpPatternType)lua_tointeger(L, ++index);
-    if (pat_type < HTTP_PAYLOAD || pat_type > HTTP_URL)
+    if (pat_type < HTTP_PAYLOAD or pat_type > HTTP_URL)
     {
         ErrorMessage("Invalid HTTP pattern type.");
         return 0;
@@ -1042,8 +1076,8 @@ static int detector_add_http_pattern(lua_State* L)
     const uint8_t* pattern_str = (const uint8_t*)lua_tolstring(L, ++index, &pattern_size);
     uint32_t app_id = lua_tointeger(L, ++index);
     DetectorHTTPPattern pattern;
-    if ( pattern.init(pattern_str, pattern_size, seq, service_id, client_id,
-        payload_id, app_id) )
+    if (pattern.init(pattern_str, pattern_size, seq, service_id, client_id,
+        payload_id, app_id))
     {
         ud->get_odp_ctxt().get_http_matchers().insert_http_pattern(pat_type, pattern);
         aim.set_app_info_active(service_id);
@@ -1069,7 +1103,7 @@ static int detector_add_ssl_cert_pattern(lua_State* L)
     AppId app_id  = (AppId)lua_tointeger(L, ++index);
     size_t pattern_size = 0;
     const char* tmp_string = lua_tolstring(L, ++index, &pattern_size);
-    if (!tmp_string || !pattern_size)
+    if (!tmp_string or !pattern_size)
     {
         ErrorMessage("Invalid SSL Host pattern string");
         return 0;
@@ -1097,7 +1131,7 @@ static int detector_add_dns_host_pattern(lua_State* L)
 
     size_t pattern_size = 0;
     const char* tmp_string = lua_tolstring(L, ++index, &pattern_size);
-    if (!tmp_string || !pattern_size)
+    if (!tmp_string or !pattern_size)
     {
         ErrorMessage("LuaDetectorApi:Invalid DNS Host pattern string");
         return 0;
@@ -1123,7 +1157,7 @@ static int detector_add_ssl_cname_pattern(lua_State* L)
 
     size_t pattern_size = 0;
     const char* tmp_string = lua_tolstring(L, ++index, &pattern_size);
-    if (!tmp_string || !pattern_size)
+    if (!tmp_string or !pattern_size)
     {
         ErrorMessage("Invalid SSL Host pattern string");
         return 0;
@@ -1150,7 +1184,7 @@ static int detector_add_host_port_application(lua_State* L)
     AppId app_id  = (AppId)lua_tointeger(L, ++index);
     size_t ipaddr_size = 0;
     const char* ip_str= lua_tolstring(L, ++index, &ipaddr_size);
-    if (!ip_str || !ipaddr_size || !convert_string_to_address(ip_str, &ip_address))
+    if (!ip_str or !ipaddr_size or !convert_string_to_address(ip_str, &ip_address))
     {
         ErrorMessage("%s: Invalid IP address: %s\n",__func__, ip_str);
         return 0;
@@ -1187,7 +1221,7 @@ static int detector_add_host_port_dynamic(lua_State* L)
     AppId appid  = (AppId)lua_tointeger(L, ++index);
     size_t ipaddr_size = 0;
     const char* ip_str = lua_tolstring(L, ++index, &ipaddr_size);
-    if (!ip_str || !ipaddr_size || !convert_string_to_address(ip_str, &ip_address))
+    if (!ip_str or !ipaddr_size or !convert_string_to_address(ip_str, &ip_address))
         return 0;
 
     unsigned port = lua_tointeger(L, ++index);
@@ -1222,7 +1256,7 @@ static int detector_add_content_type_pattern(lua_State* L)
     int index = 1;
 
     const char* tmp_string = lua_tolstring(L, ++index, &stringSize);
-    if (!tmp_string || !stringSize)
+    if (!tmp_string or !stringSize)
     {
         ErrorMessage("Invalid HTTP Header string");
         return 0;
@@ -1468,7 +1502,7 @@ static inline int get_chp_key_pattern_boolean(lua_State* L, int index)
 static inline int get_chp_pattern_type(lua_State* L, int index, HttpFieldIds* pattern_type)
 {
     *pattern_type = (HttpFieldIds)lua_tointeger(L, index);
-    if ( *pattern_type >= NUM_HTTP_FIELDS )
+    if (*pattern_type >= NUM_HTTP_FIELDS)
     {
         ErrorMessage("LuaDetectorApi:Invalid CHP Action pattern type.");
         return -1;
@@ -1484,7 +1518,7 @@ static inline int get_chp_pattern_data_and_size(lua_State* L, int index, char** 
     *pattern_data = nullptr;
     tmp_string = lua_tolstring(L, index, pattern_size);
     // non-empty pattern required
-    if (!tmp_string || !*pattern_size)
+    if (!tmp_string or !*pattern_size)
     {
         ErrorMessage("LuaDetectorApi:Invalid CHP Action PATTERN string.");
         return -1;
@@ -1496,7 +1530,7 @@ static inline int get_chp_pattern_data_and_size(lua_State* L, int index, char** 
 static inline int get_chp_action_type(lua_State* L, int index, ActionType& action_type)
 {
     action_type = (ActionType)lua_tointeger(L, index);
-    if (action_type < NO_ACTION || action_type > MAX_ACTION_TYPE)
+    if (action_type < NO_ACTION or action_type > MAX_ACTION_TYPE)
     {
         WarningMessage(
             "LuaDetectorApi:Unsupported CHP Action type: %d, possible version mismatch.",
@@ -1563,7 +1597,7 @@ static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, HttpFie
 
     unsigned precedence = chpapp->ptype_scan_counts[patternType]++;
     // at runtime we'll want to know how many of each type of pattern we are looking for.
-    if (actionType != ALTERNATE_APPID && actionType != DEFER_TO_SIMPLE_DETECT)
+    if (actionType != ALTERNATE_APPID and actionType != DEFER_TO_SIMPLE_DETECT)
         chpapp->ptype_req_counts[patternType]++;
 
     CHPListElement* chpa = (CHPListElement*)snort_calloc(sizeof(CHPListElement));
@@ -1578,7 +1612,7 @@ static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, HttpFie
     chpa->chp_action.chpapp = chpapp; // link this struct to the Glossary entry
     odp_ctxt.get_http_matchers().insert_chp_pattern(chpa);
 
-    if (actionType == DEFER_TO_SIMPLE_DETECT && strcmp(patternData,"<ignore-all-patterns>") == 0)
+    if (actionType == DEFER_TO_SIMPLE_DETECT and strcmp(patternData,"<ignore-all-patterns>") == 0)
         odp_ctxt.get_http_matchers().remove_http_patterns_for_id(appIdInstance);
 
     return 0;
@@ -1646,7 +1680,7 @@ static int detector_create_chp_multi_application(lua_State* L)
     unsigned app_type_flags = lua_tointeger(L, ++index);
     int num_matches = lua_tointeger(L, ++index);
 
-    for (instance=0; instance < CHP_APPID_INSTANCE_MAX; instance++ )
+    for (instance=0; instance < CHP_APPID_INSTANCE_MAX; instance++)
     {
         appIdInstance = (appId << CHP_APPID_BITS_FOR_INSTANCE) + instance;
         if (CHP_glossary->find(appIdInstance) != CHP_glossary->end())
@@ -1668,7 +1702,7 @@ static int detector_create_chp_multi_application(lua_State* L)
         return 0;
     }
 
-    if ( create_chp_application(appIdInstance, app_type_flags, num_matches) )
+    if (create_chp_application(appIdInstance, app_type_flags, num_matches))
         return 0;
 
     lua_pushnumber(L, appIdInstance);
@@ -1784,9 +1818,9 @@ static int detector_add_length_app_cache(lua_State* L)
     uint8_t sequence_cnt = lua_tonumber(L, ++index);
     const char* sequence_str = lua_tostring(L, ++index);
 
-    if (((proto != IpProtocol::TCP) && (proto != IpProtocol::UDP))
-        || ((sequence_cnt == 0) || (sequence_cnt > LENGTH_SEQUENCE_CNT_MAX))
-        || ((sequence_str == nullptr) || (strlen(sequence_str) == 0)))
+    if (((proto != IpProtocol::TCP) and (proto != IpProtocol::UDP))
+        or ((sequence_cnt == 0) or (sequence_cnt > LENGTH_SEQUENCE_CNT_MAX))
+        or ((sequence_str == nullptr) or (strlen(sequence_str) == 0)))
     {
         ErrorMessage("LuaDetectorApi:Invalid input (%d,%u,%u,\"%s\")!",
             appId, (unsigned)proto, (unsigned)sequence_cnt, sequence_str ? sequence_str : "");
@@ -1839,14 +1873,14 @@ static int detector_add_length_app_cache(lua_State* L)
         }
         length_sequence.sequence[i].length = length;
 
-        while ((*str_ptr != ',') && (*str_ptr != 0))
+        while ((*str_ptr != ',') and (*str_ptr != 0))
         {
             str_ptr++;
         }
 
         last_one = (i == (sequence_cnt - 1));
-        if (   (!last_one && (*str_ptr != ','))
-            || (last_one && (*str_ptr != 0)))
+        if ((!last_one and (*str_ptr != ','))
+            or (last_one and (*str_ptr != 0)))
         {
             ErrorMessage("LuaDetectorApi:Invalid sequence string (\"%s\")!",
                 sequence_str);
@@ -1856,7 +1890,7 @@ static int detector_add_length_app_cache(lua_State* L)
         str_ptr++;
     }
 
-    if ( !ud->get_odp_ctxt().length_cache_add(length_sequence, appId) )
+    if (!ud->get_odp_ctxt().length_cache_add(length_sequence, appId))
     {
         ErrorMessage("LuaDetectorApi:Could not add entry to cache!");
         lua_pushnumber(L, -1);
@@ -1886,7 +1920,7 @@ static int detector_add_url_application(lua_State* L)
     size_t host_pattern_size = 0;
     uint8_t* host_pattern = nullptr;
     const char* tmp_string = lua_tolstring(L, ++index, &host_pattern_size);
-    if (!tmp_string || !host_pattern_size)
+    if (!tmp_string or !host_pattern_size)
     {
         ErrorMessage(
             "appid: Invalid host pattern string: service_id %u; client_id %u; payload_id %u.\n",
@@ -1900,7 +1934,7 @@ static int detector_add_url_application(lua_State* L)
     size_t path_pattern_size = 0;
     uint8_t* path_pattern = nullptr;
     tmp_string = lua_tolstring(L, ++index, &path_pattern_size);
-    if (!tmp_string || !path_pattern_size )
+    if (!tmp_string or !path_pattern_size)
     {
         ErrorMessage(
             "appid: Invalid path pattern string: service_id %u; client_id %u; payload %u.\n",
@@ -1915,7 +1949,7 @@ static int detector_add_url_application(lua_State* L)
     size_t schemePatternSize;
     uint8_t* schemePattern = nullptr;
     tmp_string = lua_tolstring(L, ++index, &schemePatternSize);
-    if (!tmp_string || !schemePatternSize )
+    if (!tmp_string or !schemePatternSize)
     {
         ErrorMessage(
             "appid: Invalid scheme pattern string: service_id %u; client_id %u; payload %u.\n",
@@ -1931,7 +1965,7 @@ static int detector_add_url_application(lua_State* L)
     size_t query_pattern_size;
     uint8_t* query_pattern = nullptr;
     tmp_string = lua_tolstring(L, ++index, &query_pattern_size);
-    if (tmp_string && query_pattern_size)
+    if (tmp_string and query_pattern_size)
         query_pattern = (uint8_t*)snort_strdup(tmp_string);
 
     uint32_t appId = lua_tointeger(L, ++index);
@@ -1978,7 +2012,7 @@ static int detector_add_rtmp_url(lua_State* L)
     /* Verify that host pattern is a valid string */
     size_t host_pattern_size = 0;
     const char* tmp_string = lua_tolstring(L, ++index, &host_pattern_size);
-    if (!tmp_string || !host_pattern_size)
+    if (!tmp_string or !host_pattern_size)
     {
         ErrorMessage(
             "appid: Invalid RTMP host pattern string: service_id %u; client_id %u; payload_id %u.\n",
@@ -1990,7 +2024,7 @@ static int detector_add_rtmp_url(lua_State* L)
     /* Verify that path pattern is a valid string */
     size_t path_pattern_size = 0;
     tmp_string = lua_tolstring(L, ++index, &path_pattern_size);
-    if (!tmp_string || !path_pattern_size)
+    if (!tmp_string or !path_pattern_size)
     {
         ErrorMessage(
             "appid: Invalid RTMP path pattern string: service_id %u; client_id %u; payload_id %u.\n",
@@ -2003,7 +2037,7 @@ static int detector_add_rtmp_url(lua_State* L)
     /* Verify that scheme pattern is a valid string */
     size_t schemePatternSize;
     tmp_string = lua_tolstring(L, ++index, &schemePatternSize);
-    if (!tmp_string || !schemePatternSize)
+    if (!tmp_string or !schemePatternSize)
     {
         ErrorMessage(
             "appid: Invalid RTMP scheme pattern string: service_id %u; client_id %u; payload_id %u.\n",
@@ -2018,7 +2052,7 @@ static int detector_add_rtmp_url(lua_State* L)
     size_t query_pattern_size;
     uint8_t* query_pattern = nullptr;
     tmp_string = lua_tolstring(L, ++index, &query_pattern_size);
-    if (tmp_string  && query_pattern_size)
+    if (tmp_string  and query_pattern_size)
         query_pattern = (uint8_t*)snort_strdup(tmp_string);
 
     uint32_t appId = lua_tointeger(L, ++index);
@@ -2064,7 +2098,7 @@ static int detector_add_sip_user_agent(lua_State* L)
 
     uint32_t client_app = lua_tointeger(L, ++index);
     const char* client_version = lua_tostring(L, ++index);
-    if (!client_version )
+    if (!client_version)
     {
         ErrorMessage("Invalid sip client version string.");
         return 0;
@@ -2098,7 +2132,7 @@ static int create_custom_application(lua_State* L)
     /* Verify that host pattern is a valid string */
     size_t appNameLen = 0;
     const char* tmp_string = lua_tolstring(L, ++index, &appNameLen);
-    if (!tmp_string || !appNameLen)
+    if (!tmp_string or !appNameLen)
     {
         ErrorMessage("Invalid appName string.");
         lua_pushnumber(L, APP_ID_NONE);
@@ -2183,7 +2217,7 @@ static int add_http_pattern(lua_State* L)
 
     /* Verify valid pattern type */
     enum httpPatternType pat_type = (enum httpPatternType)lua_tointeger(L, ++index);
-    if (pat_type < HTTP_PAYLOAD || pat_type > HTTP_URL)
+    if (pat_type < HTTP_PAYLOAD or pat_type > HTTP_URL)
     {
         ErrorMessage("Invalid HTTP pattern type.");
         return 0;
@@ -2198,8 +2232,8 @@ static int add_http_pattern(lua_State* L)
     size_t pattern_size = 0;
     const uint8_t* pattern_str = (const uint8_t*)lua_tolstring(L, ++index, &pattern_size);
     DetectorHTTPPattern pattern;
-    if ( pattern.init(pattern_str, pattern_size, seq, service_id, client_id,
-        payload_id, APP_ID_NONE) )
+    if (pattern.init(pattern_str, pattern_size, seq, service_id, client_id,
+        payload_id, APP_ID_NONE))
     {
         ud->get_odp_ctxt().get_http_matchers().insert_http_pattern(pat_type, pattern);
         AppInfoManager& app_info_manager = ud->get_odp_ctxt().get_app_info_mgr();
@@ -2228,20 +2262,20 @@ static int add_url_pattern(lua_State* L)
     size_t host_pattern_size = 0;
     uint8_t* host_pattern = nullptr;
     const char* tmp_string = lua_tolstring(L, ++index, &host_pattern_size);
-    if ( !tmp_string || !host_pattern_size )
+    if (!tmp_string or !host_pattern_size)
     {
         ErrorMessage(
             "appid: Invalid host pattern string: service_id %u; client_id %u; payload_id %u.\n",
             service_id, client_id, payload_id);
         return 0;
     }
-    host_pattern = (uint8_t* )snort_strdup(tmp_string);
+    host_pattern = (uint8_t*)snort_strdup(tmp_string);
 
     /* Verify that path pattern is a valid string */
     size_t path_pattern_size = 0;
     uint8_t* path_pattern = nullptr;
     tmp_string = lua_tolstring(L, ++index, &path_pattern_size);
-    if ( !tmp_string || !path_pattern_size )
+    if (!tmp_string or !path_pattern_size)
     {
         ErrorMessage(
             "appid: Invalid path pattern string: service_id %u; client_id %u; payload_id %u.\n",
@@ -2255,7 +2289,7 @@ static int add_url_pattern(lua_State* L)
     size_t schemePatternSize;
     uint8_t* schemePattern = nullptr;
     tmp_string = lua_tolstring(L, ++index, &schemePatternSize);
-    if (!tmp_string || !schemePatternSize)
+    if (!tmp_string or !schemePatternSize)
     {
         ErrorMessage(
             "appid: Invalid scheme pattern string: service_id %u; client_id %u; payload_id %u.\n",
@@ -2322,8 +2356,8 @@ static int add_port_pattern_client(lua_State* L)
     const char* pattern = lua_tolstring(L, ++index, &patternSize);
     unsigned position = lua_tonumber(L, ++index);
     AppId appId = lua_tointeger(L, ++index);
-    if (appId <= APP_ID_NONE || !pattern || !patternSize ||
-        (protocol != IpProtocol::TCP && protocol != IpProtocol::UDP))
+    if (appId <= APP_ID_NONE or !pattern or !patternSize or
+        (protocol != IpProtocol::TCP and protocol != IpProtocol::UDP))
     {
         ErrorMessage("addPortPatternClient(): Invalid input in %s\n", ud->get_detector()->get_name().c_str());
         return 0;
@@ -2404,7 +2438,7 @@ static int detector_add_sip_server(lua_State* L)
 
     uint32_t client_app = lua_tointeger(L, ++index);
     const char* client_version = lua_tostring(L, ++index);
-    if (!client_version )
+    if (!client_version)
     {
         ErrorMessage("Invalid sip client version string.");
         return 0;
@@ -2537,7 +2571,7 @@ static int is_http_tunnel(lua_State* L)
 
     if (hsession)
     {
-        if (hsession->payload.get_id() == APP_ID_HTTP_TUNNEL ||
+        if (hsession->payload.get_id() == APP_ID_HTTP_TUNNEL or
             hsession->payload.get_id() == APP_ID_HTTP_SSL_TUNNEL)
             lua_pushboolean(L, 1);
         else
@@ -2684,6 +2718,9 @@ static const luaL_Reg detector_methods[] =
     { "client_addUser",           client_add_user },
     { "client_addPayload",        client_add_payload },
 
+    /* add client mapping for process name derived by fingerprinting */
+    { "client_addFingerprintProcess", client_add_fingerprint_process },
+
     //HTTP Multi Pattern engine
     { "CHPCreateApp",             detector_chp_create_application },
     { "CHPAddAction",             detector_add_chp_action },
@@ -2800,7 +2837,7 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
     ldp.pkt = args.pkt;
     const char* validateFn = package_info.validateFunctionName.c_str();
 
-    if ( (!validateFn) || (validateFn[0] == '\0'))
+    if ((!validateFn) or (validateFn[0] == '\0'))
     {
         ldp.pkt = nullptr;
         lua_settop(my_lua_state, 0);
@@ -2809,7 +2846,7 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
 
     lua_getfield(my_lua_state, -1, validateFn); // get the function we want to call
 
-    if ( lua_pcall(my_lua_state, 0, 1, 0) )
+    if (lua_pcall(my_lua_state, 0, 1, 0))
     {
         // Runtime Lua errors are suppressed in production code since detectors are written for
         // efficiency and with defensive minimum checks. Errors are dealt as exceptions
@@ -2827,7 +2864,7 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
         lua_detector_mgr.free_detector_flow();
 
     /* retrieve result */
-    if ( !lua_isnumber(my_lua_state, -1) )
+    if (!lua_isnumber(my_lua_state, -1))
     {
         ErrorMessage("lua detector %s: returned non-numeric value\n", package_info.name.c_str());
         ldp.pkt = nullptr;

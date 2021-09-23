@@ -515,6 +515,16 @@ public:
         api.client.update_user(id, username, change_bits);
     }
 
+    void set_efp_client_app_id(AppId id)
+    {
+        api.client.set_efp_client_app_id(id);
+    }
+
+    AppId get_efp_client_app_id() const
+    {
+        return api.client.get_efp_client_app_id();
+    }
+
     AppId get_payload_id() const
     {
         return api.payload.get_id();
