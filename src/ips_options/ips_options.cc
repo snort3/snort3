@@ -39,7 +39,7 @@ extern const BaseApi* ips_metadata;
 extern const BaseApi* ips_pkt_data;
 extern const BaseApi* ips_reference;
 extern const BaseApi* ips_replace;
-extern const BaseApi* ips_script_data;
+extern const BaseApi* ips_js_data;
 extern const BaseApi* ips_service;
 extern const BaseApi* ips_sha256;
 extern const BaseApi* ips_sha512;
@@ -106,7 +106,7 @@ static const BaseApi* ips_options[] =
     ips_pkt_data,
     ips_reference,
     ips_replace,
-    ips_script_data,
+    ips_js_data,
     ips_service,
     ips_sha256,
     ips_sha512,

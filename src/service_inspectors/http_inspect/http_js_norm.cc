@@ -216,7 +216,7 @@ void HttpJsNorm::enhanced_external_normalize(const Field& input, Field& output,
         output.set(dst - buffer, (const uint8_t*)buffer, true);
 
         trace_logf(1, http_trace, TRACE_JS_DUMP, nullptr,
-            "script_data[%zu]: %.*s\n", dst - buffer, static_cast<int>(dst - buffer), buffer);
+            "js_data[%zu]: %.*s\n", dst - buffer, static_cast<int>(dst - buffer), buffer);
     }
 }
 
@@ -357,7 +357,7 @@ void HttpJsNorm::enhanced_inline_normalize(const Field& input, Field& output,
         output.set(dst - buffer, (const uint8_t*)buffer, true);
 
         trace_logf(1, http_trace, TRACE_JS_DUMP, nullptr,
-            "script_data[%zu]: %.*s\n", dst - buffer, static_cast<int>(dst - buffer), buffer);
+            "js_data[%zu]: %.*s\n", dst - buffer, static_cast<int>(dst - buffer), buffer);
     }
 }
 

@@ -153,7 +153,7 @@ public:
     SF_EVENTQ* equeue;
 
     DataPointer file_data = DataPointer(nullptr, 0);
-    DataPointer script_data = DataPointer(nullptr, 0);
+    DataPointer js_data = DataPointer(nullptr, 0);
     DataBuffer alt_data = {};
 
     uint64_t context_num;

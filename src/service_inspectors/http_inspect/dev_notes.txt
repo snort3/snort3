@@ -427,11 +427,11 @@ Verbosity levels:
 5. Parser states (debug build only)
 6. Input stream states (debug build only)
 
-* trace.module.http_inspect.js_dump dumps script data from processing layers.
+* trace.module.http_inspect.js_dump dumps JavaScript data from processing layers.
 +
 Verbosity levels:
 +
-1. script_data buffer as it is being passed to detection (available in release build)
+1. js_data buffer as it is being passed to detection (available in release build)
 2. Current normalized script (available in release build)
 3. Payload passed to Normalizer (available in release build)
 4. Temporary buffer (debug build only)

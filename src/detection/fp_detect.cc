@@ -961,17 +961,17 @@ static int fp_search(PortGroup* port_group, Packet* p, bool srvc)
 
     if ( MpseGroup* so = port_group->mpsegrp[PM_TYPE_SCRIPT] )
     {
-        // FIXIT-M script data should be obtained from
+        // FIXIT-M js data should be obtained from
         // inspector gadget as is done with search_buffer
-        DataPointer script_data = p->context->script_data;
+        DataPointer js_data = p->context->js_data;
 
-        if ( script_data.len )
+        if ( js_data.len )
         {
             debug_logf(detection_trace, TRACE_FP_SEARCH, p,
                 "%" PRIu64 " fp search %s[%d]\n", p->context->packet_number,
-                pm_type_strings[PM_TYPE_SCRIPT], script_data.len);
+                pm_type_strings[PM_TYPE_SCRIPT], js_data.len);
 
-            batch_search(so, p, script_data.data, script_data.len, pc.script_searches);
+            batch_search(so, p, js_data.data, js_data.len, pc.script_searches);
         }
     }
 

@@ -250,7 +250,7 @@ void validate_services(SnortConfig* sc, OptTreeNode* otn)
             continue;
         }
 
-        if ( !strcmp(s, "script_data") )
+        if ( !strcmp(s, "js_data") )
         {
             script = true;
             continue;
@@ -289,7 +289,7 @@ void validate_services(SnortConfig* sc, OptTreeNode* otn)
     }
     if ( otn->sigInfo.services.empty() and script )
     {
-        ParseWarning(WARN_RULES, "%u:%u:%u has no service with script_data",
+        ParseWarning(WARN_RULES, "%u:%u:%u has no service with js_data",
             otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev);
         add_service_to_otn(sc, otn, "http");
     }

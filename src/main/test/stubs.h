@@ -163,7 +163,7 @@ void DetectionEngine::idle() { }
 void DetectionEngine::reset() { }
 void DetectionEngine::wait_for_context() { }
 void DetectionEngine::set_file_data(const DataPointer&) { }
-void DetectionEngine::set_script_data(const DataPointer&) { }
+void DetectionEngine::set_js_data(const DataPointer&) { }
 void DetectionEngine::clear_replacement() { }
 void DetectionEngine::disable_all(Packet*) { }
 unsigned get_instance_id() { return 0; }

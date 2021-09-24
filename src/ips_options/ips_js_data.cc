@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// ips_script_data.cc author Serhii Vlasiuk <svlasiuk@cisco.com>
+// ips_js_data.cc author Serhii Vlasiuk <svlasiuk@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -29,9 +29,9 @@
 
 using namespace snort;
 
-#define s_name "script_data"
+#define s_name "js_data"
 #define s_help \
-    "rule option to set detection cursor to normalized script data"
+    "rule option to set detection cursor to normalized JavaScript data"
 
 static THREAD_LOCAL ProfileStats scriptDataPerfStats;
 
@@ -50,7 +50,7 @@ IpsOption::EvalStatus ScriptDataOption::eval(Cursor& c, Packet* p)
 {
     RuleProfile profile(scriptDataPerfStats);
 
-    DataPointer dp = DetectionEngine::get_script_data(p->context);
+    DataPointer dp = DetectionEngine::get_js_data(p->context);
 
     if ( !dp.data or !dp.len )
         return NO_MATCH;
@@ -90,17 +90,17 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* script_data_ctor(Module*, OptTreeNode*)
+static IpsOption* js_data_ctor(Module*, OptTreeNode*)
 {
     return new ScriptDataOption;
 }
 
-static void script_data_dtor(IpsOption* p)
+static void js_data_dtor(IpsOption* p)
 {
     delete p;
 }
 
-static const IpsApi script_data_api =
+static const IpsApi js_data_api =
 {
     {
         PT_IPS_OPTION,
@@ -120,18 +120,18 @@ static const IpsApi script_data_api =
     nullptr,
     nullptr,
     nullptr,
-    script_data_ctor,
-    script_data_dtor,
+    js_data_ctor,
+    js_data_dtor,
     nullptr
 };
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
-const BaseApi* ips_script_data[] =
+const BaseApi* ips_js_data[] =
 #endif
 {
-    &script_data_api.base,
+    &js_data_api.base,
     nullptr
 };
 

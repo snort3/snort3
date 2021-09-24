@@ -356,7 +356,7 @@ void HttpMsgBody::do_js_normalization(const Field& input, Field& output, bool pa
 
         if ( norm_length > 0 )
         {
-            set_script_data(enhanced_js_norm_body.start(), (unsigned int)norm_length);
+            set_js_data(enhanced_js_norm_body.start(), (unsigned int)norm_length);
 
             if (partial_detect)
                 return;
