@@ -761,6 +761,16 @@ void SnortConfig::set_overlay_trace_config(TraceConfig* tc)
     overlay_trace_config = tc;
 }
 
+bool SnortConfig::set_latency_enable()
+{
+    if (latency)
+    {
+        latency->packet_latency.force_enable = true;
+        return true;
+    }
+    return false;
+}
+
 void SnortConfig::set_tunnel_verdicts(const char* args)
 {
     char* tmp, * tok;

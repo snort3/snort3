@@ -201,6 +201,16 @@ bool LatencyModule::set(const char* fqn, Value& v, SnortConfig* sc)
     return true;
 }
 
+bool LatencyModule::end(const char*, int, SnortConfig* sc)
+{
+    PacketLatencyConfig& config = sc->latency->packet_latency;
+
+    if (config.max_time > CLOCK_ZERO)
+        config.force_enable = true;
+
+    return true;
+}
+
 const RuleMap* LatencyModule::get_rules() const
 { return latency_rules; }
 

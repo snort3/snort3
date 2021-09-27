@@ -29,6 +29,7 @@ public:
     LatencyModule();
 
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
 
     const snort::RuleMap* get_rules() const override;
     unsigned get_gid() const override;

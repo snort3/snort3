@@ -482,6 +482,7 @@ public:
     void set_umask(uint32_t);
     void set_utc(bool);
     void set_overlay_trace_config(TraceConfig*);
+    SO_PUBLIC bool set_latency_enable();
 
     //------------------------------------------------------
     // accessor methods

@@ -233,7 +233,7 @@ static inline Impl<>& get_impl()
 
 void PacketLatency::push()
 {
-    if ( packet_latency::config->enabled() )
+    if ( packet_latency::config->force_enabled())
     {
         packet_latency::get_impl().push();
         ++latency_stats.total_packets;
@@ -242,7 +242,7 @@ void PacketLatency::push()
 
 void PacketLatency::pop(const Packet* p)
 {
-    if ( packet_latency::config->enabled() )
+    if ( packet_latency::config->force_enabled())
     {
         if ( packet_latency::get_impl().pop(p) )
             ++latency_stats.packet_timeouts;
@@ -250,6 +250,9 @@ void PacketLatency::pop(const Packet* p)
         // FIXIT-L the timer is still running so this max is slightly larger than logged
         if ( elapsed > latency_stats.max_usecs )
             latency_stats.max_usecs = elapsed;
+
+        if ( p->flow )
+            p->flow->flowstats.total_flow_latency += elapsed;
 
         latency_stats.total_usecs += elapsed;
     }

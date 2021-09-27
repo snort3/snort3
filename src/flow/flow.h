@@ -140,6 +140,7 @@ struct FlowStats
     uint64_t client_bytes;
     uint64_t server_bytes;
     struct timeval start_time;
+    uint64_t total_flow_latency;
 };
 
 struct LwState
