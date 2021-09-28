@@ -1128,31 +1128,46 @@ A tagged packet was logged.
 
 119:265
 
-(http_inspect) bad token in JavaScript
+JavaScript normalizer has encountered a symbol that is not expected as a part of a valid
+JavaScript statement, making further normalization impossible.
 
 119:266
 
-(http_inspect) unexpected script opening tag in JavaScript
+HTML <script> tag must not have a nested <script> tag inside it. If a nested tag is
+encountered, this alert is raised.
 
 119:267
 
-(http_inspect) unexpected script closing tag in JavaScript
+This alert is raised when </script> end-tag is encountered inside a JavaScript comment
+or literal, which is a syntax error, as the last comment or literal is not closed before
+script end. 
 
 119:268
 
-(http_inspect) JavaScript code under the external script tags
+When HTML <script> tag contains a reference to an external script, it must not contain
+any executable JavaScript code. This alert is raised if executable (i.e. not comment) code
+is found inside a script tag that has an external reference.
 
 119:269
 
-(http_inspect) script opening tag in a short form
+In HTML, a script tag must not be self-closing (written as <script /> without a following
+end-tag). If a self-closing "short-form" script tag is encountered, this alert is raised.
 
 119:270
 
-(http_inspect) max number of unique JavaScript identifiers reached
+JavaScript normalization includes identifier substitution, which brings arbitrary JavaScript
+identifiers to a common form. Amount of unique identifiers to normalize is limited,
+for memory considerations, with http_inspect.js_norm_identifier_depth parameter. When this
+threshold is reached, a corresponding alert is raised. This alert is not expected for typical
+network traffic and may be an indication that an attacker is trying to exhaust resources.
 
 119:271
 
-(http_inspect) JavaScript template literal nesting is over capacity
+In JavaScript, template literals can have substitutions, that in turn can have nested
+template literals, which requires a stack to track for proper whitespace normalization.
+When the depth of nesting exceeds limit set in http_inspect.js_norm_max_tmpl_nest,
+this alert is raised. This alert is not expected for typical network traffic and may be
+an indication that an attacker is trying to exhaust resources.
 
 119:272
 
