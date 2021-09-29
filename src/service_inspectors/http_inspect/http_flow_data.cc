@@ -272,6 +272,10 @@ snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t ident_depth, size_t no
     js_normalizer = new JSNormalizer(*js_ident_ctx, norm_depth, max_template_nesting);
     update_allocations(JSNormalizer::size());
 
+    auto ptr = js_detect_buffer[HttpCommon::SRC_SERVER];
+    auto len = js_detect_length[HttpCommon::SRC_SERVER];
+    js_normalizer->prepend_script(ptr, len);
+
     debug_logf(4, http_trace, TRACE_JS_PROC, nullptr,
         "js_normalizer created (norm_depth %zd, max_template_nesting %d)\n",
         norm_depth, max_template_nesting);

@@ -360,7 +360,7 @@ JavaScript data dump and verbosity levels:
 
 1. js_data buffer as it is passed to detection.
 
-2. Current script in normalized form.
+2. (no messages available currently)
 
 3. Current script as it is passed to Normalizer.
 

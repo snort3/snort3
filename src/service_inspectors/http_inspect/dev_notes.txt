@@ -432,7 +432,7 @@ Verbosity levels:
 Verbosity levels:
 +
 1. js_data buffer as it is being passed to detection (available in release build)
-2. Current normalized script (available in release build)
+2. (no messages available currently)
 3. Payload passed to Normalizer (available in release build)
 4. Temporary buffer (debug build only)
 5. Matched token (debug build only)

@@ -32,7 +32,6 @@ JSNormalizer::JSNormalizer(JSIdentifierCtxBase& js_ident_ctx, size_t norm_depth,
       rem_bytes(norm_depth),
       unlim(norm_depth == static_cast<size_t>(-1)),
       src_next(nullptr),
-      dst_next(nullptr),
       tmp_buf(nullptr),
       tmp_buf_size(0),
       in(&in_buf),
@@ -48,7 +47,7 @@ JSNormalizer::~JSNormalizer()
     tmp_buf_size = 0;
 }
 
-JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len, char* dst, size_t dst_len)
+JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len)
 {
     if (rem_bytes == 0 && !unlim)
     {
@@ -56,7 +55,6 @@ JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len, char
             "depth limit reached\n");
 
         src_next = src + src_len;
-        dst_next = dst;
         return JSTokenizer::EOS;
     }
 
@@ -66,29 +64,49 @@ JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len, char
     debug_logf(4, http_trace, TRACE_JS_DUMP, nullptr,
         "tmp buffer[%zu]: %.*s\n", tmp_buf_size, static_cast<int>(tmp_buf_size), tmp_buf);
 
-    in_buf.str(tmp_buf, tmp_buf_size, const_cast<char*>(src), len);
-    size_t w_bytes = out.tellp();
+    in_buf.pubsetbuf(nullptr, 0)
+        ->pubsetbuf(tmp_buf, tmp_buf_size)
+        ->pubsetbuf(const_cast<char*>(src), len);
+    out_buf.reserve(src_len);
 
     JSTokenizer::JSRet ret = static_cast<JSTokenizer::JSRet>(tokenizer.yylex());
-
-    out_buf.sgetn(dst, dst_len);
-
     in.clear();
     out.clear();
-    size_t r_bytes = in_buf.glued() ? static_cast<size_t>(in.tellg()) : 0;
-    w_bytes = (size_t)out.tellp() - w_bytes;
 
+    size_t r_bytes = in_buf.last_chunk_offset();
     if (!unlim)
         rem_bytes -= r_bytes;
     src_next = src + r_bytes;
 
-    // avoid heap overflow if number of written bytes bigger than accepted dst_len
-    dst_next = (w_bytes <= dst_len) ? dst + w_bytes : dst + dst_len;
-
     return rem_bytes ? ret : JSTokenizer::EOS;
+}
+
+std::pair<char*,size_t> JSNormalizer::get_script()
+{
+    streamsize len = 0;
+    char* dst = out_buf.release_data(len);
+    return {dst, len};
+}
+
+size_t JSNormalizer::peek_script_size()
+{
+    return out.tellp();
+}
+
+void JSNormalizer::prepend_script(const void* p , size_t n)
+{
+    if (p)
+        out_buf.sputn(reinterpret_cast<const char*>(p), n);
 }
 
 size_t JSNormalizer::size()
 {
     return sizeof(JSNormalizer) + 16834; // the default YY_BUF_SIZE
 }
+
+#ifdef BENCHMARK_TEST
+void JSNormalizer::rewind_output()
+{
+    out_buf.pubseekoff(0, ios_base::beg, ios_base::out);
+}
+#endif

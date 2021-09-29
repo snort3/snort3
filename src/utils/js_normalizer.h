@@ -25,94 +25,10 @@
 #include <FlexLexer.h>
 
 #include "js_tokenizer.h"
+#include "streambuf.h"
 
 namespace snort
 {
-
-class gluebuf : public std::stringbuf
-{
-public:
-    gluebuf() :
-        std::stringbuf(), once(true),
-        src1(nullptr), len1(0), src2(nullptr), len2(0)
-    { }
-
-    std::streambuf* str(char* buf1, std::streamsize buf1_len,
-        char* buf2, std::streamsize buf2_len)
-    {
-        once = !(buf1 && buf1_len);
-
-        if (once)
-        {
-            std::stringbuf::str(std::string(buf2, buf2_len));
-            current_src_len = buf2_len;
-        }
-        else
-        {
-            std::stringbuf::str(std::string(buf1, buf1_len));
-            current_src_len = buf1_len;
-        }
-        src1 = buf1;
-        len1 = buf1_len;
-        src2 = buf2;
-        len2 = buf2_len;
-        return this;
-    }
-
-    bool glued() const
-    {
-        return once;
-    }
-
-protected:
-    virtual std::streampos seekoff(std::streamoff off,
-        std::ios_base::seekdir way, std::ios_base::openmode which) override
-    {
-        if (way != std::ios_base::end)
-            return std::stringbuf::seekoff(off, way, which);
-
-        if (current_src_len + off < 0 and once)
-        {
-            debug_logf(6, http_trace, TRACE_JS_PROC, nullptr,
-                "seek offset %ld, %p:%zu => %p:%zu\n",
-                off, src2, len2, src1, len1);
-
-            off += current_src_len;
-            once = false;
-            std::stringbuf::str(std::string(src1, len1));
-            current_src_len = len1;
-        }
-
-        return std::stringbuf::seekoff(off, way, which);
-    }
-
-    virtual int underflow() override
-    {
-        if (once)
-        {
-            debug_log(6, http_trace, TRACE_JS_PROC, nullptr,
-                "underflow, no buffer to switch to\n");
-            return EOF;
-        }
-
-        debug_logf(6, http_trace, TRACE_JS_PROC, nullptr,
-            "underflow, %p:%zu => %p:%zu\n",
-            src1, len1, src2, len2);
-
-        once = true;
-        std::stringbuf::str(std::string(src2, len2));
-        current_src_len = len2;
-        return sgetc();
-    }
-
-private:
-    bool once;
-    std::streamsize current_src_len;
-    char* src1;
-    std::streamsize len1;
-    char* src2;
-    std::streamsize len2;
-};
 
 class JSNormalizer
 {
@@ -124,28 +40,31 @@ public:
     const char* get_src_next() const
     { return src_next; }
 
-    char* get_dst_next() const // this can go beyond dst length, but no writing happens outside of dst
-    { return dst_next; }
-
     void reset_depth()
     { rem_bytes = depth; }
 
-    JSTokenizer::JSRet normalize(const char* src, size_t src_len, char* dst, size_t dst_len);
+    JSTokenizer::JSRet normalize(const char* src, size_t src_len);
+    std::pair<char*,size_t> get_script();
+    size_t peek_script_size();
+    void prepend_script(const void*, size_t);
 
     static size_t size();
+
+#ifdef BENCHMARK_TEST
+    void rewind_output();
+#endif
 
 private:
     size_t depth;
     size_t rem_bytes;
     bool unlim;
     const char* src_next;
-    char* dst_next;
 
     char* tmp_buf;
     size_t tmp_buf_size;
 
-    gluebuf in_buf;
-    std::stringbuf out_buf;
+    istreambuf_glue in_buf;
+    ostreambuf_infl out_buf;
     std::istream in;
     std::ostream out;
     JSTokenizer tokenizer;

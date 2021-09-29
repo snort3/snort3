@@ -65,58 +65,74 @@ using namespace snort;
 
 #define DST_SIZE 512
 
-#define NORMALIZE(src, expected)                                   \
-    char dst[sizeof(expected)];                                    \
+#define NORMALIZE(src)                                             \
     JSIdentifierCtxTest ident_ctx;                                 \
     JSNormalizer norm(ident_ctx, DEPTH, MAX_TEMPLATE_NESTNIG);     \
-    auto ret = norm.normalize(src, sizeof(src), dst, sizeof(dst)); \
+    auto ret = norm.normalize(src, sizeof(src));                   \
     const char* ptr = norm.get_src_next();                         \
-    int act_len = norm.get_dst_next() - dst;
+    auto result = norm.get_script();                               \
+    char* dst = result.first;                                      \
+    int act_len = result.second;                                   \
 
 #define VALIDATE(src, expected)                 \
     CHECK(ret == JSTokenizer::SCRIPT_CONTINUE); \
     CHECK((ptr - src) == sizeof(src));          \
     CHECK(act_len == sizeof(expected) - 1);     \
-    CHECK(!memcmp(dst, expected, act_len));
+    CHECK(!memcmp(dst, expected, act_len));     \
+    delete[] dst;
 
 #define VALIDATE_FAIL(src, expected, ret_code, ptr_offset) \
     CHECK(ret == ret_code);                                \
     CHECK((ptr - src) == ptr_offset);                      \
     CHECK(act_len == sizeof(expected) - 1);                \
-    CHECK(!memcmp(dst, expected, act_len));
+    CHECK(!memcmp(dst, expected, act_len));                \
+    delete[] dst;
+
 
 #define NORMALIZE_L(src, src_len, dst, dst_len, depth, ret, ptr, len) \
     {                                                                 \
         JSIdentifierCtxTest ident_ctx;                                \
         JSNormalizer norm(ident_ctx, depth, MAX_TEMPLATE_NESTNIG);    \
-        ret = norm.normalize(src, src_len, dst, dst_len);             \
+        ret = norm.normalize(src, src_len);                           \
         ptr = norm.get_src_next();                                    \
-        len = norm.get_dst_next() - dst;                              \
+        auto result = norm.get_script();                              \
+        char* dptr = result.first;                                    \
+        len = result.second;                                          \
+        REQUIRE(len == dst_len);                                      \
+        memcpy(dst, dptr, dst_len);                                   \
+        delete[] dptr;                                                \
     }
 
 #define DO(src, slen, dst, dlen)                            \
     {                                                       \
-        auto ret = norm.normalize(src, slen, dst, dlen);    \
+        auto ret = norm.normalize(src, slen);               \
         CHECK(ret == JSTokenizer::SCRIPT_CONTINUE);         \
         auto nsrc = norm.get_src_next();                    \
-        auto ndst = norm.get_dst_next();                    \
+        auto result = norm.get_script();                    \
+        char* ptr = result.first;                           \
+        int act_len = result.second;                        \
         REQUIRE(nsrc - src == slen);                        \
-        REQUIRE(ndst - dst == dlen);                        \
+        REQUIRE(act_len == dlen);                           \
+        memcpy(dst, ptr, dlen);                             \
+        delete[] ptr;                                       \
     }
 
 #define TRY(src, slen, dst, dlen, rexp)                     \
     {                                                       \
-        auto ret = norm.normalize(src, slen, dst, dlen);    \
+        auto ret = norm.normalize(src, slen);               \
         CHECK(ret == rexp);                                 \
-        auto ndst = norm.get_dst_next();                    \
-        REQUIRE(ndst - dst == dlen);                        \
+        auto result = norm.get_script();                    \
+        char* ptr = result.first;                           \
+        int act_len = result.second;                        \
+        REQUIRE(act_len == dlen);                           \
+        memcpy(dst, ptr, dlen);                             \
+        delete[] ptr;                                       \
     }
 
 #define CLOSE()                                                         \
     {                                                                   \
         const char end[] = "</script>";                                 \
-        char dst[DST_SIZE];                                             \
-        auto ret = norm.normalize(end, sizeof(end) - 1, dst, sizeof(dst) - 1); \
+        auto ret = norm.normalize(end, sizeof(end) - 1);                \
         CHECK(ret == JSTokenizer::SCRIPT_ENDED);                        \
     }
 
@@ -331,78 +347,78 @@ TEST_CASE("clamav tests", "[JSNormalizer]")
 {
     SECTION("test_case_0 - mixed identifiers and comments")
     {
-        NORMALIZE(clamav_buf0, clamav_expected0);
+        NORMALIZE(clamav_buf0);
         VALIDATE(clamav_buf0, clamav_expected0);
     }
     SECTION("test_case_1 - escaped unicode in identifier")
     {
-        NORMALIZE(clamav_buf1, clamav_expected1);
+        NORMALIZE(clamav_buf1);
         VALIDATE(clamav_buf1, clamav_expected1);
     }
     SECTION("test_case_2 - accumulated string assignment")
     {
-        NORMALIZE(clamav_buf2, clamav_expected2);
+        NORMALIZE(clamav_buf2);
         VALIDATE(clamav_buf2, clamav_expected2);
     }
     SECTION("test_case_3 - percent-encoded string")
     {
-        NORMALIZE(clamav_buf3, clamav_expected3);
+        NORMALIZE(clamav_buf3);
         VALIDATE(clamav_buf3, clamav_expected3);
     }
     SECTION("test_case_4 - percent-encoded string")
     {
-        NORMALIZE(clamav_buf4, clamav_expected4);
+        NORMALIZE(clamav_buf4);
         VALIDATE(clamav_buf4, clamav_expected4);
     }
     SECTION("test_case_5 - obfuscated script")
     {
-        NORMALIZE(clamav_buf5, clamav_expected5);
+        NORMALIZE(clamav_buf5);
         VALIDATE(clamav_buf5, clamav_expected5);
     }
     SECTION("test_case_6 - obfuscated script")
     {
-        NORMALIZE(clamav_buf6, clamav_expected6);
+        NORMALIZE(clamav_buf6);
         VALIDATE(clamav_buf6, clamav_expected6);
     }
     SECTION("test_case_7 - single quotes string")
     {
-        NORMALIZE(clamav_buf7, clamav_expected7);
+        NORMALIZE(clamav_buf7);
         VALIDATE(clamav_buf7, clamav_expected7);
     }
     SECTION("test_case_8 - double quotes string")
     {
-        NORMALIZE(clamav_buf8, clamav_expected8);
+        NORMALIZE(clamav_buf8);
         VALIDATE(clamav_buf8, clamav_expected8);
     }
     SECTION("test_case_9 - obfuscated script")
     {
-        NORMALIZE(clamav_buf9, clamav_expected9);
+        NORMALIZE(clamav_buf9);
         VALIDATE(clamav_buf9, clamav_expected9);
     }
     SECTION("test_case_10 - obfuscated script")
     {
-        NORMALIZE(clamav_buf10, clamav_expected10);
+        NORMALIZE(clamav_buf10);
         VALIDATE(clamav_buf10, clamav_expected10);
     }
     SECTION("test_case_11 - integer literal")
     {
-        NORMALIZE(clamav_buf11, clamav_expected11);
+        NORMALIZE(clamav_buf11);
         VALIDATE(clamav_buf11, clamav_expected11);
     }
     SECTION("test_case_12 - escaped unicode in string literal")
     {
-        NORMALIZE(clamav_buf12, clamav_expected12);
+        NORMALIZE(clamav_buf12);
         VALIDATE(clamav_buf12, clamav_expected12);
     }
     // FIXIT-L this should be revisited
     SECTION("test_case_13 - invalid escape sequence")
     {
-        NORMALIZE(clamav_buf13, clamav_expected13);
+        NORMALIZE(clamav_buf13);
         VALIDATE(clamav_buf13, clamav_expected13);
     }
     SECTION("test_case_14 - EOF in the middle of string literal")
     {
-        NORMALIZE(clamav_buf14, clamav_expected14);
+        NORMALIZE(clamav_buf14);
         // trailing \0 is included as a part of the string
         // to utilize available macros we alter the read length
         act_len -= 1;
@@ -479,12 +495,12 @@ TEST_CASE("all patterns", "[JSNormalizer]")
 {
     SECTION("whitespaces and special characters")
     {
-        NORMALIZE(all_patterns_buf0, all_patterns_expected0);
+        NORMALIZE(all_patterns_buf0);
         VALIDATE(all_patterns_buf0, all_patterns_expected0);
     }
     SECTION("comments")
     {
-        NORMALIZE(all_patterns_buf1, all_patterns_expected1);
+        NORMALIZE(all_patterns_buf1);
         VALIDATE(all_patterns_buf1, all_patterns_expected1);
     }
     SECTION("directives")
@@ -499,11 +515,11 @@ TEST_CASE("all patterns", "[JSNormalizer]")
         const char expected1[] = "\"use strict\";var a=1;";
         const char expected2[] = "var a=1 'use strict';";
 
-        char dst0[sizeof(expected0)];
-        char dst1[sizeof(expected1)];
-        char dst2[sizeof(expected0)];
-        char dst3[sizeof(expected1)];
-        char dst4[sizeof(expected2)];
+        char dst0[sizeof(expected0) - 1];
+        char dst1[sizeof(expected1) - 1];
+        char dst2[sizeof(expected0) - 1];
+        char dst3[sizeof(expected1) - 1];
+        char dst4[sizeof(expected2) - 1];
 
         int ret0, ret1, ret2, ret3, ret4;
         const char *ptr0, *ptr1, *ptr2, *ptr3, *ptr4;
@@ -542,27 +558,27 @@ TEST_CASE("all patterns", "[JSNormalizer]")
     }
     SECTION("punctuators")
     {
-        NORMALIZE(all_patterns_buf2, all_patterns_expected2);
+        NORMALIZE(all_patterns_buf2);
         VALIDATE(all_patterns_buf2, all_patterns_expected2);
     }
     SECTION("keywords")
     {
-        NORMALIZE(all_patterns_buf3, all_patterns_expected3);
+        NORMALIZE(all_patterns_buf3);
         VALIDATE(all_patterns_buf3, all_patterns_expected3);
     }
     SECTION("literals")
     {
-        NORMALIZE(all_patterns_buf4, all_patterns_expected4);
+        NORMALIZE(all_patterns_buf4);
         VALIDATE(all_patterns_buf4, all_patterns_expected4);
     }
     SECTION("identifiers")
     {
-        NORMALIZE(all_patterns_buf5, all_patterns_expected5);
+        NORMALIZE(all_patterns_buf5);
         VALIDATE(all_patterns_buf5, all_patterns_expected5);
     }
     SECTION("template literals")
     {
-        NORMALIZE(all_patterns_buf6, all_patterns_expected6);
+        NORMALIZE(all_patterns_buf6);
         VALIDATE(all_patterns_buf6, all_patterns_expected6);
     }
 }
@@ -888,82 +904,82 @@ TEST_CASE("syntax cases", "[JSNormalizer]")
 {
     SECTION("variables")
     {
-        NORMALIZE(syntax_cases_buf0, syntax_cases_expected0);
+        NORMALIZE(syntax_cases_buf0);
         VALIDATE(syntax_cases_buf0, syntax_cases_expected0);
     }
     SECTION("operators")
     {
-        NORMALIZE(syntax_cases_buf1, syntax_cases_expected1);
+        NORMALIZE(syntax_cases_buf1);
         VALIDATE(syntax_cases_buf1, syntax_cases_expected1);
     }
     SECTION("arithmetic and logical operators")
     {
-        NORMALIZE(syntax_cases_buf2, syntax_cases_expected2);
+        NORMALIZE(syntax_cases_buf2);
         VALIDATE(syntax_cases_buf2, syntax_cases_expected2);
     }
     SECTION("complex object")
     {
-        NORMALIZE(syntax_cases_buf3, syntax_cases_expected3);
+        NORMALIZE(syntax_cases_buf3);
         VALIDATE(syntax_cases_buf3, syntax_cases_expected3);
     }
     SECTION("arrays")
     {
-        NORMALIZE(syntax_cases_buf4, syntax_cases_expected4);
+        NORMALIZE(syntax_cases_buf4);
         VALIDATE(syntax_cases_buf4, syntax_cases_expected4);
     }
     SECTION("loops")
     {
-        NORMALIZE(syntax_cases_buf5, syntax_cases_expected5);
+        NORMALIZE(syntax_cases_buf5);
         VALIDATE(syntax_cases_buf5, syntax_cases_expected5);
     }
     SECTION("if-else and switch statements")
     {
-        NORMALIZE(syntax_cases_buf6, syntax_cases_expected6);
+        NORMALIZE(syntax_cases_buf6);
         VALIDATE(syntax_cases_buf6, syntax_cases_expected6);
     }
     SECTION("try-catch statements")
     {
-        NORMALIZE(syntax_cases_buf7, syntax_cases_expected7);
+        NORMALIZE(syntax_cases_buf7);
         VALIDATE(syntax_cases_buf7, syntax_cases_expected7);
     }
     SECTION("functions and promises")
     {
-        NORMALIZE(syntax_cases_buf8, syntax_cases_expected8);
+        NORMALIZE(syntax_cases_buf8);
         VALIDATE(syntax_cases_buf8, syntax_cases_expected8);
     }
     SECTION("regex-division ambiguity")
     {
-        NORMALIZE(syntax_cases_buf9, syntax_cases_expected9);
+        NORMALIZE(syntax_cases_buf9);
         VALIDATE(syntax_cases_buf9, syntax_cases_expected9);
     }
     SECTION("regex on a new line")
     {
-        NORMALIZE(syntax_cases_buf10, syntax_cases_expected10);
+        NORMALIZE(syntax_cases_buf10);
         VALIDATE(syntax_cases_buf10, syntax_cases_expected10);
     }
     SECTION("string and regex literals ambiguity with escaped sentinel chars")
     {
-        NORMALIZE(syntax_cases_buf11, syntax_cases_expected11);
+        NORMALIZE(syntax_cases_buf11);
         VALIDATE(syntax_cases_buf11, syntax_cases_expected11);
     }
     SECTION("escaped LF and CR chars in literals")
     {
-        NORMALIZE(syntax_cases_buf12, syntax_cases_expected12);
+        NORMALIZE(syntax_cases_buf12);
         VALIDATE(syntax_cases_buf12, syntax_cases_expected12);
     }
     SECTION("regex after keyword")
     {
-        NORMALIZE(syntax_cases_buf13, syntax_cases_expected13);
+        NORMALIZE(syntax_cases_buf13);
         VALIDATE(syntax_cases_buf13, syntax_cases_expected13);
     }
     SECTION("white space between '+'<-->'++' and '-'<-->'--'")
     {
-        NORMALIZE(syntax_cases_buf14, syntax_cases_expected14);
+        NORMALIZE(syntax_cases_buf14);
         VALIDATE(syntax_cases_buf14, syntax_cases_expected14);
     }
     SECTION("template literals")
     {
-        NORMALIZE(syntax_cases_buf22, syntax_cases_expected22);
+        NORMALIZE(syntax_cases_buf22);
         VALIDATE(syntax_cases_buf22, syntax_cases_expected22);
     }
 }
@@ -972,37 +988,37 @@ TEST_CASE("bad tokens", "[JSNormalizer]")
 {
     SECTION("LS chars within literal")
     {
-        NORMALIZE(syntax_cases_buf15, syntax_cases_expected15);
+        NORMALIZE(syntax_cases_buf15);
         VALIDATE_FAIL(syntax_cases_buf15, syntax_cases_expected15, JSTokenizer::BAD_TOKEN, 25);
     }
     SECTION("PS chars within literal")
     {
-        NORMALIZE(syntax_cases_buf21, syntax_cases_expected21);
+        NORMALIZE(syntax_cases_buf21);
         VALIDATE_FAIL(syntax_cases_buf21, syntax_cases_expected21, JSTokenizer::BAD_TOKEN, 25);
     }
     SECTION("explicit LF within literal")
     {
-        NORMALIZE(syntax_cases_buf16, syntax_cases_expected16);
+        NORMALIZE(syntax_cases_buf16);
         VALIDATE_FAIL(syntax_cases_buf16, syntax_cases_expected16, JSTokenizer::BAD_TOKEN, 23);
     }
     SECTION("explicit CR within literal")
     {
-        NORMALIZE(syntax_cases_buf17, syntax_cases_expected17);
+        NORMALIZE(syntax_cases_buf17);
         VALIDATE_FAIL(syntax_cases_buf17, syntax_cases_expected17, JSTokenizer::BAD_TOKEN, 23);
     }
     SECTION("escaped LF-CR sequence within literal")
     {
-        NORMALIZE(syntax_cases_buf18, syntax_cases_expected18);
+        NORMALIZE(syntax_cases_buf18);
         VALIDATE_FAIL(syntax_cases_buf18, syntax_cases_expected18, JSTokenizer::BAD_TOKEN, 25);
     }
     SECTION("escaped LF within regex literal")
     {
-        NORMALIZE(syntax_cases_buf19, syntax_cases_expected19);
+        NORMALIZE(syntax_cases_buf19);
         VALIDATE_FAIL(syntax_cases_buf19, syntax_cases_expected19, JSTokenizer::BAD_TOKEN, 23);
     }
     SECTION("escaped CR-LF within regex literal")
     {
-        NORMALIZE(syntax_cases_buf20, syntax_cases_expected20);
+        NORMALIZE(syntax_cases_buf20);
         VALIDATE_FAIL(syntax_cases_buf20, syntax_cases_expected20, JSTokenizer::BAD_TOKEN, 23);
     }
 }
@@ -1011,7 +1027,7 @@ TEST_CASE("template literal overflow", "[JSNormalizer]")
 {
     SECTION("exceeding template literal limit")
     {
-        NORMALIZE(syntax_cases_buf23, syntax_cases_expected23);
+        NORMALIZE(syntax_cases_buf23);
         VALIDATE_FAIL(syntax_cases_buf23, syntax_cases_expected23,
             JSTokenizer::TEMPLATE_NESTING_OVERFLOW, 15);
     }
@@ -1028,7 +1044,7 @@ TEST_CASE("endings", "[JSNormalizer]")
             "var c = 3 ;\n";
         const int ptr_offset = 33;
         const char expected[] = "var a=1;var b=2;";
-        char dst[sizeof(expected)];
+        char dst[sizeof(expected) - 1];
         int act_len;
         const char* ptr;
         int ret;
@@ -1045,45 +1061,33 @@ TEST_CASE("endings", "[JSNormalizer]")
         const char src[] = "var abc = 123;\n\r";
         const char src2[] = "var foo = 321;\n\r";
         const char expected[] = "var abc";
-        char dst[sizeof(src)];
-        int act_len;
         const char* ptr;
         int ret;
 
         JSIdentifierCtxTest ident_ctx;
         JSNormalizer norm(ident_ctx, 7, MAX_TEMPLATE_NESTNIG);
-        ret = norm.normalize(src, sizeof(src), dst, sizeof(dst));
+        ret = norm.normalize(src, sizeof(src));
         ptr = norm.get_src_next();
-        act_len = norm.get_dst_next() - dst;
+        auto res1 = norm.get_script();
+        char* dst1 = res1.first;
+        int act_len1 = res1.second;
 
         CHECK(ret == JSTokenizer::EOS);
         CHECK(ptr == src + 7);
-        CHECK(act_len == sizeof(expected) - 1);
-        CHECK(!memcmp(dst, expected, act_len));
+        CHECK(act_len1 == sizeof(expected) - 1);
+        CHECK(!memcmp(dst1, expected, act_len1));
+        delete[] dst1;
 
-        ret = norm.normalize(src2, sizeof(src2), dst, sizeof(dst));
+        ret = norm.normalize(src2, sizeof(src2));
         ptr = norm.get_src_next();
-        act_len = norm.get_dst_next() - dst;
+        auto res2 = norm.get_script();
+        char* dst2 = res2.first;
+        int act_len2 = res2.second;
 
         CHECK(ret == JSTokenizer::EOS);
         CHECK(ptr == src2 + sizeof(src2));
-        CHECK(act_len == 0);
-    }
-    SECTION("dst size is less then src size")
-    {
-        const char src[] = "var abc = 123;\n\r";
-        const char expected[sizeof(src)] = "var abc";
-        char dst[7];
-        int act_len;
-        const char* ptr;
-        int ret;
-
-        NORMALIZE_L(src, sizeof(src), dst, sizeof(dst), DEPTH, ret, ptr, act_len);
-
-        CHECK(ret == JSTokenizer::SCRIPT_CONTINUE);
-        CHECK(ptr == src + sizeof(src));
-        CHECK(act_len == 7); // size of normalized src
-        CHECK(!memcmp(dst, expected, sizeof(dst)));
+        CHECK(act_len2 == 0);
+        delete[] dst2;
     }
 }
 
@@ -1295,127 +1299,127 @@ TEST_CASE("nested script tags", "[JSNormalizer]")
 {
     SECTION("explicit open tag - simple")
     {
-        NORMALIZE(unexpected_tag_buf0, unexpected_tag_expected0);
+        NORMALIZE(unexpected_tag_buf0);
         VALIDATE_FAIL(unexpected_tag_buf0, unexpected_tag_expected0, JSTokenizer::OPENING_TAG, 18);
     }
     SECTION("explicit open tag - complex")
     {
-        NORMALIZE(unexpected_tag_buf1, unexpected_tag_expected1);
+        NORMALIZE(unexpected_tag_buf1);
         VALIDATE_FAIL(unexpected_tag_buf1, unexpected_tag_expected1, JSTokenizer::OPENING_TAG, 18);
     }
     SECTION("open tag within literal - start")
     {
-        NORMALIZE(unexpected_tag_buf2, unexpected_tag_expected2);
+        NORMALIZE(unexpected_tag_buf2);
         VALIDATE_FAIL(unexpected_tag_buf2, unexpected_tag_expected2, JSTokenizer::OPENING_TAG, 29);
     }
     SECTION("open tag within literal - mid")
     {
-        NORMALIZE(unexpected_tag_buf3, unexpected_tag_expected3);
+        NORMALIZE(unexpected_tag_buf3);
         VALIDATE_FAIL(unexpected_tag_buf3, unexpected_tag_expected3, JSTokenizer::OPENING_TAG, 39);
     }
     SECTION("open tag within literal - end")
     {
-        NORMALIZE(unexpected_tag_buf4, unexpected_tag_expected4);
+        NORMALIZE(unexpected_tag_buf4);
         VALIDATE_FAIL(unexpected_tag_buf4, unexpected_tag_expected4, JSTokenizer::OPENING_TAG, 39);
     }
     SECTION("close tag within literal - start")
     {
-        NORMALIZE(unexpected_tag_buf5, unexpected_tag_expected5);
+        NORMALIZE(unexpected_tag_buf5);
         VALIDATE_FAIL(unexpected_tag_buf5, unexpected_tag_expected5, JSTokenizer::CLOSING_TAG, 31);
     }
     SECTION("close tag within literal - mid")
     {
-        NORMALIZE(unexpected_tag_buf6, unexpected_tag_expected6);
+        NORMALIZE(unexpected_tag_buf6);
         VALIDATE_FAIL(unexpected_tag_buf6, unexpected_tag_expected6, JSTokenizer::CLOSING_TAG, 41);
     }
     SECTION("close tag within literal - end")
     {
-        NORMALIZE(unexpected_tag_buf7, unexpected_tag_expected7);
+        NORMALIZE(unexpected_tag_buf7);
         VALIDATE_FAIL(unexpected_tag_buf7, unexpected_tag_expected7, JSTokenizer::CLOSING_TAG, 41);
     }
     SECTION("open tag within literal - escaped")
     {
-        NORMALIZE(unexpected_tag_buf8, unexpected_tag_expected8);
+        NORMALIZE(unexpected_tag_buf8);
         VALIDATE_FAIL(unexpected_tag_buf8, unexpected_tag_expected8, JSTokenizer::OPENING_TAG, 40);
     }
     SECTION("close tag within literal - escaped")
     {
-        NORMALIZE(unexpected_tag_buf9, unexpected_tag_expected9);
+        NORMALIZE(unexpected_tag_buf9);
         VALIDATE(unexpected_tag_buf9, unexpected_tag_expected9);
     }
     SECTION("open tag within single-line comment - start")
     {
-        NORMALIZE(unexpected_tag_buf10, unexpected_tag_expected10);
+        NORMALIZE(unexpected_tag_buf10);
         VALIDATE_FAIL(unexpected_tag_buf10, unexpected_tag_expected10, JSTokenizer::OPENING_TAG, 20);
     }
     SECTION("open tag within single-line comment - mid")
     {
-        NORMALIZE(unexpected_tag_buf11, unexpected_tag_expected11);
+        NORMALIZE(unexpected_tag_buf11);
         VALIDATE_FAIL(unexpected_tag_buf11, unexpected_tag_expected11, JSTokenizer::OPENING_TAG, 30);
     }
     SECTION("open tag within single-line comment - end")
     {
-        NORMALIZE(unexpected_tag_buf12, unexpected_tag_expected12);
+        NORMALIZE(unexpected_tag_buf12);
         VALIDATE_FAIL(unexpected_tag_buf12, unexpected_tag_expected12, JSTokenizer::OPENING_TAG, 30);
     }
     SECTION("open tag within multi-line comment - start")
     {
-        NORMALIZE(unexpected_tag_buf13, unexpected_tag_expected13);
+        NORMALIZE(unexpected_tag_buf13);
         VALIDATE_FAIL(unexpected_tag_buf13, unexpected_tag_expected13, JSTokenizer::OPENING_TAG, 20);
     }
     SECTION("open tag within multi-line comment - mid")
     {
-        NORMALIZE(unexpected_tag_buf14, unexpected_tag_expected14);
+        NORMALIZE(unexpected_tag_buf14);
         VALIDATE_FAIL(unexpected_tag_buf14, unexpected_tag_expected14, JSTokenizer::OPENING_TAG, 30);
     }
     SECTION("open tag within multi-line comment - end")
     {
-        NORMALIZE(unexpected_tag_buf15, unexpected_tag_expected15);
+        NORMALIZE(unexpected_tag_buf15);
         VALIDATE_FAIL(unexpected_tag_buf15, unexpected_tag_expected15, JSTokenizer::OPENING_TAG, 30);
     }
     SECTION("close tag within single-line comment - start")
     {
-        NORMALIZE(unexpected_tag_buf16, unexpected_tag_expected16);
+        NORMALIZE(unexpected_tag_buf16);
         VALIDATE_FAIL(unexpected_tag_buf16, unexpected_tag_expected16, JSTokenizer::CLOSING_TAG, 22);
     }
     SECTION("close tag within single-line comment - mid")
     {
-        NORMALIZE(unexpected_tag_buf17, unexpected_tag_expected17);
+        NORMALIZE(unexpected_tag_buf17);
         VALIDATE_FAIL(unexpected_tag_buf17, unexpected_tag_expected17, JSTokenizer::CLOSING_TAG, 34);
     }
     SECTION("close tag within single-line comment - end")
     {
-        NORMALIZE(unexpected_tag_buf18, unexpected_tag_expected18);
+        NORMALIZE(unexpected_tag_buf18);
         VALIDATE_FAIL(unexpected_tag_buf18, unexpected_tag_expected18, JSTokenizer::CLOSING_TAG, 32);
     }
     SECTION("close tag within multi-line comment - start")
     {
-        NORMALIZE(unexpected_tag_buf19, unexpected_tag_expected19);
+        NORMALIZE(unexpected_tag_buf19);
         VALIDATE_FAIL(unexpected_tag_buf19, unexpected_tag_expected19, JSTokenizer::CLOSING_TAG, 22);
     }
     SECTION("close tag within multi-line comment - mid")
     {
-        NORMALIZE(unexpected_tag_buf20, unexpected_tag_expected20);
+        NORMALIZE(unexpected_tag_buf20);
         VALIDATE_FAIL(unexpected_tag_buf20, unexpected_tag_expected20, JSTokenizer::CLOSING_TAG, 32);
     }
     SECTION("close tag within multi-line comment - end")
     {
-        NORMALIZE(unexpected_tag_buf21, unexpected_tag_expected21);
+        NORMALIZE(unexpected_tag_buf21);
         VALIDATE_FAIL(unexpected_tag_buf21, unexpected_tag_expected21, JSTokenizer::CLOSING_TAG, 32);
     }
     SECTION("multiple patterns - not matched")
     {
-        NORMALIZE(unexpected_tag_buf22, unexpected_tag_expected22);
+        NORMALIZE(unexpected_tag_buf22);
         VALIDATE(unexpected_tag_buf22, unexpected_tag_expected22);
     }
     SECTION("multiple patterns - matched")
     {
-        NORMALIZE(unexpected_tag_buf23, unexpected_tag_expected23);
+        NORMALIZE(unexpected_tag_buf23);
         VALIDATE_FAIL(unexpected_tag_buf23, unexpected_tag_expected23, JSTokenizer::OPENING_TAG, 65);
     }
     SECTION("mixed lower and upper case")
     {
-        NORMALIZE(unexpected_tag_buf24, unexpected_tag_expected24);
+        NORMALIZE(unexpected_tag_buf24);
         VALIDATE_FAIL(unexpected_tag_buf24, unexpected_tag_expected24, JSTokenizer::OPENING_TAG, 39);
     }
 }
@@ -1909,15 +1913,18 @@ TEST_CASE("benchmarking - ::normalize() - literals", "[JSNormalizer]")
     };
     BENCHMARK("whitespaces - 65535 bytes")
     {
-        return normalizer.normalize(src_ws, src_ws_len, dst, DEPTH);
+        normalizer.rewind_output();
+        return normalizer.normalize(src_ws, src_ws_len);
     };
     BENCHMARK("block comment - 65535 bytes")
     {
-        return normalizer.normalize(src_bcomm, src_bcomm_len, dst, DEPTH);
+        normalizer.rewind_output();
+        return normalizer.normalize(src_bcomm, src_bcomm_len);
     };
     BENCHMARK("double quotes string - 65535 bytes")
     {
-        return normalizer.normalize(src_dqstr, src_dqstr_len, dst, DEPTH);
+        normalizer.rewind_output();
+        return normalizer.normalize(src_dqstr, src_dqstr_len);
     };
 
     constexpr size_t depth_8k = 8192;
@@ -1932,15 +1939,18 @@ TEST_CASE("benchmarking - ::normalize() - literals", "[JSNormalizer]")
     };
     BENCHMARK("whitespaces - 8192 bytes")
     {
-        return normalizer.normalize(src_ws_8k, src_ws_len_8k, dst, DEPTH);
+        normalizer.rewind_output();
+        return normalizer.normalize(src_ws_8k, src_ws_len_8k);
     };
     BENCHMARK("block comment - 8192 bytes")
     {
-        return normalizer.normalize(src_bcomm_8k, src_bcomm_len_8k, dst, DEPTH);
+        normalizer.rewind_output();
+        return normalizer.normalize(src_bcomm_8k, src_bcomm_len_8k);
     };
     BENCHMARK("double quotes string - 8192 bytes")
     {
-        return normalizer.normalize(src_dqstr_8k, src_dqstr_len_8k, dst, DEPTH);
+        normalizer.rewind_output();
+        return normalizer.normalize(src_dqstr_8k, src_dqstr_len_8k);
     };
 }
 
@@ -1956,14 +1966,13 @@ TEST_CASE("benchmarking - ::normalize() - identifiers")
     const char* src = input.c_str();
     size_t src_len = input.size();
 
-    char dst[DEPTH];
-
     JSIdentifierCtxTest ident_ctx_mock;
     JSNormalizer normalizer_wo_ident(ident_ctx_mock, UNLIM_DEPTH, MAX_TEMPLATE_NESTNIG);
 
     BENCHMARK("without substitution")
     {
-        return normalizer_wo_ident.normalize(src, src_len, dst, DEPTH);
+        normalizer_wo_ident.rewind_output();
+        return normalizer_wo_ident.normalize(src, src_len);
     };
 
     JSIdentifierCtx ident_ctx(DEPTH);
@@ -1971,9 +1980,9 @@ TEST_CASE("benchmarking - ::normalize() - identifiers")
 
     BENCHMARK("with substitution")
     {
-        return normalizer_w_ident.normalize(src, src_len, dst, DEPTH);
+        normalizer_w_ident.rewind_output();
+        return normalizer_w_ident.normalize(src, src_len);
     };
 }
 
 #endif // BENCHMARK_TEST
-
