@@ -37,6 +37,7 @@
 #include "protocols/protocol_ids.h"
 
 #include "rna_app_discovery.h"
+#include "rna_cpe_os.h"
 #include "rna_fingerprint_smb.h"
 #include "rna_fingerprint_tcp.h"
 #include "rna_fingerprint_udp.h"
@@ -143,6 +144,36 @@ void RnaPnd::analyze_flow_udp(const Packet* p)
 {
     if ( is_eligible_udp(p) and filter.is_host_monitored(p) )
         discover_network_udp(p);
+}
+
+bool RnaPnd::analyze_cpe_os_info(snort::DataEvent& event)
+{
+    const Packet* p = event.get_packet();
+    if ( !p or !p->flow )
+        return false;
+
+    RNAFlow* rna_flow = (RNAFlow*) p->flow->get_flow_data(RNAFlow::inspector_id);
+    if ( !rna_flow )
+        return false;
+
+    RnaTracker rt = rna_flow->get_tracker(p, filter);
+    if ( !rt )
+        return false;
+
+    CpeOsInfoEvent& cpeos_event = static_cast<CpeOsInfoEvent&>(event);
+    if ( !rt->add_cpe_os_hash(cpeos_event.get_hash()) )
+        return false;
+
+    const auto& src_ip = p->ptrs.ip_api.get_src();
+    const auto& src_ip_ptr = (const struct in6_addr*) src_ip->get_ip6_ptr();
+    const auto& src_mac = layer::get_eth_layer(p)->ether_src;
+    rt->update_last_seen();
+    FpFingerprint fp = FpFingerprint();
+    fp.fp_type = FpFingerprint::FpType::FP_TYPE_CPE;
+    logger.log(RNA_EVENT_NEW, NEW_OS, p, &rt, src_ip_ptr, src_mac, &fp,
+        cpeos_event.get_os_names(), packet_time());
+
+    return true;
 }
 
 void RnaPnd::discover_network_icmp(const Packet* p)
@@ -361,7 +392,7 @@ void RnaPnd::analyze_smb_fingerprint(DataEvent& event)
         return;
 
     RnaTracker rt = rna_flow->get_tracker(p, filter);
-    if ( !rt or !rt->is_visible() )
+    if ( !rt )
         return;
 
     const FpSMBDataEvent& fp_smb_data_event = static_cast<FpSMBDataEvent&>(event);
@@ -999,4 +1030,66 @@ TEST_CASE("RNA pnd", "[non-ip]")
     }
 }
 
+TEST_CASE("RNA pnd cpe os", "[cpe-os]")
+{
+    SECTION("Testing new os RNA event for cpe os")
+    {
+        RNAFlow::init();
+        RNAFlow* rna_flow = new RNAFlow();
+        Packet p;
+        Flow flow;
+        p.flow = &flow;
+        p.flow->set_flow_data(rna_flow);
+
+        // Fill packet structure with required information
+        eth::EtherHdr eh;
+        const char mac[6] = { 00, 01, 02, 03, 04, 05 };
+        ip::IP4Hdr h4;
+        h4.ip_src = 0x65010101;
+        h4.ip_dst = 0x65010102;
+        p.ptrs.ip_api.set(&h4);
+        memcpy(eh.ether_src, mac, MAC_SIZE);
+        p.packet_flags = PKT_FROM_CLIENT;
+        p.num_layers = 1;
+        p.layers[0].start = (const uint8_t*) &eh;
+
+        // Setup host tracker and attach it to rna flow as client
+        auto* src_ip = p.ptrs.ip_api.get_src();
+        bool new_host = false;
+
+        RnaPnd pnd(false, "");
+
+        Packet p2;
+        p2.flow = nullptr;
+
+        // Test to hit sanity check ht is null
+        CpeOsInfoEvent* cpeevent = new CpeOsInfoEvent(p2);
+        cpeevent->add_os("CPE OS one");
+        CHECK(pnd.analyze_cpe_os_info(*cpeevent) == false);
+        delete(cpeevent);
+        cpeevent = new CpeOsInfoEvent(p);
+        cpeevent->add_os("CPE OS one");
+        CHECK(pnd.analyze_cpe_os_info(*cpeevent) == false);
+
+        // Check new OS information is invoking logging
+        auto ht = host_cache.find_else_create(*src_ip, &new_host);
+        rna_flow->set_client(ht);
+        CHECK(pnd.analyze_cpe_os_info(*cpeevent) == true);
+
+        // Check duplicate OS information is not invoking logging
+        CHECK(pnd.analyze_cpe_os_info(*cpeevent) == false);
+        delete(cpeevent);
+
+        // Check second OS information is invoking logging
+        cpeevent = new CpeOsInfoEvent(p);
+        cpeevent->add_os("CPE OS two");
+        CHECK(pnd.analyze_cpe_os_info(*cpeevent) == true);
+
+        // Again check duplicate OS information is not invoking logging
+        CHECK(pnd.analyze_cpe_os_info(*cpeevent) == false);
+
+        delete(cpeevent);
+        p.flow->free_flow_data(rna_flow);
+    }
+}
 #endif

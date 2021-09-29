@@ -126,3 +126,10 @@ void RnaFpSMBEventHandler::handle(DataEvent& event, Flow*)
     ++rna_stats.smb;
     pnd.analyze_smb_fingerprint(event);
 }
+
+void RnaCPEOSInfoEventHandler::handle(DataEvent& event, Flow*)
+{
+    Profile profile(rna_perf_stats);
+    ++rna_stats.cpe_os;
+    pnd.analyze_cpe_os_info(event);
+}

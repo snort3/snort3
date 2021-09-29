@@ -34,6 +34,7 @@
 struct RnaStats
 {
     PegCount appid_change;
+    PegCount cpe_os;
     PegCount icmp_bidirectional;
     PegCount icmp_new;
     PegCount ip_bidirectional;

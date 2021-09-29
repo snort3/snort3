@@ -130,6 +130,7 @@ public:
     void analyze_dhcp_fingerprint(snort::DataEvent&);
     void add_dhcp_info(snort::DataEvent&);
     void analyze_smb_fingerprint(snort::DataEvent&);
+    bool analyze_cpe_os_info(snort::DataEvent&);
 
     // generate change event for all hosts in the ip cache
     void generate_change_host_update();

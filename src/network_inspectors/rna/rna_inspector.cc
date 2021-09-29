@@ -35,7 +35,7 @@
 #include "protocols/packet.h"
 #include "pub_sub/dhcp_events.h"
 #include "pub_sub/smb_events.h"
-
+#include "rna_cpe_os.h"
 #include "rna_event_handler.h"
 #include "rna_fingerprint_smb.h"
 #include "rna_fingerprint_tcp.h"
@@ -105,6 +105,8 @@ bool RnaInspector::configure(SnortConfig* sc)
     DataBus::subscribe_global( STREAM_TCP_SYN_EVENT, new RnaTcpSynEventHandler(*pnd), sc );
     DataBus::subscribe_global( STREAM_TCP_SYN_ACK_EVENT, new RnaTcpSynAckEventHandler(*pnd), sc );
     DataBus::subscribe_global( STREAM_TCP_MIDSTREAM_EVENT, new RnaTcpMidstreamEventHandler(*pnd), sc );
+    DataBus::subscribe_global( CPE_OS_INFO_EVENT, new RnaCPEOSInfoEventHandler(*pnd), sc );
+
     if (rna_conf && rna_conf->log_when_idle)
         DataBus::subscribe_global( THREAD_IDLE_EVENT, new RnaIdleEventHandler(*pnd), sc );
 

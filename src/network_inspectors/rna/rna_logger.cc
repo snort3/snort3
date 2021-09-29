@@ -212,12 +212,22 @@ void RnaLogger::log(uint16_t type, uint16_t subtype, const snort::Packet* p, Rna
         nullptr, nullptr, APP_ID_NONE, nullptr, false, lease, netmask, router);
 }
 
+void RnaLogger::log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
+    const struct in6_addr* src_ip, const uint8_t* src_mac, const FpFingerprint* fp,
+    const vector<const char*>* cpeos, uint32_t event_time)
+{
+    log(type, subtype, src_ip, src_mac, ht, p, event_time, 0, nullptr, nullptr, fp,
+        nullptr, nullptr, nullptr, APP_ID_NONE, nullptr, false, 0, 0, nullptr,
+        nullptr, cpeos);
+}
+
 bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_ip,
     const uint8_t* src_mac, RnaTracker* ht, const Packet* p, uint32_t event_time,
     uint16_t proto, const HostMac* hm, const HostApplication* ha,
     const FpFingerprint* fp, void* cond_var, const HostClient* hc,
     const char* user, AppId appid, const char* di, bool jb, uint32_t lease,
-    uint32_t netmask, const struct in6_addr* router, const char* nb_name)
+    uint32_t netmask, const struct in6_addr* router, const char* nb_name,
+    const vector<const char*>* cpeos)
 {
     if ( !enabled )
         return false;
@@ -225,7 +235,7 @@ bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_
     assert(ht);
 
     RnaLoggerEvent rle(type, subtype, src_mac, ht, hm, proto, cond_var,
-        ha, fp, hc, user, appid, di, jb, lease, netmask, router, p, nb_name);
+        ha, fp, hc, user, appid, di, jb, lease, netmask, router, p, nb_name, cpeos);
     if ( src_ip and (!IN6_IS_ADDR_V4MAPPED(src_ip) or src_ip->s6_addr32[3]) )
         rle.ip = src_ip;
     else

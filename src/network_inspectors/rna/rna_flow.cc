@@ -88,7 +88,7 @@ RnaTracker RNAFlow::get_client(const SfIp& ip)
 
 RnaTracker RNAFlow::get_tracker(const Packet* p, DiscoveryFilter& filter)
 {
-    RnaTracker rt;
+    RnaTracker rt = nullptr;
     if ( p->is_from_server() && filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_SERVER) )
         rt = get_server(p->flow->server_ip);
     else if (p->is_from_client() && filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_CLIENT) )
@@ -96,6 +96,9 @@ RnaTracker RNAFlow::get_tracker(const Packet* p, DiscoveryFilter& filter)
 
     if ( rt && rt->is_visible() )
         rt->update_last_seen();
+    else
+        return nullptr;
+
     return rt;
 }
 

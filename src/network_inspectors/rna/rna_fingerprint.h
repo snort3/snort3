@@ -57,7 +57,8 @@ public:
         FP_TYPE_CLIENT6 = 11,
         FP_TYPE_DHCP6 = 12,
         FP_TYPE_USERAGENT = 13,
-        MAX_FP_TYPES = 14
+        FP_TYPE_CPE = 14,
+        MAX_FP_TYPES = 15
     };
 
     uint32_t fpid = 0;

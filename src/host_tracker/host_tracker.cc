@@ -807,6 +807,13 @@ bool HostTracker::add_smb_fingerprint(uint32_t fpid)
     return result.second;
 }
 
+bool HostTracker::add_cpe_os_hash(uint32_t hash)
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+    auto result = cpe_fpids.emplace(hash);
+    return result.second;
+}
+
 bool HostTracker::set_visibility(bool v)
 {
     // get_valid_id may use its own lock, so get this outside our lock
@@ -852,6 +859,7 @@ bool HostTracker::set_visibility(bool v)
         udp_fpids.clear();
         smb_fpids.clear();
         netbios_name.clear();
+        cpe_fpids.clear();
     }
 
     return old_visibility == visibility;

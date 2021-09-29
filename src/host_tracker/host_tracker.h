@@ -337,6 +337,8 @@ public:
     bool add_udp_fingerprint(uint32_t fpid);
     bool add_smb_fingerprint(uint32_t fpid);
 
+    bool add_cpe_os_hash(uint32_t hash);
+
     //  This should be updated whenever HostTracker data members are changed
     void stringify(std::string& str);
 
@@ -432,6 +434,7 @@ private:
     std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> tcp_fpids;
     std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> udp_fpids;
     std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> smb_fpids;
+    std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> cpe_fpids;
     std::vector<DeviceFingerprint, HostDeviceFpAllocator> ua_fps;
     std::string netbios_name;
 

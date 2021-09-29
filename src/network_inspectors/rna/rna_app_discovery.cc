@@ -388,7 +388,7 @@ void RnaAppDiscovery::discover_user(const Packet* p, DiscoveryFilter& filter, RN
 {
     assert(rna_flow);
     RnaTracker rt = rna_flow->get_tracker(p, filter);
-    if ( !rt or !rt->is_visible() )
+    if ( !rt )
         return;
 
     if ( rt->update_service_user(p->flow->server_port, proto, username,
@@ -404,7 +404,7 @@ void RnaAppDiscovery::discover_netbios_name(const snort::Packet* p, DiscoveryFil
     RNAFlow* rna_flow, RnaLogger& logger, const char* nb_name)
 {
     RnaTracker rt = rna_flow->get_tracker(p, filter);
-    if ( !rt or !rt->is_visible())
+    if ( !rt )
         return;
 
     if ( rt->set_netbios_name(nb_name) )

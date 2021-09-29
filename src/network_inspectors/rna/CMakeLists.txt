@@ -8,6 +8,7 @@ set (RNA_INCLUDES
     rna_inspector.h
     rna_logger.h
     rna_name.h
+    rna_cpe_os.h
 )
 
 set ( RNA_SOURCES

@@ -371,6 +371,7 @@ static const Parameter rna_params[] =
 static const PegInfo rna_pegs[] =
 {
     { CountType::SUM, "appid_change", "count of appid change events received" },
+    { CountType::SUM, "cpe_os", "count of CPE OS events received" },
     { CountType::SUM, "icmp_bidirectional", "count of bidirectional ICMP flows received" },
     { CountType::SUM, "icmp_new", "count of new ICMP flows received" },
     { CountType::SUM, "ip_bidirectional", "count of bidirectional IP received" },
