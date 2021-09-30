@@ -27,6 +27,7 @@
 #include "host_tracker/host_cache.h"
 
 #include "log/messages.h"
+#include "packet_tracer/packet_tracer.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
@@ -47,6 +48,30 @@
 #include "tp_lib_handler.h"
 #include "tp_appid_utils.h"
 using namespace snort;
+
+static void populate_trace_data(AppIdSession& session)
+{
+    // Skip sessions using old odp context after odp reload
+    if (session.get_odp_ctxt_version() != session.get_odp_ctxt().get_version())
+        return;
+
+    AppId service_id, client_id, payload_id, misc_id;
+    const char* service_app_name, * client_app_name, * payload_app_name, * misc_name;
+    OdpContext& odp_ctxt = session.get_odp_ctxt();
+    session.get_api().get_first_stream_app_ids(service_id, client_id, payload_id, misc_id);
+    service_app_name = appid_api.get_application_name(service_id, odp_ctxt);
+    client_app_name = appid_api.get_application_name(client_id, odp_ctxt);
+    payload_app_name = appid_api.get_application_name(payload_id, odp_ctxt);
+    misc_name = appid_api.get_application_name(misc_id, odp_ctxt);
+
+    PacketTracer::daq_log("AppID+%" PRId64"++service: %s(%d), "
+        "client: %s(%d), payload: %s(%d), misc: %s(%d)$",
+        TO_NSECS(pt_timer->get()),
+        (service_app_name ? service_app_name : ""), service_id,
+        (client_app_name ? client_app_name : ""), client_id,
+        (payload_app_name ? payload_app_name : ""), payload_id,
+        (misc_name ? misc_name : ""), misc_id);
+}
 
 AppIdDiscovery::~AppIdDiscovery()
 {
@@ -261,6 +286,8 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
         asd->set_ss_application_ids(asd->pick_service_app_id(), asd->pick_ss_client_app_id(),
             asd->pick_ss_payload_app_id(), asd->pick_ss_misc_app_id(),
             asd->pick_ss_referred_payload_app_id(), change_bits);
+        if (PacketTracer::is_daq_activated())
+            populate_trace_data(*asd);
         asd->publish_appid_event(change_bits, *p);
         asd->set_session_flags(APPID_SESSION_FUTURE_FLOW_IDED);
 
@@ -714,6 +741,9 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
     asd.set_ss_application_ids(service_id, client_id, payload_id, misc_id,
         asd.pick_ss_referred_payload_app_id(), change_bits);
     asd.set_tls_host(change_bits);
+
+    if (PacketTracer::is_daq_activated())
+        populate_trace_data(asd); 
 
     asd.publish_appid_event(change_bits, *p);
 }

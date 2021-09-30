@@ -69,7 +69,7 @@ static void openssl_cleanup()
     CRYPTO_cleanup_all_ex_data();
 }
 
-static void populate_trace_data(Flow& flow, const OdpContext& odp_context)
+static void add_appid_to_packet_trace(Flow& flow, const OdpContext& odp_context)
 {
     AppIdSession* session = appid_api.get_appid_session(flow);
     // Skip sessions using old odp context after odp reload
@@ -85,25 +85,12 @@ static void populate_trace_data(Flow& flow, const OdpContext& odp_context)
     payload_app_name = appid_api.get_application_name(payload_id, odp_ctxt);
     misc_name = appid_api.get_application_name(misc_id, odp_ctxt);
 
-    if (PacketTracer::is_active())
-    {
-        PacketTracer::log(appid_mute,
-            "AppID: service: %s(%d), client: %s(%d), payload: %s(%d), misc: %s(%d)\n",
-            (service_app_name ? service_app_name : ""), service_id,
-            (client_app_name ? client_app_name : ""), client_id,
-            (payload_app_name ? payload_app_name : ""), payload_id,
-            (misc_name ? misc_name : ""), misc_id);
-    }
-    if (PacketTracer::is_daq_activated())
-    {
-        PacketTracer::daq_log("AppID+%" PRId64"++service: %s(%d), "
-            "client: %s(%d), payload: %s(%d), misc: %s(%d)$",
-            TO_NSECS(pt_timer->get()),
-            (service_app_name ? service_app_name : ""), service_id,
-            (client_app_name ? client_app_name : ""), client_id,
-            (payload_app_name ? payload_app_name : ""), payload_id,
-            (misc_name ? misc_name : ""), misc_id);
-    }
+    PacketTracer::log(appid_mute,
+        "AppID: service: %s(%d), client: %s(%d), payload: %s(%d), misc: %s(%d)\n",
+        (service_app_name ? service_app_name : ""), service_id,
+        (client_app_name ? client_app_name : ""), client_id,
+        (payload_app_name ? payload_app_name : ""), payload_id,
+        (misc_name ? misc_name : ""), misc_id);
 }
 
 AppIdInspector::AppIdInspector(AppIdModule& mod)
@@ -211,12 +198,12 @@ void AppIdInspector::eval(Packet* p)
     if (p->flow)
     {
         if (PacketTracer::is_daq_activated())
-             PacketTracer::pt_timer_start();
+            PacketTracer::pt_timer_start();
 
         AppIdDiscovery::do_application_discovery(p, *this, *pkt_thread_odp_ctxt, pkt_thread_tp_appid_ctxt);
         // FIXIT-L tag verdict reason as appid for daq
-        if (PacketTracer::is_active() || PacketTracer::is_daq_activated())
-            populate_trace_data(*p->flow, *pkt_thread_odp_ctxt);
+        if (PacketTracer::is_active())
+            add_appid_to_packet_trace(*p->flow, *pkt_thread_odp_ctxt);
     }
     else
         appid_stats.ignored_packets++;

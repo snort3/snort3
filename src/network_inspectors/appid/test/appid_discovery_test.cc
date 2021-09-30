@@ -27,10 +27,12 @@
 #include "host_tracker/host_cache.h"
 #include "network_inspectors/appid/appid_discovery.cc"
 #include "network_inspectors/appid/appid_peg_counts.h"
+#include "network_inspectors/packet_tracer/packet_tracer.h"
 
 #include "search_engines/search_tool.h"
 #include "utils/sflsq.cc"
 
+#include "appid_api.h"
 #include "appid_mock_session.h"
 #include "appid_session_api.h"
 #include "tp_lib_handler.h"
@@ -46,6 +48,15 @@ void memory::MemoryCap::update_deallocations(size_t) { }
 
 namespace snort
 {
+// Stubs for appid api
+AppIdApi appid_api;
+const char* AppIdApi::get_application_name(AppId, OdpContext&) { return NULL; } 
+
+// Stubs for packet tracer
+THREAD_LOCAL PacketTracer* s_pkt_trace = nullptr;
+THREAD_LOCAL Stopwatch<SnortClock>* pt_timer = nullptr;
+void PacketTracer::daq_log(const char*, ...) { }
+
 // Stubs for packet
 Packet::Packet(bool) {}
 Packet::~Packet() = default;
@@ -113,6 +124,8 @@ void IpApi::set(const SfIp& sip, const SfIp& dip)
 
 AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
+void AppIdSessionApi::get_first_stream_app_ids(AppId&, AppId&,
+    AppId&, AppId&) const { }
 } // namespace snort
 void AppIdModule::reset_stats() {}
 DiscoveryFilter::~DiscoveryFilter() {}
