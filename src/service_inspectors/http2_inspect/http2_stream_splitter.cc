@@ -116,17 +116,21 @@ const StreamBuffer Http2StreamSplitter::reassemble(Flow* flow, unsigned total, u
     Profile profile(Http2Module::get_profile_stats());
 
     copied = len;
+    StreamBuffer frame_buf { nullptr, 0 };
 
     Http2FlowData* session_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
-    assert(session_data != nullptr);
+    if (session_data == nullptr)
+    {
+        assert(false);
+        return frame_buf;
+    }
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))
     {
-        StreamBuffer http_buf { nullptr, 0 };
         if (!(flags & PKT_PDU_TAIL))
         {
-            return http_buf;
+            return frame_buf;
         }
         bool tcp_close;
         uint8_t* test_buffer;
@@ -140,19 +144,22 @@ const StreamBuffer Http2StreamSplitter::reassemble(Flow* flow, unsigned total, u
         {
             // Source ID does not match test data, no test data was flushed, preparing for a TCP
             // connection close, or there is no more test data
-            return http_buf;
+            return frame_buf;
         }
         data = test_buffer;
     }
 #endif
 
-    assert(!session_data->abort_flow[source_id]);
+    if (session_data->abort_flow[source_id])
+    {
+        assert(false);
+        return frame_buf;
+    }
 
     // FIXIT-P: scan uses this to discard bytes until StreamSplitter:DISCARD
     // is implemented
     if (session_data->payload_discard[source_id])
     {
-        StreamBuffer frame_buf { nullptr, 0 };
         if (flags & PKT_PDU_TAIL)
             session_data->payload_discard[source_id] = false;
 

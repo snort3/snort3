@@ -383,10 +383,15 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
     unsigned total, unsigned offset, const uint8_t* data, unsigned len, uint32_t flags,
     HttpCommon::SourceId source_id)
 {
-    assert(offset+len <= total);
-    assert(total <= MAX_OCTETS);
 
     StreamBuffer frame_buf { nullptr, 0 };
+
+    if ( total > MAX_OCTETS || offset+len > total)
+    {
+         assert(false);
+         session_data->abort_flow[source_id] = true;
+         return frame_buf;
+    }
 
     if (session_data->frame_type[source_id] == FT_DATA)
     {
