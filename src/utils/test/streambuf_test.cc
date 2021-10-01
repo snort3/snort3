@@ -1442,9 +1442,9 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         CHECK(c == 'A');
         CHECK(off_b == 0);
         CHECK(off_c == 1);
-        CHECK(off_e == 256);
+        CHECK(off_e == 2048);
 
-        EXP_RES(b, exp, 1, 256);
+        EXP_RES(b, exp, 1, 2048);
     }
 
     SECTION("put two chars")
@@ -1463,9 +1463,9 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         CHECK(off_b == 0);
         CHECK(off_1 == 1);
         CHECK(off_2 == 2);
-        CHECK(off_e == 256);
+        CHECK(off_e == 2048);
 
-        EXP_RES(b, exp, 2, 256);
+        EXP_RES(b, exp, 2, 2048);
     }
 
     SECTION("extend buffer")
@@ -1484,9 +1484,9 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         CHECK(c2 == 'Z');
         CHECK(off_b == 0);
         CHECK(off_1 == 1);
-        CHECK(off_2 == 257);
-        CHECK(off_e == 256);
-        CHECK(off_z == 768);
+        CHECK(off_2 == 2049);
+        CHECK(off_e == 2048);
+        CHECK(off_z == 6144);
     }
 
     SECTION("put sequence of chars")
@@ -1524,7 +1524,7 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         CHECK(c2 == 'Z');
         CHECK(off_b == 0);
         CHECK(off_c == len + 2);
-        CHECK(off_e == 4096 + 512);
+        CHECK(off_e == 4096 + 2048);
     }
 }
 

@@ -85,8 +85,8 @@ const Parameter HttpModule::http_params[] =
       "number of input JavaScript bytes to normalize (-1 unlimited) "
       "(experimental)" },
 
-    // range of accepted identifier names is (a0:z9999), so the max is 26 * 10000 = 260000
-    { "js_norm_identifier_depth", Parameter::PT_INT, "0:260000", "260000",
+    // range of accepted identifier names is (var_0000:var_ffff), so the max is 2^16
+    { "js_norm_identifier_depth", Parameter::PT_INT, "0:65536", "65536",
       "max number of unique JavaScript identifiers to normalize" },
 
     { "js_norm_max_tmpl_nest", Parameter::PT_INT, "0:255", "32",

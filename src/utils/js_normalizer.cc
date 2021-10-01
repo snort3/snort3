@@ -23,6 +23,8 @@
 
 #include "js_normalizer.h"
 
+#define BUFF_EXP_FACTOR 1.3
+
 using namespace snort;
 using namespace std;
 
@@ -67,7 +69,7 @@ JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len)
     in_buf.pubsetbuf(nullptr, 0)
         ->pubsetbuf(tmp_buf, tmp_buf_size)
         ->pubsetbuf(const_cast<char*>(src), len);
-    out_buf.reserve(src_len);
+    out_buf.reserve(src_len * BUFF_EXP_FACTOR);
 
     JSTokenizer::JSRet ret = static_cast<JSTokenizer::JSRet>(tokenizer.yylex());
     in.clear();

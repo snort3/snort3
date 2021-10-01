@@ -42,14 +42,25 @@ public:
 };
 #endif // CATCH_TEST_BUILD
 
-#define FIRST_NAME_SIZE   26
-#define LAST_NAME_SIZE  9999
+#define MAX_LAST_NAME     65535
+#define HEX_DIGIT_MASK   15
 
-static const char s_ident_first_names[FIRST_NAME_SIZE] =
+static const char hex_digits[] = 
 {
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
+    '0', '1','2','3', '4', '5', '6', '7', '8','9', 'a', 'b', 'c', 'd', 'e', 'f'
 };
+
+static inline std::string format_name(int32_t num)
+{
+    std::string name("var_");
+    name.reserve(8);
+    name.push_back(hex_digits[(num >> 12) & HEX_DIGIT_MASK]); 
+    name.push_back(hex_digits[(num >> 8) & HEX_DIGIT_MASK]); 
+    name.push_back(hex_digits[(num >> 4) & HEX_DIGIT_MASK]);
+    name.push_back(hex_digits[num & HEX_DIGIT_MASK]); 
+
+    return name;
+}
 
 const char* JSIdentifierCtx::substitute(const char* identifier)
 {
@@ -57,29 +68,17 @@ const char* JSIdentifierCtx::substitute(const char* identifier)
     if (it != ident_names.end())
         return it->second.c_str();
 
-    if (++ident_last_name > LAST_NAME_SIZE)
-    {
-        if (++ident_first_name > FIRST_NAME_SIZE - 1)
-            return nullptr;
-
-        ident_last_name = 0;
-    }
-
-    if (++unique_ident_cnt > depth)
+    if (ident_last_name >= depth || ident_last_name > MAX_LAST_NAME)
         return nullptr;
 
-    ident_names[identifier] = s_ident_first_names[ident_first_name]
-        + std::to_string(ident_last_name);
-
+    ident_names[identifier] = format_name(ident_last_name++);
     HttpModule::increment_peg_counts(HttpEnums::PEG_JS_IDENTIFIER);
     return ident_names[identifier].c_str();
 }
 
 void JSIdentifierCtx::reset()
 {
-    ident_first_name = 0;
-    ident_last_name = -1;
-    unique_ident_cnt = 0;
+    ident_last_name = 0;
     ident_names.clear();
 }
 

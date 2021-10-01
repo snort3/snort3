@@ -222,11 +222,11 @@ int istreambuf_glue::underflow()
 
 const ostreambuf_infl::State ostreambuf_infl::states[] =
 {
-    {states + 1, 1 << 8},
-    {states + 2, 1 << 9},
-    {states + 3, 1 << 10},
-    {states + 4, 1 << 13},
-    {states + 4, 1 << 16}
+    {states + 1, 1 << 11},
+    {states + 2, 1 << 12},
+    {states + 3, 1 << 13},
+    {states + 4, 1 << 14},
+    {states + 4, 1 << 15}
 };
 
 ostreambuf_infl::ostreambuf_infl() :
@@ -335,7 +335,7 @@ streamsize ostreambuf_infl::xsputn(const char* s, streamsize n)
 
     auto c_avail = epptr() - pptr();
     if (n > c_avail)
-        enlarge(n - c_avail);
+        gen.n > (n - c_avail) ? enlarge() : enlarge(n - c_avail);
 
     auto n_avail = epptr() - pptr();
     n = min(n, n_avail);

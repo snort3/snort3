@@ -46,9 +46,7 @@ public:
     { return (sizeof(JSIdentifierCtx) + (sizeof(std::string) * 2 * 500)); }
 
 private:
-    int ident_first_name = 0;
-    int ident_last_name = -1;
-    int32_t unique_ident_cnt = 0;
+    int32_t ident_last_name = 0;
     int32_t depth;
 
     std::unordered_map<std::string, std::string> ident_names;

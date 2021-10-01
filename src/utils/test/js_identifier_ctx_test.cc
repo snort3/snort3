@@ -25,19 +25,11 @@
 
 #include <cstring>
 #include <vector>
+#include <iomanip>
 
 #include "utils/js_identifier_ctx.h"
 
-#define DEPTH 260000
-
-#define FIRST_NAME_SIZE   26
-#define LAST_NAME_SIZE  9999
-
-static const char s_ident_first_names[FIRST_NAME_SIZE] =
-{
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
-};
+#define DEPTH 65536
 
 TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
 {
@@ -45,26 +37,26 @@ TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
     {
         JSIdentifierCtx ident_ctx(DEPTH);
 
-        CHECK(!strcmp(ident_ctx.substitute("a"), "a0"));
-        CHECK(!strcmp(ident_ctx.substitute("a"), "a0"));
+        CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
+        CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
     }
     SECTION("different names")
     {
         JSIdentifierCtx ident_ctx(DEPTH);
 
-        CHECK(!strcmp(ident_ctx.substitute("a"), "a0"));
-        CHECK(!strcmp(ident_ctx.substitute("b"), "a1"));
-        CHECK(!strcmp(ident_ctx.substitute("a"), "a0"));
+        CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
+        CHECK(!strcmp(ident_ctx.substitute("b"), "var_0001"));
+        CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
     }
     SECTION("depth reached")
     {
         JSIdentifierCtx ident_ctx(2);
 
-        CHECK(!strcmp(ident_ctx.substitute("a"), "a0"));
-        CHECK(!strcmp(ident_ctx.substitute("b"), "a1"));
+        CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
+        CHECK(!strcmp(ident_ctx.substitute("b"), "var_0001"));
         CHECK(ident_ctx.substitute("c") == nullptr);
         CHECK(ident_ctx.substitute("d") == nullptr);
-        CHECK(!strcmp(ident_ctx.substitute("a"), "a0"));
+        CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
     }
     SECTION("max names")
     {
@@ -77,10 +69,12 @@ TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
         for (int it = 0; it < DEPTH + 2; ++it)
             n.push_back("n" + std::to_string(it));
 
-        for (int it_first = 0; it_first < FIRST_NAME_SIZE; ++it_first)
+        for (int it_name = 0; it_name < DEPTH; ++it_name)
         {
-            for (int it_last = 0; it_last <= LAST_NAME_SIZE; ++it_last)
-                e.push_back(s_ident_first_names[it_first] + std::to_string(it_last));
+            std::stringstream stream;
+            stream << std::setfill ('0') << std::setw(4) 
+                << std::hex << it_name;
+            e.push_back("var_" + stream.str());
         }
 
         for (int it = 0; it < DEPTH; ++it)

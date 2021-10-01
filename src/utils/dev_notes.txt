@@ -44,5 +44,5 @@ which could be useful for final consumer.
 
 From performance perspective, ostreambuf_infl can reserve an amount of memory
 before actual operations. Also, memory extending is done by predefined
-portions of 2^8^, 2^9^, 2^10^, 2^13^, 2^16^, 2^16^, 2^16^...
+portions of 2^11^, 2^12^, 2^13^, 2^14^, 2^15^, 2^15^, 2^15^...
 This tries to minimize the number of memory reallocation.
