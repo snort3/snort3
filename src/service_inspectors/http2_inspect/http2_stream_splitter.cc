@@ -97,6 +97,9 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
     const StreamSplitter::Status ret_val =
         implement_scan(session_data, data, length, flush_offset, source_id);
 
+    session_data->bytes_scanned[source_id] += (ret_val == StreamSplitter::FLUSH)?
+        *flush_offset : length;
+
     if (ret_val == StreamSplitter::ABORT)
         session_data->abort_flow[source_id] = true;
 
@@ -161,7 +164,10 @@ const StreamBuffer Http2StreamSplitter::reassemble(Flow* flow, unsigned total, u
     if (session_data->payload_discard[source_id])
     {
         if (flags & PKT_PDU_TAIL)
+        {
             session_data->payload_discard[source_id] = false;
+            session_data->bytes_scanned[source_id] = 0;
+        }
 
 #ifdef REG_TEST
         if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))

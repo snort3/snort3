@@ -175,6 +175,7 @@ protected:
 
     // Scan signals to reassemble()
     bool payload_discard[2] = { false, false };
+    unsigned bytes_scanned[2] = { 0, 0 };
 
     // Used by scan, reassemble and eval to communicate
     uint8_t frame_type[2] = { Http2Enums::FT__NONE, Http2Enums::FT__NONE };

@@ -386,7 +386,7 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
 
     StreamBuffer frame_buf { nullptr, 0 };
 
-    if ( total > MAX_OCTETS || offset+len > total)
+    if ( offset+len > total || total != session_data->bytes_scanned[source_id])
     {
          assert(false);
          session_data->abort_flow[source_id] = true;
@@ -532,6 +532,7 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
             // but don't create pkt_data buffer
             frame_buf.data = (const uint8_t*)"";
         }
+        session_data->bytes_scanned[source_id] = 0;
     }
 
     return frame_buf;
