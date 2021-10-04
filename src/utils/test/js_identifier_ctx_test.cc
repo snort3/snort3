@@ -24,8 +24,9 @@
 #include "catch/catch.hpp"
 
 #include <cstring>
-#include <vector>
 #include <iomanip>
+#include <sstream>
+#include <vector>
 
 #include "utils/js_identifier_ctx.h"
 
