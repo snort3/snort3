@@ -75,14 +75,18 @@ static void populate_trace_data(FileContext* context)
     context->print_file_name(ss);
     std::string file_name = ss.str();
 
-    PacketTracer::daq_log("file+%" PRId64"++File Type[%s]/File ID[%lu] with name[%s] and size[%lu] detected."
-                "File SHA is [%s], with verdict[%s]$",
+    PacketTracer::daq_log("file+%" PRId64"+Matched policy id %u, identification %s, signature %s, capture %s+"
+                "File with ID %lu, name %s, type %s, size %lu, SHA %s detected. Verdict %s.$",
                 TO_NSECS(pt_timer->get()),
-                file_type_name(context->get_file_type()).c_str(),
+                context->get_policy_id(),
+                ((context->is_file_type_enabled() || context->get_file_type() || context->get_file_sig_sha256()) ? "<on>" : "<off>"),
+                ((context->is_file_signature_enabled() || context->get_file_sig_sha256()) ? "<on>" : "<off>"),
+                (context->is_file_capture_enabled() ? "<on>" : "<off>"),
                 context->get_file_id(),
-                file_name.c_str(),
+                (file_name.empty() ? "<empty>" : file_name.c_str()),
+                file_type_name(context->get_file_type()).c_str(),
                 context->get_file_size(),
-                (context->get_file_sig_sha256() ? context->sha_to_string(context->get_file_sig_sha256()).c_str(): "null"),
+                (context->get_file_sig_sha256() ? context->sha_to_string(context->get_file_sig_sha256()).c_str(): "<empty>"),
                 VerdictName[context->verdict].c_str());
 }
 

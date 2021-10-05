@@ -172,6 +172,7 @@ void FilePolicy::policy_check(Flow*, FileInfo* file)
     file->config_file_type(type_enabled);
     file->config_file_signature(signature_enabled);
     file->config_file_capture(capture_enabled);
+    file->set_policy_id(0);
 }
 
 FileVerdict FilePolicy::type_lookup(Packet*, FileInfo* file)

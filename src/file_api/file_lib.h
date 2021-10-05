@@ -77,6 +77,8 @@ public:
     bool is_file_signature_enabled();
     void config_file_capture(bool enabled);
     bool is_file_capture_enabled();
+    void set_policy_id(uint32_t id);
+    uint32_t get_policy_id();
 
     // Preserve the file in memory until it is released
     // The file reserved will be returned and it will be detached from file context/session
@@ -104,6 +106,7 @@ protected:
     bool file_signature_enabled = false;
     bool file_capture_enabled = false;
     FileState file_state = { FILE_CAPTURE_SUCCESS, FILE_SIG_PROCESSING };
+    uint32_t policy_id = 0;
 
 private:
     void copy(const FileInfo& other);

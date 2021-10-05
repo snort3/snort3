@@ -259,6 +259,16 @@ bool FileInfo::is_file_capture_enabled()
     return file_capture_enabled;
 }
 
+void FileInfo::set_policy_id(uint32_t id)
+{
+    policy_id = id;
+}
+
+uint32_t FileInfo::get_policy_id()
+{
+    return policy_id;
+}
+
 FileCaptureState FileInfo::reserve_file(FileCapture*& dest)
 {
     if (!file_capture)
