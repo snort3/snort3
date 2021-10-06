@@ -211,11 +211,18 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto,
     SnortProtocolId snort_protocol_id, bool swap_app_direction, bool bidirectional)
 {
-    char src_ip[INET6_ADDRSTRLEN];
-    char dst_ip[INET6_ADDRSTRLEN];
     enum PktType type = get_pkt_type_from_ip_proto(proto);
 
-    assert(type != PktType::NONE);
+    if (type == PktType::NONE)
+    {
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s Failed to create a related flow - invalid protocol %u\n",
+                appidDebug->get_debug_session(), (unsigned)proto);
+        return nullptr;
+    }
+
+    char src_ip[INET6_ADDRSTRLEN];
+    char dst_ip[INET6_ADDRSTRLEN];
 
     AppIdInspector* inspector = (AppIdInspector*)ctrlPkt->flow->flow_data->get_handler();
     if ((inspector == nullptr) || strcmp(inspector->get_name(), MOD_NAME))

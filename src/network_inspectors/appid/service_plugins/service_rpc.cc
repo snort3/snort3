@@ -26,6 +26,8 @@
 #include "service_rpc.h"
 
 #include <netdb.h>
+#include <sstream>
+#include <string>
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(USE_TIRPC)
 #include <rpc/rpc.h>
@@ -41,7 +43,7 @@
 #include "app_info_table.h"
 
 using namespace snort;
-
+using namespace std;
 
 enum RPCState
 {
@@ -78,6 +80,8 @@ enum RPCReplyState
 #define RPC_PROGRAM_PORTMAP     100000
 #define RPC_PORTMAP_GETPORT     3
 
+#define RPC_BIND_PORTMAP_GETADDR 3
+
 #define RPC_REPLY_ACCEPTED 0
 #define RPC_REPLY_DENIED   1
 
@@ -88,6 +92,9 @@ enum RPCReplyState
 
 /* sizeof(ServiceRPCCall)+sizeof(_SERVICE_RPC_PORTMAP)==56 */
 #define RPC_MAX_TCP_PACKET_SIZE  56
+
+#define PROGRAM_LENGTH 4
+#define VERSION_LENGTH 4
 
 #pragma pack(1)
 
@@ -113,6 +120,18 @@ struct ServiceRPCPortmap
 struct ServiceRPCPortmapReply
 {
     uint32_t port;
+};
+
+struct NetId
+{
+    uint32_t length;
+    // protocol string follows
+};
+
+struct UniversalAddress
+{
+    uint32_t length;
+    // universal address follows
 };
 
 struct ServiceRPC
@@ -148,6 +167,7 @@ struct ServiceRPCData
     RPCTCPState tcpstate[APP_ID_APPID_SESSION_DIRECTION_MAX];
     RPCTCPState tcpfragstate[APP_ID_APPID_SESSION_DIRECTION_MAX];
     uint32_t program;
+    uint32_t program_version;
     uint32_t procedure;
     uint32_t xid;
     IpProtocol proto;
@@ -275,6 +295,53 @@ static const RPCProgram* FindRPCProgram(uint32_t program)
     return rpc;
 }
 
+static IpProtocol get_protocol_from_netid(const string& proto)
+{
+    if (proto == "tcp")
+        return IpProtocol::TCP;
+    else if (proto == "udp")
+        return IpProtocol::UDP;
+    else if (proto == "icmp")
+        return IpProtocol::ICMPV4;
+    else if (proto == "ip")
+        return IpProtocol::IP;
+    else
+        return IpProtocol::PROTO_NOT_SET;
+}
+
+/*
+ * Universal addresses take the form h1.h2.h3.h4.p1.p2 ; where h1, h2, h3 and h4 are respectively,
+ * the first through fourth octets of the IP address each converted to ASCII-decimal. p1 and p2 are
+ * respectively, the first and second octets of the service port, each converted to ASCII-decimal.
+ */
+static bool  validate_and_parse_universal_address(string& data, uint32_t &address,
+    uint16_t &port)
+{
+    int i = 0;
+    istringstream tokenizer(data);
+    string tok;
+    while (getline(tokenizer, tok, '.'))
+    {
+        int tmp = stoi(tok);
+        if (tmp > 255)
+            return false;
+        if (i < 4)
+        {
+            address <<= 8u;
+            address += tmp;
+        }
+        else
+        {
+            port <<= 8u;
+            port += tmp;
+        }
+        i++;
+    }
+    if (i != 6)
+        return false;
+    return true;
+}
+
 int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, AppidSessionDirection dir,
     AppIdSession& asd, Packet* pkt, ServiceRPCData* rd, const char** pname, uint32_t* program)
 {
@@ -329,6 +396,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
         if (ntohl(call->version) != 2)
             return APPID_NOT_COMPATIBLE;
         rd->program = ntohl(call->program);
+        rd->program_version = ntohl(call->program_version);
         rd->procedure = ntohl(call->procedure);
         tmp = ntohl(call->cred.length);
         if (sizeof(ServiceRPCCall)+tmp > size)
@@ -344,16 +412,27 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
         switch (rd->program)
         {
         case RPC_PROGRAM_PORTMAP:
-            switch (rd->procedure)
+            if (rd->program_version == 3 and rd->procedure == RPC_BIND_PORTMAP_GETADDR)
             {
-            case RPC_PORTMAP_GETPORT:
+                if (sizeof(ServiceRPCCall) + PROGRAM_LENGTH + VERSION_LENGTH + sizeof(NetId) > size)
+                    return APPID_NOT_COMPATIBLE;
+                data += (PROGRAM_LENGTH + VERSION_LENGTH);
+                const NetId* net_id = (const NetId*) data;
+                tmp = ntohl(net_id->length);
+                if (tmp == 0 or (sizeof(ServiceRPCCall) + PROGRAM_LENGTH + VERSION_LENGTH +
+                    sizeof(NetId) + tmp > size))
+                    return APPID_NOT_COMPATIBLE;
+
+                data += sizeof(NetId);
+                string netid_proto(data, data + tmp);
+                rd->proto = get_protocol_from_netid(netid_proto);
+            }
+            else if (rd->program_version == 2 and rd->procedure == RPC_PORTMAP_GETPORT)
+            {
                 if (end-data < (int)sizeof(ServiceRPCPortmap))
                     return APPID_NOT_COMPATIBLE;
                 pm = (const ServiceRPCPortmap*)data;
                 rd->proto = (IpProtocol)ntohl(pm->proto);
-                break;
-            default:
-                break;
             }
             break;
         default:
@@ -389,14 +468,47 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
                 return APPID_INPROCESS;
             }
             *program = rd->program;
-            const ServiceRPCPortmapReply* pmr = nullptr;
 
             switch (rd->program)
             {
             case RPC_PROGRAM_PORTMAP:
-                switch (rd->procedure)
+                if (rd->program_version == 3 and rd->procedure == RPC_BIND_PORTMAP_GETADDR)
                 {
-                case RPC_PORTMAP_GETPORT:
+                    if ((sizeof(ServiceRPCReply) + sizeof(UniversalAddress)) > size)
+                        return APPID_NOMATCH;
+                    const UniversalAddress* u_addr = (const UniversalAddress*) data;
+                    tmp = ntohl(u_addr->length);
+                    if (tmp == 0 or
+                        ((sizeof(ServiceRPCReply) + sizeof(UniversalAddress) + tmp) > size))
+                        return APPID_NOMATCH;
+                    uint32_t address = 0;
+                    uint16_t port = 0;
+                    data += sizeof(UniversalAddress);
+                    string uaddr(data, data + tmp);
+                    if (validate_and_parse_universal_address(uaddr, address, port))
+                    {
+                        SfIp sip;
+                        uint32_t addr = htonl(address);
+                        sip.set(&addr, AF_INET);
+                        const SfIp* dip = pkt->ptrs.ip_api.get_dst();
+                        AppIdSession* fsession = AppIdSession::create_future_session(
+                            pkt, dip, 0, &sip, port, rd->proto,
+                            asd.config.snort_proto_ids[PROTO_INDEX_SUNRPC]);
+
+                        if (fsession)
+                        {
+                            fsession->add_flow_data_id(port, this);
+                            fsession->service_disco_state = APPID_DISCO_STATE_STATEFUL;
+                            fsession->set_session_flags(asd.get_session_flags(
+                                APPID_SESSION_SPECIAL_MONITORED |
+                                APPID_SESSION_DISCOVER_APP |
+                                APPID_SESSION_DISCOVER_USER));
+                        }
+                    }
+                }
+                else if (rd->program_version == 2 and rd->procedure == RPC_PORTMAP_GETPORT)
+                {
+                    const ServiceRPCPortmapReply* pmr = nullptr;
                     if (end-data < (int)sizeof(ServiceRPCPortmapReply))
                         return APPID_NOMATCH;
                     pmr = (const ServiceRPCPortmapReply*)data;
@@ -420,9 +532,6 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
                                 APPID_SESSION_DISCOVER_USER));
                         }
                     }
-                    break;
-                default:
-                    break;
                 }
                 *pname = "portmap";
                 break;
