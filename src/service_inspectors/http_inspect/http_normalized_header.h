@@ -45,7 +45,7 @@ public:
     int32_t count;
     const HttpEnums::HeaderId id;
 
-private:  
+private:
     // Header normalization strategies. There should be one defined for every different way we can
     // process a header field value.
     class HeaderNormalizer;
@@ -66,6 +66,6 @@ private:
     Field norm;
     Field comma_separated_raw;
 };
- 
+
 #endif
 

@@ -1,16 +1,16 @@
-With the volume of malware transferred through network increasing, 
-network file inspection becomes more and more important. This feature 
-will provide file type identification, file signature creation, and file 
-capture capabilities to help users deal with those challenges. 
+With the volume of malware transferred through network increasing,
+network file inspection becomes more and more important. This feature
+will provide file type identification, file signature creation, and file
+capture capabilities to help users deal with those challenges.
 
 ==== Overview
 
 There are two parts of file services: file APIs and file policy.
-File APIs provides all the file inspection functionalities, such as file 
-type identification, file signature calculation, and file capture. 
+File APIs provides all the file inspection functionalities, such as file
+type identification, file signature calculation, and file capture.
 File policy provides users ability to control file services, such
-as enable/disable/configure file type identification, file signature, or 
-file capture.  
+as enable/disable/configure file type identification, file signature, or
+file capture.
 
 In addition to all capabilities from Snort 2, we support customized file
 policy along with file event log.
@@ -24,15 +24,15 @@ A very simple configuration has been included in lua/snort.lua file.
 A typical file configuration looks like this:
 
     dofile('magic.lua')
-    
-    my_file_policy = 
+
+    my_file_policy =
     {
-        {  when = { file_type_id = 0 }, use = { verdict = 'log', enable_file_signature = true, enable_file_capture = true } }  
+        {  when = { file_type_id = 0 }, use = { verdict = 'log', enable_file_signature = true, enable_file_capture = true } }
         {  when = { file_type_id = 22 }, use = { verdict = 'log', enable_file_signature = true } },
         {  when = { sha256 = "F74DC976BC8387E7D4FC0716A069017A0C7ED13F309A523CC41A8739CCB7D4B6" }, use = { verdict = 'block'} },
     }
-         
-    file_id = 
+
+    file_id =
     {
         enable_type = true,
         enable_signature = true,
@@ -44,18 +44,18 @@ A typical file configuration looks like this:
         file_policy = my_file_policy,
      }
 
-     file_log = 
-     { 
-         log_pkt_time = true, 
+     file_log =
+     {
+         log_pkt_time = true,
          log_sys_time = false,
      }
 
 There are 3 steps to enable file processing:
- 
+
 * First, you need to include the file magic rules.
 * Then, define the file policy and configure the inspector
 * At last, enable file_log to get detailed information about file event
- 
+
 ==== Pre-packaged File Magic Rules
 
 A set of file magic rules is packaged with Snort. They can be located at
@@ -73,7 +73,7 @@ Example:
    { type = "GIF", id = 63, category = "Graphics", rev = 1,
      magic = { { content = "| 47 49 46 38 39 61 |",offset = 0 } } },
 
-The previous two rules define GIF format, because two file magics are 
+The previous two rules define GIF format, because two file magics are
 different. File magics are specified by content and offset, which look
 at content at particular file offset to identify the file type. In this
 case, two magics look at the beginning of the file. You can use character
@@ -81,62 +81,62 @@ if it is printable or hex value in between "|".
 
 ==== File Policy
 
-You can enabled file type, file signature, or file capture by configuring 
-file_id. In addition, you can enable trace to see file stream data, file 
+You can enabled file type, file signature, or file capture by configuring
+file_id. In addition, you can enable trace to see file stream data, file
 type, and file signature information.
 
-Most importantly, you can configure a file policy that can block/alert 
-some file type or an individual file based on SHA. This allows you 
+Most importantly, you can configure a file policy that can block/alert
+some file type or an individual file based on SHA. This allows you
 build a file blacklist or whitelist.
 
 Example:
 
-    file_policy = 
+    file_policy =
     {
         {  when = { file_type_id = 22 }, use = { verdict = 'log', enable_file_signature = true } },
         {  when = { sha256 = "F74DC976BC8387E7D4FC0716A069017A0C7ED13F309A523CC41A8739CCB7D4B6" }, use = { verdict = 'block'} },
-        {  when = { file_type_id = 0 }, use = { verdict = 'log', enable_file_signature = true, enable_file_capture = true } }  
+        {  when = { file_type_id = 0 }, use = { verdict = 'log', enable_file_signature = true, enable_file_capture = true } }
     }
 
 In this example, it enables this policy:
 
 * For PDF files, they will be logged with signatures.
 * For the file matching this SHA, it will be blocked
-* For all file types identified, they will be logged with signature, and 
+* For all file types identified, they will be logged with signature, and
 also captured onto log folder.
 
 ==== File Capture
 
 File can be captured and stored to log folder. We use SHA as file name
-instead of actual file name to avoid conflicts. You can capture either 
+instead of actual file name to avoid conflicts. You can capture either
 all files, some file type, or a particular file based on SHA.
 
 You can enable file capture through this config:
 
   enable_capture = true,
-  
+
 or enable it for some file or  file type in your file policy:
 
   {  when = { file_type_id = 22 }, use = { verdict = 'log', enable_file_capture = true } },
-  
+
 The above rule will enable PDF file capture.
-  
+
 ==== File Events
 
-File inspect preprocessor also works as a dynamic output plugin for file 
+File inspect preprocessor also works as a dynamic output plugin for file
 events. It logs basic information about file. The log file is in the same
 folder as other log files with name starting with "file.log".
 
 Example:
 
   file_log = { log_pkt_time = true, log_sys_time = false }
-  
+
 All file events will be logged in packet time, system time is not logged.
-  
+
 File event example:
 
-   08/14-19:14:19.100891  10.22.75.72:33734 -> 10.22.75.36:80, 
-   [Name: "malware.exe"] [Verdict: Block] [Type: MSEXE] 
-   [SHA: 6F26E721FDB1AAFD29B41BCF90196DEE3A5412550615A856DAE8E3634BCE9F7A] 
-   [Size: 1039328] 
-  
+   08/14-19:14:19.100891  10.22.75.72:33734 -> 10.22.75.36:80,
+   [Name: "malware.exe"] [Verdict: Block] [Type: MSEXE]
+   [SHA: 6F26E721FDB1AAFD29B41BCF90196DEE3A5412550615A856DAE8E3634BCE9F7A]
+   [Size: 1039328]
+

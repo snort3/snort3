@@ -364,7 +364,7 @@ static inline int ssh_client_validate_pubkey(uint16_t offset, const uint8_t* dat
 }
 
 static inline int ssh_client_sm(AppIdDiscoveryArgs& args, ClientSSHData* fd)
-{   
+{
     const char *pattern_begin;
     const char *pattern_end;
     uint8_t d;
@@ -383,8 +383,8 @@ static inline int ssh_client_sm(AppIdDiscoveryArgs& args, ClientSSHData* fd)
     {
         return APPID_EINVALID;
     }
-    
-    
+
+
     pattern_begin = strchr((const char*)(fd->proto_string + SSH_CLIENT_BANNER_MAXPOS + 1), '-');
     if (pattern_begin != nullptr)
     {
@@ -394,14 +394,14 @@ static inline int ssh_client_sm(AppIdDiscoveryArgs& args, ClientSSHData* fd)
     {
         return APPID_EINVALID;
     }
-    
+
     pattern_end = strpbrk(pattern_begin, "_-");
     if (pattern_end != nullptr)
     {
         size_t pattern_len = (size_t)(pattern_end - pattern_begin);
         string pattern(pattern_begin, pattern_len);
         SshPatternMatchers& table = args.asd.get_odp_ctxt().get_ssh_matchers();
-    
+
         if (table.has_pattern(pattern))
         {
             fd->client_id = table.get_appid(pattern);
@@ -428,7 +428,7 @@ static inline int ssh_client_sm(AppIdDiscoveryArgs& args, ClientSSHData* fd)
     {
         fd->client_id = APP_ID_SSH;
     }
-    fd->pos = 0;       
+    fd->pos = 0;
     return APPID_INPROCESS;
 }
 
@@ -449,13 +449,13 @@ int SshClientDetector::validate(AppIdDiscoveryArgs& args)
         fd->oldhstate = SSH1_HEADER_BEGIN;
         fd->proto_string_done = false;
     }
-    
+
     uint16_t offset = 0;
     if (!(fd->proto_string_done))
     {
         const uint8_t *line_end = (const uint8_t *)memchr(args.data, '\n', args.size);
         size_t append_len;
-        if (line_end != nullptr) 
+        if (line_end != nullptr)
         {
             append_len = (size_t)(line_end - args.data + 1);
             fd->proto_string_done = true;

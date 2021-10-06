@@ -58,7 +58,7 @@ Http2Frame* Http2Frame::new_frame(const uint8_t* header, const uint32_t header_l
     Http2Stream* stream)
 {
     Http2Frame* frame = nullptr;
-  
+
     // FIXIT-E call the appropriate frame subclass constructor based on the type
     switch(session_data->frame_type[source_id])
     {

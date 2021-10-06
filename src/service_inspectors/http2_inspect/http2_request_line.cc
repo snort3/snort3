@@ -179,12 +179,12 @@ bool Http2RequestLine::generate_start_line(Field& start_line, bool pseudo_header
             }
         }
     }
-    
+
     start_line_length = method.length() + uri_len + http_version_length +
         num_request_line_extra_chars;
     start_line_buffer = new uint8_t[start_line_length];
-    
-    // Method    
+
+    // Method
     memcpy(start_line_buffer, method.start(), method.length());
     bytes_written += method.length();
     memcpy(start_line_buffer + bytes_written, " ", 1);

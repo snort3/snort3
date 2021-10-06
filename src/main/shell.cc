@@ -491,7 +491,7 @@ bool Shell::configure(SnortConfig* sc, bool is_root)
     }
 
     bool load_in_sandbox = true;
-  
+
     if ( lua_sandbox.empty() )
         load_in_sandbox = false;
     else if ( !load_lua_sandbox() )

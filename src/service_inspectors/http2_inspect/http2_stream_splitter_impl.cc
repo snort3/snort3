@@ -424,7 +424,7 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
             // Skip frame header
             if (session_data->read_frame_header[source_id])
             {
-               
+
                 const uint32_t remaining_frame_header = FRAME_HEADER_LENGTH -
                      session_data->frame_header_offset[source_id];
                 const uint32_t octets_to_skip = remaining_frame_header > len - data_offset ?

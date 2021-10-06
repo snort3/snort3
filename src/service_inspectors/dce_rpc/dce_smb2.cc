@@ -258,7 +258,7 @@ void Dce2Smb2SessionData::process_command(const Smb2Hdr* smb_hdr,
                     int result = Stream::set_snort_protocol_id_expected(p, PktType::TCP,
                         IpProtocol::TCP, p->ptrs.ip_api.get_dst() , 0 ,p->ptrs.ip_api.get_src(),
                         p->flow->server_port , snort_protocol_id_smb, fd, false, true);
-                
+
                     if (result < 0)
                     {
                         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, GET_CURRENT_PACKET,
@@ -474,7 +474,7 @@ void Dce2Smb2SessionData::process()
         // Check header length
         if (data_len < sizeof(NbssHdr) + SMB2_HEADER_LENGTH)
         {
-            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, 
+            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL,
                 p, "Header error with data length %d\n",data_len);
             dce2_smb_stats.v2_hdr_err++;
             return;
@@ -499,7 +499,7 @@ void Dce2Smb2SessionData::process()
             {
                 dce_alert(GID_DCE2, DCE2_SMB_BAD_NEXT_COMMAND_OFFSET,
                     (dce2CommonStats*)&dce2_smb_stats, sd);
-		        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, 
+		        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID,
 		        TRACE_ERROR_LEVEL, p, "bad next command offset\n");
                 dce2_smb_stats.v2_bad_next_cmd_offset++;
                 return;
@@ -513,7 +513,7 @@ void Dce2Smb2SessionData::process()
             if (compound_request_index > get_smb_max_compound())
             {
                 dce2_smb_stats.v2_cmpnd_req_lt_crossed++;
-		        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, 
+		        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID,
 		            TRACE_INFO_LEVEL, p, "compound request limit"
                     " reached %" PRIu8 "\n",compound_request_index);
                 return;

@@ -116,7 +116,7 @@ void parseIec104Qoc(uint8_t qu, uint8_t se)
         DetectionEngine::queue_event(GID_IEC104, IEC104_RESERVED_QOC);
     }
 
-    if (se >= 2) 
+    if (se >= 2)
     {
         // error indicating that parsing couldn't finish
     }
@@ -194,343 +194,343 @@ void parseIec104Afq(const Iec104AfqType* afq)
 uint32_t parseIec104Vsq(const Iec104ApciI* apci)
 {
     // number of elements == 0 is caught in check apdu
-    
+
     uint32_t informationObjectSubgroupSize = 0;
 
     // determine the size of the current message type group
-    switch(apci->asdu.typeId) 
+    switch(apci->asdu.typeId)
     {
-        case IEC104_ASDU_M_SP_NA_1: 
+        case IEC104_ASDU_M_SP_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_SP_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_SP_TA_1: 
+        case IEC104_ASDU_M_SP_TA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_SP_TA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_DP_NA_1: 
+        case IEC104_ASDU_M_DP_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_DP_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_DP_TA_1: 
+        case IEC104_ASDU_M_DP_TA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_DP_TA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_ST_NA_1: 
+        case IEC104_ASDU_M_ST_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_ST_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_ST_TA_1: 
+        case IEC104_ASDU_M_ST_TA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_ST_TA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_BO_NA_1: 
+        case IEC104_ASDU_M_BO_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_BO_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_BO_TA_1: 
+        case IEC104_ASDU_M_BO_TA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_BO_TA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_ME_NA_1: 
+        case IEC104_ASDU_M_ME_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_ME_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_ME_TA_1: 
+        case IEC104_ASDU_M_ME_TA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_ME_TA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_ME_NB_1: 
+        case IEC104_ASDU_M_ME_NB_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_ME_NB_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_ME_TB_1: 
+        case IEC104_ASDU_M_ME_TB_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_ME_TB_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_ME_NC_1: 
+        case IEC104_ASDU_M_ME_NC_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_ME_NC_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_ME_TC_1: 
+        case IEC104_ASDU_M_ME_TC_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_ME_TC_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_IT_NA_1: 
+        case IEC104_ASDU_M_IT_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_IT_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_IT_TA_1: 
+        case IEC104_ASDU_M_IT_TA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_IT_TA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_EP_TA_1: 
+        case IEC104_ASDU_M_EP_TA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_EP_TA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_EP_TB_1: 
+        case IEC104_ASDU_M_EP_TB_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_EP_TB_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_EP_TC_1: 
+        case IEC104_ASDU_M_EP_TC_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_EP_TC_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_PS_NA_1: 
+        case IEC104_ASDU_M_PS_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_PS_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_ME_ND_1: 
+        case IEC104_ASDU_M_ME_ND_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_ME_ND_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_SP_TB_1: 
+        case IEC104_ASDU_M_SP_TB_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_SP_TB_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_DP_TB_1: 
+        case IEC104_ASDU_M_DP_TB_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_DP_TB_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_ST_TB_1: 
+        case IEC104_ASDU_M_ST_TB_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_ST_TB_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_BO_TB_1: 
+        case IEC104_ASDU_M_BO_TB_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_BO_TB_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_ME_TD_1: 
+        case IEC104_ASDU_M_ME_TD_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_ME_TD_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_ME_TE_1: 
+        case IEC104_ASDU_M_ME_TE_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_ME_TE_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_ME_TF_1: 
+        case IEC104_ASDU_M_ME_TF_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_ME_TF_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_IT_TB_1: 
+        case IEC104_ASDU_M_IT_TB_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_IT_TB_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_EP_TD_1: 
+        case IEC104_ASDU_M_EP_TD_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_EP_TD_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_EP_TE_1: 
+        case IEC104_ASDU_M_EP_TE_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_EP_TE_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_EP_TF_1: 
+        case IEC104_ASDU_M_EP_TF_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_EP_TF_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_SC_NA_1: 
+        case IEC104_ASDU_C_SC_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_SC_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_DC_NA_1: 
+        case IEC104_ASDU_C_DC_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_DC_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_RC_NA_1: 
+        case IEC104_ASDU_C_RC_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_RC_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_SE_NA_1: 
+        case IEC104_ASDU_C_SE_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_SE_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_SE_NB_1: 
+        case IEC104_ASDU_C_SE_NB_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_SE_NB_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_SE_NC_1: 
+        case IEC104_ASDU_C_SE_NC_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_SE_NC_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_BO_NA_1: 
+        case IEC104_ASDU_C_BO_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_BO_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_SC_TA_1: 
+        case IEC104_ASDU_C_SC_TA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_SC_TA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_DC_TA_1: 
+        case IEC104_ASDU_C_DC_TA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_DC_TA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_RC_TA_1: 
+        case IEC104_ASDU_C_RC_TA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_RC_TA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_SE_TA_1: 
+        case IEC104_ASDU_C_SE_TA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_SE_TA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_SE_TB_1: 
+        case IEC104_ASDU_C_SE_TB_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_SE_TB_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_SE_TC_1: 
+        case IEC104_ASDU_C_SE_TC_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_SE_TC_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_BO_TA_1: 
+        case IEC104_ASDU_C_BO_TA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_BO_TA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_M_EI_NA_1: 
+        case IEC104_ASDU_M_EI_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104M_EI_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_IC_NA_1: 
+        case IEC104_ASDU_C_IC_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_IC_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_CI_NA_1: 
+        case IEC104_ASDU_C_CI_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_CI_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_RD_NA_1: 
+        case IEC104_ASDU_C_RD_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_RD_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_CS_NA_1: 
+        case IEC104_ASDU_C_CS_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_CS_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_TS_NA_1: 
+        case IEC104_ASDU_C_TS_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_TS_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_RP_NA_1: 
+        case IEC104_ASDU_C_RP_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_RP_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_CD_NA_1: 
+        case IEC104_ASDU_C_CD_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_CD_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_C_TS_TA_1: 
+        case IEC104_ASDU_C_TS_TA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104C_TS_TA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_P_ME_NA_1: 
+        case IEC104_ASDU_P_ME_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104P_ME_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_P_ME_NB_1: 
+        case IEC104_ASDU_P_ME_NB_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104P_ME_NB_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_P_ME_NC_1: 
+        case IEC104_ASDU_P_ME_NC_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104P_ME_NC_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_P_AC_NA_1: 
+        case IEC104_ASDU_P_AC_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104P_AC_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_F_FR_NA_1: 
+        case IEC104_ASDU_F_FR_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104F_FR_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_F_SR_NA_1: 
+        case IEC104_ASDU_F_SR_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104F_SR_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_F_SC_NA_1: 
+        case IEC104_ASDU_F_SC_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104F_SC_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_F_LS_NA_1: 
+        case IEC104_ASDU_F_LS_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104F_LS_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_F_AF_NA_1: 
+        case IEC104_ASDU_F_AF_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104F_AF_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_F_SG_NA_1: 
+        case IEC104_ASDU_F_SG_NA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104F_SG_NA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_F_DR_TA_1: 
+        case IEC104_ASDU_F_DR_TA_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104F_DR_TA_1_IO_Subgroup);
             break;
         }
-        case IEC104_ASDU_F_SC_NB_1: 
+        case IEC104_ASDU_F_SC_NB_1:
         {
             informationObjectSubgroupSize = sizeof(Iec104F_SC_NB_1_IO_Subgroup);
             break;
@@ -545,25 +545,25 @@ uint32_t parseIec104Vsq(const Iec104ApciI* apci)
     // * divide the result of the earlier calculation by this group size to get the maximum allowable groups without overflowing
     uint8_t maxNumberOfElements = 0;
 
-    if (informationObjectSubgroupSize) 
+    if (informationObjectSubgroupSize)
     {
         uint32_t reported_msg_len = apci->header.length;
-        if (reported_msg_len >= IEC104_APCI_TYPE_I_MIN_LEN) { 
-            if (apci->asdu.variableStructureQualifier.sq == 0) 
+        if (reported_msg_len >= IEC104_APCI_TYPE_I_MIN_LEN) {
+            if (apci->asdu.variableStructureQualifier.sq == 0)
             {
                 uint32_t informationObjectGroupSize = informationObjectSubgroupSize + sizeof(const Iec104InformationObjectAddressThreeOctetType);
                 maxNumberOfElements = (reported_msg_len
                                        - sizeof(uint8_t)  // type id
-                                       - sizeof(const Iec104VariableStructureQualifierType) 
+                                       - sizeof(const Iec104VariableStructureQualifierType)
                                        - sizeof(const Iec104CauseOfTransmissionType)
                                        - sizeof(const Iec104CommonAddressOfAsduType)
                                        ) / informationObjectGroupSize;
-            } 
-            else 
+            }
+            else
             {
-                maxNumberOfElements = (reported_msg_len 
+                maxNumberOfElements = (reported_msg_len
                                        - sizeof(uint8_t)  // type id
-                                       - sizeof(const Iec104VariableStructureQualifierType) 
+                                       - sizeof(const Iec104VariableStructureQualifierType)
                                        - sizeof(const Iec104CauseOfTransmissionType)
                                        - sizeof(const Iec104CommonAddressOfAsduType)
                                        - sizeof(const Iec104InformationObjectAddressThreeOctetType)
@@ -573,11 +573,11 @@ uint32_t parseIec104Vsq(const Iec104ApciI* apci)
     }
 
     uint32_t verifiedNumberOfElements = apci->asdu.variableStructureQualifier.numberOfElements;
-    if (verifiedNumberOfElements > 0 and verifiedNumberOfElements <= maxNumberOfElements) 
+    if (verifiedNumberOfElements > 0 and verifiedNumberOfElements <= maxNumberOfElements)
     {
         // do nothing
-    } 
-    else 
+    }
+    else
     {
         verifiedNumberOfElements = 0;
         DetectionEngine::queue_event(GID_IEC104, IEC104_APCII_INVALID_NUM_ELEMENTS_VALUE);
@@ -601,10 +601,10 @@ void parseIec104CauseOfTx(const Iec104ApciI* apci)
 {
     // no alerts are needed here as they are processed in checkIec104Asdu
 
-    if (!apci) 
+    if (!apci)
     {
         // error indicating that parsing couldn't finish
-    } 
+    }
 }
 
 void parseIec104TwoOctetCommonAddress(const Iec104ApciI* apci)
@@ -621,7 +621,7 @@ void parseIec104InformationObjectAddressWithThreeOctets(
 {
     // Nothing worth alerting on here
 
-    if (!ioa) 
+    if (!ioa)
     {
         // error indicating that parsing couldn't finish
     }
@@ -672,7 +672,7 @@ void parseIec104Vti(const Iec104VtiType* vti)
 {
     // Nothing worth alerting on here
 
-    if (!vti) 
+    if (!vti)
     {
         // error indicating that parsing couldn't finish
     }
@@ -694,7 +694,7 @@ void parseIec104Sva(const Iec104SvaType* sva)
 {
     // Nothing worth alerting on here
 
-    if (!sva) 
+    if (!sva)
     {
         // error indicating that parsing couldn't finish
     }
@@ -740,7 +740,7 @@ void parseIec104Bcr(const Iec104BcrType* bcr)
 {
     // Nothing worth alerting on here
 
-    if (!bcr) 
+    if (!bcr)
     {
         // error indicating that parsing couldn't finish
     }
@@ -781,7 +781,7 @@ void parseIec104Bsi(const Iec104BsiType* bsi)
 {
     // Nothing worth alerting on here
 
-    if (!bsi) 
+    if (!bsi)
     {
         // error indicating that parsing couldn't finish
     }
@@ -963,10 +963,10 @@ void parseIec104Time2aDowday(const Iec104Cp56Time2aType* sevenOctetBinaryTime)
                 // CP56Time2a Day of Month set outside of the allowable range for 30-day months
                 DetectionEngine::queue_event(GID_IEC104, IEC104_INVALID_DAY_OF_MONTH);
             }
-            
+
         }// months with 31 days cannot be over as the type isn't large enough
-    } 
-    else 
+    }
+    else
     {
         // error indicating that parsing couldn't finish
     }
@@ -1042,7 +1042,7 @@ void parseIec104Nof(const Iec104NofType* nof)
 {
     // Nothing worth alerting on directly here
 
-    if (!nof) 
+    if (!nof)
     {
         // error indicating that parsing couldn't finish
     }
@@ -1053,7 +1053,7 @@ void parseIec104Nos(const Iec104NosType* nos)
 {
     // Nothing worth alerting on directly here
 
-    if (!nos) 
+    if (!nos)
     {
         // error indicating that parsing couldn't finish
     }
@@ -1063,13 +1063,13 @@ void parseIec104Nos(const Iec104NosType* nos)
 void parseIec104Lof(const Iec104LofType* lof)
 {
     // maybe a rule checking if length of file is greater than amount of data
-    //  It appears that the length field here is an indicator for other messages actually containing the 
-    //  file data so detection may be better via plaintext rules with flowbits if desired       
+    //  It appears that the length field here is an indicator for other messages actually containing the
+    //  file data so detection may be better via plaintext rules with flowbits if desired
 
-    if (!lof) 
+    if (!lof)
     {
         // error indicating that parsing couldn't finish
-    } 
+    }
 }
 
 // LOS: Length of Segment Structure
@@ -1107,7 +1107,7 @@ void parseIec104Chs(const Iec104ChsType* chs)
 {
     // Nothing worth alerting on directly here
 
-    if (!chs) 
+    if (!chs)
     {
         // error indicating that parsing couldn't finish
     }
@@ -1138,7 +1138,7 @@ void parseIec104Scd(const Iec104ScdType* scd)
 {
     // Nothing worth alerting on directly here
 
-    if (!scd) 
+    if (!scd)
     {
         // error indicating that parsing couldn't finish
     }
@@ -1149,7 +1149,7 @@ void parseIec104Tsc(const Iec104TscType* tsc)
 {
     // Nothing worth alerting on directly here
 
-    if (!tsc) 
+    if (!tsc)
     {
         // error indicating that parsing couldn't finish
     }
@@ -1160,7 +1160,7 @@ void parseIec104Segment(const Iec104SegmentType* segment)
 {
     // Nothing worth alerting on directly here
 
-    if (!segment) 
+    if (!segment)
     {
         // error indicating that parsing couldn't finish
     }

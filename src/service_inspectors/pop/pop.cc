@@ -507,7 +507,7 @@ static void POP_ProcessServerPacket(Packet* p, POPData* pop_ssn)
 }
 
 // Analyzes POP packets for anomalies/exploits.
- 
+
 static void snort_pop(POP_PROTO_CONF* config, Packet* p)
 {
     /* Attempt to get a previously allocated POP block. */

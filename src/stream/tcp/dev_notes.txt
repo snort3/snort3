@@ -24,7 +24,7 @@ packets directly to the TCP session packet processing method.
 
 * TCP State Machine - this class is the engine that dispatches processing to the correct
   event handling method of the handler for the current TCP state of the flow.
-  
+
 The TCP session module implements the following functions:
 
 * TCP segment normalization. Variations in handling normalization are
@@ -62,18 +62,18 @@ to a per-packet thread instance of the class TcpHA.  TcpHA is sub-class
 of ProtocolHA, declared in the stream/base area.  Thus each protocol
 within 'stream' can have specific HA logic and interfaces.
 
-TcpHAManager::process_deletion() is called when an TCP stream is being 
+TcpHAManager::process_deletion() is called when an TCP stream is being
 destroyed and indicates to the stream & flow HA logic that a flow
 deletion HA message needs to be emitted for the flow in question.
 Tcp streams are both closed internally (e.g. FIN) and externally due
 to cache timeout or pruning.  The calls to TcpHAManager::process_deletion()
-in tcp/tcp_session.cc indicate a normal closure of a stream/flow.  
+in tcp/tcp_session.cc indicate a normal closure of a stream/flow.
 
 TcpHA::create_session() is called from the stream & flow HA logic and
 handles the creation of new flow upon receiving an HA update message.
 
-TcpHA::deactivate_session() is called from the stream & flow HA logic to 
-place a session into standby mode.  Upon receiving an HA Update message, 
+TcpHA::deactivate_session() is called from the stream & flow HA logic to
+place a session into standby mode.  Upon receiving an HA Update message,
 the flow is first created if necessary, and is then placed into Standby
 state.  deactivate_session() sets the TCP specific state for Standby mode.
 

@@ -1427,47 +1427,50 @@ an indication that an attacker is trying to exhaust resources.
 
 123:1
 
-(stream_ip) inconsistent IP options on fragmented packets
+Received inconsistent IP options on fragmented packets
 
 123:2
 
-(stream_ip) teardrop attack
+Received indicators of a teardrop attack on fragmented packets
 
 123:3
 
-(stream_ip) short fragment, possible DOS attempt
+Received short fragment, possible DOS attempt (possible boink/bolt/jolt attack). The minimum length
+required to throw this alert is specified by stream_ip.min_frag_length
 
 123:4
 
-(stream_ip) fragment packet ends after defragmented packet
+Overlap anomaly: fragment packet ends after defragmented packet
 
 123:5
 
-(stream_ip) zero-byte fragment packet
+Received a zero-byte fragment
 
 123:6
 
-(stream_ip) bad fragment size, packet size is negative
+Bad fragment size encountered, packet size is negative
 
 123:7
 
-(stream_ip) bad fragment size, packet size is greater than 65536
+Bad fragment size encountered, packet size is greater than 65536
 
 123:8
 
-(stream_ip) fragmentation overlap
+Fragmentation results in overlap between segments
 
 123:11
 
-(stream_ip) TTL value less than configured minimum, not using for reassembly
+TTL value is less than configured minimum, not using for reassembly. Minimum TTL can be configured
+with stream_ip.min_ttl
 
 123:12
 
-(stream_ip) excessive fragment overlap
+Fragment overlap limit exceeded, event will be raised for all successive fragments. The max fragment
+overlaps that can occur before alerting is configurable by changing stream_ip.max_overlaps
 
 123:13
 
-(stream_ip) tiny fragment
+Received a tiny fragment (less than minimum fragment length)
 
 124:1
 
@@ -1599,51 +1602,59 @@ an indication that an attacker is trying to exhaust resources.
 
 129:1
 
-(stream_tcp) SYN on established session
+Received a TCP SYN on an already established TCP session
 
 129:2
 
-(stream_tcp) data on SYN packet
+Data present on SYN packet
 
 129:3
 
-(stream_tcp) data sent on stream not accepting data
+Data was sent on a stream not accepting data. The stream is in the
+TIME-WAIT, FIN-WAIT, CLOSED, or CLOSE-WAIT state
 
 129:4
 
-(stream_tcp) TCP timestamp is outside of PAWS window
+The TCP timestamp is outside of PAWS (protection against wrapped sequences) window
 
 129:5
 
-(stream_tcp) bad segment, adjusted size <= 0 (deprecated)
+Bad segment, adjusted size <= 0 (deprecated)
 
 129:6
 
-(stream_tcp) window size (after scaling) larger than policy allows
+Window size (after scaling) is larger than policy allows. stream_tcp.max_window can be increased to
+allow for larger window sizes if desired
 
 129:7
 
-(stream_tcp) limit on number of overlapping TCP packets reached
+Limit on number of overlapping TCP packets per session was reached. stream_tcp.overlap_limit can be increased
+to allow for more overlaps per session, if desired
 
 129:8
 
-(stream_tcp) data sent on stream after TCP reset sent
+Data was sent on stream after a TCP reset was sent, and the stream is in
+CLOSED state
 
 129:9
 
-(stream_tcp) TCP client possibly hijacked, different ethernet address
+TCP client is possibly hijacked, MAC addresses on received packets differ from what was originally
+seen on this flow
 
 129:10
 
-(stream_tcp) TCP server possibly hijacked, different ethernet address
+TCP server is possibly hijacked, MAC addresses on received packets differ from what was originally
+seen on this flow
 
 129:11
 
-(stream_tcp) TCP data with no TCP flags set
+Received TCP data with no TCP flags set
 
 129:12
 
-(stream_tcp) consecutive TCP small segments exceeding threshold
+Consecutive TCP small segments exceed the configured threshold. The size required to be a small segment can
+be configured via stream_tcp.small_segments.maximum_size, and the maximum number of these small segments can be configured
+with int stream_tcp.small_segments.count
 
 129:13
 
@@ -1653,31 +1664,34 @@ detected in all cases.
 
 129:14
 
-(stream_tcp) TCP timestamp is missing
+TCP timestamp is missing, which could cause a failure in PAWS checking,
+or RTT calculation
 
 129:15
 
-(stream_tcp) reset outside window
+TCP reset was requested outside window (bad RST)
 
 129:16
 
-(stream_tcp) FIN number is greater than prior FIN
+TCP Anomaly: FIN number is greater than prior FIN while the connection
+is in TIME-WAIT
 
 129:17
 
-(stream_tcp) ACK number is greater than prior FIN
+TCP Anomaly: ACK number is greater than prior FIN while the connection
+is in FIN-WAIT-2
 
 129:18
 
-(stream_tcp) data sent on stream after TCP reset received
+Data was sent on stream after TCP reset received
 
 129:19
 
-(stream_tcp) TCP window closed before receiving data
+TCP window was closed before receiving data
 
 129:20
 
-(stream_tcp) TCP session without 3-way handshake
+The TCP 3-way handshake was not seen for this TCP session
 
 131:1
 
@@ -1933,39 +1947,55 @@ detected in all cases.
 
 135:1
 
-(stream) TCP SYN received
+ A TCP SYN was received
 
 135:2
 
-(stream) TCP session established
+ A TCP session was established
 
 135:3
 
-(stream) TCP session cleared
+ A TCP session was cleared
 
 136:1
 
-(reputation) packets blocked based on source
+The flow was blocked based on the source IP address, since it
+appears on the IP reputation block list. Configure either the discovery filter,
+or the reputation IP lists to change this behavior
 
 136:2
 
-(reputation) packets trusted based on source
+The flow was trusted based on the source IP address, since it
+appears on the IP reputation trust list. Configure either the discovery filter,
+or the reputation IP lists to change this behavior
 
 136:3
 
-(reputation) packets monitored based on source
+The flow was monitored based on the source IP address, since it
+appears on the IP reputation monitor list. Configure either the discovery filter,
+or the reputation IP lists to change this behavior
 
 136:4
 
-(reputation) packets blocked based on destination
+The flow was blocked based on the destination IP address, since it
+appears on the IP reputation block list. If the flow contained proxy traffic,
+the IP address could also be the address of the (inner-layer) proxied connection.
+Configure either the discovery filter, or the reputation IP lists to change this behavior.
 
 136:5
 
-(reputation) packets trusted based on destination
+The flow was trusted based on the destination IP address, since it
+appears on the IP reputation trust list. If the flow contained proxy traffic,
+the IP address could also be the address of the (inner-layer) proxied connection.
+Configure either the discovery filter, or the reputation IP lists to change this behavior
 
 136:6
 
-(reputation) packets monitored based on destination
+The flow was monitored (passed to further inspection) based on
+the destination IP address, since it appears on the IP reputation monitor list. If
+the flow contained proxy traffic, the IP address could also be the address of the
+(inner-layer) proxied connection. Configure either the discovery filter, or the reputation IP
+lists to change this behavior
 
 137:1
 

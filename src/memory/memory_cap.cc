@@ -133,7 +133,7 @@ void MemoryCap::free_space(size_t n)
         return;
 
     static THREAD_LOCAL bool entered = false;
-    
+
     if ( entered )
         return;
 

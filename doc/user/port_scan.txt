@@ -1,7 +1,7 @@
 
 A module to detect port scanning
 
-==== Overview 
+==== Overview
 
 This module is designed to detect the first phase in a network attack:
 Reconnaissance. In the Reconnaissance phase, an attacker determines
@@ -62,7 +62,7 @@ we track this type of scan through the scanned host.
 
 These alerts are for one to many portsweeps. One host scans a single
 port on multiple hosts. This usually occurs when a new exploit comes out
-and the attacker is looking for a specific service. 
+and the attacker is looking for a specific service.
 
 NOTE: The characteristics of a portsweep scan may not result in many
 negative responses. For example, if an attacker portsweeps a web farm
@@ -111,7 +111,7 @@ There are 3 default scan levels that can be set.
 Each of these default levels have separate options that can be edited
 to alter the scan sensitivity levels (scans, rejects, nets or ports)
 
-Example: 
+Example:
 ....
 port_scan = default_low_port_scan
 
@@ -122,7 +122,7 @@ port_scan.tcp_ports.nets = 1
 ....
 The example above would change each of the individual settings to 1.
 
-NOTE:The default levels for scans, rejects, nets and ports can be 
+NOTE:The default levels for scans, rejects, nets and ports can be
 seen in the snort_defaults.lua file.
 
 The counts can be seen in the alert outputs (-Acmg shown below):
@@ -164,7 +164,7 @@ Use the watch_ip, ignore_scanners, and ignore_scanned options.
 It's important to correctly set these options.  The watch_ip option
 is easy to understand.  The analyst should set this option to the
 list of CIDR blocks and IPs that they want to watch.  If no
-watch_ip is defined, Portscan will watch all network traffic.    
+watch_ip is defined, Portscan will watch all network traffic.
 The ignore_scanners and ignore_scanned options come into play in
 weeding out legitimate hosts that are very active on your network.
 Some of the most common examples are NAT IPs, DNS cache servers,
@@ -176,7 +176,7 @@ the host is generating portsweep events, then add it to the
 ignore_scanners option.  If the host is generating portscan alerts
 (and is the host that is being scanned), add it to the
 ignore_scanned option.
-  
+
 Filtered scan alerts are much more prone to false positives.
 When determining false positives, the alert type is very important.
 Most of the false positives that Portscan may generate are of the
@@ -185,8 +185,8 @@ portscans.  Many times this just indicates that a host was very
 active during the time period in question.  If the host continually
 generates these types of alerts, add it to the ignore_scanners list
 or use a lower sensitivity level.
-   
-Make use of the Priority Count, Connection Count, IP Count, 
+
+Make use of the Priority Count, Connection Count, IP Count,
 Port Count, IP range, and Port range to determine false positives.
 The portscan alert details are vital in determining the scope of a
 portscan and also the confidence of the portscan.  In the future,
@@ -196,24 +196,24 @@ this.  The easiest way to determine false positives is through
 simple ratio estimations. The following is a list of ratios to
 estimate and the associated values that indicate a legitimate scan
 and not a false positive.
-     
+
 Connection Count / IP Count:  This ratio indicates an estimated
 average of connections per IP.  For portscans, this ratio should be
 high, the higher the better.  For portsweeps, this ratio should be
 low.
-     
+
 Port Count / IP Count:  This ratio indicates an estimated average
 of ports connected to per IP.  For portscans, this ratio should be
 high and indicates that the scanned host's ports were connected to
 by fewer IPs. For portsweeps, this ratio should be low, indicating
 that the scanning host connected to few ports but on many hosts.
-   
+
 Connection Count / Port Count:  This ratio indicates an estimated
 average of connections per port.  For portscans, this ratio should
 be low. This indicates that each connection was to a different
 port.  For portsweeps, this ratio should be high. This indicates
 that there were many connections to the same port.
-     
+
 The reason that Priority Count is not included, is because the
 priority count is included in the connection count and the above
 comparisons take that into consideration.  The Priority Count play

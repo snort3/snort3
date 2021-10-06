@@ -209,7 +209,7 @@ Bridge two TCP connections on port 8000 and inspect the traffic:
 Dump TCP stream payload in hext mode:
 
     snort -c $my_path/etc/snort/snort.lua -L hext
-    
+
 Output timestamp, pkt_num, proto, pkt_gen, dgm_len, dir, src_ap, dst_ap,
 rule, action for each alert:
 
@@ -248,7 +248,7 @@ To enable local telnet access on port 12345:
 
     snort --shell -j 12345 <args>
 
-The command line interface is still under development.  Suggestions are 
+The command line interface is still under development.  Suggestions are
 welcome.
 
 

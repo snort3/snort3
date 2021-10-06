@@ -816,7 +816,7 @@ ScanResult HttpBodyH2Cutter::cut(const uint8_t* buffer, uint32_t length,
             num_flush = length;
         else
             num_flush = flow_target - octets_seen;
-	
+
         total_octets_scanned += num_flush;
         if (num_flush == length)
             return SCAN_FOUND;
@@ -846,7 +846,7 @@ bool HttpBodyCutter::need_accelerated_blocking(const uint8_t* data, uint32_t len
 {
     const bool need_accelerated_blocking = accelerated_blocking && dangerous(data, length);
     if (need_accelerated_blocking)
-        HttpModule::increment_peg_counts(PEG_SCRIPT_DETECTION);	 
+        HttpModule::increment_peg_counts(PEG_SCRIPT_DETECTION);
     return need_accelerated_blocking;
 }
 

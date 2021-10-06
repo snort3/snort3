@@ -184,7 +184,7 @@ yet firm so feedback is welcome to get something we can live with.
 * In many cases, even in C++, use #define name "value" instead of a
   const char* const name = "value" because it will eliminate a symbol from
   the binary.
-  
+
 * Use inline functions instead of macros where possible (pretty much all
   cases except where stringification is necessary).  Functions offer better
   typing, avoid re-expansions, and a debugger can break there.

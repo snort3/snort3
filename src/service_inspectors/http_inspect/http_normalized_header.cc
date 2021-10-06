@@ -343,7 +343,7 @@ const Field& NormalizedHeader::get_norm(HttpInfractions* infractions, HttpEventG
         header_norms[id]->normalize(id, count, infractions, events,
             header_name_id, header_value, num_headers, norm, comma_separated_raw);
     }
-    
+
     return norm;
 }
 

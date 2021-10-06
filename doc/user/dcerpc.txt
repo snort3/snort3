@@ -3,16 +3,16 @@ DCE/RPC defragmentation to avoid rule evasion using these techniques.
 
 ==== Overview
 
-The following transports are supported for DCE/RPC: SMB, TCP, and UDP.  
-New rule options have been implemented to improve performance, reduce false 
+The following transports are supported for DCE/RPC: SMB, TCP, and UDP.
+New rule options have been implemented to improve performance, reduce false
 positives and reduce the count and complexity of DCE/RPC based rules.
 
 Different from Snort 2, the DCE-RPC preprocessor is split into three inspectors
- - one for each transport: dce_smb, dce_tcp, dce_udp. This includes the 
+ - one for each transport: dce_smb, dce_tcp, dce_udp. This includes the
 configuration as well as the inspector modules. The Snort 2 server configuration
-is now split between the inspectors. Options that are meaningful to all 
-inspectors, such as policy and defragmentation, are copied into each inspector 
-configuration. The address/port mapping is handled by the binder. Autodetect 
+is now split between the inspectors. Options that are meaningful to all
+inspectors, such as policy and defragmentation, are copied into each inspector
+configuration. The address/port mapping is handled by the binder. Autodetect
 functionality is replaced by wizard curses.
 
 ==== Quick Guide
@@ -20,7 +20,7 @@ functionality is replaced by wizard curses.
 A typical dcerpce configuration looks like this:
 
    binder =
-   {    
+   {
       {
           when =
           {
@@ -55,13 +55,13 @@ A typical dcerpce configuration looks like this:
           },
        }
     }
-    
+
     dce_smb = { }
 
     dce_tcp = { }
-    
+
     dce_udp = { }
-    
+
 In this example, it defines smb, tcp and udp inspectors based on port. All the
 configurations are default.
 
@@ -71,7 +71,7 @@ There are enough important differences between Windows and Samba versions that
 a target based approach has been implemented. Some important differences:
 
 * Named pipe instance tracking
-* Accepted SMB commands   
+* Accepted SMB commands
 * AndX command chaining
 * Transaction tracking
 * Multiple Bind requests
@@ -79,11 +79,11 @@ a target based approach has been implemented. Some important differences:
 * DCE/RPC Fragmented requests - Operation number
 * DCE/RPC Stub data byte order
 
-Because of those differences, each inspector can be configured to different 
+Because of those differences, each inspector can be configured to different
 policy. Here are the list of policies supported:
 
 * WinXP (default)
-* Win2000 
+* Win2000
 * WinVista
 * Win2003
 * Win2008
@@ -95,32 +95,32 @@ policy. Here are the list of policies supported:
 
 ==== Reassembling
 
-Both SMB inspector and TCP inspector support reassemble. Reassemble threshold 
-specifies a minimum number of bytes in the DCE/RPC desegmentation and 
-defragmentation buffers before creating a reassembly packet to send to the 
-detection engine. This option is useful in inline mode so as to potentially 
+Both SMB inspector and TCP inspector support reassemble. Reassemble threshold
+specifies a minimum number of bytes in the DCE/RPC desegmentation and
+defragmentation buffers before creating a reassembly packet to send to the
+detection engine. This option is useful in inline mode so as to potentially
 catch an exploit early before full defragmentation is done. A value of 0 s
-supplied as an argument to this option will, in effect, disable this option.  
+supplied as an argument to this option will, in effect, disable this option.
 Default is disabled.
-        
+
 ==== SMB
 
-SMB inspector is one of the most complex inspectors. In addition to supporting 
-rule options and lots of inspector rule events, it also supports file 
+SMB inspector is one of the most complex inspectors. In addition to supporting
+rule options and lots of inspector rule events, it also supports file
 processing for both SMB version 1, 2, and 3.
 
 ===== Finger Print Policy
 
-In the initial phase of an SMB session, the client needs to authenticate with a 
-SessionSetupAndX.  Both the request and response to this command contain OS and 
+In the initial phase of an SMB session, the client needs to authenticate with a
+SessionSetupAndX.  Both the request and response to this command contain OS and
 version information that can allow the inspector to dynamically set the policy
-for a session which allows for better protection against Windows and Samba 
+for a session which allows for better protection against Windows and Samba
 specific evasions.
-  
+
 ===== File Inspection
 
-SMB inspector supports file inspection. A typical configuration looks like this:      
-   
+SMB inspector supports file inspection. A typical configuration looks like this:
+
     binder =
     {
        {
@@ -142,14 +142,14 @@ SMB inspector supports file inspection. A typical configuration looks like this:
         smb_file_depth = 0,
      }
 
-    file_id = 
+    file_id =
     {
         enable_type = true,
         enable_signature = true,
         enable_capture = true,
         file_rules = magics,
     }
-    
+
 First, define a binder to map tcp port 139 and 445 to smb. Then, enable file
 inspection in smb inspection and set the file depth as unlimited. Lastly, enable
 file inspector to inspect file type, calculate file signature, and capture file.
@@ -158,19 +158,19 @@ The details of file inspector are explained in file processing section.
 SMB inspector does inspection of normal SMB file transfers.  This includes doing
 file type and signature through the file processing as well as setting a pointer
 for the "file_data" rule option.  Note that the "file_depth" option only applies
-to the maximum amount of file data for which it will set the pointer for the 
-"file_data" rule option.  For file type and signature it will use the value 
+to the maximum amount of file data for which it will set the pointer for the
+"file_data" rule option.  For file type and signature it will use the value
 configured for the file API.  If "only" is specified, the inspector will only
-do SMB file inspection, i.e. it will not do any DCE/RPC tracking or inspection. 
-If "on" is specified with no arguments, the default file depth is 16384 bytes. 
+do SMB file inspection, i.e. it will not do any DCE/RPC tracking or inspection.
+If "on" is specified with no arguments, the default file depth is 16384 bytes.
 An argument of -1 to "file-depth" disables setting the pointer for "file_data",
 effectively disabling SMB file inspection in rules.  An argument of 0 to
 "file_depth" means unlimited.  Default is "off", i.e. no SMB file inspection is
- done in the inspector. 
- 
+ done in the inspector.
+
 ==== TCP
 
-dce_tcp inspector supports defragmentation, reassembling, and policy that is 
+dce_tcp inspector supports defragmentation, reassembling, and policy that is
 similar to SMB.
 
 ==== UDP
@@ -228,7 +228,7 @@ a first fragment (or full request). However, if the "any_frag" option is used to
 specify evaluating on all fragments.
 
 Examples:
-    
+
     dce_iface: 4b324fc8-1670-01d3-1278-5a47bf6ee188;
     dce_iface: 4b324fc8-1670-01d3-1278-5a47bf6ee188,<2;
     dce_iface: 4b324fc8-1670-01d3-1278-5a47bf6ee188,any_frag;
@@ -257,15 +257,15 @@ represented). As an example, the following Messenger interface UUID as taken
 off the wire from a little endian Bind request:
 
     |f8 91 7b 5a 00 ff d0 11 a9 b2 00 c0 4f b6 e6 fc|
-    
+
 must be written as:
 
     5a7b91f8-ff00-11d0-a9b2-00c04fb6e6fc
-    
+
 The same UUID taken off the wire from a big endian Bind request:
 
     |5a 7b 91 f8 ff 00 11 d0 a9 b2 00 c0 4f b6 e6 fc|
-    
+
 must be written the same way:
 
     5a7b91f8-ff00-11d0-a9b2-00c04fb6e6fc
@@ -303,7 +303,7 @@ Examples:
     dce_opnum: 15-18;
     dce_opnum: 15,18-20;
     dce_opnum: 15,17,20-22;
-    
+
 This option is used to specify an opnum (or operation number), opnum range or
 list containing either or both opnum and/or opnum-range. The opnum of a
 DCE/RPC request will be matched against the opnums specified with this option.

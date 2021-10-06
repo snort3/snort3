@@ -2,23 +2,23 @@ iec104 inspector is a service inspector for the IEC 60870-5-104 protocol.
 
 ==== Overview
 
-IEC 60870-5-104 (iec104) is a protocol distributed by the International 
+IEC 60870-5-104 (iec104) is a protocol distributed by the International
 Electrotechnical Commission (IEC) that provides a standardized method of
-sending telecontrol messages between central stations and outstations, 
+sending telecontrol messages between central stations and outstations,
 typically running on TCP port 2404.
 
-It is used in combination with the companion specifications in the 
+It is used in combination with the companion specifications in the
 IEC 60870-5 family, most notably IEC 60870-5-101, to provide reliable
-transport via TCP/IP. 
+transport via TCP/IP.
 
-An iec104 Application Protocol Data Unit (APDU) consists of one of three 
+An iec104 Application Protocol Data Unit (APDU) consists of one of three
 Application Protocol Control Information (APCI) structures, each beginning
 with the start byte 0x68. In the case of an Information Transfer APCI, an
 Application Service Data Unit (ASDU) follows the APCI.
 
 The iec104 inspector decodes the iec104 protocol and provides rule options
-to access certain protocol fields and data content. This allows the user to 
-write rules for iec104 packets without decoding the protocol. 
+to access certain protocol fields and data content. This allows the user to
+write rules for iec104 packets without decoding the protocol.
 
 
 ==== Configuration
@@ -33,20 +33,20 @@ manual configuration is necessary to leverage this functionality.
 A typical iec104 configuration looks like this:
 
    binder =
-   {  
-       { 
-           when = 
-           { 
-               proto = 'tcp', 
-               ports = '2404' 
-           }, 
-           use = 
-           { 
-               type = 'iec104' 
-           }, 
+   {
+       {
+           when =
+           {
+               proto = 'tcp',
+               ports = '2404'
+           },
+           use =
+           {
+               type = 'iec104'
+           },
        },
    }
-   
+
    iec104 = { }
 
 In this example, the tcp inspector is defined based on port. All
@@ -56,12 +56,12 @@ Debug logging can be enabled with the following additional configuration:
 
    trace =
    {
-       modules = 
-       { 
-           iec104 = 
-           { 
-               all = 1 
-           } 
+       modules =
+       {
+           iec104 =
+           {
+               all = 1
+           }
        }
    }
 
@@ -78,9 +78,9 @@ New rule options are supported by enabling the iec104 inspector:
 Determining the APCI type of an iec104 message involves checking the state
 of one to two bits in the message's first control field octet. This can
 be completed with a `byte_test` in a plaintext rule, however it adds unnecessary
-complexity to the rule. Since most rules inspecting iec104 traffic will target 
-APCI Type I messages, this option was created to alleviate the need to manually 
-check the type and subsequently reduce the complexity of the rule. 
+complexity to the rule. Since most rules inspecting iec104 traffic will target
+APCI Type I messages, this option was created to alleviate the need to manually
+check the type and subsequently reduce the complexity of the rule.
 
 This option takes one argument with three acceptable configurations.
 
@@ -93,14 +93,14 @@ Examples:
 This option is used to verify that the message being processed is of the
 specified type. The argument passed to this rule option can be specified
 in one of three ways: the full type name, the lowercase type abbreviation,
-or the uppercase type abbreviation. 
+or the uppercase type abbreviation.
 
 ===== iec104_asdu_func
 
 Determining the ASDU function of an iec104 message can be completed with a
-plaintext rule that checks a single byte in the message, however it also 
+plaintext rule that checks a single byte in the message, however it also
 requires verifying that the message's APCI is of Type I. Since a rule writer
-may not necessarily know that this additional check must be made, this 
+may not necessarily know that this additional check must be made, this
 option was created to simplify the process of verifying the function type
 and subsequently reduce the complexity of the rule.
 
@@ -112,7 +112,7 @@ Examples:
     iec104_asdu_func:m_ps_na_1;
 
 This option is used to verify that the message being processed is using
-the specified ASDU function. The argument passed to this rule option can 
-be specified in one of two ways: the uppercase function name, or the 
+the specified ASDU function. The argument passed to this rule option can
+be specified in one of two ways: the uppercase function name, or the
 lowercase function name.
 

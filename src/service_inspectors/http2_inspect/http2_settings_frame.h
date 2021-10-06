@@ -48,7 +48,7 @@ private:
 
     uint8_t get_flags_mask() const override
     { return Http2Enums::FLAG_ACK; }
-  
+
     bool bad_frame = false;
 };
 

@@ -105,7 +105,7 @@ get the idea.
 
 Note that you can do similar things with other tools like tcpdump or
 Wireshark however these commands are very useful when you want to check
-your Snort setup.  
+your Snort setup.
 
 The examples above use the default pcap DAQ.  Snort supports non-pcap
 interfaces as well via the DAQ (data acquisition) library.  Other DAQs
@@ -412,7 +412,7 @@ Additional considerations:
 
 * There is no way to explicitly configure a full path to avoid issues with
   multiple packet threads.
-  
+
 * All text mode outputs default to stdout
 
 ==== Performance Statistics

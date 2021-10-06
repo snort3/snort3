@@ -9,7 +9,7 @@ session.
 active.max_responses and active.min_interval.
 
 * Response actions were removed from IPS rule body to the rule action
-in the header.  This includes react, reject, and rewrite (split out of 
+in the header.  This includes react, reject, and rewrite (split out of
 replace which now just does the detection part). These IPS actions are
 plugins.
 
@@ -19,7 +19,7 @@ this or any following packet on the flow.
 
 ==== Configure Active
 
-Active response is enabled by configuring one of following IPS action 
+Active response is enabled by configuring one of following IPS action
 plugins:
 
     react = { }
@@ -28,27 +28,27 @@ plugins:
 When these active responses are not configured the default configuration
 is used.
 
-Active responses will be performed for reject, react or rewrite IPS rule 
-actions, and response packets are encoded based on the triggering packet. 
+Active responses will be performed for reject, react or rewrite IPS rule
+actions, and response packets are encoded based on the triggering packet.
 TTL will be set to the value captured at session pickup.
 
-Configure the number of attempts to land a TCP RST within the session's 
+Configure the number of attempts to land a TCP RST within the session's
 current window (so that it is accepted by the receiving TCP).  This
-sequence "strafing" is really only useful in passive mode.  In inline mode 
-the reset is put straight into the stream in lieu of the triggering packet 
+sequence "strafing" is really only useful in passive mode.  In inline mode
+the reset is put straight into the stream in lieu of the triggering packet
 so strafing is not necessary.
 
-Each attempt (sent in rapid succession) has a different sequence number. 
-Each active response will actually cause this number of TCP resets to be 
+Each attempt (sent in rapid succession) has a different sequence number.
+Each active response will actually cause this number of TCP resets to be
 sent. TCP data is multiplied similarly. At most 1 ICMP unreachable is sent,
 iff attempts > 0.
 
-     
-Device IP will perform network layer injection.  It is probably a better 
+
+Device IP will perform network layer injection.  It is probably a better
 choice to specify an interface and avoid kernel routing tables, etc.
 
-dst_mac will change response destination MAC address, if the device is 
-eth0, eth1, eth2 etc. Otherwise, response destination MAC address is 
+dst_mac will change response destination MAC address, if the device is
+eth0, eth1, eth2 etc. Otherwise, response destination MAC address is
 derived from packet.
 
 Example:
@@ -63,8 +63,8 @@ Example:
 
 ==== Reject
 
-IPS action reject perform active response to shutdown hostile network 
-session by injecting TCP resets (TCP connections) or ICMP unreachable 
+IPS action reject perform active response to shutdown hostile network
+session by injecting TCP resets (TCP connections) or ICMP unreachable
 packets.
 
 Example:
@@ -85,7 +85,7 @@ Example:
 
 ==== React
 
-IPS action react enables sending an HTML page on a session and then 
+IPS action react enables sending an HTML page on a session and then
 resetting it.
 
 The headers used are:
@@ -131,16 +131,16 @@ not be injected/displayed.
 When using react, payload injector must be configured as well.
 Also Snort should be in ips mode, so the rule is triggered on the client
 packet, and not delayed until the server sends ACK. To achieve this use
-the default normalizer. It will set normalizer.tcp.ips = true. 
+the default normalizer. It will set normalizer.tcp.ips = true.
 Example:
-    
+
     react = { page = "my_block_page.html" }
     payload_injector = { }
     normalizer = { }
-    
+
     local_rules =
     [[
-    react http ( msg:"Unauthorized Access Prohibited!"; flow:established, 
+    react http ( msg:"Unauthorized Access Prohibited!"; flow:established,
     to_server; http_method; content:"GET"; sid:1; )
     ]]
 
@@ -225,7 +225,7 @@ on TCP payload before reassembly: search_engine.detect_raw_tcp=true.
 For example:
 
   Rule that does not require search_engine.detect_raw_tcp=true:
-    
+
     rewrite udp any any -> any any
     (
         msg:"TEST 1";
@@ -235,7 +235,7 @@ For example:
     )
 
   Rule that does require search_engine.detect_raw_tcp=true:
-    
+
     rewrite http any any -> any any
     (
         msg:"TEST 2";
