@@ -24,6 +24,7 @@
 
 #include "decode_buffer.h"
 
+#include "file_mime_config.h"
 #include "utils/util.h"
 
 void DecodeBuffer::reset_saved()
@@ -92,8 +93,6 @@ uint32_t DecodeBuffer::get_encode_avail()
         return (code_depth - encode_bytes_read);
     }
 }
-
-#define MAX_DEPTH       65536
 
 DecodeBuffer::DecodeBuffer(int max_depth)
 {

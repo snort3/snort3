@@ -32,10 +32,13 @@ public:
 
     uint8_t* decode_buf = nullptr;
     uint8_t* decompress_buf = nullptr;
+    uint32_t decompress_buf_size = 0;
 
     static void init();
+
     static uint8_t* get_decode_buf();
     static uint8_t* get_decompress_buf();
+    static uint32_t get_decompress_buf_size();
 };
 
 #endif

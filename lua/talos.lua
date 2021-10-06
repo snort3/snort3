@@ -13,24 +13,13 @@ function file_exists(name)
     end
 end
 
-daq =
+snort =
 {
-    modules =
-    {
-        {
-            name = 'pcap',
-            mode = 'read-file'
-        },
-        {
-            name = 'dump',
-            variables = { 'output=none' }
-        },
-    },
-    snaplen = 65535
+    ['-Q'] = true,
+    ['-s'] = 65535,
+    ['--daq'] = 'dump',
+    ['--daq-var'] = 'output=none'
 }
-
-snort = { }
-snort['-Q'] = true
 
 if file_exists('local.rules') then
     snort['-R'] = 'local.rules'

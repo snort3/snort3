@@ -156,10 +156,11 @@ DecodeResult MimeDecode::decompress_data(const uint8_t* buf_in, uint32_t size_in
         return result;
 
     uint8_t* decompress_buf = MimeDecodeContextData::get_decompress_buf();
+    uint32_t decompress_buf_size = MimeDecodeContextData::get_decompress_buf_size();
     fd_state->Next_In = buf_in;
     fd_state->Avail_In = size_in;
     fd_state->Next_Out = decompress_buf;
-    fd_state->Avail_Out = MAX_DEPTH;
+    fd_state->Avail_Out = decompress_buf_size;
 
     const fd_status_t status = File_Decomp(fd_state);
 

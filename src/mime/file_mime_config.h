@@ -27,10 +27,11 @@
 /*These are temporary values*/
 #define DEFAULT_MIME_MEMCAP           838860
 #define DEFAULT_DEPTH                 1464
+#define DEFAULT_DECOMP                100000
 #define MAX_LOG_MEMCAP                104857600
 #define MIN_LOG_MEMCAP                3276
 #define MIN_MIME_MEM                  3276
-#define MAX_DEPTH                     65535
+#define MAX_DEPTH                     65536
 #define MIN_DEPTH                     (-1)
 
 namespace snort
@@ -62,6 +63,9 @@ public:
     void set_decompress_zip(bool);
     bool is_decompress_zip() const;
 
+    void set_decompress_buffer_size(uint32_t);
+    uint32_t get_decompress_buffer_size() const;
+
     int64_t get_file_depth() const;
     bool is_decoding_enabled() const;
     void sync_all_depths();
@@ -77,6 +81,7 @@ private:
     bool decompress_pdf = false;
     bool decompress_swf = false;
     bool decompress_zip = false;
+    uint32_t decompress_buffer_size = DEFAULT_DECOMP;
     int64_t file_depth = MIN_DEPTH;
     bool decode_enabled = true;
 };

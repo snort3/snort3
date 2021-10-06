@@ -24,6 +24,7 @@
 #include "http_msg_body.h"
 
 #include "file_api/file_flows.h"
+#include "file_api/file_service.h"
 #include "pub_sub/http_request_body_event.h"
 
 #include "http_api.h"
@@ -248,13 +249,14 @@ void HttpMsgBody::do_file_decompression(const Field& input, Field& output)
         output.set(input);
         return;
     }
-    uint8_t* buffer = new uint8_t[MAX_OCTETS];
+    const uint32_t buffer_size = FileService::decode_conf.get_decompress_buffer_size();
+    uint8_t* buffer = new uint8_t[buffer_size];
     session_data->fd_alert_context.infractions = transaction->get_infractions(source_id);
     session_data->fd_alert_context.events = session_data->events[source_id];
     session_data->fd_state->Next_In = input.start();
     session_data->fd_state->Avail_In = (uint32_t)input.length();
     session_data->fd_state->Next_Out = buffer;
-    session_data->fd_state->Avail_Out = MAX_OCTETS;
+    session_data->fd_state->Avail_Out = buffer_size;
 
     const fd_status_t status = File_Decomp(session_data->fd_state);
 

@@ -24,17 +24,19 @@
 #include "file_mime_context_data.h"
 
 #include "detection/detection_engine.h"
+#include "file_api/file_service.h"
 #include "utils/util.h"
 
 using namespace snort;
 
-#define MAX_DEPTH       65536
 unsigned MimeDecodeContextData::mime_ips_id = 0;
 
 MimeDecodeContextData::MimeDecodeContextData()
 {
     decode_buf = (uint8_t*)snort_alloc(MAX_DEPTH);
-    decompress_buf = (uint8_t*)snort_alloc(MAX_DEPTH);
+
+    decompress_buf_size = FileService::decode_conf.get_decompress_buffer_size();
+    decompress_buf = (uint8_t*)snort_alloc(decompress_buf_size);
 }
 
 MimeDecodeContextData::~MimeDecodeContextData()
@@ -60,5 +62,12 @@ uint8_t* MimeDecodeContextData::get_decompress_buf()
     MimeDecodeContextData* data = IpsContextData::get<MimeDecodeContextData>(mime_ips_id);
 
     return data->decompress_buf;
+}
+
+uint32_t MimeDecodeContextData::get_decompress_buf_size()
+{
+    MimeDecodeContextData* data = IpsContextData::get<MimeDecodeContextData>(mime_ips_id);
+
+    return data->decompress_buf_size;
 }
 

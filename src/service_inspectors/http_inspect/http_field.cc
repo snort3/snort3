@@ -56,7 +56,6 @@ void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
     assert(strt == nullptr);
     assert(start != nullptr);
     assert(length >= 0);
-    assert(length <= MAX_OCTETS);
     strt = start;
     len = length;
     own_the_buffer = own_the_buffer_;

@@ -196,13 +196,16 @@ static const Parameter file_id_params[] =
       "Non-Encoded MIME attachment extraction depth (-1 no limit)" },
 
     { "decompress_pdf", Parameter::PT_BOOL, nullptr, "false",
-      "decompress pdf files in MIME attachments" },
+      "decompress pdf files" },
 
     { "decompress_swf", Parameter::PT_BOOL, nullptr, "false",
-      "decompress swf files in MIME attachments" },
+      "decompress swf files" },
 
     { "decompress_zip", Parameter::PT_BOOL, nullptr, "false",
-      "decompress zip files in MIME attachments" },
+      "decompress zip files" },
+
+    { "decompress_buffer_size", Parameter::PT_INT, "1024:max31", "100000",
+      "file decompression buffer size" },
 
     { "qp_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
       "Quoted Printable decoding depth (-1 no limit)" },
@@ -345,6 +348,9 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("decompress_zip") )
         FileService::decode_conf.set_decompress_zip(v.get_bool());
+
+    else if ( v.is("decompress_buffer_size") )
+        FileService::decode_conf.set_decompress_buffer_size(v.get_uint32());
 
     else if (v.is("b64_decode_depth"))
     {
