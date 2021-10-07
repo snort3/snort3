@@ -124,6 +124,8 @@ struct TcpOption
     }
 };
 
+class TcpOptIterator;
+
 /*
  * Use TcpOptIterator ... this should NOT be called directly
  * unless you want to an actual iterator or some buggy code.
@@ -131,7 +133,7 @@ struct TcpOption
 class SO_PUBLIC TcpOptIteratorIter
 {
 public:
-    TcpOptIteratorIter(const TcpOption*);
+    TcpOptIteratorIter(const TcpOption*, const TcpOptIterator*);
 
     bool operator==(const TcpOptIteratorIter& rhs)
     { return opt == rhs.opt; }
@@ -139,16 +141,12 @@ public:
     bool operator!=(const TcpOptIteratorIter& rhs)
     { return opt != rhs.opt; }
 
-    TcpOptIteratorIter& operator++()
-    {
-        opt = &opt->next();
-        return *this;
-    }
-
+    const TcpOptIteratorIter& operator++();
     const TcpOption& operator*() const;
 
 private:
     const TcpOption* opt;
+    const TcpOptIterator* iter;
 };
 
 /*

@@ -23,16 +23,32 @@
 
 #include "tcp_options.h"
 
+#include "stream/tcp/tcp_module.h"
+
 #include "packet.h"
 #include "tcp.h"
+
+extern THREAD_LOCAL TcpStats tcpStats;
 
 namespace snort
 {
 namespace tcp
 {
-TcpOptIteratorIter::TcpOptIteratorIter(const TcpOption* first_opt) : opt(first_opt) { }
+TcpOptIteratorIter::TcpOptIteratorIter(const TcpOption* first_opt, const TcpOptIterator* it) : opt(first_opt), iter(it) { }
 
 const TcpOption& TcpOptIteratorIter::operator*() const { return *opt; }
+
+const TcpOptIteratorIter& TcpOptIteratorIter::operator++()
+{
+    const auto* old_opt = opt;
+    opt = &opt->next();
+    if (opt == old_opt)       // defend against option length = 0
+    {
+        *this = iter->end();
+        tcpStats.zero_len_tcp_opt++;
+    }
+    return *this;
+}
 
 TcpOptIterator::TcpOptIterator(const TCPHdr* const tcp_header, const Packet* const p)
 {
@@ -68,12 +84,12 @@ TcpOptIterator::TcpOptIterator(const TCPHdr* const tcp_header, const uint32_t va
 
 TcpOptIteratorIter TcpOptIterator::begin() const
 {
-    return TcpOptIteratorIter(reinterpret_cast<const TcpOption*>(start_ptr));
+    return TcpOptIteratorIter(reinterpret_cast<const TcpOption*>(start_ptr), this);
 }
 
 TcpOptIteratorIter TcpOptIterator::end() const
 {
-    return TcpOptIteratorIter(reinterpret_cast<const TcpOption*>(end_ptr));
+    return TcpOptIteratorIter(reinterpret_cast<const TcpOption*>(end_ptr), this);
 }
 } // namespace ip
 } // namespace snort
