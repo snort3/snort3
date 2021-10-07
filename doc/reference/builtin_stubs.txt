@@ -720,411 +720,444 @@ A tagged packet was logged.
 
 119:1
 
-(http_inspect) ascii encoding
+URI has percent encoding of an unreserved character. The ignore_unreserved option designates
+specific unreserved characters that are exempted from triggering this alert.
 
 119:2
 
-(http_inspect) double decoding attack
+URI is percent encoded and the result is percent encoded again. This alert can only be generated if
+the iis_double_decode option is configured.
 
 119:3
 
-(http_inspect) u encoding
+URI has non-standard %u-style Unicode encoding. This alert can only be generated if the percent_u
+option is configured.
 
 119:4
 
-(http_inspect) bare byte unicode encoding
+URI has Unicode encodings containing bytes that were not percent-encoded as required by the HTTP
+RFC. This is sometimes called "bare byte" encoding. This alert can only be generated if the
+utf8_bare_byte option is configured.
 
 119:6
 
-(http_inspect) UTF-8 encoding
+URI has two-byte or three-byte UTF-8 encoding. This alert can only be generated if the utf8 option
+is configured.
 
 119:7
 
-(http_inspect) unicode map code point encoding in URI
+URI includes a two-byte or three-byte unicode character that normalized through the unicode map to
+some byte other than 0xFF. This alert can only be generated if the iis_unicode option is
+configured.
 
 119:8
 
-(http_inspect) multi_slash encoding
+URI path contains consecutive slash characters which are redundant. This alert can only be
+generated if the simplify_path option is configured.
 
 119:9
 
-(http_inspect) backslash used in URI path
+The backslash character appears in the path portion of a URI. This alert can only be generated if
+the backslash_to_slash option is configured.
 
 119:10
 
-(http_inspect) self directory traversal
+URI path contains "/./" pattern repeating the current directory. Alternatively the path may end
+with "/." repeating the current directory. This alert can only be generated if the simplify_path
+option is configured.
 
 119:11
 
-(http_inspect) directory traversal
+URI path contains "/../" pattern moving upward a directory. Alternatively the path may end with
+"/.." with the same effect. This alert can only be generated if the simplify_path option is
+configured.
 
 119:12
 
-(http_inspect) apache whitespace (tab)
+The HTTP start line has a tab character among the blank space separators.
 
 119:13
 
-(http_inspect) HTTP header line terminated by LF without a CR
+HTTP start line or header line terminated by LF without a CR.
 
 119:14
 
-(http_inspect) non-RFC defined char
+Normalized URI (after percent decoding) contains a forbidden character specified by the
+bad_characters option.
 
 119:15
 
-(http_inspect) oversize request-uri directory
+URI path contains a segment (directory or file name) that is longer than the oversize_dir_length
+parameter.
 
 119:16
 
-(http_inspect) oversize chunk encoding
+Chunk length as given in the chunk header exceeds maximum_chunk_length parameter.
 
 119:18
 
-(http_inspect) webroot directory traversal
+The URI path has used /../ segments to go above the root of the directory tree. For example
+/foo/../../bar which specifies an object not under the root directory /. This alert can only be
+generated if the simplify_path option is configured.
 
 119:19
 
-(http_inspect) long header
+HTTP header line exceeds 4096 bytes. This does not apply to the start line. Header line length
+includes both header field name and value.
 
 119:20
 
-(http_inspect) max header fields
+HTTP message has more than 200 header fields.
 
 119:21
 
-(http_inspect) multiple content length
+HTTP message has more than one Content-Length header value. This may be multiple header lines or
+comma-separated values on one line.
 
 119:24
 
-(http_inspect) Host header field appears more than once or has multiple values
+Host header field appears more than once or has multiple values.
 
 119:25
 
-(http_inspect) Host header value is too long
+Length of HTTP Host header field value exceeds maximum_host_length option.
 
 119:28
 
-(http_inspect) POST or PUT w/o content-length or chunks
+HTTP request uses POST or PUT method without delimiting the message body using either the
+Content-Length header or Transfer-Encoding chunked.
 
 119:31
 
-(http_inspect) unknown method
+HTTP request method is not known to Snort. Snort is familiar with all RFC methods and dozens of
+other methods.
 
 119:32
 
-(http_inspect) simple request
+HTTP request uses primitive HTTP format known as HTTP/0.9.
 
 119:33
 
-(http_inspect) unescaped space in HTTP URI
+HTTP request URI has space character that is not percent-encoded.
 
 119:34
 
-(http_inspect) too many pipelined requests
+HTTP connection has more than 100 simultaneous pipelined requests that have not been answered.
 
 119:102
 
-(http_inspect) invalid status code in HTTP response
+Invalid status code in HTTP response. Either it is outside the range 100-599 or it is not a number.
 
 119:104
 
-(http_inspect) HTTP response has UTF charset that failed to normalize
+HTTP response has Content-Type charset=utf-16le, utf-16be, utf-32le, or utf-32be, but UTF decoding
+of the message body failed.
 
 119:105
 
-(http_inspect) HTTP response has UTF-7 charset
+HTTP response has Content-Type charset=utf-7.
 
 119:109
 
-(http_inspect) javascript obfuscation levels exceeds 1
+More than one level of JavaScript obfuscation. This alert can only be generated when
+normalize_javascript  configuration option is true.
 
 119:110
 
-(http_inspect) javascript whitespaces exceeds max allowed
+Consecutive whitespaces within a JavaScript exceed max_javascript_whitespaces configuration option.
+This alert can only be generated when normalize_javascript  configuration option is true.
 
 119:111
 
-(http_inspect) multiple encodings within javascript obfuscated data
+More than one encoding within JavaScript obfuscated data. This alert can only be generated when
+normalize_javascript  configuration option is true.
 
 119:112
 
-(http_inspect) SWF file zlib decompression failure
+SWF file zlib decompression failure.
 
 119:113
 
-(http_inspect) SWF file LZMA decompression failure
+SWF file LZMA decompression failure.
 
 119:114
 
-(http_inspect) PDF file deflate decompression failure
+PDF file deflate decompression failure.
 
 119:115
 
-(http_inspect) PDF file unsupported compression type
+PDF file unsupported compression type.
 
 119:116
 
-(http_inspect) PDF file cascaded compression
+PDF file cascaded compression.
 
 119:117
 
-(http_inspect) PDF file parse failure
+PDF file parse failure.
 
 119:201
 
-(http_inspect) not HTTP traffic
+HTTP inspector is unable to parse this flow. Either the connection is not actually using HTTP or
+some sort of unrecoverable HTTP protocol error has occurred. This conclusion applies only to one
+direction of the flow. The opposite direction may be OK.
 
 119:202
 
-(http_inspect) chunk length has excessive leading zeros
+Chunk length has five or more leading zeros.
 
 119:203
 
-(http_inspect) white space before or between messages
+White space characters before the first HTTP message or inserted between HTTP messages.
 
 119:204
 
-(http_inspect) request message without URI
+HTTP request message does not include a URI. There is nothing between the method and the version
+except whitespace. Alternatively the 0.9 equivalent which is GET followed by nothing except
+whitespace.
 
 119:205
 
-(http_inspect) control character in reason phrase
+The reason phrase in an HTTP response message contains a control character.
 
 119:206
 
-(http_inspect) illegal extra whitespace in start line
+There is more than one space (or other whitespace) character between two elements of an HTTP
+request or status line.
 
 119:207
 
-(http_inspect) corrupted HTTP version
+The HTTP version in the start line begins with "HTTP/" but the remainder is not in the expected
+<digit>.<digit> format.
 
 119:208
 
-(http_inspect) unknown HTTP version
+The HTTP version in the start line has a valid format but is not HTTP/1.0 or HTTP/1.1. This alert
+does not apply to HTTP/2 or HTTP/3 traffic.
 
 119:209
 
-(http_inspect) format error in HTTP header
+format error in HTTP header
 
 119:210
 
-(http_inspect) chunk header options present
+chunk header options present
 
 119:211
 
-(http_inspect) URI badly formatted
+URI badly formatted
 
 119:212
 
-(http_inspect) unrecognized type of percent encoding in URI
+unrecognized type of percent encoding in URI
 
 119:213
 
-(http_inspect) HTTP chunk misformatted
+HTTP chunk misformatted
 
 119:214
 
-(http_inspect) white space adjacent to chunk length
+white space adjacent to chunk length
 
 119:215
 
-(http_inspect) white space within header name
+white space within header name
 
 119:216
 
-(http_inspect) excessive gzip compression
+excessive gzip compression
 
 119:217
 
-(http_inspect) gzip decompression failed
+gzip decompression failed
 
 119:218
 
-(http_inspect) HTTP 0.9 requested followed by another request
+HTTP 0.9 requested followed by another request
 
 119:219
 
-(http_inspect) HTTP 0.9 request following a normal request
+HTTP 0.9 request following a normal request
 
 119:220
 
-(http_inspect) message has both Content-Length and Transfer-Encoding
+message has both Content-Length and Transfer-Encoding
 
 119:221
 
-(http_inspect) status code implying no body combined with Transfer-Encoding or nonzero Content-Length
+status code implying no body combined with Transfer-Encoding or nonzero Content-Length
 
 119:222
 
-(http_inspect) Transfer-Encoding not ending with chunked
+Transfer-Encoding not ending with chunked
 
 119:223
 
-(http_inspect) Transfer-Encoding with encodings before chunked
+Transfer-Encoding with encodings before chunked
 
 119:224
 
-(http_inspect) misformatted HTTP traffic
+misformatted HTTP traffic
 
 119:225
 
-(http_inspect) unsupported Content-Encoding used
+unsupported Content-Encoding used
 
 119:226
 
-(http_inspect) unknown Content-Encoding used
+unknown Content-Encoding used
 
 119:227
 
-(http_inspect) multiple Content-Encodings applied
+multiple Content-Encodings applied
 
 119:228
 
-(http_inspect) server response before client request
+server response before client request
 
 119:229
 
-(http_inspect) PDF/SWF/ZIP decompression of server response too big
+PDF/SWF/ZIP decompression of server response too big
 
 119:230
 
-(http_inspect) nonprinting character in HTTP message header name
+nonprinting character in HTTP message header name
 
 119:231
 
-(http_inspect) bad Content-Length value in HTTP header
+bad Content-Length value in HTTP header
 
 119:232
 
-(http_inspect) HTTP header line wrapped
+HTTP header line wrapped
 
 119:233
 
-(http_inspect) HTTP header line terminated by CR without a LF
+HTTP header line terminated by CR without a LF
 
 119:234
 
-(http_inspect) chunk terminated by nonstandard separator
+chunk terminated by nonstandard separator
 
 119:235
 
-(http_inspect) chunk length terminated by LF without CR
+chunk length terminated by LF without CR
 
 119:236
 
-(http_inspect) more than one response with 100 status code
+more than one response with 100 status code
 
 119:237
 
-(http_inspect) 100 status code not in response to Expect header
+100 status code not in response to Expect header
 
 119:238
 
-(http_inspect) 1XX status code other than 100 or 101
+1XX status code other than 100 or 101
 
 119:239
 
-(http_inspect) Expect header sent without a message body
+Expect header sent without a message body
 
 119:240
 
-(http_inspect) HTTP 1.0 message with Transfer-Encoding header
+HTTP 1.0 message with Transfer-Encoding header
 
 119:241
 
-(http_inspect) Content-Transfer-Encoding used as HTTP header
+Content-Transfer-Encoding used as HTTP header
 
 119:242
 
-(http_inspect) illegal field in chunked message trailers
+illegal field in chunked message trailers
 
 119:243
 
-(http_inspect) header field inappropriately appears twice or has two values
+header field inappropriately appears twice or has two values
 
 119:244
 
-(http_inspect) invalid value chunked in Content-Encoding header
+invalid value chunked in Content-Encoding header
 
 119:245
 
-(http_inspect) 206 response sent to a request without a Range header
+206 response sent to a request without a Range header
 
 119:246
 
-(http_inspect) 'HTTP' in version field not all upper case
+'HTTP' in version field not all upper case
 
 119:247
 
-(http_inspect) white space embedded in critical header value
+white space embedded in critical header value
 
 119:248
 
-(http_inspect) gzip compressed data followed by unexpected non-gzip data
+gzip compressed data followed by unexpected non-gzip data
 
 119:249
 
-(http_inspect) excessive HTTP parameter key repeats
+excessive HTTP parameter key repeats
 
 119:250
 
-(http_inspect) HTTP/2 Transfer-Encoding header other than identity
+HTTP/2 Transfer-Encoding header other than identity
 
 119:251
 
-(http_inspect) HTTP/2 message body overruns Content-Length header value
+HTTP/2 message body overruns Content-Length header value
 
 119:252
 
-(http_inspect) HTTP/2 message body smaller than Content-Length header value
+HTTP/2 message body smaller than Content-Length header value
 
 119:253
 
-(http_inspect) HTTP CONNECT request with a message body
+HTTP CONNECT request with a message body
 
 119:254
 
-(http_inspect) HTTP client-to-server traffic after CONNECT request but before CONNECT response
+HTTP client-to-server traffic after CONNECT request but before CONNECT response
 
 119:255
 
-(http_inspect) HTTP CONNECT 2XX response with Content-Length header
+HTTP CONNECT 2XX response with Content-Length header
 
 119:256
 
-(http_inspect) HTTP CONNECT 2XX response with Transfer-Encoding header
+HTTP CONNECT 2XX response with Transfer-Encoding header
 
 119:257
 
-(http_inspect) HTTP CONNECT response with 1XX status code
+HTTP CONNECT response with 1XX status code
 
 119:258
 
-(http_inspect) HTTP CONNECT response before request message completed
+HTTP CONNECT response before request message completed
 
 119:259
 
-(http_inspect) malformed HTTP Content-Disposition filename parameter
+malformed HTTP Content-Disposition filename parameter
 
 119:260
 
-(http_inspect) HTTP Content-Length message body was truncated
+HTTP Content-Length message body was truncated
 
 119:261
 
-(http_inspect) HTTP chunked message body was truncated
+HTTP chunked message body was truncated
 
 119:262
 
-(http_inspect) HTTP URI scheme longer than 10 characters
+HTTP URI scheme longer than 10 characters
 
 119:263
 
-(http_inspect) HTTP/1 client requested HTTP/2 upgrade
+HTTP/1 client requested HTTP/2 upgrade
 
 119:264
 
-(http_inspect) HTTP/1 server granted HTTP/2 upgrade
+HTTP/1 server granted HTTP/2 upgrade
 
 119:265
 
@@ -1140,7 +1173,7 @@ encountered, this alert is raised.
 
 This alert is raised when </script> end-tag is encountered inside a JavaScript comment
 or literal, which is a syntax error, as the last comment or literal is not closed before
-script end. 
+script end.
 
 119:268
 
@@ -1171,151 +1204,151 @@ an indication that an attacker is trying to exhaust resources.
 
 119:272
 
-(http_inspect) Consecutive commas in HTTP Accept-Encoding header
+Consecutive commas in HTTP Accept-Encoding header
 
 121:1
 
-(http2_inspect) invalid flag set on HTTP/2 frame
+invalid flag set on HTTP/2 frame
 
 121:2
 
-(http2_inspect) HPACK integer value has leading zeros
+HPACK integer value has leading zeros
 
 121:3
 
-(http2_inspect) HTTP/2 stream initiated with invalid stream id
+HTTP/2 stream initiated with invalid stream id
 
 121:4
 
-(http2_inspect) missing HTTP/2 continuation frame
+missing HTTP/2 continuation frame
 
 121:5
 
-(http2_inspect) unexpected HTTP/2 continuation frame
+unexpected HTTP/2 continuation frame
 
 121:6
 
-(http2_inspect) misformatted HTTP/2 traffic
+misformatted HTTP/2 traffic
 
 121:7
 
-(http2_inspect) HTTP/2 connection preface does not match
+HTTP/2 connection preface does not match
 
 121:8
 
-(http2_inspect) HTTP/2 request missing required header field
+HTTP/2 request missing required header field
 
 121:9
 
-(http2_inspect) HTTP/2 response has no status code
+HTTP/2 response has no status code
 
 121:10
 
-(http2_inspect) HTTP/2 CONNECT request with scheme or path
+HTTP/2 CONNECT request with scheme or path
 
 121:11
 
-(http2_inspect) error in HTTP/2 settings frame
+error in HTTP/2 settings frame
 
 121:12
 
-(http2_inspect) unknown parameter in HTTP/2 settings frame
+unknown parameter in HTTP/2 settings frame
 
 121:13
 
-(http2_inspect) invalid HTTP/2 frame sequence
+invalid HTTP/2 frame sequence
 
 121:14
 
-(http2_inspect) HTTP/2 dynamic table size limit exceeded
+HTTP/2 dynamic table size limit exceeded
 
 121:15
 
-(http2_inspect) HTTP/2 push promise frame with invalid promised stream id
+HTTP/2 push promise frame with invalid promised stream id
 
 121:16
 
-(http2_inspect) HTTP/2 padding length is bigger than frame data size
+HTTP/2 padding length is bigger than frame data size
 
 121:17
 
-(http2_inspect) HTTP/2 pseudo-header after regular header
+HTTP/2 pseudo-header after regular header
 
 121:18
 
-(http2_inspect) HTTP/2 pseudo-header in trailers
+HTTP/2 pseudo-header in trailers
 
 121:19
 
-(http2_inspect) invalid HTTP/2 pseudo-header
+invalid HTTP/2 pseudo-header
 
 121:20
 
-(http2_inspect) HTTP/2 trailers without END_STREAM bit
+HTTP/2 trailers without END_STREAM bit
 
 121:21
 
-(http2_inspect) HTTP/2 push promise frame sent when prohibited by receiver
+HTTP/2 push promise frame sent when prohibited by receiver
 
 121:22
 
-(http2_inspect) padding flag set on HTTP/2 frame with zero length
+padding flag set on HTTP/2 frame with zero length
 
 121:23
 
-(http2_inspect) HTTP/2 push promise frame in c2s direction
+HTTP/2 push promise frame in c2s direction
 
 121:24
 
-(http2_inspect) invalid HTTP/2 push promise frame
+invalid HTTP/2 push promise frame
 
 121:25
 
-(http2_inspect) HTTP/2 push promise frame sent at invalid time
+HTTP/2 push promise frame sent at invalid time
 
 121:26
 
-(http2_inspect) invalid parameter value sent in HTTP/2 settings frame
+invalid parameter value sent in HTTP/2 settings frame
 
 121:27
 
-(http2_inspect) excessive concurrent HTTP/2 streams
+excessive concurrent HTTP/2 streams
 
 121:28
 
-(http2_inspect) invalid HTTP/2 rst stream frame
+invalid HTTP/2 rst stream frame
 
 121:29
 
-(http2_inspect) HTTP/2 rst stream frame sent at invalid time
+HTTP/2 rst stream frame sent at invalid time
 
 121:30
 
-(http2_inspect) uppercase HTTP/2 header field name
+uppercase HTTP/2 header field name
 
 121:31
 
-(http2_inspect) invalid HTTP/2 window update frame
+invalid HTTP/2 window update frame
 
 121:32
 
-(http2_inspect) HTTP/2 window update frame with zero increment
+HTTP/2 window update frame with zero increment
 
 121:33
 
-(http2_inspect) HTTP/2 request without a method
+HTTP/2 request without a method
 
 121:34
 
-(http2_inspect) HTTP/2 HPACK table size update not at the start of a header block
+HTTP/2 HPACK table size update not at the start of a header block
 
 121:35
 
-(http2_inspect) More than two HTTP/2 HPACK table size updates in a single header block
+More than two HTTP/2 HPACK table size updates in a single header block
 
 121:36
 
-(http2_inspect) HTTP/2 HPACK table size update exceeds max value set by decoder in SETTINGS frame
+HTTP/2 HPACK table size update exceeds max value set by decoder in SETTINGS frame
 
 122:1
 
