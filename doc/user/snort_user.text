@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.13.0 2021-09-22 09:10:49 EDT TST
+Revision 3.1.14.0 2021-10-07 06:47:24 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -3962,9 +3962,9 @@ and operator, etc.) according to ECMAScript 5.1 standard.
 Additionally, it performs normalization of JavaScript identifiers
 making a substitution of unique names with unified names
 representation: a0 → z9999. The identifiers are variables and
-function names. The normalized data is available through the
-script_data rule option. This is currently experimental and still
-under development.
+function names. The normalized data is available through the js_data
+rule option. This is currently experimental and still under
+development.
 
 5.10.2.9. js_norm_identifier_depth
 
@@ -4173,10 +4173,10 @@ Messages from script processing flow and their verbosity levels:
 
 5.10.4.2. trace.module.http_inspect.js_dump
 
-Script data dump and verbosity levels:
+JavaScript data dump and verbosity levels:
 
- 1. script_data buffer as it is passed to detection.
- 2. Current script in normalized form.
+ 1. js_data buffer as it is passed to detection.
+ 2. (no messages available currently)
  3. Current script as it is passed to Normalizer.
 
 5.10.5. Detection rules
@@ -4418,13 +4418,13 @@ The file_data contains the normalized message body. This is the
 normalization described above under gzip, normalize_utf,
 decompress_pdf, decompress_swf, and normalize_javascript.
 
-5.10.5.14. script_data
+5.10.5.14. js_data
 
-The script_data contains normalized JavaScript text collected from
-the whole PDU (inline or external scripts). It requires the Enhanced
+The js_data contains normalized JavaScript text collected from the
+whole PDU (inline or external scripts). It requires the Enhanced
 Normalizer enabled: http_inspect = { js_normalization_depth = N },
 js_normalization_depth option is described above. Despite what
-script_data has, file_data still contains the whole HTTP body with an
+js_data has, file_data still contains the whole HTTP body with an
 original JavaScript in it.
 
 5.10.6. Timing issues and combining rule options

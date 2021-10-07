@@ -1,3 +1,26 @@
+2021/10/07 - 3.1.14.0
+
+appid: enhance RPC service detector to handle RPC Bind version 3
+appid: fix update_allocations signature in unit test
+appid: log appid daq trace first followed by subscriber modules
+appid: provide api for Lua detectors to map process name to client app
+doc: add descriptions for 119:265-271 builtin alerts
+doc: update builtin stub rule reference strings
+file: add file policy id and other config data as part of packet tracer command under File phase
+file_api: add decompress_buffer_size
+flow: add total flow latency to flowstats
+http2_inspect: compare scanned bytes to total received during reassemble
+http2_inspect: protect against reassemble with more than MAX_OCTETS
+http_inspect: change format of normalized JS identifiers
+ips_options: rename script_data buffer to js_data
+latency: add configuration for implicit enable
+lua: fix Talos tweak snaplen
+rna: support CPE new os RNA event
+snort_config: adding api for enabling latency module
+utils: add custom i/o stream buffers to JS normalizer
+utils: adjust output streambuffer expanding strategy and reserved memory
+utils: fix compilation error of js_identifier_ctx_test for clang
+
 2021/09/22 - 3.1.13.0
 
 appid: prioritize appid's client detection over third-party

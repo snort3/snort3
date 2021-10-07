@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.13.0 2021-09-22 09:11:00 EDT TST
+Revision 3.1.14.0 2021-10-07 06:47:36 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -221,28 +221,28 @@ Table of Contents
     7.72. ipopts
     7.73. isdataat
     7.74. itype
-    7.75. md5
-    7.76. metadata
-    7.77. modbus_data
-    7.78. modbus_func
-    7.79. modbus_unit
-    7.80. msg
-    7.81. mss
-    7.82. pcre
-    7.83. pkt_data
-    7.84. pkt_num
-    7.85. priority
-    7.86. raw_data
-    7.87. reference
-    7.88. regex
-    7.89. rem
-    7.90. replace
-    7.91. rev
-    7.92. rpc
-    7.93. s7commplus_content
-    7.94. s7commplus_func
-    7.95. s7commplus_opcode
-    7.96. script_data
+    7.75. js_data
+    7.76. md5
+    7.77. metadata
+    7.78. modbus_data
+    7.79. modbus_func
+    7.80. modbus_unit
+    7.81. msg
+    7.82. mss
+    7.83. pcre
+    7.84. pkt_data
+    7.85. pkt_num
+    7.86. priority
+    7.87. raw_data
+    7.88. reference
+    7.89. regex
+    7.90. rem
+    7.91. replace
+    7.92. rev
+    7.93. rpc
+    7.94. s7commplus_content
+    7.95. s7commplus_func
+    7.96. s7commplus_opcode
     7.97. sd_pattern
     7.98. seq
     7.99. service
@@ -3337,12 +3337,11 @@ Configuration:
     limit) { -1:65535 }
   * int file_id.bitenc_decode_depth = -1: Non-Encoded MIME attachment
     extraction depth (-1 no limit) { -1:65535 }
-  * bool file_id.decompress_pdf = false: decompress pdf files in MIME
-    attachments
-  * bool file_id.decompress_swf = false: decompress swf files in MIME
-    attachments
-  * bool file_id.decompress_zip = false: decompress zip files in MIME
-    attachments
+  * bool file_id.decompress_pdf = false: decompress pdf files
+  * bool file_id.decompress_swf = false: decompress swf files
+  * bool file_id.decompress_zip = false: decompress zip files
+  * int file_id.decompress_buffer_size = 100000: file decompression
+    buffer size { 1024:max31 }
   * int file_id.qp_decode_depth = -1: Quoted Printable decoding depth
     (-1 no limit) { -1:65535 }
   * int file_id.uu_decode_depth = -1: Unix-to-Unix decoding depth (-1
@@ -3690,8 +3689,8 @@ Configuration:
   * int http_inspect.js_normalization_depth = 0: enable enhanced
     normalizer (0 is disabled); number of input JavaScript bytes to
     normalize (-1 unlimited) (experimental) { -1:max53 }
-  * int http_inspect.js_norm_identifier_depth = 260000: max number of
-    unique JavaScript identifiers to normalize { 0:260000 }
+  * int http_inspect.js_norm_identifier_depth = 65536: max number of
+    unique JavaScript identifiers to normalize { 0:65536 }
   * int http_inspect.js_norm_max_tmpl_nest = 32: maximum depth of
     template literal nesting that enhanced javascript normalizer will
     process (experimental) { 0:255 }
@@ -4883,6 +4882,7 @@ Commands:
 Peg counts:
 
   * rna.appid_change: count of appid change events received (sum)
+  * rna.cpe_os: count of CPE OS events received (sum)
   * rna.icmp_bidirectional: count of bidirectional ICMP flows
     received (sum)
   * rna.icmp_new: count of new ICMP flows received (sum)
@@ -7193,7 +7193,19 @@ Configuration:
     0:255 }
 
 
-7.75. md5
+7.75. js_data
+
+--------------
+
+Help: rule option to set detection cursor to normalized JavaScript
+data
+
+Type: ips_option
+
+Usage: detect
+
+
+7.76. md5
 
 --------------
 
@@ -7213,7 +7225,7 @@ Configuration:
     of buffer
 
 
-7.76. metadata
+7.77. metadata
 
 --------------
 
@@ -7230,7 +7242,7 @@ Configuration:
     pairs
 
 
-7.77. modbus_data
+7.78. modbus_data
 
 --------------
 
@@ -7241,7 +7253,7 @@ Type: ips_option
 Usage: detect
 
 
-7.78. modbus_func
+7.79. modbus_func
 
 --------------
 
@@ -7256,7 +7268,7 @@ Configuration:
   * string modbus_func.~: function code to match
 
 
-7.79. modbus_unit
+7.80. modbus_unit
 
 --------------
 
@@ -7271,7 +7283,7 @@ Configuration:
   * int modbus_unit.~: Modbus unit ID { 0:255 }
 
 
-7.80. msg
+7.81. msg
 
 --------------
 
@@ -7286,7 +7298,7 @@ Configuration:
   * string msg.~: message describing rule
 
 
-7.81. mss
+7.82. mss
 
 --------------
 
@@ -7302,7 +7314,7 @@ Configuration:
     }
 
 
-7.82. pcre
+7.83. pcre
 
 --------------
 
@@ -7324,7 +7336,7 @@ Peg counts:
   * pcre.pcre_negated: total pcre rules using negation syntax (sum)
 
 
-7.83. pkt_data
+7.84. pkt_data
 
 --------------
 
@@ -7336,7 +7348,7 @@ Type: ips_option
 Usage: detect
 
 
-7.84. pkt_num
+7.85. pkt_num
 
 --------------
 
@@ -7352,7 +7364,7 @@ Configuration:
     { 1: }
 
 
-7.85. priority
+7.86. priority
 
 --------------
 
@@ -7368,7 +7380,7 @@ Configuration:
     1:max31 }
 
 
-7.86. raw_data
+7.87. raw_data
 
 --------------
 
@@ -7379,7 +7391,7 @@ Type: ips_option
 Usage: detect
 
 
-7.87. reference
+7.88. reference
 
 --------------
 
@@ -7394,7 +7406,7 @@ Configuration:
   * string reference.~ref: reference: <scheme>,<id>
 
 
-7.88. regex
+7.89. regex
 
 --------------
 
@@ -7418,7 +7430,7 @@ Configuration:
     instead of start of buffer
 
 
-7.89. rem
+7.90. rem
 
 --------------
 
@@ -7433,7 +7445,7 @@ Configuration:
   * string rem.~: comment
 
 
-7.90. replace
+7.91. replace
 
 --------------
 
@@ -7449,7 +7461,7 @@ Configuration:
   * string replace.~: byte code to replace with
 
 
-7.91. rev
+7.92. rev
 
 --------------
 
@@ -7464,7 +7476,7 @@ Configuration:
   * int rev.~: revision { 1:max32 }
 
 
-7.92. rpc
+7.93. rpc
 
 --------------
 
@@ -7481,7 +7493,7 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-7.93. s7commplus_content
+7.94. s7commplus_content
 
 --------------
 
@@ -7492,7 +7504,7 @@ Type: ips_option
 Usage: detect
 
 
-7.94. s7commplus_func
+7.95. s7commplus_func
 
 --------------
 
@@ -7507,7 +7519,7 @@ Configuration:
   * string s7commplus_func.~: function code to match
 
 
-7.95. s7commplus_opcode
+7.96. s7commplus_opcode
 
 --------------
 
@@ -7520,17 +7532,6 @@ Usage: detect
 Configuration:
 
   * string s7commplus_opcode.~: opcode code to match
-
-
-7.96. script_data
-
---------------
-
-Help: rule option to set detection cursor to normalized script data
-
-Type: ips_option
-
-Usage: detect
 
 
 7.97. sd_pattern
@@ -8942,12 +8943,11 @@ these libraries see the Getting Started section of the manual.
     megabytes { 0:max53 }
   * int file_id.capture_min_size = 0: stop file capture if file size
     less than this { 0:max53 }
-  * bool file_id.decompress_pdf = false: decompress pdf files in MIME
-    attachments
-  * bool file_id.decompress_swf = false: decompress swf files in MIME
-    attachments
-  * bool file_id.decompress_zip = false: decompress zip files in MIME
-    attachments
+  * int file_id.decompress_buffer_size = 100000: file decompression
+    buffer size { 1024:max31 }
+  * bool file_id.decompress_pdf = false: decompress pdf files
+  * bool file_id.decompress_swf = false: decompress swf files
+  * bool file_id.decompress_zip = false: decompress zip files
   * bool file_id.enable_capture = false: enable file capture
   * bool file_id.enable_signature = false: enable signature
     calculation
@@ -9158,8 +9158,8 @@ these libraries see the Getting Started section of the manual.
   * int http_inspect.js_normalization_depth = 0: enable enhanced
     normalizer (0 is disabled); number of input JavaScript bytes to
     normalize (-1 unlimited) (experimental) { -1:max53 }
-  * int http_inspect.js_norm_identifier_depth = 260000: max number of
-    unique JavaScript identifiers to normalize { 0:260000 }
+  * int http_inspect.js_norm_identifier_depth = 65536: max number of
+    unique JavaScript identifiers to normalize { 0:65536 }
   * int http_inspect.js_norm_max_tmpl_nest = 32: maximum depth of
     template literal nesting that enhanced javascript normalizer will
     process (experimental) { 0:255 }
@@ -11262,6 +11262,7 @@ these libraries see the Getting Started section of the manual.
   * rna.appid_change: count of appid change events received (sum)
   * rna.change_host_update: count number of change host update events
     (sum)
+  * rna.cpe_os: count of CPE OS events received (sum)
   * rna.dhcp_data: count of DHCP data events received (sum)
   * rna.dhcp_info: count of new DHCP lease events received (sum)
   * rna.icmp_bidirectional: count of bidirectional ICMP flows
@@ -12859,33 +12860,54 @@ parameter
 
 119:265 (http_inspect) bad token in JavaScript
 
-(http_inspect) bad token in JavaScript
+JavaScript normalizer has encountered a symbol that is not expected
+as a part of a valid JavaScript statement, making further
+normalization impossible.
 
 119:266 (http_inspect) unexpected script opening tag in JavaScript
 
-(http_inspect) unexpected script opening tag in JavaScript
+HTML <script> tag must not have a nested <script> tag inside it. If a
+nested tag is encountered, this alert is raised.
 
 119:267 (http_inspect) unexpected script closing tag in JavaScript
 
-(http_inspect) unexpected script closing tag in JavaScript
+This alert is raised when </script> end-tag is encountered inside a
+JavaScript comment or literal, which is a syntax error, as the last
+comment or literal is not closed before script end.
 
 119:268 (http_inspect) JavaScript code under the external script tags
 
-(http_inspect) JavaScript code under the external script tags
+When HTML <script> tag contains a reference to an external script, it
+must not contain any executable JavaScript code. This alert is raised
+if executable (i.e. not comment) code is found inside a script tag
+that has an external reference.
 
 119:269 (http_inspect) script opening tag in a short form
 
-(http_inspect) script opening tag in a short form
+In HTML, a script tag must not be self-closing (written as <script />
+without a following end-tag). If a self-closing "short-form" script
+tag is encountered, this alert is raised.
 
 119:270 (http_inspect) max number of unique JavaScript identifiers
 reached
 
-(http_inspect) max number of unique JavaScript identifiers reached
+JavaScript normalization includes identifier substitution, which
+brings arbitrary JavaScript identifiers to a common form. Amount of
+unique identifiers to normalize is limited, for memory
+considerations, with http_inspect.js_norm_identifier_depth parameter.
+When this threshold is reached, a corresponding alert is raised. This
+alert is not expected for typical network traffic and may be an
+indication that an attacker is trying to exhaust resources.
 
 119:271 (http_inspect) JavaScript template literal nesting is over
 capacity
 
-(http_inspect) JavaScript template literal nesting is over capacity
+In JavaScript, template literals can have substitutions, that in turn
+can have nested template literals, which requires a stack to track
+for proper whitespace normalization. When the depth of nesting
+exceeds limit set in http_inspect.js_norm_max_tmpl_nest, this alert
+is raised. This alert is not expected for typical network traffic and
+may be an indication that an attacker is trying to exhaust resources.
 
 119:272 (http_inspect) Consecutive commas in HTTP Accept-Encoding
 header
@@ -13159,50 +13181,54 @@ by decoder in SETTINGS frame
 
 123:1 (stream_ip) inconsistent IP options on fragmented packets
 
-(stream_ip) inconsistent IP options on fragmented packets
+Received inconsistent IP options on fragmented packets
 
 123:2 (stream_ip) teardrop attack
 
-(stream_ip) teardrop attack
+Received indicators of a teardrop attack on fragmented packets
 
 123:3 (stream_ip) short fragment, possible DOS attempt
 
-(stream_ip) short fragment, possible DOS attempt
+Received short fragment, possible DOS attempt (possible boink/bolt/
+jolt attack). The minimum length required to throw this alert is
+specified by stream_ip.min_frag_length
 
 123:4 (stream_ip) fragment packet ends after defragmented packet
 
-(stream_ip) fragment packet ends after defragmented packet
+Overlap anomaly: fragment packet ends after defragmented packet
 
 123:5 (stream_ip) zero-byte fragment packet
 
-(stream_ip) zero-byte fragment packet
+Received a zero-byte fragment
 
 123:6 (stream_ip) bad fragment size, packet size is negative
 
-(stream_ip) bad fragment size, packet size is negative
+Bad fragment size encountered, packet size is negative
 
 123:7 (stream_ip) bad fragment size, packet size is greater than
 65536
 
-(stream_ip) bad fragment size, packet size is greater than 65536
+Bad fragment size encountered, packet size is greater than 65536
 
 123:8 (stream_ip) fragmentation overlap
 
-(stream_ip) fragmentation overlap
+Fragmentation results in overlap between segments
 
 123:11 (stream_ip) TTL value less than configured minimum, not using
 for reassembly
 
-(stream_ip) TTL value less than configured minimum, not using for
-reassembly
+TTL value is less than configured minimum, not using for reassembly.
+Minimum TTL can be configured with stream_ip.min_ttl
 
 123:12 (stream_ip) excessive fragment overlap
 
-(stream_ip) excessive fragment overlap
+Fragment overlap limit exceeded, event will be raised for all
+successive fragments. The max fragment overlaps that can occur before
+alerting is configurable by changing stream_ip.max_overlaps
 
 123:13 (stream_ip) tiny fragment
 
-(stream_ip) tiny fragment
+Received a tiny fragment (less than minimum fragment length)
 
 124:1 (smtp) attempted command buffer overflow
 
@@ -13338,55 +13364,68 @@ end
 
 129:1 (stream_tcp) SYN on established session
 
-(stream_tcp) SYN on established session
+Received a TCP SYN on an already established TCP session
 
 129:2 (stream_tcp) data on SYN packet
 
-(stream_tcp) data on SYN packet
+Data present on SYN packet
 
 129:3 (stream_tcp) data sent on stream not accepting data
 
-(stream_tcp) data sent on stream not accepting data
+Data was sent on a stream not accepting data. The stream is in the
+TIME-WAIT, FIN-WAIT, CLOSED, or CLOSE-WAIT state
 
 129:4 (stream_tcp) TCP timestamp is outside of PAWS window
 
-(stream_tcp) TCP timestamp is outside of PAWS window
+The TCP timestamp is outside of PAWS (protection against wrapped
+sequences) window
 
 129:5 (stream_tcp) bad segment, adjusted size ⇐ 0 (deprecated)
 
-(stream_tcp) bad segment, adjusted size ⇐ 0 (deprecated)
+Bad segment, adjusted size ⇐ 0 (deprecated)
 
 129:6 (stream_tcp) window size (after scaling) larger than policy
 allows
 
-(stream_tcp) window size (after scaling) larger than policy allows
+Window size (after scaling) is larger than policy allows.
+stream_tcp.max_window can be increased to allow for larger window
+sizes if desired
 
 129:7 (stream_tcp) limit on number of overlapping TCP packets reached
 
-(stream_tcp) limit on number of overlapping TCP packets reached
+Limit on number of overlapping TCP packets per session was reached.
+stream_tcp.overlap_limit can be increased to allow for more overlaps
+per session, if desired
 
 129:8 (stream_tcp) data sent on stream after TCP reset sent
 
-(stream_tcp) data sent on stream after TCP reset sent
+Data was sent on stream after a TCP reset was sent, and the stream is
+in CLOSED state
 
 129:9 (stream_tcp) TCP client possibly hijacked, different ethernet
 address
 
-(stream_tcp) TCP client possibly hijacked, different ethernet address
+TCP client is possibly hijacked, MAC addresses on received packets
+differ from what was originally seen on this flow
 
 129:10 (stream_tcp) TCP server possibly hijacked, different ethernet
 address
 
-(stream_tcp) TCP server possibly hijacked, different ethernet address
+TCP server is possibly hijacked, MAC addresses on received packets
+differ from what was originally seen on this flow
 
 129:11 (stream_tcp) TCP data with no TCP flags set
 
-(stream_tcp) TCP data with no TCP flags set
+Received TCP data with no TCP flags set
 
 129:12 (stream_tcp) consecutive TCP small segments exceeding
 threshold
 
-(stream_tcp) consecutive TCP small segments exceeding threshold
+Consecutive TCP small segments exceed the configured threshold. The
+size required to be a small segment can be configured via
+stream_tcp.small_segments.maximum_size, and the maximum number of
+these small segments can be configured with int
+stream_tcp.small_segments.count
 
 129:13 (stream_tcp) 4-way handshake detected
 
@@ -13397,31 +13436,34 @@ detected in all cases.
 
 129:14 (stream_tcp) TCP timestamp is missing
 
-(stream_tcp) TCP timestamp is missing
+TCP timestamp is missing, which could cause a failure in PAWS
+checking, or RTT calculation
 
 129:15 (stream_tcp) reset outside window
 
-(stream_tcp) reset outside window
+TCP reset was requested outside window (bad RST)
 
 129:16 (stream_tcp) FIN number is greater than prior FIN
 
-(stream_tcp) FIN number is greater than prior FIN
+TCP Anomaly: FIN number is greater than prior FIN while the
+connection is in TIME-WAIT
 
 129:17 (stream_tcp) ACK number is greater than prior FIN
 
-(stream_tcp) ACK number is greater than prior FIN
+TCP Anomaly: ACK number is greater than prior FIN while the
+connection is in FIN-WAIT-2
 
 129:18 (stream_tcp) data sent on stream after TCP reset received
 
-(stream_tcp) data sent on stream after TCP reset received
+Data was sent on stream after TCP reset received
 
 129:19 (stream_tcp) TCP window closed before receiving data
 
-(stream_tcp) TCP window closed before receiving data
+TCP window was closed before receiving data
 
 129:20 (stream_tcp) TCP session without 3-way handshake
 
-(stream_tcp) TCP session without 3-way handshake
+The TCP 3-way handshake was not seen for this TCP session
 
 131:1 (dns) obsolete DNS RR types
 
@@ -13729,39 +13771,58 @@ payload boundary
 
 135:1 (stream) TCP SYN received
 
-(stream) TCP SYN received
+A TCP SYN was received
 
 135:2 (stream) TCP session established
 
-(stream) TCP session established
+A TCP session was established
 
 135:3 (stream) TCP session cleared
 
-(stream) TCP session cleared
+A TCP session was cleared
 
 136:1 (reputation) packets blocked based on source
 
-(reputation) packets blocked based on source
+The flow was blocked based on the source IP address, since it appears
+on the IP reputation block list. Configure either the discovery
+filter, or the reputation IP lists to change this behavior
 
 136:2 (reputation) packets trusted based on source
 
-(reputation) packets trusted based on source
+The flow was trusted based on the source IP address, since it appears
+on the IP reputation trust list. Configure either the discovery
+filter, or the reputation IP lists to change this behavior
 
 136:3 (reputation) packets monitored based on source
 
-(reputation) packets monitored based on source
+The flow was monitored based on the source IP address, since it
+appears on the IP reputation monitor list. Configure either the
+discovery filter, or the reputation IP lists to change this behavior
 
 136:4 (reputation) packets blocked based on destination
 
-(reputation) packets blocked based on destination
+The flow was blocked based on the destination IP address, since it
+appears on the IP reputation block list. If the flow contained proxy
+traffic, the IP address could also be the address of the
+(inner-layer) proxied connection. Configure either the discovery
+filter, or the reputation IP lists to change this behavior.
 
 136:5 (reputation) packets trusted based on destination
 
-(reputation) packets trusted based on destination
+The flow was trusted based on the destination IP address, since it
+appears on the IP reputation trust list. If the flow contained proxy
+traffic, the IP address could also be the address of the
+(inner-layer) proxied connection. Configure either the discovery
+filter, or the reputation IP lists to change this behavior
 
 136:6 (reputation) packets monitored based on destination
 
-(reputation) packets monitored based on destination
+The flow was monitored (passed to further inspection) based on the
+destination IP address, since it appears on the IP reputation monitor
+list. If the flow contained proxy traffic, the IP address could also
+be the address of the (inner-layer) proxied connection. Configure
+either the discovery filter, or the reputation IP lists to change
+this behavior
 
 137:1 (ssl) invalid client HELLO after server HELLO detected
 
@@ -14625,6 +14686,8 @@ and are not applicable elsewhere.
   * isdataat (ips_option): rule option to check for the presence of
     payload data
   * itype (ips_option): rule option to check ICMP type
+  * js_data (ips_option): rule option to set detection cursor to
+    normalized JavaScript data
   * latency (basic): packet and rule latency monitoring and control
   * llc (codec): support for logical link control
   * log_codecs (logger): log protocols in packet by layer
@@ -14700,8 +14763,6 @@ and are not applicable elsewhere.
     function code
   * s7commplus_opcode (ips_option): rule option to check s7commplus
     opcode code
-  * script_data (ips_option): rule option to set detection cursor to
-    normalized script data
   * sd_pattern (ips_option): rule option for detecting sensitive data
   * search_engine (basic): configure fast pattern matcher
   * seq (ips_option): rule option to check TCP sequence number
@@ -15024,6 +15085,8 @@ and are not applicable elsewhere.
   * ips_option::isdataat: rule option to check for the presence of
     payload data
   * ips_option::itype: rule option to check ICMP type
+  * ips_option::js_data: rule option to set detection cursor to
+    normalized JavaScript data
   * ips_option::md5: payload rule option for hash matching
   * ips_option::metadata: rule option for conveying arbitrary
     comma-separated name, value data within the rule text
@@ -15058,8 +15121,6 @@ and are not applicable elsewhere.
     function code
   * ips_option::s7commplus_opcode: rule option to check s7commplus
     opcode code
-  * ips_option::script_data: rule option to set detection cursor to
-    normalized script data
   * ips_option::sd_pattern: rule option for detecting sensitive data
   * ips_option::seq: rule option to check TCP sequence number
   * ips_option::service: rule option to specify list of services for
