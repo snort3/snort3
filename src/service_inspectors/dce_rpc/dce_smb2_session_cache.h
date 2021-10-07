@@ -42,23 +42,25 @@ public:
 
     using Data = std::shared_ptr<Value>;
 
+    Data find_id(Key key)
+    {
+        Data session = this->find(key);
+        return session;
+    }
+
     Data find_session(Key key, Dce2Smb2SessionData* ssd)
     {
-        flow_mutex.lock();
         Data session = this->find(key);
         if (session)
             session->attach_flow(ssd->get_flow_key(), ssd);
-        flow_mutex.unlock();
         return session;
     }
 
     Data find_else_create_session(Key& key, Dce2Smb2SessionData* ssd)
     {
         Data new_session = Data(new Value(key));
-        flow_mutex.lock();
         Data session = this->find_else_insert(key, new_session, nullptr);
         session->attach_flow(ssd->get_flow_key(), ssd);
-        flow_mutex.unlock();
         return session;
     }
 
@@ -93,7 +95,7 @@ public:
             data.emplace_back(list_iter->second); // increase reference count
             // This instructs the session_tracker to take a lock before detaching
             // from ssd, when it is getting destroyed.
-            list_iter->second->set_reload_prune();
+            list_iter->second->set_reload_prune(true);
             decrease_size(list_iter->second.get());
             map.erase(list_iter->first);
             list.erase(list_iter);
@@ -110,7 +112,6 @@ private:
     using LruBase::max_size;
     using LruBase::stats;
     using LruListIter = typename LruBase::LruListIter;
-    std::mutex flow_mutex;
     void increase_size(Value* value_ptr=nullptr) override
     {
         if (value_ptr) current_size += sizeof(*value_ptr);

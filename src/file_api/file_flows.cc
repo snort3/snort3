@@ -150,7 +150,7 @@ FilePolicyBase* FileFlows::get_file_policy(Flow* flow)
 void FileFlows::set_current_file_context(FileContext* ctx)
 {
     // If we finished processing a file context object last time, delete it
-    if (current_context_delete_pending)
+    if (current_context_delete_pending and (current_context != ctx))
     {
         delete current_context;
         current_context_delete_pending = false;

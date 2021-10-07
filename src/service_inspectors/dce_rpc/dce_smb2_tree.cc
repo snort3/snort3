@@ -39,7 +39,8 @@ uint64_t Smb2Mid(const Smb2Hdr* hdr)
 Dce2Smb2FileTracker* Dce2Smb2TreeTracker::open_file(const uint64_t file_id,
     const uint32_t current_flow_key)
 {
-    Dce2Smb2FileTracker* ftracker = new Dce2Smb2FileTracker(file_id, current_flow_key, this);
+    Dce2Smb2FileTracker* ftracker = new Dce2Smb2FileTracker(file_id, current_flow_key, this,
+        this->get_parent()->get_session_id());
     tree_tracker_mutex.lock();
     opened_files.insert(std::make_pair(file_id, ftracker));
     tree_tracker_mutex.unlock();

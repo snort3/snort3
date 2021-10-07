@@ -27,6 +27,7 @@
 #include "dce_smb_module.h"
 #include "dce_smb_utils.h"
 #include "dce_smb2_session_cache.h"
+#include "main/thread_config.h"
 
 #define DCE_SMB_PROTOCOL_ID "netbios-ssn"
 
@@ -139,8 +140,9 @@ static Inspector* dce2_smb_ctor(Module* m)
     dce2SmbProtoConf config;
     mod->get_data(config);
     size_t max_smb_mem = DCE2_ScSmbMemcap(&config);
+    uint16_t num_threads = ThreadConfig::get_instance_max();
     smb_module_is_up = true;
-    smb2_session_cache.reload_prune(max_smb_mem);
+    smb2_session_cache.reload_prune(max_smb_mem*num_threads);
     return new Dce2Smb(config);
 }
 

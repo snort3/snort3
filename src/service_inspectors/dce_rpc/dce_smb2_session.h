@@ -36,7 +36,9 @@ public:
         session_id = key.sid;
         session_key = key;
         reload_prune = false;
-	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET, 
+        do_not_delete = false;
+        command_prev = SMB2_COM_MAX;
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
             "session tracker %" PRIu64 "created\n", session_id);
     }
 
@@ -70,17 +72,30 @@ public:
     void process(const uint16_t, uint8_t, const Smb2Hdr*, const uint8_t*, const uint32_t);
     void increase_size(const size_t size);
     void decrease_size(const size_t size);
-    void set_reload_prune() { reload_prune = true; }
+    void set_reload_prune(bool flag) { reload_prune = flag; }
+    uint64_t get_session_id() { return session_id; }
+    void set_do_not_delete(bool flag) { do_not_delete = flag; }
+    bool get_do_not_delete() { return do_not_delete; }
+    void set_prev_comand(uint16_t cmd) { command_prev = cmd; }
+    uint16_t get_prev_command() { return command_prev; }
 
 private:
+    // do_not_delete is to make sure when we are in processing we should not delete the context
+    // which is being processed
+    bool do_not_delete;
     Dce2Smb2TreeTracker* find_tree_for_message(const uint64_t, const uint32_t);
     uint64_t session_id;
+    //to keep the tab of previous command
+    uint16_t command_prev;
     Smb2SessionKey session_key;
     Dce2Smb2SessionDataMap attached_flows;
     Dce2Smb2TreeTrackerMap connected_trees;
     std::atomic<bool> reload_prune;
     std::mutex connected_trees_mutex;
     std::mutex attached_flows_mutex;
+    // fcfs_mutex is to make sure the mutex is taken at first come first basis if code 
+    // is being hit by two different paths
+    std::mutex fcfs_mutex;
 };
 
 #endif

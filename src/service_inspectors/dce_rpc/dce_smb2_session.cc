@@ -160,6 +160,7 @@ Dce2Smb2TreeTracker* Dce2Smb2SessionTracker::connect_tree(const uint32_t tree_id
 void Dce2Smb2SessionTracker::clean_file_context_from_flow(Dce2Smb2FileTracker* file_tracker,
     uint64_t file_id, uint64_t file_name_hash)
 {
+    attached_flows_mutex.lock();
     for (auto it_flow : attached_flows)
     {
         snort::FileFlows* file_flows = snort::FileFlows::get_file_flows(
@@ -168,6 +169,7 @@ void Dce2Smb2SessionTracker::clean_file_context_from_flow(Dce2Smb2FileTracker* f
             file_flows->remove_processed_file_context(file_name_hash, file_id);
         it_flow.second->reset_matching_tcp_file_tracker(file_tracker);
     }
+    attached_flows_mutex.unlock();
 }
 
 void Dce2Smb2SessionTracker::increase_size(const size_t size)
@@ -191,6 +193,16 @@ void Dce2Smb2SessionTracker::unlink()
 // Session Tracker is created and destroyed only from session cache
 Dce2Smb2SessionTracker::~Dce2Smb2SessionTracker()
 {
+    if (!(fcfs_mutex.try_lock()))
+        return;
+
+    if (do_not_delete )
+    {
+        // Dont prune the session in LRU Cache
+        smb2_session_cache.find_id(get_key());
+        fcfs_mutex.unlock();
+        return;
+    }
     if (smb_module_is_up and (snort::is_packet_thread()))
     {
 	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, 
@@ -212,6 +224,7 @@ Dce2Smb2SessionTracker::~Dce2Smb2SessionTracker()
     {
         delete tree;
     }
-
+    do_not_delete = false;
+    fcfs_mutex.unlock();
 }
 
