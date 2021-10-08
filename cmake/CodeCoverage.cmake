@@ -21,6 +21,8 @@ endif()
 
 set(COVERAGE_COMPILER_FLAGS "-O0 -g -fprofile-arcs -ftest-coverage")
 
+set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE ON)
+
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     set(COVERAGE_LINKER_FLAGS "")
     set(COVERAGE_LIBRARIES "gcov")
