@@ -1230,12 +1230,12 @@ void HttpPatternMatchers::identify_user_agent(const char* start, int size, AppId
             default:
                 if (match->client_id)
                 {
+                    if (match->pattern_size <= longest_misc_match)
+                        break;
                     dominant_pattern_detected = 1;
                     service_id = APP_ID_HTTP;
                     client_id = match->client_id;
 
-                    if (match->pattern_size <= longest_misc_match)
-                        break;
                     longest_misc_match = match->pattern_size;
                     i = 0;
                     /* if we already collected temp_ver information after seeing 'Version', let's
