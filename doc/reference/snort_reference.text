@@ -264,8 +264,9 @@ Table of Contents
     7.115. tos
     7.116. ttl
     7.117. urg
-    7.118. window
-    7.119. wscale
+    7.118. vba_data
+    7.119. window
+    7.120. wscale
 
 8. Search Engine Modules
 9. SO Rule Modules
@@ -3682,6 +3683,8 @@ Configuration:
     response bodies
   * bool http_inspect.decompress_zip = false: decompress zip files in
     response bodies
+  * bool http_inspect.decompress_vba = false: decompress vba macro 
+    data of MS office files in response bodies
   * bool http_inspect.script_detection = false: inspect JavaScript
     immediately upon script end
   * bool http_inspect.normalize_javascript = false: use legacy
@@ -7907,7 +7910,18 @@ Configuration:
     { 0:65535 }
 
 
-7.118. window
+7.118. vba_data
+
+--------------
+
+Help: rule option to set the detection cursor to the MS office visual basic for applications macros buffer
+
+Type: ips_option
+
+Usage: detect
+
+
+7.119. window
 
 --------------
 
@@ -7923,7 +7937,7 @@ Configuration:
     range { 0:65535 }
 
 
-7.119. wscale
+7.120. wscale
 
 --------------
 
@@ -9143,6 +9157,8 @@ these libraries see the Getting Started section of the manual.
     response bodies
   * bool http_inspect.decompress_zip = false: decompress zip files in
     response bodies
+  * bool http_inspect.decompress_vba = false: decompress vba macro
+    data of MS office files in response bodies
   * string http_inspect.ignore_unreserved: do not alert when the
     specified unreserved characters are percent-encoded in a
     URI.Unreserved characters are 0-9, a-z, A-Z, period, underscore,
@@ -14819,6 +14835,8 @@ and are not applicable elsewhere.
   * unified2 (logger): output event and packet in unified2 format
     file
   * urg (ips_option): detection for TCP urgent pointer
+  * vba_data (ips_option): rule option to set the detection cursor to
+    the MS Office Visual Basic for Applications macros buffer 
   * vlan (codec): support for local area network
   * window (ips_option): rule option to check TCP window field
   * wizard (inspector): inspector that implements port-independent
@@ -15147,6 +15165,8 @@ and are not applicable elsewhere.
   * ips_option::tos: rule option to check type of service field
   * ips_option::ttl: rule option to check time to live field
   * ips_option::urg: detection for TCP urgent pointer
+  * ips_option::vba_data: rule option to set the detection cursor to
+    the MS Office Visual Basic for Applications macros buffer
   * ips_option::window: rule option to check TCP window field
   * ips_option::wscale: detection for TCP window scale
   * logger::alert_csv: output event in csv format

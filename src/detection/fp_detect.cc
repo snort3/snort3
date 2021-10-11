@@ -957,6 +957,8 @@ static int fp_search(PortGroup* port_group, Packet* p, bool srvc)
 
         search_buffer(
             gadget, buf, buf.IBT_COOKIE, p, port_group, PM_TYPE_COOKIE, pc.cookie_searches);
+
+        search_buffer(gadget, buf, buf.IBT_VBA, p, port_group, PM_TYPE_VBA, pc.vba_searches);
     }
 
     if ( MpseGroup* so = port_group->mpsegrp[PM_TYPE_SCRIPT] )

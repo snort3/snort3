@@ -27,6 +27,9 @@
 
 #include "main/snort_types.h"
 
+#define NEW_OFFICE_FRMT 120
+#define OLD_OFFICE_FRMT  27
+
 /* Function return codes used internally and with caller */
 // FIXIT-L these need to be split into internal-only codes and things that may be returned to the
 // application. The codes used by PDF and SWF should be standardized. PDF is returning BlockIn and
@@ -61,10 +64,11 @@ enum file_compression_type_t
 #define FILE_SWF_ZLIB_BIT    (0x00000002)
 #define FILE_PDF_DEFL_BIT    (0x00000004)
 #define FILE_ZIP_DEFL_BIT    (0x00000008)
+#define FILE_VBA_EXTR_BIT    (0x00000010)
 
 #define FILE_PDF_ANY         (FILE_PDF_DEFL_BIT)
 #define FILE_SWF_ANY         (FILE_SWF_LZMA_BIT | FILE_SWF_ZLIB_BIT)
-#define FILE_ZIP_ANY         (FILE_ZIP_DEFL_BIT)
+#define FILE_ZIP_ANY         (FILE_ZIP_DEFL_BIT | FILE_VBA_EXTR_BIT)
 
 /* Error codes either passed to caller via the session->Error_Alert of
    the File_Decomp_Alert() call-back function. */
@@ -136,6 +140,9 @@ struct fd_session_t
     uint8_t Decomp_Type; // Active decompression type
     uint8_t Sig_State;   // Sig search state machine
     uint8_t State;       // main state machine
+    uint8_t* ole_data_ptr; // compressed ole file.
+    uint32_t ole_data_len; 
+    bool vba_analysis;   
 };
 
 /* Macros */

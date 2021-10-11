@@ -55,6 +55,7 @@ public:
     bool decompress_pdf = false;
     bool decompress_swf = false;
     bool decompress_zip = false;
+    bool decompress_vba = false;
     bool script_detection = false;
     snort::LiteralSearch::Handle* script_detection_handle = nullptr;
     bool publish_request_body = true;

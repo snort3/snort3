@@ -70,6 +70,7 @@ bool HttpCursorModule::begin(const char*, int, SnortConfig*)
         break;
     case HTTP_BUFFER_CLIENT_BODY:
     case HTTP_BUFFER_RAW_BODY:
+    case BUFFER_VBA_DATA:
         inspect_section = IS_BODY;
         break;
     case HTTP_BUFFER_RAW_TRAILER:
@@ -1202,6 +1203,46 @@ static const IpsApi version_api =
 };
 
 //-------------------------------------------------------------------------
+// vba_data
+//-------------------------------------------------------------------------
+//
+
+#undef IPS_OPT
+#define IPS_OPT "vba_data"
+#undef IPS_HELP
+#define IPS_HELP "rule option to set the detection cursor to the MS Office Visual Basic for Applications macros buffer"
+static Module* vba_data_mod_ctor()
+{
+    return new HttpCursorModule(IPS_OPT, IPS_HELP, BUFFER_VBA_DATA, CAT_SET_VBA,
+        PSI_VBA_DATA);
+}
+
+static const IpsApi vba_data_api =
+{
+    {
+        PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        1,
+        API_RESERVED,
+        API_OPTIONS,
+        IPS_OPT,
+        IPS_HELP,
+        vba_data_mod_ctor,
+        HttpCursorModule::mod_dtor
+    },
+    OPT_TYPE_DETECTION,
+    0, PROTO_BIT__TCP,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    HttpIpsOption::opt_ctor,
+    HttpIpsOption::opt_dtor,
+    nullptr
+};
+
+//-------------------------------------------------------------------------
 // plugins
 //-------------------------------------------------------------------------
 
@@ -1223,4 +1264,5 @@ const BaseApi* ips_http_trailer = &trailer_api.base;
 const BaseApi* ips_http_true_ip = &true_ip_api.base;
 const BaseApi* ips_http_uri = &uri_api.base;
 const BaseApi* ips_http_version = &version_api.base;
+const BaseApi* ips_vba_data = &vba_data_api.base;
 

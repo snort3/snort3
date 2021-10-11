@@ -107,6 +107,9 @@ PmType get_pm_type(CursorActionType cat)
     case CAT_SET_KEY:
         return PM_TYPE_KEY;
 
+    case CAT_SET_VBA:
+        return PM_TYPE_VBA;
+
     default:
         break;
     }
@@ -151,6 +154,9 @@ static const char* get_service(const char* opt)
 
     if ( !strncmp(opt, "sip_", 4) )
         return "sip";
+
+    if ( !strncmp(opt, "vba_data", 8) )
+        return "file";
 
     return nullptr;
 }

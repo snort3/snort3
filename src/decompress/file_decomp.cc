@@ -231,6 +231,9 @@ static fd_status_t Process_Decompression(fd_session_t* SessionPtr)
     }
     case ( FILE_TYPE_ZIP ):
     {
+        if (SessionPtr->Modes & FILE_VBA_EXTR_BIT)
+            SessionPtr->vba_analysis = true;
+
         Ret_Code = File_Decomp_ZIP(SessionPtr);
         break;
     }
@@ -298,6 +301,9 @@ fd_session_t* File_Decomp_New()
     New_Session->Avail_Out = 0;
     New_Session->Next_Out = nullptr;
     New_Session->File_Type = FILE_TYPE_NONE;
+    New_Session->vba_analysis = false;
+    New_Session->ole_data_ptr = nullptr;
+    New_Session->ole_data_ptr = 0;
 
     return New_Session;
 }

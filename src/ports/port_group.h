@@ -51,13 +51,14 @@ enum PmType
     PM_TYPE_STAT_CODE,
     PM_TYPE_STAT_MSG,
     PM_TYPE_COOKIE,
+    PM_TYPE_VBA,
     PM_TYPE_MAX
 };
 
 const char* const pm_type_strings[PM_TYPE_MAX] =
 {
     "packet", "alt", "key", "header", "body", "file", "raw_key", "raw_header",
-    "method", "script", "stat_code", "stat_msg", "cookie"
+    "method", "script", "stat_code", "stat_msg", "cookie" , "vba"
 };
 
 struct RULE_NODE

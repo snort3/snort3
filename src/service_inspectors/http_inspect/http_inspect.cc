@@ -154,6 +154,7 @@ void HttpInspect::show(const SnortConfig*) const
     ConfigLogger::log_flag("decompress_pdf", params->decompress_pdf);
     ConfigLogger::log_flag("decompress_swf", params->decompress_swf);
     ConfigLogger::log_flag("decompress_zip", params->decompress_zip);
+    ConfigLogger::log_flag("decompress_vba", params->decompress_vba);
     ConfigLogger::log_flag("script_detection", params->script_detection);
     ConfigLogger::log_flag("normalize_javascript", params->js_norm_param.normalize_javascript);
     ConfigLogger::log_value("max_javascript_whitespaces",
@@ -242,6 +243,9 @@ bool HttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffe
     case InspectionBuffer::IBT_COOKIE:
         return get_buf(HTTP_BUFFER_COOKIE, p , b);
 
+    case InspectionBuffer::IBT_VBA:
+        return get_buf(BUFFER_VBA_DATA, p, b);
+
     default:
         return false;
     }
@@ -296,6 +300,7 @@ bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBu
             return false;
         break;
     case InspectionBuffer::IBT_BODY:
+    case InspectionBuffer::IBT_VBA:
         if ((get_latest_is(p) != IS_FIRST_BODY) && (get_latest_is(p) != IS_BODY))
             return false;
         break;

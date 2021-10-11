@@ -202,6 +202,7 @@ const PegInfo pc_names[] =
     { CountType::SUM, "stat_code_searches", "fast pattern searches in status code buffer" },
     { CountType::SUM, "stat_msg_searches", "fast pattern searches in status message buffer" },
     { CountType::SUM, "cookie_searches", "fast pattern searches in cookie buffer" },
+    { CountType::SUM, "vba_searches", "fast pattern searches in MS Office Visual Basic for Applications buffer" },
     { CountType::SUM, "offloads", "fast pattern searches that were offloaded" },
     { CountType::SUM, "alerts", "alerts not including IP reputation" },
     { CountType::SUM, "total_alerts", "alerts including IP reputation" },

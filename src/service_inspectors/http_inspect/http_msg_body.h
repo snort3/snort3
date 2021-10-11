@@ -38,6 +38,7 @@ public:
     bool detection_required() const override { return (detect_data.length() > 0); }
     HttpMsgBody* get_body() override { return this; }
     const Field& get_classic_client_body();
+    const Field& get_decomp_vba_data();
     const Field& get_detect_data() { return detect_data; }
     const Field& get_msg_text_new() const { return msg_text_new; }
     static void fd_event_callback(void* context, int event);
@@ -80,6 +81,7 @@ private:
     Field detect_data;
     Field enhanced_js_norm_body;
     Field classic_client_body;   // URI normalization applied
+    Field decompressed_vba_data;
 
     int32_t publish_length = HttpCommon::STAT_NOT_PRESENT;
 };

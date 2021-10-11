@@ -23,6 +23,7 @@
 
 #include "http_msg_body.h"
 
+#include "decompress/file_olefile.h"
 #include "file_api/file_flows.h"
 #include "file_api/file_service.h"
 #include "pub_sub/http_request_body_event.h"
@@ -512,6 +513,30 @@ void HttpMsgBody::get_file_info(FileDirection dir, const uint8_t*& filename_buff
 const Field& HttpMsgBody::get_classic_client_body()
 {
     return classic_normalize(detect_data, classic_client_body, false, params->uri_param);
+}
+
+const Field& HttpMsgBody::get_decomp_vba_data()
+{
+    if (decompressed_vba_data.length() != STAT_NOT_COMPUTE)
+        return decompressed_vba_data;
+
+    if (!session_data->fd_state->ole_data_ptr || !session_data->fd_state->ole_data_len)
+        return Field::FIELD_NULL;
+
+    uint8_t* buf = nullptr;
+    uint32_t buf_len = 0;
+
+    oleprocess(session_data->fd_state->ole_data_ptr, session_data->fd_state->ole_data_len, buf,
+        buf_len);
+    if (buf && buf_len)
+        decompressed_vba_data.set(buf_len, buf, true);
+    else
+        decompressed_vba_data.set(STAT_NOT_PRESENT);
+
+    session_data->fd_state->ole_data_ptr = nullptr;
+    session_data->fd_state->ole_data_len = 0;
+
+    return decompressed_vba_data;
 }
 
 int32_t HttpMsgBody::get_publish_length() const

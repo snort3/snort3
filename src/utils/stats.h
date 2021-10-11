@@ -53,6 +53,7 @@ struct PacketCount
     PegCount stat_code_searches;
     PegCount stat_msg_searches;
     PegCount cookie_searches;
+    PegCount vba_searches;
     PegCount offloads;
     PegCount alert_pkts;
     PegCount total_alert_pkts;

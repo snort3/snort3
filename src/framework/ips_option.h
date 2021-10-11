@@ -63,6 +63,7 @@ enum CursorActionType
     CAT_SET_BODY,
     CAT_SET_HEADER,
     CAT_SET_KEY,
+    CAT_SET_VBA,
 };
 
 enum RuleDirection

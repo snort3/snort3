@@ -29,6 +29,10 @@ namespace snort
 class BoyerMooreSearchCase;
 }
 
+#define MACRO_BINNAME_LEN 14
+
+static const char* const macro_binname = "vbaProject.bin";
+
 static const uint32_t ZIP_LOCAL_HEADER = 0x04034B50;
 static const uint8_t header_pattern[4] = { 0x50, 0x4B, 0x03, 0x04 };
 static const uint8_t DATA_DESC_BIT = 0x08;
@@ -56,11 +60,13 @@ enum fd_ZIP_states
     ZIP_STATE_FILENAMELEN,    // filename length (2 bytes)
     ZIP_STATE_EXTRALEN,       // extra field length (2 bytes)
 
-    // skipped:
-    // ZIP_STATE_FILENAME,    // filename field (filenamelen bytes)
+    ZIP_STATE_FILENAME,    // filename field (filenamelen bytes)
+
+    //skipped:
     // ZIP_STATE_EXTRA,       // extra field (extralen bytes)
     // ZIP_STATE_STREAM,      // compressed stream (compsize bytes)
 
+    ZIP_STATE_OLE_FILE,
     ZIP_STATE_INFLATE_INIT,   // initialize zlib inflate
     ZIP_STATE_INFLATE,        // perform zlib inflate
     ZIP_STATE_SEARCH,         // search for local header
@@ -83,7 +89,7 @@ struct fd_ZIP_t
     uint32_t compressed_size;
     uint16_t filename_length;
     uint16_t extra_length;
-
+    char* file_name;
     // field index
     uint32_t Index;
 
@@ -109,3 +115,4 @@ fd_status_t File_Decomp_End_ZIP(fd_session_t*);
 fd_status_t File_Decomp_ZIP(fd_session_t*);
 
 #endif
+

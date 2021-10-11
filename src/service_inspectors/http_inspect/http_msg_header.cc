@@ -665,7 +665,8 @@ void HttpMsgHeader::setup_file_decompression()
     session_data->fd_state->Modes =
         (params->decompress_pdf ? FILE_PDF_DEFL_BIT : 0) |
         (params->decompress_swf ? (FILE_SWF_ZLIB_BIT | FILE_SWF_LZMA_BIT) : 0) |
-        (params->decompress_zip ? FILE_ZIP_DEFL_BIT : 0);
+        (params->decompress_zip ? FILE_ZIP_DEFL_BIT : 0) |
+        (params->decompress_vba ? FILE_VBA_EXTR_BIT : 0);
     session_data->fd_state->Alert_Callback = HttpMsgBody::fd_event_callback;
     session_data->fd_state->Alert_Context = &session_data->fd_alert_context;
     session_data->fd_state->Compr_Depth = 0;

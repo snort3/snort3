@@ -3930,7 +3930,16 @@ LZMA. The compressed content is decompressed and made available
 through the file data rule option. The compressed SWF file signature
 is converted to FWS to indicate an uncompressed file.
 
-5.10.2.7. normalize_javascript
+5.10.2.7. decompress_vba
+
+decompress_vba = true will enable decompression of RLE (Run Length Encoding)
+compressed vba (Visual Basic for Applications) macro data of MS Office
+files. The MS office files are PKZIP compressed which are parsed to locate
+the OLE (Object Linking and Embedding) file embedded with the files
+containing RLE compressed vba macro data. The decompressed vba macro data is
+then made available through the vba_data ips rule option.
+
+5.10.2.8. normalize_javascript
 
 normalize_javascript = true will enable legacy normalizer of
 JavaScript within the HTTP response body. http_inspect looks for
@@ -3945,7 +3954,7 @@ normalizations refer to basic JavaScript normalization. Cannot be
 used together with js_normalization_depth (doing so will cause Snort
 to fail to load). This is planned to be deprecated at some point.
 
-5.10.2.8. js_normalization_depth
+5.10.2.9. js_normalization_depth
 
 js_normalization_depth = N {-1 : max53} will set a number of input
 JavaScript bytes to normalize and enable the enhanced normalizer. The
@@ -3966,7 +3975,7 @@ function names. The normalized data is available through the js_data
 rule option. This is currently experimental and still under
 development.
 
-5.10.2.9. js_norm_identifier_depth
+5.10.2.10. js_norm_identifier_depth
 
 js_norm_identifier_depth = N {0 : 260000} will set a number of unique
 JavaScript identifiers to normalize. When the depth is reached, a
@@ -3981,7 +3990,7 @@ js_normalization_depth is set to a non-zero value, enabling the
 enhanced normalizer. This is currently experimental and still under
 development.
 
-5.10.2.10. js_norm_max_tmpl_nest
+5.10.2.11. js_norm_max_tmpl_nest
 
 js_norm_max_tmpl_nest = N {0 : 255} (default 32) is an option of the
 enhanced JavaScript normalizer that determines the deepest level of
@@ -3995,7 +4004,7 @@ tracking. This option is used only when js_normalization_depth is not
 0. This feature is currently experimental and still under
 development.
 
-5.10.2.11. xff_headers
+5.10.2.12. xff_headers
 
 This configuration supports defining custom x-forwarded-for type
 headers. In a multi-vendor world, it is quite possible that the
@@ -4010,7 +4019,7 @@ they are defined, e.g "x-forwarded-for" will be preferred than
 "true-client-ip" if both headers are present in the stream. The
 header names should be delimited by a space.
 
-5.10.2.12. maximum_host_length
+5.10.2.13. maximum_host_length
 
 Setting maximum_host_length causes http_inspect to generate 119:25 if
 the Host header value including optional white space exceeds the
@@ -4018,7 +4027,7 @@ specified length. In the abnormal case of multiple Host headers, the
 total length of the combined values is used. The default value is -1,
 meaning do not perform this check.
 
-5.10.2.13. maximum_chunk_length
+5.10.2.14. maximum_chunk_length
 
 http_inspect strictly limits individual chunks within a chunked
 message body to be less than four gigabytes.
@@ -4026,7 +4035,7 @@ message body to be less than four gigabytes.
 A lower limit may be configured by setting maximum_chunk_length. Any
 chunk longer than maximum chunk length will generate a 119:16 alert.
 
-5.10.2.14. URI processing
+5.10.2.15. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize
@@ -4426,6 +4435,12 @@ Normalizer enabled: http_inspect = { js_normalization_depth = N },
 js_normalization_depth option is described above. Despite what
 js_data has, file_data still contains the whole HTTP body with an
 original JavaScript in it.
+
+5.10.5.15. vba_data
+
+The vba_data will contain the decompressed Visual Basic for Applications
+(vba) macro data embedded in MS office files. It requires decompress_zip
+and decompress_vba options enabled.
 
 5.10.6. Timing issues and combining rule options
 

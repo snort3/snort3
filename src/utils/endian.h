@@ -60,4 +60,21 @@
      (uint32_t)(*((const uint8_t*)(p) + 1) <<  8) | \
      (uint32_t)(*((const uint8_t*)(p))))
 
+#define LETOHLL_UNALIGNED(p) \
+    (((uint64_t)(LETOHL_UNALIGNED(p + 4)) << 32) | ((uint64_t)(LETOHL_UNALIGNED(p))))
+
+#define BETOHS_UNALIGNED(p) \
+    ((uint16_t)(*((const uint8_t*)(p)) << 8) | \
+     (uint16_t)(*((const uint8_t*)(p) + 1)))
+
+#define BETOHL_UNALIGNED(p) \
+    ((uint32_t)(*((const uint8_t*)(p)) << 24) | \
+     (uint32_t)(*((const uint8_t*)(p) + 1) << 16) | \
+     (uint32_t)(*((const uint8_t*)(p) + 2) <<  8) | \
+     (uint32_t)(*((const uint8_t*)(p) + 3)))
+
+#define BETOHLL_UNALIGNED(p) \
+    (((uint64_t)(BETOHL_UNALIGNED(p)) << 32) | ((uint64_t)(BETOHL_UNALIGNED(p + 4))))
+
 #endif
+

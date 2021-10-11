@@ -135,6 +135,15 @@ content is decompressed and made available through the file data rule
 option. The compressed SWF file signature is converted to FWS to indicate
 an uncompressed file.
 
+===== decompress_vba
+
+decompress_vba = true will enable decompression of RLE (Run Length Encoding)
+compressed vba (Visual Basic for Applications) macro data of MS Office 
+files. The MS office files are PKZIP compressed which are parsed to locate 
+the OLE (Object Linking and Embedding) file embedded with the files 
+containing RLE compressed vba macro data. The decompressed vba macro data is
+then made available through the vba_data ips rule option.
+
 ===== normalize_javascript
 
 normalize_javascript = true will enable legacy normalizer of JavaScript within
@@ -600,6 +609,12 @@ http_inspect = { js_normalization_depth = N },
 js_normalization_depth option is described above.
 Despite what js_data has, file_data still contains the whole HTTP body
 with an original JavaScript in it.
+
+===== vba_data
+
+The vba_data will contain the decompressed Visual Basic for Applications
+(vba) macro data embedded in MS office files. It requires decompress_zip
+and decompress_vba options enabled.
 
 ==== Timing issues and combining rule options
 

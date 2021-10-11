@@ -382,6 +382,14 @@ const Field& HttpMsgSection::get_classic_buffer(Cursor& c, const HttpBufferInfo&
             (HttpMsgStart*)request : (HttpMsgStart*)status;
         return (start != nullptr) ? start->get_version() : Field::FIELD_NULL;
       }
+    case BUFFER_VBA_DATA:
+      {
+        HttpMsgBody* msg_body = get_body();
+        if (session_data->fd_state and msg_body)
+            return msg_body->get_decomp_vba_data(); 
+        else
+            return Field::FIELD_NULL;
+      }
     default:
         assert(false);
         return Field::FIELD_NULL;
