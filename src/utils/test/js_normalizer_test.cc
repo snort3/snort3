@@ -482,8 +482,8 @@ static const char all_patterns_buf5[] =
     "ab\xE2\x80\xA9ww ab\xEF\xBB\xBFww ab∞ww 2abc";
 
 static const char all_patterns_expected5[] =
-    "$2abc _2abc abc $__$ 肖晗 XÆA12 \u0041abc \u00FBdef \u1234ghi ab ww "
-    "ab ww ab ww ab ∞ ww 2 abc";
+    "$2abc _2abc abc $__$ 肖晗 XÆA12 \u0041abc \u00FBdef \u1234ghi ab;ww "
+    "ab;ww ab ww ab ∞ ww 2 abc";
 
 static const char all_patterns_buf6[] =
     "tag` template\n   ${ a   +   b }   template`";
@@ -692,7 +692,7 @@ static const char syntax_cases_buf5[] =
 
 static const char syntax_cases_expected5[] =
     "var i=1;while(i<100){i*=2;document.write(i+\", \");}i=1;do{i*=2;"
-    "document.write(i+\", \");}while(i<100)for(var i=0;i<10;i++){if(i==5){break;}"
+    "document.write(i+\", \");}while(i<100);for(var i=0;i<10;i++){if(i==5){break;}"
     "document.write(i+\", \");}for(var i=0;i<10;i++){if(i==5){continue;}"
     "document.write(i+\", \");}";
 
@@ -787,7 +787,7 @@ static const char syntax_cases_buf10[] =
     "var a = 2\n/ab -cd/";
 
 static const char syntax_cases_expected10[] =
-    "var a=2 /ab -cd/";
+    "var a=2;/ab -cd/";
 
 static const char syntax_cases_buf11[] =
     "var d_str1 = \"\\\\ \" ; var d_str2 = \"abc\\\"def\" ;"
@@ -1030,6 +1030,333 @@ TEST_CASE("template literal overflow", "[JSNormalizer]")
         NORMALIZE(syntax_cases_buf23);
         VALIDATE_FAIL(syntax_cases_buf23, syntax_cases_expected23,
             JSTokenizer::TEMPLATE_NESTING_OVERFLOW, 15);
+    }
+}
+
+static const char asi_cases_buf0[] =
+    "array[0]\n{}";
+
+static const char asi_cases_expected0[] =
+    "array[0];{}";
+
+static const char asi_cases_buf1[] =
+    "array[0]\ntrue";
+
+static const char asi_cases_expected1[] =
+    "array[0];true";
+
+static const char asi_cases_buf2[] =
+    "array[0]\n++";
+
+static const char asi_cases_expected2[] =
+    "array[0];++";
+
+static const char asi_cases_buf3[] =
+    "array[0]\ncontinue";
+
+static const char asi_cases_expected3[] =
+    "array[0];continue";
+
+static const char asi_cases_buf4[] =
+    "array[0]\nvar b;";
+
+static const char asi_cases_expected4[] =
+    "array[0];var b;";
+
+static const char asi_cases_buf5[] =
+    "func()\ntrue";
+
+static const char asi_cases_expected5[] =
+    "func();true";
+
+static const char asi_cases_buf6[] =
+    "func()\n++";
+
+static const char asi_cases_expected6[] =
+    "func();++";
+
+static const char asi_cases_buf7[] =
+    "func()\ncontinue";
+
+static const char asi_cases_expected7[] =
+    "func();continue";
+
+static const char asi_cases_buf8[] =
+    "func()\nvar b;";
+
+static const char asi_cases_expected8[] =
+    "func();var b;";
+
+static const char asi_cases_buf9[] =
+    "1024\n{}";
+
+static const char asi_cases_expected9[] =
+    "1024;{}";
+
+static const char asi_cases_buf10[] =
+    "1024\ntrue";
+
+static const char asi_cases_expected10[] =
+    "1024;true";
+
+static const char asi_cases_buf11[] =
+    "1024\n++";
+
+static const char asi_cases_expected11[] =
+    "1024;++";
+
+static const char asi_cases_buf12[] =
+    "1024\ncontinue";
+
+static const char asi_cases_expected12[] =
+    "1024;continue";
+
+static const char asi_cases_buf13[] =
+    "1024\nvar b;";
+
+static const char asi_cases_expected13[] =
+    "1024;var b;";
+
+static const char asi_cases_buf14[] =
+    "++\n{}";
+
+static const char asi_cases_expected14[] =
+    "++;{}";
+
+static const char asi_cases_buf15[] =
+    "++\n[1,2,3]";
+
+static const char asi_cases_expected15[] =
+    "++;[1,2,3]";
+
+static const char asi_cases_buf16[] =
+    "++\ntrue";
+
+static const char asi_cases_expected16[] =
+    "++;true";
+
+static const char asi_cases_buf17[] =
+    "++\n++";
+
+static const char asi_cases_expected17[] =
+    "++;++";
+
+static const char asi_cases_buf18[] =
+    "++\ncontinue";
+
+static const char asi_cases_expected18[] =
+    "++;continue";
+
+static const char asi_cases_buf19[] =
+    "++\nvar b;";
+
+static const char asi_cases_expected19[] =
+    "++;var b;";
+
+static const char asi_cases_buf20[] =
+    "return\n{}";
+
+static const char asi_cases_expected20[] =
+    "return;{}";
+
+static const char asi_cases_buf21[] =
+    "return\n[1,2,3]";
+
+static const char asi_cases_expected21[] =
+    "return;[1,2,3]";
+
+static const char asi_cases_buf22[] =
+    "return\n+a";
+
+static const char asi_cases_expected22[] =
+    "return;+a";
+
+static const char asi_cases_buf23[] =
+    "return\ntrue";
+
+static const char asi_cases_expected23[] =
+    "return;true";
+
+static const char asi_cases_buf24[] =
+    "return\n++";
+
+static const char asi_cases_expected24[] =
+    "return;++";
+
+static const char asi_cases_buf25[] =
+    "return\ncontinue";
+
+static const char asi_cases_expected25[] =
+    "return;continue";
+
+static const char asi_cases_buf26[] =
+    "return\nvar b;";
+
+static const char asi_cases_expected26[] =
+    "return;var b;";
+
+TEST_CASE("automatic semicolon insertion", "[JSNormalizer]")
+{
+    SECTION("group_4 to group_1")
+    {
+        NORMALIZE(asi_cases_buf0);
+        VALIDATE(asi_cases_buf0, asi_cases_expected0);
+    }
+
+    SECTION("group_4 to group_7")
+    {
+        NORMALIZE(asi_cases_buf1);
+        VALIDATE(asi_cases_buf1, asi_cases_expected1);
+    }
+
+    SECTION("group_4 to group_8")
+    {
+        NORMALIZE(asi_cases_buf2);
+        VALIDATE(asi_cases_buf2, asi_cases_expected2);
+    }
+
+    SECTION("group_4 to group_9")
+    {
+        NORMALIZE(asi_cases_buf3);
+        VALIDATE(asi_cases_buf3, asi_cases_expected3);
+    }
+
+    SECTION("group_4 to group_10")
+    {
+        NORMALIZE(asi_cases_buf4);
+        VALIDATE(asi_cases_buf4, asi_cases_expected4);
+    }
+
+    SECTION("group_5 to group_7")
+    {
+        NORMALIZE(asi_cases_buf5);
+        VALIDATE(asi_cases_buf5, asi_cases_expected5);
+    }
+
+    SECTION("group_5 to group_8")
+    {
+        NORMALIZE(asi_cases_buf6);
+        VALIDATE(asi_cases_buf6, asi_cases_expected6);
+    }
+
+    SECTION("group_5 to group_9")
+    {
+        NORMALIZE(asi_cases_buf7);
+        VALIDATE(asi_cases_buf7, asi_cases_expected7);
+    }
+
+    SECTION("group_5 to group_10")
+    {
+        NORMALIZE(asi_cases_buf8);
+        VALIDATE(asi_cases_buf8, asi_cases_expected8);
+    }
+
+    SECTION("group_7 to group_1")
+    {
+        NORMALIZE(asi_cases_buf9);
+        VALIDATE(asi_cases_buf9, asi_cases_expected9);
+    }
+
+    SECTION("group_7 to group_7")
+    {
+        NORMALIZE(asi_cases_buf10);
+        VALIDATE(asi_cases_buf10, asi_cases_expected10);
+    }
+
+    SECTION("group_7 to group_8")
+    {
+        NORMALIZE(asi_cases_buf11);
+        VALIDATE(asi_cases_buf11, asi_cases_expected11);
+    }
+
+    SECTION("group_7 to group_9")
+    {
+        NORMALIZE(asi_cases_buf12);
+        VALIDATE(asi_cases_buf12, asi_cases_expected12);
+    }
+
+    SECTION("group_7 to group_10")
+    {
+        NORMALIZE(asi_cases_buf13);
+        VALIDATE(asi_cases_buf13, asi_cases_expected13);
+    }
+
+    SECTION("group_8 to group_1")
+    {
+        NORMALIZE(asi_cases_buf14);
+        VALIDATE(asi_cases_buf14, asi_cases_expected14);
+    }
+
+    SECTION("group_8 to group_3")
+    {
+        NORMALIZE(asi_cases_buf15);
+        VALIDATE(asi_cases_buf15, asi_cases_expected15);
+    }
+
+    SECTION("group_8 to group_7")
+    {
+        NORMALIZE(asi_cases_buf16);
+        VALIDATE(asi_cases_buf16, asi_cases_expected16);
+    }
+
+    SECTION("group_8 to group_8")
+    {
+        NORMALIZE(asi_cases_buf17);
+        VALIDATE(asi_cases_buf17, asi_cases_expected17);
+    }
+
+    SECTION("group_8 to group_9")
+    {
+        NORMALIZE(asi_cases_buf18);
+        VALIDATE(asi_cases_buf18, asi_cases_expected18);
+    }
+
+    SECTION("group_8 to group_10")
+    {
+        NORMALIZE(asi_cases_buf19);
+        VALIDATE(asi_cases_buf19, asi_cases_expected19);
+    }
+
+    SECTION("group_9 to group_1")
+    {
+        NORMALIZE(asi_cases_buf20);
+        VALIDATE(asi_cases_buf20, asi_cases_expected20);
+    }
+
+    SECTION("group_9 to group_3")
+    {
+        NORMALIZE(asi_cases_buf21);
+        VALIDATE(asi_cases_buf21, asi_cases_expected21);
+    }
+
+    SECTION("group_9 to group_6")
+    {
+        NORMALIZE(asi_cases_buf22);
+        VALIDATE(asi_cases_buf22, asi_cases_expected22);
+    }
+
+    SECTION("group_9 to group_7")
+    {
+        NORMALIZE(asi_cases_buf23);
+        VALIDATE(asi_cases_buf23, asi_cases_expected23);
+    }
+
+    SECTION("group_9 to group_8")
+    {
+        NORMALIZE(asi_cases_buf24);
+        VALIDATE(asi_cases_buf24, asi_cases_expected24);
+    }
+
+    SECTION("group_9 to group_9")
+    {
+        NORMALIZE(asi_cases_buf25);
+        VALIDATE(asi_cases_buf25, asi_cases_expected25);
+    }
+
+    SECTION("group_9 to group_10")
+    {
+        NORMALIZE(asi_cases_buf26);
+        VALIDATE(asi_cases_buf26, asi_cases_expected26);
     }
 }
 
@@ -1889,68 +2216,69 @@ TEST_CASE("memcap", "[JSNormalizer]")
 
 static constexpr const char* s_closing_tag = "</script>";
 
-#define MAKE_INPUT(src, src_len, start, mid, end, depth) \
-    std::string input_##src(start); \
-    input_##src.append(depth - strlen(start) - strlen(end) - strlen(s_closing_tag), mid); \
-    input_##src.append(end, strlen(end)); \
-    input_##src.append(s_closing_tag, strlen(s_closing_tag)); \
-    const char* src = input_##src.c_str(); \
-    size_t src_len = input_##src.size()
+static const std::string make_input(const char* begin, const char* mid,
+                             const char* end, size_t len) 
+{
+    std::string s(begin);
+    int fill = (len - strlen(begin) - strlen(end)) / strlen(mid);
+    for (int i = 0; i < fill; ++i)
+        s.append(mid);
+    s.append(end);
+    return s;
+}
 
 TEST_CASE("benchmarking - ::normalize() - literals", "[JSNormalizer]")
 {
     JSIdentifierCtxTest ident_ctx;
     JSNormalizer normalizer(ident_ctx, UNLIM_DEPTH, MAX_TEMPLATE_NESTNIG);
     char dst[DEPTH];
-
-    MAKE_INPUT(src_ws, src_ws_len, "", ' ', "", DEPTH);
-    MAKE_INPUT(src_bcomm, src_bcomm_len, "/*", ' ', "*/", DEPTH);
-    MAKE_INPUT(src_dqstr, src_dqstr_len, "\"", ' ', "\"", DEPTH);
-
+    auto whitespace = make_input("", " ", "", DEPTH);
+    auto block_comment = make_input("/*", " ", "*/", DEPTH);
+    auto double_quote = make_input("\"", " ", "\"", DEPTH);
     BENCHMARK("memcpy - whitespaces - 65535 bytes")
     {
-        return memcpy(dst, src_ws, src_ws_len);
+        return memcpy(dst, whitespace.c_str(), whitespace.size());
     };
     BENCHMARK("whitespaces - 65535 bytes")
     {
         normalizer.rewind_output();
-        return normalizer.normalize(src_ws, src_ws_len);
+        return normalizer.normalize(whitespace.c_str(), whitespace.size());
     };
     BENCHMARK("block comment - 65535 bytes")
     {
         normalizer.rewind_output();
-        return normalizer.normalize(src_bcomm, src_bcomm_len);
+        return normalizer.normalize(block_comment.c_str(), block_comment.size());
     };
     BENCHMARK("double quotes string - 65535 bytes")
     {
         normalizer.rewind_output();
-        return normalizer.normalize(src_dqstr, src_dqstr_len);
+        return normalizer.normalize(double_quote.c_str(), double_quote.size());
     };
 
     constexpr size_t depth_8k = 8192;
 
-    MAKE_INPUT(src_ws_8k, src_ws_len_8k, "", ' ', "", depth_8k);
-    MAKE_INPUT(src_bcomm_8k, src_bcomm_len_8k, "/*", ' ', "*/", depth_8k);
-    MAKE_INPUT(src_dqstr_8k, src_dqstr_len_8k, "\"", ' ', "\"", depth_8k);
+    auto whitespace_8k = make_input("", " ", "", depth_8k);
+    auto block_comment_8k = make_input("/*", " ", "*/", depth_8k);
+    auto double_quote_8k = make_input("\"", " ", "\"", depth_8k);
 
     BENCHMARK("memcpy - whitespaces - 8192 bytes")
     {
-        return memcpy(dst, src_ws_8k, src_ws_len_8k);
+        return memcpy(dst, whitespace_8k.c_str(), whitespace_8k.size());
     };
     BENCHMARK("whitespaces - 8192 bytes")
     {
         normalizer.rewind_output();
-        return normalizer.normalize(src_ws_8k, src_ws_len_8k);
+        return normalizer.normalize(whitespace_8k.c_str(), whitespace_8k.size());
     };
     BENCHMARK("block comment - 8192 bytes")
     {
         normalizer.rewind_output();
-        return normalizer.normalize(src_bcomm_8k, src_bcomm_len_8k);
+        return normalizer.normalize(block_comment_8k.c_str(), block_comment_8k.size());
     };
     BENCHMARK("double quotes string - 8192 bytes")
     {
         normalizer.rewind_output();
-        return normalizer.normalize(src_dqstr_8k, src_dqstr_len_8k);
+        return normalizer.normalize(double_quote_8k.c_str(), double_quote_8k.size());
     };
 }
 
@@ -1985,4 +2313,25 @@ TEST_CASE("benchmarking - ::normalize() - identifiers")
     };
 }
 
+TEST_CASE("benchmarking - ::normalize() - automatic semicolon insertion")
+{
+    auto w_semicolons = make_input("", "a;\n", s_closing_tag, DEPTH); 
+    auto wo_semicolons = make_input("", "a \n", s_closing_tag, DEPTH); 
+    const char* src_w_semicolons = w_semicolons.c_str();
+    const char* src_wo_semicolons = wo_semicolons.c_str();
+    size_t src_len = w_semicolons.size();
+
+    JSIdentifierCtxTest ident_ctx_mock;
+    JSNormalizer normalizer_wo_ident(ident_ctx_mock, UNLIM_DEPTH, MAX_TEMPLATE_NESTNIG);
+
+    BENCHMARK("without semicolon insertion")
+    {
+        return normalizer_wo_ident.normalize(src_w_semicolons, src_len);
+    };
+
+    BENCHMARK("with semicolon insertion")
+    {
+        return normalizer_wo_ident.normalize(src_wo_semicolons, src_len);
+    };
+}
 #endif // BENCHMARK_TEST

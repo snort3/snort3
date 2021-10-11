@@ -55,6 +55,24 @@ private:
         DIRECTIVE
     };
 
+    enum ASIGroup
+    {
+        ASI_OTHER = 0,
+        ASI_GROUP_1,    // {
+        ASI_GROUP_2,    // }
+        ASI_GROUP_3,    // [ (
+        ASI_GROUP_4,    // ]
+        ASI_GROUP_5,    // )
+        ASI_GROUP_6,    // + -
+        ASI_GROUP_7,    // this true false null identifier literal 
+                        //IDENTIFIER + LITERAL + KEYWORD_LITERAL
+        ASI_GROUP_8,    // ++ --
+        ASI_GROUP_9,    // continue break return debugger // same as KEYWORD_BA
+        ASI_GROUP_10,   // var function new delete void typeof if do while for with
+                        // switch throw try ~ + 
+        ASI_GROUP_MAX
+    };
+
 public:
     enum JSRet
     {
@@ -87,6 +105,7 @@ private:
     JSRet eval_eof();
     JSRet do_spacing(JSToken cur_token);
     JSRet do_operator_spacing(JSToken cur_token);
+    void do_semicolon_insertion(ASIGroup current);
     JSRet do_identifier_substitution(const char* lexeme);
     bool unescape(const char* lexeme);
     void process_punctuator();
@@ -103,6 +122,7 @@ private:
     uint8_t max_template_nesting;
     std::stack<uint16_t, std::vector<uint16_t>> bracket_depth;
     JSToken token = UNDEFINED;
+    ASIGroup previous_group = ASI_OTHER;
     JSIdentifierCtxBase& ident_ctx;
 
     struct
@@ -116,6 +136,21 @@ private:
     char*& tmp_buf;
     size_t& tmp_buf_size;
     const int tmp_cap_size;
+    bool newline_found = false;
+    constexpr static bool insert_semicolon[ASI_GROUP_MAX][ASI_GROUP_MAX]
+    {
+        {false, false, false, false, false, false, false, false, false, false, false,},
+        {false, false, false, false, false, false, false, false, false, false, false,},
+        {false, false, false, false, false, false, false, false, false, false, false,},
+        {false, false, false, false, false, false, false, false, false, false, false,},
+        {false, true,  false, false, false, false, false, true,  true,  true,  true, },
+        {false, false, false, false, false, false, false, true,  true,  true,  true, },
+        {false, false, false, false, false, false, false, false, false, false, false,},
+        {false, true,  false, false, false, false, false, true,  true,  true,  true, },
+        {false, true,  false, true,  false, false, false, true,  true,  true,  true, },
+        {false, true,  false, true,  false, false, true,  true,  true,  true,  true, },
+        {false, false, false, false, false, false, false, false, false, false, false,}
+    };
 };
 
 #endif // JS_TOKENIZER_H
