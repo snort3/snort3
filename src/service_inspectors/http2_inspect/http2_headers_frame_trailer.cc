@@ -56,8 +56,10 @@ Http2HeadersFrameTrailer::Http2HeadersFrameTrailer(const uint8_t* header_buffer,
     }
 
     // Decode trailers
-    if (!hpack_decoder->decode_headers((data.start() + hpack_headers_offset), data.length() -
-        hpack_headers_offset, decoded_headers, nullptr, true))
+    const uint32_t encoded_headers_length = (data.length() > hpack_headers_offset) ?
+        data.length() - hpack_headers_offset : 0;
+    if (!hpack_decoder->decode_headers((data.start() + hpack_headers_offset),
+        encoded_headers_length, decoded_headers, nullptr, true))
     {
         if (!(*session_data->infractions[source_id] & INF_TRUNCATED_HEADER_LINE))
         {
