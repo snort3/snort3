@@ -147,6 +147,10 @@ void HttpInspect::show(const SnortConfig*) const
     auto bad_chars = GetBadChars(params->uri_param.bad_characters);
     auto xff_headers = GetXFFHeaders(params->xff_headers);
 
+    std::string js_built_in_ident;
+    for (auto s : params->js_norm_param.built_in_ident)
+        js_built_in_ident += s + " ";
+
     ConfigLogger::log_limit("request_depth", params->request_depth, -1LL);
     ConfigLogger::log_limit("response_depth", params->response_depth, -1LL);
     ConfigLogger::log_flag("unzip", params->unzip);
@@ -159,11 +163,12 @@ void HttpInspect::show(const SnortConfig*) const
     ConfigLogger::log_flag("normalize_javascript", params->js_norm_param.normalize_javascript);
     ConfigLogger::log_value("max_javascript_whitespaces",
         params->js_norm_param.max_javascript_whitespaces);
-    ConfigLogger::log_value("js_normalization_depth",
-        params->js_norm_param.js_normalization_depth);
+    ConfigLogger::log_value("js_normalization_depth", params->js_norm_param.js_normalization_depth);
     ConfigLogger::log_value("js_norm_identifier_depth", params->js_norm_param.js_identifier_depth);
-    ConfigLogger::log_value("js_norm_max_tmpl_nest",
-        params->js_norm_param.max_template_nesting);
+    ConfigLogger::log_value("js_norm_max_tmpl_nest", params->js_norm_param.max_template_nesting);
+    ConfigLogger::log_value("js_norm_max_scope_depth", params->js_norm_param.max_scope_depth);
+    if (!js_built_in_ident.empty())
+        ConfigLogger::log_list("js_norm_built_in_ident", js_built_in_ident.c_str());
     ConfigLogger::log_value("bad_characters", bad_chars.c_str());
     ConfigLogger::log_value("ignore_unreserved", unreserved_chars.c_str());
     ConfigLogger::log_flag("percent_u", params->uri_param.percent_u);

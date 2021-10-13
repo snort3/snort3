@@ -34,7 +34,8 @@ class JSNormalizer
 {
 public:
     JSNormalizer(JSIdentifierCtxBase& js_ident_ctx, size_t depth,
-        uint8_t max_template_nesting, int tmp_cap_size = JSTOKENIZER_BUF_MAX_SIZE);
+        uint8_t max_template_nesting, uint32_t max_scope_depth,
+        int tmp_cap_size = JSTOKENIZER_BUF_MAX_SIZE);
     ~JSNormalizer();
 
     const char* get_src_next() const

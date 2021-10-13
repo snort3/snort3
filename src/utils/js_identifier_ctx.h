@@ -22,6 +22,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 class JSIdentifierCtxBase
 {
@@ -29,6 +30,7 @@ public:
     virtual ~JSIdentifierCtxBase() = default;
 
     virtual const char* substitute(const char* identifier) = 0;
+    virtual bool built_in(const char* identifier) const = 0;
     virtual void reset() = 0;
     virtual size_t size() const = 0;
 };
@@ -36,9 +38,12 @@ public:
 class JSIdentifierCtx : public JSIdentifierCtxBase
 {
 public:
-    JSIdentifierCtx(int32_t depth) : depth(depth) {}
+    JSIdentifierCtx(int32_t depth, const std::unordered_set<std::string>& ident_built_in)
+        : depth(depth), ident_built_in(ident_built_in)
+    {}
 
     const char* substitute(const char* identifier) override;
+    bool built_in(const char* identifier) const override;
     void reset() override;
 
     // approximated to 500 unique mappings insertions
@@ -50,6 +55,7 @@ private:
     int32_t depth;
 
     std::unordered_map<std::string, std::string> ident_names;
+    const std::unordered_set<std::string>& ident_built_in;
 };
 
 #endif // JS_IDENTIFIER_CTX

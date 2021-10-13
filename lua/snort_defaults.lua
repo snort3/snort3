@@ -1170,6 +1170,106 @@ default_low_port_scan =
 }
 
 ---------------------------------------------------------------------------
+-- ECMAScript Standard Built-in Objects and Functions Names (Identifiers)
+-- Also, might include other non-specification identifiers like those
+-- are part of WebAPI or frameworks
+---------------------------------------------------------------------------
+default_js_norm_built_in_ident =
+{
+    -- GlobalObject.Functions
+    'eval', 'PerformEval', 'HostEnsureCanCompileStrings', 'EvalDeclarationInstantiation',
+    'isFinite', 'isNaN', 'parseFloat', 'parseInt', 'Encode', 'Decode', 'decodeURI',
+    'decodeURIComponent', 'encodeURI', 'encodeURIComponent',
+
+    -- GlobalObject.Constructors
+    'AggregateError', 'Array', 'ArrayBuffer', 'BigInt', 'BitInt64Array', 'BigUint64Array',
+    'Boolean', 'DataView', 'Date', 'Error', 'EvalError', 'FinalizationRegistry',
+    'Float32Array', 'Float64Array', 'Function', 'Int8Array', 'Int16Array', 'Int32Array',
+    'Map', 'NativeError', 'Number', 'Object', 'Promise', 'Proxy',
+    'RangeError', 'ReferenceError', 'RegExp', 'Set', 'SharedArrayBuffer', 'String',
+    'Symbol', 'SyntaxError', 'TypeError', 'Uint8Array', 'Uint8ClampedArray', 'Uint16Array',
+    'Uint32Array', 'URIError', 'WeakMap', 'WeakRef', 'WeakSet',
+
+    -- Atomics
+    'Atomics', 'WaiterList', 'ValidateIntegerTypedArray', 'ValidateAtomicAccess', 'GetWaiterList',
+    'EnterCriticalSection', 'LeaveCriticalSection', 'AddWaiter', 'RemoveWaiter', 'RemoveWaiters',
+    'SuspendAgent', 'NotifyWaiter', 'AtomicReadModifyWrite', 'ByteListBitwiseOp', 'ByteListEqual',
+
+    -- JSON
+    'JSON', 'InternalizeJSONProperty', 'SerializeJSONProperty', 'QuoteJSONString', 'UnicodeEscape',
+    'SerializeJSONObject','SerializeJSONArray',
+
+    -- Math
+    'Math',
+
+    -- Reflect
+    'Reflect',
+
+    -- Date and Time
+    'LocalTZA', 'LocalTime', 'UTC', 'MakeTime', 'MakeDay', 'MakeDate', 'TimeClip', 'TimeString',
+    'DateString', 'TimeZoneString', 'ToDateString',
+
+    -- String
+    'StringPad', 'GetSubstitution', 'SplitMatch', 'TrimString',
+
+    -- RegExp
+    'RegExpExec', 'RegExpBuiltinExec', 'AdvanceStringIndex', 'RegExpHasFlag',
+
+    -- TypedArray
+    'TypedArray', 'TypedArraySpeciesCreate', 'TypedArrayCreate', 'ValidateTypedArray',
+    'AllocateTypedArray', 'InitializeTypedArrayFromTypedArray',
+    'InitializeTypedArrayFromArrayBuffer', 'InitializeTypedArrayFromList',
+    'InitializeTypedArrayFromArrayLike', 'AllocateTypedArrayBuffer',
+
+    -- ArrayBuffer
+    'AllocateArrayBuffer', 'IsDetachedBuffer', 'DetachArrayBuffer', 'CloneArrayBuffer',
+    'IsUnsignedElementType', 'IsUnclampedIntegerElementType', 'IsBigIntElementType',
+    'IsNoTearConfiguration', 'RawBytesToNumeric', 'GetValueFromBuffer', 'NumericToRawBytes',
+    'SetValueInBuffer', 'GetModifySetValueInBuffer',
+
+    -- SharedArrayBuffer
+    'AllocateSharedArrayBuffer', 'IsSharedArrayBuffer',
+
+    -- DataView
+    'GetViewValue', 'SetViewValue', 'getDataView',
+
+    -- WeakRef
+    'WeakRefDeref',
+
+    -- Promise
+    'IfAbruptRejectPromise', 'CreateResolvingFunctions', 'FulfillPromise', 'NewPromiseCapability',
+    'IsPromise', 'RejectPromise', 'TriggerPromiseReactions', 'HostPromiseRejectionTracker',
+    'NewPromiseReactionJob', 'NewPromiseResolveThenableJob', 'GetPromiseResolve',
+    'PerformPromiseAll', 'PerformPromiseAllSettled', 'PerformPromiseAny', 'PerformPromiseRace',
+    'PromiseResolve', 'PerformPromiseThen',
+
+    -- GeneratorFunction
+    'GeneratorFunction', 'AsyncGeneratorFunction',
+
+    -- Generator
+    'Generator', 'GeneratorStart', 'GeneratorValidate', 'GeneratorResume', 'GeneratorResumeAbrupt',
+    'GetGeneratorKind', 'GeneratorYield', 'Yield', 'CreateIteratorFromClosure',
+
+    -- AsyncGenerator
+    'AsyncGenerator', 'AsyncGeneratorStart', 'AsyncGeneratorValidate', 'AsyncGeneratorResolve',
+    'AsyncGeneratorReject', 'AsyncGeneratorResumeNext', 'AsyncGeneratorEnqueue',
+    'AsyncGeneratorYield', 'CreateAsyncIteratorFromClosure',
+
+    -- AsyncFunction
+    'AsyncFunction', 'AsyncFunctionStart',
+
+    -- WebAPI
+    'console', 'document',
+
+    -- Misc
+    'CreateDynamicFunction', 'HostHasSourceTextAvailable', 'SymbolDescriptiveString',
+    'IsConcatSpreadable', 'FlattenIntoArray', 'SortCompare', 'AddEntriesFromIterable',
+    'CreateMapIterator', 'CreateSetIterator', 'EventSet', 'SharedDataBlockEventSet',
+    'HostEventSet', 'ComposeWriteEventBytes', 'ValueOfReadEvent', 'escape', 'unescape',
+    'CreateHTML'
+}
+
+---------------------------------------------------------------------------
 -- default whitelist
 ---------------------------------------------------------------------------
 default_whitelist =
@@ -1187,7 +1287,7 @@ default_whitelist =
     ip_med_sweep ip_med_dist ip_hi_proto ip_hi_decoy ip_hi_sweep
     ip_hi_dist icmp_low_sweep icmp_med_sweep icmp_hi_sweep
     default_hi_port_scan default_med_port_scan default_low_port_scan
-    default_variables netflow_versions
+    default_variables netflow_versions default_js_norm_built_in_ident
 ]]
 
 snort_whitelist_append(default_whitelist)

@@ -202,6 +202,36 @@ is present to limit the amount of memory dedicated to this tracking. This option
 is used only when js_normalization_depth is not 0. This feature
 is currently experimental and still under development.
 
+===== js_norm_max_scope_depth
+
+js_norm_max_scope_depth = N {0 : 65535} (default 256) is an option of the enhanced
+JavaScript normalizer that determines the deepest level of nested scope. The scope
+term includes code sections("{}"), parentheses("()") and brackets("[]"). This option
+is present to limit the amount of memory dedicated to this tracking. This option is used
+only when js_normalization_depth is not 0. This feature is currently experimental and
+still under development.
+
+===== js_norm_built_in_ident
+
+js_norm_built_in_ident = {<the list of built-in JavaScript identifier names>}.
+The default list is present in "snort_defaults.lua".
+
+The built-in JavaScript identifiers will be placed as is, without substitution. Normalizer
+tracks built-in identifier expressions based on the configured list of built-in names.
+The built-in identifier expression is the built-in name (function or object) and the chain
+of dot and bracket accessors after it, including the function calls.
+For example:
+
+    console.log("bar")
+    document.getElementById("id").text
+    eval("script")
+    foo["bar"]
+
+The list must contain object and function names only.
+For example:
+
+    http_inspect.js_norm_built_in_ident = { 'console', 'document', 'eval', 'foo' }
+
 ===== xff_headers
 
 This configuration supports defining custom x-forwarded-for type headers. In a

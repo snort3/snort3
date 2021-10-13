@@ -52,7 +52,27 @@ private:
         PUNCTUATOR,
         OPERATOR,
         LITERAL,
-        DIRECTIVE
+        DIRECTIVE,
+        DOT,
+        CLOSING_BRACKET
+    };
+
+    enum ScopeType
+    {
+        GLOBAL = 0,
+        BRACES,      // {}
+        PARENTHESES, // ()
+        BRACKETS     // []
+    };
+    struct Scope
+    {
+        Scope(ScopeType t)
+            : type(t), ident_norm(true), func_call(false)
+        {}
+
+        ScopeType type;
+        bool ident_norm;
+        bool func_call;
     };
 
     enum ASIGroup
@@ -84,11 +104,15 @@ public:
         BAD_TOKEN,
         IDENTIFIER_OVERFLOW,
         TEMPLATE_NESTING_OVERFLOW,
+        SCOPE_NESTING_OVERFLOW,
+        WRONG_CLOSING_SYMBOL,
+        ENDED_IN_INNER_SCOPE,
         MAX
     };
 
-    JSTokenizer(std::istream& in, std::ostream& out, JSIdentifierCtxBase& ident_ctx,
-        uint8_t max_template_nesting, char*& buf, size_t& buf_size,
+    JSTokenizer() = delete;
+    explicit JSTokenizer(std::istream& in, std::ostream& out, JSIdentifierCtxBase& ident_ctx,
+        uint8_t max_template_nesting, uint32_t max_scope_depth, char*& buf, size_t& buf_size,
         int cap_size = JSTOKENIZER_BUF_MAX_SIZE);
     ~JSTokenizer() override;
 
@@ -106,21 +130,33 @@ private:
     JSRet do_spacing(JSToken cur_token);
     JSRet do_operator_spacing(JSToken cur_token);
     void do_semicolon_insertion(ASIGroup current);
-    JSRet do_identifier_substitution(const char* lexeme);
+    JSRet do_identifier_substitution(const char* lexeme, bool id_part);
     bool unescape(const char* lexeme);
     void process_punctuator();
-    void process_closing_bracket();
+    void process_closing_brace();
     JSRet process_subst_open();
 
     void states_push();
     void states_apply();
     void states_correct(int);
 
+    // scope stack servicing
+    JSRet scope_push(ScopeType);
+    JSRet scope_pop(ScopeType);
+    Scope& scope_cur();
+
+    // interactions with the current scope
+    bool global_scope();
+    void set_ident_norm(bool);
+    bool ident_norm();
+    void set_func_call(bool);
+    bool func_call();
+
     void* cur_buffer;
     void* tmp_buffer = nullptr;
     std::stringstream tmp;
     uint8_t max_template_nesting;
-    std::stack<uint16_t, std::vector<uint16_t>> bracket_depth;
+    std::stack<uint16_t, std::vector<uint16_t>> brace_depth;
     JSToken token = UNDEFINED;
     ASIGroup previous_group = ASI_OTHER;
     JSIdentifierCtxBase& ident_ctx;
@@ -136,6 +172,7 @@ private:
     char*& tmp_buf;
     size_t& tmp_buf_size;
     const int tmp_cap_size;
+
     bool newline_found = false;
     constexpr static bool insert_semicolon[ASI_GROUP_MAX][ASI_GROUP_MAX]
     {
@@ -151,6 +188,9 @@ private:
         {false, true,  false, true,  false, false, true,  true,  true,  true,  true, },
         {false, false, false, false, false, false, false, false, false, false, false,}
     };
+
+    const uint32_t max_scope_depth;
+    std::stack<Scope> scope_stack;
 };
 
 #endif // JS_TOKENIZER_H

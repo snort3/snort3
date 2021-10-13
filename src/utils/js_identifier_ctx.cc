@@ -76,6 +76,11 @@ const char* JSIdentifierCtx::substitute(const char* identifier)
     return ident_names[identifier].c_str();
 }
 
+bool JSIdentifierCtx::built_in(const char* identifier) const
+{
+    return ident_built_in.count(identifier);
+}
+
 void JSIdentifierCtx::reset()
 {
     ident_last_name = 0;

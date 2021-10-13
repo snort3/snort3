@@ -45,6 +45,12 @@ HttpModule::~HttpModule()
     LiteralSearch::cleanup(script_detection_handle);
 }
 
+static const Parameter js_built_in_ident_param[] =
+{
+    { "ident_name", Parameter::PT_STRING, nullptr, nullptr, "name of built-in identifier" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 const Parameter HttpModule::http_params[] =
 {
     { "request_depth", Parameter::PT_INT, "-1:max53", "-1",
@@ -95,6 +101,13 @@ const Parameter HttpModule::http_params[] =
     { "js_norm_max_tmpl_nest", Parameter::PT_INT, "0:255", "32",
       "maximum depth of template literal nesting that enhanced javascript normalizer "
       "will process (experimental)" },
+
+    { "js_norm_max_scope_depth", Parameter::PT_INT, "0:65535", "256",
+      "maximum depth of scope nesting that enhanced JavaScript normalizer will process "
+      "(experimental)" },
+
+    { "js_norm_built_in_ident", Parameter::PT_LIST, js_built_in_ident_param, nullptr,
+      "list of JavaScript built-in identifiers which will not be normalized (experimental)" },
 
     { "max_javascript_whitespaces", Parameter::PT_INT, "1:65535", "200",
       "maximum consecutive whitespaces allowed within the JavaScript obfuscated data" },
@@ -196,8 +209,11 @@ const TraceOption* HttpModule::get_trace_options() const
     return http_trace_options;
 }
 
-bool HttpModule::begin(const char*, int, SnortConfig*)
+bool HttpModule::begin(const char* fqn, int, SnortConfig*)
 {
+    if (strcmp(fqn, "http_inspect"))
+        return true;
+
     delete params;
     params = new HttpParaList;
     return true;
@@ -270,6 +286,14 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("js_norm_max_tmpl_nest"))
     {
         params->js_norm_param.max_template_nesting = val.get_uint8();
+    }
+    else if (val.is("js_norm_max_scope_depth"))
+    {
+        params->js_norm_param.max_scope_depth = val.get_int32();
+    }
+    else if (val.is("ident_name"))
+    {
+        params->js_norm_param.built_in_ident.insert(val.get_string());
     }
     else if (val.is("max_javascript_whitespaces"))
     {
@@ -434,8 +458,11 @@ static void prepare_http_header_list(HttpParaList* params)
     params->header_list[hdr_idx] = end_header;
 }
 
-bool HttpModule::end(const char*, int, SnortConfig*)
+bool HttpModule::end(const char* fqn, int, SnortConfig*)
 {
+    if (strcmp(fqn, "http_inspect"))
+        return true;
+
     if (!params->uri_param.utf8 && params->uri_param.utf8_bare_byte)
     {
         ParseWarning(WARN_CONF, "Meaningless to do bare byte when not doing UTF-8");
@@ -460,7 +487,8 @@ bool HttpModule::end(const char*, int, SnortConfig*)
     if ( params->js_norm_param.is_javascript_normalization )
         params->js_norm_param.js_norm = new HttpJsNorm(params->uri_param,
         params->js_norm_param.js_normalization_depth, params->js_norm_param.js_identifier_depth,
-        params->js_norm_param.max_template_nesting);
+        params->js_norm_param.max_template_nesting, params->js_norm_param.max_scope_depth,
+        params->js_norm_param.built_in_ident);
 
     params->script_detection_handle = script_detection_handle;
 

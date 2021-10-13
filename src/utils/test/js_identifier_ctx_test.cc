@@ -32,18 +32,20 @@
 
 #define DEPTH 65536
 
+static const std::unordered_set<std::string> s_ident_built_in { "console" };
+
 TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
 {
     SECTION("same name")
     {
-        JSIdentifierCtx ident_ctx(DEPTH);
+        JSIdentifierCtx ident_ctx(DEPTH, s_ident_built_in);
 
         CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
         CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
     }
     SECTION("different names")
     {
-        JSIdentifierCtx ident_ctx(DEPTH);
+        JSIdentifierCtx ident_ctx(DEPTH, s_ident_built_in);
 
         CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
         CHECK(!strcmp(ident_ctx.substitute("b"), "var_0001"));
@@ -51,7 +53,7 @@ TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
     }
     SECTION("depth reached")
     {
-        JSIdentifierCtx ident_ctx(2);
+        JSIdentifierCtx ident_ctx(2, s_ident_built_in);
 
         CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
         CHECK(!strcmp(ident_ctx.substitute("b"), "var_0001"));
@@ -61,7 +63,7 @@ TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
     }
     SECTION("max names")
     {
-        JSIdentifierCtx ident_ctx(DEPTH + 2);
+        JSIdentifierCtx ident_ctx(DEPTH + 2, s_ident_built_in);
 
         std::vector<std::string> n, e;
         n.reserve(DEPTH + 2);
@@ -84,5 +86,13 @@ TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
         CHECK(ident_ctx.substitute(n[DEPTH].c_str()) == nullptr);
         CHECK(ident_ctx.substitute(n[DEPTH + 1].c_str()) == nullptr);
     }
+}
+
+TEST_CASE("JSIdentifierCtx::built_in()", "[JSIdentifierCtx]")
+{
+    JSIdentifierCtx ident_ctx(DEPTH, s_ident_built_in);
+
+    SECTION("match") { CHECK(ident_ctx.built_in("console") == true); }
+    SECTION("no match") { CHECK(ident_ctx.built_in("foo") == false); }
 }
 

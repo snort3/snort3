@@ -231,15 +231,33 @@ So, the following whitespace codes will be normalized:
  * Any other Unicode “space separator” <USP>
  * Also including new-line and carriage-return line-break characters
 
-All JavaScript identifier names will be substituted to unified names with the
-following format: var_0000 -> var_ffff. So, the number of unique identifiers available
-is 65536 names per HTTP transaction. If Normalizer overruns the configured
-limit, built-in alert is generated. Additionally, there is a config option to
-specify the limit manually:
+All JavaScript identifier names, except those, are from the list of built-in identifiers,
+will be substituted to unified names with the following format: var_0000 -> var_ffff.
+So, the number of unique identifiers available is 65536 names per HTTP transaction.
+If Normalizer overruns the configured limit, built-in alert is generated. Additionally,
+there is a config option to specify the limit manually:
  * http_inspect.js_norm_identifier_depth.
 
-Additionally, Normalizer validates the syntax with respect to ECMA-262 Standard,
-and checks for restrictions for contents of script elements (since, it is HTML-embedded JavaScript).
+The built-in JavaScript identifiers will be placed as is, without substitution. Normalizer
+tracks built-in identifier expressions based on the configured list of built-in names.
+The built-in identifier expression is the built-in name (function or object) and the chain
+of dot and bracket accessors after it, including the function calls.
+For example:
+ * console.log("bar")
+ * document.getElementById("id").text
+ * eval("script")
+ * foo["bar"]
+
+The list of built-in identifiers should be configured with the following config option:
+ * http_inspect.js_norm_built_in_ident
+
+This list must contain object and function names only.
+For example:
+ * http_inspect.js_norm_built_in_ident = { 'console', 'document', 'eval', 'foo' }
+
+Additionally, Normalizer validates the syntax with respect to ECMA-262 Standard, including
+scope tracking, and checks for restrictions for contents of script elements (since, it
+is HTML-embedded JavaScript).
 
 The following rules applied:
  * no nesting tags allowed, i.e. two opening tags in a row

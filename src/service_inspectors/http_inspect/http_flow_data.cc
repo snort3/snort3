@@ -255,21 +255,23 @@ void HttpFlowData::reset_js_ident_ctx()
 }
 
 snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t ident_depth, size_t norm_depth,
-     uint8_t max_template_nesting)
+    uint8_t max_template_nesting, uint32_t max_scope_depth,
+    const std::unordered_set<std::string>& built_in_ident)
 {
     if (js_normalizer)
         return *js_normalizer;
 
     if (!js_ident_ctx)
     {
-        js_ident_ctx = new JSIdentifierCtx(ident_depth);
+        js_ident_ctx = new JSIdentifierCtx(ident_depth, built_in_ident);
         update_allocations(js_ident_ctx->size());
 
         debug_logf(4, http_trace, TRACE_JS_PROC, nullptr,
             "js_ident_ctx created (ident_depth %d)\n", ident_depth);
     }
 
-    js_normalizer = new JSNormalizer(*js_ident_ctx, norm_depth, max_template_nesting);
+    js_normalizer = new JSNormalizer(*js_ident_ctx, norm_depth,
+        max_template_nesting, max_scope_depth);
     update_allocations(JSNormalizer::size());
 
     auto ptr = js_detect_buffer[HttpCommon::SRC_SERVER];
@@ -297,7 +299,8 @@ void HttpFlowData::release_js_ctx()
 }
 #else
 void HttpFlowData::reset_js_ident_ctx() {}
-snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t, size_t, uint8_t)
+snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t, size_t, uint8_t, uint32_t,
+    const std::unordered_set<std::string>&)
 { return *js_normalizer; }
 void HttpFlowData::release_js_ctx() {}
 #endif

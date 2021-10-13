@@ -37,7 +37,8 @@ class HttpJsNorm
 {
 public:
     HttpJsNorm(const HttpParaList::UriParam&, int64_t normalization_depth,
-        int32_t identifier_depth, uint8_t max_template_nesting);
+        int32_t identifier_depth, uint8_t max_template_nesting, uint32_t max_scope_depth,
+        const std::unordered_set<std::string>& built_in_ident);
     ~HttpJsNorm();
 
     void legacy_normalize(const Field& input, Field& output, HttpInfractions*, HttpEventGen*,
@@ -62,6 +63,8 @@ private:
     int64_t normalization_depth;
     int32_t identifier_depth;
     uint8_t max_template_nesting;
+    uint32_t max_scope_depth;
+    const std::unordered_set<std::string>& built_in_ident;
     bool configure_once = false;
 
     snort::SearchTool* mpse_otag;

@@ -20,8 +20,9 @@
 #ifndef HTTP_MODULE_H
 #define HTTP_MODULE_H
 
-#include <string>
 #include <bitset>
+#include <string>
+#include <unordered_set>
 
 #include "framework/module.h"
 #include "helpers/literal_search.h"
@@ -69,6 +70,8 @@ public:
         int64_t js_normalization_depth = 0;
         int32_t js_identifier_depth = 0;
         uint8_t max_template_nesting = 32;
+        uint32_t max_scope_depth = 256;
+        std::unordered_set<std::string> built_in_ident;
         int max_javascript_whitespaces = 200;
         class HttpJsNorm* js_norm = nullptr;
     };

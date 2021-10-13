@@ -1198,9 +1198,11 @@ network traffic and may be an indication that an attacker is trying to exhaust r
 
 In JavaScript, template literals can have substitutions, that in turn can have nested
 template literals, which requires a stack to track for proper whitespace normalization.
-When the depth of nesting exceeds limit set in http_inspect.js_norm_max_tmpl_nest,
-this alert is raised. This alert is not expected for typical network traffic and may be
-an indication that an attacker is trying to exhaust resources.
+Also, the normalization tracks the current scope, which requires a stack as well.
+When the depth of nesting exceeds limit set in http_inspect.js_norm_max_tmpl_nest or in
+http_inspect.js_norm_max_scope_depth, this alert is raised. This alert is not expected
+for typical network traffic and may be an indication that an attacker is trying to exhaust
+resources.
 
 119:272
 
