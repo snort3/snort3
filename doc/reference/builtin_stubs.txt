@@ -1460,50 +1460,50 @@ HTTP/2 HPACK table size update exceeds max value set by decoder in SETTINGS fram
 
 123:1
 
-Received inconsistent IP options on fragmented packets
+Received inconsistent IP options on fragmented packets.
 
 123:2
 
-Received indicators of a teardrop attack on fragmented packets
+Received indicators of a teardrop attack on fragmented packets.
 
 123:3
 
 Received short fragment, possible DOS attempt (possible boink/bolt/jolt attack). The minimum length
-required to throw this alert is specified by stream_ip.min_frag_length
+required to throw this alert is specified by stream_ip.min_frag_length.
 
 123:4
 
-Overlap anomaly: fragment packet ends after defragmented packet
+Overlap anomaly: fragment packet ends after defragmented packet.
 
 123:5
 
-Received a zero-byte fragment
+Received a zero-byte fragment.
 
 123:6
 
-Bad fragment size encountered, packet size is negative
+Bad fragment size encountered, packet size is negative.
 
 123:7
 
-Bad fragment size encountered, packet size is greater than 65536
+Bad fragment size encountered, packet size is greater than 65536.
 
 123:8
 
-Fragmentation results in overlap between segments
+Fragmentation results in overlap between segments.
 
 123:11
 
 TTL value is less than configured minimum, not using for reassembly. Minimum TTL can be configured
-with stream_ip.min_ttl
+with stream_ip.min_ttl.
 
 123:12
 
 Fragment overlap limit exceeded, event will be raised for all successive fragments. The max fragment
-overlaps that can occur before alerting is configurable by changing stream_ip.max_overlaps
+overlaps that can occur before alerting is configurable by changing stream_ip.max_overlaps.
 
 123:13
 
-Received a tiny fragment (less than minimum fragment length)
+Received a tiny fragment (less than minimum fragment length).
 
 124:1
 
@@ -1635,20 +1635,20 @@ Received a tiny fragment (less than minimum fragment length)
 
 129:1
 
-Received a TCP SYN on an already established TCP session
+Received a TCP SYN on an already established TCP session.
 
 129:2
 
-Data present on SYN packet
+Data present on SYN packet.
 
 129:3
 
 Data was sent on a stream not accepting data. The stream is in the
-TIME-WAIT, FIN-WAIT, CLOSED, or CLOSE-WAIT state
+TIME-WAIT, FIN-WAIT, CLOSED, or CLOSE-WAIT state.
 
 129:4
 
-The TCP timestamp is outside of PAWS (protection against wrapped sequences) window
+The TCP timestamp is outside of PAWS (protection against wrapped sequences) window.
 
 129:5
 
@@ -1657,37 +1657,37 @@ Bad segment, adjusted size <= 0 (deprecated)
 129:6
 
 Window size (after scaling) is larger than policy allows. stream_tcp.max_window can be increased to
-allow for larger window sizes if desired
+allow for larger window sizes if desired.
 
 129:7
 
 Limit on number of overlapping TCP packets per session was reached. stream_tcp.overlap_limit can be increased
-to allow for more overlaps per session, if desired
+to allow for more overlaps per session, if desired.
 
 129:8
 
 Data was sent on stream after a TCP reset was sent, and the stream is in
-CLOSED state
+CLOSED state.
 
 129:9
 
 TCP client is possibly hijacked, MAC addresses on received packets differ from what was originally
-seen on this flow
+seen on this flow.
 
 129:10
 
 TCP server is possibly hijacked, MAC addresses on received packets differ from what was originally
-seen on this flow
+seen on this flow.
 
 129:11
 
-Received TCP data with no TCP flags set
+Received TCP data with no TCP flags set.
 
 129:12
 
 Consecutive TCP small segments exceed the configured threshold. The size required to be a small segment can
 be configured via stream_tcp.small_segments.maximum_size, and the maximum number of these small segments can be configured
-with int stream_tcp.small_segments.count
+with int stream_tcp.small_segments.count.
 
 129:13
 
@@ -1698,33 +1698,33 @@ detected in all cases.
 129:14
 
 TCP timestamp is missing, which could cause a failure in PAWS checking,
-or RTT calculation
+or RTT calculation.
 
 129:15
 
-TCP reset was requested outside window (bad RST)
+TCP reset was requested outside window (bad RST).
 
 129:16
 
 TCP Anomaly: FIN number is greater than prior FIN while the connection
-is in TIME-WAIT
+is in TIME-WAIT.
 
 129:17
 
 TCP Anomaly: ACK number is greater than prior FIN while the connection
-is in FIN-WAIT-2
+is in FIN-WAIT-2.
 
 129:18
 
-Data was sent on stream after TCP reset received
+Data was sent on stream after TCP reset received.
 
 129:19
 
-TCP window was closed before receiving data
+TCP window was closed before receiving data.
 
 129:20
 
-The TCP 3-way handshake was not seen for this TCP session
+The TCP 3-way handshake was not seen for this TCP session.
 
 131:1
 
@@ -1980,33 +1980,33 @@ The TCP 3-way handshake was not seen for this TCP session
 
 135:1
 
- A TCP SYN was received
+A TCP SYN was received.
 
 135:2
 
- A TCP session was established
+A TCP session was established.
 
 135:3
 
- A TCP session was cleared
+A TCP session was cleared.
 
 136:1
 
 The flow was blocked based on the source IP address, since it
 appears on the IP reputation block list. Configure either the discovery filter,
-or the reputation IP lists to change this behavior
+or the reputation IP lists to change this behavior.
 
 136:2
 
 The flow was trusted based on the source IP address, since it
 appears on the IP reputation trust list. Configure either the discovery filter,
-or the reputation IP lists to change this behavior
+or the reputation IP lists to change this behavior.
 
 136:3
 
 The flow was monitored based on the source IP address, since it
 appears on the IP reputation monitor list. Configure either the discovery filter,
-or the reputation IP lists to change this behavior
+or the reputation IP lists to change this behavior.
 
 136:4
 
@@ -2020,7 +2020,7 @@ Configure either the discovery filter, or the reputation IP lists to change this
 The flow was trusted based on the destination IP address, since it
 appears on the IP reputation trust list. If the flow contained proxy traffic,
 the IP address could also be the address of the (inner-layer) proxied connection.
-Configure either the discovery filter, or the reputation IP lists to change this behavior
+Configure either the discovery filter, or the reputation IP lists to change this behavior.
 
 136:6
 
@@ -2028,7 +2028,7 @@ The flow was monitored (passed to further inspection) based on
 the destination IP address, since it appears on the IP reputation monitor list. If
 the flow contained proxy traffic, the IP address could also be the address of the
 (inner-layer) proxied connection. Configure either the discovery filter, or the reputation IP
-lists to change this behavior
+lists to change this behavior.
 
 137:1
 
