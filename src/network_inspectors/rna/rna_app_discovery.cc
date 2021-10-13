@@ -77,8 +77,9 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter, 
     {
         AppId client, payload;
         appid_session_api.get_app_id(nullptr, &client, &payload, nullptr, nullptr);
+        bool is_future_flow = appid_session_api.get_appid_session_attribute(APPID_SESSION_FUTURE_FLOW);
 
-        if ( appid_change_bits[APPID_SERVICE_BIT] and service > APP_ID_NONE )
+        if ( appid_change_bits[APPID_SERVICE_BIT] and service > APP_ID_NONE and !is_future_flow)
         {
             if ( service == APP_ID_DHCP )
             {
