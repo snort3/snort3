@@ -109,6 +109,7 @@ bool FpProcReloadTuner::tinit()
     set_tcp_fp_processor(mod_conf.tcp_processor);
     set_ua_fp_processor(mod_conf.ua_processor);
     set_udp_fp_processor(mod_conf.udp_processor);
+    set_smb_fp_processor(mod_conf.smb_processor);
     return false;  // no work to do after this
 }
 
