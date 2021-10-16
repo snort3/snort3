@@ -56,95 +56,96 @@ A tagged packet was logged.
 
 116:1
 
-(ipv4) not IPv4 datagram
+The packet is not an IPv4 datagram (based on the ip header's version field).
 
 116:2
 
-(ipv4) IPv4 header length < minimum
+The IPv4 header length (based on the header's length field) is less than the ip version 
+4's minimum header length (20 bytes).
 
 116:3
 
-(ipv4) IPv4 datagram length < header field
+The total IPv4 datagram length is less than the length calculated using the ipv4 header length field.
 
 116:4
 
-(ipv4) IPv4 options found with bad lengths
+The IPv4 options field has a bad/incorrect length.
 
 116:5
 
-(ipv4) truncated IPv4 options
+The IPv4 options field is truncated.
 
 116:6
 
-(ipv4) IPv4 datagram length > captured length
+The IPv4 datagram length is greater than the captured packet's length.
 
 116:45
 
-(tcp) TCP packet length is smaller than 20 bytes
+The TCP packet length is smaller than the minimum tcp header length (20 bytes).
 
 116:46
 
-(tcp) TCP data offset is less than 5
+The TCP data offset is less than five 32 bit words (20 bytes) and is invalid.
 
 116:47
 
-(tcp) TCP header length exceeds packet length
+The TCP header length exceeds the packet's length.
 
 116:54
 
-(tcp) TCP options found with bad lengths
+The TCP options are invalid and/or have bad lengths.
 
 116:55
 
-(tcp) truncated TCP options
+The TCP options field is truncated.
 
 116:56
 
-(tcp) T/TCP detected
+A tcp packet was detected with the CC Echo field set.
 
 116:57
 
-(tcp) obsolete TCP options found
+A tcp packet was detected that contained obsolete TCP options.
 
 116:58
 
-(tcp) experimental TCP options found
+A tcp packet was detected that contained experimental TCP options.
 
 116:59
 
-(tcp) TCP window scale option found with length > 14
+The TCP window scale option found with a length greater than 14.
 
 116:95
 
-(udp) truncated UDP header
+A truncated UDP header has been detected.
 
 116:96
 
-(udp) invalid UDP header, length field < 8
+An invalid UDP header detected. The header's length is less than 8 bytes.
 
 116:97
 
-(udp) short UDP packet, length field > payload length
+The UDP length field is greater than the payload length.
 
 116:98
 
-(udp) long UDP packet, length field < payload length
+The UDP length field is less than the payload length.
 
 116:105
 
-(icmp4) ICMP header truncated
+An ICMP packet was detected with the header truncated.
 
 116:106
 
-(icmp4) ICMP timestamp header truncated
+The ICMP packet's timestamp header is truncated.
 
 116:107
 
-(icmp4) ICMP address header truncated
+The ICMP packet's address header is truncated.
 
 116:109
 
-(arp) truncated ARP
+The packet length is less than ethernet arp's minimum length of 28 bytes.
 
 116:110
 
@@ -152,7 +153,7 @@ A tagged packet was logged.
 
 116:111
 
-(eapol) EAP key truncated
+(eapol) EAP key truncated 
 
 116:112
 
@@ -160,15 +161,16 @@ A tagged packet was logged.
 
 116:120
 
-(pppoe) bad PPPOE frame detected
+A bad PPPOE frame has been detected. The frames length is less than the PPPOE frame minimum (6 bytes).
 
 116:130
 
-(vlan) bad VLAN frame
+A bad VLAN frame was detected due to either the packet being smaller 
+than the minimum VLAN header size or the VLAN ID being invalid (0 or 4095).
 
 116:131
 
-(llc) bad LLC header
+An invalid LLC header has been detected (less than 3 bytes). 
 
 116:132
 
@@ -200,15 +202,15 @@ A tagged packet was logged.
 
 116:150
 
-(decode) loopback IP
+A loopback IP was detected within a packet.
 
 116:151
 
-(decode) same src/dst IP
+The same source and destination IP was detected.
 
 116:160
 
-(gre) GRE header length > payload length
+The payload length is greater than the packet length.
 
 116:161
 
@@ -216,379 +218,383 @@ A tagged packet was logged.
 
 116:162
 
-(gre) invalid GRE version
+The detected GRE version field value is invalid (should be 0 or 1).
 
 116:163
 
-(gre) invalid GRE header
+Invalid flag set in GRE header.
 
 116:164
 
-(gre) invalid GRE v.1 PPTP header
+Invalid GRE v.1 PPTP header detected.
 
 116:165
 
-(gre) GRE trans header length > payload length
+The GRE trans header length is greater than the payload length.
 
 116:170
 
-(mpls) bad MPLS frame
+The MPLS frame is invalid. The MPLS header length is less than the MPLS minimum frame size (4 bytes).
 
 116:171
 
-(mpls) MPLS label 0 appears in bottom header when not decoding as ip4
+The MPLS label 0 appears in bottom header when not decoding as an ip4 packet.
 
 116:172
 
-(mpls) MPLS label 1 appears in bottom header
+The MPLS label 1 appears in bottom header.
 
 116:173
 
-(mpls) MPLS label 2 appears in bottom header when not decoding as ip6
+The MPLS label 2 appears in bottom header when not decoding as an ip6 packet.
 
 116:174
 
-(mpls) MPLS label 3 appears in header
+A MPLS label 3 (Implicit NULL Label) appears in header.
 
 116:175
 
-(mpls) MPLS label 4, 5,.. or 15 appears in header
+A reserved MPLS label (4, 5 or 15) appears in header.
 
 116:176
 
-(mpls) too many MPLS headers
+There were too many MPLS headers detected. (Use the mpls.max_stack_depth setting to set the max value).
 
 116:180
 
-(geneve) insufficient room for geneve header
+The packet length is less than the expected GENEVE header length.
 
 116:181
 
-(geneve) invalid version
+The version number in the GENEVE header is not valid (not equal to zero).
 
 116:182
 
-(geneve) invalid header
+The packet length is less than the minimum GENEVE header length.
 
 116:183
 
-(geneve) invalid flags
+There are several scenarios for this event. 
+1) The C flag is clear but critical options are present.
+2) The C flag is set but critical options are absent.
+3) If the critical header present bit is set the option's length cannot be 0.
+
 
 116:184
 
-(geneve) invalid options
+The options length field extends past the end of the GENEVE header.
 
 116:250
 
-(icmp4) ICMP original IP header truncated
+The ICMP error message's original IP header is truncated.
 
 116:251
 
-(icmp4) ICMP version and original IP header versions differ
+The ICMP error message's original IP packet's version and original IP header versions differ.
 
 116:252
 
-(icmp4) ICMP original datagram length < original IP header length
+The ICMP error message's original datagram's length is less than the original IP's header length.
 
 116:253
 
-(icmp4) ICMP original IP payload < 64 bits
+The ICMP error message's original IP packet's payload is less than 64 bits.
 
 116:254
 
-(icmp4) ICMP original IP payload > 576 bytes
+The ICMP error message's original IP packet's payload is greater than the expected max of 576 bytes.
 
 116:255
 
-(icmp4) ICMP original IP fragmented and offset not 0
+An ICMP original IP fragmented and the offset is not 0.
 
 116:270
 
-(ipv6) IPv6 packet below TTL limit
+The IPv6 packet has a TTL value that is below the TTL limit.
 
 116:271
 
-(ipv6) IPv6 header claims to not be IPv6
+The IPv6 header claims to not be an IPv6 packet.
 
 116:272
 
-(ipv6) IPv6 truncated extension header
+The IPv6 packet has a truncated extension header.
 
 116:273
 
-(ipv6) IPv6 truncated header
+The IPv6 packet has a truncated header.
 
 116:274
 
-(ipv6) IPv6 datagram length < header field
+The IPv6 datagram length field is less than the header field.
 
 116:275
 
-(ipv6) IPv6 datagram length > captured length
+The IPv6 datagram's length is greater than the captured packet's length.
 
 116:276
 
-(ipv6) IPv6 packet with destination address ::0
+An IPv6 packet was detected with a destination address of ::0
 
 116:277
 
-(ipv6) IPv6 packet with multicast source address
+An IPv6 packet with a multicast source address has been detected.
 
 116:278
 
-(ipv6) IPv6 packet with reserved multicast destination address
+An IPv6 packet with a reserved multicast destination address has been detected.
 
 116:279
 
-(ipv6) IPv6 header includes an undefined option type
+The IPv6 header includes an undefined option type.
 
 116:280
 
-(ipv6) IPv6 address includes an unassigned multicast scope value
+The IPv6 address includes an unassigned multicast scope value.
 
 116:281
 
-(ipv6) IPv6 header includes an invalid value for the 'next header' field
+The IPv6 header includes an invalid value for the 'next header' field.
 
 116:282
 
-(ipv6) IPv6 header includes a routing extension header followed by a hop-by-hop header
+The IPv6 header includes a routing extension header followed by a hop-by-hop header.
 
 116:283
 
-(ipv6) IPv6 header includes two routing extension headers
+The IPv6 header includes two routing extension headers. 
 
 116:285
 
-(icmp6) ICMPv6 packet of type 2 (message too big) with MTU field < 1280
+An ICMPv6 packet of type 2 (message too big) that contains an MTU field of less than 1280 bytes has been detected.
 
 116:286
 
-(icmp6) ICMPv6 packet of type 1 (destination unreachable) with non-RFC 2463 code
+An ICMPv6 packet of type 1 (destination unreachable) that contains a non-RFC 2463 code has been detected.
 
 116:287
 
-(icmp6) ICMPv6 router solicitation packet with a code not equal to 0
+An ICMPv6 router solicitation packet with a code not equal to 0 has been detected.
 
 116:288
 
-(icmp6) ICMPv6 router advertisement packet with a code not equal to 0
+An ICMPv6 router advertisement packet with a code not equal to 0 has been detected.
 
 116:289
 
-(icmp6) ICMPv6 router solicitation packet with the reserved field not equal to 0
+An ICMPv6 router solicitation packet with the reserved field not equal to 0 has been detected.
 
 116:290
 
-(icmp6) ICMPv6 router advertisement packet with the reachable time field set > 1 hour
+An ICMPv6 router advertisement packet with the reachable time field set to greater than 1 hour was detected.
 
 116:291
 
-(ipv6) IPV6 tunneled over IPv4, IPv6 header truncated, possible Linux kernel attack
+An IPV6 tunnel over IPv4 packet was received. The IPv6 header truncated which could possibly be a Linux kernel attack.
 
 116:292
 
-(ipv6) IPv6 header has destination options followed by a routing header
+The IPv6 header has destination options followed by a routing header.
 
 116:293
 
-(decode) two or more IP (v4 and/or v6) encapsulation layers present
+There are two or more IP (v4 and/or v6) encapsulation layers present.
 
 116:294
 
-(esp) truncated encapsulated security payload header
+The encapsulated security payload header was too short (less than 22 bytes).
 
 116:295
 
-(ipv6) IPv6 header includes an option which is too big for the containing header
+The IPv6 header includes an option which is too big for the containing header.
 
 116:296
 
-(ipv6) IPv6 packet includes out-of-order extension headers
+The IPv6 packet includes out-of-order extension headers.
 
 116:297
 
-(gtp) two or more GTP encapsulation layers present
+There are multiple GTP encapsulation layers present.
 
 116:298
 
-(gtp) GTP header length is invalid
+The packet data is smaller than the GTP header length making the packet invalid.
 
 116:400
 
-(tcp) XMAS attack detected
+A XMAS attack detected.
 
 116:401
 
-(tcp) Nmap XMAS attack detected
+A NMAP XMAS attack detected.
 
 116:402
 
-(tcp) DOS NAPTHA vulnerability detected
+(tcp) DOS NAPTHA vulnerability detected.
 
 116:403
 
-(tcp) SYN to multicast address
+A SYN packet was sent to a multicast address.
 
 116:404
 
-(ipv4) IPv4 packet with zero TTL
+IPv4 packet was detected with a zero TTL value.
 
 116:405
 
-(ipv4) IPv4 packet with bad frag bits (both MF and DF set)
+The IPv4 packet contains an invalid frag bits combination (both MF and DF are set).
 
 116:406
 
-(udp) invalid IPv6 UDP packet, checksum zero
+An invalid IPv6 UDP packet was detected. The checksum value is zero.
 
 116:407
 
-(ipv4) IPv4 packet frag offset + length exceed maximum
+The IPv4 packet's frag offset + the datagram length field exceeds the maximum packet size (65535)
 
 116:408
 
-(ipv4) IPv4 packet from 'current net' source address
+The IPv4 packet's source address is from the 'current net' (value of zero)
 
 116:409
 
-(ipv4) IPv4 packet to 'current net' dest address
+The IPv4 packet's destination address is to the 'current net' (value of zero)
 
 116:410
 
-(ipv4) IPv4 packet from multicast source address
+The IPv4 packet has a multicast source address.
 
 116:411
 
-(ipv4) IPv4 packet from reserved source address
+The IPv4 packet has a reserved source address.
 
 116:412
 
-(ipv4) IPv4 packet to reserved dest address
+The IPv4 packet has a reserved destination address.
 
 116:413
 
-(ipv4) IPv4 packet from broadcast source address
+The IPv4 packet has a broadcast source address.
 
 116:414
 
-(ipv4) IPv4 packet to broadcast dest address
+The IPv4 packet has a broadcast destination address
 
 116:415
 
-(icmp4) ICMP4 packet to multicast dest address
+ICMP4 packet to multicast destination address
 
 116:416
 
-(icmp4) ICMP4 packet to broadcast dest address
+ICMP4 packet to broadcast destination address
 
 116:418
 
-(icmp4) ICMP4 type other
+The ICMP4 packet 'type' is not known.
 
 116:419
 
-(tcp) TCP urgent pointer exceeds payload length or no payload
+The TCP urgent pointer exceeds payload length or has no payload.
 
 116:420
 
-(tcp) TCP SYN with FIN
+An invalid tcp flag combination was detected (SYN and FIN).
 
 116:421
 
-(tcp) TCP SYN with RST
+An invalid tcp flag combination was detected (SYN with RST)
 
 116:422
 
-(tcp) TCP PDU missing ack for established session
+The TCP packet is missing the acknowledgment flag for an established session.
 
 116:423
 
-(tcp) TCP has no SYN, ACK, or RST
+The TCP packet is invalid because it doesn't have a SYN, ACK, or RST flag set.
 
 116:424
 
-(eth) truncated ethernet header
+The packet length is less than the minimum ethernet header size (14 bytes)
 
 116:424
 
-(pbb) truncated ethernet header
+A truncated ethernet header was detected.
 
 116:425
 
-(ipv4) truncated IPv4 header
+The IPv4 header is truncated.
 
 116:426
 
-(icmp4) truncated ICMP4 header
+The ICMP4 header is truncated.
 
 116:427
 
-(icmp6) truncated ICMPv6 header
+The ICMPv6 header is truncated.
 
 116:428
 
-(ipv4) IPv4 packet below TTL limit
+(ipv4) IPv4 packet below TTL limit - Not being used.
 
 116:429
 
-(ipv6) IPv6 packet has zero hop limit
+(ipv6) IPv6 packet has zero hop limit - Not being used.
 
 116:430
 
-(ipv4) IPv4 packet both DF and offset set
-
+An invalid IPv4 packet was detected. The DF bit and an offset value are set.
+ 
 116:431
 
-(icmp6) ICMPv6 type not decoded
+The ICMPv6 type is unknown and not decoded.
 
 116:432
 
-(icmp6) ICMPv6 packet to multicast address
+An ICMPv6 packet to a multicast address was detected.
 
 116:433
 
-(tcp) DDOS shaft SYN flood
+A tcp DDOS shaft SYN flood was detected.
 
 116:434
 
-(icmp4) ICMP ping Nmap
+An ICMP ping from NMAP was detected.
 
 116:435
 
-(icmp4) ICMP icmpenum v1.1.1
+An ICMP icmpenum v1.1.1 packet was received (the payload length is zero and icmp seq number equals 666).
 
 116:436
 
-(icmp4) ICMP redirect host
+An ICMP host redirect packet was received.
 
 116:437
 
-(icmp4) ICMP redirect net
+An ICMP network redirect packet was received.
 
 116:438
 
-(icmp4) ICMP traceroute ipopts
+An ICMP packet with trace route ipopts was detected.
 
 116:439
 
-(icmp4) ICMP source quench
+An ICMP packet with the source quench field set was detected.
 
 116:440
 
-(icmp4) broadscan smurf scanner
+Broadscan smurf scanner traffic was detected.
 
 116:441
 
-(icmp4) ICMP destination unreachable communication administratively prohibited
+ICMP destination unreachable traffic was detected (communication administratively prohibited).
 
 116:442
 
-(icmp4) ICMP destination unreachable communication with destination host is administratively prohibited
+ICMP destination unreachable traffic detected (communication with destination host is administratively prohibited).
 
 116:443
 
-(icmp4) ICMP destination unreachable communication with destination network is administratively prohibited
+ICMP destination unreachable traffic detected (communication with destination network is administratively prohibited).
 
 116:444
 
@@ -596,23 +602,23 @@ A tagged packet was logged.
 
 116:445
 
-(udp) large UDP packet (> 4000 bytes)
+A large UDP packet was received (greater than 4000 bytes).
 
 116:446
 
-(tcp) TCP port 0 traffic
+TCP port 0 traffic was detected.
 
 116:447
 
-(udp) UDP port 0 traffic
+UDP port 0 traffic was detected.
 
 116:448
 
-(ipv4) IPv4 reserved bit set
+An IPv4 packet was detected that has the reserved bit set.
 
 116:449
 
-(decode) unassigned/reserved IP protocol
+An IP packet has an unassigned/reserved IP protocol number.
 
 116:450
 
@@ -620,11 +626,11 @@ A tagged packet was logged.
 
 116:451
 
-(icmp4) ICMP path MTU denial of service attempt
+An ICMP path MTU denial of service attempt has been detected.
 
 116:452
 
-(icmp4) Linux ICMP header DOS attempt
+A Linux ICMP header DOS attempt has been detected.
 
 116:453
 
@@ -636,87 +642,87 @@ A tagged packet was logged.
 
 116:455
 
-(igmp) DOS IGMP IP options validation attempt
+An IGMP IP options validation DOS attempt was detected.
 
 116:456
 
-(ipv6) too many IPv6 extension headers
+The decoder detected more than the configured amount of IPv6 extension headers.
 
 116:457
 
-(icmp6) ICMPv6 packet of type 1 (destination unreachable) with non-RFC 4443 code
+An ICMPv6 packet of type 1 (destination unreachable) was received with non-RFC 4443 code.
 
 116:458
 
-(ipv6) bogus fragmentation packet, possible BSD attack
+An invalid fragmentation packet was detected. Could be a possible BSD attack.
 
 116:459
 
-(decode) fragment with zero length
+An ip fragment was received with a zero length payload.
 
 116:460
 
-(icmp6) ICMPv6 node info query/response packet with a code greater than 2
+The ICMPv6 node info query/response packet has a code value greater than 2.
 
 116:461
 
-(ipv6) IPv6 routing type 0 extension header
+An IPv6 packet was received with a routing type 0 extension header.
 
 116:462
 
-(erspan2) ERSpan header version mismatch
+The ERSpan2 version is not equal to 1 (the value of 1 signals that it's ERSpan2).
 
 116:463
 
-(erspan2) captured length < ERSpan type2 header length
+The packet's length is less than the ERSpan2 headers minimum length (8 bytes).
 
 116:464
 
-(erspan3) captured < ERSpan type3 header length
+The packet's length is less than the ERSpan3 header's minimum length (20 bytes).
 
 116:465
 
-(auth) truncated authentication header
+The length of the packet received is less than the expected minimum of 16 bytes.
 
 116:466
 
-(auth) bad authentication header length
+The authentication header length is greater than the packet data length.
 
 116:467
 
-(fabricpath) truncated FabricPath header
+The packet header length is less than the minimum FabricPath header size of 16 bytes.
 
 116:468
 
-(ciscometadata) truncated Cisco Metadata header
+The packet length is less than the Cisco Metadata header length.
 
 116:469
 
-(ciscometadata) invalid Cisco Metadata option length
+The Cisco Metadata option length value is greater than zero. 
 
 116:470
 
-(ciscometadata) invalid Cisco Metadata option type
+The Cisco metadata option type is not set to 1.
 
 116:471
 
-(ciscometadata) invalid Cisco Metadata security group tag
+The Cisco Metadata security group tag value is invalid (0xFFFF).
 
 116:472
 
-(decode) too many protocols present
+The decoder detected that there were too many protocols present.
 
 116:473
 
-(decode) ether type out of range
+An ether type value is below the minimum of 0x0600 (1536) and therefore out of range.
 
 116:474
 
-(icmp6) ICMPv6 not encapsulated in IPv6
+An ICMPv6 packet was received that was not encapsulated in IPv6.
 
 116:475
 
-(ipv6) IPv6 mobility header includes an invalid value for the 'payload protocol' field
+The IPv6 mobility header includes an invalid value for the payload protocol field.
 
 119:1
 
