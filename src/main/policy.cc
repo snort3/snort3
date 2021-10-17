@@ -216,7 +216,8 @@ void PolicyMap::clone(PolicyMap *other_map)
     for ( auto p : other_map->shell_map )
     {
         if ( p.second->inspection == other_map->inspection_policy[0] )
-            shell_map[p.first]->inspection = inspection_policy[0];
+            shell_map[p.first] = std::make_shared<PolicyTuple>(inspection_policy[0], p.second->ips,
+                p.second->network);
     }
 
     user_inspection = other_map->user_inspection;
