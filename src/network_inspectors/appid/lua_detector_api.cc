@@ -992,7 +992,7 @@ static int client_add_payload(lua_State* L)
  *  @param process_name/stack - encrypted fingerprint process name
  *  @param process_score - encrypted fingerprint process_score
  */
-static int client_add_fingerprint_process(lua_State* L)
+static int add_process_to_client_mapping(lua_State* L)
 {
     auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
     // Verify detector user data and that we are NOT in packet context
@@ -1352,14 +1352,14 @@ static int register_callback(lua_State* L, LuaObject& ud, AppInfoFlags flag)
 
 static int detector_register_client_callback(lua_State* L)
 {
-    auto& ud = *UserData<LuaClientObject>::check(L, DETECTOR, 1);
+    const auto& ud = *UserData<LuaClientObject>::check(L, DETECTOR, 1);
 
     return register_callback(L, *ud, APPINFO_FLAG_CLIENT_DETECTOR_CALLBACK);
 }
 
 static int detector_register_service_callback(lua_State* L)
 {
-    auto& ud = *UserData<LuaServiceObject>::check(L, DETECTOR, 1);
+    const auto& ud = *UserData<LuaServiceObject>::check(L, DETECTOR, 1);
 
     return register_callback(L, *ud, APPINFO_FLAG_SERVICE_DETECTOR_CALLBACK);
 }
@@ -2719,7 +2719,7 @@ static const luaL_Reg detector_methods[] =
     { "client_addPayload",        client_add_payload },
 
     /* add client mapping for process name derived by fingerprinting */
-    { "client_addFingerprintProcess", client_add_fingerprint_process },
+    { "addProcessToClientMapping", add_process_to_client_mapping },
 
     //HTTP Multi Pattern engine
     { "CHPCreateApp",             detector_chp_create_application },
