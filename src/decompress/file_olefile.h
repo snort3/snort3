@@ -26,7 +26,10 @@
 #include <memory>
 #include <unordered_map>
 
+#include "detection/detection_engine.h"
 #include "helpers/literal_search.h"
+#include "ips_options/ips_vba_data.h"
+#include "main/snort_debug.h"
 #include "utils/util.h"
 #include "utils/util_utf.h"
 
@@ -52,6 +55,11 @@
 #define DIR_STARTING_SEC_OFFSET    116
 #define DIR_STREAM_SIZE_OFFSET     120
 #define DIR_NEXT_ENTR_OFFSET       128
+
+#define CURRENT_PACKET snort::DetectionEngine::get_current_packet()
+
+#define VBA_DEBUG(module_name, module_id, log_level, p, ...) \
+    trace_logf(log_level, module_name , module_id, p, __VA_ARGS__)
 
 #define memcpy_id(destn, dsize, src, ssize) \
     ((dsize>=ssize) ? memcpy(destn, src, ssize) : memcpy( \

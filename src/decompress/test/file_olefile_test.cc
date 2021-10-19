@@ -33,6 +33,8 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+THREAD_LOCAL const snort::Trace* vba_data_trace = nullptr;
+
 namespace snort
 {
 LiteralSearch::Handle* LiteralSearch::setup() { return nullptr; }
@@ -43,6 +45,10 @@ void UtfDecodeSession::set_decode_utf_state_charset(CharsetCode) { }
 bool UtfDecodeSession::decode_utf(unsigned char const*, unsigned int, unsigned char*, unsigned int,
     int*) { return true; }
 UtfDecodeSession::UtfDecodeSession() { }
+Packet* DetectionEngine::get_current_packet() { return nullptr; }
+void trace_vprintf(char const*, unsigned char, char const*, snort::Packet const*, char const*, va_list) { }
+uint8_t TraceApi::get_constraints_generation() { return 0; }
+void TraceApi::filter(snort::Packet const&) { }
 }
 
 TEST_GROUP(Olefile_oleprocess_test)

@@ -526,6 +526,10 @@ const Field& HttpMsgBody::get_decomp_vba_data()
     uint8_t* buf = nullptr;
     uint32_t buf_len = 0;
 
+    VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
+               "Found OLE file. Sending %d bytes for the processing.\n",
+                session_data->fd_state->ole_data_len);
+
     oleprocess(session_data->fd_state->ole_data_ptr, session_data->fd_state->ole_data_len, buf,
         buf_len);
     if (buf && buf_len)

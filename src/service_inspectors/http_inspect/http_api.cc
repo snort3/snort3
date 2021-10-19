@@ -117,7 +117,6 @@ extern const BaseApi* ips_http_trailer;
 extern const BaseApi* ips_http_true_ip;
 extern const BaseApi* ips_http_uri;
 extern const BaseApi* ips_http_version;
-extern const BaseApi* ips_vba_data;
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
@@ -144,7 +143,6 @@ const BaseApi* sin_http[] =
     ips_http_true_ip,
     ips_http_uri,
     ips_http_version,
-    ips_vba_data,
     nullptr
 };
 

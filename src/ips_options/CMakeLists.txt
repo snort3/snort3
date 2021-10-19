@@ -45,6 +45,8 @@ SET( PLUGIN_LIST
     ips_tos.cc
     ips_ttl.cc
     ips_window.cc
+    ips_vba_data.cc
+    ips_vba_data.h
 )
 
 
@@ -70,6 +72,8 @@ set (IPS_SOURCES
     ips_js_data.cc
     ips_service.cc
     ips_so.cc
+    ips_vba_data.cc
+    ips_vba_data.h
 )
 
 if ( HAVE_HYPERSCAN )

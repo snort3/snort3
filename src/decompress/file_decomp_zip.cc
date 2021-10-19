@@ -22,7 +22,6 @@
 #endif
 
 #include "file_decomp_zip.h"
-#include "file_olefile.h"
 
 #include "helpers/boyer_moore_search.h"
 #include "utils/util.h"

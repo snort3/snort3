@@ -44,6 +44,7 @@ extern const BaseApi* ips_service;
 extern const BaseApi* ips_sha256;
 extern const BaseApi* ips_sha512;
 extern const BaseApi* ips_so;
+extern const BaseApi* ips_vba_data;
 
 #ifdef STATIC_IPS_OPTIONS
 extern const BaseApi* ips_ack[];
@@ -111,6 +112,7 @@ static const BaseApi* ips_options[] =
     ips_sha256,
     ips_sha512,
     ips_so,
+    ips_vba_data,
     nullptr
 };
 

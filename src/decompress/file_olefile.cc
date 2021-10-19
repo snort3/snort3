@@ -60,6 +60,9 @@ void OleFile :: walk_directory_list()
     FileProperty* node;
     char* file_name;
 
+    VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
+        "Parsing the Directory list.\n");
+
     current_sector = header->get_first_dir();
     sector_size = header->get_sector_size();
 
@@ -137,6 +140,8 @@ void OleFile :: walk_directory_list()
         else
             current_sector = INVALID_SECTOR;
     }
+    VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
+        "End of Directory list parsing.\n");
 }
 
 FileProperty* DirectoryList :: get_file_node(char* name)
@@ -157,7 +162,11 @@ int32_t OleFile :: get_next_fat_sector(int32_t sec_id)
     if (fat_list and sec_id > INVALID_SECTOR and sec_id < fat_list_len)
         return fat_list[sec_id];
     else
+    {
+        VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
+            "The next sector ID of fat sector %d is not available in fat list.\n", sec_id);
         return INVALID_SECTOR;
+    }
 }
 
 // Every index of mini_fat_list array is the minifat sector ID and the value present
@@ -167,7 +176,12 @@ int32_t OleFile :: get_next_mini_fat_sector(int32_t sec_id)
     if (mini_fat_list and sec_id > INVALID_SECTOR and sec_id < mini_fat_list_len)
         return mini_fat_list[sec_id];
     else
+    {
+        VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
+            "The next sector ID of mini fat sector %d is not available in minifat list.\n",
+            sec_id);
         return INVALID_SECTOR;
+    }
 }
 
 // The offset of a sector is header_size + (sector_number * size_of_each_sector).
@@ -276,6 +290,9 @@ void OleFile :: get_file_data(char* file, uint8_t*& file_data, int32_t& data_len
                 {
                     memcpy(temp_data, (file_buf + byte_offset), (buf_len - byte_offset));
                     data_len += buf_len - byte_offset;
+                    VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+                        CURRENT_PACKET, "Returning with partial data of %d bytes for the "
+                        "file %s.\n", data_len, file);
                     return;
                 }
                 if ((data_len + sector_size) < stream_size)
@@ -305,6 +322,9 @@ void OleFile :: get_file_data(char* file, uint8_t*& file_data, int32_t& data_len
                 {
                     memcpy(temp_data, (file_buf + byte_offset), (buf_len - byte_offset));
                     data_len += buf_len - byte_offset;
+                    VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+                        CURRENT_PACKET, "Returning with partial data of %d bytes for "
+                        "the file %s.\n", data_len, file);
                     return;
                 }
                 if ((data_len + mini_sector_size) < stream_size)
@@ -333,9 +353,15 @@ void OleFile :: populate_fat_list()
     int32_t max_secchain_cnt = header->get_sector_size()/4;
     int32_t count = 0;
 
+    VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
+        "Reading the FAT list array.\n");
     fat_list_len = ( header->get_fat_sector_count() * header->get_sector_size() ) / 4;
     if (fat_list_len < 1)
+    {
+        VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
+            "FAT list array is empty.\n");
         return;
+    }
 
     fat_list = new int32_t[fat_list_len];
 
@@ -368,6 +394,8 @@ void OleFile :: populate_fat_list()
         else
             return;
     }
+    VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
+        "FAT list array is populated.\n");
 }
 
 // The function populate_mini_fat_list() reads the contents of mini FAT array sectors to
@@ -381,9 +409,15 @@ void OleFile :: populate_mini_fat_list()
     int32_t max_secchain_cnt = header->get_sector_size()/4;
     int32_t count = 0;
 
+    VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
+        "Reading the Mini-FAT list array.\n");
     mini_fat_list_len = ( header->get_minifat_count() * header->get_sector_size() )  / 4;
     if (mini_fat_list_len < 1)
+    {
+        VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
+            "Mini-FAT list array is empty.\n");
         return;
+    }
 
     mini_fat_list = new int32_t[mini_fat_list_len];
 
@@ -418,6 +452,8 @@ void OleFile :: populate_mini_fat_list()
         else
             current_sector = INVALID_SECTOR;
     }
+    VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
+        "Mini-FAT list array is populated..\n");
 }
 
 // API to parse the OLE File Header.
@@ -426,14 +462,24 @@ void OleFile :: populate_mini_fat_list()
 // sector (with SecID 0) always starts at file offset 512.
 bool OleFile :: parse_ole_header()
 {
+    VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
+        "Staring the OLE header parsing.\n");
     header = new OleHeader;
     if (!header->set_byte_order(file_buf + HEADER_BYTE_ORDER_OFFSET))
+    {
+        VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, CURRENT_PACKET,
+            "Invalid byte order in the OLE header. Returning.\n");
         return false;
+    }
 
     // Header Signature (8 bytes) is Identification signature of the OLE file,
     // and must be of the value 0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1.
     if (!header->match_ole_sig(file_buf))
+    {
+        VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, CURRENT_PACKET,
+            "Invalid file signature of OLE file. Returning.\n");
         return false;
+    }
 
     // Minor Version field should be set to 0x003E.
     header->set_minor_version(file_buf + HEADER_MINOR_VER_OFFSET);
@@ -463,8 +509,12 @@ bool OleFile :: parse_ole_header()
 
     header->set_dir_sector_count(file_buf + HEADER_DIR_SECTR_CNT_OFFSET);
 
-    // DIFAT array of 32-bit integer fields contains the first 109 FAT sector locations of the compound file.
+    // DIFAT array of 32-bit integer fields contains the first 109 FAT sector locations of the
+    // compound file.
     header->set_difat_array(file_buf + HEADER_DIFAT_ARRY_OFFSET);
+
+    VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
+        "Parsing of OLE header is done.\n");
 
     return true;
 }
@@ -478,7 +528,11 @@ int32_t OleFile :: get_file_offset(const uint8_t* data, int32_t data_len)
     searcher = snort::LiteralSearch::instantiate(search_handle,
         (const uint8_t*)"ATTRIBUT", 8, true);
     if (searcher == nullptr)
+    {
+        VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, CURRENT_PACKET,
+            "Error in the searcher.\n");
         return -1;
+    }
 
     int32_t offset = searcher->search(search_handle, data, data_len);
     delete searcher;
@@ -529,7 +583,11 @@ void OleFile :: decompression(const uint8_t* data, int32_t* data_len, uint8_t*& 
         return;
 
     if (*data!= SIG_COMP_CONTAINER)
+    {
+        VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, CURRENT_PACKET,
+            "Invalid Compressed flag.\n");
         return;
+    }
 
     header = LETOHS_UNALIGNED(data + 1);
 
@@ -537,6 +595,8 @@ void OleFile :: decompression(const uint8_t* data, int32_t* data_len, uint8_t*& 
 
     if (((header >> 12) & 0x07) != 0b011)
     {
+        VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
+            "Invalid Chunk signature.\n");
     }
 
     data += 3;
@@ -637,12 +697,21 @@ void OleFile :: find_and_extract_vba(uint8_t*& vba_buf, uint32_t& vba_buf_len)
             int32_t offset = get_file_offset(data, data_len);
             if (offset <= 0)
             {
+                VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+                    CURRENT_PACKET,
+                    "Stream %s of size %ld does not have VBA code within first detected"
+                    " %d bytes\n", node->get_name(), node->get_stream_size(), data_len);
                 delete[] data1;
                 continue;
             }
 
             data += offset - 4;
             data_len = data_len - offset + 4;
+            VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+                CURRENT_PACKET, "Stream %s of size %ld has vba code starting at "
+                "offset %d bytes. First %d bytes will be processed\n",
+                node->get_name(), node->get_stream_size(), (offset - 4), data_len);
+
             decompression(data, &data_len, vba_buf, &vba_buffer_offset);
             delete[] data1;
             if ( vba_buffer_offset >= MAX_VBA_BUFFER_LEN)
@@ -666,10 +735,15 @@ void OleFile :: find_and_extract_vba(uint8_t*& vba_buf, uint32_t& vba_buf_len)
 // an ole file and creating a mapping between the storage/stream name and the
 // fileproperty object.Afterwards, based on the directory the data is fetched and
 // extracted & RLE decompression is done.
-void oleprocess(const uint8_t* const ole_file, const uint32_t ole_length, uint8_t*& vba_buf, uint32_t& vba_buf_len)
+void oleprocess(const uint8_t* const ole_file, const uint32_t ole_length, uint8_t*& vba_buf,
+    uint32_t& vba_buf_len)
 {
     if (ole_length < OLE_HEADER_LEN)
+    {
+        VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
+            "OLE file data is too short for the inspection. Returning\n");
         return;
+    }
 
     std::unique_ptr<OleFile> olefile (new OleFile(ole_file,ole_length));
 
