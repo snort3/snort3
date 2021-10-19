@@ -128,9 +128,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
 {
     Profile profile(HttpModule::get_profile_stats());
 
-    assert(length <= MAX_OCTETS);
-
-    Flow* flow = pkt->flow;
+    Flow* const flow = pkt->flow;
 
     // This is the session state information we share with HttpInspect and store with stream. A
     // session is defined by a TCP connection. Since scan() is the first to see a new TCP
@@ -142,8 +140,6 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
         HttpInspect::http_set_flow_data(flow, session_data = new HttpFlowData(flow));
         HttpModule::increment_peg_counts(PEG_FLOW);
     }
-
-    SectionType type = session_data->type_expected[source_id];
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
@@ -160,8 +156,17 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
     }
 #endif
 
+    SectionType& type = session_data->type_expected[source_id];
+
     if (type == SEC_ABORT)
         return status_value(StreamSplitter::ABORT);
+
+    if (length > MAX_OCTETS)
+    {
+        assert(false);
+        type = SEC_ABORT;
+        return status_value(StreamSplitter::ABORT);
+    }
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP) &&
@@ -177,6 +182,13 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
         }
     }
 #endif
+
+    if (session_data->tcp_close[source_id])
+    {
+        // assert(false); // FIXIT-L This currently happens. Add assert back when problem resolved.
+        type = SEC_ABORT;
+        return status_value(StreamSplitter::ABORT);
+    }
 
     // If the last request was a CONNECT and we have not yet seen the response, this is early C2S
     // traffic. If there has been a pipeline overflow or underflow we cannot match requests to
@@ -203,8 +215,6 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
         session_data->last_request_was_connect = false;
     }
 
-    assert(!session_data->tcp_close[source_id]);
-
     HttpModule::increment_peg_counts(PEG_SCAN);
 
     if (session_data->detection_status[source_id] == DET_REACTIVATING)
@@ -227,7 +237,6 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
         // 0.9 response is a body that runs to connection end with no headers. HttpInspect does
         // not support no headers. Processing this imaginary status line and empty headers allows
         // us to overcome this limitation and reuse the entire HTTP infrastructure.
-        type = SEC_BODY_OLD;
         prepare_flush(session_data, nullptr, SEC_STATUS, 14, 0, 0, false, 0, 14);
         my_inspector->process((const uint8_t*)"HTTP/0.9 200 .", 14, flow, SRC_SERVER, false);
         session_data->transaction[SRC_SERVER]->clear_section();
@@ -258,7 +267,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
             // should be an unconditional EVENT_LOSS_OF_SYNC.
             session_data->events[source_id]->generate_misformatted_http(data, length);
             // FIXIT-E need to process this data not just discard it.
-            session_data->type_expected[source_id] = SEC_ABORT;
+            type = SEC_ABORT;
             delete cutter;
             cutter = nullptr;
             return status_value(StreamSplitter::ABORT);
@@ -277,7 +286,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
         // Wait patiently for more data
         return status_value(StreamSplitter::SEARCH);
     case SCAN_ABORT:
-        session_data->type_expected[source_id] = SEC_ABORT;
+        type = SEC_ABORT;
         delete cutter;
         cutter = nullptr;
         return status_value(StreamSplitter::ABORT);

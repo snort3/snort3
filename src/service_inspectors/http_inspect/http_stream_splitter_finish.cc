@@ -45,7 +45,10 @@ bool HttpStreamSplitter::finish(Flow* flow)
 
     HttpFlowData* session_data = HttpInspect::http_get_flow_data(flow);
     if (!session_data)
+    {
+        // assert(false); // FIXIT-M this should not be possible but currently it is
         return false;
+    }
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
@@ -67,6 +70,13 @@ bool HttpStreamSplitter::finish(Flow* flow)
 
     if (session_data->type_expected[source_id] == SEC_ABORT)
     {
+        return false;
+    }
+
+    if (session_data->tcp_close[source_id])
+    {
+        // assert(false); // FIXIT-M this should not happen but it does
+        session_data->type_expected[source_id] = SEC_ABORT;
         return false;
     }
 
@@ -203,11 +213,12 @@ bool HttpStreamSplitter::finish(Flow* flow)
     return false;
 }
 
-bool HttpStreamSplitter::prep_partial_flush(Flow* flow, uint32_t num_flush)
+void HttpStreamSplitter::prep_partial_flush(Flow* flow, uint32_t num_flush)
 {
     Profile profile(HttpModule::get_profile_stats());
 
     HttpFlowData* session_data = HttpInspect::http_get_flow_data(flow);
+    assert(session_data != nullptr);
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP) &&
@@ -226,6 +237,5 @@ bool HttpStreamSplitter::prep_partial_flush(Flow* flow, uint32_t num_flush)
         session_data->cutter[source_id]->get_num_good_chunks(),
         session_data->cutter[source_id]->get_octets_seen() - num_flush);
     session_data->partial_flush[source_id] = true;
-    return true;
 }
 

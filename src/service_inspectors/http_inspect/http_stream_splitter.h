@@ -43,7 +43,7 @@ public:
     const snort::StreamBuffer reassemble(snort::Flow* flow, unsigned total, unsigned, const
         uint8_t* data, unsigned len, uint32_t flags, unsigned& copied) override;
     bool finish(snort::Flow* flow) override;
-    bool prep_partial_flush(snort::Flow* flow, uint32_t num_flush);
+    void prep_partial_flush(snort::Flow* flow, uint32_t num_flush);
     bool is_paf() override { return true; }
     static StreamSplitter::Status status_value(StreamSplitter::Status ret_val, bool http2 = false);
 

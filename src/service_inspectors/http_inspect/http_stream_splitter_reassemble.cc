@@ -229,12 +229,14 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
 {
     Profile profile(HttpModule::get_profile_stats());
 
-    StreamBuffer http_buf { nullptr, 0 };
-
     copied = len;
 
     HttpFlowData* session_data = HttpInspect::http_get_flow_data(flow);
-    assert(session_data != nullptr);
+    if (session_data == nullptr)
+    {
+        assert(false);
+        return { nullptr, 0 };
+    }
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
@@ -243,7 +245,7 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
         {
             if (!(flags & PKT_PDU_TAIL))
             {
-                return http_buf;
+                return { nullptr, 0 };
             }
             bool tcp_close;
             uint8_t* test_buffer;
@@ -258,7 +260,7 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
             {
                 // Source ID does not match test data, no test data was flushed, preparing for a
                 // TCP connection close, or there is no more test data
-                return http_buf;
+                return { nullptr, 0 };
             }
             data = test_buffer;
         }
@@ -272,54 +274,50 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
     }
 #endif
 
-    assert(session_data->type_expected[source_id] != SEC_ABORT);
-    if (session_data->section_type[source_id] == SEC__NOT_COMPUTE)
+    if ((session_data->type_expected[source_id] == SEC_ABORT) ||
+        (session_data->section_type[source_id] == SEC__NOT_COMPUTE))
     {
+        assert(session_data->type_expected[source_id] != SEC_ABORT);
+        // assert(session_data->section_type[source_id] != SEC__NOT_COMPUTE); // FIXIT-M H2I
+        session_data->type_expected[source_id] = SEC_ABORT;
         return { nullptr, 0 };
     }
 
     // Sometimes it is necessary to reassemble zero bytes when a connection is closing to trigger
     // proper clean up. But even a zero-length buffer cannot be processed with a nullptr lest we
     // get in trouble with memcpy() (undefined behavior) or some library.
-    assert((data != nullptr) || (len == 0));
     if (data == nullptr)
+    {
+        if (len != 0)
+        {
+            assert(false);
+            session_data->type_expected[source_id] = SEC_ABORT;
+            return { nullptr, 0 };
+        }
         data = (const uint8_t*)"";
+    }
 
     uint8_t*& partial_buffer = session_data->partial_buffer[source_id];
     uint32_t& partial_buffer_length = session_data->partial_buffer_length[source_id];
     uint32_t& partial_raw_bytes = session_data->partial_raw_bytes[source_id];
     assert(partial_raw_bytes + total <= MAX_OCTETS);
 
-    // FIXIT-E this is a precaution/workaround for stream issues. When they are fixed replace this
-    // block with an assert.
     if ((session_data->section_offset[source_id] == 0) &&
         (session_data->octets_expected[source_id] != partial_raw_bytes + total))
     {
         assert(!session_data->for_http2);
-
-        if (session_data->octets_expected[source_id] == 0)
-        {
-            // FIXIT-E This is a known problem. No data was scanned and yet somehow stream can
-            // give us data when we ask for an empty message section. Dropping the unexpected data
-            // enables us to send the HTTP headers through detection as originally planned.
-            total = 0;
-            len = 0;
-        }
-        else
-        {
-#ifdef REG_TEST
-            // FIXIT-M: known case: if session clears w/o a flush point,
-            // stream_tcp will flush to paf max which could be well below what
-            // has been scanned so far.  since no flush point was specified,
-            // NHI should just deal with what it gets.
-            //assert(false);
-#endif
-            return http_buf;
-        }
+        assert(total == 0); // FIXIT-L this special exception for total of zero is needed for now
+        session_data->type_expected[source_id] = SEC_ABORT;
+        return { nullptr, 0 };
     }
 
     session_data->running_total[source_id] += len;
-    assert(session_data->running_total[source_id] <= total);
+    if (session_data->running_total[source_id] > total)
+    {
+        assert(false);
+        session_data->type_expected[source_id] = SEC_ABORT;
+        return { nullptr, 0 };
+    }
 
     // FIXIT-P stream should be enhanced to do discarding for us. For now flush-then-discard here
     // is how scan() handles things we don't need to examine.
@@ -356,7 +354,7 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
                 }
             }
         }
-        return http_buf;
+        return { nullptr, 0 };
     }
 
     HttpModule::increment_peg_counts(PEG_REASSEMBLE);
@@ -405,10 +403,17 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
         chunk_spray(session_data, buffer, data, len);
     }
 
+    StreamBuffer http_buf { nullptr, 0 };
+
     if (flags & PKT_PDU_TAIL)
     {
         uint32_t& running_total = session_data->running_total[source_id];
-        assert(running_total == total);
+        if (running_total != total)
+        {
+            assert(false);
+            session_data->type_expected[source_id] = SEC_ABORT;
+            return { nullptr, 0 };
+        }
         running_total = 0;
         const uint32_t buf_size =
             session_data->section_offset[source_id] - session_data->num_excess[source_id];

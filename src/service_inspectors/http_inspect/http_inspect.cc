@@ -461,15 +461,23 @@ void HttpInspect::eval(Packet* p)
     const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
 
     HttpFlowData* session_data = http_get_flow_data(p->flow);
+    if (session_data == nullptr)
+    {
+        assert(false);
+        return;
+    }
 
     if (!session_data->for_http2)
         HttpModule::increment_peg_counts(PEG_TOTAL_BYTES, p->dsize);
 
-    // FIXIT-E Workaround for unexpected eval() calls. Convert to asserts when possible.
+    // FIXIT-M Workaround for unexpected eval() calls. Convert to asserts when possible.
     if ((session_data->section_type[source_id] == SEC__NOT_COMPUTE) ||
         (session_data->type_expected[source_id] == SEC_ABORT)       ||
         (session_data->octets_reassembled[source_id] != p->dsize))
     {
+        // assert(session_data->type_expected[source_id] != SEC_ABORT);
+        // assert(session_data->section_type[source_id] != SEC__NOT_COMPUTE);
+        // assert(session_data->octets_reassembled[source_id] == p->dsize);
         session_data->type_expected[source_id] = SEC_ABORT;
         return;
     }
@@ -606,8 +614,11 @@ void HttpInspect::clear(Packet* p)
 
     HttpFlowData* const session_data = http_get_flow_data(p->flow);
 
-    if ( session_data == nullptr )
+    if (session_data == nullptr)
+    {
+        // assert(false); // FIXIT-M something wrong with H2I Push Promise triggers this.
         return;
+    }
 
     Http2FlowData* h2i_flow_data = nullptr;
     if (Http2FlowData::inspector_id != 0)
@@ -625,18 +636,19 @@ void HttpInspect::clear(Packet* p)
     else
         current_section = HttpContextData::clear_snapshot(p->context);
 
-    // FIXIT-M This test is necessary because sometimes we get extra clears
-    // Convert to assert when that gets fixed.
     if ( current_section == nullptr )
+    {
+        // assert(false); // FIXIT-M this happens a lot
         return;
+    }
 
     current_section->clear();
     HttpTransaction* current_transaction = current_section->get_transaction();
 
     const SourceId source_id = current_section->get_source_id();
 
-    //FIXIT-M This check may not apply to the transaction attached to the packet
-    //in case of offload.
+    // FIXIT-M This check may not apply to the transaction attached to the packet
+    // in case of offload.
     if (session_data->detection_status[source_id] == DET_DEACTIVATING)
     {
         if (source_id == SRC_CLIENT)
