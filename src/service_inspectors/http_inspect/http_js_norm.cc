@@ -135,8 +135,8 @@ void HttpJsNorm::configure()
     configure_once = true;
 }
 
-void HttpJsNorm::enhanced_external_normalize(const Field& input, Field& output,
-    HttpInfractions* infractions, HttpFlowData* ssn) const
+void HttpJsNorm::enhanced_external_normalize(const Field& input,
+    HttpInfractions* infractions, HttpFlowData* ssn, char*& out_buf, size_t& out_len) const
 {
     if (ssn->js_built_in_event)
         return;
@@ -212,20 +212,19 @@ void HttpJsNorm::enhanced_external_normalize(const Field& input, Field& output,
     }
 
     auto result = js_ctx.get_script();
-    auto script_ptr = result.first;
+    out_buf = result.first;
 
-    if (script_ptr)
+    if (out_buf)
     {
-        auto script_len = result.second;
-        output.set(script_len, reinterpret_cast<const uint8_t*>(script_ptr), true);
+        out_len = result.second;
 
         trace_logf(1, http_trace, TRACE_JS_DUMP, nullptr,
-            "js_data[%zu]: %.*s\n", script_len, static_cast<int>(script_len), script_ptr);
+            "js_data[%zu]: %.*s\n", out_len, static_cast<int>(out_len), out_buf);
     }
 }
 
-void HttpJsNorm::enhanced_inline_normalize(const Field& input, Field& output,
-    HttpInfractions* infractions, HttpFlowData* ssn) const
+void HttpJsNorm::enhanced_inline_normalize(const Field& input,
+    HttpInfractions* infractions, HttpFlowData* ssn, char*& out_buf, size_t& out_len) const
 {
     const char* ptr = (const char*)input.start();
     const char* const end = ptr + input.length();
@@ -339,15 +338,14 @@ void HttpJsNorm::enhanced_inline_normalize(const Field& input, Field& output,
 
     auto js_ctx = ssn->js_normalizer;
     auto result = js_ctx->get_script();
-    auto script_ptr = result.first;
+    out_buf = result.first;
 
-    if (script_ptr)
+    if (out_buf)
     {
-        auto script_len = result.second;
-        output.set(script_len, (const uint8_t*)script_ptr, true);
+        out_len = result.second;
 
         trace_logf(1, http_trace, TRACE_JS_DUMP, nullptr,
-            "js_data[%zu]: %.*s\n", script_len, static_cast<int>(script_len), script_ptr);
+            "js_data[%zu]: %.*s\n", out_len, static_cast<int>(out_len), out_buf);
     }
 
     if (!script_continue)

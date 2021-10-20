@@ -36,7 +36,6 @@ SET( PLUGIN_LIST
     ips_rem.cc
     ips_rev.cc
     ips_rpc.cc
-    ips_js_data.cc
     ips_seq.cc
     ips_sid.cc
     ips_soid.cc
@@ -69,7 +68,6 @@ set (IPS_SOURCES
     ips_pkt_data.cc
     ips_reference.cc
     ips_replace.cc
-    ips_js_data.cc
     ips_service.cc
     ips_so.cc
     ips_vba_data.cc

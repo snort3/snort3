@@ -66,8 +66,7 @@ public:
     public:
         ~JsNormParam();
         bool normalize_javascript = false;
-        bool is_javascript_normalization = false;
-        int64_t js_normalization_depth = 0;
+        int64_t js_normalization_depth = -1;
         int32_t js_identifier_depth = 0;
         uint8_t max_template_nesting = 32;
         uint32_t max_scope_depth = 256;

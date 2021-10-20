@@ -80,6 +80,7 @@ void HttpMsgBody::publish()
 void HttpMsgBody::bookkeeping_regular_flush(uint32_t& partial_detect_length,
     uint8_t*& partial_detect_buffer, uint32_t& partial_js_detect_length, int32_t detect_length)
 {
+    session_data->js_norm_depth_remaining[source_id] = session_data->detect_depth_remaining[source_id];
     session_data->detect_depth_remaining[source_id] -= detect_length;
     partial_detect_buffer = nullptr;
     partial_detect_length = 0;
@@ -160,7 +161,7 @@ void HttpMsgBody::analyze()
                 memcpy(cumulative_buffer + partial_detect_length, decompressed_file_body.start(),
                     decompressed_file_body.length());
                 cumulative_data.set(total_length, cumulative_buffer, true);
-                do_js_normalization(cumulative_data, js_norm_body, true);
+                do_legacy_js_normalization(cumulative_data, js_norm_body);
                 if ((int32_t)partial_js_detect_length == js_norm_body.length())
                 {
                     clean_partial(partial_inspected_octets, partial_detect_length,
@@ -169,7 +170,7 @@ void HttpMsgBody::analyze()
                 }
             }
             else
-                do_js_normalization(decompressed_file_body, js_norm_body, false);
+                do_legacy_js_normalization(decompressed_file_body, js_norm_body);
 
             const int32_t detect_length =
                 (js_norm_body.length() <= session_data->detect_depth_remaining[source_id]) ?
@@ -319,63 +320,71 @@ void HttpMsgBody::fd_event_callback(void* context, int event)
     }
 }
 
-void HttpMsgBody::do_js_normalization(const Field& input, Field& output, bool partial_detect)
+void HttpMsgBody::do_enhanced_js_normalization(char*& out_buf, size_t& out_buf_len)
 {
-    if (!params->js_norm_param.is_javascript_normalization or source_id == SRC_CLIENT)
-        output.set(input);
-    else if (params->js_norm_param.normalize_javascript)
-        params->js_norm_param.js_norm->legacy_normalize(input, output,
-            transaction->get_infractions(source_id), session_data->events[source_id],
-            params->js_norm_param.max_javascript_whitespaces);
-    else if (params->js_norm_param.js_normalization_depth)
+    const bool has_cumulative_data = (cumulative_data.length() > 0);
+    Field& input = has_cumulative_data ? cumulative_data : decompressed_file_body;
+
+    bool js_continuation = session_data->js_normalizer;
+    uint8_t*& buf = session_data->js_detect_buffer[source_id];
+    uint32_t& len = session_data->js_detect_length[source_id];
+
+    if (has_cumulative_data)
+        session_data->release_js_ctx();
+    else
     {
-        output.set(input);
+        session_data->update_deallocations(len);
+        delete[] buf;
+        buf = nullptr;
+        len = 0;
+    }
 
-        bool js_continuation = session_data->js_normalizer;
-        uint8_t*& buf = session_data->js_detect_buffer[source_id];
-        uint32_t& len = session_data->js_detect_length[source_id];
+    auto http_header = get_header(source_id);
 
-        if (partial_detect)
-            session_data->release_js_ctx();
-        else
+    if (http_header and http_header->is_external_js())
+        params->js_norm_param.js_norm->enhanced_external_normalize(input,
+            transaction->get_infractions(source_id), session_data, out_buf, out_buf_len);
+    else
+        params->js_norm_param.js_norm->enhanced_inline_normalize(input,
+            transaction->get_infractions(source_id), session_data, out_buf, out_buf_len);
+
+    out_buf_len = static_cast<int64_t>(out_buf_len) <= session_data->js_norm_depth_remaining[source_id] ?
+        out_buf_len : session_data->js_norm_depth_remaining[source_id];
+
+    if (out_buf_len > 0)
+    {
+        if (has_cumulative_data)
+            return;
+
+        if (js_continuation)
         {
-            session_data->update_deallocations(len);
-            delete[] buf;
-            buf = nullptr;
-            len = 0;
-        }
+            uint8_t* nscript = new uint8_t[out_buf_len];
 
-        auto http_header = get_header(source_id);
-        if (http_header and http_header->is_external_js())
-            params->js_norm_param.js_norm->enhanced_external_normalize(input, enhanced_js_norm_body,
-                transaction->get_infractions(source_id), session_data);
-        else
-            params->js_norm_param.js_norm->enhanced_inline_normalize(input, enhanced_js_norm_body,
-                transaction->get_infractions(source_id), session_data);
-
-        const int32_t norm_length =
-            (enhanced_js_norm_body.length() <= session_data->detect_depth_remaining[source_id]) ?
-            enhanced_js_norm_body.length() : session_data->detect_depth_remaining[source_id];
-
-        if ( norm_length > 0 )
-        {
-            set_js_data(enhanced_js_norm_body.start(), (unsigned int)norm_length);
-
-            if (partial_detect)
-                return;
-
-            if (js_continuation)
-            {
-                auto nscript_len = enhanced_js_norm_body.length();
-                uint8_t* nscript = new uint8_t[nscript_len];
-
-                memcpy(nscript, enhanced_js_norm_body.start(), nscript_len);
-                buf = nscript;
-                len = nscript_len;
-                session_data->update_allocations(len);
-            }
+            memcpy(nscript, out_buf, out_buf_len);
+            buf = nscript;
+            len = out_buf_len;
+            session_data->update_allocations(len);
         }
     }
+    else
+    {
+        delete[] out_buf;
+        out_buf = nullptr;
+        out_buf_len = 0;
+    }
+}
+
+void HttpMsgBody::do_legacy_js_normalization(const Field& input, Field& output)
+{
+    if (!params->js_norm_param.normalize_javascript || source_id == SRC_CLIENT)
+    {
+        output.set(input);
+        return;
+    }
+
+    params->js_norm_param.js_norm->legacy_normalize(input, output,
+        transaction->get_infractions(source_id), session_data->events[source_id],
+        params->js_norm_param.max_javascript_whitespaces);
 }
 
 void HttpMsgBody::do_file_processing(const Field& file_data)
@@ -541,6 +550,24 @@ const Field& HttpMsgBody::get_decomp_vba_data()
     session_data->fd_state->ole_data_len = 0;
 
     return decompressed_vba_data;
+}
+
+const Field& HttpMsgBody::get_norm_js_data()
+{
+    if (enhanced_js_norm_body.length() != STAT_NOT_COMPUTE)
+        return enhanced_js_norm_body;
+
+    char* buf = nullptr;
+    size_t buf_len = 0;
+
+    do_enhanced_js_normalization(buf, buf_len);
+
+    if (buf && buf_len)
+        enhanced_js_norm_body.set(buf_len, reinterpret_cast<const uint8_t*>(buf), true);
+    else
+        enhanced_js_norm_body.set(STAT_NOT_PRESENT);
+
+    return enhanced_js_norm_body;
 }
 
 int32_t HttpMsgBody::get_publish_length() const

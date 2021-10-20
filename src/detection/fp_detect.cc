@@ -959,22 +959,8 @@ static int fp_search(PortGroup* port_group, Packet* p, bool srvc)
             gadget, buf, buf.IBT_COOKIE, p, port_group, PM_TYPE_COOKIE, pc.cookie_searches);
 
         search_buffer(gadget, buf, buf.IBT_VBA, p, port_group, PM_TYPE_VBA, pc.vba_searches);
-    }
 
-    if ( MpseGroup* so = port_group->mpsegrp[PM_TYPE_SCRIPT] )
-    {
-        // FIXIT-M js data should be obtained from
-        // inspector gadget as is done with search_buffer
-        DataPointer js_data = p->context->js_data;
-
-        if ( js_data.len )
-        {
-            debug_logf(detection_trace, TRACE_FP_SEARCH, p,
-                "%" PRIu64 " fp search %s[%d]\n", p->context->packet_number,
-                pm_type_strings[PM_TYPE_SCRIPT], js_data.len);
-
-            batch_search(so, p, js_data.data, js_data.len, pc.script_searches);
-        }
+        search_buffer(gadget, buf, buf.IBT_JS_DATA, p, port_group, PM_TYPE_JS_DATA, pc.js_data_searches);
     }
 
     // file searches file only

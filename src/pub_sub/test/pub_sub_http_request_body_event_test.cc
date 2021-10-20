@@ -55,7 +55,7 @@ void HttpMsgBody::publish() {}
 void HttpMsgBody::do_file_processing(const Field&) {}
 void HttpMsgBody::do_utf_decoding(const Field&, Field&) {}
 void HttpMsgBody::do_file_decompression(const Field&, Field&) {}
-void HttpMsgBody::do_js_normalization(const Field&, Field&, bool) {}
+void HttpMsgBody::do_enhanced_js_normalization(char*&, size_t&) {}
 void HttpMsgBody::clean_partial(uint32_t&, uint32_t&, uint8_t*&, uint32_t&, int32_t) {}
 void HttpMsgBody::bookkeeping_regular_flush(uint32_t&, uint8_t*&, uint32_t&, int32_t) {}
 #ifdef REG_TEST

@@ -133,8 +133,7 @@ HttpInspect::HttpInspect(const HttpParaList* params_) :
 
 bool HttpInspect::configure(SnortConfig* )
 {
-    if ( params->js_norm_param.js_norm )
-        params->js_norm_param.js_norm->configure();
+    params->js_norm_param.js_norm->configure();
 
     return true;
 }
@@ -251,6 +250,9 @@ bool HttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffe
     case InspectionBuffer::IBT_VBA:
         return get_buf(BUFFER_VBA_DATA, p, b);
 
+    case InspectionBuffer::IBT_JS_DATA:
+        return get_buf(BUFFER_JS_DATA, p, b);
+
     default:
         return false;
     }
@@ -306,6 +308,7 @@ bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBu
         break;
     case InspectionBuffer::IBT_BODY:
     case InspectionBuffer::IBT_VBA:
+    case InspectionBuffer::IBT_JS_DATA:
         if ((get_latest_is(p) != IS_FIRST_BODY) && (get_latest_is(p) != IS_BODY))
             return false;
         break;

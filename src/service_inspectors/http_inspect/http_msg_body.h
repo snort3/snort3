@@ -39,6 +39,7 @@ public:
     HttpMsgBody* get_body() override { return this; }
     const Field& get_classic_client_body();
     const Field& get_decomp_vba_data();
+    const Field& get_norm_js_data();
     const Field& get_detect_data() { return detect_data; }
     const Field& get_msg_text_new() const { return msg_text_new; }
     static void fd_event_callback(void* context, int event);
@@ -62,7 +63,8 @@ private:
     void do_file_processing(const Field& file_data);
     void do_utf_decoding(const Field& input, Field& output);
     void do_file_decompression(const Field& input, Field& output);
-    void do_js_normalization(const Field& input, Field& output, bool partial_detect);
+    void do_enhanced_js_normalization(char*& out_buf, size_t& out_len);
+    void do_legacy_js_normalization(const Field& input, Field& output);
     void clean_partial(uint32_t& partial_inspected_octets, uint32_t& partial_detect_length,
         uint8_t*& partial_detect_buffer,  uint32_t& partial_js_detect_length,
         int32_t detect_length);

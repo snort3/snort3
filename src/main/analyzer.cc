@@ -203,7 +203,6 @@ static bool process_packet(Packet* p)
     if ( !(p->packet_flags & PKT_IGNORE) )
     {
         clear_file_data();
-        clear_js_data();
         // return incomplete status if the main hook indicates not all work was done
         if (!main_hook(p))
             return false;

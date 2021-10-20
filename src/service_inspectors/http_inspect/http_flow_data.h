@@ -170,6 +170,8 @@ private:
         HttpCommon::STAT_NOT_PRESENT };
     int64_t detect_depth_remaining[2] = { HttpCommon::STAT_NOT_PRESENT,
         HttpCommon::STAT_NOT_PRESENT };
+    int64_t js_norm_depth_remaining[2] = { HttpCommon::STAT_NOT_PRESENT,
+        HttpCommon::STAT_NOT_PRESENT };
     int32_t publish_depth_remaining[2] = { HttpCommon::STAT_NOT_PRESENT,
         HttpCommon::STAT_NOT_PRESENT };
     uint64_t expected_trans_num[2] = { 1, 1 };

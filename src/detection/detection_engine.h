@@ -71,9 +71,6 @@ public:
     static void set_file_data(const DataPointer& dp);
     static DataPointer& get_file_data(IpsContext*);
 
-    static void set_js_data(const DataPointer& dp);
-    static DataPointer& get_js_data(IpsContext*);
-
     static uint8_t* get_buffer(unsigned& max);
     static struct DataBuffer& get_alt_buffer(Packet*);
 
@@ -132,15 +129,6 @@ static inline void set_file_data(const uint8_t* p, unsigned n)
 
 static inline void clear_file_data()
 { set_file_data(nullptr, 0); }
-
-static inline void set_js_data(const uint8_t* data, unsigned len)
-{
-    DataPointer dp { data, len };
-    DetectionEngine::set_js_data(dp);
-}
-
-static inline void clear_js_data()
-{ set_js_data(nullptr, 0); }
 
 } // namespace snort
 #endif

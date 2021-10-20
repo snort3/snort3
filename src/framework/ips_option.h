@@ -53,7 +53,6 @@ enum CursorActionType
     CAT_SET_OTHER,
     CAT_SET_RAW,
     CAT_SET_COOKIE,
-    CAT_SET_SCRIPT,
     CAT_SET_STAT_MSG,
     CAT_SET_STAT_CODE,
     CAT_SET_METHOD,
@@ -63,6 +62,7 @@ enum CursorActionType
     CAT_SET_BODY,
     CAT_SET_HEADER,
     CAT_SET_KEY,
+    CAT_SET_JS_DATA,
     CAT_SET_VBA,
 };
 

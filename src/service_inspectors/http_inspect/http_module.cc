@@ -89,10 +89,8 @@ const Parameter HttpModule::http_params[] =
     { "normalize_javascript", Parameter::PT_BOOL, nullptr, "false",
       "use legacy normalizer to normalize JavaScript in response bodies" },
 
-    { "js_normalization_depth", Parameter::PT_INT, "-1:max53", "0",
-      "enable enhanced normalizer (0 is disabled); "
-      "number of input JavaScript bytes to normalize (-1 unlimited) "
-      "(experimental)" },
+    { "js_normalization_depth", Parameter::PT_INT, "-1:max53", "-1",
+      "number of input JavaScript bytes to normalize (-1 unlimited)" },
 
     // range of accepted identifier names is (var_0000:var_ffff), so the max is 2^16
     { "js_norm_identifier_depth", Parameter::PT_INT, "0:65536", "65536",
@@ -100,14 +98,13 @@ const Parameter HttpModule::http_params[] =
 
     { "js_norm_max_tmpl_nest", Parameter::PT_INT, "0:255", "32",
       "maximum depth of template literal nesting that enhanced javascript normalizer "
-      "will process (experimental)" },
+      "will process" },
 
     { "js_norm_max_scope_depth", Parameter::PT_INT, "0:65535", "256",
-      "maximum depth of scope nesting that enhanced JavaScript normalizer will process "
-      "(experimental)" },
+      "maximum depth of scope nesting that enhanced JavaScript normalizer will process" },
 
     { "js_norm_built_in_ident", Parameter::PT_LIST, js_built_in_ident_param, nullptr,
-      "list of JavaScript built-in identifiers which will not be normalized (experimental)" },
+      "list of JavaScript built-in identifiers which will not be normalized" },
 
     { "max_javascript_whitespaces", Parameter::PT_INT, "1:65535", "200",
       "maximum consecutive whitespaces allowed within the JavaScript obfuscated data" },
@@ -268,9 +265,6 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("normalize_javascript"))
     {
         params->js_norm_param.normalize_javascript = val.get_bool();
-        params->js_norm_param.is_javascript_normalization =
-            params->js_norm_param.is_javascript_normalization
-            or params->js_norm_param.normalize_javascript;
     }
     else if (val.is("js_norm_identifier_depth"))
     {
@@ -278,10 +272,7 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     }
     else if (val.is("js_normalization_depth"))
     {
-        int64_t v = val.get_int64();
-        params->js_norm_param.js_normalization_depth = v;
-        params->js_norm_param.is_javascript_normalization =
-            params->js_norm_param.is_javascript_normalization or (v != 0);
+        params->js_norm_param.js_normalization_depth = val.get_int64();
     }
     else if (val.is("js_norm_max_tmpl_nest"))
     {
@@ -480,12 +471,7 @@ bool HttpModule::end(const char* fqn, int, SnortConfig*)
                 params->uri_param.iis_unicode_code_page);
     }
 
-    if ( params->js_norm_param.normalize_javascript and
-      params->js_norm_param.js_normalization_depth )
-        ParseError("Cannot use normalize_javascript and js_normalization_depth together.");
-
-    if ( params->js_norm_param.is_javascript_normalization )
-        params->js_norm_param.js_norm = new HttpJsNorm(params->uri_param,
+    params->js_norm_param.js_norm = new HttpJsNorm(params->uri_param,
         params->js_norm_param.js_normalization_depth, params->js_norm_param.js_identifier_depth,
         params->js_norm_param.max_template_nesting, params->js_norm_param.max_scope_depth,
         params->js_norm_param.built_in_ident);
