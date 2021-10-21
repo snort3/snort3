@@ -109,18 +109,10 @@ struct TcpOption
 
     inline const TcpOption& next() const
     {
-#ifdef __GNUC__
-        const uint8_t tmp_len = ((uint8_t)code <= 1) ? 1 : len;
-        const uint8_t* const tmp = reinterpret_cast<const uint8_t*>(this);
-        const TcpOption* opt = reinterpret_cast<const TcpOption*>(&tmp[tmp_len]);
-        return *opt;
-
-#else
         if ( (uint8_t)code <= 1 )
             return reinterpret_cast<const TcpOption&>(len);
         else
             return reinterpret_cast<const TcpOption&>(data[len -2]);
-#endif
     }
 };
 

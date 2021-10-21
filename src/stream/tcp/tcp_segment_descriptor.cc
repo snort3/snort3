@@ -123,26 +123,27 @@ uint32_t TcpSegmentDescriptor::init_mss(uint16_t* value)
 
 uint32_t TcpSegmentDescriptor::init_wscale(uint16_t* value)
 {
-    tcp::TcpOptIterator iter(tcph, pkt);
-
-    for (const tcp::TcpOption& opt : iter)
+    if ( pkt->ptrs.decode_flags & DECODE_TCP_WS )
     {
-        if (opt.code == tcp::TcpOptCode::WSCALE)
+        tcp::TcpOptIterator iter(tcph, pkt);
+
+        for (const tcp::TcpOption& opt : iter)
         {
-            *value = (uint16_t)opt.data[0];
+            if (opt.code == tcp::TcpOptCode::WSCALE)
+            {
+                *value = (uint16_t)opt.data[0];
 
-            // If scale specified in option is larger than 14, use 14 because of limitation
-            // in the math of shifting a 32bit value (max scaled window is 2^30th).
-            // See RFC 1323 for details.
-            if (*value > 14)
-                *value = 14;
+                // If scale specified in option is larger than 14, use 14 because of limitation
+                // in the math of shifting a 32bit value (max scaled window is 2^30th).
+                // See RFC 1323 for details.
+                if (*value > 14)
+                    *value = 14;
 
-            return TF_WSCALE;
+                return TF_WSCALE;
+            }
         }
     }
-
     *value = 0;
-
     return TF_NONE;
 }
 
