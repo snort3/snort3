@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.14.0 2021-10-07 06:47:36 EDT TST
+Revision 3.1.15.0 2021-10-21 08:39:53 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -607,14 +607,16 @@ Peg counts:
     header buffer (sum)
   * detection.method_searches: fast pattern searches in method buffer
     (sum)
-  * detection.script_searches: fast pattern searches in script buffer
-    (sum)
   * detection.stat_code_searches: fast pattern searches in status
     code buffer (sum)
   * detection.stat_msg_searches: fast pattern searches in status
     message buffer (sum)
   * detection.cookie_searches: fast pattern searches in cookie buffer
     (sum)
+  * detection.js_data_searches: fast pattern searches in js_data
+    buffer (sum)
+  * detection.vba_searches: fast pattern searches in MS Office Visual
+    Basic for Applications buffer (sum)
   * detection.offloads: fast pattern searches that were offloaded
     (sum)
   * detection.alerts: alerts not including IP reputation (sum)
@@ -3683,20 +3685,24 @@ Configuration:
     response bodies
   * bool http_inspect.decompress_zip = false: decompress zip files in
     response bodies
-  * bool http_inspect.decompress_vba = false: decompress vba macro 
-    data of MS office files in response bodies
+  * bool http_inspect.decompress_vba = false: decompress MS Office
+    Visual Basic for Applications macro files in response bodies
   * bool http_inspect.script_detection = false: inspect JavaScript
     immediately upon script end
   * bool http_inspect.normalize_javascript = false: use legacy
     normalizer to normalize JavaScript in response bodies
-  * int http_inspect.js_normalization_depth = 0: enable enhanced
-    normalizer (0 is disabled); number of input JavaScript bytes to
-    normalize (-1 unlimited) (experimental) { -1:max53 }
+  * int http_inspect.js_normalization_depth = -1: number of input
+    JavaScript bytes to normalize (-1 unlimited) { -1:max53 }
   * int http_inspect.js_norm_identifier_depth = 65536: max number of
     unique JavaScript identifiers to normalize { 0:65536 }
   * int http_inspect.js_norm_max_tmpl_nest = 32: maximum depth of
     template literal nesting that enhanced javascript normalizer will
-    process (experimental) { 0:255 }
+    process { 0:255 }
+  * int http_inspect.js_norm_max_scope_depth = 256: maximum depth of
+    scope nesting that enhanced JavaScript normalizer will process {
+    0:65535 }
+  * string http_inspect.js_norm_built_in_ident[].ident_name: name of
+    built-in identifier
   * int http_inspect.max_javascript_whitespaces = 200: maximum
     consecutive whitespaces allowed within the JavaScript obfuscated
     data { 1:65535 }
@@ -3738,41 +3744,63 @@ Configuration:
 
 Rules:
 
-  * 119:1 (http_inspect) ascii encoding
-  * 119:2 (http_inspect) double decoding attack
-  * 119:3 (http_inspect) u encoding
-  * 119:4 (http_inspect) bare byte unicode encoding
-  * 119:6 (http_inspect) UTF-8 encoding
-  * 119:7 (http_inspect) unicode map code point encoding in URI
-  * 119:8 (http_inspect) multi_slash encoding
-  * 119:9 (http_inspect) backslash used in URI path
-  * 119:10 (http_inspect) self directory traversal
-  * 119:11 (http_inspect) directory traversal
-  * 119:12 (http_inspect) apache whitespace (tab)
-  * 119:13 (http_inspect) HTTP header line terminated by LF without a
-    CR
-  * 119:14 (http_inspect) non-RFC defined char
-  * 119:15 (http_inspect) oversize request-uri directory
-  * 119:16 (http_inspect) oversize chunk encoding
-  * 119:18 (http_inspect) webroot directory traversal
-  * 119:19 (http_inspect) long header
-  * 119:20 (http_inspect) max header fields
-  * 119:21 (http_inspect) multiple content length
+  * 119:1 (http_inspect) URI has percent-encoding of an unreserved
+    character
+  * 119:2 (http_inspect) URI is percent encoded and the result is
+    percent encoded again
+  * 119:3 (http_inspect) URI has non-standard %u-style Unicode
+    encoding
+  * 119:4 (http_inspect) URI has Unicode encodings containing bytes
+    that were not percent-encoded
+  * 119:6 (http_inspect) URI has two-byte or three-byte UTF-8
+    encoding
+  * 119:7 (http_inspect) URI has unicode map code point encoding
+  * 119:8 (http_inspect) URI path contains consecutive slash
+    characters
+  * 119:9 (http_inspect) backslash character appears in the path
+    portion of a URI.
+  * 119:10 (http_inspect) URI path contains /./ pattern repeating the
+    current directory
+  * 119:11 (http_inspect) URI path contains /../ pattern moving up a
+    directory
+  * 119:12 (http_inspect) Tab character in HTTP start line
+  * 119:13 (http_inspect) HTTP start line or header line terminated
+    by LF without a CR
+  * 119:14 (http_inspect) Normalized URI includes character from
+    bad_characters list
+  * 119:15 (http_inspect) URI path contains a segment that is longer
+    than the oversize_dir_length parameter
+  * 119:16 (http_inspect) chunk length exceeds configured
+    maximum_chunk_length
+  * 119:18 (http_inspect) URI path includes /../ that goes above the
+    root directory
+  * 119:19 (http_inspect) HTTP header line exceeds 4096 bytes
+  * 119:20 (http_inspect) HTTP message has more than 200 header
+    fields
+  * 119:21 (http_inspect) HTTP message has more than one
+    Content-Length header value
   * 119:24 (http_inspect) Host header field appears more than once or
     has multiple values
-  * 119:25 (http_inspect) Host header value is too long
-  * 119:28 (http_inspect) POST or PUT w/o content-length or chunks
-  * 119:31 (http_inspect) unknown method
-  * 119:32 (http_inspect) simple request
-  * 119:33 (http_inspect) unescaped space in HTTP URI
-  * 119:34 (http_inspect) too many pipelined requests
+  * 119:25 (http_inspect) length of HTTP Host header field value
+    exceeds maximum_host_length option
+  * 119:28 (http_inspect) HTTP POST or PUT request without
+    content-length or chunks
+  * 119:31 (http_inspect) HTTP request method is not known to Snort
+  * 119:32 (http_inspect) HTTP request uses primitive HTTP format
+    known as HTTP/0.9
+  * 119:33 (http_inspect) HTTP request URI has space character that
+    is not percent-encoded
+  * 119:34 (http_inspect) HTTP connection has more than 100
+    simultaneous pipelined requests that have not been answered
   * 119:102 (http_inspect) invalid status code in HTTP response
-  * 119:104 (http_inspect) HTTP response has UTF charset that failed
-    to normalize
-  * 119:105 (http_inspect) HTTP response has UTF-7 charset
-  * 119:109 (http_inspect) javascript obfuscation levels exceeds 1
-  * 119:110 (http_inspect) javascript whitespaces exceeds max allowed
-  * 119:111 (http_inspect) multiple encodings within javascript
+  * 119:104 (http_inspect) HTTP response has UTF character set that
+    failed to normalize
+  * 119:105 (http_inspect) HTTP response has UTF-7 character set
+  * 119:109 (http_inspect) more than one level of JavaScript
+    obfuscation
+  * 119:110 (http_inspect) consecutive JavaScript whitespaces exceed
+    maximum allowed
+  * 119:111 (http_inspect) multiple encodings within JavaScript
     obfuscated data
   * 119:112 (http_inspect) SWF file zlib decompression failure
   * 119:113 (http_inspect) SWF file LZMA decompression failure
@@ -3780,14 +3808,18 @@ Rules:
   * 119:115 (http_inspect) PDF file unsupported compression type
   * 119:116 (http_inspect) PDF file cascaded compression
   * 119:117 (http_inspect) PDF file parse failure
-  * 119:201 (http_inspect) not HTTP traffic
+  * 119:201 (http_inspect) not HTTP traffic or unrecoverable HTTP
+    protocol error
   * 119:202 (http_inspect) chunk length has excessive leading zeros
-  * 119:203 (http_inspect) white space before or between messages
+  * 119:203 (http_inspect) white space before or between HTTP
+    messages
   * 119:204 (http_inspect) request message without URI
-  * 119:205 (http_inspect) control character in reason phrase
+  * 119:205 (http_inspect) control character in HTTP response reason
+    phrase
   * 119:206 (http_inspect) illegal extra whitespace in start line
   * 119:207 (http_inspect) corrupted HTTP version
-  * 119:208 (http_inspect) unknown HTTP version
+  * 119:208 (http_inspect) HTTP version in start line is not HTTP/1.0
+    or 1.1
   * 119:209 (http_inspect) format error in HTTP header
   * 119:210 (http_inspect) chunk header options present
   * 119:211 (http_inspect) URI badly formatted
@@ -3881,8 +3913,7 @@ Rules:
   * 119:269 (http_inspect) script opening tag in a short form
   * 119:270 (http_inspect) max number of unique JavaScript
     identifiers reached
-  * 119:271 (http_inspect) JavaScript template literal nesting is
-    over capacity
+  * 119:271 (http_inspect) JavaScript scope nesting is over capacity
   * 119:272 (http_inspect) Consecutive commas in HTTP Accept-Encoding
     header
 
@@ -5657,6 +5688,8 @@ Peg counts:
     flow (max)
   * stream_tcp.max_bytes: maximum number of bytes queued in any flow
     (max)
+  * stream_tcp.zero_len_tcp_opt: number of zero length tcp options
+    (sum)
 
 
 5.50. stream_udp
@@ -7914,7 +7947,8 @@ Configuration:
 
 --------------
 
-Help: rule option to set the detection cursor to the MS office visual basic for applications macros buffer
+Help: rule option to set the detection cursor to the MS Office Visual
+Basic for Applications macros buffer
 
 Type: ips_option
 
@@ -9155,10 +9189,10 @@ these libraries see the Getting Started section of the manual.
     response bodies
   * bool http_inspect.decompress_swf = false: decompress swf files in
     response bodies
+  * bool http_inspect.decompress_vba = false: decompress MS Office
+    Visual Basic for Applications macro files in response bodies
   * bool http_inspect.decompress_zip = false: decompress zip files in
     response bodies
-  * bool http_inspect.decompress_vba = false: decompress vba macro
-    data of MS office files in response bodies
   * string http_inspect.ignore_unreserved: do not alert when the
     specified unreserved characters are percent-encoded in a
     URI.Unreserved characters are 0-9, a-z, A-Z, period, underscore,
@@ -9171,14 +9205,18 @@ these libraries see the Getting Started section of the manual.
     mapping to normalize characters
   * string http_inspect.iis_unicode_map_file: file containing code
     points for IIS unicode. { (optional) }
-  * int http_inspect.js_normalization_depth = 0: enable enhanced
-    normalizer (0 is disabled); number of input JavaScript bytes to
-    normalize (-1 unlimited) (experimental) { -1:max53 }
+  * int http_inspect.js_normalization_depth = -1: number of input
+    JavaScript bytes to normalize (-1 unlimited) { -1:max53 }
+  * string http_inspect.js_norm_built_in_ident[].ident_name: name of
+    built-in identifier
   * int http_inspect.js_norm_identifier_depth = 65536: max number of
     unique JavaScript identifiers to normalize { 0:65536 }
+  * int http_inspect.js_norm_max_scope_depth = 256: maximum depth of
+    scope nesting that enhanced JavaScript normalizer will process {
+    0:65535 }
   * int http_inspect.js_norm_max_tmpl_nest = 32: maximum depth of
     template literal nesting that enhanced javascript normalizer will
-    process (experimental) { 0:255 }
+    process { 0:255 }
   * int http_inspect.maximum_chunk_length = 4294967295: maximum
     allowed length for a message body chunk { 0:4294967295 }
   * int http_inspect.maximum_host_length = -1: maximum allowed length
@@ -10851,6 +10889,8 @@ these libraries see the Getting Started section of the manual.
   * detection.hard_evals: non-fast pattern rule evaluations (sum)
   * detection.header_searches: fast pattern searches in header buffer
     (sum)
+  * detection.js_data_searches: fast pattern searches in js_data
+    buffer (sum)
   * detection.key_searches: fast pattern searches in key buffer (sum)
   * detection.logged: logged packets (sum)
   * detection.log_limit: events queued but not logged (sum)
@@ -10884,13 +10924,13 @@ these libraries see the Getting Started section of the manual.
     buffer (sum)
   * detection.raw_searches: fast pattern searches in raw packet data
     (sum)
-  * detection.script_searches: fast pattern searches in script buffer
-    (sum)
   * detection.stat_code_searches: fast pattern searches in status
     code buffer (sum)
   * detection.stat_msg_searches: fast pattern searches in status
     message buffer (sum)
   * detection.total_alerts: alerts including IP reputation (sum)
+  * detection.vba_searches: fast pattern searches in MS Office Visual
+    Basic for Applications buffer (sum)
   * dnp3.concurrent_sessions: total concurrent dnp3 sessions (now)
   * dnp3.dnp3_application_pdus: total dnp3 application pdus (sum)
   * dnp3.dnp3_link_layer_frames: total dnp3 link layer frames (sum)
@@ -11573,6 +11613,8 @@ these libraries see the Getting Started section of the manual.
     ack (sum)
   * stream_tcp.timeouts: tcp session timeouts (sum)
   * stream_tcp.untracked: tcp packets not tracked (sum)
+  * stream_tcp.zero_len_tcp_opt: number of zero length tcp options
+    (sum)
   * stream.total_prunes: total sessions pruned (sum)
   * stream_udp.created: udp session trackers created (sum)
   * stream_udp.ignored: udp packets ignored (sum)
@@ -11737,95 +11779,103 @@ A tagged packet was logged.
 
 116:1 (ipv4) not IPv4 datagram
 
-(ipv4) not IPv4 datagram
+The packet is not an IPv4 datagram (based on the ip header’s version
+field).
 
 116:2 (ipv4) IPv4 header length < minimum
 
-(ipv4) IPv4 header length < minimum
+The IPv4 header length (based on the header’s length field) is less
+than the ip version 4’s minimum header length (20 bytes).
 
 116:3 (ipv4) IPv4 datagram length < header field
 
-(ipv4) IPv4 datagram length < header field
+The total IPv4 datagram length is less than the length calculated
+using the ipv4 header length field.
 
 116:4 (ipv4) IPv4 options found with bad lengths
 
-(ipv4) IPv4 options found with bad lengths
+The IPv4 options field has a bad/incorrect length.
 
 116:5 (ipv4) truncated IPv4 options
 
-(ipv4) truncated IPv4 options
+The IPv4 options field is truncated.
 
 116:6 (ipv4) IPv4 datagram length > captured length
 
-(ipv4) IPv4 datagram length > captured length
+The IPv4 datagram length is greater than the captured packet’s
+length.
 
 116:45 (tcp) TCP packet length is smaller than 20 bytes
 
-(tcp) TCP packet length is smaller than 20 bytes
+The TCP packet length is smaller than the minimum tcp header length
+(20 bytes).
 
 116:46 (tcp) TCP data offset is less than 5
 
-(tcp) TCP data offset is less than 5
+The TCP data offset is less than five 32 bit words (20 bytes) and is
+invalid.
 
 116:47 (tcp) TCP header length exceeds packet length
 
-(tcp) TCP header length exceeds packet length
+The TCP header length exceeds the packet’s length.
 
 116:54 (tcp) TCP options found with bad lengths
 
-(tcp) TCP options found with bad lengths
+The TCP options are invalid and/or have bad lengths.
 
 116:55 (tcp) truncated TCP options
 
-(tcp) truncated TCP options
+The TCP options field is truncated.
 
 116:56 (tcp) T/TCP detected
 
-(tcp) T/TCP detected
+A tcp packet was detected with the CC Echo field set.
 
 116:57 (tcp) obsolete TCP options found
 
-(tcp) obsolete TCP options found
+A tcp packet was detected that contained obsolete TCP options.
 
 116:58 (tcp) experimental TCP options found
 
-(tcp) experimental TCP options found
+A tcp packet was detected that contained experimental TCP options.
 
 116:59 (tcp) TCP window scale option found with length > 14
 
-(tcp) TCP window scale option found with length > 14
+The TCP window scale option found with a length greater than 14.
 
 116:95 (udp) truncated UDP header
 
-(udp) truncated UDP header
+A truncated UDP header has been detected.
 
 116:96 (udp) invalid UDP header, length field < 8
 
-(udp) invalid UDP header, length field < 8
+An invalid UDP header detected. The header’s length is less than 8
+bytes.
 
 116:97 (udp) short UDP packet, length field > payload length
 
-(udp) short UDP packet, length field > payload length
+The UDP length field is greater than the payload length.
 
 116:98 (udp) long UDP packet, length field < payload length
 
-(udp) long UDP packet, length field < payload length
+The UDP length field is less than the payload length.
 
 116:105 (icmp4) ICMP header truncated
 
-(icmp4) ICMP header truncated
+An ICMP packet was detected with the header truncated.
 
 116:106 (icmp4) ICMP timestamp header truncated
 
-(icmp4) ICMP timestamp header truncated
+The ICMP packet’s timestamp header is truncated.
 
 116:107 (icmp4) ICMP address header truncated
 
-(icmp4) ICMP address header truncated
+The ICMP packet’s address header is truncated.
 
 116:109 (arp) truncated ARP
 
-(arp) truncated ARP
+The packet length is less than ethernet arp’s minimum length of 28
+bytes.
 
 116:110 (eapol) truncated EAP header
 
@@ -11841,15 +11891,18 @@ A tagged packet was logged.
 
 116:120 (pppoe) bad PPPOE frame detected
 
-(pppoe) bad PPPOE frame detected
+A bad PPPOE frame has been detected. The frames length is less than
+the PPPOE frame minimum (6 bytes).
 
 116:130 (vlan) bad VLAN frame
 
-(vlan) bad VLAN frame
+A bad VLAN frame was detected due to either the packet being smaller
+than the minimum VLAN header size or the VLAN ID being invalid (0 or
+4095).
 
 116:131 (llc) bad LLC header
 
-(llc) bad LLC header
+An invalid LLC header has been detected (less than 3 bytes).
 
 116:132 (llc) bad extra LLC info
 
@@ -11881,15 +11934,15 @@ A tagged packet was logged.
 
 116:150 (decode) loopback IP
 
-(decode) loopback IP
+A loopback IP was detected within a packet.
 
 116:151 (decode) same src/dst IP
 
-(decode) same src/dst IP
+The same source and destination IP was detected.
 
 116:160 (gre) GRE header length > payload length
 
-(gre) GRE header length > payload length
+The payload length is greater than the packet length.
 
 116:161 (gre) multiple encapsulations in packet
 
@@ -11897,411 +11950,436 @@ A tagged packet was logged.
 
 116:162 (gre) invalid GRE version
 
-(gre) invalid GRE version
+The detected GRE version field value is invalid (should be 0 or 1).
 
 116:163 (gre) invalid GRE header
 
-(gre) invalid GRE header
+Invalid flag set in GRE header.
 
 116:164 (gre) invalid GRE v.1 PPTP header
 
-(gre) invalid GRE v.1 PPTP header
+Invalid GRE v.1 PPTP header detected.
 
 116:165 (gre) GRE trans header length > payload length
 
-(gre) GRE trans header length > payload length
+The GRE trans header length is greater than the payload length.
 
 116:170 (mpls) bad MPLS frame
 
-(mpls) bad MPLS frame
+The MPLS frame is invalid. The MPLS header length is less than the
+MPLS minimum frame size (4 bytes).
 
 116:171 (mpls) MPLS label 0 appears in bottom header when not
 decoding as ip4
 
-(mpls) MPLS label 0 appears in bottom header when not decoding as ip4
+The MPLS label 0 appears in bottom header when not decoding as an ip4
+packet.
 
 116:172 (mpls) MPLS label 1 appears in bottom header
 
-(mpls) MPLS label 1 appears in bottom header
+The MPLS label 1 appears in bottom header.
 
 116:173 (mpls) MPLS label 2 appears in bottom header when not
 decoding as ip6
 
-(mpls) MPLS label 2 appears in bottom header when not decoding as ip6
+The MPLS label 2 appears in bottom header when not decoding as an ip6
+packet.
 
 116:174 (mpls) MPLS label 3 appears in header
 
-(mpls) MPLS label 3 appears in header
+A MPLS label 3 (Implicit NULL Label) appears in header.
 
 116:175 (mpls) MPLS label 4, 5,.. or 15 appears in header
 
-(mpls) MPLS label 4, 5,.. or 15 appears in header
+A reserved MPLS label (4, 5 or 15) appears in header.
 
 116:176 (mpls) too many MPLS headers
 
-(mpls) too many MPLS headers
+There were too many MPLS headers detected. (Use the
+mpls.max_stack_depth setting to set the max value).
 
 116:180 (geneve) insufficient room for geneve header
 
-(geneve) insufficient room for geneve header
+The packet length is less than the expected GENEVE header length.
 
 116:181 (geneve) invalid version
 
-(geneve) invalid version
+The version number in the GENEVE header is not valid (not equal to
+zero).
 
 116:182 (geneve) invalid header
 
-(geneve) invalid header
+The packet length is less than the minimum GENEVE header length.
 
 116:183 (geneve) invalid flags
 
-(geneve) invalid flags
+There are several scenarios for this event. 1) The C flag is clear
+but critical options are present. 2) The C flag is set but critical
+options are absent. 3) If the critical header present bit is set the
+option’s length cannot be 0.
 
 116:184 (geneve) invalid options
 
-(geneve) invalid options
+The options length field extends past the end of the GENEVE header.
 
 116:250 (icmp4) ICMP original IP header truncated
 
-(icmp4) ICMP original IP header truncated
+The ICMP error message’s original IP header is truncated.
 
 116:251 (icmp4) ICMP version and original IP header versions differ
 
-(icmp4) ICMP version and original IP header versions differ
+The ICMP error message’s original IP packet’s version and original IP
+header versions differ.
 
 116:252 (icmp4) ICMP original datagram length < original IP header
 length
 
-(icmp4) ICMP original datagram length < original IP header length
+The ICMP error message’s original datagram’s length is less than the
+original IP’s header length.
 
 116:253 (icmp4) ICMP original IP payload < 64 bits
 
-(icmp4) ICMP original IP payload < 64 bits
+The ICMP error message’s original IP packet’s payload is less than 64
+bits.
 
 116:254 (icmp4) ICMP original IP payload > 576 bytes
 
-(icmp4) ICMP original IP payload > 576 bytes
+The ICMP error message’s original IP packet’s payload is greater than
+the expected max of 576 bytes.
 
 116:255 (icmp4) ICMP original IP fragmented and offset not 0
 
-(icmp4) ICMP original IP fragmented and offset not 0
+An ICMP original IP fragmented and the offset is not 0.
 
 116:270 (ipv6) IPv6 packet below TTL limit
 
-(ipv6) IPv6 packet below TTL limit
+The IPv6 packet has a TTL value that is below the TTL limit.
 
 116:271 (ipv6) IPv6 header claims to not be IPv6
 
-(ipv6) IPv6 header claims to not be IPv6
+The IPv6 header claims to not be an IPv6 packet.
 
 116:272 (ipv6) IPv6 truncated extension header
 
-(ipv6) IPv6 truncated extension header
+The IPv6 packet has a truncated extension header.
 
 116:273 (ipv6) IPv6 truncated header
 
-(ipv6) IPv6 truncated header
+The IPv6 packet has a truncated header.
 
 116:274 (ipv6) IPv6 datagram length < header field
 
-(ipv6) IPv6 datagram length < header field
+The IPv6 datagram length field is less than the header field.
 
 116:275 (ipv6) IPv6 datagram length > captured length
 
-(ipv6) IPv6 datagram length > captured length
+The IPv6 datagram’s length is greater than the captured packet’s
+length.
 
 116:276 (ipv6) IPv6 packet with destination address ::0
 
-(ipv6) IPv6 packet with destination address ::0
+An IPv6 packet was detected with a destination address of ::0
 
 116:277 (ipv6) IPv6 packet with multicast source address
 
-(ipv6) IPv6 packet with multicast source address
+An IPv6 packet with a multicast source address has been detected.
 
 116:278 (ipv6) IPv6 packet with reserved multicast destination
 address
 
-(ipv6) IPv6 packet with reserved multicast destination address
+An IPv6 packet with a reserved multicast destination address has been
+detected.
 
 116:279 (ipv6) IPv6 header includes an undefined option type
 
-(ipv6) IPv6 header includes an undefined option type
+The IPv6 header includes an undefined option type.
 
 116:280 (ipv6) IPv6 address includes an unassigned multicast scope
 value
 
-(ipv6) IPv6 address includes an unassigned multicast scope value
+The IPv6 address includes an unassigned multicast scope value.
 
 116:281 (ipv6) IPv6 header includes an invalid value for the next
 header field
 
-(ipv6) IPv6 header includes an invalid value for the next header
-field
+The IPv6 header includes an invalid value for the next header field.
 
 116:282 (ipv6) IPv6 header includes a routing extension header
 followed by a hop-by-hop header
 
-(ipv6) IPv6 header includes a routing extension header followed by a
-hop-by-hop header
+The IPv6 header includes a routing extension header followed by a
+hop-by-hop header.
 
 116:283 (ipv6) IPv6 header includes two routing extension headers
 
-(ipv6) IPv6 header includes two routing extension headers
+The IPv6 header includes two routing extension headers.
 
 116:285 (icmp6) ICMPv6 packet of type 2 (message too big) with MTU
 field < 1280
 
-(icmp6) ICMPv6 packet of type 2 (message too big) with MTU field <
-1280
+An ICMPv6 packet of type 2 (message too big) that contains an MTU
+field of less than 1280 bytes has been detected.
 
 116:286 (icmp6) ICMPv6 packet of type 1 (destination unreachable)
 with non-RFC 2463 code
 
-(icmp6) ICMPv6 packet of type 1 (destination unreachable) with
-non-RFC 2463 code
+An ICMPv6 packet of type 1 (destination unreachable) that contains a
+non-RFC 2463 code has been detected.
 
 116:287 (icmp6) ICMPv6 router solicitation packet with a code not
 equal to 0
 
-(icmp6) ICMPv6 router solicitation packet with a code not equal to 0
+An ICMPv6 router solicitation packet with a code not equal to 0 has
+been detected.
 
 116:288 (icmp6) ICMPv6 router advertisement packet with a code not
 equal to 0
 
-(icmp6) ICMPv6 router advertisement packet with a code not equal to 0
+An ICMPv6 router advertisement packet with a code not equal to 0 has
+been detected.
 
 116:289 (icmp6) ICMPv6 router solicitation packet with the reserved
 field not equal to 0
 
-(icmp6) ICMPv6 router solicitation packet with the reserved field not
-equal to 0
+An ICMPv6 router solicitation packet with the reserved field not
+equal to 0 has been detected.
 
 116:290 (icmp6) ICMPv6 router advertisement packet with the reachable
 time field set > 1 hour
 
-(icmp6) ICMPv6 router advertisement packet with the reachable time
-field set > 1 hour
+An ICMPv6 router advertisement packet with the reachable time field
+set to greater than 1 hour was detected.
 
 116:291 (ipv6) IPV6 tunneled over IPv4, IPv6 header truncated,
 possible Linux kernel attack
 
-(ipv6) IPV6 tunneled over IPv4, IPv6 header truncated, possible Linux
-kernel attack
+An IPV6 tunnel over IPv4 packet was received. The IPv6 header
+truncated which could possibly be a Linux kernel attack.
 
 116:292 (ipv6) IPv6 header has destination options followed by a
 routing header
 
-(ipv6) IPv6 header has destination options followed by a routing
-header
+The IPv6 header has destination options followed by a routing header.
 
 116:293 (decode) two or more IP (v4 and/or v6) encapsulation layers
 present
 
-(decode) two or more IP (v4 and/or v6) encapsulation layers present
+There are two or more IP (v4 and/or v6) encapsulation layers present.
 
 116:294 (esp) truncated encapsulated security payload header
 
-(esp) truncated encapsulated security payload header
+The encapsulated security payload header was too short (less than 22
+bytes).
 
 116:295 (ipv6) IPv6 header includes an option which is too big for
 the containing header
 
-(ipv6) IPv6 header includes an option which is too big for the
-containing header
+The IPv6 header includes an option which is too big for the
+containing header.
 
 116:296 (ipv6) IPv6 packet includes out-of-order extension headers
 
-(ipv6) IPv6 packet includes out-of-order extension headers
+The IPv6 packet includes out-of-order extension headers.
 
 116:297 (gtp) two or more GTP encapsulation layers present
 
-(gtp) two or more GTP encapsulation layers present
+There are multiple GTP encapsulation layers present.
 
 116:298 (gtp) GTP header length is invalid
 
-(gtp) GTP header length is invalid
+The packet data is smaller than the GTP header length making the
+packet invalid.
 
 116:400 (tcp) XMAS attack detected
 
-(tcp) XMAS attack detected
+A XMAS attack detected.
 
 116:401 (tcp) Nmap XMAS attack detected
 
-(tcp) Nmap XMAS attack detected
+A NMAP XMAS attack detected.
 
 116:402 (tcp) DOS NAPTHA vulnerability detected
 
-(tcp) DOS NAPTHA vulnerability detected
+(tcp) DOS NAPTHA vulnerability detected.
 
 116:403 (tcp) SYN to multicast address
 
-(tcp) SYN to multicast address
+A SYN packet was sent to a multicast address.
 
 116:404 (ipv4) IPv4 packet with zero TTL
 
-(ipv4) IPv4 packet with zero TTL
+IPv4 packet was detected with a zero TTL value.
 
 116:405 (ipv4) IPv4 packet with bad frag bits (both MF and DF set)
 
-(ipv4) IPv4 packet with bad frag bits (both MF and DF set)
+The IPv4 packet contains an invalid frag bits combination (both MF
+and DF are set).
 
 116:406 (udp) invalid IPv6 UDP packet, checksum zero
 
-(udp) invalid IPv6 UDP packet, checksum zero
+An invalid IPv6 UDP packet was detected. The checksum value is zero.
 
 116:407 (ipv4) IPv4 packet frag offset + length exceed maximum
 
-(ipv4) IPv4 packet frag offset + length exceed maximum
+The IPv4 packet’s frag offset + the datagram length field exceeds the
+maximum packet size (65535)
 
 116:408 (ipv4) IPv4 packet from current net source address
 
-(ipv4) IPv4 packet from current net source address
+The IPv4 packet’s source address is from the current net (value of
+zero)
 
 116:409 (ipv4) IPv4 packet to current net dest address
 
-(ipv4) IPv4 packet to current net dest address
+The IPv4 packet’s destination address is to the current net (value of
+zero)
 
 116:410 (ipv4) IPv4 packet from multicast source address
 
-(ipv4) IPv4 packet from multicast source address
+The IPv4 packet has a multicast source address.
 
 116:411 (ipv4) IPv4 packet from reserved source address
 
-(ipv4) IPv4 packet from reserved source address
+The IPv4 packet has a reserved source address.
 
 116:412 (ipv4) IPv4 packet to reserved dest address
 
-(ipv4) IPv4 packet to reserved dest address
+The IPv4 packet has a reserved destination address.
 
 116:413 (ipv4) IPv4 packet from broadcast source address
 
-(ipv4) IPv4 packet from broadcast source address
+The IPv4 packet has a broadcast source address.
 
 116:414 (ipv4) IPv4 packet to broadcast dest address
 
-(ipv4) IPv4 packet to broadcast dest address
+The IPv4 packet has a broadcast destination address
 
 116:415 (icmp4) ICMP4 packet to multicast dest address
 
-(icmp4) ICMP4 packet to multicast dest address
+ICMP4 packet to multicast destination address
 
 116:416 (icmp4) ICMP4 packet to broadcast dest address
 
-(icmp4) ICMP4 packet to broadcast dest address
+ICMP4 packet to broadcast destination address
 
 116:418 (icmp4) ICMP4 type other
 
-(icmp4) ICMP4 type other
+The ICMP4 packet type is not known.
 
 116:419 (tcp) TCP urgent pointer exceeds payload length or no payload
 
-(tcp) TCP urgent pointer exceeds payload length or no payload
+The TCP urgent pointer exceeds payload length or has no payload.
 
 116:420 (tcp) TCP SYN with FIN
 
-(tcp) TCP SYN with FIN
+An invalid tcp flag combination was detected (SYN and FIN).
 
 116:421 (tcp) TCP SYN with RST
 
-(tcp) TCP SYN with RST
+An invalid tcp flag combination was detected (SYN with RST)
 
 116:422 (tcp) TCP PDU missing ack for established session
 
-(tcp) TCP PDU missing ack for established session
+The TCP packet is missing the acknowledgment flag for an established
+session.
 
 116:423 (tcp) TCP has no SYN, ACK, or RST
 
-(tcp) TCP has no SYN, ACK, or RST
+The TCP packet is invalid because it doesn’t have a SYN, ACK, or RST
+flag set.
 
 116:424 (pbb) truncated ethernet header
 
-(eth) truncated ethernet header
+The packet length is less than the minimum ethernet header size (14
+bytes)
 
 116:424 (pbb) truncated ethernet header
 
-(pbb) truncated ethernet header
+A truncated ethernet header was detected.
 
 116:425 (ipv4) truncated IPv4 header
 
-(ipv4) truncated IPv4 header
+The IPv4 header is truncated.
 
 116:426 (icmp4) truncated ICMP4 header
 
-(icmp4) truncated ICMP4 header
+The ICMP4 header is truncated.
 
 116:427 (icmp6) truncated ICMPv6 header
 
-(icmp6) truncated ICMPv6 header
+The ICMPv6 header is truncated.
 
 116:428 (ipv4) IPv4 packet below TTL limit
 
-(ipv4) IPv4 packet below TTL limit
+(ipv4) IPv4 packet below TTL limit - Not being used.
 
 116:429 (ipv6) IPv6 packet has zero hop limit
 
-(ipv6) IPv6 packet has zero hop limit
+(ipv6) IPv6 packet has zero hop limit - Not being used.
 
 116:430 (ipv4) IPv4 packet both DF and offset set
 
-(ipv4) IPv4 packet both DF and offset set
+An invalid IPv4 packet was detected. The DF bit and an offset value
+are set.
 
 116:431 (icmp6) ICMPv6 type not decoded
 
-(icmp6) ICMPv6 type not decoded
+The ICMPv6 type is unknown and not decoded.
 
 116:432 (icmp6) ICMPv6 packet to multicast address
 
-(icmp6) ICMPv6 packet to multicast address
+An ICMPv6 packet to a multicast address was detected.
 
 116:433 (tcp) DDOS shaft SYN flood
 
-(tcp) DDOS shaft SYN flood
+A tcp DDOS shaft SYN flood was detected.
 
 116:434 (icmp4) ICMP ping Nmap
 
-(icmp4) ICMP ping Nmap
+An ICMP ping from NMAP was detected.
 
 116:435 (icmp4) ICMP icmpenum v1.1.1
 
-(icmp4) ICMP icmpenum v1.1.1
+An ICMP icmpenum v1.1.1 packet was received (the payload length is
+zero and icmp seq number equals 666).
 
 116:436 (icmp4) ICMP redirect host
 
-(icmp4) ICMP redirect host
+An ICMP host redirect packet was received.
 
 116:437 (icmp4) ICMP redirect net
 
-(icmp4) ICMP redirect net
+An ICMP network redirect packet was received.
 
 116:438 (icmp4) ICMP traceroute ipopts
 
-(icmp4) ICMP traceroute ipopts
+An ICMP packet with trace route ipopts was detected.
 
 116:439 (icmp4) ICMP source quench
 
-(icmp4) ICMP source quench
+An ICMP packet with the source quench field set was detected.
 
 116:440 (icmp4) broadscan smurf scanner
 
-(icmp4) broadscan smurf scanner
+Broadscan smurf scanner traffic was detected.
 
 116:441 (icmp4) ICMP destination unreachable communication
 administratively prohibited
 
-(icmp4) ICMP destination unreachable communication administratively
-prohibited
+ICMP destination unreachable traffic was detected (communication
+administratively prohibited).
 
 116:442 (icmp4) ICMP destination unreachable communication with
 destination host is administratively prohibited
 
-(icmp4) ICMP destination unreachable communication with destination
-host is administratively prohibited
+ICMP destination unreachable traffic detected (communication with
+destination host is administratively prohibited).
 
 116:443 (icmp4) ICMP destination unreachable communication with
 destination network is administratively prohibited
 
-(icmp4) ICMP destination unreachable communication with destination
-network is administratively prohibited
+ICMP destination unreachable traffic detected (communication with
+destination network is administratively prohibited).
 
 116:444 (ipv4) IPv4 option set
 
@@ -12309,23 +12387,23 @@ network is administratively prohibited
 
 116:445 (udp) large UDP packet (> 4000 bytes)
 
-(udp) large UDP packet (> 4000 bytes)
+A large UDP packet was received (greater than 4000 bytes).
 
 116:446 (tcp) TCP port 0 traffic
 
-(tcp) TCP port 0 traffic
+TCP port 0 traffic was detected.
 
 116:447 (udp) UDP port 0 traffic
 
-(udp) UDP port 0 traffic
+UDP port 0 traffic was detected.
 
 116:448 (ipv4) IPv4 reserved bit set
 
-(ipv4) IPv4 reserved bit set
+An IPv4 packet was detected that has the reserved bit set.
 
 116:449 (decode) unassigned/reserved IP protocol
 
-(decode) unassigned/reserved IP protocol
+An IP packet has an unassigned/reserved IP protocol number.
 
 116:450 (decode) bad IP protocol
 
@@ -12333,11 +12411,11 @@ network is administratively prohibited
 
 116:451 (icmp4) ICMP path MTU denial of service attempt
 
-(icmp4) ICMP path MTU denial of service attempt
+An ICMP path MTU denial of service attempt has been detected.
 
 116:452 (icmp4) Linux ICMP header DOS attempt
 
-(icmp4) Linux ICMP header DOS attempt
+A Linux ICMP header DOS attempt has been detected.
 
 116:453 (ipv6) ISATAP-addressed IPv6 traffic spoofing attempt
 
@@ -12349,530 +12427,607 @@ network is administratively prohibited
 
 116:455 (igmp) DOS IGMP IP options validation attempt
 
-(igmp) DOS IGMP IP options validation attempt
+An IGMP IP options validation DOS attempt was detected.
 
 116:456 (ipv6) too many IPv6 extension headers
 
-(ipv6) too many IPv6 extension headers
+The decoder detected more than the configured amount of IPv6
+extension headers.
 
 116:457 (icmp6) ICMPv6 packet of type 1 (destination unreachable)
 with non-RFC 4443 code
 
-(icmp6) ICMPv6 packet of type 1 (destination unreachable) with
-non-RFC 4443 code
+An ICMPv6 packet of type 1 (destination unreachable) was received
+with non-RFC 4443 code.
 
 116:458 (ipv6) bogus fragmentation packet, possible BSD attack
 
-(ipv6) bogus fragmentation packet, possible BSD attack
+An invalid fragmentation packet was detected. Could be a possible BSD
+attack.
 
 116:459 (decode) fragment with zero length
 
-(decode) fragment with zero length
+An ip fragment was received with a zero length payload.
 
 116:460 (icmp6) ICMPv6 node info query/response packet with a code
 greater than 2
 
-(icmp6) ICMPv6 node info query/response packet with a code greater
-than 2
+The ICMPv6 node info query/response packet has a code value greater
+than 2.
 
 116:461 (ipv6) IPv6 routing type 0 extension header
 
-(ipv6) IPv6 routing type 0 extension header
+An IPv6 packet was received with a routing type 0 extension header.
 
 116:462 (erspan2) ERSpan header version mismatch
 
-(erspan2) ERSpan header version mismatch
+The ERSpan2 version is not equal to 1 (the value of 1 signals that
+it’s ERSpan2).
 
 116:463 (erspan2) captured length < ERSpan type2 header length
 
-(erspan2) captured length < ERSpan type2 header length
+The packet’s length is less than the ERSpan2 headers minimum length
+(8 bytes).
 
 116:464 (erspan3) captured < ERSpan type3 header length
 
-(erspan3) captured < ERSpan type3 header length
+The packet’s length is less than the ERSpan3 header’s minimum length
+(20 bytes).
 
 116:465 (auth) truncated authentication header
 
-(auth) truncated authentication header
+The length of the packet received is less than the expected minimum
+of 16 bytes.
 
 116:466 (auth) bad authentication header length
 
-(auth) bad authentication header length
+The authentication header length is greater than the packet data
+length.
 
 116:467 (fabricpath) truncated FabricPath header
 
-(fabricpath) truncated FabricPath header
+The packet header length is less than the minimum FabricPath header
+size of 16 bytes.
 
 116:468 (ciscometadata) truncated Cisco Metadata header
 
-(ciscometadata) truncated Cisco Metadata header
+The packet length is less than the Cisco Metadata header length.
 
 116:469 (ciscometadata) invalid Cisco Metadata option length
 
-(ciscometadata) invalid Cisco Metadata option length
+The Cisco Metadata option length value is greater than zero.
 
 116:470 (ciscometadata) invalid Cisco Metadata option type
 
-(ciscometadata) invalid Cisco Metadata option type
+The Cisco metadata option type is not set to 1.
 
 116:471 (ciscometadata) invalid Cisco Metadata security group tag
 
-(ciscometadata) invalid Cisco Metadata security group tag
+The Cisco Metadata security group tag value is invalid (0xFFFF).
 
 116:472 (decode) too many protocols present
 
-(decode) too many protocols present
+The decoder detected that there were too many protocols present.
 
 116:473 (decode) ether type out of range
 
-(decode) ether type out of range
+An ether type value is below the minimum of 0x0600 (1536) and
+therefore out of range.
 
 116:474 (icmp6) ICMPv6 not encapsulated in IPv6
 
-(icmp6) ICMPv6 not encapsulated in IPv6
+An ICMPv6 packet was received that was not encapsulated in IPv6.
 
 116:475 (ipv6) IPv6 mobility header includes an invalid value for the
 payload protocol field
 
-(ipv6) IPv6 mobility header includes an invalid value for the payload
-protocol field
+The IPv6 mobility header includes an invalid value for the payload
+protocol field.
 
-119:1 (http_inspect) ascii encoding
+119:1 (http_inspect) URI has percent-encoding of an unreserved
+character
 
-(http_inspect) ascii encoding
+URI has percent encoding of an unreserved character. The
+ignore_unreserved option designates specific unreserved characters
+that are exempted from triggering this alert.
 
-119:2 (http_inspect) double decoding attack
+119:2 (http_inspect) URI is percent encoded and the result is percent
+encoded again
 
-(http_inspect) double decoding attack
+URI is percent encoded and the result is percent encoded again. This
+alert can only be generated if the iis_double_decode option is
+configured.
 
-119:3 (http_inspect) u encoding
+119:3 (http_inspect) URI has non-standard %u-style Unicode encoding
 
-(http_inspect) u encoding
+URI has non-standard %u-style Unicode encoding. This alert can only
+be generated if the percent_u option is configured.
 
-119:4 (http_inspect) bare byte unicode encoding
+119:4 (http_inspect) URI has Unicode encodings containing bytes that
+were not percent-encoded
 
-(http_inspect) bare byte unicode encoding
+URI has Unicode encodings containing bytes that were not
+percent-encoded as required by the HTTP RFC. This is sometimes called
+"bare byte" encoding. This alert can only be generated if the
+utf8_bare_byte option is configured.
 
-119:6 (http_inspect) UTF-8 encoding
+119:6 (http_inspect) URI has two-byte or three-byte UTF-8 encoding
 
-(http_inspect) UTF-8 encoding
+URI has two-byte or three-byte UTF-8 encoding. This alert can only be
+generated if the utf8 option is configured.
 
-119:7 (http_inspect) unicode map code point encoding in URI
+119:7 (http_inspect) URI has unicode map code point encoding
 
-(http_inspect) unicode map code point encoding in URI
+URI includes a two-byte or three-byte unicode character that
+normalized through the unicode map to some byte other than 0xFF. This
+alert can only be generated if the iis_unicode option is configured.
 
-119:8 (http_inspect) multi_slash encoding
+119:8 (http_inspect) URI path contains consecutive slash characters
 
-(http_inspect) multi_slash encoding
+URI path contains consecutive slash characters which are redundant.
+This alert can only be generated if the simplify_path option is
+configured.
 
-119:9 (http_inspect) backslash used in URI path
+119:9 (http_inspect) backslash character appears in the path portion
+of a URI.
 
-(http_inspect) backslash used in URI path
+The backslash character appears in the path portion of a URI. This
+alert can only be generated if the backslash_to_slash option is
+configured.
 
-119:10 (http_inspect) self directory traversal
+119:10 (http_inspect) URI path contains /./ pattern repeating the
+current directory
 
-(http_inspect) self directory traversal
+URI path contains "/./" pattern repeating the current directory.
+Alternatively the path may end with "/." repeating the current
+directory. This alert can only be generated if the simplify_path
+option is configured.
 
-119:11 (http_inspect) directory traversal
+119:11 (http_inspect) URI path contains /../ pattern moving up a
+directory
 
-(http_inspect) directory traversal
+URI path contains "/../" pattern moving upward a directory.
+Alternatively the path may end with "/.." with the same effect. This
+alert can only be generated if the simplify_path option is
+configured.
 
-119:12 (http_inspect) apache whitespace (tab)
+119:12 (http_inspect) Tab character in HTTP start line
 
-(http_inspect) apache whitespace (tab)
+The HTTP start line has a tab character among the blank space
+separators.
 
-119:13 (http_inspect) HTTP header line terminated by LF without a CR
+119:13 (http_inspect) HTTP start line or header line terminated by LF
+without a CR
 
-(http_inspect) HTTP header line terminated by LF without a CR
+HTTP start line or header line terminated by LF without a CR.
 
-119:14 (http_inspect) non-RFC defined char
+119:14 (http_inspect) Normalized URI includes character from
+bad_characters list
 
-(http_inspect) non-RFC defined char
+Normalized URI (after percent decoding) contains a forbidden
+character specified by the bad_characters option.
 
-119:15 (http_inspect) oversize request-uri directory
+119:15 (http_inspect) URI path contains a segment that is longer than
+the oversize_dir_length parameter
 
-(http_inspect) oversize request-uri directory
+URI path contains a segment (directory or file name) that is longer
+than the oversize_dir_length parameter.
 
-119:16 (http_inspect) oversize chunk encoding
+119:16 (http_inspect) chunk length exceeds configured
+maximum_chunk_length
 
-(http_inspect) oversize chunk encoding
+Chunk length as given in the chunk header exceeds
+maximum_chunk_length parameter.
 
-119:18 (http_inspect) webroot directory traversal
+119:18 (http_inspect) URI path includes /../ that goes above the root
+directory
 
-(http_inspect) webroot directory traversal
+The URI path has used /../ segments to go above the root of the
+directory tree. For example /foo/../../bar which specifies an object
+not under the root directory /. This alert can only be generated if
+the simplify_path option is configured.
 
-119:19 (http_inspect) long header
+119:19 (http_inspect) HTTP header line exceeds 4096 bytes
 
-(http_inspect) long header
+HTTP header line exceeds 4096 bytes. This does not apply to the start
+line. Header line length includes both header field name and value.
 
-119:20 (http_inspect) max header fields
+119:20 (http_inspect) HTTP message has more than 200 header fields
 
-(http_inspect) max header fields
+HTTP message has more than 200 header fields.
 
-119:21 (http_inspect) multiple content length
+119:21 (http_inspect) HTTP message has more than one Content-Length
+header value
 
-(http_inspect) multiple content length
+HTTP message has more than one Content-Length header value. This may
+be multiple header lines or comma-separated values on one line.
 
 119:24 (http_inspect) Host header field appears more than once or has
 multiple values
 
-(http_inspect) Host header field appears more than once or has
-multiple values
+Host header field appears more than once or has multiple values.
 
-119:25 (http_inspect) Host header value is too long
+119:25 (http_inspect) length of HTTP Host header field value exceeds
+maximum_host_length option
 
-(http_inspect) Host header value is too long
+Length of HTTP Host header field value exceeds maximum_host_length
+option.
 
-119:28 (http_inspect) POST or PUT w/o content-length or chunks
+119:28 (http_inspect) HTTP POST or PUT request without content-length
+or chunks
 
-(http_inspect) POST or PUT w/o content-length or chunks
+HTTP request uses POST or PUT method without delimiting the message
+body using either the Content-Length header or Transfer-Encoding
+chunked.
 
-119:31 (http_inspect) unknown method
+119:31 (http_inspect) HTTP request method is not known to Snort
 
-(http_inspect) unknown method
+HTTP request method is not known to Snort. Snort is familiar with all
+RFC methods and dozens of other methods.
 
-119:32 (http_inspect) simple request
+119:32 (http_inspect) HTTP request uses primitive HTTP format known
+as HTTP/0.9
 
-(http_inspect) simple request
+HTTP request uses primitive HTTP format known as HTTP/0.9.
 
-119:33 (http_inspect) unescaped space in HTTP URI
+119:33 (http_inspect) HTTP request URI has space character that is
+not percent-encoded
 
-(http_inspect) unescaped space in HTTP URI
+HTTP request URI has space character that is not percent-encoded.
 
-119:34 (http_inspect) too many pipelined requests
+119:34 (http_inspect) HTTP connection has more than 100 simultaneous
+pipelined requests that have not been answered
 
-(http_inspect) too many pipelined requests
+HTTP connection has more than 100 simultaneous pipelined requests
+that have not been answered.
 
 119:102 (http_inspect) invalid status code in HTTP response
 
-(http_inspect) invalid status code in HTTP response
+Invalid status code in HTTP response. Either it is outside the range
+100-599 or it is not a number.
 
-119:104 (http_inspect) HTTP response has UTF charset that failed to
-normalize
+119:104 (http_inspect) HTTP response has UTF character set that
+failed to normalize
 
-(http_inspect) HTTP response has UTF charset that failed to normalize
+HTTP response has Content-Type charset=utf-16le, utf-16be, utf-32le,
+or utf-32be, but UTF decoding of the message body failed.
 
-119:105 (http_inspect) HTTP response has UTF-7 charset
+119:105 (http_inspect) HTTP response has UTF-7 character set
 
-(http_inspect) HTTP response has UTF-7 charset
+HTTP response has Content-Type charset=utf-7.
 
-119:109 (http_inspect) javascript obfuscation levels exceeds 1
+119:109 (http_inspect) more than one level of JavaScript obfuscation
 
-(http_inspect) javascript obfuscation levels exceeds 1
+More than one level of JavaScript obfuscation. This alert can only be
+generated when normalize_javascript configuration option is true.
 
-119:110 (http_inspect) javascript whitespaces exceeds max allowed
+119:110 (http_inspect) consecutive JavaScript whitespaces exceed
+maximum allowed
 
-(http_inspect) javascript whitespaces exceeds max allowed
+Consecutive whitespaces within a JavaScript exceed
+max_javascript_whitespaces configuration option. This alert can only
+be generated when normalize_javascript configuration option is true.
 
-119:111 (http_inspect) multiple encodings within javascript
+119:111 (http_inspect) multiple encodings within JavaScript
 obfuscated data
 
-(http_inspect) multiple encodings within javascript obfuscated data
+More than one encoding within JavaScript obfuscated data. This alert
+can only be generated when normalize_javascript configuration option
+is true.
 
 119:112 (http_inspect) SWF file zlib decompression failure
 
-(http_inspect) SWF file zlib decompression failure
+SWF file zlib decompression failure.
 
 119:113 (http_inspect) SWF file LZMA decompression failure
 
-(http_inspect) SWF file LZMA decompression failure
+SWF file LZMA decompression failure.
 
 119:114 (http_inspect) PDF file deflate decompression failure
 
-(http_inspect) PDF file deflate decompression failure
+PDF file deflate decompression failure.
 
 119:115 (http_inspect) PDF file unsupported compression type
 
-(http_inspect) PDF file unsupported compression type
+PDF file unsupported compression type.
 
 119:116 (http_inspect) PDF file cascaded compression
 
-(http_inspect) PDF file cascaded compression
+PDF file cascaded compression.
 
 119:117 (http_inspect) PDF file parse failure
 
-(http_inspect) PDF file parse failure
+PDF file parse failure.
 
-119:201 (http_inspect) not HTTP traffic
+119:201 (http_inspect) not HTTP traffic or unrecoverable HTTP
+protocol error
 
-(http_inspect) not HTTP traffic
+HTTP inspector is unable to parse this flow. Either the connection is
+not actually using HTTP or some sort of unrecoverable HTTP protocol
+error has occurred. This conclusion applies only to one direction of
+the flow. The opposite direction may be OK.
 
 119:202 (http_inspect) chunk length has excessive leading zeros
 
-(http_inspect) chunk length has excessive leading zeros
+Chunk length has five or more leading zeros.
 
-119:203 (http_inspect) white space before or between messages
+119:203 (http_inspect) white space before or between HTTP messages
 
-(http_inspect) white space before or between messages
+White space characters before the first HTTP message or inserted
+between HTTP messages.
 
 119:204 (http_inspect) request message without URI
 
-(http_inspect) request message without URI
+HTTP request message does not include a URI. There is nothing between
+the method and the version except whitespace. Alternatively the 0.9
+equivalent which is GET followed by nothing except whitespace.
 
-119:205 (http_inspect) control character in reason phrase
+119:205 (http_inspect) control character in HTTP response reason
+phrase
 
-(http_inspect) control character in reason phrase
+The reason phrase in an HTTP response message contains a control
+character.
 
 119:206 (http_inspect) illegal extra whitespace in start line
 
-(http_inspect) illegal extra whitespace in start line
+There is more than one space (or other whitespace) character between
+two elements of an HTTP request or status line.
 
 119:207 (http_inspect) corrupted HTTP version
 
-(http_inspect) corrupted HTTP version
+The HTTP version in the start line begins with "HTTP/" but the
+remainder is not in the expected <digit>.<digit> format.
 
-119:208 (http_inspect) unknown HTTP version
+119:208 (http_inspect) HTTP version in start line is not HTTP/1.0 or
+1.1
 
-(http_inspect) unknown HTTP version
+The HTTP version in the start line has a valid format but is not HTTP
+/1.0 or HTTP/1.1. This alert does not apply to HTTP/2 or HTTP/3
+traffic.
 
 119:209 (http_inspect) format error in HTTP header
 
-(http_inspect) format error in HTTP header
+format error in HTTP header
 
 119:210 (http_inspect) chunk header options present
 
-(http_inspect) chunk header options present
+chunk header options present
 
 119:211 (http_inspect) URI badly formatted
 
-(http_inspect) URI badly formatted
+URI badly formatted
 
 119:212 (http_inspect) unrecognized type of percent encoding in URI
 
-(http_inspect) unrecognized type of percent encoding in URI
+unrecognized type of percent encoding in URI
 
 119:213 (http_inspect) HTTP chunk misformatted
 
-(http_inspect) HTTP chunk misformatted
+HTTP chunk misformatted
 
 119:214 (http_inspect) white space adjacent to chunk length
 
-(http_inspect) white space adjacent to chunk length
+white space adjacent to chunk length
 
 119:215 (http_inspect) white space within header name
 
-(http_inspect) white space within header name
+white space within header name
 
 119:216 (http_inspect) excessive gzip compression
 
-(http_inspect) excessive gzip compression
+excessive gzip compression
 
 119:217 (http_inspect) gzip decompression failed
 
-(http_inspect) gzip decompression failed
+gzip decompression failed
 
 119:218 (http_inspect) HTTP 0.9 requested followed by another request
 
-(http_inspect) HTTP 0.9 requested followed by another request
+HTTP 0.9 requested followed by another request
 
 119:219 (http_inspect) HTTP 0.9 request following a normal request
 
-(http_inspect) HTTP 0.9 request following a normal request
+HTTP 0.9 request following a normal request
 
 119:220 (http_inspect) message has both Content-Length and
 Transfer-Encoding
 
-(http_inspect) message has both Content-Length and Transfer-Encoding
+message has both Content-Length and Transfer-Encoding
 
 119:221 (http_inspect) status code implying no body combined with
 Transfer-Encoding or nonzero Content-Length
 
-(http_inspect) status code implying no body combined with
-Transfer-Encoding or nonzero Content-Length
+status code implying no body combined with Transfer-Encoding or
+nonzero Content-Length
 
 119:222 (http_inspect) Transfer-Encoding not ending with chunked
 
-(http_inspect) Transfer-Encoding not ending with chunked
+Transfer-Encoding not ending with chunked
 
 119:223 (http_inspect) Transfer-Encoding with encodings before
 chunked
 
-(http_inspect) Transfer-Encoding with encodings before chunked
+Transfer-Encoding with encodings before chunked
 
 119:224 (http_inspect) misformatted HTTP traffic
 
-(http_inspect) misformatted HTTP traffic
+misformatted HTTP traffic
 
 119:225 (http_inspect) unsupported Content-Encoding used
 
-(http_inspect) unsupported Content-Encoding used
+unsupported Content-Encoding used
 
 119:226 (http_inspect) unknown Content-Encoding used
 
-(http_inspect) unknown Content-Encoding used
+unknown Content-Encoding used
 
 119:227 (http_inspect) multiple Content-Encodings applied
 
-(http_inspect) multiple Content-Encodings applied
+multiple Content-Encodings applied
 
 119:228 (http_inspect) server response before client request
 
-(http_inspect) server response before client request
+server response before client request
 
 119:229 (http_inspect) PDF/SWF/ZIP decompression of server response
 too big
 
-(http_inspect) PDF/SWF/ZIP decompression of server response too big
+PDF/SWF/ZIP decompression of server response too big
 
 119:230 (http_inspect) nonprinting character in HTTP message header
 name
 
-(http_inspect) nonprinting character in HTTP message header name
+nonprinting character in HTTP message header name
 
 119:231 (http_inspect) bad Content-Length value in HTTP header
 
-(http_inspect) bad Content-Length value in HTTP header
+bad Content-Length value in HTTP header
 
 119:232 (http_inspect) HTTP header line wrapped
 
-(http_inspect) HTTP header line wrapped
+HTTP header line wrapped
 
 119:233 (http_inspect) HTTP header line terminated by CR without a LF
 
-(http_inspect) HTTP header line terminated by CR without a LF
+HTTP header line terminated by CR without a LF
 
 119:234 (http_inspect) chunk terminated by nonstandard separator
 
-(http_inspect) chunk terminated by nonstandard separator
+chunk terminated by nonstandard separator
 
 119:235 (http_inspect) chunk length terminated by LF without CR
 
-(http_inspect) chunk length terminated by LF without CR
+chunk length terminated by LF without CR
 
 119:236 (http_inspect) more than one response with 100 status code
 
-(http_inspect) more than one response with 100 status code
+more than one response with 100 status code
 
 119:237 (http_inspect) 100 status code not in response to Expect
 header
 
-(http_inspect) 100 status code not in response to Expect header
+100 status code not in response to Expect header
 
 119:238 (http_inspect) 1XX status code other than 100 or 101
 
-(http_inspect) 1XX status code other than 100 or 101
+1XX status code other than 100 or 101
 
 119:239 (http_inspect) Expect header sent without a message body
 
-(http_inspect) Expect header sent without a message body
+Expect header sent without a message body
 
 119:240 (http_inspect) HTTP 1.0 message with Transfer-Encoding header
 
-(http_inspect) HTTP 1.0 message with Transfer-Encoding header
+HTTP 1.0 message with Transfer-Encoding header
 
 119:241 (http_inspect) Content-Transfer-Encoding used as HTTP header
 
-(http_inspect) Content-Transfer-Encoding used as HTTP header
+Content-Transfer-Encoding used as HTTP header
 
 119:242 (http_inspect) illegal field in chunked message trailers
 
-(http_inspect) illegal field in chunked message trailers
+illegal field in chunked message trailers
 
 119:243 (http_inspect) header field inappropriately appears twice or
 has two values
 
-(http_inspect) header field inappropriately appears twice or has two
-values
+header field inappropriately appears twice or has two values
 
 119:244 (http_inspect) invalid value chunked in Content-Encoding
 header
 
-(http_inspect) invalid value chunked in Content-Encoding header
+invalid value chunked in Content-Encoding header
 
 119:245 (http_inspect) 206 response sent to a request without a Range
 header
 
-(http_inspect) 206 response sent to a request without a Range header
+206 response sent to a request without a Range header
 
 119:246 (http_inspect) HTTP in version field not all upper case
 
-(http_inspect) HTTP in version field not all upper case
+HTTP in version field not all upper case
 
 119:247 (http_inspect) white space embedded in critical header value
 
-(http_inspect) white space embedded in critical header value
+white space embedded in critical header value
 
 119:248 (http_inspect) gzip compressed data followed by unexpected
 non-gzip data
 
-(http_inspect) gzip compressed data followed by unexpected non-gzip
-data
+gzip compressed data followed by unexpected non-gzip data
 
 119:249 (http_inspect) excessive HTTP parameter key repeats
 
-(http_inspect) excessive HTTP parameter key repeats
+excessive HTTP parameter key repeats
 
 119:250 (http_inspect) HTTP/2 Transfer-Encoding header other than
 identity
 
-(http_inspect) HTTP/2 Transfer-Encoding header other than identity
+HTTP/2 Transfer-Encoding header other than identity
 
 119:251 (http_inspect) HTTP/2 message body overruns Content-Length
 header value
 
-(http_inspect) HTTP/2 message body overruns Content-Length header
-value
+HTTP/2 message body overruns Content-Length header value
 
 119:252 (http_inspect) HTTP/2 message body smaller than
 Content-Length header value
 
-(http_inspect) HTTP/2 message body smaller than Content-Length header
-value
+HTTP/2 message body smaller than Content-Length header value
 
 119:253 (http_inspect) HTTP CONNECT request with a message body
 
-(http_inspect) HTTP CONNECT request with a message body
+HTTP CONNECT request with a message body
 
 119:254 (http_inspect) HTTP client-to-server traffic after CONNECT
 request but before CONNECT response
 
-(http_inspect) HTTP client-to-server traffic after CONNECT request
-but before CONNECT response
+HTTP client-to-server traffic after CONNECT request but before
+CONNECT response
 
 119:255 (http_inspect) HTTP CONNECT 2XX response with Content-Length
 header
 
-(http_inspect) HTTP CONNECT 2XX response with Content-Length header
+HTTP CONNECT 2XX response with Content-Length header
 
 119:256 (http_inspect) HTTP CONNECT 2XX response with
 Transfer-Encoding header
 
-(http_inspect) HTTP CONNECT 2XX response with Transfer-Encoding
-header
+HTTP CONNECT 2XX response with Transfer-Encoding header
 
 119:257 (http_inspect) HTTP CONNECT response with 1XX status code
 
-(http_inspect) HTTP CONNECT response with 1XX status code
+HTTP CONNECT response with 1XX status code
 
 119:258 (http_inspect) HTTP CONNECT response before request message
 completed
 
-(http_inspect) HTTP CONNECT response before request message completed
+HTTP CONNECT response before request message completed
 
 119:259 (http_inspect) malformed HTTP Content-Disposition filename
 parameter
 
-(http_inspect) malformed HTTP Content-Disposition filename parameter
+malformed HTTP Content-Disposition filename parameter
 
 119:260 (http_inspect) HTTP Content-Length message body was truncated
 
-(http_inspect) HTTP Content-Length message body was truncated
+HTTP Content-Length message body was truncated
 
 119:261 (http_inspect) HTTP chunked message body was truncated
 
-(http_inspect) HTTP chunked message body was truncated
+HTTP chunked message body was truncated
 
 119:262 (http_inspect) HTTP URI scheme longer than 10 characters
 
-(http_inspect) HTTP URI scheme longer than 10 characters
+HTTP URI scheme longer than 10 characters
 
 119:263 (http_inspect) HTTP/1 client requested HTTP/2 upgrade
 
-(http_inspect) HTTP/1 client requested HTTP/2 upgrade
+HTTP/1 client requested HTTP/2 upgrade
 
 119:264 (http_inspect) HTTP/1 server granted HTTP/2 upgrade
 
-(http_inspect) HTTP/1 server granted HTTP/2 upgrade
+HTTP/1 server granted HTTP/2 upgrade
 
 119:265 (http_inspect) bad token in JavaScript
 
@@ -12915,177 +13070,175 @@ When this threshold is reached, a corresponding alert is raised. This
 alert is not expected for typical network traffic and may be an
 indication that an attacker is trying to exhaust resources.
 
-119:271 (http_inspect) JavaScript template literal nesting is over
-capacity
+119:271 (http_inspect) JavaScript scope nesting is over capacity
 
 In JavaScript, template literals can have substitutions, that in turn
 can have nested template literals, which requires a stack to track
-for proper whitespace normalization. When the depth of nesting
-exceeds limit set in http_inspect.js_norm_max_tmpl_nest, this alert
-is raised. This alert is not expected for typical network traffic and
-may be an indication that an attacker is trying to exhaust resources.
+for proper whitespace normalization. Also, the normalization tracks
+the current scope, which requires a stack as well. When the depth of
+nesting exceeds limit set in http_inspect.js_norm_max_tmpl_nest or in
+http_inspect.js_norm_max_scope_depth, this alert is raised. This
+alert is not expected for typical network traffic and may be an
+indication that an attacker is trying to exhaust resources.
 
 119:272 (http_inspect) Consecutive commas in HTTP Accept-Encoding
 header
 
-(http_inspect) Consecutive commas in HTTP Accept-Encoding header
+Consecutive commas in HTTP Accept-Encoding header
 
 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
 
-(http2_inspect) invalid flag set on HTTP/2 frame
+invalid flag set on HTTP/2 frame
 
 121:2 (http2_inspect) HPACK integer value has leading zeros
 
-(http2_inspect) HPACK integer value has leading zeros
+HPACK integer value has leading zeros
 
 121:3 (http2_inspect) HTTP/2 stream initiated with invalid stream id
 
-(http2_inspect) HTTP/2 stream initiated with invalid stream id
+HTTP/2 stream initiated with invalid stream id
 
 121:4 (http2_inspect) missing HTTP/2 continuation frame
 
-(http2_inspect) missing HTTP/2 continuation frame
+missing HTTP/2 continuation frame
 
 121:5 (http2_inspect) unexpected HTTP/2 continuation frame
 
-(http2_inspect) unexpected HTTP/2 continuation frame
+unexpected HTTP/2 continuation frame
 
 121:6 (http2_inspect) misformatted HTTP/2 traffic
 
-(http2_inspect) misformatted HTTP/2 traffic
+misformatted HTTP/2 traffic
 
 121:7 (http2_inspect) HTTP/2 connection preface does not match
 
-(http2_inspect) HTTP/2 connection preface does not match
+HTTP/2 connection preface does not match
 
 121:8 (http2_inspect) HTTP/2 request missing required header field
 
-(http2_inspect) HTTP/2 request missing required header field
+HTTP/2 request missing required header field
 
 121:9 (http2_inspect) HTTP/2 response has no status code
 
-(http2_inspect) HTTP/2 response has no status code
+HTTP/2 response has no status code
 
 121:10 (http2_inspect) HTTP/2 CONNECT request with scheme or path
 
-(http2_inspect) HTTP/2 CONNECT request with scheme or path
+HTTP/2 CONNECT request with scheme or path
 
 121:11 (http2_inspect) error in HTTP/2 settings frame
 
-(http2_inspect) error in HTTP/2 settings frame
+error in HTTP/2 settings frame
 
 121:12 (http2_inspect) unknown parameter in HTTP/2 settings frame
 
-(http2_inspect) unknown parameter in HTTP/2 settings frame
+unknown parameter in HTTP/2 settings frame
 
 121:13 (http2_inspect) invalid HTTP/2 frame sequence
 
-(http2_inspect) invalid HTTP/2 frame sequence
+invalid HTTP/2 frame sequence
 
 121:14 (http2_inspect) HTTP/2 dynamic table size limit exceeded
 
-(http2_inspect) HTTP/2 dynamic table size limit exceeded
+HTTP/2 dynamic table size limit exceeded
 
 121:15 (http2_inspect) HTTP/2 push promise frame with invalid
 promised stream id
 
-(http2_inspect) HTTP/2 push promise frame with invalid promised
-stream id
+HTTP/2 push promise frame with invalid promised stream id
 
 121:16 (http2_inspect) HTTP/2 padding length is bigger than frame
 data size
 
-(http2_inspect) HTTP/2 padding length is bigger than frame data size
+HTTP/2 padding length is bigger than frame data size
 
 121:17 (http2_inspect) HTTP/2 pseudo-header after regular header
 
-(http2_inspect) HTTP/2 pseudo-header after regular header
+HTTP/2 pseudo-header after regular header
 
 121:18 (http2_inspect) HTTP/2 pseudo-header in trailers
 
-(http2_inspect) HTTP/2 pseudo-header in trailers
+HTTP/2 pseudo-header in trailers
 
 121:19 (http2_inspect) invalid HTTP/2 pseudo-header
 
-(http2_inspect) invalid HTTP/2 pseudo-header
+invalid HTTP/2 pseudo-header
 
 121:20 (http2_inspect) HTTP/2 trailers without END_STREAM bit
 
-(http2_inspect) HTTP/2 trailers without END_STREAM bit
+HTTP/2 trailers without END_STREAM bit
 
 121:21 (http2_inspect) HTTP/2 push promise frame sent when prohibited
 by receiver
 
-(http2_inspect) HTTP/2 push promise frame sent when prohibited by
-receiver
+HTTP/2 push promise frame sent when prohibited by receiver
 
 121:22 (http2_inspect) padding flag set on HTTP/2 frame with zero
 length
 
-(http2_inspect) padding flag set on HTTP/2 frame with zero length
+padding flag set on HTTP/2 frame with zero length
 
 121:23 (http2_inspect) HTTP/2 push promise frame in c2s direction
 
-(http2_inspect) HTTP/2 push promise frame in c2s direction
+HTTP/2 push promise frame in c2s direction
 
 121:24 (http2_inspect) invalid HTTP/2 push promise frame
 
-(http2_inspect) invalid HTTP/2 push promise frame
+invalid HTTP/2 push promise frame
 
 121:25 (http2_inspect) HTTP/2 push promise frame sent at invalid time
 
-(http2_inspect) HTTP/2 push promise frame sent at invalid time
+HTTP/2 push promise frame sent at invalid time
 
 121:26 (http2_inspect) invalid parameter value sent in HTTP/2
 settings frame
 
-(http2_inspect) invalid parameter value sent in HTTP/2 settings frame
+invalid parameter value sent in HTTP/2 settings frame
 
 121:27 (http2_inspect) excessive concurrent HTTP/2 streams
 
-(http2_inspect) excessive concurrent HTTP/2 streams
+excessive concurrent HTTP/2 streams
 
 121:28 (http2_inspect) invalid HTTP/2 rst stream frame
 
-(http2_inspect) invalid HTTP/2 rst stream frame
+invalid HTTP/2 rst stream frame
 
 121:29 (http2_inspect) HTTP/2 rst stream frame sent at invalid time
 
-(http2_inspect) HTTP/2 rst stream frame sent at invalid time
+HTTP/2 rst stream frame sent at invalid time
 
 121:30 (http2_inspect) uppercase HTTP/2 header field name
 
-(http2_inspect) uppercase HTTP/2 header field name
+uppercase HTTP/2 header field name
 
 121:31 (http2_inspect) invalid HTTP/2 window update frame
 
-(http2_inspect) invalid HTTP/2 window update frame
+invalid HTTP/2 window update frame
 
 121:32 (http2_inspect) HTTP/2 window update frame with zero increment
 
-(http2_inspect) HTTP/2 window update frame with zero increment
+HTTP/2 window update frame with zero increment
 
 121:33 (http2_inspect) HTTP/2 request without a method
 
-(http2_inspect) HTTP/2 request without a method
+HTTP/2 request without a method
 
 121:34 (http2_inspect) HTTP/2 HPACK table size update not at the
 start of a header block
 
-(http2_inspect) HTTP/2 HPACK table size update not at the start of a
-header block
+HTTP/2 HPACK table size update not at the start of a header block
 
 121:35 (http2_inspect) More than two HTTP/2 HPACK table size updates
 in a single header block
 
-(http2_inspect) More than two HTTP/2 HPACK table size updates in a
-single header block
+More than two HTTP/2 HPACK table size updates in a single header
+block
 
 121:36 (http2_inspect) HTTP/2 HPACK table size update exceeds max
 value set by decoder in SETTINGS frame
 
-(http2_inspect) HTTP/2 HPACK table size update exceeds max value set
-by decoder in SETTINGS frame
+HTTP/2 HPACK table size update exceeds max value set by decoder in
+SETTINGS frame
 
 122:1 (port_scan) TCP portscan
 
@@ -13197,54 +13350,54 @@ by decoder in SETTINGS frame
 
 123:1 (stream_ip) inconsistent IP options on fragmented packets
 
-Received inconsistent IP options on fragmented packets
+Received inconsistent IP options on fragmented packets.
 
 123:2 (stream_ip) teardrop attack
 
-Received indicators of a teardrop attack on fragmented packets
+Received indicators of a teardrop attack on fragmented packets.
 
 123:3 (stream_ip) short fragment, possible DOS attempt
 
 Received short fragment, possible DOS attempt (possible boink/bolt/
 jolt attack). The minimum length required to throw this alert is
-specified by stream_ip.min_frag_length
+specified by stream_ip.min_frag_length.
 
 123:4 (stream_ip) fragment packet ends after defragmented packet
 
-Overlap anomaly: fragment packet ends after defragmented packet
+Overlap anomaly: fragment packet ends after defragmented packet.
 
 123:5 (stream_ip) zero-byte fragment packet
 
-Received a zero-byte fragment
+Received a zero-byte fragment.
 
 123:6 (stream_ip) bad fragment size, packet size is negative
 
-Bad fragment size encountered, packet size is negative
+Bad fragment size encountered, packet size is negative.
 
 123:7 (stream_ip) bad fragment size, packet size is greater than
 65536
 
-Bad fragment size encountered, packet size is greater than 65536
+Bad fragment size encountered, packet size is greater than 65536.
 
 123:8 (stream_ip) fragmentation overlap
 
-Fragmentation results in overlap between segments
+Fragmentation results in overlap between segments.
 
 123:11 (stream_ip) TTL value less than configured minimum, not using
 for reassembly
 
 TTL value is less than configured minimum, not using for reassembly.
-Minimum TTL can be configured with stream_ip.min_ttl
+Minimum TTL can be configured with stream_ip.min_ttl.
 
 123:12 (stream_ip) excessive fragment overlap
 
 Fragment overlap limit exceeded, event will be raised for all
 successive fragments. The max fragment overlaps that can occur before
-alerting is configurable by changing stream_ip.max_overlaps
+alerting is configurable by changing stream_ip.max_overlaps.
 
 123:13 (stream_ip) tiny fragment
 
-Received a tiny fragment (less than minimum fragment length)
+Received a tiny fragment (less than minimum fragment length).
 
 124:1 (smtp) attempted command buffer overflow
 
@@ -13380,21 +13533,21 @@ end
 
 129:1 (stream_tcp) SYN on established session
 
-Received a TCP SYN on an already established TCP session
+Received a TCP SYN on an already established TCP session.
 
 129:2 (stream_tcp) data on SYN packet
 
-Data present on SYN packet
+Data present on SYN packet.
 
 129:3 (stream_tcp) data sent on stream not accepting data
 
 Data was sent on a stream not accepting data. The stream is in the
-TIME-WAIT, FIN-WAIT, CLOSED, or CLOSE-WAIT state
+TIME-WAIT, FIN-WAIT, CLOSED, or CLOSE-WAIT state.
 
 129:4 (stream_tcp) TCP timestamp is outside of PAWS window
 
 The TCP timestamp is outside of PAWS (protection against wrapped
-sequences) window
+sequences) window.
 
 129:5 (stream_tcp) bad segment, adjusted size ⇐ 0 (deprecated)
 
@@ -13405,34 +13558,34 @@ allows
 
 Window size (after scaling) is larger than policy allows.
 stream_tcp.max_window can be increased to allow for larger window
-sizes if desired
+sizes if desired.
 
 129:7 (stream_tcp) limit on number of overlapping TCP packets reached
 
 Limit on number of overlapping TCP packets per session was reached.
 stream_tcp.overlap_limit can be increased to allow for more overlaps
-per session, if desired
+per session, if desired.
 
 129:8 (stream_tcp) data sent on stream after TCP reset sent
 
 Data was sent on stream after a TCP reset was sent, and the stream is
-in CLOSED state
+in CLOSED state.
 
 129:9 (stream_tcp) TCP client possibly hijacked, different ethernet
 address
 
 TCP client is possibly hijacked, MAC addresses on received packets
-differ from what was originally seen on this flow
+differ from what was originally seen on this flow.
 
 129:10 (stream_tcp) TCP server possibly hijacked, different ethernet
 address
 
 TCP server is possibly hijacked, MAC addresses on received packets
-differ from what was originally seen on this flow
+differ from what was originally seen on this flow.
 
 129:11 (stream_tcp) TCP data with no TCP flags set
 
-Received TCP data with no TCP flags set
+Received TCP data with no TCP flags set.
 
 129:12 (stream_tcp) consecutive TCP small segments exceeding
 threshold
@@ -13441,7 +13594,7 @@ Consecutive TCP small segments exceed the configured threshold. The
 size required to be a small segment can be configured via
 stream_tcp.small_segments.maximum_size, and the maximum number of
 these small segments can be configured with int
-stream_tcp.small_segments.count
+stream_tcp.small_segments.count.
 
 129:13 (stream_tcp) 4-way handshake detected
 
@@ -13453,33 +13606,33 @@ detected in all cases.
 129:14 (stream_tcp) TCP timestamp is missing
 
 TCP timestamp is missing, which could cause a failure in PAWS
-checking, or RTT calculation
+checking, or RTT calculation.
 
 129:15 (stream_tcp) reset outside window
 
-TCP reset was requested outside window (bad RST)
+TCP reset was requested outside window (bad RST).
 
 129:16 (stream_tcp) FIN number is greater than prior FIN
 
 TCP Anomaly: FIN number is greater than prior FIN while the
-connection is in TIME-WAIT
+connection is in TIME-WAIT.
 
 129:17 (stream_tcp) ACK number is greater than prior FIN
 
 TCP Anomaly: ACK number is greater than prior FIN while the
-connection is in FIN-WAIT-2
+connection is in FIN-WAIT-2.
 
 129:18 (stream_tcp) data sent on stream after TCP reset received
 
-Data was sent on stream after TCP reset received
+Data was sent on stream after TCP reset received.
 
 129:19 (stream_tcp) TCP window closed before receiving data
 
-TCP window was closed before receiving data
+TCP window was closed before receiving data.
 
 129:20 (stream_tcp) TCP session without 3-way handshake
 
-The TCP 3-way handshake was not seen for this TCP session
+The TCP 3-way handshake was not seen for this TCP session.
 
 131:1 (dns) obsolete DNS RR types
 
@@ -13787,33 +13940,33 @@ payload boundary
 
 135:1 (stream) TCP SYN received
 
-A TCP SYN was received
+A TCP SYN was received.
 
 135:2 (stream) TCP session established
 
-A TCP session was established
+A TCP session was established.
 
 135:3 (stream) TCP session cleared
 
-A TCP session was cleared
+A TCP session was cleared.
 
 136:1 (reputation) packets blocked based on source
 
 The flow was blocked based on the source IP address, since it appears
 on the IP reputation block list. Configure either the discovery
-filter, or the reputation IP lists to change this behavior
+filter, or the reputation IP lists to change this behavior.
 
 136:2 (reputation) packets trusted based on source
 
 The flow was trusted based on the source IP address, since it appears
 on the IP reputation trust list. Configure either the discovery
-filter, or the reputation IP lists to change this behavior
+filter, or the reputation IP lists to change this behavior.
 
 136:3 (reputation) packets monitored based on source
 
 The flow was monitored based on the source IP address, since it
 appears on the IP reputation monitor list. Configure either the
-discovery filter, or the reputation IP lists to change this behavior
+discovery filter, or the reputation IP lists to change this behavior.
 
 136:4 (reputation) packets blocked based on destination
 
@@ -13829,7 +13982,7 @@ The flow was trusted based on the destination IP address, since it
 appears on the IP reputation trust list. If the flow contained proxy
 traffic, the IP address could also be the address of the
 (inner-layer) proxied connection. Configure either the discovery
-filter, or the reputation IP lists to change this behavior
+filter, or the reputation IP lists to change this behavior.
 
 136:6 (reputation) packets monitored based on destination
 
@@ -13838,7 +13991,7 @@ destination IP address, since it appears on the IP reputation monitor
 list. If the flow contained proxy traffic, the IP address could also
 be the address of the (inner-layer) proxied connection. Configure
 either the discovery filter, or the reputation IP lists to change
-this behavior
+this behavior.
 
 137:1 (ssl) invalid client HELLO after server HELLO detected
 
@@ -14836,7 +14989,7 @@ and are not applicable elsewhere.
     file
   * urg (ips_option): detection for TCP urgent pointer
   * vba_data (ips_option): rule option to set the detection cursor to
-    the MS Office Visual Basic for Applications macros buffer 
+    the MS Office Visual Basic for Applications macros buffer
   * vlan (codec): support for local area network
   * window (ips_option): rule option to check TCP window field
   * wizard (inspector): inspector that implements port-independent

@@ -1,3 +1,24 @@
+2021/10/21 - 3.1.15.0
+
+appid: detect client based on longest matching user agent pattern
+appid: update the name of the lua API function that adds process name to client app mappings
+build: fix in CodeCoverage.cmake to generate *.gcda *.o files as needed by gcov
+dce_smb: optimize handling pruning of flows in stress environment
+decompress, http_inspect: add support for processing ole files and for vba_data ips option
+doc: add punctuation to builtin stubs, fix formatting
+doc: builtin rule documentation updates
+http2_inspect: partial header with priority flag set
+http_inspect: add automatic semicolon insertion
+http_inspect: document built-in alerts
+http_inspect: do not normalize JavaScript built-in identifiers
+http_inspect: hardening
+http_inspect: implement JIT (just-in-time) for JavaScript normalization
+http_inspect, ips_option: decouple the vba_data ips option from http_inspect and add the trace debug option to vba_data
+policy: update policy clone code to avoid corrupting active configuration
+protocols: prevent infinite loop over tcp options
+rna: call set_smb_fp_processor function in reload tuner
+rna: do not do service discovery for future flows
+
 2021/10/07 - 3.1.14.0
 
 appid: enhance RPC service detector to handle RPC Bind version 3

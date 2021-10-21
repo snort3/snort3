@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.14.0 2021-10-07 06:47:24 EDT TST
+Revision 3.1.15.0 2021-10-21 08:39:40 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -3844,7 +3844,46 @@ user to write rules against it. If for example a header is supposed
 to be a date then normalization means put that date in a standard
 format.
 
-5.10.2. Configuration
+5.10.2. Legacy and Enhanced Normalizers
+
+Currently, there are Legacy and Enhanced Normalizers for JavaScript
+normalization. Both normalizers are independent and can be configured
+separately. The Legacy normalizer should be considered deprecated.
+The Enhanced Normalizer is encouraged to use for JavaScript
+normalization in the first place as we continue improving
+functionality and quality.
+
+5.10.2.1. Legacy Normalizer
+
+The Legacy Normalizer can normalize obfuscated data within the
+JavaScript functions such as unescape, String.fromCharCode,
+decodeURI, and decodeURIComponent. It also replaces consecutive
+whitespaces with a single space and normalizes the plus by
+concatenating the strings. For more information on how to enable
+Legacy Normalizer, check the http_inspect.normalize_javascript
+option. Legacy Normalizer is deprecated preferably to use Enhanced
+Normalizer. After supporting backward compatibility in the Enhanced
+Normalizer, Legacy Normalizer will be removed.
+
+5.10.2.2. Enhanced Normalizer
+
+Having ips option js_data in the rules automatically enables Enhanced
+Normalizer. The Enhanced Normalizer can normalize inline/external
+scripts. It supports scripts over multiple PDUs. It is a stateful
+JavaScript whitespace and identifiers normalizer. All JavaScript
+identifier names, except those, are from the list of built-in
+identifiers, will be substituted to unified names with the following
+format: var_0000 → var_ffff. Moreover, Normalizer validates the
+syntax concerning ECMA-262 Standard, including scope tracking, and
+checks for restrictions for contents of script elements (since it is
+HTML-embedded JavaScript). For more information on how additionally
+configure Enhanced Normalizer check the following http_inspect
+options: js_normalization_depth, js_norm_identifier_depth,
+js_norm_max_tmpl_nest, js_norm_max_scope_depth,
+js_norm_built_in_ident. Eventually Enhanced Normalizer will
+completely replace Legacy Normalizer.
+
+5.10.3. Configuration
 
 Configuration can be as simple as adding:
 
@@ -3855,7 +3894,7 @@ inspection and may be all that you need. But there are some options
 that provide extra features, tweak how things are done, or conserve
 resources by doing less.
 
-5.10.2.1. request_depth and response_depth
+5.10.3.1. request_depth and response_depth
 
 These replace the flow depth parameters used by the old HTTP
 inspector but they work differently.
@@ -3883,7 +3922,7 @@ omit the depth parameter entirely because that is the default.
 These limits have no effect on how much data is forwarded to file
 processing.
 
-5.10.2.2. script_detection
+5.10.3.2. script_detection
 
 Script detection is a feature that enables Snort to more quickly
 detect and block response messages containing malicious JavaScript.
@@ -3895,7 +3934,7 @@ consumes somewhat more of the sensor’s resources.
 This feature is off by default. script_detection = true will activate
 it.
 
-5.10.2.3. gzip
+5.10.3.3. gzip
 
 http_inspect by default decompresses deflate and gzip message bodies
 before inspecting them. This feature can be turned off by unzip =
@@ -3904,14 +3943,14 @@ improvement but at a very high price. It is unlikely that any
 meaningful inspection of message bodies will be possible. Effectively
 HTTP processing would be limited to the headers.
 
-5.10.2.4. normalize_utf
+5.10.3.4. normalize_utf
 
 http_inspect will decode utf-8, utf-7, utf-16le, utf-16be, utf-32le,
 and utf-32be in response message bodies based on the Content-Type
 header. This feature is on by default: normalize_utf = false will
 deactivate it.
 
-5.10.2.5. decompress_pdf
+5.10.3.5. decompress_pdf
 
 decompress_pdf = true will enable decompression of compressed
 portions of PDF files encountered in a response body. http_inspect
@@ -3920,7 +3959,7 @@ locate PDF streams with a single /FlateDecode filter. The compressed
 content is decompressed and made available through the file data rule
 option.
 
-5.10.2.6. decompress_swf
+5.10.3.6. decompress_swf
 
 decompress_swf = true will enable decompression of compressed SWF
 (Adobe Flash content) files encountered in a response body. The
@@ -3930,16 +3969,17 @@ LZMA. The compressed content is decompressed and made available
 through the file data rule option. The compressed SWF file signature
 is converted to FWS to indicate an uncompressed file.
 
-5.10.2.7. decompress_vba
+5.10.3.7. decompress_vba
 
-decompress_vba = true will enable decompression of RLE (Run Length Encoding)
-compressed vba (Visual Basic for Applications) macro data of MS Office
-files. The MS office files are PKZIP compressed which are parsed to locate
-the OLE (Object Linking and Embedding) file embedded with the files
-containing RLE compressed vba macro data. The decompressed vba macro data is
-then made available through the vba_data ips rule option.
+decompress_vba = true will enable decompression of RLE (Run Length
+Encoding) compressed vba (Visual Basic for Applications) macro data
+of MS Office files. The MS office files are PKZIP compressed which
+are parsed to locate the OLE (Object Linking and Embedding) file
+embedded with the files containing RLE compressed vba macro data. The
+decompressed vba macro data is then made available through the
+vba_data ips rule option.
 
-5.10.2.8. normalize_javascript
+5.10.3.8. normalize_javascript
 
 normalize_javascript = true will enable legacy normalizer of
 JavaScript within the HTTP response body. http_inspect looks for
@@ -3950,47 +3990,36 @@ normalized. The different encodings handled within the unescape,
 decodeURI, or decodeURIComponent are %XX, %uXXXX, XX and uXXXXi.
 http_inspect also replaces consecutive whitespaces with a single
 space and normalizes the plus by concatenating the strings. Such
-normalizations refer to basic JavaScript normalization. Cannot be
-used together with js_normalization_depth (doing so will cause Snort
-to fail to load). This is planned to be deprecated at some point.
+normalizations refer to basic JavaScript normalization.
 
-5.10.2.9. js_normalization_depth
+5.10.3.9. js_normalization_depth
 
 js_normalization_depth = N {-1 : max53} will set a number of input
-JavaScript bytes to normalize and enable the enhanced normalizer. The
-enhanced and legacy normalizers have mutual exclusion behaviour, so
-you cannot enable both at the same time (doing so will cause Snort to
-fail to load). When the depth is reached, normalization will be
-stopped. It’s implemented per-script. js_normalization_depth = -1,
-will set unlimited depth. By default, the value is set to 0 which
-means that normalizer is disabled. The enhanced normalizer provides
-more precise whitespace normalization of JavaScript, that removes all
-redundant whitespaces and line terminators from the JavaScript syntax
-point of view (between identifier and punctuator, between identifier
-and operator, etc.) according to ECMAScript 5.1 standard.
-Additionally, it performs normalization of JavaScript identifiers
-making a substitution of unique names with unified names
-representation: a0 → z9999. The identifiers are variables and
-function names. The normalized data is available through the js_data
-rule option. This is currently experimental and still under
-development.
+JavaScript bytes to normalize. When the depth is reached,
+normalization will be stopped. It’s implemented per-script. By
+default js_normalization_depth = -1, will set unlimited depth. The
+enhanced normalizer provides more precise whitespace normalization of
+JavaScript, that removes all redundant whitespaces and line
+terminators from the JavaScript syntax point of view (between
+identifier and punctuator, between identifier and operator, etc.)
+according to ECMAScript 5.1 standard. Additionally, it performs
+normalization of JavaScript identifiers making a substitution of
+unique names with unified names representation: var_0000:var_ffff.
+The identifiers are variables and function names. The normalized data
+is available through the js_data rule option.
 
-5.10.2.10. js_norm_identifier_depth
+5.10.3.10. js_norm_identifier_depth
 
-js_norm_identifier_depth = N {0 : 260000} will set a number of unique
+js_norm_identifier_depth = N {0 : 65536} will set a number of unique
 JavaScript identifiers to normalize. When the depth is reached, a
-built-in alert is generated. It’s implemented per HTTP transaction
-(request/response), so the context of identifier substitutions is
-shared between all the scripts in the payload. By default, the value
-is set to 260000, which is the max allowed number of unique
-identifiers. The generated names are in the range from a0 to z9999.
-Thus, the number of unique identifiers cannot be greater than 26 *
-10000 = 260000. This option takes effect only if
-js_normalization_depth is set to a non-zero value, enabling the
-enhanced normalizer. This is currently experimental and still under
-development.
+built-in alert is generated. Every HTTP Response has its own
+identifier substitution context. Thus, all scripts from the same
+response will be normalized as if they are a single script.. By
+default, the value is set to 65536, which is the max allowed number
+of unique identifiers. The generated names are in the range from
+var_0000 to var_ffff.
 
-5.10.2.11. js_norm_max_tmpl_nest
+5.10.3.11. js_norm_max_tmpl_nest
 
 js_norm_max_tmpl_nest = N {0 : 255} (default 32) is an option of the
 enhanced JavaScript normalizer that determines the deepest level of
@@ -4000,11 +4029,38 @@ can have arbitrary JavaScript substitutions, that will be evaluated
 and inserted into the string. Such substitutions can be nested, and
 require keeping track of every layer for proper normalization. This
 option is present to limit the amount of memory dedicated to this
-tracking. This option is used only when js_normalization_depth is not
-0. This feature is currently experimental and still under
-development.
+tracking.
 
-5.10.2.12. xff_headers
+5.10.3.12. js_norm_max_scope_depth
+
+js_norm_max_scope_depth = N {0 : 65535} (default 256) is an option of
+the enhanced JavaScript normalizer that determines the deepest level
+of nested scope. The scope term includes code sections("{}"),
+parentheses("()") and brackets("[]"). This option is present to limit
+the amount of memory dedicated to this tracking.
+
+5.10.3.13. js_norm_built_in_ident
+
+js_norm_built_in_ident = {<the list of built-in JavaScript identifier
+names>}. The default list is present in "snort_defaults.lua".
+
+The built-in JavaScript identifiers will be placed as is, without
+substitution. Normalizer tracks built-in identifier expressions based
+on the configured list of built-in names. The built-in identifier
+expression is the built-in name (function or object) and the chain of
+dot and bracket accessors after it, including the function calls. For
+example:
+
+console.log("bar")
+document.getElementById("id").text
+eval("script")
+foo["bar"]
+
+The list must contain object and function names only. For example:
+
+http_inspect.js_norm_built_in_ident = { 'console', 'document', 'eval', 'foo' }
+
+5.10.3.14. xff_headers
 
 This configuration supports defining custom x-forwarded-for type
 headers. In a multi-vendor world, it is quite possible that the
@@ -4019,7 +4075,7 @@ they are defined, e.g "x-forwarded-for" will be preferred than
 "true-client-ip" if both headers are present in the stream. The
 header names should be delimited by a space.
 
-5.10.2.13. maximum_host_length
+5.10.3.15. maximum_host_length
 
 Setting maximum_host_length causes http_inspect to generate 119:25 if
 the Host header value including optional white space exceeds the
@@ -4027,7 +4083,7 @@ specified length. In the abnormal case of multiple Host headers, the
 total length of the combined values is used. The default value is -1,
 meaning do not perform this check.
 
-5.10.2.14. maximum_chunk_length
+5.10.3.16. maximum_chunk_length
 
 http_inspect strictly limits individual chunks within a chunked
 message body to be less than four gigabytes.
@@ -4035,7 +4091,7 @@ message body to be less than four gigabytes.
 A lower limit may be configured by setting maximum_chunk_length. Any
 chunk longer than maximum chunk length will generate a 119:16 alert.
 
-5.10.2.15. URI processing
+5.10.3.17. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize
@@ -4131,7 +4187,7 @@ allow directories to be separated by backslashes:
 backslash_to_slash is turned on by default. It replaces all the
 backslashes with slashes during normalization.
 
-5.10.3. CONNECT processing
+5.10.4. CONNECT processing
 
 The HTTP CONNECT method is used by a client to establish a tunnel to
 a destination via an HTTP proxy server. If the connection is
@@ -4162,7 +4218,7 @@ tactic, the HTTP inspector will not cut over to the wizard if it sees
 any early client-to-server traffic, but will continue normal HTTP
 processing of the flow regardless of the eventual server response.
 
-5.10.4. Trace messages
+5.10.5. Trace messages
 
 When a user needs help to sort out things going on inside HTTP
 inspector, Trace module becomes handy.
@@ -4172,7 +4228,7 @@ $ snort --help-module trace | grep http_inspect
 Messages for the enhanced JavaScript Normalizer follow (more
 verbosity available in debug build):
 
-5.10.4.1. trace.module.http_inspect.js_proc
+5.10.5.1. trace.module.http_inspect.js_proc
 
 Messages from script processing flow and their verbosity levels:
 
@@ -4180,7 +4236,7 @@ Messages from script processing flow and their verbosity levels:
  2. Attributes of the detected script.
  3. Return codes from Normalizer.
 
-5.10.4.2. trace.module.http_inspect.js_dump
+5.10.5.2. trace.module.http_inspect.js_dump
 
 JavaScript data dump and verbosity levels:
 
@@ -4188,7 +4244,7 @@ JavaScript data dump and verbosity levels:
  2. (no messages available currently)
  3. Current script as it is passed to Normalizer.
 
-5.10.5. Detection rules
+5.10.6. Detection rules
 
 http_inspect parses HTTP messages into their components and makes
 them available to the detection engine through rule options. Let’s
@@ -4259,7 +4315,7 @@ list.
 In addition to the headers there are rule options for virtually every
 part of the HTTP message.
 
-5.10.5.1. http_uri and http_raw_uri
+5.10.6.1. http_uri and http_raw_uri
 
 These provide the URI of the request message. The raw form is exactly
 as it appeared in the message and the normalized form is determined
@@ -4319,7 +4375,7 @@ Note: this section uses informal language to explain some things.
 Nothing here is intended to conflict with the technical language of
 the HTTP RFCs and the implementation follows the RFCs.
 
-5.10.5.2. http_header and http_raw_header
+5.10.6.2. http_header and http_raw_header
 
 These cover all the header lines except the first one. You may
 specify an individual header by name using the field option as shown
@@ -4346,7 +4402,7 @@ In most cases specifying individual headers creates a more efficient
 and accurate rule. It is recommended that new rules be written using
 individual headers whenever possible.
 
-5.10.5.3. http_trailer and http_raw_trailer
+5.10.6.3. http_trailer and http_raw_trailer
 
 HTTP permits header lines to appear after a chunked body ends.
 Typically they contain information about the message content that was
@@ -4358,7 +4414,7 @@ counterparts except they apply to these end headers. If you want a
 rule to inspect both kinds of headers you need to write two rules,
 one using header and one using trailer.
 
-5.10.5.4. http_cookie and http_raw_cookie
+5.10.6.4. http_cookie and http_raw_cookie
 
 These provide the value of the Cookie header for a request message
 and the Set-Cookie for a response message. If multiple cookies are
@@ -4367,7 +4423,7 @@ present they will be concatenated into a comma-separated list.
 Normalization for http_cookie is the same URI-style normalization
 applied to http_header when no specific header is specified.
 
-5.10.5.5. http_true_ip
+5.10.6.5. http_true_ip
 
 This provides the original IP address of the client sending the
 request as it was stored by a proxy in the request message headers.
@@ -4376,42 +4432,42 @@ True-Client-IP or any other custom x-forwarded-for type header. If
 multiple headers are present the preference defined in xff_headers
 configuration is considered.
 
-5.10.5.6. http_client_body
+5.10.6.6. http_client_body
 
 This is the body of a request message such as POST or PUT.
 Normalization for http_client_body is the same URI-like normalization
 applied to http_header when no specific header is specified.
 
-5.10.5.7. http_raw_body
+5.10.6.7. http_raw_body
 
 This is the body of a request or response message. It will be
 dechunked and unzipped if applicable but will not be normalized in
 any other way.
 
-5.10.5.8. http_method
+5.10.6.8. http_method
 
 The method field of a request message. Common values are "GET",
 "POST", "OPTIONS", "HEAD", "DELETE", "PUT", "TRACE", and "CONNECT".
 
-5.10.5.9. http_stat_code
+5.10.6.9. http_stat_code
 
 The status code field of a response message. This is normally a
 3-digit number between 100 and 599. In this example it is 200.
 
 HTTP/1.1 200 OK
 
-5.10.5.10. http_stat_msg
+5.10.6.10. http_stat_msg
 
 The reason phrase field of a response message. This is the
 human-readable text following the status code. "OK" in the previous
 example.
 
-5.10.5.11. http_version
+5.10.6.11. http_version
 
 The protocol version information that appears on the first line of an
 HTTP message. This is usually "HTTP/1.0" or "HTTP/1.1".
 
-5.10.5.12. http_raw_request and http_raw_status
+5.10.6.12. http_raw_request and http_raw_status
 
 These are the unmodified first header line of the HTTP request and
 response messages respectively. These rule options are a safety valve
@@ -4421,13 +4477,13 @@ first header line. For a request message those are http_method,
 http_raw_uri, and http_version. For a response message those are
 http_version, http_stat_code, and http_stat_msg.
 
-5.10.5.13. file_data
+5.10.6.13. file_data
 
 The file_data contains the normalized message body. This is the
 normalization described above under gzip, normalize_utf,
 decompress_pdf, decompress_swf, and normalize_javascript.
 
-5.10.5.14. js_data
+5.10.6.14. js_data
 
 The js_data contains normalized JavaScript text collected from the
 whole PDU (inline or external scripts). It requires the Enhanced
@@ -4436,13 +4492,13 @@ js_normalization_depth option is described above. Despite what
 js_data has, file_data still contains the whole HTTP body with an
 original JavaScript in it.
 
-5.10.5.15. vba_data
+5.10.6.15. vba_data
 
-The vba_data will contain the decompressed Visual Basic for Applications
-(vba) macro data embedded in MS office files. It requires decompress_zip
-and decompress_vba options enabled.
+The vba_data will contain the decompressed Visual Basic for
+Applications (vba) macro data embedded in MS office files. It
+requires decompress_zip and decompress_vba options enabled.
 
-5.10.6. Timing issues and combining rule options
+5.10.7. Timing issues and combining rule options
 
 HTTP inspector is stateful. That means it is aware of a bigger
 picture than the packet in front of it. It knows what all the pieces
