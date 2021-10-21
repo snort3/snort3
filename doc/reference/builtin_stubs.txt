@@ -1515,59 +1515,60 @@ Received a tiny fragment (less than minimum fragment length).
 
 124:1
 
-(smtp) attempted command buffer overflow
+SMTP command exceeds the configured max_command_line_len.
 
 124:2
 
-(smtp) attempted data header buffer overflow
+SMTP data header exceeds the configured max_header_line_len.
 
 124:3
 
-(smtp) attempted response buffer overflow
+SMTP response exceeds the configured max_response_line_len.
 
 124:4
 
-(smtp) attempted specific command buffer overflow
+SMTP command that is specified in the alt_max_command_line_len array is detected, and its length
+exceeds the maximum length that is configured in the array.
 
 124:5
 
-(smtp) unknown command
+Command did not match valid_cmds list.
 
 124:6
 
-(smtp) illegal command
+Invalid command(invalid_cmds) is detected.
 
 124:7
 
-(smtp) attempted header name buffer overflow
+SMTP header name exceeds 64 characters.
 
 124:8
 
-(smtp) attempted X-Link2State command buffer overflow
+Microsoft Exchange X-Link2State command exceeds maximum length of 520 characters.
 
 124:10
 
-(smtp) base64 decoding failed
+Base64 decoding failed.
 
 124:11
 
-(smtp) quoted-printable decoding failed
+Quoted-printable data decoding failed.
 
 124:13
 
-(smtp) Unix-to-Unix decoding failed
+Uudecoding failed.
 
 124:14
 
-(smtp) Cyrus SASL authentication attack
+Cyrus SASL authentication attack is detected.
 
 124:15
 
-(smtp) attempted authentication command buffer overflow
+AUTH command exceeds the configured max_auth_command_line_len.
 
 124:16
 
-(smtp) file decompression failed
+File decompression failed.
 
 125:1
 
@@ -2160,51 +2161,51 @@ lists to change this behavior.
 
 141:1
 
-(imap) unknown IMAP3 command
+Unknown IMAP3 command is detected.
 
 141:2
 
-(imap) unknown IMAP3 response
+Unknown IMAP3 response is detected.
 
 141:4
 
-(imap) base64 decoding failed
+Base64 decoding failed.
 
 141:5
 
-(imap) quoted-printable decoding failed
+Quoted-printable decoding failed.
 
 141:7
 
-(imap) Unix-to-Unix decoding failed
+Uudecoding failed.
 
 141:8
 
-(imap) file decompression failed
+File decompression failed.
 
 142:1
 
-(pop) unknown POP3 command
+Unknown POP3 command is detected.
 
 142:2
 
-(pop) unknown POP3 response
+Unknown POP3 response is detected.
 
 142:4
 
-(pop) base64 decoding failed
+Base64 decoding failed.
 
 142:5
 
-(pop) quoted-printable decoding failed
+Quoted-printable decoding failed.
 
 142:7
 
-(pop) Unix-to-Unix decoding failed
+Uudecoding failed.
 
 142:8
 
-(pop) file decompression failed
+File decompression failed.
 
 143:1
 
