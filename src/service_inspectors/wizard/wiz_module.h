@@ -58,8 +58,8 @@ public:
     MagicBook* get_book(bool c2s, bool hex);
     CurseBook* get_curse_book();
 
-    uint16_t get_max_pattern()
-    { return max_pattern; }
+    uint16_t get_max_search_depth()
+    { return max_search_depth; }
 
     Usage get_usage() const override
     { return INSPECT; }
@@ -83,7 +83,7 @@ private:
     MagicBook* s2c_spells = nullptr;
 
     CurseBook* curses = nullptr;
-    uint16_t max_pattern = 0;
+    uint16_t max_search_depth = 0;
 };
 
 #endif

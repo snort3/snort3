@@ -124,6 +124,8 @@ private:
 private:
     Wizard* wizard;
     Wand wand;
+    uint16_t wizard_processed_bytes;
+    const MagicPage* bookmark;         // pointer to last glob
 };
 
 class Wizard : public Inspector
@@ -138,7 +140,7 @@ public:
 
     void reset(Wand&, bool tcp, bool c2s);
     bool finished(Wand&);
-    bool cast_spell(Wand&, Flow*, const uint8_t*, unsigned);
+    bool cast_spell(Wand&, Flow*, const uint8_t*, unsigned, uint16_t&);
     bool spellbind(const MagicPage*&, Flow*, const uint8_t*, unsigned);
     bool cursebind(const vector<CurseServiceTracker>&, Flow*, const uint8_t*, unsigned);
 
@@ -150,7 +152,8 @@ public:
     MagicBook* s2c_spells;
 
     CurseBook* curses;
-    uint16_t max_pattern;
+
+    uint16_t max_search_depth;
 };
 
 //-------------------------------------------------------------------------
@@ -160,7 +163,7 @@ public:
 //-------------------------------------------------------------------------
 
 MagicSplitter::MagicSplitter(bool c2s, class Wizard* w) :
-    StreamSplitter(c2s)
+    StreamSplitter(c2s), wizard_processed_bytes(0), bookmark(nullptr)
 {
     wizard = w;
     w->add_ref();
@@ -176,7 +179,6 @@ MagicSplitter::~MagicSplitter()
         delete wand.curse_tracker[i].tracker;
 }
 
-// FIXIT-M stop search on hit and failure (no possible match)
 StreamSplitter::Status MagicSplitter::scan(
     Packet* pkt, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t*)
@@ -184,20 +186,31 @@ StreamSplitter::Status MagicSplitter::scan(
     Profile profile(wizPerfStats);
     count_scan(pkt->flow);
 
+    // setting last glob from current flow
+    if ( wand.spell )
+        wand.spell->book.set_bookmark(bookmark);
     bytes_scanned += len;
-    if ( wizard->cast_spell(wand, pkt->flow, data, len) )
+
+    if ( wizard->cast_spell(wand, pkt->flow, data, len, wizard_processed_bytes) )
     {
         trace_logf(wizard_trace, pkt, "%s streaming search found service %s\n",
             to_server() ? "c2s" : "s2c", pkt->flow->service);
         count_hit(pkt->flow);
+        wizard_processed_bytes = 0;
+        return STOP;
     }
 
     else if ( wizard->finished(wand) || bytes_scanned >= max(pkt->flow) )
     {
         count_miss(pkt->flow);
         trace_logf(wizard_trace, pkt, "%s streaming search abandoned\n", to_server() ? "c2s" : "s2c");
+        wizard_processed_bytes = 0;
         return ABORT;
     }
+
+    // saving new last glob from current flow
+    if ( wand.spell )
+        bookmark = wand.spell->book.get_bookmark();
 
     // ostensibly continue but splitter will be swapped out upon hit
     return SEARCH;
@@ -216,7 +229,7 @@ Wizard::Wizard(WizardModule* m)
     s2c_spells = m->get_book(false, false);
 
     curses = m->get_curse_book();
-    max_pattern = m->get_max_pattern();
+    max_search_depth = m->get_max_search_depth();
 }
 
 Wizard::~Wizard()
@@ -236,11 +249,13 @@ void Wizard::reset(Wand& w, bool tcp, bool c2s)
     {
         w.hex = c2s_hexes->page1();
         w.spell = c2s_spells->page1();
+        c2s_spells->set_bookmark();
     }
     else
     {
         w.hex = s2c_hexes->page1();
         w.spell = s2c_spells->page1();
+        s2c_spells->set_bookmark();
     }
 
     if (w.curse_tracker.empty())
@@ -269,9 +284,10 @@ void Wizard::eval(Packet* p)
     bool c2s = p->is_from_client();
     Wand wand;
     reset(wand, false, c2s);
+    uint16_t udp_processed_bytes = 0;
 
     ++tstats.udp_scans;
-    if ( cast_spell(wand, p->flow, p->data, p->dsize) )
+    if ( cast_spell(wand, p->flow, p->data, p->dsize, udp_processed_bytes) )
     {
         trace_logf(wizard_trace, p, "%s datagram search found service %s\n",
             c2s ? "c2s" : "s2c", p->flow->service);
@@ -293,7 +309,7 @@ StreamSplitter* Wizard::get_splitter(bool c2s)
 bool Wizard::spellbind(
     const MagicPage*& m, Flow* f, const uint8_t* data, unsigned len)
 {
-    f->service = m->book.find_spell(data, len, max_pattern, m);
+    f->service = m->book.find_spell(data, len, m);
     return ( f->service != nullptr );
 }
 
@@ -314,16 +330,30 @@ bool Wizard::cursebind(const vector<CurseServiceTracker>& curse_tracker, Flow* f
 }
 
 bool Wizard::cast_spell(
-    Wand& w, Flow* f, const uint8_t* data, unsigned len)
+    Wand& w, Flow* f, const uint8_t* data, unsigned len, uint16_t& wizard_processed_bytes)
 {
+    auto curse_len = len;
+
+    len = std::min(len, static_cast<unsigned>(max_search_depth - wizard_processed_bytes));
+
+    wizard_processed_bytes += len;
+
     if ( w.hex && spellbind(w.hex, f, data, len) )
         return true;
 
     if ( w.spell && spellbind(w.spell, f, data, len) )
         return true;
 
-    if (cursebind(w.curse_tracker, f, data, len))
+    if (cursebind(w.curse_tracker, f, data, curse_len))
         return true;
+
+    // If we reach max value of wizard_processed_bytes, 
+    // but not assign any inspector - raise tcp_miss and stop
+    if ( !f->service && wizard_processed_bytes >= max_search_depth )
+    {
+        w.spell = nullptr;
+        w.hex = nullptr;
+    }
 
     return false;
 }

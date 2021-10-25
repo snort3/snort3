@@ -136,7 +136,7 @@ static bool paf_callback (
     ps->fpt = 0;
     ps->paf = ss->scan(pkt, data, len, flags, &ps->fpt);
 
-    if ( ps->paf == StreamSplitter::ABORT )
+    if ( ps->paf == StreamSplitter::ABORT || ps->paf == StreamSplitter::STOP )
         return false;
 
     if ( ps->paf != StreamSplitter::SEARCH )

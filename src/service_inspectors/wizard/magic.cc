@@ -23,6 +23,8 @@
 
 #include "magic.h"
 
+#include <cassert>
+
 MagicPage::MagicPage(const MagicBook& b) : book(b)
 {
     for ( int i = 0; i < 256; ++i )
@@ -38,6 +40,18 @@ MagicPage::~MagicPage()
             delete next[i];
     }
     delete any;
+}
+
+const char* MagicBook::find_spell(const uint8_t* data, unsigned len, const MagicPage*& p) const
+{
+    assert(p);
+
+    p = find_spell(data, len, p, 0);
+
+    if ( p && !p->value.empty() )
+        return p->value.c_str();
+
+    return nullptr;
 }
 
 MagicBook::MagicBook()

@@ -52,15 +52,22 @@ public:
     MagicBook& operator=(const MagicBook&) = delete;
 
     virtual bool add_spell(const char* key, const char*& val) = 0;
-    virtual const char* find_spell(const uint8_t*, unsigned len, unsigned max,
-        const MagicPage*&) const = 0;
+    virtual const char* find_spell(const uint8_t*, unsigned len, const MagicPage*&) const;
 
-    const MagicPage* page1()
+    const MagicPage* page1() const
     { return root; }
+
+    virtual void set_bookmark(const MagicPage* page = nullptr) const
+    { (void)page; }
+    virtual const MagicPage* get_bookmark() const
+    { return nullptr; }
 
 protected:
     MagicBook();
     MagicPage* root;
+
+    virtual const MagicPage* find_spell(const uint8_t*, unsigned,
+        const MagicPage*, unsigned) const = 0;
 };
 
 //-------------------------------------------------------------------------
@@ -74,13 +81,19 @@ public:
     SpellBook();
 
     bool add_spell(const char*, const char*&) override;
-    const char* find_spell(const uint8_t*, unsigned len, unsigned max,
-        const MagicPage*&) const override;
+
+    void set_bookmark(const MagicPage* page = nullptr) const override
+    { glob = page; }
+
+    const MagicPage* get_bookmark() const override
+    { return glob; }
 
 private:
     bool translate(const char*, HexVector&);
     void add_spell(const char*, const char*, HexVector&, unsigned, MagicPage*);
-    const MagicPage* find_spell(const uint8_t*, unsigned, const MagicPage*, unsigned) const;
+    const MagicPage* find_spell(const uint8_t*, unsigned, const MagicPage*, unsigned) const override;
+
+    mutable const MagicPage* glob;
 };
 
 //-------------------------------------------------------------------------
@@ -94,13 +107,11 @@ public:
     HexBook() = default;
 
     bool add_spell(const char*, const char*&) override;
-    const char* find_spell(const uint8_t*, unsigned len, unsigned,
-        const MagicPage*&) const override;
 
 private:
     bool translate(const char*, HexVector&);
     void add_spell(const char*, const char*, HexVector&, unsigned, MagicPage*);
-    const MagicPage* find_spell(const uint8_t*, unsigned, const MagicPage*, unsigned) const;
+    const MagicPage* find_spell(const uint8_t*, unsigned, const MagicPage*, unsigned) const override;
 };
 
 #endif

@@ -42,13 +42,14 @@ public:
 
     enum Status
     {
-        ABORT,  // non-paf operation
-        START,  // internal use only
-        SEARCH, // searching for next flush point
-        FLUSH,  // flush at given offset
-        LIMIT,  // flush to given offset upon reaching paf_max
-        SKIP,   // skip ahead to given offset
-        LIMITED // previously did limit flush
+        ABORT,   // non-paf operation
+        START,   // internal use only
+        SEARCH,  // searching for next flush point
+        FLUSH,   // flush at given offset
+        LIMIT,   // flush to given offset upon reaching paf_max
+        SKIP,    // skip ahead to given offset
+        LIMITED, // previously did limit flush
+        STOP     // stop paf scan loop
     };
 
     // scan(), finish(), reassemble() are called in this order:
