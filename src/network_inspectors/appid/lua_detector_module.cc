@@ -325,10 +325,12 @@ static inline uint32_t compute_lua_tracker_size(uint64_t rnaMemory, uint32_t num
 
 // Leaves 1 value (the Detector userdata) at the top of the stack when succeeds
 LuaObject* LuaDetectorManager::create_lua_detector(const char* detector_name,
-    bool is_custom, const char* detector_filename)
+    bool is_custom, const char* detector_filename, bool& has_validate)
 {
     std::string log_name;
     IpProtocol proto = IpProtocol::PROTO_NOT_SET;
+
+    has_validate = false;
 
     Lua::ManageStack mgr(L);
     lua_getfield(L, LUA_REGISTRYINDEX, detector_name);
@@ -375,7 +377,7 @@ LuaObject* LuaDetectorManager::create_lua_detector(const char* detector_name,
     lua_getfield(L, -1, "client");
     if ( lua_istable(L, -1) )
     {
-        return new LuaClientObject(detector_name, log_name, is_custom, proto, L, ctxt.get_odp_ctxt());
+        return new LuaClientObject(detector_name, log_name, is_custom, proto, L, ctxt.get_odp_ctxt(), has_validate);
     }
     else
     {
@@ -384,6 +386,7 @@ LuaObject* LuaDetectorManager::create_lua_detector(const char* detector_name,
         lua_getfield(L, -1, "server");
         if ( lua_istable(L, -1) )
         {
+            has_validate = true;
             return new LuaServiceObject(&ctxt.get_odp_ctxt().get_service_disco_mgr(),
                 detector_name, log_name, is_custom, proto, L, ctxt.get_odp_ctxt());
         }
@@ -406,7 +409,7 @@ static int dump(lua_State*, const void* buf,size_t size, void* data)
     return 0;
 }
 
-void LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, bool reload, std::string& buf)
+bool LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, bool reload, std::string& buf)
 {
     if (reload and !buf.empty())
     {
@@ -415,7 +418,7 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, 
             if (init(L))
                 ErrorMessage("Error - appid: can not load Lua detector, %s\n", lua_tostring(L, -1));
             lua_pop(L, 1);
-            return;
+            return false;
         }
     }
     else
@@ -425,14 +428,14 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, 
             if (init(L))
                 ErrorMessage("Error - appid: can not load Lua detector, %s\n", lua_tostring(L, -1));
             lua_pop(L, 1);
-            return;
+            return false;
         }
         if (reload and lua_dump(L, dump, &buf))
         {
             if (init(L))
                 ErrorMessage("Error - appid: can not compile Lua detector, %s\n", lua_tostring(L, -1));
             lua_pop(L, 1);
-            return;
+            return false;
         }
     }
 
@@ -462,12 +465,15 @@ void LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, 
         ErrorMessage("Error - appid: can not set env of Lua detector %s : %s\n",
             detector_filename, lua_tostring(L, -1));
         lua_pop(L, 1);
-        return;
+        return false;
     }
 
-    LuaObject* lua_object = create_lua_detector(detectorName, is_custom, detector_filename);
+    bool has_validate;
+    LuaObject* lua_object = create_lua_detector(detectorName, is_custom, detector_filename, has_validate);
     if (lua_object)
         allocated_objects.push_front(lua_object);
+
+    return has_validate;
 }
 
 void LuaDetectorManager::load_lua_detectors(const char* path, bool is_custom, bool reload)
@@ -504,12 +510,15 @@ void LuaDetectorManager::load_lua_detectors(const char* path, bool is_custom, bo
             }
             file.close();
 
-            load_detector(globs.gl_pathv[n], is_custom, reload, buf);
+            bool has_validate = load_detector(globs.gl_pathv[n], is_custom, reload, buf);
 
             if (reload)
             {
                 for (auto& lua_detector_mgr : lua_detector_mgr_list)
-                    lua_detector_mgr->load_detector(globs.gl_pathv[n], is_custom, reload, buf);
+                {
+                    if (has_validate)
+                        lua_detector_mgr->load_detector(globs.gl_pathv[n], is_custom, reload, buf);
+                }
                 buf.clear();
             }
             lua_settop(L, 0);

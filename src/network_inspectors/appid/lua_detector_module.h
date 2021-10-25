@@ -72,10 +72,10 @@ private:
     void initialize_lua_detectors(bool reload = false);
     void activate_lua_detectors();
     void list_lua_detectors();
-    void load_detector(char* detector_name, bool is_custom, bool reload, std::string& buf);
+    bool load_detector(char* detector_name, bool is_custom, bool reload, std::string& buf);
     void load_lua_detectors(const char* path, bool is_custom, bool reload = false);
     LuaObject* create_lua_detector(const char* detector_name, bool is_custom,
-        const char* detector_filename);
+        const char* detector_filename, bool& has_validate);
 
     AppIdContext& ctxt;
     std::list<LuaObject*> allocated_objects;

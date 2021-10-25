@@ -2880,7 +2880,7 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
     return rc;
 }
 
-static inline void init_lsd(LuaStateDescriptor* lsd, const std::string& detector_name,
+static bool init_lsd(LuaStateDescriptor* lsd, const std::string& detector_name,
     lua_State* L)
 {
     lsd->service_id = APP_ID_UNKNOWN;
@@ -2891,6 +2891,11 @@ static inline void init_lsd(LuaStateDescriptor* lsd, const std::string& detector
     lsd->package_info.name = detector_name;
     lua_pop(L, 1);    // pop client table
     lua_pop(L, 1);    // pop DetectorPackageInfo table
+
+    if (lsd->package_info.validateFunctionName.empty())
+        return false;
+
+    return true;
 }
 
 LuaServiceDetector::LuaServiceDetector(AppIdDiscovery* sdm, const std::string& detector_name,
@@ -2977,9 +2982,9 @@ LuaClientDetector::LuaClientDetector(AppIdDiscovery* cdm, const std::string& det
 
 LuaClientObject::LuaClientObject(const std::string& detector_name,
     const std::string& log_name, bool is_custom, IpProtocol protocol, lua_State* L,
-    OdpContext& odp_ctxt) : LuaObject(odp_ctxt)
+    OdpContext& odp_ctxt, bool& has_validate) : LuaObject(odp_ctxt)
 {
-    init_lsd(&lsd, detector_name, L);
+    has_validate = init_lsd(&lsd, detector_name, L);
 
     if (init(L))
     {

@@ -148,7 +148,7 @@ public:
     ClientDetector* cd;
     LuaClientObject(const std::string& detector_name,
         const std::string& log_name, bool is_custom, IpProtocol protocol, lua_State* L,
-        OdpContext& odp_ctxt);
+        OdpContext& odp_ctxt, bool& has_validate);
     ClientDetector* get_detector() override
     { return cd; }
 };
