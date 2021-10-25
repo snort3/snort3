@@ -182,6 +182,9 @@ static const Parameter search_engine_params[] =
     { "offload_search_method", Parameter::PT_DYNAMIC, (void*)&get_search_methods, nullptr,
       "set fast pattern offload algorithm - choose available search engine" },
 
+    { "rule_db_dir", Parameter::PT_STRING, nullptr, nullptr,
+      "deserialize rule databases from given directory" },
+
     { "search_optimize", Parameter::PT_BOOL, nullptr, "true",
       "tweak state machine construction for better performance" },
 
@@ -284,6 +287,9 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("detect_raw_tcp") )
         fp->set_stream_insert(v.get_bool());
+
+    else if ( v.is("rule_db_dir") )
+        fp->set_rule_db_dir(v.get_string());
 
     else if ( v.is("search_method") )
     {

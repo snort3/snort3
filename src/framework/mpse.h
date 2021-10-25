@@ -98,6 +98,10 @@ public:
     virtual int print_info() { return 0; }
     virtual int get_pattern_count() const { return 0; }
 
+    virtual bool serialize(uint8_t*&, size_t&) const { return false; }
+    virtual bool deserialize(const uint8_t*, size_t) { return false; }
+    virtual void get_hash(std::string&) { }
+
     const char* get_method() { return method.c_str(); }
     void set_verbose(bool b = true) { verbose = b; }
 

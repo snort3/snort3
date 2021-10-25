@@ -137,6 +137,7 @@ void LogCount(char const*, uint64_t, FILE*)
 unsigned get_instance_id()
 { return 0; }
 
+void md5(const unsigned char*, size_t, unsigned char*) { }
 }
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }

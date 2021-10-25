@@ -51,13 +51,13 @@ PORT_RULE_MAP* prmNewMap()
 
 /*
 **  DESCRIPTION
-**    Given a PORT_RULE_MAP, this function selects the PortGroup or
-**    PortGroups necessary to fully match a given dport, sport pair.
+**    Given a PORT_RULE_MAP, this function selects the RuleGroup or
+**    RuleGroups necessary to fully match a given dport, sport pair.
 **    The selection logic looks at both the dport and sport and
 **    determines if one or both are unique.  If one is unique, then
-**    the appropriate PortGroup ptr is set.  If both are unique, then
-**    both th src and dst PortGroup ptrs are set.  If neither of the
-**    ports are unique, then the gen PortGroup ptr is set.
+**    the appropriate RuleGroup ptr is set.  If both are unique, then
+**    both th src and dst RuleGroup ptrs are set.  If neither of the
+**    ports are unique, then the gen RuleGroup ptr is set.
 **
 **  FORMAL OUTPUT
 **    int -  0: Don't evaluate
@@ -65,7 +65,7 @@ PORT_RULE_MAP* prmNewMap()
 **
 **  NOTES
 **    Currently, if there is a "unique conflict", we return both the src
-**    and dst PortGroups.  This conflict forces us to do two searches, one
+**    and dst RuleGroups.  This conflict forces us to do two searches, one
 **    for the src and one for the dst.  So we are taking twice the time to
 **    inspect a packet then usual.  Obviously, this is not good.  There
 **    are several options that we have to deal with unique conflicts, but
@@ -78,9 +78,9 @@ static int prmFindRuleGroup(
     PORT_RULE_MAP* p,
     int dport,
     int sport,
-    PortGroup** src,
-    PortGroup** dst,
-    PortGroup** gen
+    RuleGroup** src,
+    RuleGroup** dst,
+    RuleGroup** gen
     )
 {
     if ( !p )
@@ -117,26 +117,26 @@ static int prmFindRuleGroup(
 **  are also used in the file fpdetect.c, where we do lookups
 **  on the initialized variables.
 */
-int prmFindRuleGroupIp(PORT_RULE_MAP* prm, int ip_proto, PortGroup** ip_group, PortGroup** gen)
+int prmFindRuleGroupIp(PORT_RULE_MAP* prm, int ip_proto, RuleGroup** ip_group, RuleGroup** gen)
 {
-    PortGroup* src;
+    RuleGroup* src;
     return prmFindRuleGroup(prm, ip_proto, ANYPORT, &src, ip_group, gen);
 }
 
-int prmFindRuleGroupIcmp(PORT_RULE_MAP* prm, int type, PortGroup** type_group, PortGroup** gen)
+int prmFindRuleGroupIcmp(PORT_RULE_MAP* prm, int type, RuleGroup** type_group, RuleGroup** gen)
 {
-    PortGroup* src;
+    RuleGroup* src;
     return prmFindRuleGroup(prm, type, ANYPORT, &src, type_group, gen);
 }
 
-int prmFindRuleGroupTcp(PORT_RULE_MAP* prm, int dport, int sport, PortGroup** src,
-    PortGroup** dst, PortGroup** gen)
+int prmFindRuleGroupTcp(PORT_RULE_MAP* prm, int dport, int sport, RuleGroup** src,
+    RuleGroup** dst, RuleGroup** gen)
 {
     return prmFindRuleGroup(prm, dport, sport, src, dst, gen);
 }
 
-int prmFindRuleGroupUdp(PORT_RULE_MAP* prm, int dport, int sport, PortGroup** src,
-    PortGroup** dst, PortGroup** gen)
+int prmFindRuleGroupUdp(PORT_RULE_MAP* prm, int dport, int sport, RuleGroup** src,
+    RuleGroup** dst, RuleGroup** gen)
 {
     return prmFindRuleGroup(prm, dport, sport, src, dst, gen);
 }

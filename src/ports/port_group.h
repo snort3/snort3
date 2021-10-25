@@ -30,8 +30,8 @@ namespace snort
     class MpseGroup;
 }
 
-// PortGroup contains a set of fast patterns in the form of an MPSE and a
-// set of non-fast-pattern (nfp) rules.  when a PortGroup is selected, the
+// RuleGroup contains a set of fast patterns in the form of an MPSE and a
+// set of non-fast-pattern (nfp) rules.  when a RuleGroup is selected, the
 // MPSE will run fp rules if there is a match on the associated fast
 // patterns.  it will always run nfp rules since there is no way to filter
 // them out.
@@ -68,26 +68,27 @@ struct RULE_NODE
     int iRuleNodeID;
 };
 
-struct PortGroup
+struct RuleGroup
 {
+    RuleGroup() = default;
+    ~RuleGroup();
+
     // non-fast-pattern list
-    RULE_NODE* nfp_head, * nfp_tail;
+    RULE_NODE* nfp_head = nullptr;
+    RULE_NODE* nfp_tail = nullptr;
 
     // pattern matchers
-    snort::MpseGroup* mpsegrp[PM_TYPE_MAX];
+    snort::MpseGroup* mpsegrp[PM_TYPE_MAX] = { };
 
     // detection option tree
-    void* nfp_tree;
+    void* nfp_tree = nullptr;
 
-    unsigned rule_count;
-    unsigned nfp_rule_count;
+    unsigned rule_count = 0;
+    unsigned nfp_rule_count = 0;
 
     void add_rule();
     bool add_nfp_rule(void*);
     void delete_nfp_rules();
-
-    static PortGroup* alloc();
-    static void free(PortGroup*);
 };
 
 #endif

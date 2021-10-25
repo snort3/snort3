@@ -134,7 +134,7 @@ void PortObject2Free(PortObject2* po)
         delete po->port_list;
 
     if (po->group )
-        PortGroup::free(po->group);
+        delete po->group;
 
     snort_free(po);
 }

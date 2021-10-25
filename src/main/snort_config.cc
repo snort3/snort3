@@ -408,6 +408,10 @@ void SnortConfig::merge(const SnortConfig* cmd_line_conf)
     if (cmd_line_conf->dirty_pig)
         dirty_pig = cmd_line_conf->dirty_pig;
 
+    // --dump-rule-databases
+    if (!cmd_line_conf->rule_db_dir.empty())
+        rule_db_dir = cmd_line_conf->rule_db_dir;
+
     // --id-offset
     id_offset = cmd_line_conf->id_offset;
     // --id-subdir
@@ -645,6 +649,12 @@ void SnortConfig::set_obfuscation_mask(const char* mask)
     output_flags |= OUTPUT_FLAG__OBFUSCATE;
 
     obfuscation_net.set(mask);
+}
+
+void SnortConfig::set_rule_db_dir(const char* directory)
+{
+    assert(directory);
+    rule_db_dir = directory;
 }
 
 void SnortConfig::set_gid(const char* args)

@@ -879,7 +879,7 @@ static inline int batch_search(
 
 static inline void search_buffer(
     Inspector* gadget, InspectionBuffer& buf, InspectionBuffer::Type ibt,
-    Packet* p, PortGroup* pg, PmType pmt, PegCount& cnt)
+    Packet* p, RuleGroup* pg, PmType pmt, PegCount& cnt)
 {
     if ( MpseGroup* so = pg->mpsegrp[pmt] )
     {
@@ -894,7 +894,7 @@ static inline void search_buffer(
     }
 }
 
-static int fp_search(PortGroup* port_group, Packet* p, bool srvc)
+static int fp_search(RuleGroup* port_group, Packet* p, bool srvc)
 {
     Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
     InspectionBuffer buf;
@@ -984,7 +984,7 @@ static int fp_search(PortGroup* port_group, Packet* p, bool srvc)
 }
 
 static inline void eval_fp(
-    PortGroup* port_group, Packet* p, char ip_rule, bool srvc)
+    RuleGroup* port_group, Packet* p, char ip_rule, bool srvc)
 {
     const uint8_t* tmp_payload = nullptr;
     uint16_t tmp_dsize = 0;
@@ -1020,7 +1020,7 @@ static inline void eval_fp(
 }
 
 static inline void eval_nfp(
-    PortGroup* port_group, Packet* p, char ip_rule)
+    RuleGroup* port_group, Packet* p, char ip_rule)
 {
     bool repeat = false;
     int8_t curr_ip_layer = 0;
@@ -1102,7 +1102,7 @@ static inline void eval_nfp(
 //  for performance purposes.
 
 static inline void fpEvalHeaderSW(
-    PortGroup* port_group, Packet* p, char ip_rule, FPTask task, bool srvc = false)
+    RuleGroup* port_group, Packet* p, char ip_rule, FPTask task, bool srvc = false)
 {
     if ( !p->is_detection_enabled(p->packet_flags & PKT_FROM_CLIENT) )
         return;
@@ -1116,7 +1116,7 @@ static inline void fpEvalHeaderSW(
 
 static inline void fpEvalHeaderIp(Packet* p, FPTask task)
 {
-    PortGroup* any = nullptr, * ip_group = nullptr;
+    RuleGroup* any = nullptr, * ip_group = nullptr;
 
     if ( !prmFindRuleGroupIp(p->context->conf->prmIpRTNX, ANYPORT, &ip_group, &any) )
         return;
@@ -1133,7 +1133,7 @@ static inline void fpEvalHeaderIp(Packet* p, FPTask task)
 
 static inline void fpEvalHeaderIcmp(Packet* p, FPTask task)
 {
-    PortGroup* any = nullptr, * type = nullptr;
+    RuleGroup* any = nullptr, * type = nullptr;
 
     if ( !prmFindRuleGroupIcmp(p->context->conf->prmIcmpRTNX, p->ptrs.icmph->type, &type, &any) )
         return;
@@ -1148,7 +1148,7 @@ static inline void fpEvalHeaderIcmp(Packet* p, FPTask task)
 static inline void fpEvalHeaderTcp(Packet* p, FPTask task)
 {
 
-    PortGroup* src = nullptr, * dst = nullptr, * any = nullptr;
+    RuleGroup* src = nullptr, * dst = nullptr, * any = nullptr;
 
     if ( !prmFindRuleGroupTcp(p->context->conf->prmTcpRTNX, p->ptrs.dp, p->ptrs.sp, &src, &dst, &any) )
         return;
@@ -1165,7 +1165,7 @@ static inline void fpEvalHeaderTcp(Packet* p, FPTask task)
 
 static inline void fpEvalHeaderUdp(Packet* p, FPTask task)
 {
-    PortGroup* src = nullptr, * dst = nullptr, * any = nullptr;
+    RuleGroup* src = nullptr, * dst = nullptr, * any = nullptr;
 
     if ( !prmFindRuleGroupUdp(p->context->conf->prmUdpRTNX, p->ptrs.dp, p->ptrs.sp, &src, &dst, &any) )
         return;
@@ -1187,7 +1187,7 @@ static inline void fpEvalHeaderSvc(Packet* p, FPTask task)
     if (snort_protocol_id == UNKNOWN_PROTOCOL_ID or snort_protocol_id == INVALID_PROTOCOL_ID)
         return;
 
-    PortGroup* svc = nullptr;
+    RuleGroup* svc = nullptr;
 
     if (p->is_from_application_server())
         svc = p->context->conf->sopgTable->get_port_group(false, snort_protocol_id);

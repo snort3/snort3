@@ -368,6 +368,9 @@ static const Parameter s_params[] =
     { "--dump-defaults", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module prefix>] output module defaults in Lua format" },
 
+    { "--dump-rule-databases", Parameter::PT_STRING, nullptr, nullptr,
+      "dump rule databases to given directory (hyperscan only)" },
+
     { "--dump-rule-deps", Parameter::PT_IMPLIED, nullptr, nullptr,
       "dump rule dependencies in json format for use by other tools" },
 
@@ -910,6 +913,11 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("--dump-defaults") )
         dump_defaults(sc, v.get_string());
 
+    else if ( v.is("--dump-rule-databases") )
+    {
+        sc->set_rule_db_dir(v.get_string());
+        sc->run_flags |= (RUN_FLAG__TEST | RUN_FLAG__MEM_CHECK);
+    }
     else if ( v.is("--dump-rule-deps") )
     {
         sc->run_flags |= (RUN_FLAG__DUMP_RULE_DEPS | RUN_FLAG__TEST);

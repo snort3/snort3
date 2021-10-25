@@ -22,7 +22,10 @@
 #define FP_UTILS_H
 
 // fast pattern utilities
+
+#include <string>
 #include <vector>
+
 #include "framework/ips_option.h"
 #include "framework/mpse.h"
 #include "ports/port_group.h"
@@ -46,6 +49,9 @@ void queue_mpse(snort::Mpse*);
 unsigned compile_mpses(struct snort::SnortConfig*, bool parallel = false);
 
 void validate_services(struct snort::SnortConfig*, OptTreeNode*);
+
+unsigned fp_serialize(const struct snort::SnortConfig*, const std::string& dir);
+unsigned fp_deserialize(const struct snort::SnortConfig*, const std::string& dir);
 
 #endif
 

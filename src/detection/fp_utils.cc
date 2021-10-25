@@ -24,18 +24,28 @@
 
 #include <cassert>
 #include <cstring>
+#include <fstream>
+#include <iomanip>
 #include <list>
 #include <mutex>
+#include <sstream>
 #include <thread>
 
+#include "framework/mpse.h"
+#include "framework/mpse_batch.h"
+#include "hash/ghash.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "parser/parse_conf.h"
 #include "pattern_match_data.h"
 #include "ports/port_group.h"
+#include "ports/port_table.h"
+#include "ports/rule_port_tables.h"
 #include "target_based/snort_protocols.h"
 #include "treenodes.h"
 #include "utils/util.h"
+
+#include "service_map.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -231,8 +241,192 @@ bool FpSelector::is_better_than(
 }
 
 //--------------------------------------------------------------------------
+// mpse database serialization
+//--------------------------------------------------------------------------
+
+static unsigned mpse_loaded, mpse_dumped;
+
+static bool store(const std::string& s, const uint8_t* data, size_t len)
+{
+    std::ofstream out(s.c_str(), std::ofstream::binary);
+    out.write((const char*)data, len);
+    return true;
+}
+
+static bool fetch(const std::string& s, uint8_t*& data, size_t& len)
+{
+    std::ifstream in(s.c_str(), std::ifstream::binary);
+
+    if ( !in.is_open() )
+        return false;
+
+    in.seekg (0, in.end);
+    len = in.tellg();
+    in.seekg (0);
+
+    data = new uint8_t[len];
+    in.read((char*)data, len);
+
+    return true;
+}
+
+static std::string make_db_name(
+    const std::string& path, const char* proto, const char* dir, const char* buf, const std::string& id)
+{
+    std::stringstream ss;
+
+    ss << path << "/";
+    ss << proto << "_";
+    ss << dir << "_";
+    ss << buf << "_";
+
+    ss << std::hex << std::setfill('0') << std::setw(2);
+
+    for ( auto c : id )
+        ss << (unsigned)(uint8_t)c;
+
+    ss << ".hsdb";
+
+    return ss.str();
+}
+
+static bool db_dump(const std::string& path, const char* proto, const char* dir, RuleGroup* g)
+{
+    for ( auto i = 0; i < PM_TYPE_MAX; ++i )
+    {
+        if ( !g->mpsegrp[i] )
+            continue;
+
+        std::string id;
+        g->mpsegrp[i]->normal_mpse->get_hash(id);
+
+        std::string file = make_db_name(path, proto, dir, pm_type_strings[i], id);
+
+        uint8_t* db = nullptr;
+        size_t len = 0;
+
+        if ( g->mpsegrp[i]->normal_mpse->serialize(db, len) and db and len > 0 )
+        {
+            store(file, db, len);
+            free(db);
+            ++mpse_dumped;
+        }
+        else
+        {
+            ParseWarning(WARN_RULES, "Failed to serialize %s", file.c_str());
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool db_load(const std::string& path, const char* proto, const char* dir, RuleGroup* g)
+{
+    for ( auto i = 0; i < PM_TYPE_MAX; ++i )
+    {
+        if ( !g->mpsegrp[i] )
+            continue;
+
+        std::string id;
+        g->mpsegrp[i]->normal_mpse->get_hash(id);
+
+        std::string file = make_db_name(path, proto, dir, pm_type_strings[i], id);
+
+        uint8_t* db = nullptr;
+        size_t len = 0;
+
+        if ( !fetch(file, db, len) )
+        {
+            ParseWarning(WARN_RULES, "Failed to read %s", file.c_str());
+            return false;
+        }
+        else if ( !g->mpsegrp[i]->normal_mpse->deserialize(db, len) )
+        {
+            ParseWarning(WARN_RULES, "Failed to deserialize %s", file.c_str());
+            return false;
+        }
+        delete[] db;
+        ++mpse_loaded;
+    }
+    return true;
+}
+
+typedef bool (*db_io)(const std::string&, const char*, const char*, RuleGroup*);
+
+static void port_io(
+    const std::string& path, const char* proto, const char* end, PortTable* pt, db_io func)
+{
+    for (GHashNode* node = pt->pt_mpo_hash->find_first();
+         node;
+         node = pt->pt_mpo_hash->find_next())
+    {
+        PortObject2* po = (PortObject2*)node->data;
+
+        if ( !po or !po->group )
+            continue;
+
+        func(path, proto, end, po->group);
+    }
+}
+
+static void port_io(
+    const std::string& path, const char* proto, const char* end, PortObject* po, db_io func)
+{
+    if ( po->group )
+        func(path, proto, end, po->group);
+}
+
+static void svc_io(const std::string& path, const char* dir, GHash* h, db_io func)
+{
+    for ( GHashNode* n = h->find_first(); n; n = h->find_next())
+    {
+        func(path, (const char*)n->key, dir, (RuleGroup*)n->data);
+    }
+}
+
+static void fp_io(const SnortConfig* sc, const std::string& path, db_io func)
+{
+    auto* pt = sc->port_tables;
+
+    port_io(path, "ip", "src", pt->ip.src, func);
+    port_io(path, "ip", "dst", pt->ip.dst, func);
+    port_io(path, "ip", "any", pt->ip.any, func);
+
+    port_io(path, "icmp", "src", pt->icmp.src, func);
+    port_io(path, "icmp", "dst", pt->icmp.dst, func);
+    port_io(path, "icmp", "any", pt->icmp.any, func);
+
+    port_io(path, "tcp", "src", pt->tcp.src, func);
+    port_io(path, "tcp", "dst", pt->tcp.dst, func);
+    port_io(path, "tcp", "any", pt->tcp.any, func);
+
+    port_io(path, "udp", "src", pt->udp.src, func);
+    port_io(path, "udp", "dst", pt->udp.dst, func);
+    port_io(path, "udp", "any", pt->udp.any, func);
+
+    auto* sp = sc->spgmmTable;
+
+    svc_io(path, "s2c", sp->to_cli, func);
+    svc_io(path, "c2s", sp->to_srv, func);
+}
+
+//--------------------------------------------------------------------------
 // public methods
 //--------------------------------------------------------------------------
+
+unsigned fp_serialize(const SnortConfig* sc, const std::string& dir)
+{
+    mpse_dumped = 0;
+    fp_io(sc, dir, db_dump);
+    return mpse_dumped;
+}
+
+unsigned fp_deserialize(const SnortConfig* sc, const std::string& dir)
+{
+    mpse_loaded = 0;
+    fp_io(sc, dir, db_load);
+    return mpse_loaded;
+}
 
 void validate_services(SnortConfig* sc, OptTreeNode* otn)
 {

@@ -26,10 +26,10 @@
 
 //-------------------------------------------------------------------------
 // PortObject supports a set of PortObjectItems
-// associates rules with a PortGroup.
+// associates rules with a RuleGroup.
 //-------------------------------------------------------------------------
 
-struct PortGroup;
+struct RuleGroup;
 struct PortObjectItem;
 
 struct PortObject
@@ -41,7 +41,7 @@ struct PortObject
     SF_LIST* item_list;         /* list of port and port-range items */
     SF_LIST* rule_list;         /* list of rules  */
 
-    PortGroup* group;           // based on rule_list - only used by any-any ports
+    RuleGroup* group;           // based on rule_list - only used by any-any ports
 };
 
 PortObject* PortObjectNew();

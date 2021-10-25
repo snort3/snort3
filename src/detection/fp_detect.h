@@ -42,7 +42,7 @@ struct ProfileStats;
 }
 
 class Cursor;
-struct PortGroup;
+struct RuleGroup;
 struct OptTreeNode;
 
 extern THREAD_LOCAL snort::ProfileStats mpsePerfStats;

@@ -63,7 +63,7 @@ void PortObjectFree(void* pv)
         sflist_free_all(po->rule_list, snort_free);
 
     if (po->group )
-        PortGroup::free(po->group);
+        delete po->group;
 
     snort_free(po);
 }

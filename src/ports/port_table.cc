@@ -805,7 +805,7 @@ void PortTablePrintInput(PortTable* p)
 }
 
 /*
-   Prints the original (normalized) PortGroups and
+   Prints the original (normalized) RuleGroups and
    as specified by the user
 */
 void PortTablePrintUserRules(PortTable* p)
@@ -826,7 +826,7 @@ void PortTablePrintUserRules(PortTable* p)
 /*
     Prints the Unique Port Groups and rules that reference them
 */
-void PortTablePrintPortGroups(PortTable* p)
+void PortTablePrintRuleGroups(PortTable* p)
 {
     /* normalized user PortObjects and rule ids */
     LogMessage(">>>PortTable - Compiled Port Groups\n");

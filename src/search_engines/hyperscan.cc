@@ -22,14 +22,18 @@
 #include "config.h"
 #endif
 
+#include <algorithm>
+#include <cassert>
+#include <cstring>
+#include <fstream>
+#include <sstream>
+
 #include <hs_compile.h>
 #include <hs_runtime.h>
 
-#include <cassert>
-#include <cstring>
-
 #include "framework/module.h"
 #include "framework/mpse.h"
+#include "hash/hashes.h"
 #include "helpers/scratch_allocator.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -95,6 +99,14 @@ void Pattern::escape(const uint8_t* s, unsigned n, bool literal)
             pat += s[i];
         }
     }
+}
+
+static bool compare(const Pattern& a, const Pattern& b)
+{
+    if ( a.pat != b.pat )
+        return a.pat < b.pat;
+
+    return a.flags < b.flags;
 }
 
 typedef std::vector<Pattern> PatternVector;
@@ -165,6 +177,14 @@ public:
         unsigned id, unsigned long long from, unsigned long long to,
         unsigned flags, void*);
 
+    bool serialize(uint8_t*& buf, size_t& sz) const override
+    { return hs_db and (hs_serialize_database(hs_db, (char**)&buf, &sz) == HS_SUCCESS) and buf; }
+
+    bool deserialize(const uint8_t* buf, size_t sz) override
+    { return (hs_deserialize_database((const char*)buf, sz, &hs_db) == HS_SUCCESS) and hs_db; }
+
+    void get_hash(std::string&) override;
+
 private:
     void user_ctor(SnortConfig*);
     void user_dtor();
@@ -220,6 +240,14 @@ void HyperscanMpse::user_dtor()
 
 int HyperscanMpse::prep_patterns(SnortConfig* sc)
 {
+    if ( hs_db )
+    {
+        if ( agent )
+            user_ctor(sc);
+
+        return 0;
+    }
+
     if ( pvector.empty() )
         return -1;
 
@@ -228,6 +256,9 @@ int HyperscanMpse::prep_patterns(SnortConfig* sc)
         ParseError("This host does not support Hyperscan.");
         return -1;
     }
+
+    // sort for consistent serialization
+    std::sort(pvector.begin(), pvector.end(), compare);
 
     hs_compile_error_t* errptr = nullptr;
     std::vector<const char*> pats;
@@ -263,6 +294,23 @@ int HyperscanMpse::prep_patterns(SnortConfig* sc)
         user_ctor(sc);
 
     return 0;
+}
+
+void HyperscanMpse::get_hash(std::string& hash)
+{
+    if ( !hs_db )
+        std::sort(pvector.begin(), pvector.end(), compare);
+
+    std::stringstream ss;
+
+    for ( auto& p : pvector )
+        ss << p.pat << p.flags;
+
+    std::string str = ss.str();
+    uint8_t buf[MD5_HASH_SIZE];
+
+    md5((const uint8_t*)str.c_str(), str.size(), buf);
+    hash.assign((const char*)buf, sizeof(buf));
 }
 
 void HyperscanMpse::reuse_search()

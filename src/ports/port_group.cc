@@ -28,32 +28,22 @@
 #include "framework/mpse_batch.h"
 #include "utils/util.h"
 
-void PortGroup::add_rule()
+void RuleGroup::add_rule()
 {
     rule_count++;
 }
 
-PortGroup* PortGroup::alloc()
-{ return (PortGroup*)snort_calloc(sizeof(PortGroup)); }
-
-void PortGroup::free(PortGroup* pg)
+RuleGroup::~RuleGroup()
 {
-    pg->delete_nfp_rules();
+    delete_nfp_rules();
 
     for (int i = PM_TYPE_PKT; i < PM_TYPE_MAX; i++)
-    {
-        if (pg->mpsegrp[i])
-        {
-            delete pg->mpsegrp[i];
-            pg->mpsegrp[i] = nullptr;
-        }
-    }
+        delete mpsegrp[i];
 
-    free_detection_option_root(&pg->nfp_tree);
-    snort_free(pg);
+    free_detection_option_root(&nfp_tree);
 }
 
-bool PortGroup::add_nfp_rule(void* rd)
+bool RuleGroup::add_nfp_rule(void* rd)
 {
     if ( !nfp_head )
     {
@@ -77,7 +67,7 @@ bool PortGroup::add_nfp_rule(void* rd)
     return true;
 }
 
-void PortGroup::delete_nfp_rules()
+void RuleGroup::delete_nfp_rules()
 {
     RULE_NODE* rn = nfp_head;
 

@@ -43,17 +43,17 @@ struct PORT_RULE_MAP
     int prmNumDstGroups;
     int prmNumSrcGroups;
 
-    PortGroup* prmSrcPort[snort::MAX_PORTS];
-    PortGroup* prmDstPort[snort::MAX_PORTS];
-    PortGroup* prmGeneric;
+    RuleGroup* prmSrcPort[snort::MAX_PORTS];
+    RuleGroup* prmDstPort[snort::MAX_PORTS];
+    RuleGroup* prmGeneric;
 };
 
 PORT_RULE_MAP* prmNewMap();
 
-int prmFindRuleGroupTcp(PORT_RULE_MAP*, int, int, PortGroup**, PortGroup**, PortGroup**);
-int prmFindRuleGroupUdp(PORT_RULE_MAP*, int, int, PortGroup**, PortGroup**, PortGroup**);
-int prmFindRuleGroupIp(PORT_RULE_MAP*, int, PortGroup**, PortGroup**);
-int prmFindRuleGroupIcmp(PORT_RULE_MAP*, int, PortGroup**, PortGroup**);
+int prmFindRuleGroupTcp(PORT_RULE_MAP*, int, int, RuleGroup**, RuleGroup**, RuleGroup**);
+int prmFindRuleGroupUdp(PORT_RULE_MAP*, int, int, RuleGroup**, RuleGroup**, RuleGroup**);
+int prmFindRuleGroupIp(PORT_RULE_MAP*, int, RuleGroup**, RuleGroup**);
+int prmFindRuleGroupIcmp(PORT_RULE_MAP*, int, RuleGroup**, RuleGroup**);
 
 #endif
 

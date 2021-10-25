@@ -25,6 +25,8 @@
 #ifndef FP_CONFIG_H
 #define FP_CONFIG_H
 
+#include <string>
+
 namespace snort
 {
     struct MpseApi;
@@ -116,6 +118,12 @@ public:
     void set_debug_print_rule_groups_uncompiled()
     { portlists_flags |= PL_DEBUG_PRINT_RULEGROUPS_UNCOMPILED; }
 
+    void set_rule_db_dir(const char* s)
+    { rule_db_dir = s; }
+
+    const std::string& get_rule_db_dir() const
+    { return rule_db_dir; }
+
     void set_search_opt(bool flag)
     { search_opt = flag; }
 
@@ -161,6 +169,8 @@ private:
 
     int portlists_flags = 0;
     int num_patterns_truncated = 0;  // due to max_pattern_len
+
+    std::string rule_db_dir;
 };
 
 #endif

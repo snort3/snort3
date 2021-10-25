@@ -47,7 +47,7 @@ struct PortObject2
     snort::GHash* rule_hash;         /* hash of rule (rule-indexes) in use */
 
     PortBitSet* port_list;      /* for collecting ports that use this object */
-    struct PortGroup* group;    /* PortGroup based on rule_hash  */
+    struct RuleGroup* group;    /* RuleGroup based on rule_hash  */
 
     int port_cnt;               /* count of ports using this object */
 };

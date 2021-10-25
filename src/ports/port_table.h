@@ -87,7 +87,7 @@ int PortTablePrintCompiledEx(PortTable*, rim_print_f);
 
 void PortTablePrintInput(PortTable*);
 void PortTablePrintUserRules(PortTable*);
-void PortTablePrintPortGroups(PortTable*);
+void PortTablePrintRuleGroups(PortTable*);
 
 void RuleListSortUniq(SF_LIST*);
 void PortTableSortUniqRules(PortTable*);
