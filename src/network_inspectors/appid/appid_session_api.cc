@@ -29,6 +29,7 @@
 #include "managers/inspector_manager.h"
 #include "appid_inspector.h"
 #include "appid_session.h"
+#include "appid_types.h"
 #include "service_plugins/service_bootp.h"
 #include "service_plugins/service_netbios.h"
 
@@ -316,6 +317,11 @@ const char* AppIdSessionApi::get_netbios_name() const
 const char* AppIdSessionApi::get_netbios_domain() const
 {
     return netbios_domain;
+}
+
+ClientAppDetectType AppIdSessionApi::get_client_app_detect_type() const
+{
+    return client.get_client_app_detect_type();
 }
 
 void AppIdSessionApi::set_netbios_name(AppidChangeBits& change_bits, const char* name)

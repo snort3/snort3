@@ -127,6 +127,7 @@ public:
     bool is_http_inspection_done() const;
     const char* get_netbios_name() const;
     const char* get_netbios_domain() const;
+    ClientAppDetectType get_client_app_detect_type() const;
 
     // For protocols such as HTTP2 which can have multiple streams within a single flow,
     // get_first_stream_* methods return the appids in the first stream seen in a packet.

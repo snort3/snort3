@@ -65,4 +65,10 @@ enum AppidSessionDirection
     APP_ID_APPID_SESSION_DIRECTION_MAX
 };
 
+enum ClientAppDetectType
+{
+    CLIENT_APP_DETECT_APPID = 0,
+    CLIENT_APP_DETECT_TLS_FP
+};
+
 #endif

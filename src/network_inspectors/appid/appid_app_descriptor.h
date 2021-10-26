@@ -238,6 +238,7 @@ public:
         ApplicationDescriptor::reset();
         my_username.clear();
         my_user_id = APP_ID_NONE;
+        my_client_detect_type = CLIENT_APP_DETECT_APPID;
     }
 
     void update_user(AppId app_id, const char* username, AppidChangeBits& change_bits);
@@ -264,10 +265,21 @@ public:
         return efp_client_app_id;
     }
 
+    void set_efp_client_app_detect_type(ClientAppDetectType client_app_detect_type)
+    {
+        my_client_detect_type = client_app_detect_type;
+    }
+
+    ClientAppDetectType get_client_app_detect_type() const
+    {
+        return my_client_detect_type;
+    }
+
 private:
     std::string my_username;
     AppId my_user_id = APP_ID_NONE;
     AppId efp_client_app_id = APP_ID_NONE;
+    ClientAppDetectType my_client_detect_type = CLIENT_APP_DETECT_APPID;
 };
 
 class PayloadAppDescriptor : public ApplicationDescriptor
