@@ -53,6 +53,7 @@ public:
     bool is_removed() const { return removed; }
     bool has_pending_command() const { return !pending_commands.empty(); }
     time_t get_touched() const;
+    std::string get_current_command() const { return pending_commands.front(); }
 
     void configure() const;
     int read_commands();

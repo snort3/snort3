@@ -2,6 +2,7 @@
 set (INCLUDES
     analyzer_command.h
     policy.h
+    reload_tracker.h
     snort.h
     snort_config.h
     snort_debug.h
@@ -31,6 +32,7 @@ add_library (main OBJECT
     oops_handler.cc
     oops_handler.h
     policy.cc
+    reload_tracker.cc
     shell.h
     shell.cc
     snort.cc

@@ -33,6 +33,7 @@
 #include "log/messages.h"
 #include "main/analyzer.h"
 #include "main/analyzer_command.h"
+#include "main/reload_tracker.h"
 #include "main/snort.h"
 #include "main/swapper.h"
 #include "managers/inspector_manager.h"
@@ -149,7 +150,8 @@ class ACThirdPartyAppIdContextSwap : public AnalyzerCommand
 {
 public:
     bool execute(Analyzer&, void**) override;
-    ACThirdPartyAppIdContextSwap(const AppIdInspector& inspector): inspector(inspector)
+    ACThirdPartyAppIdContextSwap(const AppIdInspector& inspector, ControlConn* conn)
+        : inspector(inspector), tracker_ref(conn)
     {
         LogMessage("== swapping third-party configuration\n");
     }
@@ -158,6 +160,7 @@ public:
     const char* stringify() override { return "THIRD-PARTY_CONTEXT_SWAP"; }
 private:
     const AppIdInspector& inspector;
+    ControlConn* tracker_ref;
 };
 
 bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
@@ -176,6 +179,7 @@ ACThirdPartyAppIdContextSwap::~ACThirdPartyAppIdContextSwap()
     std::string file_path = ctxt.get_tp_appid_ctxt()->get_user_config();
     ctxt.get_odp_ctxt().get_app_info_mgr().dump_appid_configurations(file_path);
     LogMessage("== third-party configuration swap complete\n");
+    ReloadTracker::end(tracker_ref);
 }
 
 class ACThirdPartyAppIdContextUnload : public AnalyzerCommand
@@ -213,10 +217,11 @@ ACThirdPartyAppIdContextUnload::~ACThirdPartyAppIdContextUnload()
     delete tp_ctxt;
     AppIdContext& ctxt = inspector.get_ctxt();
     ctxt.create_tp_appid_ctxt();
-    main_broadcast_command(new ACThirdPartyAppIdContextSwap(inspector));
+    main_broadcast_command(new ACThirdPartyAppIdContextSwap(inspector, ctrlcon));
     LogMessage("== reload third-party complete\n");
-    ctrlcon->respond("== reload third-party complete\n");
-    Swapper::set_reload_in_progress(false);
+    if (ctrlcon && !ctrlcon->is_local())
+        ctrlcon->respond("== reload third-party complete\n");
+    ReloadTracker::update(ctrlcon, "unload old third-party complete, start swapping to new configuration.");
 }
 
 class ACOdpContextSwap : public AnalyzerCommand
@@ -265,9 +270,8 @@ ACOdpContextSwap::~ACOdpContextSwap()
             file_path = std::string(ctxt.config.app_detector_dir) + "/../userappid.conf";
         ctxt.get_odp_ctxt().get_app_info_mgr().dump_appid_configurations(file_path);
     }
-    LogMessage("== reload detectors complete\n");
+    ReloadTracker::end(ctrlcon);
     ctrlcon->respond("== reload detectors complete\n");
-    Swapper::set_reload_in_progress(false);
 }
 
 static int enable_debug(lua_State* L)
@@ -320,14 +324,16 @@ static int disable_debug(lua_State* L)
 static int reload_third_party(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    if (Swapper::get_reload_in_progress())
+    if (!ReloadTracker::start(ctrlcon))
     {
         ctrlcon->respond("== reload pending; retry\n");
         return 0;
     }
+
     AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
     if (!inspector)
     {
+        ReloadTracker::failed(ctrlcon, "appid not enabled");
         ctrlcon->respond("== reload third-party failed - appid not enabled\n");
         return 0;
     }
@@ -335,10 +341,12 @@ static int reload_third_party(lua_State* L)
     ThirdPartyAppIdContext* old_ctxt = ctxt.get_tp_appid_ctxt();
     if (!old_ctxt)
     {
+        ReloadTracker::failed(ctrlcon, "third-party module doesn't exist");
         ctrlcon->respond("== reload third-party failed - third-party module doesn't exist\n");
         return 0;
     }
-    Swapper::set_reload_in_progress(true);
+
+    ReloadTracker::update(ctrlcon, "unloading old third-party configuration");
     ctrlcon->respond("== unloading old third-party configuration\n");
     main_broadcast_command(new ACThirdPartyAppIdContextUnload(*inspector, old_ctxt, ctrlcon), ctrlcon);
     return 0;
@@ -356,7 +364,7 @@ static void clear_dynamic_host_cache_services()
 static int reload_detectors(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    if (Swapper::get_reload_in_progress())
+    if ( !ReloadTracker::start(ctrlcon) )
     {
         ctrlcon->respond("== reload pending; retry\n");
         return 0;
@@ -365,9 +373,10 @@ static int reload_detectors(lua_State* L)
     if (!inspector)
     {
         ctrlcon->respond("== reload detectors failed - appid not enabled\n");
+        ReloadTracker::failed(ctrlcon, "appid not enabled");
         return 0;
     }
-    Swapper::set_reload_in_progress(true);
+
     ctrlcon->respond(".. reloading detectors\n");
 
     AppIdContext& ctxt = inspector->get_ctxt();
@@ -388,6 +397,7 @@ static int reload_detectors(lua_State* L)
     odp_ctxt.initialize(*inspector);
 
     ctrlcon->respond("== swapping detectors configuration\n");
+    ReloadTracker::update(ctrlcon, "swapping detectors configuration");
     main_broadcast_command(new ACOdpContextSwap(*inspector, old_odp_ctxt, ctrlcon), ctrlcon);
     return 0;
 }

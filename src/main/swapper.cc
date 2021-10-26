@@ -31,8 +31,6 @@
 
 using namespace snort;
 
-bool Swapper::reload_in_progress = false;
-
 Swapper::Swapper(SnortConfig* s)
 {
     old_conf = nullptr;

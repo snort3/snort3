@@ -34,6 +34,7 @@
 #include "utils/stats.h"
 
 #include "analyzer.h"
+#include "reload_tracker.h"
 #include "snort.h"
 #include "snort_config.h"
 #include "swapper.h"
@@ -108,10 +109,7 @@ ACResetStats::ACResetStats(clear_counter_type_t requested_type_l) : requested_ty
         requested_type_l) { }
 
 ACSwap::ACSwap(Swapper* ps, ControlConn *ctrlcon) : ps(ps), ctrlcon(ctrlcon)
-{
-    assert(Swapper::get_reload_in_progress() == false);
-    Swapper::set_reload_in_progress(true);
-}
+{ }
 
 bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
 {
@@ -181,7 +179,7 @@ ACSwap::~ACSwap()
     delete ps;
     HostAttributesManager::swap_cleanup();
 
-    Swapper::set_reload_in_progress(false);
+    ReloadTracker::end(ctrlcon);
     LogMessage("== reload complete\n");
     if (ctrlcon && !ctrlcon->is_local())
         ctrlcon->respond("== reload complete\n");
@@ -189,10 +187,7 @@ ACSwap::~ACSwap()
 
 ACHostAttributesSwap::ACHostAttributesSwap(ControlConn *ctrlcon)
     : ctrlcon(ctrlcon)
-{
-    assert(Swapper::get_reload_in_progress() == false);
-    Swapper::set_reload_in_progress(true);
-}
+{ }
 
 bool ACHostAttributesSwap::execute(Analyzer&, void**)
 {
@@ -203,7 +198,7 @@ bool ACHostAttributesSwap::execute(Analyzer&, void**)
 ACHostAttributesSwap::~ACHostAttributesSwap()
 {
     HostAttributesManager::swap_cleanup();
-    Swapper::set_reload_in_progress(false);
+    ReloadTracker::end(ctrlcon);
     LogMessage("== reload host attributes complete\n");
     if (ctrlcon && !ctrlcon->is_local())
         ctrlcon->respond("== reload host attributes complete\n");

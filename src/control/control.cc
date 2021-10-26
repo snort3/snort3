@@ -92,6 +92,7 @@ int ControlConn::read_commands()
         {
             std::string command = next_command;
             next_command.append(buf, nl - p);
+            LogMessage("Control: received command, %s\n", next_command.c_str());
             pending_commands.push(std::move(next_command));
             next_command.clear();
             p = nl + 1;

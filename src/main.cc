@@ -34,6 +34,7 @@
 #include "lua/lua.h"
 #include "main/analyzer.h"
 #include "main/analyzer_command.h"
+#include "main/reload_tracker.h"
 #include "main/shell.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
@@ -348,7 +349,7 @@ int main_rotate_stats(lua_State* L)
 int main_reload_config(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    if ( Swapper::get_reload_in_progress() )
+    if ( !ReloadTracker::start(ctrlcon) )
     {
         send_response(ctrlcon, "== reload pending; retry\n");
         return 0;
@@ -370,6 +371,7 @@ int main_reload_config(lua_State* L)
     }
 
     send_response(ctrlcon, ".. reloading configuration\n");
+    ReloadTracker::update(ctrlcon,"start loading ...");
     const SnortConfig* old = SnortConfig::get_conf();
     SnortConfig* sc = Snort::get_reload_config(fname, plugin_path, old);
 
@@ -379,11 +381,16 @@ int main_reload_config(lua_State* L)
         {
             std::string response_message = "== reload failed - restart required - ";
             response_message += get_reload_errors_description() + "\n";
+            ReloadTracker::failed(ctrlcon, "restart required");
             send_response(ctrlcon, response_message.c_str());
             reset_reload_errors();
         }
         else
+        {
+            ReloadTracker::failed(ctrlcon, "bad config");
             send_response(ctrlcon, "== reload failed - bad config\n");
+        }
+
 
         HostAttributesManager::load_failure_cleanup();
         return 0;
@@ -408,6 +415,7 @@ int main_reload_config(lua_State* L)
     TraceApi::thread_reinit(sc->trace_config);
     proc_stats.conf_reloads++;
 
+    ReloadTracker::update(ctrlcon, "start swapping configuration ...");
     send_response(ctrlcon, ".. swapping configuration\n");
     main_broadcast_command(new ACSwap(new Swapper(old, sc), ctrlcon), ctrlcon);
 
@@ -417,7 +425,7 @@ int main_reload_config(lua_State* L)
 int main_reload_policy(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    if ( Swapper::get_reload_in_progress() )
+    if ( !ReloadTracker::start(ctrlcon) )
     {
         send_response(ctrlcon, "== reload pending; retry\n");
         return 0;
@@ -434,6 +442,7 @@ int main_reload_policy(lua_State* L)
         send_response(ctrlcon, ".. reloading policy\n");
     else
     {
+        ReloadTracker::failed(ctrlcon, "filename required");
         send_response(ctrlcon, "== filename required\n");
         return 0;
     }
@@ -443,6 +452,7 @@ int main_reload_policy(lua_State* L)
 
     if ( !sc )
     {
+        ReloadTracker::failed(ctrlcon, "failed to update policy");
         send_response(ctrlcon, "== reload failed\n");
         return 0;
     }
@@ -450,6 +460,7 @@ int main_reload_policy(lua_State* L)
     SnortConfig::set_conf(sc);
     proc_stats.policy_reloads++;
 
+    ReloadTracker::update(ctrlcon, "start swapping configuration ...");
     send_response(ctrlcon, ".. swapping policy\n");
     main_broadcast_command(new ACSwap(new Swapper(old, sc), ctrlcon), ctrlcon);
 
@@ -459,7 +470,7 @@ int main_reload_policy(lua_State* L)
 int main_reload_module(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    if ( Swapper::get_reload_in_progress() )
+    if ( !ReloadTracker::start(ctrlcon) )
     {
         send_response(ctrlcon, "== reload pending; retry\n");
         return 0;
@@ -476,6 +487,7 @@ int main_reload_module(lua_State* L)
         send_response(ctrlcon, ".. reloading module\n");
     else
     {
+        ReloadTracker::failed(ctrlcon, "module name required");
         send_response(ctrlcon, "== module name required\n");
         return 0;
     }
@@ -485,6 +497,7 @@ int main_reload_module(lua_State* L)
 
     if ( !sc )
     {
+        ReloadTracker::failed(ctrlcon, "failed to update module");
         send_response(ctrlcon, "== reload failed\n");
         return 0;
     }
@@ -492,6 +505,7 @@ int main_reload_module(lua_State* L)
     SnortConfig::set_conf(sc);
     proc_stats.policy_reloads++;
 
+    ReloadTracker::update(ctrlcon, "start swapping configuration ...");
     send_response(ctrlcon, ".. swapping module\n");
     main_broadcast_command(new ACSwap(new Swapper(old, sc), ctrlcon), ctrlcon);
 
@@ -511,9 +525,8 @@ int main_reload_daq(lua_State* L)
 int main_reload_hosts(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    if ( Swapper::get_reload_in_progress() )
+    if ( !ReloadTracker::start(ctrlcon) )
     {
-        WarningMessage("Reload in progress. Cannot reload host attribute table.\n");
         send_response(ctrlcon, "== reload pending; retry\n");
         return 0;
     }
@@ -531,19 +544,21 @@ int main_reload_hosts(lua_State* L)
 
     if ( fname and *fname )
     {
-        LogMessage("Reloading Host attribute table from %s.\n", fname);
+        std::string msg = "Reloading Host attribute table from ";
+        msg += fname;
+        ReloadTracker::update(ctrlcon, msg.c_str());
         send_response(ctrlcon, ".. reloading hosts table\n");
     }
     else
     {
-        ErrorMessage("Reload failed. Host attribute table filename required.\n");
+        ReloadTracker::failed(ctrlcon, "host attribute table filename required.");
         send_response(ctrlcon, "== filename required\n");
         return 0;
     }
 
     if ( !HostAttributesManager::load_hosts_file(sc, fname) )
     {
-        ErrorMessage("Host attribute table reload from %s failed.\n", fname);
+        ReloadTracker::failed(ctrlcon, "failed to load host table.");
         send_response(ctrlcon, "== reload failed\n");
         return 0;
     }
@@ -553,6 +568,7 @@ int main_reload_hosts(lua_State* L)
     assert( num_hosts >= 0 );
     LogMessage("Host attribute table: %d hosts loaded successfully.\n", num_hosts);
 
+    ReloadTracker::update(ctrlcon, "start swapping configuration ...");
     send_response(ctrlcon, ".. swapping hosts table\n");
     main_broadcast_command(new ACHostAttributesSwap(ctrlcon), ctrlcon);
 
@@ -562,7 +578,7 @@ int main_reload_hosts(lua_State* L)
 int main_delete_inspector(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    if ( Swapper::get_reload_in_progress() )
+    if ( !ReloadTracker::start(ctrlcon) )
     {
         send_response(ctrlcon, "== delete pending; retry\n");
         return 0;
@@ -579,6 +595,7 @@ int main_delete_inspector(lua_State* L)
         send_response(ctrlcon, ".. deleting inspector\n");
     else
     {
+        ReloadTracker::failed(ctrlcon, "inspector name required.");
         send_response(ctrlcon, "== inspector name required\n");
         return 0;
     }
@@ -588,12 +605,14 @@ int main_delete_inspector(lua_State* L)
 
     if ( !sc )
     {
+        ReloadTracker::failed(ctrlcon, "failed to update policy");
         send_response(ctrlcon, "== reload failed\n");
         return 0;
     }
     SnortConfig::set_conf(sc);
     proc_stats.inspector_deletions++;
 
+    ReloadTracker::update(ctrlcon, "start swapping configuration ...");
     send_response(ctrlcon, ".. deleted inspector\n");
     main_broadcast_command(new ACSwap(new Swapper(old, sc), ctrlcon), ctrlcon);
 

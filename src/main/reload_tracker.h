@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2021 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,38 +15,35 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// swapper.h author Russ Combs <rucombs@cisco.com>
+// reload_tracker.h author Steven Baigal <sbaigal@cisco.com>
 
-#ifndef SWAPPER_H
-#define SWAPPER_H
+#ifndef RELOAD_TRACKER_H
+#define RELOAD_TRACKER_H
 
-// used to make thread local, pointer-based config swaps by packet threads
+#include <string>
 
 #include "main/snort_types.h"
 
+class ControlConn;
+
 namespace snort
 {
-struct SnortConfig;
-}
 
-class Analyzer;
-
-class SO_PUBLIC Swapper
+class SO_PUBLIC ReloadTracker
 {
 public:
-    Swapper(snort::SnortConfig*);
-    Swapper(const snort::SnortConfig* sold, snort::SnortConfig* snew);
-    Swapper();
-    ~Swapper();
-
-    void apply(Analyzer&);
-    void finish(Analyzer&);
-    snort::SnortConfig* get_new_conf() { return new_conf; }
+    ReloadTracker() = delete;
+    static bool start(ControlConn* ctrlcon);
+    static void end(ControlConn* ctrlcon);
+    static void failed(ControlConn* ctrlcon, const char* reason);
+    static void update(ControlConn* ctrlcon, const char* status);
 
 private:
-    const snort::SnortConfig* old_conf;
-    snort::SnortConfig* new_conf;
+    static bool reload_in_progress;
+    static std::string current_command;
+    static ControlConn* ctrl;
 };
 
-#endif
+}
 
+#endif
