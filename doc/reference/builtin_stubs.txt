@@ -1592,7 +1592,7 @@ FTP command parameter had invalid string format. Two or more than '%' signs are 
 
 125:6
 
-FTP repsonse message is longer than the maximum configured response length.
+FTP response message is longer than the maximum configured response length.
 
 125:7
 
@@ -2057,107 +2057,113 @@ lists to change this behavior.
 
 140:2
 
-(sip) empty request URI
+SIP Request_URI header field is empty.
 
 140:3
 
-(sip) URI is too long
+SIP Request_URI header field is larger than the defined length in configuration.
 
 140:4
 
-(sip) empty call-Id
+SIP Call-ID header field is empty.
 
 140:5
 
-(sip) Call-Id is too long
+SIP Call-ID header field is larger than the defined length in configuration.
 
 140:6
 
-(sip) CSeq number is too large or negative
+SIP header field CSeq number is too large or negative.
+The CSeq number value must be expressible as a 32-bit unsigned integer and
+must be less than 2^31.
 
 140:7
 
-(sip) request name in CSeq is too long
+The request name in the CSeq is larger than the defined length in configuration.
 
 140:8
 
-(sip) empty From header
+SIP From header field is empty.
 
 140:9
 
-(sip) From header is too long
+SIP From field in header is larger than the defined length in configuration.
 
 140:10
 
-(sip) empty To header
+SIP To field in header is empty.
 
 140:11
 
-(sip) To header is too long
+SIP To field in header is larger than the defined length in configuration.
 
 140:12
 
-(sip) empty Via header
+SIP Via field in header is empty.
 
 140:13
 
-(sip) Via header is too long
+SIP Via field in header is larger than the defined length in configuration.
 
 140:14
 
-(sip) empty Contact
+SIP contact field in header is empty.
 
 140:15
 
-(sip) contact is too long
+SIP contact field in header is larger than the defined length in configuration.
 
 140:16
 
-(sip) content length is too large or negative
+SIP content length is too large or negative. 
 
 140:17
 
-(sip) multiple SIP messages in a packet
+SIP packet has multiple requests in a single packet.
 
 140:18
 
-(sip) content length mismatch
+Inconsistencies present between the Content-Length in SIP header and actual
+body data.
 
 140:19
 
-(sip) request name is invalid
+SIP request name field is invalid in response.
 
 140:20
 
-(sip) Invite replay attack
+SIP received authenticated invite message, but no challenge from server is
+received. This is the case of Invite replay attack.
 
 140:21
 
-(sip) illegal session information modification
+SIP received authenticated invite message, but session information has been
+changed. This is different from re-INVITE, where the dialog has been
+established and authenticated.
 
 140:22
 
-(sip) response status code is not a 3 digit number
+SIP response status code is not a 3 digit number.
 
 140:23
 
-(sip) empty Content-type header
+SIP Content-type header field is empty.
 
 140:24
 
-(sip) SIP version is invalid
+SIP version is invalid. SIP version other than 1.0, 1.1, and 2.0 is invalid.
 
 140:25
 
-(sip) mismatch in METHOD of request and the CSEQ header
+Mismatch in method of request and the CSEQ header detected.
 
 140:26
 
-(sip) method is unknown
+SIP method is unknown.
 
 140:27
 
-(sip) maximum dialogs within a session reached
+SIP dialog numbers in the stream session exceeds the maximal value.
 
 141:1
 
