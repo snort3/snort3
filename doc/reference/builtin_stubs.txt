@@ -1572,51 +1572,51 @@ File decompression failed.
 
 125:1
 
-(ftp_server) TELNET cmd on FTP command channel
+TELNET command is detected on FTP control channel.
 
 125:2
 
-(ftp_server) invalid FTP command
+Invalid FTP command is detected.
 
 125:3
 
-(ftp_server) FTP command parameters were too long
+The length of a FTP command parameter is longer than the configured maximum parameter length.
 
 125:4
 
-(ftp_server) FTP command parameters were malformed
+One or more FTP command parameters are malformed.
 
 125:5
 
-(ftp_server) FTP command parameters contained potential string format
+FTP command parameter had invalid string format. Two or more than '%' signs are detected in FTP command parameter.
 
 125:6
 
-(ftp_server) FTP response message was too long
+FTP repsonse message is longer than the maximum configured response length.
 
 125:7
 
-(ftp_server) FTP traffic encrypted
+FTP traffic is encrypted
 
 125:8
 
-(ftp_server) FTP bounce attempt
+FTP servers can allow an attacker to connect to arbitrary ports on machines other than the FTP client. This is called as FTP bounce attempt and bounce attempt has been detected.
 
 125:9
 
-(ftp_server) evasive (incomplete) TELNET cmd on FTP command channel
+Evasive (incomplete) TELNET command is detected on FTP control channel.
 
 126:1
 
-(telnet) consecutive Telnet AYT commands beyond threshold
+Consecutive Telnet AYT(Are you There) commands are detected beyond the configured AYT threshold limit.
 
 126:2
 
-(telnet) Telnet traffic encrypted
+Telnet traffic is encrypted.
 
 126:3
 
-(telnet) Telnet subnegotiation begin command without subnegotiation end
+Telnet subnegotiation begin command is detected without subnegotiation end.
 
 128:1
 
