@@ -504,7 +504,8 @@ bool UdpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
     const udp::UDPHdr* const hi = reinterpret_cast<const udp::UDPHdr*>(raw_in);
     udp::UDPHdr* const udph_out = reinterpret_cast<udp::UDPHdr*>(buf.data());
 
-    if ( enc.forward() )
+    // irrespective of direction, for geneve, don't swap the ports
+    if ( enc.forward() || config->is_geneve_port(ntohs(hi->uh_dport)) )
     {
         udph_out->uh_sport = hi->uh_sport;
         udph_out->uh_dport = hi->uh_dport;
