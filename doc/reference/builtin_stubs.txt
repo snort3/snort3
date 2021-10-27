@@ -1737,15 +1737,15 @@ The TCP 3-way handshake was not seen for this TCP session.
 
 131:1
 
-(dns) obsolete DNS RR types
+DNS Response Resource Record Type is Obsolete.
 
 131:2
 
-(dns) experimental DNS RR types
+DNS Response Resource Record Type is Experimental.
 
 131:3
 
-(dns) DNS client rdata txt overflow
+DNS Response Resource Record Type is Client rdata Overflow.
 
 133:2
 
