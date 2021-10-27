@@ -212,7 +212,7 @@ AppId OdpContext::get_port_service_id(IpProtocol proto, uint16_t port)
     AppId appId;
 
     if (proto == IpProtocol::TCP)
-      appId = tcp_port_only[port];
+        appId = tcp_port_only[port];
     else
         appId = udp_port_only[port];
 
@@ -229,7 +229,7 @@ void OdpThreadContext::initialize(AppIdContext& ctxt, bool is_control, bool relo
     if (!is_control and reload_odp)
         LuaDetectorManager::init_thread_manager(ctxt);
     else
-        LuaDetectorManager::initialize(ctxt, is_control? 1 : 0, reload_odp);
+        LuaDetectorManager::initialize(ctxt, is_control, reload_odp);
 }
 
 OdpThreadContext::~OdpThreadContext()

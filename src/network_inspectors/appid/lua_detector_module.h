@@ -48,9 +48,9 @@ bool get_lua_field(lua_State* L, int table, const char* field, IpProtocol& out);
 class LuaDetectorManager
 {
 public:
-    LuaDetectorManager(AppIdContext&, int);
+    LuaDetectorManager(AppIdContext&, bool);
     ~LuaDetectorManager();
-    static void initialize(AppIdContext&, int is_control=0, bool reload=false);
+    static void initialize(AppIdContext&, bool is_control=false, bool reload=false);
     static void init_thread_manager(const AppIdContext&);
     static void clear_lua_detector_mgrs();
 
@@ -69,11 +69,11 @@ public:
     LuaObject* get_cb_detector(AppId app_id);
 
 private:
-    void initialize_lua_detectors(bool reload = false);
+    void initialize_lua_detectors(bool is_control, bool reload = false);
     void activate_lua_detectors();
     void list_lua_detectors();
-    bool load_detector(char* detector_name, bool is_custom, bool reload, std::string& buf);
-    void load_lua_detectors(const char* path, bool is_custom, bool reload = false);
+    bool load_detector(char* detector_name, bool is_custom, bool is_control, bool reload, std::string& buf);
+    void load_lua_detectors(const char* path, bool is_custom, bool is_control, bool reload = false);
     LuaObject* create_lua_detector(const char* detector_name, bool is_custom,
         const char* detector_filename, bool& has_validate);
 
