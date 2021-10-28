@@ -52,15 +52,16 @@ public:
         ++count;
     }
 
-    void unlink_uni(snort::Flow* flow)
+    bool unlink_uni(snort::Flow* flow)
     {
         if ( !flow->next )
-            return;
+            return false;
 
         flow->next->prev = flow->prev;
         flow->prev->next = flow->next;
         flow->next = flow->prev = nullptr;
         --count;
+        return true;
     }
 
     snort::Flow* get_oldest_uni()

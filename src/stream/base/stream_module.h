@@ -37,6 +37,14 @@ extern THREAD_LOCAL snort::ProfileStats s5PerfStats;
 extern THREAD_LOCAL class FlowControl* flow_con;
 extern THREAD_LOCAL const snort::Trace* stream_trace;
 
+#ifdef DEBUG_MSGS
+enum
+{
+    TRACE_BASE = 0,
+    TRACE_FLOW
+};
+#endif
+
 //-------------------------------------------------------------------------
 // stream module
 //-------------------------------------------------------------------------

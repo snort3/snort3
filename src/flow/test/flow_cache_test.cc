@@ -28,6 +28,7 @@
 
 #include "detection/detection_engine.h"
 #include "main/snort_config.h"
+#include "main/snort_debug.h"
 #include "managers/inspector_manager.h"
 #include "memory/memory_cap.h"
 #include "packet_io/active.h"
@@ -53,6 +54,7 @@ THREAD_LOCAL bool Active::s_suspend = false;
 THREAD_LOCAL Active::ActiveSuspendReason Active::s_suspend_reason = Active::ASP_NONE;
 
 THREAD_LOCAL PacketTracer* snort::s_pkt_trace = nullptr;
+THREAD_LOCAL const Trace* stream_trace = nullptr;
 
 void Active::drop_packet(snort::Packet const*, bool) { }
 PacketTracer::~PacketTracer() = default;
@@ -93,6 +95,9 @@ bool ExpectCache::is_expected(Packet*) { return true; }
 Flow* HighAvailabilityManager::import(Packet&, FlowKey&) { return nullptr; }
 bool HighAvailabilityManager::in_standby(Flow*) { return true; }
 SfIpRet SfIp::set(void const*, int) { return SFIP_SUCCESS; }
+void snort::trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) {}
+uint8_t snort::TraceApi::get_constraints_generation() { return 0; }
+void snort::TraceApi::filter(const Packet&) {}
 namespace memory
 {
 void MemoryCap::update_allocations(size_t) { }

@@ -414,7 +414,7 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
 
     // FIXIT-M refactor to unlink_uni immediately after session
     // is processed by inspector manager (all flows)
-    if ( flow->next && is_bidirectional(flow) )
+    if ( is_bidirectional(flow) )
         cache->unlink_uni(flow);
 
     return true;

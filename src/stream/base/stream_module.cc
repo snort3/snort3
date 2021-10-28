@@ -36,6 +36,15 @@
 using namespace snort;
 using namespace std;
 
+#ifdef DEBUG_MSGS
+static const TraceOption stream_trace_options[] =
+{
+    { "base", TRACE_BASE, "enable base stream trace logging" },
+    { "flow", TRACE_FLOW, "enable flow trace logging" },
+    { nullptr, 0, nullptr }
+};
+#endif
+
 THREAD_LOCAL const Trace* stream_trace = nullptr;
 static THREAD_LOCAL timeval reload_time { };
 
@@ -119,8 +128,7 @@ const TraceOption* StreamModule::get_trace_options() const
 #ifndef DEBUG_MSGS
     return nullptr;
 #else
-    static const TraceOption stream_trace_options(nullptr, 0, nullptr);
-    return &stream_trace_options;
+    return stream_trace_options;
 #endif
 }
 

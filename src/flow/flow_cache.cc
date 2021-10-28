@@ -29,9 +29,11 @@
 #include "hash/zhash.h"
 #include "helpers/flag_context.h"
 #include "ips_options/ips_flowbits.h"
+#include "main/snort_debug.h"
 #include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "packet_tracer/packet_tracer.h"
+#include "stream/base/stream_module.h"
 #include "time/packet_time.h"
 #include "utils/stats.h"
 
@@ -54,6 +56,7 @@ static const unsigned ALL_FLOWS = 3;
 //-------------------------------------------------------------------------
 
 THREAD_LOCAL bool FlowCache::pruning_in_progress = false;
+extern THREAD_LOCAL const snort::Trace* stream_trace;
 
 FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg)
 {
@@ -110,19 +113,39 @@ Flow* FlowCache::find(const FlowKey* key)
 // always prepend
 void FlowCache::link_uni(Flow* flow)
 {
-    if ( flow->pkt_type == PktType::IP )
+    if ( flow->key->pkt_type == PktType::IP )
+    {
+        debug_logf(stream_trace, TRACE_FLOW, nullptr, 
+            "linking unidirectional flow (IP) to list of size: %u\n", 
+            uni_ip_flows->get_count());
         uni_ip_flows->link_uni(flow);
+    }
     else
+    {
+        debug_logf(stream_trace, TRACE_FLOW, nullptr, 
+            "linking unidirectional flow (non-IP) to list of size: %u\n", 
+            uni_flows->get_count());
         uni_flows->link_uni(flow);
+    }
 }
 
 // but remove from any point
 void FlowCache::unlink_uni(Flow* flow)
 {
-    if ( flow->pkt_type == PktType::IP )
-        uni_ip_flows->unlink_uni(flow);
+    if ( flow->key->pkt_type == PktType::IP )
+    {
+        if ( uni_ip_flows->unlink_uni(flow) )
+            debug_logf(stream_trace, TRACE_FLOW, nullptr, 
+                "unlinked unidirectional flow (IP) from list, size: %u\n", 
+                uni_ip_flows->get_count());
+    }
     else
-        uni_flows->unlink_uni(flow);
+    {
+        if ( uni_flows->unlink_uni(flow) )
+            debug_logf(stream_trace, TRACE_FLOW, nullptr, 
+                "unlinked unidirectional flow (non-IP) from list, size: %u\n",
+                uni_flows->get_count());
+    }
 }
 
 Flow* FlowCache::allocate(const FlowKey* key)
@@ -164,8 +187,7 @@ Flow* FlowCache::allocate(const FlowKey* key)
 
 void FlowCache::remove(Flow* flow)
 {
-    if ( flow->next )
-        unlink_uni(flow);
+    unlink_uni(flow);
 
     // FIXIT-M This check is added for offload case where both Flow::reset
     // and Flow::retire try remove the flow from hash. Flow::reset should
@@ -423,8 +445,7 @@ unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, u
         }
 
         // we have a winner...
-        if ( flow->next )
-            unlink_uni(flow);
+        unlink_uni(flow);
 
         if ( flow->was_blocked() )
             delete_stats.update(FlowDeleteState::BLOCKED);
