@@ -40,6 +40,7 @@
 #include "protocols/protocol_ids.h"
 #include "protocols/vlan.h"
 #include "time/packet_time.h"
+#include "utils/spinlock.h"
 
 struct HostTrackerStats
 {
@@ -216,59 +217,73 @@ public:
     void update_last_seen();
     uint32_t get_last_seen() const
     {
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
-        return last_seen;
+        spinlock_lock(&host_tracker_sl);
+        auto t = last_seen;
+        spinlock_unlock(&host_tracker_sl);
+        return t;
     }
 
     void update_last_event(uint32_t time = 0);
     uint32_t get_last_event() const
     {
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
-        return last_event;
+        spinlock_lock(&host_tracker_sl);
+        auto t = last_event;
+        spinlock_unlock(&host_tracker_sl);
+        return t;
     }
 
     std::vector<uint16_t> get_network_protos()
     {
         std::vector<uint16_t> out_protos;
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        spinlock_lock(&host_tracker_sl);
         for (const auto& proto : network_protos)
             if ( proto.second )
                 out_protos.emplace_back(proto.first);
+
+        spinlock_unlock(&host_tracker_sl);
         return out_protos;
     }
 
     std::vector<uint16_t> get_xport_protos()
     {
         std::vector<uint16_t> out_protos;
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        spinlock_lock(&host_tracker_sl);
         for (const auto& proto : xport_protos)
             if ( proto.second )
                 out_protos.emplace_back(proto.first);
+
+        spinlock_unlock(&host_tracker_sl);
         return out_protos;
     }
 
     void set_host_type(HostType rht)
     {
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        spinlock_lock(&host_tracker_sl);
         host_type = rht;
+        spinlock_unlock(&host_tracker_sl);
     }
 
     HostType get_host_type() const
     {
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
-        return host_type;
+        spinlock_lock(&host_tracker_sl);
+        auto t = host_type;
+        spinlock_unlock(&host_tracker_sl);
+        return t;
     }
 
     uint8_t get_hops()
     {
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
-        return hops;
+        spinlock_lock(&host_tracker_sl);
+        auto t = hops;
+        spinlock_unlock(&host_tracker_sl);
+        return t;
     }
 
     void update_hops(uint8_t h)
     {
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        spinlock_lock(&host_tracker_sl);
         hops = h;
+        spinlock_unlock(&host_tracker_sl);
     }
 
     bool add_client_payload(HostClient&, AppId, size_t);
@@ -344,44 +359,55 @@ public:
 
     uint8_t get_ip_ttl() const
     {
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
-        return ip_ttl;
+        spinlock_lock(&host_tracker_sl);
+        auto t = ip_ttl;
+        spinlock_unlock(&host_tracker_sl);
+        return t;
     }
 
     void set_ip_ttl(uint8_t ttl)
     {
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        spinlock_lock(&host_tracker_sl);
         ip_ttl = ttl;
+        spinlock_unlock(&host_tracker_sl);
     }
 
     uint32_t get_nat_count_start() const
     {
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
-        return nat_count_start;
+        spinlock_lock(&host_tracker_sl);
+        auto t = nat_count_start;
+        spinlock_unlock(&host_tracker_sl);
+        return t;
     }
 
     void set_nat_count_start(uint32_t natCountStart)
     {
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        spinlock_lock(&host_tracker_sl);
         nat_count_start = natCountStart;
+        spinlock_unlock(&host_tracker_sl);
     }
 
     uint32_t get_nat_count() const
     {
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
-        return nat_count;
+        spinlock_lock(&host_tracker_sl);
+        auto t =  nat_count;
+        spinlock_unlock(&host_tracker_sl);
+        return t;
     }
 
     void set_nat_count(uint32_t v = 0)
     {
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
+        spinlock_lock(&host_tracker_sl);
         nat_count = v;
+        spinlock_unlock(&host_tracker_sl);
     }
 
     uint32_t inc_nat_count()
     {
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
-        return ++nat_count;
+        spinlock_lock(&host_tracker_sl);
+        auto t =  ++nat_count;
+        spinlock_unlock(&host_tracker_sl);
+        return t;
     }
 
     bool set_netbios_name(const char*);
@@ -401,15 +427,19 @@ public:
     // Caller is responsible for checking visibility
     std::vector<HostApplication, HostAppAllocator> get_services()
     {
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
-        return services;
+        spinlock_lock(&host_tracker_sl);
+        auto t = services;
+        spinlock_unlock(&host_tracker_sl);
+        return t;
     }
 
     // Caller is responsible for checking visibility
     std::vector<HostClient, HostClientAllocator> get_clients()
     {
-        std::lock_guard<std::mutex> lck(host_tracker_lock);
-        return clients;
+        spinlock_lock(&host_tracker_sl);
+        auto t = clients;
+        spinlock_unlock(&host_tracker_sl);
+        return t;
     }
 #endif
 
@@ -419,8 +449,8 @@ public:
 
 private:
 
-    mutable std::mutex host_tracker_lock; // ensure that updates to a shared object are safe
-    mutable std::mutex flows_lock;        // protect the flows set separately
+    mutable spinlock_t host_tracker_sl;     // ensure that updates to a shared object are safe
+    mutable spinlock_t flow_sl;             // protect the flows set separately
     uint8_t hops;                 // hops from the snort inspector, e.g., zero for ARP
     uint32_t last_seen;           // the last time this host was seen
     uint32_t last_event;          // the last time an event was generated
