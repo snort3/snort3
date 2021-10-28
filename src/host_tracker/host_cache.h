@@ -65,7 +65,7 @@ class LruCacheSharedMemcap : public LruCacheShared<Key, Value, Hash, Eq, Purgato
 {
 public:
     using LruBase = LruCacheShared<Key, Value, Hash, Eq, Purgatory>;
-    using LruBase::cache_mutex;
+    using LruBase::cache_sl;
     using LruBase::current_size;
     using LruBase::list;
     using LruBase::map;
@@ -125,7 +125,7 @@ public:
             // Get a local temporary reference of data being deleted (as if a trash can).
             // To avoid race condition, data needs to self-destruct after the cache_lock does.
             Data data;
-            std::lock_guard<std::mutex> cache_lock(cache_mutex);
+            spinlock_lock(&cache_sl);
 
             if ( !list.empty() )
             {
@@ -145,10 +145,12 @@ public:
             if ( max_size <= new_size or list.empty() )
             {
                 max_size = new_size;
+                spinlock_unlock(&cache_sl);
                 return true;
             }
         }
 
+        spinlock_unlock(&cache_sl);
         return false;
     }
 
@@ -201,8 +203,9 @@ private:
             // Do not change the order of data and cache_lock, as the data must
             // self destruct after cache_lock.
             Purgatory data;
-            std::lock_guard<std::mutex> cache_lock(cache_mutex);
+            spinlock_lock(&cache_sl);
             LruBase::prune(data);
+            spinlock_unlock(&cache_sl);
         }
     }
 

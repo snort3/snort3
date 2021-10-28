@@ -34,6 +34,7 @@
 #include <vector>
 
 #include "framework/counts.h"
+#include "utils/spinlock.h"
 
 extern const PegInfo lru_cache_shared_peg_names[];
 
@@ -68,7 +69,7 @@ public:
     LruCacheShared& operator=(const LruCacheShared& arg) = delete;
 
     LruCacheShared(const size_t initial_size) :
-        max_size(initial_size), current_size(0) { }
+        max_size(initial_size), current_size(0) { spinlock_init(&cache_sl); }
 
     virtual ~LruCacheShared() = default;
 
@@ -97,14 +98,18 @@ public:
     //  Get current number of elements in the LruCache.
     size_t size()
     {
-        std::lock_guard<std::mutex> cache_lock(cache_mutex);
-        return list.size();
+        spinlock_lock(&cache_sl);
+        auto l = list.size();
+        spinlock_unlock(&cache_sl);
+        return l;
     }
 
     virtual size_t mem_size()
     {
-        std::lock_guard<std::mutex> cache_lock(cache_mutex);
-        return list.size() * mem_chunk;
+        spinlock_lock(&cache_sl);
+        auto l = list.size() * mem_chunk;
+        spinlock_unlock(&cache_sl);
+        return l;
     }
 
     size_t get_max_size()
@@ -132,10 +137,14 @@ public:
     { return (PegCount*)&stats; }
 
     void lock()
-    { cache_mutex.lock(); }
+    {
+        spinlock_lock(&cache_sl);
+    }
 
     void unlock()
-    { cache_mutex.unlock(); }
+    {
+        spinlock_unlock(&cache_sl);
+    }
 
 protected:
     using LruList = std::list<std::pair<Key, Data>>;
@@ -150,7 +159,7 @@ protected:
 
     std::atomic<size_t> current_size;// Number of entries currently in the cache.
 
-    std::mutex cache_mutex;
+    spinlock_t cache_sl;
     LruList list;  //  Contains key/data pairs. Maintains LRU order with
                    //  least recently used at the end.
     LruMap map;    //  Maps key to list iterator for fast lookup.
@@ -203,12 +212,13 @@ bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::set_max_size(size_t newsiz
     // after the cache_lock does.
     Purgatory data;
 
-    std::lock_guard<std::mutex> cache_lock(cache_mutex);
+    spinlock_lock(&cache_sl);
 
     //  Remove the oldest entries if we have to reduce cache size.
     max_size = newsize;
 
     prune(data);
+    spinlock_unlock(&cache_sl);
 
     return true;
 }
@@ -217,18 +227,20 @@ template<typename Key, typename Value, typename Hash, typename Eq, typename Purg
 std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq, Purgatory>::find(const Key& key)
 {
     LruMapIter map_iter;
-    std::lock_guard<std::mutex> cache_lock(cache_mutex);
+    spinlock_lock(&cache_sl);
 
     map_iter = map.find(key);
     if (map_iter == map.end())
     {
         stats.find_misses++;
+        spinlock_unlock(&cache_sl);
         return nullptr;
     }
 
     //  Move entry to front of LruList
     list.splice(list.begin(), list, map_iter->second);
     stats.find_hits++;
+    spinlock_unlock(&cache_sl);
     return map_iter->second->second;
 }
 
@@ -252,13 +264,13 @@ find_else_create(const Key& key, bool* new_data)
     // delete it before we got a chance to return it.
     Purgatory tmp_data;
 
-    std::lock_guard<std::mutex> cache_lock(cache_mutex);
-
+    spinlock_lock(&cache_sl);
     map_iter = map.find(key);
     if (map_iter != map.end())
     {
         stats.find_hits++;
         list.splice(list.begin(), list, map_iter->second); // update LRU
+        spinlock_unlock(&cache_sl);
         return map_iter->second->second;
     }
 
@@ -277,6 +289,7 @@ find_else_create(const Key& key, bool* new_data)
 
     prune(tmp_data);
 
+    spinlock_unlock(&cache_sl);
     return data;
 }
 
@@ -287,7 +300,7 @@ find_else_insert(const Key& key, std::shared_ptr<Value>& data, bool replace)
     LruMapIter map_iter;
 
     Purgatory tmp_data;
-    std::lock_guard<std::mutex> cache_lock(cache_mutex);
+    spinlock_lock(&cache_sl);
 
     map_iter = map.find(key);
     if (map_iter != map.end())
@@ -303,6 +316,7 @@ find_else_insert(const Key& key, std::shared_ptr<Value>& data, bool replace)
             stats.replaced++;
         }
         list.splice(list.begin(), list, map_iter->second); // update LRU
+        spinlock_unlock(&cache_sl);
         return true;
     }
 
@@ -317,6 +331,7 @@ find_else_insert(const Key& key, std::shared_ptr<Value>& data, bool replace)
     map[key] = list.begin();
 
     prune(tmp_data);
+    spinlock_unlock(&cache_sl);
 
     return false;
 }
@@ -328,7 +343,7 @@ find_else_insert(const Key& key, std::shared_ptr<Value>& data, LcsInsertStatus* 
     LruMapIter map_iter;
 
     Purgatory tmp_data;
-    std::lock_guard<std::mutex> cache_lock(cache_mutex);
+    spinlock_lock(&cache_sl);
 
     map_iter = map.find(key);
     if (map_iter != map.end())
@@ -346,6 +361,7 @@ find_else_insert(const Key& key, std::shared_ptr<Value>& data, LcsInsertStatus* 
             if (status) *status = LcsInsertStatus::LCS_ITEM_REPLACED;
         }
         list.splice(list.begin(), list, map_iter->second); // update LRU
+        spinlock_unlock(&cache_sl);
         return map_iter->second->second;
     }
 
@@ -361,6 +377,7 @@ find_else_insert(const Key& key, std::shared_ptr<Value>& data, LcsInsertStatus* 
     map[key] = list.begin();
 
     prune(tmp_data);
+    spinlock_unlock(&cache_sl);
 
     return data;
 }
@@ -370,13 +387,14 @@ std::vector< std::pair<Key, std::shared_ptr<Value>> >
 LruCacheShared<Key, Value, Hash, Eq, Purgatory>::get_all_data()
 {
     std::vector<std::pair<Key, Data> > vec;
-    std::lock_guard<std::mutex> cache_lock(cache_mutex);
+    spinlock_lock(&cache_sl);
 
     for (auto& entry : list )
     {
         vec.emplace_back(entry);
     }
 
+    spinlock_unlock(&cache_sl);
     return vec;
 }
 
@@ -398,11 +416,12 @@ bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::remove(const Key& key)
     // data and cache_lock!
     Data data;
 
-    std::lock_guard<std::mutex> cache_lock(cache_mutex);
+    spinlock_lock(&cache_sl);
 
     map_iter = map.find(key);
     if (map_iter == map.end())
     {
+        spinlock_unlock(&cache_sl);
         return false;   //  Key is not in LruCache.
     }
 
@@ -418,6 +437,7 @@ bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::remove(const Key& key)
     // Now, data can go out of scope and if it needs to lock again while
     // deleting the Value object, it can do so.
 
+    spinlock_unlock(&cache_sl);
     return true;
 }
 
@@ -427,11 +447,12 @@ bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::remove(const Key& key,
 {
     LruMapIter map_iter;
 
-    std::lock_guard<std::mutex> cache_lock(cache_mutex);
+    spinlock_lock(&cache_sl);
 
     map_iter = map.find(key);
     if (map_iter == map.end())
     {
+        spinlock_unlock(&cache_sl);
         return false;   //  Key is not in LruCache.
     }
 
@@ -443,6 +464,7 @@ bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::remove(const Key& key,
     stats.removes++;
 
     assert( data.use_count() > 0 );
+    spinlock_unlock(&cache_sl);
 
     return true;
 }
