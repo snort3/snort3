@@ -2215,19 +2215,19 @@ File decompression failed.
 
 143:1
 
-(gtp_inspect) message length is invalid
+gtp_inspect detected invalid message length
 
 143:2
 
-(gtp_inspect) information element length is invalid
+gtp_inspect detected invalid information element length
 
 143:3
 
-(gtp_inspect) information elements are out of order
+gtp_inspect detected information elements are out of order
 
 143:4
 
-(gtp_inspect) TEID is missing
+gtp_inspect detected tunnel endpoint identifier having zero
 
 144:1
 
