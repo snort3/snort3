@@ -84,7 +84,7 @@ static fd_status_t Inflate(fd_session_t* SessionPtr)
     if ( z_ret != Z_OK )
         return File_Decomp_Error;
 
-    if ( SessionPtr->Avail_Out == 0 )
+    if ( SessionPtr->Avail_Out == 0 and SessionPtr->Avail_In > 0)
         return File_Decomp_BlockOut;
 
     return File_Decomp_OK;
@@ -140,6 +140,7 @@ fd_status_t File_Decomp_End_ZIP(fd_session_t* SessionPtr)
 fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
 {
     uint8_t byte;
+    bool output_blocked = false;
 
     if ( SessionPtr == nullptr )
         return File_Decomp_Error;
@@ -161,7 +162,7 @@ fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
             {
                 // check if we read a local_header
                 if ( parser->local_header != ZIP_LOCAL_HEADER )
-                    return File_Decomp_Complete;
+                    return output_blocked ? File_Decomp_BlockOut : File_Decomp_Complete;
 
                 // read a local_header, reset the index
                 parser->Index = 0;
@@ -391,6 +392,8 @@ fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
             if ( status == File_Decomp_BlockOut )
             {
                 // ran out of output space
+                // Save this status because we need to return it to the inspector so it can alert
+                output_blocked = true;
                 if ( parser->data_descriptor )
                 {
                     // close the inflate stream
@@ -498,7 +501,7 @@ fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
                     Move_N(SessionPtr, min);
 
                     // get more input
-                    return File_Decomp_BlockIn;
+                    return output_blocked ? File_Decomp_BlockOut : File_Decomp_BlockIn;
                 }
 
                 if ( SessionPtr->Avail_Out < skip )
@@ -550,6 +553,6 @@ fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
         parser->Index++;
     }
 
-    return File_Decomp_BlockIn;
+    return output_blocked ? File_Decomp_BlockOut : File_Decomp_BlockIn;
 }
 

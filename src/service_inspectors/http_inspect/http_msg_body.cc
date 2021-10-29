@@ -125,7 +125,12 @@ void HttpMsgBody::analyze()
             msg_text.start() + partial_inspected_octets);
     }
     else
+    {
+        // First flush of inspection section - set full file decompress buffer size
+        session_data->file_decomp_buffer_size_remaining[source_id] =
+            FileService::decode_conf.get_decompress_buffer_size();
         msg_text_new.set(msg_text);
+    }
 
     int32_t& pub_depth_remaining = session_data->publish_depth_remaining[source_id];
     if (pub_depth_remaining > 0)
@@ -155,7 +160,10 @@ void HttpMsgBody::analyze()
 
             if (partial_detect_length > 0)
             {
-                const int32_t total_length = partial_detect_length + decompressed_file_body.length();
+                const int32_t total_length = partial_detect_length +
+                    decompressed_file_body.length();
+                assert(total_length <=
+                    (int64_t)FileService::decode_conf.get_decompress_buffer_size());
                 uint8_t* const cumulative_buffer = new uint8_t[total_length];
                 memcpy(cumulative_buffer, partial_detect_buffer, partial_detect_length);
                 memcpy(cumulative_buffer + partial_detect_length, decompressed_file_body.start(),
@@ -251,7 +259,7 @@ void HttpMsgBody::do_file_decompression(const Field& input, Field& output)
         output.set(input);
         return;
     }
-    const uint32_t buffer_size = FileService::decode_conf.get_decompress_buffer_size();
+    const uint32_t buffer_size = session_data->file_decomp_buffer_size_remaining[source_id];
     uint8_t* buffer = new uint8_t[buffer_size];
     session_data->fd_alert_context.infractions = transaction->get_infractions(source_id);
     session_data->fd_alert_context.events = session_data->events[source_id];
@@ -279,7 +287,11 @@ void HttpMsgBody::do_file_decompression(const Field& input, Field& output)
         create_event(EVENT_FILE_DECOMPR_OVERRUN);
         // Fall through
     default:
-        output.set(session_data->fd_state->Next_Out - buffer, buffer, true);
+        const uint32_t output_length = session_data->fd_state->Next_Out - buffer;
+        output.set(output_length, buffer, true);
+        assert((uint64_t)session_data->file_decomp_buffer_size_remaining[source_id] >=
+            output_length);
+        session_data->file_decomp_buffer_size_remaining[source_id] -= output_length;
         break;
     }
 }
