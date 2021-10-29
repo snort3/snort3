@@ -57,7 +57,7 @@ Http2HeadersFrameHeader::Http2HeadersFrameHeader(const uint8_t* header_buffer,
     const uint32_t encoded_headers_length = (data.length() > hpack_headers_offset) ?
         data.length() - hpack_headers_offset : 0;
     if (!hpack_decoder->decode_headers((data.start() + hpack_headers_offset),
-        encoded_headers_length, decoded_headers, start_line_generator, false))
+        encoded_headers_length, start_line_generator, false))
     {
         if (!(*session_data->infractions[source_id] & INF_TRUNCATED_HEADER_LINE))
         {

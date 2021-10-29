@@ -46,7 +46,7 @@ public:
         session_data(flow_data), events(_events), infractions(_infractions), source_id(src_id),
         decode_table(flow_data) { }
     bool decode_headers(const uint8_t* encoded_headers, const uint32_t encoded_headers_length,
-        uint8_t* decoded_headers, Http2StartLine* start_line, bool trailers);
+         Http2StartLine* start_line, bool trailers);
     bool write_decoded_headers(const uint8_t* in_buffer, const uint32_t in_length,
         uint8_t* decoded_header_buffer, uint32_t decoded_header_length, uint32_t& bytes_written);
     bool decode_header_line(const uint8_t* encoded_header_buffer,
@@ -80,15 +80,16 @@ public:
         uint32_t& bytes_written, Field& field);
 
     bool finalize_start_line();
-    const Field* get_start_line();
-    Field get_decoded_headers(const uint8_t* const decoded_headers);
+    void set_decoded_headers(Field&);
     bool are_pseudo_headers_allowed() { return pseudo_headers_allowed; }
     void settings_table_size_update(const uint32_t size);
+    void cleanup();
 
 private:
     Http2StartLine* start_line;
     bool pseudo_headers_allowed;
-    uint32_t decoded_headers_size;
+    uint8_t* decoded_headers = nullptr; // working buffer to store decoded headers
+    uint32_t decoded_headers_size = 0;
     Http2FlowData* session_data;
     Http2EventGen* const events;
     Http2Infractions* const infractions;

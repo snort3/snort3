@@ -67,7 +67,7 @@ Http2PushPromiseFrame::Http2PushPromiseFrame(const uint8_t* header_buffer,
 
     // Decode headers
     if (!hpack_decoder->decode_headers((data.start() + hpack_headers_offset), data.length() -
-        hpack_headers_offset, decoded_headers, start_line_generator, false))
+        hpack_headers_offset, start_line_generator, false))
     {
         if (!(*session_data->infractions[source_id] & INF_TRUNCATED_HEADER_LINE))
         {

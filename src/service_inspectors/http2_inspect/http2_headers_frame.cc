@@ -51,13 +51,12 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const uint32_
 
     // Set up HPACK decoding
     hpack_decoder = &session_data->hpack_decoder[source_id];
-    decoded_headers = new uint8_t[MAX_OCTETS];
 }
 
 
 Http2HeadersFrame::~Http2HeadersFrame()
 {
-    delete[] decoded_headers;
+    hpack_decoder->cleanup();
 }
 
 void Http2HeadersFrame::clear()
@@ -74,9 +73,8 @@ void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow, SourceI
     if (session_data->abort_flow[source_id])
         return;
 
-    http1_header = hpack_decoder->get_decoded_headers(decoded_headers);
+    hpack_decoder->set_decoded_headers(http1_header);
     StreamBuffer stream_buf;
-
 
     // http_inspect scan() of headers
     // If we're processing a header truncated immediately after the start line, http1_header will

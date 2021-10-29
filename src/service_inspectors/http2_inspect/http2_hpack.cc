@@ -370,7 +370,7 @@ bool Http2HpackDecoder::decode_header_line(const uint8_t* encoded_header_buffer,
 // does not output the start line or decoded headers - this function must be followed by calls to
 // generate_start_line() and get_decoded_headers() to generate and obtain these fields.
 bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
-    const uint32_t encoded_headers_length, uint8_t* decoded_headers,
+    const uint32_t encoded_headers_length,
     Http2StartLine *start_line_generator, bool trailers)
 {
     uint32_t total_bytes_consumed = 0;
@@ -378,7 +378,7 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     uint32_t line_bytes_written = 0;
     bool success = true;
     start_line = start_line_generator;
-    decoded_headers_size = 0;
+    decoded_headers = new uint8_t[MAX_OCTETS];
     is_trailers = trailers;
     pseudo_headers_allowed = !is_trailers;
 
@@ -425,7 +425,24 @@ void Http2HpackDecoder::settings_table_size_update(uint32_t new_size)
     decode_table.get_dynamic_table().update_size(new_size);
 }
 
-Field Http2HpackDecoder::get_decoded_headers(const uint8_t* const decoded_headers)
+void Http2HpackDecoder::set_decoded_headers(Field& http1_header)
 {
-    return Field(decoded_headers_size, decoded_headers, false);
+    assert(decoded_headers);
+    http1_header.set(decoded_headers_size, decoded_headers, true);
+
+    // The headers frame object now owns this buffer
+    decoded_headers = nullptr;
+    decoded_headers_size = 0;
+}
+
+void Http2HpackDecoder::cleanup()
+{
+    if (decoded_headers)
+    {
+        // get_decoded_headers() was never called because we encountered some error during
+        // processing. We must clean up the buffer.
+        delete[] decoded_headers;
+        decoded_headers = nullptr;
+        decoded_headers_size = 0;
+    }
 }
