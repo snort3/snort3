@@ -135,16 +135,20 @@ void FlowCache::unlink_uni(Flow* flow)
     if ( flow->key->pkt_type == PktType::IP )
     {
         if ( uni_ip_flows->unlink_uni(flow) )
+        {
             debug_logf(stream_trace, TRACE_FLOW, nullptr, 
                 "unlinked unidirectional flow (IP) from list, size: %u\n", 
                 uni_ip_flows->get_count());
+        }
     }
     else
     {
         if ( uni_flows->unlink_uni(flow) )
+        {
             debug_logf(stream_trace, TRACE_FLOW, nullptr, 
                 "unlinked unidirectional flow (non-IP) from list, size: %u\n",
                 uni_flows->get_count());
+        }
     }
 }
 
