@@ -273,10 +273,6 @@ The script continuation will be processed with the saved context.
 In order to support Script Detection feature for inline scripts, Normalizer ensures
 that after reaching the script end (legitimate closing tag or bad token),
 it falls back to an initial state, so that the next script can be processed by the same context.
-If PDU starts with a script continuation, it is not possible to restore
-Normalizer to the right state later (because context on the flow is not in an initial state).
-A buffer dedicated to handle this scenario. It contains a normalized data
-from the script continuation, so later it can be prepended to subsequent normalizations.
 
 Algorithm for reassembling chunked message bodies:
 

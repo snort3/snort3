@@ -63,7 +63,7 @@ private:
     void do_file_processing(const Field& file_data);
     void do_utf_decoding(const Field& input, Field& output);
     void do_file_decompression(const Field& input, Field& output);
-    void do_enhanced_js_normalization(char*& out_buf, size_t& out_len);
+    void do_enhanced_js_normalization(const Field& input, Field& output);
     void do_legacy_js_normalization(const Field& input, Field& output);
     void clean_partial(uint32_t& partial_inspected_octets, uint32_t& partial_detect_length,
         uint8_t*& partial_detect_buffer,  uint32_t& partial_js_detect_length,
@@ -81,7 +81,7 @@ private:
     Field cumulative_data;
     Field js_norm_body;
     Field detect_data;
-    Field enhanced_js_norm_body;
+    Field norm_js_data;
     Field classic_client_body;   // URI normalization applied
     Field decompressed_vba_data;
 

@@ -78,7 +78,14 @@ public:
 
     // releases the current buffer,
     // the caller takes ownership over the buffer
-    char* release_data(std::streamsize& n);
+    const char* take_data();
+    const char* take_data(std::streamsize& n);
+
+    const char* data() const
+    { return pbase(); }
+
+    std::streamsize data_len() const
+    { return pptr() - pbase(); }
 
 protected:
     virtual std::streambuf* setbuf(char* s, std::streamsize n) override;

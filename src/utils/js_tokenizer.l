@@ -1146,6 +1146,7 @@ JSTokenizer::JSTokenizer(std::istream& in, std::ostream& out,
       tmp_buf(buf),
       tmp_buf_size(buf_size),
       tmp_cap_size(cap_size),
+      output_steps_back(0),
       max_scope_depth(max_scope_depth)
 {
     scope_push(GLOBAL);
@@ -1158,6 +1159,12 @@ JSTokenizer::~JSTokenizer()
     delete[] tmp_buf;
     tmp_buf = nullptr;
     tmp_buf_size = 0;
+}
+
+void JSTokenizer::pre_yylex()
+{
+    assert(output_steps_back >= 0);
+    yyout.seekp(-output_steps_back, std::ios_base::cur);
 }
 
 void JSTokenizer::switch_to_temporal(const std::string& data)
@@ -1351,19 +1358,22 @@ void JSTokenizer::states_push()
     auto& state = states[sp];
 
     state.token = token;
-    state.length = yyleng;
+    state.orig_len = yyleng;
+    state.norm_len = yyout.rdbuf()->pubseekoff(0, std::ios_base::cur, std::ios_base::out);
     state.sc = yy_start;
 }
 
 void JSTokenizer::states_correct(int take_off)
 {
     auto& state = states[sp];
-    state.length -= yyleng - take_off;
+    state.orig_len -= yyleng - take_off;
 }
 
 void JSTokenizer::states_apply()
 {
     int tail_size = 0;
+    int outbuf_pos = yyout.tellp();
+    int outbuf_back = outbuf_pos;
 
     for (int i = JSTOKENIZER_MAX_STATES; i > 0 && tail_size < tmp_cap_size; --i)
     {
@@ -1371,17 +1381,21 @@ void JSTokenizer::states_apply()
         idx %= JSTOKENIZER_MAX_STATES;
         auto& state = states[idx];
 
-        if (state.length == 0)
+        outbuf_back = state.norm_len;
+
+        if (state.orig_len == 0)
             continue;
 
         token = state.token;
         yy_start = state.sc;
-        tail_size += state.length;
+        tail_size += state.orig_len;
         tail_size = tail_size < tmp_cap_size ? tail_size : tmp_cap_size;
     }
 
+    output_steps_back = outbuf_pos - outbuf_back;
+
     for (int i = 0; i < JSTOKENIZER_MAX_STATES; ++i)
-        states[i].length = 0;
+        states[i].orig_len = 0;
 
     char* buf = new char[tail_size];
 

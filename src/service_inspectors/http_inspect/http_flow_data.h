@@ -85,9 +85,6 @@ public:
     void set_h2_body_state(HttpCommon::SourceId source_id, HttpEnums::H2BodyState state)
     { h2_body_state[source_id] = state; }
 
-    void reset_partial_flush(HttpCommon::SourceId source_id)
-    { partial_flush[source_id] = false; }
-
     uint32_t get_h2_stream_id() const;
 
 private:
@@ -170,8 +167,6 @@ private:
         HttpCommon::STAT_NOT_PRESENT };
     int64_t detect_depth_remaining[2] = { HttpCommon::STAT_NOT_PRESENT,
         HttpCommon::STAT_NOT_PRESENT };
-    int64_t js_norm_depth_remaining[2] = { HttpCommon::STAT_NOT_PRESENT,
-        HttpCommon::STAT_NOT_PRESENT };
     int32_t publish_depth_remaining[2] = { HttpCommon::STAT_NOT_PRESENT,
         HttpCommon::STAT_NOT_PRESENT };
     int32_t file_decomp_buffer_size_remaining[2] = { HttpCommon::STAT_NOT_PRESENT,
@@ -187,8 +182,6 @@ private:
     uint8_t* partial_detect_buffer[2] = { nullptr, nullptr };
     uint32_t partial_detect_length[2] = { 0, 0 };
     uint32_t partial_js_detect_length[2] = { 0, 0 };
-    uint8_t* js_detect_buffer[2] = { nullptr, nullptr };
-    uint32_t js_detect_length[2] = { 0, 0 };
     int32_t status_code_num = HttpCommon::STAT_NOT_PRESENT;
     HttpEnums::VersionId version_id[2] = { HttpEnums::VERS__NOT_PRESENT,
                                             HttpEnums::VERS__NOT_PRESENT };
@@ -218,6 +211,7 @@ private:
     // *** HttpJsNorm
     JSIdentifierCtxBase* js_ident_ctx = nullptr;
     snort::JSNormalizer* js_normalizer = nullptr;
+    bool js_continue = false;
     bool js_built_in_event = false;
 
     void reset_js_ident_ctx();

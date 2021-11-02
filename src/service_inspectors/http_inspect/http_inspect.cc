@@ -590,7 +590,6 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
     current_section->gen_events();
     if (!session_data->partial_flush[source_id])
         current_section->update_flow();
-    session_data->partial_flush[source_id] = false;
     session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 
 #ifdef REG_TEST

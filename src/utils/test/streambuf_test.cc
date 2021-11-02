@@ -69,8 +69,17 @@ using namespace std;
 
 #define EXP_RES(b, exp, exp_len, exp_mem_size)                          \
     {                                                                   \
+        auto d1_len = (b).data_len();                                   \
+        auto d1 = (b).data();                                           \
         streamsize act_len;                                             \
-        char* act = (b).release_data(act_len);                          \
+        const char* act = (b).take_data(act_len);                       \
+        auto d2_len = (b).data_len();                                   \
+        auto d2 = (b).data();                                           \
+                                                                        \
+        CHECK(d1 == act);                                               \
+        CHECK(d1_len == act_len);                                       \
+        CHECK(d2 == nullptr);                                           \
+        CHECK(d2_len == 0);                                             \
                                                                         \
         CHECK((exp_mem_size) == act_len);                               \
         REQUIRE((exp_len) <= act_len);                                  \
@@ -101,12 +110,11 @@ using namespace std;
         CHECK((exp_len) == (s).tellp());                                \
                                                                         \
         ostreambuf_infl* b = reinterpret_cast<ostreambuf_infl*>((s).rdbuf()); \
-        streamsize act_len;                                             \
-        char* act = b->release_data(act_len);                           \
+        auto act = b->data();                                           \
+        auto act_len = b->data_len();                                   \
                                                                         \
         REQUIRE((exp_len) == act_len);                                  \
         CHECK(!memcmp((exp), act, (exp_len)));                          \
-        delete[] act;                                                   \
     }
 
 #define EOF_OUT(s, exp, exp_len)                                        \
@@ -117,12 +125,11 @@ using namespace std;
         CHECK((exp_len) == (s).tellp());                                \
                                                                         \
         ostreambuf_infl* b = reinterpret_cast<ostreambuf_infl*>((s).rdbuf()); \
-        streamsize act_len;                                             \
-        char* act = b->release_data(act_len);                           \
+        auto act = b->data();                                           \
+        auto act_len = b->data_len();                                   \
                                                                         \
         REQUIRE((exp_len) == act_len);                                  \
         CHECK(!memcmp((exp), act, (exp_len)));                          \
-        delete[] act;                                                   \
     }
 
 TEST_CASE("input buffer - basic one source", "[Stream buffers]")

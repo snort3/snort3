@@ -41,12 +41,13 @@ public:
         const std::unordered_set<std::string>& built_in_ident);
     ~HttpJsNorm();
 
-    void legacy_normalize(const Field& input, Field& output, HttpInfractions*, HttpEventGen*,
+    void set_detection_depth(size_t depth)
+    { detection_depth = depth; }
+
+    void do_legacy(const Field& input, Field& output, HttpInfractions*, HttpEventGen*,
         int max_javascript_whitespaces) const;
-    void enhanced_inline_normalize(const Field& input, HttpInfractions*, HttpFlowData*,
-        char*& out_buf, size_t& out_len) const;
-    void enhanced_external_normalize(const Field& input, HttpInfractions*, HttpFlowData*,
-        char*& out_buf, size_t& out_len) const;
+    void do_inline(const Field& input, Field& output, HttpInfractions*, HttpFlowData*, bool) const;
+    void do_external(const Field& input, Field& output, HttpInfractions*, HttpFlowData*, bool) const;
 
     void configure();
 
@@ -62,6 +63,7 @@ private:
     };
 
     const HttpParaList::UriParam& uri_param;
+    size_t detection_depth;
     int64_t normalization_depth;
     int32_t identifier_depth;
     uint8_t max_template_nesting;

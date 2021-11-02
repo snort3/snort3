@@ -83,6 +83,7 @@ HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_, int64_t normali
     int32_t identifier_depth_, uint8_t max_template_nesting_, uint32_t max_scope_depth_,
     const std::unordered_set<std::string>& built_in_ident_) :
     uri_param(uri_param_),
+    detection_depth(UINT64_MAX),
     normalization_depth(normalization_depth_),
     identifier_depth(identifier_depth_),
     max_template_nesting(max_template_nesting_),
@@ -135,8 +136,8 @@ void HttpJsNorm::configure()
     configure_once = true;
 }
 
-void HttpJsNorm::enhanced_external_normalize(const Field& input,
-    HttpInfractions* infractions, HttpFlowData* ssn, char*& out_buf, size_t& out_len) const
+void HttpJsNorm::do_external(const Field& input, Field& output,
+    HttpInfractions* infractions, HttpFlowData* ssn, bool final_portion) const
 {
     if (ssn->js_built_in_event)
         return;
@@ -155,7 +156,6 @@ void HttpJsNorm::enhanced_external_normalize(const Field& input,
     else
         trace_logf(2, http_trace, TRACE_JS_PROC, nullptr,
             "script continues\n");
-
 
     auto& js_ctx = ssn->acquire_js_ctx(identifier_depth, normalization_depth, max_template_nesting,
         max_scope_depth, built_in_ident);
@@ -211,27 +211,34 @@ void HttpJsNorm::enhanced_external_normalize(const Field& input,
             break;
     }
 
-    auto result = js_ctx.get_script();
-    out_buf = result.first;
+    debug_logf(4, http_trace, TRACE_JS_PROC, nullptr,
+        "input data was %s\n", final_portion ? "last one in PDU" : "a part of PDU");
 
-    if (out_buf)
+    uint32_t data_len = std::min(detection_depth, js_ctx.script_size());
+
+    if (data_len)
     {
-        out_len = result.second;
+        const char* data = final_portion ? js_ctx.take_script() : js_ctx.get_script();
 
-        trace_logf(1, http_trace, TRACE_JS_DUMP, nullptr,
-            "js_data[%zu]: %.*s\n", out_len, static_cast<int>(out_len), out_buf);
+        if (data)
+        {
+            trace_logf(1, http_trace, TRACE_JS_DUMP, nullptr,
+                       "js_data[%u]: %.*s\n", data_len, data_len, data);
+
+            output.set(data_len, (const uint8_t*)data, final_portion);
+        }
     }
 }
 
-void HttpJsNorm::enhanced_inline_normalize(const Field& input,
-    HttpInfractions* infractions, HttpFlowData* ssn, char*& out_buf, size_t& out_len) const
+void HttpJsNorm::do_inline(const Field& input, Field& output,
+    HttpInfractions* infractions, HttpFlowData* ssn, bool final_portion) const
 {
     const char* ptr = (const char*)input.start();
     const char* const end = ptr + input.length();
 
     HttpEventGen* events = ssn->events[HttpCommon::SRC_SERVER];
 
-    bool script_continue = alive_ctx(ssn);
+    bool script_continue = ssn->js_continue;
     bool script_external = false;
 
     while (ptr < end)
@@ -282,7 +289,7 @@ void HttpJsNorm::enhanced_inline_normalize(const Field& input,
 
         auto& js_ctx = ssn->acquire_js_ctx(identifier_depth, normalization_depth,
             max_template_nesting, max_scope_depth, built_in_ident);
-        auto output_size_before = js_ctx.peek_script_size();
+        auto output_size_before = js_ctx.script_size();
 
         auto ret = js_normalize(js_ctx, end, ptr);
 
@@ -324,7 +331,7 @@ void HttpJsNorm::enhanced_inline_normalize(const Field& input,
             break;
         }
 
-        if (script_external && output_size_before != js_ctx.peek_script_size())
+        if (script_external && output_size_before != js_ctx.script_size())
         {
             *infractions += INF_JS_CODE_IN_EXTERNAL;
             events->create_event(EVENT_JS_CODE_IN_EXTERNAL);
@@ -333,26 +340,35 @@ void HttpJsNorm::enhanced_inline_normalize(const Field& input,
         script_continue = ret == JSTokenizer::SCRIPT_CONTINUE;
     }
 
+    ssn->js_continue = script_continue;
+
     if (!alive_ctx(ssn))
         return;
 
+    debug_logf(4, http_trace, TRACE_JS_PROC, nullptr,
+        "input data was %s\n", final_portion ? "last one in PDU" : "a part of PDU");
+
     auto js_ctx = ssn->js_normalizer;
-    auto result = js_ctx->get_script();
-    out_buf = result.first;
+    uint32_t data_len = std::min(detection_depth, js_ctx->script_size());
 
-    if (out_buf)
+    if (data_len)
     {
-        out_len = result.second;
+        const char* data = final_portion ? js_ctx->take_script() : js_ctx->get_script();
 
-        trace_logf(1, http_trace, TRACE_JS_DUMP, nullptr,
-            "js_data[%zu]: %.*s\n", out_len, static_cast<int>(out_len), out_buf);
+        if (data)
+        {
+            trace_logf(1, http_trace, TRACE_JS_DUMP, nullptr,
+                       "js_data[%u]: %.*s\n", data_len, data_len, data);
+
+            output.set(data_len, (const uint8_t*)data, final_portion);
+        }
     }
 
-    if (!script_continue)
+    if (!script_continue && final_portion)
         ssn->release_js_ctx();
 }
 
-void HttpJsNorm::legacy_normalize(const Field& input, Field& output, HttpInfractions* infractions,
+void HttpJsNorm::do_legacy(const Field& input, Field& output, HttpInfractions* infractions,
     HttpEventGen* events, int max_javascript_whitespaces) const
 {
     bool js_present = false;

@@ -75,9 +75,8 @@ static const std::unordered_set<std::string> s_ident_built_in { "console", "eval
     JSNormalizer norm(ident_ctx, DEPTH, MAX_TEMPLATE_NESTING, MAX_SCOPE_DEPTH);     \
     auto ret = norm.normalize(src, sizeof(src));                   \
     const char* ptr = norm.get_src_next();                         \
-    auto result = norm.get_script();                               \
-    char* dst = result.first;                                      \
-    int act_len = result.second;                                   \
+    int act_len = norm.script_size();                              \
+    const char* dst = norm.take_script();
 
 #define VALIDATE(src, expected)                 \
     CHECK(ret == JSTokenizer::SCRIPT_CONTINUE); \
@@ -100,12 +99,10 @@ static const std::unordered_set<std::string> s_ident_built_in { "console", "eval
         JSNormalizer norm(ident_ctx, depth, MAX_TEMPLATE_NESTING, MAX_SCOPE_DEPTH);    \
         ret = norm.normalize(src, src_len);                           \
         ptr = norm.get_src_next();                                    \
-        auto result = norm.get_script();                              \
-        char* dptr = result.first;                                    \
-        len = result.second;                                          \
+        len = norm.script_size();                                     \
+        const char* dptr = norm.get_script();                         \
         REQUIRE(len == dst_len);                                      \
         memcpy(dst, dptr, dst_len);                                   \
-        delete[] dptr;                                                \
     }
 
 #define DO(src, slen, dst, dlen)                            \
@@ -113,9 +110,8 @@ static const std::unordered_set<std::string> s_ident_built_in { "console", "eval
         auto ret = norm.normalize(src, slen);               \
         CHECK(ret == JSTokenizer::SCRIPT_CONTINUE);         \
         auto nsrc = norm.get_src_next();                    \
-        auto result = norm.get_script();                    \
-        char* ptr = result.first;                           \
-        int act_len = result.second;                        \
+        int act_len = norm.script_size();                   \
+        const char* ptr = norm.take_script();               \
         REQUIRE(nsrc - src == slen);                        \
         REQUIRE(act_len == dlen);                           \
         memcpy(dst, ptr, dlen);                             \
@@ -126,12 +122,10 @@ static const std::unordered_set<std::string> s_ident_built_in { "console", "eval
     {                                                       \
         auto ret = norm.normalize(src, slen);               \
         CHECK(ret == rexp);                                 \
-        auto result = norm.get_script();                    \
-        char* ptr = result.first;                           \
-        int act_len = result.second;                        \
+        int act_len = norm.script_size();                   \
+        const char* ptr = norm.get_script();                \
         REQUIRE(act_len == dlen);                           \
         memcpy(dst, ptr, dlen);                             \
-        delete[] ptr;                                       \
     }
 
 #define CLOSE()                                                         \
@@ -1454,9 +1448,8 @@ TEST_CASE("endings", "[JSNormalizer]")
         JSNormalizer norm(ident_ctx, 7, MAX_TEMPLATE_NESTING, MAX_SCOPE_DEPTH);
         ret = norm.normalize(src, sizeof(src));
         ptr = norm.get_src_next();
-        auto res1 = norm.get_script();
-        char* dst1 = res1.first;
-        int act_len1 = res1.second;
+        int act_len1 = norm.script_size();
+        const char* dst1 = norm.take_script();
 
         CHECK(ret == JSTokenizer::EOS);
         CHECK(ptr == src + 7);
@@ -1466,9 +1459,8 @@ TEST_CASE("endings", "[JSNormalizer]")
 
         ret = norm.normalize(src2, sizeof(src2));
         ptr = norm.get_src_next();
-        auto res2 = norm.get_script();
-        char* dst2 = res2.first;
-        int act_len2 = res2.second;
+        int act_len2 = norm.script_size();
+        const char* dst2 = norm.take_script();
 
         CHECK(ret == JSTokenizer::EOS);
         CHECK(ptr == src2 + sizeof(src2));

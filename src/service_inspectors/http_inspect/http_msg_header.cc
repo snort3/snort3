@@ -38,6 +38,7 @@
 #include "http_common.h"
 #include "http_enum.h"
 #include "http_inspect.h"
+#include "http_js_norm.h"
 #include "http_msg_request.h"
 #include "http_msg_body.h"
 #include "http_normalizers.h"
@@ -449,7 +450,8 @@ void HttpMsgHeader::prepare_body()
     const int64_t& depth = (source_id == SRC_CLIENT) ? params->request_depth :
         params->response_depth;
     session_data->detect_depth_remaining[source_id] = (depth != -1) ? depth : INT64_MAX;
-    session_data->js_norm_depth_remaining[source_id] = session_data->detect_depth_remaining[source_id];
+    params->js_norm_param.js_norm->set_detection_depth(session_data->detect_depth_remaining[source_id]);
+
     if ((source_id == SRC_CLIENT) and params->publish_request_body and session_data->for_http2)
     {
         session_data->publish_octets[source_id] = 0;

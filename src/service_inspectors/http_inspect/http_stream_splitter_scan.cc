@@ -157,6 +157,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
 #endif
 
     SectionType& type = session_data->type_expected[source_id];
+    session_data->partial_flush[source_id] = false;
 
     if (type == SEC_ABORT)
         return status_value(StreamSplitter::ABORT);

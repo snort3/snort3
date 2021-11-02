@@ -38,21 +38,29 @@ public:
         int tmp_cap_size = JSTOKENIZER_BUF_MAX_SIZE);
     ~JSNormalizer();
 
+    JSTokenizer::JSRet normalize(const char* src, size_t src_len);
+
     const char* get_src_next() const
     { return src_next; }
 
     void reset_depth()
     { rem_bytes = depth; }
 
-    JSTokenizer::JSRet normalize(const char* src, size_t src_len);
-    std::pair<char*,size_t> get_script();
-    size_t peek_script_size();
-    void prepend_script(const void*, size_t);
+    const char* take_script()
+    { return out_buf.take_data(); }
 
-    static size_t size();
+    const char* get_script() const
+    { return out_buf.data(); }
+
+    size_t script_size()
+    { return out.tellp(); }
+
+    static size_t size()
+    { return sizeof(JSNormalizer) + 16834; /* YY_BUF_SIZE */ }
 
 #ifdef BENCHMARK_TEST
-    void rewind_output();
+    void rewind_output()
+    { out_buf.pubseekoff(0, std::ios_base::beg, std::ios_base::out); }
 #endif
 
 private:

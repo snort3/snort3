@@ -251,7 +251,19 @@ void ostreambuf_infl::reserve(streamsize n)
         enlarge(n - size);
 }
 
-char* ostreambuf_infl::release_data(streamsize& n)
+const char* ostreambuf_infl::take_data()
+{
+    auto data = pbase();
+
+    setp(nullptr, nullptr);
+
+    gen.s = states[0].s;
+    gen.n = states[0].n;
+
+    return data;
+}
+
+const char* ostreambuf_infl::take_data(streamsize& n)
 {
     auto data = pbase();
 
@@ -277,6 +289,9 @@ streampos ostreambuf_infl::seekoff(streamoff off, ios_base::seekdir way, ios_bas
 {
     if (!(which & ios_base::out))
         return -1;
+
+    if (off == 0 && way == ios_base::cur)
+        return pptr() - pbase();
 
     auto base = pbase();
     auto ptr = pptr();

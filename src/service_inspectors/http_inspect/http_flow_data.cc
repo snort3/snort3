@@ -120,8 +120,6 @@ HttpFlowData::~HttpFlowData()
         update_deallocations(partial_buffer_length[k]);
         delete[] partial_detect_buffer[k];
         update_deallocations(partial_detect_length[k]);
-        delete[] js_detect_buffer[k];
-        update_deallocations(js_detect_length[k]);
         HttpTransaction::delete_transaction(transaction[k], nullptr);
         delete cutter[k];
         if (compress_stream[k] != nullptr)
@@ -274,10 +272,6 @@ snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t ident_depth, size_t no
         max_template_nesting, max_scope_depth);
     update_allocations(JSNormalizer::size());
 
-    auto ptr = js_detect_buffer[HttpCommon::SRC_SERVER];
-    auto len = js_detect_length[HttpCommon::SRC_SERVER];
-    js_normalizer->prepend_script(ptr, len);
-
     debug_logf(4, http_trace, TRACE_JS_PROC, nullptr,
         "js_normalizer created (norm_depth %zd, max_template_nesting %d)\n",
         norm_depth, max_template_nesting);
@@ -287,6 +281,8 @@ snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t ident_depth, size_t no
 
 void HttpFlowData::release_js_ctx()
 {
+    js_continue = false;
+
     if (!js_normalizer)
         return;
 

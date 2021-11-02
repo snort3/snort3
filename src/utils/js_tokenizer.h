@@ -116,6 +116,9 @@ public:
         int cap_size = JSTOKENIZER_BUF_MAX_SIZE);
     ~JSTokenizer() override;
 
+    // internal actions before calling main loop
+    void pre_yylex();
+
     // returns JSRet
     int yylex() override;
 
@@ -164,7 +167,8 @@ private:
     struct
     {
         JSToken token = UNDEFINED;          // the token before
-        int length = 0;                     // current token length
+        int orig_len = 0;                   // current token original length
+        int norm_len = 0;                   // normalized length of previous tokens
         int sc = 0;                         // current Starting Condition
     } states[JSTOKENIZER_MAX_STATES];
     int sp = 0;                             // points to the top of states
@@ -172,6 +176,7 @@ private:
     char*& tmp_buf;
     size_t& tmp_buf_size;
     const int tmp_cap_size;
+    int output_steps_back;
 
     bool newline_found = false;
     constexpr static bool insert_semicolon[ASI_GROUP_MAX][ASI_GROUP_MAX]

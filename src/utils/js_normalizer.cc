@@ -71,6 +71,7 @@ JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len)
         ->pubsetbuf(const_cast<char*>(src), len);
     out_buf.reserve(src_len * BUFF_EXP_FACTOR);
 
+    tokenizer.pre_yylex();
     JSTokenizer::JSRet ret = static_cast<JSTokenizer::JSRet>(tokenizer.yylex());
     in.clear();
     out.clear();
@@ -82,33 +83,3 @@ JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len)
 
     return rem_bytes ? ret : JSTokenizer::EOS;
 }
-
-std::pair<char*,size_t> JSNormalizer::get_script()
-{
-    streamsize len = 0;
-    char* dst = out_buf.release_data(len);
-    return {dst, len};
-}
-
-size_t JSNormalizer::peek_script_size()
-{
-    return out.tellp();
-}
-
-void JSNormalizer::prepend_script(const void* p , size_t n)
-{
-    if (p)
-        out_buf.sputn(reinterpret_cast<const char*>(p), n);
-}
-
-size_t JSNormalizer::size()
-{
-    return sizeof(JSNormalizer) + 16834; // the default YY_BUF_SIZE
-}
-
-#ifdef BENCHMARK_TEST
-void JSNormalizer::rewind_output()
-{
-    out_buf.pubseekoff(0, ios_base::beg, ios_base::out);
-}
-#endif
