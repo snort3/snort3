@@ -190,7 +190,7 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
 }
 
 static uint32_t SSL_decode_v3(const uint8_t* pkt, int size, uint32_t pkt_flags,
-    uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len)
+    uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len, uint32_t* info_flags)
 {
     uint32_t retval = 0;
     uint16_t hblen;
@@ -245,6 +245,12 @@ static uint32_t SSL_decode_v3(const uint8_t* pkt, int size, uint32_t pkt_flags,
             break;
 
         case SSL_ALERT_REC:
+            if (reclen == sizeof(SSL_alert_t))
+            {
+                const SSL_alert_t* ssl_alert = (const SSL_alert_t*)pkt;
+                if (ssl_alert->level == SSL_ALERT_LEVEL_FATAL && info_flags)
+                    *info_flags |= SSL_ALERT_LVL_FATAL_FLAG;
+            }
             retval |= SSL_ALERT_FLAG;
             ccs = 0;
             break;
@@ -421,7 +427,7 @@ namespace snort
 {
 uint32_t SSL_decode(
     const uint8_t* pkt, int size, uint32_t pkt_flags, uint32_t prev_flags,
-    uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len)
+    uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len, uint32_t* info_flags)
 {
     if (!pkt || !size)
         return SSL_ARG_ERROR_FLAG;
@@ -442,7 +448,7 @@ uint32_t SSL_decode(
          * SSLv2 as TLS,the decoder will either catch a bad type, bad version, or
          * indicate that it is truncated. */
         if (size == 5)
-            return SSL_decode_v3(pkt, size, pkt_flags, alert_flags, partial_rec_len, max_hb_len);
+            return SSL_decode_v3(pkt, size, pkt_flags, alert_flags, partial_rec_len, max_hb_len, info_flags);
 
         /* At this point, 'size' has to be > 5 */
 
@@ -489,7 +495,7 @@ uint32_t SSL_decode(
         }
     }
 
-    return SSL_decode_v3(pkt, size, pkt_flags, alert_flags, partial_rec_len, max_hb_len);
+    return SSL_decode_v3(pkt, size, pkt_flags, alert_flags, partial_rec_len, max_hb_len, info_flags);
 }
 
 /* very simplistic - just enough to say this is binary data - the rules will make a final
@@ -540,7 +546,7 @@ bool IsTlsServerHello(const uint8_t* ptr, const uint8_t* end)
 
 bool IsSSL(const uint8_t* ptr, int len, int pkt_flags)
 {
-    uint32_t ssl_flags = SSL_decode(ptr, len, pkt_flags, 0, nullptr, nullptr, 0);
+    uint32_t ssl_flags = SSL_decode(ptr, len, pkt_flags, 0, nullptr, nullptr, 0, nullptr);
 
     if ((ssl_flags != SSL_ARG_ERROR_FLAG) &&
         !(ssl_flags & SSL_ERROR_FLAGS))

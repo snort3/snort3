@@ -94,6 +94,9 @@
 * #define SSL_HS_FINISHED_FLAG    Ignored for our purposes
 */
 
+/* Flags for additional info */
+#define SSL_ALERT_LVL_FATAL_FLAG    0x00000001
+
 /* The constants used below are from RFC 2246 */
 
 /* SSLv3 & TLS Record types */
@@ -137,6 +140,15 @@ struct SSL_record_t
 };
 
 #define SSL_REC_PAYLOAD_OFFSET (sizeof(uint8_t) * 5)
+
+#define SSL_ALERT_LEVEL_WARNING 1
+#define SSL_ALERT_LEVEL_FATAL   2
+
+struct SSL_alert_t
+{
+    uint8_t level;
+    uint8_t description;
+};
 
 struct SSL_heartbeat
 {
@@ -215,9 +227,9 @@ struct SSLv2_shello_t
 
 namespace snort
 {
-SO_PUBLIC uint32_t SSL_decode(
+uint32_t SSL_decode(
     const uint8_t* pkt, int size, uint32_t pktflags, uint32_t prevflags,
-    uint8_t* alert_flags, uint16_t* partial_rec_len, int hblen);
+    uint8_t* alert_flags, uint16_t* partial_rec_len, int hblen, uint32_t* info_flags = nullptr);
 
 SO_PUBLIC bool IsTlsClientHello(const uint8_t* ptr, const uint8_t* end);
 SO_PUBLIC bool IsTlsServerHello(const uint8_t* ptr, const uint8_t* end);

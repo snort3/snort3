@@ -169,7 +169,7 @@ static inline bool SSLPP_is_encrypted(SSL_PROTO_CONF* config, uint32_t ssl_flags
 }
 
 static inline uint32_t SSLPP_process_alert(
-    SSL_PROTO_CONF*, uint32_t ssn_flags, uint32_t new_flags, Packet* packet)
+    SSL_PROTO_CONF*, uint32_t ssn_flags, uint32_t new_flags, Packet* packet, uint32_t info_flags)
 {
     ssn_flags |= new_flags;
 
@@ -178,7 +178,8 @@ static inline uint32_t SSLPP_process_alert(
     if (SSL_IS_HANDSHAKE(ssn_flags) &&
         !SSL_IS_HANDSHAKE(new_flags) &&
         !(new_flags & SSL_CHANGE_CIPHER_FLAG) &&
-        !(new_flags & SSL_HEARTBEAT_SEEN))
+        !(new_flags & SSL_HEARTBEAT_SEEN) &&
+        info_flags & SSL_ALERT_LVL_FATAL_FLAG)
     {
         DetectionEngine::disable_content(packet);
         sslstats.disabled++;
@@ -298,8 +299,9 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
     uint8_t index = (p->packet_flags & PKT_REBUILT_STREAM) ? 2 : 0;
 
     uint8_t heartbleed_type = 0;
+    uint32_t info_flags = 0;
     uint32_t new_flags = SSL_decode(p->data, (int)p->dsize, p->packet_flags, sd->ssn_flags,
-        &heartbleed_type, &(sd->partial_rec_len[dir+index]), config->max_heartbeat_len);
+        &heartbleed_type, &(sd->partial_rec_len[dir+index]), config->max_heartbeat_len, &info_flags);
 
     if (heartbleed_type & SSL_HEARTBLEED_REQUEST)
     {
@@ -369,7 +371,7 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
 
     if (SSL_IS_ALERT(new_flags))
     {
-        sd->ssn_flags = SSLPP_process_alert(config, sd->ssn_flags, new_flags, p);
+        sd->ssn_flags = SSLPP_process_alert(config, sd->ssn_flags, new_flags, p, info_flags);
     }
     else if (SSL_IS_HANDSHAKE(new_flags))
     {
