@@ -181,6 +181,8 @@ void HttpMsgBody::analyze()
             else
                 do_legacy_js_normalization(decompressed_file_body, js_norm_body);
 
+            ++session_data->pdu_idx;
+
             const int32_t detect_length =
                 (js_norm_body.length() <= session_data->detect_depth_remaining[source_id]) ?
                 js_norm_body.length() : session_data->detect_depth_remaining[source_id];
@@ -335,10 +337,22 @@ void HttpMsgBody::fd_event_callback(void* context, int event)
 
 void HttpMsgBody::do_enhanced_js_normalization(const Field& input, Field& output)
 {
+    if (session_data->js_data_lost_once)
+        return;
+
+    auto infractions = transaction->get_infractions(source_id);
     auto back = !session_data->partial_flush[source_id];
     auto http_header = get_header(source_id);
     auto normalizer = params->js_norm_param.js_norm;
-    auto infractions = transaction->get_infractions(source_id);
+
+    if (session_data->is_pdu_missed())
+    {
+        *infractions += INF_JS_PDU_MISS;
+        session_data->events[HttpCommon::SRC_SERVER]->create_event(EVENT_JS_PDU_MISS);
+
+        session_data->js_data_lost_once = true;
+        return;
+    }
 
     if (http_header and http_header->is_external_js())
         normalizer->do_external(input, output, infractions, session_data, back);

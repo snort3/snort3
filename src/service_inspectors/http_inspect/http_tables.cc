@@ -333,6 +333,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_JS_SCOPE_NEST_OVFLOW,       "JavaScript scope nesting is over capacity" },
     { EVENT_ACCEPT_ENCODING_CONSECUTIVE_COMMAS, "Consecutive commas in HTTP Accept-Encoding "
                                         "header" },
+    { EVENT_JS_PDU_MISS,                "missed PDUs during JavaScript normalization" },
     { 0, nullptr }
 };
 

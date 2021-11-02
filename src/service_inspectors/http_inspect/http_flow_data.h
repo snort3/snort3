@@ -193,6 +193,9 @@ private:
     HttpTransaction** pipeline = nullptr;
     int16_t pipeline_front = 0;
     int16_t pipeline_back = 0;
+    uint32_t pdu_idx = 0;
+    uint32_t js_pdu_idx = 0;
+    bool js_data_lost_once = false;
     bool pipeline_overflow = false;
     bool pipeline_underflow = false;
 
@@ -214,11 +217,13 @@ private:
     bool js_continue = false;
     bool js_built_in_event = false;
 
+    void reset_js_pdu_idx();
     void reset_js_ident_ctx();
     snort::JSNormalizer& acquire_js_ctx(int32_t ident_depth, size_t norm_depth,
         uint8_t max_template_nesting, uint32_t max_scope_depth,
         const std::unordered_set<std::string>& built_in_ident);
     void release_js_ctx();
+    bool is_pdu_missed();
 
     bool cutover_on_clear = false;
     bool ssl_search_abandoned = false;

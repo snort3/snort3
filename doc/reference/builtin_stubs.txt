@@ -1214,6 +1214,15 @@ resources.
 
 Consecutive commas in HTTP Accept-Encoding header
 
+119:273
+
+This alert is raised for the following situation. During JavaScript normalization middle
+PDUs can be missed and not normalized. Usually it happens when rules have file_data and
+js_data ips options and fast-pattern (FP) search is applying to file_data. Some PDUs don’t
+match file_data FP search and JavaScript normalization won't be executed for these PDUs.
+The normalization of the following PDUs for inline/external scripts will be stopped for
+current request within the flow.
+
 121:1
 
 invalid flag set on HTTP/2 frame
