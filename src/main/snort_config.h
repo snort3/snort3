@@ -254,13 +254,12 @@ public:
     unsigned offload_limit = 99999;  // disabled
     unsigned offload_threads = 0;    // disabled
 
-#ifdef HAVE_HYPERSCAN
     bool hyperscan_literals = false;
     bool pcre_to_regex = false;
-#endif
 
     bool global_rule_state = false;
     bool global_default_rule_state = true;
+    bool allow_missing_so_rules = false;
 
     //------------------------------------------------------
     // process stuff

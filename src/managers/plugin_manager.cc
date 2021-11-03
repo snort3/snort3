@@ -196,8 +196,8 @@ static bool register_plugin(
 
     if ( api->api_version != sym->version )
     {
-        ParseWarning(WARN_PLUGINS, "%s: version mismatch; expected %u, got %u",
-            api->name, sym->version, api->version);
+        ParseWarning(WARN_PLUGINS, "%s: version mismatch; expected 0x%x, got 0x%x",
+            api->name, sym->version, api->api_version);
         return false;
     }
 

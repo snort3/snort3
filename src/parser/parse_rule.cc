@@ -1103,7 +1103,11 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
 
         if ( !rule )
         {
-            ParseError("SO rule %s not loaded.", otn->soid);
+            if ( sc->allow_missing_so_rules )
+                ParseWarning(WARN_RULES, "SO rule %s not loaded.", otn->soid);
+            else
+                ParseError("SO rule %s not loaded.", otn->soid);
+
             FreeRuleTreeNode(&rtn);
         }
         else
