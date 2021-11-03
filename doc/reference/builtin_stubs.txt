@@ -214,7 +214,7 @@ The payload length is greater than the packet length.
 
 116:161
 
-(gre) multiple encapsulations in packet
+There are multiple encapsulations within the GRE packet.
 
 116:162
 
@@ -306,7 +306,7 @@ The ICMP error message's original IP packet's payload is greater than the expect
 
 116:255
 
-An ICMP original IP fragmented and the offset is not 0.
+An ICMP original IP is fragmented and the offset is not 0.
 
 116:270
 
@@ -534,11 +534,11 @@ The ICMPv6 header is truncated.
 
 116:428
 
-(ipv4) IPv4 packet below TTL limit - Not being used.
+An IPv4 packet was received after the TTL limit.
 
 116:429
 
-(ipv6) IPv6 packet has zero hop limit - Not being used.
+An IPv6 packet has a zero hop limit count.
 
 116:430
 
@@ -622,7 +622,7 @@ An IP packet has an unassigned/reserved IP protocol number.
 
 116:450
 
-(decode) bad IP protocol
+An invalid/bad IP protocol number has been detected.
 
 116:451
 
@@ -2050,19 +2050,19 @@ lists to change this behavior.
 
 137:1
 
-(ssl) invalid client HELLO after server HELLO detected
+An invalid SSL client HELLO was received after an SSL server HELLO has been detected.
 
 137:2
 
-(ssl) invalid server HELLO without client HELLO detected
+An invalid SSL server HELLO was received without an SSL client HELLO having been detected.
 
 137:3
 
-(ssl) heartbeat read overrun attempt detected
+An SSL heartbeat read overrun attempt has been detected.
 
 137:4
 
-(ssl) large heartbeat response detected
+A large SSL heartbeat response was detected.
 
 140:2
 
