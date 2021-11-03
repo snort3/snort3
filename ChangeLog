@@ -1,3 +1,39 @@
+2021/11/03 - 3.1.16.0
+
+appid: during initialization, skip loading of Lua detectors that don't have validate function
+appid: in packet threads, skip loading of detectors that don't have validate function on reload
+appid: provide API to give client_app_detection_type
+codec: geneve - ensure injected packets have geneve port in outer udp header
+detection: refactor mpse serialization
+detection: rename PortGroup to the more apt RuleGroup (and related)
+detection: replace PortGroup::alloc/free with ctor/dtor
+doc: add SIP built-in rule documentation
+doc: update built-in rule doc for SMTP, IMAP and POP inspectors
+doc: update built-in rules documentation for dns module
+doc: update built-in rules documentation for ftp-telnet
+doc: updated builtin rules documentation for gtp module
+flow: fix warning in flow_cache.cc
+flow: use the same pkt_type to link and unlink unidirectional flows
+http2_inspect: refactor decoded_headers_buffer for hpack decoding
+http_inspect: eliminate cumulative js data processing
+http_inspect: handle unordered PDUs for inline/external JavaScript normalization
+http_inspect: improve file decompression
+hyperscan: sort patterns for dump / load stability
+ips: correct fast pattern port group counts
+mpse: add md5 check to deserialization
+reload: add logs to track reload process
+reload: move out reload progress flag to reload tracker
+search_engine: support hyperscan serialization
+search_engine: support port group serialization
+sip: track memory for sip sessions
+ssl: disable inspection on alert only at fatal level
+stream_tcp: fix init_wscale() to take into account the DECODE_TCP_WS flag
+tcp: remove the obsolete __GNUC__ block from TcpOption::next()
+tcp: stop on the EOL option in TcpOptIteratorIter::operator++()
+utils: add get methods to peek in internal buffer
+utils: correct Normalizer's output upon the next scan
+wizard: update globbing and max_pattern
+
 2021/10/21 - 3.1.15.0
 
 appid: detect client based on longest matching user agent pattern

@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.15.0 2021-10-21 08:39:53 EDT TST
+Revision 3.1.16.0 2021-11-03 07:48:29 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1288,6 +1288,8 @@ Configuration:
     offload algorithm - choose available search engine { ac_banded |
     ac_bnfa | ac_full | ac_sparse | ac_sparse_bands | ac_std |
     hyperscan | lowmem }
+  * string search_engine.rule_db_dir: deserialize rule databases from
+    given directory
   * bool search_engine.search_optimize = true: tweak state machine
     construction for better performance
   * bool search_engine.show_fast_patterns = false: print fast pattern
@@ -1432,6 +1434,8 @@ Configuration:
     loaded rules libraries
   * string snort.--dump-defaults: [<module prefix>] output module
     defaults in Lua format { (optional) }
+  * string snort.--dump-rule-databases: dump rule databases to given
+    directory (hyperscan only)
   * implied snort.--dump-rule-deps: dump rule dependencies in json
     format for use by other tools
   * implied snort.--dump-rule-meta: dump configured rule info in json
@@ -3916,6 +3920,8 @@ Rules:
   * 119:271 (http_inspect) JavaScript scope nesting is over capacity
   * 119:272 (http_inspect) Consecutive commas in HTTP Accept-Encoding
     header
+  * 119:273 (http_inspect) missed PDUs during JavaScript
+    normalization
 
 Peg counts:
 
@@ -5809,8 +5815,8 @@ Configuration:
     wild cards (*)
   * multi wizard.curses: enable service identification based on
     internal algorithm { dce_smb | dce_udp | dce_tcp | sslv2 }
-  * int wizard.max_pattern = 64: maximum scan depth per segment (0 is
-    unlimited) { 0:65535 }
+  * int wizard.max_search_depth = 64: maximum scan depth per flow {
+    0:65535 }
 
 Peg counts:
 
@@ -8408,6 +8414,8 @@ these libraries see the Getting Started section of the manual.
     libraries
   * --dump-defaults [<module prefix>] output module defaults in Lua
     format (optional)
+  * --dump-rule-databases dump rule databases to given directory
+    (hyperscan only)
   * --dump-rule-deps dump rule dependencies in json format for use by
     other tools
   * --dump-rule-meta dump configured rule info in json format for use
@@ -9955,6 +9963,8 @@ these libraries see the Getting Started section of the manual.
     hyperscan | lowmem }
   * int search_engine.queue_limit = 0: maximum number of fast pattern
     matches to queue per packet (0 is unlimited) { 0:max32 }
+  * string search_engine.rule_db_dir: deserialize rule databases from
+    given directory
   * dynamic search_engine.search_method = ac_bnfa: set fast pattern
     algorithm - choose available search engine { ac_banded | ac_bnfa
     | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan |
@@ -10101,6 +10111,8 @@ these libraries see the Getting Started section of the manual.
     defaults in Lua format { (optional) }
   * implied snort.--dump-dynamic-rules: output stub rules for all
     loaded rules libraries
+  * string snort.--dump-rule-databases: dump rule databases to given
+    directory (hyperscan only)
   * implied snort.--dump-rule-deps: dump rule dependencies in json
     format for use by other tools
   * implied snort.--dump-rule-meta: dump configured rule info in json
@@ -10503,8 +10515,8 @@ these libraries see the Getting Started section of the manual.
     chars (?)
   * string wizard.hexes[].to_server[].hex: sequence of data with wild
     chars (?)
-  * int wizard.max_pattern = 64: maximum scan depth per segment (0 is
-    unlimited) { 0:65535 }
+  * int wizard.max_search_depth = 64: maximum scan depth per flow {
+    0:65535 }
   * bool wizard.spells[].client_first = true: which end initiates
     data transfer
   * select wizard.spells[].proto = tcp: protocol to scan { tcp | udp
@@ -13086,6 +13098,17 @@ header
 
 Consecutive commas in HTTP Accept-Encoding header
 
+119:273 (http_inspect) missed PDUs during JavaScript normalization
+
+This alert is raised for the following situation. During JavaScript
+normalization middle PDUs can be missed and not normalized. Usually
+it happens when rules have file_data and js_data ips options and
+fast-pattern (FP) search is applying to file_data. Some PDUs don’t
+match file_data FP search and JavaScript normalization won’t be
+executed for these PDUs. The normalization of the following PDUs for
+inline/external scripts will be stopped for current request within
+the flow.
+
 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
 
 invalid flag set on HTTP/2 frame
@@ -13401,111 +13424,121 @@ Received a tiny fragment (less than minimum fragment length).
 
 124:1 (smtp) attempted command buffer overflow
 
-(smtp) attempted command buffer overflow
+SMTP command exceeds the configured max_command_line_len.
 
 124:2 (smtp) attempted data header buffer overflow
 
-(smtp) attempted data header buffer overflow
+SMTP data header exceeds the configured max_header_line_len.
 
 124:3 (smtp) attempted response buffer overflow
 
-(smtp) attempted response buffer overflow
+SMTP response exceeds the configured max_response_line_len.
 
 124:4 (smtp) attempted specific command buffer overflow
 
-(smtp) attempted specific command buffer overflow
+SMTP command that is specified in the alt_max_command_line_len array
+is detected, and its length exceeds the maximum length that is
+configured in the array.
 
 124:5 (smtp) unknown command
 
-(smtp) unknown command
+Command did not match valid_cmds list.
 
 124:6 (smtp) illegal command
 
-(smtp) illegal command
+Invalid command(invalid_cmds) is detected.
 
 124:7 (smtp) attempted header name buffer overflow
 
-(smtp) attempted header name buffer overflow
+SMTP header name exceeds 64 characters.
 
 124:8 (smtp) attempted X-Link2State command buffer overflow
 
-(smtp) attempted X-Link2State command buffer overflow
+Microsoft Exchange X-Link2State command exceeds maximum length of 520
+characters.
 
 124:10 (smtp) base64 decoding failed
 
-(smtp) base64 decoding failed
+Base64 decoding failed.
 
 124:11 (smtp) quoted-printable decoding failed
 
-(smtp) quoted-printable decoding failed
+Quoted-printable data decoding failed.
 
 124:13 (smtp) Unix-to-Unix decoding failed
 
-(smtp) Unix-to-Unix decoding failed
+Uudecoding failed.
 
 124:14 (smtp) Cyrus SASL authentication attack
 
-(smtp) Cyrus SASL authentication attack
+Cyrus SASL authentication attack is detected.
 
 124:15 (smtp) attempted authentication command buffer overflow
 
-(smtp) attempted authentication command buffer overflow
+AUTH command exceeds the configured max_auth_command_line_len.
 
 124:16 (smtp) file decompression failed
 
-(smtp) file decompression failed
+File decompression failed.
 
 125:1 (ftp_server) TELNET cmd on FTP command channel
 
-(ftp_server) TELNET cmd on FTP command channel
+TELNET command is detected on FTP control channel.
 
 125:2 (ftp_server) invalid FTP command
 
-(ftp_server) invalid FTP command
+Invalid FTP command is detected.
 
 125:3 (ftp_server) FTP command parameters were too long
 
-(ftp_server) FTP command parameters were too long
+The length of a FTP command parameter is longer than the configured
+maximum parameter length.
 
 125:4 (ftp_server) FTP command parameters were malformed
 
-(ftp_server) FTP command parameters were malformed
+One or more FTP command parameters are malformed.
 
 125:5 (ftp_server) FTP command parameters contained potential string
 format
 
-(ftp_server) FTP command parameters contained potential string format
+FTP command parameter had invalid string format. Two or more than %
+signs are detected in FTP command parameter.
 
 125:6 (ftp_server) FTP response message was too long
 
-(ftp_server) FTP response message was too long
+FTP response message is longer than the maximum configured response
+length.
 
 125:7 (ftp_server) FTP traffic encrypted
 
-(ftp_server) FTP traffic encrypted
+FTP traffic is encrypted
 
 125:8 (ftp_server) FTP bounce attempt
 
-(ftp_server) FTP bounce attempt
+FTP servers can allow an attacker to connect to arbitrary ports on
+machines other than the FTP client. This is called as FTP bounce
+attempt and bounce attempt has been detected.
 
 125:9 (ftp_server) evasive (incomplete) TELNET cmd on FTP command
 channel
 
-(ftp_server) evasive (incomplete) TELNET cmd on FTP command channel
+Evasive (incomplete) TELNET command is detected on FTP control
+channel.
 
 126:1 (telnet) consecutive Telnet AYT commands beyond threshold
 
-(telnet) consecutive Telnet AYT commands beyond threshold
+Consecutive Telnet AYT(Are you There) commands are detected beyond
+the configured AYT threshold limit.
 
 126:2 (telnet) Telnet traffic encrypted
 
-(telnet) Telnet traffic encrypted
+Telnet traffic is encrypted.
 
 126:3 (telnet) Telnet subnegotiation begin command without
 subnegotiation end
 
-(telnet) Telnet subnegotiation begin command without subnegotiation
-end
+Telnet subnegotiation begin command is detected without
+subnegotiation end.
 
 128:1 (ssh) challenge-response overflow exploit
 
@@ -13636,15 +13669,15 @@ The TCP 3-way handshake was not seen for this TCP session.
 
 131:1 (dns) obsolete DNS RR types
 
-(dns) obsolete DNS RR types
+DNS Response Resource Record Type is Obsolete.
 
 131:2 (dns) experimental DNS RR types
 
-(dns) experimental DNS RR types
+DNS Response Resource Record Type is Experimental.
 
 131:3 (dns) DNS client rdata txt overflow
 
-(dns) DNS client rdata txt overflow
+DNS Response Resource Record Type is Client rdata Overflow.
 
 133:2 (dce_smb) SMB - bad NetBIOS session service session type
 
@@ -14011,171 +14044,185 @@ this behavior.
 
 140:2 (sip) empty request URI
 
-(sip) empty request URI
+SIP Request_URI header field is empty.
 
 140:3 (sip) URI is too long
 
-(sip) URI is too long
+SIP Request_URI header field is larger than the defined length in
+configuration.
 
 140:4 (sip) empty call-Id
 
-(sip) empty call-Id
+SIP Call-ID header field is empty.
 
 140:5 (sip) Call-Id is too long
 
-(sip) Call-Id is too long
+SIP Call-ID header field is larger than the defined length in
+configuration.
 
 140:6 (sip) CSeq number is too large or negative
 
-(sip) CSeq number is too large or negative
+SIP header field CSeq number is too large or negative. The CSeq
+number value must be expressible as a 32-bit unsigned integer and
+must be less than 2^31.
 
 140:7 (sip) request name in CSeq is too long
 
-(sip) request name in CSeq is too long
+The request name in the CSeq is larger than the defined length in
+configuration.
 
 140:8 (sip) empty From header
 
-(sip) empty From header
+SIP From header field is empty.
 
 140:9 (sip) From header is too long
 
-(sip) From header is too long
+SIP From field in header is larger than the defined length in
+configuration.
 
 140:10 (sip) empty To header
 
-(sip) empty To header
+SIP To field in header is empty.
 
 140:11 (sip) To header is too long
 
-(sip) To header is too long
+SIP To field in header is larger than the defined length in
+configuration.
 
 140:12 (sip) empty Via header
 
-(sip) empty Via header
+SIP Via field in header is empty.
 
 140:13 (sip) Via header is too long
 
-(sip) Via header is too long
+SIP Via field in header is larger than the defined length in
+configuration.
 
 140:14 (sip) empty Contact
 
-(sip) empty Contact
+SIP contact field in header is empty.
 
 140:15 (sip) contact is too long
 
-(sip) contact is too long
+SIP contact field in header is larger than the defined length in
+configuration.
 
 140:16 (sip) content length is too large or negative
 
-(sip) content length is too large or negative
+SIP content length is too large or negative.
 
 140:17 (sip) multiple SIP messages in a packet
 
-(sip) multiple SIP messages in a packet
+SIP packet has multiple requests in a single packet.
 
 140:18 (sip) content length mismatch
 
-(sip) content length mismatch
+Inconsistencies present between the Content-Length in SIP header and
+actual body data.
 
 140:19 (sip) request name is invalid
 
-(sip) request name is invalid
+SIP request name field is invalid in response.
 
 140:20 (sip) Invite replay attack
 
-(sip) Invite replay attack
+SIP received authenticated invite message, but no challenge from
+server is received. This is the case of Invite replay attack.
 
 140:21 (sip) illegal session information modification
 
-(sip) illegal session information modification
+SIP received authenticated invite message, but session information
+has been changed. This is different from re-INVITE, where the dialog
+has been established and authenticated.
 
 140:22 (sip) response status code is not a 3 digit number
 
-(sip) response status code is not a 3 digit number
+SIP response status code is not a 3 digit number.
 
 140:23 (sip) empty Content-type header
 
-(sip) empty Content-type header
+SIP Content-type header field is empty.
 
 140:24 (sip) SIP version is invalid
 
-(sip) SIP version is invalid
+SIP version is invalid. SIP version other than 1.0, 1.1, and 2.0 is
+invalid.
 
 140:25 (sip) mismatch in METHOD of request and the CSEQ header
 
-(sip) mismatch in METHOD of request and the CSEQ header
+Mismatch in method of request and the CSEQ header detected.
 
 140:26 (sip) method is unknown
 
-(sip) method is unknown
+SIP method is unknown.
 
 140:27 (sip) maximum dialogs within a session reached
 
-(sip) maximum dialogs within a session reached
+SIP dialog numbers in the stream session exceeds the maximal value.
 
 141:1 (imap) unknown IMAP3 command
 
-(imap) unknown IMAP3 command
+Unknown IMAP3 command is detected.
 
 141:2 (imap) unknown IMAP3 response
 
-(imap) unknown IMAP3 response
+Unknown IMAP3 response is detected.
 
 141:4 (imap) base64 decoding failed
 
-(imap) base64 decoding failed
+Base64 decoding failed.
 
 141:5 (imap) quoted-printable decoding failed
 
-(imap) quoted-printable decoding failed
+Quoted-printable decoding failed.
 
 141:7 (imap) Unix-to-Unix decoding failed
 
-(imap) Unix-to-Unix decoding failed
+Uudecoding failed.
 
 141:8 (imap) file decompression failed
 
-(imap) file decompression failed
+File decompression failed.
 
 142:1 (pop) unknown POP3 command
 
-(pop) unknown POP3 command
+Unknown POP3 command is detected.
 
 142:2 (pop) unknown POP3 response
 
-(pop) unknown POP3 response
+Unknown POP3 response is detected.
 
 142:4 (pop) base64 decoding failed
 
-(pop) base64 decoding failed
+Base64 decoding failed.
 
 142:5 (pop) quoted-printable decoding failed
 
-(pop) quoted-printable decoding failed
+Quoted-printable decoding failed.
 
 142:7 (pop) Unix-to-Unix decoding failed
 
-(pop) Unix-to-Unix decoding failed
+Uudecoding failed.
 
 142:8 (pop) file decompression failed
 
-(pop) file decompression failed
+File decompression failed.
 
 143:1 (gtp_inspect) message length is invalid
 
-(gtp_inspect) message length is invalid
+gtp_inspect detected invalid message length
 
 143:2 (gtp_inspect) information element length is invalid
 
-(gtp_inspect) information element length is invalid
+gtp_inspect detected invalid information element length
 
 143:3 (gtp_inspect) information elements are out of order
 
-(gtp_inspect) information elements are out of order
+gtp_inspect detected information elements are out of order
 
 143:4 (gtp_inspect) TEID is missing
 
-(gtp_inspect) TEID is missing
+gtp_inspect detected tunnel endpoint identifier having zero
 
 144:1 (modbus) length in Modbus MBAP header does not match the length
 needed for the given function
