@@ -50,7 +50,7 @@ protected:
     void process_decoded_headers(HttpFlowData* http_flow, HttpCommon::SourceId hi_source_id);
     uint8_t get_flags_mask() const override;
 
-    Field http1_header;                 // finalized headers to be passed to NHI
+    Field http1_header;                 // finalized headers to be passed to http_inspect
     uint32_t xtradata_mask = 0;
     bool detection_required = false;
     bool process_frame = true;

@@ -56,7 +56,10 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
         AssistantGadgetEvent event(pkt, "http");
         DataBus::publish(FLOW_ASSISTANT_GADGET_EVENT, event, pkt->flow);
         if (pkt->flow->assistant_gadget == nullptr)
+        {
+            // http_inspect is not configured
             return HttpStreamSplitter::status_value(StreamSplitter::ABORT, true);
+        }
         pkt->flow->set_flow_data(session_data = new Http2FlowData(pkt->flow));
         Http2Module::increment_peg_counts(PEG_FLOW);
     }
@@ -201,9 +204,20 @@ bool Http2StreamSplitter::finish(Flow* flow)
 
     Http2FlowData* session_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
     if (!session_data)
+    {
+        // assert(false); // FIXIT-M this should not be possible but currently it may be
         return false;
+    }
     if (session_data->abort_flow[source_id])
         return false;
+
+    if (session_data->tcp_close[source_id])
+    {
+        // assert(false); // FIXIT-M this should not happen but it does
+        session_data->abort_flow[source_id] = true;
+        return false;
+    }
+    session_data->tcp_close[source_id] = true;
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP2))
@@ -264,7 +278,6 @@ bool Http2StreamSplitter::finish(Flow* flow)
 #endif
         }
         session_data->stream_in_hi = NO_STREAM_ID;
-
     }
 
     return need_reassemble;

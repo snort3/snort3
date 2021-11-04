@@ -124,8 +124,7 @@ protected:
 
     // 0 element refers to client frame, 1 element refers to server frame
 
-    // There is currently one infraction and one event object per flow per direction. This may
-    // change in the future.
+    // There is currently one infraction and one event object per flow per direction.
     Http2Infractions* const infractions[2] = { new Http2Infractions, new Http2Infractions };
     Http2EventGen* const events[2] = { new Http2EventGen, new Http2EventGen };
 
@@ -141,6 +140,7 @@ protected:
     uint32_t stream_in_hi = Http2Enums::NO_STREAM_ID;
     HttpMsgSection* hi_msg_section = nullptr;
     bool server_settings_frame_received = false;
+    bool tcp_close[2] = { false, false };
 
     // Reassemble() data to eval()
     uint8_t lead_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH];

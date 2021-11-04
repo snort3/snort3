@@ -120,9 +120,11 @@ void Http2Inspect::eval(Packet* p)
         (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
 
     if (!session_data)
+    {
+        assert(false);
         return;
+    }
 
-    // FIXIT-E Workaround for unexpected eval() calls
     if (session_data->abort_flow[source_id])
     {
         return;
@@ -181,9 +183,11 @@ void Http2Inspect::clear(Packet* p)
         (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
 
     if (session_data == nullptr)
+    {
+        assert(false);
         return;
+    }
 
-    // FIXIT-E precaution against spurious clear() calls
     if (!session_data->frame_in_detection)
     {
         assert(session_data->stream_in_hi == NO_STREAM_ID);
