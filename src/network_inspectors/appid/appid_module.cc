@@ -270,6 +270,7 @@ ACOdpContextSwap::~ACOdpContextSwap()
             file_path = std::string(ctxt.config.app_detector_dir) + "/../userappid.conf";
         ctxt.get_odp_ctxt().get_app_info_mgr().dump_appid_configurations(file_path);
     }
+    LogMessage("== reload detectors complete\n");
     ReloadTracker::end(ctrlcon);
     ctrlcon->respond("== reload detectors complete\n");
 }
