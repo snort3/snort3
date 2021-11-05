@@ -437,12 +437,7 @@ void Http2HpackDecoder::set_decoded_headers(Field& http1_header)
 
 void Http2HpackDecoder::cleanup()
 {
-    if (decoded_headers)
-    {
-        // get_decoded_headers() was never called because we encountered some error during
-        // processing. We must clean up the buffer.
-        delete[] decoded_headers;
-        decoded_headers = nullptr;
-        decoded_headers_size = 0;
-    }
+    delete[] decoded_headers;
+    decoded_headers = nullptr;
+    decoded_headers_size = 0;
 }

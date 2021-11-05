@@ -53,12 +53,6 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const uint32_
     hpack_decoder = &session_data->hpack_decoder[source_id];
 }
 
-
-Http2HeadersFrame::~Http2HeadersFrame()
-{
-    hpack_decoder->cleanup();
-}
-
 void Http2HeadersFrame::clear()
 {
     if (session_data->abort_flow[source_id] || stream->get_state(source_id) == STREAM_ERROR)
@@ -68,12 +62,39 @@ void Http2HeadersFrame::clear()
     session_data->hi->clear(&dummy_pkt);
 }
 
+bool Http2HeadersFrame::decode_headers(Http2StartLine* start_line_generator, bool trailers)
+{
+    const uint32_t encoded_headers_length = (data.length() > hpack_headers_offset) ?
+        data.length() - hpack_headers_offset : 0;
+    if (!hpack_decoder->decode_headers((data.start() + hpack_headers_offset),
+        encoded_headers_length, start_line_generator, trailers))
+    {
+        if (!(*session_data->infractions[source_id] & INF_TRUNCATED_HEADER_LINE))
+        {
+            session_data->abort_flow[source_id] = true;
+            session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
+            http1_header.set(STAT_PROBLEMATIC);
+            hpack_decoder->cleanup();
+            return false;
+        }
+    }
+    hpack_decoder->set_decoded_headers(http1_header);
+    return true;
+}
+
 void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow, SourceId hi_source_id)
 {
-    if (session_data->abort_flow[source_id])
+    if (session_data->abort_flow[source_id] or http1_header.length() < 0)
         return;
 
-    hpack_decoder->set_decoded_headers(http1_header);
+    if (http1_header.length() <= 0 and !session_data->is_processing_partial_header())
+    {
+        // This shouldn't happen because well-formatted empty frames have crlf written to the
+        // decoded headers buffer
+        assert(false);
+        return;
+    }
+
     StreamBuffer stream_buf;
 
     // http_inspect scan() of headers
@@ -81,7 +102,6 @@ void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow, SourceI
     // be empty. Don't call scan on the empty buffer because it will create a cutter and the check
     // for this condition in HI::finish() will fail. Truncated headers with non-empty http1_header
     // buffers are still sent to HI::scan().
-    assert ((http1_header.length() > 0) or session_data->is_processing_partial_header());
     if (http1_header.length() > 0)
     {
         uint32_t flush_offset;

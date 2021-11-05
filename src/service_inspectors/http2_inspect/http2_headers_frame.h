@@ -32,7 +32,6 @@ class HttpFlowData;
 class Http2HeadersFrame : public Http2Frame
 {
 public:
-    ~Http2HeadersFrame() override;
     void clear() override;
 
     const Field& get_buf(unsigned id) override;
@@ -47,6 +46,7 @@ protected:
     Http2HeadersFrame(const uint8_t* header_buffer, const uint32_t header_len,
         const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* ssn_data,
         HttpCommon::SourceId src_id, Http2Stream* stream);
+    bool decode_headers(Http2StartLine* start_line_generator, bool trailers);
     void process_decoded_headers(HttpFlowData* http_flow, HttpCommon::SourceId hi_source_id);
     uint8_t get_flags_mask() const override;
 

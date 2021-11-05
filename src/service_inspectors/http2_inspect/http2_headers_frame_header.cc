@@ -53,24 +53,13 @@ Http2HeadersFrameHeader::Http2HeadersFrameHeader(const uint8_t* header_buffer,
         start_line_generator = new Http2StatusLine(session_data->events[source_id],
             session_data->infractions[source_id]);
 
-    // Decode headers
-    const uint32_t encoded_headers_length = (data.length() > hpack_headers_offset) ?
-        data.length() - hpack_headers_offset : 0;
-    if (!hpack_decoder->decode_headers((data.start() + hpack_headers_offset),
-        encoded_headers_length, start_line_generator, false))
+    if (decode_headers(start_line_generator, false))
     {
-        if (!(*session_data->infractions[source_id] & INF_TRUNCATED_HEADER_LINE))
+        // process start line
+        if (!start_line_generator->generate_start_line(start_line, are_pseudo_headers_complete()))
         {
-            session_data->abort_flow[source_id] = true;
-            session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
-            return;
+            stream->set_state(source_id, STREAM_ERROR);
         }
-    }
-
-    // process start line
-    if (!start_line_generator->generate_start_line(start_line, are_pseudo_headers_complete()))
-    {
-        stream->set_state(source_id, STREAM_ERROR);
     }
 }
 

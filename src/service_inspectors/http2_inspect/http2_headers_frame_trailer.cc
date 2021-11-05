@@ -54,19 +54,7 @@ Http2HeadersFrameTrailer::Http2HeadersFrameTrailer(const uint8_t* header_buffer,
         *session_data->infractions[source_id] += INF_TRAILERS_NOT_END;
         session_data->events[source_id]->create_event(EVENT_TRAILERS_NOT_END);
     }
-
-    // Decode trailers
-    const uint32_t encoded_headers_length = (data.length() > hpack_headers_offset) ?
-        data.length() - hpack_headers_offset : 0;
-    if (!hpack_decoder->decode_headers((data.start() + hpack_headers_offset),
-        encoded_headers_length, nullptr, true))
-    {
-        if (!(*session_data->infractions[source_id] & INF_TRUNCATED_HEADER_LINE))
-        {
-            session_data->abort_flow[source_id] = true;
-            session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
-        }
-    }
+    decode_headers(nullptr, true);
 }
 
 bool Http2HeadersFrameTrailer::valid_sequence(Http2Enums::StreamState state)
