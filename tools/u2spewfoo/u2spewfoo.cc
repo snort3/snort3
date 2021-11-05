@@ -594,7 +594,7 @@ int main(int argc, char** argv)
 {
     if (argc != 2)
     {
-        puts("usage: u2eventdump <file>");
+        puts("usage: u2spewfoo <file>");
         return 1;
     }
 
