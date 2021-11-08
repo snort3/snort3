@@ -20,23 +20,23 @@ A tagged packet was logged.
 
 106:1
 
-(rpc_decode) fragmented RPC records
+Detected fragmented RPC records.
 
 106:2
 
-(rpc_decode) multiple RPC records
+Detected multiple RPC records in the packet.
 
 106:3
 
-(rpc_decode) large RPC record fragment
+Large RPC record fragment. RPC fragment length is greater than packet data size.
 
 106:4
 
-(rpc_decode) incomplete RPC segment
+Incomplete RPC segment. Packet data size is less than required RPC fragment length.
 
 106:5
 
-(rpc_decode) zero-length RPC fragment
+Zero-length RPC fragment.
 
 112:1
 
@@ -1758,231 +1758,231 @@ DNS Response Resource Record Type is Client rdata Overflow.
 
 133:2
 
-(dce_smb) SMB - bad NetBIOS session service session type
+Invalid NetBIOS session service type specified in the header. Valid types are keep alive, request from client, positive response, negative response, and retarget response from the server.
 
 133:3
 
-(dce_smb) SMB - bad SMB message type
+Invalid SMB message type specified in the header. Either a request was made by server or a response was given by client.
 
 133:4
 
-(dce_smb) SMB - bad SMB Id (not \xffSMB for SMB1 or not \xfeSMB for SMB2)
+SMB id not equal to \xffSMB for SMB1 or not \xfeSMB for SMB2.
 
 133:5
 
-(dce_smb) SMB - bad word count or structure size
+Invalid word count for the command or structure size. SMB commands have specific word counts and if a command with word count not matching with the required word count, this alert is raised.
 
 133:6
 
-(dce_smb) SMB - bad byte count
+Bad byte count for the command. Either word count is zero and byte count isn't or byte count is not in the range of mininum and maximum required byte count for the SMB command.
 
 133:7
 
-(dce_smb) SMB - bad format type
+Bad format type for the SMB command.
 
 133:8
 
-(dce_smb) SMB - bad offset
+Bad Offset. Offset points to beginning of SMB header. Offset is bad, if it points to the data already looked at or after the end of payload.
 
 133:9
 
-(dce_smb) SMB - zero total data count
+SMB command has a field containing total amount of data to be transmitted. If this field is zero, an alert is raised.
 
 133:10
 
-(dce_smb) SMB - NetBIOS data length less than SMB header length
+NetBIOS data length value is less than size of the SMB header.
 
 133:11
 
-(dce_smb) SMB - remaining NetBIOS data length less than command length
+Remaining NetBIOS data length is less than SMB command length.
 
 133:12
 
-(dce_smb) SMB - remaining NetBIOS data length less than command byte count
+Remaining NetBIOS data length is less than the SMB command byte count.
 
 133:13
 
-(dce_smb) SMB - remaining NetBIOS data length less than command data size
+Remaining NetBIOS data length is less than SMB command data size.
 
 133:14
 
-(dce_smb) SMB - remaining total data count less than this command data size
+Total data count is less than SMB command data size. Total data count must always be greater than or equal to current data size.
 
 133:15
 
-(dce_smb) SMB - total data sent (STDu64) greater than command total data expected
+Total data sent in transaction is greater than SMB command total data expected.
 
 133:16
 
-(dce_smb) SMB - byte count less than command data size (STDu64)
+Byte count in the SMB command header is less thean the command data size.
 
 133:17
 
-(dce_smb) SMB - invalid command data size for byte count
+Byte count minus predetermined value for the SMB command is not equal to data size. 
 
 133:18
 
-(dce_smb) SMB - excessive tree connect requests with pending tree connect responses
+Excessive SMB tree connect requests with pending tree connect responses. Tree connect requests queue up and wait for server response. This alert raised for excessing pending tree connect requests.
 
 133:19
 
-(dce_smb) SMB - excessive read requests with pending read responses
+Excessive SMB read requests with pending read responses. After client is done writing data, read request is queued and gets dequeued upon receiving response. This alert raised for excessive pending read requests
 
 133:20
 
-(dce_smb) SMB - excessive command chaining
+Excessive command chaining. Number of SMB chained commands in a single request is greater than or equal to the configured value.
 
 133:21
 
-(dce_smb) SMB - Multiple chained login requests
+It is possible to chain multiple Session Setup AndX commands within the same request. There is, however, only one place in the SMB header to return a login handle (or Uid). Windows does not allow this behavior, however Samba does. This is an anomalous behavior.
 
 133:22
 
-(dce_smb) SMB - Multiple chained tree connect requests
+It is possible to chain multiple Tree Connect AndX commands within the same request. There is, however, only one place in the SMB header to return a tree handle (or Tid). Windows does not allow this behavior, however Samba does. This is anomalous behavior.
 
 133:23
 
-(dce_smb) SMB - chained/compounded login followed by logoff
+When a Session Setup AndX request is sent to the server, the server responds with a user id or login handle. This is used by the client in subsequent requests to indicate that it has authenticated. A Logoff AndX request is sent by the client to indicate it wants to end the session and invalidate the login handle. With SMB commands that are chained after a Session Setup AndX request, the login handle returned by the server is used for the subsequent chained commands. The combination of a Session Setup AndX command with a chained Logoff AndX command, essentially logins in and logs off in the same request and is anomalous behavior.
 
 133:24
 
-(dce_smb) SMB - chained/compounded tree connect followed by tree disconnect
+A SMB Tree Connect AndX command is used to connect to a share. The Tree Disconnect command is used to disconnect from that share. The combination of a Tree Connect AndX command with a chained Tree Disconnect command, essentially connects to a share and disconnects from the same share in the same request and is anomalous behavior. 
 
 133:25
 
-(dce_smb) SMB - chained/compounded open pipe followed by close pipe
+An SMB Open AndX or Nt Create AndX command is used to open/create a file handle. The Close command is used to close that file handle. The combination of a Open AndX or Nt Create AndX command with a chained Close command, essentially opens and closes the file handle in the same request and is anomalous behavior. 
 
 133:26
 
-(dce_smb) SMB - invalid share access
+Invalid SMB shares configured. It looks for a Tree Connect or Tree Connect AndX to the share.
 
 133:27
 
-(dce_tcp) connection oriented DCE/RPC - invalid major version
+Major version contained in the connection oriented DCE/RPC header is not equal to 5.
 
 133:28
 
-(dce_tcp) connection oriented DCE/RPC - invalid minor version
+Minor version contained in the connection oriented DCE/RPC header is not equal to 0.
 
 133:29
 
-(dce_tcp) connection-oriented DCE/RPC - invalid PDU type
+Connection oriented DCE/RPC PDU type contained in the header is not a valid PDU type.
 
 133:30
 
-(dce_tcp) connection-oriented DCE/RPC - fragment length less than header size
+Fragment length less than connection oriented DCE/RPC header size.
 
 133:31
 
-(dce_tcp) connection-oriented DCE/RPC - remaining fragment length less than size needed
+Connection oriented DCE/RPC remaining fragment length less than size needed.
 
 133:32
 
-(dce_tcp) connection-oriented DCE/RPC - no context items specified
+In connection oriented DCE/RPC Client's Bind or Alter Context request, there are no context items specified.
 
 133:33
 
-(dce_tcp) connection-oriented DCE/RPC -no transfer syntaxes specified
+In connection oriented DCE/RPC Client's Bind or Alter context request, there are no transfer syntaxes to go with the requested interface.
 
 133:34
 
-(dce_tcp) connection-oriented DCE/RPC - fragment length on non-last fragment less than maximum negotiated fragment transmit size for client
+Connection oriented DCE/RPC non-last fragment is less than the size of the negotiated maximum fragment length. Most evasion techniques try to fragment the data as much as possible and usually each fragment comes well below the negotiated transmit size. 
 
 133:35
 
-(dce_tcp) connection-oriented DCE/RPC - fragment length greater than maximum negotiated fragment transmit size
+Connection oriented DCE/RPC fragment length greater than maximum negotiated fragment length.
 
 133:36
 
-(dce_tcp) connection-oriented DCE/RPC - alter context byte order different from bind
+Alter context byte order different from bind. The byte order of the request data is determined by the Bind in connection-oriented DCE/RPC for Windows. It is anomalous behavior to attempt to change the byte order.
 
 133:37
 
-(dce_tcp) connection-oriented DCE/RPC - call id of non first/last fragment different from call id established for fragmented request
+Call id of non first/last fragment different from call id established for fragmented request in connection oriented DCE/RPC. The call id for a set of fragments in a fragmented request should stay the same.
 
 133:38
 
-(dce_tcp) connection-oriented DCE/RPC - opnum of non first/last fragment different from opnum established for fragmented request
+Connection-oriented DCE/RPC opnum of non first/last fragment different from opnum established for fragmented request. The operation number specifies which function the request is calling on the bound interface. If a request is fragmented, this number should stay the same for all fragments. 
 
 133:39
 
-(dce_tcp) connection-oriented DCE/RPC - context id of non first/last fragment different from context id established for fragmented request
+Connection-oriented DCE/RPC context id of non first/last fragment different from context id established for fragmented request. The context id is a handle to a interface that was bound to. If a request if fragmented, this number should stay same for all fragments.
 
 133:40
 
-(dce_udp) connection-less DCE/RPC - invalid major version
+Connection-less DCE/RPC invalid major version.  Major version is not equal to 4.
 
 133:41
 
-(dce_udp) connection-less DCE/RPC - invalid PDU type
+Connection-less DCE/RPC PDU type is not a valid PDU type.
 
 133:42
 
-(dce_udp) connection-less DCE/RPC - data length less than header size
+Connection-less DCE/RPC packet data length is less than size of the header.
 
 133:43
 
-(dce_udp) connection-less DCE/RPC - bad sequence number
+Connection-less DCE/RPC bad sequence number. The sequence number used in a request is the same or less than a previously used sequence number on the session.
 
 133:44
 
-(dce_smb) SMB - invalid SMB version 1 seen
+Invalid SMB version 1 seen.
 
 133:45
 
-(dce_smb) SMB - invalid SMB version 2 seen
+Invalid SMB version 2 seen.
 
 133:46
 
-(dce_smb) SMB - invalid user, tree connect, file binding
+SMB invalid user, tree connect, file binding seen.
 
 133:47
 
-(dce_smb) SMB - excessive command compounding
+SMB excessive command compounding seen.
 
 133:48
 
-(dce_smb) SMB - zero data count
+SMB Data count is zero.
 
 133:50
 
-(dce_smb) SMB - maximum number of outstanding requests exceeded
+Maximum number of outstanding SMB requests exceeded.
 
 133:51
 
-(dce_smb) SMB - outstanding requests with same MID
+Multiple outstanding SMB requests with same MID. When a client sends a request it uses a value called the MID (multiplex id) to match a response, which the server is supposed to echo, to a request.
 
 133:52
 
-(dce_smb) SMB - deprecated dialect negotiated
+Deprecated dialect negotiated. In the Negotiate request a client gives a list of SMB dialects it supports, normally in order from least desirable to most desirable and the server responds with the index of the dialect to be used on the SMB session. If the client doesn't offer it as a supported dialect or the server chooses a lesser dialect, it is deprecated dialect negotiated.
 
 133:53
 
-(dce_smb) SMB - deprecated command used
+Deprecated SMB command used. There are a number of commands that are considered deprecated and/or obsolete by Microsoft (see MS-CIFS and MS-SMB). Detected use of a deprecated/obsolete command.
 
 133:54
 
-(dce_smb) SMB - unusual command used
+Unusual SMB command used. There are some commands considered unusual in the context they are used. Some of the commands such as : TRANS_READ_NMPIPE/TRANS_WRITE_NMPIPE/TRANS2_OPEN2/NT_TRANSACT_CREATE/NT_TRANSACT_CREATE.
 
 133:55
 
-(dce_smb) SMB - invalid setup count for command
+Transaction SMB commands have a setup count field that indicates word count in the transaction setup, Alert raised if setup count is invalid for transaction command.
 
 133:56
 
-(dce_smb) SMB - client attempted multiple dialect negotiations on session
+Client attempted multiple SMB dialect negotiations on session. There can be only one Negotiate transaction per session and it is the first thing a client and server do to determine the SMB dialect each supports.
 
 133:57
 
-(dce_smb) SMB - client attempted to create or set a file's attributes to readonly/hidden/system
+SMB client attempted to create or set a file's attributes to readonly/hidden/system. Malware will often set a files attributes to ReadOnly/Hidden/System if it is successful in installing itself as a Windows service or is able to write an autorun.inf file since it doesn't want the user to see the file and the default folder options in Windows is not to display Hidden files.
 
 133:58
 
-(dce_smb) SMB - file offset provided is greater than file size specified
+SMB file offset provided is greater than file size specified.
 
 133:59
 
-(dce_smb) SMB - next command specified in SMB2 header is beyond payload boundary
+SMB protocol allows multiple smb commands to be grouped in a single packet. Next command specified in SMB2 header is greater than the payload boundary.
 
 134:1
 
