@@ -1814,7 +1814,7 @@ Total data sent in transaction is greater than SMB command total data expected.
 
 133:16
 
-Byte count in the SMB command header is less thean the command data size.
+Byte count in the SMB command header is less than the command data size.
 
 133:17
 
