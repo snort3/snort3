@@ -40,19 +40,20 @@ Zero-length RPC fragment.
 
 112:1
 
-(arp_spoof) unicast ARP request
+ARP request is unicast, not broadcast.
 
 112:2
 
-(arp_spoof) ethernet/ARP mismatch request for source
+Mismatch between ethernet source hardware address and ARP source hardware address.
 
 112:3
 
-(arp_spoof) ethernet/ARP mismatch request for destination
+Mismatch between ethernet destination hardware address and ARP destination hardware address in an ARP reply.
 
 112:4
 
-(arp_spoof) attempted ARP cache overwrite attack
+Attempted ARP cache overwrite attack. The ethernet source hardware address or ARP source hardware address 
+doesn't match the one provided for this IP address in the configured host table.
 
 116:1
 
