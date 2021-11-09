@@ -1226,7 +1226,7 @@ current request within the flow.
 
 121:1
 
-invalid flag set on HTTP/2 frame
+Invalid flag set on HTTP/2 frame header
 
 121:2
 
@@ -1234,19 +1234,23 @@ HPACK integer value has leading zeros
 
 121:3
 
-HTTP/2 stream initiated with invalid stream id
+HTTP/2 stream initiated with invalid stream ID. Either server initiated push promise with
+odd promised stream ID or new stream with stream ID that is not greater than the last one
+seen on this side.
 
 121:4
 
-missing HTTP/2 continuation frame
+HTTP/2 Headers, Continuation or Push promise frame without the END_HEADERS flag set was 
+not followed by a Continuation frame.
 
 121:5
 
-unexpected HTTP/2 continuation frame
+HTTP/2 Continuation frame not preceded by Headers, Continuation or Push promise frame
+without the END_HEADERS flag.
 
 121:6
 
-misformatted HTTP/2 traffic
+HTTP/2 headers HPACK decoding error
 
 121:7
 
@@ -1254,7 +1258,8 @@ HTTP/2 connection preface does not match
 
 121:8
 
-HTTP/2 request missing required header field
+HTTP/2 request missing required header field. CONNECT request without authority, 
+non-CONNECT request without a scheme, or http/https scheme without a path.
 
 121:9
 
@@ -1266,23 +1271,25 @@ HTTP/2 CONNECT request with scheme or path
 
 121:11
 
-error in HTTP/2 settings frame
+HTTP/2 settings frame error: stream ID isn't 0, length isn't multiple of 6, or ACK flag is
+set and length isn't 0.
 
 121:12
 
-unknown parameter in HTTP/2 settings frame
+Unknown parameter in HTTP/2 settings frame. Parameter identifier is not one of
+the six RFC-defined values.
 
 121:13
 
-invalid HTTP/2 frame sequence
+Invalid HTTP/2 frame sequence. Frame type is not valid for current stream state.
 
 121:14
 
-HTTP/2 dynamic table size limit exceeded
+HTTP/2 dynamic table has more than 512 entries
 
 121:15
 
-HTTP/2 push promise frame with invalid promised stream id
+HTTP/2 push promise frame with promised stream ID already in use.
 
 121:16
 
@@ -1298,7 +1305,9 @@ HTTP/2 pseudo-header in trailers
 
 121:19
 
-invalid HTTP/2 pseudo-header
+Invalid HTTP/2 pseudo header. For response only :status is valid. For request only :authority,
+:method, :path and :scheme are valid. Any other pseudo-header or seeing one of these more
+than once will trigger the alert. 
 
 121:20
 
@@ -1306,47 +1315,50 @@ HTTP/2 trailers without END_STREAM bit
 
 121:21
 
-HTTP/2 push promise frame sent when prohibited by receiver
+HTTP/2 push promise frame sent when prohibited by receiver. Receiver prohibited push 
+promise by sending settings frame with SETTINGS_ENABLE_PUSH 0.
 
 121:22
 
-padding flag set on HTTP/2 frame with zero length
+Padding flag set on HTTP/2 frame with zero length
 
 121:23
 
-HTTP/2 push promise frame in c2s direction
+HTTP/2 push promise frame in client-to-server direction
 
 121:24
 
-invalid HTTP/2 push promise frame
+Invalid HTTP/2 push promise frame, length is less than promised stream ID length.
 
 121:25
 
-HTTP/2 push promise frame sent at invalid time
+HTTP/2 push promise frame sent at invalid time. Client didn't send headers yet for this
+stream, END_STREAM already seen on server side or server side in error state.
 
 121:26
 
-invalid parameter value sent in HTTP/2 settings frame
+Invalid SETTINGS_ENABLE_PUSH value sent in HTTP/2 settings frame
 
 121:27
 
-excessive concurrent HTTP/2 streams
+HTTP/2 flow exceed concurrent streams limit, as configured by concurrent_streams_limit.
 
 121:28
 
-invalid HTTP/2 rst stream frame
+Invalid HTTP/2 RST_STREAM frame. Stream ID is not 0 or length is not 4.
 
 121:29
 
-HTTP/2 rst stream frame sent at invalid time
+HTTP/2 RST_STREAM frame sent at invalid time. Stream is not in idle state, already started
+with a push promise or headers frame.
 
 121:30
 
-uppercase HTTP/2 header field name
+Uppercase HTTP/2 header field name
 
 121:31
 
-invalid HTTP/2 window update frame
+HTTP/2 window update frame length is not 4
 
 121:32
 
@@ -2241,15 +2253,16 @@ gtp_inspect detected tunnel endpoint identifier having zero
 
 144:1
 
-(modbus) length in Modbus MBAP header does not match the length needed for the given function
+Length in Modbus MBAP header does not match the length needed for the given function 
+or length mismatch discovered while parsing the PDU
 
 144:2
 
-(modbus) Modbus protocol ID is non-zero
+Modbus protocol ID is non-zero
 
 144:3
 
-(modbus) reserved Modbus function code in use
+Modbus using reserved function code
 
 145:1
 
