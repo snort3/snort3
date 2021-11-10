@@ -29,7 +29,8 @@
 #include "trace/trace_api.h"
 #include "utils/safec.h"
 
-#define STD_BUF_SIZE 1024
+#define BUF_SIZE_MIN (1 << 10) // guaranteed size, this one will be allocated on stack
+#define BUF_SIZE_MAX (1 << 20) // this prevents unlimited memory allocation
 
 namespace snort
 {
@@ -37,10 +38,60 @@ template <void (log_func)(const char*, const char*, uint8_t, const char*, const 
 void trace_vprintf(const char* name, TraceLevel log_level,
     const char* trace_option, const Packet* p, const char* fmt, va_list ap)
 {
-    char buf[STD_BUF_SIZE];
-    vsnprintf(buf, sizeof(buf), fmt, ap);
+    char buf[BUF_SIZE_MIN];
+    int n;
 
-    log_func(buf, name, log_level, trace_option, p);
+    va_list dup_ap;
+    va_copy(dup_ap, ap);
+
+    n = vsnprintf(buf, sizeof(buf), fmt, ap);
+
+    if (n < 0)
+    {
+        std::string err_msg = "trace_vprintf: printf error: ";
+        err_msg += strerror(errno);
+        err_msg += "\n";
+        log_func(err_msg.c_str(), name, log_level, trace_option, p);
+    }
+    else if (n < (int)sizeof(buf))
+    {
+        log_func(buf, name, log_level, trace_option, p);
+    }
+    else if (n < BUF_SIZE_MAX)
+    {
+        char* d_buf = new char[n + 1];
+
+        if (d_buf)
+        {
+            vsnprintf(d_buf, n + 1, fmt, dup_ap);
+            log_func(d_buf, name, log_level, trace_option, p);
+        }
+        else
+            log_func("trace_vprintf: out of memory\n", name, log_level, trace_option, p);
+
+        delete[] d_buf;
+    }
+    else
+    {
+        n = BUF_SIZE_MAX;
+        char* d_buf = new char[n];
+
+        if (d_buf)
+        {
+            log_func("trace_vprintf: next message will be truncated\n", name, log_level, trace_option, p);
+
+            vsnprintf(d_buf, n, fmt, dup_ap);
+            d_buf[n - 2] = '\n';
+            d_buf[n - 1] = '\0';
+            log_func(d_buf, name, log_level, trace_option, p);
+        }
+        else
+            log_func("trace_vprintf: out of memory\n", name, log_level, trace_option, p);
+
+        delete[] d_buf;
+    }
+
+    va_end(dup_ap);
 }
 
 void trace_vprintf(const char* name, TraceLevel log_level,
@@ -71,7 +122,7 @@ struct TestCase
     const char* expected;
 };
 
-static char testing_dump[STD_BUF_SIZE];
+static char testing_dump[BUF_SIZE_MAX * 2];
 
 static void test_log(const char* log_msg, const char* name,
     uint8_t log_level, const char* trace_option, const snort::Packet*)
@@ -173,18 +224,10 @@ TEST_CASE("debug_log, debug_logf", "[trace]")
     test_opt_trace.set("option4", 2);
     test_opt_trace.set("option5", 2);
 
-    char message[STD_BUF_SIZE + 1];
-    for( int i = 0; i < STD_BUF_SIZE; i++ )
+    char message[BUF_SIZE_MIN + 1];
+    for( int i = 0; i < BUF_SIZE_MIN; i++ )
         message[i] = 'A';
-    message[STD_BUF_SIZE] = '\0';
-
-    testing_dump[0] = '\0';
-    debug_log(&test_trace, nullptr, message);
-    CHECK( (strlen(testing_dump) == STD_BUF_SIZE - 1) );
-
-    testing_dump[0] = '\0';
-    debug_log(3, &test_opt_trace, TEST_TRACE_OPTION3, nullptr, message);
-    CHECK( (strlen(testing_dump) == STD_BUF_SIZE - 1) );
+    message[BUF_SIZE_MIN] = '\0';
 
     testing_dump[0] = '\0';
     debug_log(6, &test_opt_trace, TEST_TRACE_OPTION3, nullptr, message);
@@ -243,7 +286,57 @@ TEST_CASE("debug_log, debug_logf", "[trace]")
     CHECK( testing_dump[0] == '\0' );
 }
 
+TEST_CASE("trace big message", "[trace]")
+{
+    TraceOption test_trace_options(nullptr, 0, nullptr);
+    TraceTestModule trace_test_module("test_module", &test_trace_options);
+    Trace test_trace(trace_test_module);
+
+    const int hdr_size = strlen("test_module:all:1: ");
+    const char exp_1[] = "test_module:all:1: 1111111111111111111111111111";
+    const char exp_2[] = "test_module:all:1: 2222222222222222222222222222";
+    const char exp_3[] = "test_module:all:1: 3333333333333333333333333333";
+    const char exp_4[] = "test_module:all:1: 4444444444444444444444444444";
+
+
+    char msg_1[BUF_SIZE_MIN * 1];
+    char msg_2[BUF_SIZE_MIN * 2];
+    char msg_3[BUF_SIZE_MAX * 1];
+    char msg_4[BUF_SIZE_MAX * 2];
+
+    test_trace.set("all", 1);
+
+    memset(msg_1, '1', sizeof(msg_1));
+    memset(msg_2, '2', sizeof(msg_2));
+    memset(msg_3, '3', sizeof(msg_3));
+    memset(msg_4, '4', sizeof(msg_4));
+
+    msg_1[sizeof(msg_1) - 1] = '\0';
+    msg_2[sizeof(msg_2) - 1] = '\0';
+    msg_3[sizeof(msg_3) - 1] = '\0';
+    msg_4[sizeof(msg_4) - 1] = '\0';
+
+    memset(testing_dump, '\0', sizeof(testing_dump));
+    debug_log(&test_trace, nullptr, msg_1);
+    CHECK( strlen(testing_dump) == hdr_size + strlen(msg_1) );
+    CHECK( !strncmp(testing_dump, exp_1, strlen(exp_1)) );
+
+    memset(testing_dump, '\0', sizeof(testing_dump));
+    debug_log(&test_trace, nullptr, msg_2);
+    CHECK( strlen(testing_dump) == hdr_size + strlen(msg_2) );
+    CHECK( !strncmp(testing_dump, exp_2, strlen(exp_2)) );
+
+    memset(testing_dump, '\0', sizeof(testing_dump));
+    debug_log(&test_trace, nullptr, msg_3);
+    CHECK( strlen(testing_dump) == hdr_size + strlen(msg_3) );
+    CHECK( !strncmp(testing_dump, exp_3, strlen(exp_3)) );
+
+    memset(testing_dump, '\0', sizeof(testing_dump));
+    debug_log(&test_trace, nullptr, msg_4);
+    CHECK( strlen(testing_dump) == hdr_size + BUF_SIZE_MAX - 1 );
+    CHECK( !strncmp(testing_dump, exp_4, strlen(exp_4)) );
+}
+
 #endif // DEBUG_MSGS
 
 #endif // UNIT_TEST
-
