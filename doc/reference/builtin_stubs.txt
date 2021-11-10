@@ -881,27 +881,29 @@ normalize_javascript  configuration option is true.
 
 119:112
 
-SWF file zlib decompression failure.
+The HTTP message body contains compressed SWF file data with errors that cannot be decompressed. 
 
 119:113
 
-SWF file LZMA decompression failure.
+The HTTP message body contains compressed LZMA file data with errors that cannot be decompressed. 
 
 119:114
 
-PDF file deflate decompression failure.
+The HTTP message body contains compressed PDF file data with errors that cannot be decompressed. 
 
 119:115
 
-PDF file unsupported compression type.
+The HTTP message body contains a compressed PDF file that uses a compression type other than
+deflate ("FlateDecode" and "Fl").
 
 119:116
 
-PDF file cascaded compression.
+The HTTP message body contains a PDF file with more than one compression applied.
 
 119:117
 
-PDF file parse failure.
+The HTTP message body contains PDF file data with an error that made the start of the PDF compressed
+stream unable to be located. 
 
 119:201
 
@@ -944,227 +946,275 @@ does not apply to HTTP/2 or HTTP/3 traffic.
 
 119:209
 
-format error in HTTP header
+An HTTP header line contains a format error. A well-formed header consists of a field name followed
+by a colon followed by the field value.
 
 119:210
 
-chunk header options present
+A chunked transfer-encoded HTTP message body contains chunk extensions. A chunk extension is an
+optional parameter following the chunk length in the chunk header.
 
 119:211
 
-URI badly formatted
+The HTTP request URI is not well-formatted as one of the four types defined for the HTTP protocol.
 
 119:212
 
-unrecognized type of percent encoding in URI
+The HTTP URI contains an unrecognized type of percent encoding.
 
 119:213
 
-HTTP chunk misformatted
+A chunked transfer-encoded HTTP message body contains a misformatted chunk. The following conditions
+make a chunk misformatted: there are at least five leading whitespaces before the chunk length in
+the chunk header, there is an illegal character in the chunk length (expressed as the hex number in
+ASCII), the chunk length is longer than 32 bits, the chunk header is terminated by lone CR ('\r')
+without an LF ('\n'), the chunk header does not contain the length, or the chunk data is
+terminated by a character other than CR or LF
 
 119:214
 
-white space adjacent to chunk length
+A chunked transfer-encoded HTTP message body contains a chunk header with white space adjacent to
+the chunk length. This covers leading and trailing whitespace.
 
 119:215
 
-white space within header name
+An HTTP header name contains whitespace.
 
 119:216
 
-excessive gzip compression
+A gzip-encoded HTTP message body was found to have an excessive compression ratio during
+decompression.
 
 119:217
 
-gzip decompression failed
+An error was encountered during decompression of a gzip-encoded HTTP message body.
 
 119:218
 
-HTTP 0.9 requested followed by another request
+An HTTP connection contains an HTTP 0.9 request followed by another request. There can only be one
+0.9 response per connection because it ends the server-to-client connection. 
 
 119:219
 
-HTTP 0.9 request following a normal request
+An HTTP connection contains an HTTP 0.9 request following a normal request.
 
 119:220
 
-message has both Content-Length and Transfer-Encoding
+An HTTP message has both Content-Length and Transfer-Encoding headers. These headers conflict since
+the size of the message body will be determined by either the Content-Length value or by the chunked
+transfer-encoding formatting.
 
 119:221
 
-status code implying no body combined with Transfer-Encoding or nonzero Content-Length
+An HTTP server sent a response with a status code implying there will be no body but also sent a
+Transfer-Encoding or nonzero Content-Length header. The status codes that imply no message body are
+the informational (1XX) codes, 204 No Content and 304 Not Modified. Transfer-Encoding and nonzero
+Content-Length headers indicate that there will be a message body.
 
 119:222
 
-Transfer-Encoding not ending with chunked
+The HTTP Transfer-Encoding header value does not end with "chunked". The HTTP protocol specifies
+that when a transfer coding is applied to a message, "chunked" must the last transfer coding applied
+to the message body so that the length of the message body can be determined by the client.
 
 119:223
 
-Transfer-Encoding with encodings before chunked
+An HTTP message includes a Transfer-Encoding header value that specifies other encodings before
+"chunked."
 
 119:224
 
-misformatted HTTP traffic
+The traffic contains an HTTP version, but does not contain a recognizable start line. This 
+conclusion applies only to one direction of the flow. The opposite direction may be OK.
 
 119:225
 
-unsupported Content-Encoding used
+The HTTP Content-Encoding header contains a coding other than gzip and deflate
+decompression.
 
 119:226
 
-unknown Content-Encoding used
+The HTTP Content-Encoding header contains an unknown coding.
 
 119:227
 
-multiple Content-Encodings applied
+The HTTP Content-Encoding header has multiple values, meaning multiple content encodings have been
+applied.
 
 119:228
 
-server response before client request
+An HTTP server response was seen before a corresponding client request.
 
 119:229
 
-PDF/SWF/ZIP decompression of server response too big
+The decompressed size of the PDF/SWF/ZIP file contained in the HTTP message body exceeded the
+configured limit. The decompression limit can be configured with file_id.decompress_buffer_size.
 
 119:230
 
-nonprinting character in HTTP message header name
+An HTTP message header field name contains a nonprinting character.
 
 119:231
 
-bad Content-Length value in HTTP header
+The HTTP Content-Length header value is not a valid decimal length. 
 
 119:232
 
-HTTP header line wrapped
+The HTTP header contains a wrapped header line. This means that the header field value has been
+folded onto multiple lines, indicated by beginning the continuation line with a space or horizontal
+tab.
 
 119:233
 
-HTTP header line terminated by CR without a LF
+An HTTP header line is terminated by CR ('\r') without LF ('\n'). The HTTP protocol specifies that
+header lines should be terminated by CRLF ('\r\n').
 
 119:234
 
-chunk terminated by nonstandard separator
+A chunked transfer-encoded HTTP message body contains a chunk terminated by a nonstandard separator.
+The separator defined by the protocol that should terminate each chunk is CRLF ('\r\n').
 
 119:235
 
-chunk length terminated by LF without CR
+A chunked transfer-encoded HTTP message body contains a chunk length that is terminated by LF ('\n')
+without CR ('\r'). The protocol specifies that chunk lengths should be terminated by CRLF ('\r\n') 
+as the line separator.
 
 119:236
 
-more than one response with 100 status code
+An HTTP server sent more than one response with 100 Continue status code. 
 
 119:237
 
-100 status code not in response to Expect header
+An HTTP server sent a response with a status code other than 100 Continue in response to a request
+with an Expect header. The Expect header informs the server that the client will send a (presumably
+large) message body, and requests that the server send an interim 100 Continue response if it can
+handle the request.
 
 119:238
 
-1XX status code other than 100 or 101
+An HTTP server sent an informational (1XX) response with a status code other than 100 Continue or
+101 Switching Protocols.
 
 119:239
 
-Expect header sent without a message body
+An HTTP client sent an Expect header without sending a request message body. The Expect header
+informs the server that the client will send a (presumably large) message body, and requests that
+the server send an interim 100 Continue response if it can handle the request.
 
 119:240
 
-HTTP 1.0 message with Transfer-Encoding header
+An HTTP 1.0 message contains a Transfer-Encoding header, which is disallowed for that version.
 
 119:241
 
-Content-Transfer-Encoding used as HTTP header
+The Content-Transfer-Encoding field is used as an HTTP header. Content-Transfer-Encoding is a MIME
+header and is not registered as an HTTP header.
 
 119:242
 
-illegal field in chunked message trailers
+The HTTP trailer contains a header field that is disallowed in chunked message trailers. 
 
 119:243
 
-header field inappropriately appears twice or has two values
+The HTTP Age header field appears twice or has two values.
 
 119:244
 
-invalid value chunked in Content-Encoding header
+An HTTP Content-Encoding header has a value of "chunked", which is not a registered content 
+encoding.
 
 119:245
 
-206 response sent to a request without a Range header
+A partial content (status code 206) response was sent to a request without a Range header, meaning
+the client did not request the message body be fragmented.
 
 119:246
 
-'HTTP' in version field not all upper case
+An HTTP start line contains a version field where the letters in 'HTTP' are not all upper case.
 
 119:247
 
-white space embedded in critical header value
+There is whitespace embedded in the Content-Length header value other than leading and trailing
+whitespace.
 
 119:248
 
-gzip compressed data followed by unexpected non-gzip data
+While decompressing a gzip-encoded message body, the zipped data stream ended before the end of the 
+message body, so there is unexpected non-gzip data following the compressed data. 
 
 119:249
 
-excessive HTTP parameter key repeats
+There is an HTTP parameter key that is repeated at least 100 times within a request query.
 
 119:250
 
-HTTP/2 Transfer-Encoding header other than identity
+There is an HTTP/2 Transfer-Encoding header value other than identity. The HTTP/2 protocol specifies
+that the chunked transfer encoding is not allowed.
 
 119:251
 
-HTTP/2 message body overruns Content-Length header value
+An HTTP/2 message header contained a Content-Length header value, but the actual message body
+transferred is larger than that value. The Content-Length header is not used to determine
+the length of the message body for HTTP/2 traffic.
 
 119:252
 
-HTTP/2 message body smaller than Content-Length header value
+An HTTP/2 message header contained a Content-Length header value, but the actual message body
+transferred is smaller than that value. The Content-Length header is not used to determine
+the length of the message body for HTTP/2 traffic.
 
 119:253
 
-HTTP CONNECT request with a message body
+An HTTP client sent a CONNECT request with a request message body.
 
 119:254
 
-HTTP client-to-server traffic after CONNECT request but before CONNECT response
+There was traffic from an HTTP client after the client sent a CONNECT request but before the CONNECT
+response from the server was received.
 
 119:255
 
-HTTP CONNECT 2XX response with Content-Length header
+An HTTP server sent a successful (2XX) CONNECT response with a Content-Length header.
 
 119:256
 
-HTTP CONNECT 2XX response with Transfer-Encoding header
+An HTTP server sent a successful (2XX) CONNECT response with a Transfer-Encoding header.
 
 119:257
 
-HTTP CONNECT response with 1XX status code
+An HTTP server sent a CONNECT response with an informational (1XX) status code.
 
 119:258
 
-HTTP CONNECT response before request message completed
+An HTTP CONNECT response was received before the request message from the client was completed.
 
 119:259
 
-malformed HTTP Content-Disposition filename parameter
+A Content-Disposition HTTP header field contains a malformed filename parameter.
 
 119:260
 
-HTTP Content-Length message body was truncated
+The TCP connection was closed before the full HTTP message body was transferred. The length of the
+full message body was determined by the Content-Length HTTP header field.
 
 119:261
 
-HTTP chunked message body was truncated
+The TCP connection was closed before the full HTTP message body was transferred. The message uses
+the chunked transfer-encoding, so this means there was no well-formed chunk of length zero to
+terminate the message.
 
 119:262
 
-HTTP URI scheme longer than 10 characters
+The scheme portion of an HTTP URI is longer than 10 characters.
 
 119:263
 
-HTTP/1 client requested HTTP/2 upgrade
+A client sent a request to upgrade an HTTP/1 connection to HTTP/2.
 
 119:264
 
-HTTP/1 server granted HTTP/2 upgrade
+A server granted a request to upgrade a connection from HTTP/1 to HTTP/2.
 
 119:265
 
@@ -1213,7 +1263,9 @@ resources.
 
 119:272
 
-Consecutive commas in HTTP Accept-Encoding header
+There are consecutive commas, possibly separated by whitespace, in an HTTP Accept-Encoding header.
+This pattern constitutes a Microsoft Windows HTTP protocol stack remote code execution attempt.
+Reference: CVE-2021-31166.
 
 119:273
 

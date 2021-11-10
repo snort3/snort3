@@ -252,7 +252,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_SWF_LZMA_FAILURE,           "SWF file LZMA decompression failure" },
     { EVENT_PDF_DEFL_FAILURE,           "PDF file deflate decompression failure" },
     { EVENT_PDF_UNSUP_COMP_TYPE,        "PDF file unsupported compression type" },
-    { EVENT_PDF_CASC_COMP,              "PDF file cascaded compression" },
+    { EVENT_PDF_CASC_COMP,              "PDF file with more than one compression applied" },
     { EVENT_PDF_PARSE_FAILURE,          "PDF file parse failure" },
     { EVENT_LOSS_OF_SYNC,               "not HTTP traffic or unrecoverable HTTP protocol error" },
     { EVENT_CHUNK_ZEROS,                "chunk length has excessive leading zeros" },
