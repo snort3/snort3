@@ -53,7 +53,6 @@ protected:
     Field http1_header;                 // finalized headers to be passed to http_inspect
     uint32_t xtradata_mask = 0;
     bool detection_required = false;
-    bool process_frame = true;
     Http2HpackDecoder* hpack_decoder;
     uint8_t hpack_headers_offset = 0;
 };

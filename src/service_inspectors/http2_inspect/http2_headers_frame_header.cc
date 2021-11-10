@@ -43,9 +43,6 @@ Http2HeadersFrameHeader::Http2HeadersFrameHeader(const uint8_t* header_buffer,
     Http2HeadersFrameWithStartline(header_buffer, header_len, data_buffer, data_len, session_data_,
         source_id_, stream_)
 {
-    if (!process_frame)
-        return;
-
     if (source_id == SRC_CLIENT)
         start_line_generator = new Http2RequestLine(session_data->events[source_id],
             session_data->infractions[source_id]);
@@ -70,9 +67,6 @@ bool Http2HeadersFrameHeader::valid_sequence(Http2Enums::StreamState state)
 
 void Http2HeadersFrameHeader::analyze_http1()
 {
-    if (!process_frame)
-        return;
-
     HttpFlowData* http_flow;
     if (!process_start_line(http_flow, source_id))
         return;
