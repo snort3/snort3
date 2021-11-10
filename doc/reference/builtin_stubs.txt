@@ -1434,111 +1434,144 @@ HTTP/2 HPACK table size update exceeds max value set by decoder in SETTINGS fram
 
 122:1
 
-(port_scan) TCP portscan
+Basic one host to one host TCP portscan where multiple TCP ports are scanned on
+the destination host from a single host
 
 122:2
 
-(port_scan) TCP decoy portscan
+Decoy TCP portscan where the real scanner's host address was mixed with
+multiple decoy hosts to connect to a single port multiple times
 
 122:3
 
-(port_scan) TCP portsweep
+One host to many hosts TCP portsweep where multiple TCP ports are scanned on
+each destination host
 
 122:4
 
-(port_scan) TCP distributed portscan
+Many hosts to one host TCP distributed portscan where many hosts connect to
+a single destination host and multiple ports are scanned on the destination
+host
 
 122:5
 
-(port_scan) TCP filtered portscan
+Filtered one host to one host TCP portscan where multiple firewall filtered TCP
+ports are scanned on the destination host from a single host
 
 122:6
 
-(port_scan) TCP filtered decoy portscan
+Filtered decoy TCP portscan where the real scanner's host address was mixed
+with multiple decoy hosts to connect to a single firewall filtered port
+multiple times
 
 122:7
 
-(port_scan) TCP filtered portsweep
+Filtered one host to many hosts TCP portsweep where multiple firewall filtered
+TCP ports are scanned on each destination host
 
 122:8
 
-(port_scan) TCP filtered distributed portscan
+Filtered many hosts to one host TCP distributed portscan where many hosts
+connect to a single destination host and multiple firewall filtered ports
+are scanned on the destination host
 
 122:9
 
-(port_scan) IP protocol scan
+One host to one host IP protocol scan where multiple IP protocols are scanned
+on the destination host from a single host
 
 122:10
 
-(port_scan) IP decoy protocol scan
+Decoy IP protocol scan where the real scanner's host address was mixed with
+multiple decoy hosts to scan IP protocols on a single host multiple times
 
 122:11
 
-(port_scan) IP protocol sweep
+One host to many hosts IP protocol sweep where multiple IP protocols are
+scanned on each host
 
 122:12
 
-(port_scan) IP distributed protocol scan
+Many hosts to one host distributed IP protocol scan where many hosts attempt
+to scan multiple IP protocols on a single destination host
 
 122:13
 
-(port_scan) IP filtered protocol scan
+Filtered one host to one host IP protocol scan where multiple firewall filtered
+IP protocols are scanned on the destination host from a single host
 
 122:14
 
-(port_scan) IP filtered decoy protocol scan
+Filtered decoy IP protocol scan where the real scanner's host address was mixed
+with multiple decoy hosts to scan firewall filtered IP protocols on a single
+host multiple times
 
 122:15
 
-(port_scan) IP filtered protocol sweep
+Filtered one host to many hosts IP protocol sweep where multiple firewall
+filtered IP protocols are scanned on each host
 
 122:16
 
-(port_scan) IP filtered distributed protocol scan
+Filtered many hosts to one host distributed IP protocol scan where many hosts
+attempt to scan multiple firewall filtered IP protocols on a single destination
+host
 
 122:17
 
-(port_scan) UDP portscan
+Basic one host to one host UDP portscan where multiple UDP ports are scanned on
+the destination host from a single host
 
 122:18
 
-(port_scan) UDP decoy portscan
+Decoy UDP portscan where the real scanner's host address was mixed with
+multiple decoy hosts to scan a single UDP port on the single destination host
+multiple times
 
 122:19
 
-(port_scan) UDP portsweep
+One host to many hosts UDP portsweep where multiple UDP ports are scanned on
+each destination host from a single host
 
 122:20
 
-(port_scan) UDP distributed portscan
+Many hosts to one host distributed UDP portscan where many hosts scan multiple
+UDP ports on a single destination host
 
 122:21
 
-(port_scan) UDP filtered portscan
+Filtered one host to one host UDP portscan where multiple firewall filtered UDP
+ports are scanned on the destination host from a single host
 
 122:22
 
-(port_scan) UDP filtered decoy portscan
+Filtered decoy UDP portscan where the real scanner's host address was mixed with
+multiple decoy hosts to scan a single firewall filtered UDP port on the single
+destination host multiple times
 
 122:23
 
-(port_scan) UDP filtered portsweep
+Filtered one host to many hosts UDP portsweep where multiple firewall filtered
+UDP ports are scanned on each destination host from a single host
 
 122:24
 
-(port_scan) UDP filtered distributed portscan
+Filtered many hosts to one host distributed UDP portscan where many hosts scan
+multiple firewall filtered UDP ports on a single destination host
 
 122:25
 
-(port_scan) ICMP sweep
+One host to many hosts ICMP sweep scan where multiple ICMP scan occurred on
+each destination host from a single host
 
 122:26
 
-(port_scan) ICMP filtered sweep
+Filtered one host to many hosts ICMP sweep scan where multiple ICMP scan occurred on
+each firewall filtered destination host from a single host
 
 122:27
 
-(port_scan) open port
+open port
 
 123:1
 
