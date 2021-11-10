@@ -53,9 +53,14 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const uint32_
     hpack_decoder = &session_data->hpack_decoder[source_id];
 }
 
+bool Http2HeadersFrame::in_error_state() const
+{
+    return stream->get_state(source_id) == STREAM_ERROR;
+}
+
 void Http2HeadersFrame::clear()
 {
-    if (session_data->abort_flow[source_id] || stream->get_state(source_id) == STREAM_ERROR)
+    if (session_data->abort_flow[source_id] || in_error_state())
         return;
     Packet dummy_pkt(false);
     dummy_pkt.flow = session_data->flow;

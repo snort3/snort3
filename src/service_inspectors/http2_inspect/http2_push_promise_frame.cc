@@ -150,6 +150,17 @@ uint32_t Http2PushPromiseFrame::get_promised_stream_id(Http2EventGen* const even
 uint8_t Http2PushPromiseFrame::get_flags_mask() const
 { return (FLAG_END_HEADERS|FLAG_PADDED); }
 
+bool Http2PushPromiseFrame::in_error_state() const
+{
+    // valid_sequence failures set error on source_id side.
+    // Header processing errors set error on client side.
+    // If client side was already in error state, valid_sequence
+    // would have failed.
+    return stream->get_state(SRC_CLIENT) == STREAM_ERROR ||
+        stream->get_state(source_id) == STREAM_ERROR;
+}
+
+
 #ifdef REG_TEST
 void Http2PushPromiseFrame::print_frame(FILE* output)
 {

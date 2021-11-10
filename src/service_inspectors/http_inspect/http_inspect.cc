@@ -618,7 +618,7 @@ void HttpInspect::clear(Packet* p)
 
     if (session_data == nullptr)
     {
-        // assert(false); // FIXIT-M something wrong with H2I Push Promise triggers this.
+        assert(false);
         return;
     }
 

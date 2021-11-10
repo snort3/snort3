@@ -59,6 +59,8 @@ private:
         HttpCommon::SourceId src_id, Http2Stream* stream);
     uint8_t get_flags_mask() const override;
 
+    bool in_error_state() const override;
+
     static const int32_t PROMISED_ID_LENGTH = 4;
 };
 #endif

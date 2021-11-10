@@ -204,6 +204,7 @@ void Http2Inspect::clear(Packet* p)
     session_data->stream_in_hi = NO_STREAM_ID;
     session_data->processing_stream_id = NO_STREAM_ID;
     session_data->processing_partial_header = false;
+    session_data->set_hi_msg_section(nullptr);
 }
 
 void Http2Inspect::show(const SnortConfig*) const
