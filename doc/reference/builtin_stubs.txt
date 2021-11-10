@@ -1642,27 +1642,27 @@ Telnet subnegotiation begin command is detected without subnegotiation end.
 
 128:1
 
-(ssh) challenge-response overflow exploit
+SSH challenge-response overflow exploit. Amount of data transferred from client is more than configured maximum.
 
 128:2
 
-(ssh) SSH1 CRC32 exploit
+SSH1 CRC32 exploit. Amount of data transferred from client is more than configured maximum.
 
 128:3
 
-(ssh) server version string overflow
+SSH version string is greater than the configured maximum.
 
 128:5
 
-(ssh) bad message direction
+SSH bad message direction.
 
 128:6
 
-(ssh) payload size incorrect for the given payload
+SSH payload size incorrect for the given payload.
 
 128:7
 
-(ssh) failed to detect SSH version string
+Failed to detect SSH version string.
 
 129:1
 
