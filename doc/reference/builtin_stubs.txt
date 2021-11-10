@@ -4,19 +4,19 @@ A tagged packet was logged.
 
 105:1
 
-(back_orifice) BO traffic detected
+Back orifice traffic detected, unknown direction
 
 105:2
 
-(back_orifice) BO client traffic detected
+Back orifice client traffic detected
 
 105:3
 
-(back_orifice) BO server traffic detected
+Back orifice server traffic detected
 
 105:4
 
-(back_orifice) BO Snort buffer attack
+Back orifice length field >= 1024 bytes
 
 106:1
 
