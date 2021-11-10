@@ -1787,7 +1787,7 @@ Invalid word count for the command or structure size. SMB commands have specific
 
 133:6
 
-Bad byte count for the command. Either word count is zero and byte count isn't or byte count is not in the range of mininum and maximum required byte count for the SMB command.
+Bad byte count for the command. Either word count is zero and byte count isn't or byte count is not in the range of minimum and maximum required byte count for the SMB command.
 
 133:7
 
@@ -2266,27 +2266,29 @@ Modbus using reserved function code
 
 145:1
 
-(dnp3) DNP3 link-layer frame contains bad CRC
+DNP3 link-layer frame contains bad CRC
 
 145:2
 
-(dnp3) DNP3 link-layer frame was dropped
+DNP3 link-layer frame is truncated or frame length is invalid
 
 145:3
 
-(dnp3) DNP3 transport-layer segment was dropped during reassembly
+DNP3 transport-layer segment sequence number is incorrect
 
 145:4
 
-(dnp3) DNP3 reassembly buffer was cleared without reassembling a complete message
+DNP3 transport-layer segment flag violation is detected, FIR flag was set in
+middle fragment
 
 145:5
 
-(dnp3) DNP3 link-layer frame uses a reserved address
+DNP3 link-layer frame uses a reserved address (0xFFF0 to 0xFFFB)
 
 145:6
 
-(dnp3) DNP3 application-layer fragment uses a reserved function code
+DNP3 application-layer fragment uses an undefined function code, defined
+function codes: Requests (0 to 33) and Responses (129 to 131)
 
 148:1
 
