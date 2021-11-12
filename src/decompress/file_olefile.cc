@@ -719,6 +719,10 @@ void OleFile :: find_and_extract_vba(uint8_t*& vba_buf, uint32_t& vba_buf_len)
         }
     }
     vba_buf_len = vba_buffer_offset;
+
+    //Delete vba_buf if decompression could not happen
+    if (!vba_buf_len)
+        delete[] vba_buf;
 }
 
 // Beginning function of ole file processing.

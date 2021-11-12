@@ -51,12 +51,8 @@ void VbaDataModule::set_trace(const Trace* trace) const
 
 const TraceOption* VbaDataModule::VbaDataModule::get_trace_options() const
 {
-    #ifndef DEBUG_MSGS
-        return nullptr;
-    #else
-        static const TraceOption vba_data_trace_options(nullptr, 0, nullptr);
-        return &vba_data_trace_options;
-    #endif
+    static const TraceOption vba_data_trace_options(nullptr, 0, nullptr);
+    return &vba_data_trace_options;
 }
 
 //-------------------------------------------------------------------------
