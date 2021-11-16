@@ -202,10 +202,11 @@ Packet* DetectionEngine::set_next_packet(Packet* parent, Flow* flow)
         shutdown_active.reset();
     }
 
+    p->reset();
+
     if ( parent )
         p->packet_flags |= PKT_HAS_PARENT;
 
-    p->reset();
     return p;
 }
 
