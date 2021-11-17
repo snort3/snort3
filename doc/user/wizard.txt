@@ -6,7 +6,111 @@ service bindings are reevaluated so the session can be handed off to the
 appropriate inspector.  The wizard is still under development; if you find you
 need to tweak the defaults please let us know.
 
-Additional Details:
+==== Wizard patterns
+
+Wizard supports 3 kinds of patterns:
+
+    1. Hexes
+    2. Spells
+    3. Curses
+
+Each kind of pattern has its own purpose and features.
+It should be noted that the types of patterns are evaluated
+exactly in the order in which they are described above. 
+Thus, if some data matches a hex, it will not be 
+processed by spells and curses.
+
+The depth of search for a pattern in the data can be configured using
+the `max_search_depth` option
+
+'TCP' packets form a flow, so wizard checks all data
+in the flow for a match. If no pattern matches
+and 'max_search_depth' is reached, the flow is abandoned by wizard.
+
+'UDP' packets form a "meta-flow" based on the addresses and ports of the packets.
+However, unlike TCP processing, for UDP wizard only looks at the first arriving
+packet from the meta-flow. If no pattern matches that packet or wizard's 'max_search_depth'
+is reached, the meta-flow is abandoned by wizard.
+
+==== Wizard patterns - Spells
+
+Spell is a text based pattern. The best area of usage - text protocols: http, smtp, sip, etc.
+Spells are:
+
+    * Case insensitive
+    * Whitespace sensitive
+    * Able to match by a wildcard symbol
+
+In order to match any sequence of characters in pattern, you should use
+"`*`" (glob) symbol in pattern.
+
+  Example:
+    Pattern: '220-*FTP'
+    Traffic that would match: '220- Hello world! It's a new FTP server'
+
+To escape "`*`" symbol, put "`**`" in the pattern.
+
+Spells are configured as a Lua array, each element of which can
+contain following options:
+
+  * 'service' - name of the service that would be assigned
+  * 'proto' - protocol to scan
+  * 'client_first' - indicator of which end initiates data transfer
+  * 'to_server' - list of text patterns to search in the data sent to the client
+  * 'to_client' - list of text patterns to search in the data sent to the server
+
+  Example of a spell definition in Lua:
+    { 
+      service = 'smtp', 
+      proto = 'tcp', 
+      client_first = true,
+      to_server = { 'HELO', 'EHLO' },
+      to_client = { '220*SMTP', '220*MAIL' } 
+    }
+
+==== Wizard patterns - Hexes
+
+Hexes can be used to match binary protocols: dnp3, http2, ssl, etc.
+Hexes use hexadecimal representation of the data for pattern matching.
+
+Wildcard in hex pattern is a placeholder for exactly one occurrence 
+of any hexadecimal digit and denoted by the symbol "`?`".
+
+  Example:
+    Pattern: '|05 ?4|'
+    Traffic that would match: '|05 84|'
+
+Hexes are configured in the same way as spells and have an identical set of options.
+
+  Example of a hex definition in Lua:
+    { 
+      service = 'dnp3',
+      proto = 'tcp',
+      client_first = true,
+      to_server = { '|05 64|' },
+      to_client = { '|05 64|' } 
+    }
+
+==== Wizard patterns - Curses
+
+Curses are internal algorithms of service identification.
+They are implemented as state machines in C++ code
+and can have their own unique state information stored on the flow.
+
+A list of available services can be obtained using `snort --help-config wizard | grep curses`.
+
+  A configuration which enables some curses:
+    curses = {'dce_udp', 'dce_tcp', 'dce_smb', 'sslv2'}
+
+==== Additional Details:
+
+* Note that usually more specific patterns have higher precedence.
+    
+  For example:
+    The following spells against 'foobar' payload. The 3rd spell matches.
+      { service = 'first',  to_server = { 'foo' } },
+      { service = 'second',  to_server = { 'bar' } }
+      { service = 'third',  to_server = { 'foobar' } }
 
 * If the wizard and one or more service inspectors are configured w/o
   explicitly configuring the binder, default bindings will be generated which
