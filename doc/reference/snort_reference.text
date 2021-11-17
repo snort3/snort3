@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.16.0 2021-11-03 07:48:29 EDT TST
+Revision 3.1.17.0 2021-11-17 13:35:34 EST TST
 
 ---------------------------------------------------------------------
 
@@ -92,53 +92,54 @@ Table of Contents
     5.4. back_orifice
     5.5. binder
     5.6. cip
-    5.7. data_log
-    5.8. dce_http_proxy
-    5.9. dce_http_server
-    5.10. dce_smb
-    5.11. dce_tcp
-    5.12. dce_udp
-    5.13. dnp3
-    5.14. dns
-    5.15. domain_filter
-    5.16. dpx
-    5.17. file_id
-    5.18. file_log
-    5.19. ftp_client
-    5.20. ftp_data
-    5.21. ftp_server
-    5.22. gtp_inspect
-    5.23. http2_inspect
-    5.24. http_inspect
-    5.25. iec104
-    5.26. imap
-    5.27. mem_test
-    5.28. modbus
-    5.29. netflow
-    5.30. normalizer
-    5.31. null_trace_logger
-    5.32. packet_capture
-    5.33. perf_monitor
-    5.34. pop
-    5.35. port_scan
-    5.36. reputation
-    5.37. rna
-    5.38. rpc_decode
-    5.39. s7commplus
-    5.40. sip
-    5.41. smtp
-    5.42. so_proxy
-    5.43. ssh
-    5.44. ssl
-    5.45. stream
-    5.46. stream_file
-    5.47. stream_icmp
-    5.48. stream_ip
-    5.49. stream_tcp
-    5.50. stream_udp
-    5.51. stream_user
-    5.52. telnet
-    5.53. wizard
+    5.7. cpeos_test
+    5.8. data_log
+    5.9. dce_http_proxy
+    5.10. dce_http_server
+    5.11. dce_smb
+    5.12. dce_tcp
+    5.13. dce_udp
+    5.14. dnp3
+    5.15. dns
+    5.16. domain_filter
+    5.17. dpx
+    5.18. file_id
+    5.19. file_log
+    5.20. ftp_client
+    5.21. ftp_data
+    5.22. ftp_server
+    5.23. gtp_inspect
+    5.24. http2_inspect
+    5.25. http_inspect
+    5.26. iec104
+    5.27. imap
+    5.28. mem_test
+    5.29. modbus
+    5.30. netflow
+    5.31. normalizer
+    5.32. null_trace_logger
+    5.33. packet_capture
+    5.34. perf_monitor
+    5.35. pop
+    5.36. port_scan
+    5.37. reputation
+    5.38. rna
+    5.39. rpc_decode
+    5.40. s7commplus
+    5.41. sip
+    5.42. smtp
+    5.43. so_proxy
+    5.44. ssh
+    5.45. ssl
+    5.46. stream
+    5.47. stream_file
+    5.48. stream_icmp
+    5.49. stream_ip
+    5.50. stream_tcp
+    5.51. stream_udp
+    5.52. stream_user
+    5.53. telnet
+    5.54. wizard
 
 6. IPS Action Modules
 
@@ -559,6 +560,9 @@ Usage: global
 
 Configuration:
 
+  * bool detection.allow_missing_so_rules = false: warn (true) or
+    error (false) when an SO rule stub refers to an SO rule that
+    isn’t loaded
   * int detection.asn1 = 0: maximum decode nodes { 0:65535 }
   * bool detection.global_default_rule_state = true: enable or
     disable rules by default (overridden by ips policy settings)
@@ -1662,6 +1666,8 @@ Configuration:
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
     manager trace logging { 0:255 }
+  * int trace.modules.vba_data.all: enable all trace options { 0:255
+    }
   * int trace.modules.wizard.all: enable all trace options { 0:255 }
   * int trace.constraints.ip_proto: numerical IP protocol ID filter {
     0:255 }
@@ -2493,8 +2499,10 @@ Configuration:
 Rules:
 
   * 112:1 (arp_spoof) unicast ARP request
-  * 112:2 (arp_spoof) ethernet/ARP mismatch request for source
-  * 112:3 (arp_spoof) ethernet/ARP mismatch request for destination
+  * 112:2 (arp_spoof) ethernet/ARP mismatch for source hardware
+    address
+  * 112:3 (arp_spoof) ethernet/ARP mismatch for destination hardware
+    address in reply
   * 112:4 (arp_spoof) attempted ARP cache overwrite attack
 
 Peg counts:
@@ -2516,10 +2524,11 @@ Instance Type: multiton
 
 Rules:
 
-  * 105:1 (back_orifice) BO traffic detected
-  * 105:2 (back_orifice) BO client traffic detected
-  * 105:3 (back_orifice) BO server traffic detected
-  * 105:4 (back_orifice) BO Snort buffer attack
+  * 105:1 (back_orifice) Back orifice traffic detected, unknown
+    direction
+  * 105:2 (back_orifice) Back orifice client traffic detected
+  * 105:3 (back_orifice) Back orifice server traffic detected
+  * 105:4 (back_orifice) Back orifice length field >= 1024 bytes
 
 Peg counts:
 
@@ -2631,7 +2640,20 @@ Peg counts:
     (max)
 
 
-5.7. data_log
+5.7. cpeos_test
+
+--------------
+
+Help: for testing CPE OS RNA event generation
+
+Type: inspector (control)
+
+Usage: context
+
+Instance Type: global
+
+
+5.8. data_log
 
 --------------
 
@@ -2656,7 +2678,7 @@ Peg counts:
   * data_log.packets: total packets (sum)
 
 
-5.8. dce_http_proxy
+5.9. dce_http_proxy
 
 --------------
 
@@ -2676,7 +2698,7 @@ Peg counts:
     sessions (sum)
 
 
-5.9. dce_http_server
+5.10. dce_http_server
 
 --------------
 
@@ -2696,7 +2718,7 @@ Peg counts:
     sessions (sum)
 
 
-5.10. dce_smb
+5.11. dce_smb
 
 --------------
 
@@ -2970,7 +2992,7 @@ Peg counts:
     (max)
 
 
-5.11. dce_tcp
+5.12. dce_tcp
 
 --------------
 
@@ -3084,7 +3106,7 @@ Peg counts:
     (max)
 
 
-5.12. dce_udp
+5.13. dce_udp
 
 --------------
 
@@ -3145,7 +3167,7 @@ Peg counts:
     (max)
 
 
-5.13. dnp3
+5.14. dnp3
 
 --------------
 
@@ -3165,11 +3187,12 @@ Configuration:
 Rules:
 
   * 145:1 (dnp3) DNP3 link-layer frame contains bad CRC
-  * 145:2 (dnp3) DNP3 link-layer frame was dropped
-  * 145:3 (dnp3) DNP3 transport-layer segment was dropped during
-    reassembly
-  * 145:4 (dnp3) DNP3 reassembly buffer was cleared without
-    reassembling a complete message
+  * 145:2 (dnp3) DNP3 link-layer frame is truncated or frame length
+    is invalid
+  * 145:3 (dnp3) DNP3 transport-layer segment sequence number is
+    incorrect
+  * 145:4 (dnp3) DNP3 transport-layer segment flag violation is
+    detected
   * 145:5 (dnp3) DNP3 link-layer frame uses a reserved address
   * 145:6 (dnp3) DNP3 application-layer fragment uses a reserved
     function code
@@ -3186,7 +3209,7 @@ Peg counts:
     (max)
 
 
-5.14. dns
+5.15. dns
 
 --------------
 
@@ -3214,7 +3237,7 @@ Peg counts:
     (max)
 
 
-5.15. domain_filter
+5.16. domain_filter
 
 --------------
 
@@ -3243,7 +3266,7 @@ Peg counts:
   * domain_filter.filtered: domains filtered (sum)
 
 
-5.16. dpx
+5.17. dpx
 
 --------------
 
@@ -3269,7 +3292,7 @@ Peg counts:
   * dpx.packets: total packets (sum)
 
 
-5.17. file_id
+5.18. file_id
 
 --------------
 
@@ -3370,7 +3393,7 @@ Peg counts:
     concurrently on a flow (max)
 
 
-5.18. file_log
+5.19. file_log
 
 --------------
 
@@ -3394,7 +3417,7 @@ Peg counts:
   * file_log.total_events: total file events (sum)
 
 
-5.19. ftp_client
+5.20. ftp_client
 
 --------------
 
@@ -3422,7 +3445,7 @@ Configuration:
     sequences on FTP control channel
 
 
-5.20. ftp_data
+5.21. ftp_data
 
 --------------
 
@@ -3439,7 +3462,7 @@ Peg counts:
   * ftp_data.packets: total packets (sum)
 
 
-5.21. ftp_server
+5.22. ftp_server
 
 --------------
 
@@ -3525,7 +3548,7 @@ Peg counts:
     sessions with segment size change (sum)
 
 
-5.22. gtp_inspect
+5.23. gtp_inspect
 
 --------------
 
@@ -3568,7 +3591,7 @@ Peg counts:
   * gtp_inspect.unknown_infos: unknown information elements (sum)
 
 
-5.23. http2_inspect
+5.24. http2_inspect
 
 --------------
 
@@ -3594,7 +3617,7 @@ Rules:
     id
   * 121:4 (http2_inspect) missing HTTP/2 continuation frame
   * 121:5 (http2_inspect) unexpected HTTP/2 continuation frame
-  * 121:6 (http2_inspect) misformatted HTTP/2 traffic
+  * 121:6 (http2_inspect) HTTP/2 headers HPACK decoding error
   * 121:7 (http2_inspect) HTTP/2 connection preface does not match
   * 121:8 (http2_inspect) HTTP/2 request missing required header
     field
@@ -3603,9 +3626,10 @@ Rules:
   * 121:11 (http2_inspect) error in HTTP/2 settings frame
   * 121:12 (http2_inspect) unknown parameter in HTTP/2 settings frame
   * 121:13 (http2_inspect) invalid HTTP/2 frame sequence
-  * 121:14 (http2_inspect) HTTP/2 dynamic table size limit exceeded
-  * 121:15 (http2_inspect) HTTP/2 push promise frame with invalid
-    promised stream id
+  * 121:14 (http2_inspect) HTTP/2 dynamic table has more than 512
+    entries
+  * 121:15 (http2_inspect) HTTP/2 push promise frame with promised
+    stream ID already in use.
   * 121:16 (http2_inspect) HTTP/2 padding length is bigger than frame
     data size
   * 121:17 (http2_inspect) HTTP/2 pseudo-header after regular header
@@ -3616,7 +3640,8 @@ Rules:
     prohibited by receiver
   * 121:22 (http2_inspect) padding flag set on HTTP/2 frame with zero
     length
-  * 121:23 (http2_inspect) HTTP/2 push promise frame in c2s direction
+  * 121:23 (http2_inspect) HTTP/2 push promise frame in
+    client-to-server direction
   * 121:24 (http2_inspect) invalid HTTP/2 push promise frame
   * 121:25 (http2_inspect) HTTP/2 push promise frame sent at invalid
     time
@@ -3657,7 +3682,7 @@ Peg counts:
     concurrent streams (sum)
 
 
-5.24. http_inspect
+5.25. http_inspect
 
 --------------
 
@@ -3810,7 +3835,8 @@ Rules:
   * 119:113 (http_inspect) SWF file LZMA decompression failure
   * 119:114 (http_inspect) PDF file deflate decompression failure
   * 119:115 (http_inspect) PDF file unsupported compression type
-  * 119:116 (http_inspect) PDF file cascaded compression
+  * 119:116 (http_inspect) PDF file with more than one compression
+    applied
   * 119:117 (http_inspect) PDF file parse failure
   * 119:201 (http_inspect) not HTTP traffic or unrecoverable HTTP
     protocol error
@@ -3983,7 +4009,7 @@ Peg counts:
     JavaScript identifier limit overflows (sum)
 
 
-5.25. iec104
+5.26. iec104
 
 --------------
 
@@ -4115,7 +4141,7 @@ Peg counts:
     sessions (max)
 
 
-5.26. imap
+5.27. imap
 
 --------------
 
@@ -4176,7 +4202,7 @@ Peg counts:
   * imap.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-5.27. mem_test
+5.28. mem_test
 
 --------------
 
@@ -4193,7 +4219,7 @@ Peg counts:
   * mem_test.packets: total packets (sum)
 
 
-5.28. modbus
+5.29. modbus
 
 --------------
 
@@ -4222,7 +4248,7 @@ Peg counts:
     sessions (max)
 
 
-5.29. netflow
+5.30. netflow
 
 --------------
 
@@ -4272,7 +4298,7 @@ Peg counts:
     (sum)
 
 
-5.30. normalizer
+5.31. normalizer
 
 --------------
 
@@ -4408,7 +4434,7 @@ Peg counts:
   * normalizer.tcp_block: blocked segments (sum)
 
 
-5.31. null_trace_logger
+5.32. null_trace_logger
 
 --------------
 
@@ -4421,7 +4447,7 @@ Usage: global
 Instance Type: global
 
 
-5.32. packet_capture
+5.33. packet_capture
 
 --------------
 
@@ -4453,7 +4479,7 @@ Peg counts:
     filter (sum)
 
 
-5.33. perf_monitor
+5.34. perf_monitor
 
 --------------
 
@@ -4513,7 +4539,7 @@ Peg counts:
     by new flows (sum)
 
 
-5.34. pop
+5.35. pop
 
 --------------
 
@@ -4575,7 +4601,7 @@ Peg counts:
   * pop.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-5.35. port_scan
+5.36. port_scan
 
 --------------
 
@@ -4747,7 +4773,7 @@ Peg counts:
     to reduced memcap (sum)
 
 
-5.36. reputation
+5.37. reputation
 
 --------------
 
@@ -4800,7 +4826,7 @@ Peg counts:
     monitored (sum)
 
 
-5.37. rna
+5.38. rna
 
 --------------
 
@@ -4943,7 +4969,7 @@ Peg counts:
   * rna.smb: count of new SMB events received (sum)
 
 
-5.38. rpc_decode
+5.39. rpc_decode
 
 --------------
 
@@ -4972,7 +4998,7 @@ Peg counts:
     sessions (max)
 
 
-5.39. s7commplus
+5.40. s7commplus
 
 --------------
 
@@ -5001,7 +5027,7 @@ Peg counts:
     sessions (max)
 
 
-5.40. sip
+5.41. sip
 
 --------------
 
@@ -5104,7 +5130,7 @@ Peg counts:
   * sip.code_9xx: 9xx (sum)
 
 
-5.41. smtp
+5.42. smtp
 
 --------------
 
@@ -5213,7 +5239,7 @@ Peg counts:
   * smtp.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-5.42. so_proxy
+5.43. so_proxy
 
 --------------
 
@@ -5227,7 +5253,7 @@ Usage: global
 Instance Type: global
 
 
-5.43. ssh
+5.44. ssh
 
 --------------
 
@@ -5267,7 +5293,7 @@ Peg counts:
     (max)
 
 
-5.44. ssl
+5.45. ssl
 
 --------------
 
@@ -5318,7 +5344,7 @@ Peg counts:
     (max)
 
 
-5.45. stream
+5.46. stream
 
 --------------
 
@@ -5407,7 +5433,7 @@ Peg counts:
     deleted by config reloads (sum)
 
 
-5.46. stream_file
+5.47. stream_file
 
 --------------
 
@@ -5424,7 +5450,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-5.47. stream_icmp
+5.48. stream_icmp
 
 --------------
 
@@ -5451,7 +5477,7 @@ Peg counts:
   * stream_icmp.prunes: icmp session prunes (sum)
 
 
-5.48. stream_ip
+5.49. stream_ip
 
 --------------
 
@@ -5523,7 +5549,7 @@ Peg counts:
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
 
 
-5.49. stream_tcp
+5.50. stream_tcp
 
 --------------
 
@@ -5698,7 +5724,7 @@ Peg counts:
     (sum)
 
 
-5.50. stream_udp
+5.51. stream_udp
 
 --------------
 
@@ -5727,7 +5753,7 @@ Peg counts:
   * stream_udp.ignored: udp packets ignored (sum)
 
 
-5.51. stream_user
+5.52. stream_user
 
 --------------
 
@@ -5745,7 +5771,7 @@ Configuration:
     1:max31 }
 
 
-5.52. telnet
+5.53. telnet
 
 --------------
 
@@ -5781,7 +5807,7 @@ Peg counts:
     sessions (max)
 
 
-5.53. wizard
+5.54. wizard
 
 --------------
 
@@ -8910,6 +8936,9 @@ these libraries see the Getting Started section of the manual.
     per signature per flow
   * int dce_udp.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
+  * bool detection.allow_missing_so_rules = false: warn (true) or
+    error (false) when an SO rule stub refers to an SO rule that
+    isn’t loaded
   * int detection.asn1 = 0: maximum decode nodes { 0:65535 }
   * bool detection.enable_address_anomaly_checks = false: enable
     check and alerting of address anomalies
@@ -10481,6 +10510,8 @@ these libraries see the Getting Started section of the manual.
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
     manager trace logging { 0:255 }
+  * int trace.modules.vba_data.all: enable all trace options { 0:255
+    }
   * int trace.modules.wizard.all: enable all trace options { 0:255 }
   * bool trace.ntuple = false: print packet n-tuple info with trace
     messages
@@ -11737,57 +11768,64 @@ these libraries see the Getting Started section of the manual.
 
 A tagged packet was logged.
 
-105:1 (back_orifice) BO traffic detected
+105:1 (back_orifice) Back orifice traffic detected, unknown direction
 
-(back_orifice) BO traffic detected
+Back orifice traffic detected, unknown direction
 
-105:2 (back_orifice) BO client traffic detected
+105:2 (back_orifice) Back orifice client traffic detected
 
-(back_orifice) BO client traffic detected
+Back orifice client traffic detected
 
-105:3 (back_orifice) BO server traffic detected
+105:3 (back_orifice) Back orifice server traffic detected
 
-(back_orifice) BO server traffic detected
+Back orifice server traffic detected
 
-105:4 (back_orifice) BO Snort buffer attack
+105:4 (back_orifice) Back orifice length field >= 1024 bytes
 
-(back_orifice) BO Snort buffer attack
+Back orifice length field >= 1024 bytes
 
 106:1 (rpc_decode) fragmented RPC records
 
-(rpc_decode) fragmented RPC records
+Detected fragmented RPC records.
 
 106:2 (rpc_decode) multiple RPC records
 
-(rpc_decode) multiple RPC records
+Detected multiple RPC records in the packet.
 
 106:3 (rpc_decode) large RPC record fragment
 
-(rpc_decode) large RPC record fragment
+Large RPC record fragment. RPC fragment length is greater than packet
+data size.
 
 106:4 (rpc_decode) incomplete RPC segment
 
-(rpc_decode) incomplete RPC segment
+Incomplete RPC segment. Packet data size is less than required RPC
+fragment length.
 
 106:5 (rpc_decode) zero-length RPC fragment
 
-(rpc_decode) zero-length RPC fragment
+Zero-length RPC fragment.
 
 112:1 (arp_spoof) unicast ARP request
 
-(arp_spoof) unicast ARP request
+ARP request is unicast, not broadcast.
 
-112:2 (arp_spoof) ethernet/ARP mismatch request for source
+112:2 (arp_spoof) ethernet/ARP mismatch for source hardware address
 
-(arp_spoof) ethernet/ARP mismatch request for source
+Mismatch between ethernet source hardware address and ARP source
+hardware address.
 
-112:3 (arp_spoof) ethernet/ARP mismatch request for destination
+112:3 (arp_spoof) ethernet/ARP mismatch for destination hardware
+address in reply
 
-(arp_spoof) ethernet/ARP mismatch request for destination
+Mismatch between ethernet destination hardware address and ARP
+destination hardware address in an ARP reply.
 
 112:4 (arp_spoof) attempted ARP cache overwrite attack
 
-(arp_spoof) attempted ARP cache overwrite attack
+Attempted ARP cache overwrite attack. The ethernet source hardware
+address or ARP source hardware address doesn’t match the one provided
+for this IP address in the configured host table.
 
 116:1 (ipv4) not IPv4 datagram
 
@@ -11958,7 +11996,7 @@ The payload length is greater than the packet length.
 
 116:161 (gre) multiple encapsulations in packet
 
-(gre) multiple encapsulations in packet
+There are multiple encapsulations within the GRE packet.
 
 116:162 (gre) invalid GRE version
 
@@ -12061,7 +12099,7 @@ the expected max of 576 bytes.
 
 116:255 (icmp4) ICMP original IP fragmented and offset not 0
 
-An ICMP original IP fragmented and the offset is not 0.
+An ICMP original IP is fragmented and the offset is not 0.
 
 116:270 (ipv6) IPv6 packet below TTL limit
 
@@ -12300,12 +12338,12 @@ session.
 The TCP packet is invalid because it doesn’t have a SYN, ACK, or RST
 flag set.
 
-116:424 (pbb) truncated ethernet header
+116:424 (eth) truncated ethernet header
 
 The packet length is less than the minimum ethernet header size (14
 bytes)
 
-116:424 (pbb) truncated ethernet header
+116:424 (eth) truncated ethernet header
 
 A truncated ethernet header was detected.
 
@@ -12323,11 +12361,11 @@ The ICMPv6 header is truncated.
 
 116:428 (ipv4) IPv4 packet below TTL limit
 
-(ipv4) IPv4 packet below TTL limit - Not being used.
+An IPv4 packet was received after the TTL limit.
 
 116:429 (ipv6) IPv6 packet has zero hop limit
 
-(ipv6) IPv6 packet has zero hop limit - Not being used.
+An IPv6 packet has a zero hop limit count.
 
 116:430 (ipv4) IPv4 packet both DF and offset set
 
@@ -12419,7 +12457,7 @@ An IP packet has an unassigned/reserved IP protocol number.
 
 116:450 (decode) bad IP protocol
 
-(decode) bad IP protocol
+An invalid/bad IP protocol number has been detected.
 
 116:451 (icmp4) ICMP path MTU denial of service attempt
 
@@ -12729,27 +12767,34 @@ is true.
 
 119:112 (http_inspect) SWF file zlib decompression failure
 
-SWF file zlib decompression failure.
+The HTTP message body contains compressed SWF file data with errors
+that cannot be decompressed.
 
 119:113 (http_inspect) SWF file LZMA decompression failure
 
-SWF file LZMA decompression failure.
+The HTTP message body contains compressed LZMA file data with errors
+that cannot be decompressed.
 
 119:114 (http_inspect) PDF file deflate decompression failure
 
-PDF file deflate decompression failure.
+The HTTP message body contains compressed PDF file data with errors
+that cannot be decompressed.
 
 119:115 (http_inspect) PDF file unsupported compression type
 
-PDF file unsupported compression type.
+The HTTP message body contains a compressed PDF file that uses a
+compression type other than deflate ("FlateDecode" and "Fl").
 
-119:116 (http_inspect) PDF file cascaded compression
+119:116 (http_inspect) PDF file with more than one compression
+applied
 
-PDF file cascaded compression.
+The HTTP message body contains a PDF file with more than one
+compression applied.
 
 119:117 (http_inspect) PDF file parse failure
 
-PDF file parse failure.
+The HTTP message body contains PDF file data with an error that made
+the start of the PDF compressed stream unable to be located.
 
 119:201 (http_inspect) not HTTP traffic or unrecoverable HTTP
 protocol error
@@ -12799,247 +12844,335 @@ traffic.
 
 119:209 (http_inspect) format error in HTTP header
 
-format error in HTTP header
+An HTTP header line contains a format error. A well-formed header
+consists of a field name followed by a colon followed by the field
+value.
 
 119:210 (http_inspect) chunk header options present
 
-chunk header options present
+A chunked transfer-encoded HTTP message body contains chunk
+extensions. A chunk extension is an optional parameter following the
+chunk length in the chunk header.
 
 119:211 (http_inspect) URI badly formatted
 
-URI badly formatted
+The HTTP request URI is not well-formatted as one of the four types
+defined for the HTTP protocol.
 
 119:212 (http_inspect) unrecognized type of percent encoding in URI
 
-unrecognized type of percent encoding in URI
+The HTTP URI contains an unrecognized type of percent encoding.
 
 119:213 (http_inspect) HTTP chunk misformatted
 
-HTTP chunk misformatted
+A chunked transfer-encoded HTTP message body contains a misformatted
+chunk. The following conditions make a chunk misformatted: there are
+at least five leading whitespaces before the chunk length in the
+chunk header, there is an illegal character in the chunk length
+(expressed as the hex number in ASCII), the chunk length is longer
+than 32 bits, the chunk header is terminated by lone CR (\r) without
+an LF (\n), the chunk header does not contain the length, or the
+chunk data is terminated by a character other than CR or LF
 
 119:214 (http_inspect) white space adjacent to chunk length
 
-white space adjacent to chunk length
+A chunked transfer-encoded HTTP message body contains a chunk header
+with white space adjacent to the chunk length. This covers leading
+and trailing whitespace.
 
 119:215 (http_inspect) white space within header name
 
-white space within header name
+An HTTP header name contains whitespace.
 
 119:216 (http_inspect) excessive gzip compression
 
-excessive gzip compression
+A gzip-encoded HTTP message body was found to have an excessive
+compression ratio during decompression.
 
 119:217 (http_inspect) gzip decompression failed
 
-gzip decompression failed
+An error was encountered during decompression of a gzip-encoded HTTP
+message body.
 
 119:218 (http_inspect) HTTP 0.9 requested followed by another request
 
-HTTP 0.9 requested followed by another request
+An HTTP connection contains an HTTP 0.9 request followed by another
+request. There can only be one 0.9 response per connection because it
+ends the server-to-client connection.
 
 119:219 (http_inspect) HTTP 0.9 request following a normal request
 
-HTTP 0.9 request following a normal request
+An HTTP connection contains an HTTP 0.9 request following a normal
+request.
 
 119:220 (http_inspect) message has both Content-Length and
 Transfer-Encoding
 
-message has both Content-Length and Transfer-Encoding
+An HTTP message has both Content-Length and Transfer-Encoding
+headers. These headers conflict since the size of the message body
+will be determined by either the Content-Length value or by the
+chunked transfer-encoding formatting.
 
 119:221 (http_inspect) status code implying no body combined with
 Transfer-Encoding or nonzero Content-Length
 
-status code implying no body combined with Transfer-Encoding or
-nonzero Content-Length
+An HTTP server sent a response with a status code implying there will
+be no body but also sent a Transfer-Encoding or nonzero
+Content-Length header. The status codes that imply no message body
+are the informational (1XX) codes, 204 No Content and 304 Not
+Modified. Transfer-Encoding and nonzero Content-Length headers
+indicate that there will be a message body.
 
 119:222 (http_inspect) Transfer-Encoding not ending with chunked
 
-Transfer-Encoding not ending with chunked
+The HTTP Transfer-Encoding header value does not end with "chunked".
+The HTTP protocol specifies that when a transfer coding is applied to
+a message, "chunked" must the last transfer coding applied to the
+message body so that the length of the message body can be determined
+by the client.
 
 119:223 (http_inspect) Transfer-Encoding with encodings before
 chunked
 
-Transfer-Encoding with encodings before chunked
+An HTTP message includes a Transfer-Encoding header value that
+specifies other encodings before "chunked."
 
 119:224 (http_inspect) misformatted HTTP traffic
 
-misformatted HTTP traffic
+The traffic contains an HTTP version, but does not contain a
+recognizable start line. This conclusion applies only to one
+direction of the flow. The opposite direction may be OK.
 
 119:225 (http_inspect) unsupported Content-Encoding used
 
-unsupported Content-Encoding used
+The HTTP Content-Encoding header contains a coding other than gzip
+and deflate decompression.
 
 119:226 (http_inspect) unknown Content-Encoding used
 
-unknown Content-Encoding used
+The HTTP Content-Encoding header contains an unknown coding.
 
 119:227 (http_inspect) multiple Content-Encodings applied
 
-multiple Content-Encodings applied
+The HTTP Content-Encoding header has multiple values, meaning
+multiple content encodings have been applied.
 
 119:228 (http_inspect) server response before client request
 
-server response before client request
+An HTTP server response was seen before a corresponding client
+request.
 
 119:229 (http_inspect) PDF/SWF/ZIP decompression of server response
 too big
 
-PDF/SWF/ZIP decompression of server response too big
+The decompressed size of the PDF/SWF/ZIP file contained in the HTTP
+message body exceeded the configured limit. The decompression limit
+can be configured with file_id.decompress_buffer_size.
 
 119:230 (http_inspect) nonprinting character in HTTP message header
 name
 
-nonprinting character in HTTP message header name
+An HTTP message header field name contains a nonprinting character.
 
 119:231 (http_inspect) bad Content-Length value in HTTP header
 
-bad Content-Length value in HTTP header
+The HTTP Content-Length header value is not a valid decimal length.
 
 119:232 (http_inspect) HTTP header line wrapped
 
-HTTP header line wrapped
+The HTTP header contains a wrapped header line. This means that the
+header field value has been folded onto multiple lines, indicated by
+beginning the continuation line with a space or horizontal tab.
 
 119:233 (http_inspect) HTTP header line terminated by CR without a LF
 
-HTTP header line terminated by CR without a LF
+An HTTP header line is terminated by CR (\r) without LF (\n). The
+HTTP protocol specifies that header lines should be terminated by
+CRLF (\r\n).
 
 119:234 (http_inspect) chunk terminated by nonstandard separator
 
-chunk terminated by nonstandard separator
+A chunked transfer-encoded HTTP message body contains a chunk
+terminated by a nonstandard separator. The separator defined by the
+protocol that should terminate each chunk is CRLF (\r\n).
 
 119:235 (http_inspect) chunk length terminated by LF without CR
 
-chunk length terminated by LF without CR
+A chunked transfer-encoded HTTP message body contains a chunk length
+that is terminated by LF (\n) without CR (\r). The protocol specifies
+that chunk lengths should be terminated by CRLF (\r\n) as the line
+separator.
 
 119:236 (http_inspect) more than one response with 100 status code
 
-more than one response with 100 status code
+An HTTP server sent more than one response with 100 Continue status
+code.
 
 119:237 (http_inspect) 100 status code not in response to Expect
 header
 
-100 status code not in response to Expect header
+An HTTP server sent a response with a status code other than 100
+Continue in response to a request with an Expect header. The Expect
+header informs the server that the client will send a (presumably
+large) message body, and requests that the server send an interim 100
+Continue response if it can handle the request.
 
 119:238 (http_inspect) 1XX status code other than 100 or 101
 
-1XX status code other than 100 or 101
+An HTTP server sent an informational (1XX) response with a status
+code other than 100 Continue or 101 Switching Protocols.
 
 119:239 (http_inspect) Expect header sent without a message body
 
-Expect header sent without a message body
+An HTTP client sent an Expect header without sending a request
+message body. The Expect header informs the server that the client
+will send a (presumably large) message body, and requests that the
+server send an interim 100 Continue response if it can handle the
+request.
 
 119:240 (http_inspect) HTTP 1.0 message with Transfer-Encoding header
 
-HTTP 1.0 message with Transfer-Encoding header
+An HTTP 1.0 message contains a Transfer-Encoding header, which is
+disallowed for that version.
 
 119:241 (http_inspect) Content-Transfer-Encoding used as HTTP header
 
-Content-Transfer-Encoding used as HTTP header
+The Content-Transfer-Encoding field is used as an HTTP header.
+Content-Transfer-Encoding is a MIME header and is not registered as
+an HTTP header.
 
 119:242 (http_inspect) illegal field in chunked message trailers
 
-illegal field in chunked message trailers
+The HTTP trailer contains a header field that is disallowed in
+chunked message trailers.
 
 119:243 (http_inspect) header field inappropriately appears twice or
 has two values
 
-header field inappropriately appears twice or has two values
+The HTTP Age header field appears twice or has two values.
 
 119:244 (http_inspect) invalid value chunked in Content-Encoding
 header
 
-invalid value chunked in Content-Encoding header
+An HTTP Content-Encoding header has a value of "chunked", which is
+not a registered content encoding.
 
 119:245 (http_inspect) 206 response sent to a request without a Range
 header
 
-206 response sent to a request without a Range header
+A partial content (status code 206) response was sent to a request
+without a Range header, meaning the client did not request the
+message body be fragmented.
 
 119:246 (http_inspect) HTTP in version field not all upper case
 
-HTTP in version field not all upper case
+An HTTP start line contains a version field where the letters in HTTP
+are not all upper case.
 
 119:247 (http_inspect) white space embedded in critical header value
 
-white space embedded in critical header value
+There is whitespace embedded in the Content-Length header value other
+than leading and trailing whitespace.
 
 119:248 (http_inspect) gzip compressed data followed by unexpected
 non-gzip data
 
-gzip compressed data followed by unexpected non-gzip data
+While decompressing a gzip-encoded message body, the zipped data
+stream ended before the end of the message body, so there is
+unexpected non-gzip data following the compressed data.
 
 119:249 (http_inspect) excessive HTTP parameter key repeats
 
-excessive HTTP parameter key repeats
+There is an HTTP parameter key that is repeated at least 100 times
+within a request query.
 
 119:250 (http_inspect) HTTP/2 Transfer-Encoding header other than
 identity
 
-HTTP/2 Transfer-Encoding header other than identity
+There is an HTTP/2 Transfer-Encoding header value other than
+identity. The HTTP/2 protocol specifies that the chunked transfer
+encoding is not allowed.
 
 119:251 (http_inspect) HTTP/2 message body overruns Content-Length
 header value
 
-HTTP/2 message body overruns Content-Length header value
+An HTTP/2 message header contained a Content-Length header value, but
+the actual message body transferred is larger than that value. The
+Content-Length header is not used to determine the length of the
+message body for HTTP/2 traffic.
 
 119:252 (http_inspect) HTTP/2 message body smaller than
 Content-Length header value
 
-HTTP/2 message body smaller than Content-Length header value
+An HTTP/2 message header contained a Content-Length header value, but
+the actual message body transferred is smaller than that value. The
+Content-Length header is not used to determine the length of the
+message body for HTTP/2 traffic.
 
 119:253 (http_inspect) HTTP CONNECT request with a message body
 
-HTTP CONNECT request with a message body
+An HTTP client sent a CONNECT request with a request message body.
 
 119:254 (http_inspect) HTTP client-to-server traffic after CONNECT
 request but before CONNECT response
 
-HTTP client-to-server traffic after CONNECT request but before
-CONNECT response
+There was traffic from an HTTP client after the client sent a CONNECT
+request but before the CONNECT response from the server was received.
 
 119:255 (http_inspect) HTTP CONNECT 2XX response with Content-Length
 header
 
-HTTP CONNECT 2XX response with Content-Length header
+An HTTP server sent a successful (2XX) CONNECT response with a
+Content-Length header.
 
 119:256 (http_inspect) HTTP CONNECT 2XX response with
 Transfer-Encoding header
 
-HTTP CONNECT 2XX response with Transfer-Encoding header
+An HTTP server sent a successful (2XX) CONNECT response with a
+Transfer-Encoding header.
 
 119:257 (http_inspect) HTTP CONNECT response with 1XX status code
 
-HTTP CONNECT response with 1XX status code
+An HTTP server sent a CONNECT response with an informational (1XX)
+status code.
 
 119:258 (http_inspect) HTTP CONNECT response before request message
 completed
 
-HTTP CONNECT response before request message completed
+An HTTP CONNECT response was received before the request message from
+the client was completed.
 
 119:259 (http_inspect) malformed HTTP Content-Disposition filename
 parameter
 
-malformed HTTP Content-Disposition filename parameter
+A Content-Disposition HTTP header field contains a malformed filename
+parameter.
 
 119:260 (http_inspect) HTTP Content-Length message body was truncated
 
-HTTP Content-Length message body was truncated
+The TCP connection was closed before the full HTTP message body was
+transferred. The length of the full message body was determined by
+the Content-Length HTTP header field.
 
 119:261 (http_inspect) HTTP chunked message body was truncated
 
-HTTP chunked message body was truncated
+The TCP connection was closed before the full HTTP message body was
+transferred. The message uses the chunked transfer-encoding, so this
+means there was no well-formed chunk of length zero to terminate the
+message.
 
 119:262 (http_inspect) HTTP URI scheme longer than 10 characters
 
-HTTP URI scheme longer than 10 characters
+The scheme portion of an HTTP URI is longer than 10 characters.
 
 119:263 (http_inspect) HTTP/1 client requested HTTP/2 upgrade
 
-HTTP/1 client requested HTTP/2 upgrade
+A client sent a request to upgrade an HTTP/1 connection to HTTP/2.
 
 119:264 (http_inspect) HTTP/1 server granted HTTP/2 upgrade
 
-HTTP/1 server granted HTTP/2 upgrade
+A server granted a request to upgrade a connection from HTTP/1 to
+HTTP/2.
 
 119:265 (http_inspect) bad token in JavaScript
 
@@ -13096,7 +13229,10 @@ indication that an attacker is trying to exhaust resources.
 119:272 (http_inspect) Consecutive commas in HTTP Accept-Encoding
 header
 
-Consecutive commas in HTTP Accept-Encoding header
+There are consecutive commas, possibly separated by whitespace, in an
+HTTP Accept-Encoding header. This pattern constitutes a Microsoft
+Windows HTTP protocol stack remote code execution attempt. Reference:
+CVE-2021-31166.
 
 119:273 (http_inspect) missed PDUs during JavaScript normalization
 
@@ -13111,7 +13247,7 @@ the flow.
 
 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
 
-invalid flag set on HTTP/2 frame
+Invalid flag set on HTTP/2 frame header
 
 121:2 (http2_inspect) HPACK integer value has leading zeros
 
@@ -13119,19 +13255,23 @@ HPACK integer value has leading zeros
 
 121:3 (http2_inspect) HTTP/2 stream initiated with invalid stream id
 
-HTTP/2 stream initiated with invalid stream id
+HTTP/2 stream initiated with invalid stream ID. Either server
+initiated push promise with odd promised stream ID or new stream with
+stream ID that is not greater than the last one seen on this side.
 
 121:4 (http2_inspect) missing HTTP/2 continuation frame
 
-missing HTTP/2 continuation frame
+HTTP/2 Headers, Continuation or Push promise frame without the
+END_HEADERS flag set was not followed by a Continuation frame.
 
 121:5 (http2_inspect) unexpected HTTP/2 continuation frame
 
-unexpected HTTP/2 continuation frame
+HTTP/2 Continuation frame not preceded by Headers, Continuation or
+Push promise frame without the END_HEADERS flag.
 
-121:6 (http2_inspect) misformatted HTTP/2 traffic
+121:6 (http2_inspect) HTTP/2 headers HPACK decoding error
 
-misformatted HTTP/2 traffic
+HTTP/2 headers HPACK decoding error
 
 121:7 (http2_inspect) HTTP/2 connection preface does not match
 
@@ -13139,7 +13279,9 @@ HTTP/2 connection preface does not match
 
 121:8 (http2_inspect) HTTP/2 request missing required header field
 
-HTTP/2 request missing required header field
+HTTP/2 request missing required header field. CONNECT request without
+authority, non-CONNECT request without a scheme, or http/https scheme
+without a path.
 
 121:9 (http2_inspect) HTTP/2 response has no status code
 
@@ -13151,24 +13293,27 @@ HTTP/2 CONNECT request with scheme or path
 
 121:11 (http2_inspect) error in HTTP/2 settings frame
 
-error in HTTP/2 settings frame
+HTTP/2 settings frame error: stream ID isn’t 0, length isn’t multiple
+of 6, or ACK flag is set and length isn’t 0.
 
 121:12 (http2_inspect) unknown parameter in HTTP/2 settings frame
 
-unknown parameter in HTTP/2 settings frame
+Unknown parameter in HTTP/2 settings frame. Parameter identifier is
+not one of the six RFC-defined values.
 
 121:13 (http2_inspect) invalid HTTP/2 frame sequence
 
-invalid HTTP/2 frame sequence
+Invalid HTTP/2 frame sequence. Frame type is not valid for current
+stream state.
 
-121:14 (http2_inspect) HTTP/2 dynamic table size limit exceeded
+121:14 (http2_inspect) HTTP/2 dynamic table has more than 512 entries
 
-HTTP/2 dynamic table size limit exceeded
+HTTP/2 dynamic table has more than 512 entries
 
-121:15 (http2_inspect) HTTP/2 push promise frame with invalid
-promised stream id
+121:15 (http2_inspect) HTTP/2 push promise frame with promised stream
+ID already in use.
 
-HTTP/2 push promise frame with invalid promised stream id
+HTTP/2 push promise frame with promised stream ID already in use.
 
 121:16 (http2_inspect) HTTP/2 padding length is bigger than frame
 data size
@@ -13185,7 +13330,10 @@ HTTP/2 pseudo-header in trailers
 
 121:19 (http2_inspect) invalid HTTP/2 pseudo-header
 
-invalid HTTP/2 pseudo-header
+Invalid HTTP/2 pseudo header. For response only :status is valid. For
+request only :authority, :method, :path and :scheme are valid. Any
+other pseudo-header or seeing one of these more than once will
+trigger the alert.
 
 121:20 (http2_inspect) HTTP/2 trailers without END_STREAM bit
 
@@ -13194,49 +13342,58 @@ HTTP/2 trailers without END_STREAM bit
 121:21 (http2_inspect) HTTP/2 push promise frame sent when prohibited
 by receiver
 
-HTTP/2 push promise frame sent when prohibited by receiver
+HTTP/2 push promise frame sent when prohibited by receiver. Receiver
+prohibited push promise by sending settings frame with
+SETTINGS_ENABLE_PUSH 0.
 
 121:22 (http2_inspect) padding flag set on HTTP/2 frame with zero
 length
 
-padding flag set on HTTP/2 frame with zero length
+Padding flag set on HTTP/2 frame with zero length
 
-121:23 (http2_inspect) HTTP/2 push promise frame in c2s direction
+121:23 (http2_inspect) HTTP/2 push promise frame in client-to-server
+direction
 
-HTTP/2 push promise frame in c2s direction
+HTTP/2 push promise frame in client-to-server direction
 
 121:24 (http2_inspect) invalid HTTP/2 push promise frame
 
-invalid HTTP/2 push promise frame
+Invalid HTTP/2 push promise frame, length is less than promised
+stream ID length.
 
 121:25 (http2_inspect) HTTP/2 push promise frame sent at invalid time
 
-HTTP/2 push promise frame sent at invalid time
+HTTP/2 push promise frame sent at invalid time. Client didn’t send
+headers yet for this stream, END_STREAM already seen on server side
+or server side in error state.
 
 121:26 (http2_inspect) invalid parameter value sent in HTTP/2
 settings frame
 
-invalid parameter value sent in HTTP/2 settings frame
+Invalid SETTINGS_ENABLE_PUSH value sent in HTTP/2 settings frame
 
 121:27 (http2_inspect) excessive concurrent HTTP/2 streams
 
-excessive concurrent HTTP/2 streams
+HTTP/2 flow exceed concurrent streams limit, as configured by
+concurrent_streams_limit.
 
 121:28 (http2_inspect) invalid HTTP/2 rst stream frame
 
-invalid HTTP/2 rst stream frame
+Invalid HTTP/2 RST_STREAM frame. Stream ID is not 0 or length is not
+4.
 
 121:29 (http2_inspect) HTTP/2 rst stream frame sent at invalid time
 
-HTTP/2 rst stream frame sent at invalid time
+HTTP/2 RST_STREAM frame sent at invalid time. Stream is not in idle
+state, already started with a push promise or headers frame.
 
 121:30 (http2_inspect) uppercase HTTP/2 header field name
 
-uppercase HTTP/2 header field name
+Uppercase HTTP/2 header field name
 
 121:31 (http2_inspect) invalid HTTP/2 window update frame
 
-invalid HTTP/2 window update frame
+HTTP/2 window update frame length is not 4
 
 121:32 (http2_inspect) HTTP/2 window update frame with zero increment
 
@@ -13265,111 +13422,151 @@ SETTINGS frame
 
 122:1 (port_scan) TCP portscan
 
-(port_scan) TCP portscan
+Basic one host to one host TCP portscan where multiple TCP ports are
+scanned on the destination host from a single host
 
 122:2 (port_scan) TCP decoy portscan
 
-(port_scan) TCP decoy portscan
+Decoy TCP portscan where the real scanner’s host address was mixed
+with multiple decoy hosts to connect to a single port multiple times
 
 122:3 (port_scan) TCP portsweep
 
-(port_scan) TCP portsweep
+One host to many hosts TCP portsweep where multiple TCP ports are
+scanned on each destination host
 
 122:4 (port_scan) TCP distributed portscan
 
-(port_scan) TCP distributed portscan
+Many hosts to one host TCP distributed portscan where many hosts
+connect to a single destination host and multiple ports are scanned
+on the destination host
 
 122:5 (port_scan) TCP filtered portscan
 
-(port_scan) TCP filtered portscan
+Filtered one host to one host TCP portscan where multiple firewall
+filtered TCP ports are scanned on the destination host from a single
+host
 
 122:6 (port_scan) TCP filtered decoy portscan
 
-(port_scan) TCP filtered decoy portscan
+Filtered decoy TCP portscan where the real scanner’s host address was
+mixed with multiple decoy hosts to connect to a single firewall
+filtered port multiple times
 
 122:7 (port_scan) TCP filtered portsweep
 
-(port_scan) TCP filtered portsweep
+Filtered one host to many hosts TCP portsweep where multiple firewall
+filtered TCP ports are scanned on each destination host
 
 122:8 (port_scan) TCP filtered distributed portscan
 
-(port_scan) TCP filtered distributed portscan
+Filtered many hosts to one host TCP distributed portscan where many
+hosts connect to a single destination host and multiple firewall
+filtered ports are scanned on the destination host
 
 122:9 (port_scan) IP protocol scan
 
-(port_scan) IP protocol scan
+One host to one host IP protocol scan where multiple IP protocols are
+scanned on the destination host from a single host
 
 122:10 (port_scan) IP decoy protocol scan
 
-(port_scan) IP decoy protocol scan
+Decoy IP protocol scan where the real scanner’s host address was
+mixed with multiple decoy hosts to scan IP protocols on a single host
+multiple times
 
 122:11 (port_scan) IP protocol sweep
 
-(port_scan) IP protocol sweep
+One host to many hosts IP protocol sweep where multiple IP protocols
+are scanned on each host
 
 122:12 (port_scan) IP distributed protocol scan
 
-(port_scan) IP distributed protocol scan
+Many hosts to one host distributed IP protocol scan where many hosts
+attempt to scan multiple IP protocols on a single destination host
 
 122:13 (port_scan) IP filtered protocol scan
 
-(port_scan) IP filtered protocol scan
+Filtered one host to one host IP protocol scan where multiple
+firewall filtered IP protocols are scanned on the destination host
+from a single host
 
 122:14 (port_scan) IP filtered decoy protocol scan
 
-(port_scan) IP filtered decoy protocol scan
+Filtered decoy IP protocol scan where the real scanner’s host address
+was mixed with multiple decoy hosts to scan firewall filtered IP
+protocols on a single host multiple times
 
 122:15 (port_scan) IP filtered protocol sweep
 
-(port_scan) IP filtered protocol sweep
+Filtered one host to many hosts IP protocol sweep where multiple
+firewall filtered IP protocols are scanned on each host
 
 122:16 (port_scan) IP filtered distributed protocol scan
 
-(port_scan) IP filtered distributed protocol scan
+Filtered many hosts to one host distributed IP protocol scan where
+many hosts attempt to scan multiple firewall filtered IP protocols on
+a single destination host
 
 122:17 (port_scan) UDP portscan
 
-(port_scan) UDP portscan
+Basic one host to one host UDP portscan where multiple UDP ports are
+scanned on the destination host from a single host
 
 122:18 (port_scan) UDP decoy portscan
 
-(port_scan) UDP decoy portscan
+Decoy UDP portscan where the real scanner’s host address was mixed
+with multiple decoy hosts to scan a single UDP port on the single
+destination host multiple times
 
 122:19 (port_scan) UDP portsweep
 
-(port_scan) UDP portsweep
+One host to many hosts UDP portsweep where multiple UDP ports are
+scanned on each destination host from a single host
 
 122:20 (port_scan) UDP distributed portscan
 
-(port_scan) UDP distributed portscan
+Many hosts to one host distributed UDP portscan where many hosts scan
+multiple UDP ports on a single destination host
 
 122:21 (port_scan) UDP filtered portscan
 
-(port_scan) UDP filtered portscan
+Filtered one host to one host UDP portscan where multiple firewall
+filtered UDP ports are scanned on the destination host from a single
+host
 
 122:22 (port_scan) UDP filtered decoy portscan
 
-(port_scan) UDP filtered decoy portscan
+Filtered decoy UDP portscan where the real scanner’s host address was
+mixed with multiple decoy hosts to scan a single firewall filtered
+UDP port on the single destination host multiple times
 
 122:23 (port_scan) UDP filtered portsweep
 
-(port_scan) UDP filtered portsweep
+Filtered one host to many hosts UDP portsweep where multiple firewall
+filtered UDP ports are scanned on each destination host from a single
+host
 
 122:24 (port_scan) UDP filtered distributed portscan
 
-(port_scan) UDP filtered distributed portscan
+Filtered many hosts to one host distributed UDP portscan where many
+hosts scan multiple firewall filtered UDP ports on a single
+destination host
 
 122:25 (port_scan) ICMP sweep
 
-(port_scan) ICMP sweep
+One host to many hosts ICMP sweep scan where multiple ICMP scan
+occurred on each destination host from a single host
 
 122:26 (port_scan) ICMP filtered sweep
 
-(port_scan) ICMP filtered sweep
+Filtered one host to many hosts ICMP sweep scan where multiple ICMP
+scan occurred on each firewall filtered destination host from a
+single host
 
 122:27 (port_scan) open port
 
-(port_scan) open port
+open port
 
 123:1 (stream_ip) inconsistent IP options on fragmented packets
 
@@ -13542,27 +13739,29 @@ subnegotiation end.
 
 128:1 (ssh) challenge-response overflow exploit
 
-(ssh) challenge-response overflow exploit
+SSH challenge-response overflow exploit. Amount of data transferred
+from client is more than configured maximum.
 
 128:2 (ssh) SSH1 CRC32 exploit
 
-(ssh) SSH1 CRC32 exploit
+SSH1 CRC32 exploit. Amount of data transferred from client is more
+than configured maximum.
 
 128:3 (ssh) server version string overflow
 
-(ssh) server version string overflow
+SSH version string is greater than the configured maximum.
 
 128:5 (ssh) bad message direction
 
-(ssh) bad message direction
+SSH bad message direction.
 
 128:6 (ssh) payload size incorrect for the given payload
 
-(ssh) payload size incorrect for the given payload
+SSH payload size incorrect for the given payload.
 
 128:7 (ssh) failed to detect SSH version string
 
-(ssh) failed to detect SSH version string
+Failed to detect SSH version string.
 
 129:1 (stream_tcp) SYN on established session
 
@@ -13681,283 +13880,359 @@ DNS Response Resource Record Type is Client rdata Overflow.
 
 133:2 (dce_smb) SMB - bad NetBIOS session service session type
 
-(dce_smb) SMB - bad NetBIOS session service session type
+Invalid NetBIOS session service type specified in the header. Valid
+types are keep alive, request from client, positive response,
+negative response, and retarget response from the server.
 
 133:3 (dce_smb) SMB - bad SMB message type
 
-(dce_smb) SMB - bad SMB message type
+Invalid SMB message type specified in the header. Either a request
+was made by server or a response was given by client.
 
 133:4 (dce_smb) SMB - bad SMB Id (not xffSMB for SMB1 or not xfeSMB
 for SMB2)
 
-(dce_smb) SMB - bad SMB Id (not \xffSMB for SMB1 or not \xfeSMB for
-SMB2)
+SMB id not equal to \xffSMB for SMB1 or not \xfeSMB for SMB2.
 
 133:5 (dce_smb) SMB - bad word count or structure size
 
-(dce_smb) SMB - bad word count or structure size
+Invalid word count for the command or structure size. SMB commands
+have specific word counts and if a command with word count not
+matching with the required word count, this alert is raised.
 
 133:6 (dce_smb) SMB - bad byte count
 
-(dce_smb) SMB - bad byte count
+Bad byte count for the command. Either word count is zero and byte
+count isn’t or byte count is not in the range of minimum and maximum
+required byte count for the SMB command.
 
 133:7 (dce_smb) SMB - bad format type
 
-(dce_smb) SMB - bad format type
+Bad format type for the SMB command.
 
 133:8 (dce_smb) SMB - bad offset
 
-(dce_smb) SMB - bad offset
+Bad Offset. Offset points to beginning of SMB header. Offset is bad,
+if it points to the data already looked at or after the end of
+payload.
 
 133:9 (dce_smb) SMB - zero total data count
 
-(dce_smb) SMB - zero total data count
+SMB command has a field containing total amount of data to be
+transmitted. If this field is zero, an alert is raised.
 
 133:10 (dce_smb) SMB - NetBIOS data length less than SMB header
 length
 
-(dce_smb) SMB - NetBIOS data length less than SMB header length
+NetBIOS data length value is less than size of the SMB header.
 
 133:11 (dce_smb) SMB - remaining NetBIOS data length less than
 command length
 
-(dce_smb) SMB - remaining NetBIOS data length less than command
-length
+Remaining NetBIOS data length is less than SMB command length.
 
 133:12 (dce_smb) SMB - remaining NetBIOS data length less than
 command byte count
 
-(dce_smb) SMB - remaining NetBIOS data length less than command byte
-count
+Remaining NetBIOS data length is less than the SMB command byte
+count.
 
 133:13 (dce_smb) SMB - remaining NetBIOS data length less than
 command data size
 
-(dce_smb) SMB - remaining NetBIOS data length less than command data
-size
+Remaining NetBIOS data length is less than SMB command data size.
 
 133:14 (dce_smb) SMB - remaining total data count less than this
 command data size
 
-(dce_smb) SMB - remaining total data count less than this command
-data size
+Total data count is less than SMB command data size. Total data count
+must always be greater than or equal to current data size.
 
 133:15 (dce_smb) SMB - total data sent (STDu64) greater than command
 total data expected
 
-(dce_smb) SMB - total data sent (STDu64) greater than command total
-data expected
+Total data sent in transaction is greater than SMB command total data
+expected.
 
 133:16 (dce_smb) SMB - byte count less than command data size
 (STDu64)
 
-(dce_smb) SMB - byte count less than command data size (STDu64)
+Byte count in the SMB command header is less than the command data
+size.
 
 133:17 (dce_smb) SMB - invalid command data size for byte count
 
-(dce_smb) SMB - invalid command data size for byte count
+Byte count minus predetermined value for the SMB command is not equal
+to data size.
 
 133:18 (dce_smb) SMB - excessive tree connect requests with pending
 tree connect responses
 
-(dce_smb) SMB - excessive tree connect requests with pending tree
-connect responses
+Excessive SMB tree connect requests with pending tree connect
+responses. Tree connect requests queue up and wait for server
+response. This alert raised for excessing pending tree connect
+requests.
 
 133:19 (dce_smb) SMB - excessive read requests with pending read
 responses
 
-(dce_smb) SMB - excessive read requests with pending read responses
+Excessive SMB read requests with pending read responses. After client
+is done writing data, read request is queued and gets dequeued upon
+receiving response. This alert raised for excessive pending read
+requests
 
 133:20 (dce_smb) SMB - excessive command chaining
 
-(dce_smb) SMB - excessive command chaining
+Excessive command chaining. Number of SMB chained commands in a
+single request is greater than or equal to the configured value.
 
 133:21 (dce_smb) SMB - Multiple chained login requests
 
-(dce_smb) SMB - Multiple chained login requests
+It is possible to chain multiple Session Setup AndX commands within
+the same request. There is, however, only one place in the SMB header
+to return a login handle (or Uid). Windows does not allow this
+behavior, however Samba does. This is an anomalous behavior.
 
 133:22 (dce_smb) SMB - Multiple chained tree connect requests
 
-(dce_smb) SMB - Multiple chained tree connect requests
+It is possible to chain multiple Tree Connect AndX commands within
+the same request. There is, however, only one place in the SMB header
+to return a tree handle (or Tid). Windows does not allow this
+behavior, however Samba does. This is anomalous behavior.
 
 133:23 (dce_smb) SMB - chained/compounded login followed by logoff
 
-(dce_smb) SMB - chained/compounded login followed by logoff
+When a Session Setup AndX request is sent to the server, the server
+responds with a user id or login handle. This is used by the client
+in subsequent requests to indicate that it has authenticated. A
+Logoff AndX request is sent by the client to indicate it wants to end
+the session and invalidate the login handle. With SMB commands that
+are chained after a Session Setup AndX request, the login handle
+returned by the server is used for the subsequent chained commands.
+The combination of a Session Setup AndX command with a chained Logoff
+AndX command, essentially logins in and logs off in the same request
+and is anomalous behavior.
 
 133:24 (dce_smb) SMB - chained/compounded tree connect followed by
 tree disconnect
 
-(dce_smb) SMB - chained/compounded tree connect followed by tree
-disconnect
+A SMB Tree Connect AndX command is used to connect to a share. The
+Tree Disconnect command is used to disconnect from that share. The
+combination of a Tree Connect AndX command with a chained Tree
+Disconnect command, essentially connects to a share and disconnects
+from the same share in the same request and is anomalous behavior.
 
 133:25 (dce_smb) SMB - chained/compounded open pipe followed by close
 pipe
 
-(dce_smb) SMB - chained/compounded open pipe followed by close pipe
+An SMB Open AndX or Nt Create AndX command is used to open/create a
+file handle. The Close command is used to close that file handle. The
+combination of a Open AndX or Nt Create AndX command with a chained
+Close command, essentially opens and closes the file handle in the
+same request and is anomalous behavior.
 
 133:26 (dce_smb) SMB - invalid share access
 
-(dce_smb) SMB - invalid share access
+Invalid SMB shares configured. It looks for a Tree Connect or Tree
+Connect AndX to the share.
 
 133:27 (dce_tcp) connection oriented DCE/RPC - invalid major version
 
-(dce_tcp) connection oriented DCE/RPC - invalid major version
+Major version contained in the connection oriented DCE/RPC header is
+not equal to 5.
 
 133:28 (dce_tcp) connection oriented DCE/RPC - invalid minor version
 
-(dce_tcp) connection oriented DCE/RPC - invalid minor version
+Minor version contained in the connection oriented DCE/RPC header is
+not equal to 0.
 
 133:29 (dce_tcp) connection-oriented DCE/RPC - invalid PDU type
 
-(dce_tcp) connection-oriented DCE/RPC - invalid PDU type
+Connection oriented DCE/RPC PDU type contained in the header is not a
+valid PDU type.
 
 133:30 (dce_tcp) connection-oriented DCE/RPC - fragment length less
 than header size
 
-(dce_tcp) connection-oriented DCE/RPC - fragment length less than
-header size
+Fragment length less than connection oriented DCE/RPC header size.
 
 133:31 (dce_tcp) connection-oriented DCE/RPC - remaining fragment
 length less than size needed
 
-(dce_tcp) connection-oriented DCE/RPC - remaining fragment length
-less than size needed
+Connection oriented DCE/RPC remaining fragment length less than size
+needed.
 
 133:32 (dce_tcp) connection-oriented DCE/RPC - no context items
 specified
 
-(dce_tcp) connection-oriented DCE/RPC - no context items specified
+In connection oriented DCE/RPC Client’s Bind or Alter Context
+request, there are no context items specified.
 
 133:33 (dce_tcp) connection-oriented DCE/RPC -no transfer syntaxes
 specified
 
-(dce_tcp) connection-oriented DCE/RPC -no transfer syntaxes specified
+In connection oriented DCE/RPC Client’s Bind or Alter context
+request, there are no transfer syntaxes to go with the requested
+interface.
 
 133:34 (dce_tcp) connection-oriented DCE/RPC - fragment length on
 non-last fragment less than maximum negotiated fragment transmit size
 for client
 
-(dce_tcp) connection-oriented DCE/RPC - fragment length on non-last
-fragment less than maximum negotiated fragment transmit size for
-client
+Connection oriented DCE/RPC non-last fragment is less than the size
+of the negotiated maximum fragment length. Most evasion techniques
+try to fragment the data as much as possible and usually each
+fragment comes well below the negotiated transmit size.
 
 133:35 (dce_tcp) connection-oriented DCE/RPC - fragment length
 greater than maximum negotiated fragment transmit size
 
-(dce_tcp) connection-oriented DCE/RPC - fragment length greater than
-maximum negotiated fragment transmit size
+Connection oriented DCE/RPC fragment length greater than maximum
+negotiated fragment length.
 
 133:36 (dce_tcp) connection-oriented DCE/RPC - alter context byte
 order different from bind
 
-(dce_tcp) connection-oriented DCE/RPC - alter context byte order
-different from bind
+Alter context byte order different from bind. The byte order of the
+request data is determined by the Bind in connection-oriented DCE/RPC
+for Windows. It is anomalous behavior to attempt to change the byte
+order.
 
 133:37 (dce_tcp) connection-oriented DCE/RPC - call id of non first/
 last fragment different from call id established for fragmented
 request
 
-(dce_tcp) connection-oriented DCE/RPC - call id of non first/last
-fragment different from call id established for fragmented request
+Call id of non first/last fragment different from call id established
+for fragmented request in connection oriented DCE/RPC. The call id
+for a set of fragments in a fragmented request should stay the same.
 
 133:38 (dce_tcp) connection-oriented DCE/RPC - opnum of non first/
 last fragment different from opnum established for fragmented request
 
-(dce_tcp) connection-oriented DCE/RPC - opnum of non first/last
-fragment different from opnum established for fragmented request
+Connection-oriented DCE/RPC opnum of non first/last fragment
+different from opnum established for fragmented request. The
+operation number specifies which function the request is calling on
+the bound interface. If a request is fragmented, this number should
+stay the same for all fragments.
 
 133:39 (dce_tcp) connection-oriented DCE/RPC - context id of non
 first/last fragment different from context id established for
 fragmented request
 
-(dce_tcp) connection-oriented DCE/RPC - context id of non first/last
-fragment different from context id established for fragmented request
+Connection-oriented DCE/RPC context id of non first/last fragment
+different from context id established for fragmented request. The
+context id is a handle to a interface that was bound to. If a request
+if fragmented, this number should stay same for all fragments.
 
 133:40 (dce_udp) connection-less DCE/RPC - invalid major version
 
-(dce_udp) connection-less DCE/RPC - invalid major version
+Connection-less DCE/RPC invalid major version. Major version is not
+equal to 4.
 
 133:41 (dce_udp) connection-less DCE/RPC - invalid PDU type
 
-(dce_udp) connection-less DCE/RPC - invalid PDU type
+Connection-less DCE/RPC PDU type is not a valid PDU type.
 
 133:42 (dce_udp) connection-less DCE/RPC - data length less than
 header size
 
-(dce_udp) connection-less DCE/RPC - data length less than header size
+Connection-less DCE/RPC packet data length is less than size of the
+header.
 
 133:43 (dce_udp) connection-less DCE/RPC - bad sequence number
 
-(dce_udp) connection-less DCE/RPC - bad sequence number
+Connection-less DCE/RPC bad sequence number. The sequence number used
+in a request is the same or less than a previously used sequence
+number on the session.
 
 133:44 (dce_smb) SMB - invalid SMB version 1 seen
 
-(dce_smb) SMB - invalid SMB version 1 seen
+Invalid SMB version 1 seen.
 
 133:45 (dce_smb) SMB - invalid SMB version 2 seen
 
-(dce_smb) SMB - invalid SMB version 2 seen
+Invalid SMB version 2 seen.
 
 133:46 (dce_smb) SMB - invalid user, tree connect, file binding
 
-(dce_smb) SMB - invalid user, tree connect, file binding
+SMB invalid user, tree connect, file binding seen.
 
 133:47 (dce_smb) SMB - excessive command compounding
 
-(dce_smb) SMB - excessive command compounding
+SMB excessive command compounding seen.
 
 133:48 (dce_smb) SMB - zero data count
 
-(dce_smb) SMB - zero data count
+SMB Data count is zero.
 
 133:50 (dce_smb) SMB - maximum number of outstanding requests
 exceeded
 
-(dce_smb) SMB - maximum number of outstanding requests exceeded
+Maximum number of outstanding SMB requests exceeded.
 
 133:51 (dce_smb) SMB - outstanding requests with same MID
 
-(dce_smb) SMB - outstanding requests with same MID
+Multiple outstanding SMB requests with same MID. When a client sends
+a request it uses a value called the MID (multiplex id) to match a
+response, which the server is supposed to echo, to a request.
 
 133:52 (dce_smb) SMB - deprecated dialect negotiated
 
-(dce_smb) SMB - deprecated dialect negotiated
+Deprecated dialect negotiated. In the Negotiate request a client
+gives a list of SMB dialects it supports, normally in order from
+least desirable to most desirable and the server responds with the
+index of the dialect to be used on the SMB session. If the client
+doesn’t offer it as a supported dialect or the server chooses a
+lesser dialect, it is deprecated dialect negotiated.
 
 133:53 (dce_smb) SMB - deprecated command used
 
-(dce_smb) SMB - deprecated command used
+Deprecated SMB command used. There are a number of commands that are
+considered deprecated and/or obsolete by Microsoft (see MS-CIFS and
+MS-SMB). Detected use of a deprecated/obsolete command.
 
 133:54 (dce_smb) SMB - unusual command used
 
-(dce_smb) SMB - unusual command used
+Unusual SMB command used. There are some commands considered unusual
+in the context they are used. Some of the commands such as :
+TRANS_READ_NMPIPE/TRANS_WRITE_NMPIPE/TRANS2_OPEN2/NT_TRANSACT_CREATE/
+NT_TRANSACT_CREATE.
 
 133:55 (dce_smb) SMB - invalid setup count for command
 
-(dce_smb) SMB - invalid setup count for command
+Transaction SMB commands have a setup count field that indicates word
+count in the transaction setup, Alert raised if setup count is
+invalid for transaction command.
 
 133:56 (dce_smb) SMB - client attempted multiple dialect negotiations
 on session
 
-(dce_smb) SMB - client attempted multiple dialect negotiations on
-session
+Client attempted multiple SMB dialect negotiations on session. There
+can be only one Negotiate transaction per session and it is the first
+thing a client and server do to determine the SMB dialect each
+supports.
 
 133:57 (dce_smb) SMB - client attempted to create or set a file’s
 attributes to readonly/hidden/system
 
-(dce_smb) SMB - client attempted to create or set a file’s attributes
-to readonly/hidden/system
+SMB client attempted to create or set a file’s attributes to readonly
+/hidden/system. Malware will often set a files attributes to ReadOnly
+/Hidden/System if it is successful in installing itself as a Windows
+service or is able to write an autorun.inf file since it doesn’t want
+the user to see the file and the default folder options in Windows is
+not to display Hidden files.
 
 133:58 (dce_smb) SMB - file offset provided is greater than file size
 specified
 
-(dce_smb) SMB - file offset provided is greater than file size
-specified
+SMB file offset provided is greater than file size specified.
 
 133:59 (dce_smb) SMB - next command specified in SMB2 header is
 beyond payload boundary
 
-(dce_smb) SMB - next command specified in SMB2 header is beyond
-payload boundary
+SMB protocol allows multiple smb commands to be grouped in a single
+packet. Next command specified in SMB2 header is greater than the
+payload boundary.
 
 134:1 (latency) rule tree suspended due to latency
 
@@ -14028,19 +14303,21 @@ this behavior.
 
 137:1 (ssl) invalid client HELLO after server HELLO detected
 
-(ssl) invalid client HELLO after server HELLO detected
+An invalid SSL client HELLO was received after an SSL server HELLO
+has been detected.
 
 137:2 (ssl) invalid server HELLO without client HELLO detected
 
-(ssl) invalid server HELLO without client HELLO detected
+An invalid SSL server HELLO was received without an SSL client HELLO
+having been detected.
 
 137:3 (ssl) heartbeat read overrun attempt detected
 
-(ssl) heartbeat read overrun attempt detected
+An SSL heartbeat read overrun attempt has been detected.
 
 137:4 (ssl) large heartbeat response detected
 
-(ssl) large heartbeat response detected
+A large SSL heartbeat response was detected.
 
 140:2 (sip) empty request URI
 
@@ -14227,44 +14504,45 @@ gtp_inspect detected tunnel endpoint identifier having zero
 144:1 (modbus) length in Modbus MBAP header does not match the length
 needed for the given function
 
-(modbus) length in Modbus MBAP header does not match the length
-needed for the given function
+Length in Modbus MBAP header does not match the length needed for the
+given function or length mismatch discovered while parsing the PDU
 
 144:2 (modbus) Modbus protocol ID is non-zero
 
-(modbus) Modbus protocol ID is non-zero
+Modbus protocol ID is non-zero
 
 144:3 (modbus) reserved Modbus function code in use
 
-(modbus) reserved Modbus function code in use
+Modbus using reserved function code
 
 145:1 (dnp3) DNP3 link-layer frame contains bad CRC
 
-(dnp3) DNP3 link-layer frame contains bad CRC
+DNP3 link-layer frame contains bad CRC
 
-145:2 (dnp3) DNP3 link-layer frame was dropped
+145:2 (dnp3) DNP3 link-layer frame is truncated or frame length is
+invalid
 
-(dnp3) DNP3 link-layer frame was dropped
+DNP3 link-layer frame is truncated or frame length is invalid
 
-145:3 (dnp3) DNP3 transport-layer segment was dropped during
-reassembly
+145:3 (dnp3) DNP3 transport-layer segment sequence number is
+incorrect
 
-(dnp3) DNP3 transport-layer segment was dropped during reassembly
+DNP3 transport-layer segment sequence number is incorrect
 
-145:4 (dnp3) DNP3 reassembly buffer was cleared without reassembling
-a complete message
+145:4 (dnp3) DNP3 transport-layer segment flag violation is detected
 
-(dnp3) DNP3 reassembly buffer was cleared without reassembling a
-complete message
+DNP3 transport-layer segment flag violation is detected, FIR flag was
+set in middle fragment
 
 145:5 (dnp3) DNP3 link-layer frame uses a reserved address
 
-(dnp3) DNP3 link-layer frame uses a reserved address
+DNP3 link-layer frame uses a reserved address (0xFFF0 to 0xFFFB)
 
 145:6 (dnp3) DNP3 application-layer fragment uses a reserved function
 code
 
-(dnp3) DNP3 application-layer fragment uses a reserved function code
+DNP3 application-layer fragment uses an undefined function code,
+defined function codes: Requests (0 to 33) and Responses (129 to 131)
 
 148:1 (cip) CIP data is malformed
 
@@ -14755,6 +15033,7 @@ and are not applicable elsewhere.
     classification
   * content (ips_option): payload rule option for basic pattern
     matching
+  * cpeos_test (inspector): for testing CPE OS RNA event generation
   * cvs (ips_option): payload rule option for detecting specific
     attacks
   * daq (basic): configure packet acquisition interface
@@ -15114,6 +15393,7 @@ and are not applicable elsewhere.
   * inspector::binder: configure processing based on CIDRs, ports,
     services, etc.
   * inspector::cip: cip inspection
+  * inspector::cpeos_test: for testing CPE OS RNA event generation
   * inspector::data_log: log selected published data to data.log
   * inspector::dce_http_proxy: dce over http inspection - client to/
     from proxy

@@ -1,3 +1,27 @@
+2021/11/17 - 3.1.17.0
+
+appid: restore the log of reload detectors complete message
+build: remove HAVE_HYPERSCAN conditional from installed header
+detection: add allow_missing_so_rules
+detection: ensure PDUs indicate parent when available
+dnp3: update builtin rule description
+doc: arp_spoof builtins
+doc: back orifice builtin rules
+doc: spell correction
+doc: update builtin alerts description for dnp3
+doc: update builtin alerts description for modbus, HTTP/2
+doc: update builtin alerts description for portscan
+doc: update builtin rule documentation for http_inspect
+doc: update builtin rules documentation for dce_smb, dce_tcp, dce_udp, rpc_decode
+doc: updated builtin rules documentation for ssh.
+http2_inspect: hardening
+http2_inspect: http1_header buffer always created immediately after decode_headers
+http2_inspect: push promise error state check
+http2_inspect: truncated trailers without frame data
+ips_option: Enabling trace for vba_data options and fixing memory leak while extracting vba_data
+main: use dynamic buffer on demand in trace print functions
+u2spewfoo: Fixed incorrect usage line.
+
 2021/11/03 - 3.1.16.0
 
 appid: during initialization, skip loading of Lua detectors that don't have validate function
