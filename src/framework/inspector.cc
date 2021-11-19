@@ -104,6 +104,9 @@ bool Inspector::likes(Packet* p)
     if ( !(BIT((uint16_t)p->type()) & api->proto_bits) )
         return false;
 
+    if ( p->flow and p->flow->is_direction_aborted(p->is_from_client()) )
+        return false;
+
     if ( p->is_tcp() && api->type == IT_SERVICE )
         return p->has_paf_payload();
 

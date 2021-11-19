@@ -546,6 +546,16 @@ bool Flow::is_pdu_inorder(uint8_t dir)
             && !(ssn_state.session_flags & SSNFLAG_MIDSTREAM));
 }
 
+bool Flow::is_direction_aborted(bool from_client) const
+{
+    const uint32_t session_flags = get_session_flags();
+
+    if (from_client)
+        return (session_flags & SSNFLAG_ABORT_SERVER);
+
+    return (session_flags & SSNFLAG_ABORT_CLIENT);
+}
+
 void Flow::set_service(Packet* pkt, const char* new_service)
 {
     service = new_service;

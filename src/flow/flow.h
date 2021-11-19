@@ -229,7 +229,7 @@ public:
     uint32_t set_session_flags(uint32_t ssn_flags)
     { return ssn_state.session_flags |= ssn_flags; }
 
-    uint32_t get_session_flags()
+    uint32_t get_session_flags() const
     { return ssn_state.session_flags; }
 
     uint32_t clear_session_flags(uint32_t ssn_flags)
@@ -254,6 +254,8 @@ public:
     { return (ssn_state.session_flags & SSNFLAG_SEEN_BOTH) == SSNFLAG_SEEN_BOTH; }
 
     bool is_pdu_inorder(uint8_t dir);
+
+    bool is_direction_aborted(bool from_client) const;
 
     void set_proxied()
     { ssn_state.session_flags |= SSNFLAG_PROXIED; }

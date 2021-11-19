@@ -863,7 +863,7 @@ int32_t TcpReassembler::scan_data_pre_ack(TcpReassemblerState& trs, uint32_t* fl
             return flush_pt;
         }
 
-        if ( !next_no_gap(*tsn) )
+        if (!next_no_gap(*tsn) || (trs.paf_state.paf == StreamSplitter::STOP))
             break;
 
         tsn = tsn->next;
@@ -979,7 +979,8 @@ int32_t TcpReassembler::scan_data_post_ack(TcpReassemblerState& trs, uint32_t* f
             return flush_pt;
         }
 
-        if ( flush_len < tsn->c_len || ( splitter->is_paf() and !next_no_gap(*tsn) ) )
+        if (flush_len < tsn->c_len || (splitter->is_paf() and !next_no_gap(*tsn)) ||
+            (trs.paf_state.paf == StreamSplitter::STOP))
             break;
 
         tsn = tsn->next;
@@ -1016,7 +1017,7 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
             }
             while ( trs.sos.seglist.head and !p->flow->is_inspection_disabled() );
 
-            if ( !flags && trs.tracker->is_splitter_paf() )
+            if ( (trs.paf_state.paf == StreamSplitter::ABORT) && trs.tracker->is_splitter_paf() )
             {
                 fallback(*trs.tracker, trs.server_side);
                 return flush_on_data_policy(trs, p);

@@ -470,20 +470,22 @@ void HttpInspect::eval(Packet* p)
         return;
     }
 
-    if (!session_data->for_http2)
-        HttpModule::increment_peg_counts(PEG_TOTAL_BYTES, p->dsize);
-
-    // FIXIT-M Workaround for unexpected eval() calls. Convert to asserts when possible.
+    // FIXIT-M Workaround for unexpected eval() calls. Currently asserting when stream_user is in
+    // use due to calls to HttpInspect::eval on the raw stream_user packet
     if ((session_data->section_type[source_id] == SEC__NOT_COMPUTE) ||
         (session_data->type_expected[source_id] == SEC_ABORT)       ||
         (session_data->octets_reassembled[source_id] != p->dsize))
     {
-        // assert(session_data->type_expected[source_id] != SEC_ABORT);
-        // assert(session_data->section_type[source_id] != SEC__NOT_COMPUTE);
-        // assert(session_data->octets_reassembled[source_id] == p->dsize);
+        //assert(session_data->type_expected[source_id] != SEC_ABORT);
+        //assert(session_data->section_type[source_id] != SEC__NOT_COMPUTE);
+        //assert(session_data->octets_reassembled[source_id] == p->dsize);
         session_data->type_expected[source_id] = SEC_ABORT;
         return;
     }
+
+    if (!session_data->for_http2)
+        HttpModule::increment_peg_counts(PEG_TOTAL_BYTES, p->dsize);
+
     session_data->octets_reassembled[source_id] = STAT_NOT_PRESENT;
 
     // Don't make pkt_data for headers available to detection
@@ -640,7 +642,7 @@ void HttpInspect::clear(Packet* p)
 
     if ( current_section == nullptr )
     {
-        // assert(false); // FIXIT-M this happens a lot
+        //assert(false); //FIXIT-M This happens with stream_user
         return;
     }
 
