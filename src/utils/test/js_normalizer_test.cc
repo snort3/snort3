@@ -2217,6 +2217,44 @@ TEST_CASE("split in keyword", "[JSNormalizer]")
     }
 }
 
+TEST_CASE("split and continuation combined", "[JSNormalizer]")
+{
+    SECTION("PDU 1 [cont] PDU 2 [end end cont end]")
+    {
+        const char src1[] = "a b"    "";
+        const char src2[] = "c d"    "</script>";
+        const char src3[] = ""       "</script>";
+        const char src4[] = "\n"     "";
+
+        const char exp1[] = "var_0000 var_0001";
+        const char exp2[] = "var_0000 var_0002 var_0003";
+        const char exp3[] = "var_0000 var_0002 var_0003";
+        const char exp4[] = "var_0000 var_0002 var_0003";
+
+        char dst1[sizeof(exp1)];
+        char dst2[sizeof(exp2)];
+        char dst3[sizeof(exp3)];
+        char dst4[sizeof(exp4)];
+
+        JSIdentifierCtx ident_ctx(DEPTH, s_ident_built_in);
+        JSNormalizer norm(ident_ctx, DEPTH, MAX_TEMPLATE_NESTING, MAX_SCOPE_DEPTH);
+
+        DO(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1);
+        CHECK(!memcmp(exp1, dst1, sizeof(exp1) - 1));
+
+        TRY(src2, sizeof(src2) - 1, dst2, sizeof(dst2) - 1, JSTokenizer::SCRIPT_ENDED);
+        CHECK(!memcmp(exp2, dst2, sizeof(exp2) - 1));
+
+        TRY(src3, sizeof(src3) - 1, dst3, sizeof(dst3) - 1, JSTokenizer::SCRIPT_ENDED);
+        CHECK(!memcmp(exp3, dst3, sizeof(exp3) - 1));
+
+        DO(src4, sizeof(src4) - 1, dst4, sizeof(dst4) - 1);
+        CHECK(!memcmp(exp4, dst4, sizeof(exp4) - 1));
+
+        CLOSE();
+    }
+}
+
 TEST_CASE("memcap", "[JSNormalizer]")
 {
     SECTION("3 tokens")
@@ -3292,7 +3330,7 @@ TEST_CASE("built-in identifiers split", "[JSNormalizer]")
 static constexpr const char* s_closing_tag = "</script>";
 
 static const std::string make_input(const char* begin, const char* mid,
-                             const char* end, size_t len) 
+                             const char* end, size_t len)
 {
     std::string s(begin);
     int fill = (len - strlen(begin) - strlen(end) - strlen(s_closing_tag)) / strlen(mid);

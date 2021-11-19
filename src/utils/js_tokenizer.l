@@ -26,6 +26,7 @@
 %option c++
 
 %{
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -48,9 +49,38 @@
         states_push();                                      \
     }
 
-#define EXEC(f) { auto r = (f); if (r) { BEGIN(regst); return r; } }
-#define EEOF(f) { auto r = (f); if (r) { if (r != SCRIPT_CONTINUE) BEGIN(regst); return r; } }
+#define RETURN(r)                               \
+     {                                          \
+         if ((r) == SCRIPT_CONTINUE)            \
+             states_over();                     \
+         else                                   \
+             states_reset();                    \
+         return (r);                            \
+     }
+
+#define EXEC(f)                                 \
+     {                                          \
+         auto r = (f);                          \
+         if (r)                                 \
+         {                                      \
+             BEGIN(regst);                      \
+             RETURN(r)                          \
+         }                                      \
+     }
+
+#define EEOF(f)                                 \
+     {                                          \
+         auto r = (f);                          \
+         if (r)                                 \
+         {                                      \
+             if (r != SCRIPT_CONTINUE)          \
+                 BEGIN(regst);                  \
+             RETURN(r)                          \
+         }                                      \
+     }
+
 constexpr bool JSTokenizer::insert_semicolon[ASI_GROUP_MAX][ASI_GROUP_MAX];
+
 %}
 
 /* The following grammar was created based on ECMAScript specification */
@@ -963,71 +993,72 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 %x regex
 
 %%
+
 {WHITESPACES}                       { }
 {CHAR_ESCAPE_SEQUENCES}             { }
 {LINE_TERMINATORS}                  { BEGIN(regst); newline_found = true; }
 
-<INITIAL,regex,dqstr,regst,sqstr,divop>{HTML_TAG_SCRIPT_OPEN} { BEGIN(regst); return OPENING_TAG; }
-{HTML_TAG_SCRIPT_CLOSE}             { BEGIN(regst); if (!global_scope()) return ENDED_IN_INNER_SCOPE; else return SCRIPT_ENDED; }
+<INITIAL,regex,dqstr,regst,sqstr,divop>{HTML_TAG_SCRIPT_OPEN} { BEGIN(regst); RETURN(OPENING_TAG) }
+{HTML_TAG_SCRIPT_CLOSE}             { BEGIN(regst); if (!global_scope()) RETURN(ENDED_IN_INNER_SCOPE) else RETURN(SCRIPT_ENDED) }
 
        {HTML_COMMENT_OPEN}          { BEGIN(lcomm); }
        {LINE_COMMENT_START}         { BEGIN(lcomm); }
 <lcomm>{LINE_COMMENT_END1}          { BEGIN(regst); newline_found = true; }
 <lcomm>{LINE_COMMENT_END2}          { BEGIN(regst); newline_found = true; }
-<lcomm>{LINE_COMMENT_END3}          { BEGIN(regst); return OPENING_TAG; }
-<lcomm>{LINE_COMMENT_END4}          { BEGIN(regst); return CLOSING_TAG; }
+<lcomm>{LINE_COMMENT_END3}          { BEGIN(regst); RETURN(OPENING_TAG) }
+<lcomm>{LINE_COMMENT_END4}          { BEGIN(regst); RETURN(CLOSING_TAG) }
 <lcomm>{LINE_COMMENT_SKIP}          { }
-<lcomm><<EOF>>                      { states_apply(); return SCRIPT_CONTINUE; }
+<lcomm><<EOF>>                      { RETURN(SCRIPT_CONTINUE) }
 
        {BLOCK_COMMENT_START}        { BEGIN(bcomm); }
 <bcomm>{BLOCK_COMMENT_END1}         { BEGIN(regst); }
-<bcomm>{BLOCK_COMMENT_END2}         { BEGIN(regst); return OPENING_TAG; }
-<bcomm>{BLOCK_COMMENT_END3}         { BEGIN(regst); return CLOSING_TAG; }
+<bcomm>{BLOCK_COMMENT_END2}         { BEGIN(regst); RETURN(OPENING_TAG) }
+<bcomm>{BLOCK_COMMENT_END3}         { BEGIN(regst); RETURN(CLOSING_TAG) }
 <bcomm>{BLOCK_COMMENT_LINE1}        |
 <bcomm>{BLOCK_COMMENT_LINE2}        { newline_found = true;}
 <bcomm>{BLOCK_COMMENT_SKIP}         { }
-<bcomm><<EOF>>                      { states_apply(); return SCRIPT_CONTINUE; }
+<bcomm><<EOF>>                      { RETURN(SCRIPT_CONTINUE) }
 
        {LITERAL_DQ_STRING_START}    { do_semicolon_insertion(ASI_GROUP_7); EXEC(do_spacing(LITERAL)) ECHO; BEGIN(dqstr); set_ident_norm(true); }
 <dqstr>{LITERAL_DQ_STRING_END}      { ECHO; BEGIN(divop); }
-<dqstr>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); return CLOSING_TAG; }
+<dqstr>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); RETURN(CLOSING_TAG) }
 <dqstr>\\{CR}{LF}                   { }
 <dqstr>\\{LF}                       { }
 <dqstr>\\{CR}                       { }
-<dqstr>{LINE_TERMINATORS}           { BEGIN(regst); return BAD_TOKEN; }
+<dqstr>{LINE_TERMINATORS}           { BEGIN(regst); RETURN(BAD_TOKEN) }
 <dqstr>{LITERAL_DQ_STRING_SKIP}     { ECHO; }
 <dqstr>{LITERAL_DQ_STRING_TEXT}     { ECHO; }
-<dqstr><<EOF>>                      { states_apply(); return SCRIPT_CONTINUE; }
+<dqstr><<EOF>>                      { RETURN(SCRIPT_CONTINUE) }
 
        {LITERAL_SQ_STRING_START}    { do_semicolon_insertion(ASI_GROUP_7); EXEC(do_spacing(LITERAL)) ECHO; BEGIN(sqstr); set_ident_norm(true); }
 <sqstr>{LITERAL_SQ_STRING_END}      { ECHO; BEGIN(divop); }
-<sqstr>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); return CLOSING_TAG; }
+<sqstr>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); RETURN(CLOSING_TAG) }
 <sqstr>\\{CR}{LF}                   { }
 <sqstr>\\{LF}                       { }
 <sqstr>\\{CR}                       { }
-<sqstr>{LINE_TERMINATORS}           { BEGIN(regst); return BAD_TOKEN; }
+<sqstr>{LINE_TERMINATORS}           { BEGIN(regst); RETURN(BAD_TOKEN) }
 <sqstr>{LITERAL_SQ_STRING_SKIP}     { ECHO; }
 <sqstr>{LITERAL_SQ_STRING_TEXT}     { ECHO; }
-<sqstr><<EOF>>                      { states_apply(); return SCRIPT_CONTINUE; }
+<sqstr><<EOF>>                      { RETURN(SCRIPT_CONTINUE) }
 
        {LITERAL_TEMPLATE_START}                  { do_semicolon_insertion(ASI_GROUP_7); EXEC(do_spacing(LITERAL)) ECHO; BEGIN(tmpll); set_ident_norm(true); }
 <tmpll>(\\\\)*{LITERAL_TEMPLATE_END}             { ECHO; BEGIN(divop); }
 <tmpll>(\\\\)*{LITERAL_TEMPLATE_SUBST_START}     { EXEC(process_subst_open()) }
-<tmpll>{HTML_TAG_SCRIPT_CLOSE}                   { BEGIN(regst); return CLOSING_TAG; }
+<tmpll>{HTML_TAG_SCRIPT_CLOSE}                   { BEGIN(regst); RETURN(CLOSING_TAG) }
 <tmpll>(\\\\)*\\{LITERAL_TEMPLATE_SUBST_START}   | /* escaped template substitution */
 <tmpll>(\\\\)*\\{LITERAL_TEMPLATE_END}           | /* escaped backtick */
 <tmpll>{LITERAL_TEMPLATE_OTHER}                  { ECHO; }
-<tmpll><<EOF>>                                   { return SCRIPT_CONTINUE; }
+<tmpll><<EOF>>                                   { RETURN(SCRIPT_CONTINUE) }
 
 <regst>{LITERAL_REGEX_START}        { do_semicolon_insertion(ASI_GROUP_7); EXEC(do_spacing(LITERAL)) yyout << '/'; states_correct(1); yyless(1); BEGIN(regex); set_ident_norm(true); }
 <regex>{LITERAL_REGEX_END}          { ECHO; BEGIN(divop); }
-<regex>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); return CLOSING_TAG; }
+<regex>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); RETURN(CLOSING_TAG) }
 <regex>{LITERAL_REGEX_SKIP}         { ECHO; }
 <regex>\\{LF}                       |
 <regex>\\{CR}                       |
-<regex>{LINE_TERMINATORS}           { BEGIN(regst); return BAD_TOKEN; }
+<regex>{LINE_TERMINATORS}           { BEGIN(regst); RETURN(BAD_TOKEN) }
 <regex>[^<{LF}{CR}{LS}{PS}\\\/]+    { ECHO; }
-<regex><<EOF>>                      { states_apply(); return SCRIPT_CONTINUE; }
+<regex><<EOF>>                      { RETURN(SCRIPT_CONTINUE) }
 
 <divop>{DIV_OPERATOR}               |
 <divop>{DIV_ASSIGNMENT_OPERATOR}    { previous_group = ASI_OTHER; ECHO; token = PUNCTUATOR; BEGIN(INITIAL); set_ident_norm(true); }
@@ -1197,7 +1228,6 @@ JSTokenizer::JSRet JSTokenizer::eval_eof()
     }
 
     // Normal termination
-    states_apply();
     return SCRIPT_CONTINUE;
 }
 
@@ -1349,6 +1379,29 @@ JSTokenizer::JSRet JSTokenizer::process_subst_open()
     return scope_push(BRACES);
 }
 
+void JSTokenizer::states_reset()
+{
+    if (tmp_buffer)
+        switch_to_initial();
+
+    brace_depth = {};
+    token = UNDEFINED;
+    previous_group = ASI_OTHER;
+
+    memset(states, 0, sizeof(states));
+
+    delete[] tmp_buf;
+    tmp_buf = nullptr;
+    tmp_buf_size = 0;
+
+    output_steps_back = 0;
+    newline_found = false;
+    scope_stack = {};
+
+    scope_push(GLOBAL);
+    BEGIN(regst);
+}
+
 void JSTokenizer::states_push()
 {
     assert(yyleng != 0);
@@ -1369,7 +1422,7 @@ void JSTokenizer::states_correct(int take_off)
     state.orig_len -= yyleng - take_off;
 }
 
-void JSTokenizer::states_apply()
+void JSTokenizer::states_over()
 {
     int tail_size = 0;
     int outbuf_pos = yyout.tellp();

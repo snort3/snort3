@@ -84,12 +84,12 @@ private:
         ASI_GROUP_4,    // ]
         ASI_GROUP_5,    // )
         ASI_GROUP_6,    // + -
-        ASI_GROUP_7,    // this true false null identifier literal 
+        ASI_GROUP_7,    // this true false null identifier literal
                         //IDENTIFIER + LITERAL + KEYWORD_LITERAL
         ASI_GROUP_8,    // ++ --
         ASI_GROUP_9,    // continue break return debugger // same as KEYWORD_BA
         ASI_GROUP_10,   // var function new delete void typeof if do while for with
-                        // switch throw try ~ + 
+                        // switch throw try ~ +
         ASI_GROUP_MAX
     };
 
@@ -140,8 +140,9 @@ private:
     JSRet process_subst_open();
 
     void states_push();
-    void states_apply();
     void states_correct(int);
+    void states_reset();
+    void states_over();
 
     // scope stack servicing
     JSRet scope_push(ScopeType);
@@ -199,4 +200,3 @@ private:
 };
 
 #endif // JS_TOKENIZER_H
-
