@@ -1388,7 +1388,7 @@ void JSTokenizer::states_reset()
     token = UNDEFINED;
     previous_group = ASI_OTHER;
 
-    memset(states, 0, sizeof(states));
+    memset(&states, 0, sizeof(states));
 
     delete[] tmp_buf;
     tmp_buf = nullptr;
