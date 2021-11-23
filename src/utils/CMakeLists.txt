@@ -21,7 +21,7 @@ set( UTIL_INCLUDES
 
 FLEX_TARGET ( js_tokenizer ${CMAKE_CURRENT_SOURCE_DIR}/js_tokenizer.l
     ${CMAKE_CURRENT_BINARY_DIR}/js_tokenizer.cc
-    COMPILE_FLAGS -Ca
+    COMPILE_FLAGS "-Caf -8"
 )
 
 add_library ( utils OBJECT

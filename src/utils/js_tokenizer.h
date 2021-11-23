@@ -117,10 +117,13 @@ public:
     ~JSTokenizer() override;
 
     // internal actions before calling main loop
-    void pre_yylex();
+    void pre_yylex(bool adjust_output = false);
 
     // returns JSRet
     int yylex() override;
+
+    size_t get_bytes_read()
+    { auto r = bytes_read; bytes_read = 0; return r; }
 
 protected:
     [[noreturn]] void LexerError(const char* msg) override
@@ -164,6 +167,8 @@ private:
     JSToken token = UNDEFINED;
     ASIGroup previous_group = ASI_OTHER;
     JSIdentifierCtxBase& ident_ctx;
+    size_t bytes_read;
+    size_t tmp_bytes_read;
 
     struct
     {

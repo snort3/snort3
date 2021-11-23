@@ -25,6 +25,10 @@
 /* Generate C++ scanner */
 %option c++
 
+%option batch
+
+%option never-interactive
+
 %{
 
 #ifdef HAVE_CONFIG_H
@@ -1174,6 +1178,7 @@ JSTokenizer::JSTokenizer(std::istream& in, std::ostream& out,
     : yyFlexLexer(in, out),
       max_template_nesting(max_template_nesting),
       ident_ctx(mapper),
+      bytes_read(0),
       tmp_buf(buf),
       tmp_buf_size(buf_size),
       tmp_cap_size(cap_size),
@@ -1192,10 +1197,14 @@ JSTokenizer::~JSTokenizer()
     tmp_buf_size = 0;
 }
 
-void JSTokenizer::pre_yylex()
+void JSTokenizer::pre_yylex(bool adjust_output)
 {
     assert(output_steps_back >= 0);
-    yyout.seekp(-output_steps_back, std::ios_base::cur);
+
+    if (adjust_output)
+        yyout.seekp(-output_steps_back, std::ios_base::cur);
+
+    yy_flush_buffer(YY_CURRENT_BUFFER);
 }
 
 void JSTokenizer::switch_to_temporal(const std::string& data)
@@ -1204,6 +1213,8 @@ void JSTokenizer::switch_to_temporal(const std::string& data)
     cur_buffer = YY_CURRENT_BUFFER;
     tmp_buffer = yy_create_buffer(tmp, data.size());
     yy_switch_to_buffer((YY_BUFFER_STATE)tmp_buffer);
+
+    tmp_bytes_read = bytes_read;
 }
 
 void JSTokenizer::switch_to_initial()
@@ -1211,6 +1222,8 @@ void JSTokenizer::switch_to_initial()
     yy_switch_to_buffer((YY_BUFFER_STATE)cur_buffer);
     yy_delete_buffer((YY_BUFFER_STATE)tmp_buffer);
     tmp_buffer = nullptr;
+
+    bytes_read = tmp_bytes_read;
 }
 
 // A return value of this method uses to terminate the scanner
@@ -1404,7 +1417,10 @@ void JSTokenizer::states_reset()
 
 void JSTokenizer::states_push()
 {
-    assert(yyleng != 0);
+    if (!yyleng)
+        return;
+
+    bytes_read += yyleng;
 
     sp++;
     sp %= JSTOKENIZER_MAX_STATES;
@@ -1418,8 +1434,11 @@ void JSTokenizer::states_push()
 
 void JSTokenizer::states_correct(int take_off)
 {
+    auto delta = yyleng - take_off;
     auto& state = states[sp];
-    state.orig_len -= yyleng - take_off;
+
+    bytes_read -= delta;
+    state.orig_len -= delta;
 }
 
 void JSTokenizer::states_over()

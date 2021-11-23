@@ -132,6 +132,12 @@ using namespace std;
         CHECK(!memcmp((exp), act, (exp_len)));                          \
     }
 
+#define BYTES_READ(s, b)                                           \
+    ((s).clear(),                                                  \
+     std::max((std::streamsize)(s).tellg(),                        \
+              (std::streamsize)(b).last_chunk_offset())            \
+     - (b).last_chunk_offset())
+
 TEST_CASE("input buffer - basic one source", "[Stream buffers]")
 {
     const char* exp = "Early bird gets a corn.";
@@ -1349,16 +1355,20 @@ TEST_CASE("input stream - last chunk offset", "[Stream buffers]")
         CHECK(0 == b.last_chunk_offset());
 
         s.read(act, 1);
-        CHECK(1 == b.last_chunk_offset());
+        CHECK(0 == b.last_chunk_offset());
+        CHECK(1 == BYTES_READ(s, b));
 
         s.read(act, 2);
-        CHECK(3 == b.last_chunk_offset());
+        CHECK(0 == b.last_chunk_offset());
+        CHECK(3 == BYTES_READ(s, b));
 
         s.read(act, 5);
-        CHECK(8 == b.last_chunk_offset());
+        CHECK(0 == b.last_chunk_offset());
+        CHECK(8 == BYTES_READ(s, b));
 
         s.read(act, 1);
-        CHECK(8 == b.last_chunk_offset());
+        CHECK(0 == b.last_chunk_offset());
+        CHECK(8 == BYTES_READ(s, b));
     }
 
     SECTION("two buffers")
@@ -1373,22 +1383,28 @@ TEST_CASE("input stream - last chunk offset", "[Stream buffers]")
         CHECK(0 == b.last_chunk_offset());
 
         b.pubsetbuf(dat1, strlen(dat1))->pubsetbuf(dat2, strlen(dat2));
-        CHECK(0 == b.last_chunk_offset());
+        CHECK(4 == b.last_chunk_offset());
+        CHECK(0 == BYTES_READ(s, b));
 
         s.read(act, 1);
-        CHECK(0 == b.last_chunk_offset());
+        CHECK(4 == b.last_chunk_offset());
+        CHECK(0 == BYTES_READ(s, b));
 
         s.read(act, 1);
-        CHECK(0 == b.last_chunk_offset());
+        CHECK(4 == b.last_chunk_offset());
+        CHECK(0 == BYTES_READ(s, b));
 
         s.read(act, 4);
-        CHECK(2 == b.last_chunk_offset());
+        CHECK(4 == b.last_chunk_offset());
+        CHECK(2 == BYTES_READ(s, b));
 
         s.read(act, 2);
         CHECK(4 == b.last_chunk_offset());
+        CHECK(4 == BYTES_READ(s, b));
 
         s.read(act, 1);
         CHECK(4 == b.last_chunk_offset());
+        CHECK(4 == BYTES_READ(s, b));
     }
 
     SECTION("three buffers")
@@ -1404,22 +1420,28 @@ TEST_CASE("input stream - last chunk offset", "[Stream buffers]")
         CHECK(0 == b.last_chunk_offset());
 
         b.pubsetbuf(dat1, strlen(dat1))->pubsetbuf(dat2, strlen(dat2))->pubsetbuf(dat3, strlen(dat3));
-        CHECK(0 == b.last_chunk_offset());
+        CHECK(8 == b.last_chunk_offset());
+        CHECK(0 == BYTES_READ(s, b));
 
         s.read(act, 3);
-        CHECK(0 == b.last_chunk_offset());
+        CHECK(8 == b.last_chunk_offset());
+        CHECK(0 == BYTES_READ(s, b));
 
         s.read(act, 3);
-        CHECK(0 == b.last_chunk_offset());
+        CHECK(8 == b.last_chunk_offset());
+        CHECK(0 == BYTES_READ(s, b));
 
         s.read(act, 3);
-        CHECK(1 == b.last_chunk_offset());
+        CHECK(8 == b.last_chunk_offset());
+        CHECK(1 == BYTES_READ(s, b));
 
         s.read(act, 3);
-        CHECK(4 == b.last_chunk_offset());
+        CHECK(8 == b.last_chunk_offset());
+        CHECK(4 == BYTES_READ(s, b));
 
         s.read(act, 1);
-        CHECK(4 == b.last_chunk_offset());
+        CHECK(8 == b.last_chunk_offset());
+        CHECK(4 == BYTES_READ(s, b));
     }
 }
 

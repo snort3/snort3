@@ -42,9 +42,10 @@ istreambuf_glue::istreambuf_glue() :
 
 streamsize istreambuf_glue::last_chunk_offset() const
 {
-    auto c = gptr();
-    auto b = eback();
-    return last_chunk() ? c - b : 0;
+    if (chunks.empty())
+        return 0;
+
+    return get<2>(chunks.back());
 }
 
 streambuf* istreambuf_glue::setbuf(char* s, streamsize n)

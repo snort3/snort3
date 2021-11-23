@@ -51,6 +51,14 @@ JSNormalizer::~JSNormalizer()
 
 JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len)
 {
+    assert(src);
+
+    if (src_len == 0)
+    {
+        src_next = src;
+        return JSTokenizer::SCRIPT_CONTINUE;
+    }
+
     if (rem_bytes == 0 && !unlim)
     {
         debug_log(5, http_trace, TRACE_JS_PROC, nullptr,
@@ -71,12 +79,16 @@ JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len)
         ->pubsetbuf(const_cast<char*>(src), len);
     out_buf.reserve(src_len * BUFF_EXP_FACTOR);
 
-    tokenizer.pre_yylex();
+    size_t t_bytes = in_buf.last_chunk_offset();
+    tokenizer.pre_yylex(t_bytes != 0);
+
     JSTokenizer::JSRet ret = static_cast<JSTokenizer::JSRet>(tokenizer.yylex());
     in.clear();
     out.clear();
 
-    size_t r_bytes = in_buf.last_chunk_offset();
+    size_t r_bytes = tokenizer.get_bytes_read();
+    r_bytes = max(r_bytes, t_bytes) - t_bytes;
+
     if (!unlim)
         rem_bytes -= r_bytes;
     src_next = src + r_bytes;

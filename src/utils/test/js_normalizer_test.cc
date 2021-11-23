@@ -3358,75 +3358,87 @@ static JSTokenizer::JSRet norm_ret(JSNormalizer& normalizer, const std::string& 
     return normalizer.normalize(input.c_str(), input.size());
 }
 
-TEST_CASE("benchmarking - ::normalize() - literals", "[JSNormalizer]")
+TEST_CASE("JS Normalizer, literals by 8 K", "[JSNormalizer]")
 {
     JSIdentifierCtxTest ident_ctx;
     JSNormalizer normalizer(ident_ctx, UNLIM_DEPTH, MAX_TEMPLATE_NESTING, MAX_SCOPE_DEPTH);
     char dst[DEPTH];
-    auto whitespace = make_input("", " ", "", DEPTH);
-    auto block_comment = make_input("/*", " ", "*/", DEPTH);
-    auto double_quote = make_input("\"", " ", "\"", DEPTH);
 
-    BENCHMARK("memcpy - whitespaces - 65535 bytes")
+    constexpr size_t size = 1 << 13;
+
+    auto data_pl = make_input("", ".", "", size);
+    auto data_ws = make_input("", " ", "", size);
+    auto data_bc = make_input("/*", " ", "*/", size);
+    auto data_dq = make_input("\"", " ", "\"", size);
+
+    BENCHMARK("memcpy()")
     {
-        return memcpy(dst, whitespace.c_str(), whitespace.size());
+        return memcpy(dst, data_pl.c_str(), data_pl.size());
     };
 
-    REQUIRE(norm_ret(normalizer, whitespace) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("whitespaces - 65535 bytes")
+    REQUIRE(norm_ret(normalizer, data_ws) == JSTokenizer::SCRIPT_ENDED);
+    BENCHMARK("whitespaces")
     {
         normalizer.rewind_output();
-        return normalizer.normalize(whitespace.c_str(), whitespace.size());
+        return normalizer.normalize(data_ws.c_str(), data_ws.size());
     };
 
-    REQUIRE(norm_ret(normalizer, block_comment) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("block comment - 65535 bytes")
+    REQUIRE(norm_ret(normalizer, data_bc) == JSTokenizer::SCRIPT_ENDED);
+    BENCHMARK("block comment")
     {
         normalizer.rewind_output();
-        return normalizer.normalize(block_comment.c_str(), block_comment.size());
+        return normalizer.normalize(data_bc.c_str(), data_bc.size());
     };
 
-    REQUIRE(norm_ret(normalizer, double_quote) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("double quotes string - 65535 bytes")
+    REQUIRE(norm_ret(normalizer, data_dq) == JSTokenizer::SCRIPT_ENDED);
+    BENCHMARK("double quotes string")
     {
         normalizer.rewind_output();
-        return normalizer.normalize(double_quote.c_str(), double_quote.size());
-    };
-
-    constexpr size_t depth_8k = 8192;
-
-    auto whitespace_8k = make_input("", " ", "", depth_8k);
-    auto block_comment_8k = make_input("/*", " ", "*/", depth_8k);
-    auto double_quote_8k = make_input("\"", " ", "\"", depth_8k);
-
-    BENCHMARK("memcpy - whitespaces - 8192 bytes")
-    {
-        return memcpy(dst, whitespace_8k.c_str(), whitespace_8k.size());
-    };
-
-    REQUIRE(norm_ret(normalizer, whitespace_8k) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("whitespaces - 8192 bytes")
-    {
-        normalizer.rewind_output();
-        return normalizer.normalize(whitespace_8k.c_str(), whitespace_8k.size());
-    };
-
-    REQUIRE(norm_ret(normalizer, block_comment_8k) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("block comment - 8192 bytes")
-    {
-        normalizer.rewind_output();
-        return normalizer.normalize(block_comment_8k.c_str(), block_comment_8k.size());
-    };
-
-    REQUIRE(norm_ret(normalizer, double_quote_8k) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("double quotes string - 8192 bytes")
-    {
-        normalizer.rewind_output();
-        return normalizer.normalize(double_quote_8k.c_str(), double_quote_8k.size());
+        return normalizer.normalize(data_dq.c_str(), data_dq.size());
     };
 }
 
-TEST_CASE("benchmarking - ::normalize() - identifiers", "[JSNormalizer]")
+TEST_CASE("JS Normalizer, literals by 64 K", "[JSNormalizer]")
+{
+    JSIdentifierCtxTest ident_ctx;
+    JSNormalizer normalizer(ident_ctx, UNLIM_DEPTH, MAX_TEMPLATE_NESTING, MAX_SCOPE_DEPTH);
+    char dst[DEPTH];
+
+    constexpr size_t size = 1 << 16;
+
+    auto data_pl = make_input("", ".", "", size);
+    auto data_ws = make_input("", " ", "", size);
+    auto data_bc = make_input("/*", " ", "*/", size);
+    auto data_dq = make_input("\"", " ", "\"", size);
+
+    BENCHMARK("memcpy()")
+    {
+        return memcpy(dst, data_pl.c_str(), data_pl.size());
+    };
+
+    REQUIRE(norm_ret(normalizer, data_ws) == JSTokenizer::SCRIPT_ENDED);
+    BENCHMARK("whitespaces")
+    {
+        normalizer.rewind_output();
+        return normalizer.normalize(data_ws.c_str(), data_ws.size());
+    };
+
+    REQUIRE(norm_ret(normalizer, data_bc) == JSTokenizer::SCRIPT_ENDED);
+    BENCHMARK("block comment")
+    {
+        normalizer.rewind_output();
+        return normalizer.normalize(data_bc.c_str(), data_bc.size());
+    };
+
+    REQUIRE(norm_ret(normalizer, data_dq) == JSTokenizer::SCRIPT_ENDED);
+    BENCHMARK("double quotes string")
+    {
+        normalizer.rewind_output();
+        return normalizer.normalize(data_dq.c_str(), data_dq.size());
+    };
+}
+
+TEST_CASE("JS Normalizer, id normalization", "[JSNormalizer]")
 {
     // around 11 000 identifiers
     std::string input;
@@ -3471,53 +3483,47 @@ TEST_CASE("benchmarking - ::normalize() - identifiers", "[JSNormalizer]")
     };
 }
 
-TEST_CASE("benchmarking - ::normalize() - scope", "[JSNormalizer]")
+TEST_CASE("JS Normalizer, scope tracking", "[JSNormalizer]")
 {
     constexpr uint32_t depth = 65535;
     JSIdentifierCtxTest ident_ctx;
     JSNormalizer normalizer(ident_ctx, UNLIM_DEPTH, MAX_TEMPLATE_NESTING, depth);
-    char dst[depth];
 
     auto src_ws = make_input("", " ", "", depth);
     auto src_brace_rep = make_input_repeat("{}", depth);
     auto src_paren_rep = make_input_repeat("()", depth);
     auto src_bracket_rep = make_input_repeat("[]", depth);
 
-    BENCHMARK("memcpy - ...{}{}{}... - 65535 bytes")
-    {
-        return memcpy(dst, src_brace_rep.c_str(), src_brace_rep.size());
-    };
-
     REQUIRE(norm_ret(normalizer, src_ws) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("whitespaces - 65535 bytes")
+    BENCHMARK("whitespaces")
     {
         normalizer.rewind_output();
         return normalizer.normalize(src_ws.c_str(), src_ws.size());
     };
 
     REQUIRE(norm_ret(normalizer, src_brace_rep) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("...{}{}{}... - 65535 bytes")
+    BENCHMARK("...{}{}{}...")
     {
         normalizer.rewind_output();
         return normalizer.normalize(src_brace_rep.c_str(), src_brace_rep.size());
     };
 
     REQUIRE(norm_ret(normalizer, src_paren_rep) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("...()()()... - 65535 bytes")
+    BENCHMARK("...()()()...")
     {
         normalizer.rewind_output();
         return normalizer.normalize(src_paren_rep.c_str(), src_paren_rep.size());
     };
 
     REQUIRE(norm_ret(normalizer, src_bracket_rep) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("...[][][]... - 65535 bytes")
+    BENCHMARK("...[][][]...")
     {
         normalizer.rewind_output();
         return normalizer.normalize(src_bracket_rep.c_str(), src_bracket_rep.size());
     };
 }
 
-TEST_CASE("benchmarking - ::normalize() - automatic semicolon insertion")
+TEST_CASE("JS Normalizer, automatic semicolon", "[JSNormalizer]")
 {
     auto w_semicolons = make_input("", "a;\n", "", DEPTH);
     auto wo_semicolons = make_input("", "a \n", "", DEPTH);
