@@ -88,9 +88,6 @@ bool LogCodecModule::set(const char*, Value& v, SnortConfig*)
         if ( v.get_bool() )
             flags |= ALERT_FLAG_MSG;
     }
-    else
-        return false;
-
     return true;
 }
 

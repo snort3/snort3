@@ -208,6 +208,7 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
 
     if ( v.is("idle_timeout") )
         config.flow_cache_cfg.proto[to_utype(type)].nominal_timeout = v.get_uint32();
+
     else if ( v.is("cap_weight") )
         config.flow_cache_cfg.proto[to_utype(type)].cap_weight = v.get_uint16();
 

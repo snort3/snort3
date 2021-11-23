@@ -1,7 +1,6 @@
 
 set (LOGGER_SOURCES
     alert_luajit.cc
-    alert_sf_socket.cc
     log_codecs.cc
     loggers.cc
     loggers.h

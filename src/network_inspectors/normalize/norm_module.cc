@@ -321,9 +321,6 @@ bool NormalizeModule::set(const char* fqn, Value& v, SnortConfig* sc)
     else if ( v.is("icmp6") )
         Norm_Set(&config, NORM_ICMP6, v.get_bool());
 
-    else
-        return false;
-
     return true;
 }
 

@@ -72,7 +72,6 @@ typedef struct
 /* Abstracted routing table API */
 table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,
     long data_size, uint32_t mem_cap);
-void sfrt_flat_free(TABLE_PTR table);
 
 GENERIC sfrt_flat_lookup(const snort::SfIp* ip, table_flat_t* table);
 GENERIC sfrt_flat_dir8x_lookup(const snort::SfIp* ip, table_flat_t* table);

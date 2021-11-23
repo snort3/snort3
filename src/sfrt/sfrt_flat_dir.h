@@ -69,7 +69,6 @@ typedef struct
 /******************************************************************
    DIR-n-m functions, these are not intended to be called directly */
 TABLE_PTR sfrt_dir_flat_new(uint32_t mem_cap, int count,...);
-void sfrt_dir_flat_free(TABLE_PTR);
 tuple_flat_t sfrt_dir_flat_lookup(const uint32_t* addr, int numAddrDwords, TABLE_PTR table);
 int sfrt_dir_flat_insert(const uint32_t* addr, int numAddrDwords, int len, word data_index,
                     int behavior, TABLE_PTR, updateEntryInfoFunc updateEntry, INFO *data);

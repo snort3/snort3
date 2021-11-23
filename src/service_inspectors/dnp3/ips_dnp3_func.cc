@@ -140,8 +140,7 @@ ProfileStats* Dnp3FuncModule::get_profile() const
 
 bool Dnp3FuncModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~"))
-        return false;
+    assert(v.is("~"));
 
     long n;
 

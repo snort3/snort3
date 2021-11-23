@@ -234,9 +234,6 @@ bool SipModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("methods") )
         sip_methods = v.get_string();
 
-    else
-        return false;
-
     return true;
 }
 

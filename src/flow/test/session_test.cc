@@ -62,8 +62,7 @@ TEST(session_test, seesion_class_test)
     ssn->set_extra_data(nullptr, 1);
 
     CHECK(true == ssn->is_sequenced(1));
-    CHECK(true == ssn->are_packets_missing(1));
-
+    CHECK(false == ssn->are_packets_missing(1));
 
     CHECK(SSN_DIR_NONE == ssn->get_reassembly_direction());
     CHECK(SSN_MISSING_NONE == ssn->missing_in_reassembled(1));

@@ -61,9 +61,7 @@ public:
 
 bool MsgModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~") )
-        return false;
-
+    assert(v.is("~"));
     msg = v.get_string();
     return true;
 }

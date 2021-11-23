@@ -241,9 +241,6 @@ bool Asn1Module::set(const char*, Value& v, SnortConfig*)
         data.offset_type = REL_OFFSET;
         data.offset = v.get_int32();
     }
-    else
-        return false;
-
     return true;
 }
 

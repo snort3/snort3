@@ -61,12 +61,8 @@ StreamIcmpConfig* StreamIcmpModule::get_data()
 
 bool StreamIcmpModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("session_timeout") )
-        config->session_timeout = v.get_uint32();
-
-    else
-        return false;
-
+    assert(v.is("session_timeout"));
+    config->session_timeout = v.get_uint32();
     return true;
 }
 

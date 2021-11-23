@@ -17,6 +17,10 @@
 //--------------------------------------------------------------------------
 // http2_utils.cc author Maya Dagon <mdagon@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "http2_utils.h"
 
 #include <cassert>

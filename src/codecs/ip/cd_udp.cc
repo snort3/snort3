@@ -219,8 +219,6 @@ bool UdpModule::set(const char*, Value& v, SnortConfig*)
         v.get_bits(ports);
         config->set_geneve_ports(ports);
     }
-    else
-        return false;
 
     return true;
 }

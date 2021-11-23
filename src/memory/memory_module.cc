@@ -84,9 +84,6 @@ bool MemoryModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("threshold") )
         sc->memory->threshold = v.get_uint8();
 
-    else
-        return false;
-
     return true;
 }
 

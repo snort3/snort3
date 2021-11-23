@@ -68,8 +68,7 @@ bool EventManager::log_enabled = true;
 
 void EventManager::add_plugin(const LogApi* api)
 {
-    // can't assert - alert_sf_socket operates differently
-    //assert(api->flags & (OUTPUT_TYPE_FLAG__ALERT | OUTPUT_TYPE_FLAG__LOG));
+    assert(api->flags & (OUTPUT_TYPE_FLAG__ALERT | OUTPUT_TYPE_FLAG__LOG));
     s_outputs.emplace_back(new Output(api));
 }
 

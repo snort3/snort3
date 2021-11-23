@@ -510,9 +510,6 @@ bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
         else
             return false;
     }
-    else
-        return false;
-
     return true;
 }
 
@@ -666,9 +663,6 @@ TEST_CASE("RNA module", "[rna_module]")
         Value v1("rna.conf");
         v1.set(Parameter::find(rna_params, "rna_conf_path"));
         CHECK(mod.set(nullptr, v1, nullptr) == true);
-
-        Value v3("dummy");
-        CHECK(mod.set(nullptr, v3, nullptr) == false);
         CHECK(mod.end("rna", 0, &sc) == true);
 
         RnaModuleConfig* rc = mod.get_config();

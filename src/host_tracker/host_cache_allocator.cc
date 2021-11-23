@@ -18,6 +18,10 @@
 
 // host_cache_allocator.cc author Silviu Minut <sminut@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef HOST_CACHE_ALLOCATOR_CC
 #define HOST_CACHE_ALLOCATOR_CC
 

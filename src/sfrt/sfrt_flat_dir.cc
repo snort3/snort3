@@ -159,6 +159,7 @@ TABLE_PTR sfrt_dir_flat_new(uint32_t mem_cap, int count,...)
     return table_ptr;
 }
 
+#if 0
 /* Traverse "sub" tables, freeing each */
 static void _sub_table_flat_free(uint32_t* allocated, SUB_TABLE_PTR sub_ptr)
 {
@@ -195,28 +196,6 @@ static void _sub_table_flat_free(uint32_t* allocated, SUB_TABLE_PTR sub_ptr)
     segment_free(sub_ptr);
 
     *allocated -= sizeof(dir_sub_table_flat_t);
-}
-
-/* Free the DIR-n-m structure */
-void sfrt_dir_flat_free(TABLE_PTR tbl_ptr)
-{
-    dir_table_flat_t* table;
-    uint8_t* base;
-
-    if (!tbl_ptr)
-    {
-        return;
-    }
-
-    base = (uint8_t*)segment_basePtr();
-    table = (dir_table_flat_t*)(&base[tbl_ptr]);
-
-    if (table->sub_table)
-    {
-        _sub_table_flat_free(&table->allocated, table->sub_table);
-    }
-
-    segment_free(tbl_ptr);
 }
 
 static inline void _dir_fill_all(uint32_t* allocated, uint32_t index, uint32_t fill,
@@ -280,6 +259,7 @@ static inline void _dir_fill_less_specific(int index, int fill,
         }
     }
 }
+#endif
 
 static inline int64_t _dir_update_info(int index, int fill,
     word length, uint32_t val, SUB_TABLE_PTR sub_ptr, updateEntryInfoFunc updateEntry, INFO* data)
@@ -401,6 +381,7 @@ static int _dir_sub_insert(IPLOOKUP* ip, int length, int cur_len, INFO ptr,
 
         fill += index;
 
+#if 0
         /* Favor most recent CIDR */
         if (behavior == RT_FAVOR_TIME)
         {
@@ -413,6 +394,8 @@ static int _dir_sub_insert(IPLOOKUP* ip, int length, int cur_len, INFO ptr,
             _dir_fill_less_specific(index, fill, length, (word)ptr, sub_ptr);
         }
         else if (behavior == RT_FAVOR_ALL)
+#endif
+        assert(behavior == RT_FAVOR_ALL);
         {
             int64_t bytesAllocated;
 

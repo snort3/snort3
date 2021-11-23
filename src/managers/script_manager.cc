@@ -31,7 +31,7 @@
 #include "helpers/directory.h"
 #include "log/messages.h"
 #include "lua/lua.h"
-#include "lua/lua_util.h"
+#include "lua/lua_script.h"
 
 #ifdef PIGLET
 #include "piglet/piglet_manager.h"

@@ -70,7 +70,7 @@ SearchTool::SearchTool(const char*, bool)
 {
     mpsegrp = &mpse_group;
 }
-void SearchTool::reload() { }
+void SearchTool::reload() { }  // LCOV_EXCL_LINE
 int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void*)
 {
     // Seg-fault will be observed if this is called without initializing pattern matchers
@@ -86,12 +86,16 @@ bool AppIdInspector::configure(snort::SnortConfig*)
     ctxt = &context;
     return true;
 }
+
+// LCOV_EXCL_START
 void AppIdInspector::eval(Packet*) { }
 void AppIdInspector::show(const SnortConfig*) const { }
 void AppIdInspector::tinit() { }
 void AppIdInspector::tterm() { }
 void AppIdInspector::tear_down(SnortConfig*) { }
 AppIdContext& AppIdInspector::get_ctxt() const { return *ctxt; }
+// LCOV_EXCL_STOP
+
 AppIdInspector::~AppIdInspector() = default;
 
 void AppIdContext::create_odp_ctxt()
@@ -127,11 +131,17 @@ AppIdSession* AppIdSession::allocate_session(snort::Packet const*, IpProtocol,
 
 void AppIdSession::publish_appid_event(AppidChangeBits&, const Packet&, bool, uint32_t) { }
 AppIdDiscovery::~AppIdDiscovery() = default;
+
+// LCOV_EXCL_START
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection,
     AppId, AppidChangeBits&) { }
 void ClientDiscovery::initialize(AppIdInspector&) { }
 void ClientDiscovery::reload() { }
+// LCOV_EXCL_STOP
+
 void AppIdDiscovery::register_detector(const string&, AppIdDetector*, IpProtocol) { }
+
+// LCOV_EXCL_START
 void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool&, int,
     unsigned char const*, unsigned int, unsigned int) { }
 void AppIdDiscovery::register_tcp_pattern(AppIdDetector*, unsigned char const*, unsigned int,
@@ -139,13 +149,17 @@ void AppIdDiscovery::register_tcp_pattern(AppIdDetector*, unsigned char const*, 
 void AppIdDiscovery::register_udp_pattern(AppIdDetector*, unsigned char const*, unsigned int,
     int, unsigned int) { }
 int AppIdDiscovery::add_service_port(AppIdDetector*, ServiceDetectorPort const&) { return 0; }
-void AppIdModule::reset_stats() {}
+void AppIdModule::reset_stats() { }
+// LCOV_EXCL_STOP
+
 DnsPatternMatchers::~DnsPatternMatchers() = default;
 EfpCaPatternMatchers::~EfpCaPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;
 HttpPatternMatchers::~HttpPatternMatchers() = default;
 
 ClientDetector::ClientDetector() { }
+
+// LCOV_EXCL_START
 void ClientDetector::register_appid(int, unsigned int, OdpContext&) { }
 int AppIdDetector::initialize(AppIdInspector&) { return 1; }
 void AppIdDetector::reload() { }
@@ -155,12 +169,13 @@ void AppIdDetector::add_payload(AppIdSession&, int) { }
 void AppIdDetector::add_app(snort::Packet const&, AppIdSession&, AppidSessionDirection, int,
     int, char const*, AppidChangeBits&) { }
 void memory::MemoryCap::update_deallocations(size_t) { }
+// LCOV_EXCL_STOP
 
 SipEvent::SipEvent(snort::Packet const* p, SIPMsg const*, SIP_DialogData const*) { this->p = p; }
 SipEvent::~SipEvent() = default;
 bool SipEvent::is_invite() const { return false; }
 bool SipEvent::is_dialog_established() const { return false; }
-int SipPatternMatchers::get_client_from_ua(char const*, unsigned int, int&, char*&) { return 0; }
+int SipPatternMatchers::get_client_from_ua(char const*, unsigned int, int&, char*&) { return 0; }  // LCOV_EXCL_LINE
 void SipEventHandler::service_handler(SipEvent&, AppIdSession&, AppidChangeBits&) { }
 SipUdpClientDetector* SipEventHandler::client = &cd;
 

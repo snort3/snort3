@@ -220,12 +220,8 @@ bool IpOptModule::begin(const char*, int, SnortConfig*)
 
 bool IpOptModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("~opt") )
-        ipopts_parse(v.get_string(), &data);
-
-    else
-        return false;
-
+    assert(v.is("~opt"));
+    ipopts_parse(v.get_string(), &data);
     return true;
 }
 

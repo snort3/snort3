@@ -27,7 +27,7 @@
 
 #include "lua/lua.h"
 #include "lua/lua_table.h"
-#include "lua/lua_util.h"
+#include "lua/lua_script.h"
 
 #include "piglet_api.h"
 #include "piglet_manager.h"

@@ -380,11 +380,8 @@ bool FragBitsModule::begin(const char*, int, SnortConfig*)
 // which is the string of command line arguments
 bool FragBitsModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("~flags") )
-        fragBitsData.parse_fragbits(v.get_string());
-    else
-        return false;
-
+    assert(v.is("~flags"));
+    fragBitsData.parse_fragbits(v.get_string());
     return true;
 }
 

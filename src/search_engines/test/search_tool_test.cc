@@ -113,41 +113,8 @@ int Mpse::search_all(
     return _search(T, n, match, context, current_state);
 }
 
-void Mpse::search(MpseBatch& batch, MpseType mpse_type)
-{
-    _search(batch, mpse_type);
-}
-
-void Mpse::_search(MpseBatch& batch, MpseType mpse_type)
-{
-    int start_state;
-
-    for ( auto& item : batch.items )
-    {
-        if (item.second.done)
-            continue;
-
-        item.second.error = false;
-        item.second.matches = 0;
-
-        for ( auto& so : item.second.so )
-        {
-            start_state = 0;
-            switch (mpse_type)
-            {
-                case MPSE_TYPE_NORMAL:
-                    item.second.matches += so->normal_mpse->search(item.first.buf, item.first.len,
-                            batch.mf, batch.context, &start_state);
-                    break;
-                case MPSE_TYPE_OFFLOAD:
-                    item.second.matches += so->offload_mpse->search(item.first.buf, item.first.len,
-                            batch.mf, batch.context, &start_state);
-                    break;
-            }
-        }
-        item.second.done = true;
-    }
-}
+void Mpse::search(MpseBatch&, MpseType) { }
+void Mpse::_search(MpseBatch&, MpseType) { }
 
 }
 

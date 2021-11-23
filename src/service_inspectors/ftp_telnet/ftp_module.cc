@@ -120,9 +120,6 @@ bool FtpClientModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("telnet_cmds") )
         conf->telnet_cmds = v.get_bool();
 
-    else
-        return false;
-
     return true;
 }
 
@@ -469,9 +466,6 @@ bool FtpServerModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("telnet_cmds") )
         conf->telnet_cmds = v.get_bool();
-
-    else
-        return false;
 
     return true;
 }

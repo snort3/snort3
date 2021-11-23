@@ -161,9 +161,6 @@ bool BerSkipModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("optional") )
         optional = true;
 
-    else
-        return false;
-
     return true;
 }
 

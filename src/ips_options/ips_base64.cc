@@ -211,9 +211,6 @@ bool B64DecodeModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("relative") )
         data.flags |= BASE64DECODE_RELATIVE_FLAG;
 
-    else
-        return false;
-
     return true;
 }
 

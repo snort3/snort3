@@ -153,9 +153,6 @@ bool CaptureModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("group") )
         config.group = v.get_int16();
 
-    else
-        return false;
-
     return true;
 }
 

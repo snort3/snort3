@@ -474,9 +474,6 @@ bool Dce2IfaceModule::set(const char*, Value& v, SnortConfig*)
         token = DCE2_PruneWhiteSpace(token);
         return DCE2_ParseIface(token, &uuid);
     }
-    else
-        return false;
-
     return true;
 }
 

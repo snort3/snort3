@@ -487,9 +487,6 @@ bool FlowbitsModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("~bits") )
         bits = v.get_string();
 
-    else
-        return false;
-
     return true;
 }
 

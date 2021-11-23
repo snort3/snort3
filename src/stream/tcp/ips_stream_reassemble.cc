@@ -222,9 +222,6 @@ bool ReassembleModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("fastpath") )
         srod.fastpath = 1;
 
-    else
-        return false;
-
     return true;
 }
 

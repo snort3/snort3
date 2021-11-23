@@ -20,10 +20,6 @@
 #ifndef HTTP2_UTILS_H
 #define HTTP2_UTILS_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "main/snort_types.h"
 #include "service_inspectors/http_inspect/http_common.h"
 

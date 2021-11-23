@@ -281,10 +281,8 @@ bool ReactModule::begin(const char*, int, SnortConfig*)
 
 bool ReactModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("page") )
-        return getpage(v.get_string());
-
-    return true;
+    assert(v.is("page"));
+    return getpage(v.get_string());
 }
 
 std::string ReactModule::get_data()

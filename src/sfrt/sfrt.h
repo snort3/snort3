@@ -40,10 +40,12 @@ struct tuple_t
     word length;
 };
 
-#include "sfrt/sfrt_dir.h"
-
 enum types
 {
+#if 0
+    // supporting code for these types (and RT_FAVOR_* below) is
+    // disabled since it is not used. not deleting in case we need
+    // switch types at some point. see sfrt_*.cc.
     DIR_24_8,
     DIR_16x2,
     DIR_16_8x2,
@@ -54,6 +56,7 @@ enum types
     DIR_16_4x4_16x5_4x4,
     DIR_16x7_4x4,
     DIR_16x8,
+#endif
     DIR_8x16,
     IPv4,
     IPv6
@@ -72,64 +75,12 @@ enum return_codes
 
 enum
 {
+#if 0
     RT_FAVOR_TIME,
     RT_FAVOR_SPECIFIC,
+#endif
     RT_FAVOR_ALL
 };
-
-extern const char* rt_error_messages[];
-
-typedef int (* table_insert)(
-    const uint32_t* addr, int numAddrDwords, int len, word index, int behavior, GENERIC);
-
-typedef word (* table_remove)(
-    const uint32_t* addr, int numAddrDwords, int len, int behavior, GENERIC);
-
-typedef tuple_t (* table_lookup)(const uint32_t* addr, int numAddrDwords, GENERIC);
-
-typedef uint32_t (* table_usage)(GENERIC);
-typedef void (* table_print)(GENERIC);
-typedef void (* table_free)(GENERIC);
-
-// Master table struct.  Abstracts DIR and LC-trie methods
-struct table_t
-{
-    GENERIC* data;               // data table. Each IP points to an entry here
-    uint32_t num_ent;            // Number of entries in the policy table
-    uint32_t max_size;           // Max size of policies array
-    uint32_t lastAllocatedIndex; // Index allocated last. Search for unused index
-                                 // starts from this value and then wraps around at max_size.
-    char ip_type;                // Only IPs of this family will be used
-    char table_type;
-    uint32_t allocated;
-
-    void* rt;                    // Actual "routing" table
-    void* rt6;                   // Actual "routing" table
-
-    table_insert insert;
-    table_remove remove;
-    table_lookup lookup;
-    table_usage usage;
-    table_print print;
-    table_free free;
-};
-
-// Abstracted routing table API
-table_t* sfrt_new(char type, char ip_type, long data_size, uint32_t mem_cap);
-void sfrt_free(table_t*);
-
-GENERIC sfrt_lookup(const snort::SfIp*, table_t*);
-GENERIC sfrt_search(const snort::SfIp*, unsigned char len, table_t*);
-
-typedef void (* sfrt_iterator_callback)(void*);
-void sfrt_cleanup(table_t*, sfrt_iterator_callback);
-
-int sfrt_insert(snort::SfCidr*, unsigned char len, GENERIC, int behavior, table_t*);
-int sfrt_remove(snort::SfCidr*, unsigned char len, GENERIC*, int behavior, table_t*);
-
-uint32_t sfrt_usage(table_t*);
-void sfrt_print(table_t*);
-uint32_t sfrt_num_entries(table_t*);
 
 #endif
 

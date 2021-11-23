@@ -44,15 +44,10 @@ static const Parameter s_params[] =
 };
 
 StreamUserModule::StreamUserModule() : Module(MOD_NAME, MOD_HELP, s_params)
-{
-    config = nullptr;
-}
+{ config = nullptr; }
 
 StreamUserModule::~StreamUserModule()
-{
-    if ( config )
-        delete config;
-}
+{ delete config; }
 
 StreamUserConfig* StreamUserModule::get_data()
 {
@@ -76,9 +71,8 @@ const TraceOption* StreamUserModule::get_trace_options() const
 
 bool StreamUserModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("session_timeout") )
-        config->session_timeout = v.get_uint32();
-
+    assert(v.is("session_timeout"));
+    config->session_timeout = v.get_uint32();
     return true;
 }
 

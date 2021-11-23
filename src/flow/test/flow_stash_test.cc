@@ -18,6 +18,10 @@
 
 // flow_stash_test.cc author Shravan Rangaraju <shrarang@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <string>
 
 #include "flow/flow_stash.h"

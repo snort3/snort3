@@ -100,6 +100,7 @@ class EventQueueModule : public Module
 public:
     EventQueueModule() : Module("event_queue", event_queue_help, event_queue_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
     Usage get_usage() const override
     { return CONTEXT; }
@@ -125,8 +126,12 @@ bool EventQueueModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("process_all_events") )
         eq->process_all_events = v.get_bool();
 
-    else
-        return false;
+    return true;
+}
+
+bool EventQueueModule::end(const char*, int, SnortConfig* sc)
+{
+    EventQueueConfig* eq = sc->event_queue_config;
 
     if ( eq->max_events < eq->log_events )
         eq->max_events = eq->log_events;
@@ -312,9 +317,6 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("queue_limit") )
         fp->set_queue_limit(v.get_uint32());
-
-    else
-        return false;
 
     return true;
 }
@@ -545,9 +547,6 @@ bool ClassificationsModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("text") )
         text = v.get_string();
 
-    else
-        return false;
-
     return true;
 }
 
@@ -608,9 +607,6 @@ bool ReferencesModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("url") )
         url = v.get_string();
-
-    else
-        return false;
 
     return true;
 }
@@ -692,9 +688,6 @@ bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("tunnel_verdicts") )
         sc->set_tunnel_verdicts(v.get_string());
-
-    else
-        return false;
 
     return true;
 }
@@ -818,9 +811,6 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("obfuscate") )
         v.update_mask(sc->output_flags, OUTPUT_FLAG__OBFUSCATE);
 
-    else
-        return false;
-
     return true;
 }
 
@@ -895,9 +885,6 @@ bool ActiveModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("min_interval") )
         sc->min_interval = v.get_uint8();
-
-    else
-        return false;
 
     return true;
 }
@@ -1015,9 +1002,6 @@ bool AttributeTableModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("max_metadata_services") )
         sc->max_metadata_services = v.get_uint8();
 
-    else
-        return false;
-
     return true;
 }
 
@@ -1103,9 +1087,6 @@ bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
     else if (v.is("max_ip_layers"))
         sc->max_ip_layers = v.get_uint8();
 
-    else
-        return false;
-
     return true;
 }
 
@@ -1187,9 +1168,6 @@ bool InspectionModule::set(const char*, Value& v, SnortConfig* sc)
         sc->max_aux_ip = v.get_int16();
         return true;
     }
-
-    else
-        return false;
 
     return true;
 }
@@ -1370,9 +1348,6 @@ bool IpsModule::set(const char* fqn, Value& v, SnortConfig* sc)
     else if ( v.is("with") )
         with = v.get_string();
 
-    else
-        return false;
-
     return true;
 }
 
@@ -1506,9 +1481,6 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
     else if (v.is("name"))
         name = v.get_string();
 
-    else
-        return false;
-
     return true;
 }
 
@@ -1641,9 +1613,6 @@ bool SuppressModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("ip") )
         thdx.ip_address = sfip_var_from_string(v.get_string(), "suppress");
 
-    else
-        return false;
-
     return true;
 }
 
@@ -1755,9 +1724,6 @@ bool EventFilterModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("type") )
         thdx.type = v.get_uint8();
-
-    else
-        return false;
 
     return true;
 }
@@ -1892,9 +1858,6 @@ bool RateFilterModule::set(const char*, Value& v, SnortConfig*)
                     v.get_string());
     }
 
-    else
-        return false;
-
     return true;
 }
 
@@ -2001,9 +1964,6 @@ bool HostsModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("port") )
         service.port = v.get_uint16();
-
-    else
-        return false;
 
     return true;
 }

@@ -170,9 +170,7 @@ public:
 
 bool S7commplusFuncModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~") )
-        return false;
-
+    assert(v.is("~"));
     long n;
 
     if ( v.strtol(n) )
@@ -180,9 +178,6 @@ bool S7commplusFuncModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( get_func(v.get_string(), n) )
         func = static_cast<uint16_t>(n);
-
-    else
-        return false;
 
     return true;
 }

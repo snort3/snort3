@@ -106,6 +106,7 @@ table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,  long data_size,
     /* Allocate the user-specified DIR-n-m table */
     switch (table_flat_type)
     {
+#if 0
     case DIR_24_8:
         table->rt = sfrt_dir_flat_new(mem_cap, 2, 24, 8);
         break;
@@ -144,6 +145,7 @@ table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,  long data_size,
         table->rt = sfrt_dir_flat_new(mem_cap, 2, 16,16);
         table->rt6 = sfrt_dir_flat_new(mem_cap, 8, 16,16,16,16,16,16,16,16);
         break;
+#endif
     case DIR_8x16:
         table->rt = sfrt_dir_flat_new(mem_cap, 4, 16,8,4,4);
         table->rt6 = sfrt_dir_flat_new(mem_cap, 16,
@@ -151,63 +153,10 @@ table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,  long data_size,
         break;
     }
 
-    if ((!table->rt) || (!table->rt6))
-    {
-        if (table->rt)
-            sfrt_dir_flat_free(table->rt);
-        if (table->rt6)
-            sfrt_dir_flat_free(table->rt6);
-        segment_free(table->data);
-        segment_free(table_ptr);
-        return nullptr;
-    }
+    assert(table->rt);
+    assert(table->rt6);
 
     return table;
-}
-
-/* Free lookup table */
-void sfrt_flat_free(TABLE_PTR table_ptr)
-{
-    table_flat_t* table;
-    uint8_t* base;
-
-    if (!table_ptr)
-    {
-        /* What are you calling me for? */
-        return;
-    }
-
-    base = (uint8_t*)segment_basePtr();
-    table = (table_flat_t*)(&base[table_ptr]);
-
-    if (!table->data)
-    {
-        /* This really really should not have happened */
-    }
-    else
-    {
-        segment_free(table->data);
-    }
-
-    if (!table->rt)
-    {
-        /* This should not have happened either */
-    }
-    else
-    {
-        sfrt_dir_flat_free(table->rt);
-    }
-
-    if (!table->rt6)
-    {
-        /* This should not have happened either */
-    }
-    else
-    {
-        sfrt_dir_flat_free(table->rt6);
-    }
-
-    segment_free(table_ptr);
 }
 
 /* Perform a lookup on value contained in "ip" */

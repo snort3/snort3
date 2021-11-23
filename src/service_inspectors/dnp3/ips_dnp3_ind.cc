@@ -137,11 +137,9 @@ public:
 
 bool Dnp3IndModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~") )
-        return false;
+    assert(v.is("~"));
 
     flags = 0;
-
     v.set_first_token();
     std::string tok;
 

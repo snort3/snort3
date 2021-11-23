@@ -260,9 +260,6 @@ bool IsDataAtModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("relative") )
         data.flags |= ISDATAAT_RELATIVE_FLAG;
 
-    else
-        return false;
-
     return true;
 }
 

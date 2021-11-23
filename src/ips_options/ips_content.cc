@@ -723,9 +723,6 @@ bool ContentModule::set(const char*, Value& v, SnortConfig*)
         cd->pmd.fp_length = v.get_uint16();
         cd->pmd.set_fast_pattern();
     }
-    else
-        return false;
-
     return true;
 }
 

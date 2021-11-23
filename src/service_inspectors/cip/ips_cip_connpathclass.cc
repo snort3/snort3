@@ -149,9 +149,7 @@ bool CipConnpathclassModule::begin(const char*, int, SnortConfig*)
 
 bool CipConnpathclassModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~range") )
-        return false;
-
+    assert(v.is("~range"));
     return cip_cpc.validate(v.get_string(), RANGE);
 }
 

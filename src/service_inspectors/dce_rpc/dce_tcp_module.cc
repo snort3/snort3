@@ -146,10 +146,7 @@ ProfileStats* Dce2TcpModule::get_profile() const
 
 bool Dce2TcpModule::set(const char*, Value& v, SnortConfig*)
 {
-    if (dce2_set_co_config(v,config.common))
-        return true;
-
-    return false;
+    return dce2_set_co_config(v,config.common);
 }
 
 void Dce2TcpModule::get_data(dce2TcpProtoConf& dce2_tcp_config)

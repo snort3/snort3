@@ -71,7 +71,7 @@ public:
     virtual void set_extra_data(snort::Packet*, uint32_t /*flag*/) { }
 
     virtual bool is_sequenced(uint8_t /*dir*/) { return true; }
-    virtual bool are_packets_missing(uint8_t /*dir*/) { return true; }
+    virtual bool are_packets_missing(uint8_t /*dir*/) { return false; }
     virtual bool are_client_segments_queued() { return false; }
 
     virtual void disable_reassembly(snort::Flow*) { }

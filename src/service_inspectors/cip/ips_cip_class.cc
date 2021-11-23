@@ -148,9 +148,7 @@ bool CipClassModule::begin(const char*, int, SnortConfig*)
 
 bool CipClassModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~range") )
-        return false;
-
+    assert(v.is("~range"));
     return cip_class.validate(v.get_string(), RANGE);
 }
 

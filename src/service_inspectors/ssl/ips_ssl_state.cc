@@ -219,9 +219,6 @@ bool SslStateModule::set(const char*, Value& v, SnortConfig*)
         ssod.flags |= SSL_UNKNOWN_FLAG;
         ssod.mask |= SSL_UNKNOWN_FLAG;
     }
-    else
-        return false;
-
     return true;
 }
 

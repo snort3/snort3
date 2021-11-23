@@ -149,9 +149,7 @@ bool CipAttributeModule::begin(const char*, int, SnortConfig*)
 
 bool CipAttributeModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~range") )
-        return false;
-
+    assert(v.is("~range"));
     return cip_attr.validate(v.get_string(), RANGE);
 }
 

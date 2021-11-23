@@ -137,9 +137,6 @@ bool TagModule::set(const char*, Value& v, SnortConfig*)
         tag->tag_metric |= TAG_METRIC_BYTES;
         tag->tag_bytes = v.get_uint32();
     }
-    else
-        return false;
-
     return true;
 }
 

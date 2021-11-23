@@ -142,9 +142,7 @@ bool CipEnipCommandModule::begin(const char*, int, SnortConfig*)
 
 bool CipEnipCommandModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~range") )
-        return false;
-
+    assert(v.is("~range"));
     return cip_enip_cmd.validate(v.get_string(), RANGE);
 }
 

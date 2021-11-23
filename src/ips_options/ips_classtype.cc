@@ -61,9 +61,7 @@ public:
 
 bool ClassTypeModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    if ( !v.is("~") )
-        return false;
-
+    assert(v.is("~"));
     type = get_classification(sc, v.get_string());
 
     if ( !type and sc->dump_rule_info() )

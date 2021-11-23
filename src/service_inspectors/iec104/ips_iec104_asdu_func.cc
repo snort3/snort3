@@ -258,27 +258,14 @@ public:
 
 bool Iec104AsduFuncModule::set(const char*, Value& v, SnortConfig*)
 {
-    if (!v.is("~"))
-    {
-        return false;
-    }
-
+    assert(v.is("~"));
     long n;
 
     if (v.strtol(n))
-    {
         func = static_cast<uint8_t>(n);
-    }
 
     else if (get_func(v.get_string(), n))
-    {
         func = static_cast<uint8_t>(n);
-    }
-
-    else
-    {
-        return false;
-    }
 
     return true;
 }

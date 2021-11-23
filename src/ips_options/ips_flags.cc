@@ -371,9 +371,6 @@ bool FlagsModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("~mask_flags") )
         flags_parse_mask(v.get_string(), &data);
 
-    else
-        return false;
-
     return true;
 }
 

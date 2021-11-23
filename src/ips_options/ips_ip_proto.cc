@@ -247,12 +247,8 @@ bool IpProtoModule::begin(const char*, int, SnortConfig*)
 
 bool IpProtoModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("~proto") )
-        ip_proto_parse(v.get_string(), &data);
-
-    else
-        return false;
-
+    assert(v.is("~proto"));
+    ip_proto_parse(v.get_string(), &data);
     return true;
 }
 

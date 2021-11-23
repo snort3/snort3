@@ -193,9 +193,6 @@ bool NetflowModule::set(const char*, Value& v, SnortConfig*)
     {
         rule_cfg.create_service = v.get_bool();
     }
-    else
-        return false;
-
     return true;
 }
 

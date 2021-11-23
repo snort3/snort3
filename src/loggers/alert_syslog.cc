@@ -171,9 +171,6 @@ bool SyslogModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("options") )
         options = get_options(v.get_string());
 
-    else
-        return false;
-
     return true;
 }
 

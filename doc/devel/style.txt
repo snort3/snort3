@@ -285,9 +285,8 @@ yet firm so feedback is welcome to get something we can live with.
 * All .cc files should include config.h with the standard block shown below
   immediately following the initial comment blocks and before anything else.
   This presents a consistent view of all included header files as well as
-  access to any other configure-time definitions. No .h files should include
-  config.h unless they are guaranteed to be local header files (never
-  installed).
+  access to any other configure-time definitions. To avoid issues, no .h files
+  should include config.h, even if not installed.
 
     #ifdef HAVE_CONFIG_H
     #include "config.h"

@@ -358,9 +358,6 @@ bool FlowModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("only_frag") )
         data.only_reassembled |= ONLY_FRAG;
 
-    else
-        return false;
-
     return true;
 }
 

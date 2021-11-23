@@ -73,9 +73,7 @@ bool ServiceModule::begin(const char*, int, SnortConfig* sc)
 
 bool ServiceModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("*") )
-        return false;
-
+    assert(v.is("*"));
     std::string svc = v.get_string();
 
     for ( const auto& p : services )
@@ -87,7 +85,6 @@ bool ServiceModule::set(const char*, Value& v, SnortConfig*)
         }
     }
     services.emplace_back(svc);
-
     return true;
 }
 

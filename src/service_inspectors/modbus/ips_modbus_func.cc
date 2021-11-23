@@ -176,9 +176,7 @@ public:
 
 bool ModbusFuncModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~") )
-        return false;
-
+    assert(v.is("~"));
     long n;
 
     if ( v.strtol(n) )
@@ -186,9 +184,6 @@ bool ModbusFuncModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( get_func(v.get_string(), n) )
         func = (uint8_t)n;
-
-    else
-        return false;
 
     return true;
 }

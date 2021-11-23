@@ -72,9 +72,7 @@ bool EnableModule::begin(const char*, int, SnortConfig* sc)
 
 bool EnableModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~enable") )
-        return false;
-
+    assert(v.is("~enable"));
     enable = IpsPolicy::Enable(v.get_uint8());
     return true;
 }

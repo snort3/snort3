@@ -185,27 +185,14 @@ public:
 
 bool Iec104ApciTypeModule::set(const char*, Value& v, SnortConfig*)
 {
-    if (!v.is("~"))
-    {
-        return false;
-    }
-
+    assert(v.is("~"));
     long n;
 
     if (v.strtol(n))
-    {
         apci_type = static_cast<uint8_t>(n);
-    }
 
     else if (get_apci_type(v.get_string(), n))
-    {
         apci_type = static_cast<uint8_t>(n);
-    }
-
-    else
-    {
-        return false;
-    }
 
     return true;
 }

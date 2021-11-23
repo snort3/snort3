@@ -238,9 +238,6 @@ bool HextModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("width") )
         width = v.get_uint32();
 
-    else
-        return false;
-
     return true;
 }
 

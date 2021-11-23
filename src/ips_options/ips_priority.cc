@@ -60,9 +60,7 @@ public:
 
 bool PriorityModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~") )
-        return false;
-
+    assert(v.is("~"));
     priority = v.get_int32();
     return true;
 }

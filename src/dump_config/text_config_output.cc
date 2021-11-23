@@ -17,6 +17,10 @@
 //--------------------------------------------------------------------------
 // text_config_output.cc author Serhii Vlasiuk <svlasiuk@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "text_config_output.h"
 
 #include <iomanip>

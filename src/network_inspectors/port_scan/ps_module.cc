@@ -320,9 +320,6 @@ bool PortScanModule::set(const char* fqn, Value& v, SnortConfig*)
     else if ( v.is("icmp_window") )
         config->icmp_window = v.get_uint32();
 
-    else
-        return false;
-
     return true;
 }
 

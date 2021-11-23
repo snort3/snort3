@@ -141,9 +141,6 @@ bool LenModule::set(const char*, Value& v, SnortConfig*)
     if ( v.is("relative") )
         relative = true;
 
-    else
-        return false;
-
     return true;
 }
 

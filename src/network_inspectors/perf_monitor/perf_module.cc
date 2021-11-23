@@ -313,9 +313,6 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
     {
         return true;
     }
-    else
-        return false;
-
     return true;
 }
 

@@ -142,11 +142,8 @@ bool BerDataModule::begin(const char*, int, SnortConfig*)
 
 bool BerDataModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("~type") )
-        type = v.get_uint32();
-    else
-        return false;
-
+    assert(v.is("~type"));
+    type = v.get_uint32();
     return true;
 }
 

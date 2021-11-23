@@ -86,30 +86,22 @@ bool FileConnectorModule::set(const char*, Value& v, SnortConfig*)
         config->text_format = ( v.get_uint8() == 1 );
 
     else if ( v.is("direction") )
+    {
         switch ( v.get_uint8() )
         {
         case 0:
-        {
             config->direction = Connector::CONN_RECEIVE;
             break;
-        }
         case 1:
-        {
             config->direction = Connector::CONN_TRANSMIT;
             break;
-        }
         case 2:
-        {
             config->direction = Connector::CONN_DUPLEX;
             break;
-        }
         default:
             return false;
         }
-
-    else
-        return false;
-
+    }
     return true;
 }
 

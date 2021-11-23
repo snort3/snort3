@@ -368,9 +368,6 @@ bool ExtractModule::set(const char*, Value& v, SnortConfig*)
     else if (v.is("bitmask"))
         data.bitmask_val = v.get_uint32();
 
-    else
-        return false;
-
     return true;
 }
 
@@ -1030,20 +1027,6 @@ TEST_CASE("ExtractModule::set", "[ips_byte_extract]")
         CHECK(obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteExtractDataEquals(expected));
     }
-    SECTION("invalid set")
-    {
-        Value v(1023.0);
-        Parameter p{
-            "error", Parameter::PT_INT, "nan", nullptr,
-            "not an option"};
-        v.set(&p);
-        ByteExtractData expected;
-        INITIALIZE(expected, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, nullptr);
-
-        CHECK(!obj.set(nullptr, v, nullptr));
-        CHECK_THAT(obj.data, ByteExtractDataEquals(expected));
-    }
-
     delete[] obj.data.name;
 }
 

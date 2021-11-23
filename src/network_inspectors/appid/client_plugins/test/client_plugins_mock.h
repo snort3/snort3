@@ -17,10 +17,6 @@
 //--------------------------------------------------------------------------
 // client_plugins_mock.h author author Sreeja Athirkandathil Narayanan <sathirka@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #define APPID_UT_ID 1492
 
 namespace snort

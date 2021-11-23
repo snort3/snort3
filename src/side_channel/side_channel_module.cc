@@ -106,8 +106,6 @@ bool SideChannelModule::set(const char*, Value& v, SnortConfig*)
             config->ports = new PortBitSet;
         v.get_bits(*(config->ports) );
     }
-    else
-        return false;
 
     return true;
 }

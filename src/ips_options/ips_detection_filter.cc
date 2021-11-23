@@ -91,9 +91,6 @@ bool DetectionFilterModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("seconds") )
         thdx.seconds = v.get_uint32();
 
-    else
-        return false;
-
     return true;
 }
 

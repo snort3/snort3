@@ -216,12 +216,8 @@ bool ReplModule::begin(const char*, int, SnortConfig*)
 
 bool ReplModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("~") )
-        replace_parse(v.get_string(), data);
-
-    else
-        return false;
-
+    assert(v.is("~"));
+    replace_parse(v.get_string(), data);
     return true;
 }
 

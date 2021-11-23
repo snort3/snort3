@@ -69,8 +69,7 @@ bool MetadataModule::begin(const char*, int, SnortConfig*)
 
 bool MetadataModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    if ( !v.is("*") )
-        return false;
+    assert(v.is("*"));
 
     if ( !match and !sc->metadata_filter.empty() )
         match = strstr(v.get_string(), sc->metadata_filter.c_str()) != nullptr;

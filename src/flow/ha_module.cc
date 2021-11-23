@@ -145,8 +145,6 @@ bool HighAvailabilityModule::set(const char*, Value& v, SnortConfig*)
     {
         convert_milliseconds_to_timeval(v.get_uint32(), &config->min_sync_interval);
     }
-    else
-        return false;
 
     return true;
 }

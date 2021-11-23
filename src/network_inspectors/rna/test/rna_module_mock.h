@@ -28,48 +28,8 @@ THREAD_LOCAL ProfileStats rna_perf_stats;
 
 namespace snort
 {
-Module* ModuleManager::get_module(const char*)
-{ return nullptr; }
-
-char* snort_strdup(const char* s)
-{ return strdup(s); }
-
 Module::Module(const char*, const char*, const Parameter*, bool) {}
-void Module::sum_stats(bool) {}
-void Module::show_stats() {}
-void Module::reset_stats() {}
-PegCount Module::get_global_count(char const*) const
-{ return 0; }
-void Module::show_interval_stats(std::vector<unsigned int, std::allocator<unsigned int> >&, FILE*)
-{}
-void LogMessage(const char*,...) {}
-void WarningMessage(const char*,...) {}
-SnortConfig::SnortConfig(SnortConfig const*) {}
-SnortConfig::~SnortConfig() = default;
-time_t packet_time() { return 0; }
-
-// tcp fingerprint functions
-bool TcpFpProcessor::push(const TcpFingerprint&) { return true; }
-void TcpFpProcessor::make_tcp_fp_tables(TCP_FP_MODE) { }
-const TcpFingerprint* TcpFpProcessor::get_tcp_fp(const FpTcpKey&, uint8_t, TCP_FP_MODE) const
-{ return nullptr; }
-const TcpFingerprint* TcpFpProcessor::get(const Packet*, RNAFlow*) const
-{ return nullptr; }
-TcpFpProcessor* get_tcp_fp_processor() { return nullptr; }
-void set_tcp_fp_processor(TcpFpProcessor*) { }
-
-TcpFingerprint::TcpFingerprint(const RawFingerprint&) { }
 bool TcpFingerprint::operator==(const TcpFingerprint&) const { return true; }
-
-UaFpProcessor::~UaFpProcessor() = default;
-void UaFpProcessor::make_mpse(SnortConfig*) { }
-void UaFpProcessor::push(RawFingerprint const&) { }
-
-void UdpFpProcessor::push(RawFingerprint const&) { }
-
-SmbFingerprint::SmbFingerprint(const RawFingerprint&) { }
-bool SmbFingerprint::operator==(const SmbFingerprint&) const { return true; }
-bool SmbFpProcessor::push(SmbFingerprint const&) { return true; }
 
 // inspector
 class RnaInspector
@@ -104,26 +64,9 @@ private:
 
 } // end of namespace snort
 
-void snort::main_broadcast_command(snort::AnalyzerCommand*, ControlConn*) {}
-
 static ControlConn s_ctrlcon(1, true);
 ControlConn::ControlConn(int, bool) {}
 ControlConn::~ControlConn() {}
-ControlConn* ControlConn::query_from_lua(const lua_State*) { return &s_ctrlcon; }
-bool ControlConn::respond(const char*, ...) { return true; }
-
-HostCacheMac* get_host_cache_mac() { return nullptr; }
-
-DataPurgeAC::~DataPurgeAC() = default;
-bool DataPurgeAC::execute(Analyzer&, void**) { return true;}
-
-void set_host_cache_mac(HostCacheMac*) { }
-
-Inspector* InspectorManager::get_inspector(const char*, bool, const SnortConfig*)
-{
-    return nullptr;
-}
-
-void HostTracker::remove_flows() { }
 
 #endif
+

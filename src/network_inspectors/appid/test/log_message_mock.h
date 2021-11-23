@@ -1,10 +1,6 @@
 #ifndef LOG_MESSAGE_MOCK
 #define LOG_MESSAGE_MOCK
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <cstdarg>
 
 using namespace std;

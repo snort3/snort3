@@ -195,8 +195,7 @@ bool AppIdOptionModule::begin(const char*, int, SnortConfig*)
 
 bool AppIdOptionModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~") )
-        return false;
+    assert(v.is("~"));
 
     v.set_first_token();
     string tok;

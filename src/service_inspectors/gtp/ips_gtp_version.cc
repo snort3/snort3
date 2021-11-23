@@ -125,9 +125,7 @@ public:
 
 bool GtpVersionModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~") )
-        return false;
-
+    assert(v.is("~"));
     version = v.get_uint8();
     return true;
 }

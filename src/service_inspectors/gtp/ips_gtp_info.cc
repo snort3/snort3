@@ -193,9 +193,7 @@ bool GtpInfoModule::set_types(const char* name)
 
 bool GtpInfoModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~") )
-        return false;
-
+    assert(v.is("~"));
     long n;
 
     if ( v.strtol(n) )

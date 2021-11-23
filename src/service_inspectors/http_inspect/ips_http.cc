@@ -163,10 +163,6 @@ bool HttpCursorModule::set(const char*, Value& v, SnortConfig*)
         para_list.fragment = true;
         sub_id = UC_FRAGMENT;
     }
-    else
-    {
-        return false;
-    }
     return true;
 }
 

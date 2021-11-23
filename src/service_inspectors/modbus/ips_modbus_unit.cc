@@ -128,9 +128,7 @@ public:
 
 bool ModbusUnitModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~") )
-        return false;
-
+    assert(v.is("~"));
     unit = v.get_uint8();
     return true;
 }

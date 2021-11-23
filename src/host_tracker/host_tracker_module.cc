@@ -63,15 +63,13 @@ bool HostTrackerModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("port") )
         host_cache[addr]->update_service_port(app, v.get_uint16());
+
     else if ( v.is("proto") )
     {
         const IpProtocol mask[] =
         { IpProtocol::IP, IpProtocol::TCP, IpProtocol::UDP };
         host_cache[addr]->update_service_proto(app, mask[v.get_uint8()]);
     }
-
-    else
-        return false;
 
     return true;
 }

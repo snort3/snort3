@@ -102,12 +102,8 @@ public:
 
 bool TcpdumpModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("limit") )
-        limit = v.get_size() * 1024 * 1024;
-
-    else
-        return false;
-
+    assert(v.is("limit"));
+    limit = v.get_size() * 1024 * 1024;
     return true;
 }
 

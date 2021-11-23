@@ -191,9 +191,7 @@ bool GtpTypeModule::set_types(const char* name)
 
 bool GtpTypeModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~") )
-        return false;
-
+    assert(v.is("~"));
     v.set_first_token();
     std::string tok;
 

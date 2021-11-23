@@ -17,6 +17,10 @@
 //--------------------------------------------------------------------------
 // http_buffer_info.cc author Brandon Stultz <brastult@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "hash/hash_key_operations.h"
 #include "http_buffer_info.h"
 

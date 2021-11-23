@@ -483,9 +483,6 @@ bool ByteJumpModule::set(const char*, Value& v, SnortConfig*)
     else if (v.is("bitmask"))
         data.bitmask_val = v.get_uint32();
 
-    else
-        return false;
-
     return true;
 }
 
@@ -898,11 +895,6 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
     SECTION("method set")
     {
         Value value(false);
-
-        SECTION("All params incorrect")
-        {
-            REQUIRE(module_jump.set(nullptr, value, nullptr) == false);
-        }
 
         SECTION("Case param \"~count\"")
         {

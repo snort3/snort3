@@ -1,4 +1,3 @@
-
 //--------------------------------------------------------------------------
 // Copyright (C) 2021 Cisco and/or its affiliates. All rights reserved.
 //
@@ -17,6 +16,10 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 // ips_vba_data.cc author Amarnath Nayak <amarnaya@cisco.com>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "ips_vba_data.h"
 

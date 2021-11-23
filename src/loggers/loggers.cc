@@ -30,8 +30,6 @@ using namespace snort;
 // to ensure PacketManager::log_protocols() is built into Snort++
 extern const BaseApi* log_codecs[];
 
-extern const BaseApi* alert_sf_socket[];
-
 #ifdef STATIC_LOGGERS
 extern const BaseApi* alert_csv[];
 extern const BaseApi* alert_fast[];
@@ -49,7 +47,6 @@ void load_loggers()
 {
     // loggers
     PluginManager::load_plugins(log_codecs);
-    PluginManager::load_plugins(alert_sf_socket);
 
 #ifdef STATIC_LOGGERS
     // alerters

@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <cassert>
+
 #include "stream_user.h"
 
 #include "log/messages.h"
@@ -69,9 +71,7 @@ StreamUser::~StreamUser()
 
 void StreamUser::show(const SnortConfig*) const
 {
-    if ( !config )
-        return;
-
+    assert(config);
     ConfigLogger::log_value("session_timeout", config->session_timeout);
 }
 

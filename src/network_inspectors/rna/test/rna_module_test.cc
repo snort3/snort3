@@ -25,6 +25,7 @@
 #include "../rna_module.cc"
 
 #include "rna_module_mock.h"
+#include "rna_module_stubs.h"
 
 // To avoid warnings between catch.hpp and UtestMacros.h macro definitions,
 // since rna_module.cc has both catch and cpputest tests

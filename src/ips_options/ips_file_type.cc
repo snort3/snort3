@@ -148,9 +148,7 @@ bool FileTypeModule::begin(const char*, int, SnortConfig*)
 
 bool FileTypeModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    if ( !v.is("~") )
-        return false;
-
+    assert(v.is("~"));
     v.set_first_token();
     std::string tok;
 

@@ -26,8 +26,9 @@
 %option c++
 
 %option batch
-
 %option never-interactive
+%option noinput nounput
+%option noyy_push_state noyy_pop_state noyy_top_state
 
 %{
 
@@ -42,6 +43,7 @@
 #include "utils/js_identifier_ctx.h"
 #include "utils/util_cstring.h"
 
+#define YY_NO_UNPUT
 #define YY_USER_ACTION                                      \
     {                                                       \
         debug_logf(5, http_trace, TRACE_JS_PROC, nullptr,   \

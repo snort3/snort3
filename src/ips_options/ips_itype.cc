@@ -134,9 +134,7 @@ bool ItypeModule::begin(const char*, int, SnortConfig*)
 
 bool ItypeModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~range") )
-        return false;
-
+    assert(v.is("~range"));
     return data.validate(v.get_string(), RANGE);
 }
 

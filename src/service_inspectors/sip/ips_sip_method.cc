@@ -174,28 +174,24 @@ bool SipMethodModule::begin(const char*, int, SnortConfig*)
 
 bool SipMethodModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("*method") )
+    assert(v.is("*method"));
+    const char* tok = v.get_string();
+
+    if (tok[0] == '!')
     {
-        const char* tok = v.get_string();
-
-        if (tok[0] == '!')
-        {
-            negated = true;
-            tok++;
-        }
-        else
-            negated = false;
-
-        /*Only one method is allowed with !*/
-        if ( negated && (!methods.empty()) )
-            ParseError("Only one method is allowed with ! for sip_method");
-
-        std::string key = tok;
-        std::transform(key.begin(), key.end(), key.begin(), ::toupper);
-        methods[key] = negated;
+        negated = true;
+        tok++;
     }
     else
-        return false;
+        negated = false;
+
+    /*Only one method is allowed with !*/
+    if ( negated && (!methods.empty()) )
+        ParseError("Only one method is allowed with ! for sip_method");
+
+    std::string key = tok;
+    std::transform(key.begin(), key.end(), key.begin(), ::toupper);
+    methods[key] = negated;
 
     return true;
 }

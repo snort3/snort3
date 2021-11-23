@@ -232,16 +232,6 @@ TEST(ips_regex_module, config_pass)
     CHECK(mod->set(ips_regex->name, vb, nullptr));
 }
 
-TEST(ips_regex_module, config_fail_name)
-{
-    Value vs("lazy");
-    Parameter bad { "bad", Parameter::PT_STRING, nullptr, nullptr, "bad" };
-    vs.set(&bad);
-    CHECK(!mod->set(ips_regex->name, vs, nullptr));
-    expect = 1;
-    end = false;
-}
-
 TEST(ips_regex_module, config_fail_regex)
 {
     Value vs("\"/[[:fubar:]]/\"");

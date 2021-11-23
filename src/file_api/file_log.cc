@@ -266,9 +266,6 @@ bool FileLogModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("log_sys_time") )
         config.log_sys_time = v.get_bool();
 
-    else
-        return false;
-
     return true;
 }
 

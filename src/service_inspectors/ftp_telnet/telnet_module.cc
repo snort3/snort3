@@ -109,9 +109,6 @@ bool TelnetModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("normalize") )
         conf->normalize = v.get_bool();
 
-    else
-        return false;
-
     return true;
 }
 

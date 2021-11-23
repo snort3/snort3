@@ -716,15 +716,11 @@ bool PcreModule::begin(const char* name, int v, SnortConfig* sc)
 
 bool PcreModule::set(const char* name, Value& v, SnortConfig* sc)
 {
-    if ( v.is("~re") )
-    {
-        re = v.get_string();
+    assert(v.is("~re"));
+    re = v.get_string();
 
-        if( mod_regex )
-            mod_regex = mod_regex->set(name, v, sc) ? mod_regex : nullptr;
-    }
-    else
-        return false;
+    if( mod_regex )
+        mod_regex = mod_regex->set(name, v, sc) ? mod_regex : nullptr;
 
     return true;
 }

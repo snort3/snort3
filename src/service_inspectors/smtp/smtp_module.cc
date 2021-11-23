@@ -333,9 +333,6 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("xlink2state") )
         config->xlink2state = (SMTPXlinkState)v.get_uint8();
 
-    else
-        return false;
-
     return true;
 }
 

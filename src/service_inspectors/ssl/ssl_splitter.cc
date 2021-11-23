@@ -18,6 +18,10 @@
 
 // ssl_splitter.cc author Steven Baigal <sbaigal@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "ssl_splitter.h"
 
 #include <arpa/inet.h>

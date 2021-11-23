@@ -72,8 +72,7 @@ bool ReferenceModule::begin(const char*, int, SnortConfig* sc)
 
 bool ReferenceModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~ref") )
-        return false;
+    assert(v.is("~ref"));
 
     const char* ref = v.get_string();
     const char* sep = strchr(ref, ',');

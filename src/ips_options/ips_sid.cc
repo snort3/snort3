@@ -60,9 +60,7 @@ public:
 
 bool SidModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~") )
-        return false;
-
+    assert(v.is("~"));
     sid = v.get_uint32();
     return true;
 }

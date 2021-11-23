@@ -220,9 +220,6 @@ bool SslVersionModule::set(const char*, Value& v, SnortConfig*)
         svod.flags |= SSL_VER_TLS12_FLAG;
         svod.mask |= SSL_VER_TLS12_FLAG;
     }
-    else
-        return false;
-
     return true;
 }
 

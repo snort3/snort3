@@ -86,12 +86,8 @@ ProfileStats* Dnp3Module::get_profile() const
 
 bool Dnp3Module::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("check_crc") )
-        config.check_crc = v.get_bool();
-
-    else
-        return false;
-
+    assert(v.is("check_crc"));
+    config.check_crc = v.get_bool();
     return true;
 }
 

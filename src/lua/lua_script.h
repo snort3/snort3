@@ -15,43 +15,26 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// file_module.cc author Russ Combs <rucombs@cisco.com>
+// lua_script.h author Joel Cornett <jocornet@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#ifndef LUA_SCRIPT_H
+#define LUA_SCRIPT_H
+
+#include <string>
+
+#include <lua.hpp>
+
+#define LUA_DIR_SEP '/'
+#define SCRIPT_DIR_VARNAME "SCRIPT_DIR"
+
+namespace Lua
+{
+inline void set_script_dir(
+    lua_State* L, const std::string& varname, const std::string& path)
+{
+    std::string dir = path.substr(0, path.rfind(LUA_DIR_SEP));
+    lua_pushlstring(L, dir.c_str(), dir.size());
+    lua_setglobal(L, varname.c_str());
+}
+}
 #endif
-
-#include "file_module.h"
-
-using namespace snort;
-using namespace std;
-
-//-------------------------------------------------------------------------
-// stream_file module
-//-------------------------------------------------------------------------
-
-static const Parameter s_params[] =
-{
-    { "upload", Parameter::PT_BOOL, nullptr, "false",
-      "indicate file transfer direction" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-StreamFileModule::StreamFileModule() :
-    Module(MOD_NAME, MOD_HELP, s_params) { }
-
-
-bool StreamFileModule::begin(const char*, int, SnortConfig*)
-{
-    upload = false;
-    return true;
-}
-
-bool StreamFileModule::set(const char*, Value& v, SnortConfig*)
-{
-    assert(v.is("upload"));
-    upload = v.get_bool();
-    return true;
-}
-

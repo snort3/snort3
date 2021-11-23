@@ -489,27 +489,21 @@ bool Dce2OpnumModule::begin(const char*, int, SnortConfig*)
 
 bool Dce2OpnumModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~") )
-        return false;
+    assert(v.is("~"));
 
-    if (v.get_string())
-    {
-        std::string tok (v.get_string());
-        if ( tok[0] == '"' )
-            tok.erase(0, 1);
+    std::string tok (v.get_string());
 
-        if ( tok[tok.length()-1] == '"' )
-            tok.erase(tok.length()-1, 1);
+    if ( tok[0] == '"' )
+        tok.erase(0, 1);
 
-        char* s = snort_strdup(tok.c_str());
-        DCE2_Ret status = DCE2_OpnumParse(s, &opnum);
-        snort_free(s);
+    if ( tok[tok.length()-1] == '"' )
+        tok.erase(tok.length()-1, 1);
 
-        if (status == DCE2_RET__SUCCESS)
-            return true;
-    }
+    char* s = snort_strdup(tok.c_str());
+    DCE2_Ret status = DCE2_OpnumParse(s, &opnum);
+    snort_free(s);
 
-    return false;
+    return (status == DCE2_RET__SUCCESS);
 }
 
 ProfileStats* Dce2OpnumModule::get_profile() const

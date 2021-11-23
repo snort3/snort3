@@ -100,9 +100,6 @@ bool ArpSpoofModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("mac") )
         v.get_mac(host.mac_addr);
 
-    else
-        return false;
-
     return true;
 }
 

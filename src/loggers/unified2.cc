@@ -344,31 +344,14 @@ static void _Unified2LogPacketAlert(
     logheader.sensor_id = 0;
     logheader.linktype = u2.base_proto;
 
-    if (event != nullptr)
-    {
-        logheader.event_id = htonl(event->get_event_reference());
-        logheader.event_second = htonl(event->ref_time.tv_sec);
-    }
-    else
-    {
-        logheader.event_id = 0;
-        logheader.event_second = 0;
-    }
+    logheader.event_id = htonl(event->get_event_reference());
+    logheader.event_second = htonl(event->ref_time.tv_sec);
 
-    if ( p and p->pkth )
-    {
-        logheader.packet_second = htonl((uint32_t)p->pkth->ts.tv_sec);
-        logheader.packet_microsecond = htonl((uint32_t)p->pkth->ts.tv_usec);
-        pkt_length = ( p->is_rebuilt() ) ? p->dsize : p->pktlen;
-        logheader.packet_length = htonl(pkt_length + u2h_len);
-        write_len += pkt_length + u2h_len;
-    }
-    else
-    {
-        logheader.packet_second = 0;
-        logheader.packet_microsecond = 0;
-        logheader.packet_length = 0;
-    }
+    logheader.packet_second = htonl((uint32_t)p->pkth->ts.tv_sec);
+    logheader.packet_microsecond = htonl((uint32_t)p->pkth->ts.tv_usec);
+    pkt_length = ( p->is_rebuilt() ) ? p->dsize : p->pktlen;
+    logheader.packet_length = htonl(pkt_length + u2h_len);
+    write_len += pkt_length + u2h_len;
 
     if ( config->limit && (u2.current + write_len) > config->limit )
         Unified2RotateFile(config);
@@ -831,9 +814,6 @@ bool U2Module::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("legacy_events") )
         legacy_events = v.get_bool();
-
-    else
-        return false;
 
     return true;
 }

@@ -86,25 +86,19 @@ bool TcpConnectorModule::set(const char*, Value& v, SnortConfig*)
         config->base_port = v.get_uint16();
 
     else if ( v.is("setup") )
+    {
         switch ( v.get_uint8() )
         {
         case 0:
-        {
             config->setup = TcpConnectorConfig::CALL;
             break;
-        }
         case 1:
-        {
             config->setup = TcpConnectorConfig::ANSWER;
             break;
-        }
         default:
             return false;
         }
-
-    else
-        return false;
-
+    }
     return true;
 }
 

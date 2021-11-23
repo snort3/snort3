@@ -166,9 +166,6 @@ bool SoModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("relative") )
         relative_flag = true;
 
-    else
-        return false;
-
     return true;
 }
 

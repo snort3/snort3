@@ -61,9 +61,7 @@ public:
 
 bool SoidModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~") )
-        return false;
-
+    assert(v.is("~"));
     soid = v.get_string();
     return true;
 }

@@ -120,9 +120,6 @@ bool FastModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("limit") )
         limit = v.get_size() * 1024 * 1024;
 
-    else
-        return false;
-
     return true;
 }
 

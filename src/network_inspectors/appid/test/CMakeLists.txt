@@ -48,7 +48,7 @@ add_cpputest( appid_efp_process_event_handler_test
 add_cpputest( tp_lib_handler_test
     SOURCES
         tp_lib_handler_test.cc
-        ../../../network_inspectors/rna/test/rna_flow_mock.cc
+        ../../../network_inspectors/rna/test/rna_flow_stubs.cc
         ../tp_lib_handler.cc
     LIBS
         dl

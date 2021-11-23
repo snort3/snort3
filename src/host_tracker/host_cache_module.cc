@@ -362,8 +362,6 @@ bool HostCacheModule::set(const char*, Value& v, SnortConfig*)
     }
     else if ( v.is("memcap") )
         memcap = v.get_size();
-    else
-        return false;
 
     return true;
 }

@@ -275,9 +275,6 @@ bool RpcModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("~proc") )
         return set(v, data.procedure, RPC_CHECK_PROCEDURE);
 
-    else
-        return false;
-
     return true;
 }
 

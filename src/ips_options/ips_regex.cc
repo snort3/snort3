@@ -366,15 +366,11 @@ bool RegexModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("fast_pattern") )
         config.pmd.set_fast_pattern();
 
-
     else if ( v.is("nocase") )
     {
         config.pmd.mpse_flags |= HS_FLAG_CASELESS;
         config.pmd.set_no_case();
     }
-    else
-        return false;
-
     return true;
 }
 

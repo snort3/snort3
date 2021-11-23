@@ -113,9 +113,6 @@ bool CipModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("max_unconnected_messages") )
         conf->max_unconnected_messages = v.get_uint32();
 
-    else
-        return false;
-
     return true;
 }
 

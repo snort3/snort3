@@ -563,9 +563,6 @@ bool CsvModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("separator") )
         sep = v.get_string();
 
-    else
-        return false;
-
     return true;
 }
 

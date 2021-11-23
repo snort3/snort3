@@ -546,9 +546,6 @@ static SfIpRet sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
     ++*count;
 
     return SFIP_SUCCESS;
-
-    // FIXIT-L Insert new node into routing table
-    // sfrt_add(node->ip,
 }
 
 sfip_var_t* sfvar_create_alias(const sfip_var_t* alias_from, const char* alias_to)

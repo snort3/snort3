@@ -121,9 +121,6 @@ bool PopModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("uu_decode_depth") )
         config->decode_conf.set_uu_depth(mime_value);
 
-    else
-        return false;
-
     return true;
 }
 

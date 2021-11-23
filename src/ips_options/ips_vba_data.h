@@ -17,11 +17,6 @@
 //--------------------------------------------------------------------------
 // ips_vba_data.h author Amarnath Nayak <amarnaya@cisco.com>
 
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "detection/detection_engine.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"

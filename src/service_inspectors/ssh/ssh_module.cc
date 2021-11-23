@@ -115,9 +115,6 @@ bool SshModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("max_server_version_len") )
         conf->MaxServerVersionLen = v.get_uint8();
 
-    else
-        return false;
-
     return true;
 }
 

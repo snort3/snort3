@@ -144,9 +144,6 @@ bool ReputationModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("allowlist") )
         conf->allowlist_path = v.get_string();
 
-    else
-        return false;
-
     return true;
 }
 

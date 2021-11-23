@@ -162,25 +162,20 @@ bool SipStatCodeModule::begin(const char*, int, SnortConfig*)
 
 bool SipStatCodeModule::set(const char*, Value& v, SnortConfig*)
 {
-    if (num_tokens < SIP_NUM_STAT_CODE_MAX)
-    {
-        if ( v.is("*code") )
-        {
-            uint16_t statCode = v.get_uint16();
+    assert(v.is("*code"));
 
-            if ( (statCode >= NUM_OF_RESPONSE_TYPES) && (statCode < MIN_STAT_CODE) )
-            {
-                ParseError("Status code specified is not a single digit or a 3 digit number");
-                return false;
-            }
-            ssod.stat_codes[num_tokens] = statCode;
-            num_tokens++;
-        }
-        else
-            return false;
-    }
-    else
+    if (num_tokens >= SIP_NUM_STAT_CODE_MAX)
         return false;
+
+    uint16_t statCode = v.get_uint16();
+
+    if ( (statCode >= NUM_OF_RESPONSE_TYPES) && (statCode < MIN_STAT_CODE) )
+    {
+        ParseError("Status code specified is not a single digit or a 3 digit number");
+        return false;
+    }
+    ssod.stat_codes[num_tokens] = statCode;
+    num_tokens++;
 
     return true;
 }

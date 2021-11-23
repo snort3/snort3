@@ -359,8 +359,6 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
         else
             config->flags &= ~STREAM_CONFIG_NO_REASSEMBLY;
     }
-    else
-        return false;
 
     return true;
 }

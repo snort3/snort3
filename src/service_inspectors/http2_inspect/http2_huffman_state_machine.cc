@@ -17,6 +17,10 @@
 //--------------------------------------------------------------------------
 // http2_huffman_state_machine.cc author Maya Dagon <mdagon@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "http2_huffman_state_machine.h"
 
 const HuffmanEntry huffman_decode[HUFFMAN_LOOKUP_MAX+1] [UINT8_MAX+1] =

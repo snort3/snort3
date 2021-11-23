@@ -326,6 +326,12 @@ private:
 
 bool SdPatternModule::begin(const char*, int, SnortConfig*)
 {
+    if ( hs_valid_platform() != HS_SUCCESS )
+    {
+        ParseError("This host does not support Hyperscan.");
+        return false;
+    }
+
     config = SdPatternConfig();
     return true;
 }
@@ -341,11 +347,14 @@ bool SdPatternModule::set(const char*, Value& v, SnortConfig*)
     }
     else if ( v.is("threshold") )
         config.threshold = v.get_uint32();
-    else
-        return false;
 
-    // Check if built-in pattern should be used.
+    return true;
+}
+
+bool SdPatternModule::end(const char*, int, SnortConfig*)
+{
     IpsPolicy* p = get_ips_policy();
+
     if (config.pii == "credit_card")
     {
         config.pii = SD_CREDIT_PATTERN_ALL;
@@ -364,17 +373,6 @@ bool SdPatternModule::set(const char*, Value& v, SnortConfig*)
         config.pii = SD_SOCIAL_NODASHES_PATTERN;
         config.obfuscate_pii = p->obfuscate_pii;
         config.forced_boundary = true;
-    }
-
-    return true;
-}
-
-bool SdPatternModule::end(const char*, int, SnortConfig*)
-{
-    if ( hs_valid_platform() != HS_SUCCESS )
-    {
-        ParseError("This host does not support Hyperscan.");
-        return false;
     }
 
     hs_compile_error_t* err = nullptr;

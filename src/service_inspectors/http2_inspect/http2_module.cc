@@ -99,10 +99,6 @@ bool Http2Module::set(const char*, Value& val, SnortConfig*)
         params->show_scan = val.get_bool();
     }
 #endif
-    else
-    {
-        return false;
-    }
     return true;
 }
 

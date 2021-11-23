@@ -153,9 +153,7 @@ bool CipServiceModule::begin(const char*, int, SnortConfig*)
 
 bool CipServiceModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~range") )
-        return false;
-
+    assert(v.is("~range"));
     return cip_serv.validate(v.get_string(), RANGE);
 }
 

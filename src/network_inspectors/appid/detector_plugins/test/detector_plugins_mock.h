@@ -28,9 +28,11 @@ namespace snort
 {
 // Stubs for messages
 void ErrorMessage(const char*,...) { }
+// LCOV_EXCL_START
 void WarningMessage(const char*,...) { }
 void LogMessage(const char*,...) { }
 void ParseWarning(WarningGroup, const char*, ...) { }
+// LCOV_EXCL_STOP
 
 // Stubs for appid sessions
 FlowData::FlowData(unsigned, Inspector*) { }
@@ -42,16 +44,20 @@ Packet::~Packet() = default;
 
 Inspector::Inspector() = default;
 Inspector::~Inspector() = default;
+// LCOV_EXCL_START
 bool Inspector::likes(Packet*) { return true; }
 bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return true; }
 class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
+// LCOV_EXCL_STOP
 
 // Stubs for search_tool.cc
 SearchTool::~SearchTool() = default;
+// LCOV_EXCL_START
 void SearchTool::add(const char*, unsigned, int, bool) { }
 void SearchTool::add(const char*, unsigned, void*, bool) { }
 void SearchTool::add(const uint8_t*, unsigned, int, bool) { }
 void SearchTool::add(const uint8_t*, unsigned, void*, bool) { }
+// LCOV_EXCL_STOP
 void SearchTool::prep() { }
 
 // Stubs for util.cc
@@ -75,9 +81,11 @@ char* snort_strdup(const char* str)
     return p;
 }
 }
+// LCOV_EXCL_START
 DiscoveryFilter::~DiscoveryFilter(){}
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
+// LCOV_EXCL_STOP
 
 #ifndef SIP_UNIT_TEST
 class AppIdInspector : public snort::Inspector
@@ -85,11 +93,13 @@ class AppIdInspector : public snort::Inspector
 public:
     AppIdInspector(AppIdModule&) { }
     ~AppIdInspector() override = default;
-    void eval(Packet*) override { }
     bool configure(snort::SnortConfig*) override;
+// LCOV_EXCL_START
+    void eval(Packet*) override { }
     void show(const SnortConfig*) const override { }
     void tinit() override { }
     void tterm() override { }
+// LCOV_EXCL_STOP
 private:
     AppIdContext* ctxt = nullptr;
 };
@@ -100,6 +110,8 @@ AppIdConfig::~AppIdConfig() = default;
 AppIdModule::AppIdModule()
     : Module("a", "b") { }
 AppIdModule::~AppIdModule() = default;
+
+// LCOV_EXCL_START
 bool AppIdModule::begin(const char*, int, snort::SnortConfig*)
 {
     return false;
@@ -137,6 +149,7 @@ snort::ProfileStats* AppIdModule::get_profile() const
 
 void AppIdModule::set_trace(const Trace*) const { }
 const TraceOption* AppIdModule::get_trace_options() const { return nullptr; }
+// LCOV_EXCL_STOP
 
 // Stubs for inspectors
 unsigned AppIdSession::inspector_id = 0;
@@ -167,6 +180,7 @@ AppIdHttpSession::~AppIdHttpSession()
 }
 
 // Stubs for AppIdPegCounts
+// LCOV_EXCL_START
 void AppIdPegCounts::update_service_count(AppId, bool) { }
 void AppIdPegCounts::update_client_count(AppId, bool) { }
 void AppIdPegCounts::inc_user_count(AppId) { }
@@ -214,6 +228,7 @@ void ServiceDiscovery::reload() {}
 
 int ServiceDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&)
 { return 0; }
+// LCOV_EXCL_STOP
 
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*)
 { }

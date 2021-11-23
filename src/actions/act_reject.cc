@@ -250,9 +250,6 @@ bool RejectModule::set(const char*, Value& v, SnortConfig*)
         flags |= unr[v.get_uint8()];
     }
 
-    else
-        return false;
-
     return true;
 }
 

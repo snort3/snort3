@@ -60,9 +60,7 @@ public:
 
 bool GidModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( !v.is("~") )
-        return false;
-
+    assert(v.is("~"));
     gid = v.get_uint32();
     return true;
 }

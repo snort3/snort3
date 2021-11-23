@@ -184,9 +184,6 @@ bool PacketTracerModule::set(const char *, Value &v, SnortConfig*)
                 return false;
         }
     }
-    else
-        return false;
-
     return true;
 }
 

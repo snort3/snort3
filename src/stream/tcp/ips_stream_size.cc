@@ -207,9 +207,6 @@ bool SizeModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("~direction") )
         direction = v.get_uint8();
 
-    else
-        return false;
-
     return true;
 }
 

@@ -392,9 +392,6 @@ bool ByteMathModule::set(const char*, Value& v, SnortConfig*)
     else if (v.is("result"))
         data.result_name = snort_strdup(v.get_string());
 
-    else
-        return false;
-
     return true;
 }
 
@@ -1437,18 +1434,6 @@ TEST_CASE("ByteMathModule::set invalid", "[ips_byte_math]")
     ByteMathModule obj;
     obj.begin(nullptr, 0, nullptr);
 
-    SECTION("invalid parameter")
-    {
-        Value v(1023.0);
-        Parameter p{"error", Parameter::PT_INT, "nan", nullptr,
-            "not an option"};
-        v.set(&p);
-        ByteMathData expected;
-        INITIALIZE(expected, 0, 0, 0, 0, 0, BM_PLUS, 0, 0, 0, 0, 0, 0, 0);
-
-        CHECK(!obj.set(nullptr, v, nullptr));
-        CHECK_THAT(obj.data, ByteMathDataEquals(expected));
-    }
     SECTION("rvalue = 0")
     {
         Value v("0");

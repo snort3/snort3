@@ -87,15 +87,6 @@ public:
     snort::StreamSplitter* get_splitter(bool c2s) override;
     void restart(snort::Packet*) override;
 
-    bool is_sequenced(uint8_t /*dir*/) override
-    { return true; }
-
-    bool are_packets_missing(uint8_t /*dir*/) override
-    { return false; }
-
-    uint8_t missing_in_reassembled(uint8_t /*dir*/) override
-    { return SSN_MISSING_NONE; }
-
 private:
     void start(snort::Packet*, snort::Flow*);
     void update(snort::Packet*, snort::Flow*);
@@ -106,13 +97,6 @@ private:
 
     int update_alert(
         snort::Packet*, uint32_t gid, uint32_t sid, uint32_t event_id, uint32_t event_second) override;
-
-    void flush_client(snort::Packet*) override { }
-    void flush_server(snort::Packet*) override { }
-    void flush_talker(snort::Packet*, bool /*final_flush */ = false) override { }
-    void flush_listener(snort::Packet*, bool /*final_flush */ = false) override { }
-
-    void set_extra_data(snort::Packet*, uint32_t /* flag */) override { }
 
     uint8_t get_reassembly_direction() override;
 

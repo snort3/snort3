@@ -56,8 +56,6 @@ static THREAD_LOCAL ProfileStats cvsPerfStats;
 #define CVS_COMMAND_DELIMITER  '\n'
 #define CVS_COMMAND_SEPARATOR  ' '
 
-#define CVS_CONF_INVALID_ENTRY_STR  "invalid-entry"
-
 #define CVS_NO_ALERT  0
 #define CVS_ALERT     1
 
@@ -72,10 +70,10 @@ typedef enum _CvsTypes
     CVS_END_OF_ENUM
 } CvsTypes;
 
-typedef struct _CvsRuleOption
+struct CvsRuleOption
 {
-    CvsTypes type;
-} CvsRuleOption;
+    CvsTypes type = CVS_INVALID_ENTRY;
+};
 
 /* represents a CVS command with argument */
 typedef struct _CvsCommand
@@ -374,7 +372,7 @@ static void CvsGetEOL(const uint8_t* ptr, const uint8_t* end,
 
 static const Parameter s_params[] =
 {
-    { CVS_CONF_INVALID_ENTRY_STR, Parameter::PT_IMPLIED, nullptr, nullptr,
+    { "invalid-entry", Parameter::PT_IMPLIED, nullptr, nullptr,
       "looks for an invalid Entry string" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -388,9 +386,6 @@ class CvsModule : public Module
 public:
     CvsModule() : Module(s_name, s_help, s_params) { }
 
-    bool begin(const char*, int, SnortConfig*) override;
-    bool set(const char*, Value&, SnortConfig*) override;
-
     ProfileStats* get_profile() const override
     { return &cvsPerfStats; }
 
@@ -398,23 +393,8 @@ public:
     { return DETECT; }
 
 public:
-    CvsRuleOption data = {};
+    CvsRuleOption data;
 };
-
-bool CvsModule::begin(const char*, int, SnortConfig*)
-{
-    memset(&data, 0, sizeof(data));
-    return true;
-}
-
-bool CvsModule::set(const char*, Value& v, SnortConfig*)
-{
-    if ( !v.is(CVS_CONF_INVALID_ENTRY_STR) )
-        return false;
-
-    data.type = CVS_INVALID_ENTRY;
-    return true;
-}
 
 //-------------------------------------------------------------------------
 // api methods
