@@ -255,6 +255,22 @@ void HttpMsgBody::do_utf_decoding(const Field& input, Field& output)
         output.set(input);
 }
 
+void HttpMsgBody::get_ole_data()
+{
+    uint8_t* ole_data_ptr;
+    uint32_t ole_len;
+
+    session_data->fd_state->get_ole_data(ole_data_ptr, ole_len);
+
+    if (ole_data_ptr)
+    {
+        ole_data.set(ole_len, ole_data_ptr, false);
+
+        //Reset the ole data ptr once it is stored in msg body
+        session_data->fd_state->ole_data_reset();
+    }
+}
+    
 void HttpMsgBody::do_file_decompression(const Field& input, Field& output)
 {
     if ((source_id == SRC_CLIENT) || (session_data->fd_state == nullptr))
@@ -295,6 +311,8 @@ void HttpMsgBody::do_file_decompression(const Field& input, Field& output)
         assert((uint64_t)session_data->file_decomp_buffer_size_remaining[source_id] >=
             output_length);
         session_data->file_decomp_buffer_size_remaining[source_id] -= output_length;
+        get_ole_data();
+
         break;
     }
 }
@@ -515,25 +533,25 @@ const Field& HttpMsgBody::get_decomp_vba_data()
     if (decompressed_vba_data.length() != STAT_NOT_COMPUTE)
         return decompressed_vba_data;
 
-    if (!session_data->fd_state->ole_data_ptr || !session_data->fd_state->ole_data_len)
-        return Field::FIELD_NULL;
+    if (ole_data.length() <= 0)
+    {
+        decompressed_vba_data.set(STAT_NO_SOURCE);
+        return decompressed_vba_data;
+    }
 
     uint8_t* buf = nullptr;
     uint32_t buf_len = 0;
 
     VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
                "Found OLE file. Sending %d bytes for the processing.\n",
-                session_data->fd_state->ole_data_len);
+                ole_data.length());
 
-    oleprocess(session_data->fd_state->ole_data_ptr, session_data->fd_state->ole_data_len, buf,
-        buf_len);
+    oleprocess(ole_data.start(), ole_data.length(), buf, buf_len);
+
     if (buf && buf_len)
         decompressed_vba_data.set(buf_len, buf, true);
     else
         decompressed_vba_data.set(STAT_NOT_PRESENT);
-
-    session_data->fd_state->ole_data_ptr = nullptr;
-    session_data->fd_state->ole_data_len = 0;
 
     return decompressed_vba_data;
 }

@@ -142,7 +142,19 @@ struct fd_session_t
     uint8_t State;       // main state machine
     uint8_t* ole_data_ptr; // compressed ole file.
     uint32_t ole_data_len; 
-    bool vba_analysis;   
+    bool vba_analysis;
+
+    void get_ole_data(uint8_t*& ole_data_ptr, uint32_t& ole_data_len)
+    {
+        ole_data_ptr = this->ole_data_ptr;
+        ole_data_len = this->ole_data_len;
+    }
+
+    void ole_data_reset()
+    {
+        ole_data_ptr = nullptr;
+        ole_data_len = 0;
+    } 
 };
 
 /* Macros */

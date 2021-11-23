@@ -303,7 +303,7 @@ fd_session_t* File_Decomp_New()
     New_Session->File_Type = FILE_TYPE_NONE;
     New_Session->vba_analysis = false;
     New_Session->ole_data_ptr = nullptr;
-    New_Session->ole_data_ptr = 0;
+    New_Session->ole_data_len = 0;
 
     return New_Session;
 }
