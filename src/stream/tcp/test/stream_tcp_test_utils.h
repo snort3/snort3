@@ -30,10 +30,6 @@ struct Packet;
 
 snort::Packet* get_syn_packet(snort::Flow*);
 snort::Packet* get_syn_ack_packet(snort::Flow*);
-snort::Packet* get_ack_packet(snort::Flow*);
-snort::Packet* get_fin_packet(snort::Flow*);
-snort::Packet* get_rst_packet(snort::Flow*);
-snort::Packet* get_data_packet(snort::Flow*);
 
 void release_packet(snort::Packet*);
 
