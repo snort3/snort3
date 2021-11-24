@@ -121,9 +121,6 @@ public:
     bool get_bool() const
     { return num != 0; }
 
-    long get_long() const  // FIXIT-L to be removed
-    { return (long)num; }
-
     size_t get_size() const
     { return (size_t)num; }
 

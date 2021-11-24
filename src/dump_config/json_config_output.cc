@@ -41,7 +41,7 @@ static void dump_value(JsonStream& json, const char* node_name, const BaseConfig
             json.put_false(node_name);
         break;
     case Parameter::PT_INT:
-        json.put(node_name, value->get_long());
+        json.put(node_name, value->get_int64());
         break;
     case Parameter::PT_REAL:
     {

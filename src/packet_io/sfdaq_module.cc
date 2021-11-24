@@ -120,7 +120,7 @@ bool SFDAQModule::set(const char* fqn, Value& v, SnortConfig*)
     }
     else if (!strcmp(fqn, "daq.batch_size"))
     {
-        config->set_batch_size(v.get_long());
+        config->set_batch_size(v.get_uint32());
     }
     else if (!strcmp(fqn, "daq.modules.name"))
     {
@@ -128,7 +128,7 @@ bool SFDAQModule::set(const char* fqn, Value& v, SnortConfig*)
     }
     else if (!strcmp(fqn, "daq.modules.mode"))
     {
-        module_config->mode = (SFDAQModuleConfig::SFDAQMode) (v.get_long() + 1);
+        module_config->mode = (SFDAQModuleConfig::SFDAQMode) (v.get_uint8() + 1);
     }
     else if (!strcmp(fqn, "daq.modules.variables"))
     {

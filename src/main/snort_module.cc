@@ -845,7 +845,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         module_config = sc->daq_config->add_module_config(v.get_string());
 
     else if ( v.is("--daq-batch-size") )
-        sc->daq_config->set_batch_size(v.get_long());
+        sc->daq_config->set_batch_size(v.get_uint32());
 
     else if ( v.is("--daq-dir") )
     {
@@ -859,7 +859,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     {
         if (!module_config)
             return false;
-        switch ( v.get_long() )
+        switch ( v.get_uint8() )
         {
             case 0:
                 module_config->mode = SFDAQModuleConfig::SFDAQ_MODE_PASSIVE;

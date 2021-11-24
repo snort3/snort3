@@ -88,7 +88,7 @@ void JsonStream::put(const char* key)
     out << "null";
 }
 
-void JsonStream::put(const char* key, long val)
+void JsonStream::put(const char* key, int64_t val)
 {
     split();
 
