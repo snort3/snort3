@@ -315,7 +315,11 @@ default_smtp =
 -- default wizard
 ---------------------------------------------------------------------------
 
-http_methods =  -- build from default_http_methods
+-- some HTTP and SIP methods match the whole start line to disambiguate
+-- between them or, in the case of ACK, from another protocol
+-- the * * patterns match unknown methods
+
+http_methods =
 {
     'GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'TRACE', 'CONNECT',
     'VERSION_CONTROL', 'REPORT', 'CHECKOUT', 'CHECKIN', 'UNCHECKOUT',
@@ -325,13 +329,15 @@ http_methods =  -- build from default_http_methods
     'UPDATEREDIRECTREF', 'PROPFIND', 'PROPPATCH', 'MKCOL', 'COPY',
     'MOVE', 'LOCK', 'UNLOCK', 'SEARCH', 'BCOPY', 'BDELETE', 'BMOVE',
     'BPROPFIND', 'BPROPPATCH', 'POLL', 'UNSUBSCRIBE', 'X_MS_ENUMATTS',
-    'NOTIFY * HTTP/', 'SUBSCRIBE * HTTP/', 'UPDATE * HTTP/', 'OPTIONS * HTTP/'
+    'NOTIFY * HTTP/', 'OPTIONS * HTTP/', 'SUBSCRIBE * HTTP/', 'UPDATE * HTTP/',
+    '* * HTTP/'
 }
 
 sip_requests =
 {
     'INVITE', 'CANCEL', 'BYE', 'REGISTER', 'PRACK', 'PUBLISH', 'REFER', 'INFO', 'MESSAGE',
-    'ACK * SIP/', 'SUBSCRIBE * SIP/', 'UPDATE * SIP/', 'NOTIFY * SIP/', 'OPTIONS * SIP/'
+    'NOTIFY * SIP/', 'OPTIONS * SIP/', 'SUBSCRIBE * SIP/', 'UPDATE * SIP/',
+    'ACK * SIP/', '* * SIP/'
 }
 
 telnet_commands =
@@ -339,7 +345,7 @@ telnet_commands =
     '|FF F0|', '|FF F1|', '|FF F2|', '|FF F3|',
     '|FF F4|', '|FF F5|', '|FF F6|', '|FF F7|',
     '|FF F8|', '|FF F9|', '|FF FA|', '|FF FB|',
-    '|FF FC|', '|FF FD|', '|FF FE|', '|FF FF|'
+    '|FF FC|', '|FF FD|', '|FF FE|'
 }
 
 
