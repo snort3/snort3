@@ -197,6 +197,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                         session_data->remaining_data_padding[source_id] <= (length - data_offset) ?
                         session_data->remaining_data_padding[source_id] : (length - data_offset);
                     session_data->remaining_data_padding[source_id] -= avail;
+                    assert(session_data->scan_remaining_frame_octets[source_id] >= avail);
                     session_data->scan_remaining_frame_octets[source_id] -= avail;
                     session_data->payload_discard[source_id] = true;
                     *flush_offset = avail;
@@ -351,6 +352,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                             remaining = 0;
                             session_data->header_octets_seen[source_id] = 0;
                             session_data->scan_state[source_id] = SCAN_FRAME_HEADER;
+                            session_data->remaining_data_padding[source_id] = 0;
 
                             if (!session_data->frame_lengths[source_id].empty())
                             {
