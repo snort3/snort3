@@ -46,31 +46,47 @@ Note that there is at most one instance of a given Module, even if multiple
 plugin instances are created which use that Module.  (Multiple instances
 require Snort binding configuration.)
 
+A module's usage determines how it may be configured:
+
+* Global: configured at most once, outside any policy.
+
+* Context: configured at most once in a network policy, eg event_queue.
+
+* Inspect: configured in an inspection policy aka network analysis
+  policy (NAP); stream and service inspectors like stream_tcp and smtp are
+  multitons, ie they may be configured more than once in a policy, while
+  others like binder are singletons and can be configured at most once per
+  policy.
+
+* Detect: configured at most once in an IPS policy, eg ips.
 
 === Inspectors
 
 There are several types of inspector, which determines which inspectors are
 executed when:
 
-* IT_BINDER - determines which inspectors apply to given flows
+* IT_CONTROL - process all packets before detection
 
-* IT_WIZARD - determines which service inspector to use if none explicitly
-  bound
-
-* IT_PACKET - used to process all packets before session and service processing
-  (e.g. normalize)
+* IT_FIRST - analyze 1st pkt of new flow and 1st pkt after reload of
+  ongoing flow (eg reputation)
 
 * IT_NETWORK - processes packets w/o service (e.g. arp_spoof, back_orifice)
 
-* IT_STREAM - for flow tracking, ip defrag, and tcp reassembly
+* IT_PACKET - used to process raw packets only (e.g. normalizer)
 
-* IT_SERVICE - for http, ftp, telnet, etc.
+* IT_PASSIVE - for configuration only or for handling inspection events (eg
+  ftp_client and binder)
 
-* IT_PROBE - process all packets after all the above (e.g. perf_monitor,
+* IT_PROBE - process all packets after all the detection (e.g. perf_monitor,
   port_scan)
 
-* IT_PASSIVE - for configuration only or data consuming
+* IT_SERVICE - for analyzing PDUs eg http_inspect, ftp_server, telnet, etc.
 
+* IT_STREAM - for flow tracking, ip defrag, and TCP reassembly; also for
+  processing files directly or TCP payload-only streams
+
+* IT_WIZARD - determines which service inspector to use if none explicitly
+  bound by matching start-of-flow patterns
 
 === Codecs
 
