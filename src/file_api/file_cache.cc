@@ -257,7 +257,25 @@ int FileCache::store_verdict(Flow* flow, FileInfo* file, int64_t timeout)
 
     FileContext* file_got = get_file(flow, file_id, true, timeout);
     if (file_got)
+    {
         *((FileInfo*)(file_got)) = *file;
+
+        if (FILE_VERDICT_PENDING == file->verdict and file != file_got)
+        {
+            if (file->get_file_data() and !file_got->get_file_data())
+            {
+                file_got->set_file_data(file->get_file_data());
+                file->set_file_data(nullptr);
+            }
+        }
+        else
+        {
+            if (file->get_file_data() and file != file_got)
+            {
+                file_got->set_file_data(nullptr);
+            }
+        }
+    }
     else
         return -1;
     return 0;

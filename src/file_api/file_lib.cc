@@ -92,6 +92,12 @@ char* FileContext::get_UTF8_fname(size_t* converted_len)
 
 FileInfo::~FileInfo ()
 {
+    if (user_file_data)
+    {
+        delete user_file_data;
+        set_file_data(nullptr);
+    }
+
     if (sha256)
         delete[] sha256;
 }
@@ -284,6 +290,16 @@ FileCaptureState FileInfo::reserve_file(FileCapture*& dest)
 int64_t FileInfo::get_max_file_capture_size()
 {
     return (file_capture ? file_capture->get_max_file_capture_size() : 0);
+}
+
+void FileInfo::set_file_data(UserFileDataBase* fd)
+{
+    user_file_data = fd;
+}
+
+UserFileDataBase* FileInfo::get_file_data()
+{
+    return user_file_data;
 }
 
 FileContext::FileContext ()

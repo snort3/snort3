@@ -122,6 +122,18 @@ class FileInfo;
 class Flow;
 struct Packet;
 
+class UserFileDataBase
+{
+public:
+    UserFileDataBase() = default;
+    virtual ~UserFileDataBase() = default;
+    UserFileDataBase(const UserFileDataBase& other);
+    UserFileDataBase& operator=(const UserFileDataBase& other);
+
+private:
+    void copy(const UserFileDataBase& other);
+};
+
 class SO_PUBLIC FilePolicyBase
 {
 public:

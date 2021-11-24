@@ -92,8 +92,8 @@ static void populate_trace_data(FileContext* context)
 
 void FileFlows::handle_retransmit(Packet* p)
 {
-    FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p ,
-       "handle_retransmit:queried for verdict\n");
+    FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+        "handle_retransmit:queried for verdict\n");
     if (file_policy == nullptr)
         return;
 
@@ -105,8 +105,21 @@ void FileFlows::handle_retransmit(Packet* p)
         return;
     }
 
-    FileVerdict verdict = file_policy->signature_lookup(p, file);
+    FileContext* file_got = nullptr;
     FileCache* file_cache = FileService::get_file_cache();
+
+    if (!file->get_file_data())
+    {
+        if (file_cache)
+            file_got = file_cache->get_file(flow, pending_file_id, false);
+        if (file_got and file_got->get_file_data())
+        {
+            file->set_file_data(file_got->get_file_data());
+            file_got->set_file_data(nullptr);
+        }
+    }
+
+    FileVerdict verdict = file_policy->signature_lookup(p, file);
     if (file_cache)
     {
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
@@ -118,7 +131,6 @@ void FileFlows::handle_retransmit(Packet* p)
 
 FileFlows* FileFlows::get_file_flows(Flow* flow, bool to_create)
 {
-
     FileFlows* fd = (FileFlows*)flow->get_flow_data(FileFlows::file_flow_data_id);
 
     if (!to_create or fd)
@@ -152,8 +164,17 @@ void FileFlows::set_current_file_context(FileContext* ctx)
     // If we finished processing a file context object last time, delete it
     if (current_context_delete_pending and (current_context != ctx))
     {
+        int64_t file_id  = current_context->get_file_id();
         delete current_context;
         current_context_delete_pending = false;
+        FileCache* file_cache = FileService::get_file_cache();
+        assert(file_cache);
+        FileContext* file_got = file_cache->get_file(flow, file_id, false);
+        if (file_got and file_got->verdict == FILE_VERDICT_PENDING and current_context != file_got)
+        {
+            delete(file_got->get_file_data());
+            file_got->set_file_data(nullptr);
+        }
     }
     current_context = ctx;
     // Not using current_file_id so clear it
@@ -177,6 +198,22 @@ uint64_t FileFlows::get_new_file_instance()
 
 FileFlows::~FileFlows()
 {
+    FileCache* file_cache = FileService::get_file_cache();
+    assert(file_cache);
+    uint64_t file_id = 0;
+    if (current_context)
+        file_id = current_context->get_file_id();
+    else if (main_context)
+        file_id = main_context->get_file_id();
+
+    FileContext* file_got = file_cache->get_file(flow, file_id, false);
+
+    if (file_got and (file_got->verdict == FILE_VERDICT_PENDING))
+    {
+        delete (file_got->get_file_data());
+        file_got->set_file_data(nullptr);
+    }
+
     delete(main_context);
     if (current_context_delete_pending)
         delete(current_context);
@@ -230,7 +267,7 @@ FileContext* FileFlows::get_file_context(
     // First check if this file is currently being processed
     if (!multi_file_processing_id)
         multi_file_processing_id = file_id;
-    FileContext *context = get_partially_processed_context(multi_file_processing_id);
+    FileContext* context = get_partially_processed_context(multi_file_processing_id);
 
     // Otherwise check if it has been fully processed and is in the file cache. If the file is not
     // in the cache, don't add it.
@@ -345,15 +382,20 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
         context->set_file_id(file_id);
     }
 
-    if ( context->is_cacheable() and
-            (FileService::get_file_cache()->cached_verdict_lookup(p, context, file_policy) !=
-        FILE_VERDICT_UNKNOWN) )
+    if ( context->is_cacheable())
     {
-        context->processing_complete = true;
-        remove_processed_file_context(multi_file_processing_id);
-        if (PacketTracer::is_daq_activated())
-            populate_trace_data(context);
-        return false;
+        FileVerdict verdict = FileService::get_file_cache()->cached_verdict_lookup(p, context,
+            file_policy);
+        if (verdict != FILE_VERDICT_UNKNOWN and verdict != FILE_VERDICT_PENDING)
+        {
+            context->processing_complete = true;
+            remove_processed_file_context(multi_file_processing_id);
+            if (PacketTracer::is_daq_activated())
+                populate_trace_data(context);
+            return false;
+        }
+        else if (verdict == FILE_VERDICT_PENDING)
+            return true;
     }
 
     if (context->processing_complete and context->verdict != FILE_VERDICT_UNKNOWN)
