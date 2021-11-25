@@ -106,7 +106,7 @@ static const Parameter s_params[] =
     { "curses", Parameter::PT_MULTI, "dce_smb | dce_udp | dce_tcp | sslv2", nullptr,
       "enable service identification based on internal algorithm" },
 
-    { "max_search_depth", Parameter::PT_INT, "0:65535", "64",
+    { "max_search_depth", Parameter::PT_INT, "0:65535", "8192",
       "maximum scan depth per flow" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
