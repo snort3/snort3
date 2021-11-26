@@ -254,10 +254,8 @@ public:
 
     OleFile(const uint8_t* file_buf, const uint32_t buf_len)
     {
-        //header = new OleHeader;
         this->file_buf = file_buf;
         this->buf_len = buf_len;
-        //dir_list = new DirectoryList();
     }
 
     ~OleFile()
@@ -267,9 +265,6 @@ public:
         delete[] fat_list;
         delete[] mini_fat_list;
     }
-
-    snort::LiteralSearch* searcher = nullptr;
-    snort::LiteralSearch::Handle* search_handle = nullptr;
 
 private:
     const uint8_t* file_buf;

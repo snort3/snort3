@@ -524,9 +524,6 @@ bool OleFile :: parse_ole_header()
 // RLE algorithm.
 int32_t OleFile :: get_file_offset(const uint8_t* data, int32_t data_len)
 {
-    search_handle = snort::LiteralSearch::setup();
-    searcher = snort::LiteralSearch::instantiate(search_handle,
-        (const uint8_t*)"ATTRIBUT", 8, true);
     if (searcher == nullptr)
     {
         VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, CURRENT_PACKET,
@@ -535,8 +532,6 @@ int32_t OleFile :: get_file_offset(const uint8_t* data, int32_t data_len)
     }
 
     int32_t offset = searcher->search(search_handle, data, data_len);
-    delete searcher;
-    snort::LiteralSearch::cleanup(search_handle);
     return offset;
 }
 

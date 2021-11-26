@@ -35,6 +35,9 @@
 
 THREAD_LOCAL const snort::Trace* vba_data_trace = nullptr;
 
+snort::LiteralSearch::Handle* search_handle = nullptr;
+const snort::LiteralSearch* searcher = nullptr ;
+
 namespace snort
 {
 LiteralSearch::Handle* LiteralSearch::setup() { return nullptr; }

@@ -21,6 +21,7 @@
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
+#include "helpers/literal_search.h"
 #include "profiler/profiler.h"
 #include "trace/trace.h"
 
@@ -31,6 +32,9 @@
 static THREAD_LOCAL snort::ProfileStats vbaDataPerfStats;
 
 extern THREAD_LOCAL const snort::Trace* vba_data_trace;
+
+extern snort::LiteralSearch::Handle* search_handle ;
+extern const snort::LiteralSearch* searcher ;
 
 class VbaDataOption : public snort::IpsOption
 {
@@ -46,6 +50,9 @@ class VbaDataModule : public snort::Module
 {
 public:
     VbaDataModule() : Module(s_name, s_help) { }
+    ~VbaDataModule() override;
+
+    bool end(const char*, int, snort::SnortConfig*) override;
 
     snort::ProfileStats* get_profile() const override;
 
