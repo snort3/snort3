@@ -103,9 +103,10 @@ TEST(Olefile_ole, decompression_empty_data)
 {
     uint8_t* ole_data = nullptr;
     uint8_t* buf = nullptr;
-    int32_t len = 0;
+    uint32_t len = 0;
+    uint32_t buf_len;
     OleFile* olefile = new OleFile(nullptr, 0);
-    olefile->decompression(ole_data, &len, buf, nullptr);
+    olefile->decompression(ole_data, len, buf, buf_len);
     CHECK(buf == nullptr);
     delete olefile;
 }
@@ -114,9 +115,10 @@ TEST(Olefile_ole, decompression_invalid_data_1)
 {
     uint8_t ole_data[10] = { 0 };
     uint8_t* buf = nullptr;
-    int32_t len = 10;
+    uint32_t len = 10;
+    uint32_t buf_len;
     OleFile* olefile = new OleFile(nullptr, 0);
-    olefile->decompression(ole_data,&len, buf, nullptr);
+    olefile->decompression(ole_data,len, buf, buf_len);
     CHECK(buf == nullptr);
     delete olefile;
 }
@@ -125,10 +127,11 @@ TEST(Olefile_ole, decompression_invalid_chunk_header)
 {
     uint8_t ole_data[10] ={ 0 };
     uint8_t* buf = nullptr;
-    int32_t len = 10;
+    uint32_t len = 10;
+    uint32_t buf_len;
     ole_data[0] = 0x01;
     OleFile* olefile = new OleFile(nullptr, 0);
-    olefile->decompression(ole_data,&len, buf, nullptr);
+    olefile->decompression(ole_data, len, buf, buf_len);
     CHECK(buf == nullptr);
     delete olefile;
 }
@@ -137,10 +140,11 @@ TEST(Olefile_ole, decompression_flag_0)
 {
     uint8_t ole_data[10] ={ 0 };
     uint8_t* buf = nullptr;
-    int32_t len = 10;
+    uint32_t len = 10;
+    uint32_t buf_len;
     ole_data[0] = 0x01;
     OleFile* olefile = new OleFile(nullptr, 0);
-    olefile->decompression(ole_data,&len, buf, nullptr);
+    olefile->decompression(ole_data, len, buf, buf_len);
     CHECK(buf == nullptr);
     delete olefile;
 }
@@ -168,6 +172,15 @@ TEST(Olefile_ole, get_file_node_failure)
     FileProperty* res = dir_list->get_file_node(test);
     delete dir_list;
     CHECK(res == nullptr);
+}
+
+TEST(Olefile_ole, bytes_to_copy_test)
+{
+    OleFile* olefile = new OleFile(nullptr, 100);
+    uint32_t bytes_to_copy;
+    bytes_to_copy = olefile->find_bytes_to_copy(70, 50, 60, 64);
+    CHECK(bytes_to_copy == 10);
+    delete olefile;
 }
 
 TEST_GROUP(fat_mini_fat_list)

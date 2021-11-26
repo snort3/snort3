@@ -85,7 +85,7 @@ enum sector_type
     MINIFAT_SECTOR = 1
 };
 
-int32_t cli_readn(const uint8_t*& fd, int32_t& data_len, void* buff, int32_t count);
+int32_t cli_readn(const uint8_t*& fd, uint32_t& data_len, void* buff, int32_t count);
 
 struct FileProperty
 {
@@ -241,11 +241,13 @@ public:
     int32_t get_next_mini_fat_sector(int32_t sec_id);
     int32_t get_fat_offset(int32_t sec_id);
     int32_t get_mini_fat_offset(int32_t sec_id);
-    int32_t get_file_offset(const uint8_t*, int32_t data_len);
-    void get_file_data(char*, uint8_t*&, int32_t&);
+    int32_t get_file_offset(const uint8_t*, uint32_t data_len);
+    void get_file_data(char*, uint8_t*&, uint32_t&);
 
-    void decompression(const uint8_t* data, int32_t* data_len, uint8_t*& buffer,
-        uint32_t* buffer_ofset);
+    void decompression(const uint8_t* data, uint32_t& data_len, uint8_t*& buffer,
+        uint32_t& buffer_ofset);
+    uint32_t find_bytes_to_copy(uint32_t byte_offset, uint32_t data_len,
+                                   uint32_t stream_size, uint16_t sector_size);
 
     int search_nocase(const uint8_t* buffer, unsigned buffer_len) const
     {

@@ -73,7 +73,7 @@ public:
     void set_fat_sector_count(const uint8_t* buf);
     int32_t get_fat_sector_count();
     void set_minifat_cutoff(const uint8_t* buf);
-    int32_t get_minifat_cutoff();
+    uint32_t get_minifat_cutoff();
     void set_first_minifat(const uint8_t* buf);
     int32_t get_first_minifat();
     void set_minifat_count(const uint8_t* buf);
@@ -100,7 +100,7 @@ private:
     int32_t first_dir;
     int32_t difat_count;
     int32_t fat_sector_count;
-    int32_t minifat_cutoff;
+    uint32_t minifat_cutoff;
     int32_t first_minifat;
     int32_t minifat_count;
     int32_t first_difat;

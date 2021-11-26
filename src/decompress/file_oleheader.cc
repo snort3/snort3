@@ -142,7 +142,7 @@ void OleHeader::set_minifat_cutoff(const uint8_t* buf)
     minifat_cutoff = (!byte_order_endian) ? LETOHL_UNALIGNED(buf) : BETOHL_UNALIGNED(buf);
 }
 
-int32_t OleHeader::get_minifat_cutoff()
+uint32_t OleHeader::get_minifat_cutoff()
 {
     return minifat_cutoff;
 }

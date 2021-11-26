@@ -251,7 +251,28 @@ int32_t OleFile :: get_mini_fat_offset(int32_t sec_id)
     return byte_offset;
 }
 
-void OleFile :: get_file_data(char* file, uint8_t*& file_data, int32_t& data_len)
+uint32_t OleFile :: find_bytes_to_copy(uint32_t byte_offset, uint32_t data_len,
+                                   uint32_t stream_size, uint16_t sector_size)
+{
+    uint32_t remaining_bytes = stream_size - data_len;
+    uint32_t bytes_to_copy;
+
+    if ((byte_offset + sector_size) > buf_len)
+    {
+        bytes_to_copy = buf_len - byte_offset;
+    }
+    else
+    {
+        bytes_to_copy = sector_size;
+    }
+
+    if  (bytes_to_copy > remaining_bytes)
+        bytes_to_copy = remaining_bytes;
+
+    return bytes_to_copy;
+}
+        
+void OleFile :: get_file_data(char* file, uint8_t*& file_data, uint32_t& data_len)
 {
     FileProperty* node;
     uint16_t sector_size,mini_sector_size;
@@ -263,7 +284,7 @@ void OleFile :: get_file_data(char* file, uint8_t*& file_data, int32_t& data_len
     if (node)
     {
         int32_t starting_sector;
-        int64_t stream_size;
+        uint32_t stream_size;
         sector_type is_fat = FAT_SECTOR;
         uint32_t byte_offset, bytes_to_copy;
         uint8_t* temp_data;
@@ -286,20 +307,9 @@ void OleFile :: get_file_data(char* file, uint8_t*& file_data, int32_t& data_len
                 if (byte_offset > buf_len)
                     return;
 
-                if ((byte_offset + sector_size)> buf_len)
-                {
-                    memcpy(temp_data, (file_buf + byte_offset), (buf_len - byte_offset));
-                    data_len += buf_len - byte_offset;
-                    VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
-                        CURRENT_PACKET, "Returning with partial data of %d bytes for the "
-                        "file %s.\n", data_len, file);
-                    return;
-                }
-                if ((data_len + sector_size) < stream_size)
-                    bytes_to_copy = sector_size;
-                else
-                    bytes_to_copy = stream_size - data_len;
-
+                bytes_to_copy = find_bytes_to_copy(byte_offset, data_len,
+                                    stream_size, sector_size);
+                
                 memcpy(temp_data, (file_buf + byte_offset), bytes_to_copy);
                 temp_data += sector_size;
                 data_len += bytes_to_copy;
@@ -318,19 +328,8 @@ void OleFile :: get_file_data(char* file, uint8_t*& file_data, int32_t& data_len
                 if (byte_offset > buf_len)
                     return;
 
-                if ((byte_offset + mini_sector_size) > buf_len)
-                {
-                    memcpy(temp_data, (file_buf + byte_offset), (buf_len - byte_offset));
-                    data_len += buf_len - byte_offset;
-                    VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
-                        CURRENT_PACKET, "Returning with partial data of %d bytes for "
-                        "the file %s.\n", data_len, file);
-                    return;
-                }
-                if ((data_len + mini_sector_size) < stream_size)
-                    bytes_to_copy = mini_sector_size;
-                else
-                    bytes_to_copy = stream_size - data_len;
+                bytes_to_copy = find_bytes_to_copy(byte_offset, data_len,
+                                    stream_size, mini_sector_size);
 
                 memcpy(temp_data, (file_buf + byte_offset), bytes_to_copy);
                 temp_data += mini_sector_size;
@@ -522,7 +521,7 @@ bool OleFile :: parse_ole_header()
 // The vba code in a VBA macro file begins with the keyword "ATTRIBUT" .This
 // keyword is used to calculate the offset of vba code and is decompressed using
 // RLE algorithm.
-int32_t OleFile :: get_file_offset(const uint8_t* data, int32_t data_len)
+int32_t OleFile :: get_file_offset(const uint8_t* data, uint32_t data_len)
 {
     if (searcher == nullptr)
     {
@@ -535,7 +534,7 @@ int32_t OleFile :: get_file_offset(const uint8_t* data, int32_t data_len)
     return offset;
 }
 
-int32_t cli_readn(const uint8_t*& fd, int32_t& data_len, void* buff, int32_t count)
+int32_t cli_readn(const uint8_t*& fd, uint32_t& data_len, void* buff, int32_t count)
 {
     int32_t i;
 
@@ -563,8 +562,8 @@ int32_t cli_readn(const uint8_t*& fd, int32_t& data_len, void* buff, int32_t cou
 // the output is a sequence of counts of consecutive data values in a row
 // (i.e. "3A2B4C"). This type of data compression is lossless, meaning that
 // when decompressed, all of the original data will be recovered when decoded.
-void OleFile :: decompression(const uint8_t* data, int32_t* data_len, uint8_t*& local_vba_buffer,
-    uint32_t* vba_buffer_offset)
+void OleFile :: decompression(const uint8_t* data, uint32_t& data_len, uint8_t*& local_vba_buffer,
+    uint32_t& vba_buffer_offset)
 {
     int16_t header;
     bool flagCompressed;
@@ -595,17 +594,17 @@ void OleFile :: decompression(const uint8_t* data, int32_t* data_len, uint8_t*& 
     }
 
     data += 3;
-    *data_len -= 3;
+    data_len -= 3;
 
     if (flagCompressed == 0)
     {
-        memcpy(&buffer, data, *data_len);
+        memcpy(&buffer, data, data_len);
         return;
     }
 
     pos = 0;
     clean = 1;
-    int32_t size = *data_len;
+    uint32_t size = data_len;
     while (cli_readn(data, size, &flag, 1))
     {
         for (mask = 1; mask < 0x100; mask <<= 1)
@@ -663,12 +662,12 @@ void OleFile :: decompression(const uint8_t* data, int32_t* data_len, uint8_t*& 
 
     int32_t decomp_len = strlen((char*)buffer);
 
-    if ((*vba_buffer_offset + decomp_len) > MAX_VBA_BUFFER_LEN)
+    if ((vba_buffer_offset + decomp_len) > MAX_VBA_BUFFER_LEN)
     {
-        decomp_len =  MAX_VBA_BUFFER_LEN - *vba_buffer_offset;
+        decomp_len =  MAX_VBA_BUFFER_LEN - vba_buffer_offset;
     }
-    memcpy((local_vba_buffer + *vba_buffer_offset), buffer, decomp_len);
-    *vba_buffer_offset += decomp_len;
+    memcpy((local_vba_buffer + vba_buffer_offset), buffer, decomp_len);
+    vba_buffer_offset += decomp_len;
 }
 
 // Function to extract the VBA data and send it for RLE decompression.
@@ -682,7 +681,7 @@ void OleFile :: find_and_extract_vba(uint8_t*& vba_buf, uint32_t& vba_buf_len)
     {
         FileProperty* node;
         uint8_t* data = nullptr;
-        int32_t data_len;
+        uint32_t data_len;
         node = it->second;
         ++it;
         if (node->get_file_type() == STREAM)
@@ -707,7 +706,7 @@ void OleFile :: find_and_extract_vba(uint8_t*& vba_buf, uint32_t& vba_buf_len)
                 "offset %d bytes. First %d bytes will be processed\n",
                 node->get_name(), node->get_stream_size(), (offset - 4), data_len);
 
-            decompression(data, &data_len, vba_buf, &vba_buffer_offset);
+            decompression(data, data_len, vba_buf, vba_buffer_offset);
             delete[] data1;
             if ( vba_buffer_offset >= MAX_VBA_BUFFER_LEN)
                 break;
