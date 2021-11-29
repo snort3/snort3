@@ -92,7 +92,7 @@ TEST_CASE("basic", "[json_stream]")
 
     SECTION("int")
     {
-        js.put("i", (long) 0);
+        js.put("i", (int64_t)0);
         const char* x = R"-("i": 0)-";
         CHECK(ss.str() == x);
     }
