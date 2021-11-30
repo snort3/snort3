@@ -60,6 +60,8 @@ struct BindWhen
 
     std::unordered_set<uint16_t> addr_spaces;
 
+    std::unordered_set<uint32_t> tenants;
+
     enum Criteria
     {
         BWC_IPS_ID =        0x0001,
@@ -74,7 +76,8 @@ struct BindWhen
         BWC_SPLIT_INTFS =   0x0200,
         BWC_GROUPS =        0x0400,
         BWC_SPLIT_GROUPS =  0x0800,
-        BWC_ADDR_SPACES =   0x1000
+        BWC_ADDR_SPACES =   0x1000,
+        BWC_TENANTS =       0x2000
     };
     uint16_t criteria_flags;
 
@@ -115,20 +118,36 @@ struct Binding
     void configure(const snort::SnortConfig* sc);
 
     bool check_all(const snort::Flow&, const char* = nullptr) const;
+    bool check_all(const snort::Packet*) const;
     bool check_ips_policy(const snort::Flow&) const;
+    bool check_ips_policy() const;
     bool check_vlan(const snort::Flow&) const;
+    bool check_vlan(const snort::Packet*) const;
     bool check_addr(const snort::Flow&) const;
+    bool check_addr(const snort::Packet*) const;
     bool check_split_addr(const snort::Flow&) const;
+    bool check_split_addr(const snort::Packet*) const;
     bool check_proto(const snort::Flow&) const;
+    bool check_proto(const snort::Packet*) const;
     bool check_port(const snort::Flow&) const;
+    bool check_port(const snort::Packet*) const;
     bool check_split_port(const snort::Flow&) const;
+    bool check_split_port(const snort::Packet*) const;
     bool check_intf(const snort::Flow&) const;
+    bool check_intf(const snort::Packet*) const;
     bool check_split_intf(const snort::Flow&) const;
+    bool check_split_intf(const snort::Packet*) const;
     bool check_group(const snort::Flow&) const;
+    bool check_group(const snort::Packet*) const;
     bool check_split_group(const snort::Flow&) const;
-    bool check_address_space(const snort::Flow& flow) const;
+    bool check_split_group(const snort::Packet*) const;
+    bool check_address_space(const snort::Flow&) const;
+    bool check_address_space(const snort::Packet*) const;
+    bool check_tenant(const snort::Flow&) const;
+    bool check_tenant(const snort::Packet*) const;
     bool check_service(const snort::Flow&) const;
     bool check_service(const char* service) const;
+    bool check_service() const;
 };
 
 #endif

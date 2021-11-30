@@ -271,16 +271,12 @@ uint32_t OleFile :: find_bytes_to_copy(uint32_t byte_offset, uint32_t data_len,
 
     return bytes_to_copy;
 }
-        
+
 void OleFile :: get_file_data(char* file, uint8_t*& file_data, uint32_t& data_len)
 {
-    FileProperty* node;
-    uint16_t sector_size,mini_sector_size;
-    node = dir_list->get_file_node(file);
+    FileProperty* node = dir_list->get_file_node(file);
     data_len = 0;
 
-    sector_size = header->get_sector_size();
-    mini_sector_size = header->get_mini_sector_size();
     if (node)
     {
         int32_t starting_sector;
@@ -299,8 +295,8 @@ void OleFile :: get_file_data(char* file, uint8_t*& file_data, uint32_t& data_le
 
         if (is_fat == FAT_SECTOR)
         {
-            int32_t current_sector;
-            current_sector = starting_sector;
+            int32_t current_sector = starting_sector;
+            uint16_t sector_size = header->get_sector_size();
             while (current_sector > INVALID_SECTOR)
             {
                 byte_offset = get_fat_offset(current_sector);
@@ -309,7 +305,7 @@ void OleFile :: get_file_data(char* file, uint8_t*& file_data, uint32_t& data_le
 
                 bytes_to_copy = find_bytes_to_copy(byte_offset, data_len,
                                     stream_size, sector_size);
-                
+
                 memcpy(temp_data, (file_buf + byte_offset), bytes_to_copy);
                 temp_data += sector_size;
                 data_len += bytes_to_copy;
@@ -320,8 +316,8 @@ void OleFile :: get_file_data(char* file, uint8_t*& file_data, uint32_t& data_le
         }
         else
         {
-            int32_t mini_sector;
-            mini_sector = node->get_starting_sector();
+            int32_t mini_sector = node->get_starting_sector();
+            uint16_t mini_sector_size = header->get_mini_sector_size();
             while (mini_sector > INVALID_SECTOR)
             {
                 byte_offset = get_mini_fat_offset(mini_sector);
@@ -679,13 +675,12 @@ void OleFile :: find_and_extract_vba(uint8_t*& vba_buf, uint32_t& vba_buf_len)
 
     while (it != dir_list->oleentry.end())
     {
-        FileProperty* node;
-        uint8_t* data = nullptr;
-        uint32_t data_len;
-        node = it->second;
+        FileProperty* node = it->second;
         ++it;
         if (node->get_file_type() == STREAM)
         {
+            uint8_t* data = nullptr;
+            uint32_t data_len;
             get_file_data(node->get_name(), data, data_len);
             uint8_t* data1 = data;
             int32_t offset = get_file_offset(data, data_len);

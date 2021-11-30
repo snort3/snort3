@@ -128,6 +128,7 @@ add_subdirectory(decompress)
 add_subdirectory(ips_options)
 add_subdirectory(loggers)
 add_subdirectory(network_inspectors)
+add_subdirectory(policy_selectors)
 add_subdirectory(search_engines)
 add_subdirectory(side_channel)
 add_subdirectory(connectors)
@@ -165,6 +166,7 @@ add_executable( snort
     $<TARGET_OBJECTS:memory>
     $<TARGET_OBJECTS:mime>
     $<TARGET_OBJECTS:network_inspectors>
+    $<TARGET_OBJECTS:policy_selectors>
     $<TARGET_OBJECTS:packet_io>
     $<TARGET_OBJECTS:parser>
     $<TARGET_OBJECTS:payload_injector>
@@ -195,6 +197,7 @@ add_executable( snort
     ${STATIC_CODEC_PLUGINS}
     ${STATIC_NETWORK_INSPECTOR_PLUGINS}
     ${STATIC_SERVICE_INSPECTOR_PLUGINS}
+    ${STATIC_POLICY_SELECTOR_PLUGINS}
     ${UNIT_TESTS_LIBRARIES}
 )
 

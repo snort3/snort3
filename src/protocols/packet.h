@@ -27,6 +27,8 @@
 #include "main/snort_types.h"
 #include "target_based/snort_protocols.h"
 
+// Event that is generated when a packet without a flow is processed
+#define PKT_WITHOUT_FLOW_EVENT  "non_flow_pkt"
 
 namespace snort
 {

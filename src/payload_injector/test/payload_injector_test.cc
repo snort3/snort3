@@ -63,7 +63,7 @@ Flow::Flow()
 Flow::~Flow() = default;
 IpsContext::IpsContext(unsigned int) { }
 IpsContext::~IpsContext() = default;
-SnortConfig::SnortConfig(snort::SnortConfig const*) { }
+SnortConfig::SnortConfig(snort::SnortConfig const*, const char*) { }
 SnortConfig::~SnortConfig() = default;
 
 IpsContext ips_context;

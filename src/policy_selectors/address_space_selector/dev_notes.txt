@@ -1,0 +1,14 @@
+The address space selector maps configuration to a packet based on the address space
+ID in the packet header.
+
+AddressSpaceSelectorModule creates a vector of AddressSpaceSelections from the Lua
+selector table which is moved to the AddressSpaceSelector upon its construction. The
+PolicySelectUse portion of the AddressSpaceSelections is added to a policy map that
+is keyed with the tenant IDs. For each default policy selection, the policy map is
+queried for a match given the address space ID. The match selects the following
+policies:
+
+* network policy
+* inspection policy
+* IPS policy
+

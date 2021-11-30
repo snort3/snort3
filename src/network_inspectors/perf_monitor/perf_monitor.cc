@@ -60,8 +60,8 @@ static THREAD_LOCAL PerfConstraints* t_constraints;
 class PerfIdleHandler : public DataHandler
 {
 public:
-    PerfIdleHandler(PerfMonitor& p, SnortConfig*& sc) : DataHandler(PERF_NAME), perf_monitor(p)
-    { DataBus::subscribe_global(THREAD_IDLE_EVENT, this, sc); }
+    PerfIdleHandler(PerfMonitor& p) : DataHandler(PERF_NAME), perf_monitor(p)
+    { DataBus::subscribe_network(THREAD_IDLE_EVENT, this); }
 
     void handle(DataEvent&, Flow*) override
     { perf_monitor.eval(nullptr); }
@@ -73,8 +73,8 @@ private:
 class PerfRotateHandler : public DataHandler
 {
 public:
-    PerfRotateHandler(PerfMonitor& p, SnortConfig* sc) : DataHandler(PERF_NAME), perf_monitor(p)
-    { DataBus::subscribe_global(THREAD_ROTATE_EVENT, this, sc); }
+    PerfRotateHandler(PerfMonitor& p) : DataHandler(PERF_NAME), perf_monitor(p)
+    { DataBus::subscribe_network(THREAD_ROTATE_EVENT, this); }
 
     void handle(DataEvent&, Flow*) override
     { perf_monitor.rotate(); }
@@ -86,8 +86,8 @@ private:
 class FlowIPDataHandler : public DataHandler
 {
 public:
-    FlowIPDataHandler(PerfMonitor& p, SnortConfig* sc) : DataHandler(PERF_NAME), perf_monitor(p)
-    { DataBus::subscribe_global(FLOW_STATE_EVENT, this, sc); }
+    FlowIPDataHandler(PerfMonitor& p) : DataHandler(PERF_NAME), perf_monitor(p)
+    { DataBus::subscribe_network(FLOW_STATE_EVENT, this); }
 
     void handle(DataEvent&, Flow* flow) override
     {
@@ -194,11 +194,11 @@ void PerfMonitor::disable_tracker(size_t i)
 // type and version fields immediately after timestamp like seconds, usec,
 // type, version#, data1, data2, ...
 
-bool PerfMonitor::configure(SnortConfig* sc)
+bool PerfMonitor::configure(SnortConfig*)
 {
-    new PerfIdleHandler(*this, sc);
-    new PerfRotateHandler(*this, sc);
-    new FlowIPDataHandler(*this, sc);
+    new PerfIdleHandler(*this);
+    new PerfRotateHandler(*this);
+    new FlowIPDataHandler(*this);
 
     return config->resolve();
 }

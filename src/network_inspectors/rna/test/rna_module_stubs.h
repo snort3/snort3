@@ -38,7 +38,7 @@ void Module::show_interval_stats(std::vector<unsigned int, std::allocator<unsign
 {}
 void LogMessage(const char*,...) {}
 void WarningMessage(const char*,...) {}
-SnortConfig::SnortConfig(SnortConfig const*) {}
+SnortConfig::SnortConfig(const SnortConfig* const, const char*) {}
 SnortConfig::~SnortConfig() = default;
 time_t packet_time() { return 0; }
 

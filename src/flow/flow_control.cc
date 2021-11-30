@@ -323,6 +323,8 @@ static void init_roles(Packet* p, Flow* flow)
         flow->server_group = p->pkth->egress_group;
     }
 
+    flow->tenant = p->get_flow_geneve_vni();
+
     flow->flags.app_direction_swapped = false;
     if ( flow->ssn_state.direction == FROM_CLIENT )
         p->packet_flags |= PKT_FROM_CLIENT;
@@ -448,7 +450,6 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         const SnortConfig* sc = SnortConfig::get_conf();
         set_inspection_policy(sc, flow->inspection_policy_id);
         set_ips_policy(sc, flow->ips_policy_id);
-        set_network_policy(sc, flow->network_policy_id);
         p->filtering_state = flow->filtering_state;
     }
 

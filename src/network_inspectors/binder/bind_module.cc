@@ -44,6 +44,7 @@ THREAD_LOCAL BindStats bstats;
 
 static const PegInfo bind_pegs[] =
 {
+    { CountType::SUM, "raw_packets", "raw packets evaluated" },
     { CountType::SUM, "new_flows", "new flows evaluated" },
     { CountType::SUM, "service_changes", "flow service changes evaluated" },
     { CountType::SUM, "assistant_inspectors", "flow assistant inspector requests handled" },
@@ -113,6 +114,9 @@ static const Parameter binder_when_params[] =
     { "addr_spaces", Parameter::PT_STRING, nullptr, nullptr,
       "list of address space IDs" },
 
+    { "tenants", Parameter::PT_STRING, nullptr, nullptr,
+      "list of tenants" },
+
     { "role", Parameter::PT_ENUM, "client | server | any", "any",
       "use the given configuration on one or any end of a session" },
 
@@ -139,6 +143,9 @@ static const Parameter binder_use_params[] =
 
     { "file", Parameter::PT_STRING, nullptr, nullptr,
       "use configuration in given file" },
+
+    { "network_policy", Parameter::PT_STRING, nullptr, nullptr,
+      "use network policy from given file" },
 
     { "inspection_policy", Parameter::PT_STRING, nullptr, nullptr,
       "use inspection policy from given file" },
@@ -170,22 +177,22 @@ static const Parameter s_params[] =
 };
 
 template<typename T>
-static bool parse_int_set(const Value& v, unordered_set<T>& set)
+static bool parse_int_set(const snort::Value& v, std::unordered_set<T>& set)
 {
-    assert(v.get_type() == Value::VT_STR);
+    assert(v.get_type() == snort::Value::VT_STR);
 
     set.clear();
 
-    string pl = v.get_string();
+    std::string pl = v.get_string();
 
-    stringstream ss(pl);
-    ss >> setbase(0);
+    std::stringstream ss(pl);
+    ss >> std::setbase(0);
 
     uint64_t n;
 
     while ( ss >> n )
     {
-        if ( n > numeric_limits<T>::max() )
+        if ( n > static_cast<uint64_t>(std::numeric_limits<T>::max()) )
             return false;
 
         set.insert(n);
@@ -344,6 +351,12 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
             return false;
         binding.when.add_criteria(BindWhen::Criteria::BWC_ADDR_SPACES);
     }
+    else if ( v.is("tenants") )
+    {
+        if (!parse_int_set<uint32_t>(v, binding.when.tenants))
+            return false;
+        binding.when.add_criteria(BindWhen::Criteria::BWC_TENANTS);
+    }
     else if ( v.is("role") )
         binding.when.role = (BindWhen::Role)v.get_uint8();
 
@@ -418,7 +431,7 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
             if ( policy_type == FILE_KEY )
             {
                 Shell* sh = new Shell(policy_filename.c_str());
-                auto policies = sc->policy_map->add_shell(sh);
+                auto policies = sc->policy_map->add_shell(sh, false);
                 binding.use.inspection_index = policies->inspection->policy_id;
                 binding.use.ips_index = policies->ips->policy_id;
             }

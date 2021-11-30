@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// bind_module.cc author Russ Combs <rucombs@cisco.com>
+// bind_module.h author Russ Combs <rucombs@cisco.com>
 
 #ifndef BIND_MODULE_H
 #define BIND_MODULE_H
@@ -31,6 +31,7 @@
 
 struct BindStats
 {
+    PegCount raw_packets;
     PegCount new_flows;
     PegCount service_changes;
     PegCount assistant_inspectors;

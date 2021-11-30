@@ -23,11 +23,15 @@
 // Factory for Inspectors.
 // Also provides packet evaluation.
 
+#include <map>
+
 #include "framework/inspector.h"
 
 class Binder;
-struct FrameworkPolicy;
+struct InspectorList;
 struct InspectionPolicy;
+struct NetworkPolicy;
+struct PHInstance;
 
 namespace snort
 {
@@ -47,8 +51,12 @@ public:
     static std::vector<const InspectApi*> get_apis();
     static const char* get_inspector_type(const char* name);
 
+    static void new_policy(NetworkPolicy*, NetworkPolicy*);
+    static void delete_policy(NetworkPolicy*, bool cloned);
+
     static void new_policy(InspectionPolicy*, InspectionPolicy*);
     static void delete_policy(InspectionPolicy*, bool cloned);
+
     static void update_policy(SnortConfig* sc);
 
     static void new_config(SnortConfig*);
@@ -59,6 +67,7 @@ public:
 
     static bool delete_inspector(SnortConfig*, const char* iname);
     static void free_inspector(Inspector*);
+    static void free_flow_tracking(PHInstance*);
     static InspectSsnFunc get_session(uint16_t proto);
 
     SO_PUBLIC static Inspector* get_inspector(
@@ -74,6 +83,7 @@ public:
 
     static bool configure(SnortConfig*, bool cloned = false);
     static void prepare_controls(SnortConfig*);
+    static std::string generate_inspector_label(const PHInstance*);
     static void print_config(SnortConfig*);
 
     static void thread_init(const SnortConfig*);
@@ -82,8 +92,6 @@ public:
 
     static void thread_stop(const SnortConfig*);
     static void thread_term();
-
-    static void release_policy(FrameworkPolicy*);
 
     static void execute(Packet*);
     static void probe(Packet*);
@@ -101,6 +109,8 @@ private:
     static void bumble(Packet*);
     template<bool T> static void full_inspection(Packet*);
     template<bool T> static void internal_execute(Packet*);
+    static void sort_inspector_list(const InspectorList* il,
+        std::map<const std::string, const PHInstance*>& sorted_ilist);
 };
 }
 #endif

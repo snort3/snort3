@@ -67,6 +67,7 @@ void PacketTracer::unpause() { }
 void Active::set_drop_reason(char const*) { }
 Packet::Packet(bool) { }
 Packet::~Packet() = default;
+uint32_t Packet::get_flow_geneve_vni() const { return 0; }
 Flow::Flow() { memset(this, 0, sizeof(*this)); }
 Flow::~Flow() = default;
 DetectionEngine::DetectionEngine() = default;

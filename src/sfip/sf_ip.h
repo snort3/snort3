@@ -249,26 +249,25 @@ inline bool SfIp::_is_equals(const SfIp& rhs) const
     return false;
 }
 
-// FIXIT-L: when comparing ip4 vs ip6 we have !(ip4 < ip6) and !(ip6 < ip4).
-// This may be OK in some cases, but will not work e.g. on a binary tree
-// (stl::map) with SfIp as keys, whose implementation relies only on "<".
-// This affects SfIp::less_than() and SfIp::greater_than().
 inline bool SfIp::_is_lesser(const SfIp& rhs) const
 {
-    if (is_ip4())
-    {
-        return (rhs.is_ip4() &&
-               (htonl(ip32[3]) < htonl(rhs.ip32[3])));
-    }
-    else if (is_ip6())
-    {
-        return (rhs.is_ip6() &&
-               (htonl(ip32[0]) < htonl(rhs.ip32[0])) &&
-               (htonl(ip32[1]) < htonl(rhs.ip32[1])) &&
-               (htonl(ip32[2]) < htonl(rhs.ip32[2])) &&
-               (htonl(ip32[3]) < htonl(rhs.ip32[3])));
-    }
-    return false;
+    if (is_ip4() && rhs.is_ip4())
+        return ntohl(ip32[3]) < ntohl(rhs.ip32[3]);
+    uint32_t a = ntohl(ip32[0]);
+    uint32_t b = ntohl(rhs.ip32[0]);
+    if (a != b)
+        return a < b;
+    a = ntohl(ip32[1]);
+    b = ntohl(rhs.ip32[1]);
+    if (a != b)
+        return a < b;
+    a = ntohl(ip32[2]);
+    b = ntohl(rhs.ip32[2]);
+    if (a != b)
+        return a < b;
+    a = ntohl(ip32[3]);
+    b = ntohl(rhs.ip32[3]);
+    return a < b;
 }
 
 inline bool SfIp::equals(const SfIp& rhs, bool match_unset) const

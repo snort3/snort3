@@ -1,0 +1,12 @@
+The tenant selector maps configuration to a packet based on the tenant ID in the packet
+header.
+
+TenantSelectorModule creates a vector of TenantSelections from the Lua selector table which
+is moved to the TenantSelector upon its construction. The PolicySelectUse portion of the
+TenantSelections is added to a policy map that is keyed with the tenant IDs. For each
+default policy selection, the policy map is queried for a match given the tenant ID.
+The match selects the following policies:
+
+* network policy
+* inspection policy
+* IPS policy

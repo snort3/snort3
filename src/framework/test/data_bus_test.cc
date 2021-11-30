@@ -27,6 +27,7 @@
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
+#include <CppUTestExt/MockSupport.h>
 
 using namespace snort;
 
@@ -35,27 +36,46 @@ using namespace snort;
 //--------------------------------------------------------------------------
 InspectionPolicy::InspectionPolicy(unsigned int) {}
 InspectionPolicy::~InspectionPolicy() = default;
+NetworkPolicy::NetworkPolicy(unsigned int, unsigned int) {}
+NetworkPolicy::~NetworkPolicy() = default;
 namespace snort
 {
-SnortConfig::SnortConfig(snort::SnortConfig const*)
-{ global_dbus = new DataBus(); }
-
-THREAD_LOCAL const SnortConfig* snort_conf = nullptr;
+SnortConfig::SnortConfig(snort::SnortConfig const*, const char*)
+{ }
 
 const SnortConfig* SnortConfig::get_conf()
-{ return snort_conf; }
+{
+    const SnortConfig* snort_conf =
+        (const SnortConfig*)mock().getData("snort_conf").getObjectPointer();
+    return snort_conf;
+}
 
 SnortConfig* SnortConfig::get_main_conf()
-{ return const_cast<SnortConfig*>(snort_conf); }
+{
+    SnortConfig* snort_conf =
+        (SnortConfig*)mock().getData("snort_conf").getObjectPointer();
+    return snort_conf;
+}
 
 SnortConfig::~SnortConfig()
-{ delete global_dbus; }
+{ }
 
-static  InspectionPolicy* my_inspection_policy = nullptr;
+NetworkPolicy* get_network_policy()
+{
+    NetworkPolicy* my_network_policy =
+        (NetworkPolicy*)mock().getData("my_network_policy").getObjectPointer();
+    return my_network_policy;
+}
 
 InspectionPolicy* get_inspection_policy()
-{ return my_inspection_policy; }
+{
+    InspectionPolicy* my_inspection_policy =
+        (InspectionPolicy*)mock().getData("my_inspection_policy").getObjectPointer();
+    return my_inspection_policy;
 }
+
+}
+
 //--------------------------------------------------------------------------
 class UTestEvent : public DataEvent
 {
@@ -98,24 +118,27 @@ void UTestHandler::handle(DataEvent& event, Flow*)
 
 TEST_GROUP(data_bus)
 {
-   void setup() override
-   {
-        snort_conf = new SnortConfig();
-        my_inspection_policy = new InspectionPolicy();
-   }
+    SnortConfig snort_conf;
+    InspectionPolicy my_inspection_policy;
+    NetworkPolicy my_network_policy;
 
-   void teardown() override
-   {
-        delete my_inspection_policy;
-        delete snort_conf;
-   }
+    void setup() override
+    {
+        mock().setDataObject("snort_conf", "SnortConfig", &snort_conf);
+        mock().setDataObject("my_network_policy", "NetworkPolicy", &my_network_policy);
+        mock().setDataObject("my_inspection_policy", "InspectionPolicy", &my_inspection_policy);
+    }
+
+    void teardown() override
+    {
+        mock().clear();
+    }
 };
 
-TEST(data_bus, subscribe_global)
+TEST(data_bus, subscribe_network)
 {
-    SnortConfig* sc = SnortConfig::get_main_conf();
     UTestHandler* h = new UTestHandler();
-    DataBus::subscribe_global(DB_UTEST_EVENT, h, sc);
+    DataBus::subscribe_network(DB_UTEST_EVENT, h);
 
     UTestEvent event(100);
     DataBus::publish(DB_UTEST_EVENT, event);
@@ -125,7 +148,7 @@ TEST(data_bus, subscribe_global)
     DataBus::publish(DB_UTEST_EVENT, event1);
     CHECK(200 == h->evt_msg);
 
-    DataBus::unsubscribe_global(DB_UTEST_EVENT, h, sc);
+    DataBus::unsubscribe_network(DB_UTEST_EVENT, h);
 
     UTestEvent event2(300);
     DataBus::publish(DB_UTEST_EVENT, event2);

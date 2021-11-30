@@ -28,6 +28,7 @@
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
+#include "protocols/packet.h"
 
 using namespace snort;
 
@@ -139,12 +140,28 @@ inline bool Binding::check_ips_policy(const Flow& flow) const
     return when.ips_id == flow.ips_policy_id;
 }
 
+inline bool Binding::check_ips_policy() const
+{
+    if (!when.has_criteria(BindWhen::Criteria::BWC_IPS_ID))
+        return true;
+
+    return when.ips_id == get_ips_policy()->policy_id;
+}
+
 inline bool Binding::check_vlan(const Flow& flow) const
 {
     if (!when.has_criteria(BindWhen::Criteria::BWC_VLANS))
         return true;
 
     return when.vlans.test(flow.key->vlan_tag);
+}
+
+inline bool Binding::check_vlan(const Packet* p) const
+{
+    if (!when.has_criteria(BindWhen::Criteria::BWC_VLANS))
+        return true;
+
+    return when.vlans.test(p->get_flow_vlan_id());
 }
 
 inline bool Binding::check_addr(const Flow& flow) const
@@ -176,6 +193,35 @@ inline bool Binding::check_addr(const Flow& flow) const
     return false;
 }
 
+inline bool Binding::check_addr(const Packet* p) const
+{
+    if (!when.has_criteria(BindWhen::Criteria::BWC_NETS))
+        return true;
+
+    switch (when.role)
+    {
+        case BindWhen::BR_SERVER:
+            if (sfvar_ip_in(when.src_nets, p->ptrs.ip_api.get_dst()))
+                return true;
+            break;
+
+        case BindWhen::BR_CLIENT:
+            if (sfvar_ip_in(when.src_nets, p->ptrs.ip_api.get_src()))
+                return true;
+            break;
+
+        case BindWhen::BR_EITHER:
+            if (sfvar_ip_in(when.src_nets, p->ptrs.ip_api.get_src()) ||
+                sfvar_ip_in(when.src_nets, p->ptrs.ip_api.get_dst()))
+                return true;
+            break;
+
+        default:
+            break;
+    }
+    return false;
+}
+
 inline bool Binding::check_split_addr(const Flow& flow) const
 {
     if (!when.has_criteria(BindWhen::Criteria::BWC_SPLIT_NETS))
@@ -190,12 +236,35 @@ inline bool Binding::check_split_addr(const Flow& flow) const
     return true;
 }
 
+inline bool Binding::check_split_addr(const Packet* p) const
+{
+    if (!when.has_criteria(BindWhen::Criteria::BWC_SPLIT_NETS))
+        return true;
+
+    if (when.src_nets && !sfvar_ip_in(when.src_nets, p->ptrs.ip_api.get_src()))
+        return false;
+
+    if (when.dst_nets && !sfvar_ip_in(when.dst_nets, p->ptrs.ip_api.get_dst()))
+        return false;
+
+    return true;
+}
+
 inline bool Binding::check_proto(const Flow& flow) const
 {
     if (!when.has_criteria(BindWhen::Criteria::BWC_PROTO))
         return true;
 
     unsigned proto_bit = 1 << ((unsigned)flow.pkt_type - 1);
+    return (when.protos & proto_bit) != 0;
+}
+
+inline bool Binding::check_proto(const Packet* p) const
+{
+    if (!when.has_criteria(BindWhen::Criteria::BWC_PROTO))
+        return true;
+
+    unsigned proto_bit = 1 << ((unsigned)p->type() - 1);
     return (when.protos & proto_bit) != 0;
 }
 
@@ -231,6 +300,38 @@ inline bool Binding::check_port(const Flow& flow) const
     return false;
 }
 
+inline bool Binding::check_port(const Packet* p) const
+{
+    if (!when.has_criteria(BindWhen::Criteria::BWC_PORTS))
+        return true;
+
+    if (p->type() != PktType::TCP && p->type() != PktType::UDP)
+        return false;
+
+    switch (when.role)
+    {
+        case BindWhen::BR_SERVER:
+            if (when.src_ports.test(p->ptrs.dp))
+                return true;
+            break;
+
+        case BindWhen::BR_CLIENT:
+            if (when.src_ports.test(p->ptrs.sp))
+                return true;
+            break;
+
+        case BindWhen::BR_EITHER:
+            if (when.src_ports.test(p->ptrs.sp) ||
+                when.src_ports.test(p->ptrs.dp))
+                return true;
+            break;
+
+        default:
+            break;
+    }
+    return false;
+}
+
 inline bool Binding::check_split_port(const Flow& flow) const
 {
     if (!when.has_criteria(BindWhen::Criteria::BWC_SPLIT_PORTS))
@@ -243,6 +344,23 @@ inline bool Binding::check_split_port(const Flow& flow) const
         return false;
 
     if (!when.dst_ports.test(flow.server_port))
+        return false;
+
+    return true;
+}
+
+inline bool Binding::check_split_port(const Packet* p) const
+{
+    if (!when.has_criteria(BindWhen::Criteria::BWC_SPLIT_PORTS))
+        return true;
+
+    if (p->type() != PktType::TCP && p->type() != PktType::UDP)
+        return false;
+
+    if (!when.src_ports.test(p->ptrs.sp))
+        return false;
+
+    if (!when.dst_ports.test(p->ptrs.dp))
         return false;
 
     return true;
@@ -278,6 +396,36 @@ inline bool Binding::check_intf(const Flow& flow) const
     return false;
 }
 
+inline bool Binding::check_intf(const Packet* p) const
+{
+    if (!when.has_criteria(BindWhen::Criteria::BWC_INTFS))
+        return true;
+
+    switch (when.role)
+    {
+        case BindWhen::BR_SERVER:
+            if (when.src_intfs.count(p->pkth->egress_index))
+                return true;
+            break;
+
+        case BindWhen::BR_CLIENT:
+            if (when.src_intfs.count(p->pkth->ingress_index))
+                return true;
+            break;
+
+        case BindWhen::BR_EITHER:
+            if (when.src_intfs.count(p->pkth->ingress_index) ||
+                when.src_intfs.count(p->pkth->egress_index))
+                return true;
+            break;
+
+        default:
+            break;
+    }
+
+    return false;
+}
+
 inline bool Binding::check_split_intf(const Flow& flow) const
 {
     if (!when.has_criteria(BindWhen::Criteria::BWC_SPLIT_INTFS))
@@ -287,6 +435,20 @@ inline bool Binding::check_split_intf(const Flow& flow) const
         return false;
 
     if (!when.dst_intfs.empty() && !when.dst_intfs.count(flow.server_intf))
+        return false;
+
+    return true;
+}
+
+inline bool Binding::check_split_intf(const Packet* p) const
+{
+    if (!when.has_criteria(BindWhen::Criteria::BWC_SPLIT_INTFS))
+        return true;
+
+    if (!when.src_intfs.empty() && !when.src_intfs.count(p->pkth->ingress_index))
+        return false;
+
+    if (!when.dst_intfs.empty() && !when.dst_intfs.count(p->pkth->egress_index))
         return false;
 
     return true;
@@ -322,6 +484,36 @@ inline bool Binding::check_group(const Flow& flow) const
     return false;
 }
 
+inline bool Binding::check_group(const Packet* p) const
+{
+    if (!when.has_criteria(BindWhen::Criteria::BWC_GROUPS))
+        return true;
+
+    switch (when.role)
+    {
+        case BindWhen::BR_SERVER:
+            if (when.src_groups.count(p->pkth->egress_group))
+                return true;
+            break;
+
+        case BindWhen::BR_CLIENT:
+            if (when.src_groups.count(p->pkth->ingress_group))
+                return true;
+            break;
+
+        case BindWhen::BR_EITHER:
+            if (when.src_groups.count(p->pkth->ingress_group) ||
+                when.src_groups.count(p->pkth->egress_group))
+                return true;
+            break;
+
+        default:
+            break;
+    }
+
+    return false;
+}
+
 inline bool Binding::check_split_group(const Flow& flow) const
 {
     if (!when.has_criteria(BindWhen::Criteria::BWC_SPLIT_GROUPS))
@@ -336,12 +528,50 @@ inline bool Binding::check_split_group(const Flow& flow) const
     return true;
 }
 
+inline bool Binding::check_split_group(const Packet* p) const
+{
+    if (!when.has_criteria(BindWhen::Criteria::BWC_SPLIT_GROUPS))
+        return true;
+
+    if (!when.src_groups.empty() && !when.src_groups.count(p->pkth->ingress_group))
+        return false;
+
+    if (!when.dst_groups.empty() && !when.dst_groups.count(p->pkth->egress_group))
+        return false;
+
+    return true;
+}
+
 inline bool Binding::check_address_space(const Flow& flow) const
 {
     if (!when.has_criteria(BindWhen::Criteria::BWC_ADDR_SPACES))
         return true;
 
     return when.addr_spaces.count(flow.key->addressSpaceId) != 0;
+}
+
+inline bool Binding::check_address_space(const Packet* p) const
+{
+    if (!when.has_criteria(BindWhen::Criteria::BWC_ADDR_SPACES))
+        return true;
+
+    return when.addr_spaces.count(p->pkth->address_space_id) != 0;
+}
+
+inline bool Binding::check_tenant(const Flow& flow) const
+{
+    if (!when.has_criteria(BindWhen::Criteria::BWC_TENANTS))
+        return true;
+
+    return when.tenants.count(flow.tenant) != 0;
+}
+
+inline bool Binding::check_tenant(const Packet* p) const
+{
+    if (!when.has_criteria(BindWhen::Criteria::BWC_TENANTS))
+        return true;
+
+    return when.tenants.count(p->pkth->address_space_id) != 0;
 }
 
 inline bool Binding::check_service(const Flow& flow) const
@@ -363,6 +593,11 @@ inline bool Binding::check_service(const char* service) const
         return false;
 
     return when.svc == service;
+}
+
+inline bool Binding::check_service() const
+{
+    return when.has_criteria(BindWhen::Criteria::BWC_SVC) ? false : true;
 }
 
 bool Binding::check_all(const Flow& flow, const char* service) const
@@ -410,6 +645,56 @@ bool Binding::check_all(const Flow& flow, const char* service) const
         return false;
 
     if (!check_address_space(flow))
+        return false;
+
+    if (!check_tenant(flow))
+        return false;
+
+    return true;
+}
+
+bool Binding::check_all(const Packet* p) const
+{
+    if (!check_service())
+        return false;
+
+    if (!check_ips_policy())
+        return false;
+
+    if (!check_vlan(p))
+        return false;
+
+    if (!check_addr(p))
+        return false;
+
+    if (!check_split_addr(p))
+        return false;
+
+    if (!check_proto(p))
+        return false;
+
+    if (!check_port(p))
+        return false;
+
+    if (!check_split_port(p))
+        return false;
+
+    if (!check_intf(p))
+        return false;
+
+    if (!check_split_intf(p))
+        return false;
+
+    if (!check_group(p))
+        return false;
+
+    if (!check_split_group(p))
+        return false;
+
+    if (!check_address_space(p))
+        return false;
+
+    if (!check_tenant(p))
         return false;
 
     return true;

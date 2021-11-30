@@ -46,7 +46,7 @@ public:
     { return &config; }
 
     Usage get_usage() const override
-    { return INSPECT; }
+    { return CONTEXT; }
 
 private:
     bool set_ip4(const char*, const snort::Value&, snort::SnortConfig*);

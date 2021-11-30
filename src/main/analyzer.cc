@@ -194,8 +194,6 @@ static bool process_packet(Packet* p)
 
     PacketTracer::activate(*p);
 
-    // FIXIT-M should not need to set policies here
-    set_default_policy(p->context->conf);
     p->user_inspection_policy_id = get_inspection_policy()->user_policy_id;
     p->user_ips_policy_id = get_ips_policy()->user_policy_id;
     p->user_network_policy_id = get_network_policy()->user_policy_id;
@@ -382,7 +380,7 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
     Packet* p = switcher->get_context()->packet;
     p->context->wire_packet = p;
     p->context->packet_number = get_packet_number();
-    set_default_policy(p->context->conf);
+    select_default_policy(pkthdr, p->context->conf);
 
     DetectionEngine::reset();
     sfthreshold_reset();
@@ -459,7 +457,8 @@ bool Analyzer::inspect_rebuilt(Packet* p)
     return main_hook(p);
 }
 
-bool Analyzer::process_rebuilt_packet(Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt, uint32_t pktlen)
+bool Analyzer::process_rebuilt_packet(Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt,
+    uint32_t pktlen)
 {
     PacketManager::decode(p, pkthdr, pkt, pktlen, true);
 

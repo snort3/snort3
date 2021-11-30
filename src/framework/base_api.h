@@ -29,7 +29,7 @@
 
 // this is the current version of the base api
 // must be prefixed to subtype version
-#define BASE_API_VERSION 9
+#define BASE_API_VERSION 10
 
 // set options to API_OPTIONS to ensure compatibility
 #ifndef API_OPTIONS
@@ -49,6 +49,7 @@ enum PlugType
     PT_SO_RULE,
     PT_LOGGER,
     PT_CONNECTOR,
+    PT_POLICY_SELECTOR,
 #ifdef PIGLET
     PT_PIGLET,
 #endif

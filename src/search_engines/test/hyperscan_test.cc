@@ -101,7 +101,7 @@ THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
 static std::vector<void *> s_state;
 static ScratchAllocator* scratcher = nullptr;
 
-SnortConfig::SnortConfig(const SnortConfig* const)
+SnortConfig::SnortConfig(const SnortConfig* const, const char*)
 {
     state = &s_state;
     num_slots = 1;

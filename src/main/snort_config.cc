@@ -40,6 +40,7 @@
 #include "filters/sfrf.h"
 #include "filters/sfthreshold.h"
 #include "flow/ha_module.h"
+#include "framework/policy_selector.h"
 #include "hash/xhash.h"
 #include "helpers/process.h"
 #include "latency/latency_config.h"
@@ -151,7 +152,8 @@ static void init_policies(SnortConfig* sc)
     }
 }
 
-void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* protocol_reference)
+void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* protocol_reference,
+    const char* exclude_name)
 {
     homenet.clear();
     obfuscation_net.clear();
@@ -177,7 +179,6 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
         memory = new MemoryConfig();
         policy_map = new PolicyMap;
         thread_config = new ThreadConfig();
-        global_dbus = new DataBus();
 
         proto_ref = new ProtocolReference(protocol_reference);
         so_rules = new SoRules;
@@ -186,7 +187,7 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
     else
     {
         clone(other_conf);
-        policy_map = new PolicyMap(other_conf->policy_map);
+        policy_map = new PolicyMap(other_conf->policy_map, exclude_name);
     }
 }
 
@@ -198,22 +199,21 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
  * but the goal is to minimize config checks at run time when running in
  * IDS mode so we keep things simple and enforce that the only difference
  * among run_modes is how we handle packets via the log_func. */
-SnortConfig::SnortConfig(const SnortConfig* const other_conf)
+SnortConfig::SnortConfig(const SnortConfig* const other_conf, const char* exclude_name)
 {
-    init(other_conf, nullptr);
+    init(other_conf, nullptr, exclude_name);
 }
 
 //  Copy the ProtocolReference data into the new SnortConfig.
 SnortConfig::SnortConfig(ProtocolReference* protocol_reference)
 {
-    init(nullptr, protocol_reference);
+    init(nullptr, protocol_reference, nullptr);
 }
 
 SnortConfig::~SnortConfig()
 {
     if ( cloned )
     {
-        delete global_dbus;
         policy_map->set_cloned(true);
         delete policy_map;
         return;
@@ -264,7 +264,6 @@ SnortConfig::~SnortConfig()
     delete trace_config;
     delete overlay_trace_config;
     delete ha_config;
-    delete global_dbus;
 
     delete profiler;
     delete latency;
@@ -276,6 +275,8 @@ SnortConfig::~SnortConfig()
     if ( plugins )
         delete plugins;
     delete payload_injector_config;
+    InspectorManager::free_flow_tracking(flow_tracking);
+    PolicySelector::free_policy_selector(global_selector);
     clear_reload_resource_tuner_list();
 
     trim_heap();
@@ -332,7 +333,6 @@ void SnortConfig::post_setup()
 void SnortConfig::clone(const SnortConfig* const conf)
 {
     *this = *conf;
-    global_dbus = new DataBus();
     if (conf->homenet.get_family() != 0)
         memcpy(&homenet, &conf->homenet, sizeof(homenet));
 

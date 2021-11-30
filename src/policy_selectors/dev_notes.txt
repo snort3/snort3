@@ -1,0 +1,3 @@
+A set of policy selectors to select the default policies in a multi-tenant
+environment. The selectors can only use constraints that are known before
+packet decode, such as address space ID, interfaces, tenants, etc.

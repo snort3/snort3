@@ -560,9 +560,9 @@ void Reputation::eval(Packet* p)
     ++reputationstats.packets;
 }
 
-bool Reputation::configure(SnortConfig* sc)
+bool Reputation::configure(SnortConfig*)
 {
-    DataBus::subscribe_global( AUXILIARY_IP_EVENT, new AuxiliaryIpRepHandler(config), sc );
+    DataBus::subscribe_network( AUXILIARY_IP_EVENT, new AuxiliaryIpRepHandler(config) );
     return true;
 }
 

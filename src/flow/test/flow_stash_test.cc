@@ -104,13 +104,13 @@ void DataBus::subscribe(const char* key, DataHandler* h)
 {
     DB->_subscribe(key, h);
 }
-void DataBus::subscribe_global(const char* key, DataHandler* h, SnortConfig*)
+void DataBus::subscribe_network(const char* key, DataHandler* h)
 {
     DB->_subscribe(key, h);
 }
 
 void DataBus::unsubscribe(const char*, DataHandler*) {}
-void DataBus::unsubscribe_global(const char*, DataHandler*, SnortConfig*) {}
+void DataBus::unsubscribe_network(const char*, DataHandler*) {}
 
 void DataBus::publish(const char* key, DataEvent& e, Flow* f)
 {
@@ -144,7 +144,7 @@ static SnortConfig snort_conf;
 
 namespace snort
 {
-SnortConfig::SnortConfig(const SnortConfig* const) { }
+SnortConfig::SnortConfig(const SnortConfig* const, const char*) { }
 SnortConfig::~SnortConfig() = default;
 const SnortConfig* SnortConfig::get_conf() { return &snort_conf; }
 

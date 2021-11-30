@@ -43,10 +43,11 @@ typedef unsigned char uuid_t[16];
 namespace snort
 {
 class GHash;
-struct SnortConfig;
 class IpsAction;
+struct SnortConfig;
 }
 
+struct _daq_pkt_hdr;
 struct PortTable;
 struct vartable_t;
 struct sfip_var_t;
@@ -85,10 +86,13 @@ enum DecodeEventFlag
 
 // Snort ac-split creates the nap (network analysis policy)
 // Snort++ breaks the nap into network and inspection
+
 struct NetworkPolicy
 {
 public:
-    NetworkPolicy(PolicyId = 0);
+    NetworkPolicy(PolicyId = 0, PolicyId default_inspection_id = 0);
+    NetworkPolicy(NetworkPolicy*, const char*);
+    ~NetworkPolicy();
 
     bool checksum_drops(uint16_t codec_cksum_err_flag)
     { return (checksum_drop & codec_cksum_err_flag) != 0; }
@@ -106,15 +110,24 @@ public:
     { return (checksum_eval & CHECKSUM_FLAG__ICMP) != 0; }
 
 public:
-    PolicyId policy_id;
+    struct TrafficPolicy* traffic_policy;
+    snort::DataBus dbus;
+
+    PolicyId policy_id = 0;
     uint32_t user_policy_id = 0;
+    PolicyId default_inspection_policy_id = 0;
 
-    uint8_t min_ttl;
-    uint8_t new_ttl;
+    // minimum possible (allows all but errors to pass by default)
+    uint8_t min_ttl = 1;
+    uint8_t new_ttl = 5;
 
-    uint32_t checksum_eval;
-    uint32_t checksum_drop;
-    uint32_t normal_mask;
+    uint32_t checksum_eval = CHECKSUM_FLAG__ALL | CHECKSUM_FLAG__DEF;
+    uint32_t checksum_drop = CHECKSUM_FLAG__DEF;
+    uint32_t normal_mask = 0;
+    bool cloned = false;
+
+private:
+    void init(NetworkPolicy*, const char*);
 };
 
 //-------------------------------------------------------------------------
@@ -211,14 +224,14 @@ struct PolicyTuple
 class PolicyMap
 {
 public:
-    PolicyMap(PolicyMap* old_map = nullptr);
+    PolicyMap(PolicyMap* old_map = nullptr, const char* exclude_name = nullptr);
     ~PolicyMap();
 
     InspectionPolicy* add_inspection_shell(Shell*);
     IpsPolicy* add_ips_shell(Shell*);
-    std::shared_ptr<PolicyTuple> add_shell(Shell*);
+    std::shared_ptr<PolicyTuple> add_shell(Shell*, bool include_network);
     std::shared_ptr<PolicyTuple> get_policies(Shell* sh);
-    void clone(PolicyMap *old_map);
+    void clone(PolicyMap *old_map, const char* exclude_name);
 
     Shell* get_shell(unsigned i = 0)
     { return i < shells.size() ? shells[i] : nullptr; }
@@ -317,7 +330,7 @@ SO_PUBLIC void set_network_policy(NetworkPolicy*);
 SO_PUBLIC void set_inspection_policy(InspectionPolicy*);
 SO_PUBLIC void set_ips_policy(IpsPolicy*);
 
-SO_PUBLIC NetworkPolicy* get_user_network_policy(const snort::SnortConfig*, unsigned policy_id);
+SO_PUBLIC NetworkPolicy* get_default_network_policy(const snort::SnortConfig*);
 SO_PUBLIC InspectionPolicy* get_user_inspection_policy(const snort::SnortConfig*, unsigned policy_id);
 SO_PUBLIC InspectionPolicy* get_default_inspection_policy(const snort::SnortConfig*);
 
@@ -332,11 +345,10 @@ void set_ips_policy(const snort::SnortConfig*, unsigned = 0);
 
 void set_policies(const snort::SnortConfig*, Shell*);
 void set_default_policy(const snort::SnortConfig*);
+void select_default_policy(const _daq_pkt_hdr*, const snort::SnortConfig*);
 
-bool only_network_policy();
 bool only_inspection_policy();
 bool only_ips_policy();
 
-bool default_inspection_policy();
 #endif
 

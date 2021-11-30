@@ -266,7 +266,7 @@ TEST_CASE("Set and check max packet threads", "[ThreadConfig]")
     ThreadConfig::set_instance_max(new_max);
     CHECK(ThreadConfig::get_instance_max() == new_max);
     ThreadConfig::set_instance_max(0);
-    CHECK(ThreadConfig::get_instance_max() == hwloc_bitmap_weight(process_cpuset));
+    CHECK(ThreadConfig::get_instance_max() == (unsigned)hwloc_bitmap_weight(process_cpuset));
 }
 
 TEST_CASE("Set and implement thread affinity", "[ThreadConfig]")

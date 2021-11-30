@@ -135,7 +135,7 @@ static const char* InspectorTypeNames[IT_MAX] =
     "network",
     "service",
     "control",
-    "probe"
+    "probe",
 };
 
 const char* InspectApi::get_type(InspectorType type)

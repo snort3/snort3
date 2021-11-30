@@ -32,6 +32,8 @@ add_library( managers OBJECT
     mpse_manager.h
     plugin_manager.cc
     plugin_manager.h
+    policy_selector_manager.cc
+    policy_selector_manager.h
     script_manager.cc
     script_manager.h
     so_manager.cc

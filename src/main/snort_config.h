@@ -149,6 +149,7 @@ struct IpsActionsConfig;
 struct LatencyConfig;
 struct MemoryConfig;
 struct PayloadInjectorConfig;
+struct PHInstance;
 struct Plugins;
 struct PORT_RULE_MAP;
 struct RateFilterConfig;
@@ -162,6 +163,7 @@ struct ThresholdConfig;
 namespace snort
 {
 class GHash;
+class PolicySelector;
 class ProtocolReference;
 class ThreadConfig;
 class XHash;
@@ -193,10 +195,10 @@ protected:
 struct SnortConfig
 {
 private:
-    void init(const SnortConfig* const, ProtocolReference*);
+    void init(const SnortConfig* const, ProtocolReference*, const char* exclude_name);
 
 public:
-    SnortConfig(const SnortConfig* const other_conf = nullptr);
+    SnortConfig(const SnortConfig* const other_conf = nullptr, const char* exclude_name = nullptr);
     SnortConfig(ProtocolReference* protocol_reference);
     ~SnortConfig();
 
@@ -392,7 +394,9 @@ public:
     PolicyMap* policy_map = nullptr;
     std::string tweaks;
 
-    DataBus* global_dbus = nullptr;
+    PolicySelector* global_selector = nullptr;
+    PHInstance* flow_tracking = nullptr;
+    PHInstance* removed_flow_tracking = nullptr;
 
     uint16_t tunnel_mask = 0;
 
@@ -716,7 +720,7 @@ public:
     { return logging_flags & LOGGING_FLAG__SYSLOG; }
 
     static void set_log_quiet(bool enabled)
-    { 
+    {
         if (enabled)
             logging_flags |= LOGGING_FLAG__QUIET;
         else

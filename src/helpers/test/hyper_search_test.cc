@@ -50,7 +50,7 @@ static ScratchAllocator* scratcher = nullptr;
 
 static unsigned s_parse_errors = 0;
 
-SnortConfig::SnortConfig(const SnortConfig* const)
+SnortConfig::SnortConfig(const SnortConfig* const, const char*)
 {
     state = &s_state;
     num_slots = 1;

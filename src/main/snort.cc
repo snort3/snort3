@@ -52,6 +52,7 @@
 #include "managers/module_manager.h"
 #include "managers/mpse_manager.h"
 #include "managers/plugin_manager.h"
+#include "managers/policy_selector_manager.h"
 #include "managers/script_manager.h"
 #include "memory/memory_cap.h"
 #include "network_inspectors/network_inspectors.h"
@@ -60,6 +61,7 @@
 #include "packet_io/trough.h"
 #include "parser/cmd_line.h"
 #include "parser/parser.h"
+#include "policy_selectors/policy_selectors.h"
 #include "profiler/profiler.h"
 #include "search_engines/search_engines.h"
 #include "service_inspectors/service_inspectors.h"
@@ -118,6 +120,7 @@ void Snort::init(int argc, char** argv)
     load_piglets();
 #endif
     load_search_engines();
+    load_policy_selectors();
     load_stream_inspectors();
     load_network_inspectors();
     load_service_inspectors();
@@ -192,6 +195,9 @@ void Snort::init(int argc, char** argv)
             ParseError("host attributes file failed to load\n");
     }
     HostAttributesManager::activate(sc);
+
+    if ( SnortConfig::log_verbose() )
+        PolicySelectorManager::print_config(sc);
 
     // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(sc) )
@@ -481,7 +487,10 @@ SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path
     }
 
     if ( SnortConfig::log_verbose() )
+    {
+        PolicySelectorManager::print_config(sc);
         InspectorManager::print_config(sc);
+    }
 
     // FIXIT-L is this still needed?
     /* Transfer any user defined rule type outputs to the new rule list */
@@ -536,8 +545,7 @@ SnortConfig* Snort::get_updated_policy(
     reloading = true;
     reset_parse_errors();
 
-    SnortConfig* sc = new SnortConfig(other_conf);
-    sc->global_dbus->clone(*other_conf->global_dbus, iname);
+    SnortConfig* sc = new SnortConfig(other_conf, iname);
 
     if ( fname )
     {
@@ -600,8 +608,7 @@ SnortConfig* Snort::get_updated_module(SnortConfig* other_conf, const char* name
 {
     reloading = true;
 
-    SnortConfig* sc = new SnortConfig(other_conf);
-    sc->global_dbus->clone(*other_conf->global_dbus, name);
+    SnortConfig* sc = new SnortConfig(other_conf, name);
 
     if ( name )
     {

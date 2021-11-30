@@ -88,27 +88,27 @@ RnaInspector::~RnaInspector()
 
 bool RnaInspector::configure(SnortConfig* sc)
 {
-    DataBus::subscribe_global( APPID_EVENT_ANY_CHANGE, new RnaAppidEventHandler(*pnd), sc );
-    DataBus::subscribe_global( DHCP_INFO_EVENT, new RnaDHCPInfoEventHandler(*pnd), sc);
-    DataBus::subscribe_global( DHCP_DATA_EVENT, new RnaDHCPDataEventHandler(*pnd), sc);
-    DataBus::subscribe_global( FP_SMB_DATA_EVENT, new RnaFpSMBEventHandler(*pnd), sc);
+    DataBus::subscribe_network( APPID_EVENT_ANY_CHANGE, new RnaAppidEventHandler(*pnd) );
+    DataBus::subscribe_network( DHCP_INFO_EVENT, new RnaDHCPInfoEventHandler(*pnd) );
+    DataBus::subscribe_network( DHCP_DATA_EVENT, new RnaDHCPDataEventHandler(*pnd) );
+    DataBus::subscribe_network( FP_SMB_DATA_EVENT, new RnaFpSMBEventHandler(*pnd) );
 
-    DataBus::subscribe_global( STREAM_ICMP_NEW_FLOW_EVENT, new RnaIcmpNewFlowEventHandler(*pnd), sc );
-    DataBus::subscribe_global( STREAM_ICMP_BIDIRECTIONAL_EVENT, new RnaIcmpBidirectionalEventHandler(*pnd), sc );
+    DataBus::subscribe_network( STREAM_ICMP_NEW_FLOW_EVENT, new RnaIcmpNewFlowEventHandler(*pnd) );
+    DataBus::subscribe_network( STREAM_ICMP_BIDIRECTIONAL_EVENT, new RnaIcmpBidirectionalEventHandler(*pnd) );
 
-    DataBus::subscribe_global( STREAM_IP_NEW_FLOW_EVENT, new RnaIpNewFlowEventHandler(*pnd), sc );
-    DataBus::subscribe_global( STREAM_IP_BIDIRECTIONAL_EVENT, new RnaIpBidirectionalEventHandler(*pnd), sc );
+    DataBus::subscribe_network( STREAM_IP_NEW_FLOW_EVENT, new RnaIpNewFlowEventHandler(*pnd) );
+    DataBus::subscribe_network( STREAM_IP_BIDIRECTIONAL_EVENT, new RnaIpBidirectionalEventHandler(*pnd) );
 
-    DataBus::subscribe_global( STREAM_UDP_NEW_FLOW_EVENT, new RnaUdpNewFlowEventHandler(*pnd), sc );
-    DataBus::subscribe_global( STREAM_UDP_BIDIRECTIONAL_EVENT, new RnaUdpBidirectionalEventHandler(*pnd), sc );
+    DataBus::subscribe_network( STREAM_UDP_NEW_FLOW_EVENT, new RnaUdpNewFlowEventHandler(*pnd) );
+    DataBus::subscribe_network( STREAM_UDP_BIDIRECTIONAL_EVENT, new RnaUdpBidirectionalEventHandler(*pnd) );
 
-    DataBus::subscribe_global( STREAM_TCP_SYN_EVENT, new RnaTcpSynEventHandler(*pnd), sc );
-    DataBus::subscribe_global( STREAM_TCP_SYN_ACK_EVENT, new RnaTcpSynAckEventHandler(*pnd), sc );
-    DataBus::subscribe_global( STREAM_TCP_MIDSTREAM_EVENT, new RnaTcpMidstreamEventHandler(*pnd), sc );
-    DataBus::subscribe_global( CPE_OS_INFO_EVENT, new RnaCPEOSInfoEventHandler(*pnd), sc );
+    DataBus::subscribe_network( STREAM_TCP_SYN_EVENT, new RnaTcpSynEventHandler(*pnd) );
+    DataBus::subscribe_network( STREAM_TCP_SYN_ACK_EVENT, new RnaTcpSynAckEventHandler(*pnd) );
+    DataBus::subscribe_network( STREAM_TCP_MIDSTREAM_EVENT, new RnaTcpMidstreamEventHandler(*pnd) );
+    DataBus::subscribe_network( CPE_OS_INFO_EVENT, new RnaCPEOSInfoEventHandler(*pnd) );
 
     if (rna_conf && rna_conf->log_when_idle)
-        DataBus::subscribe_global( THREAD_IDLE_EVENT, new RnaIdleEventHandler(*pnd), sc );
+        DataBus::subscribe_network( THREAD_IDLE_EVENT, new RnaIdleEventHandler(*pnd) );
 
     // tinit is not called during reload, so pass processor pointers to threads via reload tuner
     if ( Snort::is_reloading() && InspectorManager::get_inspector(RNA_NAME, true) )

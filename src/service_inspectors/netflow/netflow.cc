@@ -746,10 +746,14 @@ void NetflowInspector::show(const SnortConfig*) const
 {
     ConfigLogger::log_value("dump_file", config->dump_file);
     ConfigLogger::log_value("update_timeout", config->update_timeout);
-    std::once_flag d_once;
+    bool log_header = true;
     for ( auto const& d : config->device_rule_map )
     {
-        std::call_once(d_once, []{ ConfigLogger::log_option("rules"); });
+        if (log_header)
+        {
+            ConfigLogger::log_option("rules");
+            log_header = false;
+        }
         SfIpString addr_str;
         d.first.ntop(addr_str);
         for( auto const& r : d.second.exclude )
@@ -783,35 +787,36 @@ void NetflowInspector::stringify(std::ofstream& file_stream)
 
     for (auto elem : keys)
     {
+        NetflowSessionRecord& record = cache[elem];
         str = "Netflow Record #";
         str += std::to_string(++i);
         str += "\n";
 
         str += "    Initiator IP (Port): ";
         str += elem.ntop(ip_str);
-        str += " (" + std::to_string(cache[elem].initiator_port) + ")";
+        str += " (" + std::to_string(record.initiator_port) + ")";
 
         str += " -> Responder IP (Port): ";
-        str += cache[elem].responder_ip.ntop(ip_str);
-        str += " (" + std::to_string(cache[elem].responder_port) + ")";
+        str += record.responder_ip.ntop(ip_str);
+        str += " (" + std::to_string(record.responder_port) + ")";
         str += "\n";
 
         str += "    Protocol: ";
-        str += std::to_string(cache[elem].proto);
+        str += std::to_string(record.proto);
 
         str += " Packets: ";
-        str += std::to_string(cache[elem].initiator_pkts);
+        str += std::to_string(record.initiator_pkts);
         str += "\n";
 
         str += "    Source Mask: ";
-        str += std::to_string(cache[elem].nf_src_mask);
+        str += std::to_string(record.nf_src_mask);
 
         str += " Destination Mask: ";
-        str += std::to_string(cache[elem].nf_dst_mask);
+        str += std::to_string(record.nf_dst_mask);
         str += "\n";
 
         str += "    Next Hop IP: ";
-        str += cache[elem].next_hop_ip.ntop(ip_str);
+        str += record.next_hop_ip.ntop(ip_str);
         str += "\n";
 
         str += "------\n";

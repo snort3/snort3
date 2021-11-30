@@ -25,7 +25,9 @@
 #include "flow/flow.h"
 #include "log/messages.h"
 #include "managers/inspector_manager.h"
+#include "packet_io/active.h"
 #include "profiler/profiler.h"
+#include "protocols/packet.h"
 #include "pub_sub/assistant_gadget_event.h"
 #include "stream/stream.h"
 #include "stream/stream_splitter.h"
@@ -265,6 +267,12 @@ static std::string to_string(const BindWhen& bw)
         when += " addr_spaces = " + addr_spaces + ",";
     }
 
+    if (bw.has_criteria(BindWhen::Criteria::BWC_TENANTS))
+    {
+        auto tenants = to_string<uint32_t>(bw.tenants);
+        when += " tenants = " + tenants + ",";
+    }
+
     if (when.length() > 1)
         when.pop_back();
 
@@ -316,6 +324,7 @@ struct Stuff
 
     bool update(const Binding&);
 
+    void apply_action(Packet*);
     void apply_action(Flow&);
     void apply_session(Flow&);
     void apply_service(Flow&);
@@ -362,6 +371,30 @@ bool Stuff::update(const Binding& pb)
             break;
     }
     return false;
+}
+
+void Stuff::apply_action(Packet* p)
+{
+    switch (action)
+    {
+        case BindUse::BA_RESET:
+            // disable all preproc analysis and detection for this packet
+            DetectionEngine::disable_all(p);
+            p->active->reset_session(p, true);
+            break;
+        case BindUse::BA_BLOCK:
+            // disable all preproc analysis and detection for this packet
+            DetectionEngine::disable_all(p);
+            p->active->block_session(p, true);
+            break;
+        case BindUse::BA_ALLOW:
+            p->active->trust_session(p, true);
+            break;
+        case BindUse::BA_INSPECT:
+            break;
+        default:
+            break;
+    }
 }
 
 void Stuff::apply_action(Flow& flow)
@@ -448,13 +481,16 @@ public:
 
     void eval(Packet*) override { }
 
+    void handle_packet(const Packet*);
     void handle_flow_setup(Flow&, bool standby = false);
     void handle_flow_service_change(Flow&);
     void handle_assistant_gadget(const char* service, Flow&);
 
 private:
     void get_policy_bindings(Flow&, const char* service);
+    void get_policy_bindings(Packet*);
     void get_bindings(Flow&, Stuff&, const char* service = nullptr);
+    void get_bindings(Packet*, Stuff&);
     void apply(Flow&, Stuff&);
     void apply_assistant(Flow&, Stuff&, const char*);
     Inspector* find_gadget(Flow&, Inspector*& data);
@@ -463,6 +499,20 @@ private:
     std::vector<Binding> bindings;
     std::vector<Binding> policy_bindings;
     Inspector* default_ssn_inspectors[to_utype(PktType::MAX)]{};
+};
+
+class NonFlowPacketHandler : public DataHandler
+{
+public:
+    NonFlowPacketHandler() : DataHandler(BIND_NAME)
+    { }
+
+    void handle(DataEvent& e, Flow*) override
+    {
+        Binder* binder = InspectorManager::get_binder();
+        if (binder)
+            binder->handle_packet(e.get_packet());
+    }
 };
 
 class FlowStateSetupHandler : public DataHandler
@@ -496,7 +546,8 @@ public:
 class StreamHANewFlowHandler : public DataHandler
 {
 public:
-    StreamHANewFlowHandler() : DataHandler(BIND_NAME) { }
+    StreamHANewFlowHandler() : DataHandler(BIND_NAME)
+    { order = 100; }
 
     void handle(DataEvent&, Flow* flow) override
     {
@@ -562,6 +613,7 @@ bool Binder::configure(SnortConfig* sc)
             default_ssn_inspectors[proto] = InspectorManager::get_inspector(name);
     }
 
+    DataBus::subscribe(PKT_WITHOUT_FLOW_EVENT, new NonFlowPacketHandler());
     DataBus::subscribe(FLOW_STATE_SETUP_EVENT, new FlowStateSetupHandler());
     DataBus::subscribe(FLOW_SERVICE_CHANGE_EVENT, new FlowServiceChangeHandler());
     DataBus::subscribe(STREAM_HA_NEW_FLOW_EVENT, new StreamHANewFlowHandler());
@@ -572,11 +624,14 @@ bool Binder::configure(SnortConfig* sc)
 
 void Binder::show(const SnortConfig*) const
 {
-    std::once_flag b_once;
-
+    bool log_header = true;
     for (const Binding& b : bindings)
     {
-        std::call_once(b_once, []{ ConfigLogger::log_option("bindings"); });
+        if (log_header)
+        {
+            ConfigLogger::log_option("bindings");
+            log_header = false;
+        }
 
         auto bind_when = "{ when = " + to_string(b.when) + ",";
         auto bind_use = "use = " + to_string(b.use) + " }";
@@ -584,11 +639,14 @@ void Binder::show(const SnortConfig*) const
         ConfigLogger::log_list("", bind_use.c_str(), "   ", true);
     }
 
-    std::once_flag pb_once;
-
+    log_header = true;
     for (const Binding& b : policy_bindings)
     {
-        std::call_once(pb_once, []{ ConfigLogger::log_option("policy_bindings"); });
+        if (log_header)
+        {
+            ConfigLogger::log_option("policy_bindings");
+            log_header = false;
+        }
 
         auto bind_when = "{ when = " + to_string(b.when) + ",";
         auto bind_use = "use = " + to_string(b.use) + " }";
@@ -613,6 +671,19 @@ void Binder::remove_inspector_binding(SnortConfig*, const char* name)
             return;
         }
     }
+}
+
+void Binder::handle_packet(const Packet* pkt)
+{
+    Profile profile(bindPerfStats);
+
+    Stuff stuff;
+    Packet* p = const_cast<Packet*>(pkt);
+    get_bindings(p, stuff);
+    stuff.apply_action(p);
+
+    bstats.raw_packets++;
+    bstats.verdicts[stuff.action]++;
 }
 
 void Binder::handle_flow_setup(Flow& flow, bool standby)
@@ -784,6 +855,44 @@ void Binder::get_policy_bindings(Flow& flow, const char* service)
     }
 }
 
+void Binder::get_policy_bindings(Packet* p)
+{
+    const SnortConfig* sc = SnortConfig::get_conf();
+    unsigned inspection_index = 0;
+    unsigned ips_index = 0;
+
+    // FIXIT-L This will select the first policy ID of each type that it finds and ignore the rest.
+    //          It gets potentially hairy if people start specifying overlapping policy types in
+    //          overlapping rules.
+    for (const Binding& b : policy_bindings)
+    {
+        // Skip any rules that don't contain an ID for a policy type we haven't set yet.
+        if ((!b.use.inspection_index || inspection_index) && (!b.use.ips_index || ips_index))
+            continue;
+
+        if (!b.check_all(p))
+            continue;
+
+        if (b.use.inspection_index && !inspection_index)
+            inspection_index = b.use.inspection_index;
+
+        if (b.use.ips_index && !ips_index)
+            ips_index = b.use.ips_index;
+    }
+
+    if (inspection_index)
+    {
+        set_inspection_policy(sc, inspection_index);
+        p->user_inspection_policy_id = get_inspection_policy()->user_policy_id;
+    }
+
+    if (ips_index)
+    {
+        set_ips_policy(sc, ips_index);
+        p->user_ips_policy_id = get_ips_policy()->user_policy_id;
+    }
+}
+
 // FIXIT-P this is a simple linear search until functionality is nailed
 // down.  performance should be the focus of the next iteration.
 void Binder::get_bindings(Flow& flow, Stuff& stuff, const char* service)
@@ -808,6 +917,37 @@ void Binder::get_bindings(Flow& flow, Stuff& stuff, const char* service)
     for (const Binding& b : bindings)
     {
         if (!b.check_all(flow, service))
+            continue;
+
+        if (stuff.update(b))
+            return;
+    }
+
+    bstats.no_match++;
+}
+
+void Binder::get_bindings(Packet* p, Stuff& stuff)
+{
+    // Evaluate policy ID bindings first
+    get_policy_bindings(p);
+
+    // If policy selection produced a new binder to use, use that instead.
+    Binder* sub = InspectorManager::get_binder();
+    if (sub && sub != this)
+    {
+        sub->get_bindings(p, stuff);
+        return;
+    }
+
+    // If we got here, that means that a sub-policy with a binder was not invoked.
+    // Continue using this binder for the rest of processing.
+
+    // Initialize the session inspector for both client and server to the default for this policy.
+    stuff.client = stuff.server = default_ssn_inspectors[to_utype(p->type())];
+
+    for (const Binding& b : bindings)
+    {
+        if (!b.check_all(p))
             continue;
 
         if (stuff.update(b))

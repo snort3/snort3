@@ -32,6 +32,7 @@
 #include "framework/connector.h"
 #include "framework/logger.h"
 #include "framework/mpse.h"
+#include "framework/policy_selector.h"
 #include "helpers/directory.h"
 #include "helpers/markup.h"
 #include "log/messages.h"
@@ -50,6 +51,7 @@
 #include "ips_manager.h"
 #include "module_manager.h"
 #include "mpse_manager.h"
+#include "policy_selector_manager.h"
 #include "script_manager.h"
 #include "so_manager.h"
 
@@ -77,9 +79,9 @@ static Symbol symbols[PT_MAX] =
     { "search_engine", SEAPI_VERSION, sizeof(MpseApi) },
     { "so_rule", SOAPI_VERSION, sizeof(SoApi) },
     { "logger", LOGAPI_VERSION, sizeof(LogApi) },
-    { "connector", CONNECTOR_API_VERSION, sizeof(ConnectorApi) }
+    { "connector", CONNECTOR_API_VERSION, sizeof(ConnectorApi) },
+    { "policy_selector", POLICY_SELECTOR_API_VERSION, sizeof(PolicySelectorApi) },
 #ifdef PIGLET
-    ,
     { "piglet", PIGLET_API_VERSION, sizeof(Piglet::Api) }
 #endif
 };
@@ -95,7 +97,10 @@ static Symbol symbols[PT_MAX] =
     [PT_IPS_OPTION] = { stringify(PT_IPS_OPTION), IPSAPI_VERSION, sizeof(IpsApi) },
     [PT_SEARCH_ENGINE] = { stringify(PT_SEARCH_ENGINE), SEAPI_VERSION, sizeof(MpseApi) },
     [PT_SO_RULE] = { stringify(PT_SO_RULE), SOAPI_VERSION, sizeof(SoApi) },
-    [PT_LOGGER] = { stringify(PT_LOGGER), LOGAPI_VERSION, sizeof(LogApi) }
+    [PT_LOGGER] = { stringify(PT_LOGGER), LOGAPI_VERSION, sizeof(LogApi) },
+    [PT_CONNECTOR] = { stringify(PT_CONNECTOR), CONNECTOR_API_VERSION, sizeof(ConnectorApi) },
+    [PT_POLICY_SELECTOR] = { stringify(PT_POLICY_SELECTOR), POLICY_SELECTOR_API_VERSION,
+        sizeof(PolicySelectorApi) }
 };
 #endif
 
@@ -330,6 +335,10 @@ static void add_plugin(Plugin& p)
         ConnectorManager::add_plugin((const ConnectorApi*)p.api);
         break;
 
+    case PT_POLICY_SELECTOR:
+        PolicySelectorManager::add_plugin((const PolicySelectorApi*)p.api);
+        break;
+
 #ifdef PIGLET
     case PT_PIGLET:
         Piglet::Manager::add_plugin((const Piglet::Api*)p.api);
@@ -484,6 +493,7 @@ void PluginManager::dump_plugins()
     ActionManager::dump_plugins();
     EventManager::dump_plugins();
     ConnectorManager::dump_plugins();
+    PolicySelectorManager::dump_plugins();
 }
 
 void PluginManager::release_plugins()
@@ -495,6 +505,7 @@ void PluginManager::release_plugins()
     MpseManager::release_plugins();
     CodecManager::release_plugins();
     ConnectorManager::release_plugins();
+    PolicySelectorManager::release_plugins();
 
     unload_plugins();
 }
@@ -558,6 +569,10 @@ void PluginManager::instantiate(
 
     case PT_CONNECTOR:
         ConnectorManager::instantiate((const ConnectorApi*)api, mod, sc);
+        break;
+
+    case PT_POLICY_SELECTOR:
+        PolicySelectorManager::instantiate((const PolicySelectorApi*)api, mod, sc);
         break;
 
     case PT_SO_RULE:
