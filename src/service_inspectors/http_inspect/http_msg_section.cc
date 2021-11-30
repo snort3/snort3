@@ -404,6 +404,20 @@ const Field& HttpMsgSection::get_classic_buffer(Cursor& c, const HttpBufferInfo&
     }
 }
 
+int32_t HttpMsgSection::get_num_headers(const HttpBufferInfo& buf) const
+{
+    // buffer_side replaces source_id for buffers that support the request option
+    const SourceId buffer_side = (buf.form & FORM_REQUEST) ? SRC_CLIENT : source_id;
+
+    const HttpMsgHeadShared* const head = (buf.type == HTTP_RANGE_NUM_TRAILERS) ?
+        (HttpMsgHeadShared*)trailer[buffer_side]:
+        (HttpMsgHeadShared*)header[buffer_side] ;
+    if (head == nullptr)
+        return HttpCommon::STAT_NOT_COMPUTE;
+
+    return head->get_num_headers();
+}
+
 void HttpMsgSection::get_related_sections()
 {
     // When a message section is created these relationships become fixed so we make copies for

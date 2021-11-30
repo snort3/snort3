@@ -59,7 +59,9 @@ public:
     uint64_t get_file_cache_index();
     const Field& get_content_disposition_filename();
     bool is_external_js();
+    int32_t get_num_headers() const { return num_headers; }
 
+    static const int MAX_HEADERS = 200;  // I'm an arbitrary number. FIXIT-RC
 protected:
     HttpMsgHeadShared(const uint8_t* buffer, const uint16_t buf_size,
         HttpFlowData* session_data_, HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
@@ -78,7 +80,6 @@ private:
     static const int MAX = HttpEnums::HEAD__MAX_VALUE + HttpEnums::MAX_CUSTOM_HEADERS;
 
     // All of these are indexed by the relative position of the header field in the message
-    static const int MAX_HEADERS = 200;  // I'm an arbitrary number. FIXIT-RC
     static const int MAX_HEADER_LENGTH = 4096; // Based on max cookie size of some browsers
 
     void parse_header_block();

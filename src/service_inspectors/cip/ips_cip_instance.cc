@@ -62,13 +62,11 @@ private:
 
 uint32_t CipInstanceOption::hash() const
 {
-    uint32_t a = cip_inst.op;
-    uint32_t b = cip_inst.min;
-    uint32_t c = cip_inst.max;
+    uint32_t a = cip_inst.hash();
+    uint32_t b = IpsOption::hash();
+    uint32_t c = 0;
 
     mix(a, b, c);
-    a += IpsOption::hash();
-
     finalize(a,b,c);
     return c;
 }

@@ -667,6 +667,13 @@ The vba_data will contain the decompressed Visual Basic for Applications
 (vba) macro data embedded in MS office files. It requires decompress_zip
 and decompress_vba options enabled.
 
+===== num_headers and num_trailers
+
+These rule options are used to check the number of headers and
+trailers, respectively. Checks available: equal to "=" or just value,
+not "!" or "!=",  less than "<", greater than ">", less or equal to "<=",
+less or greater than ">=", in range "<>", in range or equal to "<=>".
+
 ==== Timing issues and combining rule options
 
 HTTP inspector is stateful. That means it is aware of a bigger picture than

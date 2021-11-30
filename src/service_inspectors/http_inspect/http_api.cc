@@ -104,6 +104,8 @@ extern const BaseApi* ips_http_client_body;
 extern const BaseApi* ips_http_cookie;
 extern const BaseApi* ips_http_header;
 extern const BaseApi* ips_http_method;
+extern const BaseApi* ips_http_num_headers;
+extern const BaseApi* ips_http_num_trailers;
 extern const BaseApi* ips_http_param;
 extern const BaseApi* ips_http_raw_body;
 extern const BaseApi* ips_http_raw_cookie;
@@ -131,6 +133,8 @@ const BaseApi* sin_http[] =
     ips_http_cookie,
     ips_http_header,
     ips_http_method,
+    ips_http_num_headers,
+    ips_http_num_trailers,
     ips_http_param,
     ips_http_raw_body,
     ips_http_raw_cookie,

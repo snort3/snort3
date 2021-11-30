@@ -28,6 +28,8 @@
 #include <cstring>
 #include <string>
 
+#include "hash/hash_key_operations.h"
+
 using namespace snort;
 using namespace std;
 
@@ -306,6 +308,16 @@ bool RangeCheck::validate(const char* s, const char* r)
             return false;
     }
     return true;
+}
+
+uint32_t RangeCheck::hash() const
+{
+    uint32_t a = op;
+    uint32_t b = min;
+    uint32_t c = max;
+    mix(a,b,c);
+    finalize(a,b,c);
+    return a;
 }
 
 //--------------------------------------------------------------------------

@@ -80,6 +80,7 @@ public:
     bool is_clear() { return cleared; }
 
     uint64_t get_transaction_id() { return trans_num; }
+    int32_t get_num_headers(const HttpBufferInfo& buf) const;
 
     HttpMsgSection* next = nullptr;
 

@@ -342,13 +342,11 @@ uint32_t Dce2IfaceOption::hash() const
         (uuid.node[3] << 16) |
         (uuid.node[4] << 8) |
         (uuid.node[5]);
-    b += version.max;
-    c += version.min;
+    b += version.hash();
+    c += any_frag;
 
     mix(a, b, c);
 
-    a += version.op;
-    b += any_frag;
     c += IpsOption::hash();
 
     finalize(a, b, c);

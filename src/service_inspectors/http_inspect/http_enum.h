@@ -53,14 +53,16 @@ enum SectionType { SEC_DISCARD = -19, SEC_ABORT = -18, SEC__NOT_COMPUTE=-14, SEC
 
 enum DetectionStatus { DET_REACTIVATING = 1, DET_ON, DET_DEACTIVATING, DET_OFF };
 
-// Message buffers available to clients
-// This enum must remain synchronized with HttpApi::classic_buffer_names[]
-enum HTTP_BUFFER { HTTP_BUFFER_CLIENT_BODY = 1, HTTP_BUFFER_COOKIE, HTTP_BUFFER_HEADER,
+// HTTP rule options.
+// Lower portion is message buffers available to clients.
+// That part must remain synchronized with HttpApi::classic_buffer_names[]
+enum HTTP_RULE_OPT { HTTP_BUFFER_CLIENT_BODY = 1, HTTP_BUFFER_COOKIE, HTTP_BUFFER_HEADER,
     HTTP_BUFFER_METHOD, HTTP_BUFFER_PARAM, HTTP_BUFFER_RAW_BODY, HTTP_BUFFER_RAW_COOKIE,
     HTTP_BUFFER_RAW_HEADER, HTTP_BUFFER_RAW_REQUEST, HTTP_BUFFER_RAW_STATUS,
     HTTP_BUFFER_RAW_TRAILER, HTTP_BUFFER_RAW_URI, HTTP_BUFFER_STAT_CODE, HTTP_BUFFER_STAT_MSG,
     HTTP_BUFFER_TRAILER, HTTP_BUFFER_TRUE_IP, HTTP_BUFFER_URI, HTTP_BUFFER_VERSION,
-    BUFFER_JS_DATA, BUFFER_VBA_DATA, HTTP_BUFFER_MAX };
+    BUFFER_JS_DATA, BUFFER_VBA_DATA , HTTP_BUFFER_MAX = BUFFER_VBA_DATA,
+    HTTP_RANGE_NUM_HDRS, HTTP_RANGE_NUM_TRAILERS, HTTP_MAX_RULE_OPTION };
 
 // Peg counts
 // This enum must remain synchronized with HttpModule::peg_names[] in http_tables.cc

@@ -62,13 +62,11 @@ private:
 
 uint32_t CipEnipCommandOption::hash() const
 {
-    uint32_t a = cip_enip_cmd.op;
-    uint32_t b = cip_enip_cmd.min;
-    uint32_t c = cip_enip_cmd.max;
+    uint32_t a = cip_enip_cmd.hash();
+    uint32_t b = IpsOption::hash();
+    uint32_t c = 0;
 
     mix(a, b, c);
-    a += IpsOption::hash();
-
     finalize(a,b,c);
     return c;
 }

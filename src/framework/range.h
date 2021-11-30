@@ -43,8 +43,6 @@ public:
         EQ, NOT, LT, LE, GT, GE, LG, LEG, MAX
     };
 
-    // Warning: FragOffsetOption computes its hash function using all the data members of
-    // RangeCheck. Any change to the following may require changes in ips_fragoffset.cc.
     Op op = MAX;
     long min = 0;
     long max = 0;
@@ -57,6 +55,7 @@ public:
     bool parse(const char* s);
     bool eval(long) const;
     bool validate(const char* s, const char* r);
+    uint32_t hash() const;
 };
 }
 #endif

@@ -274,14 +274,25 @@ bool HttpInspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
 }
 
 const Field& HttpInspect::http_get_buf(Cursor& c, Packet* p,
-    const HttpBufferInfo& buffer_info)
+    const HttpBufferInfo& buffer_info) const
 {
-    HttpMsgSection* current_section = HttpContextData::get_snapshot(p);
+    HttpMsgSection* const current_section = HttpContextData::get_snapshot(p);
 
     if (current_section == nullptr)
         return Field::FIELD_NULL;
 
     return current_section->get_classic_buffer(c, buffer_info);
+}
+
+int32_t HttpInspect::http_get_num_headers(Packet* p,
+    const HttpBufferInfo& buffer_info) const
+{
+    const HttpMsgSection* const current_section = HttpContextData::get_snapshot(p);
+
+    if (current_section == nullptr)
+        return STAT_NOT_COMPUTE;
+
+    return current_section->get_num_headers(buffer_info);
 }
 
 bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
