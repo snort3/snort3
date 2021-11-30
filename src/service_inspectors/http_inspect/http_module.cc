@@ -100,7 +100,10 @@ const Parameter HttpModule::http_params[] =
       "maximum depth of template literal nesting that enhanced javascript normalizer "
       "will process" },
 
-    { "js_norm_max_scope_depth", Parameter::PT_INT, "0:65535", "256",
+    { "js_norm_max_bracket_depth", Parameter::PT_INT, "1:65535", "256",
+      "maximum depth of bracket nesting that enhanced JavaScript normalizer will process" },
+
+    { "js_norm_max_scope_depth", Parameter::PT_INT, "1:65535", "256",
       "maximum depth of scope nesting that enhanced JavaScript normalizer will process" },
 
     { "js_norm_built_in_ident", Parameter::PT_LIST, js_built_in_ident_param, nullptr,
@@ -278,9 +281,13 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     {
         params->js_norm_param.max_template_nesting = val.get_uint8();
     }
+    else if (val.is("js_norm_max_bracket_depth"))
+    {
+        params->js_norm_param.max_bracket_depth = val.get_uint32();
+    }
     else if (val.is("js_norm_max_scope_depth"))
     {
-        params->js_norm_param.max_scope_depth = val.get_int32();
+        params->js_norm_param.max_scope_depth = val.get_uint32();
     }
     else if (val.is("ident_name"))
     {
@@ -469,8 +476,8 @@ bool HttpModule::end(const char* fqn, int, SnortConfig*)
 
     params->js_norm_param.js_norm = new HttpJsNorm(params->uri_param,
         params->js_norm_param.js_normalization_depth, params->js_norm_param.js_identifier_depth,
-        params->js_norm_param.max_template_nesting, params->js_norm_param.max_scope_depth,
-        params->js_norm_param.built_in_ident);
+        params->js_norm_param.max_template_nesting, params->js_norm_param.max_bracket_depth,
+        params->js_norm_param.max_scope_depth, params->js_norm_param.built_in_ident);
 
     params->script_detection_handle = script_detection_handle;
 

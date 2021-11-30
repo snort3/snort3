@@ -330,10 +330,11 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_JS_CODE_IN_EXTERNAL,        "JavaScript code under the external script tags" },
     { EVENT_JS_SHORTENED_TAG,           "script opening tag in a short form" },
     { EVENT_JS_IDENTIFIER_OVERFLOW,     "max number of unique JavaScript identifiers reached" },
-    { EVENT_JS_SCOPE_NEST_OVFLOW,       "JavaScript scope nesting is over capacity" },
+    { EVENT_JS_BRACKET_NEST_OVERFLOW,   "JavaScript bracket nesting is over capacity" },
     { EVENT_ACCEPT_ENCODING_CONSECUTIVE_COMMAS, "Consecutive commas in HTTP Accept-Encoding "
                                         "header" },
     { EVENT_JS_PDU_MISS,                "missed PDUs during JavaScript normalization" },
+    { EVENT_JS_SCOPE_NEST_OVERFLOW,     "JavaScript scope nesting is over capacity" },
     { 0, nullptr }
 };
 

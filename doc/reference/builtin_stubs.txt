@@ -1255,9 +1255,9 @@ network traffic and may be an indication that an attacker is trying to exhaust r
 
 In JavaScript, template literals can have substitutions, that in turn can have nested
 template literals, which requires a stack to track for proper whitespace normalization.
-Also, the normalization tracks the current scope, which requires a stack as well.
+Also, the normalization tracks the current bracket scope, which requires a stack as well.
 When the depth of nesting exceeds limit set in http_inspect.js_norm_max_tmpl_nest or in
-http_inspect.js_norm_max_scope_depth, this alert is raised. This alert is not expected
+http_inspect.js_norm_max_bracket_depth, this alert is raised. This alert is not expected
 for typical network traffic and may be an indication that an attacker is trying to exhaust
 resources.
 
@@ -1275,6 +1275,15 @@ js_data ips options and fast-pattern (FP) search is applying to file_data. Some 
 match file_data FP search and JavaScript normalization won't be executed for these PDUs.
 The normalization of the following PDUs for inline/external scripts will be stopped for
 current request within the flow.
+
+119:274
+
+In JavaScript, a program is split into several scopes such as a global scope, function scope,
+if block, block of code, object, etc. The scope has a nesting nature which requires a stack
+to track it for proper normalization of JavaScript identifiers. When the depth of nesting
+exceeds limit set in http_inspect.js_norm_max_scope_depth, this alert is raised. This alert is
+not expected for typical network traffic and may be an indication that an attacker is trying to
+exhaust resources.
 
 121:1
 

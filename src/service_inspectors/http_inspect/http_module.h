@@ -69,6 +69,7 @@ public:
         int64_t js_normalization_depth = -1;
         int32_t js_identifier_depth = 0;
         uint8_t max_template_nesting = 32;
+        uint32_t max_bracket_depth = 256;
         uint32_t max_scope_depth = 256;
         std::unordered_set<std::string> built_in_ident;
         int max_javascript_whitespaces = 200;

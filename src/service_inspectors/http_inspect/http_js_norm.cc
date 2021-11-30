@@ -44,6 +44,7 @@ static const char* jsret_codes[] =
     "bad token",
     "identifier overflow",
     "template nesting overflow",
+    "bracket nesting overflow",
     "scope nesting overflow",
     "wrong closing symbol",
     "ended in inner scope",
@@ -80,13 +81,14 @@ static inline JSTokenizer::JSRet js_normalize(JSNormalizer& ctx, const char* con
 }
 
 HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_, int64_t normalization_depth_,
-    int32_t identifier_depth_, uint8_t max_template_nesting_, uint32_t max_scope_depth_,
-    const std::unordered_set<std::string>& built_in_ident_) :
+    int32_t identifier_depth_, uint8_t max_template_nesting_, uint32_t max_bracket_depth_,
+    uint32_t max_scope_depth_, const std::unordered_set<std::string>& built_in_ident_) :
     uri_param(uri_param_),
     detection_depth(UINT64_MAX),
     normalization_depth(normalization_depth_),
     identifier_depth(identifier_depth_),
     max_template_nesting(max_template_nesting_),
+    max_bracket_depth(max_bracket_depth_),
     max_scope_depth(max_scope_depth_),
     built_in_ident(built_in_ident_),
     mpse_otag(nullptr),
@@ -158,7 +160,7 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
             "script continues\n");
 
     auto& js_ctx = ssn->acquire_js_ctx(identifier_depth, normalization_depth, max_template_nesting,
-        max_scope_depth, built_in_ident);
+        max_bracket_depth, max_scope_depth, built_in_ident);
 
     while (ptr < end)
     {
@@ -197,9 +199,14 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
             ssn->js_built_in_event = true;
             break;
         case JSTokenizer::TEMPLATE_NESTING_OVERFLOW:
+        case JSTokenizer::BRACKET_NESTING_OVERFLOW:
+            *infractions += INF_JS_BRACKET_NEST_OVERFLOW;
+            events->create_event(EVENT_JS_BRACKET_NEST_OVERFLOW);
+            ssn->js_built_in_event = true;
+            break;
         case JSTokenizer::SCOPE_NESTING_OVERFLOW:
-            *infractions += INF_JS_SCOPE_NEST_OVFLOW;
-            events->create_event(EVENT_JS_SCOPE_NEST_OVFLOW);
+            *infractions += INF_JS_SCOPE_NEST_OVERFLOW;
+            events->create_event(EVENT_JS_SCOPE_NEST_OVERFLOW);
             ssn->js_built_in_event = true;
             break;
         default:
@@ -288,7 +295,7 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
         }
 
         auto& js_ctx = ssn->acquire_js_ctx(identifier_depth, normalization_depth,
-            max_template_nesting, max_scope_depth, built_in_ident);
+            max_template_nesting, max_bracket_depth, max_scope_depth, built_in_ident);
         auto output_size_before = js_ctx.script_size();
 
         auto ret = js_normalize(js_ctx, end, ptr);
@@ -322,9 +329,13 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
             events->create_event(EVENT_JS_IDENTIFIER_OVERFLOW);
             break;
         case JSTokenizer::TEMPLATE_NESTING_OVERFLOW:
+        case JSTokenizer::BRACKET_NESTING_OVERFLOW:
+            *infractions += INF_JS_BRACKET_NEST_OVERFLOW;
+            events->create_event(EVENT_JS_BRACKET_NEST_OVERFLOW);
+            break;
         case JSTokenizer::SCOPE_NESTING_OVERFLOW:
-            *infractions += INF_JS_SCOPE_NEST_OVFLOW;
-            events->create_event(EVENT_JS_SCOPE_NEST_OVFLOW);
+            *infractions += INF_JS_SCOPE_NEST_OVERFLOW;
+            events->create_event(EVENT_JS_SCOPE_NEST_OVERFLOW);
             break;
         default:
             assert(false);

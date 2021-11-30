@@ -256,8 +256,8 @@ For example:
  * http_inspect.js_norm_built_in_ident = { 'console', 'document', 'eval', 'foo' }
 
 Additionally, Normalizer validates the syntax with respect to ECMA-262 Standard, including
-scope tracking, and checks for restrictions for contents of script elements (since, it
-is HTML-embedded JavaScript).
+bracket scope tracking, program scope tracking, and checks for restrictions for contents of
+script elements (since, it is HTML-embedded JavaScript).
 
 The following rules applied:
  * no nesting tags allowed, i.e. two opening tags in a row

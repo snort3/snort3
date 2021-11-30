@@ -52,7 +52,8 @@
         debug_logf(5, http_trace, TRACE_JS_DUMP, nullptr,   \
             "text '%s'\n", YYText());                       \
                                                             \
-        states_push();                                      \
+        if (!states_process())                              \
+            break;                                          \
     }
 
 #define RETURN(r)                               \
@@ -906,28 +907,49 @@ USE_STRICT_DIRECTIVE_SC "\"use strict\"";*|"\'use strict\'";*
 /* keywords */
 /* according to https://ecma-international.org/ecma-262/5.1/#sec-7.6.1.1 */
 /* keywords that can appear at the begining or the end of Statement*/
-KEYWORD_BA break|continue|debugger|return
+KEYWORD_BA       break|continue|debugger|return
 /* keywords that can appear at the beginning of Statement*/
-KEYWORD_B  delete|do|for|function|if|new|switch|throw|try|typeof|var|void|while|with
+KEYWORD_VAR_DECL    var|let|const
+KEYWORD_FUNCTION    function
+KEYWORD_IF          if
+KEYWORD_FOR         for
+KEYWORD_WHILE       while
+KEYWORD_DO          do
+KEYWORD_WITH        with
+KEYWORD_SWITCH      switch
+KEYWORD_TRY         try
+KEYWORD_B           delete|new|throw|typeof|void
 /* keywords that can not appear at the beginning or the end of Statement*/
-KEYWORD_OTHER    case|catch|class|const|default|else|enum|export|extends|finally|implements|import|in|instanceof|interface|let|package|private|protected|public|static|super|yield
+KEYWORD_ELSE        else
+KEYWORD_CATCH       catch
+KEYWORD_FINALLY     finally
+KEYWORD_CLASS       class
+KEYWORD_OTHER       case|default|enum|export|extends|implements|import|in|instanceof|interface|package|private|protected|public|static|super|yield
 
 /* punctuators */
 /* according to https://ecma-international.org/ecma-262/5.1/#sec-7.7 */
-OPEN_BRACE                 "{"
-CLOSE_BRACE                "}"
-OPEN_PARENTHESIS           "("
-CLOSE_PARENTHESIS          ")"
-OPEN_BRACKET               "["
-CLOSE_BRACKET              "]"
-DOT_ACCESSOR               "."
-PUNCTUATOR_PREFIX          "~"|"!"
-PUNCTUATOR                 ">="|"=="|"!="|"==="|"!=="|";"|","|"<"|">"|"<="|"<<"|">>"|">>>"|"&"|"|"|"^"|"&&"|"||"|"?"|":"|"="|"+="|"-="|"*="|"%="|"<<="|">>="|">>>="|"&="|"|="|"^="
-OPERATOR_PREFIX            "+"|"-"
-OPERATOR_INCR_DECR         "--"|"++"
-OPERATOR                   "*"|"%"
-DIV_OPERATOR               "/"
-DIV_ASSIGNMENT_OPERATOR    "/="
+OPEN_BRACE                     "{"
+CLOSE_BRACE                    "}"
+OPEN_PARENTHESIS               "("
+CLOSE_PARENTHESIS              ")"
+OPEN_BRACKET                   "["
+CLOSE_BRACKET                  "]"
+DOT_ACCESSOR                   "."
+PUNCTUATOR_PREFIX              "~"|"!"
+PUNCTUATOR_SEMICOLON           ";"
+PUNCTUATOR_COLON               ":"
+PUNCTUATOR_COMMA               ","
+OPERATOR_COMPARISON            ">="|"=="|"!="|"==="|"!=="|"<"|">"|"<="
+OPERATOR_COMPLEX_ASSIGNMENT    "+="|"-="|"*="|"%="|"<<="|">>="|">>>="|"&="|"|="|"^="
+OPERATOR_ASSIGNMENT            "="
+OPERATOR_LOGICAL               "?"|"&"|"|"|"^"|"&&"|"||"
+OPERATOR_SHIFT                 "<<"|">>"|">>>"
+OPERATOR_PREFIX                "+"|"-"
+OPERATOR_INCR_DECR             "--"|"++"
+OPERATOR                       "*"|"%"
+DIV_OPERATOR                   "/"
+DIV_ASSIGNMENT_OPERATOR        "/="
+PUNCTUATOR_ARROW               "=>"
 
 /* identifiers */
 /* according to https://ecma-international.org/ecma-262/5.1/#sec-7.6 */
@@ -1025,7 +1047,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <bcomm>{BLOCK_COMMENT_SKIP}         { }
 <bcomm><<EOF>>                      { RETURN(SCRIPT_CONTINUE) }
 
-       {LITERAL_DQ_STRING_START}    { do_semicolon_insertion(ASI_GROUP_7); EXEC(do_spacing(LITERAL)) ECHO; BEGIN(dqstr); set_ident_norm(true); }
+       {LITERAL_DQ_STRING_START}    { EXEC(do_semicolon_insertion(ASI_GROUP_7)) EXEC(do_spacing(LITERAL)) ECHO; BEGIN(dqstr); set_ident_norm(true); }
 <dqstr>{LITERAL_DQ_STRING_END}      { ECHO; BEGIN(divop); }
 <dqstr>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); RETURN(CLOSING_TAG) }
 <dqstr>\\{CR}{LF}                   { }
@@ -1036,7 +1058,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <dqstr>{LITERAL_DQ_STRING_TEXT}     { ECHO; }
 <dqstr><<EOF>>                      { RETURN(SCRIPT_CONTINUE) }
 
-       {LITERAL_SQ_STRING_START}    { do_semicolon_insertion(ASI_GROUP_7); EXEC(do_spacing(LITERAL)) ECHO; BEGIN(sqstr); set_ident_norm(true); }
+       {LITERAL_SQ_STRING_START}    { EXEC(do_semicolon_insertion(ASI_GROUP_7)) EXEC(do_spacing(LITERAL)) ECHO; BEGIN(sqstr); set_ident_norm(true); }
 <sqstr>{LITERAL_SQ_STRING_END}      { ECHO; BEGIN(divop); }
 <sqstr>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); RETURN(CLOSING_TAG) }
 <sqstr>\\{CR}{LF}                   { }
@@ -1047,7 +1069,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <sqstr>{LITERAL_SQ_STRING_TEXT}     { ECHO; }
 <sqstr><<EOF>>                      { RETURN(SCRIPT_CONTINUE) }
 
-       {LITERAL_TEMPLATE_START}                  { do_semicolon_insertion(ASI_GROUP_7); EXEC(do_spacing(LITERAL)) ECHO; BEGIN(tmpll); set_ident_norm(true); }
+       {LITERAL_TEMPLATE_START}                  { EXEC(do_semicolon_insertion(ASI_GROUP_7)) EXEC(do_spacing(LITERAL)) ECHO; BEGIN(tmpll); set_ident_norm(true); }
 <tmpll>(\\\\)*{LITERAL_TEMPLATE_END}             { ECHO; BEGIN(divop); }
 <tmpll>(\\\\)*{LITERAL_TEMPLATE_SUBST_START}     { EXEC(process_subst_open()) }
 <tmpll>{HTML_TAG_SCRIPT_CLOSE}                   { BEGIN(regst); RETURN(CLOSING_TAG) }
@@ -1056,7 +1078,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <tmpll>{LITERAL_TEMPLATE_OTHER}                  { ECHO; }
 <tmpll><<EOF>>                                   { RETURN(SCRIPT_CONTINUE) }
 
-<regst>{LITERAL_REGEX_START}        { do_semicolon_insertion(ASI_GROUP_7); EXEC(do_spacing(LITERAL)) yyout << '/'; states_correct(1); yyless(1); BEGIN(regex); set_ident_norm(true); }
+<regst>{LITERAL_REGEX_START}        { EXEC(do_semicolon_insertion(ASI_GROUP_7)) EXEC(do_spacing(LITERAL)) yyout << '/'; states_correct(1); yyless(1); BEGIN(regex); set_ident_norm(true); }
 <regex>{LITERAL_REGEX_END}          { ECHO; BEGIN(divop); }
 <regex>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); RETURN(CLOSING_TAG) }
 <regex>{LITERAL_REGEX_SKIP}         { ECHO; }
@@ -1069,29 +1091,50 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <divop>{DIV_OPERATOR}               |
 <divop>{DIV_ASSIGNMENT_OPERATOR}    { previous_group = ASI_OTHER; ECHO; token = PUNCTUATOR; BEGIN(INITIAL); set_ident_norm(true); }
 
-{OPEN_BRACE}                        { do_semicolon_insertion(ASI_GROUP_1); EXEC(scope_push(BRACES)) if (!brace_depth.empty()) brace_depth.top()++; process_punctuator(); }
-{CLOSE_BRACE}                       { do_semicolon_insertion(ASI_GROUP_2); EXEC(scope_pop(BRACES)) process_closing_brace(); set_ident_norm(true); }
-{OPEN_PARENTHESIS}                  { do_semicolon_insertion(ASI_GROUP_3); EXEC(scope_push(PARENTHESES)) if (token == IDENTIFIER || token == CLOSING_BRACKET || token == KEYWORD) set_func_call(true); process_punctuator(); }
-{CLOSE_PARENTHESIS}                 { do_semicolon_insertion(ASI_GROUP_5); bool f_call = func_call(); bool id_norm = ident_norm(); EXEC(scope_pop(PARENTHESES)) if (!f_call) set_ident_norm(id_norm); ECHO; token = PUNCTUATOR; BEGIN(divop); }
-{OPEN_BRACKET}                      { do_semicolon_insertion(ASI_GROUP_3); do_semicolon_insertion(ASI_GROUP_4); EXEC(scope_push(BRACKETS)) process_punctuator(); }
-{CLOSE_BRACKET}                     { do_semicolon_insertion(ASI_GROUP_4); EXEC(scope_pop(BRACKETS)) ECHO; token = CLOSING_BRACKET; BEGIN(divop); }
+{OPEN_BRACE}                        { EXEC(do_semicolon_insertion(ASI_GROUP_1)) if (meta_type() == ScopeMetaType::NOT_SET) { if (is_operator(token) || token == COLON || func_call()) set_meta_type(ScopeMetaType::OBJECT); else { set_meta_type(ScopeMetaType::BLOCK); EXEC(p_scope_push(meta_type())) } } EXEC(scope_push(BRACES)) if (!brace_depth.empty()) brace_depth.top()++; process_punctuator(); }
+{CLOSE_BRACE}                       { EXEC(do_semicolon_insertion(ASI_GROUP_2)) if (meta_type() != ScopeMetaType::NOT_SET) EXEC(p_scope_pop(meta_type())) EXEC(scope_pop(BRACES)) process_closing_brace(); set_ident_norm(true); }
+{OPEN_PARENTHESIS}                  { EXEC(do_semicolon_insertion(ASI_GROUP_3)) EXEC(scope_push(PARENTHESES)) if (token == IDENTIFIER || token == CLOSING_BRACKET || token == KEYWORD) set_func_call(true); process_punctuator(); }
+{CLOSE_PARENTHESIS}                 { bool f_call = func_call(); bool id_norm = ident_norm(); if (meta_type() != ScopeMetaType::NOT_SET) EXEC(p_scope_pop(meta_type())) EXEC(scope_pop(PARENTHESES)) if (!f_call) set_ident_norm(id_norm); if (block_param()) { previous_group = ASI_OTHER; set_block_param(false); } else { EXEC(do_semicolon_insertion(ASI_GROUP_5)) } ECHO; token = PUNCTUATOR; BEGIN(divop); }
+{OPEN_BRACKET}                      { EXEC(do_semicolon_insertion(ASI_GROUP_3)) EXEC(do_semicolon_insertion(ASI_GROUP_4)) EXEC(scope_push(BRACKETS)) process_punctuator(); }
+{CLOSE_BRACKET}                     { EXEC(do_semicolon_insertion(ASI_GROUP_4)) EXEC(scope_pop(BRACKETS)) ECHO; token = CLOSING_BRACKET; BEGIN(divop); }
 
-{PUNCTUATOR_PREFIX}                 { do_semicolon_insertion(ASI_GROUP_10); process_punctuator(); set_ident_norm(true); }
+{PUNCTUATOR_PREFIX}                 { EXEC(do_semicolon_insertion(ASI_GROUP_10)) process_punctuator(); set_ident_norm(true); }
 {DOT_ACCESSOR}                      { previous_group = ASI_OTHER; ECHO; token = DOT; BEGIN(regst); }
-{PUNCTUATOR}                        { previous_group = ASI_OTHER; process_punctuator(); set_ident_norm(true); }
+{PUNCTUATOR_ARROW}                  { previous_group = ASI_OTHER; process_punctuator(); set_ident_norm(true); if (meta_type() == ScopeMetaType::NOT_SET) { set_meta_type(ScopeMetaType::FUNCTION); EXEC(p_scope_push(meta_type())) } }
+{PUNCTUATOR_SEMICOLON}              { previous_group = ASI_OTHER; process_punctuator(); set_ident_norm(true); if (meta_type() != ScopeMetaType::NOT_SET) { EXEC(p_scope_pop(meta_type())) set_meta_type(ScopeMetaType::NOT_SET); } }
+{PUNCTUATOR_COLON}                  { previous_group = ASI_OTHER; process_punctuator(COLON); set_ident_norm(true); }
+{OPERATOR_COMPARISON}               { previous_group = ASI_OTHER; process_punctuator(OPERATOR_COMPARISON); set_ident_norm(true); }
+{OPERATOR_COMPLEX_ASSIGNMENT}       { previous_group = ASI_OTHER; process_punctuator(OPERATOR_COMPLEX_ASSIGNMENT); set_ident_norm(true); }
+{OPERATOR_LOGICAL}                  { previous_group = ASI_OTHER; process_punctuator(OPERATOR_LOGICAL); set_ident_norm(true); }
+{OPERATOR_SHIFT}                    { previous_group = ASI_OTHER; process_punctuator(OPERATOR_SHIFT); set_ident_norm(true); }
+{PUNCTUATOR_COMMA}                  { previous_group = ASI_OTHER; process_punctuator(); set_ident_norm(true); }
 
 {USE_STRICT_DIRECTIVE}              { previous_group = ASI_OTHER; EXEC(do_spacing(DIRECTIVE)) ECHO; BEGIN(INITIAL); yyout << ';'; set_ident_norm(true); }
 {USE_STRICT_DIRECTIVE_SC}           { previous_group = ASI_OTHER; EXEC(do_spacing(DIRECTIVE)) ECHO; BEGIN(INITIAL); set_ident_norm(true); }
 
-{KEYWORD_B}                         { do_semicolon_insertion(ASI_GROUP_10); if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD)) ECHO; BEGIN(regst); }
-{KEYWORD_BA}                        { do_semicolon_insertion(ASI_GROUP_9); if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD)) ECHO; BEGIN(regst); }
+{KEYWORD_VAR_DECL}                  { EXEC(do_semicolon_insertion(ASI_GROUP_10)) if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD_VAR_DECL)) ECHO; BEGIN(regst); }
+{KEYWORD_FUNCTION}                  { EXEC(do_semicolon_insertion(ASI_GROUP_10)) if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD_FUNCTION)) ECHO; BEGIN(regst); if (meta_type() == ScopeMetaType::NOT_SET) set_meta_type(ScopeMetaType::FUNCTION); }
+{KEYWORD_IF}                        |
+{KEYWORD_FOR}                       |
+{KEYWORD_WITH}                      |
+{KEYWORD_SWITCH}                    |
+{KEYWORD_CATCH}                     { EXEC(do_semicolon_insertion(ASI_GROUP_10)) if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD_BLOCK)) ECHO; BEGIN(regst); if (meta_type() == ScopeMetaType::NOT_SET) { set_meta_type(ScopeMetaType::BLOCK); EXEC(p_scope_push(meta_type())) } set_block_param(true); }
+{KEYWORD_WHILE}                     { EXEC(do_semicolon_insertion(ASI_GROUP_10)) if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD_BLOCK)) ECHO; BEGIN(regst); if (meta_type() == ScopeMetaType::NOT_SET) { set_meta_type(ScopeMetaType::BLOCK); EXEC(p_scope_push(meta_type())) } if (do_loop()) set_do_loop(false); else set_block_param(true); }
+{KEYWORD_B}                         { EXEC(do_semicolon_insertion(ASI_GROUP_10)) if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD)) ECHO; BEGIN(regst); }
+{KEYWORD_BA}                        { EXEC(do_semicolon_insertion(ASI_GROUP_9)) if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD)) ECHO; BEGIN(regst); }
+{KEYWORD_TRY}                       |
+{KEYWORD_ELSE}                      |
+{KEYWORD_FINALLY}                   { EXEC(do_semicolon_insertion(ASI_GROUP_10)) if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD_BLOCK)) ECHO; BEGIN(regst); if (meta_type() == ScopeMetaType::NOT_SET) { set_meta_type(ScopeMetaType::BLOCK); EXEC(p_scope_push(meta_type())) } }
+{KEYWORD_DO}                        { EXEC(do_semicolon_insertion(ASI_GROUP_10)) if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD_BLOCK)) ECHO; BEGIN(regst); if (meta_type() == ScopeMetaType::NOT_SET) { set_meta_type(ScopeMetaType::BLOCK); EXEC(p_scope_push(meta_type())) } set_do_loop(true); }
+{KEYWORD_CLASS}                     { previous_group = ASI_OTHER; if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD_CLASS)) ECHO; BEGIN(regst); if (meta_type() == ScopeMetaType::NOT_SET) set_meta_type(ScopeMetaType::OBJECT); }
 {KEYWORD_OTHER}                     { previous_group = ASI_OTHER; if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD)) ECHO; BEGIN(regst); }
 
-{OPERATOR_PREFIX}                   { do_semicolon_insertion(ASI_GROUP_6); EXEC(do_operator_spacing(OPERATOR)) ECHO; BEGIN(divop); set_ident_norm(true); }
-{OPERATOR_INCR_DECR}                { do_semicolon_insertion(ASI_GROUP_8); EXEC(do_operator_spacing(OPERATOR)) ECHO; BEGIN(divop); set_ident_norm(true); }
-{OPERATOR}                          { previous_group = ASI_OTHER; EXEC(do_operator_spacing(OPERATOR)) ECHO; BEGIN(divop); set_ident_norm(true); }
-{LITERAL}                           { do_semicolon_insertion(ASI_GROUP_7); EXEC(do_spacing(LITERAL)) ECHO; BEGIN(divop); set_ident_norm(true); }
-{IDENTIFIER}                        { do_semicolon_insertion(ASI_GROUP_7); if (unescape(YYText())) { bool id_part = (token == DOT); EXEC(do_spacing(IDENTIFIER)) EXEC(do_identifier_substitution(YYText(), id_part)) } BEGIN(divop); }
+{OPERATOR_ASSIGNMENT}               { previous_group = ASI_OTHER; process_punctuator(OPERATOR_ASSIGNMENT); set_ident_norm(true); }
+{OPERATOR_PREFIX}                   { EXEC(do_semicolon_insertion(ASI_GROUP_6)) EXEC(do_operator_spacing()) ECHO; BEGIN(divop); set_ident_norm(true); }
+{OPERATOR_INCR_DECR}                { EXEC(do_semicolon_insertion(ASI_GROUP_8)) EXEC(do_operator_spacing()) ECHO; BEGIN(divop); set_ident_norm(true); }
+{OPERATOR}                          { previous_group = ASI_OTHER; EXEC(do_operator_spacing()) ECHO; BEGIN(divop); set_ident_norm(true); }
+{LITERAL}                           { EXEC(do_semicolon_insertion(ASI_GROUP_7)) EXEC(do_spacing(LITERAL)) ECHO; BEGIN(divop); set_ident_norm(true); }
+{IDENTIFIER}                        { EXEC(do_semicolon_insertion(ASI_GROUP_7)) if (unescape(YYText())) { bool id_part = (token == DOT); EXEC(do_spacing(IDENTIFIER)) EXEC(do_identifier_substitution(YYText(), id_part)) } BEGIN(divop); }
 
 .|{ALL_UNICODE}                     { previous_group = ASI_OTHER; ECHO; token = UNDEFINED; BEGIN(INITIAL); set_ident_norm(true); }
 <<EOF>>                             { EEOF(eval_eof()) }
@@ -1174,9 +1217,18 @@ static std::string unescape_unicode(const char* lexeme)
 
 // JSTokenizer members
 
+const char* JSTokenizer::p_scope_codes[] =
+{
+    "invalid",
+    "function",
+    "block",
+    "object",
+    "unknown"
+};
+
 JSTokenizer::JSTokenizer(std::istream& in, std::ostream& out,
     JSIdentifierCtxBase& mapper, uint8_t max_template_nesting,
-    uint32_t max_scope_depth, char*& buf, size_t& buf_size, int cap_size)
+    uint32_t max_bracket_depth, char*& buf, size_t& buf_size, int cap_size)
     : yyFlexLexer(in, out),
       max_template_nesting(max_template_nesting),
       ident_ctx(mapper),
@@ -1184,10 +1236,9 @@ JSTokenizer::JSTokenizer(std::istream& in, std::ostream& out,
       tmp_buf(buf),
       tmp_buf_size(buf_size),
       tmp_cap_size(cap_size),
-      output_steps_back(0),
-      max_scope_depth(max_scope_depth)
+      max_bracket_depth(max_bracket_depth)
 {
-    scope_push(GLOBAL);
+    scope_stack.emplace(GLOBAL);
     BEGIN(regst);
 }
 
@@ -1199,13 +1250,8 @@ JSTokenizer::~JSTokenizer()
     tmp_buf_size = 0;
 }
 
-void JSTokenizer::pre_yylex(bool adjust_output)
+void JSTokenizer::pre_yylex()
 {
-    assert(output_steps_back >= 0);
-
-    if (adjust_output)
-        yyout.seekp(-output_steps_back, std::ios_base::cur);
-
     yy_flush_buffer(YY_CURRENT_BUFFER);
 }
 
@@ -1251,6 +1297,12 @@ JSTokenizer::JSRet JSTokenizer::do_spacing(JSToken cur_token)
     switch (token)
     {
     case PUNCTUATOR:
+    case COLON:
+    case OPERATOR_ASSIGNMENT:
+    case OPERATOR_COMPLEX_ASSIGNMENT:
+    case OPERATOR_COMPARISON:
+    case OPERATOR_LOGICAL:
+    case OPERATOR_SHIFT:
     case OPERATOR:
     case DIRECTIVE:
     case DOT:
@@ -1261,10 +1313,25 @@ JSTokenizer::JSRet JSTokenizer::do_spacing(JSToken cur_token)
 
     case IDENTIFIER:
     case KEYWORD:
+    case KEYWORD_FUNCTION:
+    case KEYWORD_BLOCK:
+    case KEYWORD_CLASS:
     case LITERAL:
         yyout << ' ';
         token = cur_token;
         return EOS;
+
+    case KEYWORD_VAR_DECL:
+    {
+        if (cur_token == IDENTIFIER || cur_token == DOT)
+        {
+            yyout << ' ';
+            token = cur_token;
+            return EOS;
+        }
+        else
+            return BAD_TOKEN;
+    }
     }
 
     assert(false);
@@ -1272,25 +1339,37 @@ JSTokenizer::JSRet JSTokenizer::do_spacing(JSToken cur_token)
     return BAD_TOKEN;
 }
 
-JSTokenizer::JSRet JSTokenizer::do_operator_spacing(JSToken cur_token)
+JSTokenizer::JSRet JSTokenizer::do_operator_spacing()
 {
     switch (token)
     {
     case IDENTIFIER:
     case KEYWORD:
+    case KEYWORD_FUNCTION:
+    case KEYWORD_BLOCK:
+    case KEYWORD_CLASS:
     case PUNCTUATOR:
+    case COLON:
+    case OPERATOR_ASSIGNMENT:
+    case OPERATOR_COMPLEX_ASSIGNMENT:
+    case OPERATOR_COMPARISON:
+    case OPERATOR_LOGICAL:
+    case OPERATOR_SHIFT:
     case LITERAL:
     case DIRECTIVE:
     case DOT:
     case CLOSING_BRACKET:
     case UNDEFINED:
-        token = cur_token;
+        token = OPERATOR;
         return EOS;
 
     case OPERATOR:
         yyout << ' ';
-        token = cur_token;
+        token = OPERATOR;
         return EOS;
+
+    case KEYWORD_VAR_DECL:
+        return BAD_TOKEN;
     }
 
     assert(false);
@@ -1331,7 +1410,7 @@ JSTokenizer::JSRet JSTokenizer::do_identifier_substitution(const char* lexeme, b
     return EOS;
 }
 
-void JSTokenizer::do_semicolon_insertion(ASIGroup current)
+JSTokenizer::JSRet JSTokenizer::do_semicolon_insertion(ASIGroup current)
 {
     assert(current >= 0 and current < ASI_GROUP_MAX);
     if (newline_found)
@@ -1340,12 +1419,22 @@ void JSTokenizer::do_semicolon_insertion(ASIGroup current)
         if (insert_semicolon[previous_group][current])
         {
             yyout << ';';
+
             previous_group = ASI_OTHER;
             token = PUNCTUATOR;
-            return;
+            JSRet ret = EOS;
+
+            if (meta_type() != ScopeMetaType::NOT_SET)
+            {
+                ret = p_scope_pop(meta_type());
+                set_meta_type(ScopeMetaType::NOT_SET);
+            }
+
+            return ret;
         }
     }
     previous_group = current;
+    return EOS;
 }
 
 bool JSTokenizer::unescape(const char* lexeme)
@@ -1359,10 +1448,10 @@ bool JSTokenizer::unescape(const char* lexeme)
     return true;
 }
 
-void JSTokenizer::process_punctuator()
+void JSTokenizer::process_punctuator(JSToken tok)
 {
     ECHO;
-    token = PUNCTUATOR;
+    token = tok;
     BEGIN(regst);
 }
 
@@ -1403,35 +1492,18 @@ void JSTokenizer::states_reset()
     token = UNDEFINED;
     previous_group = ASI_OTHER;
 
+    bytes_skip = 0;
     memset(&states, 0, sizeof(states));
 
     delete[] tmp_buf;
     tmp_buf = nullptr;
     tmp_buf_size = 0;
 
-    output_steps_back = 0;
     newline_found = false;
+
     scope_stack = {};
-
-    scope_push(GLOBAL);
+    scope_stack.emplace(GLOBAL);
     BEGIN(regst);
-}
-
-void JSTokenizer::states_push()
-{
-    if (!yyleng)
-        return;
-
-    bytes_read += yyleng;
-
-    sp++;
-    sp %= JSTOKENIZER_MAX_STATES;
-    auto& state = states[sp];
-
-    state.token = token;
-    state.orig_len = yyleng;
-    state.norm_len = yyout.rdbuf()->pubseekoff(0, std::ios_base::cur, std::ios_base::out);
-    state.sc = yy_start;
 }
 
 void JSTokenizer::states_correct(int take_off)
@@ -1445,31 +1517,37 @@ void JSTokenizer::states_correct(int take_off)
 
 void JSTokenizer::states_over()
 {
+    int sp_idx = 0;
     int tail_size = 0;
-    int outbuf_pos = yyout.tellp();
-    int outbuf_back = outbuf_pos;
 
+    // Store the last state before EOF
+    eof_sp = sp;
+    eof_token = token;
+    eof_sc = yy_start;
+
+    // Evaluate a tail to renormalize and shift the current state
     for (int i = JSTOKENIZER_MAX_STATES; i > 0 && tail_size < tmp_cap_size; --i)
     {
         auto idx = sp + i;
         idx %= JSTOKENIZER_MAX_STATES;
         auto& state = states[idx];
 
-        outbuf_back = state.norm_len;
-
-        if (state.orig_len == 0)
+        // Continue if NOT_SET
+        if (state.sc == 0)
             continue;
 
         token = state.token;
         yy_start = state.sc;
+        sp_idx = idx;
         tail_size += state.orig_len;
         tail_size = tail_size < tmp_cap_size ? tail_size : tmp_cap_size;
     }
 
-    output_steps_back = outbuf_pos - outbuf_back;
+    // Number of already normalized bytes to be skipped
+    bytes_skip = tail_size;
 
-    for (int i = 0; i < JSTOKENIZER_MAX_STATES; ++i)
-        states[i].orig_len = 0;
+    // Set state pointer to the first state to be skipped
+    sp = sp_idx;
 
     char* buf = new char[tail_size];
 
@@ -1480,40 +1558,141 @@ void JSTokenizer::states_over()
     delete[] tmp_buf;
     tmp_buf = buf;
     tmp_buf_size = tail_size;
+}
 
-    // Reverse traversal over buffer to adjust scope stack before the next PDU buffer starts
-    bool is_tmpl = false;
-    const char* c = tmp_buf + tmp_buf_size;
-    const char* const s = tmp_buf;
-    while (c-- > s)
+bool JSTokenizer::states_process()
+{
+    if (!yyleng)
+        return true;
+
+    bytes_read += yyleng;
+
+    // Fulfillment goes after this check only in case of split over several input scripts.
+    // Otherwise, new state is pushed.
+    if (bytes_skip == 0)
     {
-        switch (*c)
-        {
-        case '{': scope_pop(BRACES); if (is_tmpl) brace_depth.pop(); break;
-        case '}': scope_push(BRACES); if (is_tmpl) brace_depth.push(0); break;
-        case '(': scope_pop(PARENTHESES); break;
-        case ')':
-        {
-            bool id_norm = ident_norm();
-            scope_push(PARENTHESES);
-            if (!id_norm)
-                set_func_call(true);
-            break;
-        }
-        case '[': scope_pop(BRACKETS); break;
-        case ']': scope_push(BRACKETS); break;
-        case '`': is_tmpl = !is_tmpl; break;
-        }
+        sp++;
+        sp %= JSTOKENIZER_MAX_STATES;
+        auto& state = states[sp];
+
+        state.token = token;
+        state.orig_len = yyleng;
+        state.norm_len = yyout.rdbuf()->pubseekoff(0, std::ios_base::cur, std::ios_base::out);
+        state.sc = yy_start;
+
+        return true;
     }
+
+    bytes_skip = bytes_skip - yyleng;
+
+    // Ignore normalization till all the already normalized bytes are skipped or mismatch found.
+    // If mismatch found, adjust normalization state and renormalize from the mismatch point.
+    if (bytes_skip < 0)
+    {
+        bytes_skip = 0;
+        states_adjust();
+
+        // Push new state
+        sp++;
+        sp %= JSTOKENIZER_MAX_STATES;
+        auto& state = states[sp];
+
+        state.token = token;
+        state.orig_len = yyleng;
+        state.norm_len = yyout.rdbuf()->pubseekoff(0, std::ios_base::cur, std::ios_base::out);
+        state.sc = yy_start;
+
+        return true;
+    }
+    // Otherwise, continue normalization from the last state without any changes
+    else if (bytes_skip == 0)
+    {
+        token = eof_token;
+        yy_start = eof_sc;
+    }
+    // Meanwhile, update parsing state every match
+    else
+    {
+        do { ++sp; sp %= JSTOKENIZER_MAX_STATES; }
+        while (states[sp].sc == 0);
+
+        auto& state = states[sp];
+        token = state.token;
+        yy_start = state.sc;
+    }
+
+    return false;
+}
+
+void JSTokenizer::states_adjust()
+{
+    int outbuf_pos = yyout.rdbuf()->pubseekoff(0, std::ios_base::cur, std::ios_base::out);
+    assert(outbuf_pos >= 0);
+
+    // Adjust output buffer if it was not cleaned up
+    if (outbuf_pos > 0)
+    {
+        // A valid state always here
+        auto& state = states[sp];
+        assert(state.sc != 0);
+
+        int ignore_norm_len = outbuf_pos - state.norm_len;
+        assert(ignore_norm_len >= 0);
+
+        yyout.seekp(-ignore_norm_len, std::ios_base::cur);
+    }
+
+    // Adjust normalization state based on specific tokens
+    switch (eof_token)
+    {
+    case KEYWORD_FUNCTION: set_meta_type(ScopeMetaType::NOT_SET); break;
+    case KEYWORD_BLOCK: p_scope_pop(meta_type()); set_meta_type(ScopeMetaType::NOT_SET); break;
+    case KEYWORD_CLASS: set_meta_type(ScopeMetaType::NOT_SET); break;
+    default: break;
+    }
+
+    assert((eof_sp >= 0 && eof_sp < JSTOKENIZER_MAX_STATES));
+
+    // Reset all the states after the current state till the state before EOF
+    if (sp <= eof_sp)
+        memset((void*)(states + sp), 0, sizeof(states[0]) * (eof_sp - sp));
+    else
+    {
+        memset((void*)(states + sp), 0, sizeof(states[0]) * (JSTOKENIZER_MAX_STATES - sp));
+        memset(&states, 0, sizeof(states[0]) * eof_sp);
+    }
+    --sp;
 }
 
 JSTokenizer::JSRet JSTokenizer::scope_push(ScopeType t)
 {
-    if (scope_stack.size() > max_scope_depth)
-        return SCOPE_NESTING_OVERFLOW;
+    if (scope_stack.size() >= max_bracket_depth)
+        return BRACKET_NESTING_OVERFLOW;
+
+    JSRet ret = EOS;
+    switch (meta_type())
+    {
+    case ScopeMetaType::FUNCTION:
+    {
+        if (t == PARENTHESES)
+            ret = p_scope_push(meta_type());
+
+        break;
+    }
+    case ScopeMetaType::OBJECT:
+    {
+        if (t == BRACES)
+            ret = p_scope_push(meta_type());
+
+        break;
+    }
+    case ScopeMetaType::BLOCK: break;
+    case ScopeMetaType::NOT_SET: break;
+    default: assert(false); return BAD_TOKEN;
+    }
 
     scope_stack.emplace(t);
-    return EOS;
+    return ret;
 }
 
 JSTokenizer::JSRet JSTokenizer::scope_pop(ScopeType t)
@@ -1522,7 +1701,16 @@ JSTokenizer::JSRet JSTokenizer::scope_pop(ScopeType t)
         return WRONG_CLOSING_SYMBOL;
 
     scope_stack.pop();
-    return EOS;
+
+    JSRet ret = EOS;
+
+    if (t == BRACES && meta_type() != ScopeMetaType::NOT_SET)
+    {
+        ret = p_scope_pop(meta_type());
+        set_meta_type(ScopeMetaType::NOT_SET);
+    }
+
+    return ret;
 }
 
 JSTokenizer::Scope& JSTokenizer::scope_cur()
@@ -1534,6 +1722,16 @@ JSTokenizer::Scope& JSTokenizer::scope_cur()
 bool JSTokenizer::global_scope()
 {
     return scope_cur().type == GLOBAL;
+}
+
+void JSTokenizer::set_meta_type(ScopeMetaType t)
+{
+    scope_cur().meta_type = t;
+}
+
+JSTokenizer::ScopeMetaType JSTokenizer::meta_type()
+{
+    return scope_cur().meta_type;
 }
 
 void JSTokenizer::set_ident_norm(bool f)
@@ -1555,3 +1753,82 @@ bool JSTokenizer::func_call()
 {
     return scope_cur().func_call;
 }
+
+void JSTokenizer::set_block_param(bool f)
+{
+    scope_cur().block_param = f;
+}
+
+bool JSTokenizer::block_param()
+{
+    return scope_cur().block_param;
+}
+
+void JSTokenizer::set_do_loop(bool f)
+{
+    scope_cur().do_loop = f;
+}
+
+bool JSTokenizer::do_loop()
+{
+    return scope_cur().do_loop;
+}
+
+JSTokenizer::JSRet JSTokenizer::p_scope_push(ScopeMetaType t)
+{
+    if (!ident_ctx.scope_push(m2p(t)))
+        return SCOPE_NESTING_OVERFLOW;
+
+    debug_logf(5, http_trace, TRACE_JS_PROC, nullptr, "scope pushed: '%s'\n", m2str(t));
+
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::p_scope_pop(ScopeMetaType t)
+{
+    if (!ident_ctx.scope_pop(m2p(t)))
+        return WRONG_CLOSING_SYMBOL;
+
+    debug_logf(5, http_trace, TRACE_JS_PROC, nullptr, "scope popped: '%s'\n", m2str(t));
+
+    return EOS;
+}
+
+JSProgramScopeType JSTokenizer::m2p(ScopeMetaType mt)
+{
+    switch (mt)
+    {
+    case ScopeMetaType::FUNCTION:
+        return JSProgramScopeType::FUNCTION;
+    case ScopeMetaType::BLOCK:
+    case ScopeMetaType::OBJECT:
+        return JSProgramScopeType::BLOCK;
+    case ScopeMetaType::NOT_SET:
+    default:
+        assert(false);
+        return JSProgramScopeType::PROG_SCOPE_TYPE_MAX;
+    }
+}
+
+const char* JSTokenizer::m2str(ScopeMetaType mt)
+{
+    mt = mt < ScopeMetaType::SCOPE_META_TYPE_MAX ? mt : ScopeMetaType::SCOPE_META_TYPE_MAX;
+    return p_scope_codes[mt];
+}
+
+bool JSTokenizer::is_operator(JSToken tok)
+{
+    switch (tok)
+    {
+    case OPERATOR:
+    case OPERATOR_ASSIGNMENT:
+    case OPERATOR_COMPLEX_ASSIGNMENT:
+    case OPERATOR_COMPARISON:
+    case OPERATOR_LOGICAL:
+    case OPERATOR_SHIFT:
+        return true;
+    default:
+        return false;
+    }
+}
+

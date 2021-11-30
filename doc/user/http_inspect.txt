@@ -83,9 +83,9 @@ validates the syntax concerning ECMA-262 Standard, including scope tracking,
 and checks for restrictions for contents of script elements (since it is
 HTML-embedded JavaScript). For more information on how additionally configure
 Enhanced Normalizer check the following http_inspect options: js_normalization_depth,
-js_norm_identifier_depth, js_norm_max_tmpl_nest, js_norm_max_scope_depth,
-js_norm_built_in_ident. Eventually Enhanced Normalizer will completely replace
-Legacy Normalizer.
+js_norm_identifier_depth, js_norm_max_tmpl_nest, js_norm_max_bracket_depth,
+js_norm_max_scope_depth, js_norm_built_in_ident. Eventually Enhanced Normalizer will
+completely replace Legacy Normalizer.
 
 ==== Configuration
 
@@ -225,12 +225,20 @@ that will be evaluated and inserted into the string. Such substitutions can be
 nested, and require keeping track of every layer for proper normalization. This option
 is present to limit the amount of memory dedicated to this tracking.
 
-===== js_norm_max_scope_depth
+===== js_norm_max_bracket_depth
 
-js_norm_max_scope_depth = N {0 : 65535} (default 256) is an option of the enhanced
-JavaScript normalizer that determines the deepest level of nested scope. The scope
+js_norm_max_bracket_depth = N {1 : 65535} (default 256) is an option of the enhanced
+JavaScript normalizer that determines the deepest level of nested bracket scope. The scope
 term includes code sections("{}"), parentheses("()") and brackets("[]"). This option
 is present to limit the amount of memory dedicated to this tracking.
+
+===== js_norm_max_scope_depth
+
+js_norm_max_scope_depth = N {1 : 65535} (default 256) is an option of the enhanced
+JavaScript normalizer that determines the deepest level of nested scope. The scope
+term includes any type of JavaScript program scope such as the global one, function scope,
+if block, loops, code block, object scope, etc. This option is present to limit the amount
+of memory dedicated to this tracking.
 
 ===== js_norm_built_in_ident
 

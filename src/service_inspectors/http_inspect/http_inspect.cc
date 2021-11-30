@@ -165,6 +165,7 @@ void HttpInspect::show(const SnortConfig*) const
     ConfigLogger::log_value("js_normalization_depth", params->js_norm_param.js_normalization_depth);
     ConfigLogger::log_value("js_norm_identifier_depth", params->js_norm_param.js_identifier_depth);
     ConfigLogger::log_value("js_norm_max_tmpl_nest", params->js_norm_param.max_template_nesting);
+    ConfigLogger::log_value("js_norm_max_bracket_depth", params->js_norm_param.max_bracket_depth);
     ConfigLogger::log_value("js_norm_max_scope_depth", params->js_norm_param.max_scope_depth);
     if (!js_built_in_ident.empty())
         ConfigLogger::log_list("js_norm_built_in_ident", js_built_in_ident.c_str());

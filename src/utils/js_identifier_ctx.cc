@@ -23,6 +23,8 @@
 
 #include "js_identifier_ctx.h"
 
+#include <cassert>
+
 #if !defined(CATCH_TEST_BUILD) && !defined(BENCHMARK_TEST)
 #include "service_inspectors/http_inspect/http_enum.h"
 #include "service_inspectors/http_inspect/http_module.h"
@@ -43,7 +45,7 @@ public:
 #endif // CATCH_TEST_BUILD
 
 #define MAX_LAST_NAME     65535
-#define HEX_DIGIT_MASK   15
+#define HEX_DIGIT_MASK       15
 
 static const char hex_digits[] = 
 {
@@ -60,6 +62,13 @@ static inline std::string format_name(int32_t num)
     name.push_back(hex_digits[num & HEX_DIGIT_MASK]); 
 
     return name;
+}
+
+JSIdentifierCtx::JSIdentifierCtx(int32_t depth, uint32_t max_scope_depth,
+    const std::unordered_set<std::string>& ident_built_in)
+    : ident_built_in(ident_built_in), depth(depth), max_scope_depth(max_scope_depth)
+{
+    scopes.emplace_back(JSProgramScopeType::GLOBAL);
 }
 
 const char* JSIdentifierCtx::substitute(const char* identifier)
@@ -81,9 +90,113 @@ bool JSIdentifierCtx::built_in(const char* identifier) const
     return ident_built_in.count(identifier);
 }
 
+bool JSIdentifierCtx::scope_push(JSProgramScopeType t)
+{
+    assert(t != JSProgramScopeType::GLOBAL && t != JSProgramScopeType::PROG_SCOPE_TYPE_MAX);
+
+    if (scopes.size() >= max_scope_depth)
+        return false;
+
+    scopes.emplace_back(t);
+    return true;
+}
+
+bool JSIdentifierCtx::scope_pop(JSProgramScopeType t)
+{
+    assert(t != JSProgramScopeType::GLOBAL && t != JSProgramScopeType::PROG_SCOPE_TYPE_MAX);
+
+    if (scopes.back().type() != t)
+        return false;
+
+    assert(scopes.size() != 1);
+    scopes.pop_back();
+    return true;
+}
+
 void JSIdentifierCtx::reset()
 {
     ident_last_name = 0;
+
     ident_names.clear();
+    scopes.clear();
+    scopes.emplace_back(JSProgramScopeType::GLOBAL);
 }
+
+void JSIdentifierCtx::ProgramScope::add_alias(const char* alias, const std::string& value)
+{
+    assert(alias);
+    aliases[alias] = value;
+}
+
+const char* JSIdentifierCtx::ProgramScope::get_alias_value(const char* alias) const
+{
+    assert(alias);
+
+    const auto it = aliases.find(alias);
+    if (it != aliases.end())
+        return it->second.c_str();
+    else
+        return nullptr;
+}
+
+// advanced program scope access for testing
+
+#ifdef CATCH_TEST_BUILD
+
+void JSIdentifierCtx::add_alias(const char* alias, const std::string& value)
+{
+    assert(alias);
+    assert(!scopes.empty());
+    scopes.back().add_alias(alias, value);
+}
+
+const char* JSIdentifierCtx::alias_lookup(const char* alias) const
+{
+    assert(alias);
+
+    for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
+    {
+        if (const char* value = it->get_alias_value(alias))
+            return value;
+    }
+    return nullptr;
+}
+
+bool JSIdentifierCtx::scope_check(const std::list<JSProgramScopeType>& compare) const
+{
+    if (scopes.size() != compare.size())
+        return false;
+
+    auto cmp = compare.begin();
+    for (auto it = scopes.begin(); it != scopes.end(); ++it, ++cmp)
+    {
+        if (it->type() != *cmp)
+            return false;
+    }
+    return true;
+}
+
+const std::list<JSProgramScopeType> JSIdentifierCtx::get_types() const
+{
+    std::list<JSProgramScopeType> return_list;
+    for(const auto& scope:scopes)
+    {
+        return_list.push_back(scope.type());
+    } 
+    return return_list;
+}
+
+bool JSIdentifierCtx::scope_contains(size_t pos, const char* alias) const
+{
+    size_t offset = 0;
+    for (auto it = scopes.begin(); it != scopes.end(); ++it, ++offset)
+    {
+        if (offset == pos)
+            return it->get_alias_value(alias);
+    }
+    assert(false);
+    return false;
+}
+
+#endif // CATCH_TEST_BUILD
 

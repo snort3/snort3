@@ -29,7 +29,7 @@ using namespace snort;
 using namespace std;
 
 JSNormalizer::JSNormalizer(JSIdentifierCtxBase& js_ident_ctx, size_t norm_depth,
-    uint8_t max_template_nesting, uint32_t max_scope_depth, int tmp_cap_size)
+    uint8_t max_template_nesting, uint32_t max_bracket_depth, int tmp_cap_size)
     : depth(norm_depth),
       rem_bytes(norm_depth),
       unlim(norm_depth == static_cast<size_t>(-1)),
@@ -38,7 +38,7 @@ JSNormalizer::JSNormalizer(JSIdentifierCtxBase& js_ident_ctx, size_t norm_depth,
       tmp_buf_size(0),
       in(&in_buf),
       out(&out_buf),
-      tokenizer(in, out, js_ident_ctx, max_template_nesting, max_scope_depth, tmp_buf, tmp_buf_size, tmp_cap_size)
+      tokenizer(in, out, js_ident_ctx, max_template_nesting, max_bracket_depth, tmp_buf, tmp_buf_size, tmp_cap_size)
 {
 }
 
@@ -79,13 +79,13 @@ JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len)
         ->pubsetbuf(const_cast<char*>(src), len);
     out_buf.reserve(src_len * BUFF_EXP_FACTOR);
 
-    size_t t_bytes = in_buf.last_chunk_offset();
-    tokenizer.pre_yylex(t_bytes != 0);
+    tokenizer.pre_yylex();
 
     JSTokenizer::JSRet ret = static_cast<JSTokenizer::JSRet>(tokenizer.yylex());
     in.clear();
     out.clear();
 
+    size_t t_bytes = in_buf.last_chunk_offset();
     size_t r_bytes = tokenizer.get_bytes_read();
     r_bytes = max(r_bytes, t_bytes) - t_bytes;
 
