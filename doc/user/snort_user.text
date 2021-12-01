@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.17.0 2021-11-17 13:35:23 EST TST
+Revision 3.1.18.0 2021-12-01 10:40:47 EST TST
 
 ---------------------------------------------------------------------
 
@@ -116,7 +116,6 @@ are:
   * New latency monitoring and enforcement
   * Piglets to facilitate component testing
   * Inspection Events
-  * Automake and Cmake
   * Autogenerate reference documentation
 
 Additional features are on the road map:
@@ -3879,9 +3878,9 @@ checks for restrictions for contents of script elements (since it is
 HTML-embedded JavaScript). For more information on how additionally
 configure Enhanced Normalizer check the following http_inspect
 options: js_normalization_depth, js_norm_identifier_depth,
-js_norm_max_tmpl_nest, js_norm_max_scope_depth,
-js_norm_built_in_ident. Eventually Enhanced Normalizer will
-completely replace Legacy Normalizer.
+js_norm_max_tmpl_nest, js_norm_max_bracket_depth,
+js_norm_max_scope_depth, js_norm_built_in_ident. Eventually Enhanced
+Normalizer will completely replace Legacy Normalizer.
 
 5.10.3. Configuration
 
@@ -4031,15 +4030,24 @@ require keeping track of every layer for proper normalization. This
 option is present to limit the amount of memory dedicated to this
 tracking.
 
-5.10.3.12. js_norm_max_scope_depth
+5.10.3.12. js_norm_max_bracket_depth
 
-js_norm_max_scope_depth = N {0 : 65535} (default 256) is an option of
+js_norm_max_bracket_depth = N {1 : 65535} (default 256) is an option
+of the enhanced JavaScript normalizer that determines the deepest
+level of nested bracket scope. The scope term includes code sections
+("{}"), parentheses("()") and brackets("[]"). This option is present
+to limit the amount of memory dedicated to this tracking.
+
+5.10.3.13. js_norm_max_scope_depth
+
+js_norm_max_scope_depth = N {1 : 65535} (default 256) is an option of
 the enhanced JavaScript normalizer that determines the deepest level
-of nested scope. The scope term includes code sections("{}"),
-parentheses("()") and brackets("[]"). This option is present to limit
+of nested scope. The scope term includes any type of JavaScript
+program scope such as the global one, function scope, if block,
+loops, code block, object scope, etc. This option is present to limit
 the amount of memory dedicated to this tracking.
 
-5.10.3.13. js_norm_built_in_ident
+5.10.3.14. js_norm_built_in_ident
 
 js_norm_built_in_ident = {<the list of built-in JavaScript identifier
 names>}. The default list is present in "snort_defaults.lua".
@@ -4060,7 +4068,7 @@ The list must contain object and function names only. For example:
 
 http_inspect.js_norm_built_in_ident = { 'console', 'document', 'eval', 'foo' }
 
-5.10.3.14. xff_headers
+5.10.3.15. xff_headers
 
 This configuration supports defining custom x-forwarded-for type
 headers. In a multi-vendor world, it is quite possible that the
@@ -4075,7 +4083,7 @@ they are defined, e.g "x-forwarded-for" will be preferred than
 "true-client-ip" if both headers are present in the stream. The
 header names should be delimited by a space.
 
-5.10.3.15. maximum_host_length
+5.10.3.16. maximum_host_length
 
 Setting maximum_host_length causes http_inspect to generate 119:25 if
 the Host header value including optional white space exceeds the
@@ -4083,7 +4091,7 @@ specified length. In the abnormal case of multiple Host headers, the
 total length of the combined values is used. The default value is -1,
 meaning do not perform this check.
 
-5.10.3.16. maximum_chunk_length
+5.10.3.17. maximum_chunk_length
 
 http_inspect strictly limits individual chunks within a chunked
 message body to be less than four gigabytes.
@@ -4091,7 +4099,7 @@ message body to be less than four gigabytes.
 A lower limit may be configured by setting maximum_chunk_length. Any
 chunk longer than maximum chunk length will generate a 119:16 alert.
 
-5.10.3.17. URI processing
+5.10.3.18. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize
@@ -4497,6 +4505,14 @@ original JavaScript in it.
 The vba_data will contain the decompressed Visual Basic for
 Applications (vba) macro data embedded in MS office files. It
 requires decompress_zip and decompress_vba options enabled.
+
+5.10.6.16. num_headers and num_trailers
+
+These rule options are used to check the number of headers and
+trailers, respectively. Checks available: equal to "=" or just value,
+not "!" or "!=", less than "<", greater than ">", less or equal to
+"⇐", less or greater than ">=", in range "<>", in range or equal to "
+<⇒".
 
 5.10.7. Timing issues and combining rule options
 
@@ -6282,7 +6298,116 @@ the session can be handed off to the appropriate inspector. The
 wizard is still under development; if you find you need to tweak the
 defaults please let us know.
 
-Additional Details:
+5.20.1. Wizard patterns
+
+Wizard supports 3 kinds of patterns:
+
+ 1. Hexes
+ 2. Spells
+ 3. Curses
+
+Each kind of pattern has its own purpose and features. It should be
+noted that the types of patterns are evaluated exactly in the order
+in which they are described above. Thus, if some data matches a hex,
+it will not be processed by spells and curses.
+
+The depth of search for a pattern in the data can be configured using
+the max_search_depth option
+
+TCP packets form a flow, so wizard checks all data in the flow for a
+match. If no pattern matches and max_search_depth is reached, the
+flow is abandoned by wizard.
+
+UDP packets form a "meta-flow" based on the addresses and ports of
+the packets. However, unlike TCP processing, for UDP wizard only
+looks at the first arriving packet from the meta-flow. If no pattern
+matches that packet or wizard’s max_search_depth is reached, the
+meta-flow is abandoned by wizard.
+
+5.20.2. Wizard patterns - Spells
+
+Spell is a text based pattern. The best area of usage - text
+protocols: http, smtp, sip, etc. Spells are:
+
+  * Case insensitive
+  * Whitespace sensitive
+  * Able to match by a wildcard symbol
+
+In order to match any sequence of characters in pattern, you should
+use "*" (glob) symbol in pattern.
+
+Example:
+  Pattern: '220-*FTP'
+  Traffic that would match: '220- Hello world! It's a new FTP server'
+
+To escape "*" symbol, put "**" in the pattern.
+
+Spells are configured as a Lua array, each element of which can
+contain following options:
+
+  * service - name of the service that would be assigned
+  * proto - protocol to scan
+  * client_first - indicator of which end initiates data transfer
+  * to_server - list of text patterns to search in the data sent to
+    the client
+  * to_client - list of text patterns to search in the data sent to
+    the server
+
+    Example of a spell definition in Lua:
+      {
+        service = 'smtp',
+        proto = 'tcp',
+        client_first = true,
+        to_server = { 'HELO', 'EHLO' },
+        to_client = { '220*SMTP', '220*MAIL' }
+      }
+
+5.20.3. Wizard patterns - Hexes
+
+Hexes can be used to match binary protocols: dnp3, http2, ssl, etc.
+Hexes use hexadecimal representation of the data for pattern
+matching.
+
+Wildcard in hex pattern is a placeholder for exactly one occurrence
+of any hexadecimal digit and denoted by the symbol "?".
+
+Example:
+  Pattern: '|05 ?4|'
+  Traffic that would match: '|05 84|'
+
+Hexes are configured in the same way as spells and have an identical
+set of options.
+
+Example of a hex definition in Lua:
+  {
+    service = 'dnp3',
+    proto = 'tcp',
+    client_first = true,
+    to_server = { '|05 64|' },
+    to_client = { '|05 64|' }
+  }
+
+5.20.4. Wizard patterns - Curses
+
+Curses are internal algorithms of service identification. They are
+implemented as state machines in C++ code and can have their own
+unique state information stored on the flow.
+
+A list of available services can be obtained using snort
+--help-config wizard | grep curses.
+
+A configuration which enables some curses:
+  curses = {'dce_udp', 'dce_tcp', 'dce_smb', 'sslv2'}
+
+5.20.5. Additional Details:
+
+  * Note that usually more specific patterns have higher precedence.
+
+    For example:
+      The following spells against 'foobar' payload. The 3rd spell matches.
+        { service = 'first',  to_server = { 'foo' } },
+        { service = 'second',  to_server = { 'bar' } }
+        { service = 'third',  to_server = { 'foobar' } }
 
   * If the wizard and one or more service inspectors are configured w
     /o explicitly configuring the binder, default bindings will be

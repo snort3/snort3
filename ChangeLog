@@ -1,3 +1,64 @@
+2021/12/01 - 3.1.18.0
+
+alert_sf_socket: remove obselete logger
+appid: exclude stubs from coverage
+build: remove config.h from headers
+build: remove unreachable code
+build: update configure options
+catch: update catch to v2.13.7
+dev_notes.txt: fix miscellaneous typos
+doc: remove mention of Automake
+doc: update builtin_subs.txt with EVENT_JS_SCOPE_NEST_OVERFLOW alert
+doc: update module usage and inspector types in the dev guide
+doc: update user/http_inspect.txt with http_inspect.js_norm_max_scope_depth option description
+doc: update wizard documentation
+file_api: file_data changes
+framework: add support for multiple tenant
+framework: don't call a gadget's eval() or clear() after its stream splitter aborted
+framework: replace Value::get_long() with a platform-independent type
+framework: update base API version to 11
+helpers: fix stream unit test on 32 bit platforms
+http2_inspect: discard with padding
+http_inspect: fix total_bytes peg count
+http_inspect: new rule options num_headers, num_trailers
+http_inspect: store ole data in msg_body
+http_inspect: update comments for asserts in eval and clear
+http_inspect: update dev_notes.txt
+hyperscan: disable bogus unit test leak warnings
+ips_options: create LiteralSearch object for vba decompression at the time of snort initialization
+memory: add max rss to verbose memory output
+memory: add original overload manager
+memory: add support for jemalloc
+memory: expand profile report field widths
+memory: fix accounting issues
+memory: free space per DAQ message, not per allocation
+memory: move mem_stats to MemoryCap
+memory: refactoring
+memory: refactor pruning and update unit tests
+memory: remove explicit allocation tracking
+memory: update dev notes
+perf_monitor: allow constraint seconds = 0
+piglets: refactor support code
+reputation: remove unused sfrt code
+rna: refactor unit test stubs
+search_engines: remove unused test code
+stream_tcp: delete unused unit test cruft
+stream_tcp: only fallback if stream splitter aborted and don't keep processing fragments after MagicSplitter returned STOP
+stream_tcp: remove unused unit test code
+stream_user: refactor, remove cruft
+unified2: remove cruft
+utils: do output adjustment in case of carryover
+utils: enable batch mode for Flex
+utils: (JSNormalizer) add program scope tracking and alias resolution
+utils: (JSNormalizer) rework the split over multiple chunks behavior
+utils: pass an address into memset instead of object
+utils: reduce flex generation of unused js normalizer code
+utils: reset Normalizer context when new script starts
+vba: fix buffer overflow in ole parser
+wizard: add patterns to match unknown HTTP and SIP methods
+wizard: change default value of max_search_depth from 64 to 8192
+wizard: remove telnet IAC pattern
+
 2021/11/17 - 3.1.17.0
 
 appid: restore the log of reload detectors complete message

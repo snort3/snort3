@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.17.0 2021-11-17 13:35:34 EST TST
+Revision 3.1.18.0 2021-12-01 10:40:58 EST TST
 
 ---------------------------------------------------------------------
 
@@ -230,44 +230,46 @@ Table of Contents
     7.80. modbus_unit
     7.81. msg
     7.82. mss
-    7.83. pcre
-    7.84. pkt_data
-    7.85. pkt_num
-    7.86. priority
-    7.87. raw_data
-    7.88. reference
-    7.89. regex
-    7.90. rem
-    7.91. replace
-    7.92. rev
-    7.93. rpc
-    7.94. s7commplus_content
-    7.95. s7commplus_func
-    7.96. s7commplus_opcode
-    7.97. sd_pattern
-    7.98. seq
-    7.99. service
-    7.100. sha256
-    7.101. sha512
-    7.102. sid
-    7.103. sip_body
-    7.104. sip_header
-    7.105. sip_method
-    7.106. sip_stat_code
-    7.107. so
-    7.108. soid
-    7.109. ssl_state
-    7.110. ssl_version
-    7.111. stream_reassemble
-    7.112. stream_size
-    7.113. tag
-    7.114. target
-    7.115. tos
-    7.116. ttl
-    7.117. urg
-    7.118. vba_data
-    7.119. window
-    7.120. wscale
+    7.83. num_headers
+    7.84. num_trailers
+    7.85. pcre
+    7.86. pkt_data
+    7.87. pkt_num
+    7.88. priority
+    7.89. raw_data
+    7.90. reference
+    7.91. regex
+    7.92. rem
+    7.93. replace
+    7.94. rev
+    7.95. rpc
+    7.96. s7commplus_content
+    7.97. s7commplus_func
+    7.98. s7commplus_opcode
+    7.99. sd_pattern
+    7.100. seq
+    7.101. service
+    7.102. sha256
+    7.103. sha512
+    7.104. sid
+    7.105. sip_body
+    7.106. sip_header
+    7.107. sip_method
+    7.108. sip_stat_code
+    7.109. so
+    7.110. soid
+    7.111. ssl_state
+    7.112. ssl_version
+    7.113. stream_reassemble
+    7.114. stream_size
+    7.115. tag
+    7.116. target
+    7.117. tos
+    7.118. ttl
+    7.119. urg
+    7.120. vba_data
+    7.121. window
+    7.122. wscale
 
 8. Search Engine Modules
 9. SO Rule Modules
@@ -278,14 +280,13 @@ Table of Contents
     10.3. alert_fast
     10.4. alert_full
     10.5. alert_json
-    10.6. alert_sfsocket
-    10.7. alert_syslog
-    10.8. alert_talos
-    10.9. alert_unixsock
-    10.10. log_codecs
-    10.11. log_hext
-    10.12. log_pcap
-    10.13. unified2
+    10.6. alert_syslog
+    10.7. alert_talos
+    10.8. alert_unixsock
+    10.9. log_codecs
+    10.10. log_hext
+    10.11. log_pcap
+    10.12. unified2
 
 11. Appendix
 
@@ -980,8 +981,8 @@ Configuration:
 
   * int memory.cap = 0: set the per-packet-thread cap on memory
     (bytes, 0 to disable) { 0:maxSZ }
-  * int memory.threshold = 0: set the per-packet-thread threshold for
-    preemptive cleanup actions (percent, 0 to disable) { 0:100 }
+  * int memory.threshold = 100: scale cap to account for heap
+    overhead { 1:100 }
 
 Peg counts:
 
@@ -992,7 +993,6 @@ Peg counts:
   * memory.reap_attempts: attempts to reclaim memory (now)
   * memory.reap_failures: failures to reclaim memory (now)
   * memory.max_in_use: highest allocated - deallocated (max)
-  * memory.total_fudge: sum of all adjustments (now)
 
 
 2.18. network
@@ -2403,7 +2403,7 @@ Type: inspector (control)
 
 Usage: context
 
-Instance Type: global
+Instance Type: network
 
 Configuration:
 
@@ -2470,7 +2470,7 @@ Type: inspector (passive)
 
 Usage: context
 
-Instance Type: global
+Instance Type: network
 
 Configuration:
 
@@ -2569,6 +2569,7 @@ Configuration:
     IDs
   * string binder[].when.dst_groups: list of destination group IDs
   * string binder[].when.addr_spaces: list of address space IDs
+  * string binder[].when.tenants: list of tenants
   * enum binder[].when.role = any: use the given configuration on one
     or any end of a session { client | server | any }
   * string binder[].when.service: override default configuration
@@ -2578,6 +2579,8 @@ Configuration:
   * enum binder[].use.action = inspect: what to do with matching
     traffic { reset | block | allow | inspect }
   * string binder[].use.file: use configuration in given file
+  * string binder[].use.network_policy: use network policy from given
+    file
   * string binder[].use.inspection_policy: use inspection policy from
     given file
   * string binder[].use.ips_policy: use ips policy from given file
@@ -2588,6 +2591,7 @@ Configuration:
 
 Peg counts:
 
+  * binder.raw_packets: raw packets evaluated (sum)
   * binder.new_flows: new flows evaluated (sum)
   * binder.service_changes: flow service changes evaluated (sum)
   * binder.assistant_inspectors: flow assistant inspector requests
@@ -2650,7 +2654,7 @@ Type: inspector (control)
 
 Usage: context
 
-Instance Type: global
+Instance Type: network
 
 
 5.8. data_log
@@ -3727,9 +3731,12 @@ Configuration:
   * int http_inspect.js_norm_max_tmpl_nest = 32: maximum depth of
     template literal nesting that enhanced javascript normalizer will
     process { 0:255 }
+  * int http_inspect.js_norm_max_bracket_depth = 256: maximum depth
+    of bracket nesting that enhanced JavaScript normalizer will
+    process { 1:65535 }
   * int http_inspect.js_norm_max_scope_depth = 256: maximum depth of
     scope nesting that enhanced JavaScript normalizer will process {
-    0:65535 }
+    1:65535 }
   * string http_inspect.js_norm_built_in_ident[].ident_name: name of
     built-in identifier
   * int http_inspect.max_javascript_whitespaces = 200: maximum
@@ -3943,11 +3950,13 @@ Rules:
   * 119:269 (http_inspect) script opening tag in a short form
   * 119:270 (http_inspect) max number of unique JavaScript
     identifiers reached
-  * 119:271 (http_inspect) JavaScript scope nesting is over capacity
+  * 119:271 (http_inspect) JavaScript bracket nesting is over
+    capacity
   * 119:272 (http_inspect) Consecutive commas in HTTP Accept-Encoding
     header
   * 119:273 (http_inspect) missed PDUs during JavaScript
     normalization
+  * 119:274 (http_inspect) JavaScript scope nesting is over capacity
 
 Peg counts:
 
@@ -4306,9 +4315,9 @@ Help: packet scrubbing for inline mode
 
 Type: inspector (packet)
 
-Usage: inspect
+Usage: context
 
-Instance Type: singleton
+Instance Type: network
 
 Configuration:
 
@@ -4500,7 +4509,7 @@ Configuration:
     pairs
   * int perf_monitor.packets = 10000: minimum packets to report {
     0:max32 }
-  * int perf_monitor.seconds = 60: report interval { 1:max32 }
+  * int perf_monitor.seconds = 60: report interval { 0:max32 }
   * int perf_monitor.flow_ip_memcap = 52428800: maximum memory in
     bytes for flow tracking { 236:maxSZ }
   * int perf_monitor.max_file_size = 1073741824: files will be rolled
@@ -4781,9 +4790,9 @@ Help: reputation inspection
 
 Type: inspector (first)
 
-Usage: global
+Usage: context
 
-Instance Type: global
+Instance Type: network
 
 Configuration:
 
@@ -4837,7 +4846,7 @@ Type: inspector (control)
 
 Usage: context
 
-Instance Type: global
+Instance Type: network
 
 Configuration:
 
@@ -5404,7 +5413,7 @@ Peg counts:
   * stream.excess_prunes: sessions pruned due to excess (sum)
   * stream.uni_prunes: uni sessions pruned (sum)
   * stream.preemptive_prunes: sessions pruned during preemptive
-    pruning (sum)
+    pruning (deprecated) (sum)
   * stream.memcap_prunes: sessions pruned due to memcap (sum)
   * stream.ha_prunes: sessions pruned by high availability sync (sum)
   * stream.stale_prunes: sessions pruned due to stale connection
@@ -5841,7 +5850,7 @@ Configuration:
     wild cards (*)
   * multi wizard.curses: enable service identification based on
     internal algorithm { dce_smb | dce_udp | dce_tcp | sslv2 }
-  * int wizard.max_search_depth = 64: maximum scan depth per flow {
+  * int wizard.max_search_depth = 8192: maximum scan depth per flow {
     0:65535 }
 
 Peg counts:
@@ -7382,7 +7391,55 @@ Configuration:
     }
 
 
-7.83. pcre
+7.83. num_headers
+
+--------------
+
+Help: rule option to perform range check on number of headers
+
+Type: ips_option
+
+Usage: detect
+
+Configuration:
+
+  * interval num_headers.~range: check that number of headers of
+    current buffer are in given range { 0:200 }
+  * implied num_headers.request: match against the version from the
+    request message even when examining the response
+  * implied num_headers.with_header: this rule is limited to
+    examining HTTP message headers
+  * implied num_headers.with_body: parts of this rule examine HTTP
+    message body
+  * implied num_headers.with_trailer: parts of this rule examine HTTP
+    message trailers
+
+
+7.84. num_trailers
+
+--------------
+
+Help: rule option to perform range check on number of trailers
+
+Type: ips_option
+
+Usage: detect
+
+Configuration:
+
+  * interval num_trailers.~range: check that number of headers of
+    current buffer are in given range { 0:200 }
+  * implied num_trailers.request: match against the version from the
+    request message even when examining the response
+  * implied num_trailers.with_header: this rule is limited to
+    examining HTTP message headers
+  * implied num_trailers.with_body: parts of this rule examine HTTP
+    message body
+  * implied num_trailers.with_trailer: parts of this rule examine
+    HTTP message trailers
+
+
+7.85. pcre
 
 --------------
 
@@ -7404,7 +7461,7 @@ Peg counts:
   * pcre.pcre_negated: total pcre rules using negation syntax (sum)
 
 
-7.84. pkt_data
+7.86. pkt_data
 
 --------------
 
@@ -7416,7 +7473,7 @@ Type: ips_option
 Usage: detect
 
 
-7.85. pkt_num
+7.87. pkt_num
 
 --------------
 
@@ -7432,7 +7489,7 @@ Configuration:
     { 1: }
 
 
-7.86. priority
+7.88. priority
 
 --------------
 
@@ -7448,7 +7505,7 @@ Configuration:
     1:max31 }
 
 
-7.87. raw_data
+7.89. raw_data
 
 --------------
 
@@ -7459,7 +7516,7 @@ Type: ips_option
 Usage: detect
 
 
-7.88. reference
+7.90. reference
 
 --------------
 
@@ -7474,7 +7531,7 @@ Configuration:
   * string reference.~ref: reference: <scheme>,<id>
 
 
-7.89. regex
+7.91. regex
 
 --------------
 
@@ -7498,7 +7555,7 @@ Configuration:
     instead of start of buffer
 
 
-7.90. rem
+7.92. rem
 
 --------------
 
@@ -7513,7 +7570,7 @@ Configuration:
   * string rem.~: comment
 
 
-7.91. replace
+7.93. replace
 
 --------------
 
@@ -7529,7 +7586,7 @@ Configuration:
   * string replace.~: byte code to replace with
 
 
-7.92. rev
+7.94. rev
 
 --------------
 
@@ -7544,7 +7601,7 @@ Configuration:
   * int rev.~: revision { 1:max32 }
 
 
-7.93. rpc
+7.95. rpc
 
 --------------
 
@@ -7561,7 +7618,7 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-7.94. s7commplus_content
+7.96. s7commplus_content
 
 --------------
 
@@ -7572,7 +7629,7 @@ Type: ips_option
 Usage: detect
 
 
-7.95. s7commplus_func
+7.97. s7commplus_func
 
 --------------
 
@@ -7587,7 +7644,7 @@ Configuration:
   * string s7commplus_func.~: function code to match
 
 
-7.96. s7commplus_opcode
+7.98. s7commplus_opcode
 
 --------------
 
@@ -7602,7 +7659,7 @@ Configuration:
   * string s7commplus_opcode.~: opcode code to match
 
 
-7.97. sd_pattern
+7.99. sd_pattern
 
 --------------
 
@@ -7626,7 +7683,7 @@ Peg counts:
   * sd_pattern.terminated: hyperscan terminated (sum)
 
 
-7.98. seq
+7.100. seq
 
 --------------
 
@@ -7642,7 +7699,7 @@ Configuration:
     range { 0: }
 
 
-7.99. service
+7.101. service
 
 --------------
 
@@ -7657,7 +7714,7 @@ Configuration:
   * string service.*: one or more comma-separated service names
 
 
-7.100. sha256
+7.102. sha256
 
 --------------
 
@@ -7677,7 +7734,7 @@ Configuration:
     start of buffer
 
 
-7.101. sha512
+7.103. sha512
 
 --------------
 
@@ -7697,7 +7754,7 @@ Configuration:
     start of buffer
 
 
-7.102. sid
+7.104. sid
 
 --------------
 
@@ -7712,7 +7769,7 @@ Configuration:
   * int sid.~: signature id { 1:max32 }
 
 
-7.103. sip_body
+7.105. sip_body
 
 --------------
 
@@ -7723,7 +7780,7 @@ Type: ips_option
 Usage: detect
 
 
-7.104. sip_header
+7.106. sip_header
 
 --------------
 
@@ -7735,7 +7792,7 @@ Type: ips_option
 Usage: detect
 
 
-7.105. sip_method
+7.107. sip_method
 
 --------------
 
@@ -7750,7 +7807,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-7.106. sip_stat_code
+7.108. sip_stat_code
 
 --------------
 
@@ -7765,7 +7822,7 @@ Configuration:
   * int sip_stat_code.*code: status code { 1:999 }
 
 
-7.107. so
+7.109. so
 
 --------------
 
@@ -7782,7 +7839,7 @@ Configuration:
     buffer
 
 
-7.108. soid
+7.110. soid
 
 --------------
 
@@ -7798,7 +7855,7 @@ Configuration:
     like 3_45678_9
 
 
-7.109. ssl_state
+7.111. ssl_state
 
 --------------
 
@@ -7827,7 +7884,7 @@ Configuration:
     unknown
 
 
-7.110. ssl_version
+7.112. ssl_version
 
 --------------
 
@@ -7854,7 +7911,7 @@ Configuration:
     tls1.2
 
 
-7.111. stream_reassemble
+7.113. stream_reassemble
 
 --------------
 
@@ -7875,7 +7932,7 @@ Configuration:
     remainder of the session
 
 
-7.112. stream_size
+7.114. stream_size
 
 --------------
 
@@ -7893,7 +7950,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-7.113. tag
+7.115. tag
 
 --------------
 
@@ -7912,7 +7969,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1:max32 }
 
 
-7.114. target
+7.116. target
 
 --------------
 
@@ -7928,7 +7985,7 @@ Configuration:
     dst_ip }
 
 
-7.115. tos
+7.117. tos
 
 --------------
 
@@ -7943,7 +8000,7 @@ Configuration:
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
 
 
-7.116. ttl
+7.118. ttl
 
 --------------
 
@@ -7959,7 +8016,7 @@ Configuration:
     0:255 }
 
 
-7.117. urg
+7.119. urg
 
 --------------
 
@@ -7975,7 +8032,7 @@ Configuration:
     { 0:65535 }
 
 
-7.118. vba_data
+7.120. vba_data
 
 --------------
 
@@ -7987,7 +8044,7 @@ Type: ips_option
 Usage: detect
 
 
-7.119. window
+7.121. window
 
 --------------
 
@@ -8003,7 +8060,7 @@ Configuration:
     range { 0:65535 }
 
 
-7.120. wscale
+7.122. wscale
 
 --------------
 
@@ -8166,24 +8223,7 @@ Configuration:
     character sequence
 
 
-10.6. alert_sfsocket
-
---------------
-
-Help: output event over socket
-
-Type: logger
-
-Usage: global
-
-Configuration:
-
-  * string alert_sfsocket.file: name of unix socket file
-  * int alert_sfsocket.rules[].gid = 1: rule generator ID { 1:max32 }
-  * int alert_sfsocket.rules[].sid = 1: rule signature ID { 1:max32 }
-
-
-10.7. alert_syslog
+10.6. alert_syslog
 
 --------------
 
@@ -8205,7 +8245,7 @@ Configuration:
     cons | ndelay | perror | pid }
 
 
-10.8. alert_talos
+10.7. alert_talos
 
 --------------
 
@@ -8216,7 +8256,7 @@ Type: logger
 Usage: global
 
 
-10.9. alert_unixsock
+10.8. alert_unixsock
 
 --------------
 
@@ -8227,7 +8267,7 @@ Type: logger
 Usage: global
 
 
-10.10. log_codecs
+10.9. log_codecs
 
 --------------
 
@@ -8244,7 +8284,7 @@ Configuration:
   * bool log_codecs.msg = false: include alert msg
 
 
-10.11. log_hext
+10.10. log_hext
 
 --------------
 
@@ -8266,7 +8306,7 @@ Configuration:
     0:max32 }
 
 
-10.12. log_pcap
+10.11. log_pcap
 
 --------------
 
@@ -8282,7 +8322,7 @@ Configuration:
     is unlimited) { 0:maxSZ }
 
 
-10.13. unified2
+10.12. unified2
 
 --------------
 
@@ -8579,6 +8619,10 @@ these libraries see the Getting Started section of the manual.
     }
   * int active.min_interval = 255: minimum number of seconds between
     responses { 1:255 }
+  * string address_space_selector[].addr_spaces: list of address
+    space IDs to match
+  * string address_space_selector[].file: use configuration in given
+    file
   * multi alert_csv.fields = timestamp pkt_num proto pkt_gen pkt_len
     dir src_ap dst_ap rule action: selected fields will be output in
     given order left to right { action | class | b64_data |
@@ -8630,9 +8674,6 @@ these libraries see the Getting Started section of the manual.
     memory for detection_filters { 0:max32 }
   * int alerts.event_filter_memcap = 1048576: set available MB of
     memory for event_filters { 0:max32 }
-  * string alert_sfsocket.file: name of unix socket file
-  * int alert_sfsocket.rules[].gid = 1: rule generator ID { 1:max32 }
-  * int alert_sfsocket.rules[].sid = 1: rule signature ID { 1:max32 }
   * bool alerts.log_references = false: include rule references in
     alert info (full only)
   * string alerts.order: change the order of rule action application
@@ -8719,6 +8760,8 @@ these libraries see the Getting Started section of the manual.
     given file
   * string binder[].use.ips_policy: use ips policy from given file
   * string binder[].use.name: symbol name (defaults to type)
+  * string binder[].use.network_policy: use network policy from given
+    file
   * string binder[].use.service: override automatic service
     identification
   * string binder[].use.type: select module for binding
@@ -8746,6 +8789,7 @@ these libraries see the Getting Started section of the manual.
   * addr_list binder[].when.src_nets: list of source networks
   * bit_list binder[].when.src_ports: list of source ports { 65535 }
   * string binder[].when.src_zone: deprecated alias for src_groups
+  * string binder[].when.tenants: list of tenants
   * bit_list binder[].when.vlans: list of VLAN IDs { 4095 }
   * string binder[].when.zones: deprecated alias for groups
   * interval bufferlen.~range: check that total length of current
@@ -9248,9 +9292,12 @@ these libraries see the Getting Started section of the manual.
     built-in identifier
   * int http_inspect.js_norm_identifier_depth = 65536: max number of
     unique JavaScript identifiers to normalize { 0:65536 }
+  * int http_inspect.js_norm_max_bracket_depth = 256: maximum depth
+    of bracket nesting that enhanced JavaScript normalizer will
+    process { 1:65535 }
   * int http_inspect.js_norm_max_scope_depth = 256: maximum depth of
     scope nesting that enhanced JavaScript normalizer will process {
-    0:65535 }
+    1:65535 }
   * int http_inspect.js_norm_max_tmpl_nest = 32: maximum depth of
     template literal nesting that enhanced javascript normalizer will
     process { 0:255 }
@@ -9492,8 +9539,8 @@ these libraries see the Getting Started section of the manual.
     of buffer
   * int memory.cap = 0: set the per-packet-thread cap on memory
     (bytes, 0 to disable) { 0:maxSZ }
-  * int memory.threshold = 0: set the per-packet-thread threshold for
-    preemptive cleanup actions (percent, 0 to disable) { 0:100 }
+  * int memory.threshold = 100: scale cap to account for heap
+    overhead { 1:100 }
   * string metadata.*: comma-separated list of arbitrary name value
     pairs
   * string modbus_func.~: function code to match
@@ -9580,6 +9627,26 @@ these libraries see the Getting Started section of the manual.
   * bool normalizer.tcp.trim_win = false: trim data to window
   * bool normalizer.tcp.urp = false: adjust urgent pointer if beyond
     segment length
+  * interval num_headers.~range: check that number of headers of
+    current buffer are in given range { 0:200 }
+  * implied num_headers.request: match against the version from the
+    request message even when examining the response
+  * implied num_headers.with_body: parts of this rule examine HTTP
+    message body
+  * implied num_headers.with_header: this rule is limited to
+    examining HTTP message headers
+  * implied num_headers.with_trailer: parts of this rule examine HTTP
+    message trailers
+  * interval num_trailers.~range: check that number of headers of
+    current buffer are in given range { 0:200 }
+  * implied num_trailers.request: match against the version from the
+    request message even when examining the response
+  * implied num_trailers.with_body: parts of this rule examine HTTP
+    message body
+  * implied num_trailers.with_header: this rule is limited to
+    examining HTTP message headers
+  * implied num_trailers.with_trailer: parts of this rule examine
+    HTTP message trailers
   * bool output.dump_chars_only = false: turns on character dumps
     (same as -C)
   * bool output.dump_payload = false: dumps application layer (same
@@ -9642,7 +9709,7 @@ these libraries see the Getting Started section of the manual.
     | console }
   * int perf_monitor.packets = 10000: minimum packets to report {
     0:max32 }
-  * int perf_monitor.seconds = 60: report interval { 1:max32 }
+  * int perf_monitor.seconds = 60: report interval { 0:max32 }
   * bool perf_monitor.summary = false: output summary at shutdown
   * interval pkt_num.~range: check if packet number is in given range
     { 1: }
@@ -10487,6 +10554,8 @@ these libraries see the Getting Started section of the manual.
   * bool telnet.check_encrypted = false: check for end of encryption
   * bool telnet.encrypted_traffic = false: check for encrypted Telnet
   * bool telnet.normalize = false: eliminate escape sequences
+  * string tenant_selector[].file: use configuration in given file
+  * string tenant_selector[].tenants: list of tenants to match
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
   * string trace.constraints.dst_ip: destination IP address filter
   * int trace.constraints.dst_port: destination port filter { 0:65535
@@ -10546,7 +10615,7 @@ these libraries see the Getting Started section of the manual.
     chars (?)
   * string wizard.hexes[].to_server[].hex: sequence of data with wild
     chars (?)
-  * int wizard.max_search_depth = 64: maximum scan depth per flow {
+  * int wizard.max_search_depth = 8192: maximum scan depth per flow {
     0:65535 }
   * bool wizard.spells[].client_first = true: which end initiates
     data transfer
@@ -10578,6 +10647,9 @@ these libraries see the Getting Started section of the manual.
   * active.holds_denied: total number of packet hold requests denied
     (sum)
   * active.injects: total crafted packets encoded and injected (sum)
+  * address_space_selector.no_match: selection evaluations that had
+    no matches (sum)
+  * address_space_selector.packets: packets evaluated (sum)
   * appid.appid_unknown: count of sessions where appid could not be
     determined (sum)
   * appid.ignored_packets: count of packets ignored (sum)
@@ -10604,6 +10676,7 @@ these libraries see the Getting Started section of the manual.
   * binder.new_flows: new flows evaluated (sum)
   * binder.new_standby_flows: new HA flows evaluated (sum)
   * binder.no_match: binding evaluations that had no matches (sum)
+  * binder.raw_packets: raw packets evaluated (sum)
   * binder.resets: reset actions bound (sum)
   * binder.service_changes: flow service changes evaluated (sum)
   * cip.concurrent_sessions: total concurrent SIP sessions (now)
@@ -11193,7 +11266,6 @@ these libraries see the Getting Started section of the manual.
   * memory.max_in_use: highest allocated - deallocated (max)
   * memory.reap_attempts: attempts to reclaim memory (now)
   * memory.reap_failures: failures to reclaim memory (now)
-  * memory.total_fudge: sum of all adjustments (now)
   * mem_test.packets: total packets (sum)
   * modbus.concurrent_sessions: total concurrent modbus sessions
     (now)
@@ -11546,7 +11618,7 @@ these libraries see the Getting Started section of the manual.
   * stream_ip.trackers_freed: datagram trackers released (sum)
   * stream.memcap_prunes: sessions pruned due to memcap (sum)
   * stream.preemptive_prunes: sessions pruned during preemptive
-    pruning (sum)
+    pruning (deprecated) (sum)
   * stream.reload_allowed_deletes: number of allowed flows deleted by
     config reloads (sum)
   * stream.reload_blocked_deletes: number of blocked flows deleted by
@@ -11677,6 +11749,9 @@ these libraries see the Getting Started section of the manual.
   * telnet.max_concurrent_sessions: maximum concurrent Telnet
     sessions (max)
   * telnet.total_packets: total packets (sum)
+  * tenant_selector.no_match: selection evaluations that had no
+    matches (sum)
+  * tenant_selector.packets: packets evaluated (sum)
   * udp.bad_udp4_checksum: nonzero udp over ipv4 checksums (sum)
   * udp.bad_udp6_checksum: nonzero udp over ipv6 checksums (sum)
   * udp.checksum_bypassed: checksum calculations bypassed (sum)
@@ -12338,12 +12413,12 @@ session.
 The TCP packet is invalid because it doesn’t have a SYN, ACK, or RST
 flag set.
 
-116:424 (eth) truncated ethernet header
+116:424 (pbb) truncated ethernet header
 
 The packet length is less than the minimum ethernet header size (14
 bytes)
 
-116:424 (eth) truncated ethernet header
+116:424 (pbb) truncated ethernet header
 
 A truncated ethernet header was detected.
 
@@ -13215,14 +13290,15 @@ When this threshold is reached, a corresponding alert is raised. This
 alert is not expected for typical network traffic and may be an
 indication that an attacker is trying to exhaust resources.
 
-119:271 (http_inspect) JavaScript scope nesting is over capacity
+119:271 (http_inspect) JavaScript bracket nesting is over capacity
 
 In JavaScript, template literals can have substitutions, that in turn
 can have nested template literals, which requires a stack to track
 for proper whitespace normalization. Also, the normalization tracks
-the current scope, which requires a stack as well. When the depth of
-nesting exceeds limit set in http_inspect.js_norm_max_tmpl_nest or in
-http_inspect.js_norm_max_scope_depth, this alert is raised. This
+the current bracket scope, which requires a stack as well. When the
+depth of nesting exceeds limit set in
+http_inspect.js_norm_max_tmpl_nest or in
+http_inspect.js_norm_max_bracket_depth, this alert is raised. This
 alert is not expected for typical network traffic and may be an
 indication that an attacker is trying to exhaust resources.
 
@@ -13244,6 +13320,17 @@ match file_data FP search and JavaScript normalization won’t be
 executed for these PDUs. The normalization of the following PDUs for
 inline/external scripts will be stopped for current request within
 the flow.
+
+119:274 (http_inspect) JavaScript scope nesting is over capacity
+
+In JavaScript, a program is split into several scopes such as a
+global scope, function scope, if block, block of code, object, etc.
+The scope has a nesting nature which requires a stack to track it for
+proper normalization of JavaScript identifiers. When the depth of
+nesting exceeds limit set in http_inspect.js_norm_max_scope_depth,
+this alert is raised. This alert is not expected for typical network
+traffic and may be an indication that an attacker is trying to
+exhaust resources.
 
 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
 
@@ -14978,12 +15065,13 @@ and are not applicable elsewhere.
 
   * ack (ips_option): rule option to match on TCP ack numbers
   * active (basic): configure responses
+  * address_space_selector (policy_selector): configure traffic
+    processing based on address space
   * alert_csv (logger): output event in csv format
   * alert_ex (logger): output gid:sid:rev for alerts
   * alert_fast (logger): output event with brief text format
   * alert_full (logger): output event with full packet dump
   * alert_json (logger): output event in json format
-  * alert_sfsocket (logger): output event over socket
   * alert_syslog (logger): output event to syslog
   * alert_talos (logger): output event in Talos alert format
   * alert_unixsock (logger): output event over unix socket
@@ -15207,6 +15295,10 @@ and are not applicable elsewhere.
   * network (basic): configure basic network parameters
   * normalizer (inspector): packet scrubbing for inline mode
   * null_trace_logger (inspector): trace logger with a null printout
+  * num_headers (ips_option): rule option to perform range check on
+    number of headers
+  * num_trailers (ips_option): rule option to perform range check on
+    number of trailers
   * output (basic): configure general output parameters
   * packet_capture (inspector): raw packet dumping facility
   * packet_tracer (basic): generate debug trace messages for packets
@@ -15306,6 +15398,8 @@ and are not applicable elsewhere.
   * tcp (codec): support for transmission control protocol
   * tcp_connector (connector): implement the tcp stream connector
   * telnet (inspector): telnet inspection and normalization
+  * tenant_selector (policy_selector): configure traffic processing
+    based on tenants
   * token_ring (codec): support for token ring decoding
   * tos (ips_option): rule option to check type of service field
   * trace (basic): configure trace log messages
@@ -15595,6 +15689,10 @@ and are not applicable elsewhere.
   * ips_option::msg: rule option summarizing rule purpose output with
     events
   * ips_option::mss: detection for TCP maximum segment size
+  * ips_option::num_headers: rule option to perform range check on
+    number of headers
+  * ips_option::num_trailers: rule option to perform range check on
+    number of trailers
   * ips_option::pcre: rule option for matching payload data with pcre
   * ips_option::pkt_data: rule option to set the detection cursor to
     the normalized packet data
@@ -15654,7 +15752,6 @@ and are not applicable elsewhere.
   * logger::alert_fast: output event with brief text format
   * logger::alert_full: output event with full packet dump
   * logger::alert_json: output event in json format
-  * logger::alert_sfsocket: output event over socket
   * logger::alert_syslog: output event to syslog
   * logger::alert_talos: output event in Talos alert format
   * logger::alert_unixsock: output event over unix socket
@@ -15663,6 +15760,10 @@ and are not applicable elsewhere.
   * logger::log_null: disable logging of packets
   * logger::log_pcap: log packet in pcap format
   * logger::unified2: output event and packet in unified2 format file
+  * policy_selector::address_space_selector: configure traffic
+    processing based on address space
+  * policy_selector::tenant_selector: configure traffic processing
+    based on tenants
   * search_engine::ac_banded: Aho-Corasick Banded (high memory,
     moderate performance)
   * search_engine::ac_bnfa: Aho-Corasick Binary NFA (low memory, high

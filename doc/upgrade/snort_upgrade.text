@@ -8,7 +8,7 @@ Snort 3 Upgrade Manual
 The Snort Team
 
 Revision History
-Revision 3.1.17.0 2021-11-17 13:35:23 EST TST
+Revision 3.1.18.0 2021-12-01 10:40:47 EST TST
 
 ---------------------------------------------------------------------
 
@@ -74,7 +74,6 @@ of Snort 3.0 are:
   * New latency monitoring and enforcement
   * Piglets to facilitate component testing
   * Inspection Events
-  * Automake and Cmake
   * Autogenerate reference documentation
 
 
