@@ -9,7 +9,3 @@ PDUs.
 The wizard is a special service inspector that examines the beginning of a
 data stream and decides what application protocol is present.
 
-http_inspect is the legacy Snort HTTP preprocessor ported to Snort\++ .
-nhttp_inspect is the complete rewrite being developed specifically for
-Snort++.
-

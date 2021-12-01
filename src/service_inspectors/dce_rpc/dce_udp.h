@@ -197,9 +197,6 @@ public:
 
     static unsigned inspector_id;
     DCE2_UdpSsnData dce2_udp_session;
-
-    size_t size_of() override
-    { return sizeof(*this); }
 };
 
 DCE2_UdpSsnData* get_dce2_udp_session_data(snort::Flow*);

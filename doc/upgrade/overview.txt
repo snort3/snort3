@@ -22,7 +22,6 @@ scalability, usability, and extensibility.  Some of the key features of Snort 3.
 * New latency monitoring and enforcement
 * Piglets to facilitate component testing
 * Inspection Events
-* Automake and Cmake
 * Autogenerate reference documentation
 
 === Efficacy

@@ -132,8 +132,6 @@ InjectionReturnStatus PayloadInjector::get_http2_payload(InjectionControl,
 
 unsigned Http2FlowData::inspector_id = 0;
 Http2Stream::~Http2Stream() = default;
-HpackDynamicTable::HpackDynamicTable(Http2FlowData* flow_data) :
-    session_data(flow_data) {}
 HpackDynamicTable::~HpackDynamicTable() = default;
 Http2DataCutter::Http2DataCutter(Http2FlowData* _session_data, HttpCommon::SourceId src_id) :
     session_data(_session_data), source_id(src_id) { }
@@ -149,7 +147,6 @@ Http2FlowData::Http2FlowData(snort::Flow*) :
     data_cutter {Http2DataCutter(this, SRC_CLIENT), Http2DataCutter(this, SRC_SERVER)}
 { }
 Http2FlowData::~Http2FlowData() = default;
-size_t Http2FlowData::size_of() { return 1; }
 Http2FlowData http2_flow_data(nullptr);
 void Http2FlowData::set_mid_frame(bool val) { continuation_expected[SRC_SERVER] = val; }
 bool Http2FlowData::is_mid_frame() const { return continuation_expected[SRC_SERVER]; }

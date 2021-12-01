@@ -1,12 +1,79 @@
-This directory provides a simple mechanism for implementing a memory cap.
-Modules can use the MemoryCap::update_allocations() and
-update_deallocations() calls to self-report when they allocate or free
-heap memory. If the total memory allocations exceed the configured memory
-cap, flow pruning is done to free up additional memory.
+Snort memory management monitors memory usage and prunes flows as needed to keep the total process
+usage below the configured limit, if any. There are two ways to build memory management: build with
+jemalloc (--enable-jemalloc) or enable the new / delete overloads (--enable-memory-overloads). The
+latter option is required to support memory profiling (--enable-memory-profiler). Profiling is not
+enabled by default due to performance concerns and is viewed as a developer tool: apart from cache
+memcaps, users should not have to care about how Snort allocates memory, only that it doesn't
+exceed the configured limit if any.
 
-This mechanism is approximate and does not directly reflect the activities
-of the memory allocator or the OOM killer.
+tcmalloc builds (--enable-tcmalloc) do not support memory management.  A process total is available
+from the tcmalloc extensions but it is too expensive to call per packet. Checking every N packets
+would also mean potentially freeing K > 1 flows after each exceeded event. Also, a process total
+does not allow pruning only the threads that are over limit. tcmalloc does provide a performance
+advantage over glibc so that may be preferred for deployments that don't need memory management.
 
-TODO:
+jemalloc is preferred because it is quicker and uses less memory since the implementation does not
+require memory tracking. jemalloc provides access to the current thread allocated total (which is
+between the number that Snort requests and what the system footprint is).
 
-- possibly add eventing
+memory_module.* - provides parameters and peg counts. The key parameters are the process_cap,
+thread_cap, and threshold. The caps are in bytes, and the threshold is a percentage of the caps
+specified.
+
+memory_manager.cc - when enabled with --enable-memory-overloads, overloads new and delete operators
+to provide support memory tracking. Metadata is allocated in front of the requested memory to store
+the sized allocated so the deallocation can be tracked. Due to the drag on performance, this is
+disabled by default.
+
+memory_allocator.* - implements the malloc and free calls used by the operator new and delete
+overloads.
+
+memory_config.h - provides MemoryConfig used by MemoryCap and stored in SnortConfig.
+
+memory_cap.* - provides the logic to enforce the thread cap by calling the prune handler. Tracks
+thread usage in pegs and updates the memory profiler if built. To avoid confusion, thread_cap
+refers to the configured maximums, while thread_limit refer to the configured percentage of the
+caps (memory.cap * memory.threshold / 100). The jemalloc specific code is here.
+
+prune_handler.* - implements the call to stream to prune.
+
+The current iteration of the memory manager is exclusively preemptive.  MemoryCap::free_space is
+called by the analyzer before each DAQ message is processed. If thread_usage > thread_limit, a
+single flow will be pruned. Demand-based pruning, ie enforcing that each allocation stays below
+limit, is both not necessary and bug prone (due to reentrancy when pruning causes flushing causes
+more allocations).
+
+This implementation has the following limitations:
+
+* If the overload manager is built, it only tracks memory allocated with C++ new.  Specifically,
+  direct calls to malloc or calloc which may be made by libraries are not tracked.
+
+* Packet thread tracking does not include heap overhead, which can be substantial.
+
+* Non-packet threads are assumed to have bounded memory usage, eg via a cache.
+
+* Heap managers tend to acquire memory from the system quickly and release back much more slowly,
+  if ever. It is also relatively expensive to force a release.
+
+* Therefore, pruning a single flow almost certainly won't release memory back to the system.
+
+For these reasons, the goal of the memory manager is to prevent allocation past the limit rather
+than try to reclaim memory allocated past the limit. This means that the configured limit must be
+well enough below the actual hard limit, for example the limit enforced by cgroups, such that the
+processing of a single packet will not push us over. It must also allow for additional heap
+overhead.
+
+Future work:
+
+* Support simplified configuration of a process cap instead of a thread cap.  Implement a MemoryCap
+  method that can be called to inform the memory module of various cache related memcaps.  Deduct
+  the startup ru_maxrss and the sum of memcaps from the configured process cap and then divide by
+  --max-packet-threads to get the effective thread cap.
+
+* Compensate for heap fragmentation and other overhead by using the current process footprint
+  (process_total below) as feedback to adjust the current packet thread limits:
+
+  thread_limit = [(cap - (process_total - sum_thread_usage)) / num_threads] * threshold
+
+* Recognize when a memory leak drives excessive pruning.
+

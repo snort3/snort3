@@ -605,8 +605,6 @@ void HttpMsgHeader::setup_encoding_decompression()
         delete session_data->compress_stream[source_id];
         session_data->compress_stream[source_id] = nullptr;
     }
-    else
-        session_data->update_allocations(session_data->zlib_inflate_memory);
 }
 
 void HttpMsgHeader::setup_utf_decoding()

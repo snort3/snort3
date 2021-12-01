@@ -25,27 +25,11 @@
 
 #include "http_common.h"
 #include "http_enum.h"
-#include "http_flow_data.h"
 #include "hash/hash_key_operations.h"
 
 using namespace HttpCommon;
 using namespace HttpEnums;
 using namespace snort;
-
-HttpUri::HttpUri(const uint8_t* start, int32_t length, HttpEnums::MethodId method_id_,
-    const HttpParaList::UriParam& uri_param_, HttpInfractions* infractions_,
-    HttpEventGen* events_, HttpFlowData* session_data_) :
-    uri(length, start), infractions(infractions_), events(events_), method_id(method_id_),
-    uri_param(uri_param_), session_data(session_data_)
-{
-    normalize();
-    classic_norm.update_allocations(session_data);
-}
-
-HttpUri::~HttpUri()
-{
-    classic_norm.update_deallocations(session_data);
-}
 
 void HttpUri::parse_uri()
 {
@@ -426,4 +410,3 @@ const Field& HttpUri::get_norm_host()
 
     return host_norm;
 }
-

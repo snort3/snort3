@@ -76,7 +76,7 @@ static const Parameter s_params[] =
     { "packets", Parameter::PT_INT, "0:max32", "10000",
       "minimum packets to report" },
 
-    { "seconds", Parameter::PT_INT, "1:max32", "60",
+    { "seconds", Parameter::PT_INT, "0:max32", "60",
       "report interval" },
 
     { "flow_ip_memcap", Parameter::PT_INT, "236:maxSZ", "52428800",
@@ -274,8 +274,6 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("seconds") )
     {
         config->sample_interval = v.get_uint32();
-        if ( config->sample_interval == 0 )
-            config->perf_flags |= PERF_SUMMARY;
     }
     else if ( v.is("flow_ip_memcap") )
     {

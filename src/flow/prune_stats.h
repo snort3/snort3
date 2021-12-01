@@ -31,7 +31,6 @@ enum class PruneReason : uint8_t
     IDLE,
     EXCESS,
     UNI,
-    PREEMPTIVE,
     MEMCAP,
     HA,
     STALE,

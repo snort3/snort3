@@ -13,7 +13,7 @@ Text output logging facilities are located here:
   data.
 
   class Obfuscator is implemented with a std::set to provide in order
-  access for pottentialy out-of-order insertions.
+  access for potentially out-of-order insertions.
 
   Currently does not support streaming mode.  It should be possible to
   iterate over contiguous chunks of data, alternating between obfuscated

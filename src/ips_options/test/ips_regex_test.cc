@@ -369,6 +369,7 @@ TEST(ips_regex_option_relative, no_match)
 
 int main(int argc, char** argv)
 {
+    MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
 

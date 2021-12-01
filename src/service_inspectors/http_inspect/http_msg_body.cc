@@ -100,7 +100,6 @@ void HttpMsgBody::clean_partial(uint32_t& partial_inspected_octets, uint32_t& pa
     if (session_data->detect_depth_remaining[source_id] > 0)
     {
         delete[] partial_detect_buffer;
-        session_data->update_deallocations(partial_detect_length);
         assert(detect_length <= session_data->detect_depth_remaining[source_id]);
         bookkeeping_regular_flush(partial_detect_length, partial_detect_buffer,
             partial_js_detect_length, detect_length);
@@ -190,7 +189,6 @@ void HttpMsgBody::analyze()
             detect_data.set(detect_length, js_norm_body.start());
 
             delete[] partial_detect_buffer;
-            session_data->update_deallocations(partial_detect_length);
 
             if (!session_data->partial_flush[source_id])
             {
@@ -206,7 +204,6 @@ void HttpMsgBody::analyze()
                 partial_detect_buffer = save_partial;
                 partial_detect_length = decompressed->length();
                 partial_js_detect_length = js_norm_body.length();
-                session_data->update_allocations(partial_detect_length);
             }
 
             set_file_data(const_cast<uint8_t*>(detect_data.start()),
@@ -367,7 +364,6 @@ void HttpMsgBody::do_enhanced_js_normalization(const Field& input, Field& output
     {
         *infractions += INF_JS_PDU_MISS;
         session_data->events[HttpCommon::SRC_SERVER]->create_event(EVENT_JS_PDU_MISS);
-
         session_data->js_data_lost_once = true;
         return;
     }

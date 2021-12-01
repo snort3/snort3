@@ -57,7 +57,6 @@ void TcpSegmentNode::clear()
     {
         TcpSegmentNode* tsn = reserved;
         reserved = reserved->next;
-        memory::MemoryCap::update_deallocations(sizeof(*tsn) + tsn->size);
         tcpStats.mem_in_use -= tsn->size;
         snort_free(tsn);
     }
@@ -85,7 +84,6 @@ TcpSegmentNode* TcpSegmentNode::create(
 #endif
     {
         size_t size = sizeof(*tsn) + len;
-        memory::MemoryCap::update_allocations(size);
         tsn = (TcpSegmentNode*)snort_alloc(size);
         tsn->size = len;
         tcpStats.mem_in_use += len;
@@ -124,7 +122,6 @@ void TcpSegmentNode::term()
     else
 #endif
     {
-        memory::MemoryCap::update_deallocations(sizeof(*this) + size);
         tcpStats.mem_in_use -= size;
         snort_free(this);
     }

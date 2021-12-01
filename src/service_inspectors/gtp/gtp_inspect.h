@@ -43,9 +43,6 @@ public:
 
     static void init();
 
-    size_t size_of() override
-    { return sizeof(*this); }
-
 public:
     static unsigned inspector_id;
     GTP_Roptions ropts;

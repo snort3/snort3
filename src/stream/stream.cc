@@ -373,10 +373,12 @@ void Stream::handle_timeouts(bool idle)
     TcpStreamTracker::release_held_packets(cur_time, max_remove);
 }
 
-void Stream::prune_flows()
+bool Stream::prune_flows()
 {
-    if ( flow_con && !FlowCache::is_pruning_in_progress())
-        flow_con->prune_one(PruneReason::MEMCAP, false);
+    if ( !flow_con )
+        return false;
+
+    return flow_con->prune_one(PruneReason::MEMCAP, false);
 }
 
 //-------------------------------------------------------------------------

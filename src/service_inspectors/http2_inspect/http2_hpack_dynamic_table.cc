@@ -22,38 +22,20 @@
 #endif
 
 #include "http2_hpack_dynamic_table.h"
+#include "http2_module.h"
 
 #include <cstring>
 
-#include "http2_flow_data.h"
 #include "http2_hpack_table.h"
-#include "http2_module.h"
 
 using namespace Http2Enums;
 
-HpackDynamicTable::HpackDynamicTable(Http2FlowData* flow_data) :
-    session_data(flow_data)
-{
-    session_data->update_allocations( ARRAY_CAPACITY * sizeof(HpackTableEntry*) +
-        TABLE_MEMORY_TRACKING_INCREMENT);
-    table_memory_allocated = TABLE_MEMORY_TRACKING_INCREMENT;
-}
-
-
 HpackDynamicTable::~HpackDynamicTable()
 {
-    for (uint32_t i = 0, indx = start; i < num_entries; i++)
+    for (std::vector<HpackTableEntry*>::iterator it = circular_buf.begin();
+        it != circular_buf.end(); ++it)
     {
-        delete circular_buf[indx];
-        indx = (indx + 1) % ARRAY_CAPACITY;
-    }
-    session_data->update_deallocations( ARRAY_CAPACITY * sizeof(HpackTableEntry*) +
-        TABLE_MEMORY_TRACKING_INCREMENT );
-
-    while (table_memory_allocated > TABLE_MEMORY_TRACKING_INCREMENT)
-    {
-        session_data->update_deallocations(TABLE_MEMORY_TRACKING_INCREMENT);
-        table_memory_allocated -= TABLE_MEMORY_TRACKING_INCREMENT;
+        delete *it;
     }
 }
 
@@ -89,12 +71,6 @@ bool HpackDynamicTable::add_entry(const Field& name, const Field& value)
         Http2Module::increment_peg_counts(PEG_MAX_TABLE_ENTRIES);
 
     rfc_table_size += new_entry_size;
-    while (rfc_table_size > table_memory_allocated)
-    {
-        session_data->update_allocations(TABLE_MEMORY_TRACKING_INCREMENT);
-        table_memory_allocated += TABLE_MEMORY_TRACKING_INCREMENT;
-    }
-
     return true;
 }
 

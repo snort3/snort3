@@ -23,7 +23,6 @@
 
 #include "http_field.h"
 
-#include "flow/flow_data.h"
 #include "http_common.h"
 #include "http_enum.h"
 #include "http_test_manager.h"
@@ -76,18 +75,6 @@ void Field::set(const Field& f)
     strt = f.strt;
     len = f.len;
     // Both Fields cannot be responsible for deleting the buffer so do not copy own_the_buffer
-}
-
-void Field::update_allocations(snort::FlowData* flow_data)
-{
-    if (own_the_buffer && (len > 0))
-        flow_data->update_allocations(len);
-}
-
-void Field::update_deallocations(snort::FlowData* flow_data)
-{
-    if (own_the_buffer && (len > 0))
-        flow_data->update_deallocations(len);
 }
 
 #ifdef REG_TEST

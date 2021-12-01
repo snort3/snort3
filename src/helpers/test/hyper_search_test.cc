@@ -257,6 +257,7 @@ TEST(hyper_search_test_group, not_found4)
 
 int main(int argc, char** argv)
 {
+    MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
 

@@ -280,9 +280,8 @@ ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
 }
 
 HttpBodyCutter::HttpBodyCutter(bool accelerated_blocking_, ScriptFinder* finder_,
-    CompressId compression_, HttpFlowData* ssn_data)
-    : accelerated_blocking(accelerated_blocking_), compression(compression_), finder(finder_),
-    session_data(ssn_data)
+    CompressId compression_)
+    : accelerated_blocking(accelerated_blocking_), compression(compression_), finder(finder_)
 {
     if (accelerated_blocking)
     {
@@ -302,9 +301,6 @@ HttpBodyCutter::HttpBodyCutter(bool accelerated_blocking_, ScriptFinder* finder_
                 delete compress_stream;
                 compress_stream = nullptr;
             }
-            else
-                session_data->update_allocations(session_data->zlib_inflate_memory);
-
         }
 
         static const uint8_t inspect_string[] = { '<', '/', 's', 'c', 'r', 'i', 'p', 't', '>' };
@@ -322,7 +318,6 @@ HttpBodyCutter::~HttpBodyCutter()
     {
         inflateEnd(compress_stream);
         delete compress_stream;
-        session_data->update_deallocations(session_data->zlib_inflate_memory);
     }
 }
 

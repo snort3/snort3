@@ -34,35 +34,11 @@ using namespace HttpCommon;
 using namespace HttpEnums;
 using namespace snort;
 
-// Memory calculation:
-// Approximations based on assumptions:
-// - there will be a cookie
-// - http_header and http_cookie rule options will be required
-// - classic normalization on the headers will not be trivial
-// - individual normalized headers won't be a lot and 500 bytes will cover them
-//
-// Header infrastructure (header_line, header_name, header_name_id, header_value):
-// session_data_->num_head_lines[source_id_] * (3 * sizeof(Field) + sizeof(HeaderId))
-//
-// The entire headers consist of http_raw_header and http_raw_cookie. Because there is
-// a cookie it will be necessary to write out the full msg_text into these two buffers,
-// resulting in allocations totaling approximately msg_text.length(). These raw buffers
-// in turn will need to be normalized, requiring another msg_text.length().
-// Total cost: 2 * msg_text.length().
-//
-// Plus 500 bytes for normalized headers.
 HttpMsgHeadShared::HttpMsgHeadShared(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
     HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
     const HttpParaList* params_): HttpMsgSection(buffer, buf_size, session_data_, source_id_,
-    buf_owner, flow_, params_), own_msg_buffer(buf_owner),
-    extra_memory_allocations(session_data_->num_head_lines[source_id_] *
-			     (3 * sizeof(Field) + sizeof(HeaderId)) + 2 * msg_text.length() + 500)
-{
-    if (own_msg_buffer)
-        session_data->update_allocations(msg_text.length());
-
-    session_data->update_allocations(extra_memory_allocations);
-}
+    buf_owner, flow_, params_), own_msg_buffer(buf_owner)
+{ }
 
 HttpMsgHeadShared::~HttpMsgHeadShared()
 {
@@ -77,11 +53,6 @@ HttpMsgHeadShared::~HttpMsgHeadShared()
         list_ptr = list_ptr->next;
         delete temp_ptr;
     }
-
-    if (own_msg_buffer)
-        session_data->update_deallocations(msg_text.length());
-
-    session_data->update_deallocations(extra_memory_allocations);
 }
 
 bool HttpMsgHeadShared::is_external_js()

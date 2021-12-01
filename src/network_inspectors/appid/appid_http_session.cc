@@ -41,9 +41,7 @@ using namespace snort;
 
 AppIdHttpSession::AppIdHttpSession(AppIdSession& asd, uint32_t http2_stream_id)
     : asd(asd), http2_stream_id(http2_stream_id)
-{
-    memory::MemoryCap::update_allocations(sizeof(AppIdHttpSession));
-}
+{ }
 
 AppIdHttpSession::~AppIdHttpSession()
 {
@@ -51,7 +49,6 @@ AppIdHttpSession::~AppIdHttpSession()
         delete meta_data[i];
     if (tun_dest)
         delete tun_dest;
-    memory::MemoryCap::update_deallocations(sizeof(AppIdHttpSession));
 }
 
 void AppIdHttpSession::free_chp_matches(ChpMatchDescriptor& cmd, unsigned num_matches)

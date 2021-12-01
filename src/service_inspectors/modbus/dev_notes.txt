@@ -6,7 +6,7 @@ to access certain protocol fields. This allows a user to write rules for
 Modbus packets without decoding the protocol with a series of ”content” and
 ”byte test” options.
 
-The preprocessor only evaluates PAF-flushed PDUs. If the rule options don't
+The inspector only evaluates PAF-flushed PDUs. If the rule options don't
 check for this, they'll fire on stale session data when the original packet
 goes through before flushing.
 

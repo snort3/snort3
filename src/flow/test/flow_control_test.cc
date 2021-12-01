@@ -29,7 +29,6 @@
 #include "detection/detection_engine.h"
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
-#include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "packet_tracer/packet_tracer.h"
 #include "protocols/icmp4.h"
@@ -99,11 +98,6 @@ ExpectCache::ExpectCache(uint32_t) { }
 bool ExpectCache::check(Packet*, Flow*) { return true; }
 bool ExpectCache::is_expected(Packet*) { return true; }
 Flow* HighAvailabilityManager::import(Packet&, FlowKey&) { return nullptr; }
-
-namespace memory
-{
-bool MemoryCap::over_threshold() { return true; }
-}
 
 namespace snort
 {

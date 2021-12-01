@@ -454,11 +454,6 @@ void RNAFlow::init()
     inspector_id = snort::FlowData::create_flow_data_id();
 }
 
-size_t RNAFlow::size_of()
-{
-    return sizeof(*this);
-}
-
 bool FpFingerprintState::set(const Packet* p)
 {
     int pos = 0;

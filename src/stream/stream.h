@@ -77,7 +77,7 @@ public:
     static void purge_flows();
 
     static void handle_timeouts(bool idle);
-    static void prune_flows();
+    static bool prune_flows();
     static bool expected_flow(Flow*, Packet*);
 
     // Looks in the flow cache for flow session with specified key and returns

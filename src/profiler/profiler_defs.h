@@ -120,16 +120,18 @@ public:
 #ifdef NO_PROFILER
 using Profile = ProfileDisabled;
 #else
-#ifdef NO_MEM_MGR
+#ifndef ENABLE_MEMORY_PROFILER
 using Profile = NoMemContext;
 #else
 using Profile = ProfileContext;
 #endif
 #endif
 
-// developer enable for profiling rule options
-//using RuleProfile = ProfileContext;
+#ifndef ENABLE_RULE_PROFILER
 using RuleProfile = ProfileDisabled;
+#else
+using RuleProfile = ProfileContext;
+#endif
 
 }
 #endif

@@ -80,7 +80,6 @@ public:
     void clear_attr(TPSessionAttr attr) override { flags &= ~attr; }
     void set_attr(TPSessionAttr attr) override { flags |= attr; }
     unsigned get_attr(TPSessionAttr attr) override { return flags & attr; }
-    size_t size_of() const override { return sizeof(*this); }
 
 private:
     unsigned flags = 0;

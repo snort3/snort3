@@ -815,12 +815,10 @@ MimeSession::MimeSession(Packet* p, DecodeConfig* dconf, MailLogConfig* lconf, u
 {
     p->flow->stash->store(STASH_EXTRADATA_MIME, log_state);
     reset_mime_paf_state(&mime_boundary);
-    memory::MemoryCap::update_allocations(sizeof(*this));
 }
 
 MimeSession::~MimeSession()
 {
-    memory::MemoryCap::update_deallocations(sizeof(*this));
     if ( decode_state )
         delete(decode_state);
 }

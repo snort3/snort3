@@ -22,7 +22,6 @@ usability.  Some of the key features of Snort 3.0 are:
 * New latency monitoring and enforcement
 * Piglets to facilitate component testing
 * Inspection Events
-* Automake and Cmake
 * Autogenerate reference documentation
 
 Additional features are on the road map:

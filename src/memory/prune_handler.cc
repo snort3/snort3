@@ -31,9 +31,9 @@ using namespace snort;
 namespace memory
 {
 
-void prune_handler()
+bool prune_handler()
 {
-    Stream::prune_flows();
+    return Stream::prune_flows();
 }
 
 } // namespace memory

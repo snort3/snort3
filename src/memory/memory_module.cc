@@ -26,6 +26,7 @@
 
 #include "main/snort_config.h"
 
+#include "memory_cap.h"
 #include "memory_config.h"
 
 using namespace snort;
@@ -43,15 +44,13 @@ static const Parameter s_params[] =
     { "cap", Parameter::PT_INT, "0:maxSZ", "0",
         "set the per-packet-thread cap on memory (bytes, 0 to disable)" },
 
-    { "threshold", Parameter::PT_INT, "0:100", "0",
-        "set the per-packet-thread threshold for preemptive cleanup actions "
-        "(percent, 0 to disable)" },
+    { "threshold", Parameter::PT_INT, "1:100", "100",
+        "scale cap to account for heap overhead" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-THREAD_LOCAL MemoryCounts mem_stats;
-static MemoryCounts zero_stats = { };
+static memory::MemoryCounts zero_stats = { };
 
 const PegInfo mem_pegs[] =
 {
@@ -62,7 +61,6 @@ const PegInfo mem_pegs[] =
     { CountType::NOW, "reap_attempts", "attempts to reclaim memory" },
     { CountType::NOW, "reap_failures", "failures to reclaim memory" },
     { CountType::MAX, "max_in_use", "highest allocated - deallocated" },
-    { CountType::NOW, "total_fudge", "sum of all adjustments" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -100,5 +98,10 @@ const PegInfo* MemoryModule::get_pegs() const
 { return mem_pegs; }
 
 PegCount* MemoryModule::get_counts() const
-{ return is_active() ? (PegCount*)&mem_stats : (PegCount*)&zero_stats; }
+{
+    if ( !is_active() )
+        return (PegCount*)&zero_stats;
+
+    return (PegCount*)&memory::MemoryCap::get_mem_stats();
+}
 

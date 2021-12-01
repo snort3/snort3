@@ -104,7 +104,7 @@ class HttpBodyCutter : public HttpCutter
 {
 public:
     HttpBodyCutter(bool accelerated_blocking_, ScriptFinder* finder,
-        HttpEnums::CompressId compression_, HttpFlowData* ssn_data);
+        HttpEnums::CompressId compression_);
     ~HttpBodyCutter() override;
     void soft_reset() override { octets_seen = 0; }
 
@@ -124,7 +124,6 @@ private:
     const uint8_t* match_string;
     const uint8_t* match_string_upper;
     uint8_t string_length;
-    HttpFlowData* const session_data;
 };
 
 class HttpBodyClCutter : public HttpBodyCutter
@@ -133,9 +132,8 @@ public:
     HttpBodyClCutter(int64_t expected_length,
         bool accelerated_blocking,
         ScriptFinder* finder,
-        HttpEnums::CompressId compression,
-        HttpFlowData* ssn_data) :
-        HttpBodyCutter(accelerated_blocking, finder, compression, ssn_data),
+        HttpEnums::CompressId compression) :
+        HttpBodyCutter(accelerated_blocking, finder, compression),
         remaining(expected_length)
         { assert(remaining > 0); }
     HttpEnums::ScanResult cut(const uint8_t*, uint32_t length, HttpInfractions*, HttpEventGen*,
@@ -149,8 +147,8 @@ class HttpBodyOldCutter : public HttpBodyCutter
 {
 public:
     HttpBodyOldCutter(bool accelerated_blocking, ScriptFinder* finder,
-        HttpEnums::CompressId compression, HttpFlowData* ssn_data) :
-        HttpBodyCutter(accelerated_blocking, finder, compression, ssn_data)
+        HttpEnums::CompressId compression) :
+        HttpBodyCutter(accelerated_blocking, finder, compression)
         {}
     HttpEnums::ScanResult cut(const uint8_t*, uint32_t, HttpInfractions*, HttpEventGen*,
         uint32_t flow_target, bool stretch, HttpEnums::H2BodyState) override;
@@ -160,8 +158,8 @@ class HttpBodyChunkCutter : public HttpBodyCutter
 {
 public:
     HttpBodyChunkCutter(int64_t maximum_chunk_length_, bool accelerated_blocking,
-        ScriptFinder* finder, HttpEnums::CompressId compression, HttpFlowData* ssn_data) :
-        HttpBodyCutter(accelerated_blocking, finder, compression, ssn_data),
+        ScriptFinder* finder, HttpEnums::CompressId compression) :
+        HttpBodyCutter(accelerated_blocking, finder, compression),
         maximum_chunk_length(maximum_chunk_length_)
         {}
     HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
@@ -190,8 +188,8 @@ class HttpBodyH2Cutter : public HttpBodyCutter
 {
 public:
     HttpBodyH2Cutter(int64_t expected_length, bool accelerated_blocking, ScriptFinder* finder,
-        HttpEnums::CompressId compression, HttpFlowData* ssn_data) :
-        HttpBodyCutter(accelerated_blocking, finder, compression, ssn_data),
+        HttpEnums::CompressId compression) :
+        HttpBodyCutter(accelerated_blocking, finder, compression),
             expected_body_length(expected_length)
         {}
     HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length, HttpInfractions*,

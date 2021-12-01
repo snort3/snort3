@@ -39,17 +39,10 @@ public:
     static unsigned create_flow_data_id()
     { return ++flow_data_id; }
 
-    // Allocations and deallocations must balance. It is not enough that the total number of bytes
-    // allocated and deallocated are equal. They must be allocated and deallocated in the same
-    // increments or roundoffs done inside the functions may not balance.
-    void update_allocations(size_t);
-    void update_deallocations(size_t);
     Inspector* get_handler() { return handler; }
 
-    // return fixed size (could be an approx avg)
-    // this must be fixed for life of flow data instance
-    // track significant supplemental allocations with the above updaters
-    virtual size_t size_of() = 0;
+    // deprecated - do not implement
+    virtual size_t size_of() { return 0; }
 
     virtual void handle_expected(Packet*) { }
     virtual void handle_retransmit(Packet*) { }
@@ -62,8 +55,6 @@ public:  // FIXIT-L privatize
 private:
     static unsigned flow_data_id;
     Inspector* handler;
-    size_t mem_in_use = 0;
-    unsigned net_allocation_calls = 0;
     unsigned id;
 };
 

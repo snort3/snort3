@@ -14,7 +14,7 @@ provide the logic to plug this inspector into the snort framework.  AppIdModule 
 configuration for AppId and AppIdInspector provides the packet processing context.  An AppId
 inspector is instantiated for each packet thread created by the framework.
 
-AppId registers to recieve any IP packet, it does not process rebuilt packets.
+AppId registers to receive any IP packet, it does not process rebuilt packets.
 
 AppIdModule contains all the logic to process the AppId inspector Lua configuration which is identified
 by the 'appid' keyword.  This configuration includes settings for logging, statistics, etc. and also

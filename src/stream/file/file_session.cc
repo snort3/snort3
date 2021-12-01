@@ -44,10 +44,10 @@ static THREAD_LOCAL ProfileStats file_ssn_stats;
 //-------------------------------------------------------------------------
 
 FileSession::FileSession(Flow* f) : Session(f)
-{ memory::MemoryCap::update_allocations(sizeof(*this)); }
+{ }
 
 FileSession::~FileSession()
-{ memory::MemoryCap::update_deallocations(sizeof(*this)); }
+{ }
 
 bool FileSession::setup(Packet*)
 {

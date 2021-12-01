@@ -179,12 +179,12 @@ mss:   maximum segment size
                       FpElementType::SYN_MATCH, FpElementType::SYNTS
 
        Examples:
-       fptype = 2, mss = "12-34" -- client traffic (fptype = 2) with mss beween 12 and 34
+       fptype = 2, mss = "12-34" -- client traffic (fptype = 2) with mss between 12 and 34
        fptype = 2, mss = "X"     -- don't use mss for matching, so match anything from cient
        fptype = 2, mss = "SYN"   -- error: client traffic (fptype = 2) but mss of type SYN_MATCH
                                     only accepted for server traffic (fptyp1 = 1 or 10)
        fptype = 1, mss = "TS"    -- OK: server traffic (fptype = 1) and mss of type SYNTS
-       mss = "+5"                -- eror: mss cannot be an INCREMENT type
+       mss = "+5"                -- error: mss cannot be an INCREMENT type
 
 id:    ip id
        FpElementType::RANGE
@@ -199,7 +199,7 @@ topts: tcp options
        FpElementType::RANGE
 
        These are defined by TcpOptCode in src/protocols/tcp_options.h.
-       The ones we use for fingerprint matcing are
+       The ones we use for fingerprint matching are
 
        - MAXSEG (2)
        - WSCALE (3)

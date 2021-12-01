@@ -27,7 +27,6 @@
 #include "detection/detection_engine.h"
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
-#include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "packet_tracer/packet_tracer.h"
 #include "protocols/icmp4.h"
@@ -121,16 +120,6 @@ bool FlowControl::prune_one(PruneReason reason, bool do_cleanup)
 void FlowControl::timeout_flows(time_t cur_time)
 {
     cache->timeout(1, cur_time);
-}
-
-void FlowControl::preemptive_cleanup()
-{
-    // FIXIT-RC is there a possibility of this looping forever?
-    while ( memory::MemoryCap::over_threshold() )
-    {
-        if ( !prune_one(PruneReason::PREEMPTIVE, true) )
-            break;
-    }
 }
 
 Flow* FlowControl::stale_flow_cleanup(FlowCache* cache, Flow* flow, Packet* p)
@@ -432,7 +421,6 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     p->disable_inspect = flow->is_inspection_disabled();
 
     last_pkt_type = p->type();
-    preemptive_cleanup();
 
     // If this code is executed on a flow in SETUP state, it will result in a packet from both
     // client and server on packets from 0.0.0.0 or ::

@@ -286,9 +286,6 @@ static DAQ_Verdict distill_verdict(Packet* p)
 
 void Analyzer::add_to_retry_queue(DAQ_Msg_h daq_msg)
 {
-    // Temporarily increase memcap until message is finalized in case
-    // DAQ makes a copy of the data buffer.
-    memory::MemoryCap::update_allocations(daq_msg_get_data_len(daq_msg));
     retry_queue->put(daq_msg);
 }
 
@@ -404,6 +401,8 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
 void Analyzer::process_daq_msg(DAQ_Msg_h msg, bool retry)
 {
     oops_handler->set_current_message(msg);
+    memory::MemoryCap::free_space();
+
     DAQ_Verdict verdict = DAQ_VERDICT_PASS;
     switch (daq_msg_get_type(msg))
     {
@@ -437,13 +436,11 @@ void Analyzer::process_retry_queue()
         struct timeval now;
         packet_gettimeofday(&now);
         DAQ_Msg_h msg;
+
         while ((msg = retry_queue->get(&now)) != nullptr)
         {
             process_daq_msg(msg, true);
             daq_stats.retries_processed++;
-
-            // Decrease memcap now that msg has been finalized.
-            memory::MemoryCap::update_deallocations(daq_msg_get_data_len(msg));
         }
     }
 }
@@ -678,6 +675,8 @@ void Analyzer::term()
     RateFilter_Cleanup();
 
     TraceApi::thread_term();
+
+    ModuleManager::accumulate_module("memory");
 }
 
 Analyzer::Analyzer(SFDAQInstance* instance, unsigned i, const char* s, uint64_t msg_cnt)
@@ -708,7 +707,6 @@ void Analyzer::operator()(Swapper* ps, uint16_t run_num)
     local_analyzer = this;
 
     ps->apply(*this);
-    delete ps;
 
     if (SnortConfig::get_conf()->pcap_show())
         show_source();

@@ -37,9 +37,6 @@
 
 // Mocks
 
-void memory::MemoryCap::update_allocations(size_t) { }
-void memory::MemoryCap::update_deallocations(size_t) { }
-
 namespace snort
 {
 unsigned get_instance_id() { return 3; }

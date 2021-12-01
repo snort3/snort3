@@ -34,24 +34,7 @@
 using namespace snort;
 using namespace std;
 
-
 static DataBus* DB = nullptr;
-
-void memory::MemoryCap::update_allocations(size_t) { }
-void memory::MemoryCap::update_deallocations(size_t) { }
-
-class TestStashObject : public StashGenericObject
-{
-public:
-    TestStashObject(int type) : StashGenericObject(type)
-    {
-
-    }
-
-    size_t size_of() const override
-    { return sizeof(*this); }
-};
-
 
 template<class Type>
 class DBConsumer : public DataHandler
@@ -310,23 +293,23 @@ TEST(stash_tests, non_existent_item)
 TEST(stash_tests, new_generic_object)
 {
     FlowStash stash;
-    TestStashObject *test_object = new TestStashObject(111);
+    StashGenericObject *test_object = new StashGenericObject(111);
 
     stash.store("item_1", test_object);
 
     StashGenericObject *retrieved_object;
     CHECK(stash.get("item_1", retrieved_object));
     POINTERS_EQUAL(test_object, retrieved_object);
-    CHECK_EQUAL(test_object->get_object_type(), ((TestStashObject*)retrieved_object)->get_object_type());
+    CHECK_EQUAL(test_object->get_object_type(), ((StashGenericObject*)retrieved_object)->get_object_type());
 }
 
 TEST(stash_tests, update_generic_object)
 {
     FlowStash stash;
-    TestStashObject *test_object = new TestStashObject(111);
+    StashGenericObject *test_object = new StashGenericObject(111);
     stash.store("item_1", test_object);
 
-    TestStashObject *new_test_object = new TestStashObject(111);
+    StashGenericObject *new_test_object = new StashGenericObject(111);
     stash.store("item_1", new_test_object);
 
     StashGenericObject *retrieved_object;
@@ -344,7 +327,7 @@ TEST(stash_tests, non_existent_generic_object)
 TEST(stash_tests, mixed_items)
 {
     FlowStash stash;
-    TestStashObject *test_object = new TestStashObject(111);
+    StashGenericObject *test_object = new StashGenericObject(111);
 
     stash.store("item_1", 10);
     stash.store("item_2", "value_2");
@@ -364,7 +347,7 @@ TEST(stash_tests, mixed_items)
     StashGenericObject *retrieved_object;
     CHECK(stash.get("item_4", retrieved_object));
     POINTERS_EQUAL(test_object, retrieved_object);
-    CHECK_EQUAL(test_object->get_object_type(), ((TestStashObject*)retrieved_object)->get_object_type());
+    CHECK_EQUAL(test_object->get_object_type(), ((StashGenericObject*)retrieved_object)->get_object_type());
 }
 
 TEST(stash_tests, store_ip)

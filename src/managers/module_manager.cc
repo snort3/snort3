@@ -1389,13 +1389,16 @@ void ModuleManager::accumulate()
 
     for ( auto* mh : mod_hooks )
     {
+        if ( !strcmp(mh->mod->name, "memory") )
+            continue;
+
         lock_guard<mutex> lock(stats_mutex);
         mh->mod->prep_counts();
         mh->mod->sum_stats(true);
     }
 }
 
-void ModuleManager::accumulate_offload(const char* name)
+void ModuleManager::accumulate_module(const char* name)
 {
     ModHook* mh = get_hook(name);
     if ( mh )

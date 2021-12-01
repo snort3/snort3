@@ -168,7 +168,6 @@ void AppIdDetector::add_user(AppIdSession&, char const*, int, bool, AppidChangeB
 void AppIdDetector::add_payload(AppIdSession&, int) { }
 void AppIdDetector::add_app(snort::Packet const&, AppIdSession&, AppidSessionDirection, int,
     int, char const*, AppidChangeBits&) { }
-void memory::MemoryCap::update_deallocations(size_t) { }
 // LCOV_EXCL_STOP
 
 SipEvent::SipEvent(snort::Packet const* p, SIPMsg const*, SIP_DialogData const*) { this->p = p; }

@@ -104,10 +104,10 @@ static int ProcessUdp(Flow* lwssn, Packet* p, StreamUdpConfig*)
 //-------------------------------------------------------------------------
 
 UdpSession::UdpSession(Flow* f) : Session(f)
-{ memory::MemoryCap::update_allocations(sizeof(*this)); }
+{ }
 
 UdpSession::~UdpSession()
-{ memory::MemoryCap::update_deallocations(sizeof(*this)); }
+{ }
 
 bool UdpSession::setup(Packet* p)
 {

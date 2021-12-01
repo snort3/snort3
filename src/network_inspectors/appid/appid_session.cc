@@ -165,7 +165,6 @@ AppIdSession::~AppIdSession()
 
     if (tpsession)
     {
-        memory::MemoryCap::update_deallocations(tpsession->size_of());
         if (pkt_thread_tp_appid_ctxt and
             ((tpsession->get_ctxt_version() == pkt_thread_tp_appid_ctxt->get_version()) and
             !ThirdPartyAppIdContext::get_tp_reload_in_progress()))

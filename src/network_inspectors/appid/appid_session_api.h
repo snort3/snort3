@@ -153,9 +153,6 @@ public:
 
     void clear_user_logged_in() { user_logged_in = false; }
 
-    size_t size_of() const override
-    { return sizeof(*this); }
-
 protected:
     AppIdSessionApi(const AppIdSession* asd, const SfIp& ip);
 

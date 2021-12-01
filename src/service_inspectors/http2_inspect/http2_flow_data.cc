@@ -43,12 +43,6 @@ unsigned Http2FlowData::inspector_id = 0;
 uint64_t Http2FlowData::instance_count = 0;
 #endif
 
-// Each stream will have class Http2Stream allocated and a node in streams list
-const size_t Http2FlowData::stream_memory_size = sizeof(class Http2Stream) +
-    stream_extra_memory;
-const size_t Http2FlowData::stream_increment_memory_size = stream_memory_size *
-    STREAM_MEMORY_TRACKING_INCREMENT;
-
 Http2FlowData::Http2FlowData(Flow* flow_) :
     FlowData(inspector_id),
     flow(flow_),
@@ -103,10 +97,6 @@ Http2FlowData::~Http2FlowData()
 
     for (Http2Stream* stream : streams)
         delete stream;
-    // Since stream memory is allocated in blocks of 25, must also deallocate in blocks of 25 to
-    // ensure consistent rounding.
-    while (stream_memory_allocations_tracked > STREAM_MEMORY_TRACKING_INCREMENT)
-        update_stream_memory_deallocations();
 }
 
 HttpFlowData* Http2FlowData::get_hi_flow_data() const
@@ -121,28 +111,6 @@ void Http2FlowData::set_hi_flow_data(HttpFlowData* flow)
     assert(stream_in_hi != Http2Enums::NO_STREAM_ID);
     Http2Stream* stream = get_hi_stream();
     stream->set_hi_flow_data(flow);
-}
-
-size_t Http2FlowData::size_of()
-{
-    // Account for memory for 25 concurrent streams up front, plus 1 stream for stream id 0.
-    return sizeof(*this) + stream_increment_memory_size + stream_memory_size +
-        (2 * sizeof(Http2EventGen)) + (2 * sizeof(Http2Infractions));
-}
-
-void Http2FlowData::update_stream_memory_allocations()
-{
-    assert(concurrent_streams > stream_memory_allocations_tracked);
-    assert(concurrent_streams % stream_memory_allocations_tracked == 1);
-    update_allocations(stream_increment_memory_size);
-    stream_memory_allocations_tracked += STREAM_MEMORY_TRACKING_INCREMENT;
-}
-
-void Http2FlowData::update_stream_memory_deallocations()
-{
-    assert(stream_memory_allocations_tracked >= STREAM_MEMORY_TRACKING_INCREMENT);
-    update_deallocations(stream_increment_memory_size);
-    stream_memory_allocations_tracked -= STREAM_MEMORY_TRACKING_INCREMENT;
 }
 
 Http2Stream* Http2FlowData::find_stream(const uint32_t key) const
@@ -215,8 +183,6 @@ Http2Stream* Http2FlowData::get_processing_stream(const SourceId source_id, uint
             concurrent_streams += 1;
             if (concurrent_streams > Http2Module::get_peg_counts(PEG_MAX_CONCURRENT_STREAMS))
                 Http2Module::increment_peg_counts(PEG_MAX_CONCURRENT_STREAMS);
-            if (concurrent_streams > stream_memory_allocations_tracked)
-                update_stream_memory_allocations();
         }
     }
     return stream;
@@ -276,16 +242,6 @@ void Http2FlowData::set_processing_stream_id(const SourceId source_id)
 uint32_t Http2FlowData::get_current_stream_id(const SourceId source_id) const
 {
     return current_stream[source_id];
-}
-
-void Http2FlowData::allocate_hi_memory(HttpFlowData* hi_flow_data)
-{
-    update_allocations(hi_flow_data->size_of());
-}
-
-void Http2FlowData::deallocate_hi_memory(HttpFlowData* hi_flow_data)
-{
-    update_deallocations(hi_flow_data->size_of());
 }
 
 bool Http2FlowData::is_mid_frame() const

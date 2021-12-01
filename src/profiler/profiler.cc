@@ -120,7 +120,9 @@ void Profiler::show_stats()
     assert(config);
 
     show_time_profiler_stats(s_profiler_nodes, config->time);
+#ifdef ENABLE_MEMORY_PROFILER
     show_memory_profiler_stats(s_profiler_nodes, config->memory);
+#endif
     show_rule_profiler_stats(config->rule);
 }
 

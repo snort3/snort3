@@ -57,14 +57,7 @@ public:
     static void init();
 
     void reset()
-    {
-        ssn_data.session_data_reset();
-    }
-
-    size_t size_of() override
-    {
-        return sizeof(*this);
-    }
+    { ssn_data.session_data_reset(); }
 
 public:
     static unsigned inspector_id;

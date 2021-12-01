@@ -54,9 +54,6 @@ public:
         ssn_data.flags = 0;
     }
 
-    size_t size_of() override
-    { return sizeof(*this); }
-
 public:
     static unsigned inspector_id;
     modbus_session_data_t ssn_data;

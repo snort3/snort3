@@ -28,9 +28,6 @@
 
 #include <vector>
 
-void memory::MemoryCap::update_allocations(size_t) { }
-void memory::MemoryCap::update_deallocations(size_t) { }
-
 namespace snort
 {
 // Stubs for logs

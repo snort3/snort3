@@ -137,6 +137,13 @@ public:
 private:
     void reap_command(AnalyzerCommand* ac);
 
+    // we could just let the analyzer own this pointer and delete
+    // immediately after getting the data but that creates memory
+    // count mismatches between main and packet threads. since the
+    // startup swapper has no old config to delete only 32 bytes
+    // after held.
+    Swapper* swapper = nullptr;
+
     std::thread* athread = nullptr;
     unsigned idx = (unsigned)-1;
 };
@@ -166,14 +173,17 @@ void Pig::start()
     assert(!athread);
     LogMessage("++ [%u] %s\n", idx, analyzer->get_source());
 
-    Swapper* ps = new Swapper(SnortConfig::get_main_conf());
-    athread = new std::thread(std::ref(*analyzer), ps, ++run_num);
+    swapper = new Swapper(SnortConfig::get_main_conf());
+    athread = new std::thread(std::ref(*analyzer), swapper, ++run_num);
 }
 
 void Pig::stop()
 {
     assert(analyzer);
     assert(athread);
+
+    delete swapper;
+    swapper = nullptr;
 
     athread->join();
     delete athread;

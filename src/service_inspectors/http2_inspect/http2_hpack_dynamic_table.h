@@ -34,7 +34,7 @@ class HpackDynamicTable
 {
 public:
     // FIXIT-P This array can be optimized to start smaller and grow on demand
-    HpackDynamicTable(Http2FlowData* flow_data);
+    HpackDynamicTable() : circular_buf(ARRAY_CAPACITY, nullptr) {}
     ~HpackDynamicTable();
     const HpackTableEntry* get_entry(uint32_t index) const;
     bool add_entry(const Field& name, const Field& value);
@@ -46,15 +46,12 @@ private:
 
     const static uint32_t DEFAULT_MAX_SIZE = 4096;
     const static uint32_t ARRAY_CAPACITY = 512;
-    const static uint32_t TABLE_MEMORY_TRACKING_INCREMENT = 500;
     uint32_t max_size = DEFAULT_MAX_SIZE;
 
     uint32_t start = 0;
     uint32_t num_entries = 0;
     uint32_t rfc_table_size = 0;
-    HpackTableEntry* circular_buf[ARRAY_CAPACITY] = {0};
-    Http2FlowData* const session_data;
-    uint32_t table_memory_allocated;
+    std::vector<HpackTableEntry*> circular_buf;
 
     void prune_to_size(uint32_t new_max_size);
 };

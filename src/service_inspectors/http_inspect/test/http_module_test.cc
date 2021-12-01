@@ -74,8 +74,6 @@ HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_, int64_t normali
 HttpJsNorm::~HttpJsNorm() = default;
 void HttpJsNorm::configure(){}
 int64_t Parameter::get_int(char const*) { return 0; }
-void FlowData::update_allocations(size_t) {}
-void FlowData::update_deallocations(size_t) {}
 
 TEST_GROUP(http_peg_count_test)
 {

@@ -46,13 +46,13 @@ namespace memory_stats
 static const StatsTable::Field fields[] =
 {
     { "#", 5, ' ', 0, std::ios_base::left },
-    { "module", 20, ' ', 0, std::ios_base::fmtflags() },
+    { "module", 24, ' ', 0, std::ios_base::fmtflags() },
     { "layer", 6, ' ', 0, std::ios_base::fmtflags() },
-    { "allocs", 9, ' ', 0, std::ios_base::fmtflags() },
-    { "used (kb)", 12, ' ', 2, std::ios_base::fmtflags() },
-    { "avg/allocation", 15, ' ', 1, std::ios_base::fmtflags() },
+    { "allocs", 12, ' ', 0, std::ios_base::fmtflags() },
+    { "used (kb)", 15, ' ', 2, std::ios_base::fmtflags() },
+    { "avg/alloc", 12, ' ', 1, std::ios_base::fmtflags() },
     { "%/caller", 10, ' ', 2, std::ios_base::fmtflags() },
-    { "%/total", 9, ' ', 2, std::ios_base::fmtflags() },
+    { "%/total", 10, ' ', 2, std::ios_base::fmtflags() },
     { nullptr, 0, '\0', 0, std::ios_base::fmtflags() }
 };
 

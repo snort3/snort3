@@ -14,7 +14,7 @@ Reject performs active response to shutdown hostile network session by injecting
 TCP resets (TCP connections) or ICMP unreachable packets.
 
 React sends an HTML page to the client, a RST to the server and blocks the flow.
-It is using payload_injector utilty. payload_injector should be configured when
+It is using payload_injector utility. payload_injector should be configured when
 react is used.
 
 Rewrite enables overwrite packet contents based on "replace" option in the

@@ -84,8 +84,6 @@ public:
     friend class Http2WindowUpdateFrame;
     friend void finish_msg_body(Http2FlowData* session_data, HttpCommon::SourceId source_id);
 
-    size_t size_of() override;
-
     Http2Stream* find_current_stream(const HttpCommon::SourceId source_id) const;
     uint32_t get_current_stream_id(const HttpCommon::SourceId source_id) const;
     Http2Stream* get_processing_stream(const HttpCommon::SourceId source_id, uint32_t concurrent_streams_limit);
@@ -202,19 +200,6 @@ private:
     Http2Stream* get_hi_stream() const;
     Http2Stream* find_stream(const uint32_t key) const;
     void delete_processing_stream();
-
-    // When H2I allocates http_inspect flows, it bypasses the usual FlowData memory allocation
-    // bookkeeping. So H2I needs to update memory allocations and deallocations itself.
-    void allocate_hi_memory(HttpFlowData* hi_flow_data);
-    void deallocate_hi_memory(HttpFlowData* hi_flow_data);
-    // Memory for streams is tracked in increments of 25 to minimize tracking overhead
-    void update_stream_memory_allocations();
-    void update_stream_memory_deallocations();
-    static const size_t stream_memory_size;
-    static const size_t stream_increment_memory_size;
-    // Per-stream extra memory estimate to account for the std::list streams. Actual memory usage
-    // is implementation dependent
-    static const size_t stream_extra_memory = 24;
 };
 
 #endif

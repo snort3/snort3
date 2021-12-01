@@ -162,7 +162,6 @@ Flow* FlowCache::allocate(const FlowKey* key)
         {
             Flow* new_flow = new Flow();
             push(new_flow);
-            memory::MemoryCap::update_allocations(sizeof(HashNode) + sizeof(FlowKey));
         }
         else if ( !prune_stale(timestamp, nullptr) )
         {
@@ -183,7 +182,6 @@ Flow* FlowCache::allocate(const FlowKey* key)
     if ( flow->session && flow->pkt_type != key->pkt_type )
         flow->term();
 
-    memory::MemoryCap::update_allocations(config.proto[to_utype(key->pkt_type)].cap_weight);
     flow->last_data_seen = timestamp;
 
     return flow;
@@ -193,11 +191,7 @@ void FlowCache::remove(Flow* flow)
 {
     unlink_uni(flow);
 
-    // FIXIT-M This check is added for offload case where both Flow::reset
-    // and Flow::retire try remove the flow from hash. Flow::reset should
-    // just mark the flow as pending instead of trying to remove it.
-    if ( !hash_table->release_node(flow->key) )
-        memory::MemoryCap::update_deallocations(config.proto[to_utype(flow->key->pkt_type)].cap_weight);
+    hash_table->release_node(flow->key);
 }
 
 bool FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
@@ -462,7 +456,6 @@ unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, u
         //The flow should not be removed from the hash before reset
         hash_table->remove();
         delete flow;
-        memory::MemoryCap::update_deallocations(sizeof(HashNode) + sizeof(FlowKey));
         --flows_allocated;
         ++deleted;
         --num_to_delete;
@@ -489,7 +482,6 @@ unsigned FlowCache::delete_flows(unsigned num_to_delete)
 
             delete flow;
             delete_stats.update(FlowDeleteState::FREELIST);
-            memory::MemoryCap::update_deallocations(sizeof(HashNode) + sizeof(FlowKey));
 
             --flows_allocated;
             ++deleted;
@@ -526,7 +518,6 @@ unsigned FlowCache::purge()
     while ( Flow* flow = (Flow*)hash_table->pop() )
     {
         delete flow;
-        memory::MemoryCap::update_deallocations(sizeof(HashNode) + sizeof(FlowKey));
         --flows_allocated;
     }
 

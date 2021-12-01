@@ -86,14 +86,11 @@ TcpSession::TcpSession(Flow* f) : TcpStreamSession(f)
     client.session = this;
     server.session = this;
     tcpStats.instantiated++;
-
-    memory::MemoryCap::update_allocations(sizeof(*this));
 }
 
 TcpSession::~TcpSession()
 {
     clear_session(true, false, false);
-    memory::MemoryCap::update_deallocations(sizeof(*this));
 }
 
 bool TcpSession::setup(Packet*)

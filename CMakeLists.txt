@@ -48,9 +48,6 @@ string(APPEND CMAKE_C_FLAGS " ${EXTRA_C_FLAGS}")
 string(APPEND CMAKE_CXX_FLAGS " ${EXTRA_CXX_FLAGS}")
 string(APPEND CMAKE_EXE_LINKER_FLAGS " ${EXTRA_LINKER_FLAGS}")
 string(APPEND CMAKE_MODULE_LINKER_FLAGS " ${EXTRA_LINKER_FLAGS}")
-foreach (EXTRA_LIBRARY IN LISTS EXTRA_LIBRARIES)
-    link_libraries(${EXTRA_LIBRARY})
-endforeach (EXTRA_LIBRARY)
 
 include_directories (${PROJECT_BINARY_DIR})
 include_directories (${PROJECT_SOURCE_DIR})
@@ -181,6 +178,14 @@ if (HAVE_TCMALLOC)
 else ()
     message("\
     TCMalloc:       OFF")
+endif ()
+
+if (HAVE_JEMALLOC)
+    message("\
+    JEMalloc:       ON")
+else ()
+    message("\
+    JEMalloc:       OFF")
 endif ()
 
 if (HAVE_UUID)

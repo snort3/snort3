@@ -54,17 +54,22 @@ Optional Features:
     --enable-gprof-profile  enable gprof profiling options (developers only)
     --disable-snort-profiler
                             disable snort performance profiling (cpu and memory) (developers only)
-    --disable-memory-manager
-                            disable snort memory manager (developers only)
+    --enable-memory-overloads
+                            overload new and delete
+    --enable-memory-profiler
+                            enable memory profiler
+    --enable-rule-profiler  enable rule keyword profiler (developers only)
+    --enable-deep-profiling enable deep (multi-level) profiling (developers only)
     --disable-corefiles     prevent Snort from generating core files
     --enable-address-sanitizer
                             enable address sanitizer support
     --enable-thread-sanitizer
                             enable thread sanitizer support
-    --enable-ub-sanitizer
-                            enable undefined behavior sanitizer support
-    --enable-tcmalloc
-                            enable using tcmalloc for dynamic memory management
+    --enable-ub-sanitizer   enable undefined behavior sanitizer support
+    --enable-tcmalloc       enable using tcmalloc for dynamic memory management
+    --enable-jemalloc       enable using jemalloc for dynamic memory management
+    --enable-jemalloc-static
+                            same as --enable-jemalloc but linked statically
     --enable-appid-third-party
                             enable third party appid
     --enable-unit-tests     build unit tests
@@ -255,10 +260,19 @@ while [ $# -ne 0 ]; do
             append_cache_entry ENABLE_TSC_CLOCK         BOOL true
             ;;
         --disable-snort-profiler)
-            append_cache_entry DISABLE_SNORT_PROFILER   BOOL true
+            append_cache_entry DISABLE_SNORT_PROFILER   BOOL false
             ;;
-        --disable-memory-manager)
-            append_cache_entry DISABLE_MEMORY_MANAGER   BOOL true
+        --enable-memory-overloads)
+            append_cache_entry ENABLE_MEMORY_OVERLOADS  BOOL true
+            ;;
+        --enable-memory-profiler)
+            append_cache_entry ENABLE_MEMORY_PROFILER   BOOL true
+            ;;
+        --enable-rule-profiler)
+            append_cache_entry ENABLE_RULE_PROFILER     BOOL true
+            ;;
+        --enable-deep-profiling)
+            append_cache_entry DEEP_PROFILING           BOOL true
             ;;
         --disable-large-pcap)
             append_cache_entry ENABLE_LARGE_PCAP        BOOL false
@@ -316,6 +330,20 @@ while [ $# -ne 0 ]; do
             ;;
         --disable-tcmalloc)
             append_cache_entry ENABLE_TCMALLOC          BOOL false
+            ;;
+        --enable-jemalloc)
+            append_cache_entry ENABLE_JEMALLOC          BOOL true
+            append_cache_entry STATIC_JEMALLOC          BOOL false
+            ;;
+        --disable-jemalloc)
+            append_cache_entry ENABLE_JEMALLOC          BOOL false
+            ;;
+        --enable-jemalloc-static)
+            append_cache_entry ENABLE_JEMALLOC          BOOL true
+            append_cache_entry STATIC_JEMALLOC          BOOL true
+            ;;
+        --disable-jemalloc-static)
+            append_cache_entry ENABLE_JEMALLOC          BOOL false
             ;;
         --enable-appid-third-party)
             ;;

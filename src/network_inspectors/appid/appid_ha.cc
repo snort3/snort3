@@ -113,7 +113,6 @@ bool AppIdHAAppsClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
                 ErrorMessage("appid: Could not allocate asd.tpsession data in consume");
             else
             {
-                memory::MemoryCap::update_allocations(asd->tpsession->size_of());
                 asd->tpsession->set_state(TP_STATE_HA);
             }
         }

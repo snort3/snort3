@@ -1,6 +1,6 @@
 This directory contains the implementation of user session tracking and
 processing functions.  When the source for a flow provides a TCP payload,
-e.g. a socket connection, then the base Stream preprocessor delegates
+e.g. a socket connection, then the base Stream inspector delegates
 handling of the packets on that flow to this module.
 
 The StreamUser class is implemented as a subclass of Inspector and provides

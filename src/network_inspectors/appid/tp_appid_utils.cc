@@ -556,7 +556,6 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
             ErrorMessage("Could not allocate asd.tpsession data");
             return false;
         }
-        memory::MemoryCap::update_allocations(asd.tpsession->size_of());
     }
 
     int tp_confidence;

@@ -106,7 +106,6 @@ Dce2Smb2SessionData::Dce2Smb2SessionData(const Packet* p,
     tcp_file_tracker = nullptr;
     flow_key = get_smb2_flow_key(tcp_flow->key);
     SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p, "smb2 session created\n");
-    memory::MemoryCap::update_allocations(sizeof(*this));
 }
 
 Dce2Smb2SessionData::~Dce2Smb2SessionData()
@@ -117,7 +116,6 @@ Dce2Smb2SessionData::~Dce2Smb2SessionData()
         it_session.second->detach_flow(flow_key);
     }
     session_data_mutex.unlock();
-    memory::MemoryCap::update_deallocations(sizeof(*this));
 }
 
 void Dce2Smb2SessionData::reset_matching_tcp_file_tracker(

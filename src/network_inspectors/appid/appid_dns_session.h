@@ -31,15 +31,8 @@
 class AppIdDnsSession
 {
 public:
-    AppIdDnsSession()
-    {
-        memory::MemoryCap::update_allocations(sizeof(*this));
-    }
-
-    ~AppIdDnsSession()
-    {
-        memory::MemoryCap::update_deallocations(sizeof(*this));
-    }
+    AppIdDnsSession() { }
+    ~AppIdDnsSession() { }
 
     void reset()
     {

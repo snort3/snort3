@@ -64,9 +64,6 @@ public:
         ssn_data.session_data_reset();
     }
 
-    size_t size_of() override
-    { return sizeof(*this); }
-
 public:
     static unsigned inspector_id;
     S7commplusSessionData ssn_data;

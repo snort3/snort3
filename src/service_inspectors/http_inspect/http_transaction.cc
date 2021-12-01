@@ -54,7 +54,6 @@ HttpTransaction::HttpTransaction(HttpFlowData* session_data_): session_data(sess
 {
     infractions[0] = nullptr;
     infractions[1] = nullptr;
-    session_data->update_allocations(transaction_memory_usage_estimate);
 }
 
 HttpTransaction::~HttpTransaction()
@@ -69,7 +68,6 @@ HttpTransaction::~HttpTransaction()
     }
     delete_section_list(body_list);
     delete_section_list(discard_list);
-    session_data->update_deallocations(transaction_memory_usage_estimate);
 }
 
 HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_data, SourceId

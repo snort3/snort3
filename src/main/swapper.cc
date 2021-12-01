@@ -51,8 +51,10 @@ Swapper::Swapper()
 
 Swapper::~Swapper()
 {
-    if ( new_conf )
+    if ( new_conf and old_conf )
+        // don't do this to startup configs
         InspectorManager::clear_removed_inspectors(new_conf);
+
     if ( old_conf )
         delete old_conf;
 }

@@ -601,7 +601,6 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         if (asd.tpsession and asd.tpsession->get_ctxt_version() != tp_appid_ctxt->get_version())
         {
             bool is_tp_done = asd.is_tp_processing_done();
-            memory::MemoryCap::update_deallocations(asd.tpsession->size_of());
             delete asd.tpsession;
             asd.tpsession = nullptr;
             if (!is_tp_done)

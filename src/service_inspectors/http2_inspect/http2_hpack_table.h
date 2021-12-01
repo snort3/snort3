@@ -40,7 +40,7 @@ struct HpackTableEntry
 class HpackIndexTable
 {
 public:
-    HpackIndexTable(Http2FlowData* flow_data) : dynamic_table(flow_data) { }
+    HpackIndexTable(Http2FlowData*) { }
     const HpackTableEntry* lookup(uint64_t index) const;
     bool add_index(const Field& name, const Field& value);
     HpackDynamicTable& get_dynamic_table() { return dynamic_table; }

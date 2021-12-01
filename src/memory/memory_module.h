@@ -23,20 +23,6 @@
 
 #include "framework/module.h"
 
-struct MemoryCounts
-{
-    PegCount allocations;
-    PegCount deallocations;
-    PegCount allocated;
-    PegCount deallocated;
-    PegCount reap_attempts;
-    PegCount reap_failures;
-    PegCount max_in_use;
-    PegCount total_fudge;
-};
-
-extern THREAD_LOCAL MemoryCounts mem_stats;
-
 class MemoryModule : public snort::Module
 {
 public:

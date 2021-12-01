@@ -40,7 +40,6 @@ using namespace snort;
 
 Flow::Flow()
 {
-    memory::MemoryCap::update_allocations(sizeof(*this) + sizeof(FlowStash));
     constexpr size_t offset = offsetof(Flow, key);
     // FIXIT-L need a struct to zero here to make future proof
     memset((uint8_t*)this+offset, 0, sizeof(*this)-offset);
@@ -48,7 +47,6 @@ Flow::Flow()
 
 Flow::~Flow()
 {
-    memory::MemoryCap::update_deallocations(sizeof(*this) + sizeof(FlowStash));
     term();
 }
 
@@ -280,12 +278,6 @@ int Flow::set_flow_data(FlowData* fd)
         flow_data->prev = fd;
 
     flow_data = fd;
-
-    // this is after actual allocation so we can't prune beforehand
-    // but if we are that close to the edge we are in trouble anyway
-    // large allocations can be accounted for directly
-    fd->update_allocations(fd->size_of());
-
     return 0;
 }
 
@@ -321,7 +313,6 @@ void Flow::free_flow_data(FlowData* fd)
         fd->prev->next = fd->next;
         fd->next->prev = fd->prev;
     }
-    fd->update_deallocations(fd->size_of());
     delete fd;
 }
 
@@ -339,7 +330,6 @@ void Flow::free_flow_data()
     {
         FlowData* tmp = flow_data;
         flow_data = flow_data->next;
-        tmp->update_deallocations(tmp->size_of());
         delete tmp;
     }
 }

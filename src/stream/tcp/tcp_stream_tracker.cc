@@ -634,10 +634,6 @@ bool TcpStreamTracker::set_held_packet(Packet* p)
     if ( held_packet != null_iterator )
         return false;
 
-    // Temporarily increase memcap until message is finalized in case
-    // DAQ makes a copy of the data buffer.
-    memory::MemoryCap::update_allocations(daq_msg_get_data_len(p->daq_msg));
-
     held_packet = hpq->append(p->daq_msg, p->ptrs.tcph->seq(), *this);
     held_pkt_seq = p->ptrs.tcph->seq();
 
@@ -684,7 +680,6 @@ void TcpStreamTracker::finalize_held_packet(Packet* cp)
     if ( held_packet != null_iterator )
     {
         DAQ_Msg_h msg = held_packet->get_daq_msg();
-        uint32_t msglen = daq_msg_get_data_len(msg);
 
         if ( cp->active->packet_was_dropped() )
         {
@@ -709,8 +704,6 @@ void TcpStreamTracker::finalize_held_packet(Packet* cp)
             tcp_session->held_packet_dir = SSN_DIR_NONE;
         }
 
-        memory::MemoryCap::update_deallocations(msglen);
-
         hpq->erase(held_packet);
         held_packet = null_iterator;
         tcpStats.current_packets_held--;
@@ -725,7 +718,6 @@ void TcpStreamTracker::finalize_held_packet(Flow* flow)
     if ( held_packet != null_iterator )
     {
         DAQ_Msg_h msg = held_packet->get_daq_msg();
-        uint32_t msglen = daq_msg_get_data_len(msg);
 
         if ( (flow->session_state & STREAM_STATE_BLOCK_PENDING) ||
              (flow->ssn_state.session_flags & SSNFLAG_BLOCK) )
@@ -741,8 +733,6 @@ void TcpStreamTracker::finalize_held_packet(Flow* flow)
             Analyzer::get_local_analyzer()->finalize_daq_message(msg, DAQ_VERDICT_PASS);
             tcpStats.held_packets_passed++;
         }
-
-        memory::MemoryCap::update_deallocations(msglen);
 
         hpq->erase(held_packet);
         held_packet = null_iterator;

@@ -33,9 +33,6 @@ public:
     static void init()
     { assign_ssl_inspector_id(snort::FlowData::create_flow_data_id()); }
 
-    size_t size_of() override
-    { return sizeof(*this); }
-
     SSLData& get_session() override
     { return session; }
 

@@ -77,24 +77,24 @@ HttpCutter* HttpStreamSplitter::get_cutter(SectionType type,
             session_data->data_length[source_id],
             session_data->accelerated_blocking[source_id],
             my_inspector->script_finder,
-            session_data->compression[source_id], session_data);
+            session_data->compression[source_id]);
     case SEC_BODY_CHUNK:
         return (HttpCutter*)new HttpBodyChunkCutter(
             my_inspector->params->maximum_chunk_length,
             session_data->accelerated_blocking[source_id],
             my_inspector->script_finder,
-            session_data->compression[source_id], session_data);
+            session_data->compression[source_id]);
     case SEC_BODY_OLD:
         return (HttpCutter*)new HttpBodyOldCutter(
             session_data->accelerated_blocking[source_id],
             my_inspector->script_finder,
-            session_data->compression[source_id], session_data);
+            session_data->compression[source_id]);
     case SEC_BODY_H2:
         return (HttpCutter*)new HttpBodyH2Cutter(
             session_data->data_length[source_id],
             session_data->accelerated_blocking[source_id],
             my_inspector->script_finder,
-            session_data->compression[source_id], session_data);
+            session_data->compression[source_id]);
     default:
         assert(false);
         return nullptr;

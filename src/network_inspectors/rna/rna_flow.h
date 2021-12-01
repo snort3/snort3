@@ -48,7 +48,6 @@ public:
     ~RNAFlow() override;
 
     static void init();
-    size_t size_of() override;
 
     void clear_ht(snort::HostTracker& ht);
 

@@ -130,10 +130,10 @@ static inline void update_session(Packet* p, Flow* lws)
 //-------------------------------------------------------------------------
 
 IpSession::IpSession(Flow* f) : Session(f)
-{ memory::MemoryCap::update_allocations(sizeof(*this)); }
+{ }
 
 IpSession::~IpSession()
-{ memory::MemoryCap::update_deallocations(sizeof(*this)); }
+{ }
 
 void IpSession::clear()
 {

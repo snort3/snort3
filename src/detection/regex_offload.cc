@@ -321,8 +321,8 @@ void ThreadRegexOffload::worker(
         }
 #endif
     }
-    ModuleManager::accumulate_offload("search_engine");
-    ModuleManager::accumulate_offload("detection");
+    ModuleManager::accumulate_module("search_engine");
+    ModuleManager::accumulate_module("detection");
 
     // FIXIT-M break this over-coupling. In reality we shouldn't be evaluating latency in offload.
     PacketLatency::tterm();

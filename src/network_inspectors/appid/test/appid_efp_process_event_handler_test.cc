@@ -54,9 +54,6 @@ Packet::Packet(bool) { }
 Packet::~Packet() = default;
 }
 
-void memory::MemoryCap::update_allocations(size_t) { }
-void memory::MemoryCap::update_deallocations(size_t) { }
-
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection,
     AppId, AppidChangeBits&) { }
 void AppIdModule::reset_stats() { }

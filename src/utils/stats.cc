@@ -33,6 +33,7 @@
 #include "helpers/process.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "memory/memory_cap.h"
 #include "managers/module_manager.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
@@ -265,6 +266,7 @@ void DropStats(ControlConn* ctrlcon)
 void PrintStatistics()
 {
     DropStats();
+    memory::MemoryCap::print(SnortConfig::log_verbose(), false);
     timing_stats();
 
     // FIXIT-L can do flag saving with RAII (much cleaner)

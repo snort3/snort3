@@ -176,9 +176,6 @@ public:
     static void init()
     { inspector_id = snort::FlowData::create_flow_data_id(); }
 
-    size_t size_of() override
-    { return sizeof(*this); }
-
 public:
     static unsigned inspector_id;
     dnp3_session_data_t dnp3_session;

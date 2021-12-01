@@ -30,7 +30,6 @@
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "managers/inspector_manager.h"
-#include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "packet_tracer/packet_tracer.h"
 #include "protocols/icmp4.h"
@@ -99,12 +98,6 @@ SfIpRet SfIp::set(void const*, int) { return SFIP_SUCCESS; }
 void snort::trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) {}
 uint8_t snort::TraceApi::get_constraints_generation() { return 0; }
 void snort::TraceApi::filter(const Packet&) {}
-namespace memory
-{
-void MemoryCap::update_allocations(size_t) { }
-void MemoryCap::update_deallocations(size_t) { }
-bool MemoryCap::over_threshold() { return true; }
-}
 
 namespace snort
 {

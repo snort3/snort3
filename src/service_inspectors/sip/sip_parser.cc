@@ -505,7 +505,6 @@ static bool sip_body_parse(SIPMsg* msg, const char* buff, const char* end, const
 
     // Create a media session
     msg->mediaSession = (SIP_MediaSession*)snort_calloc(sizeof(SIP_MediaSession));
-    memory::MemoryCap::update_allocations(sizeof(SIP_MediaSession));
     const char* start = buff;
 
     /*
@@ -1130,7 +1129,6 @@ static int sip_parse_sdp_m(SIPMsg* msg, const char* start, const char* end)
         return SIP_PARSE_ERROR;
 
     mdata = (SIP_MediaData*)snort_calloc(sizeof(SIP_MediaData));
-    memory::MemoryCap::update_allocations(sizeof(SIP_MediaData));
     mdata->mport = (uint16_t)SnortStrtoul(spaceIndex + 1, &next, 10);
 
     if ((nullptr != next)&&('/'==next[0]))
@@ -1256,13 +1254,11 @@ void sip_freeMediaSession(SIP_MediaSession* mediaSession)
     {
         nextNode = curNode->nextM;
         snort_free(curNode);
-        memory::MemoryCap::update_deallocations(sizeof(SIP_MediaData));
         curNode = nextNode;
     }
     if (nullptr != mediaSession)
     {
         snort_free(mediaSession);
-        memory::MemoryCap::update_deallocations(sizeof(SIP_MediaSession));
     }
 }
 

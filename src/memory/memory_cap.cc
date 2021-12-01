@@ -22,13 +22,22 @@
 #include "config.h"
 #endif
 
+#include <malloc.h>
+#include <sys/resource.h>
+
 #include <cassert>
+#include <vector>
+
+#ifdef HAVE_JEMALLOC
+#include <jemalloc/jemalloc.h>
+#endif
 
 #include "memory_cap.h"
 
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/snort_types.h"
+#include "main/thread.h"
 #include "profiler/memory_profiler_active_context.h"
 #include "utils/stats.h"
 
@@ -36,76 +45,77 @@
 #include "memory_module.h"
 #include "prune_handler.h"
 
-#ifdef UNIT_TEST
-#include "catch/snort_catch.h"
-#endif
-
 using namespace snort;
 
 namespace memory
 {
 
+static MemoryCounts ctl_mem_stats;
+static std::vector<MemoryCounts> pkt_mem_stats;
+
 namespace
 {
-
-struct Tracker
-{
-    void allocate(size_t n)
-    { mem_stats.allocated += n; ++mem_stats.allocations; }
-
-    void deallocate(size_t n)
-    {
-        mem_stats.deallocated += n; ++mem_stats.deallocations;
-        assert(mem_stats.deallocated <= mem_stats.allocated);
-        assert(mem_stats.deallocations <= mem_stats.allocations);
-        assert(mem_stats.allocated or !mem_stats.allocations);
-    }
-
-    size_t used() const
-    {
-        if ( mem_stats.allocated < mem_stats.deallocated )
-        {
-            assert(false);
-            return 0;
-        }
-        return mem_stats.allocated - mem_stats.deallocated;
-    }
-};
-
-static Tracker s_tracker;
 
 // -----------------------------------------------------------------------------
 // helpers
 // -----------------------------------------------------------------------------
 
-template<typename Tracker, typename Handler>
-inline bool free_space(size_t requested, size_t cap, Tracker& trk, Handler& handler)
+#ifdef HAVE_JEMALLOC
+static size_t get_usage(MemoryCounts& mc)
 {
-    if ( requested > cap )
+    static THREAD_LOCAL uint64_t* alloc_ptr = nullptr, * dealloc_ptr = nullptr;
+
+    if ( !alloc_ptr )
     {
-        return false;
+        size_t sz = sizeof(alloc_ptr);
+        // __STRDUMP_DISABLE__
+        mallctl("thread.allocatedp", (void*)&alloc_ptr, &sz, nullptr, 0);
+        mallctl("thread.deallocatedp", (void*)&dealloc_ptr, &sz, nullptr, 0);
+        // __STRDUMP_ENABLE__
     }
+    mc.allocated = *alloc_ptr;
+    mc.deallocated = *dealloc_ptr;
 
-    auto used = trk.used();
-
-    if ( used + requested <= cap )
-        return true;
-
-    ++mem_stats.reap_attempts;
-
-    while ( used + requested > cap )
+    if ( mc.allocated > mc.deallocated )
     {
-        handler();
-        auto tmp = trk.used();
+        size_t usage =  mc.allocated - mc.deallocated;
 
-        if ( tmp >= used )
-        {
-            ++mem_stats.reap_failures;
-            return false;
-        }
-        used = tmp;
+        if ( usage > mc.max_in_use )
+            mc.max_in_use = usage;
+
+        return usage;
     }
-    return true;
+    return 0;
+}
+#else
+static size_t get_usage(const MemoryCounts& mc)
+{
+#ifdef ENABLE_MEMORY_OVERLOADS
+    assert(mc.allocated >= mc.deallocated);
+    return mc.allocated - mc.deallocated;
+
+#else
+    UNUSED(mc);
+    return 0;
+#endif
+}
+#endif
+
+template<typename Handler>
+inline void free_space(size_t cap, Handler& handler)
+{
+    MemoryCounts& mc = memory::MemoryCap::get_mem_stats();
+    size_t usage = get_usage(mc);
+
+    if ( usage < cap )
+        return;
+
+    ++mc.reap_attempts;
+
+    if ( handler() )
+        return;
+
+    ++mc.reap_failures;
 }
 
 inline size_t calculate_threshold(size_t cap, size_t threshold)
@@ -117,190 +127,111 @@ inline size_t calculate_threshold(size_t cap, size_t threshold)
 // per-thread configuration
 // -----------------------------------------------------------------------------
 
-size_t MemoryCap::thread_cap = 0;
-size_t MemoryCap::preemptive_threshold = 0;
+size_t MemoryCap::limit = 0;
 
 // -----------------------------------------------------------------------------
 // public interface
 // -----------------------------------------------------------------------------
 
-void MemoryCap::free_space(size_t n)
-{
-    if ( !is_packet_thread() )
-        return;
-
-    if ( !thread_cap )
-        return;
-
-    static THREAD_LOCAL bool entered = false;
-
-    if ( entered )
-        return;
-
-    entered = true;
-    memory::free_space(n, thread_cap, s_tracker, prune_handler);
-    entered = false;
-}
-
-static size_t fudge_it(size_t n)
-{
-    return ((n >> 7) + 1) << 7;
-}
-
-void MemoryCap::update_allocations(size_t n)
-{
-    if (n == 0)
-        return;
-
-    size_t k = n;
-    n = fudge_it(n);
-    free_space(n);
-    mem_stats.total_fudge += (n - k);
-    s_tracker.allocate(n);
-    auto in_use = s_tracker.used();
-    if ( in_use > mem_stats.max_in_use )
-        mem_stats.max_in_use = in_use;
-    mp_active_context.update_allocs(n);
-}
-
-void MemoryCap::update_deallocations(size_t n)
-{
-    if (n == 0)
-      return;
-
-    n = fudge_it(n);
-    s_tracker.deallocate(n);
-    mp_active_context.update_deallocs(n);
-}
-
-bool MemoryCap::over_threshold()
-{
-    if ( !preemptive_threshold )
-        return false;
-
-    return s_tracker.used() >= preemptive_threshold;
-}
-
-// FIXIT-L this should not be called while the packet threads are running.
-// once reload is implemented for the memory manager, the configuration
-// model will need to be updated
-
-void MemoryCap::calculate()
+void MemoryCap::setup(const MemoryConfig& config, unsigned n)
 {
     assert(!is_packet_thread());
-    const MemoryConfig& config = *SnortConfig::get_conf()->memory;
-
-    thread_cap = config.cap;
-    preemptive_threshold = memory::calculate_threshold(thread_cap, config.threshold);
+    limit = memory::calculate_threshold(config.cap, config.threshold);
+    pkt_mem_stats.resize(n);
 }
 
-void MemoryCap::print()
+void MemoryCap::cleanup()
+{
+    pkt_mem_stats.resize(0);
+}
+
+MemoryCounts& MemoryCap::get_mem_stats()
+{
+    if ( !is_packet_thread() )
+        return ctl_mem_stats;
+
+    auto id = get_instance_id();
+    return pkt_mem_stats[id];
+}
+
+void MemoryCap::free_space()
+{
+    assert(is_packet_thread());
+
+    if ( !limit )
+        return;
+
+    memory::free_space(limit, prune_handler);
+}
+
+#ifdef ENABLE_MEMORY_OVERLOADS
+void MemoryCap::allocate(size_t n)
+{
+    MemoryCounts& mc = memory::MemoryCap::get_mem_stats();
+
+    mc.allocated += n;
+    ++mc.allocations;
+
+    assert(mc.allocated >= mc.deallocated);
+    auto in_use = mc.allocated - mc.deallocated;
+
+    if ( in_use > mc.max_in_use )
+        mc.max_in_use = in_use;
+
+#ifdef ENABLE_MEMORY_PROFILER
+    mp_active_context.update_allocs(n);
+#endif
+}
+
+void MemoryCap::deallocate(size_t n)
+{
+    MemoryCounts& mc = memory::MemoryCap::get_mem_stats();
+
+    // std::thread causes an extra deallocation in packet
+    // threads so the below asserts don't hold
+    if ( mc.allocated >= mc.deallocated + n )
+    {
+        mc.deallocated += n;
+        ++mc.deallocations;
+    }
+
+#if 0
+    assert(mc.deallocated <= mc.allocated);
+    assert(mc.deallocations <= mc.allocations);
+    assert(mc.allocated or !mc.allocations);
+#endif
+
+#ifdef ENABLE_MEMORY_PROFILER
+    mp_active_context.update_deallocs(n);
+#endif
+}
+#endif
+
+void MemoryCap::print(bool verbose, bool print_all)
 {
     if ( !MemoryModule::is_active() )
         return;
 
-    bool verbose = SnortConfig::log_verbose();
+    MemoryCounts& mc = get_mem_stats();
+    uint64_t usage = get_usage(mc);
 
-    if ( verbose or mem_stats.allocations )
+    if ( verbose or usage )
         LogLabel("memory (heap)");
+
+    if ( verbose and print_all )
+        LogCount("pruning threshold", limit);
+
+    LogCount("main thread usage", usage);
+    LogCount("allocations", mc.allocations);
+    LogCount("deallocations", mc.deallocations);
 
     if ( verbose )
     {
-        LogMessage("    thread cap: %zu\n", thread_cap);
-        LogMessage("    thread preemptive threshold: %zu\n", preemptive_threshold);
-    }
-
-    if ( mem_stats.allocations )
-    {
-        LogMessage("    main thread usage: %zu\n", s_tracker.used());
-        LogMessage("    allocations: %" PRIu64 "\n", mem_stats.allocations);
-        LogMessage("    deallocations: %" PRIu64 "\n", mem_stats.deallocations);
+        struct rusage ru;
+        getrusage(RUSAGE_SELF, &ru);
+        LogCount("max_rss", ru.ru_maxrss * 1024);
     }
 }
 
 } // namespace memory
 
-#ifdef UNIT_TEST
-
-namespace t_memory_cap
-{
-
-struct MockTracker
-{
-    size_t result = 0;
-    size_t used() const
-    { return result; }
-
-    MockTracker(size_t r) : result { r } { }
-    MockTracker() = default;
-};
-
-struct HandlerSpy
-{
-    size_t calls = 0;
-    ssize_t modifier;
-    MockTracker* tracker;
-
-    void operator()()
-    {
-        ++calls;
-        if ( modifier && tracker )
-            tracker->result += modifier;
-    }
-
-    HandlerSpy(ssize_t n, MockTracker& trk) :
-        modifier(n), tracker(&trk) { }
-};
-
-} // namespace t_memory_cap
-
-TEST_CASE( "memory cap free space", "[memory]" )
-{
-    using namespace t_memory_cap;
-
-    SECTION( "no handler call required" )
-    {
-        MockTracker tracker;
-        HandlerSpy handler { 0, tracker };
-
-        CHECK( memory::free_space(1, 1024, tracker, handler) );
-        CHECK( handler.calls == 0 );
-    }
-
-    SECTION( "handler frees enough space the first time" )
-    {
-        MockTracker tracker { 1024 };
-        HandlerSpy handler { -5, tracker };
-
-        CHECK( memory::free_space(1, 1024, tracker, handler) );
-        CHECK( handler.calls == 1 );
-    }
-
-    SECTION( "handler needs to be called multiple times to free up space" )
-    {
-        MockTracker tracker { 1024 };
-        HandlerSpy handler { -1, tracker };
-
-        CHECK( memory::free_space(2, 1024, tracker, handler) );
-        CHECK( (handler.calls == 2) );
-    }
-
-    SECTION( "handler fails to free enough space" )
-    {
-        MockTracker tracker { 1024 };
-        HandlerSpy handler { 0, tracker };
-
-        CHECK_FALSE( memory::free_space(1, 1024, tracker, handler) );
-        CHECK( handler.calls == 1 );
-    }
-
-    SECTION( "handler actually uses more space" )
-    {
-        MockTracker tracker { 1024 };
-        HandlerSpy handler { 5, tracker };
-        CHECK_FALSE( memory::free_space(1, 1024, tracker, handler) );
-        CHECK( handler.calls == 1 );
-    }
-}
-
-#endif

@@ -43,9 +43,6 @@
 
 uint32_t ThirdPartyAppIdContext::next_version = 0;
 
-void memory::MemoryCap::update_allocations(size_t) { }
-void memory::MemoryCap::update_deallocations(size_t) { }
-
 namespace snort
 {
 // Stubs for appid api

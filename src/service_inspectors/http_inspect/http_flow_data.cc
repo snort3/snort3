@@ -95,7 +95,6 @@ HttpFlowData::~HttpFlowData()
 #ifndef UNIT_TEST_BUILD
     if (js_ident_ctx)
     {
-        update_deallocations(js_ident_ctx->size());
         delete js_ident_ctx;
 
         debug_log(4, http_trace, TRACE_JS_PROC, nullptr,
@@ -103,7 +102,6 @@ HttpFlowData::~HttpFlowData()
     }
     if (js_normalizer)
     {
-        update_deallocations(JSNormalizer::size());
         delete js_normalizer;
 
         debug_log(4, http_trace, TRACE_JS_PROC, nullptr,
@@ -117,16 +115,13 @@ HttpFlowData::~HttpFlowData()
         delete events[k];
         delete[] section_buffer[k];
         delete[] partial_buffer[k];
-        update_deallocations(partial_buffer_length[k]);
         delete[] partial_detect_buffer[k];
-        update_deallocations(partial_detect_length[k]);
         HttpTransaction::delete_transaction(transaction[k], nullptr);
         delete cutter[k];
         if (compress_stream[k] != nullptr)
         {
             inflateEnd(compress_stream[k]);
             delete compress_stream[k];
-            update_deallocations(zlib_inflate_memory);
         }
         if (mime_state[k] != nullptr)
         {
@@ -145,11 +140,6 @@ HttpFlowData::~HttpFlowData()
         discard_list = discard_list->next;
         delete tmp;
     }
-}
-
-size_t HttpFlowData::size_of()
-{
-    return sizeof(HttpFlowData) + (2 * sizeof(HttpEventGen));
 }
 
 void HttpFlowData::half_reset(SourceId source_id)
@@ -176,7 +166,6 @@ void HttpFlowData::half_reset(SourceId source_id)
         inflateEnd(compress_stream[source_id]);
         delete compress_stream[source_id];
         compress_stream[source_id] = nullptr;
-        update_deallocations(zlib_inflate_memory);
     }
     if (mime_state[source_id] != nullptr)
     {
@@ -220,7 +209,6 @@ void HttpFlowData::trailer_prep(SourceId source_id)
         inflateEnd(compress_stream[source_id]);
         delete compress_stream[source_id];
         compress_stream[source_id] = nullptr;
-        update_deallocations(zlib_inflate_memory);
     }
     detection_status[source_id] = DET_REACTIVATING;
 }
@@ -268,7 +256,6 @@ snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t ident_depth, size_t no
     if (!js_ident_ctx)
     {
         js_ident_ctx = new JSIdentifierCtx(ident_depth, max_scope_depth, built_in_ident);
-        update_allocations(js_ident_ctx->size());
 
         debug_logf(4, http_trace, TRACE_JS_PROC, nullptr,
             "js_ident_ctx created (ident_depth %d)\n", ident_depth);
@@ -276,7 +263,6 @@ snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t ident_depth, size_t no
 
     js_normalizer = new JSNormalizer(*js_ident_ctx, norm_depth,
         max_template_nesting, max_bracket_depth);
-    update_allocations(JSNormalizer::size());
 
     debug_logf(4, http_trace, TRACE_JS_PROC, nullptr,
         "js_normalizer created (norm_depth %zd, max_template_nesting %d)\n",
@@ -299,7 +285,6 @@ void HttpFlowData::release_js_ctx()
     if (!js_normalizer)
         return;
 
-    update_deallocations(JSNormalizer::size());
     delete js_normalizer;
     js_normalizer = nullptr;
 
@@ -320,7 +305,6 @@ bool HttpFlowData::add_to_pipeline(HttpTransaction* latest)
     {
         pipeline = new HttpTransaction*[MAX_PIPELINE];
         HttpModule::increment_peg_counts(PEG_PIPELINED_FLOWS);
-        update_allocations(sizeof(HttpTransaction*) * MAX_PIPELINE);
     }
     assert(!pipeline_overflow && !pipeline_underflow);
     int new_back = (pipeline_back+1) % MAX_PIPELINE;
@@ -353,8 +337,6 @@ void HttpFlowData::delete_pipeline()
     {
         delete pipeline[k];
     }
-    if (pipeline != nullptr)
-        update_deallocations(sizeof(HttpTransaction*) * MAX_PIPELINE);
     delete[] pipeline;
 }
 
@@ -378,12 +360,10 @@ void HttpFlowData::finish_h2_body(HttpCommon::SourceId source_id, HttpEnums::H2B
     {
         // We've already sent all data through detection so no need to reinspect. Just need to
         // prep for trailers
-        update_deallocations(partial_buffer_length[source_id]);
         partial_buffer_length[source_id] = 0;
         delete[] partial_buffer[source_id];
         partial_buffer[source_id] = nullptr;
 
-        update_deallocations(partial_detect_length[source_id]);
         partial_detect_length[source_id] = 0;
         delete[] partial_detect_buffer[source_id];
         partial_detect_buffer[source_id] = nullptr;

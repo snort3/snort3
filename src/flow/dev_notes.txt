@@ -38,7 +38,7 @@ flow creation when the appropriate DAQ packet message flag has been set on the
 initiating packet.
 
 The HA subsystem exchanges two high level message types:
-  - DELETE: Indicate to the partner that a session has neen removed.  No
+  - DELETE: Indicate to the partner that a session has been removed.  No
 additional HA client status will be exchanged.  (Not used for DAQ-backed
 storage.)
   - UPDATE: Indicate all other state changes.  The message always includes

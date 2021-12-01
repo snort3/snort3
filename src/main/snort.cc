@@ -322,8 +322,6 @@ void Snort::term()
 
     const SnortConfig* sc = SnortConfig::get_conf();
 
-    memory::MemoryCap::print();
-
     IpsManager::global_term(sc);
     HostAttributesManager::term();
 
@@ -370,6 +368,8 @@ void Snort::term()
     ModuleManager::term();
     PluginManager::release_plugins();
     ScriptManager::release_scripts();
+    memory::MemoryCap::cleanup();
+
     term_signals();
 }
 
@@ -414,8 +414,9 @@ void Snort::setup(int argc, char* argv[])
 
     set_quick_exit(false);
 
-    memory::MemoryCap::calculate();
-    memory::MemoryCap::print();
+    memory::MemoryCap::setup(*sc->memory, sc->thread_config->get_instance_max());
+    memory::MemoryCap::print(SnortConfig::log_verbose());
+
     host_cache.print_config();
 
     TimeStart();

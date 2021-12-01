@@ -57,7 +57,6 @@ UserSegment* UserSegment::init(const uint8_t* p, unsigned n)
     unsigned bucket = (n > BUCKET) ? n : BUCKET;
     unsigned size = sizeof(UserSegment) + bucket -1;
 
-    memory::MemoryCap::update_allocations(size);
     UserSegment* us = (UserSegment*)snort_alloc(size);
 
     us->size = size;
@@ -71,7 +70,6 @@ UserSegment* UserSegment::init(const uint8_t* p, unsigned n)
 
 void UserSegment::term(UserSegment* us)
 {
-    memory::MemoryCap::update_deallocations(us->size);
     snort_free(us);
 }
 
@@ -423,10 +421,10 @@ void UserSession::restart(Packet* p)
 //-------------------------------------------------------------------------
 
 UserSession::UserSession(Flow* f) : Session(f)
-{ memory::MemoryCap::update_allocations(sizeof(*this)); }
+{ }
 
 UserSession::~UserSession()
-{ memory::MemoryCap::update_deallocations(sizeof(*this)); }
+{ }
 
 bool UserSession::setup(Packet*)
 {

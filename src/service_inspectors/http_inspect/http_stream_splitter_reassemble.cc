@@ -179,7 +179,6 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
                 inflateEnd(compress_stream);
                 delete compress_stream;
                 compress_stream = nullptr;
-                session_data->update_deallocations(session_data->zlib_inflate_memory);
             }
             return;
         }
@@ -207,7 +206,6 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
             inflateEnd(compress_stream);
             delete compress_stream;
             compress_stream = nullptr;
-            session_data->update_deallocations(session_data->zlib_inflate_memory);
             // Since we failed to uncompress the data, fall through
         }
     }
@@ -384,7 +382,6 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
         memcpy(buffer, partial_buffer, partial_buffer_length);
         session_data->section_offset[source_id] = partial_buffer_length;
         delete[] partial_buffer;
-        session_data->update_deallocations(partial_buffer_length);
         partial_buffer_length = 0;
         partial_buffer = nullptr;
     }
@@ -428,7 +425,6 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
                 partial_buffer = new uint8_t[buf_size];
                 memcpy(partial_buffer, buffer, buf_size);
                 partial_buffer_length = buf_size;
-                session_data->update_allocations(partial_buffer_length);
             }
             partial_raw_bytes += total;
         }

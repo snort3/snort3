@@ -27,11 +27,6 @@
 #include "http_common.h"
 #include "http_enum.h"
 
-namespace snort
-{
-class FlowData;
-}
-
 // Individual pieces of the message found during parsing.
 // Length values <= 0 are StatusCode values and imply that the start pointer is meaningless.
 // Never use the start pointer without verifying that length > 0.
@@ -51,8 +46,6 @@ public:
     void set(const Field& f);
     void set(HttpCommon::StatusCode stat_code);
     void set(int32_t length) { set(static_cast<HttpCommon::StatusCode>(length)); }
-    void update_allocations(snort::FlowData* flow_data);
-    void update_deallocations(snort::FlowData* flow_data);
 
 #ifdef REG_TEST
     void print(FILE* output, const char* name) const;

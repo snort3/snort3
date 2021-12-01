@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2021 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,42 +15,23 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// flow_data.cc author Russ Combs <rucombs@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+// memory_allocator.h author Joel Cornett <jocornet@cisco.com>
+
+#ifndef MEMORY_ALLOCATOR_H
+#define MEMORY_ALLOCATOR_H
+
+#include <cstddef>
+
+namespace memory
+{
+
+struct MemoryAllocator
+{
+    static void* allocate(size_t);
+    static void deallocate(void*);
+};
+
+} // namespace memory
+
 #endif
-
-#include "flow_data.h"
-
-#include <cassert>
-
-#include "framework/inspector.h"
-#include "main/snort_config.h"
-#include "managers/so_manager.h"
-#include "memory/memory_cap.h"
-
-using namespace snort;
-
-unsigned FlowData::flow_data_id = 0;
-
-FlowData::FlowData(unsigned u, Inspector* ph)
-{
-    assert(u > 0);
-    id = u;
-    handler = ph;
-    prev = next = nullptr;
-    if ( handler )
-        handler->add_ref();
-}
-
-FlowData::~FlowData()
-{
-    if ( handler )
-        handler->rem_ref();
-}
-
-RuleFlowData::RuleFlowData(unsigned u) :
-    FlowData(u, SnortConfig::get_conf()->so_rules->proxy)
-{ }
-

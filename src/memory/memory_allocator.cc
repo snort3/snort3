@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2021 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2021 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,42 +15,25 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// flow_data.cc author Russ Combs <rucombs@cisco.com>
+
+// memory_allocator.cc author Joel Cornett <jocornet@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "flow_data.h"
+#include "memory_allocator.h"
 
-#include <cassert>
+#include <cstdlib>
 
-#include "framework/inspector.h"
-#include "main/snort_config.h"
-#include "managers/so_manager.h"
-#include "memory/memory_cap.h"
-
-using namespace snort;
-
-unsigned FlowData::flow_data_id = 0;
-
-FlowData::FlowData(unsigned u, Inspector* ph)
+namespace memory
 {
-    assert(u > 0);
-    id = u;
-    handler = ph;
-    prev = next = nullptr;
-    if ( handler )
-        handler->add_ref();
-}
 
-FlowData::~FlowData()
-{
-    if ( handler )
-        handler->rem_ref();
-}
+// FIXIT-L (de)allocate() could be inlined if defined in memory_manager.cc
+void* MemoryAllocator::allocate(size_t n)
+{ return malloc(n); }
 
-RuleFlowData::RuleFlowData(unsigned u) :
-    FlowData(u, SnortConfig::get_conf()->so_rules->proxy)
-{ }
+void MemoryAllocator::deallocate(void* p)
+{ free(p); }
 
+} // namespace memory

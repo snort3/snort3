@@ -30,7 +30,6 @@
 #include "framework/inspector.h"
 #include "framework/data_bus.h"
 #include "main/snort_config.h"
-#include "memory/memory_cap.h"
 #include "protocols/ip.h"
 #include "protocols/layer.h"
 #include "protocols/packet.h"
@@ -46,12 +45,6 @@ Packet::~Packet()  = default;
 void Inspector::rem_ref() {}
 
 void Inspector::add_ref() {}
-
-void memory::MemoryCap::update_allocations(size_t) {}
-
-void memory::MemoryCap::update_deallocations(size_t) {}
-
-void memory::MemoryCap::free_space(size_t) { }
 
 bool HighAvailabilityManager::active() { return false; }
 

@@ -40,8 +40,6 @@ const bool HttpEnums::is_sp_tab[256] {};
 const bool HttpEnums::is_sp_tab_quote_dquote[256] {};
 long HttpTestManager::print_amount {};
 bool HttpTestManager::print_hex {};
-void FlowData::update_allocations(size_t) {}
-void FlowData::update_deallocations(size_t) {}
 
 TEST_GROUP(norm_decimal_integer_test) {};
 

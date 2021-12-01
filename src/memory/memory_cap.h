@@ -23,31 +23,45 @@
 
 #include <cstddef>
 
-#include "main/thread.h"
+#include "framework/counts.h"
+#include "main/snort_types.h"
+
+struct MemoryConfig;
 
 namespace memory
 {
 
+struct MemoryCounts
+{
+    PegCount allocations;
+    PegCount deallocations;
+    PegCount allocated;
+    PegCount deallocated;
+    PegCount reap_attempts;
+    PegCount reap_failures;
+    PegCount max_in_use;
+};
+
 class SO_PUBLIC MemoryCap
 {
 public:
-    static void free_space(size_t);
-    // The following functions perform internal rounding. Allocations and deallocations must be
-    // performed in identical increments or leakage may occur.
-    static void update_allocations(size_t);
-    static void update_deallocations(size_t);
+    static void setup(const MemoryConfig&, unsigned);
+    static void cleanup();
 
-    static bool over_threshold();
+    static void free_space();
 
     // call from main thread
-    static void calculate();
+    static void print(bool verbose, bool print_all = true);
 
-    // call from main thread
-    static void print();
+    static MemoryCounts& get_mem_stats();
+
+#ifdef ENABLE_MEMORY_OVERLOADS
+    static void allocate(size_t);
+    static void deallocate(size_t);
+#endif
 
 private:
-    static size_t thread_cap;
-    static size_t preemptive_threshold;
+    static size_t limit;
 };
 
 } // namespace memory

@@ -86,7 +86,7 @@ public:
     static void dump_stats(const char* skip = nullptr, bool dynamic = false);
 
     static void accumulate();
-    static void accumulate_offload(const char* name);
+    static void accumulate_module(const char* name);
     static void reset_stats(SnortConfig*);
     static void reset_stats(clear_counter_type_t);
 

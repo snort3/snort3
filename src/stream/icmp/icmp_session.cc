@@ -185,10 +185,10 @@ static int ProcessIcmpUnreach(Packet* p)
 //-------------------------------------------------------------------------
 
 IcmpSession::IcmpSession(Flow* f) : Session(f)
-{ memory::MemoryCap::update_allocations(sizeof(*this)); }
+{ }
 
 IcmpSession::~IcmpSession()
-{ memory::MemoryCap::update_deallocations(sizeof(*this)); }
+{ }
 
 bool IcmpSession::setup(Packet*)
 {

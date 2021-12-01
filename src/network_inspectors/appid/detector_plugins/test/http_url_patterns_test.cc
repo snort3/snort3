@@ -56,9 +56,6 @@ static AppId service_id = APP_ID_NONE;
 static AppId client_id = APP_ID_NONE;
 static DetectorHTTPPattern mpattern;
 
-void memory::MemoryCap::update_allocations(size_t) { }
-void memory::MemoryCap::update_deallocations(size_t) { }
-
 namespace snort
 {
 AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :

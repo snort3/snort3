@@ -410,7 +410,6 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
         {
             Stream::ignore_flow(p, p->flow->pkt_type, p->get_ip_proto_next(), &mdataA->maddress,
                 mdataA->mport, &mdataB->maddress, mdataB->mport, SSN_DIR_BOTH, (new SipFlowData));
-            memory::MemoryCap::update_allocations(sizeof(SipFlowData));
         }
         sip_stats.ignoreChannels++;
         mdataA = mdataA->nextM;
@@ -529,7 +528,6 @@ static SIP_DialogData* SIP_addDialog(SIPMsg* sipMsg, SIP_DialogData* currDialog,
 
     sip_stats.dialogs++;
     dialog = (SIP_DialogData*)snort_calloc(sizeof(SIP_DialogData));
-    memory::MemoryCap::update_allocations(sizeof(SIP_DialogData));
 
     // Add to the head
     dialog->nextD = currDialog;
@@ -589,9 +587,10 @@ static int SIP_deleteDialog(SIP_DialogData* currDialog, SIP_DialogList* dList)
     }
     sip_freeMediaList(currDialog->mediaSessions);
     snort_free(currDialog);
-    memory::MemoryCap::update_deallocations(sizeof(SIP_DialogData));
+
     if ( dList->num_dialogs > 0)
         dList->num_dialogs--;
+
     return true;
 }
 
@@ -686,7 +685,6 @@ void sip_freeDialogs(SIP_DialogList* list)
         nextNode = curNode->nextD;
         sip_freeMediaList(curNode->mediaSessions);
         snort_free(curNode);
-        memory::MemoryCap::update_deallocations(sizeof(SIP_DialogData));
         curNode = nextNode;
     }
 }

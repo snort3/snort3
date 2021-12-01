@@ -137,7 +137,6 @@ struct Fragment
     {
         delete[] fptr;
         ip_stats.nodes_released++;
-        memory::MemoryCap::update_deallocations(sizeof(*this) + flen);
     }
 
     uint8_t* data = nullptr;    /* ptr to adjusted start position */
@@ -157,7 +156,6 @@ private:
     inline void init(uint16_t flen, const uint8_t* fptr, int ord)
     {
         assert(flen > 0);
-        memory::MemoryCap::update_allocations(sizeof(*this) + flen);
 
         this->flen = flen;
         this->fptr = new uint8_t[flen];

@@ -24,7 +24,7 @@
 namespace memory
 {
 
-void prune_handler();
+bool prune_handler();
 
 }
 

@@ -4,10 +4,13 @@ set (MEMCAP_INCLUDES
 
 set ( MEMORY_SOURCES
     ${MEMCAP_INCLUDES}
+    memory_allocator.cc
+    memory_allocator.h
     memory_cap.cc
+    memory_config.h
+    memory_manager.cc
     memory_module.cc
     memory_module.h
-    memory_config.h
     prune_handler.cc
     prune_handler.h
 )

@@ -106,9 +106,6 @@ public:
     void set_file_policy(FilePolicyBase* fp) { file_policy = fp; }
     FilePolicyBase* get_file_policy() { return file_policy; }
 
-    size_t size_of() override
-    { return sizeof(*this); }
-
 private:
     void init_file_context(FileDirection, FileContext*);
     FileContext* find_main_file_context(FilePosition, FileDirection, size_t id = 0);

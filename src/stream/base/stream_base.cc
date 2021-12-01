@@ -60,7 +60,7 @@ const PegInfo base_pegs[] =
     { CountType::SUM, "idle_prunes", " sessions pruned due to timeout" },
     { CountType::SUM, "excess_prunes", "sessions pruned due to excess" },
     { CountType::SUM, "uni_prunes", "uni sessions pruned" },
-    { CountType::SUM, "preemptive_prunes", "sessions pruned during preemptive pruning" },
+    { CountType::SUM, "preemptive_prunes", "sessions pruned during preemptive pruning (deprecated)" },
     { CountType::SUM, "memcap_prunes", "sessions pruned due to memcap" },
     { CountType::SUM, "ha_prunes", "sessions pruned by high availability sync" },
     { CountType::SUM, "stale_prunes", "sessions pruned due to stale connection" },
@@ -90,7 +90,7 @@ void base_prep()
     stream_base_stats.timeout_prunes = flow_con->get_prunes(PruneReason::IDLE);
     stream_base_stats.excess_prunes = flow_con->get_prunes(PruneReason::EXCESS);
     stream_base_stats.uni_prunes = flow_con->get_prunes(PruneReason::UNI);
-    stream_base_stats.preemptive_prunes = flow_con->get_prunes(PruneReason::PREEMPTIVE);
+    stream_base_stats.preemptive_prunes = flow_con->get_prunes(PruneReason::MEMCAP);
     stream_base_stats.memcap_prunes = flow_con->get_prunes(PruneReason::MEMCAP);
     stream_base_stats.ha_prunes = flow_con->get_prunes(PruneReason::HA);
     stream_base_stats.stale_prunes = flow_con->get_prunes(PruneReason::STALE);

@@ -165,9 +165,6 @@ void Profiler::consolidate_stats() { }
 void Profiler::reset_stats() { }
 void Profiler::show_stats() { }
 
-void memory::MemoryCap::update_allocations(size_t) { }
-void memory::MemoryCap::update_deallocations(size_t) { }
-
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
 
 AppIdConfig::~AppIdConfig() = default;

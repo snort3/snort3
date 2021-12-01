@@ -68,8 +68,6 @@ public:
     bool is_email_hdrs_present() const;
     bool is_email_from_present() const;
     bool is_email_to_present() const;
-    size_t size_of() const override
-    { return sizeof(*this); }
 
 private:
     int log_flags = 0;
