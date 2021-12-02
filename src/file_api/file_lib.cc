@@ -358,7 +358,7 @@ void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
             break;
         }
 
-        if (policy and log_needed)
+        if (policy and log_needed and user_file_data)
             policy->log_file_action(flow, this, FILE_ACTION_DEFAULT);
 
         if ( config->trace_type )
