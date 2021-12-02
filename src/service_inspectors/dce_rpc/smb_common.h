@@ -72,6 +72,7 @@
 
 #define DCE2_SMB_ID   0xff534d42  /* \xffSMB */
 #define DCE2_SMB2_ID  0xfe534d42  /* \xfeSMB */
+#define DCE2_SMB2_TRANS_ID 0xfd534d42
 #define DCE2_SMB_ID_SIZE 4
 
 // MS-FSCC Section 2.1.5 - Pathname
@@ -375,6 +376,17 @@ struct SmbAndXCommon
     uint16_t smb_off2;     /* offset (from SMB hdr start) to next cmd (@smb_wct) */
 };
 
+struct Smb2TransformHdr
+{
+    uint8_t protocolid[4];
+    uint8_t signature[16];
+    uint8_t nonce[16];
+    uint32_t orig_msg_size;
+    uint16_t reserved;
+    uint16_t flags;
+    uint64_t session_id;
+};
+
 //NbssLen should be used by SMB1
 inline uint32_t NbssLen(const NbssHdr* nb)
 {
@@ -395,6 +407,12 @@ inline uint32_t NbssLen2(const NbssHdr *nb)
 inline uint8_t NbssType(const NbssHdr* nb)
 {
     return nb->type;
+}
+
+inline uint32_t SmbTransformId(const Smb2TransformHdr* hdr)
+{
+    const uint8_t* id = (const uint8_t*)hdr->protocolid;
+    return *id << 24 | *(id + 1) << 16 | *(id + 2) << 8 | *(id + 3);
 }
 
 inline uint32_t SmbId(const SmbNtHdr* hdr)

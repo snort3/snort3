@@ -201,6 +201,10 @@ struct dce2SmbStats
     PegCount v2_ioctl_resp_hdr_err;
     PegCount concurrent_sessions;
     PegCount max_concurrent_sessions;
+    PegCount total_smb1_sessions;
+    PegCount total_smb2_sessions;
+    PegCount total_encrypted_sessions;
+    PegCount total_mc_sessions;
 };
 
 enum DCE2_SmbVersion

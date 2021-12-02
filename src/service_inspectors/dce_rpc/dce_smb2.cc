@@ -106,6 +106,7 @@ Dce2Smb2SessionData::Dce2Smb2SessionData(const Packet* p,
     tcp_file_tracker = nullptr;
     flow_key = get_smb2_flow_key(tcp_flow->key);
     SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p, "smb2 session created\n");
+    dce2_smb_stats.total_smb2_sessions++;
 }
 
 Dce2Smb2SessionData::~Dce2Smb2SessionData()
@@ -275,6 +276,8 @@ void Dce2Smb2SessionData::process_command(const Smb2Hdr* smb_hdr,
             const Smb2NegotiateResponseHdr* neg_resp_hdr = (const Smb2NegotiateResponseHdr*)smb_data;
             if (neg_resp_hdr->capabilities & SMB2_GLOBAL_CAP_MULTI_CHANNEL)
             {
+                //total multichannel sessions
+                dce2_smb_stats.total_mc_sessions++;
                 Packet* p = DetectionEngine::get_current_packet();
                 Dce2SmbFlowData* fd = create_expected_smb_flow_data(p);
                 if (fd)
@@ -512,6 +515,21 @@ void Dce2Smb2SessionData::process()
             return;
         }
         const Smb2Hdr* smb_hdr = (const Smb2Hdr*)(data_ptr + sizeof(NbssHdr));
+        const Smb2TransformHdr* smb_trans_hdr = (const Smb2TransformHdr*)(data_ptr + sizeof(NbssHdr));
+        uint32_t smb_proto_id = SmbTransformId(smb_trans_hdr);
+        uint64_t sid = smb_trans_hdr->session_id;
+        if (smb_proto_id == DCE2_SMB2_TRANS_ID)
+        {
+            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+                p, "Encrypted header is received \n");
+            Dce2Smb2SessionTrackerPtr session = find_session(sid);
+            if (session) 
+            {
+               bool flag = session->get_encryption_flag();
+               if (!flag) 
+                   session->set_encryption_flag(true); 
+            }
+        }
         uint32_t next_command_offset;
         uint8_t compound_request_index = 0;
         // SMB protocol allows multiple smb commands to be grouped in a single packet.

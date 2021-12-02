@@ -190,6 +190,10 @@ static const PegInfo dce2_smb_pegs[] =
         "total number of ioctl response header errors" },
     { CountType::NOW, "concurrent_sessions", "total concurrent sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent sessions" },
+    { CountType::SUM, "total_smb1_sessions", "total smb1 sessions" },
+    { CountType::SUM, "total_smb2_sessions", "total smb2 sessions" },
+    { CountType::SUM, "total_encrypted_sessions", "total encrypted sessions" },
+    { CountType::SUM, "total_mc_sessions", "total multichannel sessions" },
     { CountType::END, nullptr, nullptr }
 };
 

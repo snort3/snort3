@@ -38,7 +38,8 @@ public:
         reload_prune = false;
         do_not_delete = false;
         command_prev = SMB2_COM_MAX;
-        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
+        encryption_flag = false;
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET, 
             "session tracker %" PRIu64 "created\n", session_id);
     }
 
@@ -78,7 +79,13 @@ public:
     bool get_do_not_delete() { return do_not_delete; }
     void set_prev_comand(uint16_t cmd) { command_prev = cmd; }
     uint16_t get_prev_command() { return command_prev; }
-
+    void set_encryption_flag(bool flag) 
+    { 
+        encryption_flag = flag; 
+        if (flag) 
+            dce2_smb_stats.total_encrypted_sessions++; 
+    }
+    bool get_encryption_flag() { return encryption_flag; }
 private:
     // do_not_delete is to make sure when we are in processing we should not delete the context
     // which is being processed
@@ -91,6 +98,7 @@ private:
     Dce2Smb2SessionDataMap attached_flows;
     Dce2Smb2TreeTrackerMap connected_trees;
     std::atomic<bool> reload_prune;
+    std::atomic<bool> encryption_flag;
     std::mutex connected_trees_mutex;
     std::mutex attached_flows_mutex;
     // fcfs_mutex is to make sure the mutex is taken at first come first basis if code 

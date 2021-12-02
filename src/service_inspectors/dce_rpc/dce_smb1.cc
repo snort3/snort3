@@ -314,6 +314,7 @@ Dce2Smb1SessionData::Dce2Smb1SessionData(const Packet* p,
     ssd.sd = sd;
     ssd.policy = policy;
     SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p, "smb1 session created\n");
+    dce2_smb_stats.total_smb1_sessions++;
 }
 
 Dce2Smb1SessionData::~Dce2Smb1SessionData()
