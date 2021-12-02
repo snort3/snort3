@@ -82,15 +82,6 @@ public:
 
     virtual bool is_paf() { return false; }
     virtual unsigned max(Flow* = nullptr);
-    virtual unsigned adjust_to_fit(unsigned len) { return len; }
-    virtual void update()
-    {
-        scan_footprint = 0;
-        bytes_scanned = 0;
-    }
-
-    void set_scan_footprint(unsigned fp)
-    { scan_footprint = fp; }
 
     bool to_server() { return c2s; }
     bool to_client() { return !c2s; }
@@ -98,7 +89,6 @@ public:
 protected:
     StreamSplitter(bool b) : c2s(b) { }
     uint16_t get_flush_bucket_size();
-    unsigned scan_footprint = 0;
     unsigned bytes_scanned = 0;
 
 private:
@@ -114,8 +104,6 @@ public:
     AtomSplitter(bool, uint16_t size = 0);
 
     Status scan(Packet*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override;
-    unsigned adjust_to_fit(unsigned len) override;
-    void update() override;
 
 private:
     void reset();

@@ -752,53 +752,6 @@ static int ConvertRPC(RpcSsnData* rsdata, Packet* p)
 }
 
 //-------------------------------------------------------------------------
-// splitter stuff:
-//
-// see above comments on MIN_CALL_BODY_SZ
-// why flush_point == 28 instead of 32 IDK
-//
-// we don't set a flush point to flush_point (= 28 above) because that will
-// cause the request to be segmented at that point.
-//
-// by setting max instead, we get the actual tcp segment(s) that total 32
-// or more bytes which is closer to the old set_flush_point() result (2 or
-// more segments totaling at least 28 bytes)
-//
-// obviously, the correct way to do this is to look at the actual data and
-// extract/determine the actual PDU lengths.  TBD
-//-------------------------------------------------------------------------
-
-class RpcSplitter : public StreamSplitter
-{
-public:
-    RpcSplitter(bool c2s) : StreamSplitter(c2s) { }
-
-    Status scan(Packet*, const uint8_t*, uint32_t len,
-        uint32_t, uint32_t* fp) override
-    {
-
-        bytes_scanned += len;
-        if ( bytes_scanned < max(nullptr) )
-            return SEARCH;
-
-        *fp = len;
-        return FLUSH;
-    }
-
-    unsigned max(Flow*) override
-    { return MIN_CALL_BODY_SZ; }
-
-    // FIXIT-M this limits rpc flushes to 32 bytes per pdu, is that what we want?
-    unsigned adjust_to_fit(unsigned len) override
-    {
-        if ( len > max(nullptr) )
-            return max(nullptr);
-
-        return len;
-    }
-};
-
-//-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
 
@@ -813,7 +766,7 @@ public:
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
 
     StreamSplitter* get_splitter(bool c2s) override
-    { return c2s ? new RpcSplitter(c2s) : nullptr; }
+    { return c2s ? new LogSplitter(c2s) : nullptr; }
 };
 
 RpcDecode::RpcDecode(RpcDecodeModule*)

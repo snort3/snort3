@@ -84,7 +84,10 @@ class SFDAQInstance;
 #define PKT_HAS_PARENT       0x08000000  /* derived pseudo packet from current wire packet */
 
 #define PKT_WAS_SET          0x10000000  /* derived pseudo packet (PDU) from current wire packet */
-#define PKT_UNUSED_FLAGS     0xE0000000
+
+#define PKT_MORE_TO_FLUSH    0x20000000 /* when more data is available to StreamSplitter::scan */
+
+#define PKT_UNUSED_FLAGS     0xC0000000
 
 #define PKT_TS_OFFLOADED        0x01
 

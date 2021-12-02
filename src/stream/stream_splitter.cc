@@ -71,37 +71,23 @@ AtomSplitter::AtomSplitter(bool b, uint16_t sz) : StreamSplitter(b)
     min = base + get_flush_bucket_size();
 }
 
-unsigned AtomSplitter::adjust_to_fit(unsigned len)
-{
-    return std::min(SnortConfig::get_conf()->max_pdu - bytes_scanned, len);
-}
-
 StreamSplitter::Status AtomSplitter::scan(
-    Packet*, const uint8_t*, uint32_t len, uint32_t, uint32_t* fp)
+    Packet*, const uint8_t*, uint32_t len, uint32_t flags, uint32_t* fp)
 {
     bytes_scanned += len;
     segs++;
 
-    if ( bytes_scanned < scan_footprint
-        && bytes_scanned < SnortConfig::get_conf()->max_pdu )
-        return SEARCH;
-
-    if ( segs >= 2 && bytes_scanned >= min )
+    if ( segs >= 2 && bytes_scanned >= min && !(flags & PKT_MORE_TO_FLUSH) )
     {
         *fp = len;
+        reset();
         return FLUSH;
     }
     return SEARCH;
 }
 
 void AtomSplitter::reset()
-{  segs = scan_footprint = bytes_scanned = 0; }
-
-void AtomSplitter::update()
-{
-    reset();
-    min = base + get_flush_bucket_size();
-}
+{  segs = bytes_scanned = 0; }
 
 //--------------------------------------------------------------------------
 // log splitter

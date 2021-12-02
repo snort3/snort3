@@ -86,6 +86,8 @@ protected:
     void purge_to_seq(TcpReassemblerState&, uint32_t flush_seq);
 
     bool next_no_gap(const TcpSegmentNode&);
+    bool next_no_gap_c(const TcpSegmentNode&);
+    bool next_acked_no_gap_c(const TcpSegmentNode&, const TcpReassemblerState&);
     void update_next(TcpReassemblerState&, const TcpSegmentNode&);
     uint32_t perform_partial_flush(TcpReassemblerState&, snort::Packet*, uint32_t flushed = 0);
 };

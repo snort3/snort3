@@ -1,4 +1,5 @@
 
 add_cpputest( stream_splitter_test
-    SOURCES ../stream_splitter.cc
+    SOURCES
+    ../stream_splitter.cc
 )
