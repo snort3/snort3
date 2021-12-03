@@ -1488,7 +1488,7 @@ void JSTokenizer::states_reset()
     if (tmp_buffer)
         switch_to_initial();
 
-    brace_depth = {};
+    brace_depth = std::stack<uint16_t, std::vector<uint16_t>>();
     token = UNDEFINED;
     previous_group = ASI_OTHER;
 
@@ -1501,7 +1501,7 @@ void JSTokenizer::states_reset()
 
     newline_found = false;
 
-    scope_stack = {};
+    scope_stack = std::stack<Scope>();
     scope_stack.emplace(GLOBAL);
     BEGIN(regst);
 }
