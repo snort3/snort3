@@ -836,7 +836,7 @@ void fp_set_context(IpsContext& c)
     c.context_num = 0;
 }
 
-void fp_clear_context(IpsContext& c)
+void fp_clear_context(const IpsContext& c)
 {
     delete c.stash;
     snort_free(c.otnx->matchInfo);

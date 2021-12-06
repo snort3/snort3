@@ -146,6 +146,7 @@ TEST_GROUP(hyper_search_test_group)
     {
         s_parse_errors = 0;
         handle = HyperSearch::setup();
+        CHECK(handle);
     }
 
     void teardown() override

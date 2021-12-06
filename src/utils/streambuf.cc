@@ -48,6 +48,7 @@ streamsize istreambuf_glue::last_chunk_offset() const
     return get<2>(chunks.back());
 }
 
+// cppcheck-suppress unusedFunction
 streambuf* istreambuf_glue::setbuf(char* s, streamsize n)
 {
     n = max(0, n);
@@ -69,6 +70,7 @@ streambuf* istreambuf_glue::setbuf(char* s, streamsize n)
     return this;
 }
 
+// cppcheck-suppress unusedFunction
 streampos istreambuf_glue::seekoff(streamoff off, ios_base::seekdir way, ios_base::openmode which)
 {
     if (!(which & ios_base::in))
@@ -118,6 +120,7 @@ streampos istreambuf_glue::seekoff(streamoff off, ios_base::seekdir way, ios_bas
     return pos;
 }
 
+// cppcheck-suppress unusedFunction
 streampos istreambuf_glue::seekpos(streampos pos, ios_base::openmode which)
 {
     if (!(which & ios_base::in))
@@ -156,6 +159,7 @@ int istreambuf_glue::sync()
     return -1;
 }
 
+// cppcheck-suppress unusedFunction
 streamsize istreambuf_glue::showmanyc()
 {
     if (chunks.empty())
@@ -168,6 +172,7 @@ streamsize istreambuf_glue::showmanyc()
     return size - off;
 }
 
+// cppcheck-suppress unusedFunction
 streamsize istreambuf_glue::xsgetn(char* s, streamsize n)
 {
     assert(n >= 0);
@@ -202,6 +207,7 @@ streamsize istreambuf_glue::xsgetn(char* s, streamsize n)
     return r;
 }
 
+// cppcheck-suppress unusedFunction
 int istreambuf_glue::underflow()
 {
     if (chunks.empty())
@@ -344,6 +350,7 @@ int ostreambuf_infl::sync()
     return -1;
 }
 
+// cppcheck-suppress unusedFunction
 streamsize ostreambuf_infl::xsputn(const char* s, streamsize n)
 {
     assert(n >= 0);
@@ -362,6 +369,7 @@ streamsize ostreambuf_infl::xsputn(const char* s, streamsize n)
     return n;
 }
 
+// cppcheck-suppress unusedFunction
 int ostreambuf_infl::overflow(int c)
 {
     if (traits_type::eof() == c)

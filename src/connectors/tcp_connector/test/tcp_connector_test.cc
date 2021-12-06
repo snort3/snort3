@@ -506,22 +506,6 @@ TEST_GROUP(tcp_connector_tinit_tterm_answer)
     }
 };
 
-TEST(tcp_connector_tinit_tterm_answer, null)
-{
-    CHECK(1==1);
-}
-
-TEST(tcp_connector_tinit_tterm_call, null)
-{
-    CHECK(1==1);
-}
-
-TEST(tcp_connector_tinit_tterm_thread_call, null)
-{
-    sleep(1);
-    CHECK(1==1);
-}
-
 TEST(tcp_connector_tinit_tterm_call, alloc_discard)
 {
     const uint8_t* data = nullptr;

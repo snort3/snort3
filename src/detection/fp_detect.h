@@ -93,7 +93,7 @@ struct OtnxMatchData
 int fpAddMatch(OtnxMatchData*, const OptTreeNode*);
 
 void fp_set_context(snort::IpsContext&);
-void fp_clear_context(snort::IpsContext&);
+void fp_clear_context(const snort::IpsContext&);
 
 void fp_full(snort::Packet*);
 void fp_partial(snort::Packet*);
