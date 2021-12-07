@@ -22,7 +22,7 @@ if (ENABLE_STATIC_DAQ)
     )
     set_source_files_properties(sfdaq.cc PROPERTIES COMPILE_DEFINITIONS ENABLE_STATIC_DAQ)
     include_directories(${CMAKE_CURRENT_BINARY_DIR})
-    set(STATIC_DAQ_MODULES_HEADER "sfdaq_static_modules.h")
+    set(STATIC_DAQ_MODULES_HEADER "sfdaq_static_modules.h.in")
 endif ()
 
 add_library (packet_io OBJECT
