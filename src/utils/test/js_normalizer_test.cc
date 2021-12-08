@@ -2455,7 +2455,7 @@ TEST_CASE("split and continuation combined", "[JSNormalizer]")
         char dst4[sizeof(exp4)];
 
         JSIdentifierCtx ident_ctx(DEPTH, MAX_SCOPE_DEPTH, s_ident_built_in);
-        JSNormalizer norm(ident_ctx, DEPTH, MAX_TEMPLATE_NESTING, MAX_SCOPE_DEPTH);
+        JSNormalizer norm(ident_ctx, DEPTH, MAX_TEMPLATE_NESTING, MAX_BRACKET_DEPTH);
 
         DO(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1);
         CHECK(!memcmp(exp1, dst1, sizeof(exp1) - 1));
@@ -2468,6 +2468,44 @@ TEST_CASE("split and continuation combined", "[JSNormalizer]")
 
         DO(src4, sizeof(src4) - 1, dst4, sizeof(dst4) - 1);
         CHECK(!memcmp(exp4, dst4, sizeof(exp4) - 1));
+
+        CLOSE();
+    }
+    SECTION("PDU 1 [cont] PDU 2 [cont] PDU 3 [end]")
+    {
+        const char src1[] = "<";
+        const char src2[] = "!-";
+        const char src3[] = "-comment\n";
+
+        const char exp1[] = "<";
+        const char exp2[] = "<!-";
+        const char exp3[] = "";
+
+        const char tmp_buf1[] = "<";
+        const char tmp_buf2[] = "<!-";
+        const char tmp_buf3[] = "<!--comment\n";
+
+        char dst1[sizeof(exp1)];
+        char dst2[sizeof(exp2)];
+        char dst3[sizeof(exp3)];
+
+        JSIdentifierCtx ident_ctx(DEPTH, MAX_SCOPE_DEPTH, s_ident_built_in);
+        JSNormalizer norm(ident_ctx, DEPTH, MAX_TEMPLATE_NESTING, MAX_BRACKET_DEPTH);
+
+        TRY(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1, JSTokenizer::SCRIPT_CONTINUE);
+        CHECK(!memcmp(exp1, dst1, sizeof(exp1) - 1));
+        REQUIRE(norm.get_tmp_buf_size() == sizeof(tmp_buf1) - 1);
+        CHECK(!memcmp(norm.get_tmp_buf(), tmp_buf1, sizeof(tmp_buf1) - 1));
+
+        TRY(src2, sizeof(src2) - 1, dst2, sizeof(dst2) - 1, JSTokenizer::SCRIPT_CONTINUE);
+        CHECK(!memcmp(exp2, dst2, sizeof(exp2) - 1));
+        REQUIRE(norm.get_tmp_buf_size() == sizeof(tmp_buf2) - 1);
+        CHECK(!memcmp(norm.get_tmp_buf(), tmp_buf2, sizeof(tmp_buf2) - 1));
+
+        TRY(src3, sizeof(src3) - 1, dst3, sizeof(dst3) - 1, JSTokenizer::SCRIPT_CONTINUE);
+        CHECK(!memcmp(exp3, dst3, sizeof(exp3) - 1));
+        REQUIRE(norm.get_tmp_buf_size() == sizeof(tmp_buf3) - 1);
+        CHECK(!memcmp(norm.get_tmp_buf(), tmp_buf3, sizeof(tmp_buf3) - 1));
 
         CLOSE();
     }

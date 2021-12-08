@@ -58,6 +58,13 @@ public:
     static size_t size()
     { return sizeof(JSNormalizer) + 16834; /* YY_BUF_SIZE */ }
 
+#ifdef CATCH_TEST_BUILD
+    const char* get_tmp_buf() const
+    { return tmp_buf; }
+    size_t get_tmp_buf_size() const
+    { return tmp_buf_size; }
+#endif
+
 #ifdef BENCHMARK_TEST
     void rewind_output()
     { out_buf.pubseekoff(0, std::ios_base::beg, std::ios_base::out); }

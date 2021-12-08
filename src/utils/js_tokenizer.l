@@ -1655,11 +1655,11 @@ void JSTokenizer::states_adjust()
 
     // Reset all the states after the current state till the state before EOF
     if (sp <= eof_sp)
-        memset((void*)(states + sp), 0, sizeof(states[0]) * (eof_sp - sp));
+        memset((void*)(states + sp), 0, sizeof(states[0]) * (eof_sp - sp + 1));
     else
     {
         memset((void*)(states + sp), 0, sizeof(states[0]) * (JSTOKENIZER_MAX_STATES - sp));
-        memset(&states, 0, sizeof(states[0]) * eof_sp);
+        memset(&states, 0, sizeof(states[0]) * (eof_sp + 1));
     }
     --sp;
 }
