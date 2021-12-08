@@ -27,6 +27,9 @@
 
 #include <daq.h>
 
+#include <algorithm>
+#include <vector>
+
 #include "log/messages.h"
 #include "main/snort_config.h"
 
@@ -83,14 +86,26 @@ void SFDAQ::unload()
 
 void SFDAQ::print_types(ostream& ostr)
 {
-    DAQ_Module_h module = daq_modules_first();
+    DAQ_Module_h mod = daq_modules_first();
 
-    if (module)
+    if (mod)
         ostr << "Available DAQ modules:" << endl;
     else
         ostr << "No available DAQ modules (try adding directories with --daq-dir)." << endl;
 
-    while (module)
+    std::vector<DAQ_Module_h> modules;
+
+    while (mod)
+    {
+        modules.push_back(mod);
+        mod = daq_modules_next();
+    }
+
+    std::sort(modules.begin(), modules.end(),
+        [](DAQ_Module_h a, DAQ_Module_h b)
+        { return strcmp(daq_module_get_name(a), daq_module_get_name(b)) < 0; });
+
+    for ( auto module : modules )
     {
         ostr << daq_module_get_name(module) << "(v" << daq_module_get_version(module) << "):";
 
@@ -131,8 +146,6 @@ void SFDAQ::print_types(ostream& ostr)
                 ostr << "- " << var_desc_table[i].description << endl;
             }
         }
-
-        module = daq_modules_next();
     }
 }
 
