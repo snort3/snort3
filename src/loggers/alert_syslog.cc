@@ -228,10 +228,8 @@ static void AlertSyslog(
             SnortSnprintfAppend(event_string, sizeof(event_string),
                 "<%s> ", SFDAQ::get_input_spec());
         }
-    }
-    if ((p != nullptr) && p->ptrs.ip_api.is_ip())
-    {
-        IpProtocol ip_proto = p->get_ip_proto_next();
+
+	IpProtocol ip_proto = p->get_ip_proto_next();
         if (protocol_names[to_utype(ip_proto)] != nullptr)
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
@@ -293,7 +291,7 @@ static void AlertSyslog(
 
         syslog(priority, "%s", event_string);
     }
-    else
+    else if (msg != nullptr)
     {
         syslog(priority, "%s", msg == nullptr ? "ALERT" : msg);
     }
