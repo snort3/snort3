@@ -58,6 +58,8 @@ public:
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
+    bool encode(const uint8_t* const raw_in, const uint16_t raw_len, EncState&, Buffer&,
+        Flow*) override;
 };
 
 constexpr unsigned int ETHERNET_MAX_LEN_ENCAP = 1518;    /* 802.3 (+LLC) or ether II ? */
@@ -124,6 +126,20 @@ void VlanCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
         TextLog_Print(text_log, "  Len:0x%04X", proto);
     else
         TextLog_Print(text_log, "  Next:0x%04X", proto);
+}
+
+bool VlanCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len, EncState& enc,
+    Buffer& buf, Flow*)
+{
+    if (!buf.allocate(raw_len))
+        return false;
+
+    memcpy(buf.data(), raw_in, raw_len);
+
+    enc.next_ethertype = ProtocolId::ETHERTYPE_NOT_SET;
+    enc.next_proto = IpProtocol::PROTO_NOT_SET;
+
+    return true;
 }
 
 //-------------------------------------------------------------------------
