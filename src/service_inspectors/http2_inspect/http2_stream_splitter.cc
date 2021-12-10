@@ -45,22 +45,26 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
 {
     Profile profile(Http2Module::get_profile_stats());
 
+    Flow* const flow = pkt->flow;
+    if (flow->session_state & STREAM_STATE_MIDSTREAM)
+        return StreamSplitter::ABORT;
+
     // This is the session state information we share with Http2Inspect and store with stream. A
     // session is defined by a TCP connection. Since scan() is the first to see a new TCP
     // connection the new flow data object is created here.
     Http2FlowData* session_data =
-        (Http2FlowData*)pkt->flow->get_flow_data(Http2FlowData::inspector_id);
+        (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
 
     if (session_data == nullptr)
     {
         AssistantGadgetEvent event(pkt, "http");
-        DataBus::publish(FLOW_ASSISTANT_GADGET_EVENT, event, pkt->flow);
-        if (pkt->flow->assistant_gadget == nullptr)
+        DataBus::publish(FLOW_ASSISTANT_GADGET_EVENT, event, flow);
+        if (flow->assistant_gadget == nullptr)
         {
             // http_inspect is not configured
             return HttpStreamSplitter::status_value(StreamSplitter::ABORT, true);
         }
-        pkt->flow->set_flow_data(session_data = new Http2FlowData(pkt->flow));
+        flow->set_flow_data(session_data = new Http2FlowData(flow));
         Http2Module::increment_peg_counts(PEG_FLOW);
     }
 
@@ -84,7 +88,7 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
     {
         printf("HTTP/2 scan from flow data %" PRIu64
             " direction %d length %u client port %hu server port %hu\n", session_data->seq_num,
-            source_id, length, pkt->flow->client_port, pkt->flow->server_port);
+            source_id, length, flow->client_port, flow->server_port);
         fflush(stdout);
         if (HttpTestManager::get_show_scan())
         {

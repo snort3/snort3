@@ -131,7 +131,8 @@ void Http2Inspect::eval(Packet* p)
     }
 
     session_data->set_processing_stream_id(source_id);
-    Http2Stream* stream = session_data->get_processing_stream(source_id, params->concurrent_streams_limit);
+    Http2Stream* const stream = session_data->get_processing_stream(source_id,
+        params->concurrent_streams_limit);
     if (!stream)
     {
         delete[] session_data->frame_data[source_id];
