@@ -22,7 +22,9 @@
 #include "config.h"
 #endif
 
+#ifdef HAVE_MALLOC_TRIM
 #include <malloc.h>
+#endif
 #include <sys/resource.h>
 
 #include <cassert>
@@ -234,4 +236,3 @@ void MemoryCap::print(bool verbose, bool print_all)
 }
 
 } // namespace memory
-
