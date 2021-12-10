@@ -24,6 +24,7 @@
 
 #include "file_mime_decode.h"
 
+#include "decompress/file_olefile.h"
 #include "utils/util_cstring.h"
 
 #include "decode_b64.h"
@@ -33,6 +34,8 @@
 #include "file_mime_context_data.h"
 
 using namespace snort;
+
+const BufferData BufferData::buffer_null;
 
 void MimeDecode::init()
 { MimeDecodeContextData::init(); }
@@ -152,6 +155,8 @@ DecodeResult MimeDecode::decompress_data(const uint8_t* buf_in, uint32_t size_in
     if ( (fd_state == nullptr) || (size_in == 0) )
         return result;
 
+    clear_decomp_vba_data();
+
     if ( fd_state->State == STATE_COMPLETE )
         return result;
 
@@ -175,10 +180,56 @@ DecodeResult MimeDecode::decompress_data(const uint8_t* buf_in, uint32_t size_in
     default:
         buf_out = decompress_buf;
         size_out = fd_state->Next_Out - decompress_buf;
+        get_ole_data();
         break;
     }
 
     return result;
+}
+
+void MimeDecode::get_ole_data()
+{
+    uint8_t* ole_data_ptr;
+    uint32_t ole_len;
+
+    fd_state->get_ole_data(ole_data_ptr, ole_len);
+
+    if (ole_data_ptr)
+    {
+        ole_data.set(ole_len, ole_data_ptr, false);
+
+        //Reset the ole data ptr once it is stored in msg body
+        fd_state->ole_data_reset();
+    }
+}
+
+const BufferData& MimeDecode::get_decomp_vba_data()
+{
+    if (decompressed_vba_data.length() > 0)
+        return decompressed_vba_data;
+
+    if (ole_data.length() <= 0)
+        return BufferData::buffer_null;
+
+    uint8_t* buf = nullptr;
+    uint32_t buf_len = 0;
+    
+    VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
+               "Found OLE file. Sending %d bytes for the processing.\n",
+                ole_data.length());
+
+    oleprocess(ole_data.data_ptr(), ole_data.length(), buf, buf_len);
+
+    if (buf && buf_len)
+        decompressed_vba_data.set(buf_len, buf, true);
+
+    return decompressed_vba_data;
+}
+
+void MimeDecode::clear_decomp_vba_data()
+{
+    ole_data.reset();
+    decompressed_vba_data.reset();
 }
 
 void MimeDecode::file_decomp_reset()
@@ -200,6 +251,7 @@ void MimeDecode::file_decomp_init()
     bool decompress_pdf = config->is_decompress_pdf();
     bool decompress_swf = config->is_decompress_swf();
     bool decompress_zip = config->is_decompress_zip();
+    bool decompress_vba = config->is_decompress_vba();
 
     if ( !decompress_pdf && !decompress_swf && !decompress_zip )
         return;
@@ -208,7 +260,8 @@ void MimeDecode::file_decomp_init()
     fd_state->Modes =
         (decompress_pdf ? FILE_PDF_DEFL_BIT : 0) |
         (decompress_swf ? (FILE_SWF_ZLIB_BIT | FILE_SWF_LZMA_BIT) : 0) |
-        (decompress_zip ? FILE_ZIP_DEFL_BIT : 0);
+        (decompress_zip ? FILE_ZIP_DEFL_BIT : 0) |
+        (decompress_vba ? FILE_VBA_EXTR_BIT : 0);
     fd_state->Alert_Callback = nullptr;
     fd_state->Alert_Context = nullptr;
     fd_state->Compr_Depth = 0;

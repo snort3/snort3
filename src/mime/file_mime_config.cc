@@ -111,6 +111,16 @@ bool DecodeConfig::is_decompress_zip() const
     return decompress_zip;
 }
 
+void DecodeConfig::set_decompress_vba(bool enabled)
+{
+    decompress_vba = enabled;
+}
+
+bool DecodeConfig::is_decompress_vba() const
+{
+    return decompress_vba;
+}
+
 void DecodeConfig::set_decompress_buffer_size(uint32_t size)
 {
     decompress_buffer_size = size;
@@ -171,6 +181,7 @@ void DecodeConfig::show(bool full) const
     ConfigLogger::log_flag("decompress_pdf", decompress_pdf);
     ConfigLogger::log_flag("decompress_swf", decompress_swf);
     ConfigLogger::log_flag("decompress_zip", decompress_zip);
+    ConfigLogger::log_flag("decompress_vba", decompress_vba);
     ConfigLogger::log_value("decompress_buffer_size", decompress_buffer_size);
 }
 

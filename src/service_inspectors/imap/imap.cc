@@ -724,6 +724,10 @@ public:
     bool can_start_tls() const override
     { return true; }
 
+    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
+    bool get_fp_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p,
+        snort::InspectionBuffer& b) override;
+
 private:
     IMAP_PROTO_CONF* config;
 };
@@ -767,6 +771,41 @@ void Imap::eval(Packet* p)
     ++imapstats.packets;
 
     snort_imap(config, p);
+}
+
+bool Imap::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
+{
+    switch (ibt)
+    {
+        case InspectionBuffer::IBT_VBA:
+        {
+            IMAPData* imap_ssn = get_session_data(p->flow);
+
+            if (!imap_ssn)
+                return false;
+
+            const BufferData& vba_buf = imap_ssn->mime_ssn->get_vba_inspect_buf();
+
+            if (vba_buf.data_ptr() && vba_buf.length())
+            {
+                b.data = vba_buf.data_ptr();
+                b.len = vba_buf.length();
+                return true;
+            }
+            else
+                return false;
+        }
+
+        default:
+            break;
+    }
+    return false;
+
+}
+bool Imap::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
+{
+    // Fast pattern buffers only supplied at specific times
+    return get_buf(ibt, p, b);
 }
 
 //-------------------------------------------------------------------------

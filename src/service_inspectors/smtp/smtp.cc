@@ -1433,6 +1433,9 @@ public:
 
     void ProcessSmtpCmdsList(const SmtpCmd*);
 
+    bool get_fp_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p,
+        snort::InspectionBuffer& b) override;
+
 private:
     SmtpProtoConf* config;
 };
@@ -1485,15 +1488,38 @@ void Smtp::eval(Packet* p)
     snort_smtp(config, p);
 }
 
-bool Smtp::get_buf(
-    InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
+bool Smtp::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
-    if ( ibt != InspectionBuffer::IBT_ALT )
-        return false;
+    // Fast pattern buffers only supplied at specific times
+    switch (ibt)
+    {
+        case InspectionBuffer::IBT_ALT:
+            b.data = SMTP_GetAltBuffer(p, b.len);
+            return (b.data != nullptr);
 
-    b.data = SMTP_GetAltBuffer(p, b.len);
+        case InspectionBuffer::IBT_VBA:
+        {
+            SMTPData* smtp_ssn = get_session_data(p->flow);
 
-    return (b.data != nullptr);
+            if (!smtp_ssn)
+                return false;
+
+            const BufferData& vba_buf = smtp_ssn->mime_ssn->get_vba_inspect_buf();
+
+            if (vba_buf.data_ptr() && vba_buf.length())
+            {
+                b.data = vba_buf.data_ptr();
+                b.len = vba_buf.length();
+                return true;
+            }
+            else
+                return false;
+        }
+        default:
+            break;
+    }
+    return false;
+
 }
 
 void Smtp::clear(Packet* p)
@@ -1532,6 +1558,11 @@ void Smtp::ProcessSmtpCmdsList(const SmtpCmd* sc)
 
     if ( sc->flags & PCMD_ALT )
         config->cmd_config[id].max_line_len = sc->number;
+}
+
+bool Smtp::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
+{
+    return get_buf(ibt, p, b);
 }
 
 //-------------------------------------------------------------------------

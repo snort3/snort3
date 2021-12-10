@@ -24,6 +24,7 @@
 
 #include "decompress/file_decomp.h"
 #include "framework/counts.h"
+#include "helpers/buffer_data.h"
 #include "main/snort_types.h"
 #include "mime/decode_base.h"
 #include "mime/file_mime_config.h"
@@ -81,14 +82,19 @@ public:
 
     DecodeResult decompress_data(const uint8_t* buf_in, uint32_t size_in,
                                  const uint8_t*& buf_out, uint32_t& size_out);
+    const BufferData& get_decomp_vba_data();
+    void clear_decomp_vba_data();
 
     static void init();
 
 private:
+    void get_ole_data();
     DecodeType decode_type = DECODE_NONE;
     snort::DecodeConfig* config;
     DataDecode* decoder = nullptr;
     fd_session_t* fd_state = nullptr;
+    BufferData ole_data;
+    BufferData decompressed_vba_data;
 };
 
 } // namespace snort

@@ -48,6 +48,9 @@ static const Parameter s_params[] =
     { "decompress_zip", Parameter::PT_BOOL, nullptr, "false",
       "decompress zip files in MIME attachments" },
 
+    { "decompress_vba", Parameter::PT_BOOL, nullptr, "false",
+      "decompress MS Office Visual Basic for Applications macro files in MIME attachments" },
+
     { "qp_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
       "Quoted Printable decoding depth (-1 no limit)" },
 
@@ -114,6 +117,9 @@ bool PopModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("decompress_zip") )
         config->decode_conf.set_decompress_zip(v.get_bool());
+
+    else if ( v.is("decompress_vba") )
+        config->decode_conf.set_decompress_vba(v.get_bool());
 
     else if ( v.is("qp_decode_depth") )
         config->decode_conf.set_qp_depth(mime_value);

@@ -663,6 +663,10 @@ public:
     bool can_start_tls() const override
     { return true; }
 
+    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
+    bool get_fp_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p,
+        snort::InspectionBuffer& b) override;
+
 private:
     POP_PROTO_CONF* config;
 };
@@ -706,6 +710,41 @@ void Pop::eval(Packet* p)
     ++popstats.packets;
 
     snort_pop(config, p);
+}
+
+bool Pop::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
+{
+    // Fast pattern buffers only supplied at specific times
+    switch (ibt)
+    {
+        case InspectionBuffer::IBT_VBA:
+        {
+            POPData* pop_ssn = get_session_data(p->flow);
+
+            if (!pop_ssn)
+                return false;
+
+            const BufferData& vba_buf = pop_ssn->mime_ssn->get_vba_inspect_buf();
+            
+            if (vba_buf.data_ptr() && vba_buf.length())
+            {
+                b.data = vba_buf.data_ptr();
+                b.len = vba_buf.length();
+                return true;
+            }
+            else
+                return false;
+        }
+
+        default:
+            break;
+    }
+    return false;
+}
+
+bool Pop::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
+{
+    return get_buf(ibt, p, b);
 }
 
 //-------------------------------------------------------------------------

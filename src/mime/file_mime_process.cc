@@ -711,6 +711,14 @@ void MimeSession::set_mime_stats(MimeStats* stats)
     mime_stats = stats;
 }
 
+const BufferData& MimeSession::get_vba_inspect_buf()
+{
+    if (!decode_state)
+        return BufferData::buffer_null;
+
+    return decode_state->get_decomp_vba_data();
+}
+
 MailLogState* MimeSession::get_log_state()
 {
     return log_state;

@@ -93,6 +93,9 @@ static const Parameter s_params[] =
     { "decompress_zip", Parameter::PT_BOOL, nullptr, "false",
       "decompress zip files in MIME attachments" },
 
+    { "decompress_vba", Parameter::PT_BOOL, nullptr, "false",
+      "decompress MS Office Visual Basic for Applications macro files in MIME attachments" },
+
     { "email_hdrs_log_depth", Parameter::PT_INT, "0:20480", "1464",
       "depth for logging email headers" },
 
@@ -267,6 +270,9 @@ bool SmtpModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("decompress_zip") )
         config->decode_conf.set_decompress_zip(v.get_bool());
+
+    else if ( v.is("decompress_vba") )
+        config->decode_conf.set_decompress_vba(v.get_bool());
 
     else if ( v.is("email_hdrs_log_depth") )
         config->log_config.email_hdrs_log_depth = v.get_uint16();
