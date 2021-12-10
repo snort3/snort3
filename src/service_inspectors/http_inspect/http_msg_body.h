@@ -66,8 +66,7 @@ private:
     void do_enhanced_js_normalization(const Field& input, Field& output);
     void do_legacy_js_normalization(const Field& input, Field& output);
     void clean_partial(uint32_t& partial_inspected_octets, uint32_t& partial_detect_length,
-        uint8_t*& partial_detect_buffer,  uint32_t& partial_js_detect_length,
-        int32_t detect_length);
+        uint8_t*& partial_detect_buffer,  uint32_t& partial_js_detect_length);
     void bookkeeping_regular_flush(uint32_t& partial_detect_length,
         uint8_t*& partial_detect_buffer, uint32_t& partial_js_detect_length,
         int32_t detect_length);

@@ -89,7 +89,7 @@ void HttpMsgBody::bookkeeping_regular_flush(uint32_t& partial_detect_length,
 }
 
 void HttpMsgBody::clean_partial(uint32_t& partial_inspected_octets, uint32_t& partial_detect_length,
-    uint8_t*& partial_detect_buffer, uint32_t& partial_js_detect_length, int32_t detect_length)
+    uint8_t*& partial_detect_buffer, uint32_t& partial_js_detect_length)
 {
     body_octets += msg_text.length();
     partial_inspected_octets = session_data->partial_flush[source_id] ? msg_text.length() : 0;
@@ -100,7 +100,9 @@ void HttpMsgBody::clean_partial(uint32_t& partial_inspected_octets, uint32_t& pa
     if (session_data->detect_depth_remaining[source_id] > 0)
     {
         delete[] partial_detect_buffer;
-        assert(detect_length <= session_data->detect_depth_remaining[source_id]);
+        const int32_t detect_length =
+            (partial_js_detect_length <= session_data->detect_depth_remaining[source_id]) ?
+            partial_js_detect_length : session_data->detect_depth_remaining[source_id];
         bookkeeping_regular_flush(partial_detect_length, partial_detect_buffer,
             partial_js_detect_length, detect_length);
     }
@@ -170,10 +172,14 @@ void HttpMsgBody::analyze()
                     decompressed_file_body.length());
                 cumulative_data.set(total_length, cumulative_buffer, true);
                 do_legacy_js_normalization(cumulative_data, js_norm_body);
-                if ((int32_t)partial_js_detect_length == js_norm_body.length())
+                // Partial inspections don't update detect_depth_remaining.
+                // If there is no new data or same data will be sent to detection because
+                // we already reached detect_depth, don't do another detection
+                if ((int32_t)partial_js_detect_length == js_norm_body.length() ||
+                    partial_js_detect_length >= session_data->detect_depth_remaining[source_id])
                 {
                     clean_partial(partial_inspected_octets, partial_detect_length,
-                        partial_detect_buffer, partial_js_detect_length, js_norm_body.length());
+                        partial_detect_buffer, partial_js_detect_length);
                     return;
                 }
             }
