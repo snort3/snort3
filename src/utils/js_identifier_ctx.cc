@@ -122,7 +122,26 @@ void JSIdentifierCtx::reset()
     scopes.emplace_back(JSProgramScopeType::GLOBAL);
 }
 
-void JSIdentifierCtx::ProgramScope::add_alias(const char* alias, const std::string& value)
+void JSIdentifierCtx::add_alias(const char* alias, const std::string&& value)
+{
+    assert(alias);
+    assert(!scopes.empty());
+    scopes.back().add_alias(alias, std::move(value));
+}
+
+const char* JSIdentifierCtx::alias_lookup(const char* alias) const
+{
+    assert(alias);
+
+    for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
+    {
+        if (const char* value = it->get_alias_value(alias))
+            return value;
+    }
+    return nullptr;
+}
+
+void JSIdentifierCtx::ProgramScope::add_alias(const char* alias, const std::string&& value)
 {
     assert(alias);
     aliases[alias] = value;
@@ -142,25 +161,6 @@ const char* JSIdentifierCtx::ProgramScope::get_alias_value(const char* alias) co
 // advanced program scope access for testing
 
 #ifdef CATCH_TEST_BUILD
-
-void JSIdentifierCtx::add_alias(const char* alias, const std::string& value)
-{
-    assert(alias);
-    assert(!scopes.empty());
-    scopes.back().add_alias(alias, value);
-}
-
-const char* JSIdentifierCtx::alias_lookup(const char* alias) const
-{
-    assert(alias);
-
-    for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
-    {
-        if (const char* value = it->get_alias_value(alias))
-            return value;
-    }
-    return nullptr;
-}
 
 bool JSIdentifierCtx::scope_check(const std::list<JSProgramScopeType>& compare) const
 {

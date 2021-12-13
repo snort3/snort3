@@ -117,6 +117,16 @@ private:
         ASI_GROUP_MAX
     };
 
+    enum AliasState
+    {
+        ALIAS_NONE = 0,
+        ALIAS_DEFINITION, // var a
+        ALIAS_PREFIX,     // var a +%possible PDU split%
+                          // to handle ambiguity between a++, a+=, and a + b
+        ALIAS_EQUALS,     // var a =
+        ALIAS_VALUE       // var a = eval
+    };
+
 public:
     enum JSRet
     {
@@ -162,6 +172,7 @@ private:
     JSRet do_operator_spacing();
     JSRet do_semicolon_insertion(ASIGroup current);
     JSRet do_identifier_substitution(const char* lexeme, bool id_part);
+    JSRet push_identifier(const char* ident);
     bool unescape(const char* lexeme);
     void process_punctuator(JSToken tok = PUNCTUATOR);
     void process_closing_brace();
@@ -199,11 +210,28 @@ private:
     static const char* m2str(ScopeMetaType);
     static bool is_operator(JSToken);
 
+    void dealias_clear_mutated(bool id_part);
+    void dealias_increment();
+    void dealias_identifier(bool id_part, bool assignment_start);
+    void dealias_reset();
+    void dealias_prefix_reset();
+    void dealias_equals(bool complex);
+    void dealias_append();
+    void dealias_finalize();
+
     static const char* p_scope_codes[];
 
     void* cur_buffer;
     void* tmp_buffer = nullptr;
     std::stringstream tmp;
+
+    std::stringstream aliased;
+    std::string alias;
+    std::string last_dealiased;
+    AliasState alias_state = ALIAS_NONE;
+    bool prefix_increment = false;
+    bool dealias_stored = false;
+
     uint8_t max_template_nesting;
     std::stack<uint16_t, std::vector<uint16_t>> brace_depth;
     JSToken token = UNDEFINED;

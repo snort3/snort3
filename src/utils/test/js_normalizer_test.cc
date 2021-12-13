@@ -21,57 +21,24 @@
 #include "config.h"
 #endif
 
-#include "catch/catch.hpp"
-
 #include <cstring>
-#include <tuple>
+
+#include "catch/catch.hpp"
 
 #include "utils/js_identifier_ctx.h"
 #include "utils/js_normalizer.h"
-
-// Mock functions
-
-namespace snort
-{
-[[noreturn]] void FatalError(const char*, ...)
-{ exit(EXIT_FAILURE); }
-void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) {}
-uint8_t TraceApi::get_constraints_generation() { return 0; }
-void TraceApi::filter(const Packet&) {}
-}
-
-THREAD_LOCAL const snort::Trace* http_trace = nullptr;
-
-class JSIdentifierCtxStub : public JSIdentifierCtxBase
-{
-public:
-    JSIdentifierCtxStub() = default;
-
-    const char* substitute(const char* identifier) override
-    { return identifier; }
-    bool built_in(const char*) const override
-    { return false; }
-    bool scope_push(JSProgramScopeType) override { return true; }
-    bool scope_pop(JSProgramScopeType) override { return true; }
-    void reset() override {}
-    size_t size() const override { return 0; }
-};
-
-// Test cases
+#include "utils/test/js_test_utils.h"
 
 using namespace snort;
-
-#define DEPTH 65535
-#define MAX_TEMPLATE_NESTING 4
-#define MAX_BRACKET_DEPTH 256
-#define MAX_SCOPE_DEPTH 256
-
-static const std::unordered_set<std::string> s_ident_built_in { "console", "eval", "document" };
 
 // Unit tests
 
 #ifdef CATCH_TEST_BUILD
 
+#define DEPTH 65535
+#define MAX_TEMPLATE_NESTING 4
+#define MAX_BRACKET_DEPTH 256
+#define MAX_SCOPE_DEPTH 256
 #define DST_SIZE 512
 
 #define NORMALIZE(src)                                             \
@@ -3709,16 +3676,6 @@ TEST_CASE("built-in identifiers split", "[JSNormalizer]")
     }
 }
 
-static void test_scope(const char* context, std::list<JSProgramScopeType> stack)
-{
-    std::string buf(context);
-    buf += "</script>";
-    JSIdentifierCtx ident_ctx(DEPTH, MAX_SCOPE_DEPTH, s_ident_built_in);
-    JSNormalizer normalizer(ident_ctx, DEPTH, MAX_TEMPLATE_NESTING, MAX_BRACKET_DEPTH);
-    normalizer.normalize(buf.c_str(), buf.size());
-    CHECK(ident_ctx.get_types() == stack);
-}
-
 TEST_CASE("Scope tracking - basic","[JSNormalizer]")
 {
     SECTION("Global only")
@@ -4011,24 +3968,6 @@ TEST_CASE("Scope tracking - closing","[JSNormalizer]")
         test_scope("function() { if (true)\nfor ( ; ; ) a = 2 }", {GLOBAL});
 }
 
-typedef std::tuple<const char*,const char*, std::list<JSProgramScopeType>> PduCase;
-static void test_normalization(std::list<PduCase> pdus)
-{
-    JSIdentifierCtx ident_ctx(DEPTH, MAX_SCOPE_DEPTH, s_ident_built_in);
-    JSNormalizer normalizer(ident_ctx, DEPTH, MAX_TEMPLATE_NESTING, MAX_BRACKET_DEPTH);
-    for(auto pdu:pdus)
-    {
-        const char* source;
-        const char* expected;
-        std::list<JSProgramScopeType> stack;
-        std::tie(source,expected,stack) = pdu;
-        normalizer.normalize(source, strlen(source));
-        std::string result_buf(normalizer.get_script(), normalizer.script_size());
-        CHECK(ident_ctx.get_types() == stack);
-        CHECK(result_buf == expected);
-    }
-}
-
 TEST_CASE("Scope tracking - over multiple PDU","[JSNormalizer]")
 {
     // Every line represents a PDU. Each pdu has input buffer, expected script
@@ -4184,17 +4123,6 @@ TEST_CASE("Scope tracking - over multiple PDU","[JSNormalizer]")
             {"var a; class", "var var_0000;class", {GLOBAL}},
             {"_a; { a }", "var var_0000;var_0001;{var_0000}", {GLOBAL}}
         });
-}
-
-static void test_normalization_bad(const char* source, const char* expected,
-    JSTokenizer::JSRet eret)
-{
-    JSIdentifierCtx ident_ctx(DEPTH, MAX_SCOPE_DEPTH, s_ident_built_in);
-    JSNormalizer normalizer(ident_ctx, DEPTH, MAX_TEMPLATE_NESTING, MAX_BRACKET_DEPTH);
-    auto ret = normalizer.normalize(source, strlen(source));
-    std::string result_buf(normalizer.get_script(), normalizer.script_size());
-    CHECK(eret == ret);
-    CHECK(result_buf == expected);
 }
 
 TEST_CASE("Scope tracking - error handling", "[JSNormalizer]")

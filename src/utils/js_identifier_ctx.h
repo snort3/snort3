@@ -39,6 +39,8 @@ public:
     virtual ~JSIdentifierCtxBase() = default;
 
     virtual const char* substitute(const char* identifier) = 0;
+    virtual void add_alias(const char* alias, const std::string&& value) = 0;
+    virtual const char* alias_lookup(const char* alias) const = 0;
     virtual bool built_in(const char* identifier) const = 0;
 
     virtual bool scope_push(JSProgramScopeType) = 0;
@@ -56,6 +58,8 @@ public:
         const std::unordered_set<std::string>& ident_built_in);
 
     virtual const char* substitute(const char* identifier) override;
+    virtual void add_alias(const char* alias, const std::string&& value) override;
+    virtual const char* alias_lookup(const char* alias) const override;
     virtual bool built_in(const char* identifier) const override;
 
     virtual bool scope_push(JSProgramScopeType) override;
@@ -74,7 +78,7 @@ private:
     public:
         ProgramScope(JSProgramScopeType t) : t(t) {}
 
-        void add_alias(const char* alias, const std::string& value);
+        void add_alias(const char* alias, const std::string&& value);
         const char* get_alias_value(const char* alias) const;
 
         JSProgramScopeType type() const
@@ -95,10 +99,6 @@ private:
 // advanced program scope access for testing
 #ifdef CATCH_TEST_BUILD
 public:
-    // alias tracking
-    void add_alias(const char* alias, const std::string& value);
-    const char* alias_lookup(const char* alias) const;
-
     // compare scope list with the passed pattern
     bool scope_check(const std::list<JSProgramScopeType>& compare) const;
     const std::list<JSProgramScopeType> get_types() const;
