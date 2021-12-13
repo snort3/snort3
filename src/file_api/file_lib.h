@@ -24,6 +24,7 @@
 
 // This will be basis of file class
 
+#include <mutex>
 #include <ostream>
 #include <string>
 
@@ -108,6 +109,7 @@ protected:
     bool file_capture_enabled = false;
     FileState file_state = { FILE_CAPTURE_SUCCESS, FILE_SIG_PROCESSING };
     uint32_t policy_id = 0;
+    std::mutex user_file_data_mutex;
     UserFileDataBase* user_file_data = nullptr;
 
 private:

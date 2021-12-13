@@ -358,8 +358,12 @@ void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
             break;
         }
 
+        user_file_data_mutex.lock();
+
         if (policy and log_needed and user_file_data)
             policy->log_file_action(flow, this, FILE_ACTION_DEFAULT);
+
+        user_file_data_mutex.unlock();
 
         if ( config->trace_type )
             print(std::cout);
