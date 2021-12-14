@@ -42,7 +42,7 @@ void test_scope(const char* context, std::list<JSProgramScopeType> stack)
 {
     std::string buf(context);
     buf += "</script>";
-    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ident_built_in);
+    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids);
     JSNormalizer normalizer(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth);
     normalizer.normalize(buf.c_str(), buf.size());
     CHECK(ident_ctx.get_types() == stack);
@@ -50,7 +50,7 @@ void test_scope(const char* context, std::list<JSProgramScopeType> stack)
 
 void test_normalization(const char* source, const char* expected)
 {
-    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ident_built_in);
+    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids);
     JSNormalizer normalizer(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth);
     normalizer.normalize(source, strlen(source));
     std::string result_buf(normalizer.get_script(), normalizer.script_size());
@@ -59,7 +59,7 @@ void test_normalization(const char* source, const char* expected)
 
 void test_normalization_bad(const char* source, const char* expected, JSTokenizer::JSRet eret)
 {
-    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ident_built_in);
+    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids);
     JSNormalizer normalizer(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth);
     auto ret = normalizer.normalize(source, strlen(source));
     std::string result_buf(normalizer.get_script(), normalizer.script_size());
@@ -69,7 +69,7 @@ void test_normalization_bad(const char* source, const char* expected, JSTokenize
 
 void test_normalization(const std::vector<PduCase>& pdus)
 {
-    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ident_built_in);
+    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids);
     JSNormalizer normalizer(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth);
 
     for (const auto& pdu : pdus)
@@ -84,7 +84,7 @@ void test_normalization(const std::vector<PduCase>& pdus)
 
 void test_normalization(std::list<ScopedPduCase> pdus)
 {
-    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ident_built_in);
+    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids);
     JSNormalizer normalizer(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth);
     for (auto pdu:pdus)
     {

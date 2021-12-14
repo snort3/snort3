@@ -29,10 +29,12 @@
 #include "utils/js_identifier_ctx.h"
 #include "utils/js_normalizer.h"
 
-constexpr int norm_depth=65535;
-constexpr int max_template_nesting=4;
-constexpr int max_bracket_depth=256;
-constexpr int max_scope_depth=256;
+constexpr int unlim_depth = -1;
+constexpr int norm_depth = 65535;
+constexpr int max_template_nesting = 4;
+constexpr int max_bracket_depth = 256;
+constexpr int max_scope_depth = 256;
+static const std::unordered_set<std::string> s_ignored_ids { "console", "eval", "document" };
 
 namespace snort
 {
@@ -57,8 +59,6 @@ public:
     void reset() override {}
     size_t size() const override { return 0; }
 };
-
-static const std::unordered_set<std::string> s_ident_built_in { "console", "eval", "document" };
 
 void test_scope(const char* context, std::list<JSProgramScopeType> stack);
 void test_normalization(const char* source, const char* expected);
