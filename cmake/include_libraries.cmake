@@ -15,6 +15,7 @@ if (ENABLE_UNIT_TESTS)
 endif (ENABLE_UNIT_TESTS)
 
 # optional libraries
+find_package(Atomic QUIET)
 find_package(LibLZMA QUIET)
 find_package(Asciidoc QUIET)
 find_package(DBLATEX QUIET)
