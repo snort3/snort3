@@ -1411,7 +1411,7 @@ void InspectorManager::print_config(SnortConfig* sc)
 
 template<bool T>
 static inline void execute(
-    Packet* p, PHInstance* const * prep, unsigned num)
+    Packet* p, PHInstance* const * prep, unsigned num, bool probe = false)
 {
     Stopwatch<SnortClock> timer;
     for ( unsigned i = 0; i < num; ++i, ++prep )
@@ -1451,7 +1451,7 @@ static inline void execute(
                 "exit %s, elapsed time: %" PRId64" usec\n", inspector_name, TO_USECS(timer.get()));
 
         // must check between each ::execute()
-        if ( p->disable_inspect )
+        if ( !probe && p->disable_inspect )
             return;
     }
 }
@@ -1613,7 +1613,7 @@ void InspectorManager::probe(Packet* p)
     FrameworkPolicy* fp = policy->framework_policy;
 
     if ( !trace_enabled(snort_trace, TRACE_INSPECTOR_MANAGER, DEFAULT_TRACE_LOG_LEVEL, p) )
-        ::execute<false>(p, fp->probe.vec, fp->probe.num);
+        ::execute<false>(p, fp->probe.vec, fp->probe.num, true);
     else
     {
         Stopwatch<SnortClock> timer;
@@ -1624,7 +1624,7 @@ void InspectorManager::probe(Packet* p)
 
         timer.start();
 
-        ::execute<true>(p, fp->probe.vec, fp->probe.num);
+        ::execute<true>(p, fp->probe.vec, fp->probe.num, true);
 
         trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER, p,
             "end inspection, %s, packet %" PRId64", context %" PRId64", total time: %" PRId64" usec\n",
