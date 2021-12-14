@@ -139,6 +139,8 @@ std::string& trim_quotes(std::string& s)
 
 std::string& sanitize_lua_string(std::string& s)
 {
+    // FIXIT-L we shouldn't change the data, parts that use this function 
+    // should be refactored and use Lua multilevel long brackets [=[...]=]
     std::size_t found = s.find("]]");
     while (found != std::string::npos)
     {

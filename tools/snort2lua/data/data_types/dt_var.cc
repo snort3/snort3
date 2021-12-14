@@ -67,7 +67,9 @@ bool Variable::add_value(std::string elem)
 {
     std::string s;
     std::string end;
-    util::trim(elem);
+
+    if (elem != " ")
+        util::trim(elem);
 
     if (elem.size() <= 1)
     {
@@ -91,16 +93,32 @@ bool Variable::add_value(std::string elem)
 
     if (!s.empty() and s.front() == '$')
     {
-        // add a space between strings
         if (!vars.empty())
         {
+            // wrap in square braces if negation before var
+            if (vars.back()->data.back() == '!')
+            {
+                vars.back()->data.push_back('[');
+                end.insert(0, 1, ']');
+            }
+            
+            // add a space between strings
             if (vars.back()->type == VarType::STRING)
-                vars.back()->data += " ";
+                vars.back()->data.push_back(' ');
             else
                 add_value(" ");
         }
 
         s.erase(s.begin());
+
+        size_t brace_pos = s.find("]", 1);
+        while (brace_pos != std::string::npos)
+        {
+            end.insert(0, 1, ']');
+            s.erase(brace_pos, 1);
+            brace_pos = s.find("]", brace_pos);
+        }
+
         VarData* vd = new VarData();
         vd->type = VarType::VARIABLE;
         vd->data = s;
@@ -117,7 +135,7 @@ bool Variable::add_value(std::string elem)
         vd->type = VarType::STRING;
 
         // if the previous variable was a symbol, we need a space separator.
-        if (!vars.empty())
+        if (!vars.empty() and s != " ")
             s.insert(0, " ");
 
         vd->data = s;
@@ -194,6 +212,16 @@ std::ostream& operator<<(std::ostream& out, const Variable& var)
             util::sanitize_lua_string(v->data);
             out << "[[ ";
             count += 3;
+
+            // trim spaces, because they are added with braces
+            if (v->data.length() > 1)
+            {
+                if (v->data.front() == ' ')
+                    v->data.erase(v->data.begin());
+
+                if (v->data.back() == ' ')
+                    v->data.pop_back();
+            }
 
             std::size_t printed_length = 0;
             std::size_t str_size = v->data.size();

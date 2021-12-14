@@ -306,10 +306,28 @@ static PortObject* _POParsePort(POParser* pop)
     return po;
 }
 
+const char* _POFindMatchingBraces(const char* s)
+{
+    uint32_t depth = 0;
+
+    do
+    {
+        if (*s == '[')
+        {
+            ++depth;
+        }
+        else if (*s == ']')
+        {
+            if (depth-- == 0)
+                return s;
+        }
+    } while (*s++);
+    return nullptr;
+}
+
 // FIXIT-L _POParseString creates 1 PortObject per port in the list and
 // then consolidates into one PortObject; it should just create a single
 // PortObject and put each port into appropriate PortItems
-
 static PortObject* _POParseString(POParser* pop)
 {
     PortObject* potmp = nullptr;
@@ -341,7 +359,7 @@ static PortObject* _POParseString(POParser* pop)
 
             list_count++;
 
-            if ( (end = strrchr(pop->s, (int)']')) == nullptr )
+            if ( (end = _POFindMatchingBraces(pop->s)) == nullptr )
             {
                 pop->errflag = POPERR_NO_ENDLIST_BRACKET;
                 PortObjectFree(po);
@@ -363,8 +381,8 @@ static PortObject* _POParseString(POParser* pop)
             }
 
             /* Advance "cursor" to end of this list */
-            for (; c && pop->s != end; c = POPGetChar2(pop))
-                ;
+            while (c && pop->s != end)
+                c = POPGetChar(pop);
         }
         else if (c == ']')
         {
