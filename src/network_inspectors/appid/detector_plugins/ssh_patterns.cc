@@ -43,11 +43,3 @@ AppId SshPatternMatchers::get_appid(const std::string& pattern) const
 {
     return ssh_patterns.at(pattern);
 }
-
-void SshPatternMatchers::finalize_patterns()
-{
-    ssh_patterns["dropbear"] = APP_ID_DROPBEAR;
-    ssh_patterns["OpenSSH"] = APP_ID_OPENSSH;
-    ssh_patterns["PuTTY"] = APP_ID_PUTTY;
-    ssh_patterns["lsh"] = APP_ID_LSH;
-}

@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2021 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2005-2013 Sourcefire, Inc.
+// Copyright (C) 2021-2021 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -17,21 +16,31 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// service_ssh.h author Sourcefire Inc.
+// appid_service_event_handler.h author Shravan Rangaraju <shrarang@cisco.com>
 
-#ifndef SERVICE_SSH_H
-#define SERVICE_SSH_H
+#ifndef APPID_SERVICE_EVENT_HANDLER_H
+#define APPID_SERVICE_EVENT_HANDLER_H
 
-#include "service_detector.h"
+#include "framework/data_bus.h"
 
-class ServiceDiscovery;
+#include "appid_module.h"
 
-class SshServiceDetector : public ServiceDetector
+namespace snort
+{
+class Flow;
+}
+
+class AppIdServiceEventHandler : public snort::DataHandler
 {
 public:
-    SshServiceDetector(ServiceDiscovery*);
+    AppIdServiceEventHandler(AppIdInspector& inspector) :
+        DataHandler(MOD_NAME), inspector(inspector)
+    { }
 
-    int validate(AppIdDiscoveryArgs&) override;
+    void handle(snort::DataEvent&, snort::Flow* flow) override;
+
+private:
+    AppIdInspector& inspector;
 };
-#endif
 
+#endif

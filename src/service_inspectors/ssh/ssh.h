@@ -111,6 +111,7 @@ public:
     SSHData session;
 };
 
+#define SSH_BANNER "SSH-"
 // Length of SSH2 header, in bytes.
 #define SSH2_HEADERLEN      (5)
 // Length of SSH2 Padding, in bytes.
@@ -118,24 +119,63 @@ public:
 // Length of SSH2 packet, in bytes.
 #define SSH2_PACKET_LEN    (SSH2_HEADERLEN - SSH2_PADDING_LEN)
 #define SSH2_PACKET_MAX_SIZE    (256 * 1024)
+#define SSH_PACKET_MAX_SIZE 35000
+#define SSH_MAX_BANNER_LEN 255
+#define SSH2_COOKIE_SIZE 16
+#define NUM_KEXINIT_LISTS 10
+#define SSH_MIN_BANNER_LEN 9 //SSH-2.0-*\n
+#define SSH1_KEYX_MIN_SIZE (4 + 8 + 1) // length + padding + message
+
+#pragma pack(1)
+struct SSHKeyString
+{
+    uint32_t len;
+    uint8_t data;
+};
+
+struct SSHMsg
+{
+    uint32_t len;
+    uint8_t plen;
+    uint8_t code;
+};
+
+struct SSH2KeyExchange
+{
+    SSHMsg msg;
+    uint8_t cookie[16];
+};
+
+struct SSH1KeyExchangeV1
+{
+    uint32_t len;
+    uint8_t code;
+};
+
+struct SSHKeyExchangeFinal
+{
+    uint8_t kex_pkt;
+    uint32_t future;
+};
 
 struct SSH2Packet
 {
     uint32_t packet_length; // Length not including this field or the mesg auth code (mac)
     uint8_t padding_length; // Length of padding section.
-    char packet_data[1];    // Variable length packet payload + padding + MAC.
+    uint8_t packet_data;    // Variable length packet payload + padding + MAC.
 };
+#pragma pack()
 
 // SSH v1 message types (of interest)
 #define SSH_MSG_V1_SMSG_PUBLIC_KEY  2
 #define SSH_MSG_V1_CMSG_SESSION_KEY 3
 
 // SSH v2 message types (of interest)
+#define SSH_MSG_IGNORE      2
 #define SSH_MSG_KEXINIT     20
 #define SSH_MSG_NEWKEYS     21
 #define SSH_MSG_KEXDH_INIT  30
 #define SSH_MSG_KEXDH_REPLY 31
-
 #define SSH_MSG_KEXDH_GEX_REQ   34
 #define SSH_MSG_KEXDH_GEX_GRP   33
 #define SSH_MSG_KEXDH_GEX_INIT  32

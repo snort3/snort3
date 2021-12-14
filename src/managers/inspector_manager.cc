@@ -1464,7 +1464,18 @@ void InspectorManager::bumble(Packet* p)
 
     flow->clear_clouseau();
 
-    if ( !flow->gadget || !flow->is_stream() )
+    if ( !flow->gadget )
+    {
+        if ( !flow->flags.svc_event_generated )
+        {
+            DataBus::publish(FLOW_NO_SERVICE_EVENT, p);
+            flow->flags.svc_event_generated = true;
+        }
+
+        return;
+    }
+
+    if ( !flow->is_stream() )
         return;
 
     if ( flow->session )

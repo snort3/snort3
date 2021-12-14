@@ -484,6 +484,7 @@ public:  // FIXIT-M privatize if possible
         bool data_decrypted : 1;    // indicate data in current flow is decrypted TLS application data
         bool snort_proto_id_set_by_ha : 1;
         bool efd_flow : 1;  // Indicate that current flow is an elephant flow
+        bool svc_event_generated : 1; // Set if FLOW_NO_SERVICE_EVENT was generated for this flow
     } flags;
 
     FlowState flow_state;

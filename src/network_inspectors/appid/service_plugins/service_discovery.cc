@@ -66,7 +66,6 @@
 #include "service_rsync.h"
 #include "service_rtmp.h"
 #include "service_snmp.h"
-#include "service_ssh.h"
 #include "service_ssl.h"
 #include "service_telnet.h"
 #include "service_tftp.h"
@@ -116,7 +115,6 @@ void ServiceDiscovery::initialize(AppIdInspector& inspector)
     new SipServiceDetector(this);
     new SmtpServiceDetector(this);
     new SnmpServiceDetector(this);
-    new SshServiceDetector(this);
     new SslServiceDetector(this);
     new TelnetServiceDetector(this);
     new TftpServiceDetector(this);
@@ -438,7 +436,7 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
                 asd.service_detector = sds->get_service();
             /* If we've gotten to brute force, give next detector a try. */
             else if ( sds_state == ServiceState::SEARCHING_BRUTE_FORCE and
-                      asd.service_candidates.empty() )
+                asd.service_candidates.empty() )
             {
                 asd.service_detector = sds->select_detector_by_brute_force(proto,
                     asd.get_odp_ctxt().get_service_disco_mgr());
@@ -511,7 +509,18 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
         /* If we tried everything and found nothing, then fail. */
         if ( asd.service_candidates.empty() and ret != APPID_SUCCESS and
              ( asd.service_search_state == SESSION_SERVICE_SEARCH_STATE::PENDING ) )
-            got_fail_service = true;
+        {
+            // FIXIT-E: For now, wait for snort service inspection only for TCP. In the future,
+            // if AppId rolls any of its UDP detectors into service inspectors, the UDP condition
+            // below needs to be removed.
+            if (asd.has_no_service_inspector() or (proto == IpProtocol::UDP))
+                got_fail_service = true;
+            else if (appidDebug->is_active() and !asd.service_detector and !asd.has_no_service_candidate())
+                LogMessage("AppIdDbg %s No service candidate, wait for snort service inspection\n",
+                    appidDebug->get_debug_session());
+
+            asd.set_no_service_candidate();
+        }
     }
 
     /* Failed all candidates, or no detector identified after seeing bidirectional exchange */
@@ -524,7 +533,7 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
         // Don't log this if fail service is not due to empty list
         if (appidDebug->is_active() and !(got_fail_service and asd.service_detector))
             LogMessage("AppIdDbg %s No service %s\n", appidDebug->get_debug_session(),
-                got_fail_service? "candidate" : "detector");
+                got_fail_service ? "candidate" : "detector");
         got_fail_service = true;
         fail_service(asd, p, dir, nullptr, sds);
         ret = APPID_NOMATCH;
@@ -568,7 +577,7 @@ void ServiceDiscovery::clear_ftp_service_state()
 bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
     AppidSessionDirection direction, AppidChangeBits& change_bits)
 {
-    bool isTpAppidDiscoveryDone = false;
+    bool is_discovery_done = false;
     uint32_t prev_service_state = asd.service_disco_state;
     AppId tp_app_id = asd.get_tp_app_id();
 
@@ -670,7 +679,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
     if (asd.service_disco_state == APPID_DISCO_STATE_STATEFUL)
     {
         identify_service(asd, p, direction, change_bits);
-        isTpAppidDiscoveryDone = true;
+        is_discovery_done = true;
         //to stop executing validator after service has been detected
         if (asd.get_session_flags(APPID_SESSION_SERVICE_DETECTED |
             APPID_SESSION_CONTINUE) == APPID_SESSION_SERVICE_DETECTED)
@@ -691,7 +700,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
         {
                 asd.stop_service_inspection(p, direction);
                 asd.set_service_id(APP_ID_UNKNOWN, asd.get_odp_ctxt());
-                return isTpAppidDiscoveryDone;
+                return is_discovery_done;
         }
 
         AppIdDnsSession* dsession = asd.get_dns_session();
@@ -718,7 +727,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
         }
     }
 
-    return isTpAppidDiscoveryDone;
+    return is_discovery_done;
 }
 
 /**Called when service can not be identified on a flow but the checks failed on client request

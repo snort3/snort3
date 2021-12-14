@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// ssh_patterns.cc author Daniel McGarvey <danmcgar@cisco.com>
+// ssh_patterns.h author Daniel McGarvey <danmcgar@cisco.com>
 
 #ifndef SSH_PATTERNS_H
 #define SSH_PATTERNS_H
@@ -25,7 +25,7 @@
  * SshPatternMatchers is a wrapper around an unordered_map
  * which maps strings to AppIds. SSH Client Patterns
  * are registered through a lua API, and these mappings
- * are used by client_app_ssh.cc to identify clients.
+ * are used by AppId to identify clients.
  * An instance of the class is held by OdpContext.
  */
 
@@ -43,7 +43,6 @@ public:
     bool has_pattern(const std::string& pattern) const;
     bool empty() const;
     AppId get_appid(const std::string& pattern) const;
-    void finalize_patterns();
 private:
     SshPatternTable ssh_patterns;
 };

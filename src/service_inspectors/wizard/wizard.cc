@@ -205,12 +205,30 @@ StreamSplitter::Status MagicSplitter::scan(
         count_miss(pkt->flow);
         trace_logf(wizard_trace, pkt, "%s streaming search abandoned\n", to_server() ? "c2s" : "s2c");
         wizard_processed_bytes = 0;
+        if (!pkt->flow->flags.svc_event_generated)
+        {
+            DataBus::publish(FLOW_NO_SERVICE_EVENT, pkt);
+            pkt->flow->flags.svc_event_generated = true;
+        }
         return ABORT;
     }
 
     // saving new last glob from current flow
     if ( wand.spell )
         bookmark = wand.spell->book.get_bookmark();
+
+    // FIXIT-L Ideally, this event should be raised after wizard aborts its search. However, this
+    // could take multiple packets because wizard needs wizard.max_search_depth payload bytes before
+    // it aborts. This is an issue for AppId which consumes this event. AppId is required to declare
+    // unknown service as soon as it can so that the flow actions (such as IPS block, etc) don't get
+    // delayed. Because AppId depends on wizard only for SSH detection and SSH inspector can be
+    // attached very early, event is raised here after first scan. In the future, wizard should be
+    // enhanced to abort sooner if it can't detect service.
+    if (!pkt->flow->service and !pkt->flow->flags.svc_event_generated)
+    {
+        DataBus::publish(FLOW_NO_SERVICE_EVENT, pkt);
+        pkt->flow->flags.svc_event_generated = true;
+    }
 
     // ostensibly continue but splitter will be swapped out upon hit
     return SEARCH;

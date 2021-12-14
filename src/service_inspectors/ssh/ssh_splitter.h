@@ -36,7 +36,8 @@ enum SshPafState
 class SshSplitter : public snort::StreamSplitter
 {
 public:
-    SshSplitter(bool c2s);
+    SshSplitter(bool c2s) : StreamSplitter(c2s)
+    { }
 
     Status scan(snort::Packet*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
@@ -52,7 +53,7 @@ private:
     Status ssh2_scan(SSHData* sessp, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp);
 
-    uint32_t state;
+    SshPafState state = SSH_PAF_VER_EXCHANGE;
     uint32_t client_remain_bytes = 0;
     uint32_t server_remain_bytes = 0;
 };

@@ -453,6 +453,11 @@ void Stuff::apply_service(Flow& flow)
     }
     else if (wizard)
         flow.set_clouseau(wizard);
+    else if (!flow.flags.svc_event_generated)
+    {
+        DataBus::publish(FLOW_NO_SERVICE_EVENT, DetectionEngine::get_current_packet());
+        flow.flags.svc_event_generated = true;
+    }
 }
 
 void Stuff::apply_assistant(Flow& flow, const char* service)

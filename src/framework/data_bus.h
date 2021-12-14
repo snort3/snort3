@@ -139,6 +139,8 @@ private:
 #define FLOW_SERVICE_CHANGE_EVENT "flow.service_change_event"
 // A flow has found the service inspector
 #define SERVICE_INSPECTOR_CHANGE_EVENT "flow.service_inspector.changed"
+// No service has been found for the flow
+#define FLOW_NO_SERVICE_EVENT "flow.no_service_event"
 // search of SSL is abandoned on this flow
 #define SSL_SEARCH_ABANDONED "flow.ssl_search_abandoned"
 

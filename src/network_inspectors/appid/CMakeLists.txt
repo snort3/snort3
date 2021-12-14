@@ -25,8 +25,6 @@ set ( CP_APPID_SOURCES
     client_plugins/client_app_msn.h
     client_plugins/client_app_rtp.cc
     client_plugins/client_app_rtp.h
-    client_plugins/client_app_ssh.cc
-    client_plugins/client_app_ssh.h
     client_plugins/client_app_timbuktu.cc
     client_plugins/client_app_timbuktu.h
     client_plugins/client_app_tns.cc
@@ -92,8 +90,6 @@ set ( SP_APPID_SOURCES
     service_plugins/service_rtmp.h
     service_plugins/service_snmp.cc
     service_plugins/service_snmp.h
-    service_plugins/service_ssh.cc
-    service_plugins/service_ssh.h
     service_plugins/service_ssl.cc
     service_plugins/service_ssl.h
     service_plugins/service_telnet.cc
@@ -164,6 +160,8 @@ set ( APPID_SOURCES
     appid_opportunistic_tls_event_handler.h
     appid_peg_counts.h
     appid_peg_counts.cc
+    appid_service_event_handler.cc
+    appid_service_event_handler.h
     appid_session.cc
     appid_session.h
     appid_session_api.cc
@@ -174,6 +172,8 @@ set ( APPID_SOURCES
     appid_module.cc
     appid_module.h
     appid_pegs.h
+    appid_ssh_event_handler.cc
+    appid_ssh_event_handler.h
     appid_stats.cc
     appid_stats.h
     app_info_table.cc

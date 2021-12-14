@@ -173,7 +173,6 @@ void OdpContext::initialize(AppIdInspector& inspector)
     sip_matchers.finalize_patterns(*this);
     ssl_matchers.finalize_patterns();
     dns_matchers.finalize_patterns();
-    ssh_matchers.finalize_patterns();
 }
 
 void OdpContext::reload()

@@ -248,6 +248,14 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
         else if (appidDebug->is_active())
             LogMessage("AppIdDbg %s New AppId session\n", appidDebug->get_debug_session());
     }
+    else if (!asd->get_session_flags(APPID_SESSION_MID) and
+        (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM))
+    {
+        asd->flags |= APPID_SESSION_MID;
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s AppId mid-stream session\n", appidDebug->get_debug_session());
+    }
+
     if (!asd->get_session_flags(APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED))
         return false;
 

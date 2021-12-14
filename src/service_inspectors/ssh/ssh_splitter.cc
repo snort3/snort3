@@ -26,50 +26,29 @@
 
 using namespace snort;
 
-SshSplitter::SshSplitter(bool c2s) : StreamSplitter(c2s)
-{
-    client_remain_bytes = 0;
-    server_remain_bytes = 0;
-    state = 0;
-}
-
 StreamSplitter::Status SshSplitter::ssh2_key_exchange_scan(
     const uint8_t* data, uint32_t len, uint32_t* fp,
     uint32_t& remain_bytes)
 {
     if (remain_bytes < len)
     {
-        uint32_t offset = remain_bytes;
-        while (offset < len)
+        if (remain_bytes != 0)
         {
-            const SSH2Packet* sshp = (const SSH2Packet*)(data + offset);
-            uint32_t ssh_len = ntohl(sshp->packet_length);
-            if (ssh_len > (len - offset))
-            {
-                remain_bytes = ssh_len - (len - SSH2_PACKET_LEN);
-                return StreamSplitter::SEARCH;
-            }
-
-            switch (data[offset + SSH2_HEADERLEN])
-            {
-            case SSH_MSG_KEXDH_GEX_INIT:
-            case SSH_MSG_KEXDH_GEX_GRP:
-            case SSH_MSG_KEXDH_GEX_REQ:
-            case SSH_MSG_KEXDH_REPLY:
-            case SSH_MSG_KEXDH_INIT:
-            case SSH_MSG_KEXINIT:
-                offset += (ssh_len + SSH2_PACKET_LEN);
-                break;
-            case SSH_MSG_NEWKEYS:
-                offset += (ssh_len + SSH2_PACKET_LEN);
-            // fallthrough
-            default:
-                goto exit_loop;
-            }
+            *fp = remain_bytes;
+            return StreamSplitter::FLUSH;
         }
-exit_loop:
-        *fp = offset;
-        return StreamSplitter::FLUSH;
+        const SSH2Packet* sshp = (const SSH2Packet*)data;
+        uint32_t ssh_len = ntohl(sshp->packet_length) + SSH2_PACKET_LEN;
+        if (ssh_len > len)
+        {
+            remain_bytes = ssh_len - len;
+            return StreamSplitter::SEARCH;
+        }
+        else
+        {
+            *fp = ssh_len;
+            return StreamSplitter::FLUSH;
+        }
     }
     else
     {
@@ -91,7 +70,7 @@ StreamSplitter::Status SshSplitter::ssh2_scan(SSHData* sessp,
 {
     if (flags & PKT_FROM_SERVER)
     {
-        // Do not scan if sever new keys message seen.
+        // Do not scan if server new keys message seen.
         if (sessp->state_flags & SSH_FLG_SERVER_NEWKEYS_SEEN)
         {
             return SEARCH;
