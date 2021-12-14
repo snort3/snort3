@@ -39,6 +39,9 @@ using namespace snort;
 #define MAX_TEMPLATE_NESTING 4
 #define MAX_BRACKET_DEPTH 256
 #define MAX_SCOPE_DEPTH 256
+
+static const std::unordered_set<std::string> s_ignored_ids { "console", "eval", "document" };
+
 #define DST_SIZE 512
 
 #define NORMALIZE(src)                                             \
@@ -110,7 +113,7 @@ using namespace snort;
     {                                                               \
         char dst1[sizeof(exp1)];                                    \
                                                                     \
-        JSIdentifierCtx ident_ctx(DEPTH, MAX_SCOPE_DEPTH, s_ident_built_in); \
+        JSIdentifierCtx ident_ctx(DEPTH, MAX_SCOPE_DEPTH, s_ignored_ids); \
         JSNormalizer norm(ident_ctx, DEPTH, MAX_TEMPLATE_NESTING, MAX_BRACKET_DEPTH); \
                                                                     \
         DO(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1);         \
@@ -124,7 +127,7 @@ using namespace snort;
         char dst1[sizeof(exp1)];                                    \
         char dst2[sizeof(exp2)];                                    \
                                                                     \
-        JSIdentifierCtx ident_ctx(DEPTH, MAX_SCOPE_DEPTH, s_ident_built_in); \
+        JSIdentifierCtx ident_ctx(DEPTH, MAX_SCOPE_DEPTH, s_ignored_ids); \
         JSNormalizer norm(ident_ctx, DEPTH, MAX_TEMPLATE_NESTING, MAX_BRACKET_DEPTH); \
                                                                     \
         DO(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1);         \
@@ -359,7 +362,7 @@ using namespace snort;
 
 #define NORM_COMBINED_S_2(src1, src2, exp)                                            \
     {                                                                                 \
-        JSIdentifierCtx ident_ctx(DEPTH, MAX_SCOPE_DEPTH, s_ident_built_in);          \
+        JSIdentifierCtx ident_ctx(DEPTH, MAX_SCOPE_DEPTH, s_ignored_ids);             \
         JSNormalizer norm(ident_ctx, DEPTH, MAX_TEMPLATE_NESTING, MAX_BRACKET_DEPTH); \
                                                                                       \
         auto ret = norm.normalize(src1, sizeof(src1) - 1);                            \
@@ -2421,7 +2424,7 @@ TEST_CASE("split and continuation combined", "[JSNormalizer]")
         char dst3[sizeof(exp3)];
         char dst4[sizeof(exp4)];
 
-        JSIdentifierCtx ident_ctx(DEPTH, MAX_SCOPE_DEPTH, s_ident_built_in);
+        JSIdentifierCtx ident_ctx(DEPTH, MAX_SCOPE_DEPTH, s_ignored_ids);
         JSNormalizer norm(ident_ctx, DEPTH, MAX_TEMPLATE_NESTING, MAX_BRACKET_DEPTH);
 
         DO(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1);
@@ -2456,7 +2459,7 @@ TEST_CASE("split and continuation combined", "[JSNormalizer]")
         char dst2[sizeof(exp2)];
         char dst3[sizeof(exp3)];
 
-        JSIdentifierCtx ident_ctx(DEPTH, MAX_SCOPE_DEPTH, s_ident_built_in);
+        JSIdentifierCtx ident_ctx(DEPTH, MAX_SCOPE_DEPTH, s_ignored_ids);
         JSNormalizer norm(ident_ctx, DEPTH, MAX_TEMPLATE_NESTING, MAX_BRACKET_DEPTH);
 
         TRY(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1, JSTokenizer::SCRIPT_CONTINUE);
@@ -3034,9 +3037,9 @@ TEST_CASE("scope tail handling", "[JSNormalizer]")
     }
 }
 
-TEST_CASE("built-in identifiers syntax", "[JSNormalizer]")
+TEST_CASE("ignored identifiers", "[JSNormalizer]")
 {
-    // 'console' 'eval' 'document' are built-in identifiers
+    // 'console' 'eval' 'document' are in the ignore list
 
     SECTION("a standalone identifier")
     {
@@ -3117,9 +3120,9 @@ TEST_CASE("built-in identifiers syntax", "[JSNormalizer]")
     }
 }
 
-TEST_CASE("built-in chain tracking", "[JSNormalizer]")
+TEST_CASE("ignored identifier chain tracking", "[JSNormalizer]")
 {
-    // 'console' 'eval' 'document' are built-in identifiers
+    // 'console' 'eval' 'document' are in the ignore list
 
     SECTION("chain terminators")
     {
@@ -3324,9 +3327,9 @@ TEST_CASE("built-in chain tracking", "[JSNormalizer]")
     }
 }
 
-TEST_CASE("built-in scope tracking", "[JSNormalizer]")
+TEST_CASE("ignored identifier scope tracking", "[JSNormalizer]")
 {
-    // 'console' 'eval' 'document' are built-in identifiers
+    // 'console' 'eval' 'document' are in the ignore list
 
     SECTION("basic")
     {
@@ -3504,11 +3507,11 @@ TEST_CASE("built-in scope tracking", "[JSNormalizer]")
     }
 }
 
-TEST_CASE("built-in identifiers split", "[JSNormalizer]")
+TEST_CASE("ignored identifier split", "[JSNormalizer]")
 {
 
 #if JSTOKENIZER_MAX_STATES != 8
-#error "built-in identifiers split" tests are designed for 8 states depth
+#error "ignored identifier split" tests are designed for 8 states depth
 #endif
 
     SECTION("a standalone identifier")
@@ -3980,13 +3983,13 @@ TEST_CASE("Scope tracking - over multiple PDU","[JSNormalizer]")
             // will be "var_0000"
         });
 
-    SECTION("general - variable extension: builtin to identifier")
+    SECTION("general - variable extension: ignored identifier to a regular one")
         test_normalization({
             {"console", "console", {GLOBAL}},
             {"Writer", "var_0000", {GLOBAL}}
         });
 
-    SECTION("general - variable extension: identifier to builtin")
+    SECTION("general - variable extension: a regular identifier to ignored one")
         test_normalization({
             {"con", "var_0000", {GLOBAL}},
             {"sole", "console", {GLOBAL}}
@@ -4168,7 +4171,7 @@ TEST_CASE("Scope tracking - error handling", "[JSNormalizer]")
         const char exp[] = "function(){if";
         uint32_t scope_depth = 2;
 
-        JSIdentifierCtx ident_ctx(DEPTH, scope_depth, s_ident_built_in);
+        JSIdentifierCtx ident_ctx(DEPTH, scope_depth, s_ignored_ids);
         JSNormalizer normalizer(ident_ctx, DEPTH, MAX_TEMPLATE_NESTING, MAX_BRACKET_DEPTH);
         auto ret = normalizer.normalize(src, strlen(src));
         std::string dst(normalizer.get_script(), normalizer.script_size());
@@ -4331,14 +4334,14 @@ TEST_CASE("JS Normalizer, id normalization", "[JSNormalizer]")
 
     const std::unordered_set<std::string> ids_n { "n" };
     JSIdentifierCtx ident_ctx_ids_n(DEPTH, MAX_SCOPE_DEPTH, ids_n);
-    JSNormalizer normalizer_built_ins(ident_ctx_ids_n, UNLIM_DEPTH,
+    JSNormalizer normalizer_iids(ident_ctx_ids_n, UNLIM_DEPTH,
         MAX_TEMPLATE_NESTING, MAX_BRACKET_DEPTH);
 
-    REQUIRE(norm_ret(normalizer_built_ins, input) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("with built-ins")
+    REQUIRE(norm_ret(normalizer_iids, input) == JSTokenizer::SCRIPT_ENDED);
+    BENCHMARK("with ignored identifiers")
     {
-        normalizer_built_ins.rewind_output();
-        return normalizer_built_ins.normalize(input.c_str(), input.size());
+        normalizer_iids.rewind_output();
+        return normalizer_iids.normalize(input.c_str(), input.size());
     };
 }
 

@@ -59,7 +59,9 @@ JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len)
         return JSTokenizer::SCRIPT_CONTINUE;
     }
 
-    if (rem_bytes == 0 && !unlim)
+    rem_bytes = unlim ? src_len + 1 : rem_bytes;
+
+    if (rem_bytes == 0)
     {
         debug_log(5, http_trace, TRACE_JS_PROC, nullptr,
             "depth limit reached\n");
@@ -68,29 +70,20 @@ JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len)
         return JSTokenizer::EOS;
     }
 
-    size_t len = unlim ? src_len :
-        src_len < rem_bytes ? src_len : rem_bytes;
-
     debug_logf(4, http_trace, TRACE_JS_DUMP, nullptr,
         "tmp buffer[%zu]: %.*s\n", tmp_buf_size, static_cast<int>(tmp_buf_size), tmp_buf);
 
+    src_len = min(src_len, rem_bytes);
+
     in_buf.pubsetbuf(nullptr, 0)
         ->pubsetbuf(tmp_buf, tmp_buf_size)
-        ->pubsetbuf(const_cast<char*>(src), len);
+        ->pubsetbuf(const_cast<char*>(src), src_len);
     out_buf.reserve(src_len * BUFF_EXP_FACTOR);
 
-    tokenizer.pre_yylex();
+    size_t r_bytes = in_buf.last_chunk_offset();
+    auto ret = tokenizer.process(r_bytes);
 
-    JSTokenizer::JSRet ret = static_cast<JSTokenizer::JSRet>(tokenizer.yylex());
-    in.clear();
-    out.clear();
-
-    size_t t_bytes = in_buf.last_chunk_offset();
-    size_t r_bytes = tokenizer.get_bytes_read();
-    r_bytes = max(r_bytes, t_bytes) - t_bytes;
-
-    if (!unlim)
-        rem_bytes -= r_bytes;
+    rem_bytes -= r_bytes;
     src_next = src + r_bytes;
 
     return rem_bytes ? ret : JSTokenizer::EOS;

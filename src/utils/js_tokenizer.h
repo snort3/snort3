@@ -151,20 +151,15 @@ public:
         int cap_size = JSTOKENIZER_BUF_MAX_SIZE);
     ~JSTokenizer() override;
 
-    // internal actions before calling main loop
-    void pre_yylex();
-
-    // returns JSRet
-    int yylex() override;
-
-    size_t get_bytes_read()
-    { auto r = bytes_read; bytes_read = 0; return r; }
+    JSRet process(size_t& bytes_in);
 
 protected:
     [[noreturn]] void LexerError(const char* msg) override
     { snort::FatalError("%s", msg); }
 
 private:
+    int yylex() override;
+
     void switch_to_initial();
     void switch_to_temporal(const std::string& data);
     JSRet eval_eof();

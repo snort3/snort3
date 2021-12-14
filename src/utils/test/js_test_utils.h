@@ -50,7 +50,7 @@ public:
     virtual void add_alias(const char*, const std::string&&) override {}
     virtual const char* alias_lookup(const char* alias) const override
     { return alias; }
-    bool built_in(const char*) const override
+    bool is_ignored(const char*) const override
     { return false; }
     bool scope_push(JSProgramScopeType) override { return true; }
     bool scope_pop(JSProgramScopeType) override { return true; }

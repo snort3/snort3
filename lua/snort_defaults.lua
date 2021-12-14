@@ -1176,11 +1176,14 @@ default_low_port_scan =
 }
 
 ---------------------------------------------------------------------------
+-- default http configuration
+---------------------------------------------------------------------------
+
 -- ECMAScript Standard Built-in Objects and Functions Names (Identifiers)
 -- Also, might include other non-specification identifiers like those
 -- are part of WebAPI or frameworks
----------------------------------------------------------------------------
-default_js_norm_built_in_ident =
+
+default_js_norm_ident_ignore =
 {
     -- GlobalObject.Functions
     'eval', 'PerformEval', 'HostEnsureCanCompileStrings', 'EvalDeclarationInstantiation',
@@ -1275,6 +1278,12 @@ default_js_norm_built_in_ident =
     'CreateHTML'
 }
 
+default_http_inspect =
+{
+    -- params not specified here get internal defaults
+    js_norm_ident_ignore = default_js_norm_ident_ignore,
+}
+
 ---------------------------------------------------------------------------
 -- default whitelist
 ---------------------------------------------------------------------------
@@ -1293,7 +1302,8 @@ default_whitelist =
     ip_med_sweep ip_med_dist ip_hi_proto ip_hi_decoy ip_hi_sweep
     ip_hi_dist icmp_low_sweep icmp_med_sweep icmp_hi_sweep
     default_hi_port_scan default_med_port_scan default_low_port_scan
-    default_variables netflow_versions default_js_norm_built_in_ident
+    default_variables netflow_versions default_js_norm_ident_ignore
+    default_http_inspect
 ]]
 
 snort_whitelist_append(default_whitelist)

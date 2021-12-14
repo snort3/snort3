@@ -7,7 +7,7 @@ add_cpputest( memcap_allocator_test )
 
 FLEX_TARGET ( js_tokenizer ${CMAKE_CURRENT_SOURCE_DIR}/../js_tokenizer.l
     ${CMAKE_CURRENT_BINARY_DIR}/../js_tokenizer.cc
-    COMPILE_FLAGS -Ca
+    COMPILE_FLAGS ${FLEX_FLAGS}
 )
 
 add_catch_test( js_normalizer_test

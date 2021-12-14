@@ -65,8 +65,8 @@ static inline std::string format_name(int32_t num)
 }
 
 JSIdentifierCtx::JSIdentifierCtx(int32_t depth, uint32_t max_scope_depth,
-    const std::unordered_set<std::string>& ident_built_in)
-    : ident_built_in(ident_built_in), depth(depth), max_scope_depth(max_scope_depth)
+    const std::unordered_set<std::string>& ignored_ids)
+    : ignored_ids(ignored_ids), depth(depth), max_scope_depth(max_scope_depth)
 {
     scopes.emplace_back(JSProgramScopeType::GLOBAL);
 }
@@ -85,9 +85,9 @@ const char* JSIdentifierCtx::substitute(const char* identifier)
     return ident_names[identifier].c_str();
 }
 
-bool JSIdentifierCtx::built_in(const char* identifier) const
+bool JSIdentifierCtx::is_ignored(const char* identifier) const
 {
-    return ident_built_in.count(identifier);
+    return ignored_ids.count(identifier);
 }
 
 bool JSIdentifierCtx::scope_push(JSProgramScopeType t)

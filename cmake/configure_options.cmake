@@ -29,6 +29,9 @@ if ( ENABLE_LARGE_PCAP )
     set ( _FILE_OFFSET_BITS 64 )
 endif ( ENABLE_LARGE_PCAP )
 
+# Flex Lexer
+set ( FLEX_FLAGS "-Ca" )
+
 # documentation
 
 if ( NOT ASCIIDOC_FOUND )

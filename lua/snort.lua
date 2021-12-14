@@ -54,8 +54,6 @@ arp_spoof = { }
 back_orifice = { }
 dnp3 = { }
 dns = { }
-http_inspect = { }
-http2_inspect = { }
 imap = { }
 iec104 = { }
 modbus = { }
@@ -82,6 +80,9 @@ smtp = default_smtp
 ftp_server = default_ftp_server
 ftp_client = { }
 ftp_data = { }
+
+http_inspect = default_http_inspect
+http2_inspect = { }
 
 -- see file_magic.lua for file id rules
 file_id = { file_rules = file_magic }

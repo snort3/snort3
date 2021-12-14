@@ -18,16 +18,10 @@
 // js_tokenizer.l author Oleksandr Serhiienko <oserhiie@cisco.com>
 */
 
-/* Define JSTokenizer as yyClass */
-%option yyclass="JSTokenizer"
-/* Disable yywrap() generation */
-%option noyywrap
-/* Generate C++ scanner */
 %option c++
-
-%option batch
-%option never-interactive
-%option noinput nounput
+%option yyclass="JSTokenizer"
+%option align full 8bit batch never-interactive
+%option noinput nounput noyywrap
 %option noyy_push_state noyy_pop_state noyy_top_state
 
 %{
@@ -1264,11 +1258,6 @@ JSTokenizer::~JSTokenizer()
     tmp_buf_size = 0;
 }
 
-void JSTokenizer::pre_yylex()
-{
-    yy_flush_buffer(YY_CURRENT_BUFFER);
-}
-
 void JSTokenizer::switch_to_temporal(const std::string& data)
 {
     tmp.str(data);
@@ -1401,7 +1390,7 @@ JSTokenizer::JSRet JSTokenizer::do_identifier_substitution(const char* lexeme, b
     else
         set_ident_norm(true);
 
-    if (ident_ctx.built_in(lexeme) && !id_part)
+    if (ident_ctx.is_ignored(lexeme) && !id_part)
     {
         set_ident_norm(false);
         yyout << lexeme;
@@ -1907,11 +1896,11 @@ void JSTokenizer::dealias_identifier(bool id_part, bool assignment_start)
         }
         case ALIAS_EQUALS:
             alias_state = ALIAS_VALUE;
-            //fallthrough
+            // fallthrough
         case ALIAS_VALUE:
         {
             auto dealias = ident_ctx.alias_lookup(lexeme);
-            if ((ident_ctx.built_in(lexeme) && !id_part) || (!ident_norm() && id_part))
+            if ((ident_ctx.is_ignored(lexeme) && !id_part) || (!ident_norm() && id_part))
                 aliased << YYText();
             else if (dealias)
                 aliased << dealias;
@@ -1974,4 +1963,19 @@ void JSTokenizer::dealias_finalize()
     }
     else
         dealias_reset();
+}
+
+JSTokenizer::JSRet JSTokenizer::process(size_t& bytes_in)
+{
+    yy_flush_buffer(YY_CURRENT_BUFFER);
+
+    auto r = yylex();
+
+    yyin.clear();
+    yyout.clear();
+
+    bytes_in = std::max(bytes_read, bytes_in) - bytes_in;
+    bytes_read = 0;
+
+    return static_cast<JSTokenizer::JSRet>(r);
 }

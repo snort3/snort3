@@ -33,20 +33,20 @@
 #define DEPTH 65536
 #define SCOPE_DEPTH 256
 
-static const std::unordered_set<std::string> s_ident_built_in { "console" };
+static const std::unordered_set<std::string> s_ignored_ids { "console" };
 
 TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
 {
     SECTION("same name")
     {
-        JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ident_built_in);
+        JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ignored_ids);
 
         CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
         CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
     }
     SECTION("different names")
     {
-        JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ident_built_in);
+        JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ignored_ids);
 
         CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
         CHECK(!strcmp(ident_ctx.substitute("b"), "var_0001"));
@@ -54,7 +54,7 @@ TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
     }
     SECTION("depth reached")
     {
-        JSIdentifierCtx ident_ctx(2, SCOPE_DEPTH, s_ident_built_in);
+        JSIdentifierCtx ident_ctx(2, SCOPE_DEPTH, s_ignored_ids);
 
         CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
         CHECK(!strcmp(ident_ctx.substitute("b"), "var_0001"));
@@ -64,7 +64,7 @@ TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
     }
     SECTION("max names")
     {
-        JSIdentifierCtx ident_ctx(DEPTH + 2, SCOPE_DEPTH, s_ident_built_in);
+        JSIdentifierCtx ident_ctx(DEPTH + 2, SCOPE_DEPTH, s_ignored_ids);
 
         std::vector<std::string> n, e;
         n.reserve(DEPTH + 2);
@@ -76,7 +76,7 @@ TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
         for (int it_name = 0; it_name < DEPTH; ++it_name)
         {
             std::stringstream stream;
-            stream << std::setfill ('0') << std::setw(4) 
+            stream << std::setfill ('0') << std::setw(4)
                 << std::hex << it_name;
             e.push_back("var_" + stream.str());
         }
@@ -89,17 +89,17 @@ TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
     }
 }
 
-TEST_CASE("JSIdentifierCtx::built_in()", "[JSIdentifierCtx]")
+TEST_CASE("JSIdentifierCtx::is_ignored()", "[JSIdentifierCtx]")
 {
-    JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ident_built_in);
+    JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ignored_ids);
 
-    CHECK(ident_ctx.built_in("console") == true);
-    CHECK(ident_ctx.built_in("foo") == false);
+    CHECK(ident_ctx.is_ignored("console") == true);
+    CHECK(ident_ctx.is_ignored("foo") == false);
 }
 
 TEST_CASE("JSIdentifierCtx::scopes", "[JSIdentifierCtx]")
 {
-    JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ident_built_in);
+    JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ignored_ids);
 
     SECTION("scope stack")
     {
@@ -163,7 +163,7 @@ TEST_CASE("JSIdentifierCtx::scopes", "[JSIdentifierCtx]")
     }
     SECTION("scope max nesting")
     {
-        JSIdentifierCtx ident_ctx_limited(DEPTH, 2, s_ident_built_in);
+        JSIdentifierCtx ident_ctx_limited(DEPTH, 2, s_ignored_ids);
 
         CHECK(ident_ctx_limited.scope_push(JSProgramScopeType::FUNCTION));
         CHECK(ident_ctx_limited.scope_check({GLOBAL, FUNCTION}));
@@ -178,4 +178,3 @@ TEST_CASE("JSIdentifierCtx::scopes", "[JSIdentifierCtx]")
         CHECK(ident_ctx_limited.scope_check({GLOBAL, FUNCTION}));
     }
 }
-

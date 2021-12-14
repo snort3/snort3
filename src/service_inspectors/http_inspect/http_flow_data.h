@@ -220,7 +220,7 @@ private:
     void reset_js_ident_ctx();
     snort::JSNormalizer& acquire_js_ctx(int32_t ident_depth, size_t norm_depth,
         uint8_t max_template_nesting, uint32_t max_bracket_depth, uint32_t max_scope_depth,
-        const std::unordered_set<std::string>& built_in_ident);
+        const std::unordered_set<std::string>& ignored_ids);
     void release_js_ctx();
     bool is_pdu_missed();
 

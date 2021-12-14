@@ -76,16 +76,15 @@ will be removed.
 Having ips option 'js_data' in the rules automatically enables Enhanced
 Normalizer. The Enhanced Normalizer can normalize inline/external scripts.
 It supports scripts over multiple PDUs. It is a stateful JavaScript whitespace
-and identifiers normalizer. All JavaScript identifier names, except those,
-are from the list of built-in identifiers, will be substituted to unified
-names with the following format: var_0000 -> var_ffff. Moreover, Normalizer
-validates the syntax concerning ECMA-262 Standard, including scope tracking,
-and checks for restrictions for contents of script elements (since it is
-HTML-embedded JavaScript). For more information on how additionally configure
-Enhanced Normalizer check the following http_inspect options: js_normalization_depth,
-js_norm_identifier_depth, js_norm_max_tmpl_nest, js_norm_max_bracket_depth,
-js_norm_max_scope_depth, js_norm_built_in_ident. Eventually Enhanced Normalizer will
-completely replace Legacy Normalizer.
+and identifiers normalizer. All JavaScript identifier names, except those from
+the ignore list, will be substituted with unified names in the following
+format: var_0000 -> var_ffff. Moreover, Normalizer validates the syntax
+concerning ECMA-262 Standard, including scope tracking and restrictions
+for script elements. For more information on how additionally configure
+Enhanced Normalizer check with the following configuration options:
+js_norm_bytes_depth, js_norm_identifier_depth, js_norm_max_tmpl_nest,
+js_norm_max_bracket_depth, js_norm_max_scope_depth, js_norm_ident_ignore.
+Eventually Enhanced Normalizer will completely replace Legacy Normalizer.
 
 ==== Configuration
 
@@ -191,11 +190,11 @@ uXXXXi. http_inspect also replaces consecutive whitespaces with a single
 space and normalizes the plus by concatenating the strings. Such normalizations
 refer to basic JavaScript normalization.
 
-===== js_normalization_depth
+===== js_norm_bytes_depth
 
-js_normalization_depth = N {-1 : max53} will set a number of input JavaScript
+js_norm_bytes_depth = N {-1 : max53} will set a number of input JavaScript
 bytes to normalize. When the depth is reached, normalization will be stopped.
-It's implemented per-script. By default js_normalization_depth = -1, will set
+It's implemented per-script. By default js_norm_bytes_depth = -1, will set
 unlimited depth. The enhanced normalizer provides more precise whitespace
 normalization of JavaScript, that removes all redundant whitespaces and line
 terminators from the JavaScript syntax point of view (between identifier and
@@ -240,16 +239,15 @@ term includes any type of JavaScript program scope such as the global one, funct
 if block, loops, code block, object scope, etc. This option is present to limit the amount
 of memory dedicated to this tracking.
 
-===== js_norm_built_in_ident
+===== js_norm_ident_ignore
 
-js_norm_built_in_ident = {<the list of built-in JavaScript identifier names>}.
+js_norm_ident_ignore = {<a list of ignored identifiers>}.
 The default list is present in "snort_defaults.lua".
 
-The built-in JavaScript identifiers will be placed as is, without substitution. Normalizer
-tracks built-in identifier expressions based on the configured list of built-in names.
-The built-in identifier expression is the built-in name (function or object) and the chain
-of dot and bracket accessors after it, including the function calls.
-For example:
+The Normalizer does not substitute ignored identifiers, keeping their name unchanged.
+Additionally, the Normalizer tracks expressions with ignored identifiers, so
+the subsequent identifiers are not substituted in the chain of dots, bracket
+accessors and function calls. For example:
 
     console.log("bar")
     document.getElementById("id").text
@@ -259,7 +257,7 @@ For example:
 The list must contain object and function names only.
 For example:
 
-    http_inspect.js_norm_built_in_ident = { 'console', 'document', 'eval', 'foo' }
+    http_inspect.js_norm_ident_ignore = { 'console', 'document', 'eval', 'foo' }
 
 ===== xff_headers
 
@@ -664,8 +662,8 @@ normalize_javascript.
 
 The js_data contains normalized JavaScript text collected from the whole PDU
 (inline or external scripts). It requires the Enhanced Normalizer enabled:
-http_inspect = { js_normalization_depth = N },
-js_normalization_depth option is described above.
+http_inspect = { js_norm_bytes_depth = N },
+js_norm_bytes_depth option is described above.
 Despite what js_data has, file_data still contains the whole HTTP body
 with an original JavaScript in it.
 

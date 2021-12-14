@@ -82,7 +82,7 @@ static inline JSTokenizer::JSRet js_normalize(JSNormalizer& ctx, const char* con
 
 HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_, int64_t normalization_depth_,
     int32_t identifier_depth_, uint8_t max_template_nesting_, uint32_t max_bracket_depth_,
-    uint32_t max_scope_depth_, const std::unordered_set<std::string>& built_in_ident_) :
+    uint32_t max_scope_depth_, const std::unordered_set<std::string>& ignored_ids_) :
     uri_param(uri_param_),
     detection_depth(UINT64_MAX),
     normalization_depth(normalization_depth_),
@@ -90,7 +90,7 @@ HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_, int64_t normali
     max_template_nesting(max_template_nesting_),
     max_bracket_depth(max_bracket_depth_),
     max_scope_depth(max_scope_depth_),
-    built_in_ident(built_in_ident_),
+    ignored_ids(ignored_ids_),
     mpse_otag(nullptr),
     mpse_attr(nullptr),
     mpse_type(nullptr)
@@ -160,7 +160,7 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
             "script continues\n");
 
     auto& js_ctx = ssn->acquire_js_ctx(identifier_depth, normalization_depth, max_template_nesting,
-        max_bracket_depth, max_scope_depth, built_in_ident);
+        max_bracket_depth, max_scope_depth, ignored_ids);
 
     while (ptr < end)
     {
@@ -295,7 +295,7 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
         }
 
         auto& js_ctx = ssn->acquire_js_ctx(identifier_depth, normalization_depth,
-            max_template_nesting, max_bracket_depth, max_scope_depth, built_in_ident);
+            max_template_nesting, max_bracket_depth, max_scope_depth, ignored_ids);
         auto output_size_before = js_ctx.script_size();
 
         auto ret = js_normalize(js_ctx, end, ptr);

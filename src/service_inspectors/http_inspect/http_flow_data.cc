@@ -248,14 +248,14 @@ void HttpFlowData::reset_js_ident_ctx()
 
 snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t ident_depth, size_t norm_depth,
     uint8_t max_template_nesting, uint32_t max_bracket_depth, uint32_t max_scope_depth,
-    const std::unordered_set<std::string>& built_in_ident)
+    const std::unordered_set<std::string>& ignored_ids)
 {
     if (js_normalizer)
         return *js_normalizer;
 
     if (!js_ident_ctx)
     {
-        js_ident_ctx = new JSIdentifierCtx(ident_depth, max_scope_depth, built_in_ident);
+        js_ident_ctx = new JSIdentifierCtx(ident_depth, max_scope_depth, ignored_ids);
 
         debug_logf(4, http_trace, TRACE_JS_PROC, nullptr,
             "js_ident_ctx created (ident_depth %d)\n", ident_depth);

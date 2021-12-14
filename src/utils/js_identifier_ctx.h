@@ -41,7 +41,7 @@ public:
     virtual const char* substitute(const char* identifier) = 0;
     virtual void add_alias(const char* alias, const std::string&& value) = 0;
     virtual const char* alias_lookup(const char* alias) const = 0;
-    virtual bool built_in(const char* identifier) const = 0;
+    virtual bool is_ignored(const char* identifier) const = 0;
 
     virtual bool scope_push(JSProgramScopeType) = 0;
     virtual bool scope_pop(JSProgramScopeType) = 0;
@@ -55,12 +55,12 @@ class JSIdentifierCtx : public JSIdentifierCtxBase
 {
 public:
     JSIdentifierCtx(int32_t depth, uint32_t max_scope_depth,
-        const std::unordered_set<std::string>& ident_built_in);
+        const std::unordered_set<std::string>& ignored_ids);
 
     virtual const char* substitute(const char* identifier) override;
     virtual void add_alias(const char* alias, const std::string&& value) override;
     virtual const char* alias_lookup(const char* alias) const override;
-    virtual bool built_in(const char* identifier) const override;
+    virtual bool is_ignored(const char* identifier) const override;
 
     virtual bool scope_push(JSProgramScopeType) override;
     virtual bool scope_pop(JSProgramScopeType) override;
@@ -90,7 +90,7 @@ private:
 
     std::list<ProgramScope> scopes;
     std::unordered_map<std::string, std::string> ident_names;
-    const std::unordered_set<std::string>& ident_built_in;
+    const std::unordered_set<std::string>& ignored_ids;
 
     int32_t ident_last_name = 0;
     int32_t depth;
