@@ -52,12 +52,34 @@ AppIdSession* AppIdApi::get_appid_session(Flow const&) { return session; }
 
 Packet::Packet(bool) { }
 Packet::~Packet() = default;
+
+Packet* DetectionEngine::get_current_packet()
+{
+    static Packet p;
+    return &p;
+}
+}
+
+void AppIdSession::publish_appid_event(AppidChangeBits&, const Packet&, bool, uint32_t)
+{
+    return;
+}
+
+bool SslPatternMatchers::scan_hostname(const uint8_t*, size_t, AppId&, AppId&)
+{
+    return true;
+}
+
+void AppIdSession::set_ss_application_ids_payload(AppId, AppidChangeBits&)
+{
+    return;
 }
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection,
     AppId, AppidChangeBits&) { }
 void AppIdModule::reset_stats() { }
 void AppIdDebug::activate(snort::Flow const*, AppIdSession const*, bool) { }
+
 
 AppId EfpCaPatternMatchers::match_efp_ca_pattern(const string&, uint8_t)
 {

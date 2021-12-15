@@ -334,6 +334,7 @@ public:
     void set_ss_application_ids(AppId service, AppId client, AppId payload, AppId misc,
         AppId referred, AppidChangeBits& change_bits);
     void set_ss_application_ids(AppId client, AppId payload, AppidChangeBits& change_bits);
+    void set_ss_application_ids_payload(AppId payload, AppidChangeBits& change_bits);
     void set_application_ids_service(AppId service_id, AppidChangeBits& change_bits);
 
     void examine_ssl_metadata(AppidChangeBits& change_bits);

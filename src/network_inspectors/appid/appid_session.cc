@@ -950,6 +950,13 @@ void AppIdSession::set_ss_application_ids(AppId client_id, AppId payload_id,
     api.set_ss_application_ids(client_id, payload_id, change_bits, *flow);
 }
 
+void AppIdSession::set_ss_application_ids_payload(AppId payload_id,
+    AppidChangeBits& change_bits)
+{
+    assert(flow);
+    api.set_ss_application_ids_payload(payload_id, change_bits, *flow);
+}
+
 void AppIdSession::set_application_ids_service(AppId service_id, AppidChangeBits& change_bits)
 {
     assert(flow);

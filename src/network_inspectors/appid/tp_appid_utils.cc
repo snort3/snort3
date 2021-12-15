@@ -409,7 +409,7 @@ static inline void process_quic(AppIdSession& asd,
     if ( !asd.tsession )
         asd.tsession = new TlsSession();
 
-    if ( (field=attribute_data.quic_sni()) != nullptr )
+    if ( !asd.tsession->get_tls_host() and (field=attribute_data.quic_sni()) != nullptr )
     {
         if ( appidDebug->is_active() )
             LogMessage("AppIdDbg %s Flow is QUIC\n", appidDebug->get_debug_session());

@@ -386,6 +386,18 @@ void AppIdSessionApi::set_ss_application_ids(AppId service_id, AppId client_id,
     }
 }
 
+void AppIdSessionApi::set_ss_application_ids_payload(AppId payload_id,
+    AppidChangeBits& change_bits, Flow& flow)
+{
+    if (application_ids[APP_PROTOID_PAYLOAD] != payload_id)
+    {
+        application_ids[APP_PROTOID_PAYLOAD] = payload_id;
+        change_bits.set(APPID_PAYLOAD_BIT);
+        if (flow.ha_state)
+            flow.ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
+    }
+}
+
 void AppIdSessionApi::set_ss_application_ids(AppId client_id, AppId payload_id,
     AppidChangeBits& change_bits, Flow& flow)
 {

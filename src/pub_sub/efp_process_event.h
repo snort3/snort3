@@ -31,6 +31,8 @@ public:
     EfpProcessEvent(const snort::Packet& p, const char* process, uint8_t process_conf) :
         p(p), process_name(process), process_confidence(process_conf) { }
 
+    EfpProcessEvent(const snort::Packet& p, const char* server) : p(p), server_name(server) { }
+
     const snort::Packet* get_packet() override { return &p; }
 
     const std::string& get_process_name() const
@@ -43,10 +45,22 @@ public:
         return process_confidence;
     }
 
+    const std::string& get_server_name() const
+    {
+        return server_name;
+    }
+
+    void set_server_name(const char* server)
+    {
+        if (server)
+            server_name = server;
+    }
+
 private:
     const snort::Packet &p;
     std::string process_name;
     uint8_t process_confidence = 0;
+    std::string server_name;
 };
 
 #endif

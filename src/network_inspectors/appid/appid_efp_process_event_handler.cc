@@ -23,6 +23,7 @@
 #endif
 
 #include "appid_efp_process_event_handler.h"
+#include "detection/detection_engine.h"
 
 #include "appid_debug.h"
 #include "appid_inspector.h"
@@ -46,14 +47,40 @@ void AppIdEfpProcessEventHandler::handle(DataEvent& event, Flow* flow)
 
     const std::string& name = efp_process_event.get_process_name();
     uint8_t conf = efp_process_event.get_process_confidence();
+    const std::string& server_name = efp_process_event.get_server_name();
+    AppId app_id = APP_ID_NONE;
 
-    AppId app_id = asd->get_odp_ctxt().get_efp_ca_matchers().match_efp_ca_pattern(name,
-        conf);
+    if (!name.empty())
+    {
+        app_id = asd->get_odp_ctxt().get_efp_ca_matchers().match_efp_ca_pattern(name,
+            conf);
+
+        asd->set_efp_client_app_id(app_id);
+    }
 
     if (appidDebug->is_active())
         LogMessage("AppIdDbg %s encrypted client app %d process name '%s', "
-            "confidence: %d\n", appidDebug->get_debug_session(), app_id, name.c_str(), conf);
+            "confidence: %d, server name '%s'\n", appidDebug->get_debug_session(), app_id,
+            name.c_str(), conf, server_name.c_str());
 
-    asd->set_efp_client_app_id(app_id);
+    if (!server_name.empty())
+    {
+        AppId client_id;
+        AppId payload_id;
+        AppidChangeBits change_bits;
+        snort::Packet* p = snort::DetectionEngine::get_current_packet();
+
+        if (!asd->tsession)
+            asd->tsession = new TlsSession();
+
+        asd->tsession->set_tls_host(server_name.c_str(), server_name.length(), change_bits);
+        asd->set_tls_host(change_bits);
+
+        asd->get_odp_ctxt().get_ssl_matchers().scan_hostname(reinterpret_cast<const uint8_t*>(server_name.c_str()),
+            server_name.length(), client_id, payload_id);
+        asd->set_payload_id(payload_id);
+        asd->set_ss_application_ids_payload(payload_id, change_bits);
+
+        asd->publish_appid_event(change_bits, *p);
+    }
 }
-
