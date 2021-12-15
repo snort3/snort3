@@ -1,3 +1,37 @@
+2021/12/15 - 3.1.19.0
+
+appid,ssh: roll AppId's SSH detector into SSH service inspector
+appid: remove hard-coded SSH client patterns which are available as part of ODP
+build: add cppcheck suppressions for unusedFunctions
+build: clean up some cppcheck style issues
+build: move flex options to the template file
+cmake: fix CMP0115 Warning
+daq: sort --daq-list output by module name
+dce_smb: add new smb counters
+file_api: add null check for user file data
+file_api: handle file_data
+framework,appid: generate NO_SERVICE event when no inspector can be attached to a flow; wait for the event in appid before declaring service as unknown for the flow
+http_inspect,http2_inspect: refuse midstream pickups
+http_inspect: add JavaScript builtin de-aliasing
+http_inspect: rename js normalization options
+http_inspect: use correct detect_length for partial inspection cleanup
+loggers: fix truncated alert_syslog messages
+lua: configure a list of JS ignored IDs in default_http_inspect table
+managers: continue inspectors probe when packet has disable_inspect flag
+mime: add the support for vba macro data extraction of  MS office files transferred over mime protocols
+parser: fix missing-prototypes warning in parse_ports.cc
+parser: fix parsing of portsets
+rpc: remove RpcSplitter altogether and use LogSplitter instead
+snort2lua: fix conversion of variable sets
+stream: add PKT_MORE_TO_FLUSH flag and use it in TcpReassembler::scan_data_post_ack() to signal AtomSplitter whether to flush or not
+stream: fix issue with atom splitter not returning FLUSH
+stream_tcp: remove unnecessary special adjustment methods
+utils: (JSTokenizer) fix braces initialization compilation error (gcc5)
+utils: fix state adjustment in JS Tokenizer
+utils: place init/deinit routine under a single function
+utils: update JS normalizer unit tests
+vlan: implement vlan encode function
+
 2021/12/01 - 3.1.18.0
 
 alert_sf_socket: remove obselete logger

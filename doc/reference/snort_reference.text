@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.18.0 2021-12-01 10:40:58 EST TST
+Revision 3.1.19.0 2021-12-15 06:07:48 EST TST
 
 ---------------------------------------------------------------------
 
@@ -2994,6 +2994,10 @@ Peg counts:
   * dce_smb.concurrent_sessions: total concurrent sessions (now)
   * dce_smb.max_concurrent_sessions: maximum concurrent sessions
     (max)
+  * dce_smb.total_smb1_sessions: total smb1 sessions (sum)
+  * dce_smb.total_smb2_sessions: total smb2 sessions (sum)
+  * dce_smb.total_encrypted_sessions: total encrypted sessions (sum)
+  * dce_smb.total_mc_sessions: total multichannel sessions (sum)
 
 
 5.12. dce_tcp
@@ -3724,7 +3728,7 @@ Configuration:
     immediately upon script end
   * bool http_inspect.normalize_javascript = false: use legacy
     normalizer to normalize JavaScript in response bodies
-  * int http_inspect.js_normalization_depth = -1: number of input
+  * int http_inspect.js_norm_bytes_depth = -1: number of input
     JavaScript bytes to normalize (-1 unlimited) { -1:max53 }
   * int http_inspect.js_norm_identifier_depth = 65536: max number of
     unique JavaScript identifiers to normalize { 0:65536 }
@@ -3737,8 +3741,8 @@ Configuration:
   * int http_inspect.js_norm_max_scope_depth = 256: maximum depth of
     scope nesting that enhanced JavaScript normalizer will process {
     1:65535 }
-  * string http_inspect.js_norm_built_in_ident[].ident_name: name of
-    built-in identifier
+  * string http_inspect.js_norm_ident_ignore[].ident_name: name of
+    the identifier to ignore
   * int http_inspect.max_javascript_whitespaces = 200: maximum
     consecutive whitespaces allowed within the JavaScript obfuscated
     data { 1:65535 }
@@ -4174,6 +4178,8 @@ Configuration:
     attachments
   * bool imap.decompress_zip = false: decompress zip files in MIME
     attachments
+  * bool imap.decompress_vba = false: decompress MS Office Visual
+    Basic for Applications macro files in MIME attachments
   * int imap.qp_decode_depth = -1: quoted Printable decoding depth
     (-1 no limit) { -1:65535 }
   * int imap.uu_decode_depth = -1: Unix-to-Unix decoding depth (-1 no
@@ -4572,6 +4578,8 @@ Configuration:
     attachments
   * bool pop.decompress_zip = false: decompress zip files in MIME
     attachments
+  * bool pop.decompress_vba = false: decompress MS Office Visual
+    Basic for Applications macro files in MIME attachments
   * int pop.qp_decode_depth = -1: Quoted Printable decoding depth (-1
     no limit) { -1:65535 }
   * int pop.uu_decode_depth = -1: Unix-to-Unix decoding depth (-1 no
@@ -5172,6 +5180,8 @@ Configuration:
     attachments
   * bool smtp.decompress_zip = false: decompress zip files in MIME
     attachments
+  * bool smtp.decompress_vba = false: decompress MS Office Visual
+    Basic for Applications macro files in MIME attachments
   * int smtp.email_hdrs_log_depth = 1464: depth for logging email
     headers { 0:20480 }
   * bool smtp.ignore_data = false: ignore data section of mail
@@ -9286,12 +9296,12 @@ these libraries see the Getting Started section of the manual.
     mapping to normalize characters
   * string http_inspect.iis_unicode_map_file: file containing code
     points for IIS unicode. { (optional) }
-  * int http_inspect.js_normalization_depth = -1: number of input
+  * int http_inspect.js_norm_bytes_depth = -1: number of input
     JavaScript bytes to normalize (-1 unlimited) { -1:max53 }
-  * string http_inspect.js_norm_built_in_ident[].ident_name: name of
-    built-in identifier
   * int http_inspect.js_norm_identifier_depth = 65536: max number of
     unique JavaScript identifiers to normalize { 0:65536 }
+  * string http_inspect.js_norm_ident_ignore[].ident_name: name of
+    the identifier to ignore
   * int http_inspect.js_norm_max_bracket_depth = 256: maximum depth
     of bracket nesting that enhanced JavaScript normalizer will
     process { 1:65535 }
@@ -9458,6 +9468,8 @@ these libraries see the Getting Started section of the manual.
     attachments
   * bool imap.decompress_swf = false: decompress swf files in MIME
     attachments
+  * bool imap.decompress_vba = false: decompress MS Office Visual
+    Basic for Applications macro files in MIME attachments
   * bool imap.decompress_zip = false: decompress zip files in MIME
     attachments
   * int imap.qp_decode_depth = -1: quoted Printable decoding depth
@@ -9721,6 +9733,8 @@ these libraries see the Getting Started section of the manual.
     attachments
   * bool pop.decompress_swf = false: decompress swf files in MIME
     attachments
+  * bool pop.decompress_vba = false: decompress MS Office Visual
+    Basic for Applications macro files in MIME attachments
   * bool pop.decompress_zip = false: decompress zip files in MIME
     attachments
   * int pop.qp_decode_depth = -1: Quoted Printable decoding depth (-1
@@ -10131,6 +10145,8 @@ these libraries see the Getting Started section of the manual.
     attachments
   * bool smtp.decompress_swf = false: decompress swf files in MIME
     attachments
+  * bool smtp.decompress_vba = false: decompress MS Office Visual
+    Basic for Applications macro files in MIME attachments
   * bool smtp.decompress_zip = false: decompress zip files in MIME
     attachments
   * int smtp.email_hdrs_log_depth = 1464: depth for logging email
@@ -10794,6 +10810,10 @@ these libraries see the Getting Started section of the manual.
     reassembled (sum)
   * dce_smb.smb_server_segs_reassembled: total smb server segments
     reassembled (sum)
+  * dce_smb.total_encrypted_sessions: total encrypted sessions (sum)
+  * dce_smb.total_mc_sessions: total multichannel sessions (sum)
+  * dce_smb.total_smb1_sessions: total smb1 sessions (sum)
+  * dce_smb.total_smb2_sessions: total smb2 sessions (sum)
   * dce_smb.v2_bad_next_cmd_offset: total number of SMBv2 packets
     seen with invalid next command offset (sum)
   * dce_smb.v2_cls_err_resp: total number of SMBv2 close error
