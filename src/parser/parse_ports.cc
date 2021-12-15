@@ -306,7 +306,7 @@ static PortObject* _POParsePort(POParser* pop)
     return po;
 }
 
-const char* _POFindMatchingBraces(const char* s)
+static const char* _POFindMatchingBraces(const char* s)
 {
     uint32_t depth = 0;
 
