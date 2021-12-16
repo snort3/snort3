@@ -47,9 +47,8 @@ public:
 
 private:
     const HttpCommon::SourceId source_id;
-    static StreamSplitter::Status data_frame_header_checks(Http2FlowData* session_data,
-        uint32_t* flush_offset, HttpCommon::SourceId source_id, uint32_t frame_length,
-        uint32_t& data_offset);
+    static void data_frame_header_checks(Http2FlowData* session_data,
+        HttpCommon::SourceId source_id);
     static StreamSplitter::Status non_data_scan(Http2FlowData* session_data,
         uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id, uint8_t type,
         uint8_t frame_flags, uint32_t& data_offset);
@@ -60,7 +59,6 @@ private:
         HttpCommon::SourceId source_id);
     static bool read_frame_hdr(Http2FlowData* session_data, const uint8_t* data,
         uint32_t length, HttpCommon::SourceId source_id, uint32_t& data_offset);
-    static void discarded_data_frame_cleanup(Http2FlowData* session_data, HttpCommon::SourceId source_id, Http2Stream* stream);
 };
 
 

@@ -276,7 +276,7 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
         (session_data->section_type[source_id] == SEC__NOT_COMPUTE))
     {
         assert(session_data->type_expected[source_id] != SEC_ABORT);
-        // assert(session_data->section_type[source_id] != SEC__NOT_COMPUTE); // FIXIT-M H2I
+        assert(session_data->section_type[source_id] != SEC__NOT_COMPUTE);
         session_data->type_expected[source_id] = SEC_ABORT;
         return { nullptr, 0 };
     }

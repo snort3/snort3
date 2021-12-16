@@ -127,6 +127,7 @@ bool Http2Stream::is_open(HttpCommon::SourceId source_id)
     return (state[source_id] == STREAM_EXPECT_BODY) || (state[source_id] == STREAM_BODY);
 }
 
+// Caller must set session_data->stream_in_hi before calling this
 void Http2Stream::finish_msg_body(HttpCommon::SourceId source_id, bool expect_trailers,
     bool clear_partial_buffer)
 {

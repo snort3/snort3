@@ -70,6 +70,7 @@ const RuleMap Http2Module::http2_events[] =
         "More than two HTTP/2 HPACK table size updates in a single header block" },
     { EVENT_HPACK_TABLE_SIZE_UPDATE_EXCEEDS_MAX,
         "HTTP/2 HPACK table size update exceeds max value set by decoder in SETTINGS frame" },
+    { EVENT_UNEXPECTED_DATA_FRAME, "Nonempty HTTP/2 Data frame where message body not expected" },
     { 0, nullptr }
 };
 
