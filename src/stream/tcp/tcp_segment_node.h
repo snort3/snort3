@@ -61,6 +61,13 @@ public:
             return (c_seq + c_len) < to_seq;
     }
 
+    void update_ressembly_lengths(uint16_t bytes)
+    {
+        c_seq += bytes;
+        c_len -= bytes;
+        offset += bytes;
+    }
+
 public:
     TcpSegmentNode* prev;
     TcpSegmentNode* next;

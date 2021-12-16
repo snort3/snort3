@@ -114,6 +114,26 @@ void TcpReassembler::update_next(TcpReassemblerState& trs, const TcpSegmentNode&
         trs.sos.seglist.cur_rseg->c_seq = trs.sos.seglist.cur_rseg->i_seq;
 }
 
+// If we are skipping seglist hole, update tsn so that we can purge
+void TcpReassembler::update_skipped_bytes(uint32_t remaining_bytes, TcpReassemblerState& trs)
+{
+    TcpSegmentNode* tsn;
+
+    while ( remaining_bytes and (tsn = trs.sos.seglist.cur_rseg) )
+    {
+        auto bytes_skipped = ( tsn->c_len <= remaining_bytes ) ? tsn->c_len : remaining_bytes;
+
+        remaining_bytes -= bytes_skipped;
+        tsn->update_ressembly_lengths(bytes_skipped);
+
+        if ( !tsn->c_len )
+        {
+            trs.flush_count++;
+            update_next(trs, *tsn);
+        }
+    }
+}
+
 int TcpReassembler::delete_reassembly_segment(TcpReassemblerState& trs, TcpSegmentNode* tsn)
 {
     int ret;
@@ -413,9 +433,7 @@ int TcpReassembler::flush_data_segments(TcpReassemblerState& trs, uint32_t flush
         }
 
         total_flushed += bytes_copied;
-        tsn->c_seq += bytes_copied;
-        tsn->c_len -= bytes_copied;
-        tsn->offset += bytes_copied;
+        tsn->update_ressembly_lengths(bytes_copied);
         flags = 0;
 
         if ( !tsn->c_len )
@@ -425,10 +443,8 @@ int TcpReassembler::flush_data_segments(TcpReassemblerState& trs, uint32_t flush
         }
 
         /* Check for a gap/missing packet */
-        // FIXIT-L PAF should account for missing data and resume
-        // scanning at the start of next PDU instead of aborting.
         // FIXIT-L FIN may be in to_seq causing bogus gap counts.
-        if ( tsn->is_packet_missing(to_seq) )
+        if ( tsn->is_packet_missing(to_seq) or trs.paf_state.paf == StreamSplitter::SKIP )
         {
             // FIXIT-H // assert(false); find when this scenario happens
             // FIXIT-L this is suboptimal - better to exclude fin from to_seq
@@ -443,6 +459,9 @@ int TcpReassembler::flush_data_segments(TcpReassemblerState& trs, uint32_t flush
         if ( sb.data || !trs.sos.seglist.cur_rseg )
             break;
     }
+
+    if ( trs.paf_state.paf == StreamSplitter::SKIP )
+        update_skipped_bytes(remaining_bytes, trs);
 
     return total_flushed;
 }
@@ -889,7 +908,6 @@ static inline bool both_splitters_aborted(Flow* flow)
 static inline void fallback(TcpStreamTracker& trk, bool server_side, uint16_t max)
 {
     trk.set_splitter(new AtomSplitter(!server_side, max));
-    trk.reassembler.setup_paf();
     tcpStats.partial_fallbacks++;
 }
 
@@ -909,6 +927,24 @@ void TcpReassembler::fallback(TcpStreamTracker& tracker, bool server_side)
         flow->clear_gadget();
         tcpStats.inspector_fallbacks++;
     }
+}
+
+bool TcpReassembler::has_seglist_hole(TcpReassemblerState& trs, TcpSegmentNode& tsn, PAF_State& ps,
+    uint32_t& total, uint32_t& flags)
+{
+    if ( !tsn.prev or SEQ_GEQ(tsn.prev->c_seq + tsn.prev->c_len, tsn.c_seq) or
+        SEQ_GEQ(tsn.c_seq, trs.tracker->r_win_base) )
+        return false;
+
+    // safety - prevent seq + total < seq
+    if ( total > 0x7FFFFFFF )
+        total = 0x7FFFFFFF;
+
+    if ( !ps.tot )
+        flags |= PKT_PDU_HEAD;
+
+    ps.paf = StreamSplitter::SKIP;
+    return true;
 }
 
 // iterate over trs.sos.seglist and scan all new acked bytes
@@ -944,9 +980,6 @@ int32_t TcpReassembler::scan_data_post_ack(TcpReassemblerState& trs, uint32_t* f
         uint32_t end_seq = tsn->c_seq + tsn->c_len;
         if ( SEQ_EQ(end_seq, paf_position(&trs.paf_state)) )
         {
-            if ( splitter->is_paf() and !next_no_gap(*tsn) )
-                return -1;
-
             total = end_seq - trs.sos.seglist_base_seq;
             tsn = tsn->next;
         }
@@ -959,20 +992,26 @@ int32_t TcpReassembler::scan_data_post_ack(TcpReassemblerState& trs, uint32_t* f
         // only flush acked data that fits in pdu reassembly buffer...
         uint32_t end = tsn->c_seq + tsn->c_len;
         uint32_t flush_len;
+        int32_t flush_pt;
 
         if ( SEQ_GT(end, trs.tracker->r_win_base))
             flush_len = trs.tracker->r_win_base - tsn->c_seq;
         else
             flush_len = tsn->c_len;
 
-        total += flush_len;
-
         if ( next_acked_no_gap_c(*tsn, trs) )
             *flags |= PKT_MORE_TO_FLUSH;
         else
             *flags &= ~PKT_MORE_TO_FLUSH;
-        int32_t flush_pt = paf_check(splitter, &trs.paf_state, p, tsn->payload(),
-            flush_len, total, tsn->c_seq, flags);
+
+        if ( has_seglist_hole(trs, *tsn, trs.paf_state, total, *flags) )
+            flush_pt = total;
+        else
+        {
+            total += flush_len;
+            flush_pt = paf_check(splitter, &trs.paf_state, p, tsn->payload(),
+                flush_len, total, tsn->c_seq, flags);
+        }
 
         // Get splitter from tracker as paf check may change it.
         splitter = trs.tracker->get_splitter();
@@ -1054,6 +1093,35 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
     return flushed;
 }
 
+void TcpReassembler::skip_seglist_hole(TcpReassemblerState& trs, Packet* p, uint32_t flags,
+    int32_t flush_amt)
+{
+    if ( trs.tracker->is_splitter_paf() )
+    {
+        if ( flush_amt > 0 )
+            update_skipped_bytes(flush_amt, trs);
+        fallback(*trs.tracker, trs.server_side);
+    }
+    else
+    {
+        if ( flush_amt > 0 )
+            flush_to_seq(trs, flush_amt, p, flags);
+        trs.paf_state.paf = StreamSplitter::START;
+    }
+
+    if ( trs.sos.seglist.head )
+    {
+        if ( flush_amt > 0 )
+            purge_to_seq(trs, trs.sos.seglist_base_seq + flush_amt);
+        trs.sos.seglist_base_seq = trs.sos.seglist.head->c_seq;
+    }
+    else
+        trs.sos.seglist_base_seq = trs.tracker->r_win_base;
+
+    trs.tracker->rcv_nxt = trs.tracker->r_win_base;
+    trs.sos.seglist.cur_rseg = trs.sos.seglist.head;
+}
+
 int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
 {
     uint32_t flushed = 0;
@@ -1066,11 +1134,14 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
 
     case STREAM_FLPOLICY_ON_ACK:
     {
+        int32_t flush_amt;
+        uint32_t flags;
+
         do
         {
-            uint32_t flags = get_reverse_packet_dir(trs, p);
-            int32_t flush_amt = scan_data_post_ack(trs, &flags, p);
-            if ( flush_amt <= 0 )
+            flags = get_reverse_packet_dir(trs, p);
+            flush_amt = scan_data_post_ack(trs, &flags, p);
+            if ( flush_amt <= 0 or trs.paf_state.paf == StreamSplitter::SKIP )
                 break;
 
             if ( trs.paf_state.paf == StreamSplitter::ABORT )
@@ -1090,6 +1161,11 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
         if ( (trs.paf_state.paf == StreamSplitter::ABORT) && trs.tracker->is_splitter_paf() )
         {
             fallback(*trs.tracker, trs.server_side);
+            return flush_on_ack_policy(trs, p);
+        }
+        else if ( trs.paf_state.paf == StreamSplitter::SKIP )
+        {
+            skip_seglist_hole(trs, p, flags, flush_amt);
             return flush_on_ack_policy(trs, p);
         }
     }
