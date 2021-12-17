@@ -61,6 +61,7 @@ enum SnortProtoIdIndex
     PROTO_INDEX_SUNRPC,
     PROTO_INDEX_TFTP,
     PROTO_INDEX_SIP,
+    PROTO_INDEX_SSH,
 
     PROTO_INDEX_MAX
 };
