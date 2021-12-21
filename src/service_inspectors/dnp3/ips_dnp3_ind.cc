@@ -150,6 +150,9 @@ bool Dnp3IndModule::set(const char*, Value& v, SnortConfig*)
         if ( tok[0] == '"' )
             tok.erase(0, 1);
 
+        if (tok.length() == 0)
+            continue;
+
         if ( tok[tok.length()-1] == '"' )
             tok.erase(tok.length()-1, 1);
 
