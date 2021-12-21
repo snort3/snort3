@@ -67,6 +67,12 @@ void AppIdPegCounts::cleanup_dynamic_sum()
         memset((*appid_peg_counts)[app_num].stats, 0, sizeof(PegCount) *
             DetectorPegs::NUM_APPID_DETECTOR_PEGS);
     }
+
+    // reset unknown_app stats
+    memset(appid_dynamic_sum[SF_APPID_MAX].stats, 0, sizeof(PegCount) *
+        DetectorPegs::NUM_APPID_DETECTOR_PEGS);
+    memset((*appid_peg_counts)[appid_peg_counts->size() - 1].stats, 0, sizeof(PegCount) *
+        DetectorPegs::NUM_APPID_DETECTOR_PEGS);
 }
 
 void AppIdPegCounts::add_app_peg_info(std::string app_name, AppId app_id)
@@ -96,28 +102,19 @@ void AppIdPegCounts::sum_stats()
         appid_dynamic_sum[SF_APPID_MAX].stats[j] += ptr[peg_num].stats[j];
 }
 
-void AppIdPegCounts::update_service_count(AppId id, bool increment)
+void AppIdPegCounts::inc_service_count(AppId id)
 {
-    if (increment)
-        (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::SERVICE_DETECTS]++;
-    else if ((*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::SERVICE_DETECTS])
-        (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::SERVICE_DETECTS]--;
+    (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::SERVICE_DETECTS]++;
 }
 
-void AppIdPegCounts::update_client_count(AppId id, bool increment)
+void AppIdPegCounts::inc_client_count(AppId id)
 {
-    if (increment)
-        (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::CLIENT_DETECTS]++;
-    else if ((*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::CLIENT_DETECTS])
-        (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::CLIENT_DETECTS]--;
+    (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::CLIENT_DETECTS]++;
 }
 
-void AppIdPegCounts::update_payload_count(AppId id, bool increment)
+void AppIdPegCounts::inc_payload_count(AppId id)
 {
-    if (increment)
-        (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::PAYLOAD_DETECTS]++;
-    else if ((*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::PAYLOAD_DETECTS])
-        (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::PAYLOAD_DETECTS]--;
+    (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::PAYLOAD_DETECTS]++;
 }
 
 void AppIdPegCounts::inc_user_count(AppId id)
@@ -128,6 +125,11 @@ void AppIdPegCounts::inc_user_count(AppId id)
 void AppIdPegCounts::inc_misc_count(AppId id)
 {
     (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::MISC_DETECTS]++;
+}
+
+void AppIdPegCounts::inc_referred_count(AppId id)
+{
+    (*appid_peg_counts)[get_stats_index(id)].stats[DetectorPegs::REFERRED_DETECTS]++;
 }
 
 uint32_t AppIdPegCounts::get_stats_index(AppId id)
@@ -162,8 +164,8 @@ void AppIdPegCounts::print()
     LogLabel("detected apps and services");
 
     char buff[120];
-    snprintf(buff, sizeof(buff), "%25.25s: %-10s %-10s %-10s %-10s %-10s %-10s %-10s",
-        "Application", "Flows", "Clients", "Users", "Payloads", "Misc", "Incompat.", "Failed");
+    snprintf(buff, sizeof(buff), "%25.25s: %-10s %-10s %-10s %-10s %-10s %-10s",
+        "Application", "Services", "Clients", "Users", "Payloads", "Misc", "Referred");
     LogText(buff);
 
     for (unsigned i = 0; i < app_num; i++)

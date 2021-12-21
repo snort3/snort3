@@ -28,6 +28,7 @@
 #include "flow/ha.h"
 #include "managers/inspector_manager.h"
 #include "appid_inspector.h"
+#include "appid_peg_counts.h"
 #include "appid_session.h"
 #include "appid_types.h"
 #include "service_plugins/service_bootp.h"
@@ -351,30 +352,13 @@ void AppIdSessionApi::set_netbios_domain(AppidChangeBits& change_bits, const cha
 void AppIdSessionApi::set_ss_application_ids(AppId service_id, AppId client_id,
     AppId payload_id, AppId misc_id, AppId referred_id, AppidChangeBits& change_bits, Flow& flow)
 {
-    if (application_ids[APP_PROTOID_SERVICE] != service_id)
-    {
-        application_ids[APP_PROTOID_SERVICE] = service_id;
-        change_bits.set(APPID_SERVICE_BIT);
-        if (flow.ha_state)
-            flow.ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
-    }
-    if (application_ids[APP_PROTOID_CLIENT] != client_id)
-    {
-        application_ids[APP_PROTOID_CLIENT] = client_id;
-        change_bits.set(APPID_CLIENT_BIT);
-        if (flow.ha_state)
-            flow.ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
-    }
-    if (application_ids[APP_PROTOID_PAYLOAD] != payload_id)
-    {
-        application_ids[APP_PROTOID_PAYLOAD] = payload_id;
-        change_bits.set(APPID_PAYLOAD_BIT);
-        if (flow.ha_state)
-            flow.ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
-    }
+    set_application_ids_service(service_id, change_bits, flow);
+    set_ss_application_ids(client_id, payload_id, change_bits, flow);
+
     if (application_ids[APP_PROTOID_MISC] != misc_id)
     {
         application_ids[APP_PROTOID_MISC] = misc_id;
+        AppIdPegCounts::inc_misc_count(misc_id);
         change_bits.set(APPID_MISC_BIT);
         if (flow.ha_state)
             flow.ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
@@ -382,6 +366,7 @@ void AppIdSessionApi::set_ss_application_ids(AppId service_id, AppId client_id,
     if (application_ids[APP_PROTOID_REFERRED] != referred_id)
     {
         application_ids[APP_PROTOID_REFERRED] = referred_id;
+        AppIdPegCounts::inc_referred_count(referred_id);
         change_bits.set(APPID_REFERRED_BIT);
     }
 }
@@ -392,6 +377,7 @@ void AppIdSessionApi::set_ss_application_ids_payload(AppId payload_id,
     if (application_ids[APP_PROTOID_PAYLOAD] != payload_id)
     {
         application_ids[APP_PROTOID_PAYLOAD] = payload_id;
+        AppIdPegCounts::inc_payload_count(payload_id);
         change_bits.set(APPID_PAYLOAD_BIT);
         if (flow.ha_state)
             flow.ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
@@ -404,17 +390,12 @@ void AppIdSessionApi::set_ss_application_ids(AppId client_id, AppId payload_id,
     if (application_ids[APP_PROTOID_CLIENT] != client_id)
     {
         application_ids[APP_PROTOID_CLIENT] = client_id;
+        AppIdPegCounts::inc_client_count(client_id);
         change_bits.set(APPID_CLIENT_BIT);
         if (flow.ha_state)
             flow.ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
     }
-    if (application_ids[APP_PROTOID_PAYLOAD] != payload_id)
-    {
-        application_ids[APP_PROTOID_PAYLOAD] = payload_id;
-        change_bits.set(APPID_PAYLOAD_BIT);
-        if (flow.ha_state)
-            flow.ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
-    }
+    set_ss_application_ids_payload(payload_id, change_bits, flow);
 }
 
 void AppIdSessionApi::set_application_ids_service(AppId service_id, AppidChangeBits& change_bits,
@@ -423,6 +404,7 @@ void AppIdSessionApi::set_application_ids_service(AppId service_id, AppidChangeB
     if (application_ids[APP_PROTOID_SERVICE] != service_id)
     {
         application_ids[APP_PROTOID_SERVICE] = service_id;
+        AppIdPegCounts::inc_service_count(service_id);
         change_bits.set(APPID_SERVICE_BIT);
         if (flow.ha_state)
             flow.ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);

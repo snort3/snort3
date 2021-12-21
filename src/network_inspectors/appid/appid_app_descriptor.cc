@@ -21,21 +21,7 @@ using namespace snort;
 void ApplicationDescriptor::set_id(AppId app_id)
 {
     if ( my_id != app_id )
-    {
         my_id = app_id;
-        if ( app_id > APP_ID_NONE )
-            update_stats(app_id);
-        else if ( app_id == APP_ID_UNKNOWN )
-            appid_stats.appid_unknown++;
-        else
-            return; // app_id == APP_ID_NONE
-
-        if ( overwritten_id > APP_ID_NONE )
-        {
-            update_stats(overwritten_id, false);
-            overwritten_id = APP_ID_NONE;
-        }
-    }
 }
 
 void ApplicationDescriptor::set_id(const Packet& p, AppIdSession& asd,
@@ -48,19 +34,10 @@ void ApplicationDescriptor::set_id(const Packet& p, AppIdSession& asd,
     }
 }
 
-void ServiceAppDescriptor::update_stats(AppId id, bool increment)
-{
-    AppIdPegCounts::update_service_count(id, increment);
-}
-
 void ServiceAppDescriptor::set_port_service_id(AppId id)
 {
     if ( id != port_service_id )
-    {
         port_service_id = id;
-        if ( id > APP_ID_NONE )
-            AppIdPegCounts::update_service_count(id, true);
-    }
 }
 
 void ServiceAppDescriptor::set_id(AppId app_id, OdpContext& odp_ctxt)
@@ -89,14 +66,4 @@ void ClientAppDescriptor::update_user(AppId app_id, const char* username, AppidC
             change_bits.set(APPID_USER_INFO_BIT);
         }
     }
-}
-
-void ClientAppDescriptor::update_stats(AppId id, bool increment)
-{
-    AppIdPegCounts::update_client_count(id, increment);
-}
-
-void PayloadAppDescriptor::update_stats(AppId id, bool increment)
-{
-    AppIdPegCounts::update_payload_count(id, increment);
 }

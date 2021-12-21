@@ -151,11 +151,8 @@ void ServiceAppDescriptor::set_id(AppId app_id, OdpContext& odp_ctxt)
     set_id(app_id);
     deferred = odp_ctxt.get_app_info_mgr().get_app_info_flags(app_id, APPINFO_FLAG_DEFER);
 }
-void ServiceAppDescriptor::update_stats(AppId, bool){}
 void ServiceAppDescriptor::set_port_service_id(AppId){}
 void ClientAppDescriptor::update_user(AppId, const char*, AppidChangeBits&){}
-void ClientAppDescriptor::update_stats(AppId, bool) {}
-void PayloadAppDescriptor::update_stats(AppId, bool) {}
 
 // Stubs for AppIdModule
 AppIdModule::AppIdModule(): Module("appid_mock", "appid_mock_help") {}

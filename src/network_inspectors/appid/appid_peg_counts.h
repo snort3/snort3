@@ -42,6 +42,19 @@
 #include "main/thread.h"
 #include "utils/util.h"
 
+struct AppIdStats
+{
+    PegCount packets;
+    PegCount processed_packets;
+    PegCount ignored_packets;
+    PegCount total_sessions;
+    PegCount service_cache_prunes;
+    PegCount service_cache_adds;
+    PegCount service_cache_removes;
+    PegCount odp_reload_ignored_pkts;
+    PegCount tp_reload_ignored_pkts;
+};
+
 class AppIdPegCounts
 {
 public:
@@ -52,8 +65,7 @@ public:
         USER_DETECTS,
         PAYLOAD_DETECTS,
         MISC_DETECTS,
-        INCOMPATIBLE,
-        FAILED,
+        REFERRED_DETECTS,
         NUM_APPID_DETECTOR_PEGS
     };
 
@@ -70,9 +82,10 @@ public:
 
         void print(const char* app, char* buf, int buf_size)
         {
-            snprintf(buf, buf_size, "%25.25s: " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10")
+            snprintf(buf, buf_size, "%25.25s: " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10")
                 " " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10"), app, 
-                stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], stats[6]);
+                stats[SERVICE_DETECTS], stats[CLIENT_DETECTS], stats[USER_DETECTS],
+                stats[PAYLOAD_DETECTS], stats[MISC_DETECTS], stats[REFERRED_DETECTS]);
         }
     };
 
@@ -82,24 +95,12 @@ public:
     static void cleanup_peg_info();
     static void cleanup_dynamic_sum();
 
-    static void update_service_count(AppId id, bool increment);
-    static void update_client_count(AppId id, bool increment);
-    static void update_payload_count(AppId id, bool increment);
-
+    static void inc_service_count(AppId id);
+    static void inc_client_count(AppId id);
+    static void inc_payload_count(AppId id);
     static void inc_user_count(AppId id);
     static void inc_misc_count(AppId id);
-
-    static void inc_incompatible_count(AppId id)
-    {
-        if ( appid_detector_pegs_idx[id] != appid_detectors_info.size() )
-            (*appid_peg_counts)[appid_detector_pegs_idx[id]].stats[DetectorPegs::INCOMPATIBLE]++;
-    }
-
-    static void inc_failed_count(AppId id)
-    {
-        if ( appid_detector_pegs_idx[id] != appid_detectors_info.size() )
-            (*appid_peg_counts)[appid_detector_pegs_idx[id]].stats[DetectorPegs::FAILED]++;
-    }
+    static void inc_referred_count(AppId id);
 
     static void sum_stats();
     static void print();

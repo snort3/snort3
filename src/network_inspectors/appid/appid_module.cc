@@ -429,7 +429,6 @@ static const PegInfo appid_pegs[] =
     { CountType::SUM, "processed_packets", "count of packets processed" },
     { CountType::SUM, "ignored_packets", "count of packets ignored" },
     { CountType::SUM, "total_sessions", "count of sessions created" },
-    { CountType::SUM, "appid_unknown", "count of sessions where appid could not be determined" },
     { CountType::SUM, "service_cache_prunes", "number of times the service cache was pruned" },
     { CountType::SUM, "service_cache_adds", "number of times an entry was added to the service cache" },
     { CountType::SUM, "service_cache_removes", "number of times an item was removed from the service cache" },

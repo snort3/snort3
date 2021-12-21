@@ -171,7 +171,6 @@ set ( APPID_SOURCES
     appid_inspector.h
     appid_module.cc
     appid_module.h
-    appid_pegs.h
     appid_ssh_event_handler.cc
     appid_ssh_event_handler.h
     appid_stats.cc

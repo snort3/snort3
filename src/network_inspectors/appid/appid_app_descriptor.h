@@ -59,8 +59,6 @@ public:
         set_version(version);
     }
 
-    virtual void update_stats(AppId id, bool increment = true) = 0;
-
     AppId get_id() const
     {
         return my_id;
@@ -69,11 +67,6 @@ public:
     virtual void set_id(AppId app_id);
 
     virtual void set_id(const snort::Packet& p, AppIdSession& asd, AppidSessionDirection dir, AppId app_id, AppidChangeBits& change_bits);
-
-    void set_overwritten_id(AppId app_id)
-    {
-        overwritten_id = app_id;
-    }
 
     const char* get_version() const
     {
@@ -88,7 +81,6 @@ public:
 
 private:
     AppId my_id = APP_ID_NONE;
-    AppId overwritten_id = APP_ID_NONE;
     std::string my_version;
 };
 
@@ -138,8 +130,6 @@ public:
         service_port = 0;
         service_group = DAQ_PKTHDR_UNKNOWN;
     }
-
-    void update_stats(AppId id, bool increment = true) override;
 
     AppId get_port_service_id() const
     {
@@ -253,8 +243,6 @@ public:
         return my_username.empty() ? nullptr : my_username.c_str();
     }
 
-    void update_stats(AppId id, bool increment = true) override;
-
     void set_efp_client_app_id(AppId id)
     {
         efp_client_app_id = id;
@@ -291,8 +279,6 @@ public:
     {
         ApplicationDescriptor::reset();
     }
-
-    void update_stats(AppId id, bool increment = true) override;
 };
 
 #endif

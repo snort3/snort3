@@ -30,7 +30,7 @@
 #include "utils/cpp_macros.h"
 #include "utils/util.h"
 
-#include "appid_pegs.h"
+#include "appid_peg_counts.h"
 #include "service_plugins/service_discovery.h"
 
 class ServiceDetector;

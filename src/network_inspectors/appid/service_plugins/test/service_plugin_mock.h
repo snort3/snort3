@@ -98,10 +98,7 @@ void AppIdDetector::add_payload(AppIdSession&, AppId){}
 void AppIdDetector::add_app(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppId, const char*, AppidChangeBits&){}
 void ApplicationDescriptor::set_id(AppId){}
 void ServiceAppDescriptor::set_id(AppId, OdpContext&){}
-void ServiceAppDescriptor::update_stats(AppId, bool){}
 void ClientAppDescriptor::update_user(AppId, const char*, AppidChangeBits&){}
-void ClientAppDescriptor::update_stats(AppId, bool) {}
-void PayloadAppDescriptor::update_stats(AppId, bool) {}
 void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool&, int,
         const uint8_t* const, unsigned, unsigned){}
 void AppIdDiscovery::register_detector(const std::string&, AppIdDetector*,  IpProtocol){}
@@ -178,9 +175,9 @@ void AppIdSession::free_flow_data()
 void* AppIdSession::get_flow_data(unsigned) const { return smb_data;}
 
 // Stubs for AppIdPegCounts
-void AppIdPegCounts::update_service_count(AppId, bool) { }
-void AppIdPegCounts::update_client_count(AppId, bool) { }
-void AppIdPegCounts::update_payload_count(AppId, bool) { }
+void AppIdPegCounts::inc_service_count(AppId, bool) { }
+void AppIdPegCounts::inc_client_count(AppId, bool) { }
+void AppIdPegCounts::inc_payload_count(AppId, bool) { }
 
 THREAD_LOCAL AppIdStats appid_stats;
 void AppIdModule::show_dynamic_stats() { }

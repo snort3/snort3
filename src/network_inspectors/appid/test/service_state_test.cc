@@ -80,11 +80,8 @@ void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = tru
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 void ApplicationDescriptor::set_id(AppId){}
 void ServiceAppDescriptor::set_id(AppId, OdpContext&){}
-void ServiceAppDescriptor::update_stats(AppId, bool){}
 void ServiceAppDescriptor::set_port_service_id(AppId){}
 void ClientAppDescriptor::update_user(AppId, const char*, AppidChangeBits&){}
-void ClientAppDescriptor::update_stats(AppId, bool) {}
-void PayloadAppDescriptor::update_stats(AppId, bool) {}
 AppIdConfig::~AppIdConfig() = default;
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
 AppIdConfig stub_config;

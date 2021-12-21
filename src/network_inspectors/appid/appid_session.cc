@@ -393,18 +393,6 @@ void AppIdSession::check_ssl_detection_restart(AppidChangeBits& change_bits,
         encrypted.misc_id = pick_ss_misc_app_id();
         encrypted.referred_id = pick_ss_referred_payload_app_id();
 
-        // After decryption, new application ids might be detected
-        // overriding existing ones from the encrypted flow. Set overwritten id
-        // to update app statistics when new AppId is detected.
-        if (encrypted.service_id > APP_ID_NONE and client_inferred_service_id == APP_ID_NONE)
-            api.service.set_overwritten_id(encrypted.service_id);
-
-        if (encrypted.client_id > APP_ID_NONE)
-            api.client.set_overwritten_id(encrypted.client_id);
-
-        if (encrypted.payload_id > APP_ID_NONE)
-            api.payload.set_overwritten_id(encrypted.payload_id);
-
         reinit_session_data(change_bits, curr_tp_appid_ctxt);
         if (appidDebug->is_active())
             LogMessage("AppIdDbg %s SSL decryption is available, restarting app detection\n",
