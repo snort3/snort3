@@ -122,7 +122,7 @@ protected:
 
     // 0 element refers to client frame, 1 element refers to server frame
 
-    // There is currently one infraction and one event object per flow per direction.
+    // There are currently one infraction and one event object per flow per direction.
     Http2Infractions* const infractions[2] = { new Http2Infractions, new Http2Infractions };
     Http2EventGen* const events[2] = { new Http2EventGen, new Http2EventGen };
 
@@ -185,6 +185,7 @@ protected:
     uint32_t frame_header_offset[2] = { 0, 0 };
     uint32_t frame_data_offset[2] = { 0, 0 };
     uint32_t remaining_frame_octets[2] = { 0, 0 };
+    uint32_t running_total[2] = { 0, 0 };
     uint8_t remaining_padding_reassemble[2] = { 0, 0 };
     bool read_frame_header[2] = { false, false };
     bool continuation_frame[2] = { false, false };
