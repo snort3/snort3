@@ -1218,30 +1218,32 @@ A server granted a request to upgrade a connection from HTTP/1 to HTTP/2.
 
 119:265
 
-JavaScript normalizer has encountered a symbol that is not expected as a part of a valid
+Enhanced JavaScript normalizer has encountered a symbol that is not expected as a part of a valid
 JavaScript statement, making further normalization impossible.
 
 119:266
 
 HTML <script> tag must not have a nested <script> tag inside it. If a nested tag is
-encountered, this alert is raised.
+encountered, this alert is raised. This alert is raised by the enhanced JavaScript normalizer.
 
 119:267
 
 This alert is raised when </script> end-tag is encountered inside a JavaScript comment
 or literal, which is a syntax error, as the last comment or literal is not closed before
-script end.
+script end. This alert is raised by the enhanced JavaScript normalizer.
 
 119:268
 
 When HTML <script> tag contains a reference to an external script, it must not contain
 any executable JavaScript code. This alert is raised if executable (i.e. not comment) code
-is found inside a script tag that has an external reference.
+is found inside a script tag that has an external reference. This alert is raised
+by the enhanced JavaScript normalizer.
 
 119:269
 
 In HTML, a script tag must not be self-closing (written as <script /> without a following
 end-tag). If a self-closing "short-form" script tag is encountered, this alert is raised.
+This alert is raised by the enhanced JavaScript normalizer.
 
 119:270
 
@@ -1250,6 +1252,7 @@ identifiers to a common form. Amount of unique identifiers to normalize is limit
 for memory considerations, with http_inspect.js_norm_identifier_depth parameter. When this
 threshold is reached, a corresponding alert is raised. This alert is not expected for typical
 network traffic and may be an indication that an attacker is trying to exhaust resources.
+This alert is raised by the enhanced JavaScript normalizer.
 
 119:271
 
@@ -1259,7 +1262,7 @@ Also, the normalization tracks the current bracket scope, which requires a stack
 When the depth of nesting exceeds limit set in http_inspect.js_norm_max_tmpl_nest or in
 http_inspect.js_norm_max_bracket_depth, this alert is raised. This alert is not expected
 for typical network traffic and may be an indication that an attacker is trying to exhaust
-resources.
+resources. This alert is raised by the enhanced JavaScript normalizer.
 
 119:272
 
@@ -1274,16 +1277,15 @@ PDUs can be missed and not normalized. Usually it happens when rules have file_d
 js_data ips options and fast-pattern (FP) search is applying to file_data. Some PDUs don’t
 match file_data FP search and JavaScript normalization won't be executed for these PDUs.
 The normalization of the following PDUs for inline/external scripts will be stopped for
-current request within the flow.
+current request within the flow. This alert is raised by the enhanced JavaScript normalizer.
 
 119:274
 
-In JavaScript, a program is split into several scopes such as a global scope, function scope,
-if block, block of code, object, etc. The scope has a nesting nature which requires a stack
-to track it for proper normalization of JavaScript identifiers. When the depth of nesting
-exceeds limit set in http_inspect.js_norm_max_scope_depth, this alert is raised. This alert is
-not expected for typical network traffic and may be an indication that an attacker is trying to
-exhaust resources.
+To resolve variable names in JavaScript, a current stack of variable scopes has to be tracked.
+When the depth of nesting exceeds the limit set in http_inspect.js_norm_max_scope_depth,
+this alert is raised. This alert is not expected for typical network traffic and may be
+an indication that an attacker is trying to exhaust resources. This alert is raised
+by the enhanced JavaScript normalizer.
 
 121:1
 

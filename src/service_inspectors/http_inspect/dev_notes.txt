@@ -221,16 +221,10 @@ During message body analysis the Enhanced Normalizer does one of the following:
    It proceeds and scans the entire message body for inline scripts.
 
 Enhanced Normalizer is a stateful JavaScript whitespace and identifiers normalizer.
-So, the following whitespace codes will be normalized:
- * \u0009 Tab <TAB>
- * \u000B Vertical Tab <VT>
- * \u000C Form Feed <FF>
- * \u0020 Space <SP>
- * \u00A0 No-break space <NBSP>
- * \uFEFF Byte Order Mark <BOM>
- * Any other Unicode “space separator” <USP>
- * Also including new-line and carriage-return line-break characters
-
+Normalizer will remove all extraneous whitespace and newlines, keeping a single space where 
+syntactically necessary. Comments will be removed, but contents of string literals will
+be kept intact. Semicolons will be inserted, if not already present, according to ECMAScript
+automatic semicolon insertion rules.
 All JavaScript identifier names, except those from the ignore list,
 will be substituted with unified names in the following format: var_0000 -> var_ffff.
 So, the number of unique identifiers available is 65536 names per HTTP transaction.
@@ -238,10 +232,10 @@ If Normalizer overruns the configured limit, built-in alert is generated.
 A config option to set the limit manually:
  * http_inspect.js_norm_identifier_depth.
 
-Identifiers from the ignore list will be placed as is, without substitution.
-Additionally, Normalizer tracks expressions with ignored identifiers, skipping
-name normalization for subsequent identifiers in the chain of dots, bracket
-accessors and function calls. For example:
+Identifiers from the ignore list will be placed as is, without substitution. Starting with 
+the listed identifier, any chain of dot acessors, brackets and function calls will be kept
+intact.
+For example:
  * console.log("bar")
  * document.getElementById("id").text
  * eval("script")
@@ -251,13 +245,24 @@ Ignored identifiers are configured via the following config option,
 it accepts a list of object and function names:
  * http_inspect.js_norm_ident_ignore = { 'console', 'document', 'eval', 'foo' }
 
-JS Normalizer's syntax parser relies on ECMA-262 Standard. Particularly,
-it tracks brackets, program scope, and applies some restrictions on the
-script syntax (since, it is HTML-embedded JavaScript):
- * no nesting tags allowed, i.e. two opening tags in a row
- * script closing tag is not allowed in string literal, comment, regex
+When a variable assignment that 'aliases' an identifier from the list is found,
+the assignment will be tracked, and subsequent occurrences of the variable will be
+replaced with the stored value. This substitution will follow JavaScript variable scope 
+limits.
 
-Upon a bad token seen, Normalizer fires corresponding built-in rule and abandons the current script,
+For example:
+
+    var a = console.log
+    a("hello") // will be substituted to 'console.log("hello")'
+
+JS Normalizer's syntax parser follows ECMA-262 standard. For various features,
+tracking of variable scope and individual brackets is done in accordance to the standard.
+Additionally, Normalizer enforces standard limits on HTML content in JavaScript:
+ * no nesting tags allowed, i.e. two opening tags in a row
+ * script closing tag is not allowed in string literal, comment, regular expression literal, etc.
+
+If source JavaScript is syntactically incorrect (containing a bad token, brackets mismatch,
+HTML-tags, etc) Normalizer fires corresponding built-in rule and abandons the current script,
 though the already-processed data remains in the output buffer.
 
 Enhanced Normalizer supports scripts over multiple PDUs.
