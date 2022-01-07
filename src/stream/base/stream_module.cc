@@ -200,7 +200,7 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
     else if ( strstr(fqn, "udp_cache") )
         type = PktType::UDP;
     else if ( strstr(fqn, "user_cache") )
-        type = PktType::PDU;
+        type = PktType::USER;
     else if ( strstr(fqn, "file_cache") )
         type = PktType::FILE;
     else
@@ -350,7 +350,7 @@ void StreamModuleConfig::show() const
     ConfigLogger::log_value("max_aux_ip", SnortConfig::get_conf()->max_aux_ip);
     ConfigLogger::log_value("pruning_timeout", flow_cache_cfg.pruning_timeout);
 
-    for (int i = to_utype(PktType::IP); i < to_utype(PktType::MAX); ++i)
+    for (int i = to_utype(PktType::IP); i < to_utype(PktType::PDU); ++i)
     {
         std::string tmp;
         tmp += "{ idle_timeout = " + std::to_string(flow_cache_cfg.proto[i].nominal_timeout);

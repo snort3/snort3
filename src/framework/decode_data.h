@@ -44,7 +44,7 @@ struct ICMPHdr;
 /* NOTE: if A protocol is added, update DecodeFlags! */
 enum class PktType : std::uint8_t
 {
-    NONE, IP, TCP, UDP, ICMP, PDU, FILE, MAX
+    NONE, IP, TCP, UDP, ICMP, USER, FILE, PDU, MAX
 };
 
 // the first several of these bits must map to PktType
@@ -54,9 +54,9 @@ enum class PktType : std::uint8_t
 #define PROTO_BIT__TCP              0x000002
 #define PROTO_BIT__UDP              0x000004
 #define PROTO_BIT__ICMP             0x000008
-#define PROTO_BIT__PDU              0x000010
+#define PROTO_BIT__USER             0x000010
 #define PROTO_BIT__FILE             0x000020
-#define PROTO_BIT__ARP              0x000040
+#define PROTO_BIT__PDU              0x000040
 #define PROTO_BIT__TEREDO           0x000080
 #define PROTO_BIT__GTP              0x000100
 #define PROTO_BIT__MPLS             0x000200
@@ -72,7 +72,8 @@ enum class PktType : std::uint8_t
 #define PROTO_BIT__UDP_TUNNELED     0x080000
 #define PROTO_BIT__OTHER            0x100000
 #define PROTO_BIT__GENEVE           0x200000
-#define PROTO_BIT__ALL              0x3FFFFF
+#define PROTO_BIT__ARP              0x400000
+#define PROTO_BIT__ALL              0x7FFFFF
 
 #define PROTO_BIT__ICMP_EMBED \
     (PROTO_BIT__TCP_EMBED_ICMP | PROTO_BIT__UDP_EMBED_ICMP | \
@@ -80,7 +81,7 @@ enum class PktType : std::uint8_t
 
 #define PROTO_BIT__ANY_IP   (PROTO_BIT__IP | PROTO_BIT__TCP | PROTO_BIT__UDP | PROTO_BIT__ICMP)
 #define PROTO_BIT__ANY_PDU  (PROTO_BIT__TCP | PROTO_BIT__UDP | PROTO_BIT__PDU)
-#define PROTO_BIT__ANY_SSN  (PROTO_BIT__ANY_IP | PROTO_BIT__PDU | PROTO_BIT__FILE)
+#define PROTO_BIT__ANY_SSN  (PROTO_BIT__ANY_IP | PROTO_BIT__PDU | PROTO_BIT__FILE | PROTO_BIT__USER)
 #define PROTO_BIT__ANY_TYPE (PROTO_BIT__ANY_SSN | PROTO_BIT__ARP)
 
 enum DecodeFlags : std::uint16_t

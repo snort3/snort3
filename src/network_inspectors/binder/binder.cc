@@ -149,7 +149,7 @@ static std::string proto_to_string(unsigned proto)
             return "tcp";
         case PROTO_BIT__UDP:
             return "udp";
-        case PROTO_BIT__PDU:
+        case PROTO_BIT__USER:
             return "user";
         case PROTO_BIT__FILE:
             return "file";
@@ -610,7 +610,7 @@ bool Binder::configure(SnortConfig* sc)
             case PktType::TCP:  name = "stream_tcp"; break;
             case PktType::UDP:  name = "stream_udp"; break;
             case PktType::ICMP: name = "stream_icmp"; break;
-            case PktType::PDU:  name = "stream_user"; break;
+            case PktType::USER:  name = "stream_user"; break;
             case PktType::FILE: name = "stream_file"; break;
             default:            name = nullptr; break;
         }

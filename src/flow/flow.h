@@ -264,7 +264,7 @@ public:
     { return (ssn_state.session_flags & SSNFLAG_PROXIED) != 0; }
 
     bool is_stream()
-    { return pkt_type == PktType::TCP or pkt_type == PktType::PDU; }
+    { return pkt_type == PktType::TCP or pkt_type == PktType::USER; }
 
     void block()
     { ssn_state.session_flags |= SSNFLAG_BLOCK; }

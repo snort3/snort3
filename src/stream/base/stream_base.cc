@@ -206,8 +206,8 @@ void StreamBase::tinit()
     if ( (f = InspectorManager::get_session(PROTO_BIT__UDP)) )
         flow_con->init_proto(PktType::UDP, f);
 
-    if ( (f = InspectorManager::get_session(PROTO_BIT__PDU)) )
-        flow_con->init_proto(PktType::PDU, f);
+    if ( (f = InspectorManager::get_session(PROTO_BIT__USER)) )
+        flow_con->init_proto(PktType::USER, f);
 
     if ( (f = InspectorManager::get_session(PROTO_BIT__FILE)) )
         flow_con->init_proto(PktType::FILE, f);
@@ -292,15 +292,15 @@ void StreamBase::eval(Packet* p)
         }
         break;
 
-    case PktType::PDU:
-        flow_con->process(PktType::PDU, p);
+    case PktType::USER:
+        flow_con->process(PktType::USER, p);
         break;
 
     case PktType::FILE:
         flow_con->process(PktType::FILE, p);
         break;
 
-    case PktType::MAX:
+    default:
         break;
     }
 }

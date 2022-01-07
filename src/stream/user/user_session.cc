@@ -159,6 +159,7 @@ void UserTracker::detect(
 
     up->proto_bits = p->proto_bits;
     up->pseudo_type = PSEUDO_PKT_USER;
+    up->ptrs.set_pkt_type(PktType::PDU);
 
     up->packet_flags = flags | PKT_REBUILT_STREAM | PKT_PSEUDO;
     up->packet_flags |= (p->packet_flags & (PKT_FROM_CLIENT|PKT_FROM_SERVER));

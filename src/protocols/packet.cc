@@ -164,6 +164,7 @@ const char* Packet::get_type() const
         return "UDP";
 
     case PktType::PDU:
+    case PktType::USER:
     case PktType::FILE:
         if ( proto_bits & PROTO_BIT__TCP )
             return "TCP";

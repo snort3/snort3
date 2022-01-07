@@ -201,7 +201,8 @@ struct SO_PUBLIC Packet
     { return ptrs.get_pkt_type() == PktType::ICMP; }
 
     bool is_data() const
-    { return (ptrs.get_pkt_type() == PktType::PDU) or (ptrs.get_pkt_type() == PktType::FILE); }
+    { return (ptrs.get_pkt_type() == PktType::PDU) or (ptrs.get_pkt_type() == PktType::FILE) or
+        (ptrs.get_pkt_type() == PktType::USER); }
 
     bool is_cooked() const
     { return ((packet_flags & PKT_PSEUDO) != 0); }

@@ -288,8 +288,8 @@ static void init_roles(Packet* p, Flow* flow)
             init_roles_udp(p, flow);
             break;
 
-        case PktType::PDU:
         case PktType::FILE:
+        case PktType::USER:
             swapped = init_roles_user(p, flow);
             break;
 

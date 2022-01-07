@@ -1216,7 +1216,7 @@ static void instantiate_default_binder(SnortConfig* sc, FrameworkPolicy* fp)
         m->add(PROTO_BIT__UDP, wiz_id);
 
     if ( tcp or udp or pdu )
-        m->add(PROTO_BIT__PDU, wiz_id);
+        m->add(PROTO_BIT__USER, wiz_id);
 
     const InspectApi* api = get_plugin(bind_id);
     InspectorManager::instantiate(api, m, sc);

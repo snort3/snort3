@@ -289,7 +289,7 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
         const unsigned mask[] =
         {
             PROTO_BIT__ANY_TYPE, PROTO_BIT__IP, PROTO_BIT__ICMP,
-            PROTO_BIT__TCP, PROTO_BIT__UDP, PROTO_BIT__PDU, PROTO_BIT__FILE
+            PROTO_BIT__TCP, PROTO_BIT__UDP, PROTO_BIT__USER, PROTO_BIT__FILE, PROTO_BIT__PDU,
         };
         binding.when.protos = mask[v.get_uint8()];
         binding.when.add_criteria(BindWhen::Criteria::BWC_PROTO);
