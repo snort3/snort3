@@ -52,40 +52,39 @@ void HttpMsgStart::derive_version_id()
     }
     else if ((version.start()[5] == '1') && (version.start()[7] == '1'))
     {
-        version_id = VERS_1_1;
+        if (session_data->for_http2)
+            version_id = VERS_2_0;
+        else
+            version_id = VERS_1_1;
     }
     else if ((version.start()[5] == '1') && (version.start()[7] == '0'))
     {
         version_id = VERS_1_0;
     }
-    else if ((version.start()[5] == '2') && (version.start()[7] == '0'))
-    {
-        version_id = VERS_2_0;
-    }
-    else if ((version.start()[5] == '0') && (version.start()[7] == '9'))
-    {
-        // Real 0.9 traffic would never be labeled HTTP/0.9 because 0.9 is older than the version
-        // system. Aside from the possibility that someone might do this to make trouble,
-        // HttpStreamSplitter::reassemble() converts 0.9 responses to a simple form of 1.0 format
-        // to allow us to process 0.9 without a lot of extra development. Such responses are
-        // labeled 0.9.
-        // FIXIT-M the 0.9 trick opens the door to someone spoofing us with a real start line
-        // labeled HTTP/0.9. Need to close this weakness.
-        // FIXIT-M similarly "HTTP/2.0" is not a legitimate thing we could actually see.
-        version_id = VERS_0_9;
-    }
-    else if ((version.start()[5] >= '0') && (version.start()[5] <= '9') &&
-        (version.start()[7] >= '0') && (version.start()[7] <= '9'))
-    {
-        version_id = VERS__OTHER;
-        add_infraction(INF_UNKNOWN_VERSION);
-        create_event(EVENT_UNKNOWN_VERS);
-    }
-    else
+    else if ((version.start()[5] < '0') || (version.start()[5] > '9') ||
+        (version.start()[7] < '0') || (version.start()[7] > '9'))
     {
         version_id = VERS__PROBLEMATIC;
         add_infraction(INF_BAD_VERSION);
         create_event(EVENT_BAD_VERS);
+    }
+    else if ((version.start()[5] > '1') && (version.start()[5] <= '9'))
+    {
+        version_id = VERS__OTHER;
+        add_infraction(INF_VERSION_HIGHER_THAN_1);
+        create_event(EVENT_VERSION_HIGHER_THAN_1);
+    }
+    else if (version.start()[5] == '1')
+    {
+        version_id = VERS__OTHER;
+        add_infraction(INF_INVALID_SUBVERSION);
+        create_event(EVENT_INVALID_SUBVERSION);
+    }
+    else
+    {
+        version_id = VERS__OTHER;
+        add_infraction(INF_VERSION_0);
+        create_event(EVENT_VERSION_0);
     }
 }
 

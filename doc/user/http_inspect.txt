@@ -692,6 +692,20 @@ trailers, respectively. Checks available: equal to "=" or just value,
 not "!" or "!=",  less than "<", greater than ">", less or equal to "<=",
 less or greater than ">=", in range "<>", in range or equal to "<=>".
 
+===== http_version_match
+
+Rule option that matches HTTP version to one of the listed version values.
+Possible match values: 1.0, 1.1, 2.0, 0.9, other, and malformed.
+When receiving a request line or status line, if the version is present
+it will be used for comparison. If the version doesn't have a format of
+[0-9].[0-9] it is considered malformed. A [0-9].[0-9] that is not 1.0 or 1.1
+is considered other. 0.9 refers to the original HTTP protocol version that
+uses simple GET requests without headers and includes no version number. 2.0
+refers to the actual HTTP/2 protocol with framed data. Messages that follow
+the general HTTP/1 format but contain version fields falsely claiming to be
+HTTP/2.0 or HTTP/0.9 will match "other" as described above. The http_version
+rule option is available to examine the actual bytes in the version field.
+
 ==== Timing issues and combining rule options
 
 HTTP inspector is stateful. That means it is aware of a bigger picture than

@@ -73,7 +73,7 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     trans_num(STAT_NOT_PRESENT),
     status_code_num(STAT_NOT_PRESENT),
     source_id(source_id_),
-    version_id(VERS__NO_SOURCE),
+    version_id(VERS__NOT_PRESENT),
     method_id(METH__NOT_PRESENT),
     tcp_close(false)
 {}

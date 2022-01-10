@@ -69,6 +69,7 @@ bool HttpRuleOptModule::begin(const char*, int, SnortConfig*)
     case HTTP_BUFFER_URI:
     case HTTP_BUFFER_VERSION:
     case HTTP_RANGE_NUM_HDRS:
+    case HTTP_VERSION_MATCH:
         inspect_section = IS_FLEX_HEADER;
         break;
     case HTTP_BUFFER_CLIENT_BODY:
@@ -83,6 +84,44 @@ bool HttpRuleOptModule::begin(const char*, int, SnortConfig*)
         break;
     default:
         assert(false);
+    }
+    return true;
+}
+
+static const std::map <std::string, VersionId> VersionStrToEnum =
+{
+    { "malformed", VERS__PROBLEMATIC },
+    { "other", VERS__OTHER },
+    { "1.0", VERS_1_0 },
+    { "1.1", VERS_1_1 },
+    { "2.0", VERS_2_0 },
+    { "0.9", VERS_0_9 }
+};
+
+bool HttpRuleOptModule::parse_version_list(Value& v)
+{
+    v.set_first_token();
+    std::string tok;
+
+    while ( v.get_next_token(tok) )
+    {
+        if (tok[0] == '"')
+            tok.erase(0, 1);
+
+        if (tok.length() == 0)
+            continue;
+
+        if (tok[tok.length()-1] == '"')
+            tok.erase(tok.length()-1, 1);
+
+        auto iter = VersionStrToEnum.find(tok);
+        if (iter == VersionStrToEnum.end())
+        {
+            ParseError("Unrecognized version %s\n", tok.c_str());
+            return false;
+        }
+
+        para_list.version_flags[iter->second - VERS__MIN] = true;
     }
     return true;
 }
@@ -171,6 +210,10 @@ bool HttpRuleOptModule::set(const char*, Value& v, SnortConfig*)
     {
         return para_list.range.validate(v.get_string(), hdrs_num_range.c_str());
     }
+    else if (v.is("~version_list"))
+    {
+        return parse_version_list(v);
+    }
     return true;
 }
 
@@ -207,6 +250,7 @@ void HttpRuleOptModule::HttpRuleParaList::reset()
     query = false;
     fragment = false;
     range.init();
+    version_flags = 0;
 }
 
 uint32_t HttpIpsOption::hash() const
@@ -216,6 +260,7 @@ uint32_t HttpIpsOption::hash() const
     uint32_t c = buffer_info.hash();
     mix(a,b,c);
     a += range.hash();
+    b += (uint32_t)version_flags.to_ulong();
     finalize(a,b,c);
     return c;
 }
@@ -226,7 +271,8 @@ bool HttpIpsOption::operator==(const IpsOption& ips) const
     return IpsOption::operator==(ips) &&
            inspect_section == hio.inspect_section &&
            buffer_info == hio.buffer_info &&
-           range == hio.range;
+           range == hio.range &&
+           version_flags == hio.version_flags;
 }
 
 bool HttpIpsOption::retry(Cursor& current_cursor, const Cursor&)
@@ -239,6 +285,20 @@ bool HttpIpsOption::retry(Cursor& current_cursor, const Cursor&)
             return cd->retry();
     }
     return false;
+}
+
+IpsOption::EvalStatus HttpIpsOption::eval_version_match(Packet* p, const Http2FlowData* h2i_flow_data)
+{
+    const HttpFlowData* const flow_data = (h2i_flow_data != nullptr) ?
+        (HttpFlowData*)h2i_flow_data->get_hi_flow_data():
+        (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::inspector_id);
+    const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
+    const VersionId version = flow_data->get_version_id(source_id);
+
+    if (version_flags[version - HttpEnums::VERS__MIN])
+        return MATCH;
+
+    return NO_MATCH;
 }
 
 IpsOption::EvalStatus HttpIpsOption::eval(Cursor& c, Packet* p)
@@ -262,7 +322,7 @@ IpsOption::EvalStatus HttpIpsOption::eval(Cursor& c, Packet* p)
     const HttpInspect* const hi = (h2i_flow_data != nullptr) ?
         (HttpInspect*)(p->flow->assistant_gadget) : (HttpInspect*)(p->flow->gadget);
 
-    if (buffer_info.type <= HTTP_BUFFER_MAX)
+    if (buffer_info.type <= HTTP__BUFFER_MAX)
     {
         const Field& http_buffer = hi->http_get_buf(c, p, buffer_info);
 
@@ -272,6 +332,10 @@ IpsOption::EvalStatus HttpIpsOption::eval(Cursor& c, Packet* p)
         c.set(key, http_buffer.start(), http_buffer.length());
 
         return MATCH;
+    }
+    else if (buffer_info.type == HTTP_VERSION_MATCH)
+    {
+        return eval_version_match(p, h2i_flow_data);
     }
     else
     {
@@ -1354,6 +1418,52 @@ static const IpsApi num_trailers_api =
 };
 
 //-------------------------------------------------------------------------
+// http_version_match
+//-------------------------------------------------------------------------
+#undef IPS_OPT
+#define IPS_OPT "http_version_match"
+#undef IPS_HELP
+#define IPS_HELP "rule option to match version to listed values"
+
+static const Parameter version_match_params[] =
+{
+    { "~version_list", Parameter::PT_STRING, nullptr, nullptr,
+        "space-separated list of versions to match" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static Module* version_match_mod_ctor()
+{
+    return new HttpRuleOptModule(IPS_OPT, IPS_HELP, HTTP_VERSION_MATCH, CAT_SET_OTHER,
+        PSI_VERSION_MATCH, version_match_params);
+}
+
+static const IpsApi version_match_api =
+{
+    {
+        PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        1,
+        API_RESERVED,
+        API_OPTIONS,
+        IPS_OPT,
+        IPS_HELP,
+        version_match_mod_ctor,
+        HttpRuleOptModule::mod_dtor
+    },
+    OPT_TYPE_DETECTION,
+    0, PROTO_BIT__TCP,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    HttpIpsOption::opt_ctor,
+    HttpIpsOption::opt_dtor,
+    nullptr
+};
+
+//-------------------------------------------------------------------------
 // plugins
 //-------------------------------------------------------------------------
 
@@ -1377,5 +1487,5 @@ const BaseApi* ips_http_trailer = &trailer_api.base;
 const BaseApi* ips_http_true_ip = &true_ip_api.base;
 const BaseApi* ips_http_uri = &uri_api.base;
 const BaseApi* ips_http_version = &version_api.base;
+const BaseApi* ips_http_version_match = &version_match_api.base;
 const BaseApi* ips_js_data = &js_data_api.base;
-

@@ -31,12 +31,13 @@
 #include "http_enum.h"
 
 class HttpInspect;
+class Http2FlowData;
 
 enum PsIdx { PSI_CLIENT_BODY, PSI_COOKIE, PSI_HEADER, PSI_METHOD, PSI_PARAM,
     PSI_RAW_BODY, PSI_RAW_COOKIE, PSI_RAW_HEADER, PSI_RAW_REQUEST, PSI_RAW_STATUS,
     PSI_RAW_TRAILER, PSI_RAW_URI, PSI_STAT_CODE, PSI_STAT_MSG, PSI_TRAILER,
     PSI_TRUE_IP, PSI_URI, PSI_VERSION, PSI_JS_DATA, PSI_VBA_DATA,
-    PSI_RANGE_NUM_HDRS, PSI_RANGE_NUM_TRAILERS, PSI_MAX };
+    PSI_RANGE_NUM_HDRS, PSI_RANGE_NUM_TRAILERS, PSI_VERSION_MATCH, PSI_MAX };
 
 class HttpRuleOptModule : public snort::Module
 {
@@ -61,6 +62,7 @@ public:
 private:
     friend class HttpIpsOption;
     static THREAD_LOCAL std::array<snort::ProfileStats, PsIdx::PSI_MAX> http_ps;
+    static const int version_size = HttpEnums::VERS__MAX - HttpEnums::VERS__MIN + 1;
 
     struct HttpRuleParaList
     {
@@ -79,6 +81,7 @@ private:
         bool query;
         bool fragment;
         snort::RangeCheck range;
+        std::bitset<version_size> version_flags;
 
         void reset();
     };
@@ -92,6 +95,8 @@ private:
     HttpEnums::InspectSection inspect_section;
     uint64_t sub_id;
     uint64_t form;
+
+    bool parse_version_list(snort::Value& v);
 };
 
 class HttpIpsOption : public snort::IpsOption
@@ -102,7 +107,8 @@ public:
         key(cm->key), cat(cm->cat), psi(cm->psi),
         inspect_section(cm->inspect_section),
         buffer_info(cm->rule_opt_index, cm->sub_id, cm->form,
-        cm->para_list.param, cm->para_list.nocase), range(cm->para_list.range){}
+        cm->para_list.param, cm->para_list.nocase), range(cm->para_list.range),
+        version_flags(cm->para_list.version_flags){}
     snort::CursorActionType get_cursor_type() const override { return cat; }
     EvalStatus eval(Cursor&, snort::Packet*) override;
     uint32_t hash() const override;
@@ -119,6 +125,9 @@ private:
     const HttpEnums::InspectSection inspect_section;
     HttpBufferInfo buffer_info;
     const snort::RangeCheck range;
+    const std::bitset<HttpRuleOptModule::version_size> version_flags;
+
+    IpsOption::EvalStatus eval_version_match(snort::Packet* p, const Http2FlowData* h2i_flow_data);
 };
 
 #endif

@@ -86,6 +86,9 @@ public:
 
     uint32_t get_h2_stream_id() const;
 
+    HttpEnums::VersionId get_version_id(HttpCommon::SourceId source_id) const
+    { return version_id[source_id]; }
+
 private:
     // HTTP/2 handling
     bool for_http2 = false;

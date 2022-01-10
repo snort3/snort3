@@ -939,11 +939,6 @@ request or status line.
 The HTTP version in the start line begins with "HTTP/" but the remainder is not in the expected
 <digit>.<digit> format.
 
-119:208
-
-The HTTP version in the start line has a valid format but is not HTTP/1.0 or HTTP/1.1. This alert
-does not apply to HTTP/2 or HTTP/3 traffic.
-
 119:209
 
 An HTTP header line contains a format error. A well-formed header consists of a field name followed
@@ -1286,6 +1281,19 @@ When the depth of nesting exceeds the limit set in http_inspect.js_norm_max_scop
 this alert is raised. This alert is not expected for typical network traffic and may be
 an indication that an attacker is trying to exhaust resources. This alert is raised
 by the enhanced JavaScript normalizer.
+
+119:275
+
+The HTTP version in the start line has a valid 1.<subversion> format, but the subversion is not 0 or 1.
+
+119:276
+
+The HTTP version in the start line has a valid format but the version is 0.
+
+119:277
+
+The HTTP version in the start line has a valid format but the version is higher than 1. This alert
+does not apply to HTTP/2 or HTTP/3 traffic.
 
 121:1
 

@@ -237,12 +237,12 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
     if ((type == SEC_STATUS) &&
         (session_data->expected_trans_num[SRC_SERVER] == session_data->zero_nine_expected))
     {
-        // 0.9 response is a body that runs to connection end with no headers. HttpInspect does
-        // not support no headers. Processing this imaginary status line and empty headers allows
+        // 0.9 response is a body that runs to connection end with no headers.
+        // Processing this imaginary empty headers allows
         // us to overcome this limitation and reuse the entire HTTP infrastructure.
-        prepare_flush(session_data, nullptr, SEC_STATUS, 14, 0, 0, false, 0, 14);
-        my_inspector->process((const uint8_t*)"HTTP/0.9 200 .", 14, flow, SRC_SERVER, false);
-        session_data->transaction[SRC_SERVER]->clear_section();
+        session_data->version_id[source_id] = VERS_0_9;
+        session_data->status_code_num = 200;
+        HttpModule::increment_peg_counts(PEG_RESPONSE);
         prepare_flush(session_data, nullptr, SEC_HEADER, 0, 0, 0, false, 0, 0);
         my_inspector->process((const uint8_t*)"", 0, flow, SRC_SERVER, false);
         session_data->transaction[SRC_SERVER]->clear_section();

@@ -261,7 +261,6 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_CTRL_IN_REASON,             "control character in HTTP response reason phrase" },
     { EVENT_IMPROPER_WS,                "illegal extra whitespace in start line" },
     { EVENT_BAD_VERS,                   "corrupted HTTP version" },
-    { EVENT_UNKNOWN_VERS,               "HTTP version in start line is not HTTP/1.0 or 1.1" },
     { EVENT_BAD_HEADER,                 "format error in HTTP header" },
     { EVENT_CHUNK_OPTIONS,              "chunk header options present" },
     { EVENT_URI_BAD_FORMAT,             "URI badly formatted" },
@@ -335,6 +334,9 @@ const RuleMap HttpModule::http_events[] =
                                         "header" },
     { EVENT_JS_PDU_MISS,                "missed PDUs during JavaScript normalization" },
     { EVENT_JS_SCOPE_NEST_OVERFLOW,     "JavaScript scope nesting is over capacity" },
+    { EVENT_INVALID_SUBVERSION,         "HTTP/1 version other than 1.0 or 1.1" },
+    { EVENT_VERSION_0,                  "HTTP version in start line is 0" },
+    { EVENT_VERSION_HIGHER_THAN_1,      "HTTP version in start line is higher than 1" },
     { 0, nullptr }
 };
 
