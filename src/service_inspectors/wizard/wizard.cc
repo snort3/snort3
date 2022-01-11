@@ -138,8 +138,9 @@ public:
 
     StreamSplitter* get_splitter(bool) override;
 
+    inline bool finished(Wand& w)
+    { return !w.hex && !w.spell && w.curse_tracker.empty(); };
     void reset(Wand&, bool tcp, bool c2s);
-    bool finished(Wand&);
     bool cast_spell(Wand&, Flow*, const uint8_t*, unsigned, uint16_t&);
     bool spellbind(const MagicPage*&, Flow*, const uint8_t*, unsigned);
     bool cursebind(const vector<CurseServiceTracker>&, Flow*, const uint8_t*, unsigned);
@@ -175,7 +176,7 @@ MagicSplitter::~MagicSplitter()
     wizard->rem_ref();
 
     // release trackers
-    for (unsigned i=0; i<wand.curse_tracker.size(); i++)
+    for (unsigned i = 0; i < wand.curse_tracker.size(); i++)
         delete wand.curse_tracker[i].tracker;
 }
 
@@ -224,7 +225,7 @@ StreamSplitter::Status MagicSplitter::scan(
     // delayed. Because AppId depends on wizard only for SSH detection and SSH inspector can be
     // attached very early, event is raised here after first scan. In the future, wizard should be
     // enhanced to abort sooner if it can't detect service.
-    if (!pkt->flow->service and !pkt->flow->flags.svc_event_generated)
+    if (!pkt->flow->service && !pkt->flow->flags.svc_event_generated)
     {
         DataBus::publish(FLOW_NO_SERVICE_EVENT, pkt);
         pkt->flow->flags.svc_event_generated = true;
@@ -371,21 +372,14 @@ bool Wizard::cast_spell(
     {
         w.spell = nullptr;
         w.hex = nullptr;
+
+        for ( const CurseServiceTracker& cst : w.curse_tracker )
+            delete cst.tracker;
+
+        w.curse_tracker.clear();
     }
 
     return false;
-}
-
-bool Wizard::finished(Wand& w)
-{
-    if ( w.hex or w.spell )
-        return false;
-
-    // FIXIT-L how to know curses are done?
-    if ( !w.curse_tracker.empty() )
-        return false;
-
-    return true;
 }
 
 //-------------------------------------------------------------------------
