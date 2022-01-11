@@ -44,15 +44,27 @@ const StreamBuffer StreamSplitter::reassemble(
     Flow*, unsigned, unsigned offset, const uint8_t* p,
     unsigned n, uint32_t flags, unsigned& copied)
 {
-    copied = n;
     if (n == 0)
         return { nullptr, 0 };
 
     unsigned max;
     uint8_t* pdu_buf = DetectionEngine::get_next_buffer(max);
+    max = max > Packet::max_dsize ? Packet::max_dsize : max;
 
-    assert(offset + n < max);
+    n = std::min(n, max - offset);
+    /*
+    FIXIT:
+        - Extra bytes will be lost and will pass without inspection
+        - There is some inconsistency between IpsContext::buf_size (Codec::PKT_MAX)
+            and Packet::max_dsize(IP_MAXPACKET)
+        - reassemble returns data length(StreamBuffer::length) of 32-bit type, while some
+            callers use 16-bit type for the length
+        - How it correlates with stream_tcp.max_pdu which has {1460:32768} range,
+            should it be adjusted with --snaplen {68:65535}?
+    */
+
     memcpy(pdu_buf+offset, p, n);
+    copied = n;
 
     if ( flags & PKT_PDU_TAIL )
         return { pdu_buf, offset + n };
