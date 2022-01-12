@@ -1,3 +1,18 @@
+2022/01/12 - 3.1.20.0
+
+appid: handle SNI in efp event
+appid: make peg counts consistent with what is reported to external components
+appid: update appid api to include ssh in the list of service inspectors that need inspection
+dnp3, gtp, file_type: fix assert while parsing string param
+doc: update JavaScript normalization docs
+http2_inspect: don't send data frames to the http stream splitter when it's not expecting them
+http2_inspect: hardening
+http_inspect: version update, http_version_match rule option
+stream_tcp: limit reassembly size for AtomSplitter. Thanks to barosch78 and DAKOIT for their help in the process of finding the root cause.
+stream_tcp: Skip seglist gap in post-ack mode if data is acked beyond the gap
+stream_user: change packet type from PDU to USER for hext daq, user codec, and stream_user
+wizard: make max_search_depth applicably for curses
+
 2021/12/15 - 3.1.19.0
 
 appid,ssh: roll AppId's SSH detector into SSH service inspector

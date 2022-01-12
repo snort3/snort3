@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.19.0 2021-12-15 06:07:38 EST TST
+Revision 3.1.20.0 2022-01-12 09:17:24 EST TST
 
 ---------------------------------------------------------------------
 
@@ -4010,12 +4010,13 @@ is available through the js_data rule option.
 
 js_norm_identifier_depth = N {0 : 65536} will set a number of unique
 JavaScript identifiers to normalize. When the depth is reached, a
-built-in alert is generated. Every HTTP Response has its own
-identifier substitution context. Thus, all scripts from the same
-response will be normalized as if they are a single script.. By
-default, the value is set to 65536, which is the max allowed number
-of unique identifiers. The generated names are in the range from
-var_0000 to var_ffff.
+built-in alert is generated. Every HTTP response has its own
+identifier substitution context, which means that identifier will
+retain same normal form in multiple scripts, if they are a part of
+the same HTTP response, and that this limit is set for a single HTTP
+response and not a single script. By default, the value is set to
+65536, which is the max allowed number of unique identifiers. The
+generated names are in the range from var_0000 to var_ffff.
 
 5.10.3.11. js_norm_max_tmpl_nest
 
@@ -4026,45 +4027,60 @@ literals provide syntax to define a literal multiline string, which
 can have arbitrary JavaScript substitutions, that will be evaluated
 and inserted into the string. Such substitutions can be nested, and
 require keeping track of every layer for proper normalization. This
-option is present to limit the amount of memory dedicated to this
-tracking.
+option is present to limit the amount of memory dedicated to template
+nesting tracking.
 
 5.10.3.12. js_norm_max_bracket_depth
 
 js_norm_max_bracket_depth = N {1 : 65535} (default 256) is an option
-of the enhanced JavaScript normalizer that determines the deepest
-level of nested bracket scope. The scope term includes code sections
-("{}"), parentheses("()") and brackets("[]"). This option is present
-to limit the amount of memory dedicated to this tracking.
+of the enhanced JavaScript normalizer that determines the maximum
+depth of nesting brackets, i.e. parentheses, braces and square
+brackets, nested within a matching pair, in any combination. This
+option is present to limit the amount of memory dedicated to bracket
+tracking.
 
 5.10.3.13. js_norm_max_scope_depth
 
 js_norm_max_scope_depth = N {1 : 65535} (default 256) is an option of
 the enhanced JavaScript normalizer that determines the deepest level
-of nested scope. The scope term includes any type of JavaScript
-program scope such as the global one, function scope, if block,
-loops, code block, object scope, etc. This option is present to limit
-the amount of memory dedicated to this tracking.
+of nested variable scope, i.e. functions, code blocks, etc. including
+the global scope. This option is present to limit the amount of
+memory dedicated to scope tracking.
 
 5.10.3.14. js_norm_ident_ignore
 
-js_norm_ident_ignore = {<a list of ignored identifiers>}. The default
-list is present in "snort_defaults.lua".
+js_norm_ident_ignore = {<list of ignored identifiers>} is an option
+of the enhanced JavaScript normalizer that defines a list of
+identifiers to keep intact.
 
-The Normalizer does not substitute ignored identifiers, keeping their
-name unchanged. Additionally, the Normalizer tracks expressions with
-ignored identifiers, so the subsequent identifiers are not
-substituted in the chain of dots, bracket accessors and function
-calls. For example:
+Identifiers in this list will not be put into normal form (var_0000).
+Subsequent accessors, after dot, in square brackets or after function
+call, will not be normalized as well.
+
+For example:
 
 console.log("bar")
 document.getElementById("id").text
 eval("script")
-foo["bar"]
+console["log"]
 
-The list must contain object and function names only. For example:
+Every entry has to be a simple identifier, i.e. not include dots,
+brackets, etc. For example:
 
 http_inspect.js_norm_ident_ignore = { 'console', 'document', 'eval', 'foo' }
+
+When a variable assignment that aliases an identifier from the list
+is found, the assignment will be tracked, and subsequent occurrences
+of the variable will be replaced with the stored value. This
+substitution will follow JavaScript variable scope limits.
+
+For example:
+
+var a = console.log
+a("hello") // will be substituted to 'console.log("hello")'
+
+The default list of ignore-identifiers is present in
+"snort_defaults.lua".
 
 5.10.3.15. xff_headers
 
@@ -4511,6 +4527,22 @@ trailers, respectively. Checks available: equal to "=" or just value,
 not "!" or "!=", less than "<", greater than ">", less or equal to
 "⇐", less or greater than ">=", in range "<>", in range or equal to "
 <⇒".
+
+5.10.6.17. http_version_match
+
+Rule option that matches HTTP version to one of the listed version
+values. Possible match values: 1.0, 1.1, 2.0, 0.9, other, and
+malformed. When receiving a request line or status line, if the
+version is present it will be used for comparison. If the version
+doesn’t have a format of [0-9].[0-9] it is considered malformed. A
+[0-9].[0-9] that is not 1.0 or 1.1 is considered other. 0.9 refers to
+the original HTTP protocol version that uses simple GET requests
+without headers and includes no version number. 2.0 refers to the
+actual HTTP/2 protocol with framed data. Messages that follow the
+general HTTP/1 format but contain version fields falsely claiming to
+be HTTP/2.0 or HTTP/0.9 will match "other" as described above. The
+http_version rule option is available to examine the actual bytes in
+the version field.
 
 5.10.7. Timing issues and combining rule options
 

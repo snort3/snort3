@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.19.0 2021-12-15 06:07:48 EST TST
+Revision 3.1.20.0 2022-01-12 09:17:34 EST TST
 
 ---------------------------------------------------------------------
 
@@ -212,64 +212,65 @@ Table of Contents
     7.62. http_true_ip
     7.63. http_uri
     7.64. http_version
-    7.65. icmp_id
-    7.66. icmp_seq
-    7.67. icode
-    7.68. id
-    7.69. iec104_apci_type
-    7.70. iec104_asdu_func
-    7.71. ip_proto
-    7.72. ipopts
-    7.73. isdataat
-    7.74. itype
-    7.75. js_data
-    7.76. md5
-    7.77. metadata
-    7.78. modbus_data
-    7.79. modbus_func
-    7.80. modbus_unit
-    7.81. msg
-    7.82. mss
-    7.83. num_headers
-    7.84. num_trailers
-    7.85. pcre
-    7.86. pkt_data
-    7.87. pkt_num
-    7.88. priority
-    7.89. raw_data
-    7.90. reference
-    7.91. regex
-    7.92. rem
-    7.93. replace
-    7.94. rev
-    7.95. rpc
-    7.96. s7commplus_content
-    7.97. s7commplus_func
-    7.98. s7commplus_opcode
-    7.99. sd_pattern
-    7.100. seq
-    7.101. service
-    7.102. sha256
-    7.103. sha512
-    7.104. sid
-    7.105. sip_body
-    7.106. sip_header
-    7.107. sip_method
-    7.108. sip_stat_code
-    7.109. so
-    7.110. soid
-    7.111. ssl_state
-    7.112. ssl_version
-    7.113. stream_reassemble
-    7.114. stream_size
-    7.115. tag
-    7.116. target
-    7.117. tos
-    7.118. ttl
-    7.119. urg
-    7.120. vba_data
-    7.121. window
-    7.122. wscale
+    7.65. http_version_match
+    7.66. icmp_id
+    7.67. icmp_seq
+    7.68. icode
+    7.69. id
+    7.70. iec104_apci_type
+    7.71. iec104_asdu_func
+    7.72. ip_proto
+    7.73. ipopts
+    7.74. isdataat
+    7.75. itype
+    7.76. js_data
+    7.77. md5
+    7.78. metadata
+    7.79. modbus_data
+    7.80. modbus_func
+    7.81. modbus_unit
+    7.82. msg
+    7.83. mss
+    7.84. num_headers
+    7.85. num_trailers
+    7.86. pcre
+    7.87. pkt_data
+    7.88. pkt_num
+    7.89. priority
+    7.90. raw_data
+    7.91. reference
+    7.92. regex
+    7.93. rem
+    7.94. replace
+    7.95. rev
+    7.96. rpc
+    7.97. s7commplus_content
+    7.98. s7commplus_func
+    7.99. s7commplus_opcode
+    7.100. sd_pattern
+    7.101. seq
+    7.102. service
+    7.103. sha256
+    7.104. sha512
+    7.105. sid
+    7.106. sip_body
+    7.107. sip_header
+    7.108. sip_method
+    7.109. sip_stat_code
+    7.110. so
+    7.111. soid
+    7.112. ssl_state
+    7.113. ssl_version
+    7.114. stream_reassemble
+    7.115. stream_size
+    7.116. tag
+    7.117. target
+    7.118. tos
+    7.119. ttl
+    7.120. urg
+    7.121. vba_data
+    7.122. window
+    7.123. wscale
 
 8. Search Engine Modules
 9. SO Rule Modules
@@ -2446,8 +2447,6 @@ Peg counts:
   * appid.processed_packets: count of packets processed (sum)
   * appid.ignored_packets: count of packets ignored (sum)
   * appid.total_sessions: count of sessions created (sum)
-  * appid.appid_unknown: count of sessions where appid could not be
-    determined (sum)
   * appid.service_cache_prunes: number of times the service cache was
     pruned (sum)
   * appid.service_cache_adds: number of times an entry was added to
@@ -3670,6 +3669,8 @@ Rules:
     updates in a single header block
   * 121:36 (http2_inspect) HTTP/2 HPACK table size update exceeds max
     value set by decoder in SETTINGS frame
+  * 121:37 (http2_inspect) Nonempty HTTP/2 Data frame where message
+    body not expected
 
 Peg counts:
 
@@ -3859,8 +3860,6 @@ Rules:
     phrase
   * 119:206 (http_inspect) illegal extra whitespace in start line
   * 119:207 (http_inspect) corrupted HTTP version
-  * 119:208 (http_inspect) HTTP version in start line is not HTTP/1.0
-    or 1.1
   * 119:209 (http_inspect) format error in HTTP header
   * 119:210 (http_inspect) chunk header options present
   * 119:211 (http_inspect) URI badly formatted
@@ -3961,6 +3960,10 @@ Rules:
   * 119:273 (http_inspect) missed PDUs during JavaScript
     normalization
   * 119:274 (http_inspect) JavaScript scope nesting is over capacity
+  * 119:275 (http_inspect) HTTP/1 version other than 1.0 or 1.1
+  * 119:276 (http_inspect) HTTP version in start line is 0
+  * 119:277 (http_inspect) HTTP version in start line is higher than
+    1
 
 Peg counts:
 
@@ -7122,7 +7125,23 @@ Configuration:
     HTTP message trailers
 
 
-7.65. icmp_id
+7.65. http_version_match
+
+--------------
+
+Help: rule option to match version to listed values
+
+Type: ips_option
+
+Usage: detect
+
+Configuration:
+
+  * string http_version_match.~version_list: space-separated list of
+    versions to match
+
+
+7.66. icmp_id
 
 --------------
 
@@ -7138,7 +7157,7 @@ Configuration:
     0:65535 }
 
 
-7.66. icmp_seq
+7.67. icmp_seq
 
 --------------
 
@@ -7154,7 +7173,7 @@ Configuration:
     given range { 0:65535 }
 
 
-7.67. icode
+7.68. icode
 
 --------------
 
@@ -7170,7 +7189,7 @@ Configuration:
     0:255 }
 
 
-7.68. id
+7.69. id
 
 --------------
 
@@ -7186,7 +7205,7 @@ Configuration:
     }
 
 
-7.69. iec104_apci_type
+7.70. iec104_apci_type
 
 --------------
 
@@ -7201,7 +7220,7 @@ Configuration:
   * string iec104_apci_type.~: APCI type to match
 
 
-7.70. iec104_asdu_func
+7.71. iec104_asdu_func
 
 --------------
 
@@ -7216,7 +7235,7 @@ Configuration:
   * string iec104_asdu_func.~: function code to match
 
 
-7.71. ip_proto
+7.72. ip_proto
 
 --------------
 
@@ -7231,7 +7250,7 @@ Configuration:
   * string ip_proto.~proto: [!|>|<] name or number
 
 
-7.72. ipopts
+7.73. ipopts
 
 --------------
 
@@ -7247,7 +7266,7 @@ Configuration:
     lsrre|ssrr|satid|any }
 
 
-7.73. isdataat
+7.74. isdataat
 
 --------------
 
@@ -7264,7 +7283,7 @@ Configuration:
     buffer
 
 
-7.74. itype
+7.75. itype
 
 --------------
 
@@ -7280,7 +7299,7 @@ Configuration:
     0:255 }
 
 
-7.75. js_data
+7.76. js_data
 
 --------------
 
@@ -7292,7 +7311,7 @@ Type: ips_option
 Usage: detect
 
 
-7.76. md5
+7.77. md5
 
 --------------
 
@@ -7312,7 +7331,7 @@ Configuration:
     of buffer
 
 
-7.77. metadata
+7.78. metadata
 
 --------------
 
@@ -7329,7 +7348,7 @@ Configuration:
     pairs
 
 
-7.78. modbus_data
+7.79. modbus_data
 
 --------------
 
@@ -7340,7 +7359,7 @@ Type: ips_option
 Usage: detect
 
 
-7.79. modbus_func
+7.80. modbus_func
 
 --------------
 
@@ -7355,7 +7374,7 @@ Configuration:
   * string modbus_func.~: function code to match
 
 
-7.80. modbus_unit
+7.81. modbus_unit
 
 --------------
 
@@ -7370,7 +7389,7 @@ Configuration:
   * int modbus_unit.~: Modbus unit ID { 0:255 }
 
 
-7.81. msg
+7.82. msg
 
 --------------
 
@@ -7385,7 +7404,7 @@ Configuration:
   * string msg.~: message describing rule
 
 
-7.82. mss
+7.83. mss
 
 --------------
 
@@ -7401,7 +7420,7 @@ Configuration:
     }
 
 
-7.83. num_headers
+7.84. num_headers
 
 --------------
 
@@ -7425,7 +7444,7 @@ Configuration:
     message trailers
 
 
-7.84. num_trailers
+7.85. num_trailers
 
 --------------
 
@@ -7449,7 +7468,7 @@ Configuration:
     HTTP message trailers
 
 
-7.85. pcre
+7.86. pcre
 
 --------------
 
@@ -7471,7 +7490,7 @@ Peg counts:
   * pcre.pcre_negated: total pcre rules using negation syntax (sum)
 
 
-7.86. pkt_data
+7.87. pkt_data
 
 --------------
 
@@ -7483,7 +7502,7 @@ Type: ips_option
 Usage: detect
 
 
-7.87. pkt_num
+7.88. pkt_num
 
 --------------
 
@@ -7499,7 +7518,7 @@ Configuration:
     { 1: }
 
 
-7.88. priority
+7.89. priority
 
 --------------
 
@@ -7515,7 +7534,7 @@ Configuration:
     1:max31 }
 
 
-7.89. raw_data
+7.90. raw_data
 
 --------------
 
@@ -7526,7 +7545,7 @@ Type: ips_option
 Usage: detect
 
 
-7.90. reference
+7.91. reference
 
 --------------
 
@@ -7541,7 +7560,7 @@ Configuration:
   * string reference.~ref: reference: <scheme>,<id>
 
 
-7.91. regex
+7.92. regex
 
 --------------
 
@@ -7565,7 +7584,7 @@ Configuration:
     instead of start of buffer
 
 
-7.92. rem
+7.93. rem
 
 --------------
 
@@ -7580,7 +7599,7 @@ Configuration:
   * string rem.~: comment
 
 
-7.93. replace
+7.94. replace
 
 --------------
 
@@ -7596,7 +7615,7 @@ Configuration:
   * string replace.~: byte code to replace with
 
 
-7.94. rev
+7.95. rev
 
 --------------
 
@@ -7611,7 +7630,7 @@ Configuration:
   * int rev.~: revision { 1:max32 }
 
 
-7.95. rpc
+7.96. rpc
 
 --------------
 
@@ -7628,7 +7647,7 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-7.96. s7commplus_content
+7.97. s7commplus_content
 
 --------------
 
@@ -7639,7 +7658,7 @@ Type: ips_option
 Usage: detect
 
 
-7.97. s7commplus_func
+7.98. s7commplus_func
 
 --------------
 
@@ -7654,7 +7673,7 @@ Configuration:
   * string s7commplus_func.~: function code to match
 
 
-7.98. s7commplus_opcode
+7.99. s7commplus_opcode
 
 --------------
 
@@ -7669,7 +7688,7 @@ Configuration:
   * string s7commplus_opcode.~: opcode code to match
 
 
-7.99. sd_pattern
+7.100. sd_pattern
 
 --------------
 
@@ -7693,7 +7712,7 @@ Peg counts:
   * sd_pattern.terminated: hyperscan terminated (sum)
 
 
-7.100. seq
+7.101. seq
 
 --------------
 
@@ -7709,7 +7728,7 @@ Configuration:
     range { 0: }
 
 
-7.101. service
+7.102. service
 
 --------------
 
@@ -7724,7 +7743,7 @@ Configuration:
   * string service.*: one or more comma-separated service names
 
 
-7.102. sha256
+7.103. sha256
 
 --------------
 
@@ -7744,7 +7763,7 @@ Configuration:
     start of buffer
 
 
-7.103. sha512
+7.104. sha512
 
 --------------
 
@@ -7764,7 +7783,7 @@ Configuration:
     start of buffer
 
 
-7.104. sid
+7.105. sid
 
 --------------
 
@@ -7779,7 +7798,7 @@ Configuration:
   * int sid.~: signature id { 1:max32 }
 
 
-7.105. sip_body
+7.106. sip_body
 
 --------------
 
@@ -7790,7 +7809,7 @@ Type: ips_option
 Usage: detect
 
 
-7.106. sip_header
+7.107. sip_header
 
 --------------
 
@@ -7802,7 +7821,7 @@ Type: ips_option
 Usage: detect
 
 
-7.107. sip_method
+7.108. sip_method
 
 --------------
 
@@ -7817,7 +7836,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-7.108. sip_stat_code
+7.109. sip_stat_code
 
 --------------
 
@@ -7832,7 +7851,7 @@ Configuration:
   * int sip_stat_code.*code: status code { 1:999 }
 
 
-7.109. so
+7.110. so
 
 --------------
 
@@ -7849,7 +7868,7 @@ Configuration:
     buffer
 
 
-7.110. soid
+7.111. soid
 
 --------------
 
@@ -7865,7 +7884,7 @@ Configuration:
     like 3_45678_9
 
 
-7.111. ssl_state
+7.112. ssl_state
 
 --------------
 
@@ -7894,7 +7913,7 @@ Configuration:
     unknown
 
 
-7.112. ssl_version
+7.113. ssl_version
 
 --------------
 
@@ -7921,7 +7940,7 @@ Configuration:
     tls1.2
 
 
-7.113. stream_reassemble
+7.114. stream_reassemble
 
 --------------
 
@@ -7942,7 +7961,7 @@ Configuration:
     remainder of the session
 
 
-7.114. stream_size
+7.115. stream_size
 
 --------------
 
@@ -7960,7 +7979,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-7.115. tag
+7.116. tag
 
 --------------
 
@@ -7979,7 +7998,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1:max32 }
 
 
-7.116. target
+7.117. target
 
 --------------
 
@@ -7995,7 +8014,7 @@ Configuration:
     dst_ip }
 
 
-7.117. tos
+7.118. tos
 
 --------------
 
@@ -8010,7 +8029,7 @@ Configuration:
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
 
 
-7.118. ttl
+7.119. ttl
 
 --------------
 
@@ -8026,7 +8045,7 @@ Configuration:
     0:255 }
 
 
-7.119. urg
+7.120. urg
 
 --------------
 
@@ -8042,7 +8061,7 @@ Configuration:
     { 0:65535 }
 
 
-7.120. vba_data
+7.121. vba_data
 
 --------------
 
@@ -8054,7 +8073,7 @@ Type: ips_option
 Usage: detect
 
 
-7.121. window
+7.122. window
 
 --------------
 
@@ -8070,7 +8089,7 @@ Configuration:
     range { 0:65535 }
 
 
-7.122. wscale
+7.123. wscale
 
 --------------
 
@@ -9442,6 +9461,8 @@ these libraries see the Getting Started section of the manual.
     HTTP message headers
   * implied http_uri.with_trailer: parts of this rule examine HTTP
     message trailers
+  * string http_version_match.~version_list: space-separated list of
+    versions to match
   * implied http_version.request: match against the version from the
     request message even when examining the response
   * implied http_version.with_body: parts of this rule examine HTTP
@@ -10666,8 +10687,6 @@ these libraries see the Getting Started section of the manual.
   * address_space_selector.no_match: selection evaluations that had
     no matches (sum)
   * address_space_selector.packets: packets evaluated (sum)
-  * appid.appid_unknown: count of sessions where appid could not be
-    determined (sum)
   * appid.ignored_packets: count of packets ignored (sum)
   * appid.odp_reload_ignored_pkts: count of packets ignored after
     open detector package is reloaded (sum)
@@ -12930,13 +12949,6 @@ two elements of an HTTP request or status line.
 The HTTP version in the start line begins with "HTTP/" but the
 remainder is not in the expected <digit>.<digit> format.
 
-119:208 (http_inspect) HTTP version in start line is not HTTP/1.0 or
-1.1
-
-The HTTP version in the start line has a valid format but is not HTTP
-/1.0 or HTTP/1.1. This alert does not apply to HTTP/2 or HTTP/3
-traffic.
-
 119:209 (http_inspect) format error in HTTP header
 
 An HTTP header line contains a format error. A well-formed header
@@ -13271,33 +13283,37 @@ HTTP/2.
 
 119:265 (http_inspect) bad token in JavaScript
 
-JavaScript normalizer has encountered a symbol that is not expected
-as a part of a valid JavaScript statement, making further
+Enhanced JavaScript normalizer has encountered a symbol that is not
+expected as a part of a valid JavaScript statement, making further
 normalization impossible.
 
 119:266 (http_inspect) unexpected script opening tag in JavaScript
 
 HTML <script> tag must not have a nested <script> tag inside it. If a
-nested tag is encountered, this alert is raised.
+nested tag is encountered, this alert is raised. This alert is raised
+by the enhanced JavaScript normalizer.
 
 119:267 (http_inspect) unexpected script closing tag in JavaScript
 
 This alert is raised when </script> end-tag is encountered inside a
 JavaScript comment or literal, which is a syntax error, as the last
-comment or literal is not closed before script end.
+comment or literal is not closed before script end. This alert is
+raised by the enhanced JavaScript normalizer.
 
 119:268 (http_inspect) JavaScript code under the external script tags
 
 When HTML <script> tag contains a reference to an external script, it
 must not contain any executable JavaScript code. This alert is raised
 if executable (i.e. not comment) code is found inside a script tag
-that has an external reference.
+that has an external reference. This alert is raised by the enhanced
+JavaScript normalizer.
 
 119:269 (http_inspect) script opening tag in a short form
 
 In HTML, a script tag must not be self-closing (written as <script />
 without a following end-tag). If a self-closing "short-form" script
-tag is encountered, this alert is raised.
+tag is encountered, this alert is raised. This alert is raised by the
+enhanced JavaScript normalizer.
 
 119:270 (http_inspect) max number of unique JavaScript identifiers
 reached
@@ -13308,7 +13324,8 @@ unique identifiers to normalize is limited, for memory
 considerations, with http_inspect.js_norm_identifier_depth parameter.
 When this threshold is reached, a corresponding alert is raised. This
 alert is not expected for typical network traffic and may be an
-indication that an attacker is trying to exhaust resources.
+indication that an attacker is trying to exhaust resources. This
+alert is raised by the enhanced JavaScript normalizer.
 
 119:271 (http_inspect) JavaScript bracket nesting is over capacity
 
@@ -13320,7 +13337,8 @@ depth of nesting exceeds limit set in
 http_inspect.js_norm_max_tmpl_nest or in
 http_inspect.js_norm_max_bracket_depth, this alert is raised. This
 alert is not expected for typical network traffic and may be an
-indication that an attacker is trying to exhaust resources.
+indication that an attacker is trying to exhaust resources. This
+alert is raised by the enhanced JavaScript normalizer.
 
 119:272 (http_inspect) Consecutive commas in HTTP Accept-Encoding
 header
@@ -13339,18 +13357,32 @@ fast-pattern (FP) search is applying to file_data. Some PDUs don’t
 match file_data FP search and JavaScript normalization won’t be
 executed for these PDUs. The normalization of the following PDUs for
 inline/external scripts will be stopped for current request within
-the flow.
+the flow. This alert is raised by the enhanced JavaScript normalizer.
 
 119:274 (http_inspect) JavaScript scope nesting is over capacity
 
-In JavaScript, a program is split into several scopes such as a
-global scope, function scope, if block, block of code, object, etc.
-The scope has a nesting nature which requires a stack to track it for
-proper normalization of JavaScript identifiers. When the depth of
-nesting exceeds limit set in http_inspect.js_norm_max_scope_depth,
-this alert is raised. This alert is not expected for typical network
-traffic and may be an indication that an attacker is trying to
-exhaust resources.
+To resolve variable names in JavaScript, a current stack of variable
+scopes has to be tracked. When the depth of nesting exceeds the limit
+set in http_inspect.js_norm_max_scope_depth, this alert is raised.
+This alert is not expected for typical network traffic and may be an
+indication that an attacker is trying to exhaust resources. This
+alert is raised by the enhanced JavaScript normalizer.
+
+119:275 (http_inspect) HTTP/1 version other than 1.0 or 1.1
+
+The HTTP version in the start line has a valid 1.<subversion> format,
+but the subversion is not 0 or 1.
+
+119:276 (http_inspect) HTTP version in start line is 0
+
+The HTTP version in the start line has a valid format but the version
+is 0.
+
+119:277 (http_inspect) HTTP version in start line is higher than 1
+
+The HTTP version in the start line has a valid format but the version
+is higher than 1. This alert does not apply to HTTP/2 or HTTP/3
+traffic.
 
 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
 
@@ -13526,6 +13558,11 @@ value set by decoder in SETTINGS frame
 
 HTTP/2 HPACK table size update exceeds max value set by decoder in
 SETTINGS frame
+
+121:37 (http2_inspect) Nonempty HTTP/2 Data frame where message body
+not expected
+
+Nonempty HTTP/2 Data frame where a message body was not expected.
 
 122:1 (port_scan) TCP portscan
 
@@ -15264,6 +15301,8 @@ and are not applicable elsewhere.
     the normalized URI buffer
   * http_version (ips_option): rule option to set the detection
     cursor to the version buffer
+  * http_version_match (ips_option): rule option to match version to
+    listed values
   * hyperscan (search_engine): intel hyperscan-based mpse with regex
     support
   * icmp4 (codec): support for Internet control message protocol v4
@@ -15684,6 +15723,8 @@ and are not applicable elsewhere.
     the normalized URI buffer
   * ips_option::http_version: rule option to set the detection cursor
     to the version buffer
+  * ips_option::http_version_match: rule option to match version to
+    listed values
   * ips_option::icmp_id: rule option to check ICMP ID
   * ips_option::icmp_seq: rule option to check ICMP sequence number
   * ips_option::icode: rule option to check ICMP code
