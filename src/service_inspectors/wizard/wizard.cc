@@ -139,7 +139,7 @@ public:
     StreamSplitter* get_splitter(bool) override;
 
     inline bool finished(Wand& w)
-    { return !w.hex && !w.spell && w.curse_tracker.empty(); };
+    { return !w.hex && !w.spell && w.curse_tracker.empty(); }
     void reset(Wand&, bool tcp, bool c2s);
     bool cast_spell(Wand&, Flow*, const uint8_t*, unsigned, uint16_t&);
     bool spellbind(const MagicPage*&, Flow*, const uint8_t*, unsigned);
