@@ -149,7 +149,6 @@ struct IpsActionsConfig;
 struct LatencyConfig;
 struct MemoryConfig;
 struct PayloadInjectorConfig;
-struct PHInstance;
 struct Plugins;
 struct PORT_RULE_MAP;
 struct RateFilterConfig;
@@ -163,7 +162,6 @@ struct ThresholdConfig;
 namespace snort
 {
 class GHash;
-class PolicySelector;
 class ProtocolReference;
 class ThreadConfig;
 class XHash;
@@ -393,10 +391,6 @@ public:
 
     PolicyMap* policy_map = nullptr;
     std::string tweaks;
-
-    PolicySelector* global_selector = nullptr;
-    PHInstance* flow_tracking = nullptr;
-    PHInstance* removed_flow_tracking = nullptr;
 
     uint16_t tunnel_mask = 0;
 

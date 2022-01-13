@@ -29,7 +29,6 @@
 
 #include "file_api.h"
 #include "file_module.h"
-#include "file_policy.h"
 
 #include <map>
 
@@ -103,7 +102,13 @@ public:
 
     static unsigned file_flow_data_id;
 
-    void set_file_policy(FilePolicyBase* fp) { file_policy = fp; }
+    void set_file_policy(FilePolicyBase* fp)
+    {
+        assert(fp);
+        FilePolicyBase::delete_file_policy(file_policy);
+        fp->add_ref();
+        file_policy = fp;
+    }
     FilePolicyBase* get_file_policy() { return file_policy; }
 
 private:

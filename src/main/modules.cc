@@ -31,12 +31,14 @@
 #include "detection/fp_config.h"
 #include "detection/rules.h"
 #include "detection/tag.h"
+#include "file_api/file_service.h"
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfrf.h"
 #include "filters/sfthd.h"
 #include "filters/sfthreshold.h"
 #include "flow/ha_module.h"
+#include "framework/file_policy.h"
 #include "framework/module.h"
 #include "host_tracker/host_tracker_module.h"
 #include "host_tracker/host_cache_module.h"
@@ -1051,6 +1053,7 @@ class NetworkModule : public Module
 public:
     NetworkModule() : Module("network", network_help, network_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
     Usage get_usage() const override
     { return CONTEXT; }
@@ -1067,10 +1070,7 @@ bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
         ConfigChecksumMode(v.get_string());
 
     else if ( v.is("id") )
-    {
         p->user_policy_id = v.get_uint16();
-        sc->policy_map->set_user_network(p);
-    }
 
     else if ( v.is("min_ttl") )
         p->min_ttl = v.get_uint8();
@@ -1087,6 +1087,16 @@ bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
     else if (v.is("max_ip_layers"))
         sc->max_ip_layers = v.get_uint8();
 
+    return true;
+}
+
+bool NetworkModule::end(const char*, int idx, SnortConfig* sc)
+{
+    if (!idx)
+    {
+        NetworkPolicy* p = get_network_policy();
+        sc->policy_map->set_user_network(p);
+    }
     return true;
 }
 
@@ -1122,6 +1132,7 @@ class InspectionModule : public Module
 public:
     InspectionModule() : Module("inspection", inspection_help, inspection_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
 
     Usage get_usage() const override
     { return INSPECT; }
@@ -1132,10 +1143,7 @@ bool InspectionModule::set(const char*, Value& v, SnortConfig* sc)
     InspectionPolicy* p = get_inspection_policy();
 
     if ( v.is("id") )
-    {
         p->user_policy_id = v.get_uint16();
-        sc->policy_map->set_user_inspection(p);
-    }
 
 #ifdef HAVE_UUID
     else if ( v.is("uuid") )
@@ -1164,13 +1172,18 @@ bool InspectionModule::set(const char*, Value& v, SnortConfig* sc)
     }
 
     else if ( v.is("max_aux_ip") )
-    {
         sc->max_aux_ip = v.get_int16();
-        return true;
-    }
 
     return true;
 }
+
+bool InspectionModule::end(const char*, int, SnortConfig* sc)
+{
+    InspectionPolicy* p = get_inspection_policy();
+    sc->policy_map->set_user_inspection(p);
+    return true;
+}
+
 //-------------------------------------------------------------------------
 // Ips policy module
 //-------------------------------------------------------------------------
@@ -1284,7 +1297,7 @@ private:
 bool IpsModule::matches(const char*, std::string&)
 { return true; }
 
-bool IpsModule::set(const char* fqn, Value& v, SnortConfig* sc)
+bool IpsModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     IpsPolicy* p = get_ips_policy();
 
@@ -1298,10 +1311,7 @@ bool IpsModule::set(const char* fqn, Value& v, SnortConfig* sc)
         p->enable_builtin_rules = v.get_bool();
 
     else if ( v.is("id") )
-    {
         p->user_policy_id = v.get_uint16();
-        sc->policy_map->set_user_ips(p);
-    }
 
     else if ( v.is("include") )
         p->include = v.get_string();
@@ -1351,7 +1361,7 @@ bool IpsModule::set(const char* fqn, Value& v, SnortConfig* sc)
     return true;
 }
 
-bool IpsModule::end(const char* fqn, int idx, SnortConfig*)
+bool IpsModule::end(const char* fqn, int idx, SnortConfig* sc)
 {
     if ( idx and !strcmp(fqn, "ips.action_map") )
     {
@@ -1366,6 +1376,11 @@ bool IpsModule::end(const char* fqn, int idx, SnortConfig*)
 
         replace.clear();
         with.clear();
+    }
+    else if (!idx and !strcmp(fqn, "ips"))
+    {
+        IpsPolicy* p = get_ips_policy();
+        sc->policy_map->set_user_ips(p);
     }
     return true;
 }
@@ -1997,6 +2012,155 @@ bool HostsModule::end(const char* fqn, int idx, SnortConfig* sc)
 }
 
 //-------------------------------------------------------------------------
+// File policy module
+//-------------------------------------------------------------------------
+
+static const Parameter file_when_params[] =
+{
+    // FIXIT-M when.policy_id should be an arbitrary string auto converted
+    // into index for binder matching and lookups
+    { "file_type_id", Parameter::PT_INT, "0:max32", "0",
+      "unique ID for file type in file magic rule" },
+
+    { "sha256", Parameter::PT_STRING, nullptr, nullptr,
+      "SHA 256" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter file_use_params[] =
+{
+    { "verdict", Parameter::PT_ENUM, "unknown | log | stop | block | reset ", "unknown",
+      "what to do with matching traffic" },
+
+    { "enable_file_type", Parameter::PT_BOOL, nullptr, "false",
+      "true/false -> enable/disable file type identification" },
+
+    { "enable_file_signature", Parameter::PT_BOOL, nullptr, "false",
+      "true/false -> enable/disable file signature" },
+
+    { "enable_file_capture", Parameter::PT_BOOL, nullptr, "false",
+      "true/false -> enable/disable file capture" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter file_policy_rule_params[] =
+{
+    { "when", Parameter::PT_TABLE, file_when_params, nullptr,
+      "match criteria" },
+
+    { "use", Parameter::PT_TABLE, file_use_params, nullptr,
+      "target configuration" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter file_policy_params[] =
+{
+    { "enable_type", Parameter::PT_BOOL, nullptr, "true",
+      "enable type ID" },
+
+    { "enable_signature", Parameter::PT_BOOL, nullptr, "false",
+      "enable signature calculation" },
+
+    { "enable_capture", Parameter::PT_BOOL, nullptr, "false",
+      "enable file capture" },
+
+    { "verdict_delay", Parameter::PT_INT, "0:max53", "0",
+      "number of queries to return final verdict" },
+
+    { "rules", Parameter::PT_LIST, file_policy_rule_params, nullptr,
+      "list of file rules" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+
+#define file_policy_help "configure file policy"
+
+class FilePolicyModule : public Module
+{
+public:
+    FilePolicyModule() : Module("file_policy", file_policy_help, file_policy_params)
+    { }
+    bool begin(const char*, int, SnortConfig*) override;
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
+
+private:
+    FileRule file_rule;
+};
+
+bool FilePolicyModule::begin(const char* fqn, int idx, SnortConfig*)
+{
+    if (idx && !strcmp(fqn, "file_policy.rules"))
+        file_rule.clear();
+    return true;
+}
+
+bool FilePolicyModule::set(const char*, Value& v, SnortConfig*)
+{
+    FilePolicy* fp = get_network_policy()->get_file_policy();
+    if ( v.is("file_type_id") )
+        file_rule.when.type_id = v.get_uint32();
+
+    else if ( v.is("sha256") )
+        file_rule.when.sha256 = v.get_string();
+
+    else if ( v.is("verdict") )
+        file_rule.use.verdict = (FileVerdict)v.get_uint8();
+
+    else if ( v.is("enable_file_type") )
+        file_rule.use.type_enabled = v.get_bool();
+
+    else if ( v.is("enable_file_signature") )
+        file_rule.use.signature_enabled = v.get_bool();
+
+    else if ( v.is("enable_file_capture") )
+    {
+        file_rule.use.capture_enabled = v.get_bool();
+        if (file_rule.use.capture_enabled && Snort::is_reloading()
+            && !FileService::is_file_capture_enabled())
+        {
+            ReloadError("Changing file_id.enable_file_capture requires a restart.\n");
+            return false;
+        }
+    }
+
+    else if ( v.is("enable_type") )
+        fp->set_file_type(v.get_bool());
+
+    else if ( v.is("enable_signature") )
+        fp->set_file_signature(v.get_bool());
+
+    else if ( v.is("enable_capture") )
+    {
+        if (v.get_bool() and Snort::is_reloading() and !FileService::is_file_capture_enabled())
+        {
+            ReloadError("Changing file_id.enable_capture requires a restart.\n");
+            return false;
+        }
+        fp->set_file_capture(v.get_bool());
+    }
+
+    else if ( v.is("verdict_delay") )
+        fp->set_verdict_delay(v.get_int64());
+
+    return true;
+}
+
+bool FilePolicyModule::end(const char* fqn, int idx, SnortConfig*)
+{
+    if (!idx)
+        get_network_policy()->get_file_policy()->load();
+    if (idx && !strcmp(fqn, "file_policy.rules"))
+        get_network_policy()->add_file_policy_rule(file_rule);
+
+    return true;
+}
+
+//-------------------------------------------------------------------------
 // module manager stuff - move to framework/module_manager.cc
 //-------------------------------------------------------------------------
 
@@ -2045,6 +2209,7 @@ void module_init()
     ModuleManager::add_module(new NetworkModule);
     ModuleManager::add_module(new InspectionModule);
     ModuleManager::add_module(new IpsModule);
+    ModuleManager::add_module(new FilePolicyModule);
 
     // these modules replace config and hosts.xml
     ModuleManager::add_module(new AttributeTableModule);

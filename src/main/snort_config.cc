@@ -275,8 +275,6 @@ SnortConfig::~SnortConfig()
     if ( plugins )
         delete plugins;
     delete payload_injector_config;
-    InspectorManager::free_flow_tracking(flow_tracking);
-    PolicySelector::free_policy_selector(global_selector);
     clear_reload_resource_tuner_list();
 
     trim_heap();

@@ -26,6 +26,7 @@
 // Currently, it provides three sets of APIs: file processing, MIME processing,
 // and configurations.
 
+#include <atomic>
 #include <bitset>
 #include <cstring>
 #include <string>
@@ -138,8 +139,8 @@ class SO_PUBLIC FilePolicyBase
 {
 public:
 
-    FilePolicyBase() = default;
-    virtual ~FilePolicyBase() = default;
+    FilePolicyBase();
+    virtual ~FilePolicyBase();
 
     // This is called when a new flow is queried for the first time
     // Check & update what file policy is enabled on this flow/file
@@ -154,6 +155,14 @@ public:
     { return FILE_VERDICT_UNKNOWN; }
 
     virtual void log_file_action(Flow*, FileInfo*, FileAction) { }
+
+    void add_ref()
+    { ++ref_count; }
+
+    SO_PUBLIC static void delete_file_policy(FilePolicyBase*);
+
+private:
+    std::atomic_uint ref_count;
 };
 
 inline void initFilePosition(FilePosition* position, uint64_t processed_size)

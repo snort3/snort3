@@ -63,11 +63,6 @@ void FileConfig::process_file_rule(FileMagicRule& rule)
     fileIdentifier.insert_file_rule(rule);
 }
 
-void FileConfig::process_file_policy_rule(FileRule& rule)
-{
-    filePolicy.insert_file_rule(rule);
-}
-
 const FileMagicRule* FileConfig::get_rule_from_id(uint32_t id) const
 {
     return fileIdentifier.get_rule_from_id(id);
@@ -109,7 +104,7 @@ FileConfig* get_file_config(const SnortConfig* sc)
     if ( !sc )
         sc = SnortConfig::get_conf();
 
-    FileInspect* fi = (FileInspect*)InspectorManager::get_inspector(FILE_ID_NAME, true, sc);
+    FileInspect* fi = (FileInspect*)InspectorManager::get_file_inspector(sc);
 
     if (fi)
         return (fi->config);

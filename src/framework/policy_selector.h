@@ -79,7 +79,7 @@ public:
         if (ps)
             ps->get_api()->dtor(ps);
     }
-    const PolicySelectorApi* get_api()
+    const PolicySelectorApi* get_api() const
     { return api; }
     virtual bool select_default_policies(const _daq_pkt_hdr*, const SnortConfig*) = 0;
     virtual void show() const = 0;

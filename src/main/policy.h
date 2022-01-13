@@ -42,8 +42,10 @@ typedef unsigned char uuid_t[16];
 
 namespace snort
 {
+class FilePolicyBase;
 class GHash;
 class IpsAction;
+class PolicySelector;
 struct SnortConfig;
 }
 
@@ -87,12 +89,19 @@ enum DecodeEventFlag
 // Snort ac-split creates the nap (network analysis policy)
 // Snort++ breaks the nap into network and inspection
 
+class FilePolicy;
+class FileRule;
+
 struct NetworkPolicy
 {
 public:
     NetworkPolicy(PolicyId = 0, PolicyId default_inspection_id = 0);
     NetworkPolicy(NetworkPolicy*, const char*);
     ~NetworkPolicy();
+
+    void add_file_policy_rule(FileRule& file_rule);
+    snort::FilePolicyBase* get_base_file_policy() const;
+    FilePolicy* get_file_policy() const;
 
     bool checksum_drops(uint16_t codec_cksum_err_flag)
     { return (checksum_drop & codec_cksum_err_flag) != 0; }
@@ -108,6 +117,9 @@ public:
 
     bool icmp_checksums()
     { return (checksum_eval & CHECKSUM_FLAG__ICMP) != 0; }
+
+protected:
+    FilePolicy* file_policy;
 
 public:
     struct TrafficPolicy* traffic_policy;
@@ -221,6 +233,9 @@ struct PolicyTuple
         inspection(ins_pol), ips(ips_pol), network(net_pol) { }
 };
 
+struct GlobalInspectorPolicy;
+class SingleInstanceInspectorPolicy;
+
 class PolicyMap
 {
 public:
@@ -290,6 +305,21 @@ public:
     void set_cloned(bool state)
     { cloned = state; }
 
+    snort::PolicySelector* get_policy_selector() const
+    { return selector; }
+
+    void set_policy_selector(snort::PolicySelector* new_selector)
+    { selector = new_selector; }
+
+    SingleInstanceInspectorPolicy* get_file_id()
+    { return file_id; }
+
+    SingleInstanceInspectorPolicy* get_flow_tracking()
+    { return flow_tracking; }
+
+    GlobalInspectorPolicy* get_global_inspector_policy()
+    { return global_inspector_policy; }
+
     const Shell* get_shell_by_policy(unsigned id) const
     {
         auto it = std::find_if(std::begin(shell_map), std::end(shell_map),
@@ -310,6 +340,11 @@ private:
     std::unordered_map<unsigned, NetworkPolicy*> user_network;
     std::unordered_map<unsigned, InspectionPolicy*> user_inspection;
     std::unordered_map<unsigned, IpsPolicy*> user_ips;
+
+    snort::PolicySelector* selector = nullptr;
+    SingleInstanceInspectorPolicy* file_id;
+    SingleInstanceInspectorPolicy* flow_tracking;
+    GlobalInspectorPolicy* global_inspector_policy;
 
     bool cloned = false;
 };

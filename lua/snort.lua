@@ -86,6 +86,7 @@ http2_inspect = { }
 
 -- see file_magic.lua for file id rules
 file_id = { file_rules = file_magic }
+file_policy = { }
 
 -- the following require additional configuration to be fully effective:
 

@@ -83,7 +83,8 @@ FILE* OpenAlertFile(const char* filearg)
         FatalError("OpenAlertFile() => fopen() alert file %s: %s\n",
             filename, get_error(errno));
     }
-    setvbuf(file, (char*)nullptr, _IOLBF, (size_t)0);
+    else
+        setvbuf(file, (char*)nullptr, _IOLBF, (size_t)0);
 
     return file;
 }

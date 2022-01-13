@@ -31,6 +31,7 @@ add_library ( framework OBJECT
     codec.cc
     cursor.cc
     data_bus.cc
+    file_policy.cc
     inspector.cc
     ips_option.cc
     packet_constraints.cc

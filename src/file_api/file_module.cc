@@ -82,48 +82,6 @@ static const Parameter file_rule_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-// File policy
-static const Parameter file_when_params[] =
-{
-    // FIXIT-M when.policy_id should be an arbitrary string auto converted
-    // into index for binder matching and lookups
-    { "file_type_id", Parameter::PT_INT, "0:max32", "0",
-      "unique ID for file type in file magic rule" },
-
-    { "sha256", Parameter::PT_STRING, nullptr, nullptr,
-      "SHA 256" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-static const Parameter file_use_params[] =
-{
-    { "verdict", Parameter::PT_ENUM, "unknown | log | stop | block | reset ", "unknown",
-      "what to do with matching traffic" },
-
-    { "enable_file_type", Parameter::PT_BOOL, nullptr, "false",
-      "true/false -> enable/disable file type identification" },
-
-    { "enable_file_signature", Parameter::PT_BOOL, nullptr, "false",
-      "true/false -> enable/disable file signature" },
-
-    { "enable_file_capture", Parameter::PT_BOOL, nullptr, "false",
-      "true/false -> enable/disable file capture" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-static const Parameter file_policy_rule_params[] =
-{
-    { "when", Parameter::PT_TABLE, file_when_params, nullptr,
-      "match criteria" },
-
-    { "use", Parameter::PT_TABLE, file_use_params, nullptr,
-      "target configuration" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
 static const Parameter file_id_params[] =
 {
     { "type_depth", Parameter::PT_INT, "0:max53", "1460",
@@ -159,23 +117,11 @@ static const Parameter file_id_params[] =
     { "max_files_per_flow", Parameter::PT_INT, "1:max53", "128",
       "maximal number of files able to be concurrently processed per flow" },
 
-    { "enable_type", Parameter::PT_BOOL, nullptr, "true",
-      "enable type ID" },
-
-    { "enable_signature", Parameter::PT_BOOL, nullptr, "false",
-      "enable signature calculation" },
-
-    { "enable_capture", Parameter::PT_BOOL, nullptr, "false",
-      "enable file capture" },
-
     { "show_data_depth", Parameter::PT_INT, "0:max53", "100",
       "print this many octets" },
 
     { "file_rules", Parameter::PT_LIST, file_rule_params, nullptr,
       "list of file magic rules" },
-
-    { "file_policy", Parameter::PT_LIST, file_policy_rule_params, nullptr,
-      "list of file rules" },
 
     { "trace_type", Parameter::PT_BOOL, nullptr, "false",
       "enable runtime dump of type info" },
@@ -185,9 +131,6 @@ static const Parameter file_id_params[] =
 
     { "trace_stream", Parameter::PT_BOOL, nullptr, "false",
       "enable runtime dump of file data" },
-
-    { "verdict_delay", Parameter::PT_INT, "0:max53", "0",
-      "number of queries to return final verdict" },
 
     { "b64_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
       "base64 decoding depth (-1 no limit)" },
@@ -271,8 +214,6 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
     if (!fc)
         fc = new FileConfig;
 
-    FilePolicy& fp = fc->get_file_policy();
-
     if ( v.is("type_depth") )
         fc->file_type_depth = v.get_int64();
 
@@ -306,23 +247,6 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("max_files_per_flow") )
         fc->max_files_per_flow = v.get_uint64();
 
-    else if ( v.is("enable_type") )
-    {
-        fp.set_file_type(v.get_bool());
-    }
-    else if ( v.is("enable_signature") )
-    {
-        fp.set_file_signature(v.get_bool());
-    }
-    else if ( v.is("enable_capture") )
-    {
-        if (v.get_bool() and Snort::is_reloading() and !FileService::is_file_capture_enabled())
-        {
-            ReloadError("Changing file_id.enable_capture requires a restart.\n");
-            return false;
-        }
-        fp.set_file_capture(v.get_bool());
-    }
     else if ( v.is("show_data_depth") )
         fc->show_data_depth = v.get_int64();
 
@@ -335,11 +259,6 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("trace_stream") )
         fc->trace_stream = v.get_bool();
 
-    else if ( v.is("verdict_delay") )
-    {
-        fc->verdict_delay = v.get_int64();
-        fp.set_verdict_delay(fc->verdict_delay);
-    }
     else if ( v.is("decompress_pdf") )
         FileService::decode_conf.set_decompress_pdf(v.get_bool());
 
@@ -377,9 +296,6 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
         FileService::decode_conf.set_uu_depth(mime);
     }
 
-    else if ( v.is("file_rules") )
-        return true;
-
     else if ( v.is("rev") )
         rule.rev = v.get_uint32();
 
@@ -408,53 +324,12 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("version") )
         rule.version = v.get_string();
 
-    else if ( v.is("magic") )
-        return true;
-
     else if ( v.is("content") )
         magic.content_str = v.get_string();
 
     else if ( v.is("offset") )
         magic.offset = v.get_uint32();
 
-    else if ( v.is("file_policy") )
-        return true;
-
-    else if ( v.is("when") )
-        return true;
-
-    else if ( v.is("file_type_id") )
-        file_rule.when.type_id = v.get_uint32();
-
-    else if ( v.is("sha256") )
-        file_rule.when.sha256 = v.get_string();
-
-    else if ( v.is("use") )
-        return true;
-
-    else if ( v.is("verdict") )
-    {
-        file_rule.use.verdict = (FileVerdict)v.get_uint8();
-        if (file_rule.use.verdict == FileVerdict::FILE_VERDICT_REJECT)
-            need_active = true;
-    }
-
-    else if ( v.is("enable_file_type") )
-        file_rule.use.type_enabled = v.get_bool();
-
-    else if ( v.is("enable_file_signature") )
-        file_rule.use.signature_enabled = v.get_bool();
-
-    else if ( v.is("enable_file_capture") )
-    {
-        file_rule.use.capture_enabled = v.get_bool();
-        if (file_rule.use.capture_enabled && Snort::is_reloading()
-            && !FileService::is_file_capture_enabled())
-        {
-            ReloadError("Changing file_id.enable_file_capture requires a restart.\n");
-            return false;
-        }
-    }
     return true;
 }
 
@@ -470,10 +345,6 @@ bool FileIdModule::begin(const char* fqn, int idx, SnortConfig*)
     else if ( !strcmp(fqn, "file_id.file_rules.magic") )
     {
         magic.clear();
-    }
-    else if ( !strcmp(fqn, "file_id.file_policy") )
-    {
-        file_rule.clear();
     }
 
     return true;
@@ -493,10 +364,6 @@ bool FileIdModule::end(const char* fqn, int idx, SnortConfig*)
         fc->process_file_magic(magic);
         rule.file_magics.emplace_back(magic);
     }
-    else if ( !strcmp(fqn, "file_id.file_policy") )
-    {
-        fc->process_file_policy_rule(file_rule);
-    }
 
     return true;
 }
@@ -504,12 +371,7 @@ bool FileIdModule::end(const char* fqn, int idx, SnortConfig*)
 void FileIdModule::load_config(FileConfig*& dst)
 {
     dst = fc;
-
-    if (fc)
-    {
-        fc->get_file_policy().load();
-        fc = nullptr;
-    }
+    fc = nullptr;
 }
 
 void FileIdModule::show_dynamic_stats()

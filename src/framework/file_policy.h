@@ -23,7 +23,7 @@
 #include <map>
 #include <vector>
 
-#include "file_api.h"
+#include "file_api/file_api.h"
 
 namespace snort
 {
@@ -88,7 +88,6 @@ private:
     bool signature_enabled = false;
     bool capture_enabled = false;
     int64_t verdict_delay = 0;
-
 };
 
 #endif

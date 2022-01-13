@@ -256,7 +256,7 @@ void config_markup(SnortConfig*, const char*)
     fprintf(stdout, "max31 = 2147483647\n");
     fprintf(stdout, "max32 = 4294967295\n");
     fprintf(stdout, "max53 = 9007199254740992\n");
-    fprintf(stdout, "maxSZ = %zu\n", (sizeof(size_t) == 4) ? 4294967295 : 9007199254740992);
+    fprintf(stdout, "maxSZ = %lu\n", (sizeof(size_t) == 4) ? 4294967295LU : 9007199254740992LU);
     exit(0);
 }
 

@@ -26,7 +26,6 @@
 
 #include "file_config.h"
 #include "file_identifier.h"
-#include "file_policy.h"
 #include "main/snort_debug.h"
 #include "utils/util.h"
 //-------------------------------------------------------------------------
@@ -76,9 +75,7 @@ public:
 private:
     FileMagicRule rule;
     FileMagicData magic;
-    FileRule file_rule;
     FileConfig *fc = nullptr;
-    bool need_active = false;
 };
 
 enum FileSid

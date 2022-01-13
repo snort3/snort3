@@ -136,14 +136,13 @@ FileFlows* FileFlows::get_file_flows(Flow* flow, bool to_create)
     if (!to_create or fd)
         return fd;
 
-    FileInspect* fi = (FileInspect*)InspectorManager::get_inspector(FILE_ID_NAME, true);
+    FileInspect* fi = (FileInspect*)InspectorManager::get_file_inspector();
 
     if (FileService::is_file_service_enabled() and fi)
     {
         fd = new FileFlows(flow, fi);
         flow->set_flow_data(fd);
-        if (fi->config)
-            fd->set_file_policy(&(fi->config->get_file_policy()));
+        fd->set_file_policy(get_network_policy()->get_base_file_policy());
     }
 
     return fd;
@@ -223,6 +222,8 @@ FileFlows::~FileFlows()
     {
         delete elem.second;
     }
+
+    FilePolicyBase::delete_file_policy(file_policy);
 }
 
 FileContext* FileFlows::find_main_file_context(FilePosition pos, FileDirection dir, size_t index)
@@ -297,7 +298,7 @@ FileContext* FileFlows::get_file_context(
             context = new FileContext;
             partially_processed_contexts[multi_file_processing_id] = context;
             FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
-                "get_file_context:creating new context\n"); 
+                "get_file_context:creating new context\n");
             if (partially_processed_contexts.size() > file_counts.max_concurrent_files_per_flow)
                 file_counts.max_concurrent_files_per_flow = partially_processed_contexts.size();
         }
@@ -352,7 +353,7 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
     if ((file_depth < 0) or (offset > (uint64_t)file_depth))
     {
         FILE_DEBUG(file_trace , DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, p,
-             "file depth less than zero or offset is more than file depth , returning\n"); 
+             "file depth less than zero or offset is more than file depth , returning\n");
         return false;
     }
 
@@ -418,7 +419,7 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
         }
     }
 
-    FILE_DEBUG(file_trace , DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p, 
+    FILE_DEBUG(file_trace , DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
        "calling context process data_size %d, offset %lu, position %d\n",
         data_size, offset, position);
     continue_processing = context->process(p, file_data, data_size, offset, file_policy, position);
@@ -539,18 +540,16 @@ bool FileInspect::configure(SnortConfig*)
 
 static void file_config_show(const FileConfig* fc)
 {
-    const FilePolicy& fp = fc->get_file_policy();
-
-    if ( ConfigLogger::log_flag("enable_type", fp.get_file_type()) )
+    if ( ConfigLogger::log_flag("enable_type", FileService::is_file_type_id_enabled()) )
         ConfigLogger::log_value("type_depth", fc->file_type_depth);
 
-    if ( ConfigLogger::log_flag("enable_signature", fp.get_file_signature()) )
+    if ( ConfigLogger::log_flag("enable_signature", FileService::is_file_signature_enabled()) )
         ConfigLogger::log_value("signature_depth", fc->file_signature_depth);
 
     if ( ConfigLogger::log_flag("block_timeout_lookup", fc->block_timeout_lookup) )
         ConfigLogger::log_value("block_timeout", fc->file_block_timeout);
 
-    if ( ConfigLogger::log_flag("enable_capture", fp.get_file_capture()) )
+    if ( ConfigLogger::log_flag("enable_capture", FileService::is_file_capture_enabled()) )
     {
         ConfigLogger::log_value("capture_memcap", fc->capture_memcap);
         ConfigLogger::log_value("capture_max_size", fc->capture_max_size);
@@ -566,7 +565,6 @@ static void file_config_show(const FileConfig* fc)
     ConfigLogger::log_flag("trace_type", fc->trace_type);
     ConfigLogger::log_flag("trace_signature", fc->trace_signature);
     ConfigLogger::log_flag("trace_stream", fc->trace_stream);
-    ConfigLogger::log_value("verdict_delay", fc->verdict_delay);
 }
 
 void FileInspect::show(const SnortConfig*) const
@@ -615,7 +613,7 @@ static const InspectApi file_inspect_api =
         mod_ctor,
         mod_dtor
     },
-    IT_PASSIVE,
+    IT_FILE,
     PROTO_BIT__NONE,
     nullptr,
     "file",

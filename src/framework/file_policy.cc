@@ -22,13 +22,12 @@
 #include "config.h"
 #endif
 
-#include "file_policy.h"
+#include "framework/file_policy.h"
 
+#include "file_api/file_capture.h"
+#include "file_api/file_lib.h"
+#include "file_api/file_service.h"
 #include "hash/hashes.h"
-
-#include "file_capture.h"
-#include "file_lib.h"
-#include "file_service.h"
 
 using namespace snort;
 

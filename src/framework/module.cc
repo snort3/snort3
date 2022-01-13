@@ -176,6 +176,7 @@ void Module::reset_stats()
 PegCount Module::get_global_count(const char* name) const
 {
     const PegInfo* infos = get_pegs();
+    assert(infos);
 
     for ( unsigned i = 0; infos[i].name; i++ )
     {

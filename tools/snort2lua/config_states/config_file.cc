@@ -41,7 +41,6 @@ bool File::convert(std::istringstream& data_stream)
     std::string args;
     bool retval = true;
 
-    table_api.open_table("file_id");
     while (util::get_string(data_stream, args, ","))
     {
         std::istringstream arg_stream(args);
@@ -53,61 +52,85 @@ bool File::convert(std::istringstream& data_stream)
 
         else if (keyword == "file_capture_memcap")
         {
+            table_api.open_table("file_id");
             table_api.add_diff_option_comment("config file: file_capture_memcap", "capture_memcap");
             tmpval = parse_int_option("capture_memcap", arg_stream, false);
+            table_api.close_table();
         }
         else if (keyword == "file_capture_max")
         {
+            table_api.open_table("file_id");
             table_api.add_diff_option_comment("config file: file_capture_max", "capture_max_size");
             tmpval = parse_int_option("capture_max_size", arg_stream, false);
+            table_api.close_table();
         }
 
         else if (keyword == "file_capture_min")
         {
+            table_api.open_table("file_id");
             table_api.add_diff_option_comment("config file: file_capture_min", "capture_min_size");
             tmpval = parse_int_option("capture_min_size", arg_stream, false);
+            table_api.close_table();
         }
 
         else if (keyword == "file_capture_block_size")
         {
+            table_api.open_table("file_id");
             table_api.add_diff_option_comment("config file: file_capture_block_size", "capture_block_size");
             tmpval = parse_int_option("capture_block_size", arg_stream, false);
+            table_api.close_table();
         }
 
         else if (keyword == "show_data_depth")
+        {
+            table_api.open_table("file_id");
             tmpval = parse_int_option("show_data_depth", arg_stream, false);
+            table_api.close_table();
+        }
 
         else if (keyword == "type_id")
         {
+            table_api.open_table("file_policy");
             table_api.add_diff_option_comment("config file: type_id", "enable_type");
             table_api.add_option("enable_type", true);
+            table_api.close_table();
         }
         else if (keyword == "signature")
         {
+            table_api.open_table("file_policy");
             table_api.add_diff_option_comment("config file: signature", "enable_signature");
             table_api.add_option("enable_signature", true);
+            table_api.close_table();
         }
         else if (keyword == "file_type_depth")
         {
+            table_api.open_table("file_id");
             table_api.add_diff_option_comment("config file: file_type_depth", "type_depth");
             tmpval = parse_int_option("type_depth", arg_stream, false);
+            table_api.close_table();
         }
         else if (keyword == "file_signature_depth")
         {
+            table_api.open_table("file_id");
             table_api.add_diff_option_comment("config file: file_signature_depth",
                 "signature_depth");
             tmpval = parse_int_option("signature_depth", arg_stream, false);
+            table_api.close_table();
         }
         else if (keyword == "file_block_timeout")
         {
+            table_api.open_table("file_id");
             table_api.add_diff_option_comment("config file: file_block_timeout", "block_timeout");
             tmpval = parse_int_option("block_timeout", arg_stream, false);
+            table_api.close_table();
         }
         else if (keyword == "file_lookup_timeout")
         {
+            table_api.open_table("file_id");
             table_api.add_diff_option_comment("config file: file_lookup_timeout",
                 "lookup_timeout");
             tmpval = parse_int_option("lookup_timeout", arg_stream, false);
+            table_api.close_table();
         }
         else
             tmpval = false;
@@ -117,7 +140,9 @@ bool File::convert(std::istringstream& data_stream)
     }
 
     // Always add the file_rules option to reference the file magic rules.
+    table_api.open_table("file_id");
     table_api.add_option("file_rules", "$file_magic");
+    table_api.close_table();
 
     return retval;
 }

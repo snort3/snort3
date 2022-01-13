@@ -7,7 +7,6 @@ set( FILE_API_INCLUDES
     file_identifier.h
     file_lib.h
     file_module.h
-    file_policy.h
     file_segment.h
     file_service.h
 )
@@ -16,6 +15,7 @@ add_library ( file_api OBJECT
     ${FILE_API_INCLUDES}
     circular_buffer.cc
     circular_buffer.h
+    file_api.cc
     file_capture.cc
     file_cache.cc
     file_cache.h
@@ -27,7 +27,6 @@ add_library ( file_api OBJECT
     file_mempool.cc
     file_mempool.h
     file_module.cc
-    file_policy.cc
     file_segment.cc
     file_service.cc
     file_stats.cc

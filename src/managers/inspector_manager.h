@@ -28,10 +28,12 @@
 #include "framework/inspector.h"
 
 class Binder;
+class SingleInstanceInspectorPolicy;
 struct InspectorList;
 struct InspectionPolicy;
 struct NetworkPolicy;
 struct PHInstance;
+struct GlobalInspectorPolicy;
 
 namespace snort
 {
@@ -67,9 +69,13 @@ public:
 
     static bool delete_inspector(SnortConfig*, const char* iname);
     static void free_inspector(Inspector*);
-    static void free_flow_tracking(PHInstance*);
+    static SingleInstanceInspectorPolicy* create_single_instance_inspector_policy();
+    static void destroy_single_instance_inspector(SingleInstanceInspectorPolicy*);
+    static GlobalInspectorPolicy* create_global_inspector_policy(GlobalInspectorPolicy* = nullptr);
+    static void destroy_global_inspector_policy(GlobalInspectorPolicy*, bool cloned);
     static InspectSsnFunc get_session(uint16_t proto);
 
+    SO_PUBLIC static Inspector* get_file_inspector(const SnortConfig* = nullptr);
     SO_PUBLIC static Inspector* get_inspector(
         const char* key, bool dflt_only = false, const SnortConfig* = nullptr);
 
@@ -78,6 +84,7 @@ public:
 
     SO_PUBLIC static Binder* get_binder();
 
+    SO_PUBLIC static Inspector* acquire_file_inspector();
     SO_PUBLIC static Inspector* acquire(const char* key, bool dflt_only = false);
     SO_PUBLIC static void release(Inspector*);
 

@@ -24,7 +24,6 @@
 
 // This provides a wrapper to start/stop file service
 
-#include "file_api/file_policy.h"
 #include "main/snort_config.h"
 #include "main/snort_types.h"
 #include "mime/file_mime_config.h"

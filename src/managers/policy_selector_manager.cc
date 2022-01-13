@@ -61,25 +61,26 @@ void PolicySelectorManager::release_plugins()
 void PolicySelectorManager::instantiate(const PolicySelectorApi* api, Module* mod, SnortConfig* sc)
 {
     assert(sc);
-    if (sc->global_selector)
+    if (sc->policy_map->get_policy_selector())
     {
         ParseError("Only one selector may be instantiated\n");
         return;
     }
     assert(api);
-    sc->global_selector = api->ctor(mod);
+    sc->policy_map->set_policy_selector(api->ctor(mod));
 }
 
 void PolicySelectorManager::print_config(const SnortConfig* sc)
 {
     assert(sc);
-    if (sc->global_selector)
+    const PolicySelector* ps = sc->policy_map->get_policy_selector();
+    if (ps)
     {
         LogLabel("Policy Selector");
-        std::string name = sc->global_selector->get_api()->base.name;
+        std::string name = ps->get_api()->base.name;
         name += ":";
         LogLabel(name.c_str());
-        sc->global_selector->show();
+        ps->show();
     }
 }
 

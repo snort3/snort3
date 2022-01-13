@@ -27,6 +27,7 @@
 
 #include "actions/actions.h"
 #include "detection/detection_engine.h"
+#include "framework/file_policy.h"
 #include "framework/policy_selector.h"
 #include "log/messages.h"
 #include "managers/inspector_manager.h"
@@ -52,10 +53,14 @@ NetworkPolicy::NetworkPolicy(NetworkPolicy* other_network_policy, const char* ex
 { init(other_network_policy, exclude_name); }
 
 NetworkPolicy::~NetworkPolicy()
-{ InspectorManager::delete_policy(this, cloned); }
+{
+    FilePolicyBase::delete_file_policy(file_policy);
+    InspectorManager::delete_policy(this, cloned);
+}
 
 void NetworkPolicy::init(NetworkPolicy* other_network_policy, const char* exclude_name)
 {
+    file_policy = new FilePolicy;
     if (other_network_policy)
     {
         dbus.clone(other_network_policy->dbus, exclude_name);
@@ -72,6 +77,14 @@ void NetworkPolicy::init(NetworkPolicy* other_network_policy, const char* exclud
     }
     InspectorManager::new_policy(this, other_network_policy);
 }
+
+FilePolicyBase* NetworkPolicy::get_base_file_policy() const
+{ return file_policy; }
+FilePolicy* NetworkPolicy::get_file_policy() const
+{ return file_policy; }
+
+void NetworkPolicy::add_file_policy_rule(FileRule& file_rule)
+{ file_policy->insert_file_rule(file_rule); }
 
 //-------------------------------------------------------------------------
 // inspection policy
@@ -167,6 +180,9 @@ PolicyMap::PolicyMap(PolicyMap* other_map, const char* exclude_name)
         clone(other_map, exclude_name);
     else
     {
+        file_id = InspectorManager::create_single_instance_inspector_policy();
+        flow_tracking = InspectorManager::create_single_instance_inspector_policy();
+        global_inspector_policy = InspectorManager::create_global_inspector_policy();
         add_shell(new Shell(nullptr, true), true);
         empty_ips_policy = new IpsPolicy(ips_policy.size());
         ips_policy.push_back(empty_ips_policy);
@@ -208,7 +224,12 @@ PolicyMap::~PolicyMap()
         for ( auto p : network_policy )
             delete p;
 
+        InspectorManager::destroy_single_instance_inspector(flow_tracking);
+        InspectorManager::destroy_single_instance_inspector(file_id);
     }
+
+    PolicySelector::free_policy_selector(selector);
+    InspectorManager::destroy_global_inspector_policy(global_inspector_policy, cloned);
 
     shells.clear();
     inspection_policy.clear();
@@ -219,6 +240,10 @@ PolicyMap::~PolicyMap()
 
 void PolicyMap::clone(PolicyMap *other_map, const char* exclude_name)
 {
+    global_inspector_policy =
+        InspectorManager::create_global_inspector_policy(other_map->global_inspector_policy);
+    file_id = other_map->file_id;
+    flow_tracking = other_map->flow_tracking;
     shells = other_map->shells;
     ips_policy = other_map->ips_policy;
     empty_ips_policy = other_map->empty_ips_policy;
@@ -423,7 +448,8 @@ void set_default_policy(const SnortConfig* sc)
 
 void select_default_policy(const _daq_pkt_hdr* pkthdr, const SnortConfig* sc)
 {
-    if (!sc->global_selector || !sc->global_selector->select_default_policies(pkthdr, sc))
+    PolicySelector* ps = sc->policy_map->get_policy_selector();
+    if (!ps || !ps->select_default_policies(pkthdr, sc))
     {
         set_network_policy(sc->policy_map->get_network_policy(0));
         set_inspection_policy(sc->policy_map->get_inspection_policy(0));

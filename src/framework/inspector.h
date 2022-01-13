@@ -194,6 +194,7 @@ enum InspectorType
     IT_SERVICE,  // extract and analyze service PDUs (eg dce, http, ssl)
     IT_CONTROL,  // process all packets before detection (eg appid)
     IT_PROBE,    // process all packets after detection (eg perf_monitor, port_scan)
+    IT_FILE,     // file identification inspector
     IT_MAX
 };
 

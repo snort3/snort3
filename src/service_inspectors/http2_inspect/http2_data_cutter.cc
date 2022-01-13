@@ -91,7 +91,7 @@ StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t lengt
     uint32_t* flush_offset, uint32_t& data_offset, uint8_t frame_flags)
 {
     Http2Stream* const stream = session_data->find_stream(session_data->current_stream[source_id]);
-        
+
     if (!stream or !stream->is_open(source_id) or stream->is_discard_set(source_id))
         return skip_over_frame(stream, length, flush_offset, data_offset, frame_flags);
 
@@ -164,7 +164,7 @@ StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t lengt
             // here
             assert(false);
             stream->set_state(source_id, STREAM_ERROR);
-            return skip_over_frame(stream, length, flush_offset, data_offset, frame_flags);        
+            return skip_over_frame(stream, length, flush_offset, data_offset, frame_flags);
         }
     }
 
@@ -193,7 +193,6 @@ StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t lengt
             {
                 session_data->stream_in_hi = session_data->current_stream[source_id];
                 session_data->hi_ss[source_id]->prep_partial_flush(session_data->flow, 0);
-                session_data->stream_in_hi = NO_STREAM_ID;
             }
             else
             {
@@ -317,7 +316,7 @@ void Http2DataCutter::discarded_frame_cleanup(Http2Stream* const stream)
     frame_bytes_seen = 0;
     reassemble_data_bytes_read = 0;
     reassemble_state = GET_FRAME_HDR;
-    
+
     if (!stream->is_end_stream_on_data_flush(source_id))
         return;
 
