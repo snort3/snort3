@@ -222,6 +222,7 @@ void TcpStreamTracker::init_tcp_state()
     held_packet = null_iterator;
     flush_policy = STREAM_FLPOLICY_IGNORE;
     reassembler.reset();
+    splitter_finish_flag = false;
 }
 
 //-------------------------------------------------------------------------
@@ -262,6 +263,21 @@ void TcpStreamTracker::set_splitter(const Flow* flow)
         set_splitter(ins->get_splitter(!client_tracker) );
     else
         set_splitter(new AtomSplitter(!client_tracker) );
+}
+
+bool TcpStreamTracker::splitter_finish(snort::Flow* flow)
+{
+    if (!splitter)
+        return true;
+
+    if (!splitter_finish_flag)
+    {
+        splitter_finish_flag = true;
+        return splitter->finish(flow);
+    }
+    // there shouldn't be any un-flushed data beyond this point,
+    // returning false here, discards it
+    return false;
 }
 
 void TcpStreamTracker::init_on_syn_sent(TcpSegmentDescriptor& tsd)
