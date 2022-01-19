@@ -97,6 +97,7 @@ enum PseudoPacketType
 {
     PSEUDO_PKT_IP,
     PSEUDO_PKT_TCP,
+    PSEUDO_PKT_UDP_QUIC,
     PSEUDO_PKT_USER,
     PSEUDO_PKT_DCE_SEG,
     PSEUDO_PKT_DCE_FRAG,
@@ -229,6 +230,9 @@ struct SO_PUBLIC Packet
 
     bool has_udp_data() const
     { return (proto_bits & PROTO_BIT__UDP) and data and dsize; }
+
+    bool has_udp_quic_data() const
+    { return (pseudo_type == PSEUDO_PKT_UDP_QUIC) and data and dsize; }
 
     /* Get general, non-boolean information */
     PktType type() const

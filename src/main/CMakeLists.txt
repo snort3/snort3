@@ -1,5 +1,6 @@
 
 set (INCLUDES
+    analyzer.h
     analyzer_command.h
     policy.h
     reload_tracker.h
@@ -23,7 +24,6 @@ endif ( ENABLE_SHELL )
 
 add_library (main OBJECT
     analyzer.cc
-    analyzer.h
     analyzer_command.cc
     help.cc
     help.h

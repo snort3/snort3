@@ -25,6 +25,7 @@
 #ifndef PAF_H
 #define PAF_H
 
+#include "main/snort_types.h"
 #include "main/thread.h"
 #include "profiler/profiler_defs.h"
 #include "stream/stream_splitter.h"
@@ -39,7 +40,7 @@ extern THREAD_LOCAL snort::ProfileStats pafPerfStats;
 void* paf_new(unsigned max);     // create new paf config (per policy)
 void paf_delete(void*);  // free config
 
-struct PAF_State     // per session direction
+struct SO_PUBLIC PAF_State     // per session direction
 {
     uint32_t seq;    // stream cursor
     uint32_t pos;    // last flush position
@@ -50,7 +51,7 @@ struct PAF_State     // per session direction
     snort::StreamSplitter::Status paf;  // current scan state
 };
 
-void paf_setup(PAF_State*);  // called at session start
+SO_PUBLIC void paf_setup(PAF_State*);  // called at session start
 void paf_reset(PAF_State*);  // called for do overs
 void paf_clear(PAF_State*);  // called at session end
 
@@ -59,7 +60,7 @@ inline uint32_t paf_position (PAF_State* ps)
     return ps->seq;
 }
 
-inline uint32_t paf_initialized (PAF_State* ps)
+SO_PUBLIC inline uint32_t paf_initialized (PAF_State* ps)
 {
     return ( ps->paf != snort::StreamSplitter::START );
 }
@@ -76,7 +77,7 @@ inline void paf_jump(PAF_State* ps, uint32_t n)
 }
 
 // called on each in order segment
-int32_t paf_check(snort::StreamSplitter* paf_config, PAF_State*, snort::Packet* p,
+SO_PUBLIC int32_t paf_check(snort::StreamSplitter* paf_config, PAF_State*, snort::Packet* p,
     const uint8_t* data, uint32_t len, uint32_t total, uint32_t seq, uint32_t* flags);
 
 #endif

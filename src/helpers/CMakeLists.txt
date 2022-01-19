@@ -18,13 +18,13 @@ set (HELPERS_INCLUDES
     literal_search.h
     scratch_allocator.h
     json_stream.h
+    bitop.h
 )
 
 add_library (helpers OBJECT
     ${HELPERS_INCLUDES}
     ${HYPER_SOURCES}
     base64_encoder.cc
-    bitop.h
     boyer_moore_search.cc
     buffer_data.cc
     chunk.cc
