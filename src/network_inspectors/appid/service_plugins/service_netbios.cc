@@ -1044,6 +1044,8 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
                     data += nd->length;
                     nd->count++;
                     nd->state = NBSS_STATE_FLOW;
+                    retval = APPID_SUCCESS;
+                    args.asd.set_session_flags(APPID_SESSION_CONTINUE);
                 }
                 break;
             case NBSS_TYPE_RESP_RETARGET:
@@ -1087,10 +1089,11 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
                     if (nd->count < NBSS_COUNT_THRESHOLD)
                     {
                         nd->count++;
+                        retval = APPID_SUCCESS;
                         if (nd->count >= NBSS_COUNT_THRESHOLD)
-                        {
-                            retval = APPID_SUCCESS;
-                        }
+                            args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
+                        else
+                            args.asd.set_session_flags(APPID_SESSION_CONTINUE);
                     }
                 }
                 break;
@@ -1112,10 +1115,11 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
                 if (nd->count < NBSS_COUNT_THRESHOLD)
                 {
                     nd->count++;
+                    retval = APPID_SUCCESS;
                     if (nd->count >= NBSS_COUNT_THRESHOLD)
-                    {
-                        retval = APPID_SUCCESS;
-                    }
+                        args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
+                    else
+                        args.asd.set_session_flags(APPID_SESSION_CONTINUE);
                 }
             }
             break;
@@ -1127,11 +1131,17 @@ int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
         goto inprocess;
 
     if (!args.asd.is_service_detected())
+    {
         if (add_service(args.change_bits, args.asd, args.pkt, dir, nd->serviceAppId) == APPID_SUCCESS)
         {
             add_miscellaneous_info(args.asd, nd->miscAppId);
-            add_payload(args.asd, nd->payloadAppId);
+            if (!args.asd.get_session_flags(APPID_SESSION_CONTINUE))
+                add_payload(args.asd, nd->payloadAppId);
         }
+    }
+    else if (!args.asd.get_session_flags(APPID_SESSION_CONTINUE))
+        add_payload(args.asd, nd->payloadAppId);
+
     return APPID_SUCCESS;
 
 inprocess:
