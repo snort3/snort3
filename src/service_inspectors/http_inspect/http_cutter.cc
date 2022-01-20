@@ -185,11 +185,12 @@ HttpStartCutter::ValidationResult HttpStatusCutter::validate(uint8_t octet,
 ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
     HttpInfractions* infractions, HttpEventGen* events, uint32_t, bool, HttpEnums::H2BodyState)
 {
-    // Header separators: leading \r\n, leading \n, nonleading \r\n\r\n, nonleading \n\r\n,
-    // nonleading \r\n\n, and nonleading \n\n. The separator itself becomes num_excess which is
-    // discarded during reassemble().
+    // Header separators: leading \r\n, leading \n, leading \r\r\n, nonleading \r\n\r\n, nonleading
+    // \n\r\n, nonleading \r\r\n, nonleading \r\n\n, and nonleading \n\n. The separator itself
+    // becomes num_excess which is discarded during reassemble().
     // \r without \n can (improperly) end the start line or a header line, but not the entire
     // header block.
+    // The leading cases work as described because the initial state is ONE.
     for (uint32_t k = 0; k < length; k++)
     {
         switch (state)
