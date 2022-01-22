@@ -4,7 +4,7 @@ statistics, as well as the display of those statistics at shutdown.
 
 This module provides a data structure (called ProfileStats) which stores
 information about memory usage, timing and entry counts.
-Analagous data structures exist for accumulating rule profiling and can be found
+Analogous data structures exist for accumulating rule profiling and can be found
 in the detection/ subdirectory.
 
 To facilitate accumulation of these statistics, this module provides a class
