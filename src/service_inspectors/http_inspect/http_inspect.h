@@ -50,6 +50,7 @@ public:
     const Field& http_get_buf(Cursor& c, snort::Packet* p,
         const HttpBufferInfo& buffer_info) const;
     int32_t http_get_num_headers(snort::Packet* p, const HttpBufferInfo& buffer_info) const;
+    HttpEnums::VersionId http_get_version_id(snort::Packet* p) const;
     bool get_fp_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p,
         snort::InspectionBuffer& b) override;
     bool configure(snort::SnortConfig*) override;

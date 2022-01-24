@@ -296,6 +296,16 @@ int32_t HttpInspect::http_get_num_headers(Packet* p,
     return current_section->get_num_headers(buffer_info);
 }
 
+VersionId HttpInspect::http_get_version_id(Packet* p) const
+{
+    const HttpMsgSection* const current_section = HttpContextData::get_snapshot(p);
+
+    if (current_section == nullptr)
+        return VERS__NOT_PRESENT;
+
+    return current_section->get_version_id();
+}
+
 bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
     if (get_latest_is(p) == IS_NONE)

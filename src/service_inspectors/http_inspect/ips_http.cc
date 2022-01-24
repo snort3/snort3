@@ -287,13 +287,9 @@ bool HttpIpsOption::retry(Cursor& current_cursor, const Cursor&)
     return false;
 }
 
-IpsOption::EvalStatus HttpIpsOption::eval_version_match(Packet* p, const Http2FlowData* h2i_flow_data)
+IpsOption::EvalStatus HttpIpsOption::eval_version_match(Packet* p, const HttpInspect* hi)
 {
-    const HttpFlowData* const flow_data = (h2i_flow_data != nullptr) ?
-        (HttpFlowData*)h2i_flow_data->get_hi_flow_data():
-        (HttpFlowData*)p->flow->get_flow_data(HttpFlowData::inspector_id);
-    const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
-    const VersionId version = flow_data->get_version_id(source_id);
+    const VersionId version = hi->http_get_version_id(p);
 
     if (version_flags[version - HttpEnums::VERS__MIN])
         return MATCH;
@@ -335,7 +331,7 @@ IpsOption::EvalStatus HttpIpsOption::eval(Cursor& c, Packet* p)
     }
     else if (buffer_info.type == HTTP_VERSION_MATCH)
     {
-        return eval_version_match(p, h2i_flow_data);
+        return eval_version_match(p, hi);
     }
     else
     {

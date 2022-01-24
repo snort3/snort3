@@ -81,6 +81,7 @@ public:
 
     uint64_t get_transaction_id() { return trans_num; }
     int32_t get_num_headers(const HttpBufferInfo& buf) const;
+    HttpEnums::VersionId get_version_id() const { return version_id; }
 
     HttpMsgSection* next = nullptr;
 

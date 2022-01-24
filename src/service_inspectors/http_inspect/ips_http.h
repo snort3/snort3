@@ -31,7 +31,6 @@
 #include "http_enum.h"
 
 class HttpInspect;
-class Http2FlowData;
 
 enum PsIdx { PSI_CLIENT_BODY, PSI_COOKIE, PSI_HEADER, PSI_METHOD, PSI_PARAM,
     PSI_RAW_BODY, PSI_RAW_COOKIE, PSI_RAW_HEADER, PSI_RAW_REQUEST, PSI_RAW_STATUS,
@@ -127,7 +126,7 @@ private:
     const snort::RangeCheck range;
     const std::bitset<HttpRuleOptModule::version_size> version_flags;
 
-    IpsOption::EvalStatus eval_version_match(snort::Packet* p, const Http2FlowData* h2i_flow_data);
+    IpsOption::EvalStatus eval_version_match(snort::Packet* p, const HttpInspect* hi);
 };
 
 #endif
