@@ -421,18 +421,12 @@ int32_t UriNormalizer::norm_path_clean(uint8_t* buf, const int32_t in_length,
         {
             *infractions += INF_URI_SLASH_DOT_DOT;
             events->create_event(EVENT_DIR_TRAV);
-            // Traversing above the root of the absolute path. A path of the form
-            // /../../../foo/bar/whatever cannot be further normalized. Instead of taking away a
-            // directory we leave the .. and write out the new slash. This code can write out the
-            // pretend slash after the end of the buffer. That is intentional so that the normal
-            // form of "/../../../.." is "/../../../../"
-            if ( (length == 3) ||
-                ((length >= 6) && (buf[length-4] == '.') && (buf[length-5] == '.') &&
-                (buf[length-6] == '/')))
+            // Traversing above the root of the absolute path. Remove .. , leave the leading /
+            if (length == 3)
             {
                 *infractions += INF_URI_ROOT_TRAV;
                 events->create_event(EVENT_WEBROOT_DIR);
-                buf[length++] = '/';
+                length -= 2;
             }
             // Remove the previous directory from the output. "/foo/bar/../" becomes "/foo/"
             else
