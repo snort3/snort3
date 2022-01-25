@@ -1,3 +1,19 @@
+2022/01/25 - 3.1.21.0
+
+appid: do not delay detection of SMB service for the sake of version detection
+control: fix macro definitions
+copyright: Update year to 2022
+http_inspect: correct comment regarding header splitting rules
+http_inspect: forward 0.9 request lines to detection
+http_inspect: http_version_match uses msg section version id
+http_inspect: webroot traversal
+main: move policy selector and flow tracking from snort config to policy map
+main: only add policies to the user policy map at the end of table processing
+policy: add a file_policy to the network policy and use it
+stream: QUIC stream dependent changes
+stream_tcp: ensure that we call splitter finish() only once per flow, per direction
+wizard: remove extra semicolon
+
 2022/01/12 - 3.1.20.0
 
 appid: handle SNI in efp event

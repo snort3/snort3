@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.20.0 2022-01-12 09:17:34 EST TST
+Revision 3.1.21.0 2022-01-25 11:23:50 EST TST
 
 ---------------------------------------------------------------------
 
@@ -26,28 +26,29 @@ Table of Contents
     2.7. detection
     2.8. event_filter
     2.9. event_queue
-    2.10. high_availability
-    2.11. host_cache
-    2.12. host_tracker
-    2.13. hosts
-    2.14. inspection
-    2.15. ips
-    2.16. latency
-    2.17. memory
-    2.18. network
-    2.19. output
-    2.20. packet_tracer
-    2.21. packets
-    2.22. payload_injector
-    2.23. process
-    2.24. profiler
-    2.25. rate_filter
-    2.26. references
-    2.27. search_engine
-    2.28. side_channel
-    2.29. snort
-    2.30. suppress
-    2.31. trace
+    2.10. file_policy
+    2.11. high_availability
+    2.12. host_cache
+    2.13. host_tracker
+    2.14. hosts
+    2.15. inspection
+    2.16. ips
+    2.17. latency
+    2.18. memory
+    2.19. network
+    2.20. output
+    2.21. packet_tracer
+    2.22. packets
+    2.23. payload_injector
+    2.24. process
+    2.25. profiler
+    2.26. rate_filter
+    2.27. references
+    2.28. search_engine
+    2.29. side_channel
+    2.30. snort
+    2.31. suppress
+    2.32. trace
 
 3. Codec Modules
 
@@ -707,7 +708,38 @@ Configuration:
     action group or all action groups
 
 
-2.10. high_availability
+2.10. file_policy
+
+--------------
+
+Help: configure file policy
+
+Type: basic
+
+Usage: context
+
+Configuration:
+
+  * bool file_policy.enable_type = true: enable type ID
+  * bool file_policy.enable_signature = false: enable signature
+    calculation
+  * bool file_policy.enable_capture = false: enable file capture
+  * int file_policy.verdict_delay = 0: number of queries to return
+    final verdict { 0:max53 }
+  * int file_policy.rules[].when.file_type_id = 0: unique ID for file
+    type in file magic rule { 0:max32 }
+  * string file_policy.rules[].when.sha256: SHA 256
+  * enum file_policy.rules[].use.verdict = unknown: what to do with
+    matching traffic { unknown | log | stop | block | reset }
+  * bool file_policy.rules[].use.enable_file_type = false: true/false
+    → enable/disable file type identification
+  * bool file_policy.rules[].use.enable_file_signature = false: true/
+    false → enable/disable file signature
+  * bool file_policy.rules[].use.enable_file_capture = false: true/
+    false → enable/disable file capture
+
+
+2.11. high_availability
 
 --------------
 
@@ -758,7 +790,7 @@ Peg counts:
     failure count (sum)
 
 
-2.11. host_cache
+2.12. host_cache
 
 --------------
 
@@ -803,7 +835,7 @@ Peg counts:
   * host_cache.replaced: lru cache found entry and replaced it (sum)
 
 
-2.12. host_tracker
+2.13. host_tracker
 
 --------------
 
@@ -826,7 +858,7 @@ Peg counts:
   * host_tracker.service_finds: host service finds (sum)
 
 
-2.13. hosts
+2.14. hosts
 
 --------------
 
@@ -864,7 +896,7 @@ Peg counts:
     failed due to configured resource limits (sum)
 
 
-2.14. inspection
+2.15. inspection
 
 --------------
 
@@ -886,7 +918,7 @@ Configuration:
     save, 1+ = save in FIFO manner) { -1:127 }
 
 
-2.15. ips
+2.16. ips
 
 --------------
 
@@ -925,7 +957,7 @@ Configuration:
   * string ips.variables.ports.$var: IPS policy variable
 
 
-2.16. latency
+2.17. latency
 
 --------------
 
@@ -968,7 +1000,7 @@ Peg counts:
   * latency.rule_tree_enables: rule tree re-enables (sum)
 
 
-2.17. memory
+2.18. memory
 
 --------------
 
@@ -996,7 +1028,7 @@ Peg counts:
   * memory.max_in_use: highest allocated - deallocated (max)
 
 
-2.18. network
+2.19. network
 
 --------------
 
@@ -1029,7 +1061,7 @@ Configuration:
     unlimited) { 0:255 }
 
 
-2.19. output
+2.20. output
 
 --------------
 
@@ -1067,7 +1099,7 @@ Rules:
   * 2:1 (output) tagged packet
 
 
-2.20. packet_tracer
+2.21. packet_tracer
 
 --------------
 
@@ -1091,7 +1123,7 @@ Commands:
   * packet_tracer.disable(): disable packet tracer
 
 
-2.21. packets
+2.22. packets
 
 --------------
 
@@ -1117,7 +1149,7 @@ Configuration:
     are used to track fragments and connections
 
 
-2.22. payload_injector
+2.23. payload_injector
 
 --------------
 
@@ -1139,7 +1171,7 @@ Peg counts:
     inject mid-frame (sum)
 
 
-2.23. process
+2.24. process
 
 --------------
 
@@ -1169,7 +1201,7 @@ Configuration:
     timestamps
 
 
-2.24. profiler
+2.25. profiler
 
 --------------
 
@@ -1204,7 +1236,7 @@ Configuration:
     avg_match | avg_no_match }
 
 
-2.25. rate_filter
+2.26. rate_filter
 
 --------------
 
@@ -1236,7 +1268,7 @@ Peg counts:
     memory (sum)
 
 
-2.26. references
+2.27. references
 
 --------------
 
@@ -1252,7 +1284,7 @@ Configuration:
   * string references[].url: where this reference is defined
 
 
-2.27. search_engine
+2.28. search_engine
 
 --------------
 
@@ -1320,7 +1352,7 @@ Peg counts:
   * search_engine.searched_bytes: total bytes searched (sum)
 
 
-2.28. side_channel
+2.29. side_channel
 
 --------------
 
@@ -1342,7 +1374,7 @@ Peg counts:
   * side_channel.packets: total packets (sum)
 
 
-2.29. snort
+2.30. snort
 
 --------------
 
@@ -1622,7 +1654,7 @@ Peg counts:
     failed due to attribute table full (sum)
 
 
-2.30. suppress
+2.31. suppress
 
 --------------
 
@@ -1642,7 +1674,7 @@ Configuration:
     according to track
 
 
-2.31. trace
+2.32. trace
 
 --------------
 
@@ -3305,7 +3337,7 @@ Peg counts:
 
 Help: configure file identification
 
-Type: inspector (passive)
+Type: inspector (file)
 
 Usage: global
 
@@ -3335,10 +3367,6 @@ Configuration:
     cached in memory { 8:max53 }
   * int file_id.max_files_per_flow = 128: maximal number of files
     able to be concurrently processed per flow { 1:max53 }
-  * bool file_id.enable_type = true: enable type ID
-  * bool file_id.enable_signature = false: enable signature
-    calculation
-  * bool file_id.enable_capture = false: enable file capture
   * int file_id.show_data_depth = 100: print this many octets {
     0:max53 }
   * int file_id.file_rules[].rev = 0: rule revision { 0:max32 }
@@ -3352,24 +3380,11 @@ Configuration:
   * string file_id.file_rules[].magic[].content: file magic content
   * int file_id.file_rules[].magic[].offset = 0: file magic offset {
     0:max32 }
-  * int file_id.file_policy[].when.file_type_id = 0: unique ID for
-    file type in file magic rule { 0:max32 }
-  * string file_id.file_policy[].when.sha256: SHA 256
-  * enum file_id.file_policy[].use.verdict = unknown: what to do with
-    matching traffic { unknown | log | stop | block | reset }
-  * bool file_id.file_policy[].use.enable_file_type = false: true/
-    false → enable/disable file type identification
-  * bool file_id.file_policy[].use.enable_file_signature = false:
-    true/false → enable/disable file signature
-  * bool file_id.file_policy[].use.enable_file_capture = false: true/
-    false → enable/disable file capture
   * bool file_id.trace_type = false: enable runtime dump of type info
   * bool file_id.trace_signature = false: enable runtime dump of
     signature info
   * bool file_id.trace_stream = false: enable runtime dump of file
     data
-  * int file_id.verdict_delay = 0: number of queries to return final
-    verdict { 0:max53 }
   * int file_id.b64_decode_depth = -1: base64 decoding depth (-1 no
     limit) { -1:65535 }
   * int file_id.bitenc_decode_depth = -1: Non-Encoded MIME attachment
@@ -9106,21 +9121,6 @@ these libraries see the Getting Started section of the manual.
   * bool file_id.decompress_pdf = false: decompress pdf files
   * bool file_id.decompress_swf = false: decompress swf files
   * bool file_id.decompress_zip = false: decompress zip files
-  * bool file_id.enable_capture = false: enable file capture
-  * bool file_id.enable_signature = false: enable signature
-    calculation
-  * bool file_id.enable_type = true: enable type ID
-  * bool file_id.file_policy[].use.enable_file_capture = false: true/
-    false → enable/disable file capture
-  * bool file_id.file_policy[].use.enable_file_signature = false:
-    true/false → enable/disable file signature
-  * bool file_id.file_policy[].use.enable_file_type = false: true/
-    false → enable/disable file type identification
-  * enum file_id.file_policy[].use.verdict = unknown: what to do with
-    matching traffic { unknown | log | stop | block | reset }
-  * int file_id.file_policy[].when.file_type_id = 0: unique ID for
-    file type in file magic rule { 0:max32 }
-  * string file_id.file_policy[].when.sha256: SHA 256
   * string file_id.file_rules[].category: file type category
   * string file_id.file_rules[].group: comma separated list of groups
     associated with file type
@@ -9153,12 +9153,27 @@ these libraries see the Getting Started section of the manual.
     0:max53 }
   * int file_id.uu_decode_depth = -1: Unix-to-Unix decoding depth (-1
     no limit) { -1:65535 }
-  * int file_id.verdict_delay = 0: number of queries to return final
-    verdict { 0:max53 }
   * bool file_log.log_pkt_time = true: log the packet time when event
     generated
   * bool file_log.log_sys_time = false: log the system time when
     event generated
+  * bool file_policy.enable_capture = false: enable file capture
+  * bool file_policy.enable_signature = false: enable signature
+    calculation
+  * bool file_policy.enable_type = true: enable type ID
+  * bool file_policy.rules[].use.enable_file_capture = false: true/
+    false → enable/disable file capture
+  * bool file_policy.rules[].use.enable_file_signature = false: true/
+    false → enable/disable file signature
+  * bool file_policy.rules[].use.enable_file_type = false: true/false
+    → enable/disable file type identification
+  * enum file_policy.rules[].use.verdict = unknown: what to do with
+    matching traffic { unknown | log | stop | block | reset }
+  * int file_policy.rules[].when.file_type_id = 0: unique ID for file
+    type in file magic rule { 0:max32 }
+  * string file_policy.rules[].when.sha256: SHA 256
+  * int file_policy.verdict_delay = 0: number of queries to return
+    final verdict { 0:max53 }
   * string file_type.~: list of file type IDs to match
   * string flags.~mask_flags: these flags are don’t cares
   * string flags.~test_flags: these flags are tested
@@ -15234,6 +15249,7 @@ and are not applicable elsewhere.
     file data
   * file_id (inspector): configure file identification
   * file_log (inspector): log file event to file.log
+  * file_policy (basic): configure file policy
   * file_type (ips_option): rule option to check file type
   * flags (ips_option): rule option to test TCP control flags
   * flow (ips_option): rule option to check session properties
