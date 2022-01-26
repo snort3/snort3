@@ -480,8 +480,8 @@ void dump_rule_state(const SnortConfig* sc)
             std::string action = Actions::get_string(rtn->action);
             json.put("action", action.c_str());
 
-            const char* s = rtn->enabled() ? "enabled" : "disabled";
-            json.put("state", s);
+            const char* s = rtn->enabled() ? "yes" : "no";
+            json.put("enable", s);
 
             json.close();
         }
