@@ -45,7 +45,7 @@ class EfpCaPatternMatchers
 public:
     ~EfpCaPatternMatchers();
     AppId match_efp_ca_pattern(const std::string&, uint8_t);
-    void add_efp_ca_pattern(AppId, const std::string&, uint8_t);
+    void add_efp_ca_pattern(AppId, const std::string&, uint8_t, const std::string&);
     void finalize_patterns();
     void reload_patterns();
 

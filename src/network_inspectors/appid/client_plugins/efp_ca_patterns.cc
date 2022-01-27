@@ -24,15 +24,27 @@
 
 #include "efp_ca_patterns.h"
 
+#include <algorithm>
+
 #include "log/messages.h"
 #include "utils/util.h"
 #include "appid_debug.h"
 
 using namespace snort;
+using namespace std;
 
-void EfpCaPatternMatchers::add_efp_ca_pattern(AppId app_id, const std::string& pattern_str,
-    uint8_t confidence)
+void EfpCaPatternMatchers::add_efp_ca_pattern(AppId app_id, const string& pattern_str,
+    uint8_t confidence, const string& detector)
 {
+    auto match = find_if(efp_ca_load_list.begin(), efp_ca_load_list.end(),
+        [app_id, pattern_str] (EfpCaPattern* efp_ca)
+        { return (efp_ca->pattern == pattern_str and efp_ca->app_id != app_id); });
+
+    if (match != efp_ca_load_list.end())
+        WarningMessage("appid: detector %s - process name '%s' for client app %d is already "
+            "mapped to client app %d\n", detector.c_str(), (*match)->pattern.c_str(), app_id,
+            (*match)->app_id);
+
     EfpCaPattern* new_efp_ca_pattern = new EfpCaPattern(app_id, pattern_str, confidence);
     efp_ca_load_list.push_back(new_efp_ca_pattern);
 }
@@ -44,7 +56,7 @@ static int efp_ca_pattern_match(void* id, void*, int, void* data, void*)
     return 0;
 }
 
-AppId EfpCaPatternMatchers::match_efp_ca_pattern(const std::string& pattern,
+AppId EfpCaPatternMatchers::match_efp_ca_pattern(const string& pattern,
     uint8_t reported_confidence)
 {
     EfpCaPatternList* efp_ca_match_list = new EfpCaPatternList();
@@ -55,14 +67,19 @@ AppId EfpCaPatternMatchers::match_efp_ca_pattern(const std::string& pattern,
 
     for (auto &mp : *efp_ca_match_list)
     {
-        if (reported_confidence >= mp->confidence)
+        if (mp->pattern.size() == pattern.size())
         {
-            if (!best_match or (mp->pattern.size() > best_match->pattern.size() or
-                (mp->pattern.size() == best_match->pattern.size() and
-                mp->confidence > best_match->confidence)))
-            {
+            if (reported_confidence >= mp->confidence)
                 best_match = mp;
-            }
+            else if (best_match)
+                best_match = nullptr;
+            break;
+        }
+        else if ((reported_confidence >= mp->confidence) and
+            (!best_match or (mp->pattern.size() > best_match->pattern.size())))
+        {
+            best_match = mp;
+            continue;
         }
     }
     AppId ret_app_id = APP_ID_NONE;
