@@ -15,43 +15,21 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// pub_sub_efp_process_event_test.cc author Cliff Judge <cljudge@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+// appid_eve_process_event_handler.h author Cliff Judge <cljudge@cisco.com>
 
-#include "pub_sub/efp_process_event.h"
-#include "protocols/packet.h"
+#ifndef APPID_EVE_PROCESS_EVENT_HANDLER_H
+#define APPID_EVE_PROCESS_EVENT_HANDLER_H
 
-#include <CppUTest/CommandLineTestRunner.h>
-#include <CppUTest/TestHarness.h>
-#include <CppUTestExt/MockSupport.h>
+#include "pub_sub/eve_process_event.h"
+#include "appid_module.h"
 
-using namespace snort;
-
-Packet::Packet(bool) { }
-Packet::~Packet() = default;
-
-TEST_GROUP(pub_sub_efp_process_event_test)
+class AppIdEveProcessEventHandler : public snort::DataHandler
 {
-    void teardown() override
-    {
-        mock().clear();
-    }
+public:
+    AppIdEveProcessEventHandler() : DataHandler(MOD_NAME) { }
+
+    void handle(snort::DataEvent& event, snort::Flow* flow) override;
 };
 
-TEST(pub_sub_efp_process_event_test, efp_process_event)
-{
-    Packet p;
-    EfpProcessEvent event(p, "process", 10);
-    CHECK(event.get_process_name() == "process");
-    CHECK(event.get_process_confidence() == 10);
-    CHECK(event.get_packet() == &p);
-}
-
-int main(int argc, char** argv)
-{
-    return CommandLineTestRunner::RunAllTests(argc, argv);
-}
-
+#endif

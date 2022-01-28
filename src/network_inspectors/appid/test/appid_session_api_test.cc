@@ -343,10 +343,10 @@ TEST(appid_session_api, get_client_app_detect_type)
     ClientAppDetectType detect_type = mock_session->get_api().get_client_app_detect_type();
     CHECK_EQUAL(detect_type, CLIENT_APP_DETECT_APPID);
 
-    /* Set efp client app to some appid, but keep normal client id set to none.
-       The efp_client app should be picked, but the detect type should be TLS_FP.  */
+    /* Set eve client app to some appid, but keep normal client id set to none.
+       The eve_client app should be picked, but the detect type should be TLS_FP.  */
     mock_session->set_client_id(APP_ID_NONE);
-    mock_session->set_efp_client_app_id(638);
+    mock_session->set_eve_client_app_id(638);
     AppId id = mock_session->pick_ss_client_app_id();
     CHECK_EQUAL(id, 638);
     detect_type = mock_session->get_api().get_client_app_detect_type();   

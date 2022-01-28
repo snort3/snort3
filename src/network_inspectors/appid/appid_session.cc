@@ -842,25 +842,25 @@ AppId AppIdSession::pick_ss_client_app_id() const
         tmp_id = api.hsessions[0]->client.get_id();
     if (tmp_id > APP_ID_NONE)
     {
-        api.client.set_efp_client_app_detect_type(CLIENT_APP_DETECT_APPID);
+        api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_APPID);
         return tmp_id;
     }
 
-    if (api.client.get_efp_client_app_id() > APP_ID_NONE and
+    if (api.client.get_eve_client_app_id() > APP_ID_NONE and
         (api.client.get_id() == APP_ID_SSL_CLIENT or
             api.client.get_id() <= APP_ID_NONE))
     {
-        api.client.set_efp_client_app_detect_type(CLIENT_APP_DETECT_TLS_FP);
-        return api.client.get_efp_client_app_id();
+        api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_TLS_FP);
+        return api.client.get_eve_client_app_id();
     }
 
     if (api.client.get_id() > APP_ID_NONE)
     {
-        api.client.set_efp_client_app_detect_type(CLIENT_APP_DETECT_APPID);
+        api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_APPID);
         return api.client.get_id();
     }
 
-    api.client.set_efp_client_app_detect_type(CLIENT_APP_DETECT_APPID);
+    api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_APPID);
     return encrypted.client_id;
 }
 

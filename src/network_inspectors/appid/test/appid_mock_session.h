@@ -141,14 +141,14 @@ AppId AppIdSession::pick_ss_misc_app_id() const
 
 AppId AppIdSession::pick_ss_client_app_id() const
 {
-    if (get_efp_client_app_id() > APP_ID_NONE and get_client_id() <= APP_ID_NONE)
+    if (get_eve_client_app_id() > APP_ID_NONE and get_client_id() <= APP_ID_NONE)
     {
-        api.client.set_efp_client_app_detect_type(CLIENT_APP_DETECT_TLS_FP);
-        return get_efp_client_app_id();
+        api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_TLS_FP);
+        return get_eve_client_app_id();
     }
     else
     {
-        api.client.set_efp_client_app_detect_type(CLIENT_APP_DETECT_APPID);
+        api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_APPID);
         return get_client_id();
     }
 }

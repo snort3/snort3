@@ -38,7 +38,7 @@
 #include "appid_dcerpc_event_handler.h"
 #include "appid_debug.h"
 #include "appid_discovery.h"
-#include "appid_efp_process_event_handler.h"
+#include "appid_eve_process_event_handler.h"
 #include "appid_ha.h"
 #include "appid_http_event_handler.h"
 #include "appid_http2_req_body_event_handler.h"
@@ -138,7 +138,7 @@ bool AppIdInspector::configure(SnortConfig* sc)
 
     DataBus::subscribe_network(OPPORTUNISTIC_TLS_EVENT, new AppIdOpportunisticTlsEventHandler());
 
-    DataBus::subscribe_network(EFP_PROCESS_EVENT, new AppIdEfpProcessEventHandler());
+    DataBus::subscribe_network(EVE_PROCESS_EVENT, new AppIdEveProcessEventHandler());
 
     DataBus::subscribe_network(SSH_EVENT, new SshEventHandler());
 

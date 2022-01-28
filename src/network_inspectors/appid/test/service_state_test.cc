@@ -121,7 +121,7 @@ int ServiceDiscovery::fail_service(AppIdSession&, const Packet*, AppidSessionDir
 int ServiceDiscovery::add_service_port(AppIdDetector*,
     const ServiceDetectorPort&) { return APPID_EINVALID; }
 DnsPatternMatchers::~DnsPatternMatchers() = default;
-EfpCaPatternMatchers::~EfpCaPatternMatchers() = default;
+EveCaPatternMatchers::~EveCaPatternMatchers() = default;
 HttpPatternMatchers::~HttpPatternMatchers() = default;
 SipPatternMatchers::~SipPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;

@@ -139,7 +139,7 @@ void DataBus::publish(const char*, DataEvent& event, Flow*)
 // Stubs for matchers
 static HttpPatternMatchers* http_matchers;
 DnsPatternMatchers::~DnsPatternMatchers() = default;
-EfpCaPatternMatchers::~EfpCaPatternMatchers() = default;
+EveCaPatternMatchers::~EveCaPatternMatchers() = default;
 HttpPatternMatchers::~HttpPatternMatchers() = default;
 SipPatternMatchers::~SipPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;

@@ -16,13 +16,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 //
-// appid_efp_process_event_handler_test.cc author Sreeja Athirkandathil Narayanan <sathirka@cisco.com>
+// appid_eve_process_event_handler_test.cc author Sreeja Athirkandathil Narayanan <sathirka@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "appid_efp_process_event_handler.cc"
+#include "appid_eve_process_event_handler.cc"
 
 #include <string>
 
@@ -81,12 +81,12 @@ void AppIdModule::reset_stats() { }
 void AppIdDebug::activate(snort::Flow const*, AppIdSession const*, bool) { }
 
 
-AppId EfpCaPatternMatchers::match_efp_ca_pattern(const string&, uint8_t)
+AppId EveCaPatternMatchers::match_eve_ca_pattern(const string&, uint8_t)
 {
     return APPID_UT_ID;
 }
 
-TEST_GROUP(appid_efp_process_event_handler_tests)
+TEST_GROUP(appid_eve_process_event_handler_tests)
 {
     void setup() override
     {
@@ -105,14 +105,14 @@ TEST_GROUP(appid_efp_process_event_handler_tests)
     }
 };
 
-TEST(appid_efp_process_event_handler_tests, efp_process_event_handler)
+TEST(appid_eve_process_event_handler_tests, eve_process_event_handler)
 {
     Packet p;
-    EfpProcessEvent event(p, "firefox", 90);
-    AppIdEfpProcessEventHandler event_handler;
+    EveProcessEvent event(p, "firefox", 90);
+    AppIdEveProcessEventHandler event_handler;
     Flow* flow = new Flow();
     event_handler.handle(event, flow);
-    CHECK(session->get_efp_client_app_id() == APPID_UT_ID);
+    CHECK(session->get_eve_client_app_id() == APPID_UT_ID);
     delete flow;
 }
 

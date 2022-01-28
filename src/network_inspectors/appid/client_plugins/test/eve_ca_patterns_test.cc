@@ -16,78 +16,78 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 //
-// efp_ca_patterns_test.cc author Sreeja Athirkandathil Narayanan <sathirka@cisco.com>
+// eve_ca_patterns_test.cc author Sreeja Athirkandathil Narayanan <sathirka@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "client_plugins/efp_ca_patterns.cc"
+#include "client_plugins/eve_ca_patterns.cc"
 #include "client_plugins_mock.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
-static EfpCaPatternMatchers* efp_matcher = nullptr;
-EfpCaPattern efp_ca(APPID_UT_ID, "firefox", 90);
+static EveCaPatternMatchers* eve_matcher = nullptr;
+EveCaPattern eve_ca(APPID_UT_ID, "firefox", 90);
 
 namespace snort
 {
 int SearchTool::find_all(const char* pattern, unsigned, MpseMatch, bool, void* data)
 {
     if (strcmp(pattern, "firefox") == 0)
-        efp_ca_pattern_match(&efp_ca, nullptr, 0, data, nullptr);
+        eve_ca_pattern_match(&eve_ca, nullptr, 0, data, nullptr);
     return 0;
 }
 }
 
-TEST_GROUP(efp_ca_patterns_tests)
+TEST_GROUP(eve_ca_patterns_tests)
 {
     void setup() override
     {
-        efp_matcher = new EfpCaPatternMatchers();
+        eve_matcher = new EveCaPatternMatchers();
     }
     void teardown() override
     {
-        delete efp_matcher;
+        delete eve_matcher;
     }
 };
 
 
-TEST(efp_ca_patterns_tests, efp_ca_pattern_match)
+TEST(eve_ca_patterns_tests, eve_ca_pattern_match)
 {
-    EfpCaPatternList data;
-    EfpCaPattern efp1(APPID_UT_ID + 1, "firefox", 80);
-    efp_ca_pattern_match(&efp1, nullptr, 0, &data, nullptr);
-    EfpCaPattern* efp = data.back();
-    CHECK(efp->app_id == efp1.app_id);
-    CHECK(efp->pattern == efp1.pattern);
-    CHECK(efp->confidence == efp1.confidence);
+    EveCaPatternList data;
+    EveCaPattern eve1(APPID_UT_ID + 1, "firefox", 80);
+    eve_ca_pattern_match(&eve1, nullptr, 0, &data, nullptr);
+    EveCaPattern* eve = data.back();
+    CHECK(eve->app_id == eve1.app_id);
+    CHECK(eve->pattern == eve1.pattern);
+    CHECK(eve->confidence == eve1.confidence);
 
-    EfpCaPattern efp2(APPID_UT_ID + 2, "chrome", 95);
-    efp_ca_pattern_match(&efp2, nullptr, 0, &data, nullptr);
-    efp = data.back();
-    CHECK(efp->app_id == efp2.app_id);
-    CHECK(efp->pattern == efp2.pattern);
-    CHECK(efp->confidence == efp2.confidence);
+    EveCaPattern eve2(APPID_UT_ID + 2, "chrome", 95);
+    eve_ca_pattern_match(&eve2, nullptr, 0, &data, nullptr);
+    eve = data.back();
+    CHECK(eve->app_id == eve2.app_id);
+    CHECK(eve->pattern == eve2.pattern);
+    CHECK(eve->confidence == eve2.confidence);
     CHECK(data.size() == 2);
 }
 
 
-TEST(efp_ca_patterns_tests, match_efp_ca_pattern)
+TEST(eve_ca_patterns_tests, match_eve_ca_pattern)
 {
     // 1. pattern not present in pattern matcher list
-    CHECK(efp_matcher->match_efp_ca_pattern("chrome", 95) == 0);
+    CHECK(eve_matcher->match_eve_ca_pattern("chrome", 95) == 0);
 
     // 2. pattern matches, confidence doesn't match
-    CHECK(efp_matcher->match_efp_ca_pattern("firefox", 60) == 0);
+    CHECK(eve_matcher->match_eve_ca_pattern("firefox", 60) == 0);
 
     // 3. pattern and confidence matches
-    CHECK(efp_matcher->match_efp_ca_pattern("firefox", 90) == APPID_UT_ID);
+    CHECK(eve_matcher->match_eve_ca_pattern("firefox", 90) == APPID_UT_ID);
 
     // 4. pattern matches, reported confidence > existing value
-    CHECK(efp_matcher->match_efp_ca_pattern("firefox", 92) == APPID_UT_ID);
+    CHECK(eve_matcher->match_eve_ca_pattern("firefox", 92) == APPID_UT_ID);
 }
 
 int main(int argc, char** argv)

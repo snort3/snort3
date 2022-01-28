@@ -15,23 +15,23 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// efp_process_event.h author Cliff Judge <cljudge@cisco.com>
+// eve_process_event.h author Cliff Judge <cljudge@cisco.com>
 
-#ifndef EFP_PROCESS_EVENT_H
-#define EFP_PROCESS_EVENT_H
+#ifndef EVE_PROCESS_EVENT_H
+#define EVE_PROCESS_EVENT_H
 
 #include <string>
 #include "framework/data_bus.h"
 
-#define EFP_PROCESS_EVENT "efp_process_event"
+#define EVE_PROCESS_EVENT "eve_process_event"
 
-class EfpProcessEvent : public snort::DataEvent
+class EveProcessEvent : public snort::DataEvent
 {
 public:
-    EfpProcessEvent(const snort::Packet& p, const char* process, uint8_t process_conf) :
+    EveProcessEvent(const snort::Packet& p, const char* process, uint8_t process_conf) :
         p(p), process_name(process), process_confidence(process_conf) { }
 
-    EfpProcessEvent(const snort::Packet& p, const char* server) : p(p), server_name(server) { }
+    EveProcessEvent(const snort::Packet& p, const char* server) : p(p), server_name(server) { }
 
     const snort::Packet* get_packet() override { return &p; }
 

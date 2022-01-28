@@ -243,17 +243,17 @@ public:
         return my_username.empty() ? nullptr : my_username.c_str();
     }
 
-    void set_efp_client_app_id(AppId id)
+    void set_eve_client_app_id(AppId id)
     {
-        efp_client_app_id = id;
+        eve_client_app_id = id;
     }
 
-    AppId get_efp_client_app_id() const
+    AppId get_eve_client_app_id() const
     {
-        return efp_client_app_id;
+        return eve_client_app_id;
     }
 
-    void set_efp_client_app_detect_type(ClientAppDetectType client_app_detect_type)
+    void set_eve_client_app_detect_type(ClientAppDetectType client_app_detect_type)
     {
         my_client_detect_type = client_app_detect_type;
     }
@@ -266,7 +266,7 @@ public:
 private:
     std::string my_username;
     AppId my_user_id = APP_ID_NONE;
-    AppId efp_client_app_id = APP_ID_NONE;
+    AppId eve_client_app_id = APP_ID_NONE;
     ClientAppDetectType my_client_detect_type = CLIENT_APP_DETECT_APPID;
 };
 

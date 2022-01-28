@@ -1006,14 +1006,14 @@ static int add_process_to_client_mapping(lua_State* L)
     const char* tmp_string = lua_tostring(L, ++index);
     if (!tmp_string)
     {
-        ErrorMessage("appid: Invalid efp process_name string: appid %u.\n", appid);
+        ErrorMessage("appid: Invalid eve process_name string: appid %u.\n", appid);
         return 0;
     }
     const std::string process_name(tmp_string);
     uint8_t process_score = lua_tointeger(L, ++index);
     const std::string detector_name = ud->get_detector()->get_name();
 
-    ud->get_odp_ctxt().get_efp_ca_matchers().add_efp_ca_pattern(appid, process_name,
+    ud->get_odp_ctxt().get_eve_ca_matchers().add_eve_ca_pattern(appid, process_name,
         process_score, detector_name);
 
     ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(appid);

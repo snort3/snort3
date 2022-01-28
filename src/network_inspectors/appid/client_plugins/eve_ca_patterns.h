@@ -16,42 +16,42 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// efp_ca_patterns.h author Cliff Judge <cljudge@cisco.com>
+// eve_ca_patterns.h author Cliff Judge <cljudge@cisco.com>
 
-#ifndef EFP_CA_PATTERNS_H
-#define EFP_CA_PATTERNS_H
+#ifndef EVE_CA_PATTERNS_H
+#define EVE_CA_PATTERNS_H
 
 #include <vector>
 
 #include "search_engines/search_tool.h"
 #include "application_ids.h"
 
-struct EfpCaPattern
+struct EveCaPattern
 {
     const AppId app_id;
     const std::string pattern;
     const uint8_t confidence;
 
-    EfpCaPattern(AppId id, const std::string& name, uint8_t conf) : app_id(id), pattern(name),
+    EveCaPattern(AppId id, const std::string& name, uint8_t conf) : app_id(id), pattern(name),
         confidence(conf) {}
 
-    ~EfpCaPattern() {}
+    ~EveCaPattern() {}
 };
 
-typedef std::vector<EfpCaPattern*> EfpCaPatternList;
+typedef std::vector<EveCaPattern*> EveCaPatternList;
 
-class EfpCaPatternMatchers
+class EveCaPatternMatchers
 {
 public:
-    ~EfpCaPatternMatchers();
-    AppId match_efp_ca_pattern(const std::string&, uint8_t);
-    void add_efp_ca_pattern(AppId, const std::string&, uint8_t, const std::string&);
+    ~EveCaPatternMatchers();
+    AppId match_eve_ca_pattern(const std::string&, uint8_t);
+    void add_eve_ca_pattern(AppId, const std::string&, uint8_t, const std::string&);
     void finalize_patterns();
     void reload_patterns();
 
 private:
-    snort::SearchTool efp_ca_pattern_matcher = snort::SearchTool();
-    EfpCaPatternList efp_ca_load_list;
+    snort::SearchTool eve_ca_pattern_matcher = snort::SearchTool();
+    EveCaPatternList eve_ca_load_list;
 };
 
 #endif

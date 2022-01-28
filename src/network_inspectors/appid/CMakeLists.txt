@@ -35,8 +35,8 @@ set ( CP_APPID_SOURCES
     client_plugins/client_detector.h
     client_plugins/client_discovery.cc
     client_plugins/client_discovery.h
-    client_plugins/efp_ca_patterns.cc
-    client_plugins/efp_ca_patterns.h
+    client_plugins/eve_ca_patterns.cc
+    client_plugins/eve_ca_patterns.h
 )
 
 set ( SP_APPID_SOURCES
@@ -150,8 +150,8 @@ set ( APPID_SOURCES
     appid_discovery.cc
     appid_discovery.h
     appid_dns_session.h
-    appid_efp_process_event_handler.cc
-    appid_efp_process_event_handler.h
+    appid_eve_process_event_handler.cc
+    appid_eve_process_event_handler.h
     appid_ha.cc
     appid_ha.h
     appid_http_session.cc

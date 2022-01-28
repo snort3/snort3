@@ -16,13 +16,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// appid_efp_process_event_handler.cc author Cliff Judge <cljudge@cisco.com>
+// appid_eve_process_event_handler.cc author Cliff Judge <cljudge@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "appid_efp_process_event_handler.h"
+#include "appid_eve_process_event_handler.h"
 #include "detection/detection_engine.h"
 
 #include "appid_debug.h"
@@ -31,7 +31,7 @@
 
 using namespace snort;
 
-void AppIdEfpProcessEventHandler::handle(DataEvent& event, Flow* flow)
+void AppIdEveProcessEventHandler::handle(DataEvent& event, Flow* flow)
 {
     assert(flow);
     AppIdSession* asd = appid_api.get_appid_session(*flow);
@@ -43,19 +43,19 @@ void AppIdEfpProcessEventHandler::handle(DataEvent& event, Flow* flow)
         (pkt_thread_odp_ctxt->get_version() != asd->get_odp_ctxt_version()))
         return;
 
-    const EfpProcessEvent &efp_process_event = static_cast<EfpProcessEvent&>(event);
+    const EveProcessEvent &eve_process_event = static_cast<EveProcessEvent&>(event);
 
-    const std::string& name = efp_process_event.get_process_name();
-    uint8_t conf = efp_process_event.get_process_confidence();
-    const std::string& server_name = efp_process_event.get_server_name();
+    const std::string& name = eve_process_event.get_process_name();
+    uint8_t conf = eve_process_event.get_process_confidence();
+    const std::string& server_name = eve_process_event.get_server_name();
     AppId app_id = APP_ID_NONE;
 
     if (!name.empty())
     {
-        app_id = asd->get_odp_ctxt().get_efp_ca_matchers().match_efp_ca_pattern(name,
+        app_id = asd->get_odp_ctxt().get_eve_ca_matchers().match_eve_ca_pattern(name,
             conf);
 
-        asd->set_efp_client_app_id(app_id);
+        asd->set_eve_client_app_id(app_id);
     }
 
     if (appidDebug->is_active())

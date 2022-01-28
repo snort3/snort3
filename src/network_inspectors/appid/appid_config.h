@@ -30,7 +30,7 @@
 
 #include "app_info_table.h"
 #include "client_plugins/client_discovery.h"
-#include "client_plugins/efp_ca_patterns.h"
+#include "client_plugins/eve_ca_patterns.h"
 #include "detector_plugins/dns_patterns.h"
 #include "detector_plugins/http_url_patterns.h"
 #include "detector_plugins/sip_patterns.h"
@@ -179,9 +179,9 @@ public:
         return http_matchers;
     }
 
-    EfpCaPatternMatchers& get_efp_ca_matchers()
+    EveCaPatternMatchers& get_eve_ca_matchers()
     {
-        return efp_ca_matchers;
+        return eve_ca_matchers;
     }
 
     SipPatternMatchers& get_sip_matchers()
@@ -221,7 +221,7 @@ private:
     LengthCache length_cache;
     DnsPatternMatchers dns_matchers;
     HttpPatternMatchers http_matchers;
-    EfpCaPatternMatchers efp_ca_matchers;
+    EveCaPatternMatchers eve_ca_matchers;
     ServiceDiscovery service_disco_mgr;
     SipPatternMatchers sip_matchers;
     SslPatternMatchers ssl_matchers;

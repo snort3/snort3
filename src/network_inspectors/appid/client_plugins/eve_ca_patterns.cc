@@ -16,13 +16,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// efp_ca_patterns.cc author Cliff Judge <cljudge@cisco.com>
+// eve_ca_patterns.cc author Cliff Judge <cljudge@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "efp_ca_patterns.h"
+#include "eve_ca_patterns.h"
 
 #include <algorithm>
 
@@ -33,39 +33,39 @@
 using namespace snort;
 using namespace std;
 
-void EfpCaPatternMatchers::add_efp_ca_pattern(AppId app_id, const string& pattern_str,
+void EveCaPatternMatchers::add_eve_ca_pattern(AppId app_id, const string& pattern_str,
     uint8_t confidence, const string& detector)
 {
-    auto match = find_if(efp_ca_load_list.begin(), efp_ca_load_list.end(),
-        [app_id, pattern_str] (EfpCaPattern* efp_ca)
-        { return (efp_ca->pattern == pattern_str and efp_ca->app_id != app_id); });
+    auto match = find_if(eve_ca_load_list.begin(), eve_ca_load_list.end(),
+        [app_id, pattern_str] (EveCaPattern* eve_ca)
+        { return (eve_ca->pattern == pattern_str and eve_ca->app_id != app_id); });
 
-    if (match != efp_ca_load_list.end())
+    if (match != eve_ca_load_list.end())
         WarningMessage("appid: detector %s - process name '%s' for client app %d is already "
             "mapped to client app %d\n", detector.c_str(), (*match)->pattern.c_str(), app_id,
             (*match)->app_id);
 
-    EfpCaPattern* new_efp_ca_pattern = new EfpCaPattern(app_id, pattern_str, confidence);
-    efp_ca_load_list.push_back(new_efp_ca_pattern);
+    EveCaPattern* new_eve_ca_pattern = new EveCaPattern(app_id, pattern_str, confidence);
+    eve_ca_load_list.push_back(new_eve_ca_pattern);
 }
 
-static int efp_ca_pattern_match(void* id, void*, int, void* data, void*)
+static int eve_ca_pattern_match(void* id, void*, int, void* data, void*)
 {
-    EfpCaPatternList* efp_ca_match_list = (EfpCaPatternList *)data;
-    efp_ca_match_list->push_back((EfpCaPattern *)id);
+    EveCaPatternList* eve_ca_match_list = (EveCaPatternList *)data;
+    eve_ca_match_list->push_back((EveCaPattern *)id);
     return 0;
 }
 
-AppId EfpCaPatternMatchers::match_efp_ca_pattern(const string& pattern,
+AppId EveCaPatternMatchers::match_eve_ca_pattern(const string& pattern,
     uint8_t reported_confidence)
 {
-    EfpCaPatternList* efp_ca_match_list = new EfpCaPatternList();
-    EfpCaPattern* best_match = nullptr;
+    EveCaPatternList* eve_ca_match_list = new EveCaPatternList();
+    EveCaPattern* best_match = nullptr;
 
-    efp_ca_pattern_matcher.find_all(pattern.data(), pattern.size(), efp_ca_pattern_match,
-        false, efp_ca_match_list);
+    eve_ca_pattern_matcher.find_all(pattern.data(), pattern.size(), eve_ca_pattern_match,
+        false, eve_ca_match_list);
 
-    for (auto &mp : *efp_ca_match_list)
+    for (auto &mp : *eve_ca_match_list)
     {
         if (mp->pattern.size() == pattern.size())
         {
@@ -86,34 +86,34 @@ AppId EfpCaPatternMatchers::match_efp_ca_pattern(const string& pattern,
     if (best_match)
         ret_app_id = best_match->app_id;
 
-    delete efp_ca_match_list;
+    delete eve_ca_match_list;
 
     return ret_app_id;
 }
 
-EfpCaPatternMatchers::~EfpCaPatternMatchers()
+EveCaPatternMatchers::~EveCaPatternMatchers()
 {
-    for (auto& p : efp_ca_load_list)
+    for (auto& p : eve_ca_load_list)
         delete p;
-    efp_ca_load_list.clear();
+    eve_ca_load_list.clear();
 }
 
-void EfpCaPatternMatchers::finalize_patterns()
+void EveCaPatternMatchers::finalize_patterns()
 {
-    for (auto& p : efp_ca_load_list)
+    for (auto& p : eve_ca_load_list)
     {
-        efp_ca_pattern_matcher.add(p->pattern.data(), p->pattern.size(), p, true);
+        eve_ca_pattern_matcher.add(p->pattern.data(), p->pattern.size(), p, true);
 
         #ifdef REG_TEST
-            LogMessage("Adding EFP Client App pattern %d %s %d\n",
+            LogMessage("Adding EVE Client App pattern %d %s %d\n",
                 p->app_id, p->pattern.c_str(), p->confidence);
         #endif
     }
-    efp_ca_pattern_matcher.prep();
+    eve_ca_pattern_matcher.prep();
 }
 
-void EfpCaPatternMatchers::reload_patterns()
+void EveCaPatternMatchers::reload_patterns()
 {
-    efp_ca_pattern_matcher.reload();
+    eve_ca_pattern_matcher.reload();
 }
 

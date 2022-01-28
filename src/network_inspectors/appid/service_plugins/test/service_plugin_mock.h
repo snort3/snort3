@@ -80,7 +80,7 @@ AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
 }
 
-EfpCaPatternMatchers::~EfpCaPatternMatchers() { }
+EveCaPatternMatchers::~EveCaPatternMatchers() { }
 SslPatternMatchers::~SslPatternMatchers() { }
 SipPatternMatchers::~SipPatternMatchers() { }
 HttpPatternMatchers::~HttpPatternMatchers() { }
