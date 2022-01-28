@@ -67,7 +67,7 @@ public:
     unsigned delete_flows(unsigned num_to_delete);
     bool prune_one(PruneReason, bool do_cleanup);
     snort::Flow* stale_flow_cleanup(FlowCache*, snort::Flow*, snort::Packet*);
-    void timeout_flows(time_t cur_time);
+    void timeout_flows(unsigned int, time_t cur_time);
     void check_expected_flow(snort::Flow*, snort::Packet*);
     bool is_expected(snort::Packet*);
 

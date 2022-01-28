@@ -49,6 +49,8 @@
 
 using namespace snort;
 
+#define IDLE_PRUNE_MAX 400
+
 // this should not be publicly accessible
 extern THREAD_LOCAL class FlowControl* flow_con;
 
@@ -366,8 +368,13 @@ void Stream::handle_timeouts(bool idle)
     packet_gettimeofday(&cur_time);
 
     // FIXIT-M batch here or loop vs looping over idle?
-    if ( flow_con )
-        flow_con->timeout_flows(cur_time.tv_sec);
+    if (flow_con)
+    {
+        if (idle)
+            flow_con->timeout_flows(IDLE_PRUNE_MAX, cur_time.tv_sec);
+        else
+            flow_con->timeout_flows(1, cur_time.tv_sec);
+    }
 
     int max_remove = idle ? -1 : 1;       // -1 = all eligible
     TcpStreamTracker::release_held_packets(cur_time, max_remove);

@@ -117,9 +117,9 @@ unsigned FlowControl::delete_flows(unsigned num_to_delete)
 bool FlowControl::prune_one(PruneReason reason, bool do_cleanup)
 { return cache->prune_one(reason, do_cleanup); }
 
-void FlowControl::timeout_flows(time_t cur_time)
+void FlowControl::timeout_flows(unsigned max, time_t cur_time)
 {
-    cache->timeout(1, cur_time);
+    cache->timeout(max, cur_time);
 }
 
 Flow* FlowControl::stale_flow_cleanup(FlowCache* cache, Flow* flow, Packet* p)
