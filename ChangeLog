@@ -1,3 +1,11 @@
+2022/01/31 - 3.1.22.0
+
+appid: give priority to custom process to app mappings over ODP mappings
+appid: rename efp (encrypted fingerprint) to eve (encrypted visibility engine)
+detection: change output format of dump-rule-state
+pub_sub: export assistant_gadget_event.h header file
+stream: set the max number of flows pruned while idle to 400
+
 2022/01/25 - 3.1.21.0
 
 appid: do not delay detection of SMB service for the sake of version detection
