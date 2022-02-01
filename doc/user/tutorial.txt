@@ -188,6 +188,10 @@ General Use
 
 Lua Configuration
 
+* Some parameters could be configured via a command line option or snort module.
+  In this case a command line option has the highest precedence, in turn,
+  snort module configuration has precedence over other modules.
+
 * Configure the wizard and default bindings will be created based on configured
   inspectors.  No need to explicitly bind ports in this case.
 
@@ -331,6 +335,7 @@ The following parameters can't be changed during reload, and require a restart:
 * process.set_uid
 * snort.--bpf
 * snort.-l
+* trace.output
 
 In addition, the following scenarios require a restart:
 

@@ -26,7 +26,8 @@ bundled DAQ modules.
 
 As with a number of features in Snort 3, the LibDAQ and DAQ module
 configuration may be controlled using either the command line options or by
-configuring the 'daq' Snort module in the Lua configuration.
+configuring the 'daq' Snort module in the Lua configuration (command line
+option has higher precedence).
 
 DAQ modules may be statically built into Snort, but the more common case is to
 use DAQ modules that have been built as dynamically loadable objects.  Because

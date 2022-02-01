@@ -24,6 +24,7 @@
 
 #include "snort_module.h"
 
+#include <set>
 #include <string>
 
 #include "detection/detect.h"
@@ -275,7 +276,7 @@ static const Parameter s_params[] =
     { "-r", Parameter::PT_STRING, nullptr, nullptr,
       "<pcap>... (same as --pcap-list)" },
 
-    { "-s", Parameter::PT_INT, "68:65535", "1518",
+    { "-s", Parameter::PT_INT, "0:65535", nullptr,
       "<snap> (same as --snaplen); default is 1518" },
 
     { "-T", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -331,8 +332,8 @@ static const Parameter s_params[] =
     { "--daq", Parameter::PT_STRING, nullptr, nullptr,
       "<type> select packet acquisition module (default is pcap)" },
 
-    { "--daq-batch-size", Parameter::PT_INT, "1:", "64",
-      "<size> set the DAQ receive batch size", },
+    { "--daq-batch-size", Parameter::PT_INT, "1:", nullptr,
+      "<size> set the DAQ receive batch size; default is 64", },
 
     { "--daq-dir", Parameter::PT_STRING, nullptr, nullptr,
       "<dir> tell snort where to find desired DAQ" },
@@ -503,7 +504,7 @@ static const Parameter s_params[] =
     { "--pcap-dir", Parameter::PT_STRING, nullptr, nullptr,
       "<dir> a directory to recurse to look for pcaps - read mode is implied" },
 
-    { "--pcap-filter", Parameter::PT_STRING, nullptr, "*.*cap*",
+    { "--pcap-filter", Parameter::PT_STRING, nullptr, nullptr,
       "<filter> filter to apply when getting pcaps from file or directory" },
 
     { "--pcap-loop", Parameter::PT_INT, "0:max32", nullptr,
@@ -563,7 +564,7 @@ static const Parameter s_params[] =
     { "--skip", Parameter::PT_INT, "0:max53", nullptr,
       "<n> skip 1st n packets", },
 
-    { "--snaplen", Parameter::PT_INT, "68:65535", "1518",
+    { "--snaplen", Parameter::PT_INT, "0:65535", nullptr,
       "<snap> set snaplen of packet (same as -s)", },
 
     { "--stdin-rules", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -676,10 +677,14 @@ public:
     const TraceOption* get_trace_options() const override;
 
 private:
+    inline bool is(const Value& v, const char* opt);
+
     SFDAQModuleConfig* module_config;
     bool no_warn_flowbits = false;
     bool no_warn_rules = false;
     std::string stub_opts;
+    std::set<string> cli_opts;
+    bool cli_mode = true;
 };
 
 void SnortModule::set_trace(const Trace* trace) const
@@ -697,157 +702,170 @@ bool SnortModule::begin(const char* fqn, int, SnortConfig*)
     return true;
 }
 
+bool SnortModule::is(const Value& v, const char* opt)
+{
+    if ( !v.is(opt) )
+        return false;
+
+    if ( cli_mode )
+        cli_opts.emplace(string(opt));
+    else
+        return cli_opts.end() == cli_opts.find(string(opt));
+
+    return true;
+}
+
 bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 {
-    if ( v.is("-?") )
+    if ( is(v, "-?") )
         help_options(sc, v.get_string());
 
-    else if ( v.is("-A") )
+    else if ( is(v, "-A") )
         sc->set_alert_mode(v.get_string());
 
-    else if ( v.is("-B") )
+    else if ( is(v, "-B") )
         sc->set_obfuscation_mask(v.get_string());
 
-    else if ( v.is("-C") )
+    else if ( is(v, "-C") )
         sc->set_dump_chars_only(true);
 
-    else if ( v.is("-c") )
+    else if ( is(v, "-c") )
         config_conf(v.get_string());
 
-    else if ( v.is("-D") )
+    else if ( is(v, "-D") )
         sc->set_daemon(true);
 
-    else if ( v.is("-d") )
+    else if ( is(v, "-d") )
         sc->set_dump_payload(true);
 
-    else if ( v.is("-e") )
+    else if ( is(v, "-e") )
         sc->set_decode_data_link(true);
 
-    else if ( v.is("-f") )
+    else if ( is(v, "-f") )
         sc->output_flags |= OUTPUT_FLAG__LINE_BUFFER;
 
-    else if ( v.is("-G") || v.is("--logid") )
+    else if ( is(v, "-G") || is(v, "--logid") )
         sc->event_log_id = v.get_uint16();
 
-    else if ( v.is("-g") )
+    else if ( is(v, "-g") )
         sc->set_gid(v.get_string());
 
-    else if ( v.is("-H") )
+    else if ( is(v, "-H") )
         sc->run_flags |= RUN_FLAG__STATIC_HASH;
 
-    else if ( v.is("-h") )
+    else if ( is(v, "-h") )
         help_basic(sc, v.get_string());
 
-    else if ( v.is("-i") )
+    else if ( is(v, "-i") )
         sc->daq_config->add_input(v.get_string());
 
 #ifdef SHELL
-    else if ( v.is("-j") )
+    else if ( is(v, "-j") )
     {
         sc->remote_control_port = v.get_uint16();
         sc->remote_control_socket.clear();
     }
 #endif
 
-    else if ( v.is("-k") )
+    else if ( is(v, "-k") )
         ConfigChecksumMode(v.get_string());
 
-    else if ( v.is("-L") )
+    else if ( is(v, "-L") )
         sc->set_log_mode(v.get_string());
 
-    else if ( v.is("-l") )
+    else if ( is(v, "-l") )
         sc->set_log_dir(v.get_string());
 
-    else if ( v.is("-M") )
+    else if ( is(v, "-M") )
         sc->enable_syslog();
 
-    else if ( v.is("-m") )
+    else if ( is(v, "-m") )
         sc->set_umask(v.get_uint32());
 
-    else if ( v.is("-n") )
+    else if ( is(v, "-n") )
         sc->pkt_cnt = v.get_uint64();
 
-    else if ( v.is("-O") )
+    else if ( is(v, "-O") )
         sc->set_obfuscate(true);
 
-    else if ( v.is("-Q") )
+    else if ( is(v, "-Q") )
         sc->run_flags |= RUN_FLAG__INLINE;
 
-    else if ( v.is("-q") )
+    else if ( is(v, "-q") )
         SnortConfig::set_log_quiet(true);
 
-    else if ( v.is("-R") )
+    else if ( is(v, "-R") )
     {
         string s = "include ";
         s += v.get_string();
         parser_append_rules(s.c_str());
     }
-    else if ( v.is("-r") || v.is("--pcap-list") )
+    else if ( is(v, "-r") || is(v, "--pcap-list") )
     {
         sc->run_flags |= RUN_FLAG__READ;
         Trough::add_source(Trough::SOURCE_LIST, v.get_string());
     }
 
-    else if ( v.is("-s") or v.is("--snaplen") )
+    else if ( is(v, "-s") or is(v, "--snaplen") )
         sc->daq_config->set_mru_size(v.get_uint16());
 
-    else if ( v.is("-T") )
+    else if ( is(v, "-T") )
         sc->run_flags |= RUN_FLAG__TEST;
 
-    else if ( v.is("-t") )
+    else if ( is(v, "-t") )
         sc->set_chroot_dir(v.get_string());
 
-    else if ( v.is("-U") )
+    else if ( is(v, "-U") )
         sc->set_utc(true);
 
-    else if ( v.is("-u") )
+    else if ( is(v, "-u") )
         sc->set_uid(v.get_string());
 
-    else if ( v.is("-V") )
+    else if ( is(v, "-V") )
         help_version(sc);
 
-    else if ( v.is("-v") )
+    else if ( is(v, "-v") )
         SnortConfig::enable_log_verbose();
 
-    else if ( v.is("-X") )
+    else if ( is(v, "-X") )
         sc->set_dump_payload_verbose(true);
 
-    else if ( v.is("-x") || v.is("--pedantic") )
+    else if ( is(v, "-x") || is(v, "--pedantic") )
         sc->run_flags |= RUN_FLAG__CONF_ERROR_OUT;
 
-    else if ( v.is("-y") )
+    else if ( is(v, "-y") )
         sc->set_show_year(true);
 
-    else if ( v.is("-z") || v.is("--max-packet-threads") )
+    else if ( is(v, "-z") || is(v, "--max-packet-threads") )
         ThreadConfig::set_instance_max(v.get_uint32());
 
-    else if ( v.is("--alert-before-pass") )
+    else if ( is(v, "--alert-before-pass") )
         sc->set_alert_before_pass(true);
 
-    else if ( v.is("--bpf") )
+    else if ( is(v, "--bpf") )
         sc->bpf_filter = v.get_string();
 
-    else if ( v.is("--c2x") )
+    else if ( is(v, "--c2x") )
         c2x(v.get_string());
 
 #ifdef SHELL
-    else if ( v.is("--control-socket") )
+    else if ( is(v, "--control-socket") )
     {
         sc->remote_control_socket = v.get_string();
         sc->remote_control_port = 0;
     }
 #endif
 
-    else if ( v.is("--create-pidfile") )
+    else if ( is(v, "--create-pidfile") )
         sc->set_create_pid_file(true);
 
-    else if ( v.is("--daq") )
+    else if ( is(v, "--daq") )
         module_config = sc->daq_config->add_module_config(v.get_string());
 
-    else if ( v.is("--daq-batch-size") )
+    else if ( is(v, "--daq-batch-size") )
         sc->daq_config->set_batch_size(v.get_uint32());
 
-    else if ( v.is("--daq-dir") )
+    else if ( is(v, "--daq-dir") )
     {
         stringstream ss { v.get_string() };
         string path;
@@ -855,7 +873,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         while ( getline(ss, path, ':') )
             sc->daq_config->add_module_dir(path.c_str());
     }
-    else if ( v.is("--daq-mode") )
+    else if ( is(v, "--daq-mode") )
     {
         if (!module_config)
             return false;
@@ -872,25 +890,25 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
                 break;
         }
     }
-    else if ( v.is("--daq-list") )
+    else if ( is(v, "--daq-list") )
         list_daqs(sc);
 
-    else if ( v.is("--daq-var") )
+    else if ( is(v, "--daq-var") )
     {
         if (!module_config)
             return false;
         module_config->set_variable(v.get_string());
     }
-    else if ( v.is("--dirty-pig") )
+    else if ( is(v, "--dirty-pig") )
         sc->set_dirty_pig(true);
 
-    else if ( v.is("--dump-builtin-options") )
+    else if ( is(v, "--dump-builtin-options") )
         stub_opts = v.get_string();
 
-    else if ( v.is("--dump-builtin-rules") )
+    else if ( is(v, "--dump-builtin-rules") )
         dump_builtin_rules(sc, v.get_string(), stub_opts.c_str());
 
-    else if ( v.is("--dump-config") )
+    else if ( is(v, "--dump-config") )
     {
         SnortConfig::set_log_quiet(true);
         sc->run_flags |= RUN_FLAG__TEST;
@@ -900,271 +918,271 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
             sc->dump_config_type = DUMP_CONFIG_JSON_TOP;
     }
 
-    else if ( v.is("--dump-config-text") )
+    else if ( is(v, "--dump-config-text") )
     {
         SnortConfig::set_log_quiet(true);
         sc->run_flags |= RUN_FLAG__TEST;
         sc->dump_config_type = DUMP_CONFIG_TEXT;
     }
 
-    else if ( v.is("--dump-dynamic-rules") )
+    else if ( is(v, "--dump-dynamic-rules") )
         dump_dynamic_rules(sc, v.get_string());
 
-    else if ( v.is("--dump-defaults") )
+    else if ( is(v, "--dump-defaults") )
         dump_defaults(sc, v.get_string());
 
-    else if ( v.is("--dump-rule-databases") )
+    else if ( is(v, "--dump-rule-databases") )
     {
         sc->set_rule_db_dir(v.get_string());
         sc->run_flags |= (RUN_FLAG__TEST | RUN_FLAG__MEM_CHECK);
     }
-    else if ( v.is("--dump-rule-deps") )
+    else if ( is(v, "--dump-rule-deps") )
     {
         sc->run_flags |= (RUN_FLAG__DUMP_RULE_DEPS | RUN_FLAG__TEST);
         SnortConfig::set_log_quiet(true);
     }
-    else if ( v.is("--dump-rule-meta") )
+    else if ( is(v, "--dump-rule-meta") )
     {
         sc->run_flags |= (RUN_FLAG__DUMP_RULE_META | RUN_FLAG__TEST);
         sc->output_flags |= OUTPUT_FLAG__ALERT_REFS;
         SnortConfig::set_log_quiet(true);
     }
-    else if ( v.is("--dump-rule-state") )
+    else if ( is(v, "--dump-rule-state") )
     {
         sc->run_flags |= (RUN_FLAG__DUMP_RULE_STATE | RUN_FLAG__TEST);
         SnortConfig::set_log_quiet(true);
     }
-    else if ( v.is("--dump-version") )
+    else if ( is(v, "--dump-version") )
         dump_version(sc);
 
-    else if ( v.is("--enable-inline-test") )
+    else if ( is(v, "--enable-inline-test") )
         sc->run_flags |= RUN_FLAG__INLINE_TEST;
 
-    else if ( v.is("--enable-test-features") )
+    else if ( is(v, "--enable-test-features") )
     {
         sc->run_flags |= RUN_FLAG__TEST_FEATURES;
         SfIp::test_features = true;
     }
 
-    else if ( v.is("--gen-msg-map") )
+    else if ( is(v, "--gen-msg-map") )
     {
         sc->run_flags |= (RUN_FLAG__DUMP_MSG_MAP | RUN_FLAG__TEST);
         sc->output_flags |= OUTPUT_FLAG__ALERT_REFS;
         SnortConfig::set_log_quiet(true);
     }
-    else if ( v.is("--help") )
+    else if ( is(v, "--help") )
         help_basic(sc, v.get_string());
 
-    else if ( v.is("--help-commands") )
+    else if ( is(v, "--help-commands") )
         help_commands(sc, v.get_string());
 
-    else if ( v.is("--help-config") )
+    else if ( is(v, "--help-config") )
         help_config(sc, v.get_string());
 
-    else if ( v.is("--help-counts") )
+    else if ( is(v, "--help-counts") )
         help_counts(sc, v.get_string());
 
-    else if ( v.is("--help-limits") )
+    else if ( is(v, "--help-limits") )
         help_limits(sc, v.get_string());
 
-    else if ( v.is("--help-module") )
+    else if ( is(v, "--help-module") )
         help_module(sc, v.get_string());
 
-    else if ( v.is("--help-modules") )
+    else if ( is(v, "--help-modules") )
         help_modules(sc, v.get_string());
 
-    else if ( v.is("--help-modules-json") )
+    else if ( is(v, "--help-modules-json") )
         help_modules_json(sc, v.get_string());
 
-    else if ( v.is("--help-options") )
+    else if ( is(v, "--help-options") )
         help_options(sc, v.get_string());
 
-    else if ( v.is("--help-plugins") )
+    else if ( is(v, "--help-plugins") )
         help_plugins(sc, v.get_string());
 
-    else if ( v.is("--help-signals") )
+    else if ( is(v, "--help-signals") )
         help_signals(sc, v.get_string());
 
-    else if ( v.is("--id-offset") )
+    else if ( is(v, "--id-offset") )
         sc->id_offset = v.get_uint16();
 
-    else if ( v.is("--id-subdir") )
+    else if ( is(v, "--id-subdir") )
         sc->id_subdir = true;
 
-    else if ( v.is("--id-zero") )
+    else if ( is(v, "--id-zero") )
         sc->id_zero = true;
 
-    else if ( v.is("--include-path") )
+    else if ( is(v, "--include-path") )
         sc->set_include_path(v.get_string());
 
-    else if ( v.is("--list-buffers") )
+    else if ( is(v, "--list-buffers") )
         help_buffers(sc, v.get_string());
 
-    else if ( v.is("--list-builtin") )
+    else if ( is(v, "--list-builtin") )
         help_builtin(sc, v.get_string());
 
-    else if ( v.is("--list-gids") )
+    else if ( is(v, "--list-gids") )
         help_gids(sc, v.get_string());
 
-    else if ( v.is("--list-modules") )
+    else if ( is(v, "--list-modules") )
         list_modules(sc, v.get_string());
 
-    else if ( v.is("--list-plugins") )
+    else if ( is(v, "--list-plugins") )
         list_plugins(sc, v.get_string());
 
-    else if ( v.is("--lua") )
+    else if ( is(v, "--lua") )
         sc->policy_map->get_shell()->set_overrides(v.get_string());
 
-    else if ( v.is("--lua-sandbox") )
+    else if ( is(v, "--lua-sandbox") )
         Shell::set_lua_sandbox(v.get_string());
 
-    else if ( v.is("--markup") )
+    else if ( is(v, "--markup") )
         config_markup(sc, v.get_string());
 
-    else if ( v.is("--mem-check") )
+    else if ( is(v, "--mem-check") )
         sc->run_flags |= (RUN_FLAG__TEST | RUN_FLAG__MEM_CHECK);
 
-    else if ( v.is("--metadata-filter") )
+    else if ( is(v, "--metadata-filter") )
         sc->metadata_filter = v.get_string();
 
-    else if ( v.is("--nostamps") )
+    else if ( is(v, "--nostamps") )
         sc->set_no_logging_timestamps(true);
 
-    else if ( v.is("--nolock-pidfile") )
+    else if ( is(v, "--nolock-pidfile") )
         sc->run_flags |= RUN_FLAG__NO_LOCK_PID_FILE;
 
-    else if ( v.is("--no-warn-flowbits") )
+    else if ( is(v, "--no-warn-flowbits") )
         no_warn_flowbits = true;
 
-    else if ( v.is("--no-warn-rules") )
+    else if ( is(v, "--no-warn-rules") )
         no_warn_rules = true;
 
-    else if ( v.is("--pause") )
+    else if ( is(v, "--pause") )
         sc->run_flags |= RUN_FLAG__PAUSE;
 
 #ifdef REG_TEST
-    else if ( v.is("--pause-after-n") )
+    else if ( is(v, "--pause-after-n") )
         sc->pkt_pause_cnt = v.get_uint64();
 #endif
 
-    else if ( v.is("--pcap-file") )
+    else if ( is(v, "--pcap-file") )
     {
         sc->run_flags |= RUN_FLAG__READ;
         Trough::add_source(Trough::SOURCE_FILE_LIST, v.get_string());
     }
-    else if ( v.is("--pcap-dir") )
+    else if ( is(v, "--pcap-dir") )
     {
         sc->run_flags |= RUN_FLAG__READ;
         Trough::add_source(Trough::SOURCE_DIR, v.get_string());
     }
-    else if ( v.is("--pcap-filter") )
+    else if ( is(v, "--pcap-filter") )
         Trough::set_filter(v.get_string());
 
-    else if ( v.is("--pcap-loop") )
+    else if ( is(v, "--pcap-loop") )
         Trough::set_loop_count(v.get_uint32());
 
-    else if ( v.is("--pcap-no-filter") )
+    else if ( is(v, "--pcap-no-filter") )
         Trough::set_filter(nullptr);
 
-    else if ( v.is("--pcap-show") )
+    else if ( is(v, "--pcap-show") )
         sc->run_flags |= RUN_FLAG__PCAP_SHOW;
 
 #ifdef PIGLET
-    else if ( v.is("--piglet") )
+    else if ( is(v, "--piglet") )
         sc->run_flags |= RUN_FLAG__PIGLET;
 #endif
 
-    else if ( v.is("--plugin-path") )
+    else if ( is(v, "--plugin-path") )
         sc->add_plugin_path(v.get_string());
 
-    else if ( v.is("--process-all-events") )
+    else if ( is(v, "--process-all-events") )
         sc->set_process_all_events(true);
 
-    else if ( v.is("--rule") )
+    else if ( is(v, "--rule") )
         parser_append_rules(v.get_string());
 
-    else if ( v.is("--rule-path") )
+    else if ( is(v, "--rule-path") )
         parser_append_includes(v.get_string());
 
-    else if ( v.is("--rule-to-hex") )
+    else if ( is(v, "--rule-to-hex") )
         dump_rule_hex(sc, v.get_string());
 
-    else if ( v.is("--rule-to-text") )
+    else if ( is(v, "--rule-to-text") )
         dump_rule_text(sc, v.get_string());
 
-    else if ( v.is("--run-prefix") )
+    else if ( is(v, "--run-prefix") )
         sc->run_prefix = v.get_string();
 
-    else if ( v.is("--script-path") )
+    else if ( is(v, "--script-path") )
         sc->add_script_path(v.get_string());
 
 #ifdef SHELL
-    else if ( v.is("--shell") )
+    else if ( is(v, "--shell") )
         sc->run_flags |= RUN_FLAG__SHELL;
 #endif
 
-    else if ( v.is("--show-file-codes") )
+    else if ( is(v, "--show-file-codes") )
         sc->run_flags |= RUN_FLAG__SHOW_FILE_CODES;
 
-    else if ( v.is("--show-plugins") )
+    else if ( is(v, "--show-plugins") )
         SnortConfig::enable_log_show_plugins();
 
-    else if ( v.is("--skip") )
+    else if ( is(v, "--skip") )
         sc->pkt_skip = v.get_uint64();
 
-    else if ( v.is("--stdin-rules") )
+    else if ( is(v, "--stdin-rules") )
         sc->stdin_rules = true;
 
-    else if ( v.is("--talos") )
+    else if ( is(v, "--talos") )
         sc->set_tweaks("talos");
 
-    else if ( v.is("--tweaks") )
+    else if ( is(v, "--tweaks") )
         sc->set_tweaks(v.get_string());
 
 #if defined(UNIT_TEST) || defined(BENCHMARK_TEST)
-    else if ( v.is("--catch-test") )
+    else if ( is(v, "--catch-test") )
         catch_set_filter(v.get_string());
 #endif
-    else if ( v.is("--version") )
+    else if ( is(v, "--version") )
         help_version(sc);
 
-    else if ( v.is("--warn-all") )
+    else if ( is(v, "--warn-all") )
         sc->warning_flags = 0xFFFFFFFF;
 
-    else if ( v.is("--warn-conf") )
+    else if ( is(v, "--warn-conf") )
         sc->warning_flags |= (1 << WARN_CONF);
 
-    else if ( v.is("--warn-conf-strict") )
+    else if ( is(v, "--warn-conf-strict") )
         sc->warning_flags |= (1 << WARN_CONF_STRICT);
 
-    else if ( v.is("--warn-daq") )
+    else if ( is(v, "--warn-daq") )
         sc->warning_flags |= (1 << WARN_DAQ);
 
-    else if ( v.is("--warn-flowbits") )
+    else if ( is(v, "--warn-flowbits") )
         sc->warning_flags |= (1 << WARN_FLOWBITS);
 
-    else if ( v.is("--warn-hosts") )
+    else if ( is(v, "--warn-hosts") )
         sc->warning_flags |= (1 << WARN_HOSTS);
 
-    else if ( v.is("--warn-plugins") )
+    else if ( is(v, "--warn-plugins") )
         sc->warning_flags |= (1 << WARN_PLUGINS);
 
-    else if ( v.is("--warn-rules") )
+    else if ( is(v, "--warn-rules") )
         sc->warning_flags |= (1 << WARN_RULES);
 
-    else if ( v.is("--warn-scripts") )
+    else if ( is(v, "--warn-scripts") )
         sc->warning_flags |= (1 << WARN_SCRIPTS);
 
-    else if ( v.is("--warn-symbols") )
+    else if ( is(v, "--warn-symbols") )
         sc->warning_flags |= (1 << WARN_SYMBOLS);
 
-    else if ( v.is("--warn-vars") )
+    else if ( is(v, "--warn-vars") )
         sc->warning_flags |= (1 << WARN_VARS);
 
-    else if ( v.is("--x2c") )
+    else if ( is(v, "--x2c") )
         x2c(v.get_uint8());
 
-    else if ( v.is("--x2s") )
+    else if ( is(v, "--x2s") )
         x2s(v.get_string());
 
     return true;
@@ -1172,6 +1190,8 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
 bool SnortModule::end(const char*, int, SnortConfig* sc)
 {
+    cli_mode = false;
+
     if ( sc->offload_threads and ThreadConfig::get_instance_max() != 1 )
         ParseError("You can not enable experimental offload with more than one packet thread.");
 

@@ -158,7 +158,10 @@ bool SFDAQModule::end(const char* fqn, int idx, SnortConfig* sc)
     else if (!strcmp(fqn, "daq"))
     {
         if ( sc->daq_config )
+        {
+            config->overlay(sc->daq_config);
             delete sc->daq_config;
+        }
 
         sc->daq_config = config;
         config = nullptr;

@@ -32,6 +32,8 @@ information about the type and use of the parameter:
 * IPS rules may also have a wild card parameter, which is indicated by a
   *.  Used for unquoted, comma-separated lists such as service and metadata.
 * The snort module has command line options starting with a -.
+  The options passed from command line override the options configured via
+  snort module.
 * $ denotes variable names.
 
 Some additional details to note:

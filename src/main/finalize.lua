@@ -101,6 +101,16 @@ function snort_config(env)
     if ( env.binder and type(env.binder) == 'table' ) then
         load_aliases(env)
     end
+
+    if ( env.snort and type(env.snort) == 'table' ) then
+        name = "snort"
+        if ( ffi.C.open_table(name, 0) ) then
+            snort_traverse(env.snort, name)
+            ffi.C.close_table(name, 0)
+        end
+        env.snort = nil
+    end
+
     snort_traverse(env)
 end
 

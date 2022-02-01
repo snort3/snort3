@@ -162,7 +162,14 @@ There many other options available too depending on the DAQ you use.
 -A cmg says to output intrusion events in "cmg" format, which has basic
 header details followed by the payload in hex and text.
 
-Note that you add to and/or override anything in your configuration file by
+Command line options have precedence over Lua configuration files. This can be
+used to make a custom run keeping all configuration files unchanged:
+
+    --daq-batch-size=32
+
+will override daq.batch_size value.
+
+Notably, you can add to and/or override anything in your configuration file by
 using the --lua command line option.  For example:
 
     --lua 'ips = { enable_builtin_rules = true }'
