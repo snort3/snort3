@@ -30,12 +30,12 @@ using namespace snort;
 
 static THREAD_LOCAL uint16_t g_event_id;
 
-uint16_t get_event_id()
+SO_PUBLIC uint16_t get_event_id()
 {
     return g_event_id;
 }
 
-void incr_event_id()
+SO_PUBLIC void incr_event_id()
 {
     g_event_id++;
 }
