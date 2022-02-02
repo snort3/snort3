@@ -223,6 +223,7 @@ void TcpStreamTracker::init_tcp_state()
     flush_policy = STREAM_FLPOLICY_IGNORE;
     reassembler.reset();
     splitter_finish_flag = false;
+    delayed_finish_flag = false;
 }
 
 //-------------------------------------------------------------------------
@@ -664,8 +665,18 @@ void TcpStreamTracker::perform_fin_recv_flush(TcpSegmentDescriptor& tsd)
 {
     if ( tsd.is_data_segment() )
         session->handle_data_segment(tsd);
-    else if ( flush_policy == STREAM_FLPOLICY_ON_DATA and SEQ_EQ(tsd.get_seq(), rcv_nxt) )
+
+    // If the packet is in-sequence, call finish and final flush on it.
+    // FIXIT-L: what do we do about out-of-sequence packets?
+    if ( flush_policy == STREAM_FLPOLICY_ON_DATA and SEQ_EQ(tsd.get_end_seq(), rcv_nxt) )
+    {
+        if (tsd.get_flow()->searching_for_service())
+        {
+            delayed_finish_flag = true;
+            return;
+        }
         reassembler.flush_queued_segments(tsd.get_flow(), true, tsd.get_pkt());
+    }
 }
 
 uint32_t TcpStreamTracker::perform_partial_flush()

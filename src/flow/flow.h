@@ -314,6 +314,11 @@ public:
         clouseau = nullptr;
     }
 
+    bool searching_for_service()
+    {
+        return clouseau != nullptr;
+    }
+
     void set_gadget(Inspector* ins)
     {
         gadget = ins;

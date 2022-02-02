@@ -262,6 +262,8 @@ public:
     { return splitter && splitter->is_paf(); }
 
     bool splitter_finish(snort::Flow* flow);
+    bool delayed_finish() const
+    { return delayed_finish_flag; }
 
     bool is_reassembly_enabled() const
     { return  ( splitter and (flush_policy != STREAM_FLPOLICY_IGNORE) ); }
@@ -357,6 +359,7 @@ protected:
     bool mac_addr_valid = false;
     bool fin_seq_set = false;  // FIXIT-M should be obviated by tcp state
     bool splitter_finish_flag = false;
+    bool delayed_finish_flag = false;
 };
 
 // <--- note -- the 'state' parameter must be a reference

@@ -92,23 +92,22 @@ bool TcpStateFinWait1::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
 bool TcpStateFinWait1::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     Flow* flow = tsd.get_flow();
+    bool is_ack_valid = false;
 
     trk.update_tracker_ack_recv(tsd);
-    if ( trk.update_on_fin_recv(tsd) )
+    if ( SEQ_GEQ(tsd.get_end_seq(), trk.r_win_base) and
+         check_for_window_slam(tsd, trk, &is_ack_valid) )
     {
-        bool is_ack_valid = false;
-        if ( check_for_window_slam(tsd, trk, &is_ack_valid) )
-        {
-            trk.perform_fin_recv_flush(tsd);
+        trk.perform_fin_recv_flush(tsd);
+        trk.update_on_fin_recv(tsd);
 
-            if ( !flow->two_way_traffic() )
-                trk.set_tf_flags(TF_FORCE_FLUSH);
+        if ( !flow->two_way_traffic() )
+            trk.set_tf_flags(TF_FORCE_FLUSH);
 
-            if ( is_ack_valid )
-                trk.set_tcp_state(TcpStreamTracker::TCP_TIME_WAIT);
-            else
-                trk.set_tcp_state(TcpStreamTracker::TCP_CLOSING);
-        }
+        if ( is_ack_valid )
+            trk.set_tcp_state(TcpStreamTracker::TCP_TIME_WAIT);
+        else
+            trk.set_tcp_state(TcpStreamTracker::TCP_CLOSING);
     }
     return true;
 }

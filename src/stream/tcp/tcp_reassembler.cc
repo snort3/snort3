@@ -1055,7 +1055,11 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
                 flags = get_forward_packet_dir(trs, p);
                 int32_t flush_amt = scan_data_pre_ack(trs, &flags, p);
                 if ( flush_amt <= 0 )
+                {
+                    if (trs.tracker->delayed_finish())
+                        flush_queued_segments(trs, p->flow, true, p);
                     break;
+                }
 
                 flushed += flush_to_seq(trs, flush_amt, p, flags);
             }
@@ -1142,7 +1146,11 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
             flags = get_reverse_packet_dir(trs, p);
             flush_amt = scan_data_post_ack(trs, &flags, p);
             if ( flush_amt <= 0 or trs.paf_state.paf == StreamSplitter::SKIP )
+            {
+                if (trs.tracker->delayed_finish())
+                    flush_queued_segments(trs, p->flow, true, p);
                 break;
+            }
 
             if ( trs.paf_state.paf == StreamSplitter::ABORT )
                 trs.tracker->splitter_finish(p->flow);
