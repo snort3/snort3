@@ -160,6 +160,8 @@ static bool relative_to_include_dir(const char* file, std::string& path)
 
 const char* get_config_file(const char* arg, std::string& file)
 {
+    assert(arg);
+
     bool absolute = (arg[0] == '/');
 
     if ( absolute )

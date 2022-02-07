@@ -89,6 +89,10 @@ function path_top()
 end
 
 function include(file)
+    if ( file == nil ) then
+        error("include nil file", 2)
+    end
+
     local cname = ffi.C.push_include_path(file)
     local fname = ffi.string(cname);
     path_push(fname)
