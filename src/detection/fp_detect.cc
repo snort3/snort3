@@ -1246,7 +1246,7 @@ static inline bool skip_raw_tcp(const Packet* p)
     if ( !(p->packet_flags & PKT_STREAM_INSERT) )
         return false;
 
-    if ( !p->flow or !p->flow->gadget )
+    if ( !p->flow or !p->flow->gadget or p->flow->is_direction_aborted(p->is_from_client()) )
         return false;
 
     if ( !p->context->conf->fast_pattern_config->get_stream_insert() )
