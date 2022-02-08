@@ -1295,7 +1295,7 @@ The HTTP version in the start line has a valid format but the version is 0.
 The HTTP version in the start line has a valid format but the version is higher than 1. This alert
 does not apply to HTTP/2 or HTTP/3 traffic.
 
-119:277
+119:278
 
 The HTTP message body is gzip encoded and the FEXTRA flag is set in the gzip header.
 
