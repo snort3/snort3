@@ -32,6 +32,7 @@
 #include "connectors/connectors.h"
 #include "detection/fp_config.h"
 #include "file_api/file_service.h"
+#include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfrf.h"
 #include "filters/sfthreshold.h"
@@ -221,6 +222,8 @@ void Snort::init(int argc, char** argv)
     sc->post_setup();
     sc->update_reload_id();
 
+    detection_filter_init(sc->detection_filter_config);
+
     const MpseApi* search_api = sc->fast_pattern_config->get_search_api();
     const MpseApi* offload_search_api = sc->fast_pattern_config->get_offload_search_api();
 
@@ -369,6 +372,7 @@ void Snort::term()
     PluginManager::release_plugins();
     ScriptManager::release_scripts();
     memory::MemoryCap::cleanup();
+    detection_filter_term();
 
     term_signals();
 }

@@ -588,7 +588,6 @@ void Analyzer::init_unprivileged()
 
     InitTag();
     EventTrace_Init();
-    detection_filter_init(sc->detection_filter_config);
 
     EventManager::open_outputs();
     IpsManager::setup_options(sc);
@@ -661,7 +660,6 @@ void Analyzer::term()
     Profiler::consolidate_stats();
 
     DetectionEngine::thread_term();
-    detection_filter_term();
     EventTrace_Term();
     CleanupTag();
     FileService::thread_term();

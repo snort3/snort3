@@ -29,8 +29,13 @@
 // and thereby controls event generation.  event_filter is evaluated after
 // the event is queued, and thereby controls which events get logged.
 
+#include "profiler/profiler.h"
+
 namespace snort
 {
+
+extern THREAD_LOCAL snort::ProfileStats detectionFilterPerfStats;
+
 struct SfIp;
 }
 

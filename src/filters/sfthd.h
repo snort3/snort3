@@ -28,6 +28,8 @@
 #include "sfip/sf_ip.h"
 #include "utils/cpp_macros.h"
 
+#include <mutex>
+
 namespace snort
 {
 class GHash;
@@ -36,6 +38,8 @@ struct SnortConfig;
 }
 
 typedef struct sf_list SF_LIST;
+
+static std::mutex sfthd_hash_mutex;
 
 /*!
     Max GEN_ID value - Set this to the Max Used by Snort, this is used for the

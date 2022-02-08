@@ -880,6 +880,9 @@ int sfthd_test_local(
     /*
      * Check for any Permanent sig_id objects for this gen_id  or add this one ...
      */
+
+    std::lock_guard<std::mutex> lock(sfthd_hash_mutex);
+
     int status = local_hash->insert((void*)&key, &data);
     if (status == HASH_INTABLE)
     {

@@ -64,6 +64,9 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
 
+    ProfileStats* get_profile() const override
+    { return &detectionFilterPerfStats; }
+
     Usage get_usage() const override
     { return DETECT; }
 

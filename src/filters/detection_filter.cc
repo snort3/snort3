@@ -32,7 +32,9 @@
 
 using namespace snort;
 
-static THREAD_LOCAL XHash* detection_filter_hash = nullptr;
+THREAD_LOCAL ProfileStats snort::detectionFilterPerfStats;
+
+XHash* detection_filter_hash = nullptr;
 
 DetectionFilterConfig* DetectionFilterConfigNew()
 {
@@ -55,6 +57,8 @@ void DetectionFilterConfigFree(DetectionFilterConfig* config)
 
 int detection_filter_test(void* pv, const SfIp* sip, const SfIp* dip, long curtime)
 {
+    RuleProfile profile(detectionFilterPerfStats);
+
     if (pv == nullptr)
         return 0;
 
