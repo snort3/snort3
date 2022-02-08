@@ -37,6 +37,8 @@ static const int REQUEST_PUBLISH_DEPTH = 2000;
 
 static const uint32_t HTTP_GID = 119;
 static const int GZIP_WINDOW_BITS = 31;
+static const uint8_t GZIP_HEADER_FLAG_OFFSET = 3;
+static const uint8_t GZIP_FLAG_FEXTRA = 0x4;
 static const int DEFLATE_WINDOW_BITS = 15;
 static const int MAX_FIELD_NAME_LENGTH = 100;
 // Plan to support max 8 xff headers
@@ -112,6 +114,9 @@ enum UriType { URI__NOT_COMPUTE=-14, URI__PROBLEMATIC=-12, URI_ASTERISK = 2, URI
 
 // Body compression types
 enum CompressId { CMP_NONE=2, CMP_GZIP, CMP_DEFLATE };
+
+// GZIP magic verification state
+enum GzipVerificationState { GZIP_TBD, GZIP_MAGIC_BAD, GZIP_MAGIC_GOOD, GZIP_FLAGS_PROCESSED };
 
 // Message section in which an IPS option provides the buffer
 enum InspectSection { IS_NONE, IS_HEADER, IS_FLEX_HEADER, IS_FIRST_BODY, IS_BODY, IS_TRAILER };
@@ -289,6 +294,7 @@ enum Infraction
     INF_JS_SCOPE_NEST_OVERFLOW = 132,
     INF_INVALID_SUBVERSION = 133,
     INF_VERSION_0 = 134,
+    INF_GZIP_FEXTRA = 135,
     INF__MAX_VALUE
 };
 
@@ -426,6 +432,7 @@ enum EventSid
     EVENT_INVALID_SUBVERSION = 275,
     EVENT_VERSION_0 = 276,
     EVENT_VERSION_HIGHER_THAN_1 = 277,
+    EVENT_GZIP_FEXTRA = 278,
     EVENT__MAX_VALUE
 };
 

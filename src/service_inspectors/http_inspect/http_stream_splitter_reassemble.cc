@@ -139,12 +139,53 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
     }
 }
 
+void HttpStreamSplitter::process_gzip_header(const uint8_t* data,
+    uint32_t length, HttpFlowData* session_data) const
+{
+    uint32_t& header_bytes_processed = session_data->gzip_header_bytes_processed[source_id];
+    uint32_t input_bytes_processed = 0;
+    if (session_data->gzip_state[source_id] == GZIP_TBD)
+    {
+        static const uint8_t gzip_magic[] = {0x1f, 0x8b, 0x08};
+        static const uint8_t magic_length = 3;
+        const uint32_t magic_cmp_len = (magic_length - header_bytes_processed) < length ?
+            (magic_length - header_bytes_processed) : length;
+
+        if (memcmp(data, gzip_magic + header_bytes_processed, magic_cmp_len))
+            session_data->gzip_state[source_id] = GZIP_MAGIC_BAD; 
+        else if (header_bytes_processed + length >= magic_length)
+            session_data->gzip_state[source_id] = GZIP_MAGIC_GOOD;
+        header_bytes_processed += magic_cmp_len;
+        input_bytes_processed += magic_cmp_len;
+    }
+    if (session_data->gzip_state[source_id] == GZIP_MAGIC_GOOD and length > input_bytes_processed)
+    {
+        const uint8_t gzip_flags = data[input_bytes_processed];
+        if (gzip_flags & GZIP_FLAG_FEXTRA)
+        {
+            *session_data->get_infractions(source_id) += INF_GZIP_FEXTRA;
+            session_data->events[source_id]->create_event(EVENT_GZIP_FEXTRA);
+        }
+        header_bytes_processed++;
+        session_data->gzip_state[source_id] = GZIP_FLAGS_PROCESSED;
+    }
+}
+
+bool HttpStreamSplitter::gzip_header_check_done(HttpFlowData* session_data) const
+{ 
+    return session_data->gzip_state[source_id] == HttpEnums::GZIP_MAGIC_BAD or
+        session_data->gzip_state[source_id] == HttpEnums::GZIP_FLAGS_PROCESSED;
+}
+
 void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, const uint8_t* data,
     uint32_t length, HttpEnums::CompressId& compression, z_stream*& compress_stream,
-    bool at_start, HttpInfractions* infractions, HttpEventGen* events, HttpFlowData* session_data)
+    bool at_start, HttpInfractions* infractions, HttpEventGen* events, HttpFlowData* session_data) const
 {
     if ((compression == CMP_GZIP) || (compression == CMP_DEFLATE))
     {
+        if (compression == CMP_GZIP and !gzip_header_check_done(session_data))
+            process_gzip_header(data, length, session_data);
+
         compress_stream->next_in = const_cast<Bytef*>(data);
         compress_stream->avail_in = length;
         compress_stream->next_out = buffer + offset;
@@ -179,6 +220,8 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
                 inflateEnd(compress_stream);
                 delete compress_stream;
                 compress_stream = nullptr;
+                // FIXIT-E - Will need to clear gzip header processing state here when we implement
+                // processing multiple gzip members in a message section
             }
             return;
         }

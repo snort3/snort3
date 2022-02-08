@@ -161,6 +161,8 @@ void HttpFlowData::half_reset(SourceId source_id)
     detection_status[source_id] = DET_REACTIVATING;
 
     compression[source_id] = CMP_NONE;
+    gzip_state[source_id] = GZIP_TBD;
+    gzip_header_bytes_processed[source_id] = 0;
     if (compress_stream[source_id] != nullptr)
     {
         inflateEnd(compress_stream[source_id]);

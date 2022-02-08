@@ -113,6 +113,9 @@ private:
     uint32_t partial_raw_bytes[2] = { 0, 0 };
     uint8_t* partial_buffer[2] = { nullptr, nullptr };
     uint32_t partial_buffer_length[2] = { 0, 0 };
+    uint32_t gzip_header_bytes_processed[2] = { 0, 0 };
+    HttpEnums::GzipVerificationState gzip_state[2] = { HttpEnums::GZIP_TBD, HttpEnums::GZIP_TBD };
+    bool gzip_header_check_done();
 
     // *** StreamSplitter internal data - scan() => reassemble()
     uint32_t num_excess[2] = { 0, 0 };

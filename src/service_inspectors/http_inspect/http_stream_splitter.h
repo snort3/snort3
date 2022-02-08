@@ -58,10 +58,13 @@ private:
     HttpCutter* get_cutter(HttpEnums::SectionType type, HttpFlowData* session) const;
     void chunk_spray(HttpFlowData* session_data, uint8_t* buffer, const uint8_t* data,
         unsigned length) const;
-    static void decompress_copy(uint8_t* buffer, uint32_t& offset, const uint8_t* data,
+    void decompress_copy(uint8_t* buffer, uint32_t& offset, const uint8_t* data,
         uint32_t length, HttpEnums::CompressId& compression, z_stream*& compress_stream,
         bool at_start, HttpInfractions* infractions, HttpEventGen* events,
-        HttpFlowData* session_data);
+        HttpFlowData* session_data) const;
+    void process_gzip_header(const uint8_t* data,
+        uint32_t length, HttpFlowData* session_data) const;
+    bool gzip_header_check_done(HttpFlowData* session_data) const;
 
     HttpInspect* const my_inspector;
     const HttpCommon::SourceId source_id;

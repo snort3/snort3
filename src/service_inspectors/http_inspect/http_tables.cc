@@ -337,6 +337,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_INVALID_SUBVERSION,         "HTTP/1 version other than 1.0 or 1.1" },
     { EVENT_VERSION_0,                  "HTTP version in start line is 0" },
     { EVENT_VERSION_HIGHER_THAN_1,      "HTTP version in start line is higher than 1" },
+    { EVENT_GZIP_FEXTRA,                "HTTP gzip body with the FEXTRA flag set" },
     { 0, nullptr }
 };
 
