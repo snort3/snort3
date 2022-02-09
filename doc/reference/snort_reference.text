@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.22.0 2022-01-31 06:12:49 EST TST
+Revision 3.1.23.0 2022-02-09 05:15:12 EST TST
 
 ---------------------------------------------------------------------
 
@@ -1420,8 +1420,8 @@ Configuration:
   * string snort.-R: <rules> include this rules file in the default
     policy
   * string snort.-r: <pcap>… (same as --pcap-list)
-  * int snort.-s = 1518: <snap> (same as --snaplen); default is 1518
-    { 68:65535 }
+  * int snort.-s: <snap> (same as --snaplen); default is 1518 {
+    0:65535 }
   * implied snort.-T: test and report on the current Snort
     configuration
   * string snort.-t: <dir> chroots process to <dir> after
@@ -1449,8 +1449,8 @@ Configuration:
     Daemon mode
   * string snort.--daq: <type> select packet acquisition module
     (default is pcap)
-  * int snort.--daq-batch-size = 64: <size> set the DAQ receive batch
-    size { 1: }
+  * int snort.--daq-batch-size: <size> set the DAQ receive batch
+    size; default is 64 { 1: }
   * string snort.--daq-dir: <dir> tell snort where to find desired
     DAQ
   * implied snort.--daq-list: list packet acquisition modules
@@ -1551,8 +1551,8 @@ Configuration:
     to read - read mode is implied
   * string snort.--pcap-dir: <dir> a directory to recurse to look for
     pcaps - read mode is implied
-  * string snort.--pcap-filter = .*cap: <filter> filter to apply when
-    getting pcaps from file or directory
+  * string snort.--pcap-filter: <filter> filter to apply when getting
+    pcaps from file or directory
   * int snort.--pcap-loop: <count> read all pcaps <count> times; 0
     will read until Snort is terminated { 0:max32 }
   * implied snort.--pcap-no-filter: reset to use no filter when
@@ -1580,8 +1580,8 @@ Configuration:
     directory, including file, and config file respectively
   * implied snort.--show-plugins: list module and plugin versions
   * int snort.--skip: <n> skip 1st n packets { 0:max53 }
-  * int snort.--snaplen = 1518: <snap> set snaplen of packet (same as
-    -s) { 68:65535 }
+  * int snort.--snaplen: <snap> set snaplen of packet (same as -s) {
+    0:65535 }
   * implied snort.--stdin-rules: read rules from stdin until EOF or a
     line starting with END is read
   * implied snort.--talos: enable Talos tweak (same as --tweaks
@@ -3979,6 +3979,7 @@ Rules:
   * 119:276 (http_inspect) HTTP version in start line is 0
   * 119:277 (http_inspect) HTTP version in start line is higher than
     1
+  * 119:278 (http_inspect) HTTP gzip body with the FEXTRA flag set
 
 Peg counts:
 
@@ -8485,7 +8486,7 @@ these libraries see the Getting Started section of the manual.
   * -q quiet mode - suppress normal logging on stdout
   * -R <rules> include this rules file in the default policy
   * -r <pcap>… (same as --pcap-list)
-  * -s <snap> (same as --snaplen); default is 1518 (68:65535)
+  * -s <snap> (same as --snaplen); default is 1518 (0:65535)
   * -T test and report on the current Snort configuration
   * -t <dir> chroots process to <dir> after initialization
   * -U use UTC for timestamps
@@ -8506,7 +8507,8 @@ these libraries see the Getting Started section of the manual.
   * --control-socket <file> to create unix socket
   * --create-pidfile create PID file, even when not in Daemon mode
   * --daq <type> select packet acquisition module (default is pcap)
-  * --daq-batch-size <size> set the DAQ receive batch size (1:)
+  * --daq-batch-size <size> set the DAQ receive batch size; default
+    is 64 (1:)
   * --daq-dir <dir> tell snort where to find desired DAQ
   * --daq-list list packet acquisition modules available in optional
     dir, default is static modules only
@@ -8622,7 +8624,7 @@ these libraries see the Getting Started section of the manual.
     file, and config file respectively
   * --show-plugins list module and plugin versions
   * --skip <n> skip 1st n packets (0:max53)
-  * --snaplen <snap> set snaplen of packet (same as -s) (68:65535)
+  * --snaplen <snap> set snaplen of packet (same as -s) (0:65535)
   * --stdin-rules read rules from stdin until EOF or a line starting
     with END is read
   * --talos enable Talos tweak (same as --tweaks talos)
@@ -10233,8 +10235,8 @@ these libraries see the Getting Started section of the manual.
     hex)
   * implied snort.--create-pidfile: create PID file, even when not in
     Daemon mode
-  * int snort.--daq-batch-size = 64: <size> set the DAQ receive batch
-    size { 1: }
+  * int snort.--daq-batch-size: <size> set the DAQ receive batch
+    size; default is 64 { 1: }
   * string snort.--daq-dir: <dir> tell snort where to find desired
     DAQ
   * implied snort.--daq-list: list packet acquisition modules
@@ -10358,8 +10360,8 @@ these libraries see the Getting Started section of the manual.
     pcaps - read mode is implied
   * string snort.--pcap-file: <file> file that contains a list of
     pcaps to read - read mode is implied
-  * string snort.--pcap-filter = .*cap: <filter> filter to apply when
-    getting pcaps from file or directory
+  * string snort.--pcap-filter: <filter> filter to apply when getting
+    pcaps from file or directory
   * string snort.--pcap-list: <list> a space separated list of pcaps
     to read - read mode is implied
   * int snort.--pcap-loop: <count> read all pcaps <count> times; 0
@@ -10386,8 +10388,6 @@ these libraries see the Getting Started section of the manual.
     stdout for text rule on stdin (specify delimiter or
     [Snort_SO_Rule] will be used) { 16 }
   * string snort.--run-prefix: <pfx> prepend this to each output file
-  * int snort.-s = 1518: <snap> (same as --snaplen); default is 1518
-    { 68:65535 }
   * string snort.--script-path: <path> to a luajit script or
     directory containing luajit scripts
   * implied snort.--shell: enable the interactive command line
@@ -10396,8 +10396,10 @@ these libraries see the Getting Started section of the manual.
     directory, including file, and config file respectively
   * implied snort.--show-plugins: list module and plugin versions
   * int snort.--skip: <n> skip 1st n packets { 0:max53 }
-  * int snort.--snaplen = 1518: <snap> set snaplen of packet (same as
-    -s) { 68:65535 }
+  * int snort.--snaplen: <snap> set snaplen of packet (same as -s) {
+    0:65535 }
+  * int snort.-s: <snap> (same as --snaplen); default is 1518 {
+    0:65535 }
   * implied snort.--stdin-rules: read rules from stdin until EOF or a
     line starting with END is read
   * implied snort.--talos: enable Talos tweak (same as --tweaks
@@ -12467,12 +12469,12 @@ session.
 The TCP packet is invalid because it doesn’t have a SYN, ACK, or RST
 flag set.
 
-116:424 (pbb) truncated ethernet header
+116:424 (eth) truncated ethernet header
 
 The packet length is less than the minimum ethernet header size (14
 bytes)
 
-116:424 (pbb) truncated ethernet header
+116:424 (eth) truncated ethernet header
 
 A truncated ethernet header was detected.
 
@@ -13398,6 +13400,11 @@ is 0.
 The HTTP version in the start line has a valid format but the version
 is higher than 1. This alert does not apply to HTTP/2 or HTTP/3
 traffic.
+
+119:278 (http_inspect) HTTP gzip body with the FEXTRA flag set
+
+The HTTP message body is gzip encoded and the FEXTRA flag is set in
+the gzip header.
 
 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
 

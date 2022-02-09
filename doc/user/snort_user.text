@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.22.0 2022-01-31 06:12:35 EST TST
+Revision 3.1.23.0 2022-02-09 05:15:01 EST TST
 
 ---------------------------------------------------------------------
 
@@ -266,8 +266,17 @@ the DAQ you use.
 -A cmg says to output intrusion events in "cmg" format, which has
 basic header details followed by the payload in hex and text.
 
-Note that you add to and/or override anything in your configuration
-file by using the --lua command line option. For example:
+Command line options have precedence over Lua configuration files.
+This can be used to make a custom run keeping all configuration files
+unchanged:
+
+--daq-batch-size=32
+
+will override daq.batch_size value.
+
+Notably, you can add to and/or override anything in your
+configuration file by using the --lua command line option. For
+example:
 
 --lua 'ips = { enable_builtin_rules = true }'
 
@@ -683,7 +692,9 @@ additional information about the type and use of the parameter:
   * IPS rules may also have a wild card parameter, which is indicated
     by a *. Used for unquoted, comma-separated lists such as service
     and metadata.
-  * The snort module has command line options starting with a -.
+  * The snort module has command line options starting with a -. The
+    options passed from command line override the options configured
+    via snort module.
   * $ denotes variable names.
 
 Some additional details to note:
@@ -1147,6 +1158,10 @@ General Use
 
 Lua Configuration
 
+  * Some parameters could be configured via a command line option or
+    snort module. In this case a command line option has the highest
+    precedence, in turn, snort module configuration has precedence
+    over other modules.
   * Configure the wizard and default bindings will be created based
     on configured inspectors. No need to explicitly bind ports in
     this case.
@@ -1331,6 +1346,7 @@ a restart:
   * process.set_uid
   * snort.--bpf
   * snort.-l
+  * trace.output
 
 In addition, the following scenarios require a restart:
 
@@ -6499,7 +6515,8 @@ configuring and using the bundled DAQ modules.
 
 As with a number of features in Snort 3, the LibDAQ and DAQ module
 configuration may be controlled using either the command line options
-or by configuring the daq Snort module in the Lua configuration.
+or by configuring the daq Snort module in the Lua configuration
+(command line option has higher precedence).
 
 DAQ modules may be statically built into Snort, but the more common
 case is to use DAQ modules that have been built as dynamically

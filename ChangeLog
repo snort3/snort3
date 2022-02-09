@@ -1,3 +1,22 @@
+2022/02/09 - 3.1.23.0
+
+detection: add dir abort check in skip_raw_tcp
+doc: add notes about CLI/Lua precedence
+doc: fix incorrect http builtin rule sid
+event: make apis SO_PUBLIC to access in .so
+filters: allow detection filter to sum events across threads
+http_inspect: HttpStreamSplitter::reassemble verifies gzip file magic and checks for FEXTRA flag
+main: ignore Snort module's option if it duplicates CLI option
+main: parse snort module before others
+main: remove default values for other-module parameters in snort module
+main: stop with error on include(nil) attempt
+packet_io: decrease daq module's parameters priority
+stream: defer flush_queued_segments() if flow->clouseau
+stream_tcp: better place for setting delayed_finish_flag
+stream_tcp: fix a bug in which in some cases we did not call splitter finish() in each direction, by calling flush_queued_segments() in perform_fin_recv_flush() on FIN with data packets
+stream_tcp: introduce TcpStreamTracker::delayed_finish_flag and call splitter finish from flush_on_data_policy if delayed_finish_flag is true
+stream_tcp: wrap flow->clouseau in searching_for_service()
+
 2022/01/31 - 3.1.22.0
 
 appid: give priority to custom process to app mappings over ODP mappings
