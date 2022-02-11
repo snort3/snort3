@@ -233,7 +233,7 @@ A config option to set the limit manually:
  * http_inspect.js_norm_identifier_depth.
 
 Identifiers from the ignore list will be placed as is, without substitution. Starting with 
-the listed identifier, any chain of dot acessors, brackets and function calls will be kept
+the listed identifier, any chain of dot accessors, brackets and function calls will be kept
 intact.
 For example:
  * console.log("bar")

@@ -38,7 +38,7 @@ TcpConnector adds a few session setup configuration elements:
 
 * address = '<addr>' - used for 'call' setup to specify the partner
 
-* base_port = port - used to contruct the actual port number for 'call' and
+* base_port = port - used to construct the actual port number for 'call' and
         'answer' modes.  Actual port used is (base_port + instance_id).
 
 An example segment of TcpConnector configuration:

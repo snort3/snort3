@@ -180,7 +180,7 @@ All any-any port rules are managed separately, and added in to the final
 rules lists of each port group after this analysis. Rules defined with
 ranges are no longer considered any-any rules for the purpose of organizing
 port-rule groupings.  This should help prevent some cross fertilization of
-rule groups with rules that are unneccessary, this causes rule group sizes
+rule groups with rules that are unnecessary, this causes rule group sizes
 to bloat and performance to slow.
 
 *Hierarchy*
