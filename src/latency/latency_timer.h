@@ -37,7 +37,7 @@ public:
     { return sw.get(); }
 
     bool timed_out() const
-    { return elapsed() > max_time; }
+    { return (max_time > CLOCK_ZERO) && (elapsed() > max_time); }
 
 private:
     duration max_time;
