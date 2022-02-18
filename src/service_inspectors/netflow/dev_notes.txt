@@ -1,0 +1,11 @@
+The NetFlow inspector inspects Cisco NetFlow version 5 and 9 traffic. When the device
+running Snort3 is placed between a NetFlow collector and exporter, this allows Snort
+to generate RNA events based on exported NetFlow flows.
+
+By means of a template and a record cache, Snort3 keeps track of new and existing
+flows, as well as their associated services - similar to host_cache. Events generated
+follow the same format as their corresponding RNA events, such as new_host, new_network_proto,
+etc.
+
+Note that these caches are currently thread-local for performance reasons, so the occasional
+duplicate event is expected.
