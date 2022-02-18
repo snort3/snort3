@@ -1,10 +1,13 @@
 A collection of several different event and detection filtering function.
 The types of filters implemented here include:
 
-Detection Filter - One of the last steps of the rule evaluation process.  A
+Detection Filter - One of the last steps of the rule evaluation process. A
 detection filter can prevent a rule from firing based on a simple
 threshold.  For example, only generate an alert if the filter has been
-evaluated N times in M time period.
+evaluated N times in M time period. Events are accumulated into a
+multithreaded hash structure, to allow for real-time eventing as soon
+as the threshold value is crossed, regardless of which thread(s) processed
+the prior, non-eventing packets.
 
 Rate Filter - Based on configuration options, generically track multiple
 occurrences of the same event/address tuples.  The configuration can
