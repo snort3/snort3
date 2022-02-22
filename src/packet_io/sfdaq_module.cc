@@ -253,12 +253,21 @@ void SFDAQModule::prep_counts()
     daq_stats.analyzed = daq_stats_delta.packets_received;
     daq_stats.dropped = daq_stats_delta.hw_packets_dropped;
     daq_stats.filtered = daq_stats_delta.packets_filtered;
-    daq_stats.outstanding = daq_stats_delta.hw_packets_received -
-        daq_stats_delta.packets_filtered - daq_stats_delta.packets_received;
     daq_stats.injected =  daq_stats_delta.packets_injected;
 
     for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
         daq_stats.verdicts[i] = daq_stats_delta.verdicts[i];
+
+    // If DAQ returns HW packets counter less than SW packets counter,
+    // Snort treats that as no outstanding packets left.
+    if (daq_stats_delta.hw_packets_received >
+        (daq_stats_delta.packets_filtered + daq_stats_delta.packets_received))
+    {
+        daq_stats.outstanding = daq_stats_delta.hw_packets_received -
+            daq_stats_delta.packets_filtered - daq_stats_delta.packets_received;
+    }
+    else
+        daq_stats.outstanding = 0;
 
     prev_daq_stats = new_daq_stats;
 }
