@@ -34,6 +34,7 @@ public:
     void analyze() override;
     bool detection_required() const override { return false; }
     const Field& get_version() const { return version; }
+    HttpEnums::VersionId get_version_id() const { return version_id; }
 
 protected:
     HttpMsgStart(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,

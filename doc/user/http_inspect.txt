@@ -685,7 +685,7 @@ The vba_data will contain the decompressed Visual Basic for Applications
 (vba) macro data embedded in MS office files. It requires decompress_zip
 and decompress_vba options enabled.
 
-===== num_headers and num_trailers
+===== http_num_headers and http_num_trailers
 
 These rule options are used to check the number of headers and
 trailers, respectively. Checks available: equal to "=" or just value,

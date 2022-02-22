@@ -336,6 +336,12 @@ generated and processing continues normally. If there is no separator at all tha
 Then we return to #1 as the next chunk begins. In particular extra separators beyond the two
 expected are attributed to the beginning of the next chunk.
 
+Rule options:
+
+HttpIpsOption is the base class for http rule options. It supports the commonly used parameters: 
+field, request, with_body, with_header and with_trailer. HttpBufferIpsOption is a rule option that 
+sets a buffer. It implements most of the rule options.
+
 Test tool usage instructions:
 
 The HI test tool consists of two features. test_output provides extensive information about the

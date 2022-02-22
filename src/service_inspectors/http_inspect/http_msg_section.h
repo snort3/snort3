@@ -30,6 +30,7 @@
 #include "http_field.h"
 #include "http_flow_data.h"
 #include "http_module.h"
+#include "http_param.h"
 #include "http_transaction.h"
 
 //-------------------------------------------------------------------------
@@ -67,7 +68,8 @@ public:
     virtual void update_flow() = 0;
 
     const Field& get_classic_buffer(unsigned id, uint64_t sub_id, uint64_t form);
-    const Field& get_classic_buffer(Cursor& c, const HttpBufferInfo& buf);
+    const Field& get_classic_buffer(const HttpBufferInfo& buf);
+    const Field& get_param_buffer(Cursor& c, const HttpParam& param);
 
     HttpEnums::MethodId get_method_id() const { return method_id; }
 
@@ -81,7 +83,7 @@ public:
 
     uint64_t get_transaction_id() { return trans_num; }
     int32_t get_num_headers(const HttpBufferInfo& buf) const;
-    HttpEnums::VersionId get_version_id() const { return version_id; }
+    HttpEnums::VersionId get_version_id(const HttpBufferInfo& buf) const;
 
     HttpMsgSection* next = nullptr;
 

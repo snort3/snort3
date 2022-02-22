@@ -32,24 +32,18 @@
 
 class HttpInspect;
 
-enum PsIdx { PSI_CLIENT_BODY, PSI_COOKIE, PSI_HEADER, PSI_METHOD, PSI_PARAM,
-    PSI_RAW_BODY, PSI_RAW_COOKIE, PSI_RAW_HEADER, PSI_RAW_REQUEST, PSI_RAW_STATUS,
-    PSI_RAW_TRAILER, PSI_RAW_URI, PSI_STAT_CODE, PSI_STAT_MSG, PSI_TRAILER,
-    PSI_TRUE_IP, PSI_URI, PSI_VERSION, PSI_JS_DATA, PSI_VBA_DATA,
-    PSI_RANGE_NUM_HDRS, PSI_RANGE_NUM_TRAILERS, PSI_VERSION_MATCH, PSI_MAX };
-
 class HttpRuleOptModule : public snort::Module
 {
 public:
     HttpRuleOptModule(const char* key_, const char* help, HttpEnums::HTTP_RULE_OPT rule_opt_index_,
-        snort::CursorActionType cat_, PsIdx psi_)
-        : snort::Module(key_, help), key(key_), rule_opt_index(rule_opt_index_),
-          cat(cat_), psi(psi_) {}
+        snort::CursorActionType cat_)
+        : snort::Module(key_, help), rule_opt_index(rule_opt_index_), key(key_),
+          cat(cat_) {}
     HttpRuleOptModule(const char* key_, const char* help, HttpEnums::HTTP_RULE_OPT rule_opt_index_,
-        snort::CursorActionType cat_, PsIdx psi_, const snort::Parameter params[])
-        : snort::Module(key_, help, params), key(key_), rule_opt_index(rule_opt_index_),
-        cat(cat_), psi(psi_) {}
-    snort::ProfileStats* get_profile() const override { return &http_ps[psi]; }
+        snort::CursorActionType cat_, const snort::Parameter params[])
+        : snort::Module(key_, help, params), rule_opt_index(rule_opt_index_),
+        key(key_), cat(cat_) {}
+    snort::ProfileStats* get_profile() const = 0;
     static void mod_dtor(snort::Module* m) { delete m; }
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
@@ -58,75 +52,53 @@ public:
     Usage get_usage() const override
     { return DETECT; }
 
+protected:
+    HttpEnums::InspectSection inspect_section;
+    const HttpEnums::HTTP_RULE_OPT rule_opt_index;
+    const char* const key;
+    uint64_t sub_id;
+    bool is_trailer_opt;          // used by ::end for with_* validation
+
 private:
     friend class HttpIpsOption;
-    static THREAD_LOCAL std::array<snort::ProfileStats, PsIdx::PSI_MAX> http_ps;
-    static const int version_size = HttpEnums::VERS__MAX - HttpEnums::VERS__MIN + 1;
 
     struct HttpRuleParaList
     {
     public:
         std::string field;        // provide buffer containing specific header field
-        std::string param;        // provide buffer containing specific parameter
-        bool nocase;              // case insensitive match
         bool request;             // provide buffer from request not response
         bool with_header;         // provide buffer with a later section than it appears in
         bool with_body;
         bool with_trailer;
-        bool scheme;              // provide buffer with one of the six URI subcomponents
-        bool host;
-        bool port;
-        bool path;
-        bool query;
-        bool fragment;
-        snort::RangeCheck range;
-        std::bitset<version_size> version_flags;
 
         void reset();
     };
 
-    const char* const key;
-    const HttpEnums::HTTP_RULE_OPT rule_opt_index;
     const snort::CursorActionType cat;
-    const PsIdx psi;
-
     HttpRuleParaList para_list;
-    HttpEnums::InspectSection inspect_section;
-    uint64_t sub_id;
     uint64_t form;
-
-    bool parse_version_list(snort::Value& v);
 };
 
 class HttpIpsOption : public snort::IpsOption
 {
 public:
-    HttpIpsOption(const HttpRuleOptModule* cm) :
-        snort::IpsOption(cm->key, RULE_OPTION_TYPE_BUFFER_SET),
-        key(cm->key), cat(cm->cat), psi(cm->psi),
-        inspect_section(cm->inspect_section),
-        buffer_info(cm->rule_opt_index, cm->sub_id, cm->form,
-        cm->para_list.param, cm->para_list.nocase), range(cm->para_list.range),
-        version_flags(cm->para_list.version_flags){}
+    HttpIpsOption(const HttpRuleOptModule* cm, option_type_t type) :
+        snort::IpsOption(cm->key, type),
+        buffer_info(cm->rule_opt_index, cm->sub_id, cm->form),
+        cat(cm->cat), inspect_section(cm->inspect_section) {}
     snort::CursorActionType get_cursor_type() const override { return cat; }
-    EvalStatus eval(Cursor&, snort::Packet*) override;
+    EvalStatus eval(Cursor&, snort::Packet*) = 0;
     uint32_t hash() const override;
     bool operator==(const snort::IpsOption& ips) const override;
-    bool retry(Cursor&, const Cursor&) override;
-    static IpsOption* opt_ctor(snort::Module* m, OptTreeNode*)
-        { return new HttpIpsOption((HttpRuleOptModule*)m); }
-    static void opt_dtor(snort::IpsOption* p) { delete p; }
+
+protected:
+    const HttpBufferInfo buffer_info;
+  
+    HttpInspect const* eval_helper(snort::Packet* p);
 
 private:
-    const char* const key;
     const snort::CursorActionType cat;
-    const PsIdx psi;
     const HttpEnums::InspectSection inspect_section;
-    HttpBufferInfo buffer_info;
-    const snort::RangeCheck range;
-    const std::bitset<HttpRuleOptModule::version_size> version_flags;
-
-    IpsOption::EvalStatus eval_version_match(snort::Packet* p, const HttpInspect* hi);
 };
 
 #endif

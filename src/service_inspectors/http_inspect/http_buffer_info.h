@@ -20,37 +20,20 @@
 #ifndef HTTP_BUFFER_INFO_H
 #define HTTP_BUFFER_INFO_H
 
-#include <string>
-
-#include "http_enum.h"
-#include "http_param.h"
-
 class HttpBufferInfo
 {
 public:
     HttpBufferInfo(unsigned type_, uint64_t sub_id_ = 0, uint64_t form_ = 0)
         : type(type_), sub_id(sub_id_), form(form_) {}
 
-    HttpBufferInfo(unsigned type_, uint64_t sub_id_, uint64_t form_,
-        const std::string& param_str, bool nocase)
-        : type(type_), sub_id(sub_id_), form(form_)
-    {
-        if (param_str.length() > 0)
-            param = new HttpParam(param_str, nocase);
-    }
-
-    ~HttpBufferInfo()
-    { delete param; }
-
     uint32_t hash() const;
 
     bool operator==(const HttpBufferInfo& rhs) const;
 
 public:
-    unsigned type;
-    uint64_t sub_id;
-    uint64_t form;
-    HttpParam* param = nullptr;
+    const unsigned type;
+    const uint64_t sub_id;
+    const uint64_t form;
 };
 
 #endif

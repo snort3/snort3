@@ -72,6 +72,14 @@ set (FILE_LIST
     http_event.h
     http_js_norm.cc
     http_js_norm.h
+    ips_http_buffer.cc
+    ips_http_buffer.h
+    ips_http_num_hdrs.cc
+    ips_http_num_hdrs.h
+    ips_http_param.cc
+    ips_http_param.h
+    ips_http_version.cc
+    ips_http_version.h
 )
 
 #if (STATIC_INSPECTORS)

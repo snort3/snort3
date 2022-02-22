@@ -48,6 +48,7 @@
 #include "http_msg_request.h"
 #include "http_msg_status.h"
 #include "http_msg_trailer.h"
+#include "http_param.h"
 #include "http_test_manager.h"
 
 using namespace snort;
@@ -261,10 +262,9 @@ bool HttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffe
 
 bool HttpInspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
 {
-    Cursor c;
     HttpBufferInfo buffer_info(id);
 
-    const Field& http_buffer = http_get_buf(c, p, buffer_info);
+    const Field& http_buffer = http_get_buf(p, buffer_info);
 
     if (http_buffer.length() <= 0)
         return false;
@@ -274,15 +274,25 @@ bool HttpInspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
     return true;
 }
 
-const Field& HttpInspect::http_get_buf(Cursor& c, Packet* p,
-    const HttpBufferInfo& buffer_info) const
+const Field& HttpInspect::http_get_buf(Packet* p, const HttpBufferInfo& buffer_info) const
 {
     HttpMsgSection* const current_section = HttpContextData::get_snapshot(p);
 
     if (current_section == nullptr)
         return Field::FIELD_NULL;
 
-    return current_section->get_classic_buffer(c, buffer_info);
+    return current_section->get_classic_buffer(buffer_info);
+}
+
+const Field& HttpInspect::http_get_param_buf(Cursor& c, Packet* p,
+    const HttpParam& param) const
+{
+    HttpMsgSection* const current_section = HttpContextData::get_snapshot(p);
+
+    if (current_section == nullptr)
+        return Field::FIELD_NULL;
+
+    return current_section->get_param_buffer(c, param);
 }
 
 int32_t HttpInspect::http_get_num_headers(Packet* p,
@@ -296,14 +306,15 @@ int32_t HttpInspect::http_get_num_headers(Packet* p,
     return current_section->get_num_headers(buffer_info);
 }
 
-VersionId HttpInspect::http_get_version_id(Packet* p) const
+VersionId HttpInspect::http_get_version_id(Packet* p,
+    const HttpBufferInfo& buffer_info) const
 {
     const HttpMsgSection* const current_section = HttpContextData::get_snapshot(p);
 
     if (current_section == nullptr)
         return VERS__NOT_PRESENT;
 
-    return current_section->get_version_id();
+    return current_section->get_version_id(buffer_info);
 }
 
 bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)

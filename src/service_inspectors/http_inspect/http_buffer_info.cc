@@ -33,37 +33,16 @@ uint32_t HttpBufferInfo::hash() const
     uint32_t c = sub_id & 0xFFFFFFFF;
     uint32_t d = form >> 32;
     uint32_t e = form & 0xFFFFFFFF;
-    uint32_t f = 0;
     mix(a,b,c);
-    if (param)
-        f = param->is_nocase() ? 1 : 0;
-    mix(d,e,f);
-    mix(a,c,f);
-    if (param)
-        mix_str(a,c,f,param->c_str(),param->length());
-    finalize(a,c,f);
-    return f;
+    mix(d,e,a);
+    finalize(d,e,a);
+    return d;
 }
 
 bool HttpBufferInfo::operator==(const HttpBufferInfo& rhs) const
 {
-    bool param_match = false;
-
-    if (param && rhs.param)
-    {
-        HttpParam& lhs_param = *param;
-        HttpParam& rhs_param = *rhs.param;
-
-        param_match = (lhs_param == rhs_param);
-    }
-    else if (!param && !rhs.param)
-    {
-        param_match = true;
-    }
-
-    return type == rhs.type &&
-        sub_id == rhs.sub_id &&
-        form == rhs.form &&
-        param_match;
+    return (type == rhs.type &&
+         sub_id == rhs.sub_id &&
+         form == rhs.form);
 }
 
