@@ -59,7 +59,6 @@ struct BaseStats
      PegCount timeout_prunes;
      PegCount excess_prunes;
      PegCount uni_prunes;
-     PegCount preemptive_prunes;
      PegCount memcap_prunes;
      PegCount ha_prunes;
      PegCount stale_prunes;
