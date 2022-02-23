@@ -43,7 +43,7 @@ public:
         snort::CursorActionType cat_, const snort::Parameter params[])
         : snort::Module(key_, help, params), rule_opt_index(rule_opt_index_),
         key(key_), cat(cat_) {}
-    snort::ProfileStats* get_profile() const = 0;
+    snort::ProfileStats* get_profile() const override = 0;
     static void mod_dtor(snort::Module* m) { delete m; }
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
@@ -87,7 +87,7 @@ public:
         buffer_info(cm->rule_opt_index, cm->sub_id, cm->form),
         cat(cm->cat), inspect_section(cm->inspect_section) {}
     snort::CursorActionType get_cursor_type() const override { return cat; }
-    EvalStatus eval(Cursor&, snort::Packet*) = 0;
+    EvalStatus eval(Cursor&, snort::Packet*) override = 0;
     uint32_t hash() const override;
     bool operator==(const snort::IpsOption& ips) const override;
 
