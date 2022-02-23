@@ -1,3 +1,14 @@
+2022/02/23 - 3.1.24.0
+
+detection_filter: update dev notes to show multithreaded behavior
+doc: fix typos in text. Thanks to Greg Myers <myersg86> for reporting the issue.
+http_inspect: refactor HttpIpsOption
+latency: disabling time out functionality on implicit enable
+mime: stop setting the file_data buffer for raw non-file MIME parts
+netflow: add dev_notes.txt
+sfdaq: fix for underflow of outstanding counter
+stream: Remove preemptive prunes peg count
+
 2022/02/09 - 3.1.23.0
 
 detection: add dir abort check in skip_raw_tcp

@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.23.0 2022-02-09 05:15:12 EST TST
+Revision 3.1.24.0 2022-02-23 09:29:36 EST TST
 
 ---------------------------------------------------------------------
 
@@ -199,41 +199,41 @@ Table of Contents
     7.48. http_cookie
     7.49. http_header
     7.50. http_method
-    7.51. http_param
-    7.52. http_raw_body
-    7.53. http_raw_cookie
-    7.54. http_raw_header
-    7.55. http_raw_request
-    7.56. http_raw_status
-    7.57. http_raw_trailer
-    7.58. http_raw_uri
-    7.59. http_stat_code
-    7.60. http_stat_msg
-    7.61. http_trailer
-    7.62. http_true_ip
-    7.63. http_uri
-    7.64. http_version
-    7.65. http_version_match
-    7.66. icmp_id
-    7.67. icmp_seq
-    7.68. icode
-    7.69. id
-    7.70. iec104_apci_type
-    7.71. iec104_asdu_func
-    7.72. ip_proto
-    7.73. ipopts
-    7.74. isdataat
-    7.75. itype
-    7.76. js_data
-    7.77. md5
-    7.78. metadata
-    7.79. modbus_data
-    7.80. modbus_func
-    7.81. modbus_unit
-    7.82. msg
-    7.83. mss
-    7.84. num_headers
-    7.85. num_trailers
+    7.51. http_num_headers
+    7.52. http_num_trailers
+    7.53. http_param
+    7.54. http_raw_body
+    7.55. http_raw_cookie
+    7.56. http_raw_header
+    7.57. http_raw_request
+    7.58. http_raw_status
+    7.59. http_raw_trailer
+    7.60. http_raw_uri
+    7.61. http_stat_code
+    7.62. http_stat_msg
+    7.63. http_trailer
+    7.64. http_true_ip
+    7.65. http_uri
+    7.66. http_version
+    7.67. http_version_match
+    7.68. icmp_id
+    7.69. icmp_seq
+    7.70. icode
+    7.71. id
+    7.72. iec104_apci_type
+    7.73. iec104_asdu_func
+    7.74. ip_proto
+    7.75. ipopts
+    7.76. isdataat
+    7.77. itype
+    7.78. js_data
+    7.79. md5
+    7.80. metadata
+    7.81. modbus_data
+    7.82. modbus_func
+    7.83. modbus_unit
+    7.84. msg
+    7.85. mss
     7.86. pcre
     7.87. pkt_data
     7.88. pkt_num
@@ -5441,8 +5441,6 @@ Peg counts:
   * stream.idle_prunes: sessions pruned due to timeout (sum)
   * stream.excess_prunes: sessions pruned due to excess (sum)
   * stream.uni_prunes: uni sessions pruned (sum)
-  * stream.preemptive_prunes: sessions pruned during preemptive
-    pruning (deprecated) (sum)
   * stream.memcap_prunes: sessions pruned due to memcap (sum)
   * stream.ha_prunes: sessions pruned by high availability sync (sum)
   * stream.stale_prunes: sessions pruned due to stale connection
@@ -6842,7 +6840,55 @@ Configuration:
     message trailers
 
 
-7.51. http_param
+7.51. http_num_headers
+
+--------------
+
+Help: rule option to perform range check on number of headers
+
+Type: ips_option
+
+Usage: detect
+
+Configuration:
+
+  * interval http_num_headers.~range: check that number of headers of
+    current buffer are in given range { 0:200 }
+  * implied http_num_headers.request: match against the version from
+    the request message even when examining the response
+  * implied http_num_headers.with_header: this rule is limited to
+    examining HTTP message headers
+  * implied http_num_headers.with_body: parts of this rule examine
+    HTTP message body
+  * implied http_num_headers.with_trailer: parts of this rule examine
+    HTTP message trailers
+
+
+7.52. http_num_trailers
+
+--------------
+
+Help: rule option to perform range check on number of trailers
+
+Type: ips_option
+
+Usage: detect
+
+Configuration:
+
+  * interval http_num_trailers.~range: check that number of headers
+    of current buffer are in given range { 0:200 }
+  * implied http_num_trailers.request: match against the version from
+    the request message even when examining the response
+  * implied http_num_trailers.with_header: this rule is limited to
+    examining HTTP message headers
+  * implied http_num_trailers.with_body: parts of this rule examine
+    HTTP message body
+  * implied http_num_trailers.with_trailer: parts of this rule
+    examine HTTP message trailers
+
+
+7.53. http_param
 
 --------------
 
@@ -6859,7 +6905,7 @@ Configuration:
   * implied http_param.nocase: case insensitive match
 
 
-7.52. http_raw_body
+7.54. http_raw_body
 
 --------------
 
@@ -6871,7 +6917,7 @@ Type: ips_option
 Usage: detect
 
 
-7.53. http_raw_cookie
+7.55. http_raw_cookie
 
 --------------
 
@@ -6894,7 +6940,7 @@ Configuration:
     HTTP message trailers
 
 
-7.54. http_raw_header
+7.56. http_raw_header
 
 --------------
 
@@ -6919,7 +6965,7 @@ Configuration:
     HTTP message trailers
 
 
-7.55. http_raw_request
+7.57. http_raw_request
 
 --------------
 
@@ -6940,7 +6986,7 @@ Configuration:
     HTTP message trailers
 
 
-7.56. http_raw_status
+7.58. http_raw_status
 
 --------------
 
@@ -6959,7 +7005,7 @@ Configuration:
     HTTP message trailers
 
 
-7.57. http_raw_trailer
+7.59. http_raw_trailer
 
 --------------
 
@@ -6982,7 +7028,7 @@ Configuration:
     HTTP response message body (must be combined with request)
 
 
-7.58. http_raw_uri
+7.60. http_raw_uri
 
 --------------
 
@@ -7011,7 +7057,7 @@ Configuration:
     URI only
 
 
-7.59. http_stat_code
+7.61. http_stat_code
 
 --------------
 
@@ -7029,7 +7075,7 @@ Configuration:
     HTTP message trailers
 
 
-7.60. http_stat_msg
+7.62. http_stat_msg
 
 --------------
 
@@ -7048,7 +7094,7 @@ Configuration:
     HTTP message trailers
 
 
-7.61. http_trailer
+7.63. http_trailer
 
 --------------
 
@@ -7070,7 +7116,7 @@ Configuration:
     message body (must be combined with request)
 
 
-7.62. http_true_ip
+7.64. http_true_ip
 
 --------------
 
@@ -7091,7 +7137,7 @@ Configuration:
     HTTP message trailers
 
 
-7.63. http_uri
+7.65. http_uri
 
 --------------
 
@@ -7119,7 +7165,7 @@ Configuration:
     only
 
 
-7.64. http_version
+7.66. http_version
 
 --------------
 
@@ -7141,7 +7187,7 @@ Configuration:
     HTTP message trailers
 
 
-7.65. http_version_match
+7.67. http_version_match
 
 --------------
 
@@ -7155,9 +7201,17 @@ Configuration:
 
   * string http_version_match.~version_list: space-separated list of
     versions to match
+  * implied http_version_match.request: match against the version
+    from the request message even when examining the response
+  * implied http_version_match.with_header: this rule is limited to
+    examining HTTP message headers
+  * implied http_version_match.with_body: parts of this rule examine
+    HTTP message body
+  * implied http_version_match.with_trailer: parts of this rule
+    examine HTTP message trailers
 
 
-7.66. icmp_id
+7.68. icmp_id
 
 --------------
 
@@ -7173,7 +7227,7 @@ Configuration:
     0:65535 }
 
 
-7.67. icmp_seq
+7.69. icmp_seq
 
 --------------
 
@@ -7189,7 +7243,7 @@ Configuration:
     given range { 0:65535 }
 
 
-7.68. icode
+7.70. icode
 
 --------------
 
@@ -7205,7 +7259,7 @@ Configuration:
     0:255 }
 
 
-7.69. id
+7.71. id
 
 --------------
 
@@ -7221,7 +7275,7 @@ Configuration:
     }
 
 
-7.70. iec104_apci_type
+7.72. iec104_apci_type
 
 --------------
 
@@ -7236,7 +7290,7 @@ Configuration:
   * string iec104_apci_type.~: APCI type to match
 
 
-7.71. iec104_asdu_func
+7.73. iec104_asdu_func
 
 --------------
 
@@ -7251,7 +7305,7 @@ Configuration:
   * string iec104_asdu_func.~: function code to match
 
 
-7.72. ip_proto
+7.74. ip_proto
 
 --------------
 
@@ -7266,7 +7320,7 @@ Configuration:
   * string ip_proto.~proto: [!|>|<] name or number
 
 
-7.73. ipopts
+7.75. ipopts
 
 --------------
 
@@ -7282,7 +7336,7 @@ Configuration:
     lsrre|ssrr|satid|any }
 
 
-7.74. isdataat
+7.76. isdataat
 
 --------------
 
@@ -7299,7 +7353,7 @@ Configuration:
     buffer
 
 
-7.75. itype
+7.77. itype
 
 --------------
 
@@ -7315,7 +7369,7 @@ Configuration:
     0:255 }
 
 
-7.76. js_data
+7.78. js_data
 
 --------------
 
@@ -7327,7 +7381,7 @@ Type: ips_option
 Usage: detect
 
 
-7.77. md5
+7.79. md5
 
 --------------
 
@@ -7347,7 +7401,7 @@ Configuration:
     of buffer
 
 
-7.78. metadata
+7.80. metadata
 
 --------------
 
@@ -7364,7 +7418,7 @@ Configuration:
     pairs
 
 
-7.79. modbus_data
+7.81. modbus_data
 
 --------------
 
@@ -7375,7 +7429,7 @@ Type: ips_option
 Usage: detect
 
 
-7.80. modbus_func
+7.82. modbus_func
 
 --------------
 
@@ -7390,7 +7444,7 @@ Configuration:
   * string modbus_func.~: function code to match
 
 
-7.81. modbus_unit
+7.83. modbus_unit
 
 --------------
 
@@ -7405,7 +7459,7 @@ Configuration:
   * int modbus_unit.~: Modbus unit ID { 0:255 }
 
 
-7.82. msg
+7.84. msg
 
 --------------
 
@@ -7420,7 +7474,7 @@ Configuration:
   * string msg.~: message describing rule
 
 
-7.83. mss
+7.85. mss
 
 --------------
 
@@ -7434,54 +7488,6 @@ Configuration:
 
   * interval mss.~range: check if TCP MSS is in given range { 0:65535
     }
-
-
-7.84. num_headers
-
---------------
-
-Help: rule option to perform range check on number of headers
-
-Type: ips_option
-
-Usage: detect
-
-Configuration:
-
-  * interval num_headers.~range: check that number of headers of
-    current buffer are in given range { 0:200 }
-  * implied num_headers.request: match against the version from the
-    request message even when examining the response
-  * implied num_headers.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied num_headers.with_body: parts of this rule examine HTTP
-    message body
-  * implied num_headers.with_trailer: parts of this rule examine HTTP
-    message trailers
-
-
-7.85. num_trailers
-
---------------
-
-Help: rule option to perform range check on number of trailers
-
-Type: ips_option
-
-Usage: detect
-
-Configuration:
-
-  * interval num_trailers.~range: check that number of headers of
-    current buffer are in given range { 0:200 }
-  * implied num_trailers.request: match against the version from the
-    request message even when examining the response
-  * implied num_trailers.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied num_trailers.with_body: parts of this rule examine HTTP
-    message body
-  * implied num_trailers.with_trailer: parts of this rule examine
-    HTTP message trailers
 
 
 7.86. pcre
@@ -9391,6 +9397,26 @@ these libraries see the Getting Started section of the manual.
     examining HTTP message headers
   * implied http_method.with_trailer: parts of this rule examine HTTP
     message trailers
+  * interval http_num_headers.~range: check that number of headers of
+    current buffer are in given range { 0:200 }
+  * implied http_num_headers.request: match against the version from
+    the request message even when examining the response
+  * implied http_num_headers.with_body: parts of this rule examine
+    HTTP message body
+  * implied http_num_headers.with_header: this rule is limited to
+    examining HTTP message headers
+  * implied http_num_headers.with_trailer: parts of this rule examine
+    HTTP message trailers
+  * interval http_num_trailers.~range: check that number of headers
+    of current buffer are in given range { 0:200 }
+  * implied http_num_trailers.request: match against the version from
+    the request message even when examining the response
+  * implied http_num_trailers.with_body: parts of this rule examine
+    HTTP message body
+  * implied http_num_trailers.with_header: this rule is limited to
+    examining HTTP message headers
+  * implied http_num_trailers.with_trailer: parts of this rule
+    examine HTTP message trailers
   * implied http_param.nocase: case insensitive match
   * string http_param.~param: parameter to match
   * implied http_raw_cookie.request: match against the cookie from
@@ -9478,8 +9504,16 @@ these libraries see the Getting Started section of the manual.
     HTTP message headers
   * implied http_uri.with_trailer: parts of this rule examine HTTP
     message trailers
+  * implied http_version_match.request: match against the version
+    from the request message even when examining the response
   * string http_version_match.~version_list: space-separated list of
     versions to match
+  * implied http_version_match.with_body: parts of this rule examine
+    HTTP message body
+  * implied http_version_match.with_header: this rule is limited to
+    examining HTTP message headers
+  * implied http_version_match.with_trailer: parts of this rule
+    examine HTTP message trailers
   * implied http_version.request: match against the version from the
     request message even when examining the response
   * implied http_version.with_body: parts of this rule examine HTTP
@@ -9677,26 +9711,6 @@ these libraries see the Getting Started section of the manual.
   * bool normalizer.tcp.trim_win = false: trim data to window
   * bool normalizer.tcp.urp = false: adjust urgent pointer if beyond
     segment length
-  * interval num_headers.~range: check that number of headers of
-    current buffer are in given range { 0:200 }
-  * implied num_headers.request: match against the version from the
-    request message even when examining the response
-  * implied num_headers.with_body: parts of this rule examine HTTP
-    message body
-  * implied num_headers.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied num_headers.with_trailer: parts of this rule examine HTTP
-    message trailers
-  * interval num_trailers.~range: check that number of headers of
-    current buffer are in given range { 0:200 }
-  * implied num_trailers.request: match against the version from the
-    request message even when examining the response
-  * implied num_trailers.with_body: parts of this rule examine HTTP
-    message body
-  * implied num_trailers.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied num_trailers.with_trailer: parts of this rule examine
-    HTTP message trailers
   * bool output.dump_chars_only = false: turns on character dumps
     (same as -C)
   * bool output.dump_payload = false: dumps application layer (same
@@ -11673,8 +11687,6 @@ these libraries see the Getting Started section of the manual.
   * stream_ip.trackers_completed: datagram trackers completed (sum)
   * stream_ip.trackers_freed: datagram trackers released (sum)
   * stream.memcap_prunes: sessions pruned due to memcap (sum)
-  * stream.preemptive_prunes: sessions pruned during preemptive
-    pruning (deprecated) (sum)
   * stream.reload_allowed_deletes: number of allowed flows deleted by
     config reloads (sum)
   * stream.reload_blocked_deletes: number of blocked flows deleted by
@@ -15295,6 +15307,10 @@ and are not applicable elsewhere.
   * http_inspect (inspector): HTTP inspector
   * http_method (ips_option): rule option to set the detection cursor
     to the HTTP request method
+  * http_num_headers (ips_option): rule option to perform range check
+    on number of headers
+  * http_num_trailers (ips_option): rule option to perform range
+    check on number of trailers
   * http_param (ips_option): rule option to set the detection cursor
     to the value of the specified HTTP parameter key which may be in
     the query or body
@@ -15377,10 +15393,6 @@ and are not applicable elsewhere.
   * network (basic): configure basic network parameters
   * normalizer (inspector): packet scrubbing for inline mode
   * null_trace_logger (inspector): trace logger with a null printout
-  * num_headers (ips_option): rule option to perform range check on
-    number of headers
-  * num_trailers (ips_option): rule option to perform range check on
-    number of trailers
   * output (basic): configure general output parameters
   * packet_capture (inspector): raw packet dumping facility
   * packet_tracer (basic): generate debug trace messages for packets
@@ -15717,6 +15729,10 @@ and are not applicable elsewhere.
     to the normalized headers
   * ips_option::http_method: rule option to set the detection cursor
     to the HTTP request method
+  * ips_option::http_num_headers: rule option to perform range check
+    on number of headers
+  * ips_option::http_num_trailers: rule option to perform range check
+    on number of trailers
   * ips_option::http_param: rule option to set the detection cursor
     to the value of the specified HTTP parameter key which may be in
     the query or body
@@ -15773,10 +15789,6 @@ and are not applicable elsewhere.
   * ips_option::msg: rule option summarizing rule purpose output with
     events
   * ips_option::mss: detection for TCP maximum segment size
-  * ips_option::num_headers: rule option to perform range check on
-    number of headers
-  * ips_option::num_trailers: rule option to perform range check on
-    number of trailers
   * ips_option::pcre: rule option for matching payload data with pcre
   * ips_option::pkt_data: rule option to set the detection cursor to
     the normalized packet data

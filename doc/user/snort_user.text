@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.23.0 2022-02-09 05:15:01 EST TST
+Revision 3.1.24.0 2022-02-23 09:29:22 EST TST
 
 ---------------------------------------------------------------------
 
@@ -3466,7 +3466,7 @@ TcpConnector adds a few session setup configuration elements:
     initiate the connection. answer is used to have TcpConnector
     accept incoming connections.
   * address = <addr> - used for call setup to specify the partner
-  * base_port = port - used to contruct the actual port number for 
+  * base_port = port - used to construct the actual port number for 
     call and answer modes. Actual port used is (base_port +
     instance_id).
 
@@ -4536,7 +4536,7 @@ The vba_data will contain the decompressed Visual Basic for
 Applications (vba) macro data embedded in MS office files. It
 requires decompress_zip and decompress_vba options enabled.
 
-5.10.6.16. num_headers and num_trailers
+5.10.6.16. http_num_headers and http_num_trailers
 
 These rule options are used to check the number of headers and
 trailers, respectively. Checks available: equal to "=" or just value,
