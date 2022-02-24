@@ -207,7 +207,11 @@ void CreatePidFile(pid_t pid)
     }
     else
     {
-        fclose(pid_lockfile);
+        if (pid_lockfile)
+        {
+            fclose(pid_lockfile);
+            pid_lockfile = nullptr;
+        }
         const char* error = get_error(errno);
         ErrorMessage("Failed to create pid file %s, Error: %s\n",
             sc->pid_filename.c_str(), error);
