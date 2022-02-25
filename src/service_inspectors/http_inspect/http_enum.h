@@ -53,8 +53,6 @@ enum SectionType { SEC_DISCARD = -19, SEC_ABORT = -18, SEC__NOT_COMPUTE=-14, SEC
     SEC_REQUEST = 2, SEC_STATUS, SEC_HEADER, SEC_BODY_CL, SEC_BODY_CHUNK, SEC_TRAILER,
     SEC_BODY_OLD, SEC_BODY_H2 };
 
-enum DetectionStatus { DET_REACTIVATING = 1, DET_ON, DET_DEACTIVATING, DET_OFF };
-
 // HTTP rule options.
 // Lower portion is message buffers available to clients.
 // That part must remain synchronized with HttpApi::classic_buffer_names[]

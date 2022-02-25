@@ -158,7 +158,6 @@ void HttpFlowData::half_reset(SourceId source_id)
     file_depth_remaining[source_id] = STAT_NOT_PRESENT;
     detect_depth_remaining[source_id] = STAT_NOT_PRESENT;
     publish_depth_remaining[source_id] = STAT_NOT_PRESENT;
-    detection_status[source_id] = DET_REACTIVATING;
 
     compression[source_id] = CMP_NONE;
     gzip_state[source_id] = GZIP_TBD;
@@ -212,7 +211,6 @@ void HttpFlowData::trailer_prep(SourceId source_id)
         delete compress_stream[source_id];
         compress_stream[source_id] = nullptr;
     }
-    detection_status[source_id] = DET_REACTIVATING;
 }
 
 void HttpFlowData::garbage_collect()

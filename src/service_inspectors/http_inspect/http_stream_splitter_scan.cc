@@ -220,19 +220,6 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
 
     HttpModule::increment_peg_counts(PEG_SCAN);
 
-    if (session_data->detection_status[source_id] == DET_REACTIVATING)
-    {
-        if (source_id == SRC_CLIENT)
-        {
-            flow->set_to_server_detection(true);
-        }
-        else
-        {
-            flow->set_to_client_detection(true);
-        }
-        session_data->detection_status[source_id] = DET_ON;
-    }
-
     // Check for 0.9 response message
     if ((type == SEC_STATUS) &&
         (session_data->expected_trans_num[SRC_SERVER] == session_data->zero_nine_expected))

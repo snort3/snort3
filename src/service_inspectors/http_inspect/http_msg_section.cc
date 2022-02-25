@@ -92,13 +92,6 @@ void HttpMsgSection::update_depth() const
     const int64_t& detect_depth_remaining = session_data->detect_depth_remaining[source_id];
     const int32_t& publish_depth_remaining = session_data->publish_depth_remaining[source_id];
 
-    if ((detect_depth_remaining <= 0) &&
-        (session_data->detection_status[source_id] == DET_ON) &&
-        !session_data->for_http2)
-    {
-        session_data->detection_status[source_id] = DET_DEACTIVATING;
-    }
-
     const unsigned target_size = (session_data->compression[source_id] == CMP_NONE) ?
         SnortConfig::get_conf()->max_pdu : GZIP_BLOCK_SIZE;
 

@@ -682,23 +682,6 @@ void HttpInspect::clear(Packet* p)
     current_section->clear();
     HttpTransaction* current_transaction = current_section->get_transaction();
 
-    const SourceId source_id = current_section->get_source_id();
-
-    // FIXIT-M This check may not apply to the transaction attached to the packet
-    // in case of offload.
-    if (session_data->detection_status[source_id] == DET_DEACTIVATING)
-    {
-        if (source_id == SRC_CLIENT)
-        {
-            p->flow->set_to_server_detection(false);
-        }
-        else
-        {
-            p->flow->set_to_client_detection(false);
-        }
-        session_data->detection_status[source_id] = DET_OFF;
-    }
-
     current_transaction->garbage_collect();
     session_data->garbage_collect();
 
