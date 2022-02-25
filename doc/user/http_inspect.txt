@@ -706,6 +706,13 @@ the general HTTP/1 format but contain version fields falsely claiming to be
 HTTP/2.0 or HTTP/0.9 will match "other" as described above. The http_version
 rule option is available to examine the actual bytes in the version field.
 
+===== http_header_test and http_trailer_test
+
+Rule options that perform various tests against a specific header and 
+trailer field, respectively. It can perform a range test, check whether the
+value is numeric or whether it is absent. Negative values are considered
+non-numeric. Values with more than 18 digits are considered non-numeric.
+
 ==== Timing issues and combining rule options
 
 HTTP inspector is stateful. That means it is aware of a bigger picture than

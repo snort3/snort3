@@ -148,7 +148,7 @@ const Field& HttpMsgSection::classic_normalize(const Field& raw, Field& norm,
 
 const Field& HttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, uint64_t form)
 {
-    HttpBufferInfo buffer_info(id, sub_id, form);
+    const HttpBufferInfo buffer_info(id, sub_id, form);
 
     return get_classic_buffer(buffer_info);
 }
@@ -176,8 +176,10 @@ const Field& HttpMsgSection::get_classic_buffer(const HttpBufferInfo& buf)
       }
     case HTTP_BUFFER_HEADER:
     case HTTP_BUFFER_TRAILER:
+    case HTTP_HEADER_TEST:
+    case HTTP_TRAILER_TEST:
       {
-        HttpMsgHeadShared* const head = (buf.type == HTTP_BUFFER_HEADER) ?
+        HttpMsgHeadShared* const head = (buf.type == HTTP_BUFFER_HEADER || buf.type == HTTP_HEADER_TEST) ?
             (HttpMsgHeadShared*)header[buffer_side] : (HttpMsgHeadShared*)trailer[buffer_side];
         if (head == nullptr)
             return Field::FIELD_NULL;

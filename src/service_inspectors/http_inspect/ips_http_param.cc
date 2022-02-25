@@ -87,7 +87,7 @@ bool HttpParamIpsOption::operator==(const IpsOption& ips) const
 {
     const HttpParamIpsOption& hio = static_cast<const HttpParamIpsOption&>(ips);
 
-    return HttpIpsOption::operator==(static_cast<const HttpIpsOption&>(ips)) &&
+    return HttpIpsOption::operator==(ips) &&
            http_param == hio.http_param;
 }
 

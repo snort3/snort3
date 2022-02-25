@@ -103,6 +103,7 @@ const InspectApi HttpApi::http_api =
 extern const BaseApi* ips_http_client_body;
 extern const BaseApi* ips_http_cookie;
 extern const BaseApi* ips_http_header;
+extern const BaseApi* ips_http_header_test;
 extern const BaseApi* ips_http_method;
 extern const BaseApi* ips_http_num_headers;
 extern const BaseApi* ips_http_num_trailers;
@@ -117,6 +118,7 @@ extern const BaseApi* ips_http_raw_uri;
 extern const BaseApi* ips_http_stat_code;
 extern const BaseApi* ips_http_stat_msg;
 extern const BaseApi* ips_http_trailer;
+extern const BaseApi* ips_http_trailer_test;
 extern const BaseApi* ips_http_true_ip;
 extern const BaseApi* ips_http_uri;
 extern const BaseApi* ips_http_version;
@@ -133,6 +135,7 @@ const BaseApi* sin_http[] =
     ips_http_client_body,
     ips_http_cookie,
     ips_http_header,
+    ips_http_header_test,
     ips_http_method,
     ips_http_num_headers,
     ips_http_num_trailers,
@@ -147,6 +150,7 @@ const BaseApi* sin_http[] =
     ips_http_stat_code,
     ips_http_stat_msg,
     ips_http_trailer,
+    ips_http_trailer_test,
     ips_http_true_ip,
     ips_http_uri,
     ips_http_version,

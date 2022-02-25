@@ -82,7 +82,7 @@ uint32_t HttpNumHdrsIpsOption::hash() const
 bool HttpNumHdrsIpsOption::operator==(const IpsOption& ips) const
 {
     const HttpNumHdrsIpsOption& hio = static_cast<const HttpNumHdrsIpsOption&>(ips);
-    return HttpIpsOption::operator==(static_cast<const HttpIpsOption&>(ips)) &&
+    return HttpIpsOption::operator==(ips) &&
            range == hio.range;
 }
 

@@ -78,6 +78,8 @@ set (FILE_LIST
     ips_http_num_hdrs.h
     ips_http_param.cc
     ips_http_param.h
+    ips_http_test.cc
+    ips_http_test.h
     ips_http_version.cc
     ips_http_version.h
 )

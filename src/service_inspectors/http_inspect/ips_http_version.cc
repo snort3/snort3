@@ -108,7 +108,7 @@ uint32_t HttpVersionIpsOption::hash() const
 bool HttpVersionIpsOption::operator==(const IpsOption& ips) const
 {
     const HttpVersionIpsOption& hio = static_cast<const HttpVersionIpsOption&>(ips);
-    return HttpIpsOption::operator==(static_cast<const HttpIpsOption&>(ips)) &&
+    return HttpIpsOption::operator==(ips) &&
            version_flags == hio.version_flags;
 }
 
