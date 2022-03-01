@@ -618,6 +618,11 @@ void SnortConfig::set_log_dir(const char* directory)
         log_dir.clear();
 }
 
+void SnortConfig::set_watchdog(uint16_t n)
+{
+    watchdog_timer = n;
+}
+
 void SnortConfig::set_dirty_pig(bool enabled)
 {
     dirty_pig = enabled;

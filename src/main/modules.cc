@@ -1432,6 +1432,9 @@ static const Parameter process_params[] =
     { "utc", Parameter::PT_BOOL, nullptr, "false",
       "use UTC instead of local time for timestamps" },
 
+    { "watchdog_timer", Parameter::PT_INT, "0:60", "0",
+      "watchdog timer for packet threads (seconds, 0 to disable)" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -1495,6 +1498,9 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if (v.is("name"))
         name = v.get_string();
+
+    else if ( v.is("watchdog_timer") )
+        sc->set_watchdog(v.get_uint16());
 
     return true;
 }

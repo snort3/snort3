@@ -268,7 +268,7 @@ public:
     // chown() use this later, -1 means no change to user_id/group_id
     int user_id = -1;
     int group_id = -1;
-
+    uint16_t watchdog_timer = 0;
     bool dirty_pig = false;
 
     std::string chroot_dir;        /* -t or config chroot */
@@ -471,6 +471,7 @@ public:
     void set_no_logging_timestamps(bool);
     void set_obfuscate(bool);
     void set_obfuscation_mask(const char*);
+    void set_overlay_trace_config(TraceConfig*);
     void set_include_path(const char*);
     void set_process_all_events(bool);
     void set_rule_db_dir(const char*);
@@ -480,7 +481,7 @@ public:
     void set_uid(const char*);
     void set_umask(uint32_t);
     void set_utc(bool);
-    void set_overlay_trace_config(TraceConfig*);
+    void set_watchdog(uint16_t);
     SO_PUBLIC bool set_latency_enable();
 
     //------------------------------------------------------

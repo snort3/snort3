@@ -1103,6 +1103,7 @@ static void snort_main()
 
     max_pigs = ThreadConfig::get_instance_max();
     assert(max_pigs > 0);
+    ThreadConfig::start_watchdog();
 
     // maximum number of state change notifications per pig
     constexpr unsigned max_grunts = static_cast<unsigned>(Analyzer::State::NUM_STATES);

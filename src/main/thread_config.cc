@@ -23,9 +23,13 @@
 
 #include "thread_config.h"
 
+#include <atomic>
 #include <hwloc.h>
 
+#include "analyzer_command.h"
 #include "log/messages.h"
+#include "main/snort_config.h"
+#include "time/periodic.h"
 #include "utils/util.h"
 
 #ifdef UNIT_TEST
@@ -234,6 +238,77 @@ void ThreadConfig::implement_named_thread_affinity(const string& name)
     }
     else
         implement_thread_affinity(get_thread_type(), DEFAULT_THREAD_ID);
+}
+
+// watchdog stuff
+struct Watchdog
+{
+    Watchdog(uint16_t tm) : seconds_count(tm)
+    {
+        resp = new std::atomic_bool[ThreadConfig::get_instance_max()];
+    }
+    ~Watchdog() { delete[] resp; }
+    void kick();
+    bool waiting = false;
+    std::atomic_bool* resp;
+    uint16_t seconds_count;
+};
+
+class WatchdogKick : public AnalyzerCommand
+{
+public:
+    WatchdogKick(Watchdog* d) : dog(d) { dog->waiting = true; }
+    bool execute(Analyzer&, void**) override
+    {
+        dog->resp[get_instance_id()] = true;
+        return true;
+    }
+    const char* stringify() override { return "WATCHDOG_KICK"; }
+
+    ~WatchdogKick() override { dog->waiting = false; }
+private:
+    Watchdog* dog;
+};
+
+void Watchdog::kick()
+{
+    unsigned max = ThreadConfig::get_instance_max();
+    if ( waiting )
+    {
+        int n = 0;
+        WarningMessage("Packet processing thread is unresponsive, aborting Snort!\n");
+        WarningMessage("Unresponsive thread ID: ");
+        for ( unsigned i = 0; i < max; ++i )
+            if ( !resp[i] )
+                WarningMessage("%d ", i);
+        WarningMessage("\n");
+        abort();
+    }
+
+    for ( unsigned i = 0; i < max; ++i )
+        resp[i] = false;
+
+    main_broadcast_command(new WatchdogKick(this), nullptr);
+}
+
+static void s_watchdog_handler(void*)
+{
+    static Watchdog s_dog(SnortConfig::get_conf()->watchdog_timer);
+    if ( SnortConfig::get_conf()->watchdog_timer > 0 )
+    {
+        if ( s_dog.seconds_count > 0 )
+            s_dog.seconds_count--;
+        else
+        {
+            s_dog.kick();
+            s_dog.seconds_count = SnortConfig::get_conf()->watchdog_timer;
+        }
+    }
+}
+
+void ThreadConfig::start_watchdog()
+{
+    Periodic::register_handler(s_watchdog_handler, nullptr, 0, 1000);
 }
 
 

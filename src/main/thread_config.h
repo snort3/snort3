@@ -38,6 +38,7 @@ public:
     static void set_instance_max(unsigned);
     static unsigned get_instance_max();
     static void term();
+    static void start_watchdog();
 
     ~ThreadConfig();
     void set_thread_affinity(SThreadType, unsigned id, CpuSet*);
