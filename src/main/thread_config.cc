@@ -275,7 +275,6 @@ void Watchdog::kick()
     unsigned max = ThreadConfig::get_instance_max();
     if ( waiting )
     {
-        int n = 0;
         WarningMessage("Packet processing thread is unresponsive, aborting Snort!\n");
         WarningMessage("Unresponsive thread ID: ");
         for ( unsigned i = 0; i < max; ++i )
