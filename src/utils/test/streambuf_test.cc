@@ -1555,6 +1555,62 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         CHECK(off_c == len + 2);
         CHECK(off_e == 4096 + 2048);
     }
+
+    SECTION("get char sequence")
+    {
+        ostreambuf_infl b;
+        const int exp_len = strlen(exp);
+        b.sputn(exp, exp_len);
+
+        int off_c = b.pubseekoff(-exp_len, ios_base::cur, ios_base::out);
+        CHECK(off_c == 0);
+        
+        char* act_seq = new char[exp_len];
+        CHECK(b.sgetn(act_seq, exp_len) == exp_len);
+        CHECK(!memcmp(exp, act_seq, exp_len));
+        delete[] act_seq;
+
+        int new_off = b.pubseekoff(0, ios_base::cur, ios_base::out);
+        CHECK(new_off == exp_len);
+    }
+
+    SECTION("get char sequence from the end")
+    {
+        ostreambuf_infl b;
+        const int exp_len = strlen(exp);
+        char* buf = new char[exp_len];
+        memcpy(buf, exp, exp_len);
+        b.pubsetbuf(buf, exp_len);
+        
+        int data_off = b.pubseekoff(exp_len, ios_base::beg, ios_base::out);
+        CHECK(data_off == exp_len);
+
+        char* act_seq = new char[exp_len];
+        memset(act_seq, '\0', exp_len);
+        CHECK(b.sgetn(act_seq, exp_len) == 0);
+        CHECK(strlen(act_seq) == 0);
+        delete[] act_seq;
+
+        int new_off = b.pubseekoff(0, ios_base::cur, ios_base::out);
+        CHECK(new_off == exp_len);
+    }
+    
+    SECTION("get char sequence more than available")
+    {
+        ostreambuf_infl b;
+        const int exp_len = strlen(exp);
+        char* buf = new char[exp_len];
+        memcpy(buf, exp, exp_len);
+        b.pubsetbuf(buf, exp_len);
+        
+        char* act_seq = new char[exp_len + 1];
+        CHECK(b.sgetn(act_seq, exp_len + 1) == exp_len);
+        CHECK(!memcmp(exp, act_seq, exp_len));
+        delete[] act_seq;
+
+        int new_off = b.pubseekoff(0, ios_base::cur, ios_base::out);
+        CHECK(new_off == exp_len);
+    }
 }
 
 TEST_CASE("output buffer - buffer management", "[Stream buffers]")
@@ -2008,11 +2064,8 @@ TEST_CASE("output stream - large data", "[Stream buffers]")
 {
     const int len = 1 << 21;
     const int plen = 1 << 12;
-    vector<char> chars;
-
-    chars.reserve(len);
-    for (char& c : chars)
-        c = rand();
+    vector<char> chars(len, '\0');
+    generate_n(chars.begin(), len, rand);
 
     SECTION("0 bytes reserved")
     {

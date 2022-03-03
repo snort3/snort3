@@ -58,11 +58,16 @@ public:
     static size_t size()
     { return sizeof(JSNormalizer) + 16834; /* YY_BUF_SIZE */ }
 
+    bool is_unescape_nesting_seen() const
+    { return tokenizer.is_unescape_nesting_seen(); }
+
 #ifdef CATCH_TEST_BUILD
     const char* get_tmp_buf() const
     { return tmp_buf; }
     size_t get_tmp_buf_size() const
     { return tmp_buf_size; }
+    const JSTokenizer& get_tokenizer() const
+    { return tokenizer; }
 #endif
 
 #ifdef BENCHMARK_TEST

@@ -370,6 +370,26 @@ streamsize ostreambuf_infl::xsputn(const char* s, streamsize n)
 }
 
 // cppcheck-suppress unusedFunction
+streamsize ostreambuf_infl::xsgetn(char* s, streamsize n)
+{
+    assert(n >= 0);
+
+    if (pptr() != epptr())
+    {
+        n = max(0, n);
+        auto c_avail = epptr() - pptr();
+        n = min(c_avail, n);
+
+        memcpy(s, pptr(), n);
+        pbump(n);
+
+        return n;
+    }
+
+    return 0;
+}
+
+// cppcheck-suppress unusedFunction
 int ostreambuf_infl::overflow(int c)
 {
     if (traits_type::eof() == c)

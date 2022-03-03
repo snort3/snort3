@@ -1299,6 +1299,17 @@ does not apply to HTTP/2 or HTTP/3 traffic.
 
 The HTTP message body is gzip encoded and the FEXTRA flag is set in the gzip header.
 
+119:279
+
+Detected nesting of unescape functions(unescape, decodeURI, decodeURIComponent) in JavaScript code. 
+Indicates that this code most likely has more than one level of obfuscation. This alert is raised
+by the enhanced JavaScript normalizer.
+
+119:280
+
+Detected more than one encoding within unescape function call arguments in JavaScript code.
+This alert is raised by the enhanced JavaScript normalizer.
+
 121:1
 
 Invalid flag set on HTTP/2 frame header

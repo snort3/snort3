@@ -1021,7 +1021,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 {LINE_TERMINATORS}                  { BEGIN(regst); newline_found = true; }
 
 <INITIAL,regex,dqstr,regst,sqstr,divop>{HTML_TAG_SCRIPT_OPEN} { BEGIN(regst); RETURN(OPENING_TAG) }
-{HTML_TAG_SCRIPT_CLOSE}             { BEGIN(regst); if (!global_scope()) RETURN(ENDED_IN_INNER_SCOPE) else RETURN(SCRIPT_ENDED) }
+{HTML_TAG_SCRIPT_CLOSE}             { EXEC(html_closing_script_tag()) }
 
        {HTML_COMMENT_OPEN}          { BEGIN(lcomm); }
        {LINE_COMMENT_START}         { BEGIN(lcomm); }
@@ -1041,7 +1041,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <bcomm>{BLOCK_COMMENT_SKIP}         { }
 <bcomm><<EOF>>                      { RETURN(SCRIPT_CONTINUE) }
 
-       {LITERAL_DQ_STRING_START}    { dealias_append(); EXEC(do_semicolon_insertion(ASI_GROUP_7)) EXEC(do_spacing(LITERAL)) ECHO; BEGIN(dqstr); set_ident_norm(true); }
+       {LITERAL_DQ_STRING_START}    { EXEC(literal_dq_string_start()) }
 <dqstr>{LITERAL_DQ_STRING_END}      { dealias_append(); ECHO; BEGIN(divop); }
 <dqstr>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); RETURN(CLOSING_TAG) }
 <dqstr>\\{CR}{LF}                   { }
@@ -1052,7 +1052,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <dqstr>{LITERAL_DQ_STRING_TEXT}     { dealias_append(); ECHO; }
 <dqstr><<EOF>>                      { RETURN(SCRIPT_CONTINUE) }
 
-       {LITERAL_SQ_STRING_START}    { dealias_append(); EXEC(do_semicolon_insertion(ASI_GROUP_7)) EXEC(do_spacing(LITERAL)) ECHO; BEGIN(sqstr); set_ident_norm(true); }
+       {LITERAL_SQ_STRING_START}    { EXEC(literal_sq_string_start()) }
 <sqstr>{LITERAL_SQ_STRING_END}      { dealias_append(); ECHO; BEGIN(divop); }
 <sqstr>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); RETURN(CLOSING_TAG) }
 <sqstr>\\{CR}{LF}                   { }
@@ -1063,7 +1063,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <sqstr>{LITERAL_SQ_STRING_TEXT}     { dealias_append(); ECHO; }
 <sqstr><<EOF>>                      { RETURN(SCRIPT_CONTINUE) }
 
-       {LITERAL_TEMPLATE_START}                  { dealias_append(); EXEC(do_semicolon_insertion(ASI_GROUP_7)) EXEC(do_spacing(LITERAL)) ECHO; BEGIN(tmpll); set_ident_norm(true); }
+       {LITERAL_TEMPLATE_START}                  { EXEC(literal_template_start()) }
 <tmpll>(\\\\)*{LITERAL_TEMPLATE_END}             { dealias_append(); ECHO; BEGIN(divop); }
 <tmpll>(\\\\)*{LITERAL_TEMPLATE_SUBST_START}     { EXEC(process_subst_open()) dealias_reset(); }
 <tmpll>{HTML_TAG_SCRIPT_CLOSE}                   { BEGIN(regst); RETURN(CLOSING_TAG) }
@@ -1072,7 +1072,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <tmpll>{LITERAL_TEMPLATE_OTHER}                  { dealias_append(); ECHO; }
 <tmpll><<EOF>>                                   { RETURN(SCRIPT_CONTINUE) }
 
-<regst>{LITERAL_REGEX_START}        { dealias_reset(); EXEC(do_semicolon_insertion(ASI_GROUP_7)) EXEC(do_spacing(LITERAL)) yyout << '/'; states_correct(1); yyless(1); BEGIN(regex); set_ident_norm(true); }
+<regst>{LITERAL_REGEX_START}        { EXEC(literal_regex_start()) }
 <regex>{LITERAL_REGEX_END}          { ECHO; BEGIN(divop); }
 <regex>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); RETURN(CLOSING_TAG) }
 <regex>{LITERAL_REGEX_SKIP}         { ECHO; }
@@ -1083,68 +1083,54 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <regex><<EOF>>                      { RETURN(SCRIPT_CONTINUE) }
 
 <divop>{DIV_OPERATOR}               |
-<divop>{DIV_ASSIGNMENT_OPERATOR}    { dealias_equals(true); previous_group = ASI_OTHER; ECHO; token = PUNCTUATOR; BEGIN(INITIAL); set_ident_norm(true); }
+<divop>{DIV_ASSIGNMENT_OPERATOR}    { div_assignment_operator(); }
 
-{OPEN_BRACE}                        { dealias_reset(); EXEC(do_semicolon_insertion(ASI_GROUP_1)) if (meta_type() == ScopeMetaType::NOT_SET) { if (is_operator(token) || token == COLON || func_call()) set_meta_type(ScopeMetaType::OBJECT); else { set_meta_type(ScopeMetaType::BLOCK); EXEC(p_scope_push(meta_type())) } } EXEC(scope_push(BRACES)) if (!brace_depth.empty()) brace_depth.top()++; process_punctuator(); }
-{CLOSE_BRACE}                       { dealias_clear_mutated(false); EXEC(do_semicolon_insertion(ASI_GROUP_2)) if (meta_type() != ScopeMetaType::NOT_SET) EXEC(p_scope_pop(meta_type())) EXEC(scope_pop(BRACES)) process_closing_brace(); set_ident_norm(true); }
-{OPEN_PARENTHESIS}                  { dealias_clear_mutated(true); dealias_reset(); EXEC(do_semicolon_insertion(ASI_GROUP_3)) EXEC(scope_push(PARENTHESES)) if (token == IDENTIFIER || token == CLOSING_BRACKET || token == KEYWORD) set_func_call(true); process_punctuator(); }
-{CLOSE_PARENTHESIS}                 { dealias_clear_mutated(false); dealias_reset(); bool f_call = func_call(); bool id_norm = ident_norm(); if (meta_type() != ScopeMetaType::NOT_SET) EXEC(p_scope_pop(meta_type())) EXEC(scope_pop(PARENTHESES)) if (!f_call) set_ident_norm(id_norm); if (block_param()) { previous_group = ASI_OTHER; set_block_param(false); } else { EXEC(do_semicolon_insertion(ASI_GROUP_5)) } ECHO; token = PUNCTUATOR; BEGIN(divop); }
-{OPEN_BRACKET}                      { dealias_clear_mutated(true); dealias_append(); EXEC(do_semicolon_insertion(ASI_GROUP_3)) EXEC(do_semicolon_insertion(ASI_GROUP_4)) EXEC(scope_push(BRACKETS)) process_punctuator(); }
-{CLOSE_BRACKET}                     { dealias_clear_mutated(false); dealias_append(); EXEC(do_semicolon_insertion(ASI_GROUP_4)) EXEC(scope_pop(BRACKETS)) ECHO; token = CLOSING_BRACKET; BEGIN(divop); }
+{OPEN_BRACE}                        { EXEC(open_brace()) }
+{CLOSE_BRACE}                       { EXEC(close_brace()) }
+{OPEN_PARENTHESIS}                  { EXEC(open_parenthesis()) }
+{CLOSE_PARENTHESIS}                 { EXEC(close_parenthesis()) }
+{OPEN_BRACKET}                      { EXEC(open_bracket()) }
+{CLOSE_BRACKET}                     { EXEC(close_bracket()) }
 
-{PUNCTUATOR_PREFIX}                 { process_punctuator(); EXEC(do_semicolon_insertion(ASI_GROUP_10)) set_ident_norm(true); }
-{DOT_ACCESSOR}                      { dealias_clear_mutated(true); previous_group = ASI_OTHER; dealias_append(); ECHO; token = DOT; BEGIN(regst); }
-{PUNCTUATOR_ARROW}                  { dealias_clear_mutated(false); previous_group = ASI_OTHER; dealias_reset(); process_punctuator(); set_ident_norm(true); if (meta_type() == ScopeMetaType::NOT_SET) { set_meta_type(ScopeMetaType::FUNCTION); EXEC(p_scope_push(meta_type())) } }
-{PUNCTUATOR_SEMICOLON}              { dealias_clear_mutated(false); previous_group = ASI_OTHER; dealias_finalize(); process_punctuator(); set_ident_norm(true); if (meta_type() != ScopeMetaType::NOT_SET) { EXEC(p_scope_pop(meta_type())) set_meta_type(ScopeMetaType::NOT_SET); } }
-{PUNCTUATOR_COLON}                  { dealias_clear_mutated(false); previous_group = ASI_OTHER; dealias_reset(); process_punctuator(COLON); set_ident_norm(true); }
-{OPERATOR_COMPARISON}               { dealias_clear_mutated(false); previous_group = ASI_OTHER; dealias_prefix_reset(); process_punctuator(OPERATOR_COMPARISON); set_ident_norm(true); }
-{OPERATOR_COMPLEX_ASSIGNMENT}       { dealias_clear_mutated(false); previous_group = ASI_OTHER; dealias_equals(true); process_punctuator(OPERATOR_COMPLEX_ASSIGNMENT); set_ident_norm(true); }
-{OPERATOR_LOGICAL}                  { dealias_clear_mutated(false); previous_group = ASI_OTHER; dealias_prefix_reset(); process_punctuator(OPERATOR_LOGICAL); set_ident_norm(true); }
-{OPERATOR_SHIFT}                    { dealias_clear_mutated(false); previous_group = ASI_OTHER; dealias_prefix_reset(); process_punctuator(OPERATOR_SHIFT); set_ident_norm(true); }
-{PUNCTUATOR_COMMA}                  { dealias_clear_mutated(false); previous_group = ASI_OTHER; dealias_finalize(); process_punctuator(); set_ident_norm(true); }
+{PUNCTUATOR_PREFIX}                 { EXEC(punctuator_prefix()) }
+{DOT_ACCESSOR}                      { dot_accessor(); }
+{PUNCTUATOR_ARROW}                  { EXEC(punctuator_arrow()) }
+{PUNCTUATOR_SEMICOLON}              { EXEC(punctuator_semicolon()) }
+{PUNCTUATOR_COLON}                  { punctuator_colon(); }
+{OPERATOR_COMPARISON}               { operator_comparison(); }
+{OPERATOR_COMPLEX_ASSIGNMENT}       { operator_complex_assignment(); }
+{OPERATOR_LOGICAL}                  { operator_logical(); }
+{OPERATOR_SHIFT}                    { operator_shift(); }
+{PUNCTUATOR_COMMA}                  { punctuator_comma(); }
 
-{USE_STRICT_DIRECTIVE}              { previous_group = ASI_OTHER; EXEC(do_spacing(DIRECTIVE)) ECHO; BEGIN(INITIAL); yyout << ';'; set_ident_norm(true); }
-{USE_STRICT_DIRECTIVE_SC}           { previous_group = ASI_OTHER; EXEC(do_spacing(DIRECTIVE)) ECHO; BEGIN(INITIAL); set_ident_norm(true); }
+{USE_STRICT_DIRECTIVE}              { EXEC(use_strict_directive()) }
+{USE_STRICT_DIRECTIVE_SC}           { EXEC(use_strict_directive_sc()) }
 
-{KEYWORD_VAR_DECL}                  { EXEC(do_semicolon_insertion(ASI_GROUP_10)) if (token != DOT) set_ident_norm(true); alias_state = ALIAS_NONE; EXEC(do_spacing(KEYWORD_VAR_DECL)) ECHO; BEGIN(regst); }
-{KEYWORD_FUNCTION}                  { EXEC(do_semicolon_insertion(ASI_GROUP_10)) if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD_FUNCTION)) ECHO; BEGIN(regst); if (meta_type() == ScopeMetaType::NOT_SET) set_meta_type(ScopeMetaType::FUNCTION); }
+{KEYWORD_VAR_DECL}                  { EXEC(keyword_var_decl()) }
+{KEYWORD_FUNCTION}                  { EXEC(keyword_function()) }
 {KEYWORD_IF}                        |
 {KEYWORD_FOR}                       |
 {KEYWORD_WITH}                      |
 {KEYWORD_SWITCH}                    |
-{KEYWORD_CATCH}                     { EXEC(do_semicolon_insertion(ASI_GROUP_10)) if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD_BLOCK)) ECHO; BEGIN(regst); if (meta_type() == ScopeMetaType::NOT_SET) { set_meta_type(ScopeMetaType::BLOCK); EXEC(p_scope_push(meta_type())) } set_block_param(true); }
-{KEYWORD_WHILE}                     { EXEC(do_semicolon_insertion(ASI_GROUP_10)) if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD_BLOCK)) ECHO; BEGIN(regst); if (meta_type() == ScopeMetaType::NOT_SET) { set_meta_type(ScopeMetaType::BLOCK); EXEC(p_scope_push(meta_type())) } if (do_loop()) set_do_loop(false); else set_block_param(true); }
-{KEYWORD_B}                         { EXEC(do_semicolon_insertion(ASI_GROUP_10)) if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD)) ECHO; BEGIN(regst); }
-{KEYWORD_BA}                        { EXEC(do_semicolon_insertion(ASI_GROUP_9)) if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD)) ECHO; BEGIN(regst); }
+{KEYWORD_CATCH}                     { EXEC(keyword_catch()) }
+{KEYWORD_WHILE}                     { EXEC(keyword_while()) }
+{KEYWORD_B}                         { EXEC(keyword_B()) }
+{KEYWORD_BA}                        { EXEC(keyword_BA()) }
 {KEYWORD_TRY}                       |
 {KEYWORD_ELSE}                      |
-{KEYWORD_FINALLY}                   { EXEC(do_semicolon_insertion(ASI_GROUP_10)) if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD_BLOCK)) ECHO; BEGIN(regst); if (meta_type() == ScopeMetaType::NOT_SET) { set_meta_type(ScopeMetaType::BLOCK); EXEC(p_scope_push(meta_type())) } }
-{KEYWORD_DO}                        { EXEC(do_semicolon_insertion(ASI_GROUP_10)) if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD_BLOCK)) ECHO; BEGIN(regst); if (meta_type() == ScopeMetaType::NOT_SET) { set_meta_type(ScopeMetaType::BLOCK); EXEC(p_scope_push(meta_type())) } set_do_loop(true); }
-{KEYWORD_CLASS}                     { previous_group = ASI_OTHER; dealias_reset(); if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD_CLASS)) ECHO; BEGIN(regst); if (meta_type() == ScopeMetaType::NOT_SET) set_meta_type(ScopeMetaType::OBJECT); }
-{KEYWORD_OTHER}                     { previous_group = ASI_OTHER; dealias_reset(); if (token != DOT) set_ident_norm(true); EXEC(do_spacing(KEYWORD)) ECHO; BEGIN(regst); }
+{KEYWORD_FINALLY}                   { EXEC(keyword_finally()) }
+{KEYWORD_DO}                        { EXEC(keyword_do()) }
+{KEYWORD_CLASS}                     { EXEC(keyword_class()) }
+{KEYWORD_OTHER}                     { EXEC(keyword_other()) }
 
-{OPERATOR_ASSIGNMENT}               { previous_group = ASI_OTHER; dealias_equals(false); process_punctuator(OPERATOR_ASSIGNMENT); set_ident_norm(true); }
-{OPERATOR_PREFIX}                   { dealias_prefix_reset(); EXEC(do_semicolon_insertion(ASI_GROUP_6)) EXEC(do_operator_spacing()) ECHO; BEGIN(divop); set_ident_norm(true); }
-{OPERATOR_INCR_DECR}                { dealias_increment(); dealias_reset(); EXEC(do_semicolon_insertion(ASI_GROUP_8)) EXEC(do_operator_spacing()) ECHO; BEGIN(divop); set_ident_norm(true); }
-{OPERATOR}                          { dealias_clear_mutated(false); previous_group = ASI_OTHER; dealias_prefix_reset(); EXEC(do_operator_spacing()) ECHO; BEGIN(divop); set_ident_norm(true);}
-{LITERAL}                           { dealias_clear_mutated(false); dealias_append(); EXEC(do_semicolon_insertion(ASI_GROUP_7)) EXEC(do_spacing(LITERAL)) ECHO; BEGIN(divop); set_ident_norm(true); }
-{IDENTIFIER}                        { 
-                                        if (unescape(YYText())) {
-                                            bool id_part = (token == DOT);
-                                            bool assignment_start = token == KEYWORD_VAR_DECL ||
-                                                                    token == PUNCTUATOR ||
-                                                                    token == UNDEFINED;
-                                            EXEC(do_semicolon_insertion(ASI_GROUP_7)) 
-                                            EXEC(do_spacing(IDENTIFIER))
-                                            EXEC(do_identifier_substitution(YYText(), id_part))
-                                            dealias_identifier(id_part, assignment_start);
-                                        }
-                                        else
-                                            EXEC(do_semicolon_insertion(ASI_GROUP_7)) 
-                                        BEGIN(divop);
-                                    }
+{OPERATOR_ASSIGNMENT}               { operator_assignment(); }
+{OPERATOR_PREFIX}                   { EXEC(operator_prefix()) }
+{OPERATOR_INCR_DECR}                { EXEC(operator_incr_decr()) }
+{OPERATOR}                          { EXEC(general_operator()) }
+{LITERAL}                           { EXEC(general_literal()) }
+{IDENTIFIER}                        { EXEC(general_identifier()) }
 
-.|{ALL_UNICODE}                     { previous_group = ASI_OTHER; ECHO; token = UNDEFINED; BEGIN(INITIAL); set_ident_norm(true); }
+.|{ALL_UNICODE}                     { general_unicode(); }
 <<EOF>>                             { EEOF(eval_eof()) }
 
 %%
@@ -1392,6 +1378,7 @@ JSTokenizer::JSRet JSTokenizer::do_identifier_substitution(const char* lexeme, b
 
     if (ident_ctx.is_ignored(lexeme) && !id_part)
     {
+        ignored_id_pos = yyout.rdbuf()->pubseekoff(0, yyout.cur, std::ios_base::out);
         set_ident_norm(false);
         yyout << lexeme;
         return EOS;
@@ -1403,11 +1390,15 @@ JSTokenizer::JSRet JSTokenizer::do_identifier_substitution(const char* lexeme, b
     if (ident)
     {
         set_ident_norm(false);
+        ignored_id_pos = yyout.rdbuf()->pubseekoff(0, yyout.cur, std::ios_base::out);
         last_dealiased = std::string(YYText());
         dealias_stored = true;
     }
     else
+    {
+        ignored_id_pos = -1;
         ident = ident_ctx.substitute(lexeme);
+    }
 
     if (!ident)
     {
@@ -1764,14 +1755,74 @@ bool JSTokenizer::ident_norm()
     return scope_cur().ident_norm;
 }
 
-void JSTokenizer::set_func_call(bool f)
+void JSTokenizer::set_func_call_type(JSTokenizer::FuncType f)
 {
-    scope_cur().func_call = f;
+    scope_cur().func_call_type = f;
 }
 
-bool JSTokenizer::func_call()
+JSTokenizer::FuncType JSTokenizer::func_call_type()
 {
-    return scope_cur().func_call;
+    return scope_cur().func_call_type;
+}
+
+JSTokenizer::FuncType JSTokenizer::detect_func_type()
+{
+    switch(token)
+    {
+    case CLOSING_BRACKET:
+    case KEYWORD:
+        return FuncType::GENERAL;
+
+    case IDENTIFIER:
+    {
+        FuncType ret = FuncType::GENERAL;
+        if (ignored_id_pos >= 0)      
+        {
+            std::streambuf* pbuf = yyout.rdbuf();
+            std::streamsize size = pbuf->pubseekoff(0, yyout.cur, yyout.out) - ignored_id_pos;
+            assert(size >= 0);
+            
+            char tail[256];
+            assert((long unsigned int)size <= sizeof(tail));
+            size = std::min((long unsigned int)size, sizeof(tail));
+
+            pbuf->pubseekoff(-size, yyout.cur, yyout.out);
+            pbuf->sgetn(tail, size);
+
+            for (const auto& id : function_identifiers)
+            {
+                if ((unsigned)size == (unsigned)id.identifier.size() &&
+                    memcmp(tail, id.identifier.data(), size) == 0)
+                {
+                    ret = id.type;
+                    break;
+                }
+            }
+        }
+        return ret;
+    }
+
+    default:
+        return FuncType::NOT_FUNC;
+    }
+}
+
+void JSTokenizer::check_function_nesting(JSTokenizer::FuncType type)
+{
+    switch (type)
+    {
+    case (JSTokenizer::FuncType::UNESCAPE):
+        if (func_call_type() == JSTokenizer::FuncType::UNESCAPE)
+            unescape_nest_seen = true;
+        break;
+    default:
+        break;
+    }
+}
+
+bool JSTokenizer::is_unescape_nesting_seen() const
+{
+    return unescape_nest_seen;
 }
 
 void JSTokenizer::set_block_param(bool f)
@@ -1965,9 +2016,512 @@ void JSTokenizer::dealias_finalize()
         dealias_reset();
 }
 
+JSTokenizer::JSRet JSTokenizer::html_closing_script_tag()
+{ return global_scope() ? SCRIPT_ENDED : ENDED_IN_INNER_SCOPE; }
+
+JSTokenizer::JSRet JSTokenizer::literal_dq_string_start()
+{
+    dealias_append();
+    EXEC(do_semicolon_insertion(ASI_GROUP_7))
+    EXEC(do_spacing(LITERAL))
+    ECHO;
+    BEGIN(dqstr);
+    set_ident_norm(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::literal_sq_string_start()
+{
+    dealias_append();
+    EXEC(do_semicolon_insertion(ASI_GROUP_7))
+    EXEC(do_spacing(LITERAL))
+    ECHO;
+    BEGIN(sqstr);
+    set_ident_norm(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::literal_template_start()
+{
+    dealias_append();
+    EXEC(do_semicolon_insertion(ASI_GROUP_7))
+    EXEC(do_spacing(LITERAL))
+    ECHO;
+    BEGIN(tmpll);
+    set_ident_norm(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::literal_regex_start()
+{
+    dealias_reset();
+    EXEC(do_semicolon_insertion(ASI_GROUP_7))
+    EXEC(do_spacing(LITERAL))
+    yyout << '/';
+    states_correct(1);
+    yyless(1);
+    BEGIN(regex);
+    set_ident_norm(true);
+    return EOS;
+}
+
+void JSTokenizer::div_assignment_operator()
+{
+    dealias_equals(true);
+    previous_group = ASI_OTHER;
+    ECHO;
+    token = PUNCTUATOR;
+    BEGIN(INITIAL);
+    set_ident_norm(true);
+}
+
+JSTokenizer::JSRet JSTokenizer::open_brace()
+{
+    dealias_reset();
+    EXEC(do_semicolon_insertion(ASI_GROUP_1))
+    if (meta_type() == ScopeMetaType::NOT_SET)
+    {
+        if (is_operator(token) || token == COLON || func_call_type() != FuncType::NOT_FUNC)
+            set_meta_type(ScopeMetaType::OBJECT);
+        else
+        {
+            set_meta_type(ScopeMetaType::BLOCK);
+            EXEC(p_scope_push(meta_type()))
+        }
+    }
+    EXEC(scope_push(BRACES))
+    if (!brace_depth.empty())
+        brace_depth.top()++;
+    process_punctuator();
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::close_brace()
+{
+    dealias_clear_mutated(false);
+    EXEC(do_semicolon_insertion(ASI_GROUP_2))
+    if (meta_type() != ScopeMetaType::NOT_SET)
+        EXEC(p_scope_pop(meta_type()))
+    EXEC(scope_pop(BRACES))
+    process_closing_brace();
+    set_ident_norm(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::open_parenthesis()
+{
+    dealias_clear_mutated(true);
+    dealias_reset();
+    EXEC(do_semicolon_insertion(ASI_GROUP_3))
+    FuncType f_call = detect_func_type();
+    check_function_nesting(f_call);
+    EXEC(scope_push(PARENTHESES))
+    set_func_call_type(f_call);
+    process_punctuator();
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::close_parenthesis()
+{
+    dealias_clear_mutated(false);
+    dealias_reset();
+    FuncType f_call = func_call_type();
+    bool id_norm = ident_norm();
+    if (meta_type() != ScopeMetaType::NOT_SET)
+        EXEC(p_scope_pop(meta_type()))
+    EXEC(scope_pop(PARENTHESES))
+    if (f_call == FuncType::NOT_FUNC)
+        set_ident_norm(id_norm);
+    if (block_param())
+    {
+        previous_group = ASI_OTHER;
+        set_block_param(false);
+    }
+    else
+    {
+        EXEC(do_semicolon_insertion(ASI_GROUP_5))
+    }
+    ECHO;
+    token = PUNCTUATOR;
+    BEGIN(divop);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::open_bracket()
+{
+    dealias_clear_mutated(true);
+    dealias_append();
+    EXEC(do_semicolon_insertion(ASI_GROUP_3))
+    EXEC(do_semicolon_insertion(ASI_GROUP_4))
+    EXEC(scope_push(BRACKETS))
+    process_punctuator();
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::close_bracket()
+{
+    dealias_clear_mutated(false);
+    dealias_append();
+    EXEC(do_semicolon_insertion(ASI_GROUP_4))
+    EXEC(scope_pop(BRACKETS))
+    ECHO;
+    token = CLOSING_BRACKET;
+    BEGIN(divop);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::punctuator_prefix()
+{
+    process_punctuator();
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    set_ident_norm(true);
+    return EOS;
+}
+
+void JSTokenizer::dot_accessor()
+{
+    dealias_clear_mutated(true);
+    previous_group = ASI_OTHER;
+    dealias_append();
+    ECHO;
+    token = DOT;
+    BEGIN(regst);
+}
+
+JSTokenizer::JSRet JSTokenizer::punctuator_arrow()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_reset();
+    process_punctuator();
+    set_ident_norm(true);
+    if (meta_type() == ScopeMetaType::NOT_SET)
+    {
+        set_meta_type(ScopeMetaType::FUNCTION);
+        EXEC(p_scope_push(meta_type()))
+    }
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::punctuator_semicolon()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_finalize();
+    process_punctuator();
+    set_ident_norm(true);
+    if (meta_type() != ScopeMetaType::NOT_SET)
+    {
+        EXEC(p_scope_pop(meta_type()))
+        set_meta_type(ScopeMetaType::NOT_SET);
+    }
+    return EOS;
+}
+
+void JSTokenizer::punctuator_colon()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_reset();
+    process_punctuator(COLON);
+    set_ident_norm(true);
+}
+
+void JSTokenizer::operator_comparison()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_prefix_reset();
+    process_punctuator(OPERATOR_COMPARISON);
+    set_ident_norm(true);
+}
+
+void JSTokenizer::operator_complex_assignment()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_equals(true);
+    process_punctuator(OPERATOR_COMPLEX_ASSIGNMENT);
+    set_ident_norm(true);
+}
+
+void JSTokenizer::operator_logical()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_prefix_reset();
+    process_punctuator(OPERATOR_LOGICAL);
+    set_ident_norm(true);
+}
+
+void JSTokenizer::operator_shift()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_prefix_reset();
+    process_punctuator(OPERATOR_SHIFT);
+    set_ident_norm(true);
+}
+
+void JSTokenizer::punctuator_comma()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_finalize();
+    process_punctuator();
+    set_ident_norm(true);
+}
+
+JSTokenizer::JSRet JSTokenizer::use_strict_directive()
+{
+    previous_group = ASI_OTHER;
+    EXEC(do_spacing(DIRECTIVE))
+    ECHO;
+    BEGIN(INITIAL);
+    yyout << ';';
+    set_ident_norm(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::use_strict_directive_sc()
+{
+    previous_group = ASI_OTHER;
+    EXEC(do_spacing(DIRECTIVE))
+    ECHO;
+    BEGIN(INITIAL);
+    set_ident_norm(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_var_decl()
+{
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    if (token != DOT)
+        set_ident_norm(true);
+    alias_state = ALIAS_NONE;
+    EXEC(do_spacing(KEYWORD_VAR_DECL))
+    ECHO;
+    BEGIN(regst);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_function()
+{
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    if (token != DOT)
+        set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD_FUNCTION))
+    ECHO;
+    BEGIN(regst);
+    if (meta_type() == ScopeMetaType::NOT_SET)
+        set_meta_type(ScopeMetaType::FUNCTION);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_catch()
+{
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    if (token != DOT)
+        set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD_BLOCK))
+    ECHO;
+    BEGIN(regst);
+    if (meta_type() == ScopeMetaType::NOT_SET)
+    {
+        set_meta_type(ScopeMetaType::BLOCK);
+        EXEC(p_scope_push(meta_type()))
+    }
+    set_block_param(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_while()
+{
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    if (token != DOT)
+        set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD_BLOCK))
+    ECHO;
+    BEGIN(regst);
+    if (meta_type() == ScopeMetaType::NOT_SET)
+    {
+        set_meta_type(ScopeMetaType::BLOCK);
+        EXEC(p_scope_push(meta_type()))
+    }
+    if (do_loop())
+        set_do_loop(false);
+    else
+        set_block_param(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_B()
+{
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    if (token != DOT)
+        set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD))
+    ECHO;
+    BEGIN(regst);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_BA()
+{
+    EXEC(do_semicolon_insertion(ASI_GROUP_9))
+    if (token != DOT)
+        set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD))
+    ECHO;
+    BEGIN(regst);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_finally()
+{
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    if (token != DOT)
+        set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD_BLOCK))
+    ECHO;
+    BEGIN(regst);
+    if (meta_type() == ScopeMetaType::NOT_SET)
+    {
+        set_meta_type(ScopeMetaType::BLOCK);
+        EXEC(p_scope_push(meta_type()))
+    }
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_do()
+{
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    if (token != DOT)
+        set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD_BLOCK))
+    ECHO;
+    BEGIN(regst);
+    if (meta_type() == ScopeMetaType::NOT_SET)
+    {
+        set_meta_type(ScopeMetaType::BLOCK);
+        EXEC(p_scope_push(meta_type()))
+    }
+    set_do_loop(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_class()
+{
+    previous_group = ASI_OTHER;
+    dealias_reset();
+    if (token != DOT)
+        set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD_CLASS))
+    ECHO;
+    BEGIN(regst);
+    if (meta_type() == ScopeMetaType::NOT_SET)
+        set_meta_type(ScopeMetaType::OBJECT);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_other()
+{
+    previous_group = ASI_OTHER;
+    dealias_reset();
+    if (token != DOT)
+        set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD))
+    ECHO;
+    BEGIN(regst);
+    return EOS;
+}
+
+void JSTokenizer::operator_assignment()
+{
+    previous_group = ASI_OTHER;
+    dealias_equals(false);
+    process_punctuator(OPERATOR_ASSIGNMENT);
+    set_ident_norm(true);
+}
+
+JSTokenizer::JSRet JSTokenizer::operator_prefix()
+{
+    dealias_prefix_reset();
+    EXEC(do_semicolon_insertion(ASI_GROUP_6))
+    EXEC(do_operator_spacing())
+    ECHO;
+    BEGIN(divop);
+    set_ident_norm(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::operator_incr_decr()
+{
+    dealias_increment();
+    dealias_reset();
+    EXEC(do_semicolon_insertion(ASI_GROUP_8))
+    EXEC(do_operator_spacing())
+    ECHO;
+    BEGIN(divop);
+    set_ident_norm(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::general_operator()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_prefix_reset();
+    EXEC(do_operator_spacing())
+    ECHO;
+    BEGIN(divop);
+    set_ident_norm(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::general_literal()
+{
+    dealias_clear_mutated(false);
+    dealias_append();
+    EXEC(do_semicolon_insertion(ASI_GROUP_7))
+    EXEC(do_spacing(LITERAL))
+    ECHO;
+    BEGIN(divop);
+    set_ident_norm(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::general_identifier()
+{
+    if (unescape(YYText()))
+    {
+        bool id_part = (token == DOT);
+        bool assignment_start = token == KEYWORD_VAR_DECL || token == PUNCTUATOR ||
+            token == UNDEFINED;
+        EXEC(do_semicolon_insertion(ASI_GROUP_7))
+        EXEC(do_spacing(IDENTIFIER))
+        EXEC(do_identifier_substitution(YYText(), id_part))
+        dealias_identifier(id_part, assignment_start);
+    }
+    else
+        EXEC(do_semicolon_insertion(ASI_GROUP_7))
+    BEGIN(divop);
+    return EOS;
+}
+
+void JSTokenizer::general_unicode()
+{
+    previous_group = ASI_OTHER;
+    ECHO;
+    token = UNDEFINED;
+    BEGIN(INITIAL);
+    set_ident_norm(true);
+}
+
 JSTokenizer::JSRet JSTokenizer::process(size_t& bytes_in)
 {
     yy_flush_buffer(YY_CURRENT_BUFFER);
+    unescape_nest_seen = false;
 
     auto r = yylex();
 

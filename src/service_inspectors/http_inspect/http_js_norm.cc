@@ -214,6 +214,12 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
             break;
         }
 
+        if (js_ctx.is_unescape_nesting_seen())
+        {
+            *infractions += INF_JS_UNESCAPE_NEST;
+            events->create_event(EVENT_JS_UNESCAPE_NEST);
+        }
+
         if (ssn->js_built_in_event)
             break;
     }
@@ -346,6 +352,11 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
         {
             *infractions += INF_JS_CODE_IN_EXTERNAL;
             events->create_event(EVENT_JS_CODE_IN_EXTERNAL);
+        }
+        if (js_ctx.is_unescape_nesting_seen())
+        {
+            *infractions += INF_JS_UNESCAPE_NEST;
+            events->create_event(EVENT_JS_UNESCAPE_NEST);
         }
 
         script_continue = ret == JSTokenizer::SCRIPT_CONTINUE;

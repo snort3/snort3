@@ -95,6 +95,7 @@ protected:
         std::ios_base::openmode which = std::ios_base::in | std::ios_base::out) override;
     virtual int sync() override;
     virtual std::streamsize xsputn(const char* s, std::streamsize n) override;
+    virtual std::streamsize xsgetn(char* s, std::streamsize n) override;
     virtual int overflow(int c = EOF) override;
 
     bool enlarge();

@@ -42,7 +42,9 @@ extern THREAD_LOCAL const snort::Trace* http_trace;
 enum JSProgramScopeType : unsigned int;
 
 class JSIdentifierCtxBase;
-
+#ifdef CATCH_TEST_BUILD
+class JSTokenizerTester;
+#endif
 class JSTokenizer : public yyFlexLexer
 {
 private:
@@ -84,17 +86,24 @@ private:
         OBJECT,     // object definition, class definition
         SCOPE_META_TYPE_MAX
     };
+    enum FuncType
+    {
+        NOT_FUNC = 0,
+        GENERAL,
+        UNESCAPE,
+        CHAR_CODE
+    };
     struct Scope
     {
         Scope(ScopeType t) :
-            type(t), meta_type(ScopeMetaType::NOT_SET), ident_norm(true), func_call(false),
-            block_param(false), do_loop(false)
+            type(t), meta_type(ScopeMetaType::NOT_SET), func_call_type(FuncType::NOT_FUNC),
+            ident_norm(true), block_param(false), do_loop(false)
         {}
 
         ScopeType type;
         ScopeMetaType meta_type;
+        FuncType func_call_type;
         bool ident_norm;
-        bool func_call;
         bool block_param;
         bool do_loop;
     };
@@ -153,6 +162,7 @@ public:
 
     JSRet process(size_t& bytes_in);
 
+    bool is_unescape_nesting_seen() const;
 protected:
     [[noreturn]] void LexerError(const char* msg) override
     { snort::FatalError("%s", msg); }
@@ -194,8 +204,10 @@ private:
     ScopeMetaType meta_type();
     void set_ident_norm(bool);
     bool ident_norm();
-    void set_func_call(bool);
-    bool func_call();
+    void set_func_call_type(FuncType);
+    FuncType func_call_type();
+    FuncType detect_func_type();
+    void check_function_nesting(FuncType);
     void set_block_param(bool);
     bool block_param();
     void set_do_loop(bool);
@@ -214,6 +226,49 @@ private:
     void dealias_append();
     void dealias_finalize();
 
+    //rule handlers
+    JSRet html_closing_script_tag();
+    JSRet literal_dq_string_start();
+    JSRet literal_sq_string_start();
+    JSRet literal_template_start();
+    JSRet literal_regex_start();
+    void div_assignment_operator();
+    JSRet open_brace();
+    JSRet close_brace();
+    JSRet open_parenthesis();
+    JSRet close_parenthesis();
+    JSRet open_bracket();
+    JSRet close_bracket();
+    JSRet punctuator_prefix();
+    void dot_accessor();
+    JSRet punctuator_arrow();
+    JSRet punctuator_semicolon();
+    void punctuator_colon();
+    void operator_comparison();
+    void operator_complex_assignment();
+    void operator_logical();
+    void operator_shift();
+    void punctuator_comma();
+    JSRet use_strict_directive();
+    JSRet use_strict_directive_sc();
+    JSRet keyword_var_decl();
+    JSRet keyword_function();
+    JSRet keyword_catch();
+    JSRet keyword_while();
+    JSRet keyword_B();
+    JSRet keyword_BA();
+    JSRet keyword_finally();
+    JSRet keyword_do();
+    JSRet keyword_class();
+    JSRet keyword_other();
+    void operator_assignment();
+    JSRet operator_prefix();
+    JSRet operator_incr_decr();
+    JSRet general_operator();
+    JSRet general_literal();
+    JSRet general_identifier();
+    void general_unicode();
+
     static const char* p_scope_codes[];
 
     void* cur_buffer;
@@ -226,6 +281,7 @@ private:
     AliasState alias_state = ALIAS_NONE;
     bool prefix_increment = false;
     bool dealias_stored = false;
+    bool unescape_nest_seen = false;
 
     uint8_t max_template_nesting;
     std::stack<uint16_t, std::vector<uint16_t>> brace_depth;
@@ -268,8 +324,30 @@ private:
         {false, false, false, false, false, false, false, false, false, false, false,}
     };
 
+    std::streampos ignored_id_pos = -1;
+    struct FunctionIdentifier
+    {
+        bool operator< (const FunctionIdentifier& other) const
+        { return identifier.size() < other.identifier.size(); }
+
+        std::string identifier;
+        FuncType type;
+    };
+
+    const std::array<FunctionIdentifier, 4> function_identifiers
+    {{
+        {"unescape",            FuncType::UNESCAPE  },
+        {"decodeURI",           FuncType::UNESCAPE  },
+        {"decodeURIComponent",  FuncType::UNESCAPE  },
+        {"String.fromCharCode", FuncType::CHAR_CODE }        
+    }};
+
     const uint32_t max_bracket_depth;
     std::stack<Scope> scope_stack;
+
+#ifdef CATCH_TEST_BUILD
+    friend JSTokenizerTester;
+#endif // CATCH_TEST_BUILD
 };
 
 #endif // JS_TOKENIZER_H

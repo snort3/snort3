@@ -4174,6 +4174,484 @@ TEST_CASE("Scope tracking - error handling", "[JSNormalizer]")
     }
 }
 
+TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
+{
+    JSTokenizerTester tester(norm_depth, max_scope_depth, s_ignored_ids, max_template_nesting,
+        max_bracket_depth);
+
+    using FuncType = JSTokenizerTester::FuncType;
+
+    SECTION("Global only")
+    {
+        tester.test_function_scopes({{ "", "", {FuncType::NOT_FUNC}}});
+    }
+    SECTION("General function call")
+    {
+        SECTION("in arguments")
+        {
+            tester.test_function_scopes({
+                {"general(", "var_0000(", {FuncType::NOT_FUNC, FuncType::GENERAL}}
+            });
+        }
+        SECTION("separated identifier and call")
+        {
+            tester.test_function_scopes({
+                {"general  /*comment*/  (", "var_0000(", {FuncType::NOT_FUNC, FuncType::GENERAL}}
+            });
+        }
+        SECTION("complete call")
+        {
+            tester.test_function_scopes({
+                {"general('%62%61%72')", "var_0000('%62%61%72')", {FuncType::NOT_FUNC}}
+            });
+        }
+        SECTION("as named function definition")
+        {
+            tester.test_function_scopes({
+                {"general(){", "var_0000(){", {FuncType::NOT_FUNC, FuncType::NOT_FUNC}}
+            });
+        }
+        SECTION("after defined function identifier")
+        {
+            tester.test_function_scopes({
+                {"unescape;hello(", "unescape;var_0000(", {FuncType::NOT_FUNC, FuncType::GENERAL}}
+            });
+        }
+        SECTION("fake defined function identifier")
+        {
+            tester.test_function_scopes({
+                {"fake_unescape(", "var_0000(", {FuncType::NOT_FUNC, FuncType::GENERAL}}
+            });
+        }
+        SECTION("ignored fake defined function identifier")
+        {
+            const std::unordered_set<std::string> s_ignored_ids_fake {"fake_unescape"};
+            JSTokenizerTester tester_fake(norm_depth, max_scope_depth, s_ignored_ids_fake, 
+            max_template_nesting, max_bracket_depth);
+            tester_fake.test_function_scopes({
+                {"fake_unescape(", "fake_unescape(", {FuncType::NOT_FUNC, FuncType::GENERAL}}
+            });
+        }
+        SECTION("as a template literal substitution")
+        {
+            tester.test_function_scopes({
+                {"`unescape ${general(", "`unescape ${var_0000(",
+                {FuncType::NOT_FUNC, FuncType::NOT_FUNC, FuncType::GENERAL}}
+            });
+        }
+    }
+    SECTION("unescape function call")
+    {
+        SECTION("in arguments")
+        {
+            tester.test_function_scopes({
+                {"unescape(", "unescape(", {FuncType::NOT_FUNC, FuncType::UNESCAPE}}
+            });
+        }
+        SECTION("separated identifier and call")
+        {
+            tester.test_function_scopes({
+                {"unescape  /*comment*/  (", "unescape(", {FuncType::NOT_FUNC, FuncType::UNESCAPE}}
+            });
+        }
+        SECTION("complete call")
+        {
+            tester.test_function_scopes({
+                {"unescape('%62%61%72')", "unescape('%62%61%72')", {FuncType::NOT_FUNC}}
+            });
+        }
+        SECTION("as named function definition")
+        {
+            tester.test_function_scopes({
+                {"unescape(){", "unescape(){", {FuncType::NOT_FUNC, FuncType::NOT_FUNC}}
+            });
+        }
+        SECTION("after assignment substitution")
+        {
+            tester.test_function_scopes({
+                {"var a = unescape; a(", "var var_0000=unescape;unescape(", {FuncType::NOT_FUNC,
+                                                                             FuncType::UNESCAPE}}
+            });
+        }
+        SECTION("literal")
+        {
+            tester.test_function_scopes({
+                {"`unescape(", "`unescape(", {FuncType::NOT_FUNC}}
+            });
+        }
+        SECTION("as a template literal substitution")
+        {
+            tester.test_function_scopes({
+                {"`literal ${unescape(", "`literal ${unescape(",
+                {FuncType::NOT_FUNC, FuncType::NOT_FUNC, FuncType::UNESCAPE}}
+            });
+        }
+    }
+    SECTION("decodeURI function call")
+    {
+        SECTION("in arguments")
+        {
+            tester.test_function_scopes({
+                {"decodeURI(", "decodeURI(", {FuncType::NOT_FUNC, FuncType::UNESCAPE}}
+            });
+        }
+        SECTION("separated identifier and call")
+        {
+            tester.test_function_scopes({
+                {"decodeURI  /*comment*/  (", "decodeURI(", {FuncType::NOT_FUNC,
+                                                             FuncType::UNESCAPE}}
+            });
+        }
+        SECTION("complete call")
+        {
+            tester.test_function_scopes({
+                {"decodeURI('%62%61%72')", "decodeURI('%62%61%72')", {FuncType::NOT_FUNC}}
+            });
+        }
+        SECTION("as named function definition")
+        {
+            tester.test_function_scopes({
+                {"decodeURI(){", "decodeURI(){", {FuncType::NOT_FUNC, FuncType::NOT_FUNC}}
+            });
+        }
+        SECTION("after assignment substitution")
+        {
+            tester.test_function_scopes({
+                {"var a = decodeURI; a(", "var var_0000=decodeURI;decodeURI(", {FuncType::NOT_FUNC,
+                                                                                FuncType::UNESCAPE}}
+            });
+        }
+        SECTION("literal")
+        {
+            tester.test_function_scopes({
+                {"`decodeURI(", "`decodeURI(", {FuncType::NOT_FUNC}}
+            });
+        }
+        SECTION("as a template literal substitution")
+        {
+            tester.test_function_scopes({
+                {"`literal ${decodeURI(", "`literal ${decodeURI(",
+                {FuncType::NOT_FUNC, FuncType::NOT_FUNC, FuncType::UNESCAPE}}
+            });
+        }
+    }
+    SECTION("decodeURIComponent function call")
+    {
+        SECTION("in arguments")
+        {
+            tester.test_function_scopes({
+                {"decodeURIComponent(", "decodeURIComponent(", {FuncType::NOT_FUNC,
+                                                                FuncType::UNESCAPE}}
+            });
+        }
+        SECTION("separated identifier and call")
+        {
+            tester.test_function_scopes({
+                {"decodeURIComponent  /*comment*/  (", "decodeURIComponent(", {FuncType::NOT_FUNC,
+                                                                               FuncType::UNESCAPE}}
+            });
+        }
+        SECTION("complete call")
+        {
+            tester.test_function_scopes({
+                {"decodeURIComponent('%62%61%72')", "decodeURIComponent('%62%61%72')",
+                {FuncType::NOT_FUNC}}
+            });
+        }
+        SECTION("as named function definition")
+        {
+            tester.test_function_scopes({
+                {"decodeURIComponent(){", "decodeURIComponent(){", {FuncType::NOT_FUNC,
+                                                                    FuncType::NOT_FUNC}}
+            });
+        }
+        SECTION("after assignment substitution")
+        {
+            tester.test_function_scopes({
+                {"var a = decodeURIComponent; a(",
+                "var var_0000=decodeURIComponent;decodeURIComponent(", {FuncType::NOT_FUNC,
+                                                                         FuncType::UNESCAPE}}
+            });
+        }
+        SECTION("literal")
+        {
+            tester.test_function_scopes({
+                {"`decodeURIComponent(", "`decodeURIComponent(", {FuncType::NOT_FUNC}}
+            });
+        }
+        SECTION("as a template literal substitution")
+        {
+            tester.test_function_scopes({
+                {"`literal ${decodeURIComponent(", "`literal ${decodeURIComponent(",
+                 {FuncType::NOT_FUNC, FuncType::NOT_FUNC, FuncType::UNESCAPE}}
+            });
+        }
+    }
+    SECTION("String.fromCharCode method call")
+    {
+        SECTION("in arguments")
+        {
+            tester.test_function_scopes({
+                {"String.fromCharCode(", "String.fromCharCode(",
+                {FuncType::NOT_FUNC, FuncType::CHAR_CODE}}
+            });
+        }
+        SECTION("separated identifier and call")
+        {
+            tester.test_function_scopes({
+                {"String.fromCharCode  /*comment*/  (", "String.fromCharCode(",
+                {FuncType::NOT_FUNC, FuncType::CHAR_CODE}}
+            });
+        }
+        SECTION("complete call")
+        {
+            tester.test_function_scopes({
+                {"String.fromCharCode( 65, 0x42 )", "String.fromCharCode(65,0x42)",
+                {FuncType::NOT_FUNC}}
+            });
+        }
+        SECTION("as named function definition")
+        {
+            tester.test_function_scopes({
+                {"String.fromCharCode(){", "String.fromCharCode(){",
+                {FuncType::NOT_FUNC, FuncType::NOT_FUNC}}
+            });
+        }
+        SECTION("after class name assignment substitution")
+        {
+            tester.test_function_scopes({
+                {"var a = String; a.fromCharCode(", "var var_0000=String;String.fromCharCode(",
+                {FuncType::NOT_FUNC, FuncType::CHAR_CODE}}
+            });
+        }
+        SECTION("after assignment substitution")
+        {
+            tester.test_function_scopes({
+                {"var a = String.fromCharCode; a(",
+                "var var_0000=String.fromCharCode;String.fromCharCode(",
+                {FuncType::NOT_FUNC, FuncType::CHAR_CODE}}
+            });
+        }
+        SECTION("not a Sting class member call")
+        {
+            tester.test_function_scopes({
+                {"fromCharCode(",
+                "var_0000(",
+                {FuncType::NOT_FUNC, FuncType::GENERAL}}
+            });
+        }
+        SECTION("literal")
+        {
+            tester.test_function_scopes({
+                {"`String.fromCharCode(", "`String.fromCharCode(", {FuncType::NOT_FUNC}}
+            });
+        }
+        SECTION("as a template literal substitution")
+        {
+            tester.test_function_scopes({
+                {"`literal ${String.fromCharCode(", "`literal ${String.fromCharCode(",
+                {FuncType::NOT_FUNC, FuncType::NOT_FUNC, FuncType::CHAR_CODE}}
+            });
+        }
+    }
+}
+
+TEST_CASE("Function call tracking - nesting", "[JSNormalizer]")
+{
+    JSTokenizerTester tester(norm_depth, max_scope_depth, s_ignored_ids, max_template_nesting,
+        max_bracket_depth);
+
+    using FuncType = JSTokenizerTester::FuncType;
+
+    SECTION("Opening")
+    {
+        SECTION("Multiple general functions")
+        {
+            tester.test_function_scopes({
+                { "general( general( general(", "var_0000(var_0000(var_0000(",
+                { FuncType::NOT_FUNC, FuncType::GENERAL, FuncType::GENERAL, FuncType::GENERAL}}
+            });
+            CHECK(!tester.is_unescape_nesting_seen());
+        }
+        SECTION("Multiple unescape functions")
+        {
+            tester.test_function_scopes({
+                {"unescape( unescape( unescape(", "unescape(unescape(unescape(",
+                {FuncType::NOT_FUNC, FuncType::UNESCAPE, FuncType::UNESCAPE, FuncType::UNESCAPE}}
+            });
+            CHECK(tester.is_unescape_nesting_seen());
+        }
+        SECTION("Multiple different unescape functions")
+        {
+            tester.test_function_scopes({
+                {"unescape( decodeURI( decodeURIComponent(",
+                "unescape(decodeURI(decodeURIComponent(", {FuncType::NOT_FUNC,
+                                                           FuncType::UNESCAPE,
+                                                           FuncType::UNESCAPE,
+                                                           FuncType::UNESCAPE}}
+            });
+            CHECK(tester.is_unescape_nesting_seen());
+        }
+        SECTION("Multiple String.fromCharCode functions")
+        {
+            tester.test_function_scopes({
+                {"String.fromCharCode( String.fromCharCode( String.fromCharCode(",
+                "String.fromCharCode(String.fromCharCode(String.fromCharCode(",
+                {FuncType::NOT_FUNC, FuncType::CHAR_CODE, FuncType::CHAR_CODE,
+                FuncType::CHAR_CODE}}
+            });
+            CHECK(!tester.is_unescape_nesting_seen());
+        }
+        SECTION("Mixed function calls")
+        {
+            tester.test_function_scopes({
+                {"general( unescape( String.fromCharCode(",
+                "var_0000(unescape(String.fromCharCode(",
+                {FuncType::NOT_FUNC, FuncType::GENERAL, FuncType::UNESCAPE,
+                FuncType::CHAR_CODE}}
+            });
+            CHECK(!tester.is_unescape_nesting_seen());
+        }
+    }
+    SECTION("Closing")
+    {
+        SECTION("Multiple general functions")
+        {
+            tester.test_function_scopes({
+                {"general( general( general( a ) )", "var_0000(var_0000(var_0000(var_0001))",
+                {FuncType::NOT_FUNC, FuncType::GENERAL}}
+            });
+        }
+        SECTION("Multiple unescape functions")
+        {
+            tester.test_function_scopes({
+                {"unescape( unescape( unescape( '%62%61%72' ) )",
+                "unescape(unescape(unescape('%62%61%72'))", {FuncType::NOT_FUNC,
+                                                             FuncType::UNESCAPE }}
+            });
+        }
+        SECTION("Multiple different unescape functions")
+        {
+            tester.test_function_scopes({
+                {"unescape( decodeURI( decodeURIComponent( '%62%61%72' ) )",
+                "unescape(decodeURI(decodeURIComponent('%62%61%72'))",
+                {FuncType::NOT_FUNC, FuncType::UNESCAPE }}
+            });
+        }
+        SECTION("Multiple String.fromCharCode methods")
+        {
+            tester.test_function_scopes({
+                {"String.fromCharCode( String.fromCharCode( String.fromCharCode( 65, 0x42 ) )",
+                "String.fromCharCode(String.fromCharCode(String.fromCharCode(65,0x42))",
+                {FuncType::NOT_FUNC, FuncType::CHAR_CODE}}
+            });
+        }
+        SECTION("Mixed function calls")
+        {
+            tester.test_function_scopes({
+                {"general( unescape( String.fromCharCode( 65, 0x42 ) )",
+                "var_0000(unescape(String.fromCharCode(65,0x42))", {FuncType::NOT_FUNC,
+                                                                    FuncType::GENERAL}}
+            });
+        }
+    }
+}
+
+TEST_CASE("Function call tracking - over multiple PDU", "[JSNormalizer]")
+{
+    JSTokenizerTester tester(norm_depth, max_scope_depth, s_ignored_ids, max_template_nesting,
+        max_bracket_depth);
+
+    using FuncType = JSTokenizerTester::FuncType;
+
+    SECTION("split in the middle of the identifier")
+    {
+        tester.test_function_scopes({
+            {"un",          "var_0000",     {FuncType::NOT_FUNC}},
+            {"escape",      "unescape",     {FuncType::NOT_FUNC}},
+            {"(",           "unescape(",    {FuncType::NOT_FUNC,
+                                             FuncType::UNESCAPE}},
+            {")",           "unescape()",   {FuncType::NOT_FUNC}},
+        });
+    }
+    SECTION("split between identifier and parenthesis")
+    {
+        tester.test_function_scopes({
+            {"decodeURI",   "decodeURI",    {FuncType::NOT_FUNC}},
+            {"(",           "decodeURI(",   {FuncType::NOT_FUNC,
+                                             FuncType::UNESCAPE}},
+            {")",           "decodeURI()",  {FuncType::NOT_FUNC}},
+        });
+    }
+    SECTION("comment between identifier and parenthesis")
+    {
+        tester.test_function_scopes({
+            {"unescape",                "unescape",     {FuncType::NOT_FUNC}},
+            {"//String.fromCharCode\n", "unescape",     {FuncType::NOT_FUNC}},
+            {"(",                       "unescape(",    {FuncType::NOT_FUNC,
+                                                         FuncType::UNESCAPE}},
+            {")",                       "unescape()",   {FuncType::NOT_FUNC}},
+        });
+    }
+    SECTION("split in arguments")
+    {
+        tester.test_function_scopes({
+            {"general",         "var_0000",                         {FuncType::NOT_FUNC}},
+            {"(",               "var_0000(",                        {FuncType::NOT_FUNC,
+                                                                     FuncType::GENERAL}},
+            {"a",               "var_0000(var_0001",                {FuncType::NOT_FUNC,
+                                                                     FuncType::GENERAL}},
+            {"+ b",             "var_0000(var_0001+var_0002",       {FuncType::NOT_FUNC,
+                                                                     FuncType::GENERAL}},
+            {")",               "var_0000(var_0001+var_0002)",      {FuncType::NOT_FUNC}},
+        });
+    }
+    SECTION("literal in arguments")
+    {
+        tester.test_function_scopes({
+            {"String",          "String",                               {FuncType::NOT_FUNC}},
+            {".fromCharCode",   "String.fromCharCode",                  {FuncType::NOT_FUNC}},
+            {"(`",              "String.fromCharCode(`",                {FuncType::NOT_FUNC,
+                                                                         FuncType::CHAR_CODE}},
+            {"un",              "String.fromCharCode(`un",              {FuncType::NOT_FUNC,
+                                                                         FuncType::CHAR_CODE}},
+            {"escape(",         "String.fromCharCode(`unescape(",       {FuncType::NOT_FUNC,
+                                                                         FuncType::CHAR_CODE}},
+            {"`)",              "String.fromCharCode(`unescape(`)",     {FuncType::NOT_FUNC}},
+        });
+    }
+    SECTION("Nesting - Mixed function calls")
+    {
+        tester.test_function_scopes({
+            {"decode",                      "var_0000",                 {FuncType::NOT_FUNC}},
+            {"URI",                         "decodeURI",                {FuncType::NOT_FUNC}},
+            {"Component",                   "decodeURIComponent",       {FuncType::NOT_FUNC}},
+            {"(",                           "decodeURIComponent(",      {FuncType::NOT_FUNC,
+                                                                         FuncType::UNESCAPE}},
+            {" a, ",                        "decodeURIComponent(var_0001,",
+                                                                        {FuncType::NOT_FUNC,
+                                                                         FuncType::UNESCAPE}},
+            {" String.fromCharCode( ar",
+            "decodeURIComponent(var_0001,String.fromCharCode(var_0002",
+                                                                        {FuncType::NOT_FUNC,
+                                                                         FuncType::UNESCAPE,
+                                                                         FuncType::CHAR_CODE}},
+            {"g ), b, foo",
+            "decodeURIComponent(var_0001,String.fromCharCode(var_0003),var_0004,var_0005",
+                                                                        {FuncType::NOT_FUNC,
+                                                                         FuncType::UNESCAPE}},
+            {"bar( ",
+            "decodeURIComponent(var_0001,String.fromCharCode(var_0003),var_0004,var_0006(",
+                                                                        {FuncType::NOT_FUNC,
+                                                                         FuncType::UNESCAPE,
+                                                                         FuncType::GENERAL}},
+            {"))",
+            "decodeURIComponent(var_0001,String.fromCharCode(var_0003),var_0004,var_0006())",
+                                                                        {FuncType::NOT_FUNC}}
+        });
+    }
+}
+
 #endif // CATCH_TEST_BUILD
 
 // Benchmark tests
@@ -4215,7 +4693,7 @@ TEST_CASE("JS Normalizer, literals by 8 K", "[JSNormalizer]")
 {
     JSIdentifierCtxStub ident_ctx;
     JSNormalizer normalizer(ident_ctx, unlim_depth, max_template_nesting, max_bracket_depth);
-    char dst[DEPTH];
+    char dst[norm_depth];
 
     constexpr size_t size = 1 << 13;
 
@@ -4255,7 +4733,7 @@ TEST_CASE("JS Normalizer, literals by 64 K", "[JSNormalizer]")
 {
     JSIdentifierCtxStub ident_ctx;
     JSNormalizer normalizer(ident_ctx, unlim_depth, max_template_nesting, max_scope_depth);
-    char dst[DEPTH];
+    char dst[norm_depth];
 
     constexpr size_t size = 1 << 16;
 
@@ -4295,10 +4773,10 @@ TEST_CASE("JS Normalizer, id normalization", "[JSNormalizer]")
 {
     // around 11 000 identifiers
     std::string input;
-    for (int it = 0; it < DEPTH; ++it)
+    for (int it = 0; it < norm_depth; ++it)
         input.append("n" + std::to_string(it) + " ");
 
-    input.resize(DEPTH - strlen(s_closing_tag));
+    input.resize(norm_depth - strlen(s_closing_tag));
     input.append(s_closing_tag, strlen(s_closing_tag));
 
     JSIdentifierCtxStub ident_ctx_mock;
@@ -4378,14 +4856,14 @@ TEST_CASE("JS Normalizer, scope tracking", "[JSNormalizer]")
 
 TEST_CASE("JS Normalizer, automatic semicolon", "[JSNormalizer]")
 {
-    auto w_semicolons = make_input("", "a;\n", "", depth);
-    auto wo_semicolons = make_input("", "a \n", "", depth);
+    auto w_semicolons = make_input("", "a;\n", "", norm_depth);
+    auto wo_semicolons = make_input("", "a \n", "", norm_depth);
     const char* src_w_semicolons = w_semicolons.c_str();
     const char* src_wo_semicolons = wo_semicolons.c_str();
     size_t src_len = w_semicolons.size();
 
     JSIdentifierCtxStub ident_ctx_mock;
-    JSNormalizer normalizer_wo_ident(ident_ctx_mock, unlim_depth, max_template_nesting, depth);
+    JSNormalizer normalizer_wo_ident(ident_ctx_mock, unlim_depth, max_template_nesting, norm_depth);
 
     REQUIRE(norm_ret(normalizer_wo_ident, w_semicolons) == JSTokenizer::SCRIPT_ENDED);
     BENCHMARK("without semicolon insertion")

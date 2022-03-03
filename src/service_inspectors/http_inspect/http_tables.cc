@@ -338,6 +338,8 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_VERSION_0,                  "HTTP version in start line is 0" },
     { EVENT_VERSION_HIGHER_THAN_1,      "HTTP version in start line is higher than 1" },
     { EVENT_GZIP_FEXTRA,                "HTTP gzip body with the FEXTRA flag set" },
+    { EVENT_JS_UNESCAPE_NEST,           "nested unescape functions in JavaScript code" },
+    { EVENT_JS_MULTIPLE_ENC,            "mixing of escape formats in JavaScript code" },
     { 0, nullptr }
 };
 

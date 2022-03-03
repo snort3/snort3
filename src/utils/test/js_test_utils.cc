@@ -29,14 +29,43 @@ namespace snort
 {
 [[noreturn]] void FatalError(const char*, ...)
 { exit(EXIT_FAILURE); }
-void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) {}
+void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) { }
 uint8_t TraceApi::get_constraints_generation() { return 0; }
-void TraceApi::filter(const Packet&) {}
+void TraceApi::filter(const Packet&) { }
 }
 
 THREAD_LOCAL const snort::Trace* http_trace = nullptr;
 
 using namespace snort;
+
+void JSTokenizerTester::test_function_scopes(const std::list<ScopeCase>& pdus)
+{
+    for (auto pdu : pdus)
+    {
+        const char* source;
+        const char* expected;
+        std::list<FuncType> exp_stack;
+        std::tie(source, expected, exp_stack) = pdu;
+
+        normalizer.normalize(source, strlen(source));
+        std::string result_buf(normalizer.get_script(), normalizer.script_size());
+        CHECK(result_buf == expected);
+
+        auto tmp_stack(normalizer.get_tokenizer().scope_stack);
+        CHECK(tmp_stack.size() == exp_stack.size());
+        for (auto func_it = exp_stack.rbegin(); func_it != exp_stack.rend() and !tmp_stack.empty();
+            func_it++)
+        {
+            CHECK(tmp_stack.top().func_call_type == *func_it);
+            tmp_stack.pop();
+        }
+    }
+}
+
+bool JSTokenizerTester::is_unescape_nesting_seen() const
+{
+    return normalizer.is_unescape_nesting_seen();
+}
 
 void test_scope(const char* context, std::list<JSProgramScopeType> stack)
 {
