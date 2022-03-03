@@ -1828,8 +1828,7 @@ Received TCP data with no TCP flags set.
 
 129:12
 
-Consecutive TCP small segments exceed the configured threshold. The size required to be a small segment can
-be configured via stream_tcp.small_segments.maximum_size, and the maximum number of these small segments can be configured
+Consecutive (in the order of received packets, not the order of sequence numbers) TCP small segments exceed the configured threshold. The size required to be a small segment can be configured via stream_tcp.small_segments.maximum_size, and the maximum number of these small segments can be configured
 with int stream_tcp.small_segments.count.
 
 129:13

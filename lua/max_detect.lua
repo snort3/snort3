@@ -43,12 +43,6 @@ smtp.decompress_zip = true
 
 stream_ip.min_frag_length = 100
 
-stream_tcp.small_segments =
-{
-    count = 3,
-    maximum_size = 150,
-}
-
 telnet.check_encrypted = true
 telnet.normalize = true
 
