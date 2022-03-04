@@ -20,6 +20,7 @@
 #ifndef JS_TOKENIZER_H
 #define JS_TOKENIZER_H
 
+#include <array>
 #include <sstream>
 #include <stack>
 #include <vector>

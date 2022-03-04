@@ -1783,8 +1783,8 @@ JSTokenizer::FuncType JSTokenizer::detect_func_type()
             assert(size >= 0);
             
             char tail[256];
-            assert((long unsigned int)size <= sizeof(tail));
-            size = std::min((long unsigned int)size, sizeof(tail));
+            assert((size_t)size <= sizeof(tail));
+            size = std::min((size_t)size, sizeof(tail));
 
             pbuf->pubseekoff(-size, yyout.cur, yyout.out);
             pbuf->sgetn(tail, size);
