@@ -26,7 +26,7 @@
 
 /*These are temporary values*/
 #define DEFAULT_MIME_MEMCAP           838860
-#define DEFAULT_DEPTH                 1464
+#define DEFAULT_DEPTH                 0
 #define DEFAULT_DECOMP                100000
 #define MAX_LOG_MEMCAP                104857600
 #define MIN_LOG_MEMCAP                3276

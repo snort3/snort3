@@ -154,7 +154,7 @@ void MimeSession::setup_decode(const char* data, int size, bool cnt_xf)
         if (decode_state != nullptr)
         {
             decode_state->process_decode_type(data, size, cnt_xf, mime_stats);
-            state_flags |= MIME_FLAG_EMAIL_ATTACH;
+            state_flags |= MIME_FLAG_FILE_ATTACH;
         }
     }
 }
@@ -350,7 +350,7 @@ const uint8_t* MimeSession::process_mime_header(Packet* p, const uint8_t* ptr,
                 (MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_FOLDING)) == MIME_FLAG_IN_CONTENT_TYPE)
         {
             if ((data_state == STATE_MIME_HEADER) && !(state_flags &
-                    MIME_FLAG_EMAIL_ATTACH))
+                    MIME_FLAG_FILE_ATTACH))
             {
                 setup_decode((const char*)content_type_ptr, (eolm - content_type_ptr), false);
             }
@@ -448,14 +448,14 @@ static const uint8_t* GetDataEnd(const uint8_t* data_start,
  * @return  i index into p->payload where we stopped looking at data
  */
 const uint8_t* MimeSession::process_mime_body(const uint8_t* ptr,
-    const uint8_t* data_end, bool is_data_end)
+    const uint8_t* data_end, bool is_body_end)
 {
-    if (state_flags & MIME_FLAG_EMAIL_ATTACH)
+    if (state_flags & MIME_FLAG_FILE_ATTACH)
     {
         const uint8_t* attach_start = ptr;
         const uint8_t* attach_end;
 
-        if (is_data_end )
+        if (is_body_end )
         {
             attach_end = GetDataEnd(ptr, data_end);
         }
@@ -473,10 +473,9 @@ const uint8_t* MimeSession::process_mime_body(const uint8_t* ptr,
         }
     }
 
-    if (is_data_end)
+    if (is_body_end)
     {
         data_state = STATE_MIME_HEADER;
-        state_flags &= ~MIME_FLAG_EMAIL_ATTACH;
     }
 
     return data_end;
@@ -562,64 +561,64 @@ const uint8_t* MimeSession::process_mime_data_paf(
             break;
         case STATE_DATA_BODY:
             start = process_mime_body(start, end, isFileEnd(position) );
+
+            if (state_flags & MIME_FLAG_FILE_ATTACH)
+            {
+                const DecodeConfig* conf = decode_conf;
+                const uint8_t* buffer = nullptr;
+                uint32_t buf_size = 0;
+
+                decode_state->get_decoded_data(&buffer, &buf_size);
+
+                if (conf and buf_size > 0)
+                {
+                    const uint8_t* decomp_buffer = nullptr;
+                    uint32_t detection_size, decomp_buf_size = 0;
+
+                    detection_size = (uint32_t)decode_state->get_detection_depth();
+
+                    DecodeResult result = decode_state->decompress_data(
+                        buffer, detection_size, decomp_buffer, decomp_buf_size
+                        );
+
+                    if ( result != DECODE_SUCCESS )
+                        decompress_alert();
+
+                    set_file_data(decomp_buffer, decomp_buf_size);
+                }
+
+                /*Process file type/file signature*/
+                mime_file_process(p, buffer, buf_size, position, upload);
+
+                if (mime_stats)
+                {
+                    switch (decode_state->get_decode_type())
+                    {
+                        case DECODE_B64:
+                            mime_stats->b64_bytes += buf_size;
+                            break;
+                        case DECODE_QP:
+                            mime_stats->qp_bytes += buf_size;
+                            break;
+                        case DECODE_UU:
+                            mime_stats->uu_bytes += buf_size;
+                            break;
+                        case DECODE_BITENC:
+                            mime_stats->bitenc_bytes += buf_size;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                decode_state->reset_decoded_bytes();
+            }
             break;
         }
     }
 
-    /* We have either reached the end of MIME header or end of MIME encoded data*/
-
-    if ((decode_state) != nullptr)
-    {
-        DecodeConfig* conf = decode_conf;
-        const uint8_t* buffer = nullptr;
-        uint32_t buf_size = 0;
-
-        decode_state->get_decoded_data(&buffer, &buf_size);
-
-        if (conf)
-        {
-            const uint8_t* decomp_buffer = nullptr;
-            uint32_t detection_size, decomp_buf_size = 0;
-
-            detection_size = (uint32_t)decode_state->get_detection_depth();
-
-            DecodeResult result = decode_state->decompress_data(
-                buffer, detection_size, decomp_buffer, decomp_buf_size
-            );
-
-            if ( result != DECODE_SUCCESS )
-                decompress_alert();
-
-            if (!is_http)
-                set_file_data(decomp_buffer, decomp_buf_size);
-        }
-
-        /*Process file type/file signature*/
-        mime_file_process(p, buffer, buf_size, position, upload);
-
-        if (mime_stats)
-        {
-            switch (decode_state->get_decode_type())
-            {
-            case DECODE_B64:
-                mime_stats->b64_bytes += buf_size;
-                break;
-            case DECODE_QP:
-                mime_stats->qp_bytes += buf_size;
-                break;
-            case DECODE_UU:
-                mime_stats->uu_bytes += buf_size;
-                break;
-            case DECODE_BITENC:
-                mime_stats->bitenc_bytes += buf_size;
-                break;
-            default:
-                break;
-            }
-        }
-
-        decode_state->reset_decoded_bytes();
-    }
+    if (isFileEnd(position))
+        reset_part_state();
 
     /* if we got the data end reset state, otherwise we're probably still in the data
      *      * to expect more data in next packet */
@@ -632,8 +631,12 @@ const uint8_t* MimeSession::process_mime_data_paf(
     return end;
 }
 
-void MimeSession::reset_file_data()
+void MimeSession::reset_part_state()
 {
+    state_flags = 0;
+    if (decode_state)
+        decode_state->clear_decode_state();
+
     // Clear MIME's file data to prepare for next file
     file_counter++;
     file_process_offset = 0;
@@ -654,8 +657,6 @@ const uint8_t* MimeSession::process_mime_data(Packet* p, const uint8_t* start,
 
     if (position != SNORT_FILE_POSITION_UNKNOWN)
     {
-        if (position == SNORT_FILE_START or position == SNORT_FILE_FULL)
-            reset_file_data();
         process_mime_data_paf(p, attach_start, data_end_marker,
             upload, position);
         return data_end_marker;
@@ -672,10 +673,9 @@ const uint8_t* MimeSession::process_mime_data(Packet* p, const uint8_t* start,
             finalFilePosition(&position);
             process_mime_data_paf(p, attach_start, attach_end,
                 upload, position);
-            reset_file_data();
             data_state = STATE_MIME_HEADER;
             position = SNORT_FILE_START;
-            attach_start = start + 1;
+            return attach_end;
         }
 
         start++;
@@ -806,12 +806,11 @@ void MimeSession::exit()
         delete mime_hdr_search_mpse;
 }
 
-MimeSession::MimeSession(Packet* p, DecodeConfig* dconf, MailLogConfig* lconf, uint64_t base_file_id,
-    bool session_is_http, const uint8_t* uri, const int32_t uri_length):
+MimeSession::MimeSession(Packet* p, const DecodeConfig* dconf, MailLogConfig* lconf, uint64_t base_file_id,
+    const uint8_t* uri, const int32_t uri_length):
     decode_conf(dconf),
     log_config(lconf),
     log_state(new MailLogState(log_config)),
-    is_http(session_is_http),
     session_base_file_id(base_file_id),
     uri(uri),
     uri_length(uri_length)
@@ -881,6 +880,4 @@ void MimeSession::mime_file_process(Packet* p, const uint8_t* data, int data_siz
             filename.clear();
         }
     }
-    if (position == SNORT_FILE_FULL or position == SNORT_FILE_END)
-        reset_file_data();
 }

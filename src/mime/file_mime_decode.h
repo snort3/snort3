@@ -57,7 +57,7 @@ struct MimeStats
 class SO_PUBLIC MimeDecode
 {
 public:
-    MimeDecode(snort::DecodeConfig* conf);
+    MimeDecode(const snort::DecodeConfig* conf);
     ~MimeDecode();
 
     // get the decode type from buffer
@@ -90,7 +90,7 @@ public:
 private:
     void get_ole_data();
     DecodeType decode_type = DECODE_NONE;
-    snort::DecodeConfig* config;
+    const snort::DecodeConfig* config;
     DataDecode* decoder = nullptr;
     fd_session_t* fd_state = nullptr;
     BufferData ole_data;

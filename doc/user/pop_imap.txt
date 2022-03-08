@@ -15,7 +15,7 @@ POP inspector and IMAP inspector offer same set of configuration options
 for MIME decoding depth. These depths range from 0 to 65535 bytes. Setting
 the value to 0 ("do none") turns the feature off. Alternatively the value
 -1 means an unlimited amount of data should be decoded. If you do not
-specify the default value is 1460 bytes.
+specify the default value is -1 (unlimited).
 
 The depth limits apply per attachment. They are:
 

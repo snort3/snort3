@@ -132,29 +132,8 @@ static const Parameter file_id_params[] =
     { "trace_stream", Parameter::PT_BOOL, nullptr, "false",
       "enable runtime dump of file data" },
 
-    { "b64_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
-      "base64 decoding depth (-1 no limit)" },
-
-    { "bitenc_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
-      "Non-Encoded MIME attachment extraction depth (-1 no limit)" },
-
-    { "decompress_pdf", Parameter::PT_BOOL, nullptr, "false",
-      "decompress pdf files" },
-
-    { "decompress_swf", Parameter::PT_BOOL, nullptr, "false",
-      "decompress swf files" },
-
-    { "decompress_zip", Parameter::PT_BOOL, nullptr, "false",
-      "decompress zip files" },
-
     { "decompress_buffer_size", Parameter::PT_INT, "1024:max31", "100000",
       "file decompression buffer size" },
-
-    { "qp_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
-      "Quoted Printable decoding depth (-1 no limit)" },
-
-    { "uu_decode_depth", Parameter::PT_INT, "-1:65535", "-1",
-      "Unix-to-Unix decoding depth (-1 no limit)" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -259,42 +238,8 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("trace_stream") )
         fc->trace_stream = v.get_bool();
 
-    else if ( v.is("decompress_pdf") )
-        FileService::decode_conf.set_decompress_pdf(v.get_bool());
-
-    else if ( v.is("decompress_swf") )
-        FileService::decode_conf.set_decompress_swf(v.get_bool());
-
-    else if ( v.is("decompress_zip") )
-        FileService::decode_conf.set_decompress_zip(v.get_bool());
-
     else if ( v.is("decompress_buffer_size") )
         FileService::decode_conf.set_decompress_buffer_size(v.get_uint32());
-
-    else if (v.is("b64_decode_depth"))
-    {
-        int32_t value = v.get_int32();
-        int32_t mime = value > 0 ? value : -(value+1);
-        FileService::decode_conf.set_b64_depth(mime);
-    }
-    else if (v.is("bitenc_decode_depth"))
-    {
-        int32_t value = v.get_int32();
-        int32_t mime = value > 0 ? value : -(value+1);
-        FileService::decode_conf.set_bitenc_depth(mime);
-    }
-    else if (v.is("qp_decode_depth"))
-    {
-        int32_t value = v.get_int32();
-        int32_t mime = value > 0 ? value : -(value+1);
-        FileService::decode_conf.set_qp_depth(mime);
-    }
-    else if (v.is("uu_decode_depth"))
-    {
-        int32_t value = v.get_int32();
-        int32_t mime = value > 0 ? value : -(value+1);
-        FileService::decode_conf.set_uu_depth(mime);
-    }
 
     else if ( v.is("rev") )
         rule.rev = v.get_uint32();

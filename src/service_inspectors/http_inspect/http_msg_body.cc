@@ -212,8 +212,13 @@ void HttpMsgBody::analyze()
                 partial_js_detect_length = js_norm_body.length();
             }
 
-            set_file_data(const_cast<uint8_t*>(detect_data.start()),
-                (unsigned)detect_data.length());
+            // If this is a MIME upload, the MIME library sets the file_data buffer to the
+            // file attachment body data.
+            // FIXIT-E currently the file_data buffer is set to the body of the last attachment per
+            // message section.
+            if (!session_data->mime_state[source_id])
+                set_file_data(const_cast<uint8_t*>(detect_data.start()),
+                    (unsigned)detect_data.length());
         }
     }
     body_octets += msg_text.length();
@@ -463,8 +468,18 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
     {
         // FIXIT-M this interface does not convey any indication of end of message body. If the
         // message body ends in the middle of a MIME message the partial file will not be flushed.
-        session_data->mime_state[source_id]->process_mime_data(p, file_data.start(),
-            file_data.length(), true, SNORT_FILE_POSITION_UNKNOWN);
+
+        const uint8_t* const section_end = file_data.start() + file_data.length();
+        const uint8_t* ptr = file_data.start();
+        while (ptr < section_end)
+        {
+            // After process_mime_data(), ptr will point to the last byte processed in the current
+            // MIME part
+            ptr = session_data->mime_state[source_id]->process_mime_data(p, ptr,
+                (section_end - ptr), true, SNORT_FILE_POSITION_UNKNOWN);
+            ptr++;
+        }
+
         session_data->file_octets[source_id] += file_data.length();
     }
 }

@@ -248,18 +248,22 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("decompress_pdf"))
     {
         params->decompress_pdf = val.get_bool();
+        params->mime_decode_conf.set_decompress_pdf(val.get_bool());
     }
     else if (val.is("decompress_swf"))
     {
         params->decompress_swf = val.get_bool();
+        params->mime_decode_conf.set_decompress_swf(val.get_bool());
     }
     else if (val.is("decompress_zip"))
     {
         params->decompress_zip = val.get_bool();
+        params->mime_decode_conf.set_decompress_zip(val.get_bool());
     }
     else if (val.is("decompress_vba"))
     {
         params->decompress_vba = val.get_bool();
+        params->mime_decode_conf.set_decompress_vba(val.get_bool());
     }
     else if (val.is("script_detection"))
     {

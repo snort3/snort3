@@ -48,6 +48,10 @@ LiteralSearch::Handle* LiteralSearch::setup() { return nullptr; }
 void LiteralSearch::cleanup(LiteralSearch::Handle*) {}
 LiteralSearch* LiteralSearch::instantiate(LiteralSearch::Handle*, const uint8_t*, unsigned, bool,
     bool) { return nullptr; }
+void DecodeConfig::set_decompress_pdf(bool) {}
+void DecodeConfig::set_decompress_swf(bool) {}
+void DecodeConfig::set_decompress_zip(bool) {}
+void DecodeConfig::set_decompress_vba(bool) {}
 }
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
