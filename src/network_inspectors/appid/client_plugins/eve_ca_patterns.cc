@@ -37,16 +37,19 @@ void EveCaPatternMatchers::add_eve_ca_pattern(AppId app_id, const string& patter
     uint8_t confidence, const string& detector)
 {
     auto match = find_if(eve_ca_load_list.begin(), eve_ca_load_list.end(),
-        [app_id, pattern_str] (EveCaPattern* eve_ca)
-        { return (eve_ca->pattern == pattern_str and eve_ca->app_id != app_id); });
-
+        [pattern_str] (EveCaPattern* eve_ca) { return eve_ca->pattern == pattern_str; });
     if (match != eve_ca_load_list.end())
-        WarningMessage("appid: detector %s - process name '%s' for client app %d is already "
-            "mapped to client app %d\n", detector.c_str(), (*match)->pattern.c_str(), app_id,
-            (*match)->app_id);
-
-    EveCaPattern* new_eve_ca_pattern = new EveCaPattern(app_id, pattern_str, confidence);
-    eve_ca_load_list.push_back(new_eve_ca_pattern);
+    {
+        if ((*match)->app_id != app_id)
+            WarningMessage("appid: detector %s - process name '%s' for client app %d is already "
+                "mapped to client app %d\n", detector.c_str(), (*match)->pattern.c_str(), app_id,
+                (*match)->app_id);
+    }
+    else
+    {
+        EveCaPattern* new_eve_ca_pattern = new EveCaPattern(app_id, pattern_str, confidence);
+        eve_ca_load_list.push_back(new_eve_ca_pattern);
+    }
 }
 
 static int eve_ca_pattern_match(void* id, void*, int, void* data, void*)

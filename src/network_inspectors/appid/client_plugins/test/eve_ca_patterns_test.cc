@@ -90,6 +90,25 @@ TEST(eve_ca_patterns_tests, match_eve_ca_pattern)
     CHECK(eve_matcher->match_eve_ca_pattern("firefox", 92) == APPID_UT_ID);
 }
 
+TEST(eve_ca_patterns_tests, add_eve_ca_pattern)
+{
+    // same process name mapped to different app
+    eve_matcher->add_eve_ca_pattern(APPID_UT_ID + 1, "firefox", 40, "custom_detector.lua");
+    eve_matcher->add_eve_ca_pattern(APPID_UT_ID + 2, "firefox", 90, "odp_detector.lua");
+
+    CHECK(eve_matcher->get_eve_ca_load_list().size() == 1);
+    CHECK(eve_matcher->get_eve_ca_load_list()[0]->app_id == APPID_UT_ID + 1);
+    CHECK(eve_matcher->get_eve_ca_load_list()[0]->confidence == 40);
+
+    // same process name mapped to an existing app, but with different confidence
+    eve_matcher->add_eve_ca_pattern(APPID_UT_ID + 1, "chrome", 80, "custom_detector.lua");
+    eve_matcher->add_eve_ca_pattern(APPID_UT_ID + 1, "chrome", 90, "odp_detector.lua");
+
+    CHECK(eve_matcher->get_eve_ca_load_list().size() == 2);
+    CHECK(eve_matcher->get_eve_ca_load_list()[1]->app_id == APPID_UT_ID + 1);
+    CHECK(eve_matcher->get_eve_ca_load_list()[1]->confidence == 80);
+}
+
 int main(int argc, char** argv)
 {
     int return_value = CommandLineTestRunner::RunAllTests(argc, argv);

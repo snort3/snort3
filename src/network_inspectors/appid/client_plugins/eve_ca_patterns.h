@@ -49,6 +49,8 @@ public:
     void finalize_patterns();
     void reload_patterns();
 
+    const EveCaPatternList& get_eve_ca_load_list() const { return eve_ca_load_list; }
+
 private:
     snort::SearchTool eve_ca_pattern_matcher = snort::SearchTool();
     EveCaPatternList eve_ca_load_list;
