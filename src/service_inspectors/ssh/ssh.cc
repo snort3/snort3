@@ -90,6 +90,8 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
 
     // Attempt to get a previously allocated SSH block.
     SSHData* sessp = get_session_data(p->flow);
+    if (!sessp)
+        return;
 
     // Don't process if we've missed packets
     if (sessp->state_flags & SSH_FLG_MISSED_PACKETS)
