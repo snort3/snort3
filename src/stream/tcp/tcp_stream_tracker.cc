@@ -201,6 +201,18 @@ void TcpStreamTracker::cache_mac_address(const TcpSegmentDescriptor& tsd, uint8_
     }
 }
 
+
+void TcpStreamTracker::set_fin_seq_status_seen(const TcpSegmentDescriptor& tsd)
+{
+    if ( !fin_seq_set and SEQ_GEQ(tsd.get_end_seq(), r_win_base) )
+    {
+        fin_i_seq = tsd.get_seq();
+        fin_final_seq = tsd.get_end_seq();
+        fin_seq_set = true;
+        fin_seq_status = TcpStreamTracker::FIN_WITH_SEQ_SEEN;
+    }
+}
+
 void TcpStreamTracker::init_tcp_state()
 {
     tcp_state = ( client_tracker ) ?
@@ -214,6 +226,7 @@ void TcpStreamTracker::init_tcp_state()
     mss = 0;
     tf_flags = 0;
     mac_addr_valid = false;
+    fin_i_seq = 0;
     fin_final_seq = 0;
     fin_seq_status = TcpStreamTracker::FIN_NOT_SEEN;
     fin_seq_set = false;
@@ -223,7 +236,6 @@ void TcpStreamTracker::init_tcp_state()
     flush_policy = STREAM_FLPOLICY_IGNORE;
     reassembler.reset();
     splitter_finish_flag = false;
-    delayed_finish_flag = false;
 }
 
 //-------------------------------------------------------------------------
@@ -526,7 +538,7 @@ void TcpStreamTracker::update_tracker_ack_sent(TcpSegmentDescriptor& tsd)
     }
 
     if ( ( fin_seq_status == TcpStreamTracker::FIN_WITH_SEQ_SEEN )
-        && SEQ_EQ(r_win_base, fin_final_seq) )
+        && SEQ_GEQ(tsd.get_ack(), fin_final_seq + 1) )
     {
         fin_seq_status = TcpStreamTracker::FIN_WITH_SEQ_ACKED;
     }
@@ -595,15 +607,6 @@ bool TcpStreamTracker::update_on_fin_recv(TcpSegmentDescriptor& tsd)
     else
         fin_seq_adjust = 1;
 
-    // set final seq # any packet rx'ed with seq > is bad
-    if ( !fin_seq_set )
-    {
-        fin_final_seq = tsd.get_end_seq();
-        fin_seq_set = true;
-        if( tsd.get_len() == 0 )
-            fin_seq_status = TcpStreamTracker::FIN_WITH_SEQ_SEEN;
-    }
-
     return true;
 }
 
@@ -666,17 +669,9 @@ void TcpStreamTracker::perform_fin_recv_flush(TcpSegmentDescriptor& tsd)
     if ( tsd.is_data_segment() )
         session->handle_data_segment(tsd);
 
-    // If the packet is in-sequence, call finish and final flush on it.
-    // FIXIT-L: what do we do about out-of-sequence packets?
-    if ( flush_policy == STREAM_FLPOLICY_ON_DATA and SEQ_EQ(tsd.get_end_seq(), rcv_nxt) )
-    {
-        if (tsd.get_flow()->searching_for_service())
-        {
-            delayed_finish_flag = true;
-            return;
-        }
+    if ( flush_policy == STREAM_FLPOLICY_ON_DATA and SEQ_EQ(tsd.get_end_seq(), rcv_nxt)
+         and !tsd.get_flow()->searching_for_service() )
         reassembler.flush_queued_segments(tsd.get_flow(), true, tsd.get_pkt());
-    }
 }
 
 uint32_t TcpStreamTracker::perform_partial_flush()

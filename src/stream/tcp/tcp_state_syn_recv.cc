@@ -151,6 +151,7 @@ bool TcpStateSynRecv::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     {
         Flow* flow = tsd.get_flow();
 
+        trk.set_fin_seq_status_seen(tsd);
         trk.update_tracker_ack_recv(tsd);
         trk.session->set_pkt_action_flag(trk.normalizer.handle_paws(tsd));
         flow->session_state |= STREAM_STATE_ACK;

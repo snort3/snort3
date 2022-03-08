@@ -107,6 +107,18 @@ bool TcpReassembler::next_acked_no_gap_c(const TcpSegmentNode& tsn, const TcpRea
         and SEQ_LT(tsn.next->c_seq, trs.tracker->r_win_base);
 }
 
+bool TcpReassembler::fin_no_gap(const TcpSegmentNode& tsn, const TcpReassemblerState& trs)
+{
+    return trs.tracker->fin_seq_status >= TcpStreamTracker::FIN_WITH_SEQ_SEEN
+        and SEQ_GEQ(tsn.i_seq + tsn.i_len, trs.tracker->get_fin_i_seq());
+}
+
+bool TcpReassembler::fin_acked_no_gap(const TcpSegmentNode& tsn, const TcpReassemblerState& trs)
+{
+    return trs.tracker->fin_seq_status >= TcpStreamTracker::FIN_WITH_SEQ_ACKED
+        and SEQ_GEQ(tsn.i_seq + tsn.i_len, trs.tracker->get_fin_i_seq());
+}
+
 void TcpReassembler::update_next(TcpReassemblerState& trs, const TcpSegmentNode& tsn)
 {
     trs.sos.seglist.cur_rseg = next_no_gap(tsn) ?  tsn.next : nullptr;
@@ -628,12 +640,7 @@ uint32_t TcpReassembler::get_q_footprint(TcpReassemblerState& trs)
         footprint = trs.tracker->r_win_base - trs.sos.seglist_base_seq;
 
     if ( footprint )
-    {
         sequenced = get_q_sequenced(trs);
-
-        if ( trs.tracker->fin_seq_status == TcpStreamTracker::FIN_WITH_SEQ_ACKED )
-            --footprint;
-    }
 
     return ( footprint > sequenced ) ? sequenced : footprint;
 }
@@ -848,17 +855,21 @@ int32_t TcpReassembler::scan_data_pre_ack(TcpReassemblerState& trs, uint32_t* fl
 {
     assert(trs.sos.session->flow == p->flow);
 
+    int32_t ret_val = FINAL_FLUSH_HOLD;
+
     if ( SEQ_GT(trs.sos.seglist.head->c_seq, trs.sos.seglist_base_seq) )
-        return -1;
+        return ret_val;
 
     if ( !trs.sos.seglist.cur_rseg )
         trs.sos.seglist.cur_rseg = trs.sos.seglist.cur_sseg;
 
     if ( !is_q_sequenced(trs) )
-        return -1;
+        return ret_val;
 
     TcpSegmentNode* tsn = trs.sos.seglist.cur_sseg;
     uint32_t total = tsn->c_seq - trs.sos.seglist_base_seq;
+
+    ret_val = FINAL_FLUSH_OK;
     while ( tsn && *flags )
     {
         total += tsn->c_len;
@@ -869,7 +880,10 @@ int32_t TcpReassembler::scan_data_pre_ack(TcpReassemblerState& trs, uint32_t* fl
         if ( paf_initialized(&trs.paf_state) && SEQ_LEQ(end, pos) )
         {
             if ( !next_no_gap(*tsn) )
+            {
+                ret_val = FINAL_FLUSH_HOLD;
                 break;
+            }
 
             tsn = tsn->next;
             continue;
@@ -890,13 +904,17 @@ int32_t TcpReassembler::scan_data_pre_ack(TcpReassemblerState& trs, uint32_t* fl
         }
 
         if (!next_no_gap(*tsn) || (trs.paf_state.paf == StreamSplitter::STOP))
+        {
+            if ( !(next_no_gap(*tsn) || fin_no_gap(*tsn, trs)) )
+                ret_val = FINAL_FLUSH_HOLD;
             break;
+        }
 
         tsn = tsn->next;
     }
 
     trs.sos.seglist.cur_sseg = tsn;
-    return -1;
+    return ret_val;
 }
 
 static inline bool both_splitters_aborted(Flow* flow)
@@ -965,8 +983,10 @@ int32_t TcpReassembler::scan_data_post_ack(TcpReassemblerState& trs, uint32_t* f
 {
     assert(trs.sos.session->flow == p->flow);
 
+    int32_t ret_val = FINAL_FLUSH_HOLD;
+
     if ( !trs.sos.seglist.cur_sseg || SEQ_GEQ(trs.sos.seglist_base_seq, trs.tracker->r_win_base) )
-        return -1;
+        return ret_val ;
 
     if ( !trs.sos.seglist.cur_rseg )
         trs.sos.seglist.cur_rseg = trs.sos.seglist.cur_sseg;
@@ -987,6 +1007,7 @@ int32_t TcpReassembler::scan_data_post_ack(TcpReassemblerState& trs, uint32_t* f
             total = tsn->c_seq - trs.sos.seglist.cur_rseg->c_seq;
     }
 
+    ret_val = FINAL_FLUSH_OK;
     while (tsn && *flags && SEQ_LT(tsn->c_seq, trs.tracker->r_win_base))
     {
         // only flush acked data that fits in pdu reassembly buffer...
@@ -1025,12 +1046,16 @@ int32_t TcpReassembler::scan_data_post_ack(TcpReassemblerState& trs, uint32_t* f
 
         if (flush_len < tsn->c_len || (splitter->is_paf() and !next_no_gap(*tsn)) ||
             (trs.paf_state.paf == StreamSplitter::STOP))
+        {
+            if ( !(next_no_gap(*tsn) || fin_acked_no_gap(*tsn, trs)) )
+                ret_val = FINAL_FLUSH_HOLD;
             break;
+        }
 
         tsn = tsn->next;
     }
 
-    return -1;
+    return ret_val;
 }
 
 int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
@@ -1050,16 +1075,13 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
         if ( trs.sos.seglist.head )
         {
             uint32_t flags;
+            int32_t flush_amt;
             do
             {
                 flags = get_forward_packet_dir(trs, p);
-                int32_t flush_amt = scan_data_pre_ack(trs, &flags, p);
+                flush_amt = scan_data_pre_ack(trs, &flags, p);
                 if ( flush_amt <= 0 )
-                {
-                    if (trs.tracker->delayed_finish())
-                        flush_queued_segments(trs, p->flow, true, p);
                     break;
-                }
 
                 flushed += flush_to_seq(trs, flush_amt, p, flags);
             }
@@ -1069,6 +1091,15 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
             {
                 fallback(*trs.tracker, trs.server_side);
                 return flush_on_data_policy(trs, p);
+            }
+            else if ( trs.tracker->fin_seq_status >= TcpStreamTracker::FIN_WITH_SEQ_SEEN and
+                -1 <= flush_amt and flush_amt <= 0 and
+                trs.paf_state.paf == StreamSplitter::SEARCH and
+                !p->flow->searching_for_service() )
+            {
+                // we are on a FIN, the data has been scanned, it has no gaps,
+                // but somehow we are waiting for more data - do final flush here
+                flush_queued_segments(trs, p->flow, true, p );
             }
         }
         break;
@@ -1146,11 +1177,7 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
             flags = get_reverse_packet_dir(trs, p);
             flush_amt = scan_data_post_ack(trs, &flags, p);
             if ( flush_amt <= 0 or trs.paf_state.paf == StreamSplitter::SKIP )
-            {
-                if (trs.tracker->delayed_finish())
-                    flush_queued_segments(trs, p->flow, true, p);
                 break;
-            }
 
             if ( trs.paf_state.paf == StreamSplitter::ABORT )
                 trs.tracker->splitter_finish(p->flow);
@@ -1175,6 +1202,15 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
         {
             skip_seglist_hole(trs, p, flags, flush_amt);
             return flush_on_ack_policy(trs, p);
+        }
+        else if ( -1 <= flush_amt and flush_amt <= 0 and
+            trs.paf_state.paf == StreamSplitter::SEARCH and
+            trs.tracker->fin_seq_status == TcpStreamTracker::FIN_WITH_SEQ_ACKED and
+            !p->flow->searching_for_service() )
+        {
+            // we are acknowledging a FIN, the data has been scanned, it has no gaps,
+            // but somehow we are waiting for more data - do final flush here
+            flush_queued_segments(trs, p->flow, true, p);
         }
     }
     break;

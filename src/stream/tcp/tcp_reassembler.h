@@ -28,6 +28,13 @@
 class TcpReassembler : public SegmentOverlapEditor
 {
 public:
+
+    // OK means FIN seen, data scanned, flush point not found, no gaps
+    enum ScanStatus {
+        FINAL_FLUSH_HOLD = -2,
+        FINAL_FLUSH_OK = -1
+    };
+
     virtual void queue_packet_for_reassembly(TcpReassemblerState&, TcpSegmentDescriptor&);
     virtual void purge_segment_list(TcpReassemblerState&);
     virtual void purge_flushed_ackd(TcpReassemblerState&);
@@ -88,6 +95,8 @@ protected:
     bool next_no_gap(const TcpSegmentNode&);
     bool next_no_gap_c(const TcpSegmentNode&);
     bool next_acked_no_gap_c(const TcpSegmentNode&, const TcpReassemblerState&);
+    bool fin_no_gap(const TcpSegmentNode&, const TcpReassemblerState&);
+    bool fin_acked_no_gap(const TcpSegmentNode&, const TcpReassemblerState&);
     void update_next(TcpReassemblerState&, const TcpSegmentNode&);
     void update_skipped_bytes(uint32_t, TcpReassemblerState&);
     bool has_seglist_hole(TcpReassemblerState&, TcpSegmentNode&, PAF_State&, uint32_t& total,

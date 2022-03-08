@@ -102,6 +102,7 @@ bool TcpStateEstablished::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
 bool TcpStateEstablished::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
+    trk.set_fin_seq_status_seen(tsd);
     trk.update_tracker_ack_recv(tsd);
     trk.perform_fin_recv_flush(tsd);
 

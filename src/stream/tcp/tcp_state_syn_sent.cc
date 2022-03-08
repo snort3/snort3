@@ -108,6 +108,7 @@ bool TcpStateSynSent::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker&
 
 bool TcpStateSynSent::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
+    trk.set_fin_seq_status_seen(tsd);
     trk.perform_fin_recv_flush(tsd);
     return true;
 }

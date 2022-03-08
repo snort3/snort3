@@ -94,6 +94,7 @@ bool TcpStateFinWait1::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
     Flow* flow = tsd.get_flow();
     bool is_ack_valid = false;
 
+    trk.set_fin_seq_status_seen(tsd);
     trk.update_tracker_ack_recv(tsd);
     if ( SEQ_GEQ(tsd.get_end_seq(), trk.r_win_base) and
          check_for_window_slam(tsd, trk, &is_ack_valid) )

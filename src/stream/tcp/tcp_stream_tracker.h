@@ -180,6 +180,12 @@ public:
     uint32_t get_fin_seq_adjust()
     { return fin_seq_adjust; }
 
+    uint32_t get_fin_i_seq() const
+    { return fin_i_seq; }
+
+    // set final seq # any packet rx'ed with seq > is bad
+    void set_fin_seq_status_seen(const TcpSegmentDescriptor&);
+
     bool is_fin_seq_set() const
     { return fin_seq_set; }
 
@@ -262,8 +268,6 @@ public:
     { return splitter && splitter->is_paf(); }
 
     bool splitter_finish(snort::Flow* flow);
-    bool delayed_finish() const
-    { return delayed_finish_flag; }
 
     bool is_reassembly_enabled() const
     { return  ( splitter and (flush_policy != STREAM_FLPOLICY_IGNORE) ); }
@@ -349,6 +353,7 @@ protected:
     uint32_t ts_last_packet = 0;
     uint32_t ts_last = 0;       // last timestamp (for PAWS)
     uint32_t fin_final_seq = 0;
+    uint32_t fin_i_seq = 0;
     uint32_t fin_seq_adjust = 0;
     uint16_t mss = 0;           // max segment size
     uint16_t wscale = 0;        // window scale setting
@@ -359,7 +364,6 @@ protected:
     bool mac_addr_valid = false;
     bool fin_seq_set = false;  // FIXIT-M should be obviated by tcp state
     bool splitter_finish_flag = false;
-    bool delayed_finish_flag = false;
 };
 
 // <--- note -- the 'state' parameter must be a reference
