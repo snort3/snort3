@@ -93,8 +93,11 @@ TEST_CASE("JSIdentifierCtx::is_ignored()", "[JSIdentifierCtx]")
 {
     JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ignored_ids);
 
-    CHECK(ident_ctx.is_ignored("console") == true);
-    CHECK(ident_ctx.is_ignored("foo") == false);
+    auto v1 = ident_ctx.substitute("console");
+    auto v2 = ident_ctx.substitute("foo");
+
+    CHECK(ident_ctx.is_ignored(v1) == true);
+    CHECK(ident_ctx.is_ignored(v2) == false);
 }
 
 TEST_CASE("JSIdentifierCtx::scopes", "[JSIdentifierCtx]")
@@ -120,30 +123,22 @@ TEST_CASE("JSIdentifierCtx::scopes", "[JSIdentifierCtx]")
     {
         ident_ctx.add_alias("a", "console.log");
         ident_ctx.add_alias("b", "document");
-        CHECK(ident_ctx.scope_contains(0, "a"));
-        CHECK(ident_ctx.scope_contains(0, "b"));
         CHECK(!strcmp(ident_ctx.alias_lookup("a"), "console.log"));
         CHECK(!strcmp(ident_ctx.alias_lookup("b"), "document"));
 
         REQUIRE(ident_ctx.scope_push(JSProgramScopeType::FUNCTION));
         ident_ctx.add_alias("a", "document");
-        CHECK(ident_ctx.scope_contains(1, "a"));
-        CHECK(!ident_ctx.scope_contains(1, "b"));
         CHECK(!strcmp(ident_ctx.alias_lookup("a"), "document"));
         CHECK(!strcmp(ident_ctx.alias_lookup("b"), "document"));
 
         REQUIRE(ident_ctx.scope_push(JSProgramScopeType::BLOCK));
         ident_ctx.add_alias("b", "console.log");
-        CHECK(ident_ctx.scope_contains(2, "b"));
-        CHECK(!ident_ctx.scope_contains(2, "a"));
         CHECK(!strcmp(ident_ctx.alias_lookup("b"), "console.log"));
         CHECK(!strcmp(ident_ctx.alias_lookup("a"), "document"));
 
         REQUIRE(ident_ctx.scope_pop(JSProgramScopeType::BLOCK));
         REQUIRE(ident_ctx.scope_pop(JSProgramScopeType::FUNCTION));
         ident_ctx.add_alias("a", "eval");
-        CHECK(ident_ctx.scope_contains(0, "a"));
-        CHECK(ident_ctx.scope_contains(0, "b"));
         CHECK(!strcmp(ident_ctx.alias_lookup("a"), "eval"));
         CHECK(!strcmp(ident_ctx.alias_lookup("b"), "document"));
 

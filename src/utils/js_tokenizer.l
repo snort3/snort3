@@ -961,15 +961,15 @@ LITERAL_HEX_INTEGER           0x[0-9a-fA-F]*|0X[0-9a-fA-F]*
 LITERAL_DQ_STRING_START       \"
 LITERAL_DQ_STRING_END         \"
 LITERAL_DQ_STRING_SKIP        \\\"
-LITERAL_DQ_STRING_TEXT        .
+LITERAL_DQ_STRING_TEXT        [^\"\\\xA\xD\{0x10}(\xE2\x80\xA8)(\xE2\x80\xA9)("<"+(?i:script))("<"+(?i:\/script>))]{1,32}
 LITERAL_SQ_STRING_START       \'
 LITERAL_SQ_STRING_END         \'
 LITERAL_SQ_STRING_SKIP        \\\'
-LITERAL_SQ_STRING_TEXT        .
+LITERAL_SQ_STRING_TEXT        [^\'\\\xA\xD\{0x10}(\xE2\x80\xA8)(\xE2\x80\xA9)("<"+(?i:script))("<"+(?i:\/script>))]{1,32}
 LITERAL_TEMPLATE_START        \`
 LITERAL_TEMPLATE_END          \`
 LITERAL_TEMPLATE_SUBST_START  \$\{
-LITERAL_TEMPLATE_OTHER        .
+LITERAL_TEMPLATE_OTHER        [^\\\`(\$\{)("<"+(?i:\/script>))]{1,32}
 LITERAL_REGEX_START           \/[^*\/]
 LITERAL_REGEX_END             \/[gimsuy]*
 LITERAL_REGEX_SKIP            \\\/
@@ -1373,46 +1373,55 @@ JSTokenizer::JSRet JSTokenizer::do_identifier_substitution(const char* lexeme, b
         yyout << lexeme;
         return EOS;
     }
-    else
-        set_ident_norm(true);
 
-    if (ident_ctx.is_ignored(lexeme) && !id_part)
+    set_ident_norm(true);
+
+    const char* name = ident_ctx.substitute(lexeme);
+
+    if (!name)
     {
-        ignored_id_pos = yyout.rdbuf()->pubseekoff(0, yyout.cur, std::ios_base::out);
-        set_ident_norm(false);
-        yyout << lexeme;
-        return EOS;
+        debug_logf(6, http_trace, TRACE_JS_DUMP, nullptr,
+            "'%s' => IDENTIFIER_OVERFLOW\n", lexeme);
+        return IDENTIFIER_OVERFLOW;
     }
 
-    const char *ident = nullptr;
-    if (!id_part)
-        ident = ident_ctx.alias_lookup(lexeme);
-    if (ident)
+    if (ident_ctx.is_ignored(name))
+    {
+        if (id_part)
+        {
+            std::string n(name);
+            n.push_back('+'); // any illegal symbol as a part of ID name
+            name = ident_ctx.substitute(n.c_str());
+        }
+        else
+        {
+            ignored_id_pos = yyout.rdbuf()->pubseekoff(0, yyout.cur, std::ios_base::out);
+            set_ident_norm(false);
+            yyout << name;
+            return EOS;
+        }
+    }
+
+    const char* alias = id_part ? nullptr : ident_ctx.alias_lookup(lexeme);
+
+    if (alias)
     {
         set_ident_norm(false);
         ignored_id_pos = yyout.rdbuf()->pubseekoff(0, yyout.cur, std::ios_base::out);
         last_dealiased = std::string(YYText());
         dealias_stored = true;
-    }
-    else
-    {
-        ignored_id_pos = -1;
-        ident = ident_ctx.substitute(lexeme);
-    }
+        yyout << alias;
 
-    if (!ident)
-    {
         debug_logf(6, http_trace, TRACE_JS_DUMP, nullptr,
-            "'%s' => IDENTIFIER_OVERFLOW\n", lexeme);
-
-        return IDENTIFIER_OVERFLOW;
+                   "'%s' => '%s'\n", lexeme, alias);
+        return EOS;
     }
+
+    ignored_id_pos = -1;
+    yyout << name;
 
     debug_logf(6, http_trace, TRACE_JS_DUMP, nullptr,
-        "'%s' => '%s'\n", lexeme, ident);
-
-    yyout << ident;
-
+        "'%s' => '%s'\n", lexeme, name);
     return EOS;
 }
 
@@ -1569,9 +1578,6 @@ void JSTokenizer::states_over()
 
 bool JSTokenizer::states_process()
 {
-    if (!yyleng)
-        return true;
-
     bytes_read += yyleng;
 
     // Fulfillment goes after this check only in case of split over several input scripts.
@@ -1592,9 +1598,25 @@ bool JSTokenizer::states_process()
 
     bytes_skip = bytes_skip - yyleng;
 
+    // Continue normalization from the last state without any changes
+    if (bytes_skip == 0)
+    {
+        token = eof_token;
+        yy_start = eof_sc;
+    }
+    // Update parsing state every match
+    else if (bytes_skip > 0)
+    {
+        do { ++sp; sp %= JSTOKENIZER_MAX_STATES; }
+        while (states[sp].sc == 0);
+
+        auto& state = states[sp];
+        token = state.token;
+        yy_start = state.sc;
+    }
     // Ignore normalization till all the already normalized bytes are skipped or mismatch found.
     // If mismatch found, adjust normalization state and renormalize from the mismatch point.
-    if (bytes_skip < 0)
+    else
     {
         bytes_skip = 0;
         states_adjust();
@@ -1610,22 +1632,6 @@ bool JSTokenizer::states_process()
         state.sc = yy_start;
 
         return true;
-    }
-    // Otherwise, continue normalization from the last state without any changes
-    else if (bytes_skip == 0)
-    {
-        token = eof_token;
-        yy_start = eof_sc;
-    }
-    // Meanwhile, update parsing state every match
-    else
-    {
-        do { ++sp; sp %= JSTOKENIZER_MAX_STATES; }
-        while (states[sp].sc == 0);
-
-        auto& state = states[sp];
-        token = state.token;
-        yy_start = state.sc;
     }
 
     return false;
@@ -1776,12 +1782,12 @@ JSTokenizer::FuncType JSTokenizer::detect_func_type()
     case IDENTIFIER:
     {
         FuncType ret = FuncType::GENERAL;
-        if (ignored_id_pos >= 0)      
+        if (ignored_id_pos >= 0)
         {
             std::streambuf* pbuf = yyout.rdbuf();
             std::streamsize size = pbuf->pubseekoff(0, yyout.cur, yyout.out) - ignored_id_pos;
             assert(size >= 0);
-            
+
             char tail[256];
             assert((size_t)size <= sizeof(tail));
             size = std::min((size_t)size, sizeof(tail));
@@ -1926,39 +1932,37 @@ void JSTokenizer::dealias_increment()
 void JSTokenizer::dealias_identifier(bool id_part, bool assignment_start)
 {
     auto lexeme = YYText();
-    switch(alias_state)
+
+    switch (alias_state)
     {
-        case ALIAS_NONE:
+    case ALIAS_NONE:
+        if (assignment_start)
         {
-            if (assignment_start)
-            {
-                alias = std::string(YYText());
-                aliased.clear();
-                aliased.str("");
-                alias_state = ALIAS_DEFINITION;
-            }
-            break;
+            alias = std::string(YYText());
+            aliased.clear();
+            aliased.str("");
+            alias_state = ALIAS_DEFINITION;
         }
-        case ALIAS_PREFIX:
-        case ALIAS_DEFINITION:
-        {
+        break;
+    case ALIAS_PREFIX:
+    case ALIAS_DEFINITION:
+        dealias_reset();
+        break;
+    case ALIAS_EQUALS:
+        alias_state = ALIAS_VALUE;
+    // fallthrough
+    case ALIAS_VALUE:
+    {
+        auto dealias = ident_ctx.alias_lookup(lexeme);
+        if ((!ident_norm() && id_part) ||
+            (ident_ctx.is_ignored(ident_ctx.substitute(lexeme)) && !id_part))
+            aliased << YYText();
+        else if (dealias)
+            aliased << dealias;
+        else
             dealias_reset();
-            break;
-        }
-        case ALIAS_EQUALS:
-            alias_state = ALIAS_VALUE;
-            // fallthrough
-        case ALIAS_VALUE:
-        {
-            auto dealias = ident_ctx.alias_lookup(lexeme);
-            if ((ident_ctx.is_ignored(lexeme) && !id_part) || (!ident_norm() && id_part))
-                aliased << YYText();
-            else if (dealias)
-                aliased << dealias;
-            else
-                dealias_reset();
-            break;
-        }
+        break;
+    }
     }
 }
 

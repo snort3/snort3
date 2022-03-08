@@ -24,6 +24,7 @@
 #include "js_identifier_ctx.h"
 
 #include <cassert>
+#include <memory.h>
 
 #if !defined(CATCH_TEST_BUILD) && !defined(BENCHMARK_TEST)
 #include "service_inspectors/http_inspect/http_enum.h"
@@ -44,50 +45,98 @@ public:
 };
 #endif // CATCH_TEST_BUILD
 
-#define MAX_LAST_NAME     65535
-#define HEX_DIGIT_MASK       15
+#define NORM_NAME_SIZE 9 // size of the normalized form plus null symbol
+#define NORM_NAME_CNT 65536
 
-static const char hex_digits[] = 
+static char norm_names[NORM_NAME_SIZE * NORM_NAME_CNT];
+
+static void init_norm_names()
 {
-    '0', '1','2','3', '4', '5', '6', '7', '8','9', 'a', 'b', 'c', 'd', 'e', 'f'
-};
+    static bool once = false;
 
-static inline std::string format_name(int32_t num)
-{
-    std::string name("var_");
-    name.reserve(8);
-    name.push_back(hex_digits[(num >> 12) & HEX_DIGIT_MASK]); 
-    name.push_back(hex_digits[(num >> 8) & HEX_DIGIT_MASK]); 
-    name.push_back(hex_digits[(num >> 4) & HEX_DIGIT_MASK]);
-    name.push_back(hex_digits[num & HEX_DIGIT_MASK]); 
+    if (once)
+        return;
 
-    return name;
+    once = true;
+
+    char* c = norm_names;
+    const char hex[] = "0123456789abcdef";
+
+    for (int i = 0; i < NORM_NAME_CNT; ++i)
+    {
+        *c++ = 'v';
+        *c++ = 'a';
+        *c++ = 'r';
+        *c++ = '_';
+        *c++ = hex[(i >> 12) & 0xf];
+        *c++ = hex[(i >>  8) & 0xf];
+        *c++ = hex[(i >>  4) & 0xf];
+        *c++ = hex[(i >>  0) & 0xf];
+        *c++ = '\0';
+    }
+
+    assert(sizeof(norm_names) == c - norm_names);
 }
 
 JSIdentifierCtx::JSIdentifierCtx(int32_t depth, uint32_t max_scope_depth,
-    const std::unordered_set<std::string>& ignored_ids)
-    : ignored_ids(ignored_ids), depth(depth), max_scope_depth(max_scope_depth)
+    const std::unordered_set<std::string>& ignore_list)
+    : ignore_list(ignore_list), max_scope_depth(max_scope_depth)
 {
+    init_norm_names();
+
+    memset(id_fast, 0, sizeof(id_fast));
+    norm_name = norm_names;
+    norm_name_end = norm_names + NORM_NAME_SIZE * std::min(depth, NORM_NAME_CNT);
     scopes.emplace_back(JSProgramScopeType::GLOBAL);
+
+    for (const auto& iid : ignore_list)
+        if (iid.length() == 1)
+            id_fast[(unsigned)iid[0]] = iid.c_str();
+        else
+            id_names[iid] = iid.c_str();
 }
 
-const char* JSIdentifierCtx::substitute(const char* identifier)
+const char* JSIdentifierCtx::substitute(unsigned char c)
 {
-    const auto it = ident_names.find(identifier);
-    if (it != ident_names.end())
-        return it->second.c_str();
+    auto p = id_fast[c];
+    if (p)
+        return p;
 
-    if (ident_last_name >= depth || ident_last_name > MAX_LAST_NAME)
+    if (norm_name >= norm_name_end)
         return nullptr;
 
-    ident_names[identifier] = format_name(ident_last_name++);
+    auto n = norm_name;
+    norm_name += NORM_NAME_SIZE;
     HttpModule::increment_peg_counts(HttpEnums::PEG_JS_IDENTIFIER);
-    return ident_names[identifier].c_str();
+
+    return id_fast[c] = n;
 }
 
-bool JSIdentifierCtx::is_ignored(const char* identifier) const
+const char* JSIdentifierCtx::substitute(const char* id_name)
 {
-    return ignored_ids.count(identifier);
+    assert(*id_name);
+
+    if (id_name[1] == '\0')
+        return substitute(*id_name);
+
+    const auto it = id_names.find(id_name);
+    if (it != id_names.end())
+        return it->second;
+
+    if (norm_name >= norm_name_end)
+        return nullptr;
+
+    auto n = norm_name;
+    norm_name += NORM_NAME_SIZE;
+    HttpModule::increment_peg_counts(HttpEnums::PEG_JS_IDENTIFIER);
+
+    return id_names[id_name] = n;
+}
+
+bool JSIdentifierCtx::is_ignored(const char* id_name) const
+{
+    return id_name < norm_names ||
+        id_name >= norm_names + NORM_NAME_SIZE * NORM_NAME_CNT;
 }
 
 bool JSIdentifierCtx::scope_push(JSProgramScopeType t)
@@ -115,47 +164,38 @@ bool JSIdentifierCtx::scope_pop(JSProgramScopeType t)
 
 void JSIdentifierCtx::reset()
 {
-    ident_last_name = 0;
-
-    ident_names.clear();
+    memset(id_fast, 0, sizeof(id_fast));
+    norm_name = norm_names;
+    id_names.clear();
     scopes.clear();
     scopes.emplace_back(JSProgramScopeType::GLOBAL);
+
+    for (const auto& iid : ignore_list)
+        if (iid.length() == 1)
+            id_fast[(unsigned)iid[0]] = iid.c_str();
+        else
+            id_names[iid] = iid.c_str();
 }
 
 void JSIdentifierCtx::add_alias(const char* alias, const std::string&& value)
 {
     assert(alias);
     assert(!scopes.empty());
-    scopes.back().add_alias(alias, std::move(value));
+
+    auto& a = aliases[alias];
+    a.emplace_back(std::move(value));
+
+    scopes.back().reference(a);
 }
 
 const char* JSIdentifierCtx::alias_lookup(const char* alias) const
 {
     assert(alias);
 
-    for (auto it = scopes.rbegin(); it != scopes.rend(); ++it)
-    {
-        if (const char* value = it->get_alias_value(alias))
-            return value;
-    }
-    return nullptr;
-}
+    const auto& i = aliases.find(alias);
 
-void JSIdentifierCtx::ProgramScope::add_alias(const char* alias, const std::string&& value)
-{
-    assert(alias);
-    aliases[alias] = value;
-}
-
-const char* JSIdentifierCtx::ProgramScope::get_alias_value(const char* alias) const
-{
-    assert(alias);
-
-    const auto it = aliases.find(alias);
-    if (it != aliases.end())
-        return it->second.c_str();
-    else
-        return nullptr;
+    return i != aliases.end() && !i->second.empty()
+        ? i->second.back().c_str() : nullptr;
 }
 
 // advanced program scope access for testing
@@ -182,21 +222,8 @@ const std::list<JSProgramScopeType> JSIdentifierCtx::get_types() const
     for(const auto& scope:scopes)
     {
         return_list.push_back(scope.type());
-    } 
+    }
     return return_list;
 }
 
-bool JSIdentifierCtx::scope_contains(size_t pos, const char* alias) const
-{
-    size_t offset = 0;
-    for (auto it = scopes.begin(); it != scopes.end(); ++it, ++offset)
-    {
-        if (offset == pos)
-            return it->get_alias_value(alias);
-    }
-    assert(false);
-    return false;
-}
-
 #endif // CATCH_TEST_BUILD
-

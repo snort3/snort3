@@ -4226,7 +4226,7 @@ TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
         SECTION("ignored fake defined function identifier")
         {
             const std::unordered_set<std::string> s_ignored_ids_fake {"fake_unescape"};
-            JSTokenizerTester tester_fake(norm_depth, max_scope_depth, s_ignored_ids_fake, 
+            JSTokenizerTester tester_fake(norm_depth, max_scope_depth, s_ignored_ids_fake,
             max_template_nesting, max_bracket_depth);
             tester_fake.test_function_scopes({
                 {"fake_unescape(", "fake_unescape(", {FuncType::NOT_FUNC, FuncType::GENERAL}}

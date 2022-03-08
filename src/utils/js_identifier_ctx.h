@@ -24,6 +24,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 enum JSProgramScopeType : unsigned int
 {
@@ -55,7 +56,7 @@ class JSIdentifierCtx : public JSIdentifierCtxBase
 {
 public:
     JSIdentifierCtx(int32_t depth, uint32_t max_scope_depth,
-        const std::unordered_set<std::string>& ignored_ids);
+        const std::unordered_set<std::string>& ignore_list);
 
     virtual const char* substitute(const char* identifier) override;
     virtual void add_alias(const char* alias, const std::string&& value) override;
@@ -72,39 +73,54 @@ public:
     virtual size_t size() const override
     { return (sizeof(JSIdentifierCtx) + (sizeof(std::string) * 2 * 500) +
         (sizeof(ProgramScope) * 3)); }
+
 private:
+    using Alias = std::vector<std::string>;
+    using AliasRef = std::list<Alias*>;
+    using AliasMap = std::unordered_map<std::string, Alias>;
+    using NameMap = std::unordered_map<std::string, const char*>;
+
     class ProgramScope
     {
     public:
-        ProgramScope(JSProgramScopeType t) : t(t) {}
+        ProgramScope(JSProgramScopeType t) : t(t)
+        {}
 
-        void add_alias(const char* alias, const std::string&& value);
-        const char* get_alias_value(const char* alias) const;
+        ~ProgramScope()
+        { for (auto a : to_remove) a->pop_back(); }
+
+        void reference(Alias& a)
+        { to_remove.push_back(&a); }
 
         JSProgramScopeType type() const
         { return t; }
+
     private:
-        std::unordered_map<std::string, std::string> aliases;
         JSProgramScopeType t;
+        AliasRef to_remove{};
     };
 
-    std::list<ProgramScope> scopes;
-    std::unordered_map<std::string, std::string> ident_names;
-    const std::unordered_set<std::string>& ignored_ids;
+    inline const char* substitute(unsigned char c);
 
-    int32_t ident_last_name = 0;
-    int32_t depth;
+    // do not swap next two lines, the destructor frees them in the reverse order
+    AliasMap aliases;
+    std::list<ProgramScope> scopes;
+
+    const char* id_fast[256];
+    NameMap id_names;
+    const std::unordered_set<std::string>& ignore_list;
+
+    const char* norm_name;
+    const char* norm_name_end;
     uint32_t max_scope_depth;
 
 // advanced program scope access for testing
-#ifdef CATCH_TEST_BUILD
+#if defined(CATCH_TEST_BUILD) || defined(BENCHMARK_TEST)
 public:
     // compare scope list with the passed pattern
     bool scope_check(const std::list<JSProgramScopeType>& compare) const;
     const std::list<JSProgramScopeType> get_types() const;
-    bool scope_contains(size_t pos, const char* alias) const;
 #endif // CATCH_TEST_BUILD
 };
 
 #endif // JS_IDENTIFIER_CTX
-
