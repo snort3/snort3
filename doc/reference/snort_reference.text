@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.24.0 2022-02-23 09:29:36 EST TST
+Revision 3.1.25.0 2022-03-09 06:31:14 EST TST
 
 ---------------------------------------------------------------------
 
@@ -198,80 +198,82 @@ Table of Contents
     7.47. http_client_body
     7.48. http_cookie
     7.49. http_header
-    7.50. http_method
-    7.51. http_num_headers
-    7.52. http_num_trailers
-    7.53. http_param
-    7.54. http_raw_body
-    7.55. http_raw_cookie
-    7.56. http_raw_header
-    7.57. http_raw_request
-    7.58. http_raw_status
-    7.59. http_raw_trailer
-    7.60. http_raw_uri
-    7.61. http_stat_code
-    7.62. http_stat_msg
-    7.63. http_trailer
-    7.64. http_true_ip
-    7.65. http_uri
-    7.66. http_version
-    7.67. http_version_match
-    7.68. icmp_id
-    7.69. icmp_seq
-    7.70. icode
-    7.71. id
-    7.72. iec104_apci_type
-    7.73. iec104_asdu_func
-    7.74. ip_proto
-    7.75. ipopts
-    7.76. isdataat
-    7.77. itype
-    7.78. js_data
-    7.79. md5
-    7.80. metadata
-    7.81. modbus_data
-    7.82. modbus_func
-    7.83. modbus_unit
-    7.84. msg
-    7.85. mss
-    7.86. pcre
-    7.87. pkt_data
-    7.88. pkt_num
-    7.89. priority
-    7.90. raw_data
-    7.91. reference
-    7.92. regex
-    7.93. rem
-    7.94. replace
-    7.95. rev
-    7.96. rpc
-    7.97. s7commplus_content
-    7.98. s7commplus_func
-    7.99. s7commplus_opcode
-    7.100. sd_pattern
-    7.101. seq
-    7.102. service
-    7.103. sha256
-    7.104. sha512
-    7.105. sid
-    7.106. sip_body
-    7.107. sip_header
-    7.108. sip_method
-    7.109. sip_stat_code
-    7.110. so
-    7.111. soid
-    7.112. ssl_state
-    7.113. ssl_version
-    7.114. stream_reassemble
-    7.115. stream_size
-    7.116. tag
-    7.117. target
-    7.118. tos
-    7.119. ttl
-    7.120. urg
-    7.121. vba_data
-    7.122. window
-    7.123. wscale
+    7.50. http_header_test
+    7.51. http_method
+    7.52. http_num_headers
+    7.53. http_num_trailers
+    7.54. http_param
+    7.55. http_raw_body
+    7.56. http_raw_cookie
+    7.57. http_raw_header
+    7.58. http_raw_request
+    7.59. http_raw_status
+    7.60. http_raw_trailer
+    7.61. http_raw_uri
+    7.62. http_stat_code
+    7.63. http_stat_msg
+    7.64. http_trailer
+    7.65. http_trailer_test
+    7.66. http_true_ip
+    7.67. http_uri
+    7.68. http_version
+    7.69. http_version_match
+    7.70. icmp_id
+    7.71. icmp_seq
+    7.72. icode
+    7.73. id
+    7.74. iec104_apci_type
+    7.75. iec104_asdu_func
+    7.76. ip_proto
+    7.77. ipopts
+    7.78. isdataat
+    7.79. itype
+    7.80. js_data
+    7.81. md5
+    7.82. metadata
+    7.83. modbus_data
+    7.84. modbus_func
+    7.85. modbus_unit
+    7.86. msg
+    7.87. mss
+    7.88. pcre
+    7.89. pkt_data
+    7.90. pkt_num
+    7.91. priority
+    7.92. raw_data
+    7.93. reference
+    7.94. regex
+    7.95. rem
+    7.96. replace
+    7.97. rev
+    7.98. rpc
+    7.99. s7commplus_content
+    7.100. s7commplus_func
+    7.101. s7commplus_opcode
+    7.102. sd_pattern
+    7.103. seq
+    7.104. service
+    7.105. sha256
+    7.106. sha512
+    7.107. sid
+    7.108. sip_body
+    7.109. sip_header
+    7.110. sip_method
+    7.111. sip_stat_code
+    7.112. so
+    7.113. soid
+    7.114. ssl_state
+    7.115. ssl_version
+    7.116. stream_reassemble
+    7.117. stream_size
+    7.118. tag
+    7.119. target
+    7.120. tos
+    7.121. ttl
+    7.122. urg
+    7.123. vba_data
+    7.124. window
+    7.125. wscale
 
 8. Search Engine Modules
 9. SO Rule Modules
@@ -1199,6 +1201,8 @@ Configuration:
   * int process.umask: set process umask (same as -m) { 0x000:0x1FF }
   * bool process.utc = false: use UTC instead of local time for
     timestamps
+  * int process.watchdog_timer = 0: watchdog timer for packet threads
+    (seconds, 0 to disable) { 0:60 }
 
 
 2.25. profiler
@@ -3385,19 +3389,8 @@ Configuration:
     signature info
   * bool file_id.trace_stream = false: enable runtime dump of file
     data
-  * int file_id.b64_decode_depth = -1: base64 decoding depth (-1 no
-    limit) { -1:65535 }
-  * int file_id.bitenc_decode_depth = -1: Non-Encoded MIME attachment
-    extraction depth (-1 no limit) { -1:65535 }
-  * bool file_id.decompress_pdf = false: decompress pdf files
-  * bool file_id.decompress_swf = false: decompress swf files
-  * bool file_id.decompress_zip = false: decompress zip files
   * int file_id.decompress_buffer_size = 100000: file decompression
     buffer size { 1024:max31 }
-  * int file_id.qp_decode_depth = -1: Quoted Printable decoding depth
-    (-1 no limit) { -1:65535 }
-  * int file_id.uu_decode_depth = -1: Unix-to-Unix decoding depth (-1
-    no limit) { -1:65535 }
 
 Rules:
 
@@ -3980,6 +3973,10 @@ Rules:
   * 119:277 (http_inspect) HTTP version in start line is higher than
     1
   * 119:278 (http_inspect) HTTP gzip body with the FEXTRA flag set
+  * 119:279 (http_inspect) nested unescape functions in JavaScript
+    code
+  * 119:280 (http_inspect) mixing of escape formats in JavaScript
+    code
 
 Peg counts:
 
@@ -5628,7 +5625,8 @@ Configuration:
     than given segments per session and direction, 0 = unlimited {
     0:max32 }
   * int stream_tcp.small_segments.count = 0: number of consecutive
-    TCP small segments considered to be excessive (129:12) { 0:2048 }
+    (in the received order) TCP small segments considered to be
+    excessive (129:12) { 0:2048 }
   * int stream_tcp.small_segments.maximum_size = 0: minimum bytes for
     a TCP segment not to be considered small (129:12) { 0:2048 }
   * int stream_tcp.session_timeout = 180: session tracking timeout {
@@ -6819,7 +6817,36 @@ Configuration:
     message trailers
 
 
-7.50. http_method
+7.50. http_header_test
+
+--------------
+
+Help: rule option to perform range check on specified header field,
+check whether it is a number, or check if the field is absent
+
+Type: ips_option
+
+Usage: detect
+
+Configuration:
+
+  * string http_header_test.field: Header to perform check on. Header
+    name is case insensitive.
+  * implied http_header_test.request: match against the headers from
+    the request message even when examining the response
+  * implied http_header_test.with_header: this rule is limited to
+    examining HTTP message headers
+  * implied http_header_test.with_body: parts of this rule examine
+    HTTP message body
+  * implied http_header_test.with_trailer: parts of this rule examine
+    HTTP message trailers
+  * interval http_header_test.check: range check to perform on header
+    value { 0:999999999999999999 }
+  * bool http_header_test.numeric: header value is a number
+  * implied http_header_test.absent: header is absent
+
+
+7.51. http_method
 
 --------------
 
@@ -6840,7 +6867,7 @@ Configuration:
     message trailers
 
 
-7.51. http_num_headers
+7.52. http_num_headers
 
 --------------
 
@@ -6864,7 +6891,7 @@ Configuration:
     HTTP message trailers
 
 
-7.52. http_num_trailers
+7.53. http_num_trailers
 
 --------------
 
@@ -6888,7 +6915,7 @@ Configuration:
     examine HTTP message trailers
 
 
-7.53. http_param
+7.54. http_param
 
 --------------
 
@@ -6905,7 +6932,7 @@ Configuration:
   * implied http_param.nocase: case insensitive match
 
 
-7.54. http_raw_body
+7.55. http_raw_body
 
 --------------
 
@@ -6917,7 +6944,7 @@ Type: ips_option
 Usage: detect
 
 
-7.55. http_raw_cookie
+7.56. http_raw_cookie
 
 --------------
 
@@ -6940,7 +6967,7 @@ Configuration:
     HTTP message trailers
 
 
-7.56. http_raw_header
+7.57. http_raw_header
 
 --------------
 
@@ -6965,7 +6992,7 @@ Configuration:
     HTTP message trailers
 
 
-7.57. http_raw_request
+7.58. http_raw_request
 
 --------------
 
@@ -6986,7 +7013,7 @@ Configuration:
     HTTP message trailers
 
 
-7.58. http_raw_status
+7.59. http_raw_status
 
 --------------
 
@@ -7005,7 +7032,7 @@ Configuration:
     HTTP message trailers
 
 
-7.59. http_raw_trailer
+7.60. http_raw_trailer
 
 --------------
 
@@ -7028,7 +7055,7 @@ Configuration:
     HTTP response message body (must be combined with request)
 
 
-7.60. http_raw_uri
+7.61. http_raw_uri
 
 --------------
 
@@ -7057,7 +7084,7 @@ Configuration:
     URI only
 
 
-7.61. http_stat_code
+7.62. http_stat_code
 
 --------------
 
@@ -7075,7 +7102,7 @@ Configuration:
     HTTP message trailers
 
 
-7.62. http_stat_msg
+7.63. http_stat_msg
 
 --------------
 
@@ -7094,7 +7121,7 @@ Configuration:
     HTTP message trailers
 
 
-7.63. http_trailer
+7.64. http_trailer
 
 --------------
 
@@ -7116,7 +7143,34 @@ Configuration:
     message body (must be combined with request)
 
 
-7.64. http_true_ip
+7.65. http_trailer_test
+
+--------------
+
+Help: rule option to perform range check on specified trailer field,
+check whether it is a number, or check if the field is absent
+
+Type: ips_option
+
+Usage: detect
+
+Configuration:
+
+  * string http_trailer_test.field: Trailer to perform check on.
+    Trailer name is case insensitive.
+  * implied http_trailer_test.request: match against the trailers
+    from the request message even when examining the response
+  * implied http_trailer_test.with_header: parts of this rule examine
+    HTTP headers
+  * implied http_trailer_test.with_body: parts of this rule examine
+    HTTP message body
+  * interval http_trailer_test.check: range check to perform on
+    trailer value { 0:999999999999999999 }
+  * bool http_trailer_test.numeric: trailer value is a number
+  * implied http_trailer_test.absent: trailer is absent
+
+
+7.66. http_true_ip
 
 --------------
 
@@ -7137,7 +7191,7 @@ Configuration:
     HTTP message trailers
 
 
-7.65. http_uri
+7.67. http_uri
 
 --------------
 
@@ -7165,7 +7219,7 @@ Configuration:
     only
 
 
-7.66. http_version
+7.68. http_version
 
 --------------
 
@@ -7187,7 +7241,7 @@ Configuration:
     HTTP message trailers
 
 
-7.67. http_version_match
+7.69. http_version_match
 
 --------------
 
@@ -7211,7 +7265,7 @@ Configuration:
     examine HTTP message trailers
 
 
-7.68. icmp_id
+7.70. icmp_id
 
 --------------
 
@@ -7227,7 +7281,7 @@ Configuration:
     0:65535 }
 
 
-7.69. icmp_seq
+7.71. icmp_seq
 
 --------------
 
@@ -7243,7 +7297,7 @@ Configuration:
     given range { 0:65535 }
 
 
-7.70. icode
+7.72. icode
 
 --------------
 
@@ -7259,7 +7313,7 @@ Configuration:
     0:255 }
 
 
-7.71. id
+7.73. id
 
 --------------
 
@@ -7275,7 +7329,7 @@ Configuration:
     }
 
 
-7.72. iec104_apci_type
+7.74. iec104_apci_type
 
 --------------
 
@@ -7290,7 +7344,7 @@ Configuration:
   * string iec104_apci_type.~: APCI type to match
 
 
-7.73. iec104_asdu_func
+7.75. iec104_asdu_func
 
 --------------
 
@@ -7305,7 +7359,7 @@ Configuration:
   * string iec104_asdu_func.~: function code to match
 
 
-7.74. ip_proto
+7.76. ip_proto
 
 --------------
 
@@ -7320,7 +7374,7 @@ Configuration:
   * string ip_proto.~proto: [!|>|<] name or number
 
 
-7.75. ipopts
+7.77. ipopts
 
 --------------
 
@@ -7336,7 +7390,7 @@ Configuration:
     lsrre|ssrr|satid|any }
 
 
-7.76. isdataat
+7.78. isdataat
 
 --------------
 
@@ -7353,7 +7407,7 @@ Configuration:
     buffer
 
 
-7.77. itype
+7.79. itype
 
 --------------
 
@@ -7369,7 +7423,7 @@ Configuration:
     0:255 }
 
 
-7.78. js_data
+7.80. js_data
 
 --------------
 
@@ -7381,7 +7435,7 @@ Type: ips_option
 Usage: detect
 
 
-7.79. md5
+7.81. md5
 
 --------------
 
@@ -7401,7 +7455,7 @@ Configuration:
     of buffer
 
 
-7.80. metadata
+7.82. metadata
 
 --------------
 
@@ -7418,7 +7472,7 @@ Configuration:
     pairs
 
 
-7.81. modbus_data
+7.83. modbus_data
 
 --------------
 
@@ -7429,7 +7483,7 @@ Type: ips_option
 Usage: detect
 
 
-7.82. modbus_func
+7.84. modbus_func
 
 --------------
 
@@ -7444,7 +7498,7 @@ Configuration:
   * string modbus_func.~: function code to match
 
 
-7.83. modbus_unit
+7.85. modbus_unit
 
 --------------
 
@@ -7459,7 +7513,7 @@ Configuration:
   * int modbus_unit.~: Modbus unit ID { 0:255 }
 
 
-7.84. msg
+7.86. msg
 
 --------------
 
@@ -7474,7 +7528,7 @@ Configuration:
   * string msg.~: message describing rule
 
 
-7.85. mss
+7.87. mss
 
 --------------
 
@@ -7490,7 +7544,7 @@ Configuration:
     }
 
 
-7.86. pcre
+7.88. pcre
 
 --------------
 
@@ -7512,7 +7566,7 @@ Peg counts:
   * pcre.pcre_negated: total pcre rules using negation syntax (sum)
 
 
-7.87. pkt_data
+7.89. pkt_data
 
 --------------
 
@@ -7524,7 +7578,7 @@ Type: ips_option
 Usage: detect
 
 
-7.88. pkt_num
+7.90. pkt_num
 
 --------------
 
@@ -7540,7 +7594,7 @@ Configuration:
     { 1: }
 
 
-7.89. priority
+7.91. priority
 
 --------------
 
@@ -7556,7 +7610,7 @@ Configuration:
     1:max31 }
 
 
-7.90. raw_data
+7.92. raw_data
 
 --------------
 
@@ -7567,7 +7621,7 @@ Type: ips_option
 Usage: detect
 
 
-7.91. reference
+7.93. reference
 
 --------------
 
@@ -7582,7 +7636,7 @@ Configuration:
   * string reference.~ref: reference: <scheme>,<id>
 
 
-7.92. regex
+7.94. regex
 
 --------------
 
@@ -7606,7 +7660,7 @@ Configuration:
     instead of start of buffer
 
 
-7.93. rem
+7.95. rem
 
 --------------
 
@@ -7621,7 +7675,7 @@ Configuration:
   * string rem.~: comment
 
 
-7.94. replace
+7.96. replace
 
 --------------
 
@@ -7637,7 +7691,7 @@ Configuration:
   * string replace.~: byte code to replace with
 
 
-7.95. rev
+7.97. rev
 
 --------------
 
@@ -7652,7 +7706,7 @@ Configuration:
   * int rev.~: revision { 1:max32 }
 
 
-7.96. rpc
+7.98. rpc
 
 --------------
 
@@ -7669,7 +7723,7 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-7.97. s7commplus_content
+7.99. s7commplus_content
 
 --------------
 
@@ -7680,7 +7734,7 @@ Type: ips_option
 Usage: detect
 
 
-7.98. s7commplus_func
+7.100. s7commplus_func
 
 --------------
 
@@ -7695,7 +7749,7 @@ Configuration:
   * string s7commplus_func.~: function code to match
 
 
-7.99. s7commplus_opcode
+7.101. s7commplus_opcode
 
 --------------
 
@@ -7710,7 +7764,7 @@ Configuration:
   * string s7commplus_opcode.~: opcode code to match
 
 
-7.100. sd_pattern
+7.102. sd_pattern
 
 --------------
 
@@ -7734,7 +7788,7 @@ Peg counts:
   * sd_pattern.terminated: hyperscan terminated (sum)
 
 
-7.101. seq
+7.103. seq
 
 --------------
 
@@ -7750,7 +7804,7 @@ Configuration:
     range { 0: }
 
 
-7.102. service
+7.104. service
 
 --------------
 
@@ -7765,7 +7819,7 @@ Configuration:
   * string service.*: one or more comma-separated service names
 
 
-7.103. sha256
+7.105. sha256
 
 --------------
 
@@ -7785,7 +7839,7 @@ Configuration:
     start of buffer
 
 
-7.104. sha512
+7.106. sha512
 
 --------------
 
@@ -7805,7 +7859,7 @@ Configuration:
     start of buffer
 
 
-7.105. sid
+7.107. sid
 
 --------------
 
@@ -7820,7 +7874,7 @@ Configuration:
   * int sid.~: signature id { 1:max32 }
 
 
-7.106. sip_body
+7.108. sip_body
 
 --------------
 
@@ -7831,7 +7885,7 @@ Type: ips_option
 Usage: detect
 
 
-7.107. sip_header
+7.109. sip_header
 
 --------------
 
@@ -7843,7 +7897,7 @@ Type: ips_option
 Usage: detect
 
 
-7.108. sip_method
+7.110. sip_method
 
 --------------
 
@@ -7858,7 +7912,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-7.109. sip_stat_code
+7.111. sip_stat_code
 
 --------------
 
@@ -7873,7 +7927,7 @@ Configuration:
   * int sip_stat_code.*code: status code { 1:999 }
 
 
-7.110. so
+7.112. so
 
 --------------
 
@@ -7890,7 +7944,7 @@ Configuration:
     buffer
 
 
-7.111. soid
+7.113. soid
 
 --------------
 
@@ -7906,7 +7960,7 @@ Configuration:
     like 3_45678_9
 
 
-7.112. ssl_state
+7.114. ssl_state
 
 --------------
 
@@ -7935,7 +7989,7 @@ Configuration:
     unknown
 
 
-7.113. ssl_version
+7.115. ssl_version
 
 --------------
 
@@ -7962,7 +8016,7 @@ Configuration:
     tls1.2
 
 
-7.114. stream_reassemble
+7.116. stream_reassemble
 
 --------------
 
@@ -7983,7 +8037,7 @@ Configuration:
     remainder of the session
 
 
-7.115. stream_size
+7.117. stream_size
 
 --------------
 
@@ -8001,7 +8055,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-7.116. tag
+7.118. tag
 
 --------------
 
@@ -8020,7 +8074,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1:max32 }
 
 
-7.117. target
+7.119. target
 
 --------------
 
@@ -8036,7 +8090,7 @@ Configuration:
     dst_ip }
 
 
-7.118. tos
+7.120. tos
 
 --------------
 
@@ -8051,7 +8105,7 @@ Configuration:
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
 
 
-7.119. ttl
+7.121. ttl
 
 --------------
 
@@ -8067,7 +8121,7 @@ Configuration:
     0:255 }
 
 
-7.120. urg
+7.122. urg
 
 --------------
 
@@ -8083,7 +8137,7 @@ Configuration:
     { 0:65535 }
 
 
-7.121. vba_data
+7.123. vba_data
 
 --------------
 
@@ -8095,7 +8149,7 @@ Type: ips_option
 Usage: detect
 
 
-7.122. window
+7.124. window
 
 --------------
 
@@ -8111,7 +8165,7 @@ Configuration:
     range { 0:65535 }
 
 
-7.123. wscale
+7.125. wscale
 
 --------------
 
@@ -9108,10 +9162,6 @@ these libraries see the Getting Started section of the manual.
     duplex }
   * enum file_connector[].format: file format { binary | text }
   * string file_connector[].name: channel name
-  * int file_id.b64_decode_depth = -1: base64 decoding depth (-1 no
-    limit) { -1:65535 }
-  * int file_id.bitenc_decode_depth = -1: Non-Encoded MIME attachment
-    extraction depth (-1 no limit) { -1:65535 }
   * int file_id.block_timeout = 86400: stop blocking after this many
     seconds { 0:max31 }
   * bool file_id.block_timeout_lookup = false: block if lookup times
@@ -9126,9 +9176,6 @@ these libraries see the Getting Started section of the manual.
     less than this { 0:max53 }
   * int file_id.decompress_buffer_size = 100000: file decompression
     buffer size { 1024:max31 }
-  * bool file_id.decompress_pdf = false: decompress pdf files
-  * bool file_id.decompress_swf = false: decompress swf files
-  * bool file_id.decompress_zip = false: decompress zip files
   * string file_id.file_rules[].category: file type category
   * string file_id.file_rules[].group: comma separated list of groups
     associated with file type
@@ -9146,8 +9193,6 @@ these libraries see the Getting Started section of the manual.
     cached in memory { 8:max53 }
   * int file_id.max_files_per_flow = 128: maximal number of files
     able to be concurrently processed per flow { 1:max53 }
-  * int file_id.qp_decode_depth = -1: Quoted Printable decoding depth
-    (-1 no limit) { -1:65535 }
   * int file_id.show_data_depth = 100: print this many octets {
     0:max53 }
   * int file_id.signature_depth = 10485760: stop signature at this
@@ -9159,8 +9204,6 @@ these libraries see the Getting Started section of the manual.
   * bool file_id.trace_type = false: enable runtime dump of type info
   * int file_id.type_depth = 1460: stop type ID at this point {
     0:max53 }
-  * int file_id.uu_decode_depth = -1: Unix-to-Unix decoding depth (-1
-    no limit) { -1:65535 }
   * bool file_log.log_pkt_time = true: log the packet time when event
     generated
   * bool file_log.log_sys_time = false: log the system time when
@@ -9308,6 +9351,20 @@ these libraries see the Getting Started section of the manual.
     is case insensitive.
   * implied http_header.request: match against the headers from the
     request message even when examining the response
+  * implied http_header_test.absent: header is absent
+  * interval http_header_test.check: range check to perform on header
+    value { 0:999999999999999999 }
+  * string http_header_test.field: Header to perform check on. Header
+    name is case insensitive.
+  * bool http_header_test.numeric: header value is a number
+  * implied http_header_test.request: match against the headers from
+    the request message even when examining the response
+  * implied http_header_test.with_body: parts of this rule examine
+    HTTP message body
+  * implied http_header_test.with_header: this rule is limited to
+    examining HTTP message headers
+  * implied http_header_test.with_trailer: parts of this rule examine
+    HTTP message trailers
   * implied http_header.with_body: parts of this rule examine HTTP
     message body
   * implied http_header.with_header: this rule is limited to
@@ -9481,6 +9538,18 @@ these libraries see the Getting Started section of the manual.
   * string http_trailer.field: restrict to given trailer
   * implied http_trailer.request: match against the trailers from the
     request message even when examining the response
+  * implied http_trailer_test.absent: trailer is absent
+  * interval http_trailer_test.check: range check to perform on
+    trailer value { 0:999999999999999999 }
+  * string http_trailer_test.field: Trailer to perform check on.
+    Trailer name is case insensitive.
+  * bool http_trailer_test.numeric: trailer value is a number
+  * implied http_trailer_test.request: match against the trailers
+    from the request message even when examining the response
+  * implied http_trailer_test.with_body: parts of this rule examine
+    HTTP message body
+  * implied http_trailer_test.with_header: parts of this rule examine
+    HTTP headers
   * implied http_trailer.with_body: parts of this rule examine HTTP
     message body (must be combined with request)
   * implied http_trailer.with_header: parts of this rule examine HTTP
@@ -9927,6 +9996,8 @@ these libraries see the Getting Started section of the manual.
   * int process.umask: set process umask (same as -m) { 0x000:0x1FF }
   * bool process.utc = false: use UTC instead of local time for
     timestamps
+  * int process.watchdog_timer = 0: watchdog timer for packet threads
+    (seconds, 0 to disable) { 0:60 }
   * int profiler.memory.count = 0: limit results to count items per
     level (0 = no limit) { 0:max32 }
   * int profiler.memory.max_depth = -1: limit depth to max_depth (-1
@@ -10583,7 +10654,8 @@ these libraries see the Getting Started section of the manual.
   * bool stream_tcp.show_rebuilt_packets = false: enable cmg like
     output of reassembled packets
   * int stream_tcp.small_segments.count = 0: number of consecutive
-    TCP small segments considered to be excessive (129:12) { 0:2048 }
+    (in the received order) TCP small segments considered to be
+    excessive (129:12) { 0:2048 }
   * int stream_tcp.small_segments.maximum_size = 0: minimum bytes for
     a TCP segment not to be considered small (129:12) { 0:2048 }
   * bool stream_tcp.track_only = false: disable reassembly if true
@@ -13418,6 +13490,19 @@ traffic.
 The HTTP message body is gzip encoded and the FEXTRA flag is set in
 the gzip header.
 
+119:279 (http_inspect) nested unescape functions in JavaScript code
+
+Detected nesting of unescape functions(unescape, decodeURI,
+decodeURIComponent) in JavaScript code. Indicates that this code most
+likely has more than one level of obfuscation. This alert is raised
+by the enhanced JavaScript normalizer.
+
+119:280 (http_inspect) mixing of escape formats in JavaScript code
+
+Detected more than one encoding within unescape function call
+arguments in JavaScript code. This alert is raised by the enhanced
+JavaScript normalizer.
+
 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
 
 Invalid flag set on HTTP/2 frame header
@@ -14000,8 +14085,9 @@ Received TCP data with no TCP flags set.
 129:12 (stream_tcp) consecutive TCP small segments exceeding
 threshold
 
-Consecutive TCP small segments exceed the configured threshold. The
-size required to be a small segment can be configured via
+Consecutive (in the order of received packets, not the order of
+sequence numbers) TCP small segments exceed the configured threshold.
+The size required to be a small segment can be configured via
 stream_tcp.small_segments.maximum_size, and the maximum number of
 these small segments can be configured with int
 stream_tcp.small_segments.count.
@@ -15304,6 +15390,9 @@ and are not applicable elsewhere.
     to the HTTP cookie
   * http_header (ips_option): rule option to set the detection cursor
     to the normalized headers
+  * http_header_test (ips_option): rule option to perform range check
+    on specified header field, check whether it is a number, or check
+    if the field is absent
   * http_inspect (inspector): HTTP inspector
   * http_method (ips_option): rule option to set the detection cursor
     to the HTTP request method
@@ -15334,6 +15423,9 @@ and are not applicable elsewhere.
     cursor to the HTTP status message
   * http_trailer (ips_option): rule option to set the detection
     cursor to the normalized trailers
+  * http_trailer_test (ips_option): rule option to perform range
+    check on specified trailer field, check whether it is a number,
+    or check if the field is absent
   * http_true_ip (ips_option): rule option to set the detection
     cursor to the final client IP address
   * http_uri (ips_option): rule option to set the detection cursor to
@@ -15727,6 +15819,9 @@ and are not applicable elsewhere.
     to the HTTP cookie
   * ips_option::http_header: rule option to set the detection cursor
     to the normalized headers
+  * ips_option::http_header_test: rule option to perform range check
+    on specified header field, check whether it is a number, or check
+    if the field is absent
   * ips_option::http_method: rule option to set the detection cursor
     to the HTTP request method
   * ips_option::http_num_headers: rule option to perform range check
@@ -15756,6 +15851,9 @@ and are not applicable elsewhere.
     cursor to the HTTP status message
   * ips_option::http_trailer: rule option to set the detection cursor
     to the normalized trailers
+  * ips_option::http_trailer_test: rule option to perform range check
+    on specified trailer field, check whether it is a number, or
+    check if the field is absent
   * ips_option::http_true_ip: rule option to set the detection cursor
     to the final client IP address
   * ips_option::http_uri: rule option to set the detection cursor to

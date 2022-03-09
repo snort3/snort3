@@ -1,3 +1,29 @@
+2022/03/09 - 3.1.25.0
+
+appid: do not add duplicate process to client app mapping for the same process name
+file_id: remove unused decompression and decode depth parameters
+http_inspect: add http_header_test, http_trailer_test rule options
+http_inspect: add override to fix warning
+http_inspect: add unescape function tracking for Enhanced JS Normalizer
+http_inspect: call mime in a loop for each attachment
+http_inspect: remove feature to disable raw detection upon flow depth
+http_inspect: use http_inspect decompression config parameters for HTTP MIME traffic instead of file_id
+mime: fix resetting state after every attachment and check state instead of decode object
+mime: return at the end of each attachment and set the file_data for http
+process: add watchdog to detect packet threads dead lock or dead loop
+ssh: NULL check for session pointer before access
+stream_tcp: call final flush only when the seglist has no gaps
+stream_tcp: clarify small segments help text and remove usage from lua
+utils: check for NULL before calling fclose()
+utils: check more likely branches at first
+utils: combine ignore list with normalization map
+utils: fix compilation issues in js_tokenizer
+utils: improve Flex matching patterns
+utils: pre-compute ID normalized names
+utils: refactor the alias lookup
+utils: wrap unordered set with a fast lookup table
+watchdog: remove unused code
+
 2022/02/23 - 3.1.24.0
 
 detection_filter: update dev notes to show multithreaded behavior

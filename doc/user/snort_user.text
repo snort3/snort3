@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.24.0 2022-02-23 09:29:22 EST TST
+Revision 3.1.25.0 2022-03-09 06:31:00 EST TST
 
 ---------------------------------------------------------------------
 
@@ -3967,8 +3967,8 @@ deactivate it.
 5.10.3.5. decompress_pdf
 
 decompress_pdf = true will enable decompression of compressed
-portions of PDF files encountered in a response body. http_inspect
-will examine the response body for PDF files that are then parsed to
+portions of PDF files encountered in a message body. http_inspect
+will examine the message body for PDF files that are then parsed to
 locate PDF streams with a single /FlateDecode filter. The compressed
 content is decompressed and made available through the file data rule
 option.
@@ -3976,24 +3976,30 @@ option.
 5.10.3.6. decompress_swf
 
 decompress_swf = true will enable decompression of compressed SWF
-(Adobe Flash content) files encountered in a response body. The
+(Adobe Flash content) files encountered in a message body. The
 available decompression modes are ’deflate’ and ’lzma’. http_inspect
 will search for the file signatures CWS for Deflate/ZLIB and ZWS for
 LZMA. The compressed content is decompressed and made available
 through the file data rule option. The compressed SWF file signature
 is converted to FWS to indicate an uncompressed file.
 
-5.10.3.7. decompress_vba
+5.10.3.7. decompress_zip
+
+decompress_zip = true will enable decompression of compressed zip
+archives encountered in a message body. The compressed content is
+decompressed and made available through the file_data rule option.
+
+5.10.3.8. decompress_vba
 
 decompress_vba = true will enable decompression of RLE (Run Length
 Encoding) compressed vba (Visual Basic for Applications) macro data
-of MS Office files. The MS office files are PKZIP compressed which
-are parsed to locate the OLE (Object Linking and Embedding) file
-embedded with the files containing RLE compressed vba macro data. The
-decompressed vba macro data is then made available through the
-vba_data ips rule option.
+of MS Office files encountered in a message body. The MS office files
+are PKZIP compressed which are parsed to locate the OLE (Object
+Linking and Embedding) file embedded with the files containing RLE
+compressed vba macro data. The decompressed vba macro data is then
+made available through the vba_data ips rule option.
 
-5.10.3.8. normalize_javascript
+5.10.3.9. normalize_javascript
 
 normalize_javascript = true will enable legacy normalizer of
 JavaScript within the HTTP response body. http_inspect looks for
@@ -4006,7 +4012,7 @@ http_inspect also replaces consecutive whitespaces with a single
 space and normalizes the plus by concatenating the strings. Such
 normalizations refer to basic JavaScript normalization.
 
-5.10.3.9. js_norm_bytes_depth
+5.10.3.10. js_norm_bytes_depth
 
 js_norm_bytes_depth = N {-1 : max53} will set a number of input
 JavaScript bytes to normalize. When the depth is reached,
@@ -4022,7 +4028,7 @@ unique names with unified names representation: var_0000:var_ffff.
 The identifiers are variables and function names. The normalized data
 is available through the js_data rule option.
 
-5.10.3.10. js_norm_identifier_depth
+5.10.3.11. js_norm_identifier_depth
 
 js_norm_identifier_depth = N {0 : 65536} will set a number of unique
 JavaScript identifiers to normalize. When the depth is reached, a
@@ -4034,7 +4040,7 @@ response and not a single script. By default, the value is set to
 65536, which is the max allowed number of unique identifiers. The
 generated names are in the range from var_0000 to var_ffff.
 
-5.10.3.11. js_norm_max_tmpl_nest
+5.10.3.12. js_norm_max_tmpl_nest
 
 js_norm_max_tmpl_nest = N {0 : 255} (default 32) is an option of the
 enhanced JavaScript normalizer that determines the deepest level of
@@ -4046,7 +4052,7 @@ require keeping track of every layer for proper normalization. This
 option is present to limit the amount of memory dedicated to template
 nesting tracking.
 
-5.10.3.12. js_norm_max_bracket_depth
+5.10.3.13. js_norm_max_bracket_depth
 
 js_norm_max_bracket_depth = N {1 : 65535} (default 256) is an option
 of the enhanced JavaScript normalizer that determines the maximum
@@ -4055,7 +4061,7 @@ brackets, nested within a matching pair, in any combination. This
 option is present to limit the amount of memory dedicated to bracket
 tracking.
 
-5.10.3.13. js_norm_max_scope_depth
+5.10.3.14. js_norm_max_scope_depth
 
 js_norm_max_scope_depth = N {1 : 65535} (default 256) is an option of
 the enhanced JavaScript normalizer that determines the deepest level
@@ -4063,7 +4069,7 @@ of nested variable scope, i.e. functions, code blocks, etc. including
 the global scope. This option is present to limit the amount of
 memory dedicated to scope tracking.
 
-5.10.3.14. js_norm_ident_ignore
+5.10.3.15. js_norm_ident_ignore
 
 js_norm_ident_ignore = {<list of ignored identifiers>} is an option
 of the enhanced JavaScript normalizer that defines a list of
@@ -4098,7 +4104,12 @@ a("hello") // will be substituted to 'console.log("hello")'
 The default list of ignore-identifiers is present in
 "snort_defaults.lua".
 
-5.10.3.15. xff_headers
+Unescape function names should remain intact in the output. They
+ought to be included in the ignore list. If for some reason the user
+wants to disable unescape related features, then removing function’s
+name from the ignore list does the trick.
+
+5.10.3.16. xff_headers
 
 This configuration supports defining custom x-forwarded-for type
 headers. In a multi-vendor world, it is quite possible that the
@@ -4113,7 +4124,7 @@ they are defined, e.g "x-forwarded-for" will be preferred than
 "true-client-ip" if both headers are present in the stream. The
 header names should be delimited by a space.
 
-5.10.3.16. maximum_host_length
+5.10.3.17. maximum_host_length
 
 Setting maximum_host_length causes http_inspect to generate 119:25 if
 the Host header value including optional white space exceeds the
@@ -4121,7 +4132,7 @@ specified length. In the abnormal case of multiple Host headers, the
 total length of the combined values is used. The default value is -1,
 meaning do not perform this check.
 
-5.10.3.17. maximum_chunk_length
+5.10.3.18. maximum_chunk_length
 
 http_inspect strictly limits individual chunks within a chunked
 message body to be less than four gigabytes.
@@ -4129,7 +4140,7 @@ message body to be less than four gigabytes.
 A lower limit may be configured by setting maximum_chunk_length. Any
 chunk longer than maximum chunk length will generate a 119:16 alert.
 
-5.10.3.18. URI processing
+5.10.3.19. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize
@@ -4559,6 +4570,14 @@ general HTTP/1 format but contain version fields falsely claiming to
 be HTTP/2.0 or HTTP/0.9 will match "other" as described above. The
 http_version rule option is available to examine the actual bytes in
 the version field.
+
+5.10.6.18. http_header_test and http_trailer_test
+
+Rule options that perform various tests against a specific header and
+trailer field, respectively. It can perform a range test, check
+whether the value is numeric or whether it is absent. Negative values
+are considered non-numeric. Values with more than 18 digits are
+considered non-numeric.
 
 5.10.7. Timing issues and combining rule options
 
@@ -5005,7 +5024,8 @@ POP inspector and IMAP inspector offer same set of configuration
 options for MIME decoding depth. These depths range from 0 to 65535
 bytes. Setting the value to 0 ("do none") turns the feature off.
 Alternatively the value -1 means an unlimited amount of data should
-be decoded. If you do not specify the default value is 1460 bytes.
+be decoded. If you do not specify the default value is -1
+(unlimited).
 
 The depth limits apply per attachment. They are:
 
