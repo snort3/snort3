@@ -359,18 +359,15 @@ int main_rotate_stats(lua_State* L)
 int main_reload_config(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    if ( !ReloadTracker::start(ctrlcon) )
-    {
-        send_response(ctrlcon, "== reload pending; retry\n");
-        return 0;
-    }
     const char* fname =  nullptr;
     const char* plugin_path =  nullptr;
 
     if ( L )
     {
         Lua::ManageStack(L, 1);
-        fname = luaL_checkstring(L, 1);
+        if (lua_gettop(L) >= 1)
+            fname = luaL_checkstring(L, 1);
+
         if (lua_gettop(L) > 1)
         {
             plugin_path = luaL_checkstring(L, 2);
@@ -380,6 +377,11 @@ int main_reload_config(lua_State* L)
         }
     }
 
+    if ( !ReloadTracker::start(ctrlcon) )
+    {
+        send_response(ctrlcon, "== reload pending; retry\n");
+        return 0;
+    }
     send_response(ctrlcon, ".. reloading configuration\n");
     ReloadTracker::update(ctrlcon,"start loading ...");
     const SnortConfig* old = SnortConfig::get_conf();
@@ -434,28 +436,29 @@ int main_reload_config(lua_State* L)
 
 int main_reload_policy(lua_State* L)
 {
-    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    if ( !ReloadTracker::start(ctrlcon) )
-    {
-        send_response(ctrlcon, "== reload pending; retry\n");
-        return 0;
-    }
     const char* fname =  nullptr;
 
     if ( L )
     {
         Lua::ManageStack(L, 1);
-        fname = luaL_checkstring(L, 1);
+        if (lua_gettop(L) >= 1)
+            fname = luaL_checkstring(L, 1);
     }
 
-    if ( fname and *fname )
-        send_response(ctrlcon, ".. reloading policy\n");
-    else
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    if ( !fname or *fname == '\0' )
     {
-        ReloadTracker::failed(ctrlcon, "filename required");
         send_response(ctrlcon, "== filename required\n");
         return 0;
     }
+
+    if ( !ReloadTracker::start(ctrlcon) )
+    {
+        send_response(ctrlcon, "== reload pending; retry\n");
+        return 0;
+    }
+
+    send_response(ctrlcon, ".. reloading policy\n");
 
     SnortConfig* old = SnortConfig::get_main_conf();
     SnortConfig* sc = Snort::get_updated_policy(old, fname, nullptr);
@@ -479,28 +482,29 @@ int main_reload_policy(lua_State* L)
 
 int main_reload_module(lua_State* L)
 {
-    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    if ( !ReloadTracker::start(ctrlcon) )
-    {
-        send_response(ctrlcon, "== reload pending; retry\n");
-        return 0;
-    }
     const char* fname =  nullptr;
 
     if ( L )
     {
         Lua::ManageStack(L, 1);
-        fname = luaL_checkstring(L, 1);
+        if (lua_gettop(L) >= 1)
+            fname = luaL_checkstring(L, 1);
     }
 
-    if ( fname and *fname )
-        send_response(ctrlcon, ".. reloading module\n");
-    else
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    if ( !fname or *fname == '\0' )
     {
-        ReloadTracker::failed(ctrlcon, "module name required");
         send_response(ctrlcon, "== module name required\n");
         return 0;
     }
+
+    if ( !ReloadTracker::start(ctrlcon) )
+    {
+        send_response(ctrlcon, "== reload pending; retry\n");
+        return 0;
+    }
+
+    send_response(ctrlcon, ".. reloading module\n");
 
     SnortConfig* old = SnortConfig::get_main_conf();
     SnortConfig* sc = Snort::get_updated_module(old, fname);
@@ -534,13 +538,6 @@ int main_reload_daq(lua_State* L)
 
 int main_reload_hosts(lua_State* L)
 {
-    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    if ( !ReloadTracker::start(ctrlcon) )
-    {
-        send_response(ctrlcon, "== reload pending; retry\n");
-        return 0;
-    }
-
     SnortConfig* sc = SnortConfig::get_main_conf();
     const char* fname;
 
@@ -552,19 +549,23 @@ int main_reload_hosts(lua_State* L)
     else
         fname = sc->attribute_hosts_file.c_str();
 
-    if ( fname and *fname )
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    if ( !fname or *fname == '\0' )
     {
-        std::string msg = "Reloading Host attribute table from ";
-        msg += fname;
-        ReloadTracker::update(ctrlcon, msg.c_str());
-        send_response(ctrlcon, ".. reloading hosts table\n");
-    }
-    else
-    {
-        ReloadTracker::failed(ctrlcon, "host attribute table filename required.");
         send_response(ctrlcon, "== filename required\n");
         return 0;
     }
+
+    if ( !ReloadTracker::start(ctrlcon) )
+    {
+        send_response(ctrlcon, "== reload pending; retry\n");
+        return 0;
+    }
+
+    std::string msg = "Reloading Host attribute table from ";
+    msg += fname;
+    ReloadTracker::update(ctrlcon, msg.c_str());
+    send_response(ctrlcon, ".. reloading hosts table\n");
 
     if ( !HostAttributesManager::load_hosts_file(sc, fname) )
     {
@@ -587,28 +588,29 @@ int main_reload_hosts(lua_State* L)
 
 int main_delete_inspector(lua_State* L)
 {
-    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    if ( !ReloadTracker::start(ctrlcon) )
-    {
-        send_response(ctrlcon, "== delete pending; retry\n");
-        return 0;
-    }
     const char* iname =  nullptr;
 
     if ( L )
     {
         Lua::ManageStack(L, 1);
-        iname = luaL_checkstring(L, 1);
+        if (lua_gettop(L) >= 1)
+            iname = luaL_checkstring(L, 1);
     }
 
-    if ( iname and *iname )
-        send_response(ctrlcon, ".. deleting inspector\n");
-    else
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    if ( !iname or *iname == '\0' )
     {
-        ReloadTracker::failed(ctrlcon, "inspector name required.");
         send_response(ctrlcon, "== inspector name required\n");
         return 0;
     }
+
+    if ( !ReloadTracker::start(ctrlcon) )
+    {
+        send_response(ctrlcon, "== delete pending; retry\n");
+        return 0;
+    }
+
+    send_response(ctrlcon, ".. deleting inspector\n");
 
     SnortConfig* old = SnortConfig::get_main_conf();
     SnortConfig* sc = Snort::get_updated_policy(old, nullptr, iname);

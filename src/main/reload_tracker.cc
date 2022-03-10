@@ -52,10 +52,12 @@ bool ReloadTracker::start(ControlConn* ctrlcon)
 
 void ReloadTracker::end(ControlConn* ctrlcon)
 {
-    if (ctrl == ctrlcon and reload_in_progress)
-        LogMessage("Reload ended. [%s]\n", current_command.c_str());
-    else
-        ErrorMessage("Reload session mismatched for ending tracker\n");
+#ifdef NDEBUG
+    UNUSED(ctrlcon);
+#else
+    assert(ctrl == ctrlcon and reload_in_progress);
+#endif
+    LogMessage("Reload ended. [%s]\n", current_command.c_str());
     current_command.clear();
     ctrl = nullptr;
     reload_in_progress = false;
@@ -63,10 +65,12 @@ void ReloadTracker::end(ControlConn* ctrlcon)
 
 void ReloadTracker::failed(ControlConn* ctrlcon, const char* reason)
 {
-    if (ctrl == ctrlcon and reload_in_progress)
-        LogMessage("Reload failed! %s [%s]\n", reason, current_command.c_str());
-    else
-        ErrorMessage("Reload session mismatched for failing tracker\n");
+#ifdef NDEBUG
+    UNUSED(ctrlcon);
+#else
+    assert(ctrl == ctrlcon and reload_in_progress);
+#endif
+    LogMessage("Reload failed! %s [%s]\n", reason, current_command.c_str());
     current_command.clear();
     ctrl = nullptr;
     reload_in_progress = false;
@@ -74,9 +78,10 @@ void ReloadTracker::failed(ControlConn* ctrlcon, const char* reason)
 
 void ReloadTracker::update(ControlConn* ctrlcon, const char* status)
 {
-    if (ctrl == ctrlcon and reload_in_progress)
-        LogMessage("Reload update: %s [%s]\n", status, current_command.c_str());
-    else
-        ErrorMessage("Reload session mismatched for updating tracker\n");
+#ifdef NDEBUG
+    UNUSED(ctrlcon);
+#else
+    assert(ctrl == ctrlcon and reload_in_progress);
+#endif
+    LogMessage("Reload update: %s [%s]\n", status, current_command.c_str());
 }
-
