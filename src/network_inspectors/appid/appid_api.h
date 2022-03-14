@@ -52,6 +52,7 @@ public:
         const char*, bool, AppId& service_id, AppId& client_id, AppId& payload_id);
     const AppIdSessionApi* get_appid_session_api(const Flow& flow) const;
     bool is_inspection_needed(const Inspector& g) const;
+    const char* get_appid_detector_directory() const;
 
     bool is_service_http_type(AppId service_id) const
     {

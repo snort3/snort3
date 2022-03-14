@@ -70,11 +70,16 @@ void AppIdInspector::tear_down(snort::SnortConfig*) { }
 AppIdContext& AppIdInspector::get_ctxt() const { return *ctxt; }
 
 AppIdModule appid_mod;
-AppIdInspector dummy_appid_inspector( appid_mod );
 AppIdConfig appid_config;
 AppIdContext appid_ctxt(appid_config);
 THREAD_LOCAL OdpContext* pkt_thread_odp_ctxt = nullptr;
+AppIdInspector dummy_appid_inspector( appid_mod );
 
-AppIdInspector::AppIdInspector(AppIdModule& ) { ctxt = &appid_ctxt; }
+AppIdInspector::AppIdInspector(AppIdModule& )
+{
+    ctxt = &appid_ctxt;
+    appid_config.app_detector_dir = "/path/to/appid/detectors/";
+    config = &appid_config;
+}
 
 #endif

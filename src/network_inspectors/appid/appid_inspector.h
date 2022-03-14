@@ -47,6 +47,7 @@ public:
     void tear_down(snort::SnortConfig*) override;
     void eval(snort::Packet*) override;
     AppIdContext& get_ctxt() const;
+    const AppIdConfig& get_config() const { return *config; }
 
 private:
     const AppIdConfig* config = nullptr;

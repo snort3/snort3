@@ -265,3 +265,12 @@ bool AppIdApi::is_inspection_needed(const Inspector& inspector) const
 
     return false;
 }
+
+const char* AppIdApi::get_appid_detector_directory() const
+{
+    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+    if (!inspector)
+        return "";
+
+    return inspector->get_config().app_detector_dir;
+}
