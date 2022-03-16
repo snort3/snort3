@@ -608,7 +608,7 @@ void HttpMsgHeader::setup_encoding_decompression()
 
 void HttpMsgHeader::setup_utf_decoding()
 {
-    if (!params->normalize_utf || source_id == SRC_CLIENT )
+    if (!params->normalize_utf || session_data->mime_state[source_id] )
         return;
 
     Field last_token;
@@ -651,28 +651,28 @@ void HttpMsgHeader::setup_utf_decoding()
         }
     }
 
-    session_data->utf_state = new UtfDecodeSession();
-    session_data->utf_state->set_decode_utf_state_charset(charset_code);
+    session_data->utf_state[source_id] = new UtfDecodeSession();
+    session_data->utf_state[source_id]->set_decode_utf_state_charset(charset_code);
 }
 
 void HttpMsgHeader::setup_file_decompression()
 {
-    if (source_id == SRC_CLIENT ||
-       (!params->decompress_pdf && !params->decompress_swf && !params->decompress_zip))
+    if (session_data->mime_state[source_id] ||
+        (!params->decompress_pdf && !params->decompress_swf && !params->decompress_zip))
         return;
 
-    session_data->fd_state = File_Decomp_New();
-    session_data->fd_state->Modes =
+    session_data->fd_state[source_id] = File_Decomp_New();
+    session_data->fd_state[source_id]->Modes =
         (params->decompress_pdf ? FILE_PDF_DEFL_BIT : 0) |
         (params->decompress_swf ? (FILE_SWF_ZLIB_BIT | FILE_SWF_LZMA_BIT) : 0) |
         (params->decompress_zip ? FILE_ZIP_DEFL_BIT : 0) |
         (params->decompress_vba ? FILE_VBA_EXTR_BIT : 0);
-    session_data->fd_state->Alert_Callback = HttpMsgBody::fd_event_callback;
-    session_data->fd_state->Alert_Context = &session_data->fd_alert_context;
-    session_data->fd_state->Compr_Depth = 0;
-    session_data->fd_state->Decompr_Depth = 0;
+    session_data->fd_state[source_id]->Alert_Callback = HttpMsgBody::fd_event_callback;
+    session_data->fd_state[source_id]->Alert_Context = &session_data->fd_alert_context[source_id];
+    session_data->fd_state[source_id]->Compr_Depth = 0;
+    session_data->fd_state[source_id]->Decompr_Depth = 0;
 
-    (void)File_Decomp_Init(session_data->fd_state);
+    (void)File_Decomp_Init(session_data->fd_state[source_id]);
 }
 
 // Each file processed has a unique id per flow: hash(source_id, transaction_id, h2_stream_id)

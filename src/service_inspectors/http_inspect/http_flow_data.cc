@@ -123,15 +123,12 @@ HttpFlowData::~HttpFlowData()
             inflateEnd(compress_stream[k]);
             delete compress_stream[k];
         }
-        if (mime_state[k] != nullptr)
-        {
-            delete mime_state[k];
-        }
+        delete mime_state[k];
+        delete utf_state[k];
+        if (fd_state[k] != nullptr)
+            File_Decomp_StopFree(fd_state[k]);
     }
 
-    delete utf_state;
-    if (fd_state != nullptr)
-        File_Decomp_StopFree(fd_state);
     delete_pipeline();
 
     while (discard_list != nullptr)
@@ -168,10 +165,14 @@ void HttpFlowData::half_reset(SourceId source_id)
         delete compress_stream[source_id];
         compress_stream[source_id] = nullptr;
     }
-    if (mime_state[source_id] != nullptr)
+    delete mime_state[source_id];
+    mime_state[source_id] = nullptr;
+    delete utf_state[source_id];
+    utf_state[source_id] = nullptr;
+    if (fd_state[source_id] != nullptr)
     {
-        delete mime_state[source_id];
-        mime_state[source_id] = nullptr;
+        File_Decomp_StopFree(fd_state[source_id]);
+        fd_state[source_id] = nullptr;
     }
     delete infractions[source_id];
     infractions[source_id] = new HttpInfractions;
@@ -191,13 +192,6 @@ void HttpFlowData::half_reset(SourceId source_id)
         if (transaction[SRC_SERVER]->final_response())
             expected_trans_num[SRC_SERVER]++;
         status_code_num = STAT_NOT_PRESENT;
-        delete utf_state;
-        utf_state = nullptr;
-        if (fd_state != nullptr)
-        {
-            File_Decomp_StopFree(fd_state);
-            fd_state = nullptr;
-        }
     }
 }
 
@@ -398,8 +392,10 @@ void HttpFlowData::show(FILE* out_file) const
         pipeline_back, pipeline_overflow, pipeline_underflow);
     fprintf(out_file, "Cutter: %s/%s\n", (cutter[0] != nullptr) ? "Present" : "nullptr",
         (cutter[1] != nullptr) ? "Present" : "nullptr");
-    fprintf(out_file, "utf_state: %s\n", (utf_state != nullptr) ? "Present" : "nullptr");
-    fprintf(out_file, "fd_state: %s\n", (fd_state != nullptr) ? "Present" : "nullptr");
+    fprintf(out_file, "utf_state: %s/%s\n", (utf_state[0] != nullptr) ? "Present" : "nullptr",
+        (utf_state[1] != nullptr) ? "Present" : "nullptr");
+    fprintf(out_file, "fd_state: %s/%s\n", (fd_state[0] != nullptr) ? "Present" : "nullptr",
+        (fd_state[1] != nullptr) ? "Present" : "nullptr");
     fprintf(out_file, "mime_state: %s/%s\n", (mime_state[0] != nullptr) ? "Present" : "nullptr",
         (mime_state[1] != nullptr) ? "Present" : "nullptr");
 }

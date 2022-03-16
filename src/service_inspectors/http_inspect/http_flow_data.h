@@ -160,10 +160,10 @@ private:
         HttpInfractions* infractions = nullptr;
         HttpEventGen* events = nullptr;
     };
-    FdCallbackContext fd_alert_context; // SRC_SERVER only
+    FdCallbackContext fd_alert_context[2];
     snort::MimeSession* mime_state[2] = { nullptr, nullptr };
-    snort::UtfDecodeSession* utf_state = nullptr; // SRC_SERVER only
-    fd_session_t* fd_state = nullptr; // SRC_SERVER only
+    snort::UtfDecodeSession* utf_state[2] = { nullptr, nullptr };
+    fd_session_t* fd_state[2] = { nullptr, nullptr };
     int64_t file_depth_remaining[2] = { HttpCommon::STAT_NOT_PRESENT,
         HttpCommon::STAT_NOT_PRESENT };
     int64_t detect_depth_remaining[2] = { HttpCommon::STAT_NOT_PRESENT,

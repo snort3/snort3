@@ -227,18 +227,19 @@ void HttpMsgBody::analyze()
 
 void HttpMsgBody::do_utf_decoding(const Field& input, Field& output)
 {
-    if ((source_id == SRC_CLIENT) || (session_data->utf_state == nullptr) || (input.length() == 0))
+    if ((session_data->mime_state[source_id] != nullptr) ||
+        (session_data->utf_state[source_id] == nullptr) || (input.length() == 0))
     {
         output.set(input);
         return;
     }
 
-    if (session_data->utf_state->is_utf_encoding_present())
+    if (session_data->utf_state[source_id]->is_utf_encoding_present())
     {
         int bytes_copied;
         bool decoded;
         uint8_t* buffer = new uint8_t[input.length()];
-        decoded = session_data->utf_state->decode_utf(
+        decoded = session_data->utf_state[source_id]->decode_utf(
             input.start(), input.length(), buffer, input.length(), &bytes_copied);
 
         if (!decoded)
@@ -268,53 +269,55 @@ void HttpMsgBody::get_ole_data()
     uint8_t* ole_data_ptr;
     uint32_t ole_len;
 
-    session_data->fd_state->get_ole_data(ole_data_ptr, ole_len);
+    session_data->fd_state[source_id]->get_ole_data(ole_data_ptr, ole_len);
 
     if (ole_data_ptr)
     {
         ole_data.set(ole_len, ole_data_ptr, false);
 
         //Reset the ole data ptr once it is stored in msg body
-        session_data->fd_state->ole_data_reset();
+        session_data->fd_state[source_id]->ole_data_reset();
     }
 }
     
 void HttpMsgBody::do_file_decompression(const Field& input, Field& output)
 {
-    if ((source_id == SRC_CLIENT) || (session_data->fd_state == nullptr))
+    if ((session_data->mime_state[source_id] != nullptr) ||
+        session_data->fd_state[source_id] == nullptr)
     {
         output.set(input);
         return;
     }
     const uint32_t buffer_size = session_data->file_decomp_buffer_size_remaining[source_id];
     uint8_t* buffer = new uint8_t[buffer_size];
-    session_data->fd_alert_context.infractions = transaction->get_infractions(source_id);
-    session_data->fd_alert_context.events = session_data->events[source_id];
-    session_data->fd_state->Next_In = input.start();
-    session_data->fd_state->Avail_In = (uint32_t)input.length();
-    session_data->fd_state->Next_Out = buffer;
-    session_data->fd_state->Avail_Out = buffer_size;
+    session_data->fd_alert_context[source_id].infractions = transaction->get_infractions(source_id);
+    session_data->fd_alert_context[source_id].events = session_data->events[source_id];
+    session_data->fd_state[source_id]->Next_In = input.start();
+    session_data->fd_state[source_id]->Avail_In = (uint32_t)input.length();
+    session_data->fd_state[source_id]->Next_Out = buffer;
+    session_data->fd_state[source_id]->Avail_Out = buffer_size;
 
-    const fd_status_t status = File_Decomp(session_data->fd_state);
+    const fd_status_t status = File_Decomp(session_data->fd_state[source_id]);
 
     switch(status)
     {
     case File_Decomp_DecompError:
-        File_Decomp_Alert(session_data->fd_state, session_data->fd_state->Error_Event);
+        File_Decomp_Alert(session_data->fd_state[source_id],
+            session_data->fd_state[source_id]->Error_Event);
         // Fall through
     case File_Decomp_NoSig:
     case File_Decomp_Error:
         delete[] buffer;
         output.set(input);
-        File_Decomp_StopFree(session_data->fd_state);
-        session_data->fd_state = nullptr;
+        File_Decomp_StopFree(session_data->fd_state[source_id]);
+        session_data->fd_state[source_id] = nullptr;
         break;
     case File_Decomp_BlockOut:
         add_infraction(INF_FILE_DECOMPR_OVERRUN);
         create_event(EVENT_FILE_DECOMPR_OVERRUN);
         // Fall through
     default:
-        const uint32_t output_length = session_data->fd_state->Next_Out - buffer;
+        const uint32_t output_length = session_data->fd_state[source_id]->Next_Out - buffer;
         output.set(output_length, buffer, true);
         assert((uint64_t)session_data->file_decomp_buffer_size_remaining[source_id] >=
             output_length);
