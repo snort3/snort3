@@ -209,9 +209,18 @@ static bool process_packet(Packet* p)
     return true;
 }
 
+static inline bool is_sticky_verdict(const DAQ_Verdict verdict)
+{
+    return verdict == DAQ_VERDICT_WHITELIST or verdict == DAQ_VERDICT_BLACKLIST
+        or verdict == DAQ_VERDICT_IGNORE;
+}
+
 // Finalize DAQ message verdict
 static DAQ_Verdict distill_verdict(Packet* p)
 {
+    if ( p->flow and is_sticky_verdict(p->flow->last_verdict) )
+        return p->flow->last_verdict;
+
     DAQ_Verdict verdict = DAQ_VERDICT_PASS;
     Active* act = p->active;
 
@@ -281,6 +290,10 @@ static DAQ_Verdict distill_verdict(Packet* p)
             daq_stats.internal_whitelist++;
         }
     }
+
+    if ( p->flow )
+        p->flow->last_verdict = verdict;
+
     return verdict;
 }
 

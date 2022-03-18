@@ -27,6 +27,7 @@
 // state.  Inspector state is stored in FlowData, and Flow manages a list
 // of FlowData items.
 
+#include <daq_common.h>
 #include <sys/time.h>
 
 #include "detection/ips_context_chain.h"
@@ -495,6 +496,8 @@ public:  // FIXIT-M privatize if possible
     FlowState flow_state;
 
     FilteringState filtering_state;
+
+    DAQ_Verdict last_verdict = MAX_DAQ_VERDICT;
 
 private:
     void clean();
