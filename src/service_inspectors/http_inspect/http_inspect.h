@@ -62,7 +62,7 @@ public:
     void clear(snort::Packet* p) override;
 
     HttpStreamSplitter* get_splitter(bool is_client_to_server) override
-    { return new HttpStreamSplitter(is_client_to_server, this); }
+    { return &splitter[is_client_to_server ? HttpCommon::SRC_CLIENT : HttpCommon::SRC_SERVER]; }
 
     bool can_carve_files() const override
     { return true; }
@@ -83,6 +83,8 @@ public:
 private:
     friend HttpApi;
     friend HttpStreamSplitter;
+
+    HttpStreamSplitter splitter[2] = { { true, this }, { false, this } };
 
     bool process(const uint8_t* data, const uint16_t dsize, snort::Flow* const flow,
         HttpCommon::SourceId source_id_, bool buf_owner) const;

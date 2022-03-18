@@ -91,7 +91,7 @@ Http2FlowData::~Http2FlowData()
     {
         delete infractions[k];
         delete events[k];
-        delete hi_ss[k];
+        hi_ss[k]->go_away();
         delete[] frame_data[k];
     }
 

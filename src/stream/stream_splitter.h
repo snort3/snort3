@@ -82,6 +82,7 @@ public:
 
     virtual bool is_paf() { return false; }
     virtual unsigned max(Flow* = nullptr);
+    virtual void go_away() { delete this; }
 
     bool to_server() { return c2s; }
     bool to_client() { return !c2s; }

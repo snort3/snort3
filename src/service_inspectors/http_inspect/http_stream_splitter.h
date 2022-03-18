@@ -49,6 +49,7 @@ public:
 
     // FIXIT-M should return actual packet buffer size
     unsigned max(snort::Flow*) override { return HttpEnums::MAX_OCTETS; }
+    void go_away() override {}
 
 private:
     void prepare_flush(HttpFlowData* session_data, uint32_t* flush_offset, HttpEnums::SectionType

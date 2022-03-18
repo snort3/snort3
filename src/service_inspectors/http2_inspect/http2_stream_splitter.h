@@ -44,6 +44,7 @@ public:
 
     // FIXIT-M should return actual packet buffer size
     unsigned max(snort::Flow*) override { return Http2Enums::MAX_OCTETS; }
+    void go_away() override {}
 
 private:
     const HttpCommon::SourceId source_id;

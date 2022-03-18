@@ -50,13 +50,15 @@ public:
     void clear(snort::Packet* p) override;
 
     Http2StreamSplitter* get_splitter(bool is_client_to_server) override
-    { return new Http2StreamSplitter(is_client_to_server); }
+    { return &splitter[is_client_to_server ? HttpCommon::SRC_CLIENT : HttpCommon::SRC_SERVER]; }
 
     bool can_carve_files() const override
     { return true; }
 
 private:
     friend Http2Api;
+
+    Http2StreamSplitter splitter[2] = { true, false };
 
     const Http2ParaList* const params;
 };

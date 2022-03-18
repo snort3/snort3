@@ -71,7 +71,7 @@ TcpStreamTracker::TcpStreamTracker(bool client) :
 { }
 
 TcpStreamTracker::~TcpStreamTracker()
-{ delete splitter; }
+{ if (splitter != nullptr) splitter->go_away(); }
 
 TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescriptor& tsd)
 {
@@ -255,7 +255,7 @@ void TcpStreamTracker::init_flush_policy()
 void TcpStreamTracker::set_splitter(StreamSplitter* ss)
 {
     if ( splitter )
-        delete splitter;
+        splitter->go_away();
 
     splitter = ss;
 
