@@ -94,8 +94,10 @@ FileInfo::~FileInfo ()
 {
     if (user_file_data)
     {
+        user_file_data_mutex.lock();
         delete user_file_data;
         set_file_data(nullptr);
+        user_file_data_mutex.unlock();
     }
 
     if (sha256)

@@ -224,7 +224,10 @@ FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
 {
     assert(file);
 
+    file->user_file_data_mutex.lock();
     FileVerdict verdict = policy->type_lookup(p, file);
+    file->user_file_data_mutex.unlock();
+
     FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
         "check_verdict:verdict after type lookup %d\n", verdict);
 
