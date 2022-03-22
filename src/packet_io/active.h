@@ -117,6 +117,8 @@ public:
     const char* get_action_string() const
     { return act_str[active_action][active_status]; }
 
+    void update_status(const Packet*, bool force = false);
+
     void drop_packet(const Packet*, bool force = false);
     void daq_drop_packet(const Packet*);
     bool retry_packet(const Packet*);
@@ -126,9 +128,7 @@ public:
     void trust_session(Packet*, bool force = false);
     void block_session(Packet*, bool force = false);
     void reset_session(Packet*, bool force = false);
-    void reset_session(Packet*, snort::ActiveAction* r, bool force = false,
-        bool skip_update_status = false);
-    void update_reset_status(Packet*, bool force);
+    void reset_session(Packet*, snort::ActiveAction* r, bool force = false);
 
     static void queue(snort::ActiveAction* a, snort::Packet* p);
     static void clear_queue(snort::Packet*);
@@ -212,7 +212,6 @@ private:
     static int send_ip(DAQ_Msg_h, int, const uint8_t* buf, uint32_t len);
 
     void update_status_actionable(const Packet*);
-    void update_status(const Packet*, bool force = false);
     void daq_update_status(const Packet*);
 
     void block_session(const Packet*, ActiveActionType, bool force = false);

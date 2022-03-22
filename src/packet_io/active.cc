@@ -679,16 +679,10 @@ void Active::reset_session(Packet* p, bool force)
     reset_session(p, &default_reset, force);
 }
 
-void Active::update_reset_status(Packet* p, bool force)
+void Active::reset_session(Packet* p, ActiveAction* reject, bool force)
 {
     active_action = ACT_RESET;
     update_status(p, force);
-}
-
-void Active::reset_session(Packet* p, ActiveAction* reject, bool force, bool skip_update_status)
-{
-    if ( !skip_update_status )
-        update_reset_status(p, force);
 
     if ( force or (p->context->conf->inline_mode() and SFDAQ::forwarding_packet(p->pkth)) )
         Stream::drop_flow(p);
@@ -719,8 +713,9 @@ void Active::set_delayed_action(ActiveActionType action, bool force)
 void Active::set_delayed_action(ActiveActionType action, ActiveAction* act, bool force)
 {
     delayed_active_action = action;
-    assert(delayed_reject == nullptr);
-    delayed_reject = act;
+
+    if (delayed_reject == nullptr)
+        delayed_reject = act;
 
     if ( force )
         active_status = AST_FORCE;
