@@ -82,6 +82,7 @@ public:
 
     DecodeResult decompress_data(const uint8_t* buf_in, uint32_t size_in,
                                  const uint8_t*& buf_out, uint32_t& size_out);
+    const BufferData& _get_ole_buf();
     const BufferData& get_decomp_vba_data();
     void clear_decomp_vba_data();
 

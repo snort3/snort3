@@ -73,6 +73,7 @@ public:
     MailLogState* get_log_state();
     void set_mime_stats(MimeStats*);
 
+    const BufferData& get_ole_buf();
     const BufferData& get_vba_inspect_buf();
 
 protected:

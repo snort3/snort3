@@ -232,6 +232,13 @@ void MimeDecode::clear_decomp_vba_data()
     decompressed_vba_data.reset();
 }
 
+const BufferData& MimeDecode::_get_ole_buf()
+{
+    if (ole_data.length() <= 0)
+        return BufferData::buffer_null;
+    return ole_data;
+}
+
 void MimeDecode::file_decomp_reset()
 {
     if ( fd_state == nullptr )

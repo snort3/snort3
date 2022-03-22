@@ -26,6 +26,7 @@
 #include "decompress/file_olefile.h"
 #include "file_api/file_flows.h"
 #include "file_api/file_service.h"
+#include "helpers/buffer_data.h"
 #include "pub_sub/http_request_body_event.h"
 
 #include "http_api.h"
@@ -482,7 +483,11 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
                 (section_end - ptr), true, SNORT_FILE_POSITION_UNKNOWN);
             ptr++;
         }
-
+        
+        const BufferData& vba_buf = session_data->mime_state[source_id]->get_ole_buf();
+        if (vba_buf.data_ptr())
+            ole_data.set(vba_buf.length(), vba_buf.data_ptr());
+        
         session_data->file_octets[source_id] += file_data.length();
     }
 }
