@@ -61,11 +61,11 @@ public:
     void shutdown();
 
     SO_PUBLIC bool is_local() const { return local; }
+    SO_PUBLIC bool respond(const char* format, va_list& ap);
     SO_PUBLIC bool respond(const char* format, ...) __attribute__((format (printf, 2, 3)));
     SO_PUBLIC static ControlConn* query_from_lua(const lua_State*);
 
 private:
-    bool respond(const char* format, va_list& ap);
     bool show_prompt();
     void touch();
 

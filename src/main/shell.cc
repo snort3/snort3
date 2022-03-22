@@ -479,9 +479,10 @@ bool Shell::configure(SnortConfig* sc, bool is_root)
         set_default_policy(sc);
     else
     {
+        set_network_policy(pt->network);
+        set_network_parse_policy(pt->network_parse);
         set_inspection_policy(pt->inspection);
         set_ips_policy(pt->ips);
-        set_network_policy(pt->network);
     }
 
     if (!sc->tweaks.empty())
@@ -544,6 +545,7 @@ bool Shell::configure(SnortConfig* sc, bool is_root)
 
     current_shells.pop();
 
+    set_network_parse_policy(nullptr);
     set_default_policy(sc);
     ModuleManager::set_config(nullptr);
     loaded = true;
@@ -563,6 +565,7 @@ void Shell::install(const char* name, const luaL_Reg* reg)
 
 void Shell::execute(const char* cmd, string& rsp)
 {
+    set_default_policy(SnortConfig::get_conf());
     int err = 0;
     Lua::ManageStack ms(lua);
 

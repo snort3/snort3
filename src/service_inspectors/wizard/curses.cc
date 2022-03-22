@@ -393,11 +393,11 @@ static bool ssl_v2_curse(const uint8_t* data, unsigned len, CurseTracker* tracke
 // map between service and curse details
 static vector<CurseDetails> curse_map
 {
-    // name      service        alg            is_tcp
-    { "dce_udp", "dcerpc",      dce_udp_curse, false },
-    { "dce_tcp", "dcerpc",      dce_tcp_curse, true  },
-    { "dce_smb", "netbios-ssn", dce_smb_curse, true  },
-    { "sslv2"  , "ssl",         ssl_v2_curse , true  }
+    // name      service                             alg            is_tcp
+    { "dce_udp", make_shared<string>("dcerpc")     , dce_udp_curse, false },
+    { "dce_tcp", make_shared<string>("dcerpc")     , dce_tcp_curse, true  },
+    { "dce_smb", make_shared<string>("netbios-ssn"), dce_smb_curse, true  },
+    { "sslv2"  , make_shared<string>("ssl")        , ssl_v2_curse , true  }
 };
 
 bool CurseBook::add_curse(const char* key)

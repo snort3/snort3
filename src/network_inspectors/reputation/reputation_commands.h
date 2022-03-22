@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2004-2013 Sourcefire, Inc.
+// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,18 +15,14 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// reputation_commands.h author Ron Dempster <rdempste@cisco.com>
 
-#ifndef REPUTATION_PARSE_H
-#define REPUTATION_PARSE_H
+#ifndef REPUTATION_COMMANDS_H
+#define REPUTATION_COMMANDS_H
 
-#include <cstdint>
+#include "framework/module.h"
 
-struct ReputationConfig;
-class ReputationData;
-
-void ip_list_init(uint32_t max_entries, const ReputationConfig&, ReputationData&);
-void estimate_num_entries(ReputationData&);
-void read_manifest(const char* filename, const ReputationConfig&, ReputationData&);
-void add_block_allow_List(const ReputationConfig&, ReputationData&);
+extern const snort::Command reputation_cmds[];
 
 #endif
+

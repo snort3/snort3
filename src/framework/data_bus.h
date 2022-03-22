@@ -38,6 +38,7 @@ namespace snort
 {
 class Flow;
 struct Packet;
+struct SnortConfig;
 
 class DataEvent
 {
@@ -101,10 +102,12 @@ public:
     // FIXIT-L ideally these would not be static or would take an inspection policy*
     static void subscribe(const char* key, DataHandler*);
     static void subscribe_network(const char* key, DataHandler*);
+    static void subscribe_global(const char* key, DataHandler*, SnortConfig&);
 
     // FIXIT-L these should be called during cleanup
     static void unsubscribe(const char* key, DataHandler*);
     static void unsubscribe_network(const char* key, DataHandler*);
+    static void unsubscribe_global(const char* key, DataHandler*, SnortConfig&);
 
     // runtime methods
     static void publish(const char* key, DataEvent&, Flow* = nullptr);
@@ -116,7 +119,7 @@ public:
 private:
     void _subscribe(const char* key, DataHandler*);
     void _unsubscribe(const char* key, DataHandler*);
-    void _publish(const char* key, DataEvent&, Flow*);
+    void _publish(const char* key, DataEvent&, Flow*) const;
 
 private:
     DataMap map;
@@ -146,6 +149,9 @@ private:
 
 // A flow has entered the setup state
 #define FLOW_STATE_SETUP_EVENT "flow.state_setup"
+
+// The policy has changed for the flow
+#define FLOW_STATE_RELOADED_EVENT "flow.reloaded"
 
 // A new flow is created on this packet
 #define STREAM_ICMP_NEW_FLOW_EVENT "stream.icmp_new_flow"

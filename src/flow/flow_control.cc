@@ -435,14 +435,24 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
     if ( flow->flow_state != Flow::FlowState::SETUP )
     {
-        const SnortConfig* sc = SnortConfig::get_conf();
-        set_inspection_policy(sc, flow->inspection_policy_id);
-        set_ips_policy(sc, flow->ips_policy_id);
+        unsigned reload_id = SnortConfig::get_thread_reload_id();
+        if (flow->reload_id != reload_id)
+        {
+            flow->network_policy_id = get_network_policy()->policy_id;
+            if (flow->flow_state == Flow::FlowState::INSPECT)
+                DataBus::publish(FLOW_STATE_RELOADED_EVENT, p, flow);
+        }
+        else
+        {
+            set_inspection_policy(flow->inspection_policy_id);
+            set_ips_policy(p->context->conf, flow->ips_policy_id);
+        }
         p->filtering_state = flow->filtering_state;
     }
 
     else
     {
+        flow->network_policy_id = get_network_policy()->policy_id;
         if (PacketTracer::is_active())
             PacketTracer::log("Session: new snort session\n");
 

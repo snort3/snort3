@@ -26,7 +26,6 @@
 #include <syslog.h>
 
 #include <cassert>
-#include <cstdarg>
 #include <cstring>
 
 #include "main/snort_config.h"
@@ -189,6 +188,13 @@ static void WriteLogMessage(FILE* fh, bool prefer_fh, const char* format, va_lis
 }
 
 // print an info message to stdout or syslog
+void LogMessage(const char* format, va_list& ap)
+{
+    if ( SnortConfig::log_quiet() )
+        return;
+    WriteLogMessage(stdout, false, format, ap);
+}
+
 void LogMessage(const char* format,...)
 {
     if ( SnortConfig::log_quiet() )

@@ -27,6 +27,7 @@
 #include "flow/flow_control.h"
 
 #include "detection/detection_engine.h"
+#include "main/policy.h"
 #include "main/snort_config.h"
 #include "main/snort_debug.h"
 #include "managers/inspector_manager.h"
@@ -67,7 +68,12 @@ void Active::set_drop_reason(char const*) { }
 Packet::Packet(bool) { }
 Packet::~Packet() = default;
 uint32_t Packet::get_flow_geneve_vni() const { return 0; }
-Flow::Flow() { memset(this, 0, sizeof(*this)); }
+Flow::Flow()
+{
+    constexpr size_t offset = offsetof(Flow, key);
+    // FIXIT-L need a struct to zero here to make future proof
+    memset((uint8_t*)this+offset, 0, sizeof(*this)-offset);
+}
 Flow::~Flow() = default;
 DetectionEngine::DetectionEngine() = default;
 ExpectCache::~ExpectCache() = default;
@@ -77,14 +83,14 @@ void Flow::term() { }
 void Flow::flush(bool) { }
 void Flow::reset(bool) { }
 void Flow::free_flow_data() { }
-void set_network_policy(const SnortConfig*, unsigned) { }
 void DataBus::publish(const char*, const uint8_t*, unsigned, Flow*) { }
 void DataBus::publish(const char*, Packet*, Flow*) { }
 const SnortConfig* SnortConfig::get_conf() { return nullptr; }
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
-void set_inspection_policy(const SnortConfig*, unsigned) { }
-void set_ips_policy(const SnortConfig*, unsigned) { }
+void set_network_policy(unsigned) { }
+void set_inspection_policy(unsigned) { }
+void set_ips_policy(const snort::SnortConfig*, unsigned) { }
 void Flow::set_mpls_layer_per_dir(Packet*) { }
 void DetectionEngine::disable_all(Packet*) { }
 void Stream::drop_traffic(const Packet*, char) { }
@@ -101,6 +107,11 @@ void snort::TraceApi::filter(const Packet&) {}
 
 namespace snort
 {
+NetworkPolicy* get_network_policy() { return nullptr; }
+InspectionPolicy* get_inspection_policy() { return nullptr; }
+IpsPolicy* get_ips_policy() { return nullptr; }
+unsigned SnortConfig::get_thread_reload_id() { return 0; }
+
 namespace layer
 {
 const vlan::VlanTagHdr* get_vlan_layer(const Packet* const) { return nullptr; }

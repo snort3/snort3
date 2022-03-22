@@ -115,7 +115,7 @@ bool AppIdContext::init_appid(SnortConfig* sc, AppIdInspector& inspector)
     {
         odp_ctxt->get_client_disco_mgr().initialize(inspector);
         odp_ctxt->get_service_disco_mgr().initialize(inspector);
-        odp_thread_local_ctxt->initialize(*this, true);
+        odp_thread_local_ctxt->initialize(sc, *this, true);
         odp_ctxt->initialize(inspector);
 
         // do not reload third party on reload_config()
@@ -224,12 +224,13 @@ AppId OdpContext::get_protocol_service_id(IpProtocol proto)
     return ip_protocol[(uint16_t)proto];
 }
 
-void OdpThreadContext::initialize(AppIdContext& ctxt, bool is_control, bool reload_odp)
+void OdpThreadContext::initialize(const SnortConfig* sc, AppIdContext& ctxt, bool is_control,
+    bool reload_odp)
 {
     if (!is_control and reload_odp)
-        LuaDetectorManager::init_thread_manager(ctxt);
+        LuaDetectorManager::init_thread_manager(sc, ctxt);
     else
-        LuaDetectorManager::initialize(ctxt, is_control, reload_odp);
+        LuaDetectorManager::initialize(sc, ctxt, is_control, reload_odp);
 }
 
 OdpThreadContext::~OdpThreadContext()

@@ -4,6 +4,7 @@ set (INCLUDES
     analyzer_command.h
     policy.h
     reload_tracker.h
+    reload_tuner.h
     snort.h
     snort_config.h
     snort_debug.h
@@ -21,6 +22,8 @@ set (LOCAL_INCLUDES
 if ( ENABLE_SHELL )
     set ( SHELL_SOURCES ac_shell_cmd.h ac_shell_cmd.cc)
 endif ( ENABLE_SHELL )
+
+add_subdirectory(test)
 
 add_library (main OBJECT
     analyzer.cc
@@ -67,3 +70,4 @@ include_directories (${CMAKE_CURRENT_BINARY_DIR})
 install (FILES ${INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/main"
 )
+

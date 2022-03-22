@@ -180,7 +180,7 @@ StreamBase::StreamBase(const StreamModuleConfig* c)
 { config = *c; }
 
 void StreamBase::tear_down(SnortConfig* sc)
-{ sc->register_reload_resource_tuner(new StreamUnloadReloadResourceManager); }
+{ sc->register_reload_handler(new StreamUnloadReloadResourceManager); }
 
 void StreamBase::tinit()
 {

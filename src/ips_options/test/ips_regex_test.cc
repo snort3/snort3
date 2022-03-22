@@ -56,6 +56,9 @@ THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
 static std::vector<void *> s_state;
 static ScratchAllocator* scratcher = nullptr;
 
+DataBus::DataBus() = default;
+DataBus::~DataBus() = default;
+
 SnortConfig::SnortConfig(const SnortConfig* const, const char*)
 {
     state = &s_state;

@@ -67,9 +67,11 @@ public:
 
     void show() const override;
 
-    bool select_default_policies(const _daq_pkt_hdr*, const SnortConfig*) override;
+    bool select_default_policies(const _daq_pkt_hdr&, const SnortConfig*) override;
+    bool select_default_policies(const _daq_flow_stats&, const SnortConfig*) override;
 
 protected:
+    bool select_default_policies(uint32_t key, const SnortConfig*);
     std::vector<TenantSelection> policy_selections;
     std::unordered_map<uint32_t, snort::PolicySelectUse*> policy_map;
 };
@@ -113,24 +115,35 @@ void TenantSelector::show() const
     }
 }
 
-bool TenantSelector::select_default_policies(const _daq_pkt_hdr* pkthdr, const SnortConfig* sc)
+bool TenantSelector::select_default_policies(uint32_t key, const SnortConfig* sc)
 {
     Profile profile(tenant_select_perf_stats);
 
     tenant_select_stats.packets++;
 
-    // FIXIT-H replace address_space_id with tenant_id when it is added to the pkthdr
-    auto i = policy_map.find(static_cast<uint32_t>(pkthdr->address_space_id));
+    auto i = policy_map.find(key);
     if (i != policy_map.end())
     {
         auto use = (*i).second;
-        set_network_policy(sc, use->network_index);
-        set_inspection_policy(sc, use->inspection_index);
+        set_network_policy(use->network_index);
+        set_inspection_policy(use->inspection_index);
         set_ips_policy(sc, use->ips_index);
         return true;
     }
     tenant_select_stats.no_match++;
     return false;
+}
+
+bool TenantSelector::select_default_policies(const _daq_pkt_hdr& pkthdr, const SnortConfig* sc)
+{
+    // FIXIT-H replace address_space_id with tenant_id when it is added to the pkthdr
+    return select_default_policies(static_cast<uint32_t>(pkthdr.address_space_id), sc);
+}
+
+bool TenantSelector::select_default_policies(const _daq_flow_stats& stats, const SnortConfig* sc)
+{
+    // FIXIT-H replace address_space_id with tenant_id when it is added to the pkthdr
+    return select_default_policies(static_cast<uint32_t>(stats.address_space_id), sc);
 }
 
 //-------------------------------------------------------------------------

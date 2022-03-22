@@ -13,6 +13,8 @@ set( MANAGERS_INCLUDES
     inspector_manager.h
 )
 
+add_subdirectory(test)
+
 add_library( managers OBJECT
     ${LUA_INCLUDES}
     ${MANAGERS_INCLUDES}

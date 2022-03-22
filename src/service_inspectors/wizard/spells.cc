@@ -84,7 +84,7 @@ void SpellBook::add_spell(
         ++i;
     }
     p->key = key;
-    p->value = val;
+    p->value = make_shared<string>(val);
 }
 
 bool SpellBook::add_spell(const char* key, const char*& val)
@@ -118,7 +118,7 @@ bool SpellBook::add_spell(const char* key, const char*& val)
     }
     if ( p->key == key )
     {
-        val = p->value.c_str();
+        val = p->value->c_str();
         return false;
     }
 
@@ -162,15 +162,15 @@ const MagicPage* SpellBook::find_spell(
         }
 
         // If no match but has glob, continue lookup from glob
-        if ( p->value.empty() && glob )
-        {   
+        if ( !p->value.use_count() && glob )
+        {
             p = glob;
             glob = nullptr;
-            
+
             return find_spell(s, n, p, i);
         }
 
-        return p->value.empty() ? nullptr : p;
+        return p->value.use_count() ? p : nullptr;
     }
     return p;
 }

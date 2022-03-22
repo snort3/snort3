@@ -725,7 +725,7 @@ bool Pop::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
                 return false;
 
             const BufferData& vba_buf = pop_ssn->mime_ssn->get_vba_inspect_buf();
-            
+
             if (vba_buf.data_ptr() && vba_buf.length())
             {
                 b.data = vba_buf.data_ptr();

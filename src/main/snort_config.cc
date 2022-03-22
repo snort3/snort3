@@ -72,6 +72,7 @@
 #include "utils/util_cstring.h"
 
 #include "analyzer.h"
+#include "reload_tuner.h"
 #include "thread_config.h"
 
 using namespace snort;
@@ -90,7 +91,12 @@ using namespace snort;
 #define OUTPUT_U2   "unified2"
 #define OUTPUT_FAST "alert_fast"
 
-static THREAD_LOCAL const SnortConfig* snort_conf = nullptr;
+struct ThreadSnortConfig
+{
+    const SnortConfig* snort_conf;
+    unsigned reload_id;
+};
+static THREAD_LOCAL ThreadSnortConfig thread_snort_config = {};
 
 uint32_t SnortConfig::warning_flags = 0;
 uint32_t SnortConfig::logging_flags = 0;
@@ -136,20 +142,23 @@ static PolicyMode init_policy_mode(const SnortConfig* sc, PolicyMode mode)
 
 static void init_policies(SnortConfig* sc)
 {
-    IpsPolicy* ips_policy = nullptr;
-    InspectionPolicy* inspection_policy = nullptr;
+    for ( unsigned nidx = 0; nidx <  sc->policy_map->network_policy_count(); ++nidx )
+    {
+        NetworkPolicy* network_policy = sc->policy_map->get_network_policy(nidx);
+
+        for ( unsigned idx = 0; idx < network_policy->inspection_policy_count(); ++idx )
+        {
+            InspectionPolicy* inspection_policy = network_policy->get_inspection_policy(idx);
+            inspection_policy->policy_mode = init_policy_mode(sc, inspection_policy->policy_mode);
+        }
+    }
 
     for ( unsigned idx = 0; idx <  sc->policy_map->ips_policy_count(); ++idx )
     {
-        ips_policy = sc->policy_map->get_ips_policy(idx);
+        IpsPolicy* ips_policy = get_ips_policy(sc, idx);
         ips_policy->policy_mode = init_policy_mode(sc, ips_policy->policy_mode);
     }
 
-    for ( unsigned idx = 0; idx < sc->policy_map->inspection_policy_count(); ++idx )
-    {
-        inspection_policy = sc->policy_map->get_inspection_policy(idx);
-        inspection_policy->policy_mode = init_policy_mode(sc, inspection_policy->policy_mode);
-    }
 }
 
 void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* protocol_reference,
@@ -179,6 +188,7 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
         memory = new MemoryConfig();
         policy_map = new PolicyMap;
         thread_config = new ThreadConfig();
+        global_dbus = new DataBus();
 
         proto_ref = new ProtocolReference(protocol_reference);
         so_rules = new SoRules;
@@ -214,6 +224,7 @@ SnortConfig::~SnortConfig()
 {
     if ( cloned )
     {
+        delete global_dbus;
         policy_map->set_cloned(true);
         delete policy_map;
         return;
@@ -247,7 +258,7 @@ SnortConfig::~SnortConfig()
         snort_free(eth_dst);
 
     if ( fast_pattern_config &&
-        (!snort_conf || this == snort_conf ||
+        (!thread_snort_config.snort_conf || this == thread_snort_config.snort_conf ||
         (fast_pattern_config->get_search_api() !=
         get_conf()->fast_pattern_config->get_search_api())) )
     {
@@ -264,6 +275,7 @@ SnortConfig::~SnortConfig()
     delete trace_config;
     delete overlay_trace_config;
     delete ha_config;
+        delete global_dbus;
 
     delete profiler;
     delete latency;
@@ -331,6 +343,7 @@ void SnortConfig::post_setup()
 void SnortConfig::clone(const SnortConfig* const conf)
 {
     *this = *conf;
+    global_dbus = new DataBus();
     if (conf->homenet.get_family() != 0)
         memcpy(&homenet, &conf->homenet, sizeof(homenet));
 
@@ -466,6 +479,9 @@ bool SnortConfig::verify() const
 {
     bool config_ok = false;
     const SnortConfig* sc = get_conf();
+
+    if (!policy_map->setup_network_policies())
+        ReloadError("Network policy user ids must be unique\n");
 
     if ( sc->asn1_mem != asn1_mem )
         ReloadError("Changing detection.asn1_mem requires a restart.\n");
@@ -978,14 +994,20 @@ void SnortConfig::release_scratch(int id)
 }
 
 SnortConfig* SnortConfig::get_main_conf()
-{ return const_cast<SnortConfig*>(snort_conf); }
+{ return const_cast<SnortConfig*>(thread_snort_config.snort_conf); }
 
 const SnortConfig* SnortConfig::get_conf()
-{ return snort_conf; }
+{ return thread_snort_config.snort_conf; }
+
+unsigned SnortConfig::get_thread_reload_id()
+{ return thread_snort_config.reload_id; }
+
+void SnortConfig::update_thread_reload_id()
+{ thread_snort_config.reload_id = thread_snort_config.snort_conf->reload_id; }
 
 void SnortConfig::set_conf(const SnortConfig* sc)
 {
-    snort_conf = sc;
+    thread_snort_config.snort_conf = sc;
 
     if ( sc )
     {
@@ -995,7 +1017,7 @@ void SnortConfig::set_conf(const SnortConfig* sc)
     }
 }
 
-void SnortConfig::register_reload_resource_tuner(ReloadResourceTuner* rrt)
+void SnortConfig::register_reload_handler(ReloadResourceTuner* rrt)
 {
     if (Snort::is_reloading())
         reload_tuners.push_back(rrt);

@@ -159,6 +159,9 @@ void Snort::init(int argc, char** argv)
     /* Set the global snort_conf that will be used during run time */
     SnortConfig::set_conf(sc);
 
+    if (!sc->policy_map->setup_network_policies())
+        ParseError("Network policy user ids must be unique\n");
+
     // This call must be immediately after "SnortConfig::set_conf(sc)"
     // since the first trace call may happen somewhere after this point
     TraceApi::thread_init(sc->trace_config);
@@ -206,6 +209,8 @@ void Snort::init(int argc, char** argv)
     else if ( SnortConfig::log_verbose() )
         InspectorManager::print_config(sc);
 
+    InspectorManager::global_init();
+    InspectorManager::prepare_inspectors(sc);
     InspectorManager::prepare_controls(sc);
 
     // Must be after InspectorManager::configure()
@@ -481,7 +486,8 @@ SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path
         return nullptr;
     }
 
-    InspectorManager::tear_down_removed_inspectors(old, sc);
+    InspectorManager::reconcile_inspectors(old, sc);
+    InspectorManager::prepare_inspectors(sc);
     InspectorManager::prepare_controls(sc);
 
     FileService::verify_reload(sc);
@@ -551,6 +557,7 @@ SnortConfig* Snort::get_updated_policy(
     reset_parse_errors();
 
     SnortConfig* sc = new SnortConfig(other_conf, iname);
+    sc->global_dbus->clone(*other_conf->global_dbus, iname);
 
     if ( fname )
     {
@@ -601,6 +608,8 @@ SnortConfig* Snort::get_updated_policy(
         return nullptr;
     }
 
+    InspectorManager::reconcile_inspectors(other_conf, sc, true);
+    InspectorManager::prepare_inspectors(sc);
     InspectorManager::prepare_controls(sc);
 
     other_conf->cloned = true;
@@ -614,6 +623,7 @@ SnortConfig* Snort::get_updated_module(SnortConfig* other_conf, const char* name
     reloading = true;
 
     SnortConfig* sc = new SnortConfig(other_conf, name);
+    sc->global_dbus->clone(*other_conf->global_dbus, name);
 
     if ( name )
     {
@@ -641,6 +651,8 @@ SnortConfig* Snort::get_updated_module(SnortConfig* other_conf, const char* name
         return nullptr;
     }
 
+    InspectorManager::reconcile_inspectors(other_conf, sc, true);
+    InspectorManager::prepare_inspectors(sc);
     InspectorManager::prepare_controls(sc);
 
     other_conf->cloned = true;

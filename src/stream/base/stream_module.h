@@ -21,11 +21,11 @@
 #ifndef STREAM_MODULE_H
 #define STREAM_MODULE_H
 
-#include "main/analyzer.h"
-#include "main/snort_config.h"
 #include "flow/flow_config.h"
 #include "flow/flow_control.h"
 #include "framework/module.h"
+#include "main/analyzer.h"
+#include "main/reload_tuner.h"
 
 namespace snort
 {

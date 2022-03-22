@@ -29,7 +29,7 @@
 
 // this is the current version of the base api
 // must be prefixed to subtype version
-#define BASE_API_VERSION 12
+#define BASE_API_VERSION 13
 
 // set options to API_OPTIONS to ensure compatibility
 #ifndef API_OPTIONS

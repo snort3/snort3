@@ -27,8 +27,11 @@
 // state.  Inspector state is stored in FlowData, and Flow manages a list
 // of FlowData items.
 
-#include <daq_common.h>
+#include <memory>
+#include <string>
 #include <sys/time.h>
+
+#include <daq_common.h>
 
 #include "detection/ips_context_chain.h"
 #include "flow/deferred_trust.h"
@@ -197,7 +200,10 @@ public:
     void set_mpls_layer_per_dir(Packet*);
     Layer get_mpls_layer_per_dir(bool);
     void swap_roles();
-    void set_service(Packet* pkt, const char* new_service);
+    void set_service(Packet*, std::shared_ptr<std::string> new_service);
+    void clear_service(Packet*);
+    bool has_service() const
+    { return 0 != service.use_count(); }
     bool get_attr(const std::string& key, int32_t& val);
     bool get_attr(const std::string& key, std::string& val);
     void set_attr(const std::string& key, const int32_t& val);
@@ -281,26 +287,20 @@ public:
 
     void set_client(Inspector* ins)
     {
+        if (ssn_client)
+            ssn_client->rem_ref();
         ssn_client = ins;
-        ssn_client->add_ref();
-    }
-
-    void clear_client()
-    {
-        ssn_client->rem_ref();
-        ssn_client = nullptr;
+        if (ssn_client)
+            ssn_client->add_ref();
     }
 
     void set_server(Inspector* ins)
     {
+        if (ssn_server)
+            ssn_server->rem_ref();
         ssn_server = ins;
-        ssn_server->add_ref();
-    }
-
-    void clear_server()
-    {
-        ssn_server->rem_ref();
-        ssn_server = nullptr;
+        if (ssn_server)
+            ssn_server->add_ref();
     }
 
     void set_clouseau(Inspector* ins)
@@ -405,8 +405,8 @@ public:  // FIXIT-M privatize if possible
     // fields are organized by initialization and size to minimize
     // void space and allow for memset of tail end of struct
 
-    // these fields are const after initialization
     DeferredTrust deferred_trust;
+    std::shared_ptr<std::string> service;
 
     // Anything before this comment is not zeroed during construction
     const FlowKey* key;
@@ -441,10 +441,10 @@ public:  // FIXIT-M privatize if possible
     Inspector* gadget;    // service handler
     Inspector* assistant_gadget;
     Inspector* data;
-    const char* service;
 
     uint64_t expire_time;
 
+    unsigned network_policy_id;
     unsigned inspection_policy_id;
     unsigned ips_policy_id;
     unsigned reload_id;

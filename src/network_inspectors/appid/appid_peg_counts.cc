@@ -28,6 +28,8 @@
 #include <algorithm>
 #include <string>
 
+#include "framework/inspector.h"
+#include "main/thread_config.h"
 #include "utils/stats.h"
 
 using namespace snort;
@@ -36,10 +38,12 @@ std::unordered_map<AppId, uint32_t> AppIdPegCounts::appid_detector_pegs_idx;
 std::vector<std::string> AppIdPegCounts::appid_detectors_info;
 THREAD_LOCAL std::vector<AppIdPegCounts::AppIdDynamicPeg>* AppIdPegCounts::appid_peg_counts;
 AppIdPegCounts::AppIdDynamicPeg AppIdPegCounts::appid_dynamic_sum[SF_APPID_MAX + 1];
+AppIdPegCounts::AppIdDynamicPeg AppIdPegCounts::zeroed_peg;
+PegCount AppIdPegCounts::all_zeroed_peg[DetectorPegs::NUM_APPID_DETECTOR_PEGS] = {};
 
 void AppIdPegCounts::init_pegs()
 {
-    AppIdPegCounts::AppIdDynamicPeg zeroed_peg = AppIdPegCounts::AppIdDynamicPeg();
+    assert(!appid_peg_counts);
     appid_peg_counts = new std::vector<AppIdPegCounts::AppIdDynamicPeg>(
         appid_detectors_info.size() + 1, zeroed_peg);
 }
@@ -47,6 +51,7 @@ void AppIdPegCounts::init_pegs()
 void AppIdPegCounts::cleanup_pegs()
 {
     delete appid_peg_counts;
+    appid_peg_counts = nullptr;
 }
 
 void AppIdPegCounts::cleanup_peg_info()
@@ -57,22 +62,21 @@ void AppIdPegCounts::cleanup_peg_info()
 
 void AppIdPegCounts::cleanup_dynamic_sum()
 {
-    if ( !appid_peg_counts )
-        return;
-
     for ( unsigned app_num = 0; app_num < AppIdPegCounts::appid_detectors_info.size(); app_num++ )
     {
         memset(appid_dynamic_sum[app_num].stats, 0, sizeof(PegCount) *
             DetectorPegs::NUM_APPID_DETECTOR_PEGS);
-        memset((*appid_peg_counts)[app_num].stats, 0, sizeof(PegCount) *
-            DetectorPegs::NUM_APPID_DETECTOR_PEGS);
+        if ( appid_peg_counts )
+            memset((*appid_peg_counts)[app_num].stats, 0, sizeof(PegCount) *
+                DetectorPegs::NUM_APPID_DETECTOR_PEGS);
     }
 
     // reset unknown_app stats
     memset(appid_dynamic_sum[SF_APPID_MAX].stats, 0, sizeof(PegCount) *
         DetectorPegs::NUM_APPID_DETECTOR_PEGS);
-    memset((*appid_peg_counts)[appid_peg_counts->size() - 1].stats, 0, sizeof(PegCount) *
-        DetectorPegs::NUM_APPID_DETECTOR_PEGS);
+    if ( appid_peg_counts )
+        memset((*appid_peg_counts)[appid_peg_counts->size() - 1].stats, 0, sizeof(PegCount) *
+            DetectorPegs::NUM_APPID_DETECTOR_PEGS);
 }
 
 void AppIdPegCounts::add_app_peg_info(std::string app_name, AppId app_id)

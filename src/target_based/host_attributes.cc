@@ -26,6 +26,7 @@
 #include "host_attributes.h"
 
 #include "hash/lru_cache_shared.h"
+#include "main/reload_tuner.h"
 #include "main/shell.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
@@ -171,7 +172,7 @@ void HostAttributesManager::activate(SnortConfig* sc)
     next_cache = nullptr;
 
     if( active_cache != old_cache and Snort::is_reloading() )
-        sc->register_reload_resource_tuner(new HostAttributesReloadTuner);
+        sc->register_reload_handler(new HostAttributesReloadTuner);
 }
 
 void HostAttributesManager::initialize()

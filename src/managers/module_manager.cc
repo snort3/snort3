@@ -725,7 +725,8 @@ SO_PUBLIC bool open_table(const char* s, int idx)
 
     // FIXIT-M only basic modules, inspectors and ips actions can be reloaded at present
     if ( ( Snort::is_reloading() ) and h->api
-            and h->api->type != PT_INSPECTOR and h->api->type != PT_IPS_ACTION )
+            and h->api->type != PT_INSPECTOR and h->api->type != PT_IPS_ACTION
+            and h->api->type != PT_POLICY_SELECTOR )
     {
         return false;
     }

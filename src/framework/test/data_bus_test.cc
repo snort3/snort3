@@ -41,7 +41,7 @@ NetworkPolicy::~NetworkPolicy() = default;
 namespace snort
 {
 SnortConfig::SnortConfig(snort::SnortConfig const*, const char*)
-{ }
+{ global_dbus = new DataBus(); }
 
 const SnortConfig* SnortConfig::get_conf()
 {
@@ -58,7 +58,7 @@ SnortConfig* SnortConfig::get_main_conf()
 }
 
 SnortConfig::~SnortConfig()
-{ }
+{ delete global_dbus; }
 
 NetworkPolicy* get_network_policy()
 {
@@ -134,6 +134,26 @@ TEST_GROUP(data_bus)
         mock().clear();
     }
 };
+
+TEST(data_bus, subscribe_global)
+{
+    UTestHandler h;
+    DataBus::subscribe_global(DB_UTEST_EVENT, &h, snort_conf);
+
+    UTestEvent event(100);
+    DataBus::publish(DB_UTEST_EVENT, event);
+    CHECK(100 == h.evt_msg);
+
+    UTestEvent event1(200);
+    DataBus::publish(DB_UTEST_EVENT, event1);
+    CHECK(200 == h.evt_msg);
+
+    DataBus::unsubscribe_global(DB_UTEST_EVENT, &h, snort_conf);
+
+    UTestEvent event2(300);
+    DataBus::publish(DB_UTEST_EVENT, event2);
+    CHECK(200 == h.evt_msg); // unsubscribed!
+}
 
 TEST(data_bus, subscribe_network)
 {

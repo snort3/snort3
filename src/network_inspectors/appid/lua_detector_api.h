@@ -42,6 +42,8 @@ class AppInfoTableEntry;
 #define DETECTOR "Detector"
 #define DETECTORFLOW "DetectorFlow"
 
+#define LUA_STATE_GLOBAL_SC_ID  "snort_config"
+
 struct DetectorPackageInfo
 {
     std::string initFunctionName;

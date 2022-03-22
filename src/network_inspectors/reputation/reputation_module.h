@@ -24,6 +24,8 @@
 // Interface to the REPUTATION network inspector
 
 #include "framework/module.h"
+#include "main/reload_tuner.h"
+
 #include "reputation_config.h"
 #include "reputation_common.h"
 
@@ -35,6 +37,21 @@ struct SnortConfig;
 extern THREAD_LOCAL snort::ProfileStats reputation_perf_stats;
 extern unsigned long total_duplicates;
 extern unsigned long total_invalids;
+
+class Reputation;
+
+class ReputationReloadSwapper : public snort::ReloadSwapper
+{
+public:
+    explicit ReputationReloadSwapper(Reputation& ins) : inspector(ins)
+    { }
+    ~ReputationReloadSwapper() override = default;
+
+    void tswap() override;
+
+private:
+    Reputation& inspector;
+};
 
 class ReputationModule : public snort::Module
 {
@@ -50,6 +67,7 @@ public:
     { return GID_REPUTATION; }
 
     const snort::RuleMap* get_rules() const override;
+    const snort::Command* get_commands() const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     snort::ProfileStats* get_profile() const override;

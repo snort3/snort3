@@ -43,7 +43,6 @@ class Swapper;
 namespace snort
 {
 class AnalyzerCommand;
-class ReloadResourceTuner;
 class SFDAQInstance;
 struct Packet;
 struct SnortConfig;

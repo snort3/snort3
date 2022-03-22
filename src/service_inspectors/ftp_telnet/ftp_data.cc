@@ -23,6 +23,9 @@
 
 #include "ftp_data.h"
 
+#include <memory>
+#include <string>
+
 #include "detection/detection_engine.h"
 #include "file_api/file_flows.h"
 #include "file_api/file_service.h"
@@ -46,6 +49,8 @@ using namespace snort;
     "FTP data channel handler"
 
 static const char* const fd_svc_name = "ftp-data";
+static std::shared_ptr<std::string> shared_fd_svc_name =
+    std::make_shared<std::string>(fd_svc_name);
 
 static THREAD_LOCAL ProfileStats ftpdataPerfStats;
 static THREAD_LOCAL SimpleStats fdstats;
@@ -223,15 +228,15 @@ FtpDataFlowData::~FtpDataFlowData()
 
 void FtpDataFlowData::handle_expected(Packet* p)
 {
-    if (!p->flow->service)
+    if (!p->flow->has_service())
     {
-        p->flow->set_service(p, fd_svc_name);
+        p->flow->set_service(p, shared_fd_svc_name);
 
         FtpDataFlowData* fd =
             (FtpDataFlowData*)p->flow->get_flow_data(FtpDataFlowData::inspector_id);
         if (fd and fd->in_tls)
         {
-            OpportunisticTlsEvent evt(p, fd_svc_name);
+            OpportunisticTlsEvent evt(p, shared_fd_svc_name);
             DataBus::publish(OPPORTUNISTIC_TLS_EVENT, evt, p->flow);
         }
         else

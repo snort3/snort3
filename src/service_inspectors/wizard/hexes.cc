@@ -91,7 +91,7 @@ void HexBook::add_spell(
         ++i;
     }
     p->key = key;
-    p->value = val;
+    p->value = make_shared<string>(val);
 }
 
 bool HexBook::add_spell(const char* key, const char*& val)
@@ -124,7 +124,7 @@ bool HexBook::add_spell(const char* key, const char*& val)
     }
     if ( p->key == key )
     {
-        val = p->value.c_str();
+        val = p->value->c_str();
         return false;
     }
 
@@ -158,7 +158,7 @@ const MagicPage* HexBook::find_spell(
             if ( const MagicPage* q = find_spell(s, n, p->any, i+1) )
                 return q;
         }
-        return p->value.empty() ? nullptr : p;
+        return p->value.use_count() ? p : nullptr;
     }
     return p;
 }

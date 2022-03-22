@@ -43,6 +43,9 @@ using namespace snort;
 THREAD_LOCAL int dce2_detected = 0;
 static THREAD_LOCAL bool using_rpkt = false;
 
+std::shared_ptr<std::string> dce_rpc_service_name =
+    std::make_shared<std::string>(DCE_RPC_SERVICE_NAME);
+
 static const char* dce2_get_policy_name(DCE2_Policy policy)
 {
     const char* policyStr = nullptr;

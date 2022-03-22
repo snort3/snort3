@@ -420,15 +420,8 @@ void Stuff::apply_action(Flow& flow)
 
 void Stuff::apply_session(Flow& flow)
 {
-    if (client)
-        flow.set_client(client);
-    else if (flow.ssn_client)
-        flow.clear_client();
-
-    if (server)
-        flow.set_server(server);
-    else if (flow.ssn_server)
-        flow.clear_server();
+    flow.set_client(client);
+    flow.set_server(server);
 }
 
 void Stuff::apply_service(Flow& flow)
@@ -490,6 +483,7 @@ public:
     void handle_flow_setup(Flow&, bool standby = false);
     void handle_flow_service_change(Flow&);
     void handle_assistant_gadget(const char* service, Flow&);
+    void handle_flow_after_reload(Flow&);
 
 private:
     void get_policy_bindings(Flow&, const char* service);
@@ -577,6 +571,19 @@ public:
     }
 };
 
+class RebindFlow : public DataHandler
+{
+public:
+    RebindFlow() : DataHandler(BIND_NAME) { }
+
+    void handle(DataEvent&, Flow* flow) override
+    {
+        Binder* binder = InspectorManager::get_binder();
+        if (binder && flow)
+            binder->handle_flow_after_reload(*flow);
+    }
+};
+
 Binder::Binder(std::vector<Binding>& bv, std::vector<Binding>& pbv)
 {
     bindings = std::move(bv);
@@ -623,6 +630,7 @@ bool Binder::configure(SnortConfig* sc)
     DataBus::subscribe(FLOW_SERVICE_CHANGE_EVENT, new FlowServiceChangeHandler());
     DataBus::subscribe(STREAM_HA_NEW_FLOW_EVENT, new StreamHANewFlowHandler());
     DataBus::subscribe(FLOW_ASSISTANT_GADGET_EVENT, new AssistantGadgetHandler());
+    DataBus::subscribe(FLOW_STATE_RELOADED_EVENT, new RebindFlow());
 
     return true;
 }
@@ -721,7 +729,7 @@ void Binder::handle_flow_setup(Flow& flow, bool standby)
         if (flow.ssn_state.snort_protocol_id != UNKNOWN_PROTOCOL_ID)
         {
             const SnortConfig* sc = SnortConfig::get_conf();
-            flow.service = sc->proto_ref->get_name(flow.ssn_state.snort_protocol_id);
+            flow.service = sc->proto_ref->get_shared_name(flow.ssn_state.snort_protocol_id);
         }
     }
 
@@ -742,7 +750,7 @@ void Binder::handle_flow_service_change(Flow& flow)
 
     Inspector* ins = nullptr;
     Inspector* data = nullptr;
-    if (flow.service)
+    if (flow.has_service())
     {
         ins = find_gadget(flow, data);
         if (flow.gadget != ins)
@@ -789,8 +797,8 @@ void Binder::handle_flow_service_change(Flow& flow)
 
     // If there is no inspector bound to this flow after the service change, see if there's at least
     // an associated protocol ID.
-    if (!ins && flow.service)
-        flow.ssn_state.snort_protocol_id = SnortConfig::get_conf()->proto_ref->find(flow.service);
+    if (!ins && flow.has_service())
+        flow.ssn_state.snort_protocol_id = SnortConfig::get_conf()->proto_ref->find(flow.service->c_str());
 
     if (flow.is_stream())
     {
@@ -820,9 +828,18 @@ void Binder::handle_assistant_gadget(const char* service, Flow& flow)
     bstats.assistant_inspectors++;
 }
 
+void Binder::handle_flow_after_reload(Flow& flow)
+{
+    Stuff stuff;
+    get_bindings(flow, stuff);
+    stuff.apply_action(flow);
+
+    bstats.rebinds++;
+    bstats.verdicts[stuff.action]++;
+}
+
 void Binder::get_policy_bindings(Flow& flow, const char* service)
 {
-    const SnortConfig* sc = SnortConfig::get_conf();
     unsigned inspection_index = 0;
     unsigned ips_index = 0;
 
@@ -847,13 +864,14 @@ void Binder::get_policy_bindings(Flow& flow, const char* service)
 
     if (inspection_index)
     {
-        set_inspection_policy(sc, inspection_index);
+        set_inspection_policy(inspection_index);
         if (!service)
             flow.inspection_policy_id = inspection_index;
     }
 
     if (ips_index)
     {
+        const SnortConfig* sc = SnortConfig::get_conf();
         set_ips_policy(sc, ips_index);
         if (!service)
             flow.ips_policy_id = ips_index;
@@ -862,7 +880,6 @@ void Binder::get_policy_bindings(Flow& flow, const char* service)
 
 void Binder::get_policy_bindings(Packet* p)
 {
-    const SnortConfig* sc = SnortConfig::get_conf();
     unsigned inspection_index = 0;
     unsigned ips_index = 0;
 
@@ -887,12 +904,13 @@ void Binder::get_policy_bindings(Packet* p)
 
     if (inspection_index)
     {
-        set_inspection_policy(sc, inspection_index);
+        set_inspection_policy(inspection_index);
         p->user_inspection_policy_id = get_inspection_policy()->user_policy_id;
     }
 
     if (ips_index)
     {
+        const SnortConfig* sc = SnortConfig::get_conf();
         set_ips_policy(sc, ips_index);
         p->user_ips_policy_id = get_ips_policy()->user_policy_id;
     }
@@ -965,7 +983,7 @@ void Binder::get_bindings(Packet* p, Stuff& stuff)
 Inspector* Binder::find_gadget(Flow& flow, Inspector*& data)
 {
     Stuff stuff;
-    get_bindings(flow, stuff, flow.service);
+    get_bindings(flow, stuff, flow.has_service() ? flow.service->c_str() : nullptr);
     data = stuff.data;
     return stuff.gadget;
 }

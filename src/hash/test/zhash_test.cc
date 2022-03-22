@@ -63,6 +63,9 @@ bool FlowHashKeyOps::key_compare(const void* k1, const void* k2, size_t len)
 static SnortConfig my_config;
 THREAD_LOCAL SnortConfig *snort_conf = &my_config;
 
+DataBus::DataBus() = default;
+DataBus::~DataBus() = default;
+
 // run_flags is used indirectly from HashFnc class by calling SnortConfig::static_hash()
 SnortConfig::SnortConfig(const SnortConfig* const, const char*)
 { snort_conf->run_flags = 0;}

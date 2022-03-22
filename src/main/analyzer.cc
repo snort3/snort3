@@ -169,6 +169,7 @@ static void process_daq_sof_eof_msg(DAQ_Msg_h msg, DAQ_Verdict& verdict)
     const DAQ_FlowStats_t *stats = (const DAQ_FlowStats_t*) daq_msg_get_hdr(msg);
     const char* key;
 
+    select_default_policy(*stats, SnortConfig::get_conf());
     if (daq_msg_get_type(msg) == DAQ_MSG_TYPE_EOF)
     {
         packet_time_update(&stats->eof_timestamp);
@@ -390,7 +391,7 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
     Packet* p = switcher->get_context()->packet;
     p->context->wire_packet = p;
     p->context->packet_number = get_packet_number();
-    select_default_policy(pkthdr, p->context->conf);
+    select_default_policy(*pkthdr, p->context->conf);
 
     DetectionEngine::reset();
     sfthreshold_reset();
@@ -652,8 +653,8 @@ void Analyzer::term()
 
     DetectionEngine::idle();
     InspectorManager::thread_stop(sc);
-    ModuleManager::accumulate();
     InspectorManager::thread_term();
+    ModuleManager::accumulate();
     ActionManager::thread_term();
 
     IpsManager::clear_options(sc);
@@ -776,6 +777,9 @@ bool Analyzer::handle_command()
         return false;
 
     void* ac_state = nullptr;
+    if ( ac->need_update_reload_id() )
+        SnortConfig::update_thread_reload_id();
+
     if ( ac->execute(*this, &ac_state) )
         add_command_to_completed_queue(ac);
     else

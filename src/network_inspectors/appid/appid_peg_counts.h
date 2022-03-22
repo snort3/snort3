@@ -76,14 +76,13 @@ public:
 
         bool all_zeros()
         {
-            PegCount zeroed_peg[DetectorPegs::NUM_APPID_DETECTOR_PEGS] = { };
-            return !memcmp(stats, &zeroed_peg, sizeof(stats));
+            return !memcmp(stats, &all_zeroed_peg, sizeof(stats));
         }
 
         void print(const char* app, char* buf, int buf_size)
         {
             snprintf(buf, buf_size, "%25.25s: " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10")
-                " " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10"), app, 
+                " " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10"), app,
                 stats[SERVICE_DETECTS], stats[CLIENT_DETECTS], stats[USER_DETECTS],
                 stats[PAYLOAD_DETECTS], stats[MISC_DETECTS], stats[REFERRED_DETECTS]);
         }
@@ -111,6 +110,8 @@ private:
     static AppIdDynamicPeg appid_dynamic_sum[SF_APPID_MAX+1];
     static THREAD_LOCAL std::vector<AppIdDynamicPeg>* appid_peg_counts;
     static uint32_t get_stats_index(AppId id);
+    static AppIdDynamicPeg zeroed_peg;
+    static PegCount all_zeroed_peg[DetectorPegs::NUM_APPID_DETECTOR_PEGS];
 };
 #endif
 

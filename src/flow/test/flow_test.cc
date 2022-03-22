@@ -29,6 +29,7 @@
 #include "flow/ha.h"
 #include "framework/inspector.h"
 #include "framework/data_bus.h"
+#include "main/policy.h"
 #include "main/snort_config.h"
 #include "protocols/ip.h"
 #include "protocols/layer.h"
@@ -57,6 +58,21 @@ FlowStash::~FlowStash() = default;
 void FlowStash::reset() {}
 
 void DetectionEngine::onload(Flow*) {}
+
+void set_network_policy(unsigned) { }
+void set_inspection_policy(unsigned) { }
+void set_ips_policy(const snort::SnortConfig*, unsigned) { }
+void select_default_policy(const _daq_pkt_hdr&, const SnortConfig*) { }
+namespace snort
+{
+NetworkPolicy* get_network_policy() { return nullptr; }
+InspectionPolicy* get_inspection_policy() { return nullptr; }
+IpsPolicy* get_ips_policy() { return nullptr; }
+void set_network_policy(NetworkPolicy*) { }
+void set_inspection_policy(InspectionPolicy*) { }
+void set_ips_policy(IpsPolicy*) { }
+unsigned SnortConfig::get_thread_reload_id() { return 0; }
+}
 
 Packet* DetectionEngine::set_next_packet(Packet*, Flow*) { return nullptr; }
 

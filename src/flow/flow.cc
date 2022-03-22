@@ -24,6 +24,7 @@
 #include "flow.h"
 
 #include "detection/detection_engine.h"
+#include "flow/flow_key.h"
 #include "flow/ha.h"
 #include "flow/session.h"
 #include "framework/data_bus.h"
@@ -118,6 +119,8 @@ void Flow::term()
         delete stash;
         stash = nullptr;
     }
+
+    service.reset();
 }
 
 inline void Flow::clean()
@@ -211,6 +214,7 @@ void Flow::reset(bool do_cleanup)
         stash->reset();
 
     deferred_trust.clear();
+    service.reset();
 
     constexpr size_t offset = offsetof(Flow, context_chain);
     // FIXIT-L need a struct to zero here to make future proof
@@ -326,12 +330,33 @@ void Flow::free_flow_data(uint32_t proto)
 
 void Flow::free_flow_data()
 {
+    NetworkPolicy* np = get_network_policy();
+    InspectionPolicy* ip = get_inspection_policy();
+    IpsPolicy* ipsp = get_ips_policy();
+
+    unsigned t_reload_id = SnortConfig::get_thread_reload_id();
+    if (reload_id == t_reload_id)
+    {
+        ::set_network_policy(network_policy_id);
+        ::set_inspection_policy(inspection_policy_id);
+        ::set_ips_policy(SnortConfig::get_conf(), ips_policy_id);
+    }
+    else
+    {
+        _daq_pkt_hdr pkthdr = {};
+        pkthdr.address_space_id = key->addressSpaceId;
+        select_default_policy(pkthdr, SnortConfig::get_conf());
+    }
     while (flow_data)
     {
         FlowData* tmp = flow_data;
         flow_data = flow_data->next;
         delete tmp;
     }
+
+    set_network_policy(np);
+    set_inspection_policy(ip);
+    set_ips_policy(ipsp);
 }
 
 void Flow::call_handlers(Packet* p, bool eof)
@@ -546,9 +571,18 @@ bool Flow::is_direction_aborted(bool from_client) const
     return (session_flags & SSNFLAG_ABORT_CLIENT);
 }
 
-void Flow::set_service(Packet* pkt, const char* new_service)
+void Flow::set_service(Packet* pkt, std::shared_ptr<std::string> new_service)
 {
+    if (!new_service.use_count())
+        return clear_service(pkt);
+
     service = new_service;
+    DataBus::publish(FLOW_SERVICE_CHANGE_EVENT, pkt);
+}
+
+void Flow::clear_service(Packet* pkt)
+{
+    service.reset();
     DataBus::publish(FLOW_SERVICE_CHANGE_EVENT, pkt);
 }
 

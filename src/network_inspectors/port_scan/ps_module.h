@@ -22,9 +22,14 @@
 #define PS_MODULE_H
 
 #include "framework/module.h"
-#include "main/snort_config.h"
+#include "main/reload_tuner.h"
 #include "ps_detect.h"
 #include "ps_pegs.h"
+
+namespace snort
+{
+struct SnortConfig;
+}
 
 #define PS_NAME "port_scan"
 #define PS_HELP "detect various ip, icmp, tcp, and udp port or protocol scans"

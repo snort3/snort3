@@ -63,6 +63,8 @@ Flow::Flow()
 Flow::~Flow() = default;
 IpsContext::IpsContext(unsigned int) { }
 IpsContext::~IpsContext() = default;
+DataBus::DataBus() = default;
+DataBus::~DataBus() = default;
 SnortConfig::SnortConfig(snort::SnortConfig const*, const char*) { }
 SnortConfig::~SnortConfig() = default;
 

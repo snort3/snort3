@@ -153,10 +153,10 @@ public:
         return host_port_cache.find(ip, port, proto, *this);
     }
 
-    bool host_port_cache_add(const snort::SfIp* ip, uint16_t port, IpProtocol proto, unsigned type,
-        AppId appid)
+    bool host_port_cache_add(const snort::SnortConfig* sc, const snort::SfIp* ip, uint16_t port,
+        IpProtocol proto, unsigned type, AppId appid)
     {
-        return host_port_cache.add(ip, port, proto, type, appid);
+        return host_port_cache.add(sc, ip, port, proto, type, appid);
     }
 
     AppId length_cache_find(const LengthKey& key)
@@ -241,7 +241,8 @@ class OdpThreadContext
 {
 public:
     ~OdpThreadContext();
-    void initialize(AppIdContext& ctxt, bool is_control=false, bool reload_odp=false);
+    void initialize(const snort::SnortConfig*, AppIdContext& ctxt, bool is_control=false,
+        bool reload_odp=false);
 
     void set_lua_detector_mgr(LuaDetectorManager& mgr)
     {

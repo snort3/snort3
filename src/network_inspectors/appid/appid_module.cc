@@ -151,7 +151,7 @@ class ACThirdPartyAppIdContextSwap : public AnalyzerCommand
 public:
     bool execute(Analyzer&, void**) override;
     ACThirdPartyAppIdContextSwap(const AppIdInspector& inspector, ControlConn* conn)
-        : inspector(inspector), tracker_ref(conn)
+        : AnalyzerCommand(conn), inspector(inspector)
     {
         LogMessage("== swapping third-party configuration\n");
     }
@@ -160,7 +160,6 @@ public:
     const char* stringify() override { return "THIRD-PARTY_CONTEXT_SWAP"; }
 private:
     const AppIdInspector& inspector;
-    ControlConn* tracker_ref;
 };
 
 bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
@@ -179,7 +178,7 @@ ACThirdPartyAppIdContextSwap::~ACThirdPartyAppIdContextSwap()
     std::string file_path = ctxt.get_tp_appid_ctxt()->get_user_config();
     ctxt.get_odp_ctxt().get_app_info_mgr().dump_appid_configurations(file_path);
     LogMessage("== third-party configuration swap complete\n");
-    ReloadTracker::end(tracker_ref);
+    ReloadTracker::end(ctrlcon);
 }
 
 class ACThirdPartyAppIdContextUnload : public AnalyzerCommand
@@ -187,13 +186,13 @@ class ACThirdPartyAppIdContextUnload : public AnalyzerCommand
 public:
     bool execute(Analyzer&, void**) override;
     ACThirdPartyAppIdContextUnload(const AppIdInspector& inspector, ThirdPartyAppIdContext* tp_ctxt,
-        ControlConn* ctrlcon): inspector(inspector), tp_ctxt(tp_ctxt), ctrlcon(ctrlcon) { }
+        ControlConn* conn): AnalyzerCommand(conn), inspector(inspector), tp_ctxt(tp_ctxt)
+    { }
     ~ACThirdPartyAppIdContextUnload() override;
     const char* stringify() override { return "THIRD-PARTY_CONTEXT_UNLOAD"; }
 private:
     const AppIdInspector& inspector;
     ThirdPartyAppIdContext* tp_ctxt =  nullptr;
-    ControlConn* ctrlcon;
 };
 
 bool ACThirdPartyAppIdContextUnload::execute(Analyzer& ac, void**)
@@ -218,9 +217,7 @@ ACThirdPartyAppIdContextUnload::~ACThirdPartyAppIdContextUnload()
     AppIdContext& ctxt = inspector.get_ctxt();
     ctxt.create_tp_appid_ctxt();
     main_broadcast_command(new ACThirdPartyAppIdContextSwap(inspector, ctrlcon));
-    LogMessage("== reload third-party complete\n");
-    if (ctrlcon && !ctrlcon->is_local())
-        ctrlcon->respond("== reload third-party complete\n");
+    log_message("== reload third-party complete\n");
     ReloadTracker::update(ctrlcon, "unload old third-party complete, start swapping to new configuration.");
 }
 
@@ -228,14 +225,14 @@ class ACOdpContextSwap : public AnalyzerCommand
 {
 public:
     bool execute(Analyzer&, void**) override;
-    ACOdpContextSwap(const AppIdInspector& inspector, OdpContext& odp_ctxt, ControlConn* ctrlcon) :
-        inspector(inspector), odp_ctxt(odp_ctxt), ctrlcon(ctrlcon) { }
+    ACOdpContextSwap(const AppIdInspector& inspector, OdpContext& odp_ctxt, ControlConn* conn) :
+        AnalyzerCommand(conn), inspector(inspector), odp_ctxt(odp_ctxt)
+    { }
     ~ACOdpContextSwap() override;
     const char* stringify() override { return "ODP_CONTEXT_SWAP"; }
 private:
     const AppIdInspector& inspector;
     OdpContext& odp_ctxt;
-    ControlConn* ctrlcon;
 };
 
 bool ACOdpContextSwap::execute(Analyzer&, void**)
@@ -254,7 +251,7 @@ bool ACOdpContextSwap::execute(Analyzer&, void**)
     assert(odp_thread_local_ctxt);
     delete odp_thread_local_ctxt;
     odp_thread_local_ctxt = new OdpThreadContext;
-    odp_thread_local_ctxt->initialize(ctxt, false, true);
+    odp_thread_local_ctxt->initialize(SnortConfig::get_conf(), ctxt, false, true);
     return true;
 }
 
@@ -270,9 +267,8 @@ ACOdpContextSwap::~ACOdpContextSwap()
             file_path = std::string(ctxt.config.app_detector_dir) + "/../userappid.conf";
         ctxt.get_odp_ctxt().get_app_info_mgr().dump_appid_configurations(file_path);
     }
-    LogMessage("== reload detectors complete\n");
     ReloadTracker::end(ctrlcon);
-    ctrlcon->respond("== reload detectors complete\n");
+    log_message("== reload detectors complete\n");
 }
 
 static int enable_debug(lua_State* L)
@@ -394,7 +390,7 @@ static int reload_detectors(lua_State* L)
     OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
     odp_ctxt.get_client_disco_mgr().initialize(*inspector);
     odp_ctxt.get_service_disco_mgr().initialize(*inspector);
-    odp_thread_local_ctxt->initialize(ctxt, true, true);
+    odp_thread_local_ctxt->initialize(SnortConfig::get_conf(), ctxt, true, true);
     odp_ctxt.initialize(*inspector);
 
     ctrlcon->respond("== swapping detectors configuration\n");
@@ -524,7 +520,7 @@ bool AppIdModule::end(const char* fqn, int, SnortConfig* sc)
     assert(config);
 
     if ( Snort::is_reloading() && strcmp(fqn, "appid") == 0 )
-        sc->register_reload_resource_tuner(new AppIdReloadTuner(config->memcap));
+        sc->register_reload_handler(new AppIdReloadTuner(config->memcap));
 
     if ( !config->app_detector_dir )
     {

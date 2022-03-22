@@ -21,7 +21,7 @@
 #ifndef PERF_RELOAD_TUNER_H
 #define PERF_RELOAD_TUNER_H
 
-#include "main/snort_config.h"
+#include "main/reload_tuner.h"
 
 class PerfMonReloadTuner : public snort::ReloadResourceTuner
 {

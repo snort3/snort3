@@ -23,6 +23,7 @@
 
 #include <arpa/inet.h>
 #include <cstdio>
+#include <cstdarg>
 #include <string>
 #include <ctime>
 
@@ -61,6 +62,7 @@ SO_PUBLIC void ParseError(const char*, ...) __attribute__((format (printf, 1, 2)
 SO_PUBLIC void ReloadError(const char*, ...) __attribute__((format (printf, 1, 2)));
 [[noreturn]] SO_PUBLIC void ParseAbort(const char*, ...) __attribute__((format (printf, 1, 2)));
 
+SO_PUBLIC void LogMessage(const char*, va_list& ap);
 SO_PUBLIC void LogMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 SO_PUBLIC void LogMessage(FILE*, const char*, ...) __attribute__((format (printf, 2, 3)));
 SO_PUBLIC void WarningMessage(const char*, ...) __attribute__((format (printf, 1, 2)));

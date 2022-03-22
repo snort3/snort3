@@ -1,7 +1,7 @@
 if ( ENABLE_SHELL )
     add_cpputest(distill_verdict_test
         SOURCES
-            stubs.h
+            distill_verdict_stubs.h
             ../analyzer.cc
             ../../packet_io/active.cc
     )

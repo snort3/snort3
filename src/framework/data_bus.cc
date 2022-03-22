@@ -107,6 +107,12 @@ void DataBus::subscribe_network(const char* key, DataHandler* h)
     get_network_data_bus()._subscribe(key, h);
 }
 
+// for subscribers that need to receive events regardless of active inspection policy
+void DataBus::subscribe_global(const char* key, DataHandler* h, SnortConfig& sc)
+{
+    sc.global_dbus->_subscribe(key, h);
+}
+
 void DataBus::unsubscribe(const char* key, DataHandler* h)
 {
     get_data_bus()._unsubscribe(key, h);
@@ -117,9 +123,16 @@ void DataBus::unsubscribe_network(const char* key, DataHandler* h)
     get_network_data_bus()._unsubscribe(key, h);
 }
 
+void DataBus::unsubscribe_global(const char* key, DataHandler* h, SnortConfig& sc)
+{
+    sc.global_dbus->_unsubscribe(key, h);
+}
+
 // notify subscribers of event
 void DataBus::publish(const char* key, DataEvent& e, Flow* f)
 {
+    SnortConfig::get_conf()->global_dbus->_publish(key, e, f);
+
     NetworkPolicy* ni = get_network_policy();
     ni->dbus._publish(key, e, f);
 
@@ -176,7 +189,7 @@ void DataBus::_unsubscribe(const char* key, DataHandler* h)
 }
 
 // notify subscribers of event
-void DataBus::_publish(const char* key, DataEvent& e, Flow* f)
+void DataBus::_publish(const char* key, DataEvent& e, Flow* f) const
 {
     auto v = map.find(key);
 

@@ -39,8 +39,8 @@
 #include "main/snort_debug.h"
 #include "main/snort_module.h"
 #include "main/thread_config.h"
-#include "search_engines/search_tool.h"
 #include "protocols/packet.h"
+#include "search_engines/search_tool.h"
 #include "target_based/snort_protocols.h"
 #include "time/clock_defs.h"
 #include "time/stopwatch.h"
@@ -67,18 +67,18 @@ using namespace std;
 // this distinction should be more precise when policy foo is ripped out of
 // the instances.
 
-struct PHGlobal
+struct PHObject
 {
     const InspectApi& api;
     bool initialized = false;   // In the context of the main thread, this means that api.pinit()
                                 // has been called.  In the packet thread, it means that
                                 // api.tinit() has been called.
-    bool instance_initialized = false;  // In the packet thread, at least one instance has had
+    bool instance_initialized = false;  //In the packet thread, at least one instance has had
                                         // tinit() called.
 
-    PHGlobal(const InspectApi& p) : api(p) { }
+    PHObject(const InspectApi& p) : api(p) { }
 
-    static bool comp(const PHGlobal* a, const PHGlobal* b)
+    static bool comp(const PHObject* a, const PHObject* b)
     { return ( a->api.type < b->api.type ); }
 };
 
@@ -104,6 +104,17 @@ enum ReloadType
     RELOAD_TYPE_REENABLED,
     RELOAD_TYPE_NEW,
     RELOAD_TYPE_MAX
+};
+
+typedef vector<PHObject> PHObjectList;
+typedef vector<PHObjectList*> PHTSObjectLists;
+struct ThreadSpecificHandlers
+{
+    explicit ThreadSpecificHandlers(unsigned max)
+    { olists.resize(max); }
+    ~ThreadSpecificHandlers() = default;
+    PHTSObjectLists olists;
+    unsigned ref_count = 1;
 };
 
 struct PHInstance
@@ -138,8 +149,8 @@ struct PHInstance
     ReloadType get_reload_type()
     { return reload_type; }
 
-    void tinit();
-    void tterm();
+    void tinit(PHObjectList* handlers);
+    void tterm(PHObjectList* handlers);
 };
 
 PHInstance::PHInstance(PHClass& p, SnortConfig* sc, Module* mod) : pp_class(p)
@@ -163,9 +174,18 @@ PHInstance::~PHInstance()
         handler->rem_global_ref();
 }
 
-typedef vector<PHGlobal*> PHGlobalList;
+typedef vector<PHObject*> PHGlobalList;
 typedef vector<PHClass*> PHClassList;
 typedef vector<PHInstance*> PHInstanceList;
+struct PHRemovedInstance
+{
+    PHRemovedInstance(PHInstance* i, PHTSObjectLists& handlers)
+        : instance(i), handlers(handlers)
+    { }
+    PHInstance* instance;
+    PHTSObjectLists& handlers;
+};
+typedef vector<PHRemovedInstance> PHRemovedInstanceList;
 typedef list<Inspector*> PHList;
 
 static PHGlobalList s_handlers;
@@ -173,7 +193,13 @@ static PHList s_trash;
 static PHList s_trash2;
 static bool s_sorted = false;
 
-static THREAD_LOCAL vector<PHGlobal>* s_tl_handlers = nullptr;
+static PHTSObjectLists s_tl_handlers;
+
+void InspectorManager::global_init()
+{
+    if (s_tl_handlers.size() != ThreadConfig::get_instance_max())
+        s_tl_handlers.resize(ThreadConfig::get_instance_max(), nullptr);
+}
 
 struct FrameworkConfig
 {
@@ -182,11 +208,11 @@ struct FrameworkConfig
 
 struct PHVector
 {
-    PHInstance** vec;
-    unsigned num;
+    PHInstance** vec = nullptr;
+    unsigned num = 0;
+    unsigned total_num = 0;
 
-    PHVector()
-    { vec = nullptr; num = 0; }
+    PHVector() = default;
 
     ~PHVector()
     { if ( vec ) delete[] vec; }
@@ -195,7 +221,10 @@ struct PHVector
     { vec = new PHInstance*[max]; }
 
     void add(PHInstance* p)
-    { vec[num++] = p; }
+    {
+        vec[num++] = p;
+        total_num = num;
+    }
 
     void add_control(PHInstance*);
 };
@@ -210,7 +239,6 @@ void PHVector::add_control(PHInstance* p)
 
     if ( strcmp(name, app_id) or !num )
         add(p);
-
     else
     {
         add(vec[0]);
@@ -220,74 +248,175 @@ void PHVector::add_control(PHInstance* p)
 
 struct InspectorList
 {
-    virtual ~InspectorList() = default;
+    virtual ~InspectorList();
 
     PHInstanceList ilist;   // List of inspector module instances
-    PHInstanceList removed_ilist;   // List of removed inspector module instances
+    PHRemovedInstanceList removed_ilist;    // List of removed inspector module instances
 
-    virtual void handle_new_reenabled(SnortConfig*, bool, bool) = 0;
+    virtual void handle_new_reenabled(SnortConfig*, bool, bool)
+    { }
     virtual void vectorize(SnortConfig*) = 0;
 
-    void tinit();
-    void tterm();
+    void tinit(PHObjectList* handlers);
+    void tterm(PHObjectList* handlers);
     void tterm_removed();
 
-    void populate_removed(SnortConfig*, InspectorList*);
+    void populate_removed(SnortConfig*, InspectorList* new_il, PHTSObjectLists& handlers);
+    void populate_removed(SnortConfig*, InspectorList* new_il, InspectorList* def_il,
+        PHTSObjectLists& handlers);
+    void populate_all_removed(SnortConfig* sc, InspectorList* def_il,
+        PHTSObjectLists& handlers);
     void clear_removed();
+    void reconcile_inspectors(SnortConfig*, InspectorList* old_list, bool cloned);
+    void allocate_thread_storage();
 };
 
-void InspectorList::tinit()
+InspectorList::~InspectorList()
+{  clear_removed(); }
+
+void InspectorList::tinit(PHObjectList* handlers)
 {
     for ( auto* p : ilist )
-        p->tinit();
+        p->tinit(handlers);
 }
 
-void InspectorList::tterm()
+void InspectorList::tterm(PHObjectList* handlers)
 {
     for ( auto* p : ilist )
-        p->tterm();
+        p->tterm(handlers);
 }
 
 void InspectorList::tterm_removed()
 {
-    for ( auto* p : removed_ilist )
-        p->tterm();
+    for ( auto& ri : removed_ilist )
+        ri.instance->tterm(ri.handlers[Inspector::slot]);
 }
 
 static PHInstance* get_instance(InspectorList* il, const char* keyword);
 
-void InspectorList::populate_removed(SnortConfig* sc, InspectorList* old)
+void InspectorList::populate_removed(SnortConfig* sc, InspectorList* new_il,
+    PHTSObjectLists& handlers)
 {
-    for (auto it = old->ilist.begin(); it != old->ilist.end(); ++it)
+    assert(new_il);
+    for (auto* p : ilist)
     {
-        PHInstance* instance = get_instance(this, (*it)->name.c_str());
+        PHInstance* instance = get_instance(new_il, p->name.c_str());
         if (!instance)
         {
-            removed_ilist.emplace_back(*it);
-            (*it)->handler->add_global_ref();
-            (*it)->handler->tear_down(sc);
+            new_il->removed_ilist.emplace_back(p, handlers);
+            p->handler->add_global_ref();
+            p->handler->tear_down(sc);
         }
+    }
+}
+
+void InspectorList::populate_removed(SnortConfig* sc, InspectorList* new_il,
+    InspectorList* def_il, PHTSObjectLists& handlers)
+{
+    assert(def_il);
+    for (auto* p : ilist)
+    {
+        PHInstance* instance = new_il ? get_instance(new_il, p->name.c_str()) : nullptr;
+        if (!instance)
+        {
+            def_il->removed_ilist.emplace_back(p, handlers);
+            p->handler->add_global_ref();
+            p->handler->tear_down(sc);
+        }
+    }
+}
+
+void InspectorList::populate_all_removed(SnortConfig* sc, InspectorList* def_il,
+    PHTSObjectLists& handlers)
+{
+    assert(def_il);
+    for (auto* p : ilist)
+    {
+        def_il->removed_ilist.emplace_back(p, handlers);
+        p->handler->add_global_ref();
+        p->handler->tear_down(sc);
     }
 }
 
 void InspectorList::clear_removed()
 {
-    for ( auto* p : removed_ilist )
-        p->handler->rem_global_ref();
+    for ( auto& ri : removed_ilist )
+        ri.instance->handler->rem_global_ref();
     removed_ilist.clear();
+}
+
+void InspectorList::reconcile_inspectors(SnortConfig* sc, InspectorList* old_list, bool cloned)
+{
+    if (old_list)
+    {
+        for (auto* p : ilist)
+        {
+            for (auto* old_p : old_list->ilist)
+            {
+                if (old_p->name == p->name)
+                {
+                    ReloadType reload_type = p->get_reload_type();
+                    if (!cloned || RELOAD_TYPE_NEW == reload_type
+                        || RELOAD_TYPE_REENABLED == reload_type)
+                    {
+                        p->handler->copy_thread_storage(old_p->handler);
+                        p->handler->install_reload_handler(sc);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void InspectorList::allocate_thread_storage()
+{
+    for (auto* p : ilist)
+        p->handler->allocate_thread_storage();
+}
+
+static PHInstance* get_instance_from_vector(const char* key, PHInstance** vec, unsigned num)
+{
+    for (unsigned i = 0; i < num; ++i)
+    {
+        PHInstance* ph = vec[i];
+        if (ph->name == key)
+            return ph;
+    }
+    return nullptr;
 }
 
 struct TrafficPolicy : public InspectorList
 {
+    TrafficPolicy() = default;
+    ~TrafficPolicy() override;
     PHVector passive;
     PHVector packet;
     PHVector first;
     PHVector control;
 
-    void handle_new_reenabled(SnortConfig*, bool, bool) override
-    { }
+    ThreadSpecificHandlers* ts_handlers = nullptr;
+
     void vectorize(SnortConfig*) override;
+    PHInstance* get_instance_by_type(const char* key, InspectorType);
+
+    PHObjectList* get_specific_handlers();
 };
+
+TrafficPolicy::~TrafficPolicy()
+{
+    if (ts_handlers)
+    {
+        assert(ts_handlers->ref_count);
+        --ts_handlers->ref_count;
+        if (!ts_handlers->ref_count)
+        {
+            for (auto* h : ts_handlers->olists)
+                delete h;
+            delete ts_handlers;
+        }
+    }
+}
 
 void TrafficPolicy::vectorize(SnortConfig*)
 {
@@ -313,7 +442,7 @@ void TrafficPolicy::vectorize(SnortConfig*)
             break;
 
         case IT_CONTROL:
-            control.add_control(p);
+            control.add(p);
             break;
 
         default:
@@ -325,6 +454,41 @@ void TrafficPolicy::vectorize(SnortConfig*)
     }
 }
 
+PHObjectList* TrafficPolicy::get_specific_handlers()
+{
+    assert(ts_handlers);
+    PHObjectList* handlers = ts_handlers->olists[Inspector::slot];
+    if (!handlers)
+    {
+        handlers = new PHObjectList;
+        ts_handlers->olists[Inspector::slot] = handlers;
+    }
+    return handlers;
+}
+
+PHInstance* TrafficPolicy::get_instance_by_type(const char* key, InspectorType type)
+{
+    switch (type)
+    {
+    case IT_PASSIVE:
+        return get_instance_from_vector(key, passive.vec, passive.total_num);
+
+    case IT_PACKET:
+        return get_instance_from_vector(key, packet.vec, packet.total_num);
+
+    case IT_FIRST:
+        return get_instance_from_vector(key, first.vec, first.total_num);
+
+    case IT_CONTROL:
+        return get_instance_from_vector(key, control.vec, control.total_num);
+
+    default:
+        assert(false);
+        break;
+    }
+    return nullptr;
+}
+
 class SingleInstanceInspectorPolicy
 {
 public:
@@ -332,13 +496,16 @@ public:
     ~SingleInstanceInspectorPolicy();
 
     bool get_new(SnortConfig*, Module*, PHClass&, PHInstance*&);
-    void populate_removed(SnortConfig*, SingleInstanceInspectorPolicy*);
+    void populate_removed(SnortConfig*, SingleInstanceInspectorPolicy* new_instance);
     void clear_removed();
     void configure(SnortConfig*);
-    void tinit();
-    void tterm();
+    void reconcile_inspector(SnortConfig*, SingleInstanceInspectorPolicy* old_instance,
+        bool cloned);
+    void tinit(PHObjectList* handlers);
+    void tterm(PHObjectList* handlers);
     void tterm_removed();
     void print_config(SnortConfig*, const char* title);
+    void allocate_thread_storage();
 
     PHInstance* instance = nullptr;
     PHInstance* removed_instance = nullptr;
@@ -355,7 +522,7 @@ SingleInstanceInspectorPolicy::~SingleInstanceInspectorPolicy()
 
         delete instance;
     }
-    assert(nullptr == removed_instance);
+    clear_removed();
 }
 
 bool SingleInstanceInspectorPolicy::get_new(SnortConfig*sc, Module* mod, PHClass& pc,
@@ -375,13 +542,13 @@ bool SingleInstanceInspectorPolicy::get_new(SnortConfig*sc, Module* mod, PHClass
 }
 
 void SingleInstanceInspectorPolicy::populate_removed(SnortConfig* sc,
-    SingleInstanceInspectorPolicy* old)
+    SingleInstanceInspectorPolicy* new_instance)
 {
-    if (old->instance && !instance)
+    if (instance && !new_instance->instance)
     {
-        removed_instance = old->instance;
-        removed_instance->handler->add_global_ref();
-        removed_instance->handler->tear_down(sc);
+        new_instance->removed_instance = instance;
+        instance->handler->add_global_ref();
+        instance->handler->tear_down(sc);
     }
 }
 
@@ -400,22 +567,37 @@ void SingleInstanceInspectorPolicy::configure(SnortConfig* sc)
         instance->handler->configure(sc);
 }
 
-void SingleInstanceInspectorPolicy::tinit()
+void SingleInstanceInspectorPolicy::reconcile_inspector(SnortConfig* sc,
+    SingleInstanceInspectorPolicy* old_instance, bool cloned)
 {
-    if (instance)
-        instance->tinit();
+    if (instance && old_instance && old_instance->instance)
+    {
+        ReloadType reload_type = instance->get_reload_type();
+        if (!cloned || RELOAD_TYPE_NEW == reload_type
+            || RELOAD_TYPE_REENABLED == reload_type)
+        {
+            instance->handler->copy_thread_storage(old_instance->instance->handler);
+            instance->handler->install_reload_handler(sc);
+        }
+    }
 }
 
-void SingleInstanceInspectorPolicy::tterm()
+void SingleInstanceInspectorPolicy::tinit(PHObjectList* handlers)
 {
     if (instance)
-        instance->tterm();
+        instance->tinit(handlers);
+}
+
+void SingleInstanceInspectorPolicy::tterm(PHObjectList* handlers)
+{
+    if (instance)
+        instance->tterm(handlers);
 }
 
 void SingleInstanceInspectorPolicy::tterm_removed()
 {
     if (removed_instance)
-        removed_instance->tterm();
+        removed_instance->tterm(s_tl_handlers[Inspector::slot]);
 }
 
 void SingleInstanceInspectorPolicy::print_config(SnortConfig* sc, const char* title)
@@ -429,20 +611,27 @@ void SingleInstanceInspectorPolicy::print_config(SnortConfig* sc, const char* ti
     }
 }
 
+void SingleInstanceInspectorPolicy::allocate_thread_storage()
+{
+    if (instance)
+        instance->handler->allocate_thread_storage();
+}
+
 struct GlobalInspectorPolicy : public InspectorList
 {
     PHVector passive;
     PHVector probe;
+    PHVector control;
 
-    void handle_new_reenabled(SnortConfig*, bool, bool) override
-    { }
     void vectorize(SnortConfig*) override;
+    PHInstance* get_instance_by_type(const char* key, InspectorType);
 };
 
 void GlobalInspectorPolicy::vectorize(SnortConfig*)
 {
     passive.alloc(ilist.size());
     probe.alloc(ilist.size());
+    control.alloc(ilist.size());
     for ( auto* p : ilist )
     {
         switch ( p->pp_class.api.type )
@@ -455,6 +644,10 @@ void GlobalInspectorPolicy::vectorize(SnortConfig*)
             probe.add(p);
             break;
 
+        case IT_CONTROL:
+            control.add_control(p);
+            break;
+
         default:
             ParseError(
                 "Global inspector policy (global usage) does not handle inspector %s with type %s\n",
@@ -462,6 +655,26 @@ void GlobalInspectorPolicy::vectorize(SnortConfig*)
             break;
         }
     }
+}
+
+PHInstance* GlobalInspectorPolicy::get_instance_by_type(const char* key, InspectorType type)
+{
+    switch (type)
+    {
+    case IT_PASSIVE:
+        return get_instance_from_vector(key, passive.vec, passive.total_num);
+
+    case IT_PROBE:
+        return get_instance_from_vector(key, probe.vec, probe.total_num);
+
+    case IT_CONTROL:
+        return get_instance_from_vector(key, control.vec, control.total_num);
+
+    default:
+        assert(false);
+        break;
+    }
+    return nullptr;
 }
 
 struct FrameworkPolicy : public InspectorList
@@ -482,8 +695,8 @@ struct FrameworkPolicy : public InspectorList
     void handle_new_reenabled(SnortConfig*, bool, bool) override;
     void vectorize(SnortConfig*) override;
     void add_inspector_to_cache(PHInstance*, SnortConfig*);
-    void remove_inspector_from_cache(Inspector*);
     bool delete_inspector(SnortConfig*, const char* iname);
+    PHInstance* get_instance_by_type(const char* key, InspectorType);
 };
 
 void FrameworkPolicy::add_inspector_to_cache(PHInstance* p, SnortConfig* sc)
@@ -497,49 +710,27 @@ void FrameworkPolicy::add_inspector_to_cache(PHInstance* p, SnortConfig* sc)
     }
 }
 
-void FrameworkPolicy::remove_inspector_from_cache(Inspector* ins)
-{
-    if (!ins)
-        return;
-
-    for(auto i = inspector_cache_by_id.begin(); i != inspector_cache_by_id.end(); i++)
-    {
-        if (ins == i->second)
-        {
-            inspector_cache_by_id.erase(i);
-            break;
-        }
-    }
-    for(auto i = inspector_cache_by_service.begin(); i != inspector_cache_by_service.end(); i++)
-    {
-        if (ins == i->second)
-        {
-            inspector_cache_by_service.erase(i);
-            break;
-        }
-    }
-}
-
 static bool get_instance(InspectorList*, const char*,
     std::vector<PHInstance*>::iterator&);
 
 void FrameworkPolicy::handle_new_reenabled(SnortConfig* sc, bool new_ins, bool reenabled_ins)
 {
-    std::vector<PHInstance*>::iterator old_binder;
-    if ( get_instance(this, bind_id, old_binder) )
+    if ( new_ins or reenabled_ins )
     {
-        if ( new_ins and default_binder )
+        std::vector<PHInstance*>::iterator old_binder;
+        if ( get_instance(this, bind_id, old_binder) )
         {
-            if ( !((*old_binder)->is_reloaded()) )
+            if ( new_ins and default_binder )
             {
-                (*old_binder)->set_reloaded(RELOAD_TYPE_REENABLED);
-                ilist.erase(old_binder);
+                if ( !((*old_binder)->is_reloaded()) )
+                {
+                    (*old_binder)->set_reloaded(RELOAD_TYPE_REENABLED);
+                    ilist.erase(old_binder);
+                }
+                default_binder = false;
             }
-            default_binder = false;
-        }
-        else if ( reenabled_ins and !((*old_binder)->is_reloaded()) )
-        {
-            (*old_binder)->handler->configure(sc);
+            else if ( reenabled_ins and !((*old_binder)->is_reloaded()) )
+                (*old_binder)->handler->configure(sc);
         }
     }
 }
@@ -606,7 +797,6 @@ bool FrameworkPolicy::delete_inspector(SnortConfig* sc, const char* iname)
     if ( get_instance(this, iname, old_it) )
     {
         (*old_it)->set_reloaded(RELOAD_TYPE_DELETED);
-        remove_inspector_from_cache((*old_it)->handler);
         ilist.erase(old_it);
         std::vector<PHInstance*>::iterator bind_it;
         if ( get_instance(this, bind_id, bind_it) )
@@ -614,6 +804,35 @@ bool FrameworkPolicy::delete_inspector(SnortConfig* sc, const char* iname)
         return true;
     }
     return false;
+}
+
+PHInstance* FrameworkPolicy::get_instance_by_type(const char* key, InspectorType type)
+{
+    switch (type)
+    {
+    case IT_PASSIVE:
+        return get_instance_from_vector(key, passive.vec, passive.total_num);
+
+    case IT_PACKET:
+        return get_instance_from_vector(key, packet.vec, packet.total_num);
+
+    case IT_NETWORK:
+        return get_instance_from_vector(key, network.vec, network.total_num);
+
+    case IT_STREAM:
+        return get_instance(this, key);
+
+    case IT_SERVICE:
+        return get_instance_from_vector(key, service.vec, service.total_num);
+
+    case IT_WIZARD:
+        return get_instance(this, key);
+
+    default:
+        assert(false);
+        break;
+    }
+    return nullptr;
 }
 
 //-------------------------------------------------------------------------
@@ -641,7 +860,7 @@ const char* InspectorManager::get_inspector_type(const char* name)
 
 void InspectorManager::add_plugin(const InspectApi* api)
 {
-    PHGlobal* g = new PHGlobal(*api);
+    PHObject* g = new PHObject(*api);
     s_handlers.emplace_back(g);
 }
 
@@ -834,7 +1053,6 @@ void InspectorManager::new_policy(InspectionPolicy* pi, InspectionPolicy* other_
 void InspectorManager::new_policy(NetworkPolicy* pi, NetworkPolicy* other_pi)
 {
     pi->traffic_policy = new TrafficPolicy;
-
     if ( other_pi )
         pi->traffic_policy->ilist = other_pi->traffic_policy->ilist;
 }
@@ -843,7 +1061,7 @@ void InspectorManager::delete_policy(InspectionPolicy* pi, bool cloned)
 {
     for ( auto* p : pi->framework_policy->ilist )
     {
-        if ( cloned and !(p->is_reloaded()) )
+        if ( cloned and !p->is_reloaded() )
             continue;
 
         if ( p->handler->get_api()->type == IT_PASSIVE )
@@ -880,21 +1098,25 @@ void InspectorManager::update_policy(SnortConfig* sc)
     GlobalInspectorPolicy* pp = sc->policy_map->get_global_inspector_policy();
     for ( auto* p : pp->ilist )
         p->set_reloaded(RELOAD_TYPE_NONE);
-    InspectionPolicy* ip = sc->policy_map->get_inspection_policy();
-    for ( auto* p : ip->framework_policy->ilist )
-        p->set_reloaded(RELOAD_TYPE_NONE);
-    NetworkPolicy* np = sc->policy_map->get_network_policy();
-    for ( auto* p : np->traffic_policy->ilist )
-        p->set_reloaded(RELOAD_TYPE_NONE);
+    for (unsigned idx = 0; idx < sc->policy_map->network_policy_count(); ++idx)
+    {
+        NetworkPolicy* np = sc->policy_map->get_network_policy(idx);
+        for ( auto* p : np->traffic_policy->ilist )
+            p->set_reloaded(RELOAD_TYPE_NONE);
+        InspectionPolicy* ip = np->get_inspection_policy();
+        for ( auto* p : ip->framework_policy->ilist )
+            p->set_reloaded(RELOAD_TYPE_NONE);
+    }
 }
 
 Binder* InspectorManager::get_binder()
 {
     InspectionPolicy* pi = get_inspection_policy();
 
-    if ( !pi || !pi->framework_policy )
+    if ( !pi )
         return nullptr;
 
+    assert(pi->framework_policy);
     return (Binder*)pi->framework_policy->binder;
 }
 
@@ -906,33 +1128,75 @@ void InspectorManager::clear_removed_inspectors(SnortConfig* sc)
     ft->clear_removed();
     GlobalInspectorPolicy* pp = sc->policy_map->get_global_inspector_policy();
     pp->clear_removed();
-    TrafficPolicy* tp = sc->policy_map->get_network_policy()->traffic_policy;
-    tp->clear_removed();
-    FrameworkPolicy* fp = sc->policy_map->get_inspection_policy()->framework_policy;
-    fp->clear_removed();
+    for (unsigned idx = 0; idx < sc->policy_map->network_policy_count(); ++idx)
+    {
+        NetworkPolicy* np = sc->policy_map->get_network_policy(idx);
+        np->traffic_policy->clear_removed();
+        FrameworkPolicy* fp = np->get_inspection_policy()->framework_policy;
+        fp->clear_removed();
+    }
 }
 
-void InspectorManager::tear_down_removed_inspectors(const SnortConfig* old, SnortConfig* sc)
+void InspectorManager::reconcile_inspectors(const SnortConfig* old, SnortConfig* sc, bool cloned)
 {
     SingleInstanceInspectorPolicy* old_fid = old->policy_map->get_file_id();
     SingleInstanceInspectorPolicy* fid = sc->policy_map->get_file_id();
-    fid->populate_removed(sc, old_fid);
+    old_fid->populate_removed(sc, fid);
+    fid->reconcile_inspector(sc, old_fid, cloned);
 
     SingleInstanceInspectorPolicy* old_ft = old->policy_map->get_flow_tracking();
     SingleInstanceInspectorPolicy* ft = sc->policy_map->get_flow_tracking();
-    ft->populate_removed(sc, old_ft);
+    old_ft->populate_removed(sc, ft);
+    ft->reconcile_inspector(sc, old_ft, cloned);
 
     GlobalInspectorPolicy* pp = sc->policy_map->get_global_inspector_policy();
     GlobalInspectorPolicy* old_pp = old->policy_map->get_global_inspector_policy();
-    pp->populate_removed(sc, old_pp);
+    old_pp->populate_removed(sc, pp, s_tl_handlers);
+    pp->reconcile_inspectors(sc, old_pp, cloned);
 
-    TrafficPolicy* tp = get_default_network_policy(sc)->traffic_policy;
-    TrafficPolicy* old_tp = get_default_network_policy(old)->traffic_policy;
-    tp->populate_removed(sc, old_tp);
+    // Put all removed instances in the default traffic policy
+    TrafficPolicy* default_tp = sc->policy_map->get_network_policy(0)->traffic_policy;
+    for (unsigned idx = 0; idx < old->policy_map->network_policy_count(); ++idx)
+    {
+        NetworkPolicy* old_np = old->policy_map->get_network_policy(idx);
+        NetworkPolicy* np = sc->policy_map->get_user_network(old_np->user_policy_id);
+        if (np)
+        {
+            TrafficPolicy* tp = np->traffic_policy;
+            TrafficPolicy* old_tp = old_np->traffic_policy;
+            tp->ts_handlers = old_tp->ts_handlers;
+            ++tp->ts_handlers->ref_count;
 
-    FrameworkPolicy* fp = get_default_inspection_policy(sc)->framework_policy;
-    FrameworkPolicy* old_fp = get_default_inspection_policy(old)->framework_policy;
-    fp->populate_removed(sc, old_fp);
+            PHTSObjectLists& handlers = tp->ts_handlers->olists;
+            old_tp->populate_removed(sc, tp, default_tp, handlers);
+
+            FrameworkPolicy* old_fp = old_np->get_inspection_policy(0)->framework_policy;
+            FrameworkPolicy* fp = np->get_inspection_policy(0)->framework_policy;
+            old_fp->populate_removed(sc, fp, default_tp, handlers);
+        }
+        else
+        {
+            TrafficPolicy* old_tp = old_np->traffic_policy;
+            old_tp->populate_all_removed(sc, default_tp, old_tp->ts_handlers->olists);
+
+            FrameworkPolicy* old_fp = old_np->get_inspection_policy(0)->framework_policy;
+            old_fp->populate_all_removed(sc, default_tp, old_tp->ts_handlers->olists);
+        }
+    }
+
+    for (unsigned idx = 0; idx < sc->policy_map->network_policy_count(); ++idx)
+    {
+        NetworkPolicy* np = sc->policy_map->get_network_policy(idx);
+        NetworkPolicy* old_np = old->policy_map->get_user_network(np->user_policy_id);
+        if (old_np)
+        {
+            np->traffic_policy->reconcile_inspectors(sc, old_np->traffic_policy, cloned);
+
+            FrameworkPolicy* fp = np->get_inspection_policy(0)->framework_policy;
+            FrameworkPolicy* old_fp = old_np->get_inspection_policy(0)->framework_policy;
+            fp->reconcile_inspectors(sc, old_fp, cloned);
+        }
+    }
 }
 
 Inspector* InspectorManager::get_file_inspector(const SnortConfig* sc)
@@ -953,8 +1217,8 @@ Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only, cons
         sc = SnortConfig::get_conf();
     if ( dflt_only )
     {
-        pi = get_default_inspection_policy(sc);
         ni = get_default_network_policy(sc);
+        pi = ni->get_inspection_policy(0);
     }
     else
     {
@@ -962,7 +1226,7 @@ Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only, cons
         ni = get_network_policy();
     }
 
-    if ( pi && pi->framework_policy )
+    if ( pi )
     {
         PHInstance* p = get_instance(pi->framework_policy, key);
         if ( p )
@@ -992,13 +1256,58 @@ Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only, cons
     return nullptr;
 }
 
+Inspector* InspectorManager::get_inspector(const char* key, Module::Usage usage,
+    InspectorType type, const SnortConfig* sc)
+{
+    if ( !sc )
+        sc = SnortConfig::get_conf();
+
+    if (Module::GLOBAL == usage && IT_FILE == type)
+    {
+        SingleInstanceInspectorPolicy* fid = sc->policy_map->get_file_id();
+        assert(fid);
+        return (fid->instance && fid->instance->name == key) ? fid->instance->handler : nullptr;
+    }
+    else if (Module::GLOBAL == usage && IT_STREAM == type)
+    {
+        SingleInstanceInspectorPolicy* ft = sc->policy_map->get_flow_tracking();
+        assert(ft);
+        return (ft->instance && ft->instance->name == key) ? ft->instance->handler : nullptr;
+    }
+    else
+    {
+        if (Module::GLOBAL == usage && IT_SERVICE != type)
+        {
+            GlobalInspectorPolicy* il = sc->policy_map->get_global_inspector_policy();
+            assert(il);
+            PHInstance* p = il->get_instance_by_type(key, type);
+            return p ? p->handler : nullptr;
+        }
+        else if (Module::CONTEXT == usage)
+        {
+            TrafficPolicy* il = get_network_policy()->traffic_policy;
+            assert(il);
+            PHInstance* p = il->get_instance_by_type(key, type);
+            return p ? p->handler : nullptr;
+        }
+        else
+        {
+            FrameworkPolicy* il = get_inspection_policy()->framework_policy;
+            assert(il);
+            PHInstance* p = il->get_instance_by_type(key, type);
+            return p ? p->handler : nullptr;
+        }
+    }
+}
+
 Inspector* InspectorManager::get_service_inspector_by_service(const char* key)
 {
     InspectionPolicy* pi = get_inspection_policy();
 
-    if ( !pi || !pi->framework_policy )
+    if ( !pi )
         return nullptr;
 
+    assert(pi->framework_policy);
     auto g = pi->framework_policy->inspector_cache_by_service.find(key);
     return (g != pi->framework_policy->inspector_cache_by_service.end()) ? g->second : nullptr;
 }
@@ -1007,16 +1316,18 @@ Inspector* InspectorManager::get_service_inspector_by_id(const SnortProtocolId p
 {
     InspectionPolicy* pi = get_inspection_policy();
 
-    if ( !pi || !pi->framework_policy )
+    if ( !pi )
         return nullptr;
 
+    assert(pi->framework_policy);
     auto g = pi->framework_policy->inspector_cache_by_id.find(protocol_id);
     return (g != pi->framework_policy->inspector_cache_by_id.end()) ? g->second : nullptr;
 }
 
 bool InspectorManager::delete_inspector(SnortConfig* sc, const char* iname)
 {
-    FrameworkPolicy* fp = sc->policy_map->get_inspection_policy()->framework_policy;
+    FrameworkPolicy* fp =
+        sc->policy_map->get_network_policy(0)->get_inspection_policy()->framework_policy;
     return fp->delete_inspector(sc, iname);
 }
 
@@ -1078,32 +1389,33 @@ static PHClass* get_class(const char* keyword, FrameworkConfig* fc)
     return nullptr;
 }
 
-static PHGlobal& get_thread_local_plugin(const InspectApi& api)
+static PHObject& get_thread_local_plugin(const InspectApi& api, PHObjectList* handlers)
 {
-    assert(s_tl_handlers != nullptr);
+    assert(handlers);
 
-    for ( PHGlobal& phg : *s_tl_handlers )
+    for ( PHObject& phg : *handlers )
     {
         if ( &phg.api == &api )
             return phg;
     }
-    s_tl_handlers->emplace_back(api);
-    return s_tl_handlers->back();
+    handlers->emplace_back(api);
+    return handlers->back();
 }
 
-void PHInstance::tinit()
+void PHInstance::tinit(PHObjectList* handlers)
 {
-    PHGlobal& phg = get_thread_local_plugin(pp_class.api);
+    PHObject& phg = get_thread_local_plugin(pp_class.api, handlers);
     if ( !phg.instance_initialized )
     {
-        handler->tinit();
         phg.instance_initialized = true;
+        handler->tinit();
     }
 }
 
-void PHInstance::tterm()
+void PHInstance::tterm(PHObjectList* handlers)
 {
-    PHGlobal& phg = get_thread_local_plugin(pp_class.api);
+    assert(handlers);
+    PHObject& phg = get_thread_local_plugin(pp_class.api, handlers);
     if ( phg.instance_initialized )
     {
         handler->tterm();
@@ -1113,73 +1425,90 @@ void PHInstance::tterm()
 
 void InspectorManager::thread_init(const SnortConfig* sc)
 {
+    SnortConfig::update_thread_reload_id();
     Inspector::slot = get_instance_id();
 
     // Initial build out of this thread's configured plugin registry
-    s_tl_handlers = new vector<PHGlobal>;
+    PHObjectList* g_handlers = new PHObjectList;
+    s_tl_handlers[Inspector::slot] = g_handlers;
     for ( auto* p : sc->framework_config->clist )
     {
-        PHGlobal& phg = get_thread_local_plugin(p->api);
+        PHObject& phg = get_thread_local_plugin(p->api, g_handlers);
         if (phg.api.tinit)
             phg.api.tinit();
         phg.initialized = true;
     }
 
-    // pin->tinit() only called for default policy
-    set_default_policy(sc);
     SingleInstanceInspectorPolicy* fid = sc->policy_map->get_file_id();
-    fid->tinit();
+    fid->tinit(g_handlers);
     SingleInstanceInspectorPolicy* ft = sc->policy_map->get_flow_tracking();
-    ft->tinit();
+    ft->tinit(g_handlers);
 
     GlobalInspectorPolicy* pp = sc->policy_map->get_global_inspector_policy();
-    pp->tinit();
-
-    InspectionPolicy* pi = get_inspection_policy();
-    if ( pi && pi->framework_policy )
-        pi->framework_policy->tinit();
+    pp->tinit(g_handlers);
 
     for ( unsigned i = 0; i < sc->policy_map->network_policy_count(); i++)
     {
         NetworkPolicy* npi = sc->policy_map->get_network_policy(i);
+        PHObjectList* handlers = npi->traffic_policy->get_specific_handlers();
         set_network_policy(npi);
-        npi->traffic_policy->tinit();
+        npi->traffic_policy->tinit(handlers);
+
+        InspectionPolicy* pi = npi->get_inspection_policy(0);
+        if ( pi )
+        {
+            set_inspection_policy(pi);
+            assert(pi->framework_policy);
+            pi->framework_policy->tinit(handlers);
+        }
     }
 }
 
 void InspectorManager::thread_reinit(const SnortConfig* sc)
 {
-    // Update this thread's configured plugin registry with any newly configured inspectors
-    for ( auto* p : sc->framework_config->clist )
+    SnortConfig::update_thread_reload_id();
+    unsigned instance_id = get_instance_id();
+    if (!sc->policy_map->get_inspector_tinit_complete(instance_id))
     {
-        PHGlobal& phg = get_thread_local_plugin(p->api);
-        if (!phg.initialized)
+        sc->policy_map->set_inspector_tinit_complete(instance_id, true);
+
+        // Update this thread's configured plugin registry with any newly configured inspectors
+        PHObjectList* g_handlers = s_tl_handlers[Inspector::slot];
+        for ( auto* p : sc->framework_config->clist )
         {
-            if (phg.api.tinit)
-                phg.api.tinit();
-            phg.initialized = true;
+            PHObject& phg = get_thread_local_plugin(p->api, g_handlers);
+            if (!phg.initialized)
+            {
+                if (phg.api.tinit)
+                    phg.api.tinit();
+                phg.initialized = true;
+            }
         }
-    }
 
-    set_default_policy(sc);
-    SingleInstanceInspectorPolicy* fid = sc->policy_map->get_file_id();
-    fid->tinit();
-    SingleInstanceInspectorPolicy* ft = sc->policy_map->get_flow_tracking();
-    ft->tinit();
+        SingleInstanceInspectorPolicy* fid = sc->policy_map->get_file_id();
+        fid->tinit(g_handlers);
+        SingleInstanceInspectorPolicy* ft = sc->policy_map->get_flow_tracking();
+        ft->tinit(g_handlers);
 
-    GlobalInspectorPolicy* pp = sc->policy_map->get_global_inspector_policy();
-    pp->tinit();
+        GlobalInspectorPolicy* pp = sc->policy_map->get_global_inspector_policy();
+        pp->tinit(g_handlers);
 
-    for ( unsigned i = 0; i < sc->policy_map->network_policy_count(); i++)
-    {
-        NetworkPolicy* npi = sc->policy_map->get_network_policy(i);
-        set_network_policy(npi);
-        npi->traffic_policy->tinit();
+        for ( unsigned i = 0; i < sc->policy_map->network_policy_count(); i++)
+        {
+            NetworkPolicy* npi = sc->policy_map->get_network_policy(i);
+            PHObjectList* handlers = npi->traffic_policy->get_specific_handlers();
+            set_network_policy(npi);
+            npi->traffic_policy->tinit(handlers);
 
-        // pin->tinit() only called for default policy
-        InspectionPolicy* pi = get_default_inspection_policy(sc);
-        if ( pi && pi->framework_policy )
-            pi->framework_policy->tinit();
+            // pin->tinit() only called for default policy
+            InspectionPolicy* pi = npi->get_inspection_policy(0);
+            if ( pi )
+            {
+                set_inspection_policy(pi);
+                assert(pi->framework_policy);
+                pi->framework_policy->tinit(handlers);
+            }
+        }
     }
 }
 
@@ -1194,65 +1523,70 @@ void InspectorManager::thread_stop_removed(const SnortConfig* sc)
     GlobalInspectorPolicy* pp = sc->policy_map->get_global_inspector_policy();
     pp->tterm_removed();
 
-    // pin->tinit() only called for default policy
     NetworkPolicy* npi = get_default_network_policy(sc);
     if ( npi && npi->traffic_policy )
     {
         // Call pin->tterm() for anything that has been initialized and removed
         npi->traffic_policy->tterm_removed();
-    }
 
-    // pin->tinit() only called for default policy
-    InspectionPolicy* pi = get_default_inspection_policy(sc);
-
-    if ( pi && pi->framework_policy )
-    {
-        // Call pin->tterm() for anything that has been initialized and removed
-        pi->framework_policy->tterm_removed();
+        // pin->tinit() only called for default policy
+        InspectionPolicy* pi = npi->get_inspection_policy(0);
+        if ( pi )
+        {
+            assert(pi->framework_policy);
+            // Call pin->tterm() for anything that has been initialized and removed
+            pi->framework_policy->tterm_removed();
+        }
     }
 }
 
 void InspectorManager::thread_stop(const SnortConfig* sc)
 {
     // If thread_init() was never called, we have nothing to do.
-    if ( !s_tl_handlers )
+    PHObjectList* g_handlers = s_tl_handlers[Inspector::slot];
+    if ( !g_handlers )
         return;
 
     set_default_policy(sc);
     SingleInstanceInspectorPolicy* fid = sc->policy_map->get_file_id();
-    fid->tterm();
+    fid->tterm(g_handlers);
     SingleInstanceInspectorPolicy* ft = sc->policy_map->get_flow_tracking();
-    ft->tterm();
+    ft->tterm(g_handlers);
 
     GlobalInspectorPolicy* pp = sc->policy_map->get_global_inspector_policy();
-    pp->tterm();
-
-    InspectionPolicy* pi = get_inspection_policy();
-    if ( pi && pi->framework_policy )
-        pi->framework_policy->tterm();
+    pp->tterm(g_handlers);
 
     for ( unsigned i = 0; i < sc->policy_map->network_policy_count(); i++)
     {
         NetworkPolicy* npi = sc->policy_map->get_network_policy(i);
+        PHObjectList* handlers = npi->traffic_policy->get_specific_handlers();
         set_network_policy(npi);
-        npi->traffic_policy->tterm();
+        npi->traffic_policy->tterm(handlers);
+
+        InspectionPolicy* pi = npi->get_inspection_policy(0);
+        if ( pi )
+        {
+            assert(pi->framework_policy);
+            pi->framework_policy->tterm(handlers);
+        }
     }
 }
 
 void InspectorManager::thread_term()
 {
     // If thread_init() was never called, we have nothing to do.
-    if ( !s_tl_handlers )
+    PHObjectList* handlers = s_tl_handlers[Inspector::slot];
+    if ( !handlers )
         return;
 
     // Call tterm for every inspector plugin ever configured during the lifetime of this thread
-    for ( PHGlobal& phg : *s_tl_handlers )
+    for ( PHObject& phg : *handlers )
     {
         if ( phg.api.tterm && phg.initialized )
             phg.api.tterm();
     }
-    delete s_tl_handlers;
-    s_tl_handlers = nullptr;
+    delete handlers;
+    s_tl_handlers[Inspector::slot] = nullptr;
 }
 
 //-------------------------------------------------------------------------
@@ -1308,13 +1642,17 @@ void InspectorManager::instantiate(
             }
             else if (Module::CONTEXT == mod->get_usage())
             {
-                TrafficPolicy* il = get_network_policy()->traffic_policy;
+                NetworkPolicy* np = get_network_policy();
+                assert(np);
+                TrafficPolicy* il = np->traffic_policy;
                 assert(il);
                 ppi = get_new(ppc, il, keyword, mod, sc);
             }
             else
             {
-                FrameworkPolicy* il = get_inspection_policy()->framework_policy;
+                InspectionPolicy* ip = get_inspection_policy();
+                assert(ip);
+                FrameworkPolicy* il = ip->framework_policy;
                 assert(il);
                 ppi = get_new(ppc, il, keyword, mod, sc);
             }
@@ -1338,7 +1676,9 @@ Inspector* InspectorManager::instantiate(
     if ( !ppc )
         return nullptr;
 
-    auto fp = get_inspection_policy()->framework_policy;
+    InspectionPolicy* ip = get_inspection_policy();
+    assert(ip);
+    auto fp = ip->framework_policy;
     auto ppi = get_new(ppc, fp, name, mod, sc);
 
     if ( !ppi )
@@ -1381,7 +1721,9 @@ static void instantiate_default_binder(SnortConfig* sc, FrameworkPolicy* fp)
 
     const InspectApi* api = get_plugin(bind_id);
     InspectorManager::instantiate(api, m, sc);
-    fp->binder = get_instance(fp, bind_id)->handler;
+    PHInstance* instance = get_instance(fp, bind_id);
+    assert(instance);
+    fp->binder = instance->handler;
     fp->binder->configure(sc);
     fp->default_binder = true;
 }
@@ -1393,10 +1735,9 @@ static bool configure(SnortConfig* sc, InspectorList* il, bool cloned, bool& new
 
     for ( auto* p : il->ilist )
     {
-        ReloadType reload_type = p->get_reload_type();
-
         if ( cloned )
         {
+            ReloadType reload_type = p->get_reload_type();
             if ( reload_type == RELOAD_TYPE_NEW )
                 new_ins = true;
             else if ( reload_type == RELOAD_TYPE_REENABLED )
@@ -1406,9 +1747,7 @@ static bool configure(SnortConfig* sc, InspectorList* il, bool cloned, bool& new
         }
         ok = p->handler->configure(sc) && ok;
     }
-
-    if ( new_ins or reenabled_ins )
-        il->handle_new_reenabled(sc, new_ins, reenabled_ins);
+    il->handle_new_reenabled(sc, new_ins, reenabled_ins);
 
     sort(il->ilist.begin(), il->ilist.end(), PHInstance::comp);
     il->vectorize(sc);
@@ -1428,18 +1767,6 @@ Inspector* InspectorManager::acquire_file_inspector()
     return pi;
 }
 
-Inspector* InspectorManager::acquire(const char* key, bool dflt_only)
-{
-    Inspector* pi = get_inspector(key, dflt_only);
-
-    if ( !pi )
-        FatalError("unconfigured inspector: '%s'.\n", key);
-    else
-        pi->add_global_ref();
-
-    return pi;
-}
-
 void InspectorManager::release(Inspector* pi)
 {
     assert(pi);
@@ -1450,25 +1777,12 @@ bool InspectorManager::configure(SnortConfig* sc, bool cloned)
 {
     if ( !s_sorted )
     {
-        sort(s_handlers.begin(), s_handlers.end(), PHGlobal::comp);
+        sort(s_handlers.begin(), s_handlers.end(), PHObject::comp);
         s_sorted = true;
     }
     bool ok = true;
 
     SearchTool::set_conf(sc);
-
-    bool new_ins = false;
-    bool reenabled_ins = false;
-    for ( unsigned idx = 0; idx < sc->policy_map->network_policy_count(); ++idx )
-    {
-        if ( cloned and idx )
-            break;
-
-        ::set_network_policy(sc, idx);
-        NetworkPolicy* p = sc->policy_map->get_network_policy(idx);
-        ok = ::configure(sc, p->traffic_policy, cloned, new_ins, reenabled_ins) && ok;
-    }
-    ::set_network_policy(sc);
 
     SingleInstanceInspectorPolicy* fid = sc->policy_map->get_file_id();
     fid->configure(sc);
@@ -1476,40 +1790,93 @@ bool InspectorManager::configure(SnortConfig* sc, bool cloned)
     SingleInstanceInspectorPolicy* ft = sc->policy_map->get_flow_tracking();
     ft->configure(sc);
 
+    bool new_ins = false;
+    bool reenabled_ins = false;
+
     GlobalInspectorPolicy* pp = sc->policy_map->get_global_inspector_policy();
     ok = ::configure(sc, pp, cloned, new_ins, reenabled_ins) && ok;
 
-    ::set_inspection_policy(sc);
-    for ( unsigned idx = 0; idx < sc->policy_map->inspection_policy_count(); ++idx )
+    for ( unsigned nidx = 0; nidx < sc->policy_map->network_policy_count(); ++nidx )
     {
-        if ( cloned and idx )
-            break;
+        NetworkPolicy* np = sc->policy_map->get_network_policy(nidx);
+        assert(np);
+        set_network_policy(np);
+        ok = ::configure(sc, np->traffic_policy, cloned, new_ins, reenabled_ins) && ok;
 
-        ::set_inspection_policy(sc, idx);
-        InspectionPolicy* p = sc->policy_map->get_inspection_policy(idx);
-        p->configure();
-        ok = ::configure(sc, p->framework_policy, cloned, new_ins, reenabled_ins) && ok;
+        for ( unsigned idx = 0; idx < np->inspection_policy_count(); ++idx )
+        {
+            if ( cloned and idx )
+                break;
+
+            InspectionPolicy* p = np->get_inspection_policy(idx);
+            assert(p);
+            set_inspection_policy(p);
+            p->configure();
+            ok = ::configure(sc, p->framework_policy, cloned, new_ins, reenabled_ins) && ok;
+        }
     }
 
-    ::set_inspection_policy(sc);
+    NetworkPolicy* np = sc->policy_map->get_network_policy();
+    assert(np);
+    set_network_policy(np);
+    set_inspection_policy(np->get_inspection_policy());
     SearchTool::set_conf(nullptr);
 
     return ok;
 }
 
+void InspectorManager::prepare_inspectors(SnortConfig* sc)
+{
+    SingleInstanceInspectorPolicy* fid = sc->policy_map->get_file_id();
+    fid->allocate_thread_storage();
+
+    SingleInstanceInspectorPolicy* ft = sc->policy_map->get_flow_tracking();
+    ft->allocate_thread_storage();
+
+    GlobalInspectorPolicy* pp = sc->policy_map->get_global_inspector_policy();
+    pp->allocate_thread_storage();
+
+    for (unsigned idx = 0; idx < sc->policy_map->network_policy_count(); ++idx)
+    {
+        NetworkPolicy* np = sc->policy_map->get_network_policy(idx);
+        TrafficPolicy* tp = np->traffic_policy;
+        if (!tp->ts_handlers)
+            tp->ts_handlers = new ThreadSpecificHandlers(ThreadConfig::get_instance_max());
+        tp->allocate_thread_storage();
+    }
+}
+
 // remove any disabled controls while retaining order
 void InspectorManager::prepare_controls(SnortConfig* sc)
 {
+    GlobalInspectorPolicy* gp = sc->policy_map->get_global_inspector_policy();
+    unsigned g_c = 0;
+    std::vector<PHInstance*> g_disabled;
+    for ( unsigned i = 0; i < gp->control.num; ++i )
+    {
+        if ( !gp->control.vec[i]->handler->disable(sc) )
+            gp->control.vec[g_c++] = gp->control.vec[i];
+        else
+            g_disabled.emplace_back(gp->control.vec[i]);
+    }
+    gp->control.num = g_c;
+    for (auto* ph : g_disabled)
+        gp->control.vec[g_c++] = ph;
     for ( unsigned idx = 0; idx < sc->policy_map->network_policy_count(); ++idx )
     {
         TrafficPolicy* tp = sc->policy_map->get_network_policy(idx)->traffic_policy;
         unsigned c = 0;
+        std::vector<PHInstance*> disabled;
         for ( unsigned i = 0; i < tp->control.num; ++i )
         {
             if ( !tp->control.vec[i]->handler->disable(sc) )
                 tp->control.vec[c++] = tp->control.vec[i];
+            else
+                disabled.emplace_back(tp->control.vec[i]);
         }
         tp->control.num = c;
+        for (auto* ph : disabled)
+            tp->control.vec[c++] = ph;
     }
 }
 
@@ -1577,8 +1944,9 @@ void InspectorManager::print_config(SnortConfig* sc)
         }
 
         const auto inspection = policies->inspection;
-        if ( inspection and inspection->framework_policy )
+        if ( inspection )
         {
+            assert(inspection->framework_policy);
             const std::string label = "Inspection Policy : policy id " +
                 std::to_string(inspection->user_policy_id) + " : " +
                 shell->get_file();
@@ -1676,7 +2044,7 @@ void InspectorManager::full_inspection(Packet* p)
 {
     Flow* flow = p->flow;
 
-    if ( flow->service and flow->searching_for_service()
+    if ( flow->has_service() and flow->searching_for_service()
          and (!(p->is_cooked()) or p->is_defrag()) )
         bumble(p);
 
@@ -1765,6 +2133,9 @@ void InspectorManager::internal_execute(Packet* p)
     if ( p->disable_inspect )
         return;
 
+    GlobalInspectorPolicy* pp = sc->policy_map->get_global_inspector_policy();
+    assert(pp);
+
     if ( !p->flow )
     {
         ::execute<T>(p, tp->first.vec, tp->first.num);
@@ -1777,6 +2148,7 @@ void InspectorManager::internal_execute(Packet* p)
         if ( p->disable_inspect )
             return;
 
+        ::execute<T>(p, pp->control.vec, pp->control.num);
         ::execute<T>(p, tp->control.vec, tp->control.num);
     }
     else
@@ -1784,16 +2156,17 @@ void InspectorManager::internal_execute(Packet* p)
         if ( !p->has_paf_payload() and p->flow->flow_state == Flow::FlowState::INSPECT )
             p->flow->session->process(p);
 
-        if ( p->flow->reload_id != sc->reload_id )
+        unsigned reload_id = SnortConfig::get_thread_reload_id();
+        if ( p->flow->reload_id != reload_id )
         {
             ::execute<T>(p, tp->first.vec, tp->first.num);
 
-            p->flow->reload_id = sc->reload_id;
+            p->flow->reload_id = reload_id;
             if ( p->disable_inspect )
                 return;
         }
 
-        if ( !p->flow->service )
+        if ( !p->flow->has_service() )
             ::execute<T>(p, fp->network.vec, fp->network.num);
 
         if ( p->disable_inspect )
@@ -1802,6 +2175,8 @@ void InspectorManager::internal_execute(Packet* p)
         if ( p->flow->full_inspection() )
             full_inspection<T>(p);
 
+        if ( !p->disable_inspect and !p->flow->is_inspection_disabled() )
+            ::execute<T>(p, pp->control.vec, pp->control.num);
         if ( !p->disable_inspect and !p->flow->is_inspection_disabled() )
             ::execute<T>(p, tp->control.vec, tp->control.num);
     }

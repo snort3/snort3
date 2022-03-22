@@ -23,7 +23,7 @@
 
 #include <unistd.h>
 
-#include "stubs.h"
+#include "distill_verdict_stubs.h"
 
 #include "main/analyzer.h"
 #include "memory/memory_cap.h"

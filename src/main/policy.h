@@ -49,6 +49,7 @@ class PolicySelector;
 struct SnortConfig;
 }
 
+struct _daq_flow_stats;
 struct _daq_pkt_hdr;
 struct PortTable;
 struct vartable_t;
@@ -68,6 +69,50 @@ enum PolicyMode
 // FIXIT-L split into separate headers
 
 //-------------------------------------------------------------------------
+// navigator stuff
+//-------------------------------------------------------------------------
+
+struct InspectionPolicy;
+struct IpsPolicy;
+struct NetworkPolicy;
+class Shell;
+
+namespace snort
+{
+SO_PUBLIC NetworkPolicy* get_network_policy();
+NetworkPolicy* get_network_parse_policy();
+SO_PUBLIC InspectionPolicy* get_inspection_policy();
+SO_PUBLIC IpsPolicy* get_ips_policy();
+
+SO_PUBLIC void set_network_policy(NetworkPolicy*);
+void set_network_parse_policy(NetworkPolicy*);
+SO_PUBLIC void set_inspection_policy(InspectionPolicy*);
+SO_PUBLIC void set_ips_policy(IpsPolicy*);
+
+SO_PUBLIC NetworkPolicy* get_default_network_policy(const snort::SnortConfig*);
+// Based on currently set network policy
+SO_PUBLIC InspectionPolicy* get_user_inspection_policy(unsigned policy_id);
+
+SO_PUBLIC IpsPolicy* get_ips_policy(const snort::SnortConfig*, unsigned i = 0);
+// Based on currently set network policy
+SO_PUBLIC IpsPolicy* get_default_ips_policy(const snort::SnortConfig*);
+SO_PUBLIC IpsPolicy* get_user_ips_policy(const snort::SnortConfig*, unsigned policy_id);
+SO_PUBLIC IpsPolicy* get_empty_ips_policy(const snort::SnortConfig*);
+}
+
+void set_network_policy(unsigned = 0);
+void set_inspection_policy(unsigned = 0);
+void set_ips_policy(const snort::SnortConfig*, unsigned = 0);
+
+void set_policies(const snort::SnortConfig*, Shell*);
+void set_default_policy(const snort::SnortConfig*);
+void select_default_policy(const _daq_pkt_hdr&, const snort::SnortConfig*);
+void select_default_policy(const _daq_flow_stats&, const snort::SnortConfig*);
+
+bool only_inspection_policy();
+bool only_ips_policy();
+
+//-------------------------------------------------------------------------
 // traffic stuff
 //-------------------------------------------------------------------------
 
@@ -84,62 +129,6 @@ enum ChecksumFlag
 enum DecodeEventFlag
 {
     DECODE_EVENT_FLAG__DEFAULT = 0x00000001
-};
-
-// Snort ac-split creates the nap (network analysis policy)
-// Snort++ breaks the nap into network and inspection
-
-class FilePolicy;
-class FileRule;
-
-struct NetworkPolicy
-{
-public:
-    NetworkPolicy(PolicyId = 0, PolicyId default_inspection_id = 0);
-    NetworkPolicy(NetworkPolicy*, const char*);
-    ~NetworkPolicy();
-
-    void add_file_policy_rule(FileRule& file_rule);
-    snort::FilePolicyBase* get_base_file_policy() const;
-    FilePolicy* get_file_policy() const;
-
-    bool checksum_drops(uint16_t codec_cksum_err_flag)
-    { return (checksum_drop & codec_cksum_err_flag) != 0; }
-
-    bool ip_checksums()
-    { return (checksum_eval & CHECKSUM_FLAG__IP) != 0; }
-
-    bool udp_checksums()
-    { return (checksum_eval & CHECKSUM_FLAG__UDP) != 0; }
-
-    bool tcp_checksums()
-    { return (checksum_eval & CHECKSUM_FLAG__TCP) != 0; }
-
-    bool icmp_checksums()
-    { return (checksum_eval & CHECKSUM_FLAG__ICMP) != 0; }
-
-protected:
-    FilePolicy* file_policy;
-
-public:
-    struct TrafficPolicy* traffic_policy;
-    snort::DataBus dbus;
-
-    PolicyId policy_id = 0;
-    uint32_t user_policy_id = 0;
-    PolicyId default_inspection_policy_id = 0;
-
-    // minimum possible (allows all but errors to pass by default)
-    uint8_t min_ttl = 1;
-    uint8_t new_ttl = 5;
-
-    uint32_t checksum_eval = CHECKSUM_FLAG__ALL | CHECKSUM_FLAG__DEF;
-    uint32_t checksum_drop = CHECKSUM_FLAG__DEF;
-    uint32_t normal_mask = 0;
-    bool cloned = false;
-
-private:
-    void init(NetworkPolicy*, const char*);
 };
 
 //-------------------------------------------------------------------------
@@ -167,6 +156,78 @@ public:
 
 private:
     void init(InspectionPolicy* old_inspection_policy);
+};
+
+//-------------------------------------------------------------------------
+// Network stuff
+//-------------------------------------------------------------------------
+
+class FilePolicy;
+class FileRule;
+struct IpsPolicy;
+
+struct NetworkPolicy
+{
+public:
+    NetworkPolicy(PolicyId = 0, PolicyId default_ips_id = 0);
+    NetworkPolicy(NetworkPolicy*, const char*);
+    ~NetworkPolicy();
+
+    InspectionPolicy* get_inspection_policy(unsigned i = 0)
+    { return i < inspection_policy.size() ? inspection_policy[i] : nullptr; }
+    unsigned inspection_policy_count()
+    { return inspection_policy.size(); }
+    InspectionPolicy* get_user_inspection_policy(unsigned user_id);
+    void set_user_inspection(InspectionPolicy* p)
+    { user_inspection[p->user_policy_id] = p; }
+
+    IpsPolicy* get_default_ips_policy(const snort::SnortConfig* sc)
+    { return snort::get_ips_policy(sc, default_ips_policy_id); }
+
+    void add_file_policy_rule(FileRule& file_rule);
+    snort::FilePolicyBase* get_base_file_policy() const;
+    FilePolicy* get_file_policy() const;
+
+    bool checksum_drops(uint16_t codec_cksum_err_flag)
+    { return (checksum_drop & codec_cksum_err_flag) != 0; }
+
+    bool ip_checksums()
+    { return (checksum_eval & CHECKSUM_FLAG__IP) != 0; }
+
+    bool udp_checksums()
+    { return (checksum_eval & CHECKSUM_FLAG__UDP) != 0; }
+
+    bool tcp_checksums()
+    { return (checksum_eval & CHECKSUM_FLAG__TCP) != 0; }
+
+    bool icmp_checksums()
+    { return (checksum_eval & CHECKSUM_FLAG__ICMP) != 0; }
+
+protected:
+    FilePolicy* file_policy;
+
+public:
+    struct TrafficPolicy* traffic_policy;
+    snort::DataBus dbus;
+
+    std::vector<InspectionPolicy*> inspection_policy;
+    std::unordered_map<unsigned, InspectionPolicy*> user_inspection;
+
+    PolicyId policy_id = 0;
+    uint32_t user_policy_id = 0;
+    PolicyId default_ips_policy_id = 0;
+
+    // minimum possible (allows all but errors to pass by default)
+    uint8_t min_ttl = 1;
+    uint8_t new_ttl = 5;
+
+    uint32_t checksum_eval = CHECKSUM_FLAG__ALL | CHECKSUM_FLAG__DEF;
+    uint32_t checksum_drop = CHECKSUM_FLAG__DEF;
+    uint32_t normal_mask = 0;
+    bool cloned = false;
+
+private:
+    void init(NetworkPolicy*, const char*);
 };
 
 //-------------------------------------------------------------------------
@@ -221,16 +282,17 @@ public:
 // binding stuff
 //-------------------------------------------------------------------------
 
-class Shell;
-
 struct PolicyTuple
 {
     InspectionPolicy* inspection = nullptr;
     IpsPolicy* ips = nullptr;
     NetworkPolicy* network = nullptr;
+    NetworkPolicy* network_parse = nullptr;
 
-    PolicyTuple(InspectionPolicy* ins_pol, IpsPolicy* ips_pol, NetworkPolicy* net_pol) :
-        inspection(ins_pol), ips(ips_pol), network(net_pol) { }
+    PolicyTuple(InspectionPolicy* ins_pol, IpsPolicy* ips_pol, NetworkPolicy* net_pol,
+        NetworkPolicy* net_parse) :
+        inspection(ins_pol), ips(ips_pol), network(net_pol), network_parse(net_parse)
+    { }
 };
 
 struct GlobalInspectorPolicy;
@@ -244,33 +306,18 @@ public:
 
     InspectionPolicy* add_inspection_shell(Shell*);
     IpsPolicy* add_ips_shell(Shell*);
-    std::shared_ptr<PolicyTuple> add_shell(Shell*, bool include_network);
+    std::shared_ptr<PolicyTuple> add_shell(Shell*, NetworkPolicy*);
     std::shared_ptr<PolicyTuple> get_policies(Shell* sh);
-    void clone(PolicyMap *old_map, const char* exclude_name);
 
     Shell* get_shell(unsigned i = 0)
     { return i < shells.size() ? shells[i] : nullptr; }
 
-    void set_user_network(NetworkPolicy* p)
-    { user_network[p->user_policy_id] = p; }
-
-    void set_user_inspection(InspectionPolicy* p)
-    { user_inspection[p->user_policy_id] = p; }
+    bool setup_network_policies();
 
     void set_user_ips(IpsPolicy* p)
     { user_ips[p->user_policy_id] = p; }
 
-    NetworkPolicy* get_user_network(unsigned user_id)
-    {
-        auto it = user_network.find(user_id);
-        return it == user_network.end() ? nullptr : it->second;
-    }
-
-    InspectionPolicy* get_user_inspection(unsigned user_id)
-    {
-        auto it = user_inspection.find(user_id);
-        return it == user_inspection.end() ? nullptr : it->second;
-    }
+    NetworkPolicy* get_user_network(unsigned user_id);
 
     IpsPolicy* get_user_ips(unsigned user_id)
     {
@@ -280,24 +327,15 @@ public:
 
     NetworkPolicy* get_network_policy(unsigned i = 0)
     { return i < network_policy.size() ? network_policy[i] : nullptr; }
-
-    InspectionPolicy* get_inspection_policy(unsigned i = 0)
-    { return i < inspection_policy.size() ? inspection_policy[i] : nullptr; }
-
-    IpsPolicy* get_ips_policy(unsigned i = 0)
-    { return i < ips_policy.size() ? ips_policy[i] : nullptr; }
-
-    IpsPolicy* get_empty_ips()
-    { return empty_ips_policy; }
-
     unsigned network_policy_count()
     { return network_policy.size(); }
 
-    unsigned inspection_policy_count()
-    { return inspection_policy.size(); }
-
+    IpsPolicy* get_ips_policy(unsigned i = 0)
+    { return i < ips_policy.size() ? ips_policy[i] : nullptr; }
     unsigned ips_policy_count()
     { return ips_policy.size(); }
+    IpsPolicy* get_empty_ips()
+    { return empty_ips_policy; }
 
     unsigned shells_count()
     { return shells.size(); }
@@ -328,17 +366,23 @@ public:
         return (it == std::end(shell_map)) ? nullptr : it->first;
     }
 
-private:
-    std::vector<Shell*> shells;
-    std::vector<InspectionPolicy*> inspection_policy;
-    std::vector<IpsPolicy*> ips_policy;
-    std::vector<NetworkPolicy*> network_policy;
+    bool get_inspector_tinit_complete(unsigned instance_id) const
+    { return inspector_tinit_complete[instance_id]; }
 
+    void set_inspector_tinit_complete(unsigned instance_id, bool val)
+    { inspector_tinit_complete[instance_id] = val; }
+
+private:
+    void clone(PolicyMap *old_map, const char* exclude_name);
+    bool set_user_network(NetworkPolicy* p);
+
+    std::vector<Shell*> shells;
+    std::vector<NetworkPolicy*> network_policy;
+    std::vector<IpsPolicy*> ips_policy;
     IpsPolicy* empty_ips_policy;
 
     std::unordered_map<Shell*, std::shared_ptr<PolicyTuple>> shell_map;
     std::unordered_map<unsigned, NetworkPolicy*> user_network;
-    std::unordered_map<unsigned, InspectionPolicy*> user_inspection;
     std::unordered_map<unsigned, IpsPolicy*> user_ips;
 
     snort::PolicySelector* selector = nullptr;
@@ -346,44 +390,9 @@ private:
     SingleInstanceInspectorPolicy* flow_tracking;
     GlobalInspectorPolicy* global_inspector_policy;
 
+    bool* inspector_tinit_complete;
     bool cloned = false;
 };
-
-//-------------------------------------------------------------------------
-// navigator stuff
-//-------------------------------------------------------------------------
-
-// FIXIT-L may be inlined at some point; on lockdown for now
-// FIXIT-L SO_PUBLIC required because SnortConfig::inline_mode(), etc. uses the function
-namespace snort
-{
-SO_PUBLIC NetworkPolicy* get_network_policy();
-SO_PUBLIC InspectionPolicy* get_inspection_policy();
-SO_PUBLIC IpsPolicy* get_ips_policy();
-
-SO_PUBLIC void set_network_policy(NetworkPolicy*);
-SO_PUBLIC void set_inspection_policy(InspectionPolicy*);
-SO_PUBLIC void set_ips_policy(IpsPolicy*);
-
-SO_PUBLIC NetworkPolicy* get_default_network_policy(const snort::SnortConfig*);
-SO_PUBLIC InspectionPolicy* get_user_inspection_policy(const snort::SnortConfig*, unsigned policy_id);
-SO_PUBLIC InspectionPolicy* get_default_inspection_policy(const snort::SnortConfig*);
-
-SO_PUBLIC IpsPolicy* get_ips_policy(const snort::SnortConfig*, unsigned i = 0);
-SO_PUBLIC IpsPolicy* get_user_ips_policy(const snort::SnortConfig*, unsigned policy_id);
-SO_PUBLIC IpsPolicy* get_empty_ips_policy(const snort::SnortConfig*);
-}
-
-void set_network_policy(const snort::SnortConfig*, unsigned = 0);
-void set_inspection_policy(const snort::SnortConfig*, unsigned = 0);
-void set_ips_policy(const snort::SnortConfig*, unsigned = 0);
-
-void set_policies(const snort::SnortConfig*, Shell*);
-void set_default_policy(const snort::SnortConfig*);
-void select_default_policy(const _daq_pkt_hdr*, const snort::SnortConfig*);
-
-bool only_inspection_policy();
-bool only_ips_policy();
 
 #endif
 

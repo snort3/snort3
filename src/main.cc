@@ -310,6 +310,8 @@ void snort::main_broadcast_command(AnalyzerCommand* ac, ControlConn* ctrlcon)
 
     ac = get_command(ac, ctrlcon);
     debug_logf(snort_trace, TRACE_MAIN, nullptr, "Broadcasting %s command\n", ac->stringify());
+    if (ac->need_update_reload_id())
+        SnortConfig::get_main_conf()->update_reload_id();
 
     for (unsigned idx = 0; idx < max_pigs; ++idx)
     {
@@ -422,7 +424,6 @@ int main_reload_config(lua_State* L)
     }
 
     PluginManager::reload_so_plugins_cleanup(sc);
-    sc->update_reload_id();
     SnortConfig::set_conf(sc);
     TraceApi::thread_reinit(sc->trace_config);
     proc_stats.conf_reloads++;
@@ -469,7 +470,6 @@ int main_reload_policy(lua_State* L)
         send_response(ctrlcon, "== reload failed\n");
         return 0;
     }
-    sc->update_reload_id();
     SnortConfig::set_conf(sc);
     proc_stats.policy_reloads++;
 
@@ -515,7 +515,6 @@ int main_reload_module(lua_State* L)
         send_response(ctrlcon, "== reload failed\n");
         return 0;
     }
-    sc->update_reload_id();
     SnortConfig::set_conf(sc);
     proc_stats.policy_reloads++;
 

@@ -1196,7 +1196,11 @@ static int detector_add_host_port_application(lua_State* L)
     if (toipprotocol(L, ++index, proto))
         return 0;
 
-    if (!ud->get_odp_ctxt().host_port_cache_add(&ip_address, (uint16_t)port, proto, type, app_id))
+    lua_getglobal(L, LUA_STATE_GLOBAL_SC_ID);
+    const SnortConfig* sc = *static_cast<const SnortConfig**>(lua_touserdata(L, -1));
+    lua_pop(L, 1);
+    if (!ud->get_odp_ctxt().host_port_cache_add(
+        sc, &ip_address, (uint16_t)port, proto, type, app_id))
         ErrorMessage("%s:Failed to backend call\n",__func__);
 
     return 0;

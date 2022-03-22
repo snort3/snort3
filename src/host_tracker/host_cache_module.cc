@@ -371,7 +371,7 @@ bool HostCacheModule::end(const char* fqn, int, SnortConfig* sc)
     if ( memcap and !strcmp(fqn, HOST_CACHE_NAME) )
     {
         if ( Snort::is_reloading() )
-            sc->register_reload_resource_tuner(new HostCacheReloadTuner(memcap));
+            sc->register_reload_handler(new HostCacheReloadTuner(memcap));
         else
             host_cache.set_max_size(memcap);
     }

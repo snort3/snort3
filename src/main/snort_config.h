@@ -163,32 +163,10 @@ namespace snort
 {
 class GHash;
 class ProtocolReference;
+class ReloadResourceTuner;
 class ThreadConfig;
 class XHash;
 struct ProfilerConfig;
-
-class ReloadResourceTuner
-{
-public:
-    static const unsigned RELOAD_MAX_WORK_PER_PACKET = 3;
-    // be aggressive when idle as analyzer gets chance once in every second only due to daq timeout
-    static const unsigned RELOAD_MAX_WORK_WHEN_IDLE = 32767;
-
-    virtual ~ReloadResourceTuner() = default;
-
-    // returns true if resource tuning required, false otherwise
-    virtual bool tinit() = 0;
-
-    // each of these returns true if resource tuning is complete, false otherwise
-    virtual bool tune_packet_context() = 0;
-    virtual bool tune_idle_context() = 0;
-
-protected:
-    ReloadResourceTuner() = default;
-
-    unsigned max_work = RELOAD_MAX_WORK_PER_PACKET;
-    unsigned max_work_idle = RELOAD_MAX_WORK_WHEN_IDLE;
-};
 
 struct SnortConfig
 {
@@ -392,6 +370,8 @@ public:
     PolicyMap* policy_map = nullptr;
     std::string tweaks;
 
+    DataBus* global_dbus = nullptr;
+
     uint16_t tunnel_mask = 0;
 
     int16_t max_aux_ip = 16;
@@ -428,11 +408,11 @@ public:
     bool cloned = false;
     Plugins* plugins = nullptr;
     SoRules* so_rules = nullptr;
-    unsigned reload_id = 0;
 
     DumpConfigType dump_config_type = DUMP_CONFIG_NONE;
 private:
     std::list<ReloadResourceTuner*> reload_tuners;
+    unsigned reload_id = 0;
 
 public:
     //------------------------------------------------------
@@ -697,13 +677,16 @@ public:
     // runtime access to const config - especially for packet threads
     // prefer access via packet->context->conf
     SO_PUBLIC static const SnortConfig* get_conf();
+    // Thread local copy of the reload_id needed for commands that cause reevaluation
+    SO_PUBLIC static unsigned get_thread_reload_id();
+    SO_PUBLIC static void update_thread_reload_id();
 
     // runtime access to mutable config - main thread only, and only special cases
     SO_PUBLIC static SnortConfig* get_main_conf();
 
     static void set_conf(const SnortConfig*);
 
-    SO_PUBLIC void register_reload_resource_tuner(ReloadResourceTuner*);
+    SO_PUBLIC void register_reload_handler(ReloadResourceTuner*);
 
     static void cleanup_fatal_error();
 

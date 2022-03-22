@@ -20,6 +20,7 @@
 #ifndef ANALYZER_COMMANDS_H
 #define ANALYZER_COMMANDS_H
 
+#include <cstdarg>
 #include <vector>
 
 #include "main/snort_types.h"
@@ -35,14 +36,25 @@ class SFDAQInstance;
 class AnalyzerCommand
 {
 public:
+    AnalyzerCommand() : AnalyzerCommand(nullptr)
+    { }
+    explicit AnalyzerCommand(ControlConn* conn) : ctrlcon(conn)
+    { }
     virtual ~AnalyzerCommand() = default;
     virtual bool execute(Analyzer&, void**) = 0;
+    virtual bool need_update_reload_id() const
+    { return false; }
     virtual const char* stringify() = 0;
     unsigned get() { return ++ref_count; }
     unsigned put() { return --ref_count; }
+    SO_PUBLIC void log_message(const char* format, ...) __attribute__((format (printf, 2, 3)));
+    SO_PUBLIC static void log_message(ControlConn*, const char* format, ...) __attribute__((format (printf, 2, 3)));
     SO_PUBLIC static snort::SFDAQInstance* get_daq_instance(Analyzer& analyzer);
 
+    ControlConn* ctrlcon;
+
 private:
+    static void log_message(ControlConn*, const char* format, va_list& ap);
     unsigned ref_count = 0;
 };
 }
@@ -50,12 +62,11 @@ private:
 class ACGetStats : public snort::AnalyzerCommand
 {
 public:
-    ACGetStats(ControlConn* conn) : ctrlcon(conn) {}
+    ACGetStats(ControlConn* conn) : AnalyzerCommand(conn)
+    { }
     bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "GET_STATS"; }
     ~ACGetStats() override;
-private:
-    ControlConn* ctrlcon;
 };
 
 typedef enum clear_counter_type
@@ -69,7 +80,7 @@ typedef enum clear_counter_type
     TYPE_HA
 } clear_counter_type_t;
 
-// FIXIT-M Will replace this vector with an unordered map of 
+// FIXIT-M Will replace this vector with an unordered map of
 // <clear_counter_type, clear_counter_type_string_map> when
 // will come up with more granular form of clearing module stats.
 static std::vector<const char*> clear_counter_type_string_map
@@ -145,25 +156,25 @@ class ACSwap : public snort::AnalyzerCommand
 {
 public:
     ACSwap() = delete;
-    ACSwap(Swapper* ps, ControlConn* ctrlcon);
+    ACSwap(Swapper* ps, ControlConn* conn) : AnalyzerCommand(conn), ps(ps)
+    { }
     bool execute(Analyzer&, void**) override;
+    bool need_update_reload_id() const override
+    { return true; }
     const char* stringify() override { return "SWAP"; }
     ~ACSwap() override;
 private:
     Swapper *ps;
-    ControlConn* ctrlcon;
 };
 
 class ACHostAttributesSwap : public snort::AnalyzerCommand
 {
 public:
-    ACHostAttributesSwap(ControlConn* ctrlcon);
+    ACHostAttributesSwap(ControlConn* conn) : AnalyzerCommand(conn)
+    { }
     bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "HOST_ATTRIBUTES_SWAP"; }
     ~ACHostAttributesSwap() override;
-
-private:
-    ControlConn* ctrlcon;
 };
 
 class ACDAQSwap : public snort::AnalyzerCommand
@@ -178,9 +189,9 @@ namespace snort
 {
 // from main.cc
 #ifdef REG_TEST
-void main_unicast_command(AnalyzerCommand* ac, unsigned target, ControlConn* ctrlcon = nullptr);
+void main_unicast_command(AnalyzerCommand*, unsigned target, ControlConn* = nullptr);
 #endif
-SO_PUBLIC void main_broadcast_command(snort::AnalyzerCommand* ac, ControlConn* ctrlcon = nullptr);
+SO_PUBLIC void main_broadcast_command(snort::AnalyzerCommand*, ControlConn* = nullptr);
 }
 
 #endif

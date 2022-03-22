@@ -43,13 +43,13 @@ THREAD_LOCAL AppIdHAAppsClient* AppIdHAManager::ha_apps_client = nullptr;
 THREAD_LOCAL AppIdHAHttpClient* AppIdHAManager::ha_http_client = nullptr;
 THREAD_LOCAL AppIdHATlsHostClient* AppIdHAManager::ha_tls_host_client = nullptr;
 
-static AppIdSession* create_appid_session(Flow& flow, const FlowKey* key)
+static AppIdSession* create_appid_session(Flow& flow, const FlowKey* key,
+    AppIdInspector& inspector)
 {
-    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
     AppIdSession* asd = new AppIdSession(static_cast<IpProtocol>(key->ip_protocol),
         flow.flags.client_initiated ? &flow.client_ip : &flow.server_ip,
-        flow.flags.client_initiated ? flow.client_port : flow.server_port, *inspector,
-        inspector->get_ctxt().get_odp_ctxt(), key->addressSpaceId);
+        flow.flags.client_initiated ? flow.client_port : flow.server_port, inspector,
+        inspector.get_ctxt().get_odp_ctxt(), key->addressSpaceId);
     if (appidDebug->is_active())
         LogMessage("AppIdDbg %s high-avail - New AppId session created in consume\n",
             appidDebug->get_debug_session());
@@ -67,7 +67,9 @@ bool AppIdHAAppsClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
     if (size != sizeof(AppIdSessionHAApps))
         return false;
 
-    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+    AppIdInspector* inspector =
+        static_cast<AppIdInspector*>(
+            InspectorManager::get_inspector(MOD_NAME, MOD_USAGE, appid_inspector_api.type));
     if (!inspector)
         return false;
 
@@ -77,9 +79,9 @@ bool AppIdHAAppsClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
     if (appidDebug->is_enabled())
     {
         appidDebug->activate(flow, asd, inspector->get_ctxt().config.log_all_sessions);
-        LogMessage("AppIdDbg %s high-avail - Consuming app data - flags 0x%x, service %d, client %d, "
-            "payload %d, misc %d, referred %d, client_inferred_service %d, port_service %d, "
-            "tp_app %d, tp_payload %d\n",
+        LogMessage("AppIdDbg %s high-avail - Consuming app data - flags 0x%x, service %d, "
+            "client %d, payload %d, misc %d, referred %d, client_inferred_service %d, "
+            "port_service %d, tp_app %d, tp_payload %d\n",
             appidDebug->get_debug_session(), appHA->flags, appHA->appId[APPID_HA_APP_SERVICE],
             appHA->appId[APPID_HA_APP_CLIENT], appHA->appId[APPID_HA_APP_PAYLOAD],
             appHA->appId[APPID_HA_APP_MISC], appHA->appId[APPID_HA_APP_REFERRED],
@@ -90,7 +92,7 @@ bool AppIdHAAppsClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
 
     if (!asd)
     {
-        asd = create_appid_session(*flow, key);
+        asd = create_appid_session(*flow, key, *inspector);
         asd->set_service_id(appHA->appId[APPID_HA_APP_SERVICE], asd->get_odp_ctxt());
         if (asd->get_service_id() == APP_ID_FTP_CONTROL)
         {
@@ -227,7 +229,9 @@ bool AppIdHAHttpClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
     if (size != sizeof(AppIdSessionHAHttp))
         return false;
 
-    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+    AppIdInspector* inspector =
+        static_cast<AppIdInspector*>(
+            InspectorManager::get_inspector(MOD_NAME, MOD_USAGE, appid_inspector_api.type));
     if (!inspector)
         return false;
 
@@ -241,7 +245,7 @@ bool AppIdHAHttpClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
     }
 
     if (!asd)
-        asd = create_appid_session(*flow, key);
+        asd = create_appid_session(*flow, key, *inspector);
 
     AppidChangeBits change_bits;
     AppIdHttpSession* hsession = asd->get_http_session();
@@ -315,7 +319,9 @@ bool AppIdHATlsHostClient::consume(Flow*& flow, const FlowKey* key, HAMessage& m
     if (size != sizeof(AppIdSessionHATlsHost))
         return false;
 
-    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+    AppIdInspector* inspector =
+        static_cast<AppIdInspector*>(
+            InspectorManager::get_inspector(MOD_NAME, MOD_USAGE, appid_inspector_api.type));
     if (!inspector)
         return false;
 
@@ -329,7 +335,7 @@ bool AppIdHATlsHostClient::consume(Flow*& flow, const FlowKey* key, HAMessage& m
     }
 
     if (!asd)
-        asd = create_appid_session(*flow, key);
+        asd = create_appid_session(*flow, key, *inspector);
 
     asd->set_tls_host(appHA->tls_host);
 

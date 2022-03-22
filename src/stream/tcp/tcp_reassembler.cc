@@ -783,8 +783,8 @@ static Packet* get_packet(Flow* flow, uint32_t flags, bool c2s)
 
     p->ip_proto_next = (IpProtocol)flow->ip_proto;
 
+    set_inspection_policy(flow->inspection_policy_id);
     const SnortConfig* sc = SnortConfig::get_conf();
-    set_inspection_policy(sc, flow->inspection_policy_id);
     set_ips_policy(sc, flow->ips_policy_id);
 
     return p;

@@ -3,6 +3,8 @@ set (REPUTATION_INCLUDES
 )
 
 add_library( reputation OBJECT
+    reputation_commands.cc
+    reputation_commands.h
     reputation_config.h
     reputation_inspect.h
     reputation_inspect.cc

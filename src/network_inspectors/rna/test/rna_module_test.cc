@@ -44,7 +44,7 @@ void set_smb_fp_processor(SmbFpProcessor*) { }
 
 namespace snort
 {
-    void SnortConfig::register_reload_resource_tuner(ReloadResourceTuner* rrt) { delete rrt; }
+    void SnortConfig::register_reload_handler(ReloadResourceTuner* rrt) { delete rrt; }
 }
 
 TEST_GROUP(rna_module_test)

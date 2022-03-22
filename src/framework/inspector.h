@@ -25,6 +25,9 @@
 // in different ways.  These correspond to Snort 2X preprocessors.
 
 #include <atomic>
+#include <cstring>
+#include <memory>
+#include <vector>
 
 #include "framework/base_api.h"
 #include "main/thread.h"
@@ -58,6 +61,8 @@ struct InspectApi;
 //-------------------------------------------------------------------------
 // api for class
 //-------------------------------------------------------------------------
+
+class ThreadSpecificData;
 
 class SO_PUBLIC Inspector
 {
@@ -164,8 +169,15 @@ public:
     virtual bool can_start_tls() const
     { return false; }
 
+    void allocate_thread_storage();
+    void set_thread_specific_data(void*);
+    void* get_thread_specific_data() const;
+    void copy_thread_storage(Inspector*);
+
+    virtual void install_reload_handler(SnortConfig*)
+    { }
+
 public:
-    static unsigned max_slots;
     static THREAD_LOCAL unsigned slot;
 
 protected:
@@ -174,6 +186,7 @@ protected:
 
 private:
     const InspectApi* api = nullptr;
+    std::shared_ptr<ThreadSpecificData> thread_specific_data;
     std::atomic_uint* ref_count;
     SnortProtocolId snort_protocol_id = 0;
     // FIXIT-E Use std::string to avoid storing a pointer to external std::string buffers

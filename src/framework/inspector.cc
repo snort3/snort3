@@ -27,6 +27,19 @@
 #include "protocols/packet.h"
 #include "stream/stream_splitter.h"
 
+namespace snort
+{
+class ThreadSpecificData
+{
+public:
+    explicit ThreadSpecificData(unsigned max)
+    { data.resize(max); }
+    ~ThreadSpecificData() = default;
+
+    std::vector<void*> data;
+};
+}
+
 using namespace snort;
 
 //-------------------------------------------------------------------------
@@ -34,14 +47,11 @@ using namespace snort;
 //-------------------------------------------------------------------------
 
 unsigned THREAD_LOCAL Inspector::slot = 0;
-unsigned Inspector::max_slots = 1;
 
 Inspector::Inspector()
 {
     unsigned max = ThreadConfig::get_instance_max();
-    assert(slot < max);
     ref_count = new std::atomic_uint[max];
-
     for ( unsigned i = 0; i < max; ++i )
         ref_count[i] = 0;
 }
@@ -124,6 +134,25 @@ void Inspector::add_global_ref()
 
 void Inspector::rem_global_ref()
 { --ref_count[0]; }
+
+void Inspector::allocate_thread_storage()
+{
+    if (!thread_specific_data.use_count())
+        thread_specific_data = std::make_shared<ThreadSpecificData>(ThreadConfig::get_instance_max());
+}
+
+void Inspector::copy_thread_storage(Inspector* ins)
+{
+    assert(!thread_specific_data.use_count());
+    if (ins->thread_specific_data.use_count())
+        thread_specific_data = ins->thread_specific_data;
+}
+
+void Inspector::set_thread_specific_data(void* tsd)
+{ thread_specific_data->data[slot] = tsd; }
+
+void* Inspector::get_thread_specific_data() const
+{ return thread_specific_data->data[slot]; }
 
 static const char* InspectorTypeNames[IT_MAX] =
 {

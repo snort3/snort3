@@ -86,7 +86,7 @@ RnaInspector::~RnaInspector()
     }
 }
 
-bool RnaInspector::configure(SnortConfig* sc)
+bool RnaInspector::configure(SnortConfig*)
 {
     DataBus::subscribe_network( APPID_EVENT_ANY_CHANGE, new RnaAppidEventHandler(*pnd) );
     DataBus::subscribe_network( DHCP_INFO_EVENT, new RnaDHCPInfoEventHandler(*pnd) );
@@ -110,12 +110,11 @@ bool RnaInspector::configure(SnortConfig* sc)
     if (rna_conf && rna_conf->log_when_idle)
         DataBus::subscribe_network( THREAD_IDLE_EVENT, new RnaIdleEventHandler(*pnd) );
 
-    // tinit is not called during reload, so pass processor pointers to threads via reload tuner
-    if ( Snort::is_reloading() && InspectorManager::get_inspector(RNA_NAME, true) )
-        sc->register_reload_resource_tuner(new FpProcReloadTuner(*mod_conf));
-
     return true;
 }
+
+void RnaInspector::install_reload_handler(SnortConfig* sc)
+{ sc->register_reload_handler(new FpProcReloadTuner(*mod_conf)); }
 
 void RnaInspector::eval(Packet* p)
 {

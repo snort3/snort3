@@ -19,21 +19,49 @@
 #ifndef REPUTATION_INSPECT_H
 #define REPUTATION_INSPECT_H
 
-#include "flow/flow.h"
+#include "framework/inspector.h"
 
 #include "reputation_module.h"
+
+class ReputationData
+{
+public:
+    ReputationData() = default;
+    ~ReputationData();
+
+    ListFiles list_files;
+    uint8_t* reputation_segment = nullptr;
+    table_flat_t* ip_list = nullptr;
+    int num_entries = 0;
+    bool memcap_reached = false;
+};
 
 class Reputation : public snort::Inspector
 {
 public:
-    Reputation(ReputationConfig*);
+    explicit Reputation(ReputationConfig*);
+    ~Reputation() override;
+
+    void tinit() override;
+    void tterm() override;
 
     void show(const snort::SnortConfig*) const override;
     void eval(snort::Packet*) override;
     bool configure(snort::SnortConfig*) override;
+    void install_reload_handler(snort::SnortConfig*) override;
+
+    ReputationData& get_data()
+    { return *rep_data; }
+    const ReputationConfig& get_config()
+    { return config; }
+    ReputationData* load_data();
+
+    void swap_thread_data(ReputationData*);
+    void swap_data(ReputationData*);
 
 private:
     ReputationConfig config;
+    ReputationData* rep_data;
 };
 
 #endif

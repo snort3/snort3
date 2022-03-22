@@ -116,6 +116,9 @@ eth_t* eth_close(eth_t*) { return nullptr; }
 ssize_t eth_send(eth_t*, const void*, size_t) { return -1; }
 void HostAttributesManager::initialize() { }
 
+void select_default_policy(const _daq_pkt_hdr&, const snort::SnortConfig*) { }
+void select_default_policy(const _daq_flow_stats&, const snort::SnortConfig*) { }
+
 namespace snort
 {
 static struct timeval s_packet_time = { 0, 0 };
@@ -167,6 +170,7 @@ void DetectionEngine::clear_replacement() { }
 void DetectionEngine::disable_all(Packet*) { }
 unsigned get_instance_id() { return 0; }
 const SnortConfig* SnortConfig::get_conf() { return nullptr; }
+void SnortConfig::update_thread_reload_id() { }
 void PacketTracer::thread_init() { }
 void PacketTracer::thread_term() { }
 void PacketTracer::log(const char*, ...) { }
@@ -203,6 +207,7 @@ void InspectorManager::thread_stop(const SnortConfig*) { }
 void InspectorManager::thread_reinit(const SnortConfig*) { }
 void InspectorManager::thread_stop_removed(const SnortConfig*) { }
 void ModuleManager::accumulate() { }
+void ModuleManager::accumulate_module(const char*) { }
 void Stream::handle_timeouts(bool) { }
 void Stream::purge_flows() { }
 bool Stream::set_packet_action_to_hold(Packet*) { return false; }
@@ -215,4 +220,9 @@ InspectionPolicy* get_inspection_policy() { return nullptr; }
 Flow::Flow() = default;
 Flow::~Flow() = default;
 void ThreadConfig::implement_thread_affinity(SThreadType, unsigned) { }
+}
+
+namespace memory
+{
+void MemoryCap::free_space() { }
 }

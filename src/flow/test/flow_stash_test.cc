@@ -111,7 +111,7 @@ void DataBus::_subscribe(const char* key, DataHandler* h)
 
 void DataBus::_unsubscribe(const char*, DataHandler*) {}
 
-void DataBus::_publish(const char* key, DataEvent& e, Flow* f)
+void DataBus::_publish(const char* key, DataEvent& e, Flow* f) const
 {
     auto v = map.find(key);
 

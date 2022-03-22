@@ -46,6 +46,7 @@ public:
     ~RnaInspector() override;
 
     bool configure(snort::SnortConfig*) override;
+    void install_reload_handler(snort::SnortConfig*) override;
     void eval(snort::Packet*) override;
     void show(const snort::SnortConfig*) const override;
     void tinit() override;

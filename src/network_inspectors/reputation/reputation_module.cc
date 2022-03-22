@@ -29,6 +29,8 @@
 #include "log/messages.h"
 #include "utils/util.h"
 
+#include "reputation_commands.h"
+#include "reputation_inspect.h"
 #include "reputation_parse.h"
 
 using namespace snort;
@@ -109,6 +111,9 @@ ReputationModule::~ReputationModule()
 const RuleMap* ReputationModule::get_rules() const
 { return reputation_rules; }
 
+const Command* ReputationModule::get_commands() const
+{ return reputation_cmds; }
+
 const PegInfo* ReputationModule::get_pegs() const
 { return reputation_peg_names; }
 
@@ -175,3 +180,7 @@ bool ReputationModule::end(const char*, int, SnortConfig*)
 
     return true;
 }
+
+void ReputationReloadSwapper::tswap()
+{ inspector.set_thread_specific_data(&inspector.get_data()); }
+

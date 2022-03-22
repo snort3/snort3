@@ -22,7 +22,7 @@
 #define RNA_MODULE_H
 
 #include "framework/module.h"
-#include "main/snort_config.h"
+#include "main/reload_tuner.h"
 #include "main/snort_debug.h"
 #include "profiler/profiler.h"
 
@@ -30,6 +30,11 @@
 #include "rna_fingerprint.h"
 #include "rna_mac_cache.h"
 #include "rna_name.h"
+
+namespace snort
+{
+struct SnortConfig;
+}
 
 struct RnaStats
 {

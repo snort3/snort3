@@ -36,6 +36,9 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
+#include "reputation_config.h"
+#include "reputation_inspect.h"
+
 using namespace snort;
 using namespace std;
 
@@ -76,19 +79,6 @@ unsigned long total_invalids;
 
 int totalNumEntries = 0;
 
-static void load_list_file(ListFile*, ReputationConfig* config);
-
-ReputationConfig::~ReputationConfig()
-{
-    if (reputation_segment != nullptr)
-        snort_free(reputation_segment);
-
-    for (auto& file : list_files)
-    {
-        delete file;
-    }
-}
-
 static uint32_t estimate_size(uint32_t num_entries, uint32_t memcap)
 {
     uint64_t size;
@@ -112,49 +102,6 @@ static uint32_t estimate_size(uint32_t num_entries, uint32_t memcap)
     }
 
     return (uint32_t)size;
-}
-
-void ip_list_init(uint32_t max_entries, ReputationConfig* config)
-{
-    if ( !config->ip_list )
-    {
-        uint32_t mem_size;
-        mem_size = estimate_size(max_entries, config->memcap);
-        config->reputation_segment = (uint8_t*)snort_alloc(mem_size);
-
-        segment_meminit(config->reputation_segment, mem_size);
-
-        /*DIR_16x7_4x4 for performance, but memory usage is high
-         *Use  DIR_8x16 worst case IPV4 5K, IPV6 15K (bytes)
-         *Use  DIR_16x7_4x4 worst case IPV4 500, IPV6 2.5M
-         */
-        config->ip_list = sfrt_flat_new(DIR_8x16, IPv6, max_entries, config->memcap);
-
-        if ( !config->ip_list )
-        {
-            ErrorMessage("Failed to create IP list.\n");
-            return;
-        }
-
-        total_duplicates = 0;
-        for (size_t i = 0; i < config->list_files.size(); i++)
-        {
-            config->list_files[i]->list_index = (uint8_t)i + 1;
-            if (config->list_files[i]->file_type == ALLOW_LIST)
-            {
-                if (config->allow_action == DO_NOT_BLOCK)
-                    config->list_files[i]->list_type = TRUSTED_DO_NOT_BLOCK;
-                else
-                    config->list_files[i]->list_type = TRUSTED;
-            }
-            else if (config->list_files[i]->file_type == BLOCK_LIST)
-                config->list_files[i]->list_type = BLOCKED;
-            else if (config->list_files[i]->file_type == MONITOR_LIST)
-                config->list_files[i]->list_type = MONITORED;
-
-            load_list_file(config->list_files[i], config);
-        }
-    }
 }
 
 static inline IPrepInfo* get_last_index(IPrepInfo* rep_info, uint8_t* base, int* last_index)
@@ -311,51 +258,39 @@ static int64_t update_entry_info(INFO* current, INFO new_entry, SaveDest save_de
     return bytes_allocated;
 }
 
-static int add_ip(SfCidr* ip_addr,INFO info_ptr, ReputationConfig* config)
+static int add_ip(SfCidr* ip_addr,INFO info_ptr, const ReputationConfig& config,
+    ReputationData& data)
 {
-    int ret;
-    int final_ret = IP_INSERT_SUCCESS;
     /*This variable is used to check whether a more generic address
      * overrides specific address
      */
     uint32_t usage_before;
     uint32_t usage_after;
 
-    usage_before =  sfrt_flat_usage(config->ip_list);
+    usage_before =  sfrt_flat_usage(data.ip_list);
 
+    int final_ret = IP_INSERT_SUCCESS;
     /*Check whether the same or more generic address is already in the table*/
-    if (nullptr != sfrt_flat_lookup(ip_addr->get_addr(), config->ip_list))
-    {
+    if (nullptr != sfrt_flat_lookup(ip_addr->get_addr(), data.ip_list))
         final_ret = IP_INSERT_DUPLICATE;
-    }
 
-    ret = sfrt_flat_insert(ip_addr, (unsigned char)ip_addr->get_bits(), info_ptr, RT_FAVOR_ALL,
-        config->ip_list, &update_entry_info);
+    int ret = sfrt_flat_insert(ip_addr, (unsigned char)ip_addr->get_bits(), info_ptr, RT_FAVOR_ALL,
+        data.ip_list, &update_entry_info);
 
     if (RT_SUCCESS == ret)
-    {
         totalNumEntries++;
-    }
     else if (MEM_ALLOC_FAILURE == ret)
-    {
         final_ret = IP_MEM_ALLOC_FAILURE;
-    }
     else
-    {
         final_ret = IP_INSERT_FAILURE;
-    }
 
-    usage_after = sfrt_flat_usage(config->ip_list);
+    usage_after = sfrt_flat_usage(data.ip_list);
     /*Compare in the same scale*/
-    if (usage_after  > (config->memcap << 20))
-    {
+    if (usage_after > (config.memcap << 20))
         final_ret = IP_MEM_ALLOC_FAILURE;
-    }
     /*Check whether there a more specific address will be overridden*/
     if (usage_before > usage_after )
-    {
         final_ret = IP_INSERT_DUPLICATE;
-    }
 
     return final_ret;
 }
@@ -499,7 +434,8 @@ static int snort_pton(char const* src, SfCidr* dest)
     return 1;
 }
 
-static int process_line(char* line, INFO info, ReputationConfig* config)
+static int process_line(char* line, INFO info, const ReputationConfig& config,
+    ReputationData& data)
 {
     SfCidr address;
 
@@ -509,7 +445,7 @@ static int process_line(char* line, INFO info, ReputationConfig* config)
     if ( snort_pton(line, &address) < 1 )
         return IP_INVALID;
 
-    return add_ip(&address, info, config);
+    return add_ip(&address, info, config, data);
 }
 
 static int update_path_to_file(char* full_filename, unsigned int max_size, const char* filename)
@@ -571,7 +507,8 @@ static char* get_list_type_name(ListFile* list_info)
     }
 }
 
-static void load_list_file(ListFile* list_info, ReputationConfig* config)
+static void load_list_file(ListFile* list_info, const ReputationConfig& config,
+    ReputationData& data)
 {
     char linebuf[MAX_ADDR_LINE_LENGTH];
     char full_path_filename[PATH_MAX+1];
@@ -589,7 +526,7 @@ static void load_list_file(ListFile* list_info, ReputationConfig* config)
     unsigned int fail_count = 0;   /*number of invalid entries in this file*/
     unsigned int num_loaded_before = 0;     /*number of valid entries loaded */
 
-    if (config->memcap_reached)
+    if (data.memcap_reached)
         return;
 
     update_path_to_file(full_path_filename, PATH_MAX, list_info->file_name.c_str());
@@ -602,10 +539,8 @@ static void load_list_file(ListFile* list_info, ReputationConfig* config)
     /*convert list info to ip entry info*/
     ip_info_ptr = segment_snort_calloc(1,sizeof(IPrepInfo));
     if (!(ip_info_ptr))
-    {
         return;
-    }
-    base = (uint8_t*)config->ip_list;
+    base = (uint8_t*)data.ip_list;
     ip_info = ((IPrepInfo*)&base[ip_info_ptr]);
     ip_info->list_indexes[0] = list_info->list_index;
 
@@ -618,7 +553,7 @@ static void load_list_file(ListFile* list_info, ReputationConfig* config)
         return;
     }
 
-    num_loaded_before = sfrt_flat_num_entries(config->ip_list);
+    num_loaded_before = sfrt_flat_num_entries(data.ip_list);
     while ( fgets(linebuf, MAX_ADDR_LINE_LENGTH, fp) )
     {
         int ret;
@@ -633,7 +568,7 @@ static void load_list_file(ListFile* list_info, ReputationConfig* config)
             *cmt = '\0';
 
         /* process the line */
-        ret = process_line(linebuf, ip_info_ptr, config);
+        ret = process_line(linebuf, ip_info_ptr, config, data);
 
         if (IP_INSERT_SUCCESS == ret)
         {
@@ -655,9 +590,9 @@ static void load_list_file(ListFile* list_info, ReputationConfig* config)
         {
             ErrorMessage(
                 "WARNING: %s(%d) => Memcap %u Mbytes reached when inserting IP Address: %s\n",
-                full_path_filename, addrline, config->memcap,linebuf);
+                full_path_filename, addrline, config.memcap,linebuf);
 
-            config->memcap_reached = true;
+            data.memcap_reached = true;
             break;
         }
     }
@@ -673,10 +608,53 @@ static void load_list_file(ListFile* list_info, ReputationConfig* config)
         ErrorMessage("    Additional duplicate addresses were not listed.\n");
 
     LogMessage("    Reputation entries loaded: %u, invalid: %u, re-defined: %u (from file %s)\n",
-        sfrt_flat_num_entries(config->ip_list) - num_loaded_before,
+        sfrt_flat_num_entries(data.ip_list) - num_loaded_before,
         invalid_count, duplicate_count, full_path_filename);
 
     fclose(fp);
+}
+
+void ip_list_init(uint32_t max_entries, const ReputationConfig& config, ReputationData& data)
+{
+    if ( !data.ip_list )
+    {
+        uint32_t mem_size;
+        mem_size = estimate_size(max_entries, config.memcap);
+        data.reputation_segment = (uint8_t*)snort_alloc(mem_size);
+
+        segment_meminit(data.reputation_segment, mem_size);
+
+        /*DIR_16x7_4x4 for performance, but memory usage is high
+         *Use  DIR_8x16 worst case IPV4 5K, IPV6 15K (bytes)
+         *Use  DIR_16x7_4x4 worst case IPV4 500, IPV6 2.5M
+         */
+        data.ip_list = sfrt_flat_new(DIR_8x16, IPv6, max_entries, config.memcap);
+
+        if ( !data.ip_list )
+        {
+            ErrorMessage("Failed to create IP list.\n");
+            return;
+        }
+
+        total_duplicates = 0;
+        for (size_t i = 0; i < data.list_files.size(); i++)
+        {
+            data.list_files[i]->list_index = (uint8_t)i + 1;
+            if (data.list_files[i]->file_type == ALLOW_LIST)
+            {
+                if (config.allow_action == DO_NOT_BLOCK)
+                    data.list_files[i]->list_type = TRUSTED_DO_NOT_BLOCK;
+                else
+                    data.list_files[i]->list_type = TRUSTED;
+            }
+            else if (data.list_files[i]->file_type == BLOCK_LIST)
+                data.list_files[i]->list_type = BLOCKED;
+            else if (data.list_files[i]->file_type == MONITOR_LIST)
+                data.list_files[i]->list_type = MONITORED;
+
+            load_list_file(data.list_files[i], config, data);
+        }
+    }
 }
 
 static int num_lines_in_file(char* fname)
@@ -735,37 +713,33 @@ static int load_file(int total_lines, const char* path)
     return num_lines;
 }
 
-void estimate_num_entries(ReputationConfig* config)
+void estimate_num_entries(ReputationData& data)
 {
-    int total_lines = 0;
+    data.num_entries = 0;
 
-    for (auto& file : config->list_files)
-    {
-        total_lines += load_file(total_lines, file->file_name.c_str());
-    }
-
-    config->num_entries = total_lines;
+    for (auto& file : data.list_files)
+        data.num_entries += load_file(data.num_entries, file->file_name.c_str());
 }
 
-void add_block_allow_List(ReputationConfig* config)
+void add_block_allow_List(const ReputationConfig& config, ReputationData& data)
 {
-    if (config->blocklist_path.size())
+    if (config.blocklist_path.size())
     {
         ListFile* listItem = new ListFile;
         listItem->all_intfs_enabled = true;
-        listItem->file_name = config->blocklist_path;
+        listItem->file_name = config.blocklist_path;
         listItem->file_type = BLOCK_LIST;
         listItem->list_id = 0;
-        config->list_files.emplace_back(listItem);
+        data.list_files.emplace_back(listItem);
     }
-    if (config->allowlist_path.size())
+    if (config.allowlist_path.size())
     {
         ListFile* listItem = new ListFile;
         listItem->all_intfs_enabled = true;
-        listItem->file_name = config->allowlist_path;
+        listItem->file_name = config.allowlist_path;
         listItem->file_type = ALLOW_LIST;
         listItem->list_id = 0;
-        config->list_files.emplace_back(listItem);
+        data.list_files.emplace_back(listItem);
     }
 }
 
@@ -828,7 +802,7 @@ static int get_file_type(char* type_name)
 //If no interface information provided, this means all interfaces are applied.
 
 static bool process_line_in_manifest(ListFile* list_item, const char* manifest, const char* line,
-    int line_number, ReputationConfig* config)
+    int line_number, const ReputationConfig& config, ReputationData& data)
 {
     char* token;
     int token_index = 0;
@@ -846,7 +820,7 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
         switch (token_index)
         {
         case 0:    // File name
-            list_item->file_name = config->list_dir + '/' + token;
+            list_item->file_name = config.list_dir + '/' + token;
             break;
 
         case 1:    // List ID
@@ -925,17 +899,14 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
         list_item->all_intfs_enabled = true;
     }
 
-    config->list_files.emplace_back(list_item);
+    data.list_files.emplace_back(list_item);
     return true;
 }
 
-int read_manifest(const char* manifest_file, ReputationConfig* config)
+void read_manifest(const char* manifest_file, const ReputationConfig& config, ReputationData& data)
 {
-    int line_number = 0;
-    std::string line;
     char full_path_dir[PATH_MAX+1];
-
-    update_path_to_file(full_path_dir, PATH_MAX, config->list_dir.c_str());
+    update_path_to_file(full_path_dir, PATH_MAX, config.list_dir.c_str());
     std::string manifest_full_path = std::string(full_path_dir) + '/' + manifest_file;
 
     std::fstream fs;
@@ -944,9 +915,11 @@ int read_manifest(const char* manifest_file, ReputationConfig* config)
     if (!fs.good())
     {
         ErrorMessage("Can't open file: %s\n", manifest_full_path.c_str());
-        return -1;
+        return;
     }
 
+    int line_number = 0;
+    std::string line;
     while (std::getline(fs, line))
     {
         line_number++;
@@ -958,12 +931,11 @@ int read_manifest(const char* manifest_file, ReputationConfig* config)
 
         //Processing the line
         ListFile* list_item = new ListFile;
-        if (!process_line_in_manifest(list_item, manifest_file, line.c_str(), line_number, config))
+        if (!process_line_in_manifest(
+                list_item, manifest_file, line.c_str(), line_number, config, data))
             delete list_item;
     }
 
     fs.close();
-
-    return 0;
 }
 

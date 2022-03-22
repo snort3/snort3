@@ -54,6 +54,8 @@ private:
     AppIdContext* ctxt = nullptr;
 };
 
+extern const snort::InspectApi appid_inspector_api;
+
 extern THREAD_LOCAL OdpThreadContext* odp_thread_local_ctxt;
 extern THREAD_LOCAL OdpContext* pkt_thread_odp_ctxt;
 extern THREAD_LOCAL ThirdPartyAppIdContext* pkt_thread_tp_appid_ctxt;

@@ -34,11 +34,12 @@ public:
     ACShellCmd() = delete;
     ACShellCmd(ControlConn*, snort::AnalyzerCommand*);
     bool execute(Analyzer&, void**) override;
+    bool need_update_reload_id() const override
+    { return ac->need_update_reload_id(); }
     const char* stringify() override { return ac->stringify(); }
     ~ACShellCmd() override;
 
 private:
-    ControlConn* ctrlcon;
     snort::AnalyzerCommand* ac;
 };
 

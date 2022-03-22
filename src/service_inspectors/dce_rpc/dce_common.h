@@ -22,6 +22,8 @@
 #define DCE_COMMON_H
 
 #include <cassert>
+#include <memory>
+#include <string>
 
 #include "detection/detection_engine.h"
 #include "framework/counts.h"
@@ -41,6 +43,7 @@ extern THREAD_LOCAL int dce2_detected;
 
 #define GID_DCE2 133
 #define DCE_RPC_SERVICE_NAME "dcerpc"
+extern std::shared_ptr<std::string> dce_rpc_service_name;
 
 enum DCE2_Policy
 {

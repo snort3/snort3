@@ -33,6 +33,7 @@ struct BindStats
 {
     PegCount raw_packets;
     PegCount new_flows;
+    PegCount rebinds;
     PegCount service_changes;
     PegCount assistant_inspectors;
     PegCount new_standby_flows;

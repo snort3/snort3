@@ -20,6 +20,9 @@
 #ifndef OPPORTUNISTIC_TLS_EVENT_H
 #define OPPORTUNISTIC_TLS_EVENT_H
 
+#include <memory>
+#include <string>
+
 #include "framework/data_bus.h"
 
 // An opportunistic SSL/TLS session will start from next packet
@@ -31,18 +34,18 @@ namespace snort
 class SO_PUBLIC OpportunisticTlsEvent : public snort::DataEvent
 {
 public:
-    OpportunisticTlsEvent(const snort::Packet* p, const char* service) :
+    OpportunisticTlsEvent(const snort::Packet* p, std::shared_ptr<std::string> service) :
         pkt(p), next_service(service) { }
 
     const snort::Packet* get_packet() override
     { return pkt; }
 
-    const char* get_next_service()
+    std::shared_ptr<std::string> get_next_service()
     { return next_service; }
 
 private:
     const snort::Packet* pkt;
-    const char* next_service = nullptr;
+    std::shared_ptr<std::string> next_service;
 };
 
 }

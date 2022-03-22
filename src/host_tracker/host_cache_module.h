@@ -25,7 +25,7 @@
 
 #include "framework/module.h"
 #include "main/snort.h"
-#include "main/snort_config.h"
+#include "main/reload_tuner.h"
 
 #include "host_cache.h"
 

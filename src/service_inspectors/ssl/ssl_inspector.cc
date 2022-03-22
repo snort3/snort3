@@ -25,6 +25,9 @@
 
 #include "ssl_inspector.h"
 
+#include <memory>
+#include <string>
+
 #include "detection/detect.h"
 #include "detection/detection_engine.h"
 #include "events/event_queue.h"
@@ -400,6 +403,7 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
 // class stuff
 //-------------------------------------------------------------------------
 static const char* s_name = "ssl";
+static std::shared_ptr<std::string> shared_s_name = std::make_shared<std::string>(s_name);
 
 class Ssl : public Inspector
 {
@@ -448,7 +452,7 @@ public:
             pkt->flow->flags.trigger_finalize_event = fd->finalize_info.orig_flag;
             fd->finalize_info.switch_in = false;
             pkt->flow->set_proxied();
-            pkt->flow->set_service(const_cast<Packet*>(pkt), s_name);
+            pkt->flow->set_service(const_cast<Packet*>(pkt), shared_s_name);
         }
     }
 };

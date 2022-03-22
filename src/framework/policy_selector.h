@@ -29,6 +29,7 @@
 #include "framework/counts.h"
 #include "main/snort_types.h"
 
+struct _daq_flow_stats;
 struct _daq_pkt_hdr;
 
 namespace snort
@@ -81,7 +82,8 @@ public:
     }
     const PolicySelectorApi* get_api() const
     { return api; }
-    virtual bool select_default_policies(const _daq_pkt_hdr*, const SnortConfig*) = 0;
+    virtual bool select_default_policies(const _daq_pkt_hdr&, const SnortConfig*) = 0;
+    virtual bool select_default_policies(const _daq_flow_stats&, const SnortConfig*) = 0;
     virtual void show() const = 0;
 
 protected:

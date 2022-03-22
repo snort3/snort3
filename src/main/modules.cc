@@ -1053,7 +1053,6 @@ class NetworkModule : public Module
 public:
     NetworkModule() : Module("network", network_help, network_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
 
     Usage get_usage() const override
     { return CONTEXT; }
@@ -1087,16 +1086,6 @@ bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
     else if (v.is("max_ip_layers"))
         sc->max_ip_layers = v.get_uint8();
 
-    return true;
-}
-
-bool NetworkModule::end(const char*, int idx, SnortConfig* sc)
-{
-    if (!idx)
-    {
-        NetworkPolicy* p = get_network_policy();
-        sc->policy_map->set_user_network(p);
-    }
     return true;
 }
 
@@ -1177,10 +1166,12 @@ bool InspectionModule::set(const char*, Value& v, SnortConfig* sc)
     return true;
 }
 
-bool InspectionModule::end(const char*, int, SnortConfig* sc)
+bool InspectionModule::end(const char*, int, SnortConfig*)
 {
     InspectionPolicy* p = get_inspection_policy();
-    sc->policy_map->set_user_inspection(p);
+    NetworkPolicy* np = get_network_parse_policy();
+    assert(np);
+    np->set_user_inspection(p);
     return true;
 }
 

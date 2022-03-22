@@ -343,8 +343,8 @@ static void ff_server_pkts(const Args& a)
 static void ff_service(const Args& a)
 {
     const char* svc = "unknown";
-    if ( a.pkt->flow and a.pkt->flow->service )
-        svc = a.pkt->flow->service;
+    if ( a.pkt->flow and a.pkt->flow->has_service() )
+        svc = a.pkt->flow->service->c_str();
     TextLog_Puts(csv_log, svc);
 }
 

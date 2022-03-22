@@ -68,7 +68,7 @@ void DceHttpProxy::clear(Packet* p)
             if ( c2s_splitter->cutover_inspector() && s2c_splitter->cutover_inspector() )
             {
                 dce_http_proxy_stats.http_proxy_sessions++;
-                flow->set_service(p, DCE_RPC_SERVICE_NAME);
+                flow->set_service(p, dce_rpc_service_name);
             }
             else
                 dce_http_proxy_stats.http_proxy_session_failures++;

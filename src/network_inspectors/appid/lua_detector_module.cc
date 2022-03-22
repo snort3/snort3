@@ -202,7 +202,8 @@ LuaDetectorManager::~LuaDetectorManager()
     cb_detectors.clear(); // do not free Lua objects in cb_detectors
 }
 
-void LuaDetectorManager::initialize(AppIdContext& ctxt, bool is_control, bool reload)
+void LuaDetectorManager::initialize(const SnortConfig* sc, AppIdContext& ctxt, bool is_control,
+    bool reload)
 {
     LuaDetectorManager* lua_detector_mgr = new LuaDetectorManager(ctxt, is_control);
     odp_thread_local_ctxt->set_lua_detector_mgr(*lua_detector_mgr);
@@ -226,17 +227,17 @@ void LuaDetectorManager::initialize(AppIdContext& ctxt, bool is_control, bool re
     }
 
     lua_detector_mgr->initialize_lua_detectors(is_control, reload);
-    lua_detector_mgr->activate_lua_detectors();
+    lua_detector_mgr->activate_lua_detectors(sc);
 
     if (ctxt.config.list_odp_detectors)
         lua_detector_mgr->list_lua_detectors();
 }
 
-void LuaDetectorManager::init_thread_manager(const AppIdContext& ctxt)
+void LuaDetectorManager::init_thread_manager(const SnortConfig* sc, const AppIdContext& ctxt)
 {
     LuaDetectorManager* lua_detector_mgr = lua_detector_mgr_list[get_instance_id()];
     odp_thread_local_ctxt->set_lua_detector_mgr(*lua_detector_mgr);
-    lua_detector_mgr->activate_lua_detectors();
+    lua_detector_mgr->activate_lua_detectors(sc);
     if (ctxt.config.list_odp_detectors)
         lua_detector_mgr->list_lua_detectors();
 }
@@ -582,7 +583,7 @@ void LuaDetectorManager::initialize_lua_detectors(bool is_control, bool reload)
     load_lua_detectors(path, true, is_control, reload);
 }
 
-void LuaDetectorManager::activate_lua_detectors()
+void LuaDetectorManager::activate_lua_detectors(const SnortConfig* sc)
 {
     uint32_t lua_tracker_size = compute_lua_tracker_size(MAX_MEMORY_FOR_LUA_DETECTORS,
         allocated_objects.size());
@@ -616,6 +617,9 @@ void LuaDetectorManager::activate_lua_detectors()
 
         /*second parameter is a table containing configuration stuff. */
         lua_newtable(L);
+        const SnortConfig** sc_ud = static_cast<const SnortConfig**>(lua_newuserdata(L, sizeof(const SnortConfig*)));
+        *(sc_ud) = sc;
+        lua_setglobal(L, LUA_STATE_GLOBAL_SC_ID);
         if (lua_pcall(L, 2, 1, 0))
         {
             if (init(L))
@@ -627,6 +631,7 @@ void LuaDetectorManager::activate_lua_detectors()
             lo = allocated_objects.erase(lo);
             continue;
         }
+        *(sc_ud) = nullptr;
 
         lua_getfield(L, LUA_REGISTRYINDEX, lsd->package_info.name.c_str());
         set_lua_tracker_size(L, lua_tracker_size);

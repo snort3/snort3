@@ -50,6 +50,9 @@ static ScratchAllocator* scratcher = nullptr;
 
 static unsigned s_parse_errors = 0;
 
+DataBus::DataBus() = default;
+DataBus::~DataBus() = default;
+
 SnortConfig::SnortConfig(const SnortConfig* const, const char*)
 {
     state = &s_state;

@@ -26,6 +26,7 @@
 #include <map>
 
 #include "framework/inspector.h"
+#include "framework/module.h"
 
 class Binder;
 class SingleInstanceInspectorPolicy;
@@ -49,6 +50,8 @@ public:
     static void dump_plugins();
     static void dump_buffers();
     static void release_plugins();
+
+    static void global_init();
 
     static std::vector<const InspectApi*> get_apis();
     static const char* get_inspector_type(const char* name);
@@ -78,6 +81,8 @@ public:
     SO_PUBLIC static Inspector* get_file_inspector(const SnortConfig* = nullptr);
     SO_PUBLIC static Inspector* get_inspector(
         const char* key, bool dflt_only = false, const SnortConfig* = nullptr);
+    SO_PUBLIC static Inspector* get_inspector(const char* key, Module::Usage, InspectorType,
+        const SnortConfig* = nullptr);
 
     static Inspector* get_service_inspector_by_service(const char*);
     static Inspector* get_service_inspector_by_id(const SnortProtocolId);
@@ -85,10 +90,10 @@ public:
     SO_PUBLIC static Binder* get_binder();
 
     SO_PUBLIC static Inspector* acquire_file_inspector();
-    SO_PUBLIC static Inspector* acquire(const char* key, bool dflt_only = false);
     SO_PUBLIC static void release(Inspector*);
 
     static bool configure(SnortConfig*, bool cloned = false);
+    static void prepare_inspectors(SnortConfig*);
     static void prepare_controls(SnortConfig*);
     static std::string generate_inspector_label(const PHInstance*);
     static void print_config(SnortConfig*);
@@ -105,7 +110,7 @@ public:
 
     static void clear(Packet*);
     static void empty_trash();
-    static void tear_down_removed_inspectors(const SnortConfig*, SnortConfig*);
+    static void reconcile_inspectors(const SnortConfig*, SnortConfig*, bool cloned = false);
     static void clear_removed_inspectors(SnortConfig*);
 
 #ifdef PIGLET

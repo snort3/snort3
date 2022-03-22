@@ -29,6 +29,11 @@
 #include "sfip/sf_ip.h"
 #include "utils/cpp_macros.h"
 
+namespace snort
+{
+    struct SnortConfig;
+}
+
 class OdpContext;
 
 PADDING_GUARD_BEGIN
@@ -64,7 +69,8 @@ class HostPortCache
 {
 public:
     HostPortVal* find(const snort::SfIp*, uint16_t port, IpProtocol, const OdpContext&);
-    bool add(const snort::SfIp*, uint16_t port, IpProtocol, unsigned type, AppId);
+    bool add(const snort::SnortConfig*, const snort::SfIp*, uint16_t port, IpProtocol,
+        unsigned type, AppId);
     void dump();
 
     ~HostPortCache()
