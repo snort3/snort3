@@ -67,7 +67,7 @@ bool JSTokenizerTester::is_unescape_nesting_seen() const
     return normalizer.is_unescape_nesting_seen();
 }
 
-void test_scope(const char* context, std::list<JSProgramScopeType> stack)
+void test_scope(const char* context, const std::list<JSProgramScopeType>& stack)
 {
     std::string buf(context);
     buf += "</script>";
@@ -96,6 +96,17 @@ void test_normalization_bad(const char* source, const char* expected, JSTokenize
     CHECK(result_buf == expected);
 }
 
+void test_normalization_mixed_encoding(const char* source, const char* expected)
+{
+    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids);
+    JSNormalizer normalizer(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth);
+    auto ret = normalizer.normalize(source, strlen(source));
+    std::string result_buf(normalizer.get_script(), normalizer.script_size());
+    CHECK(ret == JSTokenizer::JSRet::SCRIPT_CONTINUE);
+    CHECK(normalizer.is_mixed_encoding_seen());
+    CHECK(result_buf == expected);
+}
+
 void test_normalization(const std::vector<PduCase>& pdus)
 {
     JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids);
@@ -111,7 +122,7 @@ void test_normalization(const std::vector<PduCase>& pdus)
     }
 }
 
-void test_normalization(std::list<ScopedPduCase> pdus)
+void test_normalization(const std::list<ScopedPduCase>& pdus)
 {
     JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids);
     JSNormalizer normalizer(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth);

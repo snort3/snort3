@@ -83,14 +83,15 @@ private:
     snort::JSNormalizer normalizer;
 };
 
-void test_scope(const char* context, std::list<JSProgramScopeType> stack);
+void test_scope(const char* context, const std::list<JSProgramScopeType>& stack);
 void test_normalization(const char* source, const char* expected);
 void test_normalization_bad(const char* source, const char* expected, JSTokenizer::JSRet eret);
+void test_normalization_mixed_encoding(const char* source, const char* expected);
 typedef std::pair<const char*, const char*> PduCase;
 // source, expected for a single PDU
 void test_normalization(const std::vector<PduCase>& pdus);
 typedef std::tuple<const char*,const char*, std::list<JSProgramScopeType>> ScopedPduCase;
 // source, expected, and current scope type stack for a single PDU
-void test_normalization(std::list<ScopedPduCase> pdus);
+void test_normalization(const std::list<ScopedPduCase>& pdus);
 
 #endif // JS_TEST_UTILS_H

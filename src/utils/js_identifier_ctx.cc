@@ -200,7 +200,7 @@ const char* JSIdentifierCtx::alias_lookup(const char* alias) const
 
 // advanced program scope access for testing
 
-#ifdef CATCH_TEST_BUILD
+#if defined(CATCH_TEST_BUILD) || defined(BENCHMARK_TEST)
 
 bool JSIdentifierCtx::scope_check(const std::list<JSProgramScopeType>& compare) const
 {
@@ -226,4 +226,4 @@ const std::list<JSProgramScopeType> JSIdentifierCtx::get_types() const
     return return_list;
 }
 
-#endif // CATCH_TEST_BUILD
+#endif // CATCH_TEST_BUILD || BENCHMARK_TEST

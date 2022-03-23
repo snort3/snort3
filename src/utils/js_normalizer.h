@@ -61,14 +61,17 @@ public:
     bool is_unescape_nesting_seen() const
     { return tokenizer.is_unescape_nesting_seen(); }
 
-#ifdef CATCH_TEST_BUILD
+    bool is_mixed_encoding_seen() const
+    { return tokenizer.is_mixed_encoding_seen(); }
+
+#if defined(CATCH_TEST_BUILD) || defined(BENCHMARK_TEST)
     const char* get_tmp_buf() const
     { return tmp_buf; }
     size_t get_tmp_buf_size() const
     { return tmp_buf_size; }
     const JSTokenizer& get_tokenizer() const
     { return tokenizer; }
-#endif
+#endif // CATCH_TEST_BUILD || BENCHMARK_TEST
 
 #ifdef BENCHMARK_TEST
     void rewind_output()

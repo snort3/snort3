@@ -479,7 +479,7 @@ static const char clamav_buf12[] =
     "var x='test\\u0000test';";
 
 static const char clamav_expected12[] =
-    "var x='test\\u0000test';";
+    "var x='test\u0000test';";
 
 static const char clamav_buf13[] =
     "var x\\s12345";
@@ -491,7 +491,7 @@ static const char clamav_buf14[] =
     "document.write(unescape('test%20test";
 
 static const char clamav_expected14[] =
-    "document.write(unescape('test%20test";
+    "document.write('test test";
 
 TEST_CASE("clamav tests", "[JSNormalizer]")
 {
@@ -2314,8 +2314,8 @@ TEST_CASE("split in string literal", "[JSNormalizer]")
         const char dat1[] = "var str =\"any\\";
         const char dat2[] = "u1234tx\";";
         const char exp1[] = "var str=\"any\\";
-        const char exp2[] = "u1234tx\";";
-        const char exp[] = "var str=\"any\\u1234tx\";";
+        const char exp2[] = "\u1234tx\";";
+        const char exp[] = "var str=\"any\u1234tx\";";
 
         NORMALIZE_2(dat1, dat2, exp1, exp2);
         NORM_COMBINED_2(dat1, dat2, exp);
@@ -2325,8 +2325,8 @@ TEST_CASE("split in string literal", "[JSNormalizer]")
         const char dat1[] = "var str =\"any\\u";
         const char dat2[] = "1234tx\";";
         const char exp1[] = "var str=\"any\\u";
-        const char exp2[] = "1234tx\";";
-        const char exp[] = "var str=\"any\\u1234tx\";";
+        const char exp2[] = "\u1234tx\";";
+        const char exp[] = "var str=\"any\u1234tx\";";
 
         NORMALIZE_2(dat1, dat2, exp1, exp2);
         NORM_COMBINED_2(dat1, dat2, exp);
@@ -4245,32 +4245,33 @@ TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
         SECTION("in arguments")
         {
             tester.test_function_scopes({
-                {"unescape(", "unescape(", {FuncType::NOT_FUNC, FuncType::UNESCAPE}}
+                {"unescape(", "", {FuncType::NOT_FUNC, FuncType::UNESCAPE}}
             });
         }
         SECTION("separated identifier and call")
         {
             tester.test_function_scopes({
-                {"unescape  /*comment*/  (", "unescape(", {FuncType::NOT_FUNC, FuncType::UNESCAPE}}
+                {"unescape  /*comment*/  (", "", {FuncType::NOT_FUNC, FuncType::UNESCAPE}}
             });
         }
         SECTION("complete call")
         {
             tester.test_function_scopes({
-                {"unescape('%62%61%72')", "unescape('%62%61%72')", {FuncType::NOT_FUNC}}
+                {"unescape('%62%61%72')", "'bar'", {FuncType::NOT_FUNC}}
             });
         }
         SECTION("as named function definition")
         {
             tester.test_function_scopes({
-                {"unescape(){", "unescape(){", {FuncType::NOT_FUNC, FuncType::NOT_FUNC}}
+                {"function unescape(){", "function unescape(){",
+                {FuncType::NOT_FUNC, FuncType::NOT_FUNC}}
             });
         }
         SECTION("after assignment substitution")
         {
             tester.test_function_scopes({
-                {"var a = unescape; a(", "var var_0000=unescape;unescape(", {FuncType::NOT_FUNC,
-                                                                             FuncType::UNESCAPE}}
+                {"var a = unescape; a(", "var var_0000=unescape;",
+                {FuncType::NOT_FUNC, FuncType::UNESCAPE}}
             });
         }
         SECTION("literal")
@@ -4282,7 +4283,7 @@ TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
         SECTION("as a template literal substitution")
         {
             tester.test_function_scopes({
-                {"`literal ${unescape(", "`literal ${unescape(",
+                {"`literal ${unescape(", "`literal ${",
                 {FuncType::NOT_FUNC, FuncType::NOT_FUNC, FuncType::UNESCAPE}}
             });
         }
@@ -4292,33 +4293,34 @@ TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
         SECTION("in arguments")
         {
             tester.test_function_scopes({
-                {"decodeURI(", "decodeURI(", {FuncType::NOT_FUNC, FuncType::UNESCAPE}}
+                {"decodeURI(", "", {FuncType::NOT_FUNC, FuncType::UNESCAPE}}
             });
         }
         SECTION("separated identifier and call")
         {
             tester.test_function_scopes({
-                {"decodeURI  /*comment*/  (", "decodeURI(", {FuncType::NOT_FUNC,
-                                                             FuncType::UNESCAPE}}
+                {"decodeURI  /*comment*/  (", "",
+                {FuncType::NOT_FUNC, FuncType::UNESCAPE}}
             });
         }
         SECTION("complete call")
         {
             tester.test_function_scopes({
-                {"decodeURI('%62%61%72')", "decodeURI('%62%61%72')", {FuncType::NOT_FUNC}}
+                {"decodeURI('%62%61%72')", "'bar'", {FuncType::NOT_FUNC}}
             });
         }
         SECTION("as named function definition")
         {
             tester.test_function_scopes({
-                {"decodeURI(){", "decodeURI(){", {FuncType::NOT_FUNC, FuncType::NOT_FUNC}}
+                {"function decodeURI(){", "function decodeURI(){",
+                {FuncType::NOT_FUNC, FuncType::NOT_FUNC}}
             });
         }
         SECTION("after assignment substitution")
         {
             tester.test_function_scopes({
-                {"var a = decodeURI; a(", "var var_0000=decodeURI;decodeURI(", {FuncType::NOT_FUNC,
-                                                                                FuncType::UNESCAPE}}
+                {"var a = decodeURI; a(", "var var_0000=decodeURI;",
+                {FuncType::NOT_FUNC, FuncType::UNESCAPE}}
             });
         }
         SECTION("literal")
@@ -4330,7 +4332,7 @@ TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
         SECTION("as a template literal substitution")
         {
             tester.test_function_scopes({
-                {"`literal ${decodeURI(", "`literal ${decodeURI(",
+                {"`literal ${decodeURI(", "`literal ${",
                 {FuncType::NOT_FUNC, FuncType::NOT_FUNC, FuncType::UNESCAPE}}
             });
         }
@@ -4340,37 +4342,36 @@ TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
         SECTION("in arguments")
         {
             tester.test_function_scopes({
-                {"decodeURIComponent(", "decodeURIComponent(", {FuncType::NOT_FUNC,
-                                                                FuncType::UNESCAPE}}
+                {"decodeURIComponent(", "",
+                {FuncType::NOT_FUNC, FuncType::UNESCAPE}}
             });
         }
         SECTION("separated identifier and call")
         {
             tester.test_function_scopes({
-                {"decodeURIComponent  /*comment*/  (", "decodeURIComponent(", {FuncType::NOT_FUNC,
-                                                                               FuncType::UNESCAPE}}
+                {"decodeURIComponent  /*comment*/  (", "",
+                {FuncType::NOT_FUNC, FuncType::UNESCAPE}}
             });
         }
         SECTION("complete call")
         {
             tester.test_function_scopes({
-                {"decodeURIComponent('%62%61%72')", "decodeURIComponent('%62%61%72')",
+                {"decodeURIComponent('%62%61%72')", "'bar'",
                 {FuncType::NOT_FUNC}}
             });
         }
         SECTION("as named function definition")
         {
             tester.test_function_scopes({
-                {"decodeURIComponent(){", "decodeURIComponent(){", {FuncType::NOT_FUNC,
-                                                                    FuncType::NOT_FUNC}}
+                {"function decodeURIComponent(){", "function decodeURIComponent(){",
+                {FuncType::NOT_FUNC, FuncType::NOT_FUNC}}
             });
         }
         SECTION("after assignment substitution")
         {
             tester.test_function_scopes({
-                {"var a = decodeURIComponent; a(",
-                "var var_0000=decodeURIComponent;decodeURIComponent(", {FuncType::NOT_FUNC,
-                                                                         FuncType::UNESCAPE}}
+                {"var a = decodeURIComponent; a(", "var var_0000=decodeURIComponent;",
+                {FuncType::NOT_FUNC, FuncType::UNESCAPE}}
             });
         }
         SECTION("literal")
@@ -4382,8 +4383,8 @@ TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
         SECTION("as a template literal substitution")
         {
             tester.test_function_scopes({
-                {"`literal ${decodeURIComponent(", "`literal ${decodeURIComponent(",
-                 {FuncType::NOT_FUNC, FuncType::NOT_FUNC, FuncType::UNESCAPE}}
+                {"`literal ${decodeURIComponent(", "`literal ${",
+                {FuncType::NOT_FUNC, FuncType::NOT_FUNC, FuncType::UNESCAPE}}
             });
         }
     }
@@ -4392,35 +4393,35 @@ TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
         SECTION("in arguments")
         {
             tester.test_function_scopes({
-                {"String.fromCharCode(", "String.fromCharCode(",
+                {"String.fromCharCode(", "'",
                 {FuncType::NOT_FUNC, FuncType::CHAR_CODE}}
             });
         }
         SECTION("separated identifier and call")
         {
             tester.test_function_scopes({
-                {"String.fromCharCode  /*comment*/  (", "String.fromCharCode(",
+                {"String.fromCharCode  /*comment*/  (", "'",
                 {FuncType::NOT_FUNC, FuncType::CHAR_CODE}}
             });
         }
         SECTION("complete call")
         {
             tester.test_function_scopes({
-                {"String.fromCharCode( 65, 0x42 )", "String.fromCharCode(65,0x42)",
+                {"String.fromCharCode( 65, 0x42 )", "'AB'",
                 {FuncType::NOT_FUNC}}
             });
         }
         SECTION("as named function definition")
         {
             tester.test_function_scopes({
-                {"String.fromCharCode(){", "String.fromCharCode(){",
+                {"function String.fromCharCode(){", "function String.fromCharCode(){",
                 {FuncType::NOT_FUNC, FuncType::NOT_FUNC}}
             });
         }
         SECTION("after class name assignment substitution")
         {
             tester.test_function_scopes({
-                {"var a = String; a.fromCharCode(", "var var_0000=String;String.fromCharCode(",
+                {"var a = String; a.fromCharCode(", "var var_0000=String;'",
                 {FuncType::NOT_FUNC, FuncType::CHAR_CODE}}
             });
         }
@@ -4428,7 +4429,7 @@ TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
         {
             tester.test_function_scopes({
                 {"var a = String.fromCharCode; a(",
-                "var var_0000=String.fromCharCode;String.fromCharCode(",
+                "var var_0000=String.fromCharCode;'",
                 {FuncType::NOT_FUNC, FuncType::CHAR_CODE}}
             });
         }
@@ -4449,7 +4450,7 @@ TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
         SECTION("as a template literal substitution")
         {
             tester.test_function_scopes({
-                {"`literal ${String.fromCharCode(", "`literal ${String.fromCharCode(",
+                {"`literal ${String.fromCharCode(", "`literal ${'",
                 {FuncType::NOT_FUNC, FuncType::NOT_FUNC, FuncType::CHAR_CODE}}
             });
         }
@@ -4476,7 +4477,7 @@ TEST_CASE("Function call tracking - nesting", "[JSNormalizer]")
         SECTION("Multiple unescape functions")
         {
             tester.test_function_scopes({
-                {"unescape( unescape( unescape(", "unescape(unescape(unescape(",
+                {"unescape( unescape( unescape(", "",
                 {FuncType::NOT_FUNC, FuncType::UNESCAPE, FuncType::UNESCAPE, FuncType::UNESCAPE}}
             });
             CHECK(tester.is_unescape_nesting_seen());
@@ -4484,31 +4485,24 @@ TEST_CASE("Function call tracking - nesting", "[JSNormalizer]")
         SECTION("Multiple different unescape functions")
         {
             tester.test_function_scopes({
-                {"unescape( decodeURI( decodeURIComponent(",
-                "unescape(decodeURI(decodeURIComponent(", {FuncType::NOT_FUNC,
-                                                           FuncType::UNESCAPE,
-                                                           FuncType::UNESCAPE,
-                                                           FuncType::UNESCAPE}}
+                {"unescape( decodeURI( decodeURIComponent(", "",
+                {FuncType::NOT_FUNC, FuncType::UNESCAPE, FuncType::UNESCAPE, FuncType::UNESCAPE}}
             });
             CHECK(tester.is_unescape_nesting_seen());
         }
         SECTION("Multiple String.fromCharCode functions")
         {
             tester.test_function_scopes({
-                {"String.fromCharCode( String.fromCharCode( String.fromCharCode(",
-                "String.fromCharCode(String.fromCharCode(String.fromCharCode(",
-                {FuncType::NOT_FUNC, FuncType::CHAR_CODE, FuncType::CHAR_CODE,
-                FuncType::CHAR_CODE}}
+                {"String.fromCharCode( String.fromCharCode( String.fromCharCode(", "'' '' '",
+                {FuncType::NOT_FUNC, FuncType::CHAR_CODE, FuncType::CHAR_CODE, FuncType::CHAR_CODE}}
             });
             CHECK(!tester.is_unescape_nesting_seen());
         }
         SECTION("Mixed function calls")
         {
             tester.test_function_scopes({
-                {"general( unescape( String.fromCharCode(",
-                "var_0000(unescape(String.fromCharCode(",
-                {FuncType::NOT_FUNC, FuncType::GENERAL, FuncType::UNESCAPE,
-                FuncType::CHAR_CODE}}
+                {"general( unescape( String.fromCharCode(", "var_0000('",
+                {FuncType::NOT_FUNC, FuncType::GENERAL, FuncType::UNESCAPE, FuncType::CHAR_CODE}}
             });
             CHECK(!tester.is_unescape_nesting_seen());
         }
@@ -4525,16 +4519,14 @@ TEST_CASE("Function call tracking - nesting", "[JSNormalizer]")
         SECTION("Multiple unescape functions")
         {
             tester.test_function_scopes({
-                {"unescape( unescape( unescape( '%62%61%72' ) )",
-                "unescape(unescape(unescape('%62%61%72'))", {FuncType::NOT_FUNC,
-                                                             FuncType::UNESCAPE }}
+                {"unescape( unescape( unescape( '%62%61%72' ) )", "'bar'",
+                {FuncType::NOT_FUNC, FuncType::UNESCAPE }}
             });
         }
         SECTION("Multiple different unescape functions")
         {
             tester.test_function_scopes({
-                {"unescape( decodeURI( decodeURIComponent( '%62%61%72' ) )",
-                "unescape(decodeURI(decodeURIComponent('%62%61%72'))",
+                {"unescape( decodeURI( decodeURIComponent( '%62%61%72' ) )", "'bar'",
                 {FuncType::NOT_FUNC, FuncType::UNESCAPE }}
             });
         }
@@ -4542,7 +4534,7 @@ TEST_CASE("Function call tracking - nesting", "[JSNormalizer]")
         {
             tester.test_function_scopes({
                 {"String.fromCharCode( String.fromCharCode( String.fromCharCode( 65, 0x42 ) )",
-                "String.fromCharCode(String.fromCharCode(String.fromCharCode(65,0x42))",
+                "'' '' 'AB'",
                 {FuncType::NOT_FUNC, FuncType::CHAR_CODE}}
             });
         }
@@ -4550,8 +4542,8 @@ TEST_CASE("Function call tracking - nesting", "[JSNormalizer]")
         {
             tester.test_function_scopes({
                 {"general( unescape( String.fromCharCode( 65, 0x42 ) )",
-                "var_0000(unescape(String.fromCharCode(65,0x42))", {FuncType::NOT_FUNC,
-                                                                    FuncType::GENERAL}}
+                "var_0000('AB'",
+                {FuncType::NOT_FUNC, FuncType::GENERAL}}
             });
         }
     }
@@ -4569,18 +4561,18 @@ TEST_CASE("Function call tracking - over multiple PDU", "[JSNormalizer]")
         tester.test_function_scopes({
             {"un",          "var_0000",     {FuncType::NOT_FUNC}},
             {"escape",      "unescape",     {FuncType::NOT_FUNC}},
-            {"(",           "unescape(",    {FuncType::NOT_FUNC,
+            {"(",           "",             {FuncType::NOT_FUNC,
                                              FuncType::UNESCAPE}},
-            {")",           "unescape()",   {FuncType::NOT_FUNC}},
+            {")",           "",             {FuncType::NOT_FUNC}},
         });
     }
     SECTION("split between identifier and parenthesis")
     {
         tester.test_function_scopes({
             {"decodeURI",   "decodeURI",    {FuncType::NOT_FUNC}},
-            {"(",           "decodeURI(",   {FuncType::NOT_FUNC,
+            {"(",           "",             {FuncType::NOT_FUNC,
                                              FuncType::UNESCAPE}},
-            {")",           "decodeURI()",  {FuncType::NOT_FUNC}},
+            {")",           "",             {FuncType::NOT_FUNC}},
         });
     }
     SECTION("comment between identifier and parenthesis")
@@ -4588,9 +4580,9 @@ TEST_CASE("Function call tracking - over multiple PDU", "[JSNormalizer]")
         tester.test_function_scopes({
             {"unescape",                "unescape",     {FuncType::NOT_FUNC}},
             {"//String.fromCharCode\n", "unescape",     {FuncType::NOT_FUNC}},
-            {"(",                       "unescape(",    {FuncType::NOT_FUNC,
+            {"(",                       "",             {FuncType::NOT_FUNC,
                                                          FuncType::UNESCAPE}},
-            {")",                       "unescape()",   {FuncType::NOT_FUNC}},
+            {")",                       "",             {FuncType::NOT_FUNC}},
         });
     }
     SECTION("split in arguments")
@@ -4611,13 +4603,13 @@ TEST_CASE("Function call tracking - over multiple PDU", "[JSNormalizer]")
         tester.test_function_scopes({
             {"String",          "String",                               {FuncType::NOT_FUNC}},
             {".fromCharCode",   "String.fromCharCode",                  {FuncType::NOT_FUNC}},
-            {"(`",              "String.fromCharCode(`",                {FuncType::NOT_FUNC,
+            {"(`",              "'' `",                                 {FuncType::NOT_FUNC,
                                                                          FuncType::CHAR_CODE}},
-            {"un",              "String.fromCharCode(`un",              {FuncType::NOT_FUNC,
+            {"un",              "'' `un",                               {FuncType::NOT_FUNC,
                                                                          FuncType::CHAR_CODE}},
-            {"escape(",         "String.fromCharCode(`unescape(",       {FuncType::NOT_FUNC,
+            {"escape(",         "'' `unescape(",                        {FuncType::NOT_FUNC,
                                                                          FuncType::CHAR_CODE}},
-            {"`)",              "String.fromCharCode(`unescape(`)",     {FuncType::NOT_FUNC}},
+            {"`)",              "'' `unescape(`",                       {FuncType::NOT_FUNC}},
         });
     }
     SECTION("Nesting - Mixed function calls")
@@ -4626,27 +4618,26 @@ TEST_CASE("Function call tracking - over multiple PDU", "[JSNormalizer]")
             {"decode",                      "var_0000",                 {FuncType::NOT_FUNC}},
             {"URI",                         "decodeURI",                {FuncType::NOT_FUNC}},
             {"Component",                   "decodeURIComponent",       {FuncType::NOT_FUNC}},
-            {"(",                           "decodeURIComponent(",      {FuncType::NOT_FUNC,
+            {"(",                           "",                         {FuncType::NOT_FUNC,
                                                                          FuncType::UNESCAPE}},
-            {" a, ",                        "decodeURIComponent(var_0001,",
+            {" a, ",                        "var_0001,",
                                                                         {FuncType::NOT_FUNC,
                                                                          FuncType::UNESCAPE}},
-            {" String.fromCharCode( ar",
-            "decodeURIComponent(var_0001,String.fromCharCode(var_0002",
+            {" String.fromCharCode( ar",    "var_0001,'' var_0002",
                                                                         {FuncType::NOT_FUNC,
                                                                          FuncType::UNESCAPE,
                                                                          FuncType::CHAR_CODE}},
-            {"g ), b, foo",
-            "decodeURIComponent(var_0001,String.fromCharCode(var_0003),var_0004,var_0005",
+
+            {"g ), b, foo",                 "var_0001,'' var_0003,var_0004,var_0005",
                                                                         {FuncType::NOT_FUNC,
                                                                          FuncType::UNESCAPE}},
-            {"bar( ",
-            "decodeURIComponent(var_0001,String.fromCharCode(var_0003),var_0004,var_0006(",
+
+            {"bar( ",                       "var_0001,'' var_0003,var_0004,var_0006(",
                                                                         {FuncType::NOT_FUNC,
                                                                          FuncType::UNESCAPE,
                                                                          FuncType::GENERAL}},
-            {"))",
-            "decodeURIComponent(var_0001,String.fromCharCode(var_0003),var_0004,var_0006())",
+
+            {"))",                          "var_0001,'' var_0003,var_0004,var_0006()",
                                                                         {FuncType::NOT_FUNC}}
         });
     }
@@ -4879,4 +4870,31 @@ TEST_CASE("JS Normalizer, automatic semicolon", "[JSNormalizer]")
         return normalizer_wo_ident.normalize(src_wo_semicolons, src_len);
     };
 }
+
+TEST_CASE("JS Normalizer, unescape", "[JSNormalizer]")
+{
+    auto str_unescape = make_input("'", "\\u0061", "'", norm_depth);
+    auto f_unescape = make_input_repeat("unescape('')", norm_depth);
+    const char* src_str_unescape = str_unescape.c_str();
+    const char* src_f_unescape = f_unescape.c_str();
+    size_t src_len = norm_depth;
+
+    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids);
+    JSNormalizer norm(ident_ctx, unlim_depth, max_template_nesting, norm_depth);
+
+    REQUIRE(norm_ret(norm, str_unescape) == JSTokenizer::SCRIPT_ENDED);
+    BENCHMARK("unescape sequence")
+    {
+        norm.rewind_output();
+        return norm.normalize(src_str_unescape, src_len);
+    };
+
+    REQUIRE(norm_ret(norm, f_unescape) == JSTokenizer::SCRIPT_ENDED);
+    BENCHMARK("unescape function tracking")
+    {
+        norm.rewind_output();
+        return norm.normalize(src_f_unescape, src_len);
+    };
+}
+
 #endif // BENCHMARK_TEST

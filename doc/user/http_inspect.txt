@@ -78,8 +78,9 @@ Normalizer. The Enhanced Normalizer can normalize inline/external scripts.
 It supports scripts over multiple PDUs. It is a stateful JavaScript whitespace
 and identifiers normalizer. All JavaScript identifier names, except those from
 the ignore list, will be substituted with unified names in the following
-format: var_0000 -> var_ffff. Moreover, Normalizer validates the syntax
-concerning ECMA-262 Standard, including scope tracking and restrictions
+format: var_0000 -> var_ffff. The Normalizer tries to expand an escaped text,
+so it will appear in a usual form in the output. Moreover, Normalizer validates
+the syntax concerning ECMA-262 Standard, including scope tracking and restrictions
 for script elements. For more information on how additionally configure
 Enhanced Normalizer check with the following configuration options:
 js_norm_bytes_depth, js_norm_identifier_depth, js_norm_max_tmpl_nest,

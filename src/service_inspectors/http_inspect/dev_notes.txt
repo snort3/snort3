@@ -256,11 +256,33 @@ For example:
     a("hello") // will be substituted to 'console.log("hello")'
 
 In addition to the scope tracking, JS Normalizer specifically tracks unicode unescape
-functions(unescape, decodeURI, decodeURIComponent). This allows detection of
+functions(unescape, decodeURI, decodeURIComponent, String.fromCharCode). This allows detection of
 unescape functions nested within other unescape functions, which is a potential
 indicator of a multilevel obfuscation. The definition of a function call depends on
 identifier substitution, so such identifiers must be included in the ignore list in
-order to use this feature.
+order to use this feature. After determining the unescape sequence, it is decoded into the
+corresponding string.
+
+For example:
+
+   unescape('\u0062\u0061\u0072')        -> 'bar'
+   decodeURI('%62%61%72')                -> 'bar'
+   decodeURIComponent('\x62\x61\x72')    -> 'bar'
+   String.fromCharCode(98, 0x0061, 0x72) -> 'bar'
+
+Supported formats follow
+
+   \xXX
+   \uXXXX
+   \u{XXXX}
+   %XX
+   \uXX
+   %uXXXX
+   decimal code point
+   hexadecimal code point
+
+JS Normalizer is able to decode mixed encoding sequences. However, a built-in alert rises
+in such case.
 
 JS Normalizer's syntax parser follows ECMA-262 standard. For various features,
 tracking of variable scope and individual brackets is done in accordance to the standard.
