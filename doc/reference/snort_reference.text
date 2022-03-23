@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.25.0 2022-03-09 06:31:14 EST TST
+Revision 3.1.26.0 2022-03-23 13:19:21 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -2438,9 +2438,9 @@ Help: application and service identification
 
 Type: inspector (control)
 
-Usage: context
+Usage: global
 
-Instance Type: network
+Instance Type: global
 
 Configuration:
 
@@ -2628,6 +2628,7 @@ Peg counts:
 
   * binder.raw_packets: raw packets evaluated (sum)
   * binder.new_flows: new flows evaluated (sum)
+  * binder.rebinds: flows rebound (sum)
   * binder.service_changes: flow service changes evaluated (sum)
   * binder.assistant_inspectors: flow assistant inspector requests
     handled (sum)
@@ -4834,6 +4835,10 @@ Configuration:
   * enum reputation.allow = do_not_block: specify the meaning of
     allowlist { do_not_block|trust }
   * string reputation.allowlist: allowlist file name with IP lists
+
+Commands:
+
+  * reputation.reload(): reload reputation data
 
 Rules:
 
@@ -10815,6 +10820,7 @@ these libraries see the Getting Started section of the manual.
   * binder.new_standby_flows: new HA flows evaluated (sum)
   * binder.no_match: binding evaluations that had no matches (sum)
   * binder.raw_packets: raw packets evaluated (sum)
+  * binder.rebinds: flows rebound (sum)
   * binder.resets: reset actions bound (sum)
   * binder.service_changes: flow service changes evaluated (sum)
   * cip.concurrent_sessions: total concurrent SIP sessions (now)
@@ -15190,6 +15196,7 @@ a reserved value
     host pairs
   * perf_monitor.show_flow_ip_profiling(): show status of statistics
     on host pairs
+  * reputation.reload(): reload reputation data
   * rna.dump_macs(): dump rna’s internal MAC trackers
   * rna.delete_mac_host(mac): delete a MAC from rna’s MAC cache
   * rna.delete_mac_host_proto(mac, proto): delete a protocol

@@ -1,3 +1,29 @@
+2022/03/23 - 3.1.26.0
+
+actions: revert bf62a22d43bb2d15b7425c5ec3e3118ead470e8d
+actions: set a delayed action on Reject IPS Action hit
+analyzer: avoid distilling sticky verdicts
+appid: appid api to provide the path to appid detector directory
+appid: make appid a global inspector
+appid: sum stats at tterm and null the thread local stats pointer after delete
+control: make sure reload commands with empty argument is handled correctly
+event: add new static member update_and_get_event_id()
+file_api: Handling user_file_data cleanup
+flow: make service a shared pointer to handle reload properly
+framework: update base API version to 13
+http_inspect: do file decompression and utf decoding on non-MIME uploads
+http_inspect, mime: VBA macro decompression for HTTP MIME file uploads
+inspector, main, inspector_manager: add support for thread local data in inspectors and commands updating reload_id
+main: add the control connection to the analyzer command and a method to log a message to both console and the remote connection
+main: fix and reenable the distill_verdict unit test
+managers: add a faster get_inspectors method
+managers: add get_inspector unit tests
+managers: move inspection policies into the corresponding network policy
+packet_io: fix active action so the first reset occurred takes effect
+policy_selectors: add a method to select policies based on DAQ_FlowStats_t
+reputation: add a command to reload repuation data
+stream: reusable stream splitter
+
 2022/03/09 - 3.1.25.0
 
 appid: do not add duplicate process to client app mapping for the same process name
