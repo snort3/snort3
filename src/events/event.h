@@ -52,6 +52,7 @@ struct Event
 
     void update_event_id(uint16_t log_id);
     void update_event_id_and_ref(uint16_t log_id);
+    SO_PUBLIC static uint32_t update_and_get_event_id();
 
     void set_event(uint32_t gid, uint32_t sid, uint32_t rev,
         uint32_t classification, uint32_t priority, uint16_t event_ref,
