@@ -28,14 +28,16 @@
 #include "hash/hash_key_operations.h"
 
 #include "dce_co.h"
+#include "dce_smb2.h"
 #include "dce_smb2_session.h"
 #include "dce_smb2_tree.h"
 
+#include <mutex>
 using namespace snort;
 
 #define UNKNOWN_FILE_SIZE  (~0)
 
-void Dce2Smb2FileTracker::accept_raw_data_from(Dce2Smb2SessionData* flow, uint64_t offset)
+void Dce2Smb2FileTracker::accept_raw_data_from(Dce2Smb2SessionData* flow, uint64_t offset, Dce2Smb2FileTrackerPtr file_tracker)
 {
     if (flow)
     {
@@ -49,7 +51,7 @@ void Dce2Smb2FileTracker::accept_raw_data_from(Dce2Smb2SessionData* flow, uint64
         }
 
         current_flow_state.pdu_state = DCE2_SMB_PDU_STATE__RAW_DATA;
-        flow->set_tcp_file_tracker(this);
+        flow->set_tcp_file_tracker(file_tracker);
     }
 }
 void Dce2Smb2FileTracker::stop_accepting_raw_data_from(uint32_t current_flow_key)
@@ -67,11 +69,16 @@ inline void Dce2Smb2FileTracker::file_detect()
 }
 
 std::pair<bool, Dce2Smb2SessionData*> Dce2Smb2FileTracker::update_processing_flow(
-    Dce2Smb2SessionData* current_flow)
+    Dce2Smb2SessionData* current_flow,Dce2Smb2SessionTrackerPtr session_tracker)
 {
     std::lock_guard<std::mutex> guard(process_file_mutex);
     bool switched = false;
-    Dce2Smb2SessionData* processing_flow = parent_tree->get_parent()->get_flow(file_flow_key);
+    Dce2Smb2SessionData* processing_flow;
+    if (session_tracker)
+        processing_flow = session_tracker->get_flow(file_flow_key);
+    else
+        processing_flow = parent_tree->get_parent()->get_flow(file_flow_key);
+    
     if (!processing_flow)
     {
         switched = true;
@@ -131,7 +138,9 @@ bool Dce2Smb2FileTracker::close(const uint32_t current_flow_key)
         FileContext* file = get_smb_file_context(flow, file_name_hash, file_id, false);
         if (file)
             file->set_file_size(file_size);
-        return (!process_data(current_flow_key, nullptr, 0));
+        
+        Dce2Smb2SessionTrackerPtr ses_ptr = processing_flow->find_session(session_id);
+        return (!process_data(current_flow_key, nullptr, 0,ses_ptr));
     }
     return true;
 }
@@ -144,25 +153,60 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
     current_flow_state.file_offset = offset;
     current_flow_state.max_offset = offset + max_offset;
     flow_state_mutex.unlock();
-    return process_data(current_flow_key, file_data, data_size);
-}
-
-bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const uint8_t* file_data,
-    uint32_t data_size)
-{
-    Dce2Smb2SessionData* current_flow = parent_tree->get_parent()->get_flow(current_flow_key);
-    if (!current_flow)
-        return true;
-
+    Dce2Smb2SessionTracker *sess = parent_tree->get_parent();
     if (parent_tree->get_share_type() != SMB2_SHARE_TYPE_DISK)
     {
+        Dce2Smb2SessionData *current_flow = nullptr;
+            if (sess) 
+	    {
+                parent_tree->get_parent()->set_do_not_delete(true);
+                current_flow = parent_tree->get_parent()->get_flow(current_flow_key); 
+	        if (!current_flow)
+		{
+	            parent_tree->get_parent()->set_do_not_delete(false);
+		    return false;
+		}
+	    }
+	    else 
+	    {
+                return false;
+	    }
+ 
         if (data_size > UINT16_MAX)
         {
             data_size = UINT16_MAX;
         }
-        DCE2_CoProcess(current_flow->get_dce2_session_data(), parent_tree->get_cotracker(),
-            file_data, data_size);
+        if (parent_tree->get_cotracker()) 
+	{
+            sess->co_tracker_mutex.lock();
+            DCE2_CoProcess(current_flow->get_dce2_session_data(), parent_tree->get_cotracker(),
+                file_data, data_size);
+            sess->co_tracker_mutex.unlock(); 
+	}
+        parent_tree->get_parent()->set_do_not_delete(false);
         return true;
+    }
+    Dce2Smb2SessionData *current_flow = sess->get_flow(current_flow_key);
+    Dce2Smb2SessionTrackerPtr ses_ptr = current_flow->find_session(session_id);
+    return process_data(current_flow_key, file_data, data_size,ses_ptr);
+}
+
+bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const uint8_t* file_data,
+    uint32_t data_size,Dce2Smb2SessionTrackerPtr session_tracker)
+{
+    Dce2Smb2SessionData *current_flow;
+    if (session_tracker)
+    {
+           session_tracker->set_do_not_delete(true);
+           current_flow = session_tracker->get_flow(current_flow_key); 
+    }
+    else 
+       return false;
+    
+    if (!current_flow) 
+    {
+       session_tracker->set_do_not_delete(false);
+       return true; 
     }
 
     int64_t file_detection_depth = current_flow->get_smb_file_depth();
@@ -193,6 +237,7 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
     {
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, p,
             "file name not set , ignored\n");
+        session_tracker->set_do_not_delete(false);
         return true;
     }
 
@@ -203,7 +248,7 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
             &dce2_smb_stats, *(current_flow->get_dce2_session_data()));
     }
 
-    auto updated_flow = update_processing_flow(current_flow);
+    auto updated_flow = update_processing_flow(current_flow, session_tracker);
     Dce2Smb2SessionData* processing_flow = updated_flow.second;
 
     SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,"file_process fid %" PRIu64 " data_size %"
@@ -214,6 +259,7 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
     if (!file_flows)
     {
 	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, p, "file_flows not found\n");
+        session_tracker->set_do_not_delete(false);
         return true;
     }
 
@@ -232,6 +278,7 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
     if (!continue_processing)
     {
 	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p, "file_process completed\n");
+        session_tracker->set_do_not_delete(false);
         return false;
     }
 
@@ -239,20 +286,16 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
     flow_state_mutex.lock();
     flow_state[current_flow_key].file_offset = file_offset;
     flow_state_mutex.unlock();
+    session_tracker->set_do_not_delete(false);
     return true;
 }
 
-Dce2Smb2FileTracker::~Dce2Smb2FileTracker()
+Dce2Smb2FileTracker::~Dce2Smb2FileTracker(void)
 {
-    if (smb_module_is_up and (is_packet_thread()))
-    {
-	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET, "file tracker %" PRIu64
-            " file name hash %" PRIu64 " terminating\n", file_id, file_name_hash);
-    }
-
     if (file_name)
         snort_free((void*)file_name);
 
-    parent_tree->get_parent()->clean_file_context_from_flow(this, file_id, file_name_hash);
+    file_name = nullptr;
+    parent_tree = nullptr;
 }
 

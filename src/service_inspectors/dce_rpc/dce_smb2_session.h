@@ -67,7 +67,7 @@ public:
     }
 
     Smb2SessionKey get_key() { return session_key; }
-    void clean_file_context_from_flow(Dce2Smb2FileTracker*, uint64_t, uint64_t);
+    void clean_file_context_from_flow(uint64_t, uint64_t);
     void unlink();
     Dce2Smb2SessionData* get_flow(uint32_t);
     void process(const uint16_t, uint8_t, const Smb2Hdr*, const uint8_t*, const uint32_t);
@@ -79,6 +79,7 @@ public:
     bool get_do_not_delete() { return do_not_delete; }
     void set_prev_comand(uint16_t cmd) { command_prev = cmd; }
     uint16_t get_prev_command() { return command_prev; }
+    std::mutex co_tracker_mutex;
     void set_encryption_flag(bool flag) 
     { 
         encryption_flag = flag; 

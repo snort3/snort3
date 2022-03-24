@@ -109,22 +109,36 @@ Dce2Smb2SessionData::Dce2Smb2SessionData(const Packet* p,
     dce2_smb_stats.total_smb2_sessions++;
 }
 
-Dce2Smb2SessionData::~Dce2Smb2SessionData()
+Dce2Smb2SessionData::~Dce2Smb2SessionData(void)
 {
     session_data_mutex.lock();
     for (auto it_session : connected_sessions)
     {
         it_session.second->detach_flow(flow_key);
     }
+
+    if (get_tcp_file_tracker() && !(get_tcp_file_tracker()->get_flow_state_map().empty()))
+    {
+        get_tcp_file_tracker()->get_flow_state_map().erase(flow_key);
+        tcp_file_tracker = nullptr;
+    }
     session_data_mutex.unlock();
 }
 
 void Dce2Smb2SessionData::reset_matching_tcp_file_tracker(
-    Dce2Smb2FileTracker* file_tracker)
+    Dce2Smb2FileTrackerPtr file_tracker)
 {
     std::lock_guard<std::mutex> guard(tcp_file_tracker_mutex);
     if (tcp_file_tracker == file_tracker)
-        tcp_file_tracker = nullptr;
+    {
+        if (get_tcp_file_tracker() && !(get_tcp_file_tracker()->get_flow_state_map().empty()))
+        {
+            get_tcp_file_tracker()->get_flow_state_map().erase(flow_key);
+            tcp_file_tracker = nullptr;
+        }
+        else
+            return;
+    }
 }
 
 Smb2SessionKey Dce2Smb2SessionData::get_session_key(uint64_t session_id)
@@ -187,7 +201,7 @@ void Dce2Smb2SessionData::process_command(const Smb2Hdr* smb_hdr,
     uint16_t structure_size = alignedNtohs((const uint16_t*)smb_data);
     uint16_t command = alignedNtohs(&(smb_hdr->command));
     uint64_t session_id = Smb2Sid(smb_hdr);
-    Dce2Smb2SessionTrackerPtr session = find_session(session_id);
+    Dce2Smb2SessionTrackerPtr session;
 
 // Macro and shorthand to save some repetitive code
 // Should only be used in this function
@@ -239,7 +253,7 @@ void Dce2Smb2SessionData::process_command(const Smb2Hdr* smb_hdr,
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL \
 	    , GET_CURRENT_PACKET, "%s: invalid struct size\n", \
             smb2_command_string[command]); \
-        if (session) \
+	                    if (session) \
         { \
             session->set_do_not_delete(false); \
             session->set_prev_comand(SMB2_COM_MAX); \
@@ -253,9 +267,10 @@ void Dce2Smb2SessionData::process_command(const Smb2Hdr* smb_hdr,
         flow_key, Smb2Mid(smb_hdr), session_id, Smb2Tid(smb_hdr));
 
     // Handling case of two threads trying to do close same session at a time
-    if (command == SMB2_COM_CLOSE and (session and session->get_prev_command() !=  SMB2_COM_MAX))
+    session = find_session(session_id);
+    if ((command == SMB2_COM_CLOSE or command ==
+        SMB2_COM_TREE_DISCONNECT) and (session and session->get_prev_command() !=  SMB2_COM_MAX))
     {
-        session->set_do_not_delete(false);
         return;
     }
 
@@ -522,7 +537,7 @@ void Dce2Smb2SessionData::process()
         {
             SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
                 p, "Encrypted header is received \n");
-            Dce2Smb2SessionTrackerPtr session = find_session(sid);
+            session = find_session(sid);
             if (session) 
             {
                bool flag = session->get_encryption_flag();
@@ -579,17 +594,28 @@ void Dce2Smb2SessionData::process()
     {
         if ( tcp_file_tracker )
         {
-             session = find_session(tcp_file_tracker->get_session_id());
-             if (session)
-                 session->set_do_not_delete(true);
+            session = find_session (tcp_file_tracker->get_session_id());
+            if (session)
+                session->set_do_not_delete(true);
         }
+        else
+            return;
         tcp_file_tracker_mutex.lock();
-        if ( tcp_file_tracker and tcp_file_tracker->accepting_raw_data_from(flow_key))
+        if ( tcp_file_tracker and tcp_file_tracker.use_count() >
+            1 and tcp_file_tracker->accepting_raw_data_from(flow_key))
         {
             SMB_DEBUG(dce_smb_trace,DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p, "processing raw data for file id %" PRIu64 "\n",
                 tcp_file_tracker->get_file_id());
-            tcp_file_tracker->process_data(flow_key, data_ptr, data_len);
+            tcp_file_tracker->process_data(flow_key, data_ptr, data_len, session);
             tcp_file_tracker->stop_accepting_raw_data_from(flow_key);
+        }
+        else if (tcp_file_tracker and tcp_file_tracker.use_count() == 1)
+        {
+            if (get_tcp_file_tracker() && !(get_tcp_file_tracker()->get_flow_state_map().empty()))
+            {
+                get_tcp_file_tracker()->get_flow_state_map().erase(flow_key);
+                tcp_file_tracker = nullptr;
+            }
         }
         else
         {

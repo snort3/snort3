@@ -83,16 +83,11 @@ void Dce2Smb2SessionTracker::process(const uint16_t command, uint8_t command_typ
     }
     break;
     case SMB2_COM_TREE_DISCONNECT:
-        if (tree)
-        {
-            delete tree;
-            connected_trees_mutex.lock();
-            connected_trees.erase(tree_id);
-            connected_trees_mutex.unlock();
-        }
-        else
-            dce2_smb_stats.v2_tree_discn_ignored++;
-        break;
+    {
+        if (!tree)           
+        dce2_smb_stats.v2_tree_discn_ignored++;
+    }
+    break;
 
     //for all other cases, tree tracker should handle the command
     case SMB2_COM_CREATE:
@@ -157,9 +152,10 @@ Dce2Smb2TreeTracker* Dce2Smb2SessionTracker::connect_tree(const uint32_t tree_id
     return tree;
 }
 
-void Dce2Smb2SessionTracker::clean_file_context_from_flow(Dce2Smb2FileTracker* file_tracker,
-    uint64_t file_id, uint64_t file_name_hash)
+void Dce2Smb2SessionTracker::clean_file_context_from_flow(uint64_t file_id, uint64_t
+    file_name_hash)
 {
+    set_do_not_delete(true);
     attached_flows_mutex.lock();
     for (auto it_flow : attached_flows)
     {
@@ -167,9 +163,9 @@ void Dce2Smb2SessionTracker::clean_file_context_from_flow(Dce2Smb2FileTracker* f
             it_flow.second->get_tcp_flow(), false);
         if (file_flows)
             file_flows->remove_processed_file_context(file_name_hash, file_id);
-        it_flow.second->reset_matching_tcp_file_tracker(file_tracker);
     }
     attached_flows_mutex.unlock();
+    set_do_not_delete(false);
 }
 
 void Dce2Smb2SessionTracker::increase_size(const size_t size)
@@ -191,7 +187,7 @@ void Dce2Smb2SessionTracker::unlink()
 }
 
 // Session Tracker is created and destroyed only from session cache
-Dce2Smb2SessionTracker::~Dce2Smb2SessionTracker()
+Dce2Smb2SessionTracker::~Dce2Smb2SessionTracker(void)
 {
     if (!(fcfs_mutex.try_lock()))
         return;
@@ -202,12 +198,6 @@ Dce2Smb2SessionTracker::~Dce2Smb2SessionTracker()
         smb2_session_cache.find_id(get_key());
         fcfs_mutex.unlock();
         return;
-    }
-    if (smb_module_is_up and (snort::is_packet_thread()))
-    {
-	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, 
-	        TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
-            "session tracker %" PRIu64 " terminating\n", session_id);
     }
 
     std::vector<Dce2Smb2TreeTracker*> all_trees;

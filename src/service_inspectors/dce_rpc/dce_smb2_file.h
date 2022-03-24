@@ -24,6 +24,7 @@
 // This provides file tracker for SMBv2
 
 #include "dce_smb2.h"
+#include <atomic>
 
 class Dce2Smb2TreeTracker;
 
@@ -54,10 +55,10 @@ public:
 
     ~Dce2Smb2FileTracker();
     bool process_data(const uint32_t, const uint8_t*, uint32_t, const uint64_t, uint64_t);
-    bool process_data(const uint32_t, const uint8_t*, uint32_t);
+    bool process_data(const uint32_t, const uint8_t*, uint32_t, Dce2Smb2SessionTrackerPtr);
     bool close(const uint32_t);
     void set_info(char*, uint16_t, uint64_t);
-    void accept_raw_data_from(Dce2Smb2SessionData*, uint64_t = 0);
+    void accept_raw_data_from(Dce2Smb2SessionData*, uint64_t, Dce2Smb2FileTrackerPtr);
     bool accepting_raw_data_from(uint32_t current_flow_key)
     {
         std::lock_guard<std::mutex> guard(flow_state_mutex);
@@ -67,12 +68,19 @@ public:
 
     void set_direction(FileDirection dir) { direction = dir; }
     Dce2Smb2TreeTracker* get_parent() { return parent_tree; }
+    void set_parent(Dce2Smb2TreeTracker* pt) { parent_tree = pt; }
     uint64_t get_file_id() { return file_id; }
+    uint64_t get_file_name_hash() { return file_name_hash; }
     uint64_t get_session_id() { return session_id; }
+    std::unordered_map<uint32_t, tcp_flow_state, std::hash<uint32_t> > get_flow_state_map()
+    {
+        return flow_state;
+    }
 
 private:
     void file_detect();
-    std::pair<bool, Dce2Smb2SessionData*> update_processing_flow(Dce2Smb2SessionData* = nullptr);
+    std::pair<bool, Dce2Smb2SessionData*> update_processing_flow(Dce2Smb2SessionData* = nullptr,
+        Dce2Smb2SessionTrackerPtr session_tracker = nullptr);
     bool ignore;
     uint16_t file_name_len;
     uint32_t file_flow_key;
@@ -88,8 +96,9 @@ private:
     std::mutex flow_state_mutex;
 };
 
-using  Dce2Smb2FileTrackerMap =
-    std::unordered_map<uint64_t, Dce2Smb2FileTracker*, std::hash<uint64_t> >;
+using Dce2Smb2FileTrackerPtr = std::shared_ptr<Dce2Smb2FileTracker>;
+using Dce2Smb2FileTrackerMap =
+    std::unordered_map<uint64_t, Dce2Smb2FileTrackerPtr, std::hash<uint64_t> >;
 
 #endif
 

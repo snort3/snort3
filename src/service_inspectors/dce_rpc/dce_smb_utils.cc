@@ -951,7 +951,8 @@ DCE2_Ret DCE2_SmbProcessRequestData(DCE2_SmbSsnData* ssd,
         if (data_len > UINT16_MAX)
             data_len = UINT16_MAX;
 
-        DCE2_CoProcess(&ssd->sd, ftracker->fp_co_tracker, data_ptr, (uint16_t)data_len);
+        if (ftracker->fp_co_tracker)
+            DCE2_CoProcess(&ssd->sd, ftracker->fp_co_tracker, data_ptr, (uint16_t)data_len);
 
         if (!ftracker->fp_used)
             ftracker->fp_used = true;
@@ -978,8 +979,8 @@ DCE2_Ret DCE2_SmbProcessResponseData(DCE2_SmbSsnData* ssd,
         // Maximum possible fragment length is 16 bit
         if (data_len > UINT16_MAX)
             data_len = UINT16_MAX;
-
-        DCE2_CoProcess(&ssd->sd, ftracker->fp_co_tracker, data_ptr, (uint16_t)data_len);
+        if (ftracker->fp_co_tracker)
+            DCE2_CoProcess(&ssd->sd, ftracker->fp_co_tracker, data_ptr, (uint16_t)data_len);
     }
     else
     {

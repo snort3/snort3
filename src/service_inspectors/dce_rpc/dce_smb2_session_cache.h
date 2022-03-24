@@ -95,11 +95,19 @@ public:
             data.emplace_back(list_iter->second); // increase reference count
             // This instructs the session_tracker to take a lock before detaching
             // from ssd, when it is getting destroyed.
-            list_iter->second->set_reload_prune(true);
-            decrease_size(list_iter->second.get());
-            map.erase(list_iter->first);
-            list.erase(list_iter);
-            ++stats.reload_prunes;
+            if (!list_iter->second->get_do_not_delete())
+            {
+                list_iter->second->set_reload_prune(true);
+                decrease_size(list_iter->second.get());
+                map.erase(list_iter->first);
+                list.erase(list_iter);
+                ++stats.reload_prunes;
+            }
+            else
+            {
+                // Move entry to front of LruList
+                list.splice(list.begin(), list, list_iter);
+            }
         }
     }
 

@@ -299,6 +299,10 @@ using Dce2Smb2SessionTrackerPtr = std::shared_ptr<Dce2Smb2SessionTracker>;
 using Dce2Smb2SessionTrackerMap =
     std::unordered_map<uint64_t, Dce2Smb2SessionTrackerPtr, std::hash<uint64_t> >;
 
+using Dce2Smb2FileTrackerPtr = std::shared_ptr<Dce2Smb2FileTracker>;
+using Dce2Smb2FileTrackerMap =
+    std::unordered_map<uint64_t, Dce2Smb2FileTrackerPtr, std::hash<uint64_t> >;
+
 PADDING_GUARD_BEGIN
 struct Smb2SessionKey
 {
@@ -447,23 +451,29 @@ public:
     void process() override;
     void remove_session(uint64_t, bool = false);
     void handle_retransmit(FilePosition, FileVerdict) override { }
-    void reset_matching_tcp_file_tracker(Dce2Smb2FileTracker*);
+    void reset_matching_tcp_file_tracker(Dce2Smb2FileTrackerPtr);
     void set_reassembled_data(uint8_t*, uint16_t) override;
     uint32_t get_flow_key() { return flow_key; }
-    void set_tcp_file_tracker(Dce2Smb2FileTracker* file_tracker)
+    void set_tcp_file_tracker(Dce2Smb2FileTrackerPtr file_tracker)
     {
         std::lock_guard<std::mutex> guard(session_data_mutex);
         tcp_file_tracker = file_tracker;
     }
 
+    Dce2Smb2FileTrackerPtr get_tcp_file_tracker()
+    {
+        return tcp_file_tracker;
+    }
+
+    Dce2Smb2SessionTrackerPtr find_session(uint64_t);
+
 private:
     void process_command(const Smb2Hdr*, const uint8_t*);
     Smb2SessionKey get_session_key(uint64_t);
     Dce2Smb2SessionTrackerPtr create_session(uint64_t);
-    Dce2Smb2SessionTrackerPtr find_session(uint64_t);
 
+    Dce2Smb2FileTrackerPtr tcp_file_tracker;
     uint32_t flow_key;
-    Dce2Smb2FileTracker* tcp_file_tracker;
     Dce2Smb2SessionTrackerMap connected_sessions;
     std::mutex session_data_mutex;
     std::mutex tcp_file_tracker_mutex;
