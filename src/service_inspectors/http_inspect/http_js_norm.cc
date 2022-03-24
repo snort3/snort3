@@ -58,16 +58,16 @@ static const char* ret2str(JSTokenizer::JSRet ret)
     return jsret_codes[ret];
 }
 
-static inline JSTokenizer::JSRet js_normalize(JSNormalizer& ctx, const char* const end,
-    const char*& ptr)
+static inline JSTokenizer::JSRet js_normalize(JSNormalizer& ctx, const Packet* current_packet,
+    const char* const end, const char*& ptr)
 {
-    trace_logf(3, http_trace, TRACE_JS_DUMP, nullptr,
+    trace_logf(3, http_trace, TRACE_JS_DUMP, current_packet,
         "original[%zu]: %.*s\n", end - ptr, static_cast<int>(end - ptr), ptr);
 
     auto ret = ctx.normalize(ptr, end - ptr);
     auto src_next = ctx.get_src_next();
 
-    trace_logf(3, http_trace, TRACE_JS_PROC, nullptr,
+    trace_logf(3, http_trace, TRACE_JS_PROC, current_packet,
         "normalizer returned with %d '%s'\n", ret, ret2str(ret));
 
     if (src_next > ptr)
@@ -143,7 +143,7 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
 {
     if (ssn->js_built_in_event)
         return;
-
+    const Packet* current_packet = DetectionEngine::get_current_packet();
     const char* ptr = (const char*)input.start();
     const char* const end = ptr + input.length();
 
@@ -152,11 +152,11 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
     if (!alive_ctx(ssn))
     {
         HttpModule::increment_peg_counts(PEG_JS_EXTERNAL);
-        trace_logf(2, http_trace, TRACE_JS_PROC, nullptr,
+        trace_logf(2, http_trace, TRACE_JS_PROC, current_packet,
             "script starts\n");
     }
     else
-        trace_logf(2, http_trace, TRACE_JS_PROC, nullptr,
+        trace_logf(2, http_trace, TRACE_JS_PROC, current_packet,
             "script continues\n");
 
     auto& js_ctx = ssn->acquire_js_ctx(identifier_depth, normalization_depth, max_template_nesting,
@@ -164,10 +164,10 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
 
     while (ptr < end)
     {
-        trace_logf(1, http_trace, TRACE_JS_PROC, nullptr,
+        trace_logf(1, http_trace, TRACE_JS_PROC, current_packet,
             "external script at %zd offset\n", ptr - (const char*)input.start());
 
-        auto ret = js_normalize(js_ctx, end, ptr);
+        auto ret = js_normalize(js_ctx, current_packet, end, ptr);
 
         switch (ret)
         {
@@ -229,7 +229,7 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
             break;
     }
 
-    debug_logf(4, http_trace, TRACE_JS_PROC, nullptr,
+    debug_logf(4, http_trace, TRACE_JS_PROC, current_packet,
         "input data was %s\n", final_portion ? "last one in PDU" : "a part of PDU");
 
     uint32_t data_len = std::min(detection_depth, js_ctx.script_size());
@@ -240,7 +240,7 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
 
         if (data)
         {
-            trace_logf(1, http_trace, TRACE_JS_DUMP, nullptr,
+            trace_logf(1, http_trace, TRACE_JS_DUMP, current_packet,
                        "js_data[%u]: %.*s\n", data_len, data_len, data);
 
             output.set(data_len, (const uint8_t*)data, final_portion);
@@ -251,6 +251,7 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
 void HttpJsNorm::do_inline(const Field& input, Field& output,
     HttpInfractions* infractions, HttpFlowData* ssn, bool final_portion) const
 {
+    const Packet* current_packet = DetectionEngine::get_current_packet();
     const char* ptr = (const char*)input.start();
     const char* const end = ptr + input.length();
 
@@ -279,10 +280,10 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
                 ptr = sctx.next;
             }
 
-            trace_logf(1, http_trace, TRACE_JS_PROC, nullptr,
+            trace_logf(1, http_trace, TRACE_JS_PROC, current_packet,
                 "opening tag at %zd offset\n", ptr - (const char*)input.start());
 
-            trace_logf(2, http_trace, TRACE_JS_PROC, nullptr,
+            trace_logf(2, http_trace, TRACE_JS_PROC, current_packet,
                 "script attributes [%s, %s, %s]\n",
                 sctx.is_shortened ? "shortened form" : "full form",
                 sctx.is_javascript ? "JavaScript type" : "unknown type",
@@ -309,7 +310,7 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
             max_template_nesting, max_bracket_depth, max_scope_depth, ignored_ids);
         auto output_size_before = js_ctx.script_size();
 
-        auto ret = js_normalize(js_ctx, end, ptr);
+        auto ret = js_normalize(js_ctx, current_packet, end, ptr);
 
         switch (ret)
         {
@@ -377,7 +378,7 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
     if (!alive_ctx(ssn))
         return;
 
-    debug_logf(4, http_trace, TRACE_JS_PROC, nullptr,
+    debug_logf(4, http_trace, TRACE_JS_PROC, current_packet,
         "input data was %s\n", final_portion ? "last one in PDU" : "a part of PDU");
 
     auto js_ctx = ssn->js_normalizer;
@@ -389,7 +390,7 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
 
         if (data)
         {
-            trace_logf(1, http_trace, TRACE_JS_DUMP, nullptr,
+            trace_logf(1, http_trace, TRACE_JS_DUMP, current_packet,
                        "js_data[%u]: %.*s\n", data_len, data_len, data);
 
             output.set(data_len, (const uint8_t*)data, final_portion);
