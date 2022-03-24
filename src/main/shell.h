@@ -29,6 +29,7 @@
 
 #include "dump_config/config_data.h"
 #include "framework/parameter.h"
+#include "policy.h"
 
 struct lua_State;
 
@@ -69,6 +70,8 @@ public:
     lua_State* get_lua() const
     { return lua; }
 
+    void set_user_network_policy();
+
 public:
     static bool is_trusted(const std::string& key);
     static void allowlist_append(const char* keyword, bool is_prefix);
@@ -86,6 +89,8 @@ public:
     static void set_lua_sandbox(const char* s)
     { lua_sandbox = s; }
 
+    static void set_network_policy_user_id(lua_State*, uint32_t user_id);
+
 private:
     static void add_config_root_node(const std::string& root_name, snort::Parameter::Type type);
 
@@ -100,6 +105,7 @@ private:
     static BaseConfigNode* s_current_node;
     static bool s_close_table;
     static std::string lua_sandbox;
+    static const char* const lua_shell_id;
 
 private:
     void clear_allowlist()
@@ -137,6 +143,7 @@ private:
     Allowlist internal_allowlist;
     Allowlist allowlist_prefixes;
     ConfigData config_data;
+    uint32_t network_user_policy_id = UNDEFINED_USER_POLICY_ID;
     bool load_defaults;
 };
 

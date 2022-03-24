@@ -91,6 +91,8 @@ BaseConfigNode* Shell::s_current_node = nullptr;
 bool Shell::s_close_table = true;
 string Shell::lua_sandbox;
 
+const char* const Shell::lua_shell_id = "the_shell";
+
 // FIXIT-M Shell::panic() works on Linux but on OSX we can't throw from lua
 // to C++.  unprotected lua calls could be wrapped in a pcall to ensure lua
 // panics don't kill the process.  or we can not use lua for the shell.  :(
@@ -441,6 +443,9 @@ Shell::Shell(const char* s, bool load_defaults) :
     loaded = false;
     load_string(lua_bootstrap, false, "bootstrap");
     install_version_strings(lua);
+    Shell** shell_ud = static_cast<Shell**>(lua_newuserdata(lua, sizeof(Shell*)));
+    *(shell_ud) = this;
+    lua_setglobal(lua, lua_shell_id);
     bootstrapped = true;
 
     current_shells.pop();
@@ -563,6 +568,24 @@ void Shell::install(const char* name, const luaL_Reg* reg)
     luaL_register(lua, name, reg);
 }
 
+void Shell::set_network_policy_user_id(lua_State* L, uint32_t user_id)
+{
+    lua_getglobal(L, lua_shell_id);
+    Shell* shell = *static_cast<Shell**>(lua_touserdata(L, -1));
+    lua_pop(L, 1);
+    shell->network_user_policy_id = user_id;
+}
+
+void Shell::set_user_network_policy()
+{
+    if (UNDEFINED_USER_POLICY_ID > network_user_policy_id)
+    {
+        NetworkPolicy* np =
+            SnortConfig::get_conf()->policy_map->get_user_network(network_user_policy_id);
+        set_network_policy(np);
+    }
+}
+
 void Shell::execute(const char* cmd, string& rsp)
 {
     set_default_policy(SnortConfig::get_conf());
@@ -575,7 +598,10 @@ void Shell::execute(const char* cmd, string& rsp)
         err = luaL_loadbuffer(lua, cmd, strlen(cmd), "shell");
 
         if ( !err )
+        {
+            set_user_network_policy();
             err = lua_pcall(lua, 0, 0, 0);
+        }
     }
     catch (...)
     {

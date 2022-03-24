@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,41 +15,26 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// ac_shell_cmd.cc author Bhagya Tholpady <bbantwal@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+// network_module.cc author Ron Dempster <rdempste@cisco.com>
+
+#ifndef NETWORK_MODULE_H
+#define NETWORK_MODULE_H
+
+#include "framework/module.h"
+
+
+class NetworkModule : public snort::Module
+{
+public:
+    NetworkModule();
+    ~NetworkModule() override = default;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+
+    const snort::Command* get_commands() const override;
+
+    Usage get_usage() const override
+    { return CONTEXT; }
+};
+
 #endif
-
-#include "ac_shell_cmd.h"
-
-#include <cassert>
-
-#include "control/control.h"
-
-ACShellCmd::ACShellCmd(ControlConn* conn, AnalyzerCommand* ac) : AnalyzerCommand(conn), ac(ac)
-{
-    assert(ac);
-
-    if (ctrlcon)
-        ctrlcon->block();
-}
-
-bool ACShellCmd::execute(Analyzer& analyzer, void** state)
-{
-    ctrlcon->set_user_network_policy();
-    return ac->execute(analyzer, state);
-}
-
-ACShellCmd::~ACShellCmd()
-{
-    delete ac;
-
-    if (ctrlcon)
-    {
-        if (ctrlcon->is_removed())
-            delete ctrlcon;
-        else
-            ctrlcon->unblock();
-    }
-}

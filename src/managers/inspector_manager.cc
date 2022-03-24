@@ -1285,14 +1285,20 @@ Inspector* InspectorManager::get_inspector(const char* key, Module::Usage usage,
         }
         else if (Module::CONTEXT == usage)
         {
-            TrafficPolicy* il = get_network_policy()->traffic_policy;
+            NetworkPolicy* np = get_network_policy();
+            if (!np)
+                return nullptr;
+            TrafficPolicy* il = np->traffic_policy;
             assert(il);
             PHInstance* p = il->get_instance_by_type(key, type);
             return p ? p->handler : nullptr;
         }
         else
         {
-            FrameworkPolicy* il = get_inspection_policy()->framework_policy;
+            InspectionPolicy* ip = get_inspection_policy();
+            if (!ip)
+                return nullptr;
+            FrameworkPolicy* il = ip->framework_policy;
             assert(il);
             PHInstance* p = il->get_instance_by_type(key, type);
             return p ? p->handler : nullptr;
@@ -1326,8 +1332,11 @@ Inspector* InspectorManager::get_service_inspector_by_id(const SnortProtocolId p
 
 bool InspectorManager::delete_inspector(SnortConfig* sc, const char* iname)
 {
+    NetworkPolicy* np = get_network_policy();
+    if (!np)
+        return false;
     FrameworkPolicy* fp =
-        sc->policy_map->get_network_policy(0)->get_inspection_policy()->framework_policy;
+        np->get_inspection_policy()->framework_policy;
     return fp->delete_inspector(sc, iname);
 }
 

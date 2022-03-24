@@ -55,6 +55,8 @@ struct PortTable;
 struct vartable_t;
 struct sfip_var_t;
 
+#define UNDEFINED_USER_POLICY_ID 65536
+
 typedef unsigned int PolicyId;
 typedef snort::GHash PortVarTable;
 

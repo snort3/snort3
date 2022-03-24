@@ -60,6 +60,8 @@ public:
     int execute_commands();
     void shutdown();
 
+    void set_user_network_policy();
+
     SO_PUBLIC bool is_local() const { return local; }
     SO_PUBLIC bool respond(const char* format, va_list& ap);
     SO_PUBLIC bool respond(const char* format, ...) __attribute__((format (printf, 2, 3)));

@@ -120,6 +120,9 @@ int ControlConn::read_commands()
     return commands_found;
 }
 
+void ControlConn::set_user_network_policy()
+{ shell->set_user_network_policy(); }
+
 int ControlConn::execute_commands()
 {
     int executed = 0;
