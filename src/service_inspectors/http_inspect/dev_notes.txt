@@ -223,7 +223,9 @@ During message body analysis the Enhanced Normalizer does one of the following:
 Enhanced Normalizer is a stateful JavaScript whitespace and identifiers normalizer.
 Normalizer will remove all extraneous whitespace and newlines, keeping a single space where 
 syntactically necessary. Comments will be removed, but contents of string literals will
-be kept intact. Semicolons will be inserted, if not already present, according to ECMAScript
+be kept intact. Any string literals, added by the plus operator,
+will be concatenated. This also works for functions that result in string
+literals. Semicolons will be inserted, if not already present, according to ECMAScript
 automatic semicolon insertion rules.
 All JavaScript identifier names, except those from the ignore list,
 will be substituted with unified names in the following format: var_0000 -> var_ffff.

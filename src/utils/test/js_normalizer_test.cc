@@ -399,7 +399,7 @@ static const char clamav_buf2[] =
     "function () { var tst=\"a\"+'bc'+     'd'; }";
 
 static const char clamav_expected2[] =
-    "function(){var tst=\"a\"+'bc'+'d';}";
+    "function(){var tst=\"abcd';}";
 
 static const char clamav_buf3[] =
     "dF('bmfsu%2639%2638x11u%2638%263%3A%264C1');";
@@ -751,7 +751,7 @@ static const char syntax_cases_buf0[] =
     "var esc = 'I don\\'t \\n know';\n";
 
 static const char syntax_cases_expected0[] =
-    "var a;var b=\"init this    stuff\";var c=\"Hi\"+\" \"+\"Joe\";"
+    "var a;var b=\"init this    stuff\";var c=\"Hi Joe\";"
     "var d=1+2+\"3\";var e=[2,3,5,8];var f=false;var g=/( i'm   a  .* regex )/;"
     "var h=function(){};const PI=3.14;var a=1,b=2,c=a+b;let z='zzz zz';var g=null;"
     "var name={first:\"Jane\",last:\"Doe\"};var esc='I don\\'t \\n know';";
@@ -4639,6 +4639,209 @@ TEST_CASE("Function call tracking - over multiple PDU", "[JSNormalizer]")
 
             {"))",                          "var_0001,'' var_0003,var_0004,var_0006()",
                                                                         {FuncType::NOT_FUNC}}
+        });
+    }
+}
+
+TEST_CASE("String Concatenation - Basic", "[JSNormalizer]")
+{
+    SECTION("Two strings")
+    {
+        SECTION("single quoted strings")
+            test_normalization("'foo' + 'bar'", "'foobar'");
+
+        SECTION("double quoted strings")
+            test_normalization("\"foo\" + \"bar\"", "\"foobar\"");
+
+        SECTION("double quoted string + single quoted string")
+            test_normalization("\"foo\" + 'bar'", "\"foobar'");
+
+        SECTION("single quoted string + double quoted string")
+            test_normalization("'foo' + \"bar\"", "'foobar\"");
+
+        SECTION("string + function call")
+            test_normalization("'foo' + general('bar')", "'foo'+var_0000('bar')");
+
+        SECTION("function call + string")
+            test_normalization("general('bar') + 'foo'", "var_0000('bar')+'foo'");
+
+        SECTION("inside function call arguments")
+            test_normalization("general('foo' + 'bar')", "var_0000('foobar')");
+
+        SECTION("with concatenation inside")
+            test_normalization("'\"foo\"' + '+\"bar\"')", "'\"foo\"+\"bar\"'");
+
+        SECTION("terminated concatenation")
+            test_normalization("'foo' + '!</script>')", "'foo!");
+    }
+    SECTION("Three strings")
+    {
+        SECTION("single quoted strings")
+            test_normalization("'foo' + 'bar' + 'baz'", "'foobarbaz'");
+
+        SECTION("double quoted strings")
+            test_normalization("\"foo\" + \"bar\" + \"baz\"", "\"foobarbaz\"");
+
+        SECTION("single quoted string + double quoted string + double quoted string")
+            test_normalization("'foo' + \"bar\" + \"baz\"", "'foobarbaz\"");
+
+        SECTION("double quoted string + double quoted string + single quoted string")
+            test_normalization("\"foo\" + \"bar\" + 'baz'", "\"foobarbaz'");
+
+        SECTION("double quoted string + single quoted string + double quoted string")
+            test_normalization("\"foo\" + 'bar' + \"baz\"", "\"foobarbaz\"");
+
+        SECTION("function call between literals")
+            test_normalization("'foo' + general('bar') + \"baz\"", "'foo'+var_0000('bar')+\"baz\"");
+    }
+    SECTION("multiline comment before the plus symbol")
+        test_normalization("'foo' /*comment*/ + 'bar'", "'foobar'");
+
+    SECTION("single line comment before the plus symbol")
+        test_normalization("'foo' //comment\n + 'bar'", "'foobar'");
+
+    SECTION("HTML comment before the plus symbol")
+        test_normalization("'foo' <!-- HTML comment\n + 'bar'", "'foobar'");
+
+    SECTION("tab after the plus symbol")
+        test_normalization("'foo' + \t 'bar'", "'foobar'");
+
+    SECTION("comment after the plus symbol")
+        test_normalization("'foo' + /*comment*/ 'bar'", "'foobar'");
+
+    SECTION("with a non-string literal in chain")
+        test_normalization("'foo' + 'bar' + 2", "'foobar'+2");
+
+    SECTION("with a non-string literal between strings")
+        test_normalization("'foo' + 2 + 'bar'", "'foo'+2+'bar'");
+
+    SECTION("with a template literal")
+        test_normalization("\"foo\" + `bar`", "\"foo\"+`bar`");
+
+    SECTION("with a template literal substitution")
+        test_normalization("\"foo\" + `bar${a + 1}`", "\"foo\"+`bar${var_0000+1}`");
+
+    SECTION("inside a template literal substitution")
+        test_normalization("`literal${\"foo\" + \"bar\"}`", "`literal${\"foobar\"}`");
+
+    SECTION("automatic semicolon insertion after concatenation")
+        test_normalization("'foo' + 'bar'\nvar a = 5;", "'foobar';var var_0000=5;");
+}
+
+TEST_CASE("String Concatenation - With unescape", "[JSNormalizer]")
+{
+    SECTION("unescape")
+    {
+        SECTION("single quoted string + single quoted unescape")
+            test_normalization("'foo' + unescape('%62%61%72')", "'foobar'");
+
+        SECTION("double quoted string + single quoted unescape")
+            test_normalization("\"foo\" + unescape('%62%61%72')", "\"foobar'");
+
+        SECTION("single quoted unescape + single quoted string")
+            test_normalization("unescape('%66%6f%6f') + 'bar'", "'foobar'");
+
+        SECTION("double quoted unescape + double quoted string")
+            test_normalization("unescape(\"%66%6f%6f\") + \"bar\"", "\"foobar\"");
+
+        SECTION("string + unescape + string")
+            test_normalization("'foo' + unescape('%62%61%72') + 'baz'", "'foobarbaz'");
+
+        SECTION("unescape + unescape")
+            test_normalization("unescape('%66%6f%6f') + unescape('%62%61%72')", "'foobar'");
+
+        SECTION("inside function call arguments")
+            test_normalization("unescape('foo' + '%62' + '%61' + '%72')", "'foobar'");
+    }
+    SECTION("String.fromCharCode")
+    {
+        SECTION("single quoted string + String.fromCharCode")
+            test_normalization("'foo' + String.fromCharCode(98, 97, 114)", "'foobar'");
+
+        SECTION("double quoted string + String.fromCharCode")
+            test_normalization("\"foo\" + String.fromCharCode(98, 97, 114)", "\"foobar'");
+
+        SECTION("String.fromCharCode + single quoted string")
+            test_normalization("String.fromCharCode(102, 111, 111) + 'bar'", "'foobar'");
+
+        SECTION("String.fromCharCode + double quoted string")
+            test_normalization("String.fromCharCode(102, 111, 111) + \"bar\"", "'foobar\"");
+        SECTION("Inside function call arguments")
+            test_normalization(" String.fromCharCode('foo' + 'bar')", "'' 'foobar'");
+    }
+}
+
+TEST_CASE("String Concatenation - Multiple PDU", "[JSNormalizer]")
+{
+    SECTION("Two single quoted strings")
+    {
+        test_normalization({
+            {"'",   "'"         },
+            {"foo", "'foo"      },
+            {"'",   "'foo'"     },
+            {" +",  "'foo'+"    },
+            {" '",  "'foo"      },
+            {"bar", "'foobar"   },
+            {"'",   "'foobar'"  }
+        });
+    }
+    SECTION("Three double quoted strings")
+    {
+        test_normalization({
+            {"\"foo",       "\"foo"         },
+            {"\" + \"",     "\"foo"         },
+            {"bar\"",       "\"foobar\""    },
+            {"+ \"baz\"",   "\"foobarbaz\"" }
+
+        });
+    }
+    SECTION("single quoted string + double quoted string")
+    {
+        test_normalization({
+            {"'foo",    "'foo"      },
+            {"'",       "'foo'"     },
+            {" + \"",   "\'foo"     },
+            {"bar",     "'foobar"   },
+            {"\"",      "'foobar\"" }
+        });
+    }
+    SECTION("With a non-string literal between strings")
+    {
+        test_normalization({
+            {"\"fo",    "\"fo"                  },
+            {"o\"",     "\"foo\""               },
+            {" + i",    "\"foo\"+var_0000"      },
+            {"d + ",    "\"foo\"+var_0001+"     },
+            {"'ba",     "\"foo\"+var_0001+'ba"  },
+            {"r'",      "\"foo\"+var_0001+'bar'"}
+        });
+    }
+    SECTION("With unescape")
+    {
+        test_normalization({
+            {"'fo",         "'fo"               },
+            {"o'",          "'foo'"             },
+            {" + ",         "'foo'+"            },
+            {"unescape",    "'foo'+unescape"    },
+            {"(",           "'foo'+"            },
+            {"'%62%61%72",  "'foobar"           },
+            {"'+",          "'foobar'+"         },
+            {"'baz",        "'foobarbaz"        },
+            {"'",           "'foobarbaz'"       }
+        });
+    }
+    SECTION("With String.fromCharCode")
+    {
+        test_normalization({
+            {"'foo",            "'foo"                      },
+            {"' + ",            "'foo'+"                    },
+            {"String",          "'foo'+String"              },
+            {".fromCharCode",   "'foo'+String.fromCharCode" },
+            {"(",               "'foo"                      },
+            {"98,97,114",       "'foobar"                   },
+            {")+",              "'foobar'+"                 },
+            {"'",               "'foobar"                   },
+            {"baz'",            "'foobarbaz'"               }
         });
     }
 }

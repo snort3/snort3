@@ -1083,11 +1083,11 @@ TEST_CASE("Mixed input", "[JSNormalizer]")
         );
         test_normalization(
             "unescape ( '\\x62\\x61\\x72' + '\\x62\\x61\\x72' ) ;",
-            "'bar'+'bar';"
+            "'barbar';"
         );
         test_normalization_mixed_encoding(
             "unescape ( '\\x62\\x61\\x72' + '\\u62\\u61\\u72' ) ;",
-            "'bar'+'bar';"
+            "'barbar';"
         );
     }
 
@@ -1131,7 +1131,7 @@ TEST_CASE("Mixed input", "[JSNormalizer]")
     {
         test_normalization(
             "unescape('\\x62\\x61\\x72'+unescape('\\x62\\x61\\x72')+decodeURI('\\u62\\u61\\u72')) ;",
-            "'bar'+'bar'+'bar';"
+            "'barbarbar';"
         );
         test_normalization(
             "document.write(unescape('%62%61%72')) ;",

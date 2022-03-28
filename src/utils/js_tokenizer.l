@@ -1573,6 +1573,28 @@ bool JSTokenizer::unescape(const char* lexeme)
     return true;
 }
 
+bool JSTokenizer::concatenate()
+{
+    std::streambuf* pbuf = yyout.rdbuf();
+    std::streamsize size = pbuf->pubseekoff(0, yyout.cur, yyout.out);
+
+    if (size >= 2)
+    {
+        char tail[2];
+        pbuf->pubseekoff(-2, yyout.cur, yyout.out);
+        pbuf->sgetn(tail, 2);
+
+        if (tail[1] == '+' and (tail[0] == '\'' or tail[0] == '"'))
+        {
+            pbuf->pubseekoff(-2, yyout.cur, yyout.out);
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void JSTokenizer::process_punctuator(JSToken tok)
 {
     ECHO;
@@ -2159,8 +2181,8 @@ JSTokenizer::JSRet JSTokenizer::literal_dq_string_start()
     dealias_append();
     EXEC(do_semicolon_insertion(ASI_GROUP_7))
     EXEC(do_spacing(LITERAL))
-    ECHO;
-    BEGIN(dqstr);
+    if (!concatenate())
+        ECHO;
     set_ident_norm(true);
 
     switch (func_call_type())
@@ -2186,7 +2208,8 @@ JSTokenizer::JSRet JSTokenizer::literal_sq_string_start()
     dealias_append();
     EXEC(do_semicolon_insertion(ASI_GROUP_7))
     EXEC(do_spacing(LITERAL))
-    ECHO;
+    if (!concatenate())
+        ECHO;
     set_ident_norm(true);
 
     switch (func_call_type())
@@ -2305,7 +2328,8 @@ JSTokenizer::JSRet JSTokenizer::open_parenthesis()
         token = LITERAL;
         BEGIN(char_code);
         set_char_code_str(true);
-        yyout << '\'';
+        if (!concatenate())
+            yyout << '\'';
         break;
     case FuncType::UNESCAPE:
         skip_punctuator();

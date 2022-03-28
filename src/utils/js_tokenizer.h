@@ -184,6 +184,7 @@ private:
     JSRet do_identifier_substitution(const char* lexeme, bool id_part);
     JSRet push_identifier(const char* ident);
     bool unescape(const char* lexeme);
+    bool concatenate();
     void process_punctuator(JSToken tok = PUNCTUATOR);
     void skip_punctuator();
     void process_closing_brace();
