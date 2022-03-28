@@ -216,13 +216,13 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
 
         if (js_ctx.is_unescape_nesting_seen())
         {
-            *infractions += INF_JS_UNESCAPE_NEST;
-            events->create_event(EVENT_JS_UNESCAPE_NEST);
+            *infractions += INF_JS_OBFUSCATION_EXCD;
+            events->create_event(EVENT_JS_OBFUSCATION_EXCD);
         }
         if (js_ctx.is_mixed_encoding_seen())
         {
-            *infractions += INF_JS_MULTIPLE_ENC;
-            events->create_event(EVENT_JS_MULTIPLE_ENC);
+            *infractions += INF_MIXED_ENCODINGS;
+            events->create_event(EVENT_MIXED_ENCODINGS);
         }
 
         if (ssn->js_built_in_event)
@@ -361,13 +361,13 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
         }
         if (js_ctx.is_unescape_nesting_seen())
         {
-            *infractions += INF_JS_UNESCAPE_NEST;
-            events->create_event(EVENT_JS_UNESCAPE_NEST);
+            *infractions += INF_JS_OBFUSCATION_EXCD;
+            events->create_event(EVENT_JS_OBFUSCATION_EXCD);
         }
         if (js_ctx.is_mixed_encoding_seen())
         {
-            *infractions += INF_JS_MULTIPLE_ENC;
-            events->create_event(EVENT_JS_MULTIPLE_ENC);
+            *infractions += INF_MIXED_ENCODINGS;
+            events->create_event(EVENT_MIXED_ENCODINGS);
         }
 
         script_continue = ret == JSTokenizer::SCRIPT_CONTINUE;

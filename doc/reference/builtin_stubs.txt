@@ -867,7 +867,7 @@ HTTP response has Content-Type charset=utf-7.
 119:109
 
 More than one level of JavaScript obfuscation. This alert can only be generated when
-normalize_javascript  configuration option is true.
+normalize_javascript configuration option is true or enhanced JavaScript normalizer is enabled.
 
 119:110
 
@@ -877,7 +877,7 @@ This alert can only be generated when normalize_javascript  configuration option
 119:111
 
 More than one encoding within JavaScript obfuscated data. This alert can only be generated when
-normalize_javascript  configuration option is true.
+normalize_javascript configuration option is true or enhanced JavaScript normalizer is enabled.
 
 119:112
 
@@ -1298,17 +1298,6 @@ does not apply to HTTP/2 or HTTP/3 traffic.
 119:278
 
 The HTTP message body is gzip encoded and the FEXTRA flag is set in the gzip header.
-
-119:279
-
-Detected nesting of unescape functions(unescape, decodeURI, decodeURIComponent) in JavaScript code. 
-Indicates that this code most likely has more than one level of obfuscation. This alert is raised
-by the enhanced JavaScript normalizer.
-
-119:280
-
-Detected more than one encoding within unescape function call arguments in JavaScript code.
-This alert is raised by the enhanced JavaScript normalizer.
 
 121:1
 
