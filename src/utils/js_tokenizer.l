@@ -1339,6 +1339,7 @@ JSTokenizer::JSTokenizer(std::istream& in, std::ostream& out,
       tmp_buf(buf),
       tmp_buf_size(buf_size),
       tmp_cap_size(cap_size),
+      ignored_id_pos(-1),
       max_bracket_depth(max_bracket_depth)
 {
     scope_stack.emplace(GLOBAL);

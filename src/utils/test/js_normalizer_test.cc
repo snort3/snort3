@@ -3670,6 +3670,26 @@ TEST_CASE("ignored identifier split", "[JSNormalizer]")
         NORMALIZE_T(dat5, dat6, exp7, exp8);
         NORM_COMBINED_S_2(dat5, dat6, exp9);
     }
+
+    SECTION("normalized word in the previous PDU")
+    {
+        const char dat1[] = "!foo";
+        const char dat2[] = "()";
+        const char exp1[] = "!var_0000";
+        const char exp2[] = "()";
+
+        NORMALIZE_T(dat1, dat2, exp1, exp2);
+    }
+
+    SECTION("ignored word in the previous PDU")
+    {
+        const char dat1[] = "!eval";
+        const char dat2[] = "()";
+        const char exp1[] = "!eval";
+        const char exp2[] = "()";
+
+        NORMALIZE_T(dat1, dat2, exp1, exp2);
+    }
 }
 
 TEST_CASE("Scope tracking - basic","[JSNormalizer]")

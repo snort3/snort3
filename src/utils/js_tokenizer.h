@@ -166,6 +166,9 @@ public:
 
     JSRet process(size_t& bytes_in);
 
+    void reset_output()
+    { ignored_id_pos = -1; }
+
     bool is_unescape_nesting_seen() const;
     bool is_mixed_encoding_seen() const;
 protected:
@@ -351,7 +354,7 @@ private:
         {false, false, false, false, false, false, false, false, false, false, false,}
     };
 
-    std::streampos ignored_id_pos = -1;
+    std::streampos ignored_id_pos;
     struct FunctionIdentifier
     {
         bool operator< (const FunctionIdentifier& other) const
@@ -366,7 +369,7 @@ private:
         {"unescape",            FuncType::UNESCAPE  },
         {"decodeURI",           FuncType::UNESCAPE  },
         {"decodeURIComponent",  FuncType::UNESCAPE  },
-        {"String.fromCharCode", FuncType::CHAR_CODE }        
+        {"String.fromCharCode", FuncType::CHAR_CODE }
     }};
 
     const uint32_t max_bracket_depth;

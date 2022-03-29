@@ -47,7 +47,7 @@ public:
     { rem_bytes = depth; }
 
     const char* take_script()
-    { return out_buf.take_data(); }
+    { tokenizer.reset_output(); return out_buf.take_data(); }
 
     const char* get_script() const
     { return out_buf.data(); }
