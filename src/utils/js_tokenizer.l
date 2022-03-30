@@ -1237,8 +1237,15 @@ static std::string unicode_to_utf8(const unsigned int code)
         res += 0x80 | ((code >> 6) & 0x3f);
         res += 0x80 | (code & 0x3f);
     }
+    else if (code <= 0x1fffff)
+    {
+        res += 0xf0 | (code >> 18);
+        res += 0x80 | ((code >> 12) & 0x3f);
+        res += 0x80 | ((code >> 6) & 0x3f);
+        res += 0x80 | (code & 0x3f);
+    }
     else
-        res += "\uffff";
+        res += "\xf7\xbf\xbf\xbf";    // UTF-8 sequence for hex 0x1fffff
 
     return res;
 }

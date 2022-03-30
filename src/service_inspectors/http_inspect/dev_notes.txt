@@ -258,19 +258,20 @@ For example:
     a("hello") // will be substituted to 'console.log("hello")'
 
 In addition to the scope tracking, JS Normalizer specifically tracks unicode unescape
-functions(unescape, decodeURI, decodeURIComponent, String.fromCharCode). This allows detection of
-unescape functions nested within other unescape functions, which is a potential
-indicator of a multilevel obfuscation. The definition of a function call depends on
+functions(unescape, decodeURI, decodeURIComponent, String.fromCharCode, String.fromCodePoint).
+This allows detection of unescape functions nested within other unescape functions, which is
+a potential indicator of a multilevel obfuscation. The definition of a function call depends on
 identifier substitution, so such identifiers must be included in the ignore list in
 order to use this feature. After determining the unescape sequence, it is decoded into the
-corresponding string.
+corresponding string, and the name of unescape function will not be present in the output.
 
 For example:
 
-   unescape('\u0062\u0061\u0072')        -> 'bar'
-   decodeURI('%62%61%72')                -> 'bar'
-   decodeURIComponent('\x62\x61\x72')    -> 'bar'
-   String.fromCharCode(98, 0x0061, 0x72) -> 'bar'
+   unescape('\u0062\u0061\u0072')              -> 'bar'
+   decodeURI('%62%61%72')                      -> 'bar'
+   decodeURIComponent('\x62\x61\x72')          -> 'bar'
+   String.fromCharCode(98, 0x0061, 0x72)       -> 'bar'
+   String.fromCodePoint(65600, 65601, 0x10042) -> '𐁀𐁁𐁂'
 
 Supported formats follow
 

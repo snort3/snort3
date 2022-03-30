@@ -276,7 +276,11 @@ TEST_CASE("Sequence parsing", "[JSNormalizer]")
         );
         test_normalization(
             "String.fromCharCode(65536)",
-            "'\uffff'"
+            "'\xf0\x90\x80\x80'"
+        );
+        test_normalization(
+            "String.fromCodePoint(2097152)",
+            "'\xf7\xbf\xbf\xbf'"
         );
     }
 
@@ -315,12 +319,20 @@ TEST_CASE("Sequence parsing", "[JSNormalizer]")
             "'\ueEfF'"
         );
         test_normalization(
-            "String.fromCharCode(0x10000)",
-            "'\uffff'"
+            "String.fromCodePoint(0x10000)",
+            "'\xf0\x90\x80\x80'"
         );
         test_normalization(
             "String.fromCharCode(0X10000)",
-            "'\uffff'"
+            "'\xf0\x90\x80\x80'"
+        );
+        test_normalization(
+            "String.fromCodePoint(0x200000)",
+            "'\xf7\xbf\xbf\xbf'"
+        );
+        test_normalization(
+            "String.fromCodePoint(0X200000)",
+            "'\xf7\xbf\xbf\xbf'"
         );
     }
 }
@@ -825,6 +837,63 @@ TEST_CASE("String.fromCharCode()", "[JSNormalizer]")
     }
 }
 
+TEST_CASE("String.fromCodePoint()", "[JSNormalizer]")
+{
+    SECTION("decimal")
+    {
+        test_normalization(
+            "String.fromCodePoint(98, 97, 114)",
+            "'bar'"
+        );
+
+        test_normalization(
+            "String.fromCodePoint(65600, 65601, 65602)",
+            "'\xf0\x90\x81\x80\xf0\x90\x81\x81\xf0\x90\x81\x82'"
+        );
+    }
+
+    SECTION("hexadecimal")
+    {
+        test_normalization(
+            "String.fromCodePoint(0x62, 0x61, 0x72)",
+            "'bar'"
+        );
+
+        test_normalization(
+            "String.fromCodePoint(0x00000062, 0x00000061, 0x00000072)",
+            "'bar'"
+        );
+
+        test_normalization(
+            "String.fromCodePoint(0x10040, 0x10041, 0x10042)",
+            "'\xf0\x90\x81\x80\xf0\x90\x81\x81\xf0\x90\x81\x82'"
+        );
+    }
+
+    SECTION("mixed sequence")
+    {
+        test_normalization_mixed_encoding(
+            "String.fromCodePoint(98, 97, 0x72)",
+            "'bar'"
+        );
+
+        test_normalization_mixed_encoding(
+            "String.fromCodePoint(0x00000062, 97, 114)",
+            "'bar'"
+        );
+
+        test_normalization_mixed_encoding(
+            "String.fromCodePoint(65600, 0x10041, 65602)",
+            "'\xf0\x90\x81\x80\xf0\x90\x81\x81\xf0\x90\x81\x82'"
+        );
+
+        test_normalization_mixed_encoding(
+            "String.fromCodePoint(0x10040, 65601, 0x10042)",
+            "'\xf0\x90\x81\x80\xf0\x90\x81\x81\xf0\x90\x81\x82'"
+        );
+    }
+}
+
 TEST_CASE("Split", "[JSNormalizer]")
 {
     SECTION("unescape()")
@@ -1063,6 +1132,61 @@ TEST_CASE("Split", "[JSNormalizer]")
             { "114)", "'bar'" }
         });
     }
+
+    SECTION("String.fromCodePoint()")
+    {
+        test_normalization({
+            { "String.fromCodePoint(", "'" },
+            { ")", "''" }
+        });
+
+        test_normalization({
+            { "String.fromCodePoint(9", "'\u0009" },
+            { "8, 97, 114)", "'bar'" }
+        });
+
+        test_normalization({
+            { "String.fromCodePoint(98,", "'b" },
+            { "97, 114)", "'bar'" }
+        });
+
+        test_normalization({
+            { "String.fromCodePoint(98, 97", "'ba" },
+            { ",114)", "'bar'" }
+        });
+
+        test_normalization({
+            { "String.fromCodePoint(98, 97, 114", "'bar" },
+            { ")", "'bar'" }
+        });
+
+        test_normalization({
+            { "String.fromCodePoint(0x0062", "'b" },
+            { ",0x0061, 0x0072)", "'bar'" }
+        });
+
+        test_normalization({
+            { "String.fromCodePoint(0x00000062, 0x00000061", "'ba" },
+            { ", 0x0072)", "'bar'" }
+        });
+
+        test_normalization({
+            { "String.fromCodePoint(0x00000062, 0x00000061, 0x00000072", "'bar" },
+            { ")", "'bar'" }
+        });
+
+        test_normalization({
+            { "String.fromCodePoint(0x00000062,", "'b" },
+            { "0x00000061,", "'ba" },
+            { "0x72)",   "'bar'" }
+        });
+
+        test_normalization({
+            { "String.fromCodePoint(98,", "'b" },
+            { "97,", "'ba" },
+            { "114)", "'bar'" }
+        });
+    }
 }
 
 TEST_CASE("Mixed input", "[JSNormalizer]")
@@ -1109,6 +1233,10 @@ TEST_CASE("Mixed input", "[JSNormalizer]")
             "String.fromCharCode (114, 0x72, eval('123'), 114, 0x72) ;",
             "'rr' eval('123'),114,0x72;"
         );
+        test_normalization_mixed_encoding(
+            "String.fromCodePoint (114, 0x00000072, eval('123'), 114, 0x00000072) ;",
+            "'rr' eval('123'),114,0x00000072;"
+        );
     }
 
     SECTION("comment")
@@ -1125,6 +1253,18 @@ TEST_CASE("Mixed input", "[JSNormalizer]")
             "String.fromCharCode(0x62, \r 0x61, <!-- HTML comment \r 0x72) ;",
             "'bar';"
         );
+        test_normalization(
+            "String.fromCodePoint(0x00000062, \n 0x00000061, // comment \n 0x00000072) ;",
+            "'bar';"
+        );
+        test_normalization(
+            "String.fromCodePoint(0x00000062, \t 0x00000061, /* comment */ 0x00000072) ;",
+            "'bar';"
+        );
+        test_normalization(
+            "String.fromCodePoint(0x00000062, \r 0x00000061, <!-- HTML comment \r 0x00000072) ;",
+            "'bar';"
+        );
     }
 
     SECTION("nested")
@@ -1136,6 +1276,14 @@ TEST_CASE("Mixed input", "[JSNormalizer]")
         test_normalization(
             "document.write(unescape('%62%61%72')) ;",
             "document.write('bar');"
+        );
+        test_normalization(
+            "String.fromCodePoint(0x0062, 0x0061, String.fromCharCode(0x0062, 0x0061, 0x0072));",
+            "'ba' 'bar';"
+        );
+        test_normalization(
+            "String.fromCharCode(0x0062, 0x0061, String.fromCodePoint(0x0062, 0x0061, 0x0072));",
+            "'ba' 'bar';"
         );
     }
 }

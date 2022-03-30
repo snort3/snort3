@@ -364,12 +364,13 @@ private:
         FuncType type;
     };
 
-    const std::array<FunctionIdentifier, 4> function_identifiers
+    const std::array<FunctionIdentifier, 5> function_identifiers
     {{
-        {"unescape",            FuncType::UNESCAPE  },
-        {"decodeURI",           FuncType::UNESCAPE  },
-        {"decodeURIComponent",  FuncType::UNESCAPE  },
-        {"String.fromCharCode", FuncType::CHAR_CODE }
+        {"unescape",             FuncType::UNESCAPE },
+        {"decodeURI",            FuncType::UNESCAPE },
+        {"decodeURIComponent",   FuncType::UNESCAPE },
+        {"String.fromCharCode",  FuncType::CHAR_CODE},
+        {"String.fromCodePoint", FuncType::CHAR_CODE}
     }};
 
     const uint32_t max_bracket_depth;
