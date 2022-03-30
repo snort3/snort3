@@ -116,6 +116,14 @@ else ()
     DAQ Modules:    Dynamic")
 endif ()
 
+if (HAVE_ATOMIC)
+    message("\
+    libatomic:      User-specified")
+else ()
+    message("\
+    libatomic:      System-provided")
+endif ()
+
 if (HAVE_FLATBUFFERS)
     message("\
     Flatbuffers:    ON")
