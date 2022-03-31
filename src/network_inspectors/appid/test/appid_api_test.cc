@@ -240,7 +240,7 @@ TEST(appid_api, get_application_id)
 
 TEST(appid_api, ssl_app_group_id_lookup)
 {
-    mock().expectNCalls(4, "publish");
+    mock().expectNCalls(5, "publish");
     AppId service, client, payload = APP_ID_NONE;
     bool val = false;
 
@@ -294,6 +294,24 @@ TEST(appid_api, ssl_app_group_id_lookup)
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_org_unit(), "Google");
     STRCMP_EQUAL("Published change_bits == 0000000000100000000", test_log);
+
+    // Override client id found by SSL pattern matcher with the client id provided by
+    // Encrypted Visibility Engine if available
+    service = APP_ID_NONE;
+    client = APP_ID_NONE;
+    payload = APP_ID_NONE;
+    mock_session->set_client_id(APP_ID_NONE);
+    mock_session->set_eve_client_app_id(APPID_UT_ID + 100);
+    val = appid_api.ssl_app_group_id_lookup(flow, (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST,
+        (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST, false, service, client, payload);
+    CHECK_TRUE(val);
+    CHECK_EQUAL(client, APPID_UT_ID + 100);
+    CHECK_EQUAL(payload, APPID_UT_ID + 1);
+    STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
+    STRCMP_EQUAL(mock_session->tsession->get_tls_first_alt_name(), APPID_UT_TLS_HOST);
+    STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
+    STRCMP_EQUAL("Published change_bits == 0000000000100011000", test_log);
+
     mock().checkExpectations();
 }
 

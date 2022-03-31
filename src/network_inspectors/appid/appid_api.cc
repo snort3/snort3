@@ -193,7 +193,9 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
 
         service_id = asd->get_api().get_service_app_id();
 
-        if (client_id == APP_ID_NONE)
+        if (asd->use_eve_client_app_id())
+            client_id = asd->get_eve_client_app_id();
+        else if (client_id == APP_ID_NONE)
             client_id = asd->get_api().get_client_app_id();
         else
             asd->set_client_id(client_id);

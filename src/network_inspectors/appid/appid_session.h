@@ -520,6 +520,12 @@ public:
         return api.client.get_eve_client_app_id();
     }
 
+    bool use_eve_client_app_id() const
+    {
+        return (api.client.get_eve_client_app_id() > APP_ID_NONE and
+            (api.client.get_id() == APP_ID_SSL_CLIENT or api.client.get_id() <= APP_ID_NONE));
+    }
+
     AppId get_payload_id() const
     {
         return api.payload.get_id();
