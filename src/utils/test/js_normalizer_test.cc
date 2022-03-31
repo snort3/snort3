@@ -1664,14 +1664,14 @@ static const char unexpected_tag_expected7_ext[] =
 
 static const char unexpected_tag_buf8[] =
     "var a = 1;\n"
-    "var str = 'something \\<script\\> something';\n"
+    "var str = 'something \\<script> something';\n"
     "var b = 2;\r\n";
 
 static const char unexpected_tag_expected8[] =
     "var a=1;var str='something \\";
 
 static const char unexpected_tag_expected8_ext[] =
-    "var a=1;var str='something \\<script\\> something';var b=2;";
+    "var a=1;var str='something \\<script> something';var b=2;";
 
 static const char unexpected_tag_buf9[] =
     "var a = 1;\n"
@@ -1858,27 +1858,27 @@ TEST_CASE("nested script tags", "[JSNormalizer]")
     SECTION("explicit open tag - simple")
     {
         NORMALIZE(unexpected_tag_buf0);
-        VALIDATE_FAIL(unexpected_tag_buf0, unexpected_tag_expected0, JSTokenizer::OPENING_TAG, 18);
+        VALIDATE_FAIL(unexpected_tag_buf0, unexpected_tag_expected0, JSTokenizer::OPENING_TAG, 19);
     }
     SECTION("explicit open tag - complex")
     {
         NORMALIZE(unexpected_tag_buf1);
-        VALIDATE_FAIL(unexpected_tag_buf1, unexpected_tag_expected1, JSTokenizer::OPENING_TAG, 18);
+        VALIDATE_FAIL(unexpected_tag_buf1, unexpected_tag_expected1, JSTokenizer::OPENING_TAG, 19);
     }
     SECTION("open tag within literal - start")
     {
         NORMALIZE(unexpected_tag_buf2);
-        VALIDATE_FAIL(unexpected_tag_buf2, unexpected_tag_expected2, JSTokenizer::OPENING_TAG, 29);
+        VALIDATE_FAIL(unexpected_tag_buf2, unexpected_tag_expected2, JSTokenizer::OPENING_TAG, 30);
     }
     SECTION("open tag within literal - mid")
     {
         NORMALIZE(unexpected_tag_buf3);
-        VALIDATE_FAIL(unexpected_tag_buf3, unexpected_tag_expected3, JSTokenizer::OPENING_TAG, 39);
+        VALIDATE_FAIL(unexpected_tag_buf3, unexpected_tag_expected3, JSTokenizer::OPENING_TAG, 40);
     }
     SECTION("open tag within literal - end")
     {
         NORMALIZE(unexpected_tag_buf4);
-        VALIDATE_FAIL(unexpected_tag_buf4, unexpected_tag_expected4, JSTokenizer::OPENING_TAG, 39);
+        VALIDATE_FAIL(unexpected_tag_buf4, unexpected_tag_expected4, JSTokenizer::OPENING_TAG, 40);
     }
     SECTION("close tag within literal - start")
     {
@@ -1898,7 +1898,7 @@ TEST_CASE("nested script tags", "[JSNormalizer]")
     SECTION("open tag within literal - escaped")
     {
         NORMALIZE(unexpected_tag_buf8);
-        VALIDATE_FAIL(unexpected_tag_buf8, unexpected_tag_expected8, JSTokenizer::OPENING_TAG, 40);
+        VALIDATE_FAIL(unexpected_tag_buf8, unexpected_tag_expected8, JSTokenizer::OPENING_TAG, 41);
     }
     SECTION("close tag within literal - escaped")
     {
@@ -1973,12 +1973,88 @@ TEST_CASE("nested script tags", "[JSNormalizer]")
     SECTION("multiple patterns - matched")
     {
         NORMALIZE(unexpected_tag_buf23);
-        VALIDATE_FAIL(unexpected_tag_buf23, unexpected_tag_expected23, JSTokenizer::OPENING_TAG, 65);
+        VALIDATE_FAIL(unexpected_tag_buf23, unexpected_tag_expected23, JSTokenizer::OPENING_TAG, 66);
     }
     SECTION("mixed lower and upper case")
     {
         NORMALIZE(unexpected_tag_buf24);
-        VALIDATE_FAIL(unexpected_tag_buf24, unexpected_tag_expected24, JSTokenizer::OPENING_TAG, 39);
+        VALIDATE_FAIL(unexpected_tag_buf24, unexpected_tag_expected24, JSTokenizer::OPENING_TAG, 40);
+    }
+}
+
+TEST_CASE("opening tag sequence", "[JSNormalizer]")
+{
+    SECTION("incomplete")
+    {
+        const char src[] = "<script";
+        const char exp[] = "<script";
+
+        NORMALIZE(src);
+        VALIDATE(src, exp);
+    }
+    SECTION("valid 1")
+    {
+        const char src[] = "<scripts";
+        const char exp[] = "<scripts";
+
+        NORMALIZE(src);
+        VALIDATE(src, exp);
+    }
+    SECTION("valid 2")
+    {
+        const char src[] = "<script.";
+        const char exp[] = "<script.";
+
+        NORMALIZE(src);
+        VALIDATE(src, exp);
+    }
+    SECTION("tabulation")
+    {
+        const char src[] = "<script\x9";
+        const char exp[] = "";
+
+        NORMALIZE(src);
+        VALIDATE_FAIL(src, exp, JSTokenizer::OPENING_TAG, 8);
+    }
+    SECTION("line feed")
+    {
+        const char src[] = "<script\xA";
+        const char exp[] = "";
+
+        NORMALIZE(src);
+        VALIDATE_FAIL(src, exp, JSTokenizer::OPENING_TAG, 8);
+    }
+    SECTION("form feed")
+    {
+        const char src[] = "<script\xC";
+        const char exp[] = "";
+
+        NORMALIZE(src);
+        VALIDATE_FAIL(src, exp, JSTokenizer::OPENING_TAG, 8);
+    }
+    SECTION("space")
+    {
+        const char src[] = "<script\x20";
+        const char exp[] = "";
+
+        NORMALIZE(src);
+        VALIDATE_FAIL(src, exp, JSTokenizer::OPENING_TAG, 8);
+    }
+    SECTION("solidus")
+    {
+        const char src[] = "<script\x2F";
+        const char exp[] = "";
+
+        NORMALIZE(src);
+        VALIDATE_FAIL(src, exp, JSTokenizer::OPENING_TAG, 8);
+    }
+    SECTION("greater than")
+    {
+        const char src[] = "<script\x3E";
+        const char exp[] = "";
+
+        NORMALIZE(src);
+        VALIDATE_FAIL(src, exp, JSTokenizer::OPENING_TAG, 8);
     }
 }
 
@@ -1987,12 +2063,12 @@ TEST_CASE("nested script tags in an external script", "[JSNormalizer]")
     SECTION("explicit open tag - simple")
     {
         NORMALIZE_EXT(unexpected_tag_buf0);
-        VALIDATE_FAIL(unexpected_tag_buf0, unexpected_tag_expected0_ext, JSTokenizer::OPENING_TAG, 18);
+        VALIDATE_FAIL(unexpected_tag_buf0, unexpected_tag_expected0_ext, JSTokenizer::OPENING_TAG, 19);
     }
     SECTION("explicit open tag - complex")
     {
         NORMALIZE_EXT(unexpected_tag_buf1);
-        VALIDATE_FAIL(unexpected_tag_buf1, unexpected_tag_expected1_ext, JSTokenizer::OPENING_TAG, 18);
+        VALIDATE_FAIL(unexpected_tag_buf1, unexpected_tag_expected1_ext, JSTokenizer::OPENING_TAG, 19);
     }
     SECTION("open tag within literal - start")
     {
@@ -2308,7 +2384,7 @@ TEST_CASE("split in opening tag", "[JSNormalizer]")
     SECTION("< script")
     {
         const char dat1[] = "<";
-        const char dat2[] = "script";
+        const char dat2[] = "script>";
         const char exp1[] = "<";
         const char exp2[] = "";
         const char exp[] = "";
@@ -2319,7 +2395,7 @@ TEST_CASE("split in opening tag", "[JSNormalizer]")
     SECTION("str='<s cript'")
     {
         const char dat1[] = "var str ='<s";
-        const char dat2[] = "cript';";
+        const char dat2[] = "cript>';";
         const char exp1[] = "var str='<s";
         const char exp2[] = "";
         const char exp[]  = "var str='";
@@ -2330,7 +2406,7 @@ TEST_CASE("split in opening tag", "[JSNormalizer]")
     SECTION("str='<scrip t'")
     {
         const char dat1[] = "var str ='<scrip";
-        const char dat2[] = "t';";
+        const char dat2[] = "t>';";
         const char exp1[] = "var str='<scrip";
         const char exp2[] = "";
         const char exp[] = "var str='";
@@ -2342,7 +2418,7 @@ TEST_CASE("split in opening tag", "[JSNormalizer]")
     {
         const char dat1[] = "<";
         const char dat2[] = "scr";
-        const char dat3[] = "ipt";
+        const char dat3[] = "ipt>";
         const char exp1[] = "<";
         const char exp2[] = "scr";
         const char exp3[] = "";
@@ -2355,7 +2431,7 @@ TEST_CASE("split in opening tag", "[JSNormalizer]")
     {
         const char dat1[] = "var str =\"<sc";
         const char dat2[] = "rip";
-        const char dat3[] = "t\";";
+        const char dat3[] = "t>\";";
         const char exp1[] = "var str=\"<sc";
         const char exp2[] = "rip";
         const char exp3[] = "";

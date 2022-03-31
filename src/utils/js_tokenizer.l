@@ -1006,7 +1006,7 @@ LITERAL_NAN                   NaN
 LITERAL                       {LITERAL_NULL}|{LITERAL_THIS}|{LITERAL_BOOLEAN}|{LITERAL_DECIMAL}|{LITERAL_HEX_INTEGER}|{LITERAL_UNDEFINED}|{LITERAL_INFINITY}|{LITERAL_NAN}
 
 HTML_COMMENT_OPEN         "<"+"!--"
-HTML_TAG_SCRIPT_OPEN      "<"+(?i:script)
+HTML_TAG_SCRIPT_OPEN      "<"+(?i:script)[\x9\xA\xC\x20\x2f\x3e]
 HTML_TAG_SCRIPT_CLOSE     "<"+(?i:\/script>)
 
 /* from 0x000 to 0x10FFFD to match undefined tokens */
