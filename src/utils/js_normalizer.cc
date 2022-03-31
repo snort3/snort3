@@ -49,7 +49,7 @@ JSNormalizer::~JSNormalizer()
     tmp_buf_size = 0;
 }
 
-JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len)
+JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len, bool external_script)
 {
     assert(src);
 
@@ -81,7 +81,7 @@ JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len)
     out_buf.reserve(src_len * BUFF_EXP_FACTOR);
 
     size_t r_bytes = in_buf.last_chunk_offset();
-    auto ret = tokenizer.process(r_bytes);
+    auto ret = tokenizer.process(r_bytes, external_script);
 
     rem_bytes -= r_bytes;
     src_next = src + r_bytes;

@@ -38,7 +38,8 @@ public:
         int tmp_cap_size = JSTOKENIZER_BUF_MAX_SIZE);
     ~JSNormalizer();
 
-    JSTokenizer::JSRet normalize(const char* src, size_t src_len);
+    JSTokenizer::JSRet normalize(const char* src, size_t src_len,
+        bool external_script = false);
 
     const char* get_src_next() const
     { return src_next; }

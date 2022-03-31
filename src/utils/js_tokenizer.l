@@ -1055,14 +1055,14 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 
 %%
 
-<INITIAL,divop,regst,char_code>{WHITESPACES}              { /* skip */ }
-<INITIAL,divop,regst,char_code>{CHAR_ESCAPE_SEQUENCES}    { /* skip */ }
+<INITIAL,divop,regst,char_code>{WHITESPACES}           { /* skip */ }
+<INITIAL,divop,regst,char_code>{CHAR_ESCAPE_SEQUENCES} { /* skip */ }
 
-{LINE_TERMINATORS}                    { BEGIN(regst); newline_found = true; }
-<char_code>{LINE_TERMINATORS}         { newline_found = true; }
+{LINE_TERMINATORS}                            { BEGIN(regst); newline_found = true; }
+<char_code>{LINE_TERMINATORS}                 { newline_found = true; }
 
-<INITIAL,regex,dqstr,regst,sqstr,divop,char_code>{HTML_TAG_SCRIPT_OPEN} { BEGIN(regst); RETURN(OPENING_TAG) }
-{HTML_TAG_SCRIPT_CLOSE}             { EXEC(html_closing_script_tag()) }
+<INITIAL,regex,regst,divop,char_code>{HTML_TAG_SCRIPT_OPEN} { BEGIN(regst); RETURN(OPENING_TAG) }
+{HTML_TAG_SCRIPT_CLOSE}                       { EXEC(html_closing_script_tag()) }
 
     {HTML_COMMENT_OPEN}                       { BEGIN(lcomm); }
     {LINE_COMMENT_START}                      { BEGIN(lcomm); }
@@ -1072,25 +1072,26 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <lcomm>{LINE_COMMENT_END2}                    { BEGIN(regst); newline_found = true; }
 <char_code_lcomm>{LINE_COMMENT_END1}          { BEGIN(char_code); newline_found = true; }
 <char_code_lcomm>{LINE_COMMENT_END2}          { BEGIN(char_code); newline_found = true; }
-<lcomm,char_code_lcomm>{LINE_COMMENT_END3}    { BEGIN(regst); RETURN(OPENING_TAG) }
-<lcomm,char_code_lcomm>{LINE_COMMENT_END4}    { BEGIN(regst); RETURN(CLOSING_TAG) }
+<lcomm,char_code_lcomm>{LINE_COMMENT_END3}    { if (!ext_script) { BEGIN(regst); RETURN(OPENING_TAG) } }
+<lcomm,char_code_lcomm>{LINE_COMMENT_END4}    { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } }
 <lcomm,char_code_lcomm>{LINE_COMMENT_SKIP}    { /* skip */ }
 <lcomm,char_code_lcomm><<EOF>>                { RETURN(SCRIPT_CONTINUE) }
 
-    {BLOCK_COMMENT_START}                       { BEGIN(bcomm); }
-<char_code>{BLOCK_COMMENT_START}                { BEGIN(char_code_bcomm); }
-<bcomm>{BLOCK_COMMENT_END1}                     { BEGIN(regst); }
-<char_code_bcomm>{BLOCK_COMMENT_END1}           { BEGIN(char_code); }
-<bcomm,char_code_bcomm>{BLOCK_COMMENT_END2}     { BEGIN(regst); RETURN(OPENING_TAG) }
-<bcomm,char_code_bcomm>{BLOCK_COMMENT_END3}     { BEGIN(regst); RETURN(CLOSING_TAG) }
-<bcomm,char_code_bcomm>{BLOCK_COMMENT_LINE1}    |
-<bcomm,char_code_bcomm>{BLOCK_COMMENT_LINE2}    { newline_found = true; }
-<bcomm,char_code_bcomm>{BLOCK_COMMENT_SKIP}     { /* skip */ }
-<bcomm,char_code_bcomm><<EOF>>                  { RETURN(SCRIPT_CONTINUE) }
+    {BLOCK_COMMENT_START}                     { BEGIN(bcomm); }
+<char_code>{BLOCK_COMMENT_START}              { BEGIN(char_code_bcomm); }
+<bcomm>{BLOCK_COMMENT_END1}                   { BEGIN(regst); }
+<char_code_bcomm>{BLOCK_COMMENT_END1}         { BEGIN(char_code); }
+<bcomm,char_code_bcomm>{BLOCK_COMMENT_END2}   { if (!ext_script) { BEGIN(regst); RETURN(OPENING_TAG) } }
+<bcomm,char_code_bcomm>{BLOCK_COMMENT_END3}   { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } }
+<bcomm,char_code_bcomm>{BLOCK_COMMENT_LINE1}  |
+<bcomm,char_code_bcomm>{BLOCK_COMMENT_LINE2}  { newline_found = true; }
+<bcomm,char_code_bcomm>{BLOCK_COMMENT_SKIP}   { /* skip */ }
+<bcomm,char_code_bcomm><<EOF>>                { RETURN(SCRIPT_CONTINUE) }
 
     {LITERAL_DQ_STRING_START}                 { EXEC(literal_dq_string_start()) }
 <dqstr,unesc_dqstr>{LITERAL_DQ_STRING_END}    { dealias_append(); ECHO; BEGIN(divop); }
-<dqstr,unesc_dqstr>{HTML_TAG_SCRIPT_CLOSE}    { BEGIN(regst); RETURN(CLOSING_TAG) }
+<dqstr,unesc_dqstr>{HTML_TAG_SCRIPT_OPEN}     { if (ext_script) { ECHO; } else { BEGIN(regst); RETURN(OPENING_TAG) } }
+<dqstr,unesc_dqstr>{HTML_TAG_SCRIPT_CLOSE}    { if (ext_script) { ECHO; } else { BEGIN(regst); RETURN(CLOSING_TAG) } }
 <dqstr,unesc_dqstr>\\{CR}{LF}                 { /* skip */ }
 <dqstr,unesc_dqstr>\\{LF}                     { /* skip */ }
 <dqstr,unesc_dqstr>\\{CR}                     { /* skip */ }
@@ -1110,7 +1111,8 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 
     {LITERAL_SQ_STRING_START}                 { EXEC(literal_sq_string_start()) }
 <sqstr,unesc_sqstr>{LITERAL_SQ_STRING_END}    { dealias_append(); ECHO; BEGIN(divop); }
-<sqstr,unesc_sqstr>{HTML_TAG_SCRIPT_CLOSE}    { BEGIN(regst); RETURN(CLOSING_TAG) }
+<sqstr,unesc_sqstr>{HTML_TAG_SCRIPT_OPEN}     { if (ext_script) { ECHO; } else { BEGIN(regst); RETURN(OPENING_TAG) } }
+<sqstr,unesc_sqstr>{HTML_TAG_SCRIPT_CLOSE}    { if (ext_script) { ECHO; } else { BEGIN(regst); RETURN(CLOSING_TAG) } }
 <sqstr,unesc_sqstr>\\{CR}{LF}                 { /* skip */ }
 <sqstr,unesc_sqstr>\\{LF}                     { /* skip */ }
 <sqstr,unesc_sqstr>\\{CR}                     { /* skip */ }
@@ -2818,11 +2820,12 @@ void JSTokenizer::char_code_no_match()
     memset((void*)(states + sp), 0, sizeof(states[0]));
 }
 
-JSTokenizer::JSRet JSTokenizer::process(size_t& bytes_in)
+JSTokenizer::JSRet JSTokenizer::process(size_t& bytes_in, bool external_script)
 {
     yy_flush_buffer(YY_CURRENT_BUFFER);
     unescape_nest_seen = false;
     mixed_encoding_seen = false;
+    ext_script = external_script;
 
     auto r = yylex();
 

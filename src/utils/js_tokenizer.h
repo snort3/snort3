@@ -164,7 +164,7 @@ public:
         int cap_size = JSTOKENIZER_BUF_MAX_SIZE);
     ~JSTokenizer() override;
 
-    JSRet process(size_t& bytes_in);
+    JSRet process(size_t& bytes_in, bool external_script = false);
 
     void reset_output()
     { ignored_id_pos = -1; }
@@ -320,6 +320,7 @@ private:
     JSIdentifierCtxBase& ident_ctx;
     size_t bytes_read;
     size_t tmp_bytes_read;
+    bool ext_script;
 
     struct
     {

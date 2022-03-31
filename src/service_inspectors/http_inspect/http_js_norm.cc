@@ -59,12 +59,12 @@ static const char* ret2str(JSTokenizer::JSRet ret)
 }
 
 static inline JSTokenizer::JSRet js_normalize(JSNormalizer& ctx, const Packet* current_packet,
-    const char* const end, const char*& ptr)
+    const char* const end, const char*& ptr, bool external_script)
 {
     trace_logf(3, http_trace, TRACE_JS_DUMP, current_packet,
         "original[%zu]: %.*s\n", end - ptr, static_cast<int>(end - ptr), ptr);
 
-    auto ret = ctx.normalize(ptr, end - ptr);
+    auto ret = ctx.normalize(ptr, end - ptr, external_script);
     auto src_next = ctx.get_src_next();
 
     trace_logf(3, http_trace, TRACE_JS_PROC, current_packet,
@@ -167,7 +167,7 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
         trace_logf(1, http_trace, TRACE_JS_PROC, current_packet,
             "external script at %zd offset\n", ptr - (const char*)input.start());
 
-        auto ret = js_normalize(js_ctx, current_packet, end, ptr);
+        auto ret = js_normalize(js_ctx, current_packet, end, ptr, true);
 
         switch (ret)
         {
@@ -310,7 +310,7 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
             max_template_nesting, max_bracket_depth, max_scope_depth, ignored_ids);
         auto output_size_before = js_ctx.script_size();
 
-        auto ret = js_normalize(js_ctx, current_packet, end, ptr);
+        auto ret = js_normalize(js_ctx, current_packet, end, ptr, false);
 
         switch (ret)
         {
