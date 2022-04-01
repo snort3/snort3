@@ -1791,8 +1791,6 @@ bool InspectorManager::configure(SnortConfig* sc, bool cloned)
     }
     bool ok = true;
 
-    SearchTool::set_conf(sc);
-
     SingleInstanceInspectorPolicy* fid = sc->policy_map->get_file_id();
     fid->configure(sc);
 
@@ -1829,7 +1827,6 @@ bool InspectorManager::configure(SnortConfig* sc, bool cloned)
     assert(np);
     set_network_policy(np);
     set_inspection_policy(np->get_inspection_policy());
-    SearchTool::set_conf(nullptr);
 
     return ok;
 }

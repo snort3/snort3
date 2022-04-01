@@ -782,8 +782,7 @@ static int _bnfa_build_nfa(bnfa_struct_t* bnfa)
 #ifdef ENABLE_BNFA_FAIL_STATE_OPT
     // FIXIT-L low priority performance issue: bnfa fail state reduction
     // optimize the failure states
-    if ( bnfa->bnfaOpt )
-        _bnfa_opt_nfa(bnfa);
+    _bnfa_opt_nfa(bnfa);
 #endif
 
     return 0;
@@ -1190,7 +1189,6 @@ bnfa_struct_t* bnfaNew(const MpseAgent* agent)
 
     if ( p )
     {
-        p->bnfaOpt                = 0;
         p->bnfaCaseMode           = BNFA_PER_PAT_CASE;
         p->bnfaFormat             = BNFA_SPARSE;
         p->bnfaAlphabetSize       = BNFA_MAX_ALPHABET_SIZE;
@@ -1200,11 +1198,6 @@ bnfa_struct_t* bnfaNew(const MpseAgent* agent)
     }
 
     return p;
-}
-
-void bnfaSetOpt(bnfa_struct_t* p, int flag)
-{
-    p->bnfaOpt=flag;
 }
 
 void bnfaSetCase(bnfa_struct_t* p, int flag)

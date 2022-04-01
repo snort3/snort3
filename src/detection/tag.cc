@@ -629,7 +629,7 @@ void SetTags(const Packet* p, const OptTreeNode* otn, uint16_t event_id)
     {
         if (otn->tag->tag_type != 0)
         {
-            RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
+            RuleTreeNode* rtn = getRtnFromOtn(otn);
             void* log_list = rtn ? rtn->listhead : nullptr;
 
             switch (otn->tag->tag_type)

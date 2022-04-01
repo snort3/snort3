@@ -115,8 +115,6 @@ OptTreeNode* OtnLookup(snort::GHash*, uint32_t gid, uint32_t sid);
 void OtnLookupFree(snort::GHash*);
 void OtnRemove(snort::GHash*, OptTreeNode*);
 
-OptTreeNode* GetOTN(uint32_t gid, uint32_t sid);
-
 void dump_msg_map(const snort::SnortConfig*);
 void dump_rule_deps(const snort::SnortConfig*);
 void dump_rule_meta(const snort::SnortConfig*);

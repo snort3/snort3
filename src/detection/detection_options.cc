@@ -315,8 +315,10 @@ void print_option_tree(detection_option_tree_node_t* node, int level)
         opt = buf;
     }
 
-    debug_logf(detection_trace, TRACE_OPTION_TREE, nullptr, "%3d %3d  %p %*s\n",
-        level, node->num_children, node->option_data, (int)(level + strlen(opt)), opt);
+    const char* srtn = node->otn ? " (rtn)" : "";
+
+    debug_logf(detection_trace, TRACE_OPTION_TREE, nullptr, "%3d %3d  %p %*s%s\n",
+        level+1, node->num_children, node->option_data, (int)(level + strlen(opt)), opt, srtn);
 
     for ( int i=0; i<node->num_children; i++ )
         print_option_tree(node->children[i], level+1);
@@ -439,7 +441,7 @@ int detection_option_node_evaluate(
                 }
             }
 
-            if ( !fp_eval_rtn(getRuntimeRtnFromOtn(node->otn), p, check_ports) )
+            if ( !fp_eval_rtn(getRtnFromOtn(node->otn), p, check_ports) )
                 break;
         }
 

@@ -30,7 +30,6 @@ struct RuleTreeNode;
 
 // parsing
 int RuleListEnd(snort::Packet*, RuleTreeNode*, RuleFpList*, int);
-int OptListEnd(void* option_data, class Cursor&, snort::Packet*);
 
 // detection
 int CheckBidirectional(snort::Packet*, RuleTreeNode*, RuleFpList*, int);

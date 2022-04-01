@@ -124,12 +124,6 @@ public:
     const std::string& get_rule_db_dir() const
     { return rule_db_dir; }
 
-    void set_search_opt(bool flag)
-    { search_opt = flag; }
-
-    bool get_search_opt() const
-    { return search_opt; }
-
     bool set_search_method(const char*);
     const char* get_search_method();
 
@@ -151,6 +145,9 @@ public:
 
     unsigned set_max(unsigned bytes);
 
+    bool deduplicate() const
+    { return dedup; }
+
 private:
     const snort::MpseApi* search_api = nullptr;
     const snort::MpseApi* offload_search_api = nullptr;
@@ -159,7 +156,7 @@ private:
     bool split_any_any = false;
     bool debug_print_fast_pattern = false;
     bool debug = false;
-    bool search_opt = false;
+    bool dedup = true;
 
     unsigned max_queue_events = 5;
     unsigned bleedover_port_limit = 1024;
@@ -168,7 +165,7 @@ private:
     unsigned queue_limit = 0;
 
     int portlists_flags = 0;
-    int num_patterns_truncated = 0;  // due to max_pattern_len
+    unsigned num_patterns_truncated = 0;  // due to max_pattern_len
 
     std::string rule_db_dir;
 };

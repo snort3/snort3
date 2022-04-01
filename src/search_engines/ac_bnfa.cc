@@ -58,12 +58,6 @@ public:
             bnfaFree(obj);
     }
 
-    void set_opt(int flag) override
-    {
-        if (obj)
-            bnfaSetOpt(obj, flag);
-    }
-
     int add_pattern(
         const uint8_t* P, unsigned m, const PatternDescriptor& desc, void* user) override
     {

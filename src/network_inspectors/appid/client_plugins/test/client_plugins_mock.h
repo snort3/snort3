@@ -26,7 +26,7 @@ void LogMessage(const char*,...) { }
 void WarningMessage(const char*,...) { }
 
 // Stubs for search_tool.cc
-SearchTool::SearchTool(char const*, bool) { }
+SearchTool::SearchTool(bool) { }
 SearchTool::~SearchTool() = default;
 void SearchTool::add(const char*, unsigned, int, bool) { }
 void SearchTool::add(const char*, unsigned, void*, bool) { }

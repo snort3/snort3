@@ -57,7 +57,7 @@ void LogText(const char*, FILE*) {}
 void ParseWarning(WarningGroup, const char*, ...) { }
 
 void LogLabel(const char*, FILE*) {}
-SearchTool::SearchTool(char const*, bool) { }
+SearchTool::SearchTool(bool) { }
 SearchTool::~SearchTool() = default;
 }
 DiscoveryFilter::~DiscoveryFilter(){}

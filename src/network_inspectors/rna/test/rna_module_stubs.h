@@ -57,7 +57,7 @@ void set_tcp_fp_processor(TcpFpProcessor*) { }
 TcpFingerprint::TcpFingerprint(const RawFingerprint&) { }
 
 UaFpProcessor::~UaFpProcessor() = default;
-void UaFpProcessor::make_mpse(SnortConfig*) { }
+void UaFpProcessor::make_mpse(bool) { }
 void UaFpProcessor::push(RawFingerprint const&) { }
 
 void UdpFpProcessor::push(RawFingerprint const&) { }

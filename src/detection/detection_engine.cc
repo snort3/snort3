@@ -665,7 +665,7 @@ int DetectionEngine::queue_event(const OptTreeNode* otn)
 
 int DetectionEngine::queue_event(unsigned gid, unsigned sid)
 {
-    OptTreeNode* otn = GetOTN(gid, sid);
+    OptTreeNode* otn = OtnLookup(SnortConfig::get_conf()->otn_map, gid, sid);
 
     if ( !otn )
         return 0;

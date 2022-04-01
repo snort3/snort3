@@ -125,7 +125,7 @@ EveCaPatternMatchers::~EveCaPatternMatchers() = default;
 HttpPatternMatchers::~HttpPatternMatchers() = default;
 SipPatternMatchers::~SipPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;
-snort::SearchTool::SearchTool(char const*, bool) { }
+snort::SearchTool::SearchTool(bool) { }
 snort::SearchTool::~SearchTool() = default;
 
 TEST_GROUP(service_state_tests)

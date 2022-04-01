@@ -232,7 +232,7 @@ int SFRF_ConfigAdd(SnortConfig*, RateFilterConfig* rf_config, tSFRFConfigNode* c
     tSFRFConfigNode* pNewConfigNode;
     tSFRFGenHashKey key = { 0,0 };
 
-    PolicyId policy_id = get_ips_policy()->policy_id;
+    PolicyId policy_id = get_inspection_policy()->policy_id;
 
     if ((rf_config == nullptr) || (cfgNode == nullptr))
         return -1;
@@ -782,7 +782,7 @@ static tSFRFTrackingNode* _getSFRFTrackingNode(const SfIp* ip, unsigned tid, tim
     /* Setup key */
     key.ip = *(ip);
     key.tid = tid;
-    key.policyId = get_ips_policy()->policy_id;
+    key.policyId = get_inspection_policy()->policy_id;
     key.padding = 0;
 
     // Check for any Permanent sid objects for this gid or add this one ...

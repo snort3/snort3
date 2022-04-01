@@ -110,6 +110,9 @@ bool RnaInspector::configure(SnortConfig*)
     if (rna_conf && rna_conf->log_when_idle)
         DataBus::subscribe_network( THREAD_IDLE_EVENT, new RnaIdleEventHandler(*pnd) );
 
+    if ( mod_conf->ua_processor )
+        mod_conf->ua_processor->make_mpse();
+
     return true;
 }
 

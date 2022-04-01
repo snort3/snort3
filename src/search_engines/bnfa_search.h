@@ -160,7 +160,6 @@ void bnfa_init_xlatcase();
 
 bnfa_struct_t* bnfaNew(const MpseAgent*);
 
-void bnfaSetOpt(bnfa_struct_t* p, int flag);
 void bnfaSetCase(bnfa_struct_t* p, int flag);
 void bnfaFree(bnfa_struct_t* pstruct);
 

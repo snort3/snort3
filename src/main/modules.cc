@@ -193,9 +193,6 @@ static const Parameter search_engine_params[] =
     { "rule_db_dir", Parameter::PT_STRING, nullptr, nullptr,
       "deserialize rule databases from given directory" },
 
-    { "search_optimize", Parameter::PT_BOOL, nullptr, "true",
-      "tweak state machine construction for better performance" },
-
     { "show_fast_patterns", Parameter::PT_BOOL, nullptr, "false",
       "print fast pattern info for each rule" },
 
@@ -309,9 +306,6 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
         if ( !fp->set_offload_search_method(v.get_string()) )
             return false;
     }
-    else if ( v.is("search_optimize") )
-        fp->set_search_opt(v.get_bool());
-
     else if ( v.is("show_fast_patterns") )
         fp->set_debug_print_fast_patterns(v.get_bool());
 
@@ -641,9 +635,6 @@ static const Parameter alerts_params[] =
       "set the CIDR for homenet "
       "(for use with -l or -B, does NOT change $HOME_NET in IDS mode)" },
 
-    { "stateful", Parameter::PT_BOOL, nullptr, "false",
-      "don't alert w/o established session (note: rule action still taken)" },
-
     { "tunnel_verdicts", Parameter::PT_STRING, nullptr, nullptr,
       "let DAQ handle non-allow verdicts for gtp|teredo|6in4|4in6|4in4|6in6|gre|mpls|vxlan traffic" },
 
@@ -685,9 +676,6 @@ bool AlertsModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("reference_net") )
         return ( sc->homenet.set(v.get_string()) == SFIP_SUCCESS );
-
-    else if ( v.is("stateful") )
-        v.update_mask(sc->run_flags, RUN_FLAG__ASSURE_EST);
 
     else if ( v.is("tunnel_verdicts") )
         sc->set_tunnel_verdicts(v.get_string());
@@ -1745,7 +1733,7 @@ public:
     }
 
     Usage get_usage() const override
-    { return CONTEXT; }
+    { return INSPECT; }
 
 private:
     tSFRFConfigNode thdx;

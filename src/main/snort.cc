@@ -214,7 +214,7 @@ void Snort::init(int argc, char** argv)
     InspectorManager::prepare_controls(sc);
 
     // Must be after InspectorManager::configure()
-    FileService::post_init(sc);
+    FileService::post_init();
 
     if (sc->file_mask != 0)
         umask(sc->file_mask);

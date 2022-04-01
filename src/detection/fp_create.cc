@@ -65,6 +65,7 @@ using namespace std;
 
 static unsigned mpse_count = 0;
 static unsigned offload_mpse_count = 0;
+static unsigned fp_only = 0;
 static const char* s_group = "";
 
 static void fpDeletePMX(void* data);
@@ -75,27 +76,6 @@ static int fpGetFinalPattern(
 static void print_nfp_info(const char*, OptTreeNode*);
 static void print_fp_info(const char*, const OptTreeNode*, const PatternMatchData*,
     const char* pattern, unsigned pattern_length);
-
-static int finalize_detection_option_tree(SnortConfig* sc, detection_option_tree_root_t* root)
-{
-    if ( !root )
-        return -1;
-
-    for ( int i=0; i<root->num_children; i++ )
-    {
-        detection_option_tree_node_t* node = root->children[i];
-
-        if ( void* dup_node = add_detection_option_tree(sc, node) )
-        {
-            // FIXIT-L delete dup_node and keep original?
-            free_detection_option_tree(node);
-            root->children[i] = (detection_option_tree_node_t*)dup_node;
-        }
-        print_option_tree(root->children[i], 0);
-    }
-
-    return 0;
-}
 
 static OptTreeNode* fixup_tree(
     detection_option_tree_node_t* dot, bool branched, unsigned contents)
@@ -127,19 +107,30 @@ static OptTreeNode* fixup_tree(
     return nullptr;
 }
 
-static void fixup_trees(SnortConfig* sc)
+static int finalize_detection_option_tree(SnortConfig* sc, detection_option_tree_root_t* root)
 {
-    if ( !sc->detection_option_tree_hash_table )
-        return;
+    if ( !root )
+        return -1;
 
-    HashNode* hn = sc->detection_option_tree_hash_table->find_first_node();
-
-    while ( hn )
+    for ( int i=0; i<root->num_children; i++ )
     {
-        detection_option_tree_node_t* node = (detection_option_tree_node_t*)hn->data;
-        fixup_tree(node, true, 0);
-        hn = sc->detection_option_tree_hash_table->find_next_node();
+        detection_option_tree_node_t* node = root->children[i];
+
+        if ( void* dup_node = add_detection_option_tree(sc, node) )
+        {
+            // FIXIT-L delete dup_node and keep original?
+            free_detection_option_tree(node);
+            root->children[i] = (detection_option_tree_node_t*)dup_node;
+        }
+        fixup_tree(root->children[i], true, 0);
+
+        debug_logf(detection_trace, TRACE_OPTION_TREE, nullptr, "%3d %3d  %p %4s\n",
+            0, root->num_children, (void*)root, "root" );
+
+        print_option_tree(root->children[i], 0);
     }
+
+    return 0;
 }
 
 static bool new_sig(int num_children, detection_option_tree_node_t** nodes, OptTreeNode* otn)
@@ -452,7 +443,7 @@ static int fpFinishRuleGroupRule(
     pmx->pmd = pmd;
 
     Mpse::PatternDescriptor desc(
-        pmd->is_no_case(), pmd->is_negated(), pmd->is_literal(), pmd->mpse_flags);
+        pmd->is_no_case(), pmd->is_negated(), pmd->is_literal(), false, pmd->mpse_flags);
 
     mpse->add_pattern((const uint8_t*)pattern, pattern_length, desc, pmx);
 
@@ -481,10 +472,6 @@ static int fpFinishRuleGroup(SnortConfig* sc, RuleGroup* pg, FastPatternConfig* 
                 if (pg->mpsegrp[i]->normal_mpse->get_pattern_count() != 0)
                 {
                     queue_mpse(pg->mpsegrp[i]->normal_mpse);
-
-                    if (fp->get_debug_mode())
-                        pg->mpsegrp[i]->normal_mpse->print_info();
-
                     rules = 1;
                 }
                 else
@@ -498,10 +485,6 @@ static int fpFinishRuleGroup(SnortConfig* sc, RuleGroup* pg, FastPatternConfig* 
                 if (pg->mpsegrp[i]->offload_mpse->get_pattern_count() != 0)
                 {
                     queue_mpse(pg->mpsegrp[i]->offload_mpse);
-
-                    if (fp->get_debug_mode())
-                        pg->mpsegrp[i]->offload_mpse->print_info();
-
                     rules = 1;
                 }
                 else
@@ -623,8 +606,6 @@ static int fpAddRuleGroupRule(
                 }
 
                 mpse_count++;
-                if ( fp->get_search_opt() )
-                    pg->mpsegrp[main_pmd->pm_type]->normal_mpse->set_opt(1);
             }
 
             if (add_to_offload)
@@ -649,8 +630,6 @@ static int fpAddRuleGroupRule(
                     }
 
                     offload_mpse_count++;
-                    if ( fp->get_search_opt() )
-                        pg->mpsegrp[main_pmd->pm_type]->offload_mpse->set_opt(1);
                 }
             }
 
@@ -671,7 +650,10 @@ static int fpAddRuleGroupRule(
                         otn->longestPatternLen = main_pmd->pattern_size;
 
                     if ( make_fast_pattern_only(ofp, main_pmd) )
+                    {
                         otn->normal_fp_only = ofp;
+                        fp_only++;
+                    }
 
                     // Add Alternative patterns
                     for (auto p : pmv)
@@ -694,7 +676,10 @@ static int fpAddRuleGroupRule(
                         otn->longestPatternLen = ol_pmd->pattern_size;
 
                     if ( make_fast_pattern_only(ofp_ol, ol_pmd) )
+                    {
                         otn->offload_fp_only = ofp_ol;
+                        fp_only++;
+                    }
 
                     // Add Alternative patterns
                     for (auto p : pmv_ol)
@@ -951,11 +936,14 @@ static int fpGetFinalPattern(
          * is taken care of during parsing */
         assert(pmd->fp_offset + pmd->fp_length <= pmd->pattern_size);
         pattern = pmd->pattern_buf + pmd->fp_offset;
-        bytes = pmd->fp_length ? pmd->fp_length : pmd->pattern_size - pmd->fp_length;
+        bytes = pmd->fp_length ? pmd->fp_length : pmd->pattern_size - pmd->fp_offset;
     }
 
     ret_pattern = pattern;
     ret_bytes = fp->set_max(bytes);
+
+    if ( ret_bytes < pmd->pattern_size )
+        pmd->fp_length = ret_bytes;
 
     return 0;
 }
@@ -1315,7 +1303,7 @@ static void fpCreateServiceMapRuleGroups(SnortConfig* sc)
 }
 
 /*
- *  Print the rule gid:sid based onm the otn list
+ *  Print the rule gid:sid based on the otn list
  */
 static void fpPrintRuleList(SF_LIST* list)
 {
@@ -1576,6 +1564,7 @@ int fpCreateFastPacketDetection(SnortConfig* sc)
 
     mpse_count = 0;
     offload_mpse_count = 0;
+    fp_only = 0;
 
     MpseManager::start_search_engine(fp->get_search_api());
 
@@ -1616,8 +1605,6 @@ int fpCreateFastPacketDetection(SnortConfig* sc)
 
         if ( c != expected )
             ParseError("Failed to compile %u search engines", expected - c);
-
-        fixup_trees(sc);
     }
 
     fp_print_port_groups(port_tables);
@@ -1639,6 +1626,7 @@ int fpCreateFastPacketDetection(SnortConfig* sc)
     }
 
     LogCount("truncated patterns", fp->get_num_patterns_truncated());
+    LogCount("fast pattern only", fp_only);
     LogCount("mpse_loaded", mpse_loaded);
     LogCount("mpse_dumped", mpse_dumped);
 

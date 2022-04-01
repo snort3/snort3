@@ -48,18 +48,21 @@ using namespace snort;
 //-------------------------------------------------------------------------
 
 const MpseApi* get_test_api()
-{ return (const MpseApi*) se_ac_full; }
+{ return (const MpseApi*) se_hyperscan; }
 
 //-------------------------------------------------------------------------
-// ac_full tests
+// hyperscan tests
 //-------------------------------------------------------------------------
 
 TEST_GROUP(search_tool_full)
 {
+    Module* mod = nullptr;
     SearchTool* stool;
+    const MpseApi* mpse_api = (const MpseApi*)se_hyperscan;
 
     void setup() override
     {
+        mod = mpse_api->base.mod_ctor();
         stool = new SearchTool;
         CHECK(stool->mpsegrp->normal_mpse);
 
@@ -89,6 +92,8 @@ TEST_GROUP(search_tool_full)
     void teardown() override
     {
         delete stool;
+        scratcher->cleanup(snort_conf);
+        mpse_api->base.mod_dtor(mod);
     }
 };
 
@@ -96,19 +101,20 @@ TEST(search_tool_full, search)
 {
     //                     0         1         2         3
     //                     0123456789012345678901234567890
-    const char* datastr = "the tuba ran away with the the tuna";
+    const char* datastr = "the tuba ran away with the tuna";
     const ExpectedMatch xm[] =
     {
         { 1, 3 },
+        { 77, 8 },
         { 78, 8 },
         { 2112, 17 },
         { 1, 26 },
-        { 1, 30 },
         { 0, 0 }
     };
 
     s_expect = xm;
     s_found = 0;
+    scratcher->setup(snort_conf);
 
     int result = stool->find(datastr, strlen(datastr), check_mpse_match);
 
@@ -119,26 +125,26 @@ TEST(search_tool_full, search)
 TEST(search_tool_full, search_all)
 {
     //                     0         1         2         3
-    //                     01234567890123456789012345678901234
-    const char* datastr = "the the tuba ran away with the tuna";
+    //                     0123456789012345678901234567890
+    const char* datastr = "the tuba ran away with the tuna";
     const ExpectedMatch xm[] =
     {
         { 1, 3 },
-        { 1, 7 },
-        { 78, 12 },
-        { 77, 12 },
-        { 2112, 21 },
-        { 1, 30 },
+        { 77, 8 },
+        { 78, 8 },
+        { 2112, 17 },
+        { 1, 26 },
         { 0, 0 }
     };
 
     s_expect = xm;
     s_found = 0;
+    scratcher->setup(snort_conf);
 
     int result = stool->find_all(datastr, strlen(datastr), check_mpse_match);
 
-    CHECK(result == 6);
-    CHECK(s_found == 6);
+    CHECK(result == 5);
+    CHECK(s_found == 5);
 }
 
 //-------------------------------------------------------------------------
@@ -147,7 +153,10 @@ TEST(search_tool_full, search_all)
 
 int main(int argc, char** argv)
 {
-    ((MpseApi*)se_ac_full)->init();
+    ((MpseApi*)se_hyperscan)->init();
+    // FIXIT-L There is currently no external way to fully release the memory from the static
+    //   s_scratch vector in hyperscan.cc
+    MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
 

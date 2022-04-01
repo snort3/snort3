@@ -45,6 +45,7 @@
 #include "treenodes.h"
 #include "utils/util.h"
 
+#include "fp_config.h"
 #include "service_map.h"
 
 #ifdef UNIT_TEST
@@ -143,7 +144,7 @@ static const char* get_service(const char* opt)
 {
     if ( !strncmp(opt, "http_", 5) )
         return "http";
-    
+
     if ( !strncmp(opt, "js_data", 7) )
         return "http";
 
@@ -538,6 +539,9 @@ PatternMatchVector get_fp_content(
 
 bool make_fast_pattern_only(const OptFpList* ofp, const PatternMatchData* pmd)
 {
+    if ( pmd->fp_offset or (pmd->fp_length and pmd->pattern_size != pmd->fp_length) )
+        return false;
+
     // FIXIT-L no_case consideration is mpse specific, delegate
     if ( !pmd->is_relative() and !pmd->is_negated() and
          !pmd->offset and !pmd->depth and pmd->is_no_case() )
@@ -588,7 +592,12 @@ static void compile_mpse(SnortConfig* sc, unsigned id, unsigned* count)
     while ( Mpse* m = get_mpse() )
     {
         if ( !m->prep_patterns(sc) )
+        {
+            if ( sc->fast_pattern_config->get_debug_mode() )
+                m->print_info();
+
             c++;
+        }
     }
     std::lock_guard<std::mutex> lock(s_mutex);
     *count += c;

@@ -76,7 +76,8 @@ Pattern::Pattern(
     if ( no_case )
         flags |= HS_FLAG_CASELESS;
 
-    flags |= HS_FLAG_SINGLEMATCH;
+    if ( !d.multi_match )
+        flags |= HS_FLAG_SINGLEMATCH;
 }
 
 void Pattern::escape(const uint8_t* s, unsigned n, bool literal)
@@ -177,11 +178,8 @@ public:
         unsigned id, unsigned long long from, unsigned long long to,
         unsigned flags, void*);
 
-    bool serialize(uint8_t*& buf, size_t& sz) const override
-    { return hs_db and (hs_serialize_database(hs_db, (char**)&buf, &sz) == HS_SUCCESS) and buf; }
-
-    bool deserialize(const uint8_t* buf, size_t sz) override
-    { return (hs_deserialize_database((const char*)buf, sz, &hs_db) == HS_SUCCESS) and hs_db; }
+    bool serialize(uint8_t*&, size_t&) const override;
+    bool deserialize(const uint8_t*, size_t) override;
 
     void get_hash(std::string&) override;
 
@@ -201,6 +199,22 @@ public:
 
 uint64_t HyperscanMpse::instances = 0;
 uint64_t HyperscanMpse::patterns = 0;
+
+bool HyperscanMpse::serialize(uint8_t*& buf, size_t& sz) const
+{ return hs_db and (hs_serialize_database(hs_db, (char**)&buf, &sz) == HS_SUCCESS) and buf; }
+
+bool HyperscanMpse::deserialize(const uint8_t* buf, size_t sz)
+{
+    if ( hs_deserialize_database((const char*)buf, sz, &hs_db) != HS_SUCCESS or !hs_db )
+        return false;
+
+    if ( hs_error_t err = hs_alloc_scratch(hs_db, &s_scratch[get_instance_id()]) )
+    {
+        ParseError("can't allocate search scratch space (%d)", err);
+        return false;
+    }
+    return true;
+}
 
 // other mpse have direct access to their fsm match states and populate
 // user list and tree with each pattern that leads to the same match state.

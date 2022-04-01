@@ -32,54 +32,20 @@
 
 namespace snort
 {
-const SnortConfig* SearchTool::conf = nullptr;
-
-SearchTool::SearchTool(const char* method, bool dfa)
+SearchTool::SearchTool(bool multi)
 {
+    const SnortConfig* sc = SnortConfig::get_conf();
+    assert(sc and sc->fast_pattern_config);
+    const char* method = sc->fast_pattern_config->get_search_method();
+
+    if ( strcmp(method, "hyperscan") )
+        method = "ac_full";
+
     mpsegrp = new MpseGroup;
+    mpsegrp->create_normal_mpse(sc, method);
+    assert(mpsegrp->get_normal_mpse());
 
-    // When no method is passed in, a normal search engine mpse will be created with the search
-    // method the same as that configured for the fast pattern normal search method, and also an
-    // offload search engine mpse will be created with the search method the same as that
-    // configured for the fast pattern offload search method.  If a method is passed in then an
-    // offload search engine will not be created
-
-    // FIXIT-L the above is flawed.  Offload should not depend on default.  Also, offload only
-    // works in an inline, synchronous fashion for SearchTool so the overhead must be offset by
-    // the speed gain.  Offload support should be removed from here for now.
-
-    // FIXIT-L we force non-hyperscan to be ac_full since the other algorithms like ac_bnfa don't
-    // return all matches.  This could be fixed by adding the match iteration loops like ac_full to
-    // ac_bnfa or removing that and updating SearchTool to do a trivial vector of matches.
-
-    assert(conf);
-
-    if ( !method )
-    {
-        method = conf->fast_pattern_config->get_search_method();
-
-        if ( strcmp(method, "hyperscan") )
-        {
-            method = "ac_full";
-            dfa = true;
-        }
-    }
-
-    if (mpsegrp->create_normal_mpse(conf, method))
-    {
-        if( dfa )
-            mpsegrp->normal_mpse->set_opt(1);
-    }
-
-    if (method == nullptr)
-    {
-        if (mpsegrp->create_offload_mpse(conf))
-        {
-            if ( dfa )
-                mpsegrp->offload_mpse->set_opt(1);
-        }
-    }
-
+    multi_match = multi;
     max_len = 0;
 }
 
@@ -99,7 +65,7 @@ void SearchTool::add(const uint8_t* pat, unsigned len, int id, bool no_case)
 
 void SearchTool::add(const uint8_t* pat, unsigned len, void* id, bool no_case)
 {
-    Mpse::PatternDescriptor desc(no_case, false, true);
+    Mpse::PatternDescriptor desc(no_case, false, true, multi_match);
 
     if ( mpsegrp->normal_mpse )
         mpsegrp->normal_mpse->add_pattern(pat, len, desc, id);
@@ -143,7 +109,7 @@ int SearchTool::find(
         user_data = (void*)str;
 
     if ( fp and fp->get_offload_search_api() and (len >= sc->offload_limit) and
-            (mpsegrp->get_offload_mpse() != mpsegrp->get_normal_mpse()) )
+        (mpsegrp->get_offload_mpse() != mpsegrp->get_normal_mpse()) )
     {
         num = mpsegrp->get_offload_mpse()->search((const uint8_t*)str, len, mf, user_data, &state);
 
@@ -185,18 +151,15 @@ int SearchTool::find_all(
     int state = 0;
 
     if ( fp and fp->get_offload_search_api() and (len >= sc->offload_limit) and
-            (mpsegrp->get_offload_mpse() != mpsegrp->get_normal_mpse()) )
+        (mpsegrp->get_offload_mpse() != mpsegrp->get_normal_mpse()) )
     {
-        num = mpsegrp->get_offload_mpse()->search_all((const uint8_t*)str, len, mf, user_data,
-                &state);
+        num = mpsegrp->get_offload_mpse()->search_all((const uint8_t*)str, len, mf, user_data, &state);
 
         if ( num < 0 )
-            num = mpsegrp->get_normal_mpse()->search_all((const uint8_t*)str, len, mf, user_data,
-                    &state);
+            num = mpsegrp->get_normal_mpse()->search_all((const uint8_t*)str, len, mf, user_data, &state);
     }
     else
-        num = mpsegrp->get_normal_mpse()->search_all((const uint8_t*)str, len, mf, user_data,
-                &state);
+        num = mpsegrp->get_normal_mpse()->search_all((const uint8_t*)str, len, mf, user_data, &state);
 
     // SeachTool::find expects the number found to be returned so if we have a failure return 0
     if ( num < 0 )
@@ -205,3 +168,4 @@ int SearchTool::find_all(
     return num;
 }
 } // namespace snort
+

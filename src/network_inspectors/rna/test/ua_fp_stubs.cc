@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2022-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,34 +16,29 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
+// ua_fp_stubs.cc author Russ Combs <rucombs@cisco.com>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "search_engines.h"
+#include "search_engines/search_tool.h"
 
-#include "managers/plugin_manager.h"
-
-using namespace snort;
-
-extern const BaseApi* se_ac_bnfa[];
-extern const BaseApi* se_ac_full[];
-
-#ifdef STATIC_SEARCH_ENGINES
-#ifdef HAVE_HYPERSCAN
-extern const BaseApi* se_hyperscan[];
-#endif
-#endif
-
-void load_search_engines()
+namespace snort
 {
-    PluginManager::load_plugins(se_ac_bnfa);
-    PluginManager::load_plugins(se_ac_full);
+void SearchTool::add(const char*, unsigned, int, bool) { }
+void SearchTool::add(const uint8_t*, unsigned, int, bool) { }
+void SearchTool::add(const uint8_t*, unsigned, void*, bool) { }
 
-#ifdef STATIC_SEARCH_ENGINES
-#ifdef HAVE_HYPERSCAN
-    PluginManager::load_plugins(se_hyperscan);
-#endif
-#endif
+void SearchTool::reload() { }
+
+int SearchTool::find(const char*, unsigned, MpseMatch, int&, bool, void*)
+{ return 0; }
+
+int SearchTool::find(const char*, unsigned, MpseMatch, bool, void*)
+{ return 0; }
+
+int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void*)
+{ return 0; }
 }
 

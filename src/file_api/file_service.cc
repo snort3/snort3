@@ -59,11 +59,9 @@ void FileService::init()
     FileFlows::init();
 }
 
-void FileService::post_init(const SnortConfig* sc)
+void FileService::post_init()
 {
-    SearchTool::set_conf(sc);
     MimeSession::init();
-    SearchTool::set_conf(nullptr);
 
     const FileConfig* const conf = get_file_config();
 

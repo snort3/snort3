@@ -70,22 +70,6 @@ void otn_trigger_actions(const OptTreeNode* otn, Packet* p)
 // rule FOO
 //-------------------------------------------------------------------------
 
-void* get_rule_type_data(OptTreeNode* otn, const char* name)
-{
-    OptFpList* fpl = otn->opt_func;
-
-    while ( fpl )
-    {
-        if ( fpl->ips_opt )
-        {
-            if ( !strcmp(fpl->ips_opt->get_name(), name) )
-                return fpl->ips_opt;
-        }
-        fpl = fpl->next;
-    }
-    return nullptr;
-}
-
 namespace snort
 {
 bool otn_has_plugin(OptTreeNode* otn, const char* name)

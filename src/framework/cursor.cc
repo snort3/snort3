@@ -96,7 +96,6 @@ void Cursor::reset(Packet* p)
 {
     InspectionBuffer buf;
 
-    // FIXIT-M should this be converted to get_fp_buf()?
     if ( p->flow and p->flow->gadget and
         p->flow->gadget->get_buf(buf.IBT_ALT, p, buf) )
     {

@@ -60,8 +60,8 @@ public:
     { return get_offload_mpse() != normal_mpse; }
 
 public:  // FIXIT-L privatize
-        Mpse* normal_mpse;
-        Mpse* offload_mpse;
+    Mpse* normal_mpse;
+    Mpse* offload_mpse;
 };
 
 template<typename BUF = const uint8_t*, typename LEN = unsigned>

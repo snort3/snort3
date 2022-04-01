@@ -53,6 +53,12 @@ bool FastPatternConfig::set_search_method(const char* method)
         return false;
 
     search_api = api;
+
+    // FIXIT-L query search_api capabilities when API is redone
+    // same for offload
+    if ( !strcmp(method, "hyperscan") )
+        dedup = false;
+
     return true;
 }
 
@@ -72,15 +78,15 @@ bool FastPatternConfig::set_offload_search_method(const char* method)
         return false;
 
     offload_search_api = api;
+
+    if ( !dedup and !strcmp(method, "hyperscan") )
+        dedup = false;
+
     return true;
 }
 
 void FastPatternConfig::set_max_pattern_len(unsigned int max_len)
 {
-    if (max_pattern_len != 0)
-        ParseWarning(WARN_CONF, "maximum pattern length redefined from %d to %u.\n",
-            max_pattern_len, max_len);
-
     max_pattern_len = max_len;
 }
 

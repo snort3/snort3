@@ -80,11 +80,6 @@ inline RuleTreeNode* getRtnFromOtn(const struct OptTreeNode* otn)
     return getRtnFromOtn(otn, snort::get_ips_policy()->policy_id);
 }
 
-inline RuleTreeNode* getRuntimeRtnFromOtn(const struct OptTreeNode* otn)
-{
-    return getRtnFromOtn(otn);
-}
-
 RuleListNode* CreateRuleType(snort::SnortConfig* sc, const char* name, Actions::Type action_type);
 
 void FreeRuleTreeNode(RuleTreeNode*);

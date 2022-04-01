@@ -533,10 +533,6 @@ bool RnaModule::end(const char* fqn, int index, SnortConfig* sc)
             mod_conf->tcp_processor->make_tcp_fp_tables(TcpFpProcessor::TCP_FP_MODE::SERVER);
             mod_conf->tcp_processor->make_tcp_fp_tables(TcpFpProcessor::TCP_FP_MODE::CLIENT);
         }
-
-        if ( mod_conf->ua_processor )
-            mod_conf->ua_processor->make_mpse(sc);
-
     }
 
     if ( index > 0 and mod_conf->tcp_processor and !strcmp(fqn, "rna.tcp_fingerprints") )

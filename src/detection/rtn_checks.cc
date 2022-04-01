@@ -258,8 +258,3 @@ int RuleListEnd(Packet*, RuleTreeNode*, RuleFpList*, int)
     return 1;
 }
 
-int OptListEnd(void*, Cursor&, Packet*)
-{
-    return (int)IpsOption::MATCH;
-}
-

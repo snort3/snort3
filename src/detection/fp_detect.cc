@@ -182,19 +182,6 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
         p->packet_flags &= ~PKT_STATELESS;
     }
 
-    if ((p->packet_flags & PKT_STREAM_UNEST_UNI) &&
-        p->context->conf->assure_established() &&
-        (!(p->packet_flags & PKT_REBUILT_STREAM)) &&
-        !otn->stateless() )
-    {
-        // We still want to drop packets that are drop rules.
-        // We just don't want to see the alert.
-        IpsAction * act = get_ips_policy()->action[rtn->action];
-        act->exec(p);
-        fpLogOther(p, rtn, otn, rtn->action);
-        return 1;
-    }
-
     // perform rate filtering tests - impacts action taken
     rateAction = RateFilter_Test(otn, p);
     override = ( rateAction >= Actions::get_max_types() );
@@ -290,7 +277,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
 */
 int fpAddMatch(OtnxMatchData* omd, const OptTreeNode* otn)
 {
-    RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
+    RuleTreeNode* rtn = getRtnFromOtn(otn);
     unsigned evalIndex = rtn->listhead->ruleListNode->evalIndex;
 
     const SnortConfig* sc = SnortConfig::get_conf();
@@ -667,9 +654,14 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
             for (unsigned j = 0; j < omd->matchInfo[i].iMatchCount; j++)
             {
                 const OptTreeNode* otn = omd->matchInfo[i].MatchArray[j];
+                assert(otn);
+
                 RuleTreeNode* rtn = getRtnFromOtn(otn);
 
-                if ( otn && rtn && ( p->packet_flags & PKT_PASS_RULE ) )
+                if ( !rtn )
+                    continue;
+
+                if ( p->packet_flags & PKT_PASS_RULE )
                 {
                     /* Already acted on rules, so just don't act on anymore */
                     if ( tcnt > 0 )
@@ -686,7 +678,10 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
                     }
                 }
 
-                if ( otn && !fpSessionAlerted(p, otn) )
+                if ( !otn )
+                    continue;
+
+                if ( !fpSessionAlerted(p, otn) )
                 {
                     if ( DetectionEngine::queue_event(otn) )
                         pc.queue_limit++;
@@ -710,7 +705,7 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
                 }
 
                 /* only log/count one pass */
-                if ( otn && rtn && ( p->packet_flags & PKT_PASS_RULE ) )
+                if ( p->packet_flags & PKT_PASS_RULE )
                     return 1;
             }
         }
@@ -733,7 +728,11 @@ public:
     using MatchStore = std::vector<MatchData>;
 
 public:
-    MpseStash(unsigned limit) : max(limit) { }
+    MpseStash(const FastPatternConfig& fp)
+    {
+        max = fp.get_queue_limit();
+        dedup = fp.deduplicate();
+    }
 
     // this is done in the offload thread
     bool push(void* user, void* tree, int index, void* context, void* list);
@@ -750,6 +749,7 @@ private:
 
     unsigned inserts = 0;
     unsigned max;
+    bool dedup;
 
     MatchStore queue;
     MatchStore defer;
@@ -761,12 +761,15 @@ bool MpseStash::push(void* user, void* tree, int index, void* context, void* lis
     bool checker = !root or root->otn->checks_flowbits();
     MatchStore& store = checker ? defer : queue;
 
-    for ( auto it = store.rbegin(); it != store.rend(); it++ )
+    if ( dedup )
     {
-        if ( tree == (*it).tree )
+        for ( auto it = store.rbegin(); it != store.rend(); it++ )
         {
-            inserts++;
-            return true;
+            if ( tree == (*it).tree )
+            {
+                inserts++;
+                return true;
+            }
         }
     }
 
@@ -776,7 +779,7 @@ bool MpseStash::push(void* user, void* tree, int index, void* context, void* lis
         return false;
     }
 
-    if ( !checker and qmax == queue.size() )
+    if ( !checker and qmax == queue.size() and is_packet_thread() )
     {
         Profile rule_profile(rulePerfStats);
         process((IpsContext*)context, queue);
@@ -830,7 +833,7 @@ void MpseStash::process(IpsContext* context, MatchStore& store)
 void fp_set_context(IpsContext& c)
 {
     FastPatternConfig* fp = c.conf->fast_pattern_config;
-    c.stash = new MpseStash(fp->get_queue_limit());
+    c.stash = new MpseStash(*fp);
     c.otnx = (OtnxMatchData*)snort_calloc(sizeof(OtnxMatchData));
     c.otnx->matchInfo = (MatchInfo*)snort_calloc(MAX_NUM_RULE_TYPES, sizeof(MatchInfo));
     c.context_num = 0;

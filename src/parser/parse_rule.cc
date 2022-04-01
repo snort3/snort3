@@ -1179,7 +1179,7 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
     if ( otn->sigInfo.message.empty() )
         otn->sigInfo.message = "\"no msg in rule\"";
 
-    OptFpList* fpl = AddOptFuncToList(OptListEnd, otn);
+    OptFpList* fpl = AddOptFuncToList(nullptr, otn);
     fpl->type = RULE_OPTION_TYPE_LEAF_NODE;
 
     if ( is_service_protocol(otn->snort_protocol_id) )

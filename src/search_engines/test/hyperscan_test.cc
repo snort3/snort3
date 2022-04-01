@@ -29,7 +29,8 @@
 #include "framework/mpse.h"
 #include "framework/mpse_batch.h"
 #include "main/snort_config.h"
-#include "utils/stats.h"
+
+#include "mpse_test_stubs.h"
 
 // must appear after snort_config.h to avoid broken c++ map include
 #include <CppUTest/CommandLineTestRunner.h>
@@ -38,148 +39,17 @@
 using namespace snort;
 
 //-------------------------------------------------------------------------
-// base stuff
-//-------------------------------------------------------------------------
-
-namespace snort
-{
-Mpse::Mpse(const char*) { }
-
-int Mpse::search(
-    const unsigned char* T, int n, MpseMatch match,
-    void* context, int* current_state)
-{
-    return _search(T, n, match, context, current_state);
-}
-
-int Mpse::search_all(
-    const unsigned char* T, int n, MpseMatch match,
-    void* context, int* current_state)
-{
-    return _search(T, n, match, context, current_state);
-}
-
-void Mpse::search(MpseBatch& batch, MpseType mpse_type)
-{
-    _search(batch, mpse_type);
-}
-
-void Mpse::_search(MpseBatch& batch, MpseType mpse_type)
-{
-    int start_state;
-
-    for ( auto& item : batch.items )
-    {
-        if (item.second.done)
-            continue;
-
-        item.second.error = false;
-        item.second.matches = 0;
-
-        for ( auto& so : item.second.so )
-        {
-            start_state = 0;
-            switch (mpse_type)
-            {
-                case MPSE_TYPE_NORMAL:
-                    item.second.matches += so->normal_mpse->search(item.first.buf, item.first.len,
-                            batch.mf, batch.context, &start_state);
-                    break;
-                case MPSE_TYPE_OFFLOAD:
-                    item.second.matches += so->offload_mpse->search(item.first.buf, item.first.len,
-                            batch.mf, batch.context, &start_state);
-                    break;
-            }
-        }
-        item.second.done = true;
-    }
-}
-
-SnortConfig s_conf;
-THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
-
-static std::vector<void *> s_state;
-static ScratchAllocator* scratcher = nullptr;
-
-DataBus::DataBus() = default;
-DataBus::~DataBus() = default;
-
-SnortConfig::SnortConfig(const SnortConfig* const, const char*)
-{
-    state = &s_state;
-    num_slots = 1;
-}
-
-SnortConfig::~SnortConfig() = default;
-
-int SnortConfig::request_scratch(ScratchAllocator* s)
-{
-    scratcher = s;
-    s_state.resize(1);
-    return 0;
-}
-
-void SnortConfig::release_scratch(int)
-{
-    scratcher = nullptr;
-    s_state.clear();
-    s_state.shrink_to_fit();
-}
-
-const SnortConfig* SnortConfig::get_conf()
-{ return snort_conf; }
-
-static unsigned parse_errors = 0;
-void ParseError(const char*, ...)
-{ parse_errors++; }
-void ErrorMessage(const char*, ...) { }
-
-void LogCount(char const*, uint64_t, FILE*)
-{ }
-
-unsigned get_instance_id()
-{ return 0; }
-
-void md5(const unsigned char*, size_t, unsigned char*) { }
-}
-
-void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
-
-//-------------------------------------------------------------------------
 // stubs, spies, etc.
 //-------------------------------------------------------------------------
 
-extern const BaseApi* se_hyperscan;
+const MpseApi* get_test_api()
+{ return nullptr; }
 
 static unsigned hits = 0;
 
 static int match(
     void* /*user*/, void* /*tree*/, int /*index*/, void* /*context*/, void* /*list*/)
 { ++hits; return 0; }
-
-static void* s_user = (void*)"user";
-static void* s_tree = (void*)"tree";
-static void* s_list = (void*)"list";
-
-static MpseAgent s_agent =
-{
-    [](struct SnortConfig* sc, void*, void** ppt)
-    {
-        CHECK(sc == snort_conf);
-        *ppt = s_tree;
-        return 0;
-    },
-    [](void*, void** ppl)
-    {
-        *ppl = s_list;
-        return 0;
-    },
-
-    [](void* pu) { CHECK(pu == s_user); },
-    [](void** ppt) { CHECK(*ppt == s_tree); },
-    [](void** ppl) { CHECK(*ppl == s_list); }
-};
 
 //-------------------------------------------------------------------------
 // base tests
@@ -229,7 +99,6 @@ TEST_GROUP(mpse_hs_match)
 {
     Module* mod = nullptr;
     Mpse* hs = nullptr;
-    bool do_cleanup = false;
     const MpseApi* mpse_api = (const MpseApi*)se_hyperscan;
 
     void setup() override
@@ -244,8 +113,7 @@ TEST_GROUP(mpse_hs_match)
     void teardown() override
     {
         mpse_api->dtor(hs);
-        if ( do_cleanup )
-            scratcher->cleanup(snort_conf);
+        scratcher->cleanup(snort_conf);
         mpse_api->base.mod_dtor(mod);
     }
 };
@@ -256,7 +124,7 @@ TEST(mpse_hs_match, empty)
     CHECK(parse_errors == 0);
     CHECK(hs->get_pattern_count() == 0);
 
-    do_cleanup = scratcher->setup(snort_conf);
+    scratcher->setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((const uint8_t*)"foo", 3, match, nullptr, &state) == 0);
@@ -271,7 +139,7 @@ TEST(mpse_hs_match, single)
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
 
-    do_cleanup = scratcher->setup(snort_conf);
+    scratcher->setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((const uint8_t*)"foo", 3, match, nullptr, &state) == 1);
@@ -286,7 +154,7 @@ TEST(mpse_hs_match, nocase)
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
 
-    do_cleanup = scratcher->setup(snort_conf);
+    scratcher->setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((const uint8_t*)"foo", 3, match, nullptr, &state) == 1);
@@ -302,7 +170,7 @@ TEST(mpse_hs_match, other)
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
 
-    do_cleanup = scratcher->setup(snort_conf);
+    scratcher->setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((const uint8_t*)"foo", 3, match, nullptr, &state) == 1);
@@ -321,10 +189,12 @@ TEST(mpse_hs_match, multi)
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 3);
 
-    do_cleanup = scratcher->setup(snort_conf);
+    scratcher->setup(snort_conf);
 
     int state = 0;
-    CHECK(hs->search((const uint8_t*)"foo bar baz", 11, match, nullptr, &state) == 3);
+    // __STRDUMP_DISABLE__
+    CHECK(hs->search((const uint8_t*)"foo barfoo bazbaz", 17, match, nullptr, &state) == 3);
+    // __STRDUMP_ENABLE__
     CHECK(hits == 3);
 }
 
@@ -338,7 +208,7 @@ TEST(mpse_hs_match, regex)
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
 
-    do_cleanup = scratcher->setup(snort_conf);
+    scratcher->setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((const uint8_t*)"foo bar baz", 11, match, nullptr, &state) == 0);
@@ -355,7 +225,7 @@ TEST(mpse_hs_match, pcre)
     CHECK(hs->prep_patterns(snort_conf) == 0);
     CHECK(hs->get_pattern_count() == 1);
 
-    do_cleanup = scratcher->setup(snort_conf);
+    scratcher->setup(snort_conf);
 
     int state = 0;
     CHECK(hs->search((const uint8_t*)":definition(", 12, match, nullptr, &state) == 0);
@@ -375,7 +245,6 @@ TEST_GROUP(mpse_hs_multi)
     Module* mod = nullptr;
     Mpse* hs1 = nullptr;
     Mpse* hs2 = nullptr;
-    bool do_cleanup = false;
     const MpseApi* mpse_api = (const MpseApi*)se_hyperscan;
 
     void setup() override
@@ -397,8 +266,7 @@ TEST_GROUP(mpse_hs_multi)
     {
         mpse_api->dtor(hs1);
         mpse_api->dtor(hs2);
-        if ( do_cleanup )
-            scratcher->cleanup(snort_conf);
+        scratcher->cleanup(snort_conf);
         mpse_api->base.mod_dtor(mod);
     }
 };
@@ -416,7 +284,7 @@ TEST(mpse_hs_multi, single)
     CHECK(hs1->get_pattern_count() == 1);
     CHECK(hs2->get_pattern_count() == 1);
 
-    do_cleanup = scratcher->setup(snort_conf);
+    scratcher->setup(snort_conf);
 
     int state = 0;
     CHECK(hs1->search((const uint8_t*)"fubar", 5, match, nullptr, &state) == 1 );

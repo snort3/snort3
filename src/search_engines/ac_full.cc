@@ -38,16 +38,10 @@ private:
 
 public:
     AcfMpse(const MpseAgent* agent) : Mpse("ac_full")
-    { obj = acsmNew2(agent, ACF_FULL); }
+    { obj = acsmNew2(agent); }
 
     ~AcfMpse() override
     { acsmFree2(obj); }
-
-    void set_opt(int flag) override
-    {
-        acsmCompressStates(obj, flag);
-        obj->enable_dfa();
-    }
 
     int add_pattern(
         const uint8_t* P, unsigned m, const PatternDescriptor& desc, void* user) override
@@ -62,20 +56,14 @@ public:
         const uint8_t* T, int n, MpseMatch match,
         void* context, int* current_state) override
     {
-        if ( obj->dfa_enabled() )
-            return acsm_search_dfa_full(obj, T, n, match, context, current_state);
-
-        return acsm_search_nfa(obj, T, n, match, context, current_state);
+        return acsm_search_dfa_full(obj, T, n, match, context, current_state);
     }
 
     int search_all(
         const uint8_t* T, int n, MpseMatch match,
         void* context, int* current_state) override
     {
-        if ( !obj->dfa_enabled() )
-            return acsm_search_nfa(obj, T, n, match, context, current_state);
-        else
-            return acsm_search_dfa_full_all(obj, T, n, match, context, current_state);
+        return acsm_search_dfa_full_all(obj, T, n, match, context, current_state);
     }
 
     int print_info() override
@@ -137,5 +125,9 @@ static const MpseApi acf_api =
     nullptr,
 };
 
-const BaseApi* se_ac_full = &acf_api.base;
+const BaseApi* se_ac_full[] =
+{
+    &acf_api.base,
+    nullptr
+};
 

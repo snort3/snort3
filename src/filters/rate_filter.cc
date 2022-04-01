@@ -133,12 +133,12 @@ int RateFilter_Test(const OptTreeNode* otn, Packet* p)
         // events and these require: src -> client, dst -> server.
         if ( p->is_from_server() )
         {
-            return SFRF_TestThreshold(rfc, gid, sid, get_network_policy()->policy_id,
+            return SFRF_TestThreshold(rfc, gid, sid, get_inspection_policy()->policy_id,
                 dip, sip, p->pkth->ts.tv_sec, SFRF_COUNT_INCREMENT);
         }
     }
 
-    return SFRF_TestThreshold(rfc, gid, sid, get_network_policy()->policy_id,
+    return SFRF_TestThreshold(rfc, gid, sid, get_inspection_policy()->policy_id,
         sip, dip, p->pkth->ts.tv_sec, SFRF_COUNT_INCREMENT);
 }
 

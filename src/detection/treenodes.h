@@ -261,8 +261,6 @@ struct OptTreeNode
 typedef int (* RuleOptEvalFunc)(void*, Cursor&, snort::Packet*);
 OptFpList* AddOptFuncToList(RuleOptEvalFunc, OptTreeNode*);
 
-void* get_rule_type_data(OptTreeNode*, const char* name);
-
 namespace snort
 {
 SO_PUBLIC bool otn_has_plugin(OptTreeNode* otn, const char* name);

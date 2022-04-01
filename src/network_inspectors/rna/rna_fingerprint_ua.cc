@@ -102,13 +102,19 @@ void UaFpProcessor::push(const RawFingerprint& rfp)
     }
 }
 
-void UaFpProcessor::make_mpse(SnortConfig* sc)
+void UaFpProcessor::make_mpse(bool priority)
 {
-    if ( !sc )
-        sc = SnortConfig::get_main_conf();
-    SearchTool::set_conf(sc);
+    if ( priority )
+    {
+        delete os_mpse;
+        delete device_mpse;
+        delete jb_mpse;
+        delete jb_host_mpse;
 
-    if ( !os_fps.empty() )
+        os_mpse = device_mpse = jb_mpse = jb_host_mpse = nullptr;
+    }
+
+    if ( !os_mpse and !os_fps.empty() )
     {
         os_mpse = new SearchTool;
         for (auto& fp : os_fps)
@@ -116,7 +122,7 @@ void UaFpProcessor::make_mpse(SnortConfig* sc)
         os_mpse->prep();
     }
 
-    if ( !device_fps.empty() )
+    if ( !device_mpse and !device_fps.empty() )
     {
         device_mpse = new SearchTool;
         for (auto& fp : device_fps)
@@ -124,7 +130,7 @@ void UaFpProcessor::make_mpse(SnortConfig* sc)
         device_mpse->prep();
     }
 
-    if ( !jb_fps.empty() )
+    if ( !jb_mpse and !jb_fps.empty() )
     {
         jb_mpse = new SearchTool;
         for (auto& fp : jb_fps)
@@ -132,7 +138,7 @@ void UaFpProcessor::make_mpse(SnortConfig* sc)
         jb_mpse->prep();
     }
 
-    if ( !jb_host_fps.empty() )
+    if ( !jb_host_mpse and !jb_host_fps.empty() )
     {
         jb_host_mpse = new SearchTool;
         for (auto& fp : jb_host_fps)

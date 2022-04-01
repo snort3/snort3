@@ -139,7 +139,6 @@ bool AppIdContext::init_appid(SnortConfig* sc, AppIdInspector& inspector)
 void AppIdContext::create_odp_ctxt()
 {
     SnortConfig* sc = SnortConfig::get_main_conf();
-    SearchTool::set_conf(sc);
     odp_ctxt = new OdpContext(config, sc);
 }
 

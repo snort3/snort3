@@ -22,17 +22,22 @@
 
 #include "framework/mpse.h"
 
+// FIXIT-L until APIs are updated, SearchTool depends on SnortConfig so it must
+// not be instantiated until configure time (Inspector::configure) to ensure
+// SnortConfig is fully initialized and the configured algorithm is used.
+
+// Use hyperscan if configured with search_engine.search_method else use ac_full.
+// Offload is not supported for search tool.
+
+// We force non-hyperscan to be ac_full since the other algorithms like ac_bnfa
+// don't implement search_all, which returns all patterns for a given match state.
+
 namespace snort
 {
 class SO_PUBLIC SearchTool
 {
 public:
-    // FIXIT-L SnortConfig should be passed to ctor, a lot of appid plumbing
-    // for now set_conf must be called before instantiation
-    static void set_conf(const SnortConfig* sc)
-    { conf = sc; }
-
-    SearchTool(const char* method = nullptr, bool dfa = false);
+    SearchTool(bool multi_match = true);
     ~SearchTool();
 
     void add(const char* pattern, unsigned len, int s_id, bool no_case = true);
@@ -55,9 +60,9 @@ public:
         bool confine = false, void* user_data = nullptr);
 
 private:
-    static const SnortConfig* conf;
     class MpseGroup* mpsegrp;
     unsigned max_len;
+    bool multi_match;
 };
 } // namespace snort
 #endif

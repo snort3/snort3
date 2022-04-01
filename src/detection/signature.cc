@@ -208,23 +208,6 @@ OptTreeNode* OtnLookup(GHash* otn_map, uint32_t gid, uint32_t sid)
     return otn;
 }
 
-OptTreeNode* GetOTN(uint32_t gid, uint32_t sid)
-{
-    OptTreeNode* otn = OtnLookup(SnortConfig::get_conf()->otn_map, gid, sid);
-
-    if ( !otn )
-        return nullptr;
-
-    if ( !getRtnFromOtn(otn) )
-    {
-        // If not configured to autogenerate and there isn't an RTN, meaning
-        // this rule isn't in the current policy, return nullptr.
-        return nullptr;
-    }
-
-    return otn;
-}
-
 void OtnLookupFree(GHash* otn_map)
 {
     if ( otn_map )

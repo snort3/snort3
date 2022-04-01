@@ -86,17 +86,6 @@ struct trans_node_t
 };
 
 /*
-*  User specified final storage type for the state transitions
-*/
-enum
-{
-    ACF_FULL,
-    ACF_SPARSE,
-    ACF_BANDED,
-    ACF_SPARSE_BANDS,
-};
-
-/*
 *   Aho-Corasick State Machine Struct - one per group of patterns
 */
 struct ACSM_STRUCT2
@@ -115,24 +104,11 @@ struct ACSM_STRUCT2
     int acsmMaxStates;
     int acsmNumStates;
 
-    int acsmFormat;
-    int acsmSparseMaxRowNodes;
-    int acsmSparseMaxZcnt;
-
     int acsmNumTrans;
     int acsmAlphabetSize;
     int numPatterns;
 
     int sizeofstate;
-    int compress_states;
-
-    bool dfa;
-
-    void enable_dfa()
-    { dfa = true; }
-
-    bool dfa_enabled()
-    { return dfa; }
 };
 
 /*
@@ -140,7 +116,7 @@ struct ACSM_STRUCT2
 */
 void acsmx2_init_xlatcase();
 
-ACSM_STRUCT2* acsmNew2(const MpseAgent*, int format);
+ACSM_STRUCT2* acsmNew2(const MpseAgent*);
 
 int acsmAddPattern2(
     ACSM_STRUCT2* p, const uint8_t* pat, unsigned n,
@@ -151,12 +127,6 @@ int acsmCompile2(snort::SnortConfig*, ACSM_STRUCT2*);
 int acsm_search_nfa(
     ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
-int acsm_search_dfa_sparse(
-    ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
-
-int acsm_search_dfa_banded(
-    ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
-
 int acsm_search_dfa_full(
     ACSM_STRUCT2*, const uint8_t* T, int n, MpseMatch, void* context, int* current_state);
 
@@ -165,7 +135,6 @@ int acsm_search_dfa_full_all(
 
 void acsmFree2(ACSM_STRUCT2*);
 int acsmPatternCount2(ACSM_STRUCT2*);
-void acsmCompressStates(ACSM_STRUCT2*, int);
 
 void acsmPrintInfo2(ACSM_STRUCT2* p);
 

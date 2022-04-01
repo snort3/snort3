@@ -21,7 +21,6 @@
 #ifndef RNA_FINGERPRINT_UA_H
 #define RNA_FINGERPRINT_UA_H
 
-#include "main/snort_config.h"
 #include "main/snort_types.h"
 #include "search_engines/search_tool.h"
 
@@ -52,7 +51,7 @@ public:
     bool has_pattern()
     { return os_mpse != nullptr; }
 
-    void make_mpse(SnortConfig* sc = nullptr);
+    void make_mpse(bool priority = false);
 
     void match_mpse(const char*, const char*, const UaFingerprint*&, const char*&, bool&);
 

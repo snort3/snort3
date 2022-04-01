@@ -523,7 +523,7 @@ static DAQ_RecvStatus hext_read_message(HextContext* hc, HextMsgDesc* desc)
 
 static int hext_setup(HextContext* hc)
 {
-    if (!strcmp(hc->filename, "tty"))
+    if (!strcmp(hc->filename, "-"))
     {
         hc->fp = stdin;
     }

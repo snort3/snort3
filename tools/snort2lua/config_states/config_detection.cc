@@ -65,8 +65,7 @@ bool Detection::convert(std::istringstream& data_stream)
 
         else if (keyword == "search-optimize")
         {
-            table_api.add_diff_option_comment("search-optimize", "search_optimize");
-            tmpval = table_api.add_option("search_optimize", true);
+            table_api.add_deleted_comment("search-optimize is always true");
         }
         else if (keyword == "split-any-any")
         {
@@ -194,23 +193,23 @@ bool Detection::convert(std::istringstream& data_stream)
             }
             else if (method == "ac-std")
             {
-                table_api.add_diff_option_comment("ac-std", "ac_std");
-                tmpval = table_api.add_option("search_method", "ac_std");
+                table_api.add_diff_option_comment("ac-std", "ac_full");
+                tmpval = table_api.add_option("search_method", "ac_full");
             }
             else if (method == "ac-banded")
             {
-                table_api.add_diff_option_comment("ac-banded", "ac_banded");
-                tmpval = table_api.add_option("search_method", "ac_banded");
+                table_api.add_diff_option_comment("ac-banded", "ac_full");
+                tmpval = table_api.add_option("search_method", "ac_full");
             }
             else if (method == "acs")
             {
-                table_api.add_diff_option_comment("acs", "ac_sparse");
-                tmpval = table_api.add_option("search_method", "ac_sparse");
+                table_api.add_diff_option_comment("acs", "ac_full");
+                tmpval = table_api.add_option("search_method", "ac_full");
             }
             else if (method == "ac-sparsebands")
             {
-                table_api.add_diff_option_comment("ac-sparsebands", "ac_sparse_bands");
-                tmpval = table_api.add_option("search_method", "ac_sparse_bands");
+                table_api.add_diff_option_comment("ac-sparsebands", "ac_full");
+                tmpval = table_api.add_option("search_method", "ac_full");
             }
             else if (method == "lowmem")
             {

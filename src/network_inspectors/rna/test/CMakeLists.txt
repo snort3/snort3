@@ -10,3 +10,10 @@ add_cpputest( rna_module_test
         ${DNET_LIBRARIES}
         ${LUAJIT_LIBRARIES}
 )
+
+add_cpputest( rna_ua_fp_processor_test
+    SOURCES
+        ../rna_fingerprint_ua.cc
+        ua_fp_stubs.cc
+)
+

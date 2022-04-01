@@ -303,19 +303,6 @@ static const ConvertMap show_year_api =
 const ConvertMap* show_year_map = &show_year_api;
 
 /*************************************************
- *******************  stateful  ******************
- *************************************************/
-
-static const std::string stateful = "stateful";
-static const ConvertMap stateful_api =
-{
-    stateful,
-    config_true_no_opt_ctor<& stateful, & alerts>
-};
-
-const ConvertMap* stateful_map = &stateful_api;
-
-/*************************************************
  *********************  utc  *********************
  *************************************************/
 

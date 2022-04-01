@@ -601,6 +601,19 @@ static const ConvertMap sidechannel_api =
 const ConvertMap* sidechannel_map = &sidechannel_api;
 
 /*************************************************
+ *******************  stateful  ******************
+ *************************************************/
+
+static const std::string stateful = "stateful";
+static const ConvertMap stateful_api =
+{
+    stateful,
+    deleted_ctor<& stateful>,
+};
+
+const ConvertMap* stateful_map = &stateful_api;
+
+/*************************************************
  *****************  no_promisc *******************
  *************************************************/
 

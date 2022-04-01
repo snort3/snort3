@@ -22,6 +22,8 @@
 
 #include "actions.h"
 
+#include <cassert>
+
 #include "detection/detect.h"
 #include "managers/action_manager.h"
 #include "parser/parser.h"
@@ -36,16 +38,15 @@ void Actions::pass()
 
 void Actions::log(Packet* p, const OptTreeNode* otn)
 {
-    RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
+    RuleTreeNode* rtn = getRtnFromOtn(otn);
+    assert(rtn);
     CallLogFuncs(p, otn, rtn->listhead);
 }
 
 void Actions::alert(Packet* p, const OptTreeNode* otn)
 {
-    RuleTreeNode* rtn = getRuntimeRtnFromOtn(otn);
-
-    if (rtn == nullptr)
-        return;
+    RuleTreeNode* rtn = getRtnFromOtn(otn);
+    assert(rtn);
 
     /* Call OptTreeNode specific output functions */
     if (otn->outputFuncs)

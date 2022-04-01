@@ -61,18 +61,14 @@ enum RunFlag
     RUN_FLAG__PAUSE               = 0x00004000,
     RUN_FLAG__NO_PCRE             = 0x00008000,
 
-    /* If stream is configured, the STATEFUL flag is set.  This is
-     * somewhat misnamed and is used to assure a session is established */
-    RUN_FLAG__ASSURE_EST          = 0x00010000,
+    RUN_FLAG__DUMP_RULE_STATE     = 0x00010000,
     RUN_FLAG__DUMP_RULE_DEPS      = 0x00020000,
     RUN_FLAG__TEST                = 0x00040000,
     RUN_FLAG__MEM_CHECK           = 0x00080000,
 
     RUN_FLAG__TRACK_ON_SYN        = 0x00100000,
     RUN_FLAG__IP_FRAGS_ONLY       = 0x00200000,
-    RUN_FLAG__DUMP_RULE_STATE     = 0x00400000,
-
-    RUN_FLAG__TEST_FEATURES       = 0x00800000,
+    RUN_FLAG__TEST_FEATURES       = 0x00400000,
 
 #ifdef SHELL
     RUN_FLAG__SHELL               = 0x01000000,
@@ -590,9 +586,6 @@ public:
 
     bool conf_error_out() const
     { return run_flags & RUN_FLAG__CONF_ERROR_OUT; }
-
-    bool assure_established() const
-    { return run_flags & RUN_FLAG__ASSURE_EST; }
 
     bool test_features() const
     { return run_flags & RUN_FLAG__TEST_FEATURES; }

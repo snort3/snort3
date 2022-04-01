@@ -43,7 +43,7 @@ static OdpContext stub_odp_ctxt(config, nullptr);
 OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
 ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
 
-snort::SearchTool::SearchTool(char const*, bool) { }
+snort::SearchTool::SearchTool(bool) { }
 snort::SearchTool::~SearchTool() = default;
 
 AppIdDiscovery::~AppIdDiscovery() = default;

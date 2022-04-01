@@ -42,7 +42,6 @@ void set_default_policy(const snort::SnortConfig*) { }
 namespace snort
 {
 unsigned THREAD_LOCAL Inspector::slot = 0;
-const SnortConfig* SearchTool::conf = nullptr;
 [[noreturn]] void FatalError(const char*,...) { exit(-1); }
 void LogMessage(const char*, ...) { }
 void LogLabel(const char*, FILE*) { }
