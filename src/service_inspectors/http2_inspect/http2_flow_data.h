@@ -146,7 +146,6 @@ protected:
     uint32_t frame_data_size[2] = { 0, 0 };
 
     // Used in eval()
-    bool frame_in_detection = false;
     Http2ConnectionSettings connection_settings[2];
     Http2HpackDecoder hpack_decoder[2];
     std::list<Http2Stream*> streams;
@@ -154,6 +153,7 @@ protected:
     uint32_t concurrent_streams = 0;
     uint32_t stream_memory_allocations_tracked = Http2Enums::STREAM_MEMORY_TRACKING_INCREMENT;
     uint32_t max_stream_id[2] = {0, 0};
+    bool frame_in_detection = false;
     bool delete_stream = false;
 
     // Internal to scan()
@@ -172,14 +172,14 @@ protected:
     Http2DataCutter data_cutter[2];
 
     // Scan signals to reassemble()
+    uint32_t bytes_scanned[2] = { 0, 0 };
     bool payload_discard[2] = { false, false };
-    unsigned bytes_scanned[2] = { 0, 0 };
 
     // Used by scan, reassemble and eval to communicate
     uint8_t frame_type[2] = { Http2Enums::FT__NONE, Http2Enums::FT__NONE };
     bool abort_flow[2] = { false, false };
-    std::queue<uint32_t> frame_lengths[2];
     bool processing_partial_header = false;
+    std::queue<uint32_t> frame_lengths[2];
 
     // Internal to reassemble()
     uint32_t frame_header_offset[2] = { 0, 0 };

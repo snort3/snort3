@@ -118,12 +118,12 @@ private:
     const bool accelerated_blocking;
     uint8_t partial_match = 0;
     HttpEnums::CompressId compression;
-    z_stream* compress_stream = nullptr;
     bool decompress_failed = false;
+    uint8_t string_length;
+    z_stream* compress_stream = nullptr;
     ScriptFinder* const finder;
     const uint8_t* match_string;
     const uint8_t* match_string_upper;
-    uint8_t string_length;
 };
 
 class HttpBodyClCutter : public HttpBodyCutter

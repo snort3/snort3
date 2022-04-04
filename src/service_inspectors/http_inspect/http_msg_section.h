@@ -110,6 +110,7 @@ protected:
     HttpEnums::VersionId version_id;
     HttpEnums::MethodId method_id;
     const bool tcp_close;
+    bool cleared = false;
 
     // Pointers to related message sections in the same transaction
     HttpMsgRequest* request;
@@ -117,7 +118,6 @@ protected:
     HttpMsgHeader* header[2];
     HttpMsgTrailer* trailer[2];
 
-    bool cleared = false;
 
     // Convenience methods shared by multiple subclasses
     void add_infraction(int infraction);

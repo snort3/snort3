@@ -89,10 +89,10 @@ private:
     Http2StartLine* start_line;
     bool pseudo_headers_allowed;
     uint8_t* decoded_headers = nullptr; // working buffer to store decoded headers
-    uint32_t decoded_headers_size = 0;
     Http2FlowData* session_data;
     Http2EventGen* const events;
     Http2Infractions* const infractions;
+    uint32_t decoded_headers_size = 0;
     const HttpCommon::SourceId source_id;
 
     static Http2HpackIntDecode decode_int7;

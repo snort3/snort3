@@ -87,12 +87,6 @@ public:
     uint32_t get_h2_stream_id() const;
 
 private:
-    // HTTP/2 handling
-    bool for_http2 = false;
-    HttpEnums::H2BodyState h2_body_state[2] = { HttpEnums::H2_BODY_NOT_COMPLETE,
-         HttpEnums::H2_BODY_NOT_COMPLETE };
-    uint32_t h2_stream_id = 0;
-
     // Convenience routines
     void half_reset(HttpCommon::SourceId source_id);
     void trailer_prep(HttpCommon::SourceId source_id);
@@ -144,7 +138,7 @@ private:
 
     // *** Inspector => StreamSplitter (facts about the message section that is coming next)
     HttpEnums::SectionType type_expected[2] = { HttpEnums::SEC_REQUEST, HttpEnums::SEC_STATUS };
-    uint64_t last_request_was_connect = false;
+    bool last_request_was_connect = false;
     z_stream* compress_stream[2] = { nullptr, nullptr };
     uint64_t zero_nine_expected = 0;
     // length of the data from Content-Length field
@@ -190,27 +184,24 @@ private:
 
     // *** Transaction management including pipelining
     static const int MAX_PIPELINE = 100;  // requests seen - responses seen <= MAX_PIPELINE
-    HttpTransaction* transaction[2] = { nullptr, nullptr };
-    HttpTransaction** pipeline = nullptr;
-    int16_t pipeline_front = 0;
-    int16_t pipeline_back = 0;
-    uint32_t pdu_idx = 0;
-    uint32_t js_pdu_idx = 0;
-    bool js_data_lost_once = false;
-    bool pipeline_overflow = false;
-    bool pipeline_underflow = false;
 
-    bool add_to_pipeline(HttpTransaction* latest);
-    HttpTransaction* take_from_pipeline();
-    void delete_pipeline();
+    HttpTransaction* transaction[2] = { nullptr, nullptr };
 
     // Transactions with uncleared sections awaiting deletion
     HttpTransaction* discard_list = nullptr;
 
+    HttpTransaction** pipeline = nullptr;
+    int16_t pipeline_front = 0;
+    int16_t pipeline_back = 0;
+    bool pipeline_overflow = false;
+    bool pipeline_underflow = false;
+    bool add_to_pipeline(HttpTransaction* latest);
+    HttpTransaction* take_from_pipeline();
+    void delete_pipeline();
 
-    // Memory footprint required by zlib inflation. Formula from https://zlib.net/zlib_tech.html
-    // Accounts for a 32k sliding window and 11520 bytes of inflate_huft allocations
-    static const size_t zlib_inflate_memory = (1 << 15) + 1440*2*sizeof(int);
+    bool js_data_lost_once = false;
+    uint32_t pdu_idx = 0;
+    uint32_t js_pdu_idx = 0;
 
     // *** HttpJsNorm
     JSIdentifierCtxBase* js_ident_ctx = nullptr;
@@ -228,6 +219,12 @@ private:
 
     bool cutover_on_clear = false;
     bool ssl_search_abandoned = false;
+
+    // *** HTTP/2 handling
+    bool for_http2 = false;
+    uint32_t h2_stream_id = 0;
+    HttpEnums::H2BodyState h2_body_state[2] = { HttpEnums::H2_BODY_NOT_COMPLETE,
+        HttpEnums::H2_BODY_NOT_COMPLETE };
 
 #ifdef REG_TEST
     static uint64_t instance_count;
