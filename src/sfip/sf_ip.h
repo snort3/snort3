@@ -109,6 +109,11 @@ private:
     bool _is_lesser(const SfIp& rhs) const;
     SfIpRet _ip6_cmp(const SfIp& ip2) const;
 
+    /* Keep this union at the offset of 0 in this struct.
+     * If it's not it introduces possibility of pointer misalignment when
+     * pointing to its elements. This layout makes it safe to suppress this
+     * warning, which is done for get_ip4_ptr(), get_ip6_ptr(), and get_ptr().
+     */
     union
     {
         uint8_t ip8[16];
@@ -139,6 +144,10 @@ inline uint32_t SfIp::get_ip4_value() const
     return ip32[3];
 }
 
+/* Safe to ignore because ip32 is at the offset of 0 in SfIp */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+
 inline const uint32_t* SfIp::get_ip4_ptr() const
 {
     return &ip32[3];
@@ -155,6 +164,8 @@ inline const uint32_t* SfIp::get_ptr() const
         return &ip32[3];
     return ip32;
 }
+
+#pragma GCC diagnostic pop
 
 inline bool SfIp::is_set() const
 {
@@ -312,18 +323,14 @@ inline SfIpRet _ip4_cmp(uint32_t ip1, uint32_t ip2)
 inline SfIpRet SfIp::_ip6_cmp(const SfIp& ip2) const
 {
     SfIpRet ret;
-    const uint32_t* p1, * p2;
 
-    p1 = ip32;
-    p2 = ip2.ip32;
-
-    if ( (ret = _ip4_cmp(p1[0], p2[0])) != SFIP_EQUAL)
+    if ( (ret = _ip4_cmp(ip32[0], ip2.ip32[0])) != SFIP_EQUAL)
         return ret;
-    if ( (ret = _ip4_cmp(p1[1], p2[1])) != SFIP_EQUAL)
+    if ( (ret = _ip4_cmp(ip32[1], ip2.ip32[1])) != SFIP_EQUAL)
         return ret;
-    if ( (ret = _ip4_cmp(p1[2], p2[2])) != SFIP_EQUAL)
+    if ( (ret = _ip4_cmp(ip32[2], ip2.ip32[2])) != SFIP_EQUAL)
         return ret;
-    if ( (ret = _ip4_cmp(p1[3], p2[3])) != SFIP_EQUAL)
+    if ( (ret = _ip4_cmp(ip32[3], ip2.ip32[3])) != SFIP_EQUAL)
         return ret;
 
     return ret;
@@ -358,29 +365,24 @@ inline bool SfIp::fast_eq4(const SfIp& ip2) const
 
 inline bool SfIp::fast_lt6(const SfIp& ip2) const
 {
-    const uint32_t* p1, * p2;
-
-    p1 = ip32;
-    p2 = ip2.ip32;
-
-    if (*p1 < *p2)
+    if (ip32[0] < ip2.ip32[0])
         return true;
-    else if (*p1 > *p2)
+    else if (ip32[0] > ip2.ip32[0])
         return false;
 
-    if (p1[1] < p2[1])
+    if (ip32[1] < ip2.ip32[1])
         return true;
-    else if (p1[1] > p2[1])
+    else if (ip32[1] > ip2.ip32[1])
         return false;
 
-    if (p1[2] < p2[2])
+    if (ip32[2] < ip2.ip32[2])
         return true;
-    else if (p1[2] > p2[2])
+    else if (ip32[2] > ip2.ip32[2])
         return false;
 
-    if (p1[3] < p2[3])
+    if (ip32[3] < ip2.ip32[3])
         return true;
-    else if (p1[3] > p2[3])
+    else if (ip32[3] > ip2.ip32[3])
         return false;
 
     return false;
@@ -388,29 +390,24 @@ inline bool SfIp::fast_lt6(const SfIp& ip2) const
 
 inline bool SfIp::fast_gt6(const SfIp& ip2) const
 {
-    const uint32_t* p1, * p2;
-
-    p1 = ip32;
-    p2 = ip2.ip32;
-
-    if (*p1 > *p2)
+    if (ip32[0] > ip2.ip32[0])
         return true;
-    else if (*p1 < *p2)
+    else if (ip32[0] < ip2.ip32[0])
         return false;
 
-    if (p1[1] > p2[1])
+    if (ip32[1] > ip2.ip32[1])
         return true;
-    else if (p1[1] < p2[1])
+    else if (ip32[1] < ip2.ip32[1])
         return false;
 
-    if (p1[2] > p2[2])
+    if (ip32[2] > ip2.ip32[2])
         return true;
-    else if (p1[2] < p2[2])
+    else if (ip32[2] < ip2.ip32[2])
         return false;
 
-    if (p1[3] > p2[3])
+    if (ip32[3] > ip2.ip32[3])
         return true;
-    else if (p1[3] < p2[3])
+    else if (ip32[3] < ip2.ip32[3])
         return false;
 
     return false;
@@ -418,18 +415,13 @@ inline bool SfIp::fast_gt6(const SfIp& ip2) const
 
 inline bool SfIp::fast_eq6(const SfIp& ip2) const
 {
-    const uint32_t* p1, * p2;
-
-    p1 = ip32;
-    p2 = ip2.ip32;
-
-    if (*p1 != *p2)
+    if (ip32[0] != ip2.ip32[0])
         return false;
-    if (p1[1] != p2[1])
+    if (ip32[1] != ip2.ip32[1])
         return false;
-    if (p1[2] != p2[2])
+    if (ip32[2] != ip2.ip32[2])
         return false;
-    if (p1[3] != p2[3])
+    if (ip32[3] != ip2.ip32[3])
         return false;
 
     return true;
