@@ -114,8 +114,10 @@ void FileFlows::handle_retransmit(Packet* p)
             file_got = file_cache->get_file(flow, pending_file_id, false);
         if (file_got and file_got->get_file_data())
         {
+            file_got->user_file_data_mutex.lock();
             file->set_file_data(file_got->get_file_data());
             file_got->set_file_data(nullptr);
+            file_got->user_file_data_mutex.unlock();
         }
     }
 
@@ -209,8 +211,10 @@ FileFlows::~FileFlows()
 
     if (file_got and (file_got->verdict == FILE_VERDICT_PENDING))
     {
+        file_got->user_file_data_mutex.lock();
         delete (file_got->get_file_data());
         file_got->set_file_data(nullptr);
+        file_got->user_file_data_mutex.unlock();
     }
 
     delete(main_context);

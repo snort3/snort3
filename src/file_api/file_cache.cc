@@ -238,7 +238,9 @@ FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
 
     if ( file->get_file_sig_sha256() and verdict == FILE_VERDICT_UNKNOWN )
     {
+        file->user_file_data_mutex.lock();
         verdict = policy->signature_lookup(p, file);
+        file->user_file_data_mutex.unlock();
     }
 
     FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
