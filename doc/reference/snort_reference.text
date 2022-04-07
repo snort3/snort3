@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.26.0 2022-03-23 13:19:21 EDT TST
+Revision 3.1.27.0 2022-04-07 13:35:35 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -423,8 +423,6 @@ Configuration:
     memory for rate_filters { 0:max32 }
   * string alerts.reference_net: set the CIDR for homenet (for use
     with -l or -B, does NOT change $HOME_NET in IDS mode)
-  * bool alerts.stateful = false: don’t alert w/o established session
-    (note: rule action still taken)
   * string alerts.tunnel_verdicts: let DAQ handle non-allow verdicts
     for gtp|teredo|6in4|4in6|4in4|6in6|gre|mpls|vxlan traffic
 
@@ -1062,6 +1060,11 @@ Configuration:
     Snort will process for a given packet before raising 116:293 (0 =
     unlimited) { 0:255 }
 
+Commands:
+
+  * network.set_policy(id): set the network policy for commands given
+    the user policy id
+
 
 2.20. output
 
@@ -1248,7 +1251,7 @@ Help: configure rate filters (which change rule actions)
 
 Type: basic
 
-Usage: context
+Usage: inspect
 
 Configuration:
 
@@ -1322,17 +1325,13 @@ Configuration:
   * bool search_engine.detect_raw_tcp = false: detect on TCP payload
     before reassembly
   * dynamic search_engine.search_method = ac_bnfa: set fast pattern
-    algorithm - choose available search engine { ac_banded | ac_bnfa
-    | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan |
-    lowmem }
-  * dynamic search_engine.offload_search_method: set fast pattern
-    offload algorithm - choose available search engine { ac_banded |
-    ac_bnfa | ac_full | ac_sparse | ac_sparse_bands | ac_std |
+    algorithm - choose available search engine { ac_bnfa | ac_full |
     hyperscan | lowmem }
+  * dynamic search_engine.offload_search_method: set fast pattern
+    offload algorithm - choose available search engine { ac_bnfa |
+    ac_full | hyperscan | lowmem }
   * string search_engine.rule_db_dir: deserialize rule databases from
     given directory
-  * bool search_engine.search_optimize = true: tweak state machine
-    construction for better performance
   * bool search_engine.show_fast_patterns = false: print fast pattern
     info for each rule
   * bool search_engine.split_any_any = true: evaluate any-any rules
@@ -3974,10 +3973,6 @@ Rules:
   * 119:277 (http_inspect) HTTP version in start line is higher than
     1
   * 119:278 (http_inspect) HTTP gzip body with the FEXTRA flag set
-  * 119:279 (http_inspect) nested unescape functions in JavaScript
-    code
-  * 119:280 (http_inspect) mixing of escape formats in JavaScript
-    code
 
 Peg counts:
 
@@ -8792,8 +8787,6 @@ these libraries see the Getting Started section of the manual.
     memory for rate_filters { 0:max32 }
   * string alerts.reference_net: set the CIDR for homenet (for use
     with -l or -B, does NOT change $HOME_NET in IDS mode)
-  * bool alerts.stateful = false: don’t alert w/o established session
-    (note: rule action still taken)
   * string alerts.tunnel_verdicts: let DAQ handle non-allow verdicts
     for gtp|teredo|6in4|4in6|4in4|6in6|gre|mpls|vxlan traffic
   * enum alert_syslog.facility = auth: part of priority applied to
@@ -10196,19 +10189,15 @@ these libraries see the Getting Started section of the manual.
   * int search_engine.max_queue_events = 5: maximum number of
     matching fast pattern states to queue per packet { 2:100 }
   * dynamic search_engine.offload_search_method: set fast pattern
-    offload algorithm - choose available search engine { ac_banded |
-    ac_bnfa | ac_full | ac_sparse | ac_sparse_bands | ac_std |
-    hyperscan | lowmem }
+    offload algorithm - choose available search engine { ac_bnfa |
+    ac_full | hyperscan | lowmem }
   * int search_engine.queue_limit = 0: maximum number of fast pattern
     matches to queue per packet (0 is unlimited) { 0:max32 }
   * string search_engine.rule_db_dir: deserialize rule databases from
     given directory
   * dynamic search_engine.search_method = ac_bnfa: set fast pattern
-    algorithm - choose available search engine { ac_banded | ac_bnfa
-    | ac_full | ac_sparse | ac_sparse_bands | ac_std | hyperscan |
-    lowmem }
-  * bool search_engine.search_optimize = true: tweak state machine
-    construction for better performance
+    algorithm - choose available search engine { ac_bnfa | ac_full |
+    hyperscan | lowmem }
   * bool search_engine.show_fast_patterns = false: print fast pattern
     info for each rule
   * bool search_engine.split_any_any = true: evaluate any-any rules
@@ -12970,7 +12959,8 @@ HTTP response has Content-Type charset=utf-7.
 119:109 (http_inspect) more than one level of JavaScript obfuscation
 
 More than one level of JavaScript obfuscation. This alert can only be
-generated when normalize_javascript configuration option is true.
+generated when normalize_javascript configuration option is true or
+enhanced JavaScript normalizer is enabled.
 
 119:110 (http_inspect) consecutive JavaScript whitespaces exceed
 maximum allowed
@@ -12984,7 +12974,7 @@ obfuscated data
 
 More than one encoding within JavaScript obfuscated data. This alert
 can only be generated when normalize_javascript configuration option
-is true.
+is true or enhanced JavaScript normalizer is enabled.
 
 119:112 (http_inspect) SWF file zlib decompression failure
 
@@ -13495,19 +13485,6 @@ traffic.
 
 The HTTP message body is gzip encoded and the FEXTRA flag is set in
 the gzip header.
-
-119:279 (http_inspect) nested unescape functions in JavaScript code
-
-Detected nesting of unescape functions(unescape, decodeURI,
-decodeURIComponent) in JavaScript code. Indicates that this code most
-likely has more than one level of obfuscation. This alert is raised
-by the enhanced JavaScript normalizer.
-
-119:280 (http_inspect) mixing of escape formats in JavaScript code
-
-Detected more than one encoding within unescape function call
-arguments in JavaScript code. This alert is raised by the enhanced
-JavaScript normalizer.
 
 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
 
@@ -15185,6 +15162,8 @@ a reserved value
   * host_cache.delete_client(host_ip, id, service, version): delete
     client from host
   * host_cache.get_stats(): get current host cache usage and pegs
+  * network.set_policy(id): set the network policy for commands given
+    the user policy id
   * packet_capture.enable(filter, group): dump raw packets
   * packet_capture.disable(): stop packet dump
   * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port):
@@ -15965,18 +15944,10 @@ and are not applicable elsewhere.
     processing based on address space
   * policy_selector::tenant_selector: configure traffic processing
     based on tenants
-  * search_engine::ac_banded: Aho-Corasick Banded (high memory,
-    moderate performance)
   * search_engine::ac_bnfa: Aho-Corasick Binary NFA (low memory, high
     performance) MPSE
   * search_engine::ac_full: Aho-Corasick Full (high memory, best
     performance), implements search_all()
-  * search_engine::ac_sparse: Aho-Corasick Sparse (high memory,
-    moderate performance) MPSE
-  * search_engine::ac_sparse_bands: Aho-Corasick Sparse-Banded (high
-    memory, moderate performance) MPSE
-  * search_engine::ac_std: Aho-Corasick Full (high memory, best
-    performance) MPSE
   * search_engine::hyperscan: intel hyperscan-based mpse with regex
     support
   * search_engine::lowmem: Keyword Trie (low memory, moderate

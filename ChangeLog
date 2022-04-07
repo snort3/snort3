@@ -1,3 +1,50 @@
+2022/04/07 - 3.1.27.0
+
+ac_full: refactor api access
+ac_full: remove cruft
+ac_std: fix case translation buffer size
+alerts: remove obsolete stateful parameter
+appid: provide client appid set by encrypted visibility engine to ssl through the ssl appid lookup api
+build: compile against libatomic if present. Thanks to W. Michael Petullo <mike@flyn.org>
+control, shell: add a command to set the network policy to be used by subsequent commands
+dce_rpc: handle cleanup path and race conditions for dce traffic
+detection: do not check ips policy when builtin events are queued
+detection: fixup dump of detection option tree
+detection: minor refactoring of rule header access
+detection: override match queue limit for offload
+detection: remove cruft
+detection: skip match deduplication for hyperscan
+file_api: handle user_file_data cleanup
+hext: change stdin designation from tty to - since the trough uses dash
+http2_inspect: reduce holes in objects
+http_inspect: add unescape text processing for Enhanced JS Normalizer
+http_inspect: decode String.fromCodePoint() JavaScript function
+http_inspect: delete alerts 119:279 and 119:280
+http_inspect: provide current packet to trace
+http_inspect: support headers Restrict-Access-To-Tenants, Restrict-Access-Context
+hyperscan: ensure adequate scratch when deserializing
+rate_filter: move to inspection policy
+search_engine: add fast pattern only count at startup
+search_engine: always build ac_full since it is a hard default case
+search_engine: fix .debug = true output
+search_engine: fix adjustment for fast_pattern_offset
+search_engine: fix fast pattern only eligibility check
+search_engine: remove obsolete warning on max_pattern_len change
+search_engine: remove search_optimize parameter (always true)
+search_engine: truncated patterns not eligible as fast pattern only contents
+search_engines: add and refactor unit tests
+search_engines: ensure SearchTool with hyperscan gets multi-match mode
+search_engines: remove the legacy ac_banded algorithm
+search_engines: remove the legacy ac_sparse algorithm
+search_engines: remove the legacy ac_sparse_bands algorithm
+search_engines: remove the legacy ac_std algorithm
+sfip: suppress compiler warning
+utils: add string concatenation for Enchanced JS Normalizer
+utils: allow opening/closing tags in external scripts
+utils: fix JS Normalizer benchmark build
+utils: fix tracking variable when the output buffer is reset
+utils: harden script opening tag sequence
+
 2022/03/23 - 3.1.26.0
 
 actions: revert bf62a22d43bb2d15b7425c5ec3e3118ead470e8d
