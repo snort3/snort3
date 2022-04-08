@@ -649,6 +649,36 @@ static const char all_patterns_buf6[] =
 static const char all_patterns_expected6[] =
     "tag ` template\n   ${a+b}   template`";
 
+static const char all_patterns_buf7[] =
+    "/Day:   \\d{2}\\/Month:   \\d{2}\\/Year:   \\d{4}/;"
+    "/<\\d{3}>\\//g";
+
+static const char all_patterns_expected7[] =
+    "/Day:   \\d{2}\\/Month:   \\d{2}\\/Year:   \\d{4}/;"
+    "/<\\d{3}>\\//g";
+
+static const char all_patterns_buf8[] =
+    "a = \"   \\\"   \\\\\\\"   \\\\\";"
+    "b = `   \\`   \\\\\\`   \\\\`;"
+    "c = '   \\'   \\\\\\'   \\\\';"
+    "d = /   \\/   \\\\\\/   \\\\/;"
+    "a + b;";
+
+static const char all_patterns_expected8[] =
+    "a=\"   \\\"   \\\\\\\"   \\\\\";"
+    "b=`   \\`   \\\\\\`   \\\\`;"
+    "c='   \\'   \\\\\\'   \\\\';"
+    "d=/   \\/   \\\\\\/   \\\\/;"
+    "a+b;";
+
+static const char all_patterns_buf9[] =
+    "var r = /^(?:(?:https?|mailto|ftp):|[^:/?#]*(?:[/?#]|$))/i;"
+    "new Lb(function(a){return /^[^:]*([/?#]|$)/.test(a)})";
+
+static const char all_patterns_expected9[] =
+    "var r=/^(?:(?:https?|mailto|ftp):|[^:/?#]*(?:[/?#]|$))/i;"
+    "new Lb(function(a){return /^[^:]*([/?#]|$)/.test(a)})";
+
 TEST_CASE("all patterns", "[JSNormalizer]")
 {
     SECTION("whitespaces and special characters")
@@ -738,6 +768,21 @@ TEST_CASE("all patterns", "[JSNormalizer]")
     {
         NORMALIZE(all_patterns_buf6);
         VALIDATE(all_patterns_buf6, all_patterns_expected6);
+    }
+    SECTION("regex literal with slashes")
+    {
+        NORMALIZE(all_patterns_buf7);
+        VALIDATE(all_patterns_buf7, all_patterns_expected7);
+    }
+    SECTION("multiple escaped slashes")
+    {
+        NORMALIZE(all_patterns_buf8);
+        VALIDATE(all_patterns_buf8, all_patterns_expected8);
+    }
+    SECTION("slashes and braces")
+    {
+        NORMALIZE(all_patterns_buf9);
+        VALIDATE(all_patterns_buf9, all_patterns_expected9);
     }
 }
 
@@ -3315,6 +3360,197 @@ TEST_CASE("scope tail handling", "[JSNormalizer]")
         NORM_COMBINED_2(dat1, dat2, exp7);
         NORM_COMBINED_2(dat3, dat4, exp8);
         NORM_COMBINED_2(dat5, dat6, exp9);
+    }
+}
+
+TEST_CASE("scope regex groups", "[JSNormalizer]")
+{
+    SECTION("parentheses")
+    {
+        const char dat1[] = "a=/()/;";
+        const char dat2[] = "b=/()()()/;";
+        const char dat3[] = "c=/((()))/;";
+        const char exp1[] = "a=/()/;";
+        const char exp2[] = "b=/()()()/;";
+        const char exp3[] = "c=/((()))/;";
+
+        NORMALIZE_1(dat1, exp1);
+        NORMALIZE_1(dat2, exp2);
+        NORMALIZE_1(dat3, exp3);
+    }
+    SECTION("curly braces")
+    {
+        const char dat1[] = "a=/{}/;";
+        const char dat2[] = "b=/{}{}{}/;";
+        const char dat3[] = "c=/{{{}}}/;";
+        const char exp1[] = "a=/{}/;";
+        const char exp2[] = "b=/{}{}{}/;";
+        const char exp3[] = "c=/{{{}}}/;";
+
+        NORMALIZE_1(dat1, exp1);
+        NORMALIZE_1(dat2, exp2);
+        NORMALIZE_1(dat3, exp3);
+    }
+    SECTION("square brackets")
+    {
+        const char dat1[] = "a=/[]/;";
+        const char dat2[] = "b=/[][][]/;";
+        const char dat3[] = "c=/[[[]]]/;";
+        const char exp1[] = "a=/[]/;";
+        const char exp2[] = "b=/[][][]/;";
+        const char exp3[] = "c=/[[[]]]/;";
+
+        NORMALIZE_1(dat1, exp1);
+        NORMALIZE_1(dat2, exp2);
+        NORMALIZE_1(dat3, exp3);
+    }
+    SECTION("mix of brackets")
+    {
+        const char dat1[] = "a=/(){}[]/";
+        const char dat2[] = "b=/({})[]/";
+        const char dat3[] = "c=/(){[]}/";
+        const char exp1[] = "a=/(){}[]/";
+        const char exp2[] = "b=/({})[]/";
+        const char exp3[] = "c=/(){[]}/";
+
+        NORMALIZE_1(dat1, exp1);
+        NORMALIZE_1(dat2, exp2);
+        NORMALIZE_1(dat3, exp3);
+    }
+    SECTION("parentheses - wrong closing symbol")
+    {
+        const char dat1[] = "/({[ (} ]})/";
+        const char dat2[] = "/({[ (] ]})/";
+        const char exp1[] = "/({[ (";
+        const char exp2[] = "/({[ (";
+
+        NORM_BAD_1(dat1, exp1, JSTokenizer::BAD_TOKEN);
+        NORM_BAD_1(dat2, exp2, JSTokenizer::BAD_TOKEN);
+    }
+    SECTION("curly braces - wrong closing symbol")
+    {
+        const char dat1[] = "/({[ {) ]})/";
+        const char dat2[] = "/({[ {] ]})/";
+        const char exp1[] = "/({[ {";
+        const char exp2[] = "/({[ {";
+
+        NORM_BAD_1(dat1, exp1, JSTokenizer::BAD_TOKEN);
+        NORM_BAD_1(dat2, exp2, JSTokenizer::BAD_TOKEN);
+    }
+    SECTION("square brackets - wrong closing symbol")
+    {
+        const char dat1[] = "/([{ [) }])/";
+        const char dat2[] = "/([{ [} }])/";
+        const char exp1[] = "/([{ [";
+        const char exp2[] = "/([{ [";
+
+        NORM_BAD_1(dat1, exp1, JSTokenizer::BAD_TOKEN);
+        NORM_BAD_1(dat2, exp2, JSTokenizer::BAD_TOKEN);
+    }
+    SECTION("parentheses - mismatch")
+    {
+        const char dat1[] = "/)/";
+        const char dat2[] = "/())/";
+        const char dat3[] = "/({[ ()) ]})/";
+        const char exp1[] = "/";
+        const char exp2[] = "/()";
+        const char exp3[] = "/({[ ()";
+
+        NORM_BAD_1(dat1, exp1, JSTokenizer::BAD_TOKEN);
+        NORM_BAD_1(dat2, exp2, JSTokenizer::BAD_TOKEN);
+        NORM_BAD_1(dat3, exp3, JSTokenizer::BAD_TOKEN);
+    }
+    SECTION("curly braces - mismatch")
+    {
+        const char dat1[] = "/}/";
+        const char dat2[] = "/{}}/";
+        const char dat3[] = "/({[ {}} ]})/";
+        const char exp1[] = "/";
+        const char exp2[] = "/{}";
+        const char exp3[] = "/({[ {}";
+
+        NORM_BAD_1(dat1, exp1, JSTokenizer::BAD_TOKEN);
+        NORM_BAD_1(dat2, exp2, JSTokenizer::BAD_TOKEN);
+        NORM_BAD_1(dat3, exp3, JSTokenizer::BAD_TOKEN);
+    }
+    SECTION("square brackets - mismatch")
+    {
+        const char dat1[] = "/]/";
+        const char dat2[] = "/[]]/";
+        const char dat3[] = "/([{ []] }])/";
+        const char exp1[] = "/";
+        const char exp2[] = "/[]";
+        const char exp3[] = "/([{ []";
+
+        NORM_BAD_1(dat1, exp1, JSTokenizer::BAD_TOKEN);
+        NORM_BAD_1(dat2, exp2, JSTokenizer::BAD_TOKEN);
+        NORM_BAD_1(dat3, exp3, JSTokenizer::BAD_TOKEN);
+    }
+    SECTION("parentheses - continuation")
+    {
+        const char dat1[] = "/((";
+        const char dat2[] = "))/";
+        const char exp1[] = "/((";
+        const char exp2[] = "))/";
+        const char exp[] = "/(())/";
+
+        NORMALIZE_2(dat1, dat2, exp1, exp2);
+        NORM_COMBINED_2(dat1, dat2, exp);
+    }
+    SECTION("curly braces - continuation")
+    {
+        const char dat1[] = "/{{";
+        const char dat2[] = "}}/";
+        const char exp1[] = "/{{";
+        const char exp2[] = "}}/";
+        const char exp[] = "/{{}}/";
+
+        NORMALIZE_2(dat1, dat2, exp1, exp2);
+        NORM_COMBINED_2(dat1, dat2, exp);
+    }
+    SECTION("square brackets - continuation")
+    {
+        const char dat1[] = "/[[";
+        const char dat2[] = "]]/";
+        const char exp1[] = "/[[";
+        const char exp2[] = "]]/";
+        const char exp[] = "/[[]]/";
+
+        NORMALIZE_2(dat1, dat2, exp1, exp2);
+        NORM_COMBINED_2(dat1, dat2, exp);
+    }
+    SECTION("parentheses - mismatch in continuation")
+    {
+        const char dat1[] = "/(";
+        const char dat2[] = "))/";
+        const char exp1[] = "/(";
+        const char exp2[] = ")";
+        const char exp[] = "/()";
+
+        NORM_BAD_2(dat1, dat2, exp1, exp2, JSTokenizer::BAD_TOKEN);
+        NORM_COMBINED_BAD_2(dat1, dat2, exp, JSTokenizer::BAD_TOKEN);
+    }
+    SECTION("curly braces - mismatch in continuation")
+    {
+        const char dat1[] = "/{";
+        const char dat2[] = "}}/";
+        const char exp1[] = "/{";
+        const char exp2[] = "}";
+        const char exp[] = "/{}";
+
+        NORM_BAD_2(dat1, dat2, exp1, exp2, JSTokenizer::BAD_TOKEN);
+        NORM_COMBINED_BAD_2(dat1, dat2, exp, JSTokenizer::BAD_TOKEN);
+    }
+    SECTION("square brackets - mismatch in continuation")
+    {
+        const char dat1[] = "/[";
+        const char dat2[] = "]]/";
+        const char exp1[] = "/[";
+        const char exp2[] = "]";
+        const char exp[] = "/[]";
+
+        NORM_BAD_2(dat1, dat2, exp1, exp2, JSTokenizer::BAD_TOKEN);
+        NORM_COMBINED_BAD_2(dat1, dat2, exp, JSTokenizer::BAD_TOKEN);
     }
 }
 

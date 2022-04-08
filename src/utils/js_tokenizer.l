@@ -985,11 +985,11 @@ LITERAL_INTEGER               [0-9]*
 LITERAL_HEX_INTEGER           0x[0-9a-fA-F]*|0X[0-9a-fA-F]*
 LITERAL_DQ_STRING_START       \"
 LITERAL_DQ_STRING_END         \"
-LITERAL_DQ_STRING_SKIP        \\\"
+LITERAL_DQ_STRING_SKIP        \\\"|\\\\
 LITERAL_DQ_STRING_TEXT        [^\"\\%\xA\xD\{0x10}(\xE2\x80\xA8)(\xE2\x80\xA9)("<"+(?i:script))("<"+(?i:\/script>))]{1,32}
 LITERAL_SQ_STRING_START       \'
 LITERAL_SQ_STRING_END         \'
-LITERAL_SQ_STRING_SKIP        \\\'
+LITERAL_SQ_STRING_SKIP        \\\'|\\\\
 LITERAL_SQ_STRING_TEXT        [^\'\\%\xA\xD\{0x10}(\xE2\x80\xA8)(\xE2\x80\xA9)("<"+(?i:script))("<"+(?i:\/script>))]{1,32}
 LITERAL_TEMPLATE_START        \`
 LITERAL_TEMPLATE_END          \`
@@ -997,7 +997,10 @@ LITERAL_TEMPLATE_SUBST_START  \$\{
 LITERAL_TEMPLATE_OTHER        [^\\%\`(\$\{)("<"+(?i:\/script>))]{1,32}
 LITERAL_REGEX_START           \/[^*\/]
 LITERAL_REGEX_END             \/[gimsuy]*
-LITERAL_REGEX_SKIP            \\\/
+LITERAL_REGEX_SKIP            \\\/|\\\\|\\\(|\\\)|\\\[|\\\]|\\\{|\\\}
+LITERAL_REGEX_TEXT            [^<{LF}{CR}{LS}{PS}\\\/\(\[\{\)\]\}]+
+LITERAL_REGEX_G_OPEN          \(|\[|\{
+LITERAL_REGEX_G_CLOSE         \)|\]|\}
 /* extra literals */
 /* according to https://ecma-international.org/ecma-262/5.1/#sec-4.3 */
 LITERAL_UNDEFINED             undefined
@@ -1149,13 +1152,15 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <unesc_tmpll>{URL_ESCAPE_SEQUENCE}                           { set_encoding(IS_PERCENT); escaped_url_sequence(); }
 
 <regst>{LITERAL_REGEX_START}        { EXEC(literal_regex_start()) }
-<regex>{LITERAL_REGEX_END}          { ECHO; BEGIN(divop); }
+<regex>{LITERAL_REGEX_END}          { EXEC(literal_regex_end()) }
 <regex>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); RETURN(CLOSING_TAG) }
-<regex>{LITERAL_REGEX_SKIP}         { ECHO; }
 <regex>\\{LF}                       |
 <regex>\\{CR}                       |
 <regex>{LINE_TERMINATORS}           { BEGIN(regst); RETURN(BAD_TOKEN) }
-<regex>[^<{LF}{CR}{LS}{PS}\\\/]+    { ECHO; }
+<regex>{LITERAL_REGEX_SKIP}         { ECHO; }
+<regex>{LITERAL_REGEX_TEXT}         { ECHO; }
+<regex>{LITERAL_REGEX_G_OPEN}       { EXEC(literal_regex_g_open()) }
+<regex>{LITERAL_REGEX_G_CLOSE}      { EXEC(literal_regex_g_close()) }
 <regex>{UNICODE_ESCAPE_SEQUENCE}    |
 <regex>{HEX_ESCAPE_SEQUENCE}        { escaped_unicode(); }
 <regex><<EOF>>                      { RETURN(SCRIPT_CONTINUE) }
@@ -1666,6 +1671,7 @@ void JSTokenizer::states_reset()
 
     scope_stack = std::stack<Scope>();
     scope_stack.emplace(GLOBAL);
+
     BEGIN(regst);
 }
 
@@ -2276,6 +2282,56 @@ JSTokenizer::JSRet JSTokenizer::literal_regex_start()
     yyless(1);
     BEGIN(regex);
     set_ident_norm(true);
+    regex_stack = std::stack<char>();
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::literal_regex_end()
+{
+    if (regex_stack.empty())
+    {
+        ECHO;
+        BEGIN(divop);
+        return EOS;
+    }
+    else
+    {
+        ECHO;
+        return EOS;
+    }
+}
+
+JSTokenizer::JSRet JSTokenizer::literal_regex_g_open()
+{
+    regex_stack.push(yytext[0]);
+    ECHO;
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::literal_regex_g_close()
+{
+    if (regex_stack.empty())
+    {
+        debug_logf(5, http_trace, TRACE_JS_PROC, nullptr,
+            "no group to close, .. %c\n", yytext[0]);
+        return BAD_TOKEN;
+    }
+
+    char c = yytext[0];
+    char o = regex_stack.top();
+    char d = o == '(' ? 1 : 2;
+
+    regex_stack.pop();
+
+    if (o + d != c)
+    {
+        debug_logf(5, http_trace, TRACE_JS_PROC, nullptr,
+            "closing symbol mismatch, %c .. %c\n", o, c);
+        return BAD_TOKEN;
+    }
+
+    ECHO;
+
     return EOS;
 }
 

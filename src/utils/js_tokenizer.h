@@ -255,6 +255,9 @@ private:
     JSRet literal_sq_string_start();
     JSRet literal_template_start();
     JSRet literal_regex_start();
+    JSRet literal_regex_end();
+    JSRet literal_regex_g_open();
+    JSRet literal_regex_g_close();
     void div_assignment_operator();
     JSRet open_brace();
     JSRet close_brace();
@@ -321,6 +324,7 @@ private:
     size_t bytes_read;
     size_t tmp_bytes_read;
     bool ext_script;
+    std::stack<char> regex_stack;
 
     struct
     {
