@@ -130,13 +130,21 @@ void TcpStreamSession::update_session_on_client_packet(TcpSegmentDescriptor& tsd
         flow->set_ttl(tsd.get_pkt(), true);
 }
 
-void TcpStreamSession::set_no_ack(bool b)
+bool TcpStreamSession::can_set_no_ack()
 {
-    if ( server.get_flush_policy() == STREAM_FLPOLICY_ON_DATA and
-         client.get_flush_policy() == STREAM_FLPOLICY_ON_DATA )
+    return ( server.get_flush_policy() == STREAM_FLPOLICY_ON_DATA and
+         client.get_flush_policy() == STREAM_FLPOLICY_ON_DATA );
+}
+
+bool TcpStreamSession::set_no_ack(bool b)
+{
+    if ( can_set_no_ack() )
     {
         no_ack = b;
+        return true;
     }
+    else
+        return false;
 }
 
 void TcpStreamSession::disable_reassembly(Flow* f)

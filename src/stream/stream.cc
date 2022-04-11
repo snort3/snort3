@@ -813,12 +813,20 @@ bool Stream::set_packet_action_to_hold(Packet* p)
     return p->flow->session->set_packet_action_to_hold(p);
 }
 
-void Stream::set_no_ack_mode(Flow* flow, bool on_off)
+bool Stream::can_set_no_ack_mode(Flow* flow)
 {
     assert(flow and flow->session and flow->pkt_type == PktType::TCP);
 
     TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
-    tcp_session->set_no_ack(on_off);
+    return tcp_session->can_set_no_ack();
+}
+
+bool Stream::set_no_ack_mode(Flow* flow, bool on_off)
+{
+    assert(flow and flow->session and flow->pkt_type == PktType::TCP);
+
+    TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
+    return tcp_session->set_no_ack(on_off);
 }
 
 void Stream::partial_flush(Flow* flow, bool to_server)

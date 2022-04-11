@@ -66,7 +66,8 @@ public:
 
     void set_packet_header_foo(const TcpSegmentDescriptor&);
     void get_packet_header_foo(DAQ_PktHdr_t*, uint32_t dir);
-    void set_no_ack(bool);
+    bool can_set_no_ack();
+    bool set_no_ack(bool);
     bool no_ack_mode_enabled() { return no_ack; }
     virtual void update_perf_base_state(char) = 0;
     virtual void clear_session(

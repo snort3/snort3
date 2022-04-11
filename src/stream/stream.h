@@ -240,7 +240,8 @@ public:
     static uint8_t get_tcp_options_len(Flow*, bool to_server);
 
     static bool set_packet_action_to_hold(Packet*);
-    static void set_no_ack_mode(Flow*, bool);
+    static bool can_set_no_ack_mode(Flow*);
+    static bool set_no_ack_mode(Flow*, bool);
     static void partial_flush(Flow*, bool to_server);
 
     static bool get_held_pkt_seq(Flow*, uint32_t&);
