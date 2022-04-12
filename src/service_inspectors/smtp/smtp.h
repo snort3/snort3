@@ -91,6 +91,7 @@ enum SMTPRespEnum
     RESP_450,
     RESP_451,
     RESP_452,
+    RESP_454,
     RESP_500,
     RESP_501,
     RESP_502,
@@ -163,6 +164,9 @@ struct SMTPData
     uint32_t dat_chunk;
     SmtpMime* mime_ssn;
     SMTPAuthName* auth_name;
+    bool client_requested_starttls = false;
+    size_t pipelined_command_counter = 0;
+    bool server_accepted_starttls = false;
 };
 
 class SmtpFlowData : public snort::FlowData
