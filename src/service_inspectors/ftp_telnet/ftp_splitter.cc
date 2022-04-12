@@ -24,6 +24,7 @@
 #include "ftp_splitter.h"
 #include "protocols/ssl.h"
 #include "protocols/packet.h"
+#include "utils/util.h"
 
 #include <cstring>
 
@@ -31,34 +32,34 @@ using namespace snort;
 
 FtpSplitter::FtpSplitter(bool c2s) : StreamSplitter(c2s) { }
 
-// flush at last line feed in data
+// flush at last CR or LF in data
 // preproc will deal with any pipelined commands
 StreamSplitter::Status FtpSplitter::scan(
     Packet* p, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t* fp)
 {
-    if(IsSSL(data, len, p->packet_flags))
+    if ( IsSSL(data, len, p->packet_flags) )
     {
         *fp = len;
         return FLUSH;
     }
-#ifdef HAVE_MEMRCHR
-    const uint8_t* lf =  (const uint8_t*)memrchr(data, '\n', len);
-#else
-    uint32_t n = len;
-    const uint8_t* lf = nullptr, * tmp = data;
 
-    while ( (tmp = (const uint8_t*)memchr(tmp, '\n', n)) )
-    {
-        lf = tmp++;
-        n = len - (tmp - data);
-    }
-#endif
+    const uint8_t* cr = snort_memrchr(data, '\r', len);
+    const uint8_t* lf = snort_memrchr(data, '\n', len);
 
-    if ( !lf )
+    const uint8_t* ptr = nullptr;
+
+    if ( cr && !lf )
+        ptr = cr;
+    else if ( !cr && lf )
+        ptr = lf;
+    else if ( cr && lf )
+        ptr = ( cr > lf ) ? cr : lf;
+
+    if ( !ptr )
         return SEARCH;
 
-    *fp = lf - data + 1;
+    *fp = ptr - data + 1;
     return FLUSH;
 }
 

@@ -108,6 +108,7 @@ SO_PUBLIC extern char** protocol_names;
 SO_PUBLIC const char* get_error(int errnum);
 SO_PUBLIC char* snort_strdup(const char*);
 SO_PUBLIC char* snort_strndup(const char*, size_t);
+SO_PUBLIC const uint8_t* snort_memrchr(const uint8_t*, char, size_t);
 SO_PUBLIC void ts_print(const struct timeval*, char*, bool yyyymmdd = false);
 }
 

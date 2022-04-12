@@ -534,6 +534,25 @@ char* snort_strdup(const char* str)
     return p;
 }
 
+const uint8_t* snort_memrchr(const uint8_t* buf, char c, size_t len)
+{
+#ifdef HAVE_MEMRCHR
+    return (const uint8_t*)memrchr(buf, c, len);
+#else
+    size_t n = len;
+    const uint8_t* tmp = buf;
+    const uint8_t* ptr = nullptr;
+
+    while ( n > 0 && (tmp = (const uint8_t*)memchr(tmp, c, n)) )
+    {
+        ptr = tmp++;
+        n = len - (tmp - buf);
+    }
+
+    return ptr;
+#endif
+}
+
 void ts_print(const struct timeval* tvp, char* timebuf, bool yyyymmdd)
 {
     struct timeval tv;

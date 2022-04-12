@@ -1596,7 +1596,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                     {
                         req->cmd_begin = nullptr;
                         req->cmd_end = nullptr;
-                        if (*read_ptr != SP)
+                        if (*read_ptr != SP && read_ptr != p->data)
                             read_ptr--;
                         state = FTP_RESPONSE_CONT;
                     }
