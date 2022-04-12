@@ -31,6 +31,7 @@
 
 #include "main/snort_types.h"
 #include "sfip/sf_returns.h"
+#include "utils/cpp_macros.h"
 
 namespace snort
 {
@@ -145,8 +146,7 @@ inline uint32_t SfIp::get_ip4_value() const
 }
 
 /* Safe to ignore because ip32 is at the offset of 0 in SfIp */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+PACKED_MEMBER_ADDR_BEGIN
 
 inline const uint32_t* SfIp::get_ip4_ptr() const
 {
@@ -165,7 +165,7 @@ inline const uint32_t* SfIp::get_ptr() const
     return ip32;
 }
 
-#pragma GCC diagnostic pop
+PACKED_MEMBER_ADDR_END
 
 inline bool SfIp::is_set() const
 {

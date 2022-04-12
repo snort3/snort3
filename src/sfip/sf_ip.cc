@@ -42,10 +42,7 @@ bool SfIp::test_features{ false };
 /* Masks off 'val' bits from the IP contained within 'ip' */
 inline int SfIp::cidr_mask(int val)
 {
-    uint32_t* p;
     int index, bits;
-
-    p = ip32;
 
     if (val < 0 || val > 128)
         return SFIP_ARG_ERR;
@@ -64,14 +61,14 @@ inline int SfIp::cidr_mask(int val)
         mask = ~0;
         mask >>= bits;
         mask <<= bits;
-        p[index] &= htonl(mask);
+        ip32[index] &= htonl(mask);
     }
 
     index++;
 
     /* 0 off the rest of the IP */
     for (; index < 4; index++)
-        p[index] = 0;
+        ip32[index] = 0;
 
     return SFIP_SUCCESS;
 }
