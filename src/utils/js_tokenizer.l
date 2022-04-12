@@ -1656,7 +1656,7 @@ void JSTokenizer::states_reset()
     if (tmp_buffer)
         switch_to_initial();
 
-    brace_depth = std::stack<uint16_t, std::vector<uint16_t>>();
+    brace_depth = VStack<uint16_t>();
     token = UNDEFINED;
     previous_group = ASI_OTHER;
 
@@ -2282,7 +2282,7 @@ JSTokenizer::JSRet JSTokenizer::literal_regex_start()
     yyless(1);
     BEGIN(regex);
     set_ident_norm(true);
-    regex_stack = std::stack<char>();
+    regex_stack = VStack<char>();
     return EOS;
 }
 
@@ -2303,6 +2303,9 @@ JSTokenizer::JSRet JSTokenizer::literal_regex_end()
 
 JSTokenizer::JSRet JSTokenizer::literal_regex_g_open()
 {
+    if (regex_stack.size() >= max_template_nesting)
+        return TEMPLATE_NESTING_OVERFLOW;
+
     regex_stack.push(yytext[0]);
     ECHO;
     return EOS;

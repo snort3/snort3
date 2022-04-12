@@ -1103,6 +1103,14 @@ static const char syntax_cases_buf23[] =
 static const char syntax_cases_expected23[] =
     "`${`${`${`${`";
 
+static const char syntax_cases_buf24[] =
+    "var a=/[[[[/]]]]/;"
+    "var b=/[[[[[/]]]]]/;";
+
+static const char syntax_cases_expected24[] =
+    "var a=/[[[[/]]]]/;"
+    "var b=/[[[[";
+
 TEST_CASE("syntax cases", "[JSNormalizer]")
 {
     SECTION("variables")
@@ -1226,13 +1234,19 @@ TEST_CASE("bad tokens", "[JSNormalizer]")
     }
 }
 
-TEST_CASE("template literal overflow", "[JSNormalizer]")
+TEST_CASE("braces overflow", "[JSNormalizer]")
 {
     SECTION("exceeding template literal limit")
     {
         NORMALIZE(syntax_cases_buf23);
         VALIDATE_FAIL(syntax_cases_buf23, syntax_cases_expected23,
             JSTokenizer::TEMPLATE_NESTING_OVERFLOW, 15);
+    }
+    SECTION("exceeding regex literal limit")
+    {
+        NORMALIZE(syntax_cases_buf24);
+        VALIDATE_FAIL(syntax_cases_buf24, syntax_cases_expected24,
+            JSTokenizer::TEMPLATE_NESTING_OVERFLOW, 30);
     }
 }
 

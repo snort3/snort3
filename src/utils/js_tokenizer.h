@@ -140,6 +140,9 @@ private:
         ALIAS_VALUE       // var a = eval
     };
 
+    template <class T>
+    using VStack = std::stack<T, std::vector<T>>;
+
 public:
     enum JSRet
     {
@@ -317,14 +320,14 @@ private:
     bool mixed_encoding_seen = false;
 
     uint8_t max_template_nesting;
-    std::stack<uint16_t, std::vector<uint16_t>> brace_depth;
+    VStack<uint16_t> brace_depth;
     JSToken token = UNDEFINED;
     ASIGroup previous_group = ASI_OTHER;
     JSIdentifierCtxBase& ident_ctx;
     size_t bytes_read;
     size_t tmp_bytes_read;
     bool ext_script;
-    std::stack<char> regex_stack;
+    VStack<char> regex_stack;
 
     struct
     {
