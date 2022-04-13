@@ -746,10 +746,21 @@ void Binder::handle_flow_setup(Flow& flow, bool standby)
 
 void Binder::handle_flow_service_change(Flow& flow)
 {
+    bstats.service_changes++;
+
     Profile profile(bindPerfStats);
+    Stuff stuff;
+
+    get_bindings(flow, stuff);
+    if (stuff.action != BindUse::BA_INSPECT)
+    {
+        stuff.apply_action(flow);
+        return;
+    }
 
     Inspector* ins = nullptr;
     Inspector* data = nullptr;
+
     if (flow.has_service())
     {
         ins = find_gadget(flow, data);
@@ -813,8 +824,6 @@ void Binder::handle_flow_service_change(Flow& flow)
             Stream::set_splitter(&flow, false, new AtomSplitter(false));
         }
     }
-
-    bstats.service_changes++;
 }
 
 void Binder::handle_assistant_gadget(const char* service, Flow& flow)
