@@ -1,8 +1,53 @@
-This unit support parsing of command line args, detection rules, IP addresses,
+This unit supports parsing of command line args, detection rules, IP addresses,
 and config files. New Lua-based features are elsewhere.
 
-* parse_stream.cc uses state machines to parse IPS rules.
+==== Rules
 
-* mstring is a set of parsing utilities that should not be used in new
-  code.
+A state machine parser expects a rule in the following format:
 
+    Action Proto Source Dir Destination ( Options )
+
+Where 'Action' is an IPS Action, 'Source/Destination' is a source or destination
+IP address and port if any, 'Dir' is a marker for uni-directional or bi-directional
+rule, 'Options' is a list of IPS options including matchers and meta-data.
+Some of the tokens can be omitted, taking a default value.
+
+The left part of the rule (before the opening parenthesis) is a header, which is
+represented by RuleTreeNode structure internally, the RTN.
+
+The right part of the rule (in the parentheses) is a rule body, which is just
+a list of IPS options, delimited by a semi-colon. Internally this part is
+represented by OptTreeNode structure, the OTN.
+During parsing the options, the right IPS Option module is selected. It will
+parse the option and its parameters and create an instance.
+
+RTN is a per-policy data. Within a given policy all RTNs which have the
+same action and 5-tuple (protocol, addresses, ports values after expanding
+variables) will be collapsed into a single RTN. This reduces the memory and
+computation efforts to evaluate RTN. Hence, RTN has a counter for OTNs
+referencing it.
+RTNs populate policies when the rule states are applied.
+
+OTN is a global data. It is uniquely identified by gid:sid pair.
+So, a text rule, a rule state or stub can reference the same rule:
+
+    ips.rules = [[ reject http ( gid:1; sid:1; ) ]]
+    ips.states = [[ alert ( gid:1; sid:1; ) ]]
+
+In the example above the state will affect the current policy, while the rule
+will be loaded and become available in all policies (with inherited or
+overridden state).
+OTN has a pointer to the right RTN for each policy.
+
+After all the rules are read and parsed, Detection module will create rule
+groups and options trees to evaluate rules faster.
+
+==== IP and Port Variables
+
+IP or Port value (either a scalar or a list) can be represented by a user variable.
+Each IPS policy has a table which maps variable name to a specific value.
+
+    ips.variables.nets.HOME_NET = 192.168.0.0/24
+    ips.variables.ports.STATIC_NAT_PORT = '8080, 40000:'
+
+RTN gets expanded values when the rule state is applied.
