@@ -473,8 +473,8 @@ static bool ff_service(const Args& a)
 {
     const char* svc = "unknown";
 
-    if ( a.pkt->flow and a.pkt->flow->has_service() )
-        svc = a.pkt->flow->service->c_str();
+    if ( a.pkt->flow and a.pkt->flow->service )
+        svc = a.pkt->flow->service;
 
     print_label(a, "service");
     TextLog_Quote(json_log, svc);

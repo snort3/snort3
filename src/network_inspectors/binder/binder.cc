@@ -578,9 +578,13 @@ public:
 
     void handle(DataEvent&, Flow* flow) override
     {
-        Binder* binder = InspectorManager::get_binder();
-        if (binder && flow)
-            binder->handle_flow_after_reload(*flow);
+        // If reload_id is zero, this is a new flow and is bound by FLOW_STATE_SETUP_EVENT
+        if (flow && flow->reload_id && Flow::FlowState::INSPECT == flow->flow_state)
+        {
+            Binder* binder = InspectorManager::get_binder();
+            if (binder)
+                binder->handle_flow_after_reload(*flow);
+        }
     }
 };
 
@@ -729,7 +733,7 @@ void Binder::handle_flow_setup(Flow& flow, bool standby)
         if (flow.ssn_state.snort_protocol_id != UNKNOWN_PROTOCOL_ID)
         {
             const SnortConfig* sc = SnortConfig::get_conf();
-            flow.service = sc->proto_ref->get_shared_name(flow.ssn_state.snort_protocol_id);
+            flow.set_service(nullptr, sc->proto_ref->get_name(flow.ssn_state.snort_protocol_id));
         }
     }
 
@@ -761,7 +765,7 @@ void Binder::handle_flow_service_change(Flow& flow)
     Inspector* ins = nullptr;
     Inspector* data = nullptr;
 
-    if (flow.has_service())
+    if (flow.service)
     {
         ins = find_gadget(flow, data);
         if (flow.gadget != ins)
@@ -808,8 +812,8 @@ void Binder::handle_flow_service_change(Flow& flow)
 
     // If there is no inspector bound to this flow after the service change, see if there's at least
     // an associated protocol ID.
-    if (!ins && flow.has_service())
-        flow.ssn_state.snort_protocol_id = SnortConfig::get_conf()->proto_ref->find(flow.service->c_str());
+    if (!ins && flow.service)
+        flow.ssn_state.snort_protocol_id = SnortConfig::get_conf()->proto_ref->find(flow.service);
 
     if (flow.is_stream())
     {
@@ -992,7 +996,7 @@ void Binder::get_bindings(Packet* p, Stuff& stuff)
 Inspector* Binder::find_gadget(Flow& flow, Inspector*& data)
 {
     Stuff stuff;
-    get_bindings(flow, stuff, flow.has_service() ? flow.service->c_str() : nullptr);
+    get_bindings(flow, stuff, flow.service);
     data = stuff.data;
     return stuff.gadget;
 }

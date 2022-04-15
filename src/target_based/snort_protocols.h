@@ -22,7 +22,6 @@
 #ifndef SNORT_PROTOCOLS_H
 #define SNORT_PROTOCOLS_H
 
-#include <memory>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -74,7 +73,6 @@ public:
     SnortProtocolId get_count() const;
 
     const char* get_name(SnortProtocolId id) const;
-    std::shared_ptr<std::string> get_shared_name(SnortProtocolId id) const;
     const char* get_name_sorted(SnortProtocolId id);
 
     SnortProtocolId add(const char* protocol);
@@ -83,7 +81,7 @@ public:
     bool operator()(SnortProtocolId a, SnortProtocolId b);
 
 private:
-    std::vector<std::shared_ptr<std::string>> id_map;
+    std::vector<const char*> id_map;
     std::vector<SnortProtocolId> ind_map;
     std::unordered_map<std::string, SnortProtocolId> ref_table;
 
@@ -91,6 +89,10 @@ private:
 
     void init(const ProtocolReference* old_proto_ref);
 };
+
+void protocol_reference_global_init();
+void protocol_reference_global_term();
+
 }
 #endif
 

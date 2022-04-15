@@ -24,8 +24,10 @@
 #include "snort_config.h"
 
 #include <grp.h>
+#include <mutex>
 #include <pwd.h>
 #include <syslog.h>
+#include <unordered_map>
 
 #include "actions/ips_actions.h"
 #include "detection/detect.h"
@@ -1056,3 +1058,15 @@ void SnortConfig::cleanup_fatal_error()
 #endif
 }
 
+std::mutex SnortConfig::static_names_mutex;
+std::unordered_map<std::string, std::string> SnortConfig::static_names;
+
+const char* SnortConfig::get_static_name(const char* name)
+{
+    std::lock_guard<std::mutex> static_name_lock(static_names_mutex);
+    auto entry = static_names.find(name);
+    if ( entry != static_names.end() )
+        return entry->second.c_str();
+    static_names.emplace(name, name);
+    return static_names[name].c_str();
+}

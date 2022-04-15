@@ -64,7 +64,7 @@ void DceHttpServer::clear(Packet* p)
             if ( splitter->cutover_inspector())
             {
                 dce_http_server_stats.http_server_sessions++;
-                flow->set_service(p, dce_rpc_service_name);
+                flow->set_service(p, DCE_RPC_SERVICE_NAME);
             }
             else
                 dce_http_server_stats.http_server_session_failures++;

@@ -1116,7 +1116,6 @@ static void SMTP_ProcessServerPacket(
                 /* This is either an initial server response or a STARTTLS response */
                 if (smtp_ssn->state == STATE_CONNECT)
                     smtp_ssn->state = STATE_COMMAND;
-
                 break;
 
             case RESP_250:

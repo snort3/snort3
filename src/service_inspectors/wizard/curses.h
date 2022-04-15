@@ -21,7 +21,6 @@
 #define CURSES_H
 
 #include <cstdint>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -87,7 +86,7 @@ typedef bool (* curse_alg)(const uint8_t* data, unsigned len, CurseTracker*);
 struct CurseDetails
 {
     std::string name;
-    std::shared_ptr<std::string> service;
+    const char* service;
     curse_alg alg;
     bool is_tcp;
 };

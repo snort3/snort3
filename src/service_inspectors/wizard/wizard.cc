@@ -195,7 +195,7 @@ StreamSplitter::Status MagicSplitter::scan(
     if ( wizard->cast_spell(wand, pkt->flow, data, len, wizard_processed_bytes) )
     {
         trace_logf(wizard_trace, pkt, "%s streaming search found service %s\n",
-            to_server() ? "c2s" : "s2c", pkt->flow->service->c_str());
+            to_server() ? "c2s" : "s2c", pkt->flow->service);
         count_hit(pkt->flow);
         wizard_processed_bytes = 0;
         return STOP;
@@ -225,7 +225,7 @@ StreamSplitter::Status MagicSplitter::scan(
     // delayed. Because AppId depends on wizard only for SSH detection and SSH inspector can be
     // attached very early, event is raised here after first scan. In the future, wizard should be
     // enhanced to abort sooner if it can't detect service.
-    if (!pkt->flow->has_service() && !pkt->flow->flags.svc_event_generated)
+    if (!pkt->flow->service && !pkt->flow->flags.svc_event_generated)
     {
         DataBus::publish(FLOW_NO_SERVICE_EVENT, pkt);
         pkt->flow->flags.svc_event_generated = true;
@@ -309,7 +309,7 @@ void Wizard::eval(Packet* p)
     if ( cast_spell(wand, p->flow, p->data, p->dsize, udp_processed_bytes) )
     {
         trace_logf(wizard_trace, p, "%s datagram search found service %s\n",
-            c2s ? "c2s" : "s2c", p->flow->service->c_str());
+            c2s ? "c2s" : "s2c", p->flow->service);
         ++tstats.udp_hits;
     }
     else
@@ -328,12 +328,8 @@ StreamSplitter* Wizard::get_splitter(bool c2s)
 bool Wizard::spellbind(
     const MagicPage*& m, Flow* f, const uint8_t* data, unsigned len)
 {
-    std::shared_ptr<std::string> p_shared = m->book.find_spell(data, len, m);
-    if (p_shared.use_count())
-        f->service = p_shared;
-    else
-        f->service.reset();
-    return f->has_service();
+    f->service = m->book.find_spell(data, len, m);
+    return f->service != nullptr;
 }
 
 bool Wizard::cursebind(const vector<CurseServiceTracker>& curse_tracker, Flow* f,
@@ -343,11 +339,8 @@ bool Wizard::cursebind(const vector<CurseServiceTracker>& curse_tracker, Flow* f
     {
         if (cst.curse->alg(data, len, cst.tracker))
         {
-            if (cst.curse->service.use_count())
-                f->service = cst.curse->service;
-            else
-                f->service.reset();
-            if ( f->has_service() )
+            f->service = cst.curse->service;
+            if ( f->service )
                 return true;
         }
     }
@@ -375,7 +368,7 @@ bool Wizard::cast_spell(
 
     // If we reach max value of wizard_processed_bytes,
     // but not assign any inspector - raise tcp_miss and stop
-    if ( !f->has_service() && wizard_processed_bytes >= max_search_depth )
+    if ( !f->service && wizard_processed_bytes >= max_search_depth )
     {
         w.spell = nullptr;
         w.hex = nullptr;

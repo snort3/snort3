@@ -20,7 +20,6 @@
 #ifndef MAGIC_H
 #define MAGIC_H
 
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -29,7 +28,7 @@ class MagicBook;
 struct MagicPage
 {
     std::string key;
-    std::shared_ptr<std::string> value;
+    const char* value = nullptr;
 
     MagicPage* next[256];
     MagicPage* any;
@@ -53,8 +52,7 @@ public:
     MagicBook& operator=(const MagicBook&) = delete;
 
     virtual bool add_spell(const char* key, const char*& val) = 0;
-    virtual std::shared_ptr<std::string> find_spell(const uint8_t*, unsigned len,
-        const MagicPage*&) const;
+    virtual const char* find_spell(const uint8_t* data, unsigned len, const MagicPage*&) const;
 
     const MagicPage* page1() const
     { return root; }

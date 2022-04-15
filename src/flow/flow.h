@@ -27,7 +27,6 @@
 // state.  Inspector state is stored in FlowData, and Flow manages a list
 // of FlowData items.
 
-#include <memory>
 #include <string>
 #include <sys/time.h>
 
@@ -200,10 +199,7 @@ public:
     void set_mpls_layer_per_dir(Packet*);
     Layer get_mpls_layer_per_dir(bool);
     void swap_roles();
-    void set_service(Packet*, std::shared_ptr<std::string> new_service);
-    void clear_service(Packet*);
-    bool has_service() const
-    { return 0 != service.use_count(); }
+    void set_service(Packet*, const char* new_service);
     bool get_attr(const std::string& key, int32_t& val);
     bool get_attr(const std::string& key, std::string& val);
     void set_attr(const std::string& key, const int32_t& val);
@@ -406,7 +402,6 @@ public:  // FIXIT-M privatize if possible
     // void space and allow for memset of tail end of struct
 
     DeferredTrust deferred_trust;
-    std::shared_ptr<std::string> service;
 
     // Anything before this comment is not zeroed during construction
     const FlowKey* key;
@@ -441,6 +436,7 @@ public:  // FIXIT-M privatize if possible
     Inspector* gadget;    // service handler
     Inspector* assistant_gadget;
     Inspector* data;
+    const char* service;
 
     uint64_t expire_time;
 

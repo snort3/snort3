@@ -23,8 +23,11 @@
 
 #include <cstdlib>
 
+#include "main/snort_config.h"
+
 #include "magic.h"
 
+using namespace snort;
 using namespace std;
 
 #define WILD 0x100
@@ -91,7 +94,7 @@ void HexBook::add_spell(
         ++i;
     }
     p->key = key;
-    p->value = make_shared<string>(val);
+    p->value = SnortConfig::get_static_name(val);
 }
 
 bool HexBook::add_spell(const char* key, const char*& val)
@@ -124,7 +127,7 @@ bool HexBook::add_spell(const char* key, const char*& val)
     }
     if ( p->key == key )
     {
-        val = p->value->c_str();
+        val = p->value;
         return false;
     }
 
@@ -158,7 +161,7 @@ const MagicPage* HexBook::find_spell(
             if ( const MagicPage* q = find_spell(s, n, p->any, i+1) )
                 return q;
         }
-        return p->value.use_count() ? p : nullptr;
+        return p->value ? p : nullptr;
     }
     return p;
 }

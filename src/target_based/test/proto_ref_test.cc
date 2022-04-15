@@ -32,8 +32,10 @@
 
 using namespace snort;
 
+const char* SnortConfig::get_static_name(const char* name) { return name; }
+
 TEST_GROUP(protocol_reference)
-{};
+{ };
 
 // Service Protocols
 //

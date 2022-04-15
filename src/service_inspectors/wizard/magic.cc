@@ -42,16 +42,12 @@ MagicPage::~MagicPage()
     delete any;
 }
 
-std::shared_ptr<std::string> MagicBook::find_spell(const uint8_t* data, unsigned len,
+const char* MagicBook::find_spell(const uint8_t* data, unsigned len,
     const MagicPage*& p) const
 {
     assert(p);
-
     p = find_spell(data, len, p, 0);
-    if ( p && p->value.use_count() )
-        return p->value;
-
-    return nullptr;
+    return p ? p->value : nullptr;
 }
 
 MagicBook::MagicBook()

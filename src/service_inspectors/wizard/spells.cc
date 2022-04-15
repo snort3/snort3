@@ -23,8 +23,11 @@
 
 #include <cassert>
 
+#include "main/snort_config.h"
+
 #include "magic.h"
 
+using namespace snort;
 using namespace std;
 
 #define WILD 0x100
@@ -84,7 +87,7 @@ void SpellBook::add_spell(
         ++i;
     }
     p->key = key;
-    p->value = make_shared<string>(val);
+    p->value = SnortConfig::get_static_name(val);
 }
 
 bool SpellBook::add_spell(const char* key, const char*& val)
@@ -118,7 +121,7 @@ bool SpellBook::add_spell(const char* key, const char*& val)
     }
     if ( p->key == key )
     {
-        val = p->value->c_str();
+        val = p->value;
         return false;
     }
 
@@ -162,7 +165,7 @@ const MagicPage* SpellBook::find_spell(
         }
 
         // If no match but has glob, continue lookup from glob
-        if ( !p->value.use_count() && glob )
+        if ( !p->value && glob )
         {
             p = glob;
             glob = nullptr;
@@ -170,7 +173,7 @@ const MagicPage* SpellBook::find_spell(
             return find_spell(s, n, p, i);
         }
 
-        return p->value.use_count() ? p : nullptr;
+        return p->value ? p : nullptr;
     }
     return p;
 }

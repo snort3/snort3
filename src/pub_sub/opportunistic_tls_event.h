@@ -34,18 +34,18 @@ namespace snort
 class SO_PUBLIC OpportunisticTlsEvent : public snort::DataEvent
 {
 public:
-    OpportunisticTlsEvent(const snort::Packet* p, std::shared_ptr<std::string> service) :
+    OpportunisticTlsEvent(const snort::Packet* p, const char* service) :
         pkt(p), next_service(service) { }
 
     const snort::Packet* get_packet() override
     { return pkt; }
 
-    std::shared_ptr<std::string> get_next_service()
+    const char* get_next_service()
     { return next_service; }
 
 private:
     const snort::Packet* pkt;
-    std::shared_ptr<std::string> next_service;
+    const char* next_service;
 };
 
 }

@@ -26,8 +26,10 @@
 #include "snort_protocols.h"
 
 #include <algorithm>
+#include <cassert>
 
 #include "log/messages.h"
+#include "main/snort_config.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"
@@ -40,12 +42,6 @@ SnortProtocolId ProtocolReference::get_count() const
 
 const char* ProtocolReference::get_name(SnortProtocolId id) const
 {
-    std::shared_ptr<std::string> shared_name = get_shared_name(id);
-    return shared_name->c_str();
-}
-
-std::shared_ptr<std::string> ProtocolReference::get_shared_name(SnortProtocolId id) const
-{
     if ( id >= id_map.size() )
         id = 0;
 
@@ -55,9 +51,9 @@ std::shared_ptr<std::string> ProtocolReference::get_shared_name(SnortProtocolId 
 struct Compare
 {
     bool operator()(SnortProtocolId a, SnortProtocolId b)
-    { return map[a]->c_str() < map[b]->c_str(); }
+    { return 0 > strcmp(map[a], map[b]); }
 
-    vector<shared_ptr<string>>& map;
+    vector<const char*>& map;
 };
 
 const char* ProtocolReference::get_name_sorted(SnortProtocolId id)
@@ -73,7 +69,7 @@ const char* ProtocolReference::get_name_sorted(SnortProtocolId id)
     if ( id >= ind_map.size() )
         return nullptr;
 
-    return id_map[ind_map[id]]->c_str();
+    return id_map[ind_map[id]];
 }
 
 SnortProtocolId ProtocolReference::add(const char* protocol)
@@ -86,7 +82,8 @@ SnortProtocolId ProtocolReference::add(const char* protocol)
         return protocol_ref->second;
 
     SnortProtocolId snort_protocol_id = protocol_number++;
-    id_map.emplace_back(make_shared<string>(protocol));
+    protocol = SnortConfig::get_static_name(protocol);
+    id_map.emplace_back(protocol);
     ref_table[protocol] = snort_protocol_id;
 
     return snort_protocol_id;
@@ -127,5 +124,9 @@ ProtocolReference::ProtocolReference(ProtocolReference* old_proto_ref)
 { init(old_proto_ref); }
 
 ProtocolReference::~ProtocolReference()
-{ ref_table.clear(); }
+{
+    ref_table.clear();
+    id_map.clear();
+    ind_map.clear();
+}
 

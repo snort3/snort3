@@ -459,9 +459,9 @@ IpsPolicy* get_empty_ips_policy(const SnortConfig* sc)
 void set_network_policy(unsigned i)
 {
     PolicyMap* pm = SnortConfig::get_conf()->policy_map;
-
-    if ( i < pm->network_policy_count() )
-        set_network_policy(pm->get_network_policy(i));
+    NetworkPolicy* np = pm->get_network_policy(i);
+    if ( np )
+        set_network_policy(np);
 }
 
 void set_inspection_policy(unsigned i)

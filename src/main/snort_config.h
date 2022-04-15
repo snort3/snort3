@@ -26,6 +26,7 @@
 #include <sys/types.h>
 
 #include <list>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -409,6 +410,8 @@ public:
 private:
     std::list<ReloadResourceTuner*> reload_tuners;
     unsigned reload_id = 0;
+    static std::mutex static_names_mutex;
+    static std::unordered_map<std::string, std::string> static_names;
 
 public:
     //------------------------------------------------------
@@ -712,6 +715,8 @@ public:
 
     static bool log_show_plugins()
     { return logging_flags & LOGGING_FLAG__SHOW_PLUGINS; }
+
+    SO_PUBLIC static const char* get_static_name(const char* name);
 };
 }
 

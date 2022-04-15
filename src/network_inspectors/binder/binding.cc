@@ -579,10 +579,10 @@ inline bool Binding::check_service(const Flow& flow) const
     if (!when.has_criteria(BindWhen::Criteria::BWC_SVC))
         return true;
 
-    if (!flow.has_service())
+    if (!flow.service)
         return false;
 
-    return when.svc == flow.service->c_str();
+    return when.svc == flow.service;
 }
 
 inline bool Binding::check_service(const char* service) const
