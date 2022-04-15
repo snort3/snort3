@@ -1,0 +1,108 @@
+MMS inspector is a service inspector for the MMS protocol within the
+IEC 61850 specification.
+
+==== Overview
+
+IEC 61850 is a family of protocols, including MMS, distributed by the 
+International Electrotechnical Commission (IEC) that provide a standardized 
+method of sending service messages between various manufacturing and process 
+control devices, typically running on TCP port 102.
+
+It is used in combination with various parts of the OSI model, most notably
+the TPKT, COTP, Session, Presentation, and ACSE layers, to provide reliable
+transport via TCP/IP. 
+
+The MMS inspector decodes the OSI layers encapsulating the MMS protocol and 
+provides rule writers access to certain protocol fields and data content 
+through rule options. This allows the user to write rules for MMS messages 
+without decoding the protocol. 
+
+
+==== Configuration
+
+MMS messages can be sent in a variety of ways including multiple PDUs within
+one TCP packet, one PDU split across multiple TCP packets, or a combination
+of the two. It is the aim of the MMS service inspector to normalize the 
+traffic such that only complete MMS messages are presented to the user. No
+manual configuration other than enabling the MMS service inspector is 
+necessary to leverage this functionality.
+
+
+==== Quick Guide
+
+A typical MMS configuration looks like this:
+
+   wizard = { curses = {'mms'}, }
+   mms = { }
+   
+   binder =
+   {
+       { when = { service = 'mms' }, use = { type = 'mms' } },
+       { use = { type = 'wizard' } }
+   }
+
+In this example, the mms inspector is defined based on patterns known to be
+consistent with MMS messages.
+
+
+==== Rule Options
+
+New rule options are supported by enabling the MMS inspector:
+
+* mms_data
+* mms_func 
+
+===== mms_data
+
+mms_data moves the cursor to the start of the MMS message, bypassing 
+all of the OSI encapsulation layers and allowing subsequent rule options
+to start processing from the MMS PDU field. 
+
+This option takes no arguments.
+
+In the following example, the rule is using the `mms_data` rule option
+to set the cursor position to the beginning of the MMS PDU, and then
+checking the byte at that position for the value indicative of an
+`Initiate-Request` message. 
+
+    alert tcp ( \
+      msg: "PROTOCOL-SCADA MMS Initiate-Request"; \
+      flow: to_server, established; \
+      mms_data; \
+      content:"|A8|", depth 1; \
+      sid:1000000; \
+    )
+
+===== mms_func
+
+mms_func takes the supplied function name or number and compares it with
+the Confirmed Service Request/Response in the message being analyzed. 
+
+This option takes one argument.
+
+In the following example the rule is using the `mms_func` rule option
+with a string argument containing the `Confirmed Service Request` service 
+name on which to alert. This is combined with a content match for a
+`Confirmed Service Request` message (0xA0) to allow for use of the fast 
+pattern matcher. 
+
+    alert tcp ( \
+      msg: "PROTOCOL-SCADA MMS svc get_name_list"; \
+      flow: to_server, established; \
+      content:"|A0|"; \
+      mms_func: get_name_list; \
+      sid:1000000; \
+    )
+
+The following example also uses the `mms_func` rule option to alert on
+a `GetNameList` message, but this time an integer argument containing the 
+function number is used. 
+
+    alert tcp ( \
+      msg: "PROTOCOL-SCADA MMS svc get_name_list"; \
+      flow: to_server, established; \
+      content:"|A0|"; \
+      mms_func:1; \
+      sid:1000001; \
+    )  
+

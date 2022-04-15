@@ -22,6 +22,7 @@ set (
     http_inspect.txt
     http2_inspect.txt
     iec104.txt
+    mms.txt
     overview.txt
     params.txt
     perf_monitor.txt
