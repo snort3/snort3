@@ -415,7 +415,7 @@ default_wizard =
           to_server = telnet_commands, to_client = telnet_commands },
     },
 
-    curses = {'dce_udp', 'dce_tcp', 'dce_smb', 'sslv2'}
+    curses = {'dce_udp', 'dce_tcp', 'dce_smb', 'mms', 'sslv2'}
 }
 
 ---------------------------------------------------------------------------

@@ -24,6 +24,8 @@
 #include <string>
 #include <vector>
 
+#include "mms_curse.h"
+
 enum DCE_State
 {
     STATE_0 = 0,
@@ -65,6 +67,12 @@ public:
         uint32_t helper;
     } dce;
 
+    struct MMS
+    {
+        MMS_State state;
+        MMS_State last_state;
+    } mms;
+
     struct SSL
     {
         SSL_State state;
@@ -77,6 +85,8 @@ public:
     CurseTracker()
     {
         dce.state = DCE_State::STATE_0;
+        mms.state = MMS_State::MMS_STATE__TPKT_VER;
+        mms.last_state = mms.state;
         ssl.state = SSL_State::BYTE_0_LEN_MSB;
     }
 };

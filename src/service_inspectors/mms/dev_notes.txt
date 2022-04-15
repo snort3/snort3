@@ -1,0 +1,111 @@
+*** MMS service inspector overview ***
+IEC 61850 is a family of protocols distributed by the International 
+Electrotechnical Commission (IEC) that provide a standardized method of
+sending service messages between various manufacturing and process control
+devices, typically running on TCP port 102.
+
+It is used in combination with various parts of the OSI model, most notably
+the TPKT, COTP, Session, Presentation, and ACSE layers, to provide reliable
+transport via TCP/IP. 
+
+The MMS inspector decodes the OSI layers encapsulating the MMS protocol and 
+provides rule options to access certain protocol fields and data content. 
+This allows the user to write rules for MMS messages without decoding the 
+protocol. 
+
+
+*** Encapsulation overview ***
+MMS can be transported via TCP/102 when encapsulated in TPKT and the 
+associated OSI layers. The two structures most commonly encountered are
+shown below:
+
+Connection Request/Response:
+    TCP -> TPKT -> COTP -> OSI Session -> OSI Presentation -> OSI ACSE -> MMS
+
+Confirmed Request/Response:
+    TCP -> TPKT -> COTP -> OSI Session -> OSI Presentation -> MMS
+
+Parsing functions for each of these layers can be found in `util_tpkt`. 
+
+
+*** MMS message pipelining overview ***
+Multiple MMS messages can be sent within a single TCP stream through use of
+a variety of techniques. Splitting for known forms is handled as follows:
+
+Case 1 Combined:
+In this case multiple messages are contained within one TCP packet. This can 
+occur at any of the following layers: TPKT, OSI Presentation, MMS, or any 
+combination thereof. Example layouts are shown below:
+
+Combined at the TPKT layer:
+    TCP -> TPKT -> COTP -> OSI Session -> OSI Presentation -> MMS -> TPKT 
+    -> COTP -> OSI Session -> OSI Presentation -> MMS
+
+Combined at the OSI Presentation layer:
+    TCP -> TPKT -> COTP -> OSI Session -> OSI Presentation -> MMS 
+    -> OSI Presentation -> MMS
+
+Combined at the MMS layer:
+    TCP -> TPKT -> COTP -> OSI Session -> OSI Presentation -> MMS -> MMS
+
+Due to the ability for messages to be combined at multiple layers, the 
+starting layer of the cursor following a successful split cannot be assumed. 
+To solve this, a set of functions have been developed in `util_tpkt` to make 
+a best guess at the layer at the cursor start (`isTpkt`, `isCotp`, etc.). An 
+example of usage can be found in the MMS Splitter. No special considerations
+were needed in the curse to handle this case. 
+
+Case 2 Split: 
+In this case a single message is split across multiple TCP packets within the 
+same stream. This can occur at any point across the packet data, not 
+necessarily on a layer boundary. Due to this case it is necessary to buffer
+the incoming packet data until a flush point has been found. To handle this, 
+the both the MMS curse and splitter need to have special considerations. 
+
+In the MMS curse, current and prior state are tracked as the potential message
+is processed byte by byte. The current state indicates the part of a fully
+encapsulated MMS message that the byte in that position would represent if it
+was found to contain MMS. The prior state is tracked so that the state machine
+knows where to pick up in the event of a message being split. 
+
+In the MMS splitter, two buffers (one for each direction) are used to track 
+message data across packets. At the beginning of each scan, the direction is
+determined and the appropriate buffer is selected. The new packet data is then
+appended to the selected buffer. This buffer, not the current packet data, is 
+then searched for a MMS message through use of various functions exposed 
+in `util_tpkt`. 
+
+Case 3 Combined and Split:
+In this case, the above two techniques are combined to create a stream where 
+one packet contains a complete MMS message as well as the start of a second,
+and then the packets that follow contain the remainder of the second MMS 
+message. No additional considerations beyond those implemented for the prior
+two techniques were needed.
+
+
+*** MMS curse ***
+In the MMS curse, current and prior state are tracked as the potential message
+is processed byte by byte. The current state indicates the part of a fully
+encapsulated MMS message that the byte in that position would represent if it
+was found to contain MMS. The prior state is tracked so that the state machine
+knows where to pick up in the event of a message being split. Two special 
+states exist which are used to assist in determining when to stop 
+processing: MMS_STATE__MMS and MMS_STATE__NOT_FOUND. 
+
+During processing only states that are required to be specific values are 
+enforced, leaving more specific enforcement to the MMS inspector itself.
+This choice was made to help avoid false negatives caused by states that
+would not affect the inspector's parsing. For example, the TPKT version is
+expected to be the value 0x03, however this does not make any material 
+difference at this time to how the message is parsed so it is not enforced. 
+By contrast, the COTP PDU value is enforced to be of type `DT_DATA` as other
+values indicate that MMS is most likely not in use. 
+
+If all of the encapsulation layer checks pass, a best guess is made to 
+determine if the payload is a MMS message. This is done by searching for any
+of the known MMS message types. Unfortunately, this approach has the potential
+for some false positives to slip into the MMS inspector processing as the 
+message type indicators are only one byte in size. This was deemed preferred
+as it is enough to kick out the majority of non-MMS traffic while not needing
+to run the more intensive parsing that occurs in the inspector. 
+

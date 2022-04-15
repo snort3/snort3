@@ -56,6 +56,7 @@ dnp3 = { }
 dns = { }
 imap = { }
 iec104 = { }
+mms = { }
 modbus = { }
 netflow = {}
 normalizer = { }
@@ -140,6 +141,7 @@ binder =
     { when = { service = 'http' },             use = { type = 'http_inspect' } },
     { when = { service = 'http2' },            use = { type = 'http2_inspect' } },
     { when = { service = 'iec104' },           use = { type = 'iec104' } },
+    { when = { service = 'mms' },              use = { type = 'mms' } },
     { when = { service = 'modbus' },           use = { type = 'modbus' } },
     { when = { service = 'pop3' },             use = { type = 'pop' } },
     { when = { service = 'ssh' },              use = { type = 'ssh' } },

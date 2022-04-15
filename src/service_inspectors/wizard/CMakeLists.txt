@@ -4,6 +4,7 @@ set(FILE_LIST
     curses.h
     magic.cc
     magic.h
+    mms_curse.h
     hexes.cc
     spells.cc
     wizard.cc
