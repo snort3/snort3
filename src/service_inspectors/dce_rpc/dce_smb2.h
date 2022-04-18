@@ -69,6 +69,10 @@ extern const char* smb2_command_string[SMB2_COM_MAX];
 #define SMB2_CMD_TYPE_RESPONSE       2
 #define SMB2_CMD_TYPE_INVALID        3
 
+#define FSCTL_PIPE_WAIT 0x00110018
+#define FSCTL_PIPE_TRANSCEIVE 0x0011C017
+#define FSCTL_PIPE_PEEK 0x0011400C
+
 struct Smb2Hdr
 {
     uint8_t smb_idf[4];       /* contains 0xFE,’SMB’ */
@@ -249,6 +253,38 @@ struct Smb2TreeConnectResponseHdr
     uint32_t share_flags;             /* properties for this share*/
     uint32_t capabilities;            /* various capabilities for this share */
     uint32_t maximal_access;          /* maximal access for the user */
+};
+
+struct Smb2IoctlRequestHdr
+{
+    uint16_t structure_size;          /* This MUST be set to 57 */
+    uint16_t reserved;
+    uint32_t ctl_code;
+    uint64_t fileId_persistent;       /* fileId that is persistent */
+    uint64_t fileId_volatile;
+    uint32_t input_offset;
+    uint32_t input_count;
+    uint32_t max_input_response;
+    uint32_t output_offset;
+    uint32_t output_count;
+    uint32_t max_output_response;
+    uint32_t flags;
+    uint32_t reserved2;
+};
+
+struct Smb2IoctlResponseHdr
+{
+    uint16_t structure_size;           /* This MUST be set to 49 */
+    uint16_t reserved;
+    uint32_t ctl_code;
+    uint64_t fileId_persistent;       /* fileId that is persistent */
+    uint64_t fileId_volatile;
+    uint32_t input_offset;
+    uint32_t input_count;
+    uint32_t output_offset;
+    uint32_t output_count;
+    uint32_t flags;
+    uint32_t reserved2;
 };
 
 #define SMB2_HEADER_LENGTH 64

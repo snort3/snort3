@@ -157,12 +157,7 @@ void Dce2Smb2TreeTracker::process_close_request(const Smb2Hdr* smb_header,
 
     if (share_type != SMB2_SHARE_TYPE_DISK)
     {
-        if (co_tracker != nullptr)
-        {
-            DCE2_CoCleanTracker(co_tracker);
-            snort_free((void*)co_tracker);
-            co_tracker = nullptr;
-        }
+        DCE2_CoCleanTracker(co_tracker);
     }
 }
 
@@ -453,7 +448,25 @@ void Dce2Smb2TreeTracker::process_ioctl_command(const uint8_t command_type,
     const uint8_t* smb_data = (const uint8_t*)smb_header + SMB2_HEADER_LENGTH;
     const uint8_t structure_size = (command_type == SMB2_CMD_TYPE_REQUEST) ?
         SMB2_IOCTL_REQUEST_STRUC_SIZE : SMB2_IOCTL_RESPONSE_STRUC_SIZE;
+    if (SMB2_CMD_TYPE_REQUEST == command_type)
+    {
+        const Smb2IoctlRequestHdr* ioctl_req = (const Smb2IoctlRequestHdr*)smb_data;
+        if ((ioctl_req->ctl_code != FSCTL_PIPE_PEEK) and (ioctl_req->ctl_code !=
+            FSCTL_PIPE_WAIT) and (ioctl_req->ctl_code != FSCTL_PIPE_TRANSCEIVE))
+        {
+            return;
+        }
+    }
 
+    if (SMB2_CMD_TYPE_RESPONSE == command_type)
+    {
+        const Smb2IoctlResponseHdr* ioctl_response = (const Smb2IoctlResponseHdr*)smb_data;
+        if ((ioctl_response->ctl_code != FSCTL_PIPE_PEEK) and (ioctl_response->ctl_code !=
+            FSCTL_PIPE_WAIT) and (ioctl_response->ctl_code != FSCTL_PIPE_TRANSCEIVE))
+        {
+            return;
+        }
+    }
     const uint8_t* file_data = (const uint8_t*)smb_data + structure_size - 1;
     int data_size = end - file_data;
     Dce2Smb2SessionData* current_flow = parent_session->get_flow(current_flow_key);
