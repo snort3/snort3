@@ -29,6 +29,8 @@
 #include <cstring>
 #include <vector>
 
+#include "main/snort_types.h"
+
 namespace snort
 {
 struct Packet;
@@ -52,7 +54,7 @@ private:
     unsigned id;
 };
 
-class Cursor
+class SO_PUBLIC Cursor
 {
 public:
     Cursor() = default;
