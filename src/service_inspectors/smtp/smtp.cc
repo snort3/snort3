@@ -201,7 +201,6 @@ static void SMTP_ResetState(Flow*);
 
 SmtpFlowData::SmtpFlowData() : FlowData(inspector_id)
 {
-    memset(&session, 0, sizeof(session));
     smtpstats.concurrent_sessions++;
     if (smtpstats.max_concurrent_sessions < smtpstats.concurrent_sessions)
         smtpstats.max_concurrent_sessions = smtpstats.concurrent_sessions;

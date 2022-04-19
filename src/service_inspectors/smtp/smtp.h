@@ -158,15 +158,27 @@ private:
 
 struct SMTPData
 {
+    //Initialize structure with default values
+    SMTPData() : state{0},
+                 state_flags{0},
+                 session_flags{0},
+                 dat_chunk{0},
+                 mime_ssn{nullptr},
+                 auth_name{nullptr},
+                 client_requested_starttls{false},
+                 pipelined_command_counter{0},
+                 server_accepted_starttls{false}
+    { }
+
     int state;
     int state_flags;
     int session_flags;
     uint32_t dat_chunk;
     SmtpMime* mime_ssn;
     SMTPAuthName* auth_name;
-    bool client_requested_starttls = false;
-    size_t pipelined_command_counter = 0;
-    bool server_accepted_starttls = false;
+    bool client_requested_starttls;
+    size_t pipelined_command_counter;
+    bool server_accepted_starttls;
 };
 
 class SmtpFlowData : public snort::FlowData
