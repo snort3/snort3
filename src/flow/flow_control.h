@@ -94,6 +94,10 @@ public:
     PegCount get_deletes(FlowDeleteState state) const;
     void clear_counts();
 
+    PegCount get_uni_flows() const;
+    PegCount get_uni_ip_flows() const;
+    PegCount get_num_flows() const;
+
 private:
     void set_key(snort::FlowKey*, snort::Packet*);
     unsigned process(snort::Flow*, snort::Packet*);

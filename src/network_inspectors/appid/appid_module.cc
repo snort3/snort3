@@ -430,6 +430,8 @@ static const PegInfo appid_pegs[] =
     { CountType::SUM, "service_cache_removes", "number of times an item was removed from the service cache" },
     { CountType::SUM, "odp_reload_ignored_pkts", "count of packets ignored after open detector package is reloaded" },
     { CountType::SUM, "tp_reload_ignored_pkts", "count of packets ignored after third-party module is reloaded" },
+    { CountType::NOW, "bytes_in_use", "number of bytes in use in the cache" },
+    { CountType::NOW, "items_in_use", "items in use in the cache" },
     { CountType::END, nullptr, nullptr },
 };
 

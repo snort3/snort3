@@ -654,7 +654,7 @@ void Analyzer::term()
     DetectionEngine::idle();
     InspectorManager::thread_stop(sc);
     InspectorManager::thread_term();
-    ModuleManager::accumulate();
+    ModuleManager::accumulate("memory");
     ActionManager::thread_term();
 
     IpsManager::clear_options(sc);

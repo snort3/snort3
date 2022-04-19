@@ -41,6 +41,8 @@ struct LruCacheSharedStats
 {
     PegCount adds = 0;          // an insert that added new entry
     PegCount alloc_prunes = 0;  // when an old entry is removed to make room for a new entry
+    PegCount bytes_in_use = 0;  // current bytes in use
+    PegCount items_in_use = 0;  // current items in cache
     PegCount find_hits = 0;     // found entry in cache
     PegCount find_misses = 0;   // did not find entry in cache
     PegCount reload_prunes = 0; // when an old entry is removed due to lower memcap during reload

@@ -53,6 +53,8 @@ struct AppIdStats
     PegCount service_cache_removes;
     PegCount odp_reload_ignored_pkts;
     PegCount tp_reload_ignored_pkts;
+    PegCount bytes_in_use;
+    PegCount items_in_use;
 };
 
 class AppIdPegCounts

@@ -1394,13 +1394,13 @@ void ModuleManager::dump_stats(const char* skip, bool dynamic)
     }
 }
 
-void ModuleManager::accumulate()
+void ModuleManager::accumulate(const char* except)
 {
     auto mod_hooks = get_all_modhooks();
 
     for ( auto* mh : mod_hooks )
     {
-        if ( !strcmp(mh->mod->name, "memory") )
+        if ( except and !strcmp(mh->mod->name, except) )
             continue;
 
         lock_guard<mutex> lock(stats_mutex);

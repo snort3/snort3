@@ -115,15 +115,15 @@ void FlowCache::link_uni(Flow* flow)
 {
     if ( flow->key->pkt_type == PktType::IP )
     {
-        debug_logf(stream_trace, TRACE_FLOW, nullptr, 
-            "linking unidirectional flow (IP) to list of size: %u\n", 
+        debug_logf(stream_trace, TRACE_FLOW, nullptr,
+            "linking unidirectional flow (IP) to list of size: %u\n",
             uni_ip_flows->get_count());
         uni_ip_flows->link_uni(flow);
     }
     else
     {
-        debug_logf(stream_trace, TRACE_FLOW, nullptr, 
-            "linking unidirectional flow (non-IP) to list of size: %u\n", 
+        debug_logf(stream_trace, TRACE_FLOW, nullptr,
+            "linking unidirectional flow (non-IP) to list of size: %u\n",
             uni_flows->get_count());
         uni_flows->link_uni(flow);
     }
@@ -136,8 +136,8 @@ void FlowCache::unlink_uni(Flow* flow)
     {
         if ( uni_ip_flows->unlink_uni(flow) )
         {
-            debug_logf(stream_trace, TRACE_FLOW, nullptr, 
-                "unlinked unidirectional flow (IP) from list, size: %u\n", 
+            debug_logf(stream_trace, TRACE_FLOW, nullptr,
+                "unlinked unidirectional flow (IP) from list, size: %u\n",
                 uni_ip_flows->get_count());
         }
     }
@@ -145,7 +145,7 @@ void FlowCache::unlink_uni(Flow* flow)
     {
         if ( uni_flows->unlink_uni(flow) )
         {
-            debug_logf(stream_trace, TRACE_FLOW, nullptr, 
+            debug_logf(stream_trace, TRACE_FLOW, nullptr,
                 "unlinked unidirectional flow (non-IP) from list, size: %u\n",
                 uni_flows->get_count());
         }
@@ -525,4 +525,19 @@ unsigned FlowCache::purge()
     delete_uni();
 
     return retired;
+}
+
+size_t FlowCache::uni_flows_size() const
+{
+    return uni_flows ? uni_flows->get_count() : 0;
+}
+
+size_t FlowCache::uni_ip_flows_size() const
+{
+    return uni_ip_flows ? uni_ip_flows->get_count() : 0;
+}
+
+size_t FlowCache::flows_size() const
+{
+    return hash_table->get_num_nodes();
 }

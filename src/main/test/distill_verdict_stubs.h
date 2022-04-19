@@ -132,7 +132,7 @@ MemoryContext::MemoryContext(MemoryTracker&) : saved(nullptr) { }
 MemoryContext::~MemoryContext() = default;
 Packet::Packet(bool)
 {
-    memset(this , 0, sizeof(*this));
+    memset((char*) this , 0, sizeof(*this));
     ip_proto_next = IpProtocol::PROTO_NOT_SET;
     packet_flags = PKT_FROM_CLIENT;
 }
@@ -206,7 +206,7 @@ void InspectorManager::thread_term() { }
 void InspectorManager::thread_stop(const SnortConfig*) { }
 void InspectorManager::thread_reinit(const SnortConfig*) { }
 void InspectorManager::thread_stop_removed(const SnortConfig*) { }
-void ModuleManager::accumulate() { }
+void ModuleManager::accumulate(const char*) { }
 void ModuleManager::accumulate_module(const char*) { }
 void Stream::handle_timeouts(bool) { }
 void Stream::purge_flows() { }

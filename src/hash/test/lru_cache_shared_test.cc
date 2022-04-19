@@ -195,19 +195,23 @@ TEST(lru_cache_shared, stats_test)
 
     CHECK(stats[0] == 10);  //  adds
     CHECK(stats[1] == 7);   //  alloc prunes
-    CHECK(stats[2] == 3);   //  find hits
-    CHECK(stats[3] == 12);  //  find misses
-    CHECK(stats[4] == 0);   //  reload prunes
-    CHECK(stats[5] == 1);   //  removes
+    CHECK(stats[2] == 0);   //  bytes in use
+    CHECK(stats[3] == 0);   //  items in use
+    CHECK(stats[4] == 3);   //  find hits
+    CHECK(stats[5] == 12);  //  find misses
+    CHECK(stats[6] == 0);   //  reload prunes
+    CHECK(stats[7] == 1);   //  removes
 
     // Check statistics names.
     const PegInfo* pegs = lru_cache.get_pegs();
     CHECK(!strcmp(pegs[0].name, "adds"));
     CHECK(!strcmp(pegs[1].name, "alloc_prunes"));
-    CHECK(!strcmp(pegs[2].name, "find_hits"));
-    CHECK(!strcmp(pegs[3].name, "find_misses"));
-    CHECK(!strcmp(pegs[4].name, "reload_prunes"));
-    CHECK(!strcmp(pegs[5].name, "removes"));
+    CHECK(!strcmp(pegs[2].name, "bytes_in_use"));
+    CHECK(!strcmp(pegs[3].name, "items_in_use"));
+    CHECK(!strcmp(pegs[4].name, "find_hits"));
+    CHECK(!strcmp(pegs[5].name, "find_misses"));
+    CHECK(!strcmp(pegs[6].name, "reload_prunes"));
+    CHECK(!strcmp(pegs[7].name, "removes"));
 }
 
 int main(int argc, char** argv)

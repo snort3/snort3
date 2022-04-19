@@ -213,6 +213,8 @@ public:
             mem_used += sz;
             ss->qptr = --q.end(); // remember our place in the queue
             appid_stats.service_cache_adds++;
+            appid_stats.bytes_in_use = mem_used;
+            appid_stats.items_in_use = m.size();
 
             if ( mem_used > memcap )
                 remove( q.front() );
@@ -248,6 +250,8 @@ public:
             delete it->second;
             m.erase(it);                // then from cache
             appid_stats.service_cache_removes++;
+            appid_stats.bytes_in_use = mem_used;
+            appid_stats.items_in_use = m.size();
 
             return true;
         }

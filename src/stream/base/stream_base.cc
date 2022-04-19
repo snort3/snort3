@@ -75,6 +75,9 @@ const PegInfo base_pegs[] =
     { CountType::SUM, "reload_allowed_deletes", "number of allowed flows deleted by config reloads" },
     { CountType::SUM, "reload_blocked_deletes", "number of blocked flows deleted by config reloads" },
     { CountType::SUM, "reload_offloaded_deletes", "number of offloaded flows deleted by config reloads" },
+    { CountType::NOW, "current_flows", "current number of flows in cache" },
+    { CountType::NOW, "uni_flows", "number of uni flows in cache" },
+    { CountType::NOW, "uni_ip_flows", "number of uni ip flows in cache" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -96,6 +99,9 @@ void base_prep()
     stream_base_stats.reload_allowed_flow_deletes = flow_con->get_deletes(FlowDeleteState::ALLOWED);
     stream_base_stats.reload_offloaded_flow_deletes= flow_con->get_deletes(FlowDeleteState::OFFLOADED);
     stream_base_stats.reload_blocked_flow_deletes= flow_con->get_deletes(FlowDeleteState::BLOCKED);
+    stream_base_stats.current_flows = flow_con->get_num_flows();
+    stream_base_stats.uni_flows = flow_con->get_uni_flows();
+    stream_base_stats.uni_ip_flows = flow_con->get_uni_ip_flows();
     ExpectCache* exp_cache = flow_con->get_exp_cache();
 
     if ( exp_cache )

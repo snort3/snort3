@@ -456,6 +456,9 @@ string HostCacheModule::get_host_cache_stats()
 
     host_cache.lock();
 
+    host_cache.stats.bytes_in_use = host_cache.current_size;
+    host_cache.stats.items_in_use = host_cache.list.size();
+
     PegCount* counts = (PegCount*) host_cache.get_counts();
     const PegInfo* pegs = host_cache.get_pegs();
 
@@ -483,6 +486,11 @@ PegCount* HostCacheModule::get_counts() const
 void HostCacheModule::sum_stats(bool accumulate_now_stats)
 {
     host_cache.lock();
+    // These could be set in prep_counts but we set them here
+    // to save an extra cache lock.
+    host_cache.stats.bytes_in_use = host_cache.current_size;
+    host_cache.stats.items_in_use = host_cache.list.size();
+
     Module::sum_stats(accumulate_now_stats);
     host_cache.unlock();
 }

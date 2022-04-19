@@ -81,6 +81,9 @@ void FlowCache::push(Flow*) { }
 bool FlowCache::prune_one(PruneReason, bool) { return true; }
 unsigned FlowCache::delete_flows(unsigned) { return 0; }
 unsigned FlowCache::timeout(unsigned, time_t) { return 1; }
+size_t FlowCache::uni_flows_size() const { return 0; }
+size_t FlowCache::uni_ip_flows_size() const { return 0; }
+size_t FlowCache::flows_size() const { return 0; }
 void Flow::init(PktType) { }
 void DataBus::publish(const char*, const uint8_t*, unsigned, Flow*) { }
 void DataBus::publish(const char*, Packet*, Flow*) { }

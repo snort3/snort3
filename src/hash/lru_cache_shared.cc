@@ -28,6 +28,8 @@ const PegInfo lru_cache_shared_peg_names[] =
 {
     { CountType::SUM, "adds", "lru cache added new entry" },
     { CountType::SUM, "alloc_prunes", "lru cache pruned entry to make space for new entry" },
+    { CountType::NOW, "bytes_in_use", "current number of bytes in use" },
+    { CountType::NOW, "items_in_use", "current number of items in the cache" },
     { CountType::SUM, "find_hits", "lru cache found entry in cache" },
     { CountType::SUM, "find_misses", "lru cache did not find entry in cache" },
     { CountType::SUM, "reload_prunes", "lru cache pruned entry for lower memcap during reload" },

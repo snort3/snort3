@@ -109,12 +109,18 @@ TEST(host_cache_module, misc)
 
     CHECK(!strcmp(ht_pegs[0].name, "adds"));
     CHECK(!strcmp(ht_pegs[1].name, "alloc_prunes"));
-    CHECK(!strcmp(ht_pegs[2].name, "find_hits"));
-    CHECK(!strcmp(ht_pegs[3].name, "find_misses"));
-    CHECK(!strcmp(ht_pegs[4].name, "reload_prunes"));
-    CHECK(!strcmp(ht_pegs[5].name, "removes"));
-    CHECK(!strcmp(ht_pegs[6].name, "replaced"));
-    CHECK(!ht_pegs[7].name);
+    CHECK(!strcmp(ht_pegs[2].name, "bytes_in_use"));
+    CHECK(!strcmp(ht_pegs[3].name, "items_in_use"));
+    CHECK(!strcmp(ht_pegs[4].name, "find_hits"));
+    CHECK(!strcmp(ht_pegs[5].name, "find_misses"));
+    CHECK(!strcmp(ht_pegs[6].name, "reload_prunes"));
+    CHECK(!strcmp(ht_pegs[7].name, "removes"));
+    CHECK(!strcmp(ht_pegs[8].name, "replaced"));
+    CHECK(!ht_pegs[9].name);
+
+    // call this to set up the counts vector, before inserting hosts into the
+    // cache, because sum_stats resets the pegs.
+    module.sum_stats(true);
 
     // add 3 entries
     SfIp ip1, ip2, ip3;
@@ -124,23 +130,39 @@ TEST(host_cache_module, misc)
     host_cache.find_else_create(ip1, nullptr);
     host_cache.find_else_create(ip2, nullptr);
     host_cache.find_else_create(ip3, nullptr);
+    module.sum_stats(true);      // does not call reset
     CHECK(ht_stats[0] == 3);
+    CHECK(ht_stats[2] == 1992);  // bytes_in_use
+    CHECK(ht_stats[3] == 3);     // items_in_use
 
     // no pruning needed for resizing higher than current size
     CHECK(host_cache.reload_resize(host_cache.mem_chunk * 10) == false);
+    module.sum_stats(true);
+    CHECK(ht_stats[2] == 1992);  // bytes_in_use unchanged
+    CHECK(ht_stats[3] == 3);     // items_in_use unchanged
 
     // pruning needed for resizing lower than current size
     CHECK(host_cache.reload_resize(host_cache.mem_chunk * 1.5) == true);
+    module.sum_stats(true);
+    CHECK(ht_stats[2] == 1992);  // bytes_in_use still unchanged
+    CHECK(ht_stats[3] == 3);     // items_in_use still unchanged
 
     // pruning in thread is not done when reload_mutex is already locked
     host_cache.reload_mutex.lock();
     std::thread test_negative(try_reload_prune, false);
     test_negative.join();
     host_cache.reload_mutex.unlock();
+    module.sum_stats(true);
+    CHECK(ht_stats[2] == 1992);   // no pruning yet
+    CHECK(ht_stats[3] == 3);      // no pruning_yet
 
     // prune 2 entries in thread when reload_mutex is not locked
     std::thread test_positive(try_reload_prune, true);
     test_positive.join();
+
+    module.sum_stats(true);
+    CHECK(ht_stats[2] == 664);
+    CHECK(ht_stats[3] == 1);     // one left
 
     // alloc_prune 1 entry
     host_cache.find_else_create(ip1, nullptr);
@@ -149,12 +171,15 @@ TEST(host_cache_module, misc)
     host_cache.find_else_create(ip1, nullptr);
     host_cache.remove(ip1);
 
+    module.sum_stats(true);
     CHECK(ht_stats[0] == 4); // 4 adds
     CHECK(ht_stats[1] == 1); // 1 alloc_prunes
-    CHECK(ht_stats[2] == 1); // 1 hit
-    CHECK(ht_stats[3] == 4); // 4 misses
-    CHECK(ht_stats[4] == 2); // 2 reload_prunes
-    CHECK(ht_stats[5] == 1); // 1 remove
+    CHECK(ht_stats[2] == 0); // 0 bytes_in_use
+    CHECK(ht_stats[3] == 0); // 0 items_in_use
+    CHECK(ht_stats[4] == 1); // 1 hit
+    CHECK(ht_stats[5] == 4); // 4 misses
+    CHECK(ht_stats[6] == 2); // 2 reload_prunes
+    CHECK(ht_stats[7] == 1); // 1 remove
 
     ht_stats = module.get_counts();
     CHECK(ht_stats[0] == 4);

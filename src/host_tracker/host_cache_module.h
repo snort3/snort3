@@ -63,6 +63,10 @@ public:
     PegCount* get_counts() const override;
     void sum_stats(bool) override;
 
+    // in sum_stats, just populate the counts vector with whatever we have now
+    bool global_stats() const override
+    { return true; }
+
     Usage get_usage() const override
     { return GLOBAL; }
 
