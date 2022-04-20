@@ -104,6 +104,9 @@ static void try_reload_prune(bool is_not_locked)
 // This method is a friend of LruCacheSharedMemcap class.
 TEST(host_cache_module, misc)
 {
+    // memory chunk, computed as in the base cache class
+    static constexpr size_t mc = sizeof(HostCacheIp::Data) + sizeof(HostCacheIp::ValueType);
+
     const PegInfo* ht_pegs = module.get_pegs();
     const PegCount* ht_stats = module.get_counts();
 
@@ -132,19 +135,19 @@ TEST(host_cache_module, misc)
     host_cache.find_else_create(ip3, nullptr);
     module.sum_stats(true);      // does not call reset
     CHECK(ht_stats[0] == 3);
-    CHECK(ht_stats[2] == 1992);  // bytes_in_use
+    CHECK(ht_stats[2] == 3*mc);  // bytes_in_use
     CHECK(ht_stats[3] == 3);     // items_in_use
 
     // no pruning needed for resizing higher than current size
     CHECK(host_cache.reload_resize(host_cache.mem_chunk * 10) == false);
     module.sum_stats(true);
-    CHECK(ht_stats[2] == 1992);  // bytes_in_use unchanged
+    CHECK(ht_stats[2] == 3*mc);  // bytes_in_use unchanged
     CHECK(ht_stats[3] == 3);     // items_in_use unchanged
 
     // pruning needed for resizing lower than current size
     CHECK(host_cache.reload_resize(host_cache.mem_chunk * 1.5) == true);
     module.sum_stats(true);
-    CHECK(ht_stats[2] == 1992);  // bytes_in_use still unchanged
+    CHECK(ht_stats[2] == 3*mc);  // bytes_in_use still unchanged
     CHECK(ht_stats[3] == 3);     // items_in_use still unchanged
 
     // pruning in thread is not done when reload_mutex is already locked
@@ -153,7 +156,7 @@ TEST(host_cache_module, misc)
     test_negative.join();
     host_cache.reload_mutex.unlock();
     module.sum_stats(true);
-    CHECK(ht_stats[2] == 1992);   // no pruning yet
+    CHECK(ht_stats[2] == 3*mc);   // no pruning yet
     CHECK(ht_stats[3] == 3);      // no pruning_yet
 
     // prune 2 entries in thread when reload_mutex is not locked
@@ -161,7 +164,7 @@ TEST(host_cache_module, misc)
     test_positive.join();
 
     module.sum_stats(true);
-    CHECK(ht_stats[2] == 664);
+    CHECK(ht_stats[2] == mc);
     CHECK(ht_stats[3] == 1);     // one left
 
     // alloc_prune 1 entry
