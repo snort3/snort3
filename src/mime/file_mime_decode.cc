@@ -49,85 +49,95 @@ void MimeDecode::reset_decoded_bytes()
 void MimeDecode::clear_decode_state()
 {
     decode_type = DECODE_NONE;
-    if (decoder)
-        decoder->reset_decode_state();
+    delete decoder;
+    decoder = nullptr;
 }
 
-void MimeDecode::process_decode_type(const char* start, int length, bool cnt_xf,
-    MimeStats* mime_stats)
+// Called if MIME_FLAG_FILE_ATTACH flag is set 
+void MimeDecode::finalize_decoder(MimeStats* mime_stats)
 {
+    // If this isn't the first body section, the decoder is already set
     if (decoder)
-        delete decoder;
-
-    decoder = nullptr;
-
-    if (cnt_xf)
-    {
-        if (config->get_b64_depth() > -1)
-        {
-            const char* tmp = SnortStrcasestr(start, length, "base64");
-
-            if ( tmp )
-            {
-                decode_type = DECODE_B64;
-                if (mime_stats)
-                    mime_stats->b64_attachments++;
-                decoder = new B64Decode(config->get_max_depth(config->get_b64_depth()),
-                        config->get_b64_depth());
-                file_decomp_reset();
-                return;
-            }
-        }
-
-        if (config->get_qp_depth() > -1)
-        {
-            const char* tmp = SnortStrcasestr(start, length, "quoted-printable");
-
-            if ( tmp )
-            {
-                decode_type = DECODE_QP;
-                if (mime_stats)
-                    mime_stats->qp_attachments++;
-                decoder = new QPDecode(config->get_max_depth(config->get_qp_depth()),
-                        config->get_qp_depth());
-                file_decomp_reset();
-                return;
-            }
-        }
-
-        if (config->get_uu_depth() > -1)
-        {
-            const char* tmp = SnortStrcasestr(start, length, "uuencode");
-
-            if ( tmp )
-            {
-                decode_type = DECODE_UU;
-                if (mime_stats)
-                    mime_stats->uu_attachments++;
-                decoder = new UUDecode(config->get_max_depth(config->get_uu_depth()),
-                        config->get_uu_depth());
-                file_decomp_reset();
-                return;
-            }
-        }
-    }
-
-    if (config->get_bitenc_depth() > -1)
-    {
-        decode_type = DECODE_BITENC;
-        if (mime_stats)
-            mime_stats->bitenc_attachments++;
-        decoder = new BitDecode(config->get_max_depth(config->get_bitenc_depth()),
-            config->get_bitenc_depth());
-        file_decomp_reset();
         return;
+
+    switch (decode_type)
+    {
+        case DECODE_B64:
+            if (mime_stats)
+                mime_stats->b64_attachments++;
+            decoder = new B64Decode(config->get_max_depth(config->get_b64_depth()),
+                config->get_b64_depth());
+            break;
+        case DECODE_QP:
+            if (mime_stats)
+                mime_stats->qp_attachments++;
+            decoder = new QPDecode(config->get_max_depth(config->get_qp_depth()),
+                config->get_qp_depth());
+            break;
+        case DECODE_UU:
+            if (mime_stats)
+                mime_stats->uu_attachments++;
+            decoder = new UUDecode(config->get_max_depth(config->get_uu_depth()),
+                config->get_uu_depth());
+            break;
+        case DECODE_NONE:
+            // This occurs if we only saw Content-Type header and no Cont-Trans-Enc header
+            if (config->get_bitenc_depth() < 0)
+                break;
+            decode_type = DECODE_BITENC;
+        // Fallthrough
+        case DECODE_BITENC:
+            if (mime_stats)
+                mime_stats->bitenc_attachments++;
+            decoder = new BitDecode(config->get_max_depth(config->get_bitenc_depth()),
+                config->get_bitenc_depth());
+            break;
     }
+}
+
+// This may be called more than once due to folding. 
+void MimeDecode::process_decode_type(const char* start, int length)
+{
+    if (config->get_b64_depth() > -1)
+    {
+        const char* tmp = SnortStrcasestr(start, length, "base64");
+        if ( tmp )
+        {
+            decode_type = DECODE_B64;
+            return;
+        }
+    }
+
+    if (config->get_qp_depth() > -1)
+    {
+        const char* tmp = SnortStrcasestr(start, length, "quoted-printable");
+        if ( tmp )
+        {
+            decode_type = DECODE_QP;
+            return;
+        }
+    }
+
+    if (config->get_uu_depth() > -1)
+    {
+        const char* tmp = SnortStrcasestr(start, length, "uuencode");
+        if ( tmp )
+        {
+            decode_type = DECODE_UU;
+            return;
+        }
+    }
+
+    // Default and "7bit" / "8bit" / "binary". This means the body is not encoded. This will not
+    // overwrite any of the three encoding types above
+    if (config->get_bitenc_depth() > -1 and decode_type == DECODE_NONE)
+        decode_type = DECODE_BITENC;
 }
 
 DecodeResult MimeDecode::decode_data(const uint8_t* start, const uint8_t* end)
 {
     uint8_t* decode_buf = MimeDecodeContextData::get_decode_buf();
-    return (decoder ? decoder->decode_data(start,end, decode_buf) : DECODE_SUCCESS);
+    return (decoder ? decoder->decode_data(start, end, decode_buf) : DECODE_SUCCESS);
 }
 
 int MimeDecode::get_detection_depth()

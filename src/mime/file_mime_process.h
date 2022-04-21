@@ -33,10 +33,9 @@
 namespace snort
 {
 /* state flags */
-#define MIME_FLAG_FOLDING                    0x00000001
 #define MIME_FLAG_IN_CONTENT_TYPE            0x00000002
 #define MIME_FLAG_GOT_BOUNDARY               0x00000004
-#define MIME_FLAG_DATA_HEADER_CONT           0x00000008
+#define MIME_FLAG_SEEN_HEADERS               0x00000008
 #define MIME_FLAG_IN_CONT_TRANS_ENC          0x00000010
 #define MIME_FLAG_FILE_ATTACH                0x00000020
 #define MIME_FLAG_MULTIPLE_EMAIL_ATTACH      0x00000040
@@ -48,6 +47,14 @@ namespace snort
 #define STATE_DATA_HEADER  1    /* Data header section of data state */
 #define STATE_DATA_BODY    2    /* Data body section of data state */
 #define STATE_MIME_HEADER  3    /* MIME header section within data section */
+
+enum FilenameState
+{
+    CONT_DISP_FILENAME_PARAM_NAME,
+    CONT_DISP_FILENAME_PARAM_EQUALS, 
+    CONT_DISP_FILENAME_PARAM_VALUE_QUOTE,
+    CONT_DISP_FILENAME_PARAM_VALUE
+};
 
 /* Maximum length of header chars before colon, based on Exim 4.32 exploit */
 #define MAX_HEADER_NAME_LEN 64
@@ -87,6 +94,7 @@ private:
     MailLogConfig* log_config = nullptr;
     MailLogState* log_state = nullptr;
     MimeStats* mime_stats = nullptr;
+    FilenameState filename_state = CONT_DISP_FILENAME_PARAM_NAME;
     std::string filename;
     bool continue_inspecting_file = true;
     // This counter is not an accurate count of files; used only for creating a unique mime_file_id
@@ -112,12 +120,17 @@ private:
     virtual bool is_end_of_data(Flow*) { return false; }
 
     void reset_mime_state();
-    void setup_decode(const char* data, int size, bool cnt_xf);
+    void setup_attachment_processing();
     const uint8_t* process_mime_header(Packet*, const uint8_t* ptr, const uint8_t* data_end_marker);
+    bool process_header_line(const uint8_t*& ptr, const uint8_t* eol, const uint8_t* eolm, const
+        uint8_t* start_hdr, Packet* p);
     const uint8_t* process_mime_body(const uint8_t* ptr, const uint8_t* data_end,bool is_data_end);
     const uint8_t* process_mime_data_paf(Packet*, const uint8_t* start, const uint8_t* end,
         bool upload, FilePosition);
-    int extract_file_name(const char*& start, int length, bool* disp_cont);
+    int extract_file_name(const char*& start, int length);
+
+    uint8_t* partial_header = nullptr;
+    uint32_t partial_header_len = 0;
 };
 }
 #endif

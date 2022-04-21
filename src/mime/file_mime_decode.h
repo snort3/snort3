@@ -35,11 +35,10 @@ namespace snort
 enum DecodeType
 {
     DECODE_NONE = 0,
+    DECODE_BITENC,
     DECODE_B64,
     DECODE_QP,
     DECODE_UU,
-    DECODE_BITENC,
-    DECODE_ALL
 };
 
 struct MimeStats
@@ -61,8 +60,8 @@ public:
     ~MimeDecode();
 
     // get the decode type from buffer
-    // bool cnt_xf: true if there is transfer encode defined, false otherwise
-    void process_decode_type(const char* start, int length, bool cnt_xf, MimeStats* mime_stats);
+    void process_decode_type(const char* start, int length);
+    void finalize_decoder(MimeStats* mime_stats);
 
     // Main function to decode file data
     DecodeResult decode_data(const uint8_t* start, const uint8_t* end);

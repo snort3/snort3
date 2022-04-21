@@ -78,7 +78,7 @@ static THREAD_LOCAL MIMESearch* mime_current_search = nullptr;
 SearchTool* mime_hdr_search_mpse = nullptr;
 MIMESearch mime_hdr_search[HDR_LAST];
 
-static void get_mime_eol(const uint8_t* ptr, const uint8_t* end,
+static bool get_mime_eol(const uint8_t* ptr, const uint8_t* end,
     const uint8_t** eol, const uint8_t** eolm)
 {
     const uint8_t* tmp_eol;
@@ -89,14 +89,14 @@ static void get_mime_eol(const uint8_t* ptr, const uint8_t* end,
     if ( !ptr or !end )
     {
         *eol = *eolm = end;
-        return;
+        return false;
     }
 
     tmp_eol = (const uint8_t*)memchr(ptr, '\n', end - ptr);
     if (tmp_eol == nullptr)
     {
-        tmp_eol = end;
-        tmp_eolm = end;
+        *eol = *eolm = end;
+        return false;
     }
     else
     {
@@ -117,6 +117,7 @@ static void get_mime_eol(const uint8_t* ptr, const uint8_t* end,
 
     *eol = tmp_eol;
     *eolm = tmp_eolm;
+    return true;
 }
 
 /*
@@ -141,7 +142,7 @@ static int search_str_found(void* id, void*, int index, void*, void*)
     return 1;
 }
 
-void MimeSession::setup_decode(const char* data, int size, bool cnt_xf)
+void MimeSession::setup_attachment_processing()
 {
     /* Check for Encoding Type */
     if ( decode_conf && decode_conf->is_decoding_enabled())
@@ -150,12 +151,8 @@ void MimeSession::setup_decode(const char* data, int size, bool cnt_xf)
         {
             decode_state = new MimeDecode(decode_conf);
         }
-
         if (decode_state != nullptr)
-        {
-            decode_state->process_decode_type(data, size, cnt_xf, mime_stats);
             state_flags |= MIME_FLAG_FILE_ATTACH;
-        }
     }
 }
 
@@ -173,239 +170,239 @@ const uint8_t* MimeSession::process_mime_header(Packet* p, const uint8_t* ptr,
 {
     const uint8_t* eol = data_end_marker;
     const uint8_t* eolm = eol;
-    const uint8_t* colon;
-    const uint8_t* content_type_ptr = nullptr;
-    const uint8_t* cont_trans_enc = nullptr;
-    const uint8_t* cont_disp = nullptr;
-    int header_found;
     const uint8_t* start_hdr;
 
     start_hdr = ptr;
-
-    /* if we got a content-type in a previous packet and are
-     * folding, the boundary still needs to be checked for */
-    if (state_flags & MIME_FLAG_IN_CONTENT_TYPE)
-        content_type_ptr = ptr;
-
-    if (state_flags & MIME_FLAG_IN_CONT_TRANS_ENC)
-        cont_trans_enc = ptr;
-
-    if (state_flags & MIME_FLAG_IN_CONT_DISP)
-        cont_disp = ptr;
-
-    while (ptr < data_end_marker)
+    bool cont = true;
+    while (cont and ptr < data_end_marker)
     {
-        int max_header_name_len = 0;
-        get_mime_eol(ptr, data_end_marker, &eol, &eolm);
-
-        /* got a line with only end of line marker should signify end of header */
-        if (eolm == ptr)
+        bool found_end_marker = get_mime_eol(ptr, data_end_marker, &eol, &eolm);
+        // Save partial header lines until we have the full line
+        if (!found_end_marker)
         {
-            /* reset global header state values */
-            state_flags &=
-                ~(MIME_FLAG_FOLDING | MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_DATA_HEADER_CONT
-                | MIME_FLAG_IN_CONT_TRANS_ENC );
-
-            data_state = STATE_DATA_BODY;
-
-            /* if no headers, treat as data */
-            if (ptr == start_hdr)
-                return eolm;
+            if (partial_header)
+            {
+                // Single header line split into >2 sections, accumulate
+                // FIXIT-P: could allocate reasonable-size buf and only reallocate if needed
+                const uint32_t new_len = data_end_marker - ptr;
+                const uint32_t cum_len = partial_header_len + new_len;
+                uint8_t* tmp = new uint8_t[cum_len];
+                memcpy(tmp, partial_header, partial_header_len);
+                memcpy(tmp + partial_header_len, ptr, new_len);
+                delete[] partial_header;
+                partial_header_len = cum_len;
+                partial_header = tmp;
+            }
             else
-                return eol;
+            {
+                partial_header_len = data_end_marker - ptr;
+                partial_header = new uint8_t[partial_header_len];
+                memcpy(partial_header, ptr, partial_header_len);
+            }
+            return data_end_marker;
         }
-
-        /* if we're not folding, see if we should interpret line as a data line
-         * instead of a header line */
-        if (!(state_flags & (MIME_FLAG_FOLDING | MIME_FLAG_DATA_HEADER_CONT)))
+        if (partial_header)
         {
-            char got_non_printable_in_header_name = 0;
+            const uint32_t remainder_header_len = eol - ptr;
+            const uint32_t full_header_len = partial_header_len + remainder_header_len;
+            const uint8_t* full_header = new uint8_t[full_header_len];
+            const uint8_t* head_ptr = full_header;
+            memcpy((void*)full_header, partial_header, partial_header_len);
+            memcpy((void*)(full_header + partial_header_len), ptr, remainder_header_len);
+            ptr = eol;
+            // Update eol and eolm to point to full_header buffer. eol points to byte after end
+            // marker and eolm points to start of the end marker - either \n or \r if CR precedes LF
+            eol = full_header + full_header_len;
+            if ((full_header_len > 1) && (*(eol - 2) == '\r'))
+                eolm = eol - 2;
+            else
+                eolm = eol - 1;
 
-            /* if we're not folding and the first char is a space or
-             * colon, it's not a header */
-            if (isspace((int)*ptr) || *ptr == ':')
-            {
-                data_state = STATE_DATA_BODY;
-                return ptr;
-            }
+            cont = process_header_line(head_ptr, eol, eolm, start_hdr, p);
 
-            /* look for header field colon - if we're not folding then we need
-             * to find a header which will be all printables (except colon)
-             * followed by a colon */
-            colon = ptr;
-            while ((colon < eolm) && (*colon != ':'))
-            {
-                if (((int)*colon < 33) || ((int)*colon > 126))
-                    got_non_printable_in_header_name = 1;
-
-                colon++;
-            }
-
-            /* Check for Exim 4.32 exploit where number of chars before colon is greater than 64 */
-            int header_name_len = colon - ptr;
-
-            if ((colon < eolm) && (header_name_len > MAX_HEADER_NAME_LEN))
-            {
-                max_header_name_len = header_name_len;
-            }
-
-            /* If the end on line marker and end of line are the same, assume
-             * header was truncated, so stay in data header state */
-            if ((eolm != eol) &&
-                ((colon == eolm) || got_non_printable_in_header_name))
-            {
-                /* no colon or got spaces in header name (won't be interpreted as a header)
-                 * assume we're in the body */
-                state_flags &=
-                    ~(MIME_FLAG_FOLDING | MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_DATA_HEADER_CONT
-                    |MIME_FLAG_IN_CONT_TRANS_ENC);
-
-                data_state = STATE_DATA_BODY;
-
-                return ptr;
-            }
-
-            if (tolower((int)*ptr) == 'c')
-            {
-                mime_current_search = &mime_hdr_search[0];
-                header_found = mime_hdr_search_mpse->find(
-                    (const char*)ptr, eolm - ptr, search_str_found, true);
-
-                /* Headers must start at beginning of line */
-                if ((header_found > 0) && (mime_search_info.index == 0))
-                {
-                    switch (mime_search_info.id)
-                    {
-                    case HDR_CONTENT_TYPE:
-                        content_type_ptr = ptr + mime_search_info.length;
-                        state_flags |= MIME_FLAG_IN_CONTENT_TYPE;
-                        break;
-                    case HDR_CONT_TRANS_ENC:
-                        cont_trans_enc = ptr + mime_search_info.length;
-                        state_flags |= MIME_FLAG_IN_CONT_TRANS_ENC;
-                        break;
-                    case HDR_CONT_DISP:
-                        cont_disp = ptr + mime_search_info.length;
-                        state_flags |= MIME_FLAG_IN_CONT_DISP;
-                        break;
-                    default:
-                        break;
-                    }
-                }
-            }
-            else if (tolower((int)*ptr) == 'e')
-            {
-                if ((eolm - ptr) >= 9)
-                {
-                    if (strncasecmp((const char*)ptr, "Encoding:", 9) == 0)
-                    {
-                        cont_trans_enc = ptr + 9;
-                        state_flags |= MIME_FLAG_IN_CONT_TRANS_ENC;
-                    }
-                }
-            }
+            delete[] partial_header;
+            partial_header = nullptr;
+            partial_header_len = 0;
+            delete[] full_header;
         }
         else
         {
-            state_flags &= ~MIME_FLAG_DATA_HEADER_CONT;
+            cont = process_header_line(ptr, eol, eolm, start_hdr, p);
         }
+        state_flags |= MIME_FLAG_SEEN_HEADERS;
+    }
+    if (!cont)
+    {
+        data_state = STATE_DATA_BODY;
+    }
+    return ptr;
+}
 
-        int ret = handle_header_line(ptr, eol, max_header_name_len, p);
-        if (ret < 0)
-            return nullptr;
-        else if (ret > 0)
-        {
-            /* assume we guessed wrong and are in the body */
-            data_state = STATE_DATA_BODY;
-            state_flags &=
-                ~(MIME_FLAG_FOLDING | MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_DATA_HEADER_CONT
-                | MIME_FLAG_IN_CONT_TRANS_ENC | MIME_FLAG_IN_CONT_DISP);
-            return ptr;
-        }
+static bool is_wsp(const uint8_t* c)
+{
+    return (*c == ' ' or *c == '\t');
+}
 
-        /* check for folding
-         * if char on next line is a space and not \n or \r\n, we are folding */
-        if ((eol < data_end_marker) && isspace((int)eol[0]) && (eol[0] != '\n'))
-        {
-            if ((eol < (data_end_marker - 1)) && (eol[0] != '\r') && (eol[1] != '\n'))
-            {
-                state_flags |= MIME_FLAG_FOLDING;
-            }
-            else
-            {
-                state_flags &= ~MIME_FLAG_FOLDING;
-            }
-        }
-        else if (eol != eolm)
-        {
-            state_flags &= ~MIME_FLAG_FOLDING;
-        }
-
-        /* check if we're in a content-type header and not folding. if so we have the whole
-         * header line/lines for content-type - see if we got a multipart with boundary
-         * we don't check each folded line, but wait until we have the complete header
-         * because boundary=BOUNDARY can be split across multiple folded lines before
-         * or after the '=' */
-        if ((state_flags &
-                (MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_FOLDING)) == MIME_FLAG_IN_CONTENT_TYPE)
-        {
-            if ((data_state == STATE_MIME_HEADER) && !(state_flags &
-                    MIME_FLAG_FILE_ATTACH))
-            {
-                setup_decode((const char*)content_type_ptr, (eolm - content_type_ptr), false);
-            }
-
-            state_flags &= ~MIME_FLAG_IN_CONTENT_TYPE;
-            content_type_ptr = nullptr;
-        }
-        else if ((state_flags &
-                (MIME_FLAG_IN_CONT_TRANS_ENC | MIME_FLAG_FOLDING)) == MIME_FLAG_IN_CONT_TRANS_ENC)
-        {
-            setup_decode((const char*)cont_trans_enc, (eolm - cont_trans_enc), true);
-
-            state_flags &= ~MIME_FLAG_IN_CONT_TRANS_ENC;
-
-            cont_trans_enc = nullptr;
-        }
-        else if (((state_flags &
-                    (MIME_FLAG_IN_CONT_DISP | MIME_FLAG_FOLDING)) == MIME_FLAG_IN_CONT_DISP) &&
-            cont_disp)
-        {
-            bool disp_cont = (state_flags & MIME_FLAG_IN_CONT_DISP_CONT) ? true : false;
-            int len = extract_file_name((const char*&)cont_disp, eolm - cont_disp, &disp_cont);
-
-            if (len > 0)
-            {
-                filename.assign((const char*)cont_disp, len);
-
-                if (log_config->log_filename && log_state)
-                {
-                    log_state->log_file_name(cont_disp, len);
-                }
-            }
-            else
-                filename.clear();
-
-            if (disp_cont)
-            {
-                state_flags |= MIME_FLAG_IN_CONT_DISP_CONT;
-            }
-            else
-            {
-                state_flags &= ~MIME_FLAG_IN_CONT_DISP;
-                state_flags &= ~MIME_FLAG_IN_CONT_DISP_CONT;
-            }
-
-            cont_disp = nullptr;
-        }
-
-        ptr = eol;
-
-        if (ptr == data_end_marker)
-            state_flags |= MIME_FLAG_DATA_HEADER_CONT;
+bool MimeSession::process_header_line(const uint8_t*& ptr, const uint8_t* eol, const uint8_t* eolm,
+    const uint8_t* start_hdr, Packet* p)
+{
+    const uint8_t* colon;
+    const uint8_t* header_value_ptr = nullptr;
+    int max_header_name_len = 0;
+    
+    int header_found;
+    /* got a line with only end of line marker should signify end of header */
+    if (eolm == ptr)
+    {
+        /* if no headers, treat as data */
+        if ((ptr == start_hdr) and !(state_flags & MIME_FLAG_SEEN_HEADERS))
+            ptr = eolm;
+        else
+            ptr = eol;
+        return false;
     }
 
-    return ptr;
+    // If we're not folding, process the header field name
+    if (!is_wsp(ptr))
+    {
+        // Clear flags from last header line
+        state_flags &= ~(MIME_FLAG_IN_CONTENT_TYPE | MIME_FLAG_IN_CONT_TRANS_ENC);
+
+        bool got_non_printable_in_header_name = false;
+
+        // If we're not folding and the first char is a whitespace (other than space (0x20) or htab
+        // (0x09) that means folding), it's not a header
+        if (isspace((int)*ptr) || *ptr == ':')
+        {
+            return false;
+        }
+
+        /* look for header field colon - if we're not folding then we need
+         * to find a header which will be all printables (except colon)
+         * followed by a colon */
+        colon = ptr;
+        while ((colon < eolm) && (*colon != ':'))
+        {
+            if (((int)*colon < 33) || ((int)*colon > 126))
+                got_non_printable_in_header_name = true;
+
+            colon++;
+        }
+        
+        if (colon + 1 < eolm)
+            header_value_ptr = colon + 1;
+
+        /* Check for Exim 4.32 exploit where number of chars before colon is greater than 64 */
+        int header_name_len = colon - ptr;
+
+        if ((colon < eolm) && (header_name_len > MAX_HEADER_NAME_LEN))
+        {
+            max_header_name_len = header_name_len;
+        }
+
+        /* If the end on line marker and end of line are the same, assume
+         * header was truncated, so stay in data header state */
+        if ((eolm != eol) &&
+            ((colon == eolm) || got_non_printable_in_header_name))
+        {
+            /* no colon or got spaces in header name (won't be interpreted as a header)
+             * assume we're in the body */
+            return false;
+        }
+
+        if (tolower((int)*ptr) == 'c')
+        {
+            mime_current_search = &mime_hdr_search[0];
+            header_found = mime_hdr_search_mpse->find(
+                (const char*)ptr, eolm - ptr, search_str_found, true);
+
+            /* Headers must start at beginning of line */
+            if ((header_found > 0) && (mime_search_info.index == 0))
+            {
+                switch (mime_search_info.id)
+                {
+                    case HDR_CONTENT_TYPE:
+                        state_flags |= MIME_FLAG_IN_CONTENT_TYPE;
+                        break;
+                    case HDR_CONT_TRANS_ENC:
+                        state_flags |= MIME_FLAG_IN_CONT_TRANS_ENC;
+                        break;
+                    case HDR_CONT_DISP:
+                        state_flags |= MIME_FLAG_IN_CONT_DISP;
+                        break;
+                    default:
+                        assert(false);
+                        break;
+                }
+            }
+        }
+        else if (tolower((int)*ptr) == 'e')
+        {
+            if ((eolm - ptr) >= 9)
+            {
+                if (strncasecmp((const char*)ptr, "Encoding:", 9) == 0)
+                {
+                    state_flags |= MIME_FLAG_IN_CONT_TRANS_ENC;
+                }
+            }
+        }
+    }
+    else if (!(state_flags & MIME_FLAG_SEEN_HEADERS))
+    {
+        // If the line starts with folding whitespace but we haven't seen any headers yet, we can't
+        // be folding. Treat as body.
+        return false;
+    }
+    else
+    {
+        // If we are folding, we've already processed the header field and are somewhere in the
+        // header value
+        header_value_ptr = ptr;
+    }
+
+    int ret = handle_header_line(ptr, eol, max_header_name_len, p);
+    if (ret != 0)
+        return false;
+
+    // Now handle the header value
+    const uint32_t header_value_len = eolm - header_value_ptr;
+
+    if (state_flags & MIME_FLAG_IN_CONTENT_TYPE)
+    {
+        if (data_state == STATE_MIME_HEADER)
+        {
+            setup_attachment_processing();
+        }
+        // We don't need the value, so it doesn't matter if we're folding
+        state_flags &= ~MIME_FLAG_IN_CONTENT_TYPE;
+    }
+    else if (state_flags & MIME_FLAG_IN_CONT_TRANS_ENC)
+    {
+        setup_attachment_processing();
+        if (decode_state != nullptr and header_value_len > 0)
+        {
+            decode_state->process_decode_type((const char*)header_value_ptr, header_value_len);
+        }
+        // Don't clear the MIME_FLAG_IN_CONT_TRANS_ENC flag in case of folding
+    }
+    else if (state_flags & MIME_FLAG_IN_CONT_DISP)
+    {
+        int len = extract_file_name((const char*&)header_value_ptr, header_value_len);
+
+        if (len > 0)
+        {
+            filename.assign((const char*)header_value_ptr, len);
+
+            if (log_config->log_filename && log_state)
+            {
+                log_state->log_file_name(header_value_ptr, len);
+            }
+            state_flags &= ~MIME_FLAG_IN_CONT_DISP;
+        }
+    }
+
+    ptr = eol;
+    return true;
 }
 
 /* Get the end of data body (excluding boundary)*/
@@ -466,6 +463,7 @@ const uint8_t* MimeSession::process_mime_body(const uint8_t* ptr,
 
         if (( attach_start < attach_end ) && decode_state)
         {
+            decode_state->finalize_decoder(mime_stats);
             if (decode_state->decode_data(attach_start, attach_end) == DECODE_FAIL )
             {
                 decode_alert();
@@ -634,10 +632,16 @@ const uint8_t* MimeSession::process_mime_data_paf(
 void MimeSession::reset_part_state()
 {
     state_flags = 0;
+    filename_state = CONT_DISP_FILENAME_PARAM_NAME;
+    delete[] partial_header;
     if (decode_state)
+    {
         decode_state->clear_decode_state();
+        decode_state->file_decomp_reset();
+    }
 
     // Clear MIME's file data to prepare for next file
+    filename.clear();
     file_counter++;
     file_process_offset = 0;
     current_file_cache_file_id = 0;
@@ -727,63 +731,72 @@ MailLogState* MimeSession::get_log_state()
     return log_state;
 }
 
-int MimeSession::extract_file_name(const char*& start, int length, bool* disp_cont)
+int MimeSession::extract_file_name(const char*& start, int length)
 {
-    const char* tmp = nullptr;
+    const char* tmp = start;
     const char* end = start+length;
 
     if (length <= 0)
         return -1;
 
-    if (!(*disp_cont))
+    while (tmp < end)
     {
-        tmp = SnortStrcasestr(start, length, "filename");
-
-        if ( tmp == nullptr )
-            return -1;
-
-        tmp = tmp + 8;
-        while ( (tmp < end) && ((isspace(*tmp)) || (*tmp == '=') ))
+        switch (filename_state)
         {
-            tmp++;
-        }
-    }
-    else
-        tmp = start;
-
-    if (tmp < end)
-    {
-        if (*tmp == '"' || (*disp_cont))
-        {
-            if (*tmp == '"')
+            case CONT_DISP_FILENAME_PARAM_NAME:
             {
-                if (*disp_cont)
-                {
-                    *disp_cont = false;
-                    return (tmp - start);
-                }
-                tmp++;
+                tmp = SnortStrcasestr(start, length, "filename");
+                if ( tmp == nullptr )
+                    return -1;
+                tmp = tmp + 8;
+                filename_state = CONT_DISP_FILENAME_PARAM_EQUALS;
+                break;
             }
-            start = tmp;
-            tmp = SnortStrnPbrk(start,(end - tmp),"\"");
-            if (tmp == nullptr )
+            case CONT_DISP_FILENAME_PARAM_EQUALS:
             {
-                if ((end - tmp) > 0 )
+                //skip past whitespace and '='
+                if (isspace(*tmp) or (*tmp == '='))
+                    tmp++;
+                else if (*tmp == '"')
                 {
-                    tmp = end;
-                    *disp_cont = true;
+                    // Skip past the quote
+                    tmp++;
+                    filename_state = CONT_DISP_FILENAME_PARAM_VALUE_QUOTE;
                 }
                 else
-                    return -1;
+                {
+                    filename_state = CONT_DISP_FILENAME_PARAM_VALUE;
+                    start = tmp;
+                }
+                break;
             }
-            else
-                *disp_cont = false;
-            end = tmp;
+            case CONT_DISP_FILENAME_PARAM_VALUE_QUOTE:
+                start = tmp;
+                tmp = SnortStrnPbrk(start,(end - tmp),"\"");
+                if (tmp)
+                {
+                    end = tmp;
+                    return (end - start);
+                }
+                // Since we have the full header line and there can't be wrapping within a quoted
+                // string, getting here means the line is malformed. Treat like unquoted string
+                filename_state = CONT_DISP_FILENAME_PARAM_VALUE;
+                tmp = start;
+                break;
+            case CONT_DISP_FILENAME_PARAM_VALUE:
+                // Go until we get a ';' or whitespace
+                if ((*tmp == ';') or isspace(*tmp))
+                {
+                    end = tmp;
+                    return (end - start);
+                }
+                tmp++;
+                break;
         }
-        else
-        {
-            start = tmp;
-        }
+    }
+    if (filename_state == CONT_DISP_FILENAME_PARAM_VALUE)
+    {
+        // The filename is ended by the eol marker
         return (end - start);
     }
     return -1;
@@ -829,8 +842,8 @@ MimeSession::MimeSession(Packet* p, const DecodeConfig* dconf, MailLogConfig* lc
 
 MimeSession::~MimeSession()
 {
-    if ( decode_state )
-        delete(decode_state);
+    delete decode_state;
+    delete[] partial_header;
 }
 
 // File verdicts get cached with key (file_id, sip, dip). File_id is hash of filename if available.
