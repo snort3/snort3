@@ -229,7 +229,7 @@ static DAQ_Verdict distill_verdict(Packet* p)
     if ( act->session_was_blocked() ||
             (p->flow && (p->flow->flow_state == Flow::FlowState::BLOCK)) )
     {
-        if ( !act->can_block() )
+        if ( !act->can_act() )
             verdict = DAQ_VERDICT_PASS;
         else if ( act->get_tunnel_bypass() )
         {
@@ -243,7 +243,7 @@ static DAQ_Verdict distill_verdict(Packet* p)
     }
 
     // Second Pass, now with more side effects
-    if ( act->packet_was_dropped() && act->can_block() )
+    if ( act->packet_was_dropped() && act->can_act() )
     {
         if ( verdict == DAQ_VERDICT_PASS )
             verdict = DAQ_VERDICT_BLOCK;

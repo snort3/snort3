@@ -39,6 +39,7 @@ struct Event
     SigInfo* sig_info = nullptr;
     struct sf_timeval32 ref_time = { 0, 0 };   /* reference time for the event reference */
     const char* alt_msg = nullptr;
+    std::string action_string;
 
     Event() = default;
     Event(SigInfo& si)
@@ -56,7 +57,7 @@ struct Event
 
     void set_event(uint32_t gid, uint32_t sid, uint32_t rev,
         uint32_t classification, uint32_t priority, uint16_t event_ref,
-        uint16_t log_id, const struct timeval& tv);
+        uint16_t log_id, const struct timeval& tv, const std::string& act = "");
 
 
 private:

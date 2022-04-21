@@ -83,6 +83,8 @@ void CallLogFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
     event.ref_time.tv_sec = p->pkth->ts.tv_sec;
     event.ref_time.tv_usec = p->pkth->ts.tv_usec;
     event.update_event_id_and_ref(p->context->conf->get_event_log_id());
+    if (head and head->ruleListNode)
+        event.action_string = head->ruleListNode->name;
 
     DetectionEngine::set_check_tags(false);
     pc.log_pkts++;
@@ -99,6 +101,8 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
     event.ref_time.tv_sec = p->pkth->ts.tv_sec;
     event.ref_time.tv_usec = p->pkth->ts.tv_usec;
     event.update_event_id_and_ref(p->context->conf->get_event_log_id());
+    if (head and head->ruleListNode)
+        event.action_string = head->ruleListNode->name;
 
     pc.total_alert_pkts++;
 

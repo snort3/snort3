@@ -48,11 +48,20 @@ static void set_fields(lua_State* L, int tindex, Event& self)
     table.get_field("event_reference", value);
     self.set_event_reference(value);
 
-    const char* s = nullptr;
-    if ( table.get_field("alt_msg", s) && s )  // FIXIT-L shouldn't need both conditions
+    const char* s_alt_msg = nullptr;
+    if ( table.get_field("alt_msg", s_alt_msg) && s_alt_msg )  // FIXIT-L shouldn't need both conditions
     {
-        self.alt_msg = RawBufferIface.create(L, s).c_str();
+        self.alt_msg = RawBufferIface.create(L, s_alt_msg).c_str();
         Lua::add_ref(L, &self, "alt_msg", lua_gettop(L));
+        lua_pop(L, 1);
+    }
+
+    const char* s_action_string = nullptr;
+    // FIXIT-L shouldn't need both conditions
+    if ( table.get_field("action_string", s_action_string) && s_action_string )
+    {
+        self.action_string = RawBufferIface.create(L, s_action_string);
+        Lua::add_ref(L, &self, "action_string", lua_gettop(L));
         lua_pop(L, 1);
     }
 }
@@ -66,6 +75,9 @@ static void get_fields(lua_State* L, int tindex, Event& self)
 
     if ( self.alt_msg )
         table.set_field("alt_msg", self.alt_msg);
+
+    if ( !self.action_string.empty() )
+        table.set_field("action_string", self.action_string);
 }
 
 static const luaL_Reg methods[] =

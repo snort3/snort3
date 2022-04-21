@@ -60,7 +60,7 @@ public:
     // apply_delayed_action, in a big switch(action). Do away with these and
     // use the actual (Base)Action objects.
     enum ActiveActionType : uint8_t
-    { ACT_TRUST, ACT_ALLOW, ACT_HOLD, ACT_RETRY, ACT_DROP, ACT_BLOCK, ACT_RESET, ACT_MAX };
+    { ACT_TRUST, ACT_ALLOW, ACT_HOLD, ACT_RETRY, ACT_REWRITE, ACT_DROP, ACT_BLOCK, ACT_RESET, ACT_MAX };
 
 public:
 
@@ -111,7 +111,7 @@ public:
 
     void kill_session(Packet*, EncodeFlags = ENC_FLAG_FWD);
 
-    bool can_block() const
+    bool can_act() const
     { return active_status == AST_ALLOW or active_status == AST_FORCE; }
 
     const char* get_action_string() const
@@ -121,6 +121,7 @@ public:
 
     void drop_packet(const Packet*, bool force = false);
     void daq_drop_packet(const Packet*);
+    void rewrite_packet(const Packet*, bool force = false);
     bool retry_packet(const Packet*);
     bool hold_packet(const Packet*);
     void cancel_packet_hold();

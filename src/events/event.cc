@@ -71,7 +71,7 @@ uint32_t Event::update_and_get_event_id(void)
 
 void Event::set_event(uint32_t gid, uint32_t sid, uint32_t rev,
     uint32_t classification, uint32_t priority, uint16_t event_ref,
-    uint16_t log_id, const struct timeval& tv)
+    uint16_t log_id, const struct timeval& tv, const std::string& act)
 {
     sig_info->gid = gid;
     sig_info->sid = sid;
@@ -88,5 +88,6 @@ void Event::set_event(uint32_t gid, uint32_t sid, uint32_t rev,
 
     ref_time.tv_sec = tv.tv_sec;
     ref_time.tv_usec = tv.tv_usec;
+    action_string = act;
 }
 
