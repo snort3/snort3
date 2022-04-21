@@ -71,6 +71,7 @@ class Modbus : public Inspector
 public:
     // default ctor / dtor
     void eval(Packet*) override;
+    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
 
     int get_message_type(int version, const char* name);
     int get_info_type(int version, const char* name);
@@ -118,6 +119,16 @@ void Modbus::eval(Packet* p)
         mfd->reset();
 }
 
+bool Modbus::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
+{
+    if ( ibt !=  InspectionBuffer::IBT_BODY or p->dsize <= MODBUS_MIN_LEN )
+        return false;
+
+    b.data = p->data + MODBUS_MIN_LEN;
+    b.len = p->dsize - MODBUS_MIN_LEN;
+    return true;
+}
+
 //-------------------------------------------------------------------------
 // plugin stuff
 //-------------------------------------------------------------------------
@@ -145,6 +156,12 @@ static void modbus_dtor(Inspector* p)
 
 //-------------------------------------------------------------------------
 
+static const char* modbus_bufs[] =
+{
+    "modbus_data",
+    nullptr
+};
+
 static const InspectApi modbus_api =
 {
     {
@@ -161,7 +178,7 @@ static const InspectApi modbus_api =
     },
     IT_SERVICE,
     PROTO_BIT__PDU,
-    nullptr,
+    modbus_bufs,
     "modbus",
     modbus_init,
     nullptr,

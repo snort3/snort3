@@ -82,8 +82,8 @@ private:
 class HttpIpsOption : public snort::IpsOption
 {
 public:
-    HttpIpsOption(const HttpRuleOptModule* cm, option_type_t type) :
-        snort::IpsOption(cm->key, type),
+    HttpIpsOption(const HttpRuleOptModule* cm) :
+        snort::IpsOption(cm->key),
         buffer_info(cm->rule_opt_index, cm->sub_id, cm->form),
         cat(cm->cat), inspect_section(cm->inspect_section) {}
     snort::CursorActionType get_cursor_type() const override { return cat; }

@@ -140,6 +140,7 @@ void IpsContext::post_detection()
         callback(this);
 
     post_callbacks.clear();
+    alt_data.len = 0;
 }
 
 void IpsContext::disable_detection()

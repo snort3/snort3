@@ -29,7 +29,6 @@
 #include "flow/session.h"
 #include "framework/data_bus.h"
 #include "helpers/bitop.h"
-#include "ips_options/ips_flowbits.h"
 #include "memory/memory_cap.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"

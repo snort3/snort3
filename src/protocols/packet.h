@@ -40,56 +40,54 @@ class IpsContext;
 class Obfuscator;
 class SFDAQInstance;
 
-/* packet status flags */
-#define PKT_REBUILT_FRAG     0x00000001  /* is a rebuilt fragment */
-#define PKT_REBUILT_STREAM   0x00000002  /* is a rebuilt stream */
-#define PKT_STREAM_UNEST_UNI 0x00000004  /* is from an unestablished stream and
-                                          * we've only seen traffic in one direction */
-#define PKT_STREAM_EST       0x00000008  /* is from an established stream */
+#define PKT_REBUILT_FRAG          0x00000001  // is a rebuilt fragment
+#define PKT_REBUILT_STREAM        0x00000002  // is a rebuilt stream
+#define PKT_STREAM_UNEST_UNI      0x00000004  // is from an unestablished stream and
+                                         // we've only seen traffic in one direction
+#define PKT_STREAM_EST            0x00000008  // is from an established stream
 
-#define PKT_STREAM_INSERT    0x00000010  /* this packet has been queued for stream reassembly */
-#define PKT_STREAM_TWH       0x00000020  /* packet completes the 3-way handshake */
-#define PKT_FROM_SERVER      0x00000040  /* this packet came from the server
-                                            side of a connection (TCP) */
-#define PKT_FROM_CLIENT      0x00000080  /* this packet came from the client
-                                            side of a connection (TCP) */
+#define PKT_STREAM_INSERT         0x00000010  // this packet has been queued for stream reassembly
+#define PKT_STREAM_TWH            0x00000020  // packet completes the 3-way handshake
+#define PKT_FROM_SERVER           0x00000040  // this packet came from the server side of a connection (TCP)
+#define PKT_FROM_CLIENT           0x00000080  // this packet came from the client side of a connection (TCP)
 
-#define PKT_PDU_HEAD         0x00000100  /* start of PDU */
-#define PKT_PDU_TAIL         0x00000200  /* end of PDU */
-#define PKT_DETECT_LIMIT     0x00000400  /* alt_dsize is valid */
+#define PKT_PDU_HEAD              0x00000100  // start of PDU
+#define PKT_PDU_TAIL              0x00000200  // end of PDU
+#define PKT_DETECT_LIMIT          0x00000400  // alt_dsize is valid
 
-#define PKT_ALLOW_MULTIPLE_DETECT 0x00000800  /* packet has multiple PDUs */
+#define PKT_ALLOW_MULTIPLE_DETECT 0x00000800  // packet has multiple PDUs
 #define PKT_PAYLOAD_OBFUSCATE     0x00001000
 
-#define PKT_STATELESS        0x00002000  /* Packet has matched a stateless rule */
-#define PKT_PASS_RULE        0x00004000  /* this packet has matched a pass rule */
-#define PKT_IP_RULE          0x00008000  /* this packet is being evaluated against an IP rule */
-#define PKT_IP_RULE_2ND      0x00010000  /* this packet is being evaluated against an IP rule */
+#define PKT_STATELESS             0x00002000  // Packet has matched a stateless rule
+#define PKT_PASS_RULE             0x00004000  // this packet has matched a pass rule
+#define PKT_IP_RULE               0x00008000  // this packet is being evaluated against an IP rule
+#define PKT_IP_RULE_2ND           0x00010000  // this packet is being evaluated against an IP rule
 
-#define PKT_PSEUDO           0x00020000  /* is a pseudo packet */
-#define PKT_MODIFIED         0x00040000  /* packet had normalizations, etc. */
-#define PKT_RESIZED          0x00080000  /* packet has new size */
+#define PKT_PSEUDO                0x00020000  // is a pseudo packet
+#define PKT_MODIFIED              0x00040000  // packet had normalizations, etc.
+#define PKT_RESIZED               0x00080000  // packet has new size
 
 // neither of these flags will be set for (full) retransmissions or non-data segments
 // a partial overlap results in out of sequence condition
 // out of sequence condition is sticky
-#define PKT_STREAM_ORDER_OK  0x00100000  /* this segment is in order, w/o gaps */
-#define PKT_STREAM_ORDER_BAD 0x00200000  /* this stream had at least one gap */
+#define PKT_STREAM_ORDER_OK       0x00100000  // this segment is in order, w/o gaps
+#define PKT_STREAM_ORDER_BAD      0x00200000  // this stream had at least one gap
 
-#define PKT_FILE_EVENT_SET   0x00400000
-#define PKT_IGNORE           0x00800000  /* this packet should be ignored, based on port */
-#define PKT_RETRANSMIT       0x01000000  // packet is a re-transmitted pkt.
-#define PKT_RETRY            0x02000000  /* this packet is being re-evaluated from the internal retry queue */
-#define PKT_USE_DIRECT_INJECT 0x04000000  /* Use ioctl when injecting. */
-#define PKT_HAS_PARENT       0x08000000  /* derived pseudo packet from current wire packet */
+#define PKT_FILE_EVENT_SET        0x00400000
+#define PKT_IGNORE                0x00800000  // this packet should be ignored, based on port
+#define PKT_RETRANSMIT            0x01000000  // packet is a re-transmitted pkt.
+#define PKT_RETRY                 0x02000000  // this packet is being re-evaluated from the internal retry queue
+#define PKT_USE_DIRECT_INJECT     0x04000000  // Use ioctl when injecting.
+#define PKT_HAS_PARENT            0x08000000  // derived pseudo packet from current wire packet
 
-#define PKT_WAS_SET          0x10000000  /* derived pseudo packet (PDU) from current wire packet */
+#define PKT_WAS_SET               0x10000000  // derived pseudo packet (PDU) from current wire packet
 
-#define PKT_MORE_TO_FLUSH    0x20000000 /* when more data is available to StreamSplitter::scan */
+#define PKT_MORE_TO_FLUSH         0x20000000 // when more data is available to StreamSplitter::scan
+#define PKT_FAST_PAT_EVAL         0x40000000 // temporary until IpsOption api updated
 
-#define PKT_UNUSED_FLAGS     0xC0000000
+#define PKT_UNUSED_FLAGS          0x80000000
 
-#define PKT_TS_OFFLOADED        0x01
+#define TS_PKT_OFFLOADED          0x01
 
 #define PKT_PDU_FULL (PKT_PDU_HEAD | PKT_PDU_TAIL)
 
@@ -319,13 +317,13 @@ struct SO_PUBLIC Packet
     { return (packet_flags & PKT_RETRY) != 0; }
 
     bool is_offloaded() const
-    { return (ts_packet_flags & PKT_TS_OFFLOADED) != 0; }
+    { return (ts_packet_flags & TS_PKT_OFFLOADED) != 0; }
 
     void set_offloaded()
-    { ts_packet_flags |= PKT_TS_OFFLOADED; }
+    { ts_packet_flags |= TS_PKT_OFFLOADED; }
 
     void clear_offloaded()
-    { ts_packet_flags &= (~PKT_TS_OFFLOADED); }
+    { ts_packet_flags &= (~TS_PKT_OFFLOADED); }
 
     bool has_parent() const
     { return (packet_flags & PKT_HAS_PARENT) != 0; }

@@ -45,12 +45,15 @@ static THREAD_LOCAL ProfileStats s7commplus_content_prof;
 class S7commplusContentOption : public IpsOption
 {
 public:
-    S7commplusContentOption() : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_SET) { }
+    S7commplusContentOption() : IpsOption(s_name) { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
     EvalStatus eval(Cursor&, Packet*) override;
+
+    CursorActionType get_cursor_type() const override
+    { return CAT_SET_FAST_PATTERN; }
 };
 
 uint32_t S7commplusContentOption::hash() const

@@ -53,7 +53,7 @@ class HttpVersionIpsOption : public HttpIpsOption
 {
 public:
     HttpVersionIpsOption(const HttpVersionRuleOptModule* cm) :
-        HttpIpsOption(cm, RULE_OPTION_TYPE_OTHER), version_flags(cm->version_flags) {}
+        HttpIpsOption(cm), version_flags(cm->version_flags) {}
     EvalStatus eval(Cursor&, snort::Packet*) override;
     uint32_t hash() const override;
     bool operator==(const snort::IpsOption& ips) const override;

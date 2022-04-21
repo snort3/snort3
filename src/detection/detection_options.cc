@@ -607,22 +607,27 @@ int detection_option_node_evaluate(
 
                                     continue;
                                 }
-                                else if ( node->option_type != RULE_OPTION_TYPE_BUFFER_SET )
+                                else
                                 {
-                                    // Check for an unbounded relative search.  If this
-                                    // failed before, it's going to fail again so don't
-                                    // go down this path again
-                                    IpsOption* opt = (IpsOption*)child_node->option_data;
-                                    PatternMatchData* pmd = opt->get_pattern(0, RULE_WO_DIR);
+                                    IpsOption* opt = (IpsOption*)node->option_data;
 
-                                    if ( pmd and pmd->is_literal() and pmd->is_unbounded() )
+                                    if ( !opt->is_buffer_setter() )
                                     {
-                                        // Only increment result once. Should hit this
-                                        // condition on first loop iteration
-                                        if (loop_count == 1)
-                                            ++result;
+                                        // Check for an unbounded relative search.  If this
+                                        // failed before, it's going to fail again so don't
+                                        // go down this path again
+                                        opt = (IpsOption*)child_node->option_data;
+                                        PatternMatchData* pmd = opt->get_pattern(0, RULE_WO_DIR);
 
-                                        continue;
+                                        if ( pmd and pmd->is_literal() and pmd->is_unbounded() )
+                                        {
+                                            // Only increment result once. Should hit this
+                                            // condition on first loop iteration
+                                            if (loop_count == 1)
+                                                ++result;
+
+                                            continue;
+                                        }
                                     }
                                 }
                             }

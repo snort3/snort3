@@ -72,7 +72,7 @@ static THREAD_LOCAL SdStats s_stats;
 
 struct SdPatternConfig
 {
-    PatternMatchData pmd;
+    PatternMatchData pmd = { };
     hs_database_t* db;
 
     std::string pii;
@@ -93,7 +93,6 @@ struct SdPatternConfig
 
     void reset()
     {
-        memset(&pmd, 0, sizeof(pmd));
         pii.clear();
         threshold = 1;
         obfuscate_pii = false;
@@ -128,7 +127,7 @@ private:
 };
 
 SdPatternOption::SdPatternOption(const SdPatternConfig& c) :
-    IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE), config(c)
+    IpsOption(s_name), config(c)
 {
     if ( !scratcher->allocate(config.db) )
         ParseError("can't allocate scratch for sd_pattern '%s'", config.pii.c_str());
@@ -148,13 +147,14 @@ SdPatternOption::~SdPatternOption()
 uint32_t SdPatternOption::hash() const
 {
     uint32_t a = config.pmd.pattern_size;
-    uint32_t b = config.pmd.pm_type;
+    uint32_t b = IpsOption::hash();
     uint32_t c = config.threshold;
 
     mix(a, b, c);
-    a += IpsOption::hash();
 
     mix_str(a, b, c, config.pii.c_str());
+    //mix_str(a, b, c, config.pmd.sticky_buf.c_str());
+
     finalize(a, b, c);
 
     return c;
@@ -402,12 +402,11 @@ static void mod_dtor(Module* p)
     delete p;
 }
 
-static IpsOption* sd_pattern_ctor(Module* m, OptTreeNode* otn)
+static IpsOption* sd_pattern_ctor(Module* m, OptTreeNode*)
 {
     SdPatternModule* mod = (SdPatternModule*)m;
     SdPatternConfig c;
     mod->get_data(c);
-    c.pmd.pm_type = otn->sticky_buf;
     return new SdPatternOption(c);
 }
 

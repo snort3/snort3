@@ -58,7 +58,7 @@ class HttpNumHdrsIpsOption : public HttpIpsOption
 {
 public:
     HttpNumHdrsIpsOption(const HttpNumHdrsRuleOptModule* cm) :
-        HttpIpsOption(cm, RULE_OPTION_TYPE_OTHER), idx(cm->idx), range(cm->range) {}
+        HttpIpsOption(cm), idx(cm->idx), range(cm->range) {}
     EvalStatus eval(Cursor&, snort::Packet*) override;
     uint32_t hash() const override;
     bool operator==(const snort::IpsOption& ips) const override;

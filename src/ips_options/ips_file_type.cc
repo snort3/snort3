@@ -45,9 +45,6 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption& ips) const override;
 
-    CursorActionType get_cursor_type() const override
-    { return CAT_NONE; }
-
     EvalStatus eval(Cursor&, Packet*) override;
 
     FileTypeBitSet types;

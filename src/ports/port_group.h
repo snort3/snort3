@@ -25,10 +25,10 @@
 #ifndef PORT_GROUP_H
 #define PORT_GROUP_H
 
-namespace snort
-{
-    class MpseGroup;
-}
+#include <cassert>
+#include <vector>
+
+#include "framework/mpse_batch.h"
 
 // RuleGroup contains a set of fast patterns in the form of an MPSE and a
 // set of non-fast-pattern (nfp) rules.  when a RuleGroup is selected, the
@@ -36,36 +36,31 @@ namespace snort
 // patterns.  it will always run nfp rules since there is no way to filter
 // them out.
 
-enum PmType
+namespace snort
 {
-    PM_TYPE_PKT = 0,
-    PM_TYPE_ALT,
-    PM_TYPE_KEY,
-    PM_TYPE_HEADER,
-    PM_TYPE_BODY,
-    PM_TYPE_FILE,
-    PM_TYPE_RAW_KEY,
-    PM_TYPE_RAW_HEADER,
-    PM_TYPE_METHOD,
-    PM_TYPE_STAT_CODE,
-    PM_TYPE_STAT_MSG,
-    PM_TYPE_COOKIE,
-    PM_TYPE_JS_DATA,
-    PM_TYPE_VBA,
-    PM_TYPE_MAX
-};
-
-const char* const pm_type_strings[PM_TYPE_MAX] =
-{
-    "packet", "alt", "key", "header", "body", "file", "raw_key", "raw_header",
-    "method", "stat_code", "stat_msg", "cookie", "js_data", "vba"
-};
+    class IpsOption;
+}
 
 struct RULE_NODE
 {
     RULE_NODE* rnNext;
     void* rnRuleData;
     int iRuleNodeID;
+};
+
+struct PatternMatcher
+{
+    enum Type { PMT_PKT, PMT_FILE, PMT_PDU };
+
+    PatternMatcher(Type t, const char* s, bool r = false)
+    { type = t; name = s; raw_data = r; }
+
+    Type type;
+    const char* name;
+    bool raw_data;
+
+    snort::MpseGroup group;
+    snort::IpsOption* fp_opt = nullptr;
 };
 
 struct RuleGroup
@@ -78,7 +73,8 @@ struct RuleGroup
     RULE_NODE* nfp_tail = nullptr;
 
     // pattern matchers
-    snort::MpseGroup* mpsegrp[PM_TYPE_MAX] = { };
+    using PmList = std::vector<PatternMatcher*>;
+    PmList pm_list;
 
     // detection option tree
     void* nfp_tree = nullptr;
@@ -89,6 +85,8 @@ struct RuleGroup
     void add_rule();
     bool add_nfp_rule(void*);
     void delete_nfp_rules();
+
+    PatternMatcher* get_pattern_matcher(PatternMatcher::Type, const char*);
 };
 
 #endif

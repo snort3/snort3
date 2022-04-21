@@ -30,6 +30,7 @@
 #include "binder/bind_module.h"
 #include "detection/detect.h"
 #include "detection/detection_engine.h"
+#include "detection/fp_utils.h"
 #include "flow/flow.h"
 #include "flow/session.h"
 #include "log/messages.h"
@@ -862,6 +863,7 @@ void InspectorManager::add_plugin(const InspectApi* api)
 {
     PHObject* g = new PHObject(*api);
     s_handlers.emplace_back(g);
+    update_buffer_map(api->buffers, api->service);
 }
 
 static const InspectApi* get_plugin(const char* keyword)

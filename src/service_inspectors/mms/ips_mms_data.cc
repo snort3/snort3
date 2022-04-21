@@ -45,10 +45,10 @@ static THREAD_LOCAL ProfileStats mms_data_prof;
 class MmsDataOption : public IpsOption
 {
 public:
-    MmsDataOption() : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_SET) { }
+    MmsDataOption() : IpsOption(s_name) { }
 
     CursorActionType get_cursor_type() const override
-    { return CAT_SET_OTHER; }
+    { return CAT_SET_FAST_PATTERN; }
 
     EvalStatus eval(Cursor&, Packet*) override;
 };

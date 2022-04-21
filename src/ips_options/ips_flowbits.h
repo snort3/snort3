@@ -24,6 +24,7 @@
 
 bool flowbits_setter(void*);
 void get_flowbits_dependencies(void*, bool& set, std::vector<std::string>& bits);
+void flowbits_counts(unsigned& total, unsigned& unchecked, unsigned& unset);
 
 #endif
 

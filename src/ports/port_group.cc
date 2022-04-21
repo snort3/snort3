@@ -24,8 +24,8 @@
 #include "port_group.h"
 
 #include "detection/detection_options.h"
+#include "framework/ips_option.h"
 #include "framework/mpse.h"
-#include "framework/mpse_batch.h"
 #include "utils/util.h"
 
 void RuleGroup::add_rule()
@@ -35,11 +35,10 @@ void RuleGroup::add_rule()
 
 RuleGroup::~RuleGroup()
 {
+    for ( auto* it : pm_list )
+        delete it;
+
     delete_nfp_rules();
-
-    for (int i = PM_TYPE_PKT; i < PM_TYPE_MAX; i++)
-        delete mpsegrp[i];
-
     free_detection_option_root(&nfp_tree);
 }
 
@@ -78,5 +77,26 @@ void RuleGroup::delete_nfp_rules()
         rn = tmpRn;
     }
     nfp_head = nullptr;
+}
+
+PatternMatcher* RuleGroup::get_pattern_matcher(PatternMatcher::Type t, const char* s)
+{
+    bool raw = false;
+
+    if ( !strcmp(s, "raw_data") )
+    {
+        s = "pkt_data";
+        raw = true;
+    }
+    for ( auto& it : pm_list )
+    {
+        if ( it->type == t and !strcmp(it->name, s) )
+        {
+            it->raw_data = raw;
+            return it;
+        }
+    }
+    pm_list.push_back(new PatternMatcher(t, s, raw));
+    return pm_list.back();
 }
 

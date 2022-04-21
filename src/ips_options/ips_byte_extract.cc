@@ -61,7 +61,7 @@ class ByteExtractOption : public IpsOption
 {
 public:
     ByteExtractOption(const ByteExtractData& c) :
-        IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE), config(c)
+        IpsOption(s_name), config(c)
     { }
 
     ~ByteExtractOption() override
@@ -510,22 +510,12 @@ static ByteExtractDataMatcher ByteExtractDataEquals(const ByteExtractData& value
     return {value};
 }
 
-class SetBufferOptionHelper : public IpsOption
-{
-public:
-    SetBufferOptionHelper(const char* value)
-        : IpsOption(value, RULE_OPTION_TYPE_BUFFER_SET)
-    { }
-};
-
 //-------------------------------------------------------------------------
 // option tests
 //-------------------------------------------------------------------------
 
 TEST_CASE("ByteExtractOption::operator== valid", "[ips_byte_extract]")
 {
-    SetBufferOptionHelper set_buf("test");
-
     char* lhs_name = new char[9];
     strcpy(lhs_name, "test_lhs");
     ByteExtractData data_lhs;
@@ -543,19 +533,12 @@ TEST_CASE("ByteExtractOption::operator== valid", "[ips_byte_extract]")
 
 TEST_CASE("ByteExtractOption::operator== invalid", "[ips_byte_extract]")
 {
-    SetBufferOptionHelper set_buf("test");
-
     char* lhs_name = new char[5];
     strcpy(lhs_name, "test");
     ByteExtractData data_lhs;
     INITIALIZE(data_lhs, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, nullptr);
     ByteExtractOption lhs(data_lhs);
 
-    SECTION("not equal to IpsOption object")
-    {
-        CHECK(lhs != set_buf);
-        delete[] lhs_name;
-    }
     SECTION("all fields is different")
     {
         ByteExtractData data_rhs;
@@ -647,8 +630,6 @@ TEST_CASE("ByteExtractOption::operator== invalid", "[ips_byte_extract]")
 
 TEST_CASE("ByteExtractOption::hash", "[ips_byte_extract]")
 {
-    SetBufferOptionHelper set_buf("test");
-
     ByteExtractData data_lhs;
     INITIALIZE(data_lhs, 0, 0, 0, 0, 0, 0, 8, 1, 0, 0, nullptr);
     ByteExtractOption lhs(data_lhs);

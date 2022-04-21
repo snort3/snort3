@@ -55,9 +55,7 @@ struct NCListNode
 */
 int fpCreateFastPacketDetection(snort::SnortConfig*);
 void fpDeleteFastPacketDetection(snort::SnortConfig*);
-void get_pattern_info(const PatternMatchData* pmd,
-    const char* pattern, int pattern_length, std::string& hex, std::string& txt,
-    std::string& opts);
+void get_pattern_info(const PatternMatchData* pmd, std::string& hex, std::string& txt, std::string& opts);
 
 #endif
 

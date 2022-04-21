@@ -137,6 +137,7 @@ HttpInspect const* HttpIpsOption::eval_helper(Packet* p)
         return nullptr;
 
     const bool section_match =
+        (p->packet_flags & PKT_FAST_PAT_EVAL) ||
         (HttpInspect::get_latest_is(p) == inspect_section) ||
         ((HttpInspect::get_latest_is(p) == IS_HEADER) && (inspect_section == IS_FLEX_HEADER)) ||
         ((HttpInspect::get_latest_is(p) == IS_FIRST_BODY) && (inspect_section == IS_BODY)) ||

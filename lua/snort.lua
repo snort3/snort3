@@ -52,12 +52,8 @@ stream_file = { }
 
 arp_spoof = { }
 back_orifice = { }
-dnp3 = { }
 dns = { }
 imap = { }
-iec104 = { }
-mms = { }
-modbus = { }
 netflow = {}
 normalizer = { }
 pop = { }
@@ -66,6 +62,13 @@ sip = { }
 ssh = { }
 ssl = { }
 telnet = { }
+
+cip = { }
+dnp3 = { }
+iec104 = { }
+mms = { }
+modbus = { }
+s7commplus = { }
 
 dce_smb = { }
 dce_tcp = { }
@@ -119,19 +122,23 @@ binder =
     -- port bindings required for protocols without wizard support
     { when = { proto = 'udp', ports = '53', role='server' },  use = { type = 'dns' } },
     { when = { proto = 'tcp', ports = '53', role='server' },  use = { type = 'dns' } },
+    { when = { proto = 'tcp', ports = '102', role = 'server' }, use = { type = 's7commplus' } },
     { when = { proto = 'tcp', ports = '111', role='server' }, use = { type = 'rpc_decode' } },
     { when = { proto = 'tcp', ports = '502', role='server' }, use = { type = 'modbus' } },
     { when = { proto = 'tcp', ports = '2123 2152 3386', role='server' }, use = { type = 'gtp_inspect' } },
     { when = { proto = 'tcp', ports = '2404', role='server' }, use = { type = 'iec104' } },
+    { when = { proto = 'udp', ports = '22222', role = 'server' }, use = { type = 'cip' } },
+    { when = { proto = 'tcp', ports = '44818', role = 'server' }, use = { type = 'cip' } },
 
-    { when = { proto = 'tcp', service = 'dcerpc' }, use = { type = 'dce_tcp' } },
-    { when = { proto = 'udp', service = 'dcerpc' }, use = { type = 'dce_udp' } },
+    { when = { proto = 'tcp', service = 'dcerpc' },  use = { type = 'dce_tcp' } },
+    { when = { proto = 'udp', service = 'dcerpc' },  use = { type = 'dce_udp' } },
     { when = { proto = 'udp', service = 'netflow' }, use = { type = 'netflow' } },
 
     { when = { service = 'netbios-ssn' },      use = { type = 'dce_smb' } },
     { when = { service = 'dce_http_server' },  use = { type = 'dce_http_server' } },
     { when = { service = 'dce_http_proxy' },   use = { type = 'dce_http_proxy' } },
 
+    { when = { service = 'cip' },              use = { type = 'cip' } },
     { when = { service = 'dnp3' },             use = { type = 'dnp3' } },
     { when = { service = 'dns' },              use = { type = 'dns' } },
     { when = { service = 'ftp' },              use = { type = 'ftp_server' } },
@@ -149,6 +156,7 @@ binder =
     { when = { service = 'smtp' },             use = { type = 'smtp' } },
     { when = { service = 'ssl' },              use = { type = 'ssl' } },
     { when = { service = 'sunrpc' },           use = { type = 'rpc_decode' } },
+    { when = { service = 's7commplus' },       use = { type = 's7commplus' } },
     { when = { service = 'telnet' },           use = { type = 'telnet' } },
 
     { use = { type = 'wizard' } }

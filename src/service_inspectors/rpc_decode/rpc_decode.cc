@@ -763,8 +763,6 @@ public:
     void eval(Packet*) override;
     void clear(Packet*) override;
 
-    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
-
     StreamSplitter* get_splitter(bool c2s) override
     { return c2s ? new LogSplitter(c2s) : nullptr; }
 };
@@ -821,18 +819,6 @@ void RpcDecode::eval(Packet* p)
             RpcSsnSetInactive(rsdata, p);
     }
     RpcPreprocEvent(rsdata, ConvertRPC(rsdata, p));
-}
-
-bool RpcDecode::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
-{
-    if ( ibt != InspectionBuffer::IBT_ALT )
-        return false;
-
-    const DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
-    b.len = buf.len;
-    b.data = (b.len > 0) ? buf.data : nullptr;
-
-    return (b.data != nullptr);
 }
 
 void RpcDecode::clear(Packet* p)

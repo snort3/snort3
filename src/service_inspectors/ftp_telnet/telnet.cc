@@ -186,9 +186,8 @@ public:
 
     bool configure(SnortConfig*) override;
     void show(const SnortConfig*) const override;
-    void eval(Packet*) override;
 
-    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
+    void eval(Packet*) override;
     void clear(Packet*) override;
 
 private:
@@ -229,17 +228,6 @@ void Telnet::eval(Packet* p)
 
     ++tnstats.total_packets;
     snort_telnet(config, p);
-}
-
-bool Telnet::get_buf(
-    InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
-{
-    if ( ibt != InspectionBuffer::IBT_ALT )
-        return false;
-
-    b.data = get_telnet_buffer(p, b.len);
-
-    return (b.data != nullptr);
 }
 
 void Telnet::clear(Packet* p)

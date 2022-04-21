@@ -38,12 +38,12 @@ struct PatternMatchData* get_pmd(OptFpList*, SnortProtocolId, snort::RuleDirecti
 bool make_fast_pattern_only(const OptFpList*, const PatternMatchData*);
 bool is_fast_pattern_only(const OptTreeNode*, const OptFpList*, snort::Mpse::MpseType);
 
-PmType get_pm_type(snort::CursorActionType);
+PatternMatcher::Type get_pm_type(const std::string& buf);
 
 bool set_fp_content(OptTreeNode*);
 
 std::vector <PatternMatchData*> get_fp_content(
-    OptTreeNode*, OptFpList*&, bool srvc, bool only_literals, bool& exclude);
+    OptTreeNode*, OptFpList*& pat, snort::IpsOption*& buf, bool srvc, bool only_literals, bool& exclude);
 
 void queue_mpse(snort::Mpse*);
 unsigned compile_mpses(struct snort::SnortConfig*, bool parallel = false);
@@ -52,6 +52,9 @@ void validate_services(struct snort::SnortConfig*, OptTreeNode*);
 
 unsigned fp_serialize(const struct snort::SnortConfig*, const std::string& dir);
 unsigned fp_deserialize(const struct snort::SnortConfig*, const std::string& dir);
+
+void update_buffer_map(const char** bufs, const char* svc);
+void add_default_services(struct snort::SnortConfig*, const std::string&, OptTreeNode*);
 
 #endif
 

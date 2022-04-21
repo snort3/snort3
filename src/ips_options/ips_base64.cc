@@ -59,7 +59,7 @@ struct Base64DecodeData
 class Base64DecodeOption : public IpsOption
 {
 public:
-    Base64DecodeOption(const Base64DecodeData& c) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
+    Base64DecodeOption(const Base64DecodeData& c) : IpsOption(s_name)
     { config = c; }
 
 
@@ -274,7 +274,7 @@ static const IpsApi base64_decode_api =
 class Base64DataOption : public IpsOption
 {
 public:
-    Base64DataOption() : IpsOption(s_data_name, RULE_OPTION_TYPE_BUFFER_SET) { }
+    Base64DataOption() : IpsOption(s_data_name) { }
 
     CursorActionType get_cursor_type() const override
     { return CAT_SET_OTHER; }

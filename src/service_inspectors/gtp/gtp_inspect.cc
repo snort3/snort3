@@ -220,6 +220,12 @@ static void gtp_dtor(Inspector* p)
 
 //-------------------------------------------------------------------------
 
+static const char* gtp_bufs[] =
+{
+    "gtp_info",
+    nullptr
+};
+
 static const InspectApi gtp_api =
 {
     {
@@ -236,7 +242,7 @@ static const InspectApi gtp_api =
     },
     IT_SERVICE,
     PROTO_BIT__UDP,
-    nullptr,
+    gtp_bufs,
     "gtp",
     gtp_init,
     gtp_term,

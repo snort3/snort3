@@ -48,6 +48,9 @@ public:
 
     EvalStatus eval(Cursor&, Packet*) override;
 
+    CursorActionType get_cursor_type() const override
+    { return CAT_ADJUST; }
+
 private:
     uint32_t type;
 };

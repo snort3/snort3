@@ -53,7 +53,7 @@ class HttpParamIpsOption : public HttpIpsOption
 {
 public:
     HttpParamIpsOption(const HttpParamRuleOptModule* cm) :
-        HttpIpsOption(cm, RULE_OPTION_TYPE_BUFFER_SET),
+        HttpIpsOption(cm),
         key(cm->key), http_param(cm->param, cm->nocase) {}
     EvalStatus eval(Cursor&, snort::Packet*) override;
     uint32_t hash() const override;

@@ -133,15 +133,60 @@ bool HttpBufferRuleOptModule::end(const char*, int, SnortConfig*)
     return HttpRuleOptModule::end(nullptr, 0, nullptr);
 }
 
+static InspectionBuffer::Type buf_map[] =
+{
+#if 0
+    BUFFER_PSI_CLIENT_BODY, BUFFER_PSI_COOKIE, BUFFER_PSI_HEADER, BUFFER_PSI_METHOD,
+    BUFFER_PSI_RAW_BODY, BUFFER_PSI_RAW_COOKIE, BUFFER_PSI_RAW_HEADER, BUFFER_PSI_RAW_REQUEST,
+    BUFFER_PSI_RAW_STATUS, BUFFER_PSI_RAW_TRAILER, BUFFER_PSI_RAW_URI, BUFFER_PSI_STAT_CODE,
+    BUFFER_PSI_STAT_MSG, BUFFER_PSI_TRAILER, BUFFER_PSI_TRUE_IP, BUFFER_PSI_URI, BUFFER_PSI_VERSION,
+    BUFFER_PSI_JS_DATA, BUFFER_PSI_VBA_DATA, BUFFER_PSI_MAX
+#endif
+    InspectionBuffer::IBT_BODY,
+    InspectionBuffer::IBT_COOKIE,
+    InspectionBuffer::IBT_HEADER,
+    InspectionBuffer::IBT_METHOD,
+    InspectionBuffer::IBT_MAX,
+    InspectionBuffer::IBT_MAX,
+    InspectionBuffer::IBT_RAW_HEADER,
+    InspectionBuffer::IBT_MAX,
+    InspectionBuffer::IBT_MAX,
+    InspectionBuffer::IBT_RAW_HEADER,
+    InspectionBuffer::IBT_RAW_KEY,
+    InspectionBuffer::IBT_STAT_CODE,
+    InspectionBuffer::IBT_STAT_MSG,
+    InspectionBuffer::IBT_HEADER,
+    InspectionBuffer::IBT_MAX,
+    InspectionBuffer::IBT_KEY,
+    InspectionBuffer::IBT_MAX,
+    InspectionBuffer::IBT_JS_DATA,
+    InspectionBuffer::IBT_VBA,
+    InspectionBuffer::IBT_MAX
+};
 
 IpsOption::EvalStatus HttpBufferIpsOption::eval(Cursor& c, Packet* p)
 {
     RuleProfile profile(HttpBufferRuleOptModule::http_buffer_ps[idx]);
 
-    const HttpInspect* const hi = eval_helper(p);
+    HttpInspect* hi = const_cast<HttpInspect*>(eval_helper(p));
     if (hi == nullptr)
         return NO_MATCH;
-    
+
+    if (p->packet_flags & PKT_FAST_PAT_EVAL)
+    {
+        InspectionBuffer buf;
+        InspectionBuffer::Type ibt = buf_map[idx];
+
+        if (ibt == InspectionBuffer::IBT_MAX)
+            return NO_MATCH;
+
+        if (!hi->get_fp_buf(ibt, p, buf))
+            return NO_MATCH;
+
+        c.set(key, buf.data, buf.len);
+        return MATCH;
+    }
+
     const Field& http_buffer = hi->http_get_buf(p, buffer_info);
     if (http_buffer.length() <= 0)
         return NO_MATCH;
@@ -163,7 +208,7 @@ IpsOption::EvalStatus HttpBufferIpsOption::eval(Cursor& c, Packet* p)
 
 static Module* client_body_mod_ctor()
 {
-    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_CLIENT_BODY, CAT_SET_BODY,
+    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_CLIENT_BODY, CAT_SET_FAST_PATTERN,
         BUFFER_PSI_CLIENT_BODY);
 }
 
@@ -216,8 +261,8 @@ static const Parameter http_cookie_params[] =
 
 static Module* cookie_mod_ctor()
 {
-    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_COOKIE, CAT_SET_COOKIE, BUFFER_PSI_COOKIE,
-        http_cookie_params);
+    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_COOKIE, CAT_SET_FAST_PATTERN,
+        BUFFER_PSI_COOKIE, http_cookie_params);
 }
 
 static const IpsApi cookie_api =
@@ -277,7 +322,7 @@ static const Parameter http_header_params[] =
 
 static Module* header_mod_ctor()
 {
-    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_HEADER, CAT_SET_HEADER,
+    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_HEADER, CAT_SET_FAST_PATTERN,
         BUFFER_PSI_HEADER, http_header_params);
 }
 
@@ -328,8 +373,8 @@ static const Parameter http_method_params[] =
 
 static Module* method_mod_ctor()
 {
-    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_METHOD, CAT_SET_METHOD, BUFFER_PSI_METHOD,
-        http_method_params);
+    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_METHOD, CAT_SET_FAST_PATTERN,
+        BUFFER_PSI_METHOD, http_method_params);
 }
 
 static const IpsApi method_api =
@@ -476,7 +521,7 @@ static const Parameter http_raw_header_params[] =
 
 static Module* raw_header_mod_ctor()
 {
-    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_RAW_HEADER, CAT_SET_RAW_HEADER,
+    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_RAW_HEADER, CAT_SET_FAST_PATTERN,
         BUFFER_PSI_RAW_HEADER, http_raw_header_params);
 }
 
@@ -630,7 +675,7 @@ static const Parameter http_raw_trailer_params[] =
 
 static Module* raw_trailer_mod_ctor()
 {
-    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_RAW_TRAILER, CAT_SET_RAW_HEADER,
+    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_RAW_TRAILER, CAT_SET_FAST_PATTERN,
         BUFFER_PSI_RAW_TRAILER, http_raw_trailer_params);
 }
 
@@ -693,7 +738,7 @@ static const Parameter http_raw_uri_params[] =
 
 static Module* raw_uri_mod_ctor()
 {
-    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_RAW_URI, CAT_SET_RAW_KEY,
+    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_RAW_URI, CAT_SET_FAST_PATTERN,
         BUFFER_PSI_RAW_URI, http_raw_uri_params);
 }
 
@@ -742,7 +787,7 @@ static const Parameter http_stat_code_params[] =
 
 static Module* stat_code_mod_ctor()
 {
-    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_STAT_CODE, CAT_SET_STAT_CODE,
+    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_STAT_CODE, CAT_SET_FAST_PATTERN,
         BUFFER_PSI_STAT_CODE, http_stat_code_params);
 }
 
@@ -791,7 +836,7 @@ static const Parameter http_stat_msg_params[] =
 
 static Module* stat_msg_mod_ctor()
 {
-    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_STAT_MSG, CAT_SET_STAT_MSG,
+    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_STAT_MSG, CAT_SET_FAST_PATTERN,
         BUFFER_PSI_STAT_MSG, http_stat_msg_params);
 }
 
@@ -844,7 +889,7 @@ static const Parameter http_trailer_params[] =
 
 static Module* trailer_mod_ctor()
 {
-    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_TRAILER, CAT_SET_HEADER,
+    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_TRAILER, CAT_SET_FAST_PATTERN,
         BUFFER_PSI_TRAILER, http_trailer_params);
 }
 
@@ -958,8 +1003,8 @@ static const Parameter http_uri_params[] =
 
 static Module* uri_mod_ctor()
 {
-    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_URI, CAT_SET_KEY, BUFFER_PSI_URI,
-        http_uri_params);
+    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, HTTP_BUFFER_URI, CAT_SET_FAST_PATTERN,
+        BUFFER_PSI_URI, http_uri_params);
 }
 
 static const IpsApi uri_api =
@@ -1051,7 +1096,7 @@ static const IpsApi version_api =
 #define IPS_HELP "rule option to set detection cursor to normalized JavaScript data"
 static Module* js_data_mod_ctor()
 {
-    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, BUFFER_JS_DATA, CAT_SET_JS_DATA,
+    return new HttpBufferRuleOptModule(IPS_OPT, IPS_HELP, BUFFER_JS_DATA, CAT_SET_FAST_PATTERN,
         BUFFER_PSI_JS_DATA);
 }
 

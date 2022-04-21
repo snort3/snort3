@@ -331,6 +331,29 @@ void get_flowbits_dependencies(void* option_data, bool& set, std::vector<std::st
     p->get_dependencies(set, bits);
 }
 
+void flowbits_counts(unsigned& total, unsigned& unchecked, unsigned& unset)
+{
+    unchecked = unset = 0;
+
+    for ( const auto& it : bit_map )
+    {
+        if ((it.second.sets > 0) and (it.second.checks == 0))
+        {
+            ParseWarning(WARN_FLOWBITS, "%s key '%s' is set but not checked.",
+                s_name, it.first.c_str());
+            unchecked++;
+        }
+        else if ((it.second.checks > 0) and (it.second.sets == 0))
+        {
+            ParseWarning(WARN_FLOWBITS, "%s key '%s' is checked but not set.",
+                s_name, it.first.c_str());
+            unset++;
+        }
+    }
+
+    total = bit_map.size();
+}
+
 //-------------------------------------------------------------------------
 // parsing methods
 //-------------------------------------------------------------------------
@@ -399,35 +422,6 @@ static bool parse_flowbits(const char* flowbits_names, FlowBitCheck* check)
         check->add(flow_bit->id);
     }
     return true;
-}
-
-static void flowbits_verify()
-{
-    unsigned unchecked = 0, unset = 0;
-
-    for ( const auto& it : bit_map )
-    {
-        if ((it.second.sets > 0) and (it.second.checks == 0))
-        {
-            ParseWarning(WARN_FLOWBITS, "%s key '%s' is set but not checked.",
-                s_name, it.first.c_str());
-            unchecked++;
-        }
-        else if ((it.second.checks > 0) and (it.second.sets == 0))
-        {
-            ParseWarning(WARN_FLOWBITS, "%s key '%s' is checked but not set.",
-                s_name, it.first.c_str());
-            unset++;
-        }
-    }
-
-    if ( !bit_map.size() )
-        return;
-
-    LogLabel(s_name);
-    LogCount("defined", bit_map.size());
-    LogCount("not checked", unchecked);
-    LogCount("not set", unset);
 }
 
 //-------------------------------------------------------------------------
@@ -541,11 +535,6 @@ static void flowbits_dtor(IpsOption* p)
     delete p;
 }
 
-static void flowbits_verify(const SnortConfig*)
-{
-    flowbits_verify();
-}
-
 static const IpsApi flowbits_api =
 {
     {
@@ -568,7 +557,7 @@ static const IpsApi flowbits_api =
     nullptr,
     flowbits_ctor,
     flowbits_dtor,
-    flowbits_verify
+    nullptr
 };
 
 const BaseApi* ips_flowbits = &flowbits_api.base;

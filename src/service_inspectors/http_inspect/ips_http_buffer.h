@@ -69,7 +69,7 @@ class HttpBufferIpsOption : public HttpIpsOption
 {
 public:
     HttpBufferIpsOption(const HttpBufferRuleOptModule* cm) :
-        HttpIpsOption(cm, RULE_OPTION_TYPE_BUFFER_SET), idx(cm->idx),
+        HttpIpsOption(cm), idx(cm->idx),
         key(cm->key) {}
     EvalStatus eval(Cursor&, snort::Packet*) override;
 

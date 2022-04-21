@@ -126,7 +126,7 @@ static const Parameter http_num_hdrs_params[] =
 
 static Module* num_hdrs_mod_ctor()
 {
-    return new HttpNumHdrsRuleOptModule(IPS_OPT, IPS_HELP, HTTP_RANGE_NUM_HDRS, CAT_SET_OTHER,
+    return new HttpNumHdrsRuleOptModule(IPS_OPT, IPS_HELP, HTTP_RANGE_NUM_HDRS, CAT_NONE,
 	NUM_HDRS_PSI_HDRS, http_num_hdrs_params);
 }
 
@@ -165,7 +165,7 @@ static const IpsApi num_headers_api =
 
 static Module* num_trailers_mod_ctor()
 {
-    return new HttpNumHdrsRuleOptModule(IPS_OPT, IPS_HELP, HTTP_RANGE_NUM_TRAILERS, CAT_SET_OTHER,
+    return new HttpNumHdrsRuleOptModule(IPS_OPT, IPS_HELP, HTTP_RANGE_NUM_TRAILERS, CAT_NONE,
         NUM_HDRS_PSI_TRAILERS, http_num_hdrs_params);
 }
 

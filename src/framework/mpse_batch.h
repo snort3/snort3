@@ -130,8 +130,7 @@ struct MpseBatch
 
 inline void MpseBatch::search()
 {
-    items.begin()->second.so[0]->get_normal_mpse()->
-        search(*this, Mpse::MPSE_TYPE_NORMAL);
+    items.begin()->second.so[0]->get_normal_mpse()->search(*this, Mpse::MPSE_TYPE_NORMAL);
 }
 
 inline Mpse::MpseRespType MpseBatch::receive_responses()

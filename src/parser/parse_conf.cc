@@ -33,6 +33,7 @@
 #include <fstream>
 #include <stack>
 
+#include "detection/fp_utils.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "managers/module_manager.h"
@@ -244,12 +245,8 @@ void add_service_to_otn(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
     {
         // well-known services supporting file_data
         // applies to both alert file and service:file rules
-        add_service_to_otn(sc, otn, "ftp-data");
-        add_service_to_otn(sc, otn, "netbios-ssn");
-        add_service_to_otn(sc, otn, "http");
-        add_service_to_otn(sc, otn, "pop3");
-        add_service_to_otn(sc, otn, "imap");
-        add_service_to_otn(sc, otn, "smtp");
+        std::string buf = "file_data";
+        add_default_services(sc, buf, otn);
         add_service_to_otn(sc, otn, "file");
         return;
     }

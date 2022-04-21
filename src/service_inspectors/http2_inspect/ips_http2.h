@@ -67,7 +67,7 @@ class Http2IpsOption : public snort::IpsOption
 {
 public:
     Http2IpsOption(const Http2CursorModule* cm) :
-        snort::IpsOption(cm->key, RULE_OPTION_TYPE_BUFFER_SET), key(cm->key),
+        snort::IpsOption(cm->key), key(cm->key),
         buffer_index(cm->buffer_index), cat(cm->cat), psi(cm->psi) {}
     snort::CursorActionType get_cursor_type() const override { return cat; }
     EvalStatus eval(Cursor&, snort::Packet*) override;

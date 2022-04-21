@@ -778,6 +778,13 @@ static void pop_dtor(Inspector* p)
     delete p;
 }
 
+static const char* pop_bufs[] =
+{
+    "file_data",
+    "vba_data",
+    nullptr
+};
+
 const InspectApi pop_api =
 {
     {
@@ -794,7 +801,7 @@ const InspectApi pop_api =
     },
     IT_SERVICE,
     PROTO_BIT__PDU,
-    nullptr, // buffers
+    pop_bufs,
     "pop3",
     pop_init,
     pop_term, // pterm

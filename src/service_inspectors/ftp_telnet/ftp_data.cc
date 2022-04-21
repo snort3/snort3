@@ -348,6 +348,12 @@ static void fd_dtor(Inspector* p)
     delete p;
 }
 
+static const char* fd_bufs[] =
+{
+    "file_data",
+    nullptr
+};
+
 // exported in ftp.cc
 const InspectApi fd_api =
 {
@@ -365,7 +371,7 @@ const InspectApi fd_api =
     },
     IT_SERVICE,
     PROTO_BIT__PDU,
-    nullptr, // buffers
+    fd_bufs,
     fd_svc_name,
     fd_init,
     nullptr, // pterm

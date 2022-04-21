@@ -41,6 +41,7 @@
 #include "hash/hash_key_operations.h"
 #include "hash/xhash.h"
 #include "helpers/directory.h"
+#include "ips_options/ips_flowbits.h"
 #include "log/messages.h"
 #include "main/modules.h"
 #include "main/shell.h"
@@ -512,7 +513,8 @@ static void reduce_rtns(SnortConfig* sc)
     for ( auto node = sc->otn_map->find_first(); node; node = sc->otn_map->find_next() )
     {
         OptTreeNode* otn = (OptTreeNode*)node->data;
-        if ( !otn )
+
+        if ( !otn or otn->service_only() )
             continue;
 
         for ( auto pid = 0; pid < otn->proto_node_num; ++pid )
@@ -528,19 +530,7 @@ static void reduce_rtns(SnortConfig* sc)
     }
 }
 
-void ParseRulesFinish(SnortConfig* sc)
-{
-    if ( !sc->dump_rule_info() )
-        reduce_rtns(sc);
-
-    set_ips_policy(sc, 0);
-
-    /* Compile/Finish and Print the PortList Tables */
-    PortTablesFinish(sc->port_tables, sc->fast_pattern_config);
-    parse_rule_print();
-}
-
-void ShowPolicyStats(const SnortConfig* sc)
+static void ShowPolicyStats(const SnortConfig* sc)
 {
     std::unordered_map<PolicyId, int> stats;
     std::multimap<PolicyId, PolicyRuleStats> sorted_stats;
@@ -598,6 +588,23 @@ void ShowPolicyStats(const SnortConfig* sc)
     for (const auto& s : sorted_stats)
         LogMessage("%16u%8d%8d%8d%4s%s\n", s.first, s.second.loaded, s.second.shared,
             s.second.enabled, " ", s.second.file);
+}
+
+void ParseRulesFinish(SnortConfig* sc)
+{
+    ShowPolicyStats(sc);
+
+    if ( !sc->dump_rule_info() )
+        reduce_rtns(sc);
+
+    set_ips_policy(sc, 0);
+
+    /* Compile/Finish and Print the PortList Tables */
+    PortTablesFinish(sc->port_tables, sc->fast_pattern_config);
+
+    unsigned total, unchk, unset;
+    flowbits_counts(total, unchk, unset);
+    parse_rule_print(total, unchk, unset);
 }
 
 /****************************************************************************

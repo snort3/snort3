@@ -30,7 +30,9 @@
 #include <mutex>
 #include <sstream>
 #include <thread>
+#include <unordered_map>
 
+#include "framework/inspector.h"
 #include "framework/mpse.h"
 #include "framework/mpse_batch.h"
 #include "hash/ghash.h"
@@ -77,55 +79,15 @@ static bool pmd_can_be_fp(
     return pmd->can_be_fp();
 }
 
-PmType get_pm_type(CursorActionType cat)
+PatternMatcher::Type get_pm_type(const std::string& buf)
 {
-    switch ( cat )
-    {
-    case CAT_SET_RAW:
-    case CAT_SET_OTHER:
-        return PM_TYPE_PKT;
+    if ( buf == "pkt_data" or buf == "raw_data" )
+        return PatternMatcher::PMT_PKT;
 
-    case CAT_SET_COOKIE:
-        return PM_TYPE_COOKIE;
+    if ( buf == "file_data" )
+        return PatternMatcher::PMT_FILE;
 
-    case CAT_SET_JS_DATA:
-        return PM_TYPE_JS_DATA;
-
-    case CAT_SET_STAT_MSG:
-        return PM_TYPE_STAT_MSG;
-
-    case CAT_SET_STAT_CODE:
-        return PM_TYPE_STAT_CODE;
-
-    case CAT_SET_METHOD:
-        return PM_TYPE_METHOD;
-
-    case CAT_SET_RAW_HEADER:
-        return PM_TYPE_RAW_HEADER;
-
-    case CAT_SET_RAW_KEY:
-        return PM_TYPE_RAW_KEY;
-
-    case CAT_SET_FILE:
-        return PM_TYPE_FILE;
-
-    case CAT_SET_BODY:
-        return PM_TYPE_BODY;
-
-    case CAT_SET_HEADER:
-        return PM_TYPE_HEADER;
-
-    case CAT_SET_KEY:
-        return PM_TYPE_KEY;
-
-    case CAT_SET_VBA:
-        return PM_TYPE_VBA;
-
-    default:
-        break;
-    }
-    assert(false);
-    return PM_TYPE_MAX;
+    return PatternMatcher::PMT_PDU;
 }
 
 static RuleDirection get_dir(OptTreeNode* otn)
@@ -139,16 +101,71 @@ static RuleDirection get_dir(OptTreeNode* otn)
     return RULE_WO_DIR;
 }
 
-// this will be made extensible when fast patterns are extensible
-static const char* get_service(const char* opt)
+using SvcList = std::vector<std::string>;
+static std::unordered_map<std::string, SvcList> buffer_map;
+
+static const char* get_service(const char* buf)
+{
+    auto it = buffer_map.find(buf);
+
+    if ( it == buffer_map.end() )
+        return nullptr;
+
+    return it->second[0].c_str();
+}
+
+static unsigned get_num_services(const char* buf)
+{
+    auto it = buffer_map.find(buf);
+
+    if ( it == buffer_map.end() )
+        return 0;
+
+    return it->second.size();
+}
+
+void update_buffer_map(const char** bufs, const char* svc)
+{
+    if ( !bufs )
+        return;
+
+    if ( !svc )
+    {
+        assert(svc);
+        return;
+    }
+
+    // FIXIT-M update NHI and H2I api.buffers and remove the hard-coded foo below
+    for ( int i = 0; bufs[i]; ++i )
+    {
+        buffer_map[bufs[i]].push_back(svc);
+        if ( !strcmp(svc, "http") )
+            buffer_map[bufs[i]].push_back("http2");
+    }
+
+    if ( !strcmp(svc, "http") )
+    {
+        buffer_map["file_data"].push_back("http");
+        buffer_map["file_data"].push_back("http2");
+    }
+}
+
+void add_default_services(SnortConfig* sc, const std::string& buf, OptTreeNode* otn)
+{
+    SvcList& list = buffer_map[buf];
+
+    for ( auto& svc : list )
+        add_service_to_otn(sc, otn, svc.c_str());
+}
+
+// FIXIT-L this will be removed when ips option api
+// is updated to include service
+static const char* guess_service(const char* opt)
 {
     if ( !strncmp(opt, "http_", 5) )
         return "http";
 
-    if ( !strncmp(opt, "js_data", 7) )
-        return "http";
-
-    if ( !strncmp(opt, "cip_", 4) )  // NO FP BUF
+    if ( !strncmp(opt, "cip_", 4) or !strncmp(opt, "enip_", 5) )
         return "cip";
 
     if ( !strncmp(opt, "dce_", 4) )
@@ -157,8 +174,11 @@ static const char* get_service(const char* opt)
     if ( !strncmp(opt, "dnp3_", 5) )
         return "dnp3";
 
-    if ( !strncmp(opt, "gtp_", 4) )  // NO FP BUF
+    if ( !strncmp(opt, "gtp_", 4) )
         return "gtp";
+
+    if ( !strncmp(opt, "mms_", 4) )
+        return "mms";
 
     if ( !strncmp(opt, "modbus_", 7) )
         return "modbus";
@@ -169,8 +189,8 @@ static const char* get_service(const char* opt)
     if ( !strncmp(opt, "sip_", 4) )
         return "sip";
 
-    if ( !strncmp(opt, "vba_data", 8) )
-        return "file";
+    if ( !strncmp(opt, "ssl_", 4) )
+        return "ssl";
 
     return nullptr;
 }
@@ -293,20 +313,17 @@ static std::string make_db_name(
 
 static bool db_dump(const std::string& path, const char* proto, const char* dir, RuleGroup* g)
 {
-    for ( auto i = 0; i < PM_TYPE_MAX; ++i )
+    for ( auto it : g->pm_list )
     {
-        if ( !g->mpsegrp[i] )
-            continue;
-
         std::string id;
-        g->mpsegrp[i]->normal_mpse->get_hash(id);
+        it->group.normal_mpse->get_hash(id);
 
-        std::string file = make_db_name(path, proto, dir, pm_type_strings[i], id);
+        std::string file = make_db_name(path, proto, dir, it->name, id);
 
         uint8_t* db = nullptr;
         size_t len = 0;
 
-        if ( g->mpsegrp[i]->normal_mpse->serialize(db, len) and db and len > 0 )
+        if ( it->group.normal_mpse->serialize(db, len) and db and len > 0 )
         {
             store(file, db, len);
             free(db);
@@ -323,15 +340,12 @@ static bool db_dump(const std::string& path, const char* proto, const char* dir,
 
 static bool db_load(const std::string& path, const char* proto, const char* dir, RuleGroup* g)
 {
-    for ( auto i = 0; i < PM_TYPE_MAX; ++i )
+    for ( auto it : g->pm_list )
     {
-        if ( !g->mpsegrp[i] )
-            continue;
-
         std::string id;
-        g->mpsegrp[i]->normal_mpse->get_hash(id);
+        it->group.normal_mpse->get_hash(id);
 
-        std::string file = make_db_name(path, proto, dir, pm_type_strings[i], id);
+        std::string file = make_db_name(path, proto, dir, it->name, id);
 
         uint8_t* db = nullptr;
         size_t len = 0;
@@ -341,7 +355,7 @@ static bool db_load(const std::string& path, const char* proto, const char* dir,
             ParseWarning(WARN_RULES, "Failed to read %s", file.c_str());
             return false;
         }
-        else if ( !g->mpsegrp[i]->normal_mpse->deserialize(db, len) )
+        else if ( !it->group.normal_mpse->deserialize(db, len) )
         {
             ParseWarning(WARN_RULES, "Failed to deserialize %s", file.c_str());
             return false;
@@ -431,8 +445,8 @@ unsigned fp_deserialize(const SnortConfig* sc, const std::string& dir)
 
 void validate_services(SnortConfig* sc, OptTreeNode* otn)
 {
-    std::string svc;
-    bool file = false;
+    std::string svc, multi_svc_buf;
+    const char* guess = nullptr;
 
     for (OptFpList* ofl = otn->opt_func; ofl; ofl = ofl->next)
     {
@@ -440,23 +454,28 @@ void validate_services(SnortConfig* sc, OptTreeNode* otn)
             continue;
 
         CursorActionType cat = ofl->ips_opt->get_cursor_type();
-
-        if ( cat <= CAT_ADJUST )
-            continue;
-
         const char* s = ofl->ips_opt->get_name();
 
-        // special case file_data because it could be any subset of file carving services
-        if ( !strcmp(s, "file_data") )
+        if ( cat <= CAT_ADJUST )
         {
-            file = true;
+            if ( !guess )
+                guess = guess_service(s);
+
+            continue;
+        }
+
+        unsigned n = get_num_services(s);
+
+        if ( !n )
+            continue;
+
+        if ( n > 1 )
+        {
+            multi_svc_buf = s;
             continue;
         }
 
         s = get_service(s);
-
-        if ( !s )
-            continue;
 
         if ( !svc.empty() and svc != s )
         {
@@ -478,21 +497,35 @@ void validate_services(SnortConfig* sc, OptTreeNode* otn)
 
         add_service_to_otn(sc, otn, svc.c_str());
     }
-    if ( otn->sigInfo.services.empty() and file )
+    if ( otn->sigInfo.services.empty() and !multi_svc_buf.empty() )
     {
-        ParseWarning(WARN_RULES, "%u:%u:%u has no service with file_data",
-            otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev);
-        add_service_to_otn(sc, otn, "file");
+        ParseWarning(WARN_RULES, "%u:%u:%u has no service with %s",
+            otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, multi_svc_buf.c_str());
+
+        add_default_services(sc, multi_svc_buf, otn);
+    }
+    if ( !otn->sigInfo.services.size() and guess )
+    {
+        ParseWarning(WARN_RULES, "%u:%u:%u has no service with %s option",
+            otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, guess);
+
+        add_service_to_otn(sc, otn, guess);
+
+        if ( !strcmp(guess, "netbios-ssn") )  // :(
+            add_service_to_otn(sc, otn, "dcerpc");
+
+        otn->set_service_only();
     }
 }
 
 PatternMatchVector get_fp_content(
-    OptTreeNode* otn, OptFpList*& node, bool srvc, bool only_literals, bool& exclude)
+    OptTreeNode* otn, OptFpList*& node, IpsOption*& fp_opt, bool srvc, bool only_literals, bool& exclude)
 {
     CursorActionType curr_cat = CAT_SET_RAW;
     FpSelector best;
     bool content = false;
     PatternMatchVector pmds;
+    IpsOption* curr_opt = nullptr, * best_opt = nullptr;
 
     for (OptFpList* ofl = otn->opt_func; ofl; ofl = ofl->next)
     {
@@ -502,7 +535,12 @@ PatternMatchVector get_fp_content(
         CursorActionType cat = ofl->ips_opt->get_cursor_type();
 
         if ( cat > CAT_ADJUST )
+        {
+            if ( cat == CAT_SET_FAST_PATTERN or cat == CAT_SET_RAW )
+                curr_opt = ofl->ips_opt;
+
             curr_cat = cat;
+        }
 
         RuleDirection dir = get_dir(otn);
         PatternMatchData* tmp = ofl->ips_opt->get_pattern(otn->snort_protocol_id, dir);
@@ -518,6 +556,7 @@ PatternMatchVector get_fp_content(
         {
             best = curr;
             node = ofl;
+            best_opt = curr_opt;
         }
     }
 
@@ -533,6 +572,7 @@ PatternMatchVector get_fp_content(
         if (alt_pmd)
             pmds.emplace_back(alt_pmd);
         pmds.emplace_back(best.pmd); // add primary pattern last
+        fp_opt = best_opt;
     }
     return pmds;
 }
@@ -638,8 +678,6 @@ unsigned compile_mpses(struct SnortConfig* sc, bool parallel)
 #ifdef UNIT_TEST
 static void set_pmd(PatternMatchData& pmd, unsigned flags, const char* s)
 {
-    memset(&pmd, 0, sizeof(pmd));
-
     if ( flags & 0x01 )
         pmd.set_negated();
     if ( flags & 0x02 )
@@ -657,49 +695,49 @@ static void set_pmd(PatternMatchData& pmd, unsigned flags, const char* s)
 
 TEST_CASE("pmd_no_options", "[PatternMatchData]")
 {
-    PatternMatchData pmd;
+    PatternMatchData pmd = { };
     set_pmd(pmd, 0x0, "foo");
     CHECK(pmd.can_be_fp());
 }
 
 TEST_CASE("pmd_negated", "[PatternMatchData]")
 {
-    PatternMatchData pmd;
+    PatternMatchData pmd = { };
     set_pmd(pmd, 0x1, "foo");
     CHECK(!pmd.can_be_fp());
 }
 
 TEST_CASE("pmd_no_case", "[PatternMatchData]")
 {
-    PatternMatchData pmd;
+    PatternMatchData pmd = { };
     set_pmd(pmd, 0x2, "foo");
     CHECK(pmd.can_be_fp());
 }
 
 TEST_CASE("pmd_relative", "[PatternMatchData]")
 {
-    PatternMatchData pmd;
+    PatternMatchData pmd = { };
     set_pmd(pmd, 0x4, "foo");
     CHECK(pmd.can_be_fp());
 }
 
 TEST_CASE("pmd_negated_no_case", "[PatternMatchData]")
 {
-    PatternMatchData pmd;
+    PatternMatchData pmd = { };
     set_pmd(pmd, 0x3, "foo");
     CHECK(pmd.can_be_fp());
 }
 
 TEST_CASE("pmd_negated_relative", "[PatternMatchData]")
 {
-    PatternMatchData pmd;
+    PatternMatchData pmd = { };
     set_pmd(pmd, 0x5, "foo");
     CHECK(!pmd.can_be_fp());
 }
 
 TEST_CASE("pmd_negated_no_case_offset", "[PatternMatchData]")
 {
-    PatternMatchData pmd;
+    PatternMatchData pmd = { };
     set_pmd(pmd, 0x1, "foo");
     pmd.offset = 3;
     CHECK(!pmd.can_be_fp());
@@ -707,7 +745,7 @@ TEST_CASE("pmd_negated_no_case_offset", "[PatternMatchData]")
 
 TEST_CASE("pmd_negated_no_case_depth", "[PatternMatchData]")
 {
-    PatternMatchData pmd;
+    PatternMatchData pmd = { };
     set_pmd(pmd, 0x3, "foo");
     pmd.depth = 1;
     CHECK(!pmd.can_be_fp());
@@ -716,7 +754,7 @@ TEST_CASE("pmd_negated_no_case_depth", "[PatternMatchData]")
 TEST_CASE("fp_simple", "[FastPatternSelect]")
 {
     FpSelector test;
-    PatternMatchData pmd;
+    PatternMatchData pmd = { };
     set_pmd(pmd, 0x0, "foo");
     FpSelector left(CAT_SET_RAW, nullptr, &pmd);
     CHECK(left.is_better_than(test, false, RULE_WO_DIR));
@@ -727,11 +765,11 @@ TEST_CASE("fp_simple", "[FastPatternSelect]")
 
 TEST_CASE("fp_negated", "[FastPatternSelect]")
 {
-    PatternMatchData p0;
+    PatternMatchData p0 = { };
     set_pmd(p0, 0x0, "foo");
     FpSelector s0(CAT_SET_RAW, nullptr, &p0);
 
-    PatternMatchData p1;
+    PatternMatchData p1 = { };
     set_pmd(p1, 0x1, "foo");
     FpSelector s1(CAT_SET_RAW, nullptr, &p1);
 
@@ -741,26 +779,26 @@ TEST_CASE("fp_negated", "[FastPatternSelect]")
 
 TEST_CASE("fp_cat1", "[FastPatternSelect]")
 {
-    PatternMatchData p0;
+    PatternMatchData p0 = { };
     set_pmd(p0, 0x0, "longer");
-    FpSelector s0(CAT_SET_FILE, nullptr, &p0);
+    FpSelector s0(CAT_SET_FAST_PATTERN, nullptr, &p0);
 
-    PatternMatchData p1;
+    PatternMatchData p1 = { };
     set_pmd(p1, 0x0, "short");
-    FpSelector s1(CAT_SET_BODY, nullptr, &p1);
+    FpSelector s1(CAT_SET_FAST_PATTERN, nullptr, &p1);
 
     CHECK(s0.is_better_than(s1, true, RULE_WO_DIR));
 }
 
 TEST_CASE("fp_cat2", "[FastPatternSelect]")
 {
-    PatternMatchData p0;
+    PatternMatchData p0 = { };
     set_pmd(p0, 0x0, "foo");
     FpSelector s0(CAT_SET_RAW, nullptr, &p0);
 
-    PatternMatchData p1;
+    PatternMatchData p1 = { };
     set_pmd(p1, 0x0, "foo");
-    FpSelector s1(CAT_SET_FILE, nullptr, &p1);
+    FpSelector s1(CAT_SET_FAST_PATTERN, nullptr, &p1);
 
     CHECK(!s0.is_better_than(s1, false, RULE_WO_DIR));
     CHECK(!s1.is_better_than(s0, false, RULE_WO_DIR));
@@ -768,117 +806,117 @@ TEST_CASE("fp_cat2", "[FastPatternSelect]")
 
 TEST_CASE("fp_cat3", "[FastPatternSelect]")
 {
-    PatternMatchData p0;
+    PatternMatchData p0 = { };
     set_pmd(p0, 0x0, "foo");
     FpSelector s0(CAT_SET_RAW, nullptr, &p0);
 
-    PatternMatchData p1;
+    PatternMatchData p1 = { };
     set_pmd(p1, 0x0, "foo");
-    FpSelector s1(CAT_SET_FILE, nullptr, &p1);
+    FpSelector s1(CAT_SET_FAST_PATTERN, nullptr, &p1);
 
     CHECK(!s0.is_better_than(s1, true, RULE_WO_DIR));
 }
 
 TEST_CASE("fp_size", "[FastPatternSelect]")
 {
-    PatternMatchData p0;
+    PatternMatchData p0 = { };
     set_pmd(p0, 0x0, "longer");
-    FpSelector s0(CAT_SET_HEADER, nullptr, &p0);
+    FpSelector s0(CAT_SET_FAST_PATTERN, nullptr, &p0);
 
-    PatternMatchData p1;
+    PatternMatchData p1 = { };
     set_pmd(p1, 0x0, "short");
-    FpSelector s1(CAT_SET_HEADER, nullptr, &p1);
+    FpSelector s1(CAT_SET_FAST_PATTERN, nullptr, &p1);
 
     CHECK(s0.is_better_than(s1, false, RULE_WO_DIR));
 }
 
 TEST_CASE("fp_pkt_key_port", "[FastPatternSelect]")
 {
-    PatternMatchData p0;
+    PatternMatchData p0 = { };
     set_pmd(p0, 0x0, "short");
     FpSelector s0(CAT_SET_RAW, nullptr, &p0);
 
-    PatternMatchData p1;
+    PatternMatchData p1 = { };
     set_pmd(p1, 0x0, "longer");
-    FpSelector s1(CAT_SET_KEY, nullptr, &p1);
+    FpSelector s1(CAT_SET_FAST_PATTERN, nullptr, &p1);
 
     CHECK(!s0.is_better_than(s1, false, RULE_WO_DIR));
 }
 
 TEST_CASE("fp_pkt_key_port_user", "[FastPatternSelect]")
 {
-    PatternMatchData p0;
+    PatternMatchData p0 = { };
     set_pmd(p0, 0x10, "short");
-    FpSelector s0(CAT_SET_KEY, nullptr, &p0);
+    FpSelector s0(CAT_SET_FAST_PATTERN, nullptr, &p0);
 
-    PatternMatchData p1;
+    PatternMatchData p1 = { };
     set_pmd(p1, 0x0, "longer");
-    FpSelector s1(CAT_SET_KEY, nullptr, &p1);
+    FpSelector s1(CAT_SET_FAST_PATTERN, nullptr, &p1);
 
     CHECK(s0.is_better_than(s1, false, RULE_WO_DIR));
 }
 
 TEST_CASE("fp_pkt_key_port_user_user", "[FastPatternSelect]")
 {
-    PatternMatchData p0;
+    PatternMatchData p0 = { };
     set_pmd(p0, 0x10, "longer");
-    FpSelector s0(CAT_SET_KEY, nullptr, &p0);
+    FpSelector s0(CAT_SET_FAST_PATTERN, nullptr, &p0);
 
-    PatternMatchData p1;
+    PatternMatchData p1 = { };
     set_pmd(p1, 0x10, "short");
-    FpSelector s1(CAT_SET_KEY, nullptr, &p1);
+    FpSelector s1(CAT_SET_FAST_PATTERN, nullptr, &p1);
 
     CHECK(!s0.is_better_than(s1, false, RULE_WO_DIR));
 }
 
 TEST_CASE("fp_pkt_key_port_user_user2", "[FastPatternSelect]")
 {
-    PatternMatchData p0;
+    PatternMatchData p0 = { };
     set_pmd(p0, 0x0, "longer");
-    FpSelector s0(CAT_SET_KEY, nullptr, &p0);
+    FpSelector s0(CAT_SET_FAST_PATTERN, nullptr, &p0);
 
-    PatternMatchData p1;
+    PatternMatchData p1 = { };
     set_pmd(p1, 0x10, "short");
-    FpSelector s1(CAT_SET_KEY, nullptr, &p1);
+    FpSelector s1(CAT_SET_FAST_PATTERN, nullptr, &p1);
 
     CHECK(!s0.is_better_than(s1, false, RULE_WO_DIR));
 }
 
 TEST_CASE("fp_pkt_key_srvc_1", "[FastPatternSelect]")
 {
-    PatternMatchData p0;
+    PatternMatchData p0 = { };
     set_pmd(p0, 0x0, "short");
     FpSelector s0(CAT_SET_RAW, nullptr, &p0);
 
-    PatternMatchData p1;
+    PatternMatchData p1 = { };
     set_pmd(p1, 0x0, "longer");
-    FpSelector s1(CAT_SET_KEY, nullptr, &p1);
+    FpSelector s1(CAT_SET_FAST_PATTERN, nullptr, &p1);
 
     CHECK(s1.is_better_than(s0, true, RULE_WO_DIR));
 }
 
 TEST_CASE("fp_pkt_key_srvc_2", "[FastPatternSelect]")
 {
-    PatternMatchData p0;
+    PatternMatchData p0 = { };
     set_pmd(p0, 0x0, "longer");
     FpSelector s0(CAT_SET_RAW, nullptr, &p0);
 
-    PatternMatchData p1;
+    PatternMatchData p1 = { };
     set_pmd(p1, 0x0, "short");
-    FpSelector s1(CAT_SET_KEY, nullptr, &p1);
+    FpSelector s1(CAT_SET_FAST_PATTERN, nullptr, &p1);
 
     CHECK(s0.is_better_than(s1, true, RULE_WO_DIR));
 }
 
 TEST_CASE("fp_pkt_key_srvc_rsp", "[FastPatternSelect]")
 {
-    PatternMatchData p0;
+    PatternMatchData p0 = { };
     set_pmd(p0, 0x0, "short");
     FpSelector s0(CAT_SET_RAW, nullptr, &p0);
 
-    PatternMatchData p1;
+    PatternMatchData p1 = { };
     set_pmd(p1, 0x0, "longer");
-    FpSelector s1(CAT_SET_KEY, nullptr, &p1);
+    FpSelector s1(CAT_SET_FAST_PATTERN, nullptr, &p1);
 
     CHECK(!s0.is_better_than(s1, true, RULE_FROM_SERVER));
     CHECK(s1.is_better_than(s0, true, RULE_FROM_SERVER));

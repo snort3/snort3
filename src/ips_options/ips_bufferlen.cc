@@ -40,12 +40,14 @@ static THREAD_LOCAL ProfileStats lenCheckPerfStats;
 class LenOption : public IpsOption
 {
 public:
-    LenOption(const RangeCheck& c, bool r) :
-        IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE)
+    LenOption(const RangeCheck& c, bool r) : IpsOption(s_name)
     { config = c; relative = r; }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
+
+    bool is_relative() override
+    { return relative; }
 
     EvalStatus eval(Cursor&, Packet*) override;
 

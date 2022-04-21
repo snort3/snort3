@@ -75,7 +75,7 @@ class ByteMathOption : public IpsOption
 {
 public:
     ByteMathOption(const ByteMathData& c) :
-        IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_USE), config(c)
+        IpsOption(s_name), config(c)
     { }
 
     ~ByteMathOption() override
@@ -83,9 +83,6 @@ public:
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
-
-    CursorActionType get_cursor_type() const override
-    { return CAT_ADJUST; }
 
     bool is_relative() override
     { return config.relative_flag; }
@@ -619,22 +616,12 @@ static ByteMathDataMatcher ByteMathDataEquals(const ByteMathData& value)
     return {value};
 }
 
-class SetBufferOptionHelper : public IpsOption
-{
-public:
-    SetBufferOptionHelper(const char* value)
-        : IpsOption(value, RULE_OPTION_TYPE_BUFFER_SET)
-    { }
-};
-
 //-------------------------------------------------------------------------
 // option tests
 //-------------------------------------------------------------------------
 
 TEST_CASE("ByteMathOption::operator== valid", "[ips_byte_math]")
 {
-    SetBufferOptionHelper set_buf("test");
-
     char* lhs_name = new char[9];
     strcpy(lhs_name, "test_lhs");
     ByteMathData data_lhs;
@@ -654,8 +641,6 @@ TEST_CASE("ByteMathOption::operator== valid", "[ips_byte_math]")
 
 TEST_CASE("ByteMathOption::operator== invalid", "[ips_byte_math]")
 {
-    SetBufferOptionHelper set_buf("test");
-
     char* lhs_name = new char[5];
     strcpy(lhs_name, "test");
     ByteMathData data_lhs;
@@ -666,11 +651,6 @@ TEST_CASE("ByteMathOption::operator== invalid", "[ips_byte_math]")
     char* rhs_name = new char[5];
     strcpy(rhs_name, "test");
 
-    SECTION("not equal to IpsOption object")
-    {
-        CHECK(lhs != set_buf);
-        delete[] rhs_name;
-    }
     SECTION("all fields is different")
     {
         delete[] rhs_name;
@@ -793,8 +773,6 @@ TEST_CASE("ByteMathOption::operator== invalid", "[ips_byte_math]")
 
 TEST_CASE("ByteMathOption::hash", "[ips_byte_math]")
 {
-    SetBufferOptionHelper set_buf("test");
-
     char* lhs_name = new char[5];
     strcpy(lhs_name, "test");
     ByteMathData data_lhs;

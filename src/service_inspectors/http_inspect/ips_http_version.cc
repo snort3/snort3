@@ -153,7 +153,7 @@ static const Parameter version_match_params[] =
 
 static Module* version_match_mod_ctor()
 {
-    return new HttpVersionRuleOptModule(IPS_OPT, IPS_HELP, HTTP_VERSION_MATCH, CAT_SET_OTHER,
+    return new HttpVersionRuleOptModule(IPS_OPT, IPS_HELP, HTTP_VERSION_MATCH, CAT_NONE,
         version_match_params);
 }
 

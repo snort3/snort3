@@ -152,6 +152,14 @@ static void dce2_smb_dtor(Inspector* p)
     delete p;
 }
 
+static const char* dce2_bufs[] =
+{
+    "dce_iface",
+    "dce_stub_data",
+    "file_data",
+    nullptr
+};
+
 const InspectApi dce2_smb_api =
 {
     {
@@ -168,7 +176,7 @@ const InspectApi dce2_smb_api =
     },
     IT_SERVICE,
     PROTO_BIT__PDU,
-    nullptr,  // buffers
+    dce2_bufs,
     DCE_SMB_PROTOCOL_ID,
     dce2_smb_init,
     nullptr,

@@ -52,18 +52,7 @@ enum CursorActionType
     CAT_ADJUST,
     CAT_SET_OTHER,
     CAT_SET_RAW,
-    CAT_SET_COOKIE,
-    CAT_SET_STAT_MSG,
-    CAT_SET_STAT_CODE,
-    CAT_SET_METHOD,
-    CAT_SET_RAW_HEADER,
-    CAT_SET_RAW_KEY,
-    CAT_SET_FILE,
-    CAT_SET_BODY,
-    CAT_SET_HEADER,
-    CAT_SET_KEY,
-    CAT_SET_JS_DATA,
-    CAT_SET_VBA,
+    CAT_SET_FAST_PATTERN,
 };
 
 enum RuleDirection
@@ -95,10 +84,6 @@ public:
     enum EvalStatus { NO_MATCH, MATCH, NO_ALERT, FAILED_BIT };
     virtual EvalStatus eval(Cursor&, Packet*) { return MATCH; }
 
-    option_type_t get_type() const { return type; }
-    const char* get_name() const { return name; }
-    const char* get_buffer() const { return buffer; }
-
     virtual CursorActionType get_cursor_type() const
     { return CAT_NONE; }
 
@@ -109,14 +94,21 @@ public:
     virtual PatternMatchData* get_alternate_pattern()
     { return nullptr; }
 
-    static void set_buffer(const char*);
+    option_type_t get_type() const { return type; }
+    const char* get_name() const { return name; }
+
+    bool is_buffer_setter() const
+    { return get_cursor_type() > CAT_ADJUST; }
+
+    const char* get_buffer()
+    { return buffer; }
 
 protected:
     IpsOption(const char* s, option_type_t t = RULE_OPTION_TYPE_OTHER);
 
 private:
     const char* name;
-    const char* buffer;
+    const char* buffer = "error"; // FIXIT-API to be deleted; here to avoid an api update
     option_type_t type;
 };
 

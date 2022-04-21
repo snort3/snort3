@@ -144,11 +144,9 @@ static IpsOption* get_option(Module* mod, const char* pat)
     mod->end(ips_regex->name, 0, nullptr);
 
     OptTreeNode otn;
-    otn.sticky_buf = 0;
 
     const IpsApi* api = (const IpsApi*) ips_regex;
     IpsOption* opt = api->ctor(mod, &otn);
-    IpsOption::set_buffer("pkt_data");
 
     return opt;
 }

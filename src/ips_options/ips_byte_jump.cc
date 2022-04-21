@@ -109,9 +109,7 @@ struct ByteJumpData : public ByteData
 class ByteJumpOption : public IpsOption
 {
 public:
-    ByteJumpOption(const ByteJumpData& c) : IpsOption(s_name,
-        RULE_OPTION_TYPE_BUFFER_USE), config(c)
-    { }
+    ByteJumpOption(const ByteJumpData& c) : IpsOption(s_name), config(c) { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -597,14 +595,6 @@ static void SetByteJumpMaxValue(ByteJumpData &byte_jump)
     byte_jump.post_offset_var = SCHAR_MAX;
 }
 
-class StubIpsOption : public IpsOption
-{
-public:
-    StubIpsOption(const char* name, option_type_t option_type) :
-        IpsOption(name, option_type)
-    { }
-};
-
 class StubEndianness : public Endianness
 {
 public:
@@ -617,7 +607,6 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
 {
     ByteJumpData byte_jump;
     SetByteJumpData(byte_jump, 1);
-    snort::IpsOption::set_buffer("hello_world");
 
     SECTION("method hash")
     {
@@ -662,13 +651,6 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
     SECTION("operator ==")
     {
         ByteJumpOption jump(byte_jump);
-
-        SECTION("Compare IpsOptions with different names")
-        {
-            StubIpsOption case_diff_name("not_hello_world",
-                option_type_t::RULE_OPTION_TYPE_BUFFER_USE);
-            REQUIRE(jump != case_diff_name);
-        }
 
         ByteJumpData byte_jump2;
         SetByteJumpData(byte_jump2, 1);

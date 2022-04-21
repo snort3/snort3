@@ -75,6 +75,7 @@
 #include "detection_options.h"
 #include "fp_config.h"
 #include "fp_create.h"
+#include "fp_utils.h"
 #include "ips_context.h"
 #include "pattern_match_data.h"
 #include "pcrm.h"
@@ -856,21 +857,21 @@ static int rule_tree_queue(
 }
 
 static inline int batch_search(
-    MpseGroup* so, Packet* p, const uint8_t* buf, unsigned len, PegCount& cnt)
+    MpseGroup* mpg, Packet* p, const uint8_t* buf, unsigned len, PegCount& cnt)
 {
-    assert(so->get_normal_mpse()->get_pattern_count() > 0);
+    assert(mpg->get_normal_mpse()->get_pattern_count() > 0);
     cnt++;
 
     // FIXIT-P Batch outer UDP payload searches for teredo set and the outer header
     // during any signature evaluation
     if ( p->is_udp_tunneled() )
     {
-        fp_immediate(so, p, buf, len);
+        fp_immediate(mpg, p, buf, len);
     }
     else
     {
         MpseBatchKey<> key = MpseBatchKey<>(buf, len);
-        p->context->searches.items[key].so.push_back(so);
+        p->context->searches.items[key].so.push_back(mpg);
     }
 
     dump_buffer(buf, len, p);
@@ -880,109 +881,83 @@ static inline int batch_search(
     return 0;
 }
 
-static inline void search_buffer(
-    Inspector* gadget, InspectionBuffer& buf, InspectionBuffer::Type ibt,
-    Packet* p, RuleGroup* pg, PmType pmt, PegCount& cnt)
-{
-    if ( MpseGroup* so = pg->mpsegrp[pmt] )
-    {
-        if ( gadget->get_fp_buf(ibt, p, buf) )
-        {
-            debug_logf(detection_trace, TRACE_FP_SEARCH, p,
-                "%" PRIu64 " fp %s.%s[%d]\n", p->context->packet_number,
-                gadget->get_name(), pm_type_strings[pmt], buf.len);
-
-            batch_search(so, p, buf.data, buf.len, cnt);
-        }
-    }
-}
-
 static int fp_search(RuleGroup* port_group, Packet* p, bool srvc)
 {
+    p->packet_flags |= PKT_FAST_PAT_EVAL;
     Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
-    InspectionBuffer buf;
 
     debug_log(detection_trace, TRACE_RULE_EVAL, p, "Fast pattern search\n");
 
-    // ports search raw packet only
-    if ( p->dsize )
+    for ( const auto it : port_group->pm_list )
     {
-        assert(p->data);
-
-        if ( MpseGroup* so = port_group->mpsegrp[PM_TYPE_PKT] )
+        switch ( it->type )
         {
-            if ( uint16_t pattern_match_size = p->get_detect_limit() )
+        case PatternMatcher::PMT_PKT:
             {
-                debug_logf(detection_trace, TRACE_FP_SEARCH, p,
-                    "%" PRIu64 " fp %s[%u]\n", p->context->packet_number,
-                    pm_type_strings[PM_TYPE_PKT], pattern_match_size);
+                bool alt_search = false;
+                if ( gadget )
+                {
+                    // need to add a norm_data keyword or telnet, rpc_decode, smtp keywords
+                    // until then we must use the standard packet mpse
+                    const DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
 
-                batch_search(so, p, p->data, pattern_match_size, pc.pkt_searches);
-                p->is_cooked() ?  pc.cooked_searches++ : pc.raw_searches++;
+                    if ( buf.len )
+                    {
+                        debug_logf(detection_trace, TRACE_FP_SEARCH, p,
+                            "%" PRIu64 " fp alt_data[%u]\n", p->context->packet_number, buf.len);
+
+                        batch_search(&it->group, p, buf.data, buf.len, pc.alt_searches);
+                        alt_search = true;
+                    }
+                }
+                if ( p->dsize and (!alt_search or it->raw_data) )
+                {
+                    assert(p->data);
+
+                    if ( uint16_t length = p->get_detect_limit() )
+                    {
+                        debug_logf(detection_trace, TRACE_FP_SEARCH, p,
+                            "%" PRIu64 " fp pkt_data[%u]\n", p->context->packet_number, length);
+
+                        batch_search(&it->group, p, p->data, length, pc.pkt_searches);
+                        p->is_cooked() ?  pc.cooked_searches++ : pc.raw_searches++;
+                    }
+                }
             }
+            break;
+
+        case PatternMatcher::PMT_PDU:
+            if ( srvc and gadget )
+            {
+                Cursor c;
+
+                if ( it->fp_opt->eval(c, p) == IpsOption::MATCH )
+                {
+                    debug_logf(detection_trace, TRACE_FP_SEARCH, p,
+                        "%" PRIu64 " fp %s[%d]\n", p->context->packet_number, c.get_name(), c.size());
+
+                    batch_search(&it->group, p, c.buffer(), c.size(), pc.pdu_searches);
+                }
+            }
+            break;
+
+        case PatternMatcher::PMT_FILE:
+            if ( srvc )
+            {
+                DataPointer file_data = p->context->file_data;
+
+                if ( file_data.len )
+                {
+                    debug_logf(detection_trace, TRACE_FP_SEARCH, p,
+                        "%" PRIu64 " fp search file_data[%d]\n", p->context->packet_number, file_data.len);
+
+                    batch_search(&it->group, p, file_data.data, file_data.len, pc.file_searches);
+                }
+            }
+            break;
         }
     }
-
-    if ( gadget )
-    {
-        // FIXIT-L PM_TYPE_ALT will never be set unless we add
-        // norm_data keyword or telnet, rpc_decode, smtp keywords
-        // until then we must use the standard packet mpse
-        search_buffer(gadget, buf, buf.IBT_ALT, p, port_group, PM_TYPE_PKT, pc.alt_searches);
-    }
-
-    if ( !srvc )
-        return 0;
-
-    // service searches PDU buffers and file
-    if ( gadget )
-    {
-        search_buffer(gadget, buf, buf.IBT_KEY, p, port_group, PM_TYPE_KEY, pc.key_searches);
-
-        search_buffer(gadget, buf, buf.IBT_HEADER, p, port_group, PM_TYPE_HEADER, pc.header_searches);
-
-        search_buffer(gadget, buf, buf.IBT_BODY, p, port_group, PM_TYPE_BODY, pc.body_searches);
-
-        search_buffer(
-            gadget, buf, buf.IBT_RAW_KEY, p, port_group, PM_TYPE_RAW_KEY, pc.raw_key_searches);
-
-        search_buffer(
-            gadget, buf, buf.IBT_RAW_HEADER, p, port_group, PM_TYPE_RAW_HEADER, pc.raw_header_searches);
-
-        search_buffer(
-            gadget, buf, buf.IBT_METHOD, p, port_group, PM_TYPE_METHOD, pc.method_searches);
-
-        search_buffer(
-            gadget, buf, buf.IBT_STAT_CODE, p, port_group, PM_TYPE_STAT_CODE, pc.stat_code_searches);
-
-        search_buffer(
-            gadget, buf, buf.IBT_STAT_MSG, p, port_group, PM_TYPE_STAT_MSG, pc.stat_msg_searches);
-
-        search_buffer(
-            gadget, buf, buf.IBT_COOKIE, p, port_group, PM_TYPE_COOKIE, pc.cookie_searches);
-
-        search_buffer(gadget, buf, buf.IBT_VBA, p, port_group, PM_TYPE_VBA, pc.vba_searches);
-
-        search_buffer(gadget, buf, buf.IBT_JS_DATA, p, port_group, PM_TYPE_JS_DATA, pc.js_data_searches);
-    }
-
-    // file searches file only
-    if ( MpseGroup* so = port_group->mpsegrp[PM_TYPE_FILE] )
-    {
-        // FIXIT-M file data should be obtained from
-        // inspector gadget as is done with search_buffer
-        DataPointer file_data = p->context->file_data;
-
-        if ( file_data.len )
-        {
-            debug_logf(detection_trace, TRACE_FP_SEARCH, p,
-                "%" PRIu64 " fp search %s[%d]\n", p->context->packet_number,
-                pm_type_strings[PM_TYPE_FILE], file_data.len);
-
-            batch_search(so, p, file_data.data, file_data.len, pc.file_searches);
-        }
-    }
-
+    p->packet_flags &= ~PKT_FAST_PAT_EVAL;
     return 0;
 }
 
@@ -1367,13 +1342,13 @@ static void fp_immediate(Packet* p)
     }
 }
 
-static void fp_immediate(MpseGroup* so, Packet* p, const uint8_t* buf, unsigned len)
+static void fp_immediate(MpseGroup* mpg, Packet* p, const uint8_t* buf, unsigned len)
 {
     MpseStash* stash = p->context->stash;
     {
         Profile mpse_profile(mpsePerfStats);
         int start_state = 0;
-        so->get_normal_mpse()->search(buf, len, rule_tree_queue, p->context, &start_state);
+        mpg->get_normal_mpse()->search(buf, len, rule_tree_queue, p->context, &start_state);
     }
     {
         Profile rule_profile(rulePerfStats);

@@ -39,7 +39,7 @@ extern const snort::LiteralSearch* searcher ;
 class VbaDataOption : public snort::IpsOption
 {
 public:
-    VbaDataOption() : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_SET) { }
+    VbaDataOption() : IpsOption(s_name) { }
 
     snort::CursorActionType get_cursor_type() const override;
 

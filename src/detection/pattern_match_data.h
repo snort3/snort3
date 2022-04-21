@@ -22,6 +22,9 @@
 #define PATTERN_MATCH_DATA_H
 
 #include <sys/time.h>
+
+#include <cctype>
+#include <string>
 #include <vector>
 
 #include "framework/ips_option.h"  // FIXIT-L not a good dependency
@@ -36,8 +39,6 @@ struct PmdLastCheck
 
 struct PatternMatchData
 {
-    const char* pattern_buf; // app layer pattern to match on
-
     // FIXIT-L wasting some memory here:
     // - this is not used by content option logic directly
     // - and only used on current eval (not across packets)
@@ -47,7 +48,12 @@ struct PatternMatchData
        but the rule option specifies a negated content. Only
        applies to negative contents that are not relative */
     PmdLastCheck* last_check;
+    const char* sticky_buf = nullptr;  // provides context to contents
+    //----------------------------------------------------------------
+    // data above this point is for framework use only!
+    //----------------------------------------------------------------
 
+    const char* pattern_buf; // app layer pattern to match on
     unsigned pattern_size;   // size of app layer pattern
 
     int offset;              // pattern search start offset
@@ -68,9 +74,6 @@ struct PatternMatchData
 
     uint16_t fp_offset;
     uint16_t fp_length;
-
-    // not used by ips_content
-    uint8_t pm_type;
 
     bool is_unbounded() const
     { return !depth; }
@@ -106,6 +109,8 @@ struct PatternMatchData
     { return (flags & LITERAL) != 0; }
 
     bool can_be_fp() const;
+
+    bool has_alpha() const;
 };
 
 typedef std::vector<PatternMatchData*> PatternMatchVector;
@@ -135,6 +140,19 @@ inline bool PatternMatchData::can_be_fp() const
         return false;
 
     return true;
+}
+
+inline bool PatternMatchData::has_alpha() const
+{
+    unsigned offset = fp_offset ? fp_offset : 0;
+    unsigned length = fp_length ? fp_length : pattern_size;
+
+    for ( unsigned idx = 0; idx < length; ++idx )
+    {
+        if ( isalpha(pattern_buf[offset + idx]) )
+            return true;
+    }
+    return false;
 }
 
 #endif

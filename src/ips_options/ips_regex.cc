@@ -50,7 +50,7 @@ struct RegexConfig
 {
     hs_database_t* db;
     std::string re;
-    PatternMatchData pmd;
+    PatternMatchData pmd = { };
     bool pcre_upgrade;
 
     RegexConfig()
@@ -58,7 +58,6 @@ struct RegexConfig
 
     void reset()
     {
-        memset(&pmd, 0, sizeof(pmd));
         re.clear();
         db = nullptr;
         pcre_upgrade = false;
@@ -123,12 +122,11 @@ uint32_t RegexOption::hash() const
 {
     uint32_t a = config.pmd.flags;
     uint32_t b = config.pmd.mpse_flags;
-    uint32_t c = config.pmd.pm_type;
+    uint32_t c = IpsOption::hash();
 
     mix(a, b, c);
-    a += IpsOption::hash();
-
     mix_str(a, b, c, config.re.c_str());
+
     finalize(a, b, c);
 
     return c;
@@ -142,7 +140,6 @@ bool RegexOption::operator==(const IpsOption& ips) const
     const RegexOption& rhs = (const RegexOption&)ips;
 
     if ( config.re == rhs.config.re and
-         config.pmd.pm_type == rhs.config.pmd.pm_type and
          config.pmd.flags == rhs.config.pmd.flags and
          config.pmd.mpse_flags == rhs.config.pmd.mpse_flags )
         return true;
@@ -409,12 +406,11 @@ static Module* mod_ctor()
 static void mod_dtor(Module* p)
 { delete p; }
 
-static IpsOption* regex_ctor(Module* m, OptTreeNode* otn)
+static IpsOption* regex_ctor(Module* m, OptTreeNode*)
 {
     RegexModule* mod = (RegexModule*)m;
     RegexConfig c;
     mod->get_data(c);
-    c.pmd.pm_type = otn->sticky_buf;
     return new RegexOption(c);
 }
 

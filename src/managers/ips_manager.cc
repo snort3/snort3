@@ -349,9 +349,6 @@ void IpsManager::reset_options()
 {
     for ( auto& p : s_options )
         p.second->count = 0;
-
-    // this is the default when we start parsing a rule body
-    IpsOption::set_buffer("pkt_data");
 }
 
 void IpsManager::setup_options(const SnortConfig* sc)

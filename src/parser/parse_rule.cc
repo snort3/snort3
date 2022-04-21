@@ -699,7 +699,7 @@ void parse_rule_init()
 void parse_rule_term()
 { }
 
-void parse_rule_print()
+void parse_rule_print(unsigned fb_total, unsigned fb_unchk, unsigned fb_unset)
 {
     if ( !rule_count and !skip_count )
         return;
@@ -713,6 +713,9 @@ void parse_rule_print()
     LogCount("so rules", so_rule_count);
     LogCount("option chains", otn_count);
     LogCount("chain headers", head_count);
+    LogCount("flowbits", fb_total);
+    LogCount("flowbits not checked", fb_unchk);
+    LogCount("flowbits not set", fb_unset);
 
     unsigned ip = ipCnt.src + ipCnt.dst + ipCnt.any + ipCnt.both;
     unsigned icmp = icmpCnt.src + icmpCnt.dst + icmpCnt.any + icmpCnt.both;
@@ -975,7 +978,10 @@ void parse_rule_opt_end(SnortConfig* sc, const char* key, OptTreeNode* otn)
     CursorActionType cat = ips ? ips->get_cursor_type() : CAT_NONE;
 
     if ( cat > CAT_ADJUST )
-        otn->sticky_buf = get_pm_type(cat);
+    {
+        if ( cat != CAT_SET_RAW )
+            otn->set_service_only();
+    }
 
     if ( type != OPT_TYPE_META )
         otn->num_detection_opts++;

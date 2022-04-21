@@ -66,30 +66,6 @@ static dnp3_session_data_t* set_new_dnp3_session(Packet* p)
     return(&fd->dnp3_session);
 }
 
-static const uint8_t* dnp3_get_alt_buffer(Packet* p, unsigned& len)
-{
-    dnp3_session_data_t* dnp3_sess = get_session_data(p->flow);
-    len = 0;
-
-    if (dnp3_sess)
-    {
-        dnp3_reassembly_data_t* rdata;
-        /* rdata->buffer will be the alt decode buffer.
-           This will be returned via the get_buf inspector API*/
-
-        if (dnp3_sess->direction == DNP3_CLIENT)
-            rdata = &(dnp3_sess->client_rdata);
-        else
-            rdata = &(dnp3_sess->server_rdata);
-        if (rdata->state == DNP3_REASSEMBLY_STATE__DONE)
-        {
-            len = rdata->buflen;
-            return (const uint8_t*)rdata->buffer;
-        }
-    }
-    return nullptr;
-}
-
 static void dnp3_reset_alt_buffer(const Packet* p)
 {
     dnp3_session_data_t* dnp3_sess = get_session_data(p->flow);
@@ -220,13 +196,10 @@ public:
 
     void show(const SnortConfig*) const override;
     void eval(Packet*) override;
-    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
     void clear(Packet*) override;
 
     StreamSplitter* get_splitter(bool c2s) override
-    {
-        return new Dnp3Splitter(c2s);
-    }
+    { return new Dnp3Splitter(c2s); }
 
 private:
     dnp3ProtoConf config;
@@ -253,17 +226,6 @@ void Dnp3::eval(Packet* p)
     ++dnp3_stats.total_packets;
 
     process_dnp3(config, p);
-}
-
-bool Dnp3::get_buf(
-    InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
-{
-    if ( ibt != InspectionBuffer::IBT_ALT )
-        return false;
-
-    b.data = dnp3_get_alt_buffer(p,b.len);
-
-    return (b.data != nullptr);
 }
 
 void Dnp3::clear(Packet* p)
@@ -303,6 +265,12 @@ static void dnp3_dtor(Inspector* p)
     delete p;
 }
 
+static const char* dnp3_bufs[] =
+{
+    "dnp3_data",
+    nullptr
+};
+
 const InspectApi dnp3_api =
 {
     {
@@ -319,7 +287,7 @@ const InspectApi dnp3_api =
     },
     IT_SERVICE,
     PROTO_BIT__UDP | PROTO_BIT__PDU,
-    nullptr,  // buffers
+    dnp3_bufs,
     "dnp3",
     dnp3_init,
     nullptr, // pterm

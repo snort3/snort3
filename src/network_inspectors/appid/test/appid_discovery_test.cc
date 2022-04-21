@@ -66,7 +66,7 @@ Inspector::Inspector()
 }
 Inspector::~Inspector() = default;
 bool Inspector::likes(Packet*) { return true; }
-bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return true; }
+bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return false; }
 class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
 
 // Stubs for module

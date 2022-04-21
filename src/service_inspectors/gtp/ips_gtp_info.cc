@@ -49,11 +49,11 @@ class GtpInfoOption : public IpsOption
 public:
     GtpInfoOption(const uint8_t*);
 
-    CursorActionType get_cursor_type() const override
-    { return CAT_SET_OTHER; }
-
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
+
+    CursorActionType get_cursor_type() const override
+    { return CAT_SET_OTHER; }
 
     EvalStatus eval(Cursor&, Packet*) override;
 
@@ -63,7 +63,7 @@ public:
     uint8_t types[MAX_GTP_VERSION_CODE + 1];
 };
 
-GtpInfoOption::GtpInfoOption(const uint8_t* t) : IpsOption(s_name, RULE_OPTION_TYPE_BUFFER_SET)
+GtpInfoOption::GtpInfoOption(const uint8_t* t) : IpsOption(s_name)
 {
     for ( int v = 0; v <= MAX_GTP_VERSION_CODE; ++v )
         types[v] = t[v];

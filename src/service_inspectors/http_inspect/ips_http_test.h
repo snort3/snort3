@@ -63,7 +63,7 @@ class HttpTestIpsOption : public HttpIpsOption
 {
 public:
     HttpTestIpsOption(const HttpTestRuleOptModule* cm) :
-        HttpIpsOption(cm, RULE_OPTION_TYPE_OTHER), idx(cm->idx), check(cm->check),
+        HttpIpsOption(cm), idx(cm->idx), check(cm->check),
         numeric(cm->numeric), absent(cm->absent) {}
     EvalStatus eval(Cursor&, snort::Packet*) override;
     uint32_t hash() const override;

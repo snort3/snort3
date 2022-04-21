@@ -33,7 +33,7 @@ LiteralSearch::Handle* search_handle = nullptr;
 const LiteralSearch* searcher = nullptr;
 
 CursorActionType VbaDataOption::get_cursor_type() const
-{ return CAT_SET_VBA; }
+{ return CAT_SET_FAST_PATTERN; }
 
 IpsOption::EvalStatus VbaDataOption::eval(Cursor& c, Packet* p)
 {

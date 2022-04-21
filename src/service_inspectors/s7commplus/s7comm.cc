@@ -145,6 +145,12 @@ static void s7commplus_dtor(Inspector* p)
 
 //-------------------------------------------------------------------------
 
+static const char* s7commplus_bufs[] =
+{
+    "s7commplus_content",
+    nullptr
+};
+
 static const InspectApi s7commplus_api =
 {
     {
@@ -161,7 +167,7 @@ static const InspectApi s7commplus_api =
     },
     IT_SERVICE,
     PROTO_BIT__PDU,
-    nullptr,
+    s7commplus_bufs,
     "s7commplus",
     s7commplus_init,
     nullptr,

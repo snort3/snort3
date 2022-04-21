@@ -206,7 +206,7 @@ static const Parameter hdr_test_params[] =
 
 static Module* http_header_test_mod_ctor()
 {
-    return new HttpTestRuleOptModule(IPS_OPT, IPS_HELP, HTTP_HEADER_TEST, CAT_SET_OTHER,
+    return new HttpTestRuleOptModule(IPS_OPT, IPS_HELP, HTTP_HEADER_TEST, CAT_NONE,
         TEST_PSI_HEADER_TEST, hdr_test_params);
 }
 
@@ -265,7 +265,7 @@ check whether it is a number, or check if the field is absent"
 
 static Module* http_trailer_test_mod_ctor()
 {
-    return new HttpTestRuleOptModule(IPS_OPT, IPS_HELP, HTTP_TRAILER_TEST, CAT_SET_OTHER,
+    return new HttpTestRuleOptModule(IPS_OPT, IPS_HELP, HTTP_TRAILER_TEST, CAT_NONE,
         TEST_PSI_TRAILER_TEST, trailer_test_params);
 }
 

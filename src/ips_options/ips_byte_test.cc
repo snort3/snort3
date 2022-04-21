@@ -188,9 +188,7 @@ static inline bool byte_test_check(ByteTestOper op, uint32_t val, uint32_t cmp,
 class ByteTestOption : public IpsOption
 {
 public:
-    ByteTestOption(const ByteTestData& c) : IpsOption(s_name,
-        RULE_OPTION_TYPE_BUFFER_USE), config(c)
-    { }
+    ByteTestOption(const ByteTestData& c) : IpsOption(s_name), config(c) { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -656,14 +654,6 @@ static void SetByteTestDataMax(ByteTestData& byte_test)
     byte_test.offset_var = CHAR_MAX;
 }
 
-class StubIpsOption : public IpsOption
-{
-public:
-    StubIpsOption(const char* name, option_type_t option_type) :
-        IpsOption(name, option_type)
-    { }
-};
-
 class StubEndianness : public Endianness
 {
 public:
@@ -731,7 +721,6 @@ TEST_CASE("ByteTestOption test", "[ips_byte_test]")
 {
     ByteTestData byte_test;
     SetByteTestData(byte_test, 1);
-    snort::IpsOption::set_buffer("hello_world");
 
     SECTION("method hash")
     {
@@ -776,13 +765,6 @@ TEST_CASE("ByteTestOption test", "[ips_byte_test]")
     SECTION("operator ==")
     {
         ByteTestOption test(byte_test);
-
-        SECTION("Compare IpsOptions with different names")
-        {
-            StubIpsOption case_diff_name("not_hello_world",
-                option_type_t::RULE_OPTION_TYPE_BUFFER_USE);
-            REQUIRE(test != case_diff_name);
-        }
 
         SECTION("Compare between equals objects")
         {

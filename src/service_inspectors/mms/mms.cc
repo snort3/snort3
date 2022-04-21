@@ -149,6 +149,12 @@ static void mms_dtor(Inspector* p)
 
 //-------------------------------------------------------------------------
 
+static const char* mms_bufs[] =
+{
+    "mms_data",
+    nullptr
+};
+
 static const InspectApi mms_api =
 {
     {
@@ -165,7 +171,7 @@ static const InspectApi mms_api =
     },
     IT_SERVICE,
     PROTO_BIT__PDU,
-    nullptr,
+    mms_bufs,
     "mms",
     mms_init,
     nullptr,

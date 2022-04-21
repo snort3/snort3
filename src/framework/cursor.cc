@@ -25,6 +25,7 @@
 
 #include "cursor.h"
 
+#include "detection/detection_engine.h"
 #include "detection/detection_util.h"
 #include "protocols/packet.h"
 
@@ -94,16 +95,17 @@ void Cursor::set_data(CursorData* cd)
 
 void Cursor::reset(Packet* p)
 {
-    InspectionBuffer buf;
+    if ( p->flow and p->flow->gadget )
+    {
+        const DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
 
-    if ( p->flow and p->flow->gadget and
-        p->flow->gadget->get_buf(buf.IBT_ALT, p, buf) )
-    {
-        set("alt_data", buf.data, buf.len);
+        if ( buf.len )
+        {
+            set("alt_data", buf.data, buf.len);
+            return;
+        }
     }
-    else
-    {
-        set("pkt_data", p->data, p->get_detect_limit());
-    }
+
+    set("pkt_data", p->data, p->get_detect_limit());
 }
 

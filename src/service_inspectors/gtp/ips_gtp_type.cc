@@ -48,9 +48,6 @@ class GtpTypeOption : public IpsOption
 public:
     GtpTypeOption(ByteBitSet*);
 
-    CursorActionType get_cursor_type() const override
-    { return CAT_SET_OTHER; }
-
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 

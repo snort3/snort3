@@ -134,7 +134,7 @@ private:
 
 LuaJitOption::LuaJitOption(
     const char* name, std::string& chunk, LuaJitModule* mod)
-    : IpsOption((my_name = snort_strdup(name)), RULE_OPTION_TYPE_BUFFER_USE)
+    : IpsOption((my_name = snort_strdup(name)))
 {
     // create an args table with any rule options
     config = "args = { ";

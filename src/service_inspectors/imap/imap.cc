@@ -839,6 +839,13 @@ static void imap_dtor(Inspector* p)
     delete p;
 }
 
+static const char* imap_bufs[] =
+{
+    "file_data",
+    "vba_data",
+    nullptr
+};
+
 const InspectApi imap_api =
 {
     {
@@ -855,7 +862,7 @@ const InspectApi imap_api =
     },
     IT_SERVICE,
     PROTO_BIT__PDU,
-    nullptr, // buffers
+    imap_bufs,
     "imap",
     imap_init,
     imap_term, // pterm

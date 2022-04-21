@@ -1446,8 +1446,8 @@ public:
 
     bool configure(SnortConfig*) override;
     void show(const SnortConfig*) const override;
+
     void eval(Packet*) override;
-    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
     void clear(Packet*) override;
 
     StreamSplitter* get_splitter(bool c2s) override
@@ -1461,8 +1461,7 @@ public:
 
     void ProcessSmtpCmdsList(const SmtpCmd*);
 
-    bool get_fp_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p,
-        snort::InspectionBuffer& b) override;
+    bool get_fp_buf(snort::InspectionBuffer::Type, snort::Packet*, snort::InspectionBuffer&) override;
 
 private:
     SmtpProtoConf* config;
@@ -1516,40 +1515,6 @@ void Smtp::eval(Packet* p)
     snort_smtp(config, p);
 }
 
-bool Smtp::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
-{
-    // Fast pattern buffers only supplied at specific times
-    switch (ibt)
-    {
-        case InspectionBuffer::IBT_ALT:
-            b.data = SMTP_GetAltBuffer(p, b.len);
-            return (b.data != nullptr);
-
-        case InspectionBuffer::IBT_VBA:
-        {
-            SMTPData* smtp_ssn = get_session_data(p->flow);
-
-            if (!smtp_ssn)
-                return false;
-
-            const BufferData& vba_buf = smtp_ssn->mime_ssn->get_vba_inspect_buf();
-
-            if (vba_buf.data_ptr() && vba_buf.length())
-            {
-                b.data = vba_buf.data_ptr();
-                b.len = vba_buf.length();
-                return true;
-            }
-            else
-                return false;
-        }
-        default:
-            break;
-    }
-    return false;
-
-}
-
 void Smtp::clear(Packet* p)
 {
     SMTP_ResetAltBuffer(p);
@@ -1590,7 +1555,23 @@ void Smtp::ProcessSmtpCmdsList(const SmtpCmd* sc)
 
 bool Smtp::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
-    return get_buf(ibt, p, b);
+    if ( ibt != InspectionBuffer::IBT_VBA )
+        return false;
+
+    SMTPData* smtp_ssn = get_session_data(p->flow);
+
+    if (!smtp_ssn)
+        return false;
+
+    const BufferData& vba_buf = smtp_ssn->mime_ssn->get_vba_inspect_buf();
+
+    if ( vba_buf.data_ptr() && vba_buf.length() )
+    {
+        b.data = vba_buf.data_ptr();
+        b.len = vba_buf.length();
+        return true;
+    }
+    return false;
 }
 
 //-------------------------------------------------------------------------
@@ -1633,6 +1614,13 @@ static void smtp_dtor(Inspector* p)
     delete p;
 }
 
+static const char* smtp_bufs[] =
+{
+    "file_data",
+    "vba_data",
+    nullptr
+};
+
 const InspectApi smtp_api =
 {
     {
@@ -1649,7 +1637,7 @@ const InspectApi smtp_api =
     },
     IT_SERVICE,
     PROTO_BIT__PDU,
-    nullptr,                // buffers
+    smtp_bufs,
     "smtp",
     smtp_init,
     smtp_term,

@@ -187,7 +187,6 @@ public:
 
     void show(const SnortConfig*) const override;
     void eval(Packet*) override;
-    bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
 
     class StreamSplitter* get_splitter(bool to_server) override
     { return new SipSplitter(to_server); }
@@ -243,47 +242,6 @@ void Sip::eval(Packet* p)
     snort_sip(config, p);
 }
 
-bool Sip::get_buf(
-    InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
-{
-    SIPData* sd;
-    SIP_Roptions* ropts;
-    const uint8_t* data = nullptr;
-    unsigned len = 0;
-
-    sd = get_sip_session_data(p->flow);
-    if (!sd)
-        return false;
-
-    ropts = &sd->ropts;
-
-    switch ( ibt )
-    {
-    case InspectionBuffer::IBT_HEADER:
-        data = ropts->header_data;
-        len = ropts->header_len;
-        break;
-
-    case InspectionBuffer::IBT_BODY:
-        data = ropts->body_data;
-        len = ropts->body_len;
-        break;
-
-    default:
-        break;
-    }
-
-    if (!len)
-        return false;
-
-    assert(data);
-
-    b.data = data;
-    b.len = len;
-
-    return true;
-}
-
 //-------------------------------------------------------------------------
 // api stuff
 //-------------------------------------------------------------------------
@@ -310,6 +268,13 @@ static void sip_dtor(Inspector* p)
     delete p;
 }
 
+static const char* sip_bufs[] =
+{
+    "sip_header",
+    "sip_body",
+    nullptr
+};
+
 const InspectApi sip_api =
 {
     {
@@ -326,7 +291,7 @@ const InspectApi sip_api =
     },
     IT_SERVICE,
     PROTO_BIT__UDP | PROTO_BIT__PDU,
-    nullptr, // buffers
+    sip_bufs,
     "sip",
     sip_init,
     nullptr, // pterm

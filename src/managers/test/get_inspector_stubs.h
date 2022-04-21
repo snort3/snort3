@@ -38,6 +38,7 @@ void BinderModule::add(const char*, const char*) { }
 void BinderModule::add(unsigned, const char*) { }
 
 void set_default_policy(const snort::SnortConfig*) { }
+void update_buffer_map(const char**, const char*) { }
 
 namespace snort
 {

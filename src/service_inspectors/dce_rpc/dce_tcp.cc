@@ -198,6 +198,14 @@ static void dce2_tcp_init()
     DceContextData::init(DCE2_TRANS_TYPE__TCP);
 }
 
+static const char* dce2_tcp_bufs[] =
+{
+    "dce_iface",
+    "dce_stub_data",
+    "file_data",
+    nullptr
+};
+
 const InspectApi dce2_tcp_api =
 {
     {
@@ -214,7 +222,7 @@ const InspectApi dce2_tcp_api =
     },
     IT_SERVICE,
     PROTO_BIT__PDU,
-    nullptr,  // buffers
+    dce2_tcp_bufs,
     DCE_RPC_SERVICE_NAME,
     dce2_tcp_init,
     nullptr, // pterm

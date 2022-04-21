@@ -318,7 +318,6 @@ void SnortConfig::setup()
     }
 
     ParseRulesFinish(this);
-    ShowPolicyStats(this);
 
     /* Need to do this after dynamic detection stuff is initialized, too */
     IpsManager::verify(this);
