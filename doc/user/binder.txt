@@ -48,3 +48,7 @@ configurations are applied.  binder.when can contain any combination of
 criteria and binder.use can specify an action, config file, or inspector
 configuration.
 
+If binder is not explicitly configured (via file *.lua or option --lua),
+a default binder will be instantiated in which bindings will be created for all
+service inspectors configured. Some bindings may require a configured wizard to
+detect the service type.

@@ -5,7 +5,7 @@ bound to the flow.
 
 If the binder is not explicitly configured but the wizard is configured,
 then the inspector manager will create a default binder with bindings for
-each configured service inspector.
+each configured service inspector (excluding wizard itself).
 
 BinderModule creates a vector of Bindings from the Lua binder table which
 is moved to the Binder upon its construction.  Upon start of flow, the
