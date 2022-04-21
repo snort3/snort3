@@ -387,6 +387,7 @@ static const PegInfo rna_pegs[] =
     { CountType::SUM, "dhcp_data", "count of DHCP data events received" },
     { CountType::SUM, "dhcp_info", "count of new DHCP lease events received" },
     { CountType::SUM, "smb", "count of new SMB events received" },
+    { CountType::SUM, "netflow_record", "count of netflow record events received" },
     { CountType::END, nullptr, nullptr},
 };
 

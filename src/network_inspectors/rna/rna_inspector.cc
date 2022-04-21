@@ -105,7 +105,9 @@ bool RnaInspector::configure(SnortConfig*)
     DataBus::subscribe_network( STREAM_TCP_SYN_EVENT, new RnaTcpSynEventHandler(*pnd) );
     DataBus::subscribe_network( STREAM_TCP_SYN_ACK_EVENT, new RnaTcpSynAckEventHandler(*pnd) );
     DataBus::subscribe_network( STREAM_TCP_MIDSTREAM_EVENT, new RnaTcpMidstreamEventHandler(*pnd) );
+
     DataBus::subscribe_network( CPE_OS_INFO_EVENT, new RnaCPEOSInfoEventHandler(*pnd) );
+    DataBus::subscribe_network( NETFLOW_EVENT, new RnaNetflowEventHandler(*pnd) );
 
     if (rna_conf && rna_conf->log_when_idle)
         DataBus::subscribe_network( THREAD_IDLE_EVENT, new RnaIdleEventHandler(*pnd) );

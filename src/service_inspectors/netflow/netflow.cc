@@ -35,6 +35,7 @@
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+#include "pub_sub/netflow_event.h"
 #include "sfip/sf_ip.h"
 #include "src/utils/endian.h"
 #include "utils/util.h"
@@ -49,6 +50,19 @@ struct IpCompare
 {
     bool operator()(const snort::SfIp& a, const snort::SfIp& b)
     { return a.less_than(b); }
+};
+
+// Used to ensure we fully populate the record; can't rely on the actual values being zero
+struct RecordStatus
+{
+    bool src = false;
+    bool dst = false;
+    bool first = false;
+    bool last = false;
+    bool src_tos = false;
+    bool dst_tos = false;
+    bool bytes_sent = false;
+    bool packets_sent = false;
 };
 
 // -----------------------------------------------------------------------------
@@ -81,9 +95,7 @@ static bool filter_record(const NetflowRules* rules, const int zone,
         for( auto const& rule : rules->exclude )
         {
             if ( rule.filter_match(address, zone) )
-            {
                 return false;
-            }
         }
     }
 
@@ -92,18 +104,15 @@ static bool filter_record(const NetflowRules* rules, const int zone,
         for( auto const& rule : rules->include )
         {
             if ( rule.filter_match(address, zone) )
-            {
-                // check i.create_host i.create_service
-                // and publish events
                 return true;
-            }
         }
     }
     return false;
 }
 
 static bool version_9_record_update(const unsigned char* data, uint32_t unix_secs,
-        std::vector<Netflow9TemplateField>::iterator field, NetflowSessionRecord &record)
+    std::vector<Netflow9TemplateField>::iterator field, NetflowSessionRecord &record,
+    RecordStatus& record_status)
 {
 
     switch ( field->field_type )
@@ -144,6 +153,8 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
             // Invalid source IP address provided
             if ( record.initiator_ip.set((const uint32_t *)data, AF_INET) != SFIP_SUCCESS )
                 return false;
+
+            record_status.src = true;
             break;
 
         case NETFLOW_SRC_IPV6:
@@ -151,6 +162,8 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
             // Invalid source IP address provided
             if ( record.initiator_ip.set((const uint32_t *)data, AF_INET6) != SFIP_SUCCESS )
                 return false;
+
+            record_status.src = true;
             break;
 
         case NETFLOW_DST_PORT:
@@ -171,6 +184,8 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
             // Invalid destination IP address
             if ( record.responder_ip.set((const uint32_t *)data, AF_INET) != SFIP_SUCCESS )
                 return false;
+
+            record_status.dst = true;
             break;
 
         case NETFLOW_DST_IPV6:
@@ -178,6 +193,8 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
             // Invalid destination IP address
             if ( record.responder_ip.set((const uint32_t *)data, AF_INET6) != SFIP_SUCCESS )
                 return false;
+
+            record_status.dst = true;
             break;
 
         case NETFLOW_IPV4_NEXT_HOP:
@@ -202,6 +219,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
             if( record.last_pkt_second > MAX_TIME )
                 return false;
 
+            record_status.last = true;
             break;
 
         case NETFLOW_FIRST_PKT:
@@ -215,6 +233,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
             if( record.first_pkt_second > MAX_TIME )
                 return 0;
 
+            record_status.first = true;
             break;
 
         case NETFLOW_IN_BYTES:
@@ -228,6 +247,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
             else
                 return false;
 
+            record_status.bytes_sent = true;
             break;
 
         case NETFLOW_IN_PKTS:
@@ -241,6 +261,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
             else
                 return false;
 
+            record_status.packets_sent = true;
             break;
 
         case NETFLOW_SRC_TOS:
@@ -249,6 +270,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
                 return false;
 
             record.nf_src_tos = (uint8_t)*data;
+            record_status.src_tos = true;
             break;
 
         case NETFLOW_DST_TOS:
@@ -257,6 +279,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
                 return false;
 
             record.nf_dst_tos = (uint8_t)*data;
+            record_status.dst_tos = true;
             break;
 
         case NETFLOW_SNMP_IN:
@@ -397,6 +420,7 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
             {
 
                 NetflowSessionRecord record = {};
+                RecordStatus record_status;
                 bool bad_field = false;
 
                 for ( auto t_field = tf.begin(); t_field != tf.end(); ++t_field )
@@ -407,7 +431,8 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
 
                     if ( !bad_field )
                     {
-                        bool status = version_9_record_update(data, header.unix_secs, t_field, record);
+                        bool status = version_9_record_update(data, header.unix_secs,
+                            t_field, record, record_status);
 
                         if ( !status )
                             bad_field = true;
@@ -430,7 +455,24 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
                     continue;
                 }
 
-                // create flow event here
+                if ( record_status.bytes_sent and record_status.packets_sent and
+                    record_status.src and record_status.dst and record_status.first and
+                    record_status.last and record.first_pkt_second <= record.last_pkt_second )
+                {
+                    if ( record_status.src_tos )
+                    {
+                        if ( !record_status.dst_tos )
+                            record.nf_dst_tos = record.nf_src_tos;
+                    }
+                    else if ( record_status.dst_tos )
+                    {
+                        if ( !record_status.src_tos )
+                            record.nf_src_tos = record.nf_dst_tos;
+                    }
+                    // send create_host and create_service flags too so that rna event handler can log those
+                    NetflowEvent event(p, &record);
+                    DataBus::publish(NETFLOW_EVENT, event);
+                }
 
                 // check if record exists
                 auto result = netflow_cache->find(record.initiator_ip);
@@ -625,6 +667,9 @@ static bool decode_netflow_v5(const unsigned char* data, uint16_t size,
         if ( result.second )
             ++netflow_stats.unique_flows;
 
+        // send create_host and create_service flags too so that rna event handler can log those
+        NetflowEvent event(p, &record);
+        DataBus::publish(NETFLOW_EVENT, event);
     }
     return true;
 }
@@ -896,9 +941,8 @@ NetflowInspector::~NetflowInspector()
 
 void NetflowInspector::eval(Packet* p)
 {
-    // precondition - what we registered for
-    assert((p->is_udp() and p->dsize and p->data));
-    assert(netflow_cache);
+    if ( !p->is_udp() or !p->dsize or !p->data or !netflow_cache )
+        return;
 
     auto d = config->device_rule_map.find(*p->ptrs.ip_api.get_src());
 

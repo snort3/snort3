@@ -31,6 +31,7 @@
 #include "protocols/vlan.h"
 #include "pub_sub/appid_events.h"
 #include "pub_sub/dhcp_events.h"
+#include "pub_sub/netflow_event.h"
 #include "pub_sub/smb_events.h"
 #include "sfip/sf_ip.h"
 
@@ -131,6 +132,7 @@ public:
     void add_dhcp_info(snort::DataEvent&);
     void analyze_smb_fingerprint(snort::DataEvent&);
     bool analyze_cpe_os_info(snort::DataEvent&);
+    bool analyze_netflow(snort::DataEvent&);
 
     // generate change event for all hosts in the ip cache
     void generate_change_host_update();

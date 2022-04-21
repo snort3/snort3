@@ -133,3 +133,10 @@ void RnaCPEOSInfoEventHandler::handle(DataEvent& event, Flow*)
     ++rna_stats.cpe_os;
     pnd.analyze_cpe_os_info(event);
 }
+
+void RnaNetflowEventHandler::handle(DataEvent& event, Flow*)
+{
+    Profile profile(rna_perf_stats);
+    ++rna_stats.netflow_record;
+    pnd.analyze_netflow(event);
+}

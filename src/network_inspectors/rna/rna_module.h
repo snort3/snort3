@@ -54,6 +54,7 @@ struct RnaStats
     PegCount dhcp_data;
     PegCount dhcp_info;
     PegCount smb;
+    PegCount netflow_record;
 };
 
 extern THREAD_LOCAL RnaStats rna_stats;

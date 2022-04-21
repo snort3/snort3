@@ -176,6 +176,26 @@ bool RnaPnd::analyze_cpe_os_info(snort::DataEvent& event)
     return true;
 }
 
+bool RnaPnd::analyze_netflow(snort::DataEvent& event)
+{
+    const Packet* p = event.get_packet();
+    if ( !p )
+        return false;
+
+    const auto& src_ip = p->ptrs.ip_api.get_src();
+    const auto& src_ip_ptr = (const struct in6_addr*) src_ip->get_ip6_ptr();
+    const auto& src_mac = layer::get_eth_layer(p)->ether_src;
+    NetflowEvent* nfe = static_cast<NetflowEvent*>(&event);
+    const NetflowSessionRecord* nf_record = nfe->get_record();
+
+    // process host and service log events
+    UNUSED(src_ip_ptr);
+    UNUSED(src_mac);
+    UNUSED(nf_record);
+
+    return true;
+}
+
 void RnaPnd::discover_network_icmp(const Packet* p)
 {
     discover_network(p, 0);

@@ -12,6 +12,7 @@ set (PUB_SUB_INCLUDES
     finalize_packet_event.h
     http_events.h
     http_request_body_event.h
+    netflow_event.h
     opportunistic_tls_event.h
     sip_events.h
     smb_events.h
