@@ -34,6 +34,7 @@
 #include "mms_decode.h"
 #include "mms_module.h"
 #include "mms_splitter.h"
+#include "util_tpkt.h"
 
 using namespace snort;
 
@@ -135,6 +136,7 @@ static void mod_dtor(Module* m)
 static void mms_init()
 {
     MmsFlowData::init();
+    TpktFlowData::init();
 }
 
 static Inspector* mms_ctor(Module*)

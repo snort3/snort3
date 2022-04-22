@@ -155,7 +155,6 @@ StreamSplitter::Status MmsSplitter::scan(Packet* p, const uint8_t* data, uint32_
 
     if (!tpktfd)
     {
-        TpktFlowData::init();
         tpktfd = new TpktFlowData;
         p->flow->set_flow_data(tpktfd);
         tpktfd->reset_packet_data(TPKT_PACKET_DATA_DIRECTION__SERVER);

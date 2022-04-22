@@ -316,7 +316,6 @@ TpktEncapLayerType get_next_tpkt_encap_layer(Packet* p, Cursor* c)
 
     if (!tpktfd)
     {
-        TpktFlowData::init();
         tpktfd = new TpktFlowData;
         p->flow->set_flow_data(tpktfd);
     }
