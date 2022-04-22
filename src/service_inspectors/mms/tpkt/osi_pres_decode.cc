@@ -37,7 +37,7 @@ static TpktAppliSearchStateType decode_osi_pres_normal_mode_params(BerReader*, C
 bool process_next_ber_tag(BerReader* ber, BerElement* e, Cursor* tpkt_cur, BerTagProcessType
     process_type)
 {
-    if (ber->read(tpkt_cur->start(), *e))
+    if (e and ber->read(tpkt_cur->start(), *e))
     {
         // determine if the cursor needs to be incremented by only the header
         // length or both the header and payload length
