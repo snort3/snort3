@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.27.0 2022-04-07 13:35:35 EDT TST
+Revision 3.1.28.0 2022-04-25 10:44:49 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -115,32 +115,33 @@ Table of Contents
     5.26. iec104
     5.27. imap
     5.28. mem_test
-    5.29. modbus
-    5.30. netflow
-    5.31. normalizer
-    5.32. null_trace_logger
-    5.33. packet_capture
-    5.34. perf_monitor
-    5.35. pop
-    5.36. port_scan
-    5.37. reputation
-    5.38. rna
-    5.39. rpc_decode
-    5.40. s7commplus
-    5.41. sip
-    5.42. smtp
-    5.43. so_proxy
-    5.44. ssh
-    5.45. ssl
-    5.46. stream
-    5.47. stream_file
-    5.48. stream_icmp
-    5.49. stream_ip
-    5.50. stream_tcp
-    5.51. stream_udp
-    5.52. stream_user
-    5.53. telnet
-    5.54. wizard
+    5.29. mms
+    5.30. modbus
+    5.31. netflow
+    5.32. normalizer
+    5.33. null_trace_logger
+    5.34. packet_capture
+    5.35. perf_monitor
+    5.36. pop
+    5.37. port_scan
+    5.38. reputation
+    5.39. rna
+    5.40. rpc_decode
+    5.41. s7commplus
+    5.42. sip
+    5.43. smtp
+    5.44. so_proxy
+    5.45. ssh
+    5.46. ssl
+    5.47. stream
+    5.48. stream_file
+    5.49. stream_icmp
+    5.50. stream_ip
+    5.51. stream_tcp
+    5.52. stream_udp
+    5.53. stream_user
+    5.54. telnet
+    5.55. wizard
 
 6. IPS Action Modules
 
@@ -231,49 +232,51 @@ Table of Contents
     7.80. js_data
     7.81. md5
     7.82. metadata
-    7.83. modbus_data
-    7.84. modbus_func
-    7.85. modbus_unit
-    7.86. msg
-    7.87. mss
-    7.88. pcre
-    7.89. pkt_data
-    7.90. pkt_num
-    7.91. priority
-    7.92. raw_data
-    7.93. reference
-    7.94. regex
-    7.95. rem
-    7.96. replace
-    7.97. rev
-    7.98. rpc
-    7.99. s7commplus_content
-    7.100. s7commplus_func
-    7.101. s7commplus_opcode
-    7.102. sd_pattern
-    7.103. seq
-    7.104. service
-    7.105. sha256
-    7.106. sha512
-    7.107. sid
-    7.108. sip_body
-    7.109. sip_header
-    7.110. sip_method
-    7.111. sip_stat_code
-    7.112. so
-    7.113. soid
-    7.114. ssl_state
-    7.115. ssl_version
-    7.116. stream_reassemble
-    7.117. stream_size
-    7.118. tag
-    7.119. target
-    7.120. tos
-    7.121. ttl
-    7.122. urg
-    7.123. vba_data
-    7.124. window
-    7.125. wscale
+    7.83. mms_data
+    7.84. mms_func
+    7.85. modbus_data
+    7.86. modbus_func
+    7.87. modbus_unit
+    7.88. msg
+    7.89. mss
+    7.90. pcre
+    7.91. pkt_data
+    7.92. pkt_num
+    7.93. priority
+    7.94. raw_data
+    7.95. reference
+    7.96. regex
+    7.97. rem
+    7.98. replace
+    7.99. rev
+    7.100. rpc
+    7.101. s7commplus_content
+    7.102. s7commplus_func
+    7.103. s7commplus_opcode
+    7.104. sd_pattern
+    7.105. seq
+    7.106. service
+    7.107. sha256
+    7.108. sha512
+    7.109. sid
+    7.110. sip_body
+    7.111. sip_header
+    7.112. sip_method
+    7.113. sip_stat_code
+    7.114. so
+    7.115. soid
+    7.116. ssl_state
+    7.117. ssl_version
+    7.118. stream_reassemble
+    7.119. stream_size
+    7.120. tag
+    7.121. target
+    7.122. tos
+    7.123. ttl
+    7.124. urg
+    7.125. vba_data
+    7.126. window
+    7.127. wscale
 
 8. Search Engine Modules
 9. SO Rule Modules
@@ -601,29 +604,10 @@ Peg counts:
     (sum)
   * detection.alt_searches: alt fast pattern searches in packet data
     (sum)
-  * detection.key_searches: fast pattern searches in key buffer (sum)
-  * detection.header_searches: fast pattern searches in header buffer
-    (sum)
-  * detection.body_searches: fast pattern searches in body buffer
+  * detection.pdu_searches: fast pattern searches in service buffers
     (sum)
   * detection.file_searches: fast pattern searches in file buffer
     (sum)
-  * detection.raw_key_searches: fast pattern searches in raw key
-    buffer (sum)
-  * detection.raw_header_searches: fast pattern searches in raw
-    header buffer (sum)
-  * detection.method_searches: fast pattern searches in method buffer
-    (sum)
-  * detection.stat_code_searches: fast pattern searches in status
-    code buffer (sum)
-  * detection.stat_msg_searches: fast pattern searches in status
-    message buffer (sum)
-  * detection.cookie_searches: fast pattern searches in cookie buffer
-    (sum)
-  * detection.js_data_searches: fast pattern searches in js_data
-    buffer (sum)
-  * detection.vba_searches: fast pattern searches in MS Office Visual
-    Basic for Applications buffer (sum)
   * detection.offloads: fast pattern searches that were offloaded
     (sum)
   * detection.alerts: alerts not including IP reputation (sum)
@@ -826,6 +810,9 @@ Peg counts:
   * host_cache.adds: lru cache added new entry (sum)
   * host_cache.alloc_prunes: lru cache pruned entry to make space for
     new entry (sum)
+  * host_cache.bytes_in_use: current number of bytes in use (now)
+  * host_cache.items_in_use: current number of items in the cache
+    (now)
   * host_cache.find_hits: lru cache found entry in cache (sum)
   * host_cache.find_misses: lru cache did not find entry in cache
     (sum)
@@ -2492,6 +2479,8 @@ Peg counts:
     open detector package is reloaded (sum)
   * appid.tp_reload_ignored_pkts: count of packets ignored after
     third-party module is reloaded (sum)
+  * appid.bytes_in_use: number of bytes in use in the cache (now)
+  * appid.items_in_use: items in use in the cache (now)
 
 
 5.2. appid_listener
@@ -4246,7 +4235,32 @@ Peg counts:
   * mem_test.packets: total packets (sum)
 
 
-5.29. modbus
+5.29. mms
+
+--------------
+
+Help: mms inspection
+
+Type: inspector (service)
+
+Usage: inspect
+
+Instance Type: multiton
+
+Rules:
+
+no match
+
+Peg counts:
+
+  * mms.sessions: total sessions processed (sum)
+  * mms.frames: total MMS messages (sum)
+  * mms.concurrent_sessions: total concurrent MMS sessions (now)
+  * mms.max_concurrent_sessions: maximum concurrent MMS sessions
+    (max)
+
+
+5.30. modbus
 
 --------------
 
@@ -4275,7 +4289,7 @@ Peg counts:
     sessions (max)
 
 
-5.30. netflow
+5.31. netflow
 
 --------------
 
@@ -4325,7 +4339,7 @@ Peg counts:
     (sum)
 
 
-5.31. normalizer
+5.32. normalizer
 
 --------------
 
@@ -4461,7 +4475,7 @@ Peg counts:
   * normalizer.tcp_block: blocked segments (sum)
 
 
-5.32. null_trace_logger
+5.33. null_trace_logger
 
 --------------
 
@@ -4474,7 +4488,7 @@ Usage: global
 Instance Type: global
 
 
-5.33. packet_capture
+5.34. packet_capture
 
 --------------
 
@@ -4506,7 +4520,7 @@ Peg counts:
     filter (sum)
 
 
-5.34. perf_monitor
+5.35. perf_monitor
 
 --------------
 
@@ -4566,7 +4580,7 @@ Peg counts:
     by new flows (sum)
 
 
-5.35. pop
+5.36. pop
 
 --------------
 
@@ -4630,7 +4644,7 @@ Peg counts:
   * pop.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-5.36. port_scan
+5.37. port_scan
 
 --------------
 
@@ -4802,7 +4816,7 @@ Peg counts:
     to reduced memcap (sum)
 
 
-5.37. reputation
+5.38. reputation
 
 --------------
 
@@ -4859,7 +4873,7 @@ Peg counts:
     monitored (sum)
 
 
-5.38. rna
+5.39. rna
 
 --------------
 
@@ -5000,9 +5014,10 @@ Peg counts:
   * rna.dhcp_data: count of DHCP data events received (sum)
   * rna.dhcp_info: count of new DHCP lease events received (sum)
   * rna.smb: count of new SMB events received (sum)
+  * rna.netflow_record: count of netflow record events received (sum)
 
 
-5.39. rpc_decode
+5.40. rpc_decode
 
 --------------
 
@@ -5031,7 +5046,7 @@ Peg counts:
     sessions (max)
 
 
-5.40. s7commplus
+5.41. s7commplus
 
 --------------
 
@@ -5060,7 +5075,7 @@ Peg counts:
     sessions (max)
 
 
-5.41. sip
+5.42. sip
 
 --------------
 
@@ -5163,7 +5178,7 @@ Peg counts:
   * sip.code_9xx: 9xx (sum)
 
 
-5.42. smtp
+5.43. smtp
 
 --------------
 
@@ -5249,6 +5264,7 @@ Rules:
   * 124:14 (smtp) Cyrus SASL authentication attack
   * 124:15 (smtp) attempted authentication command buffer overflow
   * 124:16 (smtp) file decompression failed
+  * 124:17 (smtp) STARTTLS command injection attempt
 
 Peg counts:
 
@@ -5274,7 +5290,7 @@ Peg counts:
   * smtp.non_encoded_bytes: total non-encoded extracted bytes (sum)
 
 
-5.43. so_proxy
+5.44. so_proxy
 
 --------------
 
@@ -5288,7 +5304,7 @@ Usage: global
 Instance Type: global
 
 
-5.44. ssh
+5.45. ssh
 
 --------------
 
@@ -5328,7 +5344,7 @@ Peg counts:
     (max)
 
 
-5.45. ssl
+5.46. ssl
 
 --------------
 
@@ -5379,7 +5395,7 @@ Peg counts:
     (max)
 
 
-5.46. stream
+5.47. stream
 
 --------------
 
@@ -5464,9 +5480,12 @@ Peg counts:
     config reloads (sum)
   * stream.reload_offloaded_deletes: number of offloaded flows
     deleted by config reloads (sum)
+  * stream.current_flows: current number of flows in cache (now)
+  * stream.uni_flows: number of uni flows in cache (now)
+  * stream.uni_ip_flows: number of uni ip flows in cache (now)
 
 
-5.47. stream_file
+5.48. stream_file
 
 --------------
 
@@ -5483,7 +5502,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-5.48. stream_icmp
+5.49. stream_icmp
 
 --------------
 
@@ -5510,7 +5529,7 @@ Peg counts:
   * stream_icmp.prunes: icmp session prunes (sum)
 
 
-5.49. stream_ip
+5.50. stream_ip
 
 --------------
 
@@ -5582,7 +5601,7 @@ Peg counts:
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
 
 
-5.50. stream_tcp
+5.51. stream_tcp
 
 --------------
 
@@ -5758,7 +5777,7 @@ Peg counts:
     (sum)
 
 
-5.51. stream_udp
+5.52. stream_udp
 
 --------------
 
@@ -5787,7 +5806,7 @@ Peg counts:
   * stream_udp.ignored: udp packets ignored (sum)
 
 
-5.52. stream_user
+5.53. stream_user
 
 --------------
 
@@ -5805,7 +5824,7 @@ Configuration:
     1:max31 }
 
 
-5.53. telnet
+5.54. telnet
 
 --------------
 
@@ -5841,7 +5860,7 @@ Peg counts:
     sessions (max)
 
 
-5.54. wizard
+5.55. wizard
 
 --------------
 
@@ -5874,7 +5893,7 @@ Configuration:
   * string wizard.spells[].to_client[].spell: sequence of data with
     wild cards (*)
   * multi wizard.curses: enable service identification based on
-    internal algorithm { dce_smb | dce_udp | dce_tcp | sslv2 }
+    internal algorithm { dce_smb | dce_udp | dce_tcp | mms | sslv2 }
   * int wizard.max_search_depth = 8192: maximum scan depth per flow {
     0:65535 }
 
@@ -7472,7 +7491,33 @@ Configuration:
     pairs
 
 
-7.83. modbus_data
+7.83. mms_data
+
+--------------
+
+Help: rule option to set cursor to MMS data
+
+Type: ips_option
+
+Usage: detect
+
+
+7.84. mms_func
+
+--------------
+
+Help: rule option to check MMS function
+
+Type: ips_option
+
+Usage: detect
+
+Configuration:
+
+  * string mms_func.~: func to match
+
+
+7.85. modbus_data
 
 --------------
 
@@ -7483,7 +7528,7 @@ Type: ips_option
 Usage: detect
 
 
-7.84. modbus_func
+7.86. modbus_func
 
 --------------
 
@@ -7498,7 +7543,7 @@ Configuration:
   * string modbus_func.~: function code to match
 
 
-7.85. modbus_unit
+7.87. modbus_unit
 
 --------------
 
@@ -7513,7 +7558,7 @@ Configuration:
   * int modbus_unit.~: Modbus unit ID { 0:255 }
 
 
-7.86. msg
+7.88. msg
 
 --------------
 
@@ -7528,7 +7573,7 @@ Configuration:
   * string msg.~: message describing rule
 
 
-7.87. mss
+7.89. mss
 
 --------------
 
@@ -7544,7 +7589,7 @@ Configuration:
     }
 
 
-7.88. pcre
+7.90. pcre
 
 --------------
 
@@ -7566,7 +7611,7 @@ Peg counts:
   * pcre.pcre_negated: total pcre rules using negation syntax (sum)
 
 
-7.89. pkt_data
+7.91. pkt_data
 
 --------------
 
@@ -7578,7 +7623,7 @@ Type: ips_option
 Usage: detect
 
 
-7.90. pkt_num
+7.92. pkt_num
 
 --------------
 
@@ -7594,7 +7639,7 @@ Configuration:
     { 1: }
 
 
-7.91. priority
+7.93. priority
 
 --------------
 
@@ -7610,7 +7655,7 @@ Configuration:
     1:max31 }
 
 
-7.92. raw_data
+7.94. raw_data
 
 --------------
 
@@ -7621,7 +7666,7 @@ Type: ips_option
 Usage: detect
 
 
-7.93. reference
+7.95. reference
 
 --------------
 
@@ -7636,7 +7681,7 @@ Configuration:
   * string reference.~ref: reference: <scheme>,<id>
 
 
-7.94. regex
+7.96. regex
 
 --------------
 
@@ -7660,7 +7705,7 @@ Configuration:
     instead of start of buffer
 
 
-7.95. rem
+7.97. rem
 
 --------------
 
@@ -7675,7 +7720,7 @@ Configuration:
   * string rem.~: comment
 
 
-7.96. replace
+7.98. replace
 
 --------------
 
@@ -7691,7 +7736,7 @@ Configuration:
   * string replace.~: byte code to replace with
 
 
-7.97. rev
+7.99. rev
 
 --------------
 
@@ -7706,7 +7751,7 @@ Configuration:
   * int rev.~: revision { 1:max32 }
 
 
-7.98. rpc
+7.100. rpc
 
 --------------
 
@@ -7723,7 +7768,7 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-7.99. s7commplus_content
+7.101. s7commplus_content
 
 --------------
 
@@ -7734,7 +7779,7 @@ Type: ips_option
 Usage: detect
 
 
-7.100. s7commplus_func
+7.102. s7commplus_func
 
 --------------
 
@@ -7749,7 +7794,7 @@ Configuration:
   * string s7commplus_func.~: function code to match
 
 
-7.101. s7commplus_opcode
+7.103. s7commplus_opcode
 
 --------------
 
@@ -7764,7 +7809,7 @@ Configuration:
   * string s7commplus_opcode.~: opcode code to match
 
 
-7.102. sd_pattern
+7.104. sd_pattern
 
 --------------
 
@@ -7788,7 +7833,7 @@ Peg counts:
   * sd_pattern.terminated: hyperscan terminated (sum)
 
 
-7.103. seq
+7.105. seq
 
 --------------
 
@@ -7804,7 +7849,7 @@ Configuration:
     range { 0: }
 
 
-7.104. service
+7.106. service
 
 --------------
 
@@ -7819,7 +7864,7 @@ Configuration:
   * string service.*: one or more comma-separated service names
 
 
-7.105. sha256
+7.107. sha256
 
 --------------
 
@@ -7839,7 +7884,7 @@ Configuration:
     start of buffer
 
 
-7.106. sha512
+7.108. sha512
 
 --------------
 
@@ -7859,7 +7904,7 @@ Configuration:
     start of buffer
 
 
-7.107. sid
+7.109. sid
 
 --------------
 
@@ -7874,7 +7919,7 @@ Configuration:
   * int sid.~: signature id { 1:max32 }
 
 
-7.108. sip_body
+7.110. sip_body
 
 --------------
 
@@ -7885,7 +7930,7 @@ Type: ips_option
 Usage: detect
 
 
-7.109. sip_header
+7.111. sip_header
 
 --------------
 
@@ -7897,7 +7942,7 @@ Type: ips_option
 Usage: detect
 
 
-7.110. sip_method
+7.112. sip_method
 
 --------------
 
@@ -7912,7 +7957,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-7.111. sip_stat_code
+7.113. sip_stat_code
 
 --------------
 
@@ -7927,7 +7972,7 @@ Configuration:
   * int sip_stat_code.*code: status code { 1:999 }
 
 
-7.112. so
+7.114. so
 
 --------------
 
@@ -7944,7 +7989,7 @@ Configuration:
     buffer
 
 
-7.113. soid
+7.115. soid
 
 --------------
 
@@ -7960,7 +8005,7 @@ Configuration:
     like 3_45678_9
 
 
-7.114. ssl_state
+7.116. ssl_state
 
 --------------
 
@@ -7989,7 +8034,7 @@ Configuration:
     unknown
 
 
-7.115. ssl_version
+7.117. ssl_version
 
 --------------
 
@@ -8016,7 +8061,7 @@ Configuration:
     tls1.2
 
 
-7.116. stream_reassemble
+7.118. stream_reassemble
 
 --------------
 
@@ -8037,7 +8082,7 @@ Configuration:
     remainder of the session
 
 
-7.117. stream_size
+7.119. stream_size
 
 --------------
 
@@ -8055,7 +8100,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-7.118. tag
+7.120. tag
 
 --------------
 
@@ -8074,7 +8119,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1:max32 }
 
 
-7.119. target
+7.121. target
 
 --------------
 
@@ -8090,7 +8135,7 @@ Configuration:
     dst_ip }
 
 
-7.120. tos
+7.122. tos
 
 --------------
 
@@ -8105,7 +8150,7 @@ Configuration:
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
 
 
-7.121. ttl
+7.123. ttl
 
 --------------
 
@@ -8121,7 +8166,7 @@ Configuration:
     0:255 }
 
 
-7.122. urg
+7.124. urg
 
 --------------
 
@@ -8137,7 +8182,7 @@ Configuration:
     { 0:65535 }
 
 
-7.123. vba_data
+7.125. vba_data
 
 --------------
 
@@ -8149,7 +8194,7 @@ Type: ips_option
 Usage: detect
 
 
-7.124. window
+7.126. window
 
 --------------
 
@@ -8165,7 +8210,7 @@ Configuration:
     range { 0:65535 }
 
 
-7.125. wscale
+7.127. wscale
 
 --------------
 
@@ -9694,6 +9739,7 @@ these libraries see the Getting Started section of the manual.
     overhead { 1:100 }
   * string metadata.*: comma-separated list of arbitrary name value
     pairs
+  * string mms_func.~: func to match
   * string modbus_func.~: function code to match
   * int modbus_unit.~: Modbus unit ID { 0:255 }
   * int mpls.max_stack_depth = -1: set maximum MPLS stack depth {
@@ -10740,7 +10786,7 @@ these libraries see the Getting Started section of the manual.
   * interval window.~range: check if TCP window size is in given
     range { 0:65535 }
   * multi wizard.curses: enable service identification based on
-    internal algorithm { dce_smb | dce_udp | dce_tcp | sslv2 }
+    internal algorithm { dce_smb | dce_udp | dce_tcp | mms | sslv2 }
   * bool wizard.hexes[].client_first = true: which end initiates data
     transfer
   * select wizard.hexes[].proto = tcp: protocol to scan { tcp | udp }
@@ -10784,7 +10830,9 @@ these libraries see the Getting Started section of the manual.
   * address_space_selector.no_match: selection evaluations that had
     no matches (sum)
   * address_space_selector.packets: packets evaluated (sum)
+  * appid.bytes_in_use: number of bytes in use in the cache (now)
   * appid.ignored_packets: count of packets ignored (sum)
+  * appid.items_in_use: items in use in the cache (now)
   * appid.odp_reload_ignored_pkts: count of packets ignored after
     open detector package is reloaded (sum)
   * appid.packets: count of packets received (sum)
@@ -11128,28 +11176,17 @@ these libraries see the Getting Started section of the manual.
   * detection.alt_searches: alt fast pattern searches in packet data
     (sum)
   * detection.analyzed: total packets processed (now)
-  * detection.body_searches: fast pattern searches in body buffer
-    (sum)
   * detection.context_stalls: times processing stalled to wait for an
     available context (sum)
   * detection.cooked_searches: fast pattern searches in cooked packet
     data (sum)
-  * detection.cookie_searches: fast pattern searches in cookie buffer
-    (sum)
   * detection.event_limit: events filtered (sum)
   * detection.file_searches: fast pattern searches in file buffer
     (sum)
   * detection.hard_evals: non-fast pattern rule evaluations (sum)
-  * detection.header_searches: fast pattern searches in header buffer
-    (sum)
-  * detection.js_data_searches: fast pattern searches in js_data
-    buffer (sum)
-  * detection.key_searches: fast pattern searches in key buffer (sum)
   * detection.logged: logged packets (sum)
   * detection.log_limit: events queued but not logged (sum)
   * detection.match_limit: fast pattern matches not processed (sum)
-  * detection.method_searches: fast pattern searches in method buffer
-    (sum)
   * detection.offload_busy: times offload was not available (sum)
   * detection.offload_failures: fast pattern offload search failures
     (sum)
@@ -11168,22 +11205,14 @@ these libraries see the Getting Started section of the manual.
     match limit (sum)
   * detection.pcre_recursion_limit: total number of times pcre hit
     the recursion limit (sum)
+  * detection.pdu_searches: fast pattern searches in service buffers
+    (sum)
   * detection.pkt_searches: fast pattern searches in packet data
     (sum)
   * detection.queue_limit: events not queued because queue full (sum)
-  * detection.raw_header_searches: fast pattern searches in raw
-    header buffer (sum)
-  * detection.raw_key_searches: fast pattern searches in raw key
-    buffer (sum)
   * detection.raw_searches: fast pattern searches in raw packet data
     (sum)
-  * detection.stat_code_searches: fast pattern searches in status
-    code buffer (sum)
-  * detection.stat_msg_searches: fast pattern searches in status
-    message buffer (sum)
   * detection.total_alerts: alerts including IP reputation (sum)
-  * detection.vba_searches: fast pattern searches in MS Office Visual
-    Basic for Applications buffer (sum)
   * dnp3.concurrent_sessions: total concurrent dnp3 sessions (now)
   * dnp3.dnp3_application_pdus: total dnp3 application pdus (sum)
   * dnp3.dnp3_link_layer_frames: total dnp3 link layer frames (sum)
@@ -11266,9 +11295,12 @@ these libraries see the Getting Started section of the manual.
   * host_cache.adds: lru cache added new entry (sum)
   * host_cache.alloc_prunes: lru cache pruned entry to make space for
     new entry (sum)
+  * host_cache.bytes_in_use: current number of bytes in use (now)
   * host_cache.find_hits: lru cache found entry in cache (sum)
   * host_cache.find_misses: lru cache did not find entry in cache
     (sum)
+  * host_cache.items_in_use: current number of items in the cache
+    (now)
   * host_cache.reload_prunes: lru cache pruned entry for lower memcap
     during reload (sum)
   * host_cache.removes: lru cache found entry and removed it (sum)
@@ -11404,6 +11436,11 @@ these libraries see the Getting Started section of the manual.
   * memory.reap_attempts: attempts to reclaim memory (now)
   * memory.reap_failures: failures to reclaim memory (now)
   * mem_test.packets: total packets (sum)
+  * mms.concurrent_sessions: total concurrent MMS sessions (now)
+  * mms.frames: total MMS messages (sum)
+  * mms.max_concurrent_sessions: maximum concurrent MMS sessions
+    (max)
+  * mms.sessions: total sessions processed (sum)
   * modbus.concurrent_sessions: total concurrent modbus sessions
     (now)
   * modbus.frames: total Modbus messages (sum)
@@ -11578,6 +11615,7 @@ these libraries see the Getting Started section of the manual.
   * rna.icmp_new: count of new ICMP flows received (sum)
   * rna.ip_bidirectional: count of bidirectional IP received (sum)
   * rna.ip_new: count of new IP flows received (sum)
+  * rna.netflow_record: count of netflow record events received (sum)
   * rna.other_packets: count of packets received without session
     tracking (sum)
   * rna.smb: count of new SMB events received (sum)
@@ -11712,6 +11750,7 @@ these libraries see the Getting Started section of the manual.
   * ssl.server_key_exchange: total server key exchanges (sum)
   * ssl.sessions_ignored: total sessions ignore (sum)
   * ssl.unrecognized_records: total unrecognized records (sum)
+  * stream.current_flows: current number of flows in cache (now)
   * stream.excess_prunes: sessions pruned due to excess (sum)
   * stream.expected_flows: total expected flows created within snort
     (sum)
@@ -11874,6 +11913,8 @@ these libraries see the Getting Started section of the manual.
   * stream_udp.sessions: total udp sessions (sum)
   * stream_udp.timeouts: udp session timeouts (sum)
   * stream_udp.total_bytes: total number of bytes processed (sum)
+  * stream.uni_flows: number of uni flows in cache (now)
+  * stream.uni_ip_flows: number of uni ip flows in cache (now)
   * stream.uni_prunes: uni sessions pruned (sum)
   * tcp.bad_tcp4_checksum: nonzero tcp over ip checksums (sum)
   * tcp.bad_tcp6_checksum: nonzero tcp over ipv6 checksums (sum)
@@ -11966,6 +12007,7 @@ these libraries see the Getting Started section of the manual.
   * 149: s7commplus
   * 150: file_id
   * 151: iec104
+  * 152: mms
   * 175: domain_filter
   * 256: dpx
 
@@ -15457,6 +15499,9 @@ and are not applicable elsewhere.
   * memory (basic): memory management configuration
   * metadata (ips_option): rule option for conveying arbitrary
     comma-separated name, value data within the rule text
+  * mms (inspector): mms inspection
+  * mms_data (ips_option): rule option to set cursor to MMS data
+  * mms_func (ips_option): rule option to check MMS function
   * modbus (inspector): modbus inspection
   * modbus_data (ips_option): rule option to set cursor to modbus
     data
@@ -15683,6 +15728,7 @@ and are not applicable elsewhere.
   * inspector::iec104: iec104 inspection
   * inspector::imap: imap inspection
   * inspector::mem_test: for testing memory management
+  * inspector::mms: mms inspection
   * inspector::modbus: modbus inspection
   * inspector::netflow: netflow inspection
   * inspector::normalizer: packet scrubbing for inline mode
@@ -15866,6 +15912,8 @@ and are not applicable elsewhere.
   * ips_option::md5: payload rule option for hash matching
   * ips_option::metadata: rule option for conveying arbitrary
     comma-separated name, value data within the rule text
+  * ips_option::mms_data: rule option to set cursor to MMS data
+  * ips_option::mms_func: rule option to check MMS function
   * ips_option::modbus_data: rule option to set cursor to modbus data
   * ips_option::modbus_func: rule option to check modbus function
     code

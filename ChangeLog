@@ -1,3 +1,55 @@
+2022/04/25 - 3.1.28.0
+
+appid: add bytes_in_use and items_in_use peg counts
+appid: ssl service detection for segmented server hello done
+binder: add binder actions to flow reassignment. Thanks to Meridoff for the original report of the issue.
+bufferlen: add missing relative override
+conf: add cip and s7commplus to the default snort.lua
+content: auto no-case non-alpha patterns
+dce_rpc: Handling only named ioctls for smb
+detection: add missing fast pattern buffer translations
+detection: make CursorActionType generic
+detection: map buffers to services
+detection: rearrange startup rule counts
+detection: remove now obsolete get buf support
+doc: add clarification on default bindings in developer notes and user notes
+events: add action logging to the event
+flow, managers, binder: only publish flow state reloaded event from internal execute
+flow: only select policies when deleting flow data if there is a policy selector
+flow, snort_config: change service back to a pointer and add a method to return a non-volatile pointer for service
+flow: use a flag instead off shared pointer use count for has service check
+framework: make Cursor SO_PUBLIC
+ftp: fix FTP response parsing
+ftp: flush FTP cmds ending in just carriage return
+host_cache: bytes_in_use and items_in_use peg counts
+host_cache: fix unit test broken on some platforms
+inspectors: add / update api buffer lists
+ips: eliminate direct dependence on get_fp_buf of all ibt (by using rule options)
+ips: eliminate PM_TYPE_* to make fast pattern buffers generic
+ips: further limit port group rules
+ips_options: eliminate obsolete RULE_OPTION_TYPE_BUFFER_*
+ips_options: fix cursor action type overrides
+main: check policy exists instead of index when setting network policy by id
+mime: handle MIME header lines split between inspection sections and improve folded header line processing
+mms: add check that BerElement argument isn't null before calling BerReader::read
+mms: adding manual updates for the new service inspector for the IEC61850 MMS protocol
+mms: adding new service inspector for the IEC61850 MMS protocol
+mms_data: make a fast pattern buffer
+mms: moved creation of TpktFlowData inspector ID to process init
+module_manager: fix memory pegs display issue during packet processing, while also correctly computing the memory pegs in Analyzer::term
+netflow: framework for netflow V5 and V9 events
+packet_io: add rewrite action logging
+parser: update dev notes
+raw_data: only search pkt_data if no alt buffer or raw_data rules included in group
+service inspectors: update fast pattern access
+sfip: improve warning suppression
+smtp: SMTPData initialization changed from memset to constructor
+smtp: STARTTLS command injection event processing
+stream: add can_set_no_ack() api to check if policy allows no-ack mode
+stream: add current_flows, uni_flows and uni_ip_flows peg counts
+utils: limit JS regex stack size
+utils: track groups and escaped symbols in JavaScript regex literals
+
 2022/04/07 - 3.1.27.0
 
 ac_full: refactor api access
