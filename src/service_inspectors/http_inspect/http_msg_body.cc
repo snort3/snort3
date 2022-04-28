@@ -142,8 +142,32 @@ void HttpMsgBody::analyze()
             msg_text_new.length() : pub_depth_remaining;
         pub_depth_remaining -= publish_length;
     }
+    
+    if (session_data->mime_state[source_id])
+    {
+        // FIXIT-M this interface does not convey any indication of end of message body. If the
+        // message body ends in the middle of a MIME message the partial file will not be flushed.
 
-    if (session_data->file_depth_remaining[source_id] > 0 or
+        Packet* p = DetectionEngine::get_current_packet();
+        const uint8_t* const section_end = msg_text_new.start() + msg_text_new.length();
+        const uint8_t* ptr = msg_text_new.start();
+        while (ptr < section_end)
+        {
+            // After process_mime_data(), ptr will point to the last byte processed in the current
+            // MIME part
+            ptr = session_data->mime_state[source_id]->process_mime_data(p, ptr,
+                (section_end - ptr), true, SNORT_FILE_POSITION_UNKNOWN);
+            ptr++;
+        }
+        
+        const BufferData& vba_buf = session_data->mime_state[source_id]->get_ole_buf();
+        if (vba_buf.data_ptr())
+            ole_data.set(vba_buf.length(), vba_buf.data_ptr());
+
+        detect_data.set(msg_text.length(), msg_text.start());
+    }
+
+    else if (session_data->file_depth_remaining[source_id] > 0 or
         session_data->detect_depth_remaining[source_id] > 0)
     {
         do_utf_decoding(msg_text_new, decoded_body);
@@ -217,9 +241,8 @@ void HttpMsgBody::analyze()
             // file attachment body data.
             // FIXIT-E currently the file_data buffer is set to the body of the last attachment per
             // message section.
-            if (!session_data->mime_state[source_id])
-                set_file_data(const_cast<uint8_t*>(detect_data.start()),
-                    (unsigned)detect_data.length());
+            set_file_data(const_cast<uint8_t*>(detect_data.start()),
+                (unsigned)detect_data.length());
         }
     }
     body_octets += msg_text.length();
@@ -228,8 +251,7 @@ void HttpMsgBody::analyze()
 
 void HttpMsgBody::do_utf_decoding(const Field& input, Field& output)
 {
-    if ((session_data->mime_state[source_id] != nullptr) ||
-        (session_data->utf_state[source_id] == nullptr) || (input.length() == 0))
+    if ((session_data->utf_state[source_id] == nullptr) || (input.length() == 0))
     {
         output.set(input);
         return;
@@ -283,8 +305,7 @@ void HttpMsgBody::get_ole_data()
     
 void HttpMsgBody::do_file_decompression(const Field& input, Field& output)
 {
-    if ((session_data->mime_state[source_id] != nullptr) ||
-        session_data->fd_state[source_id] == nullptr)
+    if (session_data->fd_state[source_id] == nullptr)
     {
         output.set(input);
         return;
@@ -422,74 +443,49 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
         return;
     }
 
-    if (!session_data->mime_state[source_id])
+    const int32_t fp_length = (file_data.length() <=
+        session_data->file_depth_remaining[source_id]) ?
+        file_data.length() : session_data->file_depth_remaining[source_id];
+
+    FileFlows* file_flows = FileFlows::get_file_flows(flow);
+    if (!file_flows)
+        return;
+
+    const FileDirection dir = source_id == SRC_SERVER ? FILE_DOWNLOAD : FILE_UPLOAD;
+
+    const uint64_t file_index = get_header(source_id)->get_file_cache_index();
+
+    bool continue_processing_file = file_flows->file_process(p, file_index, file_data.start(),
+        fp_length, session_data->file_octets[source_id], dir,
+        get_header(source_id)->get_multi_file_processing_id(), file_position);
+    if (continue_processing_file)
     {
-        const int32_t fp_length = (file_data.length() <=
-            session_data->file_depth_remaining[source_id]) ?
-            file_data.length() : session_data->file_depth_remaining[source_id];
+        session_data->file_depth_remaining[source_id] -= fp_length;
 
-        FileFlows* file_flows = FileFlows::get_file_flows(flow);
-        if (!file_flows)
-            return;
-
-        const FileDirection dir = source_id == SRC_SERVER ? FILE_DOWNLOAD : FILE_UPLOAD;
-
-        const uint64_t file_index = get_header(source_id)->get_file_cache_index();
-
-        bool continue_processing_file = file_flows->file_process(p, file_index, file_data.start(),
-            fp_length, session_data->file_octets[source_id], dir,
-            get_header(source_id)->get_multi_file_processing_id(), file_position);
-        if (continue_processing_file)
+        // With the first piece of the file we must provide the filename and URI
+        if (front)
         {
-            session_data->file_depth_remaining[source_id] -= fp_length;
-
-            // With the first piece of the file we must provide the filename and URI
-            if (front)
+            if (request != nullptr)
             {
-                if (request != nullptr)
-                {
-                    const uint8_t* filename_buffer;
-                    const uint8_t* uri_buffer;
-                    uint32_t filename_length;
-                    uint32_t uri_length;
-                    get_file_info(dir, filename_buffer, filename_length, uri_buffer, uri_length);
+                const uint8_t* filename_buffer;
+                const uint8_t* uri_buffer;
+                uint32_t filename_length;
+                uint32_t uri_length;
+                get_file_info(dir, filename_buffer, filename_length, uri_buffer, uri_length);
 
-                    continue_processing_file = file_flows->set_file_name(filename_buffer,
-                        filename_length, 0,
-                        get_header(source_id)->get_multi_file_processing_id(), uri_buffer,
-                        uri_length);
-                }
+                continue_processing_file = file_flows->set_file_name(filename_buffer,
+                    filename_length, 0,
+                    get_header(source_id)->get_multi_file_processing_id(), uri_buffer,
+                    uri_length);
             }
         }
-        if (!continue_processing_file)
-        {
-            // file processing doesn't want any more data
-            session_data->file_depth_remaining[source_id] = 0;
-        }
-        session_data->file_octets[source_id] += fp_length;
     }
-    else
+    if (!continue_processing_file)
     {
-        // FIXIT-M this interface does not convey any indication of end of message body. If the
-        // message body ends in the middle of a MIME message the partial file will not be flushed.
-
-        const uint8_t* const section_end = file_data.start() + file_data.length();
-        const uint8_t* ptr = file_data.start();
-        while (ptr < section_end)
-        {
-            // After process_mime_data(), ptr will point to the last byte processed in the current
-            // MIME part
-            ptr = session_data->mime_state[source_id]->process_mime_data(p, ptr,
-                (section_end - ptr), true, SNORT_FILE_POSITION_UNKNOWN);
-            ptr++;
-        }
-        
-        const BufferData& vba_buf = session_data->mime_state[source_id]->get_ole_buf();
-        if (vba_buf.data_ptr())
-            ole_data.set(vba_buf.length(), vba_buf.data_ptr());
-        
-        session_data->file_octets[source_id] += file_data.length();
+        // file processing doesn't want any more data
+        session_data->file_depth_remaining[source_id] = 0;
     }
+    session_data->file_octets[source_id] += fp_length;
 }
 
 // Parses out the filename and URI associated with this file.

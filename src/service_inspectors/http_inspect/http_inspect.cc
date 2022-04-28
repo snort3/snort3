@@ -132,9 +132,17 @@ HttpInspect::HttpInspect(const HttpParaList* params_) :
     }
 }
 
+HttpInspect::~HttpInspect()
+{
+    delete params->mime_decode_conf;
+    delete params;
+    delete script_finder;
+}
+
 bool HttpInspect::configure(SnortConfig* )
 {
     params->js_norm_param.js_norm->configure();
+    params->mime_decode_conf->sync_all_depths();
 
     return true;
 }

@@ -53,6 +53,7 @@ public:
 
 private:
     void prepare_body();
+    void setup_mime();
     void setup_file_processing();
     void setup_encoding_decompression();
     void setup_utf_decoding();

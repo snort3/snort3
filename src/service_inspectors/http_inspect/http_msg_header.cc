@@ -443,15 +443,26 @@ void HttpMsgHeader::update_flow()
     }
 }
 
-// Common activities of preparing for upcoming regular body or chunked body
+// Common activities of preparing for upcoming body
 void HttpMsgHeader::prepare_body()
 {
     session_data->body_octets[source_id] = 0;
-    const int64_t& depth = (source_id == SRC_CLIENT) ? params->request_depth :
-        params->response_depth;
-    session_data->detect_depth_remaining[source_id] = (depth != -1) ? depth : INT64_MAX;
-    params->js_norm_param.js_norm->set_detection_depth(session_data->detect_depth_remaining[source_id]);
-
+    setup_mime();
+    if (!session_data->mime_state[source_id])
+    {
+        const int64_t& depth = (source_id == SRC_CLIENT) ? params->request_depth :
+            params->response_depth;
+        session_data->detect_depth_remaining[source_id] = (depth != -1) ? depth : INT64_MAX;
+        params->js_norm_param.js_norm->set_detection_depth(session_data->detect_depth_remaining[source_id]);
+    }
+    else
+    {
+        // File and decode depths are per attachment, so if either is greater than 0 we inspect the
+        // full message body. Currently the decode depths are not configurable for http_inspect so
+        // are always the default of unlimited, meaning for MIME we always inspect the full message
+        // body
+        session_data->detect_depth_remaining[source_id] = INT64_MAX;
+    }
     if ((source_id == SRC_CLIENT) and params->publish_request_body and session_data->for_http2)
     {
         session_data->publish_octets[source_id] = 0;
@@ -479,20 +490,8 @@ void HttpMsgHeader::prepare_body()
     }
 }
 
-void HttpMsgHeader::setup_file_processing()
+void HttpMsgHeader::setup_mime()
 {
-    session_data->file_octets[source_id] = 0;
-
-    const int64_t max_file_depth = FileService::get_max_file_depth();
-    if (max_file_depth <= 0)
-    {
-        session_data->file_depth_remaining[source_id] = 0;
-        return;
-    }
-
-    // Generate the unique file id for multi file processing
-    set_multi_file_processing_id(get_transaction_id(), session_data->get_h2_stream_id());
-
     // Do we meet all the conditions for MIME file processing?
     if (source_id == SRC_CLIENT)
     {
@@ -501,15 +500,18 @@ void HttpMsgHeader::setup_file_processing()
         {
             if (boundary_present(content_type))
             {
+                // Generate the unique file id for multi file processing
+                set_multi_file_processing_id(get_transaction_id(), session_data->get_h2_stream_id());
+
                 Packet* p = DetectionEngine::get_current_packet();
                 const Field& uri = request->get_uri_norm_classic();
                 if (uri.length() > 0)
                     session_data->mime_state[source_id] = new MimeSession(p,
-                        &params->mime_decode_conf, &mime_conf, get_multi_file_processing_id(),
+                        params->mime_decode_conf, &mime_conf, get_multi_file_processing_id(),
                         uri.start(), uri.length());
                 else
                     session_data->mime_state[source_id] = new MimeSession(p,
-                        &params->mime_decode_conf, &mime_conf, get_multi_file_processing_id());
+                        params->mime_decode_conf, &mime_conf, get_multi_file_processing_id());
 
                 // Show file processing the Content-Type header as if it were regular data.
                 // This will enable it to find the boundary string.
@@ -525,15 +527,28 @@ void HttpMsgHeader::setup_file_processing()
             }
         }
     }
+}
 
-    // Otherwise do regular file processing
-    if (session_data->mime_state[source_id] == nullptr)
+void HttpMsgHeader::setup_file_processing()
+{
+    if (session_data->mime_state[source_id])
+        return;
+
+    session_data->file_octets[source_id] = 0;
+    const int64_t max_file_depth = FileService::get_max_file_depth();
+    if (max_file_depth <= 0)
     {
-        session_data->file_depth_remaining[source_id] = max_file_depth;
-        FileFlows* file_flows = FileFlows::get_file_flows(flow);
-        if (!file_flows)
-            session_data->file_depth_remaining[source_id] = 0;
+        session_data->file_depth_remaining[source_id] = 0;
+        return;
     }
+
+    // Generate the unique file id for multi file processing
+    set_multi_file_processing_id(get_transaction_id(), session_data->get_h2_stream_id());
+
+    session_data->file_depth_remaining[source_id] = max_file_depth;
+    FileFlows* file_flows = FileFlows::get_file_flows(flow);
+    if (!file_flows)
+        session_data->file_depth_remaining[source_id] = 0;
 }
 
 void HttpMsgHeader::setup_encoding_decompression()
