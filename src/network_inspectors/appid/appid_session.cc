@@ -125,7 +125,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
 }
 
 AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
-    AppIdInspector& inspector, OdpContext& odp_ctxt, uint16_t asid)
+    AppIdInspector& inspector, OdpContext& odp_ctxt, uint32_t asid)
     : FlowData(inspector_id, &inspector), config(inspector.get_ctxt().config),
         initiator_port(port), asid(asid), protocol(proto),
         api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(odp_ctxt),

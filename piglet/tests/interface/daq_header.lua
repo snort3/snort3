@@ -20,6 +20,7 @@ DEFAULT_VALUES =
     opaque = 0,
     flow_id = 0,
     address_space_id = 0
+    tenant_id = 0
 }
 
 VALUES =
@@ -34,6 +35,7 @@ VALUES =
     opaque = 8,
     flow_id = 9,
     address_space_id = 10
+    tenant_id = 11
 }
 
 tests =

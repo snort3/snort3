@@ -61,7 +61,7 @@ AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);
 OdpContext stub_odp_ctxt(stub_config, nullptr);
 AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector&,
-    OdpContext&, uint16_t) : FlowData(0), config(stub_config),
+    OdpContext&, uint32_t) : FlowData(0), config(stub_config),
     api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt) { }
 AppIdSession::~AppIdSession() = default;
 
@@ -123,7 +123,7 @@ TEST(appid_debug, basic_test)
     uint16_t sport = 48620;
     uint16_t dport = 80;
     IpProtocol protocol = IpProtocol::TCP;
-    uint16_t address_space_id = 0;
+    uint32_t address_space_id = 0;
     // The session...
     session.initiator_port = sport;
     // activate()
@@ -157,7 +157,7 @@ TEST(appid_debug, reverse_direction_activate_test)
     uint16_t sport = 80;
     uint16_t dport = 48620;
     IpProtocol protocol = IpProtocol::TCP;
-    uint16_t address_space_id = 0;
+    uint32_t address_space_id = 0;
     // The session...
     session.initiator_port = dport;    // session initiator is now dst
     // activate()
@@ -193,7 +193,7 @@ TEST(appid_debug, ipv6_test)
     uint16_t sport = 1234;
     uint16_t dport = 443;
     IpProtocol protocol = IpProtocol::UDP;    // also threw in UDP and address space ID for kicks
-    uint16_t address_space_id = 100;
+    uint32_t address_space_id = 100;
     // The session...
     session.initiator_port = sport;
     // activate()
@@ -229,7 +229,7 @@ TEST(appid_debug, no_initiator_port_test)
     uint16_t sport = 48620;
     uint16_t dport = 80;
     IpProtocol protocol = IpProtocol::TCP;
-    uint16_t address_space_id = 0;
+    uint32_t address_space_id = 0;
     // The session...
     session.initiator_port = 0;    // no initiator port yet (uses IPs)
     // activate()
@@ -263,7 +263,7 @@ TEST(appid_debug, no_initiator_port_reversed_test)
     uint16_t sport = 80;
     uint16_t dport = 48620;
     IpProtocol protocol = IpProtocol::TCP;
-    uint16_t address_space_id = 0;
+    uint32_t address_space_id = 0;
     // The session...
     session.initiator_port = 0;    // no initiator port yet (uses IPs)... and reversed packet dir from above
     // activate()
@@ -292,7 +292,7 @@ TEST(appid_debug, null_session_test)
     uint16_t sport = 0;
     uint16_t dport = 0;
     IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
-    uint16_t address_space_id = 0;
+    uint32_t address_space_id = 0;
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
         protocol, 4, address_space_id, nullptr, false);    // null session
@@ -332,7 +332,7 @@ TEST(appid_debug, no_match_test)
     uint16_t sport = 48620;
     uint16_t dport = 80;
     IpProtocol protocol = IpProtocol::UDP;    // but this packet is UDP instead
-    uint16_t address_space_id = 0;
+    uint32_t address_space_id = 0;
     // The session...
     session.initiator_port = sport;
     // activate()
@@ -362,7 +362,7 @@ TEST(appid_debug, all_constraints_test)
     uint16_t sport = 48620;
     uint16_t dport = 80;
     IpProtocol protocol = IpProtocol::TCP;
-    uint16_t address_space_id = 0;
+    uint32_t address_space_id = 0;
     // The session...
     session.initiator_port = sport;
     // activate()
@@ -396,7 +396,7 @@ TEST(appid_debug, just_proto_test)
     uint16_t sport = 48620;
     uint16_t dport = 80;
     IpProtocol protocol = IpProtocol::TCP;
-    uint16_t address_space_id = 0;
+    uint32_t address_space_id = 0;
     // The session...
     session.initiator_port = sport;
     // activate()
@@ -430,7 +430,7 @@ TEST(appid_debug, just_ip_test)
     uint16_t sport = 48620;
     uint16_t dport = 80;
     IpProtocol protocol = IpProtocol::TCP;
-    uint16_t address_space_id = 0;
+    uint32_t address_space_id = 0;
     // The session...
     session.initiator_port = sport;
     // activate()
@@ -464,7 +464,7 @@ TEST(appid_debug, just_port_test)
     uint16_t sport = 48620;
     uint16_t dport = 80;
     IpProtocol protocol = IpProtocol::TCP;
-    uint16_t address_space_id = 0;
+    uint32_t address_space_id = 0;
     // The session...
     session.initiator_port = sport;
     // activate()

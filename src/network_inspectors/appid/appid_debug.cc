@@ -35,7 +35,7 @@ using namespace snort;
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 
 void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t port1,
-    uint16_t port2, IpProtocol protocol, const int version, uint16_t address_space_id,
+    uint16_t port2, IpProtocol protocol, const int version, uint32_t address_space_id,
     const AppIdSession* session, bool log_all_sessions, int16_t group1, int16_t group2,
     bool inter_group_flow)
 {
@@ -115,7 +115,7 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
         snprintf(gr_buf, sizeof(gr_buf), " GR=%hd-%hd", sgroup, dgroup);
 
     snprintf(debug_session, sizeof(debug_session),
-        "%s %hu -> %s %hu %hhu AS=%hu ID=%u%s",
+        "%s %hu -> %s %hu %hhu AS=%u ID=%u%s",
         sipstr, sport, dipstr, dport, static_cast<uint8_t>(protocol),
         address_space_id, get_instance_id(), gr_buf);
 }

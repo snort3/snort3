@@ -213,21 +213,21 @@ void AppIdServiceState::clean()
 }
 
 ServiceDiscoveryState* AppIdServiceState::add(const SfIp* ip, IpProtocol proto, uint16_t port,
-    int16_t group, uint16_t asid, bool decrypted, bool do_touch)
+    int16_t group, uint32_t asid, bool decrypted, bool do_touch)
 {
     return service_state_cache->add( AppIdServiceStateKey(ip, proto, port, group,
         asid, decrypted), do_touch );
 }
 
 ServiceDiscoveryState* AppIdServiceState::get(const SfIp* ip, IpProtocol proto, uint16_t port,
-    int16_t group, uint16_t asid, bool decrypted, bool do_touch)
+    int16_t group, uint32_t asid, bool decrypted, bool do_touch)
 {
     return service_state_cache->get( AppIdServiceStateKey(ip, proto, port, group,
         asid, decrypted), do_touch);
 }
 
 void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port,
-    int16_t group, uint16_t asid, bool decrypted)
+    int16_t group, uint32_t asid, bool decrypted)
 {
     AppIdServiceStateKey ssk(ip, proto, port, group, asid, decrypted);
     Map_t::iterator it = service_state_cache->find(ssk);
@@ -243,7 +243,7 @@ void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port,
 }
 
 void AppIdServiceState::check_reset(AppIdSession& asd, const SfIp* ip, uint16_t port,
-    int16_t group, uint16_t asid)
+    int16_t group, uint32_t asid)
 {
     ServiceDiscoveryState* sds = AppIdServiceState::get(ip, IpProtocol::TCP, port,
         group, asid, asd.is_decrypted());

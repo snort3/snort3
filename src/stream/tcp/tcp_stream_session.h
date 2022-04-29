@@ -65,7 +65,7 @@ public:
     void start_proxy();
 
     void set_packet_header_foo(const TcpSegmentDescriptor&);
-    void get_packet_header_foo(DAQ_PktHdr_t*, uint32_t dir);
+    void get_packet_header_foo(DAQ_PktHdr_t*, const DAQ_PktHdr_t* orig, uint32_t dir);
     bool can_set_no_ack();
     bool set_no_ack(bool);
     bool no_ack_mode_enabled() { return no_ack; }
@@ -118,7 +118,7 @@ public:
     int32_t egress_index = DAQ_PKTHDR_UNKNOWN;
     int16_t egress_group = DAQ_PKTHDR_UNKNOWN;
     uint32_t daq_flags = 0;
-    uint16_t address_space_id = 0;
+    uint32_t address_space_id = 0;
     bool generate_3whs_alert = true;
     TcpStreamConfig* tcp_config = nullptr;
     TcpEventLogger tel;

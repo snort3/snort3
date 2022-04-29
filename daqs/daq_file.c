@@ -127,12 +127,10 @@ static int create_message_pool(FileContext* fc, unsigned size)
 
         /* Initialize non-zero invariant packet header fields. */
         DAQ_PktHdr_t *pkthdr = &desc->pkthdr;
-        pkthdr->address_space_id = 0;
         pkthdr->ingress_index = DAQ_PKTHDR_UNKNOWN;
         pkthdr->ingress_group = DAQ_PKTHDR_UNKNOWN;
         pkthdr->egress_index = DAQ_PKTHDR_UNKNOWN;
         pkthdr->egress_group = DAQ_PKTHDR_UNKNOWN;
-        pkthdr->flags = 0;
 
         /* Initialize non-zero invariant message header fields. */
         DAQ_Msg_t *msg = &desc->msg;

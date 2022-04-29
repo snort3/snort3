@@ -135,16 +135,10 @@ bool TenantSelector::select_default_policies(uint32_t key, const SnortConfig* sc
 }
 
 bool TenantSelector::select_default_policies(const _daq_pkt_hdr& pkthdr, const SnortConfig* sc)
-{
-    // FIXIT-H replace address_space_id with tenant_id when it is added to the pkthdr
-    return select_default_policies(static_cast<uint32_t>(pkthdr.address_space_id), sc);
-}
+{ return select_default_policies(static_cast<uint32_t>(pkthdr.tenant_id), sc); }
 
 bool TenantSelector::select_default_policies(const _daq_flow_stats& stats, const SnortConfig* sc)
-{
-    // FIXIT-H replace address_space_id with tenant_id when it is added to the pkthdr
-    return select_default_policies(static_cast<uint32_t>(stats.address_space_id), sc);
-}
+{ return select_default_policies(static_cast<uint32_t>(stats.tenant_id), sc); }
 
 //-------------------------------------------------------------------------
 // api stuff

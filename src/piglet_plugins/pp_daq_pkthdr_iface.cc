@@ -42,11 +42,12 @@ static void set_fields(lua_State* L, int tindex, DAQ_PktHdr_t& self)
     table.get_field("opaque", self.opaque);
     table.get_field("flow_id", self.flow_id);
     table.get_field("address_space_id", self.address_space_id);
+    table.get_field("tenant_id", self.tenant_id);
 
     // FIXIT-L do we want to be able to set the priv_ptr field?
 }
 
-static void get_fields(lua_State* L, int tindex, DAQ_PktHdr_t& self)
+static void get_fields(lua_State* L, int tindex, const DAQ_PktHdr_t& self)
 {
     Lua::Table table(L, tindex);
 
@@ -59,6 +60,7 @@ static void get_fields(lua_State* L, int tindex, DAQ_PktHdr_t& self)
     table.set_field("opaque", self.opaque);
     table.set_field("flow_id", self.flow_id);
     table.set_field("address_space_id", self.address_space_id);
+    table.set_field("tenant_id", self.tenant_id);
 }
 
 static const luaL_Reg methods[] =

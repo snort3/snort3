@@ -139,12 +139,10 @@ static int create_message_pool(HextContext* hc, unsigned size)
 
         /* Initialize non-zero invariant packet header fields. */
         DAQ_PktHdr_t *pkthdr = &desc->pkthdr;
-        pkthdr->address_space_id = 0;
         pkthdr->ingress_index = DAQ_PKTHDR_UNKNOWN;
         pkthdr->ingress_group = DAQ_PKTHDR_UNKNOWN;
         pkthdr->egress_index = DAQ_PKTHDR_UNKNOWN;
         pkthdr->egress_group = DAQ_PKTHDR_UNKNOWN;
-        pkthdr->flags = 0;
 
         /* Initialize non-zero invariant message header fields. */
         DAQ_Msg_t *msg = &desc->msg;
@@ -260,11 +258,12 @@ static bool parse_flowstats(DAQ_MsgType type, const char* line, HextMsgDesc *des
     "%" SCNu8  " "  /* is_qos_applied_on_src_intf */ \
     "%" SCNu32 " "  /* sof_timestamp.tv_sec */  \
     "%" SCNu32 " "  /* eof_timestamp.tv_sec */  \
+    "%" SCNu32 " "  /* address_space_id */  \
+    "%" SCNu32 " "  /* tenant_id */  \
     "%" SCNu16 " "  /* vlan_tag */      \
-    "%" SCNu16 " "  /* address_space_id */  \
     "%" SCNu8  " "  /* protocol */ \
     "%" SCNu8       /* flags */
-#define FLOWSTATS_ITEMS 22
+#define FLOWSTATS_ITEMS 23
     DAQ_FlowStats_t* f = &desc->flowstats;
     char srcaddr[INET6_ADDRSTRLEN], dstaddr[INET6_ADDRSTRLEN];
     uint32_t sof_sec, eof_sec;
@@ -272,7 +271,7 @@ static bool parse_flowstats(DAQ_MsgType type, const char* line, HextMsgDesc *des
             &f->egress_intf, srcaddr, &f->initiator_port, dstaddr, &f->responder_port, &f->opaque,
             &f->initiator_pkts, &f->responder_pkts, &f->initiator_pkts_dropped, &f->responder_pkts_dropped,
             &f->initiator_bytes_dropped, &f->responder_bytes_dropped, &f->is_qos_applied_on_src_intf,
-            &sof_sec, &eof_sec, &f->vlan_tag, &f->address_space_id,
+            &sof_sec, &eof_sec, &f->address_space_id, &f->tenant_id, &f->vlan_tag,
             &f->protocol, &f->flags);
     if (rval != FLOWSTATS_ITEMS)
         return false;

@@ -684,6 +684,7 @@ static void init_daq_pkthdr(
     pkth->egress_group = phdr->egress_group;
     pkth->flags = phdr->flags;
     pkth->address_space_id = phdr->address_space_id;
+    pkth->tenant_id = phdr->tenant_id;
     pkth->opaque = opaque;
 }
 

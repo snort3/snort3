@@ -130,7 +130,7 @@ bool FlowKey::init(
     const SfIp*, uint16_t,
     const SfIp*, uint16_t,
     uint16_t, uint32_t,
-    uint16_t, int16_t, int16_t)
+    uint32_t, int16_t, int16_t)
 {
    return true;
 }
@@ -150,7 +150,7 @@ bool FlowKey::init(
     PktType, IpProtocol,
     const SfIp*, const SfIp*,
     uint32_t, uint16_t,
-    uint32_t, uint16_t, int16_t,
+    uint32_t, uint32_t, int16_t,
     int16_t)
 {
     return true;

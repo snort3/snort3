@@ -92,7 +92,7 @@ Flow* Stream::get_flow(
     PktType type, IpProtocol proto,
     const SfIp* srcIP, uint16_t srcPort,
     const SfIp* dstIP, uint16_t dstPort,
-    uint16_t vlan, uint32_t mplsId, uint16_t addressSpaceId,
+    uint16_t vlan, uint32_t mplsId, uint32_t addressSpaceId,
     int16_t ingress_group, int16_t egress_group)
 {
     FlowKey key;
@@ -158,7 +158,7 @@ FlowData* Stream::get_flow_data(
     const SfIp* srcIP, uint16_t srcPort,
     const SfIp* dstIP, uint16_t dstPort,
     uint16_t vlan, uint32_t mplsId,
-    uint16_t addressSpaceID, unsigned flowdata_id,
+    uint32_t addressSpaceID, unsigned flowdata_id,
     int16_t ingress_group, int16_t egress_group)
 {
     Flow* flow = get_flow(
@@ -847,7 +847,7 @@ bool Stream::get_held_pkt_seq(Flow* flow, uint32_t& seq)
 
     TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
 
-    if (tcp_session->held_packet_dir == SSN_DIR_NONE) 
+    if (tcp_session->held_packet_dir == SSN_DIR_NONE)
         return false;
 
     if (tcp_session->held_packet_dir == SSN_DIR_FROM_CLIENT)

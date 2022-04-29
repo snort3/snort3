@@ -48,7 +48,7 @@ static void set_fields(lua_State* L, int tindex, Packet& self)
     table.set_field("user_network_policy_id", self.user_network_policy_id);
 }
 
-static void get_fields(lua_State* L, int tindex, Packet& self)
+static void get_fields(lua_State* L, int tindex, const Packet& self)
 {
     Lua::Table table(L, tindex);
 

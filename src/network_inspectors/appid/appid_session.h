@@ -226,7 +226,7 @@ class AppIdSession : public snort::FlowData
 {
 public:
     AppIdSession(IpProtocol, const snort::SfIp*, uint16_t port, AppIdInspector&,
-        OdpContext&, uint16_t asid = 0);
+        OdpContext&, uint32_t asid = 0);
     ~AppIdSession() override;
 
     static AppIdSession* allocate_session(const snort::Packet*, IpProtocol,
@@ -241,7 +241,7 @@ public:
     std::unordered_map<unsigned, AppIdFlowData*> flow_data;
     uint64_t flags = 0;
     uint16_t initiator_port = 0;
-    uint16_t asid = 0;
+    uint32_t asid = 0;
 
     uint16_t session_packet_count = 0;
     uint16_t init_pkts_without_reply = 0;

@@ -538,7 +538,7 @@ Packet* TcpReassembler::initialize_pdu(
 
     EncodeFlags enc_flags = 0;
     DAQ_PktHdr_t pkth;
-    trs.sos.session->get_packet_header_foo(&pkth, pkt_flags);
+    trs.sos.session->get_packet_header_foo(&pkth, p->pkth, pkt_flags);
     PacketManager::format_tcp(enc_flags, p, pdu, PSEUDO_PKT_TCP, &pkth, pkth.opaque);
     prep_pdu(trs, trs.sos.session->flow, p, pkt_flags, pdu);
     assert(pdu->pkth == pdu->context->pkth);

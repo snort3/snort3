@@ -136,15 +136,11 @@ bool AddressSpaceSelector::select_default_policies(uint32_t key, const SnortConf
 
 bool AddressSpaceSelector::select_default_policies(const _daq_pkt_hdr& pkthdr,
     const SnortConfig* sc)
-{
-    return select_default_policies(static_cast<uint32_t>(pkthdr.address_space_id), sc);
-}
+{ return select_default_policies(static_cast<uint32_t>(pkthdr.address_space_id), sc); }
 
 bool AddressSpaceSelector::select_default_policies(const _daq_flow_stats& stats,
     const SnortConfig* sc)
-{
-    return select_default_policies(static_cast<uint32_t>(stats.address_space_id), sc);
-}
+{ return select_default_policies(static_cast<uint32_t>(stats.address_space_id), sc); }
 
 //-------------------------------------------------------------------------
 // api stuff

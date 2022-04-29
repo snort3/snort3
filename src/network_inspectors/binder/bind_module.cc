@@ -348,7 +348,7 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
     }
     else if ( v.is("addr_spaces") )
     {
-        if (!parse_int_set<uint16_t>(v, binding.when.addr_spaces))
+        if (!parse_int_set<uint32_t>(v, binding.when.addr_spaces))
             return false;
         binding.when.add_criteria(BindWhen::Criteria::BWC_ADDR_SPACES);
     }

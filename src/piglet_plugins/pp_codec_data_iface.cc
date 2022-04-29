@@ -44,7 +44,7 @@ static void set_fields(lua_State* L, int tindex, CodecData& self)
     table.get_field("ip6_csum_proto", reinterpret_cast<uint8_t&>(self.ip6_csum_proto));
 }
 
-static void get_fields(lua_State* L, int tindex, CodecData& self)
+static void get_fields(lua_State* L, int tindex, const CodecData& self)
 {
     Lua::Table table(L, tindex);
 

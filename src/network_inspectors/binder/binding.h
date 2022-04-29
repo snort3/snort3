@@ -58,7 +58,7 @@ struct BindWhen
     std::unordered_set<int16_t> src_groups;
     std::unordered_set<int16_t> dst_groups;
 
-    std::unordered_set<uint16_t> addr_spaces;
+    std::unordered_set<uint32_t> addr_spaces;
 
     std::unordered_set<uint32_t> tenants;
 

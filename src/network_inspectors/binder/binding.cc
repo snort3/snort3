@@ -571,7 +571,7 @@ inline bool Binding::check_tenant(const Packet* p) const
     if (!when.has_criteria(BindWhen::Criteria::BWC_TENANTS))
         return true;
 
-    return when.tenants.count(p->pkth->address_space_id) != 0;
+    return when.tenants.count(p->pkth->tenant_id) != 0;
 }
 
 inline bool Binding::check_service(const Flow& flow) const

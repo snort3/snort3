@@ -147,9 +147,9 @@ static int ProcessIcmpUnreach(Packet* p)
     skey.init_vlan(sc, vlan);
     skey.init_address_space(sc, 0);
     skey.init_mpls(sc, 0);
+    skey.padding = skey.flags.padding_bits = 0;
     skey.flags.group_used = p->is_inter_group_flow();
     skey.init_groups(p->pkth->ingress_group, p->pkth->egress_group, reversed);
-    skey.flags.ubits = 0;
 
     switch (p->type())
     {

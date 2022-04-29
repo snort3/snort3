@@ -331,14 +331,14 @@ void PacketTracer::add_ip_header_info(const Packet& p)
     if (shell_enabled)
     {
         PacketTracer::log("\n");
-        snprintf(debug_session, sizeof(debug_session), "%s %hu -> %s %hu %hhu AS=%hu ID=%u%s ",
+        snprintf(debug_session, sizeof(debug_session), "%s %hu -> %s %hu %hhu AS=%u ID=%u%s ",
             sipstr, sport, dipstr, dport, static_cast<uint8_t>(proto),
             p.pkth->address_space_id, get_instance_id(), gr_buf);
     }
     else
     {
         add_eth_header_info(p);
-        PacketTracer::log("%s:%hu -> %s:%hu proto %u AS=%hu ID=%u%s\n",
+        PacketTracer::log("%s:%hu -> %s:%hu proto %u AS=%u ID=%u%s\n",
             sipstr, sport, dipstr, dport, static_cast<uint8_t>(proto),
             p.pkth->address_space_id, get_instance_id(), gr_buf);
     }
@@ -403,7 +403,7 @@ void PacketTracer::add_eth_header_info(const Packet& p)
 
             snprintf(debug_session, sizeof(debug_session),
                 "%02X:%02X:%02X:%02X:%02X:%02X -> %02X:%02X:%02X:%02X:%02X:%02X %04X"
-                " AS=%hu ID=%u%s ",
+                " AS=%u ID=%u%s ",
                 eh->ether_src[0], eh->ether_src[1], eh->ether_src[2],
                 eh->ether_src[3], eh->ether_src[4], eh->ether_src[5],
                 eh->ether_dst[0], eh->ether_dst[1], eh->ether_dst[2],

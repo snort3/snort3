@@ -92,7 +92,7 @@ uint32_t get_smb2_flow_key(const FlowKey* flow_key)
     key.ip_protocol = flow_key->ip_protocol;
     key.pkt_type = (uint8_t)flow_key->pkt_type;
     key.version = flow_key->version;
-    key.padding = 0;
+    key.padding = key.padding16 = 0;
 
     Smb2KeyHash hasher;
     return hasher(key);
@@ -151,7 +151,6 @@ Smb2SessionKey Dce2Smb2SessionData::get_session_key(uint64_t session_id)
     key.cgroup = flow->client_group;
     key.sgroup = flow->server_group;
     key.asid = flow->key->addressSpaceId;
-    key.padding = 0;
     return key;
 }
 
@@ -538,11 +537,11 @@ void Dce2Smb2SessionData::process()
             SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
                 p, "Encrypted header is received \n");
             session = find_session(sid);
-            if (session) 
+            if (session)
             {
                bool flag = session->get_encryption_flag();
-               if (!flag) 
-                   session->set_encryption_flag(true); 
+               if (!flag)
+                   session->set_encryption_flag(true);
             }
         }
         uint32_t next_command_offset;

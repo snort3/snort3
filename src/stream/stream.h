@@ -180,7 +180,7 @@ public:
     static FlowData* get_flow_data(
         PktType type, IpProtocol proto,
         const snort::SfIp* a1, uint16_t p1, const snort::SfIp* a2, uint16_t p2,
-        uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId, unsigned flowdata_id,
+        uint16_t vlanId, uint32_t mplsId, uint32_t addrSpaceId, unsigned flowdata_id,
         int16_t ingress_group = DAQ_PKTHDR_UNKNOWN, int16_t egress_group = DAQ_PKTHDR_UNKNOWN);
 
     static FlowData* get_flow_data(
@@ -196,7 +196,7 @@ public:
     static Flow* get_flow(
         PktType type, IpProtocol proto,
         const snort::SfIp* a1, uint16_t p1, const snort::SfIp* a2, uint16_t p2,
-        uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId,
+        uint16_t vlanId, uint32_t mplsId, uint32_t addrSpaceId,
         int16_t ingress_group = DAQ_PKTHDR_UNKNOWN, int16_t egress_group = DAQ_PKTHDR_UNKNOWN);
 
     static Flow* get_flow(

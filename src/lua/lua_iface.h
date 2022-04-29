@@ -78,6 +78,7 @@ struct TypeInterface
 {
     using type = T;
     using AccessorCallback = void (*)(lua_State*, int, T&);
+    using ConstAccessorCallback = void (*)(lua_State*, int, const T&);
 
     const char* name;
     const luaL_Reg* methods;
@@ -136,7 +137,7 @@ struct TypeInterface
         return 0;
     }
 
-    int default_getter(lua_State* L, AccessorCallback acb) const
+    int default_getter(lua_State* L, ConstAccessorCallback acb) const
     {
         auto& self = this->get(L);
         lua_newtable(L);

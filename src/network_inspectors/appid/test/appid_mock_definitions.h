@@ -117,13 +117,13 @@ bool AppInfoManager::configured()
 
 // Stubs for service_state.h
 ServiceDiscoveryState* AppIdServiceState::get(SfIp const*, IpProtocol,
-    unsigned short, int16_t, uint16_t, bool, bool)
+    unsigned short, int16_t, uint32_t, bool, bool)
 {
   return nullptr;
 }
 
 ServiceDiscoveryState* AppIdServiceState::add(SfIp const*, IpProtocol,
-    unsigned short, int16_t, uint16_t, bool, bool)
+    unsigned short, int16_t, uint32_t, bool, bool)
 {
   return nullptr;
 }

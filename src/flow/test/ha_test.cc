@@ -37,20 +37,20 @@ class StreamHAClient;
 
 static const FlowKey s_test_key =
 {
-    { 1, 2, 3, 4 },
-    { 5, 6, 7, 8 },
-    9,
-    10,
-    11,
-    0,
-    0,
-    0,
-    12,
-    14,
-    PktType::TCP,
-    14,
-    0,
-    0
+    /* .ip_l = */ { 1, 2, 3, 4 },
+    /* .ip_h = */ { 5, 6, 7, 8 },
+    /* .mplsLabel = */ 9,
+    /* .addressSpaceId = */ 0,
+    /* .port_l = */ 10,
+    /* .port_h = */ 11,
+    /* .group_l = */ 0,
+    /* .group_h = */ 0,
+    /* .vlan_tag = */ 12,
+    /* .padding = */ 0,
+    /* .ip_protocol = */ 14,
+    /* .pkt_type = */ PktType::TCP,
+    /* .version = */ 14,
+    /* .flags = */ 0,
 };
 
 static struct __attribute__((__packed__)) TestDeleteMessage {
@@ -61,7 +61,7 @@ static struct __attribute__((__packed__)) TestDeleteMessage {
     {
         HA_DELETE_EVENT,
         HA_MESSAGE_VERSION,
-        0x39,
+        61,
         KEY_TYPE_IP6
     },
     s_test_key
@@ -71,13 +71,14 @@ static struct __attribute__((__packed__)) TestUpdateMessage {
     HAMessageHeader mhdr;
     FlowKey key;
     HAClientHeader schdr;
+    // cppcheck-suppress unusedStructMember
     uint8_t scmsg[10];
 } s_update_stream_message =
 {
     {
         HA_UPDATE_EVENT,
         HA_MESSAGE_VERSION,
-        0x45,
+        73,
         KEY_TYPE_IP6
     },
     s_test_key,
@@ -527,6 +528,7 @@ TEST(high_availability_test, consume_error_truncated_client_msg)
     struct __attribute__((__packed__))
     {
         HAClientHeader chdr = { 0, 0x42 };
+        // cppcheck-suppress unusedStructMember
         uint8_t cmsg[0x42 / 2] = { };
     } input;
     HAMessage msg((uint8_t*) &input, sizeof(input));
@@ -542,6 +544,7 @@ TEST(high_availability_test, consume_error_client_consume)
     struct __attribute__((__packed__))
     {
         HAClientHeader chdr = { 0, 10 };
+        // cppcheck-suppress unusedStructMember
         uint8_t cmsg[0x42 / 2] = { };
     } input;
     HAMessage msg((uint8_t*) &input, sizeof(input));

@@ -44,7 +44,7 @@ static void set_fields(lua_State* L, int tindex, DecodeData& self)
     self.type = static_cast<PktType>(pkt_type);
 }
 
-static void get_fields(lua_State* L, int tindex, DecodeData& self)
+static void get_fields(lua_State* L, int tindex, const DecodeData& self)
 {
     Lua::Table table(L, tindex);
 

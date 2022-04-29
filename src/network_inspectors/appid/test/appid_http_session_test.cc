@@ -111,7 +111,7 @@ static Flow flow;
 
 // AppIdSession mock functions
 AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector& inspector,
-    OdpContext&, uint16_t) : FlowData(inspector_id, &inspector), config(stub_config),
+    OdpContext&, uint32_t) : FlowData(inspector_id, &inspector), config(stub_config),
         api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt)
 {}
 
@@ -149,7 +149,7 @@ void AppIdModule::reset_stats() {}
 
 // AppIdDebug mock functions
 void AppIdDebug::activate(const uint32_t*, const uint32_t*, uint16_t,
-    uint16_t, IpProtocol, const int, uint16_t, const AppIdSession*, bool,
+    uint16_t, IpProtocol, const int, uint32_t, const AppIdSession*, bool,
     int16_t, int16_t, bool)
 {
 }

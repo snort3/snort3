@@ -149,13 +149,13 @@ public:
     static bool initialize(size_t memcap);
     static void clean();
     static ServiceDiscoveryState* add(const snort::SfIp*, IpProtocol, uint16_t port,
-        int16_t group, uint16_t asid, bool decrypted, bool do_touch = false);
+        int16_t group, uint32_t asid, bool decrypted, bool do_touch = false);
     static ServiceDiscoveryState* get(const snort::SfIp*, IpProtocol, uint16_t port,
-        int16_t group, uint16_t asid, bool decrypted, bool do_touch = false);
+        int16_t group, uint32_t asid, bool decrypted, bool do_touch = false);
     static void remove(const snort::SfIp*, IpProtocol, uint16_t port,
-        int16_t group, uint16_t asid, bool decrypted);
+        int16_t group, uint32_t asid, bool decrypted);
     static void check_reset(AppIdSession& asd, const snort::SfIp* ip, uint16_t port,
-        int16_t group, uint16_t asid);
+        int16_t group, uint32_t asid);
     static bool prune(size_t max_memory = 0, size_t num_items = -1u);
 };
 
@@ -164,8 +164,8 @@ PADDING_GUARD_BEGIN
 struct AppIdServiceStateKey
 {
     AppIdServiceStateKey(const snort::SfIp* ip,
-        IpProtocol proto, uint16_t port, int16_t group, uint16_t asid, bool decrypted) :
-        ip(*ip), port(port), group(group), asid(asid), decrypted(decrypted), proto(proto)
+        IpProtocol proto, uint16_t port, int16_t group, uint32_t asid, bool decrypted) :
+        ip(*ip), port(port), asid(asid), group(group), decrypted(decrypted), proto(proto)
     { }
 
     bool operator<(const AppIdServiceStateKey& right) const
@@ -175,8 +175,8 @@ struct AppIdServiceStateKey
 
     snort::SfIp ip;
     uint16_t port;
+    uint32_t asid;
     int16_t group;
-    uint16_t asid;
     bool decrypted;
     IpProtocol proto;
 };

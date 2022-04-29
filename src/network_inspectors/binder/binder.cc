@@ -263,7 +263,7 @@ static std::string to_string(const BindWhen& bw)
 
     if (bw.has_criteria(BindWhen::Criteria::BWC_ADDR_SPACES))
     {
-        auto addr_spaces = to_string<uint16_t>(bw.addr_spaces);
+        auto addr_spaces = to_string<uint32_t>(bw.addr_spaces);
         when += " addr_spaces = " + addr_spaces + ",";
     }
 

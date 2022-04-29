@@ -72,7 +72,7 @@ public:
     AppIdDebug() = default;
 
     void activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t port1, uint16_t port2,
-        IpProtocol protocol, const int version, uint16_t address_space_id,
+        IpProtocol protocol, const int version, uint32_t address_space_id,
         const AppIdSession* session, bool log_all_sessions, int16_t group1 = DAQ_PKTHDR_UNKNOWN,
         int16_t group2 = DAQ_PKTHDR_UNKNOWN, bool inter_group_flow = false);
     void activate(const snort::Flow *flow, const AppIdSession* session, bool log_all_sessions);

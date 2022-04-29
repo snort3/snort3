@@ -350,6 +350,7 @@ void Flow::free_flow_data()
         {
             _daq_pkt_hdr pkthdr = {};
             pkthdr.address_space_id = key->addressSpaceId;
+            pkthdr.tenant_id = tenant;
             select_default_policy(pkthdr, sc);
         }
     }

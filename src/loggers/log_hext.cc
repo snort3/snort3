@@ -101,9 +101,11 @@ void DaqMessageEventHandler::handle(DataEvent& event, Flow*)
         "%hhu "         // is_qos_applied_on_src_intf
         "%ld "          // sof_timestamp.tv_sec
         "%ld "          // eof_timestamp.tv_sec
+        "%u "           // address_space_id
+        "%u "           // tenant_id
         "%hu "          // vlan_tag
-        "%hu "          // address_space_id
-        "%hhu"          // protocol
+        "%hhu "         // protocol
+        "%hhu"          // flags
         "\n",
         cmd,
         fs->ingress_group,
@@ -122,9 +124,11 @@ void DaqMessageEventHandler::handle(DataEvent& event, Flow*)
         fs->is_qos_applied_on_src_intf,
         fs->sof_timestamp.tv_sec,
         fs->eof_timestamp.tv_sec,
-        vlan_tag,
         fs->address_space_id,
-        fs->protocol);
+        fs->tenant_id,
+        vlan_tag,
+        fs->protocol,
+        fs->flags);
 }
 
 

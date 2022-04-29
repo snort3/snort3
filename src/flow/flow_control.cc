@@ -322,7 +322,7 @@ static void init_roles(Packet* p, Flow* flow)
         flow->server_group = p->pkth->egress_group;
     }
 
-    flow->tenant = p->get_flow_geneve_vni();
+    flow->tenant = p->pkth->tenant_id;
 
     flow->flags.app_direction_swapped = false;
     if ( flow->ssn_state.direction == FROM_CLIENT )

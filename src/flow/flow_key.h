@@ -56,18 +56,20 @@ struct SO_PUBLIC FlowKey
     uint32_t   ip_l[4]; /* Low IP */
     uint32_t   ip_h[4]; /* High IP */
     uint32_t   mplsLabel;
+    uint32_t   addressSpaceId;
     uint16_t   port_l;  /* Low Port - 0 if ICMP */
     uint16_t   port_h;  /* High Port - 0 if ICMP */
     int16_t    group_l;
     int16_t    group_h;
-    uint16_t   addressSpaceId;
     uint16_t   vlan_tag;
+    uint16_t   padding;
     uint8_t    ip_protocol;
     PktType    pkt_type;
     uint8_t    version;
-    struct {
-        uint8_t group_used:1; // Is group being used to build key.
-        uint8_t ubits:7;
+    struct
+    {
+        bool group_used : 1;
+        uint8_t padding_bits : 7;
     } flags;
 
     /* The init() functions return true if the key IP/port fields were actively
@@ -78,14 +80,14 @@ struct SO_PUBLIC FlowKey
         const SnortConfig*, PktType, IpProtocol,
         const snort::SfIp *srcIP, uint16_t srcPort,
         const snort::SfIp *dstIP, uint16_t dstPort,
-        uint16_t vlanId, uint32_t mplsId, uint16_t addrSpaceId,
+        uint16_t vlanId, uint32_t mplsId, uint32_t addrSpaceId,
         int16_t group_h = DAQ_PKTHDR_UNKNOWN, int16_t group_l = DAQ_PKTHDR_UNKNOWN);
 
     bool init(
         const SnortConfig*, PktType, IpProtocol,
         const snort::SfIp *srcIP, const snort::SfIp *dstIP,
         uint32_t id, uint16_t vlanId,
-        uint32_t mplsId, uint16_t addrSpaceId,
+        uint32_t mplsId, uint32_t addrSpaceId,
         int16_t group_h = DAQ_PKTHDR_UNKNOWN, int16_t group_l = DAQ_PKTHDR_UNKNOWN);
 
     bool init(
@@ -101,7 +103,7 @@ struct SO_PUBLIC FlowKey
 
     void init_mpls(const SnortConfig*, uint32_t);
     void init_vlan(const SnortConfig*, uint16_t);
-    void init_address_space(const SnortConfig*, uint16_t);
+    void init_address_space(const SnortConfig*, uint32_t);
     void init_groups(int16_t, int16_t, bool);
 
     // If this data structure changes size, compare must be updated!

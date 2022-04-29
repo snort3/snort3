@@ -258,8 +258,8 @@ The available commands are:
 
     $packet <addr> <port> -> <addr> <port>
 
-    $sof <i32:ingressZone> <i32:egressZone> <i32:ingressIntf> <i32:egressIntf> <s:srcIp> <i16:srcPort> <s:destIp> <i16:dstPort> <u32:opaque> <u64:initiatorPkts> <u64:responderPkts> <u64:initiatorPktsDropped> <u64:responderPktsDropped> <u64:initiatorBytesDropped> <u64:responderBytesDropped> <u8:isQosAppliedOnSrcIntf> <timeval:sof_timestamp> <timeval:eof_timestamp> <u16:vlan> <u16:address_space_id> <u8:protocol>
-    $eof <i32:ingressZone> <i32:egressZone> <i32:ingressIntf> <i32:egressIntf> <s:srcIp> <i16:srcPort> <s:destIp> <i16:dstPort> <u32:opaque> <u64:initiatorPkts> <u64:responderPkts> <u64:initiatorPktsDropped> <u64:responderPktsDropped> <u64:initiatorBytesDropped> <u64:responderBytesDropped> <u8:isQosAppliedOnSrcIntf> <timeval:sof_timestamp> <timeval:eof_timestamp> <u16:vlan> <u16:address_space_id> <u8:protocol>
+    $sof <i32:ingressZone> <i32:egressZone> <i32:ingressIntf> <i32:egressIntf> <s:srcIp> <i16:srcPort> <s:destIp> <i16:dstPort> <u32:opaque> <u64:initiatorPkts> <u64:responderPkts> <u64:initiatorPktsDropped> <u64:responderPktsDropped> <u64:initiatorBytesDropped> <u64:responderBytesDropped> <u8:isQosAppliedOnSrcIntf> <timeval:sof_timestamp> <timeval:eof_timestamp> <u32:address_space_id> <u32:tenant_id> <u16:vlan> <u8:protocol> <u8:flags>
+    $eof <i32:ingressZone> <i32:egressZone> <i32:ingressIntf> <i32:egressIntf> <s:srcIp> <i16:srcPort> <s:destIp> <i16:dstPort> <u32:opaque> <u64:initiatorPkts> <u64:responderPkts> <u64:initiatorPktsDropped> <u64:responderPktsDropped> <u64:initiatorBytesDropped> <u64:responderBytesDropped> <u8:isQosAppliedOnSrcIntf> <timeval:sof_timestamp> <timeval:eof_timestamp> <u32:address_space_id> <u32:tenant_id> <u16:vlan> <u8:protocol> <u8:flags>
 
 Client and server are determined as follows.  $packet -> client indicates
 to the client (from server) and $packet -> server indicates a packet to the

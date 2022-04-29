@@ -310,7 +310,7 @@ void TcpStreamSession::set_packet_header_foo(const TcpSegmentDescriptor& tsd)
     address_space_id = p->pkth->address_space_id;
 }
 
-void TcpStreamSession::get_packet_header_foo(DAQ_PktHdr_t* pkth, uint32_t dir)
+void TcpStreamSession::get_packet_header_foo(DAQ_PktHdr_t* pkth, const DAQ_PktHdr_t* orig, uint32_t dir)
 {
     if ( (dir & PKT_FROM_CLIENT) || (egress_index == DAQ_PKTHDR_UNKNOWN &&
          egress_group == DAQ_PKTHDR_UNKNOWN) )
@@ -330,6 +330,7 @@ void TcpStreamSession::get_packet_header_foo(DAQ_PktHdr_t* pkth, uint32_t dir)
     pkth->opaque = 0;
     pkth->flags = daq_flags;
     pkth->address_space_id = address_space_id;
+    pkth->tenant_id = orig->tenant_id;
 }
 
 void TcpStreamSession::reset()

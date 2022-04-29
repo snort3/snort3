@@ -193,7 +193,7 @@ void FlowKey::init_vlan(const SnortConfig* sc, uint16_t vlanId)
         vlan_tag = 0;
 }
 
-void FlowKey::init_address_space(const SnortConfig* sc, uint16_t addrSpaceId)
+void FlowKey::init_address_space(const SnortConfig* sc, uint32_t addrSpaceId)
 {
     if (!sc->address_space_agnostic())
         addressSpaceId = addrSpaceId;
@@ -234,7 +234,7 @@ bool FlowKey::init(
     const SfIp *srcIP, uint16_t srcPort,
     const SfIp *dstIP, uint16_t dstPort,
     uint16_t vlanId, uint32_t mplsId,
-    uint16_t addrSpaceId, int16_t ingress_group,
+    uint32_t addrSpaceId, int16_t ingress_group,
     int16_t egress_group)
 {
     bool reversed;
@@ -263,14 +263,11 @@ bool FlowKey::init(
     init_address_space(sc, addrSpaceId);
     init_mpls(sc, mplsId);
 
-    if (ingress_group == DAQ_PKTHDR_UNKNOWN or egress_group == DAQ_PKTHDR_UNKNOWN)
-        flags.group_used = 0;
-    else
-        flags.group_used = 1;
+    padding = flags.padding_bits = 0;
 
+    flags.group_used = (ingress_group != DAQ_PKTHDR_UNKNOWN and egress_group != DAQ_PKTHDR_UNKNOWN);
     init_groups(ingress_group, egress_group, reversed);
 
-    flags.ubits = 0;
     return reversed;
 }
 
@@ -308,10 +305,9 @@ bool FlowKey::init(
     init_address_space(sc, pkt_hdr.address_space_id);
     init_mpls(sc, mplsId);
 
+    padding = flags.padding_bits = 0;
     flags.group_used = ((pkt_hdr.flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS) != 0);
     init_groups(pkt_hdr.ingress_group, pkt_hdr.egress_group, reversed);
-
-    flags.ubits = 0;
 
     return reversed;
 }
@@ -321,7 +317,7 @@ bool FlowKey::init(
     PktType type, IpProtocol ip_proto,
     const SfIp *srcIP, const SfIp *dstIP,
     uint32_t id, uint16_t vlanId,
-    uint32_t mplsId, uint16_t addrSpaceId,
+    uint32_t mplsId, uint32_t addrSpaceId,
     int16_t ingress_group, int16_t egress_group)
 {
     // to avoid confusing 2 different datagrams or confusing a datagram
@@ -350,14 +346,10 @@ bool FlowKey::init(
     init_address_space(sc, addrSpaceId);
     init_mpls(sc, mplsId);
 
-    if (ingress_group == DAQ_PKTHDR_UNKNOWN or egress_group == DAQ_PKTHDR_UNKNOWN)
-        flags.group_used = 0;
-    else
-        flags.group_used = 1;
+    padding = flags.padding_bits = 0;
 
+    flags.group_used = (ingress_group != DAQ_PKTHDR_UNKNOWN and egress_group != DAQ_PKTHDR_UNKNOWN);
     init_groups(ingress_group, egress_group, reversed);
-
-    flags.ubits = 0;
 
     return false;
 }
@@ -395,10 +387,10 @@ bool FlowKey::init(
     init_address_space(sc, pkt_hdr.address_space_id);
     init_mpls(sc, mplsId);
 
+    padding = flags.padding_bits = 0;
+
     flags.group_used = ((pkt_hdr.flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS) != 0);
     init_groups(pkt_hdr.ingress_group, pkt_hdr.egress_group, reversed);
-
-    flags.ubits = 0;
 
     return false;
 }
@@ -412,8 +404,6 @@ bool FlowKey::is_equal(const void* s1, const void* s2, size_t)
 {
     const uint64_t* a = (const uint64_t*)s1;
     const uint64_t* b = (const uint64_t*)s2;
-    const uint32_t* c;
-    const uint32_t* d;
 
     if (*a - *b)
         return false;               /* Compares IPv4 lo/hi
@@ -438,17 +428,17 @@ bool FlowKey::is_equal(const void* s1, const void* s2, size_t)
     a++;
     b++;
     if (*a - *b)
-        return false;               /* Compares MPLS label, port lo/hi */
+        return false;               /* Compares MPLS label, addressSpaceId */
 
     a++;
     b++;
     if (*a - *b)
-        return false;               /* Compares group lo/hi, addressSpaceId, vlan */
+        return false;               /* Compares port lo/hi, group lo/hi, vlan */
 
-    c = (const uint32_t*)(++a);
-    d = (const uint32_t*)(++b);
-    if (*c - *d)
-        return false;               /* ip_proto, type, version, 8 bit pad */
+    a++;
+    b++;
+    if (*a - *b)
+        return false;               /* vlan, pad, ip_proto, type, version, flags */
 
     return true;
 }
@@ -478,13 +468,14 @@ unsigned FlowHashKeyOps::do_hash(const unsigned char* k, int)
 
     mix(a, b, c);
 
-    a += d[9];   // port lo & port hi
-    b += d[10];  // group lo & group hi
-    c += d[11];  // addressSpaceId, vlan
+    a += d[9];   // addressSpaceId
+    b += d[10];  // port lo & port hi
+    c += d[11];  // group lo & group hi
 
     mix(a, b, c);
 
-    a += d[12];  // ip_proto, pkt_type, version, 8 bits of zeroed pad
+    a += d[12];  // vlan & pad
+    b += d[13];  // ip_proto, pkt_type, version, flags
 
     finalize(a, b, c);
 
