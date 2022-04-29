@@ -159,13 +159,13 @@ static THREAD_LOCAL SimpleStats bostats;
 #define BO_SNORT_BUFFER_ATTACK    4
 
 #define BO_TRAFFIC_DETECT_STR \
-    "Back orifice traffic detected, unknown direction"
+    "Back Orifice traffic detected, unknown direction"
 #define BO_CLIENT_TRAFFIC_DETECT_STR \
-    "Back orifice client traffic detected"
+    "Back Orifice client traffic detected"
 #define BO_SERVER_TRAFFIC_DETECT_STR \
-    "Back orifice server traffic detected"
+    "Back Orifice server traffic detected"
 #define BO_SNORT_BUFFER_ATTACK_STR \
-    "Back orifice length field >= 1024 bytes"
+    "Back Orifice length field >= 1024 bytes"
 
 static const RuleMap bo_rules[] =
 {

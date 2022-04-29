@@ -45,7 +45,7 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_SETTINGS_FRAME_UNKN_PARAM, "unknown parameter in HTTP/2 settings frame" },
     { EVENT_FRAME_SEQUENCE, "invalid HTTP/2 frame sequence" },
     { EVENT_DYNAMIC_TABLE_OVERFLOW, "HTTP/2 dynamic table has more than 512 entries" },
-    { EVENT_INVALID_PROMISED_STREAM, "HTTP/2 push promise frame with promised stream ID already in use." },
+    { EVENT_INVALID_PROMISED_STREAM, "HTTP/2 push promise frame with promised stream ID already in use" },
     { EVENT_PADDING_LEN, "HTTP/2 padding length is bigger than frame data size" },
     { EVENT_PSEUDO_HEADER_AFTER_REGULAR_HEADER, "HTTP/2 pseudo-header after regular header" },
     { EVENT_PSEUDO_HEADER_IN_TRAILERS, "HTTP/2 pseudo-header in trailers" },

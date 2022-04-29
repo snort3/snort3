@@ -202,15 +202,14 @@ const StrCode HttpMsgHeadShared::transfer_encoding_list[] =
 const RuleMap HttpModule::http_events[] =
 {
     { EVENT_ASCII,                      "URI has percent-encoding of an unreserved character" },
-    { EVENT_DOUBLE_DECODE,              "URI is percent encoded and the result is percent encoded "
-                                        "again" },
+    { EVENT_DOUBLE_DECODE,              "URI contains double-encoded hexadecimal characters" },
     { EVENT_U_ENCODE,                   "URI has non-standard %u-style Unicode encoding" },
     { EVENT_BARE_BYTE,                  "URI has Unicode encodings containing bytes that were not "
                                         "percent-encoded" },
     { EVENT_UTF_8,                      "URI has two-byte or three-byte UTF-8 encoding" },
     { EVENT_CODE_POINT_IN_URI,          "URI has unicode map code point encoding" },
     { EVENT_MULTI_SLASH,                "URI path contains consecutive slash characters" },
-    { EVENT_BACKSLASH_IN_URI,           "backslash character appears in the path portion of a URI."
+    { EVENT_BACKSLASH_IN_URI,           "backslash character appears in the path portion of a URI"
                                         },
     { EVENT_SELF_DIR_TRAV,              "URI path contains /./ pattern repeating the current "
                                         "directory" },
@@ -331,11 +330,11 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_JS_CODE_IN_EXTERNAL,        "JavaScript code under the external script tags" },
     { EVENT_JS_SHORTENED_TAG,           "script opening tag in a short form" },
     { EVENT_JS_IDENTIFIER_OVERFLOW,     "max number of unique JavaScript identifiers reached" },
-    { EVENT_JS_BRACKET_NEST_OVERFLOW,   "JavaScript bracket nesting is over capacity" },
+    { EVENT_JS_BRACKET_NEST_OVERFLOW,   "excessive JavaScript bracket nesting" },
     { EVENT_ACCEPT_ENCODING_CONSECUTIVE_COMMAS, "Consecutive commas in HTTP Accept-Encoding "
                                         "header" },
     { EVENT_JS_PDU_MISS,                "missed PDUs during JavaScript normalization" },
-    { EVENT_JS_SCOPE_NEST_OVERFLOW,     "JavaScript scope nesting is over capacity" },
+    { EVENT_JS_SCOPE_NEST_OVERFLOW,     "excessive JavaScript scope nesting" },
     { EVENT_INVALID_SUBVERSION,         "HTTP/1 version other than 1.0 or 1.1" },
     { EVENT_VERSION_0,                  "HTTP version in start line is 0" },
     { EVENT_VERSION_HIGHER_THAN_1,      "HTTP version in start line is higher than 1" },

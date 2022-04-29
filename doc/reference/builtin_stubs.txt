@@ -4,19 +4,19 @@ A tagged packet was logged.
 
 105:1
 
-Back orifice traffic detected, unknown direction
+Back Orifice traffic detected, unknown direction
 
 105:2
 
-Back orifice client traffic detected
+Back Orifice client traffic detected
 
 105:3
 
-Back orifice server traffic detected
+Back Orifice server traffic detected
 
 105:4
 
-Back orifice length field >= 1024 bytes
+Back Orifice length field >= 1024 bytes
 
 106:1
 
@@ -732,7 +732,7 @@ specific unreserved characters that are exempted from triggering this alert.
 
 119:2
 
-URI is percent encoded and the result is percent encoded again. This alert can only be generated if
+URI contains double-encoded hexadecimal characters. This alert can only be generated if
 the iis_double_decode option is configured.
 
 119:3
@@ -765,7 +765,7 @@ generated if the simplify_path option is configured.
 119:9
 
 The backslash character appears in the path portion of a URI. This alert can only be generated if
-the backslash_to_slash option is configured.
+the backslash_to_slash option is configured
 
 119:10
 
@@ -1364,7 +1364,7 @@ HTTP/2 dynamic table has more than 512 entries
 
 121:15
 
-HTTP/2 push promise frame with promised stream ID already in use.
+HTTP/2 push promise frame with promised stream ID already in use
 
 121:16
 
