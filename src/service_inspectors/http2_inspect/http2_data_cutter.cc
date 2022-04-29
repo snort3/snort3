@@ -74,7 +74,7 @@ StreamSplitter::Status Http2DataCutter::skip_over_frame(Http2Stream* const strea
 bool Http2DataCutter::check_http_state(Http2Stream* const stream)
 {
     HttpFlowData* const http_flow = stream->get_hi_flow_data();
-    if ((http_flow->get_type_expected(source_id) != HttpEnums::SEC_BODY_H2))
+    if ((http_flow->get_type_expected(source_id) != SEC_BODY_H2))
     {
         stream->set_state(source_id, STREAM_ERROR);
         if (data_len > 0)
@@ -138,7 +138,7 @@ StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t lengt
         if ((data_bytes_read == data_len) && (frame_flags & FLAG_END_STREAM))
         {
             HttpFlowData* const hi_flow = stream->get_hi_flow_data();
-            hi_flow->set_h2_body_state(source_id, HttpEnums::H2_BODY_LAST_SEG);
+            hi_flow->set_h2_body_state(source_id, H2_BODY_LAST_SEG);
         }
         scan_result = session_data->hi_ss[source_id]->scan(&dummy_pkt, data + cur_data_offset,
             cur_data, unused, &http_flush_offset);

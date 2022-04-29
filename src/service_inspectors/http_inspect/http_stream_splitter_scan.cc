@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include "http_stream_splitter.h"
+
 #include "packet_io/active.h"
 
 #include "http_common.h"
@@ -28,7 +30,7 @@
 #include "http_enum.h"
 #include "http_inspect.h"
 #include "http_module.h"
-#include "http_stream_splitter.h"
+#include "http_msg_section.h"
 #include "http_test_input.h"
 
 using namespace snort;

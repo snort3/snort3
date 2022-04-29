@@ -32,14 +32,14 @@
 #include "http_common.h"
 #include "http_enum.h"
 #include "http_field.h"
+#include "http_inspect_base.h"
 #include "http_module.h"
-#include "http_msg_section.h"
 #include "http_stream_splitter.h"
 
 class HttpApi;
 class HttpParam;
 
-class HttpInspect : public snort::Inspector
+class HttpInspect : public HttpInspectBase
 {
 public:
     HttpInspect(const HttpParaList* params_);
@@ -54,6 +54,10 @@ public:
     int32_t http_get_num_headers(snort::Packet* p, const HttpBufferInfo& buffer_info) const;
     HttpEnums::VersionId http_get_version_id(snort::Packet* p,
         const HttpBufferInfo& buffer_info) const;
+    HttpCommon::SectionType get_type_expected(snort::Flow* flow, HttpCommon::SourceId source_id) const override;
+    void finish_h2_body(snort::Flow* flow, HttpCommon::SourceId source_id, HttpCommon::H2BodyState state,
+        bool clear_partial_buffer) const override;
+    void set_h2_body_state(snort::Flow* flow, HttpCommon::SourceId source_id, HttpCommon::H2BodyState state) const override;
     bool get_fp_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p,
         snort::InspectionBuffer& b) override;
     bool configure(snort::SnortConfig*) override;

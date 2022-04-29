@@ -24,7 +24,6 @@
 #include "http2_headers_frame_with_startline.h"
 
 #include "protocols/packet.h"
-#include "service_inspectors/http_inspect/http_enum.h"
 #include "service_inspectors/http_inspect/http_flow_data.h"
 #include "service_inspectors/http_inspect/http_inspect.h"
 #include "service_inspectors/http_inspect/http_stream_splitter.h"
@@ -90,7 +89,7 @@ bool Http2HeadersFrameWithStartline::process_start_line(HttpFlowData*& http_flow
         dummy_pkt.dsize = stream_buf.length;
         dummy_pkt.data = stream_buf.data;
         session_data->hi->eval(&dummy_pkt);
-        if (http_flow->get_type_expected(hi_source_id) != HttpEnums::SEC_HEADER)
+        if (http_flow->get_type_expected(hi_source_id) != SEC_HEADER)
         {
             stream->set_state(hi_source_id, STREAM_ERROR);
             return false;

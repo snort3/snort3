@@ -22,20 +22,19 @@
 
 #include <zlib.h>
 
-#include "stream/stream_splitter.h"
-
 #include "http_common.h"
 #include "http_enum.h"
 #include "http_flow_data.h"
+#include "http_stream_splitter_base.h"
 #include "http_test_manager.h"
 
 class HttpInspect;
 
-class HttpStreamSplitter : public snort::StreamSplitter
+class HttpStreamSplitter : public HttpStreamSplitterBase
 {
 public:
     HttpStreamSplitter(bool is_client_to_server, HttpInspect* my_inspector_) :
-        snort::StreamSplitter(is_client_to_server),
+        HttpStreamSplitterBase(is_client_to_server),
         my_inspector(my_inspector_),
         source_id(is_client_to_server ? HttpCommon::SRC_CLIENT : HttpCommon::SRC_SERVER) {}
     Status scan(snort::Packet* pkt, const uint8_t* data, uint32_t length, uint32_t not_used,
@@ -43,7 +42,7 @@ public:
     const snort::StreamBuffer reassemble(snort::Flow* flow, unsigned total, unsigned, const
         uint8_t* data, unsigned len, uint32_t flags, unsigned& copied) override;
     bool finish(snort::Flow* flow) override;
-    void prep_partial_flush(snort::Flow* flow, uint32_t num_flush);
+    void prep_partial_flush(snort::Flow* flow, uint32_t num_flush) override;
     bool is_paf() override { return true; }
     static StreamSplitter::Status status_value(StreamSplitter::Status ret_val, bool http2 = false);
 
@@ -52,11 +51,11 @@ public:
     void go_away() override {}
 
 private:
-    void prepare_flush(HttpFlowData* session_data, uint32_t* flush_offset, HttpEnums::SectionType
+    void prepare_flush(HttpFlowData* session_data, uint32_t* flush_offset, HttpCommon::SectionType
         section_type, uint32_t num_flushed, uint32_t num_excess, int32_t num_head_lines,
         bool is_broken_chunk, uint32_t num_good_chunks, uint32_t octets_seen)
         const;
-    HttpCutter* get_cutter(HttpEnums::SectionType type, HttpFlowData* session) const;
+    HttpCutter* get_cutter(HttpCommon::SectionType type, HttpFlowData* session) const;
     void chunk_spray(HttpFlowData* session_data, uint8_t* buffer, const uint8_t* data,
         unsigned length) const;
     void decompress_copy(uint8_t* buffer, uint32_t& offset, const uint8_t* data,

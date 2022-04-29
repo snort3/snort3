@@ -32,6 +32,14 @@ enum StatusCode { STAT_NO_SOURCE=-16, STAT_NOT_CONFIGURED=-15, STAT_NOT_COMPUTE=
 // Message originator--client or server
 enum SourceId { SRC__NOT_COMPUTE=-14, SRC_CLIENT=0, SRC_SERVER=1 };
 
+// Type of message section
+enum SectionType { SEC_DISCARD = -19, SEC_ABORT = -18, SEC__NOT_COMPUTE=-14, SEC__NOT_PRESENT=-11,
+    SEC_REQUEST = 2, SEC_STATUS, SEC_HEADER, SEC_BODY_CL, SEC_BODY_CHUNK, SEC_TRAILER,
+    SEC_BODY_OLD, SEC_BODY_H2 };
+
+enum H2BodyState { H2_BODY_NOT_COMPLETE, H2_BODY_LAST_SEG, H2_BODY_COMPLETE,
+    H2_BODY_COMPLETE_EXPECT_TRAILERS, H2_BODY_NO_BODY };
+
 } // end namespace HttpCommon
 
 #endif

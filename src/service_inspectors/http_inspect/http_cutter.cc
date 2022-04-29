@@ -29,9 +29,10 @@
 #include "http_module.h"
 
 using namespace HttpEnums;
+using namespace HttpCommon;
 
 ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
-    HttpInfractions* infractions, HttpEventGen* events, uint32_t, bool, HttpEnums::H2BodyState)
+    HttpInfractions* infractions, HttpEventGen* events, uint32_t, bool, H2BodyState)
 {
     for (uint32_t k = 0; k < length; k++)
     {
@@ -183,7 +184,7 @@ HttpStartCutter::ValidationResult HttpStatusCutter::validate(uint8_t octet,
 }
 
 ScanResult HttpHeaderCutter::cut(const uint8_t* buffer, uint32_t length,
-    HttpInfractions* infractions, HttpEventGen* events, uint32_t, bool, HttpEnums::H2BodyState)
+    HttpInfractions* infractions, HttpEventGen* events, uint32_t, bool, H2BodyState)
 {
     // Header separators: leading \r\n, leading \n, leading \r\r\n, nonleading \r\n\r\n, nonleading
     // \n\r\n, nonleading \r\r\n, nonleading \r\n\n, and nonleading \n\n. The separator itself
@@ -323,7 +324,7 @@ HttpBodyCutter::~HttpBodyCutter()
 }
 
 ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length, HttpInfractions*,
-    HttpEventGen*, uint32_t flow_target, bool stretch, HttpEnums::H2BodyState)
+    HttpEventGen*, uint32_t flow_target, bool stretch, H2BodyState)
 {
     assert(remaining > octets_seen);
 
@@ -400,7 +401,7 @@ ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length, HttpInf
 }
 
 ScanResult HttpBodyOldCutter::cut(const uint8_t* buffer, uint32_t length, HttpInfractions*,
-    HttpEventGen*, uint32_t flow_target, bool stretch, HttpEnums::H2BodyState)
+    HttpEventGen*, uint32_t flow_target, bool stretch, H2BodyState)
 {
     if (flow_target == 0)
     {
@@ -446,7 +447,7 @@ void HttpBodyChunkCutter::transition_to_chunk_bad(bool& accelerate_this_packet)
 
 ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
     HttpInfractions* infractions, HttpEventGen* events, uint32_t flow_target, bool stretch,
-    HttpEnums::H2BodyState)
+    H2BodyState)
 {
     // Are we skipping through the rest of this chunked body to the trailers and the next message?
     const bool discard_mode = (flow_target == 0);
@@ -764,7 +765,7 @@ ScanResult HttpBodyH2Cutter::cut(const uint8_t* buffer, uint32_t length,
         {
             *infractions += INF_H2_DATA_OVERRUNS_CL;
             events->create_event(EVENT_H2_DATA_OVERRUNS_CL);
-            expected_body_length = HttpCommon::STAT_NOT_COMPUTE;
+            expected_body_length = STAT_NOT_COMPUTE;
         }
         else if (state != H2_BODY_NOT_COMPLETE and
             ((total_octets_scanned + length) < expected_body_length))

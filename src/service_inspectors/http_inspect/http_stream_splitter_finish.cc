@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include "http_stream_splitter.h"
+
 #include "file_api/file_flows.h"
 #include "pub_sub/http_request_body_event.h"
 
@@ -32,7 +34,6 @@
 #include "http_module.h"
 #include "http_msg_header.h"
 #include "http_msg_request.h"
-#include "http_stream_splitter.h"
 #include "http_test_input.h"
 
 using namespace HttpCommon;

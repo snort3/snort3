@@ -325,6 +325,25 @@ VersionId HttpInspect::http_get_version_id(Packet* p,
     return current_section->get_version_id(buffer_info);
 }
 
+HttpCommon::SectionType HttpInspect::get_type_expected(snort::Flow* flow, HttpCommon::SourceId source_id) const
+{
+    HttpFlowData* session_data = http_get_flow_data(flow);
+    return session_data->get_type_expected(source_id);
+}
+
+void HttpInspect::finish_h2_body(snort::Flow* flow, HttpCommon::SourceId source_id, HttpCommon::H2BodyState state,
+    bool clear_partial_buffer) const
+{
+    HttpFlowData* session_data = http_get_flow_data(flow);
+    session_data->finish_h2_body(source_id, state, clear_partial_buffer);
+}
+
+void HttpInspect::set_h2_body_state(snort::Flow* flow, HttpCommon::SourceId source_id, HttpCommon::H2BodyState state) const
+{
+    HttpFlowData* session_data = http_get_flow_data(flow);
+    session_data->set_h2_body_state(source_id, state);
+}
+
 bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
     if (get_latest_is(p) == IS_NONE)

@@ -75,13 +75,13 @@ public:
     friend class HttpUnitTestSetup;
 #endif
 
-    HttpEnums::SectionType get_type_expected(HttpCommon::SourceId source_id) const
+    HttpCommon::SectionType get_type_expected(HttpCommon::SourceId source_id) const
     { return type_expected[source_id]; }
 
-    void finish_h2_body(HttpCommon::SourceId source_id, HttpEnums::H2BodyState state,
+    void finish_h2_body(HttpCommon::SourceId source_id, HttpCommon::H2BodyState state,
         bool clear_partial_buffer);
 
-    void set_h2_body_state(HttpCommon::SourceId source_id, HttpEnums::H2BodyState state)
+    void set_h2_body_state(HttpCommon::SourceId source_id, HttpCommon::H2BodyState state)
     { h2_body_state[source_id] = state; }
 
     uint32_t get_h2_stream_id() const;
@@ -118,8 +118,8 @@ private:
     bool is_broken_chunk[2] = { false, false };
 
     // *** StreamSplitter => Inspector (facts about the most recent message section)
-    HttpEnums::SectionType section_type[2] = { HttpEnums::SEC__NOT_COMPUTE,
-                                                HttpEnums::SEC__NOT_COMPUTE };
+    HttpCommon::SectionType section_type[2] = { HttpCommon::SEC__NOT_COMPUTE,
+                                                HttpCommon::SEC__NOT_COMPUTE };
     int32_t octets_reassembled[2] = { HttpCommon::STAT_NOT_PRESENT, HttpCommon::STAT_NOT_PRESENT };
     int32_t num_head_lines[2] = { HttpCommon::STAT_NOT_PRESENT, HttpCommon::STAT_NOT_PRESENT };
     bool tcp_close[2] = { false, false };
@@ -137,7 +137,7 @@ private:
     HttpInfractions* get_infractions(HttpCommon::SourceId source_id);
 
     // *** Inspector => StreamSplitter (facts about the message section that is coming next)
-    HttpEnums::SectionType type_expected[2] = { HttpEnums::SEC_REQUEST, HttpEnums::SEC_STATUS };
+    HttpCommon::SectionType type_expected[2] = { HttpCommon::SEC_REQUEST, HttpCommon::SEC_STATUS };
     bool last_request_was_connect = false;
     z_stream* compress_stream[2] = { nullptr, nullptr };
     uint64_t zero_nine_expected = 0;
@@ -223,8 +223,8 @@ private:
     // *** HTTP/2 handling
     bool for_http2 = false;
     uint32_t h2_stream_id = 0;
-    HttpEnums::H2BodyState h2_body_state[2] = { HttpEnums::H2_BODY_NOT_COMPLETE,
-        HttpEnums::H2_BODY_NOT_COMPLETE };
+    HttpCommon::H2BodyState h2_body_state[2] = { HttpCommon::H2_BODY_NOT_COMPLETE,
+        HttpCommon::H2_BODY_NOT_COMPLETE };
 
 #ifdef REG_TEST
     static uint64_t instance_count;

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2022-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,30 +15,27 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http_msg_body_h2.cc author Katura Harvey <katharve@cisco.com>
+// http_inspect_base.h author Shibin K V <shikv@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef HTTP_INSPECT_BASE_H
+#define HTTP_INSPECT_BASE_H
 
-#include "http_msg_body_h2.h"
+#include "flow/flow.h"
+#include "framework/inspector.h"
+#include "main/snort_types.h"
 
-using namespace HttpCommon;
+#include "http_common.h"
 
-void HttpMsgBodyH2::update_flow()
+class SO_PUBLIC HttpInspectBase : public snort::Inspector
 {
-    session_data->body_octets[source_id] = body_octets;
-    if (session_data->h2_body_state[source_id] == H2_BODY_NOT_COMPLETE ||
-        session_data->h2_body_state[source_id] == H2_BODY_LAST_SEG)
-        update_depth();
-    else if (session_data->h2_body_state[source_id] == H2_BODY_COMPLETE_EXPECT_TRAILERS)
-        session_data->trailer_prep(source_id);
-}
+public:
+    virtual ~HttpInspectBase() override = default;
+    
+    virtual HttpCommon::SectionType get_type_expected(snort::Flow* flow, HttpCommon::SourceId source_id) const = 0;
+    virtual void finish_h2_body(snort::Flow* flow, HttpCommon::SourceId source_id, HttpCommon::H2BodyState state,
+        bool clear_partial_buffer) const = 0;
+    virtual void set_h2_body_state(snort::Flow* flow, HttpCommon::SourceId source_id, HttpCommon::H2BodyState state) const = 0;
+};
 
-#ifdef REG_TEST
-void HttpMsgBodyH2::print_section(FILE* output)
-{
-    print_body_section(output, "HTTP/2 body");
-}
 #endif
 

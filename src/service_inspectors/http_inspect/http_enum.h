@@ -48,11 +48,6 @@ static const uint8_t MAX_CUSTOM_HEADERS = MAX_XFF_HEADERS;
 // This can grow into a bitmap for the get_buf() form parameter
 static const uint64_t FORM_REQUEST = 0x1;
 
-// Type of message section
-enum SectionType { SEC_DISCARD = -19, SEC_ABORT = -18, SEC__NOT_COMPUTE=-14, SEC__NOT_PRESENT=-11,
-    SEC_REQUEST = 2, SEC_STATUS, SEC_HEADER, SEC_BODY_CL, SEC_BODY_CHUNK, SEC_TRAILER,
-    SEC_BODY_OLD, SEC_BODY_H2 };
-
 // HTTP rule options.
 // Lower numbered portion is message buffers available to clients.
 // That part must remain synchronized with HttpApi::classic_buffer_names[]
@@ -448,9 +443,6 @@ extern const bool is_sp_tab_cr_lf_vt_ff[256];
 extern const bool is_sp_tab_quote_dquote[256];
 extern const bool is_print_char[256]; // printable includes SP, tab, CR, LF
 extern const bool is_sp_comma[256];
-
-enum H2BodyState { H2_BODY_NOT_COMPLETE, H2_BODY_LAST_SEG, H2_BODY_COMPLETE,
-    H2_BODY_COMPLETE_EXPECT_TRAILERS, H2_BODY_NO_BODY };
 
 } // end namespace HttpEnums
 

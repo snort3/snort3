@@ -21,13 +21,15 @@
 #include "config.h"
 #endif
 
+#include "http_stream_splitter.h"
+
 #include "protocols/packet.h"
 
 #include "http_inspect.h"
 #include "http_module.h"
-#include "http_stream_splitter.h"
 #include "http_test_input.h"
 
+using namespace HttpCommon;
 using namespace HttpEnums;
 using namespace snort;
 

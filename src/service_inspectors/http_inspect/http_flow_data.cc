@@ -343,7 +343,7 @@ HttpInfractions* HttpFlowData::get_infractions(SourceId source_id)
     return transaction[source_id]->get_infractions(source_id);
 }
 
-void HttpFlowData::finish_h2_body(HttpCommon::SourceId source_id, HttpEnums::H2BodyState state,
+void HttpFlowData::finish_h2_body(HttpCommon::SourceId source_id, HttpCommon::H2BodyState state,
     bool clear_partial_buffer)
 {
     assert((h2_body_state[source_id] == H2_BODY_NOT_COMPLETE) ||

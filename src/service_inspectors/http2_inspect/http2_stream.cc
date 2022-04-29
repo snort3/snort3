@@ -24,7 +24,6 @@
 #include "http2_enum.h"
 #include "http2_stream.h"
 
-#include "service_inspectors/http_inspect/http_enum.h"
 #include "service_inspectors/http_inspect/http_flow_data.h"
 #include "service_inspectors/http_inspect/http_stream_splitter.h"
 
@@ -34,7 +33,6 @@
 
 using namespace HttpCommon;
 using namespace Http2Enums;
-using namespace HttpEnums;
 
 Http2Stream::Http2Stream(uint32_t stream_id_, Http2FlowData* session_data_) :
     stream_id(stream_id_),

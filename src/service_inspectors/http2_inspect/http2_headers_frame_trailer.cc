@@ -24,7 +24,6 @@
 #include "http2_headers_frame_trailer.h"
 
 #include "protocols/packet.h"
-#include "service_inspectors/http_inspect/http_enum.h"
 #include "service_inspectors/http_inspect/http_flow_data.h"
 #include "service_inspectors/http_inspect/http_inspect.h"
 #include "service_inspectors/http_inspect/http_stream_splitter.h"
@@ -72,11 +71,11 @@ void Http2HeadersFrameTrailer::analyze_http1()
     assert(http_flow);
 
     const bool valid_headers = http1_header.length() > 0;
-    if (http_flow->get_type_expected(source_id) != HttpEnums::SEC_TRAILER)
+    if (http_flow->get_type_expected(source_id) != SEC_TRAILER)
     {
         // http_inspect is not yet expecting trailers. Flush empty buffer through scan, reassemble,
         // and eval to prepare http_inspect for trailers.
-        assert(http_flow->get_type_expected(source_id) == HttpEnums::SEC_BODY_H2);
+        assert(http_flow->get_type_expected(source_id) == SEC_BODY_H2);
         stream->finish_msg_body(source_id, valid_headers, true); // calls http_inspect scan()
 
         unsigned copied;
@@ -93,8 +92,8 @@ void Http2HeadersFrameTrailer::analyze_http1()
             dummy_pkt.dsize = stream_buf.length;
             dummy_pkt.data = stream_buf.data;
             session_data->hi->eval(&dummy_pkt);
-            assert (!valid_headers || http_flow->get_type_expected(source_id) == HttpEnums::SEC_TRAILER);
-            if (http_flow->get_type_expected(source_id) == HttpEnums::SEC_ABORT)
+            assert (!valid_headers || http_flow->get_type_expected(source_id) == SEC_TRAILER);
+            if (http_flow->get_type_expected(source_id) == SEC_ABORT)
             {
                 stream->set_state(source_id, STREAM_ERROR);
                 return;

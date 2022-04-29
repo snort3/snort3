@@ -24,7 +24,6 @@
 #include "http2_headers_frame.h"
 
 #include "protocols/packet.h"
-#include "service_inspectors/http_inspect/http_enum.h"
 #include "service_inspectors/http_inspect/http_flow_data.h"
 #include "service_inspectors/http_inspect/http_inspect.h"
 #include "service_inspectors/http_inspect/http_stream_splitter.h"
@@ -152,7 +151,7 @@ void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow, SourceI
         dummy_pkt.data = stream_buf.data;
         dummy_pkt.xtradata_mask = 0;
         session_data->hi->eval(&dummy_pkt);
-        if (http_flow->get_type_expected(hi_source_id) == HttpEnums::SEC_ABORT)
+        if (http_flow->get_type_expected(hi_source_id) == SEC_ABORT)
         {
             assert(session_data->is_processing_partial_header());
             stream->set_state(hi_source_id, STREAM_ERROR);

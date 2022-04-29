@@ -23,7 +23,6 @@
 
 #include "http2_push_promise_frame.h"
 
-#include "service_inspectors/http_inspect/http_enum.h"
 #include "service_inspectors/http_inspect/http_flow_data.h"
 
 #include "http2_flow_data.h"
@@ -117,7 +116,7 @@ void Http2PushPromiseFrame::analyze_http1()
 
     // Push promise cannot have a message body
     // FIXIT-E handle bad request lines and cases where a message body is implied
-    stream->get_hi_flow_data()->finish_h2_body(SRC_CLIENT, HttpEnums::H2_BODY_NO_BODY, false);
+    stream->get_hi_flow_data()->finish_h2_body(SRC_CLIENT, H2_BODY_NO_BODY, false);
 
     process_decoded_headers(http_flow, SRC_CLIENT);
 }

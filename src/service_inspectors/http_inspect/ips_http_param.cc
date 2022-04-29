@@ -33,6 +33,7 @@
 #include "http_common.h"
 #include "http_enum.h"
 #include "http_inspect.h"
+#include "http_msg_section.h"
 #include "http_param.h"
 
 using namespace snort;
