@@ -44,9 +44,14 @@ using namespace snort;
 
 void AnalyzerCommand::log_message(ControlConn* ctrlcon, const char* format, va_list& ap)
 {
-    LogMessage(format, ap);
     if (ctrlcon && !ctrlcon->is_local())
-        ctrlcon->respond(format, ap);
+    {
+        va_list rap;
+        va_copy(rap, ap);
+        ctrlcon->respond(format, rap);
+        va_end(rap);
+    }
+    LogMessage(format, ap);
 }
 
 void AnalyzerCommand::log_message(ControlConn* ctrlcon, const char* format, ...)
