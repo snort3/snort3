@@ -60,6 +60,7 @@ EveCaPatternMatchers::~EveCaPatternMatchers() = default;
 HttpPatternMatchers::~HttpPatternMatchers() = default;
 SipPatternMatchers::~SipPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;
+AlpnPatternMatchers::~AlpnPatternMatchers() = default;
 AppIdConfig::~AppIdConfig() = default;
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
 void ServiceDiscovery::initialize(AppIdInspector&) { }

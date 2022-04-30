@@ -71,6 +71,7 @@ public:
             case APP_ID_SSHELL:
             case APP_ID_SSL:
             case APP_ID_QUIC:
+            case APP_ID_HTTP3:
                 return true;
         }
 

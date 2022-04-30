@@ -24,6 +24,8 @@
 #include "appid_peg_counts.h"
 #include "utils/stats.h"
 
+#define APPID_UT_ID 1492
+
 namespace snort
 {
 // Stubs for messages
@@ -80,6 +82,7 @@ AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
 }
 
+AlpnPatternMatchers::~AlpnPatternMatchers() {}
 EveCaPatternMatchers::~EveCaPatternMatchers() { }
 SslPatternMatchers::~SslPatternMatchers() { }
 SipPatternMatchers::~SipPatternMatchers() { }

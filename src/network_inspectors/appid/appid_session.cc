@@ -493,6 +493,9 @@ void AppIdSession::update_encrypted_app_id(AppId service_id)
     case APP_ID_POP3:
         misc_app_id = APP_ID_POP3S;
         break;
+    case APP_ID_HTTP3:
+    case APP_ID_SMB_OVER_QUIC:
+        misc_app_id = APP_ID_QUIC;
     default:
         break;
     }
@@ -767,6 +770,9 @@ void AppIdSession::stop_service_inspection(Packet* p, AppidSessionDirection dire
 AppId AppIdSession::pick_service_app_id() const
 {
     AppId rval = APP_ID_NONE;
+
+    if (api.service.get_alpn_service_app_id() > APP_ID_NONE)
+        return api.service.get_alpn_service_app_id();
 
     if (!tp_appid_ctxt)
     {

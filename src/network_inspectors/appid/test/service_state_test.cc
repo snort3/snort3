@@ -125,6 +125,7 @@ EveCaPatternMatchers::~EveCaPatternMatchers() = default;
 HttpPatternMatchers::~HttpPatternMatchers() = default;
 SipPatternMatchers::~SipPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;
+AlpnPatternMatchers::~AlpnPatternMatchers() = default;
 snort::SearchTool::SearchTool(bool) { }
 snort::SearchTool::~SearchTool() = default;
 

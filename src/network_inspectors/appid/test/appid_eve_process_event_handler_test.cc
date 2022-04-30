@@ -60,13 +60,20 @@ Packet* DetectionEngine::get_current_packet()
 }
 }
 
+AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
+    AppidSessionDirection, AppIdInspector&, OdpContext&)
+{
+    return nullptr;
+}
+
 void AppIdSession::publish_appid_event(AppidChangeBits&, const Packet&, bool, uint32_t)
 {
     return;
 }
 
-bool SslPatternMatchers::scan_hostname(const uint8_t*, size_t, AppId&, AppId&)
+bool SslPatternMatchers::scan_hostname(const uint8_t*, size_t, AppId&, AppId& payload)
 {
+    payload = APPID_UT_ID + 1;
     return true;
 }
 
@@ -75,11 +82,34 @@ void AppIdSession::set_ss_application_ids_payload(AppId, AppidChangeBits&)
     return;
 }
 
+void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, char*)
+{
+    set_client_id(APPID_UT_ID);
+    return;
+}
+
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection,
     AppId, AppidChangeBits&) { }
 void AppIdModule::reset_stats() { }
 void AppIdDebug::activate(snort::Flow const*, AppIdSession const*, bool) { }
 
+void AppIdSession::update_encrypted_app_id(AppId) {}
+void HttpPatternMatchers::identify_user_agent(const char*, int, AppId&, AppId& client, char**)
+{
+    client = APPID_UT_ID;
+}
+
+void AppIdSession::set_service_appid_data(AppId, AppidChangeBits&, char*)
+{
+}
+
+AppId AlpnPatternMatchers::match_alpn_pattern(const string& str)
+{
+    if (!str.compare("h3"))
+        return APPID_UT_ID + 2;
+    else
+        return APP_ID_NONE;
+}
 
 AppId EveCaPatternMatchers::match_eve_ca_pattern(const string&, uint8_t)
 {
@@ -109,10 +139,62 @@ TEST(appid_eve_process_event_handler_tests, eve_process_event_handler)
 {
     Packet p;
     EveProcessEvent event(p, "firefox", 90);
-    AppIdEveProcessEventHandler event_handler;
+    AppIdEveProcessEventHandler event_handler(dummy_appid_inspector);
     Flow* flow = new Flow();
     event_handler.handle(event, flow);
     CHECK(session->get_eve_client_app_id() == APPID_UT_ID);
+    delete flow;
+}
+
+TEST(appid_eve_process_event_handler_tests, eve_user_agent_event_handler)
+{
+    Packet p;
+    EveProcessEvent event(p, "firefox", 90);
+    event.set_user_agent("chrome");
+    AppIdEveProcessEventHandler event_handler(dummy_appid_inspector);
+    Flow* flow = new Flow();
+    event_handler.handle(event, flow);
+    CHECK(session->get_client_id() == APPID_UT_ID);
+    delete flow;
+}
+
+TEST(appid_eve_process_event_handler_tests, eve_server_name_event_handler)
+{
+    Packet p;
+    EveProcessEvent event(p, "firefox", 90);
+    event.set_server_name("www.google.com");
+    AppIdEveProcessEventHandler event_handler(dummy_appid_inspector);
+    Flow* flow = new Flow();
+    event_handler.handle(event, flow);
+    CHECK(session->get_payload_id() == APPID_UT_ID + 1);
+    delete flow;
+}
+
+TEST(appid_eve_process_event_handler_tests, eve_alpn_event_handler)
+{
+    Packet p;
+    vector<string> alpn = {"h3"};
+    EveProcessEvent event(p, "firefox", 90);
+    event.set_alpn(alpn);
+    event.set_quic(true);
+    AppIdEveProcessEventHandler event_handler(dummy_appid_inspector);
+    Flow* flow = new Flow();
+    event_handler.handle(event, flow);
+    CHECK(session->get_alpn_service_app_id() == APPID_UT_ID + 2);
+    delete flow;
+}
+
+TEST(appid_eve_process_event_handler_tests, eve_unknown_alpn_event_handler)
+{
+    Packet p;
+    vector<string> alpn = {"smb"};
+    EveProcessEvent event(p, "firefox", 90);
+    event.set_alpn(alpn);
+    event.set_quic(true);
+    AppIdEveProcessEventHandler event_handler(dummy_appid_inspector);
+    Flow* flow = new Flow();
+    event_handler.handle(event, flow);
+    CHECK(session->get_alpn_service_app_id() == APP_ID_NONE);
     delete flow;
 }
 

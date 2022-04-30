@@ -168,6 +168,7 @@ void OdpContext::initialize(AppIdInspector& inspector)
     client_disco_mgr.finalize_client_patterns();
     http_matchers.finalize_patterns();
     eve_ca_matchers.finalize_patterns();
+    alpn_matchers.finalize_patterns();
     // sip patterns need to be finalized after http patterns because they
     // are dependent on http patterns
     sip_matchers.finalize_patterns(*this);
@@ -188,6 +189,7 @@ void OdpContext::reload()
     sip_matchers.reload_patterns();
     ssl_matchers.reload_patterns();
     dns_matchers.reload_patterns();
+    alpn_matchers.reload_patterns();
 }
 
 void OdpContext::add_port_service_id(IpProtocol proto, uint16_t port, AppId appid)

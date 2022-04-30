@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,24 +16,43 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// appid_eve_process_event_handler.h author Cliff Judge <cljudge@cisco.com>
+// alpn_patterns.h author Pranav Bhalerao <prbhaler@cisco.com>
 
-#ifndef APPID_EVE_PROCESS_EVENT_HANDLER_H
-#define APPID_EVE_PROCESS_EVENT_HANDLER_H
+#ifndef ALPN_PATTERNS_H
+#define ALPN_PATTERNS_H
 
-#include "pub_sub/eve_process_event.h"
-#include "appid_module.h"
+#include <vector>
 
-class AppIdEveProcessEventHandler : public snort::DataHandler
+#include "search_engines/search_tool.h"
+#include "application_ids.h"
+
+struct AlpnPattern
+{
+    const AppId app_id;
+    const std::string pattern;
+
+    AlpnPattern(AppId id, const std::string& name) : app_id(id), pattern(name){}
+
+    ~AlpnPattern() {}
+};
+
+typedef std::vector<AlpnPattern*> AlpnPatternList;
+
+class AlpnPatternMatchers
 {
 public:
-    AppIdEveProcessEventHandler(AppIdInspector& inspector) :
-        DataHandler(MOD_NAME), inspector(inspector) { }
+    ~AlpnPatternMatchers();
+    AppId match_alpn_pattern(const std::string&);
+    void add_alpn_pattern(AppId, const std::string&, const std::string&);
+    void finalize_patterns();
+    void reload_patterns();
 
-    void handle(snort::DataEvent& event, snort::Flow* flow) override;
+    const AlpnPatternList& get_alpn_load_list() const { return alpn_load_list; }
 
 private:
-    AppIdInspector& inspector;
+    snort::SearchTool alpn_pattern_matcher = snort::SearchTool();
+    AlpnPatternList alpn_load_list;
 };
 
 #endif
+

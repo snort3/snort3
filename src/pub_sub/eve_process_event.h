@@ -56,11 +56,45 @@ public:
             server_name = server;
     }
 
+    const std::string& get_user_agent() const
+    {
+        return user_agent;
+    }
+
+    void set_user_agent(const char* u_a)
+    {
+        if (u_a)
+            user_agent = u_a;
+    }
+
+    const std::vector<std::string> get_alpn() const
+    {
+        return alpn;
+    }
+
+    void set_alpn(std::vector<std::string>& alpn_vec)
+    {
+        if(alpn_vec.size())
+            alpn = alpn_vec;
+    }
+
+    void set_quic(bool flag)
+    {
+        is_quic = flag;
+    }
+
+    bool is_flow_quic() const
+    {
+        return is_quic;
+    }
+
 private:
     const snort::Packet &p;
     std::string process_name;
     uint8_t process_confidence = 0;
     std::string server_name;
+    std::string user_agent;
+    std::vector<std::string> alpn;
+    bool is_quic = false;
 };
-
 #endif

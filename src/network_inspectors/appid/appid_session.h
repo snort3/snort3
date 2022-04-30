@@ -526,6 +526,16 @@ public:
             (api.client.get_id() == APP_ID_SSL_CLIENT or api.client.get_id() <= APP_ID_NONE));
     }
 
+    void set_alpn_service_app_id(AppId id)
+    {
+        api.service.set_alpn_service_app_id(id);
+    }
+
+    AppId get_alpn_service_app_id() const
+    {
+        return api.service.get_alpn_service_app_id();
+    }
+
     AppId get_payload_id() const
     {
         return api.payload.get_id();

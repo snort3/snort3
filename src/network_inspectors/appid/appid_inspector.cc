@@ -138,7 +138,7 @@ bool AppIdInspector::configure(SnortConfig* sc)
 
     DataBus::subscribe_global(OPPORTUNISTIC_TLS_EVENT, new AppIdOpportunisticTlsEventHandler(), *sc);
 
-    DataBus::subscribe_global(EVE_PROCESS_EVENT, new AppIdEveProcessEventHandler(), *sc);
+    DataBus::subscribe_global(EVE_PROCESS_EVENT, new AppIdEveProcessEventHandler(*this), *sc);
 
     DataBus::subscribe_global(SSH_EVENT, new SshEventHandler(), *sc);
 

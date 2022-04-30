@@ -87,6 +87,7 @@ DnsPatternMatchers::~DnsPatternMatchers() = default;
 EveCaPatternMatchers::~EveCaPatternMatchers() = default;
 SipPatternMatchers::~SipPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;
+AlpnPatternMatchers::~AlpnPatternMatchers() = default;
 void AppIdModule::reset_stats() {}
 bool AppIdInspector::configure(snort::SnortConfig*) { return true; }
 

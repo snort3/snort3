@@ -207,8 +207,19 @@ public:
         return service_group;
     }
 
+    void set_alpn_service_app_id(AppId id)
+    {
+        alpn_service_app_id = id;
+    }
+
+    AppId get_alpn_service_app_id() const
+    {
+        return alpn_service_app_id;
+    }
+
 private:
     AppId port_service_id = APP_ID_NONE;
+    AppId alpn_service_app_id = APP_ID_NONE;
     bool deferred = false;
     using ApplicationDescriptor::set_id;
     std::string my_vendor;

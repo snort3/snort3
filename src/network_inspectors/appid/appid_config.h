@@ -39,6 +39,7 @@
 #include "length_app_cache.h"
 #include "lua_detector_flow_api.h"
 #include "lua_detector_module.h"
+#include "service_plugins/alpn_patterns.h"
 #include "service_plugins/service_discovery.h"
 #include "detector_plugins/ssh_patterns.h"
 #include "tp_appid_module_api.h"
@@ -209,6 +210,11 @@ public:
         return *service_pattern_detector;
     }
 
+    AlpnPatternMatchers& get_alpn_matchers()
+    {
+        return alpn_matchers;
+    }
+
     void add_port_service_id(IpProtocol, uint16_t, AppId);
     void add_protocol_service_id(IpProtocol, AppId);
     AppId get_port_service_id(IpProtocol, uint16_t);
@@ -228,6 +234,7 @@ private:
     SshPatternMatchers ssh_matchers;
     PatternClientDetector* client_pattern_detector;
     PatternServiceDetector* service_pattern_detector;
+    AlpnPatternMatchers alpn_matchers;
 
     std::array<AppId, APP_ID_PORT_ARRAY_SIZE> tcp_port_only = {}; // port-only TCP services
     std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only = {}; // port-only UDP services

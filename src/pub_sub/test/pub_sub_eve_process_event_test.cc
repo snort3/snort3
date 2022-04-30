@@ -44,9 +44,16 @@ TEST_GROUP(pub_sub_eve_process_event_test)
 TEST(pub_sub_eve_process_event_test, eve_process_event)
 {
     Packet p;
+    std::vector<std::string> alpn = {"h3"};
     EveProcessEvent event(p, "process", 10);
+    event.set_user_agent("chrome");
+    event.set_server_name("www.google.com");
+    event.set_alpn(alpn);
     CHECK(event.get_process_name() == "process");
     CHECK(event.get_process_confidence() == 10);
+    CHECK(event.get_user_agent() == "chrome");
+    CHECK(event.get_server_name() == "www.google.com");
+    CHECK(event.get_alpn()[0] == "h3");
     CHECK(event.get_packet() == &p);
 }
 

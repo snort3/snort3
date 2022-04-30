@@ -40,6 +40,8 @@ set ( CP_APPID_SOURCES
 )
 
 set ( SP_APPID_SOURCES
+    service_plugins/alpn_patterns.cc
+    service_plugins/alpn_patterns.h
     service_plugins/dcerpc.cc
     service_plugins/dcerpc.h
     service_plugins/service_bgp.cc

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,25 +15,24 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// alpn_patterns_mock.h author Pranav Bhalerao <prbhaler@cisco.com>
 
-// appid_eve_process_event_handler.h author Cliff Judge <cljudge@cisco.com>
+#define APPID_UT_ID 1492
 
-#ifndef APPID_EVE_PROCESS_EVENT_HANDLER_H
-#define APPID_EVE_PROCESS_EVENT_HANDLER_H
-
-#include "pub_sub/eve_process_event.h"
-#include "appid_module.h"
-
-class AppIdEveProcessEventHandler : public snort::DataHandler
+namespace snort
 {
-public:
-    AppIdEveProcessEventHandler(AppIdInspector& inspector) :
-        DataHandler(MOD_NAME), inspector(inspector) { }
+// Stubs for  messages
+void LogMessage(const char*,...) { }
+void WarningMessage(const char*,...) { }
 
-    void handle(snort::DataEvent& event, snort::Flow* flow) override;
+// Stubs for search_tool.cc
+SearchTool::SearchTool(bool) { }
+SearchTool::~SearchTool() = default;
+void SearchTool::add(const char*, unsigned, int, bool) { }
+void SearchTool::add(const char*, unsigned, void*, bool) { }
+void SearchTool::add(const uint8_t*, unsigned, int, bool) { }
+void SearchTool::add(const uint8_t*, unsigned, void*, bool) { }
+void SearchTool::prep() { }
+void SearchTool::reload() { }
+}
 
-private:
-    AppIdInspector& inspector;
-};
-
-#endif

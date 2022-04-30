@@ -34,13 +34,35 @@ using namespace snort;
 void AppIdEveProcessEventHandler::handle(DataEvent& event, Flow* flow)
 {
     assert(flow);
-    AppIdSession* asd = appid_api.get_appid_session(*flow);
-    if (!asd or
-        !asd->get_session_flags(APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED))
+
+    if (!pkt_thread_odp_ctxt)
         return;
 
-    if (!pkt_thread_odp_ctxt or
-        (pkt_thread_odp_ctxt->get_version() != asd->get_odp_ctxt_version()))
+    Packet* p = DetectionEngine::get_current_packet();
+    assert(p);
+
+    AppIdSession* asd = appid_api.get_appid_session(*flow);
+    if (!asd)
+    {
+        AppidSessionDirection dir;
+
+        dir = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
+
+        asd = AppIdSession::allocate_session(p, p->get_ip_proto_next(), dir,
+            inspector, *pkt_thread_odp_ctxt);
+        if (appidDebug->is_enabled())
+        {
+            appidDebug->activate(flow, asd, inspector.get_ctxt().config.log_all_sessions);
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s New AppId session at mercury event\n",
+                    appidDebug->get_debug_session());
+        }
+    }
+
+    if (!asd->get_session_flags(APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED))
+        return;
+
+    if (pkt_thread_odp_ctxt->get_version() != asd->get_odp_ctxt_version())
         return;
 
     const EveProcessEvent &eve_process_event = static_cast<EveProcessEvent&>(event);
@@ -48,27 +70,54 @@ void AppIdEveProcessEventHandler::handle(DataEvent& event, Flow* flow)
     const std::string& name = eve_process_event.get_process_name();
     uint8_t conf = eve_process_event.get_process_confidence();
     const std::string& server_name = eve_process_event.get_server_name();
-    AppId app_id = APP_ID_NONE;
+    const std::string& user_agent = eve_process_event.get_user_agent();
+    std::vector<std::string> alpn_vec = eve_process_event.get_alpn();
+    const bool is_quic = eve_process_event.is_flow_quic();
 
-    if (!name.empty())
+    AppidChangeBits change_bits;
+
+    if (is_quic && alpn_vec.size())
     {
-        app_id = asd->get_odp_ctxt().get_eve_ca_matchers().match_eve_ca_pattern(name,
-            conf);
-
-        asd->set_eve_client_app_id(app_id);
+        AppId service_id = APP_ID_NONE;
+        service_id = asd->get_odp_ctxt().get_alpn_matchers().match_alpn_pattern(alpn_vec[0]);
+        if (service_id)
+        {
+            asd->set_alpn_service_app_id(service_id);
+            asd->update_encrypted_app_id(service_id);
+        }
+        else
+        {
+            asd->set_service_appid_data(APP_ID_QUIC, change_bits);
+            asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
+        }
     }
 
-    if (appidDebug->is_active())
-        LogMessage("AppIdDbg %s encrypted client app %d process name '%s', "
-            "confidence: %d, server name '%s'\n", appidDebug->get_debug_session(), app_id,
-            name.c_str(), conf, server_name.c_str());
+    AppId client_id = APP_ID_NONE;
+    if (!user_agent.empty())
+    {
+        char* version = nullptr;
+        AppId service_id = APP_ID_NONE;
+
+        asd->get_odp_ctxt().get_http_matchers().identify_user_agent(user_agent.c_str(),
+            user_agent.size(), service_id, client_id, &version);
+
+        if (client_id != APP_ID_NONE)
+            asd->set_client_appid_data(client_id, change_bits, version);
+
+        snort_free(version);
+    }
+    else if (!name.empty())
+    {
+        client_id = asd->get_odp_ctxt().get_eve_ca_matchers().match_eve_ca_pattern(name,
+            conf);
+
+        asd->set_eve_client_app_id(client_id);
+    }
 
     if (!server_name.empty())
     {
-        AppId client_id;
-        AppId payload_id;
-        AppidChangeBits change_bits;
-        snort::Packet* p = snort::DetectionEngine::get_current_packet();
+        AppId client_id = APP_ID_NONE;
+        AppId payload_id = APP_ID_NONE;
 
         if (!asd->tsession)
             asd->tsession = new TlsSession();
@@ -80,7 +129,34 @@ void AppIdEveProcessEventHandler::handle(DataEvent& event, Flow* flow)
             server_name.length(), client_id, payload_id);
         asd->set_payload_id(payload_id);
         asd->set_ss_application_ids_payload(payload_id, change_bits);
-
-        asd->publish_appid_event(change_bits, *p);
     }
+
+    if (appidDebug->is_active())
+    {
+        std::string debug_str;
+
+        debug_str += "encrypted client app: " + std::to_string(client_id);
+        if (!name.empty())
+            debug_str += ", process name: " + name + ", confidence: " + std::to_string(conf);
+
+        if (!server_name.empty())
+            debug_str += ", server name: " + server_name;
+
+        if (!user_agent.empty())
+            debug_str += ", user agent: " + user_agent;
+
+        if (is_quic && alpn_vec.size())
+        {
+            debug_str += ", alpn: [ ";
+            for(unsigned int i = 0; i < alpn_vec.size(); i++)
+                debug_str += alpn_vec[i] + " ";
+            debug_str += "]";
+        }
+
+        LogMessage("AppIdDbg %s %s\n",
+            appidDebug->get_debug_session(), debug_str.c_str());
+    }
+
+    if (change_bits.any())
+        asd->publish_appid_event(change_bits, *p);
 }
