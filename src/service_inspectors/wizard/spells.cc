@@ -27,12 +27,11 @@
 
 #include "magic.h"
 
-using namespace snort;
 using namespace std;
 
 #define WILD 0x100
 
-SpellBook::SpellBook() : glob(nullptr)
+SpellBook::SpellBook()
 {
     // allows skipping leading whitespace only
     root->next[(int)' '] = root;
@@ -87,7 +86,7 @@ void SpellBook::add_spell(
         ++i;
     }
     p->key = key;
-    p->value = SnortConfig::get_static_name(val);
+    p->value = snort::SnortConfig::get_static_name(val);
 }
 
 bool SpellBook::add_spell(const char* key, const char*& val)
@@ -130,7 +129,7 @@ bool SpellBook::add_spell(const char* key, const char*& val)
 }
 
 const MagicPage* SpellBook::find_spell(
-    const uint8_t* s, unsigned n, const MagicPage* p, unsigned i) const
+    const uint8_t* s, unsigned n, const MagicPage* p, unsigned i, const MagicPage*& bookmark) const
 {
     while ( i < n )
     {
@@ -140,7 +139,7 @@ const MagicPage* SpellBook::find_spell(
         {
             if ( p->any )
             {
-                if ( const MagicPage* q = find_spell(s, n, p->next[c], i+1) )
+                if ( const MagicPage* q = find_spell(s, n, p->next[c], i+1, bookmark) )
                     return q;
             }
             else
@@ -154,9 +153,9 @@ const MagicPage* SpellBook::find_spell(
         {
             while ( i < n )
             {
-                if ( const MagicPage* q = find_spell(s, n, p->any, i) )
+                if ( const MagicPage* q = find_spell(s, n, p->any, i, bookmark) )
                 {
-                    glob = q->any ? q : p;
+                    bookmark = q->any ? q : p;
                     return q;
                 }
                 ++i;
@@ -164,13 +163,13 @@ const MagicPage* SpellBook::find_spell(
             return p;
         }
 
-        // If no match but has glob, continue lookup from glob
-        if ( !p->value && glob )
+        // If no match but has bookmark, continue lookup from bookmark
+        if ( !p->value && bookmark )
         {
-            p = glob;
-            glob = nullptr;
+            p = bookmark;
+            bookmark = nullptr;
 
-            return find_spell(s, n, p, i);
+            return find_spell(s, n, p, i, bookmark);
         }
 
         return p->value ? p : nullptr;

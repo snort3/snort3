@@ -136,7 +136,7 @@ bool HexBook::add_spell(const char* key, const char*& val)
 }
 
 const MagicPage* HexBook::find_spell(
-    const uint8_t* s, unsigned n, const MagicPage* p, unsigned i) const
+    const uint8_t* s, unsigned n, const MagicPage* p, unsigned i, const MagicPage*& bookmark) const
 {
     while ( i < n )
     {
@@ -146,7 +146,7 @@ const MagicPage* HexBook::find_spell(
         {
             if ( p->any )
             {
-                if ( const MagicPage* q = find_spell(s, n, p->next[c], i+1) )
+                if ( const MagicPage* q = find_spell(s, n, p->next[c], i+1, bookmark) )
                     return q;
             }
             else
@@ -158,7 +158,7 @@ const MagicPage* HexBook::find_spell(
         }
         if ( p->any )
         {
-            if ( const MagicPage* q = find_spell(s, n, p->any, i+1) )
+            if ( const MagicPage* q = find_spell(s, n, p->any, i+1, bookmark) )
                 return q;
         }
         return p->value ? p : nullptr;

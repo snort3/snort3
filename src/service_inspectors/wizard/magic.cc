@@ -43,10 +43,10 @@ MagicPage::~MagicPage()
 }
 
 const char* MagicBook::find_spell(const uint8_t* data, unsigned len,
-    const MagicPage*& p) const
+    const MagicPage*& p, const MagicPage*& bookmark) const
 {
     assert(p);
-    p = find_spell(data, len, p, 0);
+    p = find_spell(data, len, p, 0, bookmark);
     return p ? p->value : nullptr;
 }
 

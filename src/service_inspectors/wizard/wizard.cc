@@ -80,6 +80,7 @@ struct Wand
 {
     const MagicPage* hex;
     const MagicPage* spell;
+    const MagicPage* bookmark;
     vector<CurseServiceTracker> curse_tracker;
 };
 
@@ -125,7 +126,6 @@ private:
     Wizard* wizard;
     Wand wand;
     uint16_t wizard_processed_bytes;
-    const MagicPage* bookmark;         // pointer to last glob
 };
 
 class Wizard : public Inspector
@@ -142,7 +142,7 @@ public:
     { return !w.hex && !w.spell && w.curse_tracker.empty(); }
     void reset(Wand&, bool tcp, bool c2s);
     bool cast_spell(Wand&, Flow*, const uint8_t*, unsigned, uint16_t&);
-    bool spellbind(const MagicPage*&, Flow*, const uint8_t*, unsigned);
+    bool spellbind(const MagicPage*&, Flow*, const uint8_t*, unsigned, const MagicPage*&);
     bool cursebind(const vector<CurseServiceTracker>&, Flow*, const uint8_t*, unsigned);
 
 public:
@@ -164,7 +164,7 @@ public:
 //-------------------------------------------------------------------------
 
 MagicSplitter::MagicSplitter(bool c2s, class Wizard* w) :
-    StreamSplitter(c2s), wizard_processed_bytes(0), bookmark(nullptr)
+    StreamSplitter(c2s), wizard_processed_bytes(0)
 {
     wizard = w;
     w->add_ref();
@@ -187,9 +187,6 @@ StreamSplitter::Status MagicSplitter::scan(
     Profile profile(wizPerfStats);
     count_scan(pkt->flow);
 
-    // setting last glob from current flow
-    if ( wand.spell )
-        wand.spell->book.set_bookmark(bookmark);
     bytes_scanned += len;
 
     if ( wizard->cast_spell(wand, pkt->flow, data, len, wizard_processed_bytes) )
@@ -200,7 +197,6 @@ StreamSplitter::Status MagicSplitter::scan(
         wizard_processed_bytes = 0;
         return STOP;
     }
-
     else if ( wizard->finished(wand) || bytes_scanned >= max(pkt->flow) )
     {
         count_miss(pkt->flow);
@@ -213,10 +209,6 @@ StreamSplitter::Status MagicSplitter::scan(
         }
         return ABORT;
     }
-
-    // saving new last glob from current flow
-    if ( wand.spell )
-        bookmark = wand.spell->book.get_bookmark();
 
     // FIXIT-L Ideally, this event should be raised after wizard aborts its search. However, this
     // could take multiple packets because wizard needs wizard.max_search_depth payload bytes before
@@ -264,17 +256,17 @@ Wizard::~Wizard()
 
 void Wizard::reset(Wand& w, bool tcp, bool c2s)
 {
+    w.bookmark = nullptr;
+
     if ( c2s )
     {
         w.hex = c2s_hexes->page1();
         w.spell = c2s_spells->page1();
-        c2s_spells->set_bookmark();
     }
     else
     {
         w.hex = s2c_hexes->page1();
         w.spell = s2c_spells->page1();
-        s2c_spells->set_bookmark();
     }
 
     if (w.curse_tracker.empty())
@@ -326,9 +318,9 @@ StreamSplitter* Wizard::get_splitter(bool c2s)
 }
 
 bool Wizard::spellbind(
-    const MagicPage*& m, Flow* f, const uint8_t* data, unsigned len)
+    const MagicPage*& m, Flow* f, const uint8_t* data, unsigned len, const MagicPage*& bookmark)
 {
-    f->service = m->book.find_spell(data, len, m);
+    f->service = m->book.find_spell(data, len, m, bookmark);
     return f->service != nullptr;
 }
 
@@ -357,10 +349,10 @@ bool Wizard::cast_spell(
 
     wizard_processed_bytes += len;
 
-    if ( w.hex && spellbind(w.hex, f, data, len) )
+    if ( w.hex && spellbind(w.hex, f, data, len, w.bookmark) )
         return true;
 
-    if ( w.spell && spellbind(w.spell, f, data, len) )
+    if ( w.spell && spellbind(w.spell, f, data, len, w.bookmark) )
         return true;
 
     if (cursebind(w.curse_tracker, f, data, curse_len))
