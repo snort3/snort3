@@ -832,7 +832,7 @@ static void StringFromCharCodeDecode(
     {
         js->alerts |= ALERT_MIXED_ENCODINGS;
     }
-    UnescapeDecode(s.output.data, s.output.len, (const char**)&(s.output.data), &s.output.data,
+    UnescapeDecode(s.output.data, s.output.len, const_cast<const char**>(&s.output.data), &s.output.data,
         s.output.size, &(s.output.len), js, iis_unicode_map);
 
     *bytes_copied = s.output.len;

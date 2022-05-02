@@ -245,7 +245,7 @@ SCMessage* SideChannel::alloc_transmit_message(uint32_t content_length)
 {
     SCMessage* msg = new SCMessage;
     msg->handle = connector_transmit->alloc_message((content_length + sizeof(SCMsgHdr)),
-        (const uint8_t**)&(msg->hdr));
+        const_cast<const uint8_t**>(reinterpret_cast<uint8_t**>(&msg->hdr)));
     assert(msg->handle);
 
     msg->sc = this;

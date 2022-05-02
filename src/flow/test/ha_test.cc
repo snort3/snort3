@@ -50,7 +50,8 @@ static const FlowKey s_test_key =
     /* .ip_protocol = */ 14,
     /* .pkt_type = */ PktType::TCP,
     /* .version = */ 14,
-    /* .flags = */ 0,
+    /* .flags.group_used = */ 0,
+    /* .flags.padding_bits = */ 0,
 };
 
 static struct __attribute__((__packed__)) TestDeleteMessage {
