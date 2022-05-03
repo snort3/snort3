@@ -75,7 +75,7 @@ There is a source tarball available in the Downloads section on snort.org:
 
 You can also get the code with:
 
-    git clone git://github.com/snort3/snort3.git
+    git clone https://github.com/snort3/snort3.git
 
 There are separate extras packages for cmake that provide additional
 features and demonstrate how to build plugins. The source for extras
