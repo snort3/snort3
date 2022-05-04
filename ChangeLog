@@ -1,3 +1,17 @@
+2022/05/04 - 3.1.29.0
+
+appid: add alpn matchers
+dce_rpc: update address space id in the smb keys
+doc: rule text updates
+flow, network_inspectors, policy_selectors, stream: make address space id 32 bits and add a tenant id to the daq header
+flow, side_channel, utils: fix clang issues
+flow: add inline cppcheck suppressions
+flow: change the padding and bits in the flow key to make it more clear
+http_inspect: install header files, create a virtual base class for http_inspect and http_stream_splitter
+http_inspect: move mime processing outside of file and detect depth
+main: update analyzer command log message to copy the variable arguments before using them for the remote response
+wizard: update glob storage due to shared memory
+
 2022/04/25 - 3.1.28.0
 
 appid: add bytes_in_use and items_in_use peg counts

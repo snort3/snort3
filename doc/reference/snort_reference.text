@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.28.0 2022-04-25 10:44:49 EDT TST
+Revision 3.1.29.0 2022-05-04 08:07:08 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -2547,11 +2547,11 @@ Instance Type: multiton
 
 Rules:
 
-  * 105:1 (back_orifice) Back orifice traffic detected, unknown
+  * 105:1 (back_orifice) Back Orifice traffic detected, unknown
     direction
-  * 105:2 (back_orifice) Back orifice client traffic detected
-  * 105:3 (back_orifice) Back orifice server traffic detected
-  * 105:4 (back_orifice) Back orifice length field >= 1024 bytes
+  * 105:2 (back_orifice) Back Orifice client traffic detected
+  * 105:3 (back_orifice) Back Orifice server traffic detected
+  * 105:4 (back_orifice) Back Orifice length field >= 1024 bytes
 
 Peg counts:
 
@@ -3633,7 +3633,7 @@ Rules:
   * 121:14 (http2_inspect) HTTP/2 dynamic table has more than 512
     entries
   * 121:15 (http2_inspect) HTTP/2 push promise frame with promised
-    stream ID already in use.
+    stream ID already in use
   * 121:16 (http2_inspect) HTTP/2 padding length is bigger than frame
     data size
   * 121:17 (http2_inspect) HTTP/2 pseudo-header after regular header
@@ -3784,8 +3784,8 @@ Rules:
 
   * 119:1 (http_inspect) URI has percent-encoding of an unreserved
     character
-  * 119:2 (http_inspect) URI is percent encoded and the result is
-    percent encoded again
+  * 119:2 (http_inspect) URI contains double-encoded hexadecimal
+    characters
   * 119:3 (http_inspect) URI has non-standard %u-style Unicode
     encoding
   * 119:4 (http_inspect) URI has Unicode encodings containing bytes
@@ -3796,7 +3796,7 @@ Rules:
   * 119:8 (http_inspect) URI path contains consecutive slash
     characters
   * 119:9 (http_inspect) backslash character appears in the path
-    portion of a URI.
+    portion of a URI
   * 119:10 (http_inspect) URI path contains /./ pattern repeating the
     current directory
   * 119:11 (http_inspect) URI path contains /../ pattern moving up a
@@ -3950,13 +3950,12 @@ Rules:
   * 119:269 (http_inspect) script opening tag in a short form
   * 119:270 (http_inspect) max number of unique JavaScript
     identifiers reached
-  * 119:271 (http_inspect) JavaScript bracket nesting is over
-    capacity
+  * 119:271 (http_inspect) excessive JavaScript bracket nesting
   * 119:272 (http_inspect) Consecutive commas in HTTP Accept-Encoding
     header
   * 119:273 (http_inspect) missed PDUs during JavaScript
     normalization
-  * 119:274 (http_inspect) JavaScript scope nesting is over capacity
+  * 119:274 (http_inspect) excessive JavaScript scope nesting
   * 119:275 (http_inspect) HTTP/1 version other than 1.0 or 1.1
   * 119:276 (http_inspect) HTTP version in start line is 0
   * 119:277 (http_inspect) HTTP version in start line is higher than
@@ -12020,21 +12019,21 @@ these libraries see the Getting Started section of the manual.
 
 A tagged packet was logged.
 
-105:1 (back_orifice) Back orifice traffic detected, unknown direction
+105:1 (back_orifice) Back Orifice traffic detected, unknown direction
 
-Back orifice traffic detected, unknown direction
+Back Orifice traffic detected, unknown direction
 
-105:2 (back_orifice) Back orifice client traffic detected
+105:2 (back_orifice) Back Orifice client traffic detected
 
-Back orifice client traffic detected
+Back Orifice client traffic detected
 
-105:3 (back_orifice) Back orifice server traffic detected
+105:3 (back_orifice) Back Orifice server traffic detected
 
-Back orifice server traffic detected
+Back Orifice server traffic detected
 
-105:4 (back_orifice) Back orifice length field >= 1024 bytes
+105:4 (back_orifice) Back Orifice length field >= 1024 bytes
 
-Back orifice length field >= 1024 bytes
+Back Orifice length field >= 1024 bytes
 
 106:1 (rpc_decode) fragmented RPC records
 
@@ -12833,12 +12832,11 @@ URI has percent encoding of an unreserved character. The
 ignore_unreserved option designates specific unreserved characters
 that are exempted from triggering this alert.
 
-119:2 (http_inspect) URI is percent encoded and the result is percent
-encoded again
+119:2 (http_inspect) URI contains double-encoded hexadecimal
+characters
 
-URI is percent encoded and the result is percent encoded again. This
-alert can only be generated if the iis_double_decode option is
-configured.
+URI contains double-encoded hexadecimal characters. This alert can
+only be generated if the iis_double_decode option is configured.
 
 119:3 (http_inspect) URI has non-standard %u-style Unicode encoding
 
@@ -12871,11 +12869,11 @@ This alert can only be generated if the simplify_path option is
 configured.
 
 119:9 (http_inspect) backslash character appears in the path portion
-of a URI.
+of a URI
 
 The backslash character appears in the path portion of a URI. This
 alert can only be generated if the backslash_to_slash option is
-configured.
+configured
 
 119:10 (http_inspect) URI path contains /./ pattern repeating the
 current directory
@@ -13466,7 +13464,7 @@ alert is not expected for typical network traffic and may be an
 indication that an attacker is trying to exhaust resources. This
 alert is raised by the enhanced JavaScript normalizer.
 
-119:271 (http_inspect) JavaScript bracket nesting is over capacity
+119:271 (http_inspect) excessive JavaScript bracket nesting
 
 In JavaScript, template literals can have substitutions, that in turn
 can have nested template literals, which requires a stack to track
@@ -13498,7 +13496,7 @@ executed for these PDUs. The normalization of the following PDUs for
 inline/external scripts will be stopped for current request within
 the flow. This alert is raised by the enhanced JavaScript normalizer.
 
-119:274 (http_inspect) JavaScript scope nesting is over capacity
+119:274 (http_inspect) excessive JavaScript scope nesting
 
 To resolve variable names in JavaScript, a current stack of variable
 scopes has to be tracked. When the depth of nesting exceeds the limit
@@ -13594,9 +13592,9 @@ stream state.
 HTTP/2 dynamic table has more than 512 entries
 
 121:15 (http2_inspect) HTTP/2 push promise frame with promised stream
-ID already in use.
+ID already in use
 
-HTTP/2 push promise frame with promised stream ID already in use.
+HTTP/2 push promise frame with promised stream ID already in use
 
 121:16 (http2_inspect) HTTP/2 padding length is bigger than frame
 data size

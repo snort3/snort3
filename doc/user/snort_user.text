@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.28.0 2022-04-25 10:44:39 EDT TST
+Revision 3.1.29.0 2022-05-04 08:06:54 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -6901,8 +6901,8 @@ $packet -> server
 
 $packet <addr> <port> -> <addr> <port>
 
-$sof <i32:ingressZone> <i32:egressZone> <i32:ingressIntf> <i32:egressIntf> <s:srcIp> <i16:srcPort> <s:destIp> <i16:dstPort> <u32:opaque> <u64:initiatorPkts> <u64:responderPkts> <u64:initiatorPktsDropped> <u64:responderPktsDropped> <u64:initiatorBytesDropped> <u64:responderBytesDropped> <u8:isQosAppliedOnSrcIntf> <timeval:sof_timestamp> <timeval:eof_timestamp> <u16:vlan> <u16:address_space_id> <u8:protocol>
-$eof <i32:ingressZone> <i32:egressZone> <i32:ingressIntf> <i32:egressIntf> <s:srcIp> <i16:srcPort> <s:destIp> <i16:dstPort> <u32:opaque> <u64:initiatorPkts> <u64:responderPkts> <u64:initiatorPktsDropped> <u64:responderPktsDropped> <u64:initiatorBytesDropped> <u64:responderBytesDropped> <u8:isQosAppliedOnSrcIntf> <timeval:sof_timestamp> <timeval:eof_timestamp> <u16:vlan> <u16:address_space_id> <u8:protocol>
+$sof <i32:ingressZone> <i32:egressZone> <i32:ingressIntf> <i32:egressIntf> <s:srcIp> <i16:srcPort> <s:destIp> <i16:dstPort> <u32:opaque> <u64:initiatorPkts> <u64:responderPkts> <u64:initiatorPktsDropped> <u64:responderPktsDropped> <u64:initiatorBytesDropped> <u64:responderBytesDropped> <u8:isQosAppliedOnSrcIntf> <timeval:sof_timestamp> <timeval:eof_timestamp> <u32:address_space_id> <u32:tenant_id> <u16:vlan> <u8:protocol> <u8:flags>
+$eof <i32:ingressZone> <i32:egressZone> <i32:ingressIntf> <i32:egressIntf> <s:srcIp> <i16:srcPort> <s:destIp> <i16:dstPort> <u32:opaque> <u64:initiatorPkts> <u64:responderPkts> <u64:initiatorPktsDropped> <u64:responderPktsDropped> <u64:initiatorBytesDropped> <u64:responderBytesDropped> <u8:isQosAppliedOnSrcIntf> <timeval:sof_timestamp> <timeval:eof_timestamp> <u32:address_space_id> <u32:tenant_id> <u16:vlan> <u8:protocol> <u8:flags>
 
 Client and server are determined as follows. $packet → client
 indicates to the client (from server) and $packet → server indicates
