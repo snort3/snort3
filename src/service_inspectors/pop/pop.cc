@@ -101,9 +101,6 @@ const PegInfo pop_peg_names[] =
 };
 
 
-static void snort_pop(POP_PROTO_CONF* GlobalConf, Packet* p);
-static void POP_ResetState(Flow*);
-
 PopFlowData::PopFlowData() : FlowData(inspector_id)
 {
     memset(&session, 0, sizeof(session));

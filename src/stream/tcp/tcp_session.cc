@@ -133,6 +133,9 @@ void TcpSession::restart(Packet* p)
     {
         talker = &server;
         listener = &client;
+
+        if ( server.get_splitter()->sync_on_start() )
+            flush_tracker(server, p, PKT_FROM_CLIENT, false);
     }
     else
     {

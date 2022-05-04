@@ -80,6 +80,7 @@ public:
         unsigned& copied       // actual data copied (1 <= copied <= len)
         );
 
+    virtual bool sync_on_start() const { return false; }
     virtual bool is_paf() { return false; }
     virtual unsigned max(Flow* = nullptr);
     virtual void go_away() { delete this; }

@@ -70,7 +70,11 @@ public:
     Status scan(snort::Packet*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
 
-    bool is_paf() override { return true; }
+    bool is_paf() override
+    { return true; }
+
+    bool sync_on_start() const override
+    { return true; }
 
 public:
     PopPafData state;
