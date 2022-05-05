@@ -159,6 +159,12 @@ void Dce2Smb2SessionTracker::clean_file_context_from_flow(uint64_t file_id, uint
     attached_flows_mutex.lock();
     for (auto it_flow : attached_flows)
     {
+        if (get_file_context_cleaned())
+        {
+            attached_flows_mutex.unlock();
+            set_do_not_delete(false);
+            return;
+        }
         snort::FileFlows* file_flows = snort::FileFlows::get_file_flows(
             it_flow.second->get_tcp_flow(), false);
         if (file_flows)

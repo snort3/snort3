@@ -115,6 +115,7 @@ Dce2Smb2SessionData::~Dce2Smb2SessionData(void)
     for (auto it_session : connected_sessions)
     {
         it_session.second->detach_flow(flow_key);
+        it_session.second->set_file_context_cleaned(true);
     }
 
     if (get_tcp_file_tracker() && !(get_tcp_file_tracker()->get_flow_state_map().empty()))

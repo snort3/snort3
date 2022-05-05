@@ -37,6 +37,7 @@ public:
         session_key = key;
         reload_prune = false;
         do_not_delete = false;
+        file_context_cleaned = false;
         command_prev = SMB2_COM_MAX;
         encryption_flag = false;
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET, 
@@ -77,6 +78,8 @@ public:
     uint64_t get_session_id() { return session_id; }
     void set_do_not_delete(bool flag) { do_not_delete = flag; }
     bool get_do_not_delete() { return do_not_delete; }
+    void set_file_context_cleaned(bool flag) { file_context_cleaned = flag; }
+    bool get_file_context_cleaned() { return file_context_cleaned; }
     void set_prev_comand(uint16_t cmd) { command_prev = cmd; }
     uint16_t get_prev_command() { return command_prev; }
     std::mutex co_tracker_mutex;
@@ -91,6 +94,7 @@ private:
     // do_not_delete is to make sure when we are in processing we should not delete the context
     // which is being processed
     bool do_not_delete;
+    bool file_context_cleaned;
     Dce2Smb2TreeTracker* find_tree_for_message(const uint64_t, const uint32_t);
     uint64_t session_id;
     //to keep the tab of previous command

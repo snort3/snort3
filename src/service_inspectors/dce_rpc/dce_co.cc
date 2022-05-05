@@ -334,7 +334,11 @@ static inline void DCE2_CoSetRdata(DCE2_CoTracker* cot, uint8_t* co_ptr, uint16_
         (cot->frag_tracker.opnum != DCE2_SENTINEL) ?
         (uint16_t)cot->frag_tracker.opnum : (uint16_t)cot->opnum;
 
-    if ( DetectionEngine::get_current_packet()->is_from_client() )
+    Packet* p = DetectionEngine::get_current_packet();
+    if (p == nullptr)
+        return;
+
+    if ( p->is_from_client() )
     {
         DceRpcCoRequest* co_req = (DceRpcCoRequest*)((uint8_t*)co_hdr + sizeof(DceRpcCoHdr));
         /* Doesn't really matter if this wraps ... it is basically just for presentation */
@@ -380,7 +384,10 @@ void DCE2_CoInitRdata(uint8_t* co_ptr, int dir)
 
 static inline DCE2_CoSeg* DCE2_CoGetSegPtr(DCE2_CoTracker* cot)
 {
-    if ( DetectionEngine::get_current_packet()->is_from_server() )
+    Packet* p = DetectionEngine::get_current_packet();
+    if (p == nullptr)
+        return nullptr;
+    if ( p->is_from_server() )
         return &cot->srv_seg;
 
     return &cot->cli_seg;
@@ -556,7 +563,11 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
         return DCE2_RET__ERROR;
     }
 
-    if (DetectionEngine::get_current_packet()->is_from_client() && (cot->max_xmit_frag != DCE2_SENTINEL))
+    Packet* p = DetectionEngine::get_current_packet();
+    if (p == nullptr)
+        return DCE2_RET__ERROR;
+
+    if (p->is_from_client() && (cot->max_xmit_frag != DCE2_SENTINEL))
     {
         if (frag_len > cot->max_xmit_frag)
         {
@@ -1167,7 +1178,11 @@ static int DCE2_CoGetAuthLen(DCE2_SsnData* sd, const DceRpcCoHdr* co_hdr,
 
 static DCE2_Buffer* DCE2_CoGetFragBuf(DCE2_CoFragTracker* ft)
 {
-    if ( DetectionEngine::get_current_packet()->is_from_server() )
+    Packet* p = DetectionEngine::get_current_packet();
+    if (p == nullptr)
+        return nullptr;
+
+    if ( p->is_from_server() )
         return ft->srv_stub_buf;
 
     return ft->cli_stub_buf;
@@ -1244,6 +1259,9 @@ static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     const uint8_t* frag_data = nullptr, * seg_data = nullptr;
     uint32_t frag_len = 0, seg_len = 0;
     Packet* rpkt = nullptr;
+
+    if (seg_buf == nullptr)
+        return nullptr;
 
     *rtype = DCE2_RPKT_TYPE__NULL;
 
@@ -1342,7 +1360,10 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     DCE2_CoRpktType co_rtype, const DceRpcCoHdr** co_hdr)
 {
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
-    bool from_client = DetectionEngine::get_current_packet()->is_from_client();
+    Packet* p = DetectionEngine::get_current_packet();
+    if (p == nullptr)
+        return nullptr;
+    bool from_client = p->is_from_client();
 
     int co_hdr_len = from_client ? DCE2_MOCK_HDR_LEN__CO_CLI : DCE2_MOCK_HDR_LEN__CO_SRV;
     int smb_hdr_len = from_client ? DCE2_MOCK_HDR_LEN__SMB_CLI : DCE2_MOCK_HDR_LEN__SMB_SRV;
@@ -1450,6 +1471,8 @@ static DCE2_Ret dce_co_handle_frag(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     DCE2_Ret status;
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
     Packet* p = DetectionEngine::get_current_packet();
+    if (p == nullptr)
+        return DCE2_RET__ERROR;
 
     if ( p->is_from_client() )
     {
@@ -1852,6 +1875,8 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     cot->call_id = DceRpcCoCallId(co_hdr);
 
     Packet* p = DetectionEngine::get_current_packet();
+    if (p == nullptr)
+        return;
 
     if (DceRpcCoFirstFrag(co_hdr) && DceRpcCoLastFrag(co_hdr))
     {
@@ -1928,13 +1953,16 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     const DceRpcCoHdr* co_hdr = (const DceRpcCoHdr*)frag_ptr;
     int pdu_type = DceRpcCoPduType(co_hdr);
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
+    Packet* p = DetectionEngine::get_current_packet();
+    if (p == nullptr)
+        return;
 
     /* We've got the main header.  Move past it to the
      * start of the pdu */
     dce2_move(frag_ptr, frag_len, sizeof(DceRpcCoHdr));
 
     /* Client specific pdu types - some overlap with server */
-    if ( DetectionEngine::get_current_packet()->is_from_client() )
+    if ( p->is_from_client() )
     {
         switch (pdu_type)
         {
@@ -2137,8 +2165,9 @@ static DCE2_Ret DCE2_CoSegEarlyRequest(DCE2_CoTracker* cot,
 static void DCE2_CoEarlyReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot)
 {
     DCE2_Buffer* frag_buf = DCE2_CoGetFragBuf(&cot->frag_tracker);
+    Packet* p = DetectionEngine::get_current_packet();
 
-    if ( DetectionEngine::get_current_packet()->is_from_server() )
+    if ( (p == nullptr) || p->is_from_server() )
         return;
 
     if (!DCE2_BufferIsEmpty(frag_buf))
@@ -2206,8 +2235,11 @@ static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
     const uint8_t* data_ptr, uint32_t data_len)
 {
     Packet* p = DetectionEngine::get_current_packet();
+    if (p == nullptr)
+        return nullptr;
     Packet* rpkt = nullptr;
-    int smb_hdr_len = p->is_from_client() ? DCE2_MOCK_HDR_LEN__SMB_CLI : DCE2_MOCK_HDR_LEN__SMB_SRV;
+    int smb_hdr_len = p->is_from_client() ? DCE2_MOCK_HDR_LEN__SMB_CLI :
+        DCE2_MOCK_HDR_LEN__SMB_SRV;
 
     switch (sd->trans)
     {
@@ -2249,7 +2281,11 @@ static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* 
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
     int smb_hdr_len;
 
-    if ( DetectionEngine::get_current_packet()->is_from_client() )
+    Packet* p = DetectionEngine::get_current_packet();
+    if (p == nullptr)
+        return;
+
+    if ( p->is_from_client() )
     {
         smb_hdr_len = DCE2_MOCK_HDR_LEN__SMB_CLI;
         dce_common_stats->co_cli_seg_reassembled++;
@@ -2393,6 +2429,9 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     DCE2_CoSeg* seg = DCE2_CoGetSegPtr(cot);
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
     uint32_t num_frags = 0;
+
+    if (seg == nullptr)
+        return;
 
     dce_common_stats->co_pdus++;
     co_reassembled = 0;

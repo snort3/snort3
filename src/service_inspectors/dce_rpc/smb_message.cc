@@ -1725,6 +1725,7 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
 
             if (!DCE2_BufferIsEmpty(*seg_buf))
             {
+                set_file_data(nullptr, 0);
                 DCE2_BufferDestroy(*seg_buf);
                 *seg_buf = nullptr;
             }
