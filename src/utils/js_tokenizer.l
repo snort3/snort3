@@ -1933,22 +1933,18 @@ JSTokenizer::FuncType JSTokenizer::detect_func_type()
         return FuncType::GENERAL;
 
     case IDENTIFIER:
-    {
-        FuncType ret = FuncType::GENERAL;
+        if (meta_type() == ScopeMetaType::FUNCTION or ignored_id_pos < 0)
+            return FuncType::GENERAL;
 
-        if (meta_type() == ScopeMetaType::FUNCTION)
-            return ret;
-
-        if (ignored_id_pos >= 0)
         {
+            char tail[256];
             std::streambuf* pbuf = yyout.rdbuf();
             std::streamsize size = pbuf->pubseekoff(0, yyout.cur, yyout.out) - ignored_id_pos;
-            assert(size >= 0);
 
-            char tail[256];
-            assert((size_t)size <= sizeof(tail));
+            if (size <= 0)
+                return FuncType::GENERAL;
+
             size = std::min((size_t)size, sizeof(tail));
-
             pbuf->pubseekoff(-size, yyout.cur, yyout.out);
             pbuf->sgetn(tail, size);
 
@@ -1957,15 +1953,13 @@ JSTokenizer::FuncType JSTokenizer::detect_func_type()
                 if ((unsigned)size == (unsigned)id.identifier.size() &&
                     memcmp(tail, id.identifier.data(), size) == 0)
                 {
-                    ret = id.type;
                     pbuf->pubseekoff(-size, yyout.cur, yyout.out);
-
-                    break;
+                    return id.type;
                 }
             }
+
+            return FuncType::GENERAL;
         }
-        return ret;
-    }
 
     default:
         return FuncType::NOT_FUNC;
