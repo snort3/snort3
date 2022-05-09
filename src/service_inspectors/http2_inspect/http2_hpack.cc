@@ -30,8 +30,11 @@
 #include "http2_flow_data.h"
 #include "http2_start_line.h"
 
-using namespace HttpCommon;
 using namespace Http2Enums;
+#include "http2_varlen_int_decode_impl.h"
+#include "http2_varlen_string_decode_impl.h"
+
+using namespace HttpCommon;
 
 Http2HpackIntDecode Http2HpackDecoder::decode_int7(7);
 Http2HpackIntDecode Http2HpackDecoder::decode_int6(6);
@@ -66,7 +69,7 @@ bool Http2HpackDecoder::decode_string_literal(const uint8_t* encoded_header_buff
     bytes_written = 0;
     bytes_consumed = 0;
 
-    if (!decode_string.translate(encoded_header_buffer, encoded_header_length, bytes_consumed,
+    if (!decode_string.translate(encoded_header_buffer, encoded_header_length, decode_int7, bytes_consumed,
         decoded_header_buffer, decoded_header_length, bytes_written, events, infractions,
         session_data->is_processing_partial_header()))
     {

@@ -23,9 +23,11 @@ set (FILE_LIST
     http2_hpack.h
     http2_hpack_dynamic_table.cc
     http2_hpack_dynamic_table.h
-    http2_hpack_int_decode.cc
+    http2_varlen_int_decode.h
+    http2_varlen_int_decode_impl.h
+    http2_varlen_string_decode.h
+    http2_varlen_string_decode_impl.h
     http2_hpack_int_decode.h
-    http2_hpack_string_decode.cc
     http2_hpack_string_decode.h
     http2_hpack_table.cc
     http2_hpack_table.h

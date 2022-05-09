@@ -15,30 +15,29 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http2_hpack_int_decode.cc author Maya Dagon <mdagon@cisco.com>
+// http2_varlen_int_decode_impl.h author Maya Dagon <mdagon@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef HTTP2_VARLEN_INT_DECODE_IMPL_H
+#define HTTP2_VARLEN_INT_DECODE_IMPL_H
 
-#include "http2_hpack_int_decode.h"
+#include <cassert>
 
-#include "http2_enum.h"
+#include "main/snort_types.h"
 
-using namespace Http2Enums;
-
-static const uint8_t VAL_MASK = 0x7F;
-static const uint8_t FLAG_BIT = 0x80;
-
-Http2HpackIntDecode::Http2HpackIntDecode(uint8_t prefix) : prefix_mask(((uint16_t)1 << prefix) - 1)
+template <typename EGen, typename Inf>
+VarLengthIntDecode<EGen, Inf>::VarLengthIntDecode(uint8_t prefix) : prefix_mask(((uint16_t)1 << prefix) - 1)
 {
     assert ((0 < prefix) && (prefix < 9));
 }
 
-bool Http2HpackIntDecode::translate(const uint8_t* in_buff, const uint32_t in_len,
-    uint32_t& bytes_consumed, uint64_t& result, Http2EventGen* const events,
-    Http2Infractions* const infractions, bool partial_header) const
+template <typename EGen, typename Inf>
+bool VarLengthIntDecode<EGen, Inf>::translate(const uint8_t* in_buff, const uint32_t in_len,
+    uint32_t& bytes_consumed, uint64_t& result, EGen* const events,
+    Inf* const infractions, bool partial_header) const
 {
+    const uint8_t VAL_MASK = 0x7F;
+    const uint8_t FLAG_BIT = 0x80;
+
     bytes_consumed = 0;
     result = 0;
 
@@ -100,4 +99,6 @@ bool Http2HpackIntDecode::translate(const uint8_t* in_buff, const uint32_t in_le
 
     return true;
 }
+
+#endif
 

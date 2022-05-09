@@ -15,30 +15,28 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http2_hpack_string_decode.cc author Maya Dagon <mdagon@cisco.com>
+// http2_varlen_string_decode_impl.h author Maya Dagon <mdagon@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef HTTP2_VARLEN_STRING_DECODE_IMPL_H
+#define HTTP2_VARLEN_STRING_DECODE_IMPL_H
 
-#include "http2_hpack_string_decode.h"
 
 #include "http2_enum.h"
 #include "http2_huffman_state_machine.h"
+#include "http2_varlen_string_decode.h"
 
 #include <cmath>
-
-using namespace Http2Enums;
-
-static const uint8_t HUFFMAN_FLAG = 0x80;
 
 // Minimum bit length for each lookup table
 static const uint8_t min_decode_len[HUFFMAN_LOOKUP_MAX + 1] =
     {5, 2, 2, 3, 5, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4};
 
-bool Http2HpackStringDecode::translate(const uint8_t* in_buff, const uint32_t in_len,
-    uint32_t& bytes_consumed, uint8_t* out_buff, const uint32_t out_len, uint32_t& bytes_written,
-    Http2EventGen* const events, Http2Infractions* const infractions, bool partial_header) const
+template <typename IntDec, typename EGen, typename Inf>
+bool VarLengthStringDecode<IntDec, EGen, Inf>::translate(const uint8_t* in_buff, const uint32_t in_len,
+    IntDec& decode_int, uint32_t& bytes_consumed, uint8_t* out_buff,
+    const uint32_t out_len, uint32_t& bytes_written,
+    EGen* const events, Inf* const infractions, bool partial_header,
+    uint8_t huffman_mask) const
 {
     bytes_consumed = 0;
     bytes_written = 0;
@@ -52,11 +50,11 @@ bool Http2HpackStringDecode::translate(const uint8_t* in_buff, const uint32_t in
         return false;
     }
 
-    const bool isHuffman = (in_buff[0] & HUFFMAN_FLAG) != 0;
+    const bool isHuffman = (in_buff[0] & huffman_mask) != 0;
 
     // Get length
     uint64_t encoded_len;
-    if (!decode7.translate(in_buff, in_len, bytes_consumed, encoded_len, events, infractions,
+    if (!decode_int.translate(in_buff, in_len, bytes_consumed, encoded_len, events, infractions,
             partial_header))
         return false;
 
@@ -80,9 +78,10 @@ bool Http2HpackStringDecode::translate(const uint8_t* in_buff, const uint32_t in
         bytes_written, infractions);
 }
 
-bool Http2HpackStringDecode::get_string(const uint8_t* in_buff, const uint32_t encoded_len,
+template <typename IntDec, typename EGen, typename Inf>
+bool VarLengthStringDecode<IntDec, EGen, Inf>::get_string(const uint8_t* in_buff, const uint32_t encoded_len,
     uint32_t& bytes_consumed, uint8_t* out_buff, const uint32_t out_len, uint32_t& bytes_written,
-    Http2Infractions* const infractions) const
+    Inf* const infractions) const
 {
     if (encoded_len > out_len)
     {
@@ -97,7 +96,8 @@ bool Http2HpackStringDecode::get_string(const uint8_t* in_buff, const uint32_t e
 }
 
 // return is tail/padding
-bool Http2HpackStringDecode::get_next_byte(const uint8_t* in_buff, const uint32_t last_byte,
+template <typename IntDec, typename EGen, typename Inf>
+bool VarLengthStringDecode<IntDec, EGen, Inf>::get_next_byte(const uint8_t* in_buff, const uint32_t last_byte,
     uint32_t& bytes_consumed, uint8_t& cur_bit, uint8_t match_len, uint8_t& byte,
     bool& another_search) const
 {
@@ -143,9 +143,10 @@ bool Http2HpackStringDecode::get_next_byte(const uint8_t* in_buff, const uint32_
     return tail;
 }
 
-bool Http2HpackStringDecode::get_huffman_string(const uint8_t* in_buff, const uint32_t encoded_len,
+template <typename IntDec, typename EGen, typename Inf>
+bool VarLengthStringDecode<IntDec, EGen, Inf>::get_huffman_string(const uint8_t* in_buff, const uint32_t encoded_len,
     uint32_t& bytes_consumed, uint8_t* out_buff, const uint32_t out_len, uint32_t& bytes_written,
-    Http2Infractions* const infractions) const
+    Inf* const infractions) const
 {
     const uint32_t last_encoded_byte = bytes_consumed + encoded_len;
     uint8_t byte;
@@ -241,4 +242,6 @@ bool Http2HpackStringDecode::get_huffman_string(const uint8_t* in_buff, const ui
 
     return true;
 }
+
+#endif
 

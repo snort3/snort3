@@ -23,7 +23,10 @@
 #endif
 
 #include "../http2_enum.h"
+
+using namespace Http2Enums;
 #include "../http2_hpack_int_decode.h"
+#include "../http2_varlen_int_decode_impl.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -35,7 +38,6 @@ namespace snort
 int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }
 }
 
-using namespace Http2Enums;
 
 //
 // The following tests should result in a successful decode, no infractions/events

@@ -24,7 +24,12 @@
 
 #include "../http2_enum.h"
 #include "../http2_huffman_state_machine.h"
+
+#include "../http2_hpack_int_decode.h"
 #include "../http2_hpack_string_decode.h"
+using namespace Http2Enums;
+#include "../http2_varlen_int_decode_impl.h"
+#include "../http2_varlen_string_decode_impl.h"
 #include "../../http_inspect/http_common.h"
 #include "../../http_inspect/http_enum.h"
 
@@ -38,7 +43,6 @@ namespace snort
 int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }
 }
 
-using namespace Http2Enums;
 using namespace HttpCommon;
 
 //
@@ -49,6 +53,7 @@ TEST_GROUP(http2_hpack_string_decode_success)
     Http2EventGen events;
     Http2Infractions inf;
     Http2HpackStringDecode* const decode = new Http2HpackStringDecode();
+    Http2HpackIntDecode decode_int7{7};
 
     void teardown() override
     {
@@ -65,7 +70,7 @@ TEST(http2_hpack_string_decode_success, custom_key_len_10)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[10];
-    bool success = decode->translate(buf, 11, bytes_processed, res, 10, bytes_written, &events,
+    bool success = decode->translate(buf, 11, decode_int7, bytes_processed, res, 10, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -81,7 +86,7 @@ TEST(http2_hpack_string_decode_success, custom_key_len_10_wtail)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[12];
-    bool success = decode->translate(buf, 12, bytes_processed, res, 12, bytes_written, &events,
+    bool success = decode->translate(buf, 12, decode_int7, bytes_processed, res, 12, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -100,7 +105,7 @@ TEST(http2_hpack_string_decode_success, int_is_more_than_1_byte)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[130];
-    bool success = decode->translate(buf, 130, bytes_processed, res, 130, bytes_written, &events,
+    bool success = decode->translate(buf, 130, decode_int7, bytes_processed, res, 130, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -116,7 +121,7 @@ TEST(http2_hpack_string_decode_success, empty_string)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res = 10; // random value, just to check it wasn't overwritten
-    bool success = decode->translate(&buf, 1, bytes_processed, &res, 1, bytes_written, &events,
+    bool success = decode->translate(&buf, 1, decode_int7, bytes_processed, &res, 1, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -132,7 +137,7 @@ TEST(http2_hpack_string_decode_success, string_len_1)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res = 0;
-    bool success = decode->translate(buf, 2, bytes_processed, &res, 1, bytes_written, &events,
+    bool success = decode->translate(buf, 2, decode_int7, bytes_processed, &res, 1, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -153,7 +158,7 @@ TEST(http2_hpack_string_decode_success, max_field_length)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[MAX_OCTETS];
-    bool success = decode->translate(buf, MAX_OCTETS, bytes_processed, res,
+    bool success = decode->translate(buf, MAX_OCTETS, decode_int7, bytes_processed, res,
         MAX_OCTETS, bytes_written, &events, &inf, false);
     // check results
     CHECK(success == true);
@@ -169,7 +174,7 @@ TEST(http2_hpack_string_decode_success, huffman_1_byte)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[1];
-    bool success = decode->translate(buf, 2, bytes_processed, res, 1, bytes_written, &events, &inf,
+    bool success = decode->translate(buf, 2, decode_int7, bytes_processed, res, 1, bytes_written, &events, &inf,
         false);
     // check results
     CHECK(success == true);
@@ -185,7 +190,7 @@ TEST(http2_hpack_string_decode_success, huffman_1_byte_star)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[1];
-    bool success = decode->translate(buf, 2, bytes_processed, res, 1, bytes_written, &events, &inf,
+    bool success = decode->translate(buf, 2, decode_int7, bytes_processed, res, 1, bytes_written, &events, &inf,
         false);
     // check results
     CHECK(success == true);
@@ -201,7 +206,7 @@ TEST(http2_hpack_string_decode_success, huffman_2_bytes_aligned)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[3];
-    bool success = decode->translate(buf, 3, bytes_processed, res, 3, bytes_written, &events, &inf,
+    bool success = decode->translate(buf, 3, decode_int7, bytes_processed, res, 3, bytes_written, &events, &inf,
         false);
     // check results
     CHECK(success == true);
@@ -217,7 +222,7 @@ TEST(http2_hpack_string_decode_success, huffman_2_bytes_unaligned)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[3];
-    bool success = decode->translate(buf, 3, bytes_processed, res, 3, bytes_written, &events, &inf,
+    bool success = decode->translate(buf, 3, decode_int7, bytes_processed, res, 3, bytes_written, &events, &inf,
         false);
     // check results
     CHECK(success == true);
@@ -233,7 +238,7 @@ TEST(http2_hpack_string_decode_success, huffman_rfc_example1)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[19];
-    bool success = decode->translate(buf, 13, bytes_processed, res, 19, bytes_written, &events,
+    bool success = decode->translate(buf, 13, decode_int7, bytes_processed, res, 19, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -249,7 +254,7 @@ TEST(http2_hpack_string_decode_success, huffman_rfc_example2)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[9];
-    bool success = decode->translate(buf, 7, bytes_processed, res, 9, bytes_written, &events, &inf,
+    bool success = decode->translate(buf, 7, decode_int7, bytes_processed, res, 9, bytes_written, &events, &inf,
         false);
     // check results
     CHECK(success == true);
@@ -265,7 +270,7 @@ TEST(http2_hpack_string_decode_success, huffman_rfc_example3)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[12];
-    bool success = decode->translate(buf, 9, bytes_processed, res, 12, bytes_written, &events,
+    bool success = decode->translate(buf, 9, decode_int7, bytes_processed, res, 12, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -281,7 +286,7 @@ TEST(http2_hpack_string_decode_success, huffman_rfc_example4)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[14];
-    bool success = decode->translate(buf, 10, bytes_processed, res, 14, bytes_written, &events,
+    bool success = decode->translate(buf, 10, decode_int7, bytes_processed, res, 14, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -298,7 +303,7 @@ TEST(http2_hpack_string_decode_success, huffman_rfc_example5)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[35];
-    bool success = decode->translate(buf, 23, bytes_processed, res, 35, bytes_written, &events,
+    bool success = decode->translate(buf, 23, decode_int7, bytes_processed, res, 35, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -317,7 +322,7 @@ TEST(http2_hpack_string_decode_success, huffman_rfc_example6)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[73];
-    bool success = decode->translate(buf, 46, bytes_processed, res, 73, bytes_written, &events,
+    bool success = decode->translate(buf, 46, decode_int7, bytes_processed, res, 73, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -333,7 +338,7 @@ TEST(http2_hpack_string_decode_success, huffman_unaligned_then_aligned)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[6];
-    bool success = decode->translate(buf, 5, bytes_processed, res, 6, bytes_written, &events, &inf,
+    bool success = decode->translate(buf, 5, decode_int7, bytes_processed, res, 6, bytes_written, &events, &inf,
         false);
     // check results
     CHECK(success == true);
@@ -350,7 +355,7 @@ TEST(http2_hpack_string_decode_success, huffman_decoding_all_possible_symbols_1)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[32];
-    bool success = decode->translate(buf, 21, bytes_processed, res, 32, bytes_written, &events,
+    bool success = decode->translate(buf, 21, decode_int7, bytes_processed, res, 32, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -367,7 +372,7 @@ TEST(http2_hpack_string_decode_success, huffman_decoding_all_possible_symbols_2)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[36];
-    bool success = decode->translate(buf, 24, bytes_processed, res, 36, bytes_written, &events,
+    bool success = decode->translate(buf, 24, decode_int7, bytes_processed, res, 36, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -383,7 +388,7 @@ TEST(http2_hpack_string_decode_success, huffman_decoding_all_possible_symbols_3)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[12];
-    bool success = decode->translate(buf, 9, bytes_processed, res, 12, bytes_written, &events,
+    bool success = decode->translate(buf, 9, decode_int7, bytes_processed, res, 12, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -401,7 +406,7 @@ TEST(http2_hpack_string_decode_success, huffman_decoding_all_possible_symbols_4)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[70];
-    bool success = decode->translate(buf, 45, bytes_processed, res, 70, bytes_written, &events,
+    bool success = decode->translate(buf, 45, decode_int7, bytes_processed, res, 70, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -421,7 +426,7 @@ TEST(http2_hpack_string_decode_success, huffman_decoding_all_possible_symbols_he
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[88];
     uint8_t expected[16] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F};
-    bool success = decode->translate(buf, 55, bytes_processed, res, 88, bytes_written, &events,
+    bool success = decode->translate(buf, 55, decode_int7, bytes_processed, res, 88, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -441,7 +446,7 @@ TEST(http2_hpack_string_decode_success, huffman_decoding_all_possible_symbols_he
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[93];
     uint8_t expected[16] = {0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F};
-    bool success = decode->translate(buf, 58, bytes_processed, res, 93, bytes_written, &events,
+    bool success = decode->translate(buf, 58, decode_int7, bytes_processed, res, 93, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -461,7 +466,7 @@ TEST(http2_hpack_string_decode_success, huffman_decoding_all_possible_symbols_he
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[79];
     uint8_t expected[17] = {0x7F, 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F};
-    bool success = decode->translate(buf, 49, bytes_processed, res, 79, bytes_written, &events,
+    bool success = decode->translate(buf, 49, decode_int7, bytes_processed, res, 79, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -481,7 +486,7 @@ TEST(http2_hpack_string_decode_success, huffman_decoding_all_possible_symbols_he
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[76];
     uint8_t expected[16] = {0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F};
-    bool success = decode->translate(buf, 47, bytes_processed, res, 76, bytes_written, &events,
+    bool success = decode->translate(buf, 47, decode_int7, bytes_processed, res, 76, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -500,7 +505,7 @@ TEST(http2_hpack_string_decode_success, huffman_decoding_all_possible_symbols_he
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[74];
     uint8_t expected[16] = {0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF};
-    bool success = decode->translate(buf, 46, bytes_processed, res, 74, bytes_written, &events,
+    bool success = decode->translate(buf, 46, decode_int7, bytes_processed, res, 74, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -520,7 +525,7 @@ TEST(http2_hpack_string_decode_success, huffman_decoding_all_possible_symbols_he
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[73];
     uint8_t expected[16] = {0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF};
-    bool success = decode->translate(buf, 45, bytes_processed, res, 73, bytes_written, &events,
+    bool success = decode->translate(buf, 45, decode_int7, bytes_processed, res, 73, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -541,7 +546,7 @@ TEST(http2_hpack_string_decode_success, huffman_decoding_all_possible_symbols_he
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[80];
     uint8_t expected[16] = {0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF};
-    bool success = decode->translate(buf, 50, bytes_processed, res, 80, bytes_written, &events,
+    bool success = decode->translate(buf, 50, decode_int7, bytes_processed, res, 80, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -562,7 +567,7 @@ TEST(http2_hpack_string_decode_success, huffman_decoding_all_possible_symbols_he
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[82];
     uint8_t expected[16] = {0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF};
-    bool success = decode->translate(buf, 51, bytes_processed, res, 82, bytes_written, &events,
+    bool success = decode->translate(buf, 51, decode_int7, bytes_processed, res, 82, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -582,7 +587,7 @@ TEST(http2_hpack_string_decode_success, huffman_decoding_all_possible_symbols_he
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[76];
     uint8_t expected[16] = {0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF};
-    bool success = decode->translate(buf, 47, bytes_processed, res, 76, bytes_written, &events,
+    bool success = decode->translate(buf, 47, decode_int7, bytes_processed, res, 76, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -603,7 +608,7 @@ TEST(http2_hpack_string_decode_success, huffman_decoding_all_possible_symbols_he
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[88];
     uint8_t expected[16] = {0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF};
-    bool success = decode->translate(buf, 55, bytes_processed, res, 88, bytes_written, &events,
+    bool success = decode->translate(buf, 55, decode_int7, bytes_processed, res, 88, bytes_written, &events,
         &inf, false);
     // check results
     CHECK(success == true);
@@ -620,7 +625,7 @@ TEST(http2_hpack_string_decode_success, huffman_decoding_tail_lookup_unsucessful
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[3];
-    bool success = decode->translate(buf, 3, bytes_processed, res, 3, bytes_written, &events, &inf,
+    bool success = decode->translate(buf, 3, decode_int7, bytes_processed, res, 3, bytes_written, &events, &inf,
         false);
     // check results
     CHECK(success == true);
@@ -641,12 +646,14 @@ TEST(http2_hpack_string_decode_infractions, 0_len_field)
     Http2EventGen local_events;
     Http2Infractions local_inf;
     Http2HpackStringDecode local_decode;
+    Http2HpackIntDecode decode_int7(7);
+
     // prepare buf to decode - use field length 0
     uint8_t buf = 0;
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res;
-    bool success = local_decode.translate(&buf, 0, bytes_processed, &res, 1, bytes_written,
+    bool success = local_decode.translate(&buf, 0, decode_int7, bytes_processed, &res, 1, bytes_written,
         &local_events, &local_inf, false);
     // check results
     CHECK(success == false);
@@ -661,12 +668,13 @@ TEST(http2_hpack_string_decode_infractions, missing_bytes)
     Http2EventGen local_events;
     Http2Infractions local_inf;
     Http2HpackStringDecode local_decode;
+    Http2HpackIntDecode decode_int7(7);
     // prepare buf to decode - length is 1, no string
     uint8_t buf = 1;
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[2];
-    bool success = local_decode.translate(&buf, 1, bytes_processed, res, 2, bytes_written,
+    bool success = local_decode.translate(&buf, 1, decode_int7, bytes_processed, res, 2, bytes_written,
         &local_events, &local_inf, false);
     // check results
     CHECK(success == false);
@@ -681,12 +689,13 @@ TEST(http2_hpack_string_decode_infractions, bad_int)
     Http2EventGen local_events;
     Http2Infractions local_inf;
     Http2HpackStringDecode local_decode;
+    Http2HpackIntDecode decode_int7(7);
     // prepare buf to decode - bad int
     uint8_t buf[2] = { 0x7f, 0x80 };
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[2];
-    bool success = local_decode.translate(buf, 2, bytes_processed, res, 2, bytes_written,
+    bool success = local_decode.translate(buf, 2, decode_int7, bytes_processed, res, 2, bytes_written,
         &local_events, &local_inf, false);
     // check results
     CHECK(success == false);
@@ -701,6 +710,7 @@ TEST(http2_hpack_string_decode_infractions, max_field_length_plus_1)
     Http2EventGen local_events;
     Http2Infractions local_inf;
     Http2HpackStringDecode local_decode;
+    Http2HpackIntDecode decode_int7(7);
     // prepare buf to decode -  int + string == MAX_OCTETS+1 (Field limitation + 1)
     uint8_t buf[MAX_OCTETS];
     buf[0] = 0x7F;
@@ -711,7 +721,7 @@ TEST(http2_hpack_string_decode_infractions, max_field_length_plus_1)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[MAX_OCTETS];
-    bool success = local_decode.translate(buf, MAX_OCTETS, bytes_processed, res,
+    bool success = local_decode.translate(buf, MAX_OCTETS, decode_int7, bytes_processed, res,
         MAX_OCTETS, bytes_written, &local_events, &local_inf, false);
     // check results
     CHECK(success == false);
@@ -726,6 +736,7 @@ TEST(http2_hpack_string_decode_infractions, out_buf_out_of_space)
     Http2EventGen local_events;
     Http2Infractions local_inf;
     Http2HpackStringDecode local_decode;
+    Http2HpackIntDecode decode_int7(7);
     // prepare buf to decode
     uint8_t buf[MAX_OCTETS];
     buf[0] = 0x7F;
@@ -736,7 +747,7 @@ TEST(http2_hpack_string_decode_infractions, out_buf_out_of_space)
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[MAX_OCTETS-5];
-    bool success = local_decode.translate(buf, MAX_OCTETS, bytes_processed, res,
+    bool success = local_decode.translate(buf, MAX_OCTETS, decode_int7, bytes_processed, res,
         MAX_OCTETS-5, bytes_written, &local_events, &local_inf, false);
     // check results
     CHECK(success == false);
@@ -751,12 +762,13 @@ TEST(http2_hpack_string_decode_infractions, huffman_1_byte_bad_padding)
     Http2EventGen local_events;
     Http2Infractions local_inf;
     Http2HpackStringDecode local_decode;
+    Http2HpackIntDecode decode_int7(7);
     // prepare buf to decode - bad padding
     uint8_t buf[2] = { 0x81, 0x54 };
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[2];
-    bool success = local_decode.translate(buf, 2, bytes_processed, res, 2, bytes_written,
+    bool success = local_decode.translate(buf, 2, decode_int7, bytes_processed, res, 2, bytes_written,
         &local_events, &local_inf, false);
     // check results
     CHECK(success == false);
@@ -771,12 +783,13 @@ TEST(http2_hpack_string_decode_infractions, huffman_1_byte_incomplete_FF)
     Http2EventGen local_events;
     Http2Infractions local_inf;
     Http2HpackStringDecode local_decode;
+    Http2HpackIntDecode decode_int7(7);
     // prepare buf to decode - Incomplete code 0xFF
     uint8_t buf[2] = { 0x81, 0xFF };
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[2];
-    bool success = local_decode.translate(buf, 2, bytes_processed, res, 2, bytes_written,
+    bool success = local_decode.translate(buf, 2, decode_int7, bytes_processed, res, 2, bytes_written,
         &local_events, &local_inf, false);
     // check results
     CHECK(success == false);
@@ -791,12 +804,13 @@ TEST(http2_hpack_string_decode_infractions, huffman_1_byte_incomplete_FE)
     Http2EventGen local_events;
     Http2Infractions local_inf;
     Http2HpackStringDecode local_decode;
+    Http2HpackIntDecode decode_int7(7);
     // prepare buf to decode - Incomplete code 0xFE
     uint8_t buf[2] = { 0x81, 0xFE };
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[2];
-    bool success = local_decode.translate(buf, 2, bytes_processed, res, 2, bytes_written,
+    bool success = local_decode.translate(buf, 2, decode_int7, bytes_processed, res, 2, bytes_written,
         &local_events, &local_inf, false);
     // check results
     CHECK(success == false);
@@ -811,12 +825,13 @@ TEST(http2_hpack_string_decode_infractions, huffman_2_bytes_incomplete_FF_FE)
     Http2EventGen local_events;
     Http2Infractions local_inf;
     Http2HpackStringDecode local_decode;
+    Http2HpackIntDecode decode_int7(7);
     // prepare buf to decode - Incomplete code 0xFFFE
     uint8_t buf[3] = { 0x82, 0xFF, 0xFE };
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[5];
-    bool success = local_decode.translate(buf, 3, bytes_processed, res, 5, bytes_written,
+    bool success = local_decode.translate(buf, 3, decode_int7, bytes_processed, res, 5, bytes_written,
         &local_events, &local_inf, false);
     // check results
     CHECK(success == false);
@@ -831,12 +846,13 @@ TEST(http2_hpack_string_decode_infractions, huffman_3_bytes_incomplete)
     Http2EventGen local_events;
     Http2Infractions local_inf;
     Http2HpackStringDecode local_decode;
+    Http2HpackIntDecode decode_int7(7);
     // prepare buf to decode - Incomplete code 0xFFFFFE
     uint8_t buf[4] = { 0x83, 0xFF, 0xFF, 0xFE };
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[7];
-    bool success = local_decode.translate(buf, 4, bytes_processed, res, 7, bytes_written,
+    bool success = local_decode.translate(buf, 4, decode_int7, bytes_processed, res, 7, bytes_written,
         &local_events, &local_inf, false);
     // check results
     CHECK(success == false);
@@ -851,12 +867,13 @@ TEST(http2_hpack_string_decode_infractions, huffman_FB_incomplete_FF)
     Http2EventGen local_events;
     Http2Infractions local_inf;
     Http2HpackStringDecode local_decode;
+    Http2HpackIntDecode decode_int7(7);
     // prepare buf to decode - ';' (8 bits) and incomplete code 0xFF
     uint8_t buf[3] = { 0x82, 0xFB, 0xFF };
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[5];
-    bool success = local_decode.translate(buf, 3, bytes_processed, res, 5, bytes_written,
+    bool success = local_decode.translate(buf, 3, decode_int7, bytes_processed, res, 5, bytes_written,
         &local_events, &local_inf, false);
     // check results
     CHECK(success == false);
@@ -872,12 +889,13 @@ TEST(http2_hpack_string_decode_infractions, huffman_07_incomplete_FF)
     Http2EventGen local_events;
     Http2Infractions local_inf;
     Http2HpackStringDecode local_decode;
+    Http2HpackIntDecode decode_int7(7);
     // prepare buf to decode - '0' (5 bits) and incomplete code 0xFF with padding
     uint8_t buf[3] = { 0x82, 0x07, 0xFF };
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[5];
-    bool success = local_decode.translate(buf, 3, bytes_processed, res, 5, bytes_written,
+    bool success = local_decode.translate(buf, 3, decode_int7, bytes_processed, res, 5, bytes_written,
         &local_events, &local_inf, false);
     // check results
     CHECK(success == false);
@@ -893,12 +911,13 @@ TEST(http2_hpack_string_decode_infractions, huffman_decoded_eos)
     Http2EventGen local_events;
     Http2Infractions local_inf;
     Http2HpackStringDecode local_decode;
+    Http2HpackIntDecode decode_int7(7);
     // prepare buf to decode - bad padding
     uint8_t buf[5] = { 0x84, 0xFF, 0xFF, 0xFF, 0xFF };
     // decode
     uint32_t bytes_processed = 0, bytes_written = 0;
     uint8_t res[10];
-    bool success = local_decode.translate(buf, 5, bytes_processed, res, 10, bytes_written,
+    bool success = local_decode.translate(buf, 5, decode_int7, bytes_processed, res, 10, bytes_written,
         &local_events, &local_inf, false);
     // check results
     CHECK(success == false);

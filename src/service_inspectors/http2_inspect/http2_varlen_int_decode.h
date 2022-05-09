@@ -15,24 +15,25 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http2_hpack_int_decode.h author Maya Dagon <mdagon@cisco.com>
+// http2_varlen_int_decode.h author Maya Dagon <mdagon@cisco.com>
 
-#ifndef HTTP2_HPACK_INT_DECODE_H
-#define HTTP2_HPACK_INT_DECODE_H
-
-#include "http2_enum.h"
-#include "http2_varlen_int_decode.h"
+#ifndef HTTP2_VARLEN_INT_DECODE_H
+#define HTTP2_VARLEN_INT_DECODE_H
 
 #include "main/snort_types.h"
-#include "utils/event_gen.h"
-#include "utils/infractions.h"
 
-using Http2Infractions = Infractions<Http2Enums::INF__MAX_VALUE, Http2Enums::INF__NONE>;
+template <typename EGen, typename Inf>
+class VarLengthIntDecode
+{
+public:
+    VarLengthIntDecode(uint8_t prefix);
+    bool translate(const uint8_t* in_buff, const uint32_t in_len, uint32_t& bytes_consumed,
+        uint64_t& result, EGen* const events, Inf* const infractions,
+        bool partial_header) const;
 
-using Http2EventGen = EventGen<Http2Enums::EVENT__MAX_VALUE, Http2Enums::EVENT__NONE,
-    Http2Enums::HTTP2_GID>;
-
-using Http2HpackIntDecode = VarLengthIntDecode<Http2EventGen, Http2Infractions>;
+private:
+    const uint8_t prefix_mask;
+};
 
 #endif
 
