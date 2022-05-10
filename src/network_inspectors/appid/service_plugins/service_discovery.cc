@@ -97,7 +97,6 @@ void ServiceDiscovery::initialize(AppIdInspector& inspector)
     new LprServiceDetector(this);
     new MdnsServiceDetector(this);
     new MySqlServiceDetector(this);
-    new NbssServiceDetector(this);
     new NbnsServiceDetector(this);
     new NbdgmServiceDetector(this);
     new NntpServiceDetector(this);

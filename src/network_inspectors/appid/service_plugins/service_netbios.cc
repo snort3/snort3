@@ -24,7 +24,6 @@
 #endif
 
 #include "service_netbios.h"
-
 #include "detection/detection_engine.h"
 #include "protocols/packet.h"
 #include "pub_sub/smb_events.h"
@@ -36,12 +35,9 @@
 
 using namespace snort;
 
-#define NBSS_PORT   139
-
-#define NBNS_NB 32
-#define NBNS_NBSTAT 33
-#define NBNS_LENGTH_FLAGS 0xC0
-
+#define NBNS_NB                     32
+#define NBNS_NBSTAT                 33
+#define NBNS_LENGTH_FLAGS           0xC0
 #define NBNS_OPCODE_QUERY           0
 #define NBNS_OPCODE_REGISTRATION    5
 #define NBNS_OPCODE_RELEASE         6
@@ -49,25 +45,7 @@ using namespace snort;
 #define NBNS_OPCODE_REFRESH         8
 #define NBNS_OPCODE_REFRESHALT      9
 #define NBNS_OPCODE_MHREGISTRATION 15
-
-#define NBSS_COUNT_THRESHOLD 5
-
-#define NBNS_REPLYCODE_MAX  7
-
-#define NBSS_TYPE_MESSAGE       0x00
-#define NBSS_TYPE_REQUEST       0x81
-#define NBSS_TYPE_RESP_POSITIVE 0x82
-#define NBSS_TYPE_RESP_NEGATIVE 0x83
-#define NBSS_TYPE_RESP_RETARGET 0x84
-#define NBSS_TYPE_KEEP_ALIVE    0x85
-
-enum NBSSState
-{
-    NBSS_STATE_CONNECTION,
-    NBSS_STATE_FLOW,
-    NBSS_STATE_CONT,
-    NBSS_STATE_ERROR
-};
+#define NBNS_REPLYCODE_MAX          7
 
 #define NBDGM_TYPE_DIRECT_UNIQUE        0x10
 #define NBDGM_TYPE_DIRECT_GROUP         0x11
@@ -76,9 +54,8 @@ enum NBSSState
 #define NBDGM_TYPE_REQUEST              0x14
 #define NBDGM_TYPE_POSITIVE_REPSONSE    0x15
 #define NBDGM_TYPE_NEGATIVE_RESPONSE    0x16
-
-#define NBDGM_ERROR_CODE_MIN    0x82
-#define NBDGM_ERROR_CODE_MAX    0x84
+#define NBDGM_ERROR_CODE_MIN            0x82
+#define NBDGM_ERROR_CODE_MAX            0x84
 
 #define FINGERPRINT_UDP_FLAGS_XENIX 0x00000800
 #define FINGERPRINT_UDP_FLAGS_NT    0x00001000
@@ -147,27 +124,9 @@ struct NBNSAnswerData
     uint16_t data_len;
 };
 
-struct NBSSHeader
-{
-    uint8_t type;
-    uint8_t flags;
-    uint16_t length;
-};
-
 uint8_t NB_SMB_BANNER[] =
 {
     0xFF, 'S', 'M', 'B'
-};
-
-uint8_t NB_SMB2_BANNER[] =
-{
-    0xFE, 'S', 'M', 'B'
-};
-
-// this header is used in SMB3+ dialects for encryption negotiation
-uint8_t NB_SMB2_TRANSFORM_BANNER[] =
-{
-    0xFD, 'S', 'M', 'B'
 };
 
 struct ServiceSMBHeader
@@ -182,78 +141,6 @@ struct ServiceSMBHeader
     uint16_t pid;
     uint16_t uid;
     uint16_t mid;
-};
-
-struct ServiceSMB2Header
-{
-    uint16_t length;
-    uint16_t cc;
-    uint32_t status;
-    uint16_t command;
-    uint16_t cr;
-    uint32_t flags;
-    uint32_t nc;
-    uint32_t msg_id[2];
-    uint32_t proc;
-    uint32_t tree_id;
-    uint32_t session_id[2];
-    uint32_t sig[4];
-};
-
-struct ServiceSMB2SetupResponse
-{
-    uint16_t struct_size;
-    uint16_t flags;
-    uint16_t sec_offset;
-    uint16_t sec_length;
-};
-
-struct ServiceSMB2NtlmChallenge
-{
-    uint8_t signature[8];
-    uint32_t msg_type;
-    uint16_t target_name_len;
-    uint16_t target_name_max_len;
-    uint32_t target_name_offset;
-    uint32_t negotiate_flags;
-    uint8_t server_challenge[8];
-    uint8_t reserved[8];
-    uint16_t target_info_len;
-    uint16_t target_info_max_len;
-    uint32_t target_info_offset;
-    uint8_t version[8];
-};
-
-struct ServiceSMB2NtlmAttr
-{
-    uint16_t type;
-    uint16_t length;
-};
-
-struct ServiceSMBAndXResponse
-{
-    uint8_t wc;
-    uint8_t cmd;
-    uint8_t reserved;
-    uint16_t offset;
-    uint16_t action;
-    uint16_t sec_len;
-};
-
-struct ServiceSMBNegotiateProtocolResponse
-{
-    uint8_t wc;
-    uint16_t dialect_index;
-    uint8_t security_mode;
-    uint16_t max_mpx_count;
-    uint16_t max_vcs;
-    uint32_t max_buffer_size;
-    uint32_t max_raw_buffer;
-    uint32_t session_key;
-    uint32_t capabilities;
-    uint32_t system_time[2];
-    uint16_t time_zone;
-    uint8_t sec_len;
 };
 
 struct ServiceSMBTransactionHeader
@@ -275,27 +162,6 @@ struct ServiceSMBTransactionHeader
     uint8_t sc;
     uint8_t reserved3;
 };
-/* sc * 2 to get to the transaction name */
-
-#define SERVICE_SMB_STATUS_SUCCESS              0x00000000
-#define SERVICE_SMB_MORE_PROCESSING_REQUIRED    0xc0000016
-#define SERVICE_SMB_TRANSACTION_COMMAND         0x25
-#define SERVICE_SMB_COMMAND_SESSION_SETUP_ANDX_RESPONSE 0x73
-#define SERVICE_SMB_COMMAND_NEGOTIATE_PROTOCOL          0x72
-#define SERVICE_SMB_CAPABILITIES_EXTENDED_SECURITY  0x80000000
-#define SERVICE_SMB_CAPABILITIES_UNICODE            0x00000004
-#define SERVICE_SMB_FLAGS_RESPONSE              0x80
-#define SERVICE_SMB_FLAGS_UNICODE               0x80
-#define SERVICE_SMB_NOT_TRANSACTION_WC          8
-#define SERVICE_SMB_MAILSLOT_HOST               0x01
-#define SERVICE_SMB_MAILSLOT_LOCAL_MASTER       0x0f
-#define SERVICE_SMB_MAILSLOT_SERVER_TYPE_XENIX  0x00000800
-#define SERVICE_SMB_MAILSLOT_SERVER_TYPE_NT     0x00001000
-#define SERVICE_SMB2_SESSION_SETUP              0x0001
-#define NTLM_CHALLENGE                          0x00000002
-#define NTLM_DOMAIN_FLAG                        0x0002
-static char mailslot[] = "\\MAILSLOT\\BROWSE";
-static char ntlmssp[] = "NTLMSSP";
 
 struct ServiceSMBBrowserHeader
 {
@@ -308,15 +174,11 @@ struct ServiceSMBBrowserHeader
     uint32_t server_type;
 };
 
-struct ServiceNBSSData
-{
-    NBSSState state;
-    unsigned count;
-    uint32_t length;
-    AppId serviceAppId;
-    AppId miscAppId;
-    AppId payloadAppId;
-};
+#define SERVICE_SMB_TRANSACTION_COMMAND         0x25
+#define SERVICE_SMB_NOT_TRANSACTION_WC          8
+#define SERVICE_SMB_MAILSLOT_HOST               0x01
+#define SERVICE_SMB_MAILSLOT_LOCAL_MASTER       0x0f
+static char mailslot[] = "\\MAILSLOT\\BROWSE";
 
 struct NBDgmHeader
 {
@@ -441,7 +303,8 @@ static int netbios_validate_name(const uint8_t** data,
     return 0;
 }
 
-static int netbios_validate_label(const uint8_t** data, const uint8_t* const end)
+static int netbios_validate_label(const uint8_t** data,
+    const uint8_t* const end)
 {
     const NBNSLabel* lbl;
     uint16_t tmp;
@@ -515,7 +378,6 @@ NbnsServiceDetector::NbnsServiceDetector(ServiceDiscovery* sd)
 
     handler->register_detector(name, this, proto);
 }
-
 
 int NbnsServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
@@ -623,536 +485,6 @@ fail:
 not_compatible:
     incompatible_data(args.asd, args.pkt, dir);
     return APPID_NOT_COMPATIBLE;
-}
-
-static void nbss_free_state(void* data)
-{
-    ServiceNBSSData* nd = (ServiceNBSSData*)data;
-
-    if (nd)
-    {
-        snort_free(nd);
-    }
-}
-
-static inline void smb_domain_skip_string(const uint8_t** data, uint16_t* size, uint16_t* offset,
-    const uint8_t unicode)
-{
-    if (unicode)
-    {
-        if (*size != 0 and ((*offset) % 2))
-        {
-            (*offset)++;
-            (*data)++;
-            (*size)--;
-        }
-        while (*size > 1)
-        {
-            *size -= 2;
-            *offset += 2;
-            if (**data == 0)
-            {
-                *data += 2;
-                break;
-            }
-            else
-            {
-                *data += 2;
-            }
-        }
-    }
-    else
-    {
-        while (*size)
-        {
-            (*size)--;
-            (*offset)++;
-            if (**data == 0)
-            {
-                (*data)++;
-                break;
-            }
-            else
-            {
-                (*data)++;
-            }
-        }
-    }
-}
-
-static void smb2_find_domain(const uint8_t* data, uint16_t size,
-    AppIdSession& asd, AppidChangeBits& change_bits)
-{
-    if (size < sizeof(ServiceSMB2Header))
-        return;
-    const ServiceSMB2Header* smb2 = (const ServiceSMB2Header*)data;
-    if (smb2->command != SERVICE_SMB2_SESSION_SETUP)
-        return;
-    data += sizeof(*smb2);
-    size -= sizeof(*smb2);
-    if (size < sizeof(ServiceSMB2SetupResponse))
-        return;
-    const ServiceSMB2SetupResponse* resp = (const ServiceSMB2SetupResponse*)data;
-    if (resp->struct_size != 9 or resp->sec_length < 1)
-        return;
-    data += sizeof(*resp);
-    size -= sizeof(*resp);
-    if (size < resp->sec_length)
-        return;
-    const uint8_t* ptr = (const uint8_t*)SnortStrnStr((const char*)data, size, ntlmssp);
-    if (!ptr)
-        return;
-    size -= ptr - data;
-    data = ptr;
-    if (size < sizeof(ServiceSMB2NtlmChallenge))
-        return;
-    const ServiceSMB2NtlmChallenge* ntlm = (const ServiceSMB2NtlmChallenge*)data;
-    if (ntlm->msg_type != NTLM_CHALLENGE)
-        return;
-    data += sizeof(*ntlm);
-    size -= sizeof(*ntlm);
-    if (size < ntlm->target_name_len or ntlm->target_name_len < 1 or ntlm->target_info_len < 1)
-        return;
-    data += ntlm->target_name_len;
-    size -= ntlm->target_name_len;
-    const ServiceSMB2NtlmAttr* info;
-    while (true)
-    {
-        if (size < sizeof(ServiceSMB2NtlmAttr))
-            return;
-        info = (const ServiceSMB2NtlmAttr*)data;
-        data += sizeof(*info);
-        size -= sizeof(*info);
-        if (size < info->length or info->length == 0)
-            return;
-        if (info->type == NTLM_DOMAIN_FLAG)
-            break;
-        data += info->length;
-        size -= info->length;
-    }
-    char domain[NBNS_NAME_LEN+1];
-    unsigned pos = 0;
-    while (pos < (info->length)/2 and pos < NBNS_NAME_LEN)
-    {
-        domain[pos] = *data;
-        pos++;
-        domain[pos] = 0;
-        data++;
-        if (*data != 0)
-            return;
-        data++;
-    }
-    asd.set_netbios_domain(change_bits, (const char*)domain);
-}
-
-static void smb_find_domain(const uint8_t* data, uint16_t size,
-    AppIdSession& asd, AppidChangeBits& change_bits)
-{
-    const ServiceSMBHeader* smb;
-    const ServiceSMBAndXResponse* resp;
-    const ServiceSMBNegotiateProtocolResponse* np;
-    char domain[NBNS_NAME_LEN+1];
-    unsigned pos = 0;
-    uint16_t byte_count;
-    uint16_t wc;
-    uint8_t unicode;
-    uint32_t capabilities;
-    uint16_t offset;
-
-    if (size < sizeof(*smb) + sizeof(wc))
-        return;
-    smb = (const ServiceSMBHeader*)data;
-    if (smb->status != SERVICE_SMB_STATUS_SUCCESS and
-        smb->status != SERVICE_SMB_MORE_PROCESSING_REQUIRED)
-        return;
-    if (!(smb->flags[0] & SERVICE_SMB_FLAGS_RESPONSE))
-        return;
-    unicode = smb->flags[2] & SERVICE_SMB_FLAGS_UNICODE;
-    data += sizeof(*smb);
-    size -= sizeof(*smb);
-    resp = (const ServiceSMBAndXResponse*)data;
-    np = (const ServiceSMBNegotiateProtocolResponse*)data;
-    wc = 2 * (uint16_t)*data;
-    offset = 0;
-    data++;
-    size--;
-    if (size < (wc + sizeof(byte_count)))
-        return;
-    data += wc;
-    size -= wc;
-    byte_count = LETOHS_UNALIGNED(data);
-    data += sizeof(byte_count);
-    size -= sizeof(byte_count);
-    if (size < byte_count)
-        return;
-    offset += sizeof(byte_count);
-    offset += wc;
-    if (smb->command == SERVICE_SMB_COMMAND_SESSION_SETUP_ANDX_RESPONSE)
-    {
-        if (wc == 8)
-        {
-            uint16_t sec_len = LETOHS_UNALIGNED(&resp->sec_len);
-            if (sec_len >= byte_count)
-                return;
-            data += sec_len;
-            byte_count -= sec_len;
-        }
-        else if (wc != 6)
-            return;
-        smb_domain_skip_string(&data, &byte_count, &offset, unicode);
-        smb_domain_skip_string(&data, &byte_count, &offset, unicode);
-        if (byte_count != 0 and (offset % 2))
-        {
-            data++;
-            byte_count--;
-        }
-    }
-    else if (smb->command == SERVICE_SMB_COMMAND_NEGOTIATE_PROTOCOL)
-    {
-        if (wc == 34)
-        {
-            capabilities = LETOHL_UNALIGNED(&np->capabilities);
-            if (capabilities & SERVICE_SMB_CAPABILITIES_EXTENDED_SECURITY)
-                return;
-            unicode = (capabilities & SERVICE_SMB_CAPABILITIES_UNICODE) or unicode;
-        }
-        else if (wc != 26)
-            return;
-        if (np->sec_len >= byte_count)
-            return;
-        data += np->sec_len;
-        byte_count -= np->sec_len;
-    }
-    else
-        return;
-    if (unicode)
-    {
-        int found = 0;
-        while (byte_count > 1)
-        {
-            byte_count -= 2;
-            if (*data == 0)
-            {
-                data += 2;
-                found = 1;
-                break;
-            }
-            else
-            {
-                if (pos < NBNS_NAME_LEN)
-                {
-                    domain[pos] = *data;
-                    pos++;
-                    domain[pos] = 0;
-                }
-                data++;
-                if (*data != 0)
-                    return;
-                data++;
-            }
-        }
-        if (!found and byte_count == 1 and *data == 0)
-        {
-            byte_count--;
-        }
-        if (byte_count and smb->command != SERVICE_SMB_COMMAND_NEGOTIATE_PROTOCOL and
-            smb->command != SERVICE_SMB_COMMAND_SESSION_SETUP_ANDX_RESPONSE)
-            return;
-    }
-    else
-    {
-        while (byte_count)
-        {
-            byte_count--;
-            if (*data == 0)
-            {
-                data++;
-                break;
-            }
-            else
-            {
-                if (pos < NBNS_NAME_LEN)
-                {
-                    domain[pos] = *data;
-                    pos++;
-                    domain[pos] = 0;
-                }
-                data++;
-            }
-        }
-        if (byte_count and smb->command != SERVICE_SMB_COMMAND_NEGOTIATE_PROTOCOL)
-            return;
-    }
-
-    if (pos)
-        asd.set_netbios_domain(change_bits, (const char*)domain);
-}
-
-void NbssServiceDetector::parse_type_message(AppIdDiscoveryArgs& args,
-    const uint8_t* data, uint32_t tmp)
-{
-    ServiceNBSSData* nd = (ServiceNBSSData*)data_get(args.asd);
-
-    if (tmp >= sizeof(NB_SMB_BANNER) and
-        nd->length >= sizeof(NB_SMB_BANNER) and
-        !memcmp(data, NB_SMB_BANNER, sizeof(NB_SMB_BANNER)))
-    {
-        if (nd->serviceAppId != APP_ID_DCE_RPC)
-        {
-            nd->serviceAppId = APP_ID_NETBIOS_SSN;
-            nd->payloadAppId = APP_ID_SMB_VERSION_1;
-        }
-
-        if (nd->length <= tmp)
-        {
-            smb_find_domain(data + sizeof(NB_SMB_BANNER),
-                tmp - sizeof(NB_SMB_BANNER), args.asd, args.change_bits);
-        }
-    }
-    else if (tmp >= sizeof(NB_SMB2_BANNER) and
-        nd->length >= sizeof(NB_SMB2_BANNER) and
-        !memcmp(data, NB_SMB2_BANNER, sizeof(NB_SMB2_BANNER)))
-    {
-        if (nd->serviceAppId != APP_ID_DCE_RPC)
-        {
-            nd->serviceAppId = APP_ID_NETBIOS_SSN;
-            nd->payloadAppId = APP_ID_SMB_VERSION_2;
-        }
-
-        if (nd->length <= tmp)
-        {
-            smb2_find_domain(data + sizeof(NB_SMB2_BANNER),
-                tmp - sizeof(NB_SMB2_BANNER), args.asd, args.change_bits);
-        }
-    }
-    else if (tmp >= sizeof(NB_SMB2_TRANSFORM_BANNER) and
-        nd->length >= sizeof(NB_SMB2_TRANSFORM_BANNER) and
-        !memcmp(data, NB_SMB2_TRANSFORM_BANNER, sizeof(NB_SMB2_TRANSFORM_BANNER)))
-    {
-        if (nd->serviceAppId != APP_ID_DCE_RPC)
-        {
-            nd->serviceAppId = APP_ID_NETBIOS_SSN;
-            nd->payloadAppId = APP_ID_SMB_VERSION_3;
-        }
-    }
-    else if (tmp >= 4 and nd->length >= 4 and
-        !(*((const uint32_t*)data)) and
-        dcerpc_validate(data+4, ((int)std::min(tmp, nd->length)) - 4) > 0)
-    {
-        nd->serviceAppId = APP_ID_DCE_RPC;
-        nd->miscAppId = APP_ID_NETBIOS_SSN;
-    }
-}
-
-NbssServiceDetector::NbssServiceDetector(ServiceDiscovery* sd)
-{
-    handler = sd;
-    name = "nbss";
-    proto = IpProtocol::TCP;
-    detectorType = DETECTOR_TYPE_DECODER;
-
-    tcp_patterns =
-    {
-        { NB_SMB_BANNER, sizeof(NB_SMB_BANNER), -1, 0, 0 },
-        { NB_SMB2_BANNER, sizeof(NB_SMB2_BANNER), -1, 0, 0 },
-        { NB_SMB2_TRANSFORM_BANNER, sizeof(NB_SMB2_TRANSFORM_BANNER), -1, 0, 0 }
-    };
-
-    appid_registry =
-    {
-        { APP_ID_NETBIOS_SSN, APPINFO_FLAG_SERVICE_ADDITIONAL },
-        { APP_ID_DCE_RPC, 0 }
-    };
-
-    service_ports =
-    {
-        { 139, IpProtocol::TCP, false },
-        { 445, IpProtocol::TCP, false }
-    };
-
-    handler->register_detector(name, this, proto);
-}
-
-int NbssServiceDetector::validate(AppIdDiscoveryArgs& args)
-{
-    ServiceNBSSData* nd;
-    const NBSSHeader* hdr;
-    const uint8_t* end;
-    uint32_t tmp;
-    int retval = -1;
-    const uint8_t* data = args.data;
-    const AppidSessionDirection dir = args.dir;
-    uint16_t size = args.size;
-
-    if (dir != APP_ID_FROM_RESPONDER)
-        goto inprocess;
-    if (!size)
-        goto inprocess;
-
-    nd = (ServiceNBSSData*)data_get(args.asd);
-    if (!nd)
-    {
-        nd = (ServiceNBSSData*)snort_calloc(sizeof(ServiceNBSSData));
-        data_add(args.asd, nd, &nbss_free_state);
-        nd->state = NBSS_STATE_CONNECTION;
-        nd->serviceAppId = APP_ID_NETBIOS_SSN;
-        nd->miscAppId = APP_ID_NONE;
-    }
-
-    end = data + size;
-    while (data < end)
-    {
-        switch (nd->state)
-        {
-        case NBSS_STATE_CONNECTION:
-            if (size < sizeof(NBSSHeader))
-                goto fail;
-            hdr = (const NBSSHeader*)data;
-            data += sizeof(NBSSHeader);
-            nd->state = NBSS_STATE_ERROR;
-            switch (hdr->type)
-            {
-            case NBSS_TYPE_RESP_POSITIVE:
-                if (hdr->flags or hdr->length)
-                    goto fail;
-                nd->state = NBSS_STATE_FLOW;
-                break;
-            case NBSS_TYPE_RESP_NEGATIVE:
-                if (hdr->flags or ntohs(hdr->length) != 1)
-                    goto fail;
-                if (data >= end)
-                    goto fail;
-                if (*data < 0x80 or (*data > 0x83 and *data < 0x8F) or *data > 0x8F)
-                    goto fail;
-                data++;
-                break;
-            case NBSS_TYPE_MESSAGE:
-                if (hdr->flags & 0xFE)
-                    goto fail;
-                nd->length = ((uint32_t)(hdr->flags & 0x01)) << 16;
-                nd->length += (uint32_t)ntohs(hdr->length);
-                tmp = end - data;
-                parse_type_message(args, data, tmp);
-                if (tmp < nd->length)
-                {
-                    data = end;
-                    nd->length -= tmp;
-                    nd->state = NBSS_STATE_CONT;
-                }
-                else
-                {
-                    data += nd->length;
-                    nd->count++;
-                    nd->state = NBSS_STATE_FLOW;
-                    retval = APPID_SUCCESS;
-                    args.asd.set_session_flags(APPID_SESSION_CONTINUE);
-                }
-                break;
-            case NBSS_TYPE_RESP_RETARGET:
-                if (hdr->flags or ntohs(hdr->length) != 6)
-                    goto fail;
-                if (end - data < 6)
-                    goto fail;
-                data += 6;
-                break;
-            default:
-                goto fail;
-            }
-            break;
-        case NBSS_STATE_FLOW:
-            if (size < sizeof(NBSSHeader))
-                goto fail;
-            hdr = (const NBSSHeader*)data;
-            data += sizeof(NBSSHeader);
-            switch (hdr->type)
-            {
-            case NBSS_TYPE_KEEP_ALIVE:
-                if (hdr->flags or hdr->length)
-                    goto fail;
-                break;
-            case NBSS_TYPE_MESSAGE:
-                if (hdr->flags & 0xFE)
-                    goto fail;
-                nd->length = ((uint32_t)(hdr->flags & 0x01)) << 16;
-                nd->length += (uint32_t)ntohs(hdr->length);
-                tmp = end - data;
-                parse_type_message(args, data, tmp);
-                if (tmp < nd->length)
-                {
-                    data = end;
-                    nd->length -= tmp;
-                    nd->state = NBSS_STATE_CONT;
-                }
-                else
-                {
-                    data += nd->length;
-                    if (nd->count < NBSS_COUNT_THRESHOLD)
-                    {
-                        nd->count++;
-                        retval = APPID_SUCCESS;
-                        if (nd->count >= NBSS_COUNT_THRESHOLD)
-                            args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
-                        else
-                            args.asd.set_session_flags(APPID_SESSION_CONTINUE);
-                    }
-                }
-                break;
-            default:
-                goto fail;
-            }
-            break;
-        case NBSS_STATE_CONT:
-            tmp = end - data;
-            if (tmp < nd->length)
-            {
-                data = end;
-                nd->length -= tmp;
-            }
-            else
-            {
-                data += nd->length;
-                nd->state = NBSS_STATE_FLOW;
-                if (nd->count < NBSS_COUNT_THRESHOLD)
-                {
-                    nd->count++;
-                    retval = APPID_SUCCESS;
-                    if (nd->count >= NBSS_COUNT_THRESHOLD)
-                        args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
-                    else
-                        args.asd.set_session_flags(APPID_SESSION_CONTINUE);
-                }
-            }
-            break;
-        default:
-            goto fail;
-        }
-    }
-    if (retval == -1)
-        goto inprocess;
-
-    if (!args.asd.is_service_detected())
-    {
-        if (add_service(args.change_bits, args.asd, args.pkt, dir, nd->serviceAppId) == APPID_SUCCESS)
-        {
-            add_miscellaneous_info(args.asd, nd->miscAppId);
-            if (!args.asd.get_session_flags(APPID_SESSION_CONTINUE))
-                add_payload(args.asd, nd->payloadAppId);
-        }
-    }
-    else if (!args.asd.get_session_flags(APPID_SESSION_CONTINUE))
-        add_payload(args.asd, nd->payloadAppId);
-
-    return APPID_SUCCESS;
-
-inprocess:
-    if (!args.asd.is_service_detected())
-        service_inprocess(args.asd, args.pkt, dir);
-    return APPID_INPROCESS;
-
-fail:
-    if (!args.asd.is_service_detected())
-        fail_service(args.asd, args.pkt, dir);
-    return APPID_NOMATCH;
 }
 
 NbdgmServiceDetector::NbdgmServiceDetector(ServiceDiscovery* sd)
@@ -1284,7 +616,7 @@ not_mailslot:
         data += sizeof(NBDgmError);
         if (end != data)
             goto fail;
-        if (err->code < NBDGM_ERROR_CODE_MIN or
+        if (err->code < NBDGM_ERROR_CODE_MIN and
             err->code > NBDGM_ERROR_CODE_MAX)
         {
             goto fail;
