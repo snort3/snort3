@@ -56,7 +56,7 @@ bool HexBook::translate(const char* in, HexVector& out)
         }
         else if ( in[i] != ' ' )
         {
-            if ( !isxdigit(in[i]) || byte.size() > 1 )
+            if ( !isxdigit(in[i]) or byte.size() > 1 )
                 return false;
 
             byte += in[i];
@@ -64,14 +64,16 @@ bool HexBook::translate(const char* in, HexVector& out)
         else
             push = true;
 
-        if ( push && !byte.empty() )
+        if ( push and !byte.empty() )
         {
             int b = strtol(byte.c_str(), nullptr, 16);
             out.emplace_back((uint8_t)b);
             byte.clear();
         }
+
         ++i;
     }
+
     return true;
 }
 
@@ -93,6 +95,7 @@ void HexBook::add_spell(
         p = t;
         ++i;
     }
+
     p->key = key;
     p->value = SnortConfig::get_static_name(val);
 }
@@ -104,6 +107,7 @@ bool HexBook::add_spell(const char* key, const char*& val)
     if ( !translate(key, hv) )
     {
         val = nullptr;
+
         return false;
     }
 
@@ -114,7 +118,7 @@ bool HexBook::add_spell(const char* key, const char*& val)
     {
         int c = hv[i];
 
-        if ( c == WILD && p->any )
+        if ( c == WILD and p->any )
             p = p->any;
 
         else if ( p->next[c] )
@@ -128,10 +132,12 @@ bool HexBook::add_spell(const char* key, const char*& val)
     if ( p->key == key )
     {
         val = p->value;
+
         return false;
     }
 
     add_spell(key, val, hv, i, p);
+
     return true;
 }
 
@@ -161,7 +167,9 @@ const MagicPage* HexBook::find_spell(
             if ( const MagicPage* q = find_spell(s, n, p->any, i+1, bookmark) )
                 return q;
         }
+
         return p->value ? p : nullptr;
     }
+
     return p;
 }

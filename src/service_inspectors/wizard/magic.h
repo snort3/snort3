@@ -42,7 +42,6 @@ struct MagicPage
 typedef std::vector<uint16_t> HexVector;
 
 // MagicBook is a set of MagicPages implementing a trie
-
 class MagicBook
 {
 public:

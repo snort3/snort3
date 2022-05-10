@@ -131,6 +131,7 @@ void WizardModule::set_trace(const Trace* trace) const
 const TraceOption* WizardModule::get_trace_options() const
 {
     static const TraceOption wizard_trace_options(nullptr, 0, nullptr);
+
     return &wizard_trace_options;
 }
 
@@ -149,9 +150,9 @@ bool WizardModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("client_first") )
         return true;
 
-    else if ( v.is("hex") || v.is("spell") )
+    else if ( v.is("hex") or v.is("spell") )
     {
-        if (c2s)
+        if ( c2s )
             c2s_patterns.emplace_back(v.get_string());
         else
             s2c_patterns.emplace_back(v.get_string());
@@ -177,7 +178,7 @@ bool WizardModule::begin(const char* fqn, int idx, SnortConfig*)
 
         curses = new CurseBook;
     }
-    else if ( !strcmp(fqn, "wizard.hexes") || !strcmp(fqn, "wizard.spells") )
+    else if ( !strcmp(fqn, "wizard.hexes") or !strcmp(fqn, "wizard.spells") )
     {
         if ( idx > 0 )
         {
@@ -186,10 +187,10 @@ bool WizardModule::begin(const char* fqn, int idx, SnortConfig*)
             s2c_patterns.clear();
         }
     }
-    else if ( !strcmp(fqn, "wizard.hexes.to_client") || !strcmp(fqn, "wizard.spells.to_client") )
+    else if ( !strcmp(fqn, "wizard.hexes.to_client") or !strcmp(fqn, "wizard.spells.to_client") )
         c2s = false;
 
-    else if ( !strcmp(fqn, "wizard.hexes.to_server") || !strcmp(fqn, "wizard.spells.to_server") )
+    else if ( !strcmp(fqn, "wizard.hexes.to_server") or !strcmp(fqn, "wizard.spells.to_server") )
         c2s = true;
 
     return true;
@@ -206,6 +207,7 @@ static bool add_spells(MagicBook* b, const string& service, const vector<string>
             {
                 ParseError("Invalid %s '%s' for service '%s'",
                     hex ? "hex" : "spell", p.c_str(), service.c_str());
+
                 return false;
             }
             else if ( service != val )
@@ -238,11 +240,13 @@ bool WizardModule::end(const char* fqn, int idx, SnortConfig*)
             if ( service.empty() )
             {
                 ParseError("Hexes must have a service name");
+
                 return false;
             }
-            if ( c2s_patterns.empty() && s2c_patterns.empty() )
+            if ( c2s_patterns.empty() and s2c_patterns.empty() )
             {
                 ParseError("Hexes must have at least one pattern");
+
                 return false;
             }
             if ( !add_spells(c2s_hexes, service, c2s_patterns, true) )
@@ -259,11 +263,13 @@ bool WizardModule::end(const char* fqn, int idx, SnortConfig*)
             if ( service.empty() )
             {
                 ParseError("Spells must have a service name");
+
                 return false;
             }
-            if ( c2s_patterns.empty() && s2c_patterns.empty() )
+            if ( c2s_patterns.empty() and s2c_patterns.empty() )
             {
                 ParseError("Spells must have at least one pattern");
+
                 return false;
             }
             if ( !add_spells(c2s_spells, service, c2s_patterns, false) )
@@ -305,6 +311,7 @@ MagicBook* WizardModule::get_book(bool c2s, bool hex)
         c2s_hexes = nullptr;
         break;
     }
+
     return b;
 }
 
@@ -312,6 +319,7 @@ CurseBook* WizardModule::get_curse_book()
 {
     CurseBook* b = curses;
     curses = nullptr;
+
     return b;
 }
 

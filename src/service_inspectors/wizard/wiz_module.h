@@ -58,7 +58,7 @@ public:
     MagicBook* get_book(bool c2s, bool hex);
     CurseBook* get_curse_book();
 
-    uint16_t get_max_search_depth()
+    uint16_t get_max_search_depth() const
     { return max_search_depth; }
 
     Usage get_usage() const override

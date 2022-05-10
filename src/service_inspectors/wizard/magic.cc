@@ -29,6 +29,7 @@ MagicPage::MagicPage(const MagicBook& b) : book(b)
 {
     for ( int i = 0; i < 256; ++i )
         next[i] = nullptr;
+
     any = nullptr;
 }
 
@@ -36,9 +37,10 @@ MagicPage::~MagicPage()
 {
     for ( int i = 0; i < 256; ++i )
     {
-        if ( next[i] && next[i] != this )
+        if ( next[i] and next[i] != this )
             delete next[i];
     }
+
     delete any;
 }
 
@@ -47,6 +49,7 @@ const char* MagicBook::find_spell(const uint8_t* data, unsigned len,
 {
     assert(p);
     p = find_spell(data, len, p, 0, bookmark);
+
     return p ? p->value : nullptr;
 }
 

@@ -67,6 +67,7 @@ bool SpellBook::translate(const char* in, HexVector& out)
         }
         ++i;
     }
+
     return true;
 }
 
@@ -85,6 +86,7 @@ void SpellBook::add_spell(
         p = t;
         ++i;
     }
+
     p->key = key;
     p->value = snort::SnortConfig::get_static_name(val);
 }
@@ -96,6 +98,7 @@ bool SpellBook::add_spell(const char* key, const char*& val)
     if ( !translate(key, hv) )
     {
         val = nullptr;
+
         return false;
     }
 
@@ -107,10 +110,10 @@ bool SpellBook::add_spell(const char* key, const char*& val)
     {
         int c = toupper(hv[i]);
 
-        if ( c == WILD && p->any )
+        if ( c == WILD and p->any )
             p = p->any;
 
-        else if ( c != WILD && p->next[c] )
+        else if ( c != WILD and p->next[c] )
             p = p->next[c];
 
         else
@@ -121,10 +124,12 @@ bool SpellBook::add_spell(const char* key, const char*& val)
     if ( p->key == key )
     {
         val = p->value;
+
         return false;
     }
 
     add_spell(key, val, hv, i, p);
+
     return true;
 }
 
@@ -156,15 +161,18 @@ const MagicPage* SpellBook::find_spell(
                 if ( const MagicPage* q = find_spell(s, n, p->any, i, bookmark) )
                 {
                     bookmark = q->any ? q : p;
+
                     return q;
                 }
+
                 ++i;
             }
+
             return p;
         }
 
         // If no match but has bookmark, continue lookup from bookmark
-        if ( !p->value && bookmark )
+        if ( !p->value and bookmark )
         {
             p = bookmark;
             bookmark = nullptr;
@@ -174,5 +182,6 @@ const MagicPage* SpellBook::find_spell(
 
         return p->value ? p : nullptr;
     }
+
     return p;
 }
