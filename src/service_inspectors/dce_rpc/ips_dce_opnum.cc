@@ -490,15 +490,7 @@ bool Dce2OpnumModule::begin(const char*, int, SnortConfig*)
 bool Dce2OpnumModule::set(const char*, Value& v, SnortConfig*)
 {
     assert(v.is("~"));
-
-    std::string tok (v.get_string());
-
-    if ( tok[0] == '"' )
-        tok.erase(0, 1);
-
-    if ( tok[tok.length()-1] == '"' )
-        tok.erase(tok.length()-1, 1);
-
+    std::string tok = v.get_unquoted_string();
     char* s = snort_strdup(tok.c_str());
     DCE2_Ret status = DCE2_OpnumParse(s, &opnum);
     snort_free(s);

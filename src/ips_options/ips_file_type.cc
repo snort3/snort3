@@ -155,7 +155,7 @@ bool FileTypeModule::set(const char*, Value& v, SnortConfig* sc)
             tok.erase(0, 1);
 
         if (tok.length() == 0)
-            continue;	
+            continue;
 
         if ( tok[tok.length()-1] == '"' )
             tok.erase(tok.length()-1, 1);

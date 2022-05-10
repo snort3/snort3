@@ -96,16 +96,9 @@ bool LuaJitModule::begin(const char*, int, SnortConfig*)
 
 bool LuaJitModule::set(const char*, Value& v, SnortConfig*)
 {
-    args = v.get_string();
-
     // if args not empty, it has to be a quoted string
     // so remove enclosing quotes
-    if ( args.size() > 1 )
-    {
-        args.erase(0, 1);
-        args.erase(args.size()-1);
-    }
-
+    args = v.get_unquoted_string();
     return true;
 }
 

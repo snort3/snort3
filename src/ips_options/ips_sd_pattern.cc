@@ -339,12 +339,7 @@ bool SdPatternModule::begin(const char*, int, SnortConfig*)
 bool SdPatternModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("~pattern") )
-    {
-        config.pii = v.get_string();
-        // remove quotes
-        config.pii.erase(0, 1);
-        config.pii.erase(config.pii.length()-1, 1);
-    }
+        config.pii = v.get_unquoted_string();
     else if ( v.is("threshold") )
         config.threshold = v.get_uint32();
 

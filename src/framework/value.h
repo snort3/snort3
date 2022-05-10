@@ -158,6 +158,22 @@ public:
     Parameter::Type get_param_type() const;
     std::string get_origin_string() const;
 
+    std::string get_unquoted_string() const
+    {
+        if ( str.length() < 2 )
+            return str;
+
+        std::string tmp = str;
+
+        if ( tmp.front() == '"' and tmp.back() == '"' )
+        {
+            tmp.erase(0, 1);
+            tmp.erase(tmp.size() - 1, 1);
+        }
+
+        return tmp;
+    }
+
     bool strtol(long&) const;
     bool strtol(long&, const std::string&) const;
 
