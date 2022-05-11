@@ -582,6 +582,12 @@ const Field& HttpMsgBody::get_norm_js_data()
     if (norm_js_data.length() != STAT_NOT_COMPUTE)
         return norm_js_data;
 
+    if (decompressed_file_body.length() <= 0)
+    {
+        norm_js_data.set(STAT_NO_SOURCE);
+        return norm_js_data;
+    }
+
     do_enhanced_js_normalization(decompressed_file_body, norm_js_data);
 
     if (norm_js_data.length() == STAT_NOT_COMPUTE)
