@@ -159,6 +159,10 @@ void HttpInspect::show(const SnortConfig*) const
     for (auto s : params->js_norm_param.ignored_ids)
         js_norm_ident_ignore += s + " ";
 
+    std::string js_norm_prop_ignore;
+    for (auto s : params->js_norm_param.ignored_props)
+        js_norm_prop_ignore += s + " ";
+
     ConfigLogger::log_limit("request_depth", params->request_depth, -1LL);
     ConfigLogger::log_limit("response_depth", params->response_depth, -1LL);
     ConfigLogger::log_flag("unzip", params->unzip);
@@ -178,6 +182,8 @@ void HttpInspect::show(const SnortConfig*) const
     ConfigLogger::log_value("js_norm_max_scope_depth", params->js_norm_param.max_scope_depth);
     if (!js_norm_ident_ignore.empty())
         ConfigLogger::log_list("js_norm_ident_ignore", js_norm_ident_ignore.c_str());
+    if (!js_norm_prop_ignore.empty())
+        ConfigLogger::log_list("js_norm_prop_ignore", js_norm_prop_ignore.c_str());
     ConfigLogger::log_value("bad_characters", bad_chars.c_str());
     ConfigLogger::log_value("ignore_unreserved", unreserved_chars.c_str());
     ConfigLogger::log_flag("percent_u", params->uri_param.percent_u);

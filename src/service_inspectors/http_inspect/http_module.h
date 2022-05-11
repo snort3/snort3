@@ -74,6 +74,7 @@ public:
         uint32_t max_bracket_depth = 256;
         uint32_t max_scope_depth = 256;
         std::unordered_set<std::string> ignored_ids;
+        std::unordered_set<std::string> ignored_props;
         int max_javascript_whitespaces = 200;
         class HttpJsNorm* js_norm = nullptr;
     };

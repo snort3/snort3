@@ -39,7 +39,7 @@ class JSIdentifierCtxBase
 public:
     virtual ~JSIdentifierCtxBase() = default;
 
-    virtual const char* substitute(const char* identifier) = 0;
+    virtual const char* substitute(const char* identifier, bool is_property) = 0;
     virtual void add_alias(const char* alias, const std::string&& value) = 0;
     virtual const char* alias_lookup(const char* alias) const = 0;
     virtual bool is_ignored(const char* identifier) const = 0;
@@ -56,9 +56,10 @@ class JSIdentifierCtx : public JSIdentifierCtxBase
 {
 public:
     JSIdentifierCtx(int32_t depth, uint32_t max_scope_depth,
-        const std::unordered_set<std::string>& ignore_list);
+        const std::unordered_set<std::string>& ignored_ids_list,
+        const std::unordered_set<std::string>& ignored_props_list);
 
-    virtual const char* substitute(const char* identifier) override;
+    virtual const char* substitute(const char* identifier, bool is_property) override;
     virtual void add_alias(const char* alias, const std::string&& value) override;
     virtual const char* alias_lookup(const char* alias) const override;
     virtual bool is_ignored(const char* identifier) const override;
@@ -75,10 +76,18 @@ public:
         (sizeof(ProgramScope) * 3)); }
 
 private:
+
+    struct NormId
+    {
+        const char* id_name = nullptr;
+        const char* prop_name = nullptr;
+        uint8_t type = 0;
+    };
+    
     using Alias = std::vector<std::string>;
     using AliasRef = std::list<Alias*>;
     using AliasMap = std::unordered_map<std::string, Alias>;
-    using NameMap = std::unordered_map<std::string, const char*>;
+    using NameMap = std::unordered_map<std::string, NormId>;
 
     class ProgramScope
     {
@@ -100,15 +109,19 @@ private:
         AliasRef to_remove{};
     };
 
-    inline const char* substitute(unsigned char c);
+    inline const char* substitute(unsigned char c, bool is_property);
+    inline bool is_substituted(const NormId& id, bool is_property);
+    inline const char* acquire_norm_name(NormId& id);
+    inline void init_ignored_names();
 
     // do not swap next two lines, the destructor frees them in the reverse order
     AliasMap aliases;
     std::list<ProgramScope> scopes;
 
-    const char* id_fast[256];
+    NormId id_fast[256];
     NameMap id_names;
-    const std::unordered_set<std::string>& ignore_list;
+    const std::unordered_set<std::string>& ignored_ids_list;
+    const std::unordered_set<std::string>& ignored_props_list;
 
     const char* norm_name;
     const char* norm_name_end;

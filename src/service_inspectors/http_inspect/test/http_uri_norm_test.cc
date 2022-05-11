@@ -57,13 +57,10 @@ void DecodeConfig::set_decompress_vba(bool) {}
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 
-HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_, int64_t normalization_depth_,
-    int32_t identifier_depth_, uint8_t max_template_nesting_, uint32_t max_bracket_depth_,
-    uint32_t max_scope_depth_, const std::unordered_set<std::string>& ignored_ids_) :
-    uri_param(uri_param_), normalization_depth(normalization_depth_),
-    identifier_depth(identifier_depth_), max_template_nesting(max_template_nesting_),
-    max_bracket_depth(max_bracket_depth_), max_scope_depth(max_scope_depth_),
-    ignored_ids(ignored_ids_), mpse_otag(nullptr), mpse_attr(nullptr), mpse_type(nullptr) {}
+HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_,
+    const HttpParaList::JsNormParam& js_norm_param_) :
+    uri_param(uri_param_), js_norm_param(js_norm_param_), mpse_otag(nullptr), mpse_attr(nullptr),
+    mpse_type(nullptr) {}
 HttpJsNorm::~HttpJsNorm() = default;
 void HttpJsNorm::configure() {}
 int64_t Parameter::get_int(char const*) { return 0; }

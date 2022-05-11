@@ -1278,10 +1278,47 @@ default_js_norm_ident_ignore =
     'CreateHTML'
 }
 
+default_js_norm_prop_ignore =
+{
+    -- Object 
+    'constructor', 'prototype', '__proto__', '__defineGetter__', '__defineSetter__',
+    '__lookupGetter__', '__lookupSetter__', '__count__', '__noSuchMethod__', '__parent__',
+    'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'toLocaleString', 'toString',
+    'toSource', 'valueOf', 'getNotifier', 'eval', 'observe', 'unobserve', 'watch', 'unwatch',
+
+    -- Function
+    'arguments', 'arity', 'caller', 'length', 'name', 'displayName', 'apply', 'bind', 'call',
+    'isGenerator',
+
+    -- Number
+    'toExponential', 'toFixed', 'toPrecision',
+
+    -- String
+    'at', 'charAt', 'charCodeAt', 'codePointAt', 'concat', 'includes', 'endWith', 'indexOf',
+    'lastIndexOf', 'localeCompare', 'match', 'matchAll', 'normalize', 'padEnd', 'padStart',
+    'repeat', 'replace', 'replaceAll', 'search', 'slice', 'split', 'startsWith', 'substring',
+    'toLocaleLowerCase', 'toLocaleUpperCase', 'toLowerCase', 'toUpperCase', 'trim', 'trimStart',
+    'trimEnd',
+
+    -- RegExp
+    'flags', 'dotAll', 'global', 'hasIndices', 'ignoreCase', 'multiline', 'source', 'sticky',
+    'unicode', 'lastIndex', 'compile', 'exec', 'test', 'input', 'lastMatch', 'lastParen',
+    'leftContext', 'rightContext',
+
+    -- Array
+    'copyWithin', 'entries', 'every', 'fill', 'filter', 'find', 'findIndex', 'flat', 'flatMap',
+    'forEach', 'groupBy', 'groupByToMap', 'join', 'keys', 'map', 'pop',  'push', 'reduce', 
+    'reduceRight', 'reverse', 'shift', 'unshift', 'some', 'sort', 'splice',
+
+    -- Generator
+    'next', 'return', 'throw'
+}
+
 default_http_inspect =
 {
     -- params not specified here get internal defaults
     js_norm_ident_ignore = default_js_norm_ident_ignore,
+    js_norm_prop_ignore = default_js_norm_prop_ignore,
 }
 
 ---------------------------------------------------------------------------
@@ -1303,7 +1340,7 @@ default_whitelist =
     ip_hi_dist icmp_low_sweep icmp_med_sweep icmp_hi_sweep
     default_hi_port_scan default_med_port_scan default_low_port_scan
     default_variables netflow_versions default_js_norm_ident_ignore
-    default_http_inspect
+    default_js_norm_prop_ignore default_http_inspect
 ]]
 
 snort_whitelist_append(default_whitelist)

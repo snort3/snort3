@@ -227,14 +227,14 @@ be kept intact. Any string literals, added by the plus operator,
 will be concatenated. This also works for functions that result in string
 literals. Semicolons will be inserted, if not already present, according to ECMAScript
 automatic semicolon insertion rules.
-All JavaScript identifier names, except those from the ignore list,
+All JavaScript identifier names, except those from the ident_ignore or prop_ignore lists,
 will be substituted with unified names in the following format: var_0000 -> var_ffff.
 So, the number of unique identifiers available is 65536 names per HTTP transaction.
 If Normalizer overruns the configured limit, built-in alert is generated.
 A config option to set the limit manually:
  * http_inspect.js_norm_identifier_depth.
 
-Identifiers from the ignore list will be placed as is, without substitution. Starting with 
+Identifiers from the ident_ignore list will be placed as is, without substitution. Starting with 
 the listed identifier, any chain of dot accessors, brackets and function calls will be kept
 intact.
 For example:
@@ -256,6 +256,21 @@ For example:
 
     var a = console.log
     a("hello") // will be substituted to 'console.log("hello")'
+
+For properties and methods of objects that can be created implicitly, there is a
+js_norm_prop_ignore list. All names in the call chain after the first property or
+method from the list has been occurred will not be normalized.
+
+Note that identifiers are normalized by name, i.e. an identifier and a property with the same name
+will be normalized to the same value. However, the ignore lists act separately on identifiers
+and properties.
+
+For example:
+
+   http_inspect.js_norm_prop_ignore = { 'split' }
+
+   in: "string".toUpperCase().split("").reverse().join("");
+   out: "string".var_0000().split("").reverse().join("");
 
 In addition to the scope tracking, JS Normalizer specifically tracks unicode unescape
 functions(unescape, decodeURI, decodeURIComponent, String.fromCharCode, String.fromCodePoint).

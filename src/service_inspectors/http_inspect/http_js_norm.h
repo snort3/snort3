@@ -36,9 +36,8 @@
 class HttpJsNorm
 {
 public:
-    HttpJsNorm(const HttpParaList::UriParam&, int64_t normalization_depth,
-        int32_t identifier_depth, uint8_t max_template_nesting, uint32_t max_bracket_depth,
-        uint32_t max_scope_depth, const std::unordered_set<std::string>& ignored_ids);
+    HttpJsNorm(const HttpParaList::UriParam& uri_param_,
+        const HttpParaList::JsNormParam& js_norm_param_);
     ~HttpJsNorm();
 
     void set_detection_depth(size_t depth)
@@ -63,13 +62,8 @@ private:
     };
 
     const HttpParaList::UriParam& uri_param;
+    const HttpParaList::JsNormParam& js_norm_param;
     size_t detection_depth;
-    int64_t normalization_depth;
-    int32_t identifier_depth;
-    uint8_t max_template_nesting;
-    uint32_t max_bracket_depth;
-    uint32_t max_scope_depth;
-    const std::unordered_set<std::string>& ignored_ids;
     bool configure_once = false;
 
     snort::SearchTool* mpse_otag;

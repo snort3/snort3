@@ -1500,7 +1500,7 @@ JSTokenizer::JSRet JSTokenizer::do_identifier_substitution(const char* lexeme, b
 
     set_ident_norm(true);
 
-    const char* name = ident_ctx.substitute(lexeme);
+    const char* name = ident_ctx.substitute(lexeme, id_part);
 
     if (!name)
     {
@@ -1511,19 +1511,11 @@ JSTokenizer::JSRet JSTokenizer::do_identifier_substitution(const char* lexeme, b
 
     if (ident_ctx.is_ignored(name))
     {
-        if (id_part)
-        {
-            std::string n(name);
-            n.push_back('+'); // any illegal symbol as a part of ID name
-            name = ident_ctx.substitute(n.c_str());
-        }
-        else
-        {
+        if (!id_part)
             ignored_id_pos = yyout.rdbuf()->pubseekoff(0, yyout.cur, std::ios_base::out);
-            set_ident_norm(false);
-            yyout << name;
-            return EOS;
-        }
+        set_ident_norm(false);
+        yyout << name;
+        return EOS;
     }
 
     const char* alias = id_part ? nullptr : ident_ctx.alias_lookup(lexeme);
@@ -2076,7 +2068,8 @@ void JSTokenizer::dealias_clear_mutated(bool id_continue)
 {
     if (!id_continue && prefix_increment && dealias_stored)
     {
-        ident_ctx.add_alias(last_dealiased.c_str(), std::string(ident_ctx.substitute(last_dealiased.c_str())));
+        ident_ctx.add_alias(last_dealiased.c_str(),
+            std::string(ident_ctx.substitute(last_dealiased.c_str(), false)));
     }
     dealias_stored = false;
     prefix_increment = false;
@@ -2086,7 +2079,8 @@ void JSTokenizer::dealias_increment()
 {
     if (dealias_stored)
     {
-        ident_ctx.add_alias(last_dealiased.c_str(), std::string(ident_ctx.substitute(last_dealiased.c_str())));
+        ident_ctx.add_alias(last_dealiased.c_str(),
+            std::string(ident_ctx.substitute(last_dealiased.c_str(), false)));
     }
     prefix_increment = token != IDENTIFIER && token != CLOSING_BRACKET;
     dealias_stored = false;
@@ -2118,7 +2112,7 @@ void JSTokenizer::dealias_identifier(bool id_part, bool assignment_start)
     {
         auto dealias = ident_ctx.alias_lookup(lexeme);
         if ((!ident_norm() && id_part) ||
-            (ident_ctx.is_ignored(ident_ctx.substitute(lexeme)) && !id_part))
+            (!id_part && ident_ctx.is_ignored(ident_ctx.substitute(lexeme, false))))
             aliased << YYText();
         else if (dealias)
             aliased << dealias;
@@ -2136,7 +2130,10 @@ void JSTokenizer::dealias_equals(bool complex_assignment)
         if (complex_assignment)
         {
             if (ident_ctx.alias_lookup(alias.c_str()))
-                ident_ctx.add_alias(alias.c_str(), std::string(ident_ctx.substitute(alias.c_str())));
+            {
+                ident_ctx.add_alias(alias.c_str(),
+                    std::string(ident_ctx.substitute(alias.c_str(), false)));
+            }
             alias_state = ALIAS_NONE;
         }
         else
@@ -2150,7 +2147,10 @@ void JSTokenizer::dealias_reset()
     {
         if (alias_state == ALIAS_VALUE || alias_state == ALIAS_EQUALS)
             if (ident_ctx.alias_lookup(alias.c_str()))
-                ident_ctx.add_alias(alias.c_str(), std::string(ident_ctx.substitute(alias.c_str())));
+            {
+                ident_ctx.add_alias(alias.c_str(),
+                    std::string(ident_ctx.substitute(alias.c_str(), false)));
+            }
         alias_state = ALIAS_NONE;
     }
 }

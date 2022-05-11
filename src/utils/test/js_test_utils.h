@@ -35,7 +35,12 @@ constexpr int max_template_nesting = 4;
 constexpr int max_bracket_depth = 256;
 constexpr int max_scope_depth = 256;
 static const std::unordered_set<std::string> s_ignored_ids {
-    "console", "eval", "document", "unescape", "decodeURI", "decodeURIComponent", "String"
+    "console", "eval", "document", "unescape", "decodeURI", "decodeURIComponent", "String",
+    "name", "u"
+};
+
+static const std::unordered_set<std::string> s_ignored_props {
+    "watch", "unwatch", "split", "reverse", "join", "name", "w"
 };
 
 namespace snort
@@ -49,7 +54,7 @@ class JSIdentifierCtxStub : public JSIdentifierCtxBase
 public:
     JSIdentifierCtxStub() = default;
 
-    const char* substitute(const char* identifier) override
+    const char* substitute(const char* identifier, bool) override
     { return identifier; }
     virtual void add_alias(const char*, const std::string&&) override {}
     virtual const char* alias_lookup(const char* alias) const override
@@ -67,9 +72,10 @@ class JSTokenizerTester
 public:
     JSTokenizerTester(int32_t depth, uint32_t max_scope_depth,
         const std::unordered_set<std::string>& ignored_ids,
+        const std::unordered_set<std::string>& ignored_props,
         uint8_t max_template_nesting, uint32_t max_bracket_depth)
         :
-        ident_ctx(depth, max_scope_depth, ignored_ids),
+        ident_ctx(depth, max_scope_depth, ignored_ids, ignored_props),
         normalizer(ident_ctx, depth, max_template_nesting, max_bracket_depth)
     { }
 

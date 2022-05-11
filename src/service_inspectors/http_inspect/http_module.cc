@@ -51,6 +51,12 @@ static const Parameter js_norm_ident_ignore_param[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const Parameter js_norm_prop_ignore_param[] =
+{
+    { "prop_name", Parameter::PT_STRING, nullptr, nullptr, "name of the object property to ignore" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 const Parameter HttpModule::http_params[] =
 {
     { "request_depth", Parameter::PT_INT, "-1:max53", "-1",
@@ -108,6 +114,9 @@ const Parameter HttpModule::http_params[] =
 
     { "js_norm_ident_ignore", Parameter::PT_LIST, js_norm_ident_ignore_param, nullptr,
       "list of JavaScript ignored identifiers which will not be normalized" },
+
+    { "js_norm_prop_ignore", Parameter::PT_LIST, js_norm_prop_ignore_param, nullptr,
+      "list of JavaScript ignored object properties which will not be normalized" },
 
     { "max_javascript_whitespaces", Parameter::PT_INT, "1:65535", "200",
       "maximum consecutive whitespaces allowed within the JavaScript obfuscated data" },
@@ -293,6 +302,10 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     {
         params->js_norm_param.ignored_ids.insert(val.get_string());
     }
+    else if (val.is("prop_name"))
+    {
+        params->js_norm_param.ignored_props.insert(val.get_string());
+    }
     else if (val.is("max_javascript_whitespaces"))
     {
         params->js_norm_param.max_javascript_whitespaces = val.get_uint16();
@@ -474,10 +487,7 @@ bool HttpModule::end(const char* fqn, int, SnortConfig*)
                 params->uri_param.iis_unicode_code_page);
     }
 
-    params->js_norm_param.js_norm = new HttpJsNorm(params->uri_param,
-        params->js_norm_param.js_norm_bytes_depth, params->js_norm_param.js_identifier_depth,
-        params->js_norm_param.max_template_nesting, params->js_norm_param.max_bracket_depth,
-        params->js_norm_param.max_scope_depth, params->js_norm_param.ignored_ids);
+    params->js_norm_param.js_norm = new HttpJsNorm(params->uri_param, params->js_norm_param);
 
     params->script_detection_handle = script_detection_handle;
 

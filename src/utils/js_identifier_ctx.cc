@@ -48,6 +48,10 @@ public:
 #define NORM_NAME_SIZE 9 // size of the normalized form plus null symbol
 #define NORM_NAME_CNT 65536
 
+#define TYPE_NORMALIZED     1
+#define TYPE_IGNORED_ID     2
+#define TYPE_IGNORED_PROP   4
+
 static char norm_names[NORM_NAME_SIZE * NORM_NAME_CNT];
 
 static void init_norm_names()
@@ -79,64 +83,98 @@ static void init_norm_names()
 }
 
 JSIdentifierCtx::JSIdentifierCtx(int32_t depth, uint32_t max_scope_depth,
-    const std::unordered_set<std::string>& ignore_list)
-    : ignore_list(ignore_list), max_scope_depth(max_scope_depth)
+    const std::unordered_set<std::string>& ignored_ids_list,
+    const std::unordered_set<std::string>& ignored_props_list)
+    : ignored_ids_list(ignored_ids_list), ignored_props_list(ignored_props_list), 
+    max_scope_depth(max_scope_depth)
 {
     init_norm_names();
 
-    memset(id_fast, 0, sizeof(id_fast));
     norm_name = norm_names;
     norm_name_end = norm_names + NORM_NAME_SIZE * std::min(depth, NORM_NAME_CNT);
     scopes.emplace_back(JSProgramScopeType::GLOBAL);
 
-    for (const auto& iid : ignore_list)
-        if (iid.length() == 1)
-            id_fast[(unsigned)iid[0]] = iid.c_str();
-        else
-            id_names[iid] = iid.c_str();
+    init_ignored_names();
 }
 
-const char* JSIdentifierCtx::substitute(unsigned char c)
+const char* JSIdentifierCtx::substitute(unsigned char c, bool is_property)
 {
     auto p = id_fast[c];
-    if (p)
-        return p;
+    if (is_substituted(p, is_property))
+        return is_property ? p.prop_name : p.id_name;
 
-    if (norm_name >= norm_name_end)
-        return nullptr;
-
-    auto n = norm_name;
-    norm_name += NORM_NAME_SIZE;
-    HttpModule::increment_peg_counts(HttpEnums::PEG_JS_IDENTIFIER);
-
-    return id_fast[c] = n;
+    return acquire_norm_name(id_fast[c]);
 }
 
-const char* JSIdentifierCtx::substitute(const char* id_name)
+const char* JSIdentifierCtx::substitute(const char* id_name, bool is_property)
 {
     assert(*id_name);
 
     if (id_name[1] == '\0')
-        return substitute(*id_name);
+        return substitute(*id_name, is_property);
 
     const auto it = id_names.find(id_name);
-    if (it != id_names.end())
-        return it->second;
+    if (it != id_names.end() && is_substituted(it->second, is_property))
+        return is_property ? it->second.prop_name : it->second.id_name;
 
-    if (norm_name >= norm_name_end)
-        return nullptr;
-
-    auto n = norm_name;
-    norm_name += NORM_NAME_SIZE;
-    HttpModule::increment_peg_counts(HttpEnums::PEG_JS_IDENTIFIER);
-
-    return id_names[id_name] = n;
+    return acquire_norm_name(id_names[id_name]);
 }
 
 bool JSIdentifierCtx::is_ignored(const char* id_name) const
 {
     return id_name < norm_names ||
         id_name >= norm_names + NORM_NAME_SIZE * NORM_NAME_CNT;
+}
+
+bool JSIdentifierCtx::is_substituted(const NormId& id, bool is_property)
+{
+    return ((id.type & TYPE_NORMALIZED) != 0) ||
+        (!is_property && ((id.type & TYPE_IGNORED_ID) != 0)) ||
+        (is_property && ((id.type & TYPE_IGNORED_PROP) != 0));
+}
+
+const char* JSIdentifierCtx::acquire_norm_name(NormId& id)
+{
+    if (norm_name >= norm_name_end)
+        return nullptr;
+
+    auto n = norm_name;
+    norm_name += NORM_NAME_SIZE;
+    HttpModule::increment_peg_counts(HttpEnums::PEG_JS_IDENTIFIER);
+
+    if (id.prop_name || id.id_name)
+    {
+        id.type |= TYPE_NORMALIZED;
+        if ((id.type & TYPE_IGNORED_ID) != 0)
+            return id.prop_name = n;
+        else if ((id.type & TYPE_IGNORED_PROP) != 0)
+            return id.id_name = n;
+    }
+
+    return (id = {n, n, TYPE_NORMALIZED}).id_name;
+}
+
+void JSIdentifierCtx::init_ignored_names()
+{
+    for (const auto& iid : ignored_ids_list)
+        if (iid.length() == 1)
+            id_fast[(unsigned)iid[0]] = {iid.c_str(), nullptr, TYPE_IGNORED_ID};
+        else
+            id_names[iid] = {iid.c_str(), nullptr, TYPE_IGNORED_ID};
+
+    for (const auto& iprop : ignored_props_list)
+    {
+        if (iprop.length() == 1)
+        {
+            id_fast[(unsigned)iprop[0]].prop_name = iprop.c_str();
+            id_fast[(unsigned)iprop[0]].type |= TYPE_IGNORED_PROP;
+        }
+        else
+        {
+            id_names[iprop].prop_name = iprop.c_str();
+            id_names[iprop].type |= TYPE_IGNORED_PROP;
+        }
+    }
 }
 
 bool JSIdentifierCtx::scope_push(JSProgramScopeType t)
@@ -164,17 +202,12 @@ bool JSIdentifierCtx::scope_pop(JSProgramScopeType t)
 
 void JSIdentifierCtx::reset()
 {
-    memset(id_fast, 0, sizeof(id_fast));
+    memset(&id_fast, 0, sizeof(id_fast));
     norm_name = norm_names;
     id_names.clear();
     scopes.clear();
     scopes.emplace_back(JSProgramScopeType::GLOBAL);
-
-    for (const auto& iid : ignore_list)
-        if (iid.length() == 1)
-            id_fast[(unsigned)iid[0]] = iid.c_str();
-        else
-            id_names[iid] = iid.c_str();
+    init_ignored_names();
 }
 
 void JSIdentifierCtx::add_alias(const char* alias, const std::string&& value)

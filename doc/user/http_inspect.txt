@@ -79,7 +79,7 @@ It supports scripts over multiple PDUs. It is a stateful JavaScript whitespace
 and identifiers normalizer. Normalizer concatenates string literals whenever 
 it's possible to do. This also works with any other normalizations that result
 in string literals. All JavaScript identifier names, except those from
-the ignore list, will be substituted with unified names in the following
+the ignore lists, will be substituted with unified names in the following
 format: var_0000 -> var_ffff. But the unescape-like function names will be removed
 from the normalized data. The Normalizer tries to expand an escaped text,
 so it will appear in a usual form in the output. Moreover, Normalizer validates
@@ -87,7 +87,8 @@ the syntax concerning ECMA-262 Standard, including scope tracking and restrictio
 for script elements. For more information on how additionally configure
 Enhanced Normalizer check with the following configuration options:
 js_norm_bytes_depth, js_norm_identifier_depth, js_norm_max_tmpl_nest,
-js_norm_max_bracket_depth, js_norm_max_scope_depth, js_norm_ident_ignore.
+js_norm_max_bracket_depth, js_norm_max_scope_depth, js_norm_ident_ignore,
+js_norm_prop_ignore.
 Eventually Enhanced Normalizer will completely replace Legacy Normalizer.
 
 ==== Configuration
@@ -283,6 +284,26 @@ The default list of ignore-identifiers is present in "snort_defaults.lua".
 Unescape function names should remain intact in the output. They ought to be
 included in the ignore list. If for some reason the user wants to disable unescape
 related features, then removing function's name from the ignore list does the trick.
+
+===== js_norm_prop_ignore
+
+js_norm_prop_ignore = {<list of ignored properties>} is an option of the enhanced
+JavaScript normalizer that defines a list of object properties and methods that
+will be kept intact during the identifiers normalization. This list should include
+methods and properties of objects that will not be tracked by assignment substitution
+functionality, for example, those that can be created implicitly.
+
+Subsequent accessors, after dot, in square brackets or after function call, will not be
+normalized as well.
+
+For example:
+
+    http_inspect.js_norm_prop_ignore = { 'split' }
+
+    in: "string".toUpperCase().split("").reverse().join("");
+    out: "string".var_0000().split("").reverse().join("");
+
+The default list of ignored properties is present in "snort_defaults.lua".
 
 ===== xff_headers
 

@@ -33,38 +33,39 @@
 #define DEPTH 65536
 #define SCOPE_DEPTH 256
 
-static const std::unordered_set<std::string> s_ignored_ids { "console" };
+static const std::unordered_set<std::string> s_ignored_ids { "console", "v" };
+static const std::unordered_set<std::string> s_ignored_props { "watch", "w" };
 
 TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
 {
     SECTION("same name")
     {
-        JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ignored_ids);
+        JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ignored_ids, s_ignored_props);
 
-        CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
-        CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
+        CHECK(!strcmp(ident_ctx.substitute("a", false), "var_0000"));
+        CHECK(!strcmp(ident_ctx.substitute("a", false), "var_0000"));
     }
     SECTION("different names")
     {
-        JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ignored_ids);
+        JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ignored_ids, s_ignored_props);
 
-        CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
-        CHECK(!strcmp(ident_ctx.substitute("b"), "var_0001"));
-        CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
+        CHECK(!strcmp(ident_ctx.substitute("a", false), "var_0000"));
+        CHECK(!strcmp(ident_ctx.substitute("b", false), "var_0001"));
+        CHECK(!strcmp(ident_ctx.substitute("a", false), "var_0000"));
     }
     SECTION("depth reached")
     {
-        JSIdentifierCtx ident_ctx(2, SCOPE_DEPTH, s_ignored_ids);
+        JSIdentifierCtx ident_ctx(2, SCOPE_DEPTH, s_ignored_ids, s_ignored_props);
 
-        CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
-        CHECK(!strcmp(ident_ctx.substitute("b"), "var_0001"));
-        CHECK(ident_ctx.substitute("c") == nullptr);
-        CHECK(ident_ctx.substitute("d") == nullptr);
-        CHECK(!strcmp(ident_ctx.substitute("a"), "var_0000"));
+        CHECK(!strcmp(ident_ctx.substitute("a", false), "var_0000"));
+        CHECK(!strcmp(ident_ctx.substitute("b", false), "var_0001"));
+        CHECK(ident_ctx.substitute("c", false) == nullptr);
+        CHECK(ident_ctx.substitute("d", false) == nullptr);
+        CHECK(!strcmp(ident_ctx.substitute("a", false), "var_0000"));
     }
     SECTION("max names")
     {
-        JSIdentifierCtx ident_ctx(DEPTH + 2, SCOPE_DEPTH, s_ignored_ids);
+        JSIdentifierCtx ident_ctx(DEPTH + 2, SCOPE_DEPTH, s_ignored_ids, s_ignored_props);
 
         std::vector<std::string> n, e;
         n.reserve(DEPTH + 2);
@@ -82,27 +83,66 @@ TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
         }
 
         for (int it = 0; it < DEPTH; ++it)
-            CHECK(!strcmp(ident_ctx.substitute(n[it].c_str()), e[it].c_str()));
+            CHECK(!strcmp(ident_ctx.substitute(n[it].c_str(), false), e[it].c_str()));
 
-        CHECK(ident_ctx.substitute(n[DEPTH].c_str()) == nullptr);
-        CHECK(ident_ctx.substitute(n[DEPTH + 1].c_str()) == nullptr);
+        CHECK(ident_ctx.substitute(n[DEPTH].c_str(), false) == nullptr);
+        CHECK(ident_ctx.substitute(n[DEPTH + 1].c_str(), false) == nullptr);
+    }
+    SECTION("ignored identifier - single char")
+    {
+        JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ignored_ids, s_ignored_props);
+
+        CHECK(!strcmp(ident_ctx.substitute("v", false), "v"));
+        CHECK(!strcmp(ident_ctx.substitute("v", true), "var_0000"));
+        CHECK(!strcmp(ident_ctx.substitute("w", false), "var_0001"));
+        CHECK(!strcmp(ident_ctx.substitute("w", true), "w"));
+    }
+    SECTION("ignored identifier - multiple chars")
+    {
+        JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ignored_ids, s_ignored_props);
+
+        CHECK(!strcmp(ident_ctx.substitute("console", false), "console"));
+        CHECK(!strcmp(ident_ctx.substitute("console", true), "var_0000"));
+        CHECK(!strcmp(ident_ctx.substitute("watch", false), "var_0001"));
+        CHECK(!strcmp(ident_ctx.substitute("watch", true), "watch"));
     }
 }
 
 TEST_CASE("JSIdentifierCtx::is_ignored()", "[JSIdentifierCtx]")
 {
-    JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ignored_ids);
+    SECTION("single char identifier")
+    {
+        JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ignored_ids, s_ignored_props);
 
-    auto v1 = ident_ctx.substitute("console");
-    auto v2 = ident_ctx.substitute("foo");
+        auto v1 = ident_ctx.substitute("v", false);
+        auto v2 = ident_ctx.substitute("a", false);
+        auto v3 = ident_ctx.substitute("w", false);
+        auto v4 = ident_ctx.substitute("w", true);
 
-    CHECK(ident_ctx.is_ignored(v1) == true);
-    CHECK(ident_ctx.is_ignored(v2) == false);
+        CHECK(ident_ctx.is_ignored(v1) == true);
+        CHECK(ident_ctx.is_ignored(v2) == false);
+        CHECK(ident_ctx.is_ignored(v3) == false);
+        CHECK(ident_ctx.is_ignored(v4) == true);
+    }
+    SECTION("multiple chars identifier")
+    {
+        JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ignored_ids, s_ignored_props);
+
+        auto v1 = ident_ctx.substitute("console", false);
+        auto v2 = ident_ctx.substitute("foo", false);
+        auto v3 = ident_ctx.substitute("watch", false);
+        auto v4 = ident_ctx.substitute("watch", true);
+
+        CHECK(ident_ctx.is_ignored(v1) == true);
+        CHECK(ident_ctx.is_ignored(v2) == false);
+        CHECK(ident_ctx.is_ignored(v3) == false);
+        CHECK(ident_ctx.is_ignored(v4) == true);
+    }
 }
 
 TEST_CASE("JSIdentifierCtx::scopes", "[JSIdentifierCtx]")
 {
-    JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ignored_ids);
+    JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ignored_ids, s_ignored_props);
 
     SECTION("scope stack")
     {
@@ -158,7 +198,7 @@ TEST_CASE("JSIdentifierCtx::scopes", "[JSIdentifierCtx]")
     }
     SECTION("scope max nesting")
     {
-        JSIdentifierCtx ident_ctx_limited(DEPTH, 2, s_ignored_ids);
+        JSIdentifierCtx ident_ctx_limited(DEPTH, 2, s_ignored_ids, s_ignored_props);
 
         CHECK(ident_ctx_limited.scope_push(JSProgramScopeType::FUNCTION));
         CHECK(ident_ctx_limited.scope_check({GLOBAL, FUNCTION}));

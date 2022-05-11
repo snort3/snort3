@@ -240,27 +240,26 @@ void HttpFlowData::reset_js_ident_ctx()
     }
 }
 
-snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t ident_depth, size_t norm_depth,
-    uint8_t max_template_nesting, uint32_t max_bracket_depth, uint32_t max_scope_depth,
-    const std::unordered_set<std::string>& ignored_ids)
+snort::JSNormalizer& HttpFlowData::acquire_js_ctx(const HttpParaList::JsNormParam& js_norm_param)
 {
     if (js_normalizer)
         return *js_normalizer;
 
     if (!js_ident_ctx)
     {
-        js_ident_ctx = new JSIdentifierCtx(ident_depth, max_scope_depth, ignored_ids);
+        js_ident_ctx = new JSIdentifierCtx(js_norm_param.js_identifier_depth, 
+            js_norm_param.max_scope_depth, js_norm_param.ignored_ids, js_norm_param.ignored_props);
 
         debug_logf(4, http_trace, TRACE_JS_PROC, nullptr,
-            "js_ident_ctx created (ident_depth %d)\n", ident_depth);
+            "js_ident_ctx created (ident_depth %d)\n", js_norm_param.js_identifier_depth);
     }
 
-    js_normalizer = new JSNormalizer(*js_ident_ctx, norm_depth,
-        max_template_nesting, max_bracket_depth);
+    js_normalizer = new JSNormalizer(*js_ident_ctx, js_norm_param.js_norm_bytes_depth,
+        js_norm_param.max_template_nesting, js_norm_param.max_bracket_depth);
 
     debug_logf(4, http_trace, TRACE_JS_PROC, nullptr,
         "js_normalizer created (norm_depth %zd, max_template_nesting %d)\n",
-        norm_depth, max_template_nesting);
+        js_norm_param.js_norm_bytes_depth, js_norm_param.max_template_nesting);
 
     return *js_normalizer;
 }
@@ -287,8 +286,7 @@ void HttpFlowData::release_js_ctx()
 }
 #else
 void HttpFlowData::reset_js_ident_ctx() {}
-snort::JSNormalizer& HttpFlowData::acquire_js_ctx(int32_t, size_t, uint8_t, uint32_t, uint32_t,
-    const std::unordered_set<std::string>&)
+snort::JSNormalizer& HttpFlowData::acquire_js_ctx(const HttpParaList::JsNormParam&)
 { return *js_normalizer; }
 void HttpFlowData::release_js_ctx() {}
 #endif

@@ -114,7 +114,7 @@ using namespace snort;
     {                                                               \
         char dst1[sizeof(exp1)];                                    \
                                                                     \
-        JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids); \
+        JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props); \
         JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
                                                                     \
         DO(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1);         \
@@ -128,7 +128,7 @@ using namespace snort;
         char dst1[sizeof(exp1)];                                    \
         char dst2[sizeof(exp2)];                                    \
                                                                     \
-        JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids); \
+        JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props); \
         JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
                                                                     \
         DO(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1);         \
@@ -363,7 +363,7 @@ using namespace snort;
 
 #define NORM_COMBINED_S_2(src1, src2, exp)                              \
     {                                                                   \
-        JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids); \
+        JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props); \
         JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
                                                                         \
         auto ret = norm.normalize(src1, sizeof(src1) - 1);              \
@@ -2764,7 +2764,7 @@ TEST_CASE("split and continuation combined", "[JSNormalizer]")
         char dst3[sizeof(exp3)];
         char dst4[sizeof(exp4)];
 
-        JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids);
+        JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props);
         JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth);
 
         DO(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1);
@@ -2799,7 +2799,7 @@ TEST_CASE("split and continuation combined", "[JSNormalizer]")
         char dst2[sizeof(exp2)];
         char dst3[sizeof(exp3)];
 
-        JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids);
+        JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props);
         JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth);
 
         TRY(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1, JSTokenizer::SCRIPT_CONTINUE);
@@ -4038,6 +4038,274 @@ TEST_CASE("ignored identifier scope tracking", "[JSNormalizer]")
     }
 }
 
+TEST_CASE("ignored properties", "[JSNormalizer]")
+{
+    SECTION("basic")
+    {
+        const char dat1[] = "foo.bar ;";
+        const char dat2[] = "foo.bar() ;";
+        const char dat3[] = "foo.watch ;";
+        const char dat4[] = "foo.unwatch() ;";
+        const char dat5[] = "console.watch ;";
+        const char dat6[] = "console.unwatch() ;";
+        const char dat7[] = "console.foo.watch ;";
+        const char dat8[] = "console.foo.unwatch() ;";
+        const char dat9[] = "foo.console.watch ;";
+        const char dat10[] = "foo.console.unwatch() ;";
+
+        const char dat11[] = "foo['bar'] ;";
+        const char dat12[] = "foo[\"bar\"]() ;";
+        const char dat13[] = "foo['watch'] ;";
+        const char dat14[] = "foo[\"unwatch\"]() ;";
+        const char dat15[] = "console['watch'] ;";
+        const char dat16[] = "console[\"unwatch\"]() ;";
+        const char dat17[] = "console['foo']['watch'] ;";
+        const char dat18[] = "console[\"foo\"][\"unwatch\"]() ;";
+        const char dat19[] = "foo['console']['watch'] ;";
+        const char dat20[] = "foo[\"console\"][\"unwatch\"]() ;";
+
+        const char exp1[] = "var_0000.var_0001;";
+        const char exp2[] = "var_0000.var_0001();";
+        const char exp3[] = "var_0000.watch;";
+        const char exp4[] = "var_0000.unwatch();";
+        const char exp5[] = "console.watch;";
+        const char exp6[] = "console.unwatch();";
+        const char exp7[] = "console.foo.watch;";
+        const char exp8[] = "console.foo.unwatch();";
+        const char exp9[] = "var_0000.var_0001.watch;";
+        const char exp10[] = "var_0000.var_0001.unwatch();";
+
+        const char exp11[] = "var_0000['bar'];";
+        const char exp12[] = "var_0000[\"bar\"]();";
+        const char exp13[] = "var_0000['watch'];";
+        const char exp14[] = "var_0000[\"unwatch\"]();";
+        const char exp15[] = "console['watch'];";
+        const char exp16[] = "console[\"unwatch\"]();";
+        const char exp17[] = "console['foo']['watch'];";
+        const char exp18[] = "console[\"foo\"][\"unwatch\"]();";
+        const char exp19[] = "var_0000['console']['watch'];";
+        const char exp20[] = "var_0000[\"console\"][\"unwatch\"]();";
+
+        NORMALIZE_S(dat1, exp1);
+        NORMALIZE_S(dat2, exp2);
+        NORMALIZE_S(dat3, exp3);
+        NORMALIZE_S(dat4, exp4);
+        NORMALIZE_S(dat5, exp5);
+        NORMALIZE_S(dat6, exp6);
+        NORMALIZE_S(dat7, exp7);
+        NORMALIZE_S(dat8, exp8);
+        NORMALIZE_S(dat9, exp9);
+        NORMALIZE_S(dat10, exp10);
+
+        NORMALIZE_S(dat11, exp11);
+        NORMALIZE_S(dat12, exp12);
+        NORMALIZE_S(dat13, exp13);
+        NORMALIZE_S(dat14, exp14);
+        NORMALIZE_S(dat15, exp15);
+        NORMALIZE_S(dat16, exp16);
+        NORMALIZE_S(dat17, exp17);
+        NORMALIZE_S(dat18, exp18);
+        NORMALIZE_S(dat19, exp19);
+        NORMALIZE_S(dat20, exp20);
+    }
+
+    SECTION("chain tracking")
+    {
+        const char dat1[] = "foo.watch.bar ;";
+        const char dat2[] = "foo['watch'].bar ;";
+        const char dat3[] = "foo.bar.watch.bar ;";
+        const char dat4[] = "foo['bar'].watch['bar'] ;";
+        const char dat5[] = "foo['bar'].watch['bar'].baz ;";
+
+        const char dat6[] = "foo.unwatch().bar ;";
+        const char dat7[] = "foo['unwatch']().bar ;";
+        const char dat8[] = "foo.bar.unwatch().bar ;";
+        const char dat9[] = "foo['bar'].unwatch()['bar'] ;";
+        const char dat10[] = "foo['bar'].unwatch()['bar'].baz ;";
+
+        const char dat11[] = "foo . watch \n . bar ;";
+        const char dat12[] = "foo ['watch'] \n . bar ;";
+        const char dat13[] = "foo . /*multiline*/ watch //oneline\n . bar ;";
+
+        const char dat14[] = "foo . unwatch () \n . bar ;";
+        const char dat15[] = "foo ['unwatch'] () \n . bar ;";
+        const char dat16[] = "foo /*multiline*/ . unwatch ( ) . // oneline \n bar ;";
+
+        const char dat17[] = "foo . + watch . bar ;";
+        const char dat18[] = "foo . + ['watch'] . bar ;";
+
+        const char dat19[] = "foo . + unwatch() . bar ;";
+        const char dat20[] = "foo . + ['unwatch']() . bar ;";
+
+        // FIXIT-L: add support for proper tracking of bracket accessors.
+        // Current behavior: foo['watch'].bar -> var_0000['watch'].var_0001
+        // Expected behavior: foo['watch'].bar -> var_0000['watch'].bar
+        const char exp1[] = "var_0000.watch.bar;";
+        const char exp2[] = "var_0000['watch'].var_0001;";
+        const char exp3[] = "var_0000.var_0001.watch.bar;";
+        const char exp4[] = "var_0000['bar'].watch['bar'];";
+        const char exp5[] = "var_0000['bar'].watch['bar'].baz;";
+
+        const char exp6[] = "var_0000.unwatch().bar;";
+        const char exp7[] = "var_0000['unwatch']().var_0001;";
+        const char exp8[] = "var_0000.var_0001.unwatch().bar;";
+        const char exp9[] = "var_0000['bar'].unwatch()['bar'];";
+        const char exp10[] = "var_0000['bar'].unwatch()['bar'].baz;";
+
+        const char exp11[] = "var_0000.watch.bar;";
+        const char exp12[] = "var_0000['watch'].var_0001;";
+        const char exp13[] = "var_0000.watch.bar;";
+
+        const char exp14[] = "var_0000.unwatch().bar;";
+        const char exp15[] = "var_0000['unwatch']().var_0001;";
+        const char exp16[] = "var_0000.unwatch().bar;";
+
+        const char exp17[] = "var_0000.+var_0001.var_0002;";
+        const char exp18[] = "var_0000.+['watch'].var_0001;";
+
+        const char exp19[] = "var_0000.+var_0001().var_0002;";
+        const char exp20[] = "var_0000.+['unwatch']().var_0001;";
+
+        NORMALIZE_S(dat1, exp1);
+        NORMALIZE_S(dat2, exp2);
+        NORMALIZE_S(dat3, exp3);
+        NORMALIZE_S(dat4, exp4);
+        NORMALIZE_S(dat5, exp5);
+
+        NORMALIZE_S(dat6, exp6);
+        NORMALIZE_S(dat7, exp7);
+        NORMALIZE_S(dat8, exp8);
+        NORMALIZE_S(dat9, exp9);
+        NORMALIZE_S(dat10, exp10);
+
+        NORMALIZE_S(dat11, exp11);
+        NORMALIZE_S(dat12, exp12);
+        NORMALIZE_S(dat13, exp13);
+
+        NORMALIZE_S(dat14, exp14);
+        NORMALIZE_S(dat15, exp15);
+        NORMALIZE_S(dat16, exp16);
+
+        NORMALIZE_S(dat17, exp17);
+        NORMALIZE_S(dat18, exp18);
+
+        NORMALIZE_S(dat19, exp19);
+        NORMALIZE_S(dat20, exp20);
+    }
+
+    SECTION("scope tracking")
+    {
+        const char dat1[] = "foo.(watch).bar ;";
+        const char dat2[] = "foo(['watch']).bar ;";
+
+        const char dat3[] = "foo.bar(baz.unwatch.eval).eval ;";
+        const char dat4[] = "foo.bar(baz['unwatch'].eval).eval ;";
+
+        const char exp1[] = "var_0000.(var_0001).var_0002;";
+        const char exp2[] = "var_0000(['watch']).var_0001;";
+
+        const char exp3[] = "var_0000.var_0001(var_0002.unwatch.eval).var_0003;";
+        const char exp4[] = "var_0000.var_0001(var_0002['unwatch'].var_0003).var_0003;";
+
+        NORMALIZE_S(dat1, exp1);
+        NORMALIZE_S(dat2, exp2);
+
+        NORMALIZE_S(dat3, exp3);
+        NORMALIZE_S(dat4, exp4);
+    }
+
+    SECTION("corner cases")
+    {
+        const char dat1[] = ".watch ;";
+        const char dat2[] = ".unwatch() ;";
+
+        const char dat3[] = "'foo'.watch ;";
+        const char dat4[] = "\"foo\".unwatch() ;";
+
+        const char dat5[] = "''.split('').reverse().join('') ;";
+        const char dat6[] = "\"\".split(\"\").reverse().join(\"\") ;";
+
+        const char dat7[] = "watch () ;";
+        const char dat8[] = "watch.watch() ;";
+
+        // 'name' is present in both ignore lists
+        const char dat9[] = "name.foo ;";
+        const char dat10[] = "foo.name ;";
+        const char dat11[] = "name.name ;";
+        const char dat12[] = "name ;";
+
+        const char dat13[] = "foo.foo ;";
+        const char dat14[] = "console.console; console;";
+        const char dat15[] = "watch.watch; watch;";
+        const char dat16[] = "foo.console; console.foo; foo.watch; watch.foo ;";
+        const char dat17[] = "console.foo; foo.console; watch.foo; foo.watch ;";
+
+        const char dat18[] = "a.a ;";
+        const char dat19[] = "u.u; u;";
+        const char dat20[] = "w.w; w;";
+        const char dat21[] = "a.u; u.a; a.w; w.a ;";
+        const char dat22[] = "u.a; a.u; w.a; a.w ;";
+
+        const char exp1[] = ".watch;";
+        const char exp2[] = ".unwatch();";
+
+        const char exp3[] = "'foo'.watch;";
+        const char exp4[] = "\"foo\".unwatch();";
+
+        const char exp5[] = "''.split('').reverse().join('');";
+        const char exp6[] = "\"\".split(\"\").reverse().join(\"\");";
+
+        const char exp7[] = "var_0000();";
+        const char exp8[] = "var_0000.watch();";
+
+        const char exp9[] = "name.foo;";
+        const char exp10[] = "var_0000.name;";
+        const char exp11[] = "name.name;";
+        const char exp12[] = "name;";
+
+        const char exp13[] = "var_0000.var_0000;";
+        const char exp14[] = "console.console;console;";
+        const char exp15[] = "var_0000.watch;var_0000;";
+        const char exp16[] = "var_0000.var_0001;console.foo;var_0000.watch;var_0002.var_0000;";
+        const char exp17[] = "console.foo;var_0000.var_0001;var_0002.var_0000;var_0000.watch;";
+
+        const char exp18[] = "var_0000.var_0000;";
+        const char exp19[] = "u.u;u;";
+        const char exp20[] = "var_0000.w;var_0000;";
+        const char exp21[] = "var_0000.var_0001;u.a;var_0000.w;var_0002.var_0000;";
+        const char exp22[] = "u.a;var_0000.var_0001;var_0002.var_0000;var_0000.w;";
+
+        NORMALIZE_S(dat1, exp1);
+        NORMALIZE_S(dat2, exp2);
+
+        NORMALIZE_S(dat3, exp3);
+        NORMALIZE_S(dat4, exp4);
+
+        NORMALIZE_S(dat5, exp5);
+        NORMALIZE_S(dat6, exp6);
+
+        NORMALIZE_S(dat7, exp7);
+        NORMALIZE_S(dat8, exp8);
+
+        NORMALIZE_S(dat9, exp9);
+        NORMALIZE_S(dat10, exp10);
+        NORMALIZE_S(dat11, exp11);
+        NORMALIZE_S(dat12, exp12);
+
+        NORMALIZE_S(dat13, exp13);
+        NORMALIZE_S(dat14, exp14);
+        NORMALIZE_S(dat15, exp15);
+        NORMALIZE_S(dat16, exp16);
+        NORMALIZE_S(dat17, exp17);
+
+        NORMALIZE_S(dat18, exp18);
+        NORMALIZE_S(dat19, exp19);
+        NORMALIZE_S(dat20, exp20);
+        NORMALIZE_S(dat21, exp21);
+        NORMALIZE_S(dat22, exp22);
+    }
+}
+
 TEST_CASE("ignored identifier split", "[JSNormalizer]")
 {
 
@@ -4227,6 +4495,194 @@ TEST_CASE("ignored identifier split", "[JSNormalizer]")
         const char exp2[] = "()";
 
         NORMALIZE_T(dat1, dat2, exp1, exp2);
+    }
+}
+
+TEST_CASE("ignored properties split", "[JSNormalizer]")
+{
+
+#if JSTOKENIZER_MAX_STATES != 8
+#error "ignored properties split" tests are designed for 8 states depth
+#endif
+
+    SECTION("a standalone property")
+    {
+        const char dat1[] = "foo.un";
+        const char dat2[] = "watch ;";
+        const char exp1[] = "var_0000.var_0001";
+        const char exp2[] = "unwatch;";
+        const char exp_comb_1[] = "var_0000.unwatch;";
+
+        const char dat3[] = "foo. un";
+        const char dat4[] = "watch () ;";
+        const char exp3[] = "var_0000.var_0001";
+        const char exp4[] = "unwatch();";
+        const char exp_comb_2[] = "var_0000.unwatch();";
+
+        const char dat5[] = "fo";
+        const char dat6[] = "o . watch ;";
+        const char exp5[] = "var_0000";
+        const char exp6[] = "var_0001.watch;";
+        const char exp_comb_3[] = "var_0001.watch;";
+
+        const char dat7[] = "foo. ";
+        const char dat8[] = "watch ;";
+        const char exp7[] = "var_0000.";
+        const char exp8[] = "watch;";
+        const char exp_comb_4[] = "var_0000.watch;";
+
+        const char dat9[] = "foo ";
+        const char dat10[] = ". watch ;";
+        const char exp9[] = "var_0000";
+        const char exp10[] = ".watch;";
+        const char exp_comb_5[] = "var_0000.watch;";
+
+        NORMALIZE_T(dat1, dat2, exp1, exp2);
+        NORM_COMBINED_S_2(dat1, dat2, exp_comb_1);
+
+        NORMALIZE_T(dat3, dat4, exp3, exp4);
+        NORM_COMBINED_S_2(dat3, dat4, exp_comb_2);
+
+        NORMALIZE_T(dat5, dat6, exp5, exp6);
+        NORM_COMBINED_S_2(dat5, dat6, exp_comb_3);
+
+        NORMALIZE_T(dat7, dat8, exp7, exp8);
+        NORM_COMBINED_S_2(dat7, dat8, exp_comb_4);
+
+        NORMALIZE_T(dat9, dat10, exp9, exp10);
+        NORM_COMBINED_S_2(dat9, dat10, exp_comb_5);
+    }
+
+    SECTION("chain tracking")
+    {
+        const char dat1[] = "foo.un";
+        const char dat2[] = "watch.bar ;";
+        const char exp1[] = "var_0000.var_0001";
+        const char exp2[] = "unwatch.bar;";
+        const char exp_comb_1[] = "var_0000.unwatch.bar;";
+
+        const char dat3[] = "foo.un";
+        const char dat4[] = "watch().bar ;";
+        const char exp3[] = "var_0000.var_0001";
+        const char exp4[] = "unwatch().bar;";
+        const char exp_comb_2[] = "var_0000.unwatch().bar;";
+
+        const char dat5[] = "foo['un";
+        const char dat6[] = "watch'].bar ;";
+        const char exp5[] = "var_0000['un";
+        const char exp6[] = "unwatch'].var_0001;";
+        const char exp_comb_3[] = "var_0000['unwatch'].var_0001;";
+
+        const char dat7[] = "foo['un";
+        const char dat8[] = "watch']().bar ;";
+        const char exp7[] = "var_0000['un";
+        const char exp8[] = "unwatch']().var_0001;";
+        const char exp_comb_4[] = "var_0000['unwatch']().var_0001;";
+
+        const char dat9[] = "foo. /*multi";
+        const char dat10[] = "line*/ watch . bar ;";
+        const char exp9[] = "var_0000.";
+        const char exp10[] = "watch.bar;";
+        const char exp_comb_5[] = "var_0000.watch.bar;";
+
+        const char dat11[] = "foo //one";
+        const char dat12[] = "line \n . watch . bar ;";
+        const char exp11[] = "var_0000";
+        const char exp12[] = ".watch.bar;";
+        const char exp_comb_6[] = "var_0000.watch.bar;";
+
+        const char dat13[] = ".";
+        const char dat14[] = "watch ( ) . bar ;";
+        const char exp13[] = ".";
+        const char exp14[] = "watch().bar;";
+        const char exp_comb_7[] = ".watch().bar;";
+
+        const char dat15[] = ".un";
+        const char dat16[] = "watch ( ) . bar ;";
+        const char exp15[] = ".var_0000";
+        const char exp16[] = "unwatch().bar;";
+        const char exp_comb_8[] = ".unwatch().bar;";
+
+        const char dat17[] = "foo.watch ";
+        const char dat18[] = "+ bar ;";
+        const char exp17[] = "var_0000.watch";
+        const char exp18[] = "+var_0001;";
+        const char exp_comb_9[] = "var_0000.watch+var_0001;";
+
+        const char dat19[] = "foo.unwatch ( ) +";
+        const char dat20[] = "bar ;";
+        const char exp19[] = "var_0000.unwatch()+";
+        const char exp20[] = "var_0001;";
+        const char exp_comb_10[] = "var_0000.unwatch()+var_0001;";
+
+        NORMALIZE_T(dat1, dat2, exp1, exp2);
+        NORM_COMBINED_S_2(dat1, dat2, exp_comb_1);
+
+        NORMALIZE_T(dat3, dat4, exp3, exp4);
+        NORM_COMBINED_S_2(dat3, dat4, exp_comb_2);
+
+        NORMALIZE_T(dat5, dat6, exp5, exp6);
+        NORM_COMBINED_S_2(dat5, dat6, exp_comb_3);
+
+        NORMALIZE_T(dat7, dat8, exp7, exp8);
+        NORM_COMBINED_S_2(dat7, dat8, exp_comb_4);
+
+        NORMALIZE_T(dat9, dat10, exp9, exp10);
+        NORM_COMBINED_S_2(dat9, dat10, exp_comb_5);
+
+        NORMALIZE_T(dat11, dat12, exp11, exp12);
+        NORM_COMBINED_S_2(dat11, dat12, exp_comb_6);
+
+        NORMALIZE_T(dat13, dat14, exp13, exp14);
+        NORM_COMBINED_S_2(dat13, dat14, exp_comb_7);
+
+        NORMALIZE_T(dat15, dat16, exp15, exp16);
+        NORM_COMBINED_S_2(dat15, dat16, exp_comb_8);
+
+        NORMALIZE_T(dat17, dat18, exp17, exp18);
+        NORM_COMBINED_S_2(dat17, dat18, exp_comb_9);
+
+        NORMALIZE_T(dat19, dat20, exp19, exp20);
+        NORM_COMBINED_S_2(dat19, dat20, exp_comb_10);
+    }
+
+    SECTION("scope tracking")
+    {
+        const char dat1[] = "foo.(un";
+        const char dat2[] = "watch).bar ;";
+        const char exp1[] = "var_0000.(var_0001";
+        const char exp2[] = "var_0002).var_0003;";
+        const char exp_comb_1[] = "var_0000.(var_0002).var_0003;";
+
+        const char dat3[] = "foo(['un";
+        const char dat4[] = "watch']).bar ;";
+        const char exp3[] = "var_0000(['un";
+        const char exp4[] = "unwatch']).var_0001;";
+        const char exp_comb_2[] = "var_0000(['unwatch']).var_0001;";
+
+        const char dat5[] = "foo.bar(baz.un";
+        const char dat6[] = "watch() . bar ) . foo ;";
+        const char exp5[] = "var_0000.var_0001(var_0002.var_0003";
+        const char exp6[] = "unwatch().bar).var_0000;";
+        const char exp_comb_3[] = "var_0000.var_0001(var_0002.unwatch().bar).var_0000;";
+
+        const char dat7[] = "foo.bar(baz['un";
+        const char dat8[] = "watch']() . bar ) . foo ;";
+        const char exp7[] = "var_0000.var_0001(var_0002['un";
+        const char exp8[] = "unwatch']().var_0001).var_0000;";
+        const char exp_comb_4[] = "var_0000.var_0001(var_0002['unwatch']().var_0001).var_0000;";
+
+        NORMALIZE_T(dat1, dat2, exp1, exp2);
+        NORM_COMBINED_S_2(dat1, dat2, exp_comb_1);
+
+        NORMALIZE_T(dat3, dat4, exp3, exp4);
+        NORM_COMBINED_S_2(dat3, dat4, exp_comb_2);
+
+        NORMALIZE_T(dat5, dat6, exp5, exp6);
+        NORM_COMBINED_S_2(dat5, dat6, exp_comb_3);
+
+        NORMALIZE_T(dat7, dat8, exp7, exp8);
+        NORM_COMBINED_S_2(dat7, dat8, exp_comb_4);
     }
 }
 
@@ -4722,7 +5178,7 @@ TEST_CASE("Scope tracking - error handling", "[JSNormalizer]")
         const char exp[] = "function(){if";
         uint32_t scope_depth = 2;
 
-        JSIdentifierCtx ident_ctx(norm_depth, scope_depth, s_ignored_ids);
+        JSIdentifierCtx ident_ctx(norm_depth, scope_depth, s_ignored_ids, s_ignored_props);
         JSNormalizer normalizer(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth);
         auto ret = normalizer.normalize(src, strlen(src));
         std::string dst(normalizer.get_script(), normalizer.script_size());
@@ -4734,8 +5190,8 @@ TEST_CASE("Scope tracking - error handling", "[JSNormalizer]")
 
 TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
 {
-    JSTokenizerTester tester(norm_depth, max_scope_depth, s_ignored_ids, max_template_nesting,
-        max_bracket_depth);
+    JSTokenizerTester tester(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props, 
+        max_template_nesting, max_bracket_depth);
 
     using FuncType = JSTokenizerTester::FuncType;
 
@@ -4784,8 +5240,8 @@ TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
         SECTION("ignored fake defined function identifier")
         {
             const std::unordered_set<std::string> s_ignored_ids_fake {"fake_unescape"};
-            JSTokenizerTester tester_fake(norm_depth, max_scope_depth, s_ignored_ids_fake,
-            max_template_nesting, max_bracket_depth);
+            JSTokenizerTester tester_fake(norm_depth, max_scope_depth, s_ignored_ids_fake, 
+                s_ignored_props, max_template_nesting, max_bracket_depth);
             tester_fake.test_function_scopes({
                 {"fake_unescape(", "fake_unescape(", {FuncType::NOT_FUNC, FuncType::GENERAL}}
             });
@@ -5017,8 +5473,8 @@ TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
 
 TEST_CASE("Function call tracking - nesting", "[JSNormalizer]")
 {
-    JSTokenizerTester tester(norm_depth, max_scope_depth, s_ignored_ids, max_template_nesting,
-        max_bracket_depth);
+    JSTokenizerTester tester(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props,
+        max_template_nesting, max_bracket_depth);
 
     using FuncType = JSTokenizerTester::FuncType;
 
@@ -5109,8 +5565,8 @@ TEST_CASE("Function call tracking - nesting", "[JSNormalizer]")
 
 TEST_CASE("Function call tracking - over multiple PDU", "[JSNormalizer]")
 {
-    JSTokenizerTester tester(norm_depth, max_scope_depth, s_ignored_ids, max_template_nesting,
-        max_bracket_depth);
+    JSTokenizerTester tester(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props,
+        max_template_nesting, max_bracket_depth);
 
     using FuncType = JSTokenizerTester::FuncType;
 
@@ -5543,7 +5999,8 @@ TEST_CASE("JS Normalizer, id normalization", "[JSNormalizer]")
     };
 
     const std::unordered_set<std::string> ids{};
-    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, ids);
+    const std::unordered_set<std::string> props{};
+    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, ids, props);
     JSNormalizer normalizer_w_ident(ident_ctx, unlim_depth, max_template_nesting, max_bracket_depth);
 
     REQUIRE(norm_ret(normalizer_w_ident, input) == JSTokenizer::SCRIPT_ENDED);
@@ -5554,7 +6011,8 @@ TEST_CASE("JS Normalizer, id normalization", "[JSNormalizer]")
     };
 
     const std::unordered_set<std::string> ids_n { "n" };
-    JSIdentifierCtx ident_ctx_ids_n(norm_depth, max_scope_depth, ids_n);
+    const std::unordered_set<std::string> props_n { "n" };
+    JSIdentifierCtx ident_ctx_ids_n(norm_depth, max_scope_depth, ids_n, props_n);
     JSNormalizer normalizer_iids(ident_ctx_ids_n, unlim_depth,
         max_template_nesting, max_bracket_depth);
 
@@ -5640,7 +6098,7 @@ TEST_CASE("JS Normalizer, unescape", "[JSNormalizer]")
     const char* src_f_unescape = f_unescape.c_str();
     size_t src_len = norm_depth;
 
-    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids);
+    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props);
     JSNormalizer norm(ident_ctx, unlim_depth, max_template_nesting, norm_depth);
 
     REQUIRE(norm_ret(norm, str_unescape) == JSTokenizer::SCRIPT_ENDED);
