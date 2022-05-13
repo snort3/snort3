@@ -272,13 +272,17 @@ For example:
    in: "string".toUpperCase().split("").reverse().join("");
    out: "string".var_0000().split("").reverse().join("");
 
-In addition to the scope tracking, JS Normalizer specifically tracks unicode unescape
-functions(unescape, decodeURI, decodeURIComponent, String.fromCharCode, String.fromCodePoint).
+In addition to the scope tracking, JS Normalizer specifically tracks unescape-like JavaScript
+functions (unescape, decodeURI, decodeURIComponent, String.fromCharCode, String.fromCodePoint).
 This allows detection of unescape functions nested within other unescape functions, which is
 a potential indicator of a multilevel obfuscation. The definition of a function call depends on
 identifier substitution, so such identifiers must be included in the ignore list in
 order to use this feature. After determining the unescape sequence, it is decoded into the
 corresponding string, and the name of unescape function will not be present in the output.
+Single-byte escape sequences within the string and template literals which are arguments of
+unescape, decodeURI and decodeURIComponent functions will be decoded according to ISO/IEC 8859-1
+(Latin-1) charset. Except these cases, escape sequences and code points will be decoded to UTF-8
+format.
 
 For example:
 

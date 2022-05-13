@@ -1103,14 +1103,14 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <dqstr,unesc_dqstr>{LITERAL_DQ_STRING_TEXT}   { dealias_append(); ECHO; }
 <dqstr,unesc_dqstr><<EOF>>                    { RETURN(SCRIPT_CONTINUE) }
 <dqstr>{UNICODE_ESCAPE_SEQUENCE}              |
-<dqstr>{HEX_ESCAPE_SEQUENCE}                  { escaped_unicode(); }
+<dqstr>{HEX_ESCAPE_SEQUENCE}                  { escaped_unicode_utf_8(); }
 <dqstr>{ESCAPED_CODE_POINT}                   { escaped_code_point(); }
-<unesc_dqstr>{UNICODE_ESCAPE_SEQUENCE}        { set_encoding(IS_UBACKSLASH_2); escaped_unicode(); }
-<unesc_dqstr>{HEX_ESCAPE_SEQUENCE}            { set_encoding(IS_XBACKSLASH); escaped_unicode(); }
+<unesc_dqstr>{UNICODE_ESCAPE_SEQUENCE}        { set_encoding(IS_UBACKSLASH_2); escaped_unicode_utf_8(); }
+<unesc_dqstr>{HEX_ESCAPE_SEQUENCE}            { set_encoding(IS_XBACKSLASH); escaped_unicode_latin_1(); }
 <unesc_dqstr>{ESCAPED_CODE_POINT}             { set_encoding(IS_UCODEPOINT); escaped_code_point(); }
-<unesc_dqstr>{BYTE_ESCAPE_SEQUENCE}           { set_encoding(IS_UBACKSLASH_1); escaped_unicode(); }
-<unesc_dqstr>{PERCENT_ESCAPE_SEQUENCE}        { set_encoding(IS_UPERCENT); escaped_unicode(); }
-<unesc_dqstr>{URL_ESCAPE_SEQUENCE}            { set_encoding(IS_PERCENT); escaped_url_sequence(); }
+<unesc_dqstr>{BYTE_ESCAPE_SEQUENCE}           { set_encoding(IS_UBACKSLASH_1); escaped_unicode_latin_1(); }
+<unesc_dqstr>{PERCENT_ESCAPE_SEQUENCE}        { set_encoding(IS_UPERCENT); escaped_unicode_utf_8(); }
+<unesc_dqstr>{URL_ESCAPE_SEQUENCE}            { set_encoding(IS_PERCENT); escaped_url_sequence_latin_1(); }
 
     {LITERAL_SQ_STRING_START}                 { EXEC(literal_sq_string_start()) }
 <sqstr,unesc_sqstr>{LITERAL_SQ_STRING_END}    { dealias_append(); ECHO; BEGIN(divop); }
@@ -1124,14 +1124,14 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <sqstr,unesc_sqstr>{LITERAL_SQ_STRING_TEXT}   { dealias_append(); ECHO; }
 <sqstr,unesc_sqstr><<EOF>>                    { RETURN(SCRIPT_CONTINUE) }
 <sqstr>{UNICODE_ESCAPE_SEQUENCE}              |
-<sqstr>{HEX_ESCAPE_SEQUENCE}                  { escaped_unicode(); }
+<sqstr>{HEX_ESCAPE_SEQUENCE}                  { escaped_unicode_utf_8(); }
 <sqstr>{ESCAPED_CODE_POINT}                   { escaped_code_point(); }
-<unesc_sqstr>{UNICODE_ESCAPE_SEQUENCE}        { set_encoding(IS_UBACKSLASH_2); escaped_unicode(); }
-<unesc_sqstr>{HEX_ESCAPE_SEQUENCE}            { set_encoding(IS_XBACKSLASH); escaped_unicode(); }
+<unesc_sqstr>{UNICODE_ESCAPE_SEQUENCE}        { set_encoding(IS_UBACKSLASH_2); escaped_unicode_utf_8(); }
+<unesc_sqstr>{HEX_ESCAPE_SEQUENCE}            { set_encoding(IS_XBACKSLASH); escaped_unicode_latin_1(); }
 <unesc_sqstr>{ESCAPED_CODE_POINT}             { set_encoding(IS_UCODEPOINT); escaped_code_point(); }
-<unesc_sqstr>{BYTE_ESCAPE_SEQUENCE}           { set_encoding(IS_UBACKSLASH_1); escaped_unicode(); }
-<unesc_sqstr>{PERCENT_ESCAPE_SEQUENCE}        { set_encoding(IS_UPERCENT); escaped_unicode(); }
-<unesc_sqstr>{URL_ESCAPE_SEQUENCE}            { set_encoding(IS_PERCENT); escaped_url_sequence(); }
+<unesc_sqstr>{BYTE_ESCAPE_SEQUENCE}           { set_encoding(IS_UBACKSLASH_1); escaped_unicode_latin_1(); }
+<unesc_sqstr>{PERCENT_ESCAPE_SEQUENCE}        { set_encoding(IS_UPERCENT); escaped_unicode_utf_8(); }
+<unesc_sqstr>{URL_ESCAPE_SEQUENCE}            { set_encoding(IS_PERCENT); escaped_url_sequence_latin_1(); }
 
     {LITERAL_TEMPLATE_START}                                 { EXEC(literal_template_start()) }
 <tmpll,unesc_tmpll>(\\\\)*{LITERAL_TEMPLATE_END}             { dealias_append(); ECHO; BEGIN(divop); }
@@ -1142,14 +1142,14 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <tmpll,unesc_tmpll>{LITERAL_TEMPLATE_OTHER}                  { dealias_append(); ECHO; }
 <tmpll,unesc_tmpll><<EOF>>                                   { RETURN(SCRIPT_CONTINUE) }
 <tmpll>{UNICODE_ESCAPE_SEQUENCE}                             |
-<tmpll>{HEX_ESCAPE_SEQUENCE}                                 { escaped_unicode(); }
+<tmpll>{HEX_ESCAPE_SEQUENCE}                                 { escaped_unicode_utf_8(); }
 <tmpll>{ESCAPED_CODE_POINT}                                  { escaped_code_point(); }
-<unesc_tmpll>{UNICODE_ESCAPE_SEQUENCE}                       { set_encoding(IS_UBACKSLASH_2); escaped_unicode(); }
-<unesc_tmpll>{HEX_ESCAPE_SEQUENCE}                           { set_encoding(IS_XBACKSLASH); escaped_unicode(); }
+<unesc_tmpll>{UNICODE_ESCAPE_SEQUENCE}                       { set_encoding(IS_UBACKSLASH_2); escaped_unicode_utf_8(); }
+<unesc_tmpll>{HEX_ESCAPE_SEQUENCE}                           { set_encoding(IS_XBACKSLASH); escaped_unicode_latin_1(); }
 <unesc_tmpll>{ESCAPED_CODE_POINT}                            { set_encoding(IS_UCODEPOINT); escaped_code_point(); }
-<unesc_tmpll>{BYTE_ESCAPE_SEQUENCE}                          { set_encoding(IS_UBACKSLASH_1); escaped_unicode(); }
-<unesc_tmpll>{PERCENT_ESCAPE_SEQUENCE}                       { set_encoding(IS_UPERCENT); escaped_unicode(); }
-<unesc_tmpll>{URL_ESCAPE_SEQUENCE}                           { set_encoding(IS_PERCENT); escaped_url_sequence(); }
+<unesc_tmpll>{BYTE_ESCAPE_SEQUENCE}                          { set_encoding(IS_UBACKSLASH_1); escaped_unicode_latin_1(); }
+<unesc_tmpll>{PERCENT_ESCAPE_SEQUENCE}                       { set_encoding(IS_UPERCENT); escaped_unicode_utf_8(); }
+<unesc_tmpll>{URL_ESCAPE_SEQUENCE}                           { set_encoding(IS_PERCENT); escaped_url_sequence_latin_1(); }
 
 <regst>{LITERAL_REGEX_START}        { EXEC(literal_regex_start()) }
 <regex>{LITERAL_REGEX_END}          { EXEC(literal_regex_end()) }
@@ -1162,7 +1162,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <regex>{LITERAL_REGEX_G_OPEN}       { EXEC(literal_regex_g_open()) }
 <regex>{LITERAL_REGEX_G_CLOSE}      { EXEC(literal_regex_g_close()) }
 <regex>{UNICODE_ESCAPE_SEQUENCE}    |
-<regex>{HEX_ESCAPE_SEQUENCE}        { escaped_unicode(); }
+<regex>{HEX_ESCAPE_SEQUENCE}        { escaped_unicode_utf_8(); }
 <regex><<EOF>>                      { RETURN(SCRIPT_CONTINUE) }
 
 <divop>{DIV_OPERATOR}               |
@@ -2830,7 +2830,14 @@ void JSTokenizer::general_unicode()
     set_ident_norm(true);
 }
 
-void JSTokenizer::escaped_unicode()
+void JSTokenizer::escaped_unicode_latin_1()
+{
+    // truncate escape symbol, get hex number only
+    std::string code(YYText() + 2);
+    yyout << (char)std::stoi(code, nullptr, 16);
+}
+
+void JSTokenizer::escaped_unicode_utf_8()
 {
     // truncate escape symbol, get hex number only
     std::string code(YYText() + 2);
@@ -2845,11 +2852,11 @@ void JSTokenizer::escaped_code_point()
     yyout << unicode_to_utf8(std::stoi(code, nullptr, 16));
 }
 
-void JSTokenizer::escaped_url_sequence()
+void JSTokenizer::escaped_url_sequence_latin_1()
 {
     // truncate escape symbol, get hex number only
     std::string code(YYText() + 1);
-    yyout << unicode_to_utf8(std::stoi(code, nullptr, 16));
+    yyout << (char)std::stoi(code, nullptr, 16);
 }
 
 void JSTokenizer::dec_code_point()

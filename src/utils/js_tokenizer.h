@@ -297,9 +297,10 @@ private:
     JSRet general_literal();
     JSRet general_identifier();
     void general_unicode();
-    void escaped_unicode();
+    void escaped_unicode_latin_1();
+    void escaped_unicode_utf_8();
     void escaped_code_point();
-    void escaped_url_sequence();
+    void escaped_url_sequence_latin_1();
     void dec_code_point();
     void hex_code_point();
     void char_code_no_match();

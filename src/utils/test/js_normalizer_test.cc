@@ -5766,6 +5766,15 @@ TEST_CASE("String Concatenation - With unescape", "[JSNormalizer]")
 
         SECTION("inside function call arguments")
             test_normalization("unescape('foo' + '%62' + '%61' + '%72')", "'foobar'");
+
+        SECTION("Latin-1 encoding - string + unescape")
+            test_normalization("'foo ' + unescape('%eb')", "'foo \xEB'");
+
+        SECTION("Latin-1 encoding - unescape + string")
+            test_normalization("unescape('%eb') + ' foo'", "'\xEB foo'");
+
+        SECTION("Latin-1 encoding - unescape + unescape")
+            test_normalization("unescape('%eb') + unescape('%eb')", "'\xEB\xEB'");
     }
     SECTION("String.fromCharCode")
     {

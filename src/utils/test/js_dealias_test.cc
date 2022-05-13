@@ -424,6 +424,12 @@ TEST_CASE("De-aliasing - basic", "[JSNormalizer]")
             "a \n = \n eval \n a \n eval;",
             "var_0000=eval;eval;eval;"
         );
+
+    SECTION("with unescape")
+        test_normalization(
+            "a = \\u0065\\u{0076}\\u0061\\u{006C}; a(); a.foo();",
+            "var_0000=eval;eval();eval.foo();"
+        );
 }
 
 TEST_CASE("De-aliasing - split", "[JSNormalizer]")

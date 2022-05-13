@@ -33,246 +33,52 @@
 TEST_CASE("Sequence parsing", "[JSNormalizer]")
 {
     SECTION("\\xXX")
-    {
         test_normalization(
-            "'\\x01'",
-            "'\u0001'"
+            "'\\x01 \\x23 \\x45 \\x67 \\x89 \\xaA \\xbB \\xcC \\xdD \\xeE \\xfF'",
+            "'\u0001 \u0023 \u0045 \u0067 \u0089 \u00aA \u00bB \u00cC \u00dD \u00eE \u00fF'"
         );
+
+    SECTION("\\xXX - unescape function")
         test_normalization(
-            "'\\x23'",
-            "'\u0023'"
+            "unescape('\\x01 \\x23 \\x45 \\x67 \\x89 \\xaA \\xbB \\xcC \\xdD \\xeE \\xfF')",
+            "'\x01 \x23 \x45 \x67 \x89 \xaA \xbB \xcC \xdD \xeE \xfF'"
         );
-        test_normalization(
-            "'\\x45'",
-            "'\u0045'"
-        );
-        test_normalization(
-            "'\\x67'",
-            "'\u0067'"
-        );
-        test_normalization(
-            "'\\x89'",
-            "'\u0089'"
-        );
-        test_normalization(
-            "'\\xaA'",
-            "'\u00aA'"
-        );
-        test_normalization(
-            "'\\xbB'",
-            "'\u00bB'"
-        );
-        test_normalization(
-            "'\\xcC'",
-            "'\u00cC'"
-        );
-        test_normalization(
-            "'\\xdD'",
-            "'\u00dD'"
-        );
-        test_normalization(
-            "'\\xeE'",
-            "'\u00eE'"
-        );
-        test_normalization(
-            "'\\xfF'",
-            "'\u00fF'"
-        );
-    }
 
     SECTION("\\uXXXX")
-    {
         test_normalization(
-            "'\\u0123'",
-            "'\u0123'"
+            "'\\u0020 \\u00EB \\u0123 \\u4567 \\u89aA \\ubBcC \\u00dD \\ueEfF'",
+            "'\u0020 \u00EB \u0123 \u4567 \u89aA \ubBcC \u00dD \ueEfF'"
         );
-        test_normalization(
-            "'\\u4567'",
-            "'\u4567'"
-        );
-        test_normalization(
-            "'\\u89aA'",
-            "'\u89aA'"
-        );
-        test_normalization(
-            "'\\ubBcC'",
-            "'\ubBcC'"
-        );
-        test_normalization(
-            "'\\ueEfF'",
-            "'\ueEfF'"
-        );
-    }
 
     SECTION("\\u{XXXX}")
-    {
         test_normalization(
-            "'\\u{0123}'",
-            "'\u0123'"
+            "'\\u{0020} \\u{00EB} \\u{0123} \\u{4567} \\u{89aA} \\u{bBcC} \\u{00dD} \\u{eEfF}'",
+            "'\u0020 \u00EB \u0123 \u4567 \u89aA \ubBcC \u00dD \ueEfF'"
         );
-        test_normalization(
-            "'\\u{4567}'",
-            "'\u4567'"
-        );
-        test_normalization(
-            "'\\u{89aA}'",
-            "'\u89aA'"
-        );
-        test_normalization(
-            "'\\u{bBcC}'",
-            "'\ubBcC'"
-        );
-        test_normalization(
-            "'\\u{eEfF}'",
-            "'\ueEfF'"
-        );
-    }
 
     SECTION("%XX")
-    {
         test_normalization(
-            "unescape('%01')",
-            "'\u0001'"
+            "unescape('%01 %23 %45 %67 %89 %aA %bB %cC %dD %eE %fF')",
+            "'\x01 \x23 \x45 \x67 \x89 \xaA \xbB \xcC \xdD \xeE \xfF'"
         );
-        test_normalization(
-            "unescape('%23')",
-            "'\u0023'"
-        );
-        test_normalization(
-            "unescape('%45')",
-            "'\u0045'"
-        );
-        test_normalization(
-            "unescape('%67')",
-            "'\u0067'"
-        );
-        test_normalization(
-            "unescape('%89')",
-            "'\u0089'"
-        );
-        test_normalization(
-            "unescape('%aA')",
-            "'\u00aA'"
-        );
-        test_normalization(
-            "unescape('%bB')",
-            "'\u00bB'"
-        );
-        test_normalization(
-            "unescape('%cC')",
-            "'\u00cC'"
-        );
-        test_normalization(
-            "unescape('%dD')",
-            "'\u00dD'"
-        );
-        test_normalization(
-            "unescape('%eE')",
-            "'\u00eE'"
-        );
-        test_normalization(
-            "unescape('%fF')",
-            "'\u00fF'"
-        );
-    }
 
     SECTION("\\uXX")
-    {
         test_normalization(
-            "unescape('\\u01')",
-            "'\u0001'"
+            "unescape('\\u01 \\u23 \\u45 \\u67 \\u89 \\uaA \\ubB \\ucC \\udD \\ueE \\ufF')",
+            "'\x01 \x23 \x45 \x67 \x89 \xaA \xbB \xcC \xdD \xeE \xfF'"
         );
-        test_normalization(
-            "unescape('%23')",
-            "'\u0023'"
-        );
-        test_normalization(
-            "unescape('\\u45')",
-            "'\u0045'"
-        );
-        test_normalization(
-            "unescape('\\u67')",
-            "'\u0067'"
-        );
-        test_normalization(
-            "unescape('\\u89')",
-            "'\u0089'"
-        );
-        test_normalization(
-            "unescape('\\uaA')",
-            "'\u00aA'"
-        );
-        test_normalization(
-            "unescape('\\ubB')",
-            "'\u00bB'"
-        );
-        test_normalization(
-            "unescape('\\ucC')",
-            "'\u00cC'"
-        );
-        test_normalization(
-            "unescape('\\udD')",
-            "'\u00dD'"
-        );
-        test_normalization(
-            "unescape('\\ueE')",
-            "'\u00eE'"
-        );
-        test_normalization(
-            "unescape('\\ufF')",
-            "'\u00fF'"
-        );
-    }
 
     SECTION("%uXXXX")
-    {
         test_normalization(
-            "unescape('%u0123')",
-            "'\u0123'"
+            "unescape('%u0020 %u00EB %u0123 %u4567 %u89aA %ubBcC %u00dD %ueEfF')",
+            "'\u0020 \u00EB \u0123 \u4567 \u89aA \ubBcC \u00dD \ueEfF'"
         );
-        test_normalization(
-            "unescape('%u4567')",
-            "'\u4567'"
-        );
-        test_normalization(
-            "unescape('%u89aA')",
-            "'\u89aA'"
-        );
-        test_normalization(
-            "unescape('%ubBcC')",
-            "'\ubBcC'"
-        );
-        test_normalization(
-            "unescape('%ueEfF')",
-            "'\ueEfF'"
-        );
-    }
 
     SECTION("decimal")
     {
         test_normalization(
-            "String.fromCharCode(1)",
-            "'\u0001'"
-        );
-        test_normalization(
-            "String.fromCharCode(12)",
-            "'\u000c'"
-        );
-        test_normalization(
-            "String.fromCharCode(345)",
-            "'\u0159'"
-        );
-        test_normalization(
-            "String.fromCharCode(6789)",
-            "'\u1a85'"
-        );
-        test_normalization(
-            "String.fromCharCode(1000)",
-            "'\u03e8'"
-        );
-        test_normalization(
-            "String.fromCharCode(0001)",
-            "'\x01'"
+            "String.fromCharCode(1, 12 ,235, 345, 6789, 1000, 0001)",
+            "'\u0001\u000c\u00EB\u0159\u1a85\u03e8\u0001'"
         );
         test_normalization(
             "String.fromCharCode(65536)",
@@ -287,36 +93,8 @@ TEST_CASE("Sequence parsing", "[JSNormalizer]")
     SECTION("hexadecimal")
     {
         test_normalization(
-            "String.fromCharCode(0x0001)",
-            "'\u0001'"
-        );
-        test_normalization(
-            "String.fromCharCode(0X0001)",
-            "'\u0001'"
-        );
-        test_normalization(
-            "String.fromCharCode(0x1234)",
-            "'\u1234'"
-        );
-        test_normalization(
-            "String.fromCharCode(0X5678)",
-            "'\u5678'"
-        );
-        test_normalization(
-            "String.fromCharCode(0x9aAb)",
-            "'\u9aAb'"
-        );
-        test_normalization(
-            "String.fromCharCode(0x9aAb)",
-            "'\u9aAb'"
-        );
-        test_normalization(
-            "String.fromCharCode(0xBcCd)",
-            "'\uBcCd'"
-        );
-        test_normalization(
-            "String.fromCharCode(0XeEfF)",
-            "'\ueEfF'"
+            "String.fromCharCode(0x0001, 0X00EB, 0x0123, 0x4567, 0x89aA, 0xbBcC, 0x00dD, 0xeEfF)",
+            "'\u0001\u00EB\u0123\u4567\u89aA\ubBcC\u00dD\ueEfF'"
         );
         test_normalization(
             "String.fromCodePoint(0x10000)",
@@ -342,64 +120,64 @@ TEST_CASE("Universal sequences", "[JSNormalizer]")
     SECTION("\\uXXXX")
     {
         test_normalization(
-            "\\u0065\\u0076\\u0061\\u006C () ;",
-            "eval();"
+            "\\u0065\\u0076\\u0061\\u006C () ; \\u00EB\\u1234 ;",
+            "eval();var_0000;"
         );
         test_normalization(
-            "'\\u0062\\u0061\\u0072'",
-            "'bar'"
+            "'\\u0062\\u0061\\u0072' ; '\\u00EB\\ueEfF' ;",
+            "'bar';'\u00EB\ueEfF';"
         );
         test_normalization(
-            "\"\\u0062\\u0061\\u0072\"",
-            "\"bar\""
+            "\"\\u0062\\u0061\\u0072\" ; \"\\u00EB\\ueEfF\" ;",
+            "\"bar\";\"\u00EB\ueEfF\";"
         );
         test_normalization(
-            "`\\u0062\\u0061\\u0072`",
-            "`bar`"
+            "`\\u0062\\u0061\\u0072` ; `\\u00EB\\ueEfF` ;",
+            "`bar`;`\u00EB\ueEfF`;"
         );
         test_normalization(
-            "/\\u0062\\u0061\\u0072/",
-            "/bar/"
+            "/\\u0062\\u0061\\u0072/ ; /\\u00EB\\ueEfF/ ;",
+            "/bar/;/\u00EB\ueEfF/;"
         );
     }
 
     SECTION("\\xXX")
     {
         test_normalization(
-            "'\\x62\\x61\\x72'",
-            "'bar'"
+            "'\\x62\\x61\\x72' ; '\\xEB' ;",
+            "'bar';'\u00EB';"
         );
         test_normalization(
-            "\"\\x62\\x61\\x72\"",
-            "\"bar\""
+            "\"\\x62\\x61\\x72\" ; \"\\xEB\" ;",
+            "\"bar\";\"\u00EB\";"
         );
         test_normalization(
-            "`\\x62\\x61\\x72`",
-            "`bar`"
+            "`\\x62\\x61\\x72` ; `\\xEB` ;",
+            "`bar`;`\u00EB`;"
         );
         test_normalization(
-            "/\\x62\\x61\\x72/",
-            "/bar/"
+            "/\\x62\\x61\\x72/ ; /\\xEB/ ;",
+            "/bar/;/\u00EB/;"
         );
     }
 
     SECTION("\\u{XXXX}")
     {
         test_normalization(
-            "\\u{0065}\\u{0076}\\u{0061}\\u{006C} () ;",
-            "eval();"
+            "\\u{0065}\\u{0076}\\u{0061}\\u{006C} () ; \\u{00EB}\\u{1234} ;",
+            "eval();var_0000;"
         );
         test_normalization(
-            "'\\u{0062}\\u{0061}\\u{0072}'",
-            "'bar'"
+            "'\\u{0062}\\u{0061}\\u{0072}'; '\\u{00EB}\\u{eEfF}' ;",
+            "'bar';'\u00EB\ueEfF';"
         );
         test_normalization(
-            "\"\\u{0062}\\u{0061}\\u{0072}\"",
-            "\"bar\""
+            "\"\\u{0062}\\u{0061}\\u{0072}\" ; \"\\u{00EB}\\u{eEfF}\" ;",
+            "\"bar\";\"\u00EB\ueEfF\";"
         );
         test_normalization(
-            "`\\u{0062}\\u{0061}\\u{0072}`",
-            "`bar`"
+            "`\\u{0062}\\u{0061}\\u{0072}` ; `\\u{00EB}\\u{eEfF}` ;",
+            "`bar`;`\u00EB\ueEfF`;"
         );
     }
 }
@@ -409,96 +187,96 @@ TEST_CASE("unescape()", "[JSNormalizer]")
     SECTION("%XX")
     {
         test_normalization(
-            "unescape('%62%61%72')",
-            "'bar'"
+            "unescape('%62%61%72') ; unescape('%EB') ;",
+            "'bar';'\xEB';"
         );
         test_normalization(
-            "unescape(\"%62%61%72\")",
-            "\"bar\""
+            "unescape(\"%62%61%72\") ; unescape(\"%EB\") ;",
+            "\"bar\";\"\xEB\";"
         );
         test_normalization(
-            "unescape(`%62%61%72`)",
-            "`bar`"
+            "unescape(`%62%61%72`) ; unescape(`%EB`) ;",
+            "`bar`;`\xEB`;"
         );
     }
 
     SECTION("%uXXXX")
     {
         test_normalization(
-            "unescape('%u0062%u0061%u0072')",
-            "'bar'"
+            "unescape('%u0062%u0061%u0072') ; unescape('%u00EB%ueEfF') ;",
+            "'bar';'\u00EB\ueEfF';"
         );
         test_normalization(
-            "unescape(\"%u0062%u0061%u0072\")",
-            "\"bar\""
+            "unescape(\"%u0062%u0061%u0072\") ; unescape(\"%u00EB%ueEfF\") ;",
+            "\"bar\";\"\u00EB\ueEfF\";"
         );
         test_normalization(
-            "unescape(`%u0062%u0061%u0072`)",
-            "`bar`"
+            "unescape(`%u0062%u0061%u0072`) ; unescape(`%u00EB%ueEfF`) ;",
+            "`bar`;`\u00EB\ueEfF`;"
         );
     }
 
     SECTION("\\uXX")
     {
         test_normalization(
-            "unescape('\\u62\\u61\\u72')",
-            "'bar'"
+            "unescape('\\u62\\u61\\u72') ; unescape('\\uEB') ;",
+            "'bar';'\xEB';"
         );
         test_normalization(
-            "unescape(\"\\u62\\u61\\u72\")",
-            "\"bar\""
+            "unescape(\"\\u62\\u61\\u72\") ; unescape(\"\\uEB\") ;",
+            "\"bar\";\"\xEB\";"
         );
         test_normalization(
-            "unescape(`\\u62\\u61\\u72`)",
-            "`bar`"
+            "unescape(`\\u62\\u61\\u72`) ; unescape(`\\uEB`) ;",
+            "`bar`;`\xEB`;"
         );
     }
 
     SECTION("\\uXXXX")
     {
         test_normalization(
-            "unescape('\\u0062\\u0061\\u0072')",
-            "'bar'"
+            "unescape('\\u0062\\u0061\\u0072') ; unescape('\\u00EB\\ueEfF') ;",
+            "'bar';'\u00EB\ueEfF';"
         );
         test_normalization(
-            "unescape(\"\\u0062\\u0061\\u0072\")",
-            "\"bar\""
+            "unescape(\"\\u0062\\u0061\\u0072\") ; unescape(\"\\u00EB\\ueEfF\") ;",
+            "\"bar\";\"\u00EB\ueEfF\";"
         );
         test_normalization(
-            "unescape(`\\u0062\\u0061\\u0072`)",
-            "`bar`"
+            "unescape(`\\u0062\\u0061\\u0072`) ; unescape(`\\u00EB\\ueEfF`) ;",
+            "`bar`;`\u00EB\ueEfF`;"
         );
     }
 
     SECTION("\\xXX")
     {
         test_normalization(
-            "unescape('\\x62\\x61\\x72')",
-            "'bar'"
+            "unescape('\\x62\\x61\\x72') ; unescape('\\xEB') ;",
+            "'bar';'\xEB';"
         );
         test_normalization(
-            "unescape(\"\\x62\\x61\\x72\")",
-            "\"bar\""
+            "unescape(\"\\x62\\x61\\x72\") ; unescape(\"\\xEB\") ;",
+            "\"bar\";\"\xEB\";"
         );
         test_normalization(
-            "unescape(`\\x62\\x61\\x72`)",
-            "`bar`"
+            "unescape(`\\x62\\x61\\x72`) ; unescape(`\\xEB`) ;",
+            "`bar`;`\xEB`;"
         );
     }
 
     SECTION("\\u{XXXX}")
     {
         test_normalization(
-            "unescape('\\u{0062}\\u{0061}\\u{0072}')",
-            "'bar'"
+            "unescape('\\u{0062}\\u{0061}\\u{0072}') ; unescape('\\u{00EB}\\u{eEfF}') ;",
+            "'bar';'\u00EB\ueEfF';"
         );
         test_normalization(
-            "unescape(\"\\u{0062}\\u{0061}\\u{0072}\")",
-            "\"bar\""
+            "unescape(\"\\u{0062}\\u{0061}\\u{0072}\") ; unescape(\"\\u{00EB}\\u{eEfF}\") ;",
+            "\"bar\";\"\u00EB\ueEfF\";"
         );
         test_normalization(
-            "unescape(`\\u{0062}\\u{0061}\\u{0072}`)",
-            "`bar`"
+            "unescape(`\\u{0062}\\u{0061}\\u{0072}`) ; unescape(`\\u{00EB}\\u{eEfF}`) ;",
+            "`bar`;`\u00EB\ueEfF`;"
         );
     }
 
@@ -541,96 +319,96 @@ TEST_CASE("decodeURI()", "[JSNormalizer]")
     SECTION("%XX")
     {
         test_normalization(
-            "decodeURI('%62%61%72')",
-            "'bar'"
+            "decodeURI('%62%61%72') ; decodeURI('%EB') ;",
+            "'bar';'\xEB';"
         );
         test_normalization(
-            "decodeURI(\"%62%61%72\")",
-            "\"bar\""
+            "decodeURI(\"%62%61%72\") ; decodeURI(\"%EB\") ;",
+            "\"bar\";\"\xEB\";"
         );
         test_normalization(
-            "decodeURI(`%62%61%72`)",
-            "`bar`"
+            "decodeURI(`%62%61%72`) ; decodeURI(`%EB`) ;",
+            "`bar`;`\xEB`;"
         );
     }
 
     SECTION("%uXXXX")
     {
         test_normalization(
-            "decodeURI('%u0062%u0061%u0072')",
-            "'bar'"
+            "decodeURI('%u0062%u0061%u0072') ; decodeURI('%u00EB%ueEfF') ;",
+            "'bar';'\u00EB\ueEfF';"
         );
         test_normalization(
-            "decodeURI(\"%u0062%u0061%u0072\")",
-            "\"bar\""
+            "decodeURI(\"%u0062%u0061%u0072\") ; decodeURI(\"%u00EB%ueEfF\") ;",
+            "\"bar\";\"\u00EB\ueEfF\";"
         );
         test_normalization(
-            "decodeURI(`%u0062%u0061%u0072`)",
-            "`bar`"
+            "decodeURI(`%u0062%u0061%u0072`) ; decodeURI(`%u00EB%ueEfF`) ;",
+            "`bar`;`\u00EB\ueEfF`;"
         );
     }
 
     SECTION("\\uXX")
     {
         test_normalization(
-            "decodeURI('\\u62\\u61\\u72')",
-            "'bar'"
+            "decodeURI('\\u62\\u61\\u72') ; decodeURI('\\uEB') ;",
+            "'bar';'\xEB';"
         );
         test_normalization(
-            "decodeURI(\"\\u62\\u61\\u72\")",
-            "\"bar\""
+            "decodeURI(\"\\u62\\u61\\u72\") ; decodeURI(\"\\uEB\") ;",
+            "\"bar\";\"\xEB\";"
         );
         test_normalization(
-            "decodeURI(`\\u62\\u61\\u72`)",
-            "`bar`"
+            "decodeURI(`\\u62\\u61\\u72`) ; decodeURI(`\\uEB`) ;",
+            "`bar`;`\xEB`;"
         );
     }
 
     SECTION("\\uXXXX")
     {
         test_normalization(
-            "decodeURI('\\u0062\\u0061\\u0072')",
-            "'bar'"
+            "decodeURI('\\u0062\\u0061\\u0072') ; decodeURI('\\u00EB\\ueEfF') ;",
+            "'bar';'\u00EB\ueEfF';"
         );
         test_normalization(
-            "decodeURI(\"\\u0062\\u0061\\u0072\")",
-            "\"bar\""
+            "decodeURI(\"\\u0062\\u0061\\u0072\") ; decodeURI(\"\\u00EB\\ueEfF\") ;",
+            "\"bar\";\"\u00EB\ueEfF\";"
         );
         test_normalization(
-            "decodeURI(`\\u0062\\u0061\\u0072`)",
-            "`bar`"
+            "decodeURI(`\\u0062\\u0061\\u0072`) ; decodeURI(`\\u00EB\\ueEfF`) ;",
+            "`bar`;`\u00EB\ueEfF`;"
         );
     }
 
     SECTION("\\xXX")
     {
         test_normalization(
-            "decodeURI('\\x62\\x61\\x72')",
-            "'bar'"
+            "decodeURI('\\x62\\x61\\x72') ; decodeURI('\\xEB') ;",
+            "'bar';'\xEB';"
         );
         test_normalization(
-            "decodeURI(\"\\x62\\x61\\x72\")",
-            "\"bar\""
+            "decodeURI(\"\\x62\\x61\\x72\") ; decodeURI(\"\\xEB\") ;",
+            "\"bar\";\"\xEB\";"
         );
         test_normalization(
-            "decodeURI(`\\x62\\x61\\x72`)",
-            "`bar`"
+            "decodeURI(`\\x62\\x61\\x72`) ; decodeURI(`\\xEB`) ;",
+            "`bar`;`\xEB`;"
         );
     }
 
     SECTION("\\u{XXXX}")
     {
         test_normalization(
-            "decodeURI('\\u{0062}\\u{0061}\\u{0072}')",
-            "'bar'"
+            "decodeURI('\\u{0062}\\u{0061}\\u{0072}') ; decodeURI('\\u{00EB}\\u{eEfF}') ;",
+            "'bar';'\u00EB\ueEfF';"
         );
         test_normalization(
-            "decodeURI(\"\\u{0062}\\u{0061}\\u{0072}\")",
-            "\"bar\""
+            "decodeURI(\"\\u{0062}\\u{0061}\\u{0072}\") ; decodeURI(\"\\u{00EB}\\u{eEfF}\") ;",
+            "\"bar\";\"\u00EB\ueEfF\";"
         );
         test_normalization(
-            "decodeURI(`\\u{0062}\\u{0061}\\u{0072}`)",
-            "`bar`"
+            "decodeURI(`\\u{0062}\\u{0061}\\u{0072}`) ; decodeURI(`\\u{00EB}\\u{eEfF}`) ;",
+            "`bar`;`\u00EB\ueEfF`;"
         );
     }
 
@@ -673,96 +451,100 @@ TEST_CASE("decodeURIComponent()", "[JSNormalizer]")
     SECTION("%XX")
     {
         test_normalization(
-            "decodeURIComponent('%62%61%72')",
-            "'bar'"
+            "decodeURIComponent('%62%61%72') ; decodeURIComponent('%EB') ;",
+            "'bar';'\xEB';"
         );
         test_normalization(
-            "decodeURIComponent(\"%62%61%72\")",
-            "\"bar\""
+            "decodeURIComponent(\"%62%61%72\") ; decodeURIComponent(\"%EB\") ;",
+            "\"bar\";\"\xEB\";"
         );
         test_normalization(
-            "decodeURIComponent(`%62%61%72`)",
-            "`bar`"
+            "decodeURIComponent(`%62%61%72`) ; decodeURIComponent(`%EB`) ;",
+            "`bar`;`\xEB`;"
         );
     }
 
     SECTION("%uXXXX")
     {
         test_normalization(
-            "decodeURIComponent('%u0062%u0061%u0072')",
-            "'bar'"
+            "decodeURIComponent('%u0062%u0061%u0072') ; decodeURIComponent('%u00EB%ueEfF') ;",
+            "'bar';'\u00EB\ueEfF';"
         );
         test_normalization(
-            "decodeURIComponent(\"%u0062%u0061%u0072\")",
-            "\"bar\""
+            "decodeURIComponent(\"%u0062%u0061%u0072\") ; decodeURIComponent(\"%u00EB%ueEfF\") ;",
+            "\"bar\";\"\u00EB\ueEfF\";"
         );
         test_normalization(
-            "decodeURIComponent(`%u0062%u0061%u0072`)",
-            "`bar`"
+            "decodeURIComponent(`%u0062%u0061%u0072`) ; decodeURIComponent(`%u00EB%ueEfF`) ;",
+            "`bar`;`\u00EB\ueEfF`;"
         );
     }
 
     SECTION("\\uXX")
     {
         test_normalization(
-            "decodeURIComponent('\\u62\\u61\\u72')",
-            "'bar'"
+            "decodeURIComponent('\\u62\\u61\\u72') ; decodeURIComponent('\\uEB') ;",
+            "'bar';'\xEB';"
         );
         test_normalization(
-            "decodeURIComponent(\"\\u62\\u61\\u72\")",
-            "\"bar\""
+            "decodeURIComponent(\"\\u62\\u61\\u72\") ; decodeURIComponent(\"\\uEB\") ;",
+            "\"bar\";\"\xEB\";"
         );
         test_normalization(
-            "decodeURIComponent(`\\u62\\u61\\u72`)",
-            "`bar`"
+            "decodeURIComponent(`\\u62\\u61\\u72`) ; decodeURIComponent(`\\uEB`) ;",
+            "`bar`;`\xEB`;"
         );
     }
 
     SECTION("\\uXXXX")
     {
         test_normalization(
-            "decodeURIComponent('\\u0062\\u0061\\u0072')",
-            "'bar'"
+            "decodeURIComponent('\\u0062\\u0061\\u0072') ; decodeURIComponent('\\u00EB\\ueEfF') ;",
+            "'bar';'\u00EB\ueEfF';"
         );
         test_normalization(
-            "decodeURIComponent(\"\\u0062\\u0061\\u0072\")",
-            "\"bar\""
+            "decodeURIComponent(\"\\u0062\\u0061\\u0072\") ; "
+                "decodeURIComponent(\"\\u00EB\\ueEfF\") ;",
+            "\"bar\";\"\u00EB\ueEfF\";"
         );
         test_normalization(
-            "decodeURIComponent(`\\u0062\\u0061\\u0072`)",
-            "`bar`"
+            "decodeURIComponent(`\\u0062\\u0061\\u0072`) ; decodeURIComponent(`\\u00EB\\ueEfF`) ;",
+            "`bar`;`\u00EB\ueEfF`;"
         );
     }
 
     SECTION("\\xXX")
     {
         test_normalization(
-            "decodeURIComponent('\\x62\\x61\\x72')",
-            "'bar'"
+            "decodeURIComponent('\\x62\\x61\\x72') ; decodeURIComponent('\\xEB') ;",
+            "'bar';'\xEB';"
         );
         test_normalization(
-            "decodeURIComponent(\"\\x62\\x61\\x72\")",
-            "\"bar\""
+            "decodeURIComponent(\"\\x62\\x61\\x72\") ; decodeURIComponent(\"\\xEB\") ;",
+            "\"bar\";\"\xEB\";"
         );
         test_normalization(
-            "decodeURIComponent(`\\x62\\x61\\x72`)",
-            "`bar`"
+            "decodeURIComponent(`\\x62\\x61\\x72`) ; decodeURIComponent(`\\xEB`) ;",
+            "`bar`;`\xEB`;"
         );
     }
 
     SECTION("\\u{XXXX}")
     {
         test_normalization(
-            "decodeURIComponent('\\u{0062}\\u{0061}\\u{0072}')",
-            "'bar'"
+            "decodeURIComponent('\\u{0062}\\u{0061}\\u{0072}') ; "
+                "decodeURIComponent('\\u{00EB}\\u{eEfF}') ;",
+            "'bar';'\u00EB\ueEfF';"
         );
         test_normalization(
-            "decodeURIComponent(\"\\u{0062}\\u{0061}\\u{0072}\")",
-            "\"bar\""
+            "decodeURIComponent(\"\\u{0062}\\u{0061}\\u{0072}\") ; "
+                "decodeURIComponent(\"\\u{00EB}\\u{eEfF}\") ;",
+            "\"bar\";\"\u00EB\ueEfF\";"
         );
         test_normalization(
-            "decodeURIComponent(`\\u{0062}\\u{0061}\\u{0072}`)",
-            "`bar`"
+            "decodeURIComponent(`\\u{0062}\\u{0061}\\u{0072}`) ; "
+                "decodeURIComponent(`\\u{00EB}\\u{eEfF}`) ;",
+            "`bar`;`\u00EB\ueEfF`;"
         );
     }
 
