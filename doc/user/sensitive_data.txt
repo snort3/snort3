@@ -74,11 +74,11 @@ in a packet, you will not see an event.
 ===== Obfuscating Credit Cards and Social Security Numbers
 
 Snort provides discreet logging for the built in patterns "credit_card",
-"us_social" and "us_social_nodashes". Enabling `output.obfuscate_pii` makes
+"us_social" and "us_social_nodashes". Enabling `ips.obfuscate_pii` makes
 Snort obfuscate the suspect packet payload which was matched by the
 patterns. This configuration is disabled by default.
 
-    output =
+    ips =
     { 
         obfuscate_pii = true
     }

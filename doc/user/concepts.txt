@@ -13,7 +13,7 @@ and consistently.  You can learn quite a lot about any given module from
 the command line.  For example, to see what stream_tcp is all about, do
 this:
 
-    $ snort --help-config stream_tcp
+    $ snort --help-module stream_tcp
 
 Modules are configured using Lua tables with the same name.  So the
 stream_tcp module is configured with defaults like this:
