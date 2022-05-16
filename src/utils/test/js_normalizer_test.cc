@@ -1111,6 +1111,14 @@ static const char syntax_cases_expected24[] =
     "var a=/[[[[/]]]]/;"
     "var b=/[[[[";
 
+static const char syntax_cases_buf25[] =
+    "return /regex0/.foo + /regex1/.bar ;"
+    "return /regex2/.baz * /regex3/.qux ;";
+
+static const char syntax_cases_expected25[] =
+    "return /regex0/.var_0000+/regex1/.var_0001;"
+    "return /regex2/.var_0002*/regex3/.var_0003;";
+
 TEST_CASE("syntax cases", "[JSNormalizer]")
 {
     SECTION("variables")
@@ -1192,6 +1200,10 @@ TEST_CASE("syntax cases", "[JSNormalizer]")
     {
         NORMALIZE(syntax_cases_buf22);
         VALIDATE(syntax_cases_buf22, syntax_cases_expected22);
+    }
+    SECTION("regex after operator")
+    {
+        NORMALIZE_S(syntax_cases_buf25, syntax_cases_expected25);
     }
 }
 

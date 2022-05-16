@@ -2762,7 +2762,7 @@ JSTokenizer::JSRet JSTokenizer::operator_prefix()
     EXEC(do_semicolon_insertion(ASI_GROUP_6))
     EXEC(do_operator_spacing())
     ECHO;
-    BEGIN(divop);
+    BEGIN(regst);
     set_ident_norm(true);
     return EOS;
 }
@@ -2786,7 +2786,7 @@ JSTokenizer::JSRet JSTokenizer::general_operator()
     dealias_prefix_reset();
     EXEC(do_operator_spacing())
     ECHO;
-    BEGIN(divop);
+    BEGIN(regst);
     set_ident_norm(true);
     return EOS;
 }
