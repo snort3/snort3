@@ -2300,30 +2300,63 @@ JSTokenizer::JSRet JSTokenizer::literal_regex_g_open()
     if (regex_stack.size() >= max_template_nesting)
         return TEMPLATE_NESTING_OVERFLOW;
 
-    regex_stack.push(yytext[0]);
+    // special meaning only outside of a character class
+    if (regex_stack.empty() or regex_stack.top() != '[')
+        regex_stack.push(yytext[0]);
+
     ECHO;
     return EOS;
 }
 
 JSTokenizer::JSRet JSTokenizer::literal_regex_g_close()
 {
+    char c_close = yytext[0];
+
     if (regex_stack.empty())
     {
+        // a raw bracket is allowed in regex w/o unicode flag,
+        // but the parser will accept a bracket in regex with unicode flag
+        if (c_close == ']')
+        {
+            ECHO;
+            return EOS;
+        }
+
         debug_logf(5, http_trace, TRACE_JS_PROC, nullptr,
             "no group to close, .. %c\n", yytext[0]);
         return BAD_TOKEN;
     }
 
-    char c = yytext[0];
-    char o = regex_stack.top();
-    char d = o == '(' ? 1 : 2;
+    char c_open = regex_stack.top();
+    bool mismatch = false;
 
-    regex_stack.pop();
+    switch (c_open)
+    {
+    case '(':
+        mismatch = c_close != ')';
+        regex_stack.pop();
+        break;
 
-    if (o + d != c)
+    case '[':
+         // only the closing bracket has an effect in a character set
+        if (c_close == ']')
+            regex_stack.pop();
+        break;
+
+    case '{':
+        mismatch = c_close != '}';
+        regex_stack.pop();
+        break;
+
+    default:
+        assert(false);
+        mismatch = true;
+    }
+
+    if (mismatch)
     {
         debug_logf(5, http_trace, TRACE_JS_PROC, nullptr,
-            "closing symbol mismatch, %c .. %c\n", o, c);
+            "closing symbol mismatch, %c .. %c\n", c_open, c_close);
         return BAD_TOKEN;
     }
 

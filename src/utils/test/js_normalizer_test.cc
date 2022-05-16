@@ -673,11 +673,17 @@ static const char all_patterns_expected8[] =
 
 static const char all_patterns_buf9[] =
     "var r = /^(?:(?:https?|mailto|ftp):|[^:/?#]*(?:[/?#]|$))/i;"
-    "new Lb(function(a){return /^[^:]*([/?#]|$)/.test(a)})";
+    "new Lb(function(a){return /^[^:]*([/?#]|$)/.test(a)});"
+    "pa=/^((https:)?\\/\\/[0-9a-z.:[\\]-]+\\/|\\/[^/\\\\]|"
+    "[^:/\\\\%]+\\/|[^:/\\\\%]*[?#]|about:blank#)/i;"
+    "/[/ a  b   c / 1]/ a  b   c / 1;";
 
 static const char all_patterns_expected9[] =
     "var r=/^(?:(?:https?|mailto|ftp):|[^:/?#]*(?:[/?#]|$))/i;"
-    "new Lb(function(a){return /^[^:]*([/?#]|$)/.test(a)})";
+    "new Lb(function(a){return /^[^:]*([/?#]|$)/.test(a)});"
+    "pa=/^((https:)?\\/\\/[0-9a-z.:[\\]-]+\\/|\\/[^/\\\\]"
+    "|[^:/\\\\%]+\\/|[^:/\\\\%]*[?#]|about:blank#)/i;"
+    "/[/ a  b   c / 1]/ a b c/1;";
 
 TEST_CASE("all patterns", "[JSNormalizer]")
 {
@@ -1104,12 +1110,12 @@ static const char syntax_cases_expected23[] =
     "`${`${`${`${`";
 
 static const char syntax_cases_buf24[] =
-    "var a=/[[[[/]]]]/;"
-    "var b=/[[[[[/]]]]]/;";
+    "var a=/{{{{/}}}}/;"
+    "var b=/{{{{{/}}}}}/;";
 
 static const char syntax_cases_expected24[] =
-    "var a=/[[[[/]]]]/;"
-    "var b=/[[[[";
+    "var a=/{{{{/}}}}/;"
+    "var b=/{{{{";
 
 static const char syntax_cases_buf25[] =
     "return /regex0/.foo + /regex1/.bar ;"
@@ -3421,14 +3427,17 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
     {
         const char dat1[] = "a=/[]/;";
         const char dat2[] = "b=/[][][]/;";
-        const char dat3[] = "c=/[[[]]]/;";
+        const char dat3[] = "c=/[[[[[]/;";
+        const char dat4[] = "d=/[/]/;";
         const char exp1[] = "a=/[]/;";
         const char exp2[] = "b=/[][][]/;";
-        const char exp3[] = "c=/[[[]]]/;";
+        const char exp3[] = "c=/[[[[[]/;";
+        const char exp4[] = "d=/[/]/;";
 
         NORMALIZE_1(dat1, exp1);
         NORMALIZE_1(dat2, exp2);
         NORMALIZE_1(dat3, exp3);
+        NORMALIZE_1(dat4, exp4);
     }
     SECTION("mix of brackets")
     {
@@ -3445,42 +3454,45 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
     }
     SECTION("parentheses - wrong closing symbol")
     {
-        const char dat1[] = "/({[ (} ]})/";
-        const char dat2[] = "/({[ (] ]})/";
-        const char exp1[] = "/({[ (";
-        const char exp2[] = "/({[ (";
+        const char dat1[] = "/({ (} })/";
+        const char dat2[] = "/({ (] })/";
+        const char exp1[] = "/({ (";
+        const char exp2[] = "/({ (";
 
         NORM_BAD_1(dat1, exp1, JSTokenizer::BAD_TOKEN);
         NORM_BAD_1(dat2, exp2, JSTokenizer::BAD_TOKEN);
     }
     SECTION("curly braces - wrong closing symbol")
     {
-        const char dat1[] = "/({[ {) ]})/";
-        const char dat2[] = "/({[ {] ]})/";
-        const char exp1[] = "/({[ {";
-        const char exp2[] = "/({[ {";
+        const char dat1[] = "/({ {) })/";
+        const char dat2[] = "/({ {] })/";
+        const char exp1[] = "/({ {";
+        const char exp2[] = "/({ {";
 
         NORM_BAD_1(dat1, exp1, JSTokenizer::BAD_TOKEN);
         NORM_BAD_1(dat2, exp2, JSTokenizer::BAD_TOKEN);
     }
-    SECTION("square brackets - wrong closing symbol")
+    SECTION("square brackets - raw bracket")
     {
-        const char dat1[] = "/([{ [) }])/";
-        const char dat2[] = "/([{ [} }])/";
-        const char exp1[] = "/([{ [";
-        const char exp2[] = "/([{ [";
+        const char dat1[] = "/]/";
+        const char dat2[] = "/[]]/";
+        const char dat3[] = "/][]]/g";
+        const char exp1[] = "/]/";
+        const char exp2[] = "/[]]/";
+        const char exp3[] = "/][]]/g";
 
-        NORM_BAD_1(dat1, exp1, JSTokenizer::BAD_TOKEN);
-        NORM_BAD_1(dat2, exp2, JSTokenizer::BAD_TOKEN);
+        NORMALIZE_1(dat1, exp1);
+        NORMALIZE_1(dat2, exp2);
+        NORMALIZE_1(dat3, exp3);
     }
     SECTION("parentheses - mismatch")
     {
         const char dat1[] = "/)/";
         const char dat2[] = "/())/";
-        const char dat3[] = "/({[ ()) ]})/";
+        const char dat3[] = "/({{ ()) }})/";
         const char exp1[] = "/";
         const char exp2[] = "/()";
-        const char exp3[] = "/({[ ()";
+        const char exp3[] = "/({{ ()";
 
         NORM_BAD_1(dat1, exp1, JSTokenizer::BAD_TOKEN);
         NORM_BAD_1(dat2, exp2, JSTokenizer::BAD_TOKEN);
@@ -3490,23 +3502,10 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
     {
         const char dat1[] = "/}/";
         const char dat2[] = "/{}}/";
-        const char dat3[] = "/({[ {}} ]})/";
+        const char dat3[] = "/({( {}} )})/";
         const char exp1[] = "/";
         const char exp2[] = "/{}";
-        const char exp3[] = "/({[ {}";
-
-        NORM_BAD_1(dat1, exp1, JSTokenizer::BAD_TOKEN);
-        NORM_BAD_1(dat2, exp2, JSTokenizer::BAD_TOKEN);
-        NORM_BAD_1(dat3, exp3, JSTokenizer::BAD_TOKEN);
-    }
-    SECTION("square brackets - mismatch")
-    {
-        const char dat1[] = "/]/";
-        const char dat2[] = "/[]]/";
-        const char dat3[] = "/([{ []] }])/";
-        const char exp1[] = "/";
-        const char exp2[] = "/[]";
-        const char exp3[] = "/([{ []";
+        const char exp3[] = "/({( {}";
 
         NORM_BAD_1(dat1, exp1, JSTokenizer::BAD_TOKEN);
         NORM_BAD_1(dat2, exp2, JSTokenizer::BAD_TOKEN);
@@ -3537,10 +3536,10 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
     SECTION("square brackets - continuation")
     {
         const char dat1[] = "/[[";
-        const char dat2[] = "]]/";
+        const char dat2[] = "[]/";
         const char exp1[] = "/[[";
-        const char exp2[] = "]]/";
-        const char exp[] = "/[[]]/";
+        const char exp2[] = "[]/";
+        const char exp[] = "/[[[]/";
 
         NORMALIZE_2(dat1, dat2, exp1, exp2);
         NORM_COMBINED_2(dat1, dat2, exp);
@@ -3563,17 +3562,6 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
         const char exp1[] = "/{";
         const char exp2[] = "}";
         const char exp[] = "/{}";
-
-        NORM_BAD_2(dat1, dat2, exp1, exp2, JSTokenizer::BAD_TOKEN);
-        NORM_COMBINED_BAD_2(dat1, dat2, exp, JSTokenizer::BAD_TOKEN);
-    }
-    SECTION("square brackets - mismatch in continuation")
-    {
-        const char dat1[] = "/[";
-        const char dat2[] = "]]/";
-        const char exp1[] = "/[";
-        const char exp2[] = "]";
-        const char exp[] = "/[]";
 
         NORM_BAD_2(dat1, dat2, exp1, exp2, JSTokenizer::BAD_TOKEN);
         NORM_COMBINED_BAD_2(dat1, dat2, exp, JSTokenizer::BAD_TOKEN);
