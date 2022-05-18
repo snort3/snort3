@@ -634,6 +634,8 @@ void MimeSession::reset_part_state()
     state_flags = 0;
     filename_state = CONT_DISP_FILENAME_PARAM_NAME;
     delete[] partial_header;
+    partial_header = nullptr;
+    partial_header_len = 0;
     if (decode_state)
     {
         decode_state->clear_decode_state();
