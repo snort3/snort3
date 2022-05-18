@@ -396,6 +396,9 @@ void HttpMsgBody::do_enhanced_js_normalization(const Field& input, Field& output
     auto http_header = get_header(source_id);
     auto normalizer = params->js_norm_param.js_norm;
 
+    if ((*infractions & INF_UNKNOWN_ENCODING) or (*infractions & INF_UNSUPPORTED_ENCODING))
+        return;
+
     if (session_data->is_pdu_missed())
     {
         *infractions += INF_JS_PDU_MISS;
