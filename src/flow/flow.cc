@@ -23,12 +23,14 @@
 
 #include "flow.h"
 
+#include "detection/context_switcher.h"
 #include "detection/detection_engine.h"
 #include "flow/flow_key.h"
 #include "flow/ha.h"
 #include "flow/session.h"
 #include "framework/data_bus.h"
 #include "helpers/bitop.h"
+#include "main/analyzer.h"
 #include "memory/memory_cap.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
@@ -148,16 +150,18 @@ void Flow::flush(bool do_cleanup)
     {
         DetectionEngine::onload(this);
 
-        if ( do_cleanup )
+        if ( !do_cleanup )
+            session->clear();
+
+        else if ( Analyzer::get_switcher()->get_context() )
+            session->flush();
+
+        else
         {
             DetectionEngine::set_next_packet();
             DetectionEngine de;
-
             session->flush();
-            de.get_context()->clear_callbacks();
         }
-        else
-            session->clear();
     }
 
     if ( was_blocked() )
@@ -170,17 +174,18 @@ void Flow::reset(bool do_cleanup)
     {
         DetectionEngine::onload(this);
 
-        if ( do_cleanup )
+        if ( !do_cleanup )
+            session->clear();
+
+        else if ( Analyzer::get_switcher()->get_context() )
+            session->cleanup();
+
+        else
         {
             DetectionEngine::set_next_packet();
             DetectionEngine de;
-
             session->cleanup();
-
-            de.get_context()->clear_callbacks();
         }
-        else
-            session->clear();
     }
 
     free_flow_data();

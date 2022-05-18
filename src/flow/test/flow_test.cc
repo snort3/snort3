@@ -23,12 +23,14 @@
 #include "config.h"
 #endif
 
+#include "detection/context_switcher.h"
 #include "detection/detection_engine.h"
 #include "flow/flow.h"
 #include "flow/flow_stash.h"
 #include "flow/ha.h"
 #include "framework/inspector.h"
 #include "framework/data_bus.h"
+#include "main/analyzer.h"
 #include "main/policy.h"
 #include "main/snort_config.h"
 #include "protocols/ip.h"
@@ -74,8 +76,10 @@ void set_ips_policy(IpsPolicy*) { }
 unsigned SnortConfig::get_thread_reload_id() { return 0; }
 }
 
-Packet* DetectionEngine::set_next_packet(Packet*, Flow*) { return nullptr; }
+Packet* DetectionEngine::set_next_packet(const Packet*, Flow*) { return nullptr; }
 
+ContextSwitcher* Analyzer::get_switcher() { return nullptr; }
+snort::IpsContext* ContextSwitcher::get_context() const { return nullptr; }
 IpsContext* DetectionEngine::get_context() { return nullptr; }
 
 DetectionEngine::DetectionEngine() = default;

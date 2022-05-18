@@ -50,8 +50,6 @@ FlowControl::FlowControl(const FlowCacheConfig& fc)
 
 FlowControl::~FlowControl()
 {
-    DetectionEngine de;
-
     delete cache;
     snort_free(mem);
     delete exp_cache;

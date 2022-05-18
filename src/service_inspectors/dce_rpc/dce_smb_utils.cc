@@ -1351,7 +1351,7 @@ static void DCE2_SmbInjectDeletePdu(DCE2_SmbFileTracker* ftracker)
     Packet* inject_pkt = DetectionEngine::get_current_wire_packet();
     Packet* p = DetectionEngine::get_current_packet();
 
-    if ( inject_pkt->flow != p->flow )
+    if ( !inject_pkt || inject_pkt->flow != p->flow )
         return;
 
     NbssHdr* nb_hdr = (NbssHdr*)dce2_smb_delete_pdu;

@@ -41,6 +41,7 @@
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
+#include "time/packet_time.h"
 #include "utils/stats.h"
 
 #include "context_switcher.h"
@@ -131,10 +132,18 @@ SF_EVENTQ* DetectionEngine::get_event_queue()
 { return Analyzer::get_switcher()->get_context()->equeue; }
 
 Packet* DetectionEngine::get_current_packet()
-{ return Analyzer::get_switcher()->get_context()->packet; }
+{
+    const IpsContext* c = Analyzer::get_switcher()->get_context();
+    assert(c);
+    return c->packet;
+}
 
 Packet* DetectionEngine::get_current_wire_packet()
-{ return Analyzer::get_switcher()->get_context()->wire_packet; }
+{
+    const IpsContext* c = Analyzer::get_switcher()->get_context();
+    assert(c);
+    return c->wire_packet;
+}
 
 void DetectionEngine::set_encode_packet(Packet* p)
 { Analyzer::get_switcher()->get_context()->encode_packet = p; }
@@ -145,7 +154,7 @@ Packet* DetectionEngine::get_encode_packet()
 // we need to stay in the current context until rebuild is successful
 // any events while rebuilding will be logged against the current packet
 // however, rebuild is always in the next context, not current.
-Packet* DetectionEngine::set_next_packet(Packet* parent, Flow* flow)
+Packet* DetectionEngine::set_next_packet(const Packet* parent, Flow* flow)
 {
     static THREAD_LOCAL Active shutdown_active;
     static THREAD_LOCAL ActiveAction* shutdown_action = nullptr;
@@ -170,6 +179,7 @@ Packet* DetectionEngine::set_next_packet(Packet* parent, Flow* flow)
         c->wire_packet = nullptr;
     }
 
+    packet_gettimeofday(&c->pkth->ts);
     p->pkth = c->pkth;
     p->data = c->buf;
     p->pkt = c->buf;
@@ -203,6 +213,8 @@ Packet* DetectionEngine::set_next_packet(Packet* parent, Flow* flow)
     }
 
     p->reset();
+
+    p->packet_flags |= PKT_WAS_SET;
 
     if ( parent )
         p->packet_flags |= PKT_HAS_PARENT;

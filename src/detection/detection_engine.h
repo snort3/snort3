@@ -56,7 +56,7 @@ public:
 
     static Packet* get_current_packet();
     static Packet* get_current_wire_packet();
-    static Packet* set_next_packet(Packet* parent = nullptr, Flow* flow = nullptr);
+    static Packet* set_next_packet(const Packet* parent = nullptr, Flow* flow = nullptr);
     static uint8_t* get_next_buffer(unsigned& max);
 
     static bool offload(Packet*);

@@ -766,7 +766,7 @@ static Packet* get_packet(Flow* flow, uint32_t flags, bool c2s)
     p->ptrs.set_pkt_type(PktType::PDU);
     p->proto_bits |= PROTO_BIT__TCP;
     p->flow = flow;
-    p->packet_flags = flags;
+    p->packet_flags |= flags;
 
     if ( c2s )
     {
@@ -790,7 +790,7 @@ static Packet* get_packet(Flow* flow, uint32_t flags, bool c2s)
     return p;
 }
 
-void TcpReassembler::flush_queued_segments(
+void TcpReassembler::finish_and_final_flush(
     TcpReassemblerState& trs, Flow* flow, bool clear, Packet* p)
 {
     bool pending = clear and paf_initialized(&trs.paf_state)
@@ -800,19 +800,28 @@ void TcpReassembler::flush_queued_segments(
         final_flush(trs, p, trs.packet_dir);
 }
 
+// Call this only from outside reassembly.
 void TcpReassembler::flush_queued_segments(
     TcpReassemblerState& trs, Flow* flow, bool clear, const Packet* p)
 {
-    Packet* pdu = get_packet(flow, trs.packet_dir, trs.server_side);
-
     if ( p )
-        flush_queued_segments(trs, flow, clear, pdu);
-
+    {
+        finish_and_final_flush(trs, flow, clear, const_cast<Packet*>(p));
+    }
     else
     {
-        // if we weren't given a packet, we must establish a context
-        DetectionEngine de;
-        flush_queued_segments(trs, flow, clear, pdu);
+        Packet* pdu = get_packet(flow, trs.packet_dir, trs.server_side);
+
+        bool pending = clear and paf_initialized(&trs.paf_state);
+
+        if ( pending )
+        {
+            DetectionEngine de;
+            pending = trs.tracker->splitter_finish(flow);
+        }
+
+        if ( pending and !(flow->ssn_state.ignore_direction & trs.ignore_dir) )
+            final_flush(trs, pdu, trs.packet_dir);
     }
 }
 
@@ -1099,7 +1108,7 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
             {
                 // we are on a FIN, the data has been scanned, it has no gaps,
                 // but somehow we are waiting for more data - do final flush here
-                flush_queued_segments(trs, p->flow, true, p );
+                finish_and_final_flush(trs, p->flow, true, p);
             }
         }
         break;
@@ -1210,7 +1219,7 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
         {
             // we are acknowledging a FIN, the data has been scanned, it has no gaps,
             // but somehow we are waiting for more data - do final flush here
-            flush_queued_segments(trs, p->flow, true, p);
+            finish_and_final_flush(trs, p->flow, true, p);
         }
     }
     break;
@@ -1366,21 +1375,10 @@ void TcpReassembler::queue_packet_for_reassembly(
         insert_segment_in_seglist(trs, tsd);
 }
 
-uint32_t TcpReassembler::perform_partial_flush(TcpReassemblerState& trs, Flow* flow)
+uint32_t TcpReassembler::perform_partial_flush(TcpReassemblerState& trs, Flow* flow, Packet*& p)
 {
-    Packet* p = get_packet(flow, (trs.packet_dir|PKT_WAS_SET), trs.server_side);
-
-    uint32_t result = perform_partial_flush(trs, p);
-
-    // If the held_packet hasn't been released by perform_partial_flush(),
-    // call finalize directly.
-    if ( trs.tracker->is_holding_packet() )
-    {
-        trs.tracker->finalize_held_packet(p);
-        tcpStats.held_packet_purges++;
-    }
-
-    return result;
+    p = get_packet(flow, trs.packet_dir, trs.server_side);
+    return perform_partial_flush(trs, p);
 }
 
 // No error checking here, so the caller must ensure that p, p->flow and context

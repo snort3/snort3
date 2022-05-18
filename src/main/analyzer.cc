@@ -408,6 +408,9 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
         switcher->stop();
     }
 
+    // Beyond this point, we don't have an active context, but e.g. calls to
+    // get_current_packet() or get_current_wire_packet() require a context.
+    // We must ensure that a context is available when one is needed.
     Stream::handle_timeouts(false);
     HighAvailabilityManager::process_receive();
 }

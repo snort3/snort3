@@ -70,6 +70,9 @@ public:
     int flush_stream(snort::Packet* p, uint32_t dir, bool final_flush = false)
     { return reassembler->flush_stream(trs, p, dir, final_flush); }
 
+    void finish_and_final_flush(snort::Flow* flow, bool clear, snort::Packet* p)
+    { reassembler->finish_and_final_flush(trs, flow, clear, p); }
+
     void flush_queued_segments(snort::Flow* flow, bool clear, const snort::Packet* p = nullptr)
     { reassembler->flush_queued_segments(trs, flow, clear, p); }
 
@@ -118,8 +121,8 @@ public:
     void set_norm_mode_test()
     { trs.sos.tcp_ips_data = NORM_MODE_TEST; }
 
-    uint32_t perform_partial_flush(snort::Flow* flow)
-    { return reassembler->perform_partial_flush(trs, flow); }
+    uint32_t perform_partial_flush(snort::Flow* flow, snort::Packet*& p)
+    { return reassembler->perform_partial_flush(trs, flow, p); }
 
     void reset_paf()
     { paf_reset(&trs.paf_state); }

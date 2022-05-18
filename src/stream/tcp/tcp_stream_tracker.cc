@@ -671,14 +671,29 @@ void TcpStreamTracker::perform_fin_recv_flush(TcpSegmentDescriptor& tsd)
 
     if ( flush_policy == STREAM_FLPOLICY_ON_DATA and SEQ_EQ(tsd.get_end_seq(), rcv_nxt)
          and !tsd.get_flow()->searching_for_service() )
-        reassembler.flush_queued_segments(tsd.get_flow(), true, tsd.get_pkt());
+        reassembler.finish_and_final_flush(tsd.get_flow(), true, tsd.get_pkt());
 }
 
 uint32_t TcpStreamTracker::perform_partial_flush()
 {
     uint32_t flushed = 0;
     if ( held_packet != null_iterator )
-        flushed = reassembler.perform_partial_flush(session->flow);
+    {
+        Packet* p;
+        flushed = reassembler.perform_partial_flush(session->flow, p);
+
+        // If the held_packet hasn't been released by perform_partial_flush(),
+        // call finalize directly.
+        if ( is_holding_packet() )
+        {
+            finalize_held_packet(p);
+            tcpStats.held_packet_purges++;
+        }
+
+        // call this here explicitly, because we've avoided it in reassembler
+        // and we need to set flow state to BLOCK, if need be
+        Stream::check_flow_closed(p);
+    }
     return flushed;
 }
 

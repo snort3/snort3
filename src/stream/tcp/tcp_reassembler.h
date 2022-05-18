@@ -42,6 +42,8 @@ public:
         TcpReassemblerState&, snort::Packet* p, uint32_t dir, bool final_flush = false);
     virtual void flush_queued_segments(
         TcpReassemblerState&, snort::Flow* flow, bool clear, const snort::Packet* = nullptr);
+    void finish_and_final_flush(
+        TcpReassemblerState&, snort::Flow* flow, bool clear, snort::Packet*);
     virtual bool is_segment_pending_flush(TcpReassemblerState&);
     virtual int flush_on_data_policy(TcpReassemblerState&, snort::Packet*);
     virtual int flush_on_ack_policy(TcpReassemblerState&, snort::Packet*);
@@ -51,7 +53,7 @@ public:
         uint32_t event_id, uint32_t event_second);
     virtual void purge_alerts(TcpReassemblerState&);
 
-    uint32_t perform_partial_flush(TcpReassemblerState&, snort::Flow*);
+    uint32_t perform_partial_flush(TcpReassemblerState&, snort::Flow*, snort::Packet*&);
 
 protected:
     TcpReassembler() = default;
@@ -72,8 +74,6 @@ protected:
     bool is_segment_fasttrack
         (TcpReassemblerState&, TcpSegmentNode* tail, const TcpSegmentDescriptor&);
     void show_rebuilt_packet(const TcpReassemblerState&, snort::Packet*);
-    void flush_queued_segments(
-        TcpReassemblerState&, snort::Flow* flow, bool clear, snort::Packet*);
     int flush_data_segments(TcpReassemblerState&, uint32_t flush_len, snort::Packet* pdu);
     void prep_pdu(
         TcpReassemblerState&, snort::Flow*, snort::Packet*, uint32_t pkt_flags, snort::Packet*);
