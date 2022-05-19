@@ -44,9 +44,6 @@ Optional:
 * dblatex from http://dblatex.sourceforge.net to build the pdf manual (in
   addition to asciidoc)
 
-* flatbuffers from https://google.github.io/flatbuffers/ for enabling the
-  flatbuffers serialization format
-
 * hyperscan >= 4.4.0 from https://github.com/01org/hyperscan to build new
   the regex and sd_pattern rule options and hyperscan search engine.
   Hyperscan is large so it recommended to follow their instructions for

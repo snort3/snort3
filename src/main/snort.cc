@@ -75,12 +75,6 @@
 #include "trace/trace_logger.h"
 #include "utils/util.h"
 
-#ifdef PIGLET
-#include "piglet/piglet.h"
-#include "piglet/piglet_manager.h"
-#include "piglet_plugins/piglet_plugins.h"
-#endif
-
 #ifdef SHELL
 #include "control/control_mgmt.h"
 #include "ac_shell_cmd.h"
@@ -117,9 +111,6 @@ void Snort::init(int argc, char** argv)
     load_connectors();
     load_ips_options();
     load_loggers();
-#ifdef PIGLET
-    load_piglets();
-#endif
     load_search_engines();
     load_policy_selectors();
     load_stream_inspectors();
@@ -136,10 +127,6 @@ void Snort::init(int argc, char** argv)
     LogMessage("%s  Snort++ %s\n", get_prompt(), VERSION);
 #endif
     LogMessage("--------------------------------------------------\n");
-
-#ifdef PIGLET
-    Piglet::Manager::init();
-#endif
 
     SideChannelManager::pre_config_init();
 
@@ -173,14 +160,8 @@ void Snort::init(int argc, char** argv)
         ModuleManager::dump_modules();
         PluginManager::dump_plugins();
     }
-#ifdef PIGLET
-    if ( !Piglet::piglet_mode() )
-#endif
     CodecManager::instantiate();
 
-#ifdef PIGLET
-    if ( !Piglet::piglet_mode() )
-#endif
     if ( !sc->output.empty() )
         EventManager::instantiate(sc->output.c_str(), sc);
 
@@ -237,9 +218,6 @@ void Snort::init(int argc, char** argv)
     if ((offload_search_api != nullptr) and (offload_search_api != search_api))
         MpseManager::activate_search_engine(offload_search_api, sc);
 
-#ifdef PIGLET
-    if ( !Piglet::piglet_mode() )
-#endif
     /* Finish up the pcap list and put in the queues */
     Trough::setup();
 
@@ -333,11 +311,7 @@ void Snort::term()
     IpsManager::global_term(sc);
     HostAttributesManager::term();
 
-#ifdef PIGLET
-    if ( !Piglet::piglet_mode() )
-#endif
     Trough::cleanup();
-
     ClosePidFile();
 
     /* remove pid file */

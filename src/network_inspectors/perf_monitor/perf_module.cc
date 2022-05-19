@@ -36,12 +36,6 @@
 #include "perf_pegs.h"
 #include "perf_reload_tuner.h"
 
-#ifdef HAVE_FLATBUFFERS
-#define FLATBUFFERS_ENUM " | flatbuffers"
-#else
-#define FLATBUFFERS_ENUM
-#endif
-
 using namespace snort;
 
 //-------------------------------------------------------------------------
@@ -94,7 +88,7 @@ static const Parameter s_params[] =
     { "modules", Parameter::PT_LIST, module_params, nullptr,
       "gather statistics from the specified modules" },
 
-    { "format", Parameter::PT_ENUM, "csv | text | json" FLATBUFFERS_ENUM, "csv",
+    { "format", Parameter::PT_ENUM, "csv | text | json", "csv",
       "output format for stats" },
 
     { "summary", Parameter::PT_BOOL, nullptr, "false",

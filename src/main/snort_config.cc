@@ -356,7 +356,7 @@ void SnortConfig::clone(const SnortConfig* const conf)
 void SnortConfig::merge(const SnortConfig* cmd_line_conf)
 {
     // -D / -H / -Q / -r / -T / -x / --alert-before-pass / --create-pidfile / --enable-inline-test / --mem-check /
-    // --nolock-pidfile / --pause / --pcap-file / --pcap-dir / --pcap-list / --pcap-show / --pedantic / --piglet /
+    // --nolock-pidfile / --pause / --pcap-file / --pcap-dir / --pcap-list / --pcap-show / --pedantic /
     // --shell / --show-file-codes
     run_flags |= cmd_line_conf->run_flags;
 

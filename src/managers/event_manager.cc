@@ -256,32 +256,3 @@ void EventManager::call_loggers(
         p->log(pkt, message, event);
 }
 
-#ifdef PIGLET
-
-//-------------------------------------------------------------------------
-// piglet breach
-//-------------------------------------------------------------------------
-static const LogApi* find_api(const char* name)
-{
-    for ( auto out : s_outputs )
-        if ( !strcmp(out->api->base.name, name) )
-            return out->api;
-
-    return nullptr;
-}
-
-LoggerWrapper* EventManager::instantiate(const char* name, Module* m, SnortConfig*)
-{
-    auto api = find_api(name);
-    if ( !api || !api->ctor )
-        return nullptr;
-
-    auto p = api->ctor(m);
-    if ( !p )
-        return nullptr;
-
-    return new LoggerWrapper(api, p);
-}
-
-#endif
-

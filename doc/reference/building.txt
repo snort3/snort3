@@ -11,8 +11,6 @@ into the Snort binary.  For a full list of build options, run ./configure
 These options are built only if the required libraries and headers are
 present.  There is no need to explicitly enable.
 
-* *flatbuffers*: for an alternative perf_monitor logging format.
-
 * *hyperscan* >= 4.4.0: for the regex and sd_pattern rule options and the hyperscan
   search engine.
 
@@ -33,7 +31,6 @@ can use these options:
 * *--with-pkg-libraries*: specify the directory containing the package
   libraries.
 
-These can be used for pcap, luajit, pcre, dnet, daq, lzma, openssl,
-flatbuffers, iconv, and hyperscan packages.  For more information on
-these libraries see the Getting Started section of the manual.
+These can be used for pcap, luajit, pcre, dnet, daq, lzma, openssl, iconv, and hyperscan packages.
+For more information on these libraries see the Getting Started section of the manual.
 

@@ -37,10 +37,6 @@
 #include <sys/stat.h>
 #include <zlib.h>
 
-#ifdef HAVE_FLATBUFFERS
-#include <flatbuffers/flatbuffers.h>
-#endif
-
 #ifdef HAVE_HYPERSCAN
 #include <hs_compile.h>
 #endif
@@ -115,9 +111,6 @@ int DisplayBanner()
     LogMessage("           Using %s\n", pcap_lib_version());
     LogMessage("           Using PCRE version %s\n", pcre_version());
     LogMessage("           Using ZLIB version %s\n", zlib_version);
-#ifdef HAVE_FLATBUFFERS
-    LogMessage("           Using %s\n", flatbuffers::flatbuffer_version_string);
-#endif
 #ifdef HAVE_HYPERSCAN
     LogMessage("           Using Hyperscan version %s\n", hs_version());
 #endif

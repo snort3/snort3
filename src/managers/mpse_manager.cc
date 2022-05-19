@@ -175,22 +175,3 @@ void MpseManager::print_qinfo()
 }
 #endif
 
-#ifdef PIGLET
-
-MpseWrapper* MpseManager::instantiate(const char* name, Module* m, SnortConfig* sc)
-{
-    auto api = ::get_api(name);
-
-    if ( !api || !api->ctor )
-        return nullptr;
-
-    auto p = api->ctor(sc, m, nullptr);
-
-    if ( !p )
-        return nullptr;
-
-    return new MpseWrapper(api, p);
-}
-
-#endif
-

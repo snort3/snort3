@@ -3,7 +3,7 @@
 Some things Snort++ can do today that Snort can not do:
 
 * regex fast patterns, not just literals
-* FlatBuffers and JSON perf monitor logs
+* JSON perf monitor logs
 * LuaJIT scriptable rule options and loggers
 * pub/sub inspection events (currently used by sip and http_inspect to appid)
 * JIT buffer stuffers (notably with new http_inspect)

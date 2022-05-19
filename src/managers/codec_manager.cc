@@ -247,27 +247,3 @@ void CodecManager::dump_plugins()
         d.dump(wrap.api->base.name, wrap.api->base.version);
 }
 
-#ifdef PIGLET
-const CodecApi* CodecManager::find_api(const char* name)
-{
-    for ( auto wrap : CodecManager::s_codecs )
-        if ( !strcmp(wrap.api->base.name, name) )
-            return wrap.api;
-
-    return nullptr;
-}
-
-CodecWrapper* CodecManager::instantiate(const char* name, Module* m, SnortConfig*)
-{
-    auto api = find_api(name);
-    if ( !api )
-        return nullptr;
-
-    auto p = api->ctor(m);
-    if ( !p )
-        return nullptr;
-
-    return new CodecWrapper(api, p);
-}
-#endif
-

@@ -33,10 +33,6 @@
 #include "lua/lua.h"
 #include "lua/lua_script.h"
 
-#ifdef PIGLET
-#include "piglet/piglet_manager.h"
-#endif
-
 using namespace snort;
 using namespace std;
 
@@ -224,11 +220,6 @@ static void load_script(const char* f)
 
     else if ( type == LogLuaApi::type )
         lua_api.emplace_back(new LogLuaApi(name, chunk, ver));
-
-#ifdef PIGLET
-    else if ( type == "piglet" )
-        Piglet::Manager::add_chunk(f, name, chunk);
-#endif
 
     else
     {

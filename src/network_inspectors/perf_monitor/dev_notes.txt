@@ -37,16 +37,7 @@ Currently output formats are:
 
 2. CSV
 
-3. Flatbuffers (if the library is available at build)
-
-==== Flatbuffers Parsing
-
-While a tool has been included to parse the file format used, it may be
-desired to build analysis tools that deal with the files directly. This can
-be accomplished in a few ways; either the records can be split and passed to
-flatc along with the included schema, or the schema can be parsed using the
-Flatbuffers reflection API and used to read the data within the records.
-The format for the files is as follows:
+3. JSON
 
 ===== File Layout
 

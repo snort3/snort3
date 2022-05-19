@@ -74,9 +74,6 @@ enum RunFlag
 #ifdef SHELL
     RUN_FLAG__SHELL               = 0x01000000,
 #endif
-#ifdef PIGLET
-    RUN_FLAG__PIGLET              = 0x02000000,
-#endif
 };
 
 enum OutputFlag

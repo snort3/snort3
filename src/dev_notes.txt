@@ -16,8 +16,7 @@ The shell has to be explicitly enabled at build time to be available and
 then must be configured at run time to be activated. Multiple simultaneous
 remote shells are supported.
 
-Unit test, benchmark test, and piglet test harness build options also
-impact actual execution.
+Unit test and benchmark testbuild options also impact actual execution.
 
 Reload is implemented by swapping a thread local config pointer by each
 running Pig.  The inspector manager is called to empty trash if the main

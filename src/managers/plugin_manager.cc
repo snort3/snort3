@@ -38,11 +38,6 @@
 #include "log/messages.h"
 #include "main/snort_config.h"
 
-#ifdef PIGLET
-#include "piglet/piglet_api.h"
-#include "piglet/piglet_manager.h"
-#endif
-
 #include "action_manager.h"
 #include "codec_manager.h"
 #include "connector_manager.h"
@@ -81,9 +76,6 @@ static Symbol symbols[PT_MAX] =
     { "logger", LOGAPI_VERSION, sizeof(LogApi) },
     { "connector", CONNECTOR_API_VERSION, sizeof(ConnectorApi) },
     { "policy_selector", POLICY_SELECTOR_API_VERSION, sizeof(PolicySelectorApi) },
-#ifdef PIGLET
-    { "piglet", PIGLET_API_VERSION, sizeof(Piglet::Api) }
-#endif
 };
 #else
 // this gets around the sequence issue with some compilers
@@ -339,12 +331,6 @@ static void add_plugin(Plugin& p)
         PolicySelectorManager::add_plugin((const PolicySelectorApi*)p.api);
         break;
 
-#ifdef PIGLET
-    case PT_PIGLET:
-        Piglet::Manager::add_plugin((const Piglet::Api*)p.api);
-        break;
-#endif
-
     default:
         assert(false);
         break;
@@ -525,21 +511,6 @@ const BaseApi* PluginManager::get_api(PlugType type, const char* name)
 
     return nullptr;
 }
-
-#ifdef PIGLET
-PlugType PluginManager::get_type_from_name(const std::string& name)
-{
-    for ( auto it = s_plugins.plug_map.begin(); it != s_plugins.plug_map.end(); ++it )
-    {
-        const auto* api = it->second.api;
-        if ( name == api->name )
-            return api->type;
-    }
-
-    return PT_MAX;
-}
-
-#endif
 
 void PluginManager::instantiate(
     const BaseApi* api, Module* mod, SnortConfig* sc)

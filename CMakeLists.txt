@@ -124,14 +124,6 @@ else ()
     libatomic:      System-provided")
 endif ()
 
-if (HAVE_FLATBUFFERS)
-    message("\
-    Flatbuffers:    ON")
-else ()
-    message("\
-    Flatbuffers:    OFF")
-endif ()
-
 if (HAVE_HYPERSCAN)
     message("\
     Hyperscan:      ON")

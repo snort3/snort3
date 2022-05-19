@@ -94,12 +94,6 @@ To enable:
 
 ==== Formatters
 
-Performance monitor allows statistics to be output in a few formats. Along with
-human readable text (as seen at shutdown) and csv formats, a Flatbuffers binary
-format is also available if Flatbuffers is present at build. A utility for
-accessing the statistics generated in this format has been included for
-convenience (see fbstreamer in tools). This tool generates a YAML array of
-records found, allowing the data to be read by humans or passed into other
-analysis tools. For information on working directly with the Flatbuffers file
-format used by Performance monitor, see the developer notes for Performance
-monitor or the code provided for fbstreamer.
+Performance monitor allows statistics to be output in a few formats. Along with human readable text
+(as seen at shutdown) and csv formats, a JSON format format is also available.
+

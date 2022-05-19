@@ -40,9 +40,6 @@
 /* do not generate a core file on segfault etc */
 #cmakedefine NOCOREFILE 1
 
-/* enable piglet */
-#cmakedefine PIGLET 1
-
 /* enable command shell */
 #cmakedefine SHELL 1
 
@@ -124,9 +121,6 @@
 
 
 /*  Available libraries */
-
-/* flatbuffers available */
-#cmakedefine HAVE_FLATBUFFERS 1
 
 /* hyperscan available */
 #cmakedefine HAVE_HYPERSCAN 1

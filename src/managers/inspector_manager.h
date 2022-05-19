@@ -113,10 +113,6 @@ public:
     static void reconcile_inspectors(const SnortConfig*, SnortConfig*, bool cloned = false);
     static void clear_removed_inspectors(SnortConfig*);
 
-#ifdef PIGLET
-    static Inspector* instantiate(const char*, Module*, SnortConfig*);
-#endif
-
 private:
     static void bumble(Packet*);
     template<bool T> static void full_inspection(Packet*);

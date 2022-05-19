@@ -29,10 +29,6 @@
 #include "main/thread.h"
 #include "protocols/protocol_ids.h"
 
-#ifdef PIGLET
-#include "framework/codec.h"
-#endif
-
 namespace snort
 {
 class Codec;
@@ -46,23 +42,6 @@ struct SnortConfig;
 //-------------------------------------------------------------------------
 
 extern THREAD_LOCAL snort::ProfileStats decodePerfStats;
-
-#ifdef PIGLET
-struct CodecWrapper
-{
-    CodecWrapper(const snort::CodecApi* a, snort::Codec* p) :
-        api { a }, instance { p } { }
-
-    ~CodecWrapper()
-    {
-        if ( api && instance && api->dtor )
-            api->dtor(instance);
-    }
-
-    const snort::CodecApi* api;
-    snort::Codec* instance;
-};
-#endif
 
 /*
  *  CodecManager class
@@ -87,10 +66,6 @@ public:
     // print all of the codec plugins
     static void dump_plugins();
 
-#ifdef PIGLET
-    static CodecWrapper* instantiate(const char*, snort::Module*, snort::SnortConfig*);
-#endif
-
     static uint8_t get_max_layers()
     { return max_layers; }
 
@@ -114,10 +89,6 @@ private:
     static void instantiate(CodecApiWrapper&, snort::Module*, snort::SnortConfig*);
     static CodecApiWrapper& get_api_wrapper(const snort::CodecApi* cd_api);
     static uint8_t get_codec(const char* const keyword);
-
-#ifdef PIGLET
-    static const snort::CodecApi* find_api(const char*);
-#endif
 };
 
 #endif

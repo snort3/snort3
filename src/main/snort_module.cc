@@ -519,11 +519,6 @@ static const Parameter s_params[] =
     { "--pedantic", Parameter::PT_IMPLIED, nullptr, nullptr,
       "warnings are fatal" },
 
-#ifdef PIGLET
-    { "--piglet", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "enable piglet test harness mode" },
-#endif
-
     { "--plugin-path", Parameter::PT_STRING, nullptr, nullptr,
       "<path> a colon separated list of directories or plugin libraries" },
 
@@ -1086,11 +1081,6 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( is(v, "--pcap-show") )
         sc->run_flags |= RUN_FLAG__PCAP_SHOW;
-
-#ifdef PIGLET
-    else if ( is(v, "--piglet") )
-        sc->run_flags |= RUN_FLAG__PIGLET;
-#endif
 
     else if ( is(v, "--plugin-path") )
         sc->add_plugin_path(v.get_string());

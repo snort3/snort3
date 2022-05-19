@@ -47,7 +47,6 @@ enum class PerfFormat
     CSV,
     TEXT,
     JSON,
-    FBS,
     MOCK
 };
 

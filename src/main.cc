@@ -61,10 +61,6 @@
 #include "catch/unit_test.h"
 #endif
 
-#ifdef PIGLET
-#include "piglet/piglet.h"
-#endif
-
 #ifdef SHELL
 #include "control/control_mgmt.h"
 #include "main/ac_shell_cmd.h"
@@ -874,13 +870,6 @@ static bool just_validate(const SnortConfig* sc)
 
 static bool set_mode()
 {
-#ifdef PIGLET
-    if ( Piglet::piglet_mode() )
-    {
-        main_exit_code = Piglet::main();
-        return false;
-    }
-#endif
 #if defined(UNIT_TEST) || defined(BENCHMARK_TEST)
     // FIXIT-M X we should move this out of set_mode and not do Snort bring up/teardown at all
     if ( catch_enabled() )

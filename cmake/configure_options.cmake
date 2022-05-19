@@ -5,7 +5,6 @@
 
 set ( SHELL ${ENABLE_SHELL} )
 set ( UNIT_TEST ${ENABLE_UNIT_TESTS} )
-set ( PIGLET ${ENABLE_PIGLET} )
 
 if ( ENABLE_BENCHMARK_TESTS )
     add_definitions( -DBENCHMARK_TEST )

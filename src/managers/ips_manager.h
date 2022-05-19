@@ -36,23 +36,6 @@ namespace snort
 
 //-------------------------------------------------------------------------
 
-#ifdef PIGLET
-struct IpsOptionWrapper
-{
-    IpsOptionWrapper(const snort::IpsApi* a, snort::IpsOption* p) :
-        api { a }, instance { p } { }
-
-    ~IpsOptionWrapper()
-    {
-        if ( api && instance && api->dtor )
-            api->dtor(instance);
-    }
-
-    const snort::IpsApi* api;
-    snort::IpsOption* instance;
-};
-#endif
-
 class IpsManager
 {
 public:
@@ -80,10 +63,6 @@ public:
     static void clear_options(const snort::SnortConfig*);
 
     static bool verify(snort::SnortConfig*);
-
-#ifdef PIGLET
-    static IpsOptionWrapper* instantiate(const char*, snort::Module*, struct OptTreeNode*);
-#endif
 };
 
 #endif

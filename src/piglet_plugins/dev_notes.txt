@@ -1,7 +1,0 @@
-This directory contains subclasses of Piglet::BasePlugin that correspond to
-each Snort plugin type. Each pp_\*.cc source file is a Snort plugin proper.
-
-piglet_plugins_common contains utilities for working with the Lua C API and
-Lua interfaces for some useful Snort data structures (Packet, DecodeData).
-There is also an interface called RawBuffer.  This is essentially a wrapper
-around a std::string.

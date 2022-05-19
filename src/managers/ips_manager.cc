@@ -374,29 +374,3 @@ bool IpsManager::verify(SnortConfig* sc)
     return true;
 }
 
-#ifdef PIGLET
-
-static const IpsApi* find_api(const char* name)
-{
-    for ( auto& wrap : s_options )
-        if ( !strcmp(wrap.second->api->base.name, name) )
-            return wrap.second->api;
-
-    return nullptr;
-}
-
-IpsOptionWrapper* IpsManager::instantiate(const char* name, Module* m, struct OptTreeNode* otn)
-{
-    auto api = find_api(name);
-    if ( !api || !api->ctor )
-        return nullptr;
-
-    auto p = api->ctor(m, otn);
-    if ( !p )
-        return nullptr;
-
-    return new IpsOptionWrapper(api, p);
-}
-
-#endif
-

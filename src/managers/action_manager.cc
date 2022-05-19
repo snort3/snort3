@@ -306,33 +306,3 @@ void ActionManager::thread_term()
     }
 }
 
-#ifdef PIGLET
-
-//-------------------------------------------------------------------------
-// piglet breach
-//-------------------------------------------------------------------------
-
-static const ActionApi* find_api(const char* name)
-{
-    for ( auto actor : s_actors )
-        if ( !strcmp(actor.api->base.name, name) )
-            return actor.api;
-
-    return nullptr;
-}
-
-IpsActionWrapper* ActionManager::instantiate(const char* name, Module* m)
-{
-    auto api = find_api(name);
-    if ( !api || !api->ctor )
-        return nullptr;
-
-    auto p = api->ctor(m);
-    if ( !p )
-        return nullptr;
-
-    return new IpsActionWrapper(api, p);
-}
-
-#endif
-

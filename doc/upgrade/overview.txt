@@ -20,7 +20,6 @@ scalability, usability, and extensibility.  Some of the key features of Snort 3.
 * New performance monitor
 * New time and space profiling
 * New latency monitoring and enforcement
-* Piglets to facilitate component testing
 * Inspection Events
 * Autogenerate reference documentation
 

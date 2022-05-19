@@ -146,10 +146,6 @@ static const char* to_string(const PerfFormat& pf)
         return "csv";
     case PerfFormat::JSON:
         return "json";
-#ifdef HAVE_FLATBUFFERS
-    case PerfFormat::FBS:
-        return "flatbuffers";
-#endif
     case PerfFormat::MOCK:
         return "mock";
     }

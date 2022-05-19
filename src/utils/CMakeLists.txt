@@ -56,10 +56,6 @@ add_library ( utils OBJECT
     ${TEST_FILES}
 )
 
-if ( HAVE_FLATBUFFERS )
-    target_include_directories( utils PRIVATE ${FLATBUFFERS_INCLUDE_DIR} )
-endif()
-
 install (FILES ${UTIL_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/utils"
 )

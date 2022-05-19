@@ -1,6 +1,3 @@
-if ( HAVE_FLATBUFFERS )
-    set( FLATBUFFERS_SOURCE fbs_formatter.h fbs_formatter.cc )
-endif()
 
 set ( FILE_LIST
     base_tracker.cc
@@ -9,7 +6,6 @@ set ( FILE_LIST
     csv_formatter.h
     cpu_tracker.cc
     cpu_tracker.h
-    ${FLATBUFFERS_SOURCE}
     flow_tracker.cc
     flow_tracker.h
     flow_ip_tracker.cc
@@ -39,10 +35,6 @@ else (STATIC_INSPECTORS)
 
 endif (STATIC_INSPECTORS)
 
-if ( HAVE_FLATBUFFERS )
-    target_include_directories( perf_monitor PRIVATE ${FLATBUFFERS_INCLUDE_DIR} )
-endif()
-
 add_catch_test( csv_formatter_test
     NO_TEST_SOURCE
     SOURCES
@@ -56,15 +48,4 @@ add_catch_test( json_formatter_test
         json_formatter.cc
         perf_formatter.cc
 )
-
-if ( HAVE_FLATBUFFERS )
-    add_catch_test( fbs_formatter_test
-        NO_TEST_SOURCE
-        SOURCES
-            fbs_formatter.cc
-            perf_formatter.cc
-        LIBS
-            ${FLATBUFFERS_LIBRARIES}
-    )
-endif()
 

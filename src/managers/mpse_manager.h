@@ -26,10 +26,6 @@
 
 #include "framework/module.h"
 
-#ifdef PIGLET
-#include "framework/mpse.h"
-#endif
-
 namespace snort
 {
 struct MpseApi;
@@ -38,23 +34,6 @@ struct SnortConfig;
 }
 
 //-------------------------------------------------------------------------
-
-#ifdef PIGLET
-struct MpseWrapper
-{
-    MpseWrapper(const snort::MpseApi* a, snort::Mpse* p) :
-        api { a }, instance { p } { }
-
-    ~MpseWrapper()
-    {
-        if ( api && instance && api->dtor )
-            api->dtor(instance);
-    }
-
-    const snort::MpseApi* api;
-    snort::Mpse* instance;
-};
-#endif
 
 class MpseManager
 {
@@ -80,10 +59,6 @@ public:
     static bool is_poll_capable(const snort::MpseApi* api);
     static void print_mpse_summary(const snort::MpseApi*);
     static void print_search_engine_stats();
-
-#ifdef PIGLET
-    static MpseWrapper* instantiate(const char*, snort::Module*, snort::SnortConfig*);
-#endif
 };
 
 #endif

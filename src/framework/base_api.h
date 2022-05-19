@@ -50,9 +50,6 @@ enum PlugType
     PT_LOGGER,
     PT_CONNECTOR,
     PT_POLICY_SELECTOR,
-#ifdef PIGLET
-    PT_PIGLET,
-#endif
     PT_MAX
 };
 

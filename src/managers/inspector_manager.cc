@@ -1676,33 +1676,6 @@ void InspectorManager::instantiate(
     }
 }
 
-#ifdef PIGLET
-// FIXIT-M duplicates logic in void InspectorManager::instantiate()
-
-Inspector* InspectorManager::instantiate(
-    const char* name, Module* mod, SnortConfig* sc)
-{
-    auto ppc = get_class(name, sc->framework_config);
-
-    if ( !ppc )
-        return nullptr;
-
-    InspectionPolicy* ip = get_inspection_policy();
-    assert(ip);
-    auto fp = ip->framework_policy;
-    auto ppi = get_new(ppc, fp, name, mod, sc);
-
-    if ( !ppi )
-        return nullptr;
-
-    ppi->set_name(name);
-
-    // FIXIT-L can't we just unify PHInstance and InspectorWrapper?
-    return ppi->handler;
-}
-
-#endif
-
 // create default binding for wizard and configured services
 static void instantiate_default_binder(SnortConfig* sc, FrameworkPolicy* fp)
 {
