@@ -8,7 +8,7 @@ Snort 3 Upgrade Manual
 The Snort Team
 
 Revision History
-Revision 3.1.29.0 2022-05-04 08:06:54 EDT TST
+Revision 3.1.30.0 2022-05-19 00:39:56 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -72,7 +72,6 @@ of Snort 3.0 are:
   * New performance monitor
   * New time and space profiling
   * New latency monitoring and enforcement
-  * Piglets to facilitate component testing
   * Inspection Events
   * Autogenerate reference documentation
 
@@ -170,7 +169,7 @@ of Snort 3.0 are:
 Some things Snort++ can do today that Snort can not do:
 
   * regex fast patterns, not just literals
-  * FlatBuffers and JSON perf monitor logs
+  * JSON perf monitor logs
   * LuaJIT scriptable rule options and loggers
   * pub/sub inspection events (currently used by sip and http_inspect
     to appid)

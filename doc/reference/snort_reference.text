@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.29.0 2022-05-04 08:07:08 EDT TST
+Revision 3.1.30.0 2022-05-19 00:40:10 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -3741,6 +3741,8 @@ Configuration:
     1:65535 }
   * string http_inspect.js_norm_ident_ignore[].ident_name: name of
     the identifier to ignore
+  * string http_inspect.js_norm_prop_ignore[].prop_name: name of the
+    object property to ignore
   * int http_inspect.max_javascript_whitespaces = 200: maximum
     consecutive whitespaces allowed within the JavaScript obfuscated
     data { 1:65535 }
@@ -4553,7 +4555,7 @@ Configuration:
   * string perf_monitor.modules[].pegs: list of statistics to track
     or empty for all counters
   * enum perf_monitor.format = csv: output format for stats { csv |
-    text | json | flatbuffers }
+    text | json }
   * bool perf_monitor.summary = false: output summary at shutdown
 
 Commands:
@@ -8514,7 +8516,6 @@ configure --help.
 These options are built only if the required libraries and headers
 are present. There is no need to explicitly enable.
 
-  * flatbuffers: for an alternative perf_monitor logging format.
   * hyperscan >= 4.4.0: for the regex and sd_pattern rule options and
     the hyperscan search engine.
   * iconv: for converting UTF16-LE filenames to UTF8 (usually
@@ -8534,8 +8535,8 @@ locations, you can use these options:
     package libraries.
 
 These can be used for pcap, luajit, pcre, dnet, daq, lzma, openssl,
-flatbuffers, iconv, and hyperscan packages. For more information on
-these libraries see the Getting Started section of the manual.
+iconv, and hyperscan packages. For more information on these
+libraries see the Getting Started section of the manual.
 
 
 11.2. Environment Variables
@@ -9452,6 +9453,8 @@ these libraries see the Getting Started section of the manual.
   * int http_inspect.js_norm_max_tmpl_nest = 32: maximum depth of
     template literal nesting that enhanced javascript normalizer will
     process { 0:255 }
+  * string http_inspect.js_norm_prop_ignore[].prop_name: name of the
+    object property to ignore
   * int http_inspect.maximum_chunk_length = 4294967295: maximum
     allowed length for a message body chunk { 0:4294967295 }
   * int http_inspect.maximum_host_length = -1: maximum allowed length
@@ -9875,7 +9878,7 @@ these libraries see the Getting Started section of the manual.
   * int perf_monitor.flow_ports = 1023: maximum ports to track {
     0:65535 }
   * enum perf_monitor.format = csv: output format for stats { csv |
-    text | json | flatbuffers }
+    text | json }
   * int perf_monitor.max_file_size = 1073741824: files will be rolled
     over if they exceed this size { 4096:max53 }
   * string perf_monitor.modules[].name: name of the module

@@ -1,3 +1,28 @@
+2022/05/19 - 3.1.30.0
+
+build: Update dependent libdaq version to 3.0.7
+doc: update clone link in README. Thanks to billchenchina.
+doc: user documentation update for obfuscate_pii and --help-module
+framework: add method to get unquoted string from configuration value
+http2_inspect: Templatize variable length integer decoding of integer and string
+http_inspect: add ignoring defined object properties for Enchanced JS normalizer
+http_inspect: avoid sending compressed data to JS normalizer
+http_inspect: check if input available before JavaScript normalization
+mime: set partial_header to null after deletion
+perf_monitor: remove unused flatbuffers support
+piglets: remove unused test harness
+smb: handle file context cleanup
+snort3: remove SMB detection from service_netbios.cc
+stream: refactor flush_queued_segments
+stream_tcp: add null check for get_current_wire_packet() in dce too
+stream_tcp, pop: add sync_on_start method to StreamSplitter
+stream_tcp: provide a context and a wire packet where needed, when calling into reassembly from outside regular processing (handle_timeouts)
+utils: add Latin-1 decoding of JavaScript unescape-like functions
+utils: allow regex literals after operator
+utils: fix regex char classes parsing
+utils: turn debug-build assertion into a product-build code
+wizard: fix code style
+
 2022/05/04 - 3.1.29.0
 
 appid: add alpn matchers

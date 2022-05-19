@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.29.0 2022-05-04 08:06:54 EDT TST
+Revision 3.1.30.0 2022-05-19 00:39:56 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -115,7 +115,6 @@ are:
   * New performance monitor
   * New time and space profiling
   * New latency monitoring and enforcement
-  * Piglets to facilitate component testing
   * Inspection Events
   * Autogenerate reference documentation
 
@@ -621,7 +620,7 @@ them generically and consistently. You can learn quite a lot about
 any given module from the command line. For example, to see what
 stream_tcp is all about, do this:
 
-$ snort --help-config stream_tcp
+$ snort --help-module stream_tcp
 
 Modules are configured using Lua tables with the same name. So the
 stream_tcp module is configured with defaults like this:
@@ -1018,8 +1017,6 @@ Optional:
     tests with make check
   * dblatex from http://dblatex.sourceforge.net to build the pdf
     manual (in addition to asciidoc)
-  * flatbuffers from https://google.github.io/flatbuffers/ for
-    enabling the flatbuffers serialization format
   * hyperscan >= 4.4.0 from https://github.com/01org/hyperscan to
     build new the regex and sd_pattern rule options and hyperscan
     search engine. Hyperscan is large so it recommended to follow
@@ -3894,7 +3891,7 @@ scripts. It supports scripts over multiple PDUs. It is a stateful
 JavaScript whitespace and identifiers normalizer. Normalizer
 concatenates string literals whenever it’s possible to do. This also
 works with any other normalizations that result in string literals.
-All JavaScript identifier names, except those from the ignore list,
+All JavaScript identifier names, except those from the ignore lists,
 will be substituted with unified names in the following format:
 var_0000 → var_ffff. But the unescape-like function names will be
 removed from the normalized data. The Normalizer tries to expand an
@@ -3905,8 +3902,8 @@ elements. For more information on how additionally configure Enhanced
 Normalizer check with the following configuration options:
 js_norm_bytes_depth, js_norm_identifier_depth, js_norm_max_tmpl_nest,
 js_norm_max_bracket_depth, js_norm_max_scope_depth,
-js_norm_ident_ignore. Eventually Enhanced Normalizer will completely
-replace Legacy Normalizer.
+js_norm_ident_ignore, js_norm_prop_ignore. Eventually Enhanced
+Normalizer will completely replace Legacy Normalizer.
 
 5.10.3. Configuration
 
@@ -4120,7 +4117,30 @@ ought to be included in the ignore list. If for some reason the user
 wants to disable unescape related features, then removing function’s
 name from the ignore list does the trick.
 
-5.10.3.16. xff_headers
+5.10.3.16. js_norm_prop_ignore
+
+js_norm_prop_ignore = {<list of ignored properties>} is an option of
+the enhanced JavaScript normalizer that defines a list of object
+properties and methods that will be kept intact during the
+identifiers normalization. This list should include methods and
+properties of objects that will not be tracked by assignment
+substitution functionality, for example, those that can be created
+implicitly.
+
+Subsequent accessors, after dot, in square brackets or after function
+call, will not be normalized as well.
+
+For example:
+
+http_inspect.js_norm_prop_ignore = { 'split' }
+
+in: "string".toUpperCase().split("").reverse().join("");
+out: "string".var_0000().split("").reverse().join("");
+
+The default list of ignored properties is present in
+"snort_defaults.lua".
+
+5.10.3.17. xff_headers
 
 This configuration supports defining custom x-forwarded-for type
 headers. In a multi-vendor world, it is quite possible that the
@@ -4135,7 +4155,7 @@ they are defined, e.g "x-forwarded-for" will be preferred than
 "true-client-ip" if both headers are present in the stream. The
 header names should be delimited by a space.
 
-5.10.3.17. maximum_host_length
+5.10.3.18. maximum_host_length
 
 Setting maximum_host_length causes http_inspect to generate 119:25 if
 the Host header value including optional white space exceeds the
@@ -4143,7 +4163,7 @@ specified length. In the abnormal case of multiple Host headers, the
 total length of the combined values is used. The default value is -1,
 meaning do not perform this check.
 
-5.10.3.18. maximum_chunk_length
+5.10.3.19. maximum_chunk_length
 
 http_inspect strictly limits individual chunks within a chunked
 message body to be less than four gigabytes.
@@ -4151,7 +4171,7 @@ message body to be less than four gigabytes.
 A lower limit may be configured by setting maximum_chunk_length. Any
 chunk longer than maximum chunk length will generate a 119:16 alert.
 
-5.10.3.19. URI processing
+5.10.3.20. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize
@@ -5117,14 +5137,7 @@ perf_monitor = { cpu = true }
 
 Performance monitor allows statistics to be output in a few formats.
 Along with human readable text (as seen at shutdown) and csv formats,
-a Flatbuffers binary format is also available if Flatbuffers is
-present at build. A utility for accessing the statistics generated in
-this format has been included for convenience (see fbstreamer in
-tools). This tool generates a YAML array of records found, allowing
-the data to be read by humans or passed into other analysis tools.
-For information on working directly with the Flatbuffers file format
-used by Performance monitor, see the developer notes for Performance
-monitor or the code provided for fbstreamer.
+a JSON format format is also available.
 
 
 5.15. POP and IMAP
@@ -5528,11 +5541,11 @@ occurred 299 times in a packet, you will not see an event.
 
 Snort provides discreet logging for the built in patterns
 "credit_card", "us_social" and "us_social_nodashes". Enabling
-output.obfuscate_pii makes Snort obfuscate the suspect packet payload
+ips.obfuscate_pii makes Snort obfuscate the suspect packet payload
 which was matched by the patterns. This configuration is disabled by
 default.
 
-output =
+ips =
 {
     obfuscate_pii = true
 }
