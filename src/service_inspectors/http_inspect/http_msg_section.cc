@@ -193,7 +193,7 @@ const Field& HttpMsgSection::get_classic_buffer(const HttpBufferInfo& buf)
       }
     case HTTP_BUFFER_RAW_BODY:
       {
-        return (get_body() != nullptr) ? get_body()->msg_text : Field::FIELD_NULL;
+        return (get_body() != nullptr) ? get_body()->get_raw_body() : Field::FIELD_NULL;
       }
     case HTTP_BUFFER_RAW_HEADER:
     case HTTP_BUFFER_RAW_TRAILER:

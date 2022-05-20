@@ -111,6 +111,15 @@ void HttpMsgBody::clean_partial(uint32_t& partial_inspected_octets, uint32_t& pa
 
 void HttpMsgBody::analyze()
 {
+    const int32_t raw_body_length =
+        (msg_text.length() <= session_data->detect_depth_remaining[source_id]) ?
+        msg_text.length() : session_data->detect_depth_remaining[source_id];
+
+    if (raw_body_length > 0)
+        raw_body.set(raw_body_length, msg_text.start());
+    else
+        raw_body.set(STAT_NO_SOURCE);
+
     uint32_t& partial_inspected_octets = session_data->partial_inspected_octets[source_id];
 
     // When there have been partial inspections we focus on the part of the message we have not

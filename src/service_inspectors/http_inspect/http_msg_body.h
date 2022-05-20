@@ -38,6 +38,7 @@ public:
     bool detection_required() const override { return (detect_data.length() > 0); }
     HttpMsgBody* get_body() override { return this; }
     const Field& get_classic_client_body();
+    const Field& get_raw_body() { return raw_body; }
     const Field& get_decomp_vba_data();
     const Field& get_norm_js_data();
     const Field& get_detect_data() { return detect_data; }
@@ -77,6 +78,7 @@ private:
     // In order of generation
     Field msg_text_new;
     Field decoded_body;
+    Field raw_body;              // request_depth or response_depth applied
     Field decompressed_file_body;
     Field cumulative_data;
     Field js_norm_body;
