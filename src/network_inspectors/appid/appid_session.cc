@@ -165,9 +165,7 @@ AppIdSession::~AppIdSession()
 
     if (tpsession)
     {
-        if (pkt_thread_tp_appid_ctxt and
-            ((tpsession->get_ctxt_version() == pkt_thread_tp_appid_ctxt->get_version()) and
-            !ThirdPartyAppIdContext::get_tp_reload_in_progress()))
+        if (need_to_delete_tp_conn(pkt_thread_tp_appid_ctxt))
             tpsession->delete_with_ctxt();
         else
             delete tpsession;
@@ -309,8 +307,7 @@ void AppIdSession::reinit_session_data(AppidChangeBits& change_bits,
     free_flow_data_by_mask(APPID_SESSION_DATA_CLIENT_MODSTATE_BIT);
 
     //3rd party cleaning
-    if (tpsession and curr_tp_appid_ctxt and
-        (tpsession->get_ctxt_version() == curr_tp_appid_ctxt->get_version()))
+    if (tpsession and need_to_delete_tp_conn(curr_tp_appid_ctxt))
         tpsession->reset();
     else if (tpsession)
         tpsession->set_state(TP_STATE_TERMINATED);
@@ -963,8 +960,7 @@ void AppIdSession::reset_session_data(AppidChangeBits& change_bits)
     tp_payload_app_id = APP_ID_UNKNOWN;
     tp_app_id = APP_ID_UNKNOWN;
 
-    if (tpsession and pkt_thread_tp_appid_ctxt and
-        (tpsession->get_ctxt_version() == pkt_thread_tp_appid_ctxt->get_version()))
+    if (tpsession and need_to_delete_tp_conn(pkt_thread_tp_appid_ctxt))
         tpsession->reset();
     else if (tpsession)
         tpsession->set_state(TP_STATE_TERMINATED);
@@ -1070,6 +1066,15 @@ bool AppIdSession::is_tp_appid_available() const
     }
 
     return true;
+}
+
+bool AppIdSession::need_to_delete_tp_conn(ThirdPartyAppIdContext* curr_tp_appid_ctxt) const
+{
+    // do not delete a third-party connection when reload third-party is in progress, and
+    // third-party context swap isn't complete; since all open connections will be deleted
+    // as part of the third-party reload pruning process.
+    return (curr_tp_appid_ctxt and ((tpsession->get_ctxt_version() == curr_tp_appid_ctxt->get_version()) and
+        !ThirdPartyAppIdContext::get_tp_reload_in_progress()));
 }
 
 void AppIdSession::set_tp_app_id(const Packet& p, AppidSessionDirection dir, AppId app_id,

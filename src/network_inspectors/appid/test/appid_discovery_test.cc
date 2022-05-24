@@ -219,6 +219,7 @@ void AppIdSession::examine_ssl_metadata(AppidChangeBits&) {}
 void AppIdSession::update_encrypted_app_id(AppId) {}
 bool AppIdSession::is_tp_processing_done() const {return false;}
 AppId AppIdSession::pick_ss_payload_app_id(AppId) const { return get_payload_id(); }
+bool AppIdSession::need_to_delete_tp_conn(ThirdPartyAppIdContext*) const { return true; }
 AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
     AppidSessionDirection, AppIdInspector&, OdpContext&)
 {

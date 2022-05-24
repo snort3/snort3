@@ -493,8 +493,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
             asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
 
-            if (asd.tpsession and tp_appid_ctxt and
-                (asd.tpsession->get_ctxt_version() == tp_appid_ctxt->get_version()))
+            if (asd.tpsession and asd.need_to_delete_tp_conn(tp_appid_ctxt))
                 asd.tpsession->reset();
             else if (asd.tpsession)
                 asd.tpsession->set_state(TP_STATE_TERMINATED);

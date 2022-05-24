@@ -374,6 +374,8 @@ public:
     void publish_appid_event(AppidChangeBits&, const snort::Packet&, bool is_http2 = false,
         uint32_t http2_stream_index = 0);
 
+    bool need_to_delete_tp_conn(ThirdPartyAppIdContext*) const;
+
     inline void set_tp_app_id(AppId app_id)
     {
         if (tp_app_id != app_id)
