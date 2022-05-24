@@ -55,56 +55,26 @@ HttpMsgHeadShared::~HttpMsgHeadShared()
     }
 }
 
-bool HttpMsgHeadShared::is_external_js()
+int32_t HttpMsgHeadShared::get_content_type()
 {
-    if (js_external != STAT_NOT_COMPUTE)
-        return js_external;
+    if (content_type != STAT_NOT_COMPUTE)
+        return content_type;
 
-    const Field& content_type = get_header_value_raw(HEAD_CONTENT_TYPE);
-    const char* cur = (const char*)content_type.start();
-    int len = content_type.length();
-    if (SnortStrcasestr(cur, len, "application/"))
+    const Field& content_type_hdr = get_header_value_norm(HEAD_CONTENT_TYPE);
+    const uint8_t* start = content_type_hdr.start();
+    int32_t len = content_type_hdr.length();
+
+    if (len <= 0)
     {
-        if (SnortStrcasestr(cur, len, "javascript"))
-        {
-            js_external = 1;
-            return true;
-        }
-
-        if (SnortStrcasestr(cur, len, "ecmascript"))
-        {
-            js_external = 1;
-            return true;
-        }
+        content_type = CT__OTHER;
+        return content_type;
     }
-    else if (SnortStrcasestr(cur, len, "text/"))
-    {
-        if (SnortStrcasestr(cur, len, "javascript"))
-        {
-            js_external = 1;
-            return true;
-        }
 
-        if (SnortStrcasestr(cur, len, "ecmascript"))
-        {
-            js_external = 1;
-            return true;
-        }
+    if (const uint8_t* semicolon = (const uint8_t*)memchr(start, ';', len))
+        len = semicolon - start;
 
-        if (SnortStrcasestr(cur, len, "jscript"))
-        {
-            js_external = 1;
-            return true;
-        }
-
-        if (SnortStrcasestr(cur, len, "livescript"))
-        {
-            js_external = 1;
-            return true;
-        }
-    }
-    js_external = 0;
-    return js_external;
+    content_type = str_to_code(start, len, content_type_list);
+    return content_type;
 }
 
 // All the header processing that is done for every message (i.e. not just-in-time) is done here.

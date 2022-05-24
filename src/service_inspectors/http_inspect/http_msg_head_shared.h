@@ -49,6 +49,7 @@ public:
     // Tables of header field names and header value names
     static const StrCode header_list[];
     static const StrCode content_code_list[];
+    static const StrCode content_type_list[];
     static const StrCode charset_code_list[];
     static const StrCode charset_code_opt_list[];
     static const StrCode transfer_encoding_list[];
@@ -58,8 +59,8 @@ public:
     // verdicts.
     uint64_t get_file_cache_index();
     const Field& get_content_disposition_filename();
-    bool is_external_js();
     int32_t get_num_headers() const { return num_headers; }
+    int32_t get_content_type();
 
     static const int MAX_HEADERS = 200;  // I'm an arbitrary number. FIXIT-RC
 protected:
@@ -109,7 +110,7 @@ private:
     bool file_cache_index_computed = false;
 
     bool own_msg_buffer;
-    int js_external = HttpCommon::STAT_NOT_COMPUTE;
+    int32_t content_type = HttpCommon::STAT_NOT_COMPUTE;
 };
 
 #endif

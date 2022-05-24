@@ -166,6 +166,29 @@ const StrCode HttpMsgHeadShared::content_code_list[] =
     { 0,                         nullptr }
 };
 
+const StrCode HttpMsgHeadShared::content_type_list[] =
+{
+    { CT_APPLICATION_JAVASCRIPT,   "application/javascript" },
+    { CT_APPLICATION_ECMASCRIPT,   "application/ecmascript" },
+    { CT_APPLICATION_X_JAVASCRIPT, "application/x-javascript" },
+    { CT_APPLICATION_X_ECMASCRIPT, "application/x-ecmascript" },
+    { CT_APPLICATION_XHTML_XML,    "application/xhtml+xml" },
+    { CT_TEXT_JAVASCRIPT,          "text/javascript" },
+    { CT_TEXT_JAVASCRIPT_1_0,      "text/javascript1.0" },
+    { CT_TEXT_JAVASCRIPT_1_1,      "text/javascript1.1" },
+    { CT_TEXT_JAVASCRIPT_1_2,      "text/javascript1.2" },
+    { CT_TEXT_JAVASCRIPT_1_3,      "text/javascript1.3" },
+    { CT_TEXT_JAVASCRIPT_1_4,      "text/javascript1.4" },
+    { CT_TEXT_JAVASCRIPT_1_5,      "text/javascript1.5" },
+    { CT_TEXT_ECMASCRIPT,          "text/ecmascript" },
+    { CT_TEXT_X_JAVASCRIPT,        "text/x-javascript" },
+    { CT_TEXT_X_ECMASCRIPT,        "text/x-ecmascript" },
+    { CT_TEXT_JSCRIPT,             "text/jscript" },
+    { CT_TEXT_LIVESCRIPT,          "text/livescript" },
+    { CT_TEXT_HTML,                "text/html" },
+    { 0,                           nullptr }
+};
+
 const StrCode HttpMsgHeadShared::charset_code_list[] =
 {
     { CHARSET_DEFAULT,       "charset=utf-8" },

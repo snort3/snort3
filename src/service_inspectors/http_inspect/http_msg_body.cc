@@ -416,10 +416,35 @@ void HttpMsgBody::do_enhanced_js_normalization(const Field& input, Field& output
         return;
     }
 
-    if (http_header and http_header->is_external_js())
+    if (!http_header)
+        return;
+
+    switch(http_header->get_content_type())
+    {
+    case CT_APPLICATION_JAVASCRIPT:
+    case CT_APPLICATION_ECMASCRIPT:
+    case CT_APPLICATION_X_JAVASCRIPT:
+    case CT_APPLICATION_X_ECMASCRIPT:
+    case CT_TEXT_JAVASCRIPT:
+    case CT_TEXT_JAVASCRIPT_1_0:
+    case CT_TEXT_JAVASCRIPT_1_1:
+    case CT_TEXT_JAVASCRIPT_1_2:
+    case CT_TEXT_JAVASCRIPT_1_3:
+    case CT_TEXT_JAVASCRIPT_1_4:
+    case CT_TEXT_JAVASCRIPT_1_5:
+    case CT_TEXT_ECMASCRIPT:
+    case CT_TEXT_X_JAVASCRIPT:
+    case CT_TEXT_X_ECMASCRIPT:
+    case CT_TEXT_JSCRIPT:
+    case CT_TEXT_LIVESCRIPT:
         normalizer->do_external(input, output, infractions, session_data, back);
-    else
+        break;
+
+    case CT_APPLICATION_XHTML_XML:
+    case CT_TEXT_HTML:
         normalizer->do_inline(input, output, infractions, session_data, back);
+        break;
+    }
 }
 
 void HttpMsgBody::do_legacy_js_normalization(const Field& input, Field& output)
