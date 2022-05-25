@@ -812,5 +812,69 @@ TEST_CASE("De-aliasing - scopes", "[JSNormalizer]")
         );
 }
 
+TEST_CASE("De-aliasing - class", "[JSNormalizer]")
+{
+    
+    SECTION("basic case")
+        test_normalization(
+            "a = new String(); a.foo()",
+            "var_0000=new String();var_0000.foo()"
+        );
+
+    SECTION("unknown class")
+        test_normalization(
+            "a = new foo(); a.bar()",
+            "var_0000=new var_0001();var_0000.var_0002()"
+        );
+
+    SECTION("complex parameters")
+        test_normalization(
+            "a = new String(10,p+q,eval('f')); a.foo()",
+            "var_0000=new String(10,var_0001+var_0002,eval('f'));var_0000.foo()"
+        );
+
+    SECTION("accessor chain")
+        test_normalization(
+            "a = new String.foo(); a.bar()",
+            "var_0000=new String.foo();var_0000.bar()"
+        );
+
+    SECTION("square bracket accessor")
+        test_normalization(
+            "a = new String['foo'](); a.bar()",
+            "var_0000=new String['foo']();var_0000.bar()"
+        );
+
+    SECTION("property of a constructed object")
+        test_normalization(
+            "a = new String().length; a.bar()",
+            "var_0000=new String().length;var_0000.bar()"
+        );
+
+    SECTION("de-alias chaining")
+        test_normalization(
+            "s = String; a = new s(); a.baz()",
+            "var_0000=String;var_0001=new String();var_0001.baz()"
+        );
+
+    SECTION("single-line comment after new")
+        test_normalization(
+            "o = new //split\n String(); o.foo()",
+            "var_0000=new String();var_0000.foo()"
+        );
+
+    SECTION("multi-line comment after new")
+        test_normalization(
+            "o = new /*split*/ String(); o.foo()",
+            "var_0000=new String();var_0000.foo()"
+        );
+
+    SECTION("semicolon after new")
+        test_normalization(
+            "o = new; String(); o.foo()",
+            "var_0000=new;String();var_0000.var_0001()"
+        );
+}
+
 #endif // CATCH_TEST_BUILD
 

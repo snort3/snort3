@@ -936,7 +936,8 @@ KEYWORD_DO          do
 KEYWORD_WITH        with
 KEYWORD_SWITCH      switch
 KEYWORD_TRY         try
-KEYWORD_B           delete|new|throw|typeof|void
+KEYWORD_B           delete|throw|typeof|void
+KEYWORD_NEW         new
 /* keywords that can not appear at the beginning or the end of Statement*/
 KEYWORD_ELSE        else
 KEYWORD_CATCH       catch
@@ -983,22 +984,26 @@ LITERAL_BOOLEAN               true|false
 LITERAL_DECIMAL               [.]?[0-9]+[\.]?[0-9]*[eE]?[0-9]*
 LITERAL_INTEGER               [0-9]*
 LITERAL_HEX_INTEGER           0x[0-9a-fA-F]*|0X[0-9a-fA-F]*
+
 LITERAL_DQ_STRING_START       \"
 LITERAL_DQ_STRING_END         \"
 LITERAL_DQ_STRING_SKIP        \\\"|\\\\
-LITERAL_DQ_STRING_TEXT        [^\"\\%\xA\xD\{0x10}(\xE2\x80\xA8)(\xE2\x80\xA9)("<"+(?i:script))("<"+(?i:\/script>))]{1,32}
+LITERAL_DQ_STRING_TEXT        [^\\%<\xA\xD\xE2"]{1,32}|.
+
 LITERAL_SQ_STRING_START       \'
 LITERAL_SQ_STRING_END         \'
 LITERAL_SQ_STRING_SKIP        \\\'|\\\\
-LITERAL_SQ_STRING_TEXT        [^\'\\%\xA\xD\{0x10}(\xE2\x80\xA8)(\xE2\x80\xA9)("<"+(?i:script))("<"+(?i:\/script>))]{1,32}
+LITERAL_SQ_STRING_TEXT        [^\\%<\xA\xD\xE2']{1,32}|.
+
 LITERAL_TEMPLATE_START        \`
 LITERAL_TEMPLATE_END          \`
 LITERAL_TEMPLATE_SUBST_START  \$\{
-LITERAL_TEMPLATE_OTHER        [^\\%\`(\$\{)("<"+(?i:\/script>))]{1,32}
+LITERAL_TEMPLATE_TEXT         [^\\%<$`]{1,32}|.
+
 LITERAL_REGEX_START           \/[^*\/]
 LITERAL_REGEX_END             \/[gimsuy]*
 LITERAL_REGEX_SKIP            \\\/|\\\\|\\\(|\\\)|\\\[|\\\]|\\\{|\\\}
-LITERAL_REGEX_TEXT            [^<{LF}{CR}{LS}{PS}\\\/\(\[\{\)\]\}]+
+LITERAL_REGEX_TEXT            [^\\<\xA\xD\xE2/\(\)\[\]\{\}]{1,32}|.
 LITERAL_REGEX_G_OPEN          \(|\[|\{
 LITERAL_REGEX_G_CLOSE         \)|\]|\}
 /* extra literals */
@@ -1099,8 +1104,6 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <dqstr,unesc_dqstr>\\{LF}                     { /* skip */ }
 <dqstr,unesc_dqstr>\\{CR}                     { /* skip */ }
 <dqstr,unesc_dqstr>{LINE_TERMINATORS}         { BEGIN(regst); RETURN(BAD_TOKEN) }
-<dqstr,unesc_dqstr>{LITERAL_DQ_STRING_SKIP}   { dealias_append(); ECHO; }
-<dqstr,unesc_dqstr>{LITERAL_DQ_STRING_TEXT}   { dealias_append(); ECHO; }
 <dqstr,unesc_dqstr><<EOF>>                    { RETURN(SCRIPT_CONTINUE) }
 <dqstr>{UNICODE_ESCAPE_SEQUENCE}              |
 <dqstr>{HEX_ESCAPE_SEQUENCE}                  { escaped_unicode_utf_8(); }
@@ -1111,6 +1114,8 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <unesc_dqstr>{BYTE_ESCAPE_SEQUENCE}           { set_encoding(IS_UBACKSLASH_1); escaped_unicode_latin_1(); }
 <unesc_dqstr>{PERCENT_ESCAPE_SEQUENCE}        { set_encoding(IS_UPERCENT); escaped_unicode_utf_8(); }
 <unesc_dqstr>{URL_ESCAPE_SEQUENCE}            { set_encoding(IS_PERCENT); escaped_url_sequence_latin_1(); }
+<dqstr,unesc_dqstr>{LITERAL_DQ_STRING_SKIP}   { dealias_append(); ECHO; }
+<dqstr,unesc_dqstr>{LITERAL_DQ_STRING_TEXT}   { dealias_append(); ECHO; }
 
     {LITERAL_SQ_STRING_START}                 { EXEC(literal_sq_string_start()) }
 <sqstr,unesc_sqstr>{LITERAL_SQ_STRING_END}    { dealias_append(); ECHO; BEGIN(divop); }
@@ -1120,8 +1125,6 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <sqstr,unesc_sqstr>\\{LF}                     { /* skip */ }
 <sqstr,unesc_sqstr>\\{CR}                     { /* skip */ }
 <sqstr,unesc_sqstr>{LINE_TERMINATORS}         { BEGIN(regst); RETURN(BAD_TOKEN) }
-<sqstr,unesc_sqstr>{LITERAL_SQ_STRING_SKIP}   { dealias_append(); ECHO; }
-<sqstr,unesc_sqstr>{LITERAL_SQ_STRING_TEXT}   { dealias_append(); ECHO; }
 <sqstr,unesc_sqstr><<EOF>>                    { RETURN(SCRIPT_CONTINUE) }
 <sqstr>{UNICODE_ESCAPE_SEQUENCE}              |
 <sqstr>{HEX_ESCAPE_SEQUENCE}                  { escaped_unicode_utf_8(); }
@@ -1132,14 +1135,13 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <unesc_sqstr>{BYTE_ESCAPE_SEQUENCE}           { set_encoding(IS_UBACKSLASH_1); escaped_unicode_latin_1(); }
 <unesc_sqstr>{PERCENT_ESCAPE_SEQUENCE}        { set_encoding(IS_UPERCENT); escaped_unicode_utf_8(); }
 <unesc_sqstr>{URL_ESCAPE_SEQUENCE}            { set_encoding(IS_PERCENT); escaped_url_sequence_latin_1(); }
+<sqstr,unesc_sqstr>{LITERAL_SQ_STRING_SKIP}   { dealias_append(); ECHO; }
+<sqstr,unesc_sqstr>{LITERAL_SQ_STRING_TEXT}   { dealias_append(); ECHO; }
 
     {LITERAL_TEMPLATE_START}                                 { EXEC(literal_template_start()) }
 <tmpll,unesc_tmpll>(\\\\)*{LITERAL_TEMPLATE_END}             { dealias_append(); ECHO; BEGIN(divop); }
 <tmpll,unesc_tmpll>(\\\\)*{LITERAL_TEMPLATE_SUBST_START}     { EXEC(process_subst_open()) dealias_reset(); }
 <tmpll,unesc_tmpll>{HTML_TAG_SCRIPT_CLOSE}                   { BEGIN(regst); RETURN(CLOSING_TAG) }
-<tmpll,unesc_tmpll>(\\\\)*\\{LITERAL_TEMPLATE_SUBST_START}   | /* escaped template substitution */
-<tmpll,unesc_tmpll>(\\\\)*\\{LITERAL_TEMPLATE_END}           | /* escaped backtick */
-<tmpll,unesc_tmpll>{LITERAL_TEMPLATE_OTHER}                  { dealias_append(); ECHO; }
 <tmpll,unesc_tmpll><<EOF>>                                   { RETURN(SCRIPT_CONTINUE) }
 <tmpll>{UNICODE_ESCAPE_SEQUENCE}                             |
 <tmpll>{HEX_ESCAPE_SEQUENCE}                                 { escaped_unicode_utf_8(); }
@@ -1150,6 +1152,9 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <unesc_tmpll>{BYTE_ESCAPE_SEQUENCE}                          { set_encoding(IS_UBACKSLASH_1); escaped_unicode_latin_1(); }
 <unesc_tmpll>{PERCENT_ESCAPE_SEQUENCE}                       { set_encoding(IS_UPERCENT); escaped_unicode_utf_8(); }
 <unesc_tmpll>{URL_ESCAPE_SEQUENCE}                           { set_encoding(IS_PERCENT); escaped_url_sequence_latin_1(); }
+<tmpll,unesc_tmpll>(\\\\)*\\{LITERAL_TEMPLATE_SUBST_START}   | /* escaped template substitution */
+<tmpll,unesc_tmpll>(\\\\)*\\{LITERAL_TEMPLATE_END}           | /* escaped backtick */
+<tmpll,unesc_tmpll>{LITERAL_TEMPLATE_TEXT}                   { dealias_append(); ECHO; }
 
 <regst>{LITERAL_REGEX_START}        { EXEC(literal_regex_start()) }
 <regex>{LITERAL_REGEX_END}          { EXEC(literal_regex_end()) }
@@ -1157,12 +1162,12 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <regex>\\{LF}                       |
 <regex>\\{CR}                       |
 <regex>{LINE_TERMINATORS}           { BEGIN(regst); RETURN(BAD_TOKEN) }
-<regex>{LITERAL_REGEX_SKIP}         { ECHO; }
-<regex>{LITERAL_REGEX_TEXT}         { ECHO; }
 <regex>{LITERAL_REGEX_G_OPEN}       { EXEC(literal_regex_g_open()) }
 <regex>{LITERAL_REGEX_G_CLOSE}      { EXEC(literal_regex_g_close()) }
 <regex>{UNICODE_ESCAPE_SEQUENCE}    |
 <regex>{HEX_ESCAPE_SEQUENCE}        { escaped_unicode_utf_8(); }
+<regex>{LITERAL_REGEX_SKIP}         { ECHO; }
+<regex>{LITERAL_REGEX_TEXT}         { ECHO; }
 <regex><<EOF>>                      { RETURN(SCRIPT_CONTINUE) }
 
 <divop>{DIV_OPERATOR}               |
@@ -1200,6 +1205,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 {KEYWORD_CATCH}                     { EXEC(keyword_catch()) }
 {KEYWORD_WHILE}                     { EXEC(keyword_while()) }
 {KEYWORD_B}                         { EXEC(keyword_B()) }
+{KEYWORD_NEW}                       { EXEC(keyword_new())}
 {KEYWORD_BA}                        { EXEC(keyword_BA()) }
 {KEYWORD_TRY}                       |
 {KEYWORD_ELSE}                      |
@@ -2120,6 +2126,13 @@ void JSTokenizer::dealias_identifier(bool id_part, bool assignment_start)
             dealias_reset();
         break;
     }
+    case ALIAS_NEW:
+    {
+        if (ident_norm())
+            break;
+        ident_ctx.add_alias(alias.c_str(), std::string(ident_ctx.substitute(alias.c_str(), false)));
+        alias_state = ALIAS_NONE;
+    }
     }
 }
 
@@ -2708,6 +2721,20 @@ JSTokenizer::JSRet JSTokenizer::keyword_B()
     EXEC(do_spacing(KEYWORD))
     ECHO;
     BEGIN(regst);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_new()
+{
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    if (token != DOT)
+        set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD))
+    ECHO;
+    BEGIN(regst);
+
+    if (alias_state == ALIAS_EQUALS)
+        alias_state = ALIAS_NEW;
     return EOS;
 }
 

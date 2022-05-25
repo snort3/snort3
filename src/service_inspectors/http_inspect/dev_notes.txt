@@ -255,7 +255,17 @@ limits.
 For example:
 
     var a = console.log
-    a("hello") // will be substituted to 'console.log("hello")'
+    a("hello")  // will be substituted to 'console.log("hello")'
+    a.foo.bar() // will be normalized as 'console.log.foo.bar()'. When variable is 'de-aliased',
+                // following identifiers are not normalized, just like identifiers from ident_ignore
+
+When an object is created using a 'new' keyword, and the class/constructor is found in ident_ignore
+list, the object will be tracked, and although its own identifier will be converted to normal form
+its property and function calls will be kept intact, as with ignored identifiers. 
+
+For example:
+    var obj = new Array()
+    obj.insert(1,2,3) // will be normalized to var_0000.insert(1,2,3)
 
 For properties and methods of objects that can be created implicitly, there is a
 js_norm_prop_ignore list. All names in the call chain after the first property or

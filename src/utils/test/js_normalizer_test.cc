@@ -2510,7 +2510,7 @@ TEST_CASE("split in opening tag", "[JSNormalizer]")
         const char dat2[] = "rip";
         const char dat3[] = "t>\";";
         const char exp1[] = "var str=\"<sc";
-        const char exp2[] = "rip";
+        const char exp2[] = "scrip";
         const char exp3[] = "";
         const char exp[] = "var str=\"";
 
@@ -2584,7 +2584,7 @@ TEST_CASE("split in closing tag", "[JSNormalizer]")
         const char dat2[] = "rip";
         const char dat3[] = "t>\";";
         const char exp1[] = "var str=\"</sc";
-        const char exp2[] = "rip";
+        const char exp2[] = "/scrip";
         const char exp3[] = "";
         const char exp[] = "var str=\"";
 

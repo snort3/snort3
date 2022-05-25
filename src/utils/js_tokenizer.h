@@ -137,6 +137,7 @@ private:
         ALIAS_PREFIX,     // var a +%possible PDU split%
                           // to handle ambiguity between a++, a+=, and a + b
         ALIAS_EQUALS,     // var a =
+        ALIAS_NEW,        // var a = new
         ALIAS_VALUE       // var a = eval
     };
 
@@ -285,6 +286,7 @@ private:
     JSRet keyword_catch();
     JSRet keyword_while();
     JSRet keyword_B();
+    JSRet keyword_new();
     JSRet keyword_BA();
     JSRet keyword_finally();
     JSRet keyword_do();
