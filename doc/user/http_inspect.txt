@@ -279,6 +279,15 @@ For example:
     var a = console.log
     a("hello") // will be substituted to 'console.log("hello")'
 
+For class names and constructors in the list, when the class is used with the
+keyword 'new', created object will be tracked, and its properties will be kept intact.
+Identifier of the object itself, however, will be brought to unified form.
+
+For example:
+
+    var o = new Array() // normalized to 'var var_0000=new Array()'
+    o.push(10) // normalized to 'var_0000.push(10)'
+
 The default list of ignore-identifiers is present in "snort_defaults.lua".
 
 Unescape function names should remain intact in the output. They ought to be
