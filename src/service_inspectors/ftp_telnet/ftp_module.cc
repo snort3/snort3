@@ -402,7 +402,7 @@ FTP_SERVER_PROTO_CONF* FtpServerModule::get_data()
 bool FtpServerModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("check_encrypted") )
-        conf->detect_encrypted = v.get_bool();
+        conf->check_encrypted_data = v.get_bool();
 
     else if ( v.is("chk_str_fmt") )
         add_commands(v, CMD_CHECK);
@@ -432,7 +432,7 @@ bool FtpServerModule::set(const char*, Value& v, SnortConfig*)
         add_commands(v, CMD_ENCR);
 
     else if ( v.is("encrypted_traffic") )
-        conf->check_encrypted_data = v.get_bool();
+        conf->detect_encrypted = v.get_bool();
 
     else if ( v.is("file_get_cmds") )
         add_commands(v, CMD_XFER|CMD_GET);

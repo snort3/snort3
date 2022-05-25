@@ -1443,7 +1443,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                 {
                     if (!isalpha((int)(*ptr)))
                     {
-                        if (!isascii((int)(*ptr)) || !isprint((int)(*ptr)))
+                        if (!isascii((int)(*ptr)) || (!isprint((int)(*ptr)) && (!isspace((int)(*ptr)))))
                         {
                             encrypted = 1;
                         }
@@ -1520,7 +1520,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                 {
                     if (!isdigit((int)(*ptr)))
                     {
-                        if (!isascii((int)(*ptr)) || !isprint((int)(*ptr)))
+                        if (!isascii((int)(*ptr)) || (!isprint((int)(*ptr)) && (!isspace((int)(*ptr)))))
                         {
                             encrypted = 1;
                         }
