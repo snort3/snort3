@@ -238,7 +238,8 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                 if ((type != FT_DATA) && (frame_length + FRAME_HEADER_LENGTH > MAX_OCTETS))
                 {
                     // FIXIT-E long non-data frames may need to be supported
-                    // FIXIT-E need an alert and infraction
+                    *session_data->infractions[source_id] += INF_NON_DATA_FRAME_TOO_LONG;
+                    session_data->events[source_id]->create_event(EVENT_NON_DATA_FRAME_TOO_LONG);
                     return StreamSplitter::ABORT;
                 }
 

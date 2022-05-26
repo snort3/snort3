@@ -1459,6 +1459,10 @@ HTTP/2 HPACK table size update exceeds max value set by decoder in SETTINGS fram
 
 Nonempty HTTP/2 Data frame where a message body was not expected.
 
+121:38
+
+HTTP/2 non-Data frame longer than 63780 bytes
+
 122:1
 
 Basic one host to one host TCP portscan where multiple TCP ports are scanned on
