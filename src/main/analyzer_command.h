@@ -31,6 +31,9 @@ class Swapper;
 
 namespace snort
 {
+class ScratchAllocator;
+struct SnortConfig;
+
 class SFDAQInstance;
 
 class AnalyzerCommand
@@ -183,6 +186,20 @@ public:
     bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "DAQ_SWAP"; }
     ~ACDAQSwap() override;
+};
+
+class ACScratchUpdate : public snort::AnalyzerCommand
+{
+public:
+    ACScratchUpdate(snort::SnortConfig* sc, std::vector<snort::ScratchAllocator*>& handlers,
+        ControlConn* conn) : AnalyzerCommand(conn), sc(sc), handlers(handlers)
+    { }
+    bool execute(Analyzer&, void**) override;
+    const char* stringify() override { return "SCRATCH_UPDATE"; }
+    ~ACScratchUpdate() override;
+private:
+    snort::SnortConfig* sc;
+    std::vector<snort::ScratchAllocator*>& handlers;
 };
 
 namespace snort

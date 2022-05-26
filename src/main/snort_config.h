@@ -128,6 +128,7 @@ enum DumpConfigType
 };
 
 class ConfigOutput;
+class ControlConn;
 class FastPatternConfig;
 class RuleStateMap;
 class TraceConfig;
@@ -176,6 +177,7 @@ public:
 
     void setup();
     void post_setup();
+    void update_scratch(ControlConn*);
     bool verify() const;
 
     void merge(const SnortConfig*);

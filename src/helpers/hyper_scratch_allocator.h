@@ -44,7 +44,8 @@ public:
 
     bool setup(SnortConfig*) override;
     void cleanup(SnortConfig*) override;
-
+    void update(SnortConfig*) override
+    { }
     bool allocate(hs_database_t*);
 
     hs_scratch_t* get()

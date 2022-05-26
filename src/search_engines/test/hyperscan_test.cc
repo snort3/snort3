@@ -23,6 +23,7 @@
 #endif
 
 #include <cstring>
+#include <hs_runtime.h>
 
 #include "framework/base_api.h"
 #include "framework/counts.h"
@@ -295,6 +296,59 @@ TEST(mpse_hs_multi, single)
 
     CHECK(hs1->search((const uint8_t*)"snafu", 5, match, nullptr, &state) == 0);
     CHECK(hits == 1);
+}
+
+//-------------------------------------------------------------------------
+// scratch update test
+//-------------------------------------------------------------------------
+
+TEST_GROUP(mpse_hs_scratch)
+{
+    Module* mod = nullptr;
+    Mpse* hs1 = nullptr;
+    Mpse* hs2 = nullptr;
+    const MpseApi* mpse_api = (const MpseApi*)se_hyperscan;
+
+    void setup() override
+    {
+        CHECK(se_hyperscan);
+        mod = mpse_api->base.mod_ctor();
+        hs1 = mpse_api->ctor(snort_conf, nullptr, nullptr);
+        hs2 = mpse_api->ctor(snort_conf, nullptr, nullptr);
+        CHECK(hs1);
+        CHECK(hs2);
+    }
+    void teardown() override
+    {
+        mpse_api->dtor(hs1);
+        mpse_api->dtor(hs2);
+        scratcher->cleanup(snort_conf);
+        mpse_api->base.mod_dtor(mod);
+    }
+};
+
+TEST(mpse_hs_scratch, scratch_update)
+{
+    Mpse::PatternDescriptor desc;
+    CHECK(hs1->add_pattern((const uint8_t*)"foo", 3, desc, s_user) == 0);
+    CHECK(hs1->prep_patterns(snort_conf) == 0);
+    CHECK(hs1->get_pattern_count() == 1);
+
+    scratcher->setup(snort_conf);
+
+    size_t instance_sz1;
+    hs_scratch_size((hs_scratch_t*)snort_conf->state[0][0], &instance_sz1);
+
+    for (unsigned i = 0; i < 30; i++)
+        CHECK(hs2->add_pattern((const uint8_t*)"bar", 3, desc, s_user) == 0);
+    CHECK(hs2->prep_patterns(snort_conf) == 0);
+    CHECK(hs2->get_pattern_count() == 30);
+
+    scratcher->update(snort_conf);
+
+    size_t instance_sz2;
+    hs_scratch_size((hs_scratch_t*)snort_conf->state[0][0], &instance_sz2);
+    CHECK(instance_sz2 > instance_sz1);
 }
 
 //-------------------------------------------------------------------------
