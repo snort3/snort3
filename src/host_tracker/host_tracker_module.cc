@@ -23,10 +23,11 @@
 #endif
 
 #include "host_tracker_module.h"
-#include "host_cache_allocator.cc"
 
 #include "log/messages.h"
 #include "main/snort_config.h"
+
+#include "cache_allocator.cc"
 
 using namespace snort;
 

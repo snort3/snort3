@@ -28,6 +28,8 @@
 #include <pcre.h>
 #include <unordered_map>
 
+#include "host_tracker/cache_allocator.cc"
+#include "host_tracker/host_cache.h"
 #include "log/messages.h"
 #include "main/snort_debug.h"
 #include "main/snort_types.h"
@@ -50,8 +52,6 @@
 #include "lua_detector_util.h"
 #include "service_plugins/service_discovery.h"
 #include "service_plugins/service_ssl.h"
-#include "host_tracker/host_cache.h"
-#include "host_tracker/host_cache_allocator.cc"
 
 using namespace snort;
 using namespace std;

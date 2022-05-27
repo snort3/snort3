@@ -27,13 +27,14 @@
 #include <cassert>
 
 #include "hash/lru_cache_shared.h"
-#include "host_cache_interface.h"
-#include "host_cache_allocator.h"
 #include "host_tracker.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "sfip/sf_ip.h"
 #include "utils/stats.h"
+
+#include "cache_allocator.h"
+#include "cache_interface.h"
 
 // Used to create hash of key for indexing into cache.
 //
@@ -61,7 +62,7 @@ struct IpEqualTo
 template<typename Key, typename Value, typename Hash, typename Eq = std::equal_to<Key>,
     typename Purgatory = std::vector<std::shared_ptr<Value>>>
 class LruCacheSharedMemcap : public LruCacheShared<Key, Value, Hash, Eq, Purgatory>,
-    public HostCacheInterface
+    public CacheInterface
 {
 public:
     using LruBase = LruCacheShared<Key, Value, Hash, Eq, Purgatory>;

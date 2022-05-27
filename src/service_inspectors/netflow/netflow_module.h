@@ -25,6 +25,7 @@
 #include <unordered_map>
 
 #include "framework/module.h"
+#include "hash/lru_cache_local.h"
 #include "sfip/sf_cidr.h"
 #include "utils/util.h"
 
@@ -120,9 +121,11 @@ struct NetflowConfig
     const char* dump_file = nullptr;
     std::unordered_map <snort::SfIp, NetflowRules, NetflowHash> device_rule_map;
     uint32_t update_timeout = 0;
+    size_t flow_memcap = 0;
+    size_t template_memcap = 0;
 };
 
-struct NetflowStats
+struct NetflowStats : public LruCacheLocalStats
 {
     PegCount invalid_netflow_record;
     PegCount packets;

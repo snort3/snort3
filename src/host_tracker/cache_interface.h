@@ -16,12 +16,12 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// host_cache_interface.h author Silviu Minut <sminut@cisco.com>
+// cache_interface.h author Silviu Minut <sminut@cisco.com>
 
-#ifndef HOST_CACHE_INTERFACE_H
-#define HOST_CACHE_INTERFACE_H
+#ifndef CACHE_INTERFACE_H
+#define CACHE_INTERFACE_H
 
-class HostCacheInterface
+class CacheInterface
 {
 public:
 

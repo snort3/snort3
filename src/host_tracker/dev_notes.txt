@@ -125,9 +125,9 @@ a single .h file. However, to break this dependency, we have to split the
 Allocator into a .h and a .cc file. We include the .h file in HostTracker
 and declare HostCache extern only in the .cc file. Then, we have to include
 the .cc file also in the HostTracker implementation file because Allocator
-is templated. See host_cache.h, host_cache_allocator.h, host_cache_allocator.cc,
+is templated. See host_cache.h, cache_allocator.h, cache_allocator.cc,
 host_tracker.h and host_tracker.cc.
 
-Illustrative examples are test/host_cache_allocator_test.cc (standalone
+Illustrative examples are test/cache_allocator_test.cc (standalone
 host cache / allocator example) and test/host_cache_allocator_ht_test.cc
 (host_cache / allocator with host tracker example).

@@ -1,5 +1,6 @@
 
 set ( FILE_LIST
+    netflow_cache.h
     netflow_headers.h
     netflow_module.cc
     netflow_module.h

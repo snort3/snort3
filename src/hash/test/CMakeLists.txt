@@ -1,3 +1,7 @@
+add_cpputest( lru_cache_local_test
+    SOURCES ../lru_cache_local.h
+)
+
 add_cpputest( lru_cache_shared_test
     SOURCES ../lru_cache_shared.cc
 )

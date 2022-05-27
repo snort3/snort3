@@ -23,9 +23,6 @@
 #include "config.h"
 #endif
 
-#include "netflow_headers.h"
-#include "netflow_module.h"
-
 #include <fstream>
 #include <mutex>
 #include <sys/stat.h>
@@ -36,21 +33,15 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "pub_sub/netflow_event.h"
-#include "sfip/sf_ip.h"
 #include "src/utils/endian.h"
 #include "utils/util.h"
+
+#include "netflow_cache.cc"
 
 using namespace snort;
 
 THREAD_LOCAL NetflowStats netflow_stats;
 THREAD_LOCAL ProfileStats netflow_perf_stats;
-
-// compare struct to use with ip sort
-struct IpCompare
-{
-    bool operator()(const snort::SfIp& a, const snort::SfIp& b)
-    { return a.less_than(b); }
-};
 
 // Used to ensure we fully populate the record; can't rely on the actual values being zero
 struct RecordStatus
@@ -69,22 +60,22 @@ struct RecordStatus
 // static variables
 // -----------------------------------------------------------------------------
 
-// Used to avoid creating multiple events for the same initiator IP.
-// Cache can be thread local since Netflow packets coming from a Netflow
-// device will go to the same thread.
-typedef std::unordered_map<snort::SfIp, NetflowSessionRecord, NetflowHash> NetflowCache;
-static THREAD_LOCAL NetflowCache* netflow_cache = nullptr;
+// temporary cache required to dump the output
+typedef std::pair<snort::SfIp, NetflowSessionRecord> IpRecord;
+typedef std::vector<IpRecord> DumpCache;
+static DumpCache* dump_cache = nullptr;
 
-// cache required to dump the output
-static NetflowCache* dump_cache = nullptr;
-
-// Netflow version 9 Template fields cache.
-typedef std::unordered_map<std::pair<uint16_t, snort::SfIp>, std::vector<Netflow9TemplateField>, TemplateIpHash> TemplateFieldCache;
-static THREAD_LOCAL TemplateFieldCache* template_cache = nullptr;
+// compare struct to use with ip sort
+struct IpCompare
+{
+    bool operator()(const IpRecord& a, const IpRecord& b)
+    { return a.first.less_than(b.first); }
+};
 
 // -----------------------------------------------------------------------------
 // static functions
 // -----------------------------------------------------------------------------
+
 static bool filter_record(const NetflowRules* rules, const int zone,
     const SfIp* src, const SfIp* dst)
 {
@@ -111,16 +102,16 @@ static bool filter_record(const NetflowRules* rules, const int zone,
 }
 
 static bool version_9_record_update(const unsigned char* data, uint32_t unix_secs,
-    std::vector<Netflow9TemplateField>::iterator field, NetflowSessionRecord &record,
+    uint16_t field_type, uint16_t field_length, NetflowSessionRecord &record,
     RecordStatus& record_status)
 {
 
-    switch ( field->field_type )
+    switch ( field_type )
     {
         case NETFLOW_PROTOCOL:
 
             // invalid protocol
-            if( field->field_length != sizeof(record.proto) )
+            if( field_length != sizeof(record.proto) )
                 return false;
 
             record.proto = (uint8_t)*data;
@@ -129,7 +120,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
         case NETFLOW_TCP_FLAGS:
 
             // invalid tcp flags
-            if( field->field_length != sizeof(record.tcp_flags ) )
+            if( field_length != sizeof(record.tcp_flags ) )
                 return false;
 
             record.tcp_flags = (uint8_t)*data;
@@ -138,7 +129,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
         case NETFLOW_SRC_PORT:
 
             // invalid src port
-            if( field->field_length != sizeof(record.initiator_port) )
+            if( field_length != sizeof(record.initiator_port) )
                 return false;
 
             record.initiator_port = ntohs(*(const uint16_t*) data);
@@ -147,7 +138,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
         case NETFLOW_SRC_IP:
 
             // invalid source ip
-            if( field->field_length != sizeof(uint32_t) )
+            if( field_length != sizeof(uint32_t) )
                 return false;
 
             // Invalid source IP address provided
@@ -169,7 +160,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
         case NETFLOW_DST_PORT:
 
             // invalid destination port
-            if( field->field_length != sizeof(record.responder_port) )
+            if( field_length != sizeof(record.responder_port) )
                 return false;
 
             record.responder_port = ntohs(*(const uint16_t*) data);
@@ -178,7 +169,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
         case NETFLOW_DST_IP:
 
             // invalid length
-            if( field->field_length != sizeof(uint32_t) )
+            if( field_length != sizeof(uint32_t) )
                 return false;
 
             // Invalid destination IP address
@@ -200,7 +191,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
         case NETFLOW_IPV4_NEXT_HOP:
 
             // invalid length
-            if( field->field_length != sizeof(uint32_t) )
+            if( field_length != sizeof(uint32_t) )
                 return false;
 
             // Invalid next-hop IP address
@@ -210,7 +201,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 
         case NETFLOW_LAST_PKT:
 
-            if( field->field_length != sizeof(record.last_pkt_second) )
+            if( field_length != sizeof(record.last_pkt_second) )
                 return false;
 
             record.last_pkt_second = unix_secs + ntohl(*(const time_t*)data)/1000;
@@ -224,7 +215,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 
         case NETFLOW_FIRST_PKT:
 
-            if( field->field_length != sizeof(record.first_pkt_second) )
+            if( field_length != sizeof(record.first_pkt_second) )
                 return false;
 
             record.first_pkt_second = unix_secs + ntohl(*(const time_t*)data)/1000;
@@ -238,11 +229,11 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 
         case NETFLOW_IN_BYTES:
 
-            if ( field->field_length == sizeof(uint64_t) )
+            if ( field_length == sizeof(uint64_t) )
                 record.initiator_bytes = ntohll(*(const uint64_t*)data);
-            else if ( field->field_length == sizeof(uint32_t) )
+            else if ( field_length == sizeof(uint32_t) )
                 record.initiator_bytes = (uint64_t)ntohl(*(const uint32_t*)data);
-            else if ( field->field_length == sizeof(uint16_t) )
+            else if ( field_length == sizeof(uint16_t) )
                 record.initiator_bytes = (uint64_t)ntohs(*(const uint16_t*) data);
             else
                 return false;
@@ -252,11 +243,11 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 
         case NETFLOW_IN_PKTS:
 
-            if ( field->field_length == sizeof(uint64_t) )
+            if ( field_length == sizeof(uint64_t) )
                 record.initiator_pkts = ntohll(*(const uint64_t*)data);
-            else if ( field->field_length == sizeof(uint32_t) )
+            else if ( field_length == sizeof(uint32_t) )
                 record.initiator_pkts = (uint64_t)ntohl(*(const uint32_t*)data);
-            else if ( field->field_length == sizeof(uint16_t) )
+            else if ( field_length == sizeof(uint16_t) )
                 record.initiator_pkts = (uint64_t)ntohs(*(const uint16_t*) data);
             else
                 return false;
@@ -266,7 +257,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 
         case NETFLOW_SRC_TOS:
 
-            if( field->field_length != sizeof(record.nf_src_tos) )
+            if( field_length != sizeof(record.nf_src_tos) )
                 return false;
 
             record.nf_src_tos = (uint8_t)*data;
@@ -275,7 +266,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 
         case NETFLOW_DST_TOS:
 
-            if( field->field_length != sizeof(record.nf_dst_tos))
+            if( field_length != sizeof(record.nf_dst_tos))
                 return false;
 
             record.nf_dst_tos = (uint8_t)*data;
@@ -284,9 +275,9 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 
         case NETFLOW_SNMP_IN:
 
-            if ( field->field_length == sizeof(uint32_t) )
+            if ( field_length == sizeof(uint32_t) )
                 record.nf_snmp_in = ntohl(*(const uint32_t*)data);
-            else if ( field->field_length == sizeof(uint16_t) )
+            else if ( field_length == sizeof(uint16_t) )
                 record.nf_snmp_in = (uint32_t)ntohs(*(const uint16_t*) data);
             else
                 return false;
@@ -295,9 +286,9 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 
         case NETFLOW_SNMP_OUT:
 
-            if ( field->field_length == sizeof(uint32_t) )
+            if ( field_length == sizeof(uint32_t) )
                 record.nf_snmp_out = ntohl(*(const uint32_t*)data);
-            else if ( field->field_length == sizeof(uint16_t) )
+            else if ( field_length == sizeof(uint16_t) )
                 record.nf_snmp_out = (uint32_t)ntohs(*(const uint16_t*) data);
             else
                 return false;
@@ -306,9 +297,9 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 
         case NETFLOW_SRC_AS:
 
-            if( field->field_length == sizeof(uint16_t) )
+            if( field_length == sizeof(uint16_t) )
                 record.nf_src_as = (uint32_t)ntohs(*(const uint16_t*) data);
-            else if( field->field_length == sizeof(uint32_t) )
+            else if( field_length == sizeof(uint32_t) )
                 record.nf_src_as = ntohl(*(const uint32_t*)data);
             else
                 return false;
@@ -316,9 +307,9 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 
         case NETFLOW_DST_AS:
 
-            if( field->field_length == sizeof(uint16_t) )
+            if( field_length == sizeof(uint16_t) )
                 record.nf_dst_as = (uint32_t)ntohs(*(const uint16_t*) data);
-            else if( field->field_length == sizeof(uint32_t) )
+            else if( field_length == sizeof(uint32_t) )
                 record.nf_dst_as = ntohl(*(const uint32_t*)data);
             else
                 return false;
@@ -327,7 +318,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
         case NETFLOW_SRC_MASK:
         case NETFLOW_SRC_MASK_IPV6:
 
-            if( field->field_length != sizeof(record.nf_src_mask) )
+            if( field_length != sizeof(record.nf_src_mask) )
                 return false;
 
             record.nf_src_mask = (uint8_t)*data;
@@ -336,7 +327,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
         case NETFLOW_DST_MASK:
         case NETFLOW_DST_MASK_IPV6:
 
-            if( field->field_length != sizeof(record.nf_dst_mask) )
+            if( field_length != sizeof(record.nf_dst_mask) )
                 return false;
 
             record.nf_dst_mask = (uint8_t)*data;
@@ -413,8 +404,7 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
         // It's a data flowset
         if ( f_id > 255 && template_cache->count(ti_key) > 0 )
         {
-            std::vector<Netflow9TemplateField> tf;
-            tf = template_cache->at(ti_key);
+            auto& tf = template_cache->find_else_create(ti_key);
 
             while( data < flowset_end && records )
             {
@@ -432,7 +422,7 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
                     if ( !bad_field )
                     {
                         bool status = version_9_record_update(data, header.unix_secs,
-                            t_field, record, record_status);
+                            t_field->field_type, t_field->field_length, record, record_status);
 
                         if ( !status )
                             bad_field = true;
@@ -474,19 +464,8 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
                     DataBus::publish(NETFLOW_EVENT, event);
                 }
 
-                // check if record exists
-                auto result = netflow_cache->find(record.initiator_ip);
-
-                if ( result != netflow_cache->end() )
-                {
-                    // record exists and hence first remove the element
-                    netflow_cache->erase(record.initiator_ip);
-                    --netflow_stats.unique_flows;
-                }
-
-                // emplace doesn't replace element if exist, hence removing it first
-                netflow_cache->emplace(record.initiator_ip, record);
-                ++netflow_stats.unique_flows;
+                if ( netflow_cache->add(record.initiator_ip, record, true) )
+                    ++netflow_stats.unique_flows;
 
                 records--;
             }
@@ -527,20 +506,8 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
 
                 if ( field_count > 0 )
                 {
-                    auto t_key = std::make_pair(t_id, device_ip);
-
-                    // remove if there any entry exists for this template
-                    auto is_erased = template_cache->erase(t_key);
-
-                    // count only unique templates
-                    if ( is_erased == 1 )
-                        --netflow_stats.v9_templates;
-
-                    // add template to cache
-                    template_cache->emplace(t_key, tf);
-
-                    // update the total templates count
-                    ++netflow_stats.v9_templates;
+                    if ( template_cache->insert(std::make_pair(t_id, device_ip), tf) )
+                        ++netflow_stats.v9_templates;
 
                     // don't count template as record
                     netflow_stats.records--;
@@ -660,11 +627,7 @@ static bool decode_netflow_v5(const unsigned char* data, uint16_t size,
         record.nf_src_mask = precord->src_mask;
         record.nf_dst_mask = precord->dst_mask;
 
-        // insert record
-        auto result = netflow_cache->emplace(record.initiator_ip, record);
-
-        // new unique record
-        if ( result.second )
+        if ( netflow_cache->add(record.initiator_ip, record, false) )
             ++netflow_stats.unique_flows;
 
         // send create_host and create_service flags too so that rna event handler can log those
@@ -789,6 +752,8 @@ static void show_device(const NetflowRule& d, bool is_exclude)
 
 void NetflowInspector::show(const SnortConfig*) const
 {
+    ConfigLogger::log_value("flow_memcap", config->flow_memcap);
+    ConfigLogger::log_value("template_memcap", config->template_memcap);
     ConfigLogger::log_value("dump_file", config->dump_file);
     ConfigLogger::log_value("update_timeout", config->update_timeout);
     bool log_header = true;
@@ -816,29 +781,21 @@ void NetflowInspector::show(const SnortConfig*) const
 
 void NetflowInspector::stringify(std::ofstream& file_stream)
 {
-    std::vector<snort::SfIp> keys;
-    keys.reserve(dump_cache->size());
-
-    for (const auto& elem : *dump_cache)
-        keys.push_back(elem.first);
-
-    std::sort(keys.begin(),keys.end(), IpCompare());
+    std::sort(dump_cache->begin(), dump_cache->end(), IpCompare());
 
     std::string str;
     SfIpString ip_str;
     uint32_t i = 0;
 
-    auto& cache = *dump_cache;
-
-    for (auto elem : keys)
+    for (auto& elem : *dump_cache)
     {
-        NetflowSessionRecord& record = cache[elem];
+        NetflowSessionRecord& record = elem.second;
         str = "Netflow Record #";
         str += std::to_string(++i);
         str += "\n";
 
         str += "    Initiator IP (Port): ";
-        str += elem.ntop(ip_str);
+        str += elem.first.ntop(ip_str);
         str += " (" + std::to_string(record.initiator_port) + ")";
 
         str += " -> Responder IP (Port): ";
@@ -911,7 +868,7 @@ NetflowInspector::NetflowInspector(const NetflowConfig* pc)
     {
         // create dump cache
         if ( ! dump_cache )
-            dump_cache = new NetflowCache;
+            dump_cache = new DumpCache;
     }
 }
 
@@ -958,11 +915,10 @@ void NetflowInspector::eval(Packet* p)
 void NetflowInspector::tinit()
 {
     if ( !netflow_cache )
-        netflow_cache = new NetflowCache;
+        netflow_cache = new NetflowCache(config->flow_memcap, netflow_stats);
 
     if ( !template_cache )
-        template_cache = new TemplateFieldCache;
-
+        template_cache = new TemplateFieldCache(config->template_memcap, netflow_stats);
 }
 
 void NetflowInspector::tterm()
@@ -971,10 +927,7 @@ void NetflowInspector::tterm()
     {
         static std::mutex stats_mutex;
         std::lock_guard<std::mutex> lock(stats_mutex);
-        {
-            // insert each cache
-            dump_cache->insert(netflow_cache->begin(), netflow_cache->end());
-        }
+        netflow_cache->get_all_values(*dump_cache);
     }
     delete netflow_cache;
     delete template_cache;

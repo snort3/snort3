@@ -52,7 +52,7 @@ add_cpputest( host_cache_allocator_ht_test
         ../../sfip/sf_ip.cc
 )
 
-add_cpputest( host_cache_allocator_test
+add_cpputest( cache_allocator_test
     SOURCES
         ../host_tracker.cc
         ../../network_inspectors/rna/test/rna_flow_stubs.cc

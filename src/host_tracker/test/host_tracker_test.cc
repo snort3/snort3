@@ -25,8 +25,8 @@
 
 #include <cstring>
 
+#include "host_tracker/cache_allocator.cc"
 #include "host_tracker/host_cache.h"
-#include "host_tracker/host_cache_allocator.cc"
 #include "network_inspectors/rna/rna_flow.h"
 
 #include <CppUTest/CommandLineTestRunner.h>

@@ -28,8 +28,8 @@
 #include "network_inspectors/rna/rna_flow.h"
 #include "utils/util.h"
 
+#include "cache_allocator.cc"
 #include "host_cache.h"
-#include "host_cache_allocator.cc"
 #include "host_tracker.h"
 
 using namespace snort;

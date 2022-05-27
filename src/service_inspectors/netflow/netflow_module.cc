@@ -65,11 +65,18 @@ static const Parameter netflow_params[] =
     { "rules", Parameter::PT_LIST, device_rule_params, nullptr,
       "list of NetFlow device rules" },
 
+    { "flow_memcap", Parameter::PT_INT, "0:maxSZ", "0",
+      "maximum memory for flow record cache in bytes, 0 = unlimited" },
+
+    { "template_memcap", Parameter::PT_INT, "0:maxSZ", "0",
+      "maximum memory for template cache in bytes, 0 = unlimited" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 static const PegInfo netflow_pegs[] =
 {
+    LRU_CACHE_LOCAL_PEGS("netflow"),
     { CountType::SUM, "invalid_netflow_record", "count of invalid netflow records" },
     { CountType::SUM, "packets", "total packets processed" },
     { CountType::SUM, "records", "total records found in netflow data" },
@@ -137,7 +144,11 @@ bool NetflowModule::end(const char* fqn, int idx, SnortConfig*)
 }
 bool NetflowModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("dump_file") )
+    if ( v.is("flow_memcap") )
+        conf->flow_memcap = v.get_size();
+    else if ( v.is("template_memcap") )
+        conf->template_memcap = v.get_size();
+    else if ( v.is("dump_file") )
     {
         if ( conf->dump_file )
             snort_free((void*)conf->dump_file);

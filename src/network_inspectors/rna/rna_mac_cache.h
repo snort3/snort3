@@ -23,13 +23,13 @@
 
 #include "hash/hash_key_operations.h"
 // Non-standard, required to include template definition across compiler translation units
-#include "host_tracker/host_cache_allocator.cc"
-#include "host_tracker/host_cache_allocator.h"
+#include "host_tracker/cache_allocator.cc"
+#include "host_tracker/cache_allocator.h"
 
 #define MAC_CACHE_INITIAL_SIZE 1024 * 1024 // Default to 1 MB
 
 template <class T>
-class HostCacheAllocMac : public HostCacheAlloc<T>
+class HostCacheAllocMac : public CacheAlloc<T>
 {
 public:
     template <class U>
@@ -38,7 +38,7 @@ public:
         typedef HostCacheAllocMac<U> other;
     };
 
-    using HostCacheAlloc<T>::lru;
+    using CacheAlloc<T>::lru;
 
     HostCacheAllocMac();
 };

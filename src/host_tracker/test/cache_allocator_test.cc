@@ -16,14 +16,14 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// host_cache_allocator_test.cc author Silviu Minut <sminut@cisco.com>
+// cache_allocator_test.cc author Silviu Minut <sminut@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include "host_tracker/host_cache.h"
-#include "host_tracker/host_cache_allocator.cc"
+#include "host_tracker/cache_allocator.cc"
 #include "network_inspectors/rna/rna_flow.h"
 
 #include <string>
@@ -38,9 +38,9 @@ HostCacheIp host_cache(100);
 using namespace std;
 using namespace snort;
 
-// Derive an allocator from HostCacheAlloc:
+// Derive an allocator from CacheAlloc:
 template <class T>
-class Allocator : public HostCacheAlloc<T>
+class Allocator : public CacheAlloc<T>
 {
 public:
 
@@ -51,7 +51,7 @@ public:
         typedef Allocator<U> other;
     };
 
-    using HostCacheAlloc<T>::lru;
+    using CacheAlloc<T>::lru;
 
     Allocator();
 };
@@ -70,7 +70,7 @@ typedef LruCacheSharedMemcap<string, Item, hash<string>> CacheType;
 CacheType cache(100);
 
 // Implement the allocator constructor AFTER we have a cache object
-// to point to and the implementation of our base HostCacheAlloc:
+// to point to and the implementation of our base CacheAlloc:
 template <class T>
 Allocator<T>::Allocator()
 {

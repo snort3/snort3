@@ -33,13 +33,14 @@
 #include <vector>
 
 #include "framework/counts.h"
-#include "host_cache_allocator.h"
 #include "main/snort_types.h"
 #include "main/thread.h"
 #include "network_inspectors/appid/application_ids.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/vlan.h"
 #include "time/packet_time.h"
+
+#include "cache_allocator.h"
 
 struct HostTrackerStats
 {

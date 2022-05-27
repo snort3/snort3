@@ -16,24 +16,24 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// host_cache_allocator.h author Silviu Minut <sminut@cisco.com>
+// cache_allocator.h author Silviu Minut <sminut@cisco.com>
 
-#ifndef HOST_CACHE_ALLOCATOR_H
-#define HOST_CACHE_ALLOCATOR_H
+#ifndef CACHE_ALLOCATOR_H
+#define CACHE_ALLOCATOR_H
 
 #include <cassert>
 
-#include "host_cache_interface.h"
+#include "cache_interface.h"
 
 template <class T>
-class HostCacheAlloc : public std::allocator<T>
+class CacheAlloc : public std::allocator<T>
 {
 public:
 
     template <class U>
     struct rebind
     {
-        typedef HostCacheAlloc<U> other;
+        typedef CacheAlloc<U> other;
     };
 
     T* allocate(std::size_t n);
@@ -41,11 +41,11 @@ public:
 
 protected:
 
-    HostCacheInterface* lru = nullptr;
+    CacheInterface* lru = nullptr;
 };
 
 template <class T>
-T* HostCacheAlloc<T>::allocate(std::size_t n)
+T* CacheAlloc<T>::allocate(std::size_t n)
 {
     size_t sz = n * sizeof(T);
     T* out = std::allocator<T>::allocate(n);
@@ -54,7 +54,7 @@ T* HostCacheAlloc<T>::allocate(std::size_t n)
 }
 
 template <class T>
-void HostCacheAlloc<T>::deallocate(T* p, std::size_t n) noexcept
+void CacheAlloc<T>::deallocate(T* p, std::size_t n) noexcept
 {
     size_t sz = n * sizeof(T);
     std::allocator<T>::deallocate(p, n);
@@ -63,13 +63,13 @@ void HostCacheAlloc<T>::deallocate(T* p, std::size_t n) noexcept
 
 
 // Trivial derived allocator, pointing to their own host cache.
-// HostCacheAllocIp has a HostCacheInterface* pointing to an lru cache
+// HostCacheAllocIp has a CacheInterface* pointing to an lru cache
 // instantiated using snort::SfIp as the key. See host_cache.h.
 // We can create different cache types by instantiating the lru cache using
-// different keys and derive here allocators with HostCacheInterface*
+// different keys and derive here allocators with CacheInterface*
 // pointing to the appropriate lru cache object.
 template <class T>
-class HostCacheAllocIp : public HostCacheAlloc<T>
+class HostCacheAllocIp : public CacheAlloc<T>
 {
 public:
 
@@ -80,7 +80,7 @@ public:
         typedef HostCacheAllocIp<U> other;
     };
 
-    using HostCacheAlloc<T>::lru;
+    using CacheAlloc<T>::lru;
 
     HostCacheAllocIp();
 

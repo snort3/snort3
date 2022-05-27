@@ -4,6 +4,7 @@ set (HASH_INCLUDES
     hashes.h
     hash_defs.h
     hash_key_operations.h
+    lru_cache_local.h
     lru_cache_shared.h
     xhash.h
 )

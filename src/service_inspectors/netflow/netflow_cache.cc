@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2022-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,21 +16,31 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// host_cache_allocator.cc author Silviu Minut <sminut@cisco.com>
+// netflow_cache.cc author Masud Hasan <mashasan@cisco.com>
+
+#ifndef NETFLOW_CACHE_CC
+#define NETFLOW_CACHE_CC
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#ifndef HOST_CACHE_ALLOCATOR_CC
-#define HOST_CACHE_ALLOCATOR_CC
+#include "netflow_cache.h"
 
-#include "host_cache.h"
+THREAD_LOCAL NetflowCache* netflow_cache = nullptr;
 
 template <class T>
-HostCacheAllocIp<T>::HostCacheAllocIp()
+LruCacheAllocNetflow<T>::LruCacheAllocNetflow()
 {
-    lru = &host_cache;
+    lru = netflow_cache;
+}
+
+THREAD_LOCAL TemplateFieldCache* template_cache = nullptr;
+
+template <class T>
+LruCacheAllocTemplate<T>::LruCacheAllocTemplate()
+{
+    lru = template_cache;
 }
 
 #endif
