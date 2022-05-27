@@ -74,18 +74,74 @@ TEST_CASE("Sequence parsing", "[JSNormalizer]")
             "'\u0020 \u00EB \u0123 \u4567 \u89aA \ubBcC \u00dD \ueEfF'"
         );
 
+    SECTION("binary")
+    {
+        test_normalization(
+            "String.fromCharCode(0b1, 0B1100 ,0b11101011, 0B000101011001, 0b0001101010000101)",
+            "'\u0001\u000c\u00EB\u0159\u1a85'"
+        );
+        test_normalization(
+            "String.fromCharCode(0b10000000000000000)",
+            "'\xf0\x90\x80\x80'"
+        );
+        test_normalization(
+            "String.fromCharCode(0B10000000000000000)",
+            "'\xf0\x90\x80\x80'"
+        );
+        test_normalization(
+            "String.fromCodePoint(0b1000000000000000000000)",
+            "'\xf7\xbf\xbf\xbf'"
+        );
+        test_normalization(
+            "String.fromCodePoint(0B1000000000000000000000)",
+            "'\xf7\xbf\xbf\xbf'"
+        );
+    }
+
+    SECTION("octal")
+    {
+        test_normalization(
+            "String.fromCharCode(0O1, 014 ,0o353, 0O531, 0o15205)",
+            "'\u0001\u000c\u00EB\u0159\u1a85'"
+        );
+        test_normalization(
+            "String.fromCharCode(0o200000)",
+            "'\xf0\x90\x80\x80'"
+        );
+        test_normalization(
+            "String.fromCharCode(0O200000)",
+            "'\xf0\x90\x80\x80'"
+        );
+        test_normalization(
+            "String.fromCharCode(0200000)",
+            "'\xf0\x90\x80\x80'"
+        );
+        test_normalization(
+            "String.fromCodePoint(0o10_000_000)",
+            "'\xf7\xbf\xbf\xbf'"
+        );
+        test_normalization(
+            "String.fromCodePoint(0O10_000_000)",
+            "'\xf7\xbf\xbf\xbf'"
+        );
+        test_normalization(
+            "String.fromCodePoint(010_000_000)",
+            "'\xf7\xbf\xbf\xbf'"
+        );
+    }
+
     SECTION("decimal")
     {
         test_normalization(
-            "String.fromCharCode(1, 12 ,235, 345, 6789, 1000, 0001)",
-            "'\u0001\u000c\u00EB\u0159\u1a85\u03e8\u0001'"
+            "String.fromCharCode(1, 12 ,235, 345, 6789, 10_00, 00_09)",
+            "'\u0001\u000c\u00EB\u0159\u1a85\u03e8\u0009'"
         );
         test_normalization(
             "String.fromCharCode(65536)",
             "'\xf0\x90\x80\x80'"
         );
         test_normalization(
-            "String.fromCodePoint(2097152)",
+            "String.fromCodePoint(209_715_2)",
             "'\xf7\xbf\xbf\xbf'"
         );
     }
@@ -93,7 +149,7 @@ TEST_CASE("Sequence parsing", "[JSNormalizer]")
     SECTION("hexadecimal")
     {
         test_normalization(
-            "String.fromCharCode(0x0001, 0X00EB, 0x0123, 0x4567, 0x89aA, 0xbBcC, 0x00dD, 0xeEfF)",
+            "String.fromCharCode(0x0001, 0X00EB, 0x0123, 0x45_67, 0x89aA, 0xbBcC, 0x00dD, 0xe_Ef_F)",
             "'\u0001\u00EB\u0123\u4567\u89aA\ubBcC\u00dD\ueEfF'"
         );
         test_normalization(
@@ -105,11 +161,11 @@ TEST_CASE("Sequence parsing", "[JSNormalizer]")
             "'\xf0\x90\x80\x80'"
         );
         test_normalization(
-            "String.fromCodePoint(0x200000)",
+            "String.fromCodePoint(0x200_000)",
             "'\xf7\xbf\xbf\xbf'"
         );
         test_normalization(
-            "String.fromCodePoint(0X200000)",
+            "String.fromCodePoint(0X200_000)",
             "'\xf7\xbf\xbf\xbf'"
         );
     }
@@ -584,6 +640,41 @@ TEST_CASE("decodeURIComponent()", "[JSNormalizer]")
 
 TEST_CASE("String.fromCharCode()", "[JSNormalizer]")
 {
+    SECTION("binary")
+    {
+        test_normalization(
+            "String.fromCharCode(0b1100010, 0B1100001, 0b1110010)",
+            "'bar'"
+        );
+
+        test_normalization(
+            "String.fromCharCode(0B001100010, 0b001100001, 0B001110010)",
+            "'bar'"
+        );
+
+        test_normalization(
+            "String.fromCharCode(0b11_00_010, 0b00_11_00_001, 0B11_10_010)",
+            "'bar'"
+        );
+    }
+
+    SECTION("octal")
+    {
+        test_normalization(
+            "String.fromCharCode(0o142, 0o141, 0o162)",
+            "'bar'"
+        );
+
+        test_normalization(
+            "String.fromCharCode(0o00142, 0o00141, 0o00162)",
+            "'bar'"
+        );
+        test_normalization(
+            "String.fromCharCode(0o00_14_2, 0O0_0_1_4_1, 000_162)",
+            "'bar'"
+        );
+    }
+
     SECTION("decimal")
     {
         test_normalization(
@@ -600,7 +691,7 @@ TEST_CASE("String.fromCharCode()", "[JSNormalizer]")
         );
 
         test_normalization(
-            "String.fromCharCode(0x0062, 0x0061, 0x0072)",
+            "String.fromCharCode(0x0062, 0x00_61, 0x0072)",
             "'bar'"
         );
     }
@@ -608,19 +699,50 @@ TEST_CASE("String.fromCharCode()", "[JSNormalizer]")
     SECTION("mixed sequence")
     {
         test_normalization_mixed_encoding(
-            "String.fromCharCode(98, 97, 0x72)",
-            "'bar'"
+            "String.fromCharCode(0b11_00_110, 111, 0o157, 98, 0b1100001, 0x72)",
+            "'foobar'"
         );
 
         test_normalization_mixed_encoding(
-            "String.fromCharCode(0x62, 97, 114)",
-            "'bar'"
+            "String.fromCharCode(102 ,0b110_1111, 0o157, 0x62, 97, 0O162)",
+            "'foobar'"
         );
     }
 }
 
 TEST_CASE("String.fromCodePoint()", "[JSNormalizer]")
 {
+    SECTION("binary")
+    {
+        test_normalization(
+            "String.fromCodePoint(0b1100010, 0b1100001, 0b1110010)",
+            "'bar'"
+        );
+
+        test_normalization(
+            "String.fromCodePoint(0b10000000001000000, 0b10000000001000001, 0b10000000001000010)",
+            "'\xf0\x90\x81\x80\xf0\x90\x81\x81\xf0\x90\x81\x82'"
+        );
+
+        test_normalization(
+            "String.fromCodePoint(0b000_1_100_010, 0B1100001, 0B111_0010)",
+            "'bar'"
+        );
+    }
+
+    SECTION("octal")
+    {
+        test_normalization(
+            "String.fromCodePoint(0o142, 0O141, 0162)",
+            "'bar'"
+        );
+
+        test_normalization(
+            "String.fromCodePoint(0200_100, 0o200101, 0O200_102)",
+            "'\xf0\x90\x81\x80\xf0\x90\x81\x81\xf0\x90\x81\x82'"
+        );
+    }
+
     SECTION("decimal")
     {
         test_normalization(
@@ -629,7 +751,7 @@ TEST_CASE("String.fromCodePoint()", "[JSNormalizer]")
         );
 
         test_normalization(
-            "String.fromCodePoint(65600, 65601, 65602)",
+            "String.fromCodePoint(65600, 65_601, 65602)",
             "'\xf0\x90\x81\x80\xf0\x90\x81\x81\xf0\x90\x81\x82'"
         );
     }
@@ -642,7 +764,7 @@ TEST_CASE("String.fromCodePoint()", "[JSNormalizer]")
         );
 
         test_normalization(
-            "String.fromCodePoint(0x00000062, 0x00000061, 0x00000072)",
+            "String.fromCodePoint(0x000_000_62, 0X00000061, 0x00000072)",
             "'bar'"
         );
 
@@ -655,23 +777,23 @@ TEST_CASE("String.fromCodePoint()", "[JSNormalizer]")
     SECTION("mixed sequence")
     {
         test_normalization_mixed_encoding(
-            "String.fromCodePoint(98, 97, 0x72)",
-            "'bar'"
+            "String.fromCodePoint(0b1100110, 111, 0o157, 98, 0b11_00_001, 0x72)",
+            "'foobar'"
         );
 
         test_normalization_mixed_encoding(
-            "String.fromCodePoint(0x00000062, 97, 114)",
-            "'bar'"
+            "String.fromCodePoint(102 ,0b1101111, 0o157, 0X000_00062, 97, 0O162)",
+            "'foobar'"
         );
 
         test_normalization_mixed_encoding(
-            "String.fromCodePoint(65600, 0x10041, 65602)",
-            "'\xf0\x90\x81\x80\xf0\x90\x81\x81\xf0\x90\x81\x82'"
+            "String.fromCodePoint(65600, 0x10041, 0o200102, 0B1000_0000_0010_00011)",
+            "'\xf0\x90\x81\x80\xf0\x90\x81\x81\xf0\x90\x81\x82\xf0\x90\x81\x83'"
         );
 
         test_normalization_mixed_encoding(
-            "String.fromCodePoint(0x10040, 65601, 0x10042)",
-            "'\xf0\x90\x81\x80\xf0\x90\x81\x81\xf0\x90\x81\x82'"
+            "String.fromCodePoint(0200_100, 65601, 0B10000000001000010, 0x10043)",
+            "'\xf0\x90\x81\x80\xf0\x90\x81\x81\xf0\x90\x81\x82\xf0\x90\x81\x83'"
         );
     }
 }

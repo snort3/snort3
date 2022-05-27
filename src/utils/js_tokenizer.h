@@ -303,8 +303,7 @@ private:
     void escaped_unicode_utf_8();
     void escaped_code_point();
     void escaped_url_sequence_latin_1();
-    void dec_code_point();
-    void hex_code_point();
+    void lit_int_code_point(int base);
     void char_code_no_match();
 
     static const char* p_scope_codes[];

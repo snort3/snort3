@@ -32,6 +32,7 @@
 
 #include "utils/js_tokenizer.h"
 
+#include <algorithm>
 #include <cassert>
 
 #include "utils/js_identifier_ctx.h"
@@ -86,14 +87,16 @@ constexpr bool JSTokenizer::insert_semicolon[ASI_GROUP_MAX][ASI_GROUP_MAX];
 
 enum EncodingType
 {
-    IS_HEX          = 1 << 0,   // hex code unit: 0xXXXX
-    IS_DEC          = 1 << 1,   // dec code unit: XXXX
-    IS_XBACKSLASH   = 1 << 2,   // \xXX
-    IS_UBACKSLASH_1 = 1 << 3,   // \uXX
-    IS_UBACKSLASH_2 = 1 << 4,   // \uXXXX
-    IS_UPERCENT     = 1 << 5,   // %uXXXX
-    IS_PERCENT      = 1 << 6,   // %XX
-    IS_UCODEPOINT   = 1 << 7    // \u{0xXXXX}
+    IS_BIN          = 1 << 0,   // bin code unit: 0bXXXX
+    IS_OCT          = 1 << 1,   // oct code unit: 0oXXXX
+    IS_DEC          = 1 << 2,   // dec code unit: XXXX
+    IS_HEX          = 1 << 3,   // hex code unit: 0xXXXX
+    IS_XBACKSLASH   = 1 << 4,   // \xXX
+    IS_UBACKSLASH_1 = 1 << 5,   // \uXX
+    IS_UBACKSLASH_2 = 1 << 6,   // \uXXXX
+    IS_UPERCENT     = 1 << 7,   // %uXXXX
+    IS_PERCENT      = 1 << 8,   // %XX
+    IS_UCODEPOINT   = 1 << 9    // \u{0xXXXX}
 };
 
 %}
@@ -981,9 +984,12 @@ IDENTIFIER          ({IDENTIFIER_START}{IDENTIFIER_PART})*
 LITERAL_NULL                  null
 LITERAL_THIS                  this
 LITERAL_BOOLEAN               true|false
-LITERAL_DECIMAL               [.]?[0-9]+[\.]?[0-9]*[eE]?[0-9]*
-LITERAL_INTEGER               [0-9]*
-LITERAL_HEX_INTEGER           0x[0-9a-fA-F]*|0X[0-9a-fA-F]*
+LITERAL_BIN_INTEGER           0[bB][01](_?[01])*
+LITERAL_OCT_INTEGER           0[oO]?[0-7](_?[0-7])*
+LITERAL_DECIMAL               [.]?(_?[0-9])+[\.]?(_?[0-9])*([eE](_?[0-9])+)?
+LITERAL_INTEGER               [0-9](_?[0-9])*
+LITERAL_HEX_INTEGER           0[xX][a-fA-F0-9](_?[a-fA-F0-9])*
+LITERAL_BIG_INTEGER           ({LITERAL_DECIMAL}|{LITERAL_BIN_INTEGER}|{LITERAL_OCT_INTEGER}|{LITERAL_HEX_INTEGER})n
 
 LITERAL_DQ_STRING_START       \"
 LITERAL_DQ_STRING_END         \"
@@ -1011,7 +1017,7 @@ LITERAL_REGEX_G_CLOSE         \)|\]|\}
 LITERAL_UNDEFINED             undefined
 LITERAL_INFINITY              Infinity|\xE2\x88\x9E
 LITERAL_NAN                   NaN
-LITERAL                       {LITERAL_NULL}|{LITERAL_THIS}|{LITERAL_BOOLEAN}|{LITERAL_DECIMAL}|{LITERAL_HEX_INTEGER}|{LITERAL_UNDEFINED}|{LITERAL_INFINITY}|{LITERAL_NAN}
+LITERAL                       {LITERAL_NULL}|{LITERAL_THIS}|{LITERAL_BOOLEAN}|{LITERAL_DECIMAL}|{LITERAL_BIN_INTEGER}|{LITERAL_OCT_INTEGER}|{LITERAL_HEX_INTEGER}|{LITERAL_BIG_INTEGER}|{LITERAL_UNDEFINED}|{LITERAL_INFINITY}|{LITERAL_NAN}
 
 HTML_COMMENT_OPEN         "<"+"!--"
 HTML_TAG_SCRIPT_OPEN      "<"+(?i:script)[\x9\xA\xC\x20\x2f\x3e]
@@ -1221,8 +1227,10 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 {LITERAL}                           { EXEC(general_literal()) }
 {IDENTIFIER}                        { EXEC(general_identifier()) }
 
-<char_code>{LITERAL_INTEGER}       { set_encoding(IS_DEC); dec_code_point(); }
-<char_code>{LITERAL_HEX_INTEGER}   { set_encoding(IS_HEX); hex_code_point(); }
+<char_code>{LITERAL_BIN_INTEGER}   { set_encoding(IS_BIN); lit_int_code_point(2); }
+<char_code>{LITERAL_OCT_INTEGER}   { set_encoding(IS_OCT); lit_int_code_point(8); }
+<char_code>{LITERAL_INTEGER}       { set_encoding(IS_DEC); lit_int_code_point(10); }
+<char_code>{LITERAL_HEX_INTEGER}   { set_encoding(IS_HEX); lit_int_code_point(16); }
 
 .|{ALL_UNICODE}                     { general_unicode(); }
 
@@ -2919,16 +2927,11 @@ void JSTokenizer::escaped_url_sequence_latin_1()
     yyout << (char)std::stoi(code, nullptr, 16);
 }
 
-void JSTokenizer::dec_code_point()
+void JSTokenizer::lit_int_code_point(int base)
 {
-    std::string code(YYText());
-    yyout << unicode_to_utf8(std::stoi(code, nullptr, 10));
-}
-
-void JSTokenizer::hex_code_point()
-{
-    std::string code(YYText());
-    yyout << unicode_to_utf8(std::stoi(code, nullptr, 16));
+    std::string code(base != 10 && !isdigit(YYText()[1]) ? YYText() + 2 : YYText());
+    code.erase(std::remove(code.begin(), code.end(), '_'), code.end());
+    yyout << unicode_to_utf8(std::stoi(code, nullptr, base));
 }
 
 void JSTokenizer::char_code_no_match()

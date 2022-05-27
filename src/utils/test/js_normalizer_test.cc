@@ -624,16 +624,16 @@ static const char all_patterns_expected3[] =
     "interface void while delete export package";
 
 static const char all_patterns_buf4[] =
-    "/regex/g undefined null true false 2 23 2.3 2.23 .2 .02 4. +2 -2 "
-    "+3.3 -3.3 +23 -32 2.3E45 3.E34 -2.3E45 -3.E34 +2.3E45 +3.E34 0x1234 0XFFFF Infinity "
-    "\xE2\x88\x9E NaN \"\" \"double string\" \"d\" '' 'single string' 's' x=/regex/gs "
-    "x=2/2/1 `\ntemplate\n`";
+    "/regex/g undefined null true false 2 23 2_3 2.3 2.23 2.2_3 .2 .02 .0_2 4. +2 -2 "
+    "+3.3 -3.3 +23 -32 2.3E45 2.3E4_5 3.E34 -2.3E45 -3.E34 +2.3E45 +3.E34 0b101 0B111 0o357 0O777 "
+    "0373 0x1234 0XFFFF 123n 0b101n 0o123n 0xaffn Infinity \xE2\x88\x9E NaN \"\" \"double string\" "
+    "\"d\" '' 'single string' 's' x=/regex/gs x=2/2/1 `\ntemplate\n`";
 
 static const char all_patterns_expected4[] =
-    "/regex/g undefined null true false 2 23 2.3 2.23 .2 .02 4.+2-2"
-    "+3.3-3.3+23-32 2.3E45 3.E34-2.3E45-3.E34+2.3E45+3.E34 0x1234 0XFFFF Infinity "
-    "\xE2\x88\x9E NaN \"\" \"double string\" \"d\" '' 'single string' 's' x=/regex/gs "
-    "x=2/2/1 `\ntemplate\n`";
+    "/regex/g undefined null true false 2 23 2_3 2.3 2.23 2.2_3 .2 .02 .0_2 4.+2-2"
+    "+3.3-3.3+23-32 2.3E45 2.3E4_5 3.E34-2.3E45-3.E34+2.3E45+3.E34 0b101 0B111 0o357 0O777 0373 "
+    "0x1234 0XFFFF 123n 0b101n 0o123n 0xaffn Infinity \xE2\x88\x9E NaN \"\" \"double string\" "
+    "\"d\" '' 'single string' 's' x=/regex/gs x=2/2/1 `\ntemplate\n`";
 
 static const char all_patterns_buf5[] =
     "$2abc _2abc abc $__$ 肖晗 XÆA12 \\u0041abc \\u00FBdef \\u1234ghi ab\xE2\x80\xA8ww "
@@ -2757,6 +2757,115 @@ TEST_CASE("split in keyword", "[JSNormalizer]")
         const char exp2[] = "instance";
         const char exp3[] = "instanceof";
         const char exp[] = "instanceof";
+
+        NORMALIZE_3(dat1, dat2, dat3, exp1, exp2, exp3);
+        NORM_COMBINED_3(dat1, dat2, dat3, exp);
+    }
+}
+
+TEST_CASE("split in integer literal", "[JSNormalizer]")
+{
+    SECTION("1 2;")
+    {
+        const char dat1[] = "1";
+        const char dat2[] = "2;";
+        const char exp1[] = "1";
+        const char exp2[] = "12;";
+        const char exp[] = "12;";
+
+        NORMALIZE_2(dat1, dat2, exp1, exp2);
+        NORM_COMBINED_2(dat1, dat2, exp);
+    }
+    SECTION("0 b01;")
+    {
+        const char dat1[] = "0";
+        const char dat2[] = "b01;";
+        const char exp1[] = "0";
+        const char exp2[] = "0b01;";
+        const char exp[] = "0b01;";
+
+        NORMALIZE_2(dat1, dat2, exp1, exp2);
+        NORM_COMBINED_2(dat1, dat2, exp);
+    }
+    SECTION("0o 12;")
+    {
+        const char dat1[] = "0o";
+        const char dat2[] = "12;";
+        const char exp1[] = "0 o";
+        const char exp2[] = "0o12;";
+        const char exp[] = "0o12;";
+
+        NORMALIZE_2(dat1, dat2, exp1, exp2);
+        NORM_COMBINED_2(dat1, dat2, exp);
+    }
+    SECTION("0 12;")
+    {
+        const char dat1[] = "0";
+        const char dat2[] = "12;";
+        const char exp1[] = "0";
+        const char exp2[] = "012;";
+        const char exp[] = "012;";
+
+        NORMALIZE_2(dat1, dat2, exp1, exp2);
+        NORM_COMBINED_2(dat1, dat2, exp);
+    }
+    SECTION("01 9;")
+    {
+        const char dat1[] = "01";
+        const char dat2[] = "9;";
+        const char exp1[] = "01";
+        const char exp2[] = "019;";
+        const char exp[] = "019;";
+
+        NORMALIZE_2(dat1, dat2, exp1, exp2);
+        NORM_COMBINED_2(dat1, dat2, exp);
+    }
+    SECTION(". 12;")
+    {
+        const char dat1[] = ".";
+        const char dat2[] = "12;";
+        const char exp1[] = ".";
+        const char exp2[] = ".12;";
+        const char exp[] = ".12;";
+
+        NORMALIZE_2(dat1, dat2, exp1, exp2);
+        NORM_COMBINED_2(dat1, dat2, exp);
+    }
+    SECTION("0 x 12;")
+    {
+        const char dat1[] = "0";
+        const char dat2[] = "x";
+        const char dat3[] = "12;";
+        const char exp1[] = "0";
+        const char exp2[] = " x";
+        const char exp3[] = "0x12;";
+        const char exp[] = "0x12;";
+
+        NORMALIZE_3(dat1, dat2, dat3, exp1, exp2, exp3);
+        NORM_COMBINED_3(dat1, dat2, dat3, exp);
+    }
+    SECTION("1 _ 2;")
+    {
+        const char dat1[] = "1";
+        const char dat2[] = "_";
+        const char dat3[] = "2;";
+        const char exp1[] = "1";
+        const char exp2[] = " _";
+        const char exp3[] = "1_2;";
+        const char exp[] = "1_2;";
+
+        NORMALIZE_3(dat1, dat2, dat3, exp1, exp2, exp3);
+        NORM_COMBINED_3(dat1, dat2, dat3, exp);
+    }
+    SECTION("1 E 2;")
+    {
+        const char dat1[] = "1";
+        const char dat2[] = "E";
+        const char dat3[] = "2;";
+        const char exp1[] = "1";
+        const char exp2[] = " E";
+        const char exp3[] = "1E2;";
+        const char exp[] = "1E2;";
 
         NORMALIZE_3(dat1, dat2, dat3, exp1, exp2, exp3);
         NORM_COMBINED_3(dat1, dat2, dat3, exp);
