@@ -356,7 +356,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_JS_BRACKET_NEST_OVERFLOW,   "excessive JavaScript bracket nesting" },
     { EVENT_ACCEPT_ENCODING_CONSECUTIVE_COMMAS, "Consecutive commas in HTTP Accept-Encoding "
                                         "header" },
-    { EVENT_JS_PDU_MISS,                "missed PDUs during JavaScript normalization" },
+    { EVENT_JS_DATA_LOST,               "data gaps during JavaScript normalization" },
     { EVENT_JS_SCOPE_NEST_OVERFLOW,     "excessive JavaScript scope nesting" },
     { EVENT_INVALID_SUBVERSION,         "HTTP/1 version other than 1.0 or 1.1" },
     { EVENT_VERSION_0,                  "HTTP version in start line is 0" },

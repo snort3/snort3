@@ -220,7 +220,8 @@ void HttpMsgBody::analyze()
             else
                 do_legacy_js_normalization(decompressed_file_body, js_norm_body);
 
-            ++session_data->pdu_idx;
+            if (decompressed_file_body.length() > 0)
+                ++session_data->js_data_idx;
 
             const int32_t detect_length =
                 (js_norm_body.length() <= session_data->detect_depth_remaining[source_id]) ?
@@ -408,10 +409,10 @@ void HttpMsgBody::do_enhanced_js_normalization(const Field& input, Field& output
     if ((*infractions & INF_UNKNOWN_ENCODING) or (*infractions & INF_UNSUPPORTED_ENCODING))
         return;
 
-    if (session_data->is_pdu_missed())
+    if (session_data->sync_js_data_idx())
     {
-        *infractions += INF_JS_PDU_MISS;
-        session_data->events[HttpCommon::SRC_SERVER]->create_event(EVENT_JS_PDU_MISS);
+        *infractions += INF_JS_DATA_LOST;
+        session_data->events[HttpCommon::SRC_SERVER]->create_event(EVENT_JS_DATA_LOST);
         session_data->js_data_lost_once = true;
         return;
     }

@@ -201,8 +201,8 @@ private:
     void delete_pipeline();
 
     bool js_data_lost_once = false;
-    uint32_t pdu_idx = 0;
-    uint32_t js_pdu_idx = 0;
+    uint32_t js_data_idx = 0;
+    uint32_t js_data_processed_idx = 0;
 
     // *** HttpJsNorm
     JSIdentifierCtxBase* js_ident_ctx = nullptr;
@@ -210,11 +210,11 @@ private:
     bool js_continue = false;
     bool js_built_in_event = false;
 
-    void reset_js_pdu_idx();
+    void reset_js_data_idx();
     void reset_js_ident_ctx();
     snort::JSNormalizer& acquire_js_ctx(const HttpParaList::JsNormParam& js_norm_param);
     void release_js_ctx();
-    bool is_pdu_missed();
+    bool sync_js_data_idx();
 
     bool cutover_on_clear = false;
     bool ssl_search_abandoned = false;

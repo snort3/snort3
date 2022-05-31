@@ -224,9 +224,9 @@ void HttpFlowData::garbage_collect()
 }
 
 #ifndef UNIT_TEST_BUILD
-void HttpFlowData::reset_js_pdu_idx()
+void HttpFlowData::reset_js_data_idx()
 {
-    js_pdu_idx = pdu_idx = 0;
+    js_data_processed_idx = js_data_idx = 0;
     js_data_lost_once = false;
 }
 
@@ -264,11 +264,11 @@ snort::JSNormalizer& HttpFlowData::acquire_js_ctx(const HttpParaList::JsNormPara
     return *js_normalizer;
 }
 
-bool HttpFlowData::is_pdu_missed()
+bool HttpFlowData::sync_js_data_idx()
 {
-    bool pdu_missed = ((pdu_idx - js_pdu_idx) > 1);
-    js_pdu_idx = pdu_idx;
-    return pdu_missed;
+    bool data_missed = ((js_data_idx - js_data_processed_idx) > 1);
+    js_data_processed_idx = js_data_idx;
+    return data_missed;
 }
 
 void HttpFlowData::release_js_ctx()
