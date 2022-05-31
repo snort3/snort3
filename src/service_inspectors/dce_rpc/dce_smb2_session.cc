@@ -40,7 +40,7 @@ Dce2Smb2SessionData* Dce2Smb2SessionTracker::get_flow(uint32_t flow_key)
     return (it_flow != attached_flows.end()) ? it_flow->second : nullptr;
 }
 
-Dce2Smb2TreeTracker* Dce2Smb2SessionTracker::find_tree_for_message(
+Dce2Smb2TreeTrackerPtr Dce2Smb2SessionTracker::find_tree_for_message(
     const uint64_t message_id, const uint32_t flow_key)
 {
     std::lock_guard<std::mutex> guard(connected_trees_mutex);
@@ -53,10 +53,20 @@ Dce2Smb2TreeTracker* Dce2Smb2SessionTracker::find_tree_for_message(
     return nullptr;
 }
 
+Dce2Smb2TreeTrackerPtr Dce2Smb2SessionTracker::find_tree_for_tree_id(
+    const uint32_t tree_id)
+{
+    std::lock_guard<std::mutex> guard(connected_trees_mutex);
+    auto it_tree = connected_trees.find(tree_id);
+    if (it_tree != connected_trees.end())
+        return it_tree->second;
+    return nullptr;
+}
+
 void Dce2Smb2SessionTracker::process(const uint16_t command, uint8_t command_type,
     const Smb2Hdr* smb_header, const uint8_t* end, const uint32_t current_flow_key)
 {
-    Dce2Smb2TreeTracker* tree = nullptr;
+    Dce2Smb2TreeTrackerPtr tree;
     uint32_t tree_id = Smb2Tid(smb_header);
 
     if (tree_id)
@@ -121,7 +131,7 @@ void Dce2Smb2SessionTracker::process(const uint16_t command, uint8_t command_typ
     }
 }
 
-Dce2Smb2TreeTracker* Dce2Smb2SessionTracker::connect_tree(const uint32_t tree_id,
+Dce2Smb2TreeTrackerPtr Dce2Smb2SessionTracker::connect_tree(const uint32_t tree_id,
     const uint32_t current_flow_key, const uint8_t share_type)
 {
     Dce2Smb2SessionData* current_flow = get_flow(current_flow_key);
@@ -135,7 +145,7 @@ Dce2Smb2TreeTracker* Dce2Smb2SessionTracker::connect_tree(const uint32_t tree_id
         dce2_smb_stats.v2_tree_cnct_ignored++;
         return nullptr;
     }
-    Dce2Smb2TreeTracker* tree = nullptr;
+    Dce2Smb2TreeTrackerPtr tree;
     connected_trees_mutex.lock();
     auto it_tree = connected_trees.find(tree_id);
     if (it_tree != connected_trees.end())
@@ -143,7 +153,7 @@ Dce2Smb2TreeTracker* Dce2Smb2SessionTracker::connect_tree(const uint32_t tree_id
     connected_trees_mutex.unlock();
     if (!tree)
     {
-        tree = new Dce2Smb2TreeTracker(tree_id, this, share_type);
+        tree = std::make_shared<Dce2Smb2TreeTracker>(tree_id, this, share_type);
         connected_trees_mutex.lock();
         connected_trees.insert(std::make_pair(tree_id, tree));
         connected_trees_mutex.unlock();
@@ -206,20 +216,17 @@ Dce2Smb2SessionTracker::~Dce2Smb2SessionTracker(void)
         return;
     }
 
-    std::vector<Dce2Smb2TreeTracker*> all_trees;
     connected_trees_mutex.lock();
     auto it_tree = connected_trees.begin();
     while (it_tree != connected_trees.end())
     {
-        all_trees.push_back(it_tree->second);
-        it_tree = connected_trees.erase(it_tree);
+        auto next_it_tree = std::next(it_tree);
+        it_tree->second->close_all_files();
+        disconnect_tree(it_tree->second->get_tree_id());
+        it_tree = next_it_tree;
     }
     connected_trees_mutex.unlock();
 
-    for (Dce2Smb2TreeTracker* tree : all_trees)
-    {
-        delete tree;
-    }
     do_not_delete = false;
     fcfs_mutex.unlock();
 }

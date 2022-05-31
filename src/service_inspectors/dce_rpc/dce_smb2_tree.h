@@ -60,6 +60,7 @@ public:
 
     Dce2Smb2FileTrackerPtr open_file(const uint64_t, const uint32_t);
     void close_file(uint64_t, bool);
+    void close_all_files();
     Dce2Smb2FileTrackerPtr find_file(uint64_t);
     Dce2Smb2RequestTracker* find_request(const uint64_t, const uint32_t);
     void process(uint16_t, uint8_t, const Smb2Hdr*, const uint8_t*, const uint32_t);
@@ -98,8 +99,9 @@ private:
     std::mutex tree_tracker_mutex;
 };
 
+using Dce2Smb2TreeTrackerPtr = std::shared_ptr<Dce2Smb2TreeTracker>;
 using Dce2Smb2TreeTrackerMap =
-    std::unordered_map<uint32_t, Dce2Smb2TreeTracker*, std::hash<uint32_t> >;
+    std::unordered_map<uint32_t, Dce2Smb2TreeTrackerPtr, std::hash<uint32_t> >;
 
 #endif
 

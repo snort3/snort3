@@ -1370,7 +1370,7 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
     DCE2_RpktType rpkt_type;
     Packet* rpkt = DCE2_CoGetRpkt(sd, cot, co_rtype, &rpkt_type);
-    if (rpkt == nullptr)
+    if (!rpkt || !rpkt->data)
     {
         return nullptr;
     }
@@ -2246,7 +2246,7 @@ static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
     case DCE2_TRANS_TYPE__SMB:
         rpkt = DCE2_GetRpkt(p, DCE2_RPKT_TYPE__SMB_CO_SEG, data_ptr, data_len);
 
-        if ( !rpkt )
+        if ( !rpkt  || !rpkt->data )
             return nullptr;
 
         set_smb_reassembled_data(const_cast<uint8_t*>(rpkt->data),

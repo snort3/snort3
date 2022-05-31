@@ -40,8 +40,11 @@ uint64_t Smb2Mid(const Smb2Hdr* hdr)
 Dce2Smb2FileTrackerPtr Dce2Smb2TreeTracker::open_file(const uint64_t file_id,
     const uint32_t current_flow_key)
 {
+    Dce2Smb2TreeTrackerPtr tree_ptr = parent_session->find_tree_for_tree_id(tree_id);
+    if (!tree_ptr)
+        return nullptr;
     std::shared_ptr<Dce2Smb2FileTracker> ftracker =  std::make_shared<Dce2Smb2FileTracker> (
-        file_id, current_flow_key, this, this->get_parent()->get_session_id());
+        file_id, current_flow_key, tree_ptr, this->get_parent()->get_session_id());
     tree_tracker_mutex.lock();
     opened_files.insert(std::make_pair(file_id, ftracker));
     tree_tracker_mutex.unlock();
@@ -65,13 +68,26 @@ void Dce2Smb2TreeTracker::close_file(uint64_t file_id, bool destroy)
     if (it_file != opened_files.end())
     {
         Dce2Smb2FileTrackerPtr file = it_file->second;
-        it_file->second->set_parent(nullptr);
+        it_file->second->get_parent().reset();
         if (opened_files.erase(file_id) and destroy)
         {
             parent_session->decrease_size(sizeof(Dce2Smb2FileTracker));
             tree_tracker_mutex.unlock();
             return;
         }
+    }
+    tree_tracker_mutex.unlock();
+}
+
+void Dce2Smb2TreeTracker::close_all_files()
+{
+    tree_tracker_mutex.lock();
+    auto it_file = opened_files.begin();
+    while (it_file != opened_files.end())
+    {
+        get_parent()->clean_file_context_from_flow(it_file->second->get_file_id(),
+            it_file->second->get_file_name_hash());
+        it_file = opened_files.erase(it_file);
     }
     tree_tracker_mutex.unlock();
 }
@@ -603,12 +619,11 @@ Dce2Smb2TreeTracker::~Dce2Smb2TreeTracker(void)
     {
         get_parent()->clean_file_context_from_flow(it_file.second->get_file_id(),
             it_file.second->get_file_name_hash());
-        it_file.second->set_parent(nullptr);
+        it_file.second->get_parent().reset();
         parent_session->decrease_size(sizeof(Dce2Smb2FileTracker));
     }
 
     tree_tracker_mutex.unlock();
 
-    parent_session->disconnect_tree(tree_id);
 }
 

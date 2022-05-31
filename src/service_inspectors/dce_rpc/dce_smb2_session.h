@@ -45,11 +45,10 @@ public:
     }
 
     ~Dce2Smb2SessionTracker();
-    Dce2Smb2TreeTracker* connect_tree(const uint32_t, const uint32_t,
+    Dce2Smb2TreeTrackerPtr connect_tree(const uint32_t, const uint32_t,
         uint8_t=SMB2_SHARE_TYPE_DISK);
     void disconnect_tree(uint32_t tree_id)
     {
-        std::lock_guard<std::mutex> guard(connected_trees_mutex);
         connected_trees.erase(tree_id);
         decrease_size(sizeof(Dce2Smb2TreeTracker));
     }
@@ -90,12 +89,13 @@ public:
             dce2_smb_stats.total_encrypted_sessions++; 
     }
     bool get_encryption_flag() { return encryption_flag; }
+    Dce2Smb2TreeTrackerPtr find_tree_for_tree_id(const uint32_t);
 private:
     // do_not_delete is to make sure when we are in processing we should not delete the context
     // which is being processed
     bool do_not_delete;
     bool file_context_cleaned;
-    Dce2Smb2TreeTracker* find_tree_for_message(const uint64_t, const uint32_t);
+    Dce2Smb2TreeTrackerPtr find_tree_for_message(const uint64_t, const uint32_t);
     uint64_t session_id;
     //to keep the tab of previous command
     uint16_t command_prev;

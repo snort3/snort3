@@ -303,6 +303,6 @@ Dce2Smb2FileTracker::~Dce2Smb2FileTracker(void)
         snort_free((void*)file_name);
 
     file_name = nullptr;
-    parent_tree = nullptr;
+    parent_tree.reset();
 }
 
