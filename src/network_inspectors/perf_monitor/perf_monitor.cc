@@ -387,7 +387,7 @@ bool PerfMonitor::ready_to_process(Packet* p)
     {
         if ((cur_time - sample_time) >= t_constraints->sample_interval)
         {
-            if (cnt == 0)
+            if (!p)
                 for (auto& tracker : *trackers)
                     tracker->update_time(cur_time);
 
