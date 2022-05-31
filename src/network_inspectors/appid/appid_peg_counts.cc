@@ -92,18 +92,24 @@ void AppIdPegCounts::sum_stats()
     if (!appid_peg_counts)
         return;
 
-    const unsigned peg_num = appid_peg_counts->size() ? (appid_peg_counts->size() - 1) : 0;
-    const AppIdDynamicPeg* ptr = (AppIdDynamicPeg*)appid_peg_counts->data();
+    static std::mutex r_mutex;
 
-    for ( unsigned i = 0; i < peg_num; ++i )
     {
-        for (unsigned j = 0; j < DetectorPegs::NUM_APPID_DETECTOR_PEGS; ++j)
-            appid_dynamic_sum[i].stats[j] += ptr[i].stats[j];
-    }
+        std::lock_guard<std::mutex> _lock(r_mutex);
+        const unsigned peg_num = appid_peg_counts->size() ? (appid_peg_counts->size() - 1) : 0;
+        const AppIdDynamicPeg* ptr = (AppIdDynamicPeg*)appid_peg_counts->data();
 
-    // unknown_app stats
-    for (unsigned j = 0; j < DetectorPegs::NUM_APPID_DETECTOR_PEGS; ++j)
-        appid_dynamic_sum[SF_APPID_MAX].stats[j] += ptr[peg_num].stats[j];
+        for ( unsigned i = 0; i < peg_num; ++i )
+        {
+            for (unsigned j = 0; j < DetectorPegs::NUM_APPID_DETECTOR_PEGS; ++j)
+                appid_dynamic_sum[i].stats[j] += ptr[i].stats[j];
+        }
+
+        // unknown_app stats
+        for (unsigned j = 0; j < DetectorPegs::NUM_APPID_DETECTOR_PEGS; ++j)
+            appid_dynamic_sum[SF_APPID_MAX].stats[j] += ptr[peg_num].stats[j];
+    }
+    
 }
 
 void AppIdPegCounts::inc_service_count(AppId id)
