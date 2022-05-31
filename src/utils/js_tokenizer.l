@@ -1084,10 +1084,11 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <char_code>{LINE_COMMENT_START}               { BEGIN(char_code_lcomm); }
 <lcomm>{LINE_COMMENT_END1}                    { BEGIN(regst); newline_found = true; }
 <lcomm>{LINE_COMMENT_END2}                    { BEGIN(regst); newline_found = true; }
+<lcomm>{LINE_COMMENT_END4}                    { if (!ext_script) { BEGIN(regst); EXEC(html_closing_script_tag()) } }
 <char_code_lcomm>{LINE_COMMENT_END1}          { BEGIN(char_code); newline_found = true; }
 <char_code_lcomm>{LINE_COMMENT_END2}          { BEGIN(char_code); newline_found = true; }
+<char_code_lcomm>{LINE_COMMENT_END4}          { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } }
 <lcomm,char_code_lcomm>{LINE_COMMENT_END3}    { if (!ext_script) { BEGIN(regst); RETURN(OPENING_TAG) } }
-<lcomm,char_code_lcomm>{LINE_COMMENT_END4}    { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } }
 <lcomm,char_code_lcomm>{LINE_COMMENT_SKIP}    { /* skip */ }
 <lcomm,char_code_lcomm><<EOF>>                { RETURN(SCRIPT_CONTINUE) }
 

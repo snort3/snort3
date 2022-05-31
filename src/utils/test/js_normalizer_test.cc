@@ -2015,17 +2015,17 @@ TEST_CASE("nested script tags", "[JSNormalizer]")
     SECTION("close tag within single-line comment - start")
     {
         NORMALIZE(unexpected_tag_buf16);
-        VALIDATE_FAIL(unexpected_tag_buf16, unexpected_tag_expected16, JSTokenizer::CLOSING_TAG, 22);
+        VALIDATE_FAIL(unexpected_tag_buf16, unexpected_tag_expected16, JSTokenizer::SCRIPT_ENDED, 22);
     }
     SECTION("close tag within single-line comment - mid")
     {
         NORMALIZE(unexpected_tag_buf17);
-        VALIDATE_FAIL(unexpected_tag_buf17, unexpected_tag_expected17, JSTokenizer::CLOSING_TAG, 34);
+        VALIDATE_FAIL(unexpected_tag_buf17, unexpected_tag_expected17, JSTokenizer::SCRIPT_ENDED, 34);
     }
     SECTION("close tag within single-line comment - end")
     {
         NORMALIZE(unexpected_tag_buf18);
-        VALIDATE_FAIL(unexpected_tag_buf18, unexpected_tag_expected18, JSTokenizer::CLOSING_TAG, 32);
+        VALIDATE_FAIL(unexpected_tag_buf18, unexpected_tag_expected18, JSTokenizer::SCRIPT_ENDED, 32);
     }
     SECTION("close tag within multi-line comment - start")
     {

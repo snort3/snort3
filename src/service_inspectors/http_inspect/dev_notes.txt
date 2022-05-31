@@ -320,7 +320,7 @@ JS Normalizer's syntax parser follows ECMA-262 standard. For various features,
 tracking of variable scope and individual brackets is done in accordance to the standard.
 Additionally, Normalizer enforces standard limits on HTML content in JavaScript:
  * no nesting tags allowed, i.e. two opening tags in a row
- * script closing tag is not allowed in string literal, comment, regular expression literal, etc.
+ * script closing tag is not allowed in string literals, block comments, regular expression literals, etc.
 
 If source JavaScript is syntactically incorrect (containing a bad token, brackets mismatch,
 HTML-tags, etc) Normalizer fires corresponding built-in rule and abandons the current script,
