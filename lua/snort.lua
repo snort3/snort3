@@ -212,7 +212,10 @@ suppress =
     -- don't want to any of see these
     { gid = 1, sid = 1 },
 
-    -- don't want to see these for a given server
+    -- don't want to see anything for a given host
+    { track = 'by_dst', ip = '1.2.3.4' }
+
+    -- don't want to see these for a given host
     { gid = 1, sid = 2, track = 'by_dst', ip = '1.2.3.4' },
 }
 --]]

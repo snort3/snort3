@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <cassert>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -223,8 +224,29 @@ static void dump_field_std(const string& key, const Parameter* p)
 
     cout << ": " << p->help;
 
-    if ( const char* r = p->get_range() )
-        cout << " { " << r << " }";
+    const char* range = p->get_range();
+    if ( !range )
+    {
+        cout << endl;
+        return;
+    }
+
+    if ( strcmp(p->get_type(), "enum" ) != 0 )
+        cout << " { " << range << " }";
+    else
+    {
+        std::stringstream ss(range);
+        std::string word;
+        cout << " { ";
+        while ( ss >> word )
+        {
+            if ( word != "|" )
+                std::cout << "'" << word << "'";
+            else
+                std::cout << " " << word << " ";
+        }
+        cout << " }";
+    }
 
     cout << endl;
 }
