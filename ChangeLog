@@ -1,3 +1,23 @@
+2022/06/02 - 3.1.31.0
+
+appid: add lock_guard to prevent data race on reload
+appid: do not delete third-party connection when third-party reload is in progress and the context swap is not complete
+dce_rpc: convert tree tracker to shared ptr
+doc: add class track description to user doc
+filters: add correct handling of by_src and by_dst. Thanks to Albert O'Balsam for reporting the bug.
+host_tracker: rename generic files and classes
+http2_inspect: add alert and infraction for non-Data frame too long
+http_inspect: add Content-Type header validation for Enhanced JS Normalizer
+http_inspect: add field for raw_body
+http_inspect: add handling of binary, octal and big integers to JS Normalizer
+http_inspect: change js processed data tracking
+http_inspect: implement general approach of checking Content-Type header
+hyperscan: reallocate hyperscan scratch space when patterns are reloaded during appid detector reload
+netflow: enforce memcap for session record and template LRU caches
+perf_monitor: fix timestamp for idle processing
+utils: add keyword new support and object tracking
+utils: allow script closing tag in single-line comments
+
 2022/05/19 - 3.1.30.0
 
 build: Update dependent libdaq version to 3.0.7

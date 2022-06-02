@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.30.0 2022-05-19 00:40:10 EDT TST
+Revision 3.1.31.0 2022-06-01 13:59:47 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -489,7 +489,7 @@ Configuration:
   * int daq.batch_size = 64: set receive batch size (same as
     --daq-batch-size) { 1: }
   * string daq.modules[].name: DAQ module name (required)
-  * enum daq.modules[].mode = passive: DAQ module mode { passive |
+  * enum daq.modules[].mode = passive: DAQ module mode { passive | 
     inline | read-file }
   * string daq.modules[].variables[].variable: DAQ module variable
     (foo[=bar])
@@ -836,7 +836,7 @@ Configuration:
 
   * addr host_tracker[].ip: hosts address / cidr
   * port host_tracker[].services[].port: port number
-  * enum host_tracker[].services[].proto: IP protocol { ip | tcp |
+  * enum host_tracker[].services[].proto: IP protocol { ip | tcp | 
     udp }
 
 Peg counts:
@@ -860,8 +860,8 @@ Configuration:
   * addr hosts[].ip = 0.0.0.0/32: hosts address / CIDR
   * enum hosts[].frag_policy: defragmentation policy { first | linux
     | bsd | bsd_right | last | windows | solaris }
-  * enum hosts[].tcp_policy: TCP reassembly policy { first | last |
-    linux | old_linux | bsd | macos | solaris | irix | hpux11 |
+  * enum hosts[].tcp_policy: TCP reassembly policy { first | last | 
+    linux | old_linux | bsd | macos | solaris | irix | hpux11 | 
     hpux10 | windows | win_2003 | vista | proxy }
   * string hosts[].services[].name: service identifier
   * enum hosts[].services[].proto = tcp: IP protocol { tcp | udp }
@@ -898,7 +898,7 @@ Configuration:
   * int inspection.id = 0: correlate policy and events with other
     items in configuration { 0:65535 }
   * string inspection.uuid: correlate events by uuid
-  * enum inspection.mode = inline-test: set policy mode { inline |
+  * enum inspection.mode = inline-test: set policy mode { inline | 
     inline-test }
   * int inspection.max_aux_ip = 16: maximum number of auxiliary IPs
     per flow to detect and save (-1 = disable, 0 = detect but don’t
@@ -1210,7 +1210,7 @@ Configuration:
   * bool profiler.modules.show = true: show module time profile stats
   * int profiler.modules.count = 0: limit results to count items per
     level (0 = no limit) { 0:max32 }
-  * enum profiler.modules.sort = total_time: sort by given field {
+  * enum profiler.modules.sort = total_time: sort by given field { 
     none | checks | avg_check | total_time }
   * int profiler.modules.max_depth = -1: limit depth to max_depth (-1
     = no limit) { -1:255 }
@@ -1218,7 +1218,7 @@ Configuration:
     stats
   * int profiler.memory.count = 0: limit results to count items per
     level (0 = no limit) { 0:max32 }
-  * enum profiler.memory.sort = total_used: sort by given field {
+  * enum profiler.memory.sort = total_used: sort by given field { 
     none | allocations | total_used | avg_allocation }
   * int profiler.memory.max_depth = -1: limit depth to max_depth (-1
     = no limit) { -1:255 }
@@ -1226,7 +1226,7 @@ Configuration:
   * int profiler.rules.count = 0: print results to given level (0 =
     all) { 0:max32 }
   * enum profiler.rules.sort = total_time: sort by given field { none
-    | checks | avg_check | total_time | matches | no_matches |
+    | checks | avg_check | total_time | matches | no_matches | 
     avg_match | avg_no_match }
 
 
@@ -2165,7 +2165,7 @@ Configuration:
 
   * int mpls.max_stack_depth = -1: set maximum MPLS stack depth {
     -1:255 }
-  * enum mpls.payload_type = auto: force encapsulated payload type {
+  * enum mpls.payload_type = auto: force encapsulated payload type { 
     auto | eth | ip4 | ip6 }
 
 Rules:
@@ -2375,7 +2375,7 @@ Configuration:
   * string file_connector[].connector: connector name
   * string file_connector[].name: channel name
   * enum file_connector[].format: file format { binary | text }
-  * enum file_connector[].direction: usage { receive | transmit |
+  * enum file_connector[].direction: usage { receive | transmit | 
     duplex }
 
 Peg counts:
@@ -2771,7 +2771,7 @@ Configuration:
   * enum dce_smb.smb_fingerprint_policy = none: target based SMB
     policy to use { none | client | server | both }
   * enum dce_smb.policy = WinXP: target based policy to use { Win2000
-    | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba |
+    | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | 
     Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
   * int dce_smb.smb_max_chain = 3: SMB max chain size { 0:255 }
   * int dce_smb.smb_max_compound = 3: SMB max compound size { 0:255 }
@@ -3047,7 +3047,7 @@ Configuration:
   * int dce_tcp.reassemble_threshold = 0: minimum bytes received
     before performing reassembly { 0:65535 }
   * enum dce_tcp.policy = WinXP: target based policy to use { Win2000
-    | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba |
+    | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | 
     Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
 
 Rules:
@@ -3668,6 +3668,8 @@ Rules:
     value set by decoder in SETTINGS frame
   * 121:37 (http2_inspect) Nonempty HTTP/2 Data frame where message
     body not expected
+  * 121:38 (http2_inspect) HTTP/2 non-Data frame longer than 63780
+    bytes
 
 Peg counts:
 
@@ -3955,8 +3957,7 @@ Rules:
   * 119:271 (http_inspect) excessive JavaScript bracket nesting
   * 119:272 (http_inspect) Consecutive commas in HTTP Accept-Encoding
     header
-  * 119:273 (http_inspect) missed PDUs during JavaScript
-    normalization
+  * 119:273 (http_inspect) data gaps during JavaScript normalization
   * 119:274 (http_inspect) excessive JavaScript scope nesting
   * 119:275 (http_inspect) HTTP/1 version other than 1.0 or 1.1
   * 119:276 (http_inspect) HTTP version in start line is 0
@@ -4321,9 +4322,21 @@ Configuration:
     event
   * bool netflow.rules[].create_service = false: generate a new or
     changed service event
+  * int netflow.flow_memcap = 0: maximum memory for flow record cache
+    in bytes, 0 = unlimited { 0:maxSZ }
+  * int netflow.template_memcap = 0: maximum memory for template
+    cache in bytes, 0 = unlimited { 0:maxSZ }
 
 Peg counts:
 
+  * netflow.cache_adds: netflow cache added new entry (sum)
+  * netflow.cache_hits: netflow cache found existing entry (sum)
+  * netflow.cache_misses: netflow cache did not find entry (sum)
+  * netflow.cache_replaces: netflow cache found entry and replaced
+    its value (sum)
+  * netflow.cache_max: netflow cache’s maximum byte usage (sum)
+  * netflow.cache_prunes: netflow cache pruned entry to make space
+    for new entry (sum)
   * netflow.invalid_netflow_record: count of invalid netflow records
     (sum)
   * netflow.packets: total packets processed (sum)
@@ -4554,7 +4567,7 @@ Configuration:
   * string perf_monitor.modules[].name: name of the module
   * string perf_monitor.modules[].pegs: list of statistics to track
     or empty for all counters
-  * enum perf_monitor.format = csv: output format for stats { csv |
+  * enum perf_monitor.format = csv: output format for stats { csv | 
     text | json }
   * bool perf_monitor.summary = false: output summary at shutdown
 
@@ -5238,7 +5251,7 @@ Configuration:
     0:65535 }
   * int smtp.max_response_line_len = 512: max SMTP response line {
     0:65535 }
-  * enum smtp.normalize = none: turns on/off normalization { none |
+  * enum smtp.normalize = none: turns on/off normalization { none | 
     cmds | all }
   * string smtp.normalize_cmds: list of commands to normalize
   * int smtp.qp_decode_depth = -1: quoted-Printable decoding depth
@@ -5629,8 +5642,8 @@ Configuration:
   * bool stream_tcp.no_ack = false: received data is implicitly acked
     immediately
   * enum stream_tcp.policy = bsd: determines operating system
-    characteristics like reassembly { first | last | linux |
-    old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 |
+    characteristics like reassembly { first | last | linux | 
+    old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | 
     windows | win_2003 | vista | proxy }
   * bool stream_tcp.reassemble_async = true: queue data for
     reassembly before traffic is seen in both directions
@@ -5953,7 +5966,7 @@ Usage: detect
 
 Configuration:
 
-  * enum reject.reset = both: send TCP reset to one or both ends {
+  * enum reject.reset = both: send TCP reset to one or both ends { 
     none|source|dest|both }
   * enum reject.control = none: send ICMP unreachable(s) { none|
     network|host|port|forward|all }
@@ -6196,7 +6209,7 @@ Configuration:
     of buffer
   * enum byte_math.endian: specify big/little endian { big|little }
   * implied byte_math.dce: dcerpc2 determines endianness
-  * enum byte_math.string: convert extracted string to dec/hex/oct {
+  * enum byte_math.string: convert extracted string to dec/hex/oct { 
     hex|dec|oct }
   * int byte_math.bitmask: applies as bitwise AND to the extracted
     value before storage in name { 0x1:0xFFFFFFFF }
@@ -6683,7 +6696,7 @@ Usage: detect
 
 Configuration:
 
-  * enum flowbits.~op: bit operation or noalert (no bits) { set |
+  * enum flowbits.~op: bit operation or noalert (no bits) { set | 
     unset | isset | isnotset | noalert }
   * string flowbits.~bits: bit [|bit]* or bit [&bit]*
 
@@ -8074,7 +8087,7 @@ Usage: detect
 
 Configuration:
 
-  * enum stream_reassemble.action: stop or start stream reassembly {
+  * enum stream_reassemble.action: stop or start stream reassembly { 
     disable|enable }
   * enum stream_reassemble.direction: action applies to the given
     direction(s) { client|server|both }
@@ -8132,7 +8145,7 @@ Usage: detect
 
 Configuration:
 
-  * enum target.~: indicate the target of the attack { src_ip |
+  * enum target.~: indicate the target of the attack { src_ip | 
     dst_ip }
 
 
@@ -8390,7 +8403,7 @@ Configuration:
     each message { auth | authpriv | daemon | user | local0 | local1
     | local2 | local3 | local4 | local5 | local6 | local7 }
   * enum alert_syslog.level = info: part of priority applied to each
-    message { emerg | alert | crit | err | warning | notice | info |
+    message { emerg | alert | crit | err | warning | notice | info | 
     debug }
   * multi alert_syslog.options: used to open the syslog connection {
     cons | ndelay | perror | pid }
@@ -8838,7 +8851,7 @@ libraries see the Getting Started section of the manual.
     each message { auth | authpriv | daemon | user | local0 | local1
     | local2 | local3 | local4 | local5 | local6 | local7 }
   * enum alert_syslog.level = info: part of priority applied to each
-    message { emerg | alert | crit | err | warning | notice | info |
+    message { emerg | alert | crit | err | warning | notice | info | 
     debug }
   * multi alert_syslog.options: used to open the syslog connection {
     cons | ndelay | perror | pid }
@@ -9006,7 +9019,7 @@ libraries see the Getting Started section of the manual.
   * string byte_math.result: name of the variable to store the result
   * string byte_math.rvalue: value to use mathematical operation
     against
-  * enum byte_math.string: convert extracted string to dec/hex/oct {
+  * enum byte_math.string: convert extracted string to dec/hex/oct { 
     hex|dec|oct }
   * implied byte_test.big: big endian
   * int byte_test.bitmask: applies as an AND prior to evaluation {
@@ -9069,7 +9082,7 @@ libraries see the Getting Started section of the manual.
     --daq-batch-size) { 1: }
   * string daq.inputs[].input: input source
   * string daq.module_dirs[].path: directory path
-  * enum daq.modules[].mode = passive: DAQ module mode { passive |
+  * enum daq.modules[].mode = passive: DAQ module mode { passive | 
     inline | read-file }
   * string daq.modules[].name: DAQ module name (required)
   * string daq.modules[].variables[].variable: DAQ module variable
@@ -9094,7 +9107,7 @@ libraries see the Getting Started section of the manual.
   * int dce_smb.memcap = 8388608: Memory utilization limit on smb {
     512:maxSZ }
   * enum dce_smb.policy = WinXP: target based policy to use { Win2000
-    | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba |
+    | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | 
     Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
   * int dce_smb.reassemble_threshold = 0: minimum bytes received
     before performing reassembly { 0:65535 }
@@ -9119,7 +9132,7 @@ libraries see the Getting Started section of the manual.
   * int dce_tcp.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
   * enum dce_tcp.policy = WinXP: target based policy to use { Win2000
-    | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba |
+    | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | 
     Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
   * int dce_tcp.reassemble_threshold = 0: minimum bytes received
     before performing reassembly { 0:65535 }
@@ -9201,7 +9214,7 @@ libraries see the Getting Started section of the manual.
   * bool event_queue.process_all_events = false: process just first
     action group or all action groups
   * string file_connector[].connector: connector name
-  * enum file_connector[].direction: usage { receive | transmit |
+  * enum file_connector[].direction: usage { receive | transmit | 
     duplex }
   * enum file_connector[].format: file format { binary | text }
   * string file_connector[].name: channel name
@@ -9272,7 +9285,7 @@ libraries see the Getting Started section of the manual.
   * string flags.~mask_flags: these flags are don’t cares
   * string flags.~test_flags: these flags are tested
   * string flowbits.~bits: bit [|bit]* or bit [&bit]*
-  * enum flowbits.~op: bit operation or noalert (no bits) { set |
+  * enum flowbits.~op: bit operation or noalert (no bits) { set | 
     unset | isset | isnotset | noalert }
   * implied flow.established: match only during data transfer phase
   * implied flow.from_client: same as to_server
@@ -9372,12 +9385,12 @@ libraries see the Getting Started section of the manual.
   * string hosts[].services[].name: service identifier
   * port hosts[].services[].port: port number
   * enum hosts[].services[].proto = tcp: IP protocol { tcp | udp }
-  * enum hosts[].tcp_policy: TCP reassembly policy { first | last |
-    linux | old_linux | bsd | macos | solaris | irix | hpux11 |
+  * enum hosts[].tcp_policy: TCP reassembly policy { first | last | 
+    linux | old_linux | bsd | macos | solaris | irix | hpux11 | 
     hpux10 | windows | win_2003 | vista | proxy }
   * addr host_tracker[].ip: hosts address / cidr
   * port host_tracker[].services[].port: port number
-  * enum host_tracker[].services[].proto: IP protocol { ip | tcp |
+  * enum host_tracker[].services[].proto: IP protocol { ip | tcp | 
     udp }
   * int http2_inspect.concurrent_streams_limit = 100: Maximum number
     of concurrent streams allowed in a single HTTP/2 flow { 100:1000
@@ -9667,7 +9680,7 @@ libraries see the Getting Started section of the manual.
   * int inspection.max_aux_ip = 16: maximum number of auxiliary IPs
     per flow to detect and save (-1 = disable, 0 = detect but don’t
     save, 1+ = save in FIFO manner) { -1:127 }
-  * enum inspection.mode = inline-test: set policy mode { inline |
+  * enum inspection.mode = inline-test: set policy mode { inline | 
     inline-test }
   * string inspection.uuid: correlate events by uuid
   * select ipopts.~opt: output format { rr|eol|nop|ts|sec|esec|lsrr|
@@ -9746,13 +9759,15 @@ libraries see the Getting Started section of the manual.
   * int modbus_unit.~: Modbus unit ID { 0:255 }
   * int mpls.max_stack_depth = -1: set maximum MPLS stack depth {
     -1:255 }
-  * enum mpls.payload_type = auto: force encapsulated payload type {
+  * enum mpls.payload_type = auto: force encapsulated payload type { 
     auto | eth | ip4 | ip6 }
   * string msg.~: message describing rule
   * interval mss.~range: check if TCP MSS is in given range { 0:65535
     }
   * string netflow.dump_file: file name to dump netflow cache on
     shutdown; won’t dump by default
+  * int netflow.flow_memcap = 0: maximum memory for flow record cache
+    in bytes, 0 = unlimited { 0:maxSZ }
   * bool netflow.rules[].create_host = false: generate a new host
     event
   * bool netflow.rules[].create_service = false: generate a new or
@@ -9766,6 +9781,8 @@ libraries see the Getting Started section of the manual.
     networks
   * string netflow.rules[].zones: generate events only for NetFlow
     packets that originate from these zones
+  * int netflow.template_memcap = 0: maximum memory for template
+    cache in bytes, 0 = unlimited { 0:maxSZ }
   * int netflow.update_timeout = 3600: the interval at which the
     system updates host cache information { 0:max32 }
   * multi network.checksum_drop = none: drop if checksum is bad { all
@@ -9877,7 +9894,7 @@ libraries see the Getting Started section of the manual.
     bytes for flow tracking { 236:maxSZ }
   * int perf_monitor.flow_ports = 1023: maximum ports to track {
     0:65535 }
-  * enum perf_monitor.format = csv: output format for stats { csv |
+  * enum perf_monitor.format = csv: output format for stats { csv | 
     text | json }
   * int perf_monitor.max_file_size = 1073741824: files will be rolled
     over if they exceed this size { 4096:max53 }
@@ -10050,20 +10067,20 @@ libraries see the Getting Started section of the manual.
     = no limit) { -1:255 }
   * bool profiler.memory.show = true: show module memory profile
     stats
-  * enum profiler.memory.sort = total_used: sort by given field {
+  * enum profiler.memory.sort = total_used: sort by given field { 
     none | allocations | total_used | avg_allocation }
   * int profiler.modules.count = 0: limit results to count items per
     level (0 = no limit) { 0:max32 }
   * int profiler.modules.max_depth = -1: limit depth to max_depth (-1
     = no limit) { -1:255 }
   * bool profiler.modules.show = true: show module time profile stats
-  * enum profiler.modules.sort = total_time: sort by given field {
+  * enum profiler.modules.sort = total_time: sort by given field { 
     none | checks | avg_check | total_time }
   * int profiler.rules.count = 0: print results to given level (0 =
     all) { 0:max32 }
   * bool profiler.rules.show = true: show rule time profile stats
   * enum profiler.rules.sort = total_time: sort by given field { none
-    | checks | avg_check | total_time | matches | no_matches |
+    | checks | avg_check | total_time | matches | no_matches | 
     avg_match | avg_no_match }
   * string rate_filter[].apply_to: restrict filter to these addresses
     according to track
@@ -10093,7 +10110,7 @@ libraries see the Getting Started section of the manual.
     instead of start of buffer
   * enum reject.control = none: send ICMP unreachable(s) { none|
     network|host|port|forward|all }
-  * enum reject.reset = both: send TCP reset to one or both ends {
+  * enum reject.reset = both: send TCP reset to one or both ends { 
     none|source|dest|both }
   * string rem.~: comment
   * string replace.~: byte code to replace with
@@ -10339,7 +10356,7 @@ libraries see the Getting Started section of the manual.
   * int smtp.max_response_line_len = 512: max SMTP response line {
     0:65535 }
   * string smtp.normalize_cmds: list of commands to normalize
-  * enum smtp.normalize = none: turns on/off normalization { none |
+  * enum smtp.normalize = none: turns on/off normalization { none | 
     cmds | all }
   * int smtp.qp_decode_depth = -1: quoted-Printable decoding depth
     (-1 no limit) { -1:65535 }
@@ -10651,7 +10668,7 @@ libraries see the Getting Started section of the manual.
     before pruning { 2:max32 }
   * int stream.pruning_timeout = 30: minimum inactive time before
     being eligible for pruning { 1:max32 }
-  * enum stream_reassemble.action: stop or start stream reassembly {
+  * enum stream_reassemble.action: stop or start stream reassembly { 
     disable|enable }
   * enum stream_reassemble.direction: action applies to the given
     direction(s) { client|server|both }
@@ -10678,8 +10695,8 @@ libraries see the Getting Started section of the manual.
   * int stream_tcp.overlap_limit = 0: maximum number of allowed
     overlapping segments per session { 0:max32 }
   * enum stream_tcp.policy = bsd: determines operating system
-    characteristics like reassembly { first | last | linux |
-    old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 |
+    characteristics like reassembly { first | last | linux | 
+    old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | 
     windows | win_2003 | vista | proxy }
   * int stream_tcp.queue_limit.max_bytes = 4194304: don’t queue more
     than given bytes per session and direction, 0 = unlimited {
@@ -10724,7 +10741,7 @@ libraries see the Getting Started section of the manual.
     host { session|host_src|host_dst }
   * int tag.packets: tag this many packets { 1:max32 }
   * int tag.seconds: tag for this many seconds { 1:max32 }
-  * enum target.~: indicate the target of the attack { src_ip |
+  * enum target.~: indicate the target of the attack { src_ip | 
     dst_ip }
   * string tcp_connector[].address: address
   * port tcp_connector[].base_port: base port number
@@ -11449,6 +11466,14 @@ libraries see the Getting Started section of the manual.
   * modbus.max_concurrent_sessions: maximum concurrent modbus
     sessions (max)
   * modbus.sessions: total sessions processed (sum)
+  * netflow.cache_adds: netflow cache added new entry (sum)
+  * netflow.cache_hits: netflow cache found existing entry (sum)
+  * netflow.cache_max: netflow cache’s maximum byte usage (sum)
+  * netflow.cache_misses: netflow cache did not find entry (sum)
+  * netflow.cache_prunes: netflow cache pruned entry to make space
+    for new entry (sum)
+  * netflow.cache_replaces: netflow cache found entry and replaced
+    its value (sum)
   * netflow.invalid_netflow_record: count of invalid netflow records
     (sum)
   * netflow.packets: total packets processed (sum)
@@ -12592,12 +12617,12 @@ session.
 The TCP packet is invalid because it doesn’t have a SYN, ACK, or RST
 flag set.
 
-116:424 (eth) truncated ethernet header
+116:424 (pbb) truncated ethernet header
 
 The packet length is less than the minimum ethernet header size (14
 bytes)
 
-116:424 (eth) truncated ethernet header
+116:424 (pbb) truncated ethernet header
 
 A truncated ethernet header was detected.
 
@@ -13488,16 +13513,16 @@ HTTP Accept-Encoding header. This pattern constitutes a Microsoft
 Windows HTTP protocol stack remote code execution attempt. Reference:
 CVE-2021-31166.
 
-119:273 (http_inspect) missed PDUs during JavaScript normalization
+119:273 (http_inspect) data gaps during JavaScript normalization
 
 This alert is raised for the following situation. During JavaScript
-normalization middle PDUs can be missed and not normalized. Usually
-it happens when rules have file_data and js_data ips options and
-fast-pattern (FP) search is applying to file_data. Some PDUs don’t
+normalization some data can be lost and not normalized. Usually it
+happens when rules have file_data and js_data ips options and
+fast-pattern (FP) search is applying to file_data. Some data doesn’t
 match file_data FP search and JavaScript normalization won’t be
-executed for these PDUs. The normalization of the following PDUs for
-inline/external scripts will be stopped for current request within
-the flow. This alert is raised by the enhanced JavaScript normalizer.
+executed for it. The following normalization for inline/external
+scripts will be stopped for current request within the flow. This
+alert is raised by the enhanced JavaScript normalizer.
 
 119:274 (http_inspect) excessive JavaScript scope nesting
 
@@ -13708,6 +13733,10 @@ SETTINGS frame
 not expected
 
 Nonempty HTTP/2 Data frame where a message body was not expected.
+
+121:38 (http2_inspect) HTTP/2 non-Data frame longer than 63780 bytes
+
+HTTP/2 non-Data frame longer than 63780 bytes
 
 122:1 (port_scan) TCP portscan
 
