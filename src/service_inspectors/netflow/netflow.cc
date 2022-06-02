@@ -752,8 +752,8 @@ static void show_device(const NetflowRule& d, bool is_exclude)
 
 void NetflowInspector::show(const SnortConfig*) const
 {
-    ConfigLogger::log_value("flow_memcap", config->flow_memcap);
-    ConfigLogger::log_value("template_memcap", config->template_memcap);
+    ConfigLogger::log_value("flow_memcap", (uint64_t)config->flow_memcap);
+    ConfigLogger::log_value("template_memcap", (uint64_t)config->template_memcap);
     ConfigLogger::log_value("dump_file", config->dump_file);
     ConfigLogger::log_value("update_timeout", config->update_timeout);
     bool log_header = true;
