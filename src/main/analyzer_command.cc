@@ -237,7 +237,8 @@ bool ACScratchUpdate::execute(Analyzer&, void**)
 {
     for ( auto* s : handlers )
     {
-        s->update(sc);
+        if ( s )
+            s->update(sc);
     }
     return true;
 }
