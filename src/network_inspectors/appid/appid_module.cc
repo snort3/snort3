@@ -69,6 +69,8 @@ static const Parameter s_params[] =
 #ifdef REG_TEST
     { "first_decrypted_packet_debug", Parameter::PT_INT, "0:max32", "0",
       "the first packet of an already decrypted SSL flow (debug single session only)" },
+    { "log_eve_process_client_mappings", Parameter::PT_BOOL, nullptr, "false",
+      "enable logging of encrypted visibility engine process to client mappings" },
 #endif
     { "memcap", Parameter::PT_INT, "1024:maxSZ", "1048576",
       "max size of the service cache before we start pruning the cache" },
@@ -476,6 +478,8 @@ bool AppIdModule::set(const char*, Value& v, SnortConfig*)
 #ifdef REG_TEST
     if ( v.is("first_decrypted_packet_debug") )
         config->first_decrypted_packet_debug = v.get_uint32();
+    else if ( v.is("log_eve_process_client_mappings") )
+        config->log_eve_process_client_mappings = v.get_bool();
     else
 #endif
     if ( v.is("memcap") )

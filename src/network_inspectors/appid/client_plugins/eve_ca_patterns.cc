@@ -27,8 +27,10 @@
 #include <algorithm>
 
 #include "log/messages.h"
+#include "managers/inspector_manager.h"
 #include "utils/util.h"
 #include "appid_debug.h"
+#include "appid_inspector.h"
 
 using namespace snort;
 using namespace std;
@@ -108,6 +110,9 @@ void EveCaPatternMatchers::finalize_patterns()
         eve_ca_pattern_matcher.add(p->pattern.data(), p->pattern.size(), p, true);
 
         #ifdef REG_TEST
+        AppIdInspector* inspector =
+            (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+        if (inspector and inspector->get_ctxt().config.log_eve_process_client_mappings)
             LogMessage("Adding EVE Client App pattern %d %s %d\n",
                 p->app_id, p->pattern.c_str(), p->confidence);
         #endif

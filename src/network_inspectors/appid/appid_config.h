@@ -83,6 +83,7 @@ public:
     // indicate the first packet from where the flow is decrypted (usually immediately
     // after certificate-exchange). Such manual detection is disabled by default (0).
     uint32_t first_decrypted_packet_debug = 0;
+    bool log_eve_process_client_mappings = false;
 #endif
     bool log_stats = false;
     uint32_t app_stats_period = 300;

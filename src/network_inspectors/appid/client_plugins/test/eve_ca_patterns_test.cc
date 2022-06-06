@@ -23,6 +23,7 @@
 #endif
 
 #include "client_plugins/eve_ca_patterns.cc"
+#include "appid_inspector.h"
 #include "client_plugins_mock.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
@@ -41,6 +42,14 @@ int SearchTool::find_all(const char* pattern, unsigned, MpseMatch, bool, void* d
     return 0;
 }
 }
+
+Inspector* InspectorManager::get_inspector(char const*, bool, const snort::SnortConfig*)
+{
+    return nullptr;
+}
+
+AppIdContext* ctxt;
+AppIdContext& AppIdInspector::get_ctxt() const { return *ctxt; }
 
 TEST_GROUP(eve_ca_patterns_tests)
 {
