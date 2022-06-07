@@ -31,8 +31,10 @@ namespace snort
 class NetflowEvent : public DataEvent
 {
 public:
-    NetflowEvent(const snort::Packet* p, const NetflowSessionRecord* rec)
-        : pkt(p), record(rec) { }
+    NetflowEvent(const snort::Packet* p, const NetflowSessionRecord* rec,
+        bool cre_host, bool cre_serv, uint32_t s_id)
+        : pkt(p), record(rec), create_host(cre_host),
+          create_service(cre_serv), serviceID(s_id) { }
 
     const Packet* get_packet() override
     { return pkt; }
@@ -40,9 +42,21 @@ public:
     const NetflowSessionRecord* get_record()
     { return record; }
 
+    bool get_create_host()
+    { return create_host; }
+
+    bool get_create_service()
+    { return create_service; }
+
+    uint32_t get_service_id()
+    { return serviceID; }
+
 private:
     const Packet* pkt;
     const NetflowSessionRecord* record;
+    bool create_host;
+    bool create_service;
+    uint32_t serviceID = 0;
 };
 
 }

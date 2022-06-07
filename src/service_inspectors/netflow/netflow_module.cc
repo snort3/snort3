@@ -22,6 +22,11 @@
 #include "config.h"
 #endif
 
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+
 #include "netflow_module.h"
 
 #include "utils/util.h"
@@ -70,6 +75,9 @@ static const Parameter netflow_params[] =
 
     { "template_memcap", Parameter::PT_INT, "0:maxSZ", "0",
       "maximum memory for template cache in bytes, 0 = unlimited" },
+
+    { "netflow_service_id_path", Parameter::PT_STRING, nullptr, nullptr,
+      "path to file containing service IDs for NetFlow" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -204,7 +212,42 @@ bool NetflowModule::set(const char*, Value& v, SnortConfig*)
     {
         rule_cfg.create_service = v.get_bool();
     }
+    else if ( v.is("netflow_service_id_path") )
+    {
+        parse_service_id_file(v.get_string());
+    }
     return true;
+}
+
+void NetflowModule::parse_service_id_file(const std::string& serv_id_file_path)
+{
+    std::string serv_line;
+    std::ifstream serv_id_file;
+    serv_id_file.open(serv_id_file_path);
+
+    if ( serv_id_file.is_open() )
+    {
+        while ( std::getline(serv_id_file, serv_line) )
+        {
+            std::stringstream ss(serv_line);
+            std::vector<std::string> tokens;
+
+            std::string tmp_str;
+
+            while( std::getline(ss, tmp_str, '\t') )
+                tokens.push_back(tmp_str);
+
+            // Format is <port> <tcp/udp> <internal ID>
+            uint16_t srv_port = std::stoi(tokens[0]);
+            std::string proto_str = tokens[1];
+            uint16_t id = std::stoi(tokens[2]);
+
+            if ( proto_str == "tcp" )
+                tcp_service_mappings[srv_port] = id;
+            else if ( proto_str == "udp" )
+                udp_service_mappings[srv_port] = id;
+        }
+    }
 }
 
 PegCount* NetflowModule::get_counts() const

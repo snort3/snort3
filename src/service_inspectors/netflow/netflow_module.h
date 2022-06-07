@@ -156,6 +156,11 @@ public:
     snort::ProfileStats* get_profile() const override;
     NetflowConfig* get_data();
 
+    void parse_service_id_file(const std::string& serv_id_file_path);
+
+    std::unordered_map<int, int> udp_service_mappings;
+    std::unordered_map<int, int> tcp_service_mappings;
+
     Usage get_usage() const override
     { return INSPECT; }
 

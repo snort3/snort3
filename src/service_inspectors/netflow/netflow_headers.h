@@ -52,7 +52,7 @@ enum NetflowFieldTypes : uint16_t
     NETFLOW_DST_IPV6 = 28,
     NETFLOW_SRC_MASK_IPV6 = 29,
     NETFLOW_DST_MASK_IPV6 = 30,
-    NETFLOW_DST_TOS = 55
+    NETFLOW_DST_TOS = 55,
 };
 
 struct NetflowSessionRecord
