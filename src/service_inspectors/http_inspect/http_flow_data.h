@@ -25,7 +25,6 @@
 #include <cstdio>
 
 #include "flow/flow.h"
-#include "mime/file_mime_process.h"
 #include "utils/util_utf.h"
 #include "decompress/file_decomp.h"
 
@@ -44,6 +43,7 @@ class JSIdentifierCtxBase;
 namespace snort
 {
 class JSNormalizer;
+class MimeSession;
 }
 
 class HttpFlowData : public snort::FlowData

@@ -21,6 +21,7 @@
 #define HTTP_MSG_HEADER_H
 
 #include "file_api/file_api.h"
+#include "mime/file_mime_process.h"
 
 #include "http_common.h"
 #include "http_enum.h"

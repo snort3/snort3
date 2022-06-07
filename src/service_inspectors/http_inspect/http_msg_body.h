@@ -20,6 +20,8 @@
 #ifndef HTTP_MSG_BODY_H
 #define HTTP_MSG_BODY_H
 
+#include "file_api/file_api.h"
+
 #include "http_common.h"
 #include "http_enum.h"
 #include "http_field.h"

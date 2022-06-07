@@ -25,6 +25,7 @@
 
 #include "decompress/file_decomp.h"
 #include "main/snort_debug.h"
+#include "mime/file_mime_process.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
 #include "utils/js_identifier_ctx.h"
 #include "utils/js_normalizer.h"
@@ -205,6 +206,10 @@ void HttpFlowData::trailer_prep(SourceId source_id)
         delete compress_stream[source_id];
         compress_stream[source_id] = nullptr;
     }
+    delete mime_state[source_id];
+    mime_state[source_id] = nullptr;
+    delete utf_state[source_id];
+    utf_state[source_id] = nullptr;
 }
 
 void HttpFlowData::garbage_collect()

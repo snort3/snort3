@@ -409,13 +409,13 @@ bool MimeSession::process_header_line(const uint8_t*& ptr, const uint8_t* eol, c
 static const uint8_t* GetDataEnd(const uint8_t* data_start,
     const uint8_t* data_end_marker)
 {
-    /* '\r\n' + '--' + MIME boundary string */
+    // '\r\n' + '--' + MIME boundary string
     const int Max_Search = 4 + MAX_MIME_BOUNDARY_LEN;
     const uint8_t* start;
-    /*Exclude 2 bytes because either \r\n or '--'  at the end */
+    // Exclude 2 bytes because either \r\n or '--'  at the end
     const uint8_t* end = data_end_marker - 2;
 
-    /*Search for the start of boundary, should be less than boundary length*/
+    // Search for the start of boundary, should be less than boundary length
     if (end > data_start + Max_Search)
         start = end - Max_Search;
     else
@@ -585,7 +585,7 @@ const uint8_t* MimeSession::process_mime_data_paf(
                     set_file_data(decomp_buffer, decomp_buf_size);
                 }
 
-                /*Process file type/file signature*/
+                // Process file type/file signature
                 mime_file_process(p, buffer, buf_size, position, upload);
 
                 if (mime_stats)
@@ -645,7 +645,7 @@ void MimeSession::reset_part_state()
     // Clear MIME's file data to prepare for next file
     filename.clear();
     file_counter++;
-    file_process_offset = 0;
+    file_offset = 0;
     current_file_cache_file_id = 0;
     current_multiprocessing_file_id = 0;
     continue_inspecting_file = true;
@@ -668,11 +668,11 @@ const uint8_t* MimeSession::process_mime_data(Packet* p, const uint8_t* start,
         return data_end_marker;
     }
 
-    initFilePosition(&position, file_process_offset);
-    /* look for boundary */
+    initFilePosition(&position, file_offset);
+    // look for boundary
     while (start < data_end_marker)
     {
-        /*Found the boundary, start processing data*/
+        // Found the boundary, start processing data
         if (process_mime_paf_data(&(mime_boundary),  *start))
         {
             attach_end = start;
@@ -689,7 +689,7 @@ const uint8_t* MimeSession::process_mime_data(Packet* p, const uint8_t* start,
 
     if ((start == data_end_marker) && (attach_start < data_end_marker))
     {
-        updateFilePosition(&position, file_process_offset);
+        updateFilePosition(&position, file_offset);
         process_mime_data_paf(p, attach_start, data_end_marker,
             upload, position);
     }
@@ -886,16 +886,15 @@ void MimeSession::mime_file_process(Packet* p, const uint8_t* data, int data_siz
         if (session_base_file_id)
         {
             const FileDirection dir = upload? FILE_UPLOAD : FILE_DOWNLOAD;
-            uint64_t offset = file_process_offset;
             continue_inspecting_file = file_flows->file_process(p, get_file_cache_file_id(), data,
-                data_size, offset, dir, get_multiprocessing_file_id(), position);
+                data_size, file_offset, dir, get_multiprocessing_file_id(), position);
         }
         else
         {
             continue_inspecting_file = file_flows->file_process(p, data, data_size, position,
                 upload);
         }
-        file_process_offset += data_size;
+        file_offset += data_size;
         if (continue_inspecting_file and (isFileStart(position)) && log_state)
         {
             continue_inspecting_file = file_flows->set_file_name((const uint8_t*)filename.c_str(),

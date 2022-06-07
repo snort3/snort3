@@ -99,7 +99,7 @@ private:
     bool continue_inspecting_file = true;
     // This counter is not an accurate count of files; used only for creating a unique mime_file_id
     uint32_t file_counter = 0;
-    uint32_t file_process_offset = 0;
+    uint32_t file_offset = 0;
     uint64_t session_base_file_id = 0;
     uint64_t current_file_cache_file_id = 0;
     uint64_t current_multiprocessing_file_id = 0;
@@ -111,7 +111,7 @@ private:
         FilePosition position, bool upload);
     void reset_part_state();
 
-    // SMTP, IMAP, POP might have different implementation for this
+    // Individual service inspectors may have different implementations for these
     virtual int handle_header_line(const uint8_t*, const uint8_t*, int, Packet*) { return 0; }
     virtual int normalize_data(const uint8_t*, const uint8_t*, Packet*) { return 0; }
     virtual void decode_alert() { }

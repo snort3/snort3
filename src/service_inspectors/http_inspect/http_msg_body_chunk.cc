@@ -32,24 +32,9 @@ void HttpMsgBodyChunk::update_flow()
 
     // Cutter was deleted by splitter when zero-length chunk received or at TCP close
     if (session_data->cutter[source_id] == nullptr)
-    {
         session_data->trailer_prep(source_id);
-        if (session_data->mime_state[source_id] != nullptr)
-        {
-            delete session_data->mime_state[source_id];
-            session_data->mime_state[source_id] = nullptr;
-        }
-
-        if ((source_id == SRC_SERVER) && (session_data->utf_state[source_id] != nullptr))
-        {
-            delete session_data->utf_state[source_id];
-            session_data->utf_state[source_id] = nullptr;
-        }
-    }
     else
-    {
         update_depth();
-    }
 }
 
 #ifdef REG_TEST
