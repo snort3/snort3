@@ -10,6 +10,7 @@ set (CPP_INCLUDES
 
 set( MANAGERS_INCLUDES
     codec_manager.h
+    event_manager.h
     inspector_manager.h
 )
 
@@ -23,7 +24,6 @@ add_library( managers OBJECT
     action_manager.cc
     codec_manager.cc
     event_manager.cc
-    event_manager.h
     inspector_manager.cc
     ips_manager.cc
     ips_manager.h

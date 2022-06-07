@@ -98,6 +98,7 @@ void CodecManager::thread_init(const snort::SnortConfig*) { }
 void CodecManager::thread_term() { }
 void EventManager::open_outputs() { }
 void EventManager::close_outputs() { }
+void EventManager::reload_outputs() { }
 void IpsManager::setup_options(const snort::SnortConfig*) { }
 void IpsManager::clear_options(const snort::SnortConfig*) { }
 void ActionManager::thread_init(const snort::SnortConfig*) { }

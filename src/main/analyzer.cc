@@ -630,6 +630,7 @@ void Analyzer::reinit(const SnortConfig* sc)
     InspectorManager::thread_reinit(sc);
     ActionManager::thread_reinit(sc);
     TraceApi::thread_reinit(sc->trace_config);
+    EventManager::reload_outputs();
 }
 
 void Analyzer::stop_removed(const SnortConfig* sc)

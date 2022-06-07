@@ -60,6 +60,7 @@ public:
 
     static void open_outputs();
     static void close_outputs();
+    static void reload_outputs();
 
     static void call_alerters(OutputSet*, snort::Packet*, const char* message, const Event&);
     static void call_loggers(OutputSet*, snort::Packet*, const char* message, Event*);

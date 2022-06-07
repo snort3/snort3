@@ -55,6 +55,7 @@ public:
     virtual void open() { }
     virtual void close() { }
     virtual void reset() { }
+    virtual void reload() { }
 
     virtual void alert(Packet*, const char*, const Event&) { }
     virtual void log(Packet*, const char*, Event*) { }

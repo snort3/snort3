@@ -230,6 +230,13 @@ void EventManager::close_outputs()
         p->close();
 }
 
+void EventManager::reload_outputs()
+{
+    for ( auto p : s_loggers.outputs )
+        p->reload();
+    LogMessage("logger file reinitialized\n");
+}
+
 void EventManager::call_alerters(
     OutputSet* idx, Packet* pkt, const char* message, const Event& event)
 {
