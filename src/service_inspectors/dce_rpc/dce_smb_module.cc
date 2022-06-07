@@ -243,7 +243,7 @@ static const Parameter s_params[] =
     { "smb_legacy_mode", Parameter::PT_BOOL, nullptr, "false",
       "inspect only SMBv1" },
 
-    { "smb_max_credit", Parameter::PT_INT, "1:65536", "8192",
+    { "smb_max_credit", Parameter::PT_INT, "1:65535", "8192",
       "Maximum number of outstanding request" },
 
     { "memcap", Parameter::PT_INT, "512:maxSZ", "8388608",

@@ -289,7 +289,7 @@ static const Parameter rna_fp_params[] =
     { "uuid", Parameter::PT_STRING, nullptr, nullptr,
       "fingerprint uuid" },
 
-    { "ttl", Parameter::PT_INT, "0:256", "0",
+    { "ttl", Parameter::PT_INT, "0:255", "0",
       "fingerprint ttl" },
 
     { "tcp_window", Parameter::PT_STRING, nullptr, nullptr,
@@ -482,7 +482,7 @@ bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
         else if (v.is("ws"))
             fingerprint.ws = v.get_string();
         else if (v.is("df"))
-            fingerprint.df = v.get_uint8();
+            fingerprint.df = v.get_bool();
         else if (v.is("ua_type"))
             fingerprint.ua_type = (UserAgentInfoType)v.get_uint8();
         else if (v.is("host_name"))
@@ -503,9 +503,9 @@ bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
         else if (v.is("dhcp60"))
             fingerprint.dhcp60 = v.get_string();
         else if (v.is("major"))
-            fingerprint.smb_major = v.get_uint16();
+            fingerprint.smb_major = v.get_uint32();
         else if (v.is("minor"))
-            fingerprint.smb_minor = v.get_uint16();
+            fingerprint.smb_minor = v.get_uint32();
         else if (v.is("flags"))
             fingerprint.smb_flags = v.get_uint32();
         else

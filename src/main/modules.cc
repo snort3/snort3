@@ -393,7 +393,7 @@ static const Parameter profiler_params[] =
 
 template<typename T>
 static bool s_profiler_module_set_max_depth(T& config, Value& v)
-{ config.max_depth = v.get_uint8(); return true; }
+{ config.max_depth = v.get_int16(); return true; }
 
 static bool s_profiler_module_set_max_depth(RuleProfilerConfig&, Value&)
 { return false; }
