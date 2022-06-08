@@ -268,7 +268,7 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
                 ptr++;
             else
             {
-                if (!mpse_attr->find(ptr, end - ptr, match_attr, false, &sctx))
+                if (!mpse_attr->find(ptr, end - ptr, match_attr, false, &sctx) || ptr == sctx.next)
                     break; // the opening tag never ends
                 ptr = sctx.next;
             }
@@ -570,9 +570,9 @@ int HttpJsNorm::match_attr(void* pid, void*, int index, void* sctx, void*)
         return 0;
 
     default:
+        assert(false);
         ctx->is_external = false;
         ctx->is_javascript = false;
-        ctx->next += index;
         return 1;
     }
 }
