@@ -276,9 +276,7 @@ void Wizard::reset(Wand& w, bool tcp, bool c2s)
 
     if ( w.curse_tracker.empty() )
     {
-        vector<const CurseDetails*> pages = curses->get_curses(tcp);
-
-        for ( const CurseDetails* curse : pages )
+        for ( const CurseDetails* curse : curses->get_curses(tcp) )
         {
             if ( tcp )
                 w.curse_tracker.emplace_back( CurseServiceTracker{ curse, new CurseTracker } );
