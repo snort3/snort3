@@ -31,6 +31,7 @@
 
 #include "log/messages.h"
 #include "managers/module_manager.h"
+#include "main/reload_tuner.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "pub_sub/netflow_event.h"
@@ -704,12 +705,23 @@ public:
 
     void eval(snort::Packet*) override;
     void show(const snort::SnortConfig*) const override;
+    void install_reload_handler(snort::SnortConfig*) override;
 
 private:
     const NetflowConfig *config;
 
     bool log_netflow_cache();
     void stringify(std::ofstream&);
+};
+
+class NetflowReloadSwapper : public snort::ReloadSwapper
+{
+public:
+    explicit NetflowReloadSwapper(NetflowInspector& ins) : inspector(ins) { }
+    void tswap() override;
+
+private:
+    NetflowInspector& inspector;
 };
 
 static std::string to_string(const std::vector <snort::SfCidr>& networks)
@@ -939,11 +951,11 @@ void NetflowInspector::eval(Packet* p)
 
 void NetflowInspector::tinit()
 {
-    if ( !netflow_cache )
-        netflow_cache = new NetflowCache(config->flow_memcap, netflow_stats);
+    delete netflow_cache;
+    netflow_cache = new NetflowCache(config->flow_memcap, netflow_stats);
 
-    if ( !template_cache )
-        template_cache = new TemplateFieldCache(config->template_memcap, netflow_stats);
+    delete template_cache;
+    template_cache = new TemplateFieldCache(config->template_memcap, netflow_stats);
 }
 
 void NetflowInspector::tterm()
@@ -956,6 +968,16 @@ void NetflowInspector::tterm()
     }
     delete netflow_cache;
     delete template_cache;
+}
+
+void NetflowInspector::install_reload_handler(SnortConfig* sc)
+{
+    sc->register_reload_handler(new NetflowReloadSwapper(*this));
+}
+
+void NetflowReloadSwapper::tswap()
+{
+    inspector.tinit();
 }
 
 //-------------------------------------------------------------------------
