@@ -1334,7 +1334,6 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
  *
  */
 #define NUL 0x00
-#define FF 0x0c
 #define CR 0x0d
 #define LF 0x0a
 #define SP 0x20
@@ -1395,9 +1394,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
         req->cmd_begin = (const char*)read_ptr;
 
         while ((read_ptr < end) &&
-            (*read_ptr != SP) &&
-            (*read_ptr != FF) &&
-            (*read_ptr != CR) &&
+            (!isspace(*read_ptr)) &&
             (*read_ptr != LF) &&    /* Check for LF when there wasn't a CR,
                                      * protocol violation, but accepted by
                                      * some servers. */
@@ -1636,7 +1633,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
 
         if (read_ptr < end)
         {
-            if ((*read_ptr == SP) || (*read_ptr == FF))
+            if (isspace(*read_ptr))
             {
                 space = 1;
             }
