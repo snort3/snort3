@@ -1334,6 +1334,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
  *
  */
 #define NUL 0x00
+#define FF 0x0c
 #define CR 0x0d
 #define LF 0x0a
 #define SP 0x20
@@ -1395,6 +1396,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
 
         while ((read_ptr < end) &&
             (*read_ptr != SP) &&
+            (*read_ptr != FF) &&
             (*read_ptr != CR) &&
             (*read_ptr != LF) &&    /* Check for LF when there wasn't a CR,
                                      * protocol violation, but accepted by
@@ -1443,7 +1445,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                 {
                     if (!isalpha((int)(*ptr)))
                     {
-                        if (!isascii((int)(*ptr)) || !isprint((int)(*ptr)))
+                        if (!isascii((int)(*ptr)) || (!isprint((int)(*ptr)) && (!isspace((int)(*ptr)))))
                         {
                             encrypted = 1;
                         }
@@ -1520,7 +1522,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                 {
                     if (!isdigit((int)(*ptr)))
                     {
-                        if (!isascii((int)(*ptr)) || !isprint((int)(*ptr)))
+                        if (!isascii((int)(*ptr)) || (!isprint((int)(*ptr)) && (!isspace((int)(*ptr)))))
                         {
                             encrypted = 1;
                         }
@@ -1634,7 +1636,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
 
         if (read_ptr < end)
         {
-            if (*read_ptr == SP)
+            if ((*read_ptr == SP) || (*read_ptr == FF))
             {
                 space = 1;
             }

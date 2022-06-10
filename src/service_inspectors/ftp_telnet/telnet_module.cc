@@ -101,10 +101,10 @@ bool TelnetModule::set(const char*, Value& v, SnortConfig*)
         conf->ayt_threshold = v.get_int32();
 
     else if ( v.is("check_encrypted") )
-        conf->detect_encrypted = v.get_bool();
+        conf->check_encrypted_data = v.get_bool();
 
     else if ( v.is("encrypted_traffic") )
-        conf->check_encrypted_data = v.get_bool();
+        conf->detect_encrypted = v.get_bool();
 
     else if ( v.is("normalize") )
         conf->normalize = v.get_bool();
