@@ -685,6 +685,14 @@ static const char all_patterns_expected9[] =
     "|[^:/\\\\%]+\\/|[^:/\\\\%]*[?#]|about:blank#)/i;"
     "/[/ a  b   c / 1]/ a b c/1;";
 
+static const char all_patterns_buf10[] =
+    "function(a){if(!/^\\s*{/.test(a))return!1;a=_.xf(a);return null!==a&&\"object\"===typeof a&&!!a.g};"
+    "/^\\s*$/.test(Q)?0:/^[\\],:{}]*$/.replace(/(?=:|,|]|}|$)/g,z)";
+
+static const char all_patterns_expected10[] =
+    "function(a){if(!/^\\s*{/.test(a))return!1;a=_.xf(a);return null!==a&&\"object\"===typeof a&&!!a.g};"
+    "/^\\s*$/.test(Q)?0:/^[\\],:{}]*$/.replace(/(?=:|,|]|}|$)/g,z)";
+
 TEST_CASE("all patterns", "[JSNormalizer]")
 {
     SECTION("whitespaces and special characters")
@@ -789,6 +797,11 @@ TEST_CASE("all patterns", "[JSNormalizer]")
     {
         NORMALIZE(all_patterns_buf9);
         VALIDATE(all_patterns_buf9, all_patterns_expected9);
+    }
+    SECTION("regex literal with curly brace")
+    {
+        NORMALIZE(all_patterns_buf10);
+        VALIDATE(all_patterns_buf10, all_patterns_expected10);
     }
 }
 
@@ -1110,12 +1123,12 @@ static const char syntax_cases_expected23[] =
     "`${`${`${`${`";
 
 static const char syntax_cases_buf24[] =
-    "var a=/{{{{/}}}}/;"
-    "var b=/{{{{{/}}}}}/;";
+    "var a=/((((/))))/;"
+    "var b=/(((((/)))))/;";
 
 static const char syntax_cases_expected24[] =
-    "var a=/{{{{/}}}}/;"
-    "var b=/{{{{";
+    "var a=/((((/))))/;"
+    "var b=/((((";
 
 static const char syntax_cases_buf25[] =
     "return /regex0/.foo + /regex1/.bar ;"
@@ -3561,26 +3574,6 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
         NORMALIZE_1(dat2, exp2);
         NORMALIZE_1(dat3, exp3);
     }
-    SECTION("parentheses - wrong closing symbol")
-    {
-        const char dat1[] = "/({ (} })/";
-        const char dat2[] = "/({ (] })/";
-        const char exp1[] = "/({ (";
-        const char exp2[] = "/({ (";
-
-        NORM_BAD_1(dat1, exp1, JSTokenizer::BAD_TOKEN);
-        NORM_BAD_1(dat2, exp2, JSTokenizer::BAD_TOKEN);
-    }
-    SECTION("curly braces - wrong closing symbol")
-    {
-        const char dat1[] = "/({ {) })/";
-        const char dat2[] = "/({ {] })/";
-        const char exp1[] = "/({ {";
-        const char exp2[] = "/({ {";
-
-        NORM_BAD_1(dat1, exp1, JSTokenizer::BAD_TOKEN);
-        NORM_BAD_1(dat2, exp2, JSTokenizer::BAD_TOKEN);
-    }
     SECTION("square brackets - raw bracket")
     {
         const char dat1[] = "/]/";
@@ -3598,23 +3591,10 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
     {
         const char dat1[] = "/)/";
         const char dat2[] = "/())/";
-        const char dat3[] = "/({{ ()) }})/";
+        const char dat3[] = "/( ()) )/";
         const char exp1[] = "/";
         const char exp2[] = "/()";
-        const char exp3[] = "/({{ ()";
-
-        NORM_BAD_1(dat1, exp1, JSTokenizer::BAD_TOKEN);
-        NORM_BAD_1(dat2, exp2, JSTokenizer::BAD_TOKEN);
-        NORM_BAD_1(dat3, exp3, JSTokenizer::BAD_TOKEN);
-    }
-    SECTION("curly braces - mismatch")
-    {
-        const char dat1[] = "/}/";
-        const char dat2[] = "/{}}/";
-        const char dat3[] = "/({( {}} )})/";
-        const char exp1[] = "/";
-        const char exp2[] = "/{}";
-        const char exp3[] = "/({( {}";
+        const char exp3[] = "/( ()) ";
 
         NORM_BAD_1(dat1, exp1, JSTokenizer::BAD_TOKEN);
         NORM_BAD_1(dat2, exp2, JSTokenizer::BAD_TOKEN);
@@ -3627,17 +3607,6 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
         const char exp1[] = "/((";
         const char exp2[] = "))/";
         const char exp[] = "/(())/";
-
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
-    }
-    SECTION("curly braces - continuation")
-    {
-        const char dat1[] = "/{{";
-        const char dat2[] = "}}/";
-        const char exp1[] = "/{{";
-        const char exp2[] = "}}/";
-        const char exp[] = "/{{}}/";
 
         NORMALIZE_2(dat1, dat2, exp1, exp2);
         NORM_COMBINED_2(dat1, dat2, exp);
@@ -3660,17 +3629,6 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
         const char exp1[] = "/(";
         const char exp2[] = ")";
         const char exp[] = "/()";
-
-        NORM_BAD_2(dat1, dat2, exp1, exp2, JSTokenizer::BAD_TOKEN);
-        NORM_COMBINED_BAD_2(dat1, dat2, exp, JSTokenizer::BAD_TOKEN);
-    }
-    SECTION("curly braces - mismatch in continuation")
-    {
-        const char dat1[] = "/{";
-        const char dat2[] = "}}/";
-        const char exp1[] = "/{";
-        const char exp2[] = "}";
-        const char exp[] = "/{}";
 
         NORM_BAD_2(dat1, dat2, exp1, exp2, JSTokenizer::BAD_TOKEN);
         NORM_COMBINED_BAD_2(dat1, dat2, exp, JSTokenizer::BAD_TOKEN);

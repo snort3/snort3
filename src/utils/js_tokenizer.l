@@ -1008,10 +1008,10 @@ LITERAL_TEMPLATE_TEXT         [^\\%<$`]{1,32}|.
 
 LITERAL_REGEX_START           \/[^*\/]
 LITERAL_REGEX_END             \/[gimsuy]*
-LITERAL_REGEX_SKIP            \\\/|\\\\|\\\(|\\\)|\\\[|\\\]|\\\{|\\\}
-LITERAL_REGEX_TEXT            [^\\<\xA\xD\xE2/\(\)\[\]\{\}]{1,32}|.
-LITERAL_REGEX_G_OPEN          \(|\[|\{
-LITERAL_REGEX_G_CLOSE         \)|\]|\}
+LITERAL_REGEX_SKIP            \\\/|\\\\|\\\(|\\\)|\\\[|\\\]
+LITERAL_REGEX_TEXT            [^\\<\xA\xD\xE2/\(\)\[\]]{1,32}|.
+LITERAL_REGEX_G_OPEN          \(|\[
+LITERAL_REGEX_G_CLOSE         \)|\]
 /* extra literals */
 /* according to https://ecma-international.org/ecma-262/5.1/#sec-4.3 */
 LITERAL_UNDEFINED             undefined
@@ -2332,54 +2332,39 @@ JSTokenizer::JSRet JSTokenizer::literal_regex_g_open()
 
 JSTokenizer::JSRet JSTokenizer::literal_regex_g_close()
 {
-    char c_close = yytext[0];
-
-    if (regex_stack.empty())
+    switch (yytext[0])
     {
-        // a raw bracket is allowed in regex w/o unicode flag,
-        // but the parser will accept a bracket in regex with unicode flag
-        if (c_close == ']')
+    case ')':
+        if (regex_stack.empty())
         {
+            debug_logf(5, http_trace, TRACE_JS_PROC, nullptr,
+                "no group to close, .. %c\n", yytext[0]);
+            return BAD_TOKEN;
+        }
+        else if (regex_stack.top() == '(')
+            regex_stack.pop();
+        else
+            assert(regex_stack.top() == '[');
+
+        break;
+
+    case ']':
+        if (regex_stack.empty())
+        {
+            // a raw bracket is allowed in regex w/o unicode flag,
+            // but the parser will accept a bracket in regex with unicode flag
             ECHO;
             return EOS;
         }
-
-        debug_logf(5, http_trace, TRACE_JS_PROC, nullptr,
-            "no group to close, .. %c\n", yytext[0]);
-        return BAD_TOKEN;
-    }
-
-    char c_open = regex_stack.top();
-    bool mismatch = false;
-
-    switch (c_open)
-    {
-    case '(':
-        mismatch = c_close != ')';
-        regex_stack.pop();
-        break;
-
-    case '[':
-         // only the closing bracket has an effect in a character set
-        if (c_close == ']')
+        else if (regex_stack.top() == '[')
             regex_stack.pop();
-        break;
+        else
+            assert(regex_stack.top() == '(');
 
-    case '{':
-        mismatch = c_close != '}';
-        regex_stack.pop();
         break;
 
     default:
         assert(false);
-        mismatch = true;
-    }
-
-    if (mismatch)
-    {
-        debug_logf(5, http_trace, TRACE_JS_PROC, nullptr,
-            "closing symbol mismatch, %c .. %c\n", c_open, c_close);
-        return BAD_TOKEN;
     }
 
     ECHO;
