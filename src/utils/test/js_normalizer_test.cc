@@ -4204,9 +4204,6 @@ TEST_CASE("ignored properties", "[JSNormalizer]")
         const char dat19[] = "foo . + unwatch() . bar ;";
         const char dat20[] = "foo . + ['unwatch']() . bar ;";
 
-        // FIXIT-L: add support for proper tracking of bracket accessors.
-        // Current behavior: foo['watch'].bar -> var_0000['watch'].var_0001
-        // Expected behavior: foo['watch'].bar -> var_0000['watch'].bar
         const char exp1[] = "var_0000.watch.bar;";
         const char exp2[] = "var_0000['watch'].var_0001;";
         const char exp3[] = "var_0000.var_0001.watch.bar;";

@@ -207,8 +207,9 @@ void parse_include(SnortConfig* sc, const char* arg)
 void ParseIpVar(const char* var, const char* value)
 {
     int ret;
-    IpsPolicy* p = get_ips_policy();  // FIXIT-M double check, see below
-    DisallowCrossTableDuplicateVars(var, VAR_TYPE__IPVAR);
+    IpsPolicy* p = get_ips_policy();
+    DisallowCrossTableDuplicateVars(var, VAR_TYPE__IPVAR); 
+    // FIXIT-M: ip checked for duplicates twice: in the function above and in sfvt_add_str
 
     if ((ret = sfvt_define(p->ip_vartable, var, value)) != SFIP_SUCCESS)
     {

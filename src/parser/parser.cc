@@ -698,7 +698,7 @@ void OrderRuleLists(SnortConfig* sc)
     const char* order = sc->rule_order.c_str();
     if ( !*order )
     {
-        default_priorities = Actions::get_default_priorities();  // FIXIT-M apply builtin module defaults
+        default_priorities = Actions::get_default_priorities();
         order = default_priorities.c_str();
     }
 
