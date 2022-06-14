@@ -622,7 +622,6 @@ bool DetectionEngine::inspect(Packet* p)
         else
         {
             enable_content(p);
-            p->alt_dsize = 0;  // FIXIT-M should be redundant
 
             InspectorManager::execute(p);
             inspected = true;
