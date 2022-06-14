@@ -143,19 +143,19 @@ bool HashOption::operator==(const IpsOption& ips) const
 
 int HashOption::match(Cursor& c)
 {
-    int offset;
+    unsigned offset;
 
     /* Get byte_extract variables */
     if (config->offset_var >= 0 && config->offset_var < NUM_IPS_OPTIONS_VARS)
     {
         uint32_t extract;
         GetVarValueByIndex(&extract, config->offset_var);
-        offset = (int)extract;
+        offset = extract;
     }
     else
         offset = config->offset;
 
-    int pos = c.get_delta();
+    unsigned pos = c.get_delta();
 
     if ( !pos )
     {
@@ -164,9 +164,6 @@ int HashOption::match(Cursor& c)
 
         pos += offset;
     }
-
-    if ( pos < 0 )
-        pos = 0;
 
     // If the pattern size is greater than the amount of data we have to
     // search, there's no way we can match, but return 0 here for the
@@ -505,3 +502,139 @@ const BaseApi* ips_sha256 = &sha256_api.base;
 const BaseApi* ips_sha512 = &sha512_api.base;
 //#endif
 
+//-------------------------------------------------------------------------
+// UNIT TESTS
+//-------------------------------------------------------------------------
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+#define NO_MATCH snort::IpsOption::EvalStatus::NO_MATCH
+#define MATCH snort::IpsOption::EvalStatus::MATCH
+
+TEST_CASE("HashOption test", "[ips_hash]")
+{
+    SECTION("operator ==")
+    {
+        HashMatchData* hmd = new HashMatchData();
+        HashOption hash_opt("sha256", HPI_SHA256, hmd, sha256, SHA256_HASH_SIZE);
+
+        SECTION("not equal as IpsOptions")
+        {
+            HashMatchData* hmd_other = new HashMatchData();
+            HashOption hash_other("not_sha256", HPI_SHA256, hmd_other, sha256, SHA256_HASH_SIZE);
+            REQUIRE_FALSE(hash_opt == hash_other);
+        }
+
+        SECTION("equal as HashOptions")
+        {
+            HashMatchData* hmd_other = new HashMatchData();
+            HashOption hash_other("sha256", HPI_SHA256, hmd_other, sha256, SHA256_HASH_SIZE);
+            REQUIRE(hash_opt == hash_other);
+        }
+
+        SECTION("hash is different")
+        {
+            HashMatchData* hmd_other = new HashMatchData();
+            hmd_other->hash = "other";
+            HashOption hash_other("sha256", HPI_SHA256, hmd_other, sha256, SHA256_HASH_SIZE);
+            REQUIRE_FALSE(hash_opt == hash_other);
+        }
+
+        SECTION("length is different")
+        {
+            HashMatchData* hmd_other = new HashMatchData();
+            hmd_other->length = 42;
+            HashOption hash_other("sha256", HPI_SHA256, hmd_other, sha256, SHA256_HASH_SIZE);
+            REQUIRE_FALSE(hash_opt == hash_other);
+        }
+
+        SECTION("offset is different")
+        {
+            HashMatchData* hmd_other = new HashMatchData();
+            hmd_other->offset = 42;
+            HashOption hash_other("sha256", HPI_SHA256, hmd_other, sha256, SHA256_HASH_SIZE);
+            REQUIRE_FALSE(hash_opt == hash_other);
+        }
+
+        SECTION("offset_var is different")
+        {
+            HashMatchData* hmd_other = new HashMatchData();
+            hmd_other->offset_var = 42;
+            HashOption hash_other("sha256", HPI_SHA256, hmd_other, sha256, SHA256_HASH_SIZE);
+            REQUIRE_FALSE(hash_opt == hash_other);
+        }
+
+        SECTION("negated is different")
+        {
+            HashMatchData* hmd_other = new HashMatchData();
+            hmd_other->relative = true;
+            HashOption hash_other("sha256", HPI_SHA256, hmd_other, sha256, SHA256_HASH_SIZE);
+            REQUIRE_FALSE(hash_opt == hash_other);
+        }
+
+        SECTION("relative is different")
+        {
+            HashMatchData* hmd_other = new HashMatchData();
+            hmd_other->negated = true;
+            HashOption hash_other("sha256", HPI_SHA256, hmd_other, sha256, SHA256_HASH_SIZE);
+            REQUIRE_FALSE(hash_opt == hash_other);
+        }
+    }
+
+    SECTION("HashOption::match")
+    {
+        SECTION("config->offset_var is zero")
+        {
+            HashMatchData* hmd = new HashMatchData();
+            hmd->offset_var = 0;
+            HashOption hash_opt("sha256", HPI_SHA256, hmd, sha256, SHA256_HASH_SIZE);
+            Cursor c;
+            REQUIRE(0 == hash_opt.match(c));
+        }
+
+        SECTION("cursor->delta is not zero")
+        {
+            HashMatchData* hmd = new HashMatchData();
+            HashOption hash_opt("sha256", HPI_SHA256, hmd, sha256, SHA256_HASH_SIZE);
+            Cursor c;
+            c.set_delta(1);
+            REQUIRE(0 == hash_opt.match(c));
+        }
+
+        SECTION("pattern size > data size")
+        {
+            HashMatchData* hmd = new HashMatchData();
+            hmd->length = 10;
+            HashOption hash_opt("sha256", HPI_SHA256, hmd, sha256, SHA256_HASH_SIZE);
+            Cursor c;
+
+            SECTION("config is negated")
+            {
+                hmd->negated = true;
+                REQUIRE(0 == hash_opt.match(c));
+            }
+
+            SECTION("config is not negated")
+            {
+                hmd->negated = false;
+                REQUIRE(-1 == hash_opt.match(c));
+            }
+        }
+    }
+
+    SECTION("HashOption::eval")
+    {
+        SECTION("on match error")
+        {
+            HashMatchData* hmd = new HashMatchData();
+            hmd->length = 10;
+            hmd->negated = false;
+            HashOption hash_opt("sha256", HPI_SHA256, hmd, sha256, SHA256_HASH_SIZE);
+            Cursor c;
+            REQUIRE(NO_MATCH == hash_opt.eval(c, nullptr));
+        }
+    }
+}
+
+#endif

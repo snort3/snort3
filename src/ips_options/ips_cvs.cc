@@ -456,3 +456,87 @@ const BaseApi* ips_cvs[] =
     nullptr
 };
 
+//-------------------------------------------------------------------------
+// UNIT TESTS
+//-------------------------------------------------------------------------
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+class StubIpsOption : public IpsOption
+{
+public:
+    StubIpsOption(const char* name, option_type_t option_type) :
+        IpsOption(name, option_type)
+    {}
+};
+
+TEST_CASE("CvsOption test", "[ips_cvs]")
+{
+    SECTION("operator ==")
+    {
+        CvsRuleOption cvs_rule_opt;
+        CvsOption cvs_opt(cvs_rule_opt);
+
+        SECTION("not equal as IpsOptions")
+        {
+            StubIpsOption opt_other("not_cvs",
+                option_type_t::RULE_OPTION_TYPE_OTHER);
+            REQUIRE_FALSE(cvs_opt == opt_other);
+        }
+
+        SECTION("equal types")
+        {
+            CvsOption cvs_opt_other(cvs_rule_opt);
+            REQUIRE(cvs_opt == cvs_opt_other);
+        }
+
+        SECTION("not equal")
+        {
+            CvsRuleOption cvs_rule_opt_other { CvsTypes::CVS_END_OF_ENUM };
+            CvsOption cvs_opt_other(cvs_rule_opt_other);
+            REQUIRE_FALSE(cvs_opt == cvs_opt_other);
+        }
+    }
+
+    SECTION("CvsGetCommand")
+    {
+        SECTION("cmd is nullptr")
+        {
+            CvsCommand* cmd = nullptr;
+            CvsGetCommand(nullptr, nullptr, cmd);
+            REQUIRE(nullptr == cmd);
+        }
+
+        SECTION("line is nullptr")
+        {
+            CvsCommand cmd;
+            CvsGetCommand(nullptr, nullptr, &cmd);
+
+            CHECK(nullptr == cmd.cmd_str);
+            CHECK(0 == cmd.cmd_str_len);
+            CHECK(nullptr == cmd.cmd_arg);
+            REQUIRE(0 == cmd.cmd_arg_len);
+        }
+    }
+
+    SECTION("CvsValidateEntry")
+    {
+        SECTION("null input")
+        {
+            REQUIRE(CVS_ENTRY_VALID == CvsValidateEntry(nullptr, nullptr));
+        }
+    }
+
+    SECTION("CvsDecode")
+    {
+        SECTION("rule option type is unknown")
+        {
+            CvsRuleOption cvs_rule_opt { CvsTypes::CVS_END_OF_ENUM };
+            REQUIRE(CVS_NO_ALERT == CvsDecode((const uint8_t*)"data", 4,
+                &cvs_rule_opt));
+        }
+    }
+}
+
+#endif
