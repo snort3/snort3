@@ -25,6 +25,8 @@
 
 #include "tcp_reassembler.h"
 
+#include <cassert>
+
 #include "detection/detection_engine.h"
 #include "log/log.h"
 #include "main/analyzer.h"
@@ -478,6 +480,12 @@ int TcpReassembler::flush_data_segments(TcpReassemblerState& trs, uint32_t flush
     return total_flushed;
 }
 
+static inline bool both_splitters_aborted(Flow* flow)
+{
+    uint32_t both_splitters_yoinked = (SSNFLAG_ABORT_CLIENT | SSNFLAG_ABORT_SERVER);
+    return (flow->get_session_flags() & both_splitters_yoinked) == both_splitters_yoinked;
+}
+
 // FIXIT-L consolidate encode format, update, and this into new function?
 void TcpReassembler::prep_pdu(
     TcpReassemblerState&, Flow* flow, Packet* p, uint32_t pkt_flags, Packet* pdu)
@@ -508,10 +516,8 @@ void TcpReassembler::prep_pdu(
     else if (!p->packet_flags || (pkt_flags & p->packet_flags))
     {
         // forward
-        pdu->packet_flags |= (p->packet_flags
-            & (PKT_FROM_CLIENT | PKT_FROM_SERVER));
-        pdu->ptrs.ip_api.set(*p->ptrs.ip_api.get_src(),
-            *p->ptrs.ip_api.get_dst());
+        pdu->packet_flags |= (p->packet_flags & (PKT_FROM_CLIENT | PKT_FROM_SERVER));
+        pdu->ptrs.ip_api.set(*p->ptrs.ip_api.get_src(), *p->ptrs.ip_api.get_dst());
         pdu->ptrs.sp = p->ptrs.sp;
         pdu->ptrs.dp = p->ptrs.dp;
     }
@@ -523,8 +529,7 @@ void TcpReassembler::prep_pdu(
         else
             pdu->packet_flags |= PKT_FROM_CLIENT;
 
-        pdu->ptrs.ip_api.set(*p->ptrs.ip_api.get_dst(),
-            *p->ptrs.ip_api.get_src());
+        pdu->ptrs.ip_api.set(*p->ptrs.ip_api.get_dst(), *p->ptrs.ip_api.get_src());
         pdu->ptrs.dp = p->ptrs.sp;
         pdu->ptrs.sp = p->ptrs.dp;
     }
@@ -619,8 +624,8 @@ int TcpReassembler::do_zero_byte_flush(TcpReassemblerState& trs, Packet* p, uint
         pdu->data = sb.data;
         pdu->dsize = sb.length;
         pdu->packet_flags |= (PKT_REBUILT_STREAM | PKT_STREAM_EST | PKT_PDU_HEAD | PKT_PDU_TAIL);
-        trs.flush_count++;
 
+        trs.flush_count++;
         show_rebuilt_packet(trs, pdu);
         Analyzer::get_local_analyzer()->inspect_rebuilt(pdu);
      }
@@ -926,15 +931,18 @@ int32_t TcpReassembler::scan_data_pre_ack(TcpReassemblerState& trs, uint32_t* fl
     return ret_val;
 }
 
-static inline bool both_splitters_aborted(Flow* flow)
-{
-    uint32_t both_splitters_yoinked = (SSNFLAG_ABORT_CLIENT | SSNFLAG_ABORT_SERVER);
-    return (flow->get_session_flags() & both_splitters_yoinked) == both_splitters_yoinked;
-}
-
 static inline void fallback(TcpStreamTracker& trk, bool server_side, uint16_t max)
 {
-    trk.set_splitter(new AtomSplitter(!server_side, max));
+#ifndef NDEBUG
+    StreamSplitter* splitter = trk.get_splitter();
+    assert(splitter);
+
+    // FIXIT-L: consolidate these 3
+    bool to_server = splitter->to_server();
+    assert(splitter && server_side == to_server && server_side == !trk.client_tracker);
+#endif
+
+    trk.set_splitter(new AtomSplitter(server_side, max));
     tcpStats.partial_fallbacks++;
 }
 
@@ -1187,9 +1195,6 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
             flush_amt = scan_data_post_ack(trs, &flags, p);
             if ( flush_amt <= 0 or trs.paf_state.paf == StreamSplitter::SKIP )
                 break;
-
-            if ( trs.paf_state.paf == StreamSplitter::ABORT )
-                trs.tracker->splitter_finish(p->flow);
 
             // for consistency with other cases, should return total
             // but that breaks flushing pipelined pdus
