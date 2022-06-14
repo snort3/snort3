@@ -64,13 +64,6 @@ THREAD_LOCAL OdpContext* pkt_thread_odp_ctxt = nullptr;
 
 static THREAD_LOCAL PacketTracer::TracerMute appid_mute;
 
-// FIXIT-L - appid cleans up openssl now as it is the primary (only) user... eventually this
-//           should probably be done outside of appid
-static void openssl_cleanup()
-{
-    CRYPTO_cleanup_all_ex_data();
-}
-
 static void add_appid_to_packet_trace(Flow& flow, const OdpContext& odp_context)
 {
     AppIdSession* session = appid_api.get_appid_session(flow);
@@ -237,7 +230,6 @@ static void appid_inspector_pinit()
 static void appid_inspector_pterm()
 {
     AppIdContext::pterm();
-    openssl_cleanup();
     TPLibHandler::pfini();
 }
 

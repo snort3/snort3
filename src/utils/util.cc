@@ -107,7 +107,7 @@ int DisplayBanner()
     LogMessage("           Copyright (C) 1998-2013 Sourcefire, Inc., et al.\n");
     LogMessage("           Using DAQ version %s\n", daq_version_string());
     LogMessage("           Using LuaJIT version %s\n", ljv);
-    LogMessage("           Using %s\n", SSLeay_version(SSLEAY_VERSION));
+    LogMessage("           Using %s\n", OpenSSL_version(SSLEAY_VERSION));
     LogMessage("           Using %s\n", pcap_lib_version());
     LogMessage("           Using PCRE version %s\n", pcre_version());
     LogMessage("           Using ZLIB version %s\n", zlib_version);
