@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.31.0 2022-06-01 13:59:47 EDT TST
+Revision 3.1.32.0 2022-06-15 10:02:53 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -2784,7 +2784,7 @@ Configuration:
   * string dce_smb.smb_invalid_shares: SMB shares to alert on
   * bool dce_smb.smb_legacy_mode = false: inspect only SMBv1
   * int dce_smb.smb_max_credit = 8192: Maximum number of outstanding
-    request { 1:65536 }
+    request { 1:65535 }
   * int dce_smb.memcap = 8388608: Memory utilization limit on smb {
     512:maxSZ }
 
@@ -4326,6 +4326,8 @@ Configuration:
     in bytes, 0 = unlimited { 0:maxSZ }
   * int netflow.template_memcap = 0: maximum memory for template
     cache in bytes, 0 = unlimited { 0:maxSZ }
+  * string netflow.netflow_service_id_path: path to file containing
+    service IDs for NetFlow
 
 Peg counts:
 
@@ -4912,7 +4914,7 @@ Configuration:
   * int rna.tcp_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
   * int rna.tcp_fingerprints[].type = 0: fingerprint type { 0:max32 }
   * string rna.tcp_fingerprints[].uuid: fingerprint uuid
-  * int rna.tcp_fingerprints[].ttl = 0: fingerprint ttl { 0:256 }
+  * int rna.tcp_fingerprints[].ttl = 0: fingerprint ttl { 0:255 }
   * string rna.tcp_fingerprints[].tcp_window: fingerprint tcp window
   * string rna.tcp_fingerprints[].mss = X: fingerprint mss
   * string rna.tcp_fingerprints[].id = X: id
@@ -4934,7 +4936,7 @@ Configuration:
   * int rna.ua_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
   * int rna.ua_fingerprints[].type = 0: fingerprint type { 0:max32 }
   * string rna.ua_fingerprints[].uuid: fingerprint uuid
-  * int rna.ua_fingerprints[].ttl = 0: fingerprint ttl { 0:256 }
+  * int rna.ua_fingerprints[].ttl = 0: fingerprint ttl { 0:255 }
   * string rna.ua_fingerprints[].tcp_window: fingerprint tcp window
   * string rna.ua_fingerprints[].mss = X: fingerprint mss
   * string rna.ua_fingerprints[].id = X: id
@@ -4956,7 +4958,7 @@ Configuration:
   * int rna.udp_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
   * int rna.udp_fingerprints[].type = 0: fingerprint type { 0:max32 }
   * string rna.udp_fingerprints[].uuid: fingerprint uuid
-  * int rna.udp_fingerprints[].ttl = 0: fingerprint ttl { 0:256 }
+  * int rna.udp_fingerprints[].ttl = 0: fingerprint ttl { 0:255 }
   * string rna.udp_fingerprints[].tcp_window: fingerprint tcp window
   * string rna.udp_fingerprints[].mss = X: fingerprint mss
   * string rna.udp_fingerprints[].id = X: id
@@ -4978,7 +4980,7 @@ Configuration:
   * int rna.smb_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
   * int rna.smb_fingerprints[].type = 0: fingerprint type { 0:max32 }
   * string rna.smb_fingerprints[].uuid: fingerprint uuid
-  * int rna.smb_fingerprints[].ttl = 0: fingerprint ttl { 0:256 }
+  * int rna.smb_fingerprints[].ttl = 0: fingerprint ttl { 0:255 }
   * string rna.smb_fingerprints[].tcp_window: fingerprint tcp window
   * string rna.smb_fingerprints[].mss = X: fingerprint mss
   * string rna.smb_fingerprints[].id = X: id
@@ -9122,7 +9124,7 @@ libraries see the Getting Started section of the manual.
   * int dce_smb.smb_max_chain = 3: SMB max chain size { 0:255 }
   * int dce_smb.smb_max_compound = 3: SMB max compound size { 0:255 }
   * int dce_smb.smb_max_credit = 8192: Maximum number of outstanding
-    request { 1:65536 }
+    request { 1:65535 }
   * multi dce_smb.valid_smb_versions = all: valid SMB versions { v1 |
     v2 | all }
   * bool dce_tcp.disable_defrag = false: disable DCE/RPC
@@ -9768,6 +9770,8 @@ libraries see the Getting Started section of the manual.
     shutdown; won’t dump by default
   * int netflow.flow_memcap = 0: maximum memory for flow record cache
     in bytes, 0 = unlimited { 0:maxSZ }
+  * string netflow.netflow_service_id_path: path to file containing
+    service IDs for NetFlow
   * bool netflow.rules[].create_host = false: generate a new host
     event
   * bool netflow.rules[].create_service = false: generate a new or
@@ -10150,7 +10154,7 @@ libraries see the Getting Started section of the manual.
   * string rna.smb_fingerprints[].mss = X: fingerprint mss
   * string rna.smb_fingerprints[].tcp_window: fingerprint tcp window
   * string rna.smb_fingerprints[].topts: fingerprint tcp options
-  * int rna.smb_fingerprints[].ttl = 0: fingerprint ttl { 0:256 }
+  * int rna.smb_fingerprints[].ttl = 0: fingerprint ttl { 0:255 }
   * int rna.smb_fingerprints[].type = 0: fingerprint type { 0:max32 }
   * enum rna.smb_fingerprints[].ua_type = os: type of user agent
     fingerprints { os | device | jail-broken | jail-broken-host }
@@ -10172,7 +10176,7 @@ libraries see the Getting Started section of the manual.
   * string rna.tcp_fingerprints[].mss = X: fingerprint mss
   * string rna.tcp_fingerprints[].tcp_window: fingerprint tcp window
   * string rna.tcp_fingerprints[].topts: fingerprint tcp options
-  * int rna.tcp_fingerprints[].ttl = 0: fingerprint ttl { 0:256 }
+  * int rna.tcp_fingerprints[].ttl = 0: fingerprint ttl { 0:255 }
   * int rna.tcp_fingerprints[].type = 0: fingerprint type { 0:max32 }
   * enum rna.tcp_fingerprints[].ua_type = os: type of user agent
     fingerprints { os | device | jail-broken | jail-broken-host }
@@ -10194,7 +10198,7 @@ libraries see the Getting Started section of the manual.
   * string rna.ua_fingerprints[].mss = X: fingerprint mss
   * string rna.ua_fingerprints[].tcp_window: fingerprint tcp window
   * string rna.ua_fingerprints[].topts: fingerprint tcp options
-  * int rna.ua_fingerprints[].ttl = 0: fingerprint ttl { 0:256 }
+  * int rna.ua_fingerprints[].ttl = 0: fingerprint ttl { 0:255 }
   * int rna.ua_fingerprints[].type = 0: fingerprint type { 0:max32 }
   * enum rna.ua_fingerprints[].ua_type = os: type of user agent
     fingerprints { os | device | jail-broken | jail-broken-host }
@@ -10216,7 +10220,7 @@ libraries see the Getting Started section of the manual.
   * string rna.udp_fingerprints[].mss = X: fingerprint mss
   * string rna.udp_fingerprints[].tcp_window: fingerprint tcp window
   * string rna.udp_fingerprints[].topts: fingerprint tcp options
-  * int rna.udp_fingerprints[].ttl = 0: fingerprint ttl { 0:256 }
+  * int rna.udp_fingerprints[].ttl = 0: fingerprint ttl { 0:255 }
   * int rna.udp_fingerprints[].type = 0: fingerprint type { 0:max32 }
   * enum rna.udp_fingerprints[].ua_type = os: type of user agent
     fingerprints { os | device | jail-broken | jail-broken-host }

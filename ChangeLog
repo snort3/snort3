@@ -1,3 +1,31 @@
+2022/06/16 - 3.1.32.0
+
+appid: config for logging eve process to client mappings
+dce_smb: reduce smb_max_credit range to avoid uint16_t overflow
+detection: remove redundant FIXIT
+ftp_telnet: correct the implementation for check_encrypted and encrypted_data config, handle form-feed as non-encrypted traffic
+ftp_telnet: handle all space characters as a seperator between FTP request command and arguments
+http_inspect: add explicit check for HTML script opening tag ending
+http_inspect: remove unneeded header inclusions and improve cleanup before trailers
+ips_options: improve ips_hash and ips_cvs code coverage
+log: Fixed missing include for Clear Linux build.
+logger: added reload function to create new files when snort reloads
+main: add null check for scratch handler
+mime: cleanup
+modules: resolve int type mismatch in config options
+netflow: fix build on MacOS
+netflow: implement RNA integration for host/service discovery
+netflow: support memcap reconfiguration upon reload
+openssl: Openssl minimum version is set to 1.1.1
+profiler: fix issue with negative number cast to unsigned for max_depth
+rna: reduce range for ttl, fix cast for df, minor and major options. Thanks to liangxwa01 for pointing this out.
+stream_tcp: fix splitter abort handling
+stream_tcp: flip the server_side flag in fallback() and assert what it should be
+utils, parser: remove redundant fixits
+utils: remove curly brace parsing from regex literals
+utils: remove redundant checks in regex groups
+wizard: use const reference instead of copying
+
 2022/06/02 - 3.1.31.0
 
 appid: add lock_guard to prevent data race on reload
