@@ -32,6 +32,7 @@
 #include "text_log.h"
 
 #include <sys/stat.h>
+#include <time.h>
 
 #include <algorithm>
 #include <cstdarg>
