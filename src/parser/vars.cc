@@ -310,11 +310,8 @@ void ParsePathVar(const char* name, const char* value)
         while (tmp != var_table);
     }
 
-    value = ExpandVars(value);
-    if (!value)
-    {
-        ParseAbort("could not expand var('%s').", name);
-    }
+    std::string expand_value = ExpandVars(value);
+    value = expand_value.c_str();
 
     DisallowCrossTableDuplicateVars(name, VAR_TYPE__DEFAULT);
 
@@ -391,7 +388,7 @@ void DeleteVars(VarEntry* var_table)
     }
 }
 
-const char* VarSearch(const char* name)
+const std::string VarSearch(const std::string& name)
 {
     IpsPolicy* dp = get_ips_policy();
     VarEntry* var_table = dp->var_table;
@@ -399,10 +396,10 @@ const char* VarSearch(const char* name)
     vartable_t* ip_vartable = dp->ip_vartable;
     sfip_var_t* ipvar;
 
-    if ((ipvar = sfvt_lookup_var(ip_vartable, name)) != nullptr)
+    if ((ipvar = sfvt_lookup_var(ip_vartable, name.c_str())) != nullptr)
         return ExpandVars(ipvar->value);
 
-    if (PortVarTableFind(portVarTable, name))
+    if (PortVarTableFind(portVarTable, name.c_str()))
         return name;
 
     if (var_table != nullptr)
@@ -410,147 +407,97 @@ const char* VarSearch(const char* name)
         VarEntry* p = var_table;
         do
         {
-            if (strcasecmp(p->name, name) == 0)
+            if (strcasecmp(p->name, name.c_str()) == 0)
                 return p->value;
             p = p->next;
         }
         while (p != var_table);
     }
 
-    return nullptr;
+    return "";
 }
 
- // The expanded string.  Note that the string is returned in a
- // static variable and most likely needs to be string dup'ed.
-const char* ExpandVars(const char* string)
+const std::string ExpandVars(const std::string& input_str)
 {
-    static char estring[ 65536 ];  // FIXIT-L convert this foo to a std::string
+    std::stringstream output;
+    bool quote_toggle = false;
 
-    char rawvarname[128], varname[128], varaux[128], varbuffer[128];
-    int quote_toggle = 0;
+    if (input_str.find('$') == std::string::npos)
+        return(input_str);
 
-    if (!string || !*string || !strchr(string, '$'))
-        return(string);
-
-    memset((char*)estring, 0, sizeof(estring));
-
-    int i = 0, j = 0;
-    int l_string = strlen(string);
-
-    while (i < l_string && j < (int)sizeof(estring) - 1)
+    for (auto i = input_str.begin(); i < input_str.end(); i++)
     {
-        int c = string[i++];
-
+        const char c = *i;
         if (c == '"')
         {
-            /* added checks to make sure that we are inside a quoted string
-             */
-            quote_toggle ^= 1;
+            // added checks to make sure that we are inside a quoted string
+            quote_toggle = !quote_toggle;
         }
 
         if (c == '$' && !quote_toggle)
         {
-            memset((char*)rawvarname, 0, sizeof(rawvarname));
-            int varname_completed = 0;
-            int name_only = 1;
-            int iv = i;
-            int jv = 0;
+            auto begin = (i+1);
+            auto end = begin;
+            bool name_only = *begin != '(';
+            if (!name_only)
+                begin++;
 
-            if (string[i] == '(')
-            {
-                name_only = 0;
-                iv = i + 1;
+            while (*end != '\0' && (
+                ( name_only && (isalnum(*end) || *end == '_') ) ||
+                ( !name_only && *end != ')' ) ) ) {
+                end++;
             }
 
-            while (!varname_completed
-                && iv < l_string
-                && jv < (int)sizeof(rawvarname) - 1)
+            std::string var_name(begin, end);
+            std::string var_aux; 
+
+            i = end;
+
+            char var_modifier = ' ';
+
+            size_t p = var_name.find(':');
+
+            if (p != std::string::npos)
             {
-                c = string[iv++];
-
-                if ((name_only && !(isalnum(c) || c == '_'))
-                    || (!name_only && c == ')'))
+                if (var_name.size() - p >= 2)
                 {
-                    varname_completed = 1;
-
-                    if (name_only)
-                        iv--;
+                    var_modifier = var_name[p+1];
+                    var_aux = var_name.substr(p+2);
                 }
-                else
-                {
-                    rawvarname[jv++] = (char)c;
-                }
+                var_name = var_name.substr(0, p);
             }
 
-            if (varname_completed || iv == l_string)
+            std::string var_contents = VarSearch(var_name);
+
+            switch (var_modifier)
             {
-                i = iv;
-                const char* varcontents = nullptr;
+            case '-':
+                if (var_contents.empty())
+                    var_contents = var_aux.c_str();
+                break;
 
-                memset((char*)varname, 0, sizeof(varname));
-                memset((char*)varaux, 0, sizeof(varaux));
-                char varmodifier = ' ';
-
-                char* p = strchr(rawvarname, ':');
-
-                if (p)
+            case '?':
+                if (var_contents.empty())
                 {
-                    SnortStrncpy(varname, rawvarname, p - rawvarname);
-
-                    if (strlen(p) >= 2)
-                    {
-                        varmodifier = *(p + 1);
-                        SnortStrncpy(varaux, p + 2, sizeof(varaux));
-                    }
+                    if (!var_aux.empty())
+                        ParseAbort("%s", var_aux.c_str());
+                    else
+                        ParseAbort("undefined variable '%s'.", var_name.c_str());
                 }
-                else
-                    SnortStrncpy(varname, rawvarname, sizeof(varname));
-
-                memset((char*)varbuffer, 0, sizeof(varbuffer));
-
-                varcontents = VarSearch(varname);
-
-                switch (varmodifier)
-                {
-                case '-':
-                    if (!varcontents || !strlen(varcontents))
-                        varcontents = varaux;
-                    break;
-
-                case '?':
-                    if (!varcontents || !strlen(varcontents))
-                    {
-                        if (strlen(varaux))
-                            ParseAbort("%s", varaux);
-                        else
-                            ParseAbort("undefined variable '%s'.", varname);
-                    }
-                    break;
-                }
-
-                /* If variable not defined now, we're toast */
-                if (!varcontents || !strlen(varcontents))
-                    ParseAbort("undefined variable name: %s.", varname);
-
-                int l_varcontents = strlen(varcontents);
-
-                iv = 0;
-
-                while (iv < l_varcontents && j < (int)sizeof(estring) - 1)
-                    estring[j++] = varcontents[iv++];
+                break;
             }
-            else
-            {
-                estring[j++] = '$';
-            }
+
+            // If variable not defined now, we're toast
+            if (var_contents.empty())
+                ParseAbort("undefined variable name: %s.", var_name.c_str());
+
+            output << var_contents;
         }
         else
         {
-            estring[j++] = (char)c;
+            output << c;
         }
     }
 
-
-    return estring;
+    return output.str();
 }
-

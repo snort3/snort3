@@ -21,6 +21,7 @@
 #define VARS_H
 
 #include <cstdint>
+#include <string>
 
 #include "sfip/sf_vartable.h"
 
@@ -63,8 +64,8 @@ int VarIsIpAddr(vartable_t* ip_vartable, const char* value);
 int VarIsIpList(vartable_t* ip_vartable, const char* value);
 void DisallowCrossTableDuplicateVars(const char* name, VarType var_type);
 
-const char* VarSearch(const char* name);
-const char* ExpandVars(const char* string);
+const std::string VarSearch(const std::string& name);
+const std::string ExpandVars(const std::string& input_str);
 
 #endif
 
