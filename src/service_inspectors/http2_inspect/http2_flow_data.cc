@@ -134,6 +134,7 @@ Http2Stream* Http2FlowData::get_processing_stream(const SourceId source_id, uint
         {
             *infractions[source_id] += INF_TOO_MANY_STREAMS;
             events[source_id]->create_event(EVENT_TOO_MANY_STREAMS);
+            events[source_id]->create_event(EVENT_LOSS_OF_SYNC);
             Http2Module::increment_peg_counts(PEG_FLOWS_OVER_STREAM_LIMIT);
             abort_flow[SRC_CLIENT] = true;
             abort_flow[SRC_SERVER] = true;

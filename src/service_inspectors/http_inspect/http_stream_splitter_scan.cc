@@ -242,6 +242,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
     {
         cutter = get_cutter(type, session_data);
     }
+
     const uint32_t max_length = MAX_OCTETS - cutter->get_octets_seen();
     const ScanResult cut_result = cutter->cut(data, (length <= max_length) ? length :
         max_length, session_data->get_infractions(source_id), session_data->events[source_id],
@@ -255,10 +256,13 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
         if (cutter->get_octets_seen() == MAX_OCTETS)
         {
             *session_data->get_infractions(source_id) += INF_ENDLESS_HEADER;
-            // FIXIT-L the following call seems inappropriate for headers and trailers. Those cases
-            // should be an unconditional EVENT_LOSS_OF_SYNC.
-            session_data->events[source_id]->generate_misformatted_http(data, length);
-            // FIXIT-E need to process this data not just discard it.
+            auto event = HttpEnums::EVENT_HEADERS_TOO_LONG;
+            if (session_data ->type_expected[source_id] == HttpCommon::SEC_REQUEST)
+                event = HttpEnums::EVENT_REQ_TOO_LONG;
+            else if (session_data ->type_expected[source_id] == HttpCommon::SEC_STATUS)
+                event = HttpEnums::EVENT_STAT_TOO_LONG;
+            session_data->events[source_id]->create_event(event);
+            session_data->events[source_id]->create_event(HttpEnums::EVENT_LOSS_OF_SYNC);
             type = SEC_ABORT;
             delete cutter;
             cutter = nullptr;
@@ -281,6 +285,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
         type = SEC_ABORT;
         delete cutter;
         cutter = nullptr;
+        session_data->events[source_id]->create_event(HttpEnums::EVENT_LOSS_OF_SYNC);
         return status_value(StreamSplitter::ABORT);
     case SCAN_DISCARD:
     case SCAN_DISCARD_PIECE:
@@ -312,6 +317,9 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
       }
     default:
         assert(false);
+        type = SEC_ABORT;
+        delete cutter;
+        cutter = nullptr;
         return status_value(StreamSplitter::ABORT);
     }
 }

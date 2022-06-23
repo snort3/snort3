@@ -81,12 +81,6 @@ private:
     static inline uint8_t extract_percent_encoding(const Field& input, int32_t index);
     static inline bool is_u_encoding(const Field& input, int32_t index);
     static inline uint16_t extract_u_encoding(const Field& input, int32_t index);
-
-    // An artifice used by the classic normalization methods to disable event generation
-    class HttpDummyEventGen : public HttpEventGen
-    {
-        void create_event(int) override {}
-    };
 };
 
 bool UriNormalizer::is_percent_encoding(const Field& input, int32_t index)

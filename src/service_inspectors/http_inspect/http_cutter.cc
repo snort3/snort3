@@ -57,7 +57,7 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
                 else
                 {
                     *infractions += INF_TOO_MUCH_LEADING_WS;
-                    events->generate_misformatted_http(buffer, length);
+                    events->create_event(HttpEnums::EVENT_TOO_MUCH_LEADING_WS);
                     return SCAN_ABORT;
                 }
             }
@@ -82,7 +82,6 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
                 break;
             case V_BAD:
                 *infractions += INF_NOT_HTTP;
-                events->generate_misformatted_http(buffer, length);
                 return SCAN_ABORT;
             case V_TBD:
                 break;
@@ -117,7 +116,7 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
 }
 
 HttpStartCutter::ValidationResult HttpRequestCutter::validate(uint8_t octet,
-    HttpInfractions* infractions, HttpEventGen*)
+    HttpInfractions* infractions, HttpEventGen* events)
 {
     // Request line must begin with a method. There is no list of all possible methods because
     // extension is allowed, so there is no absolute way to tell whether something is a method.
@@ -141,6 +140,7 @@ HttpStartCutter::ValidationResult HttpRequestCutter::validate(uint8_t octet,
             if (octets_checked >= preface_len)
             {
                 *infractions += INF_HTTP2_IN_HI;
+                events->create_event(HttpEnums::EVENT_UNEXPECTED_H2_PREFACE);
                 return V_BAD;
             }
             return V_TBD;
@@ -155,7 +155,10 @@ HttpStartCutter::ValidationResult HttpRequestCutter::validate(uint8_t octet,
     if ((octet == ' ') || (octet == '\t'))
         return V_GOOD;
     if (!token_char[octet] || ++octets_checked > max_method_length)
+    {
+        events->create_event(HttpEnums::EVENT_BAD_REQ_LINE);
         return V_BAD;
+    }
     return V_TBD;
 }
 
@@ -176,7 +179,10 @@ HttpStartCutter::ValidationResult HttpStatusCutter::validate(uint8_t octet,
             events->create_event(EVENT_VERSION_NOT_UPPERCASE);
         }
         else
+        {
+            events->create_event(HttpEnums::EVENT_BAD_STAT_LINE);
             return V_BAD;
+        }
     }
     if (++octets_checked >= match_size)
         return V_GOOD;

@@ -39,7 +39,6 @@ public:
         assert((inf >= 0) && (inf < MAX));
         infractions[inf] = true;
     }
-    bool none_found() const { return infractions == 0; }
     Infractions& operator+=(const Infractions& rhs)
         { infractions |= rhs.infractions; return *this; }
     friend Infractions operator+(Infractions lhs, const Infractions& rhs)
@@ -47,13 +46,12 @@ public:
     friend bool operator&(const Infractions& lhs, const Infractions& rhs)
         { return (lhs.infractions & rhs.infractions) != 0; }
 
-    // The following methods are for convenience of debug and test output only!
-    uint64_t get_raw() const { return
-        (infractions & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
-    uint64_t get_raw2() const { return
-        ((infractions >> 64) & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
-    uint64_t get_raw3() const { return
-        ((infractions >> 128) & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
+#ifdef REG_TEST
+    bool none_found() const { return infractions == 0; }
+
+    uint64_t get_raw(unsigned base) const { return
+        ((infractions >> base) & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
+#endif
 
 private:
     std::bitset<MAX> infractions = 0;

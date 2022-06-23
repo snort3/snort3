@@ -219,6 +219,6 @@ static void print_flow_issues(FILE* output, Http2Infractions* const infractions,
     Http2EventGen* const events)
 {
     fprintf(output, "Infractions: %016" PRIx64 ", Events: %016" PRIx64 "\n\n",
-        infractions->get_raw(), events->get_raw());
+        infractions->get_raw(0), events->get_raw(0));
 }
 #endif

@@ -62,8 +62,11 @@ bool Http2HeadersFrameWithStartline::process_start_line(HttpFlowData*& http_flow
         const StreamSplitter::Status start_scan_result =
             session_data->hi_ss[hi_source_id]->scan(&dummy_pkt, start_line.start(),
                 start_line.length(), unused, &flush_offset);
-        assert(start_scan_result == StreamSplitter::FLUSH);
-        UNUSED(start_scan_result);
+        if (start_scan_result != StreamSplitter::FLUSH)
+        {
+            stream->set_state(hi_source_id, STREAM_ERROR);
+            return false;
+        }
         assert((int64_t)flush_offset == start_line.length());
     }
 

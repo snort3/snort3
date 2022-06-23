@@ -77,6 +77,8 @@ HttpFlowData::HttpFlowData(Flow* flow) : FlowData(inspector_id)
     {
         for_http2 = true;
         h2_stream_id = h2i_flow_data->get_processing_stream_id();
+        events[0]->suppress_event(HttpEnums::EVENT_LOSS_OF_SYNC);
+        events[1]->suppress_event(HttpEnums::EVENT_LOSS_OF_SYNC);
     }
 }
 

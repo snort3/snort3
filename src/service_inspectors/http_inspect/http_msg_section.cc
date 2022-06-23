@@ -452,13 +452,13 @@ void HttpMsgSection::print_section_wrapup(FILE* output) const
 {
     fprintf(output, "Infractions: %016" PRIx64 " %016" PRIx64 " %016" PRIx64 ", Events: %016"
         PRIx64 " %016" PRIx64 " %016" PRIx64 " %016" PRIx64 ", TCP Close: %s\n\n",
-        transaction->get_infractions(source_id)->get_raw3(),
-        transaction->get_infractions(source_id)->get_raw2(),
-        transaction->get_infractions(source_id)->get_raw(),
-        session_data->events[source_id]->get_raw4(),
-        session_data->events[source_id]->get_raw3(),
-        session_data->events[source_id]->get_raw2(),
-        session_data->events[source_id]->get_raw(),
+        transaction->get_infractions(source_id)->get_raw(128),
+        transaction->get_infractions(source_id)->get_raw(64),
+        transaction->get_infractions(source_id)->get_raw(0),
+        session_data->events[source_id]->get_raw(BASE_2XX_EVENTS + 64),
+        session_data->events[source_id]->get_raw(BASE_2XX_EVENTS),
+        session_data->events[source_id]->get_raw(BASE_1XX_EVENTS),
+        session_data->events[source_id]->get_raw(0),
         tcp_close ? "True" : "False");
     if (HttpTestManager::get_show_pegs())
     {

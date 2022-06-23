@@ -1017,11 +1017,6 @@ to the message body so that the length of the message body can be determined by 
 An HTTP message includes a Transfer-Encoding header value that specifies other encodings before
 "chunked."
 
-119:224
-
-The traffic contains an HTTP version, but does not contain a recognizable start line. This 
-conclusion applies only to one direction of the flow. The opposite direction may be OK.
-
 119:225
 
 The HTTP Content-Encoding header contains a coding other than gzip and deflate
@@ -1299,6 +1294,38 @@ does not apply to HTTP/2 or HTTP/3 traffic.
 
 The HTTP message body is gzip encoded and the FEXTRA flag is set in the gzip header.
 
+119:279
+
+HTTP Status-Line failed validation checks. Checks include minimum length, format, characters used, etc.
+
+119:280
+
+HTTP message headers longer than 63780 bytes
+
+119:281
+
+HTTP Request-Line failed validation checks. Checks include minimum length, format, characters used, etc.
+
+119:282
+
+Packet with more than 20 white space characters when an HTTP Start-Line is required.
+
+119:283
+
+HTTP message Status-Line longer than 63780 bytes
+
+119:284
+
+Connection closed in the middle of a Request-Line or Status-Line.
+
+119:285
+
+HTTP message Request-Line longer than 63780 bytes
+
+119:286
+
+HTTP/2 preface received instead of an HTTP/1 method
+
 121:1
 
 Invalid flag set on HTTP/2 frame header
@@ -1462,6 +1489,12 @@ Nonempty HTTP/2 Data frame where a message body was not expected.
 121:38
 
 HTTP/2 non-Data frame longer than 63780 bytes
+
+121:39
+
+HTTP/2 inspector is unable to parse this flow. Either the connection is not actually using HTTP/2 or
+some sort of unrecoverable HTTP/2 protocol error has occurred. This conclusion applies only to one
+direction of the flow. The opposite direction may be OK.
 
 122:1
 

@@ -77,6 +77,7 @@ bool Http2HeadersFrame::decode_headers(Http2StartLine* start_line_generator, boo
         {
             session_data->abort_flow[source_id] = true;
             session_data->events[source_id]->create_event(EVENT_MISFORMATTED_HTTP2);
+            session_data->events[source_id]->create_event(EVENT_LOSS_OF_SYNC);
             http1_header.set(STAT_PROBLEMATIC);
             hpack_decoder->cleanup();
             return false;

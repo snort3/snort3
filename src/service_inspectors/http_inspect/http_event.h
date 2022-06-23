@@ -20,9 +20,6 @@
 #ifndef HTTP_EVENT_H
 #define HTTP_EVENT_H
 
-#include <bitset>
-
-#include "events/event_queue.h"
 #include "utils/event_gen.h"
 #include "utils/infractions.h"
 #include "utils/util_cstring.h"
@@ -30,36 +27,13 @@
 #include "http_enum.h"
 
 //-------------------------------------------------------------------------
-// HTTP Event generator class
+// HTTP Event generator
 //-------------------------------------------------------------------------
 
-class HttpEventGen : public EventGen<HttpEnums::EVENT__MAX_VALUE, HttpEnums::EVENT__NONE,
-        HttpEnums::HTTP_GID>
-{
-public:
-    void generate_misformatted_http(const uint8_t* buffer, uint32_t length)
-    {
-        if ( snort::SnortStrnStr((const char*)buffer, length, "HTTP/") != nullptr )
-            create_event(HttpEnums::EVENT_MISFORMATTED_HTTP);
-        else
-            create_event(HttpEnums::EVENT_LOSS_OF_SYNC);
-    }
+using HttpEventGen = EventGen<HttpEnums::EVENT__MAX_VALUE, HttpEnums::EVENT__NONE, HttpEnums::HTTP_GID>;
 
-    // The following methods are for convenience of debug and test output only!
-    uint64_t get_raw2() const { return
-       ((events_generated >> BASE_1XX_EVENTS) & bitmask).to_ulong(); }
-
-    uint64_t get_raw3() const { return
-       ((events_generated >> BASE_2XX_EVENTS) & bitmask).to_ulong(); }
-
-    uint64_t get_raw4() const { return
-       ((events_generated >> (BASE_2XX_EVENTS + 64)) & bitmask).to_ulong(); }
-
-private:
-    static const unsigned BASE_1XX_EVENTS = 100;
-    static const unsigned BASE_2XX_EVENTS = 200;
-};
-
+static const unsigned BASE_1XX_EVENTS = 100;
+static const unsigned BASE_2XX_EVENTS = 200;
 
 //-------------------------------------------------------------------------
 // Http Infractions

@@ -72,6 +72,7 @@ const RuleMap Http2Module::http2_events[] =
         "HTTP/2 HPACK table size update exceeds max value set by decoder in SETTINGS frame" },
     { EVENT_UNEXPECTED_DATA_FRAME, "Nonempty HTTP/2 Data frame where message body not expected" },
     { EVENT_NON_DATA_FRAME_TOO_LONG, "HTTP/2 non-Data frame longer than 63780 bytes" },
+    { EVENT_LOSS_OF_SYNC,  "not HTTP/2 traffic or unrecoverable HTTP/2 protocol error" },
     { 0, nullptr }
 };
 
@@ -81,11 +82,9 @@ const PegInfo Http2Module::peg_names[PEG_COUNT__MAX+1] =
     { CountType::NOW, "concurrent_sessions", "total concurrent HTTP/2 sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent HTTP/2 sessions" },
     { CountType::MAX, "max_table_entries", "maximum entries in an HTTP/2 dynamic table" },
-    { CountType::MAX, "max_concurrent_files", "maximum concurrent file transfers per HTTP/2 "
-        "connection" },
+    { CountType::MAX, "max_concurrent_files", "maximum concurrent file transfers per HTTP/2 connection" },
     { CountType::SUM, "total_bytes", "total HTTP/2 data bytes inspected" },
-    { CountType::MAX, "max_concurrent_streams", "maximum concurrent streams per HTTP/2 "
-        "connection" },
+    { CountType::MAX, "max_concurrent_streams", "maximum concurrent streams per HTTP/2 connection" },
     { CountType::SUM, "flows_over_stream_limit", "HTTP/2 flows exceeding 100 concurrent streams" },
     { CountType::END, nullptr, nullptr }
 };

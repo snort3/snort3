@@ -107,7 +107,7 @@ bool HttpStreamSplitter::finish(Flow* flow)
             (session_data->type_expected[source_id] == SEC_STATUS))
         {
             *session_data->get_infractions(source_id) += INF_PARTIAL_START;
-            // FIXIT-M why not use generate_misformatted_http()?
+            session_data->events[source_id]->create_event(EVENT_PARTIAL_START);
             session_data->events[source_id]->create_event(EVENT_LOSS_OF_SYNC);
             return false;
         }

@@ -227,50 +227,36 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_ASCII,                      "URI has percent-encoding of an unreserved character" },
     { EVENT_DOUBLE_DECODE,              "URI contains double-encoded hexadecimal characters" },
     { EVENT_U_ENCODE,                   "URI has non-standard %u-style Unicode encoding" },
-    { EVENT_BARE_BYTE,                  "URI has Unicode encodings containing bytes that were not "
-                                        "percent-encoded" },
+    { EVENT_BARE_BYTE,                  "URI has Unicode encodings containing bytes that were not percent-encoded" },
     { EVENT_UTF_8,                      "URI has two-byte or three-byte UTF-8 encoding" },
     { EVENT_CODE_POINT_IN_URI,          "URI has unicode map code point encoding" },
     { EVENT_MULTI_SLASH,                "URI path contains consecutive slash characters" },
-    { EVENT_BACKSLASH_IN_URI,           "backslash character appears in the path portion of a URI"
-                                        },
-    { EVENT_SELF_DIR_TRAV,              "URI path contains /./ pattern repeating the current "
-                                        "directory" },
+    { EVENT_BACKSLASH_IN_URI,           "backslash character appears in the path portion of a URI" },
+    { EVENT_SELF_DIR_TRAV,              "URI path contains /./ pattern repeating the current directory" },
     { EVENT_DIR_TRAV,                   "URI path contains /../ pattern moving up a directory" },
     { EVENT_APACHE_WS,                  "Tab character in HTTP start line" },
-    { EVENT_LF_WITHOUT_CR,              "HTTP start line or header line terminated by LF without "
-                                        "a CR" },
-    { EVENT_NON_RFC_CHAR,               "Normalized URI includes character from bad_characters "
-                                        "list" },
+    { EVENT_LF_WITHOUT_CR,              "HTTP start line or header line terminated by LF without a CR" },
+    { EVENT_NON_RFC_CHAR,               "Normalized URI includes character from bad_characters list" },
     { EVENT_OVERSIZE_DIR,               "URI path contains a segment that is longer than the "
                                         "oversize_dir_length parameter" },
     { EVENT_LARGE_CHUNK,                "chunk length exceeds configured maximum_chunk_length" },
-    { EVENT_WEBROOT_DIR,                "URI path includes /../ that goes above the root directory"
-                                        },
+    { EVENT_WEBROOT_DIR,                "URI path includes /../ that goes above the root directory" },
     { EVENT_LONG_HDR,                   "HTTP header line exceeds 4096 bytes" },
     { EVENT_MAX_HEADERS,                "HTTP message has more than 200 header fields" },
-    { EVENT_MULTIPLE_CONTLEN,           "HTTP message has more than one Content-Length header "
-                                        "value" },
-    { EVENT_MULTIPLE_HOST_HDRS,         "Host header field appears more than once or has multiple "
-                                        "values" },
-    { EVENT_LONG_HOSTNAME,              "length of HTTP Host header field value exceeds "
-                                        "maximum_host_length option" },
-    { EVENT_UNBOUNDED_POST,             "HTTP POST or PUT request without content-length or chunks"
-                                        },
+    { EVENT_MULTIPLE_CONTLEN,           "HTTP message has more than one Content-Length header value" },
+    { EVENT_MULTIPLE_HOST_HDRS,         "Host header field appears more than once or has multiple values" },
+    { EVENT_LONG_HOSTNAME,              "length of HTTP Host header field value exceeds maximum_host_length option" },
+    { EVENT_UNBOUNDED_POST,             "HTTP POST or PUT request without content-length or chunks" },
     { EVENT_UNKNOWN_METHOD,             "HTTP request method is not known to Snort" },
-    { EVENT_SIMPLE_REQUEST,             "HTTP request uses primitive HTTP format known as HTTP/0.9"
-                                        },
-    { EVENT_UNESCAPED_SPACE_URI,        "HTTP request URI has space character that is not "
-                                        "percent-encoded" },
+    { EVENT_SIMPLE_REQUEST,             "HTTP request uses primitive HTTP format known as HTTP/0.9" },
+    { EVENT_UNESCAPED_SPACE_URI,        "HTTP request URI has space character that is not percent-encoded" },
     { EVENT_PIPELINE_MAX,               "HTTP connection has more than 100 simultaneous pipelined "
                                         "requests that have not been answered" },
     { EVENT_INVALID_STATCODE,           "invalid status code in HTTP response" },
-    { EVENT_UTF_NORM_FAIL,              "HTTP response has UTF character set that failed to "
-                                        "normalize" },
+    { EVENT_UTF_NORM_FAIL,              "HTTP response has UTF character set that failed to normalize" },
     { EVENT_UTF7,                       "HTTP response has UTF-7 character set" },
     { EVENT_JS_OBFUSCATION_EXCD,        "more than one level of JavaScript obfuscation" },
-    { EVENT_JS_EXCESS_WS,               "consecutive JavaScript whitespaces exceed maximum allowed"
-                                        },
+    { EVENT_JS_EXCESS_WS,               "consecutive JavaScript whitespaces exceed maximum allowed" },
     { EVENT_MIXED_ENCODINGS,            "multiple encodings within JavaScript obfuscated data" },
     { EVENT_SWF_ZLIB_FAILURE,           "SWF file zlib decompression failure" },
     { EVENT_SWF_LZMA_FAILURE,           "SWF file LZMA decompression failure" },
@@ -301,7 +287,6 @@ const RuleMap HttpModule::http_events[] =
                                         "Encoding or nonzero Content-Length" },
     { EVENT_BAD_TE_HEADER,              "Transfer-Encoding not ending with chunked" },
     { EVENT_PADDED_TE_HEADER,           "Transfer-Encoding with encodings before chunked" },
-    { EVENT_MISFORMATTED_HTTP,          "misformatted HTTP traffic" },
     { EVENT_UNSUPPORTED_ENCODING,       "unsupported Content-Encoding used" },
     { EVENT_UNKNOWN_ENCODING,           "unknown Content-Encoding used" },
     { EVENT_STACKED_ENCODINGS,          "multiple Content-Encodings applied" },
@@ -320,20 +305,16 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_CHUNKED_ONE_POINT_ZERO,     "HTTP 1.0 message with Transfer-Encoding header" },
     { EVENT_CTE_HEADER,                 "Content-Transfer-Encoding used as HTTP header" },
     { EVENT_ILLEGAL_TRAILER,            "illegal field in chunked message trailers" },
-    { EVENT_REPEATED_HEADER,            "header field inappropriately appears twice or has two "
-                                        "values" },
+    { EVENT_REPEATED_HEADER,            "header field inappropriately appears twice or has two values" },
     { EVENT_CONTENT_ENCODING_CHUNKED,   "invalid value chunked in Content-Encoding header" },
     { EVENT_206_WITHOUT_RANGE,          "206 response sent to a request without a Range header" },
     { EVENT_VERSION_NOT_UPPERCASE,      "'HTTP' in version field not all upper case" },
     { EVENT_BAD_HEADER_WHITESPACE,      "white space embedded in critical header value" },
-    { EVENT_GZIP_EARLY_END,             "gzip compressed data followed by unexpected non-gzip "
-                                        "data" },
+    { EVENT_GZIP_EARLY_END,             "gzip compressed data followed by unexpected non-gzip data" },
     { EVENT_EXCESS_REPEAT_PARAMS,       "excessive HTTP parameter key repeats" },
     { EVENT_H2_NON_IDENTITY_TE,         "HTTP/2 Transfer-Encoding header other than identity" },
-    { EVENT_H2_DATA_OVERRUNS_CL,        "HTTP/2 message body overruns Content-Length header "
-                                        "value" },
-    { EVENT_H2_DATA_UNDERRUNS_CL,       "HTTP/2 message body smaller than Content-Length header "
-                                        "value" },
+    { EVENT_H2_DATA_OVERRUNS_CL,        "HTTP/2 message body overruns Content-Length header value" },
+    { EVENT_H2_DATA_UNDERRUNS_CL,       "HTTP/2 message body smaller than Content-Length header value" },
     { EVENT_CONNECT_REQUEST_BODY,       "HTTP CONNECT request with a message body" },
     { EVENT_EARLY_C2S_TRAFFIC_AFTER_CONNECT, "HTTP client-to-server traffic after CONNECT request "
                                         "but before CONNECT response" },
@@ -354,14 +335,21 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_JS_SHORTENED_TAG,           "script opening tag in a short form" },
     { EVENT_JS_IDENTIFIER_OVERFLOW,     "max number of unique JavaScript identifiers reached" },
     { EVENT_JS_BRACKET_NEST_OVERFLOW,   "excessive JavaScript bracket nesting" },
-    { EVENT_ACCEPT_ENCODING_CONSECUTIVE_COMMAS, "Consecutive commas in HTTP Accept-Encoding "
-                                        "header" },
+    { EVENT_ACCEPT_ENCODING_CONSECUTIVE_COMMAS, "Consecutive commas in HTTP Accept-Encoding header" },
     { EVENT_JS_DATA_LOST,               "data gaps during JavaScript normalization" },
     { EVENT_JS_SCOPE_NEST_OVERFLOW,     "excessive JavaScript scope nesting" },
     { EVENT_INVALID_SUBVERSION,         "HTTP/1 version other than 1.0 or 1.1" },
     { EVENT_VERSION_0,                  "HTTP version in start line is 0" },
     { EVENT_VERSION_HIGHER_THAN_1,      "HTTP version in start line is higher than 1" },
     { EVENT_GZIP_FEXTRA,                "HTTP gzip body with the FEXTRA flag set" },
+    { EVENT_BAD_STAT_LINE,              "invalid status line" },
+    { EVENT_HEADERS_TOO_LONG,           "HTTP message headers longer than 63780 bytes" },
+    { EVENT_BAD_REQ_LINE,               "invalid request line" },
+    { EVENT_TOO_MUCH_LEADING_WS,        "too many white space characters when start line is expected" },
+    { EVENT_STAT_TOO_LONG,              "HTTP message status line longer than 63780 bytes" },
+    { EVENT_PARTIAL_START,              "partial start line" },
+    { EVENT_REQ_TOO_LONG,               "HTTP message request line longer than 63780 bytes" },
+    { EVENT_UNEXPECTED_H2_PREFACE,      "HTTP/2 preface received instead of an HTTP/1 method" },
     { 0, nullptr }
 };
 
@@ -402,8 +390,7 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "js_external_scripts", "total number of external JavaScripts processed" },
     { CountType::SUM, "js_bytes", "total number of JavaScript bytes processed" },
     { CountType::SUM, "js_identifiers", "total number of unique JavaScript identifiers processed" },
-    { CountType::SUM, "js_identifier_overflows", "total number of unique JavaScript identifier "
-        "limit overflows" },
+    { CountType::SUM, "js_identifier_overflows", "total number of unique JavaScript identifier limit overflows" },
     { CountType::END, nullptr, nullptr }
 };
 

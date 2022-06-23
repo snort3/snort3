@@ -150,6 +150,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
             return StreamSplitter::FLUSH;
         case V_BAD:
             session_data->events[source_id]->create_event(EVENT_PREFACE_MATCH_FAILURE);
+            session_data->events[source_id]->create_event(EVENT_LOSS_OF_SYNC);
             return StreamSplitter::ABORT;
         case V_TBD:
             session_data->preface_octets_seen += length;
@@ -203,6 +204,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                 {
                     *session_data->infractions[source_id] += INF_MISSING_CONTINUATION;
                     session_data->events[source_id]->create_event(EVENT_MISSING_CONTINUATION);
+                    session_data->events[source_id]->create_event(EVENT_LOSS_OF_SYNC);
                     return StreamSplitter::ABORT;
                 }
 
@@ -224,6 +226,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                     {
                         *session_data->infractions[source_id] += INF_UNEXPECTED_CONTINUATION;
                         session_data->events[source_id]->create_event(EVENT_UNEXPECTED_CONTINUATION);
+                        session_data->events[source_id]->create_event(EVENT_LOSS_OF_SYNC);
                         return StreamSplitter::ABORT;
                     }
                     // Do flags check for continuation frame, since it is not saved
@@ -240,6 +243,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                     // FIXIT-E long non-data frames may need to be supported
                     *session_data->infractions[source_id] += INF_NON_DATA_FRAME_TOO_LONG;
                     session_data->events[source_id]->create_event(EVENT_NON_DATA_FRAME_TOO_LONG);
+                    session_data->events[source_id]->create_event(EVENT_LOSS_OF_SYNC);
                     return StreamSplitter::ABORT;
                 }
 
@@ -254,6 +258,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                         *session_data->infractions[source_id] += INF_PADDING_ON_EMPTY_FRAME;
                         session_data->events[source_id]->create_event(
                             EVENT_PADDING_ON_EMPTY_FRAME);
+                        session_data->events[source_id]->create_event(EVENT_LOSS_OF_SYNC);
                         return StreamSplitter::ABORT;
                     }
                     session_data->scan_state[source_id] = SCAN_PADDING_LENGTH;
@@ -287,6 +292,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                 {
                     *session_data->infractions[source_id] += INF_PADDING_LEN;
                     session_data->events[source_id]->create_event(EVENT_PADDING_LEN);
+                    session_data->events[source_id]->create_event(EVENT_LOSS_OF_SYNC);
                     return StreamSplitter::ABORT;
                 }
                 data_offset++;

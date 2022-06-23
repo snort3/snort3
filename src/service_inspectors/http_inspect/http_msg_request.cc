@@ -74,8 +74,8 @@ void HttpMsgRequest::parse_start_line()
         else
         {
             add_infraction(INF_BAD_REQ_LINE);
-            session_data->events[source_id]->generate_misformatted_http(start_line.start(),
-                start_line.length());
+            session_data->events[source_id]->create_event(HttpEnums::EVENT_BAD_REQ_LINE);
+            session_data->events[source_id]->create_event(HttpEnums::EVENT_LOSS_OF_SYNC);
             return;
         }
     }

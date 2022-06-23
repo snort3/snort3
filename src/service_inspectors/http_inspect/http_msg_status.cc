@@ -49,7 +49,8 @@ void HttpMsgStatus::parse_start_line()
     if ((start_line.length() < 12) || !is_sp_tab[start_line.start()[8]])
     {
         add_infraction(INF_BAD_STAT_LINE);
-        create_event(EVENT_MISFORMATTED_HTTP);
+        create_event(EVENT_BAD_STAT_LINE);
+        create_event(EVENT_LOSS_OF_SYNC);
         return;
     }
 
@@ -61,7 +62,8 @@ void HttpMsgStatus::parse_start_line()
     if (start_line.length() < first_end + 4)
     {
         add_infraction(INF_BAD_STAT_LINE);
-        create_event(EVENT_MISFORMATTED_HTTP);
+        create_event(EVENT_BAD_STAT_LINE);
+        create_event(EVENT_LOSS_OF_SYNC);
         return;
     }
 
@@ -70,7 +72,8 @@ void HttpMsgStatus::parse_start_line()
         // FIXIT-M This should not be fatal. HI supports something like "HTTP/1.1 200\\OK\r\n" as
         // seen in a status line test.
         add_infraction(INF_BAD_STAT_LINE);
-        create_event(EVENT_MISFORMATTED_HTTP);
+        create_event(EVENT_BAD_STAT_LINE);
+        create_event(EVENT_LOSS_OF_SYNC);
         return;
     }
 

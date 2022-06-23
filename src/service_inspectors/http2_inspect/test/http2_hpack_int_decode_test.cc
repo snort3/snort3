@@ -195,7 +195,7 @@ TEST(http2_hpack_int_decode_failure, 0_len_field)
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 0);
-    CHECK(local_inf.get_raw() == (1<<INF_INT_EMPTY_BUFF));
+    CHECK(local_inf.get_raw(0) == (1<<INF_INT_EMPTY_BUFF));
 }
 
 TEST(http2_hpack_int_decode_failure, too_short)
@@ -214,7 +214,7 @@ TEST(http2_hpack_int_decode_failure, too_short)
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 2);
-    CHECK(local_inf.get_raw() == (1<<INF_INT_MISSING_BYTES));
+    CHECK(local_inf.get_raw(0) == (1<<INF_INT_MISSING_BYTES));
 }
 
 TEST(http2_hpack_int_decode_failure, multiplier_bigger_than_63)
@@ -233,7 +233,7 @@ TEST(http2_hpack_int_decode_failure, multiplier_bigger_than_63)
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 11);
-    CHECK(local_inf.get_raw() == (1<<INF_INT_OVERFLOW));
+    CHECK(local_inf.get_raw(0) == (1<<INF_INT_OVERFLOW));
 }
 
 TEST(http2_hpack_int_decode_failure, add_val_overflow)
@@ -252,7 +252,7 @@ TEST(http2_hpack_int_decode_failure, add_val_overflow)
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 11);
-    CHECK(local_inf.get_raw() == (1<<INF_INT_OVERFLOW));
+    CHECK(local_inf.get_raw(0) == (1<<INF_INT_OVERFLOW));
 }
 
 TEST(http2_hpack_int_decode_failure, add_val_overflow2)
@@ -271,7 +271,7 @@ TEST(http2_hpack_int_decode_failure, add_val_overflow2)
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 11);
-    CHECK(local_inf.get_raw() == (1<<INF_INT_OVERFLOW));
+    CHECK(local_inf.get_raw(0) == (1<<INF_INT_OVERFLOW));
 }
 
 TEST(http2_hpack_int_decode_failure, 2_64_using_5_bit)
@@ -290,7 +290,7 @@ TEST(http2_hpack_int_decode_failure, 2_64_using_5_bit)
     // check results
     CHECK(success == false);
     CHECK(bytes_processed == 11);
-    CHECK(local_inf.get_raw() == (1<<INF_INT_OVERFLOW));
+    CHECK(local_inf.get_raw(0) == (1<<INF_INT_OVERFLOW));
 }
 
 //
@@ -318,8 +318,8 @@ TEST(http2_hpack_int_decode_leading_zeros, leading_zeros)
     CHECK(success == true);
     CHECK(res == 31);
     CHECK(bytes_processed == 3);
-    CHECK(local_inf.get_raw() == (1<<INF_INT_LEADING_ZEROS));
-    CHECK(local_events.get_raw() == (1<<(EVENT_INT_LEADING_ZEROS-1)));
+    CHECK(local_inf.get_raw(0) == (1<<INF_INT_LEADING_ZEROS));
+    CHECK(local_events.get_raw(0) == (1<<(EVENT_INT_LEADING_ZEROS-1)));
 }
 
 TEST(http2_hpack_int_decode_leading_zeros, leading_0_byte_11)
@@ -340,8 +340,8 @@ TEST(http2_hpack_int_decode_leading_zeros, leading_0_byte_11)
     CHECK(success == true);
     CHECK(res == 0x7FFFFFFFFFFFFFFF);
     CHECK(bytes_processed == 11);
-    CHECK(local_inf.get_raw() == (1<<INF_INT_LEADING_ZEROS));
-    CHECK(local_events.get_raw() == (1<<(EVENT_INT_LEADING_ZEROS-1)));
+    CHECK(local_inf.get_raw(0) == (1<<INF_INT_LEADING_ZEROS));
+    CHECK(local_events.get_raw(0) == (1<<(EVENT_INT_LEADING_ZEROS-1)));
 }
 
 int main(int argc, char** argv)

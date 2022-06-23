@@ -33,29 +33,45 @@ template <int EVENT_MAX, int EVENT_NONE, int GID>
 class EventGen
 {
 public:
-    virtual ~EventGen() = default;
+    EventGen() = default;
 
-    virtual void create_event(int sid)
+    EventGen(const std::bitset<EVENT_MAX>& suppressed) : events_suppressed(suppressed) {}
+
+    void create_event(int sid)
     {
         if (sid == EVENT_NONE)
             return;
         assert((sid > 0) && (sid <= EVENT_MAX));
-        if (!events_generated[sid-1])
+        if (!events_suppressed[sid-1])
         {
             snort::DetectionEngine::queue_event(GID, (uint32_t)sid);
+            events_suppressed[sid-1] = true;
+#ifdef REG_TEST
             events_generated[sid-1] = true;
+#endif
         }
     }
 
+    void suppress_event(int sid)
+    {
+        assert((sid > 0) && (sid <= EVENT_MAX));
+        events_suppressed[sid-1] = true;
+    }
+
+#ifdef REG_TEST
     bool none_found() const { return events_generated == 0; }
 
-    // The following method is for convenience of debug and test output only!
-    uint64_t get_raw() const { return
-        (events_generated & bitmask).to_ulong(); }
+    uint64_t get_raw(unsigned base) const { return
+        ((events_generated >> base) & bitmask).to_ulong(); }
+#endif
 
 protected:
+    std::bitset<EVENT_MAX> events_suppressed = 0;
+
+#ifdef REG_TEST
     std::bitset<EVENT_MAX> events_generated = 0;
     const std::bitset<EVENT_MAX> bitmask = 0xFFFFFFFFFFFFFFFF;
+#endif
 };
 
 #endif

@@ -31,6 +31,8 @@
 using namespace HttpEnums;
 using namespace snort;
 
+static HttpEventGen events_sink(std::bitset<HttpEnums::EVENT__MAX_VALUE>().set());
+
 void UriNormalizer::normalize(const Field& input, Field& result, bool do_path, uint8_t* buffer,
     const HttpParaList::UriParam& uri_param, HttpInfractions* infractions, HttpEventGen* events,
     bool own_the_buffer)
@@ -457,12 +459,11 @@ void UriNormalizer::classic_normalize(const Field& input, Field& result,
     // that we can conveniently modify it as requirements are better understood.
 
     HttpInfractions unused;
-    HttpDummyEventGen dummy_ev;
 
     uint8_t* const buffer = new uint8_t[input.length() + URI_NORM_EXPANSION];
 
     // Normalize character escape sequences
-    int32_t data_length = norm_char_clean(input, buffer, uri_param, &unused, &dummy_ev);
+    int32_t data_length = norm_char_clean(input, buffer, uri_param, &unused, &events_sink);
 
     if (do_path && uri_param.simplify_path)
     {
@@ -473,9 +474,9 @@ void UriNormalizer::classic_normalize(const Field& input, Field& result,
         {
             const int32_t uri_offset = first_slash - buffer;
             norm_substitute(buffer + uri_offset, data_length - uri_offset, uri_param, &unused,
-                &dummy_ev);
+                &events_sink);
             data_length = uri_offset +
-                norm_path_clean(buffer + uri_offset, data_length - uri_offset, &unused, &dummy_ev);
+                norm_path_clean(buffer + uri_offset, data_length - uri_offset, &unused, &events_sink);
         }
     }
 
@@ -486,9 +487,8 @@ bool UriNormalizer::classic_need_norm(const Field& uri_component, bool do_path,
     const HttpParaList::UriParam& uri_param)
 {
     HttpInfractions unused;
-    HttpDummyEventGen dummy_ev;
 
-    return need_norm(uri_component, do_path, uri_param, &unused, &dummy_ev);
+    return need_norm(uri_component, do_path, uri_param, &unused, &events_sink);
 }
 
 void UriNormalizer::load_default_unicode_map(uint8_t map[65536])
