@@ -88,9 +88,7 @@ public:
 
         mix(a,b,c);
 
-        a += (uint32_t)(uintptr_t)rtn->src_portobject;
-        b += (uint32_t)(uintptr_t)rtn->dst_portobject;
-        c += (uint32_t)(uintptr_t)rtnk->policyId;
+        a += (uint32_t)(uintptr_t)rtnk->policyId;
 
         finalize(a,b,c);
 

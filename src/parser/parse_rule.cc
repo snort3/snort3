@@ -420,16 +420,14 @@ bool same_headers(RuleTreeNode* rule, RuleTreeNode* rtn)
     if ( rule->dip and rtn->dip and sfvar_compare(rule->dip, rtn->dip) != SFIP_EQUAL )
         return false;
 
-    /* compare the port group pointers - this prevents confusing src/dst port objects
-     * with the same port set, and it's quicker. It does assume that we only have
-     * one port object and pointer for each unique port set...this is handled by the
-     * parsing and initial port object storage and lookup.  This must be consistent during
-     * the rule parsing phase. - man */
-    if ( (rule->src_portobject != rtn->src_portobject)
-        or (rule->dst_portobject != rtn->dst_portobject))
-    {
+    if ( rule->src_portobject and rtn->src_portobject
+        and !PortObjectEqual(rule->src_portobject, rtn->src_portobject) )
         return false;
-    }
+
+    if ( rule->dst_portobject and rtn->dst_portobject
+        and !PortObjectEqual(rule->dst_portobject, rtn->dst_portobject) )
+        return false;
+
     return true;
 }
 
