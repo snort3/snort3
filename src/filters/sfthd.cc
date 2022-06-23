@@ -470,6 +470,9 @@ static int sfthd_create_threshold_global(
     if (thd_objs == nullptr)
         return -1;
 
+    if (config->gen_id >= THD_MAX_GENID)
+        return -1;
+
     if (thd_objs->sfthd_garray[policy_id] == nullptr)
     {
         thd_objs->sfthd_garray[policy_id] =

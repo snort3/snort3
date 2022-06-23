@@ -1551,19 +1551,19 @@ bool SuppressModule::end(const char*, int idx, SnortConfig* sc)
 
     if ( thdx.gen_id == 0 and thdx.sig_id >= 1 )
     {
-        ParseError("bad or incomplete gid:sid pair [%d]", idx);
+        ParseError("bad or incomplete gid:sid pair");
         return false;
     }
 
     if ( ( thdx.tracking == 0 and thdx.ip_address ) or ( thdx.tracking > 0 and !thdx.ip_address ) )
     {
-        ParseError("incomplete pair of track and IP [%d]", idx);
+        ParseError("incomplete pair of track and IP");
         return false;
     }
 
     if ( sfthreshold_create(sc, sc->threshold_config, &thdx, get_network_policy()->policy_id) )
     {
-        ParseError("threshold object cannot be created from the given parameters [%d]", idx);
+        ParseError("threshold object cannot be created from the given parameters");
         return false;
     }
 
