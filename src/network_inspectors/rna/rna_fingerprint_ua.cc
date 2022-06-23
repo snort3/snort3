@@ -180,6 +180,7 @@ static inline UaFingerprint* search_ua_fp(SearchTool* mpse, const char* start, u
 
     sort(matched_parts.begin(), matched_parts.end(), CompareParts());
 
+    UaFingerprint* matched_fp = nullptr;
     uint32_t cur_fpid = 0, part_num = 0;
     for (auto& fp : matched_parts)
     {
@@ -191,11 +192,12 @@ static inline UaFingerprint* search_ua_fp(SearchTool* mpse, const char* start, u
 
         if ( part_num == fp->part_num )
         {
-            if ( ++part_num == fp->total_parts )
-                return fp;
+            if ( ++part_num == fp->total_parts and
+                ( !matched_fp or matched_fp->user_agent.size() < fp->user_agent.size() ) )
+                    matched_fp = fp;
         }
     }
-    return nullptr;
+    return matched_fp;
 }
 
 void UaFpProcessor::match_mpse(const char* host, const char* uagent, const UaFingerprint*& osfp,
