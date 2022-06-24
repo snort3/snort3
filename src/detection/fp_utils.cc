@@ -353,11 +353,13 @@ static bool db_load(const std::string& path, const char* proto, const char* dir,
         if ( !fetch(file, db, len) )
         {
             ParseWarning(WARN_RULES, "Failed to read %s", file.c_str());
+            delete[] db;
             return false;
         }
         else if ( !it->group.normal_mpse->deserialize(db, len) )
         {
             ParseWarning(WARN_RULES, "Failed to deserialize %s", file.c_str());
+            delete[] db;
             return false;
         }
         delete[] db;
