@@ -38,7 +38,6 @@
 #include "main/shell.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "main/snort_module.h"
 #include "main/swapper.h"
 #include "main/thread_config.h"

@@ -31,10 +31,10 @@
 #include "host_tracker/cache_allocator.cc"
 #include "host_tracker/host_cache.h"
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "main/snort_types.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+#include "trace/trace_api.h"
 
 #include "app_info_table.h"
 #include "appid_debug.h"

@@ -29,7 +29,7 @@
 #include "hash/hash_defs.h"
 #include "hash/hash_key_operations.h"
 #include "log/messages.h"
-#include "main/snort_debug.h"
+#include "trace/trace_api.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 

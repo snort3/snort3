@@ -26,8 +26,8 @@
 
 #include "gtp.h"
 
-#include "main/snort_debug.h"
 #include "protocols/packet.h"
+#include "trace/trace_api.h"
 
 #include "gtp_inspect.h"
 #include "gtp_module.h"

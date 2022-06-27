@@ -26,8 +26,8 @@
 
 #include <cassert>
 
-#include "main/snort_debug.h"
 #include "packet_io/active.h"
+#include "trace/trace_api.h"
 #include "utils/stats.h"
 
 #include "detect_trace.h"

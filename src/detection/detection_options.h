@@ -35,7 +35,7 @@
 
 #include "detection/rule_option_types.h"
 #include "time/clock_defs.h"
-#include "main/snort_debug.h"
+#include "trace/trace_api.h"
 
 namespace snort
 {

@@ -31,10 +31,10 @@
 #include "hash/xhash.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "parser/parser.h"
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
+#include "trace/trace_api.h"
 #include "utils/cpp_macros.h"
 #include "utils/util.h"
 

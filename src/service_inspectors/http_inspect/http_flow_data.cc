@@ -24,9 +24,9 @@
 #include "http_flow_data.h"
 
 #include "decompress/file_decomp.h"
-#include "main/snort_debug.h"
 #include "mime/file_mime_process.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
+#include "trace/trace_api.h"
 #include "utils/js_identifier_ctx.h"
 #include "utils/js_normalizer.h"
 

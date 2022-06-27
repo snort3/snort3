@@ -26,7 +26,7 @@
 
 #include "file_config.h"
 #include "file_identifier.h"
-#include "main/snort_debug.h"
+#include "trace/trace_api.h"
 #include "utils/util.h"
 //-------------------------------------------------------------------------
 // file_id module

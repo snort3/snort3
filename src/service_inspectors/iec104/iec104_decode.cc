@@ -29,8 +29,8 @@
 #include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "protocols/packet.h"
+#include "trace/trace_api.h"
 
 #include "iec104.h"
 #include "iec104_module.h"

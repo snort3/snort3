@@ -33,7 +33,7 @@
 #include "dce_udp.h"
 
 #include "flow/session.h"
-#include "main/snort_debug.h"
+#include "trace/trace_api.h"
 #include "utils/safec.h"
 #include "utils/util.h"
 

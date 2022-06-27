@@ -23,7 +23,7 @@
 
 #include "http_js_norm.h"
 
-#include "main/snort_debug.h"
+#include "trace/trace_api.h"
 #include "utils/js_normalizer.h"
 #include "utils/safec.h"
 #include "utils/util_jsnorm.h"

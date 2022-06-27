@@ -26,8 +26,8 @@
 #include <vector>
 
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "service_inspectors/http_inspect/http_enum.h"
+#include "trace/trace_api.h"
 
 extern THREAD_LOCAL const snort::Trace* http_trace;
 

@@ -26,8 +26,8 @@
 
 #include "appid_config.h"
 
-#include "main/snort_debug.h"
 #include "log/messages.h"
+#include "trace/trace_api.h"
 
 #include "tp_lib_handler.h"
 

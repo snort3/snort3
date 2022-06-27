@@ -52,7 +52,6 @@
 #include "log/messages.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "managers/action_manager.h"
 #include "packet_io/active.h"
 #include "packet_tracer/packet_tracer.h"
@@ -63,6 +62,7 @@
 #include "protocols/udp.h"
 #include "search_engines/pat_stats.h"
 #include "stream/stream.h"
+#include "trace/trace_api.h"
 #include "utils/stats.h"
 #include "utils/util.h"
 

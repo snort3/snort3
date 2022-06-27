@@ -23,10 +23,10 @@
 
 #include "flow/flow.h"
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "stream/stream_splitter.h"
+#include "trace/trace_api.h"
 
 #include "curses.h"
 #include "magic.h"

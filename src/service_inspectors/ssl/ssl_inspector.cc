@@ -32,7 +32,6 @@
 #include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "protocols/ssl.h"
@@ -40,6 +39,7 @@
 #include "pub_sub/opportunistic_tls_event.h"
 #include "stream/stream.h"
 #include "stream/stream_splitter.h"
+#include "trace/trace_api.h"
 
 #include "ssl_module.h"
 #include "ssl_splitter.h"

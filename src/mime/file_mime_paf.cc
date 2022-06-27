@@ -28,7 +28,7 @@
 
 #include <cctype>
 
-#include "main/snort_debug.h"
+#include "trace/trace_api.h"
 
 using namespace snort;
 

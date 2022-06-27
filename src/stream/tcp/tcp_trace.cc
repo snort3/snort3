@@ -25,7 +25,7 @@
 
 #include "tcp_trace.h"
 
-#include "main/snort_debug.h"
+#include "trace/trace_api.h"
 #include "utils/stats.h"
 
 #include "tcp_module.h"

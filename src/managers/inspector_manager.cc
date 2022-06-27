@@ -37,7 +37,6 @@
 #include "main/shell.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "main/snort_module.h"
 #include "main/thread_config.h"
 #include "protocols/packet.h"
@@ -45,6 +44,7 @@
 #include "target_based/snort_protocols.h"
 #include "time/clock_defs.h"
 #include "time/stopwatch.h"
+#include "trace/trace_api.h"
 
 #include "module_manager.h"
 

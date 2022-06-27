@@ -7,7 +7,6 @@ set (INCLUDES
     reload_tuner.h
     snort.h
     snort_config.h
-    snort_debug.h
     snort_types.h
     swapper.h
     thread.h
@@ -43,7 +42,6 @@ add_library (main OBJECT
     snort.cc
     snort.h
     snort_config.cc
-    snort_debug.cc
     snort_module.h
     snort_module.cc
     swapper.cc

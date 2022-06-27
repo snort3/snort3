@@ -26,9 +26,9 @@
 #include "detector_pattern.h"
 
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "protocols/packet.h"
 #include "search_engines/search_tool.h"
+#include "trace/trace_api.h"
 
 #include "app_info_table.h"
 #include "appid_inspector.h"

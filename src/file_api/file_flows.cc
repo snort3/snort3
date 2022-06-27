@@ -35,7 +35,7 @@
 #include "managers/inspector_manager.h"
 #include "packet_tracer/packet_tracer.h"
 #include "protocols/packet.h"
-#include "main/snort_debug.h"
+#include "trace/trace_api.h"
 
 #include "file_cache.h"
 #include "file_config.h"

@@ -28,7 +28,7 @@
 #include <cassert>
 
 #include "log/messages.h"
-#include "main/snort_debug.h"
+#include "trace/trace_api.h"
 #include "utils/util.h"
 
 using namespace snort;

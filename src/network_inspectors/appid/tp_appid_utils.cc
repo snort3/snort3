@@ -27,10 +27,10 @@
 #include <dlfcn.h>
 
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
+#include "trace/trace_api.h"
 
 #include "app_info_table.h"
 #include "appid_config.h"

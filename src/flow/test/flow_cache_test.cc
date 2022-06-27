@@ -29,7 +29,6 @@
 #include "detection/detection_engine.h"
 #include "main/policy.h"
 #include "main/snort_config.h"
-#include "main/snort_debug.h"
 #include "managers/inspector_manager.h"
 #include "packet_io/active.h"
 #include "packet_tracer/packet_tracer.h"
@@ -44,6 +43,7 @@
 #include "flow/flow_cache.h"
 #include "flow/ha.h"
 #include "flow/session.h"
+#include "trace/trace_api.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>

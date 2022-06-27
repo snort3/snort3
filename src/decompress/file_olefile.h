@@ -29,7 +29,7 @@
 #include "detection/detection_engine.h"
 #include "helpers/literal_search.h"
 #include "ips_options/ips_vba_data.h"
-#include "main/snort_debug.h"
+#include "trace/trace_api.h"
 #include "utils/util.h"
 #include "utils/util_utf.h"
 

@@ -33,7 +33,6 @@
 #include "framework/parameter.h"
 #include "log/messages.h"
 #include "main.h"
-#include "main/snort_debug.h"
 #include "managers/codec_manager.h"
 #include "packet_io/sfdaq_config.h"
 #include "packet_io/trough.h"
@@ -41,6 +40,7 @@
 #include "parser/parser.h"
 #include "parser/parse_utils.h"
 #include "parser/vars.h"
+#include "trace/trace_api.h"
 #include "trace/trace_config.h"
 
 #if defined(UNIT_TEST) || defined(BENCHMARK_TEST)

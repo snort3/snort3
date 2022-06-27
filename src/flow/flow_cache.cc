@@ -28,12 +28,12 @@
 #include "hash/hash_defs.h"
 #include "hash/zhash.h"
 #include "helpers/flag_context.h"
-#include "main/snort_debug.h"
 #include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "packet_tracer/packet_tracer.h"
 #include "stream/base/stream_module.h"
 #include "time/packet_time.h"
+#include "trace/trace_api.h"
 #include "utils/stats.h"
 
 #include "flow.h"

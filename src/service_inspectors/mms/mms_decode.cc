@@ -29,9 +29,9 @@
 #include "detection/detection_engine.h"
 #include "events/event_queue.h"
 #include "log/messages.h"
-#include "main/snort_debug.h"
 #include "managers/plugin_manager.h"
 #include "protocols/packet.h"
+#include "trace/trace_api.h"
 #include "utils/util_ber.h"
 
 #include "mms.h"

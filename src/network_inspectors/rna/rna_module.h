@@ -23,8 +23,8 @@
 
 #include "framework/module.h"
 #include "main/reload_tuner.h"
-#include "main/snort_debug.h"
 #include "profiler/profiler.h"
+#include "trace/trace_api.h"
 
 #include "rna_config.h"
 #include "rna_fingerprint.h"

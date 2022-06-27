@@ -30,9 +30,9 @@
 #include "file_api/file_api.h"
 #include "hash/hash_key_operations.h"
 #include "main/snort.h"
-#include "main/snort_debug.h"
 #include "network_inspectors/packet_tracer/packet_tracer.h"
 #include "packet_io/active.h"
+#include "trace/trace_api.h"
 #include "utils/util.h"
 
 #include "dce_smb_module.h"
