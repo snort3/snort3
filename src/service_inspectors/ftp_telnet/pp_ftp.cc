@@ -1200,8 +1200,8 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                             /* Call into Streams to mark data channel as ftp-data */
                             result = Stream::set_snort_protocol_id_expected(
                                 p, PktType::TCP, IpProtocol::TCP,
-                                &session->clientIP, session->clientPort,
                                 &session->serverIP, session->serverPort,
+                                &session->clientIP, session->clientPort,
                                 ftp_data_snort_protocol_id, fd, true);
 
                             if (result < 0)
@@ -1216,8 +1216,8 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                              * to ignore. */
                             Stream::ignore_flow(
                                 p, PktType::TCP, IpProtocol::TCP,
-                                &session->clientIP, session->clientPort,
                                 &session->serverIP, session->serverPort,
+                                &session->clientIP, session->clientPort,
                                 SSN_DIR_BOTH, (new FtpDataFlowData(p)));
                         }
                     }
