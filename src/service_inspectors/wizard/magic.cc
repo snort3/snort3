@@ -54,8 +54,8 @@ const char* MagicBook::find_spell(const uint8_t* data, unsigned len,
 }
 
 MagicBook::MagicBook()
-{ root = new MagicPage(*this); }
+{ root = new MagicPage[(int)ArcaneType::MAX] { *this, *this }; }
 
 MagicBook::~MagicBook()
-{ delete root; }
+{ delete[] root; }
 

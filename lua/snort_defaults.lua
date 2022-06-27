@@ -392,7 +392,7 @@ default_wizard =
         { service = 'dnp3', proto = 'tcp', client_first = true,
           to_server = { '|05 64|' }, to_client = { '|05 64|' } },
 
-        { service = 'netflow', proto = 'udp',  client_first = true,
+        { service = 'netflow', proto = 'udp', client_first = true,
           to_server = netflow_versions },
 
         { service = 'http2', proto = 'tcp', client_first = true,

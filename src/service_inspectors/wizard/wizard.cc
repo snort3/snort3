@@ -141,7 +141,7 @@ public:
     inline bool finished(Wand& w)
     { return !w.hex and !w.spell and w.curse_tracker.empty(); }
 
-    void reset(Wand&, bool, bool);
+    void reset(Wand&, bool, MagicBook::MagicBook::ArcaneType);
 
     bool cast_spell(Wand&, Flow*, const uint8_t*, unsigned, uint16_t&);
     bool spellbind(const MagicPage*&, Flow*, const uint8_t*, unsigned, const MagicPage*&);
@@ -170,7 +170,8 @@ MagicSplitter::MagicSplitter(bool c2s, class Wizard* w) :
 {
     wizard = w;
     w->add_ref();
-    w->reset(wand, true, c2s);
+    // Used only in case of TCP traffic
+    w->reset(wand, c2s, MagicBook::ArcaneType::TCP);
 }
 
 MagicSplitter::~MagicSplitter()
@@ -259,20 +260,22 @@ Wizard::~Wizard()
     delete curses;
 }
 
-void Wizard::reset(Wand& w, bool tcp, bool c2s)
+void Wizard::reset(Wand& w, bool c2s, MagicBook::ArcaneType proto)
 {
     w.bookmark = nullptr;
 
     if ( c2s )
     {
-        w.hex = c2s_hexes->page1();
-        w.spell = c2s_spells->page1();
+        w.hex = c2s_hexes->page1(proto);
+        w.spell = c2s_spells->page1(proto);
     }
     else
     {
-        w.hex = s2c_hexes->page1();
-        w.spell = s2c_spells->page1();
+        w.hex = s2c_hexes->page1(proto);
+        w.spell = s2c_spells->page1(proto);
     }
+
+    bool tcp = MagicBook::ArcaneType::TCP == proto;
 
     if ( w.curse_tracker.empty() )
     {
@@ -298,7 +301,7 @@ void Wizard::eval(Packet* p)
 
     bool c2s = p->is_from_client();
     Wand wand;
-    reset(wand, false, c2s);
+    reset(wand, c2s, MagicBook::ArcaneType::UDP);
     uint16_t udp_processed_bytes = 0;
 
     ++tstats.udp_scans;

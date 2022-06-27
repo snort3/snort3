@@ -28,7 +28,6 @@
 #include "trace/trace.h"
 
 #include "curses.h"
-#include "magic.h"
 
 using namespace snort;
 using namespace std;
@@ -52,7 +51,7 @@ static const Parameter wizard_hexes_params[] =
     { "service", Parameter::PT_STRING, nullptr, nullptr,
       "name of service" },
 
-    { "proto", Parameter::PT_SELECT, "tcp | udp", "tcp",
+    { "proto", Parameter::PT_SELECT, "tcp | udp | any", "any",
       "protocol to scan" },
 
     { "client_first", Parameter::PT_BOOL, nullptr, "true",
@@ -80,7 +79,7 @@ static const Parameter wizard_spells_params[] =
     { "service", Parameter::PT_STRING, nullptr, nullptr,
       "name of service" },
 
-    { "proto", Parameter::PT_SELECT, "tcp | udp", "tcp",
+    { "proto", Parameter::PT_SELECT, "tcp | udp | any", "any",
       "protocol to scan" },
 
     { "client_first", Parameter::PT_BOOL, nullptr, "true",
@@ -143,10 +142,17 @@ bool WizardModule::set(const char*, Value& v, SnortConfig*)
     if ( v.is("service") )
         service = v.get_string();
 
-    // FIXIT-L implement proto and client_first
     else if ( v.is("proto") )
-        return true;
+    {
+        if ( !strcmp(v.get_string(), "tcp") )
+            proto = MagicBook::ArcaneType::TCP;
+        else if ( !strcmp(v.get_string(), "udp") )
+            proto = MagicBook::ArcaneType::UDP;
+        else 
+            proto = MagicBook::ArcaneType::ANY;
+    }
 
+    // FIXIT-H implement client_first
     else if ( v.is("client_first") )
         return true;
 
@@ -196,12 +202,14 @@ bool WizardModule::begin(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
-static bool add_spells(MagicBook* b, const string& service, const vector<string>& patterns, bool hex)
+static bool add_spells(MagicBook* b, const string& service, const vector<string>& patterns,
+    bool hex, MagicBook::ArcaneType proto)
 {
     for ( const auto& p : patterns )
     {
         const char* val = service.c_str();
-        if ( !b->add_spell(p.c_str(), val) )
+
+        if ( !b->add_spell(p.c_str(), val, proto) )
         {
             if ( !val )
             {
@@ -231,6 +239,7 @@ bool WizardModule::end(const char* fqn, int idx, SnortConfig*)
     {
         service.clear();
         c2s_patterns.clear();
+        s2c_patterns.clear();
     }
     else if ( !strcmp(fqn, "wizard.hexes") )
     {
@@ -249,9 +258,9 @@ bool WizardModule::end(const char* fqn, int idx, SnortConfig*)
 
                 return false;
             }
-            if ( !add_spells(c2s_hexes, service, c2s_patterns, true) )
+            if ( !add_spells(c2s_hexes, service, c2s_patterns, true, proto) )
                 return false;
-            if ( !add_spells(s2c_hexes, service, s2c_patterns, true) )
+            if ( !add_spells(s2c_hexes, service, s2c_patterns, true, proto) )
                 return false;
         }
     }
@@ -272,9 +281,9 @@ bool WizardModule::end(const char* fqn, int idx, SnortConfig*)
 
                 return false;
             }
-            if ( !add_spells(c2s_spells, service, c2s_patterns, false) )
+            if ( !add_spells(c2s_spells, service, c2s_patterns, false, proto) )
                 return false;
-            if ( !add_spells(s2c_spells, service, s2c_patterns, false) )
+            if ( !add_spells(s2c_spells, service, s2c_patterns, false, proto) )
                 return false;
         }
     }

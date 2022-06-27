@@ -31,13 +31,19 @@ using namespace std;
 
 #define WILD 0x100
 
-SpellBook::SpellBook()
+SpellBook::SpellBook() : MagicBook()
 {
-    // allows skipping leading whitespace only
-    root->next[(int)' '] = root;
-    root->next[(int)'\t'] = root;
-    root->next[(int)'\r'] = root;
-    root->next[(int)'\n'] = root;
+    // applying for both TCP and UDP arrays
+    for (size_t idx = 0; idx < (int)ArcaneType::MAX; ++idx)
+    {
+        MagicPage* r = &root[idx];
+
+        // allows skipping leading whitespace only
+        root[idx].next[(int)' '] = r;
+        root[idx].next[(int)'\t'] = r;
+        root[idx].next[(int)'\r'] = r;
+        root[idx].next[(int)'\n'] = r;
+    }
 }
 
 bool SpellBook::translate(const char* in, HexVector& out)
@@ -91,8 +97,20 @@ void SpellBook::add_spell(
     p->value = snort::SnortConfig::get_static_name(val);
 }
 
-bool SpellBook::add_spell(const char* key, const char*& val)
+bool SpellBook::add_spell(const char* key, const char*& val, ArcaneType proto)
 {
+    // In case of 'ANY' as proto, pattern should be added
+    // to both UDP and TCP collections
+    if ( proto == ArcaneType::ANY )
+    {
+        auto val_local = val;
+
+        bool ret1 = add_spell(key, val_local, ArcaneType::UDP);
+        bool ret2 = add_spell(key, val, ArcaneType::TCP);
+
+        return ret1 || ret2;
+    }
+
     HexVector hv;
 
     if ( !translate(key, hv) )
@@ -103,7 +121,7 @@ bool SpellBook::add_spell(const char* key, const char*& val)
     }
 
     unsigned i = 0;
-    MagicPage* p = root;
+    MagicPage* p = get_root(proto);
 
     // Perform a longest prefix match before inserting the pattern.
     while ( i < hv.size() )

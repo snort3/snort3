@@ -25,6 +25,8 @@
 
 #include "framework/module.h"
 
+#include "magic.h"
+
 #define WIZ_NAME "wizard"
 #define WIZ_HELP "inspector that implements port-independent protocol identification"
 
@@ -84,6 +86,8 @@ private:
 
     CurseBook* curses = nullptr;
     uint16_t max_search_depth = 0;
+
+    MagicBook::ArcaneType proto;
 };
 
 #endif

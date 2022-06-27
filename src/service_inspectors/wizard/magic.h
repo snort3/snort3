@@ -20,6 +20,7 @@
 #ifndef MAGIC_H
 #define MAGIC_H
 
+#include <cassert>
 #include <string>
 #include <vector>
 
@@ -50,16 +51,33 @@ public:
     MagicBook(const MagicBook&) = delete;
     MagicBook& operator=(const MagicBook&) = delete;
 
-    virtual bool add_spell(const char* key, const char*& val) = 0;
+    enum class ArcaneType
+    {
+        TCP,
+        UDP,
+        ANY,
+        MAX = ANY
+    };
+
+    virtual bool add_spell(const char* key, const char*& val, ArcaneType proto) = 0;
     virtual const char* find_spell(const uint8_t* data, unsigned len, const MagicPage*& p,
         const MagicPage*& bookmark) const;
 
-    const MagicPage* page1() const
-    { return root; }
+    const MagicPage* page1(ArcaneType proto) const
+    {
+        assert(proto < ArcaneType::MAX);
+        return &root[(int)proto];
+    }
 
 protected:
     MagicBook();
     MagicPage* root;
+
+    MagicPage* get_root(ArcaneType proto) const
+    {
+        assert(proto < ArcaneType::MAX);
+        return &root[(int)proto];
+    }
 
     virtual const MagicPage* find_spell(const uint8_t*, unsigned,
         const MagicPage*, unsigned, const MagicPage*&) const = 0;
@@ -75,7 +93,7 @@ class SpellBook : public MagicBook
 public:
     SpellBook();
 
-    bool add_spell(const char*, const char*&) override;
+    bool add_spell(const char*, const char*&, ArcaneType) override;
 
 private:
     bool translate(const char*, HexVector&);
@@ -94,7 +112,7 @@ class HexBook : public MagicBook
 public:
     HexBook() = default;
 
-    bool add_spell(const char*, const char*&) override;
+    bool add_spell(const char*, const char*&, ArcaneType) override;
 
 private:
     bool translate(const char*, HexVector&);

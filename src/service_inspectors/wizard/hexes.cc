@@ -100,8 +100,20 @@ void HexBook::add_spell(
     p->value = SnortConfig::get_static_name(val);
 }
 
-bool HexBook::add_spell(const char* key, const char*& val)
+bool HexBook::add_spell(const char* key, const char*& val, ArcaneType proto)
 {
+    // In case of 'ANY' as proto, pattern should be added
+    // to both UDP and TCP collections
+    if ( proto == ArcaneType::ANY )
+    {
+        auto val_local = val;
+
+        bool ret1 = add_spell(key, val_local, ArcaneType::UDP);
+        bool ret2 = add_spell(key, val, ArcaneType::TCP);
+
+        return ret1 || ret2;
+    }
+
     HexVector hv;
 
     if ( !translate(key, hv) )
@@ -112,7 +124,7 @@ bool HexBook::add_spell(const char* key, const char*& val)
     }
 
     unsigned i = 0;
-    MagicPage* p = root;
+    MagicPage* p = get_root(proto);
 
     while ( i < hv.size() )
     {
