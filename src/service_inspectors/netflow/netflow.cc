@@ -253,7 +253,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 
             last_pkt_time = ntohl(*(const time_t*)data)/1000;
             // last_pkt_time (LAST_SWITCHED) is defined as the system uptime
-            // at which the flow was seen. If this is == to the current uptime
+            // at which the flow was seen. If this is >= to the current uptime
             // something has gone wrong - use the NetFlow header unix time instead.
             if (last_pkt_time >= sys_uptime)
                 record.last_pkt_second = unix_secs;
@@ -652,6 +652,13 @@ static bool decode_netflow_v5(const unsigned char* data, uint16_t size,
         // invalid flow time values
         if ( first_packet > MAX_TIME or last_packet > MAX_TIME or first_packet > last_packet )
             return false;
+
+        // also invalid flow time values, but we can recover from these malformed times
+        if (ntohl(precord->flow_first)/1000 >= header.sys_uptime)
+            first_packet = header.unix_secs;
+
+        if (ntohl(precord->flow_last)/1000 >= header.sys_uptime)
+            last_packet = header.unix_secs;
 
         NetFlowSessionRecord record = {};
 
