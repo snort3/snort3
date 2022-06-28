@@ -58,7 +58,6 @@ TEST_GROUP(http2_hpack_string_decode_success)
     void teardown() override
     {
         CHECK(inf.none_found() == true);
-        CHECK(events.none_found() == true);
         delete decode;
     }
 };

@@ -51,7 +51,6 @@ TEST_GROUP(http2_hpack_int_decode_success)
     void teardown() override
     {
         CHECK(inf.none_found() == true);
-        CHECK(events.none_found() == true);
         delete decode;
     }
 };
@@ -319,7 +318,6 @@ TEST(http2_hpack_int_decode_leading_zeros, leading_zeros)
     CHECK(res == 31);
     CHECK(bytes_processed == 3);
     CHECK(local_inf.get_raw(0) == (1<<INF_INT_LEADING_ZEROS));
-    CHECK(local_events.get_raw(0) == (1<<(EVENT_INT_LEADING_ZEROS-1)));
 }
 
 TEST(http2_hpack_int_decode_leading_zeros, leading_0_byte_11)
@@ -341,7 +339,6 @@ TEST(http2_hpack_int_decode_leading_zeros, leading_0_byte_11)
     CHECK(res == 0x7FFFFFFFFFFFFFFF);
     CHECK(bytes_processed == 11);
     CHECK(local_inf.get_raw(0) == (1<<INF_INT_LEADING_ZEROS));
-    CHECK(local_events.get_raw(0) == (1<<(EVENT_INT_LEADING_ZEROS-1)));
 }
 
 int main(int argc, char** argv)

@@ -46,12 +46,10 @@ public:
     friend bool operator&(const Infractions& lhs, const Infractions& rhs)
         { return (lhs.infractions & rhs.infractions) != 0; }
 
-#ifdef REG_TEST
     bool none_found() const { return infractions == 0; }
 
     uint64_t get_raw(unsigned base) const { return
         ((infractions >> base) & std::bitset<MAX>(0xFFFFFFFFFFFFFFFF)).to_ulong(); }
-#endif
 
 private:
     std::bitset<MAX> infractions = 0;
