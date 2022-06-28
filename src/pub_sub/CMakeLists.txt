@@ -14,6 +14,7 @@ set (PUB_SUB_INCLUDES
     http_request_body_event.h
     netflow_event.h
     opportunistic_tls_event.h
+    rna_events.h
     sip_events.h
     smb_events.h
     ssh_events.h

@@ -162,10 +162,10 @@ private:
     RnaPnd& pnd;
 };
 
-class RnaNetflowEventHandler : public snort::DataHandler
+class RnaNetFlowEventHandler : public snort::DataHandler
 {
 public:
-    RnaNetflowEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
+    RnaNetFlowEventHandler(RnaPnd& nd) : DataHandler(RNA_NAME), pnd(nd) { }
     void handle(snort::DataEvent&, snort::Flow*) override;
 private:
     RnaPnd& pnd;

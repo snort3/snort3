@@ -101,28 +101,26 @@ static const PegInfo netflow_pegs[] =
 // netflow module
 //-------------------------------------------------------------------------
 
-NetflowModule::NetflowModule() : Module(NETFLOW_NAME, NETFLOW_HELP, netflow_params)
-{
-    conf = nullptr;
-}
+NetFlowModule::NetFlowModule() : Module(NETFLOW_NAME, NETFLOW_HELP, netflow_params)
+{ }
 
-NetflowModule::~NetflowModule()
+NetFlowModule::~NetFlowModule()
 {
     delete conf;
 }
 
-NetflowConfig* NetflowModule::get_data()
+NetFlowConfig* NetFlowModule::get_data()
 {
-    NetflowConfig* tmp = conf;
+    NetFlowConfig* tmp = conf;
     conf = nullptr;
     return tmp;
 }
 
-bool NetflowModule::begin(const char* fqn, int idx, SnortConfig*)
+bool NetFlowModule::begin(const char* fqn, int idx, SnortConfig*)
 {
     if ( !conf )
     {
-        conf = new NetflowConfig();
+        conf = new NetFlowConfig();
     }
 
     if ( idx && !strcmp(fqn, "netflow.rules") )
@@ -134,7 +132,7 @@ bool NetflowModule::begin(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
-bool NetflowModule::end(const char* fqn, int idx, SnortConfig*)
+bool NetFlowModule::end(const char* fqn, int idx, SnortConfig*)
 {
     if ( idx && !strcmp(fqn, "netflow.rules") )
     {
@@ -150,7 +148,7 @@ bool NetflowModule::end(const char* fqn, int idx, SnortConfig*)
 
     return true;
 }
-bool NetflowModule::set(const char*, Value& v, SnortConfig*)
+bool NetFlowModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("flow_memcap") )
         conf->flow_memcap = v.get_size();
@@ -219,7 +217,7 @@ bool NetflowModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-void NetflowModule::parse_service_id_file(const std::string& serv_id_file_path)
+void NetFlowModule::parse_service_id_file(const std::string& serv_id_file_path)
 {
     std::string serv_line;
     std::ifstream serv_id_file;
@@ -250,11 +248,11 @@ void NetflowModule::parse_service_id_file(const std::string& serv_id_file_path)
     }
 }
 
-PegCount* NetflowModule::get_counts() const
+PegCount* NetFlowModule::get_counts() const
 { return (PegCount*)&netflow_stats; }
 
-const PegInfo* NetflowModule::get_pegs() const
+const PegInfo* NetFlowModule::get_pegs() const
 { return netflow_pegs; }
 
-ProfileStats* NetflowModule::get_profile() const
+ProfileStats* NetFlowModule::get_profile() const
 { return &netflow_perf_stats; }

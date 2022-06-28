@@ -15,32 +15,40 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// rna_events.h author Michael Matirko <mmatirko@cisco.com>
 
-// netflow_cache.cc author Masud Hasan <mashasan@cisco.com>
+#ifndef RNA_EVENTS_H
+#define RNA_EVENTS_H
 
-#ifndef NETFLOW_CACHE_CC
-#define NETFLOW_CACHE_CC
+#include "framework/data_bus.h"
+#include "service_inspectors/netflow/netflow_record.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#define RNA_NEW_NETFLOW_HOST "network_inspector.rna.new_netflow_host"
 
-#include "netflow_cache.h"
-
-THREAD_LOCAL NetFlowCache* netflow_cache = nullptr;
-
-template <class T>
-LruCacheAllocNetFlow<T>::LruCacheAllocNetFlow()
+namespace snort
 {
-    lru = netflow_cache;
-}
 
-THREAD_LOCAL TemplateFieldCache* template_cache = nullptr;
-
-template <class T>
-LruCacheAllocTemplate<T>::LruCacheAllocTemplate()
+class RNAEvent : public DataEvent
 {
-    lru = template_cache;
+public:
+    RNAEvent(const snort::Packet* p, const NetFlowSessionRecord* rec, const uint32_t service)
+        : pkt(p), record(rec), service_id(service) { }
+
+    const Packet* get_packet() override
+    { return pkt; }
+
+    const NetFlowSessionRecord* get_record()
+    { return record; }
+
+    uint32_t get_service_id()
+    { return service_id; }
+
+private:
+    const Packet* pkt;
+    const NetFlowSessionRecord* record;
+    const uint32_t service_id;
+};
+
 }
 
 #endif

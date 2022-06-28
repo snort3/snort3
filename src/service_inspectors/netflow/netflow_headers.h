@@ -28,7 +28,7 @@
 #define NETFLOW_MAX_COUNT 256
 #define MAX_TIME 2145916799
 
-enum NetflowFieldTypes : uint16_t
+enum NetFlowFieldTypes : uint16_t
 {
     NETFLOW_IN_BYTES = 1,
     NETFLOW_IN_PKTS = 2,
@@ -55,36 +55,10 @@ enum NetflowFieldTypes : uint16_t
     NETFLOW_DST_TOS = 55,
 };
 
-struct NetflowSessionRecord
+struct NetFlow5Hdr
 {
-    snort::SfIp initiator_ip;
-    snort::SfIp responder_ip;
-    snort::SfIp next_hop_ip;
-    uint8_t proto;
-    uint16_t initiator_port;
-    uint16_t responder_port;
-    uint32_t first_pkt_second;
-    uint32_t last_pkt_second;
-    uint64_t initiator_pkts;
-    uint64_t responder_pkts;
-    uint64_t initiator_bytes;
-    uint64_t responder_bytes;
-    uint8_t tcp_flags;
-
-    uint32_t nf_src_as;
-    uint32_t nf_dst_as;
-    uint32_t nf_snmp_in;
-    uint32_t nf_snmp_out;
-    uint8_t nf_src_tos;
-    uint8_t nf_dst_tos;
-    uint8_t nf_src_mask;
-    uint8_t nf_dst_mask;
-};
-
-struct Netflow5Hdr
-{
-    uint16_t version;               // Netflow export format version number
-    uint16_t flow_count;            // Number of flows exported in this packet(1-30)
+    uint16_t version;               // NetFlow export format version number
+    uint16_t flow_count;            // Number of flows exported in this packet (1-30)
     uint32_t sys_uptime;            // Current time in milliseconds since the export device booted
     uint32_t unix_secs;             // Current count of seconds since 0000 UTC 1970
     uint32_t unix_nsecs;            // Residual nanoseconds since 0000 UTC 1970
@@ -94,7 +68,7 @@ struct Netflow5Hdr
     uint16_t sampling_interval;     // First two bits hold the sampling mode; remaining 14 bits hold value of sampling interval
 };
 
-struct Netflow5RecordHdr
+struct NetFlow5RecordHdr
 {
     uint32_t flow_src_addr;         // Source IP address
     uint32_t flow_dst_addr;         // Destination IP address
@@ -118,34 +92,34 @@ struct Netflow5RecordHdr
     uint16_t pad2;                  // Unused (zero) bytes
 };
 
-struct Netflow9Hdr
+struct NetFlow9Hdr
 {
-    uint16_t version;               // The version of netflow records exported in this packet;
+    uint16_t version;               // The version of netflow records exported in this packet
     uint16_t flow_count;            // Number of FlowSet records (both template and data) contained within this packet
     uint32_t sys_uptime;            // Time in milliseconds since this device was first booted
     uint32_t unix_secs;             // Seconds since 0000 Coordinated Universal Time (UTC) 1970
-    uint32_t sequence_num;          // Incremental sequence counter of all export packets sent by this export device;
+    uint32_t sequence_num;          // Incremental sequence counter of all export packets sent by this export device
     uint32_t source_id;             // A 32-bit value that identifies the Exporter Observation Domain
 };
 
-struct Netflow9FlowSet
+struct NetFlow9FlowSet
 {
     uint16_t field_id;
     uint16_t field_length;
 };
 
-struct Netflow9Template
+struct NetFlow9Template
 {
     uint16_t template_id;
     uint16_t template_field_count;
 };
 
-struct Netflow9TemplateField
+struct NetFlow9TemplateField
 {
     uint16_t field_type;
     uint16_t field_length;
 
-    Netflow9TemplateField(uint16_t type, uint16_t length)
+    NetFlow9TemplateField(uint16_t type, uint16_t length)
         : field_type(type)
         , field_length(length)
     {}

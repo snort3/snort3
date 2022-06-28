@@ -35,6 +35,7 @@
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
 #include "protocols/protocol_ids.h"
+#include "pub_sub/rna_events.h"
 
 #include "rna_app_discovery.h"
 #include "rna_cpe_os.h"
@@ -182,10 +183,9 @@ bool RnaPnd::analyze_netflow(snort::DataEvent& event)
     if ( !p )
         return false;
 
-    NetflowEvent* nfe = static_cast<NetflowEvent*>(&event);
+    NetFlowEvent* nfe = static_cast<NetFlowEvent*>(&event);
 
-    if (nfe->get_create_host())
-        analyze_netflow_host(nfe);
+    analyze_netflow_host(nfe);
 
     if (nfe->get_create_service())
         analyze_netflow_service(nfe);
@@ -193,7 +193,7 @@ bool RnaPnd::analyze_netflow(snort::DataEvent& event)
     return true;
 }
 
-void RnaPnd::analyze_netflow_host(NetflowEvent* nfe)
+void RnaPnd::analyze_netflow_host(NetFlowEvent* nfe)
 {
     const Packet* p = nfe->get_packet();
     if ( !p )
@@ -211,7 +211,20 @@ void RnaPnd::analyze_netflow_host(NetflowEvent* nfe)
     const uint8_t src_mac[6] = {0};
 
     if ( new_host )
-        logger.log(RNA_EVENT_NEW, NEW_HOST, p, &ht, src_ip_ptr, src_mac);
+    {
+        if (!nfe->get_create_host() and !nfe->get_create_service())
+        {
+            uint32_t service = nfe->get_service_id();
+            RNAEvent new_flow_event(p, nfe->get_record(), service);
+            DataBus::publish(RNA_NEW_NETFLOW_HOST, new_flow_event);
+            return;
+        }
+
+        if ( nfe->get_create_host() )
+            logger.log(RNA_EVENT_NEW, NEW_HOST, p, &ht, src_ip_ptr, src_mac);
+        else
+            return;
+    }
 
     uint16_t ptype = rna_get_eth(p);
     if ( ptype > to_utype(ProtocolId::ETHERTYPE_MINIMUM) )
@@ -230,7 +243,7 @@ void RnaPnd::analyze_netflow_host(NetflowEvent* nfe)
         generate_change_host_update(&ht, p, &src_ip, src_mac, packet_time());
 }
 
-void RnaPnd::analyze_netflow_service(NetflowEvent* nfe)
+void RnaPnd::analyze_netflow_service(NetFlowEvent* nfe)
 {
 
     const Packet* p = nfe->get_packet();

@@ -29,28 +29,29 @@
 
 #include "netflow_headers.h"
 #include "netflow_module.h"
+#include "netflow_record.h"
 
-// Trivial derived allocator, pointing to their own cache. LruCacheAllocNetflow has a
+// Trivial derived allocator, pointing to their own cache. LruCacheAllocNetFlow has a
 // CacheInterface* pointing to an lru cache. We can create different cache types by
 // instantiating the lru cache using different keys and derive here allocators with
 // CacheInterface* pointing to the appropriate lru cache object.
 template <class T>
-class LruCacheAllocNetflow : public CacheAlloc<T>
+class LruCacheAllocNetFlow : public CacheAlloc<T>
 {
 public:
     // This needs to be in every derived class:
     template <class U>
     struct rebind
     {
-        typedef LruCacheAllocNetflow<U> other;
+        typedef LruCacheAllocNetFlow<U> other;
     };
 
     using CacheAlloc<T>::lru;
-    LruCacheAllocNetflow();
+    LruCacheAllocNetFlow();
 };
 
 template<typename Key, typename Value, typename Hash>
-class LruCacheLocalNetflow : public LruCacheLocal<Key, Value, Hash>, public CacheInterface
+class LruCacheLocalNetFlow : public LruCacheLocal<Key, Value, Hash>, public CacheInterface
 {
 public:
     using LruLocal = LruCacheLocal<Key, Value, Hash>;
@@ -58,10 +59,10 @@ public:
     using LruLocal::max_size;
     using LruLocal::list;
 
-    LruCacheLocalNetflow(const size_t sz, struct LruCacheLocalStats& st) : LruLocal(sz, st) {}
+    LruCacheLocalNetFlow(const size_t sz, struct LruCacheLocalStats& st) : LruLocal(sz, st) {}
 
     template <class T>
-    friend class LruCacheAllocNetflow;
+    friend class LruCacheAllocNetFlow;
 
 private:
     // Only the allocator calls this
@@ -103,7 +104,7 @@ public:
     LruCacheLocalTemplate(const size_t sz, struct LruCacheLocalStats& st) : LruLocal(sz, st)
     {}
 
-    bool insert(const Key& key, std::vector<Netflow9TemplateField>& tf)
+    bool insert(const Key& key, std::vector<NetFlow9TemplateField>& tf)
     {
         bool is_new = false;
         Value& entry = LruLocal::find_else_create(key, &is_new);
@@ -134,14 +135,14 @@ private:
     }
 };
 
-// Used to track record for unique IP; we assume Netflow packets coming from
-// a given Netflow device will go to the same thread
-typedef LruCacheLocalNetflow<snort::SfIp, NetflowSessionRecord, NetflowHash> NetflowCache;
+// Used to track record for unique IP; we assume NetFlow packets coming from
+// a given NetFlow device will go to the same thread
+typedef LruCacheLocalNetFlow<snort::SfIp, NetFlowSessionRecord, NetFlowHash> NetFlowCache;
 
-// Used to track Netflow version 9 Template fields
+// Used to track NetFlow version 9 Template fields
 typedef std::pair<uint16_t, snort::SfIp> TemplateFieldKey;
-typedef LruCacheAllocTemplate<Netflow9TemplateField> TemplateAllocator;
-typedef std::vector<Netflow9TemplateField, TemplateAllocator> TemplateFieldValue;
+typedef LruCacheAllocTemplate<NetFlow9TemplateField> TemplateAllocator;
+typedef std::vector<NetFlow9TemplateField, TemplateAllocator> TemplateFieldValue;
 typedef LruCacheLocalTemplate<TemplateFieldKey, TemplateFieldValue, TemplateIpHash> TemplateFieldCache;
 
 #endif

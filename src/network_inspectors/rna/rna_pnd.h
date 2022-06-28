@@ -133,8 +133,8 @@ public:
     void analyze_smb_fingerprint(snort::DataEvent&);
     bool analyze_cpe_os_info(snort::DataEvent&);
     bool analyze_netflow(snort::DataEvent&);
-    void analyze_netflow_host(snort::NetflowEvent*);
-    void analyze_netflow_service(snort::NetflowEvent*);
+    void analyze_netflow_host(snort::NetFlowEvent*);
+    void analyze_netflow_service(snort::NetFlowEvent*);
 
     // generate change event for all hosts in the ip cache
     void generate_change_host_update();

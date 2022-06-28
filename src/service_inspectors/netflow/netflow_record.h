@@ -16,31 +16,38 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// netflow_cache.cc author Masud Hasan <mashasan@cisco.com>
+// netflow_record.h author Michael Matirko <mmatirkoe@cisco.com>
 
-#ifndef NETFLOW_CACHE_CC
-#define NETFLOW_CACHE_CC
+#ifndef NETFLOW_RECORD_H
+#define NETFLOW_RECORD_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "sfip/sf_ip.h"
 
-#include "netflow_cache.h"
-
-THREAD_LOCAL NetFlowCache* netflow_cache = nullptr;
-
-template <class T>
-LruCacheAllocNetFlow<T>::LruCacheAllocNetFlow()
+struct NetFlowSessionRecord
 {
-    lru = netflow_cache;
-}
+    snort::SfIp initiator_ip;
+    snort::SfIp responder_ip;
+    snort::SfIp next_hop_ip;
+    snort::SfIp netflow_initiator_ip;
+    uint8_t proto;
+    uint16_t initiator_port;
+    uint16_t responder_port;
+    uint32_t first_pkt_second;
+    uint32_t last_pkt_second;
+    uint64_t initiator_pkts;
+    uint64_t responder_pkts;
+    uint64_t initiator_bytes;
+    uint64_t responder_bytes;
+    uint8_t tcp_flags;
 
-THREAD_LOCAL TemplateFieldCache* template_cache = nullptr;
-
-template <class T>
-LruCacheAllocTemplate<T>::LruCacheAllocTemplate()
-{
-    lru = template_cache;
-}
+    uint32_t nf_src_as;
+    uint32_t nf_dst_as;
+    uint32_t nf_snmp_in;
+    uint32_t nf_snmp_out;
+    uint8_t nf_src_tos;
+    uint8_t nf_dst_tos;
+    uint8_t nf_src_mask;
+    uint8_t nf_dst_mask;
+};
 
 #endif

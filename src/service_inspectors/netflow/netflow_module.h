@@ -41,7 +41,7 @@ struct SnortConfig;
 #define NETFLOW_ANY_ZONE (-1)
 
 //  Used to create hash of key for indexing into cache.
-struct NetflowHash
+struct NetFlowHash
 {
     size_t operator()(const snort::SfIp& ip) const
     {
@@ -64,9 +64,9 @@ struct TemplateIpHash
     }
 };
 
-struct NetflowRule
+struct NetFlowRule
 {
-    NetflowRule() { reset(); }
+    NetFlowRule() { reset(); }
     void reset()
     {
         networks.clear();
@@ -108,24 +108,24 @@ struct NetflowRule
     bool create_service = false;
 };
 
-using NetflowRuleList = std::vector<NetflowRule>;
-struct NetflowRules
+using NetFlowRuleList = std::vector<NetFlowRule>;
+struct NetFlowRules
 {
-    NetflowRuleList exclude;
-    NetflowRuleList include;
+    NetFlowRuleList exclude;
+    NetFlowRuleList include;
 };
 
-struct NetflowConfig
+struct NetFlowConfig
 {
-    NetflowConfig() { }
+    NetFlowConfig() { }
     const char* dump_file = nullptr;
-    std::unordered_map <snort::SfIp, NetflowRules, NetflowHash> device_rule_map;
+    std::unordered_map <snort::SfIp, NetFlowRules, NetFlowHash> device_rule_map;
     uint32_t update_timeout = 0;
     size_t flow_memcap = 0;
     size_t template_memcap = 0;
 };
 
-struct NetflowStats : public LruCacheLocalStats
+struct NetFlowStats : public LruCacheLocalStats
 {
     PegCount invalid_netflow_record;
     PegCount packets;
@@ -138,14 +138,14 @@ struct NetflowStats : public LruCacheLocalStats
     PegCount version_9;
 };
 
-extern THREAD_LOCAL NetflowStats netflow_stats;
+extern THREAD_LOCAL NetFlowStats netflow_stats;
 extern THREAD_LOCAL snort::ProfileStats netflow_perf_stats;
 
-class NetflowModule : public snort::Module
+class NetFlowModule : public snort::Module
 {
 public:
-    NetflowModule();
-    ~NetflowModule() override;
+    NetFlowModule();
+    ~NetFlowModule() override;
 
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool begin(const char*, int, snort::SnortConfig*) override;
@@ -154,7 +154,7 @@ public:
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     snort::ProfileStats* get_profile() const override;
-    NetflowConfig* get_data();
+    NetFlowConfig* get_data();
 
     void parse_service_id_file(const std::string& serv_id_file_path);
 
@@ -168,8 +168,8 @@ public:
     { return true; }
 
 private:
-    NetflowConfig* conf = nullptr;
-    NetflowRule rule_cfg = {};
+    NetFlowConfig* conf = nullptr;
+    NetFlowRule rule_cfg = {};
     snort::SfIp device_ip_cfg = {};
     bool is_exclude_rule = false;
 };

@@ -21,17 +21,17 @@
 #define NETFLOW_EVENT_H
 
 #include "framework/data_bus.h"
-#include "service_inspectors/netflow/netflow_headers.h"
+#include "service_inspectors/netflow/netflow_record.h"
 
 #define NETFLOW_EVENT "service_inspector.netflow"
 
 namespace snort
 {
 
-class NetflowEvent : public DataEvent
+class NetFlowEvent : public DataEvent
 {
 public:
-    NetflowEvent(const snort::Packet* p, const NetflowSessionRecord* rec,
+    NetFlowEvent(const snort::Packet* p, const NetFlowSessionRecord* rec,
         bool cre_host, bool cre_serv, uint32_t s_id)
         : pkt(p), record(rec), create_host(cre_host),
           create_service(cre_serv), serviceID(s_id) { }
@@ -39,7 +39,7 @@ public:
     const Packet* get_packet() override
     { return pkt; }
 
-    const NetflowSessionRecord* get_record()
+    const NetFlowSessionRecord* get_record()
     { return record; }
 
     bool get_create_host()
@@ -53,7 +53,7 @@ public:
 
 private:
     const Packet* pkt;
-    const NetflowSessionRecord* record;
+    const NetFlowSessionRecord* record;
     bool create_host;
     bool create_service;
     uint32_t serviceID = 0;
