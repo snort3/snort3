@@ -46,6 +46,7 @@ class SO_PUBLIC IpsAction
 public:
     enum IpsActionPriority : uint16_t
     {
+        IAP_OTHER = 1,
         IAP_LOG = 10,
         IAP_ALERT = 20,
         IAP_REWRITE = 30,

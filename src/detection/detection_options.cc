@@ -414,7 +414,7 @@ int detection_option_node_evaluate(
     do
     {
         rval = (int)IpsOption::NO_MATCH;  // FIXIT-L refactor to eliminate casts to int.
-        if ( node->otn )
+        if ( node->otn and !node->otn->sigInfo.file_id )
         {
             SnortProtocolId snort_protocol_id = p->get_snort_protocol_id();
             int check_ports = 1;

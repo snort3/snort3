@@ -2,7 +2,7 @@
 set (LUA_SCRIPTS
     balanced.lua
     connectivity.lua
-    file_magic.lua
+    file_magic.rules
     inline.lua
     max_detect.lua
     security.lua

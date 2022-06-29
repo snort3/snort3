@@ -37,20 +37,6 @@
 
 using namespace snort;
 
-bool FileConfig::process_file_magic(FileMagicData& magic)
-{
-    bool negated = false;
-    std::string str = '"' + magic.content_str + '"';
-
-    if ( !parse_byte_code(str.c_str(), negated, magic.content) )
-        return false;
-
-    if (negated)
-        return false;
-
-    return true;
-}
-
 uint32_t FileConfig::find_file_type_id(const uint8_t* buf, int len,
     uint64_t file_offset, void** context)
 {
@@ -58,12 +44,12 @@ uint32_t FileConfig::find_file_type_id(const uint8_t* buf, int len,
 }
 
 /*The main function for parsing rule option*/
-void FileConfig::process_file_rule(FileMagicRule& rule)
+void FileConfig::process_file_rule(FileMeta& rule)
 {
-    fileIdentifier.insert_file_rule(rule);
+    fileIdentifier.add_file_id(rule);
 }
 
-const FileMagicRule* FileConfig::get_rule_from_id(uint32_t id) const
+const FileMeta* FileConfig::get_rule_from_id(uint32_t id) const
 {
     return fileIdentifier.get_rule_from_id(id);
 }
@@ -82,7 +68,7 @@ std::string FileConfig::file_type_name(uint32_t id) const
     else if (SNORT_FILE_TYPE_CONTINUE == id)
         return "Undecided file type, continue...";
 
-    const FileMagicRule* info = get_rule_from_id(id);
+    const FileMeta* info = get_rule_from_id(id);
 
     if (info != nullptr)
         return info->type;
@@ -122,6 +108,17 @@ void get_magic_rule_ids_from_type(const std::string& type, const std::string& ve
         conf->get_magic_rule_ids_from_type(type, version, ids_set);
     else
         ids_set.reset();
+}
+
+void set_rule_id_from_type(SnortConfig* sc, uint64_t id, std::string type,
+    std::string file_category, std::string file_version, std::vector<std::string> file_groups)
+{
+    FileConfig* conf = get_file_config(sc);
+    if (conf)
+    {
+        FileMeta rule(id, type, file_category, file_version, file_groups);
+        conf->process_file_rule(rule);
+    }
 }
 }
 

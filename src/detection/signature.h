@@ -28,6 +28,7 @@
 #include <cstdio>
 #include <string>
 
+#include "rules.h"
 #include "target_based/snort_protocols.h"
 
 namespace snort
@@ -98,7 +99,7 @@ struct SigInfo
 
     const ClassType* class_type = nullptr;
 
-    uint32_t gid = 0;
+    uint32_t gid = GID_DEFAULT;
     uint32_t sid = 0;
     uint32_t rev = 0;
 
@@ -107,6 +108,7 @@ struct SigInfo
 
     bool builtin = false;
     Target target = TARGET_NONE;
+    uint64_t file_id = 0;
 };
 
 snort::GHash* OtnLookupNew();

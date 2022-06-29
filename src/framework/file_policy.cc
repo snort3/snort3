@@ -78,7 +78,7 @@ bool FilePolicy::get_file_capture() const
     return capture_enabled;
 }
 
-void FilePolicy::insert_file_rule(FileRule& rule)
+void FilePolicy::add_file_id(FileRule& rule)
 {
     file_rules.emplace_back(rule);
 

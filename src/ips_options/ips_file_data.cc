@@ -57,8 +57,8 @@ IpsOption::EvalStatus FileDataOption::eval(Cursor& c, Packet* p)
 
     if ( !dp.data || !dp.len )
         return NO_MATCH;
-
     c.set(s_name, dp.data, dp.len);
+    c.set_pos_file(p->context->file_pos);
 
     return MATCH;
 }

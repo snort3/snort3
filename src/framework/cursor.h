@@ -85,6 +85,12 @@ public:
     void set(const char* s, const uint8_t* b, unsigned n)
     { name = s; buf = b; sz = n; pos = delta = 0; }
 
+    void set(const char* s, const uint8_t* b, unsigned n, unsigned pos_file)
+    {
+        file_pos = pos_file;
+        name = s; buf = b; sz = n; pos = delta = 0;
+    }
+
     const uint8_t* buffer() const
     { return buf; }
 
@@ -127,6 +133,17 @@ public:
         return true;
     }
 
+    bool set_pos_file(unsigned n)
+    {
+        file_pos = n;
+        return true;
+    }
+
+    unsigned get_file_pos() const
+    {
+        return file_pos;
+    }
+
     bool set_delta(unsigned n)
     {
         if (n > sz)
@@ -145,6 +162,7 @@ private:
     unsigned sz = 0;               // size of buffer
     unsigned pos = 0;              // current pos
     unsigned delta = 0;            // loop offset
+    unsigned file_pos = 0;         // file pos
     CursorDataVec* data = nullptr; // data stored on the cursor
 };
 

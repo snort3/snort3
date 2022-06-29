@@ -46,25 +46,16 @@ struct MergeNode
 {
     IdentifierNode* shared_node;  /*the node that is shared*/
     IdentifierNode* append_node;  /*the node that is added*/
-} ;
+};
 
-void FileMagicData::clear()
-{
-    content_str.clear();
-    content.clear();
-    offset = 0;
-}
-
-void FileMagicRule::clear()
+void FileMeta::clear()
 {
     rev = 0;
-    message.clear();
     type.clear();
     id = 0;
     category.clear();
     version.clear();
     groups.clear();
-    file_magics.clear();
 }
 
 void FileIdentifier::init_merge_hash()
@@ -133,177 +124,21 @@ IdentifierNode* FileIdentifier::clone_node(IdentifierNode* start)
     return node;
 }
 
-IdentifierNode* FileIdentifier::create_trie_from_magic(FileMagicRule& rule, uint32_t type_id)
+void FileIdentifier::add_file_id(FileMeta& rule)
 {
-    IdentifierNode* current;
-    IdentifierNode* root = nullptr;
-
-    if (rule.file_magics.empty() || !type_id)
-        return nullptr;
-
-    /* Content magics are sorted based on offset, this
-     * will help compile the file magic trio
-     */
-    std::sort(rule.file_magics.begin(),rule.file_magics.end());
-
-    current =  (IdentifierNode*)calloc_mem(sizeof(*current));
-    current->state = ID_NODE_NEW;
-    root = current;
-
-    for (auto magic:rule.file_magics)
-    {
-        unsigned int i;
-        current->offset = magic.offset;
-        for (i = 0; i < magic.content.size(); i++)
-        {
-            IdentifierNode* node = (IdentifierNode*)calloc_mem(sizeof(*node));
-            uint8_t index = magic.content[i];
-            node->offset = magic.offset + i + 1;
-            node->state = ID_NODE_NEW;
-            current->next[index] = node;
-            current = node;
-        }
-    }
-
-    /*Last node has type name*/
-    current->type_id = type_id;
-    return root;
-}
-
-/*This function examines whether to update the trie based on shared state*/
-
-bool FileIdentifier::update_next(IdentifierNode* start, IdentifierNode** next_ptr,
-    IdentifierNode* append)
-{
-    IdentifierNode* next = (*next_ptr);
-    MergeNode merge_node;
-    IdentifierNode* result;
-
-    if (!append || (next == append))
-        return false;
-
-    merge_node.append_node = append;
-    merge_node.shared_node = next;
-    if (!next)
-    {
-        /*reuse the append*/
-        *next_ptr = append;
-        set_node_state_shared(append);
-        return false;
-    }
-    else if ((result = (IdentifierNode*)identifier_merge_hash->find(&merge_node)))
-    {
-        /*the same pointer has been processed, reuse it*/
-        *next_ptr = result;
-        set_node_state_shared(result);
-        return false;
-    }
-    else
-    {
-        if ((start->offset < append->offset) && (next->offset > append->offset))
-        {
-            /*offset could have gap when non 0 offset is allowed */
-            unsigned int index;
-            IdentifierNode* node = (IdentifierNode*)calloc_mem(sizeof(*node));
-            merge_node.shared_node = next;
-            merge_node.append_node = append;
-            node->offset = append->offset;
-
-            for (index = 0; index < MAX_BRANCH; index++)
-            {
-                node->next[index] = next;
-            }
-
-            set_node_state_shared(next);
-            next = node;
-            identifier_merge_hash->insert(&merge_node, next);
-        }
-        else if (next->state == ID_NODE_SHARED)
-        {
-            /*shared, need to clone one*/
-            IdentifierNode* current_next = next;
-            merge_node.shared_node = current_next;
-            merge_node.append_node = append;
-            next = clone_node(current_next);
-            set_node_state_shared(next);
-            identifier_merge_hash->insert(&merge_node, next);
-        }
-
-        *next_ptr = next;
-    }
-
-    return true;
-}
-
-/*
- * Append magic to existing trie
- */
-void FileIdentifier::update_trie(IdentifierNode* start, IdentifierNode* append)
-{
-    unsigned int i;
-
-    if ((!start )||(!append)||(start == append))
-        return;
-
-    if (start->offset == append->offset )
-    {
-        /* when we come here, make sure this tree is not shared
-         * Update start trie using append information*/
-
-        assert(start->state != ID_NODE_SHARED);
-
-        if (append->type_id)
-        {
-            if (start->type_id)
-                ParseWarning(WARN_RULES, "Duplicated type definition '%u -> %u at offset %u",
-                    start->type_id, append->type_id, append->offset);
-            start->type_id = append->type_id;
-        }
-
-        for (i = 0; i < MAX_BRANCH; i++)
-        {
-            if (update_next(start,&start->next[i], append->next[i]))
-            {
-                update_trie(start->next[i], append->next[i]);
-            }
-        }
-    }
-    else if (start->offset < append->offset )
-    {
-        for (i = 0; i < MAX_BRANCH; i++)
-        {
-            if (update_next(start,&start->next[i], append))
-                update_trie(start->next[i], append);
-        }
-    }
-}
-
-void FileIdentifier::insert_file_rule(FileMagicRule& rule)
-{
-    IdentifierNode* node;
-
     if (!identifier_root)
     {
         identifier_root = (IdentifierNode*)calloc_mem(sizeof(*identifier_root));
         init_merge_hash();
     }
 
-    if (rule.id >= FILE_ID_MAX)
-    {
-        ParseError("file type: rule id %u exceeds max id of %d", rule.id, FILE_ID_MAX-1);
-        return;
-    }
-
     if (file_magic_rules[rule.id].id > 0)
     {
-        ParseError("file type: duplicated rule id %u defined", rule.id);
+        ParseError("file type: rule id %u found duplicate", rule.id);
         return;
     }
 
     file_magic_rules[rule.id] = rule;
-
-    node = create_trie_from_magic(rule, rule.id);
-    update_trie(identifier_root, node);
 }
 
 /*
@@ -359,7 +194,7 @@ uint32_t FileIdentifier::find_file_type_id(const uint8_t* buf, int len, uint64_t
     return file_type_id;
 }
 
-const FileMagicRule* FileIdentifier::get_rule_from_id(uint32_t id) const
+const FileMeta* FileIdentifier::get_rule_from_id(uint32_t id) const
 {
     if ((id < FILE_ID_MAX) && (file_magic_rules[id].id > 0))
     {
@@ -378,7 +213,10 @@ void FileIdentifier::get_magic_rule_ids_from_type(const std::string& type,
     {
         if (type == file_magic_rules[i].type)
         {
-            if (version.empty() or version == file_magic_rules[i].version)
+            std::string s = "\"", tmp;
+            if (!version.empty())
+                tmp = s+version+s;
+            if (tmp.empty() or tmp == file_magic_rules[i].version)
             {
                 ids_set.set(file_magic_rules[i].id);
             }
@@ -400,44 +238,33 @@ TEST_CASE ("FileIdMemory", "[FileMagic]")
 
 TEST_CASE ("FileIdRulePDF", "[FileMagic]")
 {
-    FileMagicData magic;
-
-    magic.content = "PDF";
-    magic.offset = 0;
-
-    FileMagicRule rule;
+    FileMeta rule;
 
     rule.type = "pdf";
-    rule.file_magics.emplace_back(magic);
     rule.id = 1;
 
     FileIdentifier rc;
 
-    rc.insert_file_rule(rule);
+    rc.add_file_id(rule);
 
     const char* data = "PDF";
 
     void* context = nullptr;
 
-    CHECK(rc.find_file_type_id((const uint8_t*)data, strlen(data), 0, &context) == 1);
+    CHECK(rc.find_file_type_id((const uint8_t*)data, strlen(data), 0, &context) ==
+        SNORT_FILE_TYPE_UNKNOWN);
 }
 
 TEST_CASE ("FileIdRuleUnknow", "[FileMagic]")
 {
-    FileMagicData magic;
-
-    magic.content = "PDF";
-    magic.offset = 0;
-
-    FileMagicRule rule;
+    FileMeta rule;
 
     rule.type = "pdf";
-    rule.file_magics.emplace_back(magic);
     rule.id = 1;
 
     FileIdentifier rc;
 
-    rc.insert_file_rule(rule);
+    rc.add_file_id(rule);
 
     const char* data = "DDF";
 
@@ -449,102 +276,72 @@ TEST_CASE ("FileIdRuleUnknow", "[FileMagic]")
 
 TEST_CASE ("FileIdRuleEXE", "[FileMagic]")
 {
-    FileMagicData magic;
-
-    magic.content = "PDF";
-    magic.offset = 0;
-
-    FileMagicRule rule;
+    FileMeta rule;
 
     rule.type = "exe";
-    rule.file_magics.emplace_back(magic);
     rule.id = 1;
 
     FileIdentifier rc;
-    rc.insert_file_rule(rule);
-
-    magic.clear();
-    magic.content = "EXE";
-    magic.offset = 0;
+    rc.add_file_id(rule);
 
     rule.clear();
     rule.type = "exe";
-    rule.file_magics.emplace_back(magic);
     rule.id = 3;
 
-    rc.insert_file_rule(rule);
+    rc.add_file_id(rule);
 
     const char* data = "PDFooo";
     void* context = nullptr;
 
-    CHECK(rc.find_file_type_id((const uint8_t*)data, strlen(data), 0, &context) == 1);
+    CHECK(rc.find_file_type_id((const uint8_t*)data, strlen(data), 0, &context) ==
+        SNORT_FILE_TYPE_UNKNOWN);
 }
 
 TEST_CASE ("FileIdRulePDFEXE", "[FileMagic]")
 {
-    FileMagicData magic;
-
-    magic.content = "PDF";
-    magic.offset = 0;
-
-    FileMagicRule rule;
+    FileMeta rule;
 
     rule.type = "exe";
-    rule.file_magics.emplace_back(magic);
     rule.id = 1;
 
     FileIdentifier rc;
-    rc.insert_file_rule(rule);
-
-    magic.clear();
-    magic.content = "EXE";
-    magic.offset = 3;
+    rc.add_file_id(rule);
 
     rule.clear();
     rule.type = "exe";
-    rule.file_magics.emplace_back(magic);
     rule.id = 3;
 
-    rc.insert_file_rule(rule);
+    rc.add_file_id(rule);
 
     const char* data = "PDFEXE";
     void* context = nullptr;
 
     // Match the last one
-    CHECK((rc.find_file_type_id((const uint8_t*)data, strlen(data), 0, &context) == 3));
+    CHECK((rc.find_file_type_id((const uint8_t*)data, strlen(data), 0, &context) ==
+        SNORT_FILE_TYPE_UNKNOWN));
 }
 
 TEST_CASE ("FileIdRuleFirst", "[FileMagic]")
 {
-    FileMagicData magic;
-
-    magic.content = "PDF";
-    magic.offset = 0;
-
-    FileMagicRule rule;
+    FileMeta rule;
 
     rule.type = "exe";
-    rule.file_magics.emplace_back(magic);
     rule.id = 1;
 
     FileIdentifier rc;
-    rc.insert_file_rule(rule);
-
-    magic.clear();
-    magic.content = "EXE";
-    magic.offset = 3;
+    rc.add_file_id(rule);
 
     rule.clear();
     rule.type = "exe";
-    rule.file_magics.emplace_back(magic);
     rule.id = 3;
 
-    rc.insert_file_rule(rule);
+    rc.add_file_id(rule);
 
     const char* data = "PDF";
     void* context = nullptr;
 
-    CHECK(rc.find_file_type_id((const uint8_t*)data, strlen(data), 0, &context) == 1);
+    CHECK(rc.find_file_type_id((const uint8_t*)data, strlen(data), 0, &context) ==
+        SNORT_FILE_TYPE_UNKNOWN);
 }
 #endif
 

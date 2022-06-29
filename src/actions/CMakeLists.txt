@@ -10,6 +10,7 @@ set (IPS_ACTION_SOURCES
     act_alert.cc
     act_block.cc
     act_drop.cc
+    act_file_id.cc
     act_log.cc
     act_pass.cc
     act_reject.cc

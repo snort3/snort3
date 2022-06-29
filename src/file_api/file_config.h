@@ -24,6 +24,7 @@
 
 // This provides the basic configuration for file processing
 #include "main/snort_config.h"
+#include "detection/detection_engine.h"
 #include "file_api/file_identifier.h"
 
 #define DEFAULT_FILE_TYPE_DEPTH 1460
@@ -44,11 +45,10 @@
 class FileConfig
 {
 public:
-    const FileMagicRule* get_rule_from_id(uint32_t) const;
+    const FileMeta* get_rule_from_id(uint32_t) const;
     void get_magic_rule_ids_from_type(const std::string&, const std::string&,
         snort::FileTypeBitSet&) const;
-    void process_file_rule(FileMagicRule&);
-    bool process_file_magic(FileMagicData&);
+    void process_file_rule(FileMeta&);
     uint32_t find_file_type_id(const uint8_t* buf, int len, uint64_t file_offset, void** context);
     std::string file_type_name(uint32_t id) const;
 
@@ -69,6 +69,7 @@ public:
     bool trace_type = false;
     bool trace_signature = false;
     bool trace_stream = false;
+    SnortProtocolId snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 
 private:
     FileIdentifier fileIdentifier;

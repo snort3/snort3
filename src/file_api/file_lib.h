@@ -54,6 +54,7 @@ public:
     FileInfo(const FileInfo& other);
     FileInfo& operator=(const FileInfo& other);
     uint32_t get_file_type() const;
+    void set_file_type(uint64_t index);
     void set_file_name(const char* file_name, uint32_t name_size);
     void set_url(const char* url, uint32_t url_size);
     std::string& get_file_name();
@@ -132,7 +133,6 @@ public:
     bool process(Packet*, const uint8_t* file_data, int data_size, FilePosition, FilePolicyBase*);
     bool process(Packet*, const uint8_t* file_data, int data_size, uint64_t offset, FilePolicyBase*,
         FilePosition position=SNORT_FILE_POSITION_UNKNOWN);
-    void process_file_type(const uint8_t* file_data, int data_size, FilePosition);
     void process_file_signature_sha256(const uint8_t* file_data, int data_size, FilePosition);
     void update_file_size(int data_size, FilePosition position);
     void stop_file_capture();
@@ -163,8 +163,10 @@ private:
     FileConfig*  config;
     bool cacheable = true;
 
-    inline void finalize_file_type();
-    inline void finish_signature_lookup(Packet*, bool, FilePolicyBase*);
+    void finalize_file_type();
+    void finish_signature_lookup(Packet*, bool, FilePolicyBase*);
+    void find_file_type_from_ips(Packet*, const uint8_t *file_data, int data_size, FilePosition);
+    void process_file_type(Packet*, const uint8_t* file_data, int data_size, FilePosition);
 };
 }
 #endif

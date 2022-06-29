@@ -186,6 +186,7 @@ StreamSplitter::Status MmsSplitter::scan(Packet* p, const uint8_t* data, uint32_
     Packet* tmp_pkt = new Packet(false);
     tmp_pkt->data  = cur_pkt_ctx.data;
     tmp_pkt->dsize = cur_pkt_ctx.len;
+    tmp_pkt->context = nullptr;
 
     Cursor mms_cur = Cursor(tmp_pkt);
 

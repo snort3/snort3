@@ -277,7 +277,7 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
             file->set_file_name(file_name, file_name_len);
             file->set_file_size(file_size.load() ? file_size.load() : UNKNOWN_FILE_SIZE);
         }
-
+        FileFlows::get_file_flows(p->flow);
         bool continue_processing = file_flows->file_process(p, file_name_hash, file_data, data_size,
            file_offset, direction, file_id);
     

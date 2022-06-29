@@ -81,6 +81,9 @@ public:
     SnortProtocolId get_snort_protocol_id()
     { return flow.proto_id; }
 
+    void set_snort_protocol_id(SnortProtocolId id)
+    { flow.proto_id = id; }
+
     void disable_detection();
     void disable_inspection();
 
@@ -154,6 +157,8 @@ public:
 
     DataPointer file_data = DataPointer(nullptr, 0);
     DataBuffer alt_data = {};
+    unsigned file_pos = 0;
+    bool file_type_process = false;
 
     uint64_t context_num;
     uint64_t packet_number = 0;

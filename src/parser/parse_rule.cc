@@ -92,6 +92,8 @@ static bool s_capture = false;
 static std::string s_type;
 static std::string s_body;
 
+static bool action_file_id = false;
+
 struct SoRule
 {
     SoRule(RuleTreeNode* rtn, const OptTreeNode* otn) :
@@ -104,6 +106,9 @@ struct SoRule
 };
 
 static SoRule* s_so_rule = nullptr;
+
+static bool rule_is_stateless()
+{ return action_file_id; }
 
 static int ValidateIPList(sfip_var_t* addrset, const char* token)
 {
@@ -773,6 +778,10 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
         ParseError("unknown rule action '%s'", s);
         return;
     }
+    if (!strcmp(s,"file_id"))
+        action_file_id = true;
+    else
+        action_file_id = false;
 
     if ( sc->dump_rule_meta() )
         rtn.header = new RuleHeader(s);
@@ -785,7 +794,7 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
         rtn.listhead = get_rule_list(sc, s);
     }
 
-    if ( sc->get_default_rule_state() )
+    if ( sc->get_default_rule_state() or rule_is_stateless() )
         rtn.set_enabled();
 }
 
@@ -1002,12 +1011,9 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
     OptTreeNode* otn = new OptTreeNode;
     otn->state = new OtnState[ThreadConfig::get_instance_max()];
 
-    if ( !stub )
-        otn->sigInfo.gid = GID_DEFAULT;
-
     otn->snort_protocol_id = rtn.snort_protocol_id;
 
-    if ( sc->get_default_rule_state() )
+    if ( sc->get_default_rule_state() or rule_is_stateless() )
         rtn.set_enabled();
 
     IpsManager::reset_options();
@@ -1020,9 +1026,6 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
 
 static void parse_rule_state(SnortConfig* sc, const RuleTreeNode& rtn, OptTreeNode* otn)
 {
-    if ( !otn->sigInfo.gid )
-        otn->sigInfo.gid = GID_DEFAULT;
-
     if ( otn->num_detection_opts )
     {
         ParseError("%u:%u rule state stubs do not support detection options",
@@ -1192,6 +1195,11 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
         // invalidate the service name pointer
         std::string service = sc->proto_ref->get_name(otn->snort_protocol_id);
         add_service_to_otn(sc, otn, service.c_str());
+    }
+    if (!otn->sigInfo.services.size() and action_file_id)
+    {
+        add_service_to_otn(sc, otn, "file_id");
+        action_file_id = false;
     }
 
     validate_services(sc, otn);

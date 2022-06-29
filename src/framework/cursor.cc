@@ -28,6 +28,7 @@
 #include "detection/detection_engine.h"
 #include "detection/detection_util.h"
 #include "protocols/packet.h"
+#include "detection/ips_context.h"
 
 using namespace snort;
 
@@ -44,6 +45,7 @@ Cursor::Cursor(const Cursor& rhs)
     buf = rhs.buf;
     sz = rhs.sz;
     pos = rhs.pos;
+    file_pos = rhs.file_pos;
 
     if (rhs.data)
     {
@@ -95,17 +97,16 @@ void Cursor::set_data(CursorData* cd)
 
 void Cursor::reset(Packet* p)
 {
-    if ( p->flow and p->flow->gadget )
+    if (p->flow and p->flow->gadget)
     {
         const DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
 
-        if ( buf.len )
+        if (buf.len)
         {
             set("alt_data", buf.data, buf.len);
             return;
         }
     }
-
     set("pkt_data", p->data, p->get_detect_limit());
 }
 

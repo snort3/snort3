@@ -119,7 +119,7 @@ FilePolicy* NetworkPolicy::get_file_policy() const
 { return file_policy; }
 
 void NetworkPolicy::add_file_policy_rule(FileRule& file_rule)
-{ file_policy->insert_file_rule(file_rule); }
+{ file_policy->add_file_id(file_rule); }
 
 InspectionPolicy* NetworkPolicy::get_user_inspection_policy(unsigned user_id)
 {

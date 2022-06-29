@@ -45,33 +45,21 @@ enum IdNodeState
     ID_NODE_SHARED
 };
 
-class FileMagicData
+class FileMeta
 {
 public:
-    void clear();
-    std::string content_str;   /* magic content to match*/
-    std::string content;       /* magic content raw values*/
-    uint32_t offset;           /* pattern search start offset */
-    bool operator <(const FileMagicData& magic) const
-    {
-        return (offset < magic.offset);
-    }
-};
-
-typedef std::vector<FileMagicData> FileMagics;
-
-class FileMagicRule
-{
-public:
+    FileMeta() { }
+    FileMeta(uint type_id, const std::string& type_name, const std::string& file_category, const std::string&
+        file_version, const std::vector<std::string>& file_groups)
+        : id(type_id), type(type_name),category(file_category),version(file_version),groups(
+            file_groups) { }
     void clear();
     uint32_t rev = 0;
     uint32_t id = 0;
-    std::string message;
     std::string type;
     std::string category;
     std::string version;
     std::vector<std::string> groups;
-    FileMagics file_magics;
 };
 
 struct IdentifierNode
@@ -89,9 +77,9 @@ class FileIdentifier
 public:
     ~FileIdentifier();
     uint32_t memory_usage() const { return memory_used; }
-    void insert_file_rule(FileMagicRule& rule);
+    void add_file_id(FileMeta& rule);
     uint32_t find_file_type_id(const uint8_t* buf, int len, uint64_t offset, void** context);
-    const FileMagicRule* get_rule_from_id(uint32_t) const;
+    const FileMeta* get_rule_from_id(uint32_t) const;
     void get_magic_rule_ids_from_type(const std::string&, const std::string&,
         snort::FileTypeBitSet&) const;
 
@@ -101,14 +89,13 @@ private:
     void set_node_state_shared(IdentifierNode* start);
     IdentifierNode* clone_node(IdentifierNode* start);
     bool update_next(IdentifierNode* start, IdentifierNode** next_ptr, IdentifierNode* append);
-    IdentifierNode* create_trie_from_magic(FileMagicRule& rule, uint32_t type_id);
     void update_trie(IdentifierNode* start, IdentifierNode* append);
 
     /*properties*/
     IdentifierNode* identifier_root = nullptr; /*Root of magic tries*/
     uint32_t memory_used = 0; /*Track memory usage*/
     snort::GHash* identifier_merge_hash = nullptr;
-    FileMagicRule file_magic_rules[FILE_ID_MAX + 1];
+    FileMeta file_magic_rules[FILE_ID_MAX + 1];
     IDMemoryBlocks id_memory_blocks;
 };
 

@@ -33,6 +33,7 @@ extern const BaseApi* act_react[];
 extern const BaseApi* act_alert[];
 extern const BaseApi* act_block[];
 extern const BaseApi* act_drop[];
+extern const BaseApi* act_file_id[];
 extern const BaseApi* act_log[];
 extern const BaseApi* act_pass[];
 extern const BaseApi* act_reject[];
@@ -46,6 +47,7 @@ void load_actions()
     PluginManager::load_plugins(act_alert);
     PluginManager::load_plugins(act_block);
     PluginManager::load_plugins(act_drop);
+    PluginManager::load_plugins(act_file_id);
     PluginManager::load_plugins(act_log);
     PluginManager::load_plugins(act_pass);
     PluginManager::load_plugins(act_reject);

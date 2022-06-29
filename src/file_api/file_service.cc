@@ -63,7 +63,7 @@ void FileService::post_init()
 {
     MimeSession::init();
 
-    const FileConfig* const conf = get_file_config();
+    FileConfig* const conf = get_file_config();
 
     if (!conf)
         return;
@@ -82,11 +82,13 @@ void FileService::post_init()
         capture_memcap = conf->capture_memcap;
         capture_block_size = conf->capture_block_size;
     }
+    const SnortConfig* sc = SnortConfig::get_conf();
+    conf->snort_protocol_id = sc->proto_ref->find("file_id");
 }
 
 void FileService::verify_reload(const SnortConfig* sc)
 {
-    const FileConfig* const conf = get_file_config(sc);
+    FileConfig* const conf = get_file_config(sc);
 
     if (!conf)
         return;
@@ -100,6 +102,11 @@ void FileService::verify_reload(const SnortConfig* sc)
             ReloadError("Changing file_id.capture_memcap requires a restart.\n");
         if (capture_block_size != conf->capture_block_size)
             ReloadError("Changing file_id.capture_block_size requires a restart.\n");
+    }
+
+    if (conf->snort_protocol_id == UNKNOWN_PROTOCOL_ID)
+    {
+        conf->snort_protocol_id = sc->proto_ref->find("file_id");
     }
 }
 

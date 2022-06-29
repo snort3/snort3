@@ -68,6 +68,7 @@ public:
 
     int8_t offset_var;      /* byte_extract variable indices for offset, */
     int8_t depth_var;       /* depth, distance, within */
+    bool offset_set = false;
 
     unsigned match_delta;   /* Maximum distance we can jump to search for this pattern again. */
 };
@@ -298,7 +299,14 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
         depth = cd->pmd.depth;
 
     int pos = c.get_delta();
+    int file_pos = c.get_file_pos();
 
+    if (file_pos and cd->offset_set)
+    {
+        offset -= file_pos;
+        if (offset < 0)
+            return 0;
+    }
     if ( !pos )
     {
         if ( cd->pmd.is_relative() )
@@ -446,6 +454,7 @@ static void parse_offset(ContentData* cd, const char* data)
     {
         cd->pmd.offset = parse_int(data, "offset");
         cd->offset_var = IPS_OPTIONS_NO_VAR;
+        cd->offset_set = true;
     }
     else
     {

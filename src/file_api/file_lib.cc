@@ -39,6 +39,7 @@
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
 #include "packet_tracer/packet_tracer.h"
+#include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
 #include "utils/util_utf.h"
@@ -52,8 +53,11 @@
 #include "file_segment.h"
 #include "file_stats.h"
 #include "file_module.h"
+#include "detection/fp_detect.h"
 
 using namespace snort;
+
+THREAD_LOCAL ProfileStats file_perf_stats;
 
 // Convert UTF16-LE file name to UTF-8.
 // Returns allocated name. Caller responsible for freeing the buffer.
@@ -185,6 +189,11 @@ void FileInfo::set_file_size(uint64_t size)
 uint64_t FileInfo::get_file_size() const
 {
     return file_size;
+}
+
+void FileInfo::set_file_type(uint64_t id)
+{
+    file_type_id = id;
 }
 
 uint32_t FileInfo::get_file_type() const
@@ -451,6 +460,7 @@ void FileContext::check_policy(Flow* flow, FileDirection dir, FilePolicyBase* po
 bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
     FilePosition position, FilePolicyBase* policy)
 {
+    Profile profile(file_perf_stats);
     Flow* flow = p->flow;
 
     if ( config->trace_stream )
@@ -484,7 +494,7 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
     /*file type id*/
     if (is_file_type_enabled())
     {
-        process_file_type(file_data, data_size, position);
+        process_file_type(p, file_data, data_size, position);
 
         /*Don't care unknown file type*/
         if (get_file_type() == SNORT_FILE_TYPE_UNKNOWN)
@@ -613,13 +623,12 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
  * 3) file magics are exhausted in depth
  *
  */
-void FileContext::process_file_type(const uint8_t* file_data, int data_size, FilePosition position)
+void FileContext::find_file_type_from_ips(Packet* pkt, const uint8_t* file_data, int
+    data_size,
+    FilePosition position)
 {
-    /* file type already found and no magics to continue */
-    if (file_type_id && !file_type_context)
-        return;
-
     bool depth_exhausted = false;
+    bool set_file_context = false;
 
     if ((int64_t)processed_bytes + data_size >= config->file_type_depth)
     {
@@ -627,13 +636,40 @@ void FileContext::process_file_type(const uint8_t* file_data, int data_size, Fil
         assert(data_size > 0);
         depth_exhausted = true;
     }
+    const FileConfig* const conf = get_file_config();
+    DetectionEngine de;
+    Packet* p = DetectionEngine::get_current_packet();
+    p->flow = pkt->flow;
+    p->pkth = pkt->pkth;
 
-    file_type_id =
-        config->find_file_type_id(file_data, data_size, processed_bytes, &file_type_context);
+    p->context->file_data = { file_data, (unsigned int)data_size };
+    p->context->file_pos = processed_bytes;
+    p->context->file_type_process = true;
+    p->context->set_snort_protocol_id(conf->snort_protocol_id);
+    p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
+    p->proto_bits |= PROTO_BIT__PDU;
 
+    FileFlows* files = FileFlows::get_file_flows(p->flow, false);
+    if (files and (!files->get_current_file_context() or files->get_current_file_context() != this))
+    {
+        files->set_current_file_context(this);
+        set_file_context =true;
+    }
+    fp_eval_service_group(p, conf->snort_protocol_id);
+    if (set_file_context)
+    {
+        files->set_current_file_context(nullptr);
+    }
     /* Check whether file transfer is done or type depth is reached */
-    if ( (position == SNORT_FILE_END) || (position == SNORT_FILE_FULL) || depth_exhausted )
+    if ((position == SNORT_FILE_END) || (position == SNORT_FILE_FULL) || depth_exhausted)
         finalize_file_type();
+}
+
+void FileContext::process_file_type(Packet* pkt,const uint8_t* file_data, int data_size,
+    FilePosition position)
+{
+    /* file type already found and no magics to continue */
+    find_file_type_from_ips(pkt, file_data, data_size, position);
 }
 
 void FileContext::process_file_signature_sha256(const uint8_t* file_data, int data_size,
@@ -896,32 +932,3 @@ void FileContext::print(std::ostream& log)
     log << "File size: " << file_size << std::endl;
     log << "Processed size: " << processed_bytes << std::endl;
 }
-
-/**
-bool file_IDs_from_type(const void *conf, const char *type,
-     uint32_t **ids, uint32_t *count)
-{
-    if ( !type )
-        return false;
-
-    return get_ids_from_type(conf, type, ids, count);
-}
-
-bool file_IDs_from_type_version(const  void *conf, const char *type,
-    const char *version, uint32_t **ids, uint32_t *count )
-{
-    if ( !type || !version )
-        return false;
-
-    return get_ids_from_type_version(conf, type, version, ids, count);
-}
-
-bool file_IDs_from_group(const void *conf, const char *group,
-     uint32_t **ids, uint32_t *count)
-{
-    if ( !group )
-        return false;
-
-    return get_ids_from_group(conf, group, ids, count);
-}
- **/

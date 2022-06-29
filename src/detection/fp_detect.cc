@@ -962,7 +962,7 @@ static int fp_search(RuleGroup* port_group, Packet* p, bool srvc)
 }
 
 static inline void eval_fp(
-    RuleGroup* port_group, Packet* p, char ip_rule, bool srvc)
+    RuleGroup* port_group, Packet* p, char ip_rule, bool srvc, bool force = false)
 {
     const uint8_t* tmp_payload = nullptr;
     uint16_t tmp_dsize = 0;
@@ -985,7 +985,7 @@ static inline void eval_fp(
         }
     }
 
-    if ( DetectionEngine::content_enabled(p) )
+    if ( DetectionEngine::content_enabled(p) or force)
     {
         if ( fp_search(port_group, p, srvc) )
             return;
@@ -1080,13 +1080,13 @@ static inline void eval_nfp(
 //  for performance purposes.
 
 static inline void fpEvalHeaderSW(
-    RuleGroup* port_group, Packet* p, char ip_rule, FPTask task, bool srvc = false)
+    RuleGroup* port_group, Packet* p, char ip_rule, FPTask task, bool srvc = false, bool force = false)
 {
-    if ( !p->is_detection_enabled(p->packet_flags & PKT_FROM_CLIENT) )
+    if ( !force and !p->is_detection_enabled(p->packet_flags & PKT_FROM_CLIENT))
         return;
 
     if ( task & FPTask::FP )
-        eval_fp(port_group, p, ip_rule, srvc);
+        eval_fp(port_group, p, ip_rule, srvc, force);
 
     if ( task & FPTask::NON_FP )
         eval_nfp(port_group, p, ip_rule);
@@ -1356,3 +1356,61 @@ static void fp_immediate(MpseGroup* mpg, Packet* p, const uint8_t* buf, unsigned
     }
 }
 
+static inline int fp_do_actions(OtnxMatchData* omd, Packet* p)
+{
+    if (!omd->have_match)
+        return 0;
+
+    for (unsigned i = 0; i < p->context->conf->num_rule_types; i++)
+    {
+        if (omd->matchInfo[i].iMatchCount)
+        {
+            qsort(omd->matchInfo[i].MatchArray, omd->matchInfo[i].iMatchCount,
+                sizeof(void*), sortOrderByContentLength);
+            const OptTreeNode* otn = omd->matchInfo[i].MatchArray[0];
+            RuleTreeNode* rtn = getRtnFromOtn(otn);
+            IpsAction* act = get_ips_policy()->action[rtn->action];
+            act->exec(p, otn);
+        }
+    }
+
+    return 0;
+}
+
+void fp_eval_service_group(Packet* p, SnortProtocolId snort_protocol_id)
+{
+    Profile mpse_profile(mpsePerfStats);
+    RuleGroup* svc = p->context->conf->sopgTable->get_port_group(true, snort_protocol_id);
+
+    if (!svc)
+        return;
+
+    IpsContext* c = p->context;
+    init_match_info(c);
+    c->searches.mf = rule_tree_queue;
+    c->searches.context = c;
+    assert(!c->searches.items.size());
+
+    IpsContext::ActiveRules actv_rules = c->active_rules;
+    c->active_rules = IpsContext::CONTENT;
+    IpsPolicy* ips_policy = snort::get_ips_policy();
+    snort::set_ips_policy(get_default_ips_policy(SnortConfig::get_conf()));
+
+    print_pkt_info(p, "file_id fast-patterns"); //FIXIT
+    fpEvalHeaderSW(svc, p, 0, FPTask::FP, true, true);
+    MpseStash* stash = c->stash;
+    c->searches.search_sync();
+    {
+        Profile rule_profile(rulePerfStats);
+        stash->process(c);
+
+        print_pkt_info(p, "file_id non-fast-patterns"); //FIXIT
+        fpEvalHeaderSW(svc, p, 0, FPTask::NON_FP, true);
+
+        fp_do_actions(c->otnx, p);
+
+        c->searches.items.clear();
+    }
+    c->active_rules = actv_rules;
+    snort::set_ips_policy(ips_policy);
+}

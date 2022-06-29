@@ -69,7 +69,7 @@ public:
     // This is called after file signature is complete
     FileVerdict signature_lookup(snort::Packet*, snort::FileInfo*) override;
 
-    void insert_file_rule(FileRule&);
+    void add_file_id(FileRule&);
     void set_file_type(bool enabled);
     void set_file_signature(bool enabled);
     void set_file_capture(bool enabled);

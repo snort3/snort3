@@ -68,6 +68,7 @@ using namespace snort;
 static struct rule_index_map_t* ruleIndexMap = nullptr;
 
 static std::string s_aux_rules;
+static std::string s_special_rules;
 
 class RuleTreeHashKeyOps : public HashKeyOperations
 {
@@ -427,6 +428,14 @@ void ParseRules(SnortConfig* sc)
         if ( p->enable_builtin_rules )
             ModuleManager::load_rules(sc);
 
+        if (!idx and !s_special_rules.empty())
+        {
+            push_parse_location("W", "./", "rule args");
+            parse_rules_string(sc, s_special_rules.c_str());
+            pop_parse_location();
+            s_special_rules.clear();
+        }
+
         if ( !p->include.empty() )
         {
             std::string path = p->includer;
@@ -451,7 +460,7 @@ void ParseRules(SnortConfig* sc)
             pop_parse_location();
         }
 
-        if ( !idx and !s_aux_rules.empty() )
+        if (!idx and !s_aux_rules.empty())
         {
             p->includer.clear();
             push_parse_location("W", "./", "rule args");
@@ -842,6 +851,12 @@ void parser_append_rules(const char* s)
 {
     s_aux_rules += s;
     s_aux_rules += "\n";
+}
+
+void parser_append_rules_special(const char *s)
+{
+    s_special_rules += s;
+    s_special_rules += "\n";
 }
 
 void parser_append_includes(const char* d)

@@ -31,6 +31,7 @@
 
 #include "main/thread.h"
 #include "profiler/profiler_defs.h"
+#include "target_based/snort_protocols.h"
 
 #define REBUILD_FLAGS (PKT_REBUILT_FRAG | PKT_REBUILT_STREAM)
 
@@ -98,6 +99,7 @@ void fp_clear_context(const snort::IpsContext&);
 void fp_full(snort::Packet*);
 void fp_partial(snort::Packet*);
 void fp_complete(snort::Packet*, bool search = false);
+void fp_eval_service_group(snort::Packet*, SnortProtocolId);
 
 #endif
 

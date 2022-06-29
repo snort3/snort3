@@ -48,9 +48,8 @@ public:
     ~FileIdModule() override;
 
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
-    bool begin(const char*, int, snort::SnortConfig*) override;
-    bool end(const char*, int, snort::SnortConfig*) override;
 
+    snort::ProfileStats* get_profile() const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
 
@@ -73,8 +72,7 @@ public:
     const snort::RuleMap* get_rules() const override;
 
 private:
-    FileMagicRule rule;
-    FileMagicData magic;
+    FileMeta rule;
     FileConfig *fc = nullptr;
 };
 
