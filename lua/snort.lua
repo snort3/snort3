@@ -87,7 +87,7 @@ ftp_data = { }
 http_inspect = default_http_inspect
 http2_inspect = { }
 
--- see file_magic.lua for file id rules
+-- see file_magic.rules for file id rules
 file_id = { rules_file = 'file_magic.rules' }
 file_policy = { }
 
