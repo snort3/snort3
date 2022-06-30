@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.32.0 2022-06-15 10:02:53 EDT TST
+Revision 3.1.33.0 2022-06-30 07:50:31 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -186,97 +186,98 @@ Table of Contents
     7.34. enip_req
     7.35. enip_rsp
     7.36. file_data
-    7.37. file_type
-    7.38. flags
-    7.39. flow
-    7.40. flowbits
-    7.41. fragbits
-    7.42. fragoffset
-    7.43. gid
-    7.44. gtp_info
-    7.45. gtp_type
-    7.46. gtp_version
-    7.47. http_client_body
-    7.48. http_cookie
-    7.49. http_header
-    7.50. http_header_test
-    7.51. http_method
-    7.52. http_num_headers
-    7.53. http_num_trailers
-    7.54. http_param
-    7.55. http_raw_body
-    7.56. http_raw_cookie
-    7.57. http_raw_header
-    7.58. http_raw_request
-    7.59. http_raw_status
-    7.60. http_raw_trailer
-    7.61. http_raw_uri
-    7.62. http_stat_code
-    7.63. http_stat_msg
-    7.64. http_trailer
-    7.65. http_trailer_test
-    7.66. http_true_ip
-    7.67. http_uri
-    7.68. http_version
-    7.69. http_version_match
-    7.70. icmp_id
-    7.71. icmp_seq
-    7.72. icode
-    7.73. id
-    7.74. iec104_apci_type
-    7.75. iec104_asdu_func
-    7.76. ip_proto
-    7.77. ipopts
-    7.78. isdataat
-    7.79. itype
-    7.80. js_data
-    7.81. md5
-    7.82. metadata
-    7.83. mms_data
-    7.84. mms_func
-    7.85. modbus_data
-    7.86. modbus_func
-    7.87. modbus_unit
-    7.88. msg
-    7.89. mss
-    7.90. pcre
-    7.91. pkt_data
-    7.92. pkt_num
-    7.93. priority
-    7.94. raw_data
-    7.95. reference
-    7.96. regex
-    7.97. rem
-    7.98. replace
-    7.99. rev
-    7.100. rpc
-    7.101. s7commplus_content
-    7.102. s7commplus_func
-    7.103. s7commplus_opcode
-    7.104. sd_pattern
-    7.105. seq
-    7.106. service
-    7.107. sha256
-    7.108. sha512
-    7.109. sid
-    7.110. sip_body
-    7.111. sip_header
-    7.112. sip_method
-    7.113. sip_stat_code
-    7.114. so
-    7.115. soid
-    7.116. ssl_state
-    7.117. ssl_version
-    7.118. stream_reassemble
-    7.119. stream_size
-    7.120. tag
-    7.121. target
-    7.122. tos
-    7.123. ttl
-    7.124. urg
-    7.125. vba_data
-    7.126. window
-    7.127. wscale
+    7.37. file_meta
+    7.38. file_type
+    7.39. flags
+    7.40. flow
+    7.41. flowbits
+    7.42. fragbits
+    7.43. fragoffset
+    7.44. gid
+    7.45. gtp_info
+    7.46. gtp_type
+    7.47. gtp_version
+    7.48. http_client_body
+    7.49. http_cookie
+    7.50. http_header
+    7.51. http_header_test
+    7.52. http_method
+    7.53. http_num_headers
+    7.54. http_num_trailers
+    7.55. http_param
+    7.56. http_raw_body
+    7.57. http_raw_cookie
+    7.58. http_raw_header
+    7.59. http_raw_request
+    7.60. http_raw_status
+    7.61. http_raw_trailer
+    7.62. http_raw_uri
+    7.63. http_stat_code
+    7.64. http_stat_msg
+    7.65. http_trailer
+    7.66. http_trailer_test
+    7.67. http_true_ip
+    7.68. http_uri
+    7.69. http_version
+    7.70. http_version_match
+    7.71. icmp_id
+    7.72. icmp_seq
+    7.73. icode
+    7.74. id
+    7.75. iec104_apci_type
+    7.76. iec104_asdu_func
+    7.77. ip_proto
+    7.78. ipopts
+    7.79. isdataat
+    7.80. itype
+    7.81. js_data
+    7.82. md5
+    7.83. metadata
+    7.84. mms_data
+    7.85. mms_func
+    7.86. modbus_data
+    7.87. modbus_func
+    7.88. modbus_unit
+    7.89. msg
+    7.90. mss
+    7.91. pcre
+    7.92. pkt_data
+    7.93. pkt_num
+    7.94. priority
+    7.95. raw_data
+    7.96. reference
+    7.97. regex
+    7.98. rem
+    7.99. replace
+    7.100. rev
+    7.101. rpc
+    7.102. s7commplus_content
+    7.103. s7commplus_func
+    7.104. s7commplus_opcode
+    7.105. sd_pattern
+    7.106. seq
+    7.107. service
+    7.108. sha256
+    7.109. sha512
+    7.110. sid
+    7.111. sip_body
+    7.112. sip_header
+    7.113. sip_method
+    7.114. sip_stat_code
+    7.115. so
+    7.116. soid
+    7.117. ssl_state
+    7.118. ssl_version
+    7.119. stream_reassemble
+    7.120. stream_size
+    7.121. tag
+    7.122. target
+    7.123. tos
+    7.124. ttl
+    7.125. urg
+    7.126. vba_data
+    7.127. window
+    7.128. wscale
 
 8. Search Engine Modules
 9. SO Rule Modules
@@ -1250,8 +1251,8 @@ Configuration:
     tripping { 0:max32 }
   * int rate_filter[].seconds = 1: count interval { 0:max32 }
   * dynamic rate_filter[].new_action = alert: take this action on
-    future hits until timeout { alert | block | drop | log | pass |
-    react | reject | rewrite }
+    future hits until timeout { alert | block | drop | file_id | log
+    | pass | react | reject | rewrite }
   * int rate_filter[].timeout = 1: count interval { 0:max32 }
   * string rate_filter[].apply_to: restrict filter to these addresses
     according to track
@@ -3362,17 +3363,8 @@ Configuration:
     able to be concurrently processed per flow { 1:max53 }
   * int file_id.show_data_depth = 100: print this many octets {
     0:max53 }
-  * int file_id.file_rules[].rev = 0: rule revision { 0:max32 }
-  * string file_id.file_rules[].msg: information about the file type
-  * string file_id.file_rules[].type: file type name
-  * int file_id.file_rules[].id = 0: file type id { 0:max32 }
-  * string file_id.file_rules[].category: file type category
-  * string file_id.file_rules[].group: comma separated list of groups
-    associated with file type
-  * string file_id.file_rules[].version: file type version
-  * string file_id.file_rules[].magic[].content: file magic content
-  * int file_id.file_rules[].magic[].offset = 0: file magic offset {
-    0:max32 }
+  * string file_id.rules_file: name of file with IPS rules for file
+    identification
   * bool file_id.trace_type = false: enable runtime dump of type info
   * bool file_id.trace_signature = false: enable runtime dump of
     signature info
@@ -3670,6 +3662,8 @@ Rules:
     body not expected
   * 121:38 (http2_inspect) HTTP/2 non-Data frame longer than 63780
     bytes
+  * 121:39 (http2_inspect) not HTTP/2 traffic or unrecoverable HTTP/2
+    protocol error
 
 Peg counts:
 
@@ -3882,7 +3876,6 @@ Rules:
   * 119:222 (http_inspect) Transfer-Encoding not ending with chunked
   * 119:223 (http_inspect) Transfer-Encoding with encodings before
     chunked
-  * 119:224 (http_inspect) misformatted HTTP traffic
   * 119:225 (http_inspect) unsupported Content-Encoding used
   * 119:226 (http_inspect) unknown Content-Encoding used
   * 119:227 (http_inspect) multiple Content-Encodings applied
@@ -3964,6 +3957,19 @@ Rules:
   * 119:277 (http_inspect) HTTP version in start line is higher than
     1
   * 119:278 (http_inspect) HTTP gzip body with the FEXTRA flag set
+  * 119:279 (http_inspect) invalid status line
+  * 119:280 (http_inspect) HTTP message headers longer than 63780
+    bytes
+  * 119:281 (http_inspect) invalid request line
+  * 119:282 (http_inspect) too many white space characters when start
+    line is expected
+  * 119:283 (http_inspect) HTTP message status line longer than 63780
+    bytes
+  * 119:284 (http_inspect) partial start line
+  * 119:285 (http_inspect) HTTP message request line longer than
+    63780 bytes
+  * 119:286 (http_inspect) HTTP/2 preface received instead of an HTTP
+    /1 method
 
 Peg counts:
 
@@ -5892,7 +5898,8 @@ Instance Type: multiton
 Configuration:
 
   * string wizard.hexes[].service: name of service
-  * select wizard.hexes[].proto = tcp: protocol to scan { tcp | udp }
+  * select wizard.hexes[].proto = any: protocol to scan { tcp | udp |
+    any }
   * bool wizard.hexes[].client_first = true: which end initiates data
     transfer
   * string wizard.hexes[].to_server[].hex: sequence of data with wild
@@ -5900,8 +5907,8 @@ Configuration:
   * string wizard.hexes[].to_client[].hex: sequence of data with wild
     chars (?)
   * string wizard.spells[].service: name of service
-  * select wizard.spells[].proto = tcp: protocol to scan { tcp | udp
-    }
+  * select wizard.spells[].proto = any: protocol to scan { tcp | udp
+    | any }
   * bool wizard.spells[].client_first = true: which end initiates
     data transfer
   * string wizard.spells[].to_server[].spell: sequence of data with
@@ -6629,7 +6636,27 @@ Type: ips_option
 Usage: detect
 
 
-7.37. file_type
+7.37. file_meta
+
+--------------
+
+Help: rule option to set file metadata (file type and id)
+
+Type: ips_option
+
+Usage: detect
+
+Configuration:
+
+  * string file_meta.type: file type to set
+  * int file_meta.id: file type id { 1:1023 }
+  * string file_meta.category: file type category
+  * string file_meta.group: comma separated list of groups associated
+    with file type
+  * string file_meta.version: file type version
+
+
+7.38. file_type
 
 --------------
 
@@ -6644,7 +6671,7 @@ Configuration:
   * string file_type.~: list of file type IDs to match
 
 
-7.38. flags
+7.39. flags
 
 --------------
 
@@ -6660,7 +6687,7 @@ Configuration:
   * string flags.~mask_flags: these flags are don’t cares
 
 
-7.39. flow
+7.40. flow
 
 --------------
 
@@ -6686,7 +6713,7 @@ Configuration:
   * implied flow.only_frag: match on defragmented packets only
 
 
-7.40. flowbits
+7.41. flowbits
 
 --------------
 
@@ -6703,7 +6730,7 @@ Configuration:
   * string flowbits.~bits: bit [|bit]* or bit [&bit]*
 
 
-7.41. fragbits
+7.42. fragbits
 
 --------------
 
@@ -6718,7 +6745,7 @@ Configuration:
   * string fragbits.~flags: these flags are tested
 
 
-7.42. fragoffset
+7.43. fragoffset
 
 --------------
 
@@ -6734,7 +6761,7 @@ Configuration:
     given range { 0:8192 }
 
 
-7.43. gid
+7.44. gid
 
 --------------
 
@@ -6749,7 +6776,7 @@ Configuration:
   * int gid.~: generator id { 1:max32 }
 
 
-7.44. gtp_info
+7.45. gtp_info
 
 --------------
 
@@ -6764,7 +6791,7 @@ Configuration:
   * string gtp_info.~: info element to match
 
 
-7.45. gtp_type
+7.46. gtp_type
 
 --------------
 
@@ -6779,7 +6806,7 @@ Configuration:
   * string gtp_type.~: list of types to match
 
 
-7.46. gtp_version
+7.47. gtp_version
 
 --------------
 
@@ -6794,7 +6821,7 @@ Configuration:
   * int gtp_version.~: version to match { 0:2 }
 
 
-7.47. http_client_body
+7.48. http_client_body
 
 --------------
 
@@ -6805,7 +6832,7 @@ Type: ips_option
 Usage: detect
 
 
-7.48. http_cookie
+7.49. http_cookie
 
 --------------
 
@@ -6827,7 +6854,7 @@ Configuration:
     message trailers
 
 
-7.49. http_header
+7.50. http_header
 
 --------------
 
@@ -6852,7 +6879,7 @@ Configuration:
     message trailers
 
 
-7.50. http_header_test
+7.51. http_header_test
 
 --------------
 
@@ -6881,7 +6908,7 @@ Configuration:
   * implied http_header_test.absent: header is absent
 
 
-7.51. http_method
+7.52. http_method
 
 --------------
 
@@ -6902,7 +6929,7 @@ Configuration:
     message trailers
 
 
-7.52. http_num_headers
+7.53. http_num_headers
 
 --------------
 
@@ -6926,7 +6953,7 @@ Configuration:
     HTTP message trailers
 
 
-7.53. http_num_trailers
+7.54. http_num_trailers
 
 --------------
 
@@ -6950,7 +6977,7 @@ Configuration:
     examine HTTP message trailers
 
 
-7.54. http_param
+7.55. http_param
 
 --------------
 
@@ -6967,7 +6994,7 @@ Configuration:
   * implied http_param.nocase: case insensitive match
 
 
-7.55. http_raw_body
+7.56. http_raw_body
 
 --------------
 
@@ -6979,7 +7006,7 @@ Type: ips_option
 Usage: detect
 
 
-7.56. http_raw_cookie
+7.57. http_raw_cookie
 
 --------------
 
@@ -7002,7 +7029,7 @@ Configuration:
     HTTP message trailers
 
 
-7.57. http_raw_header
+7.58. http_raw_header
 
 --------------
 
@@ -7027,7 +7054,7 @@ Configuration:
     HTTP message trailers
 
 
-7.58. http_raw_request
+7.59. http_raw_request
 
 --------------
 
@@ -7048,7 +7075,7 @@ Configuration:
     HTTP message trailers
 
 
-7.59. http_raw_status
+7.60. http_raw_status
 
 --------------
 
@@ -7067,7 +7094,7 @@ Configuration:
     HTTP message trailers
 
 
-7.60. http_raw_trailer
+7.61. http_raw_trailer
 
 --------------
 
@@ -7090,7 +7117,7 @@ Configuration:
     HTTP response message body (must be combined with request)
 
 
-7.61. http_raw_uri
+7.62. http_raw_uri
 
 --------------
 
@@ -7119,7 +7146,7 @@ Configuration:
     URI only
 
 
-7.62. http_stat_code
+7.63. http_stat_code
 
 --------------
 
@@ -7137,7 +7164,7 @@ Configuration:
     HTTP message trailers
 
 
-7.63. http_stat_msg
+7.64. http_stat_msg
 
 --------------
 
@@ -7156,7 +7183,7 @@ Configuration:
     HTTP message trailers
 
 
-7.64. http_trailer
+7.65. http_trailer
 
 --------------
 
@@ -7178,7 +7205,7 @@ Configuration:
     message body (must be combined with request)
 
 
-7.65. http_trailer_test
+7.66. http_trailer_test
 
 --------------
 
@@ -7205,7 +7232,7 @@ Configuration:
   * implied http_trailer_test.absent: trailer is absent
 
 
-7.66. http_true_ip
+7.67. http_true_ip
 
 --------------
 
@@ -7226,7 +7253,7 @@ Configuration:
     HTTP message trailers
 
 
-7.67. http_uri
+7.68. http_uri
 
 --------------
 
@@ -7254,7 +7281,7 @@ Configuration:
     only
 
 
-7.68. http_version
+7.69. http_version
 
 --------------
 
@@ -7276,7 +7303,7 @@ Configuration:
     HTTP message trailers
 
 
-7.69. http_version_match
+7.70. http_version_match
 
 --------------
 
@@ -7300,7 +7327,7 @@ Configuration:
     examine HTTP message trailers
 
 
-7.70. icmp_id
+7.71. icmp_id
 
 --------------
 
@@ -7316,7 +7343,7 @@ Configuration:
     0:65535 }
 
 
-7.71. icmp_seq
+7.72. icmp_seq
 
 --------------
 
@@ -7332,7 +7359,7 @@ Configuration:
     given range { 0:65535 }
 
 
-7.72. icode
+7.73. icode
 
 --------------
 
@@ -7348,7 +7375,7 @@ Configuration:
     0:255 }
 
 
-7.73. id
+7.74. id
 
 --------------
 
@@ -7364,7 +7391,7 @@ Configuration:
     }
 
 
-7.74. iec104_apci_type
+7.75. iec104_apci_type
 
 --------------
 
@@ -7379,7 +7406,7 @@ Configuration:
   * string iec104_apci_type.~: APCI type to match
 
 
-7.75. iec104_asdu_func
+7.76. iec104_asdu_func
 
 --------------
 
@@ -7394,7 +7421,7 @@ Configuration:
   * string iec104_asdu_func.~: function code to match
 
 
-7.76. ip_proto
+7.77. ip_proto
 
 --------------
 
@@ -7409,7 +7436,7 @@ Configuration:
   * string ip_proto.~proto: [!|>|<] name or number
 
 
-7.77. ipopts
+7.78. ipopts
 
 --------------
 
@@ -7425,7 +7452,7 @@ Configuration:
     lsrre|ssrr|satid|any }
 
 
-7.78. isdataat
+7.79. isdataat
 
 --------------
 
@@ -7442,7 +7469,7 @@ Configuration:
     buffer
 
 
-7.79. itype
+7.80. itype
 
 --------------
 
@@ -7458,7 +7485,7 @@ Configuration:
     0:255 }
 
 
-7.80. js_data
+7.81. js_data
 
 --------------
 
@@ -7470,7 +7497,7 @@ Type: ips_option
 Usage: detect
 
 
-7.81. md5
+7.82. md5
 
 --------------
 
@@ -7490,7 +7517,7 @@ Configuration:
     of buffer
 
 
-7.82. metadata
+7.83. metadata
 
 --------------
 
@@ -7507,7 +7534,7 @@ Configuration:
     pairs
 
 
-7.83. mms_data
+7.84. mms_data
 
 --------------
 
@@ -7518,7 +7545,7 @@ Type: ips_option
 Usage: detect
 
 
-7.84. mms_func
+7.85. mms_func
 
 --------------
 
@@ -7533,7 +7560,7 @@ Configuration:
   * string mms_func.~: func to match
 
 
-7.85. modbus_data
+7.86. modbus_data
 
 --------------
 
@@ -7544,7 +7571,7 @@ Type: ips_option
 Usage: detect
 
 
-7.86. modbus_func
+7.87. modbus_func
 
 --------------
 
@@ -7559,7 +7586,7 @@ Configuration:
   * string modbus_func.~: function code to match
 
 
-7.87. modbus_unit
+7.88. modbus_unit
 
 --------------
 
@@ -7574,7 +7601,7 @@ Configuration:
   * int modbus_unit.~: Modbus unit ID { 0:255 }
 
 
-7.88. msg
+7.89. msg
 
 --------------
 
@@ -7589,7 +7616,7 @@ Configuration:
   * string msg.~: message describing rule
 
 
-7.89. mss
+7.90. mss
 
 --------------
 
@@ -7605,7 +7632,7 @@ Configuration:
     }
 
 
-7.90. pcre
+7.91. pcre
 
 --------------
 
@@ -7627,7 +7654,7 @@ Peg counts:
   * pcre.pcre_negated: total pcre rules using negation syntax (sum)
 
 
-7.91. pkt_data
+7.92. pkt_data
 
 --------------
 
@@ -7639,7 +7666,7 @@ Type: ips_option
 Usage: detect
 
 
-7.92. pkt_num
+7.93. pkt_num
 
 --------------
 
@@ -7655,7 +7682,7 @@ Configuration:
     { 1: }
 
 
-7.93. priority
+7.94. priority
 
 --------------
 
@@ -7671,7 +7698,7 @@ Configuration:
     1:max31 }
 
 
-7.94. raw_data
+7.95. raw_data
 
 --------------
 
@@ -7682,7 +7709,7 @@ Type: ips_option
 Usage: detect
 
 
-7.95. reference
+7.96. reference
 
 --------------
 
@@ -7697,7 +7724,7 @@ Configuration:
   * string reference.~ref: reference: <scheme>,<id>
 
 
-7.96. regex
+7.97. regex
 
 --------------
 
@@ -7721,7 +7748,7 @@ Configuration:
     instead of start of buffer
 
 
-7.97. rem
+7.98. rem
 
 --------------
 
@@ -7736,7 +7763,7 @@ Configuration:
   * string rem.~: comment
 
 
-7.98. replace
+7.99. replace
 
 --------------
 
@@ -7752,7 +7779,7 @@ Configuration:
   * string replace.~: byte code to replace with
 
 
-7.99. rev
+7.100. rev
 
 --------------
 
@@ -7767,7 +7794,7 @@ Configuration:
   * int rev.~: revision { 1:max32 }
 
 
-7.100. rpc
+7.101. rpc
 
 --------------
 
@@ -7784,7 +7811,7 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-7.101. s7commplus_content
+7.102. s7commplus_content
 
 --------------
 
@@ -7795,7 +7822,7 @@ Type: ips_option
 Usage: detect
 
 
-7.102. s7commplus_func
+7.103. s7commplus_func
 
 --------------
 
@@ -7810,7 +7837,7 @@ Configuration:
   * string s7commplus_func.~: function code to match
 
 
-7.103. s7commplus_opcode
+7.104. s7commplus_opcode
 
 --------------
 
@@ -7825,7 +7852,7 @@ Configuration:
   * string s7commplus_opcode.~: opcode code to match
 
 
-7.104. sd_pattern
+7.105. sd_pattern
 
 --------------
 
@@ -7849,7 +7876,7 @@ Peg counts:
   * sd_pattern.terminated: hyperscan terminated (sum)
 
 
-7.105. seq
+7.106. seq
 
 --------------
 
@@ -7865,7 +7892,7 @@ Configuration:
     range { 0: }
 
 
-7.106. service
+7.107. service
 
 --------------
 
@@ -7880,7 +7907,7 @@ Configuration:
   * string service.*: one or more comma-separated service names
 
 
-7.107. sha256
+7.108. sha256
 
 --------------
 
@@ -7900,7 +7927,7 @@ Configuration:
     start of buffer
 
 
-7.108. sha512
+7.109. sha512
 
 --------------
 
@@ -7920,7 +7947,7 @@ Configuration:
     start of buffer
 
 
-7.109. sid
+7.110. sid
 
 --------------
 
@@ -7935,7 +7962,7 @@ Configuration:
   * int sid.~: signature id { 1:max32 }
 
 
-7.110. sip_body
+7.111. sip_body
 
 --------------
 
@@ -7946,7 +7973,7 @@ Type: ips_option
 Usage: detect
 
 
-7.111. sip_header
+7.112. sip_header
 
 --------------
 
@@ -7958,7 +7985,7 @@ Type: ips_option
 Usage: detect
 
 
-7.112. sip_method
+7.113. sip_method
 
 --------------
 
@@ -7973,7 +8000,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-7.113. sip_stat_code
+7.114. sip_stat_code
 
 --------------
 
@@ -7988,7 +8015,7 @@ Configuration:
   * int sip_stat_code.*code: status code { 1:999 }
 
 
-7.114. so
+7.115. so
 
 --------------
 
@@ -8005,7 +8032,7 @@ Configuration:
     buffer
 
 
-7.115. soid
+7.116. soid
 
 --------------
 
@@ -8021,7 +8048,7 @@ Configuration:
     like 3_45678_9
 
 
-7.116. ssl_state
+7.117. ssl_state
 
 --------------
 
@@ -8050,7 +8077,7 @@ Configuration:
     unknown
 
 
-7.117. ssl_version
+7.118. ssl_version
 
 --------------
 
@@ -8077,7 +8104,7 @@ Configuration:
     tls1.2
 
 
-7.118. stream_reassemble
+7.119. stream_reassemble
 
 --------------
 
@@ -8098,7 +8125,7 @@ Configuration:
     remainder of the session
 
 
-7.119. stream_size
+7.120. stream_size
 
 --------------
 
@@ -8116,7 +8143,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-7.120. tag
+7.121. tag
 
 --------------
 
@@ -8135,7 +8162,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1:max32 }
 
 
-7.121. target
+7.122. target
 
 --------------
 
@@ -8151,7 +8178,7 @@ Configuration:
     dst_ip }
 
 
-7.122. tos
+7.123. tos
 
 --------------
 
@@ -8166,7 +8193,7 @@ Configuration:
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
 
 
-7.123. ttl
+7.124. ttl
 
 --------------
 
@@ -8182,7 +8209,7 @@ Configuration:
     0:255 }
 
 
-7.124. urg
+7.125. urg
 
 --------------
 
@@ -8198,7 +8225,7 @@ Configuration:
     { 0:65535 }
 
 
-7.125. vba_data
+7.126. vba_data
 
 --------------
 
@@ -8210,7 +8237,7 @@ Type: ips_option
 Usage: detect
 
 
-7.126. window
+7.127. window
 
 --------------
 
@@ -8226,7 +8253,7 @@ Configuration:
     range { 0:65535 }
 
 
-7.127. wscale
+7.128. wscale
 
 --------------
 
@@ -9234,23 +9261,14 @@ libraries see the Getting Started section of the manual.
     less than this { 0:max53 }
   * int file_id.decompress_buffer_size = 100000: file decompression
     buffer size { 1024:max31 }
-  * string file_id.file_rules[].category: file type category
-  * string file_id.file_rules[].group: comma separated list of groups
-    associated with file type
-  * int file_id.file_rules[].id = 0: file type id { 0:max32 }
-  * string file_id.file_rules[].magic[].content: file magic content
-  * int file_id.file_rules[].magic[].offset = 0: file magic offset {
-    0:max32 }
-  * string file_id.file_rules[].msg: information about the file type
-  * int file_id.file_rules[].rev = 0: rule revision { 0:max32 }
-  * string file_id.file_rules[].type: file type name
-  * string file_id.file_rules[].version: file type version
   * int file_id.lookup_timeout = 2: give up on lookup after this many
     seconds { 0:max31 }
   * int file_id.max_files_cached = 65536: maximal number of files
     cached in memory { 8:max53 }
   * int file_id.max_files_per_flow = 128: maximal number of files
     able to be concurrently processed per flow { 1:max53 }
+  * string file_id.rules_file: name of file with IPS rules for file
+    identification
   * int file_id.show_data_depth = 100: print this many octets {
     0:max53 }
   * int file_id.signature_depth = 10485760: stop signature at this
@@ -9266,6 +9284,12 @@ libraries see the Getting Started section of the manual.
     generated
   * bool file_log.log_sys_time = false: log the system time when
     event generated
+  * string file_meta.category: file type category
+  * string file_meta.group: comma separated list of groups associated
+    with file type
+  * int file_meta.id: file type id { 1:1023 }
+  * string file_meta.type: file type to set
+  * string file_meta.version: file type version
   * bool file_policy.enable_capture = false: enable file capture
   * bool file_policy.enable_signature = false: enable signature
     calculation
@@ -10092,8 +10116,8 @@ libraries see the Getting Started section of the manual.
     tripping { 0:max32 }
   * int rate_filter[].gid = 1: rule generator ID { 0:max32 }
   * dynamic rate_filter[].new_action = alert: take this action on
-    future hits until timeout { alert | block | drop | log | pass |
-    react | reject | rewrite }
+    future hits until timeout { alert | block | drop | file_id | log
+    | pass | react | reject | rewrite }
   * int rate_filter[].seconds = 1: count interval { 0:max32 }
   * int rate_filter[].sid = 1: rule signature ID { 0:max32 }
   * int rate_filter[].timeout = 1: count interval { 0:max32 }
@@ -10812,7 +10836,8 @@ libraries see the Getting Started section of the manual.
     internal algorithm { dce_smb | dce_udp | dce_tcp | mms | sslv2 }
   * bool wizard.hexes[].client_first = true: which end initiates data
     transfer
-  * select wizard.hexes[].proto = tcp: protocol to scan { tcp | udp }
+  * select wizard.hexes[].proto = any: protocol to scan { tcp | udp |
+    any }
   * string wizard.hexes[].service: name of service
   * string wizard.hexes[].to_client[].hex: sequence of data with wild
     chars (?)
@@ -10822,8 +10847,8 @@ libraries see the Getting Started section of the manual.
     0:65535 }
   * bool wizard.spells[].client_first = true: which end initiates
     data transfer
-  * select wizard.spells[].proto = tcp: protocol to scan { tcp | udp
-    }
+  * select wizard.spells[].proto = any: protocol to scan { tcp | udp
+    | any }
   * string wizard.spells[].service: name of service
   * string wizard.spells[].to_client[].spell: sequence of data with
     wild cards (*)
@@ -12621,12 +12646,12 @@ session.
 The TCP packet is invalid because it doesn’t have a SYN, ACK, or RST
 flag set.
 
-116:424 (pbb) truncated ethernet header
+116:424 (eth) truncated ethernet header
 
 The packet length is less than the minimum ethernet header size (14
 bytes)
 
-116:424 (pbb) truncated ethernet header
+116:424 (eth) truncated ethernet header
 
 A truncated ethernet header was detected.
 
@@ -13213,12 +13238,6 @@ chunked
 An HTTP message includes a Transfer-Encoding header value that
 specifies other encodings before "chunked."
 
-119:224 (http_inspect) misformatted HTTP traffic
-
-The traffic contains an HTTP version, but does not contain a
-recognizable start line. This conclusion applies only to one
-direction of the flow. The opposite direction may be OK.
-
 119:225 (http_inspect) unsupported Content-Encoding used
 
 The HTTP Content-Encoding header contains a coding other than gzip
@@ -13558,6 +13577,45 @@ traffic.
 The HTTP message body is gzip encoded and the FEXTRA flag is set in
 the gzip header.
 
+119:279 (http_inspect) invalid status line
+
+HTTP Status-Line failed validation checks. Checks include minimum
+length, format, characters used, etc.
+
+119:280 (http_inspect) HTTP message headers longer than 63780 bytes
+
+HTTP message headers longer than 63780 bytes
+
+119:281 (http_inspect) invalid request line
+
+HTTP Request-Line failed validation checks. Checks include minimum
+length, format, characters used, etc.
+
+119:282 (http_inspect) too many white space characters when start
+line is expected
+
+Packet with more than 20 white space characters when an HTTP
+Start-Line is required.
+
+119:283 (http_inspect) HTTP message status line longer than 63780
+bytes
+
+HTTP message Status-Line longer than 63780 bytes
+
+119:284 (http_inspect) partial start line
+
+Connection closed in the middle of a Request-Line or Status-Line.
+
+119:285 (http_inspect) HTTP message request line longer than 63780
+bytes
+
+HTTP message Request-Line longer than 63780 bytes
+
+119:286 (http_inspect) HTTP/2 preface received instead of an HTTP/1
+method
+
+HTTP/2 preface received instead of an HTTP/1 method
+
 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
 
 Invalid flag set on HTTP/2 frame header
@@ -13741,6 +13799,14 @@ Nonempty HTTP/2 Data frame where a message body was not expected.
 121:38 (http2_inspect) HTTP/2 non-Data frame longer than 63780 bytes
 
 HTTP/2 non-Data frame longer than 63780 bytes
+
+121:39 (http2_inspect) not HTTP/2 traffic or unrecoverable HTTP/2
+protocol error
+
+HTTP/2 inspector is unable to parse this flow. Either the connection
+is not actually using HTTP/2 or some sort of unrecoverable HTTP/2
+protocol error has occurred. This conclusion applies only to one
+direction of the flow. The opposite direction may be OK.
 
 122:1 (port_scan) TCP portscan
 
@@ -15416,6 +15482,8 @@ and are not applicable elsewhere.
     file data
   * file_id (inspector): configure file identification
   * file_log (inspector): log file event to file.log
+  * file_meta (ips_option): rule option to set file metadata (file
+    type and id)
   * file_policy (basic): configure file policy
   * file_type (ips_option): rule option to check file type
   * flags (ips_option): rule option to test TCP control flags
@@ -15802,6 +15870,7 @@ and are not applicable elsewhere.
   * ips_action::block: block current packet and all the subsequent
     packets in this flow
   * ips_action::drop: drop the current packet
+  * ips_action::file_id: file_id file type id
   * ips_action::log: log the current packet
   * ips_action::pass: mark the current packet as passed
   * ips_action::react: send response to client and terminate session
@@ -15868,6 +15937,8 @@ and are not applicable elsewhere.
   * ips_option::enip_rsp: detection option to match ENIP response
   * ips_option::file_data: rule option to set detection cursor to
     file data
+  * ips_option::file_meta: rule option to set file metadata (file
+    type and id)
   * ips_option::file_type: rule option to check file type
   * ips_option::flags: rule option to test TCP control flags
   * ips_option::flow: rule option to check session properties

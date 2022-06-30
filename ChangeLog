@@ -1,3 +1,21 @@
+2022/06/30 - 3.1.33.0
+
+file_api: implement file type identification over ips engine
+filters: check if a configured gid value is supported by filter's implementation
+framework: update base API version to 14
+ftp_telnet: make active ftp expected session in the correct direction
+http2_inspect: fix unit tests depending on REG_TEST
+http_inspect: implement uniform alerts when splitter aborts
+hyperscan: delete databases upon error
+lua: update sid and rev fields
+main: move trace related code to trace folder
+netflow: fix v5 header time value
+parser: update do_hash() function to work correctly with port variables
+parser: use std::string in ExpandVars
+rna: allow rna to fire an event when a new netflow connection is detected
+rna: use the longest user agent fingerprint among multiple matches
+wizard: update wizard's patterns to follow the proto option
+
 2022/06/16 - 3.1.32.0
 
 appid: config for logging eve process to client mappings
