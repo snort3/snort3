@@ -214,6 +214,10 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                 const uint8_t frame_flags = get_frame_flags(session_data->
                     scan_frame_header[source_id]);
 
+                uint32_t& accumulated_frame_length = session_data->accumulated_frame_length[source_id];
+                if ((type == FT_HEADERS || type == FT_PUSH_PROMISE) && !(frame_flags & FLAG_END_HEADERS))
+                    accumulated_frame_length = frame_length + FRAME_HEADER_LENGTH;
+
                 if (type != FT_CONTINUATION)
                 {
                     session_data->frame_type[source_id] = type;
@@ -236,9 +240,11 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                         *session_data->infractions[source_id] += INF_INVALID_FLAG;
                         session_data->events[source_id]->create_event(EVENT_INVALID_FLAG);
                     }
+                    accumulated_frame_length += frame_length + FRAME_HEADER_LENGTH;
                 }
 
-                if ((type != FT_DATA) && (frame_length + FRAME_HEADER_LENGTH > MAX_OCTETS))
+                if (((type == FT_CONTINUATION) && (accumulated_frame_length > MAX_OCTETS)) ||
+                    ((type != FT_DATA) && (frame_length + FRAME_HEADER_LENGTH > MAX_OCTETS)))
                 {
                     // FIXIT-E long non-data frames may need to be supported
                     *session_data->infractions[source_id] += INF_NON_DATA_FRAME_TOO_LONG;

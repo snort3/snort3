@@ -180,6 +180,7 @@ protected:
     bool abort_flow[2] = { false, false };
     bool processing_partial_header = false;
     std::queue<uint32_t> frame_lengths[2];
+    uint32_t accumulated_frame_length[2] = { 0, 0 };
 
     // Internal to reassemble()
     uint32_t frame_header_offset[2] = { 0, 0 };

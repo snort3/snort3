@@ -101,11 +101,17 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
     if (session_data->abort_flow[source_id])
         return HttpStreamSplitter::status_value(StreamSplitter::ABORT, true);
 
-    const StreamSplitter::Status ret_val =
+    StreamSplitter::Status ret_val =
         implement_scan(session_data, data, length, flush_offset, source_id);
 
     session_data->bytes_scanned[source_id] += (ret_val == StreamSplitter::FLUSH)?
         *flush_offset : length;
+
+    if (ret_val == StreamSplitter::SEARCH && session_data->bytes_scanned[source_id] >= MAX_OCTETS)
+    {
+        assert(false);
+        ret_val = StreamSplitter::ABORT;
+    }
 
     if (ret_val == StreamSplitter::ABORT)
         session_data->abort_flow[source_id] = true;

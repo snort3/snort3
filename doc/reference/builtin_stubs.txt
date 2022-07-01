@@ -1488,7 +1488,8 @@ Nonempty HTTP/2 Data frame where a message body was not expected.
 
 121:38
 
-HTTP/2 non-Data frame longer than 63780 bytes
+HTTP/2 non-Data frame longer than 63780 bytes. For HEADERS and PUSH_PROMISE frames this includes the
+size of any following continuation frames.
 
 121:39
 
