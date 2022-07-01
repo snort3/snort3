@@ -392,13 +392,14 @@ int SFDAQInstance::add_expected(const Packet* ctrlPkt, const SfIp* cliIP, uint16
 
     if (flags & DAQ_EFLOW_BIDIRECTIONAL)
         d_cef.flags |= DAQ_EFLOW_BIDIRECTIONAL;
+
+    if (flags & DAQ_EFLOW_PERSIST)
+        d_cef.flags |= DAQ_EFLOW_PERSIST;
 /*
     if (flags & DAQ_DC_FLOAT)
         d_cef.flags |= DAQ_EFLOW_FLOAT;
     if (flags & DAQ_DC_ALLOW_MULTIPLE)
         d_cef.flags |= DAQ_EFLOW_ALLOW_MULTIPLE;
-    if (flags & DAQ_DC_PERSIST)
-        d_cef.flags |= DAQ_EFLOW_PERSIST;
 */
     d_cef.timeout_ms = timeout_ms;
     // Opaque data blob for expected flows is currently unused/unimplemented

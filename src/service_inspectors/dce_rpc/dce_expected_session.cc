@@ -76,7 +76,7 @@ int DceTcpExpSsnManager::create_expected_session_impl(Packet* pkt,
     fd->dce2_tcp_session.sd.config = (void*)&pc;
 
     if (Stream::set_snort_protocol_id_expected(pkt, type,
-        proto, src_ip, src_port, dst_ip, dst_port, protocol_id, fd))
+        proto, src_ip, src_port, dst_ip, dst_port, protocol_id, fd, false, false, false, true))
     {
         delete fd;
         return -1;

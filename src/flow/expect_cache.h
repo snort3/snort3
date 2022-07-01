@@ -98,7 +98,8 @@ public:
     int add_flow(const snort::Packet *ctrlPkt, PktType, IpProtocol, const snort::SfIp* cliIP,
         uint16_t cliPort, const snort::SfIp* srvIP, uint16_t srvPort, char direction,
         snort::FlowData*, SnortProtocolId snort_protocol_id = UNKNOWN_PROTOCOL_ID,
-        bool swap_app_direction = false, bool expect_multi = false, bool bidirectional = false);
+        bool swap_app_direction = false, bool expect_multi = false, bool bidirectional = false,
+        bool expect_persist = false);
 
     bool is_expected(snort::Packet*);
     bool check(snort::Packet*, snort::Flow*);

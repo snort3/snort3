@@ -397,13 +397,13 @@ int Stream::set_snort_protocol_id_expected(
     const SfIp* srcIP, uint16_t srcPort,
     const SfIp* dstIP, uint16_t dstPort,
     SnortProtocolId snort_protocol_id, FlowData* fd, bool swap_app_direction, bool expect_multi,
-    bool bidirectional)
+    bool bidirectional, bool expect_persist)
 {
     assert(flow_con);
 
     return flow_con->add_expected(
         ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort, snort_protocol_id, fd,
-        swap_app_direction, expect_multi, bidirectional);
+        swap_app_direction, expect_multi, bidirectional, expect_persist);
 }
 
 void Stream::set_snort_protocol_id_from_ha(
