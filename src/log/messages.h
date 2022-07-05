@@ -69,18 +69,36 @@ class SO_PUBLIC ConfigLogger final
 {
 public:
     ConfigLogger() = delete;
+
     static void log_option(const char* caption);
+
     static bool log_flag(const char* caption, bool flag, bool subopt = false);
+
     static void log_limit(const char* caption, int val, int unlim, bool subopt = false);
+    static void log_limit(const char* caption, unsigned int val, unsigned int unlim, bool subopt = false);
+    static void log_limit(const char* caption, long val, int unlim, bool subopt = false);
+    static void log_limit(const char* caption, unsigned long val, unsigned int unlim, bool subopt = false);
+    static void log_limit(const char* caption, long long val, int unlim, bool subopt = false);
+    static void log_limit(const char* caption, unsigned long long val, unsigned int unlim, bool subopt = false);
+
     static void log_limit(const char* caption, int val, int unlim, int disable, bool subopt = false);
-    static void log_limit(const char* caption, int64_t val, int64_t unlim, bool subopt = false);
+    static void log_limit(const char* caption, unsigned int val, unsigned int unlim, unsigned int disable, bool subopt = false);
+    static void log_limit(const char* caption, long val, int unlim, int disable, bool subopt = false);
+    static void log_limit(const char* caption, unsigned long val, unsigned int unlim, unsigned int disable, bool subopt = false);
+    static void log_limit(const char* caption, long long val, int unlim, int disable, bool subopt = false);
+    static void log_limit(const char* caption, unsigned long long val, unsigned int unlim, unsigned int disable, bool subopt = false);
+
     static void log_value(const char* caption, int n, const char* descr, bool subopt = false);
-    static void log_value(const char* caption, int32_t n, bool subopt = false);
-    static void log_value(const char* caption, uint32_t n, bool subopt = false);
-    static void log_value(const char* caption, int64_t n, bool subopt = false);
-    static void log_value(const char* caption, uint64_t n, bool subopt = false);
+
+    static void log_value(const char* caption, int n, bool subopt = false);
+    static void log_value(const char* caption, unsigned int n, bool subopt = false);
+    static void log_value(const char* caption, long n, bool subopt = false);
+    static void log_value(const char* caption, unsigned long n, bool subopt = false);
+    static void log_value(const char* caption, long long n, bool subopt = false);
+    static void log_value(const char* caption, unsigned long long n, bool subopt = false);
     static void log_value(const char* caption, double n, bool subopt = false);
     static void log_value(const char* caption, const char* str, bool subopt = false);
+
     static void log_list(const char* caption, const char* list, const char* prefix = " ", bool subopt = false);
     static void log_list(const char* list);
 private:

@@ -384,7 +384,7 @@ static std::string to_string(const IPSET* list)
 
 static void portscan_config_show(const PortscanConfig* config)
 {
-    ConfigLogger::log_value("memcap", static_cast<uint64_t>(config->memcap));
+    ConfigLogger::log_value("memcap", config->memcap);
     ConfigLogger::log_value("protos", get_protos(config->detect_scans).c_str());
     ConfigLogger::log_value("scan_types", get_types(config->detect_scan_type).c_str());
 

@@ -163,8 +163,8 @@ void HttpInspect::show(const SnortConfig*) const
     for (auto s : params->js_norm_param.ignored_props)
         js_norm_prop_ignore += s + " ";
 
-    ConfigLogger::log_limit("request_depth", params->request_depth, -1LL);
-    ConfigLogger::log_limit("response_depth", params->response_depth, -1LL);
+    ConfigLogger::log_limit("request_depth", params->request_depth, -1);
+    ConfigLogger::log_limit("response_depth", params->response_depth, -1);
     ConfigLogger::log_flag("unzip", params->unzip);
     ConfigLogger::log_flag("normalize_utf", params->normalize_utf);
     ConfigLogger::log_flag("decompress_pdf", params->decompress_pdf);

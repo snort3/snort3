@@ -342,9 +342,76 @@ bool ConfigLogger::log_flag(const char* caption, bool flag, bool subopt)
     return flag;
 }
 
+void ConfigLogger::log_limit(const char* caption, int val, int unlim, bool subopt)
+{
+    auto fmt = subopt ? SUB_CAPTION "%" PRId32 "%s\n" : CAPTION "%" PRId32 "%s\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    if ( val == unlim )
+        LogMessage(fmt, ind, caption, val, " (unlimited)");
+    else
+        LogMessage(fmt, ind, caption, val, "");
+}
+
+void ConfigLogger::log_limit(const char* caption, unsigned int val, unsigned int unlim, bool subopt)
+{
+    auto fmt = subopt ? SUB_CAPTION "%" PRIu32 "%s\n" : CAPTION "%" PRIu32 "%s\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    if ( val == unlim )
+        LogMessage(fmt, ind, caption, val, " (unlimited)");
+    else
+        LogMessage(fmt, ind, caption, val, "");
+}
+
+void ConfigLogger::log_limit(const char* caption, long val, int unlim, bool subopt)
+{
+    auto fmt = subopt ? SUB_CAPTION "%" PRId64 "%s\n" : CAPTION "%" PRId64 "%s\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    if ( val == unlim )
+        LogMessage(fmt, ind, caption, static_cast<long long>(val), " (unlimited)");
+    else
+        LogMessage(fmt, ind, caption, static_cast<long long>(val), "");
+}
+
+void ConfigLogger::log_limit(const char* caption, unsigned long val, unsigned int unlim, bool subopt)
+{
+    auto fmt = subopt ? SUB_CAPTION "%" PRIu64 "%s\n" : CAPTION "%" PRIu64 "%s\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    if ( val == unlim )
+        LogMessage(fmt, ind, caption, static_cast<unsigned long long>(val), " (unlimited)");
+    else
+        LogMessage(fmt, ind, caption, static_cast<unsigned long long>(val), "");
+}
+
+void ConfigLogger::log_limit(const char* caption, long long val, int unlim, bool subopt)
+{
+    auto fmt = subopt ? SUB_CAPTION "%" PRId64 "%s\n" : CAPTION "%" PRId64 "%s\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    if ( val == unlim )
+        LogMessage(fmt, ind, caption, val, " (unlimited)");
+    else
+        LogMessage(fmt, ind, caption, val, "");
+}
+
+void ConfigLogger::log_limit(const char* caption, unsigned long long val, unsigned int unlim,
+    bool subopt)
+{
+    auto fmt = subopt ? SUB_CAPTION "%" PRIu64 "%s\n" : CAPTION "%" PRIu64 "%s\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    if ( val == unlim )
+        LogMessage(fmt, ind, caption, val, " (unlimited)");
+    else
+        LogMessage(fmt, ind, caption, val, "");
+}
+
 void ConfigLogger::log_limit(const char* caption, int val, int unlim, int disable, bool subopt)
 {
-    auto fmt = subopt ? SUB_CAPTION "%d%s\n" : CAPTION "%d%s\n";
+    auto fmt = subopt ? SUB_CAPTION "%" PRId32 "%s\n" : CAPTION "%" PRId32 "%s\n";
     auto ind = subopt ? indention + strlen(caption) + 2 : indention;
 
     if ( val == disable )
@@ -355,23 +422,69 @@ void ConfigLogger::log_limit(const char* caption, int val, int unlim, int disabl
         LogMessage(fmt, ind, caption, val, "");
 }
 
-void ConfigLogger::log_limit(const char* caption, int val, int unlim, bool subopt)
+void ConfigLogger::log_limit(const char* caption, unsigned int val, unsigned int unlim,
+    unsigned int disable, bool subopt)
 {
-    auto fmt = subopt ? SUB_CAPTION "%d%s\n" : CAPTION "%d%s\n";
+    auto fmt = subopt ? SUB_CAPTION "%" PRIu32 "%s\n" : CAPTION "%" PRIu32 "%s\n";
     auto ind = subopt ? indention + strlen(caption) + 2 : indention;
 
-    if ( val == unlim )
+    if ( val == disable )
+        LogMessage(fmt, ind, caption, val, " (disabled)");
+    else if ( val == unlim )
         LogMessage(fmt, ind, caption, val, " (unlimited)");
     else
         LogMessage(fmt, ind, caption, val, "");
 }
 
-void ConfigLogger::log_limit(const char* caption, int64_t val, int64_t unlim, bool subopt)
+void ConfigLogger::log_limit(const char* caption, long val, int unlim, int disable, bool subopt)
 {
     auto fmt = subopt ? SUB_CAPTION "%" PRId64 "%s\n" : CAPTION "%" PRId64 "%s\n";
     auto ind = subopt ? indention + strlen(caption) + 2 : indention;
 
-    if ( val == unlim )
+    if ( val == disable )
+        LogMessage(fmt, ind, caption, static_cast<long long>(val), " (disabled)");
+    else if ( val == unlim )
+        LogMessage(fmt, ind, caption, static_cast<long long>(val), " (unlimited)");
+    else
+        LogMessage(fmt, ind, caption, static_cast<long long>(val), "");
+}
+
+void ConfigLogger::log_limit(const char* caption, unsigned long val, unsigned int unlim,
+    unsigned int disable, bool subopt)
+{
+    auto fmt = subopt ? SUB_CAPTION "%" PRIu64 "%s\n" : CAPTION "%" PRIu64 "%s\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    if ( val == disable )
+        LogMessage(fmt, ind, caption, static_cast<unsigned long long>(val), " (disabled)");
+    else if ( val == unlim )
+        LogMessage(fmt, ind, caption, static_cast<unsigned long long>(val), " (unlimited)");
+    else
+        LogMessage(fmt, ind, caption, static_cast<unsigned long long>(val), "");
+}
+
+void ConfigLogger::log_limit(const char* caption, long long val, int unlim, int disable, bool subopt)
+{
+    auto fmt = subopt ? SUB_CAPTION "%" PRId64 "%s\n" : CAPTION "%" PRId64 "%s\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    if ( val == disable )
+        LogMessage(fmt, ind, caption, val, " (disabled)");
+    else if ( val == unlim )
+        LogMessage(fmt, ind, caption, val, " (unlimited)");
+    else
+        LogMessage(fmt, ind, caption, val, "");
+}
+
+void ConfigLogger::log_limit(const char* caption, unsigned long long val, unsigned int unlim,
+    unsigned int disable, bool subopt)
+{
+    auto fmt = subopt ? SUB_CAPTION "%" PRIu64 "%s\n" : CAPTION "%" PRIu64 "%s\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    if ( val == disable )
+        LogMessage(fmt, ind, caption, val, " (disabled)");
+    else if ( val == unlim )
         LogMessage(fmt, ind, caption, val, " (unlimited)");
     else
         LogMessage(fmt, ind, caption, val, "");
@@ -385,7 +498,7 @@ void ConfigLogger::log_value(const char* caption, int n, const char* descr, bool
     LogMessage(fmt, ind, caption, n, descr);
 }
 
-void ConfigLogger::log_value(const char* caption, int32_t n, bool subopt)
+void ConfigLogger::log_value(const char* caption, int n, bool subopt)
 {
     auto fmt = subopt ? SUB_CAPTION "%" PRId32 "\n" : CAPTION "%" PRId32 "\n";
     auto ind = subopt ? indention + strlen(caption) + 2 : indention;
@@ -393,7 +506,7 @@ void ConfigLogger::log_value(const char* caption, int32_t n, bool subopt)
     LogMessage(fmt, ind, caption, n);
 }
 
-void ConfigLogger::log_value(const char* caption, uint32_t n, bool subopt)
+void ConfigLogger::log_value(const char* caption, unsigned int n, bool subopt)
 {
     auto fmt = subopt ? SUB_CAPTION "%" PRIu32 "\n" : CAPTION "%" PRIu32 "\n";
     auto ind = subopt ? indention + strlen(caption) + 2 : indention;
@@ -401,7 +514,23 @@ void ConfigLogger::log_value(const char* caption, uint32_t n, bool subopt)
     LogMessage(fmt, ind, caption, n);
 }
 
-void ConfigLogger::log_value(const char* caption, int64_t n, bool subopt)
+void ConfigLogger::log_value(const char* caption, long n, bool subopt)
+{
+    auto fmt = subopt ? SUB_CAPTION "%" PRId64 "\n" : CAPTION "%" PRId64 "\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    LogMessage(fmt, ind, caption, static_cast<long long>(n));
+}
+
+void ConfigLogger::log_value(const char* caption, unsigned long n, bool subopt)
+{
+    auto fmt = subopt ? SUB_CAPTION "%" PRIu64 "\n" : CAPTION "%" PRIu64 "\n";
+    auto ind = subopt ? indention + strlen(caption) + 2 : indention;
+
+    LogMessage(fmt, ind, caption, static_cast<unsigned long long>(n));
+}
+
+void ConfigLogger::log_value(const char* caption, long long n, bool subopt)
 {
     auto fmt = subopt ? SUB_CAPTION "%" PRId64 "\n" : CAPTION "%" PRId64 "\n";
     auto ind = subopt ? indention + strlen(caption) + 2 : indention;
@@ -409,7 +538,7 @@ void ConfigLogger::log_value(const char* caption, int64_t n, bool subopt)
     LogMessage(fmt, ind, caption, n);
 }
 
-void ConfigLogger::log_value(const char* caption, uint64_t n, bool subopt)
+void ConfigLogger::log_value(const char* caption, unsigned long long n, bool subopt)
 {
     auto fmt = subopt ? SUB_CAPTION "%" PRIu64 "\n" : CAPTION "%" PRIu64 "\n";
     auto ind = subopt ? indention + strlen(caption) + 2 : indention;

@@ -87,7 +87,7 @@ void AppIdConfig::show() const
 
     ConfigLogger::log_flag("log_all_sessions", log_all_sessions);
     ConfigLogger::log_flag("log_stats", log_stats);
-    ConfigLogger::log_value("memcap", static_cast<uint64_t>(memcap));
+    ConfigLogger::log_value("memcap", memcap);
 }
 
 void AppIdContext::pterm()

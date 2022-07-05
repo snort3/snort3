@@ -163,7 +163,7 @@ void PerfMonitor::show(const SnortConfig*) const
         ConfigLogger::log_value("flow_ports", config->flow_max_port_to_track);
 
     if ( ConfigLogger::log_flag("flow_ip", config->perf_flags & PERF_FLOWIP) )
-        ConfigLogger::log_value("flow_ip_memcap", static_cast<uint64_t>(config->flowip_memcap));
+        ConfigLogger::log_value("flow_ip_memcap", config->flowip_memcap);
 
     ConfigLogger::log_value("packets", config->pkt_cnt);
     ConfigLogger::log_value("seconds", config->sample_interval);
