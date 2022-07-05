@@ -24,6 +24,7 @@
 #include "stats.h"
 
 #include <cassert>
+#include <cmath>
 
 #include "control/control.h"
 #include "detection/detection_engine.h"
@@ -46,6 +47,7 @@
 
 #define STATS_SEPARATOR \
     "--------------------------------------------------"
+#define USECS_PER_SEC 1000000.0
 
 ProcessCount proc_stats;
 
@@ -152,9 +154,6 @@ static void timing_stats()
     TIMERSUB(&endtime, &starttime, &difftime);
 
     uint32_t tmp = (uint32_t)difftime.tv_sec;
-    uint32_t total_secs = tmp;
-    if ( total_secs < 1 )
-        total_secs = 1;
 
     uint32_t hrs  = tmp / SECONDS_PER_HOUR;
     tmp  = tmp % SECONDS_PER_HOUR;
@@ -175,10 +174,12 @@ static void timing_stats()
     uint64_t num_pkts = (uint64_t)daq->get_global_count("analyzed");
     uint64_t num_byts = (uint64_t)daq->get_global_count("rx_bytes");
 
-    if ( uint64_t pps = (num_pkts / total_secs) )
+    double total_secs = tmp + difftime.tv_usec / USECS_PER_SEC;
+
+    if ( uint64_t pps = (uint64_t)llround(num_pkts / total_secs) )
         LogMessage("%25.25s: " STDu64 "\n", "pkts/sec", pps);
 
-    if ( uint64_t mbps = 8 * num_byts / total_secs / 1024 / 1024 )
+    if ( uint64_t mbps = (uint64_t)llround(8 * num_byts / total_secs / 1024 / 1024) )
         LogMessage("%25.25s: " STDu64 "\n", "Mbits/sec", mbps);
 }
 
