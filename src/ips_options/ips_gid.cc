@@ -36,7 +36,7 @@ using namespace snort;
 
 static const Parameter s_params[] =
 {
-    { "~", Parameter::PT_INT, "1:max32", nullptr,
+    { "~", Parameter::PT_INT, "1:8129", nullptr,
       "generator id" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }

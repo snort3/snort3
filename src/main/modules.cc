@@ -1480,7 +1480,7 @@ bool ProcessModule::end(const char* fqn, int idx, SnortConfig* sc)
 
 static const Parameter suppress_params[] =
 {
-    { "gid", Parameter::PT_INT, "0:max32", "0",
+    { "gid", Parameter::PT_INT, "0:8129", "0",
       "rule generator ID" },
 
     { "sid", Parameter::PT_INT, "0:max32", "0",
@@ -1571,7 +1571,7 @@ bool SuppressModule::end(const char*, int idx, SnortConfig* sc)
 
 static const Parameter event_filter_params[] =
 {
-    { "gid", Parameter::PT_INT, "0:max32", "1",
+    { "gid", Parameter::PT_INT, "0:8129", "1",
       "rule generator ID" },
 
     { "sid", Parameter::PT_INT, "0:max32", "1",
@@ -1685,7 +1685,7 @@ function<const char*()> get_action_types = []()
 
 static const Parameter rate_filter_params[] =
 {
-    { "gid", Parameter::PT_INT, "0:max32", "1",
+    { "gid", Parameter::PT_INT, "0:8129", "1",
       "rule generator ID" },
 
     { "sid", Parameter::PT_INT, "0:max32", "1",
