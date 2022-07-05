@@ -89,7 +89,7 @@ a. To build with cmake and make, run configure_cmake.sh.  It will
 
     ./configure_cmake.sh --prefix=$my_path
     cd build
-    make -j
+    make -j $(nproc)
     make install
     ln -s $my_path/conf $my_path/etc
 
