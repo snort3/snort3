@@ -213,7 +213,7 @@ yet firm so feedback is welcome to get something we can live with.
   signature, if, else, loop, switch, etc.
 
 * Use consistent spacing and line breaks.  Always indent 4 spaces from the
-  breaking line.  Keep lines less than 100 chars; it greatly helps
+  breaking line.  Keep lines less than 120 chars; it greatly helps
   readability.
 
     No:
