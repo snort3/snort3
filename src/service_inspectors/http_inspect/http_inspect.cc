@@ -29,10 +29,11 @@
 
 #include "detection/detection_engine.h"
 #include "detection/detection_util.h"
-#include "service_inspectors/http2_inspect/http2_dummy_packet.h"
-#include "service_inspectors/http2_inspect/http2_flow_data.h"
+
 #include "log/unified2.h"
 #include "protocols/packet.h"
+#include "service_inspectors/http2_inspect/http2_dummy_packet.h"
+#include "service_inspectors/http2_inspect/http2_flow_data.h"
 #include "stream/stream.h"
 
 #include "http_common.h"
@@ -95,9 +96,8 @@ static std::string GetXFFHeaders(const StrCode *header_list)
 
     // Remove the trailing whitespace, if any
     if (hdr_list.length())
-    {
         hdr_list.pop_back();
-    }
+    
     return hdr_list;
 }
 
@@ -127,9 +127,8 @@ HttpInspect::HttpInspect(const HttpParaList* params_) :
 #endif
 
     if (params->script_detection)
-    {
         script_finder = new ScriptFinder(params->script_detection_handle);
-    }
+    
 }
 
 HttpInspect::~HttpInspect()
@@ -285,6 +284,7 @@ bool HttpInspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
 
     b.data = http_buffer.start();
     b.len = http_buffer.length();
+
     return true;
 }
 
@@ -366,34 +366,45 @@ bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBu
         if (get_latest_src(p) != SRC_CLIENT)
             return false;
         break;
+
     case InspectionBuffer::IBT_HEADER:
+
     case InspectionBuffer::IBT_RAW_HEADER:
         // http_header fast patterns for response bodies limited to first section
         if ((get_latest_src(p) == SRC_SERVER) && (get_latest_is(p) == IS_BODY))
             return false;
         break;
+
     case InspectionBuffer::IBT_BODY:
+
     case InspectionBuffer::IBT_VBA:
+
     case InspectionBuffer::IBT_JS_DATA:
         if ((get_latest_is(p) != IS_FIRST_BODY) && (get_latest_is(p) != IS_BODY))
             return false;
         break;
+
     case InspectionBuffer::IBT_METHOD:
         if ((get_latest_src(p) != SRC_CLIENT) || (get_latest_is(p) == IS_BODY))
             return false;
         break;
+
     case InspectionBuffer::IBT_STAT_CODE:
+
     case InspectionBuffer::IBT_STAT_MSG:
         if ((get_latest_src(p) != SRC_SERVER) || (get_latest_is(p) != IS_HEADER))
             return false;
         break;
+
     case InspectionBuffer::IBT_COOKIE:
         if (get_latest_is(p) != IS_HEADER)
             return false;
         break;
+
     default:
         break;
     }
+
     return get_buf(ibt, p, b);
 }
 
@@ -414,6 +425,7 @@ int HttpInspect::get_xtra_trueip(Flow* flow, uint8_t** buf, uint32_t* len, uint3
     *buf = const_cast<uint8_t*>(true_ip.start());
     *len = true_ip.length();
     *type = (*len == 4) ? EVENT_INFO_XFF_IPV4 : EVENT_INFO_XFF_IPV6;
+
     return 1;
 }
 
@@ -586,7 +598,7 @@ void HttpInspect::eval(Packet* p)
     // If current transaction is complete then we are done with it. This is strictly a memory
     // optimization not necessary for correct operation.
     if ((source_id == SRC_SERVER) && (session_data->type_expected[SRC_SERVER] == SEC_STATUS) &&
-         session_data->transaction[SRC_SERVER]->final_response())
+        session_data->transaction[SRC_SERVER]->final_response())
     {
         HttpTransaction::delete_transaction(session_data->transaction[SRC_SERVER], session_data);
         session_data->transaction[SRC_SERVER] = nullptr;
@@ -617,40 +629,47 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
         current_section = new HttpMsgRequest(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
+
     case SEC_STATUS:
         current_section = new HttpMsgStatus(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
+
     case SEC_HEADER:
         current_section = new HttpMsgHeader(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
+
     case SEC_BODY_CL:
         current_section = new HttpMsgBodyCl(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
+
     case SEC_BODY_OLD:
         current_section = new HttpMsgBodyOld(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
+
     case SEC_BODY_CHUNK:
         current_section = new HttpMsgBodyChunk(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
+
     case SEC_BODY_H2:
         current_section = new HttpMsgBodyH2(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
+
     case SEC_TRAILER:
         current_section = new HttpMsgTrailer(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
+        
     default:
         assert(false);
         if (buf_owner)
-        {
             delete[] data;
-        }
+        
         return false;
     }
 
@@ -672,9 +691,10 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
         }
         fflush(stdout);
     }
-#endif
+#endif 
 
     current_section->publish();
+
     return current_section->detection_required();
 }
 
@@ -684,7 +704,7 @@ void HttpInspect::clear(Packet* p)
 
     HttpFlowData* const session_data = http_get_flow_data(p->flow);
 
-    if (session_data == nullptr)
+    if (session_data == nullptr) 
     {
         assert(false);
         return;
@@ -692,9 +712,7 @@ void HttpInspect::clear(Packet* p)
 
     Http2FlowData* h2i_flow_data = nullptr;
     if (Http2FlowData::inspector_id != 0)
-    {
         h2i_flow_data = (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
-    }
 
     HttpMsgSection* current_section = nullptr;
     if (h2i_flow_data != nullptr)
