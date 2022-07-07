@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.33.0 2022-06-30 07:50:31 EDT TST
+Revision 3.1.34.0 2022-07-07 11:57:12 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -929,8 +929,6 @@ Configuration:
   * int ips.id = 0: correlate unified2 events with configuration {
     0:65535 }
   * string ips.include: snort rules and includes
-  * string ips.includer: for internal use; where includes are
-    included from { (optional) }
   * enum ips.mode: set policy mode { tap | inline | inline-test }
   * bool ips.obfuscate_pii = false: mask all but the last 4
     characters of credit card and social security numbers
@@ -9722,8 +9720,6 @@ libraries see the Getting Started section of the manual.
     rules w/o stubs
   * int ips.id = 0: correlate unified2 events with configuration {
     0:65535 }
-  * string ips.includer: for internal use; where includes are
-    included from { (optional) }
   * string ips.include: snort rules and includes
   * enum ips.mode: set policy mode { tap | inline | inline-test }
   * bool ips.obfuscate_pii = false: mask all but the last 4
@@ -13798,7 +13794,9 @@ Nonempty HTTP/2 Data frame where a message body was not expected.
 
 121:38 (http2_inspect) HTTP/2 non-Data frame longer than 63780 bytes
 
-HTTP/2 non-Data frame longer than 63780 bytes
+HTTP/2 non-Data frame longer than 63780 bytes. For HEADERS and
+PUSH_PROMISE frames this includes the size of any following
+continuation frames.
 
 121:39 (http2_inspect) not HTTP/2 traffic or unrecoverable HTTP/2
 protocol error
