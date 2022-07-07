@@ -55,7 +55,8 @@ void VarTablesFree(snort::SnortConfig*);
 
 void parser_append_rules(const char*);
 void parser_append_includes(const char*);
-void parser_append_rules_special(const char *);
+void parser_append_rules_special(const char* file, const char* includer);
+const char* parser_get_special_includer();
 
 int ParseBool(const char* arg);
 

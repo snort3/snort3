@@ -69,6 +69,7 @@ static struct rule_index_map_t* ruleIndexMap = nullptr;
 
 static std::string s_aux_rules;
 static std::string s_special_rules;
+static std::string s_special_includer;
 
 class RuleTreeHashKeyOps : public HashKeyOperations
 {
@@ -430,8 +431,8 @@ void ParseRules(SnortConfig* sc)
 
         if (!idx and !s_special_rules.empty())
         {
-            push_parse_location("W", "./", "rule args");
-            parse_rules_string(sc, s_special_rules.c_str());
+            push_parse_location("W", "./", "file_id.rules_file");
+            parse_rules_string(sc, s_special_rules.c_str(), false);
             pop_parse_location();
             s_special_rules.clear();
         }
@@ -853,11 +854,15 @@ void parser_append_rules(const char* s)
     s_aux_rules += "\n";
 }
 
-void parser_append_rules_special(const char *s)
+void parser_append_rules_special(const char *s, const char* inc)
 {
     s_special_rules += s;
     s_special_rules += "\n";
+    s_special_includer = inc;
 }
+
+const char* parser_get_special_includer()
+{ return s_special_includer.c_str(); }
 
 void parser_append_includes(const char* d)
 {

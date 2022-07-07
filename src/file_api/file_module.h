@@ -22,6 +22,8 @@
 #ifndef FILE_MODULE_H
 #define FILE_MODULE_H
 
+#include <string>
+
 #include "framework/module.h"
 
 #include "file_config.h"
@@ -48,6 +50,7 @@ public:
     ~FileIdModule() override;
 
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
 
     snort::ProfileStats* get_profile() const override;
     const PegInfo* get_pegs() const override;
@@ -74,6 +77,7 @@ public:
 private:
     FileMeta rule;
     FileConfig *fc = nullptr;
+    std::string magic_file;
 };
 
 enum FileSid

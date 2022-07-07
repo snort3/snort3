@@ -81,6 +81,8 @@ mutex ModuleManager::stats_mutex;
 static string s_current;
 static string s_aliased_name;
 static string s_aliased_type;
+static string s_ips_includer;
+static string s_file_id_includer;
 
 // for callbacks from Lua
 static SnortConfig* s_config = nullptr;
@@ -98,8 +100,10 @@ extern "C"
     bool set_alias(const char* from, const char* to);
     void clear_alias();
 
-    const char* push_include_path(const char* file);
+    bool set_includer(const char* fqn, const char* val);
+    const char* push_include_path(const char*);
     void pop_include_path();
+
     void snort_whitelist_append(const char*);
     void snort_whitelist_add_prefix(const char*);
 }
@@ -719,6 +723,19 @@ SO_PUBLIC void pop_include_path()
     pop_parse_location();
 }
 
+// cppcheck-suppress unusedFunction
+SO_PUBLIC bool set_includer(const char* fqn, const char* s)
+{
+    if ( !strcmp(fqn, "ips.includer") )
+        s_ips_includer = s;
+    else
+    {
+        assert(!strcmp(fqn, "file_id.includer"));
+        s_file_id_includer = s;
+    }
+    return true;
+}
+
 //-------------------------------------------------------------------------
 // ffi methods - also called internally so no cppcheck suppressions
 //-------------------------------------------------------------------------
@@ -959,6 +976,16 @@ void ModuleManager::reset_errors()
 
 unsigned ModuleManager::get_errors()
 { return s_errors; }
+
+const char* ModuleManager::get_includer(const char* mod)
+{
+    assert(!strcmp(mod, "ips") or !strcmp(mod, "file_id"));
+
+    if ( !strcmp(mod, "ips") )
+        return s_ips_includer.c_str();
+
+    return s_file_id_includer.c_str();
+}
 
 void ModuleManager::list_modules(const char* s)
 {

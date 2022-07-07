@@ -29,6 +29,7 @@ void close_table(const char*, int);
 bool set_bool(const char*, bool);
 bool set_number(const char*, double);
 bool set_string(const char*, const char*);
+bool set_includer(const char*, const char*);
 bool set_alias(const char*, const char*);
 void clear_alias();
 ]]
@@ -68,7 +69,11 @@ function snort_set(fqn, key, val)
         ffi.C.set_number(name, val)
 
     elseif ( what == 'string' ) then
-        ffi.C.set_string(name, val)
+        if ( key == "includer" ) then
+            ffi.C.set_includer(name, val)
+        else
+            ffi.C.set_string(name, val)
+        end
 
     elseif ( what == 'table' ) then
         if ( ffi.C.open_table(name, idx) ) then

@@ -32,6 +32,7 @@
 #include "log/messages.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
+#include "managers/module_manager.h"
 #include "packet_io/active.h"
 #include "trace/trace.h"
 
@@ -206,13 +207,20 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("decompress_buffer_size") )
         FileService::decode_conf.set_decompress_buffer_size(v.get_uint32());
+
     else if ( v.is("rules_file") )
     {
-        std::string s = "include ";
-        s += v.get_string();
-        parser_append_rules_special(s.c_str());
+        magic_file = "include ";
+        magic_file += v.get_string();
     }
 
+    return true;
+}
+
+bool FileIdModule::end(const char*, int, SnortConfig*)
+{
+    const char* inc = ModuleManager::get_includer("file_id");
+    parser_append_rules_special(magic_file.c_str(), inc);
     return true;
 }
 

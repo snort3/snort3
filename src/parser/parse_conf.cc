@@ -61,6 +61,7 @@ struct Location
 
 static std::stack<Location> files;
 static int rules_file_depth = 0;
+static bool s_ips_policy = true;
 
 const char* get_parse_file()
 {
@@ -190,7 +191,16 @@ void parse_include(SnortConfig* sc, const char* arg)
 {
     assert(arg);
     std::string conf = ExpandVars(arg);
-    std::string file = !rules_file_depth ? get_ips_policy()->includer : get_parse_file();
+    std::string file;
+
+    if ( rules_file_depth )
+        file = get_parse_file();
+
+    else if ( s_ips_policy )
+        file = get_ips_policy()->includer;
+
+    else
+        file = parser_get_special_includer();
 
     const char* code = get_config_file(conf.c_str(), file);
 
@@ -293,10 +303,12 @@ void parse_rules_file(SnortConfig* sc, const char* fname)
     --rules_file_depth;
 }
 
-void parse_rules_string(SnortConfig* sc, const char* s)
+void parse_rules_string(SnortConfig* sc, const char* s, bool ips_policy)
 {
+    s_ips_policy = ips_policy;
     std::string rules = s;
     std::stringstream ss(rules);
     parse_stream(ss, sc);
+    s_ips_policy = true;
 }
 

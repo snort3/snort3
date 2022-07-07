@@ -53,6 +53,7 @@ public:
     SO_PUBLIC static std::list<Module*> get_all_modules();
 
     static const char* get_lua_coreinit();
+    static const char* get_includer(const char* module);
 
     static void list_modules(const char* = nullptr);
     static void dump_modules();

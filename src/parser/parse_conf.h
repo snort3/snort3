@@ -39,7 +39,7 @@ const char* get_parse_file();
 const char* get_config_file(const char* arg, std::string& file);
 
 void parse_rules_file(snort::SnortConfig*, const char* fname);
-void parse_rules_string(snort::SnortConfig*, const char* str);
+void parse_rules_string(snort::SnortConfig*, const char* str, bool ips_policy = true);
 
 void ParseIpVar(const char* name, const char* value);
 void parse_include(snort::SnortConfig*, const char*);

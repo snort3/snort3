@@ -117,9 +117,12 @@ function include(file)
         dofile(fname)
     end
 
-    local iname = path_top()
-    if ( (ips ~= nil) and (ips.includer == nil) and (iname ~= nil) ) then
-        ips.includer = iname
+    if ( (ips ~= nil) and (ips.includer == nil) ) then
+        ips.includer = fname
+    end
+
+    if ( file_id ~= nil and file_id.includer == nil ) then
+        file_id.includer = fname
     end
 
     path_pop()

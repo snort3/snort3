@@ -1146,9 +1146,6 @@ static const Parameter ips_params[] =
     { "include", Parameter::PT_STRING, nullptr, nullptr,
       "snort rules and includes" },
 
-    { "includer", Parameter::PT_STRING, "(optional)", nullptr,
-      "for internal use; where includes are included from" },
-
     // FIXIT-L no default; it breaks initialization by -Q
     { "mode", Parameter::PT_ENUM, "tap | inline | inline-test", nullptr,
       "set policy mode" },
@@ -1214,9 +1211,6 @@ bool IpsModule::set(const char* fqn, Value& v, SnortConfig*)
     else if ( v.is("include") )
         p->include = v.get_string();
 
-    else if ( v.is("includer") )
-        p->includer = v.get_string();
-
     else if ( v.is("mode") )
         p->policy_mode = (PolicyMode)v.get_uint8();
 
@@ -1278,6 +1272,7 @@ bool IpsModule::end(const char* fqn, int idx, SnortConfig* sc)
     else if (!idx and !strcmp(fqn, "ips"))
     {
         IpsPolicy* p = get_ips_policy();
+        p->includer = ModuleManager::get_includer("ips");
         sc->policy_map->set_user_ips(p);
     }
     return true;
