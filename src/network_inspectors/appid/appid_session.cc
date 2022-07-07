@@ -411,6 +411,10 @@ void AppIdSession::check_tunnel_detection_restart()
     if (tp_payload_app_id != APP_ID_HTTP_TUNNEL or get_session_flags(APPID_SESSION_HTTP_TUNNEL))
         return;
 
+    AppIdHttpSession* hsession = get_http_session();
+    if (!hsession or !hsession->get_tunnel())
+        return;
+
     if (appidDebug->is_active())
         LogMessage("AppIdDbg %s Found HTTP Tunnel, restarting app Detection\n",
             appidDebug->get_debug_session());
@@ -880,8 +884,13 @@ AppId AppIdSession::pick_ss_payload_app_id(AppId service_id) const
         tmp_id = api.hsessions[0]->payload.get_id();
     if (tmp_id > APP_ID_NONE)
     {
-        if (tmp_id == APP_ID_HTTP_TUNNEL and tp_payload_app_id > APP_ID_NONE)
-            return tp_payload_app_id;
+        if (tmp_id == APP_ID_HTTP_TUNNEL)
+        {
+            if (api.payload.get_id() > APP_ID_NONE)
+                return api.payload.get_id();
+            else if (tp_payload_app_id > APP_ID_NONE)
+                return tp_payload_app_id;
+        }
         else
             return tmp_id;
     }

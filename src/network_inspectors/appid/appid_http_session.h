@@ -147,6 +147,15 @@ public:
         return rcvd_full_req_body;
     }
 
+    void set_tunnel(bool tunnel)
+    {
+        is_tunnel = tunnel;
+    }
+
+    bool get_tunnel()
+    {
+        return is_tunnel;
+    }
 protected:
 
     void init_chp_match_descriptor(ChpMatchDescriptor& cmd);
@@ -187,6 +196,7 @@ protected:
     uint32_t http2_stream_id = 0;
     bool is_payload_processed = false;
     bool rcvd_full_req_body = false;
+    bool is_tunnel = false;
 };
 
 #endif
