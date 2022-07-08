@@ -113,6 +113,10 @@ function include(file)
         if ( sandbox_env.ips ) then
             ips = sandbox_env.ips
         end
+
+        if ( sandbox_env.file_id ) then
+            file_id = sandbox_env.file_id
+        end
     else
         dofile(fname)
     end
