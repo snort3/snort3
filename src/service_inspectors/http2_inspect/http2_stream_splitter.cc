@@ -46,8 +46,6 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
     Profile profile(Http2Module::get_profile_stats());
 
     Flow* const flow = pkt->flow;
-    if (flow->session_state & STREAM_STATE_MIDSTREAM)
-        return StreamSplitter::ABORT;
 
     // This is the session state information we share with Http2Inspect and store with stream. A
     // session is defined by a TCP connection. Since scan() is the first to see a new TCP
