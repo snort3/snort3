@@ -986,7 +986,7 @@ LITERAL_THIS                  this
 LITERAL_BOOLEAN               true|false
 LITERAL_BIN_INTEGER           0[bB][01](_?[01])*
 LITERAL_OCT_INTEGER           0[oO]?[0-7](_?[0-7])*
-LITERAL_DECIMAL               [.]?(_?[0-9])+[\.]?(_?[0-9])*([eE](_?[0-9])+)?
+LITERAL_DECIMAL               [.]?[0-9](_?[0-9])*[.]?(_?[0-9])*([eE](_?[0-9])+)?
 LITERAL_INTEGER               [0-9](_?[0-9])*
 LITERAL_HEX_INTEGER           0[xX][a-fA-F0-9](_?[a-fA-F0-9])*
 LITERAL_BIG_INTEGER           ({LITERAL_DECIMAL}|{LITERAL_BIN_INTEGER}|{LITERAL_OCT_INTEGER}|{LITERAL_HEX_INTEGER})n

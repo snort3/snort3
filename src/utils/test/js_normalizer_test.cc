@@ -637,11 +637,13 @@ static const char all_patterns_expected4[] =
 
 static const char all_patterns_buf5[] =
     "$2abc _2abc abc $__$ 肖晗 XÆA12 \\u0041abc \\u00FBdef \\u1234ghi ab\xE2\x80\xA8ww "
-    "ab\xE2\x80\xA9ww ab\xEF\xBB\xBFww ab∞ww 2abc";
+    "ab\xE2\x80\xA9ww ab\xEF\xBB\xBFww ab∞ww 2abc _a _1;"
+    "var a;var _1;";
 
 static const char all_patterns_expected5[] =
     "$2abc _2abc abc $__$ 肖晗 XÆA12 \u0041abc \u00FBdef \u1234ghi ab;ww "
-    "ab;ww ab ww ab ∞ ww 2 abc";
+    "ab;ww ab ww ab ∞ ww 2 abc _a _1;"
+    "var a;var _1;";
 
 static const char all_patterns_buf6[] =
     "tag` template\n   ${ a   +   b }   template`";
