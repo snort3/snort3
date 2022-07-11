@@ -137,6 +137,7 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
 {
     if (ssn->js_built_in_event)
         return;
+        
     const Packet* current_packet = DetectionEngine::get_current_packet();
     const char* ptr = (const char*)input.start();
     const char* const end = ptr + input.length();
@@ -165,43 +166,55 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
         switch (ret)
         {
         case JSTokenizer::EOS:
+
         case JSTokenizer::SCRIPT_CONTINUE:
             break;
+
         case JSTokenizer::SCRIPT_ENDED:
+
         case JSTokenizer::CLOSING_TAG:
             *infractions += INF_JS_CLOSING_TAG;
             events->create_event(EVENT_JS_CLOSING_TAG);
             ssn->js_built_in_event = true;
             break;
+
         case JSTokenizer::OPENING_TAG:
             *infractions += INF_JS_OPENING_TAG;
             events->create_event(EVENT_JS_OPENING_TAG);
             ssn->js_built_in_event = true;
             break;
+
         case JSTokenizer::BAD_TOKEN:
+
         case JSTokenizer::WRONG_CLOSING_SYMBOL:
+
         case JSTokenizer::ENDED_IN_INNER_SCOPE:
             *infractions += INF_JS_BAD_TOKEN;
             events->create_event(EVENT_JS_BAD_TOKEN);
             ssn->js_built_in_event = true;
             break;
+
         case JSTokenizer::IDENTIFIER_OVERFLOW:
             HttpModule::increment_peg_counts(PEG_JS_IDENTIFIER_OVERFLOW);
             *infractions += INF_JS_IDENTIFIER_OVERFLOW;
             events->create_event(EVENT_JS_IDENTIFIER_OVERFLOW);
             ssn->js_built_in_event = true;
             break;
+
         case JSTokenizer::TEMPLATE_NESTING_OVERFLOW:
+
         case JSTokenizer::BRACKET_NESTING_OVERFLOW:
             *infractions += INF_JS_BRACKET_NEST_OVERFLOW;
             events->create_event(EVENT_JS_BRACKET_NEST_OVERFLOW);
             ssn->js_built_in_event = true;
             break;
+
         case JSTokenizer::SCOPE_NESTING_OVERFLOW:
             *infractions += INF_JS_SCOPE_NEST_OVERFLOW;
             events->create_event(EVENT_JS_SCOPE_NEST_OVERFLOW);
             ssn->js_built_in_event = true;
             break;
+
         default:
             assert(false);
             break;
@@ -309,38 +322,50 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
         case JSTokenizer::EOS:
             js_ctx.reset_depth();
             break;
+
         case JSTokenizer::SCRIPT_ENDED:
             break;
+
         case JSTokenizer::SCRIPT_CONTINUE:
             break;
+
         case JSTokenizer::OPENING_TAG:
             *infractions += INF_JS_OPENING_TAG;
             events->create_event(EVENT_JS_OPENING_TAG);
             break;
+
         case JSTokenizer::CLOSING_TAG:
             *infractions += INF_JS_CLOSING_TAG;
             events->create_event(EVENT_JS_CLOSING_TAG);
             break;
+
         case JSTokenizer::BAD_TOKEN:
+
         case JSTokenizer::WRONG_CLOSING_SYMBOL:
+
         case JSTokenizer::ENDED_IN_INNER_SCOPE:
             *infractions += INF_JS_BAD_TOKEN;
             events->create_event(EVENT_JS_BAD_TOKEN);
             break;
+
         case JSTokenizer::IDENTIFIER_OVERFLOW:
             HttpModule::increment_peg_counts(PEG_JS_IDENTIFIER_OVERFLOW);
             *infractions += INF_JS_IDENTIFIER_OVERFLOW;
             events->create_event(EVENT_JS_IDENTIFIER_OVERFLOW);
             break;
+
         case JSTokenizer::TEMPLATE_NESTING_OVERFLOW:
+
         case JSTokenizer::BRACKET_NESTING_OVERFLOW:
             *infractions += INF_JS_BRACKET_NEST_OVERFLOW;
             events->create_event(EVENT_JS_BRACKET_NEST_OVERFLOW);
             break;
+
         case JSTokenizer::SCOPE_NESTING_OVERFLOW:
             *infractions += INF_JS_SCOPE_NEST_OVERFLOW;
             events->create_event(EVENT_JS_SCOPE_NEST_OVERFLOW);
             break;
+
         default:
             assert(false);
             break;
@@ -438,6 +463,7 @@ void HttpJsNorm::do_legacy(const Field& input, Field& output, HttpInfractions* i
                         js_present = true;
                         type_js = true;
                         break;
+
                     default:
                         type_js = false;
                         break;
@@ -455,6 +481,7 @@ void HttpJsNorm::do_legacy(const Field& input, Field& output, HttpInfractions* i
             {
                 if ((js_start - ptr) > (input.length() - index))
                     break;
+                    
                 memmove_s(buffer + index, input.length() - index, ptr, js_start - ptr);
                 index += js_start - ptr;
             }
