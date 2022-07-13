@@ -1217,5 +1217,24 @@ TEST_CASE("Internal limits", "[JSNormalizer]")
     }
 }
 
+TEST_CASE("Function type detection", "[JSNormalizer]")
+{
+    SECTION("in arrow function")
+    {
+        test_normalization(
+            "var func = () => unescape('%62%61%72');"
+            "func = () => String.fromCodePoint(0x0062, 0x0061, 0x0072);"
+            "func = () => String.fromCharCode(0x0062, 0x0061, 0x0072);"
+            "func = () => decodeURIComponent('%62%61%72');"
+            "func = () => decodeURI('%62%61%72');",
+            "var var_0000=()=>'bar';"
+            "var_0000=()=>'bar';"
+            "var_0000=()=>'bar';"
+            "var_0000=()=>'bar';"
+            "var_0000=()=>'bar';"
+        );
+    }
+}
+
 #endif // CATCH_TEST_BUILD
 

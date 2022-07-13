@@ -4769,6 +4769,9 @@ TEST_CASE("Scope tracking - basic","[JSNormalizer]")
     SECTION("Function scope - arrow function without scope")
         test_scope("var f = (a,b)=> a",{GLOBAL,FUNCTION});
 
+    SECTION("Function scope - function call in an arrow function without scope")
+        test_scope("var f = (a,b)=> call(",{GLOBAL,FUNCTION});
+
     SECTION("Function scope - method in object initialization")
         test_scope("var o = { f(){",{GLOBAL,BLOCK,BLOCK});
 
@@ -4916,6 +4919,9 @@ TEST_CASE("Scope tracking - closing","[JSNormalizer]")
 
     SECTION("Function scope - arrow function without scope")
         test_scope("var f = (a,b)=>a;",{GLOBAL});
+
+    SECTION("Function scope - function call in an arrow function without scope")
+        test_scope("var f = a=>call();",{GLOBAL});
 
     SECTION("Function scope - arrow function as a function parameter")
         test_scope("console.log(a=>c)",{GLOBAL});

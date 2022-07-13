@@ -1352,6 +1352,7 @@ static std::string unescape_unicode(const char* lexeme)
 const char* JSTokenizer::p_scope_codes[] =
 {
     "invalid",
+    "arrow function",
     "function",
     "block",
     "object",
@@ -1863,6 +1864,7 @@ JSTokenizer::JSRet JSTokenizer::scope_push(ScopeType t)
 
         break;
     }
+    case ScopeMetaType::ARROW_FUNCTION: break;
     case ScopeMetaType::BLOCK: break;
     case ScopeMetaType::NOT_SET: break;
     default: assert(false); return BAD_TOKEN;
@@ -2045,6 +2047,7 @@ JSProgramScopeType JSTokenizer::m2p(ScopeMetaType mt)
 {
     switch (mt)
     {
+    case ScopeMetaType::ARROW_FUNCTION:
     case ScopeMetaType::FUNCTION:
         return JSProgramScopeType::FUNCTION;
     case ScopeMetaType::BLOCK:
@@ -2549,7 +2552,7 @@ JSTokenizer::JSRet JSTokenizer::punctuator_arrow()
     set_ident_norm(true);
     if (meta_type() == ScopeMetaType::NOT_SET)
     {
-        set_meta_type(ScopeMetaType::FUNCTION);
+        set_meta_type(ScopeMetaType::ARROW_FUNCTION);
         EXEC(p_scope_push(meta_type()))
     }
     return EOS;
