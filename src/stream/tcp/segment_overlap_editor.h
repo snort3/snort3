@@ -24,7 +24,7 @@
 
 #include <vector>
 
-#include "normalize/normalize.h"
+#include "normalize/norm_stats.h"
 #include "stream/paf.h"
 #include "tcp_segment_node.h"
 

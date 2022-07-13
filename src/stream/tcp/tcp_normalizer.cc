@@ -31,39 +31,13 @@
 
 using namespace snort;
 
-THREAD_LOCAL PegCount tcp_norm_stats[PC_TCP_MAX][NORM_MODE_MAX];
-
-static const PegInfo pegName[] =
-{
-    { CountType::SUM, "tcp_trim_syn", "tcp segments trimmed on SYN" },
-    { CountType::SUM, "tcp_trim_rst", "RST packets with data trimmed" },
-    { CountType::SUM, "tcp_trim_win", "data trimmed to window" },
-    { CountType::SUM, "tcp_trim_mss", "data trimmed to MSS" },
-    { CountType::SUM, "tcp_ecn_session", "ECN bits cleared" },
-    { CountType::SUM, "tcp_ts_nop", "timestamp options cleared" },
-    { CountType::SUM, "tcp_ips_data", "normalized segments" },
-    { CountType::SUM, "tcp_block", "blocked segments" },
-    { CountType::END, nullptr, nullptr }
-};
-
-const PegInfo* TcpNormalizer::get_normalization_pegs()
-{
-    return pegName;
-}
-
-NormPegs TcpNormalizer::get_normalization_counts(unsigned& c)
-{
-    c = PC_TCP_MAX;
-    return tcp_norm_stats;
-}
-
 bool TcpNormalizer::trim_payload(TcpNormalizerState&, TcpSegmentDescriptor& tsd, uint32_t max,
-    NormMode mode, TcpPegCounts peg, bool force)
+    NormMode mode, PegCounts peg, bool force)
 {
     if ( force )
         mode = NORM_MODE_ON;
 
-    tcp_norm_stats[peg][mode]++;
+    norm_stats[peg][mode]++;
 
     if ( mode == NORM_MODE_ON )
     {
@@ -79,7 +53,7 @@ bool TcpNormalizer::trim_payload(TcpNormalizerState&, TcpSegmentDescriptor& tsd,
 bool TcpNormalizer::strip_tcp_timestamp(
     TcpNormalizerState&, TcpSegmentDescriptor& tsd, const tcp::TcpOption* opt, NormMode mode)
 {
-    tcp_norm_stats[PC_TCP_TS_NOP][mode]++;
+    norm_stats[PC_TCP_TS_NOP][mode]++;
 
     if (mode == NORM_MODE_ON)
     {
@@ -100,7 +74,7 @@ bool TcpNormalizer::packet_dropper(
 
     const int8_t mode = (f == NORM_TCP_BLOCK) ? tns.tcp_block : tns.opt_block;
 
-    tcp_norm_stats[PC_TCP_BLOCK][mode]++;
+    norm_stats[PC_TCP_BLOCK][mode]++;
 
     if (mode == NORM_MODE_ON)
     {
@@ -166,7 +140,7 @@ void TcpNormalizer::ecn_stripper(
             tsd.set_packet_flags(PKT_MODIFIED);
         }
 
-        tcp_norm_stats[PC_TCP_ECN_SSN][tns.strip_ecn]++;
+        norm_stats[PC_TCP_ECN_SSN][tns.strip_ecn]++;
     }
 }
 
@@ -427,7 +401,7 @@ uint16_t TcpNormalizer::set_urg_offset(
 
 void TcpNormalizer::reset_stats()
 {
-    for (int i = 0; i < PC_TCP_MAX; i++)
+    for (int i = TCP_PEGS_START; i < PC_MAX; i++)
         for (int j = 0; j < NORM_MODE_MAX; j++)
-            tcp_norm_stats[i][j] = 0;
+            norm_stats[i][j] = 0;
 }

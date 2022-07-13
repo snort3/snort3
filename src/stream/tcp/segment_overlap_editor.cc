@@ -215,7 +215,7 @@ void SegmentOverlapEditor::left_overlap_keep_first(TcpReassemblerState& trs)
                 unsigned offset = trs.sos.tsd->get_seq() - trs.sos.left->i_seq;
                 trs.sos.tsd->rewrite_payload(0, trs.sos.left->data + offset);
             }
-            tcp_norm_stats[PC_TCP_IPS_DATA][trs.sos.tcp_ips_data]++;
+            norm_stats[PC_TCP_IPS_DATA][trs.sos.tcp_ips_data]++;
         }
         else
         {
@@ -227,7 +227,7 @@ void SegmentOverlapEditor::left_overlap_keep_first(TcpReassemblerState& trs)
                 trs.sos.tsd->rewrite_payload(0, trs.sos.left->data + offset, length);
             }
 
-            tcp_norm_stats[PC_TCP_IPS_DATA][trs.sos.tcp_ips_data]++;
+            norm_stats[PC_TCP_IPS_DATA][trs.sos.tcp_ips_data]++;
         }
 
         trs.sos.seq += trs.sos.overlap;
@@ -335,7 +335,7 @@ void SegmentOverlapEditor::right_overlap_truncate_new(TcpReassemblerState& trs)
         trs.sos.tsd->rewrite_payload(offset, trs.sos.right->data, length);
     }
 
-    tcp_norm_stats[PC_TCP_IPS_DATA][trs.sos.tcp_ips_data]++;
+    norm_stats[PC_TCP_IPS_DATA][trs.sos.tcp_ips_data]++;
     trs.sos.trunc_len = trs.sos.overlap;
 }
 
@@ -349,7 +349,7 @@ void SegmentOverlapEditor::full_right_overlap_truncate_new(TcpReassemblerState& 
         trs.sos.tsd->rewrite_payload(offset, trs.sos.right->data, trs.sos.right->i_len);
     }
 
-    tcp_norm_stats[PC_TCP_IPS_DATA][trs.sos.tcp_ips_data]++;
+    norm_stats[PC_TCP_IPS_DATA][trs.sos.tcp_ips_data]++;
 
     if ( SEQ_EQ(trs.sos.right->i_seq, trs.sos.seq) )
     {

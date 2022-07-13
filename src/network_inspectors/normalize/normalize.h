@@ -20,8 +20,6 @@
 #ifndef NORMALIZE_H
 #define NORMALIZE_H
 
-#include "framework/counts.h"
-
 // these control protocol specific normalizations
 enum NormFlags
 {
@@ -59,14 +57,12 @@ enum NormFlags
     NORM_ALL             = 0xFFFFFFFF,  // all normalizations on
 };
 
-enum NormMode : int8_t
+enum NormMode
 {
     NORM_MODE_TEST,
     NORM_MODE_ON,
     NORM_MODE_MAX
 };
-
-typedef PegCount (* NormPegs)[NORM_MODE_MAX];
 
 bool Normalize_IsEnabled(NormFlags);
 NormMode Normalize_GetMode(NormFlags);

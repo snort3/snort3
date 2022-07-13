@@ -51,6 +51,9 @@ THREAD_LOCAL FlowControl* flow_con = nullptr;
 
 static BaseStats g_stats;
 THREAD_LOCAL BaseStats stream_base_stats;
+THREAD_LOCAL PegCount current_flows_prev;
+THREAD_LOCAL PegCount uni_flows_prev;
+THREAD_LOCAL PegCount uni_ip_flows_prev;
 
 // FIXIT-L dependency on stats define in another file
 const PegInfo base_pegs[] =
@@ -75,11 +78,15 @@ const PegInfo base_pegs[] =
     { CountType::SUM, "reload_allowed_deletes", "number of allowed flows deleted by config reloads" },
     { CountType::SUM, "reload_blocked_deletes", "number of blocked flows deleted by config reloads" },
     { CountType::SUM, "reload_offloaded_deletes", "number of offloaded flows deleted by config reloads" },
+
+    // Keep the NOW stats at the bottom as it requires special sum_stats logic
     { CountType::NOW, "current_flows", "current number of flows in cache" },
     { CountType::NOW, "uni_flows", "number of uni flows in cache" },
     { CountType::NOW, "uni_ip_flows", "number of uni ip flows in cache" },
     { CountType::END, nullptr, nullptr }
 };
+
+#define NOW_PEGS_NUM 3
 
 // FIXIT-L dependency on stats define in another file
 void base_prep()
@@ -99,9 +106,11 @@ void base_prep()
     stream_base_stats.reload_allowed_flow_deletes = flow_con->get_deletes(FlowDeleteState::ALLOWED);
     stream_base_stats.reload_offloaded_flow_deletes= flow_con->get_deletes(FlowDeleteState::OFFLOADED);
     stream_base_stats.reload_blocked_flow_deletes= flow_con->get_deletes(FlowDeleteState::BLOCKED);
+
     stream_base_stats.current_flows = flow_con->get_num_flows();
     stream_base_stats.uni_flows = flow_con->get_uni_flows();
     stream_base_stats.uni_ip_flows = flow_con->get_uni_ip_flows();
+
     ExpectCache* exp_cache = flow_con->get_exp_cache();
 
     if ( exp_cache )
@@ -116,7 +125,12 @@ void base_prep()
 void base_sum()
 {
     sum_stats((PegCount*)&g_stats, (PegCount*)&stream_base_stats,
-        array_size(base_pegs) - 1);
+        array_size(base_pegs) - 1 - NOW_PEGS_NUM);
+
+    g_stats.current_flows += (int64_t)stream_base_stats.current_flows - (int64_t)current_flows_prev;
+    g_stats.uni_flows += (int64_t)stream_base_stats.uni_flows - (int64_t)uni_flows_prev;
+    g_stats.uni_ip_flows += (int64_t)stream_base_stats.uni_ip_flows - (int64_t)uni_ip_flows_prev;
+
     base_reset(false);
 }
 
@@ -127,21 +141,22 @@ void base_stats()
 
 void base_reset(bool reset_all)
 {
-    if ( flow_con )
-        flow_con->clear_counts();
+    current_flows_prev = stream_base_stats.current_flows;
+    uni_flows_prev = stream_base_stats.uni_flows;
+    uni_ip_flows_prev = stream_base_stats.uni_ip_flows;
 
     memset(&stream_base_stats, 0, sizeof(stream_base_stats));
 
-    if ( reset_all )
+    if ( flow_con )
     {
-        if ( flow_con )
-        {
-            ExpectCache* exp_cache = flow_con->get_exp_cache();
-            if ( exp_cache )
-                exp_cache->reset_stats();
-        }
-        memset(&g_stats, 0, sizeof(g_stats));
+        flow_con->clear_counts();
+        ExpectCache* exp_cache = flow_con->get_exp_cache();
+        if ( exp_cache )
+            exp_cache->reset_stats();
     }
+
+    if ( reset_all )
+        memset(&g_stats, 0, sizeof(g_stats));
 }
 
 //-------------------------------------------------------------------------

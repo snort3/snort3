@@ -22,6 +22,7 @@
 #endif
 
 #include "norm.h"
+#include "norm_stats.h"
 
 #include "detection/ips_context.h"
 #include "main/snort_config.h"
@@ -34,61 +35,6 @@
 #include "stream/tcp/tcp_normalizer.h"
 
 using namespace snort;
-
-enum PegCounts
-{
-    PC_IP4_TRIM,
-    PC_IP4_TOS,
-    PC_IP4_DF,
-    PC_IP4_RF,
-    PC_IP4_TTL,
-    PC_IP4_OPTS,
-    PC_ICMP4_ECHO,
-    PC_IP6_TTL,
-    PC_IP6_OPTS,
-    PC_ICMP6_ECHO,
-    PC_TCP_SYN_OPT,
-    PC_TCP_OPT,
-    PC_TCP_PAD,
-    PC_TCP_RSV,
-    PC_TCP_NS,
-    PC_TCP_URP,
-    PC_TCP_ECN_PKT,
-    PC_TCP_TS_ECR,
-    PC_TCP_REQ_URG,
-    PC_TCP_REQ_PAY,
-    PC_TCP_REQ_URP,
-    PC_MAX
-};
-
-const PegInfo norm_names[] =
-{
-    { CountType::SUM, "ip4_trim", "eth packets trimmed to datagram size" },
-    { CountType::SUM, "ip4_tos", "type of service normalizations" },
-    { CountType::SUM, "ip4_df", "don't frag bit normalizations" },
-    { CountType::SUM, "ip4_rf", "reserved flag bit clears" },
-    { CountType::SUM, "ip4_ttl", "time-to-live normalizations" },
-    { CountType::SUM, "ip4_opts", "ip4 options cleared" },
-    { CountType::SUM, "icmp4_echo", "icmp4 ping normalizations" },
-    { CountType::SUM, "ip6_hops", "ip6 hop limit normalizations" },
-    { CountType::SUM, "ip6_options", "ip6 options cleared" },
-    { CountType::SUM, "icmp6_echo", "icmp6 echo normalizations" },
-    { CountType::SUM, "tcp_syn_options", "SYN only options cleared from non-SYN packets" },
-    { CountType::SUM, "tcp_options", "packets with options cleared" },
-    { CountType::SUM, "tcp_padding", "packets with padding cleared" },
-    { CountType::SUM, "tcp_reserved", "packets with reserved bits cleared" },
-    { CountType::SUM, "tcp_nonce", "packets with nonce bit cleared" },
-    { CountType::SUM, "tcp_urgent_ptr", "packets without data with urgent pointer cleared" },
-    { CountType::SUM, "tcp_ecn_pkt", "packets with ECN bits cleared" },
-    { CountType::SUM, "tcp_ts_ecr", "timestamp cleared on non-ACKs" },
-    { CountType::SUM, "tcp_req_urg", "cleared urgent pointer when urgent flag is not set" },
-    { CountType::SUM, "tcp_req_pay",
-        "cleared urgent pointer and urgent flag when there is no payload" },
-    { CountType::SUM, "tcp_req_urp", "cleared the urgent flag if the urgent pointer is not set" },
-    { CountType::END, nullptr, nullptr }
-};
-
-static THREAD_LOCAL PegCount normStats[PC_MAX+PC_TCP_MAX][NORM_MODE_MAX];
 
 //static int Norm_Eth(Packet*, uint8_t layer, int changes);
 static int Norm_IP4(NormalizerConfig*, Packet*, uint8_t layer, int changes);
@@ -197,7 +143,7 @@ static int Norm_IP4(
                 p->packet_flags |= PKT_RESIZED;
                 changes++;
             }
-            normStats[PC_IP4_TRIM][mode]++;
+            norm_stats[PC_IP4_TRIM][mode]++;
         }
     }
     if ( Norm_IsEnabled(c, NORM_IP4_TOS) )
@@ -209,7 +155,7 @@ static int Norm_IP4(
                 h->ip_tos = 0;
                 changes++;
             }
-            normStats[PC_IP4_TOS][mode]++;
+            norm_stats[PC_IP4_TOS][mode]++;
         }
     }
 #if 0
@@ -227,7 +173,7 @@ static int Norm_IP4(
                 fragbits &= ~IP4_FLAG_DF;
                 changes++;
             }
-            normStats[PC_IP4_DF][mode]++;
+            norm_stats[PC_IP4_DF][mode]++;
         }
     }
     if ( Norm_IsEnabled(c, NORM_IP4_RF) )
@@ -239,7 +185,7 @@ static int Norm_IP4(
                 fragbits &= ~IP4_FLAG_RF;
                 changes++;
             }
-            normStats[PC_IP4_RF][mode]++;
+            norm_stats[PC_IP4_RF][mode]++;
         }
     }
     if ( fragbits != origbits )
@@ -256,7 +202,7 @@ static int Norm_IP4(
                 p->ptrs.decode_flags &= ~DECODE_ERR_BAD_TTL;
                 changes++;
             }
-            normStats[PC_IP4_TTL][mode]++;
+            norm_stats[PC_IP4_TTL][mode]++;
         }
     }
     if ( p->layers[layer].length > ip::IP4_HEADER_LEN )
@@ -269,7 +215,7 @@ static int Norm_IP4(
             memset(opts, static_cast<uint8_t>(ip::IPOptionCodes::NOP), len);
             changes++;
         }
-        normStats[PC_IP4_OPTS][mode]++;
+        norm_stats[PC_IP4_OPTS][mode]++;
     }
     return changes;
 }
@@ -290,7 +236,7 @@ static int Norm_ICMP4(
             h->code = icmp::IcmpCode::ECHO_CODE;
             changes++;
         }
-        normStats[PC_ICMP4_ECHO][mode]++;
+        norm_stats[PC_ICMP4_ECHO][mode]++;
     }
     return changes;
 }
@@ -315,7 +261,7 @@ static int Norm_IP6(
                 p->ptrs.decode_flags &= ~DECODE_ERR_BAD_TTL;
                 changes++;
             }
-            normStats[PC_IP6_TTL][mode]++;
+            norm_stats[PC_IP6_TTL][mode]++;
         }
     }
     return changes;
@@ -339,7 +285,7 @@ static int Norm_ICMP6(
             h->code = static_cast<icmp::IcmpCode>(0);
             changes++;
         }
-        normStats[PC_ICMP6_ECHO][mode]++;
+        norm_stats[PC_ICMP6_ECHO][mode]++;
     }
     return changes;
 }
@@ -375,7 +321,7 @@ static int Norm_IP6_Opts(
 
         changes++;
     }
-    normStats[PC_IP6_OPTS][mode]++;
+    norm_stats[PC_IP6_OPTS][mode]++;
     return changes;
 }
 
@@ -430,7 +376,7 @@ static inline int Norm_TCPOptions(NormalizerConfig* config, const NormMode mode,
                     NopDaOpt(opts+i, olen);
                     changes++;
                 }
-                normStats[PC_TCP_SYN_OPT][mode]++;
+                norm_stats[PC_TCP_SYN_OPT][mode]++;
             }
             break;
 
@@ -445,7 +391,7 @@ static inline int Norm_TCPOptions(NormalizerConfig* config, const NormMode mode,
                     memset(opts+i+TS_ECR_OFFSET, 0, TS_ECR_LENGTH);
                     changes++;
                 }
-                normStats[PC_TCP_TS_ECR][mode]++;
+                norm_stats[PC_TCP_TS_ECR][mode]++;
             }
             break;
 
@@ -457,7 +403,7 @@ static inline int Norm_TCPOptions(NormalizerConfig* config, const NormMode mode,
                     NopDaOpt(opts+i, olen);
                     changes++;
                 }
-                normStats[PC_TCP_OPT][mode]++;
+                norm_stats[PC_TCP_OPT][mode]++;
             }
         }
         i += olen;
@@ -469,7 +415,7 @@ static inline int Norm_TCPOptions(NormalizerConfig* config, const NormMode mode,
             memset(opts+i, 0, len-i);
             changes++;
         }
-        normStats[PC_TCP_PAD][mode]++;
+        norm_stats[PC_TCP_PAD][mode]++;
     }
     return changes;
 }
@@ -492,7 +438,7 @@ static inline int Norm_TCPPadding(NormalizerConfig*, const NormMode mode,
             memset(opts+i, 0, len-i);
             changes++;
         }
-        normStats[PC_TCP_PAD][mode]++;
+        norm_stats[PC_TCP_PAD][mode]++;
     }
     return changes;
 }
@@ -512,7 +458,7 @@ static int Norm_TCP(
                 h->th_offx2 &= ~TH_RSV;
                 changes++;
             }
-            normStats[PC_TCP_RSV][mode]++;
+            norm_stats[PC_TCP_RSV][mode]++;
         }
     }
     if ( Norm_IsEnabled(c, NORM_TCP_ECN_PKT) )
@@ -524,7 +470,7 @@ static int Norm_TCP(
                 h->th_flags &= ~(TH_CWR|TH_ECE);
                 changes++;
             }
-            normStats[PC_TCP_ECN_PKT][mode]++;
+            norm_stats[PC_TCP_ECN_PKT][mode]++;
         }
         if ( h->th_offx2 & TH_NS )
         {
@@ -533,7 +479,7 @@ static int Norm_TCP(
                 h->th_offx2 &= ~TH_NS;
                 changes++;
             }
-            normStats[PC_TCP_NS][mode]++;
+            norm_stats[PC_TCP_NS][mode]++;
         }
     }
     if ( h->th_urp )
@@ -547,7 +493,7 @@ static int Norm_TCP(
                     h->th_urp = 0;
                     changes++;
                 }
-                normStats[PC_TCP_REQ_URG][mode]++;
+                norm_stats[PC_TCP_REQ_URG][mode]++;
             }
         }
         else if ( !p->dsize )
@@ -560,7 +506,7 @@ static int Norm_TCP(
                     h->th_urp = 0;
                     changes++;
                 }
-                normStats[PC_TCP_REQ_PAY][mode]++;
+                norm_stats[PC_TCP_REQ_PAY][mode]++;
             }
         }
         else if ( h->urp() > p->dsize )
@@ -572,7 +518,7 @@ static int Norm_TCP(
                     h->set_urp(p->dsize);
                     changes++;
                 }
-                normStats[PC_TCP_URP][mode]++;
+                norm_stats[PC_TCP_URP][mode]++;
             }
         }
     }
@@ -585,7 +531,7 @@ static int Norm_TCP(
                 h->th_flags &= ~TH_URG;
                 changes++;
             }
-            normStats[PC_TCP_REQ_URP][mode]++;
+            norm_stats[PC_TCP_REQ_URP][mode]++;
         }
     }
 
@@ -610,17 +556,6 @@ static int Norm_TCP(
         }
     }
     return changes;
-}
-
-//-----------------------------------------------------------------------
-
-const PegInfo* Norm_GetPegs()
-{ return norm_names; }
-
-NormPegs Norm_GetCounts(unsigned& c)
-{
-    c = PC_MAX;
-    return normStats;
 }
 
 //-----------------------------------------------------------------------

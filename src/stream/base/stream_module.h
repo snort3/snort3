@@ -74,6 +74,8 @@ struct BaseStats
      PegCount reload_allowed_flow_deletes;
      PegCount reload_blocked_flow_deletes;
      PegCount reload_offloaded_flow_deletes;
+
+     // Keep the NOW stats at the bottom as it requires special sum_stats logic
      PegCount current_flows;
      PegCount uni_flows;
      PegCount uni_ip_flows;

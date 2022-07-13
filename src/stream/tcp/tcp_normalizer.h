@@ -26,22 +26,8 @@
 
 #include "main/thread.h"
 #include "normalize/normalize.h"
+#include "normalize/norm_stats.h"
 #include "protocols/tcp_options.h"
-
-enum TcpPegCounts
-{
-    PC_TCP_TRIM_SYN,
-    PC_TCP_TRIM_RST,
-    PC_TCP_TRIM_WIN,
-    PC_TCP_TRIM_MSS,
-    PC_TCP_ECN_SSN,
-    PC_TCP_TS_NOP,
-    PC_TCP_IPS_DATA,
-    PC_TCP_BLOCK,
-    PC_TCP_MAX
-};
-
-extern THREAD_LOCAL PegCount tcp_norm_stats[PC_TCP_MAX][NORM_MODE_MAX];
 
 class TcpStreamSession;
 class TcpStreamTracker;
@@ -93,14 +79,12 @@ public:
     virtual int handle_repeated_syn(State&, TcpSegmentDescriptor&) = 0;
     virtual uint16_t set_urg_offset(State&, const snort::tcp::TCPHdr* tcph, uint16_t dsize);
 
-    static const PegInfo* get_normalization_pegs();
-    static NormPegs get_normalization_counts(unsigned&);
     static void reset_stats();
 
 protected:
     TcpNormalizer() = default;
 
-    virtual bool trim_payload(State&, TcpSegmentDescriptor&, uint32_t, NormMode, TcpPegCounts,
+    virtual bool trim_payload(State&, TcpSegmentDescriptor&, uint32_t, NormMode, PegCounts,
         bool force = false);
     virtual bool strip_tcp_timestamp(
         State&, TcpSegmentDescriptor&, const snort::tcp::TcpOption*, NormMode);

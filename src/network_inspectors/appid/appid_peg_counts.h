@@ -81,6 +81,11 @@ public:
             return !memcmp(stats, &all_zeroed_peg, sizeof(stats));
         }
 
+        void zero_out()
+        {
+            memcpy(stats, &all_zeroed_peg, sizeof(stats));
+        }
+
         void print(const char* app, char* buf, int buf_size)
         {
             snprintf(buf, buf_size, "%25.25s: " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10")

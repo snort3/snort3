@@ -22,6 +22,7 @@
 #endif
 
 #include "norm_module.h"
+#include "norm_stats.h"
 
 #include "main/policy.h"
 #include "stream/tcp/tcp_normalizer.h"
@@ -364,7 +365,7 @@ const PegInfo* NormalizeModule::get_pegs() const
     if ( !test_pegs.empty() )
         return &test_pegs[0];
 
-    const PegInfo* p = Norm_GetPegs();
+    const PegInfo* p = &norm_names[0];
     assert(p);
 
     while ( p->name )
@@ -373,35 +374,10 @@ const PegInfo* NormalizeModule::get_pegs() const
         test_pegs.emplace_back(*p);
         p++;
     }
-
-    p = TcpNormalizer::get_normalization_pegs();
-    assert(p);
-
-    while ( p->name )
-    {
-        add_test_peg(*p);
-        test_pegs.emplace_back(*p);
-        p++;
-    }
-
     test_pegs.emplace_back(*p);
+    
     return &test_pegs[0];
 }
 
 PegCount* NormalizeModule::get_counts() const
-{
-    unsigned c = 0;
-    NormPegs p = Norm_GetCounts(c);
-
-    unsigned tc = 0;
-    NormPegs tp = TcpNormalizer::get_normalization_counts(tc);
-
-    for ( unsigned i = 0; i < tc; ++i )
-    {
-        p[c+i][NORM_MODE_ON] = tp[i][NORM_MODE_ON];
-        p[c+i][NORM_MODE_TEST] = tp[i][NORM_MODE_TEST];
-    }
-
-    return (PegCount*)p;
-}
-
+{ return (PegCount*)norm_stats; }

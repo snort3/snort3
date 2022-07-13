@@ -81,7 +81,7 @@ static const PegInfo dce2_smb_pegs[] =
     { CountType::SUM, "ignored_bytes", "total ignored bytes" },
     { CountType::SUM, "smb_client_segs_reassembled", "total smb client segments reassembled" },
     { CountType::SUM, "smb_server_segs_reassembled", "total smb server segments reassembled" },
-    { CountType::SUM, "max_outstanding_requests", "total smb maximum outstanding requests" },
+    { CountType::MAX, "max_outstanding_requests", "maximum outstanding requests" },
     { CountType::SUM, "files_processed", "total smb files processed" },
     { CountType::SUM, "v2_setup", "total number of SMBv2 setup packets seen" },
     { CountType::SUM, "v2_setup_err_resp",

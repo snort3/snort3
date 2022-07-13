@@ -34,8 +34,6 @@ struct Packet;
 typedef int (* NormalFunc)( // FIXIT-L why is this exposed?
     struct NormalizerConfig*, snort::Packet*, uint8_t layer, int changes);
 
-extern const PegInfo norm_names[];
-
 struct NormalizerConfig
 {
     uint32_t normalizer_flags;
@@ -89,9 +87,6 @@ inline bool Norm_TcpIsOptional(const NormalizerConfig* nc, uint8_t opt)
     uint8_t byte = (opt >> 3), bit = (1 << (opt & 0x07));
     return nc->normalizer_options[byte] & bit;
 }
-
-const PegInfo* Norm_GetPegs();
-NormPegs Norm_GetCounts(unsigned&);
 
 #endif
 

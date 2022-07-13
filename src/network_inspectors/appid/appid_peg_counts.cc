@@ -62,7 +62,7 @@ void AppIdPegCounts::cleanup_peg_info()
 
 void AppIdPegCounts::cleanup_dynamic_sum()
 {
-    for ( unsigned app_num = 0; app_num < AppIdPegCounts::appid_detectors_info.size(); app_num++ )
+    for (unsigned app_num = 0; app_num < AppIdPegCounts::appid_detectors_info.size(); app_num++)
     {
         memset(appid_dynamic_sum[app_num].stats, 0, sizeof(PegCount) *
             DetectorPegs::NUM_APPID_DETECTOR_PEGS);
@@ -97,17 +97,20 @@ void AppIdPegCounts::sum_stats()
     {
         std::lock_guard<std::mutex> _lock(r_mutex);
         const unsigned peg_num = appid_peg_counts->size() ? (appid_peg_counts->size() - 1) : 0;
-        const AppIdDynamicPeg* ptr = (AppIdDynamicPeg*)appid_peg_counts->data();
+        AppIdDynamicPeg* ptr = (AppIdDynamicPeg*)appid_peg_counts->data();
 
-        for ( unsigned i = 0; i < peg_num; ++i )
+        for (unsigned i = 0; i < peg_num; ++i)
         {
             for (unsigned j = 0; j < DetectorPegs::NUM_APPID_DETECTOR_PEGS; ++j)
                 appid_dynamic_sum[i].stats[j] += ptr[i].stats[j];
+
+            ptr[i].zero_out();
         }
 
         // unknown_app stats
         for (unsigned j = 0; j < DetectorPegs::NUM_APPID_DETECTOR_PEGS; ++j)
             appid_dynamic_sum[SF_APPID_MAX].stats[j] += ptr[peg_num].stats[j];
+        ptr[peg_num].zero_out();
     }
     
 }

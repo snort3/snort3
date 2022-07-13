@@ -60,12 +60,13 @@ void file_stats_sum()
 
     unsigned num = sizeof(file_totals) / sizeof(PegCount);
 
-    for ( unsigned i = 0; i < num; ++i )
-    {
-        PegCount* t = (PegCount*)&file_totals;
-        PegCount* s = (PegCount*)file_stats;
+    PegCount* t = (PegCount*)&file_totals;
+    PegCount* s = (PegCount*)file_stats;
+
+    for (unsigned i = 0; i < num; ++i)
         t[i] += s[i];
-    }
+
+    memset(file_stats, 0, sizeof(*file_stats));
 }
 
 void file_stats_clear()
@@ -89,10 +90,7 @@ void file_stats_print()
     }
 
     if ( !check_total )
-    {
-        memset(&file_totals,0,sizeof(file_totals));
         return;
-    }
 
     LogLabel("File Statistics");
     LogLabel("file type stats (files)");
@@ -160,7 +158,6 @@ void file_stats_print()
 
     if ( !check_total )
     {
-        memset(&file_totals,0,sizeof(file_totals));
         return;
     }
 
@@ -298,6 +295,5 @@ void file_stats_print()
 #endif
     // these are global / shared by all threads
     FileCapture::print_mem_usage();
-    memset(&file_totals,0,sizeof(file_totals));
 }
 
