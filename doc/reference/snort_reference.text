@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.35.0 2022-07-08 13:59:50 EDT TST
+Revision 3.1.36.0 2022-07-14 13:46:25 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -2900,8 +2900,8 @@ Peg counts:
     reassembled (sum)
   * dce_smb.smb_server_segs_reassembled: total smb server segments
     reassembled (sum)
-  * dce_smb.max_outstanding_requests: total smb maximum outstanding
-    requests (sum)
+  * dce_smb.max_outstanding_requests: maximum outstanding requests
+    (max)
   * dce_smb.files_processed: total smb files processed (sum)
   * dce_smb.v2_setup: total number of SMBv2 setup packets seen (sum)
   * dce_smb.v2_setup_err_resp: total number of SMBv2 setup error
@@ -10987,8 +10987,8 @@ libraries see the Getting Started section of the manual.
   * dce_smb.ignored_bytes: total ignored bytes (sum)
   * dce_smb.max_concurrent_sessions: maximum concurrent sessions
     (max)
-  * dce_smb.max_outstanding_requests: total smb maximum outstanding
-    requests (sum)
+  * dce_smb.max_outstanding_requests: maximum outstanding requests
+    (max)
   * dce_smb.ms_rpc_http_pdus: total connection-oriented MS requests
     to send RPC over HTTP (sum)
   * dce_smb.orphaned: total connection-oriented orphaned (sum)

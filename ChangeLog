@@ -1,3 +1,14 @@
+2022/07/14 - 3.1.36.0
+
+appid: fix stats cleanup
+dce_smb: fix stats cleanup
+file_api: fix stats cleanup
+http_inspect: do not abort midstream pickups
+normalizer: make normalizer and tcp_normalizer peg counts shared
+stream: fix stats cleanup
+utils: fix arrow functions parsing
+utils: fix parsing of decimal number literals
+
 2022/07/08 - 3.1.35.0
 
 sandbox: must propagate file_id for includer logic
