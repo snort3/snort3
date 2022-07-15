@@ -159,8 +159,6 @@ enum class ProtocolId : std::uint16_t
     ETHERTYPE_ERSPAN_TYPE2 = 0x88BE,
     ETHERTYPE_FPATH = 0x8903,
     ETHERTYPE_CISCO_META = 0x8909,
-    ETHERTYPE_QINQ_NS1 = 0x9100,
-    ETHERTYPE_QINQ_NS2 = 0x9200,
 };
 
 static const auto num_protocol_ids =
