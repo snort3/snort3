@@ -82,8 +82,16 @@ bool get_string(std::istringstream& data_stream,
  * characters which can get removed by c++ libraries
  *
  * NO SIDE EFFECTS
+ * 
+ * PARAMS:
+ *          data_stream - the rule's data stream
+ *          trim - specifies whether to trim the result string
+ * RETURN:
+ *          a string containing all the data left in the rule's 
+ *          data stream
+ * 
  */
-std::string get_remain_data(std::istringstream& data_stream);
+std::string get_remain_data(std::istringstream& data_stream, bool trim = true);
 
 std::string get_rule_option_args(std::istringstream& data_stream);
 

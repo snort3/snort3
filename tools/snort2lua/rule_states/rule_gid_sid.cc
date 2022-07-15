@@ -26,6 +26,7 @@
 // Handle 2 cases: sid was read before/after gid.
 
 #include <sstream>
+#include <unordered_map>
 
 #include "conversion_state.h"
 #include "helpers/converter.h"
@@ -39,6 +40,12 @@ namespace
 
 static const std::string removed_gids[] = { "146" , "147" };
 constexpr uint8_t MAX_GIDS = (sizeof(removed_gids) / sizeof(removed_gids[0]));
+
+// first -> gid, second -> error message
+static const std::unordered_map<std::string, std::string> rejected_gids = 
+{
+    {"138", "gid 138(sensitive data) rules should be written with Snort3 functionality in mind"}
+};
 
 class Gid : public ConversionState
 {
@@ -100,6 +107,12 @@ bool Gid::convert(std::istringstream& data_stream)
         }
     }
     rule_api.add_option("gid", gid);
+
+    auto reject_it = rejected_gids.find(gid);
+
+    if ( reject_it != rejected_gids.end() )
+        rule_api.bad_rule(data_stream, reject_it->second);
+
     return set_next_rule_state(data_stream);
 }
 

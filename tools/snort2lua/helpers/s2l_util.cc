@@ -124,10 +124,10 @@ std::string& trim(std::string& s)
 
 std::string& trim_quotes(std::string& s)
 {
-    if(s.length() < 2)
+    if (s.length() < 2)
         return s;
 
-    if((s.front() == '"' and s.back() == '"') or
+    if ((s.front() == '"' and s.back() == '"') or
        (s.front() == '\'' and s.back() == '\''))
     {
         s.erase(0,1);
@@ -224,7 +224,7 @@ bool get_string(std::istringstream& stream,
     }
 }
 
-std::string get_remain_data(std::istringstream& stream)
+std::string get_remain_data(std::istringstream& stream, bool trim)
 {
     // get string length
     const std::streamoff pos = stream.tellg();
@@ -238,8 +238,22 @@ std::string get_remain_data(std::istringstream& stream)
     arg_c[length] = '\0';
     std::string arg_s(arg_c);
     delete[] arg_c;
-    util::trim(arg_s);
+
+    if (trim)
+        util::trim(arg_s);
+
     return arg_s;
+}
+
+static bool is_semicolon_escaped(const std::string& args)
+{
+    unsigned bs_count = 0;
+
+    for (auto sym_it = args.rbegin();
+         sym_it != args.rend() and *sym_it == '\\'; 
+         ++sym_it, ++bs_count);
+
+    return bs_count % 2;
 }
 
 std::string get_rule_option_args(std::istringstream& stream)
@@ -251,12 +265,12 @@ std::string get_rule_option_args(std::istringstream& stream)
     {
         std::getline(stream, tmp, ';');
 
+        args += tmp + ";";
+
         if (tmp.empty())
             break;
-
-        args += tmp + ";";
     }
-    while (tmp.back() == '\\');
+    while (is_semicolon_escaped(tmp));
 
     // semicolon will be added when printing
     if (!args.empty())
