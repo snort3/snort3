@@ -1074,7 +1074,7 @@ static const char syntax_cases_buf15[] =
     "var invalid_str = 'abc\u2028 def' ;\n";
 
 static const char syntax_cases_expected15[] =
-    "var invalid_str='abc";
+    "var invalid_str='abc\u2028 def';";
 
 static const char syntax_cases_buf16[] =
     "var invalid_str = \"abc\n def\"";
@@ -1110,7 +1110,7 @@ static const char syntax_cases_buf21[] =
     "var invalid_str = 'abc\u2029 def' ;\n\r";
 
 static const char syntax_cases_expected21[] =
-    "var invalid_str='abc";
+    "var invalid_str='abc\u2029 def';";
 
 static const char syntax_cases_buf22[] =
     "tag`template\n \\\\\\${   }   \\\\${   a  + ` template ${ 1 + c  }`  }`";
@@ -1139,6 +1139,12 @@ static const char syntax_cases_buf25[] =
 static const char syntax_cases_expected25[] =
     "return /regex0/.var_0000+/regex1/.var_0001;"
     "return /regex2/.var_0002*/regex3/.var_0003;";
+
+static const char syntax_cases_buf26[] =
+    "var invalid_re = /abc \n def/ ;";
+
+static const char syntax_cases_expected26[] =
+    "var invalid_re=/abc ";
 
 TEST_CASE("syntax cases", "[JSNormalizer]")
 {
@@ -1217,6 +1223,16 @@ TEST_CASE("syntax cases", "[JSNormalizer]")
         NORMALIZE(syntax_cases_buf14);
         VALIDATE(syntax_cases_buf14, syntax_cases_expected14);
     }
+    SECTION("LS within literal")
+    {
+        NORMALIZE(syntax_cases_buf15);
+        VALIDATE(syntax_cases_buf15, syntax_cases_expected15);
+    }
+    SECTION("PS within literal")
+    {
+        NORMALIZE(syntax_cases_buf21);
+        VALIDATE(syntax_cases_buf21, syntax_cases_expected21);
+    }
     SECTION("template literals")
     {
         NORMALIZE(syntax_cases_buf22);
@@ -1230,16 +1246,6 @@ TEST_CASE("syntax cases", "[JSNormalizer]")
 
 TEST_CASE("bad tokens", "[JSNormalizer]")
 {
-    SECTION("LS chars within literal")
-    {
-        NORMALIZE(syntax_cases_buf15);
-        VALIDATE_FAIL(syntax_cases_buf15, syntax_cases_expected15, JSTokenizer::BAD_TOKEN, 25);
-    }
-    SECTION("PS chars within literal")
-    {
-        NORMALIZE(syntax_cases_buf21);
-        VALIDATE_FAIL(syntax_cases_buf21, syntax_cases_expected21, JSTokenizer::BAD_TOKEN, 25);
-    }
     SECTION("explicit LF within literal")
     {
         NORMALIZE(syntax_cases_buf16);
@@ -1264,6 +1270,11 @@ TEST_CASE("bad tokens", "[JSNormalizer]")
     {
         NORMALIZE(syntax_cases_buf20);
         VALIDATE_FAIL(syntax_cases_buf20, syntax_cases_expected20, JSTokenizer::BAD_TOKEN, 23);
+    }
+    SECTION("explicit LF within regex literal")
+    {
+        NORMALIZE(syntax_cases_buf26);
+        VALIDATE_FAIL(syntax_cases_buf26, syntax_cases_expected26, JSTokenizer::BAD_TOKEN, 23);
     }
 }
 

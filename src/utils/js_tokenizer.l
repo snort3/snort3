@@ -1110,7 +1110,8 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <dqstr,unesc_dqstr>\\{CR}{LF}                 { /* skip */ }
 <dqstr,unesc_dqstr>\\{LF}                     { /* skip */ }
 <dqstr,unesc_dqstr>\\{CR}                     { /* skip */ }
-<dqstr,unesc_dqstr>{LINE_TERMINATORS}         { BEGIN(regst); RETURN(BAD_TOKEN) }
+<dqstr,unesc_dqstr>{CR}                       { BEGIN(regst); RETURN(BAD_TOKEN) }
+<dqstr,unesc_dqstr>{LF}                       { BEGIN(regst); RETURN(BAD_TOKEN) }
 <dqstr,unesc_dqstr><<EOF>>                    { RETURN(SCRIPT_CONTINUE) }
 <dqstr>{UNICODE_ESCAPE_SEQUENCE}              |
 <dqstr>{HEX_ESCAPE_SEQUENCE}                  { escaped_unicode_utf_8(); }
@@ -1131,7 +1132,8 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <sqstr,unesc_sqstr>\\{CR}{LF}                 { /* skip */ }
 <sqstr,unesc_sqstr>\\{LF}                     { /* skip */ }
 <sqstr,unesc_sqstr>\\{CR}                     { /* skip */ }
-<sqstr,unesc_sqstr>{LINE_TERMINATORS}         { BEGIN(regst); RETURN(BAD_TOKEN) }
+<sqstr,unesc_sqstr>{CR}                       { BEGIN(regst); RETURN(BAD_TOKEN) }
+<sqstr,unesc_sqstr>{LF}                       { BEGIN(regst); RETURN(BAD_TOKEN) }
 <sqstr,unesc_sqstr><<EOF>>                    { RETURN(SCRIPT_CONTINUE) }
 <sqstr>{UNICODE_ESCAPE_SEQUENCE}              |
 <sqstr>{HEX_ESCAPE_SEQUENCE}                  { escaped_unicode_utf_8(); }
@@ -1166,9 +1168,10 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <regst>{LITERAL_REGEX_START}        { EXEC(literal_regex_start()) }
 <regex>{LITERAL_REGEX_END}          { EXEC(literal_regex_end()) }
 <regex>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); RETURN(CLOSING_TAG) }
-<regex>\\{LF}                       |
-<regex>\\{CR}                       |
-<regex>{LINE_TERMINATORS}           { BEGIN(regst); RETURN(BAD_TOKEN) }
+<regex>\\{CR}                       { BEGIN(regst); RETURN(BAD_TOKEN) }
+<regex>\\{LF}                       { BEGIN(regst); RETURN(BAD_TOKEN) }
+<regex>{CR}                         { BEGIN(regst); RETURN(BAD_TOKEN) }
+<regex>{LF}                         { BEGIN(regst); RETURN(BAD_TOKEN) }
 <regex>{LITERAL_REGEX_G_OPEN}       { EXEC(literal_regex_g_open()) }
 <regex>{LITERAL_REGEX_G_CLOSE}      { EXEC(literal_regex_g_close()) }
 <regex>{UNICODE_ESCAPE_SEQUENCE}    |
