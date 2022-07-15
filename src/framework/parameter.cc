@@ -75,26 +75,13 @@ static unsigned get_index(const char* r, const char* t)
     return idx;
 }
 
-#define delim " \t\n"
-
-static size_t split(const string& txt, vector<string>& strs)
+static size_t split(const string& s, vector<string>& strs)
 {
-    size_t last = txt.find_first_not_of(delim);
-    size_t pos = txt.find_first_of(delim, last);
-    strs.clear();
+    stringstream ss(s);
+    string tok;
 
-    while ( pos != string::npos )
-    {
-        if ( last != pos )
-            strs.emplace_back(txt.substr(last, pos - last));
-
-        last = txt.find_first_not_of(delim, pos + 1);
-        pos = txt.find_first_of(delim, last);
-    }
-
-    // add the last one
-    if ( last != string::npos )
-        strs.emplace_back(txt.substr(last, min(pos, txt.size()) - last));
+    while ( ss >> tok )
+        strs.push_back(tok);
 
     return strs.size();
 }
@@ -286,9 +273,9 @@ static bool valid_multi(Value& v, const char* r)
     if ( !r )
         return false;
 
-    string s = v.get_string();
+    const string str = v.get_string();
     vector<string> list;
-    split(s, list);
+    split(str, list);
 
     uint64_t mask = 0;
 
