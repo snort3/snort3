@@ -386,6 +386,32 @@ static bool valid_bit_list(Value& v, const char* r)
     return true;
 }
 
+static bool valid_int_list(Value& v, const char* r)
+{
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
+    string pl = v.get_string();
+
+    size_t max = r ? strtoul(r, nullptr, 0) : 0;
+    assert(max < ULONG_MAX);
+
+    stringstream ss(pl);
+    ss >> setbase(0);
+
+    int val;
+
+    while ( ss >> val )
+    {
+        if ( val < 0 || (r and (size_t)val > max) )
+            return false;
+    }
+    if ( !ss.eof() )
+        return false;
+
+    return true;
+}
+
 //--------------------------------------------------------------------------
 // Parameter methods
 //--------------------------------------------------------------------------
@@ -434,7 +460,13 @@ bool Parameter::validate(Value& v) const
     case PT_BIT_LIST:
         return valid_bit_list(v, (const char*)range);
 
+    case PT_INT_LIST:
+        return valid_int_list(v, (const char*)range);
+
     case PT_ADDR_LIST:
+        // validated by user on sfip_from_string
+        // fall through
+
     case PT_IMPLIED:
         return true;
 
@@ -450,7 +482,7 @@ static const char* const pt2str[Parameter::PT_MAX] =
     "bool", "int", "interval", "real", "port",
     "string", "select", "multi", "enum",
     "mac", "ip4", "addr",
-    "bit_list", "addr_list", "implied"
+    "bit_list", "int_list", "addr_list", "implied"
 };
 
 const char* Parameter::get_type() const
@@ -674,6 +706,13 @@ string_tests[] =
     { true, valid_bit_list, "1 2 3", "3" },
     { false, valid_bit_list, "1 2 3 4", "3" },
     { false, valid_bit_list, "128", "3" },
+
+    { true, valid_int_list, "0 65535", nullptr },
+    { true, valid_int_list, "0 65535", "65535" },
+    { false, valid_int_list, "-1", "1" },
+    { false, valid_int_list, "65535", "1" },
+    { false, valid_int_list, "1", "0" },
+    { true, valid_int_list, "0", "0" },
 
     { false, nullptr, nullptr, nullptr }
 // __STRDUMP_ENABLE__
