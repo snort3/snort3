@@ -30,6 +30,7 @@
 #include <fstream>
 #include <limits>
 
+#include "main/snort_config.h"
 #include "log/messages.h"
 #include "parser/config_file.h"
 #include "sfip/sf_cidr.h"
@@ -544,7 +545,10 @@ static void load_list_file(ListFile* list_info, const ReputationConfig& config,
     ip_info = ((IPrepInfo*)&base[ip_info_ptr]);
     ip_info->list_indexes[0] = list_info->list_index;
 
-    LogMessage("    Processing %s file %s\n", list_type_name, full_path_filename);
+    if ( SnortConfig::log_verbose() )
+    {
+    	LogMessage("    Processing %s file %s\n", list_type_name, full_path_filename);
+    }
 
     if ((fp = fopen(full_path_filename, "r")) == nullptr)
     {
@@ -607,9 +611,12 @@ static void load_list_file(ListFile* list_info, const ReputationConfig& config,
     if (duplicate_count > MAX_MSGS_TO_PRINT)
         ErrorMessage("    Additional duplicate addresses were not listed.\n");
 
-    LogMessage("    Reputation entries loaded: %u, invalid: %u, re-defined: %u (from file %s)\n",
-        sfrt_flat_num_entries(data.ip_list) - num_loaded_before,
-        invalid_count, duplicate_count, full_path_filename);
+    if ( SnortConfig::log_verbose() )
+    {
+        LogMessage("    Reputation entries loaded: %u, invalid: %u, re-defined: %u (from file %s)\n",
+            sfrt_flat_num_entries(data.ip_list) - num_loaded_before,
+            invalid_count, duplicate_count, full_path_filename);
+    }
 
     fclose(fp);
 }
