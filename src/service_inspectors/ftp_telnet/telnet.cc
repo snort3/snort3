@@ -30,6 +30,7 @@
 
 #include "ft_main.h"
 #include "ftp_print.h"
+#include "ftp_splitter.h"
 #include "ftpp_return_codes.h"
 #include "ftpp_si.h"
 #include "ftpp_ui_config.h"
@@ -189,6 +190,9 @@ public:
 
     void eval(Packet*) override;
     void clear(Packet*) override;
+
+    StreamSplitter* get_splitter(bool c2s) override
+    { return new FtpSplitter(c2s); }
 
 private:
     TELNET_PROTO_CONF* config;
