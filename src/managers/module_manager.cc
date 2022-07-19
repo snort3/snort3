@@ -224,7 +224,12 @@ static void dump_field_std(const string& key, const Parameter* p)
     cout << " " << Markup::emphasis(Markup::escape(key));
 
     if ( p->deflt )
-        cout << " = " << p->deflt;
+    {
+        if ( p->is_quoted() )
+            cout << " = '" << p->deflt << "'";
+        else
+            cout << " = " << p->deflt;
+    }
 
     cout << ": " << p->help;
 
