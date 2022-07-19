@@ -22,6 +22,7 @@ HTTP/2 frames are stored in frame objects for processing.
 9. Http2RstStreamFrame : Http2Frame
 10. Http2WindowUpdateFrame: Http2Frame
 11. Http2PriorityFrame: Http2Frame
+12. Http2GoAwayFrame: Http2Frame
 
 Http2Frame virtual methods:
 1. bool valid_sequence(Http2Enums::StreamState state) - Returns if the current frame has been sent
