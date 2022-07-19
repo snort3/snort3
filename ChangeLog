@@ -1,3 +1,9 @@
+2022/07/19 - 3.1.37.0
+
+reputation: print LogMessage in reputation only when in verbose mode
+utils: fix Unicode LS PS handling in JavaScript
+
+
 2022/07/14 - 3.1.36.0
 
 appid: fix stats cleanup
