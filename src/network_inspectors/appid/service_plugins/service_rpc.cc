@@ -493,7 +493,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
                         const SfIp* dip = pkt->ptrs.ip_api.get_dst();
                         AppIdSession* fsession = AppIdSession::create_future_session(
                             pkt, dip, 0, &sip, port, rd->proto,
-                            asd.config.snort_proto_ids[PROTO_INDEX_SUNRPC]);
+                            asd.config.snort_proto_ids[PROTO_INDEX_SUNRPC], false, false, true);
 
                         if (fsession)
                         {
@@ -519,8 +519,8 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
                         tmp = ntohl(pmr->port);
 
                         AppIdSession* pf = AppIdSession::create_future_session(
-                            pkt, dip, 0, sip, (uint16_t)tmp,
-                            rd->proto,asd.config.snort_proto_ids[PROTO_INDEX_SUNRPC]);
+                            pkt, dip, 0, sip, (uint16_t)tmp, rd->proto,
+                            asd.config.snort_proto_ids[PROTO_INDEX_SUNRPC], false, false, true);
 
                         if (pf)
                         {
