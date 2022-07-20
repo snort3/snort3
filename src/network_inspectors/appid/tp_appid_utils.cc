@@ -399,7 +399,11 @@ static inline void process_ftp_control(AppIdSession& asd,
     {
         asd.set_client_user(APP_ID_FTP_CONTROL, field->c_str(), change_bits);
         asd.set_user_logged_in();
+        asd.tpsession->set_attr(TP_ATTR_UNAME_KNOWN);
     }
+    // This is a safe bail out condition in case username is not known 
+    if ((asd.init_tpPackets + asd.resp_tpPackets) >= asd.get_odp_ctxt().max_tp_flow_depth)
+        asd.tpsession->set_attr(TP_ATTR_UNAME_KNOWN);
 }
 
 static inline void process_quic(AppIdSession& asd,

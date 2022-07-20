@@ -54,6 +54,7 @@ enum TPSessionAttr
     TP_ATTR_COPY_RESPONSE_CONTENT   = (1 << 1),
     TP_ATTR_COPY_RESPONSE_LOCATION  = (1 << 2),
     TP_ATTR_COPY_RESPONSE_BODY      = (1 << 3),
+    TP_ATTR_UNAME_KNOWN             = (1 << 4),
 };
 
 static void set_attr(string*& attr, const char* buf, size_t len, bool flush, size_t max_len)
