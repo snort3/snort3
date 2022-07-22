@@ -106,12 +106,6 @@ IpsOption::EvalStatus IpProtoOption::eval(Cursor&, Packet* p)
     RuleProfile profile(ipProtoPerfStats);
 
     IpProtoData* ipd = &config;
-
-    if (!p->has_ip())
-    {
-        return NO_MATCH;
-    }
-
     const IpProtocol ip_proto = p->get_ip_proto_next();
 
     switch (ipd->comparison_flag)
