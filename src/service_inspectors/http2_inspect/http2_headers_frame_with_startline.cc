@@ -28,7 +28,6 @@
 #include "service_inspectors/http_inspect/http_inspect.h"
 #include "service_inspectors/http_inspect/http_stream_splitter.h"
 
-#include "http2_dummy_packet.h"
 #include "http2_enum.h"
 #include "http2_flow_data.h"
 #include "http2_hpack.h"
@@ -47,8 +46,7 @@ Http2HeadersFrameWithStartline::~Http2HeadersFrameWithStartline()
     delete start_line_generator;
 }
 
-bool Http2HeadersFrameWithStartline::process_start_line(HttpFlowData*& http_flow,
-    SourceId hi_source_id)
+bool Http2HeadersFrameWithStartline::process_start_line(HttpFlowData*& http_flow, SourceId hi_source_id, Packet* p)
 {
     if (session_data->abort_flow[source_id])
         return false;
@@ -56,12 +54,9 @@ bool Http2HeadersFrameWithStartline::process_start_line(HttpFlowData*& http_flow
     // http_inspect scan() of start line
     {
         uint32_t flush_offset;
-        Http2DummyPacket dummy_pkt;
-        dummy_pkt.flow = session_data->flow;
-        const uint32_t unused = 0;
         const StreamSplitter::Status start_scan_result =
-            session_data->hi_ss[hi_source_id]->scan(&dummy_pkt, start_line.start(),
-                start_line.length(), unused, &flush_offset);
+            session_data->hi_ss[hi_source_id]->scan(session_data->flow, start_line.start(), start_line.length(),
+            &flush_offset);
         if (start_scan_result != StreamSplitter::FLUSH)
         {
             stream->set_state(hi_source_id, STREAM_ERROR);
@@ -86,18 +81,13 @@ bool Http2HeadersFrameWithStartline::process_start_line(HttpFlowData*& http_flow
     assert(http_flow);
     // http_inspect eval() and clear() of start line
     {
-        Http2DummyPacket dummy_pkt;
-        dummy_pkt.flow = session_data->flow;
-        dummy_pkt.packet_flags = (hi_source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
-        dummy_pkt.dsize = stream_buf.length;
-        dummy_pkt.data = stream_buf.data;
-        session_data->hi->eval(&dummy_pkt);
+        session_data->hi->eval(p, hi_source_id, stream_buf.data, stream_buf.length);
         if (http_flow->get_type_expected(hi_source_id) != SEC_HEADER)
         {
             stream->set_state(hi_source_id, STREAM_ERROR);
             return false;
         }
-        session_data->hi->clear(&dummy_pkt);
+        session_data->hi->clear(p);
     }
     return true;
 }

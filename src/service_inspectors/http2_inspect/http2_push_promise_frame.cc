@@ -100,7 +100,7 @@ bool Http2PushPromiseFrame::valid_sequence(Http2Enums::StreamState)
     return true;
 }
 
-void Http2PushPromiseFrame::analyze_http1()
+void Http2PushPromiseFrame::analyze_http1(Packet* p)
 {
     if (!start_line_generator->generate_start_line(start_line, are_pseudo_headers_complete()))
     {
@@ -111,14 +111,14 @@ void Http2PushPromiseFrame::analyze_http1()
     }
 
     HttpFlowData* http_flow;
-    if (!process_start_line(http_flow, SRC_CLIENT))
+    if (!process_start_line(http_flow, SRC_CLIENT, p))
         return;
 
     // Push promise cannot have a message body
     // FIXIT-E handle bad request lines and cases where a message body is implied
     stream->get_hi_flow_data()->finish_h2_body(SRC_CLIENT, H2_BODY_NO_BODY, false);
 
-    process_decoded_headers(http_flow, SRC_CLIENT);
+    process_decoded_headers(http_flow, SRC_CLIENT, p);
 }
 
 void Http2PushPromiseFrame::update_stream_state()

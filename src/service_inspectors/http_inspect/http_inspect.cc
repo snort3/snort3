@@ -29,7 +29,6 @@
 
 #include "detection/detection_engine.h"
 #include "detection/detection_util.h"
-#include "service_inspectors/http2_inspect/http2_dummy_packet.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
 #include "log/unified2.h"
 #include "protocols/packet.h"
@@ -489,9 +488,7 @@ int HttpInspect::get_xtra_jsnorm(Flow* flow, uint8_t** buf, uint32_t* len, uint3
 void HttpInspect::disable_detection(Packet* p)
 {
     HttpFlowData* session_data = http_get_flow_data(p->flow);
-    if (session_data->for_http2)
-        p->disable_inspect = true;
-    else
+    if (!session_data->for_http2)
     {
         assert(p->context);
         DetectionEngine::disable_all(p);
@@ -525,9 +522,14 @@ void HttpInspect::http_set_flow_data(Flow* flow, HttpFlowData* flow_data)
 
 void HttpInspect::eval(Packet* p)
 {
-    Profile profile(HttpModule::get_profile_stats());
-
     const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
+    eval(p, source_id, p->data, p->dsize);
+    return;
+}
+
+void HttpInspect::eval(Packet* p, SourceId source_id, const uint8_t* data, uint16_t dsize)
+{
+    Profile profile(HttpModule::get_profile_stats());
 
     HttpFlowData* session_data = http_get_flow_data(p->flow);
     if (session_data == nullptr)
@@ -540,17 +542,17 @@ void HttpInspect::eval(Packet* p)
     // use due to calls to HttpInspect::eval on the raw stream_user packet
     if ((session_data->section_type[source_id] == SEC__NOT_COMPUTE) ||
         (session_data->type_expected[source_id] == SEC_ABORT)       ||
-        (session_data->octets_reassembled[source_id] != p->dsize))
+        (session_data->octets_reassembled[source_id] != dsize))
     {
         //assert(session_data->type_expected[source_id] != SEC_ABORT);
         //assert(session_data->section_type[source_id] != SEC__NOT_COMPUTE);
-        //assert(session_data->octets_reassembled[source_id] == p->dsize);
+        //assert(session_data->octets_reassembled[source_id] == dsize);
         session_data->type_expected[source_id] = SEC_ABORT;
         return;
     }
 
     if (!session_data->for_http2)
-        HttpModule::increment_peg_counts(PEG_TOTAL_BYTES, p->dsize);
+        HttpModule::increment_peg_counts(PEG_TOTAL_BYTES, dsize);
 
     session_data->octets_reassembled[source_id] = STAT_NOT_PRESENT;
 
@@ -562,26 +564,18 @@ void HttpInspect::eval(Packet* p)
     }
 
     // Limit alt_dsize of message body sections to request/response depth
+    // p->dsize is not a typo. The actual value on the reassembled packet is what matters for this purpose.
     if ((session_data->detect_depth_remaining[source_id] > 0) &&
         (session_data->detect_depth_remaining[source_id] < p->dsize))
     {
         p->set_detect_limit(session_data->detect_depth_remaining[source_id]);
     }
 
-    if (!process(p->data, p->dsize, p->flow, source_id, true))
-        disable_detection(p);
+    process(data, dsize, p->flow, source_id, true, p);
 
-#ifdef REG_TEST
-    else
-    {
-        if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
-        {
-            fprintf(HttpTestManager::get_output_file(), "Sent to detection %hu octets\n\n",
-                p->dsize);
-            fflush(HttpTestManager::get_output_file());
-        }
-    }
-#endif
+    // Detection was done in process()
+    if (!session_data->for_http2)
+        disable_detection(p);
 
     // If current transaction is complete then we are done with it. This is strictly a memory
     // optimization not necessary for correct operation.
@@ -600,8 +594,8 @@ void HttpInspect::eval(Packet* p)
     SetExtraData(p, xtra_jsnorm_id);
 }
 
-bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow,
-    SourceId source_id, bool buf_owner) const
+void HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const flow, SourceId source_id,
+    bool buf_owner, Packet* p) const
 {
     HttpMsgSection* current_section;
     HttpFlowData* session_data = http_get_flow_data(flow);
@@ -651,7 +645,7 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
         {
             delete[] data;
         }
-        return false;
+        return;
     }
 
     current_section->analyze();
@@ -675,7 +669,17 @@ bool HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
 #endif
 
     current_section->publish();
-    return current_section->detection_required();
+    if (current_section->run_detection(p))
+    {
+#ifdef REG_TEST
+        if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
+        {
+            fprintf(HttpTestManager::get_output_file(), "Sent to detection %hu octets\n\n",
+                dsize);
+            fflush(HttpTestManager::get_output_file());
+        }
+#endif
+    }
 }
 
 void HttpInspect::clear(Packet* p)

@@ -63,6 +63,7 @@ public:
     bool configure(snort::SnortConfig*) override;
     void show(const snort::SnortConfig*) const override;
     void eval(snort::Packet* p) override;
+    void eval(snort::Packet* p, HttpCommon::SourceId source_id, const uint8_t* data, uint16_t dsize);
     void clear(snort::Packet* p) override;
 
     HttpStreamSplitter* get_splitter(bool is_client_to_server) override
@@ -90,8 +91,8 @@ private:
 
     HttpStreamSplitter splitter[2] = { { true, this }, { false, this } };
 
-    bool process(const uint8_t* data, const uint16_t dsize, snort::Flow* const flow,
-        HttpCommon::SourceId source_id_, bool buf_owner) const;
+    void process(const uint8_t* data, const uint16_t dsize, snort::Flow* const flow,
+        HttpCommon::SourceId source_id_, bool buf_owner, snort::Packet* p) const;
     static HttpFlowData* http_get_flow_data(const snort::Flow* flow);
     static void http_set_flow_data(snort::Flow* flow, HttpFlowData* flow_data);
 

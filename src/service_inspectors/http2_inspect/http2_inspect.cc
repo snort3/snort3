@@ -83,7 +83,7 @@ bool Http2Inspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
 
     // Otherwise we can return buffers for raw packets because frame header is available before
     // frame is reassembled.
-    if (!session_data->frame_in_detection)
+    if (session_data->stream_in_hi == Http2Enums::NO_STREAM_ID)
         return false;
 
     Http2Stream* const stream = session_data->find_processing_stream();
@@ -151,11 +151,10 @@ void Http2Inspect::eval(Packet* p)
     uint8_t* const frame_header_copy = new uint8_t[FRAME_HEADER_LENGTH];
     memcpy(frame_header_copy, session_data->lead_frame_header[source_id], FRAME_HEADER_LENGTH);
     stream->eval_frame(frame_header_copy, FRAME_HEADER_LENGTH,
-        session_data->frame_data[source_id], session_data->frame_data_size[source_id], source_id);
+        session_data->frame_data[source_id], session_data->frame_data_size[source_id], source_id, p);
 
     if (!stream->get_current_frame()->is_detection_required())
         DetectionEngine::disable_all(p);
-    p->xtradata_mask |= stream->get_xtradata_mask();
 
     // The current frame now owns these buffers, clear them from the flow data
     session_data->frame_data[source_id] = nullptr;
@@ -199,7 +198,7 @@ void Http2Inspect::clear(Packet* p)
 
     Http2Stream* stream = session_data->find_processing_stream();
     assert(stream != nullptr);
-    stream->clear_frame();
+    stream->clear_frame(p);
     if (session_data->delete_stream)
         session_data->delete_processing_stream();
     session_data->stream_in_hi = NO_STREAM_ID;

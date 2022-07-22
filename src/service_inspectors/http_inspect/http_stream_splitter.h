@@ -39,6 +39,7 @@ public:
         source_id(is_client_to_server ? HttpCommon::SRC_CLIENT : HttpCommon::SRC_SERVER) {}
     Status scan(snort::Packet* pkt, const uint8_t* data, uint32_t length, uint32_t not_used,
         uint32_t* flush_offset) override;
+    Status scan(snort::Flow* flow, const uint8_t* data, uint32_t length, uint32_t* flush_offset);
     const snort::StreamBuffer reassemble(snort::Flow* flow, unsigned total, unsigned, const
         uint8_t* data, unsigned len, uint32_t flags, unsigned& copied) override;
     bool finish(snort::Flow* flow) override;

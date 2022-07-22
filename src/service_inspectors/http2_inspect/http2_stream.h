@@ -38,14 +38,12 @@ public:
     ~Http2Stream();
     uint32_t get_stream_id() const { return stream_id; }
     void eval_frame(const uint8_t* header_buffer, uint32_t header_len, const uint8_t* data_buffer,
-        uint32_t data_len, HttpCommon::SourceId source_id);
+        uint32_t data_len, HttpCommon::SourceId source_id, snort::Packet* p);
     void check_and_cleanup_completed();
-    void clear_frame();
+    void clear_frame(snort::Packet* p);
     const Field& get_buf(unsigned id);
     HttpFlowData* get_hi_flow_data() const { return hi_flow_data; }
     void set_hi_flow_data(HttpFlowData* flow_data);
-    uint32_t get_xtradata_mask() { return (current_frame != nullptr) ?
-        current_frame->get_xtradata_mask() : 0; }
     Http2Frame *get_current_frame() { return current_frame; }
 
     void set_state(HttpCommon::SourceId source_id, Http2Enums::StreamState new_state);

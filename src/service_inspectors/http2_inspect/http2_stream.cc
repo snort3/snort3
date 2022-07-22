@@ -28,9 +28,9 @@
 #include "service_inspectors/http_inspect/http_stream_splitter.h"
 
 #include "http2_data_cutter.h"
-#include "http2_dummy_packet.h"
 #include "http2_flow_data.h"
 
+using namespace snort;
 using namespace HttpCommon;
 using namespace Http2Enums;
 
@@ -47,7 +47,7 @@ Http2Stream::~Http2Stream()
 }
 
 void Http2Stream::eval_frame(const uint8_t* header_buffer, uint32_t header_len,
-    const uint8_t* data_buffer, uint32_t data_len, SourceId source_id)
+    const uint8_t* data_buffer, uint32_t data_len, SourceId source_id, Packet* p)
 {
     assert(current_frame == nullptr);
     current_frame = Http2Frame::new_frame(header_buffer, header_len, data_buffer,
@@ -56,7 +56,7 @@ void Http2Stream::eval_frame(const uint8_t* header_buffer, uint32_t header_len,
     {
         if (current_frame->valid_sequence(state[source_id]))
         {
-            current_frame->analyze_http1();
+            current_frame->analyze_http1(p);
             current_frame->update_stream_state();
         }
         else
@@ -80,10 +80,10 @@ void Http2Stream::check_and_cleanup_completed()
     }
 }
 
-void Http2Stream::clear_frame()
+void Http2Stream::clear_frame(Packet* p)
 {
     assert(current_frame != nullptr);
-    current_frame->clear();
+    current_frame->clear(p);
     delete current_frame;
     current_frame = nullptr;
 
@@ -130,17 +130,14 @@ void Http2Stream::finish_msg_body(HttpCommon::SourceId source_id, bool expect_tr
     bool clear_partial_buffer)
 {
     uint32_t http_flush_offset = 0;
-    Http2DummyPacket dummy_pkt;
-    dummy_pkt.flow = session_data->flow;
     const H2BodyState body_state = expect_trailers ?
         H2_BODY_COMPLETE_EXPECT_TRAILERS : H2_BODY_COMPLETE;
     get_hi_flow_data()->finish_h2_body(source_id, body_state, clear_partial_buffer);
     if (clear_partial_buffer)
     {
-        uint32_t unused = 0;
-        const snort::StreamSplitter::Status scan_result = session_data->hi_ss[source_id]->scan(
-            &dummy_pkt, nullptr, 0, unused, &http_flush_offset);
-        assert(scan_result == snort::StreamSplitter::FLUSH);
+        const StreamSplitter::Status scan_result = session_data->hi_ss[source_id]->scan(
+            session_data->flow, nullptr, 0, &http_flush_offset);
+        assert(scan_result == StreamSplitter::FLUSH);
         UNUSED(scan_result);
     }
 }

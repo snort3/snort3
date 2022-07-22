@@ -28,7 +28,6 @@
 #include "service_inspectors/http_inspect/http_inspect.h"
 #include "service_inspectors/http_inspect/http_stream_splitter.h"
 
-#include "http2_dummy_packet.h"
 #include "http2_enum.h"
 #include "http2_flow_data.h"
 #include "http2_hpack.h"
@@ -65,7 +64,7 @@ bool Http2HeadersFrameTrailer::valid_sequence(Http2Enums::StreamState state)
     return false;
 }
 
-void Http2HeadersFrameTrailer::analyze_http1()
+void Http2HeadersFrameTrailer::analyze_http1(Packet* p)
 {
     HttpFlowData* const http_flow = stream->get_hi_flow_data();
     assert(http_flow);
@@ -86,19 +85,14 @@ void Http2HeadersFrameTrailer::analyze_http1()
 
         if (stream_buf.data != nullptr)
         {
-            Http2DummyPacket dummy_pkt;
-            dummy_pkt.flow = session_data->flow;
-            dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
-            dummy_pkt.dsize = stream_buf.length;
-            dummy_pkt.data = stream_buf.data;
-            session_data->hi->eval(&dummy_pkt);
+            session_data->hi->eval(p, source_id, stream_buf.data, stream_buf.length);
             assert (!valid_headers || http_flow->get_type_expected(source_id) == SEC_TRAILER);
             if (http_flow->get_type_expected(source_id) == SEC_ABORT)
             {
                 stream->set_state(source_id, STREAM_ERROR);
                 return;
             }
-            session_data->hi->clear(&dummy_pkt);
+            session_data->hi->clear(p);
         }
     }
 
@@ -108,7 +102,7 @@ void Http2HeadersFrameTrailer::analyze_http1()
         return;
     }
 
-    process_decoded_headers(http_flow, source_id);
+    process_decoded_headers(http_flow, source_id, p);
 }
 
 void Http2HeadersFrameTrailer::update_stream_state()

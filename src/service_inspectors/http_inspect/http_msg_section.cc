@@ -131,6 +131,14 @@ void HttpMsgSection::update_depth() const
     }
 }
 
+bool HttpMsgSection::run_detection(snort::Packet* p)
+{
+    if ((p == nullptr) || !detection_required())
+        return false;
+    DetectionEngine::detect(p);
+    return true;
+}
+
 const Field& HttpMsgSection::classic_normalize(const Field& raw, Field& norm,
     bool do_path, const HttpParaList::UriParam& uri_param)
 {

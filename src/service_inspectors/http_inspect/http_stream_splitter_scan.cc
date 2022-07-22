@@ -24,6 +24,7 @@
 #include "http_stream_splitter.h"
 
 #include "packet_io/active.h"
+#include "protocols/packet.h"
 
 #include "http_common.h"
 #include "http_cutter.h"
@@ -128,9 +129,13 @@ StreamSplitter::Status HttpStreamSplitter::status_value(StreamSplitter::Status r
 StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data, uint32_t length,
     uint32_t, uint32_t* flush_offset)
 {
-    Profile profile(HttpModule::get_profile_stats());
+    return scan(pkt->flow, data, length, flush_offset);
+}
 
-    Flow* const flow = pkt->flow;
+StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data, uint32_t length,
+    uint32_t* flush_offset)
+{
+    Profile profile(HttpModule::get_profile_stats());
 
     // This is the session state information we share with HttpInspect and store with stream. A
     // session is defined by a TCP connection. Since scan() is the first to see a new TCP
@@ -231,7 +236,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data
         session_data->status_code_num = 200;
         HttpModule::increment_peg_counts(PEG_RESPONSE);
         prepare_flush(session_data, nullptr, SEC_HEADER, 0, 0, 0, false, 0, 0);
-        my_inspector->process((const uint8_t*)"", 0, flow, SRC_SERVER, false);
+        my_inspector->process((const uint8_t*)"", 0, flow, SRC_SERVER, false, nullptr);
         session_data->transaction[SRC_SERVER]->clear_section();
     }
 

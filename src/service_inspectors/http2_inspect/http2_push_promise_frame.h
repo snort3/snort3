@@ -41,7 +41,7 @@ class Http2PushPromiseFrame : public Http2HeadersFrameWithStartline
 {
 public:
     bool valid_sequence(Http2Enums::StreamState state) override;
-    void analyze_http1() override;
+    void analyze_http1(snort::Packet*) override;
     void update_stream_state() override;
     static uint32_t get_promised_stream_id(Http2EventGen* const events,
         Http2Infractions* const infractions, const uint8_t* data_buffer, uint32_t data_len);

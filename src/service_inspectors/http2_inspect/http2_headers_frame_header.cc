@@ -64,17 +64,17 @@ bool Http2HeadersFrameHeader::valid_sequence(Http2Enums::StreamState state)
     return (state == Http2Enums::STREAM_EXPECT_HEADERS);
 }
 
-void Http2HeadersFrameHeader::analyze_http1()
+void Http2HeadersFrameHeader::analyze_http1(Packet* p)
 {
     HttpFlowData* http_flow;
-    if (!process_start_line(http_flow, source_id))
+    if (!process_start_line(http_flow, source_id, p))
         return;
 
     // if END_STREAM flag set on headers, tell http_inspect not to expect a message body
     if (get_flags() & FLAG_END_STREAM)
         stream->get_hi_flow_data()->finish_h2_body(source_id, H2_BODY_NO_BODY, false);
 
-    process_decoded_headers(http_flow, source_id);
+    process_decoded_headers(http_flow, source_id, p);
 }
 
 void Http2HeadersFrameHeader::update_stream_state()

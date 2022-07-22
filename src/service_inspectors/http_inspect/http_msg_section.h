@@ -22,6 +22,7 @@
 
 #include "detection/detection_util.h"
 #include "framework/cursor.h"
+#include "protocols/packet.h"
 
 #include "http_buffer_info.h"
 #include "http_common.h"
@@ -67,6 +68,12 @@ public:
     // Manages the splitter and communication between message sections
     virtual void update_flow() = 0;
 
+    // Publish an inspection event for other modules to consume
+    virtual void publish() {}
+
+    // Call the detection engine to inspect the current packet
+    bool run_detection(snort::Packet* p);
+
     const Field& get_classic_buffer(unsigned id, uint64_t sub_id, uint64_t form);
     const Field& get_classic_buffer(const HttpBufferInfo& buf);
     const Field& get_param_buffer(Cursor& c, const HttpParam& param);
@@ -74,9 +81,6 @@ public:
     HttpEnums::MethodId get_method_id() const { return method_id; }
 
     int32_t get_status_code_num() const { return status_code_num; }
-
-    // Publish an inspection event for other modules to consume.
-    virtual void publish() { }
 
     void clear();
     bool is_clear() { return cleared; }

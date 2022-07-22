@@ -25,7 +25,6 @@
 
 #include <cassert>
 
-#include "http2_dummy_packet.h"
 #include "http2_enum.h"
 
 using namespace Http2Enums;

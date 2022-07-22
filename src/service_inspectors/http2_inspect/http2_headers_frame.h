@@ -32,11 +32,10 @@ class HttpFlowData;
 class Http2HeadersFrame : public Http2Frame
 {
 public:
-    void clear() override;
+    void clear(snort::Packet*) override;
 
     const Field& get_buf(unsigned id) override;
-    uint32_t get_xtradata_mask() override { return xtradata_mask; }
-    bool is_detection_required() const override { return detection_required; }
+    bool is_detection_required() const override { return false; }
 
 #ifdef REG_TEST
     void print_frame(FILE* output) override;
@@ -47,13 +46,11 @@ protected:
         const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* ssn_data,
         HttpCommon::SourceId src_id, Http2Stream* stream);
     bool decode_headers(Http2StartLine* start_line_generator, bool trailers);
-    void process_decoded_headers(HttpFlowData* http_flow, HttpCommon::SourceId hi_source_id);
+    void process_decoded_headers(HttpFlowData* http_flow, HttpCommon::SourceId hi_source_id, snort::Packet* p);
     uint8_t get_flags_mask() const override;
     virtual bool in_error_state() const;
 
     Field http1_header;                 // finalized headers to be passed to http_inspect
-    uint32_t xtradata_mask = 0;
-    bool detection_required = false;
     Http2HpackDecoder* hpack_decoder;
     uint8_t hpack_headers_offset = 0;
 };

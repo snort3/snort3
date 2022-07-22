@@ -27,7 +27,6 @@
 #include "service_inspectors/http_inspect/http_inspect.h"
 #include "service_inspectors/http_inspect/http_stream_splitter.h"
 
-#include "http2_dummy_packet.h"
 #include "http2_flow_data.h"
 #include "http2_module.h"
 
@@ -48,25 +47,15 @@ bool Http2DataFrame::valid_sequence(Http2Enums::StreamState state)
     return (state == Http2Enums::STREAM_EXPECT_BODY) || (state == Http2Enums::STREAM_BODY);
 }
 
-void Http2DataFrame::analyze_http1()
+void Http2DataFrame::analyze_http1(Packet* p)
 {
-    Http2DummyPacket dummy_pkt;
-    dummy_pkt.flow = session_data->flow;
-    dummy_pkt.packet_flags = (source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
-    dummy_pkt.dsize = data_length;
-    dummy_pkt.data = data_buffer;
-    dummy_pkt.xtradata_mask = 0;
     // FIXIT-E no checks here
-    session_data->hi->eval(&dummy_pkt);
-    detection_required = dummy_pkt.is_detection_required();
-    xtradata_mask = dummy_pkt.xtradata_mask;
+    session_data->hi->eval(p, source_id, data_buffer, data_length);
 }
 
-void Http2DataFrame::clear()
+void Http2DataFrame::clear(Packet* p)
 {
-    Http2DummyPacket dummy_pkt;
-    dummy_pkt.flow = session_data->flow;
-    session_data->hi->clear(&dummy_pkt);
+    session_data->hi->clear(p);
 }
 
 void Http2DataFrame::update_stream_state()

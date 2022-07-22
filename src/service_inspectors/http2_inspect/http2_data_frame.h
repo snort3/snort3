@@ -30,11 +30,10 @@ class Http2DataFrame : public Http2Frame
 public:
     ~Http2DataFrame() override = default;
     bool valid_sequence(Http2Enums::StreamState state) override;
-    void analyze_http1() override;
-    void clear() override;
+    void analyze_http1(snort::Packet*) override;
+    void clear(snort::Packet*) override;
 
-    uint32_t get_xtradata_mask() override { return xtradata_mask; }
-    bool is_detection_required() const override { return detection_required; }
+    bool is_detection_required() const override { return false; }
     void update_stream_state() override;
 
     friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const uint32_t, const uint8_t*,
@@ -52,7 +51,5 @@ private:
 
     const uint32_t data_length;
     const uint8_t* const data_buffer;
-    uint32_t xtradata_mask = 0;
-    bool detection_required = false;
 };
 #endif

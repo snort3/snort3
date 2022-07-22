@@ -30,7 +30,7 @@ public:
         const uint32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);
 
     bool valid_sequence(Http2Enums::StreamState state) override;
-    void analyze_http1() override;
+    void analyze_http1(snort::Packet*) override;
     void update_stream_state() override;
 
 #ifdef REG_TEST

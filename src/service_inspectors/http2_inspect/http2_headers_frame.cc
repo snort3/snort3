@@ -28,7 +28,6 @@
 #include "service_inspectors/http_inspect/http_inspect.h"
 #include "service_inspectors/http_inspect/http_stream_splitter.h"
 
-#include "http2_dummy_packet.h"
 #include "http2_enum.h"
 #include "http2_flow_data.h"
 #include "http2_hpack.h"
@@ -57,13 +56,11 @@ bool Http2HeadersFrame::in_error_state() const
     return stream->get_state(source_id) == STREAM_ERROR;
 }
 
-void Http2HeadersFrame::clear()
+void Http2HeadersFrame::clear(Packet* p)
 {
     if (session_data->abort_flow[source_id] || in_error_state())
         return;
-    Packet dummy_pkt(false);
-    dummy_pkt.flow = session_data->flow;
-    session_data->hi->clear(&dummy_pkt);
+    session_data->hi->clear(p);
 }
 
 bool Http2HeadersFrame::decode_headers(Http2StartLine* start_line_generator, bool trailers)
@@ -87,7 +84,7 @@ bool Http2HeadersFrame::decode_headers(Http2StartLine* start_line_generator, boo
     return true;
 }
 
-void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow, SourceId hi_source_id)
+void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow, SourceId hi_source_id, Packet* p)
 {
     if (session_data->abort_flow[source_id] or http1_header.length() < 0)
         return;
@@ -110,12 +107,9 @@ void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow, SourceI
     if (http1_header.length() > 0)
     {
         uint32_t flush_offset;
-        Http2DummyPacket dummy_pkt;
-        dummy_pkt.flow = session_data->flow;
-        const uint32_t unused = 0;
         const StreamSplitter::Status header_scan_result =
-            session_data->hi_ss[hi_source_id]->scan(&dummy_pkt, http1_header.start(),
-            http1_header.length(), unused, &flush_offset);
+            session_data->hi_ss[hi_source_id]->scan(session_data->flow, http1_header.start(), http1_header.length(),
+            &flush_offset);
         assert((session_data->is_processing_partial_header() and
                 (header_scan_result == StreamSplitter::SEARCH)) or
             ((!session_data->is_processing_partial_header() and
@@ -145,20 +139,13 @@ void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow, SourceI
 
     // http_inspect eval() of headers
     {
-        Http2DummyPacket dummy_pkt;
-        dummy_pkt.flow = session_data->flow;
-        dummy_pkt.packet_flags = (hi_source_id == SRC_CLIENT) ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
-        dummy_pkt.dsize = stream_buf.length;
-        dummy_pkt.data = stream_buf.data;
-        dummy_pkt.xtradata_mask = 0;
-        session_data->hi->eval(&dummy_pkt);
+        session_data->hi->eval(p, hi_source_id, stream_buf.data, stream_buf.length);
+
         if (http_flow->get_type_expected(hi_source_id) == SEC_ABORT)
         {
             assert(session_data->is_processing_partial_header());
             stream->set_state(hi_source_id, STREAM_ERROR);
         }
-        detection_required = dummy_pkt.is_detection_required();
-        xtradata_mask = dummy_pkt.xtradata_mask;
     }
 }
 

@@ -20,6 +20,7 @@
 #ifndef HTTP2_FRAME_H
 #define HTTP2_FRAME_H
 
+#include "protocols/packet.h"
 #include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_field.h"
 
@@ -44,10 +45,9 @@ public:
         const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* session_data,
         HttpCommon::SourceId source_id, Http2Stream* stream);
     virtual bool valid_sequence(Http2Enums::StreamState) { return true; }
-    virtual void analyze_http1() { }
-    virtual void clear() { }
+    virtual void analyze_http1(snort::Packet*) { }
+    virtual void clear(snort::Packet*) { }
     virtual const Field& get_buf(unsigned id);
-    virtual uint32_t get_xtradata_mask() { return 0; }
     virtual bool is_detection_required() const { return true; }
     virtual void update_stream_state() { }
 
