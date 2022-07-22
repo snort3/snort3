@@ -27,7 +27,6 @@
 struct FlowTypeConfig
 {
     unsigned nominal_timeout = 0;
-    unsigned cap_weight = 0;
 };
 
 struct FlowCacheConfig

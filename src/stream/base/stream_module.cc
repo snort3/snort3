@@ -52,24 +52,21 @@ static THREAD_LOCAL timeval reload_time { };
 // stream module
 //-------------------------------------------------------------------------
 
-#define FLOW_TYPE_PARAMS(name, idle, weight) \
+#define FLOW_TYPE_PARAMS(name, idle) \
 static const Parameter name[] = \
 { \
     { "idle_timeout", Parameter::PT_INT, "1:max32", idle, \
       "maximum inactive time before retiring session tracker" }, \
  \
-    { "cap_weight", Parameter::PT_INT, "0:65535", weight, \
-      "additional bytes to track per flow for better estimation against cap" }, \
- \
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr } \
 }
 
-FLOW_TYPE_PARAMS(ip_params, "180", "0");
-FLOW_TYPE_PARAMS(icmp_params, "180", "0");
-FLOW_TYPE_PARAMS(tcp_params, "3600", "11000");
-FLOW_TYPE_PARAMS(udp_params, "180", "0");
-FLOW_TYPE_PARAMS(user_params,"180", "0");
-FLOW_TYPE_PARAMS(file_params, "180", "32");
+FLOW_TYPE_PARAMS(ip_params, "180");
+FLOW_TYPE_PARAMS(icmp_params, "180");
+FLOW_TYPE_PARAMS(tcp_params, "3600");
+FLOW_TYPE_PARAMS(udp_params, "180");
+FLOW_TYPE_PARAMS(user_params,"180");
+FLOW_TYPE_PARAMS(file_params, "180");
 
 #define FLOW_TYPE_TABLE(flow_type, proto, params) \
     { flow_type, Parameter::PT_TABLE, params, nullptr, \
@@ -208,9 +205,6 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
 
     if ( v.is("idle_timeout") )
         config.flow_cache_cfg.proto[to_utype(type)].nominal_timeout = v.get_uint32();
-
-    else if ( v.is("cap_weight") )
-        config.flow_cache_cfg.proto[to_utype(type)].cap_weight = v.get_uint16();
 
     return true;
 }
@@ -354,7 +348,6 @@ void StreamModuleConfig::show() const
     {
         std::string tmp;
         tmp += "{ idle_timeout = " + std::to_string(flow_cache_cfg.proto[i].nominal_timeout);
-        tmp += ", cap_weight = " + std::to_string(flow_cache_cfg.proto[i].cap_weight);
         tmp += " }";
 
         ConfigLogger::log_value(flow_type_names[i], tmp.c_str());
