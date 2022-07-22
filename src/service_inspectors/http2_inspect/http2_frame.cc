@@ -29,6 +29,7 @@
 #include "http2_headers_frame_header.h"
 #include "http2_headers_frame_trailer.h"
 #include "http2_ping_frame.h"
+#include "http2_priority_frame.h"
 #include "http2_push_promise_frame.h"
 #include "http2_rst_stream_frame.h"
 #include "http2_settings_frame.h"
@@ -59,7 +60,6 @@ Http2Frame* Http2Frame::new_frame(const uint8_t* header, const uint32_t header_l
 {
     Http2Frame* frame = nullptr;
 
-    // FIXIT-E call the appropriate frame subclass constructor based on the type
     switch(session_data->frame_type[source_id])
     {
         case FT_HEADERS:
@@ -69,6 +69,10 @@ Http2Frame* Http2Frame::new_frame(const uint8_t* header, const uint32_t header_l
             else
                 frame = new Http2HeadersFrameTrailer(header, header_len, data, data_len,
                     session_data, source_id, stream);
+            break;
+        case FT_PRIORITY:
+            frame = new Http2PriorityFrame(header, header_len, data, data_len, session_data,
+                source_id, stream);
             break;
         case FT_SETTINGS:
             frame = new Http2SettingsFrame(header, header_len, data, data_len, session_data,

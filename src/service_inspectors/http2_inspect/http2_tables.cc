@@ -73,6 +73,7 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_UNEXPECTED_DATA_FRAME, "Nonempty HTTP/2 Data frame where message body not expected" },
     { EVENT_NON_DATA_FRAME_TOO_LONG, "HTTP/2 non-Data frame longer than 63780 bytes" },
     { EVENT_LOSS_OF_SYNC,  "not HTTP/2 traffic or unrecoverable HTTP/2 protocol error" },
+    { EVENT_INVALID_PRIORITY_FRAME, "invalid HTTP/2 PRIORITY frame" },
     { 0, nullptr }
 };
 

@@ -73,6 +73,7 @@ public:
     friend class Http2HeadersFrameWithStartline;
     friend class Http2Hpack;
     friend class Http2Inspect;
+    friend class Http2PriorityFrame;
     friend class Http2PushPromiseFrame;
     friend class Http2RequestLine;
     friend class Http2RstStreamFrame;
