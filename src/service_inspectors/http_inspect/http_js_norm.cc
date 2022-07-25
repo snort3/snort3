@@ -39,7 +39,6 @@ static const char* jsret_codes[] =
     "end of stream",
     "script ended",
     "script continues",
-    "opening tag",
     "closing tag",
     "bad token",
     "identifier overflow",
@@ -171,11 +170,6 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
         case JSTokenizer::CLOSING_TAG:
             *infractions += INF_JS_CLOSING_TAG;
             events->create_event(EVENT_JS_CLOSING_TAG);
-            ssn->js_built_in_event = true;
-            break;
-        case JSTokenizer::OPENING_TAG:
-            *infractions += INF_JS_OPENING_TAG;
-            events->create_event(EVENT_JS_OPENING_TAG);
             ssn->js_built_in_event = true;
             break;
         case JSTokenizer::BAD_TOKEN:
@@ -313,10 +307,6 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
             break;
         case JSTokenizer::SCRIPT_CONTINUE:
             break;
-        case JSTokenizer::OPENING_TAG:
-            *infractions += INF_JS_OPENING_TAG;
-            events->create_event(EVENT_JS_OPENING_TAG);
-            break;
         case JSTokenizer::CLOSING_TAG:
             *infractions += INF_JS_CLOSING_TAG;
             events->create_event(EVENT_JS_CLOSING_TAG);
@@ -360,6 +350,11 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
         {
             *infractions += INF_MIXED_ENCODINGS;
             events->create_event(EVENT_MIXED_ENCODINGS);
+        }
+        if (js_ctx.is_opening_tag_seen())
+        {
+            *infractions += INF_JS_OPENING_TAG;
+            events->create_event(EVENT_JS_OPENING_TAG);
         }
 
         script_continue = ret == JSTokenizer::SCRIPT_CONTINUE;

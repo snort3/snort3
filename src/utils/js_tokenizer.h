@@ -151,7 +151,6 @@ public:
         EOS = 0,
         SCRIPT_ENDED,
         SCRIPT_CONTINUE,
-        OPENING_TAG,
         CLOSING_TAG,
         BAD_TOKEN,
         IDENTIFIER_OVERFLOW,
@@ -176,6 +175,7 @@ public:
 
     bool is_unescape_nesting_seen() const;
     bool is_mixed_encoding_seen() const;
+    bool is_opening_tag_seen() const;
 protected:
     [[noreturn]] void LexerError(const char* msg) override
     { snort::FatalError("%s", msg); }
@@ -306,6 +306,7 @@ private:
     void escaped_url_sequence_latin_1();
     void lit_int_code_point(int base);
     void char_code_no_match();
+    void explicit_otag();
 
     static const char* p_scope_codes[];
 
@@ -321,6 +322,7 @@ private:
     bool dealias_stored = false;
     bool unescape_nest_seen = false;
     bool mixed_encoding_seen = false;
+    bool opening_tag_seen = false;
 
     uint8_t max_template_nesting;
     VStack<uint16_t> brace_depth;
