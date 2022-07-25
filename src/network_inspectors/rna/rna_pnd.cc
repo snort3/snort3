@@ -254,14 +254,22 @@ void RnaPnd::analyze_netflow_service(NetFlowEvent* nfe)
     const auto& src_ip = nfe->get_record()->initiator_ip;
     const auto& mac_addr = layer::get_eth_layer(p)->ether_src;
     uint32_t service = nfe->get_service_id();
-    uint16_t port = nfe->get_record()->responder_port;
+    uint16_t port = 0;
     IpProtocol proto = (IpProtocol) nfe->get_record()->proto;
+
+    if (nfe->is_initiator_swapped())
+        port = nfe->get_record()->initiator_port;
+    else
+        port = nfe->get_record()->responder_port;
 
     auto ht = find_or_create_host_tracker(src_ip, new_host);
     ht->update_last_seen();
 
     bool is_new = false;
     auto ha = ht->add_service(port, proto, (uint32_t) packet_time(), is_new, service);
+
+    ht->update_service_info(ha, nullptr, nullptr, conf->max_host_service_info);
+
     if ( is_new )
     {
         if ( proto == IpProtocol::TCP )

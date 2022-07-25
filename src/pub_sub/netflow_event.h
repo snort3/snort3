@@ -32,9 +32,9 @@ class NetFlowEvent : public DataEvent
 {
 public:
     NetFlowEvent(const snort::Packet* p, const NetFlowSessionRecord* rec,
-        bool cre_host, bool cre_serv, uint32_t s_id)
+        bool cre_host, bool cre_serv, bool swp_initiator, uint32_t s_id)
         : pkt(p), record(rec), create_host(cre_host),
-          create_service(cre_serv), serviceID(s_id) { }
+          create_service(cre_serv), swapped(swp_initiator), serviceID(s_id) { }
 
     const Packet* get_packet() override
     { return pkt; }
@@ -48,6 +48,9 @@ public:
     bool get_create_service()
     { return create_service; }
 
+    bool is_initiator_swapped()
+    { return swapped; }
+
     uint32_t get_service_id()
     { return serviceID; }
 
@@ -56,6 +59,7 @@ private:
     const NetFlowSessionRecord* record;
     bool create_host;
     bool create_service;
+    bool swapped;
     uint32_t serviceID = 0;
 };
 

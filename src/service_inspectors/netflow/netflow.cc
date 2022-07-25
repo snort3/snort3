@@ -109,6 +109,7 @@ static const NetFlowRule* filter_record(const NetFlowRules* rules, const int zon
 static void publish_netflow_event(const Packet* p, const NetFlowRule* match, NetFlowSessionRecord& record)
 {
     uint32_t serviceID = 0;
+    bool swapped = false;
 
     std::unordered_map<int, int>* service_mappings = nullptr;
 
@@ -134,14 +135,21 @@ static void publish_netflow_event(const Packet* p, const NetFlowRule* match, Net
 
         // Use only the known port. If both are known, take the lower numbered port.
         if (sid_responder && !sid_initiator)
+        {
             serviceID = sid_responder;
+        }
         else if (sid_initiator && !sid_responder)
+        {
             serviceID = sid_initiator;
+            swapped = true;
+        }
         else
+        {
             serviceID = (record.initiator_port > record.responder_port) ? sid_responder : sid_initiator;
+        }
     }
 
-    NetFlowEvent event(p, &record, match->create_host, match->create_service, serviceID);
+    NetFlowEvent event(p, &record, match->create_host, match->create_service, swapped, serviceID);
     DataBus::publish(NETFLOW_EVENT, event);
 }
 
