@@ -28,6 +28,7 @@ const char* push_include_path(const char*);
 void pop_include_path();
 void snort_whitelist_append(const char*);
 void snort_whitelist_add_prefix(const char*);
+int get_module_version(const char* name, const char* type);
 ]]
 
 function whitelist_append(list, is_prefix)
@@ -61,6 +62,10 @@ function initialize_whitelist(tab)
             end
         end
     end
+end
+
+function get_module_version(name, type)
+    return ffi.C.get_module_version(name, type)
 end
 
 ---------------------------------------------------------------------------
@@ -149,6 +154,7 @@ function create_sandbox_env()
         SNORT_MINOR_VERSION = SNORT_MINOR_VERSION,
         SNORT_PATCH_VERSION = SNORT_PATCH_VERSION,
         SNORT_SUBLEVEL_VERSION = SNORT_SUBLEVEL_VERSION,
+        get_module_version = get_module_version,
         tweaks = tweaks,
     }
 
