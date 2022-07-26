@@ -110,8 +110,15 @@ struct detection_option_tree_root_t
 
 struct detection_option_eval_data_t
 {
+    detection_option_eval_data_t() = delete;
+
+    detection_option_eval_data_t(snort::Packet* p) :
+        pmd(nullptr), p(p), leaf_reached(0), flowbit_failed(0), flowbit_noalert(0)
+    { }
+
     void* pmd;
     snort::Packet* p;
+    char leaf_reached;
     char flowbit_failed;
     char flowbit_noalert;
 };

@@ -479,6 +479,7 @@ int detection_option_node_evaluate(
                         fpAddMatch(p->context->otnx, otn);
                     }
                     result = rval = (int)IpsOption::MATCH;
+                    eval_data.leaf_reached = 1;
                 }
             }
             break;

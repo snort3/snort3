@@ -336,7 +336,7 @@ int fp_eval_option(void* v, Cursor& c, Packet* p)
     return opt->eval(c, p);
 }
 
-static int detection_option_tree_evaluate(detection_option_tree_root_t* root,
+static void detection_option_tree_evaluate(detection_option_tree_root_t* root,
     detection_option_eval_data_t& eval_data)
 {
     assert(root);
@@ -344,21 +344,17 @@ static int detection_option_tree_evaluate(detection_option_tree_root_t* root,
     RuleLatency::Context rule_latency_ctx(root, eval_data.p);
 
     if ( RuleLatency::suspended() )
-        return 0;
+        return;
 
     Cursor c(eval_data.p);
-    int rval = 0;
 
     debug_log(detection_trace, TRACE_RULE_EVAL, eval_data.p, "Starting tree eval\n");
 
     for ( int i = 0; i < root->num_children; ++i )
     {
-        // Increment number of events generated from that child
-        rval += detection_option_node_evaluate(root->children[i], eval_data, c);
+        detection_option_node_evaluate(root->children[i], eval_data, c);
     }
     clear_trace_cursor_info();
-
-    return rval;
 }
 
 static void rule_tree_match(
@@ -366,11 +362,8 @@ static void rule_tree_match(
 {
     PMX* pmx = (PMX*)user;
 
-    detection_option_eval_data_t eval_data;
-    eval_data.p = context->packet;
+    detection_option_eval_data_t eval_data(context->packet);
     eval_data.pmd = pmx->pmd;
-    eval_data.flowbit_failed = 0;
-    eval_data.flowbit_noalert = 0;
 
     print_pattern(pmx->pmd, eval_data.p);
 
@@ -399,9 +392,10 @@ static void rule_tree_match(
             return;
 
         detection_option_tree_root_t* root = (detection_option_tree_root_t*)tree;
-        int ret = detection_option_tree_evaluate(root, eval_data);
 
-        if ( ret )
+        detection_option_tree_evaluate(root, eval_data);
+
+        if ( eval_data.leaf_reached )
             pmqs.qualified_events++;
         else
             pmqs.non_qualified_events++;
@@ -1029,22 +1023,16 @@ static inline void eval_nfp(
             if ( fp->get_debug_print_nc_rules() )
                 LogMessage("NC-testing %u rules\n", port_group->nfp_rule_count);
 
-            detection_option_eval_data_t eval_data;
+            detection_option_eval_data_t eval_data(p);
 
-            eval_data.p = p;
-            eval_data.pmd = nullptr;
-            eval_data.flowbit_failed = 0;
-            eval_data.flowbit_noalert = 0;
+            debug_log(detection_trace, TRACE_RULE_EVAL, p,
+                "Testing non-content rules\n");
 
-            int rval = 0;
-            {
-                debug_log(detection_trace, TRACE_RULE_EVAL, p,
-                    "Testing non-content rules\n");
-                rval = detection_option_tree_evaluate(
-                    (detection_option_tree_root_t*)port_group->nfp_tree, eval_data);
-            }
+            detection_option_tree_root_t* root = (detection_option_tree_root_t*)port_group->nfp_tree;
 
-            if (rval)
+            detection_option_tree_evaluate(root, eval_data);
+
+            if (eval_data.leaf_reached)
                 pmqs.qualified_events++;
             else
                 pmqs.non_qualified_events++;
