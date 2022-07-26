@@ -56,13 +56,6 @@ static char norm_names[NORM_NAME_SIZE * NORM_NAME_CNT];
 
 static void init_norm_names()
 {
-    static bool once = false;
-
-    if (once)
-        return;
-
-    once = true;
-
     char* c = norm_names;
     const char hex[] = "0123456789abcdef";
 
@@ -82,14 +75,14 @@ static void init_norm_names()
     assert(sizeof(norm_names) == c - norm_names);
 }
 
+static int _init_norm_names __attribute__((unused)) = (init_norm_names(), 0);
+
 JSIdentifierCtx::JSIdentifierCtx(int32_t depth, uint32_t max_scope_depth,
     const std::unordered_set<std::string>& ignored_ids_list,
     const std::unordered_set<std::string>& ignored_props_list)
     : ignored_ids_list(ignored_ids_list), ignored_props_list(ignored_props_list), 
     max_scope_depth(max_scope_depth)
 {
-    init_norm_names();
-
     norm_name = norm_names;
     norm_name_end = norm_names + NORM_NAME_SIZE * std::min(depth, NORM_NAME_CNT);
     scopes.emplace_back(JSProgramScopeType::GLOBAL);

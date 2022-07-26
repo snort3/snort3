@@ -81,8 +81,6 @@ void HttpMsgBody::publish()
 void HttpMsgBody::bookkeeping_regular_flush(uint32_t& partial_detect_length,
     uint8_t*& partial_detect_buffer, uint32_t& partial_js_detect_length, int32_t detect_length)
 {
-    params->js_norm_param.js_norm->set_detection_depth(session_data->detect_depth_remaining[source_id]);
-
     session_data->detect_depth_remaining[source_id] -= detect_length;
     partial_detect_buffer = nullptr;
     partial_detect_length = 0;

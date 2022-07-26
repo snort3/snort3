@@ -83,7 +83,6 @@ HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_,
     const HttpParaList::JsNormParam& js_norm_param_) :
     uri_param(uri_param_),
     js_norm_param(js_norm_param_),
-    detection_depth(UINT64_MAX),
     mpse_otag(nullptr),
     mpse_attr(nullptr),
     mpse_type(nullptr)
@@ -252,7 +251,7 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
     debug_logf(4, http_trace, TRACE_JS_PROC, current_packet,
         "input data was %s\n", final_portion ? "last one in PDU" : "a part of PDU");
 
-    uint32_t data_len = std::min(detection_depth, js_ctx.script_size());
+    uint32_t data_len = js_ctx.script_size();
 
     if (data_len)
     {
@@ -402,7 +401,7 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
         "input data was %s\n", final_portion ? "last one in PDU" : "a part of PDU");
 
     auto js_ctx = ssn->js_normalizer;
-    uint32_t data_len = std::min(detection_depth, js_ctx->script_size());
+    uint32_t data_len = js_ctx->script_size();
 
     if (data_len)
     {

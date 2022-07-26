@@ -453,7 +453,6 @@ void HttpMsgHeader::prepare_body()
         const int64_t& depth = (source_id == SRC_CLIENT) ? params->request_depth :
             params->response_depth;
         session_data->detect_depth_remaining[source_id] = (depth != -1) ? depth : INT64_MAX;
-        params->js_norm_param.js_norm->set_detection_depth(session_data->detect_depth_remaining[source_id]);
     }
     else
     {
