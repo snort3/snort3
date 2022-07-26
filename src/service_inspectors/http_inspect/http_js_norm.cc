@@ -109,19 +109,52 @@ void HttpJsNorm::configure()
     static constexpr const char* attr_slash = "/";
     static constexpr const char* attr_gt = ">";
     static constexpr const char* attr_src = "SRC";
-    static constexpr const char* attr_js1 = "JAVASCRIPT";
-    static constexpr const char* attr_js2 = "ECMASCRIPT";
-    static constexpr const char* attr_vb = "VBSCRIPT";
+
+    static constexpr const char* attr_js = "JAVASCRIPT";    // legacy only
+    static constexpr const char* attr_ecma = "ECMASCRIPT";  // legacy only
+    static constexpr const char* attr_vb = "VBSCRIPT";      // legacy only
+
+    static constexpr const size_t attrs_js_size = 15;
+    static constexpr const char* attrs_js[attrs_js_size] =
+    {
+        "APPLICATION/JAVASCRIPT",
+        "APPLICATION/ECMASCRIPT",
+        "APPLICATION/X-JAVASCRIPT",
+        "APPLICATION/X-ECMASCRIPT",
+        "TEXT/JAVASCRIPT",
+        "TEXT/JAVASCRIPT1.0",
+        "TEXT/JAVASCRIPT1.1",
+        "TEXT/JAVASCRIPT1.2",
+        "TEXT/JAVASCRIPT1.3",
+        "TEXT/JAVASCRIPT1.4",
+        "TEXT/JAVASCRIPT1.5",
+        "TEXT/ECMASCRIPT",
+        "TEXT/X-JAVASCRIPT",
+        "TEXT/X-ECMASCRIPT",
+        "TEXT/JSCRIPT"
+    };
+
+    static constexpr const size_t attrs_non_js_size = 2;
+    static constexpr const char* attrs_non_js[attrs_non_js_size] =
+    {
+        "TEXT/VBSCRIPT",
+        "APPLICATION/JSON"
+    };
 
     mpse_otag->add(otag_start, strlen(otag_start), 0);
+
     mpse_attr->add(attr_slash, strlen(attr_slash), AID_SLASH);
     mpse_attr->add(attr_gt, strlen(attr_gt), AID_GT);
     mpse_attr->add(attr_src, strlen(attr_src), AID_SRC);
-    mpse_attr->add(attr_js1, strlen(attr_js1), AID_JS);
-    mpse_attr->add(attr_js2, strlen(attr_js2), AID_ECMA);
-    mpse_attr->add(attr_vb, strlen(attr_vb), AID_VB);
-    mpse_type->add(attr_js1, strlen(attr_js1), AID_JS);
-    mpse_type->add(attr_js2, strlen(attr_js2), AID_ECMA);
+
+    for (unsigned i = 0; i < attrs_js_size; ++i)
+        mpse_attr->add(attrs_js[i], strlen(attrs_js[i]), AID_JS);
+
+    for (unsigned i = 0; i < attrs_non_js_size; ++i)
+        mpse_attr->add(attrs_non_js[i], strlen(attrs_non_js[i]), AID_NON_JS);
+
+    mpse_type->add(attr_js, strlen(attr_js), AID_JS);
+    mpse_type->add(attr_ecma, strlen(attr_ecma), AID_ECMA);
     mpse_type->add(attr_vb, strlen(attr_vb), AID_VB);
 
     mpse_otag->prep();
@@ -556,11 +589,7 @@ int HttpJsNorm::match_attr(void* pid, void*, int index, void* sctx, void*)
         ctx->is_javascript = true;
         return 0;
 
-    case AID_ECMA:
-        ctx->is_javascript = true;
-        return 0;
-
-    case AID_VB:
+    case AID_NON_JS:
         ctx->is_javascript = false;
         return 0;
 
