@@ -30,6 +30,7 @@
 #include "framework/base_api.h"
 #include "framework/mpse.h"
 #include "framework/mpse_batch.h"
+#include "log/messages.h"
 #include "main/snort_config.h"
 #include "managers/mpse_manager.h"
 #include "search_engines/pat_stats.h"
@@ -89,7 +90,10 @@ void ErrorMessage(const char*, ...) { }
 
 void LogValue(const char*, const char*, FILE*) { }
 void LogMessage(const char*, ...) { }
+void ParseWarning(WarningGroup, const char*, ...) { }
+
 [[noreturn]] void FatalError(const char*,...) { exit(1); }
+
 void LogCount(char const*, uint64_t, FILE*) { }
 void LogStat(const char*, double, FILE*) { }
 

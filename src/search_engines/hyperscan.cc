@@ -205,8 +205,11 @@ bool HyperscanMpse::serialize(uint8_t*& buf, size_t& sz) const
 
 bool HyperscanMpse::deserialize(const uint8_t* buf, size_t sz)
 {
-    if ( hs_deserialize_database((const char*)buf, sz, &hs_db) != HS_SUCCESS or !hs_db )
+    if ( hs_error_t err = hs_deserialize_database((const char*)buf, sz, &hs_db) )
+    {
+        ParseWarning(WARN_RULES, "can't deserialize hyperscan database (%d)", err);
         return false;
+    }
 
     if ( hs_error_t err = hs_alloc_scratch(hs_db, &s_scratch[get_instance_id()]) )
     {
@@ -288,8 +291,15 @@ int HyperscanMpse::prep_patterns(SnortConfig* sc)
         ids.emplace_back(id++);
     }
 
+#ifdef REG_TEST
+    hs_platform_info_t info = { HS_TUNE_FAMILY_SNB, 0, 0, 0 };
+    auto pinfo = &info;
+#else
+    hs_platform_info_t* pinfo = nullptr;
+#endif
+
     if ( hs_compile_multi(&pats[0], &flags[0], &ids[0], pvector.size(), HS_MODE_BLOCK,
-            nullptr, &hs_db, &errptr) or !hs_db )
+        pinfo, &hs_db, &errptr) or !hs_db )
     {
         ParseError("can't compile hyperscan pattern database: %s (%d) - '%s'",
             errptr->message, errptr->expression,
