@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.37.0 2022-07-18 16:24:41 EDT TST
+Revision 3.1.38.0 2022-07-28 09:09:42 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -3662,6 +3662,8 @@ Rules:
     bytes
   * 121:39 (http2_inspect) not HTTP/2 traffic or unrecoverable HTTP/2
     protocol error
+  * 121:40 (http2_inspect) invalid HTTP/2 PRIORITY frame
+  * 121:41 (http2_inspect) invalid HTTP/2 GOAWAY frame
 
 Peg counts:
 
@@ -5438,28 +5440,16 @@ Configuration:
     for held packets { 1:max32 }
   * int stream.ip_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
-  * int stream.ip_cache.cap_weight = 0: additional bytes to track per
-    flow for better estimation against cap { 0:65535 }
   * int stream.icmp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
-  * int stream.icmp_cache.cap_weight = 0: additional bytes to track
-    per flow for better estimation against cap { 0:65535 }
   * int stream.tcp_cache.idle_timeout = 3600: maximum inactive time
     before retiring session tracker { 1:max32 }
-  * int stream.tcp_cache.cap_weight = 11000: additional bytes to
-    track per flow for better estimation against cap { 0:65535 }
   * int stream.udp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
-  * int stream.udp_cache.cap_weight = 0: additional bytes to track
-    per flow for better estimation against cap { 0:65535 }
   * int stream.user_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
-  * int stream.user_cache.cap_weight = 0: additional bytes to track
-    per flow for better estimation against cap { 0:65535 }
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
-  * int stream.file_cache.cap_weight = 32: additional bytes to track
-    per flow for better estimation against cap { 0:65535 }
 
 Rules:
 
@@ -10658,21 +10648,15 @@ libraries see the Getting Started section of the manual.
   * implied ssl_version.!tls1.2: check for records that are not
     tls1.2
   * implied ssl_version.tls1.2: check for tls1.2
-  * int stream.file_cache.cap_weight = 32: additional bytes to track
-    per flow for better estimation against cap { 0:65535 }
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * bool stream_file.upload = false: indicate file transfer direction
   * int stream.held_packet_timeout = 1000: timeout in milliseconds
     for held packets { 1:max32 }
-  * int stream.icmp_cache.cap_weight = 0: additional bytes to track
-    per flow for better estimation against cap { 0:65535 }
   * int stream.icmp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream_icmp.session_timeout = 60: session tracking timeout {
     1:max31 }
-  * int stream.ip_cache.cap_weight = 0: additional bytes to track per
-    flow for better estimation against cap { 0:65535 }
   * int stream.ip_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * bool stream.ip_frags_only = false: don’t process non-frag flows
@@ -10703,8 +10687,6 @@ libraries see the Getting Started section of the manual.
     direction(s) { either|to_server|to_client|both }
   * interval stream_size.~range: check if the stream size is in the
     given range { 0: }
-  * int stream.tcp_cache.cap_weight = 11000: additional bytes to
-    track per flow for better estimation against cap { 0:65535 }
   * int stream.tcp_cache.idle_timeout = 3600: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream_tcp.flush_factor = 0: flush upon seeing a drop in
@@ -10742,14 +10724,10 @@ libraries see the Getting Started section of the manual.
   * int stream_tcp.small_segments.maximum_size = 0: minimum bytes for
     a TCP segment not to be considered small (129:12) { 0:2048 }
   * bool stream_tcp.track_only = false: disable reassembly if true
-  * int stream.udp_cache.cap_weight = 0: additional bytes to track
-    per flow for better estimation against cap { 0:65535 }
   * int stream.udp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream_udp.session_timeout = 30: session tracking timeout {
     1:max31 }
-  * int stream.user_cache.cap_weight = 0: additional bytes to track
-    per flow for better estimation against cap { 0:65535 }
   * int stream.user_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream_user.session_timeout = 60: session tracking timeout {
@@ -13805,6 +13783,15 @@ HTTP/2 inspector is unable to parse this flow. Either the connection
 is not actually using HTTP/2 or some sort of unrecoverable HTTP/2
 protocol error has occurred. This conclusion applies only to one
 direction of the flow. The opposite direction may be OK.
+
+121:40 (http2_inspect) invalid HTTP/2 PRIORITY frame
+
+Invalid HTTP/2 PRIORITY frame. Stream ID is 0 or length is not 5.
+
+121:41 (http2_inspect) invalid HTTP/2 GOAWAY frame
+
+Invalid HTTP/2 GOAWAY frame. R bit is set or stream ID is not 0 or
+length is less than 8.
 
 122:1 (port_scan) TCP portscan
 

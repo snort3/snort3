@@ -1,3 +1,23 @@
+2022/07/28 - 3.1.38.0
+
+appid: restart inspection for ssl session inside http tunnel
+appid: set persistent flag for sunrpc expected session
+appid: send more packets to third-party for FTP user name extraction
+detection: separate the branch/leaf result to different variables
+http_inspect: remove dependency of JS normalization depth on HTTP depth
+http_inspect: add more explicit js type values to otag type check
+http_inspect: do not stop normalization in case of opening script tag
+http2_inspect: add support for GOAWAY frames
+http2_inspect: add support for PRIORITY frames
+http_inspect: directly call detection
+http2_inspect: interface to http_inspect now uses real reassembled packet
+pub_sub: add definitions for ssl block and block with reset messages
+snort2lua: change the conversion of sensitive data rules
+stream: removed all instances of 'cap_weight' config parameter
+stream: removed macro references for 'cap_weight' config parameter
+utils: add static initialization of norm_names
+utils: continue JS normalization after opening tag seen
+
 2022/07/19 - 3.1.37.0
 
 reputation: print LogMessage in reputation only when in verbose mode
