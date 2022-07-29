@@ -36,9 +36,6 @@
 #define GID_BUILTIN_MIN    100
 #define GID_BUILTIN_MAX    999
 
-// should be revoked in the future
-#define GID_EXCEPTION_SDF  138
-
 #define SESSION_EVENT_SYN_RX 1
 #define SESSION_EVENT_SETUP  2
 #define SESSION_EVENT_CLEAR  3

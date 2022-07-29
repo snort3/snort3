@@ -1055,16 +1055,8 @@ static void parse_rule_state(SnortConfig* sc, const RuleTreeNode& rtn, OptTreeNo
 
 static bool is_builtin(uint32_t gid)
 {
-    if ( ModuleManager::gid_in_use(gid) )
-        return true;
-
-    // the builtin range prevents unloaded sids from firing on every packet
-    if ( gid < GID_BUILTIN_MIN or gid > GID_BUILTIN_MAX )
-        return false;
-
-    // not builtin but may get used and abused by snort2lua
-    // should be deleted at some point
-    return gid != GID_EXCEPTION_SDF;
+    return ModuleManager::gid_in_use(gid) or
+        ( gid >= GID_BUILTIN_MIN and gid <= GID_BUILTIN_MAX );
 }
 
 void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
