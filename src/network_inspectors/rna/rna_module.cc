@@ -448,7 +448,14 @@ bool RnaModule::begin(const char* fqn, int, SnortConfig*)
 bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     if (v.is("rna_conf_path"))
+    {
+        struct stat buf;
         mod_conf->rna_conf_path = string(v.get_string());
+        if (stat(mod_conf->rna_conf_path.c_str(), &buf) != 0)
+        {
+            WarningMessage("WARNING: Missing/Incorrect 'rna.conf' path : \"%s\", using system defaults\n" , mod_conf->rna_conf_path.c_str());
+        }
+    }
     else if (v.is("enable_logger"))
         mod_conf->enable_logger = v.get_bool();
     else if (v.is("log_when_idle"))
@@ -701,3 +708,4 @@ TEST_CASE("RNA module", "[rna_module]")
 }
 
 #endif
+
