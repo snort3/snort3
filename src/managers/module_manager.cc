@@ -1140,39 +1140,6 @@ void ModuleManager::show_module(const char* name)
         cout << "no match" << endl;
 }
 
-void ModuleManager::reload_module(const char* name, SnortConfig* sc)
-{
-    ModHook* h = get_hook(name);
-
-    // Most of the modules don't support yet reload_module.
-    // This list contains the ones that do, and should be updated as
-    // more modules support reload_module.
-    const vector<string> supported_modules =
-    {
-        "dns_si", "firewall", "identity", "qos", "reputation", "url_si", "rt_network"
-    };
-    auto it = find(supported_modules.begin(), supported_modules.end(), name);
-
-    // FIXIT-L: we can check that h->api is not null here or inside instantiate.
-    // Both alternatives prevent crashing in instantiate(). However,
-    // checking it here might be too aggressive, because we are also saying it
-    // is an error. That makes the caller of this function
-    // (get_updated_module()) discard other legitimate reload operations, e.g.
-    // the newly read configuration. We should decide on this when proper
-    // reload functionality gets implemented.
-    if ( it != supported_modules.end() and h and h->api and h->mod and sc )
-    {
-        PluginManager::instantiate(h->api, h->mod, sc);
-        s_errors += get_parse_errors();
-    }
-    else
-    {
-        cout << "Module " << name <<" doesn't exist or reload not implemented.";
-        cout << endl;
-        ++s_errors;
-    }
-}
-
 static bool selected(const Module* m, const char* pfx, bool exact)
 {
     if ( !pfx )

@@ -592,49 +592,6 @@ SnortConfig* Snort::get_updated_policy(
     return sc;
 }
 
-SnortConfig* Snort::get_updated_module(SnortConfig* other_conf, const char* name)
-{
-    reloading = true;
-
-    SnortConfig* sc = new SnortConfig(other_conf, name);
-    sc->global_dbus->clone(*other_conf->global_dbus, name);
-
-    if ( name )
-    {
-        reset_parse_errors();
-        ModuleManager::reset_errors();
-        ModuleManager::reload_module(name, sc);
-        if ( ModuleManager::get_errors() || !sc->verify() )
-        {
-            sc->cloned = true;
-            InspectorManager::update_policy(other_conf);
-            delete sc;
-            set_default_policy(other_conf);
-            reloading = false;
-            return nullptr;
-        }
-    }
-
-    if ( !InspectorManager::configure(sc, true) )
-    {
-        sc->cloned = true;
-        InspectorManager::update_policy(other_conf);
-        delete sc;
-        set_default_policy(other_conf);
-        reloading = false;
-        return nullptr;
-    }
-
-    InspectorManager::reconcile_inspectors(other_conf, sc, true);
-    InspectorManager::prepare_inspectors(sc);
-    InspectorManager::prepare_controls(sc);
-
-    other_conf->cloned = true;
-    InspectorManager::update_policy(sc);
-    reloading = false;
-    return sc;
-}
-
 OopsHandlerSuspend::OopsHandlerSuspend()
 {
     remove_oops_handler();

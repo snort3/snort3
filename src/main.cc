@@ -475,51 +475,6 @@ int main_reload_policy(lua_State* L)
     return 0;
 }
 
-int main_reload_module(lua_State* L)
-{
-    const char* fname =  nullptr;
-
-    if ( L )
-    {
-        Lua::ManageStack(L, 1);
-        if (lua_gettop(L) >= 1)
-            fname = luaL_checkstring(L, 1);
-    }
-
-    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    if ( !fname or *fname == '\0' )
-    {
-        send_response(ctrlcon, "== module name required\n");
-        return 0;
-    }
-
-    if ( !ReloadTracker::start(ctrlcon) )
-    {
-        send_response(ctrlcon, "== reload pending; retry\n");
-        return 0;
-    }
-
-    send_response(ctrlcon, ".. reloading module\n");
-
-    SnortConfig* old = SnortConfig::get_main_conf();
-    SnortConfig* sc = Snort::get_updated_module(old, fname);
-
-    if ( !sc )
-    {
-        ReloadTracker::failed(ctrlcon, "failed to update module");
-        send_response(ctrlcon, "== reload failed\n");
-        return 0;
-    }
-    SnortConfig::set_conf(sc);
-    proc_stats.policy_reloads++;
-
-    ReloadTracker::update(ctrlcon, "start swapping configuration ...");
-    send_response(ctrlcon, ".. swapping module\n");
-    main_broadcast_command(new ACSwap(new Swapper(old, sc), ctrlcon), ctrlcon);
-
-    return 0;
-}
-
 int main_reload_daq(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);

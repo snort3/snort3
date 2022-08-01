@@ -41,7 +41,6 @@ public:
     static SnortConfig* get_reload_config(const char* fname, const char* plugin_path,
         const SnortConfig* old);
     static SnortConfig* get_updated_policy(SnortConfig*, const char* fname, const char* iname);
-    static SnortConfig* get_updated_module(SnortConfig*, const char* name);
     static void setup(int argc, char* argv[]);
     static bool drop_privileges();
     static void do_pidfile();
