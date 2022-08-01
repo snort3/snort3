@@ -556,9 +556,11 @@ void HttpInspect::eval(Packet* p, SourceId source_id, const uint8_t* data, uint1
 
     session_data->octets_reassembled[source_id] = STAT_NOT_PRESENT;
 
-    // Don't make pkt_data for headers available to detection
+    // Don't make pkt_data for headers, request and response available to detection
     if ((session_data->section_type[source_id] == SEC_HEADER) ||
-        (session_data->section_type[source_id] == SEC_TRAILER))
+        (session_data->section_type[source_id] == SEC_TRAILER) ||
+        (session_data->section_type[source_id] == SEC_REQUEST) ||
+        (session_data->section_type[source_id] == SEC_STATUS))
     {
         p->set_detect_limit(0);
     }
