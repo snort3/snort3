@@ -49,6 +49,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     Packet* p = DetectionEngine::get_current_packet();
     assert(p);
     auto direction = event_type == REQUEST_EVENT ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
+    bool is_debug_active = false;
 
     if ( !asd )
     {
@@ -61,6 +62,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
             if ( appidDebug->is_active() )
                 LogMessage("AppIdDbg %s New AppId session at HTTP event\n",
                     appidDebug->get_debug_session());
+            is_debug_active = true;
         }
     }
     else if ( asd->get_odp_ctxt_version() != pkt_thread_odp_ctxt->get_version() )
@@ -76,6 +78,9 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     if ((asd->get_tp_appid_ctxt() or ThirdPartyAppIdContext::get_tp_reload_in_progress()) and
         !http_event->get_is_http2())
         return;
+
+    if (appidDebug->is_enabled() and !is_debug_active)
+        appidDebug->activate(flow, asd, inspector.get_ctxt().config.log_all_sessions);
 
     if (appidDebug->is_active())
         LogMessage("AppIdDbg %s Processing HTTP metadata from HTTP Inspector for stream %u\n",
