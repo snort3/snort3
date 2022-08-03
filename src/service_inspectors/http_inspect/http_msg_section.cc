@@ -415,9 +415,21 @@ int32_t HttpMsgSection::get_num_headers(const HttpBufferInfo& buf) const
         (HttpMsgHeadShared*)trailer[buffer_side]:
         (HttpMsgHeadShared*)header[buffer_side] ;
     if (head == nullptr)
-        return HttpCommon::STAT_NOT_COMPUTE;
+        return HttpCommon::STAT_NO_SOURCE;
 
     return head->get_num_headers();
+}
+
+int32_t HttpMsgSection::get_num_cookies(const HttpBufferInfo& buf) const
+{
+    // buffer_side replaces source_id for rule options that support the request option
+    const SourceId buffer_side = (buf.form & FORM_REQUEST) ? SRC_CLIENT : source_id;
+
+    HttpMsgHeader* head = header[buffer_side];
+    if (head == nullptr)
+        return HttpCommon::STAT_NO_SOURCE;
+
+    return head->get_num_cookies();
 }
 
 VersionId HttpMsgSection::get_version_id(const HttpBufferInfo& buf) const

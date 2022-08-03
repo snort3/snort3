@@ -31,7 +31,7 @@
 #include "http_enum.h"
 #include "ips_http.h"
 
-enum NumHdrsPsIdx { NUM_HDRS_PSI_HDRS, NUM_HDRS_PSI_TRAILERS, NUM_HDRS_PSI_MAX };
+enum NumHdrsPsIdx { NUM_HDRS_PSI_HDRS, NUM_HDRS_PSI_TRAILERS, NUM_HDRS_PSI_COOKIES, NUM_HDRS_PSI_MAX };
 
 class HttpNumHdrsRuleOptModule : public HttpRuleOptModule
 {

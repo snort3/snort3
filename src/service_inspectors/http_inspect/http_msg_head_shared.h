@@ -73,6 +73,10 @@ protected:
     // Do a case insensitive search for "boundary=" in a Field
     static bool boundary_present(const Field& field);
 
+    Field* header_line = nullptr;
+    HttpEnums::HeaderId* header_name_id = nullptr;
+    int32_t num_headers = HttpCommon::STAT_NOT_COMPUTE;
+
 #ifdef REG_TEST
     void print_headers(FILE* output);
 #endif
@@ -93,15 +97,12 @@ private:
     Field classic_raw_header;    // raw headers with cookies spliced out
     Field classic_norm_header;   // URI normalization applied
     Field classic_norm_cookie;   // URI normalization applied to concatenated cookie values
-    Field* header_line = nullptr;
     Field* header_name = nullptr;
-    HttpEnums::HeaderId* header_name_id = nullptr;
     Field* header_value = nullptr;
 
     NormalizedHeader* get_header_node(HttpEnums::HeaderId k) const;
     NormalizedHeader* norm_heads = nullptr;
 
-    int32_t num_headers = HttpCommon::STAT_NOT_COMPUTE;
     std::bitset<MAX> headers_present = 0;
 
     void extract_filename_from_content_disposition();

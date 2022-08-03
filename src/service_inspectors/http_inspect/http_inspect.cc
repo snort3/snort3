@@ -314,9 +314,20 @@ int32_t HttpInspect::http_get_num_headers(Packet* p,
     const HttpMsgSection* const current_section = HttpContextData::get_snapshot(p);
 
     if (current_section == nullptr)
-        return STAT_NOT_COMPUTE;
+        return STAT_NOT_PRESENT;
 
     return current_section->get_num_headers(buffer_info);
+}
+
+int32_t HttpInspect::http_get_num_cookies(Packet* p,
+    const HttpBufferInfo& buffer_info) const
+{
+    const HttpMsgSection* const current_section = HttpContextData::get_snapshot(p);
+
+    if (current_section == nullptr)
+        return STAT_NOT_PRESENT;
+
+    return current_section->get_num_cookies(buffer_info);
 }
 
 VersionId HttpInspect::http_get_version_id(Packet* p,

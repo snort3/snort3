@@ -138,6 +138,29 @@ const Field& HttpMsgHeader::get_true_ip_addr()
     return true_ip_addr;
 }
 
+int32_t HttpMsgHeader::get_num_cookies()
+{
+    if (num_cookies != STAT_NOT_COMPUTE)
+        return num_cookies;
+
+    num_cookies = 0;
+    for (int j=0; j < num_headers; j++)
+    {
+        if (header_name_id[j] == HEAD_SET_COOKIE)
+            num_cookies++;
+        else if (header_name_id[j] == HEAD_COOKIE)
+        {
+            const uint8_t* lim = header_line[j].start() + header_line[j].length();
+            for (const uint8_t* p = header_line[j].start();  p < lim; p++)
+                if (*p == ';')
+                    num_cookies++;
+            num_cookies++;
+        }
+    }
+
+    return num_cookies;
+}
+
 void HttpMsgHeader::gen_events()
 {
     if ((get_header_count(HEAD_CONTENT_LENGTH) > 0) &&

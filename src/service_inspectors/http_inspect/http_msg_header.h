@@ -46,6 +46,7 @@ public:
     void publish() override;
     const Field& get_true_ip();
     const Field& get_true_ip_addr();
+    int32_t get_num_cookies();
 
     // The multi_file_processing_id is unique for each file transferred within a single connection
     // and is used by file processing to store partially processed file contexts in the flow data.
@@ -65,6 +66,7 @@ private:
 
     Field true_ip;
     Field true_ip_addr;
+    int32_t num_cookies = HttpCommon::STAT_NOT_COMPUTE;
 
     uint64_t multi_file_processing_id = 0;
 

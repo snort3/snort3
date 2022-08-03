@@ -43,7 +43,7 @@ using namespace HttpEnums;
 
 THREAD_LOCAL std::array<ProfileStats, NUM_HDRS_PSI_MAX> HttpNumHdrsRuleOptModule::http_num_hdrs_ps;
 
-const std::string hdrs_num_range = "0:" + std::to_string(HttpMsgHeadShared::MAX_HEADERS);
+static const char* num_range = "0:65535";
 
 bool HttpNumHdrsRuleOptModule::begin(const char*, int, SnortConfig*)
 {
@@ -51,6 +51,8 @@ bool HttpNumHdrsRuleOptModule::begin(const char*, int, SnortConfig*)
     range.init();
     if (rule_opt_index == HTTP_RANGE_NUM_HDRS)
         inspect_section = IS_FLEX_HEADER;
+    else if (rule_opt_index == HTTP_RANGE_NUM_COOKIES)
+        inspect_section = IS_HEADER;
     else
     {
         inspect_section = IS_TRAILER;
@@ -63,8 +65,8 @@ bool HttpNumHdrsRuleOptModule::begin(const char*, int, SnortConfig*)
 bool HttpNumHdrsRuleOptModule::set(const char*, Value& v, SnortConfig*)
 {
     if (v.is("~range"))
-        return range.validate(v.get_string(), hdrs_num_range.c_str());
-    
+        return range.validate(v.get_string(), num_range);
+
     return HttpRuleOptModule::set(nullptr, v, nullptr);
 }
 
@@ -94,8 +96,10 @@ IpsOption::EvalStatus HttpNumHdrsIpsOption::eval(Cursor&, Packet* p)
     if (hi == nullptr)
         return NO_MATCH;
 
-    const int32_t num_lines = hi->http_get_num_headers(p, buffer_info);
-    if (num_lines != HttpCommon::STAT_NOT_PRESENT && range.eval(num_lines))
+    const int32_t count = (idx == NUM_HDRS_PSI_COOKIES) ?
+        hi->http_get_num_cookies(p, buffer_info) :
+        hi->http_get_num_headers(p, buffer_info);
+    if (count != HttpCommon::STAT_NOT_PRESENT && range.eval(count))
         return MATCH;
 
     return NO_MATCH;
@@ -111,7 +115,7 @@ IpsOption::EvalStatus HttpNumHdrsIpsOption::eval(Cursor&, Packet* p)
 
 static const Parameter http_num_hdrs_params[] =
 {
-    { "~range", Parameter::PT_INTERVAL, hdrs_num_range.c_str(), nullptr,
+    { "~range", Parameter::PT_INTERVAL, num_range, nullptr,
         "check that number of headers of current buffer are in given range" },
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against the version from the request message even when examining the response" },
@@ -195,8 +199,56 @@ static const IpsApi num_trailers_api =
 };
 
 //-------------------------------------------------------------------------
+// num_cookies
+//-------------------------------------------------------------------------
+#undef IPS_OPT
+#define IPS_OPT "http_num_cookies"
+#undef IPS_HELP
+#define IPS_HELP "rule option to perform range check on number of cookies"
+
+static const Parameter http_num_cookies_params[] =
+{
+    { "~range", Parameter::PT_INTERVAL, num_range, nullptr,
+        "check that number of cookies of current header are in given range" },
+    { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "match against the version from the request message even when examining the response" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static Module* num_cookies_mod_ctor()
+{
+    return new HttpNumHdrsRuleOptModule(IPS_OPT, IPS_HELP, HTTP_RANGE_NUM_COOKIES, CAT_NONE,
+        NUM_HDRS_PSI_COOKIES, http_num_cookies_params);
+}
+
+static const IpsApi num_cookies_api =
+{
+    {
+        PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        1,
+        API_RESERVED,
+        API_OPTIONS,
+        IPS_OPT,
+        IPS_HELP,
+        num_cookies_mod_ctor,
+        HttpNumHdrsRuleOptModule::mod_dtor
+    },
+    OPT_TYPE_DETECTION,
+    0, PROTO_BIT__TCP,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    HttpNumHdrsIpsOption::opt_ctor,
+    HttpNumHdrsIpsOption::opt_dtor,
+    nullptr
+};
+
+//-------------------------------------------------------------------------
 // plugins
 //-------------------------------------------------------------------------
 const BaseApi* ips_http_num_headers = &num_headers_api.base;
 const BaseApi* ips_http_num_trailers = &num_trailers_api.base;
-
+const BaseApi* ips_http_num_cookies = &num_cookies_api.base;
