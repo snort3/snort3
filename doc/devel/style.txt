@@ -352,3 +352,15 @@ You can use uncrustify something like this:
 
     uncrustify -c crusty.cfg --replace file.cc
 
+=== Commit Messages
+
+Commit messages should follow some basic guidelines:
+
+* Messages should have a subject line followed by an optional body separated
+  by an empty line.
+
+* The subject line should be formatted like "<topic>: <summary>".
+
+* All lines should be 72 characters or less. Subject lines at 50 characters or
+  less are encouraged.
+
