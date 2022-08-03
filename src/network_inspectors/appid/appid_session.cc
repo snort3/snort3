@@ -171,7 +171,7 @@ AppIdSession::~AppIdSession()
             delete tpsession;
     }
 
-    delete_session_data(false);
+    delete tsession;
     free_flow_data();
     service_candidates.clear();
     client_candidates.clear();
@@ -672,18 +672,13 @@ bool AppIdSession::is_svc_taking_too_much_time() const
         init_bytes_without_reply > odp_ctxt.max_bytes_before_service_fail));
 }
 
-void AppIdSession::delete_session_data(bool free_api)
+void AppIdSession::delete_session_data()
 {
     api.service.reset();
     api.client.reset();
     api.payload.reset();
-
-    if (tsession)
-        delete tsession;
-
-    // delete api data only when appid session is getting reset
-    if (free_api)
-        api.delete_session_data();
+    api.delete_session_data();
+    delete tsession;
 }
 
 int AppIdSession::add_flow_data(void* data, unsigned id, AppIdFreeFCN fcn)

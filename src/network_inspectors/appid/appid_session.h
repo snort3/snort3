@@ -666,7 +666,7 @@ private:
     uint16_t prev_http2_raw_packet = 0;
 
     void reinit_session_data(AppidChangeBits& change_bits, ThirdPartyAppIdContext* tp_appid_ctxt);
-    void delete_session_data(bool free_api = true);
+    void delete_session_data();
 
     bool tp_app_id_deferred = false;
     bool tp_payload_app_id_deferred = false;
