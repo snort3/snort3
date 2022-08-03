@@ -132,6 +132,22 @@ TEST(deferred_trust_test, finalize)
     CHECK_TEXT(deferred_trust.is_deferred(), "Deferred trust should be deferring");
     CHECK_TEXT(!active.session_was_trusted(), "Session was trusted while deferring trust");
     CHECK_TEXT(active.session_was_allowed(), "Session was not allowed while deferring trust");
+
+    deferred_trust.clear();
+    // Trust flow
+    active.set_trust();
+    deferred_trust.try_trust();
+    // Enable
+    deferred_trust.set_deferred_trust(1, true);
+    deferred_trust.try_trust();
+    CHECK_TEXT(deferred_trust.is_active(), "Deferred trust should be active");
+    CHECK_TEXT(deferred_trust.is_deferred(), "Deferred trust should be deferring");
+    // Session is trusted, defer should change action to allow and session should not be trusted
+    deferred_trust.finalize(active);
+    CHECK_TEXT(deferred_trust.is_active(), "Deferred trust should be active");
+    CHECK_TEXT(deferred_trust.is_deferred(), "Deferred trust should be deferring");
+    CHECK_TEXT(!active.session_was_trusted(), "Session was trusted while deferring trust");
+    CHECK_TEXT(active.session_was_allowed(), "Session was not allowed while deferring trust");
 }
 
 
