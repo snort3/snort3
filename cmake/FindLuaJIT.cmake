@@ -19,8 +19,13 @@ pkg_check_modules(PC_LUAJIT luajit)
 # and then package config information after that.
 find_path(LUAJIT_INCLUDE_DIR luajit.h
     HINTS ${LUAJIT_INCLUDE_DIR_HINT} ${PC_LUAJIT_INCLUDEDIR} ${PC_LUAJIT_INCLUDE_DIRS})
-find_library(LUAJIT_LIBRARIES NAMES luajit-5.1
+if (STATIC_LUAJIT)
+  find_library(LUAJIT_LIBRARIES NAMES libluajit-5.1.a
     HINTS ${LUAJIT_LIBRARIES_DIR_HINT} ${PC_LUAJIT_LIBDIR} ${PC_LUAJIT_LIBRARY_DIRS})
+else()
+  find_library(LUAJIT_LIBRARIES NAMES luajit-5.1
+    HINTS ${LUAJIT_LIBRARIES_DIR_HINT} ${PC_LUAJIT_LIBDIR} ${PC_LUAJIT_LIBRARY_DIRS})
+endif()
 
 if (APPLE)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LUAJIT_LIBRARIES} -pagezero_size 10000 -image_base 100000000")

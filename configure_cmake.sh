@@ -70,6 +70,7 @@ Optional Features:
     --enable-jemalloc       enable using jemalloc for dynamic memory management
     --enable-jemalloc-static
                             same as --enable-jemalloc but linked statically
+    --enable-luajit-static  enable luajit linked statically
     --enable-appid-third-party
                             enable third party appid
     --enable-unit-tests     build unit tests
@@ -338,6 +339,9 @@ while [ $# -ne 0 ]; do
         --enable-jemalloc-static)
             append_cache_entry ENABLE_JEMALLOC          BOOL true
             append_cache_entry STATIC_JEMALLOC          BOOL true
+            ;;
+        --enable-luajit-static)
+            append_cache_entry STATIC_LUAJIT            BOOL true
             ;;
         --disable-jemalloc-static)
             append_cache_entry ENABLE_JEMALLOC          BOOL false
