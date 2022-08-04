@@ -331,6 +331,8 @@ private:
     JSIdentifierCtxBase& ident_ctx;
     size_t bytes_read;
     size_t tmp_bytes_read;
+    uint32_t tokens_read;
+    uint32_t tmp_tokens_read;
     bool ext_script;
     VStack<char> regex_stack;
 

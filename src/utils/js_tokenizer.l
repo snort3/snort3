@@ -1371,6 +1371,7 @@ JSTokenizer::JSTokenizer(std::istream& in, std::ostream& out,
       max_template_nesting(max_template_nesting),
       ident_ctx(mapper),
       bytes_read(0),
+      tokens_read(0),
       tmp_buf(buf),
       tmp_buf_size(buf_size),
       tmp_cap_size(cap_size),
@@ -1397,6 +1398,7 @@ void JSTokenizer::switch_to_temporal(const std::string& data)
     yy_switch_to_buffer((YY_BUFFER_STATE)tmp_buffer);
 
     tmp_bytes_read = bytes_read;
+    tmp_tokens_read = tokens_read;
 }
 
 void JSTokenizer::switch_to_initial()
@@ -1406,6 +1408,7 @@ void JSTokenizer::switch_to_initial()
     tmp_buffer = nullptr;
 
     bytes_read = tmp_bytes_read;
+    tmp_tokens_read = tokens_read - tmp_tokens_read;
 }
 
 // A return value of this method uses to terminate the scanner
@@ -1414,16 +1417,20 @@ void JSTokenizer::switch_to_initial()
 // The return value should be used to make a decision about yyterminate() call
 JSTokenizer::JSRet JSTokenizer::eval_eof()
 {
-    // If the temporal scan buffer reaches EOF, cleanup and
-    // continue with the initial one
-    if (tmp_buffer)
-    {
-        switch_to_initial();
-        return EOS;
-    }
+    if (!tmp_buffer)
+        return SCRIPT_CONTINUE;
 
-    // Normal termination
-    return SCRIPT_CONTINUE;
+    switch_to_initial();
+
+    if (tmp_tokens_read != 1 or token != IDENTIFIER)
+        return BAD_TOKEN;
+
+    // remove temporal buffer normalization state
+    memset((void*)(states + sp), 0, sizeof(states[0]));
+    --sp;
+    sp %= JSTOKENIZER_MAX_STATES;
+
+    return EOS;
 }
 
 JSTokenizer::JSRet JSTokenizer::do_spacing(JSToken cur_token)
@@ -1745,6 +1752,7 @@ void JSTokenizer::states_over()
 bool JSTokenizer::states_process()
 {
     bytes_read += yyleng;
+    ++tokens_read;
 
     // Fulfillment goes after this check only in case of split over several input scripts.
     // Otherwise, new state is pushed.
@@ -2969,6 +2977,7 @@ JSTokenizer::JSRet JSTokenizer::process(size_t& bytes_in, bool external_script)
 
     bytes_in = std::max(bytes_read, bytes_in) - bytes_in;
     bytes_read = 0;
+    tokens_read = 0;
 
     return static_cast<JSTokenizer::JSRet>(r);
 }

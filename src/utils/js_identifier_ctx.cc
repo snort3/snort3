@@ -75,7 +75,7 @@ static void init_norm_names()
     assert(sizeof(norm_names) == c - norm_names);
 }
 
-static int _init_norm_names __attribute__((unused)) = (init_norm_names(), 0);
+static int _init_norm_names __attribute__((unused)) = (static_cast<void>(init_norm_names()), 0);
 
 JSIdentifierCtx::JSIdentifierCtx(int32_t depth, uint32_t max_scope_depth,
     const std::unordered_set<std::string>& ignored_ids_list,

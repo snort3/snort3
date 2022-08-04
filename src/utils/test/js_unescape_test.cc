@@ -798,6 +798,150 @@ TEST_CASE("String.fromCodePoint()", "[JSNormalizer]")
     }
 }
 
+TEST_CASE("Identifiers", "[JSNormalizer]")
+{
+    SECTION("all patterns")
+    {
+        test_normalization(
+            "\\u0061",
+            "var_0000"
+        );
+        test_normalization_bad(
+            "\\u0020",
+            "",
+            JSTokenizer::BAD_TOKEN
+        );
+
+        test_normalization(
+            "\\u{0061}",
+            "var_0000"
+        );
+        test_normalization(
+            "\\u{061}",
+            "var_0000"
+        );
+        test_normalization(
+            "\\u{61}",
+            "var_0000"
+        );
+        test_normalization_bad(
+            "\\u{1}",
+            "\u0001",
+            JSTokenizer::BAD_TOKEN
+        );
+    }
+
+    SECTION("valid sequence")
+    {
+        test_normalization(
+            " \\u0061bc ;",
+            "var_0000;"
+        );
+        test_normalization(
+            " a\\u0062c ;",
+            "var_0000;"
+        );
+        test_normalization(
+            " ab\\u0063 ;",
+            "var_0000;"
+        );
+    }
+
+    SECTION("invalid sequence")
+    {
+        test_normalization_bad(
+            " \\u0020bc ;",
+            "var_0000",
+            JSTokenizer::BAD_TOKEN
+        );
+        test_normalization_bad(
+            " a\\u0020c ;",
+            "var_0000 var_0001",
+            JSTokenizer::BAD_TOKEN
+        );
+        test_normalization_bad(
+            " ab\\u0020 ;",
+            "var_0000",
+            JSTokenizer::BAD_TOKEN
+        );
+    }
+
+    SECTION("valid code point")
+    {
+        test_normalization(
+            " \\u{61}bc ;",
+            "var_0000;"
+        );
+        test_normalization(
+            " a\\u{62}c ;",
+            "var_0000;"
+        );
+        test_normalization(
+            " ab\\u{63} ;",
+            "var_0000;"
+        );
+    }
+
+    SECTION("invalid code point")
+    {
+        test_normalization_bad(
+            " \\u{20}bc ;",
+            "var_0000",
+            JSTokenizer::BAD_TOKEN
+        );
+        test_normalization_bad(
+            " a\\u{20}c ;",
+            "var_0000 var_0001",
+            JSTokenizer::BAD_TOKEN
+        );
+        test_normalization_bad(
+            " ab\\u{20} ;",
+            "var_0000",
+            JSTokenizer::BAD_TOKEN
+        );
+    }
+
+    SECTION("valid dot accessor")
+    {
+        test_normalization(
+            "\\u0066\\u006f\\u006f.\\u0062\\u0061\\u0072 ;",
+            "var_0000.var_0001;"
+        );
+        test_normalization(
+            "console.\\u006c\\u006f\\u0067 ;",
+            "console.log;"
+        );
+        test_normalization(
+            "\\u0066\\u006f\\u006f.\\u006a\\u006f\\u0069\\u006e ;",
+            "var_0000.join;"
+        );
+    }
+
+    SECTION("invalid dot accessor")
+    {
+        test_normalization_bad(
+            "\\u0066\\u006f\\u006f.\\u0020\\u0061\\u0072 ;",
+            "var_0000.var_0001",
+            JSTokenizer::BAD_TOKEN
+        );
+        test_normalization_bad(
+            "\\u0066\\u0020\\u006f.\\u0062\\u0061\\u0072 ;",
+            "var_0000 var_0001",
+            JSTokenizer::BAD_TOKEN
+        );
+        test_normalization_bad(
+            "console.\\u006c\\u0020\\u0067 ;",
+            "console.l var_0000",
+            JSTokenizer::BAD_TOKEN
+        );
+        test_normalization_bad(
+            "\\u0066\\u0020\\u006f.\\u006a\\u006f\\u0069\\u006e ;",
+            "var_0000 var_0001",
+            JSTokenizer::BAD_TOKEN
+        );
+    }
+}
+
 TEST_CASE("Split", "[JSNormalizer]")
 {
     SECTION("unescape()")
@@ -1091,6 +1235,35 @@ TEST_CASE("Split", "[JSNormalizer]")
             { "114)", "'bar'" }
         });
     }
+
+    SECTION("identifier")
+    {
+        test_normalization({
+            { "\\u0062", "var_0000" },
+            { "\\u0061\\u0072", "var_0001" }
+        });
+        test_normalization({
+            { "\\u{62}", "var_0000" },
+            { "\\u{61}\\u{72}", "var_0001" }
+        });
+        test_normalization({
+            { "\\u0062", "var_0000" },
+            { "\\u{61}\\u{72}", "var_0001" }
+        });
+        test_normalization({
+            { "\\u{62}", "var_0000" },
+            { "\\u0061\\u0072", "var_0001" }
+        });
+        test_normalization({
+            { "\\u{63}\\u{6f}\\u{6e}", "var_0000" },
+            { "\\u{73}\\u{6f}\\u{6c}\\u{65}", "console" }
+        });
+        test_normalization({
+            { "\\u0062", "var_0000" },
+            { "\\u0061", "var_0001" },
+            { "\\u0072", "var_0002" }
+        });
+    }
 }
 
 TEST_CASE("Mixed input", "[JSNormalizer]")
@@ -1129,6 +1302,14 @@ TEST_CASE("Mixed input", "[JSNormalizer]")
 
     SECTION("identifier")
     {
+        test_normalization(
+            "\\u0062\\u{61}\\u0072",
+            "var_0000"
+        );
+        test_normalization(
+            "\\u{62}\\u0061\\u{72}",
+            "var_0000"
+        );
         test_normalization(
             "unescape ( f(\"A\\u20B\\u20C\"), eval(\"\\u66\\u6f\\u6f\"), \"\\u66\\u6f\\u6f\" ) ;",
             "var_0000(\"A\\u20B\\u20C\"),eval(\"\\u66\\u6f\\u6f\"),\"foo\";"
