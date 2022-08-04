@@ -2460,6 +2460,39 @@ TEST_CASE("split between tokens", "[JSNormalizer]")
         NORMALIZE_2(dat1, dat2, exp1, exp2);
         NORM_COMBINED_2(dat1, dat2, exp);
     }
+    SECTION("complete regex (1 parsing group) - identifier")
+    {
+        const char dat1[] = "/ss/,";
+        const char dat2[] = " a ;";
+        const char exp1[] = "/ss/,";
+        const char exp2[] = "a;";
+        const char exp[] = "/ss/,a;";
+
+        NORMALIZE_2(dat1, dat2, exp1, exp2);
+        NORM_COMBINED_2(dat1, dat2, exp);
+    }
+    SECTION("complete regex (2 parsing groups) - identifier")
+    {
+        const char dat1[] = "/\\s/,";
+        const char dat2[] = " a ;";
+        const char exp1[] = "/\\s/,";
+        const char exp2[] = "a;";
+        const char exp[] = "/\\s/,a;";
+
+        NORMALIZE_2(dat1, dat2, exp1, exp2);
+        NORM_COMBINED_2(dat1, dat2, exp);
+    }
+    SECTION("complete regex (not the first) - identifier")
+    {
+        const char dat1[] = ",/\\s/,";
+        const char dat2[] = " a ;";
+        const char exp1[] = ",/\\s/,";
+        const char exp2[] = "a;";
+        const char exp[] = ",/\\s/,a;";
+
+        NORMALIZE_2(dat1, dat2, exp1, exp2);
+        NORM_COMBINED_2(dat1, dat2, exp);
+    }
 }
 
 TEST_CASE("split in comments", "[JSNormalizer]")
@@ -2745,7 +2778,7 @@ TEST_CASE("split in closing tag", "[JSNormalizer]")
         const char dat2[] = "ipt";
         const char dat3[] = ">";
         const char exp1[] = "::::</scr";
-        const char exp2[] = "cript";
+        const char exp2[] = "script";
         const char exp3[] = "";
         const char exp[] = "::::";
 

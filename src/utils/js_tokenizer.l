@@ -1702,6 +1702,9 @@ void JSTokenizer::states_correct(int take_off)
 
     bytes_read -= delta;
     state.orig_len -= delta;
+    state.correction = take_off;
+
+    yyless(take_off);
 }
 
 void JSTokenizer::states_over()
@@ -1766,6 +1769,7 @@ bool JSTokenizer::states_process()
         state.orig_len = yyleng;
         state.norm_len = yyout.rdbuf()->pubseekoff(0, std::ios_base::cur, std::ios_base::out);
         state.sc = yy_start;
+        state.correction = 0;
 
         return true;
     }
@@ -1781,6 +1785,16 @@ bool JSTokenizer::states_process()
     // Update parsing state every match
     else if (bytes_skip > 0)
     {
+        // if the state was corrected, reflect this during the parsing
+        if (auto correction = states[sp].correction)
+        {
+            auto delta = yyleng - correction;
+            bytes_skip += delta;
+            bytes_read -= delta;
+
+            yyless(correction);
+        }
+
         do { ++sp; sp %= JSTOKENIZER_MAX_STATES; }
         while (states[sp].sc == 0);
 
@@ -1804,6 +1818,7 @@ bool JSTokenizer::states_process()
         state.orig_len = yyleng;
         state.norm_len = yyout.rdbuf()->pubseekoff(0, std::ios_base::cur, std::ios_base::out);
         state.sc = yy_start;
+        state.correction = 0;
 
         return true;
     }
@@ -2316,7 +2331,6 @@ JSTokenizer::JSRet JSTokenizer::literal_regex_start()
     EXEC(do_spacing(LITERAL))
     yyout << '/';
     states_correct(1);
-    yyless(1);
     BEGIN(regex);
     set_ident_norm(true);
     regex_stack = VStack<char>();
@@ -2957,7 +2971,6 @@ void JSTokenizer::explicit_otag()
 
     // discard match of the script tag and scan again without leading '<'
     states_correct(1);
-    yyless(1);
 
     // process leading '<' as a comparison operator
     operator_comparison();
