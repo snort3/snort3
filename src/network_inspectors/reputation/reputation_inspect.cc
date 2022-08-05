@@ -37,6 +37,7 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "pub_sub/auxiliary_ip_event.h"
+#include "pub_sub/reputation_events.h"
 #include "utils/util.h"
 
 #include "reputation_parse.h"
@@ -263,6 +264,7 @@ static IPdecision snort_reputation_aux_ip(const ReputationConfig& config, Reputa
             set_ips_policy(get_default_ips_policy(SnortConfig::get_conf()));
 
             DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_BLOCKLIST_DST);
+            DataBus::publish(REPUTATION_MATCHED_EVENT, p);
             p->active->drop_packet(p, true);
 
             // disable all preproc analysis and detection for this packet
@@ -287,6 +289,7 @@ static IPdecision snort_reputation_aux_ip(const ReputationConfig& config, Reputa
             }
 
             DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_MONITOR_DST);
+            DataBus::publish(REPUTATION_MATCHED_EVENT, p);
             reputationstats.aux_ip_monitored++;
         }
         else if (decision == TRUSTED)
@@ -295,6 +298,7 @@ static IPdecision snort_reputation_aux_ip(const ReputationConfig& config, Reputa
                 p->flow->flags.reputation_allowlist = true;
 
             DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_ALLOWLIST_DST);
+            DataBus::publish(REPUTATION_MATCHED_EVENT, p);
             p->active->trust_session(p, true);
             reputationstats.aux_ip_trusted++;
         }
@@ -377,6 +381,7 @@ static void snort_reputation(const ReputationConfig& config, ReputationData& dat
         }
 
         DetectionEngine::queue_event(GID_REPUTATION, blocklist_event);
+        DataBus::publish(REPUTATION_MATCHED_EVENT, p);
         act->drop_packet(p, true);
 
         // disable all preproc analysis and detection for this packet
@@ -393,7 +398,7 @@ static void snort_reputation(const ReputationConfig& config, ReputationData& dat
         return;
     }
 
-    else if ( p->flow and p->flow->reload_id > 0 )
+    if ( p->flow and p->flow->reload_id > 0 )
     {
         const auto& aux_ip_list =  p->flow->stash->get_aux_ip_list();
         for ( const auto& ip : aux_ip_list )
@@ -408,7 +413,7 @@ static void snort_reputation(const ReputationConfig& config, ReputationData& dat
         return;
     }
 
-    else if (MONITORED_SRC == decision or MONITORED_DST == decision)
+    if (MONITORED_SRC == decision or MONITORED_DST == decision)
     {
         unsigned monitor_event = (MONITORED_SRC == decision) ?
             REPUTATION_EVENT_MONITOR_SRC : REPUTATION_EVENT_MONITOR_DST;
@@ -420,6 +425,7 @@ static void snort_reputation(const ReputationConfig& config, ReputationData& dat
         }
 
         DetectionEngine::queue_event(GID_REPUTATION, monitor_event);
+        DataBus::publish(REPUTATION_MATCHED_EVENT, p);
         reputationstats.monitored++;
     }
 
@@ -435,6 +441,7 @@ static void snort_reputation(const ReputationConfig& config, ReputationData& dat
         }
 
         DetectionEngine::queue_event(GID_REPUTATION, allowlist_event);
+        DataBus::publish(REPUTATION_MATCHED_EVENT, p);
         act->trust_session(p, true);
         reputationstats.trusted++;
     }
@@ -469,6 +476,36 @@ static const char* to_string(AllowAction aa)
     }
 
     return "";
+}
+
+class IpRepHandler : public DataHandler
+{
+public:
+    explicit IpRepHandler(Reputation& inspector)
+        : DataHandler(REPUTATION_NAME), inspector(inspector)
+    { }
+    void handle(DataEvent&, Flow*) override;
+
+private:
+    Reputation& inspector;
+};
+
+void IpRepHandler::handle(DataEvent& event, Flow*)
+{
+    Packet* p = const_cast<Packet*>(event.get_packet());
+    assert(p);
+    if (!p->has_ip())
+        return;
+
+    Profile profile(reputation_perf_stats);
+
+    if (PacketTracer::is_daq_activated())
+        PacketTracer::pt_timer_start();
+
+    ReputationData* data = static_cast<ReputationData*>(inspector.get_thread_specific_data());
+    assert(data);
+    snort_reputation(inspector.get_config(), *data, p);
+    ++reputationstats.packets;
 }
 
 class AuxiliaryIpRepHandler : public DataHandler
@@ -559,28 +596,12 @@ void Reputation::show(const SnortConfig*) const
     ConfigLogger::log_value("allowlist", config.allowlist_path.c_str());
 }
 
-void Reputation::eval(Packet* p)
-{
-    Profile profile(reputation_perf_stats);
-
-    // precondition - what we registered for
-    assert(p->has_ip());
-
-    if (p->is_rebuilt())
-        return;
-
-    if (PacketTracer::is_daq_activated())
-        PacketTracer::pt_timer_start();
-
-    ReputationData* data = static_cast<ReputationData*>(get_thread_specific_data());
-    assert(data);
-    snort_reputation(config, *data, p);
-    ++reputationstats.packets;
-}
-
 bool Reputation::configure(SnortConfig*)
 {
+    DataBus::subscribe_network( FLOW_STATE_SETUP_EVENT, new IpRepHandler(*this) );
+    DataBus::subscribe_network( FLOW_STATE_RELOADED_EVENT, new IpRepHandler(*this) );
     DataBus::subscribe_network( AUXILIARY_IP_EVENT, new AuxiliaryIpRepHandler(*this) );
+    DataBus::subscribe_network( PKT_WITHOUT_FLOW_EVENT, new IpRepHandler(*this) );
     return true;
 }
 
@@ -624,7 +645,7 @@ const InspectApi reputation_api =
         mod_ctor,
         mod_dtor
     },
-    IT_FIRST,
+    IT_PASSIVE,
     PROTO_BIT__ANY_IP,
     nullptr, // buffers
     nullptr, // service
