@@ -578,8 +578,7 @@ public:
 
     void handle(DataEvent&, Flow* flow) override
     {
-        // If reload_id is zero, this is a new flow and is bound by FLOW_STATE_SETUP_EVENT
-        if (flow && flow->reload_id && Flow::FlowState::INSPECT == flow->flow_state)
+        if (flow && Flow::FlowState::INSPECT == flow->flow_state)
         {
             Binder* binder = InspectorManager::get_binder();
             if (binder)

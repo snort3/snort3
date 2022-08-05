@@ -2096,7 +2096,7 @@ void InspectorManager::internal_execute(Packet* p)
     unsigned reload_id = SnortConfig::get_thread_reload_id();
     if ( p->flow )
     {
-        if ( p->flow->reload_id != reload_id )
+        if ( p->flow->reload_id && p->flow->reload_id != reload_id )
             DataBus::publish(FLOW_STATE_RELOADED_EVENT, p, p->flow);
     }
     else
