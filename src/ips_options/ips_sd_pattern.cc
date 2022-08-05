@@ -77,7 +77,7 @@ struct SdPatternConfig
 
     std::string pii;
     unsigned threshold = 1;
-    bool obfuscate_pii = false;
+    bool can_be_obfuscated = false;
     bool forced_boundary = false;
     int (* validate)(const uint8_t* buf, unsigned long long buflen) = nullptr;
 
@@ -95,7 +95,7 @@ struct SdPatternConfig
     {
         pii.clear();
         threshold = 1;
-        obfuscate_pii = false;
+        can_be_obfuscated = false;
         validate = nullptr;
         db = nullptr;
     }
@@ -229,7 +229,11 @@ static int hs_match(unsigned int /*id*/, unsigned long long from,
 
     ctx->count++;
 
-    if ( ctx->config.obfuscate_pii )
+    IpsPolicy* p = get_ips_policy();
+
+    assert(p);
+
+    if ( p->obfuscate_pii and ctx->config.can_be_obfuscated )
     {
         if ( !ctx->packet->obfuscator )
             ctx->packet->obfuscator = new Obfuscator();
@@ -348,25 +352,23 @@ bool SdPatternModule::set(const char*, Value& v, SnortConfig*)
 
 bool SdPatternModule::end(const char*, int, SnortConfig*)
 {
-    IpsPolicy* p = get_ips_policy();
-
     if (config.pii == "credit_card")
     {
         config.pii = SD_CREDIT_PATTERN_ALL;
         config.validate = SdLuhnAlgorithm;
-        config.obfuscate_pii = p->obfuscate_pii;
+        config.can_be_obfuscated = true;
         config.forced_boundary = true;
     }
     else if (config.pii == "us_social")
     {
         config.pii = SD_SOCIAL_PATTERN;
-        config.obfuscate_pii = p->obfuscate_pii;
+        config.can_be_obfuscated = true;
         config.forced_boundary = true;
     }
     else if (config.pii == "us_social_nodashes")
     {
         config.pii = SD_SOCIAL_NODASHES_PATTERN;
-        config.obfuscate_pii = p->obfuscate_pii;
+        config.can_be_obfuscated = true;
         config.forced_boundary = true;
     }
 
