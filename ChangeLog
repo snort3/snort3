@@ -1,3 +1,16 @@
+2022/08/10 - 3.1.39.0
+
+cmake: add --enable-luajit-static option to enable LuaJit linked statically
+http_inspect: request and response shouldn't be available for pkt_data
+ips_options: remove obfuscate_pii caching in sd_pattern option
+main, managers: remove the reload_module command
+netflow: pass a flag if the initiator and responder were swapped
+parser: remove 138 from builtin GID exceptions
+rna: Added log message for missing 'rna.conf' path
+utils: fix compilation warning [-Wcomma]
+utils: fix JS split to reflect tokens correction and re-normalization
+utils: validate escaped JavaScript identifiers
+
 2022/07/28 - 3.1.38.0
 
 appid: restart inspection for ssl session inside http tunnel

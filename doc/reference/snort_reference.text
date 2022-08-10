@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.38.0 2022-07-28 09:09:42 EDT TST
+Revision 3.1.39.0 2022-08-10 12:15:07 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1612,7 +1612,6 @@ Commands:
   * snort.reload_config(filename): load new configuration
   * snort.reload_policy(filename): reload part or all of the default
     policy
-  * snort.reload_module(module): reload module
   * snort.reload_daq(): reload daq module
   * snort.reload_hosts(filename): load a new hosts table
   * snort.pause(): suspend packet processing
@@ -15317,7 +15316,6 @@ a reserved value
   * snort.reload_config(filename): load new configuration
   * snort.reload_policy(filename): reload part or all of the default
     policy
-  * snort.reload_module(module): reload module
   * snort.reload_daq(): reload daq module
   * snort.reload_hosts(filename): load a new hosts table
   * snort.pause(): suspend packet processing
