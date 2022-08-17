@@ -54,6 +54,8 @@ public:
     bool normalize_utf = true;
     int64_t maximum_host_length = -1;
     int64_t maximum_chunk_length = 0xFFFFFFFF;
+    uint16_t maximum_header_length = 4096;
+    uint16_t maximum_headers = 200;
     bool decompress_pdf = false;
     bool decompress_swf = false;
     bool decompress_zip = false;

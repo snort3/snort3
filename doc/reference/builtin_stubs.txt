@@ -809,12 +809,12 @@ generated if the simplify_path option is configured.
 
 119:19
 
-HTTP header line exceeds 4096 bytes. This does not apply to the start line. Header line length
-includes both header field name and value.
+HTTP header line exceeds maximum_header_length option bytes. This does not apply to the start line.
+Header line length includes both header field name and value.
 
 119:20
 
-HTTP message has more than 200 header fields.
+HTTP message has more than maximum_headers option header fields.
 
 119:21
 

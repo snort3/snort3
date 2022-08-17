@@ -62,7 +62,6 @@ public:
     int32_t get_num_headers() const { return num_headers; }
     int32_t get_content_type();
 
-    static const int MAX_HEADERS = 200;  // I'm an arbitrary number. FIXIT-RC
 protected:
     HttpMsgHeadShared(const uint8_t* buffer, const uint16_t buf_size,
         HttpFlowData* session_data_, HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
@@ -72,6 +71,8 @@ protected:
     static int32_t get_next_code(const Field& field, int32_t& offset, const StrCode table[]);
     // Do a case insensitive search for "boundary=" in a Field
     static bool boundary_present(const Field& field);
+
+    // All of these are indexed by the relative position of the header field in the message
 
     Field* header_line = nullptr;
     HttpEnums::HeaderId* header_name_id = nullptr;
@@ -83,9 +84,6 @@ protected:
 
 private:
     static const int MAX = HttpEnums::HEAD__MAX_VALUE + HttpEnums::MAX_CUSTOM_HEADERS;
-
-    // All of these are indexed by the relative position of the header field in the message
-    static const int MAX_HEADER_LENGTH = 4096; // Based on max cookie size of some browsers
 
     void parse_header_block();
     int32_t find_next_header(const uint8_t* buffer, int32_t length, int32_t& num_seps);

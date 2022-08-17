@@ -74,6 +74,12 @@ const Parameter HttpModule::http_params[] =
     { "maximum_chunk_length", Parameter::PT_INT, "0:4294967295", "4294967295",
       "maximum allowed length for a message body chunk" },
 
+    { "maximum_header_length", Parameter::PT_INT, "0:65535", "4096",
+      "alert when the length of a header exceeds this value" },
+
+    { "maximum_headers", Parameter::PT_INT, "0:65535", "200",
+      "alert when the number of headers in a message exceeds this value" },
+
     { "normalize_utf", Parameter::PT_BOOL, nullptr, "true",
       "normalize charset utf encodings in response bodies" },
 
@@ -253,6 +259,14 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("maximum_chunk_length"))
     {
         params->maximum_chunk_length = val.get_int64();
+    }
+    else if (val.is("maximum_header_length"))
+    {
+        params->maximum_header_length = val.get_uint16();
+    }
+    else if (val.is("maximum_headers"))
+    {
+        params->maximum_headers = val.get_uint16();
     }
     else if (val.is("decompress_pdf"))
     {

@@ -343,6 +343,16 @@ body to be less than four gigabytes.
 A lower limit may be configured by setting maximum_chunk_length. Any chunk
 longer than maximum chunk length will generate a 119:16 alert.
 
+===== maximum_header_length
+
+http_inspect generates 119:19 when the length of a header exceeds
+maximum_header_length = N {0 : 65535} (default 4096).
+
+===== maximum_headers
+
+http_inspect generates 119:20 when the number of headers exceeds
+maximum_headers = N {0 : 65535} (default 200).
+
 ===== URI processing
 
 Normalization and inspection of the URI in the HTTP request message is a

@@ -132,18 +132,15 @@ void HttpMsgHeadShared::parse_header_block()
         const int32_t header_length = find_next_header(msg_text.start() + bytes_used,
             msg_text.length() - bytes_used, num_seps);
         header_line[num_headers].set(header_length, msg_text.start() + bytes_used + num_seps);
-        if (header_line[num_headers].length() > MAX_HEADER_LENGTH)
+        if (header_line[num_headers].length() > params->maximum_header_length)
         {
             add_infraction(INF_TOO_LONG_HEADER);
             create_event(EVENT_LONG_HDR);
         }
         bytes_used += num_seps + header_line[num_headers].length();
-        if (++num_headers >= MAX_HEADERS)
-        {
-            break;
-        }
+        ++num_headers;
     }
-    if (bytes_used < msg_text.length())
+    if (num_headers > params->maximum_headers)
     {
         add_infraction(INF_TOO_MANY_HEADERS);
         create_event(EVENT_MAX_HEADERS);
