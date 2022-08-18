@@ -24,7 +24,7 @@ subdirectory located here.  These include the following:
 * tcp - implements module for handling Stream tcp sessions.  This includes
   normalization protocol tracking, normalization, and reassembly.
 
-* upd - implements module for handling Stream udp sessions.  Tracking only.
+* udp - implements module for handling Stream udp sessions.  Tracking only.
 
 * icmp - implements module for handling Stream icmp sessions.  Tracking
   only.
