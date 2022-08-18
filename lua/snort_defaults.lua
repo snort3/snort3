@@ -1190,6 +1190,9 @@ default_js_norm_ident_ignore =
     'isFinite', 'isNaN', 'parseFloat', 'parseInt', 'Encode', 'Decode', 'decodeURI',
     'decodeURIComponent', 'encodeURI', 'encodeURIComponent',
 
+    -- Microsoft.JScript.GlobalObject.Functions
+    'CollectGarbage', 'GetHashCode', 'GetObject', 'GetType', 'MemberwiseClone',
+
     -- GlobalObject.Constructors
     'AggregateError', 'Array', 'ArrayBuffer', 'BigInt', 'BitInt64Array', 'BigUint64Array',
     'Boolean', 'DataView', 'Date', 'Error', 'EvalError', 'FinalizationRegistry',
@@ -1198,6 +1201,9 @@ default_js_norm_ident_ignore =
     'RangeError', 'ReferenceError', 'RegExp', 'Set', 'SharedArrayBuffer', 'String',
     'Symbol', 'SyntaxError', 'TypeError', 'Uint8Array', 'Uint8ClampedArray', 'Uint16Array',
     'Uint32Array', 'URIError', 'WeakMap', 'WeakRef', 'WeakSet',
+
+    -- Microsoft.JScript.GlobalObject.Constructors
+    'ActiveXObject', 'Enumerator', 'VBArray',
 
     -- Atomics
     'Atomics', 'WaiterList', 'ValidateIntegerTypedArray', 'ValidateAtomicAccess', 'GetWaiterList',
@@ -1271,7 +1277,7 @@ default_js_norm_ident_ignore =
     'console', 'document',
 
     -- Misc
-    'CreateDynamicFunction', 'HostHasSourceTextAvailable', 'SymbolDescriptiveString',
+    'arguments', 'CreateDynamicFunction', 'HostHasSourceTextAvailable', 'SymbolDescriptiveString',
     'IsConcatSpreadable', 'FlattenIntoArray', 'SortCompare', 'AddEntriesFromIterable',
     'CreateMapIterator', 'CreateSetIterator', 'EventSet', 'SharedDataBlockEventSet',
     'HostEventSet', 'ComposeWriteEventBytes', 'ValueOfReadEvent', 'escape', 'unescape',
@@ -1311,7 +1317,32 @@ default_js_norm_prop_ignore =
     'reduceRight', 'reverse', 'shift', 'unshift', 'some', 'sort', 'splice',
 
     -- Generator
-    'next', 'return', 'throw'
+    'next', 'return', 'throw',
+
+    -- EventTarget
+    'addEventListener', 'dispatchEvent', 'removeEventListener',
+
+    -- Node
+    'childNodes', 'nodeValue', 'ownerDocument', 'parentElement', 'textContent', 'appendChild',
+    'cloneNode', 'insertBefore', 'removeChild', 'replaceChild',
+
+    -- Element
+    'innerHTML', 'msRegionOverflow', 'openOrClosedShadowRoot', 'outerHTML', 'part', 'shadowRoot',
+    'after', 'append', 'attachShadow', 'before', 'closest', 'createShadowRoot', 'getAttribute',
+    'getAttributeNode', 'getAttributeNodeNS', 'getAttributeNS', 'getElementsByClassName',
+    'getElementsByTagName', 'getElementsByTagNameNS', 'insertAdjacentElement', 'insertAdjacentHTML',
+    'insertAdjacentText', 'prepend', 'querySelector', 'querySelectorAll', 'releasePointerCapture',
+    'remove', 'removeAttribute', 'removeAttributeNode', 'removeAttributeNS', 'replaceChildren',
+    'replaceWith', 'setAttribute', 'setAttributeNode', 'setAttributeNodeNS', 'setAttributeNS',
+    'setCapture', 'setHTML', 'setPointerCapture', 'toggleAttribute',
+
+    -- HTMLElement
+    'contentEditable', 'contextMenu', 'dataset', 'dir', 'enterKeyHint', 'hidden', 'inert', 
+    'innerText', 'lang', 'nonce', 'outerText', 'style', 'tabIndex', 'title',
+    'attachInternals',
+
+    -- Misc
+    'ExportStyle', 'callee'
 }
 
 default_http_inspect =
