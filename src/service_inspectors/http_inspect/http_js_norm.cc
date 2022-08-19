@@ -200,9 +200,7 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
             break;
         case JSTokenizer::SCRIPT_ENDED:
         case JSTokenizer::CLOSING_TAG:
-            *infractions += INF_JS_CLOSING_TAG;
-            events->create_event(EVENT_JS_CLOSING_TAG);
-            ssn->js_built_in_event = true;
+            assert(false); // should not be present in external
             break;
         case JSTokenizer::BAD_TOKEN:
         case JSTokenizer::WRONG_CLOSING_SYMBOL:
@@ -242,6 +240,11 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
         {
             *infractions += INF_MIXED_ENCODINGS;
             events->create_event(EVENT_MIXED_ENCODINGS);
+        }
+        if (js_ctx.is_closing_tag_seen())
+        {
+            *infractions += INF_JS_CLOSING_TAG;
+            events->create_event(EVENT_JS_CLOSING_TAG);
         }
 
         if (ssn->js_built_in_event)

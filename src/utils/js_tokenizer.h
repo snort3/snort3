@@ -176,6 +176,8 @@ public:
     bool is_unescape_nesting_seen() const;
     bool is_mixed_encoding_seen() const;
     bool is_opening_tag_seen() const;
+    bool is_closing_tag_seen() const;
+
 protected:
     [[noreturn]] void LexerError(const char* msg) override
     { snort::FatalError("%s", msg); }
@@ -307,6 +309,7 @@ private:
     void lit_int_code_point(int base);
     void char_code_no_match();
     void explicit_otag();
+    void ctag_in_regex();
 
     static const char* p_scope_codes[];
 
@@ -323,6 +326,7 @@ private:
     bool unescape_nest_seen = false;
     bool mixed_encoding_seen = false;
     bool opening_tag_seen = false;
+    bool closing_tag_seen = false;
 
     uint8_t max_template_nesting;
     VStack<uint16_t> brace_depth;

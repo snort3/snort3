@@ -1106,7 +1106,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
     {LITERAL_DQ_STRING_START}                 { EXEC(literal_dq_string_start()) }
 <dqstr,unesc_dqstr>{LITERAL_DQ_STRING_END}    { dealias_append(); ECHO; BEGIN(divop); }
 <dqstr,unesc_dqstr>{HTML_TAG_SCRIPT_OPEN}     { if (!ext_script) { opening_tag_seen = true; } ECHO; }
-<dqstr,unesc_dqstr>{HTML_TAG_SCRIPT_CLOSE}    { if (ext_script) { ECHO; } else { BEGIN(regst); RETURN(CLOSING_TAG) } }
+<dqstr,unesc_dqstr>{HTML_TAG_SCRIPT_CLOSE}    { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } else { ECHO; } }
 <dqstr,unesc_dqstr>\\{CR}{LF}                 { /* skip */ }
 <dqstr,unesc_dqstr>\\{LF}                     { /* skip */ }
 <dqstr,unesc_dqstr>\\{CR}                     { /* skip */ }
@@ -1128,7 +1128,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
     {LITERAL_SQ_STRING_START}                 { EXEC(literal_sq_string_start()) }
 <sqstr,unesc_sqstr>{LITERAL_SQ_STRING_END}    { dealias_append(); ECHO; BEGIN(divop); }
 <sqstr,unesc_sqstr>{HTML_TAG_SCRIPT_OPEN}     { if (!ext_script) { opening_tag_seen = true; } ECHO; }
-<sqstr,unesc_sqstr>{HTML_TAG_SCRIPT_CLOSE}    { if (ext_script) { ECHO; } else { BEGIN(regst); RETURN(CLOSING_TAG) } }
+<sqstr,unesc_sqstr>{HTML_TAG_SCRIPT_CLOSE}    { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } else { ECHO; } }
 <sqstr,unesc_sqstr>\\{CR}{LF}                 { /* skip */ }
 <sqstr,unesc_sqstr>\\{LF}                     { /* skip */ }
 <sqstr,unesc_sqstr>\\{CR}                     { /* skip */ }
@@ -1151,7 +1151,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <tmpll,unesc_tmpll>(\\\\)*{LITERAL_TEMPLATE_END}             { dealias_append(); ECHO; BEGIN(divop); }
 <tmpll,unesc_tmpll>(\\\\)*{LITERAL_TEMPLATE_SUBST_START}     { EXEC(process_subst_open()) dealias_reset(); }
 <tmpll,unesc_tmpll>{HTML_TAG_SCRIPT_OPEN}                    { if (!ext_script) { opening_tag_seen = true; } ECHO; }
-<tmpll,unesc_tmpll>{HTML_TAG_SCRIPT_CLOSE}                   { BEGIN(regst); RETURN(CLOSING_TAG) }
+<tmpll,unesc_tmpll>{HTML_TAG_SCRIPT_CLOSE}                   { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } else { ECHO; } }
 <tmpll,unesc_tmpll><<EOF>>                                   { RETURN(SCRIPT_CONTINUE) }
 <tmpll>{UNICODE_ESCAPE_SEQUENCE}                             |
 <tmpll>{HEX_ESCAPE_SEQUENCE}                                 { escaped_unicode_utf_8(); }
@@ -1169,7 +1169,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <regst>{LITERAL_REGEX_START}        { EXEC(literal_regex_start()) }
 <regex>{LITERAL_REGEX_END}          { EXEC(literal_regex_end()) }
 <regex>{HTML_TAG_SCRIPT_OPEN}       { if (!ext_script) { opening_tag_seen = true; } ECHO; }
-<regex>{HTML_TAG_SCRIPT_CLOSE}      { BEGIN(regst); RETURN(CLOSING_TAG) }
+<regex>{HTML_TAG_SCRIPT_CLOSE}      { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } else { ctag_in_regex(); } }
 <regex>\\{CR}                       { BEGIN(regst); RETURN(BAD_TOKEN) }
 <regex>\\{LF}                       { BEGIN(regst); RETURN(BAD_TOKEN) }
 <regex>{CR}                         { BEGIN(regst); RETURN(BAD_TOKEN) }
@@ -2036,6 +2036,11 @@ bool JSTokenizer::is_opening_tag_seen() const
     return opening_tag_seen;
 }
 
+bool JSTokenizer::is_closing_tag_seen() const
+{
+    return closing_tag_seen;
+}
+
 void JSTokenizer::set_block_param(bool f)
 {
     scope_cur().block_param = f;
@@ -2242,7 +2247,17 @@ void JSTokenizer::dealias_finalize()
 }
 
 JSTokenizer::JSRet JSTokenizer::html_closing_script_tag()
-{ return global_scope() ? SCRIPT_ENDED : ENDED_IN_INNER_SCOPE; }
+{
+    if (!ext_script)
+        return global_scope() ? SCRIPT_ENDED : ENDED_IN_INNER_SCOPE;
+    else
+    {
+        closing_tag_seen = true;
+        states_correct(1);
+        operator_comparison();
+        return EOS;
+    }
+}
 
 JSTokenizer::JSRet JSTokenizer::literal_dq_string_start()
 {
@@ -2974,6 +2989,13 @@ void JSTokenizer::explicit_otag()
 
     // process leading '<' as a comparison operator
     operator_comparison();
+}
+
+void JSTokenizer::ctag_in_regex()
+{
+    // out of '</script>', consume only the leading '<' and renormalize the rest
+    states_correct(1);
+    ECHO;
 }
 
 JSTokenizer::JSRet JSTokenizer::process(size_t& bytes_in, bool external_script)

@@ -1929,6 +1929,33 @@ static const char unexpected_tag_buf26[] =
 static const char unexpected_tag_expected26[] =
     "var regex=/ <script> /;";
 
+static const char unexpected_tag_buf27[] =
+    "var template = ` </script> `;";
+
+static const char unexpected_tag_expected27[] =
+    "var template=` ";
+
+static const char unexpected_tag_expected27_ext[] =
+    "var template=` </script> `;";
+
+static const char unexpected_tag_buf28[] =
+    "var regex = / </script> /;/";
+
+static const char unexpected_tag_expected28[] =
+    "var regex=/ ";
+
+static const char unexpected_tag_expected28_ext[] =
+    "var regex=/ </s cript>/;/";
+
+static const char unexpected_tag_buf29[] =
+    "var a = 5 </script>/";
+
+static const char unexpected_tag_expected29[] =
+    "var a=5";
+
+static const char unexpected_tag_expected29_ext[] =
+    "var a=5</script>/";
+
 TEST_CASE("nested script tags", "[JSNormalizer]")
 {
     SECTION("explicit open tag - simple")
@@ -2081,6 +2108,21 @@ TEST_CASE("nested script tags", "[JSNormalizer]")
         NORMALIZE(unexpected_tag_buf26);
         VALIDATE(unexpected_tag_buf26, unexpected_tag_expected26);
         CHECK_OTAG(true);
+    }
+    SECTION("closing tag within template literal")
+    {
+        NORMALIZE(unexpected_tag_buf27);
+        VALIDATE_FAIL(unexpected_tag_buf27, unexpected_tag_expected27, JSTokenizer::CLOSING_TAG, 26);
+    }
+    SECTION("closing tag within regex literal")
+    {
+        NORMALIZE(unexpected_tag_buf28);
+        VALIDATE_FAIL(unexpected_tag_buf28, unexpected_tag_expected28, JSTokenizer::CLOSING_TAG, 23);
+    }
+    SECTION("closing tag from regex literal expression")
+    {
+        NORMALIZE(unexpected_tag_buf29);
+        VALIDATE_FAIL(unexpected_tag_buf29, unexpected_tag_expected29, JSTokenizer::SCRIPT_ENDED, 19);
     }
 }
 
@@ -2321,6 +2363,22 @@ TEST_CASE("nested script tags in an external script", "[JSNormalizer]")
         NORMALIZE_EXT(unexpected_tag_buf26);
         VALIDATE(unexpected_tag_buf26, unexpected_tag_expected26);
         CHECK_OTAG(false);
+    }
+    SECTION("closing tag within template literal")
+    {
+        NORMALIZE_EXT(unexpected_tag_buf27);
+        VALIDATE(unexpected_tag_buf27, unexpected_tag_expected27_ext);
+    }
+    SECTION("closing tag within regex literal")
+    {
+        NORMALIZE_EXT(unexpected_tag_buf28);
+        VALIDATE(unexpected_tag_buf28, unexpected_tag_expected28_ext);
+    }
+    SECTION("closing tag from regex literal expression")
+    {
+        NORMALIZE_EXT(unexpected_tag_buf29);
+        CHECK(norm.is_closing_tag_seen());
+        VALIDATE(unexpected_tag_buf29, unexpected_tag_expected29_ext);
     }
 }
 
