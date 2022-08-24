@@ -19,6 +19,8 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
+#include "main/snort_types.h"
+
 // process oriented services like signal handling, heap info, etc.
 
 enum PigSignal
@@ -39,8 +41,8 @@ const char* get_signal_name(PigSignal);
 
 void init_signals();
 void term_signals();
-void install_oops_handler();
-void remove_oops_handler();
+SO_PUBLIC void install_oops_handler();
+SO_PUBLIC void remove_oops_handler();
 void help_signals();
 
 void daemonize();

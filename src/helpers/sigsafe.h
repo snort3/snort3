@@ -23,7 +23,9 @@
 #include <cstddef>
 #include <cstdint>
 
-class SigSafePrinter
+#include "main/snort_types.h"
+
+class SO_PUBLIC SigSafePrinter
 {
 public:
     SigSafePrinter(char *buf, size_t size);

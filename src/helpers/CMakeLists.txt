@@ -13,12 +13,14 @@ endif ()
 set (HELPERS_INCLUDES
     ${HYPER_HEADERS}
     base64_encoder.h
-    buffer_data.h
-    boyer_moore_search.h
-    literal_search.h
-    scratch_allocator.h
-    json_stream.h
     bitop.h
+    boyer_moore_search.h
+    buffer_data.h
+    json_stream.h
+    literal_search.h
+    process.h
+    scratch_allocator.h
+    sigsafe.h
 )
 
 add_library (helpers OBJECT
@@ -40,11 +42,9 @@ add_library (helpers OBJECT
     markup.cc
     markup.h
     process.cc
-    process.h
     ring.h
     ring_logic.h
     sigsafe.cc
-    sigsafe.h
     scratch_allocator.cc
 )
 
