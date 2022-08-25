@@ -1,3 +1,32 @@
+2022-08-25: 3.1.40.0
+
+* appid: activate appid debug object before printing logs from http event handler
+* appid: do not clear client version when deleting appid session data
+* ChangeLog: change to md format
+* daq: Remove duplicate entries from static module list; thanks to raging-loon for reporting the issue
+* doc: add section on commit messages to the dev guide
+* doc: specify parallelization in make in tutorial; Thanks to nitronarcosis for reporting the issue and suggesting a fix
+* ffi: add get_module_version(name, type) for conditional config
+* flow: fix deferred trust for trust followed by defer
+* gid: upper bound changed to match event_filter and rate_filter implementation limits
+* help: enclose --help-config string defaults in single quotes
+* helpers: make install_oops_handle and remove_oops_handle so_public, install process.h and sigsafe.h
+* http_inspect: add doc for http_num_cookies
+* http_inspect: add more identifiers to js_norm lists
+* http_inspect: http_num_cookies rule option
+* http_inspect: parameters for header alerts
+* hyperscan: add warning when deserialization fails that includes error code
+* ip_proto: enable match on PDUs
+* managers: only publish the reloaded flow event for existing flows with an old policy
+* parameter: add int_list
+* parameter: simplify multi validation
+* reputation: make reputation handle flow setup, reloaded, and packet without flow events
+* stream: typo in dev_notes; Thanks to RobinLanglois for the fix
+* style: change max line length to 120 including \n
+* telnet: use the same splitter as ftp_server
+* utils: allow closing tag in external scripts
+* vlan: add configurable TPIDs; Thanks to ozkankirik for reporting the issue
+
 2022-08-10: 3.1.39.0
 
 * cmake: add --enable-luajit-static option to enable LuaJit linked statically

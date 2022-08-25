@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.39.0 2022-08-10 12:14:56 EDT TST
+Revision 3.1.40.0 2022-08-25 09:57:58 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1059,7 +1059,7 @@ Optional:
 
         ./configure_cmake.sh --prefix=$my_path
         cd build
-        make -j
+        make -j $(nproc)
         make install
         ln -s $my_path/conf $my_path/etc
 
@@ -4181,7 +4181,17 @@ message body to be less than four gigabytes.
 A lower limit may be configured by setting maximum_chunk_length. Any
 chunk longer than maximum chunk length will generate a 119:16 alert.
 
-5.10.3.20. URI processing
+5.10.3.20. maximum_header_length
+
+http_inspect generates 119:19 when the length of a header exceeds
+maximum_header_length = N {0 : 65535} (default 4096).
+
+5.10.3.21. maximum_headers
+
+http_inspect generates 119:20 when the number of headers exceeds
+maximum_headers = N {0 : 65535} (default 200).
+
+5.10.3.22. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize
@@ -4405,6 +4415,45 @@ list.
 In addition to the headers there are rule options for virtually every
 part of the HTTP message.
 
+Occasionally one needs a rule that looks for the count of some
+variable. For example, to alert when a message has more than 100
+headers use this rule:
+
+alert tcp any any -> any any ( msg:"more that 100 headers";
+http_num_headers: > 100; sid:25; rev:1; )
+
+This is a range-based rule. It is matching when the expression in the
+rule option is true. The general format is "option operator value".
+To compare for equality, use operator "=". This is the default
+operator and may be omitted. Both rules below will alert when the
+message has 100 headers:
+
+alert tcp any any -> any any ( msg:"100 headers";
+http_num_headers: = 100; sid:26; rev:1; )
+
+alert tcp any any -> any any ( msg:"100 headers";
+http_num_headers: 100; sid:27; rev:1; )
+
+Compare for non-equality using operator "!" or "!=", compare for less
+than using operator "<", compare for greater than using operator ">",
+compare for less or equal using operator "⇐", and compare for greater
+or equal using operator ">=".
+
+To alert when a message has strictly more than 100 headers and
+strictly less than 200 headers use this rule:
+
+alert tcp any any -> any any ( msg:"between (100,200) headers";
+http_num_headers: 100<>200; sid:28; rev:1; )
+
+This is a range-based rule with an interval. The general format is
+"option value1 operator value2". Use operator "<>" to match if the
+option is in the interval excluding the endpoints, or operator "<⇒"
+to include the endpoints. This rule will alert when a message has 100
+headers or more and 200 headers or less:
+
+alert tcp any any -> any any ( msg:"between [100,200] headers";
+http_num_headers: 100<=>200; sid:95; rev:1; )
+
 5.10.6.1. http_uri and http_raw_uri
 
 These provide the URI of the request message. The raw form is exactly
@@ -4590,13 +4639,28 @@ requires decompress_zip and decompress_vba options enabled.
 
 5.10.6.16. http_num_headers and http_num_trailers
 
-These rule options are used to check the number of headers and
-trailers, respectively. Checks available: equal to "=" or just value,
-not "!" or "!=", less than "<", greater than ">", less or equal to
-"⇐", less or greater than ">=", in range "<>", in range or equal to "
-<⇒".
+These are range-based rule options used to check the number of
+headers and trailers, respectively.
 
-5.10.6.17. http_version_match
+5.10.6.17. http_num_cookies
+
+This is a range-based rule option that checks the number of cookies.
+In a request all the individual cookies found in Cookie header are
+counted. For example, in this request there are 2 cookies:
+
+GET /send/in/some/cookies HTTP/1.1
+Host: www.cookie-store.com
+Cookie: SID=31d4d96e407aad42; lang=en-US
+
+In a response Set-Cookie headers are counted. For example, in this
+response there are 2 cookies:
+
+HTTP/1.0 540 Too much sugar
+Content-Length: 5
+Set-Cookie: lang=en-US; Path=/; Domain=example.com
+Set-Cookie: id=a3fWa; Expires=Thu, 21 Oct 2021 07:28:00 GMT; Secure; HttpOnly
+
+5.10.6.18. http_version_match
 
 Rule option that matches HTTP version to one of the listed version
 values. Possible match values: 1.0, 1.1, 2.0, 0.9, other, and
@@ -4612,7 +4676,7 @@ be HTTP/2.0 or HTTP/0.9 will match "other" as described above. The
 http_version rule option is available to examine the actual bytes in
 the version field.
 
-5.10.6.18. http_header_test and http_trailer_test
+5.10.6.19. http_header_test and http_trailer_test
 
 Rule options that perform various tests against a specific header and
 trailer field, respectively. It can perform a range test, check

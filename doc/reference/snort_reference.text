@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.39.0 2022-08-10 12:15:07 EDT TST
+Revision 3.1.40.0 2022-08-25 09:58:14 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -202,82 +202,83 @@ Table of Contents
     7.50. http_header
     7.51. http_header_test
     7.52. http_method
-    7.53. http_num_headers
-    7.54. http_num_trailers
-    7.55. http_param
-    7.56. http_raw_body
-    7.57. http_raw_cookie
-    7.58. http_raw_header
-    7.59. http_raw_request
-    7.60. http_raw_status
-    7.61. http_raw_trailer
-    7.62. http_raw_uri
-    7.63. http_stat_code
-    7.64. http_stat_msg
-    7.65. http_trailer
-    7.66. http_trailer_test
-    7.67. http_true_ip
-    7.68. http_uri
-    7.69. http_version
-    7.70. http_version_match
-    7.71. icmp_id
-    7.72. icmp_seq
-    7.73. icode
-    7.74. id
-    7.75. iec104_apci_type
-    7.76. iec104_asdu_func
-    7.77. ip_proto
-    7.78. ipopts
-    7.79. isdataat
-    7.80. itype
-    7.81. js_data
-    7.82. md5
-    7.83. metadata
-    7.84. mms_data
-    7.85. mms_func
-    7.86. modbus_data
-    7.87. modbus_func
-    7.88. modbus_unit
-    7.89. msg
-    7.90. mss
-    7.91. pcre
-    7.92. pkt_data
-    7.93. pkt_num
-    7.94. priority
-    7.95. raw_data
-    7.96. reference
-    7.97. regex
-    7.98. rem
-    7.99. replace
-    7.100. rev
-    7.101. rpc
-    7.102. s7commplus_content
-    7.103. s7commplus_func
-    7.104. s7commplus_opcode
-    7.105. sd_pattern
-    7.106. seq
-    7.107. service
-    7.108. sha256
-    7.109. sha512
-    7.110. sid
-    7.111. sip_body
-    7.112. sip_header
-    7.113. sip_method
-    7.114. sip_stat_code
-    7.115. so
-    7.116. soid
-    7.117. ssl_state
-    7.118. ssl_version
-    7.119. stream_reassemble
-    7.120. stream_size
-    7.121. tag
-    7.122. target
-    7.123. tos
-    7.124. ttl
-    7.125. urg
-    7.126. vba_data
-    7.127. window
-    7.128. wscale
+    7.53. http_num_cookies
+    7.54. http_num_headers
+    7.55. http_num_trailers
+    7.56. http_param
+    7.57. http_raw_body
+    7.58. http_raw_cookie
+    7.59. http_raw_header
+    7.60. http_raw_request
+    7.61. http_raw_status
+    7.62. http_raw_trailer
+    7.63. http_raw_uri
+    7.64. http_stat_code
+    7.65. http_stat_msg
+    7.66. http_trailer
+    7.67. http_trailer_test
+    7.68. http_true_ip
+    7.69. http_uri
+    7.70. http_version
+    7.71. http_version_match
+    7.72. icmp_id
+    7.73. icmp_seq
+    7.74. icode
+    7.75. id
+    7.76. iec104_apci_type
+    7.77. iec104_asdu_func
+    7.78. ip_proto
+    7.79. ipopts
+    7.80. isdataat
+    7.81. itype
+    7.82. js_data
+    7.83. md5
+    7.84. metadata
+    7.85. mms_data
+    7.86. mms_func
+    7.87. modbus_data
+    7.88. modbus_func
+    7.89. modbus_unit
+    7.90. msg
+    7.91. mss
+    7.92. pcre
+    7.93. pkt_data
+    7.94. pkt_num
+    7.95. priority
+    7.96. raw_data
+    7.97. reference
+    7.98. regex
+    7.99. rem
+    7.100. replace
+    7.101. rev
+    7.102. rpc
+    7.103. s7commplus_content
+    7.104. s7commplus_func
+    7.105. s7commplus_opcode
+    7.106. sd_pattern
+    7.107. seq
+    7.108. service
+    7.109. sha256
+    7.110. sha512
+    7.111. sid
+    7.112. sip_body
+    7.113. sip_header
+    7.114. sip_method
+    7.115. sip_stat_code
+    7.116. so
+    7.117. soid
+    7.118. ssl_state
+    7.119. ssl_version
+    7.120. stream_reassemble
+    7.121. stream_size
+    7.122. tag
+    7.123. target
+    7.124. tos
+    7.125. ttl
+    7.126. urg
+    7.127. vba_data
+    7.128. window
+    7.129. wscale
 
 8. Search Engine Modules
 9. SO Rule Modules
@@ -652,7 +653,7 @@ Usage: context
 
 Configuration:
 
-  * int event_filter[].gid = 1: rule generator ID { 0:max32 }
+  * int event_filter[].gid = 1: rule generator ID { 0:8129 }
   * int event_filter[].sid = 1: rule signature ID { 0:max32 }
   * enum event_filter[].type: 1st count events | every count events |
     once after count events { limit | threshold | both }
@@ -1241,7 +1242,7 @@ Usage: inspect
 
 Configuration:
 
-  * int rate_filter[].gid = 1: rule generator ID { 0:max32 }
+  * int rate_filter[].gid = 1: rule generator ID { 0:8129 }
   * int rate_filter[].sid = 1: rule signature ID { 0:max32 }
   * enum rate_filter[].track = by_src: filter only matching source or
     destination addresses { by_src | by_dst | by_rule }
@@ -1654,7 +1655,7 @@ Usage: context
 
 Configuration:
 
-  * int suppress[].gid = 0: rule generator ID { 0:max32 }
+  * int suppress[].gid = 0: rule generator ID { 0:8129 }
   * int suppress[].sid = 0: rule signature ID { 0:max32 }
   * enum suppress[].track: suppress only matching source or
     destination addresses { by_src | by_dst }
@@ -2328,6 +2329,11 @@ Type: codec
 
 Usage: context
 
+Configuration:
+
+  * int_list vlan.extra_tpid_ether_types = 0x9100 0x9200: set
+    non-standard QinQ ether types { 65535 }
+
 Rules:
 
   * 116:130 (vlan) bad VLAN frame
@@ -2693,7 +2699,7 @@ Instance Type: singleton
 
 Configuration:
 
-  * select data_log.key = http_request_header_event : name of the
+  * select data_log.key = 'http_request_header_event ': name of the
     event to log { http_request_header_event |
     http_response_header_event }
   * int data_log.limit = 0: set maximum size in MB before rollover (0
@@ -3707,6 +3713,10 @@ Configuration:
     for Host header value (-1 no limit) { -1:max53 }
   * int http_inspect.maximum_chunk_length = 4294967295: maximum
     allowed length for a message body chunk { 0:4294967295 }
+  * int http_inspect.maximum_header_length = 4096: alert when the
+    length of a header exceeds this value { 0:65535 }
+  * int http_inspect.maximum_headers = 200: alert when the number of
+    headers in a message exceeds this value { 0:65535 }
   * bool http_inspect.normalize_utf = true: normalize charset utf
     encodings in response bodies
   * bool http_inspect.decompress_pdf = false: decompress pdf files in
@@ -3809,9 +3819,10 @@ Rules:
     maximum_chunk_length
   * 119:18 (http_inspect) URI path includes /../ that goes above the
     root directory
-  * 119:19 (http_inspect) HTTP header line exceeds 4096 bytes
-  * 119:20 (http_inspect) HTTP message has more than 200 header
-    fields
+  * 119:19 (http_inspect) HTTP header line exceeds
+    maximum_header_length option bytes
+  * 119:20 (http_inspect) HTTP message has more than maximum_headers
+    option header fields
   * 119:21 (http_inspect) HTTP message has more than one
     Content-Length header value
   * 119:24 (http_inspect) Host header field appears more than once or
@@ -4843,7 +4854,7 @@ Peg counts:
 
 Help: reputation inspection
 
-Type: inspector (first)
+Type: inspector (passive)
 
 Usage: context
 
@@ -6760,7 +6771,7 @@ Usage: detect
 
 Configuration:
 
-  * int gid.~: generator id { 1:max32 }
+  * int gid.~: generator id { 1:8129 }
 
 
 7.45. gtp_info
@@ -6916,7 +6927,25 @@ Configuration:
     message trailers
 
 
-7.53. http_num_headers
+7.53. http_num_cookies
+
+--------------
+
+Help: rule option to perform range check on number of cookies
+
+Type: ips_option
+
+Usage: detect
+
+Configuration:
+
+  * interval http_num_cookies.~range: check that number of cookies of
+    current header are in given range { 0:65535 }
+  * implied http_num_cookies.request: match against the version from
+    the request message even when examining the response
+
+
+7.54. http_num_headers
 
 --------------
 
@@ -6929,7 +6958,7 @@ Usage: detect
 Configuration:
 
   * interval http_num_headers.~range: check that number of headers of
-    current buffer are in given range { 0:200 }
+    current buffer are in given range { 0:65535 }
   * implied http_num_headers.request: match against the version from
     the request message even when examining the response
   * implied http_num_headers.with_header: this rule is limited to
@@ -6940,7 +6969,7 @@ Configuration:
     HTTP message trailers
 
 
-7.54. http_num_trailers
+7.55. http_num_trailers
 
 --------------
 
@@ -6953,7 +6982,7 @@ Usage: detect
 Configuration:
 
   * interval http_num_trailers.~range: check that number of headers
-    of current buffer are in given range { 0:200 }
+    of current buffer are in given range { 0:65535 }
   * implied http_num_trailers.request: match against the version from
     the request message even when examining the response
   * implied http_num_trailers.with_header: this rule is limited to
@@ -6964,7 +6993,7 @@ Configuration:
     examine HTTP message trailers
 
 
-7.55. http_param
+7.56. http_param
 
 --------------
 
@@ -6981,7 +7010,7 @@ Configuration:
   * implied http_param.nocase: case insensitive match
 
 
-7.56. http_raw_body
+7.57. http_raw_body
 
 --------------
 
@@ -6993,7 +7022,7 @@ Type: ips_option
 Usage: detect
 
 
-7.57. http_raw_cookie
+7.58. http_raw_cookie
 
 --------------
 
@@ -7016,7 +7045,7 @@ Configuration:
     HTTP message trailers
 
 
-7.58. http_raw_header
+7.59. http_raw_header
 
 --------------
 
@@ -7041,7 +7070,7 @@ Configuration:
     HTTP message trailers
 
 
-7.59. http_raw_request
+7.60. http_raw_request
 
 --------------
 
@@ -7062,7 +7091,7 @@ Configuration:
     HTTP message trailers
 
 
-7.60. http_raw_status
+7.61. http_raw_status
 
 --------------
 
@@ -7081,7 +7110,7 @@ Configuration:
     HTTP message trailers
 
 
-7.61. http_raw_trailer
+7.62. http_raw_trailer
 
 --------------
 
@@ -7104,7 +7133,7 @@ Configuration:
     HTTP response message body (must be combined with request)
 
 
-7.62. http_raw_uri
+7.63. http_raw_uri
 
 --------------
 
@@ -7133,7 +7162,7 @@ Configuration:
     URI only
 
 
-7.63. http_stat_code
+7.64. http_stat_code
 
 --------------
 
@@ -7151,7 +7180,7 @@ Configuration:
     HTTP message trailers
 
 
-7.64. http_stat_msg
+7.65. http_stat_msg
 
 --------------
 
@@ -7170,7 +7199,7 @@ Configuration:
     HTTP message trailers
 
 
-7.65. http_trailer
+7.66. http_trailer
 
 --------------
 
@@ -7192,7 +7221,7 @@ Configuration:
     message body (must be combined with request)
 
 
-7.66. http_trailer_test
+7.67. http_trailer_test
 
 --------------
 
@@ -7219,7 +7248,7 @@ Configuration:
   * implied http_trailer_test.absent: trailer is absent
 
 
-7.67. http_true_ip
+7.68. http_true_ip
 
 --------------
 
@@ -7240,7 +7269,7 @@ Configuration:
     HTTP message trailers
 
 
-7.68. http_uri
+7.69. http_uri
 
 --------------
 
@@ -7268,7 +7297,7 @@ Configuration:
     only
 
 
-7.69. http_version
+7.70. http_version
 
 --------------
 
@@ -7290,7 +7319,7 @@ Configuration:
     HTTP message trailers
 
 
-7.70. http_version_match
+7.71. http_version_match
 
 --------------
 
@@ -7314,7 +7343,7 @@ Configuration:
     examine HTTP message trailers
 
 
-7.71. icmp_id
+7.72. icmp_id
 
 --------------
 
@@ -7330,7 +7359,7 @@ Configuration:
     0:65535 }
 
 
-7.72. icmp_seq
+7.73. icmp_seq
 
 --------------
 
@@ -7346,7 +7375,7 @@ Configuration:
     given range { 0:65535 }
 
 
-7.73. icode
+7.74. icode
 
 --------------
 
@@ -7362,7 +7391,7 @@ Configuration:
     0:255 }
 
 
-7.74. id
+7.75. id
 
 --------------
 
@@ -7378,7 +7407,7 @@ Configuration:
     }
 
 
-7.75. iec104_apci_type
+7.76. iec104_apci_type
 
 --------------
 
@@ -7393,7 +7422,7 @@ Configuration:
   * string iec104_apci_type.~: APCI type to match
 
 
-7.76. iec104_asdu_func
+7.77. iec104_asdu_func
 
 --------------
 
@@ -7408,7 +7437,7 @@ Configuration:
   * string iec104_asdu_func.~: function code to match
 
 
-7.77. ip_proto
+7.78. ip_proto
 
 --------------
 
@@ -7423,7 +7452,7 @@ Configuration:
   * string ip_proto.~proto: [!|>|<] name or number
 
 
-7.78. ipopts
+7.79. ipopts
 
 --------------
 
@@ -7439,7 +7468,7 @@ Configuration:
     lsrre|ssrr|satid|any }
 
 
-7.79. isdataat
+7.80. isdataat
 
 --------------
 
@@ -7456,7 +7485,7 @@ Configuration:
     buffer
 
 
-7.80. itype
+7.81. itype
 
 --------------
 
@@ -7472,7 +7501,7 @@ Configuration:
     0:255 }
 
 
-7.81. js_data
+7.82. js_data
 
 --------------
 
@@ -7484,7 +7513,7 @@ Type: ips_option
 Usage: detect
 
 
-7.82. md5
+7.83. md5
 
 --------------
 
@@ -7504,7 +7533,7 @@ Configuration:
     of buffer
 
 
-7.83. metadata
+7.84. metadata
 
 --------------
 
@@ -7521,7 +7550,7 @@ Configuration:
     pairs
 
 
-7.84. mms_data
+7.85. mms_data
 
 --------------
 
@@ -7532,7 +7561,7 @@ Type: ips_option
 Usage: detect
 
 
-7.85. mms_func
+7.86. mms_func
 
 --------------
 
@@ -7547,7 +7576,7 @@ Configuration:
   * string mms_func.~: func to match
 
 
-7.86. modbus_data
+7.87. modbus_data
 
 --------------
 
@@ -7558,7 +7587,7 @@ Type: ips_option
 Usage: detect
 
 
-7.87. modbus_func
+7.88. modbus_func
 
 --------------
 
@@ -7573,7 +7602,7 @@ Configuration:
   * string modbus_func.~: function code to match
 
 
-7.88. modbus_unit
+7.89. modbus_unit
 
 --------------
 
@@ -7588,7 +7617,7 @@ Configuration:
   * int modbus_unit.~: Modbus unit ID { 0:255 }
 
 
-7.89. msg
+7.90. msg
 
 --------------
 
@@ -7603,7 +7632,7 @@ Configuration:
   * string msg.~: message describing rule
 
 
-7.90. mss
+7.91. mss
 
 --------------
 
@@ -7619,7 +7648,7 @@ Configuration:
     }
 
 
-7.91. pcre
+7.92. pcre
 
 --------------
 
@@ -7641,7 +7670,7 @@ Peg counts:
   * pcre.pcre_negated: total pcre rules using negation syntax (sum)
 
 
-7.92. pkt_data
+7.93. pkt_data
 
 --------------
 
@@ -7653,7 +7682,7 @@ Type: ips_option
 Usage: detect
 
 
-7.93. pkt_num
+7.94. pkt_num
 
 --------------
 
@@ -7669,7 +7698,7 @@ Configuration:
     { 1: }
 
 
-7.94. priority
+7.95. priority
 
 --------------
 
@@ -7685,7 +7714,7 @@ Configuration:
     1:max31 }
 
 
-7.95. raw_data
+7.96. raw_data
 
 --------------
 
@@ -7696,7 +7725,7 @@ Type: ips_option
 Usage: detect
 
 
-7.96. reference
+7.97. reference
 
 --------------
 
@@ -7711,7 +7740,7 @@ Configuration:
   * string reference.~ref: reference: <scheme>,<id>
 
 
-7.97. regex
+7.98. regex
 
 --------------
 
@@ -7735,7 +7764,7 @@ Configuration:
     instead of start of buffer
 
 
-7.98. rem
+7.99. rem
 
 --------------
 
@@ -7750,7 +7779,7 @@ Configuration:
   * string rem.~: comment
 
 
-7.99. replace
+7.100. replace
 
 --------------
 
@@ -7766,7 +7795,7 @@ Configuration:
   * string replace.~: byte code to replace with
 
 
-7.100. rev
+7.101. rev
 
 --------------
 
@@ -7781,7 +7810,7 @@ Configuration:
   * int rev.~: revision { 1:max32 }
 
 
-7.101. rpc
+7.102. rpc
 
 --------------
 
@@ -7798,7 +7827,7 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-7.102. s7commplus_content
+7.103. s7commplus_content
 
 --------------
 
@@ -7809,7 +7838,7 @@ Type: ips_option
 Usage: detect
 
 
-7.103. s7commplus_func
+7.104. s7commplus_func
 
 --------------
 
@@ -7824,7 +7853,7 @@ Configuration:
   * string s7commplus_func.~: function code to match
 
 
-7.104. s7commplus_opcode
+7.105. s7commplus_opcode
 
 --------------
 
@@ -7839,7 +7868,7 @@ Configuration:
   * string s7commplus_opcode.~: opcode code to match
 
 
-7.105. sd_pattern
+7.106. sd_pattern
 
 --------------
 
@@ -7863,7 +7892,7 @@ Peg counts:
   * sd_pattern.terminated: hyperscan terminated (sum)
 
 
-7.106. seq
+7.107. seq
 
 --------------
 
@@ -7879,7 +7908,7 @@ Configuration:
     range { 0: }
 
 
-7.107. service
+7.108. service
 
 --------------
 
@@ -7894,7 +7923,7 @@ Configuration:
   * string service.*: one or more comma-separated service names
 
 
-7.108. sha256
+7.109. sha256
 
 --------------
 
@@ -7914,7 +7943,7 @@ Configuration:
     start of buffer
 
 
-7.109. sha512
+7.110. sha512
 
 --------------
 
@@ -7934,7 +7963,7 @@ Configuration:
     start of buffer
 
 
-7.110. sid
+7.111. sid
 
 --------------
 
@@ -7949,7 +7978,7 @@ Configuration:
   * int sid.~: signature id { 1:max32 }
 
 
-7.111. sip_body
+7.112. sip_body
 
 --------------
 
@@ -7960,7 +7989,7 @@ Type: ips_option
 Usage: detect
 
 
-7.112. sip_header
+7.113. sip_header
 
 --------------
 
@@ -7972,7 +8001,7 @@ Type: ips_option
 Usage: detect
 
 
-7.113. sip_method
+7.114. sip_method
 
 --------------
 
@@ -7987,7 +8016,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-7.114. sip_stat_code
+7.115. sip_stat_code
 
 --------------
 
@@ -8002,7 +8031,7 @@ Configuration:
   * int sip_stat_code.*code: status code { 1:999 }
 
 
-7.115. so
+7.116. so
 
 --------------
 
@@ -8019,7 +8048,7 @@ Configuration:
     buffer
 
 
-7.116. soid
+7.117. soid
 
 --------------
 
@@ -8035,7 +8064,7 @@ Configuration:
     like 3_45678_9
 
 
-7.117. ssl_state
+7.118. ssl_state
 
 --------------
 
@@ -8064,7 +8093,7 @@ Configuration:
     unknown
 
 
-7.118. ssl_version
+7.119. ssl_version
 
 --------------
 
@@ -8091,7 +8120,7 @@ Configuration:
     tls1.2
 
 
-7.119. stream_reassemble
+7.120. stream_reassemble
 
 --------------
 
@@ -8112,7 +8141,7 @@ Configuration:
     remainder of the session
 
 
-7.120. stream_size
+7.121. stream_size
 
 --------------
 
@@ -8130,7 +8159,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-7.121. tag
+7.122. tag
 
 --------------
 
@@ -8149,7 +8178,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1:max32 }
 
 
-7.122. target
+7.123. target
 
 --------------
 
@@ -8165,7 +8194,7 @@ Configuration:
     dst_ip }
 
 
-7.123. tos
+7.124. tos
 
 --------------
 
@@ -8180,7 +8209,7 @@ Configuration:
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
 
 
-7.124. ttl
+7.125. ttl
 
 --------------
 
@@ -8196,7 +8225,7 @@ Configuration:
     0:255 }
 
 
-7.125. urg
+7.126. urg
 
 --------------
 
@@ -8212,7 +8241,7 @@ Configuration:
     { 0:65535 }
 
 
-7.126. vba_data
+7.127. vba_data
 
 --------------
 
@@ -8224,7 +8253,7 @@ Type: ips_option
 Usage: detect
 
 
-7.127. window
+7.128. window
 
 --------------
 
@@ -8240,7 +8269,7 @@ Configuration:
     range { 0:65535 }
 
 
-7.128. wscale
+7.129. wscale
 
 --------------
 
@@ -8315,7 +8344,7 @@ Configuration:
     timestamp | tos | ttl | udp_len | vlan }
   * int alert_csv.limit = 0: set maximum size in MB before rollover
     (0 is unlimited) { 0:maxSZ }
-  * string alert_csv.separator = , : separate fields with this
+  * string alert_csv.separator = ', ': separate fields with this
     character sequence
 
 
@@ -8399,7 +8428,7 @@ Configuration:
     timestamp | tos | ttl | udp_len | vlan }
   * int alert_json.limit = 0: set maximum size in MB before rollover
     (0 is unlimited) { 0:maxSZ }
-  * string alert_json.separator = , : separate fields with this
+  * string alert_json.separator = ', ': separate fields with this
     character sequence
 
 
@@ -8818,7 +8847,7 @@ libraries see the Getting Started section of the manual.
     stdout
   * int alert_csv.limit = 0: set maximum size in MB before rollover
     (0 is unlimited) { 0:maxSZ }
-  * string alert_csv.separator = , : separate fields with this
+  * string alert_csv.separator = ', ': separate fields with this
     character sequence
   * bool alert_ex.upper = false: true/false → convert to upper/lower
     case
@@ -8846,7 +8875,7 @@ libraries see the Getting Started section of the manual.
     stdout
   * int alert_json.limit = 0: set maximum size in MB before rollover
     (0 is unlimited) { 0:maxSZ }
-  * string alert_json.separator = , : separate fields with this
+  * string alert_json.separator = ', ': separate fields with this
     character sequence
   * bool alerts.alert_with_interface_name = false: include interface
     in alert info (fast, full, or syslog only)
@@ -9104,7 +9133,7 @@ libraries see the Getting Started section of the manual.
   * string daq.modules[].variables[].variable: DAQ module variable
     (foo[=bar])
   * int daq.snaplen = 1518: set snap length (same as -s) { 0:65535 }
-  * select data_log.key = http_request_header_event : name of the
+  * select data_log.key = 'http_request_header_event ': name of the
     event to log { http_request_header_event |
     http_response_header_event }
   * int data_log.limit = 0: set maximum size in MB before rollover (0
@@ -9213,7 +9242,7 @@ libraries see the Getting Started section of the manual.
     that has authentication but not encryption
   * int event_filter[].count = 0: number of events in interval before
     tripping; -1 to disable { -1:max31 }
-  * int event_filter[].gid = 1: rule generator ID { 0:max32 }
+  * int event_filter[].gid = 1: rule generator ID { 0:8129 }
   * string event_filter[].ip: restrict filter to these addresses
     according to track
   * int event_filter[].seconds = 0: count interval { 0:max32 }
@@ -9366,7 +9395,7 @@ libraries see the Getting Started section of the manual.
     on start up
   * bool ftp_server.telnet_cmds = false: detect Telnet escape
     sequences of FTP control channel
-  * int gid.~: generator id { 1:max32 }
+  * int gid.~: generator id { 1:8129 }
   * string gtp_info.~: info element to match
   * int gtp_inspect[].infos[].length = 0: information element type
     code { 0:255 }
@@ -9483,6 +9512,10 @@ libraries see the Getting Started section of the manual.
     object property to ignore
   * int http_inspect.maximum_chunk_length = 4294967295: maximum
     allowed length for a message body chunk { 0:4294967295 }
+  * int http_inspect.maximum_header_length = 4096: alert when the
+    length of a header exceeds this value { 0:65535 }
+  * int http_inspect.maximum_headers = 200: alert when the number of
+    headers in a message exceeds this value { 0:65535 }
   * int http_inspect.maximum_host_length = -1: maximum allowed length
     for Host header value (-1 no limit) { -1:max53 }
   * int http_inspect.max_javascript_whitespaces = 200: maximum
@@ -9525,8 +9558,12 @@ libraries see the Getting Started section of the manual.
     examining HTTP message headers
   * implied http_method.with_trailer: parts of this rule examine HTTP
     message trailers
+  * interval http_num_cookies.~range: check that number of cookies of
+    current header are in given range { 0:65535 }
+  * implied http_num_cookies.request: match against the version from
+    the request message even when examining the response
   * interval http_num_headers.~range: check that number of headers of
-    current buffer are in given range { 0:200 }
+    current buffer are in given range { 0:65535 }
   * implied http_num_headers.request: match against the version from
     the request message even when examining the response
   * implied http_num_headers.with_body: parts of this rule examine
@@ -9536,7 +9573,7 @@ libraries see the Getting Started section of the manual.
   * implied http_num_headers.with_trailer: parts of this rule examine
     HTTP message trailers
   * interval http_num_trailers.~range: check that number of headers
-    of current buffer are in given range { 0:200 }
+    of current buffer are in given range { 0:65535 }
   * implied http_num_trailers.request: match against the version from
     the request message even when examining the response
   * implied http_num_trailers.with_body: parts of this rule examine
@@ -10099,7 +10136,7 @@ libraries see the Getting Started section of the manual.
     according to track
   * int rate_filter[].count = 1: number of events in interval before
     tripping { 0:max32 }
-  * int rate_filter[].gid = 1: rule generator ID { 0:max32 }
+  * int rate_filter[].gid = 1: rule generator ID { 0:8129 }
   * dynamic rate_filter[].new_action = alert: take this action on
     future hits until timeout { alert | block | drop | file_id | log
     | pass | react | reject | rewrite }
@@ -10731,7 +10768,7 @@ libraries see the Getting Started section of the manual.
     before retiring session tracker { 1:max32 }
   * int stream_user.session_timeout = 60: session tracking timeout {
     1:max31 }
-  * int suppress[].gid = 0: rule generator ID { 0:max32 }
+  * int suppress[].gid = 0: rule generator ID { 0:8129 }
   * string suppress[].ip: restrict suppression to these addresses
     according to track
   * int suppress[].sid = 0: rule signature ID { 0:max32 }
@@ -10803,6 +10840,8 @@ libraries see the Getting Started section of the manual.
     (in Unix Epoch format)
   * interval urg.~range: check if tcp urgent offset is in given range
     { 0:65535 }
+  * int_list vlan.extra_tpid_ether_types = 0x9100 0x9200: set
+    non-standard QinQ ether types { 65535 }
   * interval window.~range: check if TCP window size is in given
     range { 0:65535 }
   * multi wizard.curses: enable service identification based on
@@ -12957,14 +12996,17 @@ directory tree. For example /foo/../../bar which specifies an object
 not under the root directory /. This alert can only be generated if
 the simplify_path option is configured.
 
-119:19 (http_inspect) HTTP header line exceeds 4096 bytes
+119:19 (http_inspect) HTTP header line exceeds maximum_header_length
+option bytes
 
-HTTP header line exceeds 4096 bytes. This does not apply to the start
-line. Header line length includes both header field name and value.
+HTTP header line exceeds maximum_header_length option bytes. This
+does not apply to the start line. Header line length includes both
+header field name and value.
 
-119:20 (http_inspect) HTTP message has more than 200 header fields
+119:20 (http_inspect) HTTP message has more than maximum_headers
+option header fields
 
-HTTP message has more than 200 header fields.
+HTTP message has more than maximum_headers option header fields.
 
 119:21 (http_inspect) HTTP message has more than one Content-Length
 header value
@@ -15509,6 +15551,8 @@ and are not applicable elsewhere.
   * http_inspect (inspector): HTTP inspector
   * http_method (ips_option): rule option to set the detection cursor
     to the HTTP request method
+  * http_num_cookies (ips_option): rule option to perform range check
+    on number of cookies
   * http_num_headers (ips_option): rule option to perform range check
     on number of headers
   * http_num_trailers (ips_option): rule option to perform range
@@ -15944,6 +15988,8 @@ and are not applicable elsewhere.
     if the field is absent
   * ips_option::http_method: rule option to set the detection cursor
     to the HTTP request method
+  * ips_option::http_num_cookies: rule option to perform range check
+    on number of cookies
   * ips_option::http_num_headers: rule option to perform range check
     on number of headers
   * ips_option::http_num_trailers: rule option to perform range check
