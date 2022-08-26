@@ -35,6 +35,7 @@
 #include "utils/util.h"
 
 #include "file_capture.h"
+#include "file_service.h"
 
 using namespace snort;
 
@@ -81,7 +82,9 @@ void file_stats_print()
 {
     uint64_t processed_total[2];
     uint64_t processed_data_total[2];
+    uint64_t processed_sig_total[2]{ 0, 0 };
     uint64_t check_total = 0;
+    uint64_t check_sig_total{ 0 };
 
     for (unsigned i = 0; i < FILE_ID_MAX; i++)
     {
@@ -92,97 +95,97 @@ void file_stats_print()
     if ( !check_total )
         return;
 
-    LogLabel("File Statistics");
-    LogLabel("file type stats (files)");
+    for (unsigned i = 0; i < FILE_ID_MAX; i++)
+    {
+        check_sig_total += file_totals.signatures_processed[i][0];
+        check_sig_total += file_totals.signatures_processed[i][1];
+    }
 
-    LogLabel("         Type              Download   Upload ");
+    LogLabel("File Statistics");
+    LogLabel("file stats");
+
+    char buff[128];
+    if (FileService::is_file_signature_enabled() && check_sig_total)
+        snprintf(buff, sizeof(buff), "%25.25s %-10s %-10s %-10s %-10s %-10s %-10s", "Type",
+            "TypeDn", "TypeUp", "SigDn", "SigUp", "BytesDn", "BytesUp");
+    else
+        snprintf(buff, sizeof(buff), "%25.25s %-10s %-10s %-10s %-10s", "Type", "TypeDn", "TypeUp",
+            "BytesDn", "BytesUp");
+    LogText(buff);
 
     processed_total[0] = 0;
     processed_total[1] = 0;
     processed_data_total[0] = 0;
     processed_data_total[1] = 0;
+    processed_sig_total[0]  = 0;
+    processed_sig_total[1]  = 0;
 
-    char buff[128];
     for (unsigned i = 0; i < FILE_ID_MAX; i++)
     {
-        std::string type_name = file_type_name(i);
-        if (type_name.length() &&
-            (file_totals.files_processed[i][0] || file_totals.files_processed[i][1] ))
+        std::string type_name  = file_type_name(i);
+        bool status = false;
+
+        if (FileService::is_file_signature_enabled() && check_sig_total)
+            status = ( file_totals.files_processed[i][0] ||
+                file_totals.files_processed[i][1] ||
+                file_totals.signatures_processed[i][0] ||
+                file_totals.signatures_processed[i][1] );
+        else
+            status = ( file_totals.files_processed[i][0] ||
+                file_totals.files_processed[i][1] );
+
+        if (type_name.length() && status)
         {
-            snprintf(buff, sizeof(buff), "%12s(%3d)          " FMTu64("-10") " " FMTu64("-10") " ",
-                type_name.c_str(), i,
-                file_totals.files_processed[i][0],
-                file_totals.files_processed[i][1]);
+            type_name.append("(");
+            type_name.append(std::to_string(i));
+            type_name.append(")");
+            if (FileService::is_file_signature_enabled() && check_sig_total)
+            {
+                snprintf(buff, sizeof(buff), "%25.25s " FMTu64("-10") " " FMTu64("-10") " "
+                    FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10"),
+                    type_name.c_str(), file_totals.files_processed[i][0],
+                    file_totals.files_processed[i][1],
+                    file_totals.signatures_processed[i][0],
+                    file_totals.signatures_processed[i][1],
+                    file_totals.data_processed[i][0],
+                    file_totals.data_processed[i][1]);
+            }
+            else
+            {
+                snprintf(buff, sizeof(buff), "%25.25s " FMTu64("-10") " " FMTu64("-10") " "
+                    FMTu64("-10") " " FMTu64("-10"),
+                    type_name.c_str(),
+                    file_totals.files_processed[i][0],
+                    file_totals.files_processed[i][1],
+                    file_totals.data_processed[i][0],
+                    file_totals.data_processed[i][1]);
+            }
             LogText(buff);
-            processed_total[0]+= file_totals.files_processed[i][0];
-            processed_total[1]+= file_totals.files_processed[i][1];
+            processed_total[0]      += file_totals.files_processed[i][0];
+            processed_total[1]      += file_totals.files_processed[i][1];
+            processed_data_total[0] += file_totals.data_processed[i][0];
+            processed_data_total[1] += file_totals.data_processed[i][1];
+            if (FileService::is_file_signature_enabled() && check_sig_total)
+            {
+                processed_sig_total[0]  += file_totals.signatures_processed[i][0];
+                processed_sig_total[1]  += file_totals.signatures_processed[i][1];
+            }
         }
     }
 
-    snprintf(buff, sizeof(buff), "            Total          " FMTu64("-10") " " FMTu64("-10") " ",
-        processed_total[0], processed_total[1]);
-    LogText(buff);
-
-    LogLabel("file type stats (bytes)");
-
-    LogLabel("         Type              Download   Upload ");
-
-    for (unsigned i = 0; i < FILE_ID_MAX; i++)
+    if (FileService::is_file_signature_enabled() && check_sig_total)
     {
-        std::string type_name = file_type_name(i);
-        if (type_name.length() &&
-            (file_totals.files_processed[i][0] || file_totals.files_processed[i][1] ))
-        {
-            snprintf(buff, sizeof(buff), "%12s(%3d)          " FMTu64("-10") " " FMTu64("-10") " ",
-                type_name.c_str(), i,
-                file_totals.data_processed[i][0],
-                file_totals.data_processed[i][1]);
-            LogText(buff);
-
-            processed_data_total[0]+= file_totals.data_processed[i][0];
-            processed_data_total[1]+= file_totals.data_processed[i][1];
-        }
+        snprintf(buff, sizeof(buff), "%25.25s " FMTu64("-10") " " FMTu64("-10") " "
+            FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10"),
+            "Total", processed_total[0], processed_total[1], processed_sig_total[0],
+            processed_sig_total[1], processed_data_total[0], processed_data_total[1]);
     }
-
-    snprintf(buff, sizeof(buff), "            Total          " FMTu64("-10") " " FMTu64("-10") " ",
-        processed_data_total[0], processed_data_total[1]);
-    LogText(buff);
-
-    check_total = 0;
-
-    for (unsigned i = 0; i < FILE_ID_MAX; i++)
+    else
     {
-        check_total += file_totals.signatures_processed[i][0];
-        check_total += file_totals.signatures_processed[i][1];
+        snprintf(buff, sizeof(buff), "%25.25s " FMTu64("-10") " " FMTu64("-10") " "
+            FMTu64("-10") " " FMTu64("-10"),"Total", processed_total[0],
+            processed_total[1], processed_data_total[0], processed_data_total[1]);
     }
-
-    if ( !check_total )
-    {
-        return;
-    }
-
-    LogLabel("file signature stats");
-
-    LogLabel("         Type              Download   Upload ");
-
-    processed_total[0] = 0;
-    processed_total[1] = 0;
-    for (unsigned i = 0; i < FILE_ID_MAX; i++)
-    {
-        std::string type_name = file_type_name(i);
-        if (type_name.length() &&
-            (file_totals.signatures_processed[i][0] || file_totals.signatures_processed[i][1] ))
-        {
-            snprintf(buff, sizeof(buff), "%12s(%3d)          " FMTu64("-10") " " FMTu64("-10") " ",
-                type_name.c_str(), i,
-                file_totals.signatures_processed[i][0], file_totals.signatures_processed[i][1]);
-            LogText(buff);
-            processed_total[0]+= file_totals.signatures_processed[i][0];
-            processed_total[1]+= file_totals.signatures_processed[i][1];
-        }
-    }
-    snprintf(buff, sizeof(buff), "            Total          " FMTu64("-10") " " FMTu64("-10") " ",
-        processed_total[0], processed_total[1]);
     LogText(buff);
 
 #if 0

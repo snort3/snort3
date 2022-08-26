@@ -112,8 +112,11 @@ void FilePolicy::add_file_id(FileRule& rule)
 
 void FilePolicy::load()
 {
-    if (type_enabled)
+    if (type_enabled or signature_enabled)
+    {
+        type_enabled = true;
         FileService::enable_file_type();
+    }
 
     if (signature_enabled)
         FileService::enable_file_signature();
