@@ -47,6 +47,7 @@ public:
     void block();
     void unblock();
     void remove();
+    bool show_prompt();
 
     bool is_blocked() const { return blocked; }
     bool is_closed() const { return (fd == -1); }
@@ -68,7 +69,6 @@ public:
     SO_PUBLIC static ControlConn* query_from_lua(const lua_State*);
 
 private:
-    bool show_prompt();
     void touch();
 
 private:

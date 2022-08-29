@@ -179,8 +179,9 @@ ACThirdPartyAppIdContextSwap::~ACThirdPartyAppIdContextSwap()
     const AppIdContext& ctxt = inspector.get_ctxt();
     std::string file_path = ctxt.get_tp_appid_ctxt()->get_user_config();
     ctxt.get_odp_ctxt().get_app_info_mgr().dump_appid_configurations(file_path);
+    log_message("== reload third-party complete\n");
     LogMessage("== third-party configuration swap complete\n");
-    ReloadTracker::end(ctrlcon);
+    ReloadTracker::end(ctrlcon, true);
 }
 
 class ACThirdPartyAppIdContextUnload : public AnalyzerCommand
@@ -219,7 +220,7 @@ ACThirdPartyAppIdContextUnload::~ACThirdPartyAppIdContextUnload()
     AppIdContext& ctxt = inspector.get_ctxt();
     ctxt.create_tp_appid_ctxt();
     main_broadcast_command(new ACThirdPartyAppIdContextSwap(inspector, ctrlcon));
-    log_message("== reload third-party complete\n");
+    log_message("== unload old third-party complete\n");
     ReloadTracker::update(ctrlcon, "unload old third-party complete, start swapping to new configuration.");
 }
 

@@ -245,8 +245,8 @@ bool ACScratchUpdate::execute(Analyzer&, void**)
 
 ACScratchUpdate::~ACScratchUpdate()
 {
-    LogMessage("== scratch update complete\n");
-    ReloadTracker::end(ctrlcon);
+    log_message("== scratch update complete\n");
+    ReloadTracker::end(ctrlcon, true);
 }
 
 SFDAQInstance* AnalyzerCommand::get_daq_instance(Analyzer& analyzer)

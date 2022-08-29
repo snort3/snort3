@@ -34,7 +34,7 @@ class SO_PUBLIC ReloadTracker
 public:
     ReloadTracker() = delete;
     static bool start(ControlConn* ctrlcon);
-    static void end(ControlConn* ctrlcon);
+    static void end(ControlConn* ctrlcon, bool prompt=false);
     static void failed(ControlConn* ctrlcon, const char* reason);
     static void update(ControlConn* ctrlcon, const char* status);
 

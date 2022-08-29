@@ -50,7 +50,7 @@ bool ReloadTracker::start(ControlConn* ctrlcon)
     return true;
 }
 
-void ReloadTracker::end(ControlConn* ctrlcon)
+void ReloadTracker::end(ControlConn* ctrlcon, bool prompt)
 {
 #ifdef NDEBUG
     UNUSED(ctrlcon);
@@ -59,6 +59,8 @@ void ReloadTracker::end(ControlConn* ctrlcon)
 #endif
     LogMessage("Reload ended. [%s]\n", current_command.c_str());
     current_command.clear();
+    if (prompt)
+        ctrl->show_prompt();
     ctrl = nullptr;
     reload_in_progress = false;
 }
