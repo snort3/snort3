@@ -136,7 +136,7 @@ static void service_success(SshAppIdInfo& fd, const Packet& p, AppIdSession& asd
     asd.set_service_detected();
 }
 
-static void handle_success(SshEventFlowData& data, SshEvent& event,
+static void handle_success(SshEventFlowData& data, const SshEvent& event,
     AppIdSession& asd, AppidChangeBits& change_bits)
 {
     service_success(data.service_info, *event.get_packet(), asd, change_bits);

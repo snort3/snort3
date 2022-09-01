@@ -47,7 +47,7 @@ public:
         flow_data = fd;
     }
 
-    const snort::Packet* get_packet() override
+    const snort::Packet* get_packet() const override
     { return p; }
 
     snort::ExpectFlow* get_expect_flow()

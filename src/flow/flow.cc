@@ -333,6 +333,8 @@ void Flow::free_flow_data(uint32_t proto)
 
 void Flow::free_flow_data()
 {
+    if (!flow_data)
+        return;
     const SnortConfig* sc = SnortConfig::get_conf();
     PolicySelector* ps = sc->policy_map->get_policy_selector();
     NetworkPolicy* np = nullptr;

@@ -41,7 +41,7 @@ public:
         p(packet), service(_service)
     { }
 
-    snort::Packet* get_packet() override
+    snort::Packet* get_packet() const override
     { return p; }
 
     const char* get_service()

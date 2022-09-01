@@ -452,8 +452,8 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
             set_ips_policy(p->context->conf, flow->ips_policy_id);
         }
         p->filtering_state = flow->filtering_state;
+        update_stats(flow, p);
     }
-
     else
     {
         flow->network_policy_id = get_network_policy()->policy_id;
@@ -464,6 +464,8 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
         // process expected flows
         check_expected_flow(flow, p);
+
+        update_stats(flow, p);
 
         flow->set_client_initiate(p);
         DataBus::publish(FLOW_STATE_SETUP_EVENT, p);
@@ -525,7 +527,6 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         break;
     }
 
-    update_stats(flow, p);
     return news;
 }
 

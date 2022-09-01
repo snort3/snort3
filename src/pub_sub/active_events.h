@@ -44,7 +44,7 @@ public:
     Active::ActiveActionType get_previous_action() const
     { return previous_action; }
 
-    const Packet* get_pkt() const
+    const Packet* get_packet() const override
     { return pkt; }
 
 private:

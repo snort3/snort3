@@ -28,7 +28,7 @@ class SO_PUBLIC CpeOsInfoEvent : public snort::DataEvent
 public:
     CpeOsInfoEvent(const snort::Packet& p) : p(p) { }
 
-    const snort::Packet* get_packet() override
+    const snort::Packet* get_packet() const override
     {
          return &p;
     }

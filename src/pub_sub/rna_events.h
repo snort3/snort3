@@ -34,7 +34,7 @@ public:
     RNAEvent(const snort::Packet* p, const NetFlowSessionRecord* rec, const uint32_t service)
         : pkt(p), record(rec), service_id(service) { }
 
-    const Packet* get_packet() override
+    const Packet* get_packet() const override
     { return pkt; }
 
     const NetFlowSessionRecord* get_record()

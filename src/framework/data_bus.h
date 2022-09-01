@@ -45,7 +45,7 @@ class DataEvent
 public:
     virtual ~DataEvent() = default;
 
-    virtual const Packet* get_packet()
+    virtual const Packet* get_packet() const
     { return nullptr; }
 
     virtual const uint8_t* get_data()

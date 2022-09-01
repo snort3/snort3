@@ -37,7 +37,7 @@ public:
     OpportunisticTlsEvent(const snort::Packet* p, const char* service) :
         pkt(p), next_service(service) { }
 
-    const snort::Packet* get_packet() override
+    const snort::Packet* get_packet() const override
     { return pkt; }
 
     const char* get_next_service()

@@ -36,7 +36,7 @@ public:
         : pkt(p), record(rec), create_host(cre_host),
           create_service(cre_serv), swapped(swp_initiator), serviceID(s_id) { }
 
-    const Packet* get_packet() override
+    const Packet* get_packet() const override
     { return pkt; }
 
     const NetFlowSessionRecord* get_record()

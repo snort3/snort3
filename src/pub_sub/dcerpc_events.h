@@ -26,7 +26,7 @@ public:
             dst_ip(dst_ip), dst_port(dst_port),
             proto(proto), protocol_id(protocol_id) { }
 
-    const snort::Packet* get_packet() override
+    const snort::Packet* get_packet() const override
     { return p; }
 
     const snort::SfIp* get_src_ip() const

@@ -42,7 +42,7 @@ public:
         memcpy(eth_addr, eth, sizeof(eth_addr));
     }
 
-    const snort::Packet* get_packet() override
+    const snort::Packet* get_packet() const override
     { return pkt; }
 
     uint32_t get_ip_address() const
@@ -82,7 +82,7 @@ public:
         memcpy(eth_addr, eth, sizeof(eth_addr));
     }
 
-    const snort::Packet* get_packet() override
+    const snort::Packet* get_packet() const override
     { return pkt; }
 
     unsigned get_op55_len() const

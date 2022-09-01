@@ -40,7 +40,7 @@ public:
     {
     }
 
-    const snort::Packet* get_packet() override
+    const snort::Packet* get_packet() const override
     { return pkt; }
 
     DAQ_Verdict& get_verdict()

@@ -56,7 +56,7 @@ public:
     PacketEvent(Packet* p)
     { packet = p; }
 
-    const Packet* get_packet() override
+    const Packet* get_packet() const override
     { return packet; }
 
 private:

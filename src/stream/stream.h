@@ -213,7 +213,7 @@ public:
     static FlowKey* get_flow_key(Packet*);
 
     //  Populate a session key from the Packet
-    static void populate_flow_key(Packet*, FlowKey*);
+    static void populate_flow_key(const Packet*, FlowKey*);
 
     static void set_snort_protocol_id_from_ha(Flow*, const SnortProtocolId);
 

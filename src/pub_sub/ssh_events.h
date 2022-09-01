@@ -59,7 +59,7 @@ public:
     uint8_t get_direction() const
     { return direction; }
 
-    const snort::Packet* get_packet() override
+    const snort::Packet* get_packet() const override
     { return packet; }
 
 private:

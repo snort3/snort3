@@ -135,7 +135,7 @@ public:
     const snort::AppIdSessionApi& get_appid_session_api() const
     { return api; }
 
-    const snort::Packet* get_packet() override
+    const snort::Packet* get_packet() const override
     { return &p; }
 
 private:

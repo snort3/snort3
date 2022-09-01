@@ -83,7 +83,7 @@ public:
     SipEvent(const snort::Packet*, const SIPMsg*, const SIP_DialogData*);
     ~SipEvent() override;
 
-    const snort::Packet* get_packet() override
+    const snort::Packet* get_packet() const override
     { return p; }
 
     const char* get_from() const

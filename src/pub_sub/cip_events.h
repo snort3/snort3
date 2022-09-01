@@ -47,7 +47,7 @@ class SO_PUBLIC CipEvent : public snort::DataEvent
 public:
     CipEvent(const snort::Packet*, const CipEventData*);
 
-    const snort::Packet* get_packet() override
+    const snort::Packet* get_packet() const override
     { return p; }
 
 private:

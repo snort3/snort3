@@ -33,7 +33,7 @@ public:
 
     EveProcessEvent(const snort::Packet& p, const char* server) : p(p), server_name(server) { }
 
-    const snort::Packet* get_packet() override { return &p; }
+    const snort::Packet* get_packet() const override { return &p; }
 
     const std::string& get_process_name() const
     {

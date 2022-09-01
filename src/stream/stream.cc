@@ -117,7 +117,7 @@ Flow* Stream::get_flow(
     return get_flow(&key);
 }
 
-void Stream::populate_flow_key(Packet* p, FlowKey* key)
+void Stream::populate_flow_key(const Packet* p, FlowKey* key)
 {
     if (!key || !p)
         return;
@@ -221,6 +221,7 @@ void Stream::check_flow_closed(Packet* p)
     else if (flow->session_state & STREAM_STATE_BLOCK_PENDING)
     {
         flow->session->clear();
+        flow->free_flow_data();
         flow->set_state(Flow::FlowState::BLOCK);
 
         if ( !(p->packet_flags & PKT_STATELESS) )

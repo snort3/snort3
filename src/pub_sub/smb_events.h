@@ -33,7 +33,7 @@ public:
     FpSMBDataEvent(const snort::Packet* p, unsigned major, unsigned minor,
         uint32_t flags) : pkt(p), major_version(major), minor_version(minor), flags(flags) { }
 
-    const snort::Packet* get_packet() override
+    const snort::Packet* get_packet() const override
     { return pkt; }
 
     unsigned get_fp_smb_major() const
