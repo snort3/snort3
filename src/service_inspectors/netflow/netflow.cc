@@ -512,9 +512,7 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
                     continue;
                 }
 
-                if ( record_status.bytes_sent and record_status.packets_sent and
-                    record_status.src and record_status.dst and record_status.first and
-                    record_status.last and record.first_pkt_second <= record.last_pkt_second )
+                if ( record_status.src and record_status.dst )
                 {
                     if ( record_status.src_tos )
                     {

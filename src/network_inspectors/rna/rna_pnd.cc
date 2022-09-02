@@ -210,16 +210,16 @@ void RnaPnd::analyze_netflow_host(NetFlowEvent* nfe)
 
     const uint8_t src_mac[6] = {0};
 
+    if (!nfe->get_create_host() and !nfe->get_create_service())
+    {
+        uint32_t service = nfe->get_service_id();
+        RNAEvent new_flow_event(p, nfe->get_record(), service);
+        DataBus::publish(RNA_NEW_NETFLOW_CONN, new_flow_event);
+        return;
+    }
+
     if ( new_host )
     {
-        if (!nfe->get_create_host() and !nfe->get_create_service())
-        {
-            uint32_t service = nfe->get_service_id();
-            RNAEvent new_flow_event(p, nfe->get_record(), service);
-            DataBus::publish(RNA_NEW_NETFLOW_HOST, new_flow_event);
-            return;
-        }
-
         if ( nfe->get_create_host() )
             logger.log(RNA_EVENT_NEW, NEW_HOST, p, &ht, src_ip_ptr, src_mac);
         else

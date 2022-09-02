@@ -23,7 +23,7 @@
 #include "framework/data_bus.h"
 #include "service_inspectors/netflow/netflow_record.h"
 
-#define RNA_NEW_NETFLOW_HOST "network_inspector.rna.new_netflow_host"
+#define RNA_NEW_NETFLOW_CONN "network_inspector.rna.new_netflow_host"
 
 namespace snort
 {
