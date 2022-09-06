@@ -29,19 +29,9 @@
 #include "utils/js_identifier_ctx.h"
 #include "utils/js_normalizer.h"
 
-constexpr int unlim_depth = -1;
-constexpr int norm_depth = 65535;
-constexpr int max_template_nesting = 4;
-constexpr int max_bracket_depth = 256;
-constexpr int max_scope_depth = 256;
-static const std::unordered_set<std::string> s_ignored_ids {
-    "console", "eval", "document", "unescape", "decodeURI", "decodeURIComponent", "String",
-    "name", "u"
-};
+#include "js_test_options.h"
 
-static const std::unordered_set<std::string> s_ignored_props {
-    "watch", "unwatch", "split", "reverse", "join", "name", "w"
-};
+constexpr int unlim_depth = -1;
 
 namespace snort
 {
@@ -67,37 +57,93 @@ public:
     size_t size() const override { return 0; }
 };
 
+class JSTestConfig;
+
 class JSTokenizerTester
 {
 public:
-    JSTokenizerTester(int32_t depth, uint32_t max_scope_depth,
-        const std::unordered_set<std::string>& ignored_ids,
-        const std::unordered_set<std::string>& ignored_props,
-        uint8_t max_template_nesting, uint32_t max_bracket_depth)
-        :
-        ident_ctx(depth, max_scope_depth, ignored_ids, ignored_props),
-        normalizer(ident_ctx, depth, max_template_nesting, max_bracket_depth)
-    { }
-
     typedef JSTokenizer::FuncType FuncType;
-    typedef std::tuple<const char*, const char*, std::list<FuncType>> ScopeCase;
-    void test_function_scopes(const std::list<ScopeCase>& pdus);
-    bool is_unescape_nesting_seen() const;
+
+    JSTokenizerTester(const JSTestConfig& conf);
+
+    void do_pdu(const std::string& source);
+    void check_output(const std::string& expected);
+    void run_checks(const JSTestConfig& checks);
+
+    JSIdentifierCtx ident_ctx;
+    JSIdentifierCtxStub ident_ctx_stub;
+    snort::JSNormalizer normalizer;
 
 private:
-    JSIdentifierCtx ident_ctx;
-    snort::JSNormalizer normalizer;
+    const JSTestConfig& config;
+    JSTokenizer::JSRet last_return;
+    std::string last_source;
 };
 
-void test_scope(const char* context, const std::list<JSProgramScopeType>& stack);
-void test_normalization(const char* source, const char* expected);
-void test_normalization_bad(const char* source, const char* expected, JSTokenizer::JSRet eret);
-void test_normalization_mixed_encoding(const char* source, const char* expected);
-typedef std::pair<const char*, const char*> PduCase;
-// source, expected for a single PDU
-void test_normalization(const std::vector<PduCase>& pdus);
-typedef std::tuple<const char*,const char*, std::list<JSProgramScopeType>> ScopedPduCase;
-// source, expected, and current scope type stack for a single PDU
-void test_normalization(const std::list<ScopedPduCase>& pdus);
+typedef JSTokenizerTester::FuncType FuncType;
 
-#endif // JS_TEST_UTILS_H
+// source, expected for a single PDU
+typedef std::pair<std::string, std::string> PduCase;
+
+// source, expected, and current scope type stack for a single PDU
+typedef std::tuple<std::string, std::string, std::list<JSProgramScopeType>> ScopedPduCase;
+typedef std::tuple<const char*, const char*, std::list<FuncType>> FunctionScopeCase;
+
+class JSTestConfig : public ConfigSet
+{
+public:
+    JSTestConfig(const Overrides& values);
+    JSTestConfig derive(const Overrides& values) const;
+
+    snort::JSNormalizer&& make_normalizer() const;
+
+    void test_scope(const std::string& context, const std::list<JSProgramScopeType>& stack) const;
+    void test_scope(const std::string& context, const std::list<JSProgramScopeType>& stack,
+        const Overrides& overrides) const;
+
+    void test_function_scopes(const std::list<FunctionScopeCase>& pdus);
+    void test_function_scopes(const std::list<FunctionScopeCase>& pdus, const Overrides& overrides);
+
+    void test_normalization(const std::string& source, const std::string& expected) const;
+    void test_normalization(const std::string& source, const std::string& expected, const Overrides& overrides) const;
+
+    void test_normalization(const std::vector<PduCase>& pdus) const;
+    void test_normalization(const std::vector<PduCase>& pdus, const Overrides& overrides) const;
+
+    void test_normalization(const std::list<ScopedPduCase>& pdus) const;
+    void test_normalization(const std::list<ScopedPduCase>& pdus, const Overrides& overrides) const;
+
+    void test_normalization_combined(const std::list<std::string>& pdu_sources,
+        const std::string& total_expected) const;
+    void test_normalization_combined(const std::list<std::string>& pdu_sources,
+        const std::string& total_expected, const Overrides& overrides) const;
+};
+
+static const JSTestConfig default_config({
+    norm_depth(65535),
+    identifier_depth(65535),
+    max_template_nesting(4),
+    max_bracket_depth(256),
+    max_scope_depth(256),
+    max_token_buf_size(256),
+    ignored_ids_list({
+        "console", "eval", "document", "unescape", "decodeURI", "decodeURIComponent", "String",
+        "name", "u"}),
+    ignored_properties_list({
+        "watch", "unwatch", "split", "reverse", "join", "name", "w"}),
+    normalize_identifiers(true)
+});
+
+void test_scope(const std::string& context, const std::list<JSProgramScopeType>& stack);
+void test_normalization(const std::string& source, const std::string& expected, const Overrides& overrides = {});
+void test_normalization_noident(const std::string& source, const std::string& expected,
+    const Overrides& overrides = {});
+void test_normalization_bad(const std::string& source, const std::string& expected, JSTokenizer::JSRet eret);
+void test_normalization_mixed_encoding(const std::string& source, const std::string& expected);
+void test_normalization(const std::vector<PduCase>& pdus, const Overrides& overrides = {});
+void test_normalization(const std::list<ScopedPduCase>& pdus, const Overrides& overrides = {});
+void test_normalization_combined(const std::list<std::string>& pdu_sources, const std::string& total_expected,
+    const Overrides& overrides = {});
+
+#endif
+

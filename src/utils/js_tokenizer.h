@@ -45,6 +45,7 @@ enum JSProgramScopeType : unsigned int;
 class JSIdentifierCtxBase;
 #if defined(CATCH_TEST_BUILD) || defined(BENCHMARK_TEST)
 class JSTokenizerTester;
+class JSTestConfig;
 #endif // CATCH_TEST_BUILD || BENCHMARK_TEST
 
 class JSTokenizer : public yyFlexLexer
@@ -398,6 +399,7 @@ private:
 
 #if defined(CATCH_TEST_BUILD) || defined(BENCHMARK_TEST)
     friend JSTokenizerTester;
+    friend JSTestConfig;
 #endif // CATCH_TEST_BUILD || BENCHMARK_TEST
 };
 

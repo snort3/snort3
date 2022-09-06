@@ -23,7 +23,7 @@
 
 #include "catch/catch.hpp"
 
-#include "utils/test/js_test_utils.h"
+#include "js_test_utils.h"
 
 using namespace snort;
 

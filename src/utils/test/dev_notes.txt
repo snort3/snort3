@@ -1,0 +1,33 @@
+This folder contains unit tests for utils folder and testing fixtures/utilities for these tests.
+
+js_test_utils:
+Provides constants and testing functions for JavaScript normalizer tests. 
+Test functions to check normalization and scope, both simple and multi-PDU,
+are made configurable through derivable configs and overrides.
+
+Use examples:
+
+[source,cpp]
+-----------------------
+    test_normalization("abc", "var_0000"); // will use params from default_config
+
+    test_normalization("abc", "var_0000", {return_code(JSTokenizer::SCRIPT_CONTINUE)});
+    // add check for the tokenizer return code, use default_config for everything else
+
+    auto config = default_config.derive({norm_depth(10), check_mixed_encoding(true)});
+    config.test_normalization("abc", "var_0000", {return_code(JSTokenizer::SCRIPT_CONTINUE)});
+    // create derived config to make a reusable setup
+-----------------------
+
+js_test_option:
+Provides a mechanism to make configurable testing setup with a number of optional, parametrized
+settings. Any option is passed in params as a variant and is stored as a ConfigSet field.
+Checklist to add a new option with an already present type:
+1. Add the option to ConfigType enum;
+2. Add the option as a Field to ConfigSet;
+3. Add the option to a matching type case in Config copy constructor;
+4. If the option type has a destructor (e.g. unordered_set), add the option to the matching type case in the
+    Config destructor;
+5. Add field assignment to the set_overrides test case;
+6. Add a named constuctor that returns Config with your option as the type.
+

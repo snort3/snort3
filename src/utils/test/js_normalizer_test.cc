@@ -21,572 +21,159 @@
 #include "config.h"
 #endif
 
-#include <cstring>
+#include <string>
 
 #include "catch/catch.hpp"
 
 #include "utils/js_identifier_ctx.h"
 #include "utils/js_normalizer.h"
-#include "utils/test/js_test_utils.h"
+
+#include "js_test_utils.h"
 
 using namespace snort;
-
-// Unit tests
+using namespace std::string_literals;
 
 #ifdef CATCH_TEST_BUILD
 
-#define DST_SIZE 512
-
-#define NORMALIZE(src)                                             \
-    JSIdentifierCtxStub ident_ctx;                                 \
-    JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
-    auto ret = norm.normalize(src, sizeof(src));                   \
-    const char* ptr = norm.get_src_next();                         \
-    int act_len = norm.script_size();                              \
-    const char* dst = norm.take_script();
-
-#define NORMALIZE_EXT(src)                                         \
-    JSIdentifierCtxStub ident_ctx;                                 \
-    JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
-    auto ret = norm.normalize(src, sizeof(src), true);             \
-    const char* ptr = norm.get_src_next();                         \
-    int act_len = norm.script_size();                              \
-    const char* dst = norm.take_script();
-
-#define VALIDATE(src, expected)                 \
-    CHECK(ret == JSTokenizer::SCRIPT_CONTINUE); \
-    CHECK((ptr - src) == sizeof(src));          \
-    CHECK(act_len == sizeof(expected) - 1);     \
-    CHECK(!memcmp(dst, expected, act_len));     \
-    delete[] dst;
-
-#define VALIDATE_FAIL(src, expected, ret_code, ptr_offset) \
-    CHECK(ret == ret_code);                                \
-    CHECK((ptr - src) == ptr_offset);                      \
-    CHECK(act_len == sizeof(expected) - 1);                \
-    CHECK(!memcmp(dst, expected, act_len));                \
-    delete[] dst;
-
-#define CHECK_OTAG(is_set)                 \
-    if (is_set)                            \
-        CHECK(norm.is_opening_tag_seen()); \
-    else                                   \
-        CHECK(!norm.is_opening_tag_seen());
-
-
-#define NORMALIZE_L(src, src_len, dst, dst_len, depth, ret, ptr, len) \
-    {                                                                 \
-        JSIdentifierCtxStub ident_ctx;                                \
-        JSNormalizer norm(ident_ctx, depth, max_template_nesting, max_bracket_depth); \
-        ret = norm.normalize(src, src_len);                           \
-        ptr = norm.get_src_next();                                    \
-        len = norm.script_size();                                     \
-        const char* dptr = norm.get_script();                         \
-        REQUIRE(len == dst_len);                                      \
-        memcpy(dst, dptr, dst_len);                                   \
-    }
-
-#define DO(src, slen, dst, dlen)                            \
-    {                                                       \
-        auto ret = norm.normalize(src, slen);               \
-        CHECK(ret == JSTokenizer::SCRIPT_CONTINUE);         \
-        auto nsrc = norm.get_src_next();                    \
-        int act_len = norm.script_size();                   \
-        const char* ptr = norm.take_script();               \
-        REQUIRE(nsrc - src == slen);                        \
-        REQUIRE(act_len == dlen);                           \
-        memcpy(dst, ptr, dlen);                             \
-        delete[] ptr;                                       \
-    }
-
-#define TRY(src, slen, dst, dlen, rexp)                     \
-    {                                                       \
-        auto ret = norm.normalize(src, slen);               \
-        CHECK(ret == rexp);                                 \
-        int act_len = norm.script_size();                   \
-        const char* ptr = norm.get_script();                \
-        REQUIRE(act_len == dlen);                           \
-        memcpy(dst, ptr, dlen);                             \
-    }
-
-#define CLOSE()                                                         \
-    {                                                                   \
-        const char end[] = "</script>";                                 \
-        auto ret = norm.normalize(end, sizeof(end) - 1);                \
-        CHECK(ret == JSTokenizer::SCRIPT_ENDED);                        \
-    }
-
-#define NORMALIZE_S(src1, exp1)                                     \
-    {                                                               \
-        char dst1[sizeof(exp1)];                                    \
-                                                                    \
-        JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props); \
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
-                                                                    \
-        DO(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1);         \
-        CHECK(!memcmp(exp1, dst1, sizeof(exp1) - 1));               \
-                                                                    \
-        CLOSE();                                                    \
-    }
-
-#define NORMALIZE_T(src1, src2, exp1, exp2)                         \
-    {                                                               \
-        char dst1[sizeof(exp1)];                                    \
-        char dst2[sizeof(exp2)];                                    \
-                                                                    \
-        JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props); \
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
-                                                                    \
-        DO(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1);         \
-        CHECK(!memcmp(exp1, dst1, sizeof(exp1) - 1));               \
-                                                                    \
-        DO(src2, sizeof(src2) - 1, dst2, sizeof(dst2) - 1);         \
-        CHECK(!memcmp(exp2, dst2, sizeof(exp2) - 1));               \
-                                                                    \
-        CLOSE();                                                    \
-    }
-
-#define NORMALIZE_1(src1, exp1)                                     \
-    {                                                               \
-        char dst1[sizeof(exp1)];                                    \
-                                                                    \
-        JSIdentifierCtxStub ident_ctx;                              \
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
-                                                                    \
-        DO(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1);         \
-        CHECK(!memcmp(exp1, dst1, sizeof(exp1) - 1));               \
-                                                                    \
-        CLOSE();                                                    \
-    }
-
-#define NORMALIZE_2(src1, src2, exp1, exp2)                         \
-    {                                                               \
-        char dst1[sizeof(exp1)];                                    \
-        char dst2[sizeof(exp2)];                                    \
-                                                                    \
-        JSIdentifierCtxStub ident_ctx;                              \
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
-                                                                    \
-        DO(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1);         \
-        CHECK(!memcmp(exp1, dst1, sizeof(exp1) - 1));               \
-                                                                    \
-        DO(src2, sizeof(src2) - 1, dst2, sizeof(dst2) - 1);         \
-        CHECK(!memcmp(exp2, dst2, sizeof(exp2) - 1));               \
-                                                                    \
-        CLOSE();                                                    \
-    }
-
-#define NORMALIZE_3(src1, src2, src3, exp1, exp2, exp3)             \
-    {                                                               \
-        char dst1[sizeof(exp1)];                                    \
-        char dst2[sizeof(exp2)];                                    \
-        char dst3[sizeof(exp3)];                                    \
-                                                                    \
-        JSIdentifierCtxStub ident_ctx;                              \
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
-                                                                    \
-        DO(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1);         \
-        CHECK(!memcmp(exp1, dst1, sizeof(exp1) - 1));               \
-                                                                    \
-        DO(src2, sizeof(src2) - 1, dst2, sizeof(dst2) - 1);         \
-        CHECK(!memcmp(exp2, dst2, sizeof(exp2) - 1));               \
-                                                                    \
-        DO(src3, sizeof(src3) - 1, dst3, sizeof(dst3) - 1);         \
-        CHECK(!memcmp(exp3, dst3, sizeof(exp3) - 1));               \
-                                                                    \
-        CLOSE();                                                    \
-    }
-
-#define NORM_BAD_1(src1, exp1, code)                                \
-    {                                                               \
-        char dst1[sizeof(exp1)];                                    \
-                                                                    \
-        JSIdentifierCtxStub ident_ctx;                              \
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
-                                                                    \
-        TRY(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1, code);  \
-        CHECK(!memcmp(exp1, dst1, sizeof(exp1) - 1));               \
-    }
-
-#define NORM_BAD_2(src1, src2, exp1, exp2, code)                    \
-    {                                                               \
-        char dst1[sizeof(exp1)];                                    \
-        char dst2[sizeof(exp2)];                                    \
-                                                                    \
-        JSIdentifierCtxStub ident_ctx;                              \
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
-                                                                    \
-        DO(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1);         \
-        CHECK(!memcmp(exp1, dst1, sizeof(exp1) - 1));               \
-                                                                    \
-        TRY(src2, sizeof(src2) - 1, dst2, sizeof(dst2) - 1, code);  \
-        CHECK(!memcmp(exp2, dst2, sizeof(exp2) - 1));               \
-    }
-
-#define NORM_BAD_3(src1, src2, src3, exp1, exp2, exp3, code)        \
-    {                                                               \
-        char dst1[sizeof(exp1)];                                    \
-        char dst2[sizeof(exp2)];                                    \
-        char dst3[sizeof(exp3)];                                    \
-                                                                    \
-        JSIdentifierCtxStub ident_ctx;                              \
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
-                                                                    \
-        DO(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1);         \
-        CHECK(!memcmp(exp1, dst1, sizeof(exp1) - 1));               \
-                                                                    \
-        DO(src2, sizeof(src2) - 1, dst2, sizeof(dst2) - 1);         \
-        CHECK(!memcmp(exp2, dst2, sizeof(exp2) - 1));               \
-                                                                    \
-        TRY(src3, sizeof(src3) - 1, dst3, sizeof(dst3) - 1, code);  \
-        CHECK(!memcmp(exp3, dst3, sizeof(exp3) - 1));               \
-    }
-
-#define NORM_LIMITED(limit, src1, src2, exp1, exp2)                     \
-    {                                                                   \
-        char dst1[sizeof(exp1)];                                        \
-        char dst2[sizeof(exp2)];                                        \
-                                                                        \
-        JSIdentifierCtxStub ident_ctx;                                  \
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth, limit); \
-                                                                        \
-        DO(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1);             \
-        CHECK(!memcmp(exp1, dst1, sizeof(exp1) - 1));                   \
-                                                                        \
-        DO(src2, sizeof(src2) - 1, dst2, sizeof(dst2) - 1);             \
-        CHECK(!memcmp(exp2, dst2, sizeof(exp2) - 1));                   \
-                                                                        \
-        CLOSE();                                                        \
-    }
-
-#define NORM_COMBINED_2(src1, src2, exp)                                \
-    {                                                                   \
-        JSIdentifierCtxStub ident_ctx;                                  \
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
-                                                                        \
-        auto ret = norm.normalize(src1, sizeof(src1) - 1);              \
-        REQUIRE(ret == JSTokenizer::SCRIPT_CONTINUE);                   \
-                                                                        \
-        ret = norm.normalize(src2, sizeof(src2) - 1);                   \
-        REQUIRE(ret == JSTokenizer::SCRIPT_CONTINUE);                   \
-                                                                        \
-        const char end[] = "</script>";                                 \
-        ret = norm.normalize(end, sizeof(end) - 1);                     \
-        REQUIRE(ret == JSTokenizer::SCRIPT_ENDED);                      \
-                                                                        \
-        size_t act_len = norm.script_size();                            \
-        REQUIRE(act_len == sizeof(exp) - 1);                            \
-                                                                        \
-        const char* dst = norm.get_script();                            \
-        CHECK(!memcmp(exp, dst, sizeof(exp) - 1));                      \
-    }
-
-#define NORM_COMBINED_3(src1, src2, src3, exp)                          \
-    {                                                                   \
-        JSIdentifierCtxStub ident_ctx;                                  \
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
-                                                                        \
-        auto ret = norm.normalize(src1, sizeof(src1) - 1);              \
-        REQUIRE(ret == JSTokenizer::SCRIPT_CONTINUE);                   \
-                                                                        \
-        ret = norm.normalize(src2, sizeof(src2) - 1);                   \
-        REQUIRE(ret == JSTokenizer::SCRIPT_CONTINUE);                   \
-                                                                        \
-        ret = norm.normalize(src3, sizeof(src3) - 1);                   \
-        REQUIRE(ret == JSTokenizer::SCRIPT_CONTINUE);                   \
-                                                                        \
-        const char end[] = "</script>";                                 \
-        ret = norm.normalize(end, sizeof(end) - 1);                     \
-        REQUIRE(ret == JSTokenizer::SCRIPT_ENDED);                      \
-                                                                        \
-        size_t act_len = norm.script_size();                            \
-        REQUIRE(act_len == sizeof(exp) - 1);                            \
-                                                                        \
-        const char* dst = norm.get_script();                            \
-        CHECK(!memcmp(exp, dst, sizeof(exp) - 1));                      \
-    }
-
-#define NORM_COMBINED_BAD_2(src1, src2, exp, eret)                      \
-    {                                                                   \
-        JSIdentifierCtxStub ident_ctx;                                  \
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
-                                                                        \
-        auto ret = norm.normalize(src1, sizeof(src1) - 1);              \
-        REQUIRE(ret == JSTokenizer::SCRIPT_CONTINUE);                   \
-                                                                        \
-        ret = norm.normalize(src2, sizeof(src2) - 1);                   \
-        REQUIRE(ret == eret);                                           \
-                                                                        \
-        size_t act_len = norm.script_size();                            \
-        REQUIRE(act_len == sizeof(exp) - 1);                            \
-                                                                        \
-        const char* dst = norm.get_script();                            \
-        CHECK(!memcmp(exp, dst, sizeof(exp) - 1));                      \
-    }
-
-#define NORM_COMBINED_BAD_3(src1, src2, src3, exp, eret)                \
-    {                                                                   \
-        JSIdentifierCtxStub ident_ctx;                                  \
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
-                                                                        \
-        auto ret = norm.normalize(src1, sizeof(src1) - 1);              \
-        REQUIRE(ret == JSTokenizer::SCRIPT_CONTINUE);                   \
-                                                                        \
-        ret = norm.normalize(src2, sizeof(src2) - 1);                   \
-        REQUIRE(ret == JSTokenizer::SCRIPT_CONTINUE);                   \
-                                                                        \
-        ret = norm.normalize(src3, sizeof(src3) - 1);                   \
-        REQUIRE(ret == eret);                                           \
-                                                                        \
-        size_t act_len = norm.script_size();                            \
-        REQUIRE(act_len == sizeof(exp) - 1);                            \
-                                                                        \
-        const char* dst = norm.get_script();                            \
-        CHECK(!memcmp(exp, dst, sizeof(exp) - 1));                      \
-    }
-
-#define NORM_COMBINED_LIMITED_2(limit, src1, src2, exp)                 \
-    {                                                                   \
-        JSIdentifierCtxStub ident_ctx;                                  \
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth, limit); \
-                                                                        \
-        auto ret = norm.normalize(src1, sizeof(src1) - 1);              \
-        REQUIRE(ret == JSTokenizer::SCRIPT_CONTINUE);                   \
-                                                                        \
-        ret = norm.normalize(src2, sizeof(src2) - 1);                   \
-        REQUIRE(ret == JSTokenizer::SCRIPT_CONTINUE);                   \
-                                                                        \
-        const char end[] = "</script>";                                 \
-        ret = norm.normalize(end, sizeof(end) - 1);                     \
-        REQUIRE(ret == JSTokenizer::SCRIPT_ENDED);                      \
-                                                                        \
-        size_t act_len = norm.script_size();                            \
-        REQUIRE(act_len == sizeof(exp) - 1);                            \
-                                                                        \
-        const char* dst = norm.get_script();                            \
-        CHECK(!memcmp(exp, dst, sizeof(exp) - 1));                      \
-    }
-
-#define NORM_COMBINED_S_2(src1, src2, exp)                              \
-    {                                                                   \
-        JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props); \
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth); \
-                                                                        \
-        auto ret = norm.normalize(src1, sizeof(src1) - 1);              \
-        REQUIRE(ret == JSTokenizer::SCRIPT_CONTINUE);                   \
-                                                                        \
-        ret = norm.normalize(src2, sizeof(src2) - 1);                   \
-        REQUIRE(ret == JSTokenizer::SCRIPT_CONTINUE);                   \
-                                                                        \
-        const char end[] = "</script>";                                 \
-        ret = norm.normalize(end, sizeof(end) - 1);                     \
-        REQUIRE(ret == JSTokenizer::SCRIPT_ENDED);                      \
-                                                                        \
-        size_t act_len = norm.script_size();                            \
-        REQUIRE(act_len == sizeof(exp) - 1);                            \
-                                                                        \
-        const char* dst = norm.get_script();                            \
-        CHECK(!memcmp(exp, dst, sizeof(exp) - 1));                      \
-    }
-
 // ClamAV test vectors from: https://github.com/Cisco-Talos/clamav/blob/main/unit_tests/check_jsnorm.c
-static const char clamav_buf0[] =
-    "function foo(a, b) {\n"
-    "var x = 1.9e2*2*a/ 4.;\n"
-    "var y = 'test\\'tst';//var\n"
-    "x=b[5],/* multiline\nvar z=6;\nsome*some/other**/"
-    "z=x/y;/* multiline oneline */var t=z/a;\n"
-    "z=[test,testi];"
-    "document.writeln('something\\n');}";
-
-static const char clamav_expected0[] =
-    "function foo(a,b){var x=1.9e2*2*a/4.;var y='test\\'tst';x=b[5],z=x/y;var t=z/a;"
-    "z=[test,testi];document.writeln('something\\n');}";
-
-static const char clamav_buf1[] =
-    "function () { var id\\u1234tx;}";
-
-static const char clamav_expected1[] =
-    "function(){var id\u1234tx;}";
-
-static const char clamav_buf2[] =
-    "function () { var tst=\"a\"+'bc'+     'd'; }";
-
-static const char clamav_expected2[] =
-    "function(){var tst=\"abcd';}";
-
-static const char clamav_buf3[] =
-    "dF('bmfsu%2639%2638x11u%2638%263%3A%264C1');";
-
-static const char clamav_expected3[] =
-    "dF('bmfsu%2639%2638x11u%2638%263%3A%264C1');";
-
-#define B64 "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-
-static char clamav_buf4[] =
-    "qbphzrag.jevgr(harfpncr('%3P%73%63%72%69%70%74%20%6P%61%6R%67%75%61%67%65%3Q%22%6N%61%76%61"
-        "%73%63%72%69%70%74%22%3R%66%75%6R%63%74%69%6S%6R%20%64%46%28%73%29%7O%76%61%72%20%73%31"
-        "%3Q%75%6R%65%73%63%61%70%65%28%73%2R%73%75%62%73%74%72%28%30%2P%73%2R%6P%65%6R%67%74%68"
-        "%2Q%31%29%29%3O%20%76%61%72%20%74%3Q%27%27%3O%66%6S%72%28%69%3Q%30%3O%69%3P%73%31%2R%6P"
-        "%65%6R%67%74%68%3O%69%2O%2O%29%74%2O%3Q%53%74%72%69%6R%67%2R%66%72%6S%6Q%43%68%61%72%43"
-        "%6S%64%65%28%73%31%2R%63%68%61%72%43%6S%64%65%41%74%28%69%29%2Q%73%2R%73%75%62%73%74%72"
-        "%28%73%2R%6P%65%6R%67%74%68%2Q%31%2P%31%29%29%3O%64%6S%63%75%6Q%65%6R%74%2R%77%72%69%74"
-        "%65%28%75%6R%65%73%63%61%70%65%28%74%29%29%3O%7Q%3P%2S%73%63%72%69%70%74%3R'));"
-        "riny(qS('tV%285%3O%285%3Nsdwjl%28585%3N7%28586Q%28585%3N7%3P%7P55l%28585%3N7%3P%28585%3N7"
-        "%28586R%28585%3N8T5%285%3N%285%3P%286R3'));";
-
-static char clamav_expected4[] =
-    "qbphzrag.jevgr(harfpncr('%3P%73%63%72%69%70%74%20%6P%61%6R%67%75%61%67%65%3Q%22%6N%61%76%61"
-        "%73%63%72%69%70%74%22%3R%66%75%6R%63%74%69%6S%6R%20%64%46%28%73%29%7O%76%61%72%20%73%31"
-        "%3Q%75%6R%65%73%63%61%70%65%28%73%2R%73%75%62%73%74%72%28%30%2P%73%2R%6P%65%6R%67%74%68"
-        "%2Q%31%29%29%3O%20%76%61%72%20%74%3Q%27%27%3O%66%6S%72%28%69%3Q%30%3O%69%3P%73%31%2R%6P"
-        "%65%6R%67%74%68%3O%69%2O%2O%29%74%2O%3Q%53%74%72%69%6R%67%2R%66%72%6S%6Q%43%68%61%72%43"
-        "%6S%64%65%28%73%31%2R%63%68%61%72%43%6S%64%65%41%74%28%69%29%2Q%73%2R%73%75%62%73%74%72"
-        "%28%73%2R%6P%65%6R%67%74%68%2Q%31%2P%31%29%29%3O%64%6S%63%75%6Q%65%6R%74%2R%77%72%69%74"
-        "%65%28%75%6R%65%73%63%61%70%65%28%74%29%29%3O%7Q%3P%2S%73%63%72%69%70%74%3R'));"
-        "riny(qS('tV%285%3O%285%3Nsdwjl%28585%3N7%28586Q%28585%3N7%3P%7P55l%28585%3N7%3P%28585%3N7"
-        "%28586R%28585%3N8T5%285%3N%285%3P%286R3'));";
-
-static char clamav_buf5[] =
-    "shapgvba (c,n,p,x,r,e){}('0(\\'1\\');',2,2,'nyreg|j00g'.fcyvg('|'),0,{});";
-
-static const char clamav_expected5[] =
-    "shapgvba(c,n,p,x,r,e){}('0(\\'1\\');',2,2,'nyreg|j00g'.fcyvg('|'),0,{});";
-
-static const char clamav_buf6[] =
-    "function $(p,a,c,k,e,d){} something(); $('0(\\'1\\');',2,2,'alert|w00t'.split('|'),0,{});";
-
-static const char clamav_expected6[] =
-    "function $(p,a,c,k,e,d){}something();$('0(\\'1\\');',2,2,'alert|w00t'.split('|'),0,{});";
-
-static const char clamav_buf7[] =
-    "var z=\"tst" B64 "tst\";";
-
-static const char clamav_expected7[] =
-    "var z=\"tst" B64 "tst\";";
-
-static const char clamav_buf8[] =
-    "var z=\'tst" B64 "tst\';";
-
-static const char clamav_expected8[] =
-    "var z=\'tst" B64 "tst\';";
-
-static char clamav_buf9[] =
-    "riny(harfpncr('%61%6p%65%72%74%28%27%74%65%73%74%27%29%3o'));";
-
-static const char clamav_expected9[] =
-    "riny(harfpncr('%61%6p%65%72%74%28%27%74%65%73%74%27%29%3o'));";
-
-static const char clamav_buf10[] =
-    "function $ $() dF(x); function (p,a,c,k,e,r){function $(){}";
-
-static const char clamav_expected10[] =
-    "function $ $()dF(x);function(p,a,c,k,e,r){function $(){}";
-
-static const char clamav_buf11[] =
-    "var x=123456789 ;";
-
-static const char clamav_expected11[] =
-    "var x=123456789;";
-
-static const char clamav_buf12[] =
-    "var x='test\\u0000test';";
-
-static const char clamav_expected12[] =
-    "var x='test\u0000test';";
-
-static const char clamav_buf13[] =
-    "var x\\s12345";
-
-static const char clamav_expected13[] =
-    "var x\\s12345";
-
-static const char clamav_buf14[] =
-    "document.write(unescape('test%20test";
-
-static const char clamav_expected14[] =
-    "document.write('test test";
 
 TEST_CASE("clamav tests", "[JSNormalizer]")
 {
     SECTION("test_case_0 - mixed identifiers and comments")
     {
-        NORMALIZE(clamav_buf0);
-        VALIDATE(clamav_buf0, clamav_expected0);
+        test_normalization_noident(
+        "function foo(a, b) {\n"
+        "var x = 1.9e2*2*a/ 4.;\n"
+        "var y = 'test\\'tst';//var\n"
+        "x=b[5],/* multiline\nvar z=6;\nsome*some/other**/"
+        "z=x/y;/* multiline oneline */var t=z/a;\n"
+        "z=[test,testi];"
+        "document.writeln('something\\n');}",
+
+        "function foo(a,b){var x=1.9e2*2*a/4.;var y='test\\'tst';x=b[5],z=x/y;var t=z/a;"
+        "z=[test,testi];document.writeln('something\\n');}"
+        );
     }
     SECTION("test_case_1 - escaped unicode in identifier")
     {
-        NORMALIZE(clamav_buf1);
-        VALIDATE(clamav_buf1, clamav_expected1);
+        test_normalization_noident(
+            "function () { var id\\u1234tx;}",
+            "function(){var id\u1234tx;}"
+        );
     }
     SECTION("test_case_2 - accumulated string assignment")
     {
-        NORMALIZE(clamav_buf2);
-        VALIDATE(clamav_buf2, clamav_expected2);
+        test_normalization_noident(
+            "function () { var tst=\"a\"+'bc'+     'd'; }",
+            "function(){var tst=\"abcd';}"
+        );
     }
     SECTION("test_case_3 - percent-encoded string")
     {
-        NORMALIZE(clamav_buf3);
-        VALIDATE(clamav_buf3, clamav_expected3);
+        test_normalization_noident(
+            "dF('bmfsu%2639%2638x11u%2638%263%3A%264C1');",
+            "dF('bmfsu%2639%2638x11u%2638%263%3A%264C1');"
+        );
     }
     SECTION("test_case_4 - percent-encoded string")
     {
-        NORMALIZE(clamav_buf4);
-        VALIDATE(clamav_buf4, clamav_expected4);
+        test_normalization_noident(
+            "qbphzrag.jevgr(harfpncr('%3P%73%63%72%69%70%74%20%6P%61%6R%67%75%61%67%65%3Q%22%6N%61%76%61"
+                "%73%63%72%69%70%74%22%3R%66%75%6R%63%74%69%6S%6R%20%64%46%28%73%29%7O%76%61%72%20%73%31"
+                "%3Q%75%6R%65%73%63%61%70%65%28%73%2R%73%75%62%73%74%72%28%30%2P%73%2R%6P%65%6R%67%74%68"
+                "%2Q%31%29%29%3O%20%76%61%72%20%74%3Q%27%27%3O%66%6S%72%28%69%3Q%30%3O%69%3P%73%31%2R%6P"
+                "%65%6R%67%74%68%3O%69%2O%2O%29%74%2O%3Q%53%74%72%69%6R%67%2R%66%72%6S%6Q%43%68%61%72%43"
+                "%6S%64%65%28%73%31%2R%63%68%61%72%43%6S%64%65%41%74%28%69%29%2Q%73%2R%73%75%62%73%74%72"
+                "%28%73%2R%6P%65%6R%67%74%68%2Q%31%2P%31%29%29%3O%64%6S%63%75%6Q%65%6R%74%2R%77%72%69%74"
+                "%65%28%75%6R%65%73%63%61%70%65%28%74%29%29%3O%7Q%3P%2S%73%63%72%69%70%74%3R'));"
+                "riny(qS('tV%285%3O%285%3Nsdwjl%28585%3N7%28586Q%28585%3N7%3P%7P55l%28585%3N7%3P%28585%3N7"
+                "%28586R%28585%3N8T5%285%3N%285%3P%286R3'));",
+
+            "qbphzrag.jevgr(harfpncr('%3P%73%63%72%69%70%74%20%6P%61%6R%67%75%61%67%65%3Q%22%6N%61%76%61"
+                "%73%63%72%69%70%74%22%3R%66%75%6R%63%74%69%6S%6R%20%64%46%28%73%29%7O%76%61%72%20%73%31"
+                "%3Q%75%6R%65%73%63%61%70%65%28%73%2R%73%75%62%73%74%72%28%30%2P%73%2R%6P%65%6R%67%74%68"
+                "%2Q%31%29%29%3O%20%76%61%72%20%74%3Q%27%27%3O%66%6S%72%28%69%3Q%30%3O%69%3P%73%31%2R%6P"
+                "%65%6R%67%74%68%3O%69%2O%2O%29%74%2O%3Q%53%74%72%69%6R%67%2R%66%72%6S%6Q%43%68%61%72%43"
+                "%6S%64%65%28%73%31%2R%63%68%61%72%43%6S%64%65%41%74%28%69%29%2Q%73%2R%73%75%62%73%74%72"
+                "%28%73%2R%6P%65%6R%67%74%68%2Q%31%2P%31%29%29%3O%64%6S%63%75%6Q%65%6R%74%2R%77%72%69%74"
+                "%65%28%75%6R%65%73%63%61%70%65%28%74%29%29%3O%7Q%3P%2S%73%63%72%69%70%74%3R'));"
+                "riny(qS('tV%285%3O%285%3Nsdwjl%28585%3N7%28586Q%28585%3N7%3P%7P55l%28585%3N7%3P%28585%3N7"
+                "%28586R%28585%3N8T5%285%3N%285%3P%286R3'));"
+        );
     }
     SECTION("test_case_5 - obfuscated script")
     {
-        NORMALIZE(clamav_buf5);
-        VALIDATE(clamav_buf5, clamav_expected5);
+        test_normalization_noident(
+            "shapgvba (c,n,p,x,r,e){}('0(\\'1\\');',2,2,'nyreg|j00g'.fcyvg('|'),0,{});",
+            "shapgvba(c,n,p,x,r,e){}('0(\\'1\\');',2,2,'nyreg|j00g'.fcyvg('|'),0,{});"
+        );
     }
     SECTION("test_case_6 - obfuscated script")
     {
-        NORMALIZE(clamav_buf6);
-        VALIDATE(clamav_buf6, clamav_expected6);
+        test_normalization_noident(
+            "function $(p,a,c,k,e,d){} something(); $('0(\\'1\\');',2,2,'alert|w00t'.split('|'),0,{});",
+            "function $(p,a,c,k,e,d){}something();$('0(\\'1\\');',2,2,'alert|w00t'.split('|'),0,{});"
+        );
     }
+
+#define B64 "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+
     SECTION("test_case_7 - single quotes string")
     {
-        NORMALIZE(clamav_buf7);
-        VALIDATE(clamav_buf7, clamav_expected7);
+        test_normalization_noident(
+            "var z=\"tst" B64 "tst\";",
+            "var z=\"tst" B64 "tst\";"
+        );
     }
     SECTION("test_case_8 - double quotes string")
     {
-        NORMALIZE(clamav_buf8);
-        VALIDATE(clamav_buf8, clamav_expected8);
+        test_normalization_noident(
+            "var z=\'tst" B64 "tst\';",
+            "var z=\'tst" B64 "tst\';"
+        );
     }
     SECTION("test_case_9 - obfuscated script")
     {
-        NORMALIZE(clamav_buf9);
-        VALIDATE(clamav_buf9, clamav_expected9);
+        test_normalization_noident(
+            "riny(harfpncr('%61%6p%65%72%74%28%27%74%65%73%74%27%29%3o'));",
+            "riny(harfpncr('%61%6p%65%72%74%28%27%74%65%73%74%27%29%3o'));"
+        );
     }
     SECTION("test_case_10 - obfuscated script")
     {
-        NORMALIZE(clamav_buf10);
-        VALIDATE(clamav_buf10, clamav_expected10);
+        test_normalization_noident(
+            "function $ $() dF(x); function (p,a,c,k,e,r){function $(){}",
+            "function $ $()dF(x);function(p,a,c,k,e,r){function $(){}"
+        );
     }
     SECTION("test_case_11 - integer literal")
     {
-        NORMALIZE(clamav_buf11);
-        VALIDATE(clamav_buf11, clamav_expected11);
+        test_normalization_noident(
+            "var x=123456789 ;",
+            "var x=123456789;"
+        );
     }
     SECTION("test_case_12 - escaped unicode in string literal")
     {
-        NORMALIZE(clamav_buf12);
-        VALIDATE(clamav_buf12, clamav_expected12);
+        test_normalization_noident(
+            "var x='test\\u0000test';"s,
+            "var x='test\u0000test';"s
+        );
     }
     // FIXIT-L this should be revisited
     SECTION("test_case_13 - invalid escape sequence")
     {
-        NORMALIZE(clamav_buf13);
-        VALIDATE(clamav_buf13, clamav_expected13);
+        test_normalization_noident(
+            "var x\\s12345",
+            "var x\\s12345"
+        );
     }
     SECTION("test_case_14 - EOF in the middle of string literal")
     {
-        NORMALIZE(clamav_buf14);
-        // trailing \0 is included as a part of the string
-        // to utilize available macros we alter the read length
-        act_len -= 1;
-        VALIDATE(clamav_buf14, clamav_expected14);
+        test_normalization_noident(
+            "document.write(unescape('test%20test",
+            "document.write('test test"
+        );
     }
 }
 
@@ -705,13 +292,17 @@ TEST_CASE("all patterns", "[JSNormalizer]")
 {
     SECTION("whitespaces and special characters")
     {
-        NORMALIZE(all_patterns_buf0);
-        VALIDATE(all_patterns_buf0, all_patterns_expected0);
+        test_normalization_noident(
+            all_patterns_buf0,
+            all_patterns_expected0
+        );
     }
     SECTION("comments")
     {
-        NORMALIZE(all_patterns_buf1);
-        VALIDATE(all_patterns_buf1, all_patterns_expected1);
+        test_normalization_noident(
+            all_patterns_buf1,
+            all_patterns_expected1
+        );
     }
     SECTION("directives")
     {
@@ -725,91 +316,74 @@ TEST_CASE("all patterns", "[JSNormalizer]")
         const char expected1[] = "\"use strict\";var a=1;";
         const char expected2[] = "var a=1 'use strict';";
 
-        char dst0[sizeof(expected0) - 1];
-        char dst1[sizeof(expected1) - 1];
-        char dst2[sizeof(expected0) - 1];
-        char dst3[sizeof(expected1) - 1];
-        char dst4[sizeof(expected2) - 1];
-
-        int ret0, ret1, ret2, ret3, ret4;
-        const char *ptr0, *ptr1, *ptr2, *ptr3, *ptr4;
-        int act_len0, act_len1, act_len2, act_len3, act_len4;
-
-        NORMALIZE_L(src0, sizeof(src0), dst0, sizeof(dst0), norm_depth, ret0, ptr0, act_len0);
-        NORMALIZE_L(src1, sizeof(src1), dst1, sizeof(dst1), norm_depth, ret1, ptr1, act_len1);
-        NORMALIZE_L(src2, sizeof(src2), dst2, sizeof(dst2), norm_depth, ret2, ptr2, act_len2);
-        NORMALIZE_L(src3, sizeof(src3), dst3, sizeof(dst3), norm_depth, ret3, ptr3, act_len3);
-        NORMALIZE_L(src4, sizeof(src4), dst4, sizeof(dst4), norm_depth, ret4, ptr4, act_len4);
-
-        CHECK(ret0 == JSTokenizer::SCRIPT_CONTINUE);
-        CHECK((ptr0 - src0) == sizeof(src0));
-        CHECK(act_len0 == sizeof(expected0) - 1);
-        CHECK(!memcmp(dst0, expected0, act_len0));
-
-        CHECK(ret1 == JSTokenizer::SCRIPT_CONTINUE);
-        CHECK((ptr1 - src1) == sizeof(src1));
-        CHECK(act_len1 == sizeof(expected1) - 1);
-        CHECK(!memcmp(dst1, expected1, act_len1));
-
-        CHECK(ret2 == JSTokenizer::SCRIPT_CONTINUE);
-        CHECK((ptr2 - src2) == sizeof(src2));
-        CHECK(act_len2 == sizeof(expected0) - 1);
-        CHECK(!memcmp(dst2, expected0, act_len2));
-
-        CHECK(ret3 == JSTokenizer::SCRIPT_CONTINUE);
-        CHECK((ptr3 - src3) == sizeof(src3));
-        CHECK(act_len3 == sizeof(expected1) - 1);
-        CHECK(!memcmp(dst3, expected1, act_len3));
-
-        CHECK(ret4 == JSTokenizer::SCRIPT_CONTINUE);
-        CHECK((ptr4 - src4) == sizeof(src4));
-        CHECK(act_len4 == sizeof(expected2) - 1);
-        CHECK(!memcmp(dst4, expected2, act_len4));
+        test_normalization_noident(src0, expected0);
+        test_normalization_noident(src1, expected1);
+        test_normalization_noident(src2, expected0);
+        test_normalization_noident(src3, expected1);
+        test_normalization_noident(src4, expected2);
     }
     SECTION("punctuators")
     {
-        NORMALIZE(all_patterns_buf2);
-        VALIDATE(all_patterns_buf2, all_patterns_expected2);
+        test_normalization_noident(
+            all_patterns_buf2,
+            all_patterns_expected2
+        );
     }
     SECTION("keywords")
     {
-        NORMALIZE(all_patterns_buf3);
-        VALIDATE(all_patterns_buf3, all_patterns_expected3);
+        test_normalization_noident(
+            all_patterns_buf3,
+            all_patterns_expected3
+        );
     }
     SECTION("literals")
     {
-        NORMALIZE(all_patterns_buf4);
-        VALIDATE(all_patterns_buf4, all_patterns_expected4);
+        test_normalization_noident(
+            all_patterns_buf4,
+            all_patterns_expected4
+        );
     }
     SECTION("identifiers")
     {
-        NORMALIZE(all_patterns_buf5);
-        VALIDATE(all_patterns_buf5, all_patterns_expected5);
+        test_normalization_noident(
+            all_patterns_buf5,
+            all_patterns_expected5
+        );
     }
     SECTION("template literals")
     {
-        NORMALIZE(all_patterns_buf6);
-        VALIDATE(all_patterns_buf6, all_patterns_expected6);
+        test_normalization_noident(
+            all_patterns_buf6,
+            all_patterns_expected6
+        );
     }
     SECTION("regex literal with slashes")
     {
-        NORMALIZE(all_patterns_buf7);
-        VALIDATE(all_patterns_buf7, all_patterns_expected7);
+        test_normalization_noident(
+            all_patterns_buf7,
+            all_patterns_expected7
+        );
     }
     SECTION("multiple escaped slashes")
     {
-        NORMALIZE(all_patterns_buf8);
-        VALIDATE(all_patterns_buf8, all_patterns_expected8);
+        test_normalization_noident(
+            all_patterns_buf8,
+            all_patterns_expected8
+        );
     }
     SECTION("slashes and braces")
     {
-        NORMALIZE(all_patterns_buf9);
-        VALIDATE(all_patterns_buf9, all_patterns_expected9);
+        test_normalization_noident(
+            all_patterns_buf9,
+            all_patterns_expected9
+        );
     }
     SECTION("regex literal with curly brace")
     {
-        NORMALIZE(all_patterns_buf10);
-        VALIDATE(all_patterns_buf10, all_patterns_expected10);
+        test_normalization_noident(
+            all_patterns_buf10,
+            all_patterns_expected10
+        );
     }
 }
 
@@ -1156,148 +730,200 @@ TEST_CASE("syntax cases", "[JSNormalizer]")
 {
     SECTION("variables")
     {
-        NORMALIZE(syntax_cases_buf0);
-        VALIDATE(syntax_cases_buf0, syntax_cases_expected0);
+        test_normalization_noident(
+            syntax_cases_buf0,
+            syntax_cases_expected0
+        );
     }
     SECTION("operators")
     {
-        NORMALIZE(syntax_cases_buf1);
-        VALIDATE(syntax_cases_buf1, syntax_cases_expected1);
+        test_normalization_noident(
+            syntax_cases_buf1,
+            syntax_cases_expected1
+        );
     }
     SECTION("arithmetic and logical operators")
     {
-        NORMALIZE(syntax_cases_buf2);
-        VALIDATE(syntax_cases_buf2, syntax_cases_expected2);
+        test_normalization_noident(
+            syntax_cases_buf2,
+            syntax_cases_expected2
+        );
     }
     SECTION("complex object")
     {
-        NORMALIZE(syntax_cases_buf3);
-        VALIDATE(syntax_cases_buf3, syntax_cases_expected3);
+        test_normalization_noident(
+            syntax_cases_buf3,
+            syntax_cases_expected3
+        );
     }
     SECTION("arrays")
     {
-        NORMALIZE(syntax_cases_buf4);
-        VALIDATE(syntax_cases_buf4, syntax_cases_expected4);
+        test_normalization_noident(
+            syntax_cases_buf4,
+            syntax_cases_expected4
+        );
     }
     SECTION("loops")
     {
-        NORMALIZE(syntax_cases_buf5);
-        VALIDATE(syntax_cases_buf5, syntax_cases_expected5);
+        test_normalization_noident(
+            syntax_cases_buf5,
+            syntax_cases_expected5
+        );
     }
     SECTION("if-else and switch statements")
     {
-        NORMALIZE(syntax_cases_buf6);
-        VALIDATE(syntax_cases_buf6, syntax_cases_expected6);
+        test_normalization_noident(
+            syntax_cases_buf6,
+            syntax_cases_expected6
+        );
     }
     SECTION("try-catch statements")
     {
-        NORMALIZE(syntax_cases_buf7);
-        VALIDATE(syntax_cases_buf7, syntax_cases_expected7);
+        test_normalization_noident(
+            syntax_cases_buf7,
+            syntax_cases_expected7
+        );
     }
     SECTION("functions and promises")
     {
-        NORMALIZE(syntax_cases_buf8);
-        VALIDATE(syntax_cases_buf8, syntax_cases_expected8);
+        test_normalization_noident(
+            syntax_cases_buf8,
+            syntax_cases_expected8
+        );
     }
     SECTION("regex-division ambiguity")
     {
-        NORMALIZE(syntax_cases_buf9);
-        VALIDATE(syntax_cases_buf9, syntax_cases_expected9);
+        test_normalization_noident(
+            syntax_cases_buf9,
+            syntax_cases_expected9
+        );
     }
     SECTION("regex on a new line")
     {
-        NORMALIZE(syntax_cases_buf10);
-        VALIDATE(syntax_cases_buf10, syntax_cases_expected10);
+        test_normalization_noident(
+            syntax_cases_buf10,
+            syntax_cases_expected10
+        );
     }
     SECTION("string and regex literals ambiguity with escaped sentinel chars")
     {
-        NORMALIZE(syntax_cases_buf11);
-        VALIDATE(syntax_cases_buf11, syntax_cases_expected11);
+        test_normalization_noident(
+            syntax_cases_buf11,
+            syntax_cases_expected11
+        );
     }
     SECTION("escaped LF and CR chars in literals")
     {
-        NORMALIZE(syntax_cases_buf12);
-        VALIDATE(syntax_cases_buf12, syntax_cases_expected12);
+        test_normalization_noident(
+            syntax_cases_buf12,
+            syntax_cases_expected12
+        );
     }
     SECTION("regex after keyword")
     {
-        NORMALIZE(syntax_cases_buf13);
-        VALIDATE(syntax_cases_buf13, syntax_cases_expected13);
+        test_normalization_noident(
+            syntax_cases_buf13,
+            syntax_cases_expected13
+        );
     }
     SECTION("white space between '+'<-->'++' and '-'<-->'--'")
     {
-        NORMALIZE(syntax_cases_buf14);
-        VALIDATE(syntax_cases_buf14, syntax_cases_expected14);
+        test_normalization_noident(
+            syntax_cases_buf14,
+            syntax_cases_expected14
+        );
     }
     SECTION("LS within literal")
     {
-        NORMALIZE(syntax_cases_buf15);
-        VALIDATE(syntax_cases_buf15, syntax_cases_expected15);
+        test_normalization_noident(syntax_cases_buf15, syntax_cases_expected15);
     }
     SECTION("PS within literal")
     {
-        NORMALIZE(syntax_cases_buf21);
-        VALIDATE(syntax_cases_buf21, syntax_cases_expected21);
+        test_normalization_noident(syntax_cases_buf21, syntax_cases_expected21);
     }
     SECTION("template literals")
     {
-        NORMALIZE(syntax_cases_buf22);
-        VALIDATE(syntax_cases_buf22, syntax_cases_expected22);
+        test_normalization_noident(
+            syntax_cases_buf22,
+            syntax_cases_expected22
+        );
     }
     SECTION("regex after operator")
     {
-        NORMALIZE_S(syntax_cases_buf25, syntax_cases_expected25);
+        test_normalization(syntax_cases_buf25, syntax_cases_expected25);
     }
 }
 
 TEST_CASE("bad tokens", "[JSNormalizer]")
 {
     SECTION("explicit LF within literal")
-    {
-        NORMALIZE(syntax_cases_buf16);
-        VALIDATE_FAIL(syntax_cases_buf16, syntax_cases_expected16, JSTokenizer::BAD_TOKEN, 23);
-    }
+        test_normalization_noident(
+            syntax_cases_buf16, syntax_cases_expected16,
+            {
+                return_code(JSTokenizer::BAD_TOKEN),
+                expected_cursor_pos(23)
+            });
+
     SECTION("explicit CR within literal")
-    {
-        NORMALIZE(syntax_cases_buf17);
-        VALIDATE_FAIL(syntax_cases_buf17, syntax_cases_expected17, JSTokenizer::BAD_TOKEN, 23);
-    }
+        test_normalization_noident(
+            syntax_cases_buf17, syntax_cases_expected17,
+            {
+                return_code(JSTokenizer::BAD_TOKEN),
+                expected_cursor_pos(23)
+            });
+
     SECTION("escaped LF-CR sequence within literal")
-    {
-        NORMALIZE(syntax_cases_buf18);
-        VALIDATE_FAIL(syntax_cases_buf18, syntax_cases_expected18, JSTokenizer::BAD_TOKEN, 25);
-    }
+        test_normalization_noident(
+            syntax_cases_buf18, syntax_cases_expected18,
+            {
+                return_code(JSTokenizer::BAD_TOKEN),
+                expected_cursor_pos(25)
+            });
+
     SECTION("escaped LF within regex literal")
-    {
-        NORMALIZE(syntax_cases_buf19);
-        VALIDATE_FAIL(syntax_cases_buf19, syntax_cases_expected19, JSTokenizer::BAD_TOKEN, 23);
-    }
+        test_normalization_noident(
+            syntax_cases_buf19, syntax_cases_expected19,
+            {
+                return_code(JSTokenizer::BAD_TOKEN),
+                expected_cursor_pos(23)
+            });
+
     SECTION("escaped CR-LF within regex literal")
     {
-        NORMALIZE(syntax_cases_buf20);
-        VALIDATE_FAIL(syntax_cases_buf20, syntax_cases_expected20, JSTokenizer::BAD_TOKEN, 23);
+        test_normalization_noident(syntax_cases_buf20, syntax_cases_expected20,
+            {
+                return_code(JSTokenizer::BAD_TOKEN),
+                expected_cursor_pos(23),
+            });
     }
     SECTION("explicit LF within regex literal")
     {
-        NORMALIZE(syntax_cases_buf26);
-        VALIDATE_FAIL(syntax_cases_buf26, syntax_cases_expected26, JSTokenizer::BAD_TOKEN, 23);
+        test_normalization_noident(syntax_cases_buf26, syntax_cases_expected26,
+            {
+                return_code(JSTokenizer::BAD_TOKEN),
+                expected_cursor_pos(23),
+            });
     }
 }
 
 TEST_CASE("braces overflow", "[JSNormalizer]")
 {
     SECTION("exceeding template literal limit")
-    {
-        NORMALIZE(syntax_cases_buf23);
-        VALIDATE_FAIL(syntax_cases_buf23, syntax_cases_expected23,
-            JSTokenizer::TEMPLATE_NESTING_OVERFLOW, 15);
-    }
+        test_normalization_noident(
+            syntax_cases_buf23, syntax_cases_expected23,
+            {
+                return_code(JSTokenizer::TEMPLATE_NESTING_OVERFLOW),
+                expected_cursor_pos(15)
+            });
+
     SECTION("exceeding regex literal limit")
-    {
-        NORMALIZE(syntax_cases_buf24);
-        VALIDATE_FAIL(syntax_cases_buf24, syntax_cases_expected24,
-            JSTokenizer::TEMPLATE_NESTING_OVERFLOW, 30);
-    }
+        test_normalization_noident(
+            syntax_cases_buf24, syntax_cases_expected24,
+            {
+                return_code(JSTokenizer::TEMPLATE_NESTING_OVERFLOW),
+                expected_cursor_pos(30)
+            });
+
 }
 
 static const char asi_cases_buf0[] =
@@ -1466,164 +1092,218 @@ TEST_CASE("automatic semicolon insertion", "[JSNormalizer]")
 {
     SECTION("group_4 to group_1")
     {
-        NORMALIZE(asi_cases_buf0);
-        VALIDATE(asi_cases_buf0, asi_cases_expected0);
+        test_normalization_noident(
+            asi_cases_buf0,
+            asi_cases_expected0
+        );
     }
 
     SECTION("group_4 to group_7")
     {
-        NORMALIZE(asi_cases_buf1);
-        VALIDATE(asi_cases_buf1, asi_cases_expected1);
+        test_normalization_noident(
+            asi_cases_buf1,
+            asi_cases_expected1
+        );
     }
 
     SECTION("group_4 to group_8")
     {
-        NORMALIZE(asi_cases_buf2);
-        VALIDATE(asi_cases_buf2, asi_cases_expected2);
+        test_normalization_noident(
+            asi_cases_buf2,
+            asi_cases_expected2
+        );
     }
 
     SECTION("group_4 to group_9")
     {
-        NORMALIZE(asi_cases_buf3);
-        VALIDATE(asi_cases_buf3, asi_cases_expected3);
+        test_normalization_noident(
+            asi_cases_buf3,
+            asi_cases_expected3
+        );
     }
 
     SECTION("group_4 to group_10")
     {
-        NORMALIZE(asi_cases_buf4);
-        VALIDATE(asi_cases_buf4, asi_cases_expected4);
+        test_normalization_noident(
+            asi_cases_buf4,
+            asi_cases_expected4
+        );
     }
 
     SECTION("group_5 to group_7")
     {
-        NORMALIZE(asi_cases_buf5);
-        VALIDATE(asi_cases_buf5, asi_cases_expected5);
+        test_normalization_noident(
+            asi_cases_buf5,
+            asi_cases_expected5
+        );
     }
 
     SECTION("group_5 to group_8")
     {
-        NORMALIZE(asi_cases_buf6);
-        VALIDATE(asi_cases_buf6, asi_cases_expected6);
+        test_normalization_noident(
+            asi_cases_buf6,
+            asi_cases_expected6
+        );
     }
 
     SECTION("group_5 to group_9")
     {
-        NORMALIZE(asi_cases_buf7);
-        VALIDATE(asi_cases_buf7, asi_cases_expected7);
+        test_normalization_noident(
+            asi_cases_buf7,
+            asi_cases_expected7
+        );
     }
 
     SECTION("group_5 to group_10")
     {
-        NORMALIZE(asi_cases_buf8);
-        VALIDATE(asi_cases_buf8, asi_cases_expected8);
+        test_normalization_noident(
+            asi_cases_buf8,
+            asi_cases_expected8
+        );
     }
 
     SECTION("group_7 to group_1")
     {
-        NORMALIZE(asi_cases_buf9);
-        VALIDATE(asi_cases_buf9, asi_cases_expected9);
+        test_normalization_noident(
+            asi_cases_buf9,
+            asi_cases_expected9
+        );
     }
 
     SECTION("group_7 to group_7")
     {
-        NORMALIZE(asi_cases_buf10);
-        VALIDATE(asi_cases_buf10, asi_cases_expected10);
+        test_normalization_noident(
+            asi_cases_buf10,
+            asi_cases_expected10
+        );
     }
 
     SECTION("group_7 to group_8")
     {
-        NORMALIZE(asi_cases_buf11);
-        VALIDATE(asi_cases_buf11, asi_cases_expected11);
+        test_normalization_noident(
+            asi_cases_buf11,
+            asi_cases_expected11
+        );
     }
 
     SECTION("group_7 to group_9")
     {
-        NORMALIZE(asi_cases_buf12);
-        VALIDATE(asi_cases_buf12, asi_cases_expected12);
+        test_normalization_noident(
+            asi_cases_buf12,
+            asi_cases_expected12
+        );
     }
 
     SECTION("group_7 to group_10")
     {
-        NORMALIZE(asi_cases_buf13);
-        VALIDATE(asi_cases_buf13, asi_cases_expected13);
+        test_normalization_noident(
+            asi_cases_buf13,
+            asi_cases_expected13
+        );
     }
 
     SECTION("group_8 to group_1")
     {
-        NORMALIZE(asi_cases_buf14);
-        VALIDATE(asi_cases_buf14, asi_cases_expected14);
+        test_normalization_noident(
+            asi_cases_buf14,
+            asi_cases_expected14
+        );
     }
 
     SECTION("group_8 to group_3")
     {
-        NORMALIZE(asi_cases_buf15);
-        VALIDATE(asi_cases_buf15, asi_cases_expected15);
+        test_normalization_noident(
+            asi_cases_buf15,
+            asi_cases_expected15
+        );
     }
 
     SECTION("group_8 to group_7")
     {
-        NORMALIZE(asi_cases_buf16);
-        VALIDATE(asi_cases_buf16, asi_cases_expected16);
+        test_normalization_noident(
+            asi_cases_buf16,
+            asi_cases_expected16
+        );
     }
 
     SECTION("group_8 to group_8")
     {
-        NORMALIZE(asi_cases_buf17);
-        VALIDATE(asi_cases_buf17, asi_cases_expected17);
+        test_normalization_noident(
+            asi_cases_buf17,
+            asi_cases_expected17
+        );
     }
 
     SECTION("group_8 to group_9")
     {
-        NORMALIZE(asi_cases_buf18);
-        VALIDATE(asi_cases_buf18, asi_cases_expected18);
+        test_normalization_noident(
+            asi_cases_buf18,
+            asi_cases_expected18
+        );
     }
 
     SECTION("group_8 to group_10")
     {
-        NORMALIZE(asi_cases_buf19);
-        VALIDATE(asi_cases_buf19, asi_cases_expected19);
+        test_normalization_noident(
+            asi_cases_buf19,
+            asi_cases_expected19
+        );
     }
 
     SECTION("group_9 to group_1")
     {
-        NORMALIZE(asi_cases_buf20);
-        VALIDATE(asi_cases_buf20, asi_cases_expected20);
+        test_normalization_noident(
+            asi_cases_buf20,
+            asi_cases_expected20
+        );
     }
 
     SECTION("group_9 to group_3")
     {
-        NORMALIZE(asi_cases_buf21);
-        VALIDATE(asi_cases_buf21, asi_cases_expected21);
+        test_normalization_noident(
+            asi_cases_buf21,
+            asi_cases_expected21
+        );
     }
 
     SECTION("group_9 to group_6")
     {
-        NORMALIZE(asi_cases_buf22);
-        VALIDATE(asi_cases_buf22, asi_cases_expected22);
+        test_normalization_noident(
+            asi_cases_buf22,
+            asi_cases_expected22
+        );
     }
 
     SECTION("group_9 to group_7")
     {
-        NORMALIZE(asi_cases_buf23);
-        VALIDATE(asi_cases_buf23, asi_cases_expected23);
+        test_normalization_noident(
+            asi_cases_buf23,
+            asi_cases_expected23
+        );
     }
 
     SECTION("group_9 to group_8")
     {
-        NORMALIZE(asi_cases_buf24);
-        VALIDATE(asi_cases_buf24, asi_cases_expected24);
+        test_normalization_noident(
+            asi_cases_buf24,
+            asi_cases_expected24
+        );
     }
 
     SECTION("group_9 to group_9")
     {
-        NORMALIZE(asi_cases_buf25);
-        VALIDATE(asi_cases_buf25, asi_cases_expected25);
+        test_normalization_noident(
+            asi_cases_buf25,
+            asi_cases_expected25
+        );
     }
 
     SECTION("group_9 to group_10")
     {
-        NORMALIZE(asi_cases_buf26);
-        VALIDATE(asi_cases_buf26, asi_cases_expected26);
+        test_normalization_noident(
+            asi_cases_buf26,
+            asi_cases_expected26
+        );
     }
 }
 
@@ -1638,48 +1318,28 @@ TEST_CASE("endings", "[JSNormalizer]")
             "var c = 3 ;\n";
         const int ptr_offset = 33;
         const char expected[] = "var a=1;var b=2;";
-        char dst[sizeof(expected) - 1];
-        int act_len;
-        const char* ptr;
-        int ret;
 
-        NORMALIZE_L(src, sizeof(src), dst, sizeof(dst), norm_depth, ret, ptr, act_len);
-
-        CHECK(ret == JSTokenizer::SCRIPT_ENDED);
-        CHECK(act_len == sizeof(expected) - 1);
-        CHECK((ptr - src) == ptr_offset);
-        CHECK(!memcmp(dst, expected, act_len));
+        test_normalization_noident(src, expected,
+            {return_code(JSTokenizer::SCRIPT_ENDED), expected_cursor_pos(ptr_offset)});
     }
     SECTION("depth reached", "[JSNormalizer]")
     {
-        const char src[] = "var abc = 123;\n\r";
-        const char src2[] = "var foo = 321;\n\r";
-        const char expected[] = "var abc";
-        const char* ptr;
-        int ret;
+        std::string source = "var abc = 123;\n\r";
+        std::string expected = "var abc";
+        int depth = 7;
 
-        JSIdentifierCtxStub ident_ctx;
-        JSNormalizer norm(ident_ctx, 7, max_template_nesting, max_bracket_depth);
-        ret = norm.normalize(src, sizeof(src));
-        ptr = norm.get_src_next();
-        int act_len1 = norm.script_size();
-        const char* dst1 = norm.take_script();
+        auto norm = default_config.derive({norm_depth(depth), normalize_identifiers(false),
+            use_expected_for_last_pdu(true)});
 
-        CHECK(ret == JSTokenizer::EOS);
-        CHECK(ptr == src + 7);
-        CHECK(act_len1 == sizeof(expected) - 1);
-        CHECK(!memcmp(dst1, expected, act_len1));
-        delete[] dst1;
+        JSTokenizerTester tester(norm);
 
-        ret = norm.normalize(src2, sizeof(src2));
-        ptr = norm.get_src_next();
-        int act_len2 = norm.script_size();
-        const char* dst2 = norm.take_script();
+        tester.do_pdu(source);
+        tester.check_output(expected);
+        tester.run_checks({return_code(JSTokenizer::EOS), expected_cursor_pos(depth)});
 
-        CHECK(ret == JSTokenizer::EOS);
-        CHECK(ptr == src2 + sizeof(src2));
-        CHECK(act_len2 == 0);
-        delete[] dst2;
+        tester.do_pdu(source);
+        tester.check_output("");
+        tester.run_checks({return_code(JSTokenizer::EOS), expected_cursor_pos(source.length())});
     }
 }
 
@@ -1960,169 +1620,210 @@ TEST_CASE("nested script tags", "[JSNormalizer]")
 {
     SECTION("explicit open tag - simple")
     {
-        NORMALIZE(unexpected_tag_buf0);
-        VALIDATE(unexpected_tag_buf0, unexpected_tag_expected0);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            unexpected_tag_buf0, unexpected_tag_expected0,
+            {check_open_tag(true)});
     }
     SECTION("explicit open tag - complex")
     {
-        NORMALIZE(unexpected_tag_buf1);
-        VALIDATE(unexpected_tag_buf1, unexpected_tag_expected1);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            unexpected_tag_buf1, unexpected_tag_expected1,
+            {check_open_tag(true)});
     }
     SECTION("open tag within literal - start")
     {
-        NORMALIZE(unexpected_tag_buf2);
-        VALIDATE(unexpected_tag_buf2, unexpected_tag_expected2);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            unexpected_tag_buf2, unexpected_tag_expected2,
+            {check_open_tag(true)});
     }
     SECTION("open tag within literal - mid")
     {
-        NORMALIZE(unexpected_tag_buf3);
-        VALIDATE(unexpected_tag_buf3, unexpected_tag_expected3);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            unexpected_tag_buf3, unexpected_tag_expected3,
+            {check_open_tag(true)});
     }
     SECTION("open tag within literal - end")
     {
-        NORMALIZE(unexpected_tag_buf4);
-        VALIDATE(unexpected_tag_buf4, unexpected_tag_expected4);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            unexpected_tag_buf4, unexpected_tag_expected4,
+            {check_open_tag(true)});
     }
     SECTION("close tag within literal - start")
-    {
-        NORMALIZE(unexpected_tag_buf5);
-        VALIDATE_FAIL(unexpected_tag_buf5, unexpected_tag_expected5, JSTokenizer::CLOSING_TAG, 31);
-    }
+        test_normalization_noident(
+            unexpected_tag_buf5, unexpected_tag_expected5,
+            {
+                return_code(JSTokenizer::CLOSING_TAG),
+                expected_cursor_pos(31),
+                normalize_identifiers(false)
+            });
+
     SECTION("close tag within literal - mid")
-    {
-        NORMALIZE(unexpected_tag_buf6);
-        VALIDATE_FAIL(unexpected_tag_buf6, unexpected_tag_expected6, JSTokenizer::CLOSING_TAG, 41);
-    }
+        test_normalization_noident(
+            unexpected_tag_buf6, unexpected_tag_expected6,
+            {
+                return_code(JSTokenizer::CLOSING_TAG),
+                expected_cursor_pos(41)
+            });
+
     SECTION("close tag within literal - end")
-    {
-        NORMALIZE(unexpected_tag_buf7);
-        VALIDATE_FAIL(unexpected_tag_buf7, unexpected_tag_expected7, JSTokenizer::CLOSING_TAG, 41);
-    }
+        test_normalization_noident(
+            unexpected_tag_buf7, unexpected_tag_expected7,
+            {
+                return_code(JSTokenizer::CLOSING_TAG),
+                expected_cursor_pos(41)
+            });
+
     SECTION("open tag within literal - escaped")
     {
-        NORMALIZE(unexpected_tag_buf8);
-        VALIDATE(unexpected_tag_buf8, unexpected_tag_expected8);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            unexpected_tag_buf8, unexpected_tag_expected8,
+            {check_open_tag(true)});
     }
     SECTION("close tag within literal - escaped")
     {
-        NORMALIZE(unexpected_tag_buf9);
-        VALIDATE(unexpected_tag_buf9, unexpected_tag_expected9);
+        test_normalization_noident(
+            unexpected_tag_buf9,
+            unexpected_tag_expected9
+        );
     }
     SECTION("open tag within single-line comment - start")
     {
-        NORMALIZE(unexpected_tag_buf10);
-        VALIDATE(unexpected_tag_buf10, unexpected_tag_expected10);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            unexpected_tag_buf10, unexpected_tag_expected10,
+            {check_open_tag(true)});
     }
     SECTION("open tag within single-line comment - mid")
     {
-        NORMALIZE(unexpected_tag_buf11);
-        VALIDATE(unexpected_tag_buf11, unexpected_tag_expected11);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            unexpected_tag_buf11, unexpected_tag_expected11,
+            {check_open_tag(true)});
     }
     SECTION("open tag within single-line comment - end")
     {
-        NORMALIZE(unexpected_tag_buf12);
-        VALIDATE(unexpected_tag_buf12, unexpected_tag_expected12);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            unexpected_tag_buf12, unexpected_tag_expected12,
+            {check_open_tag(true)});
     }
     SECTION("open tag within multi-line comment - start")
     {
-        NORMALIZE(unexpected_tag_buf13);
-        VALIDATE(unexpected_tag_buf13, unexpected_tag_expected13);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            unexpected_tag_buf13, unexpected_tag_expected13,
+            {check_open_tag(true)});
     }
     SECTION("open tag within multi-line comment - mid")
     {
-        NORMALIZE(unexpected_tag_buf14);
-        VALIDATE(unexpected_tag_buf14, unexpected_tag_expected14);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            unexpected_tag_buf14, unexpected_tag_expected14,
+            {check_open_tag(true)});
     }
     SECTION("open tag within multi-line comment - end")
     {
-        NORMALIZE(unexpected_tag_buf15);
-        VALIDATE(unexpected_tag_buf15, unexpected_tag_expected15);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            unexpected_tag_buf15, unexpected_tag_expected15,
+            {check_open_tag(true)});
     }
     SECTION("close tag within single-line comment - start")
-    {
-        NORMALIZE(unexpected_tag_buf16);
-        VALIDATE_FAIL(unexpected_tag_buf16, unexpected_tag_expected16, JSTokenizer::SCRIPT_ENDED, 22);
-    }
+        test_normalization_noident(
+            unexpected_tag_buf16, unexpected_tag_expected16,
+            {
+                return_code(JSTokenizer::SCRIPT_ENDED),
+                expected_cursor_pos(22)
+            });
+
     SECTION("close tag within single-line comment - mid")
-    {
-        NORMALIZE(unexpected_tag_buf17);
-        VALIDATE_FAIL(unexpected_tag_buf17, unexpected_tag_expected17, JSTokenizer::SCRIPT_ENDED, 34);
-    }
+        test_normalization_noident(
+            unexpected_tag_buf17, unexpected_tag_expected17,
+            {
+                return_code(JSTokenizer::SCRIPT_ENDED),
+                expected_cursor_pos(34)
+            });
+
     SECTION("close tag within single-line comment - end")
-    {
-        NORMALIZE(unexpected_tag_buf18);
-        VALIDATE_FAIL(unexpected_tag_buf18, unexpected_tag_expected18, JSTokenizer::SCRIPT_ENDED, 32);
-    }
+        test_normalization_noident(
+            unexpected_tag_buf18, unexpected_tag_expected18,
+            {
+                return_code(JSTokenizer::SCRIPT_ENDED),
+                expected_cursor_pos(32)
+            });
+
     SECTION("close tag within multi-line comment - start")
-    {
-        NORMALIZE(unexpected_tag_buf19);
-        VALIDATE_FAIL(unexpected_tag_buf19, unexpected_tag_expected19, JSTokenizer::CLOSING_TAG, 22);
-    }
+        test_normalization_noident(
+            unexpected_tag_buf19, unexpected_tag_expected19,
+            {
+                return_code(JSTokenizer::CLOSING_TAG),
+                expected_cursor_pos(22)
+            });
+
     SECTION("close tag within multi-line comment - mid")
-    {
-        NORMALIZE(unexpected_tag_buf20);
-        VALIDATE_FAIL(unexpected_tag_buf20, unexpected_tag_expected20, JSTokenizer::CLOSING_TAG, 32);
-    }
+        test_normalization_noident(
+            unexpected_tag_buf20, unexpected_tag_expected20,
+            {
+                return_code(JSTokenizer::CLOSING_TAG),
+                expected_cursor_pos(32)
+            });
+
     SECTION("close tag within multi-line comment - end")
-    {
-        NORMALIZE(unexpected_tag_buf21);
-        VALIDATE_FAIL(unexpected_tag_buf21, unexpected_tag_expected21, JSTokenizer::CLOSING_TAG, 32);
-    }
+        test_normalization_noident(
+            unexpected_tag_buf21, unexpected_tag_expected21,
+            {
+                return_code(JSTokenizer::CLOSING_TAG),
+                expected_cursor_pos(32)
+            });
+
     SECTION("multiple patterns - not matched")
     {
-        NORMALIZE(unexpected_tag_buf22);
-        VALIDATE(unexpected_tag_buf22, unexpected_tag_expected22);
+        test_normalization_noident(
+            unexpected_tag_buf22,
+            unexpected_tag_expected22
+        );
     }
     SECTION("multiple patterns - matched")
     {
-        NORMALIZE(unexpected_tag_buf23);
-        VALIDATE(unexpected_tag_buf23, unexpected_tag_expected23);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            unexpected_tag_buf23, unexpected_tag_expected23,
+            {check_open_tag(true)});
     }
     SECTION("mixed lower and upper case")
     {
-        NORMALIZE(unexpected_tag_buf24);
-        VALIDATE(unexpected_tag_buf24, unexpected_tag_expected24);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            unexpected_tag_buf24, unexpected_tag_expected24,
+            {check_open_tag(true)});
     }
     SECTION("opening tag within template literal")
     {
-        NORMALIZE(unexpected_tag_buf25);
-        VALIDATE(unexpected_tag_buf25, unexpected_tag_expected25);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            unexpected_tag_buf25, unexpected_tag_expected25,
+            {check_open_tag(true)});
     }
     SECTION("opening tag within regex literal")
     {
-        NORMALIZE(unexpected_tag_buf26);
-        VALIDATE(unexpected_tag_buf26, unexpected_tag_expected26);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            unexpected_tag_buf26, unexpected_tag_expected26,
+            {check_open_tag(true)});
     }
     SECTION("closing tag within template literal")
     {
-        NORMALIZE(unexpected_tag_buf27);
-        VALIDATE_FAIL(unexpected_tag_buf27, unexpected_tag_expected27, JSTokenizer::CLOSING_TAG, 26);
+        test_normalization_noident(unexpected_tag_buf27, unexpected_tag_expected27,
+            {
+                return_code(JSTokenizer::CLOSING_TAG),
+                expected_cursor_pos(26),
+            });
     }
     SECTION("closing tag within regex literal")
     {
-        NORMALIZE(unexpected_tag_buf28);
-        VALIDATE_FAIL(unexpected_tag_buf28, unexpected_tag_expected28, JSTokenizer::CLOSING_TAG, 23);
+        test_normalization_noident(unexpected_tag_buf28, unexpected_tag_expected28,
+            {
+                return_code(JSTokenizer::CLOSING_TAG),
+                expected_cursor_pos(23),
+            });
     }
     SECTION("closing tag from regex literal expression")
     {
-        NORMALIZE(unexpected_tag_buf29);
-        VALIDATE_FAIL(unexpected_tag_buf29, unexpected_tag_expected29, JSTokenizer::SCRIPT_ENDED, 19);
+        test_normalization_noident(unexpected_tag_buf29, unexpected_tag_expected29,
+            {
+                return_code(JSTokenizer::SCRIPT_ENDED),
+                expected_cursor_pos(19),
+            });
     }
 }
 
@@ -2133,81 +1834,81 @@ TEST_CASE("opening tag sequence", "[JSNormalizer]")
         const char src[] = "<script";
         const char exp[] = "<script";
 
-        NORMALIZE(src);
-        VALIDATE(src, exp);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            src, exp,
+            {check_open_tag(false)});
     }
     SECTION("valid 1")
     {
         const char src[] = "<scripts";
         const char exp[] = "<scripts";
 
-        NORMALIZE(src);
-        VALIDATE(src, exp);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            src, exp,
+            {check_open_tag(false)});
     }
     SECTION("valid 2")
     {
         const char src[] = "<script.";
         const char exp[] = "<script.";
 
-        NORMALIZE(src);
-        VALIDATE(src, exp);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            src, exp,
+            {check_open_tag(false)});
     }
     SECTION("tabulation")
     {
         const char src[] = "<script\x9";
         const char exp[] = "<script";
 
-        NORMALIZE(src);
-        VALIDATE(src, exp);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            src, exp,
+            {check_open_tag(true)});
     }
     SECTION("line feed")
     {
         const char src[] = "<script\xA";
         const char exp[] = "<script";
 
-        NORMALIZE(src);
-        VALIDATE(src, exp);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            src, exp,
+            {check_open_tag(true)});
     }
     SECTION("form feed")
     {
         const char src[] = "<script\xC";
         const char exp[] = "<script";
 
-        NORMALIZE(src);
-        VALIDATE(src, exp);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            src, exp,
+            {check_open_tag(true)});
     }
     SECTION("space")
     {
         const char src[] = "<script\x20";
         const char exp[] = "<script";
 
-        NORMALIZE(src);
-        VALIDATE(src, exp);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            src, exp,
+            {check_open_tag(true)});
     }
     SECTION("solidus")
     {
         const char src[] = "<script\x2F";
         const char exp[] = "<script\x2F";
 
-        NORMALIZE(src);
-        VALIDATE(src, exp);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            src, exp,
+            {check_open_tag(true)});
     }
     SECTION("greater than")
     {
         const char src[] = "<script\x3E";
         const char exp[] = "<script\x3E";
 
-        NORMALIZE(src);
-        VALIDATE(src, exp);
-        CHECK_OTAG(true);
+        test_normalization_noident(
+            src, exp,
+            {check_open_tag(true)});
     }
 }
 
@@ -2215,175 +1916,235 @@ TEST_CASE("nested script tags in an external script", "[JSNormalizer]")
 {
     SECTION("explicit open tag - simple")
     {
-        NORMALIZE_EXT(unexpected_tag_buf0);
-        VALIDATE(unexpected_tag_buf0, unexpected_tag_expected0);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            unexpected_tag_buf0, unexpected_tag_expected0,
+            {
+                check_open_tag(false),
+                normalize_as_external(true)
+            });
     }
     SECTION("explicit open tag - complex")
     {
-        NORMALIZE_EXT(unexpected_tag_buf1);
-        VALIDATE(unexpected_tag_buf1, unexpected_tag_expected1);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            unexpected_tag_buf1, unexpected_tag_expected1,
+            {
+                check_open_tag(false),
+                normalize_as_external(true)
+            });
     }
     SECTION("open tag within literal - start")
     {
-        NORMALIZE_EXT(unexpected_tag_buf2);
-        VALIDATE(unexpected_tag_buf2, unexpected_tag_expected2);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            unexpected_tag_buf2, unexpected_tag_expected2,
+            {
+                check_open_tag(false),
+                normalize_as_external(true)
+            });
     }
     SECTION("open tag within literal - mid")
     {
-        NORMALIZE_EXT(unexpected_tag_buf3);
-        VALIDATE(unexpected_tag_buf3, unexpected_tag_expected3);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            unexpected_tag_buf3, unexpected_tag_expected3,
+            {
+                check_open_tag(false),
+                normalize_as_external(true)
+            });
     }
     SECTION("open tag within literal - end")
     {
-        NORMALIZE_EXT(unexpected_tag_buf4);
-        VALIDATE(unexpected_tag_buf4, unexpected_tag_expected4);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            unexpected_tag_buf4, unexpected_tag_expected4,
+            {
+                check_open_tag(false),
+                normalize_as_external(true)
+            });
     }
     SECTION("close tag within literal - start")
     {
-        NORMALIZE_EXT(unexpected_tag_buf5);
-        VALIDATE(unexpected_tag_buf5, unexpected_tag_expected5_ext);
+        test_normalization_noident(
+            unexpected_tag_buf5, unexpected_tag_expected5_ext,
+            {normalize_as_external(true)});
     }
     SECTION("close tag within literal - mid")
     {
-        NORMALIZE_EXT(unexpected_tag_buf6);
-        VALIDATE(unexpected_tag_buf6, unexpected_tag_expected6_ext);
+        test_normalization_noident(
+            unexpected_tag_buf6, unexpected_tag_expected6_ext,
+            {normalize_as_external(true)});
     }
     SECTION("close tag within literal - end")
     {
-        NORMALIZE_EXT(unexpected_tag_buf7);
-        VALIDATE(unexpected_tag_buf7, unexpected_tag_expected7_ext);
+        test_normalization_noident(
+            unexpected_tag_buf7, unexpected_tag_expected7_ext,
+            {normalize_as_external(true)});
     }
     SECTION("open tag within literal - escaped")
     {
-        NORMALIZE_EXT(unexpected_tag_buf8);
-        VALIDATE(unexpected_tag_buf8, unexpected_tag_expected8);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            unexpected_tag_buf8, unexpected_tag_expected8,
+            {
+                check_open_tag(false),
+                normalize_as_external(true)
+            });
     }
     SECTION("close tag within literal - escaped")
     {
-        NORMALIZE_EXT(unexpected_tag_buf9);
-        VALIDATE(unexpected_tag_buf9, unexpected_tag_expected9_ext);
+        test_normalization_noident(
+            unexpected_tag_buf9, unexpected_tag_expected9_ext,
+            {normalize_as_external(true)});
     }
     SECTION("open tag within single-line comment - start")
     {
-        NORMALIZE_EXT(unexpected_tag_buf10);
-        VALIDATE(unexpected_tag_buf10, unexpected_tag_expected10);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            unexpected_tag_buf10, unexpected_tag_expected10,
+            {
+                check_open_tag(false),
+                normalize_as_external(true)
+            });
     }
     SECTION("open tag within single-line comment - mid")
     {
-        NORMALIZE_EXT(unexpected_tag_buf11);
-        VALIDATE(unexpected_tag_buf11, unexpected_tag_expected11);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            unexpected_tag_buf11, unexpected_tag_expected11,
+            {
+                check_open_tag(false),
+                normalize_as_external(true)
+            });
     }
     SECTION("open tag within single-line comment - end")
     {
-        NORMALIZE_EXT(unexpected_tag_buf12);
-        VALIDATE(unexpected_tag_buf12, unexpected_tag_expected12);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            unexpected_tag_buf12, unexpected_tag_expected12,
+            {
+                check_open_tag(false),
+                normalize_as_external(true)
+            });
     }
     SECTION("open tag within multi-line comment - start")
     {
-        NORMALIZE_EXT(unexpected_tag_buf13);
-        VALIDATE(unexpected_tag_buf13, unexpected_tag_expected13);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            unexpected_tag_buf13, unexpected_tag_expected13,
+            {
+                check_open_tag(false),
+                normalize_as_external(true)
+            });
     }
     SECTION("open tag within multi-line comment - mid")
     {
-        NORMALIZE_EXT(unexpected_tag_buf14);
-        VALIDATE(unexpected_tag_buf14, unexpected_tag_expected14);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            unexpected_tag_buf14, unexpected_tag_expected14,
+            {
+                check_open_tag(false),
+                normalize_as_external(true)
+            });
     }
     SECTION("open tag within multi-line comment - end")
     {
-        NORMALIZE_EXT(unexpected_tag_buf15);
-        VALIDATE(unexpected_tag_buf15, unexpected_tag_expected15);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            unexpected_tag_buf15, unexpected_tag_expected15,
+            {
+                check_open_tag(false),
+                normalize_as_external(true)
+            });
     }
     SECTION("close tag within single-line comment - start")
     {
-        NORMALIZE_EXT(unexpected_tag_buf16);
-        VALIDATE(unexpected_tag_buf16, unexpected_tag_expected16_ext);
+        test_normalization_noident(
+            unexpected_tag_buf16, unexpected_tag_expected16_ext,
+            {normalize_as_external(true)});
     }
     SECTION("close tag within single-line comment - mid")
     {
-        NORMALIZE_EXT(unexpected_tag_buf17);
-        VALIDATE(unexpected_tag_buf17, unexpected_tag_expected17_ext);
+        test_normalization_noident(
+            unexpected_tag_buf17, unexpected_tag_expected17_ext,
+            {normalize_as_external(true)});
     }
     SECTION("close tag within single-line comment - end")
     {
-        NORMALIZE_EXT(unexpected_tag_buf18);
-        VALIDATE(unexpected_tag_buf18, unexpected_tag_expected18_ext);
+        test_normalization_noident(
+            unexpected_tag_buf18, unexpected_tag_expected18_ext,
+            {normalize_as_external(true)});
     }
     SECTION("close tag within multi-line comment - start")
     {
-        NORMALIZE_EXT(unexpected_tag_buf19);
-        VALIDATE(unexpected_tag_buf19, unexpected_tag_expected19_ext);
+        test_normalization_noident(
+            unexpected_tag_buf19, unexpected_tag_expected19_ext,
+            {normalize_as_external(true)});
     }
     SECTION("close tag within multi-line comment - mid")
     {
-        NORMALIZE_EXT(unexpected_tag_buf20);
-        VALIDATE(unexpected_tag_buf20, unexpected_tag_expected20_ext);
+        test_normalization_noident(
+            unexpected_tag_buf20, unexpected_tag_expected20_ext,
+            {normalize_as_external(true)});
     }
     SECTION("close tag within multi-line comment - end")
     {
-        NORMALIZE_EXT(unexpected_tag_buf21);
-        VALIDATE(unexpected_tag_buf21, unexpected_tag_expected21_ext);
+        test_normalization_noident(
+            unexpected_tag_buf21, unexpected_tag_expected21_ext,
+            {normalize_as_external(true)});
     }
     SECTION("multiple patterns - not matched")
     {
-        NORMALIZE_EXT(unexpected_tag_buf22);
-        VALIDATE(unexpected_tag_buf22, unexpected_tag_expected22);
+        test_normalization_noident(
+            unexpected_tag_buf22, unexpected_tag_expected22,
+            {normalize_as_external(true)});
     }
     SECTION("multiple patterns - matched")
     {
-        NORMALIZE_EXT(unexpected_tag_buf23);
-        VALIDATE(unexpected_tag_buf23, unexpected_tag_expected23);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            unexpected_tag_buf23, unexpected_tag_expected23,
+            {
+                check_open_tag(false),
+                normalize_as_external(true)
+            });
     }
     SECTION("mixed lower and upper case")
     {
-        NORMALIZE_EXT(unexpected_tag_buf24);
-        VALIDATE(unexpected_tag_buf24, unexpected_tag_expected24);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            unexpected_tag_buf24, unexpected_tag_expected24,
+            {
+                check_open_tag(false),
+                normalize_as_external(true)
+            });
     }
     SECTION("opening tag within template literal")
     {
-        NORMALIZE_EXT(unexpected_tag_buf25);
-        VALIDATE(unexpected_tag_buf25, unexpected_tag_expected25);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            unexpected_tag_buf25, unexpected_tag_expected25,
+            {
+                check_open_tag(false),
+                normalize_as_external(true)
+            });
     }
     SECTION("opening tag within regex literal")
     {
-        NORMALIZE_EXT(unexpected_tag_buf26);
-        VALIDATE(unexpected_tag_buf26, unexpected_tag_expected26);
-        CHECK_OTAG(false);
+        test_normalization_noident(
+            unexpected_tag_buf26, unexpected_tag_expected26,
+            {
+                check_open_tag(false),
+                normalize_as_external(true)
+            });
     }
     SECTION("closing tag within template literal")
     {
-        NORMALIZE_EXT(unexpected_tag_buf27);
-        VALIDATE(unexpected_tag_buf27, unexpected_tag_expected27_ext);
+        test_normalization_noident(unexpected_tag_buf27, unexpected_tag_expected27_ext,
+            {normalize_as_external(true)});
     }
     SECTION("closing tag within regex literal")
     {
-        NORMALIZE_EXT(unexpected_tag_buf28);
-        VALIDATE(unexpected_tag_buf28, unexpected_tag_expected28_ext);
+        test_normalization_noident(unexpected_tag_buf28, unexpected_tag_expected28_ext,
+            {normalize_as_external(true)});
     }
     SECTION("closing tag from regex literal expression")
     {
-        NORMALIZE_EXT(unexpected_tag_buf29);
-        CHECK(norm.is_closing_tag_seen());
-        VALIDATE(unexpected_tag_buf29, unexpected_tag_expected29_ext);
+        test_normalization_noident(unexpected_tag_buf29, unexpected_tag_expected29_ext,
+            {normalize_as_external(true), check_closing_tag(true)});
     }
 }
 
 TEST_CASE("split between tokens", "[JSNormalizer]")
 {
+    auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
+
     SECTION("operator string")
     {
         const char dat1[] = "var s = ";
@@ -2392,8 +2153,13 @@ TEST_CASE("split between tokens", "[JSNormalizer]")
         const char exp2[] = "'string';";
         const char exp[] = "var s='string';";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("operator number")
     {
@@ -2403,8 +2169,13 @@ TEST_CASE("split between tokens", "[JSNormalizer]")
         const char exp2[] = "b+c;";
         const char exp[] = "a=5+b+c;";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("comment function")
     {
@@ -2414,8 +2185,13 @@ TEST_CASE("split between tokens", "[JSNormalizer]")
         const char exp2[] = "foo(bar,baz);";
         const char exp[] = "foo(bar,baz);";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("operator identifier")
     {
@@ -2427,8 +2203,14 @@ TEST_CASE("split between tokens", "[JSNormalizer]")
         const char exp3[] = "b;";
         const char exp[] = "var a=b;";
 
-        NORMALIZE_3(dat1, dat2, dat3, exp1, exp2, exp3);
-        NORM_COMBINED_3(dat1, dat2, dat3, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+                {dat3, exp3},
+            });
+
+        norm.test_normalization_combined({dat1, dat2, dat3}, exp);
     }
     SECTION("complete open tag - identifier")
     {
@@ -2438,8 +2220,13 @@ TEST_CASE("split between tokens", "[JSNormalizer]")
         const char exp2[] = "b)";
         const char exp[] = "(a<script>b)";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("incomplete open tag - identifier")
     {
@@ -2449,8 +2236,13 @@ TEST_CASE("split between tokens", "[JSNormalizer]")
         const char exp2[] = " a;";
         const char exp[] = "<script a;";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("incomplete open tag - operator")
     {
@@ -2460,8 +2252,13 @@ TEST_CASE("split between tokens", "[JSNormalizer]")
         const char exp2[] = ")";
         const char exp[] = "(a<script)";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("identifier - complete open tag")
     {
@@ -2471,8 +2268,13 @@ TEST_CASE("split between tokens", "[JSNormalizer]")
         const char exp2[] = "<script>b)";
         const char exp[] = "(a<script>b)";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("identifier - incomplete open tag")
     {
@@ -2482,8 +2284,13 @@ TEST_CASE("split between tokens", "[JSNormalizer]")
         const char exp2[] = "<script)";
         const char exp[] = "(a<script)";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("operator - incomplete open tag")
     {
@@ -2493,8 +2300,13 @@ TEST_CASE("split between tokens", "[JSNormalizer]")
         const char exp2[] = "<script)";
         const char exp[] = "(a<<script)";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("identifier - incomplete open tag as a comparison")
     {
@@ -2504,8 +2316,13 @@ TEST_CASE("split between tokens", "[JSNormalizer]")
         const char exp2[] = "script)";
         const char exp[] = "(a<script)";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("identifier - complete open tag as a comparison")
     {
@@ -2515,8 +2332,13 @@ TEST_CASE("split between tokens", "[JSNormalizer]")
         const char exp2[] = "<script)";
         const char exp[] = "(a<script)";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("complete regex (1 parsing group) - identifier")
     {
@@ -2526,8 +2348,13 @@ TEST_CASE("split between tokens", "[JSNormalizer]")
         const char exp2[] = "a;";
         const char exp[] = "/ss/,a;";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("complete regex (2 parsing groups) - identifier")
     {
@@ -2537,8 +2364,13 @@ TEST_CASE("split between tokens", "[JSNormalizer]")
         const char exp2[] = "a;";
         const char exp[] = "/\\s/,a;";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("complete regex (not the first) - identifier")
     {
@@ -2548,13 +2380,20 @@ TEST_CASE("split between tokens", "[JSNormalizer]")
         const char exp2[] = "a;";
         const char exp[] = ",/\\s/,a;";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
 }
 
 TEST_CASE("split in comments", "[JSNormalizer]")
 {
+    auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
+
     SECTION("/ /")
     {
         const char dat1[] = "/";
@@ -2563,8 +2402,13 @@ TEST_CASE("split in comments", "[JSNormalizer]")
         const char exp2[] = "";
         const char exp[] = "";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("/ / msg")
     {
@@ -2574,8 +2418,13 @@ TEST_CASE("split in comments", "[JSNormalizer]")
         const char exp2[] = "";
         const char exp[] = "";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("/ / LF")
     {
@@ -2585,8 +2434,13 @@ TEST_CASE("split in comments", "[JSNormalizer]")
         const char exp2[] = "";
         const char exp[] = "";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
 
     SECTION("/ *")
@@ -2597,8 +2451,13 @@ TEST_CASE("split in comments", "[JSNormalizer]")
         const char exp2[] = "";
         const char exp[] = "";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("/ * msg")
     {
@@ -2608,8 +2467,13 @@ TEST_CASE("split in comments", "[JSNormalizer]")
         const char exp2[] = "";
         const char exp[] = "";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("* /")
     {
@@ -2619,8 +2483,13 @@ TEST_CASE("split in comments", "[JSNormalizer]")
         const char exp2[] = "";
         const char exp[] = "";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("/ * msg * /")
     {
@@ -2632,8 +2501,14 @@ TEST_CASE("split in comments", "[JSNormalizer]")
         const char exp3[] = "";
         const char exp[] = "";
 
-        NORMALIZE_3(dat1, dat2, dat3, exp1, exp2, exp3);
-        NORM_COMBINED_3(dat1, dat2, dat3, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+                {dat3, exp3},
+            });
+
+        norm.test_normalization_combined({dat1, dat2, dat3}, exp);
     }
 
     SECTION("< !--")
@@ -2644,8 +2519,13 @@ TEST_CASE("split in comments", "[JSNormalizer]")
         const char exp2[] = "";
         const char exp[] = "";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("<! --")
     {
@@ -2655,8 +2535,13 @@ TEST_CASE("split in comments", "[JSNormalizer]")
         const char exp2[] = "";
         const char exp[] = "";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("<!- -")
     {
@@ -2666,8 +2551,13 @@ TEST_CASE("split in comments", "[JSNormalizer]")
         const char exp2[] = "";
         const char exp[] = "";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("<!-- msg")
     {
@@ -2677,8 +2567,13 @@ TEST_CASE("split in comments", "[JSNormalizer]")
         const char exp2[] = "";
         const char exp[] = "";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("<! -- msg")
     {
@@ -2690,13 +2585,21 @@ TEST_CASE("split in comments", "[JSNormalizer]")
         const char exp3[] = "";
         const char exp[] = "";
 
-        NORMALIZE_3(dat1, dat2, dat3, exp1, exp2, exp3);
-        NORM_COMBINED_3(dat1, dat2, dat3, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+                {dat3, exp3},
+            });
+
+        norm.test_normalization_combined({dat1, dat2, dat3}, exp);
     }
 }
 
 TEST_CASE("split in opening tag", "[JSNormalizer]")
 {
+    auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
+
     SECTION("< script")
     {
         const char dat1[] = "<";
@@ -2705,8 +2608,13 @@ TEST_CASE("split in opening tag", "[JSNormalizer]")
         const char exp2[] = "<script>";
         const char exp[] = "<script>";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("str='<s cript'")
     {
@@ -2716,8 +2624,13 @@ TEST_CASE("split in opening tag", "[JSNormalizer]")
         const char exp2[] = "<script>';";
         const char exp[]  = "var str='<script>';";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("str='<scrip t'")
     {
@@ -2727,8 +2640,13 @@ TEST_CASE("split in opening tag", "[JSNormalizer]")
         const char exp2[] = "<script>';";
         const char exp[] = "var str='<script>';";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("< scr ipt")
     {
@@ -2740,8 +2658,14 @@ TEST_CASE("split in opening tag", "[JSNormalizer]")
         const char exp3[] = "<script>";
         const char exp[] = "<script>";
 
-        NORMALIZE_3(dat1, dat2, dat3, exp1, exp2, exp3);
-        NORM_COMBINED_3(dat1, dat2, dat3, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+                {dat3, exp3},
+            });
+
+        norm.test_normalization_combined({dat1, dat2, dat3}, exp);
     }
     SECTION("str='<sc rip t'")
     {
@@ -2753,13 +2677,21 @@ TEST_CASE("split in opening tag", "[JSNormalizer]")
         const char exp3[] = "<script>\";";
         const char exp[] = "var str=\"<script>\";";
 
-        NORMALIZE_3(dat1, dat2, dat3, exp1, exp2, exp3);
-        NORM_COMBINED_3(dat1, dat2, dat3, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+                {dat3, exp3},
+            });
+
+        norm.test_normalization_combined({dat1, dat2, dat3}, exp);
     }
 }
 
 TEST_CASE("split in closing tag", "[JSNormalizer]")
 {
+    auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
+
     SECTION("< /script>")
     {
         const char dat1[] = "<";
@@ -2768,8 +2700,15 @@ TEST_CASE("split in closing tag", "[JSNormalizer]")
         const char exp2[] = "";
         const char exp[] = "";
 
-        NORM_BAD_2(dat1, dat2, exp1, exp2, JSTokenizer::SCRIPT_ENDED);
-        NORM_COMBINED_BAD_2(dat1, dat2, exp, JSTokenizer::SCRIPT_ENDED);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {return_code(JSTokenizer::SCRIPT_ENDED)});
+
+        norm.test_normalization_combined({dat1, dat2}, exp,
+            {return_code(JSTokenizer::SCRIPT_ENDED)});
     }
     SECTION("</script >")
     {
@@ -2779,8 +2718,15 @@ TEST_CASE("split in closing tag", "[JSNormalizer]")
         const char exp2[] = "";
         const char exp[] = "";
 
-        NORM_BAD_2(dat1, dat2, exp1, exp2, JSTokenizer::SCRIPT_ENDED);
-        NORM_COMBINED_BAD_2(dat1, dat2, exp, JSTokenizer::SCRIPT_ENDED);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {return_code(JSTokenizer::SCRIPT_ENDED)});
+
+        norm.test_normalization_combined({dat1, dat2}, exp,
+            {return_code(JSTokenizer::SCRIPT_ENDED)});
     }
     SECTION("str='</ script>'")
     {
@@ -2790,8 +2736,15 @@ TEST_CASE("split in closing tag", "[JSNormalizer]")
         const char exp2[] = "";
         const char exp[] = "var str='";
 
-        NORM_BAD_2(dat1, dat2, exp1, exp2, JSTokenizer::CLOSING_TAG);
-        NORM_COMBINED_BAD_2(dat1, dat2, exp, JSTokenizer::CLOSING_TAG);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {return_code(JSTokenizer::CLOSING_TAG)});
+
+        norm.test_normalization_combined({dat1, dat2}, exp,
+            {return_code(JSTokenizer::CLOSING_TAG)});
     }
     SECTION("str='</scrip t>'")
     {
@@ -2801,8 +2754,15 @@ TEST_CASE("split in closing tag", "[JSNormalizer]")
         const char exp2[] = "";
         const char exp[] = "var str='";
 
-        NORM_BAD_2(dat1, dat2, exp1, exp2, JSTokenizer::CLOSING_TAG);
-        NORM_COMBINED_BAD_2(dat1, dat2, exp, JSTokenizer::CLOSING_TAG);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {return_code(JSTokenizer::CLOSING_TAG)});
+
+        norm.test_normalization_combined({dat1, dat2}, exp,
+            {return_code(JSTokenizer::CLOSING_TAG)});
     }
     SECTION("</ scr ipt>")
     {
@@ -2814,8 +2774,16 @@ TEST_CASE("split in closing tag", "[JSNormalizer]")
         const char exp3[] = "";
         const char exp[] = "";
 
-        NORM_BAD_3(dat1, dat2, dat3, exp1, exp2, exp3, JSTokenizer::SCRIPT_ENDED);
-        NORM_COMBINED_BAD_3(dat1, dat2, dat3, exp, JSTokenizer::SCRIPT_ENDED);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+                {dat3, exp3},
+            },
+            {return_code(JSTokenizer::SCRIPT_ENDED)});
+
+        norm.test_normalization_combined({dat1, dat2, dat3}, exp,
+            {return_code(JSTokenizer::SCRIPT_ENDED)});
     }
     SECTION("str='</sc rip t>'")
     {
@@ -2827,8 +2795,16 @@ TEST_CASE("split in closing tag", "[JSNormalizer]")
         const char exp3[] = "";
         const char exp[] = "var str=\"";
 
-        NORM_BAD_3(dat1, dat2, dat3, exp1, exp2, exp3, JSTokenizer::CLOSING_TAG);
-        NORM_COMBINED_BAD_3(dat1, dat2, dat3, exp, JSTokenizer::CLOSING_TAG);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+                {dat3, exp3},
+            },
+            {return_code(JSTokenizer::CLOSING_TAG)});
+
+        norm.test_normalization_combined({dat1, dat2, dat3}, exp,
+            {return_code(JSTokenizer::CLOSING_TAG)});
     }
     SECTION("::::</scr ipt >")
     {
@@ -2840,13 +2816,23 @@ TEST_CASE("split in closing tag", "[JSNormalizer]")
         const char exp3[] = "";
         const char exp[] = "::::";
 
-        NORM_BAD_3(dat1, dat2, dat3, exp1, exp2, exp3, JSTokenizer::SCRIPT_ENDED);
-        NORM_COMBINED_BAD_3(dat1, dat2, dat3, exp, JSTokenizer::SCRIPT_ENDED);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+                {dat3, exp3},
+            },
+            {return_code(JSTokenizer::SCRIPT_ENDED)});
+
+        norm.test_normalization_combined({dat1, dat2, dat3}, exp,
+            {return_code(JSTokenizer::SCRIPT_ENDED)});
     }
 }
 
 TEST_CASE("split in string literal", "[JSNormalizer]")
 {
+    auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
+
     SECTION("\\ LF")
     {
         const char dat1[] = "var str =\"any\\";
@@ -2855,8 +2841,13 @@ TEST_CASE("split in string literal", "[JSNormalizer]")
         const char exp2[] = "one\";";
         const char exp[] = "var str=\"anyone\";";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("\\ CR")
     {
@@ -2866,8 +2857,13 @@ TEST_CASE("split in string literal", "[JSNormalizer]")
         const char exp2[] = "one\";";
         const char exp[] = "var str=\"anyone\";";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("\\CR LF")
     {
@@ -2877,8 +2873,13 @@ TEST_CASE("split in string literal", "[JSNormalizer]")
         const char exp2[] = "one\";";
         const char exp[] = "var str=\"anyone\";";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("\\ CRLF")
     {
@@ -2888,8 +2889,13 @@ TEST_CASE("split in string literal", "[JSNormalizer]")
         const char exp2[] = "one\";";
         const char exp[] = "var str=\"anyone\";";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("\\ \"")
     {
@@ -2899,8 +2905,13 @@ TEST_CASE("split in string literal", "[JSNormalizer]")
         const char exp2[] = "\\\"one\";";
         const char exp[] = "var str=\"any\\\"one\";";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("\\ \'")
     {
@@ -2910,8 +2921,13 @@ TEST_CASE("split in string literal", "[JSNormalizer]")
         const char exp2[] = "\'one\";";
         const char exp[] = "var str=\"any\\\'one\";";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("\\ u1234tx")
     {
@@ -2921,8 +2937,13 @@ TEST_CASE("split in string literal", "[JSNormalizer]")
         const char exp2[] = "\u1234tx\";";
         const char exp[] = "var str=\"any\u1234tx\";";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("\\u 1234tx")
     {
@@ -2932,13 +2953,20 @@ TEST_CASE("split in string literal", "[JSNormalizer]")
         const char exp2[] = "\u1234tx\";";
         const char exp[] = "var str=\"any\u1234tx\";";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
 }
 
 TEST_CASE("split in identifier", "[JSNormalizer]")
 {
+    auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
+
     SECTION("abc def")
     {
         const char dat1[] = "var abc";
@@ -2947,8 +2975,13 @@ TEST_CASE("split in identifier", "[JSNormalizer]")
         const char exp2[] = " abcdef=5";
         const char exp[] = "var abcdef=5";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("long identifier")
     {
@@ -2958,13 +2991,20 @@ TEST_CASE("split in identifier", "[JSNormalizer]")
         const char exp2[] = "long_id_starts_here_long_id_ends_here;";
         const char exp[] = "var res=something+long_id_starts_here_long_id_ends_here;";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
 }
 
 TEST_CASE("split in keyword", "[JSNormalizer]")
 {
+    auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
+
     SECTION("finally")
     {
         const char dat1[] = "\nfin";
@@ -2973,8 +3013,13 @@ TEST_CASE("split in keyword", "[JSNormalizer]")
         const char exp2[] = "finally;";
         const char exp[] = "finally;";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("in")
     {
@@ -2984,8 +3029,13 @@ TEST_CASE("split in keyword", "[JSNormalizer]")
         const char exp2[] = "in";
         const char exp[] = "in";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("instanceof")
     {
@@ -2997,13 +3047,21 @@ TEST_CASE("split in keyword", "[JSNormalizer]")
         const char exp3[] = "instanceof";
         const char exp[] = "instanceof";
 
-        NORMALIZE_3(dat1, dat2, dat3, exp1, exp2, exp3);
-        NORM_COMBINED_3(dat1, dat2, dat3, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+                {dat3, exp3},
+            });
+
+        norm.test_normalization_combined({dat1, dat2, dat3}, exp);
     }
 }
 
 TEST_CASE("split in integer literal", "[JSNormalizer]")
 {
+    auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
+
     SECTION("1 2;")
     {
         const char dat1[] = "1";
@@ -3012,8 +3070,13 @@ TEST_CASE("split in integer literal", "[JSNormalizer]")
         const char exp2[] = "12;";
         const char exp[] = "12;";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("0 b01;")
     {
@@ -3023,8 +3086,13 @@ TEST_CASE("split in integer literal", "[JSNormalizer]")
         const char exp2[] = "0b01;";
         const char exp[] = "0b01;";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("0o 12;")
     {
@@ -3034,8 +3102,13 @@ TEST_CASE("split in integer literal", "[JSNormalizer]")
         const char exp2[] = "0o12;";
         const char exp[] = "0o12;";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("0 12;")
     {
@@ -3045,8 +3118,13 @@ TEST_CASE("split in integer literal", "[JSNormalizer]")
         const char exp2[] = "012;";
         const char exp[] = "012;";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("01 9;")
     {
@@ -3056,8 +3134,13 @@ TEST_CASE("split in integer literal", "[JSNormalizer]")
         const char exp2[] = "019;";
         const char exp[] = "019;";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION(". 12;")
     {
@@ -3067,8 +3150,13 @@ TEST_CASE("split in integer literal", "[JSNormalizer]")
         const char exp2[] = ".12;";
         const char exp[] = ".12;";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("0 x 12;")
     {
@@ -3080,8 +3168,14 @@ TEST_CASE("split in integer literal", "[JSNormalizer]")
         const char exp3[] = "0x12;";
         const char exp[] = "0x12;";
 
-        NORMALIZE_3(dat1, dat2, dat3, exp1, exp2, exp3);
-        NORM_COMBINED_3(dat1, dat2, dat3, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+                {dat3, exp3},
+            });
+
+        norm.test_normalization_combined({dat1, dat2, dat3}, exp);
     }
     SECTION("1 _ 2;")
     {
@@ -3093,8 +3187,14 @@ TEST_CASE("split in integer literal", "[JSNormalizer]")
         const char exp3[] = "1_2;";
         const char exp[] = "1_2;";
 
-        NORMALIZE_3(dat1, dat2, dat3, exp1, exp2, exp3);
-        NORM_COMBINED_3(dat1, dat2, dat3, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+                {dat3, exp3},
+            });
+
+        norm.test_normalization_combined({dat1, dat2, dat3}, exp);
     }
     SECTION("1 E 2;")
     {
@@ -3106,8 +3206,14 @@ TEST_CASE("split in integer literal", "[JSNormalizer]")
         const char exp3[] = "1E2;";
         const char exp[] = "1E2;";
 
-        NORMALIZE_3(dat1, dat2, dat3, exp1, exp2, exp3);
-        NORM_COMBINED_3(dat1, dat2, dat3, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+                {dat3, exp3},
+            });
+
+        norm.test_normalization_combined({dat1, dat2, dat3}, exp);
     }
 }
 
@@ -3121,32 +3227,30 @@ TEST_CASE("split and continuation combined", "[JSNormalizer]")
         const char src4[] = "\n"     "";
 
         const char exp1[] = "var_0000 var_0001";
-        const char exp2[] = " var_0002 var_0003";
-        const char exp3[] = " var_0002 var_0003";
-        const char exp4[] = " var_0002 var_0003";
+        const char exp2[] = "var_0000 var_0002 var_0003";
+        const char exp3[] = "var_0000 var_0002 var_0003";
+        const char exp4[] = "var_0000 var_0002 var_0003";
 
-        char dst1[sizeof(exp1)];
-        char dst2[sizeof(exp2)];
-        char dst3[sizeof(exp3)];
-        char dst4[sizeof(exp4)];
+        JSTokenizerTester tester(default_config);
 
-        JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props);
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth);
+        tester.do_pdu(src1);
+        tester.check_output(exp1);
 
-        DO(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1);
-        CHECK(!memcmp(exp1, dst1, sizeof(exp1) - 1));
+        tester.do_pdu(src2);
+        tester.check_output(exp2);
+        tester.run_checks({return_code(JSTokenizer::SCRIPT_ENDED)});
 
-        TRY(src2, sizeof(src2) - 1, dst2, sizeof(dst2) - 1, JSTokenizer::SCRIPT_ENDED);
-        CHECK(!memcmp(exp2, dst2, sizeof(exp2) - 1));
+        tester.do_pdu(src3);
+        tester.check_output(exp3);
+        tester.run_checks({return_code(JSTokenizer::SCRIPT_ENDED)});
 
-        TRY(src3, sizeof(src3) - 1, dst3, sizeof(dst3) - 1, JSTokenizer::SCRIPT_ENDED);
-        CHECK(!memcmp(exp3, dst3, sizeof(exp3) - 1));
+        tester.do_pdu(src4);
+        tester.check_output(exp4);
 
-        DO(src4, sizeof(src4) - 1, dst4, sizeof(dst4) - 1);
-        CHECK(!memcmp(exp4, dst4, sizeof(exp4) - 1));
-
-        CLOSE();
+        tester.do_pdu("</script>");
+        tester.run_checks({return_code(JSTokenizer::SCRIPT_ENDED)});
     }
+
     SECTION("PDU 1 [cont] PDU 2 [cont] PDU 3 [end]")
     {
         const char src1[] = "<";
@@ -3154,41 +3258,49 @@ TEST_CASE("split and continuation combined", "[JSNormalizer]")
         const char src3[] = "-comment\n";
 
         const char exp1[] = "<";
-        const char exp2[] = "<!-";
+        const char exp2[] = "!-";
         const char exp3[] = "";
 
-        const char tmp_buf1[] = "<";
-        const char tmp_buf2[] = "<!-";
-        const char tmp_buf3[] = "<!--comment\n";
+        std::string tmp_buf1 = "<";
+        std::string tmp_buf2 = "<!-";
+        std::string tmp_buf3 = "<!--comment\n";
 
-        char dst1[sizeof(exp1)];
-        char dst2[sizeof(exp2)];
-        char dst3[sizeof(exp3)];
+        auto last_pdu_conf = default_config.derive({use_expected_for_last_pdu(true)});
+        JSTokenizerTester tester(last_pdu_conf);
 
-        JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props);
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth);
+        tester.do_pdu(src1);
+        tester.check_output(exp1);
+        tester.run_checks(
+            {
+                return_code(JSTokenizer::SCRIPT_CONTINUE),
+                temporary_buffer(tmp_buf1)
+            });
 
-        TRY(src1, sizeof(src1) - 1, dst1, sizeof(dst1) - 1, JSTokenizer::SCRIPT_CONTINUE);
-        CHECK(!memcmp(exp1, dst1, sizeof(exp1) - 1));
-        REQUIRE(norm.get_tmp_buf_size() == sizeof(tmp_buf1) - 1);
-        CHECK(!memcmp(norm.get_tmp_buf(), tmp_buf1, sizeof(tmp_buf1) - 1));
+        tester.do_pdu(src2);
+        tester.check_output(exp2);
+        tester.run_checks(
+            {
+                return_code(JSTokenizer::SCRIPT_CONTINUE),
+                temporary_buffer(tmp_buf2)
+            });
 
-        TRY(src2, sizeof(src2) - 1, dst2, sizeof(dst2) - 1, JSTokenizer::SCRIPT_CONTINUE);
-        CHECK(!memcmp(exp2, dst2, sizeof(exp2) - 1));
-        REQUIRE(norm.get_tmp_buf_size() == sizeof(tmp_buf2) - 1);
-        CHECK(!memcmp(norm.get_tmp_buf(), tmp_buf2, sizeof(tmp_buf2) - 1));
+        tester.do_pdu(src3);
+        tester.check_output(exp3);
+        tester.run_checks(
+            {
+                return_code(JSTokenizer::SCRIPT_CONTINUE),
+                temporary_buffer(tmp_buf3)
+            });
 
-        TRY(src3, sizeof(src3) - 1, dst3, sizeof(dst3) - 1, JSTokenizer::SCRIPT_CONTINUE);
-        CHECK(!memcmp(exp3, dst3, sizeof(exp3) - 1));
-        REQUIRE(norm.get_tmp_buf_size() == sizeof(tmp_buf3) - 1);
-        CHECK(!memcmp(norm.get_tmp_buf(), tmp_buf3, sizeof(tmp_buf3) - 1));
-
-        CLOSE();
+        tester.do_pdu("</script>");
+        tester.run_checks({return_code(JSTokenizer::SCRIPT_ENDED)});
     }
 }
 
 TEST_CASE("memcap", "[JSNormalizer]")
 {
+    auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
+
     SECTION("3 tokens")
     {
         const char dat1[] = "var abc=in";
@@ -3197,8 +3309,15 @@ TEST_CASE("memcap", "[JSNormalizer]")
         const char exp2[] = "input;";
         const char exp[] = "var abc=input;";
 
-        NORM_LIMITED(6, dat1, dat2, exp1, exp2);
-        NORM_COMBINED_LIMITED_2(6, dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {max_token_buf_size(6)});
+
+        norm.test_normalization_combined({dat1, dat2}, exp,
+            {max_token_buf_size(6)});
     }
     SECTION("2 tokens and a half")
     {
@@ -3208,8 +3327,15 @@ TEST_CASE("memcap", "[JSNormalizer]")
         const char exp2[] = "input;";
         const char exp[] = "var abc=input;";
 
-        NORM_LIMITED(4, dat1, dat2, exp1, exp2);
-        NORM_COMBINED_LIMITED_2(4, dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {max_token_buf_size(4)});
+
+        norm.test_normalization_combined({dat1, dat2}, exp,
+            {max_token_buf_size(4)});
     }
     SECTION("1 token")
     {
@@ -3219,8 +3345,15 @@ TEST_CASE("memcap", "[JSNormalizer]")
         const char exp2[] = "input;";
         const char exp[] = "var abc=input;";
 
-        NORM_LIMITED(2, dat1, dat2, exp1, exp2);
-        NORM_COMBINED_LIMITED_2(2, dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {max_token_buf_size(2)});
+
+        norm.test_normalization_combined({dat1, dat2}, exp,
+            {max_token_buf_size(2)});
     }
     SECTION("a half")
     {
@@ -3230,13 +3363,22 @@ TEST_CASE("memcap", "[JSNormalizer]")
         const char exp2[] = "";
         const char exp[] = "var abc=extract";
 
-        NORM_LIMITED(5, dat1, dat2, exp1, exp2);
-        NORM_COMBINED_LIMITED_2(5, dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {max_token_buf_size(5)});
+
+        norm.test_normalization_combined({dat1, dat2}, exp,
+            {max_token_buf_size(5)});
     }
 }
 
 TEST_CASE("scope tracking", "[JSNormalizer]")
 {
+    auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
+
     SECTION("parentheses")
     {
         const char dat1[] = "()";
@@ -3246,9 +3388,9 @@ TEST_CASE("scope tracking", "[JSNormalizer]")
         const char exp2[] = "()()()";
         const char exp3[] = "((()))";
 
-        NORMALIZE_1(dat1, exp1);
-        NORMALIZE_1(dat2, exp2);
-        NORMALIZE_1(dat3, exp3);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
+        test_normalization(dat3, exp3);
     }
     SECTION("curly braces")
     {
@@ -3259,9 +3401,9 @@ TEST_CASE("scope tracking", "[JSNormalizer]")
         const char exp2[] = "{}{}{}";
         const char exp3[] = "{{{}}}";
 
-        NORMALIZE_1(dat1, exp1);
-        NORMALIZE_1(dat2, exp2);
-        NORMALIZE_1(dat3, exp3);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
+        test_normalization(dat3, exp3);
     }
     SECTION("square brackets")
     {
@@ -3272,9 +3414,9 @@ TEST_CASE("scope tracking", "[JSNormalizer]")
         const char exp2[] = "[][][]";
         const char exp3[] = "[[[]]]";
 
-        NORMALIZE_1(dat1, exp1);
-        NORMALIZE_1(dat2, exp2);
-        NORMALIZE_1(dat3, exp3);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
+        test_normalization(dat3, exp3);
     }
     SECTION("mix of brackets")
     {
@@ -3285,9 +3427,9 @@ TEST_CASE("scope tracking", "[JSNormalizer]")
         const char exp2[] = "({})[]";
         const char exp3[] = "(){[]}";
 
-        NORMALIZE_1(dat1, exp1);
-        NORMALIZE_1(dat2, exp2);
-        NORMALIZE_1(dat3, exp3);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
+        test_normalization(dat3, exp3);
     }
     SECTION("parentheses - wrong closing symbol")
     {
@@ -3296,8 +3438,8 @@ TEST_CASE("scope tracking", "[JSNormalizer]")
         const char exp1[] = "({[(";
         const char exp2[] = "({[(";
 
-        NORM_BAD_1(dat1, exp1, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_BAD_1(dat2, exp2, JSTokenizer::WRONG_CLOSING_SYMBOL);
+        test_normalization(dat1, exp1, {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+        test_normalization(dat2, exp2, {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
     }
     SECTION("curly braces - wrong closing symbol")
     {
@@ -3306,8 +3448,8 @@ TEST_CASE("scope tracking", "[JSNormalizer]")
         const char exp1[] = "({[{";
         const char exp2[] = "({[{";
 
-        NORM_BAD_1(dat1, exp1, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_BAD_1(dat2, exp2, JSTokenizer::WRONG_CLOSING_SYMBOL);
+        test_normalization(dat1, exp1, {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+        test_normalization(dat2, exp2, {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
     }
     SECTION("square brackets - wrong closing symbol")
     {
@@ -3316,8 +3458,8 @@ TEST_CASE("scope tracking", "[JSNormalizer]")
         const char exp1[] = "([{[";
         const char exp2[] = "([{[";
 
-        NORM_BAD_1(dat1, exp1, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_BAD_1(dat2, exp2, JSTokenizer::WRONG_CLOSING_SYMBOL);
+        test_normalization(dat1, exp1, {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+        test_normalization(dat2, exp2, {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
     }
     SECTION("parentheses - mismatch")
     {
@@ -3332,11 +3474,11 @@ TEST_CASE("scope tracking", "[JSNormalizer]")
         const char exp4[] = "(";
         const char exp5[] = "(()";
 
-        NORM_BAD_1(dat1, exp1, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_BAD_1(dat2, exp2, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_BAD_1(dat3, exp3, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_BAD_1(dat4, exp4, JSTokenizer::ENDED_IN_INNER_SCOPE);
-        NORM_BAD_1(dat5, exp5, JSTokenizer::ENDED_IN_INNER_SCOPE);
+        test_normalization(dat1, exp1, {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+        test_normalization(dat2, exp2, {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+        test_normalization(dat3, exp3, {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+        test_normalization(dat4, exp4, {return_code(JSTokenizer::ENDED_IN_INNER_SCOPE)});
+        test_normalization(dat5, exp5, {return_code(JSTokenizer::ENDED_IN_INNER_SCOPE)});
     }
     SECTION("curly braces - mismatch")
     {
@@ -3351,11 +3493,11 @@ TEST_CASE("scope tracking", "[JSNormalizer]")
         const char exp4[] = "{";
         const char exp5[] = "{{}";
 
-        NORM_BAD_1(dat1, exp1, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_BAD_1(dat2, exp2, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_BAD_1(dat3, exp3, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_BAD_1(dat4, exp4, JSTokenizer::ENDED_IN_INNER_SCOPE);
-        NORM_BAD_1(dat5, exp5, JSTokenizer::ENDED_IN_INNER_SCOPE);
+        test_normalization(dat1, exp1, {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+        test_normalization(dat2, exp2, {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+        test_normalization(dat3, exp3, {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+        test_normalization(dat4, exp4, {return_code(JSTokenizer::ENDED_IN_INNER_SCOPE)});
+        test_normalization(dat5, exp5, {return_code(JSTokenizer::ENDED_IN_INNER_SCOPE)});
     }
     SECTION("square brackets - mismatch")
     {
@@ -3370,11 +3512,11 @@ TEST_CASE("scope tracking", "[JSNormalizer]")
         const char exp4[] = "[";
         const char exp5[] = "[[]";
 
-        NORM_BAD_1(dat1, exp1, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_BAD_1(dat2, exp2, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_BAD_1(dat3, exp3, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_BAD_1(dat4, exp4, JSTokenizer::ENDED_IN_INNER_SCOPE);
-        NORM_BAD_1(dat5, exp5, JSTokenizer::ENDED_IN_INNER_SCOPE);
+        test_normalization(dat1, exp1, {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+        test_normalization(dat2, exp2, {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+        test_normalization(dat3, exp3, {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+        test_normalization(dat4, exp4, {return_code(JSTokenizer::ENDED_IN_INNER_SCOPE)});
+        test_normalization(dat5, exp5, {return_code(JSTokenizer::ENDED_IN_INNER_SCOPE)});
     }
     SECTION("parentheses - continuation")
     {
@@ -3384,8 +3526,13 @@ TEST_CASE("scope tracking", "[JSNormalizer]")
         const char exp2[] = "))";
         const char exp[] = "(())";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("curly braces - continuation")
     {
@@ -3395,8 +3542,13 @@ TEST_CASE("scope tracking", "[JSNormalizer]")
         const char exp2[] = "}}";
         const char exp[] = "{{}}";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("square brackets - continuation")
     {
@@ -3406,8 +3558,13 @@ TEST_CASE("scope tracking", "[JSNormalizer]")
         const char exp2[] = "]]";
         const char exp[] = "[[]]";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("parentheses - mismatch in continuation")
     {
@@ -3423,11 +3580,25 @@ TEST_CASE("scope tracking", "[JSNormalizer]")
         const char exp5[] = "()";
         const char exp6[] = "(";
 
-        NORM_BAD_2(dat1, dat2, exp1, exp2, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_BAD_2(dat3, dat4, exp3, exp4, JSTokenizer::ENDED_IN_INNER_SCOPE);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
 
-        NORM_COMBINED_BAD_2(dat1, dat2, exp5, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_COMBINED_BAD_2(dat3, dat4, exp6, JSTokenizer::ENDED_IN_INNER_SCOPE);
+        norm.test_normalization(
+            {
+                {dat3, exp3},
+                {dat4, exp4},
+            },
+            {return_code(JSTokenizer::ENDED_IN_INNER_SCOPE)});
+
+
+        norm.test_normalization_combined({dat1, dat2}, exp5,
+            {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+        norm.test_normalization_combined({dat3, dat4}, exp6,
+            {return_code(JSTokenizer::ENDED_IN_INNER_SCOPE)});
     }
     SECTION("curly braces - mismatch in continuation")
     {
@@ -3443,11 +3614,25 @@ TEST_CASE("scope tracking", "[JSNormalizer]")
         const char exp5[] = "{}";
         const char exp6[] = "{";
 
-        NORM_BAD_2(dat1, dat2, exp1, exp2, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_BAD_2(dat3, dat4, exp3, exp4, JSTokenizer::ENDED_IN_INNER_SCOPE);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
 
-        NORM_COMBINED_BAD_2(dat1, dat2, exp5, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_COMBINED_BAD_2(dat3, dat4, exp6, JSTokenizer::ENDED_IN_INNER_SCOPE);
+        norm.test_normalization(
+            {
+                {dat3, exp3},
+                {dat4, exp4},
+            },
+            {return_code(JSTokenizer::ENDED_IN_INNER_SCOPE)});
+
+
+        norm.test_normalization_combined({dat1, dat2}, exp5,
+            {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+        norm.test_normalization_combined({dat3, dat4}, exp6,
+            {return_code(JSTokenizer::ENDED_IN_INNER_SCOPE)});
     }
     SECTION("square brackets - mismatch in continuation")
     {
@@ -3463,11 +3648,25 @@ TEST_CASE("scope tracking", "[JSNormalizer]")
         const char exp5[] = "[]";
         const char exp6[] = "[";
 
-        NORM_BAD_2(dat1, dat2, exp1, exp2, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_BAD_2(dat3, dat4, exp3, exp4, JSTokenizer::ENDED_IN_INNER_SCOPE);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
 
-        NORM_COMBINED_BAD_2(dat1, dat2, exp5, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_COMBINED_BAD_2(dat3, dat4, exp6, JSTokenizer::ENDED_IN_INNER_SCOPE);
+        norm.test_normalization(
+            {
+                {dat3, exp3},
+                {dat4, exp4},
+            },
+            {return_code(JSTokenizer::ENDED_IN_INNER_SCOPE)});
+
+
+        norm.test_normalization_combined({dat1, dat2}, exp5,
+            {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+        norm.test_normalization_combined({dat3, dat4}, exp6,
+            {return_code(JSTokenizer::ENDED_IN_INNER_SCOPE)});
     }
 }
 
@@ -3477,7 +3676,7 @@ TEST_CASE("scope misc", "[JSNormalizer]")
     const char* open = "1+(";
     const char* close = "-1)";
 
-    SECTION("max stack")
+    SECTION("one below max stack")
     {
         std::string scr;
 
@@ -3486,24 +3685,10 @@ TEST_CASE("scope misc", "[JSNormalizer]")
         for (int i = 0; i < stack_limit - 1; ++i)
             scr += close;
 
-        const char* dat = scr.c_str();
-        int dat_len = strlen(dat);
-        const char* exp = scr.c_str();
-        int exp_len = strlen(exp);
-        char* act = new char[exp_len];
-
-        JSIdentifierCtxStub ident_ctx;
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth);
-
-        DO(dat, dat_len, act, exp_len);
-        CHECK(!memcmp(exp, act, exp_len));
-
-        delete[] act;
-
-        CLOSE();
+        test_normalization(scr, scr, {return_code(JSTokenizer::SCRIPT_CONTINUE)});
     }
 
-    SECTION("max stack")
+    SECTION("over max stack")
     {
         std::string scr;
         std::string nsc;
@@ -3516,24 +3701,13 @@ TEST_CASE("scope misc", "[JSNormalizer]")
             nsc += open;
         nsc += "1+";
 
-        const char* dat = scr.c_str();
-        int dat_len = strlen(dat);
-        const char* exp = nsc.c_str();
-        int exp_len = strlen(exp);
-        char* act = new char[exp_len];
-
-        JSIdentifierCtxStub ident_ctx;
-        JSNormalizer norm(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth);
-
-        TRY(dat, dat_len, act, exp_len, JSTokenizer::BRACKET_NESTING_OVERFLOW);
-        CHECK(!memcmp(exp, act, exp_len));
-
-        delete[] act;
+        test_normalization(scr, nsc, {return_code(JSTokenizer::BRACKET_NESTING_OVERFLOW)});
     }
 }
 
 TEST_CASE("scope tail handling", "[JSNormalizer]")
 {
+    auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
     // Padding ':' symbol has been chosen, since it:
     //  * forms a single state for Parser
     //  * doesn't insert white spaces
@@ -3565,13 +3739,28 @@ TEST_CASE("scope tail handling", "[JSNormalizer]")
         const char exp8[] = "{}{{::::::::::{}}}::";
         const char exp9[] = "[][[::::::::::::]][]";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORMALIZE_2(dat3, dat4, exp3, exp4);
-        NORMALIZE_2(dat5, dat6, exp5, exp6);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
 
-        NORM_COMBINED_2(dat1, dat2, exp7);
-        NORM_COMBINED_2(dat3, dat4, exp8);
-        NORM_COMBINED_2(dat5, dat6, exp9);
+        norm.test_normalization(
+            {
+                {dat3, exp3},
+                {dat4, exp4},
+            });
+
+        norm.test_normalization(
+            {
+                {dat5, exp5},
+                {dat6, exp6},
+            });
+
+
+        norm.test_normalization_combined({dat1, dat2}, exp7);
+        norm.test_normalization_combined({dat3, dat4}, exp8);
+        norm.test_normalization_combined({dat5, dat6}, exp9);
     }
 
     SECTION("opening scope-symbols in the tail")
@@ -3593,13 +3782,28 @@ TEST_CASE("scope tail handling", "[JSNormalizer]")
         const char exp8[] = ":::::::::::{:::::::}";
         const char exp9[] = "::::[:::::::::::]:::";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORMALIZE_2(dat3, dat4, exp3, exp4);
-        NORMALIZE_2(dat5, dat6, exp5, exp6);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
 
-        NORM_COMBINED_2(dat1, dat2, exp7);
-        NORM_COMBINED_2(dat3, dat4, exp8);
-        NORM_COMBINED_2(dat5, dat6, exp9);
+        norm.test_normalization(
+            {
+                {dat3, exp3},
+                {dat4, exp4},
+            });
+
+        norm.test_normalization(
+            {
+                {dat5, exp5},
+                {dat6, exp6},
+            });
+
+
+        norm.test_normalization_combined({dat1, dat2}, exp7);
+        norm.test_normalization_combined({dat3, dat4}, exp8);
+        norm.test_normalization_combined({dat5, dat6}, exp9);
     }
 
     SECTION("closing scope-symbols in the tail")
@@ -3621,13 +3825,28 @@ TEST_CASE("scope tail handling", "[JSNormalizer]")
         const char exp8[] = "{{{{:::::::}:::::}}}";
         const char exp9[] = "[::::::::]::::::::::";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORMALIZE_2(dat3, dat4, exp3, exp4);
-        NORMALIZE_2(dat5, dat6, exp5, exp6);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
 
-        NORM_COMBINED_2(dat1, dat2, exp7);
-        NORM_COMBINED_2(dat3, dat4, exp8);
-        NORM_COMBINED_2(dat5, dat6, exp9);
+        norm.test_normalization(
+            {
+                {dat3, exp3},
+                {dat4, exp4},
+            });
+
+        norm.test_normalization(
+            {
+                {dat5, exp5},
+                {dat6, exp6},
+            });
+
+
+        norm.test_normalization_combined({dat1, dat2}, exp7);
+        norm.test_normalization_combined({dat3, dat4}, exp8);
+        norm.test_normalization_combined({dat5, dat6}, exp9);
     }
 
     SECTION("newly opening scope-symbols in the tail")
@@ -3649,13 +3868,28 @@ TEST_CASE("scope tail handling", "[JSNormalizer]")
         const char exp8[] = "{:{:{:{:{:{:::}}}}}}";
         const char exp9[] = "[:[:[:::[:::::::]]]]";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORMALIZE_2(dat3, dat4, exp3, exp4);
-        NORMALIZE_2(dat5, dat6, exp5, exp6);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
 
-        NORM_COMBINED_2(dat1, dat2, exp7);
-        NORM_COMBINED_2(dat3, dat4, exp8);
-        NORM_COMBINED_2(dat5, dat6, exp9);
+        norm.test_normalization(
+            {
+                {dat3, exp3},
+                {dat4, exp4},
+            });
+
+        norm.test_normalization(
+            {
+                {dat5, exp5},
+                {dat6, exp6},
+            });
+
+
+        norm.test_normalization_combined({dat1, dat2}, exp7);
+        norm.test_normalization_combined({dat3, dat4}, exp8);
+        norm.test_normalization_combined({dat5, dat6}, exp9);
     }
 
     SECTION("fully closing scope-symbols in the tail")
@@ -3677,13 +3911,28 @@ TEST_CASE("scope tail handling", "[JSNormalizer]")
         const char exp8[] = "{{{{}:}:}:}:::::{}{}";
         const char exp9[] = "[[:::::::]:][::::::]";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORMALIZE_2(dat3, dat4, exp3, exp4);
-        NORMALIZE_2(dat5, dat6, exp5, exp6);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
 
-        NORM_COMBINED_2(dat1, dat2, exp7);
-        NORM_COMBINED_2(dat3, dat4, exp8);
-        NORM_COMBINED_2(dat5, dat6, exp9);
+        norm.test_normalization(
+            {
+                {dat3, exp3},
+                {dat4, exp4},
+            });
+
+        norm.test_normalization(
+            {
+                {dat5, exp5},
+                {dat6, exp6},
+            });
+
+
+        norm.test_normalization_combined({dat1, dat2}, exp7);
+        norm.test_normalization_combined({dat3, dat4}, exp8);
+        norm.test_normalization_combined({dat5, dat6}, exp9);
     }
 
     SECTION("extra scope-symbols in the tail")
@@ -3705,13 +3954,34 @@ TEST_CASE("scope tail handling", "[JSNormalizer]")
         const char exp8[] = "{{{{{{{{}}}}}}";
         const char exp9[] = "[[[[[[[[]]]]]]]";
 
-        NORM_BAD_2(dat1, dat2, exp1, exp2, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_BAD_2(dat3, dat4, exp3, exp4, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_BAD_2(dat5, dat6, exp5, exp6, JSTokenizer::ENDED_IN_INNER_SCOPE);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
 
-        NORM_COMBINED_BAD_2(dat1, dat2, exp7, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_COMBINED_BAD_2(dat3, dat4, exp8, JSTokenizer::WRONG_CLOSING_SYMBOL);
-        NORM_COMBINED_BAD_2(dat5, dat6, exp9, JSTokenizer::ENDED_IN_INNER_SCOPE);
+        norm.test_normalization(
+            {
+                {dat3, exp3},
+                {dat4, exp4},
+            },
+            {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+
+        norm.test_normalization(
+            {
+                {dat5, exp5},
+                {dat6, exp6},
+            },
+            {return_code(JSTokenizer::ENDED_IN_INNER_SCOPE)});
+
+
+        norm.test_normalization_combined({dat1, dat2}, exp7,
+            {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+        norm.test_normalization_combined({dat3, dat4}, exp8,
+            {return_code(JSTokenizer::WRONG_CLOSING_SYMBOL)});
+        norm.test_normalization_combined({dat5, dat6}, exp9,
+            {return_code(JSTokenizer::ENDED_IN_INNER_SCOPE)});
     }
 
     SECTION("overwriting scope-symbols in the tail")
@@ -3733,18 +4003,35 @@ TEST_CASE("scope tail handling", "[JSNormalizer]")
         const char exp8[] = "({[(:):]{}{}}[]())";
         const char exp9[] = "{{{{}[[]]((()))}}}";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORMALIZE_2(dat3, dat4, exp3, exp4);
-        NORMALIZE_2(dat5, dat6, exp5, exp6);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
 
-        NORM_COMBINED_2(dat1, dat2, exp7);
-        NORM_COMBINED_2(dat3, dat4, exp8);
-        NORM_COMBINED_2(dat5, dat6, exp9);
+        norm.test_normalization(
+            {
+                {dat3, exp3},
+                {dat4, exp4},
+            });
+
+        norm.test_normalization(
+            {
+                {dat5, exp5},
+                {dat6, exp6},
+            });
+
+
+        norm.test_normalization_combined({dat1, dat2}, exp7);
+        norm.test_normalization_combined({dat3, dat4}, exp8);
+        norm.test_normalization_combined({dat5, dat6}, exp9);
     }
 }
 
 TEST_CASE("scope regex groups", "[JSNormalizer]")
 {
+    auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
+
     SECTION("parentheses")
     {
         const char dat1[] = "a=/()/;";
@@ -3754,9 +4041,9 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
         const char exp2[] = "b=/()()()/;";
         const char exp3[] = "c=/((()))/;";
 
-        NORMALIZE_1(dat1, exp1);
-        NORMALIZE_1(dat2, exp2);
-        NORMALIZE_1(dat3, exp3);
+        test_normalization_noident(dat1, exp1);
+        test_normalization_noident(dat2, exp2);
+        test_normalization_noident(dat3, exp3);
     }
     SECTION("curly braces")
     {
@@ -3767,9 +4054,9 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
         const char exp2[] = "b=/{}{}{}/;";
         const char exp3[] = "c=/{{{}}}/;";
 
-        NORMALIZE_1(dat1, exp1);
-        NORMALIZE_1(dat2, exp2);
-        NORMALIZE_1(dat3, exp3);
+        test_normalization_noident(dat1, exp1);
+        test_normalization_noident(dat2, exp2);
+        test_normalization_noident(dat3, exp3);
     }
     SECTION("square brackets")
     {
@@ -3782,10 +4069,10 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
         const char exp3[] = "c=/[[[[[]/;";
         const char exp4[] = "d=/[/]/;";
 
-        NORMALIZE_1(dat1, exp1);
-        NORMALIZE_1(dat2, exp2);
-        NORMALIZE_1(dat3, exp3);
-        NORMALIZE_1(dat4, exp4);
+        test_normalization_noident(dat1, exp1);
+        test_normalization_noident(dat2, exp2);
+        test_normalization_noident(dat3, exp3);
+        test_normalization_noident(dat4, exp4);
     }
     SECTION("mix of brackets")
     {
@@ -3796,9 +4083,9 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
         const char exp2[] = "b=/({})[]/";
         const char exp3[] = "c=/(){[]}/";
 
-        NORMALIZE_1(dat1, exp1);
-        NORMALIZE_1(dat2, exp2);
-        NORMALIZE_1(dat3, exp3);
+        test_normalization_noident(dat1, exp1);
+        test_normalization_noident(dat2, exp2);
+        test_normalization_noident(dat3, exp3);
     }
     SECTION("square brackets - raw bracket")
     {
@@ -3809,9 +4096,9 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
         const char exp2[] = "/[]]/";
         const char exp3[] = "/][]]/g";
 
-        NORMALIZE_1(dat1, exp1);
-        NORMALIZE_1(dat2, exp2);
-        NORMALIZE_1(dat3, exp3);
+        test_normalization_noident(dat1, exp1);
+        test_normalization_noident(dat2, exp2);
+        test_normalization_noident(dat3, exp3);
     }
     SECTION("parentheses - mismatch")
     {
@@ -3822,9 +4109,9 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
         const char exp2[] = "/()";
         const char exp3[] = "/( ()) ";
 
-        NORM_BAD_1(dat1, exp1, JSTokenizer::BAD_TOKEN);
-        NORM_BAD_1(dat2, exp2, JSTokenizer::BAD_TOKEN);
-        NORM_BAD_1(dat3, exp3, JSTokenizer::BAD_TOKEN);
+        test_normalization(dat1, exp1, {return_code(JSTokenizer::BAD_TOKEN)});
+        test_normalization(dat2, exp2, {return_code(JSTokenizer::BAD_TOKEN)});
+        test_normalization(dat3, exp3, {return_code(JSTokenizer::BAD_TOKEN)});
     }
     SECTION("parentheses - continuation")
     {
@@ -3834,8 +4121,13 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
         const char exp2[] = "))/";
         const char exp[] = "/(())/";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("square brackets - continuation")
     {
@@ -3845,8 +4137,13 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
         const char exp2[] = "[]/";
         const char exp[] = "/[[[]/";
 
-        NORMALIZE_2(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_2(dat1, dat2, exp);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            });
+
+        norm.test_normalization_combined({dat1, dat2}, exp);
     }
     SECTION("parentheses - mismatch in continuation")
     {
@@ -3856,8 +4153,15 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
         const char exp2[] = ")";
         const char exp[] = "/()";
 
-        NORM_BAD_2(dat1, dat2, exp1, exp2, JSTokenizer::BAD_TOKEN);
-        NORM_COMBINED_BAD_2(dat1, dat2, exp, JSTokenizer::BAD_TOKEN);
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {return_code(JSTokenizer::BAD_TOKEN)});
+
+        norm.test_normalization_combined({dat1, dat2}, exp,
+            {return_code(JSTokenizer::BAD_TOKEN)});
     }
 }
 
@@ -3878,11 +4182,11 @@ TEST_CASE("ignored identifiers", "[JSNormalizer]")
         const char exp4[] = "var_0000(0);console(1);var_0001(2);var_0002(3);var_0003(4);";
         const char exp5[] = "var_0000(0);eval(1);var_0001(2);var_0002(3);var_0003(4);";
 
-        NORMALIZE_S(dat1, exp1);
-        NORMALIZE_S(dat2, exp2);
-        NORMALIZE_S(dat3, exp3);
-        NORMALIZE_S(dat4, exp4);
-        NORMALIZE_S(dat5, exp5);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
+        test_normalization(dat3, exp3);
+        test_normalization(dat4, exp4);
+        test_normalization(dat5, exp5);
     }
 
     SECTION("inner objects")
@@ -3896,10 +4200,10 @@ TEST_CASE("ignored identifiers", "[JSNormalizer]")
         const char exp3[] = "eval.alpha.bravo.charlie.delta";
         const char exp4[] = "eval.alpha.bravo.console.delta";
 
-        NORMALIZE_S(dat1, exp1);
-        NORMALIZE_S(dat2, exp2);
-        NORMALIZE_S(dat3, exp3);
-        NORMALIZE_S(dat4, exp4);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
+        test_normalization(dat3, exp3);
+        test_normalization(dat4, exp4);
     }
 
     SECTION("function calls")
@@ -3929,18 +4233,18 @@ TEST_CASE("ignored identifiers", "[JSNormalizer]")
         const char exp11[] = "var_0000.var_0001().var_0002";
         const char exp12[] = "var_0000().var_0001.var_0002";
 
-        NORMALIZE_S(dat1, exp1);
-        NORMALIZE_S(dat2, exp2);
-        NORMALIZE_S(dat3, exp3);
-        NORMALIZE_S(dat4, exp4);
-        NORMALIZE_S(dat5, exp5);
-        NORMALIZE_S(dat6, exp6);
-        NORMALIZE_S(dat7, exp7);
-        NORMALIZE_S(dat8, exp8);
-        NORMALIZE_S(dat9, exp9);
-        NORMALIZE_S(dat10, exp10);
-        NORMALIZE_S(dat11, exp11);
-        NORMALIZE_S(dat12, exp12);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
+        test_normalization(dat3, exp3);
+        test_normalization(dat4, exp4);
+        test_normalization(dat5, exp5);
+        test_normalization(dat6, exp6);
+        test_normalization(dat7, exp7);
+        test_normalization(dat8, exp8);
+        test_normalization(dat9, exp9);
+        test_normalization(dat10, exp10);
+        test_normalization(dat11, exp11);
+        test_normalization(dat12, exp12);
     }
 }
 
@@ -4034,47 +4338,47 @@ TEST_CASE("ignored identifier chain tracking", "[JSNormalizer]")
         const char exp40[] = "eval.var.foo";
         const char exp41[] = "eval.break().foo";
 
-        NORMALIZE_S(dat1, exp1);
-        NORMALIZE_S(dat2, exp2);
-        NORMALIZE_S(dat3, exp3);
-        NORMALIZE_S(dat4, exp4);
-        NORMALIZE_S(dat5, exp5);
-        NORMALIZE_S(dat6, exp6);
-        NORMALIZE_S(dat7, exp7);
-        NORMALIZE_S(dat8, exp8);
-        NORMALIZE_S(dat9, exp9);
-        NORMALIZE_S(dat10, exp10);
-        NORMALIZE_S(dat11, exp11);
-        NORMALIZE_S(dat12, exp12);
-        NORMALIZE_S(dat13, exp13);
-        NORMALIZE_S(dat14, exp14);
-        NORMALIZE_S(dat15, exp15);
-        NORMALIZE_S(dat16, exp16);
-        NORMALIZE_S(dat17, exp17);
-        NORMALIZE_S(dat18, exp18);
-        NORMALIZE_S(dat19, exp19);
-        NORMALIZE_S(dat20, exp20);
-        NORMALIZE_S(dat21, exp21);
-        NORMALIZE_S(dat22, exp22);
-        NORMALIZE_S(dat23, exp23);
-        NORMALIZE_S(dat24, exp24);
-        NORMALIZE_S(dat25, exp25);
-        NORMALIZE_S(dat26, exp26);
-        NORMALIZE_S(dat27, exp27);
-        NORMALIZE_S(dat28, exp28);
-        NORMALIZE_S(dat29, exp29);
-        NORMALIZE_S(dat30, exp30);
-        NORMALIZE_S(dat31, exp31);
-        NORMALIZE_S(dat32, exp32);
-        NORMALIZE_S(dat33, exp33);
-        NORMALIZE_S(dat34, exp34);
-        NORMALIZE_S(dat35, exp35);
-        NORMALIZE_S(dat36, exp36);
-        NORMALIZE_S(dat37, exp37);
-        NORMALIZE_S(dat38, exp38);
-        NORMALIZE_S(dat39, exp39);
-        NORMALIZE_S(dat40, exp40);
-        NORMALIZE_S(dat41, exp41);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
+        test_normalization(dat3, exp3);
+        test_normalization(dat4, exp4);
+        test_normalization(dat5, exp5);
+        test_normalization(dat6, exp6);
+        test_normalization(dat7, exp7);
+        test_normalization(dat8, exp8);
+        test_normalization(dat9, exp9);
+        test_normalization(dat10, exp10);
+        test_normalization(dat11, exp11);
+        test_normalization(dat12, exp12);
+        test_normalization(dat13, exp13);
+        test_normalization(dat14, exp14);
+        test_normalization(dat15, exp15);
+        test_normalization(dat16, exp16);
+        test_normalization(dat17, exp17);
+        test_normalization(dat18, exp18);
+        test_normalization(dat19, exp19);
+        test_normalization(dat20, exp20);
+        test_normalization(dat21, exp21);
+        test_normalization(dat22, exp22);
+        test_normalization(dat23, exp23);
+        test_normalization(dat24, exp24);
+        test_normalization(dat25, exp25);
+        test_normalization(dat26, exp26);
+        test_normalization(dat27, exp27);
+        test_normalization(dat28, exp28);
+        test_normalization(dat29, exp29);
+        test_normalization(dat30, exp30);
+        test_normalization(dat31, exp31);
+        test_normalization(dat32, exp32);
+        test_normalization(dat33, exp33);
+        test_normalization(dat34, exp34);
+        test_normalization(dat35, exp35);
+        test_normalization(dat36, exp36);
+        test_normalization(dat37, exp37);
+        test_normalization(dat38, exp38);
+        test_normalization(dat39, exp39);
+        test_normalization(dat40, exp40);
+        test_normalization(dat41, exp41);
     }
 
     SECTION("over inner scopes")
@@ -4096,14 +4400,14 @@ TEST_CASE("ignored identifier chain tracking", "[JSNormalizer]")
         const char exp7[] = "eval(var_0000+var_0001).baz";
         const char exp8[] = "eval(var_0000 var_0001).baz";
 
-        NORMALIZE_S(dat1, exp1);
-        NORMALIZE_S(dat2, exp2);
-        NORMALIZE_S(dat3, exp3);
-        NORMALIZE_S(dat4, exp4);
-        NORMALIZE_S(dat5, exp5);
-        NORMALIZE_S(dat6, exp6);
-        NORMALIZE_S(dat7, exp7);
-        NORMALIZE_S(dat8, exp8);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
+        test_normalization(dat3, exp3);
+        test_normalization(dat4, exp4);
+        test_normalization(dat5, exp5);
+        test_normalization(dat6, exp6);
+        test_normalization(dat7, exp7);
+        test_normalization(dat8, exp8);
     }
 
     SECTION("spaces and operators")
@@ -4127,15 +4431,15 @@ TEST_CASE("ignored identifier chain tracking", "[JSNormalizer]")
         const char exp8[] = "console.foo.bar:var_0000";
         const char exp9[] = "console.foo";
 
-        NORMALIZE_S(dat1, exp1);
-        NORMALIZE_S(dat2, exp2);
-        NORMALIZE_S(dat3, exp3);
-        NORMALIZE_S(dat4, exp4);
-        NORMALIZE_S(dat5, exp5);
-        NORMALIZE_S(dat6, exp6);
-        NORMALIZE_S(dat7, exp7);
-        NORMALIZE_S(dat8, exp8);
-        NORMALIZE_S(dat9, exp9);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
+        test_normalization(dat3, exp3);
+        test_normalization(dat4, exp4);
+        test_normalization(dat5, exp5);
+        test_normalization(dat6, exp6);
+        test_normalization(dat7, exp7);
+        test_normalization(dat8, exp8);
+        test_normalization(dat9, exp9);
     }
 
     SECTION("comments")
@@ -4145,9 +4449,9 @@ TEST_CASE("ignored identifier chain tracking", "[JSNormalizer]")
         const char dat3[] = "console./*multi-line comment*/log(abc).foo";
         const char exp[] = "console.log(var_0000).foo";
 
-        NORMALIZE_S(dat1, exp);
-        NORMALIZE_S(dat2, exp);
-        NORMALIZE_S(dat3, exp);
+        test_normalization(dat1, exp);
+        test_normalization(dat2, exp);
+        test_normalization(dat3, exp);
     }
 }
 
@@ -4172,13 +4476,13 @@ TEST_CASE("ignored identifier scope tracking", "[JSNormalizer]")
         const char exp6[] = "(var_0000 var_0001 console var_0002 eval var_0003)";
         const char exp7[] = "var_0000 var_0001(console)var_0002(eval)var_0003";
 
-        NORMALIZE_S(dat1, exp1);
-        NORMALIZE_S(dat2, exp2);
-        NORMALIZE_S(dat3, exp3);
-        NORMALIZE_S(dat4, exp4);
-        NORMALIZE_S(dat5, exp5);
-        NORMALIZE_S(dat6, exp6);
-        NORMALIZE_S(dat7, exp7);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
+        test_normalization(dat3, exp3);
+        test_normalization(dat4, exp4);
+        test_normalization(dat5, exp5);
+        test_normalization(dat6, exp6);
+        test_normalization(dat7, exp7);
     }
 
     SECTION("function calls")
@@ -4226,27 +4530,27 @@ TEST_CASE("ignored identifier scope tracking", "[JSNormalizer]")
         const char exp20[] = "eval['foo']()['bar'].baz";
         const char exp21[] = "eval['foo']['bar'].baz()";
 
-        NORMALIZE_S(dat1, exp1);
-        NORMALIZE_S(dat2, exp2);
-        NORMALIZE_S(dat3, exp3);
-        NORMALIZE_S(dat4, exp4);
-        NORMALIZE_S(dat5, exp5);
-        NORMALIZE_S(dat6, exp6);
-        NORMALIZE_S(dat7, exp7);
-        NORMALIZE_S(dat8, exp8);
-        NORMALIZE_S(dat9, exp9);
-        NORMALIZE_S(dat10, exp10);
-        NORMALIZE_S(dat11, exp11);
-        NORMALIZE_S(dat12, exp12);
-        NORMALIZE_S(dat13, exp13);
-        NORMALIZE_S(dat14, exp14);
-        NORMALIZE_S(dat15, exp15);
-        NORMALIZE_S(dat16, exp16);
-        NORMALIZE_S(dat17, exp17);
-        NORMALIZE_S(dat18, exp18);
-        NORMALIZE_S(dat19, exp19);
-        NORMALIZE_S(dat20, exp20);
-        NORMALIZE_S(dat21, exp21);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
+        test_normalization(dat3, exp3);
+        test_normalization(dat4, exp4);
+        test_normalization(dat5, exp5);
+        test_normalization(dat6, exp6);
+        test_normalization(dat7, exp7);
+        test_normalization(dat8, exp8);
+        test_normalization(dat9, exp9);
+        test_normalization(dat10, exp10);
+        test_normalization(dat11, exp11);
+        test_normalization(dat12, exp12);
+        test_normalization(dat13, exp13);
+        test_normalization(dat14, exp14);
+        test_normalization(dat15, exp15);
+        test_normalization(dat16, exp16);
+        test_normalization(dat17, exp17);
+        test_normalization(dat18, exp18);
+        test_normalization(dat19, exp19);
+        test_normalization(dat20, exp20);
+        test_normalization(dat21, exp21);
     }
 
     SECTION("eval cases")
@@ -4272,16 +4576,16 @@ TEST_CASE("ignored identifier scope tracking", "[JSNormalizer]")
         const char exp9[] = "eval(var_0000).baz;";
         const char exp10[] = "var var_0000.var_0001=123;(eval).baz;";
 
-        NORMALIZE_S(dat1, exp1);
-        NORMALIZE_S(dat2, exp2);
-        NORMALIZE_S(dat3, exp3);
-        NORMALIZE_S(dat4, exp4);
-        NORMALIZE_S(dat5, exp5);
-        NORMALIZE_S(dat6, exp6);
-        NORMALIZE_S(dat7, exp7);
-        NORMALIZE_S(dat8, exp8);
-        NORMALIZE_S(dat9, exp9);
-        NORMALIZE_S(dat10, exp10);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
+        test_normalization(dat3, exp3);
+        test_normalization(dat4, exp4);
+        test_normalization(dat5, exp5);
+        test_normalization(dat6, exp6);
+        test_normalization(dat7, exp7);
+        test_normalization(dat8, exp8);
+        test_normalization(dat9, exp9);
+        test_normalization(dat10, exp10);
     }
 
     SECTION("console cases")
@@ -4301,13 +4605,13 @@ TEST_CASE("ignored identifier scope tracking", "[JSNormalizer]")
         const char exp6[] = "console.log(var_0000,var_0001,var_0002,document.foo(var_0000))";
         const char exp7[] = "console.log(document.getElementById(\"mem\").text).clear(var_0000)";
 
-        NORMALIZE_S(dat1, exp1);
-        NORMALIZE_S(dat2, exp2);
-        NORMALIZE_S(dat3, exp3);
-        NORMALIZE_S(dat4, exp4);
-        NORMALIZE_S(dat5, exp5);
-        NORMALIZE_S(dat6, exp6);
-        NORMALIZE_S(dat7, exp7);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
+        test_normalization(dat3, exp3);
+        test_normalization(dat4, exp4);
+        test_normalization(dat5, exp5);
+        test_normalization(dat6, exp6);
+        test_normalization(dat7, exp7);
     }
 
     SECTION("corner cases")
@@ -4323,11 +4627,11 @@ TEST_CASE("ignored identifier scope tracking", "[JSNormalizer]")
         const char exp4[] = "var_0000=[var_0001,eval,document.getElementById]";
         const char exp5[] = "var_0000[1]=eval";
 
-        NORMALIZE_S(dat1, exp1);
-        NORMALIZE_S(dat2, exp2);
-        NORMALIZE_S(dat3, exp3);
-        NORMALIZE_S(dat4, exp4);
-        NORMALIZE_S(dat5, exp5);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
+        test_normalization(dat3, exp3);
+        test_normalization(dat4, exp4);
+        test_normalization(dat5, exp5);
     }
 }
 
@@ -4379,27 +4683,27 @@ TEST_CASE("ignored properties", "[JSNormalizer]")
         const char exp19[] = "var_0000['console']['watch'];";
         const char exp20[] = "var_0000[\"console\"][\"unwatch\"]();";
 
-        NORMALIZE_S(dat1, exp1);
-        NORMALIZE_S(dat2, exp2);
-        NORMALIZE_S(dat3, exp3);
-        NORMALIZE_S(dat4, exp4);
-        NORMALIZE_S(dat5, exp5);
-        NORMALIZE_S(dat6, exp6);
-        NORMALIZE_S(dat7, exp7);
-        NORMALIZE_S(dat8, exp8);
-        NORMALIZE_S(dat9, exp9);
-        NORMALIZE_S(dat10, exp10);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
+        test_normalization(dat3, exp3);
+        test_normalization(dat4, exp4);
+        test_normalization(dat5, exp5);
+        test_normalization(dat6, exp6);
+        test_normalization(dat7, exp7);
+        test_normalization(dat8, exp8);
+        test_normalization(dat9, exp9);
+        test_normalization(dat10, exp10);
 
-        NORMALIZE_S(dat11, exp11);
-        NORMALIZE_S(dat12, exp12);
-        NORMALIZE_S(dat13, exp13);
-        NORMALIZE_S(dat14, exp14);
-        NORMALIZE_S(dat15, exp15);
-        NORMALIZE_S(dat16, exp16);
-        NORMALIZE_S(dat17, exp17);
-        NORMALIZE_S(dat18, exp18);
-        NORMALIZE_S(dat19, exp19);
-        NORMALIZE_S(dat20, exp20);
+        test_normalization(dat11, exp11);
+        test_normalization(dat12, exp12);
+        test_normalization(dat13, exp13);
+        test_normalization(dat14, exp14);
+        test_normalization(dat15, exp15);
+        test_normalization(dat16, exp16);
+        test_normalization(dat17, exp17);
+        test_normalization(dat18, exp18);
+        test_normalization(dat19, exp19);
+        test_normalization(dat20, exp20);
     }
 
     SECTION("chain tracking")
@@ -4456,31 +4760,31 @@ TEST_CASE("ignored properties", "[JSNormalizer]")
         const char exp19[] = "var_0000.+var_0001().var_0002;";
         const char exp20[] = "var_0000.+['unwatch']().var_0001;";
 
-        NORMALIZE_S(dat1, exp1);
-        NORMALIZE_S(dat2, exp2);
-        NORMALIZE_S(dat3, exp3);
-        NORMALIZE_S(dat4, exp4);
-        NORMALIZE_S(dat5, exp5);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
+        test_normalization(dat3, exp3);
+        test_normalization(dat4, exp4);
+        test_normalization(dat5, exp5);
 
-        NORMALIZE_S(dat6, exp6);
-        NORMALIZE_S(dat7, exp7);
-        NORMALIZE_S(dat8, exp8);
-        NORMALIZE_S(dat9, exp9);
-        NORMALIZE_S(dat10, exp10);
+        test_normalization(dat6, exp6);
+        test_normalization(dat7, exp7);
+        test_normalization(dat8, exp8);
+        test_normalization(dat9, exp9);
+        test_normalization(dat10, exp10);
 
-        NORMALIZE_S(dat11, exp11);
-        NORMALIZE_S(dat12, exp12);
-        NORMALIZE_S(dat13, exp13);
+        test_normalization(dat11, exp11);
+        test_normalization(dat12, exp12);
+        test_normalization(dat13, exp13);
 
-        NORMALIZE_S(dat14, exp14);
-        NORMALIZE_S(dat15, exp15);
-        NORMALIZE_S(dat16, exp16);
+        test_normalization(dat14, exp14);
+        test_normalization(dat15, exp15);
+        test_normalization(dat16, exp16);
 
-        NORMALIZE_S(dat17, exp17);
-        NORMALIZE_S(dat18, exp18);
+        test_normalization(dat17, exp17);
+        test_normalization(dat18, exp18);
 
-        NORMALIZE_S(dat19, exp19);
-        NORMALIZE_S(dat20, exp20);
+        test_normalization(dat19, exp19);
+        test_normalization(dat20, exp20);
     }
 
     SECTION("scope tracking")
@@ -4497,11 +4801,11 @@ TEST_CASE("ignored properties", "[JSNormalizer]")
         const char exp3[] = "var_0000.var_0001(var_0002.unwatch.eval).var_0003;";
         const char exp4[] = "var_0000.var_0001(var_0002['unwatch'].var_0003).var_0003;";
 
-        NORMALIZE_S(dat1, exp1);
-        NORMALIZE_S(dat2, exp2);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
 
-        NORMALIZE_S(dat3, exp3);
-        NORMALIZE_S(dat4, exp4);
+        test_normalization(dat3, exp3);
+        test_normalization(dat4, exp4);
     }
 
     SECTION("corner cases")
@@ -4565,40 +4869,39 @@ TEST_CASE("ignored properties", "[JSNormalizer]")
         const char exp21[] = "var_0000.var_0001;u.a;var_0000.w;var_0002.var_0000;";
         const char exp22[] = "u.a;var_0000.var_0001;var_0002.var_0000;var_0000.w;";
 
-        NORMALIZE_S(dat1, exp1);
-        NORMALIZE_S(dat2, exp2);
+        test_normalization(dat1, exp1);
+        test_normalization(dat2, exp2);
 
-        NORMALIZE_S(dat3, exp3);
-        NORMALIZE_S(dat4, exp4);
+        test_normalization(dat3, exp3);
+        test_normalization(dat4, exp4);
 
-        NORMALIZE_S(dat5, exp5);
-        NORMALIZE_S(dat6, exp6);
+        test_normalization(dat5, exp5);
+        test_normalization(dat6, exp6);
 
-        NORMALIZE_S(dat7, exp7);
-        NORMALIZE_S(dat8, exp8);
+        test_normalization(dat7, exp7);
+        test_normalization(dat8, exp8);
 
-        NORMALIZE_S(dat9, exp9);
-        NORMALIZE_S(dat10, exp10);
-        NORMALIZE_S(dat11, exp11);
-        NORMALIZE_S(dat12, exp12);
+        test_normalization(dat9, exp9);
+        test_normalization(dat10, exp10);
+        test_normalization(dat11, exp11);
+        test_normalization(dat12, exp12);
 
-        NORMALIZE_S(dat13, exp13);
-        NORMALIZE_S(dat14, exp14);
-        NORMALIZE_S(dat15, exp15);
-        NORMALIZE_S(dat16, exp16);
-        NORMALIZE_S(dat17, exp17);
+        test_normalization(dat13, exp13);
+        test_normalization(dat14, exp14);
+        test_normalization(dat15, exp15);
+        test_normalization(dat16, exp16);
+        test_normalization(dat17, exp17);
 
-        NORMALIZE_S(dat18, exp18);
-        NORMALIZE_S(dat19, exp19);
-        NORMALIZE_S(dat20, exp20);
-        NORMALIZE_S(dat21, exp21);
-        NORMALIZE_S(dat22, exp22);
+        test_normalization(dat18, exp18);
+        test_normalization(dat19, exp19);
+        test_normalization(dat20, exp20);
+        test_normalization(dat21, exp21);
+        test_normalization(dat22, exp22);
     }
 }
 
 TEST_CASE("ignored identifier split", "[JSNormalizer]")
 {
-
 #if JSTOKENIZER_MAX_STATES != 8
 #error "ignored identifier split" tests are designed for 8 states depth
 #endif
@@ -4627,15 +4930,37 @@ TEST_CASE("ignored identifier split", "[JSNormalizer]")
         const char exp11[] = "console.foo";
         const char exp12[] = "eval.bar";
 
-        NORMALIZE_T(dat1, dat2, exp1, exp2);
-        NORMALIZE_T(dat3, dat4, exp3, exp4);
-        NORMALIZE_T(dat5, dat6, exp5, exp6);
-        NORMALIZE_T(dat7, dat8, exp7, exp8);
+        test_normalization(
+            {
+                 {dat1, exp1},
+                 {dat2, exp2},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat1, dat2}, exp9);
 
-        NORM_COMBINED_S_2(dat1, dat2, exp9);
-        NORM_COMBINED_S_2(dat3, dat4, exp10);
-        NORM_COMBINED_S_2(dat5, dat6, exp11);
-        NORM_COMBINED_S_2(dat7, dat8, exp12);
+        test_normalization(
+            {
+                 {dat3, exp3},
+                 {dat4, exp4},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat3, dat4}, exp10);
+
+        test_normalization(
+            {
+                 {dat5, exp5},
+                 {dat6, exp6},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat5, dat6}, exp11);
+
+        test_normalization(
+            {
+                 {dat7, exp7},
+                 {dat8, exp8},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat7, dat8}, exp12);
     }
 
     SECTION("function calls")
@@ -4667,17 +4992,45 @@ TEST_CASE("ignored identifier split", "[JSNormalizer]")
         const char exp14[] = "console().foo";
         const char exp15[] = "console().rewrite";
 
-        NORMALIZE_T(dat1, dat2, exp1, exp2);
-        NORMALIZE_T(dat3, dat4, exp3, exp4);
-        NORMALIZE_T(dat5, dat6, exp5, exp6);
-        NORMALIZE_T(dat7, dat8, exp7, exp8);
-        NORMALIZE_T(dat9, dat10, exp9, exp10);
+        test_normalization(
+            {
+                 {dat1, exp1},
+                 {dat2, exp2},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat1, dat2}, exp11);
 
-        NORM_COMBINED_S_2(dat1, dat2, exp11);
-        NORM_COMBINED_S_2(dat3, dat4, exp12);
-        NORM_COMBINED_S_2(dat5, dat6, exp13);
-        NORM_COMBINED_S_2(dat7, dat8, exp14);
-        NORM_COMBINED_S_2(dat9, dat10, exp15);
+        test_normalization(
+            {
+                 {dat3, exp3},
+                 {dat4, exp4},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat3, dat4}, exp12);
+
+        test_normalization(
+            {
+                 {dat5, exp5},
+                 {dat6, exp6},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat5, dat6}, exp13);
+
+        test_normalization(
+            {
+                 {dat7, exp7},
+                 {dat8, exp8},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat7, dat8}, exp14);
+
+        test_normalization(
+            {
+                 {dat9, exp9},
+                 {dat10, exp10},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat9, dat10}, exp15);
     }
 
     SECTION("terminator split")
@@ -4709,17 +5062,45 @@ TEST_CASE("ignored identifier split", "[JSNormalizer]")
         const char exp14[] = "eval.foo;var_0000.var_0001";
         const char exp15[] = "eval.foo%=var_0000.var_0001";
 
-        NORMALIZE_T(dat1, dat2, exp1, exp2);
-        NORMALIZE_T(dat3, dat4, exp3, exp4);
-        NORMALIZE_T(dat5, dat6, exp5, exp6);
-        NORMALIZE_T(dat7, dat8, exp7, exp8);
-        NORMALIZE_T(dat9, dat10, exp9, exp10);
+        test_normalization(
+            {
+                 {dat1, exp1},
+                 {dat2, exp2},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat1, dat2}, exp11);
 
-        NORM_COMBINED_S_2(dat1, dat2, exp11);
-        NORM_COMBINED_S_2(dat3, dat4, exp12);
-        NORM_COMBINED_S_2(dat5, dat6, exp13);
-        NORM_COMBINED_S_2(dat7, dat8, exp14);
-        NORM_COMBINED_S_2(dat9, dat10, exp15);
+        test_normalization(
+            {
+                 {dat3, exp3},
+                 {dat4, exp4},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat3, dat4}, exp12);
+
+        test_normalization(
+            {
+                 {dat5, exp5},
+                 {dat6, exp6},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat5, dat6}, exp13);
+
+        test_normalization(
+            {
+                 {dat7, exp7},
+                 {dat8, exp8},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat7, dat8}, exp14);
+
+        test_normalization(
+            {
+                 {dat9, exp9},
+                 {dat10, exp10},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat9, dat10}, exp15);
     }
 
     SECTION("scope split")
@@ -4735,8 +5116,13 @@ TEST_CASE("ignored identifier split", "[JSNormalizer]")
         const char exp3[] = "eval(var_0000,eval(var_0001,eval(var_0002['"
             "'].var_0003.var_0004+var_0004).foo).bar).baz+var_0004";
 
-        NORMALIZE_T(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_S_2(dat1, dat2, exp3);
+        test_normalization(
+            {
+                 {dat1, exp1},
+                 {dat2, exp2},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat1, dat2}, exp3);
 
         // "eval(foo,eval(bar,eval(baz[''].console.check+check).foo).bar).baz+check"
         //                         split here ^
@@ -4749,8 +5135,13 @@ TEST_CASE("ignored identifier split", "[JSNormalizer]")
         const char exp6[] = "eval(var_0000,eval(var_0001,eval(var_0002['']."
             "var_0004.var_0005+var_0005).foo).bar).baz+var_0005";
 
-        NORMALIZE_T(dat3, dat4, exp4, exp5);
-        NORM_COMBINED_S_2(dat3, dat4, exp6);
+        test_normalization(
+            {
+                 {dat3, exp4},
+                 {dat4, exp5},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat3, dat4}, exp6);
 
         // "eval(foo,eval(bar,eval(baz[''].console.check+check).foo).bar).baz+check"
         //                                              split here ^
@@ -4763,8 +5154,13 @@ TEST_CASE("ignored identifier split", "[JSNormalizer]")
         const char exp9[] = "eval(var_0000,eval(var_0001,eval(var_0002[''].var_0003.var_0004+var_0004).foo"
             ").bar).baz+var_0004";
 
-        NORMALIZE_T(dat5, dat6, exp7, exp8);
-        NORM_COMBINED_S_2(dat5, dat6, exp9);
+        test_normalization(
+            {
+                 {dat5, exp7},
+                 {dat6, exp8},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat5, dat6}, exp9);
     }
 
     SECTION("normalized word in the previous PDU")
@@ -4774,7 +5170,13 @@ TEST_CASE("ignored identifier split", "[JSNormalizer]")
         const char exp1[] = "!var_0000";
         const char exp2[] = "()";
 
-        NORMALIZE_T(dat1, dat2, exp1, exp2);
+        test_normalization(
+            {
+                 {dat1, exp1},
+                 {dat2, exp2},
+            },
+            {use_expected_for_last_pdu(true)}
+       );
     }
 
     SECTION("ignored word in the previous PDU")
@@ -4784,13 +5186,18 @@ TEST_CASE("ignored identifier split", "[JSNormalizer]")
         const char exp1[] = "!eval";
         const char exp2[] = "()";
 
-        NORMALIZE_T(dat1, dat2, exp1, exp2);
+        test_normalization(
+            {
+                 {dat1, exp1},
+                 {dat2, exp2},
+            },
+            {use_expected_for_last_pdu(true)}
+       );
     }
 }
 
 TEST_CASE("ignored properties split", "[JSNormalizer]")
 {
-
 #if JSTOKENIZER_MAX_STATES != 8
 #error "ignored properties split" tests are designed for 8 states depth
 #endif
@@ -4827,20 +5234,45 @@ TEST_CASE("ignored properties split", "[JSNormalizer]")
         const char exp10[] = ".watch;";
         const char exp_comb_5[] = "var_0000.watch;";
 
-        NORMALIZE_T(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_S_2(dat1, dat2, exp_comb_1);
+        test_normalization(
+            {
+                 {dat1, exp1},
+                 {dat2, exp2},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat1, dat2}, exp_comb_1);
 
-        NORMALIZE_T(dat3, dat4, exp3, exp4);
-        NORM_COMBINED_S_2(dat3, dat4, exp_comb_2);
+        test_normalization(
+            {
+                 {dat3, exp3},
+                 {dat4, exp4},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat3, dat4}, exp_comb_2);
 
-        NORMALIZE_T(dat5, dat6, exp5, exp6);
-        NORM_COMBINED_S_2(dat5, dat6, exp_comb_3);
+        test_normalization(
+            {
+                 {dat5, exp5},
+                 {dat6, exp6},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat5, dat6}, exp_comb_3);
 
-        NORMALIZE_T(dat7, dat8, exp7, exp8);
-        NORM_COMBINED_S_2(dat7, dat8, exp_comb_4);
+        test_normalization(
+            {
+                 {dat7, exp7},
+                 {dat8, exp8},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat7, dat8}, exp_comb_4);
 
-        NORMALIZE_T(dat9, dat10, exp9, exp10);
-        NORM_COMBINED_S_2(dat9, dat10, exp_comb_5);
+        test_normalization(
+            {
+                 {dat9, exp9},
+                 {dat10, exp10},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat9, dat10}, exp_comb_5);
     }
 
     SECTION("chain tracking")
@@ -4905,35 +5337,85 @@ TEST_CASE("ignored properties split", "[JSNormalizer]")
         const char exp20[] = "var_0001;";
         const char exp_comb_10[] = "var_0000.unwatch()+var_0001;";
 
-        NORMALIZE_T(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_S_2(dat1, dat2, exp_comb_1);
+        test_normalization(
+            {
+                 {dat1, exp1},
+                 {dat2, exp2},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat1, dat2}, exp_comb_1);
 
-        NORMALIZE_T(dat3, dat4, exp3, exp4);
-        NORM_COMBINED_S_2(dat3, dat4, exp_comb_2);
+        test_normalization(
+            {
+                 {dat3, exp3},
+                 {dat4, exp4},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat3, dat4}, exp_comb_2);
 
-        NORMALIZE_T(dat5, dat6, exp5, exp6);
-        NORM_COMBINED_S_2(dat5, dat6, exp_comb_3);
+        test_normalization(
+            {
+                 {dat5, exp5},
+                 {dat6, exp6},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat5, dat6}, exp_comb_3);
 
-        NORMALIZE_T(dat7, dat8, exp7, exp8);
-        NORM_COMBINED_S_2(dat7, dat8, exp_comb_4);
+        test_normalization(
+            {
+                 {dat7, exp7},
+                 {dat8, exp8},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat7, dat8}, exp_comb_4);
 
-        NORMALIZE_T(dat9, dat10, exp9, exp10);
-        NORM_COMBINED_S_2(dat9, dat10, exp_comb_5);
+        test_normalization(
+            {
+                 {dat9, exp9},
+                 {dat10, exp10},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat9, dat10}, exp_comb_5);
 
-        NORMALIZE_T(dat11, dat12, exp11, exp12);
-        NORM_COMBINED_S_2(dat11, dat12, exp_comb_6);
+        test_normalization(
+            {
+                 {dat11, exp11},
+                 {dat12, exp12},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat11, dat12}, exp_comb_6);
 
-        NORMALIZE_T(dat13, dat14, exp13, exp14);
-        NORM_COMBINED_S_2(dat13, dat14, exp_comb_7);
+        test_normalization(
+            {
+                 {dat13, exp13},
+                 {dat14, exp14},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat13, dat14}, exp_comb_7);
 
-        NORMALIZE_T(dat15, dat16, exp15, exp16);
-        NORM_COMBINED_S_2(dat15, dat16, exp_comb_8);
+        test_normalization(
+            {
+                 {dat15, exp15},
+                 {dat16, exp16},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat15, dat16}, exp_comb_8);
 
-        NORMALIZE_T(dat17, dat18, exp17, exp18);
-        NORM_COMBINED_S_2(dat17, dat18, exp_comb_9);
+        test_normalization(
+            {
+                 {dat17, exp17},
+                 {dat18, exp18},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat17, dat18}, exp_comb_9);
 
-        NORMALIZE_T(dat19, dat20, exp19, exp20);
-        NORM_COMBINED_S_2(dat19, dat20, exp_comb_10);
+        test_normalization(
+            {
+                 {dat19, exp19},
+                 {dat20, exp20},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat19, dat20}, exp_comb_10);
     }
 
     SECTION("scope tracking")
@@ -4962,301 +5444,321 @@ TEST_CASE("ignored properties split", "[JSNormalizer]")
         const char exp8[] = "unwatch']().var_0001).var_0000;";
         const char exp_comb_4[] = "var_0000.var_0001(var_0002['unwatch']().var_0001).var_0000;";
 
-        NORMALIZE_T(dat1, dat2, exp1, exp2);
-        NORM_COMBINED_S_2(dat1, dat2, exp_comb_1);
+        test_normalization(
+            {
+                 {dat1, exp1},
+                 {dat2, exp2},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat1, dat2}, exp_comb_1);
 
-        NORMALIZE_T(dat3, dat4, exp3, exp4);
-        NORM_COMBINED_S_2(dat3, dat4, exp_comb_2);
+        test_normalization(
+            {
+                 {dat3, exp3},
+                 {dat4, exp4},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat3, dat4}, exp_comb_2);
 
-        NORMALIZE_T(dat5, dat6, exp5, exp6);
-        NORM_COMBINED_S_2(dat5, dat6, exp_comb_3);
+        test_normalization(
+            {
+                 {dat5, exp5},
+                 {dat6, exp6},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat5, dat6}, exp_comb_3);
 
-        NORMALIZE_T(dat7, dat8, exp7, exp8);
-        NORM_COMBINED_S_2(dat7, dat8, exp_comb_4);
+        test_normalization(
+            {
+                 {dat7, exp7},
+                 {dat8, exp8},
+            },
+            {use_expected_for_last_pdu(true)});
+        test_normalization_combined({dat7, dat8}, exp_comb_4);
     }
 }
 
-TEST_CASE("Scope tracking - basic","[JSNormalizer]")
+TEST_CASE("Scope tracking - basic", "[JSNormalizer]")
 {
     SECTION("Global only")
-        test_scope("",{GLOBAL});
+        test_scope("", {GLOBAL});
 
     SECTION("Function scope - named function")
-        test_scope("function f(){",{GLOBAL,FUNCTION});
+        test_scope("function f(){", {GLOBAL, FUNCTION});
 
     SECTION("Function scope - anonymous function")
-        test_scope("var f = function(){",{GLOBAL,FUNCTION});
+        test_scope("var f = function(){", {GLOBAL, FUNCTION});
 
     SECTION("Function scope - arrow function")
-        test_scope("var f = (a,b)=>{",{GLOBAL,FUNCTION});
+        test_scope("var f = (a,b)=>{", {GLOBAL, FUNCTION});
 
     SECTION("Function scope - arrow function without scope")
-        test_scope("var f = (a,b)=> a",{GLOBAL,FUNCTION});
+        test_scope("var f = (a,b)=> a", {GLOBAL, FUNCTION});
 
     SECTION("Function scope - function call in an arrow function without scope")
-        test_scope("var f = (a,b)=> call(",{GLOBAL,FUNCTION});
+        test_scope("var f = (a,b)=> call(", {GLOBAL, FUNCTION});
 
     SECTION("Function scope - method in object initialization")
-        test_scope("var o = { f(){",{GLOBAL,BLOCK,BLOCK});
+        test_scope("var o = { f(){", {GLOBAL, BLOCK, BLOCK});
 
     SECTION("Function scope - method in object operation")
-        test_scope("+{ f(){",{GLOBAL,BLOCK,BLOCK});
+        test_scope("+{ f(){", {GLOBAL, BLOCK, BLOCK});
 
     SECTION("Function scope - method in object as a function parameter")
-        test_scope("call({ f(){",{GLOBAL,BLOCK,BLOCK});
+        test_scope("call({ f(){", {GLOBAL, BLOCK, BLOCK});
 
     SECTION("Function scope - keyword name method")
-        test_scope("var o = { let(){",{GLOBAL,BLOCK,BLOCK});
+        test_scope("var o = { let(){", {GLOBAL, BLOCK, BLOCK});
 
     SECTION("Function scope - 'get' name method")
-        test_scope("var o = { get(){",{GLOBAL,BLOCK,BLOCK});
+        test_scope("var o = { get(){", {GLOBAL, BLOCK, BLOCK});
 
     SECTION("Function scope - expression method")
-        test_scope("var o = { [a + 12](){",{GLOBAL,BLOCK,BLOCK});
+        test_scope("var o = { [a + 12](){", {GLOBAL, BLOCK, BLOCK});
 
     SECTION("Function scope - method as anonymous function")
-        test_scope("var o = { f: function(){",{GLOBAL,BLOCK,FUNCTION});
+        test_scope("var o = { f: function(){", {GLOBAL, BLOCK, FUNCTION});
 
     SECTION("Function scope - keyword name method as anonymous function")
-        test_scope("var o = { let: function(){",{GLOBAL,BLOCK,FUNCTION});
+        test_scope("var o = { let: function(){", {GLOBAL, BLOCK, FUNCTION});
 
     SECTION("Function scope - 'get' name method as anonymous function")
-        test_scope("var o = { get: function(){",{GLOBAL,BLOCK,FUNCTION});
+        test_scope("var o = { get: function(){", {GLOBAL, BLOCK, FUNCTION});
 
     SECTION("Function scope - expression method as anonymous function")
-        test_scope("var o = { [a + 12]: function(){",{GLOBAL,BLOCK,FUNCTION});
+        test_scope("var o = { [a + 12]: function(){", {GLOBAL, BLOCK, FUNCTION});
 
     SECTION("Function scope - getter")
-        test_scope("var o = { get f(){",{GLOBAL,BLOCK,BLOCK});
+        test_scope("var o = { get f(){", {GLOBAL, BLOCK, BLOCK});
 
     SECTION("Function scope - parametric getter")
-        test_scope("var o = { get [a + 12](){",{GLOBAL,BLOCK,BLOCK});
+        test_scope("var o = { get [a + 12](){", {GLOBAL, BLOCK, BLOCK});
 
     SECTION("Function scope - setter")
-        test_scope("var o = { set f(){",{GLOBAL,BLOCK,BLOCK});
+        test_scope("var o = { set f(){", {GLOBAL, BLOCK, BLOCK});
 
     SECTION("Function scope - parametric setter")
-        test_scope("var o = { set [a + 12](){",{GLOBAL,BLOCK,BLOCK});
+        test_scope("var o = { set [a + 12](){", {GLOBAL, BLOCK, BLOCK});
 
     SECTION("Block scope - regular block")
-        test_scope("{",{GLOBAL,BLOCK});
+        test_scope("{", {GLOBAL, BLOCK});
 
     SECTION("Block scope - object initializer")
-        test_scope("o = {",{GLOBAL,BLOCK});
+        test_scope("o = {", {GLOBAL, BLOCK});
 
     SECTION("Block scope - class")
-        test_scope("class C{",{GLOBAL,BLOCK});
+        test_scope("class C{", {GLOBAL, BLOCK});
 
     SECTION("Block scope - class with extends")
-        test_scope("class C extends A{",{GLOBAL,BLOCK});
+        test_scope("class C extends A{", {GLOBAL, BLOCK});
 
     SECTION("Block scope - if")
-        test_scope("if(true){",{GLOBAL,BLOCK});
+        test_scope("if(true){", {GLOBAL, BLOCK});
 
     SECTION("Block scope - single statement if")
-        test_scope("if(true) func()",{GLOBAL,BLOCK});
+        test_scope("if(true) func()", {GLOBAL, BLOCK});
 
     SECTION("Block scope - nested multiple single statement ifs")
-        test_scope("if(a) if(b) if(c) if(d) func()",{GLOBAL,BLOCK});
+        test_scope("if(a) if(b) if(c) if(d) func()", {GLOBAL, BLOCK});
 
     SECTION("Block scope - nested multiple single statement ifs with newline")
-        test_scope("if(a)\nif(b)\nif(c)\nif(d)\nfunc()",{GLOBAL,BLOCK});
+        test_scope("if(a)\nif(b)\nif(c)\nif(d)\nfunc()", {GLOBAL, BLOCK});
 
     SECTION("Block scope - else")
-        test_scope("if(true);else{",{GLOBAL,BLOCK});
+        test_scope("if(true);else{", {GLOBAL, BLOCK});
 
     SECTION("Block scope - single statement else")
-        test_scope("if(true);else func()",{GLOBAL,BLOCK});
+        test_scope("if(true);else func()", {GLOBAL, BLOCK});
 
     SECTION("Block scope - for loop")
-        test_scope("for(;;){",{GLOBAL,BLOCK});
+        test_scope("for(;;){", {GLOBAL, BLOCK});
 
     SECTION("Block scope - for loop in range")
-        test_scope("for(i in range()){",{GLOBAL,BLOCK});
+        test_scope("for(i in range()){", {GLOBAL, BLOCK});
 
     SECTION("Block scope - for loop of iterable")
-        test_scope("for(i of o){",{GLOBAL,BLOCK});
+        test_scope("for(i of o){", {GLOBAL, BLOCK});
 
     SECTION("Block scope - for await loop")
-        test_scope("for await(i of o){",{GLOBAL,BLOCK});
+        test_scope("for await(i of o){", {GLOBAL, BLOCK});
 
     SECTION("Block scope - inside for statement")
-        test_scope("for(",{GLOBAL,BLOCK});
+        test_scope("for(", {GLOBAL, BLOCK});
 
     SECTION("Block scope - inside for statement, after semicolon")
-        test_scope("for(;",{GLOBAL,BLOCK});
+        test_scope("for(;", {GLOBAL, BLOCK});
 
     SECTION("Block scope - single statement for")
-        test_scope("for(;;) func()",{GLOBAL,BLOCK});
+        test_scope("for(;;) func()", {GLOBAL, BLOCK});
 
     SECTION("Block scope - for nested in single line conditional")
-        test_scope("if(true) for(;;) a++",{GLOBAL,BLOCK});
+        test_scope("if(true) for(;;) a++", {GLOBAL, BLOCK});
 
     SECTION("Block scope - while")
-        test_scope("while(true){",{GLOBAL,BLOCK});
+        test_scope("while(true){", {GLOBAL, BLOCK});
 
     SECTION("Block scope - single statement while")
-        test_scope("while(true) func()",{GLOBAL,BLOCK});
+        test_scope("while(true) func()", {GLOBAL, BLOCK});
 
     SECTION("Block scope - do-while")
-        test_scope("do{",{GLOBAL,BLOCK});
+        test_scope("do{", {GLOBAL, BLOCK});
 
     SECTION("Block scope - single statement do-while")
-        test_scope("do func()",{GLOBAL,BLOCK});
+        test_scope("do func()", {GLOBAL, BLOCK});
 
     SECTION("Block scope - try")
-        test_scope("try{",{GLOBAL,BLOCK});
+        test_scope("try{", {GLOBAL, BLOCK});
 
     SECTION("Block scope - catch")
-        test_scope("try{}catch(e){",{GLOBAL,BLOCK});
+        test_scope("try{}catch(e){", {GLOBAL, BLOCK});
 
     SECTION("Block scope - catch exception declaration")
-        test_scope("try{}catch(",{GLOBAL,BLOCK});
+        test_scope("try{}catch(", {GLOBAL, BLOCK});
 
     SECTION("Block scope - finally")
-        test_scope("try{}finally{",{GLOBAL,BLOCK});
+        test_scope("try{}finally{", {GLOBAL, BLOCK});
 
     SECTION("Block scope - nested object - named")
-        test_scope("var o = {s:{",{GLOBAL,BLOCK,BLOCK});
+        test_scope("var o = {s:{", {GLOBAL, BLOCK, BLOCK});
 
     SECTION("Block scope - nested object - keyword named")
-        test_scope("var o = {let:{",{GLOBAL,BLOCK,BLOCK});
+        test_scope("var o = {let:{", {GLOBAL, BLOCK, BLOCK});
 
     SECTION("Block scope - nested object - 'get' named")
-        test_scope("var o = {get:{",{GLOBAL,BLOCK,BLOCK});
+        test_scope("var o = {get:{", {GLOBAL, BLOCK, BLOCK});
 
     SECTION("Block scope - nested object - parametric")
-        test_scope("var o = {[a+12]:{",{GLOBAL,BLOCK,BLOCK});
+        test_scope("var o = {[a+12]:{", {GLOBAL, BLOCK, BLOCK});
 }
 
-TEST_CASE("Scope tracking - closing","[JSNormalizer]")
+TEST_CASE("Scope tracking - closing", "[JSNormalizer]")
 {
 
     SECTION("Function scope - named function")
-        test_scope("function f(){}",{GLOBAL});
+        test_scope("function f(){}", {GLOBAL});
 
     SECTION("Function scope - anonymous function")
-        test_scope("var f = function(){}",{GLOBAL});
+        test_scope("var f = function(){}", {GLOBAL});
 
     SECTION("Function scope - arrow function")
-        test_scope("var f = (a,b)=>{}",{GLOBAL});
+        test_scope("var f = (a, b)=>{}", {GLOBAL});
 
     SECTION("Function scope - arrow function without scope")
-        test_scope("var f = (a,b)=>a;",{GLOBAL});
+        test_scope("var f = (a, b)=>a;", {GLOBAL});
 
     SECTION("Function scope - function call in an arrow function without scope")
-        test_scope("var f = a=>call();",{GLOBAL});
+        test_scope("var f = a=>call();", {GLOBAL});
 
     SECTION("Function scope - arrow function as a function parameter")
-        test_scope("console.log(a=>c)",{GLOBAL});
+        test_scope("console.log(a=>c)", {GLOBAL});
 
     SECTION("Function scope - method")
-        test_scope("var o = { f(){}",{GLOBAL,BLOCK});
+        test_scope("var o = { f(){}", {GLOBAL, BLOCK});
 
     SECTION("Function scope - keyword name method")
-        test_scope("var o = { let(){}",{GLOBAL,BLOCK});
+        test_scope("var o = { let(){}", {GLOBAL, BLOCK});
 
     SECTION("Function scope - expression method")
-        test_scope("var o = { [a + 12](){}",{GLOBAL,BLOCK});
+        test_scope("var o = { [a + 12](){}", {GLOBAL, BLOCK});
 
     SECTION("Function scope - method as anonymous function")
-        test_scope("var o = { f: function(){}",{GLOBAL,BLOCK});
+        test_scope("var o = { f: function(){}", {GLOBAL, BLOCK});
 
     SECTION("Function scope - keyword name method as anonymous function")
-        test_scope("var o = { let: function(){}",{GLOBAL,BLOCK});
+        test_scope("var o = { let: function(){}", {GLOBAL, BLOCK});
 
     SECTION("Function scope - expression method as anonymous function")
-        test_scope("var o = { [a + 12]: function(){}",{GLOBAL,BLOCK});
+        test_scope("var o = { [a + 12]: function(){}", {GLOBAL, BLOCK});
 
     SECTION("Function scope - getter")
-        test_scope("var o = { get f(){}",{GLOBAL,BLOCK});
+        test_scope("var o = { get f(){}", {GLOBAL, BLOCK});
 
     SECTION("Function scope - parametric getter")
-        test_scope("var o = { get [a + 12](){}",{GLOBAL,BLOCK});
+        test_scope("var o = { get [a + 12](){}", {GLOBAL, BLOCK});
 
     SECTION("Function scope - setter")
-        test_scope("var o = { set f(){}",{GLOBAL,BLOCK});
+        test_scope("var o = { set f(){}", {GLOBAL, BLOCK});
 
     SECTION("Function scope - parametric setter")
-        test_scope("var o = { set [a + 12](){}",{GLOBAL,BLOCK});
+        test_scope("var o = { set [a + 12](){}", {GLOBAL, BLOCK});
 
     SECTION("Block scope - regular block")
-        test_scope("{}",{GLOBAL});
+        test_scope("{}", {GLOBAL});
 
     SECTION("Block scope - object initializer")
-        test_scope("o = {}",{GLOBAL});
+        test_scope("o = {}", {GLOBAL});
 
     SECTION("Block scope - class")
-        test_scope("class C{}",{GLOBAL});
+        test_scope("class C{}", {GLOBAL});
 
     SECTION("Block scope - class with extends")
-        test_scope("class C extends A{}",{GLOBAL});
+        test_scope("class C extends A{}", {GLOBAL});
 
     SECTION("Block scope - if")
-        test_scope("if(true){}",{GLOBAL});
+        test_scope("if(true){}", {GLOBAL});
 
     SECTION("Block scope - single statement if")
-        test_scope("if(true);",{GLOBAL});
+        test_scope("if(true);", {GLOBAL});
 
     SECTION("Block scope - single statement if, semicolon group terminated")
-        test_scope("if(true)\na++\nreturn",{GLOBAL});
+        test_scope("if(true)\na++\nreturn", {GLOBAL});
 
     SECTION("Block scope - nested multiple single statement ifs")
-        test_scope("if(a) if(b) if(c) if(d) func();",{GLOBAL});
+        test_scope("if(a) if(b) if(c) if(d) func();", {GLOBAL});
 
     SECTION("Block scope - nested multiple single statement ifs with newline")
-        test_scope("if(a)\nif(b)\nif(c)\nif(d)\nfunc()\nfunc()",{GLOBAL});
+        test_scope("if(a)\nif(b)\nif(c)\nif(d)\nfunc()\nfunc()", {GLOBAL});
 
     SECTION("Block scope - else")
-        test_scope("if(true);else{}",{GLOBAL});
+        test_scope("if(true);else{}", {GLOBAL});
 
     SECTION("Block scope - single statement else")
-        test_scope("if(true);else;",{GLOBAL});
+        test_scope("if(true);else;", {GLOBAL});
 
     SECTION("Block scope - for loop")
-        test_scope("for(;;){}",{GLOBAL});
+        test_scope("for(;;){}", {GLOBAL});
 
     SECTION("Block scope - for loop in range")
-        test_scope("for(i in range()){}",{GLOBAL});
+        test_scope("for(i in range()){}", {GLOBAL});
 
     SECTION("Block scope - for loop of iterable")
-        test_scope("for(i of o){}",{GLOBAL});
+        test_scope("for(i of o){}", {GLOBAL});
 
     SECTION("Block scope - for await loop")
-        test_scope("for await(i of o){}",{GLOBAL});
+        test_scope("for await(i of o){}", {GLOBAL});
 
     SECTION("Block scope - single statement for")
-        test_scope("for(;;);",{GLOBAL});
+        test_scope("for(;;);", {GLOBAL});
 
     SECTION("Block scope - while")
-        test_scope("while(true){}",{GLOBAL});
+        test_scope("while(true){}", {GLOBAL});
 
     SECTION("Block scope - single statement while")
-        test_scope("while(true);",{GLOBAL});
+        test_scope("while(true);", {GLOBAL});
 
     SECTION("Block scope - do-while")
-        test_scope("do{}while(",{GLOBAL, BLOCK});
+        test_scope("do{}while(", {GLOBAL, BLOCK});
 
     SECTION("Block scope - single statement do-while")
-        test_scope("do;while(",{GLOBAL, BLOCK});
+        test_scope("do;while(", {GLOBAL, BLOCK});
 
     SECTION("Block scope - try")
-        test_scope("try{}",{GLOBAL});
+        test_scope("try{}", {GLOBAL});
 
     SECTION("Block scope - catch")
-        test_scope("try{}catch(e){}",{GLOBAL});
+        test_scope("try{}catch(e){}", {GLOBAL});
 
     SECTION("Block scope - finally")
-        test_scope("try{}finally{}",{GLOBAL});
+        test_scope("try{}finally{}", {GLOBAL});
 
     SECTION("Block scope - nested object - named")
-        test_scope("var o = {s:{}",{GLOBAL,BLOCK});
+        test_scope("var o = {s:{}", {GLOBAL, BLOCK});
 
     SECTION("Block scope - nested object - keyword named")
-        test_scope("var o = {let:{}",{GLOBAL,BLOCK});
+        test_scope("var o = {let:{}", {GLOBAL, BLOCK});
 
     SECTION("Block scope - nested object - parametric")
-        test_scope("var o = {[a+12]:{}",{GLOBAL,BLOCK});
+        test_scope("var o = {[a+12]:{}", {GLOBAL, BLOCK});
 
     SECTION("Block scope - advanced automatic semicolon insertion")
         test_scope(
@@ -5274,7 +5776,7 @@ TEST_CASE("Scope tracking - closing","[JSNormalizer]")
         test_scope("function() { if (true)\nfor ( ; ; ) a = 2 }", {GLOBAL});
 }
 
-TEST_CASE("Scope tracking - over multiple PDU","[JSNormalizer]")
+TEST_CASE("Scope tracking - over multiple PDU", "[JSNormalizer]")
 {
     // Every line represents a PDU. Each pdu has input buffer, expected script
     // and expected scope stack, written in that order
@@ -5306,7 +5808,7 @@ TEST_CASE("Scope tracking - over multiple PDU","[JSNormalizer]")
 
     SECTION("general - variable extension that overwrites existing variable inside inner scope")
         test_normalization({
-            {"f(a, x=>{var an", "var_0000(var_0001,var_0002=>{var var_0003", {GLOBAL,FUNCTION}},
+            {"f(a, x=>{var an", "var_0000(var_0001,var_0002=>{var var_0003", {GLOBAL, FUNCTION}},
             {"other = a})", "var_0000(var_0001,var_0002=>{var var_0004=var_0001})", {GLOBAL}}
         });
 
@@ -5367,7 +5869,7 @@ TEST_CASE("Scope tracking - over multiple PDU","[JSNormalizer]")
     SECTION("function scope: split in 'function'")
         test_normalization({
             {"func", "var_0000", {GLOBAL}},
-            {"tion(", "function(", {GLOBAL,FUNCTION}}
+            {"tion(", "function(", {GLOBAL, FUNCTION}}
         });
 
     SECTION("function scope: fake function")
@@ -5385,13 +5887,13 @@ TEST_CASE("Scope tracking - over multiple PDU","[JSNormalizer]")
     SECTION("function scope: inside parameters")
         test_normalization({
             {"function(", "function(", {GLOBAL, FUNCTION}},
-            {")", "function()", {GLOBAL,FUNCTION}}
+            {")", "function()", {GLOBAL, FUNCTION}}
         });
 
     SECTION("function scope: between parameters and body")
         test_normalization({
             {"function()", "function()", {GLOBAL, FUNCTION}},
-            {"{", "function(){", {GLOBAL,FUNCTION}}
+            {"{", "function(){", {GLOBAL, FUNCTION}}
         });
 
     SECTION("function scope: inside code")
@@ -5456,7 +5958,7 @@ TEST_CASE("Scope tracking - error handling", "[JSNormalizer]")
 
     SECTION("scope mismatch")
         test_normalization_bad(
-            "function f() { if (true) } }",
+            "function f() { if (true)} }",
             "function var_0000(){if(true)}",
             JSTokenizer::WRONG_CLOSING_SYMBOL
         );
@@ -5472,24 +5974,15 @@ TEST_CASE("Scope tracking - error handling", "[JSNormalizer]")
     {
         const char src[] = "function() { if (true) { } }";
         const char exp[] = "function(){if";
-        uint32_t scope_depth = 2;
 
-        JSIdentifierCtx ident_ctx(norm_depth, scope_depth, s_ignored_ids, s_ignored_props);
-        JSNormalizer normalizer(ident_ctx, norm_depth, max_template_nesting, max_bracket_depth);
-        auto ret = normalizer.normalize(src, strlen(src));
-        std::string dst(normalizer.get_script(), normalizer.script_size());
-
-        CHECK(ret == JSTokenizer::SCOPE_NESTING_OVERFLOW);
-        CHECK(dst == exp);
+        test_normalization(src, exp,
+            {max_scope_depth(2), return_code(JSTokenizer::SCOPE_NESTING_OVERFLOW)});
     }
 }
 
 TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
 {
-    JSTokenizerTester tester(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props, 
-        max_template_nesting, max_bracket_depth);
-
-    using FuncType = JSTokenizerTester::FuncType;
+    auto tester = default_config;
 
     SECTION("Global only")
     {
@@ -5536,8 +6029,7 @@ TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
         SECTION("ignored fake defined function identifier")
         {
             const std::unordered_set<std::string> s_ignored_ids_fake {"fake_unescape"};
-            JSTokenizerTester tester_fake(norm_depth, max_scope_depth, s_ignored_ids_fake, 
-                s_ignored_props, max_template_nesting, max_bracket_depth);
+            auto tester_fake = tester.derive({ignored_ids_list(s_ignored_ids_fake)});
             tester_fake.test_function_scopes({
                 {"fake_unescape(", "fake_unescape(", {FuncType::NOT_FUNC, FuncType::GENERAL}}
             });
@@ -5769,10 +6261,7 @@ TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
 
 TEST_CASE("Function call tracking - nesting", "[JSNormalizer]")
 {
-    JSTokenizerTester tester(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props,
-        max_template_nesting, max_bracket_depth);
-
-    using FuncType = JSTokenizerTester::FuncType;
+   auto tester = default_config; 
 
     SECTION("Opening")
     {
@@ -5780,41 +6269,41 @@ TEST_CASE("Function call tracking - nesting", "[JSNormalizer]")
         {
             tester.test_function_scopes({
                 { "general( general( general(", "var_0000(var_0000(var_0000(",
-                { FuncType::NOT_FUNC, FuncType::GENERAL, FuncType::GENERAL, FuncType::GENERAL}}
-            });
-            CHECK(!tester.is_unescape_nesting_seen());
+                {FuncType::NOT_FUNC, FuncType::GENERAL, FuncType::GENERAL, FuncType::GENERAL}}
+            },
+            {check_unescape_nesting(false)});
         }
         SECTION("Multiple unescape functions")
         {
             tester.test_function_scopes({
                 {"unescape( unescape( unescape(", "",
                 {FuncType::NOT_FUNC, FuncType::UNESCAPE, FuncType::UNESCAPE, FuncType::UNESCAPE}}
-            });
-            CHECK(tester.is_unescape_nesting_seen());
+            },
+            {check_unescape_nesting(true)});
         }
         SECTION("Multiple different unescape functions")
         {
             tester.test_function_scopes({
                 {"unescape( decodeURI( decodeURIComponent(", "",
                 {FuncType::NOT_FUNC, FuncType::UNESCAPE, FuncType::UNESCAPE, FuncType::UNESCAPE}}
-            });
-            CHECK(tester.is_unescape_nesting_seen());
+            },
+            {check_unescape_nesting(true)});
         }
         SECTION("Multiple String.fromCharCode functions")
         {
             tester.test_function_scopes({
                 {"String.fromCharCode( String.fromCharCode( String.fromCharCode(", "'' '' '",
                 {FuncType::NOT_FUNC, FuncType::CHAR_CODE, FuncType::CHAR_CODE, FuncType::CHAR_CODE}}
-            });
-            CHECK(!tester.is_unescape_nesting_seen());
+            },
+            {check_unescape_nesting(false)});
         }
         SECTION("Mixed function calls")
         {
             tester.test_function_scopes({
                 {"general( unescape( String.fromCharCode(", "var_0000('",
                 {FuncType::NOT_FUNC, FuncType::GENERAL, FuncType::UNESCAPE, FuncType::CHAR_CODE}}
-            });
-            CHECK(!tester.is_unescape_nesting_seen());
+            },
+            {check_unescape_nesting(false)});
         }
     }
     SECTION("Closing")
@@ -5861,11 +6350,7 @@ TEST_CASE("Function call tracking - nesting", "[JSNormalizer]")
 
 TEST_CASE("Function call tracking - over multiple PDU", "[JSNormalizer]")
 {
-    JSTokenizerTester tester(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props,
-        max_template_nesting, max_bracket_depth);
-
-    using FuncType = JSTokenizerTester::FuncType;
-
+    auto tester = default_config;
     SECTION("split in the middle of the identifier")
     {
         tester.test_function_scopes({
@@ -6165,260 +6650,5 @@ TEST_CASE("String Concatenation - Multiple PDU", "[JSNormalizer]")
     }
 }
 
-#endif // CATCH_TEST_BUILD
+#endif
 
-// Benchmark tests
-
-#ifdef BENCHMARK_TEST
-
-static constexpr const char* s_closing_tag = "</script>";
-
-static const std::string make_input(const char* begin, const char* mid,
-                             const char* end, size_t len)
-{
-    std::string s(begin);
-    int fill = (len - strlen(begin) - strlen(end) - strlen(s_closing_tag)) / strlen(mid);
-    for (int i = 0; i < fill; ++i)
-        s.append(mid);
-    s.append(end);
-    s.append(s_closing_tag);
-    return s;
-}
-
-static const std::string make_input_repeat(const char* pattern, size_t depth)
-{
-    std::string s;
-    size_t fill = (depth - strlen(s_closing_tag))/strlen(pattern);
-    for (size_t it = 0; it < fill; ++it)
-        s.append(pattern);
-
-    s.append(s_closing_tag);
-    return s;
-}
-
-static JSTokenizer::JSRet norm_ret(JSNormalizer& normalizer, const std::string& input)
-{
-    normalizer.rewind_output();
-    return normalizer.normalize(input.c_str(), input.size());
-}
-
-TEST_CASE("JS Normalizer, literals by 8 K", "[JSNormalizer]")
-{
-    JSIdentifierCtxStub ident_ctx;
-    JSNormalizer normalizer(ident_ctx, unlim_depth, max_template_nesting, max_bracket_depth);
-    char dst[norm_depth];
-
-    constexpr size_t size = 1 << 13;
-
-    auto data_pl = make_input("", ".", "", size);
-    auto data_ws = make_input("", " ", "", size);
-    auto data_bc = make_input("/*", " ", "*/", size);
-    auto data_dq = make_input("\"", " ", "\"", size);
-
-    BENCHMARK("memcpy()")
-    {
-        return memcpy(dst, data_pl.c_str(), data_pl.size());
-    };
-
-    REQUIRE(norm_ret(normalizer, data_ws) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("whitespaces")
-    {
-        normalizer.rewind_output();
-        return normalizer.normalize(data_ws.c_str(), data_ws.size());
-    };
-
-    REQUIRE(norm_ret(normalizer, data_bc) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("block comment")
-    {
-        normalizer.rewind_output();
-        return normalizer.normalize(data_bc.c_str(), data_bc.size());
-    };
-
-    REQUIRE(norm_ret(normalizer, data_dq) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("double quotes string")
-    {
-        normalizer.rewind_output();
-        return normalizer.normalize(data_dq.c_str(), data_dq.size());
-    };
-}
-
-TEST_CASE("JS Normalizer, literals by 64 K", "[JSNormalizer]")
-{
-    JSIdentifierCtxStub ident_ctx;
-    JSNormalizer normalizer(ident_ctx, unlim_depth, max_template_nesting, max_scope_depth);
-    char dst[norm_depth];
-
-    constexpr size_t size = 1 << 16;
-
-    auto data_pl = make_input("", ".", "", size);
-    auto data_ws = make_input("", " ", "", size);
-    auto data_bc = make_input("/*", " ", "*/", size);
-    auto data_dq = make_input("\"", " ", "\"", size);
-
-    BENCHMARK("memcpy()")
-    {
-        return memcpy(dst, data_pl.c_str(), data_pl.size());
-    };
-
-    REQUIRE(norm_ret(normalizer, data_ws) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("whitespaces")
-    {
-        normalizer.rewind_output();
-        return normalizer.normalize(data_ws.c_str(), data_ws.size());
-    };
-
-    REQUIRE(norm_ret(normalizer, data_bc) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("block comment")
-    {
-        normalizer.rewind_output();
-        return normalizer.normalize(data_bc.c_str(), data_bc.size());
-    };
-
-    REQUIRE(norm_ret(normalizer, data_dq) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("double quotes string")
-    {
-        normalizer.rewind_output();
-        return normalizer.normalize(data_dq.c_str(), data_dq.size());
-    };
-}
-
-TEST_CASE("JS Normalizer, id normalization", "[JSNormalizer]")
-{
-    // around 11 000 identifiers
-    std::string input;
-    for (int it = 0; it < norm_depth; ++it)
-        input.append("n" + std::to_string(it) + " ");
-
-    input.resize(norm_depth - strlen(s_closing_tag));
-    input.append(s_closing_tag, strlen(s_closing_tag));
-
-    JSIdentifierCtxStub ident_ctx_mock;
-    JSNormalizer normalizer_wo_ident(ident_ctx_mock, unlim_depth,
-        max_template_nesting, max_bracket_depth);
-
-    REQUIRE(norm_ret(normalizer_wo_ident, input) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("without substitution")
-    {
-        normalizer_wo_ident.rewind_output();
-        return normalizer_wo_ident.normalize(input.c_str(), input.size());
-    };
-
-    const std::unordered_set<std::string> ids{};
-    const std::unordered_set<std::string> props{};
-    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, ids, props);
-    JSNormalizer normalizer_w_ident(ident_ctx, unlim_depth, max_template_nesting, max_bracket_depth);
-
-    REQUIRE(norm_ret(normalizer_w_ident, input) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("with substitution")
-    {
-        normalizer_w_ident.rewind_output();
-        return normalizer_w_ident.normalize(input.c_str(), input.size());
-    };
-
-    const std::unordered_set<std::string> ids_n { "n" };
-    const std::unordered_set<std::string> props_n { "n" };
-    JSIdentifierCtx ident_ctx_ids_n(norm_depth, max_scope_depth, ids_n, props_n);
-    JSNormalizer normalizer_iids(ident_ctx_ids_n, unlim_depth,
-        max_template_nesting, max_bracket_depth);
-
-    REQUIRE(norm_ret(normalizer_iids, input) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("with ignored identifiers")
-    {
-        normalizer_iids.rewind_output();
-        return normalizer_iids.normalize(input.c_str(), input.size());
-    };
-}
-
-TEST_CASE("JS Normalizer, scope tracking", "[JSNormalizer]")
-{
-    constexpr uint32_t depth = 65535;
-    JSIdentifierCtxStub ident_ctx;
-    JSNormalizer normalizer(ident_ctx, unlim_depth, max_template_nesting, depth);
-
-    auto src_ws = make_input("", " ", "", depth);
-    auto src_brace_rep = make_input_repeat("{}", depth);
-    auto src_paren_rep = make_input_repeat("()", depth);
-    auto src_bracket_rep = make_input_repeat("[]", depth);
-
-    REQUIRE(norm_ret(normalizer, src_ws) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("whitespaces")
-    {
-        normalizer.rewind_output();
-        return normalizer.normalize(src_ws.c_str(), src_ws.size());
-    };
-
-    REQUIRE(norm_ret(normalizer, src_brace_rep) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("...{}{}{}...")
-    {
-        normalizer.rewind_output();
-        return normalizer.normalize(src_brace_rep.c_str(), src_brace_rep.size());
-    };
-
-    REQUIRE(norm_ret(normalizer, src_paren_rep) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("...()()()...")
-    {
-        normalizer.rewind_output();
-        return normalizer.normalize(src_paren_rep.c_str(), src_paren_rep.size());
-    };
-
-    REQUIRE(norm_ret(normalizer, src_bracket_rep) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("...[][][]...")
-    {
-        normalizer.rewind_output();
-        return normalizer.normalize(src_bracket_rep.c_str(), src_bracket_rep.size());
-    };
-}
-
-TEST_CASE("JS Normalizer, automatic semicolon", "[JSNormalizer]")
-{
-    auto w_semicolons = make_input("", "a;\n", "", norm_depth);
-    auto wo_semicolons = make_input("", "a \n", "", norm_depth);
-    const char* src_w_semicolons = w_semicolons.c_str();
-    const char* src_wo_semicolons = wo_semicolons.c_str();
-    size_t src_len = w_semicolons.size();
-
-    JSIdentifierCtxStub ident_ctx_mock;
-    JSNormalizer normalizer_wo_ident(ident_ctx_mock, unlim_depth, max_template_nesting, norm_depth);
-
-    REQUIRE(norm_ret(normalizer_wo_ident, w_semicolons) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("without semicolon insertion")
-    {
-        normalizer_wo_ident.rewind_output();
-        return normalizer_wo_ident.normalize(src_w_semicolons, src_len);
-    };
-
-    REQUIRE(norm_ret(normalizer_wo_ident, wo_semicolons) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("with semicolon insertion")
-    {
-        normalizer_wo_ident.rewind_output();
-        return normalizer_wo_ident.normalize(src_wo_semicolons, src_len);
-    };
-}
-
-TEST_CASE("JS Normalizer, unescape", "[JSNormalizer]")
-{
-    auto str_unescape = make_input("'", "\\u0061", "'", norm_depth);
-    auto f_unescape = make_input_repeat("unescape('')", norm_depth);
-    const char* src_str_unescape = str_unescape.c_str();
-    const char* src_f_unescape = f_unescape.c_str();
-    size_t src_len = norm_depth;
-
-    JSIdentifierCtx ident_ctx(norm_depth, max_scope_depth, s_ignored_ids, s_ignored_props);
-    JSNormalizer norm(ident_ctx, unlim_depth, max_template_nesting, norm_depth);
-
-    REQUIRE(norm_ret(norm, str_unescape) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("unescape sequence")
-    {
-        norm.rewind_output();
-        return norm.normalize(src_str_unescape, src_len);
-    };
-
-    REQUIRE(norm_ret(norm, f_unescape) == JSTokenizer::SCRIPT_ENDED);
-    BENCHMARK("unescape function tracking")
-    {
-        norm.rewind_output();
-        return norm.normalize(src_f_unescape, src_len);
-    };
-}
-
-#endif // BENCHMARK_TEST
