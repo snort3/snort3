@@ -57,7 +57,15 @@ public:
     using iterator = ObSet::iterator;
 
     void push(uint32_t offset, uint32_t length)
-    { blocks.emplace(offset, length); }
+    {
+        const auto push_res = blocks.emplace(offset, length);
+        
+        if (!push_res.second and length > push_res.first->length)
+        {
+            blocks.erase(push_res.first);
+            blocks.emplace(offset, length);
+        }
+    }
 
     const_iterator begin() const
     { return blocks.cbegin(); }

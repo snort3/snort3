@@ -23,6 +23,7 @@
 #endif
 
 #include <cctype>
+#include <climits>
 
 #include <hs_compile.h>
 #include <hs_runtime.h>
@@ -47,9 +48,11 @@ using namespace snort;
 #define s_name "sd_pattern"
 #define s_help "rule option for detecting sensitive data"
 
-#define SD_SOCIAL_PATTERN          R"(\d{3}-\d{2}-\d{4})"
-#define SD_SOCIAL_NODASHES_PATTERN R"(\d{9})"
+#define SD_SOCIAL_PATTERN          R"([0-8]\d{2}-\d{2}-\d{4})"
+#define SD_SOCIAL_NODASHES_PATTERN R"([0-8]\d{8})"
 #define SD_CREDIT_PATTERN_ALL      R"(\d{4}\D?\d{4}\D?\d{2}\D?\d{2}\D?\d{3,4})"
+#define SD_EMAIL_PATTERN           R"([a-zA-Z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+\/=?^_`{|}~-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)"
+#define SD_US_PHONE_PATTERN        R"((?:\+?1[-\.\s]?)?\(?([2-9][0-8]\d)\)?[-\.\s]([2-9]\d{2})[-\.\s](\d{4}))"
 
 static HyperScratchAllocator* scratcher = nullptr;
 
@@ -102,6 +105,56 @@ struct SdPatternConfig
 };
 
 static THREAD_LOCAL ProfileStats sd_pattern_perf_stats;
+
+//-------------------------------------------------------------------------
+// SSN validation functions
+//-------------------------------------------------------------------------
+
+#pragma pack(push, 0)
+
+struct ssn_no_dashes
+{
+    char area[3];
+    char group[2];
+    char serial[4];
+};
+
+struct ssn_with_dashes
+{
+    char area[3];
+    char dash_1;
+    char group[2];
+    char dash_2;
+    char serial[4];
+};
+
+#pragma pack(pop)
+
+static int validate_us_ssn_nodashes(const uint8_t* buf, unsigned long long len)
+{
+    if (len != sizeof(ssn_no_dashes))
+        return false;
+
+    const ssn_no_dashes* ssn = (const ssn_no_dashes*)buf;
+
+    return strncmp(ssn->area, "000", 3)
+        and strncmp(ssn->area, "666", 3)
+        and strncmp(ssn->group, "00", 2)
+        and strncmp(ssn->serial, "0000", 4);
+}
+
+static int validate_us_ssn(const uint8_t* buf, unsigned long long len)
+{
+    if (len != sizeof(ssn_with_dashes))
+        return false;
+
+    const ssn_with_dashes* ssn = (const ssn_with_dashes*)buf;
+
+    return strncmp(ssn->area, "000", 3)
+        and strncmp(ssn->area, "666", 3)
+        and strncmp(ssn->group, "00", 2)
+        and strncmp(ssn->serial, "0000", 4);
+}
 
 //-------------------------------------------------------------------------
 // option
@@ -201,6 +254,8 @@ struct hsContext
         return left and right;
     }
 
+    unsigned long long last_match_from_pos = ULLONG_MAX;
+    unsigned long long last_match_to_pos = 0;
     unsigned int count = 0;
 
     SdPatternConfig config;
@@ -227,7 +282,15 @@ static int hs_match(unsigned int /*id*/, unsigned long long from,
     if ( ctx->config.validate && ctx->config.validate(ctx->buf+from, len) != 1 )
         return 0;
 
-    ctx->count++;
+    if (from >= ctx->last_match_to_pos)
+    {
+        ctx->last_match_from_pos = from;
+        ctx->count++;
+    }
+    else if (from != ctx->last_match_from_pos)
+        return 0;
+
+    ctx->last_match_to_pos = to;
 
     IpsPolicy* p = get_ips_policy();
 
@@ -362,12 +425,25 @@ bool SdPatternModule::end(const char*, int, SnortConfig*)
     else if (config.pii == "us_social")
     {
         config.pii = SD_SOCIAL_PATTERN;
+        config.validate = validate_us_ssn;
         config.can_be_obfuscated = true;
         config.forced_boundary = true;
     }
     else if (config.pii == "us_social_nodashes")
     {
         config.pii = SD_SOCIAL_NODASHES_PATTERN;
+        config.validate = validate_us_ssn_nodashes;
+        config.can_be_obfuscated = true;
+        config.forced_boundary = true;
+    }
+    else if (config.pii == "email")
+    {
+        config.pii = SD_EMAIL_PATTERN;
+        config.can_be_obfuscated = true;
+    }
+    else if (config.pii == "us_phone")
+    {
+        config.pii = SD_US_PHONE_PATTERN;
         config.can_be_obfuscated = true;
         config.forced_boundary = true;
     }
