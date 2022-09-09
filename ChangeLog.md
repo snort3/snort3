@@ -1,3 +1,16 @@
+2022-09-07: 3.1.41.0
+
+* appid: send intermediate messages for appid reload commands to the socket
+* file_api: corrected the formatting of File Statistics output
+* file_id: Update Office Documents rules
+* flow: update flow statistics before processing a flow
+* framework, rna, pub_sub: make data bus get_packet method a const
+* netflow: log even when not all info is present
+* sd_pattern: add and improve built-in patterns
+* stream: free flow data, if flow is blocked
+* stream: use a const packet to populate the flow key
+* utils: refactor JS normalizer unit tests
+
 2022-08-25: 3.1.40.0
 
 * appid: activate appid debug object before printing logs from http event handler
