@@ -29,49 +29,87 @@
 #include "framework/range.h"
 
 #include "http_enum.h"
+#include "http_inspect.h"
 #include "ips_http.h"
 
-enum NumHdrsPsIdx { NUM_HDRS_PSI_HDRS, NUM_HDRS_PSI_TRAILERS, NUM_HDRS_PSI_COOKIES, NUM_HDRS_PSI_MAX };
-
-class HttpNumHdrsRuleOptModule : public HttpRuleOptModule
+// Base class for all range-based rule options modules
+class HttpRangeRuleOptModule : public HttpRuleOptModule
 {
 public:
-    HttpNumHdrsRuleOptModule(const char* key_, const char* help, HttpEnums::HTTP_RULE_OPT rule_opt_index_,
-        snort::CursorActionType cat_, NumHdrsPsIdx idx_, const snort::Parameter params[])
-        : HttpRuleOptModule(key_, help, rule_opt_index_, cat_, params), idx(idx_) {}
+    HttpRangeRuleOptModule(const char* key_, const char* help, HttpEnums::HTTP_RULE_OPT rule_opt_index_,
+        const snort::Parameter params[], snort::ProfileStats& ps_);
 
-    snort::ProfileStats* get_profile() const override
-    { return &http_num_hdrs_ps[idx]; }
-  
+    snort::ProfileStats* get_profile() const override { return &ps; }
+
     static void mod_dtor(snort::Module* m) { delete m; }
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
 
 private:
-    friend class HttpNumHdrsIpsOption;
-    static THREAD_LOCAL std::array<snort::ProfileStats, NUM_HDRS_PSI_MAX> http_num_hdrs_ps;
-    const NumHdrsPsIdx idx;
+    snort::ProfileStats& ps;
+
+    friend class HttpRangeIpsOption;
+    const char* num_range;
     snort::RangeCheck range;
 };
 
-class HttpNumHdrsIpsOption : public HttpIpsOption
+// Base class for all range-based rule options
+class HttpRangeIpsOption : public HttpIpsOption
 {
 public:
-    HttpNumHdrsIpsOption(const HttpNumHdrsRuleOptModule* cm) :
-        HttpIpsOption(cm), idx(cm->idx), range(cm->range) {}
+    HttpRangeIpsOption(const HttpRangeRuleOptModule* cm) :
+        HttpIpsOption(cm), ps(cm->ps), range(cm->range) { }
     EvalStatus eval(Cursor&, snort::Packet*) override;
     uint32_t hash() const override;
     bool operator==(const snort::IpsOption& ips) const override;
 
-    static IpsOption* opt_ctor(snort::Module* m, OptTreeNode*)
-    { return new HttpNumHdrsIpsOption((HttpNumHdrsRuleOptModule*)m); }
-
     static void opt_dtor(snort::IpsOption* p) { delete p; }
 
+    virtual int32_t get_num(const HttpInspect* hi, snort::Packet* p) = 0;
+
 private:
-    const NumHdrsPsIdx idx;
+    snort::ProfileStats& ps;
     const snort::RangeCheck range;
 };
 
+// Template class for range-based rule options module
+template<HttpEnums::HTTP_RULE_OPT OPT_IDX, HttpEnums::InspectSection SECTION>
+class HttpNumRuleOptModule : public HttpRangeRuleOptModule
+{
+public:
+    HttpNumRuleOptModule(const char* key_, const char* help, const snort::Parameter params[])
+        : HttpRangeRuleOptModule(key_, help, OPT_IDX, params, ps) { }
+
+    bool begin(const char*, int, snort::SnortConfig*) override
+    {
+        HttpRangeRuleOptModule::begin(nullptr, 0, nullptr);
+        inspect_section = SECTION;
+        if (inspect_section == HttpEnums::IS_TRAILER)
+        {
+            is_trailer_opt = true;
+        }
+        return true;
+    }
+
+private:
+    static THREAD_LOCAL snort::ProfileStats ps;
+};
+
+template<HttpEnums::HTTP_RULE_OPT OPT_IDX, HttpEnums::InspectSection SECTION>
+THREAD_LOCAL snort::ProfileStats HttpNumRuleOptModule<OPT_IDX, SECTION>::ps;
+
+// Template class for range-based rule options
+template<int32_t (HttpInspect::* FNC)(snort::Packet*, const HttpBufferInfo&) const>
+class HttpNumIpsOption : public HttpRangeIpsOption
+{
+public:
+    using HttpRangeIpsOption::HttpRangeIpsOption;
+
+    static IpsOption* opt_ctor(snort::Module* m, OptTreeNode*)
+    { return new HttpNumIpsOption((const HttpRangeRuleOptModule*)m); }
+
+    int32_t get_num(const HttpInspect* hi, snort::Packet* p) override
+    { return (hi->*FNC)(p, buffer_info); }
+};
 #endif
 
