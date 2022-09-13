@@ -93,6 +93,7 @@ static std::string s_type;
 static std::string s_body;
 
 static bool action_file_id = false;
+static bool strict_rtn_reduction = false;
 
 struct SoRule
 {
@@ -401,6 +402,9 @@ static int ParsePortList(
     return 0;
 }
 
+void set_strict_rtn_reduction(bool new_strict_rtn_reduction)
+{ strict_rtn_reduction = new_strict_rtn_reduction; }
+
 bool same_headers(RuleTreeNode* rule, RuleTreeNode* rtn)
 {
     if ( !rule or !rtn )
@@ -425,13 +429,22 @@ bool same_headers(RuleTreeNode* rule, RuleTreeNode* rtn)
     if ( rule->dip and rtn->dip and sfvar_compare(rule->dip, rtn->dip) != SFIP_EQUAL )
         return false;
 
-    if ( rule->src_portobject and rtn->src_portobject
-        and !PortObjectEqual(rule->src_portobject, rtn->src_portobject) )
-        return false;
+    if ( strict_rtn_reduction )
+    {
+        if ( rule->src_portobject and rtn->src_portobject
+            and !PortObjectEqual(rule->src_portobject, rtn->src_portobject) )
+            return false;
 
-    if ( rule->dst_portobject and rtn->dst_portobject
-        and !PortObjectEqual(rule->dst_portobject, rtn->dst_portobject) )
-        return false;
+        if ( rule->dst_portobject and rtn->dst_portobject
+            and !PortObjectEqual(rule->dst_portobject, rtn->dst_portobject) )
+            return false;
+    }
+    else
+    {
+        if ( (rule->src_portobject != rtn->src_portobject)
+            or (rule->dst_portobject != rtn->dst_portobject) )
+            return false;
+    }
 
     return true;
 }

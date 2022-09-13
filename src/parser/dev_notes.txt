@@ -23,9 +23,10 @@ parse the option and its parameters and create an instance.
 
 RTN is a per-policy data. Within a given policy all RTNs which have the
 same action and 5-tuple (protocol, addresses, ports values after expanding
-variables) will be collapsed into a single RTN. This reduces the memory and
-computation efforts to evaluate RTN. Hence, RTN has a counter for OTNs
-referencing it.
+variables) will be collapsed into a single RTN. When strict reduction is enabled,
+port variables with the same values will also be collapsed into single RTNs.
+This reduces the memory and computation efforts to evaluate RTN.
+Hence, RTN has a counter for OTNs referencing it.
 RTNs populate policies when the rule states are applied.
 
 OTN is a global data. It is uniquely identified by gid:sid pair.

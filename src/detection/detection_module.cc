@@ -98,6 +98,10 @@ static const Parameter detection_params[] =
     { "enable_address_anomaly_checks", Parameter::PT_BOOL, nullptr, "false",
       "enable check and alerting of address anomalies" },
 
+    { "enable_strict_reduction", Parameter::PT_BOOL, nullptr, "false",
+      "enable strict deduplication of rule headers by ports (saves memory, but "
+      "loses some speed during config reading)" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 /* *INDENT-ON* */
@@ -205,6 +209,9 @@ bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("enable_address_anomaly_checks") )
         sc->address_anomaly_check_enabled = v.get_bool();
+
+    else if ( v.is("enable_strict_reduction") )
+        sc->enable_strict_reduction = v.get_bool();
 
     return true;
 }

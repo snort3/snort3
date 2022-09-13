@@ -421,6 +421,8 @@ void DestroyRuleTreeNode(RuleTreeNode* rtn)
 
 void ParseRules(SnortConfig* sc)
 {
+    set_strict_rtn_reduction(sc->enable_strict_reduction);
+
     for ( unsigned idx = 0; idx < sc->policy_map->ips_policy_count(); ++idx )
     {
         set_ips_policy(sc, idx);

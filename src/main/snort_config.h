@@ -234,6 +234,7 @@ public:
     bool global_rule_state = false;
     bool global_default_rule_state = true;
     bool allow_missing_so_rules = false;
+    bool enable_strict_reduction = false;
 
     //------------------------------------------------------
     // process stuff
