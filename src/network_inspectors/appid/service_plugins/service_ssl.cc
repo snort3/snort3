@@ -85,6 +85,8 @@ struct ServiceSSLData
     int common_name_strlen;
     char* org_name;
     int org_name_strlen;
+    uint8_t* cached_data;
+    uint16_t cached_len;
 };
 
 #pragma pack(1)
@@ -236,6 +238,17 @@ SslServiceDetector::SslServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
+static void ssl_cache_free(uint8_t*& ssl_cache, uint16_t& len)
+{
+    if (ssl_cache)
+    {
+        snort_free(ssl_cache);
+        ssl_cache = nullptr;
+    }
+        
+    len = 0;
+}
+
 static void ssl_free(void* ss)
 {
     ServiceSSLData* ss_tmp = (ServiceSSLData*)ss;
@@ -243,6 +256,7 @@ static void ssl_free(void* ss)
     snort_free(ss_tmp->host_name);
     snort_free(ss_tmp->common_name);
     snort_free(ss_tmp->org_name);
+    ssl_cache_free(ss_tmp->cached_data, ss_tmp->cached_len);
     snort_free(ss_tmp);
 }
 
@@ -450,6 +464,13 @@ static bool parse_certificates(ServiceSSLData* ss)
     return success;
 }
 
+static void save_ssl_cache(ServiceSSLData* ss, uint16_t size, const uint8_t* data)
+{
+    ss->cached_data = (uint8_t*)snort_calloc(size, sizeof(uint8_t));
+    memcpy(ss->cached_data, data, size);
+    ss->cached_len = size;               
+}
+
 int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     ServiceSSLData* ss;
@@ -461,6 +482,7 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
     uint16_t ver;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
+    uint8_t* reallocated_data = nullptr;
 
     if (!size)
         goto inprocess;
@@ -471,6 +493,18 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
         ss = (ServiceSSLData*)snort_calloc(sizeof(ServiceSSLData));
         data_add(args.asd, ss, &ssl_free);
         ss->state = SSL_STATE_INITIATE;
+        ss->cached_data = nullptr;
+        ss->cached_len = 0;
+    }
+
+    if (ss->cached_len and ss->cached_data and (args.dir == APP_ID_FROM_RESPONDER))
+    {
+        reallocated_data = (uint8_t*)snort_calloc(ss->cached_len + size, sizeof(uint8_t));
+        memcpy(reallocated_data, ss->cached_data, ss->cached_len);
+        memcpy(reallocated_data + ss->cached_len, args.data, args.size);
+        size = ss->cached_len + args.size;
+        ssl_cache_free(ss->cached_data, ss->cached_len);
+        data = reallocated_data;
     }
     /* Start off with a Client Hello from client to server. */
     if (ss->state == SSL_STATE_INITIATE)
@@ -556,9 +590,15 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
                    previous was completely consumed. */
                 if (ss->tot_length == 0)
                 {
+                    if (size < sizeof(ServiceSSLV3Hdr))
+                    {
+                        save_ssl_cache(ss, size, data);
+                        goto inprocess;
+                    }
+                    
                     hdr3 = (const ServiceSSLV3Hdr*)data;
                     ver = ntohs(hdr3->version);
-                    if (size < sizeof(ServiceSSLV3Hdr) || (hdr3->type != SSL_HANDSHAKE &&
+                    if ((hdr3->type != SSL_HANDSHAKE &&
                         hdr3->type != SSL_CHANGE_CIPHER && hdr3->type != SSL_APPLICATION_DATA) ||
                         (ver != 0x0300 && ver != 0x0301 && ver != 0x0302 && ver != 0x0303))
                     {
@@ -575,9 +615,14 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
                     }
                 }
 
+                if (size < offsetof(ServiceSSLV3Record, version))
+                {
+                    save_ssl_cache(ss, size, data);
+                    goto inprocess;
+                }
+
                 rec = (const ServiceSSLV3Record*)data;
-                if (rec->type != SSL_SERVER_HELLO_DONE &&
-                    (size < offsetof(ServiceSSLV3Record, version) or rec->length_msb))
+                if (rec->type != SSL_SERVER_HELLO_DONE and rec->length_msb)
                 {
                     goto fail;
                 }
@@ -682,10 +727,14 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
 inprocess:
+    if (reallocated_data)
+        snort_free(reallocated_data);
     service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
 fail:
+    if (reallocated_data)
+        snort_free(reallocated_data);
     snort_free(ss->certs_data);
     snort_free(ss->host_name);
     snort_free(ss->common_name);
@@ -696,6 +745,9 @@ fail:
     return APPID_NOMATCH;
 
 success:
+    if (reallocated_data)
+        snort_free(reallocated_data);
+        
     if (ss->certs_data && ss->certs_len)
     {
         if (!(args.asd.scan_flags & SCAN_CERTVIZ_ENABLED_FLAG) and
