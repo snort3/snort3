@@ -163,7 +163,7 @@ protected:
     ContentData* config;
 };
 
-bool ContentOption::retry(Cursor& current_cursor, const Cursor& orig_cursor)
+bool ContentOption::retry(Cursor& c, const Cursor&)
 {
     if ( config->pmd.is_negated() )
         return false;
@@ -171,12 +171,7 @@ bool ContentOption::retry(Cursor& current_cursor, const Cursor& orig_cursor)
     if ( !config->pmd.depth )
         return true;
 
-    // Do not retry if the current pattern would extend beyond the area
-    // in which we're looking for it.
-    unsigned min = current_cursor.get_delta() + config->pmd.pattern_size;
-    unsigned max = orig_cursor.get_delta() + config->pmd.offset + config->pmd.depth;
-
-    return min <= max;
+    return c.get_delta() + config->pmd.pattern_size <= config->pmd.depth;
 }
 
 uint32_t ContentOption::hash() const
@@ -277,14 +272,15 @@ bool ContentOption::operator==(const IpsOption& ips) const
  */
 static int uniSearchReal(ContentData* cd, Cursor& c)
 {
-    int offset, depth;
+    // byte_extract variables are strictly unsigned, used for sizes and forward offsets
+    // converting from uint32_t to int64_t ensures all extracted values remain positive
+    int64_t offset, depth;
 
-    /* Get byte_extract variables */
     if (cd->offset_var >= 0 && cd->offset_var < NUM_IPS_OPTIONS_VARS)
     {
         uint32_t extract;
         GetVarValueByIndex(&extract, cd->offset_var);
-        offset = (int)extract;
+        offset = extract;
     }
     else
         offset = cd->pmd.offset;
@@ -293,13 +289,12 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
     {
         uint32_t extract;
         GetVarValueByIndex(&extract, cd->depth_var);
-        depth = (int)extract;
+        depth = extract;
     }
     else
         depth = cd->pmd.depth;
 
-    int pos = c.get_delta();
-    int file_pos = c.get_file_pos();
+    uint32_t file_pos = c.get_file_pos();
 
     if (file_pos and cd->offset_set)
     {
@@ -307,28 +302,35 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
         if (offset < 0)
             return 0;
     }
-    if ( !pos )
-    {
-        if ( cd->pmd.is_relative() )
-            pos = c.get_pos();
 
-        pos += offset;
+    int64_t pos;
+
+    if ( !c.get_delta() )
+        // first - adjust from cursor or buffer start
+        pos = (cd->pmd.is_relative() ? c.get_pos() : 0) + offset;
+    else
+    {
+        // retry - adjust from start of last match
+        pos = c.get_pos() - cd->pmd.pattern_size + cd->match_delta;
+
+        if ( depth )
+            depth -= c.get_delta();
     }
 
-    if ( pos < 0 )
-        pos = 0;
+    if ( pos < 0 or depth < 0 or pos >= c.size() )
+        return -1;
 
-    int len = c.size() - pos;
+    int64_t len = c.size() - pos;
 
     if ( !depth || len < depth )
         depth = len;
 
-    unsigned end = pos + cd->pmd.pattern_size;
+    int64_t end = pos + cd->pmd.pattern_size;
 
     // If the pattern size is greater than the amount of data we have to
     // search, there's no way we can match, but return 0 here for the
     // case where the match is inverted and there is at least some data.
-    if ( end > c.size() || (int)end > pos + depth )
+    if ( end > c.size() || end > pos + depth )
     {
         if ( cd->pmd.is_negated() && (depth > 0) )
             return 0;
@@ -336,17 +338,13 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
         return -1;
     }
 
-    // FIXIT-M: The depth on retries should not be the same as that used
-    // on the first try.
-
     const uint8_t* base = c.buffer() + pos;
-    int found = cd->searcher->search(search_handle, base, depth);
+    int found = cd->searcher->search(search_handle, base, (unsigned)depth);
 
     if ( found >= 0 )
     {
-        int at = pos + found;
-        c.set_delta(at + cd->match_delta);
-        c.set_pos(at + cd->pmd.pattern_size);
+        c.set_delta(c.get_delta() + found + cd->match_delta);
+        c.set_pos(pos + found + cd->pmd.pattern_size);
         return 1;
     }
 
@@ -484,15 +482,7 @@ static void parse_depth(ContentData* cd, const char* data)
 
     if (isdigit(data[0]) || data[0] == '-')
     {
-        cd->pmd.depth = parse_int(data, "depth");
-
-        /* check to make sure that this the depth allows this rule to fire */
-        if (cd->pmd.depth < (int)cd->pmd.pattern_size)
-        {
-            ParseError("the depth (%d) is less than the size of the content(%u)",
-                cd->pmd.depth, cd->pmd.pattern_size);
-            return;
-        }
+        cd->pmd.depth = parse_int(data, "depth", cd->pmd.pattern_size);
         cd->depth_var = IPS_OPTIONS_NO_VAR;
     }
     else
@@ -555,13 +545,7 @@ static void parse_within(ContentData* cd, const char* data)
 
     if (isdigit(data[0]) || data[0] == '-')
     {
-        cd->pmd.depth = parse_int(data, "within");
-
-        if (cd->pmd.depth < (int)cd->pmd.pattern_size)
-        {
-            ParseError("within (%d) is smaller than size of pattern", cd->pmd.depth);
-            return;
-        }
+        cd->pmd.depth = parse_int(data, "within", cd->pmd.pattern_size);
         cd->depth_var = IPS_OPTIONS_NO_VAR;
     }
     else
@@ -573,7 +557,6 @@ static void parse_within(ContentData* cd, const char* data)
             return;
         }
     }
-
 
     cd->pmd.set_relative();
 }

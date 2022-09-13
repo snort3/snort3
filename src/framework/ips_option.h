@@ -78,6 +78,8 @@ public:
 
     // packet threads
     virtual bool is_relative() { return false; }
+
+    // 2nd cursor is deprecated, do not use
     virtual bool retry(Cursor&, const Cursor&) { return false; }
     virtual void action(Packet*) { }
 

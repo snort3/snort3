@@ -57,7 +57,7 @@ struct PatternMatchData
     unsigned pattern_size;   // size of app layer pattern
 
     int offset;              // pattern search start offset
-    int depth;               // pattern search depth
+    unsigned depth;          // pattern search depth
 
     enum
     {

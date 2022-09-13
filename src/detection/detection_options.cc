@@ -565,7 +565,7 @@ int detection_option_node_evaluate(
             rule_vars.reserve(sizeof(var_buf));
             for ( unsigned i = 0; i < NUM_IPS_OPTIONS_VARS; ++i )
             {
-                safe_snprintf(var_buf, sizeof(var_buf), "var[%d]=%d ", i, tmp_byte_extract_vars[i]);
+                safe_snprintf(var_buf, sizeof(var_buf), "var[%u]=0x%X ", i, tmp_byte_extract_vars[i]);
                 rule_vars.append(var_buf);
             }
             debug_logf(detection_trace, TRACE_RULE_VARS, p, "Rule options variables: %s\n",
@@ -698,8 +698,10 @@ int detection_option_node_evaluate(
         // We're essentially checking this node again and it potentially
         // might match again
         if ( continue_loop )
+        {
             state.checks++;
-
+            node_eval_trace(node, cursor, eval_data.p);
+        }
         loop_count++;
     }
     while ( continue_loop );

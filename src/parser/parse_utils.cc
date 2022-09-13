@@ -144,10 +144,72 @@ int parse_int(const char* data, const char* tag, int low, int high)
 
     if ((value > high) || (value < low))
     {
-        ParseError("'%s' must in %d:%d", tag, low, high);
+        ParseError("'%s' must be in %d:%d, inclusive", tag, low, high);
         return value;
     }
 
     return value;
 }
 
+//--------------------------------------------------------------------------
+// unit tests
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+TEST_CASE("parse_int", "[ParseUtils]")
+{
+    SECTION("invalid format")
+    {
+        int res = parse_int("10  ", "test");
+
+        CHECK(res == 10);
+    }
+
+    SECTION("not a number")
+    {
+        const char* data = "test";
+
+        int res = parse_int(data, data);
+
+        CHECK(res == 0);
+    }
+
+    SECTION("int overflow")
+    {
+        const char* data = "99999999999999999999999999999999999999999999999999";
+
+        int res = parse_int(data, "test");
+
+        CHECK(res == -1);
+        CHECK(errno == ERANGE);
+    }
+
+    SECTION("int underflow")
+    {
+        const char* data = "-9999999999999999999999999999999999999999999999999";
+
+        int res = parse_int(data, "test");
+
+        CHECK(res == 0);
+        CHECK(errno == ERANGE);
+    }
+
+    SECTION("below the limit")
+    {
+        int res = parse_int("1", "test", 2, 3);
+
+        CHECK(res == 1);
+    }
+
+    SECTION("above the limit")
+    {
+        int res = parse_int("4", "test", 2, 3);
+
+        CHECK(res == 4);
+    }
+}
+
+#endif
