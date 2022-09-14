@@ -73,6 +73,7 @@ void AppIdEveProcessEventHandler::handle(DataEvent& event, Flow* flow)
     const std::string& user_agent = eve_process_event.get_user_agent();
     std::vector<std::string> alpn_vec = eve_process_event.get_alpn();
     const bool is_quic = eve_process_event.is_flow_quic();
+    const bool is_client_process_flag = eve_process_event.is_client_process_mapping();
 
     AppidChangeBits change_bits;
 
@@ -106,7 +107,7 @@ void AppIdEveProcessEventHandler::handle(DataEvent& event, Flow* flow)
 
         snort_free(version);
     }
-    else if (!name.empty())
+    else if (!name.empty() and is_client_process_flag)
     {
         client_id = asd->get_odp_ctxt().get_eve_ca_matchers().match_eve_ca_pattern(name,
             conf);

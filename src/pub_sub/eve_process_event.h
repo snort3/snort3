@@ -87,6 +87,16 @@ public:
     {
         return is_quic;
     }
+    
+    bool is_client_process_mapping() const
+    {
+        return client_process_mapping;
+    }
+
+    void set_client_process_mapping(bool flag)
+    {
+        client_process_mapping = flag;
+    }
 
 private:
     const snort::Packet &p;
@@ -96,5 +106,6 @@ private:
     std::string user_agent;
     std::vector<std::string> alpn;
     bool is_quic = false;
+    bool client_process_mapping = true;
 };
 #endif

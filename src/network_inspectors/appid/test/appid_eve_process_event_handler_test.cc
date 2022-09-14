@@ -139,6 +139,7 @@ TEST(appid_eve_process_event_handler_tests, eve_process_event_handler)
 {
     Packet p;
     EveProcessEvent event(p, "firefox", 90);
+    event.set_client_process_mapping(true);
     AppIdEveProcessEventHandler event_handler(dummy_appid_inspector);
     Flow* flow = new Flow();
     event_handler.handle(event, flow);
