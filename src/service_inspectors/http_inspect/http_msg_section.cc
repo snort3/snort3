@@ -163,7 +163,7 @@ const Field& HttpMsgSection::get_classic_buffer(unsigned id, uint64_t sub_id, ui
 
 const Field& HttpMsgSection::get_classic_buffer(const HttpBufferInfo& buf)
 {
-    // buffer_side replaces source_id for buffers that support the request option
+    // buffer_side replaces source_id for rule options that support the request option
     const SourceId buffer_side = (buf.form & FORM_REQUEST) ? SRC_CLIENT : source_id;
 
     switch (buf.type)
@@ -408,7 +408,7 @@ const Field& HttpMsgSection::get_param_buffer(Cursor& c, const HttpParam& param)
 
 int32_t HttpMsgSection::get_num_headers(const HttpBufferInfo& buf) const
 {
-    // buffer_side replaces source_id for buffers that support the request option
+    // buffer_side replaces source_id for rule options that support the request option
     const SourceId buffer_side = (buf.form & FORM_REQUEST) ? SRC_CLIENT : source_id;
 
     const HttpMsgHeadShared* const head = (buf.type == HTTP_RANGE_NUM_TRAILERS) ?
@@ -418,6 +418,20 @@ int32_t HttpMsgSection::get_num_headers(const HttpBufferInfo& buf) const
         return HttpCommon::STAT_NO_SOURCE;
 
     return head->get_num_headers();
+}
+
+int32_t HttpMsgSection::get_max_header_line(const HttpBufferInfo& buf) const
+{
+    // buffer_side replaces source_id for rule options that support the request option
+    const SourceId buffer_side = (buf.form & FORM_REQUEST) ? SRC_CLIENT : source_id;
+
+    const HttpMsgHeadShared* const head = (buf.type == HTTP_RANGE_MAX_TRAILER_LINE) ?
+        (HttpMsgHeadShared*)trailer[buffer_side]:
+        (HttpMsgHeadShared*)header[buffer_side] ;
+    if (head == nullptr)
+        return HttpCommon::STAT_NO_SOURCE;
+
+    return head->get_max_header_line();
 }
 
 int32_t HttpMsgSection::get_num_cookies(const HttpBufferInfo& buf) const
@@ -434,7 +448,7 @@ int32_t HttpMsgSection::get_num_cookies(const HttpBufferInfo& buf) const
 
 VersionId HttpMsgSection::get_version_id(const HttpBufferInfo& buf) const
 {
-    // buffer_side replaces source_id for buffers that support the request option
+    // buffer_side replaces source_id for rule options that support the request option
     const SourceId buffer_side = (buf.form & FORM_REQUEST) ? SRC_CLIENT : source_id;
     HttpMsgStart* start = (buffer_side == SRC_CLIENT) ?
         (HttpMsgStart*)request : (HttpMsgStart*)status;

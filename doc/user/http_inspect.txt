@@ -780,6 +780,11 @@ and decompress_vba options enabled.
 These are range-based rule options used to check the number of headers and
 trailers, respectively.
 
+===== http_max_header_line and http_max_trailer_line
+
+These are range-based rule options used to check the longest line in
+request and response headers and trailers, respectively.
+
 ===== http_num_cookies
 
 This is a range-based rule option that checks the number of cookies. In a

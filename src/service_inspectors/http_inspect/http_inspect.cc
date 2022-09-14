@@ -319,6 +319,17 @@ int32_t HttpInspect::http_get_num_headers(Packet* p,
     return current_section->get_num_headers(buffer_info);
 }
 
+int32_t HttpInspect::http_get_max_header_line(Packet* p,
+    const HttpBufferInfo& buffer_info) const
+{
+    const HttpMsgSection* const current_section = HttpContextData::get_snapshot(p);
+
+    if (current_section == nullptr)
+        return STAT_NOT_PRESENT;
+
+    return current_section->get_max_header_line(buffer_info);
+}
+
 int32_t HttpInspect::http_get_num_cookies(Packet* p,
     const HttpBufferInfo& buffer_info) const
 {

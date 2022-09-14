@@ -52,6 +52,7 @@ public:
     const Field& http_get_param_buf(Cursor& c, snort::Packet* p,
         const HttpParam& param) const;
     int32_t http_get_num_headers(snort::Packet* p, const HttpBufferInfo& buffer_info) const;
+    int32_t http_get_max_header_line(snort::Packet* p, const HttpBufferInfo& buffer_info) const;
     int32_t http_get_num_cookies(snort::Packet* p, const HttpBufferInfo& buffer_info) const;
     HttpEnums::VersionId http_get_version_id(snort::Packet* p,
         const HttpBufferInfo& buffer_info) const;

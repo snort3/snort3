@@ -87,6 +87,7 @@ public:
 
     uint64_t get_transaction_id() { return trans_num; }
     int32_t get_num_headers(const HttpBufferInfo& buf) const;
+    int32_t get_max_header_line(const HttpBufferInfo& buf) const;
     int32_t get_num_cookies(const HttpBufferInfo& buf) const;
     HttpEnums::VersionId get_version_id(const HttpBufferInfo& buf) const;
 

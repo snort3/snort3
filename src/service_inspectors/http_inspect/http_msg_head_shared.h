@@ -60,6 +60,7 @@ public:
     uint64_t get_file_cache_index();
     const Field& get_content_disposition_filename();
     int32_t get_num_headers() const { return num_headers; }
+    int32_t get_max_header_line() const { return max_header_line; }
     int32_t get_content_type();
 
 protected:
@@ -77,6 +78,7 @@ protected:
     Field* header_line = nullptr;
     HttpEnums::HeaderId* header_name_id = nullptr;
     int32_t num_headers = HttpCommon::STAT_NOT_COMPUTE;
+    int32_t max_header_line = HttpCommon::STAT_NOT_COMPUTE;
 
 #ifdef REG_TEST
     void print_headers(FILE* output);

@@ -117,6 +117,7 @@ void HttpMsgHeadShared::parse_header_block()
 {
     int32_t bytes_used = 0;
     num_headers = 0;
+    max_header_line = 0;
     int32_t num_seps;
 
     // The number of header lines in a message may be zero
@@ -131,6 +132,10 @@ void HttpMsgHeadShared::parse_header_block()
         assert(num_headers < session_data->num_head_lines[source_id]);
         const int32_t header_length = find_next_header(msg_text.start() + bytes_used,
             msg_text.length() - bytes_used, num_seps);
+        if (header_length >  max_header_line)
+        {
+            max_header_line = header_length;
+        }
         header_line[num_headers].set(header_length, msg_text.start() + bytes_used + num_seps);
         if (header_line[num_headers].length() > params->maximum_header_length)
         {
