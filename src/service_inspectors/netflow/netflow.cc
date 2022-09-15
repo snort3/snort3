@@ -81,9 +81,11 @@ static std::unordered_map<int, int>* tcp_srv_map = nullptr;
 // -----------------------------------------------------------------------------
 // static functions
 // -----------------------------------------------------------------------------
-static const NetFlowRule* filter_record(const NetFlowRules* rules, const int zone,
+static std::vector<const NetFlowRule*> filter_record(const NetFlowRules* rules, const int zone,
     const SfIp* src, const SfIp* dst)
 {
+    std::vector<const NetFlowRule*> match_vec;
+
     const SfIp* addr[2] = {src, dst};
 
     for( auto const & address : addr )
@@ -91,7 +93,7 @@ static const NetFlowRule* filter_record(const NetFlowRules* rules, const int zon
         for( auto const& rule : rules->exclude )
         {
             if ( rule.filter_match(address, zone) )
-                return nullptr;
+                return match_vec;
         }
     }
 
@@ -100,10 +102,11 @@ static const NetFlowRule* filter_record(const NetFlowRules* rules, const int zon
         for( auto const& rule : rules->include )
         {
             if ( rule.filter_match(address, zone) )
-                return &rule;
+                match_vec.emplace_back(&rule);
         }
     }
-    return nullptr;
+
+    return match_vec;
 }
 
 static void publish_netflow_event(const Packet* p, const NetFlowRule* match, NetFlowSessionRecord& record)
@@ -505,8 +508,8 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
                 }
 
                 // filter based on configuration
-                const NetFlowRule* match = filter_record(p_rules, zone, &record.initiator_ip, &record.responder_ip);
-                if ( !match )
+                std::vector<const NetFlowRule*> match_vec = filter_record(p_rules, zone, &record.initiator_ip, &record.responder_ip);
+                if ( !match_vec.size() )
                 {
                     records--;
                     continue;
@@ -526,8 +529,20 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
                     }
 
                     record.netflow_initiator_ip.set(p->ptrs.ip_api.get_src()->get_ip6_ptr(), AF_INET6);
-                    publish_netflow_event(p, match, record);
 
+                    bool alerted_conn = false;
+                    bool alerted_host = false;
+
+                    for (const NetFlowRule* nr: match_vec)
+                    {
+                        if ((!alerted_conn and !nr->create_host) or (!alerted_host and nr->create_host) )
+                            publish_netflow_event(p, nr, record);
+
+                        if (nr->create_host or nr->create_service)
+                            alerted_host = true;
+                        else
+                            alerted_conn = true;
+                    }
                 }
 
                 if ( netflow_cache->add(record.initiator_ip, record, true) )
@@ -678,8 +693,8 @@ static bool decode_netflow_v5(const unsigned char* data, uint16_t size,
         if ( record.next_hop_ip.set(&precord->next_hop_addr, AF_INET) != SFIP_SUCCESS )
             return false;
 
-        const NetFlowRule* match = filter_record(p_rules, zone, &record.initiator_ip, &record.responder_ip);
-        if ( !match )
+        std::vector<const NetFlowRule*> match_vec = filter_record(p_rules, zone, &record.initiator_ip, &record.responder_ip);
+        if ( !match_vec.size() )
             continue;
 
         record.initiator_port = ntohs(precord->src_port);
@@ -705,7 +720,20 @@ static bool decode_netflow_v5(const unsigned char* data, uint16_t size,
             ++netflow_stats.unique_flows;
 
         record.netflow_initiator_ip.set(p->ptrs.ip_api.get_src()->get_ip6_ptr(), AF_INET6);
-        publish_netflow_event(p, match, record);
+
+        bool alerted_conn = false;
+        bool alerted_host = false;
+
+        for (const NetFlowRule* nr: match_vec)
+        {
+            if ( (!alerted_conn and !nr->create_host) or (!alerted_host and nr->create_host) )
+                publish_netflow_event(p, nr, record);
+
+            if (nr->create_host or nr->create_service)
+                alerted_host = true;
+            else
+                alerted_conn = true;
+        }
     }
     return true;
 }

@@ -203,13 +203,9 @@ void RnaPnd::analyze_netflow_host(NetFlowEvent* nfe)
     const auto& src_ip = nfe->get_record()->initiator_ip;
     const auto& src_ip_ptr = (const struct in6_addr*) src_ip.get_ip6_ptr();
 
-    auto ht = find_or_create_host_tracker(src_ip, new_host);
-
-    if ( !new_host )
-        ht->update_last_seen();
-
-    const uint8_t src_mac[6] = {0};
-
+    // This case must be handled first before adding the host to the
+    // host cache. Otherwise, new rules evals with create_host = true
+    // will fail since the host will already exist.
     if (!nfe->get_create_host() and !nfe->get_create_service())
     {
         uint32_t service = nfe->get_service_id();
@@ -217,6 +213,13 @@ void RnaPnd::analyze_netflow_host(NetFlowEvent* nfe)
         DataBus::publish(RNA_NEW_NETFLOW_CONN, new_flow_event);
         return;
     }
+
+    auto ht = find_or_create_host_tracker(src_ip, new_host);
+
+    if ( !new_host )
+        ht->update_last_seen();
+
+    const uint8_t src_mac[6] = {0};
 
     if ( new_host )
     {
