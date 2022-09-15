@@ -261,12 +261,12 @@ bool HttpEvent::contains_webdav_method()
     return true;
 }
 
-bool HttpEvent::get_is_http2() const
+bool HttpEvent::get_is_httpx() const
 {
     return false;
 }
 
-uint32_t HttpEvent::get_http2_stream_id() const
+int64_t HttpEvent::get_httpx_stream_id() const
 {
     return 0;
 }

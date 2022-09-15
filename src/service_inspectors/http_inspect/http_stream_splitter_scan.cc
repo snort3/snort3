@@ -92,8 +92,8 @@ HttpCutter* HttpStreamSplitter::get_cutter(SectionType type,
             session_data->accelerated_blocking[source_id],
             my_inspector->script_finder,
             session_data->compression[source_id]);
-    case SEC_BODY_H2:
-        return (HttpCutter*)new HttpBodyH2Cutter(
+    case SEC_BODY_HX:
+        return (HttpCutter*)new HttpBodyHXCutter(
             session_data->data_length[source_id],
             session_data->accelerated_blocking[source_id],
             my_inspector->script_finder,
@@ -140,7 +140,9 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
     // This is the session state information we share with HttpInspect and store with stream. A
     // session is defined by a TCP connection. Since scan() is the first to see a new TCP
     // connection the new flow data object is created here.
-    HttpFlowData* session_data = HttpInspect::http_get_flow_data(flow);
+    HttpFlowData* session_data = nullptr;
+    if (flow->stream_intf)
+        session_data = (HttpFlowData*)flow->stream_intf->get_stream_flow_data(flow);
 
     if (session_data == nullptr)
     {
@@ -201,7 +203,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
     // If the last request was a CONNECT and we have not yet seen the response, this is early C2S
     // traffic. If there has been a pipeline overflow or underflow we cannot match requests to
     // responses, so there is no attempt to track early C2S traffic.
-    if ((source_id == SRC_CLIENT) && (type == SEC_REQUEST) && !session_data->for_http2 &&
+    if ((source_id == SRC_CLIENT) && (type == SEC_REQUEST) && !session_data->for_httpx &&
         session_data->last_request_was_connect)
     {
         const uint64_t last_request_trans_num = session_data->expected_trans_num[SRC_CLIENT] - 1;
@@ -251,7 +253,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
         max_length, session_data->get_infractions(source_id), session_data->events[source_id],
         session_data->section_size_target[source_id],
         session_data->stretch_section_to_packet[source_id],
-        session_data->h2_body_state[source_id]);
+        session_data->hx_body_state[source_id]);
     switch (cut_result)
     {
     case SCAN_NOT_FOUND:

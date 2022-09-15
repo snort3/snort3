@@ -105,7 +105,7 @@ public:
     // frame into the S2C direction of an HTTP/2 flow.
     bool is_mid_frame() const;
 
-    // Used by payload injection to determine whether we should inject S2C settings frame 
+    // Used by payload injection to determine whether we should inject S2C settings frame
     // before injecting payload
     bool was_server_settings_received() const
     { return server_settings_frame_received; }
@@ -204,6 +204,15 @@ private:
     Http2Stream* get_hi_stream() const;
     Http2Stream* find_stream(const uint32_t key) const;
     void delete_processing_stream();
+};
+
+class Http2FlowStreamIntf : public snort::StreamFlowIntf
+{
+public:
+    snort::FlowData* get_stream_flow_data(const snort::Flow* flow) override;
+    void set_stream_flow_data(snort::Flow* flow, snort::FlowData* flow_data) override;
+    void get_stream_id(const snort::Flow* flow, int64_t& stream_id) override;
+    AppId get_appid_from_stream(const snort::Flow* flow) override;
 };
 
 #endif

@@ -218,7 +218,7 @@ void ParseIpVar(const char* var, const char* value)
 {
     int ret;
     IpsPolicy* p = get_ips_policy();
-    DisallowCrossTableDuplicateVars(var, VAR_TYPE__IPVAR); 
+    DisallowCrossTableDuplicateVars(var, VAR_TYPE__IPVAR);
     // FIXIT-M: ip checked for duplicates twice: in the function above and in sfvt_add_str
 
     if ((ret = sfvt_define(p->ip_vartable, var, value)) != SFIP_SUCCESS)
@@ -263,7 +263,10 @@ void add_service_to_otn(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
     }
 
     if ( !strcmp(svc_name, "http") )
+    {
         add_service_to_otn(sc, otn, "http2");
+        add_service_to_otn(sc, otn, "http3");
+    }
 
     SnortProtocolId svc_id = sc->proto_ref->add(svc_name);
 

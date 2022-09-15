@@ -36,8 +36,8 @@ namespace snort
 class SO_PUBLIC HttpEvent : public snort::DataEvent
 {
 public:
-    HttpEvent(HttpMsgHeader* http_msg_header_, bool http2, uint32_t stream_id) :
-        http_msg_header(http_msg_header_), is_http2(http2), http2_stream_id(stream_id) { }
+    HttpEvent(HttpMsgHeader* http_msg_header_, bool httpx, int64_t stream_id) :
+        http_msg_header(http_msg_header_), is_httpx(httpx), httpx_stream_id(stream_id) { }
 
 
     const uint8_t* get_content_type(int32_t &length);
@@ -54,13 +54,13 @@ public:
     const uint8_t* get_x_working_with(int32_t &length);
     int32_t get_response_code();
     bool contains_webdav_method();
-    bool get_is_http2() const;
-    uint32_t get_http2_stream_id() const;
+    bool get_is_httpx() const;
+    int64_t get_httpx_stream_id() const;
 
 private:
     HttpMsgHeader* const http_msg_header;
-    bool is_http2 = false;
-    uint32_t http2_stream_id = 0;
+    bool is_httpx = false;
+    int64_t httpx_stream_id = -1;
 
     const uint8_t* get_header(unsigned, uint64_t, int32_t&);
 

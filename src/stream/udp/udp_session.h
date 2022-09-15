@@ -23,8 +23,9 @@
 #include <sys/time.h>
 
 #include "flow/session.h"
+#include "main/snort_types.h"
 
-class UdpSession : public Session
+class SO_PUBLIC UdpSession : public Session
 {
 public:
     UdpSession(snort::Flow*);

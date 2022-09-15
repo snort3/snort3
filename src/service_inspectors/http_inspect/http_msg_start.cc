@@ -23,6 +23,8 @@
 
 #include "http_msg_start.h"
 
+#include "service_inspectors/http2_inspect/http2_flow_data.h"
+
 #include "http_enum.h"
 
 using namespace HttpEnums;
@@ -52,8 +54,13 @@ void HttpMsgStart::derive_version_id()
     }
     else if ((version.start()[5] == '1') && (version.start()[7] == '1'))
     {
-        if (session_data->for_http2)
-            version_id = VERS_2_0;
+        if (session_data->for_httpx)
+        {
+            const Http2FlowData* const h2i_flow_data =
+                (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+
+            version_id = (h2i_flow_data) ? VERS_2_0 : VERS_3_0;
+        }
         else
             version_id = VERS_1_1;
     }

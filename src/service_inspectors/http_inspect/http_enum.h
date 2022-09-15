@@ -81,7 +81,7 @@ enum ChunkState { CHUNK_NEWLINES, CHUNK_ZEROS, CHUNK_LEADING_WS, CHUNK_NUMBER, C
 
 // List of possible HTTP versions.
 enum VersionId { VERS__PROBLEMATIC=-12, VERS__NOT_PRESENT=-11, VERS__OTHER=1,
-    VERS_1_0, VERS_1_1, VERS_2_0, VERS_0_9, VERS__MIN = VERS__PROBLEMATIC,
+    VERS_1_0, VERS_1_1, VERS_2_0, VERS_3_0, VERS_0_9, VERS__MIN = VERS__PROBLEMATIC,
     VERS__MAX = VERS_0_9};
 
 // Every request method we have ever heard of

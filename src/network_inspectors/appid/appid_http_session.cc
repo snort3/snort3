@@ -39,8 +39,8 @@
 
 using namespace snort;
 
-AppIdHttpSession::AppIdHttpSession(AppIdSession& asd, uint32_t http2_stream_id)
-    : asd(asd), http2_stream_id(http2_stream_id)
+AppIdHttpSession::AppIdHttpSession(AppIdSession& asd, int64_t stream_id)
+    : asd(asd), httpx_stream_id(stream_id)
 { }
 
 AppIdHttpSession::~AppIdHttpSession()
@@ -923,9 +923,9 @@ void AppIdHttpSession::print_field(HttpFieldIds id, const std::string* field)
         return;
     }
 
-    if (http2_stream_id > 0)
-        LogMessage("AppIdDbg %s stream %u: %s is %s\n", appidDebug->get_debug_session(),
-            http2_stream_id, field_name.c_str(), field->c_str());
+    if (httpx_stream_id >= 0)
+        LogMessage("AppIdDbg %s stream %" PRId64 ": %s is %s\n", appidDebug->get_debug_session(),
+            httpx_stream_id, field_name.c_str(), field->c_str());
     else
         LogMessage("AppIdDbg %s %s is %s\n", appidDebug->get_debug_session(),
             field_name.c_str(), field->c_str());

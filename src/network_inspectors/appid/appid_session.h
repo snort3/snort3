@@ -356,8 +356,8 @@ public:
     void reset_session_data(AppidChangeBits& change_bits);
 
     AppIdHttpSession* get_http_session(uint32_t stream_index = 0) const;
-    AppIdHttpSession* create_http_session(uint32_t stream_id = 0);
-    AppIdHttpSession* get_matching_http_session(uint32_t stream_id) const;
+    AppIdHttpSession* create_http_session(int64_t stream_id = -1);
+    AppIdHttpSession* get_matching_http_session(int64_t stream_id) const;
     void delete_all_http_sessions();
 
     AppIdDnsSession* create_dns_session();
@@ -371,8 +371,8 @@ public:
         AppidChangeBits& change_bits);
     void set_tp_payload_app_id(const snort::Packet& p, AppidSessionDirection dir, AppId app_id,
         AppidChangeBits& change_bits);
-    void publish_appid_event(AppidChangeBits&, const snort::Packet&, bool is_http2 = false,
-        uint32_t http2_stream_index = 0);
+    void publish_appid_event(AppidChangeBits&, const snort::Packet&, bool is_httpx = false,
+        uint32_t httpx_stream_index = 0);
 
     bool need_to_delete_tp_conn(ThirdPartyAppIdContext*) const;
 

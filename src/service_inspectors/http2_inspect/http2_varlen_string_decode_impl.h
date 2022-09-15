@@ -20,8 +20,6 @@
 #ifndef HTTP2_VARLEN_STRING_DECODE_IMPL_H
 #define HTTP2_VARLEN_STRING_DECODE_IMPL_H
 
-
-#include "http2_enum.h"
 #include "http2_huffman_state_machine.h"
 #include "http2_varlen_string_decode.h"
 

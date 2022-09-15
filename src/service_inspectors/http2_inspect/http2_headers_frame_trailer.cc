@@ -74,7 +74,7 @@ void Http2HeadersFrameTrailer::analyze_http1(Packet* p)
     {
         // http_inspect is not yet expecting trailers. Flush empty buffer through scan, reassemble,
         // and eval to prepare http_inspect for trailers.
-        assert(http_flow->get_type_expected(source_id) == SEC_BODY_H2);
+        assert(http_flow->get_type_expected(source_id) == SEC_BODY_HX);
         stream->finish_msg_body(source_id, valid_headers, true); // calls http_inspect scan()
 
         unsigned copied;

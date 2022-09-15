@@ -6,6 +6,7 @@ set (FLOW_INCLUDES
     flow_key.h
     flow_stash.h
     ha.h
+    session.h
     stash_item.h
 )
 
@@ -28,7 +29,6 @@ add_library (flow OBJECT
     ha_module.cc
     ha_module.h
     prune_stats.h
-    session.h
     stash_item.h
 )
 

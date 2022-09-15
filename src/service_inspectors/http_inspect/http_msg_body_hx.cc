@@ -15,31 +15,30 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http_msg_body_h2.h author Katura Harvey <katharve@cisco.com>
+// http_msg_body_hx.cc author Katura Harvey <katharve@cisco.com>
 
-#ifndef HTTP_MSG_BODY_H2_H
-#define HTTP_MSG_BODY_H2_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "http_common.h"
-#include "http_msg_body.h"
+#include "http_msg_body_hx.h"
 
-//-------------------------------------------------------------------------
-// HttpMsgBodyH2 class
-//-------------------------------------------------------------------------
+using namespace HttpCommon;
 
-class HttpMsgBodyH2 : public HttpMsgBody
+void HttpMsgBodyHX::update_flow()
 {
-public:
-    HttpMsgBodyH2(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
-        HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
-        const HttpParaList* params_)
-        : HttpMsgBody(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_) {}
-    void update_flow() override;
+    session_data->body_octets[source_id] = body_octets;
+    if (session_data->hx_body_state[source_id] == HX_BODY_NOT_COMPLETE ||
+        session_data->hx_body_state[source_id] == HX_BODY_LAST_SEG)
+        update_depth();
+    else if (session_data->hx_body_state[source_id] == HX_BODY_COMPLETE_EXPECT_TRAILERS)
+        session_data->trailer_prep(source_id);
+}
 
 #ifdef REG_TEST
-    void print_section(FILE* output) override;
-#endif
-};
-
+void HttpMsgBodyHX::print_section(FILE* output)
+{
+    print_body_section(output, "HTTP/2 body");
+}
 #endif
 

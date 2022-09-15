@@ -39,6 +39,7 @@
 #include "framework/data_bus.h"
 #include "framework/decode_data.h"
 #include "framework/inspector.h"
+#include "network_inspectors/appid/application_ids.h"
 #include "protocols/layer.h"
 #include "sfip/sf_ip.h"
 #include "target_based/snort_protocols.h"
@@ -155,6 +156,15 @@ struct LwState
 
     char direction;
     char ignore_direction;
+};
+
+class SO_PUBLIC StreamFlowIntf
+{
+public:
+    virtual FlowData* get_stream_flow_data(const Flow* flow) = 0;
+    virtual void set_stream_flow_data(Flow* flow, FlowData* flow_data) = 0;
+    virtual void get_stream_id(const Flow* flow, int64_t& stream_id) = 0;
+    virtual AppId get_appid_from_stream(const Flow*) { return APP_ID_NONE; }
 };
 
 // this struct is organized by member size for compactness
@@ -425,6 +435,7 @@ public:  // FIXIT-M privatize if possible
     IpsContextChain context_chain;
     FlowData* flow_data;
     FlowStats flowstats;
+    StreamFlowIntf* stream_intf;
 
     SfIp client_ip;
     SfIp server_ip;

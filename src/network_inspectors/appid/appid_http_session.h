@@ -60,7 +60,7 @@ class AppIdHttpSession
 public:
     typedef std::pair<uint16_t,uint16_t> pair_t;
 
-    AppIdHttpSession(AppIdSession&, uint32_t);
+    AppIdHttpSession(AppIdSession&, int64_t);
     virtual ~AppIdHttpSession();
     ClientAppDescriptor client;
     PayloadAppDescriptor payload;
@@ -134,9 +134,9 @@ public:
         const char* version = nullptr);
     void set_referred_payload(AppId, AppidChangeBits&);
 
-    uint32_t get_http2_stream_id() const
+    int64_t get_httpx_stream_id() const
     {
-        return http2_stream_id;
+        return httpx_stream_id;
     }
     void set_rcvd_full_req_body(bool req_full_body)
     {
@@ -193,7 +193,7 @@ protected:
 #if RESPONSE_CODE_PACKET_THRESHHOLD
     unsigned response_code_packets = 0;
 #endif
-    uint32_t http2_stream_id = 0;
+    int64_t httpx_stream_id = -1;
     bool is_payload_processed = false;
     bool rcvd_full_req_body = false;
     bool is_tunnel = false;

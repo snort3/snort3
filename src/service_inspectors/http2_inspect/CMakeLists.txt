@@ -1,5 +1,13 @@
 
+set(HTTP2_INCLUDES
+    http2_huffman_state_machine.h
+    http2_varlen_int_decode.h
+    http2_varlen_int_decode_impl.h
+    http2_varlen_string_decode.h
+    http2_varlen_string_decode_impl.h
+)
 set (FILE_LIST
+    ${HTTP2_INCLUDES}
     http2_api.cc
     http2_api.h
     http2_data_frame.cc
@@ -25,16 +33,11 @@ set (FILE_LIST
     http2_hpack.h
     http2_hpack_dynamic_table.cc
     http2_hpack_dynamic_table.h
-    http2_varlen_int_decode.h
-    http2_varlen_int_decode_impl.h
-    http2_varlen_string_decode.h
-    http2_varlen_string_decode_impl.h
     http2_hpack_int_decode.h
     http2_hpack_string_decode.h
     http2_hpack_table.cc
     http2_hpack_table.h
     http2_huffman_state_machine.cc
-    http2_huffman_state_machine.h
     http2_inspect.cc
     http2_inspect.h
     http2_module.cc
@@ -74,6 +77,8 @@ set (FILE_LIST
     #add_dynamic_module(http2_inspect inspectors ${FILE_LIST})
 
 #endif(STATIC_INSPECTORS)
-
+install(FILES ${HTTP2_INCLUDES}
+    DESTINATION "${INCLUDE_INSTALL_PATH}/service_inspectors/http2_inspect"
+)
 add_subdirectory ( test )
 

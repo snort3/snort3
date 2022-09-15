@@ -55,6 +55,7 @@ static const std::map <std::string, VersionId> VersionStrToEnum =
     { "1.0", VERS_1_0 },
     { "1.1", VERS_1_1 },
     { "2.0", VERS_2_0 },
+    { "3.0", VERS_3_0 },
     { "0.9", VERS_0_9 }
 };
 

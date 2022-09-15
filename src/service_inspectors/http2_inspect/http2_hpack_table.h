@@ -46,7 +46,6 @@ public:
     HpackDynamicTable& get_dynamic_table() { return dynamic_table; }
 
     const static uint8_t STATIC_MAX_INDEX = 61;
-    const static uint8_t PSEUDO_HEADER_MAX_STATIC_INDEX = 14;
 
 private:
     const static HpackTableEntry static_table[STATIC_MAX_INDEX + 1];

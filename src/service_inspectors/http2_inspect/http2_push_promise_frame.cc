@@ -116,7 +116,7 @@ void Http2PushPromiseFrame::analyze_http1(Packet* p)
 
     // Push promise cannot have a message body
     // FIXIT-E handle bad request lines and cases where a message body is implied
-    stream->get_hi_flow_data()->finish_h2_body(SRC_CLIENT, H2_BODY_NO_BODY, false);
+    stream->get_hi_flow_data()->finish_hx_body(SRC_CLIENT, HX_BODY_NO_BODY, false);
 
     process_decoded_headers(http_flow, SRC_CLIENT, p);
 }

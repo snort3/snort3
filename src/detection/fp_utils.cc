@@ -140,13 +140,17 @@ void update_buffer_map(const char** bufs, const char* svc)
     {
         buffer_map[bufs[i]].push_back(svc);
         if ( !strcmp(svc, "http") )
+        {
             buffer_map[bufs[i]].push_back("http2");
+            buffer_map[bufs[i]].push_back("http3");
+        }
     }
 
     if ( !strcmp(svc, "http") )
     {
         buffer_map["file_data"].push_back("http");
         buffer_map["file_data"].push_back("http2");
+        buffer_map["file_data"].push_back("http3");
     }
 }
 

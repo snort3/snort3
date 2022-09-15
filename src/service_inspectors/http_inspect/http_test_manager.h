@@ -25,17 +25,18 @@
 #include <sys/types.h>
 #include <cstdio>
 
+#include <main/snort_types.h>
 //-------------------------------------------------------------------------
 // HttpTestManager class
 //-------------------------------------------------------------------------
 
 class HttpTestInput;
 
-class HttpTestManager
+class SO_PUBLIC HttpTestManager
 {
 public:
     // Bitmap: 1, 2, 4, 8, ...
-    enum INPUT_TYPE { IN_NONE = 0, IN_HTTP = 0x1, IN_HTTP2 = 0x2 };
+    enum INPUT_TYPE { IN_NONE = 0, IN_HTTP = 0x1, IN_HTTP2 = 0x2, IN_HTTP3 = 0x3 };
 
     static bool use_test_input(INPUT_TYPE type) { return (type & test_input) != 0; }
     static void activate_test_input(INPUT_TYPE type);

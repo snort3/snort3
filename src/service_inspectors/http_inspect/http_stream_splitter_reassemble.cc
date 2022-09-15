@@ -154,7 +154,7 @@ void HttpStreamSplitter::process_gzip_header(const uint8_t* data,
             (magic_length - header_bytes_processed) : length;
 
         if (memcmp(data, gzip_magic + header_bytes_processed, magic_cmp_len))
-            session_data->gzip_state[source_id] = GZIP_MAGIC_BAD; 
+            session_data->gzip_state[source_id] = GZIP_MAGIC_BAD;
         else if (header_bytes_processed + length >= magic_length)
             session_data->gzip_state[source_id] = GZIP_MAGIC_GOOD;
         header_bytes_processed += magic_cmp_len;
@@ -174,7 +174,7 @@ void HttpStreamSplitter::process_gzip_header(const uint8_t* data,
 }
 
 bool HttpStreamSplitter::gzip_header_check_done(HttpFlowData* session_data) const
-{ 
+{
     return session_data->gzip_state[source_id] == HttpEnums::GZIP_MAGIC_BAD or
         session_data->gzip_state[source_id] == HttpEnums::GZIP_FLAGS_PROCESSED;
 }
@@ -348,7 +348,7 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
     if ((session_data->section_offset[source_id] == 0) &&
         (session_data->octets_expected[source_id] != partial_raw_bytes + total))
     {
-        assert(!session_data->for_http2);
+        assert(!session_data->for_httpx);
         assert(total == 0); // FIXIT-L this special exception for total of zero is needed for now
         session_data->type_expected[source_id] = SEC_ABORT;
         return { nullptr, 0 };
@@ -390,8 +390,8 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
                     session_data->half_reset(source_id);
                 }
                 else if (session_data->type_expected[source_id] == SEC_BODY_CHUNK ||
-                        (session_data->type_expected[source_id] == SEC_BODY_H2 &&
-                        session_data->h2_body_state[source_id] == H2_BODY_COMPLETE_EXPECT_TRAILERS))
+                        (session_data->type_expected[source_id] == SEC_BODY_HX &&
+                        session_data->hx_body_state[source_id] == HX_BODY_COMPLETE_EXPECT_TRAILERS))
                 {
                     session_data->trailer_prep(source_id);
                 }
@@ -406,7 +406,7 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
         (session_data->section_type[source_id] == SEC_BODY_CHUNK) ||
         (session_data->section_type[source_id] == SEC_BODY_CL) ||
         (session_data->section_type[source_id] == SEC_BODY_OLD) ||
-        (session_data->section_type[source_id] == SEC_BODY_H2);
+        (session_data->section_type[source_id] == SEC_BODY_HX);
 
     uint8_t*& buffer = session_data->section_buffer[source_id];
     if (buffer == nullptr)

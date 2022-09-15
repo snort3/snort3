@@ -163,8 +163,8 @@ AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector&
     this->set_session_flags(APPID_SESSION_DISCOVER_APP);
 }
 AppIdSession::~AppIdSession() { delete &api; }
-AppIdHttpSession::AppIdHttpSession(AppIdSession& asd, uint32_t http2_stream_id)
-  : asd(asd), http2_stream_id(http2_stream_id)
+AppIdHttpSession::AppIdHttpSession(AppIdSession& asd, int64_t http2_stream_id)
+  : asd(asd), httpx_stream_id(http2_stream_id)
 {
     for ( int i = 0; i < NUM_METADATA_FIELDS; i++)
         meta_data[i] = nullptr;

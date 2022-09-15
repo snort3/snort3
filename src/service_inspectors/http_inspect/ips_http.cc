@@ -28,7 +28,6 @@
 #include "log/messages.h"
 #include "parser/parse_utils.h"
 #include "protocols/packet.h"
-#include "service_inspectors/http2_inspect/http2_flow_data.h"
 
 #include "http_common.h"
 #include "http_enum.h"
@@ -145,10 +144,11 @@ HttpInspect const* HttpIpsOption::eval_helper(Packet* p)
     if (!section_match)
         return nullptr;
 
-    const Http2FlowData* const h2i_flow_data =
-        (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
+    assert(p->flow->stream_intf);
+    const HttpFlowData* const hi_flow_data =
+        (HttpFlowData*)p->flow->stream_intf->get_stream_flow_data(p->flow);
 
-    const HttpInspect* const hi = (h2i_flow_data != nullptr) ?
+    const HttpInspect* const hi = (hi_flow_data->is_for_httpx()) ?
         (HttpInspect*)(p->flow->assistant_gadget) : (HttpInspect*)(p->flow->gadget);
 
     return hi;

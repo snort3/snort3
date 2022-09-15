@@ -163,7 +163,7 @@ AppId AppIdSession::pick_ss_referred_payload_app_id() const
     return APPID_UT_ID;
 }
 
-AppIdHttpSession* AppIdSession::create_http_session(uint32_t)
+AppIdHttpSession* AppIdSession::create_http_session(int64_t)
 {
     AppIdHttpSession* hsession = new MockAppIdHttpSession(*this);
     AppidChangeBits change_bits;
@@ -178,11 +178,11 @@ AppIdHttpSession* AppIdSession::create_http_session(uint32_t)
     return hsession;
 }
 
-AppIdHttpSession* AppIdSession::get_matching_http_session(uint32_t stream_id) const
+AppIdHttpSession* AppIdSession::get_matching_http_session(int64_t stream_id) const
 {
-    for (uint32_t stream_index=0; stream_index < api.hsessions.size(); stream_index++)
+    for (uint64_t stream_index=0; stream_index < api.hsessions.size(); stream_index++)
     {
-        if (stream_id == api.hsessions[stream_index]->get_http2_stream_id())
+        if (stream_id == api.hsessions[stream_index]->get_httpx_stream_id())
             return api.hsessions[stream_index];
     }
     return nullptr;

@@ -41,7 +41,7 @@
 #include "http_msg_body.h"
 #include "http_msg_body_chunk.h"
 #include "http_msg_body_cl.h"
-#include "http_msg_body_h2.h"
+#include "http_msg_body_hx.h"
 #include "http_msg_body_old.h"
 #include "http_msg_header.h"
 #include "http_msg_request.h"
@@ -358,17 +358,17 @@ HttpCommon::SectionType HttpInspect::get_type_expected(snort::Flow* flow, HttpCo
     return session_data->get_type_expected(source_id);
 }
 
-void HttpInspect::finish_h2_body(snort::Flow* flow, HttpCommon::SourceId source_id, HttpCommon::H2BodyState state,
+void HttpInspect::finish_hx_body(snort::Flow* flow, HttpCommon::SourceId source_id, HttpCommon::HXBodyState state,
     bool clear_partial_buffer) const
 {
     HttpFlowData* session_data = http_get_flow_data(flow);
-    session_data->finish_h2_body(source_id, state, clear_partial_buffer);
+    session_data->finish_hx_body(source_id, state, clear_partial_buffer);
 }
 
-void HttpInspect::set_h2_body_state(snort::Flow* flow, HttpCommon::SourceId source_id, HttpCommon::H2BodyState state) const
+void HttpInspect::set_hx_body_state(snort::Flow* flow, HttpCommon::SourceId source_id, HttpCommon::HXBodyState state) const
 {
     HttpFlowData* session_data = http_get_flow_data(flow);
-    session_data->set_h2_body_state(source_id, state);
+    session_data->set_hx_body_state(source_id, state);
 }
 
 bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
@@ -510,7 +510,7 @@ int HttpInspect::get_xtra_jsnorm(Flow* flow, uint8_t** buf, uint32_t* len, uint3
 void HttpInspect::disable_detection(Packet* p)
 {
     HttpFlowData* session_data = http_get_flow_data(p->flow);
-    if (!session_data->for_http2)
+    if (!session_data->for_httpx)
     {
         assert(p->context);
         DetectionEngine::disable_all(p);
@@ -519,27 +519,15 @@ void HttpInspect::disable_detection(Packet* p)
 
 HttpFlowData* HttpInspect::http_get_flow_data(const Flow* flow)
 {
-    Http2FlowData* h2i_flow_data = nullptr;
-    if (Http2FlowData::inspector_id != 0)
-        h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
-    if (h2i_flow_data == nullptr)
-        return (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+    if (flow->stream_intf)
+        return (HttpFlowData*)flow->stream_intf->get_stream_flow_data(flow);
     else
-        return h2i_flow_data->get_hi_flow_data();
+        return nullptr;
 }
 
 void HttpInspect::http_set_flow_data(Flow* flow, HttpFlowData* flow_data)
 {
-    // for_http2 set in HttpFlowData constructor after checking for h2i_flow_data
-    if (!flow_data->for_http2)
-        flow->set_flow_data(flow_data);
-    else
-    {
-        Http2FlowData* h2i_flow_data =
-            (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
-        assert(h2i_flow_data);
-        h2i_flow_data->set_hi_flow_data(flow_data);
-    }
+    flow->stream_intf->set_stream_flow_data(flow, flow_data);
 }
 
 void HttpInspect::eval(Packet* p)
@@ -573,7 +561,7 @@ void HttpInspect::eval(Packet* p, SourceId source_id, const uint8_t* data, uint1
         return;
     }
 
-    if (!session_data->for_http2)
+    if (!session_data->for_httpx)
         HttpModule::increment_peg_counts(PEG_TOTAL_BYTES, dsize);
 
     session_data->octets_reassembled[source_id] = STAT_NOT_PRESENT;
@@ -598,7 +586,7 @@ void HttpInspect::eval(Packet* p, SourceId source_id, const uint8_t* data, uint1
     process(data, dsize, p->flow, source_id, true, p);
 
     // Detection was done in process()
-    if (!session_data->for_http2)
+    if (!session_data->for_httpx)
         disable_detection(p);
 
     // If current transaction is complete then we are done with it. This is strictly a memory
@@ -655,8 +643,8 @@ void HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
         current_section = new HttpMsgBodyChunk(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
-    case SEC_BODY_H2:
-        current_section = new HttpMsgBodyH2(
+    case SEC_BODY_HX:
+        current_section = new HttpMsgBodyHX(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     case SEC_TRAILER:

@@ -147,9 +147,9 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter, 
         {
             const AppIdHttpSession* hsession;
 
-            if ( appid_event->get_is_http2() )
+            if ( appid_event->get_is_httpx() )
                 hsession = appid_session_api.get_http_session(
-                    appid_event->get_http2_stream_index());
+                    appid_event->get_httpx_stream_index());
             else
                 hsession = appid_session_api.get_http_session();
 

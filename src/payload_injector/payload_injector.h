@@ -48,7 +48,7 @@ struct InjectionControl
 {
     const uint8_t* http_page = nullptr;
     uint32_t http_page_len = 0;
-    uint32_t stream_id = 0;
+    int64_t stream_id = 0;
 };
 
 class SO_PUBLIC PayloadInjector

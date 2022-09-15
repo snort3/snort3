@@ -103,9 +103,9 @@ int32_t HttpMsgBody::get_publish_length() const
     return mock().getData("pub_length").getIntValue();
 }
 
-uint32_t HttpFlowData::get_h2_stream_id() const
+int64_t HttpFlowData::get_hx_stream_id() const
 {
-    return  mock().getData("stream_id").getUnsignedIntValue();
+    return  mock().getData("stream_id").getLongLongIntValue();
 }
 
 

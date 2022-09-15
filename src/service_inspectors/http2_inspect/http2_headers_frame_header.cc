@@ -72,7 +72,7 @@ void Http2HeadersFrameHeader::analyze_http1(Packet* p)
 
     // if END_STREAM flag set on headers, tell http_inspect not to expect a message body
     if (get_flags() & FLAG_END_STREAM)
-        stream->get_hi_flow_data()->finish_h2_body(source_id, H2_BODY_NO_BODY, false);
+        stream->get_hi_flow_data()->finish_hx_body(source_id, HX_BODY_NO_BODY, false);
 
     process_decoded_headers(http_flow, source_id, p);
 }

@@ -51,7 +51,7 @@ struct HuffmanEntry
     HuffmanState state;
 };
 
-extern const HuffmanEntry huffman_decode[][UINT8_MAX+1];
+SO_PUBLIC extern const HuffmanEntry huffman_decode[][UINT8_MAX+1];
 
 #endif
 

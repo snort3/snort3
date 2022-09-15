@@ -130,9 +130,9 @@ void Http2Stream::finish_msg_body(HttpCommon::SourceId source_id, bool expect_tr
     bool clear_partial_buffer)
 {
     uint32_t http_flush_offset = 0;
-    const H2BodyState body_state = expect_trailers ?
-        H2_BODY_COMPLETE_EXPECT_TRAILERS : H2_BODY_COMPLETE;
-    get_hi_flow_data()->finish_h2_body(source_id, body_state, clear_partial_buffer);
+    const HXBodyState body_state = expect_trailers ?
+        HX_BODY_COMPLETE_EXPECT_TRAILERS : HX_BODY_COMPLETE;
+    get_hi_flow_data()->finish_hx_body(source_id, body_state, clear_partial_buffer);
     if (clear_partial_buffer)
     {
         const StreamSplitter::Status scan_result = session_data->hi_ss[source_id]->scan(

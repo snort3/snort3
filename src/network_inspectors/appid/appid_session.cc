@@ -1000,18 +1000,18 @@ AppIdHttpSession* AppIdSession::get_http_session(uint32_t stream_index) const
         return nullptr;
 }
 
-AppIdHttpSession* AppIdSession::create_http_session(uint32_t stream_id)
+AppIdHttpSession* AppIdSession::create_http_session(int64_t stream_id)
 {
     AppIdHttpSession* hsession = new AppIdHttpSession(*this, stream_id);
     api.hsessions.push_back(hsession);
     return hsession;
 }
 
-AppIdHttpSession* AppIdSession::get_matching_http_session(uint32_t stream_id) const
+AppIdHttpSession* AppIdSession::get_matching_http_session(int64_t stream_id) const
 {
     for (uint32_t stream_index=0; stream_index < api.hsessions.size(); stream_index++)
     {
-        if(stream_id == api.hsessions[stream_index]->get_http2_stream_id())
+        if(stream_id == api.hsessions[stream_index]->get_httpx_stream_id())
             return api.hsessions[stream_index];
     }
     return nullptr;
@@ -1116,7 +1116,7 @@ void AppIdSession::set_tp_payload_app_id(const Packet& p, AppidSessionDirection 
 }
 
 void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packet& p,
-    bool is_http2, uint32_t http2_stream_index)
+    bool is_httpx, uint32_t httpx_stream_index)
 {
     if (!api.stored_in_stash)
     {
@@ -1151,15 +1151,15 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packe
     if (change_bits.none())
         return;
 
-    AppidEvent app_event(change_bits, is_http2, http2_stream_index, api, p);
+    AppidEvent app_event(change_bits, is_httpx, httpx_stream_index, api, p);
     DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, p.flow);
     if (appidDebug->is_active())
     {
         std::string str;
         change_bits_to_string(change_bits, str);
-        if (is_http2)
-            LogMessage("AppIdDbg %s Published event for changes: %s for HTTP2 stream index %u\n",
-                appidDebug->get_debug_session(), str.c_str(), http2_stream_index);
+        if (is_httpx)
+            LogMessage("AppIdDbg %s Published event for changes: %s for HTTPX stream index %u\n",
+                appidDebug->get_debug_session(), str.c_str(), httpx_stream_index);
         else
             LogMessage("AppIdDbg %s Published event for changes: %s\n",
                 appidDebug->get_debug_session(), str.c_str());

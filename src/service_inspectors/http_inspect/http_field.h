@@ -24,13 +24,14 @@
 #include <cstdio>
 #include <cassert>
 
+#include "main/snort_types.h"
+
 #include "http_common.h"
-#include "http_enum.h"
 
 // Individual pieces of the message found during parsing.
 // Length values <= 0 are StatusCode values and imply that the start pointer is meaningless.
 // Never use the start pointer without verifying that length > 0.
-class Field
+class SO_PUBLIC Field
 {
 public:
     static const Field FIELD_NULL;

@@ -30,11 +30,14 @@ class SO_PUBLIC HttpInspectBase : public snort::Inspector
 {
 public:
     virtual ~HttpInspectBase() override = default;
-    
+
     virtual HttpCommon::SectionType get_type_expected(snort::Flow* flow, HttpCommon::SourceId source_id) const = 0;
-    virtual void finish_h2_body(snort::Flow* flow, HttpCommon::SourceId source_id, HttpCommon::H2BodyState state,
+    virtual void finish_hx_body(snort::Flow* flow, HttpCommon::SourceId source_id, HttpCommon::HXBodyState state,
         bool clear_partial_buffer) const = 0;
-    virtual void set_h2_body_state(snort::Flow* flow, HttpCommon::SourceId source_id, HttpCommon::H2BodyState state) const = 0;
+    virtual void set_hx_body_state(snort::Flow* flow, HttpCommon::SourceId source_id, HttpCommon::HXBodyState state) const = 0;
+    virtual void eval(snort::Packet* p, HttpCommon::SourceId source_id, const uint8_t* data, uint16_t dsize) = 0;
+private:
+     using snort::Inspector::eval;
 };
 
 #endif

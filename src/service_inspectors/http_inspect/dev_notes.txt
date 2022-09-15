@@ -75,7 +75,7 @@ processed together. There are eight types of message section:
 5. Chunked message body (same but from a chunked body)
 6. Old message body (same but from a body with no Content-Length header that runs to connection
    close)
-7. HTTP/2 message body (same but content taken from an HTTP/2 Data frame)
+7. HTTP/X message body (same but content taken from an HTTP/2 or HTTP/3 Data frame)
 8. Trailers (all header lines following a chunked body as a group)
 
 Message sections are represented by message section objects that contain and process them. There
@@ -92,7 +92,7 @@ are twelve message section classes that inherit as follows. An asterisk denotes 
 9. HttpMsgBodyCl : HttpMsgBody
 10. HttpMsgBodyChunk : HttpMsgBody
 11. HttpMsgBodyOld : HttpMsgBody
-12. HttpMsgBodyH2 : HttpMsgBody
+12. HttpMsgBodyHX : HttpMsgBody
 
 An HttpTransaction is a container that keeps all the sections of a message together and associates
 the request message with the response message. Transactions may be organized into pipelines when an

@@ -53,6 +53,7 @@ uint64_t HttpFlowData::instance_count = 0;
 
 HttpFlowData::HttpFlowData(Flow* flow) : FlowData(inspector_id)
 {
+    static HttpFlowStreamIntf h1_stream;
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
     {
@@ -70,16 +71,17 @@ HttpFlowData::HttpFlowData(Flow* flow) : FlowData(inspector_id)
         HttpModule::get_peg_counts(PEG_CONCURRENT_SESSIONS))
         HttpModule::increment_peg_counts(PEG_MAX_CONCURRENT_SESSIONS);
 
-    Http2FlowData* h2i_flow_data = nullptr;
-    if (Http2FlowData::inspector_id != 0)
-        h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
-    if (h2i_flow_data != nullptr)
+    if (flow->stream_intf)
+        flow->stream_intf->get_stream_id(flow, hx_stream_id);
+
+    if (valid_hx_stream_id())
     {
-        for_http2 = true;
-        h2_stream_id = h2i_flow_data->get_processing_stream_id();
+        for_httpx = true;
         events[0]->suppress_event(HttpEnums::EVENT_LOSS_OF_SYNC);
         events[1]->suppress_event(HttpEnums::EVENT_LOSS_OF_SYNC);
     }
+    else
+        flow->stream_intf = &h1_stream;
 }
 
 HttpFlowData::~HttpFlowData()
@@ -254,7 +256,7 @@ snort::JSNormalizer& HttpFlowData::acquire_js_ctx(const HttpParaList::JsNormPara
 
     if (!js_ident_ctx)
     {
-        js_ident_ctx = new JSIdentifierCtx(js_norm_param.js_identifier_depth, 
+        js_ident_ctx = new JSIdentifierCtx(js_norm_param.js_identifier_depth,
             js_norm_param.max_scope_depth, js_norm_param.ignored_ids, js_norm_param.ignored_props);
 
         debug_logf(4, http_trace, TRACE_JS_PROC, nullptr,
@@ -348,12 +350,12 @@ HttpInfractions* HttpFlowData::get_infractions(SourceId source_id)
     return transaction[source_id]->get_infractions(source_id);
 }
 
-void HttpFlowData::finish_h2_body(HttpCommon::SourceId source_id, HttpCommon::H2BodyState state,
+void HttpFlowData::finish_hx_body(HttpCommon::SourceId source_id, HttpCommon::HXBodyState state,
     bool clear_partial_buffer)
 {
-    assert((h2_body_state[source_id] == H2_BODY_NOT_COMPLETE) ||
-        (h2_body_state[source_id] == H2_BODY_LAST_SEG));
-    h2_body_state[source_id] = state;
+    assert((hx_body_state[source_id] == HX_BODY_NOT_COMPLETE) ||
+        (hx_body_state[source_id] == HX_BODY_LAST_SEG));
+    hx_body_state[source_id] = state;
     partial_flush[source_id] = false;
     if (clear_partial_buffer)
     {
@@ -372,10 +374,33 @@ void HttpFlowData::finish_h2_body(HttpCommon::SourceId source_id, HttpCommon::H2
     }
 }
 
-uint32_t HttpFlowData::get_h2_stream_id() const
+int64_t HttpFlowData::get_hx_stream_id() const
 {
-    return h2_stream_id;
+    return hx_stream_id;
 }
+
+bool HttpFlowData::valid_hx_stream_id() const
+{
+    return (hx_stream_id >= 0);
+}
+
+FlowData* HttpFlowStreamIntf::get_stream_flow_data(const Flow* flow)
+{
+    return (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+}
+
+void HttpFlowStreamIntf::set_stream_flow_data(Flow* flow, FlowData* flow_data)
+{
+    flow->set_flow_data(flow_data);
+}
+
+void HttpFlowStreamIntf::get_stream_id(const Flow*, int64_t& stream_id)
+{
+    // HTTP Flows by itself doesn't have any stream id, thus assigning -1 to
+    // indicate invalid value
+    stream_id = -1;
+}
+
 
 #ifdef REG_TEST
 void HttpFlowData::show(FILE* out_file) const

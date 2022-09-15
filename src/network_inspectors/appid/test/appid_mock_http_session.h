@@ -25,8 +25,8 @@
 
 typedef AppIdHttpSession::pair_t pair_t;
 
-AppIdHttpSession::AppIdHttpSession(AppIdSession& session, uint32_t http2_stream_id)
-    : asd(session), http2_stream_id(http2_stream_id)
+AppIdHttpSession::AppIdHttpSession(AppIdSession& session, int64_t http2_stream_id)
+    : asd(session), httpx_stream_id(http2_stream_id)
 {
     for ( int i = 0; i < NUM_METADATA_FIELDS; i++)
         meta_data[i] = nullptr;

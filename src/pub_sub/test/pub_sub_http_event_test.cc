@@ -73,18 +73,18 @@ TEST_GROUP(pub_sub_http_event_test)
 
 TEST(pub_sub_http_event_test, http_traffic)
 {
-    uint32_t stream_id = 0;
+    int64_t stream_id = 0;
     HttpEvent event(nullptr, false, stream_id);
-    CHECK_FALSE(event.get_is_http2());
-    CHECK(event.get_http2_stream_id() == stream_id);
+    CHECK_FALSE(event.get_is_httpx());
+    CHECK(event.get_httpx_stream_id() == stream_id);
 }
 
-TEST(pub_sub_http_event_test, http2_traffic)
+TEST(pub_sub_http_event_test, httpx_traffic)
 {
-    uint32_t stream_id = 3;
+    int64_t stream_id = 3;
     HttpEvent event(nullptr, true, stream_id);
-    CHECK(event.get_is_http2());
-    CHECK(event.get_http2_stream_id() == stream_id);
+    CHECK(event.get_is_httpx());
+    CHECK(event.get_httpx_stream_id() == stream_id);
 }
 
 TEST(pub_sub_http_event_test, no_true_ip_addr)

@@ -48,6 +48,9 @@ int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }
 fd_status_t File_Decomp_StopFree(fd_session_t*) { return File_Decomp_OK; }
 uint32_t str_to_hash(const uint8_t *, size_t) { return 0; }
 FlowData* Flow::get_flow_data(uint32_t) const { return nullptr; }
+int Flow::set_flow_data(FlowData*) { return 0;}
+Flow::Flow() { stream_intf = nullptr; }
+Flow::~Flow() = default;
 }
 
 unsigned Http2FlowData::inspector_id = 0;
@@ -66,13 +69,15 @@ public:
 
 TEST_GROUP(http_transaction_test)
 {
-    HttpFlowData* const flow_data = new HttpFlowData(nullptr);
+    Flow* const flow = new Flow();
+    HttpFlowData* const flow_data = new HttpFlowData(flow);
     SectionType* const section_type = HttpUnitTestSetup::get_section_type(flow_data);
     SectionType* const type_expected = HttpUnitTestSetup::get_type_expected(flow_data);
 
     void teardown() override
     {
         delete flow_data;
+        delete flow;
     }
 };
 

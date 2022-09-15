@@ -53,6 +53,7 @@ Http2FlowData::Http2FlowData(Flow* flow_) :
                         infractions[SRC_SERVER]) },
     data_cutter { Http2DataCutter(this, SRC_CLIENT), Http2DataCutter(this, SRC_SERVER) }
 {
+    static Http2FlowStreamIntf h2_stream;
     if (hi != nullptr)
     {
         hi_ss[SRC_CLIENT] = hi->get_splitter(true);
@@ -72,6 +73,8 @@ Http2FlowData::Http2FlowData(Flow* flow_) :
     if (Http2Module::get_peg_counts(PEG_MAX_CONCURRENT_SESSIONS) <
         Http2Module::get_peg_counts(PEG_CONCURRENT_SESSIONS))
         Http2Module::increment_peg_counts(PEG_MAX_CONCURRENT_SESSIONS);
+
+    flow->stream_intf = &h2_stream;
 }
 
 Http2FlowData::~Http2FlowData()
@@ -251,3 +254,39 @@ bool Http2FlowData::is_mid_frame() const
         continuation_expected[SRC_SERVER];
 }
 
+FlowData* Http2FlowStreamIntf::get_stream_flow_data(const Flow* flow)
+{
+    Http2FlowData* h2i_flow_data = nullptr;
+
+    h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    assert(h2i_flow_data);
+
+    return h2i_flow_data->get_hi_flow_data();
+}
+
+void Http2FlowStreamIntf::set_stream_flow_data(Flow* flow, FlowData* flow_data)
+{
+    Http2FlowData* h2i_flow_data =
+        (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    assert(h2i_flow_data);
+    h2i_flow_data->set_hi_flow_data((HttpFlowData*)flow_data);
+}
+
+void Http2FlowStreamIntf::get_stream_id(const Flow* flow, int64_t& stream_id)
+{
+    Http2FlowData* h2i_flow_data = nullptr;
+
+    h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    assert(h2i_flow_data);
+    stream_id = h2i_flow_data->get_processing_stream_id();
+}
+
+AppId Http2FlowStreamIntf::get_appid_from_stream(const Flow* flow)
+{
+    Http2FlowData* h2i_flow_data = nullptr;
+
+    h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    assert(h2i_flow_data);
+
+    return APP_ID_HTTP2;
+}

@@ -76,20 +76,20 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     AppidChangeBits change_bits;
 
     if ((asd->get_tp_appid_ctxt() or ThirdPartyAppIdContext::get_tp_reload_in_progress()) and
-        !http_event->get_is_http2())
+        !http_event->get_is_httpx())
         return;
 
     if (appidDebug->is_enabled() and !is_debug_active)
         appidDebug->activate(flow, asd, inspector.get_ctxt().config.log_all_sessions);
 
     if (appidDebug->is_active())
-        LogMessage("AppIdDbg %s Processing HTTP metadata from HTTP Inspector for stream %u\n",
-            appidDebug->get_debug_session(), http_event->get_http2_stream_id());
+        LogMessage("AppIdDbg %s Processing HTTP metadata from HTTP Inspector for stream %" PRId64 "\n",
+            appidDebug->get_debug_session(), http_event->get_httpx_stream_id());
 
     asd->set_session_flags(APPID_SESSION_HTTP_SESSION);
 
     AppIdHttpSession* hsession;
-    if (http_event->get_is_http2())
+    if (http_event->get_is_httpx())
     {
         if (direction == APP_ID_FROM_INITIATOR)
         {
@@ -98,13 +98,13 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
                 asd->delete_all_http_sessions();
                 asd->set_prev_http2_raw_packet(asd->session_packet_count);
             }
-            hsession = asd->create_http_session(http_event->get_http2_stream_id());
+            hsession = asd->create_http_session(http_event->get_httpx_stream_id());
         }
         else
         {
-            hsession = asd->get_matching_http_session(http_event->get_http2_stream_id());
+            hsession = asd->get_matching_http_session(http_event->get_httpx_stream_id());
             if (!hsession)
-                hsession = asd->create_http_session(http_event->get_http2_stream_id());
+                hsession = asd->create_http_session(http_event->get_httpx_stream_id());
         }
     }
     else
@@ -179,9 +179,11 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     if (header_length > 0)
         hsession->set_field(MISC_VIA_FID, header_start, header_length, change_bits);
 
-    if (http_event->get_is_http2())
+    if (http_event->get_is_httpx())
     {
-        asd->set_service_id(APP_ID_HTTP2, asd->get_odp_ctxt());
+        AppId http_app_id = flow->stream_intf->get_appid_from_stream(flow);
+        assert((http_app_id == APP_ID_HTTP2) || (http_app_id == APP_ID_HTTP3));
+        asd->set_service_id(http_app_id, asd->get_odp_ctxt());
     }
 
     hsession->process_http_packet(direction, change_bits,
@@ -194,7 +196,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     else
         asd->set_application_ids_service(APP_ID_HTTP2, change_bits);
 
-    asd->publish_appid_event(change_bits, *p, http_event->get_is_http2(),
+    asd->publish_appid_event(change_bits, *p, http_event->get_is_httpx(),
         asd->get_api().get_hsessions_size() - 1);
 }
 

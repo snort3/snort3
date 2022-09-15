@@ -166,12 +166,12 @@ bool HttpEvent::contains_webdav_method()
     return HttpMsgRequest::is_webdav(method);
 }
 
-bool HttpEvent::get_is_http2() const
+bool HttpEvent::get_is_httpx() const
 {
-    return is_http2;
+    return is_httpx;
 }
 
-uint32_t HttpEvent::get_http2_stream_id() const
+int64_t HttpEvent::get_httpx_stream_id() const
 {
-    return http2_stream_id;
+    return httpx_stream_id;
 }

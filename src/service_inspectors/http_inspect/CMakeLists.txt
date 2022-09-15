@@ -4,6 +4,7 @@ set(HTTP_INCLUDES
     http_common.h
     http_inspect_base.h
     http_stream_splitter_base.h
+    http_test_manager.h
 )
 set (FILE_LIST
     ${HTTP_INCLUDES}
@@ -32,8 +33,8 @@ set (FILE_LIST
     http_msg_body_chunk.h
     http_msg_body_cl.cc
     http_msg_body_cl.h
-    http_msg_body_h2.cc
-    http_msg_body_h2.h
+    http_msg_body_hx.cc
+    http_msg_body_hx.h
     http_msg_body_old.cc
     http_msg_body_old.h
     http_msg_trailer.cc
@@ -67,6 +68,7 @@ set (FILE_LIST
     http_transaction.h
     http_test_manager.cc
     http_test_manager.h
+    http_enum.h
     http_field.cc
     http_stream_splitter_finish.cc
     http_stream_splitter_reassemble.cc
