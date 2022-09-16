@@ -580,13 +580,13 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
     uint32_t prev_service_state = asd.service_disco_state;
     AppId tp_app_id = asd.get_tp_app_id();
 
-    if (asd.service_disco_state == APPID_DISCO_STATE_NONE && p->dsize)
+    if (asd.service_disco_state == APPID_DISCO_STATE_NONE and p->dsize)
     {
         if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
         {
             // Unless it could be ftp control
-            if ( asd.protocol == IpProtocol::TCP && ( p->ptrs.sp == 21 || p->ptrs.dp == 21 )
-                && !( p->ptrs.tcph->is_fin() || p->ptrs.tcph->is_rst() ) )
+            if ( asd.protocol == IpProtocol::TCP and ( p->ptrs.sp == 21 or p->ptrs.dp == 21 )
+                and !( p->ptrs.tcph->is_fin() or p->ptrs.tcph->is_rst() ) )
             {
                 asd.set_session_flags(APPID_SESSION_CLIENT_DETECTED |
                     APPID_SESSION_NOT_A_SERVICE | APPID_SESSION_SERVICE_DETECTED);
@@ -606,27 +606,10 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
                     asd.set_payload_id(APP_ID_UNKNOWN);
             }
         }
-        else if (tp_app_id > APP_ID_NONE and asd.is_tp_appid_available())
-        {
-            // Third party has positively identified appId; Dig deeper only if our
-            // detector identifies additional information or flow is UDP reversed.
-            AppInfoTableEntry* entry = asd.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_app_id);
-            if ( entry && entry->service_detector &&
-                ( ( entry->flags & APPINFO_FLAG_SERVICE_ADDITIONAL ) ||
-                ( ( entry->flags & APPINFO_FLAG_SERVICE_UDP_REVERSED ) &&
-                asd.protocol == IpProtocol::UDP &&
-                asd.get_session_flags(APPID_SESSION_INITIATOR_MONITORED |
-                APPID_SESSION_RESPONDER_MONITORED) ) ) )
-            {
-                asd.free_flow_data_by_mask(APPID_SESSION_DATA_SERVICE_MODSTATE_BIT);
-                asd.service_detector = entry->service_detector;
-                asd.service_disco_state = APPID_DISCO_STATE_STATEFUL;
-            }
-            else
-                asd.stop_service_inspection(p, direction);
-        }
         else
+        {
             asd.service_disco_state = APPID_DISCO_STATE_STATEFUL;
+        }
     }
 
     //stop inspection as soon as tp has classified a valid AppId later in the session
@@ -646,9 +629,12 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
         }
     }
 
-    // Check to see if we want to stop any detectors for SIP/RTP.
     if (asd.service_disco_state != APPID_DISCO_STATE_FINISHED)
     {
+        bool service_found = identify_service(asd, p, direction, change_bits) == APPID_SUCCESS;
+        is_discovery_done = true;
+
+        // Check to see if we want to stop any detectors for SIP/RTP.
         if (tp_app_id == APP_ID_SIP)
         {
             // TP needs to see its own future flows and does a better
@@ -659,7 +645,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
             asd.stop_service_inspection(p, direction);
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
         }
-        else if ((tp_app_id == APP_ID_RTP) || (tp_app_id == APP_ID_RTP_AUDIO) ||
+        else if ((tp_app_id == APP_ID_RTP) or (tp_app_id == APP_ID_RTP_AUDIO) or
             (tp_app_id == APP_ID_RTP_VIDEO))
         {
             // No need for anybody to keep wasting time once we've
@@ -673,12 +659,32 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
             //  - Just ignore everything from now on.
             asd.set_session_flags(APPID_SESSION_FUTURE_FLOW);
         }
+
+        if (!service_found and tp_app_id > APP_ID_NONE and asd.is_tp_appid_available() and
+            asd.service_disco_state != APPID_DISCO_STATE_FINISHED)
+        {
+            // Third party has positively identified appId; Dig deeper only if our
+            // detector identifies additional information or flow is UDP reversed.
+            AppInfoTableEntry* entry = asd.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_app_id);
+            if ( entry and entry->service_detector and
+                ( ( entry->flags & APPINFO_FLAG_SERVICE_ADDITIONAL ) or
+                ( ( entry->flags & APPINFO_FLAG_SERVICE_UDP_REVERSED ) and
+                asd.protocol == IpProtocol::UDP and
+                asd.get_session_flags(APPID_SESSION_INITIATOR_MONITORED |
+                APPID_SESSION_RESPONDER_MONITORED) ) ) )
+            {
+                asd.free_flow_data_by_mask(APPID_SESSION_DATA_SERVICE_MODSTATE_BIT);
+                asd.service_detector = entry->service_detector;
+            }
+            else if (prev_service_state == APPID_DISCO_STATE_NONE)
+            {
+                asd.stop_service_inspection(p, direction);
+            }
+        }
     }
 
     if (asd.service_disco_state == APPID_DISCO_STATE_STATEFUL)
     {
-        identify_service(asd, p, direction, change_bits);
-        is_discovery_done = true;
         //to stop executing validator after service has been detected
         if (asd.get_session_flags(APPID_SESSION_SERVICE_DETECTED |
             APPID_SESSION_CONTINUE) == APPID_SESSION_SERVICE_DETECTED)
@@ -694,8 +700,8 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
 
         /* If the session appears to only have the client sending data then
            we must mark the service unknown to prevent pending forever. */
-        if (asd.service_disco_state == APPID_DISCO_STATE_STATEFUL &&
-            asd.get_service_id() == APP_ID_NONE && asd.is_svc_taking_too_much_time())
+        if (asd.service_disco_state == APPID_DISCO_STATE_STATEFUL and
+            asd.get_service_id() == APP_ID_NONE and asd.is_svc_taking_too_much_time())
         {
                 asd.stop_service_inspection(p, direction);
                 asd.set_service_id(APP_ID_UNKNOWN, asd.get_odp_ctxt());
@@ -715,10 +721,10 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
         }
         else if (asd.get_service_id() == APP_ID_RTMP)
             asd.examine_rtmp_metadata(change_bits);
-        else if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) && asd.tsession)
+        else if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) and asd.tsession)
             asd.examine_ssl_metadata(change_bits);
 
-        if (tp_app_id <= APP_ID_NONE && asd.get_session_flags(
+        if (tp_app_id <= APP_ID_NONE and asd.get_session_flags(
             APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
             APPID_SESSION_IGNORE_HOST) == APPID_SESSION_SERVICE_DETECTED)
         {
