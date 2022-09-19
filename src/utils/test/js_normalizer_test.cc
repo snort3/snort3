@@ -1634,19 +1634,19 @@ TEST_CASE("nested script tags", "[JSNormalizer]")
     {
         test_normalization_noident(
             unexpected_tag_buf2, unexpected_tag_expected2,
-            {check_open_tag(true)});
+            {check_open_tag(false)});
     }
     SECTION("open tag within literal - mid")
     {
         test_normalization_noident(
             unexpected_tag_buf3, unexpected_tag_expected3,
-            {check_open_tag(true)});
+            {check_open_tag(false)});
     }
     SECTION("open tag within literal - end")
     {
         test_normalization_noident(
             unexpected_tag_buf4, unexpected_tag_expected4,
-            {check_open_tag(true)});
+            {check_open_tag(false)});
     }
     SECTION("close tag within literal - start")
         test_normalization_noident(
@@ -1677,7 +1677,7 @@ TEST_CASE("nested script tags", "[JSNormalizer]")
     {
         test_normalization_noident(
             unexpected_tag_buf8, unexpected_tag_expected8,
-            {check_open_tag(true)});
+            {check_open_tag(false)});
     }
     SECTION("close tag within literal - escaped")
     {
@@ -1781,13 +1781,13 @@ TEST_CASE("nested script tags", "[JSNormalizer]")
     {
         test_normalization_noident(
             unexpected_tag_buf23, unexpected_tag_expected23,
-            {check_open_tag(true)});
+            {check_open_tag(false)});
     }
     SECTION("mixed lower and upper case")
     {
         test_normalization_noident(
             unexpected_tag_buf24, unexpected_tag_expected24,
-            {check_open_tag(true)});
+            {check_open_tag(false)});
     }
     SECTION("opening tag within template literal")
     {

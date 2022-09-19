@@ -1105,7 +1105,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 
     {LITERAL_DQ_STRING_START}                 { EXEC(literal_dq_string_start()) }
 <dqstr,unesc_dqstr>{LITERAL_DQ_STRING_END}    { dealias_append(); ECHO; BEGIN(divop); }
-<dqstr,unesc_dqstr>{HTML_TAG_SCRIPT_OPEN}     { if (!ext_script) { opening_tag_seen = true; } ECHO; }
+<dqstr,unesc_dqstr>{HTML_TAG_SCRIPT_OPEN}     { ECHO; }
 <dqstr,unesc_dqstr>{HTML_TAG_SCRIPT_CLOSE}    { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } else { ECHO; } }
 <dqstr,unesc_dqstr>\\{CR}{LF}                 { /* skip */ }
 <dqstr,unesc_dqstr>\\{LF}                     { /* skip */ }
@@ -1127,7 +1127,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 
     {LITERAL_SQ_STRING_START}                 { EXEC(literal_sq_string_start()) }
 <sqstr,unesc_sqstr>{LITERAL_SQ_STRING_END}    { dealias_append(); ECHO; BEGIN(divop); }
-<sqstr,unesc_sqstr>{HTML_TAG_SCRIPT_OPEN}     { if (!ext_script) { opening_tag_seen = true; } ECHO; }
+<sqstr,unesc_sqstr>{HTML_TAG_SCRIPT_OPEN}     { ECHO; }
 <sqstr,unesc_sqstr>{HTML_TAG_SCRIPT_CLOSE}    { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } else { ECHO; } }
 <sqstr,unesc_sqstr>\\{CR}{LF}                 { /* skip */ }
 <sqstr,unesc_sqstr>\\{LF}                     { /* skip */ }
