@@ -57,10 +57,10 @@ const PegInfo mem_pegs[] =
     { CountType::NOW, "allocations", "total number of allocations" },
     { CountType::NOW, "deallocations", "total number of deallocations" },
     { CountType::NOW, "allocated", "total amount of memory allocated" },
-    { CountType::NOW, "deallocated", "total amount of memory allocated" },
+    { CountType::NOW, "deallocated", "total amount of memory deallocated" },
     { CountType::NOW, "reap_attempts", "attempts to reclaim memory" },
     { CountType::NOW, "reap_failures", "failures to reclaim memory" },
-    { CountType::MAX, "max_in_use", "highest allocated - deallocated" },
+    { CountType::MAX, "max_in_use", "maximum memory used" },
     { CountType::END, nullptr, nullptr }
 };
 
