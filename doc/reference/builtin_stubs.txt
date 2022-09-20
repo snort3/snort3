@@ -1750,6 +1750,10 @@ AUTH command exceeds the configured max_auth_command_line_len.
 
 File decompression failed.
 
+124:17
+
+SMTP STARTTLS command injection attempt.
+
 125:1
 
 TELNET command is detected on FTP control channel.
