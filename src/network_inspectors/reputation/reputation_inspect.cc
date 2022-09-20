@@ -523,8 +523,9 @@ private:
 void AuxiliaryIpRepHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(reputation_perf_stats);
-    snort_reputation_aux_ip(inspector.get_config(), inspector.get_data(),
-        DetectionEngine::get_current_packet(),
+    ReputationData* data = static_cast<ReputationData*>(inspector.get_thread_specific_data());
+    assert(data);
+    snort_reputation_aux_ip(inspector.get_config(), *data, DetectionEngine::get_current_packet(),
         static_cast<AuxiliaryIpEvent*>(&event)->get_ip());
 }
 
