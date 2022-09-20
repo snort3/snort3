@@ -55,7 +55,7 @@ static const Parameter wizard_hexes_params[] =
       "protocol to scan" },
 
     { "client_first", Parameter::PT_BOOL, nullptr, "true",
-      "which end initiates data transfer" },
+      "which end initiates data transfer (deprecated)" },
 
     { "to_server", Parameter::PT_LIST, wizard_hex_param, nullptr,
       "sequence of data with wild chars (?)" },
@@ -83,7 +83,7 @@ static const Parameter wizard_spells_params[] =
       "protocol to scan" },
 
     { "client_first", Parameter::PT_BOOL, nullptr, "true",
-      "which end initiates data transfer" },
+      "which end initiates data transfer (deprecated)" },
 
     { "to_server", Parameter::PT_LIST, wizard_spell_param, nullptr,
       "list of initial tokens with wild cards (*)" },

@@ -55,7 +55,7 @@ contain following options:
 
   * 'service' - name of the service that would be assigned
   * 'proto' - protocol to scan
-  * 'client_first' - indicator of which end initiates data transfer
+  * 'client_first' - indicator of which end initiates data transfer (deprecated)
   * 'to_server' - list of text patterns to search in the data sent to the client
   * 'to_client' - list of text patterns to search in the data sent to the server
 
