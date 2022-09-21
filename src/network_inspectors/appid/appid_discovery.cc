@@ -545,12 +545,130 @@ static inline bool is_check_host_cache_valid(AppIdSession& asd, AppId service_id
     return false;
 }
 
+bool AppIdDiscovery::detect_on_first_pkt(Packet* p, AppIdSession& asd,
+    IpProtocol protocol, AppidSessionDirection direction, AppId& service_id,
+    AppId& client_id, AppId& payload_id)
+{ 
+    uint16_t port;
+    const SfIp* ip;
+
+    if (direction == APP_ID_FROM_INITIATOR)
+    {
+        ip = p->ptrs.ip_api.get_dst();
+        port = p->ptrs.dp;
+    }
+    else
+    {
+        ip = p->ptrs.ip_api.get_src();
+        port = p->ptrs.sp;
+    }
+
+    HostAppIdsVal* hv = nullptr;
+    hv = asd.get_odp_ctxt().host_first_pkt_find(ip, port, protocol);
+    if (hv)
+    {
+        uint32_t appids_found = 0;
+        const char *service_app_name = nullptr, *client_app_name = nullptr, *payload_app_name = nullptr;
+        FirstPktAppIdDiscovered appid_prefix = NO_APPID_FOUND;
+
+        if (hv->client_appId)
+        {
+            client_id = hv->client_appId;
+            asd.set_client_id(client_id);
+            client_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(client_id);
+            appids_found++;
+            appid_prefix = CLIENT_APPID_FOUND;
+        } 
+        if (hv->protocol_appId) 
+        {
+            service_id = hv->protocol_appId;
+            asd.set_service_id(service_id, asd.get_odp_ctxt());
+            asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
+            service_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
+            appids_found++;
+            appid_prefix = SERVICE_APPID_FOUND;
+        }
+        if (hv->web_appId) 
+        {
+            payload_id = hv->web_appId;
+            asd.set_payload_id(payload_id);
+            payload_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(payload_id);
+            appids_found++;
+            if (appid_prefix == CLIENT_APPID_FOUND)
+            {
+                appid_prefix = CLIENT_PAYLOAD_APPID_FOUND;
+            } 
+            else 
+            {
+                appid_prefix = PAYLOAD_APPID_FOUND;
+            }
+        }
+        asd.get_odp_ctxt().need_reinspection = hv->reinspect;  
+
+        switch (appids_found) 
+        {
+        case FIRST_PKT_CACHE_ONE_APPID_FOUND :
+            if (appid_prefix == PAYLOAD_APPID_FOUND) 
+            {
+                service_id = payload_id;
+                asd.set_service_id(service_id, asd.get_odp_ctxt());
+                asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
+                service_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
+            } 
+            else if (appid_prefix == CLIENT_APPID_FOUND) 
+            {    
+                service_id = client_id;
+                asd.set_service_id(service_id, asd.get_odp_ctxt());
+                asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
+                service_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
+            } 
+            break;
+        case FIRST_PKT_CACHE_TWO_APPIDS_FOUND :
+            if (appid_prefix == CLIENT_PAYLOAD_APPID_FOUND) 
+            {
+                service_id = client_id;
+                asd.set_service_id(service_id, asd.get_odp_ctxt());
+                asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
+                service_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
+            } 
+            break;
+        }
+        asd.set_session_flags(APPID_SESSION_FIRST_PKT_CACHE_MATCHED);
+        if (appidDebug->is_active())
+        {
+            LogMessage("AppIdDbg %s Host cache match found on first packet, service: %s(%d), "
+                "client: %s(%d), payload: %s(%d), reinspect: %s \n", appidDebug->get_debug_session(),
+                (service_app_name ? service_app_name : ""), service_id,
+                (client_app_name ? client_app_name : ""), client_id,
+                (payload_app_name ? payload_app_name : ""), payload_id, (hv->reinspect ? "True" : "False"));
+        }
+        return true;
+    }
+    return false;
+}
+
 bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol protocol,
     IpProtocol outer_protocol, AppidSessionDirection direction, AppId& service_id,
     AppId& client_id, AppId& payload_id, AppId& misc_id, AppidChangeBits& change_bits,
     ThirdPartyAppIdContext* tp_appid_ctxt)
 {
     bool is_discovery_done = false;
+
+    if (asd.session_packet_count == 1) 
+    {
+        detect_on_first_pkt(p, asd, protocol, direction, service_id, client_id, payload_id);
+    } 
+
+    if (asd.get_session_flags(APPID_SESSION_FIRST_PKT_CACHE_MATCHED) and !asd.get_odp_ctxt().need_reinspection) 
+    {
+       is_discovery_done = true;
+       service_id = asd.pick_service_app_id();
+       client_id = asd.pick_ss_client_app_id();
+       payload_id = asd.pick_ss_payload_app_id(service_id);
+       asd.client_disco_state = APPID_DISCO_STATE_FINISHED; 
+       asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
+       return is_discovery_done;
+    }  
 
     asd.check_app_detection_restart(change_bits, tp_appid_ctxt);
 

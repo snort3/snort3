@@ -65,21 +65,35 @@ struct HostPortVal
     unsigned type;
 };
 
+struct HostAppIdsVal
+{
+    AppId protocol_appId;
+    AppId client_appId;
+    AppId web_appId;
+    unsigned reinspect;
+};
+
 class HostPortCache
 {
 public:
     HostPortVal* find(const snort::SfIp*, uint16_t port, IpProtocol, const OdpContext&);
     bool add(const snort::SnortConfig*, const snort::SfIp*, uint16_t port, IpProtocol,
         unsigned type, AppId);
+    
+    HostAppIdsVal* find_on_first_pkt(const snort::SfIp*, uint16_t port, IpProtocol, const OdpContext&);
+    bool add_host(const snort::SnortConfig*, const snort::SfIp*, uint16_t port, IpProtocol,
+        AppId, AppId, AppId, unsigned reinspect);
     void dump();
 
     ~HostPortCache()
     {
         cache.clear();
+        cache_first.clear();
     }
 
 private:
     std::map<HostPortKey, HostPortVal> cache;
+    std::map<HostPortKey, HostAppIdsVal> cache_first;
 };
 
 #endif

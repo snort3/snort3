@@ -1211,6 +1211,48 @@ static int detector_add_ssl_cname_pattern(lua_State* L)
     return 0;
 }
 
+static int detector_add_host_first_pkt_application(lua_State* L)
+{
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are NOT in packet context
+    ud->validate_lua_state(false);
+    if (!init(L))
+        return 0;
+
+    SfIp ip_address;
+    int index = 1;
+
+    /* Extract the three appIds and the reinspect flag */
+    uint32_t protocol_appid = lua_tointeger(L, ++index);
+    uint32_t client_appid = lua_tointeger(L, ++index);
+    uint32_t web_appid = lua_tointeger(L, ++index);
+    unsigned reinspect = lua_tointeger(L, ++index);
+
+    /* Extract IP, Port, protocol */
+    size_t ipaddr_size = 0;
+    const char* ip_str = lua_tolstring(L, ++index, &ipaddr_size);
+    if (!ip_str or !ipaddr_size or !convert_string_to_address(ip_str, &ip_address))
+    {
+        ErrorMessage("%s: Invalid IP address: %s\n",__func__, ip_str);
+        return 0;
+    }
+
+    unsigned port = lua_tointeger(L, ++index);
+    IpProtocol proto;
+    if (toipprotocol(L, ++index, proto))
+        return 0;
+
+    lua_getglobal(L, LUA_STATE_GLOBAL_SC_ID);
+    const SnortConfig* sc = *static_cast<const SnortConfig**>(lua_touserdata(L, -1));
+    lua_pop(L, 1);
+
+    if (!ud->get_odp_ctxt().host_first_pkt_add(
+        sc, &ip_address, (uint16_t)port, proto, protocol_appid, client_appid, web_appid, reinspect))
+        ErrorMessage("%s:Failed to backend call first pkt add\n",__func__);
+
+    return 0;
+}
+
 static int detector_add_host_port_application(lua_State* L)
 {
     auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
@@ -2734,6 +2776,7 @@ static const luaL_Reg detector_methods[] =
     { "addSipServer",             detector_add_sip_server },
     { "addSSLCnamePattern",       detector_add_ssl_cname_pattern },
     { "addSSHPattern",            detector_add_ssh_client_pattern},
+    { "addHostFirstPktApp",       detector_add_host_first_pkt_application },
     { "addHostPortApp",           detector_add_host_port_application },
     { "addHostPortAppDynamic",    detector_add_host_port_dynamic },
     { "addDNSHostPattern",        detector_add_dns_host_pattern },

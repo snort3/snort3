@@ -114,6 +114,7 @@ public:
     bool check_host_cache_unknown_ssl = false;
     bool ftp_userid_disabled = false;
     bool chp_body_collection_disabled = false;
+    bool need_reinspection = false;
     uint32_t chp_body_collection_max = 0;
     uint32_t rtmp_max_packets = 15;
     uint32_t max_tp_flow_depth = 5;
@@ -159,6 +160,17 @@ public:
         IpProtocol proto, unsigned type, AppId appid)
     {
         return host_port_cache.add(sc, ip, port, proto, type, appid);
+    }
+
+    bool host_first_pkt_add(const snort::SnortConfig* sc, const snort::SfIp* ip, uint16_t port,
+        IpProtocol proto, AppId protocol_appid, AppId client_appid, AppId web_appid, unsigned reinspect)
+    {
+        return first_pkt_cache.add_host(sc, ip, port, proto, protocol_appid, client_appid, web_appid, reinspect);
+    }
+
+    HostAppIdsVal* host_first_pkt_find(const snort::SfIp* ip, uint16_t port, IpProtocol proto)
+    {
+        return first_pkt_cache.find_on_first_pkt(ip, port, proto, *this);
     }
 
     AppId length_cache_find(const LengthKey& key)
@@ -225,6 +237,7 @@ private:
     AppInfoManager app_info_mgr;
     ClientDiscovery client_disco_mgr;
     HostPortCache host_port_cache;
+    HostPortCache first_pkt_cache;
     LengthCache length_cache;
     DnsPatternMatchers dns_matchers;
     HttpPatternMatchers http_matchers;

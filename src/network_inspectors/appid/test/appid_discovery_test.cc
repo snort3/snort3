@@ -280,6 +280,12 @@ HostPortVal* HostPortCache::find(const SfIp*, uint16_t, IpProtocol, const OdpCon
 {
     return nullptr;
 }
+
+HostAppIdsVal* HostPortCache::find_on_first_pkt(const SfIp*, uint16_t, IpProtocol, const OdpContext&)
+{
+    return nullptr;
+}
+
 void AppIdServiceState::check_reset(AppIdSession&, const SfIp*, uint16_t,
     int16_t, uint32_t) {}
 bool do_tp_discovery(ThirdPartyAppIdContext& , AppIdSession&, IpProtocol,

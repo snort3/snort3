@@ -73,6 +73,48 @@ bool HostPortCache::add(const SnortConfig* sc, const SfIp* ip, uint16_t port, Ip
     return true;
 }
 
+
+HostAppIdsVal* HostPortCache::find_on_first_pkt(const SfIp* ip, uint16_t port, IpProtocol protocol,
+    const OdpContext& odp_ctxt)
+{
+    HostPortKey hk;
+
+    hk.ip = *ip;
+    hk.port = (odp_ctxt.allow_port_wildcard_host_cache)? 0 : port;
+    hk.proto = protocol;
+
+    std::map<HostPortKey, HostAppIdsVal>::iterator it;
+    it = cache_first.find(hk);
+    if (it != cache_first.end())
+        return &it->second;
+    else
+        return nullptr;
+}
+
+bool HostPortCache::add_host(const SnortConfig* sc, const SfIp* ip, uint16_t port, IpProtocol proto,
+    AppId protocol_appId, AppId client_appId, AppId web_appId, unsigned reinspect)
+{
+    HostPortKey hk;
+    HostAppIdsVal hv;
+
+    hk.ip = *ip;
+    AppIdInspector* inspector =
+        (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, false, sc);
+    assert(inspector);
+    const AppIdContext& ctxt = inspector->get_ctxt();
+    hk.port = (ctxt.get_odp_ctxt().allow_port_wildcard_host_cache)? 0 : port;
+    hk.proto = proto;
+
+    hv.protocol_appId = protocol_appId;
+    hv.client_appId = client_appId;
+    hv.web_appId = web_appId;
+    hv.reinspect = reinspect;
+
+    cache_first[ hk ] = hv;
+
+    return true;
+}
+
 void HostPortCache::dump()
 {
     for ( auto& kv : cache )
