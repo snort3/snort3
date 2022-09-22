@@ -1150,8 +1150,8 @@ static const Parameter ips_params[] =
     { "mode", Parameter::PT_ENUM, "tap | inline | inline-test", nullptr,
       "set policy mode" },
 
-    { "obfuscate_pii", Parameter::PT_BOOL, nullptr, "false",
-      "mask all but the last 4 characters of credit card and social security numbers" },
+    { "obfuscate_pii", Parameter::PT_BOOL, nullptr, "true",
+      "mask all but the last 4 characters of credit card, SSN, phone number, and email" },
 
     { "rules", Parameter::PT_STRING, nullptr, nullptr,
       "snort rules and includes (may contain states too)" },

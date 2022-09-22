@@ -87,7 +87,7 @@ in a packet, you will not see an event.
 Snort provides discreet logging for the built-in patterns "credit_card",
 "us_social", "us_social_nodashes", "us_phone" and "email". Enabling
 `ips.obfuscate_pii` makes Snort obfuscate the suspect packet payload which
-was matched by the patterns. This configuration is disabled by default.
+was matched by the patterns. This configuration is enabled by default.
 
     ips =
     { 

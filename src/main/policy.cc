@@ -193,7 +193,7 @@ IpsPolicy::IpsPolicy(PolicyId id) : action(Actions::get_max_types(), nullptr)
     nonamePortVarTable = PortTableNew();
 
     enable_builtin_rules = false;
-    obfuscate_pii = false;
+    obfuscate_pii = true;
 }
 
 IpsPolicy::~IpsPolicy()
