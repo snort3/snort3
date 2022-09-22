@@ -24,6 +24,7 @@
 #include "parse_utils.h"
 
 #include <cassert>
+#include <climits>
 #include <cstring>
 
 #include "log/messages.h"
@@ -125,7 +126,9 @@ bool parse_byte_code(const char* in, bool& negate, std::string& out)
 
 int parse_int(const char* data, const char* tag, int low, int high)
 {
-    int32_t value = 0;
+    assert(low <= high);
+
+    long value = 0;
     char* endptr = nullptr;
 
     value = SnortStrtol(data, &endptr, 10);
@@ -133,22 +136,24 @@ int parse_int(const char* data, const char* tag, int low, int high)
     if (*endptr)
     {
         ParseError("invalid '%s' format.", tag);
-        return value;
+        return (int)value;
     }
 
-    if (errno == ERANGE)
+    if (errno == ERANGE || value > INT_MAX || value < INT_MIN)
     {
         ParseError("range problem on '%s' value.", tag);
-        return value;
+        errno = ERANGE;
     }
-
-    if ((value > high) || (value < low))
+    else if ((value > high) || (value < low))
     {
         ParseError("'%s' must be in %d:%d, inclusive", tag, low, high);
-        return value;
     }
 
-    return value;
+    if (value > high)
+        return high;
+    else if (value < low)
+        return low;
+    return (int)value;
 }
 
 //--------------------------------------------------------------------------
@@ -183,7 +188,7 @@ TEST_CASE("parse_int", "[ParseUtils]")
 
         int res = parse_int(data, "test");
 
-        CHECK(res == -1);
+        CHECK(res == 65535);
         CHECK(errno == ERANGE);
     }
 
@@ -193,7 +198,7 @@ TEST_CASE("parse_int", "[ParseUtils]")
 
         int res = parse_int(data, "test");
 
-        CHECK(res == 0);
+        CHECK(res == -65535);
         CHECK(errno == ERANGE);
     }
 
@@ -201,14 +206,14 @@ TEST_CASE("parse_int", "[ParseUtils]")
     {
         int res = parse_int("1", "test", 2, 3);
 
-        CHECK(res == 1);
+        CHECK(res == 2);
     }
 
     SECTION("above the limit")
     {
         int res = parse_int("4", "test", 2, 3);
 
-        CHECK(res == 4);
+        CHECK(res == 3);
     }
 }
 

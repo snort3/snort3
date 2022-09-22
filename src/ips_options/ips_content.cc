@@ -306,8 +306,18 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
     int64_t pos;
 
     if ( !c.get_delta() )
+    {
         // first - adjust from cursor or buffer start
         pos = (cd->pmd.is_relative() ? c.get_pos() : 0) + offset;
+
+        if ( pos < 0 )
+        {
+            if ( depth )
+                depth += pos;
+
+            pos = 0;
+        }
+    }
     else
     {
         // retry - adjust from start of last match
