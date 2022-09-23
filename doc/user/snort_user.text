@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.41.0 2022-09-08 16:40:05 EDT TST
+Revision 3.1.42.0 2022-09-22 15:40:33 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -4642,7 +4642,12 @@ requires decompress_zip and decompress_vba options enabled.
 These are range-based rule options used to check the number of
 headers and trailers, respectively.
 
-5.10.6.17. http_num_cookies
+5.10.6.17. http_max_header_line and http_max_trailer_line
+
+These are range-based rule options used to check the longest line in
+request and response headers and trailers, respectively.
+
+5.10.6.18. http_num_cookies
 
 This is a range-based rule option that checks the number of cookies.
 In a request all the individual cookies found in Cookie header are
@@ -4660,7 +4665,7 @@ Content-Length: 5
 Set-Cookie: lang=en-US; Path=/; Domain=example.com
 Set-Cookie: id=a3fWa; Expires=Thu, 21 Oct 2021 07:28:00 GMT; Secure; HttpOnly
 
-5.10.6.18. http_version_match
+5.10.6.19. http_version_match
 
 Rule option that matches HTTP version to one of the listed version
 values. Possible match values: 1.0, 1.1, 2.0, 0.9, other, and
@@ -4676,7 +4681,7 @@ be HTTP/2.0 or HTTP/0.9 will match "other" as described above. The
 http_version rule option is available to examine the actual bytes in
 the version field.
 
-5.10.6.19. http_header_test and http_trailer_test
+5.10.6.20. http_header_test and http_trailer_test
 
 Rule options that perform various tests against a specific header and
 trailer field, respectively. It can perform a range test, check
@@ -5629,7 +5634,7 @@ Snort provides discreet logging for the built-in patterns
 "credit_card", "us_social", "us_social_nodashes", "us_phone" and
 "email". Enabling ips.obfuscate_pii makes Snort obfuscate the suspect
 packet payload which was matched by the patterns. This configuration
-is disabled by default.
+is enabled by default.
 
 ips =
 {
@@ -6637,6 +6642,7 @@ contain following options:
   * service - name of the service that would be assigned
   * proto - protocol to scan
   * client_first - indicator of which end initiates data transfer
+    (deprecated)
   * to_server - list of text patterns to search in the data sent to
     the client
   * to_client - list of text patterns to search in the data sent to

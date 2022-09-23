@@ -1,3 +1,35 @@
+2022-09-22: 3.1.42.0
+
+* appid: custom lua detector api to map ip and port to appids on the first packet
+* appid: added a snort config to control client-process mapping
+* appid: dppid service detection prioritized over third party detection
+* appid: cache support for unprocessed ssl packets
+* appid: handle http event for httpx(2,3) traffic
+* content: fix retry
+* content: fix adjustment of depth/within when offset/distance are negative
+* detection: add http3 to http ips buffers
+* detection: add option to reduce rtns by port values
+* doc: added smtp rule 124:17
+* flow: abstract class added to work on stream based connections
+* http2_inspect: updated with abstracted httpx(2,3) flags
+* http_inspect: abstract inspection of httpx(2,3)
+* http_inspect: http_max_header_line and http_max_trailer_line rule options
+* http_inspect: rework range rule options
+* ips_options: change ips.obfuscate_pii to be true by default
+* ips: trace all node evaluations
+* memory: fix typo in peg counter help text
+* netflow: evaluate all matching netflow rules, not just the first match
+* parser: add implicit http3 to http ips options otn
+* parser: remove platform dependency from parse_int function
+* payload_injector: accomodate httpx(2,3) stream id values
+* pub_sub: handle httpx(2,3) traffic
+* reputation: use the thread specific reputation data for aux ip event
+* rna: handle httpx(2,3) traffic
+* stream: export support for creating udp session
+* trace: ips variables are dumped as hex
+* utils: remove alert for an opening tag in string literals
+* wizard: deprecate client_first option
+
 2022-09-07: 3.1.41.0
 
 * appid: send intermediate messages for appid reload commands to the socket
