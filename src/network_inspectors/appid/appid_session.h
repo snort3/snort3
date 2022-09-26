@@ -323,7 +323,7 @@ public:
 
     AppId pick_service_app_id() const;
     // pick_ss_* and set_ss_* methods below are for application protocols that support only a single
-    // stream in a flow. They should not be used for HTTP2 sessions which can have multiple
+    // stream in a flow. They should not be used for HTTP2/HTTP3 sessions which can have multiple
     // streams within a single flow
     AppId pick_ss_misc_app_id() const;
     AppId pick_ss_client_app_id() const;
@@ -421,14 +421,14 @@ public:
             inferred_svcs_ver++;
     }
 
-    uint16_t get_prev_http2_raw_packet() const
+    uint16_t get_prev_httpx_raw_packet() const
     {
-        return prev_http2_raw_packet;
+        return prev_httpx_raw_packet;
     }
 
-    void set_prev_http2_raw_packet(uint16_t packet_num)
+    void set_prev_httpx_raw_packet(uint16_t packet_num)
     {
-        prev_http2_raw_packet = packet_num;
+        prev_httpx_raw_packet = packet_num;
     }
 
     const snort::AppIdSessionApi& get_api() const
@@ -663,7 +663,7 @@ public:
     }
 
 private:
-    uint16_t prev_http2_raw_packet = 0;
+    uint16_t prev_httpx_raw_packet = 0;
 
     void reinit_session_data(AppidChangeBits& change_bits, ThirdPartyAppIdContext* tp_appid_ctxt);
     void delete_session_data();

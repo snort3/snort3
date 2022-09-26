@@ -51,7 +51,7 @@ bool HttpRequestBodyEvent::is_last_request_body_piece()
     return last_piece;
 }
 
-uint32_t HttpRequestBodyEvent::get_http2_stream_id() const
+int64_t HttpRequestBodyEvent::get_httpx_stream_id() const
 {
     return http_flow_data->get_hx_stream_id();
 }

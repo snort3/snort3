@@ -96,10 +96,10 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     {
         if (direction == APP_ID_FROM_INITIATOR)
         {
-            if (asd->get_prev_http2_raw_packet() != asd->session_packet_count)
+            if (asd->get_prev_httpx_raw_packet() != asd->session_packet_count)
             {
                 asd->delete_all_http_sessions();
-                asd->set_prev_http2_raw_packet(asd->session_packet_count);
+                asd->set_prev_httpx_raw_packet(asd->session_packet_count);
             }
             hsession = asd->create_http_session(http_event->get_httpx_stream_id());
         }
@@ -158,7 +158,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
             hsession->set_field(MISC_SERVER_FID, header_start, header_length, change_bits);
 
         int32_t responseCodeNum = http_event->get_response_code();
-        if (responseCodeNum > 0 && responseCodeNum < 700)
+        if (responseCodeNum > 0 and responseCodeNum < 700)
         {
             unsigned int ret;
             char tmpstr[32];
@@ -185,19 +185,19 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     if (http_event->get_is_httpx())
     {
         AppId http_app_id = flow->stream_intf->get_appid_from_stream(flow);
-        assert((http_app_id == APP_ID_HTTP2) || (http_app_id == APP_ID_HTTP3));
+        assert((http_app_id == APP_ID_HTTP2) or (http_app_id == APP_ID_HTTP3));
         asd->set_service_id(http_app_id, asd->get_odp_ctxt());
     }
 
     hsession->process_http_packet(direction, change_bits,
         asd->get_odp_ctxt().get_http_matchers());
 
-    if (asd->get_service_id() != APP_ID_HTTP2)
+    if (!http_event->get_is_httpx())
         asd->set_ss_application_ids(asd->pick_service_app_id(), asd->pick_ss_client_app_id(),
             asd->pick_ss_payload_app_id(), asd->pick_ss_misc_app_id(),
             asd->pick_ss_referred_payload_app_id(), change_bits);
     else
-        asd->set_application_ids_service(APP_ID_HTTP2, change_bits);
+        asd->set_application_ids_service(asd->get_service_id(), change_bits);
 
     asd->publish_appid_event(change_bits, *p, http_event->get_is_httpx(),
         asd->get_api().get_hsessions_size() - 1);

@@ -158,7 +158,7 @@ set ( APPID_SOURCES
     appid_ha.h
     appid_http_session.cc
     appid_http_session.h
-    appid_http2_req_body_event_handler.h
+    appid_httpx_req_body_event_handler.h
     appid_opportunistic_tls_event_handler.h
     appid_peg_counts.h
     appid_peg_counts.cc

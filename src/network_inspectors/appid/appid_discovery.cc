@@ -178,7 +178,7 @@ static bool set_network_attributes(AppIdSession* asd, Packet* p, IpProtocol& pro
             protocol = IpProtocol::TCP;
         else if (p->is_udp())
             protocol = IpProtocol::UDP;
-        else if (p->is_ip4() || p->is_ip6())
+        else if (p->is_ip4() or p->is_ip6())
         {
             protocol = p->get_ip_proto_next();
             if (p->num_layers > 3)
@@ -319,8 +319,8 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
 
     if (p->ptrs.tcph and !asd->get_session_flags(APPID_SESSION_OOO))
     {
-        if ((p->packet_flags & PKT_STREAM_ORDER_BAD) ||
-            (p->dsize && !(p->packet_flags & (PKT_STREAM_ORDER_OK | PKT_REBUILT_STREAM))))
+        if ((p->packet_flags & PKT_STREAM_ORDER_BAD) or
+            (p->dsize and !(p->packet_flags & (PKT_STREAM_ORDER_OK | PKT_REBUILT_STREAM))))
         {
             asd->set_session_flags(APPID_SESSION_OOO | APPID_SESSION_OOO_CHECK_TP);
             if (appidDebug->is_active())
@@ -331,8 +331,8 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
 
             // Shut off service/client discoveries, since they skip not-ok data packets and
             // may keep failing on subsequent data packets causing performance degradation
-            if (!asd->get_session_flags(APPID_SESSION_MID) ||
-                (p->ptrs.sp != 21 && p->ptrs.dp != 21)) // exception for ftp-control
+            if (!asd->get_session_flags(APPID_SESSION_MID) or
+                (p->ptrs.sp != 21 and p->ptrs.dp != 21)) // exception for ftp-control
             {
                 asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
                 if (asd->get_payload_id() == APP_ID_NONE and
@@ -349,7 +349,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
         else
         {
             const auto* tcph = p->ptrs.tcph;
-            if (tcph->is_rst() && asd->previous_tcp_flags == TH_SYN)
+            if (tcph->is_rst() and asd->previous_tcp_flags == TH_SYN)
             {
                 uint16_t port = 0;
                 const SfIp* ip = nullptr;
@@ -443,7 +443,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
         asd.get_odp_ctxt().is_host_port_app_cache_runtime)
         check_dynamic = true;
 
-    if (!(check_static || check_dynamic))
+    if (!(check_static or check_dynamic))
         return false;
 
     uint16_t port;
@@ -719,8 +719,8 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     }
 
     // Third party detection
-    // Skip third-party detection for http2
-    if (tp_appid_ctxt and ((service_id = asd.pick_service_app_id()) != APP_ID_HTTP2))
+    // Skip third-party detection for http2 and http3
+    if (tp_appid_ctxt and ((service_id = asd.pick_service_app_id()) != APP_ID_HTTP2 and service_id != APP_ID_HTTP3))
     {
         // Skip third-party inspection for sessions using old config
         if (asd.tpsession and asd.tpsession->get_ctxt_version() != tp_appid_ctxt->get_version())
@@ -757,7 +757,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         }
     }
     // FIXIT-M - snort 2.x has added a check for midstream pickup to this, do we need that?
-    else if (protocol != IpProtocol::TCP || (p->packet_flags & PKT_STREAM_ORDER_OK))
+    else if (protocol != IpProtocol::TCP or (p->packet_flags & PKT_STREAM_ORDER_OK))
     {
         if (asd.service_disco_state != APPID_DISCO_STATE_FINISHED)
             is_discovery_done =
@@ -805,7 +805,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     bool is_http_tunnel = false;
 
     if (hsession)
-        is_http_tunnel = ((hsession->payload.get_id() == APP_ID_HTTP_TUNNEL) ||
+        is_http_tunnel = ((hsession->payload.get_id() == APP_ID_HTTP_TUNNEL) or
             (hsession->payload.get_id() == APP_ID_HTTP_SSL_TUNNEL)) ? true : false;
 
     if (is_check_host_cache_valid(asd, service_id, client_id, payload_id, misc_id) or

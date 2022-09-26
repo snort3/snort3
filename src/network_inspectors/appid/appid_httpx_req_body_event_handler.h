@@ -16,18 +16,18 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// appid_http2_req_body_event_handler.h
+// appid_httpx_req_body_event_handler.h
 // author Kani<kamurthi@cisco.com>
 
-#ifndef APPID_HTTP2_REQ_BODY_EVENT_HANDLER_H
-#define APPID_HTTP2_REQ_BODY_EVENT_HANDLER_H
+#ifndef APPID_HTTPX_REQ_BODY_EVENT_HANDLER_H
+#define APPID_HTTPX_REQ_BODY_EVENT_HANDLER_H
 
 #include "pub_sub/http_request_body_event.h"
 
-class AppIdHttp2ReqBodyEventHandler : public snort::DataHandler
+class AppIdHttpXReqBodyEventHandler : public snort::DataHandler
 {
 public:
-    AppIdHttp2ReqBodyEventHandler() : DataHandler(MOD_NAME){ }
+    AppIdHttpXReqBodyEventHandler() : DataHandler(MOD_NAME){ }
     void handle(snort::DataEvent& event, snort::Flow* flow) override
     {
         if (!pkt_thread_odp_ctxt)
@@ -45,7 +45,7 @@ public:
             return;
         snort::HttpRequestBodyEvent* http_req_body = (snort::HttpRequestBodyEvent*)&event;
         AppIdHttpSession* hsession = asd->get_matching_http_session(
-            http_req_body->get_http2_stream_id());
+            http_req_body->get_httpx_stream_id());
 
         if (!hsession)
             return;

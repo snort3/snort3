@@ -68,12 +68,14 @@ const char* AppIdSessionApi::get_user_info(AppId& service, bool& login) const
 
 AppId AppIdSessionApi::get_misc_app_id(uint32_t stream_index) const
 {
-    if (get_service_app_id() == APP_ID_HTTP2)
+    if (get_service_app_id() == APP_ID_HTTP2 or get_service_app_id() == APP_ID_HTTP3)
     {
-        if (stream_index >= get_hsessions_size())
+        if ((stream_index != 0) and (stream_index >= get_hsessions_size()))
             return APP_ID_NONE;
         else if (AppIdHttpSession* hsession = get_hsession(stream_index))
             return hsession->misc_app_id;
+        else if ((get_service_app_id() == APP_ID_HTTP3) and (stream_index == 0))
+            return application_ids[APP_PROTOID_MISC];
     }
     else if (stream_index == 0)
         return application_ids[APP_PROTOID_MISC];
@@ -83,12 +85,14 @@ AppId AppIdSessionApi::get_misc_app_id(uint32_t stream_index) const
 
 AppId AppIdSessionApi::get_client_app_id(uint32_t stream_index) const
 {
-    if (get_service_app_id() == APP_ID_HTTP2)
+    if (get_service_app_id() == APP_ID_HTTP2 or get_service_app_id() == APP_ID_HTTP3)
     {
-        if (stream_index >= get_hsessions_size())
+        if ((stream_index != 0) and (stream_index >= get_hsessions_size()))
             return APP_ID_NONE;
         else if (AppIdHttpSession* hsession = get_hsession(stream_index))
             return hsession->client.get_id();
+        else if ((get_service_app_id() == APP_ID_HTTP3) and (stream_index == 0))
+            return application_ids[APP_PROTOID_CLIENT];
     }
     else if (stream_index == 0)
         return application_ids[APP_PROTOID_CLIENT];
@@ -98,12 +102,14 @@ AppId AppIdSessionApi::get_client_app_id(uint32_t stream_index) const
 
 AppId AppIdSessionApi::get_payload_app_id(uint32_t stream_index) const
 {
-    if (get_service_app_id() == APP_ID_HTTP2)
+    if (get_service_app_id() == APP_ID_HTTP2 or get_service_app_id() == APP_ID_HTTP3)
     {
-        if (stream_index >= get_hsessions_size())
+        if ((stream_index != 0) and (stream_index >= get_hsessions_size()))
             return APP_ID_NONE;
         else if (AppIdHttpSession* hsession = get_hsession(stream_index))
             return hsession->payload.get_id();
+        else if ((get_service_app_id() == APP_ID_HTTP3) and (stream_index == 0))
+            return application_ids[APP_PROTOID_PAYLOAD];
     }
     else if (stream_index == 0)
         return application_ids[APP_PROTOID_PAYLOAD];
@@ -113,7 +119,7 @@ AppId AppIdSessionApi::get_payload_app_id(uint32_t stream_index) const
 
 AppId AppIdSessionApi::get_referred_app_id(uint32_t stream_index) const
 {
-    if (get_service_app_id() == APP_ID_HTTP2)
+    if (get_service_app_id() == APP_ID_HTTP2 or get_service_app_id() == APP_ID_HTTP3)
     {
         if ((stream_index != 0) and (stream_index >= get_hsessions_size()))
             return APP_ID_UNKNOWN;
@@ -129,7 +135,7 @@ AppId AppIdSessionApi::get_referred_app_id(uint32_t stream_index) const
 void AppIdSessionApi::get_app_id(AppId& service, AppId& client,
     AppId& payload, AppId& misc, AppId& referred, uint32_t stream_index) const
 {
-    if (get_service_app_id() == APP_ID_HTTP2)
+    if (get_service_app_id() == APP_ID_HTTP2 or get_service_app_id() == APP_ID_HTTP3)
     {
         if ((stream_index != 0) and (stream_index >= get_hsessions_size()))
         {
@@ -154,7 +160,7 @@ void AppIdSessionApi::get_app_id(AppId& service, AppId& client,
 void AppIdSessionApi::get_app_id(AppId* service, AppId* client,
     AppId* payload, AppId* misc, AppId* referred, uint32_t stream_index) const
 {
-    if (get_service_app_id() == APP_ID_HTTP2)
+    if (get_service_app_id() == APP_ID_HTTP2 or get_service_app_id() == APP_ID_HTTP3)
     {
         if ((stream_index != 0) and (stream_index >= get_hsessions_size()))
         {
@@ -243,12 +249,12 @@ bool AppIdSessionApi::is_appid_available(uint32_t stream_index) const
 {
     if (!asd)
         return false;
-    if (service.get_id() == APP_ID_HTTP2)
+    if (service.get_id() == APP_ID_HTTP2 or service.get_id() == APP_ID_HTTP3)
         return (get_payload_app_id(stream_index) != APP_ID_NONE);
     else
-        return ( (service.get_id() != APP_ID_NONE ||
-            payload.get_id() != APP_ID_NONE) &&
-            (asd->is_tp_appid_available() ||
+        return ( (service.get_id() != APP_ID_NONE or
+            payload.get_id() != APP_ID_NONE) and
+            (asd->is_tp_appid_available() or
             asd->get_session_flags(APPID_SESSION_NO_TPI)) );
 }
 
@@ -411,11 +417,13 @@ void AppIdSessionApi::set_application_ids_service(AppId service_id, AppidChangeB
     }
 }
 
+// For HTTP3, mercury can identify client,payload and misc. So check for them
+// even if no hsession is present, but prefer appid stored in hsession.
 void AppIdSessionApi::get_first_stream_app_ids(AppId& service_id, AppId& client_id,
     AppId& payload_id, AppId& misc_id) const
 {
     service_id = application_ids[APP_PROTOID_SERVICE];
-    if (service_id != APP_ID_HTTP2)
+    if (service_id != APP_ID_HTTP2 and service_id != APP_ID_HTTP3)
     {
         client_id  = application_ids[APP_PROTOID_CLIENT];
         payload_id = application_ids[APP_PROTOID_PAYLOAD];
@@ -426,6 +434,12 @@ void AppIdSessionApi::get_first_stream_app_ids(AppId& service_id, AppId& client_
         client_id = hsession->client.get_id();
         payload_id = hsession->payload.get_id();
         misc_id = hsession->misc_app_id;
+    }
+    else if (service_id == APP_ID_HTTP3)
+    {
+        client_id  = application_ids[APP_PROTOID_CLIENT];
+        payload_id = application_ids[APP_PROTOID_PAYLOAD];
+        misc_id    = application_ids[APP_PROTOID_MISC];
     }
     else
     {
@@ -439,7 +453,7 @@ void AppIdSessionApi::get_first_stream_app_ids(AppId& service_id, AppId& client_
     AppId& payload_id) const
 {
     service_id = application_ids[APP_PROTOID_SERVICE];
-    if (service_id != APP_ID_HTTP2)
+    if (service_id != APP_ID_HTTP2 and service_id != APP_ID_HTTP3)
     {
         client_id  = application_ids[APP_PROTOID_CLIENT];
         payload_id = application_ids[APP_PROTOID_PAYLOAD];
@@ -448,6 +462,11 @@ void AppIdSessionApi::get_first_stream_app_ids(AppId& service_id, AppId& client_
     {
         client_id = hsession->client.get_id();
         payload_id = hsession->payload.get_id();
+    }
+    else if (service_id == APP_ID_HTTP3)
+    {
+        client_id  = application_ids[APP_PROTOID_CLIENT];
+        payload_id = application_ids[APP_PROTOID_PAYLOAD];
     }
     else
     {

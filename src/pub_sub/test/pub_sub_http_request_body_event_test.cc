@@ -132,7 +132,7 @@ TEST(pub_sub_http_request_body_event_test, first_event)
     CHECK(memcmp(data, msg.data(), length) == 0);
     CHECK(length == msg_len);
     CHECK(offset == 0);
-    CHECK(event.get_http2_stream_id() == stream_id);
+    CHECK(event.get_httpx_stream_id() == stream_id);
     CHECK_FALSE(event.is_last_request_body_piece());
     delete body;
 }
@@ -153,7 +153,7 @@ TEST(pub_sub_http_request_body_event_test, last_event)
     CHECK(memcmp(data, msg.data(), length) == 0);
     CHECK(length == msg_len);
     CHECK(offset == 1500);
-    CHECK(event.get_http2_stream_id() == stream_id);
+    CHECK(event.get_httpx_stream_id() == stream_id);
     CHECK(event.is_last_request_body_piece());
     delete body;
 }
@@ -169,7 +169,7 @@ TEST(pub_sub_http_request_body_event_test, empty_data_last_event)
     CHECK(data == nullptr);
     CHECK(length == 0);
     CHECK(offset == 1500);
-    CHECK(event.get_http2_stream_id() == stream_id);
+    CHECK(event.get_httpx_stream_id() == stream_id);
     CHECK(event.is_last_request_body_piece());
 }
 

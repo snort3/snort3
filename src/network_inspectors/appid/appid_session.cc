@@ -76,8 +76,8 @@ static inline bool is_special_session_monitored(const Packet* p)
 {
     if (p->is_ip4())
     {
-        if (p->is_udp() && ((p->ptrs.sp == 68 && p->ptrs.dp == 67)
-            || (p->ptrs.sp == 67 &&  p->ptrs.dp == 68)))
+        if (p->is_udp() and ((p->ptrs.sp == 68 and p->ptrs.dp == 67)
+            or (p->ptrs.sp == 67 and  p->ptrs.dp == 68)))
         {
             return true;
         }
@@ -110,7 +110,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
 
     const SfIp* ip = (direction == APP_ID_FROM_INITIATOR)
         ? p->ptrs.ip_api.get_src() : p->ptrs.ip_api.get_dst();
-    if ((proto == IpProtocol::TCP || proto == IpProtocol::UDP) &&
+    if ((proto == IpProtocol::TCP or proto == IpProtocol::UDP) and
         (p->ptrs.sp != p->ptrs.dp))
         port = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
 
@@ -223,7 +223,7 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     char dst_ip[INET6_ADDRSTRLEN];
 
     AppIdInspector* inspector = (AppIdInspector*)ctrlPkt->flow->flow_data->get_handler();
-    if ((inspector == nullptr) || strcmp(inspector->get_name(), MOD_NAME))
+    if ((inspector == nullptr) or strcmp(inspector->get_name(), MOD_NAME))
         inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, true);
 
     // FIXIT-RC - port parameter passed in as 0 since we may not know client port, verify
@@ -383,7 +383,7 @@ void AppIdSession::check_ssl_detection_restart(AppidChangeBits& change_bits,
     // 1. Start off as SSL - captured with isSsl flag, OR
     // 2. It could start off as a non-SSL session and later change to SSL. For example, FTP->FTPS.
     //    In this case APPID_SESSION_ENCRYPTED flag is set by the protocol state machine.
-    if (get_session_flags(APPID_SESSION_ENCRYPTED) || isSsl)
+    if (get_session_flags(APPID_SESSION_ENCRYPTED) or isSsl)
     {
         set_session_flags(APPID_SESSION_DECRYPTED);
         encrypted.service_id = service_id;
@@ -457,9 +457,9 @@ void AppIdSession::update_encrypted_app_id(AppId service_id)
     switch (service_id)
     {
     case APP_ID_HTTP:
-        if (misc_app_id == APP_ID_NSIIOPS ||
-            misc_app_id == APP_ID_DDM_SSL ||
-            misc_app_id == APP_ID_MSFT_GC_SSL ||
+        if (misc_app_id == APP_ID_NSIIOPS or
+            misc_app_id == APP_ID_DDM_SSL or
+            misc_app_id == APP_ID_MSFT_GC_SSL or
             misc_app_id == APP_ID_SF_APPLIANCE_MGMT)
         {
             break;
@@ -597,7 +597,7 @@ void AppIdSession::examine_rtmp_metadata(AppidChangeBits& change_bits)
         const char* referer = hsession->get_cfield(REQ_REFERER_FID);
         if ((http_matchers.get_appid_from_url(nullptr, url, &version,
             referer, &client_id, &service_id, &payload_id,
-            &referred_payload_id, true, odp_ctxt)) ||
+            &referred_payload_id, true, odp_ctxt)) or
             (http_matchers.get_appid_from_url(nullptr, url, &version,
             referer, &client_id, &service_id, &payload_id,
             &referred_payload_id, false, odp_ctxt)))
@@ -617,7 +617,7 @@ void AppIdSession::examine_rtmp_metadata(AppidChangeBits& change_bits)
 
 void AppIdSession::set_client_appid_data(AppId id, AppidChangeBits& change_bits, char* version)
 {
-    if (id <= APP_ID_NONE || id == APP_ID_HTTP)
+    if (id <= APP_ID_NONE or id == APP_ID_HTTP)
         return;
 
     AppId cur_id = api.client.get_id();
@@ -667,8 +667,8 @@ void AppIdSession::set_service_appid_data(AppId id, AppidChangeBits& change_bits
 
 bool AppIdSession::is_svc_taking_too_much_time() const
 {
-    return (init_pkts_without_reply > odp_ctxt.max_packet_service_fail_ignore_bytes ||
-        (init_pkts_without_reply > odp_ctxt.max_packet_before_service_fail &&
+    return (init_pkts_without_reply > odp_ctxt.max_packet_service_fail_ignore_bytes or
+        (init_pkts_without_reply > odp_ctxt.max_packet_before_service_fail and
         init_bytes_without_reply > odp_ctxt.max_bytes_before_service_fail));
 }
 
@@ -724,7 +724,7 @@ void AppIdSession::free_flow_data_by_id(unsigned id)
 void AppIdSession::free_flow_data_by_mask(unsigned mask)
 {
     for (AppIdFlowDataIter it = flow_data.cbegin(); it != flow_data.cend();)
-        if (!mask || (it->second->fd_id & mask))
+        if (!mask or (it->second->fd_id & mask))
         {
             delete it->second;
             it = flow_data.erase(it);
@@ -786,9 +786,9 @@ AppId AppIdSession::pick_service_app_id() const
     {
         if (is_service_detected())
         {
-            bool deferred = api.service.get_deferred() || tp_app_id_deferred;
+            bool deferred = api.service.get_deferred() or tp_app_id_deferred;
 
-            if (api.service.get_id() > APP_ID_NONE && !deferred)
+            if (api.service.get_id() > APP_ID_NONE and !deferred)
                 return api.service.get_id();
             if (is_tp_appid_available())
             {
@@ -821,7 +821,7 @@ AppId AppIdSession::pick_service_app_id() const
 
 AppId AppIdSession::pick_ss_misc_app_id() const
 {
-    if (api.service.get_id() == APP_ID_HTTP2)
+    if (api.service.get_id() == APP_ID_HTTP2 or api.service.get_id() == APP_ID_HTTP3)
         return APP_ID_NONE;
 
     if (misc_app_id > APP_ID_NONE)
@@ -838,7 +838,7 @@ AppId AppIdSession::pick_ss_misc_app_id() const
 
 AppId AppIdSession::pick_ss_client_app_id() const
 {
-    if (api.service.get_id() == APP_ID_HTTP2)
+    if (api.service.get_id() == APP_ID_HTTP2 or api.service.get_id() == APP_ID_HTTP3)
         return APP_ID_NONE;
 
     AppId tmp_id = APP_ID_NONE;
@@ -868,7 +868,7 @@ AppId AppIdSession::pick_ss_client_app_id() const
 
 AppId AppIdSession::pick_ss_payload_app_id(AppId service_id) const
 {
-    if (service_id == APP_ID_HTTP2)
+    if (service_id == APP_ID_HTTP2 or service_id == APP_ID_HTTP3)
         return APP_ID_NONE;
 
     if (tp_payload_app_id_deferred)
@@ -919,7 +919,7 @@ AppId AppIdSession::pick_ss_payload_app_id() const
 
 AppId AppIdSession::pick_ss_referred_payload_app_id() const
 {
-    if (api.service.get_id() == APP_ID_HTTP2)
+    if (api.service.get_id() == APP_ID_HTTP2 or api.service.get_id() == APP_ID_HTTP3)
         return APP_ID_NONE;
 
     AppId tmp_id = APP_ID_NONE;
@@ -1044,14 +1044,14 @@ bool AppIdSession::is_tp_appid_done() const
         return false;
 
     unsigned state = tpsession->get_state();
-    return (state == TP_STATE_CLASSIFIED || state == TP_STATE_TERMINATED ||
+    return (state == TP_STATE_CLASSIFIED or state == TP_STATE_TERMINATED or
         state == TP_STATE_HA);
 }
 
 bool AppIdSession::is_tp_processing_done() const
 {
-    if (!get_session_flags(APPID_SESSION_NO_TPI) &&
-        (!is_tp_appid_done() ||
+    if (!get_session_flags(APPID_SESSION_NO_TPI) and
+        (!is_tp_appid_done() or
         get_session_flags(APPID_SESSION_APP_REINSPECT | APPID_SESSION_APP_REINSPECT_SSL)))
         return false;
 
@@ -1067,7 +1067,7 @@ bool AppIdSession::is_tp_appid_available() const
 
         unsigned state = tpsession->get_state();
 
-        return (state == TP_STATE_CLASSIFIED || state == TP_STATE_TERMINATED ||
+        return (state == TP_STATE_CLASSIFIED or state == TP_STATE_TERMINATED or
             state == TP_STATE_MONITORING);
     }
 

@@ -124,7 +124,7 @@ IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
     AppId service_id = session->get_api().get_service_app_id();
     OdpContext& odp_ctxt = session->get_odp_ctxt();
 
-    if (service_id != APP_ID_HTTP2)
+    if (service_id != APP_ID_HTTP2 and service_id != APP_ID_HTTP3)
     {
         AppId app_ids[APP_PROTOID_MAX];
 

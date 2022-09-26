@@ -26,7 +26,7 @@
 #include "service_inspectors/http_inspect/http_msg_body.h"
 
 // These are common values between the HTTP inspector and the subscribers.
-#define HTTP2_REQUEST_BODY_EVENT_KEY "http2_request_body_event"
+#define HTTPX_REQUEST_BODY_EVENT_KEY "httpx_request_body_event"
 
 class HttpFlowData;
 
@@ -43,7 +43,7 @@ public:
 
     const uint8_t* get_request_body_data(int32_t& length, int32_t& offset);
     bool is_last_request_body_piece();
-    uint32_t get_http2_stream_id() const;
+    int64_t get_httpx_stream_id() const;
 
 private:
     const HttpMsgBody* const http_msg_body;

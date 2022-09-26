@@ -41,7 +41,7 @@
 #include "appid_eve_process_event_handler.h"
 #include "appid_ha.h"
 #include "appid_http_event_handler.h"
-#include "appid_http2_req_body_event_handler.h"
+#include "appid_httpx_req_body_event_handler.h"
 #include "appid_opportunistic_tls_event_handler.h"
 #include "appid_peg_counts.h"
 #include "appid_service_event_handler.h"
@@ -68,7 +68,7 @@ static void add_appid_to_packet_trace(Flow& flow, const OdpContext& odp_context)
 {
     AppIdSession* session = appid_api.get_appid_session(flow);
     // Skip sessions using old odp context after odp reload
-    if (!session || (session->get_odp_ctxt_version() != odp_context.get_version()))
+    if (!session or (session->get_odp_ctxt_version() != odp_context.get_version()))
         return;
 
     AppId service_id, client_id, payload_id, misc_id;
@@ -123,7 +123,7 @@ bool AppIdInspector::configure(SnortConfig* sc)
     DataBus::subscribe_global(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(
         HttpEventHandler::RESPONSE_EVENT, *this), *sc);
 
-    DataBus::subscribe_global(HTTP2_REQUEST_BODY_EVENT_KEY, new AppIdHttp2ReqBodyEventHandler(), *sc);
+    DataBus::subscribe_global(HTTPX_REQUEST_BODY_EVENT_KEY, new AppIdHttpXReqBodyEventHandler(), *sc);
 
     DataBus::subscribe_global(DATA_DECRYPT_EVENT, new DataDecryptEventHandler(), *sc);
 

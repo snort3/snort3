@@ -130,7 +130,7 @@ public:
     const char* get_netbios_domain() const;
     ClientAppDetectType get_client_app_detect_type() const;
 
-    // For protocols such as HTTP2 which can have multiple streams within a single flow,
+    // For protocols such as HTTP2/HTTP3 which can have multiple streams within a single flow,
     // get_first_stream_* methods return the appids in the first stream seen in a packet.
     void get_first_stream_app_ids(AppId& service, AppId& client, AppId& payload, AppId& misc) const;
     void get_first_stream_app_ids(AppId& service, AppId& client, AppId& payload) const;

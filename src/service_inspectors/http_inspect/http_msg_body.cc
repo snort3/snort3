@@ -65,7 +65,7 @@ void HttpMsgBody::publish()
 
     HttpRequestBodyEvent http_request_body_event(this, publish_octets, last_piece, session_data);
 
-    DataBus::publish(HTTP2_REQUEST_BODY_EVENT_KEY, http_request_body_event, flow);
+    DataBus::publish(HTTPX_REQUEST_BODY_EVENT_KEY, http_request_body_event, flow);
     publish_octets += publish_length;
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
