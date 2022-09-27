@@ -262,23 +262,23 @@ bool Http2StreamSplitter::finish(Flow* flow)
     }
 
     // Loop through all nonzero streams with open message bodies and call NHI finish()
-    for (const Http2Stream* stream : session_data->streams)
+    for (const Http2Stream& stream : session_data->streams)
     {
-        if ((stream->get_stream_id() == 0)                            ||
-            (stream->get_state(source_id) >= STREAM_COMPLETE)         ||
-            (stream->get_hi_flow_data() == nullptr)                   ||
-            (stream->get_hi_flow_data()->get_type_expected(source_id)
+        if ((stream.get_stream_id() == 0)                            ||
+            (stream.get_state(source_id) >= STREAM_COMPLETE)         ||
+            (stream.get_hi_flow_data() == nullptr)                   ||
+            (stream.get_hi_flow_data()->get_type_expected(source_id)
                 != SEC_BODY_HX)                                       ||
             (session_data->processing_partial_header &&
-                (stream->get_stream_id() == session_data->current_stream[source_id])))
+                (stream.get_stream_id() == session_data->current_stream[source_id])))
         {
             continue;
         }
 
-        session_data->stream_in_hi = stream->get_stream_id();
+        session_data->stream_in_hi = stream.get_stream_id();
         if (session_data->hi_ss[source_id]->finish(flow))
         {
-            assert(stream->get_stream_id() == session_data->current_stream[source_id]);
+            assert(stream.get_stream_id() == session_data->current_stream[source_id]);
             need_reassemble = true;
 #ifdef REG_TEST
             if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP2))

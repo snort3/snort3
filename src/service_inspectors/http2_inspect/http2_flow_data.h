@@ -58,7 +58,7 @@ public:
     static void init() { inspector_id = snort::FlowData::create_flow_data_id(); }
 
     // Used by http_inspect to store its stuff
-    HttpFlowData* get_hi_flow_data() const;
+    HttpFlowData* get_hi_flow_data();
     void set_hi_flow_data(HttpFlowData* flow);
     HttpMsgSection* get_hi_msg_section() const { return hi_msg_section; }
     void set_hi_msg_section(HttpMsgSection* section)
@@ -86,10 +86,10 @@ public:
     friend class Http2WindowUpdateFrame;
     friend void finish_msg_body(Http2FlowData* session_data, HttpCommon::SourceId source_id);
 
-    Http2Stream* find_current_stream(const HttpCommon::SourceId source_id) const;
+    Http2Stream* find_current_stream(const HttpCommon::SourceId source_id);
     uint32_t get_current_stream_id(const HttpCommon::SourceId source_id) const;
     Http2Stream* get_processing_stream(const HttpCommon::SourceId source_id, uint32_t concurrent_streams_limit);
-    Http2Stream* find_processing_stream() const;
+    Http2Stream* find_processing_stream();
     uint32_t get_processing_stream_id() const;
     void set_processing_stream_id(const HttpCommon::SourceId source_id);
     bool is_processing_partial_header() const { return processing_partial_header; }
@@ -150,7 +150,7 @@ protected:
     // Used in eval()
     Http2ConnectionSettings connection_settings[2];
     Http2HpackDecoder hpack_decoder[2];
-    std::list<Http2Stream*> streams;
+    std::list<Http2Stream> streams;
     uint32_t concurrent_files = 0;
     uint32_t concurrent_streams = 0;
     uint32_t stream_memory_allocations_tracked = Http2Enums::STREAM_MEMORY_TRACKING_INCREMENT;
@@ -201,8 +201,8 @@ protected:
 #endif
 
 private:
-    Http2Stream* get_hi_stream() const;
-    Http2Stream* find_stream(const uint32_t key) const;
+    Http2Stream* get_hi_stream();
+    Http2Stream* find_stream(const uint32_t key);
     void delete_processing_stream();
 };
 

@@ -97,12 +97,9 @@ Http2FlowData::~Http2FlowData()
         hi_ss[k]->go_away();
         delete[] frame_data[k];
     }
-
-    for (Http2Stream* stream : streams)
-        delete stream;
 }
 
-HttpFlowData* Http2FlowData::get_hi_flow_data() const
+HttpFlowData* Http2FlowData::get_hi_flow_data()
 {
     assert(stream_in_hi != Http2Enums::NO_STREAM_ID);
     Http2Stream* stream = get_hi_stream();
@@ -116,12 +113,12 @@ void Http2FlowData::set_hi_flow_data(HttpFlowData* flow)
     stream->set_hi_flow_data(flow);
 }
 
-Http2Stream* Http2FlowData::find_stream(const uint32_t key) const
+Http2Stream* Http2FlowData::find_stream(const uint32_t key)
 {
-    for (Http2Stream* stream : streams)
+    for (Http2Stream& stream : streams)
     {
-        if (stream->get_stream_id() == key)
-            return stream;
+        if (stream.get_stream_id() == key)
+            return &stream;
     }
 
     return nullptr;
@@ -178,8 +175,8 @@ Http2Stream* Http2FlowData::get_processing_stream(const SourceId source_id, uint
         }
 
         // Allocate new stream
-        stream = new Http2Stream(key, this);
-        streams.emplace_front(stream);
+        streams.emplace_front(key, this);
+        stream = &streams.front();
 
         // stream 0 does not count against stream limit
         if (key > 0)
@@ -194,12 +191,12 @@ Http2Stream* Http2FlowData::get_processing_stream(const SourceId source_id, uint
 
 void Http2FlowData::delete_processing_stream()
 {
-    std::list<Http2Stream*>::iterator it;
+    std::list<Http2Stream>::iterator it;
+
     for (it = streams.begin(); it != streams.end(); ++it)
     {
-        if ((*it)->get_stream_id() == processing_stream_id)
+        if (it->get_stream_id() == processing_stream_id)
         {
-            delete *it;
             streams.erase(it);
             delete_stream = false;
             assert(concurrent_streams > 0);
@@ -210,17 +207,17 @@ void Http2FlowData::delete_processing_stream()
     assert(false);
 }
 
-Http2Stream* Http2FlowData::get_hi_stream() const
+Http2Stream* Http2FlowData::get_hi_stream()
 {
     return find_stream(stream_in_hi);
 }
 
-Http2Stream* Http2FlowData::find_current_stream(const SourceId source_id) const
+Http2Stream* Http2FlowData::find_current_stream(const SourceId source_id)
 {
     return find_stream(current_stream[source_id]);
 }
 
-Http2Stream* Http2FlowData::find_processing_stream() const
+Http2Stream* Http2FlowData::find_processing_stream()
 {
     return find_stream(get_processing_stream_id());
 }
