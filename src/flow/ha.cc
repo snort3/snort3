@@ -682,8 +682,7 @@ Flow* HighAvailability::process_daq_import(Packet& p, FlowKey& key)
             // Validate that the imported flow matches up with the given flow key.
             if (flow)
             {
-                if (flow->flow_state == Flow::FlowState::BLOCK
-                    or flow->flow_state == Flow::FlowState::RESET)
+                if (Flow::FlowState::INSPECT < flow->flow_state)
                 {
                     flow->disable_inspection();
                     p.disable_inspect = true;
