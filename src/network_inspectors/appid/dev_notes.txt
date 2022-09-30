@@ -142,3 +142,16 @@ the table corresponding to that detector is pulled from the Lua State and a call
 corresponding "validate" function in Lua code. The "validate" function in Lua can in turn make callbacks
 to C functions and shares its local stack with the C function. These functions make sure that the call
 is made only during discovery before executing.
+
+A custom first packet lua detector API which would map IP address, port and protocol on the very first packet to 
+application protocol (service appid), client application (client appid) and web application (payload appid). 
+This API is only used if a user creates a custom lua detector containing the IP, port, protocol values to be mapped to AppIDs.
+The first packet API shall offer performance improvements, reinspection and early detection of the traffic. 
+
+The values are stored in a cache during load time which are parsed in the lua detector API from the values passed
+through the custom detector lua file. During runtime, for every session, the first packet API is invoked, to find any cache entries 
+for the first packet. If there's an entry in the cache, the found appids are assigned accordingly, if no entries are found in the cache,
+further discovery is carried out on the incoming traffic.
+Here, there could be two scenarios, if the reinspection flag is enabled, discovery process is further continued and 
+appids found on first packet may or may not change, else if it is disabled, the discovery is stopped at the first packet itself 
+and appids remains the same for this entire session. 
