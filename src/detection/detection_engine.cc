@@ -193,15 +193,7 @@ Packet* DetectionEngine::set_next_packet(const Packet* parent, Flow* flow)
         p->action = parent->action;
     }
 
-    // processing but parent is already gone (flow cache flush etc..)
-    else if ( Analyzer::get_switcher()->get_context() )
-    {
-        p->daq_msg = nullptr;
-        p->daq_instance = nullptr;
-        p->active = get_current_packet()->active;
-        p->action = get_current_packet()->action;
-    }
-
+    // processing but parent is already gone (flow cache flush etc..) or
     // shutdown, so use a dummy so null checking is not needed everywhere
     else
     {
