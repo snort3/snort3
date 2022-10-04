@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include "sfrt_flat.h"
+#include "sfrt/sfrt_flat.h"
 
 #include "sfip/sf_cidr.h"
 
@@ -36,22 +36,13 @@ using namespace snort;
  * @param   data_size  Max number of unique data entries
  *
  * Returns the new table. */
-table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,  long data_size, uint32_t mem_cap)
+void RtTable::sfrt_flat_new(char table_flat_type, char ip_type,  long data_size, uint32_t mem_cap)
 {
-    table_flat_t* table;
     MEM_OFFSET table_ptr;
     uint8_t* base;
     long data_size_max = 1;
 
     table_ptr = segment_snort_alloc(sizeof(table_flat_t));
-
-#if 0
-    /*The first allocation always return 0*/
-    if (!table_ptr)
-    {
-        //  return nullptr;
-    }
-#endif
 
     base = (uint8_t*)segment_basePtr();
     table = (table_flat_t*)(&base[table_ptr]);
@@ -67,7 +58,8 @@ table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,  long data_size,
 #endif
     {
         segment_free(table_ptr);
-        return nullptr;
+        table = nullptr;
+        return;
     }
 
     /* mem_cap is specified in megabytes, but internally uses bytes. Convert */
@@ -88,7 +80,8 @@ table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,  long data_size,
     if (!table->data)
     {
         segment_free(table_ptr);
-        return nullptr;
+        table = nullptr;
+        return;
     }
 
     table->allocated = sizeof(table_flat_t) + sizeof(INFO) * table->max_size;
@@ -155,12 +148,10 @@ table_flat_t* sfrt_flat_new(char table_flat_type, char ip_type,  long data_size,
 
     assert(table->rt);
     assert(table->rt6);
-
-    return table;
 }
 
 /* Perform a lookup on value contained in "ip" */
-GENERIC sfrt_flat_lookup(const SfIp* ip, table_flat_t* table)
+GENERIC RtTable::sfrt_flat_lookup(const SfIp* ip)
 {
     tuple_flat_t tuple;
     const uint32_t* addr;
@@ -209,20 +200,9 @@ GENERIC sfrt_flat_lookup(const SfIp* ip, table_flat_t* table)
 }
 
 /* Insert "ip", of length "len", into "table", and have it point to "ptr" */
-int sfrt_flat_insert(SfCidr* cidr, unsigned char len, INFO ptr,
-    int behavior, table_flat_t* table, updateEntryInfoFunc updateEntry)
+return_codes RtTable::sfrt_flat_insert(SfCidr* cidr, unsigned char len, INFO ptr,
+    int behavior, updateEntryInfoFunc updateEntry, void* update_entry_info_data)
 {
-    const SfIp* ip;
-    int index;
-    int res =  RT_SUCCESS;
-    INFO* data;
-    tuple_flat_t tuple;
-    const uint32_t* addr;
-    int numAddrDwords;
-    TABLE_PTR rt;
-    uint8_t* base;
-    int64_t bytesAllocated;
-
     if (!cidr)
     {
         return RT_INSERT_FAILURE;
@@ -241,7 +221,10 @@ int sfrt_flat_insert(SfCidr* cidr, unsigned char len, INFO ptr,
         return RT_INSERT_FAILURE;
     }
 
-    ip = cidr->get_addr();
+    const SfIp* ip = cidr->get_addr();
+    TABLE_PTR rt;
+    int numAddrDwords;
+    const uint32_t* addr;
     if (ip->is_ip4())
     {
         if (len < 96)
@@ -260,11 +243,12 @@ int sfrt_flat_insert(SfCidr* cidr, unsigned char len, INFO ptr,
     else
         return RT_INSERT_FAILURE;
 
-    tuple = sfrt_dir_flat_lookup(addr, numAddrDwords, table->rt);
+    tuple_flat_t tuple = sfrt_dir_flat_lookup(addr, numAddrDwords, table->rt);
 
-    base = (uint8_t*)segment_basePtr();
-    data = (INFO*)(&base[table->data]);
+    uint8_t* base = (uint8_t*)segment_basePtr();
+    INFO* data = (INFO*)(&base[table->data]);
 
+    int index;
     if (tuple.length != len)
     {
         if ( table->num_ent >= table->max_size)
@@ -282,7 +266,7 @@ int sfrt_flat_insert(SfCidr* cidr, unsigned char len, INFO ptr,
         index = tuple.index;
     }
 
-    bytesAllocated = updateEntry(&data[index], ptr, SAVE_TO_CURRENT, base);
+    int64_t bytesAllocated = updateEntry(&data[index], ptr, SAVE_TO_CURRENT, base, update_entry_info_data);
 
     if (bytesAllocated < 0)
     {
@@ -295,7 +279,8 @@ int sfrt_flat_insert(SfCidr* cidr, unsigned char len, INFO ptr,
 
     /* The actual value that is looked-up is an index
      * into the data table. */
-    res = sfrt_dir_flat_insert(addr, numAddrDwords, len, index, behavior, rt, updateEntry, data);
+    return_codes res = sfrt_dir_flat_insert(addr, numAddrDwords, len, index, behavior, rt, updateEntry,
+        update_entry_info_data, data);
 
     /* Check if we ran out of memory. If so, need to decrement
      * table->num_ent */
@@ -312,7 +297,7 @@ int sfrt_flat_insert(SfCidr* cidr, unsigned char len, INFO ptr,
     return res;
 }
 
-uint32_t sfrt_flat_num_entries(table_flat_t* table)
+uint32_t RtTable::sfrt_flat_num_entries() const
 {
     if (!table)
     {
@@ -328,7 +313,7 @@ uint32_t sfrt_flat_num_entries(table_flat_t* table)
     return table->num_ent - 1;
 }
 
-uint32_t sfrt_flat_usage(table_flat_t* table)
+uint32_t RtTable::sfrt_flat_usage() const
 {
     uint32_t usage;
     if (!table || !table->rt || !table->allocated )
@@ -429,5 +414,53 @@ GENERIC sfrt_flat_dir8x_lookup(const SfIp* ip, table_flat_t* table)
         }
     }
     return nullptr;
+}
+
+/***************************************************************************
+ * allocate memory block from segment
+ * todo:currently, we only allocate memory continuously. Need to reuse freed
+ *      memory in the future.
+ * return:
+ *    0: fail
+ *    other: the offset of the allocated memory block
+ **************************************************************************/
+MEM_OFFSET RtTable::segment_snort_alloc(size_t size)
+{
+    MEM_OFFSET current_ptr = unused_ptr;
+
+    if (unused_mem < size)
+        return 0;
+
+    unused_ptr += size;
+    unused_mem -= size;
+
+    return current_ptr;
+}
+
+/***************************************************************************
+ * allocate memory block from segment and initialize it to zero
+ * It calls segment_snort_alloc() to get memory.
+ * todo:currently, we only allocate memory continuously. Need to reuse freed
+ *      memory in the future.
+ * return:
+ *    0: fail
+ *    other: the offset of the allocated memory block
+ **************************************************************************/
+MEM_OFFSET RtTable::segment_snort_calloc(size_t num, size_t size)
+{
+    MEM_OFFSET current_ptr;
+    size_t total;
+
+    if ((0 == size)||(0 == num))
+        return 0;
+    /*Check possible overflow*/
+    if (num > SIZE_MAX / size)
+        return 0;
+    total = num * size;
+    current_ptr = segment_snort_alloc(total);
+    if (0 != current_ptr)
+        memset((uint8_t*)base_ptr + current_ptr, 0, total);
+
+    return current_ptr;
 }
 

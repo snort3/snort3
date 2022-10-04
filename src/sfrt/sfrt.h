@@ -33,6 +33,7 @@
 typedef unsigned long word;
 
 typedef void* GENERIC;  // To be replaced with a pointer to a policy
+using MEM_OFFSET = uint32_t;
 
 struct tuple_t
 {

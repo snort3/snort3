@@ -23,6 +23,7 @@
 
 #include "reputation_module.h"
 
+struct table_flat_t;
 class ReputationData
 {
 public:

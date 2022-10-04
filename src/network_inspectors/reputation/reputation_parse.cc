@@ -134,8 +134,7 @@ static inline IPrepInfo* get_last_index(IPrepInfo* rep_info, uint8_t* base, int*
     }
 }
 
-static inline int duplicate_info(IPrepInfo* dest_info,IPrepInfo* current_info,
-    uint8_t* base)
+int ReputationParser::duplicate_info(IPrepInfo* dest_info, IPrepInfo* current_info, uint8_t* base)
 {
     int bytes_allocated = 0;
 
@@ -145,7 +144,7 @@ static inline int duplicate_info(IPrepInfo* dest_info,IPrepInfo* current_info,
         *dest_info = *current_info;
         if (!current_info->next)
             break;
-        next_info = segment_snort_calloc(1,sizeof(IPrepInfo));
+        next_info = table.segment_snort_calloc(1, sizeof(IPrepInfo));
         if (!next_info)
         {
             dest_info->next = 0;
@@ -163,7 +162,7 @@ static inline int duplicate_info(IPrepInfo* dest_info,IPrepInfo* current_info,
     return bytes_allocated;
 }
 
-static int64_t update_entry_info(INFO* current, INFO new_entry, SaveDest save_dest, uint8_t* base)
+int64_t ReputationParser::update_entry_info_impl(INFO* current, INFO new_entry, SaveDest save_dest, uint8_t* base)
 {
     IPrepInfo* current_info;
     IPrepInfo* new_info;
@@ -176,7 +175,7 @@ static int64_t update_entry_info(INFO* current, INFO new_entry, SaveDest save_de
     if (!(*current))
     {
         /* Copy the data to segment memory*/
-        *current = segment_snort_calloc(1,sizeof(IPrepInfo));
+        *current = table.segment_snort_calloc(1, sizeof(IPrepInfo));
         if (!(*current))
         {
             return -1;
@@ -247,7 +246,7 @@ static int64_t update_entry_info(INFO* current, INFO new_entry, SaveDest save_de
     else
     {
         IPrepInfo* next_info;
-        MEM_OFFSET ipInfo_ptr = segment_snort_calloc(1,sizeof(IPrepInfo));
+        MEM_OFFSET ipInfo_ptr = table.segment_snort_calloc(1, sizeof(IPrepInfo));
         if (!ipInfo_ptr)
             return -1;
         dest_info->next = ipInfo_ptr;
@@ -259,8 +258,15 @@ static int64_t update_entry_info(INFO* current, INFO new_entry, SaveDest save_de
     return bytes_allocated;
 }
 
-static int add_ip(SfCidr* ip_addr,INFO info_ptr, const ReputationConfig& config,
-    ReputationData& data)
+int64_t ReputationParser::update_entry_info(INFO* current, INFO new_entry, SaveDest save_dest, uint8_t* base,
+    void* data)
+{
+    assert(data);
+    ReputationParser* parser = static_cast<ReputationParser*>(data);
+    return parser->update_entry_info_impl(current, new_entry, save_dest, base);
+}
+
+int ReputationParser::add_ip(SfCidr* ip_addr,INFO info_ptr, const ReputationConfig& config)
 {
     /*This variable is used to check whether a more generic address
      * overrides specific address
@@ -268,15 +274,15 @@ static int add_ip(SfCidr* ip_addr,INFO info_ptr, const ReputationConfig& config,
     uint32_t usage_before;
     uint32_t usage_after;
 
-    usage_before =  sfrt_flat_usage(data.ip_list);
+    usage_before = table.sfrt_flat_usage();
 
     int final_ret = IP_INSERT_SUCCESS;
     /*Check whether the same or more generic address is already in the table*/
-    if (nullptr != sfrt_flat_lookup(ip_addr->get_addr(), data.ip_list))
+    if (nullptr != table.sfrt_flat_lookup(ip_addr->get_addr()))
         final_ret = IP_INSERT_DUPLICATE;
 
-    int ret = sfrt_flat_insert(ip_addr, (unsigned char)ip_addr->get_bits(), info_ptr, RT_FAVOR_ALL,
-        data.ip_list, &update_entry_info);
+    int ret = table.sfrt_flat_insert(ip_addr, (unsigned char)ip_addr->get_bits(), info_ptr, RT_FAVOR_ALL,
+        &update_entry_info, this);
 
     if (RT_SUCCESS == ret)
         totalNumEntries++;
@@ -285,7 +291,7 @@ static int add_ip(SfCidr* ip_addr,INFO info_ptr, const ReputationConfig& config,
     else
         final_ret = IP_INSERT_FAILURE;
 
-    usage_after = sfrt_flat_usage(data.ip_list);
+    usage_after = table.sfrt_flat_usage();
     /*Compare in the same scale*/
     if (usage_after > (config.memcap << 20))
         final_ret = IP_MEM_ALLOC_FAILURE;
@@ -435,8 +441,7 @@ static int snort_pton(char const* src, SfCidr* dest)
     return 1;
 }
 
-static int process_line(char* line, INFO info, const ReputationConfig& config,
-    ReputationData& data)
+int ReputationParser::process_line(char* line, INFO info, const ReputationConfig& config)
 {
     SfCidr address;
 
@@ -446,7 +451,7 @@ static int process_line(char* line, INFO info, const ReputationConfig& config,
     if ( snort_pton(line, &address) < 1 )
         return IP_INVALID;
 
-    return add_ip(&address, info, config, data);
+    return add_ip(&address, info, config);
 }
 
 static int update_path_to_file(char* full_filename, unsigned int max_size, const char* filename)
@@ -508,7 +513,7 @@ static char* get_list_type_name(ListFile* list_info)
     }
 }
 
-static void load_list_file(ListFile* list_info, const ReputationConfig& config,
+void ReputationParser::load_list_file(ListFile* list_info, const ReputationConfig& config,
     ReputationData& data)
 {
     char linebuf[MAX_ADDR_LINE_LENGTH];
@@ -538,7 +543,7 @@ static void load_list_file(ListFile* list_info, const ReputationConfig& config,
         return;
 
     /*convert list info to ip entry info*/
-    ip_info_ptr = segment_snort_calloc(1,sizeof(IPrepInfo));
+    ip_info_ptr = table.segment_snort_calloc(1, sizeof(IPrepInfo));
     if (!(ip_info_ptr))
         return;
     base = (uint8_t*)data.ip_list;
@@ -557,7 +562,7 @@ static void load_list_file(ListFile* list_info, const ReputationConfig& config,
         return;
     }
 
-    num_loaded_before = sfrt_flat_num_entries(data.ip_list);
+    num_loaded_before = table.sfrt_flat_num_entries();
     while ( fgets(linebuf, MAX_ADDR_LINE_LENGTH, fp) )
     {
         int ret;
@@ -572,7 +577,7 @@ static void load_list_file(ListFile* list_info, const ReputationConfig& config,
             *cmt = '\0';
 
         /* process the line */
-        ret = process_line(linebuf, ip_info_ptr, config, data);
+        ret = process_line(linebuf, ip_info_ptr, config);
 
         if (IP_INSERT_SUCCESS == ret)
         {
@@ -614,14 +619,14 @@ static void load_list_file(ListFile* list_info, const ReputationConfig& config,
     if ( SnortConfig::log_verbose() )
     {
         LogMessage("    Reputation entries loaded: %u, invalid: %u, re-defined: %u (from file %s)\n",
-            sfrt_flat_num_entries(data.ip_list) - num_loaded_before,
+            table.sfrt_flat_num_entries() - num_loaded_before,
             invalid_count, duplicate_count, full_path_filename);
     }
 
     fclose(fp);
 }
 
-void ip_list_init(uint32_t max_entries, const ReputationConfig& config, ReputationData& data)
+void ReputationParser::ip_list_init(uint32_t max_entries, const ReputationConfig& config, ReputationData& data)
 {
     if ( !data.ip_list )
     {
@@ -629,13 +634,14 @@ void ip_list_init(uint32_t max_entries, const ReputationConfig& config, Reputati
         mem_size = estimate_size(max_entries, config.memcap);
         data.reputation_segment = (uint8_t*)snort_alloc(mem_size);
 
-        segment_meminit(data.reputation_segment, mem_size);
+        table.segment_meminit(data.reputation_segment, mem_size);
 
         /*DIR_16x7_4x4 for performance, but memory usage is high
          *Use  DIR_8x16 worst case IPV4 5K, IPV6 15K (bytes)
          *Use  DIR_16x7_4x4 worst case IPV4 500, IPV6 2.5M
          */
-        data.ip_list = sfrt_flat_new(DIR_8x16, IPv6, max_entries, config.memcap);
+        table.sfrt_flat_new(DIR_8x16, IPv6, max_entries, config.memcap);
+        data.ip_list = table.get_table();
 
         if ( !data.ip_list )
         {
@@ -720,7 +726,7 @@ static int load_file(int total_lines, const char* path)
     return num_lines;
 }
 
-void estimate_num_entries(ReputationData& data)
+void ReputationParser::estimate_num_entries(ReputationData& data)
 {
     data.num_entries = 0;
 
@@ -728,7 +734,7 @@ void estimate_num_entries(ReputationData& data)
         data.num_entries += load_file(data.num_entries, file->file_name.c_str());
 }
 
-void add_block_allow_List(const ReputationConfig& config, ReputationData& data)
+void ReputationParser::add_block_allow_List(const ReputationConfig& config, ReputationData& data)
 {
     if (config.blocklist_path.size())
     {
@@ -910,7 +916,7 @@ static bool process_line_in_manifest(ListFile* list_item, const char* manifest, 
     return true;
 }
 
-void read_manifest(const char* manifest_file, const ReputationConfig& config, ReputationData& data)
+void ReputationParser::read_manifest(const char* manifest_file, const ReputationConfig& config, ReputationData& data)
 {
     char full_path_dir[PATH_MAX+1];
     update_path_to_file(full_path_dir, PATH_MAX, config.list_dir.c_str());

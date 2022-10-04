@@ -552,10 +552,10 @@ ReputationData* Reputation::load_data()
 {
     ReputationData* data = new ReputationData();
     if (!config.list_dir.empty())
-        read_manifest(MANIFEST_FILENAME, config, *data);
+        ReputationParser::read_manifest(MANIFEST_FILENAME, config, *data);
 
-    add_block_allow_List(config, *data);
-    estimate_num_entries(*data);
+    ReputationParser::add_block_allow_List(config, *data);
+    ReputationParser::estimate_num_entries(*data);
     if (0 >= data->num_entries)
     {
         ParseWarning(WARN_CONF,
@@ -563,8 +563,9 @@ ReputationData* Reputation::load_data()
     }
     else
     {
-        ip_list_init(data->num_entries + 1, config, *data);
-        reputationstats.memory_allocated = sfrt_flat_usage(data->ip_list);
+        ReputationParser parser;
+        parser.ip_list_init(data->num_entries + 1, config, *data);
+        reputationstats.memory_allocated = parser.get_usage();
     }
 
     return data;

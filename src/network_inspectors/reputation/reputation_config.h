@@ -22,7 +22,7 @@
 
 #include "framework/counts.h"
 #include "main/thread.h"
-#include "sfrt/sfrt_flat.h"
+#include "sfrt/sfrt.h"
 
 #include <vector>
 #include <set>
@@ -109,5 +109,6 @@ struct ReputationStats
 
 extern const PegInfo reputation_peg_names[];
 extern THREAD_LOCAL ReputationStats reputationstats;
+
 #endif
 

@@ -26,17 +26,17 @@
 typedef MEM_OFFSET SUB_TABLE_PTR;
 typedef MEM_OFFSET ENTRIES_PTR;
 
-typedef struct
+struct DIR_Entry
 {
     MEM_OFFSET value;
     uint8_t length;
-}DIR_Entry;
+};
 
 /*******************************************************************/
 /* DIR-n-m data structures
  * Each table in the DIR-n-m method is represented by a
  * dir_sub_table_t.  They are managed by a dir_table_t. */
-typedef struct
+struct dir_sub_table_flat_t
 {
     int num_entries; /* Number of entries in this table */
     int width;       /* width of this table. */
@@ -46,10 +46,10 @@ typedef struct
     int cur_num;     /* Present number of used nodes */
 
     ENTRIES_PTR entries;
-} dir_sub_table_flat_t;
+};
 
 /* Master data structure for the DIR-n-m derivative */
-typedef struct
+struct dir_table_flat_t
 {
     int dimensions[20];    /* DIR-n-m will consist of any number of arbitrarily
                          * long tables. This variable keeps track of the
@@ -64,15 +64,7 @@ typedef struct
     uint32_t allocated;
 
     SUB_TABLE_PTR sub_table;
-} dir_table_flat_t;
-
-/******************************************************************
-   DIR-n-m functions, these are not intended to be called directly */
-TABLE_PTR sfrt_dir_flat_new(uint32_t mem_cap, int count,...);
-tuple_flat_t sfrt_dir_flat_lookup(const uint32_t* addr, int numAddrDwords, TABLE_PTR table);
-int sfrt_dir_flat_insert(const uint32_t* addr, int numAddrDwords, int len, word data_index,
-                    int behavior, TABLE_PTR, updateEntryInfoFunc updateEntry, INFO *data);
-uint32_t sfrt_dir_flat_usage(TABLE_PTR);
+};
 
 #endif /* SFRT_FLAT_DIR_H */
 

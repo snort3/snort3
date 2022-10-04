@@ -22,10 +22,11 @@
 #include "config.h"
 #endif
 
-#include "sfrt_flat.h" // FIXIT-L these includes are circular
-#include "sfrt_flat_dir.h"
+#include "sfrt/sfrt_flat_dir.h"
 
 #include <cstdarg>
+
+#include "sfrt/sfrt_flat.h"
 
 #if SIZEOF_UNSIGNED_LONG_INT == 8
 #define ARCH_WIDTH 64
@@ -33,21 +34,19 @@
 #define ARCH_WIDTH 32
 #endif
 
-typedef struct
+struct IPLOOKUP
 {
     const uint32_t* addr;
     int bits;
-} IPLOOKUP;
+};
 
 /* Create new "sub" table of 2^width entries */
-static TABLE_PTR _sub_table_flat_new(dir_table_flat_t* root, uint32_t dimension,
+TABLE_PTR RtTable::_sub_table_flat_new(dir_table_flat_t* root, uint32_t dimension,
     uint32_t prefill, uint32_t bit_length)
 {
     int width = root->dimensions[dimension];
     int len = 1 << width;
     int index;
-    dir_sub_table_flat_t* sub;
-    TABLE_PTR sub_ptr;
     uint8_t* base;
     DIR_Entry* entries;
 
@@ -63,7 +62,7 @@ static TABLE_PTR _sub_table_flat_new(dir_table_flat_t* root, uint32_t dimension,
     }
 
     /* Set up the initial prefilled "sub table" */
-    sub_ptr = segment_snort_alloc(sizeof(dir_sub_table_flat_t));
+    TABLE_PTR sub_ptr = segment_snort_alloc(sizeof(dir_sub_table_flat_t));
 
     if (!sub_ptr)
     {
@@ -71,7 +70,7 @@ static TABLE_PTR _sub_table_flat_new(dir_table_flat_t* root, uint32_t dimension,
     }
 
     base = (uint8_t*)segment_basePtr();
-    sub = (dir_sub_table_flat_t*)(&base[sub_ptr]);
+    dir_sub_table_flat_t* sub = (dir_sub_table_flat_t*)(&base[sub_ptr]);
 
     /* This keeps the width readily available rather than recalculating it
      * from the number of entries during an insert or lookup */
@@ -110,7 +109,7 @@ static TABLE_PTR _sub_table_flat_new(dir_table_flat_t* root, uint32_t dimension,
 }
 
 /* Create new dir-n-m root table with 'count' depth */
-TABLE_PTR sfrt_dir_flat_new(uint32_t mem_cap, int count,...)
+TABLE_PTR RtTable::sfrt_dir_flat_new(uint32_t mem_cap, int count,...)
 {
     va_list ap;
     int index;
@@ -261,8 +260,8 @@ static inline void _dir_fill_less_specific(int index, int fill,
 }
 #endif
 
-static inline int64_t _dir_update_info(int index, int fill,
-    word length, uint32_t val, SUB_TABLE_PTR sub_ptr, updateEntryInfoFunc updateEntry, INFO* data)
+int64_t RtTable::_dir_update_info(int index, int fill, word length, uint32_t val, SUB_TABLE_PTR sub_ptr,
+    updateEntryInfoFunc updateEntry, void* update_entry_info_data, INFO* data)
 {
     dir_sub_table_flat_t* subtable;
     uint8_t* base;
@@ -291,7 +290,7 @@ static inline int64_t _dir_update_info(int index, int fill,
             int64_t bytesAllocated;
             dir_sub_table_flat_t* next = (dir_sub_table_flat_t*)(&base[entry[index].value]);
             bytesAllocated = _dir_update_info(0, 1 << next->width, length, val,
-                    entry[index].value, updateEntry, data);
+                    entry[index].value, updateEntry, update_entry_info_data, data);
             if (bytesAllocated < 0)
                 return bytesAllocated;
             else
@@ -303,7 +302,7 @@ static inline int64_t _dir_update_info(int index, int fill,
             {
                 int64_t bytesAllocated;
                 bytesAllocated =  updateEntry(&data[entry[index].value], data[val],
-                    SAVE_TO_NEW, base);
+                    SAVE_TO_NEW, base, update_entry_info_data);
                 if (bytesAllocated < 0)
                     return bytesAllocated;
                 else
@@ -317,7 +316,7 @@ static inline int64_t _dir_update_info(int index, int fill,
         {
             int64_t bytesAllocated;
             bytesAllocated = updateEntry(&data[entry[index].value], data[val],
-                SAVE_TO_CURRENT,  base);
+                SAVE_TO_CURRENT, base, update_entry_info_data);
             if (bytesAllocated < 0)
                 return bytesAllocated;
             else
@@ -336,10 +335,9 @@ static inline int64_t _dir_update_info(int index, int fill,
  * @param length    Number of bits of the IP used to specify this CIDR
  * @param ptr       Information to be associated with this IP range
  * @param master_table    The table that describes all, returned by dir_new */
-static int _dir_sub_insert(IPLOOKUP* ip, int length, int cur_len, INFO ptr,
-    int current_depth, int behavior,
-    SUB_TABLE_PTR sub_ptr, dir_table_flat_t* root_table,updateEntryInfoFunc updateEntry,
-    INFO* data)
+return_codes RtTable::_dir_sub_insert(IPLOOKUP* ip, int length, int cur_len, INFO ptr,
+    int current_depth, int behavior, SUB_TABLE_PTR sub_ptr, dir_table_flat_t* root_table,
+    updateEntryInfoFunc updateEntry, void* update_entry_info_data, INFO* data)
 {
     word index;
     uint8_t* base = (uint8_t*)segment_basePtr();
@@ -400,7 +398,7 @@ static int _dir_sub_insert(IPLOOKUP* ip, int length, int cur_len, INFO ptr,
             int64_t bytesAllocated;
 
             bytesAllocated = _dir_update_info(index, fill, length, (word)ptr,
-                sub_ptr, updateEntry, data);
+                sub_ptr, updateEntry, update_entry_info_data, data);
 
             if (bytesAllocated < 0)
                 return MEM_ALLOC_FAILURE;
@@ -444,15 +442,15 @@ static int _dir_sub_insert(IPLOOKUP* ip, int length, int cur_len, INFO ptr,
         ip->bits += sub_table->width;
         return (_dir_sub_insert(ip, length,
                cur_len - sub_table->width, ptr, current_depth+1,
-               behavior, entry[index].value, root_table, updateEntry, data));
+               behavior, entry[index].value, root_table, updateEntry, update_entry_info_data, data));
     }
 
     return RT_SUCCESS;
 }
 
 /* Insert entry into DIR-n-m tables */
-int sfrt_dir_flat_insert(const uint32_t* addr, int /* numAddrDwords */, int len, word data_index,
-    int behavior, TABLE_PTR table_ptr, updateEntryInfoFunc updateEntry, INFO* data)
+return_codes RtTable::sfrt_dir_flat_insert(const uint32_t* addr, int /* numAddrDwords */, int len, word data_index,
+    int behavior, TABLE_PTR table_ptr, updateEntryInfoFunc updateEntry, void* update_entry_info_data, INFO* data)
 {
     dir_table_flat_t* root;
     uint8_t* base;
@@ -497,12 +495,12 @@ int sfrt_dir_flat_insert(const uint32_t* addr, int /* numAddrDwords */, int len,
 
     /* Find the sub table in which to insert */
     return _dir_sub_insert(&iplu, len, len, data_index,
-        0, behavior, root->sub_table, root, updateEntry, data);
+        0, behavior, root->sub_table, root, updateEntry, update_entry_info_data, data);
 }
 
 /* Traverse sub tables looking for match
    Called by dir_lookup and recursively */
-static tuple_flat_t _dir_sub_flat_lookup(IPLOOKUP* ip, TABLE_PTR table_ptr)
+tuple_flat_t RtTable::_dir_sub_flat_lookup(IPLOOKUP* ip, TABLE_PTR table_ptr)
 {
     word index;
     uint8_t* base = (uint8_t*)segment_basePtr();
@@ -546,7 +544,7 @@ static tuple_flat_t _dir_sub_flat_lookup(IPLOOKUP* ip, TABLE_PTR table_ptr)
 }
 
 /* Lookup information associated with the value "ip" */
-tuple_flat_t sfrt_dir_flat_lookup(const uint32_t* addr, int numAddrDwords, TABLE_PTR table_ptr)
+tuple_flat_t RtTable::sfrt_dir_flat_lookup(const uint32_t* addr, int numAddrDwords, TABLE_PTR table_ptr)
 {
     dir_table_flat_t* root;
     uint8_t* base = (uint8_t*)segment_basePtr();
@@ -578,7 +576,7 @@ tuple_flat_t sfrt_dir_flat_lookup(const uint32_t* addr, int numAddrDwords, TABLE
     return _dir_sub_flat_lookup(&iplu, root->sub_table);
 }
 
-uint32_t sfrt_dir_flat_usage(TABLE_PTR table_ptr)
+uint32_t RtTable::sfrt_dir_flat_usage(TABLE_PTR table_ptr) const
 {
     dir_table_flat_t* table;
     uint8_t* base;

@@ -9,7 +9,6 @@ set( UTIL_INCLUDES
     memcap_allocator.h
     primed_allocator.h
     safec.h
-    segment_mem.h
     sflsq.h
     stats.h
     util.h
@@ -38,7 +37,6 @@ add_library ( utils OBJECT
     js_normalizer.h
     js_tokenizer.h
     kmap.cc
-    segment_mem.cc
     sflsq.cc
     snort_bounds.h
     stats.cc
