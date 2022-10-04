@@ -175,6 +175,12 @@ const Parameter HttpModule::http_params[] =
       "make HTTP/2 request message bodies available for application detection "
           "(detection requires AppId)" },
 
+    { "allowed_methods", Parameter::PT_STRING, nullptr, nullptr,
+      "list of allowed methods" },
+
+    { "disallowed_methods", Parameter::PT_STRING, nullptr, nullptr,
+      "list of disallowed methods" },
+
 #ifdef REG_TEST
     { "test_input", Parameter::PT_BOOL, nullptr, "false",
       "read HTTP messages from text file" },
@@ -232,6 +238,14 @@ bool HttpModule::begin(const char* fqn, int, SnortConfig*)
     delete params;
     params = new HttpParaList;
     return true;
+}
+
+static void store_tokens(Value& val, std::set<std::string>& methods)
+{
+    val.set_first_token();
+    std::string tok;
+    while (val.get_next_csv_token(tok))
+        methods.insert(tok);
 }
 
 bool HttpModule::set(const char*, Value& val, SnortConfig*)
@@ -424,6 +438,10 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     {
         params->publish_request_body = val.get_bool();
     }
+    else if (val.is("allowed_methods"))
+        store_tokens(val, params->allowed_methods);
+    else if (val.is("disallowed_methods"))
+        store_tokens(val, params->disallowed_methods);
 
 #ifdef REG_TEST
     else if (val.is("test_input"))
@@ -483,6 +501,9 @@ bool HttpModule::end(const char* fqn, int, SnortConfig*)
 {
     if (strcmp(fqn, "http_inspect"))
         return true;
+
+    if (!params->allowed_methods.empty() && !params->disallowed_methods.empty())
+        ParseError("allowed methods can't be used in conjunction with disallowed methods");
 
     if (!params->uri_param.utf8 && params->uri_param.utf8_bare_byte)
     {

@@ -130,6 +130,27 @@ depth parameter entirely because that is the default.
 These limits have no effect on how much data is forwarded to file
 processing.
 
+===== allowed_methods and disallowed_methods
+
+When either of these options are set, HTTP inspector will check if the method
+in the HTTP request is allowed and if not raise alert 119:287. You can either
+define a list of allowed methods or a list of disallowed methods. Defining
+both is a configuration error. When a list of disallowed methods is defined,
+any method not present on that list is implicitly allowed. Methods on either
+of these lists are considered known methods and will not raise alert 119:31.
+For example if configured for:
+
+    allowed_methods = "GET,PUT,BLUE"
+
+HTTP inspector will raise 119:287 for POST and RED, no alert 119:31 will
+be raised for BLUE, and 119:31 will be raised for RED.
+If configured for
+
+    disallowed_methods = "POST,RED"
+
+HTTP inspector will raise 119:287 for POST and RED, 119:31 for BLUE, and
+no alert 119:31 will be raised for RED.
+
 ===== script_detection
 
 Script detection is a feature that enables Snort to more quickly detect and

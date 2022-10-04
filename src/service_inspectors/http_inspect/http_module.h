@@ -21,6 +21,7 @@
 #define HTTP_MODULE_H
 
 #include <bitset>
+#include <set>
 #include <string>
 #include <unordered_set>
 
@@ -120,6 +121,9 @@ public:
     // The below header_list contains the list of known static header along with
     // any custom headers mapped with the their respective Header IDs.
     StrCode header_list[HttpEnums::HEAD__MAX_VALUE + HttpEnums::MAX_CUSTOM_HEADERS + 1] = {};
+
+    std::set<std::string> allowed_methods;
+    std::set<std::string> disallowed_methods;
 
 #ifdef REG_TEST
     int64_t print_amount = 1200;

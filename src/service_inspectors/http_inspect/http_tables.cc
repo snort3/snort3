@@ -350,6 +350,8 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_PARTIAL_START,              "partial start line" },
     { EVENT_REQ_TOO_LONG,               "HTTP message request line longer than 63780 bytes" },
     { EVENT_UNEXPECTED_H2_PREFACE,      "HTTP/2 preface received instead of an HTTP/1 method" },
+    { EVENT_DISALLOWED_METHOD,          "HTTP request method is not on allowed methods list or is on "
+                                        "disallowed methods list" },
     { 0, nullptr }
 };
 
