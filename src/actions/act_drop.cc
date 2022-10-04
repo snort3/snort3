@@ -49,8 +49,8 @@ void DropAction::exec(Packet* p, const OptTreeNode* otn)
 {
     p->active->drop_packet(p);
     p->active->set_drop_reason("ips");
-    if ( otn )
-        Actions::alert(p, otn);
+
+    Actions::alert(p, otn);
 }
 
 //-------------------------------------------------------------------------

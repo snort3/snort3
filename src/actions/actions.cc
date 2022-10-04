@@ -45,6 +45,9 @@ void Actions::log(Packet* p, const OptTreeNode* otn)
 
 void Actions::alert(Packet* p, const OptTreeNode* otn)
 {
+    if (!otn)
+        return;
+
     RuleTreeNode* rtn = getRtnFromOtn(otn);
     assert(rtn);
 

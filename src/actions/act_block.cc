@@ -49,8 +49,8 @@ void BlockAction::exec(Packet* p, const OptTreeNode* otn)
 {
     p->active->block_session(p);
     p->active->set_drop_reason("ips");
-    if ( otn )
-        Actions::alert(p, otn);
+
+    Actions::alert(p, otn);
 }
 
 //-------------------------------------------------------------------------

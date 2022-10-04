@@ -45,8 +45,7 @@ public:
 
 void AlertAction::exec(Packet* p, const OptTreeNode* otn)
 {
-    if ( otn )
-        Actions::alert(p, otn);
+    Actions::alert(p, otn);
 }
 
 //-------------------------------------------------------------------------

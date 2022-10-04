@@ -175,8 +175,7 @@ void RejectAction::exec(Packet* p, const OptTreeNode* otn)
     p->active->reset_again();
     p->active->update_status(p);
 
-    if ( otn )
-        Actions::alert(p, otn);
+    Actions::alert(p, otn);
 }
 
 //-------------------------------------------------------------------------
