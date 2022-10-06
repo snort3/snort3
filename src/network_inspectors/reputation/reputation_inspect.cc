@@ -88,7 +88,7 @@ static inline IPdecision get_reputation(const ReputationConfig& config, Reputati
         int i;
         for (i = 0; i < NUM_INDEX_PER_ENTRY; i++)
         {
-            int list_index = rep_info->list_indexes[i];
+            uint8_t list_index = rep_info->list_indexes[i];
             if (!list_index)
                 break;
             list_index--;
