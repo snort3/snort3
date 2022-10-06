@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.42.0 2022-09-22 15:40:10 EDT TST
+Revision 3.1.43.0 2022-10-05 15:21:03 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -3791,6 +3791,9 @@ Configuration:
   * bool http_inspect.request_body_app_detection = true: make HTTP/2
     request message bodies available for application detection
     (detection requires AppId)
+  * string http_inspect.allowed_methods: list of allowed methods
+  * string http_inspect.disallowed_methods: list of disallowed
+    methods
 
 Rules:
 
@@ -3985,6 +3988,8 @@ Rules:
     63780 bytes
   * 119:286 (http_inspect) HTTP/2 preface received instead of an HTTP
     /1 method
+  * 119:287 (http_inspect) HTTP request method is not on allowed
+    methods list or is on disallowed methods list
 
 Peg counts:
 
@@ -9513,6 +9518,7 @@ libraries see the Getting Started section of the manual.
     examining HTTP message headers
   * implied http_header.with_trailer: parts of this rule examine HTTP
     message trailers
+  * string http_inspect.allowed_methods: list of allowed methods
   * bool http_inspect.backslash_to_slash = true: replace \ with /
     when normalizing URIs
   * bit_list http_inspect.bad_characters: alert when any of specified
@@ -9525,6 +9531,8 @@ libraries see the Getting Started section of the manual.
     Visual Basic for Applications macro files in response bodies
   * bool http_inspect.decompress_zip = false: decompress zip files in
     response bodies
+  * string http_inspect.disallowed_methods: list of disallowed
+    methods
   * string http_inspect.ignore_unreserved: do not alert when the
     specified unreserved characters are percent-encoded in a
     URI.Unreserved characters are 0-9, a-z, A-Z, period, underscore,
@@ -13682,6 +13690,12 @@ HTTP message Request-Line longer than 63780 bytes
 method
 
 HTTP/2 preface received instead of an HTTP/1 method
+
+119:287 (http_inspect) HTTP request method is not on allowed methods
+list or is on disallowed methods list
+
+HTTP request method is not on allowed methods list or is on
+disallowed methods list.
 
 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
 

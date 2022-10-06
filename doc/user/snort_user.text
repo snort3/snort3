@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.42.0 2022-09-22 15:40:33 EDT TST
+Revision 3.1.43.0 2022-10-05 15:21:24 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -3944,7 +3944,29 @@ omit the depth parameter entirely because that is the default.
 These limits have no effect on how much data is forwarded to file
 processing.
 
-5.10.3.2. script_detection
+5.10.3.2. allowed_methods and disallowed_methods
+
+When either of these options are set, HTTP inspector will check if
+the method in the HTTP request is allowed and if not raise alert
+119:287. You can either define a list of allowed methods or a list of
+disallowed methods. Defining both is a configuration error. When a
+list of disallowed methods is defined, any method not present on that
+list is implicitly allowed. Methods on either of these lists are
+considered known methods and will not raise alert 119:31. For example
+if configured for:
+
+allowed_methods = "GET,PUT,BLUE"
+
+HTTP inspector will raise 119:287 for POST and RED, no alert 119:31
+will be raised for BLUE, and 119:31 will be raised for RED. If
+configured for
+
+disallowed_methods = "POST,RED"
+
+HTTP inspector will raise 119:287 for POST and RED, 119:31 for BLUE,
+and no alert 119:31 will be raised for RED.
+
+5.10.3.3. script_detection
 
 Script detection is a feature that enables Snort to more quickly
 detect and block response messages containing malicious JavaScript.
@@ -3956,7 +3978,7 @@ consumes somewhat more of the sensor’s resources.
 This feature is off by default. script_detection = true will activate
 it.
 
-5.10.3.3. gzip
+5.10.3.4. gzip
 
 http_inspect by default decompresses deflate and gzip message bodies
 before inspecting them. This feature can be turned off by unzip =
@@ -3965,14 +3987,14 @@ improvement but at a very high price. It is unlikely that any
 meaningful inspection of message bodies will be possible. Effectively
 HTTP processing would be limited to the headers.
 
-5.10.3.4. normalize_utf
+5.10.3.5. normalize_utf
 
 http_inspect will decode utf-8, utf-7, utf-16le, utf-16be, utf-32le,
 and utf-32be in response message bodies based on the Content-Type
 header. This feature is on by default: normalize_utf = false will
 deactivate it.
 
-5.10.3.5. decompress_pdf
+5.10.3.6. decompress_pdf
 
 decompress_pdf = true will enable decompression of compressed
 portions of PDF files encountered in a message body. http_inspect
@@ -3981,7 +4003,7 @@ locate PDF streams with a single /FlateDecode filter. The compressed
 content is decompressed and made available through the file data rule
 option.
 
-5.10.3.6. decompress_swf
+5.10.3.7. decompress_swf
 
 decompress_swf = true will enable decompression of compressed SWF
 (Adobe Flash content) files encountered in a message body. The
@@ -3991,13 +4013,13 @@ LZMA. The compressed content is decompressed and made available
 through the file data rule option. The compressed SWF file signature
 is converted to FWS to indicate an uncompressed file.
 
-5.10.3.7. decompress_zip
+5.10.3.8. decompress_zip
 
 decompress_zip = true will enable decompression of compressed zip
 archives encountered in a message body. The compressed content is
 decompressed and made available through the file_data rule option.
 
-5.10.3.8. decompress_vba
+5.10.3.9. decompress_vba
 
 decompress_vba = true will enable decompression of RLE (Run Length
 Encoding) compressed vba (Visual Basic for Applications) macro data
@@ -4007,7 +4029,7 @@ Linking and Embedding) file embedded with the files containing RLE
 compressed vba macro data. The decompressed vba macro data is then
 made available through the vba_data ips rule option.
 
-5.10.3.9. normalize_javascript
+5.10.3.10. normalize_javascript
 
 normalize_javascript = true will enable legacy normalizer of
 JavaScript within the HTTP response body. http_inspect looks for
@@ -4020,7 +4042,7 @@ http_inspect also replaces consecutive whitespaces with a single
 space and normalizes the plus by concatenating the strings. Such
 normalizations refer to basic JavaScript normalization.
 
-5.10.3.10. js_norm_bytes_depth
+5.10.3.11. js_norm_bytes_depth
 
 js_norm_bytes_depth = N {-1 : max53} will set a number of input
 JavaScript bytes to normalize. When the depth is reached,
@@ -4036,7 +4058,7 @@ unique names with unified names representation: var_0000:var_ffff.
 The identifiers are variables and function names. The normalized data
 is available through the js_data rule option.
 
-5.10.3.11. js_norm_identifier_depth
+5.10.3.12. js_norm_identifier_depth
 
 js_norm_identifier_depth = N {0 : 65536} will set a number of unique
 JavaScript identifiers to normalize. When the depth is reached, a
@@ -4048,7 +4070,7 @@ response and not a single script. By default, the value is set to
 65536, which is the max allowed number of unique identifiers. The
 generated names are in the range from var_0000 to var_ffff.
 
-5.10.3.12. js_norm_max_tmpl_nest
+5.10.3.13. js_norm_max_tmpl_nest
 
 js_norm_max_tmpl_nest = N {0 : 255} (default 32) is an option of the
 enhanced JavaScript normalizer that determines the deepest level of
@@ -4060,7 +4082,7 @@ require keeping track of every layer for proper normalization. This
 option is present to limit the amount of memory dedicated to template
 nesting tracking.
 
-5.10.3.13. js_norm_max_bracket_depth
+5.10.3.14. js_norm_max_bracket_depth
 
 js_norm_max_bracket_depth = N {1 : 65535} (default 256) is an option
 of the enhanced JavaScript normalizer that determines the maximum
@@ -4069,7 +4091,7 @@ brackets, nested within a matching pair, in any combination. This
 option is present to limit the amount of memory dedicated to bracket
 tracking.
 
-5.10.3.14. js_norm_max_scope_depth
+5.10.3.15. js_norm_max_scope_depth
 
 js_norm_max_scope_depth = N {1 : 65535} (default 256) is an option of
 the enhanced JavaScript normalizer that determines the deepest level
@@ -4077,7 +4099,7 @@ of nested variable scope, i.e. functions, code blocks, etc. including
 the global scope. This option is present to limit the amount of
 memory dedicated to scope tracking.
 
-5.10.3.15. js_norm_ident_ignore
+5.10.3.16. js_norm_ident_ignore
 
 js_norm_ident_ignore = {<list of ignored identifiers>} is an option
 of the enhanced JavaScript normalizer that defines a list of
@@ -4127,7 +4149,7 @@ ought to be included in the ignore list. If for some reason the user
 wants to disable unescape related features, then removing function’s
 name from the ignore list does the trick.
 
-5.10.3.16. js_norm_prop_ignore
+5.10.3.17. js_norm_prop_ignore
 
 js_norm_prop_ignore = {<list of ignored properties>} is an option of
 the enhanced JavaScript normalizer that defines a list of object
@@ -4150,7 +4172,7 @@ out: "string".var_0000().split("").reverse().join("");
 The default list of ignored properties is present in
 "snort_defaults.lua".
 
-5.10.3.17. xff_headers
+5.10.3.18. xff_headers
 
 This configuration supports defining custom x-forwarded-for type
 headers. In a multi-vendor world, it is quite possible that the
@@ -4165,7 +4187,7 @@ they are defined, e.g "x-forwarded-for" will be preferred than
 "true-client-ip" if both headers are present in the stream. The
 header names should be delimited by a space.
 
-5.10.3.18. maximum_host_length
+5.10.3.19. maximum_host_length
 
 Setting maximum_host_length causes http_inspect to generate 119:25 if
 the Host header value including optional white space exceeds the
@@ -4173,7 +4195,7 @@ specified length. In the abnormal case of multiple Host headers, the
 total length of the combined values is used. The default value is -1,
 meaning do not perform this check.
 
-5.10.3.19. maximum_chunk_length
+5.10.3.20. maximum_chunk_length
 
 http_inspect strictly limits individual chunks within a chunked
 message body to be less than four gigabytes.
@@ -4181,17 +4203,17 @@ message body to be less than four gigabytes.
 A lower limit may be configured by setting maximum_chunk_length. Any
 chunk longer than maximum chunk length will generate a 119:16 alert.
 
-5.10.3.20. maximum_header_length
+5.10.3.21. maximum_header_length
 
 http_inspect generates 119:19 when the length of a header exceeds
 maximum_header_length = N {0 : 65535} (default 4096).
 
-5.10.3.21. maximum_headers
+5.10.3.22. maximum_headers
 
 http_inspect generates 119:20 when the number of headers exceeds
 maximum_headers = N {0 : 65535} (default 200).
 
-5.10.3.22. URI processing
+5.10.3.23. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize

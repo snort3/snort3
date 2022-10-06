@@ -1,3 +1,15 @@
+2022-10-05: 3.1.43.0
+
+* actions: fix action logging for suppressed events
+* appid: handle multistream http protocols(http2,http3) together
+* appid: return appid set by eve for http/3 if no hsession is present, but prefer hsession appid over eve
+* appid: updating devnotes for first packet API
+* detection: refactor set next packet to use the dummy active object when there is no packet
+* flow: disable inspection for and HA flow unless the state is setup or inspect
+* http2_inspect: std::list - remove indirection from stream list
+* http_inspect: allowed and disallowed methods
+* reputation, sfrt: refactor reputation to remove global variables
+
 2022-09-22: 3.1.42.0
 
 * appid: custom lua detector api to map ip and port to appids on the first packet
