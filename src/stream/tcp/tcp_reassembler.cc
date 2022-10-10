@@ -266,7 +266,10 @@ void TcpReassembler::dup_reassembly_segment(
 
 bool TcpReassembler::add_alert(TcpReassemblerState& trs, uint32_t gid, uint32_t sid)
 {
-    trs.alerts.emplace_back(gid, sid, 0, 0, 0);
+    if (!this->check_alerted(trs,gid, sid))
+    {
+        trs.alerts.emplace_back(gid, sid, 0, 0, 0);
+    }
     return true;
 }
 
