@@ -121,6 +121,7 @@ HttpFlowData::~HttpFlowData()
         delete[] section_buffer[k];
         delete[] partial_buffer[k];
         delete[] partial_detect_buffer[k];
+        delete partial_mime_bufs[k];
         HttpTransaction::delete_transaction(transaction[k], nullptr);
         delete cutter[k];
         if (compress_stream[k] != nullptr)
@@ -147,6 +148,8 @@ HttpFlowData::~HttpFlowData()
 void HttpFlowData::half_reset(SourceId source_id)
 {
     assert((source_id == SRC_CLIENT) || (source_id == SRC_SERVER));
+    assert(partial_mime_bufs[source_id] == nullptr);
+    assert(partial_mime_last_complete[source_id]);
 
     version_id[source_id] = VERS__NOT_PRESENT;
     data_length[source_id] = STAT_NOT_PRESENT;

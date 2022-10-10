@@ -62,6 +62,7 @@ public:
     bool decompress_zip = false;
     bool decompress_vba = false;
     snort::DecodeConfig* mime_decode_conf;
+    uint32_t max_mime_attach = 5;
     bool script_detection = false;
     snort::LiteralSearch::Handle* script_detection_handle = nullptr;
     bool publish_request_body = true;

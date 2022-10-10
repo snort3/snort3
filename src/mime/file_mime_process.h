@@ -83,6 +83,15 @@ public:
     const BufferData& get_ole_buf();
     const BufferData& get_vba_inspect_buf();
 
+    struct AttachmentBuffer
+    {
+        const uint8_t* data = nullptr;
+        uint32_t length = 0;
+        bool finished = true;
+    };
+
+    const AttachmentBuffer get_attachment() { return attachment; }
+
 protected:
     MimeDecode* decode_state = nullptr;
 
@@ -131,6 +140,8 @@ private:
 
     uint8_t* partial_header = nullptr;
     uint32_t partial_header_len = 0;
+
+    AttachmentBuffer attachment;
 };
 }
 #endif

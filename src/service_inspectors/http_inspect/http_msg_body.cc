@@ -158,18 +158,61 @@ void HttpMsgBody::analyze()
         Packet* p = DetectionEngine::get_current_packet();
         const uint8_t* const section_end = msg_text_new.start() + msg_text_new.length();
         const uint8_t* ptr = msg_text_new.start();
+        MimeSession::AttachmentBuffer latest_attachment;
+
+        if (session_data->partial_mime_bufs[source_id] != nullptr)
+        {
+            // Retrieve the attachment list stored during the partial inspection
+            mime_bufs = session_data->partial_mime_bufs[source_id];
+            session_data->partial_mime_bufs[source_id] = nullptr;
+            last_attachment_complete = session_data->partial_mime_last_complete[source_id];
+            session_data->partial_mime_last_complete[source_id] = true;
+        }
+        else
+            mime_bufs = new std::list<MimeBufs>;
+
         while (ptr < section_end)
         {
-            // After process_mime_data(), ptr will point to the last byte processed in the current
-            // MIME part
+            // After process_mime_data(), ptr will point to the last byte processed in the current MIME part
             ptr = session_data->mime_state[source_id]->process_mime_data(p, ptr,
                 (section_end - ptr), true, SNORT_FILE_POSITION_UNKNOWN);
             ptr++;
+
+            latest_attachment = session_data->mime_state[source_id]->get_attachment();
+            if (latest_attachment.data != nullptr)
+            {
+                uint32_t attach_length;
+                uint8_t* attach_buf;
+                if (!last_attachment_complete)
+                {
+                    assert(!mime_bufs->empty());
+                    // Remove the partial attachment from the list and replace it with an extended version
+                    const uint8_t* const old_buf = mime_bufs->back().file.start();
+                    const uint32_t old_length = mime_bufs->back().file.length();
+                    attach_length = old_length + latest_attachment.length;
+                    attach_buf = new uint8_t[attach_length];
+                    memcpy(attach_buf, old_buf, old_length);
+                    memcpy(attach_buf + old_length, latest_attachment.data, latest_attachment.length);
+                    mime_bufs->pop_back();
+                }
+                else
+                {
+                    attach_length = latest_attachment.length;
+                    attach_buf = new uint8_t[attach_length];
+                    memcpy(attach_buf, latest_attachment.data, latest_attachment.length);
+                }
+                const BufferData& vba_buf = session_data->mime_state[source_id]->get_ole_buf();
+                if (vba_buf.data_ptr() != nullptr)
+                {
+                    uint8_t* my_vba_buf = new uint8_t[vba_buf.length()];
+                    memcpy(my_vba_buf, vba_buf.data_ptr(), vba_buf.length());
+                    mime_bufs->emplace_back(attach_length, attach_buf, true, vba_buf.length(), my_vba_buf, true);
+                }
+                else
+                    mime_bufs->emplace_back(attach_length, attach_buf, true, STAT_NOT_PRESENT, nullptr, false);
+            }
+            last_attachment_complete = latest_attachment.finished;
         }
-        
-        const BufferData& vba_buf = session_data->mime_state[source_id]->get_ole_buf();
-        if (vba_buf.data_ptr())
-            ole_data.set(vba_buf.length(), vba_buf.data_ptr());
 
         detect_data.set(msg_text.length(), msg_text.start());
     }
@@ -245,12 +288,7 @@ void HttpMsgBody::analyze()
                 partial_js_detect_length = js_norm_body.length();
             }
 
-            // If this is a MIME upload, the MIME library sets the file_data buffer to the
-            // file attachment body data.
-            // FIXIT-E currently the file_data buffer is set to the body of the last attachment per
-            // message section.
-            set_file_data(const_cast<uint8_t*>(detect_data.start()),
-                (unsigned)detect_data.length());
+            set_file_data(const_cast<uint8_t*>(detect_data.start()), (unsigned)detect_data.length());
         }
     }
     body_octets += msg_text.length();
@@ -306,7 +344,7 @@ void HttpMsgBody::get_ole_data()
     {
         ole_data.set(ole_len, ole_data_ptr, false);
 
-        //Reset the ole data ptr once it is stored in msg body
+        // Reset the ole data ptr once it is stored in msg body
         session_data->fd_state[source_id]->ole_data_reset();
     }
 }
@@ -524,6 +562,47 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
     session_data->file_octets[source_id] += fp_length;
 }
 
+bool HttpMsgBody::run_detection(snort::Packet* p)
+{
+    if ((p == nullptr) || !detection_required())
+        return false;
+    if ((mime_bufs != nullptr) && !mime_bufs->empty())
+    {
+        auto mb = mime_bufs->cbegin();
+        for (uint32_t count = 1; (count <= params->max_mime_attach) && (mb != mime_bufs->cend());
+            count++, mb++)
+        {
+            set_file_data(mb->file.start(), mb->file.length());
+            if (mb->vba.length() > 0)
+                ole_data.set(mb->vba.length(), mb->vba.start());
+            DetectionEngine::detect(p);
+            ole_data.reset();
+            decompressed_vba_data.reset();
+        }
+        if (mb != mime_bufs->cend())
+        {
+            // More MIME attachments than we have resources to inspect
+            HttpModule::increment_peg_counts(PEG_SKIP_MIME_ATTACH);
+        }
+    }
+    else
+        DetectionEngine::detect(p);
+    return true;
+}
+
+void HttpMsgBody::clear()
+{
+    if (session_data->partial_flush[source_id])
+    {
+        // Stash the MIME file attachments for use in full inspection
+        session_data->partial_mime_bufs[source_id] = mime_bufs;
+        mime_bufs = nullptr;
+        session_data->partial_mime_last_complete[source_id] = last_attachment_complete;
+    }
+
+    HttpMsgSection::clear();
+}
+
 // Parses out the filename and URI associated with this file.
 // For the filename, if the message has a Content-Disposition header with a filename attribute,
 // use that. Otherwise use the segment of the URI path after the last '/' but not including the
@@ -644,6 +723,22 @@ void HttpMsgBody::print_body_section(FILE* output, const char* body_type_str)
     HttpMsgSection::print_section_title(output, body_type_str);
     fprintf(output, "octets seen %" PRIi64 "\n", body_octets);
     detect_data.print(output, "Detect data");
+    if ((mime_bufs != nullptr) && !mime_bufs->empty())
+        for (MimeBufs& mb : *mime_bufs)
+        {
+            mb.file.print(output, "MIME data");
+            mb.vba.print(output, "MIME OLE data");
+            if (mb.vba.length() > 0)
+                ole_data.set(mb.vba.length(), mb.vba.start());
+            get_decomp_vba_data().print(output, "MIME Decompressed VBA data");
+            ole_data.reset();
+            decompressed_vba_data.reset();
+        }
+    else
+    {
+        ole_data.print(output, "OLE data");
+        get_decomp_vba_data().print(output, "Decompressed VBA data");
+    }
     get_classic_buffer(HTTP_BUFFER_CLIENT_BODY, 0, 0).print(output,
         HttpApi::classic_buffer_names[HTTP_BUFFER_CLIENT_BODY-1]);
     get_classic_buffer(HTTP_BUFFER_RAW_BODY, 0, 0).print(output,

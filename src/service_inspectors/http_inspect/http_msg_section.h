@@ -72,7 +72,7 @@ public:
     virtual void publish() {}
 
     // Call the detection engine to inspect the current packet
-    bool run_detection(snort::Packet* p);
+    virtual bool run_detection(snort::Packet* p);
 
     const Field& get_classic_buffer(unsigned id, uint64_t sub_id, uint64_t form);
     const Field& get_classic_buffer(const HttpBufferInfo& buf);
@@ -82,7 +82,7 @@ public:
 
     int32_t get_status_code_num() const { return status_code_num; }
 
-    void clear();
+    virtual void clear();
     bool is_clear() { return cleared; }
 
     uint64_t get_transaction_id() { return trans_num; }

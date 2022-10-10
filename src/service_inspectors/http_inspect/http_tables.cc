@@ -393,6 +393,7 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "js_bytes", "total number of JavaScript bytes processed" },
     { CountType::SUM, "js_identifiers", "total number of unique JavaScript identifiers processed" },
     { CountType::SUM, "js_identifier_overflows", "total number of unique JavaScript identifier limit overflows" },
+    { CountType::SUM, "skip_mime_attach", "total number of HTTP requests with too many MIME attachments to inspect" },
     { CountType::END, nullptr, nullptr }
 };
 

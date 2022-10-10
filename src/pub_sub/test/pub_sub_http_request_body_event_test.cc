@@ -58,6 +58,9 @@ void HttpMsgBody::do_file_decompression(const Field&, Field&) {}
 void HttpMsgBody::do_enhanced_js_normalization(const Field&, Field&) {}
 void HttpMsgBody::clean_partial(uint32_t&, uint32_t&, uint8_t*&, uint32_t&) {}
 void HttpMsgBody::bookkeeping_regular_flush(uint32_t&, uint8_t*&, uint32_t&, int32_t) {}
+bool HttpMsgBody::run_detection(snort::Packet*) { return true; }
+void HttpMsgBody::clear() {}
+void HttpMsgSection::clear() {}
 #ifdef REG_TEST
 void HttpMsgBody::print_body_section(FILE*, const char*) {}
 #endif
@@ -78,6 +81,7 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     tcp_close(false)
 {}
 void HttpMsgSection::update_depth() const{}
+bool HttpMsgSection::run_detection(snort::Packet*) { return true; }
 
 HttpTransaction*HttpTransaction::attach_my_transaction(HttpFlowData*, HttpCommon::SourceId)
     { return nullptr; }

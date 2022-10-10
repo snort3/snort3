@@ -170,10 +170,10 @@ void HttpInspect::show(const SnortConfig*) const
     ConfigLogger::log_flag("decompress_swf", params->decompress_swf);
     ConfigLogger::log_flag("decompress_zip", params->decompress_zip);
     ConfigLogger::log_flag("decompress_vba", params->decompress_vba);
+    ConfigLogger::log_value("max_mime_attach", params->max_mime_attach);
     ConfigLogger::log_flag("script_detection", params->script_detection);
     ConfigLogger::log_flag("normalize_javascript", params->js_norm_param.normalize_javascript);
-    ConfigLogger::log_value("max_javascript_whitespaces",
-        params->js_norm_param.max_javascript_whitespaces);
+    ConfigLogger::log_value("max_javascript_whitespaces", params->js_norm_param.max_javascript_whitespaces);
     ConfigLogger::log_value("js_norm_bytes_depth", params->js_norm_param.js_norm_bytes_depth);
     ConfigLogger::log_value("js_norm_identifier_depth", params->js_norm_param.js_identifier_depth);
     ConfigLogger::log_value("js_norm_max_tmpl_nest", params->js_norm_param.max_template_nesting);

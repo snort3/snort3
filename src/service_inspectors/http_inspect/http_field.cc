@@ -39,16 +39,6 @@ Field::Field(int32_t length, const uint8_t* start, bool own_the_buffer_) :
     assert(!((start != nullptr) && (length < 0)));
 }
 
-Field& Field::operator=(const Field& rhs)
-{
-    assert(len == STAT_NOT_COMPUTE);
-    assert(strt == nullptr);
-    strt = rhs.strt;
-    len = rhs.len;
-    own_the_buffer = false;    // buffer must not have two owners
-    return *this;
-}
-
 void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
 {
     assert(len == STAT_NOT_COMPUTE);
@@ -75,6 +65,15 @@ void Field::set(const Field& f)
     strt = f.strt;
     len = f.len;
     // Both Fields cannot be responsible for deleting the buffer so do not copy own_the_buffer
+}
+
+void Field::reset()
+{
+    if (own_the_buffer)
+        delete[] strt;
+    strt = nullptr;
+    len = STAT_NOT_COMPUTE;
+    own_the_buffer = false;
 }
 
 #ifdef REG_TEST
@@ -112,5 +111,6 @@ void Field::print(FILE* output, const char* name) const
     }
     fprintf(output, "\n");
 }
+
 #endif
 

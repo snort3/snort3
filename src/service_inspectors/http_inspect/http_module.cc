@@ -95,6 +95,9 @@ const Parameter HttpModule::http_params[] =
     { "decompress_vba", Parameter::PT_BOOL, nullptr, "false",
       "decompress MS Office Visual Basic for Applications macro files in response bodies" },
 
+    { "max_mime_attach", Parameter::PT_INT, "1:65535", "5",
+      "maximum number of mime attachments that will be inspected in a section of a request message" },
+
     { "script_detection", Parameter::PT_BOOL, nullptr, "false",
       "inspect JavaScript immediately upon script end" },
 
@@ -297,6 +300,10 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("decompress_vba"))
     {
         params->decompress_vba = val.get_bool();
+    }
+    else if (val.is("max_mime_attach"))
+    {
+        params->max_mime_attach = val.get_uint32();
     }
     else if (val.is("script_detection"))
     {

@@ -209,6 +209,14 @@ locate the OLE (Object Linking and Embedding) file embedded with the files
 containing RLE compressed vba macro data. The decompressed vba macro data is
 then made available through the vba_data ips rule option.
 
+===== max_mime_attach
+
+HTTP request message bodies may be in MIME format. Each file attachment is
+separately incorporated in the file_data rule option. When a request contains
+many small file attachments these inspections may consume a lot of processing
+power. This parameter limits the number of files from one message that are
+inspected. The default value is 5.
+
 ===== normalize_javascript
 
 normalize_javascript = true will enable legacy normalizer of JavaScript within
