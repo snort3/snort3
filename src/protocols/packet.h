@@ -159,7 +159,6 @@ struct SO_PUBLIC Packet
     Layer* layers;    /* decoded encapsulations */
 
     PseudoPacketType pseudo_type;    // valid only when PKT_PSEUDO is set
-    uint32_t iplist_id;
 
     uint32_t user_inspection_policy_id;
     uint32_t user_ips_policy_id;

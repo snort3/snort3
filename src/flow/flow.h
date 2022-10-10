@@ -456,8 +456,6 @@ public:  // FIXIT-M privatize if possible
     unsigned ips_policy_id;
     unsigned reload_id;
 
-    uint32_t iplist_monitor_id;
-
     uint32_t tenant;
 
     uint32_t default_session_timeout;
@@ -487,10 +485,6 @@ public:  // FIXIT-M privatize if possible
                                     // currently considered to be the client
         bool app_direction_swapped : 1; // Packet direction swapped from application perspective
         bool disable_inspect : 1;
-        bool reputation_src_dest : 1;
-        bool reputation_blocklist : 1;
-        bool reputation_monitor : 1;
-        bool reputation_allowlist : 1;
         bool trigger_detained_packet_event : 1;
         bool trigger_finalize_event : 1;
         bool use_direct_inject : 1;
