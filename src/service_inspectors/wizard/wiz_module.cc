@@ -102,7 +102,7 @@ static const Parameter s_params[] =
     { "spells", Parameter::PT_LIST, wizard_spells_params, nullptr,
       "criteria for text service identification" },
 
-    { "curses", Parameter::PT_MULTI, "dce_smb | dce_udp | dce_tcp | mms | sslv2", nullptr,
+    { "curses", Parameter::PT_MULTI, "dce_smb | dce_udp | dce_tcp | mms | s7commplus | sslv2", nullptr,
       "enable service identification based on internal algorithm" },
 
     { "max_search_depth", Parameter::PT_INT, "0:65535", "8192",

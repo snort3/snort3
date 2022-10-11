@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "mms_curse.h"
+#include "s7commplus_curse.h"
 
 enum DCE_State
 {
@@ -73,6 +74,13 @@ public:
         MMS_State last_state;
     } mms;
 
+    struct S7COMMPLUS
+    {
+        S7commplus_State state;
+        S7commplus_State last_state;
+        uint16_t func;
+    } s7commplus;
+
     struct SSL
     {
         SSL_State state;
@@ -87,6 +95,9 @@ public:
         dce.state = DCE_State::STATE_0;
         mms.state = MMS_State::MMS_STATE__TPKT_VER;
         mms.last_state = mms.state;
+        s7commplus.state = S7commplus_State::S7COMMPLUS_STATE__TPKT_VER;
+        s7commplus.last_state = s7commplus.state;
+        s7commplus.func = 0;
         ssl.state = SSL_State::BYTE_0_LEN_MSB;
     }
 };
