@@ -821,7 +821,8 @@ AppId AppIdSession::pick_service_app_id() const
 
 AppId AppIdSession::pick_ss_misc_app_id() const
 {
-    if (api.service.get_id() == APP_ID_HTTP2 or api.service.get_id() == APP_ID_HTTP3)
+    if (api.service.get_id() == APP_ID_HTTP2 or
+        (api.service.get_id() == APP_ID_HTTP3 and !api.hsessions.empty()))
         return APP_ID_NONE;
 
     if (misc_app_id > APP_ID_NONE)
@@ -838,7 +839,8 @@ AppId AppIdSession::pick_ss_misc_app_id() const
 
 AppId AppIdSession::pick_ss_client_app_id() const
 {
-    if (api.service.get_id() == APP_ID_HTTP2 or api.service.get_id() == APP_ID_HTTP3)
+    if (api.service.get_id() == APP_ID_HTTP2 or
+        (api.service.get_id() == APP_ID_HTTP3 and !api.hsessions.empty()))
         return APP_ID_NONE;
 
     AppId tmp_id = APP_ID_NONE;
@@ -868,7 +870,8 @@ AppId AppIdSession::pick_ss_client_app_id() const
 
 AppId AppIdSession::pick_ss_payload_app_id(AppId service_id) const
 {
-    if (service_id == APP_ID_HTTP2 or service_id == APP_ID_HTTP3)
+    if (service_id == APP_ID_HTTP2 or
+        (service_id == APP_ID_HTTP3 and !api.hsessions.empty()))
         return APP_ID_NONE;
 
     if (tp_payload_app_id_deferred)
