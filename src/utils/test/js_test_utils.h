@@ -130,7 +130,7 @@ static const JSTestConfig default_config({
         "console", "eval", "document", "unescape", "decodeURI", "decodeURIComponent", "String",
         "name", "u"}),
     ignored_properties_list({
-        "watch", "unwatch", "split", "reverse", "join", "name", "w"}),
+        "watch", "unwatch", "split", "reverse", "join", "name", "w", "catch", "finally"}),
     normalize_identifiers(true)
 });
 

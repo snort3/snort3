@@ -1341,6 +1341,9 @@ default_js_norm_prop_ignore =
     'innerText', 'lang', 'nonce', 'outerText', 'style', 'tabIndex', 'title',
     'attachInternals',
 
+    -- Promise
+    'catch', 'finally',
+
     -- Misc
     'ExportStyle', 'callee'
 }

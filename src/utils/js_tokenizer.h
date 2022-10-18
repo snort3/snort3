@@ -101,7 +101,8 @@ private:
     {
         Scope(ScopeType t) :
             type(t), meta_type(ScopeMetaType::NOT_SET), func_call_type(FuncType::NOT_FUNC),
-            ident_norm(true), block_param(false), do_loop(false), encoding(0), char_code_str(false)
+            ident_norm(true), block_param(false), do_loop(false), encoding(0), char_code_str(false),
+            in_object(false)
         {}
 
         ScopeType type;
@@ -112,6 +113,7 @@ private:
         bool do_loop;
         uint32_t encoding;
         bool char_code_str;
+        bool in_object;
     };
 
     enum ASIGroup
@@ -243,6 +245,12 @@ private:
 
     bool char_code_str()
     { return scope_cur().char_code_str; }
+
+    void set_in_object(bool f)
+    { scope_cur().in_object = f; }
+
+    bool in_object()
+    { return scope_cur().in_object; }
 
     static JSProgramScopeType m2p(ScopeMetaType);
     static const char* m2str(ScopeMetaType);

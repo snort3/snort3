@@ -6650,5 +6650,199 @@ TEST_CASE("String Concatenation - Multiple PDU", "[JSNormalizer]")
     }
 }
 
+TEST_CASE("keywords as identifiers", "[JSNormalizer]")
+{
+    SECTION("catch as identifier")
+    {
+        test_normalization(
+            "function() { a.catch() }; function() { [a.catch() ] }",
+            "function(){var_0000.catch()};function(){[var_0000.catch()]}"
+        );
+        test_normalization("var a = A ({catch: 1})","var var_0000=var_0001({var_0002:1})");
+
+    }
+    SECTION("finally as identifier")
+    {
+        test_normalization(
+            "function() { a.finally() }; function() { [a.finally() ] }",
+            "function(){var_0000.finally()};function(){[var_0000.finally()]}"
+        );
+        test_normalization("var a = A ({finally: 1})","var var_0000=var_0001({var_0002:1})");
+
+    }
+    SECTION("while as identifier")
+    {
+        test_normalization(
+            "function() { a.while()  }; function() { [a.while() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization("var a = A ({while: 1})","var var_0000=var_0001({var_0002:1})");
+
+    }
+    SECTION("do as identifier")
+    {
+        test_normalization(
+            "function() { a.do() }; function() { [a.do() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization("var a = A ({do: 1})","var var_0000=var_0001({var_0002:1})");
+    }
+    SECTION("new as identifier")
+    {
+        test_normalization(
+            "function() { a.new() }; function() { [a.new() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization("var a = A ({new: 1})","var var_0000=var_0001({var_0002:1})");
+
+    }
+    SECTION("class as identifier")
+    {
+        test_normalization(
+            "function() { a.class() }; function() { [a.class() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization("var a = A ({class: 1})","var var_0000=var_0001({var_0002:1})");
+        test_normalization("class A { class : 1 }", "class var_0000{var_0001:1}");
+        test_normalization("var obj = { class : 1 }", "var var_0000={var_0001:1}");
+    }
+    SECTION("function as identifier")
+    {
+        test_normalization(
+            "function() { a.function() }; function() { [a.function() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+    }
+    SECTION("const|var|let as identifier")
+    {
+        test_normalization(
+            "function() { a.const() }; function() { [a.const() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.var() }; function() { [a.var() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.let() }; function() { [a.let() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "var a = A ({const: 1, var: 0, let:1})",
+            "var var_0000=var_0001({var_0002:1,var_0003:0,var_0004:1})"
+        );
+    }
+    SECTION("delete|throw|typeof|void as identifier")
+    {
+        test_normalization(
+            "function() { a.delete() }; function() { [a.delete() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.throw() }; function() { [a.throw() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.typeof() }; function() { [a.typeof() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.void() }; function() { [a.void() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "var a = A ({delete: 1, throw: 0, typeof:1, void: 0})",
+            "var var_0000=var_0001({var_0002:1,var_0003:0,var_0004:1,var_0005:0})"
+        );
+    }
+    SECTION("other keywords as identifiers")
+    {
+        test_normalization(
+            "function() { a.case() }; function() { [a.case() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.default() }; function() { [a.default() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.enum() }; function() { [a.enum() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.export() }; function() { [a.export() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.extends() }; function() { [a.extends() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.implements() }; function() { [a.implements() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.import() }; function() { [a.import() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.in() }; function() { [a.in() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.instanceof() }; function() { [a.instanceof() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.interface() }; function() { [a.interface() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.package() }; function() { [a.package() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.private() }; function() { [a.private() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.protected() }; function() { [a.protected() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.public() }; function() { [a.public() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.static() }; function() { [a.static() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.super() }; function() { [a.super() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "function() { a.yield() }; function() { [a.yield() ] }",
+            "function(){var_0000.var_0001()};function(){[var_0000.var_0001()]}"
+        );
+        test_normalization(
+            "var a = A ({case: 1, default: 0, enum:1, export: 0})",
+            "var var_0000=var_0001({var_0002:1,var_0003:0,var_0004:1,var_0005:0})"
+        );
+        test_normalization(
+            "var a = A ({extends: 1, implements: 0, import:1, in: 0})",
+            "var var_0000=var_0001({var_0002:1,var_0003:0,var_0004:1,var_0005:0})"
+        );
+        test_normalization(
+            "var a = A ({instanceof: 1, interface: 0, package:1, private: 0})",
+            "var var_0000=var_0001({var_0002:1,var_0003:0,var_0004:1,var_0005:0})"
+        );
+        test_normalization(
+            "var a = A ({protected: 1, public: 0, static:1, super: 0, yield: 1})",
+            "var var_0000=var_0001({var_0002:1,var_0003:0,var_0004:1,var_0005:0,var_0006:1})"
+        );
+    }
+}
+
 #endif
 

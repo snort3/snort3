@@ -1876,6 +1876,8 @@ JSTokenizer::JSRet JSTokenizer::scope_push(ScopeType t)
         return BRACKET_NESTING_OVERFLOW;
 
     JSRet ret = EOS;
+    bool inside_object = false;
+
     switch (meta_type())
     {
     case ScopeMetaType::FUNCTION:
@@ -1890,6 +1892,7 @@ JSTokenizer::JSRet JSTokenizer::scope_push(ScopeType t)
         if (t == BRACES)
             ret = p_scope_push(meta_type());
 
+        inside_object = true;
         break;
     }
     case ScopeMetaType::ARROW_FUNCTION: break;
@@ -1899,6 +1902,7 @@ JSTokenizer::JSRet JSTokenizer::scope_push(ScopeType t)
     }
 
     scope_stack.emplace(t);
+    set_in_object(inside_object);
     return ret;
 }
 
@@ -2697,9 +2701,11 @@ JSTokenizer::JSRet JSTokenizer::use_strict_directive_sc()
 
 JSTokenizer::JSRet JSTokenizer::keyword_var_decl()
 {
+    if (token == DOT or in_object())
+        return general_identifier();
+
     EXEC(do_semicolon_insertion(ASI_GROUP_10))
-    if (token != DOT)
-        set_ident_norm(true);
+    set_ident_norm(true);
     alias_state = ALIAS_NONE;
     EXEC(do_spacing(KEYWORD_VAR_DECL))
     ECHO;
@@ -2709,9 +2715,11 @@ JSTokenizer::JSRet JSTokenizer::keyword_var_decl()
 
 JSTokenizer::JSRet JSTokenizer::keyword_function()
 {
+    if (token == DOT)
+        return general_identifier();
+    
     EXEC(do_semicolon_insertion(ASI_GROUP_10))
-    if (token != DOT)
-        set_ident_norm(true);
+    set_ident_norm(true);
     EXEC(do_spacing(KEYWORD_FUNCTION))
     ECHO;
     BEGIN(regst);
@@ -2722,9 +2730,11 @@ JSTokenizer::JSRet JSTokenizer::keyword_function()
 
 JSTokenizer::JSRet JSTokenizer::keyword_catch()
 {
+    if (token == DOT or in_object())
+        return general_identifier();
+    
     EXEC(do_semicolon_insertion(ASI_GROUP_10))
-    if (token != DOT)
-        set_ident_norm(true);
+    set_ident_norm(true);
     EXEC(do_spacing(KEYWORD_BLOCK))
     ECHO;
     BEGIN(regst);
@@ -2739,9 +2749,11 @@ JSTokenizer::JSRet JSTokenizer::keyword_catch()
 
 JSTokenizer::JSRet JSTokenizer::keyword_while()
 {
+    if (token == DOT or in_object())
+        return general_identifier();
+    
     EXEC(do_semicolon_insertion(ASI_GROUP_10))
-    if (token != DOT)
-        set_ident_norm(true);
+    set_ident_norm(true);
     EXEC(do_spacing(KEYWORD_BLOCK))
     ECHO;
     BEGIN(regst);
@@ -2759,9 +2771,11 @@ JSTokenizer::JSRet JSTokenizer::keyword_while()
 
 JSTokenizer::JSRet JSTokenizer::keyword_B()
 {
+    if (token == DOT or in_object())
+        return general_identifier();
+
     EXEC(do_semicolon_insertion(ASI_GROUP_10))
-    if (token != DOT)
-        set_ident_norm(true);
+    set_ident_norm(true);
     EXEC(do_spacing(KEYWORD))
     ECHO;
     BEGIN(regst);
@@ -2770,9 +2784,11 @@ JSTokenizer::JSRet JSTokenizer::keyword_B()
 
 JSTokenizer::JSRet JSTokenizer::keyword_new()
 {
+    if (token == DOT or in_object())
+        return general_identifier();
+    
     EXEC(do_semicolon_insertion(ASI_GROUP_10))
-    if (token != DOT)
-        set_ident_norm(true);
+    set_ident_norm(true);
     EXEC(do_spacing(KEYWORD))
     ECHO;
     BEGIN(regst);
@@ -2784,9 +2800,11 @@ JSTokenizer::JSRet JSTokenizer::keyword_new()
 
 JSTokenizer::JSRet JSTokenizer::keyword_BA()
 {
+    if (token == DOT or in_object())
+        return general_identifier();
+
     EXEC(do_semicolon_insertion(ASI_GROUP_9))
-    if (token != DOT)
-        set_ident_norm(true);
+    set_ident_norm(true);
     EXEC(do_spacing(KEYWORD))
     ECHO;
     BEGIN(regst);
@@ -2795,9 +2813,11 @@ JSTokenizer::JSRet JSTokenizer::keyword_BA()
 
 JSTokenizer::JSRet JSTokenizer::keyword_finally()
 {
+    if (token == DOT or in_object())
+        return general_identifier();
+
     EXEC(do_semicolon_insertion(ASI_GROUP_10))
-    if (token != DOT)
-        set_ident_norm(true);
+    set_ident_norm(true);
     EXEC(do_spacing(KEYWORD_BLOCK))
     ECHO;
     BEGIN(regst);
@@ -2811,9 +2831,11 @@ JSTokenizer::JSRet JSTokenizer::keyword_finally()
 
 JSTokenizer::JSRet JSTokenizer::keyword_do()
 {
+    if (token == DOT or in_object())
+        return general_identifier();
+    
     EXEC(do_semicolon_insertion(ASI_GROUP_10))
-    if (token != DOT)
-        set_ident_norm(true);
+    set_ident_norm(true);
     EXEC(do_spacing(KEYWORD_BLOCK))
     ECHO;
     BEGIN(regst);
@@ -2827,11 +2849,13 @@ JSTokenizer::JSRet JSTokenizer::keyword_do()
 }
 
 JSTokenizer::JSRet JSTokenizer::keyword_class()
-{
+{ 
+    if (token == DOT or in_object())
+        return general_identifier();
+
     previous_group = ASI_OTHER;
     dealias_reset();
-    if (token != DOT)
-        set_ident_norm(true);
+    set_ident_norm(true);
     EXEC(do_spacing(KEYWORD_CLASS))
     ECHO;
     BEGIN(regst);
@@ -2842,10 +2866,12 @@ JSTokenizer::JSRet JSTokenizer::keyword_class()
 
 JSTokenizer::JSRet JSTokenizer::keyword_other()
 {
+    if (token == DOT or in_object())
+        return general_identifier();
+
     previous_group = ASI_OTHER;
     dealias_reset();
-    if (token != DOT)
-        set_ident_norm(true);
+    set_ident_norm(true);
     EXEC(do_spacing(KEYWORD))
     ECHO;
     BEGIN(regst);
