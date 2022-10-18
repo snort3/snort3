@@ -849,7 +849,8 @@ HTTP request URI has space character that is not percent-encoded.
 
 119:34
 
-HTTP connection has more than 100 simultaneous pipelined requests that have not been answered.
+HTTP connection has more than maximum_pipelined_requests simultaneous pipelined requests that have
+not been answered.
 
 119:102
 

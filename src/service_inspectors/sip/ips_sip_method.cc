@@ -45,7 +45,7 @@ using namespace snort;
 
 #define s_name "sip_method"
 #define s_help \
-    "detection option for sip stat code"
+    "detection option for sip method"
 
 typedef std::unordered_map<std::string, bool> MethodMap; //Method Name => Negated
 

@@ -51,7 +51,7 @@ class MimeSession;
 class HttpFlowData : public snort::FlowData
 {
 public:
-    HttpFlowData(snort::Flow* flow);
+    HttpFlowData(snort::Flow* flow, const HttpParaList* params_);
     ~HttpFlowData() override;
     static unsigned inspector_id;
     static void init() { inspector_id = snort::FlowData::create_flow_data_id(); }
@@ -92,6 +92,8 @@ public:
     bool is_for_httpx() const { return for_httpx; }
 
 private:
+    const HttpParaList* const params;
+
     // Convenience routines
     void half_reset(HttpCommon::SourceId source_id);
     void trailer_prep(HttpCommon::SourceId source_id);
@@ -203,6 +205,7 @@ private:
     bool pipeline_overflow = false;
     bool pipeline_underflow = false;
     bool add_to_pipeline(HttpTransaction* latest);
+    int pipeline_length();
     HttpTransaction* take_from_pipeline();
     void delete_pipeline();
 

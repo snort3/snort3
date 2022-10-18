@@ -250,8 +250,8 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_UNKNOWN_METHOD,             "HTTP request method is not known to Snort" },
     { EVENT_SIMPLE_REQUEST,             "HTTP request uses primitive HTTP format known as HTTP/0.9" },
     { EVENT_UNESCAPED_SPACE_URI,        "HTTP request URI has space character that is not percent-encoded" },
-    { EVENT_PIPELINE_MAX,               "HTTP connection has more than 100 simultaneous pipelined "
-                                        "requests that have not been answered" },
+    { EVENT_PIPELINE_MAX,               "HTTP connection has more than maximum_pipelined_requests simultaneous "
+                                        "pipelined requests that have not been answered" },
     { EVENT_INVALID_STATCODE,           "invalid status code in HTTP response" },
     { EVENT_UTF_NORM_FAIL,              "HTTP response has UTF character set that failed to normalize" },
     { EVENT_UTF7,                       "HTTP response has UTF-7 character set" },

@@ -80,6 +80,9 @@ const Parameter HttpModule::http_params[] =
     { "maximum_headers", Parameter::PT_INT, "0:65535", "200",
       "alert when the number of headers in a message exceeds this value" },
 
+    { "maximum_pipelined_requests", Parameter::PT_INT, "0:99", "99",
+      "alert when the number of pipelined requests exceeds this value" },
+
     { "normalize_utf", Parameter::PT_BOOL, nullptr, "true",
       "normalize charset utf encodings in response bodies" },
 
@@ -284,6 +287,10 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("maximum_headers"))
     {
         params->maximum_headers = val.get_uint16();
+    }
+    else if (val.is("maximum_pipelined_requests"))
+    {
+        params->maximum_pipelined_requests = val.get_uint16();
     }
     else if (val.is("decompress_pdf"))
     {

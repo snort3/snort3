@@ -51,7 +51,8 @@ unsigned HttpFlowData::inspector_id = 0;
 uint64_t HttpFlowData::instance_count = 0;
 #endif
 
-HttpFlowData::HttpFlowData(Flow* flow) : FlowData(inspector_id)
+HttpFlowData::HttpFlowData(Flow* flow, const HttpParaList* params_) :
+    FlowData(inspector_id), params(params_)
 {
     static HttpFlowStreamIntf h1_stream;
 #ifdef REG_TEST
@@ -321,6 +322,14 @@ bool HttpFlowData::add_to_pipeline(HttpTransaction* latest)
     pipeline_back = new_back;
     HttpModule::increment_peg_counts(PEG_PIPELINED_REQUESTS);
     return true;
+}
+
+int HttpFlowData::pipeline_length()
+{
+    int size = pipeline_back - pipeline_front;
+    if (size < 0)
+        size += MAX_PIPELINE;
+    return size;
 }
 
 HttpTransaction* HttpFlowData::take_from_pipeline()

@@ -57,6 +57,7 @@ public:
     int64_t maximum_chunk_length = 0xFFFFFFFF;
     uint16_t maximum_header_length = 4096;
     uint16_t maximum_headers = 200;
+    uint16_t maximum_pipelined_requests = 99;
     bool decompress_pdf = false;
     bool decompress_swf = false;
     bool decompress_zip = false;

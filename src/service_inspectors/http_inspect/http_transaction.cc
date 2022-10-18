@@ -107,12 +107,23 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
                 // now on. We just throw things away when we are done with them.
                 delete_transaction(session_data->transaction[SRC_CLIENT], session_data);
             }
-            else if (!session_data->add_to_pipeline(session_data->transaction[SRC_CLIENT]))
+            else
             {
-                // The pipeline is full and just overflowed.
-                *session_data->infractions[source_id] += INF_PIPELINE_OVERFLOW;
-                session_data->events[source_id]->create_event(EVENT_PIPELINE_MAX);
-                delete_transaction(session_data->transaction[SRC_CLIENT], session_data);
+                if (!session_data->add_to_pipeline(session_data->transaction[SRC_CLIENT]))
+                {
+                    // The pipeline is full and just overflowed.
+                    *session_data->infractions[source_id] += INF_PIPELINE_OVERFLOW;
+                    delete_transaction(session_data->transaction[SRC_CLIENT], session_data);
+                    // When overflow occurs the length of the pipeline is unchanged
+                    // next code ensures that the alert is still raised
+                    *session_data->infractions[source_id] += INF_PIPELINE_MAX;
+                    session_data->events[source_id]->create_event(EVENT_PIPELINE_MAX);
+                }
+                if (session_data->pipeline_length() > session_data->params->maximum_pipelined_requests)
+                {
+                    *session_data->infractions[source_id] += INF_PIPELINE_MAX;
+                    session_data->events[source_id]->create_event(EVENT_PIPELINE_MAX);
+                }
             }
         }
         session_data->transaction[SRC_CLIENT] = new HttpTransaction(session_data);

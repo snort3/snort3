@@ -382,6 +382,16 @@ maximum_header_length = N {0 : 65535} (default 4096).
 http_inspect generates 119:20 when the number of headers exceeds
 maximum_headers = N {0 : 65535} (default 200).
 
+===== maximum_pipelined_requests
+
+http_inspect generates 119:34 when the number of pipelined requests exceeds
+maximum_pipelined_requests = N {0 : 99} (default 99). This number does
+not include the first request in a sequence of requests. Setting
+maximum_pipelined_requests = 0, will not trigger an alert in the case
+of an alternating sequence of requests and responses. It will trigger the
+alert once the client issue a request before getting the response to a
+previous request.
+
 ===== URI processing
 
 Normalization and inspection of the URI in the HTTP request message is a
