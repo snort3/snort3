@@ -86,6 +86,9 @@ public:
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
 
+    CursorActionType get_cursor_type() const override
+    { return CAT_READ; }
+
     bool is_agent() override
     { return true; }
 

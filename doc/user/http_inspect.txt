@@ -540,8 +540,11 @@ http_inspect parses HTTP messages into their components and makes them
 available to the detection engine through rule options. Let's start with an
 example:
 
-    alert tcp any any -> any any ( msg:"URI example"; flow:established,
-    to_server; http_uri; content:"chocolate"; sid:1; rev:1; )
+    alert tcp any any -> any any (
+        msg:"URI example";
+        flow:established, to_server;
+        http_uri; content:"chocolate";
+        sid:1; rev:1; )
 
 This rule looks for chocolate in the URI portion of the request message.
 Specifically, the http_uri rule option is the normalized URI with all the
@@ -555,15 +558,20 @@ and
 
 It is also possible to search the unnormalized URI
 
-    alert tcp any any -> any any ( msg:"Raw URI example"; flow:established,
-    to_server; http_raw_uri; content:"chocolate"; sid:2; rev:1; )
+    alert tcp any any -> any any (
+        msg:"Raw URI example";
+        flow:established, to_server;
+        http_raw_uri; content:"chocolate";
+        sid:2; rev:1; )
 
 will match the first message but not the second. If you want to detect
 someone who is trying to hide his request for chocolate then
 
-    alert tcp any any -> any any ( msg:"Raw URI example"; flow:established,
-    to_server; http_raw_uri; content:"%63%68$6F%63%6F%6C%61%74%65";
-    sid:3; rev:1; )
+    alert tcp any any -> any any (
+        msg:"Raw URI example";
+        flow:established, to_server;
+        http_raw_uri; content:"%63%68$6F%63%6F%6C%61%74%65";
+        sid:3; rev:1; )
 
 will do the trick.
 
@@ -571,9 +579,11 @@ Let's look at possible ways of writing a rule to match HTTP response
 messages with the Content-Language header set to "da" (Danish). You could
 write:
 
-    alert tcp any any -> any any ( msg:"whole header search";
-    flow:established, to_client; http_header; content:
-    "Content-Language: da", nocase; sid:4; rev:1; )
+    alert tcp any any -> any any (
+        msg:"whole header search";
+        flow:established, to_client;
+        http_header; content:"Content-Language: da", nocase;
+        sid:4; rev:1; )
 
 This rule leaves much to be desired. Modern headers are often thousands of
 bytes and seem to get longer every year. Searching all of the headers
@@ -590,9 +600,11 @@ the match.
 
 A better way to write this rule is:
 
-    alert tcp any any -> any any ( msg:"individual header search";
-    flow:established, to_client; http_header: field content-language;
-    content:"da", nocase; sid:4; rev:2; )
+    alert tcp any any -> any any (
+        msg:"individual header search";
+        flow:established, to_client;
+        http_header: field content-language; content:"da", nocase;
+        sid:4; rev:2; )
 
 The field option improves performance by narrowing the search to the
 Content-Language field of the header. Because it uses the header parsing
@@ -646,8 +658,11 @@ appeared in the message and the normalized form is determined by the URI
 normalization options you selected. In addition to searching the entire URI
 there are six components that can be searched individually:
 
-    alert tcp any any -> any any ( msg:"URI path"; flow:established,
-    to_server; http_uri: path; content:"chocolate"; sid:1; rev:2; )
+    alert tcp any any -> any any (
+        msg:"URI path";
+        flow:established, to_server;
+        http_uri: path; content:"chocolate";
+        sid:1; rev:2; )
 
 By specifying "path" the search is limited to the path portion of the URI.
 Informally this is the part consisting of the directory path and file name.
@@ -702,9 +717,11 @@ These cover all the header lines except the first one. You may specify an
 individual header by name using the field option as shown in this earlier
 example:
 
-    alert tcp any any -> any any ( msg:"individual header search";
-    flow:established, to_client; http_header: field content-language;
-    content:"da", nocase; sid:4; rev:2; )
+    alert tcp any any -> any any (
+        msg:"individual header search";
+        flow:established, to_client;
+        http_header: field content-language; content:"da", nocase;
+        sid:4; rev:2; )
 
 This rule searches the value of the Content-Language header. Header names
 are not case sensitive and may be written in the rule in any mixture of
@@ -871,41 +888,15 @@ the dividing lines between one message and the next, which request message
 triggered which response message, pipelines, and how many messages have
 been sent over the current connection.
 
-Some rules use a single rule option:
-
-    alert tcp any any -> any any ( msg:"URI example"; flow:established,
-    to_server; http_uri; content:"chocolate"; sid:1; rev:1; )
-
-Whenever a new URI is available this rule will be evaluated. Nothing
-complicated about that, but suppose we use more than one rule option:
-
-    alert tcp any any -> any any ( msg:"combined example"; flow:established,
-    to_server; http_uri: with_body; content:"chocolate"; file_data;
-    content:"sinister POST data"; sid:5; rev:1; )
-
-The with_body option to http_uri causes the URI to be made available with
-the message body. Use with_body for header-related rule options in rules
-that also examine the message body.
-
-The with_trailer option is analogous and causes an earlier message element
-to be made available at the end of the message when the trailers following
-a chunked body arrive.
-
-    alert tcp any any -> any any ( msg:"double content-language";
-    flow:established, to_client; http_header: with_trailer, field
-    content-language; content:"da", nocase; http_trailer: field
-    content-language; content:"en", nocase; sid:6; rev:1; )
-
-This rule will alert if the Content-Language changes from Danish in the
-headers to English in the trailers. The with_trailer option is essential to
-make this rule work.
-
-It is also possible to write rules that examine both the client request and
+It is possible to write rules that examine both the client request and
 the server response to it.
 
-    alert tcp any any -> any any ( msg:"request and response example";
-    flow:established, to_client; http_uri: with_body; content:"chocolate";
-    file_data; content:"white chocolate"; sid:7; rev:1; )
+    alert tcp any any -> any any (
+        msg:"request and response example";
+        flow:established, to_client;
+        http_uri; content:"chocolate";
+        file_data; content:"white chocolate";
+        sid:7; rev:1; )
 
 This rule looks for white chocolate in a response message body where the
 URI of the request contained chocolate. Note that this is a "to_client"
@@ -915,21 +906,23 @@ rule were rewritten "to_server" it would be nonsense and not work. Snort
 cannot block a client request based on what the server response will be
 because that has not happened yet.
 
-Another point is "with_body" for http_uri. This ensures the rule works on
-the entire response body. If we were looking for white chocolate in the
-response headers this would not be necessary.
-
 Response messages do not have a URI so there was only one thing http_uri
 could have meant in the previous rule. It had to be referring to the
 request message. Sometimes that is not so clear.
 
-    alert tcp any any -> any any ( msg:"header ambiguity example 1";
-    flow:established, to_client; http_header: with_body; content:
-    "chocolate"; file_data; content:"white chocolate"; sid:8; rev:1; )
+    alert tcp any any -> any any (
+        msg:"header ambiguity example 1";
+        flow:established, to_client;
+        http_header; content:"chocolate";
+        file_data; content:"white chocolate";
+        sid:8; rev:1; )
 
-    alert tcp any any -> any any ( msg:"header ambiguity example 2";
-    flow:established, to_client; http_header: with_body, request; content:
-    "chocolate"; file_data; content:"white chocolate"; sid:8; rev:2; )
+    alert tcp any any -> any any (
+        msg:"header ambiguity example 2";
+        flow:established, to_client;
+        http_header: request; content:"chocolate";
+        file_data; content:"white chocolate";
+        sid:8; rev:2; )
 
 Our search for chocolate has moved from the URI to the message headers.
 Both the request and response messages have headers--which one are we
@@ -941,32 +934,12 @@ the body.
 The second rule uses the "request" option to explicitly say that the
 http_header to be searched is the request header.
 
-Let's put all of this together. There are six opportunities to do
-detection:
-
-1. When the the request headers arrive. The request line and all of the
-headers go through detection at the same time.
-
-2. When sections of the request message body arrive. If you want to combine
-this with something from the request line or headers you must use the
-with_body option.
-
-3. When the request trailers arrive. If you want to combine this with
-something from the request line or headers you must use the with_trailer
-option.
-
-4. When the response headers arrive. The status line and all of the headers
-go through detection at the same time. These may be combined with elements
-from the request line, request headers, or request trailers. Where
-ambiguity arises use the request option.
-
-5. When sections of the response message body arrive. These may be combined
-with the status line, response headers, request line, request headers, or
-request trailers as described above.
-
-6. When the response trailers arrive. Again these may be combined as
-described above.
+Fast patterns are always searched in the current message. Rule options using
+"request" option can't be used as fast patterns.
 
 Message body sections can only go through detection at the time they are
 received. Headers may be combined with later items but the body cannot.
+
+The sub-options "with_header", "with_body" and "with_trailer" are deprecated,
+and no longer required when mixing the different sections.
 

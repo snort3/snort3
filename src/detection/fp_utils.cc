@@ -56,6 +56,9 @@
 
 using namespace snort;
 
+// PduSection to string, used by debug traces
+const char* section_to_str[] = {"NONE", "HEADER", "HEADER_BODY", "BODY", "TRAILER"};
+
 //--------------------------------------------------------------------------
 // private utilities
 //--------------------------------------------------------------------------
@@ -66,6 +69,7 @@ static bool pmd_can_be_fp(
     switch ( cat )
     {
     case CAT_NONE:
+    case CAT_READ:
     case CAT_ADJUST:
     case CAT_SET_OTHER:
         return false;
@@ -296,7 +300,7 @@ static bool fetch(const std::string& s, uint8_t*& data, size_t& len)
 }
 
 static std::string make_db_name(
-    const std::string& path, const char* proto, const char* dir, const char* buf, const std::string& id)
+    const std::string& path, const char* proto, const char* dir, const char* buf, const std::string& id, int sect)
 {
     std::stringstream ss;
 
@@ -304,7 +308,7 @@ static std::string make_db_name(
     ss << proto << "_";
     ss << dir << "_";
     ss << buf << "_";
-
+    ss << std::to_string(sect) << "_";
     ss << std::hex << std::setfill('0') << std::setw(2);
 
     for ( auto c : id )
@@ -317,26 +321,32 @@ static std::string make_db_name(
 
 static bool db_dump(const std::string& path, const char* proto, const char* dir, RuleGroup* g)
 {
-    for ( auto it : g->pm_list )
+    for ( int sect = PS_NONE; sect <= PS_MAX; sect++)
     {
-        std::string id;
-        it->group.normal_mpse->get_hash(id);
-
-        std::string file = make_db_name(path, proto, dir, it->name, id);
-
-        uint8_t* db = nullptr;
-        size_t len = 0;
-
-        if ( it->group.normal_mpse->serialize(db, len) and db and len > 0 )
+        for ( auto it : g->pm_list[sect] )
         {
-            store(file, db, len);
-            free(db);
-            ++mpse_dumped;
-        }
-        else
-        {
-            ParseWarning(WARN_RULES, "Failed to serialize %s", file.c_str());
-            return false;
+            if (it->group.normal_is_dup)
+                continue;
+
+            std::string id;
+            it->group.normal_mpse->get_hash(id);
+
+            std::string file = make_db_name(path, proto, dir, it->name, id, sect);
+
+            uint8_t* db = nullptr;
+            size_t len = 0;
+
+            if ( it->group.normal_mpse->serialize(db, len) and db and len > 0 )
+            {
+                store(file, db, len);
+                free(db);
+                ++mpse_dumped;
+            }
+            else
+            {
+                ParseWarning(WARN_RULES, "Failed to serialize %s", file.c_str());
+                return false;
+            }
         }
     }
     return true;
@@ -344,30 +354,36 @@ static bool db_dump(const std::string& path, const char* proto, const char* dir,
 
 static bool db_load(const std::string& path, const char* proto, const char* dir, RuleGroup* g)
 {
-    for ( auto it : g->pm_list )
+    for ( int sect = PS_NONE; sect <= PS_MAX; sect++)
     {
-        std::string id;
-        it->group.normal_mpse->get_hash(id);
-
-        std::string file = make_db_name(path, proto, dir, it->name, id);
-
-        uint8_t* db = nullptr;
-        size_t len = 0;
-
-        if ( !fetch(file, db, len) )
+        for ( auto it : g->pm_list[sect] )
         {
-            ParseWarning(WARN_RULES, "Failed to read %s", file.c_str());
+            if (it->group.normal_is_dup)
+                continue;
+
+            std::string id;
+            it->group.normal_mpse->get_hash(id);
+
+            std::string file = make_db_name(path, proto, dir, it->name, id, sect);
+
+            uint8_t* db = nullptr;
+            size_t len = 0;
+
+            if ( !fetch(file, db, len) )
+            {
+                ParseWarning(WARN_RULES, "Failed to read %s", file.c_str());
+                delete[] db;
+                return false;
+            }
+            else if ( !it->group.normal_mpse->deserialize(db, len) )
+            {
+                ParseWarning(WARN_RULES, "Failed to deserialize %s", file.c_str());
+                delete[] db;
+                return false;
+            }
             delete[] db;
-            return false;
+            ++mpse_loaded;
         }
-        else if ( !it->group.normal_mpse->deserialize(db, len) )
-        {
-            ParseWarning(WARN_RULES, "Failed to deserialize %s", file.c_str());
-            delete[] db;
-            return false;
-        }
-        delete[] db;
-        ++mpse_loaded;
     }
     return true;
 }
@@ -447,6 +463,30 @@ unsigned fp_deserialize(const SnortConfig* sc, const std::string& dir)
     mpse_loaded = 0;
     fp_io(sc, dir, db_load);
     return mpse_loaded;
+}
+
+bool has_service_rule_opt(OptTreeNode* otn)
+{
+    for (OptFpList* ofl = otn->opt_func; ofl; ofl = ofl->next)
+    {
+        if ( !ofl->ips_opt )
+            continue;
+
+        CursorActionType cat = ofl->ips_opt->get_cursor_type();
+        const char* s = ofl->ips_opt->get_name();
+
+        if ( cat <= CAT_ADJUST )
+        {
+            if (guess_service(s) != nullptr)
+                return true;
+
+            continue;
+        }
+
+        if (get_num_services(s) != 0)
+            return true;
+    }
+    return false;
 }
 
 void validate_services(SnortConfig* sc, OptTreeNode* otn)

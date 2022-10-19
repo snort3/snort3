@@ -43,6 +43,9 @@ public:
     { return CAT_SET_FAST_PATTERN; }
 
     EvalStatus eval(Cursor&, Packet*) override;
+
+    section_flags get_pdu_section(bool) const override
+    { return section_to_flag(PS_BODY); }
 };
 
 //-------------------------------------------------------------------------

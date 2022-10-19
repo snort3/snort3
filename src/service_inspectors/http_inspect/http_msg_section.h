@@ -22,6 +22,7 @@
 
 #include "detection/detection_util.h"
 #include "framework/cursor.h"
+#include "framework/pdu_section.h"	
 #include "protocols/packet.h"
 
 #include "http_buffer_info.h"
@@ -42,8 +43,8 @@ class HttpMsgSection
 {
 public:
     virtual ~HttpMsgSection() = default;
-    virtual HttpEnums::InspectSection get_inspection_section() const
-        { return HttpEnums::IS_NONE; }
+    virtual snort::PduSection get_inspection_section() const
+        { return snort::PS_NONE; }
     virtual bool detection_required() const = 0;
     HttpCommon::SourceId get_source_id() const { return source_id; }
     HttpTransaction* get_transaction() const { return transaction; }

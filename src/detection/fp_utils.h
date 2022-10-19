@@ -48,6 +48,7 @@ std::vector <PatternMatchData*> get_fp_content(
 void queue_mpse(snort::Mpse*);
 unsigned compile_mpses(struct snort::SnortConfig*, bool parallel = false);
 
+bool has_service_rule_opt(OptTreeNode*);
 void validate_services(struct snort::SnortConfig*, OptTreeNode*);
 
 unsigned fp_serialize(const struct snort::SnortConfig*, const std::string& dir);
@@ -56,5 +57,6 @@ unsigned fp_deserialize(const struct snort::SnortConfig*, const std::string& dir
 void update_buffer_map(const char** bufs, const char* svc);
 void add_default_services(struct snort::SnortConfig*, const std::string&, OptTreeNode*);
 
-#endif
+extern const char* section_to_str[];
 
+#endif

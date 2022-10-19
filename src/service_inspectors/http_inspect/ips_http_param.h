@@ -64,6 +64,8 @@ public:
 
     static void opt_dtor(snort::IpsOption* p) { delete p; }
     bool retry(Cursor& , const Cursor&) override;
+  
+    snort::section_flags get_pdu_section(bool) const override;
 
 private:
     const char* const key;

@@ -55,8 +55,6 @@ bool HttpBufferRuleOptModule::begin(const char*, int, SnortConfig*)
     case HTTP_BUFFER_RAW_STATUS:
     case HTTP_BUFFER_STAT_CODE:
     case HTTP_BUFFER_STAT_MSG:
-        inspect_section = IS_HEADER;
-        break;
     case HTTP_BUFFER_COOKIE:
     case HTTP_BUFFER_HEADER:
     case HTTP_BUFFER_METHOD:
@@ -67,17 +65,16 @@ bool HttpBufferRuleOptModule::begin(const char*, int, SnortConfig*)
     case HTTP_BUFFER_TRUE_IP:
     case HTTP_BUFFER_URI:
     case HTTP_BUFFER_VERSION:
-        inspect_section = IS_FLEX_HEADER;
+        pdu_section = PS_HEADER;
         break;
     case HTTP_BUFFER_CLIENT_BODY:
     case HTTP_BUFFER_RAW_BODY:
     case BUFFER_JS_DATA:
-        inspect_section = IS_BODY;
+        pdu_section = PS_BODY;
         break;
     case HTTP_BUFFER_RAW_TRAILER:
     case HTTP_BUFFER_TRAILER:
-        inspect_section = IS_TRAILER;
-        is_trailer_opt = true;
+        pdu_section = PS_TRAILER;
         break;
     default:
         assert(false);
@@ -130,39 +127,8 @@ bool HttpBufferRuleOptModule::end(const char*, int, SnortConfig*)
     // Check for option conflicts
     if (scheme + host + port + path + query + fragment > 1)
         ParseError("Only specify one part of the URI");
-    return HttpRuleOptModule::end(nullptr, 0, nullptr);
+    return true;
 }
-
-static InspectionBuffer::Type buf_map[] =
-{
-#if 0
-    BUFFER_PSI_CLIENT_BODY, BUFFER_PSI_COOKIE, BUFFER_PSI_HEADER, BUFFER_PSI_METHOD,
-    BUFFER_PSI_RAW_BODY, BUFFER_PSI_RAW_COOKIE, BUFFER_PSI_RAW_HEADER, BUFFER_PSI_RAW_REQUEST,
-    BUFFER_PSI_RAW_STATUS, BUFFER_PSI_RAW_TRAILER, BUFFER_PSI_RAW_URI, BUFFER_PSI_STAT_CODE,
-    BUFFER_PSI_STAT_MSG, BUFFER_PSI_TRAILER, BUFFER_PSI_TRUE_IP, BUFFER_PSI_URI, BUFFER_PSI_VERSION,
-    BUFFER_PSI_JS_DATA, BUFFER_PSI_VBA_DATA, BUFFER_PSI_MAX
-#endif
-    InspectionBuffer::IBT_BODY,
-    InspectionBuffer::IBT_COOKIE,
-    InspectionBuffer::IBT_HEADER,
-    InspectionBuffer::IBT_METHOD,
-    InspectionBuffer::IBT_MAX,
-    InspectionBuffer::IBT_MAX,
-    InspectionBuffer::IBT_RAW_HEADER,
-    InspectionBuffer::IBT_MAX,
-    InspectionBuffer::IBT_MAX,
-    InspectionBuffer::IBT_RAW_HEADER,
-    InspectionBuffer::IBT_RAW_KEY,
-    InspectionBuffer::IBT_STAT_CODE,
-    InspectionBuffer::IBT_STAT_MSG,
-    InspectionBuffer::IBT_HEADER,
-    InspectionBuffer::IBT_MAX,
-    InspectionBuffer::IBT_KEY,
-    InspectionBuffer::IBT_MAX,
-    InspectionBuffer::IBT_JS_DATA,
-    InspectionBuffer::IBT_VBA,
-    InspectionBuffer::IBT_MAX
-};
 
 IpsOption::EvalStatus HttpBufferIpsOption::eval(Cursor& c, Packet* p)
 {
@@ -174,20 +140,26 @@ IpsOption::EvalStatus HttpBufferIpsOption::eval(Cursor& c, Packet* p)
 
     if (p->packet_flags & PKT_FAST_PAT_EVAL)
     {
-        InspectionBuffer buf;
-        InspectionBuffer::Type ibt = buf_map[idx];
-
-        if (ibt == InspectionBuffer::IBT_MAX)
-            return NO_MATCH;
-
-        if (!hi->get_fp_buf(ibt, p, buf))
-            return NO_MATCH;
-
-        c.set(key, buf.data, buf.len);
-        return MATCH;
+        switch (idx)
+        {
+        case BUFFER_PSI_RAW_URI:
+        case BUFFER_PSI_URI:
+        case BUFFER_PSI_METHOD:
+            if (hi->get_latest_src(p) != SRC_CLIENT)
+                return NO_MATCH;
+            break;
+        case BUFFER_PSI_STAT_CODE:
+        case BUFFER_PSI_STAT_MSG:
+            if (hi->get_latest_src(p) != SRC_SERVER)
+                return NO_MATCH;
+            break;
+        default:
+            break;
+        }
     }
+    const HttpBufferInfo& cur_buf_info = (p->packet_flags & PKT_FAST_PAT_EVAL) ? fp_buffer_info : buffer_info;
+    const Field& http_buffer = hi->http_get_buf(p, cur_buf_info);
 
-    const Field& http_buffer = hi->http_get_buf(p, buffer_info);
     if (http_buffer.length() <= 0)
         return NO_MATCH;
 
@@ -246,11 +218,11 @@ static const Parameter http_cookie_params[] =
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against the cookie from the request message even when examining the response" },
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "this rule is limited to examining HTTP message headers" },
+        "option is no longer used and will be removed in a future release" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body" },
+        "option is no longer used and will be removed in a future release" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message trailers" },
+        "option is no longer used and will be removed in a future release" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -307,11 +279,11 @@ static const Parameter http_header_params[] =
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against the headers from the request message even when examining the response" },
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "this rule is limited to examining HTTP message headers" },
+        "option is no longer used and will be removed in a future release" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body" },
+        "option is no longer used and will be removed in a future release" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message trailers" },
+        "option is no longer used and will be removed in a future release" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -358,11 +330,11 @@ static const IpsApi header_api =
 static const Parameter http_method_params[] =
 {
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "this rule is limited to examining HTTP message headers" },
+        "option is no longer used and will be removed in a future release" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body" },
+        "option is no longer used and will be removed in a future release" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message trailers" },
+        "option is no longer used and will be removed in a future release" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -451,11 +423,11 @@ static const Parameter http_raw_cookie_params[] =
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against the cookie from the request message even when examining the response" },
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "this rule is limited to examining HTTP message headers" },
+        "option is no longer used and will be removed in a future release" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body" },
+        "option is no longer used and will be removed in a future release" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message trailers" },
+        "option is no longer used and will be removed in a future release" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -506,11 +478,11 @@ static const Parameter http_raw_header_params[] =
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against the headers from the request message even when examining the response" },
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "this rule is limited to examining HTTP message headers" },
+        "option is no longer used and will be removed in a future release" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body" },
+        "option is no longer used and will be removed in a future release" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message trailers" },
+        "option is no longer used and will be removed in a future release" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -557,11 +529,11 @@ static const IpsApi raw_header_api =
 static const Parameter http_raw_request_params[] =
 {
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "this rule is limited to examining HTTP message headers" },
+        "option is no longer used and will be removed in a future release" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body" },
+        "option is no longer used and will be removed in a future release" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message trailers" },
+        "option is no longer used and will be removed in a future release" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -608,9 +580,9 @@ static const IpsApi raw_request_api =
 static const Parameter http_raw_status_params[] =
 {
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body" },
+        "option is no longer used and will be removed in a future release" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message trailers" },
+        "option is no longer used and will be removed in a future release" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -661,10 +633,9 @@ static const Parameter http_raw_trailer_params[] =
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against the trailers from the request message even when examining the response" },
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP response message headers (must be combined with request)"
-        },
+        "option is no longer used and will be removed in a future release" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP response message body (must be combined with request)" },
+        "option is no longer used and will be removed in a future release" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -711,11 +682,11 @@ static const IpsApi raw_trailer_api =
 static const Parameter http_raw_uri_params[] =
 {
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "this rule is limited to examining HTTP message headers" },
+        "option is no longer used and will be removed in a future release" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body" },
+        "option is no longer used and will be removed in a future release" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message trailers" },
+        "option is no longer used and will be removed in a future release" },
     { "scheme", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against scheme section of URI only" },
     { "host", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -774,9 +745,9 @@ static const IpsApi raw_uri_api =
 static const Parameter http_stat_code_params[] =
 {
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body" },
+        "option is no longer used and will be removed in a future release" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message trailers" },
+        "option is no longer used and will be removed in a future release" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -823,9 +794,9 @@ static const IpsApi stat_code_api =
 static const Parameter http_stat_msg_params[] =
 {
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body" },
+        "option is no longer used and will be removed in a future release" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message trailers" },
+        "option is no longer used and will be removed in a future release" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -875,10 +846,9 @@ static const Parameter http_trailer_params[] =
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against the trailers from the request message even when examining the response" },
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP response message headers (must be combined with request)"
-        },
+        "option is no longer used and will be removed in a future release" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body (must be combined with request)" },
+        "option is no longer used and will be removed in a future release" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -925,11 +895,11 @@ static const IpsApi trailer_api =
 static const Parameter http_true_ip_params[] =
 {
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "this rule is limited to examining HTTP message headers" },
+        "option is no longer used and will be removed in a future release" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body" },
+        "option is no longer used and will be removed in a future release" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message trailers" },
+        "option is no longer used and will be removed in a future release" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -976,11 +946,11 @@ static const IpsApi true_ip_api =
 static const Parameter http_uri_params[] =
 {
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "this rule is limited to examining HTTP message headers" },
+        "option is no longer used and will be removed in a future release" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body" },
+        "option is no longer used and will be removed in a future release" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message trailers" },
+        "option is no longer used and will be removed in a future release" },
     { "scheme", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against scheme section of URI only" },
     { "host", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -1041,11 +1011,11 @@ static const Parameter http_version_params[] =
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against the version from the request message even when examining the response" },
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "this rule is limited to examining HTTP message headers" },
+        "option is no longer used and will be removed in a future release" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body" },
+        "option is no longer used and will be removed in a future release" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message trailers" },
+        "option is no longer used and will be removed in a future release" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 

@@ -174,6 +174,9 @@ public:
 
     EvalStatus eval(Cursor&, Packet* p) override;
 
+    CursorActionType get_cursor_type() const override
+    { return CAT_READ; }
+
 private:
     unsigned SdSearch(const Cursor&, Packet*);
     SdPatternConfig config;

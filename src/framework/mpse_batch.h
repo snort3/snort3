@@ -62,6 +62,8 @@ public:
 public:  // FIXIT-L privatize
     Mpse* normal_mpse;
     Mpse* offload_mpse;
+    bool normal_is_dup = false;
+    bool offload_is_dup = false;
 };
 
 template<typename BUF = const uint8_t*, typename LEN = unsigned>

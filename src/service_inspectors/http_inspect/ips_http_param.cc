@@ -47,7 +47,7 @@ bool HttpParamRuleOptModule::begin(const char*, int, SnortConfig*)
     HttpRuleOptModule::begin(nullptr, 0, nullptr);
     param.clear();
     nocase = false;
-    inspect_section = IS_FLEX_HEADER;
+    pdu_section = PS_HEADER;
     return true;
 }
 
@@ -118,6 +118,13 @@ IpsOption::EvalStatus HttpParamIpsOption::eval(Cursor& c, Packet* p)
 
     return MATCH;
 }
+
+section_flags HttpParamIpsOption::get_pdu_section(bool) const
+{
+    // Works on URI or client body
+    return section_to_flag(snort::PS_HEADER_BODY);
+}
+
 
 //-------------------------------------------------------------------------
 // http_param

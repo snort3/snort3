@@ -93,6 +93,7 @@ void Packet::reset()
     user_network_policy_id = 0;
     vlan_idx = 0;
     filtering_state.clear();
+    sect = PS_NONE;
 }
 
 void Packet::release_helpers()

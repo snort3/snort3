@@ -200,17 +200,17 @@ void HttpInspect::show(const SnortConfig*) const
     ConfigLogger::log_flag("request_body_app_detection", params->publish_request_body);
 }
 
-InspectSection HttpInspect::get_latest_is(const Packet* p)
+PduSection HttpInspect::get_latest_is(const Packet* p)
 {
     HttpMsgSection* current_section = HttpContextData::get_snapshot(p);
 
     if (current_section == nullptr)
-        return IS_NONE;
+        return PS_NONE;
 
     // FIXIT-L revisit why we need this check. We should not be getting a current section back
     // for a raw packet but one of the test cases did exactly that.
     if (!(p->packet_flags & PKT_PSEUDO))
-        return IS_NONE;
+        return PS_NONE;
 
     return current_section->get_inspection_section();
 }
@@ -233,7 +233,7 @@ bool HttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffe
         return get_buf(HTTP_BUFFER_URI, p, b);
 
     case InspectionBuffer::IBT_HEADER:
-        if (get_latest_is(p) == IS_TRAILER)
+        if (get_latest_is(p) == PS_TRAILER)
             return get_buf(HTTP_BUFFER_TRAILER, p, b);
         else
             return get_buf(HTTP_BUFFER_HEADER, p , b);
@@ -241,34 +241,11 @@ bool HttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffe
     case InspectionBuffer::IBT_BODY:
         return get_buf(HTTP_BUFFER_CLIENT_BODY, p, b);
 
-    case InspectionBuffer::IBT_RAW_KEY:
-        return get_buf(HTTP_BUFFER_RAW_URI, p , b);
-
-    case InspectionBuffer::IBT_RAW_HEADER:
-        if (get_latest_is(p) == IS_TRAILER)
-            return get_buf(HTTP_BUFFER_RAW_TRAILER, p, b);
-        else
-            return get_buf(HTTP_BUFFER_RAW_HEADER, p , b);
-
-    case InspectionBuffer::IBT_METHOD:
-        return get_buf(HTTP_BUFFER_METHOD, p , b);
-
-    case InspectionBuffer::IBT_STAT_CODE:
-        return get_buf(HTTP_BUFFER_STAT_CODE, p , b);
-
-    case InspectionBuffer::IBT_STAT_MSG:
-        return get_buf(HTTP_BUFFER_STAT_MSG, p , b);
-
-    case InspectionBuffer::IBT_COOKIE:
-        return get_buf(HTTP_BUFFER_COOKIE, p , b);
-
     case InspectionBuffer::IBT_VBA:
         return get_buf(BUFFER_VBA_DATA, p, b);
 
-    case InspectionBuffer::IBT_JS_DATA:
-        return get_buf(BUFFER_JS_DATA, p, b);
-
     default:
+        assert(false);
         return false;
     }
 }
@@ -373,48 +350,11 @@ void HttpInspect::set_hx_body_state(snort::Flow* flow, HttpCommon::SourceId sour
 
 bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
-    if (get_latest_is(p) == IS_NONE)
+    assert(ibt == InspectionBuffer::IBT_VBA);
+
+    if (get_latest_is(p) == PS_NONE)
         return false;
 
-    // Fast pattern buffers only supplied at specific times
-    switch (ibt)
-    {
-    case InspectionBuffer::IBT_KEY:
-    case InspectionBuffer::IBT_RAW_KEY:
-        // Many rules targeting POST feature http_uri fast pattern with http_client_body. We
-        // accept the performance hit of rerunning http_uri fast pattern with request body message
-        // sections
-        if (get_latest_src(p) != SRC_CLIENT)
-            return false;
-        break;
-    case InspectionBuffer::IBT_HEADER:
-    case InspectionBuffer::IBT_RAW_HEADER:
-        // http_header fast patterns for response bodies limited to first section
-        if ((get_latest_src(p) == SRC_SERVER) && (get_latest_is(p) == IS_BODY))
-            return false;
-        break;
-    case InspectionBuffer::IBT_BODY:
-    case InspectionBuffer::IBT_VBA:
-    case InspectionBuffer::IBT_JS_DATA:
-        if ((get_latest_is(p) != IS_FIRST_BODY) && (get_latest_is(p) != IS_BODY))
-            return false;
-        break;
-    case InspectionBuffer::IBT_METHOD:
-        if ((get_latest_src(p) != SRC_CLIENT) || (get_latest_is(p) == IS_BODY))
-            return false;
-        break;
-    case InspectionBuffer::IBT_STAT_CODE:
-    case InspectionBuffer::IBT_STAT_MSG:
-        if ((get_latest_src(p) != SRC_SERVER) || (get_latest_is(p) != IS_HEADER))
-            return false;
-        break;
-    case InspectionBuffer::IBT_COOKIE:
-        if (get_latest_is(p) != IS_HEADER)
-            return false;
-        break;
-    default:
-        break;
-    }
     return get_buf(ibt, p, b);
 }
 
@@ -681,6 +621,12 @@ void HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
 #endif
 
     current_section->publish();
+    if (p != nullptr)
+    {
+        const PduSection pdu_section = current_section->get_inspection_section();
+        p->set_pdu_section(pdu_section);
+    }
+
     if (current_section->run_detection(p))
     {
 #ifdef REG_TEST

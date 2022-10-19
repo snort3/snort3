@@ -43,7 +43,7 @@ THREAD_LOCAL ProfileStats HttpVersionRuleOptModule::http_version_ps;
 bool HttpVersionRuleOptModule::begin(const char*, int, SnortConfig*)
 {
     HttpRuleOptModule::begin(nullptr, 0, nullptr);
-    inspect_section = IS_FLEX_HEADER;
+    pdu_section = PS_HEADER;
     version_flags = 0;
     return true;
 }
@@ -144,11 +144,11 @@ static const Parameter version_match_params[] =
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against the version from the request message even when examining the response" },
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "this rule is limited to examining HTTP message headers" },
+        "option is no longer used and will be removed in a future release" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body" },
+        "option is no longer used and will be removed in a future release" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message trailers" },
+        "option is no longer used and will be removed in a future release" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 

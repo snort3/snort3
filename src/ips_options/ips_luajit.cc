@@ -117,6 +117,9 @@ public:
 
     IpsOption::EvalStatus eval(Cursor&, Packet*) override;
 
+    CursorActionType get_cursor_type() const override
+    { return CAT_READ; }
+
 private:
     void init(const char*, const char*);
 

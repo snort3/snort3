@@ -38,8 +38,8 @@ class HttpMsgBody : public HttpMsgSection
 public:
     ~HttpMsgBody() override { delete mime_bufs; }
     void analyze() override;
-    HttpEnums::InspectSection get_inspection_section() const override
-        { return first_body ? HttpEnums::IS_FIRST_BODY : HttpEnums::IS_BODY; }
+    snort::PduSection get_inspection_section() const override
+        { return snort::PS_BODY; }
     bool detection_required() const override { return (detect_data.length() > 0); }
     bool run_detection(snort::Packet* p) override;
     void clear() override;

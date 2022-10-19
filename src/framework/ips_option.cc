@@ -50,6 +50,11 @@ bool IpsOption::operator==(const IpsOption& ips) const
     return !strcmp(get_name(), ips.get_name());
 }
 
+section_flags IpsOption::get_pdu_section(bool) const
+{
+    return section_to_flag(PS_NONE);
+}
+
 //-------------------------------------------------------------------------
 // UNIT TESTS
 //-------------------------------------------------------------------------

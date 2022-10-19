@@ -89,6 +89,9 @@ public:
 
     EvalStatus eval(Cursor&, Packet*) override;
 
+    CursorActionType get_cursor_type() const override
+    { return CAT_READ; }
+
 private:
     const ByteMathData config;
     int calc(uint32_t& value, const uint32_t rvalue);

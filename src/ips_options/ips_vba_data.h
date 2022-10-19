@@ -44,6 +44,9 @@ public:
     snort::CursorActionType get_cursor_type() const override;
 
     snort::IpsOption::EvalStatus eval(Cursor&, snort::Packet*) override;
+
+    snort::section_flags get_pdu_section(bool) const override
+    { return section_to_flag(snort::PS_BODY); }
 };
 
 class VbaDataModule : public snort::Module

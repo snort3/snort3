@@ -35,8 +35,9 @@ void RuleGroup::add_rule()
 
 RuleGroup::~RuleGroup()
 {
-    for ( auto* it : pm_list )
-        delete it;
+    for ( int sect = snort::PS_NONE; sect <= snort::PS_MAX; sect++)
+        for ( auto* it : pm_list[sect] )
+            delete it;
 
     delete_nfp_rules();
     free_detection_option_root(&nfp_tree);
@@ -79,7 +80,7 @@ void RuleGroup::delete_nfp_rules()
     nfp_head = nullptr;
 }
 
-PatternMatcher* RuleGroup::get_pattern_matcher(PatternMatcher::Type t, const char* s)
+PatternMatcher* RuleGroup::get_pattern_matcher(PatternMatcher::Type t, const char* s, snort::PduSection sect)
 {
     bool raw = false;
 
@@ -88,7 +89,7 @@ PatternMatcher* RuleGroup::get_pattern_matcher(PatternMatcher::Type t, const cha
         s = "pkt_data";
         raw = true;
     }
-    for ( auto& it : pm_list )
+    for ( auto& it : pm_list[sect] )
     {
         if ( it->type == t and !strcmp(it->name, s) )
         {
@@ -96,7 +97,7 @@ PatternMatcher* RuleGroup::get_pattern_matcher(PatternMatcher::Type t, const cha
             return it;
         }
     }
-    pm_list.push_back(new PatternMatcher(t, s, raw));
-    return pm_list.back();
+    pm_list[sect].push_back(new PatternMatcher(t, s, raw));
+    return pm_list[sect].back();
 }
 

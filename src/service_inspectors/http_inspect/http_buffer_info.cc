@@ -21,10 +21,13 @@
 #include "config.h"
 #endif
 
-#include "hash/hash_key_operations.h"
 #include "http_buffer_info.h"
 
+#include "hash/hash_key_operations.h"
+#include "http_enum.h"
+
 using namespace snort;
+using namespace HttpEnums;
 
 uint32_t HttpBufferInfo::hash() const
 {
@@ -46,3 +49,7 @@ bool HttpBufferInfo::operator==(const HttpBufferInfo& rhs) const
          form == rhs.form);
 }
 
+bool HttpBufferInfo::is_request() const
+{
+    return ((form & FORM_REQUEST) != 0);
+}

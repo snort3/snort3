@@ -52,6 +52,9 @@ public:
 
     EvalStatus eval(Cursor&, Packet*) override;
 
+    CursorActionType get_cursor_type() const override
+    { return CAT_READ; }
+
 private:
     const char* soid;
     const char* so;

@@ -88,6 +88,7 @@ static rule_count_t svcCnt;  // dummy for now
 
 static bool s_ignore = false;  // for skipping drop rules when not inline, etc.
 static bool s_capture = false;
+static bool buf_is_set = false;
 
 static std::string s_type;
 static std::string s_body;
@@ -983,6 +984,21 @@ void parse_rule_opt_set(
     IpsManager::option_set(sc, key, opt, val);
 }
 
+static void select_section(section_flags& otn_sects, section_flags sections)
+{
+    // The logic for choosing the right section is limited to rule options working on a single section or
+    // on both header and body. Should be updated if other combinations are required.
+    if ((otn_sects == section_to_flag(PS_TRAILER) and sections == section_to_flag(PS_BODY)) or
+        (sections == section_to_flag(PS_TRAILER) and otn_sects == section_to_flag(PS_BODY)))
+    {
+        otn_sects = section_to_flag(PS_ERROR);
+        return;
+    }
+
+    if (otn_sects < sections)
+        otn_sects = sections;
+}
+
 void parse_rule_opt_end(SnortConfig* sc, const char* key, OptTreeNode* otn)
 {
     if ( s_ignore )
@@ -1001,10 +1017,21 @@ void parse_rule_opt_end(SnortConfig* sc, const char* key, OptTreeNode* otn)
     {
         if ( cat != CAT_SET_RAW )
             otn->set_service_only();
+        buf_is_set = true;
     }
 
     if ( type != OPT_TYPE_META )
         otn->num_detection_opts++;
+
+    for (int i=0; i<OptTreeNode::SECT_DIR__MAX; i++)
+    {
+        section_flags sections = ips ? ips->get_pdu_section(i==OptTreeNode::SECT_TO_SRV) : section_to_flag(PS_NONE);
+        // Rule option is using the cursor. The default buffer is pkt_data, belongs to BODY section
+        if (!buf_is_set and ((cat == CAT_ADJUST) or (cat == CAT_READ)))
+            sections = section_to_flag(PS_BODY);
+
+        select_section(otn->sections[i], sections);
+    }
 }
 
 OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
@@ -1033,6 +1060,7 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
 
     s_capture = sc->dump_rule_meta();
     s_body = "(";
+    buf_is_set = false;
 
     return otn;
 }
@@ -1217,6 +1245,19 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
     }
 
     ClearIpsOptionsVars();
+
+    for (int i=0; i<OptTreeNode::SECT_DIR__MAX; i++)
+    {
+        if (otn->sections[i] == section_to_flag(PS_HEADER_BODY))
+            otn->sections[i] = section_to_flag(PS_HEADER) | section_to_flag(PS_BODY);
+    }
+
+    if ((otn->to_server_err() && otn->to_server()) ||
+        (otn->to_client_err() && otn->to_client()) ||
+        (otn->to_server_err() && otn->to_client_err()))
+        ParseError("Rule cannot examine both HTTP message body and HTTP trailers, unless it is request"
+            " trailer with response body");
+
 }
 
 void parse_rule_process_rtn(RuleTreeNode* rtn)

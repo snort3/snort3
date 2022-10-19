@@ -28,6 +28,7 @@
 #include <cassert>
 #include <vector>
 
+#include "framework/pdu_section.h"
 #include "framework/mpse_batch.h"
 
 // RuleGroup contains a set of fast patterns in the form of an MPSE and a
@@ -73,7 +74,7 @@ struct RuleGroup
     RULE_NODE* nfp_tail = nullptr;
 
     // pattern matchers
-    using PmList = std::vector<PatternMatcher*>;
+    using PmList = std::vector<PatternMatcher*>[snort::PS_MAX + 1];
     PmList pm_list;
 
     // detection option tree
@@ -86,7 +87,7 @@ struct RuleGroup
     bool add_nfp_rule(void*);
     void delete_nfp_rules();
 
-    PatternMatcher* get_pattern_matcher(PatternMatcher::Type, const char*);
+    PatternMatcher* get_pattern_matcher(PatternMatcher::Type, const char*, snort::PduSection sect);
 };
 
 #endif

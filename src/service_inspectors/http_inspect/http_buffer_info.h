@@ -20,6 +20,8 @@
 #ifndef HTTP_BUFFER_INFO_H
 #define HTTP_BUFFER_INFO_H
 
+#include "main/snort_types.h"
+
 class HttpBufferInfo
 {
 public:
@@ -29,6 +31,7 @@ public:
     uint32_t hash() const;
 
     bool operator==(const HttpBufferInfo& rhs) const;
+    bool is_request() const;
 
 public:
     const unsigned type;

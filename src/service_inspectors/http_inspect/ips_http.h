@@ -23,6 +23,7 @@
 #include <array>
 
 #include "profiler/profiler.h"
+#include "framework/pdu_section.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/range.h"
@@ -47,35 +48,20 @@ public:
     static void mod_dtor(snort::Module* m) { delete m; }
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
-    bool end(const char*, int, snort::SnortConfig*) override;
 
     Usage get_usage() const override
     { return DETECT; }
 
 protected:
-    HttpEnums::InspectSection inspect_section;
+    snort::PduSection pdu_section;
     const HttpEnums::HTTP_RULE_OPT rule_opt_index;
     const char* const key;
     uint64_t sub_id;
-    bool is_trailer_opt;          // used by ::end for with_* validation
 
 private:
     friend class HttpIpsOption;
 
-    struct HttpRuleParaList
-    {
-    public:
-        std::string field;        // provide buffer containing specific header field
-        bool request;             // provide buffer from request not response
-        bool with_header;         // provide buffer with a later section than it appears in
-        bool with_body;
-        bool with_trailer;
-
-        void reset();
-    };
-
     const snort::CursorActionType cat;
-    HttpRuleParaList para_list;
     uint64_t form;
 };
 
@@ -85,20 +71,22 @@ public:
     HttpIpsOption(const HttpRuleOptModule* cm) :
         snort::IpsOption(cm->key),
         buffer_info(cm->rule_opt_index, cm->sub_id, cm->form),
-        cat(cm->cat), inspect_section(cm->inspect_section) {}
+        cat(cm->cat), pdu_section(cm->pdu_section) {}
     snort::CursorActionType get_cursor_type() const override { return cat; }
     EvalStatus eval(Cursor&, snort::Packet*) override = 0;
     uint32_t hash() const override;
     bool operator==(const snort::IpsOption& ips) const override;
+  
+    snort::section_flags get_pdu_section(bool) const override;
 
 protected:
     const HttpBufferInfo buffer_info;
-  
+    const snort::CursorActionType cat;
+
     HttpInspect const* eval_helper(snort::Packet* p);
 
 private:
-    const snort::CursorActionType cat;
-    const HttpEnums::InspectSection inspect_section;
+    const snort::PduSection pdu_section;
 };
 
 #endif

@@ -880,9 +880,9 @@ static int fp_search(RuleGroup* port_group, Packet* p, bool srvc)
     p->packet_flags |= PKT_FAST_PAT_EVAL;
     Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
 
-    debug_log(detection_trace, TRACE_RULE_EVAL, p, "Fast pattern search\n");
-
-    for ( const auto it : port_group->pm_list )
+    debug_logf(detection_trace, TRACE_RULE_EVAL, p, "Fast pattern search, packet section %s\n",
+        section_to_str[p->sect]);
+    for ( const auto it : port_group->pm_list[p->sect] )
     {
         switch ( it->type )
         {
@@ -912,7 +912,6 @@ static int fp_search(RuleGroup* port_group, Packet* p, bool srvc)
                     {
                         debug_logf(detection_trace, TRACE_FP_SEARCH, p,
                             "%" PRIu64 " fp pkt_data[%u]\n", p->context->packet_number, length);
-
                         batch_search(&it->group, p, p->data, length, pc.pkt_searches);
                         p->is_cooked() ?  pc.cooked_searches++ : pc.raw_searches++;
                     }

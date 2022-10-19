@@ -25,6 +25,7 @@
 //-------------------------------------------------------------------------
 
 #include "framework/cursor.h"
+#include "framework/pdu_section.h"
 #include "helpers/literal_search.h"
 #include "log/messages.h"
 
@@ -77,7 +78,7 @@ public:
     bool can_start_tls() const override
     { return true; }
 
-    static HttpEnums::InspectSection get_latest_is(const snort::Packet* p);
+    static snort::PduSection get_latest_is(const snort::Packet* p);
     static HttpCommon::SourceId get_latest_src(const snort::Packet* p);
     void disable_detection(snort::Packet* p);
 

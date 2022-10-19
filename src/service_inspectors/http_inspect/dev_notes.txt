@@ -441,9 +441,9 @@ attachment installed as file_data.
 
 Rule options:
 
-HttpIpsOption is the base class for http rule options. It supports the commonly used parameters: 
-field, request, with_body, with_header and with_trailer. HttpBufferIpsOption is a rule option that 
-sets a buffer. It implements most of the rule options.
+HttpIpsOption is the base class for http rule options. It supports the parameters field and request
+that are used by some rule options. HttpBufferIpsOption is a rule option that sets a buffer. It
+implements most of the rule options.
 
 Test tool usage instructions:
 

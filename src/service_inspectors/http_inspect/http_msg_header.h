@@ -38,8 +38,8 @@ public:
     HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
         HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
         const HttpParaList* params_);
-    HttpEnums::InspectSection get_inspection_section() const override
-        { return HttpEnums::IS_HEADER; }
+    snort::PduSection get_inspection_section() const override
+        { return snort::PS_HEADER; }
     bool detection_required() const override { return true; }
     void update_flow() override;
     void gen_events() override;

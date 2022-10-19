@@ -119,7 +119,7 @@ static const Parameter http_max_header_line_params[] =
 
 static Module* max_header_line_mod_ctor()
 {
-    return new HttpNumRuleOptModule<HTTP_RANGE_MAX_HEADER_LINE, IS_FLEX_HEADER>(IPS_OPT, IPS_HELP,
+    return new HttpNumRuleOptModule<HTTP_RANGE_MAX_HEADER_LINE, PS_HEADER>(IPS_OPT, IPS_HELP,
         http_max_header_line_params);
 }
 
@@ -167,7 +167,7 @@ static const Parameter http_max_trailer_line_params[] =
 
 static Module* max_trailer_line_mod_ctor()
 {
-    return new HttpNumRuleOptModule<HTTP_RANGE_MAX_TRAILER_LINE, IS_TRAILER>(IPS_OPT, IPS_HELP,
+    return new HttpNumRuleOptModule<HTTP_RANGE_MAX_TRAILER_LINE, PS_TRAILER>(IPS_OPT, IPS_HELP,
         http_max_trailer_line_params);
 }
 
@@ -215,7 +215,7 @@ static const Parameter http_num_cookies_params[] =
 
 static Module* num_cookies_mod_ctor()
 {
-    return new HttpNumRuleOptModule<HTTP_RANGE_NUM_COOKIES, IS_HEADER>(IPS_OPT, IPS_HELP,
+    return new HttpNumRuleOptModule<HTTP_RANGE_NUM_COOKIES, PS_HEADER>(IPS_OPT, IPS_HELP,
         http_num_cookies_params);
 }
 
@@ -259,17 +259,17 @@ static const Parameter http_num_hdrs_params[] =
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against the version from the request message even when examining the response" },
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "this rule is limited to examining HTTP message headers" },
+        "option is no longer used and will be removed in a future release" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body" },
+        "option is no longer used and will be removed in a future release" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message trailers" },
+        "option is no longer used and will be removed in a future release" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 static Module* num_hdrs_mod_ctor()
 {
-    return new HttpNumRuleOptModule<HTTP_RANGE_NUM_HDRS, IS_FLEX_HEADER>(IPS_OPT, IPS_HELP,
+    return new HttpNumRuleOptModule<HTTP_RANGE_NUM_HDRS, PS_HEADER>(IPS_OPT, IPS_HELP,
         http_num_hdrs_params);
 }
 
@@ -308,7 +308,7 @@ static const IpsApi num_headers_api =
 
 static Module* num_trailers_mod_ctor()
 {
-    return new HttpNumRuleOptModule<HTTP_RANGE_NUM_TRAILERS, IS_TRAILER>(IPS_OPT, IPS_HELP,
+    return new HttpNumRuleOptModule<HTTP_RANGE_NUM_TRAILERS, PS_TRAILER>(IPS_OPT, IPS_HELP,
         http_num_hdrs_params);
 }
 

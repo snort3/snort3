@@ -163,10 +163,10 @@ static void ServiceMapAddOtn(
 {
     assert(servicename and otn);
 
-    if ( !otn->to_server() )
+    if ( !otn->to_server() && !otn->to_client_err())
         ServiceMapAddOtnRaw(srmm->to_cli, servicename, otn);
 
-    if ( !otn->to_client() )
+    if ( !otn->to_client() && !otn->to_server_err())
         ServiceMapAddOtnRaw(srmm->to_srv, servicename, otn);
 }
 

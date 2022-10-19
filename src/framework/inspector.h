@@ -50,11 +50,8 @@ struct InspectionBuffer
         // this is the only generic rule option
         IBT_VBA,
 
-        // FIXIT-M all of these should be eliminated after NHI is updated
+        // FIXIT-M all of these should be eliminated
         IBT_KEY, IBT_HEADER, IBT_BODY,
-        IBT_RAW_KEY, IBT_RAW_HEADER, IBT_METHOD,
-        IBT_STAT_CODE, IBT_STAT_MSG, IBT_COOKIE,
-        IBT_JS_DATA,
 
         IBT_MAX
     };

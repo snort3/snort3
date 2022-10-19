@@ -42,6 +42,9 @@ public:
     { return CAT_SET_RAW; }
 
     EvalStatus eval(Cursor&, Packet*) override;
+
+    section_flags get_pdu_section(bool) const override
+    { return section_to_flag(PS_BODY); }
 };
 
 IpsOption::EvalStatus PktDataOption::eval(Cursor& c, Packet* p)

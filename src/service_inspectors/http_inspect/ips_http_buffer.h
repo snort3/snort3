@@ -33,7 +33,7 @@ enum BufferPsIdx { BUFFER_PSI_CLIENT_BODY, BUFFER_PSI_COOKIE, BUFFER_PSI_HEADER,
     BUFFER_PSI_RAW_BODY, BUFFER_PSI_RAW_COOKIE, BUFFER_PSI_RAW_HEADER, BUFFER_PSI_RAW_REQUEST,
     BUFFER_PSI_RAW_STATUS, BUFFER_PSI_RAW_TRAILER, BUFFER_PSI_RAW_URI, BUFFER_PSI_STAT_CODE,
     BUFFER_PSI_STAT_MSG, BUFFER_PSI_TRAILER, BUFFER_PSI_TRUE_IP, BUFFER_PSI_URI, BUFFER_PSI_VERSION,
-    BUFFER_PSI_JS_DATA, BUFFER_PSI_VBA_DATA, BUFFER_PSI_MAX };
+    BUFFER_PSI_JS_DATA, BUFFER_PSI_MAX };
 
 class HttpBufferRuleOptModule : public HttpRuleOptModule
 {
@@ -70,7 +70,7 @@ class HttpBufferIpsOption : public HttpIpsOption
 public:
     HttpBufferIpsOption(const HttpBufferRuleOptModule* cm) :
         HttpIpsOption(cm), idx(cm->idx),
-        key(cm->key) {}
+        key(cm->key), fp_buffer_info(cm->rule_opt_index) {}
     EvalStatus eval(Cursor&, snort::Packet*) override;
 
     static IpsOption* opt_ctor(snort::Module* m, OptTreeNode*)
@@ -78,9 +78,13 @@ public:
 
     static void opt_dtor(snort::IpsOption* p) { delete p; }
 
+    snort::CursorActionType get_cursor_type() const override
+    { return buffer_info.is_request()? snort::CAT_SET_OTHER : cat; }
+
 private:
     const BufferPsIdx idx;
     const char* const key;
+    const HttpBufferInfo fp_buffer_info;
 };
 
 #endif

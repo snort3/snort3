@@ -97,6 +97,9 @@ public:
 
     EvalStatus eval(Cursor&, Packet*) override;
 
+    CursorActionType get_cursor_type() const override
+    { return CAT_READ; }
+
 private:
     ASN1_CTXT config;
 };

@@ -48,12 +48,9 @@ bool HttpTestRuleOptModule::begin(const char*, int, SnortConfig*)
     numeric = NV_UNDEFINED;
     absent = false;
     if (rule_opt_index == HTTP_HEADER_TEST)
-        inspect_section = IS_FLEX_HEADER;
+        pdu_section = PS_HEADER;
     else
-    {
-        inspect_section = IS_TRAILER;
-        is_trailer_opt = true;
-    }
+        pdu_section = PS_TRAILER;
 
     return true;
 }
@@ -92,7 +89,7 @@ bool HttpTestRuleOptModule::end(const char*, int, SnortConfig*)
         (check.is_set() && numeric == NV_FALSE))
         ParseWarning(WARN_RULES, "conflicting suboptions");
 
-    return HttpRuleOptModule::end(nullptr, 0, nullptr);
+    return true;
 }
 
 uint32_t HttpTestIpsOption::hash() const
@@ -143,7 +140,7 @@ IpsOption::EvalStatus HttpTestIpsOption::eval_header_test(const Field& http_buff
     int64_t num = 0;
 
     const int32_t length = http_buffer.length();
-    if (length <= 0)
+    if (length < 0)
         is_absent = true;
     // Limit to 18 decimal digits, to fit comfortably into int64_t.
     else if (length <= 18)
@@ -159,7 +156,6 @@ IpsOption::EvalStatus HttpTestIpsOption::eval_header_test(const Field& http_buff
     return (absent_passed && numeric_passed && range_passed) ? MATCH : NO_MATCH;
 }
 
-
 IpsOption::EvalStatus HttpTestIpsOption::eval(Cursor&, Packet* p)
 {
     RuleProfile profile(HttpTestRuleOptModule::http_test_ps[idx]);
@@ -169,6 +165,15 @@ IpsOption::EvalStatus HttpTestIpsOption::eval(Cursor&, Packet* p)
         return NO_MATCH;
     
     const Field& http_buffer = hi->http_get_buf(p, buffer_info);
+
+    // Check if field is absent or section is not present
+    if (http_buffer.length() < 0)
+    {
+         const HttpBufferInfo section_info = HttpBufferInfo(buffer_info.type, 0, buffer_info.form);
+         const Field& section_buffer = hi->http_get_buf(p, section_info);
+         if (section_buffer.length() < 0)
+             return NO_MATCH;
+    }
 
     return eval_header_test(http_buffer);
 }
@@ -190,11 +195,11 @@ static const Parameter hdr_test_params[] =
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against the headers from the request message even when examining the response" },
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "this rule is limited to examining HTTP message headers" },
+        "option is no longer used and will be removed in a future release" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body" },
+        "option is no longer used and will be removed in a future release" },
     { "with_trailer", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message trailers" },
+        "option is no longer used and will be removed in a future release" },
     { "check", Parameter::PT_INTERVAL, hdr_test_range.c_str(), nullptr,
         "range check to perform on header value" },
     { "numeric", Parameter::PT_BOOL, nullptr, nullptr,
@@ -245,9 +250,9 @@ static const Parameter trailer_test_params[] =
     { "request", Parameter::PT_IMPLIED, nullptr, nullptr,
         "match against the trailers from the request message even when examining the response" },
     { "with_header", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP headers" },
+        "option is no longer used and will be removed in a future release" },
     { "with_body", Parameter::PT_IMPLIED, nullptr, nullptr,
-        "parts of this rule examine HTTP message body" },
+        "option is no longer used and will be removed in a future release" },
     { "check", Parameter::PT_INTERVAL, hdr_test_range.c_str(), nullptr,
         "range check to perform on trailer value" },
     { "numeric", Parameter::PT_BOOL, nullptr, nullptr,

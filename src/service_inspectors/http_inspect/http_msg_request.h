@@ -41,8 +41,8 @@ public:
     ~HttpMsgRequest() override;
     bool detection_required() const override
         { return version_id == HttpEnums::VERS_0_9; }
-    HttpEnums::InspectSection get_inspection_section() const override
-        { return HttpEnums::IS_HEADER; }
+    snort::PduSection get_inspection_section() const override
+        { return snort::PS_HEADER; }
     void gen_events() override;
     void update_flow() override;
     void publish() override;
