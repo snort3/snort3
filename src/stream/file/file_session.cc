@@ -86,7 +86,7 @@ int FileSession::process(Packet* p)
         if (file_name)
             file_flows->set_file_name((const uint8_t*)file_name, strlen(file_name));
     }
-    set_file_data(p->data, p->dsize);
+    set_file_data(p->data, p->dsize, c->upload);
 
     return 0;
 }

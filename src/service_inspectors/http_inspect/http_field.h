@@ -51,6 +51,8 @@ public:
     void set(HttpCommon::StatusCode stat_code);
     void set(int32_t length) { set(static_cast<HttpCommon::StatusCode>(length)); }
     void reset();
+    void set_accumulation(bool is_accum) { was_accumulated = is_accum; }
+    bool is_accumulated() const { return was_accumulated; }
 
 #ifdef REG_TEST
     void print(FILE* output, const char* name) const;
@@ -60,6 +62,8 @@ private:
     const uint8_t* strt = nullptr;
     int32_t len = HttpCommon::STAT_NOT_COMPUTE;
     bool own_the_buffer = false;
+    // FIXIT-M: find better place for the attribute, replace it with actual number of bytes processed
+    bool was_accumulated = false;
 };
 
 struct MimeBufs

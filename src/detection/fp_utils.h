@@ -37,6 +37,7 @@ struct PatternMatchData* get_pmd(OptFpList*, SnortProtocolId, snort::RuleDirecti
 
 bool make_fast_pattern_only(const OptFpList*, const PatternMatchData*);
 bool is_fast_pattern_only(const OptTreeNode*, const OptFpList*, snort::Mpse::MpseType);
+bool is_flowbit_setter(const OptFpList*);
 
 PatternMatcher::Type get_pm_type(const std::string& buf);
 

@@ -235,7 +235,7 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
     if (detection_size)
     {
         set_file_data(file_data, (detection_size > UINT16_MAX) ?
-            UINT16_MAX : (uint16_t)detection_size);
+            UINT16_MAX : (uint16_t)detection_size, file_id);
         file_detect();
     }
 

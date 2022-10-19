@@ -214,6 +214,13 @@ const PegInfo pc_names[] =
     { CountType::SUM, "pcre_match_limit", "total number of times pcre hit the match limit" },
     { CountType::SUM, "pcre_recursion_limit", "total number of times pcre hit the recursion limit" },
     { CountType::SUM, "pcre_error", "total number of times pcre returns error" },
+    { CountType::SUM, "cont_creations", "total number of continuations created" },
+    { CountType::SUM, "cont_recalls", "total number of continuations recalled" },
+    { CountType::SUM, "cont_flows", "total number of flows using continuation" },
+    { CountType::SUM, "cont_evals", "total number of condition-met continuations" },
+    { CountType::SUM, "cont_matches", "total number of continuations matched" },
+    { CountType::SUM, "cont_mismatches", "total number of continuations mismatched" },
+    { CountType::MAX, "cont_max_num", "peak number of simultaneous continuations per flow" },
     { CountType::END, nullptr, nullptr }
 };
 

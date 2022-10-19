@@ -105,6 +105,7 @@ DetectionEngine::DetectionEngine()
     context = Analyzer::get_switcher()->interrupt();
 
     context->file_data = DataPointer(nullptr, 0);
+    context->file_data_id = 0;
 
     reset();
 }
@@ -299,10 +300,33 @@ DataBuffer& DetectionEngine::get_alt_buffer(Packet* p)
 }
 
 void DetectionEngine::set_file_data(const DataPointer& dp)
-{ Analyzer::get_switcher()->get_context()->file_data = dp; }
+{
+    auto c = Analyzer::get_switcher()->get_context();
+    c->file_data = dp;
+    c->file_data_id = 0;
+    c->file_data_drop_sse = false;
+    c->file_data_no_sse = false;
+}
 
-DataPointer& DetectionEngine::get_file_data(IpsContext* c)
+void DetectionEngine::set_file_data(const DataPointer& dp, uint64_t id, bool is_accum, bool no_flow)
+{
+    auto c = Analyzer::get_switcher()->get_context();
+    c->file_data = dp;
+    c->file_data_id = id;
+    c->file_data_drop_sse = is_accum;
+    c->file_data_no_sse = no_flow;
+}
+
+const DataPointer& DetectionEngine::get_file_data(const IpsContext* c)
 { return c->file_data; }
+
+const DataPointer& DetectionEngine::get_file_data(const IpsContext* c, uint64_t& id, bool& drop_sse, bool& no_sse)
+{
+    id = c->file_data_id;
+    drop_sse = c->file_data_drop_sse;
+    no_sse = c->file_data_no_sse;
+    return c->file_data;
+}
 
 void DetectionEngine::set_data(unsigned id, IpsContextData* p)
 { Analyzer::get_switcher()->get_context()->set_context_data(id, p); }

@@ -43,9 +43,12 @@ Cursor::Cursor(const Cursor& rhs)
 {
     name = rhs.name;
     buf = rhs.buf;
-    sz = rhs.sz;
-    pos = rhs.pos;
     file_pos = rhs.file_pos;
+    buf_size = rhs.buf_size;
+    current_pos = rhs.current_pos;
+    extensible = rhs.extensible;
+    buf_id = rhs.buf_id;
+    is_accumulated = rhs.is_accumulated;
 
     if (rhs.data)
     {
@@ -107,6 +110,130 @@ void Cursor::reset(Packet* p)
             return;
         }
     }
-    set("pkt_data", p->data, p->get_detect_limit());
+
+    set("pkt_data", p->packet_flags & (PKT_FROM_SERVER | PKT_FROM_CLIENT),
+        p->data, p->get_detect_limit(), true);
 }
 
+//-------------------------------------------------------------------------
+// UNIT TESTS
+//-------------------------------------------------------------------------
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+TEST_CASE("Boundaries", "[cursor]")
+{
+    const uint8_t buf_1[] = "the first";
+    const uint8_t buf_2[] = "the second";
+    const uint8_t buf_3[] = "the third";
+
+    Cursor cursor;
+
+    SECTION("Stateless buffer")
+    {
+        const int offset = 11;
+        bool r1, r2;
+
+        cursor.set("1", buf_1, sizeof(buf_1), false);
+        r1 = cursor.set_pos(offset);
+        r2 = cursor.awaiting_data();
+
+        CHECK(!r1);
+        CHECK(!r2);
+    }
+
+    SECTION("Ends within 1st PDU")
+    {
+        const int offset = 8;
+        bool r1, r2;
+
+        cursor.set("1", buf_1, sizeof(buf_1), true);
+        r1 = cursor.set_pos(offset);
+        r2 = cursor.awaiting_data();
+
+        CHECK(r1);
+        CHECK(!r2);
+    }
+
+    SECTION("At the very end of 1st PDU")
+    {
+        const int offset = sizeof(buf_1);
+        bool r1, r2;
+
+        cursor.set("1", buf_1, sizeof(buf_1), true);
+        r1 = cursor.set_pos(offset);
+        r2 = cursor.awaiting_data();
+
+        CHECK(r1);
+        CHECK(r2);
+
+        auto rem = cursor.get_next_pos();
+        CHECK(rem == 0);
+
+        cursor.set("2", buf_2, sizeof(buf_2), true);
+        r1 = cursor.set_pos(rem);
+        r2 = cursor.awaiting_data();
+
+        CHECK(r1);
+        CHECK(!r2);
+    }
+
+    SECTION("Ends after 1st PDU")
+    {
+        const int offset = 11;
+        bool r1, r2;
+
+        cursor.set("1", buf_1, sizeof(buf_1), true);
+        r1 = cursor.set_pos(offset);
+        r2 = cursor.awaiting_data();
+
+        CHECK(!r1);
+        CHECK(r2);
+
+        auto rem = cursor.get_next_pos();
+        CHECK(rem == offset - sizeof(buf_1));
+
+        cursor.set("2", buf_2, sizeof(buf_2), true);
+        r1 = cursor.set_pos(rem);
+        r2 = cursor.awaiting_data();
+
+        CHECK(r1);
+        CHECK(!r2);
+    }
+
+    SECTION("Ends after 2nd PDU")
+    {
+        const int offset = 25;
+        bool r1, r2;
+
+        cursor.set("1", buf_1, sizeof(buf_1), true);
+        r1 = cursor.set_pos(offset);
+        r2 = cursor.awaiting_data();
+
+        CHECK(!r1);
+        CHECK(r2);
+
+        auto rem1 = cursor.get_next_pos();
+        CHECK(rem1 == offset - sizeof(buf_1));
+
+        cursor.set("2", buf_2, sizeof(buf_2), true);
+        r1 = cursor.set_pos(rem1);
+        r2 = cursor.awaiting_data();
+
+        CHECK(!r1);
+        CHECK(r2);
+
+        auto rem2 = cursor.get_next_pos();
+        CHECK(rem2 == rem1 - sizeof(buf_2));
+
+        cursor.set("3", buf_3, sizeof(buf_3), true);
+        r1 = cursor.set_pos(rem2);
+        r2 = cursor.awaiting_data();
+
+        CHECK(r1);
+        CHECK(!r2);
+    }
+}
+
+#endif

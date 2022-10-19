@@ -102,6 +102,7 @@
 #define STREAM_STATE_BLOCK_PENDING     0x0400
 #define STREAM_STATE_RELEASING         0x0800
 
+class Continuation;
 class BitOp;
 class Session;
 
@@ -427,6 +428,7 @@ public:  // FIXIT-M privatize if possible
     Session* session;
     Inspector* ssn_client;
     Inspector* ssn_server;
+    Continuation* ips_cont;
 
     long last_data_seen;
     Layer mpls_client, mpls_server;

@@ -40,6 +40,7 @@
 namespace snort
 {
 class HashNode;
+class IpsOption;
 class XHash;
 struct Packet;
 struct SnortConfig;
@@ -61,6 +62,8 @@ struct dot_node_state_t
         char result;
         char flowbit_failed;
     } last_check;
+    void* conts;
+    uint64_t conts_num;
 
     // FIXIT-L perf profiler stuff should be factored of the node state struct
     hr_duration elapsed;
@@ -86,41 +89,64 @@ struct dot_node_state_t
     }
 };
 
-struct detection_option_tree_node_t
+struct detection_option_tree_node_t;
+
+struct detection_option_tree_bud_t
+{
+    int relative_children;
+    int num_children;
+    detection_option_tree_node_t** children;
+    const struct OptTreeNode* otn;
+
+    detection_option_tree_bud_t()
+        : relative_children(0), num_children(0), children(nullptr), otn(nullptr) {}
+
+    detection_option_tree_bud_t(int num, detection_option_tree_node_t** d_otn, const OptTreeNode* r_otn)
+        : relative_children(0), num_children(num), children(d_otn), otn(r_otn) {}
+};
+
+struct detection_option_tree_node_t : public detection_option_tree_bud_t
 {
     eval_func_t evaluate;
-    detection_option_tree_node_t** children;
     void* option_data;
     dot_node_state_t* state;
-    struct OptTreeNode* otn;
     int is_relative;
-    int num_children;
-    int relative_children;
     option_type_t option_type;
 };
 
-struct detection_option_tree_root_t
+struct detection_option_tree_root_t : public detection_option_tree_bud_t
 {
-    int num_children;
-    detection_option_tree_node_t** children;
     RuleLatencyState* latency_state;
 
-    struct OptTreeNode* otn;  // first rule in tree
+    detection_option_tree_root_t()
+        : detection_option_tree_bud_t(), latency_state(nullptr) {}
+
+    detection_option_tree_root_t(int num, detection_option_tree_node_t** d_otn, const OptTreeNode* r_otn,
+        RuleLatencyState* lat)
+        : detection_option_tree_bud_t(num, d_otn, r_otn), latency_state(lat) {}
 };
 
 struct detection_option_eval_data_t
 {
-    detection_option_eval_data_t() = delete;
-
-    detection_option_eval_data_t(snort::Packet* p) :
-        pmd(nullptr), p(p), leaf_reached(0), flowbit_failed(0), flowbit_noalert(0)
-    { }
-
-    void* pmd;
+    const void* pmd;
     snort::Packet* p;
+    snort::IpsOption* buf_selector;
+    const struct OptTreeNode* otn;  // first rule in current processed tree
     char leaf_reached;
     char flowbit_failed;
     char flowbit_noalert;
+
+    detection_option_eval_data_t()
+        : pmd(nullptr), p(nullptr), buf_selector(nullptr), otn(nullptr)
+        , leaf_reached(0), flowbit_failed(0), flowbit_noalert(0) {}
+
+    detection_option_eval_data_t(snort::Packet* packet, const OptTreeNode* otn,
+        const void* match_data = nullptr) : pmd(match_data), p(packet), buf_selector(nullptr)
+        , otn(otn), leaf_reached(0), flowbit_failed(0), flowbit_noalert(0) {}
+
+    detection_option_eval_data_t(const detection_option_eval_data_t& m)
+        : pmd(m.pmd), p(m.p), buf_selector(m.buf_selector), otn(m.otn)
+        , leaf_reached(m.leaf_reached), flowbit_failed(m.flowbit_failed), flowbit_noalert(m.flowbit_noalert) {}
 };
 
 // return existing data or add given and return nullptr
@@ -128,7 +154,7 @@ void* add_detection_option(struct snort::SnortConfig*, option_type_t, void*);
 void* add_detection_option_tree(struct snort::SnortConfig*, detection_option_tree_node_t*);
 
 int detection_option_node_evaluate(
-    detection_option_tree_node_t*, detection_option_eval_data_t&, const class Cursor&);
+    const detection_option_tree_node_t*, detection_option_eval_data_t&, const class Cursor&);
 
 void print_option_tree(detection_option_tree_node_t*, int level);
 void detection_option_tree_update_otn_stats(snort::XHash*);

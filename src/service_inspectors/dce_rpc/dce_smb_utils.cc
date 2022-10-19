@@ -1720,7 +1720,8 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
         ((ftracker->ff_file_offset == ftracker->ff_bytes_processed) &&
         ((file_data_depth == 0) || (ftracker->ff_bytes_processed < (uint64_t)file_data_depth))))
     {
-        set_file_data(data_ptr, (data_len > UINT16_MAX) ? UINT16_MAX : (uint16_t)data_len);
+        set_file_data(data_ptr, (data_len > UINT16_MAX) ? UINT16_MAX : (uint16_t)data_len,
+            ftracker->file_key.file_id);
         DCE2_FileDetect();
         set_file_data(nullptr, 0);
     }

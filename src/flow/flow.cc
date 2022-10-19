@@ -24,6 +24,7 @@
 #include "flow.h"
 
 #include "detection/context_switcher.h"
+#include "detection/detection_continuation.h"
 #include "detection/detection_engine.h"
 #include "flow/flow_key.h"
 #include "flow/ha.h"
@@ -120,6 +121,9 @@ void Flow::term()
         delete stash;
         stash = nullptr;
     }
+
+    delete ips_cont;
+    ips_cont = nullptr;
 
     service = nullptr;
 }
@@ -218,6 +222,9 @@ void Flow::reset(bool do_cleanup)
         stash->reset();
 
     deferred_trust.clear();
+
+    delete ips_cont;
+    ips_cont = nullptr;
 
     constexpr size_t offset = offsetof(Flow, context_chain);
     // FIXIT-L need a struct to zero here to make future proof

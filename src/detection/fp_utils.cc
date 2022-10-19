@@ -36,6 +36,7 @@
 #include "framework/mpse.h"
 #include "framework/mpse_batch.h"
 #include "hash/ghash.h"
+#include "ips_options/ips_flowbits.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "parser/parse_conf.h"
@@ -648,6 +649,12 @@ bool is_fast_pattern_only(const OptTreeNode* otn, const OptFpList* ofp, Mpse::Mp
         return true;
 
     return false;
+}
+
+bool is_flowbit_setter(const OptFpList* ofp)
+{
+    return ofp->type == RULE_OPTION_TYPE_FLOWBIT
+        and flowbits_setter(ofp->ips_opt);
 }
 
 //--------------------------------------------------------------------------

@@ -180,6 +180,7 @@ public:
     bool is_mixed_encoding_seen() const;
     bool is_opening_tag_seen() const;
     bool is_closing_tag_seen() const;
+    bool is_buffer_adjusted() const;
 
 protected:
     [[noreturn]] void LexerError(const char* msg) override
@@ -368,6 +369,7 @@ private:
     const int tmp_cap_size;
 
     bool newline_found = false;
+    bool adjusted_data = false;              // flag for resetting the continuation in case of adjusting js_data
     constexpr static bool insert_semicolon[ASI_GROUP_MAX][ASI_GROUP_MAX]
     {
         {false, false, false, false, false, false, false, false, false, false, false,},

@@ -246,6 +246,8 @@ void HttpJsNorm::do_external(const Field& input, Field& output,
             *infractions += INF_JS_CLOSING_TAG;
             events->create_event(EVENT_JS_CLOSING_TAG);
         }
+        if (js_ctx.is_buffer_adjusted())
+            output.set_accumulation(true);
 
         if (ssn->js_built_in_event)
             break;
@@ -391,6 +393,8 @@ void HttpJsNorm::do_inline(const Field& input, Field& output,
             *infractions += INF_JS_OPENING_TAG;
             events->create_event(EVENT_JS_OPENING_TAG);
         }
+        if (js_ctx.is_buffer_adjusted())
+            output.set_accumulation(true);
 
         script_continue = ret == JSTokenizer::SCRIPT_CONTINUE;
     }

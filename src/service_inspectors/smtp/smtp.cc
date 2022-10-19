@@ -233,6 +233,7 @@ static SMTPData* SetNewSMTPData(SmtpProtoConf* config, Packet* p)
     p->flow->set_flow_data(fd);
     smtp_ssn = &fd->session;
 
+    smtpstats.sessions++;
     smtp_ssn->mime_ssn = new SmtpMime(p, &(config->decode_conf), &(config->log_config));
     smtp_ssn->mime_ssn->config = config;
     smtp_ssn->mime_ssn->set_mime_stats(&(smtpstats.mime_stats));

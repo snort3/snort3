@@ -168,6 +168,7 @@ void DetectionEngine::idle() { }
 void DetectionEngine::reset() { }
 void DetectionEngine::wait_for_context() { }
 void DetectionEngine::set_file_data(const DataPointer&) { }
+void DetectionEngine::set_file_data(const DataPointer&, uint64_t, bool, bool) { }
 void DetectionEngine::clear_replacement() { }
 void DetectionEngine::disable_all(Packet*) { }
 unsigned get_instance_id() { return 0; }

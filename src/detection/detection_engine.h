@@ -69,7 +69,9 @@ public:
     static Packet* get_encode_packet();
 
     static void set_file_data(const DataPointer& dp);
-    static DataPointer& get_file_data(IpsContext*);
+    static void set_file_data(const DataPointer& dp, uint64_t id, bool is_accum, bool no_flow);
+    static const DataPointer& get_file_data(const IpsContext*);
+    static const DataPointer& get_file_data(const IpsContext*, uint64_t& id, bool& drop_sse, bool& no_sse);
 
     static uint8_t* get_buffer(unsigned& max);
     static struct DataBuffer& get_alt_buffer(Packet*);
@@ -125,6 +127,12 @@ static inline void set_file_data(const uint8_t* p, unsigned n)
 {
     DataPointer dp { p, n };
     DetectionEngine::set_file_data(dp);
+}
+
+static inline void set_file_data(const uint8_t* p, unsigned n, uint64_t id, bool is_accum = false, bool no_flow = false)
+{
+    DataPointer dp { p, n };
+    DetectionEngine::set_file_data(dp, id, is_accum, no_flow);
 }
 
 static inline void clear_file_data()

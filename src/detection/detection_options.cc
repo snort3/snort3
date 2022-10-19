@@ -54,6 +54,7 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
+#include "detection_continuation.h"
 #include "detection_engine.h"
 #include "detection_module.h"
 #include "detection_util.h"
@@ -348,26 +349,17 @@ void* add_detection_option_tree(SnortConfig* sc, detection_option_tree_node_t* o
 }
 
 int detection_option_node_evaluate(
-    detection_option_tree_node_t* node, detection_option_eval_data_t& eval_data,
+    const detection_option_tree_node_t* node, detection_option_eval_data_t& eval_data,
     const Cursor& orig_cursor)
 {
     assert(node and eval_data.p);
 
+    node_eval_trace(node, orig_cursor, eval_data.p);
+
     auto& state = node->state[get_instance_id()];
     RuleContext profile(state);
 
-    int result = 0;
-    int rval;
-    char tmp_noalert_flag = 0;
-    Cursor cursor = orig_cursor;
-    bool continue_loop = true;
-    bool flowbits_setoperation = false;
-    int loop_count = 0;
-    uint32_t tmp_byte_extract_vars[NUM_IPS_OPTIONS_VARS];
     uint64_t cur_eval_context_num = eval_data.p->context->context_num;
-
-    node_eval_trace(node, cursor, eval_data.p);
-
     auto p = eval_data.p;
 
     // see if evaluated it before ...
@@ -409,6 +401,16 @@ int detection_option_node_evaluate(
         if ( pmd and pmd->is_literal() and pmd->last_check )
             content_last = pmd->last_check + get_instance_id();
     }
+
+    bool continue_loop = true;
+    int loop_count = 0;
+
+    char tmp_noalert_flag = 0;
+    int result = 0;
+    uint32_t tmp_byte_extract_vars[NUM_IPS_OPTIONS_VARS];
+    IpsOption* buf_selector = eval_data.buf_selector;
+    Cursor cursor = orig_cursor;
+    int rval;
 
     // No, haven't evaluated this one before... Check it.
     do
@@ -511,20 +513,20 @@ int detection_option_node_evaluate(
         case RULE_OPTION_TYPE_FLOWBIT:
             if ( node->evaluate )
             {
-                flowbits_setoperation = flowbits_setter(node->option_data);
-
-                if ( flowbits_setoperation )
-                    // set to match so we don't bail early
-                    rval = (int)IpsOption::MATCH;
-
-                else
-                    rval = node->evaluate(node->option_data, cursor, eval_data.p);
+                rval = node->evaluate(node->option_data, cursor, eval_data.p);
+                assert((flowbits_setter(node->option_data) and rval == (int)IpsOption::MATCH)
+                    or !flowbits_setter(node->option_data));
             }
             break;
 
         default:
             if ( node->evaluate )
+            {
+                IpsOption* opt = (IpsOption*)node->option_data;
+                if ( opt->is_buffer_setter() )
+                    buf_selector = opt;
                 rval = node->evaluate(node->option_data, cursor, p);
+            }
             break;
         }
 
@@ -532,6 +534,11 @@ int detection_option_node_evaluate(
         {
             debug_log(detection_trace, TRACE_RULE_EVAL, p, "no match\n");
             state.last_check.result = result;
+            // See if the option has failed due to incomplete input or its failed evaluation
+            if (orig_cursor.awaiting_data())
+                Continuation::postpone<false>(orig_cursor, *node, eval_data);
+            else
+                Continuation::postpone<true>(cursor, *node, eval_data);
             return result;
         }
         else if ( rval == (int)IpsOption::FAILED_BIT )
@@ -644,6 +651,7 @@ int detection_option_node_evaluate(
                             continue;
                     }
 
+                    eval_data.buf_selector = buf_selector;
                     child_state->result = detection_option_node_evaluate(
                         node->children[i], eval_data, cursor);
 
@@ -668,10 +676,14 @@ int detection_option_node_evaluate(
                 // the children so don't need to reeval this content/pcre rule
                 // option at a new offset.
                 // Else, reset the DOE ptr to last eval for offset/depth,
-                // distance/within adjustments for this same content/pcre
-                // rule option
+                // distance/within adjustments for this same content/pcre rule option.
+                // If the node and its sub-tree propagate MATCH back,
+                // then all its continuations are recalled.
                 if ( result == node->num_children )
+                {
                     continue_loop = false;
+                    Continuation::recall(state, p);
+                }
 
                 // Don't need to reset since it's only checked after we've gone
                 // through the loop at least once and the result will have
@@ -705,15 +717,6 @@ int detection_option_node_evaluate(
         loop_count++;
     }
     while ( continue_loop );
-
-    if ( flowbits_setoperation && result == (int)IpsOption::MATCH )
-    {
-        // Do any setting/clearing/resetting/toggling of flowbits here
-        // given that other rule options matched
-        rval = node->evaluate(node->option_data, cursor, p);
-        if ( rval != (int)IpsOption::MATCH )
-            result = rval;
-    }
 
     if ( eval_data.flowbit_failed )
     {

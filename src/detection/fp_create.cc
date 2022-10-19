@@ -79,7 +79,7 @@ static void print_fp_info(const char*, const OptTreeNode*, const PatternMatchDat
 static OptTreeNode* fixup_tree(
     detection_option_tree_node_t* dot, bool branched, unsigned contents)
 {
-    if ( dot->num_children == 0 )
+    if ( dot->num_children == 0 or dot->option_type == RULE_OPTION_TYPE_LEAF_NODE )
     {
         if ( !branched and contents )
             return (OptTreeNode*)dot->option_data;
@@ -153,28 +153,28 @@ static bool new_sig(int num_children, detection_option_tree_node_t** nodes, OptT
 
 static int otn_create_tree(OptTreeNode* otn, void** existing_tree, Mpse::MpseType mpse_type)
 {
-    detection_option_tree_node_t* node = nullptr, * child;
-    bool need_leaf = false;
-
     if (!existing_tree)
         return -1;
 
     if (!*existing_tree)
         *existing_tree = new_root(otn);
 
-    detection_option_tree_root_t* root = (detection_option_tree_root_t*)*existing_tree;
+    detection_option_tree_root_t* const root = (detection_option_tree_root_t*)*existing_tree;
+    detection_option_tree_bud_t* bud = root;
+    bool need_leaf = false;
 
-    if (!root->children)
+    if (!bud->children)
     {
-        root->num_children++;
-        root->children = (detection_option_tree_node_t**)
-            snort_calloc(root->num_children, sizeof(detection_option_tree_node_t*));
+        bud->num_children++;
+        bud->children = (detection_option_tree_node_t**)
+            snort_calloc(bud->num_children, sizeof(detection_option_tree_node_t*));
         need_leaf = true;
     }
 
     int i = 0;
-    child = root->children[i];
+    detection_option_tree_node_t* child = bud->children[i];
     OptFpList* opt_fp = otn->opt_func;
+    std::list<OptFpList*> fbss;
 
     /* Build out sub-nodes for each option in the OTN fp list */
     while (opt_fp)
@@ -197,61 +197,41 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree, Mpse::MpseTyp
             continue;
         }
 
+        // A flowbit setter will be evaluated last.
+        if ( is_flowbit_setter(opt_fp) )
+        {
+            fbss.push_back(opt_fp);
+            opt_fp = opt_fp->next;
+            continue;
+        }
+
         if (!child)
         {
             /* No children at this node */
             child = new_node(opt_fp->type, option_data);
             child->evaluate = opt_fp->OptTestFunc;
 
-            if (!node)
-                root->children[i] = child;
-            else
-                node->children[i] = child;
+            bud->children[i] = child;
 
             child->num_children++;
             child->children = (detection_option_tree_node_t**)
                 snort_calloc(child->num_children, sizeof(detection_option_tree_node_t*));
             child->is_relative = opt_fp->isRelative;
 
-            if (node && child->is_relative)
-                node->relative_children++;
+            if (child->is_relative)
+                bud->relative_children++;
 
             need_leaf = true;
         }
         else
         {
-            bool found_child_match = false;
+            bool found_child_match = child->option_data == option_data;
 
-            if (child->option_data != option_data)
+            for (i = 1; !found_child_match && i < bud->num_children; i++)
             {
-                if (!node)
-                {
-                    for (i=1; i<root->num_children; i++)
-                    {
-                        child = root->children[i];
-                        if (child->option_data == option_data)
-                        {
-                            found_child_match = true;
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    for (i=1; i<node->num_children; i++)
-                    {
-                        child = node->children[i];
-                        if (child->option_data == option_data)
-                        {
-                            found_child_match = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                found_child_match = true;
+                child = bud->children[i];
+                if (child->option_data == option_data)
+                    found_child_match = true;
             }
 
             if ( !found_child_match )
@@ -265,88 +245,82 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree, Mpse::MpseTyp
                     snort_calloc(child->num_children, sizeof(child->children));
                 child->is_relative = opt_fp->isRelative;
 
-                if (!node)
-                {
-                    root->num_children++;
-                    tmp_children = (detection_option_tree_node_t**)
-                        snort_calloc(root->num_children, sizeof(tmp_children));
-                    memcpy(tmp_children, root->children,
-                        sizeof(detection_option_tree_node_t*) * (root->num_children-1));
+                bud->num_children++;
+                tmp_children = (detection_option_tree_node_t**)
+                    snort_calloc(bud->num_children, sizeof(detection_option_tree_node_t*));
+                memcpy(tmp_children, bud->children,
+                       sizeof(detection_option_tree_node_t*) * (bud->num_children-1));
 
-                    snort_free(root->children);
-                    root->children = tmp_children;
-                    root->children[root->num_children-1] = child;
-                }
-                else
-                {
-                    node->num_children++;
-                    tmp_children = (detection_option_tree_node_t**)
-                        snort_calloc(node->num_children, sizeof(detection_option_tree_node_t*));
-                    memcpy(tmp_children, node->children,
-                        sizeof(detection_option_tree_node_t*) * (node->num_children-1));
+                snort_free(bud->children);
+                bud->children = tmp_children;
+                bud->children[bud->num_children-1] = child;
 
-                    snort_free(node->children);
-                    node->children = tmp_children;
-                    node->children[node->num_children-1] = child;
-                    if (child->is_relative)
-                        node->relative_children++;
-                }
+                if (child->is_relative)
+                    bud->relative_children++;
+
                 need_leaf = true;
             }
         }
-        node = child;
+        bud = child;
         i=0;
-        child = node->children[i];
+        child = bud->children[i];
         opt_fp = opt_fp->next;
     }
 
     // don't add a new leaf node unless we branched higher in the tree or this
     // is a different sig ( eg alert ip ( sid:1; ) vs alert tcp ( sid:2; ) )
     // note: same sig different policy branches at rtn (this is for same policy)
-
-    if ( !need_leaf )
-    {
-        if ( node )
-            need_leaf = new_sig(node->num_children, node->children, otn);
-        else
-            need_leaf = new_sig(root->num_children, root->children, otn);
-    }
-
-    if ( !need_leaf )
+    if ( !need_leaf and !new_sig(bud->num_children, bud->children, otn) )
         return 0;
 
     /* Append a leaf node that has option data of the SigInfo/otn pointer */
     child = new_node(RULE_OPTION_TYPE_LEAF_NODE, otn);
 
-    if (!node)
+    if (bud->children[0])
     {
-        if (root->children[0])
-        {
-            detection_option_tree_node_t** tmp_children;
-            root->num_children++;
-            tmp_children = (detection_option_tree_node_t**)
-                snort_calloc(root->num_children, sizeof(detection_option_tree_node_t*));
-            memcpy(tmp_children, root->children,
-                sizeof(detection_option_tree_node_t*) * (root->num_children-1));
-            snort_free(root->children);
-            root->children = tmp_children;
-        }
-        root->children[root->num_children-1] = child;
+        detection_option_tree_node_t** tmp_children;
+        bud->num_children++;
+        tmp_children = (detection_option_tree_node_t**)
+            snort_calloc(bud->num_children, sizeof(detection_option_tree_node_t*));
+        memcpy(tmp_children, bud->children,
+               sizeof(detection_option_tree_node_t*) * (bud->num_children - 1));
+        snort_free(bud->children);
+        bud->children = tmp_children;
     }
-    else
+    bud->children[bud->num_children - 1] = child;
+
+    // Build after-leaf nodes with flowbit setters.
+    auto fbss_num = fbss.size();
+
+    if (!fbss_num)
+        return 0;
+
+    bud = child;
+    i = 0;
+
+    bud->num_children = fbss_num;
+    bud->children = (detection_option_tree_node_t**)
+        snort_calloc(bud->num_children, sizeof(detection_option_tree_node_t*));
+
+    for (auto fbs : fbss)
     {
-        if (node->children[0])
+        // Only flowbit setters should get here.
+        if (fbs->type == RULE_OPTION_TYPE_LEAF_NODE
+            or is_fast_pattern_only(otn, fbs, mpse_type)
+            or !is_flowbit_setter(fbs) )
         {
-            detection_option_tree_node_t** tmp_children;
-            node->num_children++;
-            tmp_children = (detection_option_tree_node_t**)
-                snort_calloc(node->num_children, sizeof(detection_option_tree_node_t*));
-            memcpy(tmp_children, node->children,
-                sizeof(detection_option_tree_node_t*) * (node->num_children-1));
-            snort_free(node->children);
-            node->children = tmp_children;
+            assert(false);
+            bud->num_children--;
+            continue;
         }
-        node->children[node->num_children-1] = child;
+
+        void* option_data = fbs->ips_opt;
+        child = new_node(fbs->type, option_data);
+        child->evaluate = fbs->OptTestFunc;
+        child->is_relative = fbs->isRelative;
+        bud->children[i++] = child;
+
+        assert(child->is_relative == false);
     }
 
     return 0;

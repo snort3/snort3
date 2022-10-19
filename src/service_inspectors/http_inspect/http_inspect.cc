@@ -261,6 +261,8 @@ bool HttpInspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
 
     b.data = http_buffer.start();
     b.len = http_buffer.length();
+    b.is_accumulated = http_buffer.is_accumulated();
+
     return true;
 }
 

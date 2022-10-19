@@ -199,3 +199,67 @@ When packets arrive:
         }
     }
 
+*Stateful Signature Evaluation*
+
+Detection module processes data in block mode. Some features are available to
+extend limits of the block mode: large PDU with accumulated data (rebuilt
+packets), flowbits, and stateful signature evaluation (SSE).
+For data which forms a contiguous flow, a rule evaluation started in one
+packet may end up in subsequent packets.
+
+From the user perspective, rule options are evaluated in left-to-right order,
+doing their calculations, checks, setting cursor position, switching buffers,
+etc. If at some point the cursor position is set beyond the current buffer
+boundary, when the rule's evaluation context is stored on the flow and the
+rule fails for the current packet. Later, when more data arrives, Detection
+module checks if the flow has suspended contexts and resumes their evaluation
+after rule group selection and fast-pattern search are done but before other
+rules evaluated.
+
+The Continuation concept represents a suspended evaluation:
+
+1. IPS options are evaluated in a known order, where they form pairs when
+   the 1st option passes the evaluation context to the next option.
+
+2. The Continuation is merely the context (or a state) with a few things
+   attached. So, it is somewhere between options, rather than in an option.
+
+3. The statement above lets us deal with a single evaluation pass, which is
+   independent of what goes before and after it. (Avoiding multiple children
+   nodes).
+
+4. Evaluation flow goes forward and backwards on this pass. The pass could be
+   attempted several times, depending on presence of retry IPS options.
+
+5. On each attempt, the following could happen:
+
+Forward:
+
+[options="header"]
+|===============================================================================
+| 1st option | 2nd option    | Continuation is ...
+| NO_MATCH   | not evaluated | created and attached to the parent option (if cursor is awaiting data)
+| MATCH      | NO_MATCH      | created and attached to the child option (if original cursor was awaiting data)
+| MATCH      | MATCH         | not created (for this pass, but a subsequent pass can have its own continuation)
+|===============================================================================
+
+At this point, it doesn't matter what happens after in the sub-tree.
+If the 1st and the 2nd options matched, that means a continuation is not
+needed here.
+
+Backward:
+
+[options="header"]
+|===============================================================================
+| option    | children                      | Continuations spawned by the option ...
+| (matched) | no match or partially matched | remain attached to the flow
+| (matched) | all matched                   | are recalled and erased from the flow
+|===============================================================================
+
+So, if some branches in the sub-tree failed to match, then continuations
+created at this node will give another try to these branches (later when more
+data become available). If sub-tree fully matched, then continuations are not
+needed (since the rule has fired) and will be recalled.
+
+Pending continuations from the flow are picked up and updated/evaluated with
+respect to the buffer's source (e.g. flow direction, file context, etc.)

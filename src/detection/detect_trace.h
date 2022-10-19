@@ -48,6 +48,7 @@ enum
     TRACE_PKT_DETECTION,
     TRACE_OPTION_TREE,
     TRACE_TAG,
+    TRACE_CONT,
 };
 
 void clear_trace_cursor_info();

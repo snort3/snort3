@@ -69,10 +69,11 @@
 #include "context_switcher.h"
 #include "detect.h"
 #include "detect_trace.h"
-#include "detection_util.h"
+#include "detection_continuation.h"
 #include "detection_engine.h"
 #include "detection_module.h"
 #include "detection_options.h"
+#include "detection_util.h"
 #include "fp_config.h"
 #include "fp_create.h"
 #include "fp_utils.h"
@@ -341,7 +342,7 @@ static void detection_option_tree_evaluate(detection_option_tree_root_t* root,
 {
     assert(root);
 
-    RuleLatency::Context rule_latency_ctx(root, eval_data.p);
+    RuleLatency::Context rule_latency_ctx(*root, eval_data.p);
 
     if ( RuleLatency::suspended() )
         return;
@@ -361,11 +362,9 @@ static void rule_tree_match(
     IpsContext* context, void* user, void* tree, int index, void* neg_list)
 {
     PMX* pmx = (PMX*)user;
+    Packet* pkt = context->packet;
 
-    detection_option_eval_data_t eval_data(context->packet);
-    eval_data.pmd = pmx->pmd;
-
-    print_pattern(pmx->pmd, eval_data.p);
+    print_pattern(pmx->pmd, pkt);
 
     {
         /* NOTE: The otn will be the first one in the match state. If there are
@@ -381,17 +380,18 @@ static void rule_tree_match(
             PmdLastCheck* last_check =
                 neg_pmx->pmd->last_check + get_instance_id();
 
-            last_check->ts.tv_sec = eval_data.p->pkth->ts.tv_sec;
-            last_check->ts.tv_usec = eval_data.p->pkth->ts.tv_usec;
+            last_check->ts.tv_sec = pkt->pkth->ts.tv_sec;
+            last_check->ts.tv_usec = pkt->pkth->ts.tv_usec;
             last_check->run_num = get_run_num();
             last_check->context_num = context->context_num;
-            last_check->rebuild_flag = (eval_data.p->packet_flags & PKT_REBUILT_STREAM);
+            last_check->rebuild_flag = (pkt->packet_flags & PKT_REBUILT_STREAM);
         }
 
         if ( !tree )
             return;
 
         detection_option_tree_root_t* root = (detection_option_tree_root_t*)tree;
+        detection_option_eval_data_t eval_data(pkt, root->otn, pmx->pmd);
 
         detection_option_tree_evaluate(root, eval_data);
 
@@ -399,47 +399,47 @@ static void rule_tree_match(
             pmqs.qualified_events++;
         else
             pmqs.non_qualified_events++;
-    }
 
-    if (eval_data.flowbit_failed)
-        return;
+        if (eval_data.flowbit_failed)
+            return;
+    }
 
     /* If this is for an IP rule set, evaluate the rules from
      * the inner IP offset as well */
-    if (eval_data.p->packet_flags & PKT_IP_RULE)
+    if (pkt->packet_flags & PKT_IP_RULE)
     {
-        ip::IpApi tmp_api = eval_data.p->ptrs.ip_api;
-        int8_t curr_layer = eval_data.p->num_layers - 1;
+        ip::IpApi tmp_api = pkt->ptrs.ip_api;
+        int8_t curr_layer = pkt->num_layers - 1;
 
-        if (layer::set_inner_ip_api(eval_data.p,
-            eval_data.p->ptrs.ip_api,
+        if (layer::set_inner_ip_api(pkt,
+            pkt->ptrs.ip_api,
             curr_layer) &&
-            (eval_data.p->ptrs.ip_api != tmp_api))
+            (pkt->ptrs.ip_api != tmp_api))
         {
-            const uint8_t* tmp_data = eval_data.p->data;
-            uint16_t tmp_dsize = eval_data.p->dsize;
+            const uint8_t* tmp_data = pkt->data;
+            uint16_t tmp_dsize = pkt->dsize;
 
             /* clear so we don't keep recursing */
-            eval_data.p->packet_flags &= ~PKT_IP_RULE;
-            eval_data.p->packet_flags |= PKT_IP_RULE_2ND;
+            pkt->packet_flags &= ~PKT_IP_RULE;
+            pkt->packet_flags |= PKT_IP_RULE_2ND;
 
             do
             {
-                eval_data.p->data = eval_data.p->ptrs.ip_api.ip_data();
-                eval_data.p->dsize = eval_data.p->ptrs.ip_api.pay_len();
+                pkt->data = pkt->ptrs.ip_api.ip_data();
+                pkt->dsize = pkt->ptrs.ip_api.pay_len();
 
                 /* Recurse, and evaluate with the inner IP */
                 rule_tree_match(context, user, tree, index, nullptr);
             }
-            while (layer::set_inner_ip_api(eval_data.p,
-                eval_data.p->ptrs.ip_api, curr_layer) && (eval_data.p->ptrs.ip_api != tmp_api));
+            while (layer::set_inner_ip_api(pkt,
+                pkt->ptrs.ip_api, curr_layer) && (pkt->ptrs.ip_api != tmp_api));
 
             /*  cleanup restore original data & dsize */
-            eval_data.p->packet_flags &= ~PKT_IP_RULE_2ND;
-            eval_data.p->packet_flags |= PKT_IP_RULE;
+            pkt->packet_flags &= ~PKT_IP_RULE_2ND;
+            pkt->packet_flags |= PKT_IP_RULE;
 
-            eval_data.p->data = tmp_data;
-            eval_data.p->dsize = tmp_dsize;
+            pkt->data = tmp_data;
+            pkt->dsize = tmp_dsize;
         }
     }
 }
@@ -1022,12 +1022,11 @@ static inline void eval_nfp(
             if ( fp->get_debug_print_nc_rules() )
                 LogMessage("NC-testing %u rules\n", port_group->nfp_rule_count);
 
-            detection_option_eval_data_t eval_data(p);
+            detection_option_tree_root_t* root = (detection_option_tree_root_t*)port_group->nfp_tree;
+            detection_option_eval_data_t eval_data(p, root->otn);
 
             debug_log(detection_trace, TRACE_RULE_EVAL, p,
                 "Testing non-content rules\n");
-
-            detection_option_tree_root_t* root = (detection_option_tree_root_t*)port_group->nfp_tree;
 
             detection_option_tree_evaluate(root, eval_data);
 
@@ -1300,6 +1299,18 @@ void fp_complete(Packet* p, bool search)
     }
     {
         Profile rule_profile(rulePerfStats);
+
+        if (p->flow && p->flow->ips_cont)
+        {
+            if (!p->flow->ips_cont->is_reloaded())
+                p->flow->ips_cont->eval(*p);
+            else
+            {
+                delete p->flow->ips_cont;
+                p->flow->ips_cont = nullptr;
+            }
+        }
+
         stash->process(c);
         print_pkt_info(p, "non-fast-patterns");
         fpEvalPacket(p, FPTask::NON_FP);

@@ -289,3 +289,24 @@ be skipped if possible.  Note that this differs from Snort 2 which provided
 the fast_pattern:only option to designate such cases.  This is one less
 thing for the rule writer to worry about.
 
+===== Stateful Evaluation
+
+When data forms a kind of stream, e.g. contiguous byte flow (like a file
+transferred over the network or byte sequence from TCP session packets),
+the point of interest may be in a signature which spans across packets (its
+parts lies in different data blocks). In this case, the stateful evaluation
+becomes handy.
+
+If rule evaluation starts in a packet and the cursor position is moved beyond
+the current packet boundary, then the evaluation gets paused and will resume
+later when more data become available to finish the process.
+
+Stateful evaluation is supported for the following buffers:
+
+ 1. pkt_data -- as a sequence of TCP session bytes with respect to their
+ direction (client-to-server, server-to-client)
+
+ 2. js_data -- normalized JavaScript text from the same data transfer session
+
+ 3. file_data -- the same file bytes, e.g. flows from different files do not
+ overlap

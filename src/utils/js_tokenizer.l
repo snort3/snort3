@@ -1828,6 +1828,8 @@ bool JSTokenizer::states_process()
 
 void JSTokenizer::states_adjust()
 {
+    adjusted_data = true;
+
     int outbuf_pos = yyout.rdbuf()->pubseekoff(0, std::ios_base::cur, std::ios_base::out);
     assert(outbuf_pos >= 0);
 
@@ -2043,6 +2045,11 @@ bool JSTokenizer::is_opening_tag_seen() const
 bool JSTokenizer::is_closing_tag_seen() const
 {
     return closing_tag_seen;
+}
+
+bool JSTokenizer::is_buffer_adjusted() const
+{
+    return adjusted_data;
 }
 
 void JSTokenizer::set_block_param(bool f)
@@ -3030,6 +3037,7 @@ JSTokenizer::JSRet JSTokenizer::process(size_t& bytes_in, bool external_script)
     unescape_nest_seen = false;
     mixed_encoding_seen = false;
     ext_script = external_script;
+    adjusted_data = false;
 
     auto r = yylex();
 

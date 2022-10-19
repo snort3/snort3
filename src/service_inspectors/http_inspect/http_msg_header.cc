@@ -556,6 +556,9 @@ void HttpMsgHeader::setup_file_processing()
     if (session_data->mime_state[source_id])
         return;
 
+    // Generate the unique file id for multi file processing and set ID for file_data buffer
+    set_multi_file_processing_id(get_transaction_id(), session_data->get_hx_stream_id());
+
     session_data->file_octets[source_id] = 0;
     const int64_t max_file_depth = FileService::get_max_file_depth();
     if (max_file_depth <= 0)
@@ -563,9 +566,6 @@ void HttpMsgHeader::setup_file_processing()
         session_data->file_depth_remaining[source_id] = 0;
         return;
     }
-
-    // Generate the unique file id for multi file processing
-    set_multi_file_processing_id(get_transaction_id(), session_data->get_hx_stream_id());
 
     session_data->file_depth_remaining[source_id] = max_file_depth;
     FileFlows* file_flows = FileFlows::get_file_flows(flow);

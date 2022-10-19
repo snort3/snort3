@@ -62,7 +62,7 @@ static void FTPDataProcess(
 {
     int status;
 
-    set_file_data(p->data, p->dsize);
+    set_file_data(p->data, p->dsize, data_ssn->path_hash);
 
     if (data_ssn->packet_flags & FTPDATA_FLG_REST)
     {

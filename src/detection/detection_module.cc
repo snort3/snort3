@@ -49,6 +49,7 @@ static const TraceOption detection_trace_options[] =
     { "pkt_detect",    TRACE_PKT_DETECTION,     "enable packet detection trace logging" },
     { "opt_tree",      TRACE_OPTION_TREE,       "enable tree option trace logging" },
     { "tag",           TRACE_TAG,               "enable tag trace logging" },
+    { "cont",          TRACE_CONT,              "enable rule continuation trace logging" },
     { nullptr, 0, nullptr }
 };
 #endif

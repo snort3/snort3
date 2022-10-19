@@ -25,6 +25,7 @@
 // Cursor provides a formal way of using buffers when doing detection with
 // IpsOptions.
 
+#include <assert.h>
 #include <cstdint>
 #include <cstring>
 #include <vector>
@@ -82,34 +83,55 @@ public:
 
     void reset(snort::Packet*);
 
-    void set(const char* s, const uint8_t* b, unsigned n)
-    { name = s; buf = b; sz = n; pos = delta = 0; }
+    void set(const char* s, const uint8_t* b, unsigned n, bool ext = false)
+    {
+        name = s; buf = b; buf_size = n; current_pos = delta = 0;
+        extensible = ext and n > 0;
+        buf_id = 0;
+    }
 
-    void set(const char* s, const uint8_t* b, unsigned n, unsigned pos_file)
+    void set(const char* s, const uint8_t* b, unsigned n, unsigned pos_file, bool ext = false)
     {
         file_pos = pos_file;
-        name = s; buf = b; sz = n; pos = delta = 0;
+        name = s; buf = b; buf_size = n; current_pos = delta = 0;
+        extensible = ext and n > 0;
+        buf_id = 0;
     }
+
+    void set(const char* s, uint64_t id, const uint8_t* b, unsigned n, bool ext = false)
+    {
+        set(s, b, n, ext);
+        buf_id = id;
+    }
+
+    void set(const char* s, uint64_t id, const uint8_t* b, unsigned n, unsigned pos_file, bool ext = false)
+    {
+        set(s, b, n, pos_file, ext);
+        buf_id = id;
+    }
+
+    uint64_t id() const
+    { return buf_id; }
 
     const uint8_t* buffer() const
     { return buf; }
 
     unsigned size() const
-    { return sz; }
+    { return buf_size; }
 
     // the NEXT octect after last in buffer
     // (this pointer is out of bounds)
     const uint8_t* endo() const
-    { return buf + sz; }
+    { return buf + buf_size; }
 
     const uint8_t* start() const
-    { return buf + pos; }
+    { return buf + current_pos; }
 
     unsigned length() const
-    { return sz - pos; }
+    { return buf_size - current_pos; }
 
     unsigned get_pos() const
-    { return pos; }
+    { return current_pos; }
 
     unsigned get_delta() const
     { return delta; }
@@ -118,19 +140,15 @@ public:
 
     bool add_pos(unsigned n)
     {
-        if (pos + n > sz)
-            return false;
-        pos += n;
-        return true;
+        current_pos += n;
+        return !(current_pos > buf_size);
     }
 
-    // pos and delta may go 1 byte after end
+    // current_pos and delta may go 1 byte after end
     bool set_pos(unsigned n)
     {
-        if (n > sz)
-            return false;
-        pos = n;
-        return true;
+        current_pos = n;
+        return !(current_pos > buf_size);
     }
 
     bool set_pos_file(unsigned n)
@@ -139,14 +157,25 @@ public:
         return true;
     }
 
+    bool set_accumulation(bool is_accum)
+    {
+        is_accumulated = is_accum;
+        return true;
+    }
+
     unsigned get_file_pos() const
     {
         return file_pos;
     }
 
+    bool is_buffer_accumulated() const
+    {
+        return is_accumulated;
+    }
+
     bool set_delta(unsigned n)
     {
-        if (n > sz)
+        if (n > buf_size)
             return false;
         delta = n;
         return true;
@@ -154,16 +183,31 @@ public:
 
     void set_data(CursorData* cd);
 
+    bool awaiting_data() const
+    { return extensible and current_pos >= buf_size; }
+
+    bool awaiting_data(bool force_ext) const
+    { return force_ext and current_pos >= buf_size; }
+
+    unsigned get_next_pos() const
+    {
+        assert(current_pos >= buf_size);
+        return current_pos - buf_size;
+    }
+
     typedef std::vector<CursorData*> CursorDataVec;
 
 private:
-    const char* name = nullptr;    // rule option name ("pkt_data", "http_uri", etc.)
-    const uint8_t* buf = nullptr;  // start of buffer
-    unsigned sz = 0;               // size of buffer
-    unsigned pos = 0;              // current pos
+    unsigned buf_size = 0;
+    unsigned current_pos = 0;
     unsigned delta = 0;            // loop offset
     unsigned file_pos = 0;         // file pos
+    const uint8_t* buf = nullptr;
+    const char* name = nullptr;    // rule option name ("pkt_data", "http_uri", etc.)
     CursorDataVec* data = nullptr; // data stored on the cursor
+    bool extensible = false;       // if the buffer could have more data in a continuation
+    uint64_t buf_id = 0;           // source buffer ID
+    bool is_accumulated = false;
 };
 
 #endif

@@ -149,7 +149,7 @@ void HttpMsgBody::analyze()
             msg_text_new.length() : pub_depth_remaining;
         pub_depth_remaining -= publish_length;
     }
-    
+
     if (session_data->mime_state[source_id])
     {
         // FIXIT-M this interface does not convey any indication of end of message body. If the
@@ -167,6 +167,9 @@ void HttpMsgBody::analyze()
             session_data->partial_mime_bufs[source_id] = nullptr;
             last_attachment_complete = session_data->partial_mime_last_complete[source_id];
             session_data->partial_mime_last_complete[source_id] = true;
+
+            if (!mime_bufs->empty())
+                mime_bufs->front().file.set_accumulation(true);
         }
         else
             mime_bufs = new std::list<MimeBufs>;
@@ -210,6 +213,8 @@ void HttpMsgBody::analyze()
                 }
                 else
                     mime_bufs->emplace_back(attach_length, attach_buf, true, STAT_NOT_PRESENT, nullptr, false);
+
+                mime_bufs->back().file.set_accumulation(!last_attachment_complete);
             }
             last_attachment_complete = latest_attachment.finished;
         }
@@ -237,6 +242,8 @@ void HttpMsgBody::analyze()
 
             if (partial_detect_length > 0)
             {
+                detect_data.set_accumulation(true);
+                norm_js_data.set_accumulation(true);
                 const int32_t total_length = partial_detect_length +
                     decompressed_file_body.length();
                 assert(total_length <=
@@ -288,7 +295,9 @@ void HttpMsgBody::analyze()
                 partial_js_detect_length = js_norm_body.length();
             }
 
-            set_file_data(const_cast<uint8_t*>(detect_data.start()), (unsigned)detect_data.length());
+            const uint64_t file_index = get_header(source_id)->get_multi_file_processing_id();
+            set_file_data(const_cast<uint8_t*>(detect_data.start()),
+                (unsigned)detect_data.length(), file_index, detect_data.is_accumulated());
         }
     }
     body_octets += msg_text.length();
@@ -348,7 +357,7 @@ void HttpMsgBody::get_ole_data()
         session_data->fd_state[source_id]->ole_data_reset();
     }
 }
-    
+
 void HttpMsgBody::do_file_decompression(const Field& input, Field& output)
 {
     if (session_data->fd_state[source_id] == nullptr)
@@ -569,10 +578,13 @@ bool HttpMsgBody::run_detection(snort::Packet* p)
     if ((mime_bufs != nullptr) && !mime_bufs->empty())
     {
         auto mb = mime_bufs->cbegin();
-        for (uint32_t count = 1; (count <= params->max_mime_attach) && (mb != mime_bufs->cend());
-            count++, mb++)
+        for (uint32_t count = 0; (count < params->max_mime_attach) && (mb != mime_bufs->cend());
+            ++count, ++mb)
         {
-            set_file_data(mb->file.start(), mb->file.length());
+            const uint64_t idx = get_header(source_id)->get_multi_file_processing_id();
+            set_file_data(mb->file.start(), mb->file.length(), idx,
+                count or mb->file.is_accumulated(),
+                std::next(mb) != mime_bufs->end() or last_attachment_complete);
             if (mb->vba.length() > 0)
                 ole_data.set(mb->vba.length(), mb->vba.start());
             DetectionEngine::detect(p);
@@ -639,7 +651,7 @@ void HttpMsgBody::get_file_info(FileDirection dir, const uint8_t*& filename_buff
         if (filename_length > 0)
             return;
 
-        const Field& path = http_uri->get_norm_path(); 
+        const Field& path = http_uri->get_norm_path();
         if (path.length() > 0)
         {
             int last_slash_index = path.length() - 1;
@@ -747,4 +759,3 @@ void HttpMsgBody::print_body_section(FILE* output, const char* body_type_str)
     HttpMsgSection::print_section_wrapup(output);
 }
 #endif
-

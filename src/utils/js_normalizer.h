@@ -71,6 +71,9 @@ public:
     bool is_closing_tag_seen() const
     { return tokenizer.is_closing_tag_seen(); }
 
+    bool is_buffer_adjusted() const
+    { return tokenizer.is_buffer_adjusted(); }
+
 #if defined(CATCH_TEST_BUILD) || defined(BENCHMARK_TEST)
     const char* get_tmp_buf() const
     { return tmp_buf; }

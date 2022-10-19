@@ -31,8 +31,10 @@
 #include "protocols/packet.h"
 
 #include "http_common.h"
+#include "http_context_data.h"
 #include "http_enum.h"
 #include "http_inspect.h"
+#include "http_msg_section.h"
 
 using namespace snort;
 using namespace HttpCommon;
@@ -163,7 +165,19 @@ IpsOption::EvalStatus HttpBufferIpsOption::eval(Cursor& c, Packet* p)
     if (http_buffer.length() <= 0)
         return NO_MATCH;
 
-    c.set(key, http_buffer.start(), http_buffer.length());
+    if (idx != BUFFER_PSI_JS_DATA)
+    {
+        c.set(key, http_buffer.start(), http_buffer.length());
+        c.set_accumulation(http_buffer.is_accumulated());
+    }
+    else
+    {
+        HttpMsgSection* section = HttpContextData::get_snapshot(p);
+        uint64_t tid = section ? section->get_transaction_id() : 0;
+        c.set(key, tid, http_buffer.start(), http_buffer.length(), true);
+        c.set_accumulation(http_buffer.is_accumulated());
+    }
+
 
     return MATCH;
 }

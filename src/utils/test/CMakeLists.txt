@@ -66,3 +66,7 @@ add_catch_test( streambuf_test
         ../streambuf.cc
 )
 
+add_catch_test( grouped_list_test
+    SOURCES
+        ../grouped_list.h
+)

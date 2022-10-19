@@ -582,7 +582,11 @@ const uint8_t* MimeSession::process_mime_data_paf(
                     if ( result != DECODE_SUCCESS )
                         decompress_alert();
 
-                    set_file_data(decomp_buffer, decomp_buf_size);
+                    if (session_base_file_id)
+                        set_file_data(decomp_buffer, decomp_buf_size, get_multiprocessing_file_id());
+                    else
+                        set_file_data(decomp_buffer, decomp_buf_size, file_counter);
+
                     attachment.data = decomp_buffer;
                     attachment.length = decomp_buf_size;
                     attachment.finished = isFileEnd(position);
@@ -885,14 +889,15 @@ void MimeSession::mime_file_process(Packet* p, const uint8_t* data, int data_siz
 {
     Flow* flow = p->flow;
     FileFlows* file_flows = FileFlows::get_file_flows(flow);
-    if(!file_flows)
+
+    if (!file_flows)
         return;
 
     if (continue_inspecting_file)
     {
         if (session_base_file_id)
         {
-            const FileDirection dir = upload? FILE_UPLOAD : FILE_DOWNLOAD;
+            const FileDirection dir = upload ? FILE_UPLOAD : FILE_DOWNLOAD;
             continue_inspecting_file = file_flows->file_process(p, get_file_cache_file_id(), data,
                 data_size, file_offset, dir, get_multiprocessing_file_id(), position);
         }

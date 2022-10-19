@@ -177,7 +177,7 @@ static IMAPData* SetNewIMAPData(IMAP_PROTO_CONF* config, Packet* p)
     imap_ssn = &fd->session;
 
     imapstats.sessions++;
-    imap_ssn->mime_ssn= new ImapMime(p, &(config->decode_conf),&(config->log_config));
+    imap_ssn->mime_ssn= new ImapMime(p, &(config->decode_conf), &(config->log_config));
     imap_ssn->mime_ssn->set_mime_stats(&(imapstats.mime_stats));
 
     if (p->packet_flags & SSNFLAG_MIDSTREAM)

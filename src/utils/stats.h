@@ -63,6 +63,13 @@ struct PacketCount
     PegCount pcre_match_limit;
     PegCount pcre_recursion_limit;
     PegCount pcre_error;
+    PegCount cont_creations;
+    PegCount cont_recalls;
+    PegCount cont_flows;
+    PegCount cont_evals;
+    PegCount cont_matches;
+    PegCount cont_mismatches;
+    PegCount cont_max_num;
 };
 
 struct ProcessCount

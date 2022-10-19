@@ -74,6 +74,7 @@ void Field::reset()
     strt = nullptr;
     len = STAT_NOT_COMPUTE;
     own_the_buffer = false;
+    was_accumulated = false;
 }
 
 #ifdef REG_TEST

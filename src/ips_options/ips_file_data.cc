@@ -56,12 +56,17 @@ IpsOption::EvalStatus FileDataOption::eval(Cursor& c, Packet* p)
 {
     RuleProfile profile(fileDataPerfStats);
 
-    DataPointer dp = DetectionEngine::get_file_data(p->context);
+    uint64_t sid;
+    bool drop_sse;
+    bool no_sse;
+    DataPointer dp = DetectionEngine::get_file_data(p->context, sid, drop_sse, no_sse);
 
     if ( !dp.data || !dp.len )
         return NO_MATCH;
-    c.set(s_name, dp.data, dp.len);
+
+    c.set(s_name, sid, dp.data, dp.len, !no_sse);
     c.set_pos_file(p->context->file_pos);
+    c.set_accumulation(drop_sse);
 
     return MATCH;
 }

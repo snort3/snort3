@@ -57,6 +57,7 @@ struct InspectionBuffer
     };
     const uint8_t* data;
     unsigned len;
+    bool is_accumulated = false;
 };
 
 struct InspectApi;

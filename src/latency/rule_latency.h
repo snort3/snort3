@@ -30,7 +30,7 @@ struct Packet;
 class RuleLatency
 {
 public:
-    static void push(detection_option_tree_root_t*, snort::Packet*);
+    static void push(const detection_option_tree_root_t&, snort::Packet*);
     static void pop();
     static bool suspended();
 
@@ -39,7 +39,7 @@ public:
     class Context
     {
     public:
-        Context(detection_option_tree_root_t* root, snort::Packet* p)
+        Context(const detection_option_tree_root_t& root, snort::Packet* p)
         { RuleLatency::push(root, p); }
 
         ~Context()
