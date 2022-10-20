@@ -1,3 +1,19 @@
+2022-10-20: 3.1.44.0
+
+* appid: return APP_ID_NONE only if hsession is not present for http3
+* detection: add stateful signature evaluation
+* flow, reputation, protocols: remove reputation information from packet and flow
+* http_inspect: inspect multiple MIME attachments per message section
+* http_inspect: maximum_pipelined_requests
+* http_inspect: MIME partial inspections
+* http_inspect: remove rule option timing features
+* lua: add sensitive data rules
+* reputation: added profiling to the event handlers
+* reputation: fix for array indexing error when searching for reputation file entries
+* reputation: refactor event generation for matches
+* s7commplus: adding wizard support for s7commplus
+* utils: add possibility to process keywords as identifiers
+
 2022-10-05: 3.1.43.0
 
 * actions: fix action logging for suppressed events

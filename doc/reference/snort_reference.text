@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.43.0 2022-10-05 15:21:03 EDT TST
+Revision 3.1.44.0 2022-10-20 09:37:25 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -644,6 +644,20 @@ Peg counts:
     the recursion limit (sum)
   * detection.pcre_error: total number of times pcre returns error
     (sum)
+  * detection.cont_creations: total number of continuations created
+    (sum)
+  * detection.cont_recalls: total number of continuations recalled
+    (sum)
+  * detection.cont_flows: total number of flows using continuation
+    (sum)
+  * detection.cont_evals: total number of condition-met continuations
+    (sum)
+  * detection.cont_matches: total number of continuations matched
+    (sum)
+  * detection.cont_mismatches: total number of continuations
+    mismatched (sum)
+  * detection.cont_max_num: peak number of simultaneous continuations
+    per flow (max)
 
 
 2.8. event_filter
@@ -3722,6 +3736,8 @@ Configuration:
     length of a header exceeds this value { 0:65535 }
   * int http_inspect.maximum_headers = 200: alert when the number of
     headers in a message exceeds this value { 0:65535 }
+  * int http_inspect.maximum_pipelined_requests = 99: alert when the
+    number of pipelined requests exceeds this value { 0:99 }
   * bool http_inspect.normalize_utf = true: normalize charset utf
     encodings in response bodies
   * bool http_inspect.decompress_pdf = false: decompress pdf files in
@@ -3732,6 +3748,9 @@ Configuration:
     response bodies
   * bool http_inspect.decompress_vba = false: decompress MS Office
     Visual Basic for Applications macro files in response bodies
+  * int http_inspect.max_mime_attach = 5: maximum number of mime
+    attachments that will be inspected in a section of a request
+    message { 1:65535 }
   * bool http_inspect.script_detection = false: inspect JavaScript
     immediately upon script end
   * bool http_inspect.normalize_javascript = false: use legacy
@@ -3844,8 +3863,9 @@ Rules:
     known as HTTP/0.9
   * 119:33 (http_inspect) HTTP request URI has space character that
     is not percent-encoded
-  * 119:34 (http_inspect) HTTP connection has more than 100
-    simultaneous pipelined requests that have not been answered
+  * 119:34 (http_inspect) HTTP connection has more than
+    maximum_pipelined_requests simultaneous pipelined requests that
+    have not been answered
   * 119:102 (http_inspect) invalid status code in HTTP response
   * 119:104 (http_inspect) HTTP response has UTF character set that
     failed to normalize
@@ -4049,6 +4069,8 @@ Peg counts:
     identifiers processed (sum)
   * http_inspect.js_identifier_overflows: total number of unique
     JavaScript identifier limit overflows (sum)
+  * http_inspect.skip_mime_attach: total number of HTTP requests with
+    too many MIME attachments to inspect (sum)
 
 
 5.26. iec104
@@ -5924,7 +5946,8 @@ Configuration:
   * string wizard.spells[].to_client[].spell: sequence of data with
     wild cards (*)
   * multi wizard.curses: enable service identification based on
-    internal algorithm { dce_smb | dce_udp | dce_tcp | mms | sslv2 }
+    internal algorithm { dce_smb | dce_udp | dce_tcp | mms |
+    s7commplus | sslv2 }
   * int wizard.max_search_depth = 8192: maximum scan depth per flow {
     0:65535 }
 
@@ -6854,12 +6877,12 @@ Configuration:
 
   * implied http_cookie.request: match against the cookie from the
     request message even when examining the response
-  * implied http_cookie.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_cookie.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_cookie.with_trailer: parts of this rule examine HTTP
-    message trailers
+  * implied http_cookie.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_cookie.with_body: option is no longer used and will
+    be removed in a future release
+  * implied http_cookie.with_trailer: option is no longer used and
+    will be removed in a future release
 
 
 7.50. http_header
@@ -6879,12 +6902,12 @@ Configuration:
     is case insensitive.
   * implied http_header.request: match against the headers from the
     request message even when examining the response
-  * implied http_header.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_header.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_header.with_trailer: parts of this rule examine HTTP
-    message trailers
+  * implied http_header.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_header.with_body: option is no longer used and will
+    be removed in a future release
+  * implied http_header.with_trailer: option is no longer used and
+    will be removed in a future release
 
 
 7.51. http_header_test
@@ -6904,12 +6927,12 @@ Configuration:
     name is case insensitive.
   * implied http_header_test.request: match against the headers from
     the request message even when examining the response
-  * implied http_header_test.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_header_test.with_body: parts of this rule examine
-    HTTP message body
-  * implied http_header_test.with_trailer: parts of this rule examine
-    HTTP message trailers
+  * implied http_header_test.with_header: option is no longer used
+    and will be removed in a future release
+  * implied http_header_test.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_header_test.with_trailer: option is no longer used
+    and will be removed in a future release
   * interval http_header_test.check: range check to perform on header
     value { 0:999999999999999999 }
   * bool http_header_test.numeric: header value is a number
@@ -6965,12 +6988,12 @@ Usage: detect
 
 Configuration:
 
-  * implied http_method.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_method.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_method.with_trailer: parts of this rule examine HTTP
-    message trailers
+  * implied http_method.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_method.with_body: option is no longer used and will
+    be removed in a future release
+  * implied http_method.with_trailer: option is no longer used and
+    will be removed in a future release
 
 
 7.55. http_num_cookies
@@ -7007,12 +7030,12 @@ Configuration:
     current buffer are in given range { 0:65535 }
   * implied http_num_headers.request: match against the version from
     the request message even when examining the response
-  * implied http_num_headers.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_num_headers.with_body: parts of this rule examine
-    HTTP message body
-  * implied http_num_headers.with_trailer: parts of this rule examine
-    HTTP message trailers
+  * implied http_num_headers.with_header: option is no longer used
+    and will be removed in a future release
+  * implied http_num_headers.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_num_headers.with_trailer: option is no longer used
+    and will be removed in a future release
 
 
 7.57. http_num_trailers
@@ -7031,12 +7054,12 @@ Configuration:
     of current buffer are in given range { 0:65535 }
   * implied http_num_trailers.request: match against the version from
     the request message even when examining the response
-  * implied http_num_trailers.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_num_trailers.with_body: parts of this rule examine
-    HTTP message body
-  * implied http_num_trailers.with_trailer: parts of this rule
-    examine HTTP message trailers
+  * implied http_num_trailers.with_header: option is no longer used
+    and will be removed in a future release
+  * implied http_num_trailers.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_num_trailers.with_trailer: option is no longer used
+    and will be removed in a future release
 
 
 7.58. http_param
@@ -7083,12 +7106,12 @@ Configuration:
 
   * implied http_raw_cookie.request: match against the cookie from
     the request message even when examining the response
-  * implied http_raw_cookie.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_raw_cookie.with_body: parts of this rule examine
-    HTTP message body
-  * implied http_raw_cookie.with_trailer: parts of this rule examine
-    HTTP message trailers
+  * implied http_raw_cookie.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_raw_cookie.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_raw_cookie.with_trailer: option is no longer used
+    and will be removed in a future release
 
 
 7.61. http_raw_header
@@ -7108,12 +7131,12 @@ Configuration:
     name is case insensitive.
   * implied http_raw_header.request: match against the headers from
     the request message even when examining the response
-  * implied http_raw_header.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_raw_header.with_body: parts of this rule examine
-    HTTP message body
-  * implied http_raw_header.with_trailer: parts of this rule examine
-    HTTP message trailers
+  * implied http_raw_header.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_raw_header.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_raw_header.with_trailer: option is no longer used
+    and will be removed in a future release
 
 
 7.62. http_raw_request
@@ -7129,12 +7152,12 @@ Usage: detect
 
 Configuration:
 
-  * implied http_raw_request.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_raw_request.with_body: parts of this rule examine
-    HTTP message body
-  * implied http_raw_request.with_trailer: parts of this rule examine
-    HTTP message trailers
+  * implied http_raw_request.with_header: option is no longer used
+    and will be removed in a future release
+  * implied http_raw_request.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_raw_request.with_trailer: option is no longer used
+    and will be removed in a future release
 
 
 7.63. http_raw_status
@@ -7150,10 +7173,10 @@ Usage: detect
 
 Configuration:
 
-  * implied http_raw_status.with_body: parts of this rule examine
-    HTTP message body
-  * implied http_raw_status.with_trailer: parts of this rule examine
-    HTTP message trailers
+  * implied http_raw_status.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_raw_status.with_trailer: option is no longer used
+    and will be removed in a future release
 
 
 7.64. http_raw_trailer
@@ -7173,10 +7196,10 @@ Configuration:
     name is case insensitive.
   * implied http_raw_trailer.request: match against the trailers from
     the request message even when examining the response
-  * implied http_raw_trailer.with_header: parts of this rule examine
-    HTTP response message headers (must be combined with request)
-  * implied http_raw_trailer.with_body: parts of this rule examine
-    HTTP response message body (must be combined with request)
+  * implied http_raw_trailer.with_header: option is no longer used
+    and will be removed in a future release
+  * implied http_raw_trailer.with_body: option is no longer used and
+    will be removed in a future release
 
 
 7.65. http_raw_uri
@@ -7191,12 +7214,12 @@ Usage: detect
 
 Configuration:
 
-  * implied http_raw_uri.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_raw_uri.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_raw_uri.with_trailer: parts of this rule examine
-    HTTP message trailers
+  * implied http_raw_uri.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_raw_uri.with_body: option is no longer used and will
+    be removed in a future release
+  * implied http_raw_uri.with_trailer: option is no longer used and
+    will be removed in a future release
   * implied http_raw_uri.scheme: match against scheme section of URI
     only
   * implied http_raw_uri.host: match against host section of URI only
@@ -7220,10 +7243,10 @@ Usage: detect
 
 Configuration:
 
-  * implied http_stat_code.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_stat_code.with_trailer: parts of this rule examine
-    HTTP message trailers
+  * implied http_stat_code.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_stat_code.with_trailer: option is no longer used and
+    will be removed in a future release
 
 
 7.67. http_stat_msg
@@ -7239,10 +7262,10 @@ Usage: detect
 
 Configuration:
 
-  * implied http_stat_msg.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_stat_msg.with_trailer: parts of this rule examine
-    HTTP message trailers
+  * implied http_stat_msg.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_stat_msg.with_trailer: option is no longer used and
+    will be removed in a future release
 
 
 7.68. http_trailer
@@ -7261,10 +7284,10 @@ Configuration:
   * string http_trailer.field: restrict to given trailer
   * implied http_trailer.request: match against the trailers from the
     request message even when examining the response
-  * implied http_trailer.with_header: parts of this rule examine HTTP
-    response message headers (must be combined with request)
-  * implied http_trailer.with_body: parts of this rule examine HTTP
-    message body (must be combined with request)
+  * implied http_trailer.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_trailer.with_body: option is no longer used and will
+    be removed in a future release
 
 
 7.69. http_trailer_test
@@ -7284,10 +7307,10 @@ Configuration:
     Trailer name is case insensitive.
   * implied http_trailer_test.request: match against the trailers
     from the request message even when examining the response
-  * implied http_trailer_test.with_header: parts of this rule examine
-    HTTP headers
-  * implied http_trailer_test.with_body: parts of this rule examine
-    HTTP message body
+  * implied http_trailer_test.with_header: option is no longer used
+    and will be removed in a future release
+  * implied http_trailer_test.with_body: option is no longer used and
+    will be removed in a future release
   * interval http_trailer_test.check: range check to perform on
     trailer value { 0:999999999999999999 }
   * bool http_trailer_test.numeric: trailer value is a number
@@ -7307,12 +7330,12 @@ Usage: detect
 
 Configuration:
 
-  * implied http_true_ip.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_true_ip.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_true_ip.with_trailer: parts of this rule examine
-    HTTP message trailers
+  * implied http_true_ip.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_true_ip.with_body: option is no longer used and will
+    be removed in a future release
+  * implied http_true_ip.with_trailer: option is no longer used and
+    will be removed in a future release
 
 
 7.71. http_uri
@@ -7328,12 +7351,12 @@ Usage: detect
 
 Configuration:
 
-  * implied http_uri.with_header: this rule is limited to examining
-    HTTP message headers
-  * implied http_uri.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_uri.with_trailer: parts of this rule examine HTTP
-    message trailers
+  * implied http_uri.with_header: option is no longer used and will
+    be removed in a future release
+  * implied http_uri.with_body: option is no longer used and will be
+    removed in a future release
+  * implied http_uri.with_trailer: option is no longer used and will
+    be removed in a future release
   * implied http_uri.scheme: match against scheme section of URI only
   * implied http_uri.host: match against host section of URI only
   * implied http_uri.port: match against port section of URI only
@@ -7357,12 +7380,12 @@ Configuration:
 
   * implied http_version.request: match against the version from the
     request message even when examining the response
-  * implied http_version.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_version.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_version.with_trailer: parts of this rule examine
-    HTTP message trailers
+  * implied http_version.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_version.with_body: option is no longer used and will
+    be removed in a future release
+  * implied http_version.with_trailer: option is no longer used and
+    will be removed in a future release
 
 
 7.73. http_version_match
@@ -7381,12 +7404,12 @@ Configuration:
     versions to match
   * implied http_version_match.request: match against the version
     from the request message even when examining the response
-  * implied http_version_match.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_version_match.with_body: parts of this rule examine
-    HTTP message body
-  * implied http_version_match.with_trailer: parts of this rule
-    examine HTTP message trailers
+  * implied http_version_match.with_header: option is no longer used
+    and will be removed in a future release
+  * implied http_version_match.with_body: option is no longer used
+    and will be removed in a future release
+  * implied http_version_match.with_trailer: option is no longer used
+    and will be removed in a future release
 
 
 7.74. icmp_id
@@ -8051,7 +8074,7 @@ Usage: detect
 
 --------------
 
-Help: detection option for sip stat code
+Help: detection option for sip method
 
 Type: ips_option
 
@@ -9488,12 +9511,12 @@ libraries see the Getting Started section of the manual.
     }
   * implied http_cookie.request: match against the cookie from the
     request message even when examining the response
-  * implied http_cookie.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_cookie.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_cookie.with_trailer: parts of this rule examine HTTP
-    message trailers
+  * implied http_cookie.with_body: option is no longer used and will
+    be removed in a future release
+  * implied http_cookie.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_cookie.with_trailer: option is no longer used and
+    will be removed in a future release
   * string http_header.field: restrict to given header. Header name
     is case insensitive.
   * implied http_header.request: match against the headers from the
@@ -9506,18 +9529,18 @@ libraries see the Getting Started section of the manual.
   * bool http_header_test.numeric: header value is a number
   * implied http_header_test.request: match against the headers from
     the request message even when examining the response
-  * implied http_header_test.with_body: parts of this rule examine
-    HTTP message body
-  * implied http_header_test.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_header_test.with_trailer: parts of this rule examine
-    HTTP message trailers
-  * implied http_header.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_header.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_header.with_trailer: parts of this rule examine HTTP
-    message trailers
+  * implied http_header_test.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_header_test.with_header: option is no longer used
+    and will be removed in a future release
+  * implied http_header_test.with_trailer: option is no longer used
+    and will be removed in a future release
+  * implied http_header.with_body: option is no longer used and will
+    be removed in a future release
+  * implied http_header.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_header.with_trailer: option is no longer used and
+    will be removed in a future release
   * string http_inspect.allowed_methods: list of allowed methods
   * bool http_inspect.backslash_to_slash = true: replace \ with /
     when normalizing URIs
@@ -9570,9 +9593,14 @@ libraries see the Getting Started section of the manual.
     headers in a message exceeds this value { 0:65535 }
   * int http_inspect.maximum_host_length = -1: maximum allowed length
     for Host header value (-1 no limit) { -1:max53 }
+  * int http_inspect.maximum_pipelined_requests = 99: alert when the
+    number of pipelined requests exceeds this value { 0:99 }
   * int http_inspect.max_javascript_whitespaces = 200: maximum
     consecutive whitespaces allowed within the JavaScript obfuscated
     data { 1:65535 }
+  * int http_inspect.max_mime_attach = 5: maximum number of mime
+    attachments that will be inspected in a section of a request
+    message { 1:65535 }
   * bool http_inspect.normalize_javascript = false: use legacy
     normalizer to normalize JavaScript in response bodies
   * bool http_inspect.normalize_utf = true: normalize charset utf
@@ -9612,12 +9640,12 @@ libraries see the Getting Started section of the manual.
     current trailer is in given range { 0:65535 }
   * implied http_max_trailer_line.request: match against the version
     from the request message even when examining the response
-  * implied http_method.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_method.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_method.with_trailer: parts of this rule examine HTTP
-    message trailers
+  * implied http_method.with_body: option is no longer used and will
+    be removed in a future release
+  * implied http_method.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_method.with_trailer: option is no longer used and
+    will be removed in a future release
   * interval http_num_cookies.~range: check that number of cookies of
     current header are in given range { 0:65535 }
   * implied http_num_cookies.request: match against the version from
@@ -9626,60 +9654,60 @@ libraries see the Getting Started section of the manual.
     current buffer are in given range { 0:65535 }
   * implied http_num_headers.request: match against the version from
     the request message even when examining the response
-  * implied http_num_headers.with_body: parts of this rule examine
-    HTTP message body
-  * implied http_num_headers.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_num_headers.with_trailer: parts of this rule examine
-    HTTP message trailers
+  * implied http_num_headers.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_num_headers.with_header: option is no longer used
+    and will be removed in a future release
+  * implied http_num_headers.with_trailer: option is no longer used
+    and will be removed in a future release
   * interval http_num_trailers.~range: check that number of headers
     of current buffer are in given range { 0:65535 }
   * implied http_num_trailers.request: match against the version from
     the request message even when examining the response
-  * implied http_num_trailers.with_body: parts of this rule examine
-    HTTP message body
-  * implied http_num_trailers.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_num_trailers.with_trailer: parts of this rule
-    examine HTTP message trailers
+  * implied http_num_trailers.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_num_trailers.with_header: option is no longer used
+    and will be removed in a future release
+  * implied http_num_trailers.with_trailer: option is no longer used
+    and will be removed in a future release
   * implied http_param.nocase: case insensitive match
   * string http_param.~param: parameter to match
   * implied http_raw_cookie.request: match against the cookie from
     the request message even when examining the response
-  * implied http_raw_cookie.with_body: parts of this rule examine
-    HTTP message body
-  * implied http_raw_cookie.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_raw_cookie.with_trailer: parts of this rule examine
-    HTTP message trailers
+  * implied http_raw_cookie.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_raw_cookie.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_raw_cookie.with_trailer: option is no longer used
+    and will be removed in a future release
   * string http_raw_header.field: restrict to given header. Header
     name is case insensitive.
   * implied http_raw_header.request: match against the headers from
     the request message even when examining the response
-  * implied http_raw_header.with_body: parts of this rule examine
-    HTTP message body
-  * implied http_raw_header.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_raw_header.with_trailer: parts of this rule examine
-    HTTP message trailers
-  * implied http_raw_request.with_body: parts of this rule examine
-    HTTP message body
-  * implied http_raw_request.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_raw_request.with_trailer: parts of this rule examine
-    HTTP message trailers
-  * implied http_raw_status.with_body: parts of this rule examine
-    HTTP message body
-  * implied http_raw_status.with_trailer: parts of this rule examine
-    HTTP message trailers
+  * implied http_raw_header.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_raw_header.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_raw_header.with_trailer: option is no longer used
+    and will be removed in a future release
+  * implied http_raw_request.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_raw_request.with_header: option is no longer used
+    and will be removed in a future release
+  * implied http_raw_request.with_trailer: option is no longer used
+    and will be removed in a future release
+  * implied http_raw_status.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_raw_status.with_trailer: option is no longer used
+    and will be removed in a future release
   * string http_raw_trailer.field: restrict to given trailer. Trailer
     name is case insensitive.
   * implied http_raw_trailer.request: match against the trailers from
     the request message even when examining the response
-  * implied http_raw_trailer.with_body: parts of this rule examine
-    HTTP response message body (must be combined with request)
-  * implied http_raw_trailer.with_header: parts of this rule examine
-    HTTP response message headers (must be combined with request)
+  * implied http_raw_trailer.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_raw_trailer.with_header: option is no longer used
+    and will be removed in a future release
   * implied http_raw_uri.fragment: match against fragment section of
     URI only
   * implied http_raw_uri.host: match against host section of URI only
@@ -9689,20 +9717,20 @@ libraries see the Getting Started section of the manual.
     only
   * implied http_raw_uri.scheme: match against scheme section of URI
     only
-  * implied http_raw_uri.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_raw_uri.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_raw_uri.with_trailer: parts of this rule examine
-    HTTP message trailers
-  * implied http_stat_code.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_stat_code.with_trailer: parts of this rule examine
-    HTTP message trailers
-  * implied http_stat_msg.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_stat_msg.with_trailer: parts of this rule examine
-    HTTP message trailers
+  * implied http_raw_uri.with_body: option is no longer used and will
+    be removed in a future release
+  * implied http_raw_uri.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_raw_uri.with_trailer: option is no longer used and
+    will be removed in a future release
+  * implied http_stat_code.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_stat_code.with_trailer: option is no longer used and
+    will be removed in a future release
+  * implied http_stat_msg.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_stat_msg.with_trailer: option is no longer used and
+    will be removed in a future release
   * string http_trailer.field: restrict to given trailer
   * implied http_trailer.request: match against the trailers from the
     request message even when examining the response
@@ -9714,20 +9742,20 @@ libraries see the Getting Started section of the manual.
   * bool http_trailer_test.numeric: trailer value is a number
   * implied http_trailer_test.request: match against the trailers
     from the request message even when examining the response
-  * implied http_trailer_test.with_body: parts of this rule examine
-    HTTP message body
-  * implied http_trailer_test.with_header: parts of this rule examine
-    HTTP headers
-  * implied http_trailer.with_body: parts of this rule examine HTTP
-    message body (must be combined with request)
-  * implied http_trailer.with_header: parts of this rule examine HTTP
-    response message headers (must be combined with request)
-  * implied http_true_ip.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_true_ip.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_true_ip.with_trailer: parts of this rule examine
-    HTTP message trailers
+  * implied http_trailer_test.with_body: option is no longer used and
+    will be removed in a future release
+  * implied http_trailer_test.with_header: option is no longer used
+    and will be removed in a future release
+  * implied http_trailer.with_body: option is no longer used and will
+    be removed in a future release
+  * implied http_trailer.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_true_ip.with_body: option is no longer used and will
+    be removed in a future release
+  * implied http_true_ip.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_true_ip.with_trailer: option is no longer used and
+    will be removed in a future release
   * implied http_uri.fragment: match against fragment section of URI
     only
   * implied http_uri.host: match against host section of URI only
@@ -9735,30 +9763,30 @@ libraries see the Getting Started section of the manual.
   * implied http_uri.port: match against port section of URI only
   * implied http_uri.query: match against query section of URI only
   * implied http_uri.scheme: match against scheme section of URI only
-  * implied http_uri.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_uri.with_header: this rule is limited to examining
-    HTTP message headers
-  * implied http_uri.with_trailer: parts of this rule examine HTTP
-    message trailers
+  * implied http_uri.with_body: option is no longer used and will be
+    removed in a future release
+  * implied http_uri.with_header: option is no longer used and will
+    be removed in a future release
+  * implied http_uri.with_trailer: option is no longer used and will
+    be removed in a future release
   * implied http_version_match.request: match against the version
     from the request message even when examining the response
   * string http_version_match.~version_list: space-separated list of
     versions to match
-  * implied http_version_match.with_body: parts of this rule examine
-    HTTP message body
-  * implied http_version_match.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_version_match.with_trailer: parts of this rule
-    examine HTTP message trailers
+  * implied http_version_match.with_body: option is no longer used
+    and will be removed in a future release
+  * implied http_version_match.with_header: option is no longer used
+    and will be removed in a future release
+  * implied http_version_match.with_trailer: option is no longer used
+    and will be removed in a future release
   * implied http_version.request: match against the version from the
     request message even when examining the response
-  * implied http_version.with_body: parts of this rule examine HTTP
-    message body
-  * implied http_version.with_header: this rule is limited to
-    examining HTTP message headers
-  * implied http_version.with_trailer: parts of this rule examine
-    HTTP message trailers
+  * implied http_version.with_body: option is no longer used and will
+    be removed in a future release
+  * implied http_version.with_header: option is no longer used and
+    will be removed in a future release
+  * implied http_version.with_trailer: option is no longer used and
+    will be removed in a future release
   * interval icmp_id.~range: check if ICMP ID is in given range {
     0:65535 }
   * interval icmp_seq.~range: check if ICMP sequence number is in
@@ -10905,7 +10933,8 @@ libraries see the Getting Started section of the manual.
   * interval window.~range: check if TCP window size is in given
     range { 0:65535 }
   * multi wizard.curses: enable service identification based on
-    internal algorithm { dce_smb | dce_udp | dce_tcp | mms | sslv2 }
+    internal algorithm { dce_smb | dce_udp | dce_tcp | mms |
+    s7commplus | sslv2 }
   * bool wizard.hexes[].client_first = true: which end initiates data
     transfer (deprecated)
   * select wizard.hexes[].proto = any: protocol to scan { tcp | udp |
@@ -11296,8 +11325,22 @@ libraries see the Getting Started section of the manual.
   * detection.alt_searches: alt fast pattern searches in packet data
     (sum)
   * detection.analyzed: total packets processed (now)
+  * detection.cont_creations: total number of continuations created
+    (sum)
+  * detection.cont_evals: total number of condition-met continuations
+    (sum)
   * detection.context_stalls: times processing stalled to wait for an
     available context (sum)
+  * detection.cont_flows: total number of flows using continuation
+    (sum)
+  * detection.cont_matches: total number of continuations matched
+    (sum)
+  * detection.cont_max_num: peak number of simultaneous continuations
+    per flow (max)
+  * detection.cont_mismatches: total number of continuations
+    mismatched (sum)
+  * detection.cont_recalls: total number of continuations recalled
+    (sum)
   * detection.cooked_searches: fast pattern searches in cooked packet
     data (sum)
   * detection.event_limit: events filtered (sum)
@@ -11501,6 +11544,8 @@ libraries see the Getting Started section of the manual.
     messages (sum)
   * http_inspect.script_detections: early inspections of scripts in
     HTTP responses (sum)
+  * http_inspect.skip_mime_attach: total number of HTTP requests with
+    too many MIME attachments to inspect (sum)
   * http_inspect.ssl_srch_abandoned_early: total SSL search abandoned
     too soon (sum)
   * http_inspect.total_bytes: total HTTP data bytes inspected (sum)
@@ -12718,12 +12763,12 @@ session.
 The TCP packet is invalid because it doesn’t have a SYN, ACK, or RST
 flag set.
 
-116:424 (eth) truncated ethernet header
+116:424 (pbb) truncated ethernet header
 
 The packet length is less than the minimum ethernet header size (14
 bytes)
 
-116:424 (eth) truncated ethernet header
+116:424 (pbb) truncated ethernet header
 
 A truncated ethernet header was detected.
 
@@ -13107,11 +13152,12 @@ not percent-encoded
 
 HTTP request URI has space character that is not percent-encoded.
 
-119:34 (http_inspect) HTTP connection has more than 100 simultaneous
-pipelined requests that have not been answered
+119:34 (http_inspect) HTTP connection has more than
+maximum_pipelined_requests simultaneous pipelined requests that have
+not been answered
 
-HTTP connection has more than 100 simultaneous pipelined requests
-that have not been answered.
+HTTP connection has more than maximum_pipelined_requests simultaneous
+pipelined requests that have not been answered.
 
 119:102 (http_inspect) invalid status code in HTTP response
 
@@ -15785,7 +15831,7 @@ and are not applicable elsewhere.
     the request body
   * sip_header (ips_option): rule option to set the detection cursor
     to the SIP header buffer
-  * sip_method (ips_option): detection option for sip stat code
+  * sip_method (ips_option): detection option for sip method
   * sip_stat_code (ips_option): detection option for sip stat code
   * smtp (inspector): smtp inspection
   * snort (basic): command line configuration and shell commands
@@ -16168,7 +16214,7 @@ and are not applicable elsewhere.
     the request body
   * ips_option::sip_header: rule option to set the detection cursor
     to the SIP header buffer
-  * ips_option::sip_method: detection option for sip stat code
+  * ips_option::sip_method: detection option for sip method
   * ips_option::sip_stat_code: detection option for sip stat code
   * ips_option::so: rule option to call custom eval function
   * ips_option::soid: rule option to specify a shared object rule ID
