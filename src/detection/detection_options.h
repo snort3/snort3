@@ -63,7 +63,8 @@ struct dot_node_state_t
         char flowbit_failed;
     } last_check;
     void* conts;
-    uint64_t conts_num;
+    uint64_t context_num;
+    uint16_t run_num;
 
     // FIXIT-L perf profiler stuff should be factored of the node state struct
     hr_duration elapsed;

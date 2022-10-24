@@ -130,7 +130,8 @@ void Continuation::postpone(const Cursor& cursor,
 void Continuation::recall(dot_node_state_t& nst,
      const snort::Packet* p)
 {
-    if (nst.last_check.context_num != nst.conts_num)
+    if (nst.last_check.context_num != nst.context_num or
+        nst.last_check.run_num != nst.run_num)
         return;
 
     auto cnt = LState::erase_group((LState*&)nst.conts);
@@ -268,9 +269,11 @@ void Continuation::add(const Cursor& cursor,
     auto nst = node.state + snort::get_instance_id();
     assert(nst);
 
-    if (nst->last_check.context_num != nst->conts_num)
+    if (nst->last_check.context_num != nst->context_num or
+        nst->last_check.run_num != nst->run_num)
     {
-        nst->conts_num = nst->last_check.context_num;
+        nst->context_num = nst->last_check.context_num;
+        nst->run_num = nst->last_check.run_num;
         nst->conts = nullptr;
     }
 
