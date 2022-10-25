@@ -1,3 +1,7 @@
+2022-10-25: 3.1.45.0
+
+* detection: check Pig run number in node state conditions. Fixes crash introduced in 3.1.44.0.
+
 2022-10-20: 3.1.44.0
 
 * appid: return APP_ID_NONE only if hsession is not present for http3
