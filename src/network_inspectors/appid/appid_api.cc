@@ -205,7 +205,6 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
         else
             asd->set_payload_id(payload_id);
 
-        asd->set_ss_application_ids(client_id, payload_id, change_bits);
         asd->set_tls_host(change_bits);
 
         Packet* p = DetectionEngine::get_current_packet();

@@ -129,7 +129,6 @@ void AppIdEveProcessEventHandler::handle(DataEvent& event, Flow* flow)
         asd->get_odp_ctxt().get_ssl_matchers().scan_hostname(reinterpret_cast<const uint8_t*>(server_name.c_str()),
             server_name.length(), client_id, payload_id);
         asd->set_payload_id(payload_id);
-        asd->set_ss_application_ids_payload(payload_id, change_bits);
     }
 
     if (appidDebug->is_active())
