@@ -37,6 +37,7 @@ struct PortObject
     // FIXIT-L convert char* to C++ string
     char* name;                 /* user name */
     int id;                     /* internal tracking - compiling sets this value */
+    mutable unsigned hash = 0;
 
     SF_LIST* item_list;         /* list of port and port-range items */
     SF_LIST* rule_list;         /* list of rules  */
@@ -76,6 +77,8 @@ void PortObjectPrintPortsRaw(PortObject*);
 
 typedef void (*po_print_f)(int index, char* buf, int bufsize);
 void PortObjectPrintEx(PortObject*, po_print_f);
+
+unsigned PortObjectHash(const PortObject*, unsigned hash, unsigned scale, unsigned hardener);
 
 #endif
 

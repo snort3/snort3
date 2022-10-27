@@ -91,6 +91,8 @@ public:
         mix(a,b,c);
 
         a += (uint32_t)(uintptr_t)rtnk->policyId;
+        b += PortObjectHash(rtn->src_portobject, seed, scale, hardener);
+        c += PortObjectHash(rtn->dst_portobject, seed, scale, hardener);
 
         finalize(a,b,c);
 

@@ -136,9 +136,9 @@ int PortObjectAddPortObject(PortObject* podst, PortObject* posrc, int* errflag)
     if (errflag)
         *errflag = 0;
 
-    for (po=(PortObjectItem*)sflist_first(posrc->item_list, &pos);
+    for (po = (PortObjectItem*)sflist_first(posrc->item_list, &pos);
         po != nullptr;
-        po=(PortObjectItem*)sflist_next(&pos) )
+        po = (PortObjectItem*)sflist_next(&pos))
     {
         PortObjectItem* poi = PortObjectItemDup(po);
         if ((ret = PortObjectAddItem(podst, poi, errflag)) != 0)
@@ -212,7 +212,7 @@ PortObject* PortObjectDup(PortObject* po)
     {
         for (PortObjectItem* poi = (PortObjectItem*)sflist_first(po->item_list, &lpos);
             poi != nullptr;
-            poi = (PortObjectItem*)sflist_next(&lpos) )
+            poi = (PortObjectItem*)sflist_next(&lpos))
         {
             PortObjectItem* poinew = PortObjectItemDup(poi);
             PortObjectAddItem(ponew, poinew, nullptr);
@@ -224,7 +224,7 @@ PortObject* PortObjectDup(PortObject* po)
     {
         for (int* prid  = (int*)sflist_first(po->rule_list, &lpos);
             prid != nullptr;
-            prid  = (int*)sflist_next(&lpos) )
+            prid  = (int*)sflist_next(&lpos))
         {
             int* prule = (int*)snort_calloc(sizeof(int));
             *prule = *prid;
@@ -334,9 +334,9 @@ int PortObjectPortCount(PortObject* po)
     if ( !po )
         return 0;
 
-    for (PortObjectItem* poi=(PortObjectItem*)sflist_first(po->item_list, &cursor);
+    for (PortObjectItem* poi = (PortObjectItem*)sflist_first(po->item_list, &cursor);
         poi != nullptr;
-        poi=(PortObjectItem*)sflist_next(&cursor) )
+        poi = (PortObjectItem*)sflist_next(&cursor))
     {
         if ( poi->any() )
             return -1;
@@ -376,9 +376,9 @@ int PortObjectHasPort(PortObject* po, int port)
     if ( !po )
         return 0;
 
-    for (poi=(PortObjectItem*)sflist_first(po->item_list, &cursor);
+    for (poi = (PortObjectItem*)sflist_first(po->item_list, &cursor);
         poi != nullptr;
-        poi=(PortObjectItem*)sflist_next(&cursor) )
+        poi = (PortObjectItem*)sflist_next(&cursor))
     {
         if ( poi->any() )
             return 0;
@@ -402,9 +402,9 @@ void PortObjectToggle(PortObject* po)
     if (!po)
         return;
 
-    for (poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
+    for (poi = (PortObjectItem*)sflist_first(po->item_list,&pos);
         poi != nullptr;
-        poi=(PortObjectItem*)sflist_next(&pos) )
+        poi = (PortObjectItem*)sflist_next(&pos))
     {
         poi->negate = !poi->negate;
     }
@@ -419,9 +419,9 @@ int PortObjectIsPureNot(PortObject* po)
     if ( !po )
         return 0;
 
-    for (poi=(PortObjectItem*)sflist_first(po->item_list, &cursor);
+    for (poi = (PortObjectItem*)sflist_first(po->item_list, &cursor);
         poi != nullptr;
-        poi=(PortObjectItem*)sflist_next(&cursor) )
+        poi = (PortObjectItem*)sflist_next(&cursor))
     {
         cnt++;
         if ( !poi->negate )
@@ -442,9 +442,9 @@ int PortObjectHasAny(PortObject* po)
     if ( !po )
         return 0;
 
-    for (poi=(PortObjectItem*)sflist_first(po->item_list, &cursor);
+    for (poi = (PortObjectItem*)sflist_first(po->item_list, &cursor);
         poi != nullptr;
-        poi=(PortObjectItem*)sflist_next(&cursor) )
+        poi = (PortObjectItem*)sflist_next(&cursor))
     {
         if ( poi->any() )
             return 1;
@@ -481,8 +481,8 @@ PortObject* PortObjectAppend(PortObject* poa, PortObject* pob)
     SF_LNODE* cursor;
 
     for (PortObjectItem* poib = (PortObjectItem*)sflist_first(pob->item_list, &cursor);
-         poib!= nullptr;
-         poib = (PortObjectItem*)sflist_next(&cursor) )
+         poib != nullptr;
+         poib = (PortObjectItem*)sflist_next(&cursor))
     {
         PortObjectItem* poia = PortObjectItemNew();
 
@@ -521,9 +521,9 @@ void PortObjectPrintPortsRaw(PortObject* po)
     buf = (char*)snort_calloc(bufsize);
     SnortSnprintfAppend(buf, bufsize, " [");
 
-    for (poi=(PortObjectItem*)sflist_first(po->item_list, &pos);
+    for (poi = (PortObjectItem*)sflist_first(po->item_list, &pos);
         poi != nullptr;
-        poi=(PortObjectItem*)sflist_next(&pos) )
+        poi = (PortObjectItem*)sflist_next(&pos))
     {
         PortObjectItemPrint(poi, buf, bufsize);
     }
@@ -582,7 +582,7 @@ void PortObjectPrintEx(PortObject* po, po_print_f print_index_map)
     {
         for (poi = (PortObjectItem*)sflist_first(po->item_list,&pos);
             poi != nullptr;
-            poi = (PortObjectItem*)sflist_next(&pos) )
+            poi = (PortObjectItem*)sflist_next(&pos))
         {
             PortObjectItemPrint(poi, print_buf, bufsize);
         }
@@ -616,3 +616,24 @@ void PortObjectPrintEx(PortObject* po, po_print_f print_index_map)
     snort_free(rlist);
 }
 
+unsigned PortObjectHash(const PortObject* po, unsigned hash, unsigned scale, unsigned hardener)
+{
+#ifndef DEBUG
+    if (po->hash != 0)
+        return po->hash;
+#endif
+
+    SF_LNODE* pos;
+
+    for (PortObjectItem* poi = (PortObjectItem*)sflist_first(po->item_list, &pos);
+        poi != nullptr;
+        poi = (PortObjectItem*)sflist_next(&pos))
+    {
+        hash = PortObjectItemHash(poi, hash, scale);
+    }
+
+    assert(po->hash == 0 or po->hash == (hash ^ hardener));
+    po->hash = hash ^ hardener;
+
+    return po->hash;
+}
