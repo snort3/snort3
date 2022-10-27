@@ -36,6 +36,7 @@
 #include "protocols/packet.h"
 #include "pub_sub/netflow_event.h"
 #include "src/utils/endian.h"
+#include "time/packet_time.h"
 #include "utils/util.h"
 
 #include "netflow_cache.cc"
@@ -150,6 +151,15 @@ static void publish_netflow_event(const Packet* p, const NetFlowRule* match, Net
         {
             serviceID = (record.initiator_port > record.responder_port) ? sid_responder : sid_initiator;
         }
+    }
+
+
+    // Certain implementations of NetFlow don't use FIRST_PKT_SECOND and
+    // LAST_PKT_SECOND - if these aren't set, assume the current wire pkt time
+    if (!record.first_pkt_second or !record.last_pkt_second)
+    {
+        record.first_pkt_second = packet_time();
+        record.last_pkt_second = packet_time();
     }
 
     NetFlowEvent event(p, &record, match->create_host, match->create_service, swapped, serviceID);
