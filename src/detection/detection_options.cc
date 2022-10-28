@@ -559,20 +559,17 @@ int detection_option_node_evaluate(
             debug_log(detection_trace, TRACE_RULE_EVAL, p, "flowbit no alert\n");
         }
 
-        // Back up byte_extract vars so they don't get overwritten between rules
-        for ( unsigned i = 0; i < NUM_IPS_OPTIONS_VARS; ++i )
-        {
-            GetVarValueByIndex(&(tmp_byte_extract_vars[i]), (int8_t)i);
-        }
 #ifdef DEBUG_MSGS
         if ( trace_enabled(detection_trace, TRACE_RULE_VARS) )
         {
             char var_buf[100];
             std::string rule_vars;
             rule_vars.reserve(sizeof(var_buf));
+            uint32_t dbg_extract_vars[]{0,0};
             for ( unsigned i = 0; i < NUM_IPS_OPTIONS_VARS; ++i )
             {
-                safe_snprintf(var_buf, sizeof(var_buf), "var[%u]=0x%X ", i, tmp_byte_extract_vars[i]);
+                GetVarValueByIndex(&(dbg_extract_vars[i]), (int8_t)i);
+                safe_snprintf(var_buf, sizeof(var_buf), "var[%u]=0x%X ", i, dbg_extract_vars[i]);
                 rule_vars.append(var_buf);
             }
             debug_logf(detection_trace, TRACE_RULE_VARS, p, "Rule options variables: %s\n",
@@ -591,12 +588,17 @@ int detection_option_node_evaluate(
             // Passed, check the children.
             if ( node->num_children )
             {
+                // Back up byte_extract vars so they don't get overwritten between rules
+                // If node has only 1 child - no need to back up on current step
+                for ( unsigned i = 0; node->num_children > 1 && i < NUM_IPS_OPTIONS_VARS; ++i )
+                    GetVarValueByIndex(&(tmp_byte_extract_vars[i]), (int8_t)i);
+
                 for ( int i = 0; i < node->num_children; ++i )
                 {
                     detection_option_tree_node_t* child_node = node->children[i];
                     dot_node_state_t* child_state = child_node->state + get_instance_id();
 
-                    for ( unsigned j = 0; j < NUM_IPS_OPTIONS_VARS; ++j )
+                    for ( unsigned j = 0; node->num_children > 1 && j < NUM_IPS_OPTIONS_VARS; ++j )
                         SetVarValueByIndex(tmp_byte_extract_vars[j], (int8_t)j);
 
                     if ( loop_count > 0 )
