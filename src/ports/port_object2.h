@@ -39,9 +39,10 @@ struct PortObject;
 struct PortObject2
 {
     // FIXIT-L convert char* to C++ string
-    // prefix of this struct must match first 3 items in PortObject
+    // prefix of this struct must match first 4 items in PortObject
     char* name;                 /* user name */
     int id;                     /* internal tracking - compiling sets this value */
+    mutable unsigned hash = 0;
 
     SF_LIST* item_list;         /* list of port and port-range items */
     snort::GHash* rule_hash;         /* hash of rule (rule-indexes) in use */

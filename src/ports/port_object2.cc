@@ -38,6 +38,24 @@
 
 using namespace snort;
 
+static void check_structures()
+{
+    using po1 = PortObject;
+    using po2 = PortObject2;
+
+    assert(sizeof(po1::name) == sizeof(po2::name));
+    assert(sizeof(po1::id) == sizeof(po2::id));
+    assert(sizeof(po1::hash) == sizeof(po2::hash));
+    assert(sizeof(po1::item_list) == sizeof(po2::item_list));
+
+    assert(offsetof(po1, name) == offsetof(po2, name));
+    assert(offsetof(po1, id) == offsetof(po2, id));
+    assert(offsetof(po1, hash) == offsetof(po2, hash));
+    assert(offsetof(po1, item_list) == offsetof(po2, item_list));
+}
+
+static int _check_structures __attribute__((unused)) = (static_cast<void>(check_structures()), 0);
+
 #define PO_EXTRA_RULE_CNT 25
 
 //-------------------------------------------------------------------------
