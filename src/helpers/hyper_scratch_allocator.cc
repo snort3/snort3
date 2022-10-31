@@ -35,9 +35,6 @@ HyperScratchAllocator::~HyperScratchAllocator()
 
 bool HyperScratchAllocator::allocate(hs_database_t* db)
 {
-    if ( scratch_id < 0 )
-        scratch_id = SnortConfig::request_scratch(this);
-
     return hs_alloc_scratch(db, &scratch) == HS_SUCCESS;
 }
 

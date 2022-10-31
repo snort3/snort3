@@ -55,7 +55,6 @@ public:
 protected:
     ScratchAllocator();
 
-private:
     int id;
 };
 

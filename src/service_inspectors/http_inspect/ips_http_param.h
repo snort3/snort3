@@ -24,6 +24,7 @@
 #include "profiler/profiler.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
+#include "helpers/literal_search.h"
 
 #include "http_param.h"
 #include "ips_http.h"
@@ -32,9 +33,15 @@
 class HttpParamRuleOptModule : public HttpRuleOptModule
 {
 public:
-    HttpParamRuleOptModule(const char* key_, const char* help, HttpEnums::HTTP_RULE_OPT rule_opt_index_,
+    HttpParamRuleOptModule(const char* key_, const char* help,
+        HttpEnums::HTTP_RULE_OPT rule_opt_index_,
         snort::CursorActionType cat_, const snort::Parameter params[])
-        : HttpRuleOptModule(key_, help, rule_opt_index_, cat_, params) {}
+        : HttpRuleOptModule(key_, help, rule_opt_index_, cat_, params)
+    { search_handle = snort::LiteralSearch::setup(); }
+
+    ~HttpParamRuleOptModule()
+    { snort::LiteralSearch::cleanup(search_handle); }
+
     snort::ProfileStats* get_profile() const override { return &http_param_ps; }
     static void mod_dtor(snort::Module* m) { delete m; }
     bool begin(const char*, int, snort::SnortConfig*) override;
@@ -45,16 +52,17 @@ private:
     friend class HttpParamIpsOption;
     static THREAD_LOCAL snort::ProfileStats http_param_ps;
   
-    std::string param;        // provide buffer containing specific parameter
+    std::string param;       // provide buffer containing specific parameter
     bool nocase;             // case insensitive match
+    snort::LiteralSearch::Handle* search_handle;
 };
 
 class HttpParamIpsOption : public HttpIpsOption
 {
 public:
-    HttpParamIpsOption(const HttpParamRuleOptModule* cm) :
-        HttpIpsOption(cm),
-        key(cm->key), http_param(cm->param, cm->nocase) {}
+    HttpParamIpsOption(const HttpParamRuleOptModule* cm)
+        : HttpIpsOption(cm), key(cm->key),
+          http_param(cm->param, cm->nocase, cm->search_handle) {}
     EvalStatus eval(Cursor&, snort::Packet*) override;
     uint32_t hash() const override;
     bool operator==(const snort::IpsOption& ips) const override;

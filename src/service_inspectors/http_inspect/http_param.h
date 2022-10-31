@@ -29,8 +29,10 @@
 class HttpParam
 {
 public:
-    HttpParam(const std::string& param_, bool nocase_)
-        : param(param_), param_upper(param_), nocase(nocase_)
+    HttpParam(const std::string& param_, bool nocase_,
+        snort::LiteralSearch::Handle* search_handle_)
+        : param(param_), param_upper(param_), nocase(nocase_),
+          search_handle(search_handle_)
     {
         assert(param.length() > 0);
 
@@ -40,8 +42,6 @@ public:
         const uint8_t* pattern = (const uint8_t*)param_upper.c_str();
         unsigned pattern_length = param_upper.length();
 
-        search_handle = snort::LiteralSearch::setup();
-
         searcher = snort::LiteralSearch::instantiate(
             search_handle, pattern, pattern_length, true
         );
@@ -50,7 +50,6 @@ public:
     ~HttpParam()
     {
         delete searcher;
-        snort::LiteralSearch::cleanup(search_handle);
     }
 
     bool operator==(const HttpParam& rhs) const
