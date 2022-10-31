@@ -263,3 +263,9 @@ needed (since the rule has fired) and will be recalled.
 
 Pending continuations from the flow are picked up and updated/evaluated with
 respect to the buffer's source (e.g. flow direction, file context, etc.)
+
+In case of multiple calls for detection (the same packet and IPS context), continuations are created as usual.
+But just-created continuations are not evaluated immediately on the same packet, they will wait their turn in
+the next PDU. Additionally, if an inspector calls for detection on a single data block (like, a full
+attachment in HTTP), continuations can be disabled by providing 'no_flow' flag to file_data buffer or
+any other buffer to indicate that the block is complete and no continuations needed.
