@@ -150,12 +150,14 @@ function create_sandbox_env()
         snort_whitelist_add_prefix = snort_whitelist_add_prefix,
         snort_whitelist_append = snort_whitelist_append,
         SNORT_VERSION = SNORT_VERSION,
+        SNORT_BUILD = SNORT_BUILD,
         SNORT_MAJOR_VERSION = SNORT_MAJOR_VERSION,
         SNORT_MINOR_VERSION = SNORT_MINOR_VERSION,
         SNORT_PATCH_VERSION = SNORT_PATCH_VERSION,
         SNORT_SUBLEVEL_VERSION = SNORT_SUBLEVEL_VERSION,
         get_module_version = get_module_version,
         tweaks = tweaks,
+        SNORT_DEP_VERSIONS = SNORT_DEP_VERSIONS
     }
 
     for k, v in pairs(export_to_sandbox) do

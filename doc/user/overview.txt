@@ -264,6 +264,18 @@ number.
 
     SNORT_PATCH_VERSION = 2
 
+* SNORT_DEP_VERSIONS: Snort dependencies version numbers table.
+If snort wasn't built with some dependency, its value will be nil.
+
+    SNORT_DEP_VERSIONS.DAQ = 3.0.7
+    SNORT_DEP_VERSIONS.LUAJIT = 2.1.0
+    SNORT_DEP_VERSIONS.OPENSSL = 3.0.5
+    SNORT_DEP_VERSIONS.LIBPCAP = 1.9.1
+    SNORT_DEP_VERSIONS.PCRE = 8.45
+    SNORT_DEP_VERSIONS.ZLIB = 1.2.11
+    SNORT_DEP_VERSIONS.HYPERSCAN = 5.4.8
+    SNORT_DEP_VERSIONS.LZMA = 5.0.5
+
 ==== Whitelist
 
 When Snort is run with the --warn-conf-strict option, warnings will be
