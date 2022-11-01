@@ -103,6 +103,9 @@ static const Parameter detection_params[] =
       "enable strict deduplication of rule headers by ports (saves memory, but "
       "loses some speed during config reading)" },
 
+    { "max_continuations_per_flow", Parameter::PT_INT, "0:65535", "1024",
+      "maximum number of continuations stored simultaneously on the flow" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 /* *INDENT-ON* */
@@ -213,6 +216,9 @@ bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("enable_strict_reduction") )
         sc->enable_strict_reduction = v.get_bool();
+
+    else if ( v.is("max_continuations_per_flow") )
+        sc->max_continuations = v.get_uint16();
 
     return true;
 }

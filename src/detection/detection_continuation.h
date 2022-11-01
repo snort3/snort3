@@ -26,6 +26,7 @@
 #include "ips_options/extract.h"
 #include "latency/rule_latency.h"
 #include "latency/rule_latency_state.h"
+#include "main/snort_config.h"
 #include "main/thread_config.h"
 #include "protocols/packet.h"
 #include "trace/trace_api.h"
@@ -51,7 +52,7 @@ public:
     inline void eval(snort::Packet&);
 
 private:
-    Continuation(int max = 1024) : states_cnt(0), states_cnt_max(max),
+    Continuation(unsigned max_cnt) : states_cnt(0), states_cnt_max(max_cnt),
         reload_id(snort::SnortConfig::get_thread_reload_id())
     { }
 
@@ -120,7 +121,12 @@ void Continuation::postpone(const Cursor& cursor,
 
     if (!cont)
     {
-        cont = data.p->flow->ips_cont = new Continuation();
+        auto max_cnt = snort::SnortConfig::get_conf()->max_continuations;
+
+        if (!max_cnt)
+            return;
+
+        cont = data.p->flow->ips_cont = new Continuation(max_cnt);
         snort::pc.cont_flows++;
     }
 

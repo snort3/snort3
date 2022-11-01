@@ -235,6 +235,7 @@ public:
     bool global_default_rule_state = true;
     bool allow_missing_so_rules = false;
     bool enable_strict_reduction = false;
+    uint16_t max_continuations = 1024;
 
     //------------------------------------------------------
     // process stuff
