@@ -39,7 +39,7 @@ public:
         : HttpRuleOptModule(key_, help, rule_opt_index_, cat_, params)
     { search_handle = snort::LiteralSearch::setup(); }
 
-    ~HttpParamRuleOptModule()
+    ~HttpParamRuleOptModule() override
     { snort::LiteralSearch::cleanup(search_handle); }
 
     snort::ProfileStats* get_profile() const override { return &http_param_ps; }
