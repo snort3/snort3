@@ -38,6 +38,7 @@
 
 using namespace snort;
 
+#ifndef NDEBUG
 static void check_structures()
 {
     using po1 = PortObject;
@@ -55,6 +56,7 @@ static void check_structures()
 }
 
 static int _check_structures __attribute__((unused)) = (static_cast<void>(check_structures()), 0);
+#endif
 
 #define PO_EXTRA_RULE_CNT 25
 
