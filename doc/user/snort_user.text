@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.45.0 2022-10-25 11:19:21 EDT TST
+Revision 3.1.46.0 2022-11-06 23:55:16 EST TST
 
 ---------------------------------------------------------------------
 
@@ -369,6 +369,18 @@ with a lua config using -c option.
   * SNORT_PATCH_VERSION: Snort version’s patch number.
 
     SNORT_PATCH_VERSION = 2
+
+  * SNORT_DEP_VERSIONS: Snort dependencies version numbers table. If
+    snort wasn’t built with some dependency, its value will be nil.
+
+    SNORT_DEP_VERSIONS.DAQ = 3.0.7
+    SNORT_DEP_VERSIONS.LUAJIT = 2.1.0
+    SNORT_DEP_VERSIONS.OPENSSL = 3.0.5
+    SNORT_DEP_VERSIONS.LIBPCAP = 1.9.1
+    SNORT_DEP_VERSIONS.PCRE = 8.45
+    SNORT_DEP_VERSIONS.ZLIB = 1.2.11
+    SNORT_DEP_VERSIONS.HYPERSCAN = 5.4.8
+    SNORT_DEP_VERSIONS.LZMA = 5.0.5
 
 1.2.4. Whitelist
 
@@ -1723,8 +1735,8 @@ This section explains how to use key features of Snort.
 
 Snort can take more active role in securing network by sending active
 responses to shutdown offending sessions. When active responses is
-enabled, snort will send TCP RST or ICMP unreachable when dropping a
-session.
+enabled, snort will send TCP RST and ICMP unreachable when dropping a
+TCP session and ICMP unreachable packets for UDP.
 
 5.1.1. Changes from Snort 2.9
 
@@ -1785,8 +1797,8 @@ active =
 5.1.3. Reject
 
 IPS action reject perform active response to shutdown hostile network
-session by injecting TCP resets (TCP connections) or ICMP unreachable
-packets.
+session by injecting TCP resets and ICMP unreachable for TCP
+connections, and ICMP unreachable packets for UDP.
 
 Example:
 

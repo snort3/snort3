@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.45.0 2022-10-25 11:19:35 EDT TST
+Revision 3.1.46.0 2022-11-06 23:55:31 EST TST
 
 ---------------------------------------------------------------------
 
@@ -598,6 +598,8 @@ Configuration:
   * bool detection.enable_strict_reduction = false: enable strict
     deduplication of rule headers by ports (saves memory, but loses
     some speed during config reading)
+  * int detection.max_continuations_per_flow = 1024: maximum number
+    of continuations stored simultaneously on the flow { 0:65535 }
 
 Peg counts:
 
@@ -9277,6 +9279,8 @@ libraries see the Getting Started section of the manual.
     against all policies
   * bool detection.hyperscan_literals = false: use hyperscan for
     content literal searches instead of boyer-moore
+  * int detection.max_continuations_per_flow = 1024: maximum number
+    of continuations stored simultaneously on the flow { 0:65535 }
   * int detection.offload_limit = 99999: minimum sizeof PDU to
     offload fast pattern search (defaults to disabled) { 0:max32 }
   * int detection.offload_threads = 0: maximum number of simultaneous
