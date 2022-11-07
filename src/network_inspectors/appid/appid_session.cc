@@ -179,7 +179,7 @@ AppIdSession::~AppIdSession()
     // If api was not stored in the stash, delete it. An example would be when an appid future
     // session is created, but it doesn't get attached to a snort flow (because the packets for the
     // future session were never received by snort), api object is not stored in the stash.
-    if (!api.stored_in_stash)
+    if (!api.flags.stored_in_stash)
         delete &api;
     else
         api.asd = nullptr;
@@ -1121,17 +1121,17 @@ void AppIdSession::set_tp_payload_app_id(const Packet& p, AppidSessionDirection 
 void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packet& p,
     bool is_httpx, uint32_t httpx_stream_index)
 {
-    if (!api.stored_in_stash)
+    if (!api.flags.stored_in_stash)
     {
         assert(p.flow and p.flow->stash);
         p.flow->stash->store(STASH_APPID_DATA, &api, false);
-        api.stored_in_stash = true;
+        api.flags.stored_in_stash = true;
     }
 
-    if (!api.published)
+    if (!api.flags.published)
     {
         change_bits.set(APPID_CREATED_BIT);
-        api.published = true;
+        api.flags.published = true;
     }
 
     if (consumed_ha_data)
@@ -1149,6 +1149,12 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packe
             change_bits.set(APPID_TLSHOST_BIT);
 
         consumed_ha_data = false;
+    }
+
+    if (!(api.flags.finished || api.is_appid_inspecting_session()))
+    {
+        change_bits.set(APPID_DISCOVERY_FINISHED_BIT);
+        api.flags.finished = true;
     }
 
     if (change_bits.none())

@@ -64,6 +64,7 @@ enum AppidChangeBit
     APPID_USER_INFO_BIT,
     APPID_NETBIOS_NAME_BIT,
     APPID_NETBIOS_DOMAIN_BIT,
+    APPID_DISCOVERY_FINISHED_BIT,
 
     APPID_MAX_BIT
 };
@@ -112,6 +113,8 @@ inline void change_bits_to_string(AppidChangeBits& change_bits, std::string& str
         --n? str.append("netbios-name, ") : str.append("netbios-name");
     if (change_bits.test(APPID_NETBIOS_DOMAIN_BIT))
         --n? str.append("netbios-domain, ") : str.append("netbios-domain");
+    if (change_bits.test(APPID_DISCOVERY_FINISHED_BIT))
+        --n? str.append("finished, ") : str.append("finished");
     if (n != 0) // make sure all bits from AppidChangeBit enum get translated
         str.append("change_bits_to_string error!");
 }

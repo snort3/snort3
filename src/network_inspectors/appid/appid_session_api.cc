@@ -62,7 +62,7 @@ void AppIdSessionApi::get_service_info(const char*& vendor, const char*& version
 const char* AppIdSessionApi::get_user_info(AppId& service, bool& login) const
 {
     service = client.get_user_id();
-    login = user_logged_in;
+    login = flags.user_logged_in;
     return client.get_username();
 }
 

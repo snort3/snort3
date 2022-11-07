@@ -150,9 +150,9 @@ public:
         return session_id;
     }
 
-    void set_user_logged_in() { user_logged_in = true; }
+    void set_user_logged_in() { flags.user_logged_in = true; }
 
-    void clear_user_logged_in() { user_logged_in = false; }
+    void clear_user_logged_in() { flags.user_logged_in = false; }
 
 protected:
     AppIdSessionApi(const AppIdSession* asd, const SfIp& ip);
@@ -161,8 +161,13 @@ private:
     const AppIdSession* asd = nullptr;
     AppId application_ids[APP_PROTOID_MAX] =
         { APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE };
-    bool published = false;
-    bool stored_in_stash = false;
+    struct
+    {
+        bool published : 1;
+        bool stored_in_stash : 1;
+        bool finished : 1;
+        bool user_logged_in : 1;
+    } flags = {};
     std::vector<AppIdHttpSession*> hsessions;
     AppIdDnsSession* dsession = nullptr;
     snort::SfIp initiator_ip;
@@ -171,7 +176,6 @@ private:
     char* netbios_name = nullptr;
     char* netbios_domain = nullptr;
     std::string session_id;
-    bool user_logged_in = false;
 
     // Following two fields are used only for non-http sessions. For HTTP traffic,
     // these fields are maintained inside AppIdHttpSession.
