@@ -724,6 +724,11 @@ void Active::set_delayed_action(ActiveActionType action, bool force)
 
 void Active::set_delayed_action(ActiveActionType action, ActiveAction* act, bool force)
 {
+    // Don't update the delayed active action to a less strict one, with
+    // the exception of going from allow to trust.
+    if(delayed_active_action >= action and delayed_active_action > ACT_ALLOW)
+        return;
+
     delayed_active_action = action;
 
     if (delayed_reject == nullptr)
@@ -754,6 +759,9 @@ void Active::apply_delayed_action(Packet* p)
     case ACT_RETRY:
         if (!retry_packet(p))
             drop_packet(p, force);
+        break;
+    case ACT_TRUST:
+        trust_session(p, force);
         break;
     default:
         break;
