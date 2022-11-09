@@ -115,6 +115,9 @@ public:
     bool ftp_userid_disabled = false;
     bool chp_body_collection_disabled = false;
     bool need_reinspection = false;
+    AppId first_pkt_service_id = 0;
+    AppId first_pkt_payload_id = 0;
+    AppId first_pkt_client_id = 0;
     uint32_t chp_body_collection_max = 0;
     uint32_t rtmp_max_packets = 15;
     uint32_t max_tp_flow_depth = 5;
@@ -126,6 +129,7 @@ public:
     uint64_t max_bytes_before_service_fail = MIN_MAX_BYTES_BEFORE_SERVICE_FAIL;
     uint16_t max_packet_before_service_fail = MIN_MAX_PKTS_BEFORE_SERVICE_FAIL;
     uint16_t max_packet_service_fail_ignore_bytes = MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES;
+    FirstPktAppIdDiscovered first_pkt_appid_prefix = NO_APPID_FOUND;
 
     OdpContext(const AppIdConfig&, snort::SnortConfig*);
     void initialize(AppIdInspector& inspector);

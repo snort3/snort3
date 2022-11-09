@@ -328,6 +328,7 @@ public:
     AppId pick_ss_misc_app_id() const;
     AppId pick_ss_client_app_id() const;
     AppId pick_ss_payload_app_id() const;
+    AppId check_first_pkt_tp_payload_app_id() const;
     AppId pick_ss_payload_app_id(AppId service_id) const;
     AppId pick_ss_referred_payload_app_id() const;
 

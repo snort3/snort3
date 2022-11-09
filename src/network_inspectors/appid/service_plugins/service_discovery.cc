@@ -788,7 +788,7 @@ int ServiceDiscovery::fail_service(AppIdSession& asd, const Packet* pkt, AppidSe
 
     /* If we're still working on a port/pattern list of detectors, then ignore
      * individual fails until we're done looking at everything. */
-    if ( !asd.service_detector && !asd.service_candidates.empty() )
+    if ((asd.get_odp_ctxt().first_pkt_service_id > APP_ID_NONE) or (!asd.service_detector && !asd.service_candidates.empty()))
         return APPID_SUCCESS;
 
     asd.set_service_id(APP_ID_NONE, asd.get_odp_ctxt());

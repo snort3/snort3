@@ -567,70 +567,85 @@ bool AppIdDiscovery::detect_on_first_pkt(Packet* p, AppIdSession& asd,
     hv = asd.get_odp_ctxt().host_first_pkt_find(ip, port, protocol);
     if (hv)
     {
-        uint32_t appids_found = 0;
         const char *service_app_name = nullptr, *client_app_name = nullptr, *payload_app_name = nullptr;
-        FirstPktAppIdDiscovered appid_prefix = NO_APPID_FOUND;
+        asd.get_odp_ctxt().first_pkt_appid_prefix = NO_APPID_FOUND;
 
         if (hv->client_appId)
         {
             client_id = hv->client_appId;
-            asd.set_client_id(client_id);
             client_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(client_id);
-            appids_found++;
-            appid_prefix = CLIENT_APPID_FOUND;
+            asd.get_odp_ctxt().first_pkt_client_id = client_id;
+            asd.get_odp_ctxt().first_pkt_appid_prefix = FIRST_CLIENT_APPID_FOUND;
         } 
         if (hv->protocol_appId) 
         {
             service_id = hv->protocol_appId;
-            asd.set_service_id(service_id, asd.get_odp_ctxt());
-            asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
             service_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
-            appids_found++;
-            appid_prefix = SERVICE_APPID_FOUND;
+            asd.get_odp_ctxt().first_pkt_service_id = service_id;
+
+            if (asd.get_odp_ctxt().first_pkt_appid_prefix == FIRST_CLIENT_APPID_FOUND)
+            {
+                asd.get_odp_ctxt().first_pkt_appid_prefix = FIRST_SERVICE_CLIENT_APPID_FOUND;
+            } 
+            else 
+            {
+                asd.get_odp_ctxt().first_pkt_appid_prefix = FIRST_SERVICE_APPID_FOUND;
+            }
         }
         if (hv->web_appId) 
         {
             payload_id = hv->web_appId;
-            asd.set_payload_id(payload_id);
             payload_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(payload_id);
-            appids_found++;
-            if (appid_prefix == CLIENT_APPID_FOUND)
+            asd.get_odp_ctxt().first_pkt_payload_id = payload_id;
+
+            if (asd.get_odp_ctxt().first_pkt_appid_prefix == FIRST_CLIENT_APPID_FOUND)
             {
-                appid_prefix = CLIENT_PAYLOAD_APPID_FOUND;
+                asd.get_odp_ctxt().first_pkt_appid_prefix = FIRST_CLIENT_PAYLOAD_APPID_FOUND;
             } 
+            else if (asd.get_odp_ctxt().first_pkt_appid_prefix == FIRST_SERVICE_APPID_FOUND)
+            {
+                asd.get_odp_ctxt().first_pkt_appid_prefix = FIRST_SERVICE_PAYLOAD_APPID_FOUND;
+            }   
+            else if (asd.get_odp_ctxt().first_pkt_appid_prefix == FIRST_SERVICE_CLIENT_APPID_FOUND)
+            {
+                asd.get_odp_ctxt().first_pkt_appid_prefix = FIRST_ALL_APPID_FOUND;
+            }
             else 
             {
-                appid_prefix = PAYLOAD_APPID_FOUND;
+                asd.get_odp_ctxt().first_pkt_appid_prefix = FIRST_PAYLOAD_APPID_FOUND;
             }
         }
         asd.get_odp_ctxt().need_reinspection = hv->reinspect;  
 
-        switch (appids_found) 
+        switch (asd.get_odp_ctxt().first_pkt_appid_prefix) 
         {
-        case FIRST_PKT_CACHE_ONE_APPID_FOUND :
-            if (appid_prefix == PAYLOAD_APPID_FOUND) 
-            {
-                service_id = payload_id;
-                asd.set_service_id(service_id, asd.get_odp_ctxt());
-                asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
-                service_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
-            } 
-            else if (appid_prefix == CLIENT_APPID_FOUND) 
-            {    
-                service_id = client_id;
-                asd.set_service_id(service_id, asd.get_odp_ctxt());
-                asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
-                service_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
-            } 
+        case FIRST_PAYLOAD_APPID_FOUND :
+            service_id = payload_id;
+            service_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
+            asd.get_odp_ctxt().first_pkt_appid_prefix = FIRST_SERVICE_PAYLOAD_APPID_FOUND;
+            asd.get_odp_ctxt().first_pkt_service_id = service_id;
             break;
-        case FIRST_PKT_CACHE_TWO_APPIDS_FOUND :
-            if (appid_prefix == CLIENT_PAYLOAD_APPID_FOUND) 
-            {
-                service_id = client_id;
-                asd.set_service_id(service_id, asd.get_odp_ctxt());
-                asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
-                service_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
-            } 
+
+        case FIRST_CLIENT_APPID_FOUND :
+            service_id = client_id;
+            service_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
+            asd.get_odp_ctxt().first_pkt_appid_prefix = FIRST_SERVICE_CLIENT_APPID_FOUND;
+            asd.get_odp_ctxt().first_pkt_service_id = service_id;
+            break;
+
+        case FIRST_CLIENT_PAYLOAD_APPID_FOUND :
+            service_id = client_id;
+            service_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
+            asd.get_odp_ctxt().first_pkt_appid_prefix = FIRST_ALL_APPID_FOUND;
+            asd.get_odp_ctxt().first_pkt_service_id = service_id;
+            break;
+
+        case NO_APPID_FOUND :
+        case FIRST_SERVICE_APPID_FOUND :
+        case FIRST_SERVICE_PAYLOAD_APPID_FOUND :
+        case FIRST_SERVICE_CLIENT_APPID_FOUND :
+        case FIRST_ALL_APPID_FOUND :
+        default:
             break;
         }
         asd.set_session_flags(APPID_SESSION_FIRST_PKT_CACHE_MATCHED);
@@ -662,11 +677,13 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     if (asd.get_session_flags(APPID_SESSION_FIRST_PKT_CACHE_MATCHED) and !asd.get_odp_ctxt().need_reinspection) 
     {
        is_discovery_done = true;
+       asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
+       asd.client_disco_state = APPID_DISCO_STATE_FINISHED; 
+       asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
        service_id = asd.pick_service_app_id();
        client_id = asd.pick_ss_client_app_id();
        payload_id = asd.pick_ss_payload_app_id(service_id);
-       asd.client_disco_state = APPID_DISCO_STATE_FINISHED; 
-       asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
+       
        return is_discovery_done;
     }  
 
