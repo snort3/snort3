@@ -61,7 +61,7 @@ NtpServiceDetector::NtpServiceDetector(ServiceDiscovery* sd)
 {
     handler = sd;
     name = "ntp";
-    proto = IpProtocol::TCP;
+    proto = IpProtocol::UDP;
     detectorType = DETECTOR_TYPE_DECODER;
 
     appid_registry =
@@ -71,8 +71,7 @@ NtpServiceDetector::NtpServiceDetector(ServiceDiscovery* sd)
 
     service_ports =
     {
-        { 123, IpProtocol::UDP, false },
-        { 123, IpProtocol::TCP, false }
+        { 123, IpProtocol::UDP, false }
     };
 
     handler->register_detector(name, this, proto);
@@ -112,9 +111,9 @@ int NtpServiceDetector::validate(AppIdDiscoveryArgs& args)
 
         if (nh->stratum > 15)
             goto fail;
-        if (nh->poll && (nh->poll < 4 || nh->poll > 14))
+        if (nh->poll && (nh->poll < 3 || nh->poll > 17))
             goto fail;
-        if (nh->precision > -6 || nh->precision < -20)
+        if (nh->precision > -6 || nh->precision < -24)
             goto fail;
     }
     else
