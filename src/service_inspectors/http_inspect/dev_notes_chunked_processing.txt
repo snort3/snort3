@@ -1,0 +1,62 @@
+Algorithm for reassembling chunked message bodies:
+
+NHI parses chunked message bodies using an algorithm based on the HTTP RFC. Chunk headers are not
+included in reassembled message sections and do not count against the message section length. The
+attacker cannot affect split points by adjusting their chunks.
+
+Built-in alerts for chunking are generated for protocol violations and suspicious usages. Many
+irregularities can be compensated for but others cannot. Whenever a fatal problem occurs, NHI
+generates 119:213 HTTP chunk misformatted and converts to a mode very similar to run to connection
+close. The rest of the flow is sent to detection as is. No further attempt is made to dechunk the
+message body or look for the headers that begin the next message. The user should block 119:213
+unless they are willing to run the risk of continuing with no real security.
+
+In addition to 119:213 there will often be a more specific alert based on what went wrong.
+
+From the perspective of NHI, a chunked message body is a sequence of zero or more chunks followed
+by a zero-length chunk. Following the zero-length chunk there will be trailers which may be empty
+(CRLF only).
+
+Each chunk begins with a header and is parsed as follows:
+
+1. Zero or more unexpected CR or LF characters. If any are present 119:234 is generated and
+processing continues.
+
+2. Zero or more unexpected space and tab characters. If any are present 119:214 is generated. If
+five or more are present that is a fatal error as described above and chunk processing stops.
+
+3. Zero or more '0' characters. Leading zeros before other digits are meaningless and ignored. A
+chunk length consisting solely of zeros is the zero-length chunk. Five or more leading zeros
+generate 119:202 regardless of whether the chunk length eventually turns out to be zero or nonzero.
+
+4. The chunk length in hexadecimal format. The chunk length may be zero (see above) but it must be
+present. Both upper and lower case hex letters are acceptable. The 0x prefix for hex numbers is not
+acceptable.
++
+The goal here is a hexadecimal number followed by CRLF ending the chunk header. Many things may go
+wrong:
++
+* More than 8 hex digits other than the leading zeros. The number is limited by Snort to fit into
+  32 bits and if it does not that is a fatal error.
+* The CR may be missing, leaving a bare LF as the separator. That generates 119:235 after which
+  processing continues normally.
+* There may be one or more trailing spaces or tabs following the number. If any are present 119:214
+  is generated after which processing continues normally.
+* There may be chunk options. This is legal and parsing is supported but options are so unexpected
+  that they are suspicious. 119:210 is generated.
+* There may be a completely illegal character in the chunk length (other than those mentioned
+  above). That is a fatal error.
+* The character following the CR may not be LF. This is a fatal error. This is different from
+  similar bare CR errors because it does not provide a transparent data channel. An "innocent"
+  sender that implements this error has no way to transmit chunk data that begins with LF.
+
+5. Following the chunk header should be a number of bytes of transparent user data equal to the
+chunk length. This is the part of the chunked message body that is reassembled and inspected.
+Everything else is discarded.
+
+6. Following the chunk data should be CRLF which do not count against the chunk length. These are
+not present for the zero length chunk. If one of the two separators is missing, 119:234 is
+generated and processing continues normally. If there is no separator at all that is a fatal error.
+
+Then we return to #1 as the next chunk begins. In particular extra separators beyond the two
+expected are attributed to the beginning of the next chunk.

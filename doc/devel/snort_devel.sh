@@ -28,6 +28,7 @@ out=snort_devel.txt
 data=dev_data.txt
 html=snort_devel.html
 notes=dev_notes.txt
+more_notes=dev_notes_*.txt
 
 src_dirs=`find src -type d -name "[^.]?*" | sort`
 
@@ -63,6 +64,7 @@ for d in $src_dirs ; do
     # section notes
     if [ -e "$d/$notes" ] ; then
         cp $d/$notes $work/$d/
+        cp $d/$more_notes $work/$d/
         echo -e "include::$d/$notes[]\n"
     fi
 

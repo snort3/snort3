@@ -1,0 +1,23 @@
+MIME processing:
+
+NHI processes request message bodies in MIME format differently from other message bodies. Message
+sections are forwarded to the MIME library instead of being directly input to file processing. The
+library parses the input into individual MIME attachments. This creates a design issue because
+there may be multiple attachments within a single message body section. The email inspectors solve
+this issue by splitting MIME attachments within their stream splitters so that there is only one
+attachment per reassembled packet. This attachment, if it contains a file, is the source material for
+the file_data rule option.
+
+NHI stream splitter does not work this way. It does not consider MIME at all. Split points between
+message sections are never based on MIME or any other type of message body content.
+
+The problem for NHI is that file_data is a singular entity and cannot accomodate multiple
+simultaneous files derived from a message section. NHI resolves this by accumulating the processed
+file attachments in a list and directly calling detection multiple times--once for each file
+attachment installed as file_data.
+
+Rule options:
+
+HttpIpsOption is the base class for http rule options. It supports the parameters field and request
+that are used by some rule options. HttpBufferIpsOption is a rule option that sets a buffer. It
+implements most of the rule options.

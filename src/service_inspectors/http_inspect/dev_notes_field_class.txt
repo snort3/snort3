@@ -1,0 +1,28 @@
+The Field class is an important tool for managing JIT. It consists of a pointer to a raw message
+field or derived work product with a length field. Various negative length values specify the
+status of the field. For instance STAT_NOTCOMPUTE means the item has not been computed yet,
+STAT_NOTPRESENT means the item does not exist, and STAT_PROBLEMATIC means an attempt to compute the
+item failed. Never dereference the pointer without first checking the length value.
+
+All of these values and more are in http_enums.h which is a general repository for enumerated
+values in HI.
+
+A Field is intended to represent an immutable object. It is either part of the original message
+section or it is a work product that has been derived from the original message section. In the
+former case the original message is constant and there is no reason for a Field value to change. In
+the latter case, once the value has been derived from the original message there is no reason to
+derive it again.
+
+Once Field is set to a non-null value it should never change. The set() functions will assert if
+this rule is disregarded.
+
+Partial inspections have created an exception. Fields may be used to store work products from a
+partial inspection that may be updated by subsequent inspections. The reset() method has been
+provided for this situation. It deletes any owned buffer and reinitializes the Field to null.
+This feature should be used with care to avoid weakening the architecture.
+
+A Field may own the buffer containing the message or it may point to a buffer that belongs to
+someone else. When a Field owning a buffer is deleted the buffer is deleted as well. Ownership is
+determined with the Field is initially set. In general any dynamically allocated buffer should be
+owned by a Field. If you follow this rule you won't need to keep track of allocated buffers or have
+delete[]s all over the place.
