@@ -97,6 +97,8 @@ static const PegInfo netflow_pegs[] =
     { CountType::END, nullptr, nullptr},
 };
 
+unsigned NetFlowModule::module_id = 0;
+
 //-------------------------------------------------------------------------
 // netflow module
 //-------------------------------------------------------------------------

@@ -24,6 +24,7 @@
 
 #include <unordered_map>
 
+#include "flow/flow_data.h"
 #include "framework/module.h"
 #include "hash/lru_cache_local.h"
 #include "sfip/sf_cidr.h"
@@ -166,6 +167,10 @@ public:
 
     bool is_bindable() const override
     { return true; }
+
+    static unsigned module_id;
+    static void init()
+    { module_id = snort::FlowData::create_flow_data_id(); }
 
 private:
     NetFlowConfig* conf = nullptr;
