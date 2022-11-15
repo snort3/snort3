@@ -199,8 +199,7 @@ SmtpModule::~SmtpModule()
         delete config;
     }
 
-    for ( auto p : cmds )
-        delete p;
+    clear_cmds();
 }
 
 const RuleMap* SmtpModule::get_rules() const
@@ -231,6 +230,14 @@ const SmtpCmd* SmtpModule::get_cmd(unsigned idx)
         return cmds[idx];
     else
         return nullptr;
+}
+
+void SmtpModule::clear_cmds()
+{
+    for ( auto p : cmds )
+        delete p;
+
+    cmds.clear();
 }
 
 bool SmtpModule::set(const char*, Value& v, SnortConfig*)

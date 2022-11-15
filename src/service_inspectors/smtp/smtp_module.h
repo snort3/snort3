@@ -96,6 +96,7 @@ public:
 
     SmtpProtoConf* get_data();
     const SmtpCmd* get_cmd(unsigned idx);
+    void clear_cmds();
 
     Usage get_usage() const override
     { return INSPECT; }

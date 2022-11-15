@@ -1607,6 +1607,8 @@ static Inspector* smtp_ctor(Module* m)
     while ( (cmd = mod->get_cmd(i++)) )
         smtp->ProcessSmtpCmdsList(cmd);
 
+    mod->clear_cmds();
+
     return smtp;
 }
 
