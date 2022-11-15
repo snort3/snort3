@@ -169,15 +169,12 @@ MagicSplitter::MagicSplitter(bool c2s, class Wizard* w) :
     StreamSplitter(c2s), wizard_processed_bytes(0)
 {
     wizard = w;
-    w->add_ref();
     // Used only in case of TCP traffic
     w->reset(wand, c2s, MagicBook::ArcaneType::TCP);
 }
 
 MagicSplitter::~MagicSplitter()
 {
-    wizard->rem_ref();
-
     // release trackers
     for ( unsigned i = 0; i < wand.curse_tracker.size(); i++ )
         delete wand.curse_tracker[i].tracker;

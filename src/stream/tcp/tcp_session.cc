@@ -191,6 +191,9 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
 
     update_perf_base_state(TcpStreamTracker::TCP_CLOSED);
 
+    set_splitter(true, nullptr);
+    set_splitter(false, nullptr);
+
     if ( restart )
     {
         flow->restart(free_flow_data);
@@ -203,9 +206,6 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
         client.reassembler.clear_paf();
         server.reassembler.clear_paf();
     }
-
-    set_splitter(true, nullptr);
-    set_splitter(false, nullptr);
 
     tel.log_internal_event(SESSION_EVENT_CLEAR);
 }
@@ -1041,7 +1041,8 @@ void TcpSession::precheck(Packet* p)
 
 void TcpSession::init_tcp_packet_analysis(TcpSegmentDescriptor& tsd)
 {
-    if ( !splitter_init and tsd.is_data_segment() )
+    if ( !splitter_init and tsd.is_data_segment() and
+        (tcp_init or is_midstream_allowed(tsd)) )
     {
         if ( !(tcp_config->flags & STREAM_CONFIG_NO_REASSEMBLY) )
         {
