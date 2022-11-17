@@ -1,3 +1,25 @@
+2022-11-17: 3.1.47.0
+
+* appid: add a changed bit for discovery finished
+* appid: ntp detection improvements
+* appid: service, client and payload detection by lua detectors and third-party when first packet re-inspection is enabled
+* doc: add JavaScript Normalization section to user manual
+* doc: add js_norm alerts to builtin_stubs.txt
+* http_inspect: subdivide dev_notes into topics
+* http_inspect: move Enhanced JS Normalizer from NHI to a standalone component
+* js_norm: implement standalone Enhanced JavaScript Normalizer
+* main: dump packet trace after publishing finalize event since verdict could be modified.
+* main: update to improve performance by making packet tracer checks before calling function.
+* netflow: implement deferred trust, cleanup
+* packet_io: allow ACT_TRUST to be used as a delayed action.
+* packet_io: the most strict delayed action takes precedence.
+* smtp: do not accumulate cmds across policies and reloads. Avoids memory and performance problem.
+* stream: add info about the splitter lifetime to dev_notes
+* stream: ignore flushing from meta-ack if sent after FIN
+* stream: remove splitter from session before inspectors
+* stream: set splitter only on initialized tcp sessions or if midstream sessions are allowed
+* wizard: remove inspector's ref counter increments from MagicSplitter
+
 2022-11-04: 3.1.46.0
 
 * appid: check for empty patterns in lua detector api input
