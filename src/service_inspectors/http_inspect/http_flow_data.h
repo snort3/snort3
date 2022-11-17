@@ -36,15 +36,13 @@
 #include "http_module.h"
 
 class HttpTransaction;
-class HttpJsNorm;
+class HttpJSNorm;
 class HttpMsgSection;
 class HttpCutter;
 class HttpQueryParser;
-class JSIdentifierCtxBase;
 
 namespace snort
 {
-class JSNormalizer;
 class MimeSession;
 }
 
@@ -58,7 +56,7 @@ public:
 
     friend class HttpBodyCutter;
     friend class HttpInspect;
-    friend class HttpJsNorm;
+    friend class HttpJSNorm;
     friend class HttpMsgSection;
     friend class HttpMsgStart;
     friend class HttpMsgRequest;
@@ -209,22 +207,7 @@ private:
     HttpTransaction* take_from_pipeline();
     void delete_pipeline();
 
-    bool js_data_lost_once = false;
-    uint32_t js_data_idx = 0;
-    uint32_t js_data_processed_idx = 0;
-
-    // *** HttpJsNorm
-    JSIdentifierCtxBase* js_ident_ctx = nullptr;
-    snort::JSNormalizer* js_normalizer = nullptr;
-    bool js_continue = false;
-    bool js_built_in_event = false;
-
-    void reset_js_data_idx();
-    void reset_js_ident_ctx();
-    snort::JSNormalizer& acquire_js_ctx(const HttpParaList::JsNormParam& js_norm_param);
-    void release_js_ctx();
-    bool sync_js_data_idx();
-
+    HttpJSNorm* js_ctx[2] = { nullptr, nullptr };
     bool cutover_on_clear = false;
     bool ssl_search_abandoned = false;
 

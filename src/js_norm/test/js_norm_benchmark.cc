@@ -28,12 +28,12 @@
 
 #include "catch/catch.hpp"
 
-#include "utils/js_identifier_ctx.h"
-#include "utils/js_normalizer.h"
+#include "js_norm/js_identifier_ctx.h"
+#include "js_norm/js_normalizer.h"
 
 #include "js_test_utils.h"
 
-using namespace snort;
+using namespace jsn;
 
 static constexpr const char* s_closing_tag = "</script>";
 

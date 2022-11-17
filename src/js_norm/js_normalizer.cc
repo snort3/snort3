@@ -23,12 +23,14 @@
 
 #include "js_normalizer.h"
 
+#include "js_norm/js_enum.h"
+
 #define BUFF_EXP_FACTOR 1.3
 
-using namespace snort;
+using namespace jsn;
 using namespace std;
 
-JSNormalizer::JSNormalizer(JSIdentifierCtxBase& js_ident_ctx, size_t norm_depth,
+JSNormalizer::JSNormalizer(JSIdentifier& js_ident_ctx, size_t norm_depth,
     uint8_t max_template_nesting, uint32_t max_bracket_depth, int tmp_cap_size)
     : depth(norm_depth),
       rem_bytes(norm_depth),
@@ -63,14 +65,14 @@ JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len, bool
 
     if (rem_bytes == 0)
     {
-        debug_log(5, http_trace, TRACE_JS_PROC, nullptr,
+        debug_log(5, js_trace, TRACE_PROC, nullptr,
             "depth limit reached\n");
 
         src_next = src + src_len;
         return JSTokenizer::EOS;
     }
 
-    debug_logf(4, http_trace, TRACE_JS_DUMP, nullptr,
+    debug_logf(4, js_trace, TRACE_DUMP, nullptr,
         "tmp buffer[%zu]: %.*s\n", tmp_buf_size, static_cast<int>(tmp_buf_size), tmp_buf);
 
     src_len = min(src_len, rem_bytes);

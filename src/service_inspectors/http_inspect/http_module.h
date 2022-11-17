@@ -29,6 +29,7 @@
 #include "helpers/literal_search.h"
 #include "mime/file_mime_config.h"
 #include "profiler/profiler.h"
+#include "search_engines/search_tool.h"
 
 #include "http_enum.h"
 #include "http_str_to_code.h"
@@ -41,8 +42,6 @@ namespace snort
 class Trace;
 struct SnortConfig;
 }
-
-extern THREAD_LOCAL const snort::Trace* http_trace;
 
 struct HttpParaList
 {
@@ -70,24 +69,21 @@ public:
 
     struct JsNormParam
     {
-    public:
         ~JsNormParam();
+
+        void configure() const;
+
         bool normalize_javascript = false;
-        int64_t js_norm_bytes_depth = -1;
-        int32_t js_identifier_depth = 0;
-        uint8_t max_template_nesting = 32;
-        uint32_t max_bracket_depth = 256;
-        uint32_t max_scope_depth = 256;
-        std::unordered_set<std::string> ignored_ids;
-        std::unordered_set<std::string> ignored_props;
         int max_javascript_whitespaces = 200;
-        class HttpJsNorm* js_norm = nullptr;
+
+        mutable snort::SearchTool* mpse_otag = nullptr;
+        mutable snort::SearchTool* mpse_type = nullptr;
+        mutable snort::SearchTool* mpse_attr = nullptr;
     };
     JsNormParam js_norm_param;
 
     struct UriParam
     {
-    public:
         UriParam();
         ~UriParam() { delete[] unicode_map; }
 
@@ -194,9 +190,6 @@ public:
 
     bool is_bindable() const override
     { return true; }
-
-    void set_trace(const snort::Trace*) const override;
-    const snort::TraceOption* get_trace_options() const override;
 
 #ifdef REG_TEST
     static const PegInfo* get_peg_names() { return peg_names; }

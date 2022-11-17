@@ -35,6 +35,7 @@ extern const BaseApi* ips_file_data;
 extern const BaseApi* ips_file_meta;
 extern const BaseApi* ips_flow;
 extern const BaseApi* ips_flowbits;
+extern const BaseApi* ips_js_data;
 extern const BaseApi* ips_md5;
 extern const BaseApi* ips_metadata;
 extern const BaseApi* ips_pkt_data;
@@ -103,6 +104,7 @@ static const BaseApi* ips_options[] =
     ips_file_meta,
     ips_flow,
     ips_flowbits,
+    ips_js_data,
     ips_md5,
     ips_metadata,
     ips_pkt_data,

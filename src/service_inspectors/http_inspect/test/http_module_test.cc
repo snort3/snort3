@@ -58,6 +58,8 @@ void DecodeConfig::set_decompress_pdf(bool) {}
 void DecodeConfig::set_decompress_swf(bool) {}
 void DecodeConfig::set_decompress_zip(bool) {}
 void DecodeConfig::set_decompress_vba(bool) {}
+
+SearchTool::~SearchTool() {}
 }
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
@@ -69,12 +71,10 @@ int32_t substr_to_code(const uint8_t*, const int32_t, const StrCode []) { return
 long HttpTestManager::print_amount {};
 bool HttpTestManager::print_hex {};
 
-HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_,
-    const HttpParaList::JsNormParam& js_norm_param_) :
-    uri_param(uri_param_), js_norm_param(js_norm_param_), mpse_otag(nullptr), mpse_attr(nullptr),
-    mpse_type(nullptr) {}
-HttpJsNorm::~HttpJsNorm() = default;
-void HttpJsNorm::configure(){}
+snort::SearchTool* js_create_mpse_open_tag() { return nullptr; }
+snort::SearchTool* js_create_mpse_tag_type() { return nullptr; }
+snort::SearchTool* js_create_mpse_tag_attr() { return nullptr; }
+
 int64_t Parameter::get_int(char const*) { return 0; }
 
 TEST_GROUP(http_peg_count_test)

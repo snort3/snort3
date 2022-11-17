@@ -31,3 +31,6 @@ Checklist to add a new option with an already present type:
 5. Add field assignment to the set_overrides test case;
 6. Add a named constuctor that returns Config with your option as the type.
 
+js_test_stubs:
+Provides stubs for external dependencies.
+

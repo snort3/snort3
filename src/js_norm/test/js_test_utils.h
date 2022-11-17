@@ -26,20 +26,17 @@
 #include <utility>
 #include <vector>
 
-#include "utils/js_identifier_ctx.h"
-#include "utils/js_normalizer.h"
+#include "js_norm/js_identifier_ctx.h"
+#include "js_norm/js_normalizer.h"
 
 #include "js_test_options.h"
 
 constexpr int unlim_depth = -1;
 
-namespace snort
+namespace jsn
 {
-[[noreturn]] void FatalError(const char*, ...);
-void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list);
-}
 
-class JSIdentifierCtxStub : public JSIdentifierCtxBase
+class JSIdentifierCtxStub : public JSIdentifier
 {
 public:
     JSIdentifierCtxStub() = default;
@@ -72,7 +69,7 @@ public:
 
     JSIdentifierCtx ident_ctx;
     JSIdentifierCtxStub ident_ctx_stub;
-    snort::JSNormalizer normalizer;
+    JSNormalizer normalizer;
 
 private:
     const JSTestConfig& config;
@@ -95,7 +92,7 @@ public:
     JSTestConfig(const Overrides& values);
     JSTestConfig derive(const Overrides& values) const;
 
-    snort::JSNormalizer&& make_normalizer() const;
+    JSNormalizer&& make_normalizer() const;
 
     void test_scope(const std::string& context, const std::list<JSProgramScopeType>& stack) const;
     void test_scope(const std::string& context, const std::list<JSProgramScopeType>& stack,
@@ -134,7 +131,9 @@ static const JSTestConfig default_config({
     normalize_identifiers(true)
 });
 
-void test_scope(const std::string& context, const std::list<JSProgramScopeType>& stack);
+}
+
+void test_scope(const std::string& context, const std::list<jsn::JSProgramScopeType>& stack);
 void test_normalization(const std::string& source, const std::string& expected, const Overrides& overrides = {});
 void test_normalization_noident(const std::string& source, const std::string& expected,
     const Overrides& overrides = {});

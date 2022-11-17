@@ -25,12 +25,12 @@
 
 #include "catch/catch.hpp"
 
-#include "utils/js_identifier_ctx.h"
-#include "utils/js_normalizer.h"
+#include "js_norm/js_identifier_ctx.h"
+#include "js_norm/js_normalizer.h"
 
 #include "js_test_utils.h"
 
-using namespace snort;
+using namespace jsn;
 using namespace std::string_literals;
 
 #ifdef CATCH_TEST_BUILD
@@ -160,7 +160,6 @@ TEST_CASE("clamav tests", "[JSNormalizer]")
             "var x='test\u0000test';"s
         );
     }
-    // FIXIT-L this should be revisited
     SECTION("test_case_13 - invalid escape sequence")
     {
         test_normalization_noident(
@@ -5784,8 +5783,6 @@ TEST_CASE("Scope tracking - over multiple PDU", "[JSNormalizer]")
         test_normalization({
             {"long_", "var_0000", {GLOBAL}},
             {"variable", "var_0001", {GLOBAL}}
-            //FIXIT-E: if variable index will be preserved across PDUs, second pdu expected
-            // will be "var_0000"
         });
 
     SECTION("general - variable extension: ignored identifier to a regular one")

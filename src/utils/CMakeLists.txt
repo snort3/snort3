@@ -18,24 +18,13 @@ set( UTIL_INCLUDES
     util_utf.h
 )
 
-FLEX_TARGET ( js_tokenizer ${CMAKE_CURRENT_SOURCE_DIR}/js_tokenizer.l
-    ${CMAKE_CURRENT_BINARY_DIR}/js_tokenizer.cc
-    COMPILE_FLAGS ${FLEX_FLAGS}
-)
-
 add_library ( utils OBJECT
     ${UTIL_INCLUDES}
     ${SNPRINTF_SOURCES}
-    ${FLEX_js_tokenizer_OUTPUTS}
     boyer_moore.cc
     dnet_header.h
     dyn_array.cc
     dyn_array.h
-    js_identifier_ctx.cc
-    js_identifier_ctx.h
-    js_normalizer.cc
-    js_normalizer.h
-    js_tokenizer.h
     kmap.cc
     sflsq.cc
     snort_bounds.h

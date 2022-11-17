@@ -94,6 +94,7 @@ add_subdirectory(filters)
 add_subdirectory(flow)
 add_subdirectory(framework)
 add_subdirectory(hash)
+add_subdirectory(js_norm)
 add_subdirectory(latency)
 add_subdirectory(log)
 add_subdirectory(main)
@@ -151,6 +152,7 @@ add_executable( snort
     $<TARGET_OBJECTS:host_tracker>
     $<TARGET_OBJECTS:ips_actions>
     $<TARGET_OBJECTS:ips_options>
+    $<TARGET_OBJECTS:js_norm>
     $<TARGET_OBJECTS:latency>
     $<TARGET_OBJECTS:log>
     $<TARGET_OBJECTS:loggers>

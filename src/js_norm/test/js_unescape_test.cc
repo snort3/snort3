@@ -23,10 +23,12 @@
 
 #include "catch/catch.hpp"
 
-#include "utils/js_identifier_ctx.h"
-#include "utils/js_normalizer.h"
+#include "js_norm/js_identifier_ctx.h"
+#include "js_norm/js_normalizer.h"
 
 #include "js_test_utils.h"
+
+using namespace jsn;
 
 #ifdef CATCH_TEST_BUILD
 

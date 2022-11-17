@@ -28,7 +28,9 @@
 #include <sstream>
 #include <vector>
 
-#include "utils/js_identifier_ctx.h"
+#include "js_norm/js_identifier_ctx.h"
+
+using namespace jsn;
 
 #define DEPTH 65536
 #define SCOPE_DEPTH 256

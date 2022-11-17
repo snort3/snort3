@@ -16,12 +16,14 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 // http_js_norm.h author Tom Peters <thopeter@cisco.com>
+// http_js_norm.h author Oleksandr Serhiienko <oserhiie@cisco.com>
 
 #ifndef HTTP_JS_NORM_H
 #define HTTP_JS_NORM_H
 
 #include <cstring>
 
+#include "js_norm/js_norm.h"
 #include "search_engines/search_tool.h"
 
 #include "http_field.h"
@@ -29,50 +31,61 @@
 #include "http_event.h"
 #include "http_module.h"
 
-//-------------------------------------------------------------------------
-// HttpJsNorm class
-//-------------------------------------------------------------------------
+snort::SearchTool* js_create_mpse_open_tag();
+snort::SearchTool* js_create_mpse_tag_type();
+snort::SearchTool* js_create_mpse_tag_attr();
 
-class HttpJsNorm
+void js_normalize(const Field& input, Field& output, const HttpParaList*, HttpInfractions*, HttpEventGen*);
+
+class HttpJSNorm : public snort::JSNorm
 {
 public:
-    HttpJsNorm(const HttpParaList::UriParam& uri_param_,
-        const HttpParaList::JsNormParam& js_norm_param_);
-    ~HttpJsNorm();
+    HttpJSNorm(JSNormConfig* jsn_config) : snort::JSNorm(jsn_config) {}
 
-    void do_legacy(const Field& input, Field& output, HttpInfractions*, HttpEventGen*,
-        int max_javascript_whitespaces) const;
-    void do_inline(const Field& input, Field& output, HttpInfractions*, HttpFlowData*, bool) const;
-    void do_external(const Field& input, Field& output, HttpInfractions*, HttpFlowData*, bool) const;
+    void flush_data(const void*&, size_t&);
 
-    void configure();
+    void link(const void* page, HttpEventGen* http_events_, HttpInfractions* infs)
+    { page_start = (const uint8_t*)page; http_events = http_events_; infractions = infs; }
+
+    uint64_t get_trans_num() const
+    { return trans_num; }
+
+protected:
+    const uint8_t* page_start = nullptr;
+    HttpEventGen* http_events = nullptr;
+    HttpInfractions* infractions = nullptr;
+    uint64_t trans_num = 0;
+    bool script_continue = false;
+};
+
+class HttpInlineJSNorm : public HttpJSNorm
+{
+public:
+    HttpInlineJSNorm(JSNormConfig* jsn_config, uint64_t tid, snort::SearchTool* mpse_open_tag,
+        snort::SearchTool* mpse_tag_attr) :
+        HttpJSNorm(jsn_config), mpse_otag(mpse_open_tag), mpse_attr(mpse_tag_attr), output_size(0), ext_ref_type(false)
+    { trans_num = tid; }
+
+protected:
+    bool pre_proc() override;
+    bool post_proc(int) override;
 
 private:
-    enum AttrId { AID_SLASH, AID_GT, AID_SRC, AID_JS, AID_NON_JS, AID_ECMA, AID_VB };
-
-    struct MatchContext
-    {
-        const char* next;
-        bool is_javascript;
-        bool is_external;
-        bool is_shortened;
-    };
-
-    const HttpParaList::UriParam& uri_param;
-    const HttpParaList::JsNormParam& js_norm_param;
-    bool configure_once = false;
-
     snort::SearchTool* mpse_otag;
     snort::SearchTool* mpse_attr;
-    snort::SearchTool* mpse_type; // legacy only
+    size_t output_size;
+    bool ext_ref_type;
+};
 
-    static int search_js_found(void*, void*, int index, void*, void*);  // legacy only
-    static int search_html_found(void* id, void*, int, void*, void*); // legacy only
-    static int match_otag(void*, void*, int, void*, void*);
-    static int match_attr(void*, void*, int, void*, void*);
+class HttpExternalJSNorm : public HttpJSNorm
+{
+public:
+    HttpExternalJSNorm(JSNormConfig* jsn_config, uint64_t tid) : HttpJSNorm(jsn_config)
+    { trans_num = tid; }
 
-    bool alive_ctx(const HttpFlowData* ssn) const
-    { return ssn->js_normalizer; }
+protected:
+    bool pre_proc() override;
+    bool post_proc(int) override;
 };
 
 #endif

@@ -1,0 +1,131 @@
+Enhanced JavaScript Normalizer is a stateful JavaScript whitespace and identifiers normalizer.
+JSNorm is a basic implementation, so other modules can use it right away or provide some
+customization to it. Normalizer will remove all extraneous whitespace and newlines, keeping a
+single space where  syntactically necessary. Comments will be removed, but contents of string
+literals will be kept intact. Any string literals, added by the plus operator, will be concatenated.
+This also works for functions that result in string literals. Semicolons will be inserted, if not
+already present, according to ECMAScript automatic semicolon insertion rules.
+
+All JavaScript identifier names, except those from the ident_ignore or prop_ignore lists,
+will be substituted with unified names in the following format: var_0000 -> var_ffff.
+So, the number of unique identifiers available is 65536 names per transaction.
+If Normalizer overruns the configured limit, built-in alert is generated.
+
+A config option to set the limit manually:
+ * js_norm.identifier_depth.
+
+Identifiers from the ident_ignore list will be placed as is, without substitution. Starting with 
+the listed identifier, any chain of dot accessors, brackets and function calls will be kept
+intact.
+For example:
+ * console.log("bar")
+ * document.getElementById("id").text
+ * eval("script")
+ * foo["bar"]
+
+Ignored identifiers are configured via the following config option,
+it accepts a list of object and function names:
+ * js_norm.ident_ignore = { 'console', 'document', 'eval', 'foo' }
+
+When a variable assignment that 'aliases' an identifier from the list is found,
+the assignment will be tracked, and subsequent occurrences of the variable will be
+replaced with the stored value. This substitution will follow JavaScript variable scope 
+limits.
+
+For example:
+
+    var a = console.log
+    a("hello")  // will be substituted to 'console.log("hello")'
+    a.foo.bar() // will be normalized as 'console.log.foo.bar()'. When variable is 'de-aliased',
+                // following identifiers are not normalized, just like identifiers from ident_ignore
+
+When an object is created using a 'new' keyword, and the class/constructor is found in ident_ignore
+list, the object will be tracked, and although its own identifier will be converted to normal form
+its property and function calls will be kept intact, as with ignored identifiers. 
+
+For example:
+    var obj = new Array()
+    obj.insert(1,2,3) // will be normalized to var_0000.insert(1,2,3)
+
+For properties and methods of objects that can be created implicitly, there is a
+prop_ignore list. All names in the call chain after the first property or
+method from the list has been occurred will not be normalized.
+
+Note that identifiers are normalized by name, i.e. an identifier and a property with the same name
+will be normalized to the same value. However, the ignore lists act separately on identifiers
+and properties.
+
+For example:
+
+   js_norm.prop_ignore = { 'split' }
+
+   in: "string".toUpperCase().split("").reverse().join("");
+   out: "string".var_0000().split("").reverse().join("");
+
+In addition to the scope tracking, JS Normalizer specifically tracks unescape-like JavaScript
+functions (unescape, decodeURI, decodeURIComponent, String.fromCharCode, String.fromCodePoint).
+This allows detection of unescape functions nested within other unescape functions, which is
+a potential indicator of a multilevel obfuscation. The definition of a function call depends on
+identifier substitution, so such identifiers must be included in the ignore list in
+order to use this feature. After determining the unescape sequence, it is decoded into the
+corresponding string, and the name of unescape function will not be present in the output.
+Single-byte escape sequences within the string and template literals which are arguments of
+unescape, decodeURI and decodeURIComponent functions will be decoded according to ISO/IEC 8859-1
+(Latin-1) charset. Except these cases, escape sequences and code points will be decoded to UTF-8
+format.
+
+For example:
+
+   unescape('\u0062\u0061\u0072')              -> 'bar'
+   decodeURI('%62%61%72')                      -> 'bar'
+   decodeURIComponent('\x62\x61\x72')          -> 'bar'
+   String.fromCharCode(98, 0x0061, 0x72)       -> 'bar'
+   String.fromCodePoint(65600, 65601, 0x10042) -> '𐁀𐁁𐁂'
+
+Supported formats follow
+
+   \xXX
+   \uXXXX
+   \u{XXXX}
+   %XX
+   \uXX
+   %uXXXX
+   decimal code point
+   hexadecimal code point
+
+JS Normalizer is able to decode mixed encoding sequences. However, a built-in alert rises
+in such case.
+
+JS Normalizer's syntax parser follows ECMA-262 standard. For various features,
+tracking of variable scope and individual brackets is done in accordance to the standard.
+Additionally, Normalizer enforces standard limits on HTML content in JavaScript:
+ * no nesting tags allowed, i.e. two opening tags in a row
+ * script closing tag is not allowed in string literals, block comments, regular expression literals, etc.
+
+If source JavaScript is syntactically incorrect (containing a bad token, brackets mismatch,
+HTML-tags, etc) Normalizer fires corresponding built-in rule and abandons the current script,
+though the already-processed data remains in the output buffer.
+
+Enhanced JavaScript Normalizer has some trace messages available. Trace options follow:
+
+* trace.module.js_norm.proc turns on messages from script processing flow.
++
+Verbosity levels:
++
+1. Script opening tag detected (available in release build)
+2. Attributes of detected script (available in release build)
+3. Normalizer return code (available in release build)
+4. Contexts management (debug build only)
+5. Parser states (debug build only)
+6. Input stream states (debug build only)
+
+* trace.module.js_norm.dump dumps JavaScript data from processing layers.
++
+Verbosity levels:
++
+1. js_data buffer as it is being passed to detection (available in release build)
+2. (no messages available currently)
+3. Payload passed to Normalizer (available in release build)
+4. Temporary buffer (debug build only)
+5. Matched token (debug build only)
+6. Identifier substitution (debug build only)

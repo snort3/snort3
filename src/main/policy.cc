@@ -29,6 +29,7 @@
 #include "detection/detection_engine.h"
 #include "framework/file_policy.h"
 #include "framework/policy_selector.h"
+#include "js_norm/js_config.h"
 #include "log/messages.h"
 #include "main/thread_config.h"
 #include "managers/inspector_manager.h"
@@ -168,6 +169,7 @@ void InspectionPolicy::init(InspectionPolicy* other_inspection_policy)
 InspectionPolicy::~InspectionPolicy()
 {
     InspectorManager::delete_policy(this, cloned);
+    delete jsn_config;
 }
 
 void InspectionPolicy::configure()

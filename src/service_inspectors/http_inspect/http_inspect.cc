@@ -140,7 +140,7 @@ HttpInspect::~HttpInspect()
 
 bool HttpInspect::configure(SnortConfig* )
 {
-    params->js_norm_param.js_norm->configure();
+    params->js_norm_param.configure();
     params->mime_decode_conf->sync_all_depths();
 
     return true;
@@ -154,14 +154,6 @@ void HttpInspect::show(const SnortConfig*) const
     auto bad_chars = GetBadChars(params->uri_param.bad_characters);
     auto xff_headers = GetXFFHeaders(params->xff_headers);
 
-    std::string js_norm_ident_ignore;
-    for (auto s : params->js_norm_param.ignored_ids)
-        js_norm_ident_ignore += s + " ";
-
-    std::string js_norm_prop_ignore;
-    for (auto s : params->js_norm_param.ignored_props)
-        js_norm_prop_ignore += s + " ";
-
     ConfigLogger::log_limit("request_depth", params->request_depth, -1);
     ConfigLogger::log_limit("response_depth", params->response_depth, -1);
     ConfigLogger::log_flag("unzip", params->unzip);
@@ -173,16 +165,8 @@ void HttpInspect::show(const SnortConfig*) const
     ConfigLogger::log_value("max_mime_attach", params->max_mime_attach);
     ConfigLogger::log_flag("script_detection", params->script_detection);
     ConfigLogger::log_flag("normalize_javascript", params->js_norm_param.normalize_javascript);
-    ConfigLogger::log_value("max_javascript_whitespaces", params->js_norm_param.max_javascript_whitespaces);
-    ConfigLogger::log_value("js_norm_bytes_depth", params->js_norm_param.js_norm_bytes_depth);
-    ConfigLogger::log_value("js_norm_identifier_depth", params->js_norm_param.js_identifier_depth);
-    ConfigLogger::log_value("js_norm_max_tmpl_nest", params->js_norm_param.max_template_nesting);
-    ConfigLogger::log_value("js_norm_max_bracket_depth", params->js_norm_param.max_bracket_depth);
-    ConfigLogger::log_value("js_norm_max_scope_depth", params->js_norm_param.max_scope_depth);
-    if (!js_norm_ident_ignore.empty())
-        ConfigLogger::log_list("js_norm_ident_ignore", js_norm_ident_ignore.c_str());
-    if (!js_norm_prop_ignore.empty())
-        ConfigLogger::log_list("js_norm_prop_ignore", js_norm_prop_ignore.c_str());
+    ConfigLogger::log_value("max_javascript_whitespaces",
+        params->js_norm_param.max_javascript_whitespaces);
     ConfigLogger::log_value("bad_characters", bad_chars.c_str());
     ConfigLogger::log_value("ignore_unreserved", unreserved_chars.c_str());
     ConfigLogger::log_flag("percent_u", params->uri_param.percent_u);
@@ -243,6 +227,9 @@ bool HttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffe
 
     case InspectionBuffer::IBT_VBA:
         return get_buf(BUFFER_VBA_DATA, p, b);
+
+    case InspectionBuffer::IBT_JS_DATA:
+        return get_buf(BUFFER_JS_DATA, p, b);
 
     default:
         assert(false);
@@ -352,7 +339,7 @@ void HttpInspect::set_hx_body_state(snort::Flow* flow, HttpCommon::SourceId sour
 
 bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
-    assert(ibt == InspectionBuffer::IBT_VBA);
+    assert(ibt == InspectionBuffer::IBT_VBA or ibt == InspectionBuffer::IBT_JS_DATA);
 
     if (get_latest_is(p) == PS_NONE)
         return false;

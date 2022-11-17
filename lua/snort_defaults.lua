@@ -1286,7 +1286,7 @@ default_js_norm_ident_ignore =
 
 default_js_norm_prop_ignore =
 {
-    -- Object 
+    -- Object
     'constructor', 'prototype', '__proto__', '__defineGetter__', '__defineSetter__',
     '__lookupGetter__', '__lookupSetter__', '__count__', '__noSuchMethod__', '__parent__',
     'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'toLocaleString', 'toString',
@@ -1313,7 +1313,7 @@ default_js_norm_prop_ignore =
 
     -- Array
     'copyWithin', 'entries', 'every', 'fill', 'filter', 'find', 'findIndex', 'flat', 'flatMap',
-    'forEach', 'groupBy', 'groupByToMap', 'join', 'keys', 'map', 'pop',  'push', 'reduce', 
+    'forEach', 'groupBy', 'groupByToMap', 'join', 'keys', 'map', 'pop',  'push', 'reduce',
     'reduceRight', 'reverse', 'shift', 'unshift', 'some', 'sort', 'splice',
 
     -- Generator
@@ -1337,7 +1337,7 @@ default_js_norm_prop_ignore =
     'setCapture', 'setHTML', 'setPointerCapture', 'toggleAttribute',
 
     -- HTMLElement
-    'contentEditable', 'contextMenu', 'dataset', 'dir', 'enterKeyHint', 'hidden', 'inert', 
+    'contentEditable', 'contextMenu', 'dataset', 'dir', 'enterKeyHint', 'hidden', 'inert',
     'innerText', 'lang', 'nonce', 'outerText', 'style', 'tabIndex', 'title',
     'attachInternals',
 
@@ -1348,11 +1348,11 @@ default_js_norm_prop_ignore =
     'ExportStyle', 'callee'
 }
 
-default_http_inspect =
+default_js_norm =
 {
     -- params not specified here get internal defaults
-    js_norm_ident_ignore = default_js_norm_ident_ignore,
-    js_norm_prop_ignore = default_js_norm_prop_ignore,
+    ident_ignore = default_js_norm_ident_ignore,
+    prop_ignore = default_js_norm_prop_ignore,
 }
 
 ---------------------------------------------------------------------------
@@ -1374,8 +1374,7 @@ default_whitelist =
     ip_hi_dist icmp_low_sweep icmp_med_sweep icmp_hi_sweep
     default_hi_port_scan default_med_port_scan default_low_port_scan
     default_variables netflow_versions default_js_norm_ident_ignore
-    default_js_norm_prop_ignore default_http_inspect
+    default_js_norm_prop_ignore default_js_norm
 ]]
 
 snort_whitelist_append(default_whitelist)
-

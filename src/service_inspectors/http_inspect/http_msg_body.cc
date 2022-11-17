@@ -27,6 +27,7 @@
 #include "file_api/file_flows.h"
 #include "file_api/file_service.h"
 #include "helpers/buffer_data.h"
+#include "js_norm/js_enum.h"
 #include "pub_sub/http_request_body_event.h"
 
 #include "http_api.h"
@@ -41,6 +42,9 @@
 using namespace snort;
 using namespace HttpCommon;
 using namespace HttpEnums;
+using namespace jsn;
+
+extern THREAD_LOCAL const snort::Trace* js_trace;
 
 HttpMsgBody::HttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,
     HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
@@ -236,6 +240,9 @@ void HttpMsgBody::analyze()
         {
             do_file_decompression(decoded_body, decompressed_file_body);
 
+            if (decompressed_file_body.length() > 0 and session_data->js_ctx[source_id])
+                session_data->js_ctx[source_id]->tick();
+
             uint32_t& partial_detect_length = session_data->partial_detect_length[source_id];
             uint8_t*& partial_detect_buffer = session_data->partial_detect_buffer[source_id];
             uint32_t& partial_js_detect_length = session_data->partial_js_detect_length[source_id];
@@ -267,9 +274,6 @@ void HttpMsgBody::analyze()
             }
             else
                 do_legacy_js_normalization(decompressed_file_body, js_norm_body);
-
-            if (decompressed_file_body.length() > 0)
-                ++session_data->js_data_idx;
 
             const int32_t detect_length =
                 (js_norm_body.length() <= session_data->detect_depth_remaining[source_id]) ?
@@ -441,29 +445,37 @@ void HttpMsgBody::fd_event_callback(void* context, int event)
     }
 }
 
-void HttpMsgBody::do_enhanced_js_normalization(const Field& input, Field& output)
+void HttpMsgBody::do_legacy_js_normalization(const Field& input, Field& output)
 {
-    if (session_data->js_data_lost_once)
-        return;
-
-    auto infractions = transaction->get_infractions(source_id);
-    auto back = !session_data->partial_flush[source_id];
-    auto http_header = get_header(source_id);
-    auto normalizer = params->js_norm_param.js_norm;
-
-    if ((*infractions & INF_UNKNOWN_ENCODING) or (*infractions & INF_UNSUPPORTED_ENCODING))
-        return;
-
-    if (session_data->sync_js_data_idx())
+    if (!params->js_norm_param.normalize_javascript || source_id == SRC_CLIENT)
     {
-        *infractions += INF_JS_DATA_LOST;
-        session_data->events[HttpCommon::SRC_SERVER]->create_event(EVENT_JS_DATA_LOST);
-        session_data->js_data_lost_once = true;
+        output.set(input);
         return;
     }
 
+    js_normalize(input, output, params,
+        transaction->get_infractions(source_id), session_data->events[source_id]);
+}
+
+HttpJSNorm* HttpMsgBody::acquire_js_ctx()
+{
+    HttpJSNorm* js_ctx = session_data->js_ctx[source_id];
+
+    if (js_ctx)
+    {
+        if (js_ctx->get_trans_num() == trans_num)
+            return js_ctx;
+
+        delete js_ctx;
+        js_ctx = nullptr;
+    }
+
+    auto http_header = get_header(source_id);
+
     if (!http_header)
-        return;
+        return nullptr;
+
+    JSNormConfig* jsn_config = get_inspection_policy()->jsn_config;
 
     switch(http_header->get_content_type())
     {
@@ -483,27 +495,20 @@ void HttpMsgBody::do_enhanced_js_normalization(const Field& input, Field& output
     case CT_TEXT_X_ECMASCRIPT:
     case CT_TEXT_JSCRIPT:
     case CT_TEXT_LIVESCRIPT:
-        normalizer->do_external(input, output, infractions, session_data, back);
+        // an external script should be processed from the beginning
+        js_ctx = first_body ? new HttpExternalJSNorm(jsn_config, trans_num) : nullptr;
         break;
 
     case CT_APPLICATION_XHTML_XML:
     case CT_TEXT_HTML:
-        normalizer->do_inline(input, output, infractions, session_data, back);
+        js_ctx = new HttpInlineJSNorm(jsn_config, trans_num, params->js_norm_param.mpse_otag,
+            params->js_norm_param.mpse_attr);
         break;
     }
-}
 
-void HttpMsgBody::do_legacy_js_normalization(const Field& input, Field& output)
-{
-    if (!params->js_norm_param.normalize_javascript || source_id == SRC_CLIENT)
-    {
-        output.set(input);
-        return;
-    }
+    session_data->js_ctx[source_id] = js_ctx;
 
-    params->js_norm_param.js_norm->do_legacy(input, output,
-        transaction->get_infractions(source_id), session_data->events[source_id],
-        params->js_norm_param.max_javascript_whitespaces);
+    return js_ctx;
 }
 
 void HttpMsgBody::do_file_processing(const Field& file_data)
@@ -715,10 +720,36 @@ const Field& HttpMsgBody::get_norm_js_data()
         return norm_js_data;
     }
 
-    do_enhanced_js_normalization(decompressed_file_body, norm_js_data);
+    auto jsn = acquire_js_ctx();
 
-    if (norm_js_data.length() == STAT_NOT_COMPUTE)
+    if (!jsn)
+    {
+        norm_js_data.set(STAT_NO_SOURCE);
+        return norm_js_data;
+    }
+
+    const void* dst = nullptr;
+    size_t dst_len = HttpCommon::STAT_NOT_PRESENT;
+    auto back = !session_data->partial_flush[source_id];
+
+    jsn->link(decompressed_file_body.start(), session_data->events[source_id], transaction->get_infractions(source_id));
+    jsn->normalize(decompressed_file_body.start(), decompressed_file_body.length(), dst, dst_len);
+
+    debug_logf(4, js_trace, TRACE_PROC, DetectionEngine::get_current_packet(),
+        "input data was %s\n", back ? "last one in PDU" : "a part of PDU");
+
+    if (!dst or !dst_len)
         norm_js_data.set(STAT_NOT_PRESENT);
+    else
+    {
+        if (back)
+            jsn->flush_data(dst, dst_len);
+
+        trace_logf(1, js_trace, TRACE_DUMP, DetectionEngine::get_current_packet(),
+            "js_data[%u]: %.*s\n", (unsigned)dst_len, (int)dst_len, (const char*)dst);
+
+        norm_js_data.set(dst_len, (const uint8_t*)dst, back);
+    }
 
     return norm_js_data;
 }

@@ -24,7 +24,6 @@
 #include "http_module.h"
 
 #include "log/messages.h"
-#include "trace/trace.h"
 
 #include "http_enum.h"
 #include "http_js_norm.h"
@@ -44,18 +43,6 @@ HttpModule::~HttpModule()
     delete params;
     LiteralSearch::cleanup(script_detection_handle);
 }
-
-static const Parameter js_norm_ident_ignore_param[] =
-{
-    { "ident_name", Parameter::PT_STRING, nullptr, nullptr, "name of the identifier to ignore" },
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-static const Parameter js_norm_prop_ignore_param[] =
-{
-    { "prop_name", Parameter::PT_STRING, nullptr, nullptr, "name of the object property to ignore" },
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
 
 const Parameter HttpModule::http_params[] =
 {
@@ -106,29 +93,6 @@ const Parameter HttpModule::http_params[] =
 
     { "normalize_javascript", Parameter::PT_BOOL, nullptr, "false",
       "use legacy normalizer to normalize JavaScript in response bodies" },
-
-    { "js_norm_bytes_depth", Parameter::PT_INT, "-1:max53", "-1",
-      "number of input JavaScript bytes to normalize (-1 unlimited)" },
-
-    // range of accepted identifier names is (var_0000:var_ffff), so the max is 2^16
-    { "js_norm_identifier_depth", Parameter::PT_INT, "0:65536", "65536",
-      "max number of unique JavaScript identifiers to normalize" },
-
-    { "js_norm_max_tmpl_nest", Parameter::PT_INT, "0:255", "32",
-      "maximum depth of template literal nesting that enhanced javascript normalizer "
-      "will process" },
-
-    { "js_norm_max_bracket_depth", Parameter::PT_INT, "1:65535", "256",
-      "maximum depth of bracket nesting that enhanced JavaScript normalizer will process" },
-
-    { "js_norm_max_scope_depth", Parameter::PT_INT, "1:65535", "256",
-      "maximum depth of scope nesting that enhanced JavaScript normalizer will process" },
-
-    { "js_norm_ident_ignore", Parameter::PT_LIST, js_norm_ident_ignore_param, nullptr,
-      "list of JavaScript ignored identifiers which will not be normalized" },
-
-    { "js_norm_prop_ignore", Parameter::PT_LIST, js_norm_prop_ignore_param, nullptr,
-      "list of JavaScript ignored object properties which will not be normalized" },
 
     { "max_javascript_whitespaces", Parameter::PT_INT, "1:65535", "200",
       "maximum consecutive whitespaces allowed within the JavaScript obfuscated data" },
@@ -217,25 +181,6 @@ ProfileStats* HttpModule::get_profile() const
 
 THREAD_LOCAL PegCount HttpModule::peg_counts[PEG_COUNT_MAX] = { };
 
-THREAD_LOCAL const Trace* http_trace = nullptr;
-
-static const TraceOption http_trace_options[] =
-{
-    { "js_proc",  TRACE_JS_PROC,  "enable JavaScript processing logging" },
-    { "js_dump",  TRACE_JS_DUMP,  "enable JavaScript data logging" },
-    { nullptr, 0, nullptr }
-};
-
-void HttpModule::set_trace(const Trace* trace) const
-{
-    http_trace = trace;
-}
-
-const TraceOption* HttpModule::get_trace_options() const
-{
-    return http_trace_options;
-}
-
 bool HttpModule::begin(const char* fqn, int, SnortConfig*)
 {
     if (strcmp(fqn, "http_inspect"))
@@ -319,34 +264,6 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("normalize_javascript"))
     {
         params->js_norm_param.normalize_javascript = val.get_bool();
-    }
-    else if (val.is("js_norm_identifier_depth"))
-    {
-        params->js_norm_param.js_identifier_depth = val.get_int32();
-    }
-    else if (val.is("js_norm_bytes_depth"))
-    {
-        params->js_norm_param.js_norm_bytes_depth = val.get_int64();
-    }
-    else if (val.is("js_norm_max_tmpl_nest"))
-    {
-        params->js_norm_param.max_template_nesting = val.get_uint8();
-    }
-    else if (val.is("js_norm_max_bracket_depth"))
-    {
-        params->js_norm_param.max_bracket_depth = val.get_uint32();
-    }
-    else if (val.is("js_norm_max_scope_depth"))
-    {
-        params->js_norm_param.max_scope_depth = val.get_uint32();
-    }
-    else if (val.is("ident_name"))
-    {
-        params->js_norm_param.ignored_ids.insert(val.get_string());
-    }
-    else if (val.is("prop_name"))
-    {
-        params->js_norm_param.ignored_props.insert(val.get_string());
     }
     else if (val.is("max_javascript_whitespaces"))
     {
@@ -536,8 +453,6 @@ bool HttpModule::end(const char* fqn, int, SnortConfig*)
                 params->uri_param.iis_unicode_code_page);
     }
 
-    params->js_norm_param.js_norm = new HttpJsNorm(params->uri_param, params->js_norm_param);
-
     params->script_detection_handle = script_detection_handle;
 
     prepare_http_header_list(params);
@@ -561,7 +476,16 @@ HttpParaList::~HttpParaList()
 
 HttpParaList::JsNormParam::~JsNormParam()
 {
-    delete js_norm;
+    delete mpse_otag;
+    delete mpse_type;
+    delete mpse_attr;
+}
+
+void HttpParaList::JsNormParam::configure() const
+{
+    mpse_otag = js_create_mpse_open_tag();
+    mpse_type = js_create_mpse_tag_type();
+    mpse_attr = js_create_mpse_tag_attr();
 }
 
 // Characters that should not be percent-encoded

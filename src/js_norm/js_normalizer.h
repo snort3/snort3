@@ -25,15 +25,16 @@
 #include <FlexLexer.h>
 
 #include "js_tokenizer.h"
-#include "streambuf.h"
 
-namespace snort
+#include "utils/streambuf.h"
+
+namespace jsn
 {
 
 class JSNormalizer
 {
 public:
-    JSNormalizer(JSIdentifierCtxBase& js_ident_ctx, size_t depth,
+    JSNormalizer(JSIdentifier& js_ident_ctx, size_t depth,
         uint8_t max_template_nesting, uint32_t max_bracket_depth,
         int tmp_cap_size = JSTOKENIZER_BUF_MAX_SIZE);
     ~JSNormalizer();
@@ -55,9 +56,6 @@ public:
 
     size_t script_size()
     { return out.tellp(); }
-
-    static size_t size()
-    { return sizeof(JSNormalizer) + 16834; /* YY_BUF_SIZE */ }
 
     bool is_unescape_nesting_seen() const
     { return tokenizer.is_unescape_nesting_seen(); }
@@ -97,8 +95,8 @@ private:
     char* tmp_buf;
     size_t tmp_buf_size;
 
-    istreambuf_glue in_buf;
-    ostreambuf_infl out_buf;
+    snort::istreambuf_glue in_buf;
+    snort::ostreambuf_infl out_buf;
     std::istream in;
     std::ostream out;
     JSTokenizer tokenizer;

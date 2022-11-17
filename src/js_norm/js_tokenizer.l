@@ -30,21 +30,27 @@
 #include "config.h"
 #endif
 
-#include "utils/js_tokenizer.h"
 
 #include <algorithm>
 #include <cassert>
 
-#include "utils/js_identifier_ctx.h"
+#include "js_norm/js_enum.h"
+#include "js_norm/js_identifier_ctx.h"
+#include "js_norm/js_tokenizer.h"
 #include "utils/util_cstring.h"
 
+using namespace jsn;
+
 #define YY_NO_UNPUT
+
+#define YY_FATAL_ERROR(msg) { snort::FatalError("%s", msg); }
+
 #define YY_USER_ACTION                                      \
     {                                                       \
-        debug_logf(5, http_trace, TRACE_JS_PROC, nullptr,   \
+        debug_logf(5, js_trace, TRACE_PROC, nullptr,        \
             "pattern #%d, sc %d\n", yy_act, YY_START);      \
                                                             \
-        debug_logf(5, http_trace, TRACE_JS_DUMP, nullptr,   \
+        debug_logf(5, js_trace, TRACE_DUMP, nullptr,        \
             "text '%s'\n", YYText());                       \
                                                             \
         if (!states_process())                              \
@@ -1365,7 +1371,7 @@ const char* JSTokenizer::p_scope_codes[] =
 };
 
 JSTokenizer::JSTokenizer(std::istream& in, std::ostream& out,
-    JSIdentifierCtxBase& mapper, uint8_t max_template_nesting,
+    JSIdentifier& mapper, uint8_t max_template_nesting,
     uint32_t max_bracket_depth, char*& buf, size_t& buf_size, int cap_size)
     : yyFlexLexer(in, out),
       max_template_nesting(max_template_nesting),
@@ -1532,7 +1538,7 @@ JSTokenizer::JSRet JSTokenizer::do_identifier_substitution(const char* lexeme, b
 
     if (!name)
     {
-        debug_logf(6, http_trace, TRACE_JS_DUMP, nullptr,
+        debug_logf(6, js_trace, TRACE_DUMP, nullptr,
             "'%s' => IDENTIFIER_OVERFLOW\n", lexeme);
         return IDENTIFIER_OVERFLOW;
     }
@@ -1556,15 +1562,15 @@ JSTokenizer::JSRet JSTokenizer::do_identifier_substitution(const char* lexeme, b
         dealias_stored = true;
         yyout << alias;
 
-        debug_logf(6, http_trace, TRACE_JS_DUMP, nullptr,
-                   "'%s' => '%s'\n", lexeme, alias);
+        debug_logf(6, js_trace, TRACE_DUMP, nullptr,
+            "'%s' => '%s'\n", lexeme, alias);
         return EOS;
     }
 
     ignored_id_pos = -1;
     yyout << name;
 
-    debug_logf(6, http_trace, TRACE_JS_DUMP, nullptr,
+    debug_logf(6, js_trace, TRACE_DUMP, nullptr,
         "'%s' => '%s'\n", lexeme, name);
     return EOS;
 }
@@ -2077,7 +2083,7 @@ JSTokenizer::JSRet JSTokenizer::p_scope_push(ScopeMetaType t)
     if (!ident_ctx.scope_push(m2p(t)))
         return SCOPE_NESTING_OVERFLOW;
 
-    debug_logf(5, http_trace, TRACE_JS_PROC, nullptr, "scope pushed: '%s'\n", m2str(t));
+    debug_logf(5, js_trace, TRACE_PROC, nullptr, "scope pushed: '%s'\n", m2str(t));
 
     return EOS;
 }
@@ -2087,7 +2093,7 @@ JSTokenizer::JSRet JSTokenizer::p_scope_pop(ScopeMetaType t)
     if (!ident_ctx.scope_pop(m2p(t)))
         return WRONG_CLOSING_SYMBOL;
 
-    debug_logf(5, http_trace, TRACE_JS_PROC, nullptr, "scope popped: '%s'\n", m2str(t));
+    debug_logf(5, js_trace, TRACE_PROC, nullptr, "scope popped: '%s'\n", m2str(t));
 
     return EOS;
 }
@@ -2398,7 +2404,7 @@ JSTokenizer::JSRet JSTokenizer::literal_regex_g_close()
     case ')':
         if (regex_stack.empty())
         {
-            debug_logf(5, http_trace, TRACE_JS_PROC, nullptr,
+            debug_logf(5, js_trace, TRACE_PROC, nullptr,
                 "no group to close, .. %c\n", yytext[0]);
             return BAD_TOKEN;
         }

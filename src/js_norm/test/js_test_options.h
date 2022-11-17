@@ -26,8 +26,10 @@
 #include <unordered_set>
 #include <vector>
 
-#include "utils/js_identifier_ctx.h"
-#include "utils/js_normalizer.h"
+#include "js_norm/js_identifier_ctx.h"
+#include "js_norm/js_normalizer.h"
+
+using namespace jsn;
 
 typedef std::unordered_set<std::string> StringSet;
 

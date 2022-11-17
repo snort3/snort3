@@ -26,24 +26,10 @@
 #include <cassert>
 #include <memory.h>
 
-#if !defined(CATCH_TEST_BUILD) && !defined(BENCHMARK_TEST)
-#include "service_inspectors/http_inspect/http_enum.h"
-#include "service_inspectors/http_inspect/http_module.h"
-#else
-namespace HttpEnums
-{
-enum PEG_COUNT
-{
-    PEG_JS_IDENTIFIER
-};
-}
+#include "js_enum.h"
+#include "js_norm_module.h"
 
-class HttpModule
-{
-public:
-    static void increment_peg_counts(HttpEnums::PEG_COUNT) {}
-};
-#endif // CATCH_TEST_BUILD
+using namespace jsn;
 
 #define NORM_NAME_SIZE 9 // size of the normalized form plus null symbol
 #define NORM_NAME_CNT 65536
@@ -80,7 +66,7 @@ static int _init_norm_names __attribute__((unused)) = (static_cast<void>(init_no
 JSIdentifierCtx::JSIdentifierCtx(int32_t depth, uint32_t max_scope_depth,
     const std::unordered_set<std::string>& ignored_ids_list,
     const std::unordered_set<std::string>& ignored_props_list)
-    : ignored_ids_list(ignored_ids_list), ignored_props_list(ignored_props_list), 
+    : ignored_ids_list(ignored_ids_list), ignored_props_list(ignored_props_list),
     max_scope_depth(max_scope_depth)
 {
     norm_name = norm_names;
@@ -133,7 +119,7 @@ const char* JSIdentifierCtx::acquire_norm_name(NormId& id)
 
     auto n = norm_name;
     norm_name += NORM_NAME_SIZE;
-    HttpModule::increment_peg_counts(HttpEnums::PEG_JS_IDENTIFIER);
+    JSNormModule::increment_peg_counts(PEG_IDENTIFIERS);
 
     if (id.prop_name || id.id_name)
     {

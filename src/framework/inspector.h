@@ -47,8 +47,8 @@ struct InspectionBuffer
 {
     enum Type
     {
-        // this is the only generic rule option
-        IBT_VBA,
+        // these are the only generic rule options
+        IBT_VBA, IBT_JS_DATA,
 
         // FIXIT-M all of these should be eliminated
         IBT_KEY, IBT_HEADER, IBT_BODY,

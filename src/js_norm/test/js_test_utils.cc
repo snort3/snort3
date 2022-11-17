@@ -25,18 +25,7 @@
 
 #include "catch/catch.hpp"
 
-namespace snort
-{
-[[noreturn]] void FatalError(const char*, ...)
-{ exit(EXIT_FAILURE); }
-void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) { }
-uint8_t TraceApi::get_constraints_generation() { return 0; }
-void TraceApi::filter(const Packet&) { }
-}
-
-THREAD_LOCAL const snort::Trace* http_trace = nullptr;
-
-using namespace snort;
+using namespace jsn;
 
 JSTokenizerTester::JSTokenizerTester(const JSTestConfig& conf) :
     ident_ctx(conf.identifier_depth,
@@ -45,8 +34,8 @@ JSTokenizerTester::JSTokenizerTester(const JSTestConfig& conf) :
         conf.ignored_properties_list),
     normalizer(
         conf.normalize_identifiers ?
-            static_cast<JSIdentifierCtxBase&>(ident_ctx) :
-            static_cast<JSIdentifierCtxBase&>(ident_ctx_stub),
+            static_cast<JSIdentifier&>(ident_ctx) :
+            static_cast<JSIdentifier&>(ident_ctx_stub),
         conf.norm_depth,
         conf.max_template_nesting,
         conf.max_bracket_depth,

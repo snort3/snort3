@@ -25,7 +25,7 @@
 
 #include "js_test_utils.h"
 
-using namespace snort;
+using namespace jsn;
 
 // Unit tests
 

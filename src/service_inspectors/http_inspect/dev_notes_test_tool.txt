@@ -88,27 +88,3 @@ developer to get it right.
 The test tool is designed for single-threaded operation only.
 
 The test tool is only available when compiled with REG_TEST.
-
-NHI has some trace messages available. Trace options follow:
-
-* trace.module.http_inspect.js_proc turns on messages from script processing flow.
-+
-Verbosity levels:
-+
-1. Script opening tag detected (available in release build)
-2. Attributes of detected script (available in release build)
-3. Normalizer return code (available in release build)
-4. Contexts management (debug build only)
-5. Parser states (debug build only)
-6. Input stream states (debug build only)
-
-* trace.module.http_inspect.js_dump dumps JavaScript data from processing layers.
-+
-Verbosity levels:
-+
-1. js_data buffer as it is being passed to detection (available in release build)
-2. (no messages available currently)
-3. Payload passed to Normalizer (available in release build)
-4. Temporary buffer (debug build only)
-5. Matched token (debug build only)
-6. Identifier substitution (debug build only)

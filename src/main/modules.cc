@@ -42,6 +42,7 @@
 #include "framework/module.h"
 #include "host_tracker/host_tracker_module.h"
 #include "host_tracker/host_cache_module.h"
+#include "js_norm/js_norm_module.h"
 #include "latency/latency_module.h"
 #include "log/messages.h"
 #include "managers/module_manager.h"
@@ -2117,6 +2118,7 @@ void module_init()
 
     // these modules should be in ips policy
     ModuleManager::add_module(new EventFilterModule);
+    ModuleManager::add_module(new JSNormModule);
     ModuleManager::add_module(new RateFilterModule);
     ModuleManager::add_module(new SuppressModule);
 

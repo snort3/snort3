@@ -31,3 +31,8 @@ for the "replace" content the rule will not match.
 - "replace" works for raw packets only. So, TCP data must either fit
 under the "pkt_data" buffer requirements or one should enable detection
 on TCP payload before reassembly: search_engine.detect_raw_tcp=true.
+
+"js_data" option is used by Enhanced JavaScript Normalizer to access normalized data.
+It's implemented as a generic IPS buffer and follows the JIT approach.
+"js_data" buffer must be specified in the list of buffers available for a particular
+inspector.

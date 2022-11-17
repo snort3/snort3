@@ -26,13 +26,11 @@
 #include "decompress/file_decomp.h"
 #include "mime/file_mime_process.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
-#include "trace/trace_api.h"
-#include "utils/js_identifier_ctx.h"
-#include "utils/js_normalizer.h"
 
 #include "http_cutter.h"
 #include "http_common.h"
 #include "http_enum.h"
+#include "http_js_norm.h"
 #include "http_module.h"
 #include "http_msg_header.h"
 #include "http_msg_request.h"
@@ -98,23 +96,6 @@ HttpFlowData::~HttpFlowData()
     if (HttpModule::get_peg_counts(PEG_CONCURRENT_SESSIONS) > 0)
         HttpModule::decrement_peg_counts(PEG_CONCURRENT_SESSIONS);
 
-#ifndef UNIT_TEST_BUILD
-    if (js_ident_ctx)
-    {
-        delete js_ident_ctx;
-
-        debug_log(4, http_trace, TRACE_JS_PROC, nullptr,
-            "js_ident_ctx deleted\n");
-    }
-    if (js_normalizer)
-    {
-        delete js_normalizer;
-
-        debug_log(4, http_trace, TRACE_JS_PROC, nullptr,
-            "js_normalizer deleted\n");
-    }
-#endif
-
     for (int k=0; k <= 1; k++)
     {
         delete infractions[k];
@@ -134,6 +115,7 @@ HttpFlowData::~HttpFlowData()
         delete utf_state[k];
         if (fd_state[k] != nullptr)
             File_Decomp_StopFree(fd_state[k]);
+        delete js_ctx[k];
     }
 
     delete_pipeline();
@@ -235,74 +217,6 @@ void HttpFlowData::garbage_collect()
             current = &(*current)->next;
     }
 }
-
-#ifndef UNIT_TEST_BUILD
-void HttpFlowData::reset_js_data_idx()
-{
-    js_data_processed_idx = js_data_idx = 0;
-    js_data_lost_once = false;
-}
-
-void HttpFlowData::reset_js_ident_ctx()
-{
-    if (js_ident_ctx)
-    {
-        js_ident_ctx->reset();
-        debug_log(4, http_trace, TRACE_JS_PROC, nullptr,
-            "js_ident_ctx reset\n");
-    }
-}
-
-snort::JSNormalizer& HttpFlowData::acquire_js_ctx(const HttpParaList::JsNormParam& js_norm_param)
-{
-    if (js_normalizer)
-        return *js_normalizer;
-
-    if (!js_ident_ctx)
-    {
-        js_ident_ctx = new JSIdentifierCtx(js_norm_param.js_identifier_depth,
-            js_norm_param.max_scope_depth, js_norm_param.ignored_ids, js_norm_param.ignored_props);
-
-        debug_logf(4, http_trace, TRACE_JS_PROC, nullptr,
-            "js_ident_ctx created (ident_depth %d)\n", js_norm_param.js_identifier_depth);
-    }
-
-    js_normalizer = new JSNormalizer(*js_ident_ctx, js_norm_param.js_norm_bytes_depth,
-        js_norm_param.max_template_nesting, js_norm_param.max_bracket_depth);
-
-    debug_logf(4, http_trace, TRACE_JS_PROC, nullptr,
-        "js_normalizer created (norm_depth %zd, max_template_nesting %d)\n",
-        js_norm_param.js_norm_bytes_depth, js_norm_param.max_template_nesting);
-
-    return *js_normalizer;
-}
-
-bool HttpFlowData::sync_js_data_idx()
-{
-    bool data_missed = ((js_data_idx - js_data_processed_idx) > 1);
-    js_data_processed_idx = js_data_idx;
-    return data_missed;
-}
-
-void HttpFlowData::release_js_ctx()
-{
-    js_continue = false;
-
-    if (!js_normalizer)
-        return;
-
-    delete js_normalizer;
-    js_normalizer = nullptr;
-
-    debug_log(4, http_trace, TRACE_JS_PROC, nullptr,
-        "js_normalizer deleted\n");
-}
-#else
-void HttpFlowData::reset_js_ident_ctx() {}
-snort::JSNormalizer& HttpFlowData::acquire_js_ctx(const HttpParaList::JsNormParam&)
-{ return *js_normalizer; }
-void HttpFlowData::release_js_ctx() {}
-#endif
 
 bool HttpFlowData::add_to_pipeline(HttpTransaction* latest)
 {

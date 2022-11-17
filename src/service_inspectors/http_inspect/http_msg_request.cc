@@ -40,9 +40,6 @@ HttpMsgRequest::HttpMsgRequest(const uint8_t* buffer, const uint16_t buf_size,
 {
     transaction->set_request(this);
     get_related_sections();
-    session_data->release_js_ctx();
-    session_data->reset_js_ident_ctx();
-    session_data->reset_js_data_idx();
 }
 
 HttpMsgRequest::~HttpMsgRequest()

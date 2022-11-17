@@ -51,6 +51,7 @@ struct SnortConfig;
 
 struct _daq_flow_stats;
 struct _daq_pkt_hdr;
+struct JSNormConfig;
 struct PortTable;
 struct vartable_t;
 struct sfip_var_t;
@@ -155,6 +156,8 @@ public:
     struct FrameworkPolicy* framework_policy;
     snort::DataBus dbus;
     bool cloned;
+
+    JSNormConfig* jsn_config = nullptr;
 
 private:
     void init(InspectionPolicy* old_inspection_policy);

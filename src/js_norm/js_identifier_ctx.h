@@ -26,6 +26,9 @@
 #include <unordered_set>
 #include <vector>
 
+namespace jsn
+{
+
 enum JSProgramScopeType : unsigned int
 {
     GLOBAL = 0,     // the global scope (the initial one)
@@ -34,10 +37,10 @@ enum JSProgramScopeType : unsigned int
     PROG_SCOPE_TYPE_MAX
 };
 
-class JSIdentifierCtxBase
+class JSIdentifier
 {
 public:
-    virtual ~JSIdentifierCtxBase() = default;
+    virtual ~JSIdentifier() = default;
 
     virtual const char* substitute(const char* identifier, bool is_property) = 0;
     virtual void add_alias(const char* alias, const std::string&& value) = 0;
@@ -52,7 +55,7 @@ public:
     virtual size_t size() const = 0;
 };
 
-class JSIdentifierCtx : public JSIdentifierCtxBase
+class JSIdentifierCtx : public JSIdentifier
 {
 public:
     JSIdentifierCtx(int32_t depth, uint32_t max_scope_depth,
@@ -83,7 +86,7 @@ private:
         const char* prop_name = nullptr;
         uint8_t type = 0;
     };
-    
+
     using Alias = std::vector<std::string>;
     using AliasRef = std::list<Alias*>;
     using AliasMap = std::unordered_map<std::string, Alias>;
@@ -135,5 +138,7 @@ public:
     const std::list<JSProgramScopeType> get_types() const;
 #endif // CATCH_TEST_BUILD
 };
+
+}
 
 #endif // JS_IDENTIFIER_CTX

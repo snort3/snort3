@@ -62,6 +62,7 @@ set (IPS_SOURCES
     ips_flowbits.cc
     ips_flowbits.h
     ips_hash.cc
+    ips_js_data.cc
     ips_luajit.cc
     ips_metadata.cc
     ips_options.cc

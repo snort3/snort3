@@ -26,10 +26,9 @@
 #include <vector>
 
 #include "log/messages.h"
-#include "service_inspectors/http_inspect/http_enum.h"
 #include "trace/trace_api.h"
 
-extern THREAD_LOCAL const snort::Trace* http_trace;
+extern THREAD_LOCAL const snort::Trace* js_trace;
 
 // The longest pattern has 9 characters " < / s c r i p t > ",
 // 8 of them can reside in 1st chunk
@@ -40,9 +39,12 @@ extern THREAD_LOCAL const snort::Trace* http_trace;
 // To hold potentially long identifiers
 #define JSTOKENIZER_BUF_MAX_SIZE 256
 
+namespace jsn
+{
+
 enum JSProgramScopeType : unsigned int;
 
-class JSIdentifierCtxBase;
+class JSIdentifier;
 #if defined(CATCH_TEST_BUILD) || defined(BENCHMARK_TEST)
 class JSTokenizerTester;
 class JSTestConfig;
@@ -166,7 +168,7 @@ public:
     };
 
     JSTokenizer() = delete;
-    explicit JSTokenizer(std::istream& in, std::ostream& out, JSIdentifierCtxBase& ident_ctx,
+    explicit JSTokenizer(std::istream& in, std::ostream& out, JSIdentifier& ident_ctx,
         uint8_t max_template_nesting, uint32_t max_bracket_depth, char*& buf, size_t& buf_size,
         int cap_size = JSTOKENIZER_BUF_MAX_SIZE);
     ~JSTokenizer() override;
@@ -181,10 +183,6 @@ public:
     bool is_opening_tag_seen() const;
     bool is_closing_tag_seen() const;
     bool is_buffer_adjusted() const;
-
-protected:
-    [[noreturn]] void LexerError(const char* msg) override
-    { snort::FatalError("%s", msg); }
 
 private:
     int yylex() override;
@@ -342,7 +340,7 @@ private:
     VStack<uint16_t> brace_depth;
     JSToken token = UNDEFINED;
     ASIGroup previous_group = ASI_OTHER;
-    JSIdentifierCtxBase& ident_ctx;
+    JSIdentifier& ident_ctx;
     size_t bytes_read;
     size_t tmp_bytes_read;
     uint32_t tokens_read;
@@ -412,5 +410,7 @@ private:
     friend JSTestConfig;
 #endif // CATCH_TEST_BUILD || BENCHMARK_TEST
 };
+
+}
 
 #endif // JS_TOKENIZER_H

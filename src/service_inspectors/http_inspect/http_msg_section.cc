@@ -169,24 +169,24 @@ const Field& HttpMsgSection::get_classic_buffer(const HttpBufferInfo& buf)
     switch (buf.type)
     {
     case HTTP_BUFFER_CLIENT_BODY:
-      {
+    {
         if (source_id != SRC_CLIENT)
             return Field::FIELD_NULL;
         return (get_body() != nullptr) ? get_body()->get_classic_client_body() : Field::FIELD_NULL;
-      }
+    }
     case HTTP_BUFFER_COOKIE:
     case HTTP_BUFFER_RAW_COOKIE:
-      {
+    {
         if (header[buffer_side] == nullptr)
             return Field::FIELD_NULL;
         return (buf.type == HTTP_BUFFER_COOKIE) ? header[buffer_side]->get_classic_norm_cookie() :
             header[buffer_side]->get_classic_raw_cookie();
-      }
+    }
     case HTTP_BUFFER_HEADER:
     case HTTP_BUFFER_TRAILER:
     case HTTP_HEADER_TEST:
     case HTTP_TRAILER_TEST:
-      {
+    {
         HttpMsgHeadShared* const head = (buf.type == HTTP_BUFFER_HEADER || buf.type == HTTP_HEADER_TEST) ?
             (HttpMsgHeadShared*)header[buffer_side] : (HttpMsgHeadShared*)trailer[buffer_side];
         if (head == nullptr)
@@ -194,18 +194,18 @@ const Field& HttpMsgSection::get_classic_buffer(const HttpBufferInfo& buf)
         if (buf.sub_id == 0)
             return head->get_classic_norm_header();
         return head->get_header_value_norm((HeaderId)buf.sub_id);
-      }
+    }
     case HTTP_BUFFER_METHOD:
-      {
+    {
         return (request != nullptr) ? request->get_method() : Field::FIELD_NULL;
-      }
+    }
     case HTTP_BUFFER_RAW_BODY:
-      {
+    {
         return (get_body() != nullptr) ? get_body()->get_raw_body() : Field::FIELD_NULL;
-      }
+    }
     case HTTP_BUFFER_RAW_HEADER:
     case HTTP_BUFFER_RAW_TRAILER:
-      {
+    {
         HttpMsgHeadShared* const head = (buf.type == HTTP_BUFFER_RAW_HEADER) ?
             (HttpMsgHeadShared*)header[buffer_side] : (HttpMsgHeadShared*)trailer[buffer_side];
         if (head == nullptr)
@@ -213,31 +213,31 @@ const Field& HttpMsgSection::get_classic_buffer(const HttpBufferInfo& buf)
         if (buf.sub_id == 0)
             return head->msg_text;
         return head->get_all_header_values_raw((HeaderId)buf.sub_id);
-      }
+    }
     case HTTP_BUFFER_RAW_REQUEST:
-      {
+    {
         return (request != nullptr) ? request->msg_text : Field::FIELD_NULL;
-      }
+    }
     case HTTP_BUFFER_RAW_STATUS:
-      {
+    {
         return (status != nullptr) ? status->msg_text : Field::FIELD_NULL;
-      }
+    }
     case HTTP_BUFFER_STAT_CODE:
-      {
+    {
         return (status != nullptr) ? status->get_status_code() : Field::FIELD_NULL;
-      }
+    }
     case HTTP_BUFFER_STAT_MSG:
-      {
+    {
         return (status != nullptr) ? status->get_reason_phrase() : Field::FIELD_NULL;
-      }
+    }
     case HTTP_BUFFER_TRUE_IP:
-      {
+    {
         return (header[SRC_CLIENT] != nullptr) ? header[SRC_CLIENT]->get_true_ip() :
             Field::FIELD_NULL;
-      }
+    }
     case HTTP_BUFFER_URI:
     case HTTP_BUFFER_RAW_URI:
-      {
+    {
         const bool raw = (buf.type == HTTP_BUFFER_RAW_URI);
         if (request == nullptr)
             return Field::FIELD_NULL;
@@ -263,29 +263,29 @@ const Field& HttpMsgSection::get_classic_buffer(const HttpBufferInfo& buf)
         }
         assert(false);
         return Field::FIELD_NULL;
-      }
+    }
     case HTTP_BUFFER_VERSION:
-      {
+    {
         HttpMsgStart* start = (buffer_side == SRC_CLIENT) ?
             (HttpMsgStart*)request : (HttpMsgStart*)status;
         return (start != nullptr) ? start->get_version() : Field::FIELD_NULL;
-      }
+    }
     case BUFFER_VBA_DATA:
-      {
+    {
         HttpMsgBody* msg_body = get_body();
         if (msg_body)
-            return msg_body->get_decomp_vba_data(); 
+            return msg_body->get_decomp_vba_data();
         else
             return Field::FIELD_NULL;
-      }
+    }
     case BUFFER_JS_DATA:
-      {
+    {
         HttpMsgBody* msg_body = get_body();
         if (msg_body)
-            return msg_body->get_norm_js_data(); 
+            return msg_body->get_norm_js_data();
         else
             return Field::FIELD_NULL;
-      }
+    }
     default:
         assert(false);
         return Field::FIELD_NULL;
@@ -519,4 +519,3 @@ void HttpMsgSection::print_peg_counts(FILE* output) const
 }
 
 #endif
-
