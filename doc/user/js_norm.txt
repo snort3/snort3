@@ -1,0 +1,210 @@
+One of the improvements in Snort 3 is Enhanced JavaScript Normalizer which has its
+own module and can be used with any service inspectors where JavaScript code might occur.
+Currently it is only used by HTTP inspector.
+
+==== Overview
+
+You can configure it by adding:
+
+    js_norm = {}
+
+to your snort.lua configuration file. Or you can read about it in the
+source code under src/js_norm.
+
+Having 'js_norm' module configured and ips option 'js_data' in the rules automatically
+enables Enhanced Normalizer. The Enhanced Normalizer can normalize inline/external
+scripts. It supports scripts over multiple PDUs. It is a stateful JavaScript whitespace
+and identifiers normalizer. Normalizer concatenates string literals whenever 
+it's possible to do. This also works with any other normalizations that result
+in string literals. All JavaScript identifier names, except those from
+the ignore lists, will be substituted with unified names in the following
+format: var_0000 -> var_ffff. But the unescape-like function names will be removed
+from the normalized data. The Normalizer tries to expand an escaped text,
+so it will appear in a usual form in the output. Moreover, Normalizer validates
+the syntax concerning ECMA-262 Standard, including scope tracking and restrictions
+for script elements. For more information on how additionally configure
+Enhanced Normalizer check with the following configuration options:
+bytes_depth, identifier_depth, max_tmpl_nest, max_bracket_depth, max_scope_depth,
+ident_ignore, prop_ignore.
+Eventually Enhanced Normalizer will completely replace Legacy Normalizer from HTTP inspector.
+
+==== Configuration
+
+Configuration can be as simple as adding:
+
+    js_norm = {}
+
+to your snort.lua file. The default configuration provides a thorough
+normalization and may be all that you need. But there are some options that
+provide extra features, tweak how things are done, or conserve resources by
+doing less.
+
+Also, there are default lists of ignored identifiers and object properties provided.
+To get a complete default configuration, use 'default_js_norm' from lua/snort_default.lua
+by adding:
+
+    js_norm = default_js_norm
+
+to your snort.lua file.
+
+Enhanced JavaScript Normalizer implements JIT approach. Actual normalization takes place
+only when js_data option is evaluated. This option also used as a buffer selector for
+normalized JavaScript data.
+
+===== bytes_depth
+
+bytes_depth = N {-1 : max53} will set a number of input JavaScript
+bytes to normalize. When the depth is reached, normalization will be stopped.
+It's implemented per-script. By default bytes_depth = -1, will set
+unlimited depth. The enhanced normalizer provides more precise whitespace
+normalization of JavaScript, that removes all redundant whitespaces and line
+terminators from the JavaScript syntax point of view (between identifier and
+punctuator, between identifier and operator, etc.) according to ECMAScript 5.1
+standard. Additionally, it performs normalization of JavaScript identifiers making
+a substitution of unique names with unified names representation: var_0000:var_ffff.
+The identifiers are variables and function names. The normalized data is available
+through the 'js_data' rule option.
+
+===== identifier_depth
+
+identifier_depth = N {0 : 65536} will set a number of unique
+JavaScript identifiers to normalize. When the depth is reached, a built-in
+alert is generated. Every response has its own identifier substitution context,
+which means that identifier will retain same normal form in multiple scripts,
+if they are a part of the same response, and that this limit is set for a single
+response and not a single script. By default, the value is set to 65536, which
+is the max allowed number of unique identifiers. The generated names are in
+the range from var_0000 to var_ffff.
+
+===== max_tmpl_nest
+
+max_tmpl_nest = N {0 : 255} (default 32) is an option of the enhanced
+JavaScript normalizer that determines the deepest level of nested template literals
+to be processed. Introduced in ES6, template literals provide syntax to define
+a literal multiline string, which can have arbitrary JavaScript substitutions,
+that will be evaluated and inserted into the string. Such substitutions can be
+nested, and require keeping track of every layer for proper normalization. This option
+is present to limit the amount of memory dedicated to template nesting tracking.
+
+===== max_bracket_depth
+
+max_bracket_depth = N {1 : 65535} (default 256) is an option of the enhanced
+JavaScript normalizer that determines the maximum depth of nesting brackets, i.e. parentheses,
+braces and square brackets, nested within a matching pair, in any combination. This option
+is present to limit the amount of memory dedicated to bracket tracking.
+
+===== max_scope_depth
+
+max_scope_depth = N {1 : 65535} (default 256) is an option of the enhanced
+JavaScript normalizer that determines the deepest level of nested variable scope,
+i.e. functions, code blocks, etc. including the global scope.
+This option is present to limit the amount of memory dedicated to scope tracking.
+
+===== ident_ignore
+
+ident_ignore = {<list of ignored identifiers>} is an option of the enhanced
+JavaScript normalizer that defines a list of identifiers to keep intact.
+
+Identifiers in this list will not be put into normal form (var_0000). Subsequent accessors,
+after dot, in square brackets or after function call, will not be normalized as well.
+
+For example:
+
+    console.log("bar")
+    document.getElementById("id").text
+    eval("script")
+    console["log"]
+
+Every entry has to be a simple identifier, i.e. not include dots, brackets, etc.
+For example:
+
+    js_norm.ident_ignore = { 'console', 'document', 'eval', 'foo' }
+
+When a variable assignment that 'aliases' an identifier from the list is found,
+the assignment will be tracked, and subsequent occurrences of the variable will be
+replaced with the stored value. This substitution will follow JavaScript variable scope 
+limits.
+
+For example:
+
+    var a = console.log
+    a("hello") // will be substituted to 'console.log("hello")'
+
+For class names and constructors in the list, when the class is used with the
+keyword 'new', created object will be tracked, and its properties will be kept intact.
+Identifier of the object itself, however, will be brought to unified form.
+
+For example:
+
+    var o = new Array() // normalized to 'var var_0000=new Array()'
+    o.push(10) // normalized to 'var_0000.push(10)'
+
+The default list of ignore-identifiers is present in "snort_defaults.lua".
+
+Unescape function names should remain intact in the output. They ought to be
+included in the ignore list. If for some reason the user wants to disable unescape
+related features, then removing function's name from the ignore list does the trick.
+
+===== prop_ignore
+
+prop_ignore = {<list of ignored properties>} is an option of the enhanced
+JavaScript normalizer that defines a list of object properties and methods that
+will be kept intact during the identifiers normalization. This list should include
+methods and properties of objects that will not be tracked by assignment substitution
+functionality, for example, those that can be created implicitly.
+
+Subsequent accessors, after dot, in square brackets or after function call, will not be
+normalized as well.
+
+For example:
+
+    js_norm.prop_ignore = { 'split' }
+
+    in: "string".toUpperCase().split("").reverse().join("");
+    out: "string".var_0000().split("").reverse().join("");
+
+The default list of ignored properties is present in "snort_defaults.lua".
+
+==== Detection rules
+
+Enhanced JavaScript Normalizer follows JIT approach which require to have rules with
+'js_data' IPS option loaded.
+An example rule:
+
+    alert tcp any any -> any any (msg:"JavaScript"; js_data; content:"var var_0000=1;"; sid:1;)
+
+===== js_data
+
+The js_data IPS contains normalized JavaScript text collected from the whole PDU.
+It requires the Enhanced JavaScript Normalizer configured.
+
+==== Trace messages
+
+When a user needs help to sort out things going on inside Enhanced JavaScript Normalizer,
+Trace module becomes handy.
+
+    $ snort --help-module trace | grep js_norm
+
+Messages for the enhanced JavaScript Normalizer follow
+(more verbosity available in debug build):
+
+===== trace.module.js_norm.proc
+
+Messages from script processing flow and their verbosity levels:
+
+1. Script opening tag location.
+
+2. Attributes of the detected script.
+
+3. Return codes from Normalizer.
+
+===== trace.module.js_norm.dump
+
+JavaScript data dump and verbosity levels:
+
+1. js_data buffer as it is passed to detection.
+
+2. (no messages available currently)
+
+3. Current script as it is passed to Normalizer.
+

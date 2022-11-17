@@ -1207,22 +1207,6 @@ A client sent a request to upgrade an HTTP/1 connection to HTTP/2.
 
 A server granted a request to upgrade a connection from HTTP/1 to HTTP/2.
 
-119:265
-
-Enhanced JavaScript normalizer has encountered a symbol that is not expected as a part of a valid
-JavaScript statement, making further normalization impossible.
-
-119:266
-
-HTML <script> tag must not have a nested <script> tag inside it. If a nested tag is
-encountered, this alert is raised. This alert is raised by the enhanced JavaScript normalizer.
-
-119:267
-
-This alert is raised when </script> end-tag is encountered inside a JavaScript comment
-or literal, which is a syntax error, as the last comment or literal is not closed before
-script end. This alert is raised by the enhanced JavaScript normalizer.
-
 119:268
 
 When HTML <script> tag contains a reference to an external script, it must not contain
@@ -1236,47 +1220,11 @@ In HTML, a script tag must not be self-closing (written as <script /> without a 
 end-tag). If a self-closing "short-form" script tag is encountered, this alert is raised.
 This alert is raised by the enhanced JavaScript normalizer.
 
-119:270
-
-JavaScript normalization includes identifier substitution, which brings arbitrary JavaScript
-identifiers to a common form. Amount of unique identifiers to normalize is limited,
-for memory considerations, with http_inspect.js_norm_identifier_depth parameter. When this
-threshold is reached, a corresponding alert is raised. This alert is not expected for typical
-network traffic and may be an indication that an attacker is trying to exhaust resources.
-This alert is raised by the enhanced JavaScript normalizer.
-
-119:271
-
-In JavaScript, template literals can have substitutions, that in turn can have nested
-template literals, which requires a stack to track for proper whitespace normalization.
-Also, the normalization tracks the current bracket scope, which requires a stack as well.
-When the depth of nesting exceeds limit set in http_inspect.js_norm_max_tmpl_nest or in
-http_inspect.js_norm_max_bracket_depth, this alert is raised. This alert is not expected
-for typical network traffic and may be an indication that an attacker is trying to exhaust
-resources. This alert is raised by the enhanced JavaScript normalizer.
-
 119:272
 
 There are consecutive commas, possibly separated by whitespace, in an HTTP Accept-Encoding header.
 This pattern constitutes a Microsoft Windows HTTP protocol stack remote code execution attempt.
 Reference: CVE-2021-31166.
-
-119:273
-
-This alert is raised for the following situation. During JavaScript normalization
-some data can be lost and not normalized. Usually it happens when rules have file_data and
-js_data ips options and fast-pattern (FP) search is applying to file_data. Some data
-doesn’t match file_data FP search and JavaScript normalization won't be executed for it.
-The following normalization for inline/external scripts will be stopped for current
-request within the flow. This alert is raised by the enhanced JavaScript normalizer.
-
-119:274
-
-To resolve variable names in JavaScript, a current stack of variable scopes has to be tracked.
-When the depth of nesting exceeds the limit set in http_inspect.js_norm_max_scope_depth,
-this alert is raised. This alert is not expected for typical network traffic and may be
-an indication that an attacker is trying to exhaust resources. This alert is raised
-by the enhanced JavaScript normalizer.
 
 119:275
 
@@ -2703,6 +2651,66 @@ function codes: Requests (0 to 33) and Responses (129 to 131)
 151:54
 
 (iec104) IEC104 APCI I Qualifier of Set Point Command ql field set to a reserved value
+
+154:1
+
+Enhanced JavaScript normalizer has encountered nested unescape functions
+
+154:2
+
+Enhanced JavaScript normalizer has encountered mixed unescape sequence
+
+154:3
+
+Enhanced JavaScript normalizer has encountered a symbol that is not expected as a part of a valid
+JavaScript statement, making further normalization impossible.
+
+154:4
+
+HTML <script> tag must not have a nested <script> tag inside it. If a nested tag is
+encountered, this alert is raised. This alert is raised by the enhanced JavaScript normalizer.
+
+154:5
+
+This alert is raised when </script> end-tag is encountered inside a JavaScript comment
+or literal, which is a syntax error, as the last comment or literal is not closed before
+script end. This alert is raised by the enhanced JavaScript normalizer.
+
+154:6
+
+JavaScript normalization includes identifier substitution, which brings arbitrary JavaScript
+identifiers to a common form. Amount of unique identifiers to normalize is limited,
+for memory considerations, with http_inspect.js_norm_identifier_depth parameter. When this
+threshold is reached, a corresponding alert is raised. This alert is not expected for typical
+network traffic and may be an indication that an attacker is trying to exhaust resources.
+This alert is raised by the enhanced JavaScript normalizer.
+
+154:7
+
+In JavaScript, template literals can have substitutions, that in turn can have nested
+template literals, which requires a stack to track for proper whitespace normalization.
+Also, the normalization tracks the current bracket scope, which requires a stack as well.
+When the depth of nesting exceeds limit set in http_inspect.js_norm_max_tmpl_nest or in
+http_inspect.js_norm_max_bracket_depth, this alert is raised. This alert is not expected
+for typical network traffic and may be an indication that an attacker is trying to exhaust
+resources. This alert is raised by the enhanced JavaScript normalizer.
+
+154:8
+
+This alert is raised for the following situation. During JavaScript normalization
+some data can be lost and not normalized. Usually it happens when rules have file_data and
+js_data ips options and fast-pattern (FP) search is applying to file_data. Some data
+doesn’t match file_data FP search and JavaScript normalization won't be executed for it.
+The following normalization for inline/external scripts will be stopped for current
+request within the flow. This alert is raised by the enhanced JavaScript normalizer.
+
+154:9
+
+To resolve variable names in JavaScript, a current stack of variable scopes has to be tracked.
+When the depth of nesting exceeds the limit set in http_inspect.js_norm_max_scope_depth,
+this alert is raised. This alert is not expected for typical network traffic and may be
+an indication that an attacker is trying to exhaust resources. This alert is raised
+by the enhanced JavaScript normalizer.
 
 175:1
 

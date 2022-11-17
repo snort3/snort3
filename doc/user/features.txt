@@ -77,6 +77,10 @@ include::http2_inspect.txt[]
 
 include::iec104.txt[]
 
+=== JavaScript Normalization
+
+include::js_norm.txt[]
+
 === MMS Inspector
 
 include::mms.txt[]
