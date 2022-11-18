@@ -22,6 +22,7 @@
 #include "config.h"
 #endif
 
+#include "appid_inspector.h"
 #include "service_plugins/alpn_patterns.cc"
 #include "service_alpn_patterns_mock.h"
 
@@ -41,6 +42,14 @@ int SearchTool::find_all(const char* pattern, unsigned, MpseMatch, bool, void* d
     return 0;
 }
 }
+
+Inspector* InspectorManager::get_inspector(char const*, bool, const snort::SnortConfig*)
+{
+    return nullptr;
+}
+
+AppIdContext* ctxt;
+AppIdContext& AppIdInspector::get_ctxt() const { return *ctxt; }
 
 TEST_GROUP(alpn_patterns_tests)
 {

@@ -71,6 +71,8 @@ static const Parameter s_params[] =
       "the first packet of an already decrypted SSL flow (debug single session only)" },
     { "log_eve_process_client_mappings", Parameter::PT_BOOL, nullptr, "false",
       "enable logging of encrypted visibility engine process to client mappings" },
+    { "log_alpn_service_mappings", Parameter::PT_BOOL, nullptr, "false",
+      "enable logging of alpn service mappings" },
 #endif
     { "memcap", Parameter::PT_INT, "1024:maxSZ", "1048576",
       "max size of the service cache before we start pruning the cache" },
@@ -481,6 +483,8 @@ bool AppIdModule::set(const char*, Value& v, SnortConfig*)
         config->first_decrypted_packet_debug = v.get_uint32();
     else if ( v.is("log_eve_process_client_mappings") )
         config->log_eve_process_client_mappings = v.get_bool();
+    else if (v.is("log_alpn_service_mappings") )
+        config->log_alpn_service_mappings = v.get_bool();
     else
 #endif
     if ( v.is("memcap") )
