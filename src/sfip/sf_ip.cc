@@ -187,6 +187,8 @@ static inline int _netmask_str_to_bit_count(char* mask, int family)
 /* Parses "src" and stores results in "dst" */
 SfIpRet SfIp::set(const char* src, uint16_t* srcBits)
 {
+    bool ob = 0;
+    char* cb;
     char* mask;
     char* sfip_buf;
     char* ip;
@@ -200,8 +202,11 @@ SfIpRet SfIp::set(const char* src, uint16_t* srcBits)
     family = sfip_str_to_fam(src);
 
     /* skip whitespace or opening bracket */
-    while (isspace((int)*ip) || (*ip == '['))
+    while (isspace((int)*ip) || ((*ip == '[') ? ob = 1 : 0))
         ip++;
+    
+    if (ob && (cb = strrchr(ip, ']')))
+        *cb = '\0';
 
     /* check for and extract a mask in CIDR form */
     if ( (mask = strchr(ip, (int)'/')) != nullptr )
