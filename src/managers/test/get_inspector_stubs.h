@@ -18,6 +18,7 @@
 // stubs.h author Ron Dempster <rdempste@cisco.com>
 
 #include "detection/detection_engine.h"
+#include "flow/expect_cache.h"
 #include "main/policy.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
@@ -77,6 +78,7 @@ void Module::reset_stats() { }
 DataBus::DataBus() { }
 DataBus::~DataBus() { }
 Module* ModuleManager::get_module(const char*) { return nullptr; }
+void ExpectFlow::handle_expected_flows(const Packet*) { }
 
 NetworkPolicy* get_default_network_policy(const SnortConfig*) { return nullptr; }
 void set_network_policy(NetworkPolicy*) { }

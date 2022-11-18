@@ -31,6 +31,7 @@
 #include "detection/detect.h"
 #include "detection/detection_engine.h"
 #include "detection/fp_utils.h"
+#include "flow/expect_cache.h"
 #include "flow/flow.h"
 #include "flow/session.h"
 #include "log/messages.h"
@@ -2063,6 +2064,9 @@ void InspectorManager::execute(Packet* p)
         internal_execute<true>(p);
     else
         internal_execute<false>(p);
+
+    if ( p->flow && ( !p->is_cooked() or p->is_defrag() ) )
+        ExpectFlow::handle_expected_flows(p);
 }
 
 template<bool T>

@@ -83,6 +83,7 @@ struct SO_PUBLIC ExpectFlow
     snort::FlowData* get_flow_data(unsigned);
     static std::vector<ExpectFlow*>* get_expect_flows();
     static void reset_expect_flows();
+    static void handle_expected_flows(const snort::Packet*);
 };
 }
 
@@ -108,7 +109,7 @@ public:
     unsigned long get_realized() { return realized; }
     unsigned long get_prunes() { return prunes; }
     unsigned long get_overflows() { return overflows; }
-    void reset_stats() 
+    void reset_stats()
     {
         expects = 0;
         realized = 0;

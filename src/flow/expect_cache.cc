@@ -86,6 +86,15 @@ void ExpectFlow::reset_expect_flows()
         packet_expect_flows->clear();
 }
 
+void ExpectFlow::handle_expected_flows(const Packet* p)
+{
+    if (p->flow && packet_expect_flows && !packet_expect_flows->empty())
+    {
+        ExpectedFlowsEvent event(*packet_expect_flows, *p);
+        DataBus::publish(EXPECT_EVENT_TYPE_HANDLE_FLOWS, event);
+    }
+}
+
 FlowData* ExpectFlow::get_flow_data(unsigned id)
 {
     for (FlowData* p = data; p; p = p->next)
