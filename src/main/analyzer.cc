@@ -313,9 +313,11 @@ static void packet_trace_dump(Packet* p, DAQ_Verdict verdict, bool msg_was_held)
     PacketTracer::dump(p);
 }
 
-void Analyzer::add_to_retry_queue(DAQ_Msg_h daq_msg)
+void Analyzer::add_to_retry_queue(DAQ_Msg_h daq_msg, Flow* flow)
 {
     retry_queue->put(daq_msg);
+    if (flow)
+        flow->flags.retry_queued = true;
 }
 
 /*
@@ -331,7 +333,7 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
 
     if (p->active->packet_retry_requested())
     {
-        add_to_retry_queue(p->daq_msg);
+        add_to_retry_queue(p->daq_msg, p->flow);
         daq_stats.retries_queued++;
     }
     else

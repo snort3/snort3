@@ -729,7 +729,7 @@ void TcpStreamTracker::finalize_held_packet(Packet* cp)
             if ( cp->active->packet_retry_requested() )
             {
                 tcpStats.held_packet_retries++;
-                Analyzer::get_local_analyzer()->add_to_retry_queue(msg);
+                Analyzer::get_local_analyzer()->add_to_retry_queue(msg, cp->flow);
             }
             else
             {

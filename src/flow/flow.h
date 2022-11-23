@@ -494,6 +494,7 @@ public:  // FIXIT-M privatize if possible
         bool snort_proto_id_set_by_ha : 1;
         bool efd_flow : 1;  // Indicate that current flow is an elephant flow
         bool svc_event_generated : 1; // Set if FLOW_NO_SERVICE_EVENT was generated for this flow
+        bool retry_queued : 1; // Set if a packet was queued for retry for this flow
     } flags;
 
     FlowState flow_state;

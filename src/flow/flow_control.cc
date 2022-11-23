@@ -33,6 +33,7 @@
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
 #include "protocols/vlan.h"
+#include "pub_sub/packet_events.h"
 #include "stream/stream.h"
 #include "utils/util.h"
 
@@ -453,6 +454,19 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         }
         p->filtering_state = flow->filtering_state;
         update_stats(flow, p);
+        if (p->is_retry())
+        {
+            RetryPacketEvent retry_event(p);
+            DataBus::publish(PKT_RETRY_EVENT, retry_event);
+            flow->flags.retry_queued = false;
+        }
+        else if ( flow->flags.retry_queued and ( !p->is_cooked() or p->is_defrag() ) )
+        {
+            RetryPacketEvent retry_event(p);
+            DataBus::publish(PKT_RETRY_EVENT, retry_event);
+            if ( !retry_event.is_still_pending() )
+                flow->flags.retry_queued = false;
+        }
     }
     else
     {
