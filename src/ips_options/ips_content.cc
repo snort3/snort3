@@ -353,8 +353,11 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
 
     if ( found >= 0 )
     {
-        c.set_delta(c.get_delta() + found + cd->match_delta);
-        c.set_pos(pos + found + cd->pmd.pattern_size);
+        if ( !cd->pmd.is_negated() )
+        {
+            c.set_delta(c.get_delta() + found + cd->match_delta);
+            c.set_pos(pos + found + cd->pmd.pattern_size);
+        }
         return 1;
     }
 

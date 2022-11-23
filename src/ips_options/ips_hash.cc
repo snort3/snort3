@@ -183,7 +183,9 @@ int HashOption::match(Cursor& c)
 
     if ( !found )
     {
-        c.set_pos(pos + config->length);
+        if ( !config->negated )
+            c.set_pos(pos + config->length);
+
         return 1;
     }
 
