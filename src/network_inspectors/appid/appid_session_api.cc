@@ -252,10 +252,8 @@ bool AppIdSessionApi::is_appid_available(uint32_t stream_index) const
     if (service.get_id() == APP_ID_HTTP2 or service.get_id() == APP_ID_HTTP3)
         return (get_payload_app_id(stream_index) != APP_ID_NONE);
     else
-        return ( (service.get_id() != APP_ID_NONE or
-            payload.get_id() != APP_ID_NONE) and
-            (asd->is_tp_appid_available() or
-            asd->get_session_flags(APPID_SESSION_NO_TPI)) );
+        return (service.get_id() != APP_ID_NONE or
+            payload.get_id() != APP_ID_NONE);
 }
 
 const char* AppIdSessionApi::get_client_info(uint32_t stream_index) const
