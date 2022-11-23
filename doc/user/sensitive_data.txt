@@ -1,19 +1,19 @@
 The `sd_pattern` IPS option provides detection and filtering of Personally
-Identifiable Information (PII).  This information includes credit card
+Identifiable Information (PII). This information includes credit card
 numbers, U.S. Social Security numbers, phone numbers, and email addresses.
-A rich regular expression syntax is available for defining your own PII. 
+A rich regular expression syntax is available for defining your own PII.
 
 ==== Hyperscan
 
 The `sd_pattern` rule option is powered by the open source Hyperscan
-library from Intel.  It provides a regex grammar which is mostly PCRE
+library from Intel. It provides a regex grammar which is mostly PCRE
 compatible. To learn more about Hyperscan see
 https://intel.github.io/hyperscan/dev-reference/
 
 ==== Syntax 
 
 Snort provides `sd_pattern` as IPS rule option with no additional inspector
-overhead.  The Rule option takes the following syntax.
+overhead. The Rule option takes the following syntax.
 
     sd_pattern: "<pattern>"[, threshold <count>];
 
@@ -67,7 +67,7 @@ correctly formatted emails.
 ===== Threshold
 
 Threshold is an optional parameter allowing you to change built-in default
-value (default value is '1').  The following two instances are identical.
+value (default value is '1'). The following two instances are identical.
 The first will assume the default value of '1' the second declaration
 explicitly sets the threshold to '1'.
 
@@ -85,7 +85,7 @@ in a packet, you will not see an event.
 ===== Obfuscating built-in patterns
 
 Snort provides discreet logging for the built-in patterns "credit_card",
-"us_social", "us_social_nodashes", "us_phone" and "email". Enabling
+"us_social", "us_social_nodashes", "us_phone", and "email". Enabling
 `ips.obfuscate_pii` makes Snort obfuscate the suspect packet payload which
 was matched by the patterns. This configuration is enabled by default.
 
@@ -94,28 +94,75 @@ was matched by the patterns. This configuration is enabled by default.
         obfuscate_pii = true
     }
 
-==== Example
+==== Examples
 
-A complete Snort IPS rule
+Complete Snort IPS rules with built-in sensitive data patterns.
 
     alert tcp ( sid:1; msg:"Credit Card"; sd_pattern:"credit_card"; )
+    alert tcp ( sid:2; msg:"US Social Number"; sd_pattern:"us_social"; )
+    alert tcp ( sid:3; msg:"US Social Number No Dashes"; sd_pattern:"us_social_nodashes"; )
+    alert tcp ( sid:4; msg:"US Phone Number"; sd_pattern:"us_phone"; )
+    alert tcp ( sid:5; msg:"Email"; sd_pattern:"email"; )
 
-Logged output when running Snort in "cmg" alert format. 
+Let's try them on the next traffic.
 
-    02/25-21:19:05.125553 [**] [1:1:0] "Credit Card" [**] [Priority: 0] {TCP} 10.1.2.3:48620 -> 10.9.8.7:8
-    02:01:02:03:04:05 -> 02:09:08:07:06:05 type:0x800 len:0x46
-    10.1.2.3:48620 -> 10.9.8.7:8 TCP TTL:64 TOS:0x0 ID:14 IpLen:20 DgmLen:56
-    ***A**** Seq: 0xB2  Ack: 0x2  Win: 0x2000  TcpLen: 20
-    - - - raw[16] - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    58 58 58 58 58 58 58 58 58 58 58 58 39 32 39 34              XXXXXXXXXXXX9294
-    - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    33 34 38 30 31 32 37 34 33 35  37 34 35 38 30 20 20 20 20 20  348012743574580     
+    34 30 34 2D 35 30 2D 32 31 38  33 20 20 20 20 20 20 20 20 20  404-50-2183         
+    34 30 34 35 30 32 31 38 33 20  20 20 20 20 20 20 20 20 20 20  404502183           
+    31 2D 39 31 39 2D 36 36 33 2D  32 35 32 34 20 20 20 20 20 20  1-919-663-2524      
+    74 75 72 2E 63 61 6C 6C 69 65  40 67 6D 61 69 6C 2E 63 6F 6D  tur.callie@gmail.com
+
+Printout of alert_cmg logger for this would be obfuscated.
+
+    snort.raw[100]:
+    - - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+    58 58 58 58 58 58 58 58 58 58  58 34 35 38 30 20 20 20 20 20  XXXXXXXXXXX4580     
+    58 58 58 58 58 58 58 32 31 38  33 20 20 20 20 20 20 20 20 20  XXXXXXX2183         
+    58 58 58 58 58 32 31 38 33 20  20 20 20 20 20 20 20 20 20 20  XXXXX2183           
+    58 58 58 58 58 58 58 58 58 58  32 35 32 34 20 20 20 20 20 20  XXXXXXXXXX2524      
+    58 58 58 58 58 58 58 58 58 58  58 58 58 58 58 58 2E 63 6F 6D  XXXXXXXXXXXXXXXX.com
+    - - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+
+But obfuscation doesn't work for custom patterns.
+
+Example of a rule with a custom pattern.
+
+    alert tcp (sid: 6; sd_pattern:"\b\w+@ourdomain\.com\b"; msg: "Custom email")
+
+Traffic.
+
+    61 40 6F 75 72 64 6F 6D 61 69  6E 2E 63 6F 6D 20 20 20 20 20  a@ourdomain.com     
+    61 61 40 6F 75 72 64 6F 6D 61  69 6E 2E 63 6F 6D              aa@ourdomain.com
+
+Printout of alert_cmg logger for this would not be obfuscated.
+
+    01/01-02:00:00.000004 [**] [1:6:0] "Custom email" [**] [Priority: 0] {TCP} 10.1.2.3:48620 -> 10.9.8.7:80
+    02:01:02:03:04:05 -> 02:09:08:07:06:05 type:0x800 len:0x5A
+    10.1.2.3:48620 -> 10.9.8.7:80 TCP TTL:64 TOS:0x0 ID:3 IpLen:20 DgmLen:76
+    ******** Seq: 0x2  Ack: 0x0  Win: 0x2000  TcpLen: 20
+
+    snort.raw[36]:
+    - - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+    61 40 6F 75 72 64 6F 6D 61 69  6E 2E 63 6F 6D 20 20 20 20 20  a@ourdomain.com     
+    61 61 40 6F 75 72 64 6F 6D 61  69 6E 2E 63 6F 6D              aa@ourdomain.com
+    - - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+
+Threshold values are applied per packet.
+
+So, traffic like this.
+
+    Packet 1 payload:"a@ourdomain.com"
+    Packet 2 payload:"aa@ourdomain.com"
+
+Doesn't match a rule like this.
+
+    alert tcp (sid: 7; sd_pattern:"\b\w+@ourdomain\.com\b", threshold 2; msg: "Custom email")
 
 ==== Caveats
 
-1. Snort currently requires setting the fast pattern engine to use
-"hyperscan" in order for `sd_pattern` ips option to function correctly.
-
-    search_engine = { search_method = 'hyperscan' }
+1. sd_pattern implementation relies on Hyperscan, regardless of the search engine specified
+in the config. So, Snort must be built and run with Hyperscan to have sd_pattern
+IPS option available.
 
 2. Log obfuscation is only applicable to CMG and Unified2 logging formats.
 
