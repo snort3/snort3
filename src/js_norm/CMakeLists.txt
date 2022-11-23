@@ -1,11 +1,10 @@
-FLEX_TARGET ( js_tokenizer
+FLEX ( js_tokenizer
     ${CMAKE_CURRENT_SOURCE_DIR}/js_tokenizer.l
     ${CMAKE_CURRENT_BINARY_DIR}/js_tokenizer.cc
-    COMPILE_FLAGS ${FLEX_FLAGS}
 )
 
 set ( JS_SOURCES
-    ${FLEX_js_tokenizer_OUTPUTS}
+    ${js_tokenizer_OUTPUTS}
     js_config.h
     js_enum.h
     js_identifier_ctx.cc
