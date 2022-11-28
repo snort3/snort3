@@ -37,13 +37,15 @@ public:
     Dce2Smb2RequestTracker(uint64_t file_id_v, uint64_t offset_v = 0)
         : fname(nullptr), fname_len(0), file_id(file_id_v), offset(offset_v)
     {
-        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET, "request tracker created\n");
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
+            "request tracker created\n");
     }
 
     Dce2Smb2RequestTracker(char* fname_v, uint16_t fname_len_v)
         : fname(fname_v), fname_len(fname_len_v), file_id(0), offset(0)
     {
-	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET, "request tracker created\n");
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
+            "request tracker created\n");
     }
 
     ~Dce2Smb2RequestTracker()
@@ -64,8 +66,9 @@ private:
     uint64_t offset;
 };
 
+using Dce2Smb2RequestTrackerPtr = std::shared_ptr<Dce2Smb2RequestTracker>;
 using Dce2Smb2RequestTrackerMap =
-    std::unordered_map<Smb2MessageKey, Dce2Smb2RequestTracker*, Smb2KeyHash>;
+        std::unordered_map<Smb2MessageKey, Dce2Smb2RequestTrackerPtr, Smb2KeyHash>;
 
 #endif
 

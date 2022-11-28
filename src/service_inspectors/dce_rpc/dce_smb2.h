@@ -333,11 +333,11 @@ class Dce2Smb2SessionTracker;
 
 using Dce2Smb2SessionTrackerPtr = std::shared_ptr<Dce2Smb2SessionTracker>;
 using Dce2Smb2SessionTrackerMap =
-    std::unordered_map<uint64_t, Dce2Smb2SessionTrackerPtr, std::hash<uint64_t> >;
+        std::unordered_map<uint64_t, Dce2Smb2SessionTrackerPtr, std::hash<uint64_t> >;
 
 using Dce2Smb2FileTrackerPtr = std::shared_ptr<Dce2Smb2FileTracker>;
 using Dce2Smb2FileTrackerMap =
-    std::unordered_map<uint64_t, Dce2Smb2FileTrackerPtr, std::hash<uint64_t> >;
+        std::unordered_map<uint64_t, Dce2Smb2FileTrackerPtr, std::hash<uint64_t> >;
 
 PADDING_GUARD_BEGIN
 struct Smb2SessionKey
@@ -485,14 +485,13 @@ public:
     Dce2Smb2SessionData(const snort::Packet*, const dce2SmbProtoConf* proto);
     ~Dce2Smb2SessionData() override;
     void process() override;
-    void remove_session(uint64_t, bool = false);
+    void remove_session(uint64_t);
     void handle_retransmit(FilePosition, FileVerdict) override { }
     void reset_matching_tcp_file_tracker(Dce2Smb2FileTrackerPtr);
     void set_reassembled_data(uint8_t*, uint16_t) override;
     uint32_t get_flow_key() { return flow_key; }
     void set_tcp_file_tracker(Dce2Smb2FileTrackerPtr file_tracker)
     {
-        std::lock_guard<std::mutex> guard(session_data_mutex);
         tcp_file_tracker = file_tracker;
     }
 
@@ -502,21 +501,21 @@ public:
     }
 
     Dce2Smb2SessionTrackerPtr find_session(uint64_t);
+    std::recursive_mutex session_data_mutex;
+    uint16_t vlan_id;
 
 private:
     void process_command(const Smb2Hdr*, const uint8_t*);
     Smb2SessionKey get_session_key(uint64_t);
     Dce2Smb2SessionTrackerPtr create_session(uint64_t);
-
     Dce2Smb2FileTrackerPtr tcp_file_tracker;
     uint32_t flow_key;
     Dce2Smb2SessionTrackerMap connected_sessions;
-    std::mutex session_data_mutex;
     std::mutex tcp_file_tracker_mutex;
 };
 
 using Dce2Smb2SessionDataMap =
-    std::unordered_map<uint32_t, Dce2Smb2SessionData*, std::hash<uint32_t> >;
+        std::unordered_map<uint32_t, Dce2Smb2SessionData*, std::hash<uint32_t> >;
 
 #endif  /* _DCE_SMB2_H_ */
 

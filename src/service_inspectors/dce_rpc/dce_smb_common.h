@@ -205,6 +205,7 @@ struct dce2SmbStats
     PegCount total_smb2_sessions;
     PegCount total_encrypted_sessions;
     PegCount total_mc_sessions;
+    PegCount ignore_dup_sessions;
 };
 
 enum DCE2_SmbVersion

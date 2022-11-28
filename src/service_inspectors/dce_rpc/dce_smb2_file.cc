@@ -31,21 +31,27 @@
 #include "dce_smb2.h"
 #include "dce_smb2_session.h"
 #include "dce_smb2_tree.h"
+#include "dce_smb2_session_cache.h"
+#include "flow/flow.h"
+#include <thread>
+#include "time/packet_time.h"
 
 #include <mutex>
 using namespace snort;
 
 #define UNKNOWN_FILE_SIZE  (~0)
 
-void Dce2Smb2FileTracker::accept_raw_data_from(Dce2Smb2SessionData* flow, uint64_t offset, Dce2Smb2FileTrackerPtr file_tracker)
+void Dce2Smb2FileTracker::accept_raw_data_from(Dce2Smb2SessionData* flow, uint64_t offset,
+    Dce2Smb2FileTrackerPtr file_tracker)
 {
     if (flow)
     {
+        std::lock_guard<std::recursive_mutex> guard(flow->session_data_mutex);
         uint32_t current_flow_key = flow->get_flow_key();
-        std::lock_guard<std::mutex> guard(flow_state_mutex);
+        std::lock_guard<std::mutex> guard1(flow_state_mutex);
         tcp_flow_state& current_flow_state = flow_state[current_flow_key];
-        if ( (current_flow_state.pdu_state == DCE2_SMB_PDU_STATE__RAW_DATA) and
-             (current_flow_state.file_offset == current_flow_state.max_offset))
+        if ( (current_flow_state.pdu_state == DCE2_SMB_PDU_STATE__RAW_DATA)and
+                (current_flow_state.file_offset == current_flow_state.max_offset))
         {
             current_flow_state.file_offset = offset;
         }
@@ -54,11 +60,12 @@ void Dce2Smb2FileTracker::accept_raw_data_from(Dce2Smb2SessionData* flow, uint64
         flow->set_tcp_file_tracker(file_tracker);
     }
 }
+
 void Dce2Smb2FileTracker::stop_accepting_raw_data_from(uint32_t current_flow_key)
 {
     std::lock_guard<std::mutex> guard(flow_state_mutex);
     tcp_flow_state& current_flow_state = flow_state[current_flow_key];
-    if(current_flow_state.file_offset == current_flow_state.max_offset)
+    if (current_flow_state.file_offset == current_flow_state.max_offset)
         current_flow_state.pdu_state = DCE2_SMB_PDU_STATE__COMMAND;
 }
 
@@ -71,14 +78,28 @@ inline void Dce2Smb2FileTracker::file_detect()
 std::pair<bool, Dce2Smb2SessionData*> Dce2Smb2FileTracker::update_processing_flow(
     Dce2Smb2SessionData* current_flow,Dce2Smb2SessionTrackerPtr session_tracker)
 {
-    std::lock_guard<std::mutex> guard(process_file_mutex);
     bool switched = false;
-    Dce2Smb2SessionData* processing_flow;
-    if (session_tracker)
-        processing_flow = session_tracker->get_flow(file_flow_key);
-    else
-        processing_flow = parent_tree->get_parent()->get_flow(file_flow_key);
-    
+    Dce2Smb2SessionData* processing_flow = nullptr;
+    std::lock_guard<std::recursive_mutex> guard1(session_tracker->attached_flows_mutex);
+    auto it_flow = session_tracker->attached_flows.find(file_flow_key);
+    if (it_flow != session_tracker->attached_flows.end())
+        processing_flow = (it_flow != session_tracker->attached_flows.end()) ? it_flow->second :
+            nullptr;
+    if (processing_flow)
+    {
+        if (session_tracker->vlan_id != processing_flow->vlan_id)
+            processing_flow = nullptr;
+        else
+        {
+            processing_flow->session_data_mutex.lock();
+            if (processing_flow->get_tcp_flow()->session_state & STREAM_STATE_CLOSED or
+                processing_flow->get_tcp_flow()->session_state & STREAM_STATE_RELEASING)
+            {
+                processing_flow->session_data_mutex.unlock();
+                return std::make_pair(switched, nullptr);
+            }
+        }
+    }
     if (!processing_flow)
     {
         switched = true;
@@ -87,13 +108,27 @@ std::pair<bool, Dce2Smb2SessionData*> Dce2Smb2FileTracker::update_processing_flo
         else
         {
             Flow* flow = DetectionEngine::get_current_packet()->flow;
-            Dce2SmbFlowData* current_flow_data = (Dce2SmbFlowData*)(flow->get_flow_data(Dce2SmbFlowData::inspector_id));
-            processing_flow = (Dce2Smb2SessionData*)current_flow_data->get_smb_session_data();
+            Dce2SmbFlowData* current_flow_data = (Dce2SmbFlowData*)(flow->get_flow_data(
+                Dce2SmbFlowData::inspector_id));
+            if (current_flow_data)
+                processing_flow = (Dce2Smb2SessionData*)current_flow_data->get_smb_session_data();
         }
-        file_flow_key = processing_flow->get_flow_key();
-        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, GET_CURRENT_PACKET, 
-            "updating the processing flow key to %u\n", file_flow_key);
+        if (processing_flow)
+        {
+            file_flow_key = processing_flow->get_flow_key();
+            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, GET_CURRENT_PACKET,
+                "updating the processing flow key to %u\n", file_flow_key);
+        }
     }
+    if (processing_flow and processing_flow->get_tcp_flow())
+        processing_flow->get_tcp_flow()->last_data_seen = packet_time();
+
+    if (processing_flow and processing_flow->get_tcp_flow())
+    {
+        processing_flow->get_tcp_flow()->last_data_seen = packet_time();
+    }
+    if (processing_flow)
+        processing_flow->session_data_mutex.unlock();
     return std::make_pair(switched, processing_flow);
 }
 
@@ -107,8 +142,8 @@ void Dce2Smb2FileTracker::set_info(char* file_name_v, uint16_t name_len_v, uint6
         file_name_hash = str_to_hash((uint8_t*)file_name, file_name_len);
     }
     file_size = size_v;
-    auto updated_flow = update_processing_flow();
-    Flow* flow = updated_flow.second->get_tcp_flow();
+    Packet* p = DetectionEngine::get_current_packet();
+    Flow* flow = p->flow;
     {
         std::lock_guard<std::mutex> guard(process_file_mutex);
         FileContext* file = get_smb_file_context(flow, file_name_hash, file_id, true);
@@ -121,7 +156,7 @@ void Dce2Smb2FileTracker::set_info(char* file_name_v, uint16_t name_len_v, uint6
             ignore = false;
             if (file->verdict == FILE_VERDICT_UNKNOWN)
             {
-                if ((file_name_v and name_len_v) or updated_flow.first)
+                if ((file_name_v and name_len_v))
                     file->set_file_name(file_name, file_name_len);
                 file->set_file_size(size_v ? size_v : UNKNOWN_FILE_SIZE);
             }
@@ -137,16 +172,30 @@ bool Dce2Smb2FileTracker::close(const uint32_t current_flow_key)
     if (!ignore and !file_size and file_offset)
     {
         file_size = file_offset;
-        Dce2Smb2SessionData* processing_flow = update_processing_flow().second;
-        Flow* flow = processing_flow->get_tcp_flow();
+        std::lock_guard<std::recursive_mutex> guard1(
+            get_parent()->get_parent()->attached_flows_mutex);
+        Dce2Smb2SessionData* current_flow;
+        Packet* p = DetectionEngine::get_current_packet();
+        Flow* flow = p->flow;
+        Dce2SmbFlowData* current_flow_data = (Dce2SmbFlowData*)(flow->get_flow_data(
+            Dce2SmbFlowData::inspector_id));
+        if (!current_flow_data)
+            return false;
+        current_flow = (Dce2Smb2SessionData*)current_flow_data->get_smb_session_data();
+        Dce2Smb2SessionTracker* sess = parent_tree->get_parent();
+        Dce2Smb2SessionTrackerPtr ses_ptr = smb2_session_cache.find_id(sess->get_key());
+        Dce2Smb2SessionData* processing_flow = update_processing_flow(current_flow,
+            ses_ptr).second;
+        if (!processing_flow)
+            return false;
+        flow = processing_flow->get_tcp_flow();
         {
             std::lock_guard<std::mutex> guard(process_file_mutex);
             FileContext* file = get_smb_file_context(flow, file_name_hash, file_id, false);
             if (file)
                 file->set_file_size(file_size);
         }
-        Dce2Smb2SessionTrackerPtr ses_ptr = processing_flow->find_session(session_id);
-        return (!process_data(current_flow_key, nullptr, 0,ses_ptr));
+        return (!process_data(current_flow_key, nullptr, 0, ses_ptr));
     }
     return true;
 }
@@ -159,65 +208,65 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
     current_flow_state.file_offset = offset;
     current_flow_state.max_offset = offset + max_offset;
     flow_state_mutex.unlock();
+    Dce2Smb2SessionTrackerPtr ses_ptr = nullptr;
     Dce2Smb2SessionTracker* sess = parent_tree->get_parent();
+    if (!sess)
+        return false;
+    ses_ptr = smb2_session_cache.find_id(sess->get_key());
+    if (ses_ptr.use_count() < 2)
+        return false;
     if (parent_tree->get_share_type() != SMB2_SHARE_TYPE_DISK)
     {
         Dce2Smb2SessionData* current_flow = nullptr;
-        if (sess)
-        {
-            parent_tree->get_parent()->set_do_not_delete(true);
-            current_flow = parent_tree->get_parent()->get_flow(current_flow_key);
-            if (!current_flow)
-            {
-                parent_tree->get_parent()->set_do_not_delete(false);
-                return false;
-            }
-        }
-        else
-        {
+        if (ses_ptr.use_count() < 2)
             return false;
-        }
-
+        Packet* p = DetectionEngine::get_current_packet();
+        Flow* flow = p->flow;
+        Dce2SmbFlowData* current_flow_data = (Dce2SmbFlowData*)(flow->get_flow_data(
+            Dce2SmbFlowData::inspector_id));
+        if (!current_flow_data)
+            return false;
+        current_flow = (Dce2Smb2SessionData*)current_flow_data->get_smb_session_data();
+        if (!current_flow)
+            return false;
         if (data_size > UINT16_MAX)
         {
             data_size = UINT16_MAX;
         }
-        if (parent_tree->get_cotracker()) 
-	{
+        current_flow->session_data_mutex.lock();
+        if (current_flow->get_tcp_flow())
+            current_flow->get_tcp_flow()->last_data_seen = packet_time();
+
+        if (parent_tree->get_cotracker())
+        {
             sess->co_tracker_mutex.lock();
             DCE2_CoProcess(current_flow->get_dce2_session_data(), parent_tree->get_cotracker(),
                 file_data, data_size);
-            sess->co_tracker_mutex.unlock(); 
-	}
-        parent_tree->get_parent()->set_do_not_delete(false);
+            sess->co_tracker_mutex.unlock();
+        }
+        current_flow->session_data_mutex.unlock();
         return true;
     }
-    Dce2Smb2SessionData *current_flow = sess->get_flow(current_flow_key);
-    Dce2Smb2SessionTrackerPtr ses_ptr = current_flow->find_session(session_id);
-    return process_data(current_flow_key, file_data, data_size,ses_ptr);
+    return process_data(current_flow_key, file_data, data_size, ses_ptr);
 }
 
 bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const uint8_t* file_data,
     uint32_t data_size,Dce2Smb2SessionTrackerPtr session_tracker)
 {
-    Dce2Smb2SessionData *current_flow;
-    if (session_tracker)
-    {
-           session_tracker->set_do_not_delete(true);
-           current_flow = session_tracker->get_flow(current_flow_key); 
-    }
-    else 
-       return false;
-    
-    if (!current_flow) 
-    {
-       session_tracker->set_do_not_delete(false);
-       return true; 
-    }
-
+    if (!session_tracker or session_tracker.use_count() < 2)
+        return false;
+    std::lock_guard<std::recursive_mutex> guard1(session_tracker->attached_flows_mutex);
+    Dce2Smb2SessionData* current_flow;
+    Packet* p = DetectionEngine::get_current_packet();
+    Flow* flow = p->flow;
+    Dce2SmbFlowData* current_flow_data = (Dce2SmbFlowData*)(flow->get_flow_data(
+        Dce2SmbFlowData::inspector_id));
+    if (!current_flow_data)
+        return false;
+    current_flow = (Dce2Smb2SessionData*)current_flow_data->get_smb_session_data();
     int64_t file_detection_depth = current_flow->get_smb_file_depth();
     int64_t detection_size = 0;
-    Packet* p = DetectionEngine::get_current_packet();
+
     flow_state_mutex.lock();
     uint64_t file_offset = flow_state[current_flow_key].file_offset;
     flow_state_mutex.unlock();
@@ -235,7 +284,7 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
     if (detection_size)
     {
         set_file_data(file_data, (detection_size > UINT16_MAX) ?
-            UINT16_MAX : (uint16_t)detection_size, file_id);
+            UINT16_MAX : (uint16_t)detection_size);
         file_detect();
     }
 
@@ -243,49 +292,68 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
     {
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, p,
             "file name not set , ignored\n");
-        session_tracker->set_do_not_delete(false);
         return true;
     }
 
     if (file_size and file_offset > file_size)
     {
-	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, p, "file_process: bad offset\n");
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, p,
+            "file_process: bad offset\n");
         dce_alert(GID_DCE2, DCE2_SMB_INVALID_FILE_OFFSET, (dce2CommonStats*)
             &dce2_smb_stats, *(current_flow->get_dce2_session_data()));
     }
 
+    if (session_tracker.use_count() < 2)
+        return false;
     auto updated_flow = update_processing_flow(current_flow, session_tracker);
     Dce2Smb2SessionData* processing_flow = updated_flow.second;
-
-    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,"file_process fid %" PRIu64 " data_size %"
-        PRIu32 " offset %" PRIu64 "\n", file_id, data_size, file_offset);
+    if (!processing_flow)
+        return false;
+    if ( !processing_flow->get_tcp_flow())
+        return false;
+    processing_flow->session_data_mutex.lock();
+    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,
+        "file_process fid %" PRIu64 " data_size %" PRIu32 " offset %" PRIu64 "\n", file_id,
+        data_size, file_offset);
     {
-        std::lock_guard<std::mutex> guard(process_file_mutex);
+        if (processing_flow->get_tcp_flow()->session_state & STREAM_STATE_CLOSED or
+            processing_flow->get_tcp_flow()->session_state & STREAM_STATE_RELEASING)
+        {
+            processing_flow->session_data_mutex.unlock();
+            return true;
+        }
         FileFlows* file_flows = FileFlows::get_file_flows(processing_flow->get_tcp_flow());
 
         if (!file_flows)
         {
-            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, p, "file_flows not found\n");
-            session_tracker->set_do_not_delete(false);
+            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, p,
+                "file_flows not found\n");
+            processing_flow->session_data_mutex.unlock();
             return true;
         }
 
-        if (updated_flow.first)
         {
-            // update the new file context in case of flow switch
-            FileContext* file = file_flows->get_file_context(file_name_hash, true, file_id);
-            file->set_file_name(file_name, file_name_len);
-            file->set_file_size(file_size.load() ? file_size.load() : UNKNOWN_FILE_SIZE);
-        }
-        FileFlows::get_file_flows(p->flow);
-        bool continue_processing = file_flows->file_process(p, file_name_hash, file_data, data_size,
-           file_offset, direction, file_id);
-    
-        if (!continue_processing)
-        {
-	        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p, "file_process completed\n");
-            session_tracker->set_do_not_delete(false);
-            return false;
+            std::lock_guard<std::mutex> guard(file_flows->file_flow_context_mutex);
+
+            if (updated_flow.first)
+            {
+                // update the new file context in case of flow switch
+                FileContext* file = file_flows->get_file_context(file_name_hash, true, file_id);
+                file->set_file_name(file_name, file_name_len);
+                file->set_file_size(file_size.load() ? file_size.load() : UNKNOWN_FILE_SIZE);
+            }
+            FileFlows::get_file_flows(p->flow);
+            bool continue_processing = file_flows->file_process(p, file_name_hash, file_data,
+                data_size,
+                file_offset, direction, file_id);
+
+            if (!continue_processing)
+            {
+                SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,
+                    "file_process completed\n");
+                processing_flow->session_data_mutex.unlock();
+                return false;
+            }
         }
     }
 
@@ -293,7 +361,7 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
     flow_state_mutex.lock();
     flow_state[current_flow_key].file_offset = file_offset;
     flow_state_mutex.unlock();
-    session_tracker->set_do_not_delete(false);
+    processing_flow->session_data_mutex.unlock();
     return true;
 }
 

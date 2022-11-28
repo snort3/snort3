@@ -56,6 +56,7 @@ public:
 
     FileFlows(Flow* f, FileInspect* inspect) : FlowData(file_flow_data_id, inspect), flow(f) { }
     ~FileFlows() override;
+    std::mutex file_flow_context_mutex;
     static void init()
     { file_flow_data_id = FlowData::create_flow_data_id(); }
 

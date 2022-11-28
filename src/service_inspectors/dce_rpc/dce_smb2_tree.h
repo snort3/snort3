@@ -29,6 +29,8 @@
 #include "dce_smb2_file.h"
 #include "dce_smb2_request.h"
 
+using Dce2Smb2RequestTrackerPtr = std::shared_ptr<Dce2Smb2RequestTracker>;
+
 uint64_t Smb2Mid(const Smb2Hdr* hdr);
 
 class Dce2Smb2SessionTracker;
@@ -43,8 +45,8 @@ public:
     Dce2Smb2TreeTracker(uint32_t tree_id_v, Dce2Smb2SessionTracker* p_session, uint8_t sharetype)
         : tree_id(tree_id_v), share_type(sharetype), parent_session(p_session)
     {
-	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
-	        GET_CURRENT_PACKET, "tree tracker %" PRIu32 " created\n", tree_id);
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+            GET_CURRENT_PACKET, "tree tracker %" PRIu32 " created\n", tree_id);
         if (share_type != SMB2_SHARE_TYPE_DISK)
         {
             co_tracker = (DCE2_CoTracker*)snort_calloc(sizeof(DCE2_CoTracker));
@@ -62,7 +64,7 @@ public:
     void close_file(uint64_t, bool);
     void close_all_files();
     Dce2Smb2FileTrackerPtr find_file(uint64_t);
-    Dce2Smb2RequestTracker* find_request(const uint64_t, const uint32_t);
+    Dce2Smb2RequestTrackerPtr find_request(const uint64_t, const uint32_t);
     void process(uint16_t, uint8_t, const Smb2Hdr*, const uint8_t*, const uint32_t);
     Dce2Smb2SessionTracker* get_parent() { return parent_session; }
     DCE2_CoTracker* get_cotracker() { return co_tracker; }
@@ -81,9 +83,9 @@ private:
     void process_write_request(const uint64_t, const uint32_t, const Smb2Hdr*, const uint8_t*);
     uint64_t get_durable_file_id(const Smb2CreateRequestHdr*, const uint8_t*);
     bool remove_request(const uint64_t, const uint32_t);
-    void process_ioctl_command(const uint8_t, const uint32_t, const Smb2Hdr*, const uint8_t*);
+    void process_ioctl_command(const uint8_t, const Smb2Hdr*, const uint8_t*);
     bool store_request(const uint64_t message_id, const uint32_t current_flow_key,
-        Dce2Smb2RequestTracker* request)
+        Dce2Smb2RequestTrackerPtr request)
     {
         Smb2MessageKey message_key = { message_id, current_flow_key, 0 };
         std::lock_guard<std::mutex> guard(tree_tracker_mutex);
@@ -101,7 +103,7 @@ private:
 
 using Dce2Smb2TreeTrackerPtr = std::shared_ptr<Dce2Smb2TreeTracker>;
 using Dce2Smb2TreeTrackerMap =
-    std::unordered_map<uint32_t, Dce2Smb2TreeTrackerPtr, std::hash<uint32_t> >;
+        std::unordered_map<uint32_t, Dce2Smb2TreeTrackerPtr, std::hash<uint32_t> >;
 
 #endif
 

@@ -161,12 +161,23 @@ DCE2_SsnData* get_dce2_session_data(snort::Flow* flow)
 inline FileContext* get_smb_file_context(const Packet* p)
 {
     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
-    return file_flows ? file_flows->get_current_file_context() : nullptr;
+    if (file_flows)
+    {
+        std::lock_guard<std::mutex> guard(file_flows->file_flow_context_mutex);
+        return file_flows->get_current_file_context();
+    }
+    else
+        return nullptr;
 }
 
 FileContext* get_smb_file_context(Flow* flow, uint64_t file_id,
     uint64_t multi_file_processing_id, bool to_create)
 {
+    if (!flow)
+    {
+        dce2_smb_stats.v2_inv_file_ctx_err++;
+        return nullptr;
+    }
     FileFlows* file_flows = FileFlows::get_file_flows(flow);
 
     if ( !file_flows )
@@ -175,6 +186,7 @@ FileContext* get_smb_file_context(Flow* flow, uint64_t file_id,
         return nullptr;
     }
 
+    std::lock_guard<std::mutex> guard(file_flows->file_flow_context_mutex);
     return file_flows->get_file_context(file_id, to_create, multi_file_processing_id);
 }
 

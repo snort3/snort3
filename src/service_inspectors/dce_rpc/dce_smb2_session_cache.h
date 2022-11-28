@@ -26,11 +26,10 @@
 #include "hash/lru_cache_shared.h"
 
 #include "dce_smb2_session.h"
-
 #define SMB_AVG_FILES_PER_SESSION 5
 
 template<typename Key, typename Value, typename Hash, typename Eq = std::equal_to<Key>,
-    typename Purgatory = std::vector<std::shared_ptr<Value> > >
+typename Purgatory = std::vector<std::shared_ptr<Value> > >
 class Dce2Smb2SharedCache : public LruCacheShared<Key, Value, Hash, Eq, Purgatory>
 {
 public:
@@ -48,20 +47,22 @@ public:
         return session;
     }
 
-    Data find_session(Key key, Dce2Smb2SessionData* ssd)
+    Data find_session(Key key)
     {
         Data session = this->find(key);
-        if (session)
-            session->attach_flow(ssd->get_flow_key(), ssd);
         return session;
     }
 
     Data find_else_create_session(Key& key, Dce2Smb2SessionData* ssd)
     {
         Data new_session = Data(new Value(key));
-        Data session = this->find_else_insert(key, new_session, nullptr);
-        session->attach_flow(ssd->get_flow_key(), ssd);
-        return session;
+        Data session = this->find_else_insert(key, new_session, nullptr,false);
+        if (new_session == session)
+        {
+            session->attach_flow(ssd->get_flow_key(), ssd);
+            return session;
+        }
+        return nullptr;
     }
 
     size_t mem_size() override
@@ -131,14 +132,12 @@ private:
         {
             assert(current_size >= sizeof(*value_ptr) );
             current_size -= sizeof(*value_ptr);
-            //This is going down, remove references from flow here
-            value_ptr->unlink();
         }
     }
 };
 
 using Dce2Smb2SessionCache =
-    Dce2Smb2SharedCache<Smb2SessionKey, Dce2Smb2SessionTracker, Smb2KeyHash>;
+        Dce2Smb2SharedCache<Smb2SessionKey, Dce2Smb2SessionTracker, Smb2KeyHash>;
 
 extern Dce2Smb2SessionCache smb2_session_cache;
 
