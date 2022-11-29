@@ -504,11 +504,46 @@ HttpJSNorm* HttpMsgBody::acquire_js_ctx()
         js_ctx = new HttpInlineJSNorm(jsn_config, trans_num, params->js_norm_param.mpse_otag,
             params->js_norm_param.mpse_attr);
         break;
+
+    case CT_APPLICATION_PDF:
+        js_ctx = new HttpPDFJSNorm(jsn_config, trans_num);
+        break;
+
+    case CT_APPLICATION_OCTET_STREAM:
+        js_ctx = first_body and HttpPDFJSNorm::is_pdf(decompressed_file_body.start(), decompressed_file_body.length()) ?
+            new HttpPDFJSNorm(jsn_config, trans_num) : nullptr;
+        break;
     }
 
     session_data->js_ctx[source_id] = js_ctx;
-
     return js_ctx;
+}
+
+HttpJSNorm* HttpMsgBody::acquire_js_ctx_mime()
+{
+    HttpJSNorm* js_ctx = session_data->js_ctx_mime[source_id];
+
+    if (js_ctx)
+    {
+        if (js_ctx->get_trans_num() == trans_num)
+            return js_ctx;
+
+        delete js_ctx;
+        js_ctx = nullptr;
+    }
+
+    JSNormConfig* jsn_config = get_inspection_policy()->jsn_config;
+    js_ctx = HttpPDFJSNorm::is_pdf(decompressed_file_body.start(), decompressed_file_body.length()) ?
+        new HttpPDFJSNorm(jsn_config, trans_num) : nullptr;
+
+    session_data->js_ctx_mime[source_id] = js_ctx;
+    return js_ctx;
+}
+
+void HttpMsgBody::clear_js_ctx_mime()
+{
+    delete session_data->js_ctx_mime[source_id];
+    session_data->js_ctx_mime[source_id] = nullptr;
 }
 
 void HttpMsgBody::do_file_processing(const Field& file_data)
@@ -582,19 +617,37 @@ bool HttpMsgBody::run_detection(snort::Packet* p)
         return false;
     if ((mime_bufs != nullptr) && !mime_bufs->empty())
     {
+        HttpJSNorm* js_ctx_tmp = nullptr;
         auto mb = mime_bufs->cbegin();
+        uint32_t mime_bufs_size = mime_bufs->size();
+
         for (uint32_t count = 0; (count < params->max_mime_attach) && (mb != mime_bufs->cend());
             ++count, ++mb)
         {
+            bool is_last_attachment = ((count + 1 == mime_bufs_size) ||
+                (count + 1 == params->max_mime_attach));
             const uint64_t idx = get_header(source_id)->get_multi_file_processing_id();
             set_file_data(mb->file.start(), mb->file.length(), idx,
                 count or mb->file.is_accumulated(),
                 std::next(mb) != mime_bufs->end() or last_attachment_complete);
             if (mb->vba.length() > 0)
                 ole_data.set(mb->vba.length(), mb->vba.start());
+            decompressed_file_body.reset();
+            decompressed_file_body.set(mb->file.length(), mb->file.start());
+
+            js_ctx_tmp = session_data->js_ctx[source_id];
+            session_data->js_ctx[source_id] = acquire_js_ctx_mime();
+
             DetectionEngine::detect(p);
+
+            if (!is_last_attachment || last_attachment_complete)
+                clear_js_ctx_mime();
+
+            session_data->js_ctx[source_id] = js_ctx_tmp;
+
             ole_data.reset();
             decompressed_vba_data.reset();
+            decompressed_file_body.reset();
         }
         if (mb != mime_bufs->cend())
         {

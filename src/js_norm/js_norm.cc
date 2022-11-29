@@ -23,9 +23,11 @@
 
 #include "js_norm.h"
 
+#include "log/messages.h"
+#include "trace/trace_api.h"
+
 #include "js_identifier_ctx.h"
 #include "js_normalizer.h"
-
 #include "js_norm_module.h"
 
 using namespace jsn;
@@ -110,13 +112,20 @@ void JSNorm::normalize(const void* in_data, size_t in_len, const void*& data, si
     }
     pdu_cnt = 0;
 
+    const Packet* packet = DetectionEngine::get_current_packet();
     src_ptr = (const uint8_t*)in_data;
     src_end = src_ptr + in_len;
 
     while (alive and pre_proc())
     {
+        trace_logf(3, js_trace, TRACE_DUMP, packet,
+            "original[%zu]: %.*s\n", src_end - src_ptr, (int)(src_end - src_ptr), src_ptr);
+
         auto ret = jsn_ctx->normalize((const char*)src_ptr, src_end - src_ptr, ext_script_type);
         const uint8_t* next = (const uint8_t*)jsn_ctx->get_src_next();
+
+        trace_logf(3, js_trace, TRACE_PROC, packet,
+            "normalizer returned with %d '%s'\n", ret, jsn::ret2str(ret));
 
         JSNormModule::increment_peg_counts(PEG_BYTES, next - src_ptr);
         src_ptr = next;

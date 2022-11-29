@@ -168,6 +168,8 @@ const StrCode HttpMsgHeadShared::content_code_list[] =
 
 const StrCode HttpMsgHeadShared::content_type_list[] =
 {
+    { CT_APPLICATION_PDF,          "application/pdf" },
+    { CT_APPLICATION_OCTET_STREAM, "application/octet-stream" },
     { CT_APPLICATION_JAVASCRIPT,   "application/javascript" },
     { CT_APPLICATION_ECMASCRIPT,   "application/ecmascript" },
     { CT_APPLICATION_X_JAVASCRIPT, "application/x-javascript" },
@@ -383,6 +385,7 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "total_bytes", "total HTTP data bytes inspected" },
     { CountType::SUM, "js_inline_scripts", "total number of inline JavaScripts processed" },
     { CountType::SUM, "js_external_scripts", "total number of external JavaScripts processed" },
+    { CountType::SUM, "js_pdf_scripts", "total number of PDF JavaScripts processed" },
     { CountType::SUM, "skip_mime_attach", "total number of HTTP requests with too many MIME attachments to inspect" },
     { CountType::END, nullptr, nullptr }
 };

@@ -1,9 +1,15 @@
+FLEX ( pdf_tokenizer
+    ${CMAKE_CURRENT_SOURCE_DIR}/pdf_tokenizer.l
+    ${CMAKE_CURRENT_BINARY_DIR}/pdf_tokenizer.cc
+)
+
 FLEX ( js_tokenizer
     ${CMAKE_CURRENT_SOURCE_DIR}/js_tokenizer.l
     ${CMAKE_CURRENT_BINARY_DIR}/js_tokenizer.cc
 )
 
 set ( JS_SOURCES
+    ${pdf_tokenizer_OUTPUTS}
     ${js_tokenizer_OUTPUTS}
     js_config.h
     js_enum.h
@@ -16,6 +22,7 @@ set ( JS_SOURCES
     js_normalizer.cc
     js_normalizer.h
     js_tokenizer.h
+    pdf_tokenizer.h
 )
 
 add_library(js_norm OBJECT ${JS_SOURCES})

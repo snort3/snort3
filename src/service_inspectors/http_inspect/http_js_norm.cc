@@ -381,17 +381,11 @@ bool HttpInlineJSNorm::pre_proc()
     ext_script_type = false;
     output_size = jsn_ctx->script_size();
 
-    trace_logf(3, js_trace, TRACE_DUMP, packet,
-        "original[%zu]: %.*s\n", src_end - src_ptr, (int)(src_end - src_ptr), src_ptr);
-
     return true;
 }
 
 bool HttpInlineJSNorm::post_proc(int ret)
 {
-    trace_logf(3, js_trace, TRACE_PROC, DetectionEngine::get_current_packet(),
-        "normalizer returned with %d '%s'\n", ret, jsn::ret2str(ret));
-
     assert(http_events);
     assert(infractions);
 
@@ -431,16 +425,63 @@ bool HttpExternalJSNorm::pre_proc()
             "script continues\n");
     }
 
-    trace_logf(3, js_trace, TRACE_DUMP, packet,
-        "original[%zu]: %.*s\n", src_end - src_ptr, (int)(src_end - src_ptr), src_ptr);
-
     return true;
 }
 
 bool HttpExternalJSNorm::post_proc(int ret)
 {
-    trace_logf(3, js_trace, TRACE_PROC, DetectionEngine::get_current_packet(),
-        "normalizer returned with %d '%s'\n", ret, jsn::ret2str(ret));
+    script_continue = ret == (int)jsn::JSTokenizer::SCRIPT_CONTINUE;
+
+    return JSNorm::post_proc(ret);
+}
+
+bool HttpPDFJSNorm::pre_proc()
+{
+    if (src_ptr >= src_end)
+        return false;
+
+    const Packet* packet = DetectionEngine::get_current_packet();
+
+    if (!ext_script_type)
+    {
+        HttpModule::increment_peg_counts(PEG_JS_PDF);
+        trace_logf(1, js_trace, TRACE_PROC, packet,
+            "PDF starts\n");
+        ext_script_type = true;
+    }
+    else
+    {
+        trace_logf(2, js_trace, TRACE_PROC, packet,
+            "PDF continues\n");
+    }
+
+    // an input stream should not write to its buffer
+    pdf_in.rdbuf()->pubsetbuf(const_cast<char*>((const char*)src_ptr), src_end - src_ptr);
+    pdf_out.clear();
+    delete[] buf_pdf_out.take_data();
+
+    auto r = extractor.process();
+
+    if (r != PDFTokenizer::PDFRet::EOS)
+    {
+        trace_logf(2, js_trace, TRACE_PROC, DetectionEngine::get_current_packet(),
+            "pdf processing failed: %d\n", (int)r);
+        return false;
+    }
+
+    src_ptr = (const uint8_t*)buf_pdf_out.data();
+    src_end = src_ptr + buf_pdf_out.data_len();
+
+    // script object not found
+    if (!src_ptr)
+        return false;
+
+    return true;
+}
+
+bool HttpPDFJSNorm::post_proc(int ret)
+{
+    src_ptr = src_end; // one time per PDU, even if JS Normalizer has not finished
 
     script_continue = ret == (int)jsn::JSTokenizer::SCRIPT_CONTINUE;
 

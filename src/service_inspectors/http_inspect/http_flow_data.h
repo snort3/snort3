@@ -208,6 +208,7 @@ private:
     void delete_pipeline();
 
     HttpJSNorm* js_ctx[2] = { nullptr, nullptr };
+    HttpJSNorm* js_ctx_mime[2] = { nullptr, nullptr };
     bool cutover_on_clear = false;
     bool ssl_search_abandoned = false;
 

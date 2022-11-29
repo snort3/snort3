@@ -22,9 +22,12 @@
 #define HTTP_JS_NORM_H
 
 #include <cstring>
+#include <FlexLexer.h>
 
 #include "js_norm/js_norm.h"
+#include "js_norm/pdf_tokenizer.h"
 #include "search_engines/search_tool.h"
+#include "utils/streambuf.h"
 
 #include "http_field.h"
 #include "http_flow_data.h"
@@ -86,6 +89,31 @@ public:
 protected:
     bool pre_proc() override;
     bool post_proc(int) override;
+};
+
+class HttpPDFJSNorm : public HttpJSNorm
+{
+public:
+    static bool is_pdf(const void* data, size_t len)
+    {
+        constexpr char magic[] = "%PDF-1.";
+        constexpr int magic_len = sizeof(magic) - 1;
+        return magic_len < len and !strncmp((const char*)data, magic, magic_len);
+    }
+
+    HttpPDFJSNorm(JSNormConfig* jsn_config, uint64_t tid) :
+        HttpJSNorm(jsn_config), pdf_out(&buf_pdf_out), extractor(pdf_in, pdf_out)
+    { trans_num = tid; }
+
+protected:
+    bool pre_proc() override;
+    bool post_proc(int) override;
+
+private:
+    snort::ostreambuf_infl buf_pdf_out;
+    std::istringstream pdf_in;
+    std::ostream pdf_out;
+    jsn::PDFTokenizer extractor;
 };
 
 #endif

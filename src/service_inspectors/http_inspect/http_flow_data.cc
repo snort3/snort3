@@ -116,6 +116,7 @@ HttpFlowData::~HttpFlowData()
         if (fd_state[k] != nullptr)
             File_Decomp_StopFree(fd_state[k]);
         delete js_ctx[k];
+        delete js_ctx_mime[k];
     }
 
     delete_pipeline();

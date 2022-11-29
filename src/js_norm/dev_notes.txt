@@ -12,7 +12,7 @@ So, the number of unique identifiers available is 65536 names per transaction.
 If Normalizer overruns the configured limit, built-in alert is generated.
 
 A config option to set the limit manually:
- * js_norm.identifier_depth.
+ * js_norm.identifier_depth
 
 Identifiers from the ident_ignore list will be placed as is, without substitution. Starting with 
 the listed identifier, any chain of dot accessors, brackets and function calls will be kept
@@ -129,3 +129,12 @@ Verbosity levels:
 4. Temporary buffer (debug build only)
 5. Matched token (debug build only)
 6. Identifier substitution (debug build only)
+
+PDF parser follows "PDF 32000-1:2008 First Edition 2008-7-1 Document
+management Portable document format Part 1: PDF 1.7".
+Known limitations:
+* Nested dictionaries are not fully supported. Properties of the last object
+are tracked. Once the nested object ends, it clears all info about the object
+type.
+* Nested dictionaries are not allowed in JavaScript-type dictionary.
+* Stream objects are ignored.

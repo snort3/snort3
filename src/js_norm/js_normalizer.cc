@@ -24,6 +24,15 @@
 #include "js_normalizer.h"
 
 #include "js_norm/js_enum.h"
+#include "log/messages.h"
+#include "trace/trace_api.h"
+
+namespace snort
+{
+class Trace;
+}
+
+extern THREAD_LOCAL const snort::Trace* js_trace;
 
 #define BUFF_EXP_FACTOR 1.3
 

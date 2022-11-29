@@ -3,6 +3,11 @@ FLEX ( js_tokenizer
     ${CMAKE_CURRENT_BINARY_DIR}/../js_tokenizer.cc
 )
 
+FLEX ( pdf_tokenizer
+    ${CMAKE_CURRENT_SOURCE_DIR}/../pdf_tokenizer.l
+    ${CMAKE_CURRENT_BINARY_DIR}/../pdf_tokenizer.cc
+)
+
 add_catch_test( js_normalizer_test
     SOURCES
         ${js_tokenizer_OUTPUTS}
@@ -66,5 +71,11 @@ add_catch_test( jsn_test
         ../js_norm.cc
         ../js_normalizer.cc
         ${CMAKE_SOURCE_DIR}/src/utils/streambuf.cc
+        js_test_stubs.cc
+)
+
+add_catch_test( pdf_tokenizer_test
+    SOURCES
+        ${pdf_tokenizer_OUTPUTS}
         js_test_stubs.cc
 )

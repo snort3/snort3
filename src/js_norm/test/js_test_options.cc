@@ -23,6 +23,8 @@
 
 #include "js_test_options.h"
 
+#include <assert.h>
+
 Config::Config(const Config& other) : type(other.type)
 {
     switch (other.type)

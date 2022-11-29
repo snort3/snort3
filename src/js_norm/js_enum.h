@@ -30,7 +30,9 @@ static constexpr unsigned js_gid = 154;
 enum
 {
     TRACE_PROC = 0,
-    TRACE_DUMP
+    TRACE_DUMP,
+    TRACE_PDF_PROC,
+    TRACE_PDF_DUMP
 };
 
 // This enum must be synchronized with JSNormModule::peg_names[] in js_norm_module.cc

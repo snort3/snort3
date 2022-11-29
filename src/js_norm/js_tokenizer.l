@@ -20,6 +20,7 @@
 
 %option c++
 %option yyclass="JSTokenizer"
+%option prefix="js"
 %option align full 8bit batch never-interactive
 %option noinput nounput noyywrap
 %option noyy_push_state noyy_pop_state noyy_top_state
@@ -37,7 +38,11 @@
 #include "js_norm/js_enum.h"
 #include "js_norm/js_identifier_ctx.h"
 #include "js_norm/js_tokenizer.h"
+#include "log/messages.h"
+#include "trace/trace_api.h"
 #include "utils/util_cstring.h"
+
+extern THREAD_LOCAL const snort::Trace* js_trace;
 
 using namespace jsn;
 

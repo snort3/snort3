@@ -37,4 +37,5 @@ uint8_t TraceApi::get_constraints_generation() { return 0; }
 void TraceApi::filter(const Packet&) { }
 
 int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }
+Packet* DetectionEngine::get_current_packet() { return nullptr; }
 }

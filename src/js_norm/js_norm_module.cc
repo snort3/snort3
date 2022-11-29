@@ -79,8 +79,12 @@ const Parameter JSNormModule::params[] =
 
 static const TraceOption trace_options[] =
 {
-    { "proc",  TRACE_PROC,  "enable processing logging" },
-    { "dump",  TRACE_DUMP,  "enable data logging" },
+    { "proc", TRACE_PROC, "enable processing logging" },
+    { "dump", TRACE_DUMP, "enable data logging" },
+#ifdef DEBUG_MSGS
+    { "pdf_proc", TRACE_PDF_PROC, "enable processing logging for PDF extractor" },
+    { "pdf_dump", TRACE_PDF_DUMP, "enable data logging for PDF extractor" },
+#endif
     { nullptr, 0, nullptr }
 };
 

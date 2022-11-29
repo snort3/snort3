@@ -25,11 +25,6 @@
 #include <stack>
 #include <vector>
 
-#include "log/messages.h"
-#include "trace/trace_api.h"
-
-extern THREAD_LOCAL const snort::Trace* js_trace;
-
 // The longest pattern has 9 characters " < / s c r i p t > ",
 // 8 of them can reside in 1st chunk
 // Each character in the identifier forms its own group (pattern matching case),
