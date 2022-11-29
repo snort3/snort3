@@ -46,6 +46,20 @@ using namespace jsn;
 
 extern THREAD_LOCAL const snort::Trace* js_trace;
 
+static HttpInfractions decode_infs;
+
+static void init_decode_infs()
+{
+    decode_infs += INF_UNKNOWN_ENCODING;
+    decode_infs += INF_UNSUPPORTED_ENCODING;
+    decode_infs += INF_STACKED_ENCODINGS;
+    decode_infs += INF_CONTENT_ENCODING_CHUNKED;
+    decode_infs += INF_GZIP_FAILURE;
+    decode_infs += INF_GZIP_OVERRUN;
+}
+
+static int _init_decode_infs __attribute__((unused)) = (static_cast<void>(init_decode_infs()), 0);
+
 HttpMsgBody::HttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,
     HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
     const HttpParaList* params_) :
@@ -767,6 +781,14 @@ const Field& HttpMsgBody::get_norm_js_data()
     if (norm_js_data.length() != STAT_NOT_COMPUTE)
         return norm_js_data;
 
+    auto infractions = this->transaction->get_infractions(source_id);
+
+    if (*infractions & decode_infs)
+    {
+        norm_js_data.set(STAT_NO_SOURCE);
+        return norm_js_data;
+    }
+
     if (decompressed_file_body.length() <= 0)
     {
         norm_js_data.set(STAT_NO_SOURCE);
@@ -785,7 +807,7 @@ const Field& HttpMsgBody::get_norm_js_data()
     size_t dst_len = HttpCommon::STAT_NOT_PRESENT;
     auto back = !session_data->partial_flush[source_id];
 
-    jsn->link(decompressed_file_body.start(), session_data->events[source_id], transaction->get_infractions(source_id));
+    jsn->link(decompressed_file_body.start(), session_data->events[source_id], infractions);
     jsn->normalize(decompressed_file_body.start(), decompressed_file_body.length(), dst, dst_len);
 
     debug_logf(4, js_trace, TRACE_PROC, DetectionEngine::get_current_packet(),

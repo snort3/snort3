@@ -322,9 +322,6 @@ bool HttpInlineJSNorm::pre_proc()
     assert(http_events);
     assert(infractions);
 
-    if ((*infractions & INF_UNKNOWN_ENCODING) or (*infractions & INF_UNSUPPORTED_ENCODING))
-        return false;
-
     if (src_ptr >= src_end)
         return false;
 
