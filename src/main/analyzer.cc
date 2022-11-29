@@ -236,7 +236,7 @@ static DAQ_Verdict distill_verdict(Packet* p)
             daq_stats.internal_blacklist++;
             verdict = DAQ_VERDICT_BLOCK;
         }
-        else if ( p->context->conf->inline_mode() || act->packet_force_dropped() )
+        else if ( p->context->conf->ips_inline_mode() || act->packet_force_dropped() )
             verdict = DAQ_VERDICT_BLACKLIST;
         else
             verdict = DAQ_VERDICT_IGNORE;

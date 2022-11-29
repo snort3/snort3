@@ -52,7 +52,7 @@ static void replace_parse(const char* args, string& s)
 
 static bool replace_ok(const SnortConfig* sc)
 {
-    if ( sc->inline_mode() and SFDAQ::can_replace() )
+    if ( sc->ips_inline_mode() and SFDAQ::can_replace() )
         return true;
 
     static THREAD_LOCAL bool warned = false;

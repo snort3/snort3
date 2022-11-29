@@ -628,7 +628,7 @@ bool DetectionEngine::inspect(Packet* p)
 
         if ( p->ptrs.decode_flags & DECODE_ERR_FLAGS )
         {
-            if ( p->context->conf->inline_mode() and
+            if ( p->context->conf->ips_inline_mode() and
                 snort::get_network_policy()->checksum_drops(p->ptrs.decode_flags &
                     DECODE_ERR_CKSUM_ALL) )
             {

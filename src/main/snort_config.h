@@ -507,13 +507,16 @@ public:
     bool read_mode() const
     { return run_flags & RUN_FLAG__READ; }
 
-    bool inline_mode() const
+    bool ips_inline_mode() const
     { return get_ips_policy()->policy_mode == POLICY_MODE__INLINE; }
 
-    bool inline_test_mode() const
+    bool ips_inline_test_mode() const
     { return get_ips_policy()->policy_mode == POLICY_MODE__INLINE_TEST; }
 
-    bool passive_mode() const
+    bool nap_inline_mode() const
+    { return get_inspection_policy()->policy_mode == POLICY_MODE__INLINE; }
+
+    bool ips_passive_mode() const
     { return get_ips_policy()->policy_mode == POLICY_MODE__PASSIVE; }
 
     bool show_file_codes() const

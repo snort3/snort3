@@ -46,8 +46,11 @@ public:
     static void setup();
     static void clear();
 
-    bool is_policy_inline()
-    { return pkt->context->conf->inline_mode(); }
+    bool is_ips_policy_inline()
+    { return pkt->context->conf->ips_inline_mode(); }
+
+    bool is_nap_policy_inline()
+    { return pkt->context->conf->nap_inline_mode(); }
 
     uint32_t init_mss(uint16_t* value);
     uint32_t init_wscale(uint16_t* value);
