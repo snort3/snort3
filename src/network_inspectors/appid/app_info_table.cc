@@ -720,21 +720,22 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
             if (token)
                 entry->snort_protocol_id = add_appid_protocol_reference(token, sc);
 
-            if ((app_id = get_static_app_info_entry(entry->appId)))
-            {
-                app_info_table[app_id] = entry;
-                AppIdPegCounts::add_app_peg_info(entry->app_name_key, app_id);
-            }
-
-            if ((app_id = get_static_app_info_entry(entry->serviceId)))
-                app_info_service_table[app_id] = entry;
-            if ((app_id = get_static_app_info_entry(entry->clientId)))
-                app_info_client_table[app_id] = entry;
-            if ((app_id = get_static_app_info_entry(entry->payloadId)))
-                app_info_payload_table[app_id] = entry;
-
             if (!add_entry_to_app_info_name_table(entry->app_name_key, entry))
                 delete entry;
+            else 
+            {
+                if ((app_id = get_static_app_info_entry(entry->appId)))
+                {
+                    app_info_table[app_id] = entry;
+                    AppIdPegCounts::add_app_peg_info(entry->app_name_key, app_id);
+                }
+                if ((app_id = get_static_app_info_entry(entry->serviceId)))
+                    app_info_service_table[app_id] = entry;
+                if ((app_id = get_static_app_info_entry(entry->clientId)))
+                    app_info_client_table[app_id] = entry;
+                if ((app_id = get_static_app_info_entry(entry->payloadId)))
+                    app_info_payload_table[app_id] = entry;
+            }
         }
         fclose(tableFile);
 
