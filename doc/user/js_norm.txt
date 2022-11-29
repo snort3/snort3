@@ -12,21 +12,24 @@ to your snort.lua configuration file. Or you can read about it in the
 source code under src/js_norm.
 
 Having 'js_norm' module configured and ips option 'js_data' in the rules automatically
-enables Enhanced Normalizer. The Enhanced Normalizer can normalize inline/external
-scripts. It supports scripts over multiple PDUs. It is a stateful JavaScript whitespace
-and identifiers normalizer. Normalizer concatenates string literals whenever 
-it's possible to do. This also works with any other normalizations that result
-in string literals. All JavaScript identifier names, except those from
-the ignore lists, will be substituted with unified names in the following
-format: var_0000 -> var_ffff. But the unescape-like function names will be removed
-from the normalized data. The Normalizer tries to expand an escaped text,
-so it will appear in a usual form in the output. Moreover, Normalizer validates
-the syntax concerning ECMA-262 Standard, including scope tracking and restrictions
-for script elements. For more information on how additionally configure
-Enhanced Normalizer check with the following configuration options:
-bytes_depth, identifier_depth, max_tmpl_nest, max_bracket_depth, max_scope_depth,
-ident_ignore, prop_ignore.
-Eventually Enhanced Normalizer will completely replace Legacy Normalizer from HTTP inspector.
+enables Enhanced Normalizer.
+
+The Enhanced Normalizer can normalize JavaScript embedded in HTML (inline scripts),
+in separate .js files (external scripts), and JavaScript embedded in PDF files sent over HTTP.
+It supports scripts over multiple PDUs. It is a stateful JavaScript whitespace and identifiers
+normalizer. Normalizer concatenates string literals whenever it's possible to do. This also works
+with any other normalizations that result in string literals. All JavaScript identifier names,
+except those from the ignore lists, will be substituted with unified names in the following
+format: var_0000 -> var_ffff. The Normalizer tries to expand escaped text, so it will appear in
+a readable form in the output. When such text is a parameter of an unescape function, the entire
+function call will be replaced by the unescaped string. Moreover, Normalizer validates the syntax
+concerning ECMA-262 Standard, including scope tracking and restrictions for script elements.
+
+Check with the following options for more configurations: bytes_depth, identifier_depth,
+max_tmpl_nest, max_bracket_depth, max_scope_depth, ident_ignore, prop_ignore.
+
+Enhanced normalizer is the preferred option for writing new JavaScript related rules, though
+legacy normalizer (part of http_inspect) is still available to support old rules.
 
 ==== Configuration
 
@@ -35,7 +38,7 @@ Configuration can be as simple as adding:
     js_norm = {}
 
 to your snort.lua file. The default configuration provides a thorough
-normalization and may be all that you need. But there are some options that
+normalization and may be all that you need, but there are some options that
 provide extra features, tweak how things are done, or conserve resources by
 doing less.
 
@@ -48,7 +51,7 @@ by adding:
 to your snort.lua file.
 
 Enhanced JavaScript Normalizer implements JIT approach. Actual normalization takes place
-only when js_data option is evaluated. This option also used as a buffer selector for
+only when js_data option is evaluated. This option is also used as a buffer selector for
 normalized JavaScript data.
 
 ===== bytes_depth
@@ -56,14 +59,7 @@ normalized JavaScript data.
 bytes_depth = N {-1 : max53} will set a number of input JavaScript
 bytes to normalize. When the depth is reached, normalization will be stopped.
 It's implemented per-script. By default bytes_depth = -1, will set
-unlimited depth. The enhanced normalizer provides more precise whitespace
-normalization of JavaScript, that removes all redundant whitespaces and line
-terminators from the JavaScript syntax point of view (between identifier and
-punctuator, between identifier and operator, etc.) according to ECMAScript 5.1
-standard. Additionally, it performs normalization of JavaScript identifiers making
-a substitution of unique names with unified names representation: var_0000:var_ffff.
-The identifiers are variables and function names. The normalized data is available
-through the 'js_data' rule option.
+unlimited depth.
 
 ===== identifier_depth
 
@@ -149,7 +145,7 @@ related features, then removing function's name from the ignore list does the tr
 
 prop_ignore = {<list of ignored properties>} is an option of the enhanced
 JavaScript normalizer that defines a list of object properties and methods that
-will be kept intact during the identifiers normalization. This list should include
+will be kept intact during normalization of identifiers. This list should include
 methods and properties of objects that will not be tracked by assignment substitution
 functionality, for example, those that can be created implicitly.
 
@@ -167,11 +163,16 @@ The default list of ignored properties is present in "snort_defaults.lua".
 
 ==== Detection rules
 
-Enhanced JavaScript Normalizer follows JIT approach which require to have rules with
-'js_data' IPS option loaded.
-An example rule:
+Enhanced JavaScript Normalizer follows JIT approach, which requires rules with
+'js_data' IPS option to be executed. This can lead to missed data when js_data
+option is not evaluated for some packets, e.g. if there is a non-js_data fast
+pattern. In this case, when fast pattern doesn't match, JavaScript normalization
+is skipped for the current PDU. If later js_data IPS rule matches again,
+a missed normalization context is detected and 154:8 built-in alert is raised.
+Further normalization is not possible for the script.
+For example:
 
-    alert tcp any any -> any any (msg:"JavaScript"; js_data; content:"var var_0000=1;"; sid:1;)
+    alert http (msg:"JavaScript in HTTP"; js_data; content:"var var_0000=1;"; sid:1;)
 
 ===== js_data
 
