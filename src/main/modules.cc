@@ -1329,6 +1329,9 @@ static const Parameter process_params[] =
     { "watchdog_timer", Parameter::PT_INT, "0:60", "0",
       "watchdog timer for packet threads (seconds, 0 to disable)" },
 
+    { "watchdog_min_thread_count", Parameter::PT_INT, "1:65535", "1",
+      "minimum unresponsive threads for watchdog to trigger" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -1395,6 +1398,9 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("watchdog_timer") )
         sc->set_watchdog(v.get_uint16());
+
+    else if ( v.is("watchdog_min_thread_count") )
+        sc->set_watchdog_min_thread_count(v.get_uint16());    
 
     return true;
 }

@@ -345,6 +345,31 @@ int main_reset_stats(lua_State* L)
     return 0;
 }
 
+int main_set_watchdog_params(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    SnortConfig* sc = SnortConfig::get_main_conf();
+
+    if ( sc && L )
+    {
+        int seconds = luaL_optint(L, 1, -1);
+        int thread_count = luaL_optint(L, 2, -1);
+        // Timer and thread count are accessed only in main thread context
+        if ( seconds != -1 )
+            sc->set_watchdog(seconds);
+
+        if ( thread_count != -1 )
+            sc->set_watchdog_min_thread_count(thread_count);
+
+        std::ostringstream watchdog_timer_msg;
+        watchdog_timer_msg << "== setting watchdog timer to " << sc->watchdog_timer
+                           << ", min thread count to " << sc->watchdog_min_thread_count << "\n";
+        send_response(ctrlcon, watchdog_timer_msg.str().c_str());
+    }
+
+    return 0;
+}
+
 int main_rotate_stats(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);

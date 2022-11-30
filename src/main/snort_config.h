@@ -245,6 +245,7 @@ public:
     int user_id = -1;
     int group_id = -1;
     uint16_t watchdog_timer = 0;
+    uint16_t watchdog_min_thread_count = 1;
     bool dirty_pig = false;
 
     std::string chroot_dir;        /* -t or config chroot */
@@ -462,6 +463,7 @@ public:
     void set_umask(uint32_t);
     void set_utc(bool);
     void set_watchdog(uint16_t);
+    void set_watchdog_min_thread_count(uint16_t);
     SO_PUBLIC bool set_latency_enable();
 
     //------------------------------------------------------

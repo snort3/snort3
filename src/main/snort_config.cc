@@ -645,6 +645,11 @@ void SnortConfig::set_watchdog(uint16_t n)
     watchdog_timer = n;
 }
 
+void SnortConfig::set_watchdog_min_thread_count(uint16_t n)
+{
+    watchdog_min_thread_count = n;
+}
+
 void SnortConfig::set_dirty_pig(bool enabled)
 {
     dirty_pig = enabled;

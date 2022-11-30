@@ -101,8 +101,19 @@ static const Parameter s_pktnum[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const Parameter s_watchdog[] =
+{
+    { "timer", Parameter::PT_INT, "0:max32", nullptr,
+      "timer for watchdog" },
+    { "min_thread_count", Parameter::PT_INT, "0:max32", nullptr,
+      "min thread count for watchdog" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Command snort_cmds[] =
 {
+    { "set_watchdog_params", main_set_watchdog_params, s_watchdog, "set watchdog parameters" },
     { "show_plugins", main_dump_plugins, nullptr, "show available plugins" },
 
     { "delete_inspector", main_delete_inspector, s_delete,

@@ -275,13 +275,23 @@ void Watchdog::kick()
     unsigned max = ThreadConfig::get_instance_max();
     if ( waiting )
     {
-        WarningMessage("Packet processing thread is unresponsive, aborting Snort!\n");
+        uint16_t thread_count = 0;
+        WarningMessage("Packet processing threads are unresponsive\n");
         WarningMessage("Unresponsive thread ID: ");
         for ( unsigned i = 0; i < max; ++i )
+        {
             if ( !resp[i] )
+            {
+                ++thread_count;
                 WarningMessage("%d ", i);
+            }
+        }
         WarningMessage("\n");
-        abort();
+        if ( thread_count >= SnortConfig::get_conf()->watchdog_min_thread_count )
+        {
+            WarningMessage("Aborting Snort\n");
+            abort();
+        }
     }
 
     for ( unsigned i = 0; i < max; ++i )
