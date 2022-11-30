@@ -25,6 +25,7 @@
 
 #include "tcp_stream_session.h"
 
+#include "framework/data_bus.h"
 #include "log/messages.h"
 #include "stream/tcp/tcp_ha.h"
 
@@ -98,8 +99,7 @@ void TcpStreamSession::update_session_on_server_packet(TcpSegmentDescriptor& tsd
         if ( flow->get_session_flags() & SSNFLAG_SEEN_CLIENT )
         {
             // should TCP state go to established too?
-            flow->session_state |= STREAM_STATE_ESTABLISHED;
-            flow->set_session_flags(SSNFLAG_ESTABLISHED);
+            set_established(tsd.get_pkt());
             update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
         }
     }
@@ -120,10 +120,7 @@ void TcpStreamSession::update_session_on_client_packet(TcpSegmentDescriptor& tsd
     {
         /* Midstream and seen server. */
         if ( flow->get_session_flags() & SSNFLAG_SEEN_SERVER )
-        {
-            flow->session_state |= STREAM_STATE_ESTABLISHED;
-            flow->set_session_flags(SSNFLAG_ESTABLISHED);
-        }
+            set_established(tsd.get_pkt());
     }
 
     if ( !flow->inner_client_ttl && !tsd.is_meta_ack_packet() )
@@ -392,4 +389,49 @@ StreamSplitter* TcpStreamSession::get_splitter(bool to_server)
 
 void TcpStreamSession::start_proxy()
 { tcp_config->policy = StreamPolicy::OS_PROXY; }
+
+void TcpStreamSession::set_established(Packet* p, uint32_t flags)
+{
+    flow->session_state |= STREAM_STATE_ESTABLISHED | flags;
+    if (SSNFLAG_ESTABLISHED != (SSNFLAG_ESTABLISHED & flow->get_session_flags()))
+    {
+        flow->set_session_flags(SSNFLAG_ESTABLISHED);
+        DataBus::publish(STREAM_TCP_ESTABLISHED_EVENT, p);
+    }
+}
+
+void TcpStreamSession::check_for_one_sided_session(Packet* p)
+{
+    Flow& flow = *p->flow;
+    if ( !( (SSNFLAG_ESTABLISHED | SSNFLAG_TCP_ONE_SIDED) & flow.ssn_state.session_flags )
+        && p->is_from_client_originally() )
+    {
+        uint64_t initiator_packets;
+        uint64_t responder_packets;
+        if (flow.flags.client_initiated)
+        {
+            initiator_packets = flow.flowstats.client_pkts;
+            responder_packets = flow.flowstats.server_pkts;
+        }
+        else
+        {
+            initiator_packets = flow.flowstats.server_pkts;
+            responder_packets = flow.flowstats.client_pkts;
+        }
+
+        if ( !responder_packets )
+        {
+            // handle case where traffic is only in one direction, but the sequence numbers
+            // are changing indicating an asynchronous session
+            uint32_t watermark = p->ptrs.tcph->seq() + p->ptrs.tcph->ack();
+            if ( 1 == initiator_packets )
+                initiator_watermark = watermark;
+            else if ( initiator_watermark != watermark )
+            {
+                flow.ssn_state.session_flags |= SSNFLAG_TCP_ONE_SIDED;
+                DataBus::publish(STREAM_TCP_ESTABLISHED_EVENT, p);
+            }
+        }
+    }
+}
 

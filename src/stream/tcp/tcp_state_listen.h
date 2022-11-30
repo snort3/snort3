@@ -40,6 +40,8 @@ public:
     bool fin_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool fin_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+
+    bool do_post_sm_packet_actions(TcpSegmentDescriptor&, TcpStreamTracker&) override;
 };
 
 #endif

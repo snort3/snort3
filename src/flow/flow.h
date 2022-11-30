@@ -66,6 +66,8 @@
 #define SSNFLAG_PRUNED              0x00002000
 #define SSNFLAG_RESET               0x00004000
 
+#define SSNFLAG_TCP_ONE_SIDED       0x00008000
+
 #define SSNFLAG_DROP_CLIENT         0x00010000
 #define SSNFLAG_DROP_SERVER         0x00020000
 

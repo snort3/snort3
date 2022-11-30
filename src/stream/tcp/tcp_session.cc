@@ -102,6 +102,7 @@ bool TcpSession::setup(Packet*)
     cleaning = false;
     splitter_init = false;
 
+    initiator_watermark = 0;
     pkt_action_mask = ACTION_NOTHING;
     ecn = 0;
     ingress_index = egress_index = 0;

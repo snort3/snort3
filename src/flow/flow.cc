@@ -408,6 +408,10 @@ void Flow::markup_packet_flags(Packet* p)
         {
             p->packet_flags |= PKT_STREAM_UNEST_UNI;
         }
+        if ( (ssn_state.session_flags & SSNFLAG_TCP_ONE_SIDED) == SSNFLAG_TCP_ONE_SIDED )
+        {
+            p->packet_flags |= PKT_TCP_ONE_SIDED;
+        }
     }
     else
     {

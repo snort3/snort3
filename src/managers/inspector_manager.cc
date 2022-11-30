@@ -2145,7 +2145,10 @@ void InspectorManager::internal_execute(Packet* p)
     else
     {
         if ( !p->has_paf_payload() and p->flow->flow_state == Flow::FlowState::INSPECT )
-            p->flow->session->process(p);
+        {
+            Flow& flow = *p->flow;
+            flow.session->process(p);
+        }
 
         if ( p->flow->reload_id != reload_id )
         {

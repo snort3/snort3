@@ -99,6 +99,9 @@ public:
     void set_pkt_action_flag(uint32_t flag)
     { pkt_action_mask |= flag; }
 
+    void set_established(snort::Packet*, uint32_t flags = 0);
+    void check_for_one_sided_session(snort::Packet*);
+
     virtual void update_paws_timestamps(TcpSegmentDescriptor&) = 0;
     virtual void check_for_repeated_syn(TcpSegmentDescriptor&) = 0;
     virtual void check_for_session_hijack(TcpSegmentDescriptor&) = 0;
@@ -112,10 +115,10 @@ public:
     bool lws_init = false;
     bool tcp_init = false;
     uint32_t pkt_action_mask = ACTION_NOTHING;
-    uint8_t ecn = 0;
+    uint32_t initiator_watermark = 0;
     int32_t ingress_index = DAQ_PKTHDR_UNKNOWN;
-    int16_t ingress_group = DAQ_PKTHDR_UNKNOWN;
     int32_t egress_index = DAQ_PKTHDR_UNKNOWN;
+    int16_t ingress_group = DAQ_PKTHDR_UNKNOWN;
     int16_t egress_group = DAQ_PKTHDR_UNKNOWN;
     uint32_t daq_flags = 0;
     uint32_t address_space_id = 0;
@@ -124,6 +127,7 @@ public:
     TcpEventLogger tel;
     bool cleaning = false;
     uint8_t held_packet_dir = SSN_DIR_NONE;
+    uint8_t ecn = 0;
 
 private:
     bool no_ack = false;

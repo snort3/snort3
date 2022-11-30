@@ -66,11 +66,8 @@ bool TcpStateSynSent::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
 bool TcpStateSynSent::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    Flow* flow = tsd.get_flow();
-
     trk.update_tracker_ack_sent(tsd);
-    flow->set_session_flags(SSNFLAG_ESTABLISHED);
-    flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED );
+    trk.session->set_established(tsd.get_pkt(), STREAM_STATE_ACK);
     trk.session->update_timestamp_tracking(tsd);
     trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
     trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
@@ -86,11 +83,8 @@ bool TcpStateSynSent::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateSynSent::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    Flow* flow = tsd.get_flow();
-
     trk.update_tracker_ack_sent(tsd);
-    flow->set_session_flags(SSNFLAG_ESTABLISHED);
-    flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED );
+    trk.session->set_established(tsd.get_pkt(), STREAM_STATE_ACK);
     trk.session->update_timestamp_tracking(tsd);
     trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
     trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);

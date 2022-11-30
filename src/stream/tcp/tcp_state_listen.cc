@@ -213,3 +213,9 @@ bool TcpStateListen::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     return true;
 }
 
+bool TcpStateListen::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
+{
+    trk.session->check_for_one_sided_session(tsd.get_pkt());
+    return true;
+}
+

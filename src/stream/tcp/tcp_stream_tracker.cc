@@ -552,13 +552,10 @@ bool TcpStreamTracker::update_on_3whs_ack(TcpSegmentDescriptor& tsd)
 
     if ( good_ack )
     {
-        Flow* flow = tsd.get_flow();
-
         irs = tsd.get_seq();
         finish_client_init(tsd);
         update_tracker_ack_recv(tsd);
-        flow->set_session_flags(SSNFLAG_ESTABLISHED);
-        flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED );
+        session->set_established(tsd.get_pkt(), STREAM_STATE_ACK);
         tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
     }
 
