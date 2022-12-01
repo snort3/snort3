@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.47.0 2022-11-16 21:37:48 EST TST
+Revision 3.1.48.0 2022-12-01 11:52:17 EST TST
 
 ---------------------------------------------------------------------
 
@@ -4896,24 +4896,31 @@ to your snort.lua configuration file. Or you can read about it in the
 source code under src/js_norm.
 
 Having js_norm module configured and ips option js_data in the rules
-automatically enables Enhanced Normalizer. The Enhanced Normalizer
-can normalize inline/external scripts. It supports scripts over
-multiple PDUs. It is a stateful JavaScript whitespace and identifiers
-normalizer. Normalizer concatenates string literals whenever it’s
-possible to do. This also works with any other normalizations that
-result in string literals. All JavaScript identifier names, except
-those from the ignore lists, will be substituted with unified names
-in the following format: var_0000 → var_ffff. But the unescape-like
-function names will be removed from the normalized data. The
-Normalizer tries to expand an escaped text, so it will appear in a
-usual form in the output. Moreover, Normalizer validates the syntax
-concerning ECMA-262 Standard, including scope tracking and
-restrictions for script elements. For more information on how
-additionally configure Enhanced Normalizer check with the following
-configuration options: bytes_depth, identifier_depth, max_tmpl_nest,
-max_bracket_depth, max_scope_depth, ident_ignore, prop_ignore.
-Eventually Enhanced Normalizer will completely replace Legacy
-Normalizer from HTTP inspector.
+automatically enables Enhanced Normalizer.
+
+The Enhanced Normalizer can normalize JavaScript embedded in HTML
+(inline scripts), in separate .js files (external scripts), and
+JavaScript embedded in PDF files sent over HTTP. It supports scripts
+over multiple PDUs. It is a stateful JavaScript whitespace and
+identifiers normalizer. Normalizer concatenates string literals
+whenever it’s possible to do. This also works with any other
+normalizations that result in string literals. All JavaScript
+identifier names, except those from the ignore lists, will be
+substituted with unified names in the following format: var_0000 →
+var_ffff. The Normalizer tries to expand escaped text, so it will
+appear in a readable form in the output. When such text is a
+parameter of an unescape function, the entire function call will be
+replaced by the unescaped string. Moreover, Normalizer validates the
+syntax concerning ECMA-262 Standard, including scope tracking and
+restrictions for script elements.
+
+Check with the following options for more configurations:
+bytes_depth, identifier_depth, max_tmpl_nest, max_bracket_depth,
+max_scope_depth, ident_ignore, prop_ignore.
+
+Enhanced normalizer is the preferred option for writing new
+JavaScript related rules, though legacy normalizer (part of
+http_inspect) is still available to support old rules.
 
 5.13.2. Configuration
 
@@ -4922,7 +4929,7 @@ Configuration can be as simple as adding:
 js_norm = {}
 
 to your snort.lua file. The default configuration provides a thorough
-normalization and may be all that you need. But there are some
+normalization and may be all that you need, but there are some
 options that provide extra features, tweak how things are done, or
 conserve resources by doing less.
 
@@ -4936,23 +4943,15 @@ to your snort.lua file.
 
 Enhanced JavaScript Normalizer implements JIT approach. Actual
 normalization takes place only when js_data option is evaluated. This
-option also used as a buffer selector for normalized JavaScript data.
+option is also used as a buffer selector for normalized JavaScript
+data.
 
 5.13.2.1. bytes_depth
 
 bytes_depth = N {-1 : max53} will set a number of input JavaScript
 bytes to normalize. When the depth is reached, normalization will be
 stopped. It’s implemented per-script. By default bytes_depth = -1,
-will set unlimited depth. The enhanced normalizer provides more
-precise whitespace normalization of JavaScript, that removes all
-redundant whitespaces and line terminators from the JavaScript syntax
-point of view (between identifier and punctuator, between identifier
-and operator, etc.) according to ECMAScript 5.1 standard.
-Additionally, it performs normalization of JavaScript identifiers
-making a substitution of unique names with unified names
-representation: var_0000:var_ffff. The identifiers are variables and
-function names. The normalized data is available through the js_data
-rule option.
+will set unlimited depth.
 
 5.13.2.2. identifier_depth
 
@@ -5048,11 +5047,10 @@ name from the ignore list does the trick.
 
 prop_ignore = {<list of ignored properties>} is an option of the
 enhanced JavaScript normalizer that defines a list of object
-properties and methods that will be kept intact during the
-identifiers normalization. This list should include methods and
-properties of objects that will not be tracked by assignment
-substitution functionality, for example, those that can be created
-implicitly.
+properties and methods that will be kept intact during normalization
+of identifiers. This list should include methods and properties of
+objects that will not be tracked by assignment substitution
+functionality, for example, those that can be created implicitly.
 
 Subsequent accessors, after dot, in square brackets or after function
 call, will not be normalized as well.
@@ -5069,10 +5067,16 @@ The default list of ignored properties is present in
 
 5.13.3. Detection rules
 
-Enhanced JavaScript Normalizer follows JIT approach which require to
-have rules with js_data IPS option loaded. An example rule:
+Enhanced JavaScript Normalizer follows JIT approach, which requires
+rules with js_data IPS option to be executed. This can lead to missed
+data when js_data option is not evaluated for some packets, e.g. if
+there is a non-js_data fast pattern. In this case, when fast pattern
+doesn’t match, JavaScript normalization is skipped for the current
+PDU. If later js_data IPS rule matches again, a missed normalization
+context is detected and 154:8 built-in alert is raised. Further
+normalization is not possible for the script. For example:
 
-alert tcp any any -> any any (msg:"JavaScript"; js_data; content:"var var_0000=1;"; sid:1;)
+alert http (msg:"JavaScript in HTTP"; js_data; content:"var var_0000=1;"; sid:1;)
 
 5.13.3.1. js_data
 
@@ -5743,7 +5747,7 @@ occurred 299 times in a packet, you will not see an event.
 5.18.2.3. Obfuscating built-in patterns
 
 Snort provides discreet logging for the built-in patterns
-"credit_card", "us_social", "us_social_nodashes", "us_phone" and
+"credit_card", "us_social", "us_social_nodashes", "us_phone", and
 "email". Enabling ips.obfuscate_pii makes Snort obfuscate the suspect
 packet payload which was matched by the patterns. This configuration
 is enabled by default.
@@ -5753,30 +5757,75 @@ ips =
     obfuscate_pii = true
 }
 
-5.18.3. Example
+5.18.3. Examples
 
-A complete Snort IPS rule
+Complete Snort IPS rules with built-in sensitive data patterns.
 
 alert tcp ( sid:1; msg:"Credit Card"; sd_pattern:"credit_card"; )
+alert tcp ( sid:2; msg:"US Social Number"; sd_pattern:"us_social"; )
+alert tcp ( sid:3; msg:"US Social Number No Dashes"; sd_pattern:"us_social_nodashes"; )
+alert tcp ( sid:4; msg:"US Phone Number"; sd_pattern:"us_phone"; )
+alert tcp ( sid:5; msg:"Email"; sd_pattern:"email"; )
 
-Logged output when running Snort in "cmg" alert format.
+Let’s try them on the next traffic.
 
-02/25-21:19:05.125553 [**] [1:1:0] "Credit Card" [**] [Priority: 0] {TCP} 10.1.2.3:48620 -> 10.9.8.7:8
-02:01:02:03:04:05 -> 02:09:08:07:06:05 type:0x800 len:0x46
-10.1.2.3:48620 -> 10.9.8.7:8 TCP TTL:64 TOS:0x0 ID:14 IpLen:20 DgmLen:56
-***A**** Seq: 0xB2  Ack: 0x2  Win: 0x2000  TcpLen: 20
-- - - raw[16] - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-58 58 58 58 58 58 58 58 58 58 58 58 39 32 39 34              XXXXXXXXXXXX9294
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+33 34 38 30 31 32 37 34 33 35  37 34 35 38 30 20 20 20 20 20  348012743574580
+34 30 34 2D 35 30 2D 32 31 38  33 20 20 20 20 20 20 20 20 20  404-50-2183
+34 30 34 35 30 32 31 38 33 20  20 20 20 20 20 20 20 20 20 20  404502183
+31 2D 39 31 39 2D 36 36 33 2D  32 35 32 34 20 20 20 20 20 20  1-919-663-2524
+74 75 72 2E 63 61 6C 6C 69 65  40 67 6D 61 69 6C 2E 63 6F 6D  tur.callie@gmail.com
+
+Printout of alert_cmg logger for this would be obfuscated.
+
+snort.raw[100]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+58 58 58 58 58 58 58 58 58 58  58 34 35 38 30 20 20 20 20 20  XXXXXXXXXXX4580
+58 58 58 58 58 58 58 32 31 38  33 20 20 20 20 20 20 20 20 20  XXXXXXX2183
+58 58 58 58 58 32 31 38 33 20  20 20 20 20 20 20 20 20 20 20  XXXXX2183
+58 58 58 58 58 58 58 58 58 58  32 35 32 34 20 20 20 20 20 20  XXXXXXXXXX2524
+58 58 58 58 58 58 58 58 58 58  58 58 58 58 58 58 2E 63 6F 6D  XXXXXXXXXXXXXXXX.com
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+
+But obfuscation doesn’t work for custom patterns.
+
+Example of a rule with a custom pattern.
+
+alert tcp (sid: 6; sd_pattern:"\b\w+@ourdomain\.com\b"; msg: "Custom email")
+
+Traffic.
+
+61 40 6F 75 72 64 6F 6D 61 69  6E 2E 63 6F 6D 20 20 20 20 20  a@ourdomain.com
+61 61 40 6F 75 72 64 6F 6D 61  69 6E 2E 63 6F 6D              aa@ourdomain.com
+
+Printout of alert_cmg logger for this would not be obfuscated.
+
+01/01-02:00:00.000004 [**] [1:6:0] "Custom email" [**] [Priority: 0] {TCP} 10.1.2.3:48620 -> 10.9.8.7:80
+02:01:02:03:04:05 -> 02:09:08:07:06:05 type:0x800 len:0x5A
+10.1.2.3:48620 -> 10.9.8.7:80 TCP TTL:64 TOS:0x0 ID:3 IpLen:20 DgmLen:76
+******** Seq: 0x2  Ack: 0x0  Win: 0x2000  TcpLen: 20
+
+snort.raw[36]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+61 40 6F 75 72 64 6F 6D 61 69  6E 2E 63 6F 6D 20 20 20 20 20  a@ourdomain.com
+61 61 40 6F 75 72 64 6F 6D 61  69 6E 2E 63 6F 6D              aa@ourdomain.com
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+
+Threshold values are applied per packet.
+
+So, traffic like this.
+
+Packet 1 payload:"a@ourdomain.com"
+Packet 2 payload:"aa@ourdomain.com"
+
+Doesn’t match a rule like this.
+
+alert tcp (sid: 7; sd_pattern:"\b\w+@ourdomain\.com\b", threshold 2; msg: "Custom email")
 
 5.18.4. Caveats
 
- 1. Snort currently requires setting the fast pattern engine to use
-    "hyperscan" in order for sd_pattern ips option to function
-    correctly.
-
-    search_engine = { search_method = 'hyperscan' }
-
+ 1. sd_pattern implementation relies on Hyperscan, regardless of the
+    search engine specified in the config. So, Snort must be built
+    and run with Hyperscan to have sd_pattern IPS option available.
  2. Log obfuscation is only applicable to CMG and Unified2 logging
     formats.
  3. Log obfuscation doesn’t support user defined PII patterns. It is

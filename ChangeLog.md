@@ -1,3 +1,25 @@
+2022-12-01: 3.1.48.0
+
+* appid: added config for logging alpn service mappings
+* appid: fixed addition of duplicate entries in app_info_table
+* appid: make appid availability independent from TP state
+* cmake: add FLEX build macro
+* doc: update sensitive data documentation
+* doc: update user/js_norm.txt for PDF
+* flow: add an event for retry packets
+* flow: added an event to allow post processing of new expected flows
+* flow: fix deferred trust clear when packet is dropped
+* flow, stream: added code to track and event for one-sided TCP sessions and generate an event for established or one-sided flows
+* http_inspect: add decompression failure check before normalization
+* http_inspect: remove port from xff header
+* ips_option: keep cursor intact for a negated content mismatched
+* ips_option: keep cursor intact for a negated hash mismatched
+* js_norm: implement Enhanced JS Normalization for PDF
+* js_norm: use FLEX macro to build parser
+* process: watchdog to abort snort when multiple packet thread becomes unresponsive
+* smb: handling smb duplicate sessions
+* stream: add logic to ensure metaACKs cause flushing
+
 2022-11-17: 3.1.47.0
 
 * appid: add a changed bit for discovery finished

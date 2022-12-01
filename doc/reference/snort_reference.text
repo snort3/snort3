@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.47.0 2022-11-16 21:37:26 EST TST
+Revision 3.1.48.0 2022-12-01 11:51:55 EST TST
 
 ---------------------------------------------------------------------
 
@@ -1265,6 +1265,8 @@ Configuration:
     timestamps
   * int process.watchdog_timer = 0: watchdog timer for packet threads
     (seconds, 0 to disable) { 0:60 }
+  * int process.watchdog_min_thread_count = 1: minimum unresponsive
+    threads for watchdog to trigger { 1:65535 }
 
 
 2.26. profiler
@@ -1676,6 +1678,8 @@ Configuration:
 
 Commands:
 
+  * snort.set_watchdog_params(timer, min_thread_count): set watchdog
+    parameters
   * snort.show_plugins(): show available plugins
   * snort.delete_inspector(inspector): delete an inspector from the
     default policy
@@ -3096,6 +3100,8 @@ Peg counts:
   * dce_smb.total_smb2_sessions: total smb2 sessions (sum)
   * dce_smb.total_encrypted_sessions: total encrypted sessions (sum)
   * dce_smb.total_mc_sessions: total multichannel sessions (sum)
+  * dce_smb.ignore_dup_sessions: total smb req/resp dropped because
+    of dup msg id (sum)
 
 
 5.12. dce_tcp
@@ -4087,6 +4093,8 @@ Peg counts:
     JavaScripts processed (sum)
   * http_inspect.js_external_scripts: total number of external
     JavaScripts processed (sum)
+  * http_inspect.js_pdf_scripts: total number of PDF JavaScripts
+    processed (sum)
   * http_inspect.skip_mime_attach: total number of HTTP requests with
     too many MIME attachments to inspect (sum)
 
@@ -10216,6 +10224,8 @@ libraries see the Getting Started section of the manual.
   * int process.umask: set process umask (same as -m) { 0x000:0x1FF }
   * bool process.utc = false: use UTC instead of local time for
     timestamps
+  * int process.watchdog_min_thread_count = 1: minimum unresponsive
+    threads for watchdog to trigger { 1:65535 }
   * int process.watchdog_timer = 0: watchdog timer for packet threads
     (seconds, 0 to disable) { 0:60 }
   * int profiler.memory.count = 0: limit results to count items per
@@ -11107,6 +11117,8 @@ libraries see the Getting Started section of the manual.
   * dce_smb.faults: total connection-oriented faults (sum)
   * dce_smb.files_processed: total smb files processed (sum)
   * dce_smb.ignored_bytes: total ignored bytes (sum)
+  * dce_smb.ignore_dup_sessions: total smb req/resp dropped because
+    of dup msg id (sum)
   * dce_smb.max_concurrent_sessions: maximum concurrent sessions
     (max)
   * dce_smb.max_outstanding_requests: maximum outstanding requests
@@ -11531,6 +11543,8 @@ libraries see the Getting Started section of the manual.
     JavaScripts processed (sum)
   * http_inspect.js_inline_scripts: total number of inline
     JavaScripts processed (sum)
+  * http_inspect.js_pdf_scripts: total number of PDF JavaScripts
+    processed (sum)
   * http_inspect.max_concurrent_sessions: maximum concurrent http
     sessions (max)
   * http_inspect.options_requests: OPTIONS requests inspected (sum)
@@ -15491,6 +15505,8 @@ alert is raised by the enhanced JavaScript normalizer.
   * rna.delete_mac_host_proto(mac, proto): delete a protocol
     associated with a MAC host
   * rna.purge_data(): purge all host cache and mac cache data
+  * snort.set_watchdog_params(timer, min_thread_count): set watchdog
+    parameters
   * snort.show_plugins(): show available plugins
   * snort.delete_inspector(inspector): delete an inspector from the
     default policy
