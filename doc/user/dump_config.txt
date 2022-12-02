@@ -38,7 +38,7 @@ http.lua
     {
         spells =
         {
-            { service = 'http', proto = 'tcp', client_first = true, to_server = { 'GET' }, to_client = { 'HTTP/' } },
+            { service = 'http', proto = 'tcp', to_server = { 'GET' }, to_client = { 'HTTP/' } },
         }
     }
 
@@ -88,13 +88,11 @@ Example:
     stream_tcp.show_rebuilt_packets=true
     consolidated config for http.lua
     wizard.spells[0].proto="tcp"
-    wizard.spells[0].client_first=true
     wizard.spells[0].service="http"
     wizard.spells[0].to_client[0].spell="HTTP/"
     wizard.spells[0].to_server[0].spell="GET"
     consolidated config for sip.lua
     wizard.spells[0].proto="tcp"
-    wizard.spells[0].client_first=true
     wizard.spells[0].service="sip"
     wizard.spells[0].to_server[0].spell="INVITE"
 
@@ -184,7 +182,6 @@ Example:
                 "spells": [
                 {
                     "proto": "tcp",
-                    "client_first": true,
                     "service": "http",
                     "to_client": [
                     {
@@ -208,7 +205,6 @@ Example:
                 "spells": [
                 {
                     "proto": "tcp",
-                    "client_first": true,
                     "service": "sip",
                     "to_server": [
                     {

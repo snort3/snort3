@@ -54,9 +54,6 @@ static const Parameter wizard_hexes_params[] =
     { "proto", Parameter::PT_SELECT, "tcp | udp | any", "any",
       "protocol to scan" },
 
-    { "client_first", Parameter::PT_BOOL, nullptr, "true",
-      "which end initiates data transfer (deprecated)" },
-
     { "to_server", Parameter::PT_LIST, wizard_hex_param, nullptr,
       "sequence of data with wild chars (?)" },
 
@@ -81,9 +78,6 @@ static const Parameter wizard_spells_params[] =
 
     { "proto", Parameter::PT_SELECT, "tcp | udp | any", "any",
       "protocol to scan" },
-
-    { "client_first", Parameter::PT_BOOL, nullptr, "true",
-      "which end initiates data transfer (deprecated)" },
 
     { "to_server", Parameter::PT_LIST, wizard_spell_param, nullptr,
       "list of initial tokens with wild cards (*)" },
@@ -151,10 +145,6 @@ bool WizardModule::set(const char*, Value& v, SnortConfig*)
         else 
             proto = MagicBook::ArcaneType::ANY;
     }
-
-    // FIXIT-H implement client_first
-    else if ( v.is("client_first") )
-        return true;
 
     else if ( v.is("hex") or v.is("spell") )
     {
