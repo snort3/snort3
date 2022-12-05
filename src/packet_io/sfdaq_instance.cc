@@ -236,6 +236,8 @@ void SFDAQInstance::get_tunnel_capabilities()
             daq_tunnel_mask |= TUNNEL_6IN6;
         if (caps & DAQ_CAPA_DECODE_MPLS)
             daq_tunnel_mask |= TUNNEL_MPLS;
+        if (caps & DAQ_CAPA_DECODE_GENEVE)
+            daq_tunnel_mask |= TUNNEL_GENEVE;
     }
 }
 
