@@ -453,7 +453,9 @@ bool HttpPDFJSNorm::pre_proc()
     }
 
     // an input stream should not write to its buffer
-    pdf_in.rdbuf()->pubsetbuf(const_cast<char*>((const char*)src_ptr), src_end - src_ptr);
+    buf_pdf_in.pubsetbuf(nullptr, 0)
+        ->pubsetbuf(const_cast<char*>((const char*)src_ptr), src_end - src_ptr);
+
     pdf_out.clear();
     delete[] buf_pdf_out.take_data();
 

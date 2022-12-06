@@ -102,7 +102,7 @@ public:
     }
 
     HttpPDFJSNorm(JSNormConfig* jsn_config, uint64_t tid) :
-        HttpJSNorm(jsn_config), pdf_out(&buf_pdf_out), extractor(pdf_in, pdf_out)
+        HttpJSNorm(jsn_config), pdf_in(&buf_pdf_in), pdf_out(&buf_pdf_out), extractor(pdf_in, pdf_out)
     { trans_num = tid; }
 
 protected:
@@ -110,8 +110,9 @@ protected:
     bool post_proc(int) override;
 
 private:
+    snort::istreambuf_glue buf_pdf_in;
     snort::ostreambuf_infl buf_pdf_out;
-    std::istringstream pdf_in;
+    std::istream pdf_in;
     std::ostream pdf_out;
     jsn::PDFTokenizer extractor;
 };

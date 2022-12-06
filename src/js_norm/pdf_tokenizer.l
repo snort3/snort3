@@ -189,7 +189,7 @@ WHITESPACE        {GRP_WHITESPACE}{1,64}
 <jshstr>{HEX_STR_BODY}                            { EXEC(h_hex_hex2chr()) }
 <jshstr>{HEX_STR_SKIP}                            { }
 
-<<EOF>>                                           { return PDFRet::EOS; }
+<INITIAL,dictnr,litstr,hexstr,jslstr,jshstr><<EOF>>    { return PDFRet::EOS; }
 
 %%
 

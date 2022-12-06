@@ -58,7 +58,7 @@ static void test_pdf_proc(const vector<Chunk>& chunks)
         auto src = chunk.first;
         auto exp = chunk.second;
 
-        in.rdbuf()->pubsetbuf((char*)src.c_str(), src.length());
+        in.str(src);
         out.str("");
 
         auto r = extractor.process();
