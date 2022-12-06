@@ -673,7 +673,8 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
                 asd.get_session_flags(APPID_SESSION_INITIATOR_MONITORED |
                 APPID_SESSION_RESPONDER_MONITORED) ) ) )
             {
-                asd.free_flow_data_by_mask(APPID_SESSION_DATA_SERVICE_MODSTATE_BIT);
+                if (asd.service_candidates.empty() and !asd.service_detector)
+                    asd.free_flow_data_by_mask(APPID_SESSION_DATA_SERVICE_MODSTATE_BIT);
                 asd.service_detector = entry->service_detector;
             }
             else if (prev_service_state == APPID_DISCO_STATE_NONE)
