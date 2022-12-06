@@ -315,13 +315,13 @@ fi
 function output_port_pattern_server()
 {
 if [[ "$port" = "-1" ]]; then
-echo -en "\t\tgDetector:addPortPatternServer($protocol_string,0,\"" >>"${INTERMEDIATEFILE_SERVER}"
+echo -en "\t\tgDetector:addPortPatternService($protocol_string,0,\"" >>"${INTERMEDIATEFILE_SERVER}"
 echo -n "${pattern_string}" >>"${INTERMEDIATEFILE_SERVER}"
 echo -e "\",$pattern_offset, gAppId);" >>"${INTERMEDIATEFILE_SERVER}"
 else
 local i=0;
 while [[ "${port[i]}" != "" ]]; do
-echo -en "\t\tgDetector:addPortPatternServer($protocol_string,${port[i]},\"" >>"${INTERMEDIATEFILE_SERVER}"
+echo -en "\t\tgDetector:addPortPatternService($protocol_string,${port[i]},\"" >>"${INTERMEDIATEFILE_SERVER}"
 echo -n "${pattern_string}" >>"${INTERMEDIATEFILE_SERVER}"
 echo -e "\",$pattern_offset, gAppId);" >>"${INTERMEDIATEFILE_SERVER}"
 i=$(( $i + 1 ))
@@ -331,7 +331,7 @@ fi
 function output_optional_server()
 {
 if [[ -f "$INTERMEDIATEFILE_SERVER" ]]; then
-	echo -e "\tif gDetector.addPortPatternServer then" >>"${OUTPUTFILE}"
+	echo -e "\tif gDetector.addPortPatternService then" >>"${OUTPUTFILE}"
 	cat "${INTERMEDIATEFILE_SERVER}" >>"${OUTPUTFILE}"
 	echo -e "\tend" >>"${OUTPUTFILE}"
 	rm "${INTERMEDIATEFILE_SERVER}"
