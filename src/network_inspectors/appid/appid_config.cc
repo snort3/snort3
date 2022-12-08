@@ -92,13 +92,17 @@ void AppIdConfig::show() const
 
 void AppIdContext::pterm()
 {
-    assert(odp_ctxt);
-    odp_ctxt->get_app_info_mgr().cleanup_appid_info_table();
-    delete odp_ctxt;
+    if (odp_ctxt)
+    {
+        odp_ctxt->get_app_info_mgr().cleanup_appid_info_table();
+        delete odp_ctxt;
+    }
 
-    assert(odp_thread_local_ctxt);
-    delete odp_thread_local_ctxt;
-    odp_thread_local_ctxt = nullptr;
+    if (odp_thread_local_ctxt)
+    {
+        delete odp_thread_local_ctxt;
+        odp_thread_local_ctxt = nullptr;
+    }
 }
 
 bool AppIdContext::init_appid(SnortConfig* sc, AppIdInspector& inspector)
