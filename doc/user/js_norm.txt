@@ -1,6 +1,6 @@
 One of the improvements in Snort 3 is Enhanced JavaScript Normalizer which has its
 own module and can be used with any service inspectors where JavaScript code might occur.
-Currently it is only used by HTTP inspector.
+Currently it is supported for the following inspectors: HTTP, SMTP, IMAP, POP.
 
 ==== Overview
 
@@ -15,15 +15,15 @@ Having 'js_norm' module configured and ips option 'js_data' in the rules automat
 enables Enhanced Normalizer.
 
 The Enhanced Normalizer can normalize JavaScript embedded in HTML (inline scripts),
-in separate .js files (external scripts), and JavaScript embedded in PDF files sent over HTTP.
-It supports scripts over multiple PDUs. It is a stateful JavaScript whitespace and identifiers
-normalizer. Normalizer concatenates string literals whenever it's possible to do. This also works
-with any other normalizations that result in string literals. All JavaScript identifier names,
-except those from the ignore lists, will be substituted with unified names in the following
-format: var_0000 -> var_ffff. The Normalizer tries to expand escaped text, so it will appear in
-a readable form in the output. When such text is a parameter of an unescape function, the entire
-function call will be replaced by the unescaped string. Moreover, Normalizer validates the syntax
-concerning ECMA-262 Standard, including scope tracking and restrictions for script elements.
+in separate .js files (external scripts), and JavaScript embedded in PDF files sent over HTTP/1,
+HTTP/2, SMTP, IMAP and POP3 protocols. It supports scripts over multiple PDUs. It is a stateful
+JavaScript whitespace and identifiers normalizer. Normalizer concatenates string literals whenever
+it's possible to do. This also works with any other normalizations that result in string literals.
+All JavaScript identifier names, except those from the ignore lists, will be substituted with unified
+names in the following format: var_0000 -> var_ffff. The Normalizer tries to expand escaped text, so
+it will appear in a readable form in the output. When such text is a parameter of an unescape function,
+the entire function call will be replaced by the unescaped string. Moreover, Normalizer validates the
+syntax concerning ECMA-262 Standard, including scope tracking and restrictions for script elements.
 
 Check with the following options for more configurations: bytes_depth, identifier_depth,
 max_tmpl_nest, max_bracket_depth, max_scope_depth, ident_ignore, prop_ignore.
@@ -172,7 +172,8 @@ a missed normalization context is detected and 154:8 built-in alert is raised.
 Further normalization is not possible for the script.
 For example:
 
-    alert http (msg:"JavaScript in HTTP"; js_data; content:"var var_0000=1;"; sid:1;)
+    alert http (msg:"JS in HTTP"; js_data; content:"var var_0000"; sid:1;)
+    alert smtp (msg:"JS in SMTP"; js_data; content:"var var_0000"; sid:2;)
 
 ===== js_data
 
