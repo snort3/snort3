@@ -6,3 +6,9 @@ parsed and the MIME attachments in POP responses are processed using the
 file API.  The file API extracts and decodes the attachments. file_data is
 then set to the start of these extracted/decoded attachments. This
 inspector also identifies and whitelists the POPS traffic.
+
+POP inspector uses PDFJSNorm class to extract and normalize JavaScript
+in PDF files. The normalized JavaScript is then available in the js_data buffer.
+The js_data buffer follows the JIT approach, thus, to perform the normalization,
+the rule with the js_data IPS option must be present as well as the js_norm module
+is configured.

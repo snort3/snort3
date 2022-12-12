@@ -156,6 +156,11 @@ private:
     bool is_end_of_data(snort::Flow* ssn) override;
 };
 
+namespace snort
+{
+class PDFJSNorm;
+}
+
 struct IMAPData
 {
     int state;
@@ -164,6 +169,7 @@ struct IMAPData
     uint32_t body_len;
     uint32_t body_read;
     ImapMime* mime_ssn;
+    snort::PDFJSNorm* jsn;
 };
 
 class ImapFlowData : public snort::FlowData

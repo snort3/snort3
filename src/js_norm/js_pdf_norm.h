@@ -15,58 +15,45 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// js_norm.h author Cisco
+// js_pdf_norm.h author Cisco
 
-#ifndef JS_NORM_H
-#define JS_NORM_H
+#ifndef JS_PDF_NORM_H
+#define JS_PDF_NORM_H
 
-#include "utils/event_gen.h"
+#include <FlexLexer.h>
+#include <cstring>
 
-#include "js_config.h"
-#include "js_enum.h"
-
-namespace jsn
-{
-class JSIdentifier;
-class JSNormalizer;
-
-const char* ret2str(int);
-}
+#include "js_norm/js_norm.h"
+#include "js_norm/pdf_tokenizer.h"
+#include "utils/streambuf.h"
 
 namespace snort
 {
 
-class SO_PUBLIC JSNorm
+class SO_PUBLIC PDFJSNorm : public JSNorm
 {
 public:
-    JSNorm(JSNormConfig*, bool ext_script_type = false);
-    JSNorm(const JSNorm&) = delete;
-    virtual ~JSNorm();
+    static bool is_pdf(const void* data, size_t len)
+    {
+        constexpr char magic[] = "%PDF-1.";
+        constexpr int magic_len = sizeof(magic) - 1;
+        return magic_len < len and !strncmp((const char*)data, magic, magic_len);
+    }
 
-    void tick()
-    { ++pdu_cnt; }
-
-    void normalize(const void*, size_t, const void*&, size_t&);
-    void get_data(const void*&, size_t&);
-    void flush_data(const void*&, size_t&);
-    void flush_data();
+    PDFJSNorm(JSNormConfig* cfg) :
+        JSNorm(cfg), pdf_in(&buf_pdf_in), pdf_out(&buf_pdf_out), extractor(pdf_in, pdf_out)
+    { }
 
 protected:
-    virtual bool pre_proc();
-    virtual bool post_proc(int);
+    bool pre_proc() override;
+    bool post_proc(int) override;
 
-    bool alive;
-    uint32_t pdu_cnt;
-
-    const uint8_t* src_ptr;
-    const uint8_t* src_end;
-
-    jsn::JSIdentifier* idn_ctx;
-    jsn::JSNormalizer* jsn_ctx;
-    bool ext_script_type;
-
-    JSEvents events;
-    JSNormConfig* config;
+private:
+    snort::istreambuf_glue buf_pdf_in;
+    snort::ostreambuf_infl buf_pdf_out;
+    std::istream pdf_in;
+    std::ostream pdf_out;
+    jsn::PDFTokenizer extractor;
 };
 
 }

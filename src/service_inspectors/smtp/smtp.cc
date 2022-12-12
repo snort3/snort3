@@ -26,6 +26,7 @@
 
 #include "detection/detection_engine.h"
 #include "detection/detection_util.h"
+#include "js_norm/js_pdf_norm.h"
 #include "log/messages.h"
 #include "log/unified2.h"
 #include "profiler/profiler.h"
@@ -181,6 +182,7 @@ const PegInfo smtp_peg_names[] =
     { CountType::SUM, "uu_decoded_bytes", "total uu decoded bytes" },
     { CountType::SUM, "non_encoded_attachments", "total non-encoded attachments extracted" },
     { CountType::SUM, "non_encoded_bytes", "total non-encoded extracted bytes" },
+    { CountType::SUM, "js_pdf_scripts", "total number of PDF files processed" },
 
     { CountType::END, nullptr, nullptr }
 };
@@ -208,21 +210,35 @@ SmtpFlowData::SmtpFlowData() : FlowData(inspector_id)
 
 SmtpFlowData::~SmtpFlowData()
 {
-    if ( session.mime_ssn )
-        delete session.mime_ssn;
-
-    if ( session.auth_name )
-        snort_free(session.auth_name);
+    delete session.mime_ssn;
+    delete session.jsn;
+    snort_free(session.auth_name);
 
     assert(smtpstats.concurrent_sessions > 0);
     smtpstats.concurrent_sessions--;
 }
 
 unsigned SmtpFlowData::inspector_id = 0;
+
 static SMTPData* get_session_data(Flow* flow)
 {
     SmtpFlowData* fd = (SmtpFlowData*)flow->get_flow_data(SmtpFlowData::inspector_id);
     return fd ? &fd->session : nullptr;
+}
+
+static inline PDFJSNorm* acquire_js_ctx(SMTPData& smtp_ssn, const void* data, size_t len)
+{
+    if (smtp_ssn.jsn)
+        return smtp_ssn.jsn;
+
+    JSNormConfig* cfg = get_inspection_policy()->jsn_config;
+    if (cfg and PDFJSNorm::is_pdf(data, len))
+    {
+        smtp_ssn.jsn = new PDFJSNorm(cfg);
+        ++smtpstats.js_pdf_scripts;
+    }
+
+    return smtp_ssn.jsn;
 }
 
 static SMTPData* SetNewSMTPData(SmtpProtoConf* config, Packet* p)
@@ -526,6 +542,9 @@ static void SMTP_ResetState(Flow* ssn)
     SMTPData* smtp_ssn = get_session_data(ssn);
     smtp_ssn->state = STATE_COMMAND;
     smtp_ssn->state_flags = (smtp_ssn->state_flags & SMTP_FLAG_ABANDON_EVT) ? SMTP_FLAG_ABANDON_EVT : 0;
+
+    delete smtp_ssn->jsn;
+    smtp_ssn->jsn = nullptr;
 }
 
 static inline int InspectPacket(Packet* p)
@@ -851,7 +870,7 @@ static const uint8_t* SMTP_HandleCommand(SmtpProtoConf* config, Packet* p, SMTPD
             smtp_ssn->state = STATE_TLS_CLIENT_PEND;
             smtp_ssn->client_requested_starttls = true;
         }
-            
+
         break;
 
     case CMD_X_LINK2STATE:
@@ -1018,9 +1037,7 @@ static void SMTP_ProcessClientPacket(SmtpProtoConf* config, Packet* p, SMTPData*
     const uint8_t* end = p->data + p->dsize;
 
     if (smtp_ssn->state == STATE_CONNECT)
-    {
         smtp_ssn->state = STATE_COMMAND;
-    }
 
     while ((ptr != nullptr) && (ptr < end))
     {
@@ -1035,8 +1052,15 @@ static void SMTP_ProcessClientPacket(SmtpProtoConf* config, Packet* p, SMTPData*
         case STATE_DATA:
         case STATE_BDATA:
             position = get_file_position(p);
+            if (isFileStart(position))
+            {
+                delete smtp_ssn->jsn;
+                smtp_ssn->jsn = nullptr;
+            }
             ptr = smtp_ssn->mime_ssn->process_mime_data(p, ptr, len, true, position);
             //ptr = SMTP_HandleData(p, ptr, end, &(smtp_ssn->mime_ssn));
+            if (smtp_ssn->jsn)
+                smtp_ssn->jsn->tick();
             break;
         case STATE_XEXCH50:
             if (smtp_normalizing)
@@ -1155,7 +1179,7 @@ static void SMTP_ProcessServerPacket(
                 else
                 {
                     smtp_ssn->server_accepted_starttls = true;
-                    
+
                     OpportunisticTlsEvent event(p, p->flow->service);
                     DataBus::publish(OPPORTUNISTIC_TLS_EVENT, event, p->flow);
                     ++smtpstats.starttls;
@@ -1216,6 +1240,8 @@ static void snort_smtp(SmtpProtoConf* config, Packet* p)
     /* reset normalization stuff */
     smtp_normalizing = false;
     smtpstats.total_bytes += p->dsize;
+    if (smtp_ssn->jsn)
+        smtp_ssn->jsn->flush_data();
 
     if (pkt_dir == SMTP_PKT_FROM_SERVER)
     {
@@ -1237,7 +1263,7 @@ static void snort_smtp(SmtpProtoConf* config, Packet* p)
                 smtp_ssn->state = STATE_TLS_SERVER_PEND;
             }
         }
-        
+
         if(smtp_ssn->state == STATE_TLS_CLIENT_PEND)
             smtp_ssn->state = STATE_COMMAND;
 
@@ -1556,23 +1582,44 @@ void Smtp::ProcessSmtpCmdsList(const SmtpCmd* sc)
 
 bool Smtp::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
-    if ( ibt != InspectionBuffer::IBT_VBA )
-        return false;
-
     SMTPData* smtp_ssn = get_session_data(p->flow);
+    assert(smtp_ssn);
 
-    if (!smtp_ssn)
-        return false;
+    const void* dst = nullptr;
+    size_t dst_len = 0;
 
-    const BufferData& vba_buf = smtp_ssn->mime_ssn->get_vba_inspect_buf();
-
-    if ( vba_buf.data_ptr() && vba_buf.length() )
+    switch (ibt)
     {
-        b.data = vba_buf.data_ptr();
-        b.len = vba_buf.length();
-        return true;
+    case InspectionBuffer::IBT_VBA:
+    {
+        const BufferData& vba_buf = smtp_ssn->mime_ssn->get_vba_inspect_buf();
+        dst = vba_buf.data_ptr();
+        dst_len = vba_buf.length();
+        break;
     }
-    return false;
+
+    case InspectionBuffer::IBT_JS_DATA:
+    {
+        auto& dp = DetectionEngine::get_file_data(p->context);
+        auto jsn = acquire_js_ctx(*smtp_ssn, dp.data, dp.len);
+        if (jsn)
+        {
+            jsn->get_data(dst, dst_len);
+            if (dst and dst_len)
+                break;
+            jsn->normalize(dp.data, dp.len, dst, dst_len);
+        }
+        break;
+    }
+
+    default:
+        return false;
+    }
+
+    b.data = (const uint8_t*)dst;
+    b.len = dst_len;
+
+    return dst && dst_len;
 }
 
 //-------------------------------------------------------------------------
@@ -1621,6 +1668,7 @@ static const char* smtp_bufs[] =
 {
     "file_data",
     "vba_data",
+    "js_data",
     nullptr
 };
 
@@ -1726,4 +1774,3 @@ TEST_CASE("normalize_data", "[smtp]")
     delete p.context;
 }
 #endif
-

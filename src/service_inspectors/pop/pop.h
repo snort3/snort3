@@ -111,6 +111,11 @@ private:
     bool is_end_of_data(snort::Flow* ssn) override;
 };
 
+namespace snort
+{
+class PDFJSNorm;
+}
+
 struct POPData
 {
     int state;
@@ -118,6 +123,7 @@ struct POPData
     int state_flags;
     int session_flags;
     PopMime* mime_ssn;
+    snort::PDFJSNorm* jsn;
 };
 
 class PopFlowData : public snort::FlowData

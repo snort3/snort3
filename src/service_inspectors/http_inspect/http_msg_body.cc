@@ -255,7 +255,7 @@ void HttpMsgBody::analyze()
             do_file_decompression(decoded_body, decompressed_file_body);
 
             if (decompressed_file_body.length() > 0 and session_data->js_ctx[source_id])
-                session_data->js_ctx[source_id]->tick();
+                session_data->js_ctx[source_id]->ctx().tick();
 
             uint32_t& partial_detect_length = session_data->partial_detect_length[source_id];
             uint8_t*& partial_detect_buffer = session_data->partial_detect_buffer[source_id];
@@ -789,7 +789,9 @@ const Field& HttpMsgBody::get_norm_js_data()
         return norm_js_data;
     }
 
-    if (decompressed_file_body.length() <= 0)
+    int src_len = decompressed_file_body.length();
+
+    if (src_len <= 0)
     {
         norm_js_data.set(STAT_NO_SOURCE);
         return norm_js_data;
@@ -803,12 +805,13 @@ const Field& HttpMsgBody::get_norm_js_data()
         return norm_js_data;
     }
 
+    const void* src = decompressed_file_body.start();
     const void* dst = nullptr;
     size_t dst_len = HttpCommon::STAT_NOT_PRESENT;
-    auto back = !session_data->partial_flush[source_id];
+    bool back = !session_data->partial_flush[source_id];
 
-    jsn->link(decompressed_file_body.start(), session_data->events[source_id], infractions);
-    jsn->normalize(decompressed_file_body.start(), decompressed_file_body.length(), dst, dst_len);
+    jsn->link(src, session_data->events[source_id], infractions);
+    jsn->ctx().normalize(src, src_len, dst, dst_len);
 
     debug_logf(4, js_trace, TRACE_PROC, DetectionEngine::get_current_packet(),
         "input data was %s\n", back ? "last one in PDU" : "a part of PDU");
@@ -818,11 +821,7 @@ const Field& HttpMsgBody::get_norm_js_data()
     else
     {
         if (back)
-            jsn->flush_data(dst, dst_len);
-
-        trace_logf(1, js_trace, TRACE_DUMP, DetectionEngine::get_current_packet(),
-            "js_data[%u]: %.*s\n", (unsigned)dst_len, (int)dst_len, (const char*)dst);
-
+            jsn->ctx().flush_data(dst, dst_len);
         norm_js_data.set(dst_len, (const uint8_t*)dst, back);
     }
 

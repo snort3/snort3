@@ -156,6 +156,11 @@ private:
     bool is_end_of_data(snort::Flow* ssn) override;
 };
 
+namespace snort
+{
+class PDFJSNorm;
+}
+
 struct SMTPData
 {
     //Initialize structure with default values
@@ -164,6 +169,7 @@ struct SMTPData
                  session_flags{0},
                  dat_chunk{0},
                  mime_ssn{nullptr},
+                 jsn{nullptr},
                  auth_name{nullptr},
                  client_requested_starttls{false},
                  pipelined_command_counter{0},
@@ -175,6 +181,7 @@ struct SMTPData
     int session_flags;
     uint32_t dat_chunk;
     SmtpMime* mime_ssn;
+    snort::PDFJSNorm* jsn;
     SMTPAuthName* auth_name;
     bool client_requested_starttls;
     size_t pipelined_command_counter;

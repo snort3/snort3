@@ -24,13 +24,15 @@
 #include <utility>
 #include <vector>
 
+#include "main/snort_types.h"
+
 namespace snort
 {
 
 // an input stream over set of buffers,
 // the buffer doesn't take ownership over the memory,
 // no intermediate buffering between chunks
-class istreambuf_glue : public std::streambuf
+class SO_PUBLIC istreambuf_glue : public std::streambuf
 {
 public:
     istreambuf_glue();
@@ -65,7 +67,7 @@ protected:
 };
 
 // an output stream over extensible array
-class ostreambuf_infl : public std::streambuf
+class SO_PUBLIC ostreambuf_infl : public std::streambuf
 {
 public:
     static constexpr size_t size_limit = 1 << 20;

@@ -263,7 +263,7 @@ static inline bool flush_based_length(SmtpPafData* pfdata)
  *   * Process data boundary and flush each file based on boundary*/
 static inline bool process_data(SmtpPafData* pfdata,  uint8_t data)
 {
-    if (flush_based_length(pfdata)|| check_data_end(&(pfdata->data_end_state), data))
+    if (flush_based_length(pfdata) || check_data_end(&(pfdata->data_end_state), data))
     {
         /*Clean up states*/
         pfdata->smtp_state = SMTP_PAF_CMD_STATE;

@@ -135,6 +135,27 @@ void JSNorm::normalize(const void* in_data, size_t in_len, const void*& data, si
 
     len = jsn_ctx->script_size();
     data = jsn_ctx->get_script();
+
+    if (data and len)
+        trace_logf(1, js_trace, TRACE_DUMP, packet,
+            "js_data[%u]: %.*s\n", (unsigned)len, (int)len, (const char*)data);
+}
+
+void JSNorm::flush_data(const void*& data, size_t& len)
+{
+    len = jsn_ctx->script_size();
+    data = jsn_ctx->take_script();
+}
+
+void JSNorm::flush_data()
+{
+    delete[] jsn_ctx->take_script();
+}
+
+void JSNorm::get_data(const void*& data, size_t& len)
+{
+    len = jsn_ctx->script_size();
+    data = jsn_ctx->get_script();
 }
 
 bool JSNorm::pre_proc()

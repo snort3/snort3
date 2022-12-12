@@ -157,6 +157,7 @@ struct SmtpStats
     PegCount ssl_search_abandoned;
     PegCount ssl_search_abandoned_too_soon;
     snort::MimeStats mime_stats;
+    PegCount js_pdf_scripts;
 };
 
 extern const PegInfo smtp_peg_names[];

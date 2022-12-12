@@ -25,6 +25,7 @@
 #include "imap.h"
 
 #include "detection/detection_engine.h"
+#include "js_norm/js_pdf_norm.h"
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
@@ -140,6 +141,7 @@ const PegInfo imap_peg_names[] =
     { CountType::SUM, "uu_decoded_bytes", "total uu decoded bytes" },
     { CountType::SUM, "non_encoded_attachments", "total non-encoded attachments extracted" },
     { CountType::SUM, "non_encoded_bytes", "total non-encoded extracted bytes" },
+    { CountType::SUM, "js_pdf_scripts", "total number of PDF files processed" },
 
     { CountType::END, nullptr, nullptr }
 };
@@ -154,18 +156,34 @@ ImapFlowData::ImapFlowData() : FlowData(inspector_id)
 
 ImapFlowData::~ImapFlowData()
 {
-    if(session.mime_ssn)
-        delete(session.mime_ssn);
+    delete session.mime_ssn;
+    delete session.jsn;
 
     assert(imapstats.concurrent_sessions > 0);
     imapstats.concurrent_sessions--;
 }
 
 unsigned ImapFlowData::inspector_id = 0;
+
 static IMAPData* get_session_data(Flow* flow)
 {
     ImapFlowData* fd = (ImapFlowData*)flow->get_flow_data(ImapFlowData::inspector_id);
     return fd ? &fd->session : nullptr;
+}
+
+static inline PDFJSNorm* acquire_js_ctx(IMAPData& imap_ssn, const void* data, size_t len)
+{
+    if (imap_ssn.jsn)
+        return imap_ssn.jsn;
+
+    JSNormConfig* cfg = get_inspection_policy()->jsn_config;
+    if (cfg and PDFJSNorm::is_pdf(data, len))
+    {
+        imap_ssn.jsn = new PDFJSNorm(cfg);
+        ++imapstats.js_pdf_scripts;
+    }
+
+    return imap_ssn.jsn;
 }
 
 static IMAPData* SetNewIMAPData(IMAP_PROTO_CONF* config, Packet* p)
@@ -228,6 +246,9 @@ static void IMAP_ResetState(Flow* ssn)
     imap_ssn->state = STATE_COMMAND;
     imap_ssn->state_flags = 0;
     imap_ssn->body_read = imap_ssn->body_len = 0;
+
+    delete imap_ssn->jsn;
+    imap_ssn->jsn = nullptr;
 }
 
 static void IMAP_GetEOL(const uint8_t* ptr, const uint8_t* end,
@@ -436,11 +457,11 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
     {
         if (imap_ssn->state == STATE_DATA)
         {
-            if ( imap_ssn->body_len > imap_ssn->body_read)
+            if (imap_ssn->body_len > imap_ssn->body_read)
             {
                 int len = imap_ssn->body_len - imap_ssn->body_read;
 
-                if ( (end - ptr) < len )
+                if ((end - ptr) < len)
                 {
                     data_end = end;
                     len = data_end - ptr;
@@ -449,11 +470,18 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
                     data_end = ptr + len;
 
                 FilePosition position = get_file_position(p);
-
                 int data_len = end - ptr;
-                ptr = imap_ssn->mime_ssn->process_mime_data(p, ptr, data_len, false,
-                    position);
-                if ( ptr < data_end)
+
+                if (isFileStart(position))
+                {
+                    delete imap_ssn->jsn;
+                    imap_ssn->jsn = nullptr;
+                }
+
+                ptr = imap_ssn->mime_ssn->process_mime_data(p, ptr, data_len, false, position);
+                if (imap_ssn->jsn)
+                    imap_ssn->jsn->tick();
+                if (ptr < data_end)
                     len = len - (data_end - ptr);
 
                 imap_ssn->body_read += len;
@@ -522,13 +550,13 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
             if (imap_ssn->state == STATE_DATA)
             {
                 body_start = (const uint8_t*)memchr((const char*)ptr, '{', (eol - ptr));
-                if ( body_start == nullptr )
+                if (body_start == nullptr)
                 {
                     imap_ssn->state = STATE_UNKNOWN;
                 }
                 else
                 {
-                    if ( (body_start + 1) < eol )
+                    if ((body_start + 1) < eol)
                     {
                         uint32_t len =
                             (uint32_t)SnortStrtoul((const char*)(body_start + 1), &eptr, 10);
@@ -557,7 +585,7 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
             {
                 imap_ssn->session_flags &= ~IMAP_FLAG_CHECK_SSL;
             }
-            if ( (*ptr != '*') && (*ptr !='+') && (*ptr != '\r') && (*ptr != '\n') )
+            if ((*ptr != '*') && (*ptr != '+') && (*ptr != '\r') && (*ptr != '\n'))
             {
                 DetectionEngine::queue_event(GID_IMAP, IMAP_UNKNOWN_RESP);
             }
@@ -589,6 +617,9 @@ static void snort_imap(IMAP_PROTO_CONF* config, Packet* p)
     }
 
     int pkt_dir = IMAP_Setup(p, imap_ssn);
+
+    if (imap_ssn->jsn)
+        imap_ssn->jsn->flush_data();
 
     if (pkt_dir == IMAP_PKT_FROM_CLIENT)
     {
@@ -775,33 +806,46 @@ void Imap::eval(Packet* p)
 
 bool Imap::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
+    IMAPData* imap_ssn = get_session_data(p->flow);
+    assert(imap_ssn);
+
+    const void* dst = nullptr;
+    size_t dst_len = 0;
+
     switch (ibt)
     {
-        case InspectionBuffer::IBT_VBA:
-        {
-            IMAPData* imap_ssn = get_session_data(p->flow);
-
-            if (!imap_ssn)
-                return false;
-
-            const BufferData& vba_buf = imap_ssn->mime_ssn->get_vba_inspect_buf();
-
-            if (vba_buf.data_ptr() && vba_buf.length())
-            {
-                b.data = vba_buf.data_ptr();
-                b.len = vba_buf.length();
-                return true;
-            }
-            else
-                return false;
-        }
-
-        default:
-            break;
+    case InspectionBuffer::IBT_VBA:
+    {
+        const BufferData& vba_buf = imap_ssn->mime_ssn->get_vba_inspect_buf();
+        dst = vba_buf.data_ptr();
+        dst_len = vba_buf.length();
+        break;
     }
-    return false;
 
+    case InspectionBuffer::IBT_JS_DATA:
+    {
+        auto& dp = DetectionEngine::get_file_data(p->context);
+        auto jsn = acquire_js_ctx(*imap_ssn, dp.data, dp.len);
+        if (jsn)
+        {
+            jsn->get_data(dst, dst_len);
+            if (dst and dst_len)
+                break;
+            jsn->normalize(dp.data, dp.len, dst, dst_len);
+        }
+        break;
+    }
+
+    default:
+        return false;
+    }
+
+    b.data = (const uint8_t*)dst;
+    b.len = dst_len;
+
+    return dst && dst_len;
 }
+
 bool Imap::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
     // Fast pattern buffers only supplied at specific times
@@ -843,6 +887,7 @@ static const char* imap_bufs[] =
 {
     "file_data",
     "vba_data",
+    "js_data",
     nullptr
 };
 
@@ -883,4 +928,3 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* sin_imap = &imap_api.base;
 #endif
-

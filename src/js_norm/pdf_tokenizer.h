@@ -26,12 +26,14 @@
 #include <stack>
 #include <vector>
 
+#include "main/snort_types.h"
+
 #define PDFTOKENIZER_NAME_MAX_SIZE 16
 
 namespace jsn
 {
 
-class PDFTokenizer : public yyFlexLexer
+class SO_PUBLIC PDFTokenizer : public yyFlexLexer
 {
 public:
     enum PDFRet

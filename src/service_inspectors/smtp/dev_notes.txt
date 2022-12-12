@@ -10,3 +10,9 @@ traffic.
 
 SMTP inspector logs the filename, email addresses, attachment names when
 configured.  The SMTP commands are also normalized based on the config.
+
+SMTP inspector uses PDFJSNorm class to extract and normalize JavaScript
+in PDF files. The normalized JavaScript is then available in the js_data buffer.
+The js_data buffer follows the JIT approach, thus, to perform the normalization,
+the rule with the js_data IPS option must be present as well as the js_norm module
+is configured.

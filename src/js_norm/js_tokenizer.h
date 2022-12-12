@@ -45,7 +45,7 @@ class JSTokenizerTester;
 class JSTestConfig;
 #endif // CATCH_TEST_BUILD || BENCHMARK_TEST
 
-class JSTokenizer : public yyFlexLexer
+class SO_PUBLIC JSTokenizer : public yyFlexLexer
 {
 private:
     enum JSToken

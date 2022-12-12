@@ -40,6 +40,7 @@ struct PopStats
     PegCount ssl_search_abandoned;
     PegCount ssl_srch_abandoned_early;
     snort::MimeStats mime_stats;
+    PegCount js_pdf_scripts;
 };
 
 extern const PegInfo pop_peg_names[];

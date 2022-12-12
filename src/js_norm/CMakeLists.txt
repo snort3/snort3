@@ -21,6 +21,8 @@ set ( JS_SOURCES
     js_norm_module.h
     js_normalizer.cc
     js_normalizer.h
+    js_pdf_norm.cc
+    js_pdf_norm.h
     js_tokenizer.h
     pdf_tokenizer.h
 )

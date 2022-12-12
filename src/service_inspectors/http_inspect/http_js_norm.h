@@ -22,12 +22,10 @@
 #define HTTP_JS_NORM_H
 
 #include <cstring>
-#include <FlexLexer.h>
 
 #include "js_norm/js_norm.h"
-#include "js_norm/pdf_tokenizer.h"
+#include "js_norm/js_pdf_norm.h"
 #include "search_engines/search_tool.h"
-#include "utils/streambuf.h"
 
 #include "http_field.h"
 #include "http_flow_data.h"
@@ -40,12 +38,12 @@ snort::SearchTool* js_create_mpse_tag_attr();
 
 void js_normalize(const Field& input, Field& output, const HttpParaList*, HttpInfractions*, HttpEventGen*);
 
-class HttpJSNorm : public snort::JSNorm
+class HttpJSNorm
 {
 public:
-    HttpJSNorm(JSNormConfig* jsn_config) : snort::JSNorm(jsn_config) {}
+    virtual ~HttpJSNorm() {}
 
-    void flush_data(const void*&, size_t&);
+    virtual snort::JSNorm& ctx() = 0;
 
     void link(const void* page, HttpEventGen* http_events_, HttpInfractions* infs)
     { page_start = (const uint8_t*)page; http_events = http_events_; infractions = infs; }
@@ -61,13 +59,16 @@ protected:
     bool script_continue = false;
 };
 
-class HttpInlineJSNorm : public HttpJSNorm
+class HttpInlineJSNorm : public snort::JSNorm, public HttpJSNorm
 {
 public:
     HttpInlineJSNorm(JSNormConfig* jsn_config, uint64_t tid, snort::SearchTool* mpse_open_tag,
         snort::SearchTool* mpse_tag_attr) :
-        HttpJSNorm(jsn_config), mpse_otag(mpse_open_tag), mpse_attr(mpse_tag_attr), output_size(0), ext_ref_type(false)
+        JSNorm(jsn_config), mpse_otag(mpse_open_tag), mpse_attr(mpse_tag_attr), output_size(0), ext_ref_type(false)
     { trans_num = tid; }
+
+    snort::JSNorm& ctx() override
+    { return *this; }
 
 protected:
     bool pre_proc() override;
@@ -80,41 +81,33 @@ private:
     bool ext_ref_type;
 };
 
-class HttpExternalJSNorm : public HttpJSNorm
+class HttpExternalJSNorm : public snort::JSNorm, public HttpJSNorm
 {
 public:
-    HttpExternalJSNorm(JSNormConfig* jsn_config, uint64_t tid) : HttpJSNorm(jsn_config)
+    HttpExternalJSNorm(JSNormConfig* jsn_config, uint64_t tid) : JSNorm(jsn_config)
     { trans_num = tid; }
+
+    snort::JSNorm& ctx() override
+    { return *this; }
 
 protected:
     bool pre_proc() override;
     bool post_proc(int) override;
 };
 
-class HttpPDFJSNorm : public HttpJSNorm
+class HttpPDFJSNorm : public snort::PDFJSNorm, public HttpJSNorm
 {
 public:
-    static bool is_pdf(const void* data, size_t len)
-    {
-        constexpr char magic[] = "%PDF-1.";
-        constexpr int magic_len = sizeof(magic) - 1;
-        return magic_len < len and !strncmp((const char*)data, magic, magic_len);
-    }
-
     HttpPDFJSNorm(JSNormConfig* jsn_config, uint64_t tid) :
-        HttpJSNorm(jsn_config), pdf_in(&buf_pdf_in), pdf_out(&buf_pdf_out), extractor(pdf_in, pdf_out)
+        PDFJSNorm(jsn_config)
     { trans_num = tid; }
+
+    snort::JSNorm& ctx() override
+    { return *this; }
 
 protected:
     bool pre_proc() override;
     bool post_proc(int) override;
-
-private:
-    snort::istreambuf_glue buf_pdf_in;
-    snort::ostreambuf_infl buf_pdf_out;
-    std::istream pdf_in;
-    std::ostream pdf_out;
-    jsn::PDFTokenizer extractor;
 };
 
 #endif
