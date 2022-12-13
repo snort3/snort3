@@ -4,7 +4,7 @@ the Legacy Normalizer and the Enhanced Normalizer.
 In NHI, there are three JSNorm extensions:
  * HttpInlineJSNorm, processes content of HTML script tags.
  * HttpExternalJSNorm, processes payload with JavaScript MIME type.
- * HttpPDFJSNorm, processes payload with PDF MIME type.
+ * HttpPDFJSNorm, processes payload with PDF MIME type and PDF files in MIME attachments.
 
 Normalization context is per transaction. It is created once js_data calls for normalized JS data,
 and is deleted once transaction ends. Partial inspections feed data incrementally to JS Normalizer,
@@ -17,9 +17,9 @@ During message body analysis the Enhanced Normalizer does one of the following:
 2. If it is an HTML-page, Normalizer searches for an opening tag and processes
    subsequent bytes in a stream mode, until it finds a closing tag.
    It proceeds and scans the entire message body for inline scripts.
-3. If it is PDF file transferred as MIME attachment or as a message body then
-   Normalizer extracts strings marked with '/JS' keyword and normalizes their
-   content as JS text.
+3. If it is a PDF file transferred as MIME attachment or as a message body then
+   Normalizer extracts strings assigned to '/JS' key, or streams referred from
+   the same value, and normalizes their content as JS text.
 
 Also, js_data IPS option's buffer is a part of NHI processing in order to start the normalization.
 

@@ -134,7 +134,11 @@ PDF parser follows "PDF 32000-1:2008 First Edition 2008-7-1 Document
 management Portable document format Part 1: PDF 1.7".
 Known limitations:
 * Nested dictionaries are not fully supported. Properties of the last object
-are tracked. Once the nested object ends, it clears all info about the object
-type.
+  are tracked. Once the nested object ends, it clears all info about the object
+  type.
 * Nested dictionaries are not allowed in JavaScript-type dictionary.
-* Stream objects are ignored.
+* JavaScript in streams is tracked only when a reference to that stream is found
+  earlier in that file.
+* Compressed JavaScript streams are handled correctly only if PDF decompression is
+  enabled (http_inspect.decompress_pdf = true, and the same option for other inspectors)
+

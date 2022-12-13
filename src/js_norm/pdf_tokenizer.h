@@ -20,11 +20,9 @@
 #ifndef PDF_TOKENIZER_H
 #define PDF_TOKENIZER_H
 
-#include <array>
 #include <cstring>
 #include <sstream>
-#include <stack>
-#include <vector>
+#include <unordered_set>
 
 #include "main/snort_types.h"
 
@@ -41,6 +39,8 @@ public:
         EOS = 0,
         NOT_NAME_IN_DICTIONARY_KEY,
         INCOMPLETE_ARRAY_IN_DICTIONARY,
+        STREAM_NO_LENGTH,
+        UNEXPECTED_SYMBOL,
         MAX
     };
 
@@ -64,6 +64,13 @@ private:
     PDFRet h_lit_unescape();
     PDFRet h_lit_oct2chr();
     PDFRet h_hex_hex2chr();
+    PDFRet h_stream_open();
+    PDFRet h_stream();
+    bool h_stream_close();
+    void h_stream_length();
+    void h_ref();
+    void h_ind_obj_open();
+    inline void h_ind_obj_close();
 
     struct ObjectString
     {
@@ -98,10 +105,18 @@ private:
         char key[PDFTOKENIZER_NAME_MAX_SIZE] = {0};
     };
 
+    struct Stream
+    {
+        int rem_length = -1;
+        bool is_js = false;
+    };
+
     ObjectString obj_string;
     ObjectArray obj_array;
     ObjectDictionary obj_dictionary;
     DictionaryEntry obj_entry;
+    Stream obj_stream;
+    std::unordered_set<unsigned int> js_stream_refs;
 };
 
 bool PDFTokenizer::h_lit_str()
@@ -122,6 +137,11 @@ bool PDFTokenizer::h_lit_open()
 bool PDFTokenizer::h_lit_close()
 {
     return --obj_string.parenthesis_level == 0;
+}
+
+void PDFTokenizer::h_ind_obj_close()
+{
+    obj_stream.is_js = false;
 }
 
 }
