@@ -24,6 +24,8 @@ names in the following format: var_0000 -> var_ffff. The Normalizer tries to exp
 it will appear in a readable form in the output. When such text is a parameter of an unescape function,
 the entire function call will be replaced by the unescaped string. Moreover, Normalizer validates the
 syntax concerning ECMA-262 Standard, including scope tracking and restrictions for script elements.
+JavaScript, embedded in PDF files, has to be decompressed before normalization. For that,
+decompress_pdf = true option has to be set in configuration of appropriate service inspectors.
 
 Check with the following options for more configurations: bytes_depth, identifier_depth,
 max_tmpl_nest, max_bracket_depth, max_scope_depth, ident_ignore, prop_ignore.
@@ -43,7 +45,7 @@ provide extra features, tweak how things are done, or conserve resources by
 doing less.
 
 Also, there are default lists of ignored identifiers and object properties provided.
-To get a complete default configuration, use 'default_js_norm' from lua/snort_default.lua
+To get a complete default configuration, use 'default_js_norm' from $SNORT_LUA_PATH/snort_defaults.lua
 by adding:
 
     js_norm = default_js_norm
