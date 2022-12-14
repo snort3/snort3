@@ -696,7 +696,11 @@ void TcpSession::update_paws_timestamps(TcpSegmentDescriptor& tsd)
     TcpStreamTracker* listener = tsd.get_listener();
     TcpStreamTracker* talker = tsd.get_talker();
 
-    if ( listener->normalizer.handling_timestamps()
+    if ( no_ack_mode_enabled() )
+    { 
+        talker->set_ts_last(0); 
+    }
+    else if ( listener->normalizer.handling_timestamps()
         && SEQ_EQ(listener->r_win_base, tsd.get_seq()) )
     {
         if ( ((int32_t)(tsd.get_timestamp() - talker->get_ts_last()) >= 0  )
