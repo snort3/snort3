@@ -278,7 +278,7 @@ IpsOption::EvalStatus ByteJumpOption::eval(Cursor& c, Packet* p)
 static const Parameter s_params[] =
 {
     { "~count", Parameter::PT_INT, "0:10", nullptr,
-      "number of bytes to pick up from the buffer" },
+      "number of bytes to pick up from the buffer (string can pick less)" },
 
     { "~offset", Parameter::PT_STRING, nullptr, nullptr,
       "variable name or number of bytes into the buffer to start processing" },
@@ -810,6 +810,130 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
             byte_jump.bitmask_val = 2;
             ByteJumpOption test_5_1(byte_jump);
             REQUIRE((test_5_1.eval(current_cursor, &test_packet)) == MATCH);
+        }
+
+        SECTION("byte_to_extract bigger than bytes left in buffer")
+        {
+            uint8_t buff[] = "Hello world long input";
+            current_cursor.set("hello_world_long_name", buff, 22);
+            current_cursor.set_pos(22);
+            byte_jump.bytes_to_extract = 1;
+            byte_jump.from_beginning_flag = 0;
+            byte_jump.from_end_flag = 0;
+            byte_jump.offset = 0;
+            byte_jump.offset_var = -1;
+            byte_jump.post_offset = 0;
+            byte_jump.post_offset_var = -1;
+            byte_jump.relative_flag = 1;
+            byte_jump.string_convert_flag = 0;
+            ByteJumpOption test_6(byte_jump);
+            REQUIRE((test_6.eval(current_cursor, &test_packet)) == NO_MATCH);
+        }
+
+        SECTION("String truncation")
+        {
+            uint8_t buff[] = "Hello world long input 000";
+            current_cursor.set("hello_world_long_name", buff, 26);
+            current_cursor.set_pos(24);
+            byte_jump.bytes_to_extract = 3;
+            byte_jump.from_beginning_flag = 0;
+            byte_jump.from_end_flag = 0;
+            byte_jump.offset = 0;
+            byte_jump.offset_var = -1;
+            byte_jump.post_offset = 0;
+            byte_jump.post_offset_var = -1;
+            byte_jump.relative_flag = 1;
+            byte_jump.string_convert_flag = 1;
+            byte_jump.base = 10;
+            byte_jump.bitmask_val = 0;
+            byte_jump.align_flag = 0;
+            ByteJumpOption test_7(byte_jump);
+            REQUIRE((test_7.eval(current_cursor, &test_packet)) == MATCH);
+        }
+
+        SECTION("Negative offset")
+        {
+            SECTION("Cursor on the last byte of buffer")
+            {
+                uint8_t buff[] = "Hello world long input";
+                current_cursor.set("hello_world_long_name", buff, 22, true);
+                current_cursor.set_pos(22);
+                byte_jump.bytes_to_extract = 1;
+                byte_jump.from_beginning_flag = 0;
+                byte_jump.from_end_flag = 0;
+                byte_jump.offset = -6;
+                byte_jump.offset_var = -1;
+                byte_jump.post_offset = 0;
+                byte_jump.post_offset_var = -1;
+                byte_jump.relative_flag = 1;
+                byte_jump.string_convert_flag = 0;
+                byte_jump.align_flag = 0;
+                byte_jump.bitmask_val = 0;
+                ByteJumpOption test_8(byte_jump);
+                REQUIRE((test_8.eval(current_cursor, &test_packet)) == NO_MATCH);
+                REQUIRE(current_cursor.awaiting_data());
+            }
+
+            SECTION("Cursor on the last byte of buffer, bytes_to_extract is bigger than offset")
+            {
+                uint8_t buff[] = "Hello world long input";
+                current_cursor.set("hello_world_long_name", buff, 22);
+                current_cursor.set_pos(22);
+                byte_jump.bytes_to_extract = 3;
+                byte_jump.from_beginning_flag = 0;
+                byte_jump.from_end_flag = 0;
+                byte_jump.offset = -2;
+                byte_jump.offset_var = -1;
+                byte_jump.post_offset = 0;
+                byte_jump.post_offset_var = -1;
+                byte_jump.relative_flag = 1;
+                byte_jump.string_convert_flag = 0;
+                byte_jump.align_flag = 0;
+                ByteJumpOption test_9(byte_jump);
+                REQUIRE((test_9.eval(current_cursor, &test_packet)) == NO_MATCH);
+            }
+
+            SECTION("Cursor on the last byte of buffer with string flag")
+            {
+                uint8_t buff[] = "Hello world long input 000";
+                current_cursor.set("hello_world_long_name", buff, 26);
+                current_cursor.set_pos(26);
+                byte_jump.bytes_to_extract = 1;
+                byte_jump.from_beginning_flag = 0;
+                byte_jump.from_end_flag = 0;
+                byte_jump.offset = -2;
+                byte_jump.offset_var = -1;
+                byte_jump.post_offset = 0;
+                byte_jump.post_offset_var = -1;
+                byte_jump.relative_flag = 1;
+                byte_jump.string_convert_flag = 1;
+                byte_jump.base = 10;
+                byte_jump.bitmask_val = 0;
+                byte_jump.align_flag = 0;
+                ByteJumpOption test_10(byte_jump);
+                REQUIRE((test_10.eval(current_cursor, &test_packet)) == MATCH);
+            }
+
+            SECTION("String truncation")
+            {
+                uint8_t buff[] = "Hello world long input 000";
+                current_cursor.set("hello_world_long_name", buff, 26);
+                current_cursor.set_pos(26);
+                byte_jump.bytes_to_extract = 3;
+                byte_jump.from_beginning_flag = 0;
+                byte_jump.from_end_flag = 0;
+                byte_jump.offset = -2;
+                byte_jump.offset_var = -1;
+                byte_jump.post_offset = 0;
+                byte_jump.post_offset_var = -1;
+                byte_jump.relative_flag = 1;
+                byte_jump.string_convert_flag = 1;
+                byte_jump.base = 10;
+                byte_jump.bitmask_val = 0;
+                byte_jump.align_flag = 0;
+                ByteJumpOption test_11(byte_jump);
+                REQUIRE((test_11.eval(current_cursor, &test_packet)) == MATCH);
+            }
         }
     }
 }

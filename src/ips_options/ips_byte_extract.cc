@@ -245,7 +245,7 @@ static bool ByteExtractVerify(ByteExtractData* data)
 static const Parameter s_params[] =
 {
     { "~count", Parameter::PT_INT, "1:10", nullptr,
-      "number of bytes to pick up from the buffer" },
+      "number of bytes to pick up from the buffer (string can pick less)" },
 
     { "~offset", Parameter::PT_INT, "-65535:65535", nullptr,
       "number of bytes into the buffer to start processing" },
@@ -703,6 +703,70 @@ TEST_CASE("ByteExtractOption::eval valid", "[ips_byte_extract]")
         GetVarValueByIndex(&res, 0);
         CHECK(res == 508);
         CHECK(c.get_pos() == 4);
+    }
+    SECTION("bytes_to_extract bigger than amount of bytes left in the buffer")
+    {
+        ByteExtractData data;
+        c.set_pos(9);
+        INITIALIZE(data, 3, 0, 1, 0, 0, ENDIAN_BIG, 0, 1, 0, 0, name);
+        ByteExtractOption opt(data);
+        CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
+    }
+    SECTION("String truncation")
+    {
+        ByteExtractData data;
+        c.set_pos(10);
+        INITIALIZE(data, 2, 0, 1, 1, 0, ENDIAN_BIG, 10, 1, 0, 0, name);
+        ByteExtractOption opt(data);
+        CHECK(opt.eval(c, &p) == IpsOption::MATCH);
+        uint32_t res = 0;
+        GetVarValueByIndex(&res, 0);
+        CHECK(res == 5);
+    }
+
+    SECTION("Negative offset")
+    {
+        SECTION("Cursor on last byte of buffers")
+        {
+            ByteExtractData data;
+            c.set_pos(11);
+            INITIALIZE(data, 1, -6, 1, 0, 0, ENDIAN_BIG, 10, 1, 0, 0, name);
+            ByteExtractOption opt(data);
+            CHECK(opt.eval(c, &p) == IpsOption::MATCH);
+            uint32_t res = 0;
+            GetVarValueByIndex(&res, 0);
+            CHECK(res == 32);
+        }
+        SECTION("Cursor on last byte of buffers, bytes_to_extract is bigger than offset")
+        {
+            ByteExtractData data;
+            c.set_pos(11);
+            INITIALIZE(data, 4, -3, 1, 0, 0, ENDIAN_BIG, 0, 1, 0, 0, name);
+            ByteExtractOption opt(data);
+            CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
+        }
+        SECTION("Cursor on the last byte of buffer with string flag")
+        {
+            ByteExtractData data;
+            c.set_pos(11);
+            INITIALIZE(data, 1, -2, 1, 1, 0, ENDIAN_BIG, 10, 1, 0, 0, name);
+            ByteExtractOption opt(data);
+            CHECK(opt.eval(c, &p) == IpsOption::MATCH);
+            uint32_t res = 0;
+            GetVarValueByIndex(&res, 0);
+            CHECK(res == 4);
+        }
+        SECTION("String truncation")
+        {
+            ByteExtractData data;
+            c.set_pos(11);
+            INITIALIZE(data, 3, -2, 1, 1, 0, ENDIAN_BIG, 10, 1, 0, 0, name);
+            ByteExtractOption opt(data);
+            CHECK(opt.eval(c, &p) == IpsOption::MATCH);
+            uint32_t res = 0;
+            GetVarValueByIndex(&res, 0);
+            CHECK(res == 45);
+        }
     }
 }
 

@@ -307,8 +307,12 @@ int32_t data_extraction(const ByteData& settings, Packet* p,
     }
     else
     {
-        bytes_read = string_extract(settings.bytes_to_extract, settings.base,
-            ptr, start, end, &value);
+        unsigned len = end - ptr;
+
+        if (len > settings.bytes_to_extract)
+            len = settings.bytes_to_extract;
+
+        bytes_read = string_extract(len, settings.base, ptr, start, end, &value);
         if (bytes_read < 0)
             return IpsOption::NO_MATCH;
     }

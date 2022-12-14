@@ -148,3 +148,8 @@ Our full rule would be:
     content:"|00 01 87 88|", offset 12, depth 4;
     content:"|00 00 00 01 00 00 00 01|", offset 20, depth 8;
     byte_test:4,>,200,36;
+
+In case of using any byte_* option with "string" parameter, the amount of bytes
+to be extracted from payload can be less than specified by user.
+This might happen when the buffer has fewer bytes (from the cursor position)
+than specified in the option.
