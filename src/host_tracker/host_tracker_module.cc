@@ -63,13 +63,13 @@ bool HostTrackerModule::set(const char*, Value& v, SnortConfig*)
         v.get_addr(addr);
 
     else if ( v.is("port") )
-        host_cache[addr]->update_service_port(app, v.get_uint16());
+        app.port = v.get_uint16();
 
     else if ( v.is("proto") )
     {
         const IpProtocol mask[] =
         { IpProtocol::IP, IpProtocol::TCP, IpProtocol::UDP };
-        host_cache[addr]->update_service_proto(app, mask[v.get_uint8()]);
+        app.proto = mask[v.get_uint8()];
     }
 
     return true;
@@ -80,6 +80,7 @@ bool HostTrackerModule::begin(const char* fqn, int idx, SnortConfig*)
     if ( idx && !strcmp(fqn, "host_tracker") )
     {
         addr.clear();
+        apps.clear();
     }
     return true;
 }
@@ -87,17 +88,17 @@ bool HostTrackerModule::begin(const char* fqn, int idx, SnortConfig*)
 bool HostTrackerModule::end(const char* fqn, int idx, SnortConfig*)
 {
     if ( idx && !strcmp(fqn, "host_tracker.services") )
-    {
-        if ( addr.is_set() )
-            host_cache[addr]->add_service(app);
+        apps.emplace_back(app);
 
-        host_cache[addr]->clear_service(app);
-    }
     else if ( idx && !strcmp(fqn, "host_tracker") && addr.is_set() )
     {
         host_cache[addr];
-        host_cache[addr]->clear_service(app);
+
+        for ( auto& a : apps )
+            host_cache[addr]->add_service(a);
+
         addr.clear();
+        apps.clear();
     }
 
     return true;

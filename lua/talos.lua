@@ -13,16 +13,20 @@ function file_exists(name)
     end
 end
 
-snort =
+daq =
 {
-    ['-Q'] = true,
-    ['-s'] = 65535,
-    ['--daq'] = 'dump',
-    ['--daq-var'] = 'output=none'
+    modules =
+    {
+        {
+            name = 'dump',
+            variables = { 'output = none' }
+        }
+    },
+    snaplen = 65535
 }
 
 if file_exists('local.rules') then
-    snort['-R'] = 'local.rules'
+    ips.include = 'local.rules'
 end
 
 alert_talos = { }
@@ -34,4 +38,6 @@ profiler =
     memory = { show = false },
     rules = { show = true }
 }
+
+snort = { ['-Q'] = true }
 

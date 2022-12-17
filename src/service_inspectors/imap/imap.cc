@@ -807,7 +807,9 @@ void Imap::eval(Packet* p)
 bool Imap::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
     IMAPData* imap_ssn = get_session_data(p->flow);
-    assert(imap_ssn);
+
+    if (!imap_ssn)
+        return false;
 
     const void* dst = nullptr;
     size_t dst_len = 0;

@@ -356,9 +356,7 @@ bool HostCacheModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("dump_file") )
     {
-        if ( dump_file )
-            snort_free((void*)dump_file);
-        dump_file = snort_strdup(v.get_string());
+        dump_file = v.get_string();
     }
     else if ( v.is("memcap") )
         memcap = v.get_size();
@@ -388,11 +386,8 @@ HostCacheModule::HostCacheModule() :
 
 HostCacheModule::~HostCacheModule()
 {
-    if ( dump_file )
-    {
-        log_host_cache(dump_file);
-        snort_free((void*)dump_file);
-    }
+    if ( !dump_file.empty() )
+        log_host_cache(dump_file.c_str());
 }
 
 void HostCacheModule::log_host_cache(const char* file_name, bool verbose)

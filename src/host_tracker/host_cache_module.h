@@ -23,6 +23,8 @@
 
 //  Loads host cache configuration data.
 
+#include <string>
+
 #include "framework/module.h"
 #include "main/snort.h"
 #include "main/reload_tuner.h"
@@ -74,7 +76,7 @@ public:
     std::string get_host_cache_stats();
 
 private:
-    const char* dump_file = nullptr;
+    std::string dump_file;
     size_t memcap = 0;
 };
 

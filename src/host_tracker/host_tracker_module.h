@@ -28,6 +28,7 @@
 // one.
 
 #include <cassert>
+#include <vector>
 
 #include "framework/module.h"
 #include "host_tracker/cache_allocator.cc"
@@ -56,6 +57,7 @@ private:
     static const snort::Parameter host_tracker_params[];
     static const snort::Parameter service_params[];
 
+    std::vector<snort::HostApplication> apps;
     snort::HostApplication app;
     snort::SfIp addr;
 };

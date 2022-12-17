@@ -995,7 +995,14 @@ static list<ModHook*> get_all_modhooks()
 }
 
 void ModuleManager::set_config(SnortConfig* sc)
-{ s_config = sc; }
+{
+    s_config = sc;
+    s_current.clear();
+    s_aliased_name.clear();
+    s_aliased_type.clear();
+    s_ips_includer.clear();
+    s_file_id_includer.clear();
+}
 
 void ModuleManager::reset_errors()
 { s_errors = 0; }

@@ -745,7 +745,9 @@ void Pop::eval(Packet* p)
 bool Pop::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
     POPData* pop_ssn = get_session_data(p->flow);
-    assert(pop_ssn);
+
+    if (!pop_ssn)
+        return false;
 
     const void* dst = nullptr;
     size_t dst_len = 0;
