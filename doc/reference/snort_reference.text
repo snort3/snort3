@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.48.0 2022-12-01 11:51:55 EST TST
+Revision 3.1.49.0 2022-12-15 16:32:12 EST TST
 
 ---------------------------------------------------------------------
 
@@ -4093,8 +4093,8 @@ Peg counts:
     JavaScripts processed (sum)
   * http_inspect.js_external_scripts: total number of external
     JavaScripts processed (sum)
-  * http_inspect.js_pdf_scripts: total number of PDF JavaScripts
-    processed (sum)
+  * http_inspect.js_pdf_scripts: total number of PDF files processed
+    (sum)
   * http_inspect.skip_mime_attach: total number of HTTP requests with
     too many MIME attachments to inspect (sum)
 
@@ -4292,6 +4292,7 @@ Peg counts:
   * imap.non_encoded_attachments: total non-encoded attachments
     extracted (sum)
   * imap.non_encoded_bytes: total non-encoded extracted bytes (sum)
+  * imap.js_pdf_scripts: total number of PDF files processed (sum)
 
 
 5.28. mem_test
@@ -4732,6 +4733,7 @@ Peg counts:
   * pop.non_encoded_attachments: total non-encoded attachments
     extracted (sum)
   * pop.non_encoded_bytes: total non-encoded extracted bytes (sum)
+  * pop.js_pdf_scripts: total number of PDF files processed (sum)
 
 
 5.37. port_scan
@@ -5378,6 +5380,7 @@ Peg counts:
   * smtp.non_encoded_attachments: total non-encoded attachments
     extracted (sum)
   * smtp.non_encoded_bytes: total non-encoded extracted bytes (sum)
+  * smtp.js_pdf_scripts: total number of PDF files processed (sum)
 
 
 5.44. so_proxy
@@ -5956,8 +5959,6 @@ Configuration:
   * string wizard.hexes[].service: name of service
   * select wizard.hexes[].proto = any: protocol to scan { tcp | udp |
     any }
-  * bool wizard.hexes[].client_first = true: which end initiates data
-    transfer (deprecated)
   * string wizard.hexes[].to_server[].hex: sequence of data with wild
     chars (?)
   * string wizard.hexes[].to_client[].hex: sequence of data with wild
@@ -5965,8 +5966,6 @@ Configuration:
   * string wizard.spells[].service: name of service
   * select wizard.spells[].proto = any: protocol to scan { tcp | udp
     | any }
-  * bool wizard.spells[].client_first = true: which end initiates
-    data transfer (deprecated)
   * string wizard.spells[].to_server[].spell: sequence of data with
     wild cards (*)
   * string wizard.spells[].to_client[].spell: sequence of data with
@@ -6188,7 +6187,7 @@ Usage: detect
 Configuration:
 
   * int byte_extract.~count: number of bytes to pick up from the
-    buffer { 1:10 }
+    buffer (string can pick less) { 1:10 }
   * int byte_extract.~offset: number of bytes into the buffer to
     start processing { -65535:65535 }
   * string byte_extract.~name: name of the variable that will be used
@@ -6223,7 +6222,7 @@ Usage: detect
 Configuration:
 
   * int byte_jump.~count: number of bytes to pick up from the buffer
-    { 0:10 }
+    (string can pick less) { 0:10 }
   * string byte_jump.~offset: variable name or number of bytes into
     the buffer to start processing
   * implied byte_jump.relative: offset from cursor instead of start
@@ -6262,8 +6261,8 @@ Usage: detect
 
 Configuration:
 
-  * int byte_math.bytes: number of bytes to pick up from the buffer {
-    1:10 }
+  * int byte_math.bytes: number of bytes to pick up from the buffer
+    (string can pick less) { 1:10 }
   * string byte_math.offset: number of bytes into the buffer to start
     processing
   * enum byte_math.oper: mathematical operation to perform { +|-|*|/|
@@ -6294,7 +6293,7 @@ Usage: detect
 Configuration:
 
   * int byte_test.~count: number of bytes to pick up from the buffer
-    { 1:10 }
+    (string can pick less) { 1:10 }
   * string byte_test.~operator: operation to perform to test the
     value
   * string byte_test.~compare: variable name or value to test the
@@ -9104,7 +9103,7 @@ libraries see the Getting Started section of the manual.
   * int byte_extract.bitmask: applies as an AND to the extracted
     value before storage in name { 0x1:0xFFFFFFFF }
   * int byte_extract.~count: number of bytes to pick up from the
-    buffer { 1:10 }
+    buffer (string can pick less) { 1:10 }
   * implied byte_extract.dce: dcerpc2 determines endianness
   * implied byte_extract.dec: convert from decimal string
   * implied byte_extract.hex: convert from hex string
@@ -9125,7 +9124,7 @@ libraries see the Getting Started section of the manual.
   * int byte_jump.bitmask: applies as an AND prior to evaluation {
     0x1:0xFFFFFFFF }
   * int byte_jump.~count: number of bytes to pick up from the buffer
-    { 0:10 }
+    (string can pick less) { 0:10 }
   * implied byte_jump.dce: dcerpc2 determines endianness
   * implied byte_jump.dec: convert from decimal string
   * implied byte_jump.from_beginning: jump from start of buffer
@@ -9146,8 +9145,8 @@ libraries see the Getting Started section of the manual.
   * implied byte_jump.string: convert from string
   * int byte_math.bitmask: applies as bitwise AND to the extracted
     value before storage in name { 0x1:0xFFFFFFFF }
-  * int byte_math.bytes: number of bytes to pick up from the buffer {
-    1:10 }
+  * int byte_math.bytes: number of bytes to pick up from the buffer
+    (string can pick less) { 1:10 }
   * implied byte_math.dce: dcerpc2 determines endianness
   * enum byte_math.endian: specify big/little endian { big|little }
   * string byte_math.offset: number of bytes into the buffer to start
@@ -9167,7 +9166,7 @@ libraries see the Getting Started section of the manual.
   * string byte_test.~compare: variable name or value to test the
     converted result against
   * int byte_test.~count: number of bytes to pick up from the buffer
-    { 1:10 }
+    (string can pick less) { 1:10 }
   * implied byte_test.dce: dcerpc2 determines endianness
   * implied byte_test.dec: convert from decimal string
   * implied byte_test.hex: convert from hex string
@@ -10962,8 +10961,6 @@ libraries see the Getting Started section of the manual.
   * multi wizard.curses: enable service identification based on
     internal algorithm { dce_smb | dce_udp | dce_tcp | mms |
     s7commplus | sslv2 }
-  * bool wizard.hexes[].client_first = true: which end initiates data
-    transfer (deprecated)
   * select wizard.hexes[].proto = any: protocol to scan { tcp | udp |
     any }
   * string wizard.hexes[].service: name of service
@@ -10973,8 +10970,6 @@ libraries see the Getting Started section of the manual.
     chars (?)
   * int wizard.max_search_depth = 8192: maximum scan depth per flow {
     0:65535 }
-  * bool wizard.spells[].client_first = true: which end initiates
-    data transfer (deprecated)
   * select wizard.spells[].proto = any: protocol to scan { tcp | udp
     | any }
   * string wizard.spells[].service: name of service
@@ -11543,8 +11538,8 @@ libraries see the Getting Started section of the manual.
     JavaScripts processed (sum)
   * http_inspect.js_inline_scripts: total number of inline
     JavaScripts processed (sum)
-  * http_inspect.js_pdf_scripts: total number of PDF JavaScripts
-    processed (sum)
+  * http_inspect.js_pdf_scripts: total number of PDF files processed
+    (sum)
   * http_inspect.max_concurrent_sessions: maximum concurrent http
     sessions (max)
   * http_inspect.options_requests: OPTIONS requests inspected (sum)
@@ -11593,6 +11588,7 @@ libraries see the Getting Started section of the manual.
   * imap.b64_attachments: total base64 attachments decoded (sum)
   * imap.b64_decoded_bytes: total base64 decoded bytes (sum)
   * imap.concurrent_sessions: total concurrent imap sessions (now)
+  * imap.js_pdf_scripts: total number of PDF files processed (sum)
   * imap.max_concurrent_sessions: maximum concurrent imap sessions
     (max)
   * imap.non_encoded_attachments: total non-encoded attachments
@@ -11770,6 +11766,7 @@ libraries see the Getting Started section of the manual.
   * pop.b64_attachments: total base64 attachments decoded (sum)
   * pop.b64_decoded_bytes: total base64 decoded bytes (sum)
   * pop.concurrent_sessions: total concurrent pop sessions (now)
+  * pop.js_pdf_scripts: total number of PDF files processed (sum)
   * pop.max_concurrent_sessions: maximum concurrent pop sessions
     (max)
   * pop.non_encoded_attachments: total non-encoded attachments
@@ -11893,6 +11890,7 @@ libraries see the Getting Started section of the manual.
   * smtp.b64_attachments: total base64 attachments decoded (sum)
   * smtp.b64_decoded_bytes: total base64 decoded bytes (sum)
   * smtp.concurrent_sessions: total concurrent smtp sessions (now)
+  * smtp.js_pdf_scripts: total number of PDF files processed (sum)
   * smtp.max_concurrent_sessions: maximum concurrent smtp sessions
     (max)
   * smtp.non_encoded_attachments: total non-encoded attachments

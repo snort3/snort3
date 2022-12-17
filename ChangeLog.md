@@ -1,3 +1,19 @@
+2022-12-15: 3.1.49.0
+
+* appid: appid_detector_builder.sh addPortPatternService call fixed
+* appid: do not reset session data when built-in discovery is not done
+* appid: fixed assert condition for odp_ctxt and odp_thread_local_ctxt
+* doc: add decompression mention to js_norm reference
+* doc: update user/js_norm.txt for PDF in email protocols
+* geneve: if daq has the capability, do not bypass geneve tunnel
+* ips_options: fix offset related bug in byte_test eval()
+* js_norm: add PDF stream processing
+* js_norm: add support for email protocols
+* js_norm: fix pdf_tokenizer_test on FreeBSD platform
+* js_norm: update PDF tokenizer to use glue input streambuf
+* stream: ignore PAWS timestamp checks when in no_ack mode
+* wizard: remove client_first option
+
 2022-12-01: 3.1.48.0
 
 * appid: added config for logging alpn service mappings

@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.48.0 2022-12-01 11:52:17 EST TST
+Revision 3.1.49.0 2022-12-15 16:32:34 EST TST
 
 ---------------------------------------------------------------------
 
@@ -2567,6 +2567,11 @@ content:"|00 01 87 88|", offset 12, depth 4;
 content:"|00 00 00 01 00 00 00 01|", offset 20, depth 8;
 byte_test:4,>,200,36;
 
+In case of using any byte_* option with "string" parameter, the
+amount of bytes to be extracted from payload can be less than
+specified by user. This might happen when the buffer has fewer bytes
+(from the cursor position) than specified in the option.
+
 
 5.5. Consolidated Config
 
@@ -2612,7 +2617,7 @@ wizard =
 {
     spells =
     {
-        { service = 'http', proto = 'tcp', client_first = true, to_server = { 'GET' }, to_client = { 'HTTP/' } },
+        { service = 'http', proto = 'tcp', to_server = { 'GET' }, to_client = { 'HTTP/' } },
     }
 }
 
@@ -2662,13 +2667,11 @@ stream_tcp.track_only=false
 stream_tcp.show_rebuilt_packets=true
 consolidated config for http.lua
 wizard.spells[0].proto="tcp"
-wizard.spells[0].client_first=true
 wizard.spells[0].service="http"
 wizard.spells[0].to_client[0].spell="HTTP/"
 wizard.spells[0].to_server[0].spell="GET"
 consolidated config for sip.lua
 wizard.spells[0].proto="tcp"
-wizard.spells[0].client_first=true
 wizard.spells[0].service="sip"
 wizard.spells[0].to_server[0].spell="INVITE"
 
@@ -2759,7 +2762,6 @@ Example: snort -c snort.lua --dump-config=all | jq .
             "spells": [
             {
                 "proto": "tcp",
-                "client_first": true,
                 "service": "http",
                 "to_client": [
                 {
@@ -2783,7 +2785,6 @@ Example: snort -c snort.lua --dump-config=all | jq .
             "spells": [
             {
                 "proto": "tcp",
-                "client_first": true,
                 "service": "sip",
                 "to_server": [
                 {
@@ -4883,8 +4884,8 @@ name, or the lowercase function name.
 
 One of the improvements in Snort 3 is Enhanced JavaScript Normalizer
 which has its own module and can be used with any service inspectors
-where JavaScript code might occur. Currently it is only used by HTTP
-inspector.
+where JavaScript code might occur. Currently it is supported for the
+following inspectors: HTTP, SMTP, IMAP, POP.
 
 5.13.1. Overview
 
@@ -4900,19 +4901,22 @@ automatically enables Enhanced Normalizer.
 
 The Enhanced Normalizer can normalize JavaScript embedded in HTML
 (inline scripts), in separate .js files (external scripts), and
-JavaScript embedded in PDF files sent over HTTP. It supports scripts
-over multiple PDUs. It is a stateful JavaScript whitespace and
-identifiers normalizer. Normalizer concatenates string literals
-whenever it’s possible to do. This also works with any other
-normalizations that result in string literals. All JavaScript
-identifier names, except those from the ignore lists, will be
-substituted with unified names in the following format: var_0000 →
-var_ffff. The Normalizer tries to expand escaped text, so it will
-appear in a readable form in the output. When such text is a
+JavaScript embedded in PDF files sent over HTTP/1, HTTP/2, SMTP, IMAP
+and POP3 protocols. It supports scripts over multiple PDUs. It is a
+stateful JavaScript whitespace and identifiers normalizer. Normalizer
+concatenates string literals whenever it’s possible to do. This also
+works with any other normalizations that result in string literals.
+All JavaScript identifier names, except those from the ignore lists,
+will be substituted with unified names in the following format:
+var_0000 → var_ffff. The Normalizer tries to expand escaped text, so
+it will appear in a readable form in the output. When such text is a
 parameter of an unescape function, the entire function call will be
 replaced by the unescaped string. Moreover, Normalizer validates the
 syntax concerning ECMA-262 Standard, including scope tracking and
-restrictions for script elements.
+restrictions for script elements. JavaScript, embedded in PDF files,
+has to be decompressed before normalization. For that, decompress_pdf
+= true option has to be set in configuration of appropriate service
+inspectors.
 
 Check with the following options for more configurations:
 bytes_depth, identifier_depth, max_tmpl_nest, max_bracket_depth,
@@ -4935,7 +4939,7 @@ conserve resources by doing less.
 
 Also, there are default lists of ignored identifiers and object
 properties provided. To get a complete default configuration, use 
-default_js_norm from lua/snort_default.lua by adding:
+default_js_norm from $SNORT_LUA_PATH/snort_defaults.lua by adding:
 
 js_norm = default_js_norm
 
@@ -5076,7 +5080,8 @@ PDU. If later js_data IPS rule matches again, a missed normalization
 context is detected and 154:8 built-in alert is raised. Further
 normalization is not possible for the script. For example:
 
-alert http (msg:"JavaScript in HTTP"; js_data; content:"var var_0000=1;"; sid:1;)
+alert http (msg:"JS in HTTP"; js_data; content:"var var_0000"; sid:1;)
+alert smtp (msg:"JS in SMTP"; js_data; content:"var var_0000"; sid:2;)
 
 5.13.3.1. js_data
 
@@ -6802,8 +6807,6 @@ contain following options:
 
   * service - name of the service that would be assigned
   * proto - protocol to scan
-  * client_first - indicator of which end initiates data transfer
-    (deprecated)
   * to_server - list of text patterns to search in the data sent to
     the client
   * to_client - list of text patterns to search in the data sent to
@@ -6813,7 +6816,6 @@ contain following options:
       {
         service = 'smtp',
         proto = 'tcp',
-        client_first = true,
         to_server = { 'HELO', 'EHLO' },
         to_client = { '220*SMTP', '220*MAIL' }
       }
@@ -6838,7 +6840,6 @@ Example of a hex definition in Lua:
   {
     service = 'dnp3',
     proto = 'tcp',
-    client_first = true,
     to_server = { '|05 64|' },
     to_client = { '|05 64|' }
   }
