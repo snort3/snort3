@@ -27,6 +27,8 @@
 #include "memory/memory_cap.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
+#include "pub_sub/stream_event_ids.h"
+#include "stream/stream.h"
 
 #include "ip_defrag.h"
 #include "ip_ha.h"
@@ -109,11 +111,11 @@ static inline void update_session(Packet* p, Flow* lws)
 
             if ( p->type() == PktType::ICMP and p->ptrs.icmph)
             {
-                DataBus::publish(STREAM_ICMP_BIDIRECTIONAL_EVENT, p);
+                DataBus::publish(Stream::get_pub_id(), StreamEventIds::ICMP_BIDIRECTIONAL, p);
             }
             else
             {
-                DataBus::publish(STREAM_IP_BIDIRECTIONAL_EVENT, p);
+                DataBus::publish(Stream::get_pub_id(), StreamEventIds::IP_BIDIRECTIONAL, p);
             }
         }
     }
@@ -245,7 +247,6 @@ public:
     StreamIp(StreamIpConfig*);
     ~StreamIp() override;
 
-    bool configure(SnortConfig*) override;
     void show(const SnortConfig*) const override;
     NORETURN_ASSERT void eval(Packet*) override;
     StreamIpConfig* config;

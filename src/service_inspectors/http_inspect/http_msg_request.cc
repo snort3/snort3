@@ -23,6 +23,8 @@
 
 #include "http_msg_request.h"
 
+#include "pub_sub/intrinsic_event_ids.h"
+
 #include "http_api.h"
 #include "http_common.h"
 #include "http_enum.h"
@@ -340,13 +342,13 @@ void HttpMsgRequest::update_flow()
     session_data->method_id = method_id;
 }
 
-void HttpMsgRequest::publish()
+void HttpMsgRequest::publish(unsigned)
 {
     if (!session_data->ssl_search_abandoned && trans_num > 1 &&
         !flow->flags.data_decrypted && get_method_id() != METH_CONNECT)
     {
         session_data->ssl_search_abandoned = true;
-        DataBus::publish(SSL_SEARCH_ABANDONED, DetectionEngine::get_current_packet());
+        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::SSL_SEARCH_ABANDONED, DetectionEngine::get_current_packet());
     }
 
     if (SnortConfig::get_conf()->aux_ip_is_enabled())

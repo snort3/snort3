@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2022-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,46 +15,35 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// stream_event_ids.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef SIP_H
-#define SIP_H
+#ifndef STREAM_EVENT_IDS_H
+#define STREAM_EVENT_IDS_H
 
-// Implementation header with definitions, datatypes and flowdata class for SIP service inspector.
-
-#include "flow/flow.h"
 #include "framework/data_bus.h"
 
-#include "sip_dialog.h"
-#include "sip_parser.h"
-#include "sip_roptions.h"
+struct StreamEventIds
+{ enum : unsigned {
 
-#define SIP_FLG_MISSED_PACKETS        (0x10000)
+    IP_NEW_FLOW,
+    IP_BIDIRECTIONAL,
 
-struct SIPData
-{
-    uint32_t state_flags;
-    SIP_DialogList dialogs;
-    SIP_Roptions ropts;
-    SIP_PROTO_CONF *sip_config;
+    ICMP_NEW_FLOW,
+    ICMP_BIDIRECTIONAL,
 
-    static unsigned pub_id;
-};
+    TCP_SYN,
+    TCP_SYN_ACK,
+    TCP_MIDSTREAM,
+    TCP_ESTABLISHED,
 
-class SipFlowData : public snort::FlowData
-{
-public:
-    SipFlowData();
-    ~SipFlowData() override;
+    UDP_NEW_FLOW,
+    UDP_BIDIRECTIONAL,
 
-    static void init()
-    { inspector_id = snort::FlowData::create_flow_data_id(); }
+    HA_NEW_FLOW,
 
-public:
-    static unsigned inspector_id;
-    SIPData session;
-};
+    num_ids
+}; };
 
-SIPData* get_sip_session_data(const snort::Flow*);
-SIPMethodNode* add_sip_method(const char*);
+const snort::PubKey stream_pub_key { "stream", StreamEventIds::num_ids };
 
 #endif

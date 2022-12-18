@@ -51,7 +51,7 @@ HttpMsgBody::HttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,
     publish_length = buf_size;
 }
 void HttpMsgBody::analyze() {}
-void HttpMsgBody::publish() {}
+void HttpMsgBody::publish(unsigned) {}
 void HttpMsgBody::do_file_processing(const Field&) {}
 void HttpMsgBody::do_utf_decoding(const Field&, Field&) {}
 void HttpMsgBody::do_file_decompression(const Field&, Field&) {}

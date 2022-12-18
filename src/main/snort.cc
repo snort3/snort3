@@ -105,6 +105,7 @@ void Snort::init(int argc, char** argv)
 #endif
 
     InitProtoNames();
+    DataBus::init();
 
     load_actions();
     load_codecs();

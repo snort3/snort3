@@ -1,5 +1,6 @@
 set (PUB_SUB_INCLUDES
     appid_debug_log_event.h
+    appid_event_ids.h
     appid_events.h
     assistant_gadget_event.h
     cip_events.h
@@ -9,15 +10,19 @@ set (PUB_SUB_INCLUDES
     dhcp_events.h
     eve_process_event.h
     expect_events.h
+    external_event_ids.h
     finalize_packet_event.h
+    http_event_ids.h
     http_events.h
     http_request_body_event.h
+    intrinsic_event_ids.h
     netflow_event.h
     opportunistic_tls_event.h
     packet_events.h
     reputation_events.h
     rna_events.h
     sip_events.h
+    stream_event_ids.h
     smb_events.h
     ssh_events.h
 )

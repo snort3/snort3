@@ -70,7 +70,7 @@ public:
     virtual void update_flow() = 0;
 
     // Publish an inspection event for other modules to consume
-    virtual void publish() {}
+    virtual void publish(unsigned /*pub_id*/) {}
 
     // Call the detection engine to inspect the current packet
     virtual bool run_detection(snort::Packet* p);

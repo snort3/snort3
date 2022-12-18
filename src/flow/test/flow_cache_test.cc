@@ -27,6 +27,10 @@
 #include "flow/flow_control.h"
 
 #include "detection/detection_engine.h"
+#include "flow/expect_cache.h"
+#include "flow/flow_cache.h"
+#include "flow/ha.h"
+#include "flow/session.h"
 #include "main/policy.h"
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
@@ -39,10 +43,6 @@
 #include "protocols/vlan.h"
 #include "stream/stream.h"
 #include "utils/util.h"
-#include "flow/expect_cache.h"
-#include "flow/flow_cache.h"
-#include "flow/ha.h"
-#include "flow/session.h"
 #include "trace/trace_api.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
@@ -83,9 +83,9 @@ void Flow::term() { }
 void Flow::flush(bool) { }
 void Flow::reset(bool) { }
 void Flow::free_flow_data() { }
-void DataBus::publish(const char*, DataEvent&, Flow*) { }
-void DataBus::publish(const char*, const uint8_t*, unsigned, Flow*) { }
-void DataBus::publish(const char*, Packet*, Flow*) { }
+void DataBus::publish(unsigned, unsigned, DataEvent&, Flow*) { }
+void DataBus::publish(unsigned, unsigned, const uint8_t*, unsigned, Flow*) { }
+void DataBus::publish(unsigned, unsigned, Packet*, Flow*) { }
 const SnortConfig* SnortConfig::get_conf() { return nullptr; }
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }

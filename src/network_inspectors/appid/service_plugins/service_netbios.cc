@@ -26,11 +26,13 @@
 #include "service_netbios.h"
 #include "detection/detection_engine.h"
 #include "protocols/packet.h"
+#include "pub_sub/appid_event_ids.h"
 #include "pub_sub/smb_events.h"
 #include "utils/endian.h"
 #include "utils/util_cstring.h"
 
 #include "app_info_table.h"
+#include "appid_inspector.h"
 #include "dcerpc.h"
 
 using namespace snort;
@@ -661,5 +663,5 @@ void NbdgmServiceDetector::add_smb_info(AppIdSession& asd, unsigned major, unsig
     asd.set_session_flags(APPID_SESSION_HAS_SMB_INFO);
     Packet* p = DetectionEngine::get_current_packet();
     FpSMBDataEvent event(p, major, minor, (flags & FINGERPRINT_UDP_FLAGS_MASK));
-    DataBus::publish(FP_SMB_DATA_EVENT, event, p->flow);
+    DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::FP_SMB_DATA, event, p->flow);
 }

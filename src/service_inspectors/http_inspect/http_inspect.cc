@@ -32,6 +32,7 @@
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
 #include "log/unified2.h"
 #include "protocols/packet.h"
+#include "pub_sub/http_event_ids.h"
 #include "stream/stream.h"
 
 #include "http_common.h"
@@ -138,10 +139,11 @@ HttpInspect::~HttpInspect()
     delete script_finder;
 }
 
-bool HttpInspect::configure(SnortConfig* )
+bool HttpInspect::configure(SnortConfig*)
 {
     params->js_norm_param.configure();
     params->mime_decode_conf->sync_all_depths();
+    pub_id = DataBus::get_id(http_pub_key);
 
     return true;
 }
@@ -609,7 +611,7 @@ void HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
     }
 #endif
 
-    current_section->publish();
+    current_section->publish(pub_id);
     if (p != nullptr)
     {
         const PduSection pdu_section = current_section->get_inspection_section();

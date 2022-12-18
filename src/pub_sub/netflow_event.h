@@ -23,10 +23,12 @@
 #include "framework/data_bus.h"
 #include "service_inspectors/netflow/netflow_record.h"
 
-#define NETFLOW_EVENT "service_inspector.netflow"
-
 namespace snort
 {
+
+struct NetFlowEventIds { enum : unsigned { DATA, num_ids }; };
+
+const PubKey netflow_pub_key { "netflow", NetFlowEventIds::num_ids };
 
 class NetFlowEvent : public DataEvent
 {

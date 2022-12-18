@@ -88,6 +88,9 @@ public:
     static int get_xtra_host(snort::Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
     static int get_xtra_jsnorm(snort::Flow*, uint8_t**, uint32_t*, uint32_t*);
 
+    unsigned get_pub_id()
+    { return pub_id; }
+
 private:
     friend HttpApi;
     friend HttpStreamSplitter;
@@ -108,6 +111,8 @@ private:
     const uint32_t xtra_uri_id;
     const uint32_t xtra_host_id;
     const uint32_t xtra_jsnorm_id;
+
+    unsigned pub_id; // for inspection events
 };
 
 #endif

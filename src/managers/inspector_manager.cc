@@ -41,6 +41,7 @@
 #include "main/snort_module.h"
 #include "main/thread_config.h"
 #include "protocols/packet.h"
+#include "pub_sub/intrinsic_event_ids.h"
 #include "search_engines/search_tool.h"
 #include "target_based/snort_protocols.h"
 #include "time/clock_defs.h"
@@ -1999,7 +2000,7 @@ void InspectorManager::bumble(Packet* p)
 {
     Flow* flow = p->flow;
 
-    DataBus::publish(FLOW_SERVICE_CHANGE_EVENT, p);
+    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_SERVICE_CHANGE, p);
 
     flow->clear_clouseau();
 
@@ -2007,7 +2008,7 @@ void InspectorManager::bumble(Packet* p)
     {
         if ( !flow->flags.svc_event_generated )
         {
-            DataBus::publish(FLOW_NO_SERVICE_EVENT, p);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_NO_SERVICE, p);
             flow->flags.svc_event_generated = true;
         }
 
@@ -2022,7 +2023,7 @@ void InspectorManager::bumble(Packet* p)
 }
 
 template<bool T>
-void InspectorManager::full_inspection(Packet* p)
+void inline InspectorManager::full_inspection(Packet* p)
 {
     Flow* flow = p->flow;
 
@@ -2056,21 +2057,8 @@ void InspectorManager::full_inspection(Packet* p)
     }
 }
 
-// FIXIT-M leverage knowledge of flow creation so that reputation (possibly a
-// new it_xxx) is run just once per flow (and all non-flow packets).
-void InspectorManager::execute(Packet* p)
-{
-    if ( trace_enabled(snort_trace, TRACE_INSPECTOR_MANAGER, DEFAULT_TRACE_LOG_LEVEL, p) )
-        internal_execute<true>(p);
-    else
-        internal_execute<false>(p);
-
-    if ( p->flow && ( !p->is_cooked() or p->is_defrag() ) )
-        ExpectFlow::handle_expected_flows(p);
-}
-
 template<bool T>
-void InspectorManager::internal_execute(Packet* p)
+inline void InspectorManager::internal_execute(Packet* p)
 {
     Stopwatch<SnortClock> timer;
     const char* packet_type = nullptr;
@@ -2101,10 +2089,10 @@ void InspectorManager::internal_execute(Packet* p)
     if ( p->flow )
     {
         if ( p->flow->reload_id && p->flow->reload_id != reload_id )
-            DataBus::publish(FLOW_STATE_RELOADED_EVENT, p, p->flow);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_STATE_RELOADED, p, p->flow);
     }
     else
-        DataBus::publish(PKT_WITHOUT_FLOW_EVENT, p);
+        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::PKT_WITHOUT_FLOW, p);
 
     FrameworkPolicy* fp = get_inspection_policy()->framework_policy;
     assert(fp);
@@ -2178,6 +2166,19 @@ void InspectorManager::internal_execute(Packet* p)
         trace_ulogf(snort_trace, TRACE_INSPECTOR_MANAGER, p,
             "stop inspection, %s, packet %" PRId64", context %" PRId64", total time: %" PRId64" usec\n",
             packet_type, p->context->packet_number, p->context->context_num, TO_USECS(timer.get()));
+}
+
+// FIXIT-M leverage knowledge of flow creation so that reputation (possibly a
+// new it_xxx) is run just once per flow (and all non-flow packets).
+void InspectorManager::execute(Packet* p)
+{
+    if ( trace_enabled(snort_trace, TRACE_INSPECTOR_MANAGER, DEFAULT_TRACE_LOG_LEVEL, p) )
+        internal_execute<true>(p);
+    else
+        internal_execute<false>(p);
+
+    if ( p->flow && ( !p->is_cooked() or p->is_defrag() ) )
+        ExpectFlow::handle_expected_flows(p);
 }
 
 void InspectorManager::probe(Packet* p)

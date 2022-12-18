@@ -25,6 +25,9 @@
 
 #include "tcp_state_none.h"
 
+#include "pub_sub/stream_event_ids.h"
+#include "stream/stream.h"
+
 #include "tcp_normalizers.h"
 #include "tcp_session.h"
 
@@ -137,7 +140,7 @@ bool TcpStateNone::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
         if ( !Stream::is_midstream(flow) )
         {
             flow->set_session_flags(SSNFLAG_MIDSTREAM);
-            DataBus::publish(STREAM_TCP_MIDSTREAM_EVENT, tsd.get_pkt());
+            DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_MIDSTREAM, tsd.get_pkt());
         }
 
         trk.init_on_data_seg_sent(tsd);
@@ -164,7 +167,7 @@ bool TcpStateNone::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
         if ( !Stream::is_midstream(flow) )
         {
             flow->set_session_flags(SSNFLAG_MIDSTREAM);
-            DataBus::publish(STREAM_TCP_MIDSTREAM_EVENT, tsd.get_pkt());
+            DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_MIDSTREAM, tsd.get_pkt());
         }
 
         trk.init_on_data_seg_recv(tsd);

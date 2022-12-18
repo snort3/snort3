@@ -32,11 +32,13 @@
 #include "flow/flow_key.h"
 #include "flow/ha.h"
 #include "flow/prune_stats.h"
+#include "framework/data_bus.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "network_inspectors/packet_tracer/packet_tracer.h"
 #include "packet_io/active.h"
 #include "protocols/vlan.h"
+#include "pub_sub/stream_event_ids.h"
 #include "stream/base/stream_module.h"
 #include "target_based/host_attributes.h"
 #include "target_based/snort_protocols.h"
@@ -868,7 +870,21 @@ bool Stream::get_held_pkt_seq(Flow* flow, uint32_t& seq)
     return false;
 }
 
+//-------------------------------------------------------------------------
+// pub sub foo
+//-------------------------------------------------------------------------
+
+static unsigned stream_pub_id = 0;
+
+void Stream::set_pub_id()
+{ stream_pub_id = DataBus::get_id(stream_pub_key); }
+
+unsigned Stream::get_pub_id()
+{ return stream_pub_id; }
+
+//-------------------------------------------------------------------------
 #ifdef UNIT_TEST
+//-------------------------------------------------------------------------
 
 #include "catch/snort_catch.h"
 #include "tcp/test/stream_tcp_test_utils.h"

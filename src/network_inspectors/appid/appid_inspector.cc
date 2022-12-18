@@ -33,6 +33,8 @@
 #include "managers/module_manager.h"
 #include "packet_tracer/packet_tracer.h"
 #include "profiler/profiler.h"
+#include "pub_sub/appid_event_ids.h"
+#include "pub_sub/intrinsic_event_ids.h"
 
 #include "appid_data_decrypt_event_handler.h"
 #include "appid_dcerpc_event_handler.h"
@@ -61,6 +63,8 @@ using namespace snort;
 THREAD_LOCAL ThirdPartyAppIdContext* pkt_thread_tp_appid_ctxt = nullptr;
 THREAD_LOCAL OdpThreadContext* odp_thread_local_ctxt = nullptr;
 THREAD_LOCAL OdpContext* pkt_thread_odp_ctxt = nullptr;
+
+unsigned AppIdInspector::pub_id = 0;
 
 static THREAD_LOCAL PacketTracer::TracerMute appid_mute;
 
@@ -112,31 +116,30 @@ bool AppIdInspector::configure(SnortConfig* sc)
     assert(!ctxt);
 
     ctxt = new AppIdContext(const_cast<AppIdConfig&>(*config));
-
     ctxt->init_appid(sc, *this);
 
-    DataBus::subscribe_global(SIP_EVENT_TYPE_SIP_DIALOG_KEY, new SipEventHandler(*this), *sc);
+    DataBus::subscribe_global(http_pub_key, HttpEventIds::REQUEST_HEADER,
+        new HttpEventHandler(HttpEventHandler::REQUEST_EVENT, *this), *sc);
 
-    DataBus::subscribe_global(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(
-        HttpEventHandler::REQUEST_EVENT, *this), *sc);
+    DataBus::subscribe_global(http_pub_key, HttpEventIds::RESPONSE_HEADER,
+        new HttpEventHandler(HttpEventHandler::RESPONSE_EVENT, *this), *sc);
 
-    DataBus::subscribe_global(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(
-        HttpEventHandler::RESPONSE_EVENT, *this), *sc);
+    DataBus::subscribe_global(http_pub_key, HttpEventIds::REQUEST_BODY, new AppIdHttpXReqBodyEventHandler(), *sc);
+    DataBus::subscribe_global(sip_pub_key, SipEventIds::DIALOG, new SipEventHandler(*this), *sc);
+    DataBus::subscribe_global(dce_tcp_pub_key, DceTcpEventIds::EXP_SESSION, new DceExpSsnEventHandler(), *sc);
+    DataBus::subscribe_global(ssh_pub_key, SshEventIds::STATE_CHANGE, new SshEventHandler(), *sc);
+    DataBus::subscribe_global(external_pub_key, ExternalEventIds::DATA_DECRYPT, new DataDecryptEventHandler(), *sc);
 
-    DataBus::subscribe_global(HTTPX_REQUEST_BODY_EVENT_KEY, new AppIdHttpXReqBodyEventHandler(), *sc);
+    DataBus::subscribe_global(external_pub_key, ExternalEventIds::EVE_PROCESS,
+        new AppIdEveProcessEventHandler(*this), *sc);
 
-    DataBus::subscribe_global(DATA_DECRYPT_EVENT, new DataDecryptEventHandler(), *sc);
+    DataBus::subscribe_global(intrinsic_pub_key, IntrinsicEventIds::OPPORTUNISTIC_TLS,
+        new AppIdOpportunisticTlsEventHandler(), *sc);
 
-    DataBus::subscribe_global(DCERPC_EXP_SESSION_EVENT_KEY, new DceExpSsnEventHandler(), *sc);
+    DataBus::subscribe_global(intrinsic_pub_key, IntrinsicEventIds::FLOW_NO_SERVICE,
+         new AppIdServiceEventHandler(*this), *sc);
 
-    DataBus::subscribe_global(OPPORTUNISTIC_TLS_EVENT, new AppIdOpportunisticTlsEventHandler(), *sc);
-
-    DataBus::subscribe_global(EVE_PROCESS_EVENT, new AppIdEveProcessEventHandler(*this), *sc);
-
-    DataBus::subscribe_global(SSH_EVENT, new SshEventHandler(), *sc);
-
-    DataBus::subscribe_global(FLOW_NO_SERVICE_EVENT, new AppIdServiceEventHandler(*this), *sc);
-
+    pub_id = DataBus::get_id(appid_pub_key);
     return true;
 }
 

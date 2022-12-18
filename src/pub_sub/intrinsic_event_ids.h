@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2022-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,45 +15,57 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// intrinsic_event_ids.h author Russ Combs <rucombs@cisco.com>
 
-// rna_config.h author Masud Hasan <mashasan@cisco.com>
+#ifndef INTRINSIC_EVENT_IDS_H
+#define INTRINSIC_EVENT_IDS_H
 
-#ifndef RNA_CONFIG_H
-#define RNA_CONFIG_H
+// Common core functionality data events
 
 #include "framework/data_bus.h"
 
 namespace snort
 {
-class TcpFpProcessor;
-class UaFpProcessor;
-class UdpFpProcessor;
-class SmbFpProcessor;
+
+struct IntrinsicEventIds
+{ enum : unsigned {
+
+    DAQ_SOF_MSG,
+    DAQ_EOF_MSG,
+    DAQ_OTHER_MSG,
+
+    ALT_PACKET,
+    PKT_WITHOUT_FLOW,
+    DETAINED_PACKET,
+    FINALIZE_PACKET,
+    RETRY_PACKET,
+
+    THREAD_IDLE,
+    THREAD_ROTATE,
+
+    SSL_SEARCH_ABANDONED,
+    OPPORTUNISTIC_TLS,
+
+    FLOW_STATE_CHANGE,
+    FLOW_SERVICE_CHANGE,
+    SERVICE_INSPECTOR_CHANGE,
+
+    FLOW_NO_SERVICE,
+    FLOW_STATE_SETUP,
+    FLOW_STATE_RELOADED,
+    FLOW_ASSISTANT_GADGET,
+
+    EXPECT_HANDLE_FLOWS,
+    EXPECT_EARLY_SESSION,
+    AUXILIARY_IP,
+    FILE_VERDICT,
+
+    num_ids
+}; };
+
+const PubKey intrinsic_pub_key { "snort", IntrinsicEventIds::num_ids };
+
+const unsigned intrinsic_pub_id = 1;
 }
-
-struct RnaModuleConfig
-{
-    std::string rna_conf_path;
-    bool enable_logger;
-    bool log_when_idle;
-    snort::TcpFpProcessor* tcp_processor = nullptr;
-    snort::UaFpProcessor* ua_processor = nullptr;
-    snort::UdpFpProcessor* udp_processor = nullptr;
-    snort::SmbFpProcessor* smb_processor = nullptr;
-};
-
-// Give default values so that RNA can work even if rna_conf_path is not provided
-struct RnaConfig
-{
-    uint32_t update_timeout = 3600;
-    uint16_t max_host_client_apps = 16;
-    uint16_t max_payloads = 100;
-    uint16_t max_host_services = 100;
-    uint16_t max_host_service_info = 16;
-    bool enable_banner_grab = false;
-    bool log_when_idle = false;
-
-    static unsigned pub_id;
-};
-
 #endif
+

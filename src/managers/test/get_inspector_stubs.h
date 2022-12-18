@@ -49,7 +49,10 @@ void LogMessage(const char*, ...) { }
 void LogLabel(const char*, FILE*) { }
 void ParseError(const char*, ...) { }
 void WarningMessage(const char*, ...) { }
-void DataBus::publish(const char*, Packet*, Flow*) { }
+DataBus::DataBus() { }
+DataBus::~DataBus() { }
+void DataBus::publish(unsigned, unsigned, Packet*, Flow*) { }
+unsigned DataBus::get_id(const PubKey&) { return 0; }
 void DetectionEngine::disable_content(Packet*) { }
 unsigned SnortConfig::get_thread_reload_id() { return 1; }
 void SnortConfig::update_thread_reload_id() { }
@@ -75,8 +78,6 @@ void Module::sum_stats(bool) { }
 void Module::show_interval_stats(IndexVec&, FILE*) { }
 void Module::show_stats() { }
 void Module::reset_stats() { }
-DataBus::DataBus() { }
-DataBus::~DataBus() { }
 Module* ModuleManager::get_module(const char*) { return nullptr; }
 void ExpectFlow::handle_expected_flows(const Packet*) { }
 

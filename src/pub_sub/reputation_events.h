@@ -22,10 +22,12 @@
 
 #include "framework/data_bus.h"
 
-#define REPUTATION_MATCHED_EVENT "rep.matched"
-
 namespace snort
 {
+
+struct ReputationEventIds { enum : unsigned { REP_MATCHED, num_ids }; };
+
+const PubKey reputation_pub_key { "reputation", ReputationEventIds::num_ids };
 
 enum ReputationVerdict
 {

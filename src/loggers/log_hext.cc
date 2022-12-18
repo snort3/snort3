@@ -281,8 +281,9 @@ HextLogger::HextLogger(HextModule* m)
     limit = m->limit;
     width = m->width;
     raw = m->raw;
-    DataBus::subscribe(DAQ_SOF_MSG_EVENT, new DaqMessageEventHandler());
-    DataBus::subscribe(DAQ_EOF_MSG_EVENT, new DaqMessageEventHandler());
+
+    DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::DAQ_SOF_MSG, new DaqMessageEventHandler());
+    DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::DAQ_EOF_MSG, new DaqMessageEventHandler());
 }
 
 void HextLogger::open()

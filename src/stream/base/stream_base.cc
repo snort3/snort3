@@ -34,7 +34,9 @@
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
+#include "pub_sub/stream_event_ids.h"
 #include "stream/flush_bucket.h"
+#include "stream/stream.h"
 #include "stream/tcp/tcp_stream_tracker.h"
 
 #include "stream_ha.h"
@@ -184,6 +186,7 @@ class StreamBase : public Inspector
 {
 public:
     StreamBase(const StreamModuleConfig*);
+    bool configure(SnortConfig*) override;
     void show(const SnortConfig*) const override;
 
     void tear_down(SnortConfig*) override;
@@ -199,6 +202,12 @@ public:
 
 StreamBase::StreamBase(const StreamModuleConfig* c)
 { config = *c; }
+
+bool StreamBase::configure(SnortConfig*)
+{
+    Stream::set_pub_id();
+    return true;
+}
 
 void StreamBase::tear_down(SnortConfig* sc)
 { sc->register_reload_handler(new StreamUnloadReloadResourceManager); }
@@ -278,7 +287,7 @@ void StreamBase::eval(Packet* p)
             bool new_flow = false;
             flow_con->process(PktType::IP, p, &new_flow);
             if ( new_flow )
-                DataBus::publish(STREAM_IP_NEW_FLOW_EVENT, p);
+                DataBus::publish(Stream::get_pub_id(), StreamEventIds::IP_NEW_FLOW, p);
         }
         break;
 
@@ -296,7 +305,7 @@ void StreamBase::eval(Packet* p)
             bool new_flow = false;
             flow_con->process(PktType::UDP, p, &new_flow);
             if ( new_flow )
-                DataBus::publish(STREAM_UDP_NEW_FLOW_EVENT, p);
+                DataBus::publish(Stream::get_pub_id(), StreamEventIds::UDP_NEW_FLOW, p);
         }
         break;
 
@@ -307,7 +316,7 @@ void StreamBase::eval(Packet* p)
             if ( !flow_con->process(PktType::ICMP, p, &new_flow) )
                 flow_con->process(PktType::IP, p, &new_flow);
             if ( new_flow )
-                DataBus::publish(STREAM_ICMP_NEW_FLOW_EVENT, p);
+                DataBus::publish(Stream::get_pub_id(), StreamEventIds::ICMP_NEW_FLOW, p);
         }
         break;
 

@@ -29,6 +29,9 @@
 #include "memory/memory_cap.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
+#include "pub_sub/intrinsic_event_ids.h"
+#include "pub_sub/stream_event_ids.h"
+#include "stream/stream.h"
 
 #include "udp_ha.h"
 #include "udp_module.h"
@@ -89,7 +92,7 @@ static int ProcessUdp(Flow* lwssn, Packet* p, StreamUdpConfig*)
             (lwssn->ssn_state.session_flags & SSNFLAG_SEEN_RESPONDER))
         {
             lwssn->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
-            DataBus::publish(STREAM_UDP_BIDIRECTIONAL_EVENT, p);
+            DataBus::publish(Stream::get_pub_id(), StreamEventIds::UDP_BIDIRECTIONAL, p);
         }
     }
 
@@ -124,7 +127,7 @@ bool UdpSession::setup(Packet* p)
 
     SESSION_STATS_ADD(udpStats)
 
-    DataBus::publish(FLOW_STATE_EVENT, p);
+    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_STATE_CHANGE, p);
 
     if ( flow->ssn_state.ignore_direction != SSN_DIR_NONE )
     {

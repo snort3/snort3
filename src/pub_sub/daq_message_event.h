@@ -22,11 +22,7 @@
 
 #include <daq.h>
 
-#include "framework/data_bus.h"
-
-#define DAQ_SOF_MSG_EVENT   "daq.message.sof"
-#define DAQ_EOF_MSG_EVENT   "daq.message.eof"
-#define DAQ_OTHER_MSG_EVENT "daq.message.other"
+#include "pub_sub/intrinsic_event_ids.h"
 
 namespace snort
 {

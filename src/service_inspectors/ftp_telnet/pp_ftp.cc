@@ -1278,7 +1278,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
         and rsp_code == 234)
     {
         OpportunisticTlsEvent event(p, p->flow->service);
-        DataBus::publish(OPPORTUNISTIC_TLS_EVENT, event, p->flow);
+        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::OPPORTUNISTIC_TLS, event, p->flow);
         ++ftstats.starttls;
         if (session->flags & FTP_FLG_SEARCH_ABANDONED)
             ++ftstats.ssl_search_abandoned_too_soon;
@@ -1843,7 +1843,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                     !(ftpssn->flags & FTP_FLG_SEARCH_ABANDONED))
                 {
                     ftpssn->flags |= FTP_FLG_SEARCH_ABANDONED;
-                    DataBus::publish(SSL_SEARCH_ABANDONED, p);
+                    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::SSL_SEARCH_ABANDONED, p);
                     ++ftstats.ssl_search_abandoned;
                 }
 

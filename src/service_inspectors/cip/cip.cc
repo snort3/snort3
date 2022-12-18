@@ -45,6 +45,7 @@ using namespace snort;
 THREAD_LOCAL ProfileStats cip_perf_stats;
 
 unsigned CipFlowData::inspector_id = 0;
+unsigned CipEventData::pub_id = 0;
 
 static void free_cip_data(void* data);
 
@@ -166,7 +167,7 @@ static void publish_data_to_appId(Packet* packet, CipCurrentData& current_data)
 
     if (publish_appid)
     {
-        DataBus::publish(CIP_EVENT_TYPE_CIP_DATA_KEY, cip_event, packet->flow);
+        DataBus::publish(CipEventData::pub_id, CipEventIds::DATA, cip_event, packet->flow);
     }
 }
 
@@ -252,6 +253,7 @@ public:
     Cip(CipProtoConf*);
     ~Cip() override;
 
+    bool configure(SnortConfig*) override;
     void show(const SnortConfig*) const override;
     void eval(Packet*) override;
 
@@ -276,6 +278,12 @@ Cip::~Cip()
     {
         delete config;
     }
+}
+
+bool Cip::configure(SnortConfig*)
+{
+    CipEventData::pub_id = DataBus::get_id(cip_pub_key);
+    return true;
 }
 
 void Cip::show(const SnortConfig*) const

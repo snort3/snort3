@@ -27,6 +27,8 @@
 
 #include "framework/data_bus.h"
 #include "log/messages.h"
+#include "pub_sub/stream_event_ids.h"
+#include "stream/stream.h"
 #include "stream/tcp/tcp_ha.h"
 
 using namespace snort;
@@ -396,7 +398,7 @@ void TcpStreamSession::set_established(Packet* p, uint32_t flags)
     if (SSNFLAG_ESTABLISHED != (SSNFLAG_ESTABLISHED & flow->get_session_flags()))
     {
         flow->set_session_flags(SSNFLAG_ESTABLISHED);
-        DataBus::publish(STREAM_TCP_ESTABLISHED_EVENT, p);
+        DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_ESTABLISHED, p);
     }
 }
 
@@ -429,7 +431,7 @@ void TcpStreamSession::check_for_one_sided_session(Packet* p)
             else if ( initiator_watermark != watermark )
             {
                 flow.ssn_state.session_flags |= SSNFLAG_TCP_ONE_SIDED;
-                DataBus::publish(STREAM_TCP_ESTABLISHED_EVENT, p);
+                DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_ESTABLISHED, p);
             }
         }
     }

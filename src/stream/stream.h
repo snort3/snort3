@@ -247,6 +247,9 @@ public:
 
     static bool get_held_pkt_seq(Flow*, uint32_t&);
 
+    static void set_pub_id();
+    static unsigned get_pub_id();
+
 private:
     static void set_ip_protocol(Flow*);
 };

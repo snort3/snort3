@@ -45,7 +45,7 @@ public:
         { return snort::PS_HEADER; }
     void gen_events() override;
     void update_flow() override;
-    void publish() override;
+    void publish(unsigned pub_id) override;
 
     const Field& get_method() { return method; }
     const Field& get_uri();

@@ -54,6 +54,7 @@
 #include "memory/memory_cap.h"
 #include "profiler/profiler.h"
 #include "protocols/eth.h"
+#include "pub_sub/intrinsic_event_ids.h"
 
 #include "stream_tcp.h"
 #include "tcp_ha.h"
@@ -293,7 +294,7 @@ void TcpSession::update_perf_base_state(char newState)
     flow->update_session_flags(session_flags);
 
     if ( fire_event )
-        DataBus::publish(FLOW_STATE_EVENT, nullptr, flow);
+        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_STATE_CHANGE, nullptr, flow);
 }
 
 bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)

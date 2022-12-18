@@ -20,10 +20,9 @@
 #ifndef PACKET_EVENTS_H
 #define PACKET_EVENTS_H
 
-#include "framework/data_bus.h"
+#include "pub_sub/intrinsic_event_ids.h"
 
 // A retry packet is being processed
-#define PKT_RETRY_EVENT "retry_packet"
 
 namespace snort
 {

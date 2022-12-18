@@ -25,8 +25,7 @@
 #include "service_inspectors/http_inspect/http_field.h"
 #include "service_inspectors/http_inspect/http_msg_body.h"
 
-// These are common values between the HTTP inspector and the subscribers.
-#define HTTPX_REQUEST_BODY_EVENT_KEY "httpx_request_body_event"
+#include "http_event_ids.h"
 
 class HttpFlowData;
 

@@ -21,10 +21,8 @@
 #define DHCP_EVENTS_H
 
 #include <cstring>
-#include "framework/data_bus.h"
+#include "pub_sub/appid_event_ids.h"
 
-#define DHCP_DATA_EVENT "dhcp_data_event"
-#define DHCP_INFO_EVENT "dhcp_info_event"
 #define DHCP_OP55_MAX_SIZE  64
 #define DHCP_OP60_MAX_SIZE  64
 

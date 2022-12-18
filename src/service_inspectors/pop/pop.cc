@@ -473,7 +473,7 @@ static void POP_ProcessServerPacket(Packet* p, POPData* pop_ssn)
                         and !p->flow->flags.data_decrypted)
                     {
                         pop_ssn->session_flags |= POP_FLAG_ABANDON_EVT;
-                        DataBus::publish(SSL_SEARCH_ABANDONED, p);
+                        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::SSL_SEARCH_ABANDONED, p);
                         popstats.ssl_search_abandoned++;
                     }
 
@@ -488,7 +488,7 @@ static void POP_ProcessServerPacket(Packet* p, POPData* pop_ssn)
                     }
 
                     OpportunisticTlsEvent event(p, p->flow->service);
-                    DataBus::publish(OPPORTUNISTIC_TLS_EVENT, event, p->flow);
+                    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::OPPORTUNISTIC_TLS, event, p->flow);
                     popstats.start_tls++;
                     pop_ssn->state = STATE_DECRYPTION_REQ;
                 }

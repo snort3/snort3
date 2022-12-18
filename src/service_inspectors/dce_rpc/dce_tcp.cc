@@ -26,6 +26,7 @@
 #include "dce_tcp.h"
 
 #include "detection/detection_engine.h"
+#include "pub_sub/dcerpc_events.h"
 #include "utils/util.h"
 
 #include "dce_context_data.h"
@@ -51,6 +52,7 @@ THREAD_LOCAL dce2TcpStats dce2_tcp_stats;
 THREAD_LOCAL ProfileStats dce2_tcp_pstat_main;
 
 unsigned Dce2TcpFlowData::inspector_id = 0;
+unsigned Dce2Tcp::pub_id = 0;
 
 DCE2_TcpSsnData* get_dce2_tcp_session_data(Flow* flow)
 {
@@ -116,6 +118,7 @@ Dce2Tcp::Dce2Tcp(const dce2TcpProtoConf& pc) :
 bool Dce2Tcp::configure(snort::SnortConfig* sc)
 {
     esm.set_proto_id(sc->proto_ref->add(DCE_RPC_SERVICE_NAME));
+    pub_id = DataBus::get_id(dce_tcp_pub_key);
     return true;
 }
 

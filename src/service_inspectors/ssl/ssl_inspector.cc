@@ -488,8 +488,8 @@ void Ssl::eval(Packet* p)
 
 bool Ssl::configure(SnortConfig*)
 {
-    DataBus::subscribe(FINALIZE_PACKET_EVENT, new SslFinalizePacketHandler());
-    DataBus::subscribe(OPPORTUNISTIC_TLS_EVENT, new SslStartTlsEventtHandler());
+    DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::FINALIZE_PACKET, new SslFinalizePacketHandler());
+    DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::OPPORTUNISTIC_TLS, new SslStartTlsEventtHandler());
     return true;
 }
 

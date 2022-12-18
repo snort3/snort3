@@ -48,6 +48,7 @@
 #include "framework/data_bus.h"
 #include "log/messages.h"
 #include "managers/inspector_manager.h"
+#include "pub_sub/intrinsic_event_ids.h"
 #include "utils/util.h"
 
 #include "ftp_cmd_lookup.h"
@@ -192,7 +193,7 @@ int FTPCheckConfigs(SnortConfig* sc, void* pData)
 
 void do_detection(Packet* p)
 {
-    DataBus::publish(PACKET_EVENT, p);
+    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::ALT_PACKET, p);
     DetectionEngine::disable_all(p);
 }
 

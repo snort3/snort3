@@ -21,18 +21,25 @@
 #include "config.h"
 #endif
 
-#include <algorithm>
-
 #include "data_bus.h"
+
+#include <algorithm>
+#include <unordered_map>
 
 #include "main/policy.h"
 #include "main/snort_config.h"
 #include "protocols/packet.h"
+#include "pub_sub/intrinsic_event_ids.h"
+#include "utils/stats.h"
 
 using namespace snort;
 
+static std::unordered_map<std::string, unsigned> pub_ids;
+static unsigned next_event = 1;
+
 static DataBus& get_data_bus()
 { return get_inspection_policy()->dbus; }
+
 static DataBus& get_network_data_bus()
 { return get_network_policy()->dbus; }
 
@@ -65,14 +72,15 @@ private:
 
 //--------------------------------------------------------------------------
 // public methods
-//--------------------------------------------------------------------------
+//-------------------------------------------------------------------------
 
 DataBus::DataBus() = default;
 
 DataBus::~DataBus()
 {
-    for ( auto& p : map )
-        for ( auto* h : p.second )
+    for ( auto& p : pub_sub )
+    {
+        for ( auto* h : p )
         {
             // If the object is cloned, pass the ownership to the next config.
             // When the object is no further cloned (e.g., the last config), delete it.
@@ -81,77 +89,101 @@ DataBus::~DataBus()
             else
                 delete h;
         }
+    }
+}
+
+unsigned DataBus::init()
+{
+    unsigned id = get_id(intrinsic_pub_key);
+    assert(id == 1);
+    return id;
 }
 
 void DataBus::clone(DataBus& from, const char* exclude_name)
 {
-    for ( auto& p : from.map )
-        for ( auto* h : p.second )
-            if ( nullptr == exclude_name || 0 != strcmp(exclude_name, h->module_name) )
+    for ( unsigned i = 0; i < from.pub_sub.size(); ++i )
+    {
+        for ( auto* h : from.pub_sub[i] )
+        {
+            if ( !exclude_name || strcmp(exclude_name, h->module_name) )
             {
                 h->cloned = true;
-                _subscribe(p.first.c_str(), h);
+                _subscribe(i, 0, h);
             }
+        }
+    }
+}
+
+unsigned DataBus::get_id(const PubKey& key)
+{
+    auto it = pub_ids.find(key.publisher);
+
+    if ( it == pub_ids.end() )
+    {
+        pub_ids[key.publisher] = next_event;
+        next_event += key.num_events;
+    }
+    return pub_ids[key.publisher];
 }
 
 // add handler to list of handlers to be notified upon
 // publication of given event
-void DataBus::subscribe(const char* key, DataHandler* h)
+void DataBus::subscribe(const PubKey& key, unsigned eid, DataHandler* h)
 {
-    get_data_bus()._subscribe(key, h);
+    get_data_bus()._subscribe(key, eid, h);
 }
 
 // for subscribers that need to receive events regardless of active inspection policy
-void DataBus::subscribe_network(const char* key, DataHandler* h)
+void DataBus::subscribe_network(const PubKey& key, unsigned eid, DataHandler* h)
 {
-    get_network_data_bus()._subscribe(key, h);
+    get_network_data_bus()._subscribe(key, eid, h);
 }
 
 // for subscribers that need to receive events regardless of active inspection policy
-void DataBus::subscribe_global(const char* key, DataHandler* h, SnortConfig& sc)
+void DataBus::subscribe_global(const PubKey& key, unsigned eid, DataHandler* h, SnortConfig& sc)
 {
-    sc.global_dbus->_subscribe(key, h);
+    sc.global_dbus->_subscribe(key, eid, h);
 }
 
-void DataBus::unsubscribe(const char* key, DataHandler* h)
+void DataBus::unsubscribe(const PubKey& key, unsigned eid, DataHandler* h)
 {
-    get_data_bus()._unsubscribe(key, h);
+    get_data_bus()._unsubscribe(key, eid, h);
 }
 
-void DataBus::unsubscribe_network(const char* key, DataHandler* h)
+void DataBus::unsubscribe_network(const PubKey& key, unsigned eid, DataHandler* h)
 {
-    get_network_data_bus()._unsubscribe(key, h);
+    get_network_data_bus()._unsubscribe(key, eid, h);
 }
 
-void DataBus::unsubscribe_global(const char* key, DataHandler* h, SnortConfig& sc)
+void DataBus::unsubscribe_global(const PubKey& key, unsigned eid, DataHandler* h, SnortConfig& sc)
 {
-    sc.global_dbus->_unsubscribe(key, h);
+    sc.global_dbus->_unsubscribe(key, eid, h);
 }
 
 // notify subscribers of event
-void DataBus::publish(const char* key, DataEvent& e, Flow* f)
+void DataBus::publish(unsigned pid, unsigned eid, DataEvent& e, Flow* f)
 {
-    SnortConfig::get_conf()->global_dbus->_publish(key, e, f);
+    SnortConfig::get_conf()->global_dbus->_publish(pid, eid, e, f);
 
     NetworkPolicy* ni = get_network_policy();
-    ni->dbus._publish(key, e, f);
+    ni->dbus._publish(pid, eid, e, f);
 
     InspectionPolicy* pi = get_inspection_policy();
-    pi->dbus._publish(key, e, f);
+    pi->dbus._publish(pid, eid, e, f);
 }
 
-void DataBus::publish(const char* key, const uint8_t* buf, unsigned len, Flow* f)
+void DataBus::publish(unsigned pid, unsigned eid, const uint8_t* buf, unsigned len, Flow* f)
 {
     BufferEvent e(buf, len);
-    publish(key, e, f);
+    publish(pid, eid, e, f);
 }
 
-void DataBus::publish(const char* key, Packet* p, Flow* f)
+void DataBus::publish(unsigned pid, unsigned eid, Packet* p, Flow* f)
 {
     PacketEvent e(p);
     if ( p && !f )
         f = p->flow;
-    publish(key, e, f);
+    publish(pid, eid, e, f);
 }
 
 //--------------------------------------------------------------------------
@@ -169,34 +201,55 @@ static bool compare(DataHandler* a, DataHandler* b)
     return false;
 }
 
-void DataBus::_subscribe(const char* key, DataHandler* h)
+void DataBus::_subscribe(unsigned pid, unsigned eid, DataHandler* h)
 {
-    DataList& v = map[key];
-    v.emplace_back(h);
-    std::sort(v.begin(), v.end(), compare);
+    unsigned idx = pid + eid;
+    assert(idx < next_event);
+
+    if ( next_event > pub_sub.size() )
+        pub_sub.resize(next_event);
+
+    SubList& subs = pub_sub[idx];
+    subs.emplace_back(h);
+
+    std::sort(subs.begin(), subs.end(), compare);
 }
 
-void DataBus::_unsubscribe(const char* key, DataHandler* h)
+void DataBus::_subscribe(const PubKey& key, unsigned eid, DataHandler* h)
 {
-    DataList& v = map[key];
-
-    for ( unsigned i = 0; i < v.size(); i++ )
-        if ( v[i] == h )
-            v.erase(v.begin() + i--);
-
-    if ( v.empty() )
-        map.erase(key);
+    unsigned pid = get_id(key);
+    _subscribe(pid, eid, h);
 }
 
-// notify subscribers of event
-void DataBus::_publish(const char* key, DataEvent& e, Flow* f) const
+void DataBus::_unsubscribe(const PubKey& key, unsigned eid, DataHandler* h)
 {
-    auto v = map.find(key);
+    unsigned pid = get_id(key);
+    unsigned idx = pid + eid;
+    assert(idx < pub_sub.size());
 
-    if ( v != map.end() )
+    SubList& subs = pub_sub[idx];
+
+    for ( unsigned i = 0; i < subs.size(); i++ )
     {
-        for ( auto* h : v->second )
-            h->handle(e, f);
+        if ( subs[i] == h )
+        {
+            subs.erase(subs.begin() + i--);
+            break;
+        }
     }
+}
+
+void DataBus::_publish(unsigned pid, unsigned eid, DataEvent& e, Flow* f) const
+{
+    unsigned idx = pid + eid;
+
+    // not all instances are full size
+    if ( idx >= pub_sub.size() )
+        return;
+
+    const SubList& subs = pub_sub[idx];
+
+    for ( auto* h : subs )
+        h->handle(e, f);
 }
 

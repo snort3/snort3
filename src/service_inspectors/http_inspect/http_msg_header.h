@@ -43,7 +43,7 @@ public:
     bool detection_required() const override { return true; }
     void update_flow() override;
     void gen_events() override;
-    void publish() override;
+    void publish(unsigned pub_id) override;
     const Field& get_true_ip();
     const Field& get_true_ip_addr();
     int32_t get_num_cookies();

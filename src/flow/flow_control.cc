@@ -33,6 +33,7 @@
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
 #include "protocols/vlan.h"
+#include "pub_sub/intrinsic_event_ids.h"
 #include "pub_sub/packet_events.h"
 #include "stream/stream.h"
 #include "utils/util.h"
@@ -457,13 +458,13 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         if (p->is_retry())
         {
             RetryPacketEvent retry_event(p);
-            DataBus::publish(PKT_RETRY_EVENT, retry_event);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::RETRY_PACKET, retry_event);
             flow->flags.retry_queued = false;
         }
         else if ( flow->flags.retry_queued and ( !p->is_cooked() or p->is_defrag() ) )
         {
             RetryPacketEvent retry_event(p);
-            DataBus::publish(PKT_RETRY_EVENT, retry_event);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::RETRY_PACKET, retry_event);
             if ( !retry_event.is_still_pending() )
                 flow->flags.retry_queued = false;
         }
@@ -482,7 +483,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         update_stats(flow, p);
 
         flow->set_client_initiate(p);
-        DataBus::publish(FLOW_STATE_SETUP_EVENT, p);
+        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_STATE_SETUP, p);
 
         if ( flow->flow_state == Flow::FlowState::SETUP ||
             (flow->flow_state == Flow::FlowState::INSPECT &&

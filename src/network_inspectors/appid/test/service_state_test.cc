@@ -43,6 +43,8 @@ void ErrorMessage(const char*,...) {}
 void LogLabel(const char*, FILE*) {}
 void LogText(const char* s, FILE*) { LogMessage("%s\n", s); }
 
+unsigned DataBus::get_id(const PubKey&)
+{ return 0; }
 
 // Stubs for utils
 char* snort_strdup(const char* str)

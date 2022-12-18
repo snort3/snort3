@@ -25,6 +25,7 @@
 
 #include "distill_verdict_stubs.h"
 
+#include "framework/data_bus.h"
 #include "main/analyzer.h"
 #include "memory/memory_cap.h"
 #include "packet_io/sfdaq_instance.h"
@@ -49,6 +50,9 @@ void DeferredTrust::set_deferred_trust(unsigned, bool on)
 void Flow::trust() { }
 
 SFDAQInstance* SFDAQ::get_local_instance() { return nullptr; }
+
+unsigned DataBus::get_id(const PubKey&)
+{ return 0; }
 }
 
 using namespace snort;

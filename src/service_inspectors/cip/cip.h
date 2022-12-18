@@ -24,6 +24,7 @@
 
 #include "flow/flow.h"
 #include "framework/counts.h"
+#include "framework/data_bus.h"
 #include "main/thread.h"
 #include "protocols/packet.h"
 
@@ -79,6 +80,8 @@ struct CipEventData
 
     // Pointer to snort::Packet
     const snort::Packet* snort_packet;
+
+    static unsigned pub_id;
 };
 
 class CipFlowData : public snort::FlowData

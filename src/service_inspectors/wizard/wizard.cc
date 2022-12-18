@@ -25,6 +25,7 @@
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+#include "pub_sub/intrinsic_event_ids.h"
 #include "stream/stream_splitter.h"
 #include "trace/trace_api.h"
 
@@ -206,7 +207,7 @@ StreamSplitter::Status MagicSplitter::scan(
 
         if ( !pkt->flow->flags.svc_event_generated )
         {
-            DataBus::publish(FLOW_NO_SERVICE_EVENT, pkt);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_NO_SERVICE, pkt);
             pkt->flow->flags.svc_event_generated = true;
         }
 
@@ -222,7 +223,7 @@ StreamSplitter::Status MagicSplitter::scan(
     // enhanced to abort sooner if it can't detect service.
     if ( !pkt->flow->service and !pkt->flow->flags.svc_event_generated )
     {
-        DataBus::publish(FLOW_NO_SERVICE_EVENT, pkt);
+        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_NO_SERVICE, pkt);
         pkt->flow->flags.svc_event_generated = true;
     }
 

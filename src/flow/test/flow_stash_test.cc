@@ -34,17 +34,12 @@
 using namespace snort;
 using namespace std;
 
-static DataBus* DB = nullptr;
-
 template<class Type>
 class DBConsumer : public DataHandler
 {
 public:
 
     static const char* STASH_EVENT;
-
-    // event we'll be listening to on the DataBus:
-    // static constexpr char STASH_EVENT[] = "foo.stash.event";
 
     DBConsumer(const char* mod_name) : DataHandler(mod_name) {}
 
@@ -69,59 +64,16 @@ private:
 template<class Type>
 const char* DBConsumer<Type>::STASH_EVENT = "foo.stash.event";
 
+static DataHandler* s_handler = nullptr;
 
+void DataBus::subscribe(const PubKey&, unsigned, snort::DataHandler* h)
+{ s_handler = h; }
 
-// DataBus mock: most functions are stubs, but _subscribe() and  _publish()
-// are (close to) real.
-DataBus::DataBus() = default;
-
-DataBus::~DataBus()
+void DataBus::publish(unsigned, unsigned evid, snort::DataEvent& e, snort::Flow* f)
 {
-    for ( auto& p : map )
-        for ( auto* h : p.second )
-            delete h;
+    if ( s_handler and evid )
+        s_handler->handle(e, f);
 }
-
-void DataBus::clone(DataBus&, const char*) {}
-void DataBus::subscribe(const char* key, DataHandler* h)
-{
-    DB->_subscribe(key, h);
-}
-void DataBus::subscribe_network(const char* key, DataHandler* h)
-{
-    DB->_subscribe(key, h);
-}
-
-void DataBus::unsubscribe(const char*, DataHandler*) {}
-void DataBus::unsubscribe_network(const char*, DataHandler*) {}
-
-void DataBus::publish(const char* key, DataEvent& e, Flow* f)
-{
-    DB->_publish(key, e, f);
-}
-
-void DataBus::publish(const char*, const uint8_t*, unsigned, Flow*) {}
-void DataBus::publish(const char*, Packet*, Flow*) {}
-
-void DataBus::_subscribe(const char* key, DataHandler* h)
-{
-    DataList& v = map[key];
-    v.emplace_back(h);
-}
-
-void DataBus::_unsubscribe(const char*, DataHandler*) {}
-
-void DataBus::_publish(const char* key, DataEvent& e, Flow* f) const
-{
-    auto v = map.find(key);
-
-    if ( v != map.end() )
-    {
-        for ( auto* h : v->second )
-            h->handle(e, f);
-    }
-}
-// end DataBus mock.
 
 static SnortConfig snort_conf;
 
@@ -142,54 +94,43 @@ char* snort_strdup(const char* str)
 }
 
 TEST_GROUP(stash_tests)
-{
-    void setup() override
-    {
-        DB = new DataBus();
-    }
-
-    void teardown() override
-    {
-        delete DB;
-    }
-};
+{ };
 
 // DataBus tests
 TEST(stash_tests, data_bus_publish_test)
 {
     typedef int32_t value_t;
 
-    // DB deletes the subscribers so make c a pointer, not a local object.
-    DBConsumer<value_t>* c = new DBConsumer<value_t>("foo");
-    DataBus::subscribe(DBConsumer<value_t>::STASH_EVENT, c);
+    DBConsumer<value_t> c("foo");
+    PubKey pub_key { };
+
+    DataBus::subscribe(pub_key, 0, &c);
 
     FlowStash stash;
     value_t vin, vout;
 
     // stash/publish 10
     vin = 10;
-    stash.store(DBConsumer<value_t>::STASH_EVENT, vin);
-    vout = c->get_value();
+    stash.store(DBConsumer<value_t>::STASH_EVENT, vin, 1, 1);
+    vout = c.get_value();
     CHECK_EQUAL(vin, vout);
 
     // stash/publish 20, with the same key as before
     vin = 20;
-    stash.store(DBConsumer<value_t>::STASH_EVENT, vin);
-    vout = c->get_value();
+    stash.store(DBConsumer<value_t>::STASH_EVENT, vin, 1, 1);
+    vout = c.get_value();
     CHECK_EQUAL(vin, vout);
 
     // do we get some event that we're not listening to?
-    value_t before = c->get_value();
+    value_t before = c.get_value();
     stash.store("bar.stash.event", 30);
-    value_t after = c->get_value();
+    value_t after = c.get_value();
     CHECK_EQUAL(before, after);
 
     // do we still get our own STASH_EVENT from the stash, at a later time?
-    vout = c->get_from_stash(stash);
+    vout = c.get_from_stash(stash);
     CHECK_EQUAL(vin, vout);
-
 }
-
 
 // Stash tests
 TEST(stash_tests, new_int32_item)
@@ -387,5 +328,7 @@ TEST(stash_tests, store_ip)
 
 int main(int argc, char** argv)
 {
+    MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
+

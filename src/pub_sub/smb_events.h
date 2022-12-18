@@ -20,9 +20,7 @@
 #ifndef SMB_EVENTS_H
 #define SMB_EVENTS_H
 
-#include "framework/data_bus.h"
-
-#define FP_SMB_DATA_EVENT "fp_smb_data_event"
+#include "pub_sub/appid_event_ids.h"
 
 namespace snort
 {
@@ -54,4 +52,5 @@ private:
 
 }
 
-#endif // SMB_EVENTS_H
+#endif
+

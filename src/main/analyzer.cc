@@ -167,24 +167,24 @@ void Analyzer::set_main_hook(MainHook_f f)
 static void process_daq_sof_eof_msg(DAQ_Msg_h msg, DAQ_Verdict& verdict)
 {
     const DAQ_FlowStats_t *stats = (const DAQ_FlowStats_t*) daq_msg_get_hdr(msg);
-    const char* key;
+    unsigned key;
 
     select_default_policy(*stats, SnortConfig::get_conf());
     if (daq_msg_get_type(msg) == DAQ_MSG_TYPE_EOF)
     {
         packet_time_update(&stats->eof_timestamp);
         daq_stats.eof_messages++;
-        key = DAQ_EOF_MSG_EVENT;
+        key = IntrinsicEventIds::DAQ_EOF_MSG;
     }
     else
     {
         packet_time_update(&stats->sof_timestamp);
         daq_stats.sof_messages++;
-        key = DAQ_SOF_MSG_EVENT;
+        key = IntrinsicEventIds::DAQ_SOF_MSG;
     }
 
     DaqMessageEvent event(msg, verdict);
-    DataBus::publish(key, event);
+    DataBus::publish(intrinsic_pub_id, key, event);
 }
 
 static bool process_packet(Packet* p)
@@ -343,7 +343,7 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
         {
             if (p->flow->flags.trigger_detained_packet_event)
             {
-                DataBus::publish(DETAINED_PACKET_EVENT, p);
+                DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::DETAINED_PACKET, p);
             }
         }
         else
@@ -359,7 +359,7 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
         if (p->flow and p->flow->flags.trigger_finalize_event)
         {
             FinalizePacketEvent event(p, verdict);
-            DataBus::publish(FINALIZE_PACKET_EVENT, event);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FINALIZE_PACKET, event);
         }
 
         if (PacketTracer::is_active())
@@ -448,7 +448,7 @@ void Analyzer::process_daq_msg(DAQ_Msg_h msg, bool retry)
             {
                 daq_stats.other_messages++;
                 DaqMessageEvent event(msg, verdict);
-                DataBus::publish(DAQ_OTHER_MSG_EVENT, event);
+                DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::DAQ_OTHER_MSG, event);
             }
             break;
     }
@@ -570,7 +570,7 @@ void Analyzer::idle()
     timeradd(&now, &increment, &now);
     packet_time_update(&now);
 
-    DataBus::publish(THREAD_IDLE_EVENT, nullptr);
+    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::THREAD_IDLE, nullptr);
 
     // Service the retry queue with the new packet time.
     process_retry_queue();
@@ -1003,6 +1003,6 @@ void Analyzer::reload_daq()
 
 void Analyzer::rotate()
 {
-    DataBus::publish(THREAD_ROTATE_EVENT, nullptr);
+    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::THREAD_ROTATE, nullptr);
 }
 

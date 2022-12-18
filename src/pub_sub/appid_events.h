@@ -24,9 +24,7 @@
 
 #include <bitset>
 
-#include "framework/data_bus.h"
-
-#define APPID_EVENT_ANY_CHANGE "appid_event_any_change"
+#include "pub_sub/appid_event_ids.h"
 
 namespace snort
 {

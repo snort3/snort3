@@ -598,7 +598,7 @@ static void sip_publish_data_bus(
     const Packet* p, const SIPMsg* sip_msg, const SIP_DialogData* dialog)
 {
     SipEvent event(p, sip_msg, dialog);
-    DataBus::publish(SIP_EVENT_TYPE_SIP_DIALOG_KEY, event, p->flow);
+    DataBus::publish(SIPData::pub_id, SipEventIds::DIALOG, event, p->flow);
 }
 
 /********************************************************************

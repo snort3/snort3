@@ -28,10 +28,12 @@
 
 #include "framework/data_bus.h"
 #include "protocols/protocol_ids.h"
+#include "pub_sub/appid_event_ids.h"
 #include "service_inspectors/http_inspect/http_msg_header.h"
+
+#include "appid_http_session.h"
 #include "tp_appid_module_api.h"
 #include "tp_appid_session_api.h"
-#include "appid_http_session.h"
 
 #include "appid_mock_definitions.h"
 #include "appid_mock_http_session.h"
@@ -75,7 +77,7 @@ public:
     void eval(Packet*) override {};
 };
 
-void DataBus::publish(const char*, DataEvent& event, Flow*)
+void DataBus::publish(unsigned, unsigned, DataEvent& event, Flow*)
 {
     AppidEvent* appid_event = (AppidEvent*)&event;
     char* test_log = (char*)mock().getData("test_log").getObjectPointer();
@@ -87,7 +89,7 @@ void DataBus::publish(const char*, DataEvent& event, Flow*)
 void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packet& p, bool, uint32_t)
 {
     AppidEvent app_event(change_bits, false, 0, this->get_api(), p);
-    DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, p.flow);
+    DataBus::publish(0, AppIdEventIds::ANY_CHANGE, app_event, p.flow);
 }
 
 bool SslPatternMatchers::scan_hostname(const uint8_t* server_name, size_t, AppId& client_id, AppId& payload_id)

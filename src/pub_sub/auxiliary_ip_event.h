@@ -20,10 +20,8 @@
 #ifndef AUXILIARY_IP_EVENT_H
 #define AUXILIARY_IP_EVENT_H
 
-#include "framework/data_bus.h"
+#include "pub_sub/intrinsic_event_ids.h"
 #include "sfip/sf_ip.h"
-
-#define AUXILIARY_IP_EVENT "auxiliary_ip_event"
 
 class AuxiliaryIpEvent : public snort::DataEvent
 {

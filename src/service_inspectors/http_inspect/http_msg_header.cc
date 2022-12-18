@@ -56,16 +56,16 @@ HttpMsgHeader::HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
     get_related_sections();
 }
 
-void HttpMsgHeader::publish()
+void HttpMsgHeader::publish(unsigned pub_id)
 {
     const int64_t stream_id = session_data->get_hx_stream_id();
 
     HttpEvent http_header_event(this, session_data->for_httpx, stream_id);
 
-    const char* key = (source_id == SRC_CLIENT) ?
-        HTTP_REQUEST_HEADER_EVENT_KEY : HTTP_RESPONSE_HEADER_EVENT_KEY;
+    unsigned evid = (source_id == SRC_CLIENT) ?
+        HttpEventIds::REQUEST_HEADER : HttpEventIds::RESPONSE_HEADER;
 
-    DataBus::publish(key, http_header_event, flow);
+    DataBus::publish(pub_id, evid, http_header_event, flow);
 }
 
 const Field& HttpMsgHeader::get_true_ip()

@@ -34,6 +34,8 @@
 #include "packet_io/active.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/eth.h"
+#include "pub_sub/stream_event_ids.h"
+#include "stream/stream.h"
 
 #include "held_packet_queue.h"
 #include "segment_overlap_editor.h"
@@ -117,7 +119,7 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescr
             tcp_event = TCP_SYN_RECV_EVENT;
             tcpStats.syns++;
             if ( tcp_state == TcpStreamTracker::TCP_LISTEN )
-                DataBus::publish(STREAM_TCP_SYN_EVENT, tsd.get_pkt());
+                DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_SYN, tsd.get_pkt());
         }
         else if ( tcph->is_syn_ack() )
         {
@@ -127,7 +129,7 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescr
                 (!Stream::is_midstream(tsd.get_flow()) and
                 (tcp_state == TcpStreamTracker::TCP_LISTEN or
                 tcp_state == TcpStreamTracker::TCP_STATE_NONE)) )
-                DataBus::publish(STREAM_TCP_SYN_ACK_EVENT, tsd.get_pkt());
+                DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_SYN_ACK, tsd.get_pkt());
         }
         else if ( tcph->is_rst() )
         {

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2022-2022 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,44 +16,30 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// rna_config.h author Masud Hasan <mashasan@cisco.com>
+// appid_event_ids.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef RNA_CONFIG_H
-#define RNA_CONFIG_H
+#ifndef APPID_EVENT_IDS_H
+#define APPID_EVENT_IDS_H
 
 #include "framework/data_bus.h"
 
 namespace snort
 {
-class TcpFpProcessor;
-class UaFpProcessor;
-class UdpFpProcessor;
-class SmbFpProcessor;
+
+struct AppIdEventIds
+{ enum : unsigned {
+
+    ANY_CHANGE,
+    DEBUG_LOG,
+    DHCP_DATA,
+    DHCP_INFO,
+    FP_SMB_DATA,
+
+    num_ids
+}; };
+
+const PubKey appid_pub_key { "appid", AppIdEventIds::num_ids };
+
 }
-
-struct RnaModuleConfig
-{
-    std::string rna_conf_path;
-    bool enable_logger;
-    bool log_when_idle;
-    snort::TcpFpProcessor* tcp_processor = nullptr;
-    snort::UaFpProcessor* ua_processor = nullptr;
-    snort::UdpFpProcessor* udp_processor = nullptr;
-    snort::SmbFpProcessor* smb_processor = nullptr;
-};
-
-// Give default values so that RNA can work even if rna_conf_path is not provided
-struct RnaConfig
-{
-    uint32_t update_timeout = 3600;
-    uint16_t max_host_client_apps = 16;
-    uint16_t max_payloads = 100;
-    uint16_t max_host_services = 100;
-    uint16_t max_host_service_info = 16;
-    bool enable_banner_grab = false;
-    bool log_when_idle = false;
-
-    static unsigned pub_id;
-};
-
 #endif
+

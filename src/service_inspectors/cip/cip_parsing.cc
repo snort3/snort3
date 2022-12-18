@@ -1538,7 +1538,7 @@ static bool parse_multiple_service_packet(const uint8_t* data,
 
         pack_cip_request_event(&embedded_request, &cip_event_data);
 
-        DataBus::publish(CIP_EVENT_TYPE_CIP_DATA_KEY, cip_event, global_data->snort_packet->flow);
+        DataBus::publish(CipEventData::pub_id, CipEventIds::DATA, cip_event, global_data->snort_packet->flow);
     }
 
     return valid;

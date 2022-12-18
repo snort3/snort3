@@ -45,6 +45,8 @@ using namespace snort;
 THREAD_LOCAL ProfileStats sshPerfStats;
 THREAD_LOCAL SshStats sshstats;
 
+static unsigned pub_id = 0;
+
 /*
  * Function prototype(s)
  */
@@ -144,12 +146,12 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
             {
                 std::string proto_string((const char *)(p->data), p->dsize);
                 SshEvent event(SSH_VERSION_STRING, SSH_NOT_FINISHED, proto_string, pkt_direction, p);
-                DataBus::publish(SSH_EVENT, event, p->flow);
+                DataBus::publish(pub_id, SshEventIds::STATE_CHANGE, event, p->flow);
             }
             else
             {
                 SshEvent event(SSH_VALIDATION, SSH_INVALID_VERSION, "", pkt_direction, p);
-                DataBus::publish(SSH_EVENT, event, p->flow);
+                DataBus::publish(pub_id, SshEventIds::STATE_CHANGE, event, p->flow);
             }
         }
         else if (!(sessp->state_flags & search_dir_keyinit))
@@ -171,12 +173,12 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
             if (keyx_valid)
             {
                 SshEvent event(SSH_VALIDATION, SSH_VALID_KEXINIT, "", pkt_direction, p);
-                DataBus::publish(SSH_EVENT, event, p->flow);
+                DataBus::publish(pub_id, SshEventIds::STATE_CHANGE, event, p->flow);
             }
             else
             {
                 SshEvent event(SSH_VALIDATION, SSH_INVALID_KEXINIT, "", pkt_direction, p);
-                DataBus::publish(SSH_EVENT, event, p->flow);
+                DataBus::publish(pub_id, SshEventIds::STATE_CHANGE, event, p->flow);
                 sessp->state_flags |= SSH_FLG_SESS_ENCRYPTED;
             }
         }
@@ -546,6 +548,7 @@ public:
     Ssh(SSH_PROTO_CONF*);
     ~Ssh() override;
 
+    bool configure(SnortConfig*) override;
     void show(const SnortConfig*) const override;
     void eval(Packet*) override;
     class StreamSplitter* get_splitter(bool to_server) override
@@ -564,6 +567,12 @@ Ssh::~Ssh()
 {
     if ( config )
         delete config;
+}
+
+bool Ssh::configure(SnortConfig*)
+{
+    pub_id = DataBus::get_id(ssh_pub_key);
+    return true;
 }
 
 void Ssh::show(const SnortConfig*) const

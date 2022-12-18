@@ -61,32 +61,37 @@ bool FlowStash::get(const string& key, string& val)
     return get(key, val, STASH_ITEM_TYPE_STRING);
 }
 
-bool FlowStash::get(const std::string& key, StashGenericObject* &val)
+bool FlowStash::get(const string& key, StashGenericObject* &val)
 {
     return get(key, val, STASH_ITEM_TYPE_GENERIC_OBJECT);
 }
 
-void FlowStash::store(const string& key, int32_t val)
+void FlowStash::store(const string& key, int32_t val, unsigned pubid, unsigned evid)
 {
-    store(key, val, STASH_ITEM_TYPE_INT32);
+    store(key, val, STASH_ITEM_TYPE_INT32, pubid, evid);
 }
 
-void FlowStash::store(const string& key, uint32_t val)
+void FlowStash::store(const string& key, uint32_t val, unsigned pubid, unsigned evid)
 {
-    store(key, val, STASH_ITEM_TYPE_UINT32);
+    store(key, val, STASH_ITEM_TYPE_UINT32, pubid, evid);
 }
 
-void FlowStash::store(const string& key, const string& val)
+void FlowStash::store(const string& key, const string& val, unsigned pubid, unsigned evid)
 {
-    store(key, val, STASH_ITEM_TYPE_STRING);
+    store(key, val, STASH_ITEM_TYPE_STRING, pubid, evid);
 }
 
-void FlowStash::store(const std::string& key, StashGenericObject* val, bool publish)
+void FlowStash::store(const string& key, string* val, unsigned pubid, unsigned evid)
 {
-    store(key, val, STASH_ITEM_TYPE_GENERIC_OBJECT, publish);
+    store(key, val, STASH_ITEM_TYPE_STRING, pubid, evid);
 }
 
-void FlowStash::store(const string& key, StashGenericObject* &val, StashItemType type, bool publish)
+void FlowStash::store(const string& key, StashGenericObject* val, unsigned pubid, unsigned evid)
+{
+    store(key, val, STASH_ITEM_TYPE_GENERIC_OBJECT, pubid, evid);
+}
+
+void FlowStash::store(const string& key, StashGenericObject* &val, StashItemType type, unsigned pubid, unsigned evid)
 {
 #ifdef NDEBUG
     UNUSED(type);
@@ -104,16 +109,11 @@ void FlowStash::store(const string& key, StashGenericObject* &val, StashItemType
         it_and_status.first->second = item;
     }
 
-    if (publish)
+    if (DataBus::valid(pubid))
     {
         StashEvent e(item);
-        DataBus::publish(key.c_str(), e);
+        DataBus::publish(pubid, evid, e);
     }
-}
-
-void FlowStash::store(const std::string& key, std::string* val)
-{
-    store(key, val, STASH_ITEM_TYPE_STRING);
 }
 
 template<typename T>
@@ -134,7 +134,7 @@ bool FlowStash::get(const string& key, T& val, StashItemType type)
 }
 
 template<typename T>
-void FlowStash::store(const string& key, T& val, StashItemType type)
+void FlowStash::store(const string& key, T& val, StashItemType type, unsigned pubid, unsigned evid)
 {
 #ifdef NDEBUG
     UNUSED(type);
@@ -150,7 +150,7 @@ void FlowStash::store(const string& key, T& val, StashItemType type)
     }
 
     StashEvent e(item);
-    DataBus::publish(key.c_str(), e);
+    DataBus::publish(pubid, evid, e);
 }
 
 bool FlowStash::store(const SfIp& ip, const SnortConfig* sc)
@@ -174,6 +174,6 @@ bool FlowStash::store(const SfIp& ip, const SnortConfig* sc)
     }
 
     AuxiliaryIpEvent event(ip);
-    DataBus::publish(AUXILIARY_IP_EVENT, event);
+    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::AUXILIARY_IP, event);
     return true;
 }

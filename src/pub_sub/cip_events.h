@@ -27,12 +27,9 @@
 
 #include "framework/data_bus.h"
 
-#define CIP_EVENT_TYPE_CIP_DATA_KEY "cip_event_type_cip_data"
+struct CipEventIds { enum : unsigned { DATA, num_ids }; };
 
-enum CipEventType
-{
-    CIP_EVENT_TYPE_CIP_DATA
-};
+const snort::PubKey cip_pub_key { "cip", CipEventIds::num_ids };
 
 namespace snort
 {

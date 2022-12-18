@@ -514,7 +514,7 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
                     and !p->flow->flags.data_decrypted)
                 {
                     imap_ssn->session_flags |= IMAP_FLAG_ABANDON_EVT;
-                    DataBus::publish(SSL_SEARCH_ABANDONED, p);
+                    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::SSL_SEARCH_ABANDONED, p);
                     imapstats.ssl_search_abandoned++;
                 }
                 imap_ssn->state = STATE_DATA;
@@ -540,7 +540,7 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
                     }
 
                     OpportunisticTlsEvent event(p, p->flow->service);
-                    DataBus::publish(OPPORTUNISTIC_TLS_EVENT, event, p->flow);
+                    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::OPPORTUNISTIC_TLS, event, p->flow);
                     imapstats.start_tls++;
                     imap_ssn->state = STATE_DECRYPTION_REQ;
                 }

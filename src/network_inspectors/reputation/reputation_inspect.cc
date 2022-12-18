@@ -47,6 +47,8 @@ using namespace snort;
 THREAD_LOCAL ProfileStats reputation_perf_stats;
 THREAD_LOCAL ReputationStats reputationstats;
 
+static unsigned pub_id = 0;
+
 const PegInfo reputation_peg_names[] =
 {
 { CountType::SUM, "packets", "total packets processed" },
@@ -263,7 +265,7 @@ static IPdecision snort_reputation_aux_ip(const ReputationConfig& config, Reputa
 
             DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_BLOCKLIST_DST);
             ReputationVerdictEvent event(p, REP_VERDICT_BLOCKED, iplist_id, false);
-            DataBus::publish(REPUTATION_MATCHED_EVENT, event);
+            DataBus::publish(pub_id, ReputationEventIds::REP_MATCHED, event);
             p->active->drop_packet(p, true);
 
             // disable all preproc analysis and detection for this packet
@@ -283,14 +285,14 @@ static IPdecision snort_reputation_aux_ip(const ReputationConfig& config, Reputa
         {
             DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_MONITOR_DST);
             ReputationVerdictEvent event(p, REP_VERDICT_MONITORED, iplist_id, false);
-            DataBus::publish(REPUTATION_MATCHED_EVENT, event);
+            DataBus::publish(pub_id, ReputationEventIds::REP_MATCHED, event);
             reputationstats.aux_ip_monitored++;
         }
         else if (decision == TRUSTED)
         {
             DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_ALLOWLIST_DST);
             ReputationVerdictEvent event(p, REP_VERDICT_TRUSTED, iplist_id, false);
-            DataBus::publish(REPUTATION_MATCHED_EVENT, event);
+            DataBus::publish(pub_id, ReputationEventIds::REP_MATCHED, event);
             p->active->trust_session(p, true);
             reputationstats.aux_ip_trusted++;
         }
@@ -369,7 +371,7 @@ static void snort_reputation(const ReputationConfig& config, ReputationData& dat
 
         DetectionEngine::queue_event(GID_REPUTATION, blocklist_event);
         ReputationVerdictEvent event(p, REP_VERDICT_BLOCKED, iplist_id, BLOCKED_SRC == decision);
-        DataBus::publish(REPUTATION_MATCHED_EVENT, event);
+        DataBus::publish(pub_id, ReputationEventIds::REP_MATCHED, event);
         act->drop_packet(p, true);
 
         // disable all preproc analysis and detection for this packet
@@ -410,7 +412,7 @@ static void snort_reputation(const ReputationConfig& config, ReputationData& dat
 
         DetectionEngine::queue_event(GID_REPUTATION, monitor_event);
         ReputationVerdictEvent event(p, REP_VERDICT_MONITORED, iplist_id, MONITORED_SRC == decision);
-        DataBus::publish(REPUTATION_MATCHED_EVENT, event);
+        DataBus::publish(pub_id, ReputationEventIds::REP_MATCHED, event);
         reputationstats.monitored++;
     }
 
@@ -421,7 +423,7 @@ static void snort_reputation(const ReputationConfig& config, ReputationData& dat
 
         DetectionEngine::queue_event(GID_REPUTATION, allowlist_event);
         ReputationVerdictEvent event(p, REP_VERDICT_TRUSTED, iplist_id, TRUSTED_SRC == decision);
-        DataBus::publish(REPUTATION_MATCHED_EVENT, event);
+        DataBus::publish(pub_id, ReputationEventIds::REP_MATCHED, event);
         act->trust_session(p, true);
         reputationstats.trusted++;
     }
@@ -579,10 +581,12 @@ void Reputation::show(const SnortConfig*) const
 
 bool Reputation::configure(SnortConfig*)
 {
-    DataBus::subscribe_network( FLOW_STATE_SETUP_EVENT, new IpRepHandler(*this) );
-    DataBus::subscribe_network( FLOW_STATE_RELOADED_EVENT, new IpRepHandler(*this) );
-    DataBus::subscribe_network( AUXILIARY_IP_EVENT, new AuxiliaryIpRepHandler(*this) );
-    DataBus::subscribe_network( PKT_WITHOUT_FLOW_EVENT, new IpRepHandler(*this) );
+    DataBus::subscribe_network(intrinsic_pub_key, IntrinsicEventIds::FLOW_STATE_SETUP, new IpRepHandler(*this));
+    DataBus::subscribe_network(intrinsic_pub_key, IntrinsicEventIds::FLOW_STATE_RELOADED, new IpRepHandler(*this));
+    DataBus::subscribe_network(intrinsic_pub_key, IntrinsicEventIds::AUXILIARY_IP, new AuxiliaryIpRepHandler(*this));
+    DataBus::subscribe_network(intrinsic_pub_key, IntrinsicEventIds::PKT_WITHOUT_FLOW, new IpRepHandler(*this));
+
+    pub_id = DataBus::get_id(reputation_pub_key);
     return true;
 }
 

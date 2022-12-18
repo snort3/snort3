@@ -49,9 +49,12 @@ public:
     AppIdContext& get_ctxt() const;
     const AppIdConfig& get_config() const { return *config; }
 
+    static unsigned get_pub_id() { return pub_id; }
+
 private:
     const AppIdConfig* config = nullptr;
     AppIdContext* ctxt = nullptr;
+    static unsigned pub_id;
 };
 
 extern const snort::InspectApi appid_inspector_api;

@@ -27,12 +27,9 @@
 
 #include "framework/data_bus.h"
 
-#define SIP_EVENT_TYPE_SIP_DIALOG_KEY "sip_event_type_sip_dialog"
+struct SipEventIds { enum : unsigned { DIALOG, num_ids }; };
 
-enum SipEventType
-{
-    SIP_EVENT_TYPE_SIP_DIALOG
-};
+const snort::PubKey sip_pub_key { "sip", SipEventIds::num_ids };
 
 namespace snort
 {

@@ -21,9 +21,7 @@
 #define EVE_PROCESS_EVENT_H
 
 #include <string>
-#include "framework/data_bus.h"
-
-#define EVE_PROCESS_EVENT "eve_process_event"
+#include "pub_sub/external_event_ids.h"
 
 class EveProcessEvent : public snort::DataEvent
 {

@@ -23,12 +23,13 @@
 
 #define APPID_MOCK_INSPECTOR_H // avoiding mocked inspector
 
+#include "framework/data_bus.h"
 #include "helpers/discovery_filter.h"
 #include "host_tracker/host_cache.h"
 #include "network_inspectors/appid/appid_discovery.cc"
 #include "network_inspectors/appid/appid_peg_counts.h"
 #include "network_inspectors/packet_tracer/packet_tracer.h"
-
+#include "pub_sub/appid_event_ids.h"
 #include "search_engines/search_tool.h"
 #include "utils/sflsq.cc"
 
@@ -107,7 +108,7 @@ void SearchTool::add(const char*, unsigned, void*, bool) {}
 void SearchTool::add(const uint8_t*, unsigned, int, bool) {}
 void SearchTool::add(const uint8_t*, unsigned, void*, bool) {}
 
-// Stubs for ip
+// Mocks for ip
 namespace ip
 {
 void IpApi::set(const SfIp& sip, const SfIp& dip)
@@ -121,13 +122,13 @@ void IpApi::set(const SfIp& sip, const SfIp& dip)
 
 AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
-void AppIdSessionApi::get_first_stream_app_ids(AppId&, AppId&,
-    AppId&, AppId&) const { }
-} // namespace snort
-void AppIdModule::reset_stats() {}
-DiscoveryFilter::~DiscoveryFilter() {}
-// Stubs for publish
-void DataBus::publish(const char*, DataEvent& event, Flow*)
+void AppIdSessionApi::get_first_stream_app_ids(AppId&, AppId&, AppId&, AppId&) const { }
+
+// Mocks for publish
+unsigned DataBus::get_id(const PubKey&)
+{ return 0; }
+
+void DataBus::publish(unsigned, unsigned, DataEvent& event, Flow*)
 {
     AppidEvent* appid_event = (AppidEvent*)&event;
     char* test_log = (char*)mock().getData("test_log").getObjectPointer();
@@ -135,6 +136,9 @@ void DataBus::publish(const char*, DataEvent& event, Flow*)
         appid_event->get_change_bitset().to_string().c_str());
     mock().actualCall("publish");
 }
+} // namespace snort
+void AppIdModule::reset_stats() {}
+DiscoveryFilter::~DiscoveryFilter() {}
 
 // Stubs for matchers
 static HttpPatternMatchers* http_matchers;
@@ -229,7 +233,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
 void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packet& p, bool, uint32_t)
 {
     AppidEvent app_event(change_bits, false, 0, this->get_api(), p);
-    DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, p.flow);
+    DataBus::publish(0, AppIdEventIds::ANY_CHANGE, app_event, p.flow);
 }
 
 void AppIdHttpSession::set_tun_dest(){}

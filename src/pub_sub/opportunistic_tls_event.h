@@ -23,10 +23,9 @@
 #include <memory>
 #include <string>
 
-#include "framework/data_bus.h"
+#include "pub_sub/intrinsic_event_ids.h"
 
 // An opportunistic SSL/TLS session will start from next packet
-#define OPPORTUNISTIC_TLS_EVENT "service_inspector.opportunistic.tls"
 
 namespace snort
 {

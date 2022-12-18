@@ -52,7 +52,7 @@ public:
     const Field& get_msg_text_new() const { return msg_text_new; }
     static void fd_event_callback(void* context, int event);
     bool is_first() { return first_body; }
-    void publish() override;
+    void publish(unsigned pub_id) override;
     int32_t get_publish_length() const;
 
 protected:

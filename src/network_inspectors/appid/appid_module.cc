@@ -308,7 +308,7 @@ static int enable_debug(lua_State* L)
     constraints.dport = dport;
 
     AppIdDebugLogEvent event(&constraints, "AppIdDbg");
-    DataBus::publish(APPID_DEBUG_LOG_EVENT, event);
+    DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::DEBUG_LOG, event);
 
     main_broadcast_command(new AcAppIdDebug(&constraints), ControlConn::query_from_lua(L));
 
@@ -318,7 +318,7 @@ static int enable_debug(lua_State* L)
 static int disable_debug(lua_State* L)
 {
     AppIdDebugLogEvent event(nullptr, "");
-    DataBus::publish(APPID_DEBUG_LOG_EVENT, event);
+    DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::DEBUG_LOG, event);
     main_broadcast_command(new AcAppIdDebug(nullptr), ControlConn::query_from_lua(L));
     return 0;
 }

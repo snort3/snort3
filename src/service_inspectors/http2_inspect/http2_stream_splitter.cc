@@ -56,7 +56,7 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
     if (session_data == nullptr)
     {
         AssistantGadgetEvent event(pkt, "http");
-        DataBus::publish(FLOW_ASSISTANT_GADGET_EVENT, event, flow);
+        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_ASSISTANT_GADGET, event, flow);
         if (flow->assistant_gadget == nullptr)
         {
             // http_inspect is not configured

@@ -21,13 +21,12 @@
 #define ASSISTANT_GADGET_EVENTS_H
 
 #include "framework/data_bus.h"
+#include "pub_sub/intrinsic_event_ids.h"
 #include "target_based/snort_protocols.h"
 #include "utils/util.h"
 
 // A flow is setting up assistant inspector.
 // For example used by HTTP2 to set NHI as assistant inspector.
-
-#define FLOW_ASSISTANT_GADGET_EVENT "flow.assistant_gadget"
 
 namespace snort
 {

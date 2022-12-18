@@ -38,6 +38,7 @@
 #include "main/thread.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+#include "pub_sub/intrinsic_event_ids.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -61,7 +62,7 @@ class PerfIdleHandler : public DataHandler
 {
 public:
     PerfIdleHandler(PerfMonitor& p) : DataHandler(PERF_NAME), perf_monitor(p)
-    { DataBus::subscribe_network(THREAD_IDLE_EVENT, this); }
+    { DataBus::subscribe_network(intrinsic_pub_key, IntrinsicEventIds::THREAD_IDLE, this); }
 
     void handle(DataEvent&, Flow*) override
     { perf_monitor.eval(nullptr); }
@@ -74,7 +75,7 @@ class PerfRotateHandler : public DataHandler
 {
 public:
     PerfRotateHandler(PerfMonitor& p) : DataHandler(PERF_NAME), perf_monitor(p)
-    { DataBus::subscribe_network(THREAD_ROTATE_EVENT, this); }
+    { DataBus::subscribe_network(intrinsic_pub_key, IntrinsicEventIds::THREAD_ROTATE, this); }
 
     void handle(DataEvent&, Flow*) override
     { perf_monitor.rotate(); }
@@ -87,7 +88,7 @@ class FlowIPDataHandler : public DataHandler
 {
 public:
     FlowIPDataHandler(PerfMonitor& p) : DataHandler(PERF_NAME), perf_monitor(p)
-    { DataBus::subscribe_network(FLOW_STATE_EVENT, this); }
+    { DataBus::subscribe_network(intrinsic_pub_key, IntrinsicEventIds::FLOW_STATE_CHANGE, this); }
 
     void handle(DataEvent&, Flow* flow) override
     {

@@ -91,7 +91,7 @@ void ExpectFlow::handle_expected_flows(const Packet* p)
     if (p->flow && packet_expect_flows && !packet_expect_flows->empty())
     {
         ExpectedFlowsEvent event(*packet_expect_flows, *p);
-        DataBus::publish(EXPECT_EVENT_TYPE_HANDLE_FLOWS, event);
+        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::EXPECT_HANDLE_FLOWS, event);
     }
 }
 
@@ -448,7 +448,7 @@ int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_pro
         packet_expect_flows->emplace_back(last);
 
         ExpectEvent event(ctrlPkt, last, fd);
-        DataBus::publish(EXPECT_EVENT_TYPE_EARLY_SESSION_CREATE_KEY, event, ctrlPkt->flow);
+        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::EXPECT_EARLY_SESSION, event, ctrlPkt->flow);
     }
     return 0;
 }

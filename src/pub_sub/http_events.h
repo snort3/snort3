@@ -24,21 +24,18 @@
 #define HTTP_EVENTS_H
 
 #include "framework/data_bus.h"
-
-// These are common values between the HTTP inspector and the subscribers.
-#define HTTP_REQUEST_HEADER_EVENT_KEY "http_request_header_event"
-#define HTTP_RESPONSE_HEADER_EVENT_KEY "http_response_header_event"
+#include "pub_sub/http_event_ids.h"
 
 class HttpMsgHeader;
 
 namespace snort
 {
+
 class SO_PUBLIC HttpEvent : public snort::DataEvent
 {
 public:
     HttpEvent(HttpMsgHeader* http_msg_header_, bool httpx, int64_t stream_id) :
         http_msg_header(http_msg_header_), is_httpx(httpx), httpx_stream_id(stream_id) { }
-
 
     const uint8_t* get_content_type(int32_t &length);
     const uint8_t* get_cookie(int32_t &length);

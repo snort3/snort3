@@ -23,6 +23,7 @@
 
 #include "http2_flow_data.h"
 
+#include "main/snort_types.h"
 #include "service_inspectors/http_inspect/http_inspect.h"
 #include "service_inspectors/http_inspect/http_test_manager.h"
 
@@ -253,9 +254,7 @@ bool Http2FlowData::is_mid_frame() const
 
 FlowData* Http2FlowStreamIntf::get_stream_flow_data(const Flow* flow)
 {
-    Http2FlowData* h2i_flow_data = nullptr;
-
-    h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
     assert(h2i_flow_data);
 
     return h2i_flow_data->get_hi_flow_data();
@@ -263,27 +262,28 @@ FlowData* Http2FlowStreamIntf::get_stream_flow_data(const Flow* flow)
 
 void Http2FlowStreamIntf::set_stream_flow_data(Flow* flow, FlowData* flow_data)
 {
-    Http2FlowData* h2i_flow_data =
-        (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
     assert(h2i_flow_data);
+
     h2i_flow_data->set_hi_flow_data((HttpFlowData*)flow_data);
 }
 
 void Http2FlowStreamIntf::get_stream_id(const Flow* flow, int64_t& stream_id)
 {
-    Http2FlowData* h2i_flow_data = nullptr;
-
-    h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
     assert(h2i_flow_data);
+
     stream_id = h2i_flow_data->get_processing_stream_id();
 }
 
 AppId Http2FlowStreamIntf::get_appid_from_stream(const Flow* flow)
 {
-    Http2FlowData* h2i_flow_data = nullptr;
-
-    h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+#ifdef NDEBUG
+    UNUSED(flow);
+#else
+    Http2FlowData* h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
     assert(h2i_flow_data);
+#endif
 
     return APP_ID_HTTP2;
 }

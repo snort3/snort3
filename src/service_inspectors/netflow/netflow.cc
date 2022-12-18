@@ -44,6 +44,8 @@
 
 using namespace snort;
 
+static unsigned pub_id = 0;
+
 // -----------------------------------------------------------------------------
 // static functions
 // -----------------------------------------------------------------------------
@@ -128,7 +130,7 @@ static void publish_netflow_event(const Packet* p, const NetFlowRule* match, Net
     }
 
     NetFlowEvent event(p, &record, match->create_host, match->create_service, swapped, serviceID);
-    DataBus::publish(NETFLOW_EVENT, event);
+    DataBus::publish(pub_id, NetFlowEventIds::DATA, event);
 }
 
 static bool version_9_record_update(const unsigned char* data, uint32_t unix_secs,
@@ -767,6 +769,7 @@ public:
     void tterm() override;
 
     void eval(snort::Packet*) override;
+    bool configure(SnortConfig*) override;
     void show(const snort::SnortConfig*) const override;
     void install_reload_handler(snort::SnortConfig*) override;
 
@@ -834,6 +837,12 @@ static std::string to_string(const std::vector <int>& zones)
         }
     }
     return zs;
+}
+
+bool NetFlowInspector::configure(SnortConfig*)
+{
+    pub_id = DataBus::get_id(netflow_pub_key);
+    return true;
 }
 
 static void show_device(const NetFlowRule& d, bool is_exclude)

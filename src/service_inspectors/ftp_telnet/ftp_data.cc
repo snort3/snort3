@@ -235,10 +235,10 @@ void FtpDataFlowData::handle_expected(Packet* p)
         if (fd and fd->in_tls)
         {
             OpportunisticTlsEvent evt(p, fd_svc_name);
-            DataBus::publish(OPPORTUNISTIC_TLS_EVENT, evt, p->flow);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::OPPORTUNISTIC_TLS, evt, p->flow);
         }
         else
-            DataBus::publish(SSL_SEARCH_ABANDONED, p);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::SSL_SEARCH_ABANDONED, p);
     }
 }
 

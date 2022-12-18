@@ -27,6 +27,7 @@
 
 #include "flow/flow_key.h"
 #include "managers/inspector_manager.h"
+#include "pub_sub/stream_event_ids.h"
 #include "stream/stream.h"
 
 using namespace snort;
@@ -104,7 +105,7 @@ bool StreamHAClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg, ui
             return false;
 
         BareDataEvent event;
-        DataBus::publish(STREAM_HA_NEW_FLOW_EVENT, event, flow);
+        DataBus::publish(Stream::get_pub_id(), StreamEventIds::HA_NEW_FLOW, event, flow);
 
         flow->ha_state->clear(FlowHAState::NEW);
         flow->ha_state->add(FlowHAState::STANDBY);
@@ -288,3 +289,4 @@ void StreamHAManager::tterm()
         ha_client = nullptr;
     }
 }
+

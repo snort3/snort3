@@ -25,14 +25,16 @@
 
 #include "service_bootp.h"
 
+#include "appid_utils/ip_funcs.h"
 #include "detection/detection_engine.h"
 #include "protocols/eth.h"
 #include "protocols/packet.h"
+#include "pub_sub/appid_event_ids.h"
 #include "pub_sub/dhcp_events.h"
+
 #include "app_info_table.h"
 #include "appid_config.h"
 #include "appid_inspector.h"
-#include "appid_utils/ip_funcs.h"
 
 using namespace snort;
 
@@ -318,7 +320,7 @@ void BootpServiceDetector::add_dhcp_info(AppIdSession& asd, unsigned op55_len, c
         unsigned op60_length = (op60_len > DHCP_OP60_MAX_SIZE) ? DHCP_OP60_MAX_SIZE : op60_len;
         Packet* p = DetectionEngine::get_current_packet();
         DHCPDataEvent event(p, op55_length, op60_length, op55, op60, mac);
-        DataBus::publish(DHCP_DATA_EVENT, event, p->flow);
+        DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::DHCP_DATA, event, p->flow);
     }
 }
 
@@ -334,6 +336,6 @@ void BootpServiceDetector::add_new_dhcp_lease(AppIdSession& asd, const uint8_t* 
     asd.set_session_flags(APPID_SESSION_HAS_DHCP_INFO);
     Packet* p = DetectionEngine::get_current_packet();
     DHCPInfoEvent event(p, ip, mac, subnetmask, leaseSecs, router);
-    DataBus::publish(DHCP_INFO_EVENT,  event, p->flow);
+    DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::DHCP_INFO, event, p->flow);
 }
 

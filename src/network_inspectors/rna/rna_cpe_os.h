@@ -21,7 +21,7 @@
 #ifndef RNA_CPE_OS_H
 #define RNA_CPE_OS_H
 
-#define CPE_OS_INFO_EVENT "cpe_os_info_event"
+#include "pub_sub/external_event_ids.h"
 
 class SO_PUBLIC CpeOsInfoEvent : public snort::DataEvent
 {

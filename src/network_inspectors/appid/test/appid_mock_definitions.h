@@ -55,8 +55,10 @@ void LogMessage(const char*,...) { }
 void LogText(const char*, FILE*) {}
 
 void ParseWarning(WarningGroup, const char*, ...) { }
-
 void LogLabel(const char*, FILE*) {}
+
+unsigned DataBus::get_id(const PubKey&) { return 0; }
+
 SearchTool::SearchTool(bool) { }
 SearchTool::~SearchTool() = default;
 }

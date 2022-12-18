@@ -26,7 +26,7 @@
 #include <list>
 #include <vector>
 
-#include "framework/data_bus.h"
+#include "pub_sub/intrinsic_event_ids.h"
 
 #define EXPECT_EVENT_TYPE_EARLY_SESSION_CREATE_KEY "expect_event_type_early_session_create"
 

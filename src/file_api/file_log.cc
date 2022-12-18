@@ -25,6 +25,7 @@
 #include "framework/module.h"
 #include "log/messages.h"
 #include "log/text_log.h"
+#include "pub_sub/intrinsic_event_ids.h"
 #include "time/packet_time.h"
 #include "utils/util.h"
 
@@ -208,7 +209,7 @@ public:
 
     bool configure(SnortConfig*) override
     {
-        DataBus::subscribe("file_event", new LogHandler(config));
+        DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::FILE_VERDICT, new LogHandler(config));
         return true;
     }
 

@@ -23,7 +23,8 @@
 
 #include "framework/data_bus.h"
 #include "main/snort_config.h"
-
+#include "main/thread.h"
+#include "utils/stats.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -40,22 +41,16 @@ NetworkPolicy::NetworkPolicy(unsigned int, unsigned int) {}
 NetworkPolicy::~NetworkPolicy() = default;
 namespace snort
 {
-SnortConfig::SnortConfig(snort::SnortConfig const*, const char*)
-{ global_dbus = new DataBus(); }
+
+static SnortConfig s_conf;
+
+THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
 
 const SnortConfig* SnortConfig::get_conf()
-{
-    const SnortConfig* snort_conf =
-        (const SnortConfig*)mock().getData("snort_conf").getObjectPointer();
-    return snort_conf;
-}
+{ return snort_conf; }
 
-SnortConfig* SnortConfig::get_main_conf()
-{
-    SnortConfig* snort_conf =
-        (SnortConfig*)mock().getData("snort_conf").getObjectPointer();
-    return snort_conf;
-}
+SnortConfig::SnortConfig(const SnortConfig* const, const char*)
+{ global_dbus = new DataBus(); }
 
 SnortConfig::~SnortConfig()
 { delete global_dbus; }
@@ -74,6 +69,7 @@ InspectionPolicy* get_inspection_policy()
     return my_inspection_policy;
 }
 
+THREAD_LOCAL PacketCount pc;
 }
 
 //--------------------------------------------------------------------------
@@ -110,23 +106,29 @@ void UTestHandler::handle(DataEvent& event, Flow*)
     seq = ++s_next;
 }
 
-#define DB_UTEST_EVENT "unit.test.event"
+struct DbUtIds { enum : unsigned { EVENT, num_ids }; };
+
+const PubKey pub_key { "db_ut", DbUtIds::num_ids };
 
 //--------------------------------------------------------------------------
 // data bus unit tests
 //--------------------------------------------------------------------------
 
+static constexpr unsigned event_id = 1;
+
 TEST_GROUP(data_bus)
 {
-    SnortConfig snort_conf;
     InspectionPolicy my_inspection_policy;
     NetworkPolicy my_network_policy;
+    unsigned pub_id = 0;  // cppcheck-suppress variableScope
 
     void setup() override
     {
-        mock().setDataObject("snort_conf", "SnortConfig", &snort_conf);
         mock().setDataObject("my_network_policy", "NetworkPolicy", &my_network_policy);
         mock().setDataObject("my_inspection_policy", "InspectionPolicy", &my_inspection_policy);
+
+        pub_id = DataBus::get_id(pub_key);
+        CHECK_TRUE(DataBus::valid(pub_id));
     }
 
     void teardown() override
@@ -138,40 +140,40 @@ TEST_GROUP(data_bus)
 TEST(data_bus, subscribe_global)
 {
     UTestHandler h;
-    DataBus::subscribe_global(DB_UTEST_EVENT, &h, snort_conf);
+    DataBus::subscribe_global(pub_key, DbUtIds::EVENT, &h, *snort_conf);
 
     UTestEvent event(100);
-    DataBus::publish(DB_UTEST_EVENT, event);
+    DataBus::publish(pub_id, DbUtIds::EVENT, event);
     CHECK(100 == h.evt_msg);
 
     UTestEvent event1(200);
-    DataBus::publish(DB_UTEST_EVENT, event1);
+    DataBus::publish(pub_id, DbUtIds::EVENT, event1);
     CHECK(200 == h.evt_msg);
 
-    DataBus::unsubscribe_global(DB_UTEST_EVENT, &h, snort_conf);
+    DataBus::unsubscribe_global(pub_key, DbUtIds::EVENT, &h, *snort_conf);
 
     UTestEvent event2(300);
-    DataBus::publish(DB_UTEST_EVENT, event2);
+    DataBus::publish(pub_id, DbUtIds::EVENT, event2);
     CHECK(200 == h.evt_msg); // unsubscribed!
 }
 
 TEST(data_bus, subscribe_network)
 {
     UTestHandler* h = new UTestHandler();
-    DataBus::subscribe_network(DB_UTEST_EVENT, h);
+    DataBus::subscribe_network(pub_key, DbUtIds::EVENT, h);
 
     UTestEvent event(100);
-    DataBus::publish(DB_UTEST_EVENT, event);
+    DataBus::publish(pub_id, DbUtIds::EVENT, event);
     CHECK(100 == h->evt_msg);
 
     UTestEvent event1(200);
-    DataBus::publish(DB_UTEST_EVENT, event1);
+    DataBus::publish(pub_id, DbUtIds::EVENT, event1);
     CHECK(200 == h->evt_msg);
 
-    DataBus::unsubscribe_network(DB_UTEST_EVENT, h);
+    DataBus::unsubscribe_network(pub_key, DbUtIds::EVENT, h);
 
     UTestEvent event2(300);
-    DataBus::publish(DB_UTEST_EVENT, event2);
+    DataBus::publish(pub_id, DbUtIds::EVENT, event2);
     CHECK(200 == h->evt_msg); // unsubscribed!
 
     delete h;
@@ -180,20 +182,20 @@ TEST(data_bus, subscribe_network)
 TEST(data_bus, subscribe)
 {
     UTestHandler* h = new UTestHandler();
-    DataBus::subscribe(DB_UTEST_EVENT, h);
+    DataBus::subscribe(pub_key, DbUtIds::EVENT, h);
 
     UTestEvent event(100);
-    DataBus::publish(DB_UTEST_EVENT, event);
+    DataBus::publish(pub_id, DbUtIds::EVENT, event);
     CHECK(100 == h->evt_msg);
 
     UTestEvent event1(200);
-    DataBus::publish(DB_UTEST_EVENT, event1);
+    DataBus::publish(pub_id, DbUtIds::EVENT, event1);
     CHECK(200 == h->evt_msg);
 
-    DataBus::unsubscribe(DB_UTEST_EVENT, h);
+    DataBus::unsubscribe(pub_key, DbUtIds::EVENT, h);
 
     UTestEvent event2(300);
-    DataBus::publish(DB_UTEST_EVENT, event2);
+    DataBus::publish(pub_id, DbUtIds::EVENT, event2);
     CHECK(200 == h->evt_msg); // unsubscribed!
 
     delete h;
@@ -202,25 +204,25 @@ TEST(data_bus, subscribe)
 TEST(data_bus, order1)
 {
     UTestHandler* h0 = new UTestHandler();
-    DataBus::subscribe(DB_UTEST_EVENT, h0);
+    DataBus::subscribe(pub_key, DbUtIds::EVENT, h0);
 
     UTestHandler* h1 = new UTestHandler(1);
-    DataBus::subscribe(DB_UTEST_EVENT, h1);
+    DataBus::subscribe(pub_key, DbUtIds::EVENT, h1);
 
     UTestHandler* h9 = new UTestHandler(9);
-    DataBus::subscribe(DB_UTEST_EVENT, h9);
+    DataBus::subscribe(pub_key, DbUtIds::EVENT, h9);
 
     s_next = 0;
     UTestEvent event(100);
-    DataBus::publish(DB_UTEST_EVENT, event);
+    DataBus::publish(pub_id, DbUtIds::EVENT, event);
 
     CHECK(1 == h1->seq);
     CHECK(2 == h9->seq);
     CHECK(3 == h0->seq);
 
-    DataBus::unsubscribe(DB_UTEST_EVENT, h0);
-    DataBus::unsubscribe(DB_UTEST_EVENT, h1);
-    DataBus::unsubscribe(DB_UTEST_EVENT, h9);
+    DataBus::unsubscribe(pub_key, DbUtIds::EVENT, h0);
+    DataBus::unsubscribe(pub_key, DbUtIds::EVENT, h1);
+    DataBus::unsubscribe(pub_key, DbUtIds::EVENT, h9);
 
     delete h0;
     delete h1;
@@ -230,25 +232,25 @@ TEST(data_bus, order1)
 TEST(data_bus, order2)
 {
     UTestHandler* h0 = new UTestHandler(0);
-    DataBus::subscribe(DB_UTEST_EVENT, h0);
+    DataBus::subscribe(pub_key, DbUtIds::EVENT, h0);
 
     UTestHandler* h9 = new UTestHandler(9);
-    DataBus::subscribe(DB_UTEST_EVENT, h9);
+    DataBus::subscribe(pub_key, DbUtIds::EVENT, h9);
 
     UTestHandler* h1 = new UTestHandler(1);
-    DataBus::subscribe(DB_UTEST_EVENT, h1);
+    DataBus::subscribe(pub_key, DbUtIds::EVENT, h1);
 
     s_next = 0;
     UTestEvent event(100);
-    DataBus::publish(DB_UTEST_EVENT, event);
+    DataBus::publish(pub_id, DbUtIds::EVENT, event);
 
     CHECK(1 == h1->seq);
     CHECK(2 == h9->seq);
     CHECK(3 == h0->seq);
 
-    DataBus::unsubscribe(DB_UTEST_EVENT, h0);
-    DataBus::unsubscribe(DB_UTEST_EVENT, h1);
-    DataBus::unsubscribe(DB_UTEST_EVENT, h9);
+    DataBus::unsubscribe(pub_key, DbUtIds::EVENT, h0);
+    DataBus::unsubscribe(pub_key, DbUtIds::EVENT, h1);
+    DataBus::unsubscribe(pub_key, DbUtIds::EVENT, h9);
 
     delete h0;
     delete h1;
@@ -261,6 +263,8 @@ TEST(data_bus, order2)
 
 int main(int argc, char** argv)
 {
+    // event_map is not released until after cpputest gives up
+    MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
 

@@ -25,9 +25,7 @@
 
 #include <daq_common.h>
 
-#include "framework/data_bus.h"
-
-#define FINALIZE_PACKET_EVENT "analyzer.finalize.packet"
+#include "pub_sub/intrinsic_event_ids.h"
 
 namespace snort
 {

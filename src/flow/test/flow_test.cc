@@ -93,7 +93,7 @@ uint8_t ip::IpApi::ttl() const { return 0; }
 
 const Layer* layer::get_mpls_layer(const Packet* const) { return nullptr; }
 
-void DataBus::publish(const char*, Packet*, Flow*) {}
+void DataBus::publish(unsigned, unsigned, Packet*, Flow*) {}
 
 const SnortConfig* SnortConfig::get_conf() { return nullptr; }
 

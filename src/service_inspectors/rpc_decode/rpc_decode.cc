@@ -44,6 +44,7 @@
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+#include "pub_sub/intrinsic_event_ids.h"
 #include "stream/stream.h"
 #include "stream/stream_splitter.h"
 #include "utils/safec.h"
@@ -235,7 +236,7 @@ static RpcStatus RpcStatefulInspection(RpcSsnData* rsdata, Packet* p)
                     if (RpcPrepRaw(data, rsdata->frag_len, p) != RPC_STATUS__SUCCESS)
                         return RPC_STATUS__ERROR;
 
-                    DataBus::publish(PACKET_EVENT, p);
+                    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::ALT_PACKET, p);
                 }
 
                 if ( (dsize > 0) )
@@ -306,7 +307,7 @@ static RpcStatus RpcStatefulInspection(RpcSsnData* rsdata, Packet* p)
                 if ( (dsize > 0) )
                     RpcPreprocEvent(rsdata, RPC_MULTIPLE_RECORD);
 
-                DataBus::publish(PACKET_EVENT, p);
+                DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::ALT_PACKET, p);
                 RpcBufClean(&rsdata->frag);
             }
 

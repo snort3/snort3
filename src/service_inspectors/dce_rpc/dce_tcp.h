@@ -22,6 +22,7 @@
 #ifndef DCE_TCP_H
 #define DCE_TCP_H
 
+#include "framework/data_bus.h"
 #include "framework/inspector.h"
 #include "profiler/profiler_defs.h"
 
@@ -149,6 +150,8 @@ public:
 
     snort::StreamSplitter* get_splitter(bool c2s) override
     { return new Dce2TcpSplitter(c2s); }
+
+    static unsigned pub_id;
 
 private:
     dce2TcpProtoConf config;

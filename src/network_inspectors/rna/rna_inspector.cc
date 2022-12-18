@@ -33,8 +33,13 @@
 #include "main/snort.h"
 #include "managers/inspector_manager.h"
 #include "protocols/packet.h"
+#include "pub_sub/appid_event_ids.h"
 #include "pub_sub/dhcp_events.h"
+#include "pub_sub/intrinsic_event_ids.h"
+#include "pub_sub/rna_events.h"
 #include "pub_sub/smb_events.h"
+#include "pub_sub/stream_event_ids.h"
+
 #include "rna_cpe_os.h"
 #include "rna_event_handler.h"
 #include "rna_fingerprint_smb.h"
@@ -55,6 +60,8 @@ using namespace std;
 
 THREAD_LOCAL RnaStats rna_stats;
 THREAD_LOCAL ProfileStats rna_perf_stats;
+
+unsigned RnaConfig::pub_id = 0;
 
 //-------------------------------------------------------------------------
 // class stuff
@@ -88,29 +95,31 @@ RnaInspector::~RnaInspector()
 
 bool RnaInspector::configure(SnortConfig*)
 {
-    DataBus::subscribe_network( APPID_EVENT_ANY_CHANGE, new RnaAppidEventHandler(*pnd) );
-    DataBus::subscribe_network( DHCP_INFO_EVENT, new RnaDHCPInfoEventHandler(*pnd) );
-    DataBus::subscribe_network( DHCP_DATA_EVENT, new RnaDHCPDataEventHandler(*pnd) );
-    DataBus::subscribe_network( FP_SMB_DATA_EVENT, new RnaFpSMBEventHandler(*pnd) );
+    RnaConfig::pub_id = DataBus::get_id(rna_pub_key);
 
-    DataBus::subscribe_network( STREAM_ICMP_NEW_FLOW_EVENT, new RnaIcmpNewFlowEventHandler(*pnd) );
-    DataBus::subscribe_network( STREAM_ICMP_BIDIRECTIONAL_EVENT, new RnaIcmpBidirectionalEventHandler(*pnd) );
+    DataBus::subscribe_network( appid_pub_key, AppIdEventIds::ANY_CHANGE, new RnaAppidEventHandler(*pnd) );
+    DataBus::subscribe_network( appid_pub_key, AppIdEventIds::DHCP_INFO, new RnaDHCPInfoEventHandler(*pnd) );
+    DataBus::subscribe_network( appid_pub_key, AppIdEventIds::DHCP_DATA, new RnaDHCPDataEventHandler(*pnd) );
+    DataBus::subscribe_network( appid_pub_key, AppIdEventIds::FP_SMB_DATA, new RnaFpSMBEventHandler(*pnd) );
 
-    DataBus::subscribe_network( STREAM_IP_NEW_FLOW_EVENT, new RnaIpNewFlowEventHandler(*pnd) );
-    DataBus::subscribe_network( STREAM_IP_BIDIRECTIONAL_EVENT, new RnaIpBidirectionalEventHandler(*pnd) );
+    DataBus::subscribe_network( stream_pub_key, StreamEventIds::ICMP_NEW_FLOW, new RnaIcmpNewFlowEventHandler(*pnd) );
+    DataBus::subscribe_network( stream_pub_key, StreamEventIds::ICMP_BIDIRECTIONAL, new RnaIcmpBidirectionalEventHandler(*pnd) );
 
-    DataBus::subscribe_network( STREAM_UDP_NEW_FLOW_EVENT, new RnaUdpNewFlowEventHandler(*pnd) );
-    DataBus::subscribe_network( STREAM_UDP_BIDIRECTIONAL_EVENT, new RnaUdpBidirectionalEventHandler(*pnd) );
+    DataBus::subscribe_network( stream_pub_key, StreamEventIds::IP_NEW_FLOW, new RnaIpNewFlowEventHandler(*pnd) );
+    DataBus::subscribe_network( stream_pub_key, StreamEventIds::IP_BIDIRECTIONAL, new RnaIpBidirectionalEventHandler(*pnd) );
 
-    DataBus::subscribe_network( STREAM_TCP_SYN_EVENT, new RnaTcpSynEventHandler(*pnd) );
-    DataBus::subscribe_network( STREAM_TCP_SYN_ACK_EVENT, new RnaTcpSynAckEventHandler(*pnd) );
-    DataBus::subscribe_network( STREAM_TCP_MIDSTREAM_EVENT, new RnaTcpMidstreamEventHandler(*pnd) );
+    DataBus::subscribe_network( stream_pub_key, StreamEventIds::UDP_NEW_FLOW, new RnaUdpNewFlowEventHandler(*pnd) );
+    DataBus::subscribe_network( stream_pub_key, StreamEventIds::UDP_BIDIRECTIONAL, new RnaUdpBidirectionalEventHandler(*pnd) );
 
-    DataBus::subscribe_network( CPE_OS_INFO_EVENT, new RnaCPEOSInfoEventHandler(*pnd) );
-    DataBus::subscribe_network( NETFLOW_EVENT, new RnaNetFlowEventHandler(*pnd) );
+    DataBus::subscribe_network( stream_pub_key, StreamEventIds::TCP_SYN, new RnaTcpSynEventHandler(*pnd) );
+    DataBus::subscribe_network( stream_pub_key, StreamEventIds::TCP_SYN_ACK, new RnaTcpSynAckEventHandler(*pnd) );
+    DataBus::subscribe_network( stream_pub_key, StreamEventIds::TCP_MIDSTREAM, new RnaTcpMidstreamEventHandler(*pnd) );
+
+    DataBus::subscribe_network( external_pub_key, ExternalEventIds::CPE_OS_INFO, new RnaCPEOSInfoEventHandler(*pnd) );
+    DataBus::subscribe_network( netflow_pub_key, NetFlowEventIds::DATA, new RnaNetFlowEventHandler(*pnd) );
 
     if (rna_conf && rna_conf->log_when_idle)
-        DataBus::subscribe_network( THREAD_IDLE_EVENT, new RnaIdleEventHandler(*pnd) );
+        DataBus::subscribe_network(intrinsic_pub_key, IntrinsicEventIds::THREAD_IDLE, new RnaIdleEventHandler(*pnd) );
 
     if ( mod_conf->ua_processor )
         mod_conf->ua_processor->make_mpse();

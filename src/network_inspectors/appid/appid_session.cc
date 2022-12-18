@@ -34,6 +34,7 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
+#include "pub_sub/appid_events.h"
 #include "stream/stream.h"
 #include "target_based/snort_protocols.h"
 #include "time/packet_time.h"
@@ -1201,7 +1202,7 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packe
         return;
 
     AppidEvent app_event(change_bits, is_httpx, httpx_stream_index, api, p);
-    DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, p.flow);
+    DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::ANY_CHANGE, app_event, p.flow);
     if (appidDebug->is_active())
     {
         std::string str;

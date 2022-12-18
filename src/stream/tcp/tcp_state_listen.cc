@@ -25,6 +25,9 @@
 
 #include "tcp_state_listen.h"
 
+#include "pub_sub/stream_event_ids.h"
+#include "stream/stream.h"
+
 #include "tcp_normalizers.h"
 #include "tcp_session.h"
 
@@ -141,7 +144,7 @@ bool TcpStateListen::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
         if ( !Stream::is_midstream(flow) )
         {
             flow->set_session_flags(SSNFLAG_MIDSTREAM);
-            DataBus::publish(STREAM_TCP_MIDSTREAM_EVENT, tsd.get_pkt());
+            DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_MIDSTREAM, tsd.get_pkt());
         }
 
         trk.init_on_data_seg_sent(tsd);
@@ -168,7 +171,7 @@ bool TcpStateListen::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
         if ( !Stream::is_midstream(flow) )
         {
             flow->set_session_flags(SSNFLAG_MIDSTREAM);
-            DataBus::publish(STREAM_TCP_MIDSTREAM_EVENT, tsd.get_pkt());
+            DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_MIDSTREAM, tsd.get_pkt());
         }
         trk.init_on_data_seg_recv(tsd);
         trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());

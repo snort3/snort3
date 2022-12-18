@@ -36,6 +36,7 @@
 #include "parser/parse_conf.h"
 #include "parser/vars.h"
 #include "ports/port_var_table.h"
+#include "pub_sub/intrinsic_event_ids.h"
 
 #include "modules.h"
 #include "shell.h"
@@ -174,7 +175,7 @@ InspectionPolicy::~InspectionPolicy()
 
 void InspectionPolicy::configure()
 {
-    dbus.subscribe(PACKET_EVENT, new AltPktHandler);
+    dbus.subscribe(intrinsic_pub_key, IntrinsicEventIds::ALT_PACKET, new AltPktHandler);
 }
 
 //-------------------------------------------------------------------------

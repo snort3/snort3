@@ -210,7 +210,7 @@ void RnaPnd::analyze_netflow_host(NetFlowEvent* nfe)
     {
         uint32_t service = nfe->get_service_id();
         RNAEvent new_flow_event(p, nfe->get_record(), service);
-        DataBus::publish(RNA_NEW_NETFLOW_CONN, new_flow_event);
+        DataBus::publish(RnaConfig::pub_id, NetFlowEventIds::DATA, new_flow_event);
         return;
     }
 
