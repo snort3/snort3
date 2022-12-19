@@ -1583,7 +1583,9 @@ void Smtp::ProcessSmtpCmdsList(const SmtpCmd* sc)
 bool Smtp::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
     SMTPData* smtp_ssn = get_session_data(p->flow);
-    assert(smtp_ssn);
+
+    if (!smtp_ssn)
+        return false;
 
     const void* dst = nullptr;
     size_t dst_len = 0;
