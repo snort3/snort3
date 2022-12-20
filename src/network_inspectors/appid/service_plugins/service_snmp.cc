@@ -441,7 +441,8 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
             args.asd.set_session_flags(APPID_SESSION_UDP_REVERSED);
             break;
         }
-        if (pdu == SNMP_PDU_GET_RESPONSE && args.dir == APP_ID_FROM_INITIATOR)
+        if ((pdu == SNMP_PDU_GET_RESPONSE or pdu == SNMP_PDU_REPORT) &&
+            args.dir == APP_ID_FROM_INITIATOR)
         {
             sd->state = SNMP_STATE_R_REQUEST;
             args.asd.set_session_flags(APPID_SESSION_UDP_REVERSED);
