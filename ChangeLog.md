@@ -1,3 +1,12 @@
+2022-12-19: 3.1.50.0
+
+* alert_fast: fix initialization of http_inspect cheat codes
+* config: ensure table state is reset when starting a new shell
+* config: fix talos tweaks for the daq module
+* data_bus: improve pub-sub performance
+* host_cache: fix initialization from Lua
+* pop, imap, smtp: gracefully decline buffer requests when flow data is not present
+
 2022-12-15: 3.1.49.0
 
 * appid: appid_detector_builder.sh addPortPatternService call fixed
