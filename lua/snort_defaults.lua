@@ -543,7 +543,7 @@ default_classifications =
       text = 'Attempt to login by a default username and password' },
 
     { name = 'sdf', priority = 2,
-      text = 'Senstive Data' },
+      text = 'Sensitive Data' },
 
     { name = 'file-format', priority = 1,
       text = 'Known malicious file or file based exploit' },
