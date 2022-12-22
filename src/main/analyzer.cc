@@ -742,7 +742,7 @@ void Analyzer::operator()(Swapper* ps, uint16_t run_num)
 
     // init here to pin separately from packet threads
     DetectionEngine::thread_init();
-
+    SnortConfig::get_conf()->thread_config->set_instance_tid(id, (int)gettid());
     // Perform all packet thread initialization actions that need to be taken with escalated
     // privileges prior to starting the DAQ module.
     SnortConfig::get_conf()->thread_config->implement_thread_affinity(

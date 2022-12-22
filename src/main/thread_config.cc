@@ -162,6 +162,20 @@ void ThreadConfig::set_named_thread_affinity(const string& name, CpuSet* cpuset)
         ParseWarning(WARN_CONF, "This platform does not support setting thread affinity.\n");
 }
 
+void ThreadConfig::set_instance_tid(const int id, const int tid)
+{
+    instance_id_to_tid.emplace(id,tid);
+}
+
+const int ThreadConfig::get_instance_tid(const int id)
+{
+    int ret = -1;
+    auto iter = instance_id_to_tid.find(id);
+    if ( iter != instance_id_to_tid.end() )
+        ret = instance_id_to_tid.at(id);
+    return ret;
+}
+
 static inline string stringify_thread(const SThreadType& type, const unsigned& id)
 {
     string info;
@@ -283,7 +297,11 @@ void Watchdog::kick()
             if ( !resp[i] )
             {
                 ++thread_count;
-                WarningMessage("%d ", i);
+                const int tid = SnortConfig::get_conf()->thread_config->get_instance_tid(i);
+                if ( tid != -1 )
+                    WarningMessage("%d (TID: %d)", i, tid);
+                else
+                    WarningMessage("%d ", i);
             }
         }
         WarningMessage("\n");

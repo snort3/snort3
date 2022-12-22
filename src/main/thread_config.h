@@ -45,6 +45,8 @@ public:
     void set_named_thread_affinity(const std::string&, CpuSet*);
     void implement_thread_affinity(SThreadType, unsigned id);
     void implement_named_thread_affinity(const std::string& name);
+    void set_instance_tid(const int, const int);
+    const int get_instance_tid(const int);
 
     static constexpr unsigned int DEFAULT_THREAD_ID = 0;
 
@@ -67,6 +69,7 @@ private:
     };
     std::map<TypeIdPair, CpuSet*, TypeIdPairComparer> thread_affinity;
     std::map<std::string, CpuSet*> named_thread_affinity;
+    std::map<int, int> instance_id_to_tid;
 };
 }
 

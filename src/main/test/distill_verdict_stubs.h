@@ -223,6 +223,7 @@ InspectionPolicy* get_inspection_policy() { return nullptr; }
 Flow::Flow() = default;
 Flow::~Flow() = default;
 void ThreadConfig::implement_thread_affinity(SThreadType, unsigned) { }
+void ThreadConfig::set_instance_tid(const int, const int) { }
 }
 
 namespace memory
