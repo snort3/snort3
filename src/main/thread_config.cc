@@ -162,17 +162,17 @@ void ThreadConfig::set_named_thread_affinity(const string& name, CpuSet* cpuset)
         ParseWarning(WARN_CONF, "This platform does not support setting thread affinity.\n");
 }
 
-void ThreadConfig::set_instance_tid(const int id, const int tid)
+void ThreadConfig::set_instance_tid(int id, int tid)
 {
     instance_id_to_tid.emplace(id,tid);
 }
 
-const int ThreadConfig::get_instance_tid(const int id)
+int ThreadConfig::get_instance_tid(int id) const
 {
     int ret = -1;
     auto iter = instance_id_to_tid.find(id);
     if ( iter != instance_id_to_tid.end() )
-        ret = instance_id_to_tid.at(id);
+        ret = iter->second;
     return ret;
 }
 

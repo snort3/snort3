@@ -45,8 +45,8 @@ public:
     void set_named_thread_affinity(const std::string&, CpuSet*);
     void implement_thread_affinity(SThreadType, unsigned id);
     void implement_named_thread_affinity(const std::string& name);
-    void set_instance_tid(const int, const int);
-    const int get_instance_tid(const int);
+    void set_instance_tid(int, int);
+    int get_instance_tid(int) const;
 
     static constexpr unsigned int DEFAULT_THREAD_ID = 0;
 
