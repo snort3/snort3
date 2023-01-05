@@ -189,7 +189,7 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
         sip = args.pkt->ptrs.ip_api.get_src();
         pf = AppIdSession::create_future_session(args.pkt,
             dip, 0, sip, args.pkt->ptrs.sp, args.asd.protocol,
-            args.asd.config.snort_proto_ids[PROTO_INDEX_TFTP]);
+            args.asd.config.snort_proto_ids[PROTO_INDEX_TFTP], args.asd.get_odp_ctxt());
 
         if (pf)
         {

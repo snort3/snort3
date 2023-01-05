@@ -2643,11 +2643,12 @@ static int create_future_flow(lua_State* L)
         snort_protocol_id = entry->snort_protocol_id;
     }
 
+    OdpContext& odp_ctxt = lsd->ldp.asd->get_odp_ctxt();
     AppIdSession* fp = AppIdSession::create_future_session(lsd->ldp.pkt,  &client_addr,
-        client_port, &server_addr, server_port, proto, snort_protocol_id);
+        client_port, &server_addr, server_port, proto, snort_protocol_id, odp_ctxt);
     if (fp)
     {
-        fp->set_service_id(service_id, ud->get_odp_ctxt());
+        fp->set_service_id(service_id, odp_ctxt);
         fp->set_client_id(client_id);
         fp->set_payload_id(payload_id);
         fp->set_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |

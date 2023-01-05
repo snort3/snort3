@@ -157,7 +157,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
             const SfIp* sip = args.pkt->ptrs.ip_api.get_src();
             AppIdSession* pf = AppIdSession::create_future_session(args.pkt,
                 dip, 0, sip, (uint16_t)port, IpProtocol::TCP,
-                args.asd.config.snort_proto_ids[PROTO_INDEX_RSH_ERROR]);
+                args.asd.config.snort_proto_ids[PROTO_INDEX_RSH_ERROR], args.asd.get_odp_ctxt());
 
             if (pf)
             {

@@ -890,21 +890,22 @@ void FtpServiceDetector::create_expected_session(AppIdSession& asd, const Packet
     uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol protocol, AppidSessionDirection dir)
 {
     bool swap_flow_app_direction = (dir == APP_ID_FROM_RESPONDER) ? true : false;
+    OdpContext& odp_ctxt = asd.get_odp_ctxt();
 
     AppIdSession* fp = AppIdSession::create_future_session(pkt, cliIp, cliPort, srvIp, srvPort,
-        protocol, asd.config.snort_proto_ids[PROTO_INDEX_FTP_DATA], swap_flow_app_direction);
+        protocol, asd.config.snort_proto_ids[PROTO_INDEX_FTP_DATA], odp_ctxt, swap_flow_app_direction);
 
     if (fp) // initialize data session
     {
         uint64_t encrypted_flags = asd.get_session_flags(APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED);
         if (encrypted_flags == APPID_SESSION_ENCRYPTED)
         {
-            fp->set_service_id(APP_ID_FTPSDATA, asd.get_odp_ctxt());
+            fp->set_service_id(APP_ID_FTPSDATA, odp_ctxt);
         }
         else
         {
             encrypted_flags = 0; // reset (APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED) bits
-            fp->set_service_id(APP_ID_FTP_DATA, asd.get_odp_ctxt());
+            fp->set_service_id(APP_ID_FTP_DATA, odp_ctxt);
         }
 
         asd.initialize_future_session(*fp, APPID_SESSION_IGNORE_ID_FLAGS | encrypted_flags);

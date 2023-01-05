@@ -57,12 +57,13 @@ public:
         IpProtocol proto = map_resp_event.get_ip_proto();
         SnortProtocolId protocol_id = map_resp_event.get_proto_id();
 
+        OdpContext& odp_ctxt = asd->get_odp_ctxt();
         AppIdSession* fp = AppIdSession::create_future_session(pkt, src_ip, src_port,
-            dst_ip, dst_port, proto, protocol_id);
+            dst_ip, dst_port, proto, protocol_id, odp_ctxt);
 
         if (fp) // initialize data session
         {
-            fp->set_service_id(APP_ID_DCE_RPC, asd->get_odp_ctxt());
+            fp->set_service_id(APP_ID_DCE_RPC, odp_ctxt);
             asd->initialize_future_session(*fp, APPID_SESSION_IGNORE_ID_FLAGS);
         }
     }

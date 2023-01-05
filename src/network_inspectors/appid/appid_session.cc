@@ -207,8 +207,8 @@ static inline PktType get_pkt_type_from_ip_proto(IpProtocol proto)
 
 AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const SfIp* cliIp,
     uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto,
-    SnortProtocolId snort_protocol_id, bool swap_app_direction, bool bidirectional,
-    bool expect_persist)
+    SnortProtocolId snort_protocol_id, OdpContext& odp_ctxt, bool swap_app_direction,
+    bool bidirectional, bool expect_persist)
 {
     enum PktType type = get_pkt_type_from_ip_proto(proto);
 
@@ -229,8 +229,8 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
 
     // FIXIT-RC - port parameter passed in as 0 since we may not know client port, verify
 
-    AppIdSession* asd = new AppIdSession(proto, cliIp, 0, *inspector,
-        inspector->get_ctxt().get_odp_ctxt(), ctrlPkt->pkth->address_space_id);
+    AppIdSession* asd = new AppIdSession(proto, cliIp, 0, *inspector, odp_ctxt,
+        ctrlPkt->pkth->address_space_id);
     is_session_monitored(asd->flags, ctrlPkt, *inspector);
 
     if (Stream::set_snort_protocol_id_expected(ctrlPkt, type, proto, cliIp,
