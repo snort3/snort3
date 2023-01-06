@@ -25,7 +25,6 @@
 
 #include "detection/ips_context.h"
 #include "flow/flow_key.h"
-#include "memory/memory_cap.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/icmp4.h"
 #include "protocols/packet.h"

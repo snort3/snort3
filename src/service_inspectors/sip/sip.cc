@@ -27,7 +27,6 @@
 #include "events/event_queue.h"
 #include "log/messages.h"
 #include "managers/inspector_manager.h"
-#include "memory/memory_cap.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "pub_sub/sip_events.h"

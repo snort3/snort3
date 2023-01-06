@@ -30,7 +30,6 @@
 #include "dce_smb_transaction.h"
 #include "detection/detect.h"
 #include "file_api/file_service.h"
-#include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "protocols/packet.h"
 #include "trace/trace_api.h"

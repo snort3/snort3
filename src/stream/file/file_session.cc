@@ -25,7 +25,6 @@
 
 #include "detection/detection_engine.h"
 #include "file_api/file_flows.h"
-#include "memory/memory_cap.h"
 #include "packet_io/sfdaq.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"

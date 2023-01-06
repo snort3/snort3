@@ -27,7 +27,6 @@
 
 #include "detection/detection_engine.h"
 #include "events/event_queue.h"
-#include "memory/memory_cap.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 

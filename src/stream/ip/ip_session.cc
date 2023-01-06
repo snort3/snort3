@@ -24,7 +24,6 @@
 #include "ip_session.h"
 
 #include "framework/data_bus.h"
-#include "memory/memory_cap.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
 #include "pub_sub/stream_event_ids.h"

@@ -26,7 +26,6 @@
 #include "tcp_segment_node.h"
 
 #include "main/thread.h"
-#include "memory/memory_cap.h"
 #include "utils/util.h"
 
 #include "segment_overlap_editor.h"

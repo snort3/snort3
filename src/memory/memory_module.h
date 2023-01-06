@@ -37,11 +37,11 @@ public:
     Usage get_usage() const override
     { return GLOBAL; }
 
-    static bool is_active();
-
-private:
-    static bool configured;
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
 };
+
+extern THREAD_LOCAL const snort::Trace* memory_trace;
 
 #endif
 

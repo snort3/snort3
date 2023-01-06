@@ -30,7 +30,6 @@
 #include "log/messages.h"
 #include "main/analyzer.h"
 #include "main/snort.h"
-#include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/eth.h"

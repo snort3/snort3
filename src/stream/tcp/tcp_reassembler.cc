@@ -30,7 +30,6 @@
 #include "detection/detection_engine.h"
 #include "log/log.h"
 #include "main/analyzer.h"
-#include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "profiler/profiler.h"
 #include "protocols/packet_manager.h"

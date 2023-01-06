@@ -25,10 +25,10 @@
 // This implements smb session data for SMBv2
 // Also provides SMBv2 related header structures
 
-#include "main/thread_config.h"
-#include "memory/memory_cap.h"
-#include "utils/util.h"
 #include <mutex>
+
+#include "main/thread_config.h"
+#include "utils/util.h"
 
 #include "dce_smb_common.h"
 

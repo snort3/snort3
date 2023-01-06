@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// memory_manager.cc author Joel Cornett <jocornet@cisco.com>
+// memory_overloads.cc author Joel Cornett <jocornet@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -26,9 +26,9 @@
 #include <new>
 
 #include "main/thread.h"
+#include "profiler/memory_profiler_active_context.h"
 
 #include "memory_allocator.h"
-#include "memory_cap.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -142,7 +142,7 @@ private:
     bool& flag;
 };
 
-template<typename Allocator = MemoryAllocator, typename Cap = MemoryCap>
+template<typename Allocator = MemoryAllocator>
 struct Interface
 {
     static void* allocate(size_t);
@@ -151,8 +151,8 @@ struct Interface
     static THREAD_LOCAL bool in_allocation_call;
 };
 
-template<typename Allocator, typename Cap>
-void* Interface<Allocator, Cap>::allocate(size_t n)
+template<typename Allocator>
+void* Interface<Allocator>::allocate(size_t n)
 {
     // prevent allocation reentry
     ReentryContext reentry_context(in_allocation_call);
@@ -163,12 +163,15 @@ void* Interface<Allocator, Cap>::allocate(size_t n)
     if ( !meta )
         return nullptr;
 
-    Cap::allocate(meta->total_size());
+#ifdef ENABLE_MEMORY_PROFILER
+    mp_active_context.update_allocs(meta->total_size());
+#endif
+
     return meta->payload_offset();
 }
 
-template<typename Allocator, typename Cap>
-void Interface<Allocator, Cap>::deallocate(void* p)
+template<typename Allocator>
+void Interface<Allocator>::deallocate(void* p)
 {
     if ( !p )
         return;
@@ -176,12 +179,15 @@ void Interface<Allocator, Cap>::deallocate(void* p)
     auto meta = Metadata::extract(p);
     assert(meta);
 
-    Cap::deallocate(meta->total_size());
+#ifdef ENABLE_MEMORY_PROFILER
+    mp_active_context.update_deallocs(meta->total_size());
+#endif
+
     Allocator::deallocate(meta);
 }
 
-template<typename Allocator, typename Cap>
-THREAD_LOCAL bool Interface<Allocator, Cap>::in_allocation_call = false;
+template<typename Allocator>
+THREAD_LOCAL bool Interface<Allocator>::in_allocation_call = false;
 
 } //namespace memory
 
@@ -191,7 +197,7 @@ THREAD_LOCAL bool Interface<Allocator, Cap>::in_allocation_call = false;
 
 // these don't have to be visible to operate as replacements
 
-#ifdef ENABLE_MEMORY_OVERLOADS
+#ifdef ENABLE_MEMORY_PROFILER
 void* operator new(size_t n)
 {
     auto p = memory::Interface<>::allocate(n);
@@ -268,42 +274,6 @@ size_t AllocatorSpy::allocate_arg = 0;
 bool AllocatorSpy::deallocate_called = false;
 void* AllocatorSpy::deallocate_arg = nullptr;
 
-struct CapSpy
-{
-    static void allocate(size_t n)
-    {
-        update_allocations_called = true;
-        update_allocations_arg = n;
-    }
-
-    static void deallocate(size_t n)
-    {
-        update_deallocations_called = true;
-        update_deallocations_arg = n;
-    }
-
-    static void reset()
-    {
-        update_allocations_called = false;
-        update_allocations_arg = 0;
-
-        update_deallocations_called = false;
-        update_deallocations_arg = 0;
-    }
-
-    static bool update_allocations_called;
-    static size_t update_allocations_arg;
-
-    static bool update_deallocations_called;
-    static size_t update_deallocations_arg;
-};
-
-bool CapSpy::update_allocations_called = false;
-size_t CapSpy::update_allocations_arg = 0;
-
-bool CapSpy::update_deallocations_called = false;
-size_t CapSpy::update_deallocations_arg = 0;
-
 } // namespace t_memory
 
 TEST_CASE( "memory metadata", "[memory]" )
@@ -339,17 +309,16 @@ TEST_CASE( "memory metadata", "[memory]" )
     }
 }
 
-TEST_CASE( "memory manager interface", "[memory]" )
+TEST_CASE( "memory overloads", "[memory]" )
 {
     using namespace t_memory;
 
     AllocatorSpy::reset();
-    CapSpy::reset();
 
     constexpr size_t n = 1;
     char pool[sizeof(memory::Metadata) + n];
 
-    using Interface = memory::Interface<AllocatorSpy, CapSpy>;
+    using Interface = memory::Interface<AllocatorSpy>;
 
     SECTION( "allocation" )
     {
@@ -361,8 +330,6 @@ TEST_CASE( "memory manager interface", "[memory]" )
 
             CHECK( AllocatorSpy::allocate_called );
             CHECK( AllocatorSpy::allocate_arg == memory::Metadata::calculate_total_size(n) );
-
-            CHECK_FALSE( CapSpy::update_allocations_called );
         }
 
         SECTION( "success" )
@@ -375,9 +342,6 @@ TEST_CASE( "memory manager interface", "[memory]" )
 
             CHECK( AllocatorSpy::allocate_called );
             CHECK( AllocatorSpy::allocate_arg == memory::Metadata::calculate_total_size(n) );
-
-            CHECK( CapSpy::update_allocations_called );
-            CHECK( CapSpy::update_allocations_arg == memory::Metadata::calculate_total_size(n) );
         }
     }
 
@@ -386,9 +350,7 @@ TEST_CASE( "memory manager interface", "[memory]" )
         SECTION( "nullptr" )
         {
             Interface::deallocate(nullptr);
-
             CHECK_FALSE( AllocatorSpy::deallocate_called );
-            CHECK_FALSE( CapSpy::update_deallocations_called );
         }
 
         SECTION( "success" )
@@ -402,8 +364,6 @@ TEST_CASE( "memory manager interface", "[memory]" )
 
             CHECK( AllocatorSpy::deallocate_called );
             CHECK( AllocatorSpy::deallocate_arg == (void*)pool );
-            CHECK( CapSpy::update_deallocations_called );
-            CHECK( CapSpy::update_deallocations_arg == memory::Metadata::calculate_total_size(n) );
         }
     }
     AllocatorSpy::pool = nullptr;

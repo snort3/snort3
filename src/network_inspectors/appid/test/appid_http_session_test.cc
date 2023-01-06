@@ -27,7 +27,6 @@
 #include <string>
 
 #include "framework/data_bus.h"
-#include "memory/memory_cap.h"
 #include "protocols/protocol_ids.h"
 #include "service_inspectors/http_inspect/http_msg_header.h"
 #include "tp_appid_module_api.h"

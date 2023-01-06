@@ -54,8 +54,6 @@ Optional Features:
     --enable-gprof-profile  enable gprof profiling options (developers only)
     --disable-snort-profiler
                             disable snort performance profiling (cpu and memory) (developers only)
-    --enable-memory-overloads
-                            overload new and delete
     --enable-memory-profiler
                             enable memory profiler
     --enable-rule-profiler  enable rule keyword profiler (developers only)
@@ -260,9 +258,6 @@ while [ $# -ne 0 ]; do
         --disable-snort-profiler)
             append_cache_entry DISABLE_SNORT_PROFILER   BOOL false
             ;;
-        --enable-memory-overloads)
-            append_cache_entry ENABLE_MEMORY_OVERLOADS  BOOL true
-            ;;
         --enable-memory-profiler)
             append_cache_entry ENABLE_MEMORY_PROFILER   BOOL true
             ;;
@@ -325,6 +320,7 @@ while [ $# -ne 0 ]; do
             ;;
         --enable-tcmalloc)
             append_cache_entry ENABLE_TCMALLOC          BOOL true
+            tcm=1
             ;;
         --disable-tcmalloc)
             append_cache_entry ENABLE_TCMALLOC          BOOL false
@@ -332,6 +328,7 @@ while [ $# -ne 0 ]; do
         --enable-jemalloc)
             append_cache_entry ENABLE_JEMALLOC          BOOL true
             append_cache_entry STATIC_JEMALLOC          BOOL false
+            jem=1
             ;;
         --disable-jemalloc)
             append_cache_entry ENABLE_JEMALLOC          BOOL false
@@ -485,6 +482,11 @@ while [ $# -ne 0 ]; do
     esac
     shift
 done
+
+if [ $tcm -eq 1 -a $jem -eq 1 ] ; then
+    echo "--enable-tcmalloc and --enable-tcmalloc are mutually exclusive; enable at most one"
+    exit 2
+fi
 
 if [ -d $builddir ]; then
     # If build directory exists, check if it has a CMake cache

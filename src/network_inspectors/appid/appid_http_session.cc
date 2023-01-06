@@ -26,7 +26,6 @@
 #include "appid_http_session.h"
 
 #include "flow/ha.h"
-#include "memory/memory_cap.h"
 #include "profiler/profiler.h"
 
 #include "app_info_table.h"

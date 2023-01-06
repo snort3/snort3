@@ -24,8 +24,6 @@
 
 #include "dce_smb1.h"
 
-#include "memory/memory_cap.h"
-
 #include "dce_smb_utils.h"
 
 using namespace snort;

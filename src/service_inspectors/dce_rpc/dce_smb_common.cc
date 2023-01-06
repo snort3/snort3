@@ -26,7 +26,6 @@
 
 #include "file_api/file_flows.h"
 #include "file_api/file_service.h"
-#include "memory/memory_cap.h"
 
 #include "dce_smb1.h"
 #include "dce_smb2.h"

@@ -75,7 +75,6 @@
 #include "log/messages.h"
 #include "main/analyzer.h"
 #include "main/snort_config.h"
-#include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq_config.h"
 #include "profiler/profiler_defs.h"

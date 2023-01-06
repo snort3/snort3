@@ -51,7 +51,6 @@
 #include "detection/detection_engine.h"
 #include "detection/rules.h"
 #include "log/log.h"
-#include "memory/memory_cap.h"
 #include "profiler/profiler.h"
 #include "protocols/eth.h"
 #include "pub_sub/intrinsic_event_ids.h"

@@ -28,7 +28,6 @@
 #include "framework/inspector.h"
 #include "main/snort_config.h"
 #include "managers/so_manager.h"
-#include "memory/memory_cap.h"
 
 using namespace snort;
 

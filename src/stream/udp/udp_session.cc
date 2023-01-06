@@ -26,7 +26,6 @@
 #include "flow/session.h"
 #include "framework/data_bus.h"
 #include "hash/xhash.h"
-#include "memory/memory_cap.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
 #include "pub_sub/intrinsic_event_ids.h"

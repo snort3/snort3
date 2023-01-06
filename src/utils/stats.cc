@@ -246,16 +246,18 @@ void DropStats(ControlConn* ctrlcon)
     s_ctrlcon = ctrlcon;
     LogLabel("Packet Statistics");
     ModuleManager::get_module("daq")->show_stats();
-
     PacketManager::dump_stats();
 
     LogLabel("Module Statistics");
-    const char* exclude = "daq snort";
+    const char* exclude = "daq snort memory";
     ModuleManager::dump_stats(exclude, false);
     ModuleManager::dump_stats(exclude, true);
 
     LogLabel("Summary Statistics");
     show_stats((PegCount*)&proc_stats, proc_names, array_size(proc_names)-1, "process");
+    ModuleManager::get_module("memory")->show_stats();
+    memory::MemoryCap::print(SnortConfig::log_verbose());
+
     s_ctrlcon = nullptr;
 }
 
@@ -264,7 +266,6 @@ void DropStats(ControlConn* ctrlcon)
 void PrintStatistics()
 {
     DropStats();
-    memory::MemoryCap::print(SnortConfig::log_verbose(), false);
     timing_stats();
 
     // FIXIT-L can do flag saving with RAII (much cleaner)

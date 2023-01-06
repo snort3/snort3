@@ -68,6 +68,7 @@
 #include "service_inspectors/service_inspectors.h"
 #include "side_channel/side_channel.h"
 #include "stream/stream_inspectors.h"
+#include "stream/stream.h"
 #include "target_based/host_attributes.h"
 #include "time/periodic.h"
 #include "trace/trace_api.h"
@@ -398,8 +399,8 @@ void Snort::setup(int argc, char* argv[])
 
     set_quick_exit(false);
 
-    memory::MemoryCap::setup(*sc->memory, sc->thread_config->get_instance_max());
-    memory::MemoryCap::print(SnortConfig::log_verbose());
+    memory::MemoryCap::setup(*sc->memory, sc->thread_config->get_instance_max(), Stream::prune_flows);
+    memory::MemoryCap::print(SnortConfig::log_verbose(), true);
 
     host_cache.print_config();
 

@@ -619,6 +619,7 @@ void Analyzer::init_unprivileged()
     InitTag();
     EventTrace_Init();
 
+    memory::MemoryCap::thread_init();
     EventManager::open_outputs();
     IpsManager::setup_options(sc);
     ActionManager::thread_init(sc);

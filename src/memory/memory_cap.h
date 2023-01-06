@@ -21,6 +21,8 @@
 #ifndef MEMORY_CAP_H
 #define MEMORY_CAP_H
 
+#include "memory/heap_interface.h"
+
 #include <cstddef>
 
 #include "framework/counts.h"
@@ -33,37 +35,39 @@ namespace memory
 
 struct MemoryCounts
 {
-    PegCount allocations;
-    PegCount deallocations;
+    PegCount start_up_use;
+    PegCount cur_in_use;
+    PegCount max_in_use;
+    PegCount epochs;
     PegCount allocated;
     PegCount deallocated;
+    PegCount reap_cycles;
     PegCount reap_attempts;
     PegCount reap_failures;
-    PegCount max_in_use;
+    PegCount pruned;
 };
+
+typedef bool (*PruneHandler)();
 
 class SO_PUBLIC MemoryCap
 {
 public:
-    static void setup(const MemoryConfig&, unsigned);
-    static void cleanup();
+    // main thread - in configure
+    static void set_heap_interface(HeapInterface*);
+    static void set_pruner(PruneHandler);
 
+    // main thread - after configure
+    static void setup(const MemoryConfig&, unsigned num_threads, PruneHandler);
+    static void cleanup();
+    static void print(bool verbose, bool init = false);
+
+    // packet threads
+    static void thread_init();
     static void free_space();
 
-    // call from main thread
-    static void print(bool verbose, bool print_all = true);
-
     static MemoryCounts& get_mem_stats();
-
-#ifdef ENABLE_MEMORY_OVERLOADS
-    static void allocate(size_t);
-    static void deallocate(size_t);
-#endif
-
-private:
-    static size_t limit;
 };
 
-} // namespace memory
+}
 
 #endif

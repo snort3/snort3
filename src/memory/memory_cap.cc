@@ -22,133 +22,136 @@
 #include "config.h"
 #endif
 
+#include "memory_cap.h"
+
 #include <malloc.h>
 #include <sys/resource.h>
 
+#include <atomic>
 #include <cassert>
 #include <vector>
-
-#ifdef HAVE_JEMALLOC
-#include <jemalloc/jemalloc.h>
-#endif
-
-#include "memory_cap.h"
 
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/snort_types.h"
 #include "main/thread.h"
-#include "profiler/memory_profiler_active_context.h"
+#include "time/periodic.h"
+#include "trace/trace_api.h"
 #include "utils/stats.h"
 
+#include "heap_interface.h"
 #include "memory_config.h"
 #include "memory_module.h"
-#include "prune_handler.h"
 
 using namespace snort;
 
 namespace memory
 {
 
-static MemoryCounts ctl_mem_stats;
+// -----------------------------------------------------------------------------
+// private
+// -----------------------------------------------------------------------------
+
 static std::vector<MemoryCounts> pkt_mem_stats;
 
-namespace
+static MemoryConfig config;
+static size_t limit = 0;
+
+static std::atomic<bool> over_limit { false };
+static std::atomic<uint64_t> current_epoch { 0 };
+
+static THREAD_LOCAL uint64_t last_dealloc = 0;
+static THREAD_LOCAL uint64_t start_dealloc = 0;
+static THREAD_LOCAL uint64_t start_epoch = 0;
+
+static HeapInterface* heap = nullptr;
+static PruneHandler pruner;
+
+static void epoch_check(void*)
 {
+    uint64_t epoch, total;
+    heap->get_process_total(epoch, total);
 
-// -----------------------------------------------------------------------------
-// helpers
-// -----------------------------------------------------------------------------
+    current_epoch = epoch;
 
-#ifdef HAVE_JEMALLOC
-static size_t get_usage(MemoryCounts& mc)
-{
-    static THREAD_LOCAL uint64_t* alloc_ptr = nullptr, * dealloc_ptr = nullptr;
+    bool prior = over_limit;
+    over_limit = limit and total > limit;
 
-    if ( !alloc_ptr )
-    {
-        size_t sz = sizeof(alloc_ptr);
-        // __STRDUMP_DISABLE__
-        mallctl("thread.allocatedp", (void*)&alloc_ptr, &sz, nullptr, 0);
-        mallctl("thread.deallocatedp", (void*)&dealloc_ptr, &sz, nullptr, 0);
-        // __STRDUMP_ENABLE__
-    }
-    mc.allocated = *alloc_ptr;
-    mc.deallocated = *dealloc_ptr;
+    if ( prior != over_limit )
+        trace_logf(memory_trace, nullptr, "Epoch=%lu, memory=%lu (%s)\n", epoch, total, over_limit?"over":"under");
 
-    if ( mc.allocated > mc.deallocated )
-    {
-        size_t usage =  mc.allocated - mc.deallocated;
-
-        if ( usage > mc.max_in_use )
-            mc.max_in_use = usage;
-
-        return usage;
-    }
-    return 0;
-}
-#else
-static size_t get_usage(const MemoryCounts& mc)
-{
-#ifdef ENABLE_MEMORY_OVERLOADS
-    assert(mc.allocated >= mc.deallocated);
-    return mc.allocated - mc.deallocated;
-
-#else
-    UNUSED(mc);
-    return 0;
-#endif
-}
-#endif
-
-template<typename Handler>
-inline void free_space(size_t cap, Handler& handler)
-{
     MemoryCounts& mc = memory::MemoryCap::get_mem_stats();
-    size_t usage = get_usage(mc);
 
-    if ( usage < cap )
-        return;
+    if ( total > mc.max_in_use )
+        mc.max_in_use = total;
 
-    ++mc.reap_attempts;
-
-    if ( handler() )
-        return;
-
-    ++mc.reap_failures;
+    mc.cur_in_use = total;
+    mc.epochs++;
 }
 
-inline size_t calculate_threshold(size_t cap, size_t threshold)
-{ return cap * threshold / 100; }
-
-} // namespace
-
 // -----------------------------------------------------------------------------
-// per-thread configuration
+// public
 // -----------------------------------------------------------------------------
 
-size_t MemoryCap::limit = 0;
+void MemoryCap::set_heap_interface(HeapInterface* h)
+{ heap = h; }
 
-// -----------------------------------------------------------------------------
-// public interface
-// -----------------------------------------------------------------------------
+void MemoryCap::set_pruner(PruneHandler p)
+{ pruner = p; }
 
-void MemoryCap::setup(const MemoryConfig& config, unsigned n)
+void MemoryCap::setup(const MemoryConfig& c, unsigned n, PruneHandler ph)
 {
     assert(!is_packet_thread());
-    limit = memory::calculate_threshold(config.cap, config.threshold);
+
     pkt_mem_stats.resize(n);
+    config = c;
+
+    if ( !heap )
+        heap = HeapInterface::get_instance();
+
+    if ( !config.enabled )
+        return;
+
+    if ( !pruner )
+        pruner = ph;
+
+    limit = config.cap * config.threshold / 100;
+    over_limit = false;
+    current_epoch = 0;
+
+    Periodic::register_handler(epoch_check, nullptr, 0, config.interval);
+    heap->main_init();
+
+    MemoryCounts& mc = memory::MemoryCap::get_mem_stats();
+#ifdef UNIT_TEST
+    mc = { };
+#endif
+
+    epoch_check(nullptr);
+    mc.start_up_use = mc.cur_in_use;
 }
 
 void MemoryCap::cleanup()
 {
     pkt_mem_stats.resize(0);
+    delete heap;
+    heap = nullptr;
+}
+
+void MemoryCap::thread_init()
+{
+    if ( config.enabled )
+        heap->thread_init();
+
+    start_dealloc = 0;
+    start_epoch = 0;
 }
 
 MemoryCounts& MemoryCap::get_mem_stats()
 {
+    // main thread stats do not overlap with packet threads
     if ( !is_packet_thread() )
-        return ctl_mem_stats;
+        return pkt_mem_stats[0];
 
     auto id = get_instance_id();
     return pkt_mem_stats[id];
@@ -158,78 +161,62 @@ void MemoryCap::free_space()
 {
     assert(is_packet_thread());
 
-    if ( !limit )
+    MemoryCounts& mc = memory::MemoryCap::get_mem_stats();
+    heap->get_thread_allocs(mc.allocated, mc.deallocated);
+
+    if ( !over_limit and !start_dealloc )
         return;
 
-    memory::free_space(limit, prune_handler);
-}
-
-#ifdef ENABLE_MEMORY_OVERLOADS
-void MemoryCap::allocate(size_t n)
-{
-    MemoryCounts& mc = memory::MemoryCap::get_mem_stats();
-
-    mc.allocated += n;
-    ++mc.allocations;
-
-    assert(mc.allocated >= mc.deallocated);
-    auto in_use = mc.allocated - mc.deallocated;
-
-    if ( in_use > mc.max_in_use )
-        mc.max_in_use = in_use;
-
-#ifdef ENABLE_MEMORY_PROFILER
-    mp_active_context.update_allocs(n);
-#endif
-}
-
-void MemoryCap::deallocate(size_t n)
-{
-    MemoryCounts& mc = memory::MemoryCap::get_mem_stats();
-
-    // std::thread causes an extra deallocation in packet
-    // threads so the below asserts don't hold
-    if ( mc.allocated >= mc.deallocated + n )
+    if ( !start_dealloc )
     {
-        mc.deallocated += n;
-        ++mc.deallocations;
+        if ( current_epoch == start_epoch )
+            return;
+
+        start_dealloc = last_dealloc = mc.deallocated;
+        start_epoch = current_epoch;
+        mc.reap_cycles++;
     }
 
-#if 0
-    assert(mc.deallocated <= mc.allocated);
-    assert(mc.deallocations <= mc.allocations);
-    assert(mc.allocated or !mc.allocations);
-#endif
+    mc.pruned += (mc.deallocated - last_dealloc);
+    last_dealloc = mc.deallocated;
 
-#ifdef ENABLE_MEMORY_PROFILER
-    mp_active_context.update_deallocs(n);
-#endif
+    if ( mc.deallocated - start_dealloc  >= config.prune_target )
+    {
+        start_dealloc = 0;
+        return;
+    }
+
+    ++mc.reap_attempts;
+
+    if ( pruner() )
+        return;
+
+    ++mc.reap_failures;
 }
-#endif
 
-void MemoryCap::print(bool verbose, bool print_all)
+// called at startup and shutdown
+void MemoryCap::print(bool verbose, bool init)
 {
-    if ( !MemoryModule::is_active() )
+    if ( !config.enabled )
         return;
 
     MemoryCounts& mc = get_mem_stats();
-    uint64_t usage = get_usage(mc);
 
-    if ( verbose or usage )
-        LogLabel("memory (heap)");
-
-    if ( verbose and print_all )
+    if ( init and (verbose or mc.start_up_use) )
+    {
+        LogLabel("memory");
         LogCount("pruning threshold", limit);
+        LogCount("start up use", mc.start_up_use);
+    }
 
-    LogCount("main thread usage", usage);
-    LogCount("allocations", mc.allocations);
-    LogCount("deallocations", mc.deallocations);
+    if ( limit and (mc.max_in_use > limit) )
+        LogCount("process over limit", mc.max_in_use - limit);
 
     if ( verbose )
     {
         struct rusage ru;
         getrusage(RUSAGE_SELF, &ru);
-        LogCount("max_rss", ru.ru_maxrss * 1024);
+        LogCount("max rss", ru.ru_maxrss * 1024);
     }
 }
 

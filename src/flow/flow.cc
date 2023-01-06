@@ -32,7 +32,6 @@
 #include "framework/data_bus.h"
 #include "helpers/bitop.h"
 #include "main/analyzer.h"
-#include "memory/memory_cap.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "pub_sub/intrinsic_event_ids.h"

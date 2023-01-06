@@ -45,6 +45,7 @@
 #include "main/snort_config.h"
 #include "main/swapper.h"
 #include "main/thread_config.h"
+#include "memory/memory_cap.h"
 #include "network_inspectors/packet_tracer/packet_tracer.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
@@ -226,7 +227,6 @@ void ThreadConfig::implement_thread_affinity(SThreadType, unsigned) { }
 void ThreadConfig::set_instance_tid(const int, const int) { }
 }
 
-namespace memory
-{
-void MemoryCap::free_space() { }
-}
+void memory::MemoryCap::thread_init() { }
+void memory::MemoryCap::free_space() { }
+

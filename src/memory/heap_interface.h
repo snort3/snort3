@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2023-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,24 +16,34 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// prune_handler.cc author Joel Cornett <jocornet@cisco.com>
+// heap_interface.cc author Russ Combs <rucombs@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef HEAP_INTERFACE_H
+#define HEAP_INTERFACE_H
 
-#include "prune_handler.h"
-
-#include "stream/stream.h"
-
-using namespace snort;
+#include <cstdint>
 
 namespace memory
 {
 
-bool prune_handler()
+class HeapInterface
 {
-    return Stream::prune_flows();
+public:
+    virtual ~HeapInterface() { }
+
+    virtual void main_init() = 0;
+    virtual void thread_init() = 0;
+
+    virtual void get_process_total(uint64_t& epoch, uint64_t& total) = 0;
+    virtual void get_thread_allocs(uint64_t& alloc, uint64_t& dealloc) = 0;
+
+    static HeapInterface* get_instance();
+
+protected:
+    HeapInterface() { }
+};
+
 }
 
-} // namespace memory
+#endif
+

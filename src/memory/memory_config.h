@@ -27,6 +27,9 @@ struct MemoryConfig
 {
     size_t cap = 0;
     unsigned threshold = 0;
+    unsigned interval = 1000;
+    unsigned prune_target = 1048576;
+    bool enabled = false;
 
     constexpr MemoryConfig() = default;
 };
