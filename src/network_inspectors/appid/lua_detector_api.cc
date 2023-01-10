@@ -41,6 +41,7 @@
 #include "appid_inspector.h"
 #include "appid_peg_counts.h"
 #include "client_plugins/client_discovery.h"
+#include "detector_plugins/cip_patterns.h"
 #include "detector_plugins/detector_dns.h"
 #include "detector_plugins/detector_pattern.h"
 #include "detector_plugins/detector_sip.h"
@@ -2186,7 +2187,7 @@ static int detector_add_rtmp_url(lua_State* L)
     return 0;
 }
 
-/*Lua should inject patterns in <clientAppId, clientVersion, multi-Pattern> format. */
+/*Lua should inject patterns in <client_id, clientVersion, multi-Pattern> format. */
 static int detector_add_sip_user_agent(lua_State* L)
 {
     auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
@@ -2547,7 +2548,7 @@ static int add_port_pattern_service(lua_State* L)
     return 0;
 }
 
-/*Lua should inject patterns in <clientAppId, clientVersion, multi-Pattern> format. */
+/*Lua should inject patterns in <client_id, clientVersion, multi-Pattern> format. */
 static int detector_add_sip_server(lua_State* L)
 {
     auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
@@ -2765,6 +2766,129 @@ static int get_http_tunneled_port(lua_State* L)
     return 1;
 }
 
+/*Lua should inject patterns in <client_id, class_id> format. */
+static int detector_add_cip_connection_class(lua_State *L)
+{
+    int index = 1;
+
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are NOT in packet context
+    ud->validate_lua_state(false);
+    if (!init(L)) 
+        return 0;
+
+    uint32_t app_id = lua_tointeger(L, ++index);
+    uint32_t class_id = lua_tointeger(L, ++index);
+
+    ud->get_odp_ctxt().get_cip_matchers().cip_add_connection_class(app_id, class_id);
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(app_id);
+
+    return 0;
+}
+
+/*Lua should inject patterns in <client_id, class_id, service_id> format. */
+static int detector_add_cip_path(lua_State *L)
+{
+    int index = 1;
+
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are NOT in packet context
+    ud->validate_lua_state(false);
+    if (!init(L)) 
+        return 0;
+
+    uint32_t app_id = lua_tointeger(L, ++index);
+    uint32_t class_id = lua_tointeger(L, ++index);
+    uint8_t service_id = lua_tointeger(L, ++index);
+
+    ud->get_odp_ctxt().get_cip_matchers().cip_add_path(app_id, class_id, service_id);
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(app_id);
+
+    return 0;
+}
+
+/*Lua should inject patterns in <client_id, class_id, is_class_instance, attribute_id> format. */
+static int detector_add_cip_set_attribute(lua_State *L)
+{
+    int index = 1;
+
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are NOT in packet context
+    ud->validate_lua_state(false);
+    if (!init(L)) 
+        return 0;
+
+    uint32_t app_id = lua_tointeger(L, ++index);
+    uint32_t class_id = lua_tointeger(L, ++index);
+    bool is_class_instance = lua_toboolean(L, ++index);
+    uint32_t attribute_id = lua_tointeger(L, ++index);
+
+    ud->get_odp_ctxt().get_cip_matchers().cip_add_set_attribute(app_id, class_id, is_class_instance, attribute_id);
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(app_id);
+
+    return 0;
+}
+
+/*Lua should inject patterns in <client_id, service_id> format. */
+static int detector_add_cip_extended_symbol_service(lua_State *L)
+{
+    int index = 1;
+
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are NOT in packet context
+    ud->validate_lua_state(false);
+    if (!init(L)) 
+        return 0;
+
+    uint32_t app_id = lua_tointeger(L, ++index);
+    uint8_t service_id = lua_tointeger(L, ++index);
+
+    ud->get_odp_ctxt().get_cip_matchers().cip_add_extended_symbol_service(app_id, service_id);
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(app_id);
+
+    return 0;
+}
+
+/*Lua should inject patterns in <client_id, service_id> format. */
+static int detector_add_cip_service(lua_State *L)
+{
+    int index = 1;
+
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are NOT in packet context
+    ud->validate_lua_state(false);
+    if (!init(L)) 
+        return 0;
+
+    uint32_t app_id = lua_tointeger(L, ++index);
+    uint8_t service_id = lua_tointeger(L, ++index);
+
+    ud->get_odp_ctxt().get_cip_matchers().cip_add_service(app_id, service_id);
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(app_id);
+
+    return 0;
+}
+
+/*Lua should inject patterns in <client_id, enip_command_id> format. */
+static int detector_add_enip_command(lua_State *L)
+{
+    int index = 1;
+
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are NOT in packet context
+    ud->validate_lua_state(false);
+    if (!init(L)) 
+        return 0;
+
+    uint32_t app_id = lua_tointeger(L, ++index);
+    uint16_t command_id = lua_tointeger(L, ++index);
+
+    ud->get_odp_ctxt().get_cip_matchers().cip_add_enip_command(app_id, command_id);
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(app_id);
+
+    return 0;
+}
+
 static const luaL_Reg detector_methods[] =
 {
     /* Obsolete API names.  No longer use these!  They are here for backward
@@ -2877,6 +3001,14 @@ static const luaL_Reg detector_methods[] =
     { "isHttpTunnel",             is_http_tunnel },
     { "getHttpTunneledIp",        get_http_tunneled_ip },
     { "getHttpTunneledPort",      get_http_tunneled_port },
+
+     /* CIP registration */
+    {"addCipConnectionClass",    detector_add_cip_connection_class},
+    {"addCipPath",               detector_add_cip_path},
+    {"addCipSetAttribute",       detector_add_cip_set_attribute},
+    {"addCipExtendedSymbolService", detector_add_cip_extended_symbol_service},
+    {"addCipService",            detector_add_cip_service},
+    {"addEnipCommand",           detector_add_enip_command},
 
     { nullptr, nullptr }
 };

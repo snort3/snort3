@@ -63,6 +63,7 @@ static void map_app_names_to_snort_ids(SnortConfig* sc, AppIdConfig& config)
     config.snort_proto_ids[PROTO_INDEX_TFTP] = sc->proto_ref->add("tftp");
     config.snort_proto_ids[PROTO_INDEX_SIP] = sc->proto_ref->add("sip");
     config.snort_proto_ids[PROTO_INDEX_SSH] = sc->proto_ref->add("ssh");
+    config.snort_proto_ids[PROTO_INDEX_CIP] = sc->proto_ref->add("cip");
 }
 
 AppIdConfig::~AppIdConfig()

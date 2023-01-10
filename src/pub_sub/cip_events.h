@@ -47,9 +47,11 @@ public:
     const snort::Packet* get_packet() const override
     { return p; }
 
+    const CipEventData* get_event_data()
+    { return event_data; }	    
 private:
     const snort::Packet* p;
-    const CipEventData* EventData;
+    const CipEventData* event_data;
 };
 
 #endif

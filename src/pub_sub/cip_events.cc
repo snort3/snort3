@@ -28,9 +28,9 @@
 using namespace snort;
 using namespace std;
 
-CipEvent::CipEvent(const Packet* p, const CipEventData* EventData)
+CipEvent::CipEvent(const Packet* p, const CipEventData* event_data)
 {
     this->p = p;
-    this->EventData = EventData;
+    this->event_data = event_data;
 }
 

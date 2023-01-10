@@ -36,6 +36,7 @@
 #include "pub_sub/appid_event_ids.h"
 #include "pub_sub/intrinsic_event_ids.h"
 
+#include "appid_cip_event_handler.h"
 #include "appid_data_decrypt_event_handler.h"
 #include "appid_dcerpc_event_handler.h"
 #include "appid_debug.h"
@@ -128,6 +129,7 @@ bool AppIdInspector::configure(SnortConfig* sc)
     DataBus::subscribe_global(sip_pub_key, SipEventIds::DIALOG, new SipEventHandler(*this), *sc);
     DataBus::subscribe_global(dce_tcp_pub_key, DceTcpEventIds::EXP_SESSION, new DceExpSsnEventHandler(), *sc);
     DataBus::subscribe_global(ssh_pub_key, SshEventIds::STATE_CHANGE, new SshEventHandler(), *sc);
+    DataBus::subscribe_global(cip_pub_key, CipEventIds::DATA, new CipEventHandler(*this), *sc);
     DataBus::subscribe_global(external_pub_key, ExternalEventIds::DATA_DECRYPT, new DataDecryptEventHandler(), *sc);
 
     DataBus::subscribe_global(external_pub_key, ExternalEventIds::EVE_PROCESS,

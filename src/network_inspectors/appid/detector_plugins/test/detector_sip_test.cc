@@ -157,6 +157,7 @@ EveCaPatternMatchers::~EveCaPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;
 HttpPatternMatchers::~HttpPatternMatchers() = default;
 AlpnPatternMatchers::~AlpnPatternMatchers() = default;
+CipPatternMatchers::~CipPatternMatchers() = default;
 
 ClientDetector::ClientDetector() { }
 

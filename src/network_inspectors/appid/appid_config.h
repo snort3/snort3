@@ -31,6 +31,7 @@
 #include "app_info_table.h"
 #include "client_plugins/client_discovery.h"
 #include "client_plugins/eve_ca_patterns.h"
+#include "detector_plugins/cip_patterns.h"
 #include "detector_plugins/dns_patterns.h"
 #include "detector_plugins/http_url_patterns.h"
 #include "detector_plugins/sip_patterns.h"
@@ -63,6 +64,7 @@ enum SnortProtoIdIndex
     PROTO_INDEX_TFTP,
     PROTO_INDEX_SIP,
     PROTO_INDEX_SSH,
+    PROTO_INDEX_CIP,
 
     PROTO_INDEX_MAX
 };
@@ -188,6 +190,11 @@ public:
         return length_cache.add(key, val);
     }
 
+    CipPatternMatchers& get_cip_matchers()
+    {
+        return cip_matchers;
+    }
+
     DnsPatternMatchers& get_dns_matchers()
     {
         return dns_matchers;
@@ -244,6 +251,7 @@ private:
     HostPortCache host_port_cache;
     HostPortCache first_pkt_cache;
     LengthCache length_cache;
+    CipPatternMatchers cip_matchers;
     DnsPatternMatchers dns_matchers;
     HttpPatternMatchers http_matchers;
     EveCaPatternMatchers eve_ca_matchers;

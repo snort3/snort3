@@ -105,6 +105,8 @@ set ( SP_APPID_SOURCES
 )
 
 set ( DP_APPID_SOURCES
+    detector_plugins/cip_patterns.cc
+    detector_plugins/cip_patterns.h
     detector_plugins/detector_dns.cc
     detector_plugins/detector_dns.h
     detector_plugins/detector_imap.cc
@@ -144,6 +146,8 @@ set ( APPID_SOURCES
     appid_app_descriptor.h
     appid_config.cc
     appid_config.h
+    appid_cip_event_handler.cc
+    appid_cip_event_handler.h
     appid_data_decrypt_event_handler.h
     appid_debug.cc
     appid_debug.h
