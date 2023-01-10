@@ -31,6 +31,7 @@
 
 using namespace jsn;
 using namespace std;
+using namespace std::string_literals;
 
 typedef pair<string, string> Chunk;
 
@@ -171,14 +172,27 @@ TEST_CASE("basic", "[PDFTokenizer]")
     SECTION("escapes in string")
     {
         test_pdf_proc(
-            "(() \\n\\r\\t\\b\\f\\(\\)\\\\ \\123 \\A\\B\\C \\x\\y\\z)",
+            "1 0 obj\n"
+            "<< /S (() \\n\\r\\t\\b\\f\\(\\)\\\\ \\123 \\A\\B\\C \\x\\y\\z \\\n \\\r\n) >>\n"
+            "endobj\n",
+            ""
+        );
+    }
+    SECTION("EOL in string")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<< /S (\r\n) >>\n"
+            "endobj\n",
             ""
         );
     }
     SECTION("hex string")
     {
         test_pdf_proc(
-            "<000102030405>",
+            "1 0 obj\n"
+            "<< /S <0001020304 05> >> \n"
+            "endobj\n",
             ""
         );
     }
@@ -800,6 +814,300 @@ TEST_CASE("stream object over PDU", "[PDFTokenizer]")
                 "endstream\n"
                 "endobj\n",
                 "foobar\n"
+            }
+        });
+    }
+}
+
+TEST_CASE("UTF-16, basic", "[PDFTokenizer]")
+{
+    SECTION("basic string")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS (\xfe\xff\0f\0o\0o)"s,
+            "foo"s
+        );
+    }
+    SECTION("non-ASCII character")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS (\xfe\xff\xd8=\xdc=)"s,
+            "\xf0\x9f\x90\xbd"s
+        );
+    }
+    SECTION("Latin-1 character")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS (\xfe\xff\0\xc6)"s,
+            "\xc3\x86"s
+        );
+    }
+    SECTION("mixed charset")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS (\xfe\xff\0f\0o\0o\xd8=\xdc=\0\x20\0b\0a\0r)"s,
+            "foo\xf0\x9f\x90\xbd bar"s
+        );
+    }
+    SECTION("stream")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS 2 0 R"
+            ">>\n"
+            "endobj\n"
+            "2 0 obj\n"
+            "<</Length 8>>\n"
+            "stream\n"
+            "\xfe\xff\0f\0o\0o\n"
+            "endstream\n"
+            "endobj"s,
+            "foo"s
+        );
+    }
+    SECTION("hexadecimal string")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS <FE FF 00 66 006F 00 6F>"s,
+            "foo"s
+        );
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS <FE FF 00 66 006F 00 6F 00 2>"s,
+            "foo "s
+        );
+    }
+    SECTION("escaped slash")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS (\xfe\xff\0\\\\\0f\0o\0o)"s,
+            "\\foo"s
+        );
+    }
+    SECTION("escaped slash-like byte of a CJK character")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS (\xfe\xff\\\\\0)"s,
+            "\xe5\xb0\x80"s
+        );
+    }
+    SECTION("newline: CR")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS (\xfe\xff\0f\0o\0o\0\r\0b\0a\0r)"s,
+            "foo\r"
+            "bar"s
+        );
+    }
+    SECTION("newline: LF")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS (\xfe\xff\0f\0o\0o\0\n\0b\0a\0r)"s,
+            "foo\n"
+            "bar"s
+        );
+    }
+    SECTION("escaped newline: CR")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS (\xfe\xff\0f\0o\0o\0\\r\0b\0a\0r)"s,
+            "foo\r"
+            "bar"s
+        );
+    }
+    SECTION("escaped newline: LF")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS (\xfe\xff\0f\0o\0o\0\\n\0b\0a\0r)"s,
+            "foo\n"
+            "bar"s
+        );
+    }
+    SECTION("escaped newline: PDF line wrap")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS (\xfe\xff\0f\0o\0o\\\n"
+            "\0b\0a\0r)"s,
+            "foobar"s
+        );
+    }
+    SECTION("slash in stream")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS 2 0 R"
+            ">>\n"
+            "endobj\n"
+            "2 0 obj\n"
+            "<</Length 8>>\n"
+            "stream\n"
+            "\xfe\xff\0\\\0f\0o\0o\n"
+            "endstream\n"
+            "endobj"s,
+            "\\foo"s
+        );
+    }
+    SECTION("unexpected symbol")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS (\xfe\xff\0\\(\0a\0()"s,
+            "(a"s,
+            PDFTokenizer::PDFRet::UNEXPECTED_SYMBOL
+        );
+    }
+    SECTION("invalid high surrogate pair")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS (\xfe\xff\xd8=\0=)"s,
+            ""s,
+            PDFTokenizer::PDFRet::UNEXPECTED_SYMBOL
+        );
+    }
+}
+
+TEST_CASE("UTF-16, cross-PDU", "[PDFTokenizer]")
+{
+    SECTION("split between symbols")
+    {
+        test_pdf_proc({
+            {
+                "10 0 obj\n"
+                "<</S/JavaScript/JS(\xfe\xff\0f\0o\0o"s,
+                "foo"s
+            },
+            {
+                "\0b\0a\0r)>>\n"
+                "endobj"s,
+                "bar"s
+            }
+        });
+    }
+    SECTION("split inside the symbol between code units")
+    {
+        test_pdf_proc({
+            {
+                "10 0 obj\n"
+                "<</S/JavaScript/JS(\xfe\xff\xd8="s,
+                ""s
+            },
+            {
+                "\xdc=)>>\n"
+                "endobj"s,
+                "\xf0\x9f\x90\xbd"s
+            }
+        });
+    }
+    SECTION("split inside the code unit")
+    {
+        test_pdf_proc({
+            {
+                "10 0 obj\n"
+                "<</S/JavaScript/JS(\xfe\xff\xd8"s,
+                ""s
+            },
+            {
+                "=\xdc=)>>\n"
+                "endobj"s,
+                "\xf0\x9f\x90\xbd"s
+            }
+        });
+    }
+    SECTION("split inside escaped slash: first byte escaped")
+    {
+        test_pdf_proc({
+            {
+                "10 0 obj\n"
+                "<</S/JavaScript/JS(\xfe\xff\\\\"s,
+                ""s
+            },
+            {
+                "\0)>>\n"
+                "endobj"s,
+                "\xe5\xb0\x80"s
+            }
+        });
+    }
+    SECTION("split in hexadecimal string")
+    {
+        test_pdf_proc({
+            {
+                "10 0 obj\n"
+                "<</S/JavaScript/JS<FEFF 00"s,
+                ""s
+            },
+            {
+                "66 00 6F 00 6F>>>\n"
+                "endobj"s,
+                "foo"s
+            }
+        });
+    }
+    SECTION("split in stream")
+    {
+        test_pdf_proc({
+            {
+                "1 0 obj\n"
+                "<</S/JavaScript/JS 2 0 R>>\n"
+                "endobj\n"
+                "2 0 obj\n"
+                "<</Length 14>>\n"
+                "stream\n"
+                "\xfe\xff\0f\0o\0o\0"s,
+                "foo"s
+            },
+            {
+                "b\0a\0r\n"
+                "endstream\n"
+                "endobj"s,
+                "bar"s
             }
         });
     }

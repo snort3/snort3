@@ -101,6 +101,13 @@ LIT_STR_ESC_EOL    \\[\x0d\x0a]|\\\x0d\x0a
 LIT_STR_EOL        [\x0d\x0a]|\x0d\x0a
 LIT_STR_BODY       [^\\\(\)]{1,64}
 
+/* 7.9.2.2 Text String Type, UTF-16BE */
+/* RFC 2781: 4.3 Interpreting text labelled as UTF-16 */
+U16_BOM            \xfe\xff
+U16_BOM_HEX        FE{HEX_STR_SKIP}*FF
+LIT_STR_U16_UNESC  \\[(\)\\nrtbf]
+LIT_STR_U16_BODY   [^\\\(\)]{1,16}
+
 /* 7.3.4.3 Hexadecimal Strings */
 HEX_STR_BODY       [0-9A-Fa-f]{1,64}
 HEX_STR_SKIP       [^0-9A-Fa-f>]{1,64}
@@ -138,7 +145,7 @@ OBJ_REFERENCE        {OBJ_INT_NUM}{GRP_WHITESPACE}+{OBJ_INT_NUM}{GRP_WHITESPACE}
 SKIP              [^[:digit:]%]{1,64}|.
 WHITESPACE        {GRP_WHITESPACE}{1,64}
 
-/* Start conditions: INITIAL or inside dictionary, literal string, hexadecimal string */
+/* Start conditions: INITIAL or inside dictionary, literal string, hexadecimal string, stream */
 %x indobj
 %x stream
 %x dictnr
@@ -147,6 +154,13 @@ WHITESPACE        {GRP_WHITESPACE}{1,64}
 %x jslstr
 %x jshstr
 %x jsstream
+
+/* Start conditions: UTF-16BE BOM, UTF-16BE literal string, UTF-16BE hexadecimal string, UTF-16BE stream */
+%x u16
+%x u16hex
+%x jsstru16
+%x jshstru16
+%x jsstreamu16
 
 %%
 
@@ -158,11 +172,13 @@ WHITESPACE        {GRP_WHITESPACE}{1,64}
 <indobj>{WHITESPACE}                              { }
 <indobj>{INDIRECT_OBJ_CLOSE}                      { POP(); h_ind_obj_close(); }
 
-<indobj>{OBJ_STREAM_OPEN}                         { EXEC(h_stream_open()) PUSH(obj_stream.is_js ? jsstream : stream); }
+<indobj>{OBJ_STREAM_OPEN}                         { EXEC(h_stream_open()) PUSH(obj_stream.is_js ? u16 : stream); }
 <stream>{OBJ_STREAM_SKIP}                         { EXEC(h_stream()) }
 <jsstream>{OBJ_STREAM_SKIP}                       { EXEC(h_stream()) ECHO; }
+<jsstreamu16>{OBJ_STREAM_SKIP}                    { EXEC(h_stream()) EXEC(h_lit_u16()) }
 <stream>{OBJ_STREAM_CLOSE}                        { if (h_stream_close()) POP(); }
 <jsstream>{OBJ_STREAM_CLOSE}                      { if (h_stream_close()) POP(); }
+<jsstreamu16>{OBJ_STREAM_CLOSE}                   { if (h_stream_close()) POP(); }
 
 <dictnr>{OBJ_DICT_OPEN}                           { PUSH(dictnr); EXEC(h_dict_open()) }
 <indobj>{OBJ_DICT_OPEN}                           { PUSH(dictnr); EXEC(h_dict_open()) }
@@ -195,7 +211,7 @@ WHITESPACE        {GRP_WHITESPACE}{1,64}
 <hexstr>{HEX_STR_BODY}                            { }
 <hexstr>{HEX_STR_SKIP}                            { }
 
-<jslstr>{OBJ_LIT_STR_OPEN}                        { if (!h_lit_open()) ECHO; }
+<jslstr>{OBJ_LIT_STR_OPEN}                        { if (!h_lit_open()) ECHO; else PUSH(u16); }
 <jslstr>{OBJ_LIT_STR_CLOSE}                       { if (h_lit_close()) POP(); else ECHO; }
 <jslstr>{LIT_STR_ESC}                             { EXEC(h_lit_unescape()) }
 <jslstr>{LIT_STR_ESC_OCT}                         { EXEC(h_lit_oct2chr()) }
@@ -203,10 +219,22 @@ WHITESPACE        {GRP_WHITESPACE}{1,64}
 <jslstr>{LIT_STR_EOL}                             { ECHO; }
 <jslstr>{LIT_STR_BODY}                            { ECHO; }
 
-<jshstr>{OBJ_HEX_STR_OPEN}                        { }
-<jshstr>{OBJ_HEX_STR_CLOSE}                       { POP(); }
+<u16>{U16_BOM}                                    { h_u16_start(); }
+<u16>.|\n                                         { h_u16_break(); }
+
+<jsstru16>{OBJ_LIT_STR_CLOSE}                     { if (h_lit_close()) POP(); }
+<jsstru16>{LIT_STR_ESC_EOL}                       { }
+<jsstru16>{LIT_STR_U16_UNESC}                     { EXEC(h_lit_u16_unescape()) }
+<jsstru16>{LIT_STR_U16_BODY}                      { EXEC(h_lit_u16()) }
+
+<u16hex>{U16_BOM_HEX}                             { h_u16_hex_start(); }
+<u16hex>.|\n                                      { h_u16_hex_break(); }
+
+<jshstr>{OBJ_HEX_STR_OPEN}                        { PUSH(u16hex); }
+<jshstr,jshstru16>{OBJ_HEX_STR_CLOSE}             { POP(); }
 <jshstr>{HEX_STR_BODY}                            { EXEC(h_hex_hex2chr()) }
-<jshstr>{HEX_STR_SKIP}                            { }
+<jshstru16>{HEX_STR_BODY}                         { EXEC(h_hex_hex2chr_u16()) }
+<jshstr,jshstru16>{HEX_STR_SKIP}                  { }
 
 <*><<EOF>>                                        { return PDFRet::EOS; }
 
@@ -276,28 +304,26 @@ PDFTokenizer::PDFRet PDFTokenizer::h_dict_name()
     return PDFRet::EOS;
 }
 
+constexpr char literal_unescape(const char& input)
+{
+    // 7.3.4.2 Literal Strings, Table 3 Escape sequences in literal strings
+    switch (input)
+    {
+    case 'n': return '\n';
+    case 'r': return '\r';
+    case 't': return '\t';
+    case 'b': return '\b';
+    case 'f': return '\f';
+    default: return input;
+    }
+}
+
 PDFTokenizer::PDFRet PDFTokenizer::h_lit_unescape()
 {
     assert(yyleng == 2);
     assert(yytext[0] == '\\');
 
-    char c;
-
-    // 7.3.4.2 Literal Strings, Table 3 Escape sequences in literal strings
-    switch (yytext[1])
-    {
-    case 'n': c = '\n'; break;
-    case 'r': c = '\r'; break;
-    case 't': c = '\t'; break;
-    case 'b': c = '\b'; break;
-    case 'f': c = '\f'; break;
-    case '(': c = '('; break;
-    case ')': c = ')'; break;
-    case '\\': c = '\\'; break;
-    default: c = yytext[1];
-    }
-
-    yyout << c;
+    yyout << literal_unescape(yytext[1]);
 
     return PDFRet::EOS;
 }
@@ -340,6 +366,63 @@ PDFTokenizer::PDFRet PDFTokenizer::h_hex_hex2chr()
 
     debug_logf(6, js_trace, TRACE_PDF_DUMP, nullptr,
         "literal string, in hex: %s\n", yytext);
+
+    return PDFRet::EOS;
+}
+
+PDFTokenizer::PDFRet PDFTokenizer::h_hex_hex2chr_u16()
+{
+    int len = yyleng & ~1;
+    const char* ptr = yytext;
+    const char* end = yytext + len;
+
+    while (ptr < end)
+    {
+        unsigned v;
+        sscanf(ptr, "%02x", &v);
+        EXEC(u16_eval((uint8_t)v))
+        ptr += 2;
+    }
+
+    if (len != yyleng)
+    {
+        unsigned v;
+        sscanf(ptr, "%01x", &v);
+        EXEC(u16_eval((uint8_t)(v << 4)))
+    }
+
+    debug_logf(6, js_trace, TRACE_PDF_DUMP, nullptr,
+        "literal string, in hex (UTF-16BE): %s\n", yytext);
+
+    return PDFRet::EOS;
+}
+
+PDFTokenizer::PDFRet PDFTokenizer::h_lit_u16()
+{
+    const uint8_t* ptr = (uint8_t*)yytext;
+    const uint8_t* end = ptr + yyleng;
+
+    while (ptr < end)
+    {
+        EXEC(u16_eval(*ptr))
+        ++ptr;
+    }
+
+    debug_logf(6, js_trace, TRACE_PDF_DUMP, nullptr,
+        "string, in UTF-16BE: %s\n", yytext);
+
+    return PDFRet::EOS;
+}
+
+PDFTokenizer::PDFRet PDFTokenizer::h_lit_u16_unescape()
+{
+    assert(yyleng == 2);
+
+    // the reverse solidus behaves as a split point in this case and should be removed
+    EXEC(u16_eval(literal_unescape(yytext[1])))
+
+    debug_logf(6, js_trace, TRACE_PDF_DUMP, nullptr,
+        "string, in UTF-16BE, escaped: %s\n", yytext);
 
     return PDFRet::EOS;
 }
@@ -393,6 +476,136 @@ void PDFTokenizer::h_ind_obj_open()
     int value = atoi(yytext);
     if (js_stream_refs.count(value) > 0)
         obj_stream.is_js = true;
+}
+
+void PDFTokenizer::h_u16_start()
+{
+    POP();
+
+    switch (YY_START)
+    {
+    case jslstr:
+        POP();
+        PUSH(jsstru16);
+        break;
+    case indobj:
+        POP();
+        PUSH(jsstreamu16);
+        break;
+    default:
+        assert(false);
+    }
+}
+
+void PDFTokenizer::h_u16_break()
+{
+    POP();
+    yyless(0);
+
+    switch (YY_START)
+    {
+    case indobj:
+        PUSH(jsstream);
+        break;
+    case jslstr:
+        break;
+    default:
+        assert(false);
+    }
+}
+
+void PDFTokenizer::h_u16_hex_start()
+{
+    POP();
+
+    assert(YY_START == jshstr);
+    POP();
+    PUSH(jshstru16);
+}
+
+void PDFTokenizer::h_u16_hex_break()
+{
+    POP();
+    yyless(0);
+    assert(YY_START == jshstr);
+}
+
+/* RFC 2781: 2.1 Encoding UTF-16 2.2, Decoding UTF-16, 4.3 Interpreting text labelled as UTF-16 */
+PDFTokenizer::PDFRet PDFTokenizer::u16_eval(uint8_t byte)
+{
+    switch(u16_state.cur_byte)
+    {
+    case 0:
+        u16_state.high = byte;
+        u16_state.cur_byte = 1;
+
+        break;
+    case 1:
+    {
+        u16_state.high = (u16_state.high << 8) | byte;
+        if (u16_state.high < 0xd800)
+        {
+            u16_to_u8(u16_state.high);
+            u16_state.cur_byte = 0;
+        }
+        else
+        {
+            u16_state.high = (u16_state.high - 0xd800) * 0x400;
+            u16_state.cur_byte = 2;
+        }
+
+        break;
+    }
+    case 2:
+        u16_state.low = byte;
+        u16_state.cur_byte = 3;
+
+        break;
+    case 3:
+        u16_state.low = (u16_state.low << 8) | byte;
+        u16_state.cur_byte = 0;
+
+        if (u16_state.low < 0xdc00)
+            return PDFRet::UNEXPECTED_SYMBOL;
+
+        u16_state.low = u16_state.low - 0xdc00;
+        u16_to_u8((u16_state.high | u16_state.low) + 0x10000);
+
+        break;
+    default:
+        assert(false);
+    }
+
+    return PDFRet::EOS;
+}
+
+void PDFTokenizer::u16_to_u8(uint32_t code)
+{
+    assert(code <= 0x1fffff);
+    std::string out;
+
+    if (code <= 0x7f)
+        out = (char)code;
+    else if (code <= 0x7ff)
+    {
+        out += (char)(0xc0 | (code >> 6));
+        out += (char)(0x80 | (code & 0x3f));
+    }
+    else if (code <= 0xffff)
+    {
+        out += (char)(0xe0 | (code >> 12));
+        out += (char)(0x80 | ((code >> 6) & 0x3f));
+        out += (char)(0x80 | (code & 0x3f));
+    }
+    else if (code <= 0x1fffff)
+    {
+        out += (char)(0xf0 | (code >> 18));
+        out += (char)(0x80 | ((code >> 12) & 0x3f));
+        out += (char)(0x80 | ((code >> 6) & 0x3f));
+        out += (char)(0x80 | (code & 0x3f));
+    }
+
+    yyout << out;
 }
 
 PDFTokenizer::PDFTokenizer(std::istream& in, std::ostream& out)

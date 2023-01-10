@@ -64,6 +64,9 @@ private:
     PDFRet h_lit_unescape();
     PDFRet h_lit_oct2chr();
     PDFRet h_hex_hex2chr();
+    PDFRet h_hex_hex2chr_u16();
+    PDFRet h_lit_u16();
+    PDFRet h_lit_u16_unescape();
     PDFRet h_stream_open();
     PDFRet h_stream();
     bool h_stream_close();
@@ -71,6 +74,13 @@ private:
     void h_ref();
     void h_ind_obj_open();
     inline void h_ind_obj_close();
+    void h_u16_start();
+    void h_u16_break();
+    void h_u16_hex_start();
+    void h_u16_hex_break();
+
+    PDFRet u16_eval(uint8_t byte);
+    void u16_to_u8(uint32_t code);
 
     struct ObjectString
     {
@@ -117,6 +127,14 @@ private:
     DictionaryEntry obj_entry;
     Stream obj_stream;
     std::unordered_set<unsigned int> js_stream_refs;
+
+    // represents UTF-16BE code point
+    struct
+    {
+        uint16_t high = 0;
+        uint16_t low = 0;
+        int cur_byte = 0;
+    } u16_state;
 };
 
 bool PDFTokenizer::h_lit_str()

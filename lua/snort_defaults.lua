@@ -1176,7 +1176,7 @@ default_low_port_scan =
 }
 
 ---------------------------------------------------------------------------
--- default http configuration
+-- default js_norm configuration
 ---------------------------------------------------------------------------
 
 -- ECMAScript Standard Built-in Objects and Functions Names (Identifiers)
