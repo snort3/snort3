@@ -51,7 +51,6 @@ public:
     bool scope_push(JSProgramScopeType) override { return true; }
     bool scope_pop(JSProgramScopeType) override { return true; }
     void reset() override {}
-    size_t size() const override { return 0; }
 };
 
 class JSTestConfig;

@@ -51,8 +51,6 @@ public:
     virtual bool scope_pop(JSProgramScopeType) = 0;
 
     virtual void reset() = 0;
-
-    virtual size_t size() const = 0;
 };
 
 class JSIdentifierCtx : public JSIdentifier
@@ -71,12 +69,6 @@ public:
     virtual bool scope_pop(JSProgramScopeType) override;
 
     virtual void reset() override;
-
-    // approximated to 500 unique mappings insertions
-    // approximated to 3 program scopes in the list
-    virtual size_t size() const override
-    { return (sizeof(JSIdentifierCtx) + (sizeof(std::string) * 2 * 500) +
-        (sizeof(ProgramScope) * 3)); }
 
 private:
 

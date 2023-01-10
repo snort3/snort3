@@ -85,8 +85,8 @@ COMMENT            %{GRP_NOT_NEWLINE}*{EOL_MARKER}
 OBJ_BOOLEAN        true|false
 
 /* 7.3.3 Numeric Objects */
-OBJ_INT_NUM        [+-]?[0-9]{1,64}
-OBJ_REL_NUM        [+-]?("."?[0-9]{1,64}|[0-9]{1,64}"."?|[0-9]{1,64}"."?[0-9]{1,64})
+OBJ_INT_NUM        [+-]?[0-9]{1,16}
+OBJ_REL_NUM        [+-]?("."?[0-9]{1,16}|[0-9]{1,16}"."?|[0-9]{1,16}"."?[0-9]{1,16})
 
 /* 7.3.4 String Objects */
 OBJ_LIT_STR_OPEN   "("
@@ -99,7 +99,7 @@ LIT_STR_ESC        \\[^0-7]
 LIT_STR_ESC_OCT    \\[0-7]{1}|\\[0-7]{2}|\\[0-7]{3}
 LIT_STR_ESC_EOL    \\[\x0d\x0a]|\\\x0d\x0a
 LIT_STR_EOL        [\x0d\x0a]|\x0d\x0a
-LIT_STR_BODY       [^\\\(\)]{1,64}
+LIT_STR_BODY       [^\\\(\)]{1,16}
 
 /* 7.9.2.2 Text String Type, UTF-16BE */
 /* RFC 2781: 4.3 Interpreting text labelled as UTF-16 */
@@ -109,8 +109,8 @@ LIT_STR_U16_UNESC  \\[(\)\\nrtbf]
 LIT_STR_U16_BODY   [^\\\(\)]{1,16}
 
 /* 7.3.4.3 Hexadecimal Strings */
-HEX_STR_BODY       [0-9A-Fa-f]{1,64}
-HEX_STR_SKIP       [^0-9A-Fa-f>]{1,64}
+HEX_STR_BODY       [0-9A-Fa-f]{1,16}
+HEX_STR_SKIP       [^0-9A-Fa-f>]{1,16}
 
 /* 7.3.5 Name Objects */
 OBJ_NAME           \/{GRP_REGULAR}{1,256}
@@ -128,7 +128,7 @@ OBJ_DICT_SKIP      .|{GRP_NEWLINE}
 /* 7.3.8 Stream Objects */
 OBJ_STREAM_OPEN    stream\r?\n
 OBJ_STREAM_CLOSE   {EOL_MARKER}endstream
-OBJ_STREAM_SKIP    {GRP_NOT_NEWLINE}{1,64}|{GRP_NEWLINE}
+OBJ_STREAM_SKIP    {GRP_NOT_NEWLINE}{1,16}|{GRP_NEWLINE}
 
 /* 7.3.9 Null Object */
 OBJ_NULL           null
@@ -142,8 +142,8 @@ OBJ_REFERENCE        {OBJ_INT_NUM}{GRP_WHITESPACE}+{OBJ_INT_NUM}{GRP_WHITESPACE}
 
 
 /* Not object start, not comments */
-SKIP              [^[:digit:]%]{1,64}|.
-WHITESPACE        {GRP_WHITESPACE}{1,64}
+SKIP              [^[:digit:]%]{1,16}|.
+WHITESPACE        {GRP_WHITESPACE}{1,16}
 
 /* Start conditions: INITIAL or inside dictionary, literal string, hexadecimal string, stream */
 %x indobj
