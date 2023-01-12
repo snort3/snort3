@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.50.0 2022-12-19 15:10:28 EST TST
+Revision 3.1.51.0 2023-01-11 19:39:29 EST TST
 
 ---------------------------------------------------------------------
 
@@ -16,6 +16,7 @@ Table of Contents
 
 1. Help
 2. Basic Modules
+
     2.1. active
     2.2. alerts
     2.3. attribute_table
@@ -49,7 +50,9 @@ Table of Contents
     2.31. snort
     2.32. suppress
     2.33. trace
+
 3. Codec Modules
+
     3.1. arp
     3.2. auth
     3.3. ciscometadata
@@ -77,10 +80,14 @@ Table of Contents
     3.25. udp
     3.26. vlan
     3.27. wlan
+
 4. Connector Modules
+
     4.1. file_connector
     4.2. tcp_connector
+
 5. Inspector Modules
+
     5.1. appid
     5.2. appid_listener
     5.3. arp_spoof
@@ -136,10 +143,14 @@ Table of Contents
     5.53. stream_user
     5.54. telnet
     5.55. wizard
+
 6. IPS Action Modules
+
     6.1. react
     6.2. reject
+
 7. IPS Option Modules
+
     7.1. ack
     7.2. appids
     7.3. asn1
@@ -271,9 +282,11 @@ Table of Contents
     7.129. vba_data
     7.130. window
     7.131. wscale
+
 8. Search Engine Modules
 9. SO Rule Modules
 10. Logger Modules
+
     10.1. alert_csv
     10.2. alert_ex
     10.3. alert_fast
@@ -286,7 +299,9 @@ Table of Contents
     10.10. log_hext
     10.11. log_pcap
     10.12. unified2
+
 11. Appendix
+
     11.1. Build Options
     11.2. Environment Variables
     11.3. Command Line Options
@@ -1056,20 +1071,30 @@ Usage: global
 
 Configuration:
 
-  * int memory.cap = 0: set the per-packet-thread cap on memory
-    (bytes, 0 to disable) { 0:maxSZ }
+  * int memory.cap = 0: set the process cap on memory in bytes (0 to
+    disable) { 0:maxSZ }
+  * int memory.interval = 50: approximate ms between memory epochs {
+    1:max32 }
+  * int memory.prune_target = 1048576: bytes to prune per packet
+    thread prune cycle { 1:max32 }
   * int memory.threshold = 100: scale cap to account for heap
     overhead { 1:100 }
 
 Peg counts:
 
-  * memory.allocations: total number of allocations (now)
-  * memory.deallocations: total number of deallocations (now)
-  * memory.allocated: total amount of memory allocated (now)
-  * memory.deallocated: total amount of memory deallocated (now)
+  * memory.start_up_use: memory used before packet processing (now)
+  * memory.cur_in_use: current memory used (now)
+  * memory.max_in_use: maximum memory used (max)
+  * memory.epochs: number of memory updates (now)
+  * memory.allocated: total amount of memory allocated by packet
+    threads (now)
+  * memory.deallocated: total amount of memory deallocated by packet
+    threads (now)
+  * memory.reap_cycles: number of actionable over-limit conditions
+    (now)
   * memory.reap_attempts: attempts to reclaim memory (now)
   * memory.reap_failures: failures to reclaim memory (now)
-  * memory.max_in_use: maximum memory used (max)
+  * memory.pruned: total amount of memory pruned (now)
 
 
 2.20. network
@@ -1744,6 +1769,7 @@ Configuration:
   * int trace.modules.js_norm.proc: enable processing logging { 0:255
     }
   * int trace.modules.js_norm.dump: enable data logging { 0:255 }
+  * int trace.modules.memory.all: enable all trace options { 0:255 }
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
     manager trace logging { 0:255 }
@@ -9895,8 +9921,12 @@ libraries see the Getting Started section of the manual.
     start search
   * implied md5.relative = false: offset from cursor instead of start
     of buffer
-  * int memory.cap = 0: set the per-packet-thread cap on memory
-    (bytes, 0 to disable) { 0:maxSZ }
+  * int memory.cap = 0: set the process cap on memory in bytes (0 to
+    disable) { 0:maxSZ }
+  * int memory.interval = 50: approximate ms between memory epochs {
+    1:max32 }
+  * int memory.prune_target = 1048576: bytes to prune per packet
+    thread prune cycle { 1:max32 }
   * int memory.threshold = 100: scale cap to account for heap
     overhead { 1:100 }
   * string metadata.*: comma-separated list of arbitrary name value
@@ -10912,6 +10942,7 @@ libraries see the Getting Started section of the manual.
   * int trace.modules.js_norm.dump: enable data logging { 0:255 }
   * int trace.modules.js_norm.proc: enable processing logging { 0:255
     }
+  * int trace.modules.memory.all: enable all trace options { 0:255 }
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
     manager trace logging { 0:255 }
@@ -11604,13 +11635,19 @@ libraries see the Getting Started section of the manual.
   * latency.total_packets: total packets monitored (sum)
   * latency.total_rule_evals: total rule evals monitored (sum)
   * latency.total_usecs: total usecs elapsed (sum)
-  * memory.allocated: total amount of memory allocated (now)
-  * memory.allocations: total number of allocations (now)
-  * memory.deallocated: total amount of memory deallocated (now)
-  * memory.deallocations: total number of deallocations (now)
+  * memory.allocated: total amount of memory allocated by packet
+    threads (now)
+  * memory.cur_in_use: current memory used (now)
+  * memory.deallocated: total amount of memory deallocated by packet
+    threads (now)
+  * memory.epochs: number of memory updates (now)
   * memory.max_in_use: maximum memory used (max)
+  * memory.pruned: total amount of memory pruned (now)
   * memory.reap_attempts: attempts to reclaim memory (now)
+  * memory.reap_cycles: number of actionable over-limit conditions
+    (now)
   * memory.reap_failures: failures to reclaim memory (now)
+  * memory.start_up_use: memory used before packet processing (now)
   * mem_test.packets: total packets (sum)
   * mms.concurrent_sessions: total concurrent MMS sessions (now)
   * mms.frames: total MMS messages (sum)
@@ -12777,12 +12814,12 @@ session.
 The TCP packet is invalid because it doesn’t have a SYN, ACK, or RST
 flag set.
 
-116:424 (pbb) truncated ethernet header
+116:424 (eth) truncated ethernet header
 
 The packet length is less than the minimum ethernet header size (14
 bytes)
 
-116:424 (pbb) truncated ethernet header
+116:424 (eth) truncated ethernet header
 
 A truncated ethernet header was detected.
 
