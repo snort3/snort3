@@ -25,11 +25,14 @@
 
 #include "tcp_state_machine.h"
 
+#include "tcp_session.h"
 #include "tcp_state_none.h"
 #include "tcp_state_closed.h"
 #include "tcp_state_listen.h"
 #include "tcp_state_syn_sent.h"
 #include "tcp_state_syn_recv.h"
+#include "tcp_state_mid_stream_sent.h"
+#include "tcp_state_mid_stream_recv.h"
 #include "tcp_state_established.h"
 #include "tcp_state_close_wait.h"
 #include "tcp_state_closing.h"
@@ -64,6 +67,8 @@ TcpStateMachine::TcpStateMachine()
     new TcpStateListen(*this);
     new TcpStateSynSent(*this);
     new TcpStateSynRecv(*this);
+    new TcpStateMidStreamSent(*this);
+    new TcpStateMidStreamRecv(*this);
     new TcpStateEstablished(*this);
     new TcpStateFinWait1(*this);
     new TcpStateFinWait2(*this);
@@ -103,6 +108,8 @@ bool TcpStateMachine::eval(TcpSegmentDescriptor& tsd)
             tcp_state_handlers[ listener_state ]->do_post_sm_packet_actions(tsd, *listener);
             return true;
         }
+        else
+            talker->session->check_for_pseudo_established(tsd.get_pkt());
 
         return false;
     }

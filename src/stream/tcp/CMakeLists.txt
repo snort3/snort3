@@ -52,6 +52,10 @@ add_library( stream_tcp OBJECT
     tcp_state_listen.h
     tcp_state_machine.cc
     tcp_state_machine.h
+    tcp_state_mid_stream_recv.cc
+    tcp_state_mid_stream_recv.h
+    tcp_state_mid_stream_sent.cc
+    tcp_state_mid_stream_sent.h
     tcp_state_none.cc
     tcp_state_none.h
     tcp_state_syn_recv.cc

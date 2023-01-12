@@ -38,16 +38,6 @@ TcpStateListen::TcpStateListen(TcpStateMachine& tsm) :
 {
 }
 
-bool TcpStateListen::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
-{
-    if ( trk.session->tcp_config->require_3whs() || tsd.has_wscale() || tsd.is_data_segment() )
-    {
-        if ( tsd.is_packet_from_server() )
-            trk.session->tel.set_tcp_event(EVENT_4WHS);
-    }
-    return true;
-}
-
 bool TcpStateListen::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.init_on_syn_recv(tsd);
@@ -60,9 +50,6 @@ bool TcpStateListen::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateListen::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    Flow* flow = tsd.get_flow();
-    flow->session_state |= ( STREAM_STATE_SYN | STREAM_STATE_SYN_ACK );
-
     if ( trk.session->is_midstream_allowed(tsd) )
     {
         trk.init_on_synack_sent(tsd);
@@ -77,56 +64,9 @@ bool TcpStateListen::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& t
     return true;
 }
 
-bool TcpStateListen::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
+bool TcpStateListen::ack_sent(TcpSegmentDescriptor&, TcpStreamTracker& trk)
 {
-    if ( !trk.session->tcp_config->require_3whs() or trk.session->is_midstream_allowed(tsd) )
-    {
-        trk.init_on_synack_recv(tsd);
-        if ( tsd.is_data_segment() )
-            trk.session->handle_data_segment(tsd);
-    }
-    else if ( trk.session->tcp_config->require_3whs() )
-    {
-        trk.session->generate_no_3whs_event();
-        return false;
-    }
-    return true;
-}
-
-bool TcpStateListen::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
-{
-    if ( trk.session->tcp_config->midstream_allowed(tsd.get_pkt()) && tsd.has_wscale() )
-    {
-        Flow* flow = tsd.get_flow();
-        flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_SYN_ACK |
-            STREAM_STATE_ESTABLISHED );
-
-        trk.init_on_3whs_ack_sent(tsd);
-        trk.session->init_new_tcp_session(tsd);
-        trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
-    }
-    else if ( trk.session->tcp_config->require_3whs() )
-    {
-        trk.session->generate_no_3whs_event();
-        return false;
-    }
-    return true;
-}
-
-bool TcpStateListen::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
-{
-    if ( trk.session->is_midstream_allowed(tsd) && tsd.has_wscale() )
-    {
-        Flow* flow = tsd.get_flow();
-
-        if ( !tsd.get_tcph()->is_rst() && ( flow->session_state & STREAM_STATE_SYN_ACK) )
-        {
-            trk.init_on_3whs_ack_recv(tsd);
-            trk.normalizer.ecn_tracker(
-                tsd.get_tcph(), trk.session->tcp_config->require_3whs());
-        }
-    }
-    else if ( trk.session->tcp_config->require_3whs() )
+    if ( trk.session->tcp_config->require_3whs() )
     {
         trk.session->generate_no_3whs_event();
         return false;
@@ -149,9 +89,6 @@ bool TcpStateListen::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
         trk.init_on_data_seg_sent(tsd);
         trk.session->init_new_tcp_session(tsd);
-
-        if ( flow->session_state & STREAM_STATE_ESTABLISHED )
-            trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
     }
     else if ( trk.session->tcp_config->require_3whs() )
     {
@@ -166,13 +103,7 @@ bool TcpStateListen::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
     if ( trk.session->is_midstream_allowed(tsd) )
     {
         Flow* flow = tsd.get_flow();
-
         flow->session_state |= STREAM_STATE_MIDSTREAM;
-        if ( !Stream::is_midstream(flow) )
-        {
-            flow->set_session_flags(SSNFLAG_MIDSTREAM);
-            DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_MIDSTREAM, tsd.get_pkt());
-        }
         trk.init_on_data_seg_recv(tsd);
         trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
         trk.session->handle_data_segment(tsd);

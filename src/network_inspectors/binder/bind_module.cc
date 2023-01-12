@@ -145,9 +145,6 @@ static const Parameter binder_use_params[] =
     { "file", Parameter::PT_STRING, nullptr, nullptr,
       "use configuration in given file" },
 
-    { "network_policy", Parameter::PT_STRING, nullptr, nullptr,
-      "use network policy from given file" },
-
     { "inspection_policy", Parameter::PT_STRING, nullptr, nullptr,
       "use inspection policy from given file" },
 

@@ -608,7 +608,6 @@ bool TcpSession::handle_syn_on_reset_session(TcpSegmentDescriptor& tsd)
         else if ( tcph->is_syn_only() )
         {
             flow->ssn_state.direction = FROM_CLIENT;
-            flow->session_state = STREAM_STATE_SYN;
             flow->set_ttl(tsd.get_pkt(), true);
             init_session_on_syn(tsd);
             tcpStats.resyns++;
@@ -620,7 +619,6 @@ bool TcpSession::handle_syn_on_reset_session(TcpSegmentDescriptor& tsd)
             if ( tcp_config->midstream_allowed(tsd.get_pkt()) )
             {
                 flow->ssn_state.direction = FROM_SERVER;
-                flow->session_state = STREAM_STATE_SYN_ACK;
                 flow->set_ttl(tsd.get_pkt(), false);
                 init_session_on_synack(tsd);
                 tcpStats.resyns++;

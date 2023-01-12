@@ -79,8 +79,6 @@ public:
 
     virtual void init_new_tcp_session(TcpSegmentDescriptor&);
     virtual void update_timestamp_tracking(TcpSegmentDescriptor&) = 0;
-    virtual void update_session_on_syn_ack();
-    virtual void update_session_on_ack();
     virtual void update_session_on_server_packet(TcpSegmentDescriptor&);
     virtual void update_session_on_client_packet(TcpSegmentDescriptor&);
     virtual void update_session_on_rst(TcpSegmentDescriptor&, bool) = 0;
@@ -99,8 +97,10 @@ public:
     void set_pkt_action_flag(uint32_t flag)
     { pkt_action_mask |= flag; }
 
-    void set_established(snort::Packet*, uint32_t flags = 0);
-    void check_for_one_sided_session(snort::Packet*);
+    void set_established(const TcpSegmentDescriptor&);
+    void set_pseudo_established(snort::Packet*);
+    bool check_for_one_sided_session(snort::Packet*);
+    void check_for_pseudo_established(snort::Packet*);
 
     virtual void update_paws_timestamps(TcpSegmentDescriptor&) = 0;
     virtual void check_for_repeated_syn(TcpSegmentDescriptor&) = 0;

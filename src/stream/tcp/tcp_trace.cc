@@ -40,7 +40,7 @@ void S5TraceTCP(const TcpSegmentDescriptor&, const snort::Packet*) { }
 
 static const char* const statext[] =
 {
-    "LST", "SYS", "SYR", "EST", "FW1", "FW2", "CLW",
+    "LST", "SYS", "SYR", "EST", "MDS", "MDR", "FW1", "FW2", "CLW",
     "CLG", "LAK", "TWT", "CLD", "NON"
 };
 

@@ -83,7 +83,7 @@ class SFDAQInstance;
 #define PKT_MORE_TO_FLUSH         0x20000000 // when more data is available to StreamSplitter::scan
 #define PKT_FAST_PAT_EVAL         0x40000000 // temporary until IpsOption api updated
 
-#define PKT_TCP_ONE_SIDED         0x80000000 // A one-sided TCP session was detected
+#define PKT_TCP_PSEUDO_EST        0x80000000 // A one-sided or bidirectional without LWS TCP session was detected
 
 #define TS_PKT_OFFLOADED          0x01
 

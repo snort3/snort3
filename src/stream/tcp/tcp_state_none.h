@@ -30,17 +30,17 @@ public:
     TcpStateNone(TcpStateMachine&);
 
     bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
-    bool syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool syn_ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool syn_ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
-    bool ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool data_seg_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool data_seg_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool fin_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool fin_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool rst_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+
+    bool do_post_sm_packet_actions(TcpSegmentDescriptor&, TcpStreamTracker&) override;
 };
 
 #endif

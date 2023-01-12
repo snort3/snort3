@@ -27,7 +27,6 @@
 
 #include <daq.h>
 
-#include "log/messages.h"
 #include "main/analyzer.h"
 #include "main/snort.h"
 #include "packet_io/active.h"
@@ -89,9 +88,27 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescr
     {
         // talker events
         if ( tcph->is_syn_only() )
+        {
             tcp_event = TCP_SYN_SENT_EVENT;
+            if ( tcp_state == TcpStreamTracker::TCP_STATE_NONE )
+                DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_SYN, tsd.get_pkt());
+        }
         else if ( tcph->is_syn_ack() )
+        {
             tcp_event = TCP_SYN_ACK_SENT_EVENT;
+            if ( tcp_state == TcpStreamTracker::TCP_LISTEN )
+                DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_SYN_ACK, tsd.get_pkt());
+            else if ( tcp_state == TcpStreamTracker::TCP_SYN_RECV )
+            {
+                Flow* flow = tsd.get_flow();
+                if ( flow->get_session_flags() & SSNFLAG_SEEN_CLIENT )
+                {
+                    TcpStreamTracker::TcpState listener_state = tsd.get_listener()->get_tcp_state();
+                    if ( listener_state == TcpStreamTracker::TCP_SYN_SENT )
+                        DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_SYN_ACK, tsd.get_pkt());
+                }
+            }
+        }
         else if ( tcph->is_rst() )
             tcp_event = TCP_RST_SENT_EVENT;
         else if ( tcph->is_fin( ) )
@@ -117,18 +134,11 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescr
         {
             tcp_event = TCP_SYN_RECV_EVENT;
             tcpStats.syns++;
-            if ( tcp_state == TcpStreamTracker::TCP_LISTEN )
-                DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_SYN, tsd.get_pkt());
         }
         else if ( tcph->is_syn_ack() )
         {
             tcp_event = TCP_SYN_ACK_RECV_EVENT;
             tcpStats.syn_acks++;
-            if ( tcp_state == TcpStreamTracker::TCP_SYN_SENT or
-                (!Stream::is_midstream(tsd.get_flow()) and
-                (tcp_state == TcpStreamTracker::TCP_LISTEN or
-                tcp_state == TcpStreamTracker::TCP_STATE_NONE)) )
-                DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_SYN_ACK, tsd.get_pkt());
         }
         else if ( tcph->is_rst() )
         {
@@ -371,49 +381,10 @@ void TcpStreamTracker::init_on_synack_recv(TcpSegmentDescriptor& tsd)
     reassembler.set_seglist_base_seq(tsd.get_seq() + 1);
 
     cache_mac_address(tsd, FROM_SERVER);
-    tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
-}
-
-void TcpStreamTracker::init_on_3whs_ack_sent(TcpSegmentDescriptor& tsd)
-{
-    tsd.get_flow()->set_session_flags(SSNFLAG_SEEN_CLIENT);
-
-    if ( tsd.get_tcph()->are_flags_set(TH_CWR | TH_ECE) )
-        tsd.get_flow()->set_session_flags(SSNFLAG_ECN_CLIENT_QUERY);
-
-    iss = tsd.get_seq();
-    snd_una = tsd.get_seq();
-    snd_nxt = snd_una;
-    snd_wnd = tsd.get_wnd();
-
-    r_win_base = tsd.get_ack();
-    rcv_nxt = tsd.get_ack();
-
-    ts_last_packet = tsd.get_packet_timestamp();
-    tf_flags |= normalizer.get_tcp_timestamp(tsd, false);
-    ts_last = tsd.get_timestamp();
-    if (ts_last == 0)
-        tf_flags |= TF_TSTAMP_ZERO;
-    tf_flags |= tsd.init_wscale(&wscale);
-
-    cache_mac_address(tsd, FROM_CLIENT);
-    tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
-}
-
-void TcpStreamTracker::init_on_3whs_ack_recv(TcpSegmentDescriptor& tsd)
-{
-    iss = tsd.get_ack() - 1;
-    irs = tsd.get_seq();
-    snd_una = tsd.get_ack();
-    snd_nxt = snd_una;
-
-    rcv_nxt = tsd.get_seq();
-    r_win_base = tsd.get_seq();
-    reassembler.set_seglist_base_seq(tsd.get_seq() + 1);
-
-    cache_mac_address(tsd, FROM_CLIENT);
-    tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
-    tcpStats.sessions_on_3way++;
+    if ( TcpStreamTracker::TCP_SYN_SENT == tcp_state )
+        tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
+    else
+        tcp_state = TcpStreamTracker::TCP_SYN_SENT;
 }
 
 void TcpStreamTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
@@ -425,8 +396,8 @@ void TcpStreamTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
     else
         flow->set_session_flags(SSNFLAG_SEEN_SERVER);
 
-    iss = tsd.get_seq();
-    irs = tsd.get_ack();
+    iss = tsd.get_seq() - 1;
+    irs = tsd.get_ack() - 1;
     snd_una = tsd.get_seq();
     snd_nxt = snd_una + tsd.get_len();
     snd_wnd = tsd.get_wnd();
@@ -444,13 +415,16 @@ void TcpStreamTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
     tf_flags |= tsd.init_wscale(&wscale);
 
     cache_mac_address(tsd, tsd.get_direction() );
-    tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
+    if ( TcpStreamTracker::TCP_LISTEN == tcp_state || TcpStreamTracker::TCP_STATE_NONE == tcp_state)
+        tcp_state = TcpStreamTracker::TCP_MID_STREAM_SENT;
+    else
+        tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
 }
 
 void TcpStreamTracker::init_on_data_seg_recv(TcpSegmentDescriptor& tsd)
 {
-    iss = tsd.get_ack();
-    irs = tsd.get_seq();
+    iss = tsd.get_ack() - 1;
+    irs = tsd.get_seq() - 1;
     snd_una = tsd.get_ack();
     snd_nxt = snd_una;
     snd_wnd = 0; /* reset later */
@@ -460,7 +434,10 @@ void TcpStreamTracker::init_on_data_seg_recv(TcpSegmentDescriptor& tsd)
     reassembler.set_seglist_base_seq(tsd.get_seq());
 
     cache_mac_address(tsd, tsd.get_direction() );
-    tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
+    if ( TcpStreamTracker::TCP_LISTEN == tcp_state || TcpStreamTracker::TCP_STATE_NONE == tcp_state )
+        tcp_state = TcpStreamTracker::TCP_MID_STREAM_RECV;
+    else
+        tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
     tcpStats.sessions_on_data++;
 }
 
@@ -553,10 +530,13 @@ bool TcpStreamTracker::update_on_3whs_ack(TcpSegmentDescriptor& tsd)
 
     if ( good_ack )
     {
-        irs = tsd.get_seq();
+        if (!irs)
+            irs = tsd.get_seq();
         finish_client_init(tsd);
         update_tracker_ack_recv(tsd);
-        session->set_established(tsd.get_pkt(), STREAM_STATE_ACK);
+        TcpStreamTracker::TcpState talker_state = tsd.get_talker()->get_tcp_state();
+        if ( TcpStreamTracker::TCP_ESTABLISHED == talker_state )
+            session->set_established(tsd);
         tcp_state = TcpStreamTracker::TCP_ESTABLISHED;
     }
 
@@ -593,17 +573,22 @@ void TcpStreamTracker::update_on_rst_sent()
 
 bool TcpStreamTracker::update_on_fin_recv(TcpSegmentDescriptor& tsd)
 {
-    if ( SEQ_LT(tsd.get_end_seq(), r_win_base) )
-        return false;
+    if ( session->flow->two_way_traffic() )
+    {
+        if ( SEQ_LT(tsd.get_end_seq(), r_win_base) )
+            return false;
 
-    //--------------------------------------------------
-    // FIXIT-L don't bump rcv_nxt unless FIN is in seq
-    // because it causes bogus 129:5 cases
-    // but doing so causes extra gaps
-    if ( SEQ_EQ(tsd.get_end_seq(), rcv_nxt) )
-        rcv_nxt++;
+        //--------------------------------------------------
+        // FIXIT-L don't bump rcv_nxt unless FIN is in seq
+        // because it causes bogus 129:5 cases
+        // but doing so causes extra gaps
+        if ( SEQ_EQ(tsd.get_end_seq(), rcv_nxt) )
+            rcv_nxt++;
+        else
+            fin_seq_adjust = 1;
+    }
     else
-        fin_seq_adjust = 1;
+        rcv_nxt++;
 
     return true;
 }
