@@ -171,7 +171,10 @@ void Dce2Smb2TreeTracker::process_close_request(const Smb2Hdr* smb_header,
 
     if (share_type != SMB2_SHARE_TYPE_DISK)
     {
+        parent_session->co_tracker_mutex.lock();
         DCE2_CoCleanTracker(co_tracker);
+        parent_session->co_tracker_mutex.unlock();
+
     }
 }
 
@@ -508,12 +511,12 @@ void Dce2Smb2TreeTracker::process_ioctl_command(const uint8_t command_type,
     {
         data_size = UINT16_MAX;
     }
+    parent_session->co_tracker_mutex.lock();
     if (co_tracker)
     {
-        parent_session->co_tracker_mutex.lock();
         DCE2_CoProcess(get_dce2_session_data(p->flow), co_tracker, file_data, data_size);
-        parent_session->co_tracker_mutex.unlock();
     }
+    parent_session->co_tracker_mutex.unlock();
 }
 
 void Dce2Smb2TreeTracker::process(uint16_t command, uint8_t command_type,

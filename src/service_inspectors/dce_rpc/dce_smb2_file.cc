@@ -236,14 +236,13 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
         current_flow->session_data_mutex.lock();
         if (current_flow->get_tcp_flow())
             current_flow->get_tcp_flow()->last_data_seen = packet_time();
-
+        sess->co_tracker_mutex.lock();
         if (parent_tree->get_cotracker())
         {
-            sess->co_tracker_mutex.lock();
             DCE2_CoProcess(current_flow->get_dce2_session_data(), parent_tree->get_cotracker(),
                 file_data, data_size);
-            sess->co_tracker_mutex.unlock();
         }
+        sess->co_tracker_mutex.unlock();
         current_flow->session_data_mutex.unlock();
         return true;
     }
