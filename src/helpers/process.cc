@@ -31,7 +31,11 @@
 #endif
 
 #ifdef HAVE_MALLOC_TRIM
+#if defined(__linux__)
 #include <malloc.h>
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+#include <sys/malloc.h>
+#endif
 #endif
 
 #include <csignal>

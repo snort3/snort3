@@ -24,7 +24,13 @@
 
 #include "memory_cap.h"
 
+#ifdef HAVE_MALLOC_TRIM
+#if defined(__linux__)
 #include <malloc.h>
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+#include <sys/malloc.h>
+#endif
+#endif
 #include <sys/resource.h>
 
 #include <atomic>
@@ -301,4 +307,3 @@ void MemoryCap::dump_mem_stats(ControlConn* ctrlcon)
     heap->print_stats(ctrlcon);
 }
 } // namespace memory
-
