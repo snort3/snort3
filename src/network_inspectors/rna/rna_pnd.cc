@@ -229,6 +229,7 @@ void RnaPnd::analyze_netflow_host(NetFlowEvent* nfe)
             return;
     }
 
+    // Note: this is the ethertype for the wire packet itself, not the NetFlow flows
     uint16_t ptype = rna_get_eth(p);
     if ( ptype > to_utype(ProtocolId::ETHERTYPE_MINIMUM) )
     {
@@ -237,7 +238,8 @@ void RnaPnd::analyze_netflow_host(NetFlowEvent* nfe)
                 packet_time());
     }
 
-    ptype = to_utype(p->get_ip_proto_next());
+    // Remaining fields (port, proto, etc.) are parsed from the NetFlow record
+    ptype = nfe->get_record()->proto;
     if ( ht->add_xport_proto(ptype) )
         logger.log(RNA_EVENT_NEW, NEW_XPORT_PROTOCOL, p, &ht, ptype, src_mac, src_ip_ptr,
             packet_time());
@@ -278,7 +280,7 @@ void RnaPnd::analyze_netflow_service(NetFlowEvent* nfe)
         if ( proto == IpProtocol::TCP )
             logger.log(RNA_EVENT_NEW, NEW_TCP_SERVICE, p, &ht,
                 (const struct in6_addr*) src_ip.get_ip6_ptr(), mac_addr, &ha);
-        else
+        else if ( proto == IpProtocol::UDP )
             logger.log(RNA_EVENT_NEW, NEW_UDP_SERVICE, p, &ht,
                 (const struct in6_addr*) src_ip.get_ip6_ptr(), mac_addr, &ha);
 
