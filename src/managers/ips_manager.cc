@@ -130,10 +130,10 @@ static bool set_arg(
         if ( p->is_wild_card() )
             val = opt;
 
-        long n = (long)strtoll(val, &end, 0);
+        int64_t n = strtoll(val, &end, 0);
 
         if ( !*end )
-            v.set(n);
+            v.set((double)n);
         else
             ok = false;
     }

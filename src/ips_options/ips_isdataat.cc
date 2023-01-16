@@ -188,7 +188,7 @@ static void isdataat_parse(const char* data, IsDataAtData* idx)
         char* endp;
 
         idx->offset_var = IPS_OPTIONS_NO_VAR;
-        idx->offset = strtol(offset, &endp, 10);
+        idx->offset = strtoul(offset, &endp, 10);
 
         if (offset == endp)
         {

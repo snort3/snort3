@@ -354,8 +354,8 @@ bool ByteMathModule::set(const char*, Value& v, SnortConfig*)
 
     else if (v.is("rvalue"))
     {
-        long n;
-        if (v.strtol(n))
+        unsigned long n;
+        if (v.strtoul(n))
         {
             if (n == 0)
                 return false;
@@ -1485,6 +1485,16 @@ TEST_CASE("ByteMathModule::set valid", "[ips_byte_math]")
 
         CHECK(obj.set(nullptr, v, nullptr));
         CHECK(strcmp(obj.off_var.c_str(), "off_test_var") == 0);
+    }
+    SECTION("rvalue isn't truncated")
+    {
+        Value v("4294967295");
+        Parameter p{"rvalue", Parameter::PT_STRING, nullptr, nullptr,
+            "value to use mathematical operation against"};
+        v.set(&p);
+
+        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(obj.data.rvalue == 4294967295UL);
     }
 
     delete[] obj.data.result_name;

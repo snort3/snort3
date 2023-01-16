@@ -285,7 +285,7 @@ bool RpcModule::set(const Value& v, uint32_t& field, int flag)
 
     errno = 0;
     char* end = nullptr;
-    int64_t num = (int64_t)strtol(v.get_string(), &end, 0);
+    int64_t num = strtoll(v.get_string(), &end, 0);
 
     if ( *end or errno or num < 0 or num > 0xFFFFFFFF )
         return false;

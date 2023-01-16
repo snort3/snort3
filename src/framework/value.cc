@@ -186,6 +186,40 @@ bool Value::strtol(long& n, const std::string& tok) const
     return true;
 }
 
+bool Value::strtoul(unsigned long& n) const
+{
+    const char* s = str.c_str();
+
+    if ( !*s )
+        return false;
+
+    char* end = nullptr;
+
+    n = ::strtoul(s, &end, 0);
+
+    if ( *end )
+        return false;
+
+    return true;
+}
+
+bool Value::strtoul(unsigned long& n, const std::string& tok) const
+{
+    const char* s = tok.c_str();
+
+    if ( !*s )
+        return false;
+
+    char* end = nullptr;
+
+    n = ::strtoul(s, &end, 0);
+
+    if ( *end )
+        return false;
+
+    return true;
+}
+
 std::string Value::get_as_string() const
 {
     std::string value_str = str;

@@ -145,7 +145,7 @@ static bool get_op(const string& s, RangeCheck::Op& op)
     return true;
 }
 
-static bool get_num(const string& s, long& num)
+static bool get_num(const string& s, int64_t& num)
 {
     if ( s.empty() )
     {
@@ -154,7 +154,7 @@ static bool get_num(const string& s, long& num)
     }
     errno = 0;
     char* end = nullptr;
-    num = strtol(s.c_str(), &end, 0);
+    num = strtoll(s.c_str(), &end, 0);
 
     return !errno and !*end;
 }
@@ -229,7 +229,7 @@ bool RangeCheck::parse(const char* s)
     return true;
 }
 
-bool RangeCheck::eval(long c) const
+bool RangeCheck::eval(int64_t c) const
 {
     switch ( op )
     {
@@ -274,7 +274,7 @@ bool RangeCheck::validate(const char* s, const char* r)
     // require no leading or trailing whitespace
     // and either # | #: | :# | #:#
     // where # is a valid pos or neg dec, hex, or octal number
-    long v_min, v_max;
+    int64_t v_min, v_max;
 
     if ( op == LG or op == LEG )
     {
@@ -292,7 +292,7 @@ bool RangeCheck::validate(const char* s, const char* r)
 
     if ( *r != ':' )
     {
-        long low = strtol(r, nullptr, 0);
+        int64_t low = strtoll(r, nullptr, 0);
 
         if ( v_min < low )
             return false;
@@ -302,7 +302,7 @@ bool RangeCheck::validate(const char* s, const char* r)
 
     if ( t && *++t )
     {
-        long hi = strtol(t, nullptr, 0);
+        int64_t hi = strtoll(t, nullptr, 0);
 
         if ( v_max > hi )
             return false;

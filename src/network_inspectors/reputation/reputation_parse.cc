@@ -427,6 +427,7 @@ static int snort_pton(char const* src, SfCidr* dest)
     if ( *cidrbuf )
     {
         char* end;
+        errno = 0;
         int value = strtol(cidrbuf, &end, 10);
 
         if ( value > dest->get_bits() || value <= 0 || errno == ERANGE )

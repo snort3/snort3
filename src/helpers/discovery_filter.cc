@@ -94,7 +94,7 @@ DiscoveryFilter::DiscoveryFilter(const string& conf_path)
                     intf = 0;
                 else
                 {
-                    intf = strtol(config_intf.c_str(), nullptr, 0);
+                    intf = strtoll(config_intf.c_str(), nullptr, 0);
                     if ( intf < 1 or intf >= DF_ANY_INTF )
                     {
                         WarningMessage("Discovery Filter: Invalid interface at line %u from %s;"

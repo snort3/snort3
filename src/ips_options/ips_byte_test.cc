@@ -503,8 +503,8 @@ bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
 
     else if (v.is("~compare"))
     {
-        long n;
-        if (v.strtol(n))
+        unsigned long n;
+        if (v.strtoul(n))
             data.cmp_value = n;
         else
             cmp_var = v.get_string();
@@ -1091,6 +1091,16 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
                     nullptr, "default", "help");
                 value_tmp.set(&param);
                 REQUIRE(module_test.set(nullptr, value_tmp, nullptr) == true);
+            }
+
+            SECTION("Value isn't truncated")
+            {
+                Value value_tmp("4294967295");
+                Parameter param("~compare", snort::Parameter::Type::PT_BOOL,
+                    nullptr, "default", "help");
+                value_tmp.set(&param);
+                REQUIRE(module_test.set(nullptr, value_tmp, nullptr) == true);
+                REQUIRE(module_test.data.cmp_value == 4294967295UL);
             }
         }
 

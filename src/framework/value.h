@@ -176,6 +176,8 @@ public:
 
     bool strtol(long&) const;
     bool strtol(long&, const std::string&) const;
+    bool strtoul(unsigned long&) const;
+    bool strtoul(unsigned long&, const std::string&) const;
 
     bool operator==(const char* s) const
     { return str == s; }

@@ -690,7 +690,7 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
                 snort_free(app_name);
                 continue;
             }
-            service_id = strtol(token, nullptr, 10);
+            service_id = strtoul(token, nullptr, 10);
 
             token = strtok_r(nullptr, CONF_SEPARATORS, &context);
             if (!token)
@@ -699,7 +699,7 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
                 snort_free(app_name);
                 continue;
             }
-            client_id = strtol(token, nullptr, 10);
+            client_id = strtoul(token, nullptr, 10);
 
             token = strtok_r(nullptr, CONF_SEPARATORS, &context);
             if (!token)
@@ -708,7 +708,7 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
                 snort_free(app_name);
                 continue;
             }
-            payload_id = strtol(token, nullptr, 10);
+            payload_id = strtoul(token, nullptr, 10);
 
             AppInfoTableEntry* entry = new AppInfoTableEntry(app_id, app_name, service_id,
                 client_id, payload_id);
