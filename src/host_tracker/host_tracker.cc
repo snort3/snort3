@@ -860,6 +860,7 @@ bool HostTracker::set_visibility(bool v)
         smb_fpids.clear();
         netbios_name.clear();
         cpe_fpids.clear();
+        host_type = HostType::HOST_TYPE_HOST;
     }
 
     return old_visibility == visibility;
