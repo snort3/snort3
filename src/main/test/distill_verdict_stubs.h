@@ -228,5 +228,6 @@ void ThreadConfig::set_instance_tid(const int, const int) { }
 }
 
 void memory::MemoryCap::thread_init() { }
+void memory::MemoryCap::thread_term() { }
 void memory::MemoryCap::free_space() { }
 

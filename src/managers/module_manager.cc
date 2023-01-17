@@ -1425,6 +1425,17 @@ void ModuleManager::load_rules(SnortConfig* sc)
     }
 }
 
+PegCount* ModuleManager::get_stats(const char* name)
+{
+    PegCount* pc = nullptr;
+    ModHook* mh = get_hook(name);
+
+    if ( mh )
+        pc = &mh->mod->counts[0];
+
+    return pc;
+}
+
 void ModuleManager::dump_stats(const char* skip, bool dynamic)
 {
     auto mod_hooks = get_all_modhooks();

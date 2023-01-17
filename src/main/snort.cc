@@ -168,6 +168,7 @@ void Snort::init(int argc, char** argv)
         EventManager::instantiate(sc->output.c_str(), sc);
 
     HighAvailabilityManager::configure(sc->ha_config);
+    memory::MemoryCap::init(sc->thread_config->get_instance_max());
 
     ModuleManager::reset_stats(sc);
 
@@ -352,7 +353,7 @@ void Snort::term()
     ModuleManager::term();
     PluginManager::release_plugins();
     ScriptManager::release_scripts();
-    memory::MemoryCap::cleanup();
+    memory::MemoryCap::term();
     detection_filter_term();
 
     term_signals();
@@ -399,7 +400,7 @@ void Snort::setup(int argc, char* argv[])
 
     set_quick_exit(false);
 
-    memory::MemoryCap::setup(*sc->memory, sc->thread_config->get_instance_max(), Stream::prune_flows);
+    memory::MemoryCap::start(*sc->memory, Stream::prune_flows);
     memory::MemoryCap::print(SnortConfig::log_verbose(), true);
 
     host_cache.print_config();
@@ -413,6 +414,7 @@ void Snort::cleanup()
 
     SFDAQ::term();
     FileService::close();
+    memory::MemoryCap::stop();
 
     if ( !SnortConfig::get_conf()->test_mode() )  // FIXIT-M ideally the check is in one place
         PrintStatistics();

@@ -52,20 +52,33 @@ typedef bool (*PruneHandler)();
 class SO_PUBLIC MemoryCap
 {
 public:
+    // main thread
+    static void init(unsigned num_threads);
+    static void term();
+
     // main thread - in configure
     static void set_heap_interface(HeapInterface*);
     static void set_pruner(PruneHandler);
 
     // main thread - after configure
-    static void setup(const MemoryConfig&, unsigned num_threads, PruneHandler);
-    static void cleanup();
+    static void start(const MemoryConfig&, PruneHandler);
+    static void stop();
     static void print(bool verbose, bool init = false);
 
     // packet threads
     static void thread_init();
+    static void thread_term();
     static void free_space();
 
+    // main and packet threads
     static MemoryCounts& get_mem_stats();
+
+    // main thread - shutdown
+    static void update_pegs(PegCount*);
+
+#ifdef REG_TEST
+    static void test_main_check();
+#endif
 };
 
 }

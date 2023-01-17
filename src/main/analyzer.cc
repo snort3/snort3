@@ -673,7 +673,8 @@ void Analyzer::term()
     DetectionEngine::idle();
     InspectorManager::thread_stop(sc);
     InspectorManager::thread_term();
-    ModuleManager::accumulate("memory");
+    memory::MemoryCap::thread_term();
+    ModuleManager::accumulate();
     ActionManager::thread_term();
 
     IpsManager::clear_options(sc);
@@ -706,8 +707,6 @@ void Analyzer::term()
     RateFilter_Cleanup();
 
     TraceApi::thread_term();
-
-    ModuleManager::accumulate_module("memory");
 }
 
 Analyzer::Analyzer(SFDAQInstance* instance, unsigned i, const char* s, uint64_t msg_cnt)

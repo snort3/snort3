@@ -87,17 +87,8 @@ public:
     unsigned thread_init_calls = 0;
 };
 
-static PeriodicHook phook = nullptr;
-static void* parg = nullptr;
-
-void Periodic::register_handler(PeriodicHook f, void* v, uint16_t, uint32_t)
-{ phook = f; parg = v; }
-
 static void periodic_check()
-{
-    if ( phook )
-        phook(parg);
-}
+{ MemoryCap::test_main_check(); }
 
 static int flows;
 
@@ -128,20 +119,25 @@ static void free_space()
 TEST_GROUP(memory_off)
 {
     void setup() override
-    { MemoryCap::set_pruner(pruner); }
+    {
+        MemoryCap::init(1);
+        MemoryCap::set_pruner(pruner);
+    }
 
     void teardown() override
-    { flows = 0; }
+    {
+        MemoryCap::term();
+        flows = 0;
+    }
 };
 
 TEST(memory_off, disabled)
 {
     MemoryConfig config { 0, 100, 0, 1, false };
-    MemoryCap::setup(config, 1, pruner);
+    MemoryCap::start(config, pruner);
 
     free_space();
 
-    CHECK(phook == nullptr);
     CHECK(flows == 0);
 
     const MemoryCounts& mc = MemoryCap::get_mem_stats();
@@ -149,17 +145,16 @@ TEST(memory_off, disabled)
     CHECK(mc.epochs == 0);
     CHECK(mc.reap_cycles == 0);
 
-    MemoryCap::cleanup();
+    MemoryCap::stop();
 }
 
 TEST(memory_off, nerfed)
 {
     MemoryConfig config { 100, 100, 0, 1, false };
-    MemoryCap::setup(config, 1, pruner);
+    MemoryCap::start(config, pruner);
 
     free_space();
 
-    CHECK(phook == nullptr);
     CHECK(flows == 0);
 
     const MemoryCounts& mc = MemoryCap::get_mem_stats();
@@ -167,7 +162,7 @@ TEST(memory_off, nerfed)
     CHECK(mc.epochs == 0);
     CHECK(mc.reap_cycles == 0);
 
-    MemoryCap::cleanup();
+    MemoryCap::stop();
 }
 
 //--------------------------------------------------------------------------
@@ -180,15 +175,15 @@ TEST_GROUP(memory)
 
     void setup() override
     {
+        MemoryCap::init(1);
         heap = new MockHeap;
         MemoryCap::set_heap_interface(heap);
     }
 
     void teardown() override
     {
+        MemoryCap::term();
         heap = nullptr;
-        phook = nullptr;
-        parg = nullptr;
         flows = 0;
     }
 };
@@ -196,9 +191,8 @@ TEST_GROUP(memory)
 TEST(memory, default_enabled)
 {
     MemoryConfig config { 0, 100, 0, 1, true };
-    MemoryCap::setup(config, 1, pruner);
+    MemoryCap::start(config, pruner);
 
-    CHECK(phook != nullptr);
     CHECK(heap->epoch == 1);
     CHECK(heap->main_init_calls == 1);
 
@@ -211,7 +205,8 @@ TEST(memory, default_enabled)
     CHECK(heap->epoch == 2);
     CHECK(flows == 0);
 
-    MemoryCap::cleanup();
+    MemoryCap::stop();
+    CHECK(heap->epoch == 3);
 }
 
 TEST(memory, prune1)
@@ -221,7 +216,7 @@ TEST(memory, prune1)
     heap->total = start;
 
     MemoryConfig config { cap, 100, 0, 1, true };
-    MemoryCap::setup(config, 1, pruner);
+    MemoryCap::start(config, pruner);
     MemoryCap::thread_init();
 
     const MemoryCounts& mc = MemoryCap::get_mem_stats();
@@ -262,14 +257,17 @@ TEST(memory, prune1)
     CHECK(mc.reap_failures == 0);
     CHECK(mc.pruned == 1);
 
-    MemoryCap::cleanup();
+    heap->total = start;
+    MemoryCap::stop();
+    CHECK(mc.epochs == heap->epoch);
+    CHECK(mc.cur_in_use == start);
 }
 
 TEST(memory, prune3)
 {
     uint64_t cap = 100;
     MemoryConfig config { cap, 100, 0, 1, true };
-    MemoryCap::setup(config, 1, pruner);
+    MemoryCap::start(config, pruner);
     MemoryCap::thread_init();
 
     flows = 3;
@@ -302,14 +300,14 @@ TEST(memory, prune3)
     CHECK(mc.reap_failures == 0);
     CHECK(mc.pruned == 1);
 
-    MemoryCap::cleanup();
+    MemoryCap::stop();
 }
 
 TEST(memory, two_cycles)
 {
     uint64_t cap = 100;
     MemoryConfig config { cap, 100, 0, 1, true };
-    MemoryCap::setup(config, 1, pruner);
+    MemoryCap::start(config, pruner);
     MemoryCap::thread_init();
 
     flows = 3;
@@ -350,7 +348,7 @@ TEST(memory, two_cycles)
     CHECK(mc.reap_failures == 0);
     CHECK(mc.pruned == 11);
 
-    MemoryCap::cleanup();
+    MemoryCap::stop();
 }
 
 TEST(memory, reap_failure)
@@ -360,7 +358,7 @@ TEST(memory, reap_failure)
     heap->total = start;
 
     MemoryConfig config { cap, 100, 0, 2, true };
-    MemoryCap::setup(config, 1, pruner);
+    MemoryCap::start(config, pruner);
     MemoryCap::thread_init();
 
     flows = 1;
@@ -382,7 +380,7 @@ TEST(memory, reap_failure)
     CHECK(mc.reap_failures == 1);
     CHECK(mc.pruned == 1);
 
-    MemoryCap::cleanup();
+    MemoryCap::stop();
 }
 
 //-------------------------------------------------------------------------

@@ -47,8 +47,8 @@ static const Parameter s_params[] =
     { "cap", Parameter::PT_INT, "0:maxSZ", "0",
         "set the process cap on memory in bytes (0 to disable)" },
 
-    { "interval", Parameter::PT_INT, "1:max32", "50",
-        "approximate ms between memory epochs" },
+    { "interval", Parameter::PT_INT, "0:max32", "50",
+        "approximate ms between memory epochs (0 to disable)" },
 
     { "prune_target", Parameter::PT_INT, "1:max32", "1048576",
         "bytes to prune per packet thread prune cycle" },

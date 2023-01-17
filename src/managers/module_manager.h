@@ -28,6 +28,7 @@
 #include <mutex>
 #include <set>
 
+#include "framework/counts.h"
 #include "main/analyzer_command.h"
 #include "main/snort_types.h"
 
@@ -83,14 +84,17 @@ public:
     static void reset_errors();
     static unsigned get_errors();
 
+    static PegCount* get_stats(const char* name);
     static void dump_stats(const char* skip = nullptr, bool dynamic = false);
 
     static void accumulate(const char* except = nullptr);
     static void accumulate_module(const char* name);
+
     static void reset_stats(SnortConfig*);
     static void reset_stats(clear_counter_type_t);
 
     static void clear_global_active_counters();
+
 
     static std::set<uint32_t> gids;
     SO_PUBLIC static std::mutex stats_mutex;

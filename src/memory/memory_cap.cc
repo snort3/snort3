@@ -80,7 +80,7 @@ static void epoch_check(void*)
     if ( prior != over_limit )
         trace_logf(memory_trace, nullptr, "Epoch=%lu, memory=%lu (%s)\n", epoch, total, over_limit?"over":"under");
 
-    MemoryCounts& mc = memory::MemoryCap::get_mem_stats();
+    MemoryCounts& mc = MemoryCap::get_mem_stats();
 
     if ( total > mc.max_in_use )
         mc.max_in_use = total;
@@ -90,8 +90,60 @@ static void epoch_check(void*)
 }
 
 // -----------------------------------------------------------------------------
+// test access
+// -----------------------------------------------------------------------------
+
+#ifdef REG_TEST
+static unsigned count_down = 1;
+
+static void test_pkt_check()
+{
+    assert(is_packet_thread());
+
+    if ( !config.enabled )
+        return;
+
+    if ( get_instance_id() != 0 )
+        return;
+
+    if ( !config.interval )
+        return;
+
+    if ( --count_down )
+        return;
+    else
+        count_down = config.interval;
+
+    epoch_check(nullptr);
+}
+
+void MemoryCap::test_main_check()
+{
+    assert(in_main_thread());
+    epoch_check(nullptr);
+}
+#endif
+
+// -----------------------------------------------------------------------------
 // public
 // -----------------------------------------------------------------------------
+
+void MemoryCap::init(unsigned n)
+{
+    assert(in_main_thread());
+    pkt_mem_stats.resize(n);
+
+#ifdef UNIT_TEST
+    pkt_mem_stats[0] = { };
+#endif
+}
+
+void MemoryCap::term()
+{
+    pkt_mem_stats.resize(0);
+    delete heap;
+    heap = nullptr;
+}
 
 void MemoryCap::set_heap_interface(HeapInterface* h)
 { heap = h; }
@@ -99,15 +151,16 @@ void MemoryCap::set_heap_interface(HeapInterface* h)
 void MemoryCap::set_pruner(PruneHandler p)
 { pruner = p; }
 
-void MemoryCap::setup(const MemoryConfig& c, unsigned n, PruneHandler ph)
+void MemoryCap::start(const MemoryConfig& c, PruneHandler ph)
 {
-    assert(!is_packet_thread());
+    assert(in_main_thread());
 
-    pkt_mem_stats.resize(n);
     config = c;
 
     if ( !heap )
         heap = HeapInterface::get_instance();
+
+    heap->main_init();
 
     if ( !config.enabled )
         return;
@@ -119,38 +172,36 @@ void MemoryCap::setup(const MemoryConfig& c, unsigned n, PruneHandler ph)
     over_limit = false;
     current_epoch = 0;
 
+#ifndef REG_TEST
     Periodic::register_handler(epoch_check, nullptr, 0, config.interval);
-    heap->main_init();
-
-    MemoryCounts& mc = memory::MemoryCap::get_mem_stats();
-#ifdef UNIT_TEST
-    mc = { };
 #endif
 
     epoch_check(nullptr);
+
+    MemoryCounts& mc = get_mem_stats();
     mc.start_up_use = mc.cur_in_use;
 }
 
-void MemoryCap::cleanup()
-{
-    pkt_mem_stats.resize(0);
-    delete heap;
-    heap = nullptr;
-}
+void MemoryCap::stop()
+{ epoch_check(nullptr); }
 
 void MemoryCap::thread_init()
 {
-    if ( config.enabled )
-        heap->thread_init();
-
+    heap->thread_init();
     start_dealloc = 0;
     start_epoch = 0;
+}
+
+void MemoryCap::thread_term()
+{
+    MemoryCounts& mc = get_mem_stats();
+    heap->get_thread_allocs(mc.allocated, mc.deallocated);
 }
 
 MemoryCounts& MemoryCap::get_mem_stats()
 {
     // main thread stats do not overlap with packet threads
-    if ( !is_packet_thread() )
+    if ( in_main_thread() )
         return pkt_mem_stats[0];
 
     auto id = get_instance_id();
@@ -161,7 +212,11 @@ void MemoryCap::free_space()
 {
     assert(is_packet_thread());
 
-    MemoryCounts& mc = memory::MemoryCap::get_mem_stats();
+#ifdef REG_TEST
+    test_pkt_check();
+#endif
+
+    MemoryCounts& mc = get_mem_stats();
     heap->get_thread_allocs(mc.allocated, mc.deallocated);
 
     if ( !over_limit and !start_dealloc )
@@ -192,6 +247,25 @@ void MemoryCap::free_space()
         return;
 
     ++mc.reap_failures;
+}
+
+// required to capture any update in final epoch
+// which happens after packet threads have stopped
+void MemoryCap::update_pegs(PegCount* pc)
+{
+    MemoryCounts* mp = (MemoryCounts*)pc;
+    const MemoryCounts& mc = get_mem_stats();
+
+    if ( config.enabled )
+    {
+        mp->epochs = mc.epochs;
+        mp->cur_in_use = mc.cur_in_use;
+    }
+    else
+    {
+        mp->allocated = 0;
+        mp->deallocated = 0;
+    }
 }
 
 // called at startup and shutdown
