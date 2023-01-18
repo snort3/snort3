@@ -1,3 +1,18 @@
+2023-01-18: 3.1.52.0
+
+dce_rpc: add errno resets during uuid parsing
+dce_rpc: handling dcerpc over smbv2
+flow: update flow creation to exclude non-syn packets with no payload
+framework: change range check types to int64_t to fix ILP32 bit issues
+main: Fix missing include file that caused build error on some platforms.
+memory: add final epoch to capture stats
+memory: add regression test hooks
+memory: fix init sequence; thanks to amishmm and Xiche for reporting and debugging the problem
+netflow: grab the proto off of the netflow record - not the wire packet
+rna: reset host_tracker type when visibility changes
+stream: fix iss and irs and mid-stream sent post processing
+stream: refactor tcp state machine to handle mid-stream flow and more established cases
+
 2023-01-11: 3.1.51.0
 
 * appid: add support for cip service, client and payload detection
