@@ -1610,7 +1610,9 @@ int fpCreateFastPacketDetection(SnortConfig* sc)
 
     if ( mpse_count )
     {
-        LogLabel("search engine");
+        auto method = fp->get_search_method();
+        string search_label = "search engine (" + string(method ? method : "unspecified") + ")";
+        LogLabel(search_label.c_str());
         MpseManager::print_mpse_summary(fp->get_search_api());
     }
 
