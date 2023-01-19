@@ -113,7 +113,7 @@ void FileFlows::handle_retransmit(Packet* p)
     {
         if (file_cache)
             file_got = file_cache->get_file(flow, pending_file_id, false);
-        if (file_got and file_got->get_file_data())
+        if (file_got and file_got->get_file_data() and file_got->verdict == FILE_VERDICT_PENDING)
         {
             file_got->user_file_data_mutex.lock();
             file->set_file_data(file_got->get_file_data());
@@ -121,8 +121,10 @@ void FileFlows::handle_retransmit(Packet* p)
             file_got->user_file_data_mutex.unlock();
         }
     }
-
+    file->user_file_data_mutex.lock();
     FileVerdict verdict = file_policy->signature_lookup(p, file);
+    file->user_file_data_mutex.unlock();
+
     if (file_cache)
     {
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
@@ -174,8 +176,10 @@ void FileFlows::set_current_file_context(FileContext* ctx)
         FileContext* file_got = file_cache->get_file(flow, file_id, false);
         if (file_got and file_got->verdict == FILE_VERDICT_PENDING and current_context != file_got)
         {
+            file_got->user_file_data_mutex.lock();
             delete(file_got->get_file_data());
             file_got->set_file_data(nullptr);
+            file_got->user_file_data_mutex.unlock();
         }
     }
     current_context = ctx;

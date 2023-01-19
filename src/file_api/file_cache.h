@@ -69,7 +69,9 @@ PADDING_GUARD_END
 private:
     snort::FileContext* add(const FileHashKey&, int64_t timeout);
     snort::FileContext* find(const FileHashKey&, int64_t);
-    snort::FileContext* get_file(snort::Flow*, uint64_t file_id, bool to_create, int64_t timeout);
+    snort::FileContext* find_add(const FileHashKey&, int64_t);
+    snort::FileContext* get_file(snort::Flow*, uint64_t file_id, bool to_create,
+        int64_t timeout);
     FileVerdict check_verdict(snort::Packet*, snort::FileInfo*, snort::FilePolicyBase*);
     int store_verdict(snort::Flow*, snort::FileInfo*, int64_t timeout);
 
