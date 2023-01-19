@@ -162,6 +162,7 @@ struct PS_PKT
 
 void ps_cleanup();
 void ps_reset();
+void ps_update_memusage_peg();
 
 unsigned ps_node_size();
 bool ps_init_hash(unsigned long);

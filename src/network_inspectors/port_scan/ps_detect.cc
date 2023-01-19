@@ -158,6 +158,15 @@ void ps_reset()
         portscan_hash->clear_hash();
 }
 
+void ps_update_memusage_peg()
+{
+    if (portscan_hash)
+        spstats.bytes_in_use = portscan_hash->get_mem_used();
+    else
+        spstats.bytes_in_use = 0;
+}
+
+
 //  Check scanner and scanned ips to see if we can filter them out.
 bool PortScan::ps_ignore_ip(const SfIp* scanner, uint16_t scanner_port,
     const SfIp* scanned, uint16_t scanned_port)
@@ -309,6 +318,7 @@ static PS_TRACKER* ps_tracker_get(PS_HASH_KEY* key)
         ++spstats.alloc_prunes;
 
     ht = (PS_TRACKER*)portscan_hash->get_mru_user_data();
+
 
     if ( ht )
         memset(ht, 0x00, sizeof(PS_TRACKER));

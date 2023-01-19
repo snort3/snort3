@@ -30,6 +30,7 @@ static const PegInfo ps_module_pegs[] =
     { CountType::SUM, "trackers", "number of trackers allocated by port scan" },
     { CountType::SUM, "alloc_prunes", "number of trackers pruned on allocation of new tracking" },
     { CountType::SUM, "reload_prunes", "number of trackers pruned on reload due to reduced memcap" },
+    { CountType::NOW, "bytes_in_use", "number of bytes currently used by portscan" },
     { CountType::END, nullptr, nullptr },
 };
 
@@ -39,6 +40,7 @@ struct PsPegStats
     PegCount trackers;
     PegCount alloc_prunes;
     PegCount reload_prunes;
+    PegCount bytes_in_use;
 };
 
 #endif

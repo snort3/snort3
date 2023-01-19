@@ -1043,6 +1043,8 @@ void NetFlowInspector::tterm()
     }
     delete netflow_cache;
     delete template_cache;
+    netflow_cache = nullptr;
+    template_cache = nullptr;
 }
 
 void NetFlowInspector::install_reload_handler(SnortConfig* sc)

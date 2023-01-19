@@ -539,10 +539,14 @@ void FileCapture::print_mem_usage()
 {
     if (file_mempool)
     {
+        int64_t block_size = get_block_size() + sizeof (FileCapture);
+        if (block_size & 7)
+            block_size += (8 - (block_size & 7));
         LogCount("Max buffers can allocate", file_mempool->total_objects());
         LogCount("Buffers in use", file_mempool->allocated());
         LogCount("Buffers in free list", file_mempool->freed());
         LogCount("Buffers in release list", file_mempool->released());
+        LogCount("Memory usage in bytes", file_mempool->allocated() * block_size);
     }
 }
 

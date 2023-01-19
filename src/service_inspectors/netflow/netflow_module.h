@@ -137,6 +137,8 @@ struct NetFlowStats : public LruCacheLocalStats
     PegCount v9_templates;
     PegCount version_5;
     PegCount version_9;
+    PegCount netflow_cache_bytes_in_use;
+    PegCount template_cache_bytes_in_use;
 };
 
 extern THREAD_LOCAL NetFlowStats netflow_stats;

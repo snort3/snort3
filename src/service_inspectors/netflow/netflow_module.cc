@@ -27,12 +27,15 @@
 #include <sstream>
 #include <string>
 
+#include "netflow_cache.h"
 #include "netflow_module.h"
 
 #include "utils/util.h"
 
 using namespace snort;
 
+extern THREAD_LOCAL NetFlowCache* netflow_cache;
+extern THREAD_LOCAL TemplateFieldCache* template_cache;
 // -----------------------------------------------------------------------------
 // static variables
 // -----------------------------------------------------------------------------
@@ -94,6 +97,8 @@ static const PegInfo netflow_pegs[] =
     { CountType::SUM, "v9_templates", "count of total version 9 templates" },
     { CountType::SUM, "version_5", "count of netflow version 5 packets received" },
     { CountType::SUM, "version_9", "count of netflow version 9 packets received" },
+    { CountType::NOW, "netflow_cache_bytes_in_use", "number of bytes used in netflow cache" },
+    { CountType::NOW, "template_cache_bytes_in_use", "number of bytes used in template cache" },
     { CountType::END, nullptr, nullptr},
 };
 
@@ -251,7 +256,19 @@ void NetFlowModule::parse_service_id_file(const std::string& serv_id_file_path)
 }
 
 PegCount* NetFlowModule::get_counts() const
-{ return (PegCount*)&netflow_stats; }
+{
+    if (netflow_cache && template_cache)
+    {
+        netflow_stats.netflow_cache_bytes_in_use = netflow_cache->current_size;
+        netflow_stats.template_cache_bytes_in_use = template_cache->current_size;
+    }
+    else
+    {
+        netflow_stats.netflow_cache_bytes_in_use = 0;
+        netflow_stats.template_cache_bytes_in_use = 0;
+    }
+    return (PegCount*)&netflow_stats;
+}
 
 const PegInfo* NetFlowModule::get_pegs() const
 { return netflow_pegs; }
