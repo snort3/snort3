@@ -882,6 +882,17 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
     asd.set_ss_application_ids(service_id, client_id, payload_id, misc_id,
         asd.pick_ss_referred_payload_app_id(), change_bits);
     asd.set_tls_host(change_bits);
+    if (asd.tsession and asd.tsession->is_tls_host_unpublished())
+    {
+        change_bits.set(APPID_TLSHOST_BIT);
+        asd.tsession->set_tls_host_unpublished(false);
+    }
+
+    if (asd.is_client_info_unpublished())
+    {
+        change_bits.set(APPID_CLIENT_INFO_BIT);
+        asd.set_client_info_unpublished(false);
+    }
 
     if (PacketTracer::is_daq_activated())
         populate_trace_data(asd); 

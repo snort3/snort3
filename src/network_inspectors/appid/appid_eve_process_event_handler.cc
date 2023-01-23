@@ -75,12 +75,12 @@ void AppIdEveProcessEventHandler::handle(DataEvent& event, Flow* flow)
     const bool is_quic = eve_process_event.is_flow_quic();
     const bool is_client_process_flag = eve_process_event.is_client_process_mapping();
 
-    AppidChangeBits change_bits;
+    OdpContext& odp_ctxt = asd->get_odp_ctxt();
 
     if (is_quic && alpn_vec.size())
     {
         AppId service_id = APP_ID_NONE;
-        service_id = asd->get_odp_ctxt().get_alpn_matchers().match_alpn_pattern(alpn_vec[0]);
+        service_id = odp_ctxt.get_alpn_matchers().match_alpn_pattern(alpn_vec[0]);
         if (service_id)
         {
             asd->set_alpn_service_app_id(service_id);
@@ -88,7 +88,7 @@ void AppIdEveProcessEventHandler::handle(DataEvent& event, Flow* flow)
         }
         else
         {
-            asd->set_service_appid_data(APP_ID_QUIC, change_bits);
+            asd->set_service_id(APP_ID_QUIC, odp_ctxt);
             asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
         }
     }
@@ -99,18 +99,17 @@ void AppIdEveProcessEventHandler::handle(DataEvent& event, Flow* flow)
         char* version = nullptr;
         AppId service_id = APP_ID_NONE;
 
-        asd->get_odp_ctxt().get_http_matchers().identify_user_agent(user_agent.c_str(),
+        odp_ctxt.get_http_matchers().identify_user_agent(user_agent.c_str(),
             user_agent.size(), service_id, client_id, &version);
 
         if (client_id != APP_ID_NONE)
-            asd->set_client_appid_data(client_id, change_bits, version);
+            asd->set_client_appid_data(client_id, version);
 
         snort_free(version);
     }
     else if (!name.empty() and is_client_process_flag)
     {
-        client_id = asd->get_odp_ctxt().get_eve_ca_matchers().match_eve_ca_pattern(name,
-            conf);
+        client_id = odp_ctxt.get_eve_ca_matchers().match_eve_ca_pattern(name, conf);
 
         asd->set_eve_client_app_id(client_id);
     }
@@ -123,10 +122,10 @@ void AppIdEveProcessEventHandler::handle(DataEvent& event, Flow* flow)
         if (!asd->tsession)
             asd->tsession = new TlsSession();
 
-        asd->tsession->set_tls_host(server_name.c_str(), server_name.length(), change_bits);
-        asd->set_tls_host(change_bits);
+        asd->tsession->set_tls_host(server_name.c_str(), server_name.length());
+        asd->set_tls_host();
 
-        asd->get_odp_ctxt().get_ssl_matchers().scan_hostname(reinterpret_cast<const uint8_t*>(server_name.c_str()),
+        odp_ctxt.get_ssl_matchers().scan_hostname(reinterpret_cast<const uint8_t*>(server_name.c_str()),
             server_name.length(), client_id, payload_id);
         asd->set_payload_id(payload_id);
     }
@@ -156,7 +155,4 @@ void AppIdEveProcessEventHandler::handle(DataEvent& event, Flow* flow)
         LogMessage("AppIdDbg %s %s\n",
             appidDebug->get_debug_session(), debug_str.c_str());
     }
-
-    if (change_bits.any())
-        asd->publish_appid_event(change_bits, *p);
 }

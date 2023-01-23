@@ -616,7 +616,7 @@ void AppIdSession::examine_rtmp_metadata(AppidChangeBits& change_bits)
     }
 }
 
-void AppIdSession::set_client_appid_data(AppId id, AppidChangeBits& change_bits, char* version)
+void AppIdSession::set_client_appid_data(AppId id, char* version, bool published)
 {
     if (id <= APP_ID_NONE or id == APP_ID_HTTP)
         return;
@@ -633,7 +633,16 @@ void AppIdSession::set_client_appid_data(AppId id, AppidChangeBits& change_bits,
     if (!version)
         return;
     api.client.set_version(version);
-    change_bits.set(APPID_CLIENT_INFO_BIT);
+
+    if (!published)
+        client_info_unpublished = true;
+}
+
+void AppIdSession::set_client_appid_data(AppId id, AppidChangeBits& change_bits, char* version)
+{
+    set_client_appid_data(id, version, true);
+    if (version)
+        change_bits.set(APPID_CLIENT_INFO_BIT);
 }
 
 void AppIdSession::set_payload_appid_data(AppId id, char* version)

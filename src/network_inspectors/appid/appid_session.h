@@ -150,7 +150,7 @@ public:
     bool get_tls_handshake_done() const { return tls_handshake_done; }
 
     // Duplicate only if len > 0, otherwise simply set (i.e., own the argument)
-    void set_tls_host(const char* new_tls_host, uint32_t len, AppidChangeBits& change_bits)
+    void set_tls_host(const char* new_tls_host, uint32_t len, bool published=false)
     {
         if (tls_host)
             snort_free(tls_host);
@@ -160,6 +160,14 @@ public:
             return;
         }
         tls_host = len? snort::snort_strndup(new_tls_host,len) : const_cast<char*>(new_tls_host);
+
+        if (!published)
+            tls_host_unpublished = true;
+    }
+
+    void set_tls_host(const char* new_tls_host, uint32_t len, AppidChangeBits& change_bits)
+    {
+        set_tls_host(new_tls_host, len, true);
         change_bits.set(APPID_TLSHOST_BIT);
     }
 
@@ -213,12 +221,17 @@ public:
         matched_tls_type = type;
     }
 
+    void set_tls_host_unpublished(bool val) { tls_host_unpublished = val; }
+
+    bool is_tls_host_unpublished() const { return tls_host_unpublished; }
+
 private:
     char* tls_host = nullptr;
     char* tls_first_alt_name = nullptr;
     char* tls_cname = nullptr;
     char* tls_org_unit = nullptr;
     bool tls_handshake_done = false;
+    bool tls_host_unpublished = false;
     MatchedTlsType matched_tls_type = MATCHED_TLS_NONE;
 };
 
@@ -340,6 +353,7 @@ public:
 
     void examine_ssl_metadata(AppidChangeBits& change_bits);
     void set_client_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
+    void set_client_appid_data(AppId, char* version = nullptr, bool published=false);
     void set_service_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
     void set_payload_appid_data(AppId, char* version = nullptr);
     void check_app_detection_restart(AppidChangeBits& change_bits,
@@ -580,6 +594,12 @@ public:
         api.set_tls_host(tls_host);
     }
 
+    void set_tls_host()
+    {
+        if (tsession and tsession->is_tls_host_unpublished())
+            api.set_tls_host(tsession->get_tls_host());
+    }
+
     void set_netbios_name(AppidChangeBits& change_bits, const char *name)
     {
         api.set_netbios_name(change_bits, name);
@@ -663,6 +683,15 @@ public:
         no_service_inspector = true;
     }
 
+    void set_client_info_unpublished(bool val)
+    {
+        client_info_unpublished = val;
+    }
+
+    bool is_client_info_unpublished()
+    {
+        return client_info_unpublished;
+    }
 private:
     uint16_t prev_httpx_raw_packet = 0;
 
@@ -685,6 +714,7 @@ private:
     bool consumed_ha_data = false;
     bool no_service_candidate = false;
     bool no_service_inspector = false;
+    bool client_info_unpublished = false;
 };
 
 #endif
