@@ -165,6 +165,9 @@ public:
     virtual void set_stream_flow_data(Flow* flow, FlowData* flow_data) = 0;
     virtual void get_stream_id(const Flow* flow, int64_t& stream_id) = 0;
     virtual AppId get_appid_from_stream(const Flow*) { return APP_ID_NONE; }
+    // Stream based flows should override this interface to return parent flow
+    // when child flow is passed as input
+    virtual Flow* get_stream_parent_flow(Flow* cflow) { return cflow; }
 };
 
 // this struct is organized by member size for compactness
