@@ -116,7 +116,9 @@ static void test_pkt_check()
 
     epoch_check(nullptr);
 }
+#endif
 
+#if defined(REG_TEST) || defined(UNIT_TEST)
 void MemoryCap::test_main_check()
 {
     assert(in_main_thread());

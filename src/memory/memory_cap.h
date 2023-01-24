@@ -76,7 +76,7 @@ public:
     // main thread - shutdown
     static void update_pegs(PegCount*);
 
-#ifdef REG_TEST
+#if defined(REG_TEST) || defined(UNIT_TEST)
     static void test_main_check();
 #endif
 };
