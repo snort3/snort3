@@ -8,17 +8,20 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.52.0 2023-01-18 06:05:36 EST TST
+Revision 3.1.53.0 2023-01-25 11:23:07 EST TST
 
 ---------------------------------------------------------------------
 
 Table of Contents
 
 1. Overview
+
     1.1. First Steps
     1.2. Configuration
     1.3. Output
+
 2. Concepts
+
     2.1. Terminology
     2.2. Modules
     2.3. Parameters
@@ -26,7 +29,9 @@ Table of Contents
     2.5. Operation
     2.6. Rules
     2.7. Pattern Matching
+
 3. Tutorial
+
     3.1. Dependencies
     3.2. Building
     3.3. Running
@@ -34,7 +39,9 @@ Table of Contents
     3.5. Common Errors
     3.6. Gotchas
     3.7. Known Issues
+
 4. Usage
+
     4.1. Help
     4.2. Sniffing and Logging
     4.3. Configuration
@@ -45,7 +52,9 @@ Table of Contents
     4.8. Logger Alternatives
     4.9. Shell
     4.10. Signals
+
 5. Features
+
     5.1. Active Response
     5.2. AppId
     5.3. Binder
@@ -68,7 +77,9 @@ Table of Contents
     5.20. Telnet
     5.21. Trace
     5.22. Wizard
+
 6. DAQ Configuration and Modules
+
     6.1. Building the DAQ Library and Its Bundled DAQ Modules
     6.2. Configuration
     6.3. Interaction With Multiple Packet Threads

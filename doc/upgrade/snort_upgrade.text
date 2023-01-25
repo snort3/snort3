@@ -8,19 +8,22 @@ Snort 3 Upgrade Manual
 The Snort Team
 
 Revision History
-Revision 3.1.52.0 2023-01-18 06:06:50 EST TST
+Revision 3.1.53.0 2023-01-25 11:23:51 EST TST
 
 ---------------------------------------------------------------------
 
 Table of Contents
 
 1. Overview
+
     1.1. Efficacy
     1.2. Performance
     1.3. Scalability
     1.4. Usability
     1.5. Extensibility
+
 2. Snort 3 vs Snort 2
+
     2.1. Features New to Snort 3
     2.2. Features Improved over Snort 2
     2.3. Build Options
@@ -30,10 +33,13 @@ Table of Contents
     2.7. Output
     2.8. Sensitive Data
     2.9. Features Not Yet Supported by Snort 3
+
 3. Snort2Lua
+
     3.1. Snort2Lua Command Line
     3.2. Known Problems
     3.3. Usage
+
 4. Configuration Changes
 
 
@@ -820,6 +826,7 @@ change -> config 'checksum_mode'  ==> 'network.checksum_eval'
 change -> config 'daq_dir'  ==> 'daq.module_dirs'
 change -> config 'detection_filter'  ==> 'alerts.detection_filter_memcap'
 change -> config 'enable_deep_teredo_inspection'  ==> 'udp.deep_teredo_inspection'
+change -> config 'enable_mpls_overlapping_ip'  ==> 'packets.mpls_agnostic'
 change -> config 'event_filter'  ==> 'alerts.event_filter_memcap'
 change -> config 'max_attribute_hosts'  ==> 'attribute_table.max_hosts'
 change -> config 'max_attribute_services_per_host'  ==> 'attribute_table.max_services_per_host'
@@ -859,17 +866,17 @@ change -> daq: 'config daq:' ==> 'name'
 change -> daq_mode: 'config daq_mode:' ==> 'mode'
 change -> daq_var: 'config daq_var:' ==> 'variables'
 change -> detection: 'ac' ==> 'ac_full'
-change -> detection: 'ac-banded' ==> 'ac_banded'
+change -> detection: 'ac-banded' ==> 'ac_full'
 change -> detection: 'ac-bnfa' ==> 'ac_bnfa'
 change -> detection: 'ac-bnfa-nq' ==> 'ac_bnfa'
 change -> detection: 'ac-bnfa-q' ==> 'ac_bnfa'
 change -> detection: 'ac-nq' ==> 'ac_full'
 change -> detection: 'ac-q' ==> 'ac_full'
-change -> detection: 'ac-sparsebands' ==> 'ac_sparse_bands'
+change -> detection: 'ac-sparsebands' ==> 'ac_full'
 change -> detection: 'ac-split' ==> 'ac_full'
 change -> detection: 'ac-split' ==> 'split_any_any'
-change -> detection: 'ac-std' ==> 'ac_std'
-change -> detection: 'acs' ==> 'ac_sparse'
+change -> detection: 'ac-std' ==> 'ac_full'
+change -> detection: 'acs' ==> 'ac_full'
 change -> detection: 'bleedover-port-limit' ==> 'bleedover_port_limit'
 change -> detection: 'debug-print-fast-pattern' ==> 'show_fast_patterns'
 change -> detection: 'intel-cpm' ==> 'hyperscan'
@@ -878,7 +885,6 @@ change -> detection: 'lowmem-q' ==> 'lowmem'
 change -> detection: 'max-pattern-len' ==> 'max_pattern_len'
 change -> detection: 'no_stream_inserts' ==> 'detect_raw_tcp'
 change -> detection: 'search-method' ==> 'search_method'
-change -> detection: 'search-optimize' ==> 'search_optimize'
 change -> detection: 'split-any-any' ==> 'split_any_any = true by default'
 change -> detection: 'split-any-any' ==> 'split_any_any'
 change -> dnp3: 'ports' ==> 'bindings'
@@ -956,6 +962,7 @@ change -> rate_filter: 'sig_id' ==> 'sid'
 change -> reputation: 'shared_mem' ==> 'list_dir'
 change -> sfportscan: 'proto' ==> 'protos'
 change -> sfportscan: 'scan_type' ==> 'scan_types'
+change -> sip: 'max_requestName_len' ==> 'max_request_name_len'
 change -> sip: 'ports' ==> 'bindings'
 change -> smtp: 'ports' ==> 'bindings'
 change -> ssh: 'server_ports' ==> 'bindings'
@@ -1021,6 +1028,7 @@ deleted -> config 'disable_decode_drops'
 deleted -> config 'disable_inline_init_failopen'
 deleted -> config 'disable_ipopt_alerts'
 deleted -> config 'disable_ipopt_drops'
+deleted -> config 'disable_replace'
 deleted -> config 'disable_tcpopt_alerts'
 deleted -> config 'disable_tcpopt_drops'
 deleted -> config 'disable_tcpopt_experimental_alerts'
@@ -1037,6 +1045,7 @@ deleted -> config 'enable_decode_oversized_alerts'
 deleted -> config 'enable_decode_oversized_drops'
 deleted -> config 'enable_gtp'
 deleted -> config 'enable_ipopt_drops'
+deleted -> config 'enable_mpls_multicast'
 deleted -> config 'enable_tcpopt_drops'
 deleted -> config 'enable_tcpopt_experimental_drops'
 deleted -> config 'enable_tcpopt_obsolete_drops'
@@ -1058,10 +1067,12 @@ deleted -> config 'sfalert_unified2'
 deleted -> config 'sflog_unified2'
 deleted -> config 'sidechannel'
 deleted -> config 'so_rule_memcap'
+deleted -> config 'stateful'
 deleted -> csv: '<filename> can no longer be specific'
 deleted -> csv: 'default'
 deleted -> csv: 'trheader'
 deleted -> detection: 'mwm'
+deleted -> detection: 'search-optimize is always true'
 deleted -> dnp3: 'disabled'
 deleted -> dnp3: 'memcap'
 deleted -> dns: 'enable_experimental_types'
@@ -1075,6 +1086,8 @@ deleted -> ftp_telnet_protocol: 'detect_anomalies'
 deleted -> full: '<filename> can no longer be specific'
 deleted -> http_inspect: 'detect_anomalous_servers'
 deleted -> http_inspect: 'disabled'
+deleted -> http_inspect: 'fast_blocking'
+deleted -> http_inspect: 'normalize_random_nulls_in_text'
 deleted -> http_inspect: 'proxy_alert'
 deleted -> http_inspect_server: 'allow_proxy_use'
 deleted -> http_inspect_server: 'enable_cookie'
@@ -1152,6 +1165,7 @@ deleted -> stream5_tcp: 'ignore_any_rules'
 deleted -> stream5_tcp: 'log_asymmetric_traffic'
 deleted -> stream5_tcp: 'policy noack'
 deleted -> stream5_tcp: 'policy unknown'
+deleted -> stream5_tcp: 'use_static_footprint_sizes'
 deleted -> stream5_udp: 'ignore_any_rules'
 deleted -> tcpdump: '<filename> can no longer be specific'
 deleted -> test: 'file'

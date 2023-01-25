@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.52.0 2023-01-18 06:06:29 EST TST
+Revision 3.1.53.0 2023-01-25 11:22:45 EST TST
 
 ---------------------------------------------------------------------
 
@@ -16,6 +16,7 @@ Table of Contents
 
 1. Help
 2. Basic Modules
+
     2.1. active
     2.2. alerts
     2.3. attribute_table
@@ -49,7 +50,9 @@ Table of Contents
     2.31. snort
     2.32. suppress
     2.33. trace
+
 3. Codec Modules
+
     3.1. arp
     3.2. auth
     3.3. ciscometadata
@@ -77,10 +80,14 @@ Table of Contents
     3.25. udp
     3.26. vlan
     3.27. wlan
+
 4. Connector Modules
+
     4.1. file_connector
     4.2. tcp_connector
+
 5. Inspector Modules
+
     5.1. appid
     5.2. appid_listener
     5.3. arp_spoof
@@ -136,10 +143,14 @@ Table of Contents
     5.53. stream_user
     5.54. telnet
     5.55. wizard
+
 6. IPS Action Modules
+
     6.1. react
     6.2. reject
+
 7. IPS Option Modules
+
     7.1. ack
     7.2. appids
     7.3. asn1
@@ -271,9 +282,11 @@ Table of Contents
     7.129. vba_data
     7.130. window
     7.131. wscale
+
 8. Search Engine Modules
 9. SO Rule Modules
 10. Logger Modules
+
     10.1. alert_csv
     10.2. alert_ex
     10.3. alert_fast
@@ -286,7 +299,9 @@ Table of Contents
     10.10. log_hext
     10.11. log_pcap
     10.12. unified2
+
 11. Appendix
+
     11.1. Build Options
     11.2. Environment Variables
     11.3. Command Line Options
@@ -4422,6 +4437,10 @@ Peg counts:
     (sum)
   * netflow.version_9: count of netflow version 9 packets received
     (sum)
+  * netflow.netflow_cache_bytes_in_use: number of bytes used in
+    netflow cache (now)
+  * netflow.template_cache_bytes_in_use: number of bytes used in
+    template cache (now)
 
 
 5.32. normalizer
@@ -4900,6 +4919,8 @@ Peg counts:
     of new tracking (sum)
   * port_scan.reload_prunes: number of trackers pruned on reload due
     to reduced memcap (sum)
+  * port_scan.bytes_in_use: number of bytes currently used by
+    portscan (now)
 
 
 5.38. reputation
@@ -11651,8 +11672,12 @@ libraries see the Getting Started section of the manual.
     its value (sum)
   * netflow.invalid_netflow_record: count of invalid netflow records
     (sum)
+  * netflow.netflow_cache_bytes_in_use: number of bytes used in
+    netflow cache (now)
   * netflow.packets: total packets processed (sum)
   * netflow.records: total records found in netflow data (sum)
+  * netflow.template_cache_bytes_in_use: number of bytes used in
+    template cache (now)
   * netflow.unique_flows: count of unique netflow flows (sum)
   * netflow.v9_missing_template: count of data records that are
     missing templates (sum)
@@ -11789,6 +11814,8 @@ libraries see the Getting Started section of the manual.
   * pop.uu_decoded_bytes: total uu decoded bytes (sum)
   * port_scan.alloc_prunes: number of trackers pruned on allocation
     of new tracking (sum)
+  * port_scan.bytes_in_use: number of bytes currently used by
+    portscan (now)
   * port_scan.packets: number of packets processed by port scan (sum)
   * port_scan.reload_prunes: number of trackers pruned on reload due
     to reduced memcap (sum)
@@ -12795,12 +12822,12 @@ session.
 The TCP packet is invalid because it doesn’t have a SYN, ACK, or RST
 flag set.
 
-116:424 (pbb) truncated ethernet header
+116:424 (eth) truncated ethernet header
 
 The packet length is less than the minimum ethernet header size (14
 bytes)
 
-116:424 (pbb) truncated ethernet header
+116:424 (eth) truncated ethernet header
 
 A truncated ethernet header was detected.
 
