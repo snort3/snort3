@@ -192,9 +192,6 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
 
     update_perf_base_state(TcpStreamTracker::TCP_CLOSED);
 
-    set_splitter(true, nullptr);
-    set_splitter(false, nullptr);
-
     if ( restart )
     {
         flow->restart(free_flow_data);
@@ -207,6 +204,9 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
         client.reassembler.clear_paf();
         server.reassembler.clear_paf();
     }
+
+    set_splitter(true, nullptr);
+    set_splitter(false, nullptr);
 
     tel.log_internal_event(SESSION_EVENT_CLEAR);
 }
