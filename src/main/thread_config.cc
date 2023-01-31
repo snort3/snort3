@@ -43,6 +43,8 @@ static hwloc_topology_t topology = nullptr;
 static hwloc_cpuset_t process_cpuset = nullptr;
 static const struct hwloc_topology_support* topology_support = nullptr;
 static unsigned instance_max = 1;
+static std::mutex instance_mutex;
+static std::map<int, int> instance_id_to_tid;
 
 struct CpuSet
 {
@@ -162,13 +164,15 @@ void ThreadConfig::set_named_thread_affinity(const string& name, CpuSet* cpuset)
         ParseWarning(WARN_CONF, "This platform does not support setting thread affinity.\n");
 }
 
-void ThreadConfig::set_instance_tid(int id, int tid)
+void ThreadConfig::set_instance_tid(int id)
 {
-    instance_id_to_tid.emplace(id,tid);
+    std::lock_guard<std::mutex> lock(instance_mutex);
+    instance_id_to_tid.emplace(id, (int)gettid());
 }
 
-int ThreadConfig::get_instance_tid(int id) const
+int ThreadConfig::get_instance_tid(int id)
 {
+    std::lock_guard<std::mutex> lock(instance_mutex);
     int ret = -1;
     auto iter = instance_id_to_tid.find(id);
     if ( iter != instance_id_to_tid.end() )

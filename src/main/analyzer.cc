@@ -67,7 +67,6 @@
 #include "time/packet_time.h"
 #include "trace/trace_api.h"
 #include "utils/stats.h"
-#include "utils/util.h"
 
 #include "analyzer_command.h"
 #include "oops_handler.h"
@@ -743,7 +742,7 @@ void Analyzer::operator()(Swapper* ps, uint16_t run_num)
 
     // init here to pin separately from packet threads
     DetectionEngine::thread_init();
-    SnortConfig::get_conf()->thread_config->set_instance_tid(id, (int)gettid());
+    SnortConfig::get_conf()->thread_config->set_instance_tid(id);
     // Perform all packet thread initialization actions that need to be taken with escalated
     // privileges prior to starting the DAQ module.
     SnortConfig::get_conf()->thread_config->implement_thread_affinity(

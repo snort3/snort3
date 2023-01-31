@@ -39,14 +39,14 @@ public:
     static unsigned get_instance_max();
     static void term();
     static void start_watchdog();
+    static void set_instance_tid(int);
+    static int get_instance_tid(int);
 
     ~ThreadConfig();
     void set_thread_affinity(SThreadType, unsigned id, CpuSet*);
     void set_named_thread_affinity(const std::string&, CpuSet*);
     void implement_thread_affinity(SThreadType, unsigned id);
     void implement_named_thread_affinity(const std::string& name);
-    void set_instance_tid(int, int);
-    int get_instance_tid(int) const;
 
     static constexpr unsigned int DEFAULT_THREAD_ID = 0;
 
@@ -69,7 +69,6 @@ private:
     };
     std::map<TypeIdPair, CpuSet*, TypeIdPairComparer> thread_affinity;
     std::map<std::string, CpuSet*> named_thread_affinity;
-    std::map<int, int> instance_id_to_tid;
 };
 }
 
