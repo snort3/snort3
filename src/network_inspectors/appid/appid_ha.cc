@@ -49,7 +49,7 @@ static AppIdSession* create_appid_session(Flow& flow, const FlowKey* key,
     AppIdSession* asd = new AppIdSession(static_cast<IpProtocol>(key->ip_protocol),
         flow.flags.client_initiated ? &flow.client_ip : &flow.server_ip,
         flow.flags.client_initiated ? flow.client_port : flow.server_port, inspector,
-        inspector.get_ctxt().get_odp_ctxt(), key->addressSpaceId);
+        *pkt_thread_odp_ctxt, key->addressSpaceId);
     if (appidDebug->is_active())
         LogMessage("AppIdDbg %s high-avail - New AppId session created in consume\n",
             appidDebug->get_debug_session());
@@ -70,7 +70,7 @@ bool AppIdHAAppsClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
     AppIdInspector* inspector =
         static_cast<AppIdInspector*>(
             InspectorManager::get_inspector(MOD_NAME, MOD_USAGE, appid_inspector_api.type));
-    if (!inspector)
+    if (!inspector or !pkt_thread_odp_ctxt)
         return false;
 
     AppIdSession* asd = (AppIdSession*)(flow->get_flow_data(AppIdSession::inspector_id));
@@ -107,7 +107,7 @@ bool AppIdHAAppsClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
             asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
 
         asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
-        if (asd->get_tp_appid_ctxt())
+        if (asd->get_tp_appid_ctxt() and !ThirdPartyAppIdContext::get_tp_reload_in_progress())
         {
             const TPLibHandler* tph = TPLibHandler::get();
             TpAppIdCreateSession tpsf = tph->tpsession_factory();
@@ -232,7 +232,7 @@ bool AppIdHAHttpClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
     AppIdInspector* inspector =
         static_cast<AppIdInspector*>(
             InspectorManager::get_inspector(MOD_NAME, MOD_USAGE, appid_inspector_api.type));
-    if (!inspector)
+    if (!inspector or !pkt_thread_odp_ctxt)
         return false;
 
     AppIdSession* asd = appid_api.get_appid_session(*flow);
@@ -322,7 +322,7 @@ bool AppIdHATlsHostClient::consume(Flow*& flow, const FlowKey* key, HAMessage& m
     AppIdInspector* inspector =
         static_cast<AppIdInspector*>(
             InspectorManager::get_inspector(MOD_NAME, MOD_USAGE, appid_inspector_api.type));
-    if (!inspector)
+    if (!inspector or !pkt_thread_odp_ctxt)
         return false;
 
     AppIdSession* asd = appid_api.get_appid_session(*flow);

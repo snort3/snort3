@@ -545,7 +545,7 @@ static int service_add_service(lua_State* L)
     /*Phase2 - discuss AppIdServiceSubtype will be maintained on lua side therefore the last
       parameter on the following call is nullptr. Subtype is not displayed on DC at present. */
     unsigned int retValue = ud->sd->add_service(*lsd->ldp.change_bits, *lsd->ldp.asd, lsd->ldp.pkt,
-        lsd->ldp.dir, ud->get_odp_ctxt().get_app_info_mgr().get_appid_by_service_id(service_id),
+        lsd->ldp.dir, lsd->ldp.asd->get_odp_ctxt().get_app_info_mgr().get_appid_by_service_id(service_id),
         vendor, version, nullptr);
 
     lua_pushnumber(L, retValue);
@@ -944,9 +944,10 @@ static int client_add_application(lua_State* L)
     unsigned int service_id = lua_tonumber(L, 2);
     unsigned int productId = lua_tonumber(L, 4);
     const char* version = lua_tostring(L, 5);
+    OdpContext& odp_ctxt = lsd->ldp.asd->get_odp_ctxt();
     ud->cd->add_app(*lsd->ldp.pkt, *lsd->ldp.asd, lsd->ldp.dir,
-        ud->get_odp_ctxt().get_app_info_mgr().get_appid_by_service_id(service_id),
-        ud->get_odp_ctxt().get_app_info_mgr().get_appid_by_client_id(productId), version,
+        odp_ctxt.get_app_info_mgr().get_appid_by_service_id(service_id),
+        odp_ctxt.get_app_info_mgr().get_appid_by_client_id(productId), version,
         *lsd->ldp.change_bits);
 
     lua_pushnumber(L, 0);
@@ -968,7 +969,7 @@ static int client_add_user(lua_State* L)
     const char* userName = lua_tostring(L, 2);
     unsigned int service_id = lua_tonumber(L, 3);
     ud->cd->add_user(*lsd->ldp.asd, userName,
-        ud->get_odp_ctxt().get_app_info_mgr().get_appid_by_service_id(service_id), true,
+        lsd->ldp.asd->get_odp_ctxt().get_app_info_mgr().get_appid_by_service_id(service_id), true,
         *lsd->ldp.change_bits);
     lua_pushnumber(L, 0);
     return 1;
@@ -982,7 +983,7 @@ static int client_add_payload(lua_State* L)
 
     unsigned int payloadId = lua_tonumber(L, 2);
     ud->cd->add_payload(*lsd->ldp.asd,
-        ud->get_odp_ctxt().get_app_info_mgr().get_appid_by_payload_id(payloadId));
+        lsd->ldp.asd->get_odp_ctxt().get_app_info_mgr().get_appid_by_payload_id(payloadId));
 
     lua_pushnumber(L, 0);
     return 1;
@@ -1302,9 +1303,9 @@ static int detector_add_host_port_dynamic(lua_State* L)
 {
     auto& ud = *UserData<LuaClientObject>::check(L, DETECTOR, 1);
     // Verify detector user data and that we are in packet context
-    ud->validate_lua_state(true);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    if (!ud->get_odp_ctxt().is_host_port_app_cache_runtime)
+    if (!lsd->ldp.asd->get_odp_ctxt().is_host_port_app_cache_runtime)
         return 0;
 
     SfIp ip_address;
@@ -2635,16 +2636,16 @@ static int create_future_flow(lua_State* L)
     AppId client_id  = lua_tointeger(L, 8);
     AppId payload_id = lua_tointeger(L, 9);
     AppId app_id_to_snort = lua_tointeger(L, 10);
+    OdpContext& odp_ctxt = lsd->ldp.asd->get_odp_ctxt();
     if (app_id_to_snort > APP_ID_NONE)
     {
-        AppInfoTableEntry* entry = ud->get_odp_ctxt().get_app_info_mgr().get_app_info_entry(
+        AppInfoTableEntry* entry = odp_ctxt.get_app_info_mgr().get_app_info_entry(
             app_id_to_snort);
         if (!entry)
             return 0;
         snort_protocol_id = entry->snort_protocol_id;
     }
 
-    OdpContext& odp_ctxt = lsd->ldp.asd->get_odp_ctxt();
     AppIdSession* fp = AppIdSession::create_future_session(lsd->ldp.pkt,  &client_addr,
         client_port, &server_addr, server_port, proto, snort_protocol_id, odp_ctxt);
     if (fp)

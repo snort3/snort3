@@ -124,14 +124,16 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
     client_id = APP_ID_NONE;
     payload_id = APP_ID_NONE;
 
+    if (!pkt_thread_odp_ctxt)
+        return false;
+
     if (flow)
         asd = get_appid_session(*flow);
 
     if (asd)
     {
         // Skip detection for sessions using old odp context after odp reload
-        if (!pkt_thread_odp_ctxt or
-            pkt_thread_odp_ctxt->get_version() != asd->get_odp_ctxt_version())
+        if (pkt_thread_odp_ctxt->get_version() != asd->get_odp_ctxt_version())
             return false;
 
         AppidChangeBits change_bits;
@@ -213,24 +215,20 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
     }
     else
     {
-        AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
-        if (inspector)
-        {
-            SslPatternMatchers& ssl_matchers = inspector->get_ctxt().get_odp_ctxt().get_ssl_matchers();
+        SslPatternMatchers& ssl_matchers = pkt_thread_odp_ctxt->get_ssl_matchers();
 
-            if (server_name and !sni_mismatch)
-                ssl_matchers.scan_hostname((const uint8_t*)server_name, strlen(server_name),
-                    client_id, payload_id);
-            if (first_alt_name and client_id == APP_ID_NONE and payload_id == APP_ID_NONE)
-                ssl_matchers.scan_hostname((const uint8_t*)first_alt_name, strlen(first_alt_name),
-                    client_id, payload_id);
-            if (common_name and client_id == APP_ID_NONE and payload_id == APP_ID_NONE)
-                ssl_matchers.scan_cname((const uint8_t*)common_name, strlen(common_name), client_id,
-                    payload_id);
-            if (org_unit and client_id == APP_ID_NONE and payload_id == APP_ID_NONE)
-                ssl_matchers.scan_cname((const uint8_t*)org_unit, strlen(org_unit), client_id,
-                    payload_id);
-        }
+        if (server_name and !sni_mismatch)
+            ssl_matchers.scan_hostname((const uint8_t*)server_name, strlen(server_name),
+                client_id, payload_id);
+        if (first_alt_name and client_id == APP_ID_NONE and payload_id == APP_ID_NONE)
+            ssl_matchers.scan_hostname((const uint8_t*)first_alt_name, strlen(first_alt_name),
+                client_id, payload_id);
+        if (common_name and client_id == APP_ID_NONE and payload_id == APP_ID_NONE)
+            ssl_matchers.scan_cname((const uint8_t*)common_name, strlen(common_name), client_id,
+                payload_id);
+        if (org_unit and client_id == APP_ID_NONE and payload_id == APP_ID_NONE)
+            ssl_matchers.scan_cname((const uint8_t*)org_unit, strlen(org_unit), client_id,
+                payload_id);
     }
 
     if (client_id != APP_ID_NONE or payload_id != APP_ID_NONE)

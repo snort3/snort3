@@ -168,7 +168,8 @@ public:
     void set_tls_host(const char* new_tls_host, uint32_t len, AppidChangeBits& change_bits)
     {
         set_tls_host(new_tls_host, len, true);
-        change_bits.set(APPID_TLSHOST_BIT);
+        if (new_tls_host and *new_tls_host != '\0')
+            change_bits.set(APPID_TLSHOST_BIT);
     }
 
     void set_tls_first_alt_name(const char* new_tls_first_alt_name, uint32_t len, AppidChangeBits& change_bits)
