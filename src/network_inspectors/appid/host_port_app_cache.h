@@ -59,6 +59,37 @@ struct HostPortKey
 };
 PADDING_GUARD_END
 
+PADDING_GUARD_BEGIN
+struct FirstPktkey
+{
+    FirstPktkey()
+    {
+        max_network_range.clear();
+        network_address.clear();
+        port = 0;
+        proto = IpProtocol::PROTO_NOT_SET;
+    }
+
+    bool operator<(const FirstPktkey& right) const
+    {
+        if ((htonl(right.netmask[0]) < htonl(this->netmask[0])) or 
+            (htonl(right.netmask[1]) < htonl(this->netmask[1])) or 
+            (htonl(right.netmask[2]) < htonl(this->netmask[2])) or 
+            (htonl(right.netmask[3]) < htonl(this->netmask[3])))
+            return true;
+        else
+            return false;
+    }
+
+    uint32_t netmask[4];
+    snort::SfIp max_network_range;
+    snort::SfIp network_address;
+    uint16_t port;
+    IpProtocol proto;
+    char padding;
+};
+PADDING_GUARD_END
+
 struct HostPortVal
 {
     AppId appId;
@@ -81,19 +112,22 @@ public:
         unsigned type, AppId);
     
     HostAppIdsVal* find_on_first_pkt(const snort::SfIp*, uint16_t port, IpProtocol, const OdpContext&);
-    bool add_host(const snort::SnortConfig*, const snort::SfIp*, uint16_t port, IpProtocol,
+    bool add_host(const snort::SnortConfig*, const snort::SfIp*, uint32_t* netmask, uint16_t port, IpProtocol,
         AppId, AppId, AppId, unsigned reinspect);
     void dump();
 
     ~HostPortCache()
     {
         cache.clear();
-        cache_first.clear();
+        cache_first_ip.clear();
+        cache_first_subnet.clear();
     }
 
 private:
+
     std::map<HostPortKey, HostPortVal> cache;
-    std::map<HostPortKey, HostAppIdsVal> cache_first;
+    std::map<HostPortKey, HostAppIdsVal> cache_first_ip;
+    std::multimap<FirstPktkey, HostAppIdsVal> cache_first_subnet;
 };
 
 #endif

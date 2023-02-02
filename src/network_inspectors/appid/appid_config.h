@@ -169,10 +169,10 @@ public:
         return host_port_cache.add(sc, ip, port, proto, type, appid);
     }
 
-    bool host_first_pkt_add(const snort::SnortConfig* sc, const snort::SfIp* ip, uint16_t port,
+    bool host_first_pkt_add(const snort::SnortConfig* sc, const snort::SfIp* ip, uint32_t* netmask, uint16_t port,
         IpProtocol proto, AppId protocol_appid, AppId client_appid, AppId web_appid, unsigned reinspect)
     {
-        return first_pkt_cache.add_host(sc, ip, port, proto, protocol_appid, client_appid, web_appid, reinspect);
+        return first_pkt_cache.add_host(sc, ip, netmask, port, proto, protocol_appid, client_appid, web_appid, reinspect);
     }
 
     HostAppIdsVal* host_first_pkt_find(const snort::SfIp* ip, uint16_t port, IpProtocol proto)

@@ -34,6 +34,73 @@
 
 using namespace snort;
 
+inline void apply_min_ip_range(SfIp& ip, const uint32_t* netmask)
+{
+    if (ip.get_family() == AF_INET)
+    {
+        uint32_t tmp_val = ip.get_ip4_value() & netmask[3];
+        ip.set(&tmp_val, AF_INET);
+    }
+    else if (ip.get_family() == AF_INET6)
+    {
+        uint32_t* tmp_val = const_cast<uint32_t*>(ip.get_ip6_ptr());
+        tmp_val[0] = tmp_val[0] & netmask[0];
+        tmp_val[1] = tmp_val[1] & netmask[1];
+        tmp_val[2] = tmp_val[2] & netmask[2];
+        tmp_val[3] = tmp_val[3] & netmask[3];
+        ip.set(tmp_val, AF_INET6);
+    }
+}
+
+inline void apply_max_ip_range(SfIp& ip, const uint32_t* netmask)
+{
+    if (ip.get_family() == AF_INET)
+    {
+        uint32_t tmp_val = ip.get_ip4_value() | ~netmask[3];
+        ip.set(&tmp_val, AF_INET);
+    }
+    else if (ip.get_family() == AF_INET6)
+    {
+        uint32_t* tmp_val = const_cast<uint32_t*>(ip.get_ip6_ptr());
+
+        tmp_val[0] = tmp_val[0] | ~netmask[0];
+        tmp_val[1] = tmp_val[1] | ~netmask[1];
+        tmp_val[2] = tmp_val[2] | ~netmask[2];
+        tmp_val[3] = tmp_val[3] | ~netmask[3];
+
+        ip.set(tmp_val, AF_INET6);
+    }
+}
+
+inline bool check_ip_range(const SfIp& max, const SfIp& min, const SfIp& ip, const uint32_t* netmask)
+{
+    if (max.get_family() != ip.get_family())
+        return false;
+
+    if (max.is_ip4())
+    {
+        SfIp tmp = ip;
+        apply_min_ip_range(tmp, netmask);
+        if (tmp.get_ip4_value() == min.get_ip4_value())
+        {
+            apply_max_ip_range(tmp, netmask);
+            return tmp.get_ip4_value() == max.get_ip4_value();
+        }
+    }
+    else if (max.is_ip6())
+    {
+        SfIp tmp = ip;
+        apply_min_ip_range(tmp, netmask);
+        if (memcmp(tmp.get_ip6_ptr(), min.get_ip6_ptr(), 16) == 0)
+        {
+            apply_max_ip_range(tmp, netmask);
+            return memcmp(tmp.get_ip6_ptr(), max.get_ip6_ptr(), 16) == 0;
+        }
+    }
+
+    return false;
+}
+
 HostPortVal* HostPortCache::find(const SfIp* ip, uint16_t port, IpProtocol protocol,
     const OdpContext& odp_ctxt)
 {
@@ -73,45 +140,86 @@ bool HostPortCache::add(const SnortConfig* sc, const SfIp* ip, uint16_t port, Ip
     return true;
 }
 
-
 HostAppIdsVal* HostPortCache::find_on_first_pkt(const SfIp* ip, uint16_t port, IpProtocol protocol,
     const OdpContext& odp_ctxt)
 {
-    HostPortKey hk;
+    uint16_t lookup_port = (odp_ctxt.allow_port_wildcard_host_cache)? 0 : port;
 
-    hk.ip = *ip;
-    hk.port = (odp_ctxt.allow_port_wildcard_host_cache)? 0 : port;
-    hk.proto = protocol;
+    if (!cache_first_ip.empty())
+    {
+        HostPortKey hk;
 
-    std::map<HostPortKey, HostAppIdsVal>::iterator it;
-    it = cache_first.find(hk);
-    if (it != cache_first.end())
-        return &it->second;
-    else
-        return nullptr;
+        hk.ip = *ip;
+        hk.port = lookup_port;
+        hk.proto = protocol;
+
+        std::map<HostPortKey, HostAppIdsVal>::iterator check_cache;
+        check_cache = cache_first_ip.find(hk);
+        if (check_cache != cache_first_ip.end())
+            return &check_cache->second;
+    }
+
+    for (std::map<FirstPktkey ,HostAppIdsVal>::iterator iter = cache_first_subnet.begin(); iter != cache_first_subnet.end(); ++iter)
+    {
+        if (iter->first.port == lookup_port and iter->first.proto == protocol and
+            check_ip_range(iter->first.max_network_range, iter->first.network_address, *ip, &iter->first.netmask[0]))
+        {
+            return &iter->second;
+        }
+    }
+    
+    return nullptr;
 }
 
-bool HostPortCache::add_host(const SnortConfig* sc, const SfIp* ip, uint16_t port, IpProtocol proto,
+bool HostPortCache::add_host(const SnortConfig* sc, const SfIp* ip, uint32_t* netmask, uint16_t port, IpProtocol proto,
     AppId protocol_appId, AppId client_appId, AppId web_appId, unsigned reinspect)
 {
-    HostPortKey hk;
-    HostAppIdsVal hv;
+    if (!netmask)
+    {
+        HostPortKey hk;
+        HostAppIdsVal hv;
 
-    hk.ip = *ip;
-    AppIdInspector* inspector =
-        (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, false, sc);
-    assert(inspector);
-    const AppIdContext& ctxt = inspector->get_ctxt();
-    hk.port = (ctxt.get_odp_ctxt().allow_port_wildcard_host_cache)? 0 : port;
-    hk.proto = proto;
+        hk.ip = *ip;
+        AppIdInspector* inspector =
+            (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, false, sc);
+        assert(inspector);
+        const AppIdContext& ctxt = inspector->get_ctxt();
+        hk.port = (ctxt.get_odp_ctxt().allow_port_wildcard_host_cache)? 0 : port;
+        hk.proto = proto;
 
-    hv.protocol_appId = protocol_appId;
-    hv.client_appId = client_appId;
-    hv.web_appId = web_appId;
-    hv.reinspect = reinspect;
+        hv.protocol_appId = protocol_appId;
+        hv.client_appId = client_appId;
+        hv.web_appId = web_appId;
+        hv.reinspect = reinspect;
 
-    cache_first[ hk ] = hv;
+        cache_first_ip[ hk ] = hv;
+    }
+    else 
+    {
+        FirstPktkey hk;
+        HostAppIdsVal hv;
 
+        hk.network_address = *ip;
+        apply_min_ip_range(hk.network_address, netmask);
+        hk.max_network_range = hk.network_address;
+        apply_max_ip_range(hk.max_network_range, netmask);
+
+        memcpy(&hk.netmask[0], netmask, 16);
+        
+        AppIdInspector* inspector =
+            (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, false, sc);
+        assert(inspector);
+        const AppIdContext& ctxt = inspector->get_ctxt();
+        hk.port = (ctxt.get_odp_ctxt().allow_port_wildcard_host_cache)? 0 : port;
+        hk.proto = proto;
+
+        hv.protocol_appId = protocol_appId;
+        hv.client_appId = client_appId;
+        hv.web_appId = web_appId;
+        hv.reinspect = reinspect;
+
+        cache_first_subnet.emplace(hk, hv);
+    }
     return true;
 }
 
