@@ -27,7 +27,7 @@ echo ""
 function protocol_prompt()
 {
 local retval="zzz"
-local choice_list=( "TCP" "UDP" "HTTP" "SSL" "SIP" "RTMP" )
+local choice_list=( "TCP" "UDP" "HTTP" "SSL" "SIP" "RTMP" "First Packet")
 echo ""
 if [[ "$protocol_loop" = "atleastonce" ]]; then
     choice_list=( "Save Detector" "${choice_list[@]}" )
@@ -42,27 +42,40 @@ case $retval in
     "TCP")
         protocol_string="proto"
         protocol_choice=$retval
+        first_packet_only="0"
         break
         ;;
     "UDP")
         protocol_string="DC.ipproto.udp"
         protocol_choice=$retval
+        first_packet_only="0"
         break
         ;;
     "HTTP")
         protocol_choice=$retval
+        first_packet_only="0"
         break
         ;;
     "SSL")
         protocol_choice=$retval
+        first_packet_only="0"
         break
         ;;
     "SIP")
         protocol_choice=$retval
+        first_packet_only="0"
         break
         ;;
     "RTMP")
         protocol_choice=$retval
+        first_packet_only="0"
+        break
+        ;;
+    "First Packet")
+        protocol_choice=$retval
+        if [[ ${first_packet_only} = "-1" ]]; then
+            first_packet_only="1"
+        fi
         break
         ;;
     "Save Detector")
@@ -127,6 +140,48 @@ while [[ ${#pattern_bytes[i]} -gt 0 ]]; do
 done
 	unset retval
 fi
+done
+}
+function first_packet_pattern_prompt()
+{
+local retval="==0=="
+if [[ "${first_packet_protocol_appid}" = "" ]]; then
+    read -p "Enter Protocol AppId: " first_packet_protocol_appid
+    read -p "Enter Client AppId: " first_packet_client_appid
+    read -p "Enter Web AppId: " first_packet_webapp_appid
+fi
+read -p "Enter Server IP: " pattern_string
+local choice_list=( "TCP" "UDP" )
+echo "Protocol Type:"
+PS3="Selection: "
+select retval in "${choice_list[@]}";
+do
+case $retval in
+    "TCP")
+        first_packet_protocol_string="proto"
+        break
+        ;;
+    "UDP")
+        first_packet_protocol_string="DC.ipproto.udp"
+        break
+        ;;
+esac
+done
+choice_list=( "True" "False" )
+echo "Perform reinspection:"
+PS3="Selection: "
+select retval in "${choice_list[@]}";
+do
+case $retval in
+    "True")
+        first_packet_reinspect_flag="1"
+        break
+        ;;
+    "False")
+        first_packet_reinspect_flag="0"
+        break
+        ;;
+esac
 done
 }
 function offset_number_prompt()
@@ -277,10 +332,25 @@ function output_detectorinit_preamble()
 echo -e "function DetectorInit(detectorInstance)" >>"${OUTPUTFILE}"
 echo -e "" >>"${OUTPUTFILE}"
 echo -e "\tgDetector = detectorInstance;" >>"${OUTPUTFILE}"
-echo -en "\tgAppId = gDetector:open_createApp(\"" >>"${OUTPUTFILE}"
-echo -n "${APPIDSTRING}" >>"${OUTPUTFILE}"
-echo -e "\");" >>"${OUTPUTFILE}"
-echo -e "" >>"${OUTPUTFILE}"
+if [[ -f "$INTERMEDIATEFILE_FIRST_PACKET" ]]; then
+    echo -en "\tgProtocolAppId = gDetector:open_createApp(\"" >>"${OUTPUTFILE}"
+    echo -n "${first_packet_protocol_appid}" >>"${OUTPUTFILE}"
+    echo -e "\");" >>"${OUTPUTFILE}"
+    echo -en "\tgClientAppId = gDetector:open_createApp(\"" >>"${OUTPUTFILE}"
+    echo -n "${first_packet_client_appid}" >>"${OUTPUTFILE}"
+    echo -e "\");" >>"${OUTPUTFILE}"
+    echo -en "\tgWebAppAppId = gDetector:open_createApp(\"" >>"${OUTPUTFILE}"
+    echo -n "${first_packet_webapp_appid}" >>"${OUTPUTFILE}"
+    echo -e "\");" >>"${OUTPUTFILE}"
+    echo -e "" >>"${OUTPUTFILE}"
+fi
+
+if [[ ${first_packet_only} = "0" ]]; then
+    echo -en "\tgAppId = gDetector:open_createApp(\"" >>"${OUTPUTFILE}"
+    echo -n "${APPIDSTRING}" >>"${OUTPUTFILE}"
+    echo -e "\");" >>"${OUTPUTFILE}"
+    echo -e "" >>"${OUTPUTFILE}"
+fi
 }
 function output_detectorinit_postlude()
 {
@@ -475,6 +545,27 @@ echo -e "\tend" >>"${OUTPUTFILE}"
 rm "${INTERMEDIATEFILE_RTMP_URL}"
 fi
 }
+function output_first_packet_pattern()
+{
+if [[ "$port" = "-1" ]]; then
+    port="0"
+fi
+local i=0;
+while [[ "${port[i]}" != "" ]]; do
+    echo -en "\t\tgDetector:addHostFirstPktApp(" >> "${INTERMEDIATEFILE_FIRST_PACKET}"
+    echo -e "gProtocolAppId, gClientAppId, gWebAppAppId, ${first_packet_reinspect_flag}, \"${pattern_string}\", "${port[i]}", "${first_packet_protocol_string}")" >> "${INTERMEDIATEFILE_FIRST_PACKET}"
+    i=$(( $i + 1 ))
+done
+}
+function output_optional_first_packet_pattern()
+{
+if [[ -f "$INTERMEDIATEFILE_FIRST_PACKET" ]]; then
+    echo -e "\tif gDetector.addHostFirstPktApp then" >> "${OUTPUTFILE}"
+    cat "${INTERMEDIATEFILE_FIRST_PACKET}" >> "${OUTPUTFILE}"
+    echo -e "\tend" >> "${OUTPUTFILE}"
+    rm "${INTERMEDIATEFILE_FIRST_PACKET}"
+fi
+}
 function clean_up_APPIDSTRING()
 {
     APPIDSTRING=${APPIDSTRING//	/ }
@@ -525,6 +616,7 @@ echo -e "AppId strings MUST NOT INCLUDE tab, backslash, apostrophe, or double-qu
 echo -e ""
 read -p "Enter AppId string: " APPIDSTRING
 clean_up_APPIDSTRING
+first_packet_only="-1"
 if [[ "z${APPIDSTRING// /}" = "z" ]]; then
     echo "requires a non-empty string."
     exit 0
@@ -553,6 +645,7 @@ INTERMEDIATEFILE_SSL_CN="$MYHOME/$APPDETECTORFNAME.ssl.cn.temp"
 INTERMEDIATEFILE_SIP_SERVER="$MYHOME/$APPDETECTORFNAME.sip.server.temp"
 INTERMEDIATEFILE_SIP_USER_AGENT="$MYHOME/$APPDETECTORFNAME.sip.user.agent.temp"
 INTERMEDIATEFILE_RTMP_URL="$MYHOME/$APPDETECTORFNAME.rtmp.url.temp"
+INTERMEDIATEFILE_FIRST_PACKET="$MYHOME/$APPDETECTORFNAME.fp.tmp"
 if [[ -f "$OUTPUTFILE" ]]; then
     echo "$OUTPUTFILE will be overwritten."
     read -p "Is this acceptable? [n]: " answer
@@ -575,6 +668,7 @@ rm -f "${INTERMEDIATEFILE_SSL_CN}"
 rm -f "${INTERMEDIATEFILE_SIP_SERVER}"
 rm -f "${INTERMEDIATEFILE_SIP_USER_AGENT}"
 rm -f "${INTERMEDIATEFILE_RTMP_URL}"
+rm -f "${INTERMEDIATEFILE_FIRST_PACKET}"
 #### outer menu loop ####
 protocol_prompt
 while [[ "$protocol_choice" != "Q" ]]; do
@@ -674,6 +768,12 @@ case "$protocol_choice" in
     # we need to remember this as we add patterns for client and/or server
 	set_client_vs_server "SERVER"
 	;;
+"First Packet")
+    first_packet_pattern_prompt
+    port_numbers_prompt
+    set_client_vs_server "SERVER"
+    output_first_packet_pattern
+    ;;
 esac
 # Ask if they want more than one protocol filter
 protocol_prompt
@@ -691,6 +791,7 @@ output_optional_ssl_cn
 output_optional_sip_useragent
 output_optional_sip_server
 output_optional_rtmp_url
+output_optional_first_packet_pattern
 output_detectorinit_postlude
 output_detectorclean_preamble
 output_detectorclean_postlude
