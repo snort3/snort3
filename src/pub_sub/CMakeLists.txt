@@ -25,6 +25,7 @@ set (PUB_SUB_INCLUDES
     stream_event_ids.h
     smb_events.h
     ssh_events.h
+    ssl_events.h
 )
 
 add_library( pub_sub OBJECT

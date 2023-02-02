@@ -26,6 +26,7 @@
 #include "ssl.h"
 
 #include "packet.h"
+#include "utils/util.h"
 
 #define THREE_BYTE_LEN(x) ((x)[2] | (x)[1] << 8 | (x)[0] << 16)
 
@@ -39,6 +40,17 @@
 #define SSL3_SECOND_BYTE 0x03
 #define SSL2_CHELLO_BYTE 0x01
 #define SSL2_SHELLO_BYTE 0x04
+
+SSLV3ClientHelloData::~SSLV3ClientHelloData()
+{
+    snort_free(host_name);
+}
+
+void SSLV3ClientHelloData::clear()
+{
+    snort_free(host_name);
+    host_name = nullptr;
+}
 
 static uint32_t SSL_decode_version_v3(uint8_t major, uint8_t minor)
 {
@@ -69,7 +81,7 @@ static uint32_t SSL_decode_version_v3(uint8_t major, uint8_t minor)
 }
 
 static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
-    uint32_t cur_flags, uint32_t pkt_flags)
+    uint32_t cur_flags, uint32_t pkt_flags, SSLV3ClientHelloData* client_hello_data)
 {
     const SSL_handshake_hello_t* hello;
     uint32_t retval = 0;
@@ -113,6 +125,8 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
 
             hello = (const SSL_handshake_hello_t*)handshake;
             retval |= SSL_decode_version_v3(hello->major, hello->minor);
+
+            snort::parse_client_hello_data((const uint8_t*)handshake, size + SSL_HS_PAYLOAD_OFFSET, client_hello_data);
 
             break;
 
@@ -190,7 +204,8 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
 }
 
 static uint32_t SSL_decode_v3(const uint8_t* pkt, int size, uint32_t pkt_flags,
-    uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len, uint32_t* info_flags)
+    uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len, uint32_t* info_flags,
+    SSLV3ClientHelloData* client_hello_data)
 {
     uint32_t retval = 0;
     uint16_t hblen;
@@ -284,7 +299,7 @@ static uint32_t SSL_decode_v3(const uint8_t* pkt, int size, uint32_t pkt_flags,
             if (!(retval & SSL_CHANGE_CIPHER_FLAG))
             {
                 int hsize = size < (int)reclen ? size : (int)reclen;
-                retval |= SSL_decode_handshake_v3(pkt, hsize, retval, pkt_flags);
+                retval |= SSL_decode_handshake_v3(pkt, hsize, retval, pkt_flags, client_hello_data);
             }
             else if (ccs)
             {
@@ -427,7 +442,8 @@ namespace snort
 {
 uint32_t SSL_decode(
     const uint8_t* pkt, int size, uint32_t pkt_flags, uint32_t prev_flags,
-    uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len, uint32_t* info_flags)
+    uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len, uint32_t* info_flags,
+    SSLV3ClientHelloData* sslv3_chello_data)
 {
     if (!pkt || !size)
         return SSL_ARG_ERROR_FLAG;
@@ -448,7 +464,7 @@ uint32_t SSL_decode(
          * SSLv2 as TLS,the decoder will either catch a bad type, bad version, or
          * indicate that it is truncated. */
         if (size == 5)
-            return SSL_decode_v3(pkt, size, pkt_flags, alert_flags, partial_rec_len, max_hb_len, info_flags);
+            return SSL_decode_v3(pkt, size, pkt_flags, alert_flags, partial_rec_len, max_hb_len, info_flags, sslv3_chello_data);
 
         /* At this point, 'size' has to be > 5 */
 
@@ -495,7 +511,7 @@ uint32_t SSL_decode(
         }
     }
 
-    return SSL_decode_v3(pkt, size, pkt_flags, alert_flags, partial_rec_len, max_hb_len, info_flags);
+    return SSL_decode_v3(pkt, size, pkt_flags, alert_flags, partial_rec_len, max_hb_len, info_flags, sslv3_chello_data);
 }
 
 /* very simplistic - just enough to say this is binary data - the rules will make a final
@@ -555,6 +571,91 @@ bool IsSSL(const uint8_t* ptr, int len, int pkt_flags)
     }
 
     return false;
+}
+
+void parse_client_hello_data(const uint8_t* pkt, uint16_t size, SSLV3ClientHelloData* client_hello_data)
+{
+    if (client_hello_data == nullptr)
+        return;
+
+    if (size < sizeof(ServiceSSLV3Record))
+        return;
+    const ServiceSSLV3Record* rec = (const ServiceSSLV3Record*)pkt;
+    uint16_t ver = ntohs(rec->version);
+    if (rec->type != SSLV3RecordType::CLIENT_HELLO || (ver != 0x0300 && ver != 0x0301 && ver != 0x0302 &&
+        ver != 0x0303) || rec->length_msb)
+    {
+        return;
+    }
+    unsigned length = ntohs(rec->length) + offsetof(ServiceSSLV3Record, version);
+    if (size < length)
+        return;
+    pkt += sizeof(ServiceSSLV3Record);
+    size -= sizeof(ServiceSSLV3Record);
+
+    /* Session ID (1-byte length). */
+    if (size < 1)
+        return;
+    length = *((const uint8_t*)pkt);
+    pkt += length + 1;
+    if (size < (length + 1))
+        return;
+    size -= length + 1;
+
+    /* Cipher Suites (2-byte length). */
+    if (size < 2)
+        return;
+    length = ntohs(*((const uint16_t*)pkt));
+    pkt += length + 2;
+    if (size < (length + 2))
+        return;
+    size -= length + 2;
+
+    /* Compression Methods (1-byte length). */
+    if (size < 1)
+        return;
+    length = *((const uint8_t*)pkt);
+    pkt += length + 1;
+    if (size < (length + 1))
+        return;
+    size -= length + 1;
+
+    /* Extensions (2-byte length) */
+    if (size < 2)
+        return;
+    length = ntohs(*((const uint16_t*)pkt));
+    pkt += 2;
+    size -= 2;
+    if (size < length)
+        return;
+
+    /* We need at least type (2 bytes) and length (2 bytes) in the extension. */
+    while (length >= 4)
+    {
+        const ServiceSSLV3ExtensionServerName* ext = (const ServiceSSLV3ExtensionServerName*)pkt;
+        if (ntohs(ext->type) == SSL_EXT_SERVER_NAME)
+        {
+            /* Found server host name. */
+            if (length < sizeof(ServiceSSLV3ExtensionServerName))
+                return;
+
+            unsigned len = ntohs(ext->string_length);
+            if ((length - sizeof(ServiceSSLV3ExtensionServerName)) < len)
+                return;
+
+            const uint8_t* str = pkt + offsetof(ServiceSSLV3ExtensionServerName, string_length) +
+                sizeof(ext->string_length);
+            client_hello_data->host_name = snort_strndup((const char*)str, len);
+            return;
+        }
+
+        unsigned len = ntohs(ext->length) + offsetof(ServiceSSLV3ExtensionServerName, list_length);
+        if (len > length)
+            return;
+
+        pkt += len;
+        length -= len;
+    }
 }
 
 } // namespace snort
