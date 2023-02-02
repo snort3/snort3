@@ -465,12 +465,18 @@ void TcpStreamTracker::finish_server_init(TcpSegmentDescriptor& tsd)
 void TcpStreamTracker::finish_client_init(TcpSegmentDescriptor& tsd)
 {
     Flow* flow = tsd.get_flow();
-
     rcv_nxt = tsd.get_end_seq();
+
+    if ( reassembler.data_was_queued() )
+        return;  // we already have state, don't mess it up
 
     if ( !( flow->session_state & STREAM_STATE_MIDSTREAM ) )
     {
-        reassembler.set_seglist_base_seq(tsd.get_seq() + 1);
+        if ( tsd.get_tcph()->is_syn() )
+            reassembler.set_seglist_base_seq(tsd.get_seq() + 1);
+        else
+            reassembler.set_seglist_base_seq(tsd.get_seq());
+
         r_win_base = tsd.get_end_seq();
     }
     else
@@ -530,7 +536,7 @@ bool TcpStreamTracker::update_on_3whs_ack(TcpSegmentDescriptor& tsd)
 
     if ( good_ack )
     {
-        if (!irs)
+        if (!irs)  // FIXIT-L zero is a valid seq# so this kind of check is incorrect
             irs = tsd.get_seq();
         finish_client_init(tsd);
         update_tracker_ack_recv(tsd);

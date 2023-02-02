@@ -97,6 +97,9 @@ public:
     uint32_t get_xtradata_mask() const
     { return trs.xtradata_mask; }
 
+    bool data_was_queued() const
+    { return trs.sos.total_bytes_queued > 0; }
+
     uint32_t get_seg_count() const
     { return trs.sos.seg_count; }
 
