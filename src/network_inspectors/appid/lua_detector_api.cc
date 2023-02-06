@@ -332,6 +332,20 @@ static int detector_log_message(lua_State* L)
     return 0;
 }
 
+/** Add a netbios domain
+ *  lua params:
+ *    1 - the netbios domain
+ */
+static int service_add_netbios_domain(lua_State* L)
+{
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are in packet context
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
+    const char* netbios_domain = lua_tostring(L, 2);
+    lsd->ldp.asd->set_netbios_domain(*lsd->ldp.change_bits, netbios_domain);
+    return 0;
+}
+
 // Analyze application payload
 // lua params:
 //  1 - detector/stack - detector object
@@ -723,6 +737,71 @@ static int detector_get_pcre_groups(lua_State* L)
 
     pcre_free(re);
     return rc;
+}
+
+/** Extracts a specific substring of packet data.
+ *
+ * @param Lua_State* - Lua state variable.
+ * @param detector/stack - detector object,
+ * @param offset/stack - the offset at which we want our substring to start.
+ * @param len/stack - the number of bytes we want in our buffer
+ *
+ * @return substring/stack - the requested substring.
+ */
+static int detector_get_substr(lua_State* L)
+{
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are in packet context
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
+    unsigned int offset = lua_tonumber(L, 2);
+    unsigned int substr_len = lua_tonumber(L, 3);
+    if (offset + substr_len > lsd->ldp.size)
+    {
+        WarningMessage("Requested substr end offset %d is greater than data size %d\n",
+            offset + substr_len, lsd->ldp.size);
+        return 0;
+    }
+    lua_pushlstring(L, (const char*)lsd->ldp.data + offset, substr_len);
+    return 1;
+}
+
+/** Searches through packet data for a substr, and returns starting index if found.
+ *
+ *  Lazy search; only returns index to first match.
+ */
+static int detector_find_substr(lua_State* L)
+{
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are in packet context
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
+    unsigned int offset = lua_tonumber(L, 2);
+    size_t substr_len = 0;
+    const char* substr = lua_tolstring(L, 3, &substr_len);
+
+    for (unsigned int i = 0; i + offset <= lsd->ldp.size - substr_len; i++)
+    {
+        if (*((const char*)lsd->ldp.data + i + offset) == *substr)
+        {
+            if (substr_len == 1)
+            {
+                lua_pushnumber(L, offset + i);
+                return 1;
+            }
+
+            for (unsigned int j = 1; j < substr_len; j++)
+            {
+                if (*((const char*)lsd->ldp.data + i + j + offset) != *(substr + j))
+                    break;
+                else if (j == substr_len - 1)
+                {
+                    lua_pushnumber(L, offset + i);
+                    return 1;
+                }
+            }
+        }
+    }
+
+    return 0;
 }
 
 /**Performs a simple memory comparison.
@@ -3005,6 +3084,8 @@ static const luaL_Reg detector_methods[] =
     { "addDNSHostPattern",        detector_add_dns_host_pattern },
     { "registerClientDetectorCallback",   detector_register_client_callback },
     { "registerServiceDetectorCallback",  detector_register_service_callback },
+    { "getSubstr",                detector_get_substr },
+    { "substrIndex",              detector_find_substr },
 
     /*Obsolete - new detectors should not use this API */
     { "init",                     service_init },
@@ -3032,6 +3113,7 @@ static const luaL_Reg detector_methods[] =
     { "service_analyzePayload",     service_analyze_payload },
     { "service_addAppIdDataToFlow", service_add_data_id },
     { "service_addClient",          service_add_client },
+    { "service_addNetbiosDomain",   service_add_netbios_domain },
 
     /*client init API */
     { "client_init",              client_init },
