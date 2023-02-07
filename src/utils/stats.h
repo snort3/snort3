@@ -70,6 +70,8 @@ struct PacketCount
     PegCount cont_matches;
     PegCount cont_mismatches;
     PegCount cont_max_num;
+    PegCount cont_match_distance;
+    PegCount cont_mismatch_distance;
 };
 
 struct ProcessCount

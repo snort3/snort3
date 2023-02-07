@@ -221,6 +221,8 @@ const PegInfo pc_names[] =
     { CountType::SUM, "cont_matches", "total number of continuations matched" },
     { CountType::SUM, "cont_mismatches", "total number of continuations mismatched" },
     { CountType::MAX, "cont_max_num", "peak number of simultaneous continuations per flow" },
+    { CountType::SUM, "cont_match_distance", "total number of bytes jumped over by matched continuations"},
+    { CountType::SUM, "cont_mismatch_distance", "total number of bytes jumped over by mismatched continuations"},
     { CountType::END, nullptr, nullptr }
 };
 

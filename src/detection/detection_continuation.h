@@ -62,8 +62,8 @@ private:
 
     struct State
     {
-        State() : data(), root(), selector(nullptr), node(nullptr),
-            waypoint(0), sid(0), packet_number(0), opt_parent(false)
+        State() : data(), root(), selector(nullptr), node(nullptr), waypoint(0),
+            original_waypoint(0), sid(0), packet_number(0), opt_parent(false)
         {
             for (uint8_t i = 0; i < NUM_IPS_OPTIONS_VARS; ++i)
                 byte_extract_vars[i] = 0;
@@ -72,8 +72,9 @@ private:
         State(const detection_option_tree_node_t& n, const detection_option_eval_data_t& d,
             snort::IpsOption* s, unsigned wp, uint64_t id, bool p) : data(d),
             root(1, nullptr, d.otn, new RuleLatencyState[snort::ThreadConfig::get_instance_max()]()),
-            selector(s), node(const_cast<detection_option_tree_node_t*>(&n)),
-            waypoint(wp), sid(id), packet_number(d.p->context->packet_number), opt_parent(p)
+            selector(s), node(const_cast<detection_option_tree_node_t*>(&n)), waypoint(wp),
+            original_waypoint(wp), sid(id), packet_number(d.p->context->packet_number),
+            opt_parent(p)
         {
             for (uint8_t i = 0; i < NUM_IPS_OPTIONS_VARS; ++i)
                 snort::GetVarValueByIndex(&byte_extract_vars[i], i);
@@ -91,6 +92,7 @@ private:
         snort::IpsOption* selector;
         detection_option_tree_node_t* node;
         unsigned waypoint;
+        const unsigned original_waypoint;
         uint64_t sid;
         uint64_t packet_number;
         uint32_t byte_extract_vars[NUM_IPS_OPTIONS_VARS];
@@ -258,9 +260,15 @@ bool Continuation::State::eval(snort::Packet& p)
     clear_trace_cursor_info();
 
     if (result)
+    {
         snort::pc.cont_matches++;
+        snort::pc.cont_match_distance += original_waypoint;
+    }
     else
+    {
         snort::pc.cont_mismatches++;
+        snort::pc.cont_mismatch_distance += original_waypoint;
+    }
 
     return true;
 }
