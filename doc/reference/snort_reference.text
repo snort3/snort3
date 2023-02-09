@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.54.0 2023-01-26 13:55:08 EST TST
+Revision 3.1.55.0 2023-02-08 15:37:08 EST TST
 
 ---------------------------------------------------------------------
 
@@ -661,6 +661,10 @@ Peg counts:
     mismatched (sum)
   * detection.cont_max_num: peak number of simultaneous continuations
     per flow (max)
+  * detection.cont_match_distance: total number of bytes jumped over
+    by matched continuations (sum)
+  * detection.cont_mismatch_distance: total number of bytes jumped
+    over by mismatched continuations (sum)
 
 
 2.8. event_filter
@@ -11375,10 +11379,14 @@ libraries see the Getting Started section of the manual.
     available context (sum)
   * detection.cont_flows: total number of flows using continuation
     (sum)
+  * detection.cont_match_distance: total number of bytes jumped over
+    by matched continuations (sum)
   * detection.cont_matches: total number of continuations matched
     (sum)
   * detection.cont_max_num: peak number of simultaneous continuations
     per flow (max)
+  * detection.cont_mismatch_distance: total number of bytes jumped
+    over by mismatched continuations (sum)
   * detection.cont_mismatches: total number of continuations
     mismatched (sum)
   * detection.cont_recalls: total number of continuations recalled

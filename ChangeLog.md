@@ -1,3 +1,16 @@
+2023-02-08: 3.1.55.0
+
+* appid: first packet detector creation support in appid detector builder script
+* appid: support for IPv4 and IPv6 subnets for First Packet API
+* appid: updating lua API to accomodate netbios domain extraction, substring search, and substring index.
+* appid: use packet thread's odp context instead of inspector's context for packet processing
+* build: fix configure_cmake.sh 'too many arguments' error
+* detection: add new pegcount
+* main: avoid race conditions when accessing id to tid map
+* ssl: refactor ssl client hello parser to be used by appid/ssl inspectors
+* stream_tcp: fix passive pickups with missing packets. Thanks to nagmtuc and hedayat for reporting and helping debug the issue.
+* wizard: ensure Wizard is refcounted by MagicSplitter to prevent snort crashes due to memory corruption
+
 2023-01-25: 3.1.53.0
 
 * appid: publish tls host set in eve process event handler only when appid discovery is complete
