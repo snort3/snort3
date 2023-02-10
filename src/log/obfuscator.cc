@@ -28,20 +28,24 @@ using namespace snort;
 
 bool Obfuscator::first(ObfuscatorBlock &b)
 {
-    if ( blocks.empty() )
+    if (buffer_blocks.empty())
         return false;
-    it = blocks.begin();
+    if (cur_buf->second.empty())
+        return false;
+    it = cur_buf->second.begin();
     b = *it;
     return true;
 }
 
 bool Obfuscator::next(ObfuscatorBlock &b)
 {
-    if ( blocks.empty() )
+    if (buffer_blocks.empty())
         return false;
-    if ( it == blocks.end() )
+    if (cur_buf->second.empty())
         return false;
-    if ( ++it == blocks.end() )
+    if (it == cur_buf->second.end())
+        return false;
+    if (++it == cur_buf->second.end())
         return false;
     b = *it;
     return true;

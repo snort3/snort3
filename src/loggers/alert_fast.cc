@@ -134,6 +134,20 @@ static void load_buf_ids(
     }
 }
 
+static void ObfuscateLogNetData(TextLog* log, const uint8_t* data, const int len,
+    Packet* p, const char* buf_name, const char* buf_key, const char* ins_name)
+{
+    // FIXIT-P avoid string copy
+    std::string buf((const char*)data, len);
+    auto obf = p->obfuscator;
+
+    if ( obf and obf->select_buffer(buf_key) )
+        for ( const auto& b : *obf )
+            buf.replace(b.offset, b.length, b.length, obf->get_mask_char());
+
+    LogNetData(log, (const uint8_t*)buf.c_str(), len, p, buf_name, ins_name);
+}
+
 using BufferIds = std::vector<unsigned>;
 
 //-------------------------------------------------------------------------
@@ -283,7 +297,7 @@ void FastLogger::log_data(Packet* p, const Event& event)
             InspectionBuffer buf;
 
             if ( gadget->get_buf(id, p, buf) )
-                LogNetData(fast_log, buf.data, buf.len, p, buffers[id-1], ins_name);
+                ObfuscateLogNetData(fast_log, buf.data, buf.len, p, buffers[id-1], buffers[id-1], ins_name);
 
             log_pkt = (idv == rsp_ids);
         }
@@ -303,19 +317,8 @@ void FastLogger::log_data(Packet* p, const Event& event)
     }
     if (p->has_ip())
         LogIPPkt(fast_log, p);
-
-    else if ( log_pkt and p->obfuscator )
-    {
-        // FIXIT-P avoid string copy
-        std::string buf((const char*)p->data, p->dsize);
-
-        for ( const auto& b : *p->obfuscator )
-            buf.replace(b.offset, b.length, b.length, p->obfuscator->get_mask_char());
-
-        LogNetData(fast_log, (const uint8_t*)buf.c_str(), p->dsize, p, nullptr, ins_name);
-    }
     else if ( log_pkt )
-        LogNetData(fast_log, p->data, p->dsize, p, nullptr, ins_name);
+        ObfuscateLogNetData(fast_log, p->data, p->dsize, p, nullptr, "pkt_data", ins_name);
 
     DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
 

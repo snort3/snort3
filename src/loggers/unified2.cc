@@ -33,6 +33,7 @@
 
 #include "detection/signature.h"
 #include "detection/detection_util.h"
+#include "detection/detection_engine.h"
 #include "events/event.h"
 #include "framework/logger.h"
 #include "framework/module.h"
@@ -244,7 +245,30 @@ static void alert_event(Packet* p, const char*, Unified2Config* config, const Ev
     Unified2Write(write_pkt_buffer, write_len, config);
 }
 
+static void apply_mask(Obfuscator* obf, uint8_t* buf, const char* buf_key)
+{
+    if ( obf->select_buffer(buf_key) )
+        for ( const auto& b : *obf )
+            memset(buf + b.offset, obf->get_mask_char(), b.length);
+}
+
+static void obfuscate(uint8_t* buf, Obfuscator* obf, uint32_t type)
+{
+    switch (type)
+    {
+    case EVENT_INFO_HTTP_URI:
+        apply_mask(obf, buf, "http_uri");
+        break;
+    case EVENT_INFO_JSNORM_DATA:
+        apply_mask(obf, buf, "file_data");
+        break;
+    default:
+        break;
+    }
+}
+
 static void _WriteExtraData(Unified2Config* config,
+    Obfuscator* obf,
     uint32_t event_id,
     uint32_t event_second,
     const uint8_t* buffer,
@@ -297,6 +321,9 @@ static void _WriteExtraData(Unified2Config* config,
 
     memcpy_s(ptr + offset, sizeof(write_buffer) - offset, buffer, len);
 
+    if (obf)
+        obfuscate(ptr + offset, obf, type);
+
     Unified2Write(write_buffer, write_len, config);
 }
 
@@ -314,6 +341,9 @@ static void AlertExtraData(
 
     xid = ffs(xtradata_mask);
 
+    const IpsContext* c = DetectionEngine::get_context();
+    Obfuscator* obf = (c and c->packet) ? c->packet->obfuscator : nullptr;
+
     while ( xid && (xid <= max_count) )
     {
         uint32_t len = 0;
@@ -323,7 +353,7 @@ static void AlertExtraData(
 
         if ( log_func(flow, &write_buffer, &len, &type) && (len > 0) )
         {
-            _WriteExtraData(config, event_id, event_second, write_buffer, len, type);
+            _WriteExtraData(config, obf, event_id, event_second, write_buffer, len, type);
         }
         xtradata_mask ^= BIT(xid);
         xid = ffs(xtradata_mask);
@@ -388,8 +418,9 @@ static void _Unified2LogPacketAlert(
             if ( p->is_data() )
                 off = 0;
 
-            for ( const auto& b : *p->obfuscator )
-                memset(&start[ off + b.offset ], p->obfuscator->get_mask_char(), b.length);
+            if ( p->obfuscator->select_buffer("pkt_data") )
+                for ( const auto& b : *p->obfuscator )
+                    memset(&start[ off + b.offset ], p->obfuscator->get_mask_char(), b.length);
         }
     }
 
@@ -902,10 +933,10 @@ void U2Logger::alert_legacy(Packet* p, const char* msg, const Event& event)
         if (p->ptrs.ip_api.is_ip6())
         {
             const SfIp* ip = p->ptrs.ip_api.get_src();
-            _WriteExtraData(&config, event.get_event_id(), event.ref_time.tv_sec,
+            _WriteExtraData(&config, p->obfuscator, event.get_event_id(), event.ref_time.tv_sec,
                 (const uint8_t*) ip->get_ip6_ptr(), sizeof(struct in6_addr), EVENT_INFO_IPV6_SRC);
             ip = p->ptrs.ip_api.get_dst();
-            _WriteExtraData(&config, event.get_event_id(), event.ref_time.tv_sec,
+            _WriteExtraData(&config, p->obfuscator, event.get_event_id(), event.ref_time.tv_sec,
                 (const uint8_t*) ip->get_ip6_ptr(), sizeof(struct in6_addr), EVENT_INFO_IPV6_DST);
         }
     }

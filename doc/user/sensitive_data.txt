@@ -10,7 +10,7 @@ library from Intel. It provides a regex grammar which is mostly PCRE
 compatible. To learn more about Hyperscan see
 https://intel.github.io/hyperscan/dev-reference/
 
-==== Syntax 
+==== Syntax
 
 Snort provides `sd_pattern` as IPS rule option with no additional inspector
 overhead. The Rule option takes the following syntax.
@@ -90,7 +90,7 @@ Snort provides discreet logging for the built-in patterns "credit_card",
 was matched by the patterns. This configuration is enabled by default.
 
     ips =
-    { 
+    {
         obfuscate_pii = true
     }
 
@@ -164,12 +164,12 @@ Doesn't match a rule like this.
 in the config. So, Snort must be built and run with Hyperscan to have sd_pattern
 IPS option available.
 
-2. Log obfuscation is only applicable to CMG and Unified2 logging formats.
+2. Log obfuscation is only applicable to the buffer that the pattern was found in.
 
-3. Log obfuscation doesn't support user defined PII patterns. It is
+3. Log obfuscation is only applicable to CMG and Unified2 logging formats.
+Unified2 logger only supports obfuscation of http extra data.
+
+4. Log obfuscation doesn't support user defined PII patterns. It is
 currently only supported for the built-in patterns for Credit Cards and U.S.
-Social Security numbers.
-
-4. Log obfuscation doesn't work with stream rebuilt packet payloads.  (This
-is a known bug).
+Social Security numbers, emails and U.S. phone numbers.
 

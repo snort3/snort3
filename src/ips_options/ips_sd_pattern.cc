@@ -232,8 +232,9 @@ bool SdPatternOption::operator==(const IpsOption& ips) const
 struct hsContext
 {
     hsContext(const SdPatternConfig& c_, Packet* p_, const uint8_t* const start_,
-            const uint8_t* _buf, unsigned int _buflen )
-        : config(c_), packet(p_), start(start_), buf(_buf), buflen(_buflen) { }
+        const uint8_t* _buf, unsigned int _buf_len, const char* _buf_name)
+        : config(c_), packet(p_), start(start_), buf(_buf), buf_name(_buf_name), buf_len(_buf_len)
+    { }
 
     bool has_valid_bounds(unsigned long long from, unsigned long long len)
     {
@@ -249,9 +250,9 @@ struct hsContext
 
         // validate the right side
 
-        if ( from+len == buflen )
+        if ( from+len == buf_len )
             right = true;
-        else if ( from + len < buflen && !::isdigit((int)buf[from+len]) )
+        else if ( from + len < buf_len && !::isdigit((int)buf[from+len]) )
             right = true;
 
         return left and right;
@@ -265,7 +266,9 @@ struct hsContext
     Packet* packet = nullptr;
     const uint8_t* const start = nullptr;
     const uint8_t* buf = nullptr;
-    unsigned int buflen = 0;
+    const char* buf_name;
+    unsigned int buf_len = 0;
+    bool buf_set = false;
 };
 
 static int hs_match(unsigned int /*id*/, unsigned long long from,
@@ -304,6 +307,12 @@ static int hs_match(unsigned int /*id*/, unsigned long long from,
         if ( !ctx->packet->obfuscator )
             ctx->packet->obfuscator = new Obfuscator();
 
+        if ( !ctx->buf_set )
+        {
+            ctx->packet->obfuscator->set_buffer(ctx->buf_name);
+            ctx->buf_set = true;
+        }
+
         // FIXIT-L Make configurable or don't show any PII partials (0 for user defined??)
         uint32_t off = ctx->buf + from - ctx->start;
         ctx->packet->obfuscator->push(off, len - 4);
@@ -316,11 +325,11 @@ unsigned SdPatternOption::SdSearch(const Cursor& c, Packet* p)
 {
     const uint8_t* const start = c.buffer();
     const uint8_t* buf = c.start();
-    unsigned int buflen = c.length();
+    unsigned int buf_len = c.length();
 
-    hsContext ctx(config, p, start, buf, buflen);
+    hsContext ctx(config, p, start, buf, buf_len, c.get_name());
 
-    hs_error_t stat = hs_scan(config.db, (const char*)buf, buflen, 0,
+    hs_error_t stat = hs_scan(config.db, (const char*)buf, buf_len, 0,
         scratcher->get(), hs_match, (void*)&ctx);
 
     if ( stat == HS_SCAN_TERMINATED )
