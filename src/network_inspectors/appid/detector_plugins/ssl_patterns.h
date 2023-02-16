@@ -21,6 +21,8 @@
 #ifndef SSL_PATTERNS_H
 #define SSL_PATTERNS_H
 
+#include <cstring>
+#include <unordered_set>
 #include "search_engines/search_tool.h"
 #include "application_ids.h"
 
@@ -30,7 +32,24 @@ struct SslPattern
     AppId app_id;
     uint8_t* pattern;
     int pattern_size;
+    bool is_cname;
+
+    bool operator==(const SslPattern& v) const
+    {
+        return this->type == v.type and pattern_size == v.pattern_size
+            and (memcmp(pattern, v.pattern, (size_t)pattern_size) == 0); 
+    }
 };
+
+struct SslCacheKeyHasher
+{
+    size_t operator()(const SslPattern& key) const
+    {
+        return std::hash<std::string>{}(std::string((char*)key.pattern, key.pattern_size));
+    }
+};
+
+typedef std::unordered_set<SslPattern, SslCacheKeyHasher> CnameCache;
 
 struct MatchedSslPatterns
 {
@@ -49,8 +68,7 @@ class SslPatternMatchers
 {
 public:
     ~SslPatternMatchers();
-    void add_cert_pattern(uint8_t*, size_t, uint8_t, AppId);
-    void add_cname_pattern(uint8_t*, size_t, uint8_t, AppId);
+    void add_cert_pattern(uint8_t*, size_t, uint8_t, AppId, bool);
     void finalize_patterns();
     void reload_patterns();
     bool scan_hostname(const uint8_t*, size_t, AppId&, AppId&);
@@ -58,9 +76,8 @@ public:
 
 private:
     SslPatternList* cert_pattern_list = nullptr;
-    SslPatternList* cname_pattern_list = nullptr;
+    CnameCache cert_pattern_set;
     snort::SearchTool ssl_host_matcher = snort::SearchTool();
-    snort::SearchTool ssl_cname_matcher= snort::SearchTool();
 };
 
 #endif

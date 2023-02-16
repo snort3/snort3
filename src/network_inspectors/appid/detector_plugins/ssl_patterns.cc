@@ -28,7 +28,7 @@
 
 using namespace snort;
 
-static void create_matcher(SearchTool& matcher, SslPatternList* list)
+static void create_matcher(SearchTool& matcher, SslPatternList* list, CnameCache& set)
 {
     size_t* pattern_index;
     size_t size = 0;
@@ -38,6 +38,9 @@ static void create_matcher(SearchTool& matcher, SslPatternList* list)
 
     for (element = list; element; element = element->next)
     {
+        if (!element->dpattern->is_cname and set.count(*(element->dpattern)))
+            continue;
+
         matcher.add(element->dpattern->pattern,
             element->dpattern->pattern_size, element->dpattern, true);
         (*pattern_index)++;
@@ -57,17 +60,38 @@ static int cert_pattern_match(void* id, void*, int match_end_pos, void* data, vo
     cm->match_start_pos = match_end_pos - target->pattern_size;
     cm->next = *matches;
     *matches = cm;
+    
+    return 0;
+}
 
+static int cname_pattern_match(void* id, void*, int match_end_pos, void* data, void*)
+{
+    MatchedSslPatterns* cm;
+    MatchedSslPatterns** matches = (MatchedSslPatterns**)data;
+    SslPattern* target = (SslPattern*)id;
+
+    /* Only collect the match if it is a cname pattern. */
+    if (target->is_cname)
+    {
+        cm = (MatchedSslPatterns*)snort_alloc(sizeof(MatchedSslPatterns));
+        cm->mpattern = target;
+        cm->match_start_pos = match_end_pos - target->pattern_size;
+        cm->next = *matches;
+        *matches = cm;
+    }
     return 0;
 }
 
 static bool scan_patterns(SearchTool& matcher, const uint8_t* data, size_t size,
-    AppId& client_id, AppId& payload_id)
+    AppId& client_id, AppId& payload_id, bool is_cname_search)
 {
     MatchedSslPatterns* mp = nullptr;
     SslPattern* best_match;
 
-    matcher.find_all((const char*)data, size, cert_pattern_match, false, &mp);
+    if (is_cname_search)
+        matcher.find_all((const char*)data, size, cname_pattern_match, false, &mp);    
+    else
+        matcher.find_all((const char*)data, size, cert_pattern_match, false, &mp);
 
     if (!mp)
         return false;
@@ -132,7 +156,7 @@ static void free_patterns(SslPatternList*& list)
 }
 
 static void add_pattern(SslPatternList*& list, uint8_t* pattern_str, size_t
-    pattern_size, uint8_t type, AppId app_id)
+    pattern_size, uint8_t type, AppId app_id, bool is_cname, CnameCache& set)
 {
     SslPatternList* new_ssl_pattern;
 
@@ -142,45 +166,42 @@ static void add_pattern(SslPatternList*& list, uint8_t* pattern_str, size_t
     new_ssl_pattern->dpattern->app_id = app_id;
     new_ssl_pattern->dpattern->pattern = pattern_str;
     new_ssl_pattern->dpattern->pattern_size = pattern_size;
+    new_ssl_pattern->dpattern->is_cname = is_cname;
 
     new_ssl_pattern->next = list;
     list = new_ssl_pattern;
+
+    if (is_cname)
+        set.emplace(*(new_ssl_pattern->dpattern));
 }
 
 SslPatternMatchers::~SslPatternMatchers()
 {
     free_patterns(cert_pattern_list);
-    free_patterns(cname_pattern_list);
 }
 
-void SslPatternMatchers::add_cert_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id)
+void SslPatternMatchers::add_cert_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id, bool is_cname)
 {
-    add_pattern(cert_pattern_list, pattern_str, pattern_size, type, app_id);
-}
-
-void SslPatternMatchers::add_cname_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id)
-{
-    add_pattern(cname_pattern_list, pattern_str, pattern_size, type, app_id);
+    add_pattern(cert_pattern_list, pattern_str, pattern_size, type, app_id, is_cname, cert_pattern_set);
 }
 
 void SslPatternMatchers::finalize_patterns()
 {
-    create_matcher(ssl_host_matcher, cert_pattern_list);
-    create_matcher(ssl_cname_matcher, cname_pattern_list);
+    create_matcher(ssl_host_matcher, cert_pattern_list, cert_pattern_set);
+    cert_pattern_set.clear();
 }
 
 void SslPatternMatchers::reload_patterns()
 {
     ssl_host_matcher.reload();
-    ssl_cname_matcher.reload();
 }
 
 bool SslPatternMatchers::scan_hostname(const uint8_t* hostname, size_t size, AppId& client_id, AppId& payload_id)
 {
-    return scan_patterns(ssl_host_matcher, hostname, size, client_id, payload_id);
+    return scan_patterns(ssl_host_matcher, hostname, size, client_id, payload_id, false);
 }
 
 bool SslPatternMatchers::scan_cname(const uint8_t* common_name, size_t size, AppId& client_id, AppId& payload_id)
 {
-    return scan_patterns(ssl_cname_matcher, common_name, size, client_id, payload_id);
+    return scan_patterns(ssl_host_matcher, common_name, size, client_id, payload_id, true);
 }

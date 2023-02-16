@@ -1228,17 +1228,49 @@ static int detector_add_ssl_cert_pattern(lua_State* L)
     int index = 1;
 
     uint8_t type = lua_tointeger(L, ++index);
-    AppId app_id  = (AppId)lua_tointeger(L, ++index);
+    AppId app_id = (AppId)lua_tointeger(L, ++index);
     size_t pattern_size = 0;
     const char* tmp_string = lua_tolstring(L, ++index, &pattern_size);
     if (!tmp_string or !pattern_size)
     {
-        ErrorMessage("appid: Invalid SSL Host pattern string in %s.\n", ud->get_detector()->get_name().c_str());
+        ErrorMessage("appid: Invalid SSL Host pattern string in %s.\n", 
+            ud->get_detector()->get_name().c_str());
         return 0;
     }
 
     uint8_t* pattern_str = (uint8_t*)snort_strdup(tmp_string);
-    ud->get_odp_ctxt().get_ssl_matchers().add_cert_pattern(pattern_str, pattern_size, type, app_id);
+    ud->get_odp_ctxt().get_ssl_matchers().add_cert_pattern(pattern_str, pattern_size, type, app_id,
+        false);
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(app_id);
+
+    return 0;
+}
+
+static int detector_add_ssl_cname_pattern(lua_State* L)
+{
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are NOT in packet context
+    ud->validate_lua_state(false);
+    if (!init(L))
+        return 0;
+
+    int index = 1;
+
+    uint8_t type = lua_tointeger(L, ++index);
+    AppId app_id = (AppId)lua_tointeger(L, ++index);
+
+    size_t pattern_size = 0;
+    const char* tmp_string = lua_tolstring(L, ++index, &pattern_size);
+    if (!tmp_string or !pattern_size)
+    {
+        ErrorMessage("appid: Invalid SSL CN pattern string in %s.\n",
+            ud->get_detector()->get_name().c_str());
+        return 0;
+    }
+
+    uint8_t* pattern_str = (uint8_t*)snort_strdup(tmp_string);
+    ud->get_odp_ctxt().get_ssl_matchers().add_cert_pattern(pattern_str, pattern_size, type, app_id,
+        true);
     ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(app_id);
 
     return 0;
@@ -1268,34 +1300,6 @@ static int detector_add_dns_host_pattern(lua_State* L)
 
     uint8_t* pattern_str = (uint8_t*)snort_strdup(tmp_string);
     ud->get_odp_ctxt().get_dns_matchers().add_host_pattern(pattern_str, pattern_size, type, app_id);
-
-    return 0;
-}
-
-static int detector_add_ssl_cname_pattern(lua_State* L)
-{
-    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
-    // Verify detector user data and that we are NOT in packet context
-    ud->validate_lua_state(false);
-    if (!init(L))
-        return 0;
-
-    int index = 1;
-
-    uint8_t type = lua_tointeger(L, ++index);
-    AppId app_id  = (AppId)lua_tointeger(L, ++index);
-
-    size_t pattern_size = 0;
-    const char* tmp_string = lua_tolstring(L, ++index, &pattern_size);
-    if (!tmp_string or !pattern_size)
-    {
-        ErrorMessage("appid: Invalid SSL CN pattern string in %s.\n", ud->get_detector()->get_name().c_str());
-        return 0;
-    }
-
-    uint8_t* pattern_str = (uint8_t*)snort_strdup(tmp_string);
-    ud->get_odp_ctxt().get_ssl_matchers().add_cname_pattern(pattern_str, pattern_size, type, app_id);
-    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(app_id);
 
     return 0;
 }
@@ -3074,9 +3078,9 @@ static const luaL_Reg detector_methods[] =
     { "addRTMPUrl",               detector_add_rtmp_url },
     { "addContentTypePattern",    detector_add_content_type_pattern },
     { "addSSLCertPattern",        detector_add_ssl_cert_pattern },
+    { "addSSLCnamePattern",       detector_add_ssl_cname_pattern },
     { "addSipUserAgent",          detector_add_sip_user_agent },
     { "addSipServer",             detector_add_sip_server },
-    { "addSSLCnamePattern",       detector_add_ssl_cname_pattern },
     { "addSSHPattern",            detector_add_ssh_client_pattern},
     { "addHostFirstPktApp",       detector_add_host_first_pkt_application },
     { "addHostPortApp",           detector_add_host_port_application },
