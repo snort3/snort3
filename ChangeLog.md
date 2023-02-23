@@ -1,3 +1,12 @@
+2023-02-22: 3.1.56.0
+
+* appid: add validation for rpcbind universal address
+* appid: merge cname pattern matchers with ssl pattern matchers
+* configure: fix typo in jemalloc with tcmalloc error message
+* copyright: update for year 2023
+* doc: update sd_pattern docs after obfuscation changes
+* sd_pattern: keep obfuscation blocks per buffer
+
 2023-02-08: 3.1.55.0
 
 * appid: first packet detector creation support in appid detector builder script

@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.55.0 2023-02-08 15:37:29 EST TST
+Revision 3.1.56.0 2023-02-22 17:02:08 EST TST
 
 ---------------------------------------------------------------------
 
@@ -5831,13 +5831,15 @@ alert tcp (sid: 7; sd_pattern:"\b\w+@ourdomain\.com\b", threshold 2; msg: "Custo
  1. sd_pattern implementation relies on Hyperscan, regardless of the
     search engine specified in the config. So, Snort must be built
     and run with Hyperscan to have sd_pattern IPS option available.
- 2. Log obfuscation is only applicable to CMG and Unified2 logging
-    formats.
- 3. Log obfuscation doesn’t support user defined PII patterns. It is
+ 2. Log obfuscation is only applicable to the buffer that the pattern
+    was found in.
+ 3. Log obfuscation is only applicable to CMG and Unified2 logging
+    formats. Unified2 logger only supports obfuscation of http extra
+    data.
+ 4. Log obfuscation doesn’t support user defined PII patterns. It is
     currently only supported for the built-in patterns for Credit
-    Cards and U.S. Social Security numbers.
- 4. Log obfuscation doesn’t work with stream rebuilt packet payloads.
-    (This is a known bug).
+    Cards and U.S. Social Security numbers, emails and U.S. phone
+    numbers.
 
 
 5.19. SMTP
