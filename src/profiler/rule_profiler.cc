@@ -42,6 +42,8 @@
 #include "main/thread_config.h"
 #include "parser/parser.h"
 #include "target_based/snort_protocols.h"
+#include "utils/stats.h"
+#include "time/timersub.h"
 
 #include "profiler_printer.h"
 #include "profiler_stats_table.h"
@@ -56,6 +58,9 @@ using namespace snort;
 #define s_rule_table_title "rule profile"
 
 bool RuleContext::enabled = false;
+struct timeval RuleContext::start_time = {0, 0};
+struct timeval RuleContext::end_time = {0, 0};
+struct timeval RuleContext::total_time = {0, 0};
 
 static inline OtnState& operator+=(OtnState& lhs, const OtnState& rhs)
 {
@@ -85,6 +90,7 @@ static const StatsTable::Field fields[] =
     { "avg/non-match", 14, '\0', 1, std::ios_base::fmtflags() },
     { "timeouts", 9, '\0', 0, std::ios_base::fmtflags() },
     { "suspends", 9, '\0', 0, std::ios_base::fmtflags() },
+    { "rule_time (%)", 14, '\0', 5, std::ios_base::fmtflags() },
     { nullptr, 0, '\0', 0, std::ios_base::fmtflags() }
 };
 
@@ -136,6 +142,13 @@ struct View
 
     hr_duration avg_check() const
     { return time_per(elapsed(), checks()); }
+
+    double rule_time_per(double total_time_usec) const
+    {
+        if (total_time_usec < 1.)
+            return 100.0;
+        return clock_usecs(TO_USECS(elapsed())) / total_time_usec * 100;
+    }
 
     View(const OtnState& otn_state, const SigInfo* si = nullptr) :
         state(otn_state)
@@ -223,7 +236,7 @@ static std::vector<View> build_entries()
 }
 
 // FIXIT-L logic duplicated from ProfilerPrinter
-static void print_single_entry(const View& v, unsigned n)
+static void print_single_entry(const View& v, unsigned n, double total_time_usec)
 {
     using std::chrono::duration_cast;
     using std::chrono::microseconds;
@@ -252,6 +265,7 @@ static void print_single_entry(const View& v, unsigned n)
 
         table << v.timeouts();
         table << v.suspends();
+        table << v.rule_time_per(total_time_usec);
     }
 
     LogMessage("%s", ss.str().c_str());
@@ -261,6 +275,11 @@ static void print_single_entry(const View& v, unsigned n)
 static void print_entries(std::vector<View>& entries, ProfilerSorter<View>& sort, unsigned count)
 {
     std::ostringstream ss;
+    RuleContext::set_end_time(get_time_curr());
+    RuleContext::count_total_time();
+
+    double total_time_usec =
+        RuleContext::get_total_time()->tv_sec * 1000000.0 + RuleContext::get_total_time()->tv_usec;
 
     {
         StatsTable table(fields, ss);
@@ -290,7 +309,7 @@ static void print_entries(std::vector<View>& entries, ProfilerSorter<View>& sort
         std::partial_sort(entries.begin(), entries.begin() + count, entries.end(), sort);
 
     for ( unsigned i = 0; i < count; ++i )
-        print_single_entry(entries[i], i + 1);
+        print_single_entry(entries[i], i + 1, total_time_usec);
 }
 
 }
@@ -344,6 +363,49 @@ void RuleContext::stop(bool match)
 
     finished = true;
     stats.update(sw.get(), match);
+}
+
+void RuleContext::set_start_time(const struct timeval &time)
+{
+    start_time.tv_sec = time.tv_sec;
+    start_time.tv_usec = time.tv_usec;
+}
+
+void RuleContext::set_end_time(const struct timeval &time)
+{
+    end_time.tv_sec = time.tv_sec;
+    end_time.tv_usec = time.tv_usec;
+}
+
+void RuleContext::valid_start_time()
+{
+    const struct timeval &time = get_time_start();
+    if ((time.tv_sec > start_time.tv_sec ||
+        ((time.tv_sec == start_time.tv_sec) && (time.tv_usec > start_time.tv_usec))))
+    {
+        start_time.tv_sec = time.tv_sec;
+        start_time.tv_usec = time.tv_usec;
+    }
+}
+
+void RuleContext::valid_end_time()
+{
+    const struct timeval &time = get_time_end();
+    if (time.tv_sec && time.tv_usec &&
+        (time.tv_sec < end_time.tv_sec ||
+        ((time.tv_sec == end_time.tv_sec) && (time.tv_usec < end_time.tv_usec))))
+    {
+        end_time.tv_sec = time.tv_sec;
+        end_time.tv_usec = time.tv_usec;
+    }
+}
+
+void RuleContext::count_total_time()
+{
+    valid_start_time();
+    valid_end_time();
+
+    TIMERSUB(&end_time, &start_time, &total_time);
 }
 
 #ifdef UNIT_TEST

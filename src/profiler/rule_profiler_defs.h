@@ -68,11 +68,32 @@ public:
     static void set_enabled(bool b)
     { enabled = b; }
 
+    static const struct timeval *get_start_time()
+    { return &start_time; }
+
+    static void set_start_time(const struct timeval &time);
+
+    static const struct timeval *get_end_time()
+    { return &end_time; }
+
+    static void set_end_time(const struct timeval &time);
+
+    static const struct timeval *get_total_time()
+    { return &total_time; }
+
+    static void count_total_time();
+
 private:
     dot_node_state_t& stats;
     Stopwatch<SnortClock> sw;
     bool finished = false;
     static bool enabled;
+    static struct timeval start_time;
+    static struct timeval end_time;
+    static struct timeval total_time;
+
+    static void valid_start_time();
+    static void valid_end_time();
 };
 
 class RulePause

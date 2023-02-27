@@ -123,5 +123,8 @@ void DropStats(ControlConn* ctrlcon = nullptr);
 void PrintStatistics();
 void TimeStart();
 void TimeStop();
+const struct timeval& get_time_curr();
+const struct timeval& get_time_start();
+const struct timeval& get_time_end();
 
 #endif

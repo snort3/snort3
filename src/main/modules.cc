@@ -456,6 +456,7 @@ bool ProfilerModule::end(const char*, int, SnortConfig* sc)
 {
     TimeProfilerStats::set_enabled(sc->profiler->time.show);
     RuleContext::set_enabled(sc->profiler->rule.show);
+    RuleContext::set_start_time(get_time_curr());
     return true;
 }
 

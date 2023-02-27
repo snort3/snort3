@@ -136,7 +136,7 @@ double CalcPct(uint64_t cnt, uint64_t total)
 
 //-------------------------------------------------------------------------
 
-static struct timeval starttime, endtime;
+static struct timeval starttime = {0, 0}, endtime = {0, 0}, currtime = {0, 0};
 
 void TimeStart()
 {
@@ -146,6 +146,22 @@ void TimeStart()
 void TimeStop()
 {
     gettimeofday(&endtime, nullptr);
+}
+
+const struct timeval& get_time_start()
+{
+    return starttime;
+}
+
+const struct timeval& get_time_end()
+{
+    return endtime;
+}
+
+const struct timeval& get_time_curr()
+{
+    gettimeofday(&currtime, nullptr);
+    return currtime;
 }
 
 static void timing_stats()
