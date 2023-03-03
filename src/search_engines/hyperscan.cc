@@ -26,6 +26,7 @@
 #include <cassert>
 #include <cstring>
 #include <fstream>
+#include <mutex>
 #include <sstream>
 
 #include <hs_compile.h>
@@ -112,11 +113,8 @@ static bool compare(const Pattern& a, const Pattern& b)
 
 typedef std::vector<Pattern> PatternVector;
 
-// we need to update scratch in each compiler thread as each pattern is processed
-// and then select the largest to clone to packet thread specific after all rules
-// are loaded.  s_scratch is a prototype that is large enough for all uses.
-
-static std::vector<hs_scratch_t*> s_scratch;
+static std::mutex s_mutex;
+static hs_scratch_t* s_scratch = nullptr;
 static unsigned int scratch_index;
 static ScratchAllocator* scratcher = nullptr;
 
@@ -211,11 +209,12 @@ bool HyperscanMpse::deserialize(const uint8_t* buf, size_t sz)
         return false;
     }
 
-    if ( hs_error_t err = hs_alloc_scratch(hs_db, &s_scratch[get_instance_id()]) )
+    if ( hs_error_t err = hs_alloc_scratch(hs_db, &s_scratch) )
     {
         ParseError("can't allocate search scratch space (%d)", err);
         return false;
     }
+
     return true;
 }
 
@@ -308,14 +307,16 @@ int HyperscanMpse::prep_patterns(SnortConfig* sc)
         return -2;
     }
 
-    if ( hs_error_t err = hs_alloc_scratch(hs_db, &s_scratch[get_instance_id()]) )
+    if ( agent )
+        user_ctor(sc);
+
+    std::lock_guard<std::mutex> lock(s_mutex);
+
+    if ( hs_error_t err = hs_alloc_scratch(hs_db, &s_scratch) )
     {
         ParseError("can't allocate search scratch space (%d)", err);
         return -3;
     }
-
-    if ( agent )
-        user_ctor(sc);
 
     return 0;
 }
@@ -342,7 +343,7 @@ void HyperscanMpse::reuse_search()
     if ( pvector.empty() )
         return;
 
-    if ( hs_error_t err = hs_alloc_scratch(hs_db, &s_scratch[get_instance_id()]) )
+    if ( hs_error_t err = hs_alloc_scratch(hs_db, &s_scratch) )
         ErrorMessage("can't allocate search scratch space (%d)", err);
 }
 
@@ -381,47 +382,12 @@ int HyperscanMpse::_search(
 
 static bool scratch_setup(SnortConfig* sc)
 {
-    // find the largest scratch and clone for all slots
-    hs_scratch_t* max = nullptr;
-
-    if ( !s_scratch.size() )
-        return false;
-
-    for ( unsigned i = 0; i < sc->num_slots; ++i )
-    {
-        if ( !s_scratch[i] )
-            continue;
-
-        if ( !max )
-        {
-            max = s_scratch[i];
-            s_scratch[i] = nullptr;
-            continue;
-        }
-        size_t max_sz, idx_sz;
-        hs_scratch_size(max, &max_sz);
-        hs_scratch_size(s_scratch[i], &idx_sz);
-
-        if ( idx_sz > max_sz )
-        {
-            hs_free_scratch(max);
-            max = s_scratch[i];
-        }
-        else
-        {
-            hs_free_scratch(s_scratch[i]);
-        }
-        s_scratch[i] = nullptr;
-    }
-    if ( !max )
-        return false;
-
     for ( unsigned i = 0; i < sc->num_slots; ++i )
     {
         hs_scratch_t** ss = (hs_scratch_t**) &sc->state[i][scratch_index];
-        hs_clone_scratch(max, ss);
+        hs_clone_scratch(s_scratch, ss);
     }
-    s_scratch[get_instance_id()] = max;
+
     return true;
 }
 
@@ -435,31 +401,17 @@ static void scratch_cleanup(SnortConfig* sc)
     }
 }
 
-static bool need_update(SnortConfig* sc)
+static void scratch_update(SnortConfig* sc)
 {
-    if ( s_scratch.size() )
-    {
-        size_t max_sz, instance_sz;
-        hs_scratch_size(s_scratch[0], &max_sz);
-        hs_scratch_size((hs_scratch_t*)sc->state[get_instance_id()][scratch_index], &instance_sz);
-        if ( max_sz > instance_sz )
-            return true;
-        else
-            return false;
-    }
-    else
-        return false;
-}
+    hs_scratch_t** ss = (hs_scratch_t**) &sc->state[get_instance_id()][scratch_index];
 
-void static scratch_update(SnortConfig* sc)
-{
-    if ( !need_update(sc) )
+    if ( *ss == s_scratch )
         return;
 
-    hs_scratch_t** ss = (hs_scratch_t**) &sc->state[get_instance_id()][scratch_index];
     hs_free_scratch(*ss);
     *ss = nullptr;
-    hs_clone_scratch(s_scratch[0], ss);
+
+    hs_clone_scratch(s_scratch, ss);
 }
 
 class HyperscanModule : public Module
@@ -474,15 +426,8 @@ public:
     ~HyperscanModule() override
     {
         delete scratcher;
-
-        for ( auto& ss : s_scratch )
-        {
-             if ( ss )
-             {
-                 hs_free_scratch(ss);
-                 ss = nullptr;
-             }
-        }
+        hs_free_scratch(s_scratch);
+        s_scratch = nullptr;
     }
 };
 
@@ -496,12 +441,8 @@ static Module* mod_ctor()
 static void mod_dtor(Module* p)
 { delete p; }
 
-static Mpse* hs_ctor(
-    const SnortConfig* sc, class Module*, const MpseAgent* a)
+static Mpse* hs_ctor(const SnortConfig*, class Module*, const MpseAgent* a)
 {
-    if ( s_scratch.empty() )
-        s_scratch.resize(sc->num_slots, nullptr);
-
     return new HyperscanMpse(a);
 }
 
