@@ -15,51 +15,26 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// ftp_splitter.cc author Russ Combs <rucombs@cisco.com>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef TELNET_SPLITTER_H
+#define TELNET_SPLITTER_H
 
-#include "ftp_splitter.h"
-#include "protocols/ssl.h"
-#include "protocols/packet.h"
-#include "utils/util.h"
+#include "stream/stream_splitter.h"
+#include "pp_telnet.h"
 
-#include <cstring>
-
-using namespace snort;
-
-FtpSplitter::FtpSplitter(bool c2s) : StreamSplitter(c2s) { }
-
-// flush at last CR or LF in data
-// preproc will deal with any pipelined commands
-StreamSplitter::Status FtpSplitter::scan(
-    Packet* p, const uint8_t* data, uint32_t len,
-    uint32_t, uint32_t* fp)
+class TelnetSplitter : public snort::StreamSplitter
 {
-    if ( IsSSL(data, len, p->packet_flags) )
-    {
-        *fp = len;
-        return FLUSH;
-    }
+public:
+    TelnetSplitter(bool c2s);
 
-    const uint8_t* cr = snort_memrchr(data, '\r', len);
-    const uint8_t* lf = snort_memrchr(data, '\n', len);
+    Status scan(snort::Packet*, const uint8_t* data, uint32_t len,
+        uint32_t flags, uint32_t* fp) override;
 
-    const uint8_t* ptr = nullptr;
+    bool is_paf() override { return true; }
+private:
+    enum TelnetState { TELNET_NONE, TELNET_IAC, TELNET_IAC_SB, TELNET_IAC_SB_IAC };
+    TelnetState state { TELNET_NONE };
+};
 
-    if ( cr && !lf )
-        ptr = cr;
-    else if ( !cr && lf )
-        ptr = lf;
-    else if ( cr && lf )
-        ptr = ( cr > lf ) ? cr : lf;
-
-    if ( !ptr )
-        return SEARCH;
-
-    *fp = ptr - data + 1;
-    return FLUSH;
-}
+#endif
 

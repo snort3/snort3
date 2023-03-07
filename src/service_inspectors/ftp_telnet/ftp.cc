@@ -35,7 +35,7 @@
 #include "ftp_module.h"
 #include "ftp_parse.h"
 #include "ftp_print.h"
-#include "ftp_splitter.h"
+#include "telnet_splitter.h"
 #include "ftpp_return_codes.h"
 #include "ftpp_si.h"
 #include "pp_ftp.h"
@@ -250,7 +250,7 @@ void FtpServer::show(const SnortConfig*) const
 
 StreamSplitter* FtpServer::get_splitter(bool c2s)
 {
-    return new FtpSplitter(c2s);
+    return new TelnetSplitter(c2s);
 }
 
 void FtpServer::eval(Packet* p)
