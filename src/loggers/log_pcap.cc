@@ -139,7 +139,7 @@ static void LogTcpdumpSingle(
 
     if (!p->context->conf->line_buffered_logging())  // FIXIT-L misnomer
     {
-        fflush( (FILE*)context.dumpd);
+        pcap_dump_flush(context.dumpd);
     }
 }
 
