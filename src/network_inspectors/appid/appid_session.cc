@@ -862,6 +862,12 @@ AppId AppIdSession::pick_ss_client_app_id() const
         (api.service.get_id() == APP_ID_HTTP3 and !api.hsessions.empty()))
         return APP_ID_NONE;
 
+    if (use_eve_client_app_id())
+    {
+        api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_TLS_FP);
+        return api.client.get_eve_client_app_id();
+    }
+
     AppId tmp_id = APP_ID_NONE;
     if (!api.hsessions.empty())
         tmp_id = api.hsessions[0]->client.get_id();
@@ -869,12 +875,6 @@ AppId AppIdSession::pick_ss_client_app_id() const
     {
         api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_APPID);
         return tmp_id;
-    }
-
-    if (use_eve_client_app_id())
-    {
-        api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_TLS_FP);
-        return api.client.get_eve_client_app_id();
     }
 
     if (api.client.get_id() > APP_ID_NONE)

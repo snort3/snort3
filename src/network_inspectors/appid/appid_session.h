@@ -540,8 +540,17 @@ public:
 
     bool use_eve_client_app_id() const
     {
-        return (api.client.get_eve_client_app_id() > APP_ID_NONE and
-            (api.client.get_id() == APP_ID_SSL_CLIENT or api.client.get_id() <= APP_ID_NONE));
+        if (api.client.get_eve_client_app_id() <= APP_ID_NONE)
+            return false;
+
+        if (get_session_flags(APPID_SESSION_HTTP_SESSION))
+        {
+            if (odp_ctxt.eve_http_client)
+                api.client.reset_version();
+            return odp_ctxt.eve_http_client;
+        }
+        else
+            return (api.client.get_id() == APP_ID_SSL_CLIENT or api.client.get_id() <= APP_ID_NONE);
     }
 
     void set_alpn_service_app_id(AppId id)

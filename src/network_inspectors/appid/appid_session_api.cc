@@ -258,6 +258,9 @@ bool AppIdSessionApi::is_appid_available(uint32_t stream_index) const
 
 const char* AppIdSessionApi::get_client_info(uint32_t stream_index) const
 {
+    if (client.get_eve_client_app_id() > APP_ID_NONE and pkt_thread_odp_ctxt and
+        pkt_thread_odp_ctxt->eve_http_client)
+        return client.get_version();
     if (uint32_t num_hsessions = get_hsessions_size())
     {
         if (stream_index >= num_hsessions)

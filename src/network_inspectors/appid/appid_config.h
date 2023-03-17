@@ -133,6 +133,7 @@ public:
     uint16_t max_packet_before_service_fail = MIN_MAX_PKTS_BEFORE_SERVICE_FAIL;
     uint16_t max_packet_service_fail_ignore_bytes = MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES;
     FirstPktAppIdDiscovered first_pkt_appid_prefix = NO_APPID_FOUND;
+    bool eve_http_client = true;
 
     OdpContext(const AppIdConfig&, snort::SnortConfig*);
     void initialize(AppIdInspector& inspector);

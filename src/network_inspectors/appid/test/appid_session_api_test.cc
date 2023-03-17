@@ -250,6 +250,7 @@ TEST(appid_session_api, is_appid_available)
 TEST(appid_session_api, get_client_info)
 {
     const char* val;
+    mock_session->get_odp_ctxt().eve_http_client = false;
     val = mock_session->get_api().get_client_info();
     STRCMP_EQUAL(val, APPID_UT_CLIENT_VERSION);
     mock_session->create_http_session();

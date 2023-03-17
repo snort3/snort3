@@ -79,6 +79,11 @@ public:
             my_version = version;
     }
 
+    void reset_version()
+    {
+        my_version.clear();
+    }
+
 private:
     AppId my_id = APP_ID_NONE;
     std::string my_version;

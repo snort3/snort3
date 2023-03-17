@@ -609,6 +609,10 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
             {
                 set_app_info_flags(atoi(conf_val), APPINFO_FLAG_IGNORE);
             }
+            else if (!(strcasecmp(conf_key, "eve_http_client")))
+            {
+                odp_ctxt.eve_http_client = atoi(conf_val) ? true : false;
+            }
             else
                 ParseWarning(WARN_CONF, "appid: unsupported configuration: %s\n", conf_key);
         }
