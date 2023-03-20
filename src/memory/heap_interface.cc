@@ -25,11 +25,14 @@
 #include "heap_interface.h"
 
 #include <cassert>
+#include <cstring>
 
 #ifdef HAVE_JEMALLOC
 #include <jemalloc/jemalloc.h>
 #endif
 
+#include "control/control.h"
+#include "log/messages.h"
 #include "main/thread.h"
 
 namespace memory
@@ -46,12 +49,33 @@ class JemallocInterface : public HeapInterface
 
     void get_process_total(uint64_t&, uint64_t&) override;
     void get_thread_allocs(uint64_t&, uint64_t&) override;
+
+    void print_stats(ControlConn*) override;
+
 };
 
 static size_t stats_mib[2], mib_len = 2;
 
 static THREAD_LOCAL uint64_t* alloc_ptr = nullptr;
 static THREAD_LOCAL uint64_t* dealloc_ptr = nullptr;
+
+static ControlConn* s_ctrlconn = nullptr;
+static void log_jem_stats(void *,const char *buf)
+{
+    if (s_ctrlconn)
+    {
+        char tmp[STD_BUF];
+        const char* end = buf + strlen(buf);
+        for(const char* p = buf; p < end ;)
+        {
+            int n = (end - p > (STD_BUF - 1)) ? (STD_BUF - 1) : (end - p);
+            std::memcpy(tmp, p, n);
+            tmp[n] = '\0';
+            s_ctrlconn->respond("%s", tmp);
+            p += n;
+        }
+    }
+}
 
 void JemallocInterface::main_init()
 {
@@ -88,6 +112,12 @@ void JemallocInterface::get_thread_allocs(uint64_t& alloc, uint64_t& dealloc)
 
     alloc = *alloc_ptr;
     dealloc = *dealloc_ptr;
+}
+
+void JemallocInterface::print_stats(ControlConn* ctrlcon)
+{
+    s_ctrlconn = ctrlcon;
+    malloc_stats_print(log_jem_stats, nullptr, nullptr);
 }
 
 //--------------------------------------------------------------------------

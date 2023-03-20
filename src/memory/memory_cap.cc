@@ -296,5 +296,9 @@ void MemoryCap::print(bool verbose, bool init)
     }
 }
 
+void MemoryCap::dump_mem_stats(ControlConn* ctrlcon)
+{
+    heap->print_stats(ctrlcon);
+}
 } // namespace memory
 

@@ -29,6 +29,7 @@
 #include "main/snort_types.h"
 
 struct MemoryConfig;
+class ControlConn;
 
 namespace memory
 {
@@ -76,6 +77,7 @@ public:
     // main thread - shutdown
     static void update_pegs(PegCount*);
 
+    static void dump_mem_stats(ControlConn*);
 #if defined(REG_TEST) || defined(UNIT_TEST)
     static void test_main_check();
 #endif

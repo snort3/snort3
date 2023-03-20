@@ -120,6 +120,7 @@ static const Command snort_cmds[] =
       "delete an inspector from the default policy" },
 
     { "dump_stats", main_dump_stats, nullptr, "show summary statistics" },
+    { "dump_heap_stats", main_dump_heap_stats, nullptr, "show heap statistics" },
     { "reset_stats", main_reset_stats, nullptr, "clear summary statistics" },
     { "rotate_stats", main_rotate_stats, nullptr, "roll perfmonitor log files" },
     { "reload_config", main_reload_config, s_reload_w_path, "load new configuration" },

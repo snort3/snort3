@@ -23,6 +23,7 @@
 
 #include <cstdint>
 
+class ControlConn;
 namespace memory
 {
 
@@ -37,6 +38,7 @@ public:
     virtual void get_process_total(uint64_t& epoch, uint64_t& total) = 0;
     virtual void get_thread_allocs(uint64_t& alloc, uint64_t& dealloc) = 0;
 
+    virtual void print_stats(ControlConn*) { }
     static HeapInterface* get_instance();
 
 protected:
