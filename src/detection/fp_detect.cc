@@ -616,6 +616,7 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
         return 0;
 
     unsigned tcnt = 0;
+    int res = 0;
     EventQueueConfig* eq = p->context->conf->event_queue_config;
     int (*compar)(const void *, const void *);
     compar = ( eq->order == SNORT_EVENTQ_PRIORITY )
@@ -646,10 +647,17 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
                 sizeof(void*), compar);
 
             /* Process each event in the action (alert,drop,log,...) groups */
-            for (unsigned j = 0; j < omd->matchInfo[i].iMatchCount; j++)
+            for ( unsigned j = 0; j < omd->matchInfo[i].iMatchCount; j++ )
             {
                 const OptTreeNode* otn = omd->matchInfo[i].MatchArray[j];
                 assert(otn);
+
+                if ( tcnt >= eq->max_events )
+                {
+                    pc.queue_limit += omd->matchInfo[i].iMatchCount - j;
+                    res = 1;
+                    break;
+                }
 
                 RuleTreeNode* rtn = getRtnFromOtn(otn);
 
@@ -693,12 +701,6 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
                         fpAddSessionAlert(p, otn);
                 }
 
-                if ( tcnt >= eq->max_events )
-                {
-                    pc.queue_limit++;
-                    return 1;
-                }
-
                 /* only log/count one pass */
                 if ( p->packet_flags & PKT_PASS_RULE )
                     return 1;
@@ -706,7 +708,7 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
         }
     }
 
-    return 0;
+    return res;
 }
 
 class MpseStash
