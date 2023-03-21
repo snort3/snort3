@@ -370,7 +370,7 @@ bool HttpInlineJSNorm::pre_proc()
     }
 
     ext_script_type = false;
-    output_size = jsn_ctx->script_size();
+    output_size = (jsn_ctx != nullptr) ? jsn_ctx->script_size() : 0;
 
     return true;
 }

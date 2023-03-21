@@ -70,12 +70,6 @@ JSNorm::JSNorm(JSNormConfig* jsn_config, bool ext_script_type) :
 
     if (!alive)
         return;
-
-    idn_ctx = new JSIdentifierCtx(config->identifier_depth,
-        config->max_scope_depth, config->ignored_ids, config->ignored_props);
-    jsn_ctx = new JSNormalizer(*idn_ctx, config->bytes_depth,
-        config->max_template_nesting, config->max_bracket_depth);
-
     debug_log(4, js_trace, TRACE_PROC, nullptr, "context created\n");
 }
 
@@ -118,6 +112,12 @@ void JSNorm::normalize(const void* in_data, size_t in_len, const void*& data, si
 
     while (alive and pre_proc())
     {
+        if (idn_ctx == nullptr)
+            idn_ctx = new JSIdentifierCtx(config->identifier_depth,
+                config->max_scope_depth, config->ignored_ids, config->ignored_props);
+        if (jsn_ctx == nullptr)
+            jsn_ctx = new JSNormalizer(*idn_ctx, config->bytes_depth,
+                config->max_template_nesting, config->max_bracket_depth);
         trace_logf(3, js_trace, TRACE_DUMP, packet,
             "original[%zu]: %.*s\n", src_end - src_ptr, (int)(src_end - src_ptr), src_ptr);
 
@@ -133,9 +133,11 @@ void JSNorm::normalize(const void* in_data, size_t in_len, const void*& data, si
         alive = post_proc(ret);
     }
 
-    len = jsn_ctx->script_size();
-    data = jsn_ctx->get_script();
-
+    if (jsn_ctx != nullptr)
+    {
+        len = jsn_ctx->script_size();
+        data = jsn_ctx->get_script();
+    }
     if (data and len)
         trace_logf(1, js_trace, TRACE_DUMP, packet,
             "js_data[%u]: %.*s\n", (unsigned)len, (int)len, (const char*)data);
@@ -143,19 +145,28 @@ void JSNorm::normalize(const void* in_data, size_t in_len, const void*& data, si
 
 void JSNorm::flush_data(const void*& data, size_t& len)
 {
-    len = jsn_ctx->script_size();
-    data = jsn_ctx->take_script();
+    if (jsn_ctx != nullptr)
+    {
+        len = jsn_ctx->script_size();
+        data = jsn_ctx->take_script();
+    }
 }
 
 void JSNorm::flush_data()
 {
-    delete[] jsn_ctx->take_script();
+    if (jsn_ctx != nullptr)
+    {
+        delete[] jsn_ctx->take_script();
+    }
 }
 
 void JSNorm::get_data(const void*& data, size_t& len)
 {
-    len = jsn_ctx->script_size();
-    data = jsn_ctx->get_script();
+    if (jsn_ctx != nullptr)
+    {
+        len = jsn_ctx->script_size();
+        data = jsn_ctx->get_script();
+    }
 }
 
 bool JSNorm::pre_proc()
