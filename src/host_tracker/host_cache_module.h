@@ -28,6 +28,7 @@
 #include "framework/module.h"
 #include "main/snort.h"
 #include "main/reload_tuner.h"
+#include "trace/trace_api.h"
 
 #include "host_cache.h"
 
@@ -75,10 +76,14 @@ public:
     void log_host_cache(const char* file_name, bool verbose = false);
     std::string get_host_cache_stats();
 
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
+
 private:
     std::string dump_file;
     size_t memcap = 0;
 };
+extern THREAD_LOCAL const snort::Trace* host_cache_trace;
 
 #endif
 

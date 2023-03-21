@@ -28,6 +28,7 @@ const char* get_prompt();
 // commands provided by the snort module
 int main_delete_inspector(lua_State* = nullptr);
 int main_dump_stats(lua_State* = nullptr);
+int main_log_command(lua_State* = nullptr);
 int main_dump_heap_stats(lua_State* = nullptr);
 int main_reset_stats(lua_State* = nullptr);
 int main_set_watchdog_params(lua_State* = nullptr);

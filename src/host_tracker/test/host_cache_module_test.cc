@@ -48,11 +48,16 @@ static char logged_message[LOG_MAX+1];
 static ControlConn ctrlcon(1, true);
 ControlConn::ControlConn(int, bool) {}
 ControlConn::~ControlConn() {}
+void ControlConn::log_command(const std::string& , bool ) { }
 ControlConn* ControlConn::query_from_lua(const lua_State*) { return &ctrlcon; }
 bool ControlConn::respond(const char*, ...) { return true; }
 
 namespace snort
 {
+void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) { }
+uint8_t TraceApi::get_constraints_generation() { return 0; }
+void TraceApi::filter(const Packet&) { }
+
 const SnortConfig* SnortConfig::get_conf()
 { return nullptr; }
 

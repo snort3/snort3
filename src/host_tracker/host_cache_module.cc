@@ -36,10 +36,11 @@
 using namespace snort;
 using namespace std;
 
+THREAD_LOCAL const Trace* host_cache_trace = nullptr;
+
 //-------------------------------------------------------------------------
 // commands
 //-------------------------------------------------------------------------
-
 static int host_cache_dump(lua_State* L)
 {
     HostCacheModule* mod = (HostCacheModule*) ModuleManager::get_module(HOST_CACHE_NAME);
@@ -69,14 +70,14 @@ static int host_cache_delete_host(lua_State* L)
         const char* ips = luaL_optstring(L, 1, nullptr);
         if (ips == nullptr)
         {
-            LogMessage("Usage: host_cache.delete_host(ip)\n");
+            debug_logf(host_cache_trace, nullptr,  "Usage: host_cache.delete_host(ip)\n");
             return 0;
         }
 
         SfIp ip;
         if (ip.set(ips) != SFIP_SUCCESS)
         {
-            LogMessage("Bad ip %s\n", ips);
+            debug_logf(host_cache_trace, nullptr,  "Bad ip %s\n", ips);
             return 0;
         }
 
@@ -85,11 +86,10 @@ static int host_cache_delete_host(lua_State* L)
             ht->set_visibility(false);
         else
         {
-            LogMessage("%s not found in host cache\n", ips);
+            debug_logf(host_cache_trace, nullptr,  "%s not found in host cache\n", ips);
             return 0;
         }
-
-        LogMessage("host_cache_delete_host done\n");
+        debug_logf(host_cache_trace, nullptr,  "host_cache_delete_host done\n");
     }
     return 0;
 }
@@ -104,14 +104,14 @@ static int host_cache_delete_network_proto(lua_State* L)
 
         if (ips == nullptr || proto == -1)
         {
-            LogMessage("Usage: host_cache.delete_network_proto(ip, proto)\n");
+            debug_logf(host_cache_trace, nullptr,  "Usage: host_cache.delete_network_proto(ip, proto)\n");
             return 0;
         }
 
         SfIp ip;
         if (ip.set(ips) != SFIP_SUCCESS)
         {
-            LogMessage("Bad ip %s\n", ips);
+            debug_logf(host_cache_trace, nullptr,  "Bad ip %s\n", ips);
             return 0;
         }
 
@@ -120,17 +120,16 @@ static int host_cache_delete_network_proto(lua_State* L)
         {
             if ( !ht->set_network_proto_visibility(proto, false) )
             {
-                LogMessage("%d not found for host %s\n", proto, ips);
+                debug_logf(host_cache_trace, nullptr,  "%d not found for host %s\n", proto, ips);
                 return 0;
             }
         }
         else
         {
-            LogMessage("%s not found in host cache\n", ips);
+            debug_logf(host_cache_trace, nullptr,  "%s not found in host cache\n", ips);
             return 0;
         }
-
-        LogMessage("host_cache_delete_network_proto done\n");
+        debug_logf(host_cache_trace, nullptr,  "host_cache_delete_network_proto done\n");
     }
     return 0;
 }
@@ -142,17 +141,16 @@ static int host_cache_delete_transport_proto(lua_State* L)
     {
         const char* ips = luaL_optstring(L, 1, nullptr);
         int proto = luaL_optint(L, 2, -1);
-
         if ( ips == nullptr || proto == -1 )
         {
-            LogMessage("Usage: host_cache.delete_transport_proto(ip, proto)\n");
+            debug_logf(host_cache_trace, nullptr,  "Usage: host_cache.delete_transport_proto(ip, proto)\n");
             return 0;
         }
 
         SfIp ip;
         if ( ip.set(ips) != SFIP_SUCCESS )
         {
-            LogMessage("Bad ip %s\n", ips);
+            debug_logf(host_cache_trace, nullptr,  "Bad ip %s\n", ips);
             return 0;
         }
 
@@ -161,17 +159,16 @@ static int host_cache_delete_transport_proto(lua_State* L)
         {
             if ( !ht->set_xproto_visibility(proto, false) )
             {
-                LogMessage("%d not found for host %s\n", proto, ips);
+                debug_logf(host_cache_trace, nullptr,  "%d not found for host %s\n", proto, ips);
                 return 0;
             }
         }
         else
         {
-            LogMessage("%s not found in host cache\n", ips);
+            debug_logf(host_cache_trace, nullptr,  "%s not found in host cache\n", ips);
             return 0;
         }
-
-        LogMessage("host_cache_delete_transport_proto done\n");
+        debug_logf(host_cache_trace, nullptr,  "host_cache_delete_transport_proto done\n");
     }
     return 0;
 }
@@ -187,20 +184,20 @@ static int host_cache_delete_service(lua_State* L)
 
         if ( ips == nullptr || port == -1 || proto == -1 )
         {
-            LogMessage("Usage: host_cache.delete_service(ip, port, proto).\n");
+            debug_logf(host_cache_trace, nullptr,  "Usage: host_cache.delete_service(ip, port, proto).\n");
             return 0;
         }
 
         if ( !(0 <= proto and proto < 256) )
         {
-            LogMessage("Protocol must be between 0 and 255.\n");
+            debug_logf(host_cache_trace, nullptr,  "Protocol must be between 0 and 255.\n");
             return 0;
         }
 
         SfIp ip;
         if ( ip.set(ips) != SFIP_SUCCESS )
         {
-            LogMessage("Bad ip %s\n", ips);
+            debug_logf(host_cache_trace, nullptr,  "Bad ip %s\n", ips);
             return 0;
         }
 
@@ -209,17 +206,16 @@ static int host_cache_delete_service(lua_State* L)
         {
             if ( !ht->set_service_visibility(port, (IpProtocol)proto, false) )
             {
-                LogMessage("%d or %d not found for host %s\n", port, proto, ips);
+                debug_logf(host_cache_trace, nullptr,  "%d or %d not found for host %s\n", port, proto, ips);
                 return 0;
             }
         }
         else
         {
-            LogMessage("%s not found in host cache\n", ips);
+            debug_logf(host_cache_trace, nullptr,  "%s not found in host cache\n", ips);
             return 0;
         }
-
-        LogMessage("host_cache_delete_service done\n");
+        debug_logf(host_cache_trace, nullptr,  "host_cache_delete_service done\n");
     }
     return 0;
 }
@@ -236,14 +232,14 @@ static int host_cache_delete_client(lua_State* L)
 
         if (ips == nullptr || id == -1 || service == -1)
         {
-            LogMessage("Usage: host_cache.delete_client(ip, id, service, <version>).\n");
+            debug_logf(host_cache_trace, nullptr,  "Usage: host_cache.delete_client(ip, id, service, <version>).\n");
             return 0;
         }
 
         SfIp ip;
         if (ip.set(ips) != SFIP_SUCCESS)
         {
-            LogMessage("Bad ip %s\n", ips);
+            debug_logf(host_cache_trace, nullptr,  "Bad ip %s\n", ips);
             return 0;
         }
 
@@ -253,17 +249,16 @@ static int host_cache_delete_client(lua_State* L)
             HostClient hc(id, version, service);
             if ( !ht->set_client_visibility(hc, false) )
             {
-                LogMessage("Client not found for host %s\n", ips);
+                debug_logf(host_cache_trace, nullptr,  "Client not found for host %s\n", ips);
                 return 0;
             }
         }
         else
         {
-            LogMessage("%s not found in host cache\n", ips);
+            debug_logf(host_cache_trace, nullptr,  "%s not found in host cache\n", ips);
             return 0;
         }
-
-        LogMessage("host_cache_delete_client done\n");
+        debug_logf(host_cache_trace, nullptr,  "host_cache_delete_client done\n");
     }
     return 0;
 }
@@ -371,7 +366,10 @@ bool HostCacheModule::end(const char* fqn, int, SnortConfig* sc)
         if ( Snort::is_reloading() )
             sc->register_reload_handler(new HostCacheReloadTuner(memcap));
         else
+        {   
             host_cache.set_max_size(memcap);
+            ControlConn::log_command("host_cache.delete_host",false);
+        }
     }
 
     return true;
@@ -488,4 +486,18 @@ void HostCacheModule::sum_stats(bool accumulate_now_stats)
 
     Module::sum_stats(accumulate_now_stats);
     host_cache.unlock();
+}
+
+void HostCacheModule::set_trace(const Trace* trace) const
+{ host_cache_trace = trace; }
+
+const TraceOption* HostCacheModule::get_trace_options() const
+{
+#ifndef DEBUG_MSGS
+    return nullptr;
+#else
+    static const TraceOption host_cache_trace_options(nullptr, 0, nullptr);
+
+    return &host_cache_trace_options;
+#endif
 }

@@ -379,6 +379,25 @@ int main_set_watchdog_params(lua_State* L)
     return 0;
 }
 
+int main_log_command(lua_State* L)
+{
+    if (!L)
+        return 0;
+    
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    if (lua_gettop(L) >= 2)
+    {
+        std::string command = luaL_optstring(L, 1, nullptr);
+        bool exclusion = luaL_opt(L,lua_toboolean, 2, true);
+        ctrlcon->log_command(command, exclusion);
+        LogRespond(ctrlcon, "Control: Logging %s for %s\n", exclusion ? "enabled" : "disabled" , command.c_str());
+    }
+    else
+        LogRespond(ctrlcon, "Usage: log_command(<command>,true|false)\n");
+    
+    return 0;
+}
+
 int main_rotate_stats(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);

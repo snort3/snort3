@@ -34,6 +34,7 @@
 
 using namespace snort;
 
+std::vector<std::string> ControlConn::log_exclusion_list;
 
 ControlConn* ControlConn::query_from_lua(const lua_State* L)
 {
@@ -77,6 +78,36 @@ void ControlConn::configure() const
     ModuleManager::load_commands(shell);
 }
 
+void ControlConn::log_command(const std::string& command, bool log) 
+{
+    if(command.empty())
+        return;
+    
+    auto it = std::find(log_exclusion_list.begin(), log_exclusion_list.end(), command);
+    if (log) 
+    {
+        if (it != log_exclusion_list.end()) 
+            log_exclusion_list.erase(it);
+    } else 
+    {
+        if (it == log_exclusion_list.end()) 
+            log_exclusion_list.push_back(command);
+    }
+}
+
+bool ControlConn::loggable(const std::string& command)
+{
+    if(log_exclusion_list.empty() or command.empty())
+        return true;
+    
+    for (const auto& m : log_exclusion_list) 
+    {
+        if (command.find(m) != std::string::npos)
+            return false;
+    }
+    return true;
+}
+
 int ControlConn::read_commands()
 {
     char buf[STD_BUF];
@@ -90,9 +121,9 @@ int ControlConn::read_commands()
         char* nl;
         while ((nl = strchr(p, '\n')) != nullptr)
         {
-            std::string command = next_command;
             next_command.append(buf, nl - p);
-            LogMessage("Control: received command, %s\n", next_command.c_str());
+            if(loggable(next_command))
+                LogMessage("Control: received command, %s\n", next_command.c_str());
             pending_commands.push(std::move(next_command));
             next_command.clear();
             p = nl + 1;
