@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.57.0 2023-03-09 14:10:29 EST TST
+Revision 3.1.58.0 2023-03-22 11:45:40 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1698,6 +1698,7 @@ Commands:
   * snort.delete_inspector(inspector): delete an inspector from the
     default policy
   * snort.dump_stats(): show summary statistics
+  * snort.dump_heap_stats(): show heap statistics
   * snort.reset_stats(): clear summary statistics
   * snort.rotate_stats(): roll perfmonitor log files
   * snort.reload_config(filename): load new configuration
@@ -1705,6 +1706,8 @@ Commands:
     policy
   * snort.reload_daq(): reload daq module
   * snort.reload_hosts(filename): load a new hosts table
+  * snort.log_command(command, logging): enabled or disable logging
+    of a command
   * snort.pause(): suspend packet processing
   * snort.resume(pkt_num): continue packet processing. If number of
     packets is specified, will resume for n packets and pause
@@ -15547,6 +15550,7 @@ alert is raised by the enhanced JavaScript normalizer.
   * snort.delete_inspector(inspector): delete an inspector from the
     default policy
   * snort.dump_stats(): show summary statistics
+  * snort.dump_heap_stats(): show heap statistics
   * snort.reset_stats(): clear summary statistics
   * snort.rotate_stats(): roll perfmonitor log files
   * snort.reload_config(filename): load new configuration
@@ -15554,6 +15558,8 @@ alert is raised by the enhanced JavaScript normalizer.
     policy
   * snort.reload_daq(): reload daq module
   * snort.reload_hosts(filename): load a new hosts table
+  * snort.log_command(command, logging): enabled or disable logging
+    of a command
   * snort.pause(): suspend packet processing
   * snort.resume(pkt_num): continue packet processing. If number of
     packets is specified, will resume for n packets and pause

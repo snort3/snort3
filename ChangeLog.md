@@ -1,3 +1,13 @@
+2023-03-22: 3.1.58.0
+
+* actions: restore rtn check in Actions::alert and add to Actions::log
+* appid: give precedence to eve detected client over appid when eve_http_client_mapping config is set
+* detection: fix queue_limit pegcounter evaluation
+* host cache: removed some log to prevent log flooding
+* js_norm: initialize normalization context only when script is detected
+* loggers: fix pcap flushing
+* memory: add shell command to dump heap stats
+
 2023-03-09: 3.1.57.0
 
 * ftp_telnet: updated flushing around subnegotiation parameters
