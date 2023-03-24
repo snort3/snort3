@@ -388,7 +388,7 @@ bool Stream::prune_flows()
     if ( !flow_con )
         return false;
 
-    return flow_con->prune_one(PruneReason::MEMCAP, false);
+    return flow_con->prune_multiple(PruneReason::MEMCAP, false);
 }
 
 //-------------------------------------------------------------------------

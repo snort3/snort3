@@ -61,6 +61,7 @@ public:
     bool prune_one(PruneReason, bool do_cleanup);
     unsigned timeout(unsigned num_flows, time_t cur_time);
     unsigned delete_flows(unsigned num_to_delete);
+    unsigned prune_multiple(PruneReason, bool do_cleanup);
 
     unsigned purge();
     unsigned get_count();

@@ -354,8 +354,7 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
 
         if (!pruned and hash_table->get_num_nodes() > max_cap)
         {
-            prune_one(PruneReason::EXCESS, true);
-            ++pruned;
+            pruned += prune_multiple(PruneReason::EXCESS, true);
         }
     }
 
@@ -379,6 +378,21 @@ bool FlowCache::prune_one(PruneReason reason, bool do_cleanup)
     release(flow, reason, do_cleanup);
 
     return true;
+}
+
+unsigned FlowCache::prune_multiple(PruneReason reason, bool do_cleanup)
+{
+    unsigned pruned = 0;
+    // so we don't prune the current flow (assume current == MRU)
+    if ( hash_table->get_num_nodes() <= 1 )
+        return 0;
+
+    for (pruned = 0; pruned < config.prune_flows && prune_one(reason, do_cleanup); pruned++);
+
+    if ( PacketTracer::is_active() and pruned )
+        PacketTracer::log("Flow: Pruned memcap %u flows\n", pruned);
+
+    return pruned;
 }
 
 unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)

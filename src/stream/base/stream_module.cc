@@ -85,6 +85,9 @@ static const Parameter s_params[] =
     { "max_flows", Parameter::PT_INT, "2:max32", "476288",
       "maximum simultaneous flows tracked before pruning" },
 
+    { "prune_flows", Parameter::PT_INT, "1:max32", "10",
+      "maximum flows to prune at one time" },
+
     { "pruning_timeout", Parameter::PT_INT, "1:max32", "30",
       "minimum inactive time before being eligible for pruning" },
 
@@ -176,6 +179,11 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
     else if ( v.is("max_flows") )
     {
         config.flow_cache_cfg.max_flows = v.get_uint32();
+        return true;
+    }
+    else if ( v.is("prune_flows") )
+    {
+        config.flow_cache_cfg.prune_flows = v.get_uint32();
         return true;
     }
     else if ( v.is("pruning_timeout") )
@@ -343,6 +351,7 @@ void StreamModuleConfig::show() const
     ConfigLogger::log_value("max_flows", flow_cache_cfg.max_flows);
     ConfigLogger::log_value("max_aux_ip", SnortConfig::get_conf()->max_aux_ip);
     ConfigLogger::log_value("pruning_timeout", flow_cache_cfg.pruning_timeout);
+    ConfigLogger::log_value("prune_flows", flow_cache_cfg.prune_flows);
 
     for (int i = to_utype(PktType::IP); i < to_utype(PktType::PDU); ++i)
     {
