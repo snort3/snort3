@@ -50,7 +50,7 @@ uint64_t HttpFlowData::instance_count = 0;
 #endif
 
 HttpFlowData::HttpFlowData(Flow* flow, const HttpParaList* params_) :
-    FlowData(inspector_id), params(params_)
+    FlowData(inspector_id), params(params_), flow(flow)
 {
     static HttpFlowStreamIntf h1_stream;
 #ifdef REG_TEST
@@ -127,6 +127,9 @@ HttpFlowData::~HttpFlowData()
         discard_list = discard_list->next;
         delete tmp;
     }
+
+    if (!for_httpx)
+        flow->stream_intf = nullptr;
 }
 
 void HttpFlowData::half_reset(SourceId source_id)

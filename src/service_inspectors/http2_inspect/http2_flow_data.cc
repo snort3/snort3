@@ -98,6 +98,8 @@ Http2FlowData::~Http2FlowData()
         hi_ss[k]->go_away();
         delete[] frame_data[k];
     }
+
+    flow->stream_intf = nullptr;
 }
 
 HttpFlowData* Http2FlowData::get_hi_flow_data()

@@ -144,14 +144,14 @@ private:
     // *** Inspector => StreamSplitter (facts about the message section that is coming next)
     HttpCommon::SectionType type_expected[2] = { HttpCommon::SEC_REQUEST, HttpCommon::SEC_STATUS };
     bool last_request_was_connect = false;
+    bool stretch_section_to_packet[2] = { false, false };
+    bool accelerated_blocking[2] = { false, false };
     z_stream* compress_stream[2] = { nullptr, nullptr };
     uint64_t zero_nine_expected = 0;
     // length of the data from Content-Length field
     int64_t data_length[2] = { HttpCommon::STAT_NOT_PRESENT, HttpCommon::STAT_NOT_PRESENT };
     uint32_t section_size_target[2] = { 0, 0 };
     HttpEnums::CompressId compression[2] = { HttpEnums::CMP_NONE, HttpEnums::CMP_NONE };
-    bool stretch_section_to_packet[2] = { false, false };
-    bool accelerated_blocking[2] = { false, false };
 
     // *** Inspector's internal data about the current message
     struct FdCallbackContext
@@ -217,6 +217,7 @@ private:
     int64_t hx_stream_id = -1;
     HttpCommon::HXBodyState hx_body_state[2] = { HttpCommon::HX_BODY_NOT_COMPLETE,
         HttpCommon::HX_BODY_NOT_COMPLETE };
+    snort::Flow* flow;
 
 #ifdef REG_TEST
     static uint64_t instance_count;
