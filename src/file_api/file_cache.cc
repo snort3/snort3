@@ -443,6 +443,11 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
             act->set_delayed_action(Active::ACT_RETRY, true);
             FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
                 "apply_verdict:FILE_VERDICT_PENDING with action retry\n");
+            FileFlows *files = FileFlows::get_file_flows(flow);
+            if (files)
+            {
+               files->add_pending_file(file_ctx->get_file_id());
+            }
 
             if (resume)
                 policy->log_file_action(flow, file_ctx, FILE_RESUME_BLOCK);
