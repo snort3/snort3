@@ -39,7 +39,6 @@ public:
     static unsigned get_instance_max();
     static void term();
     static void start_watchdog();
-    static void preemptive_kick();
     static void set_instance_tid(int);
     static int get_instance_tid(int);
 

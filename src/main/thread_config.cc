@@ -275,7 +275,7 @@ struct Watchdog
 class WatchdogKick : public AnalyzerCommand
 {
 public:
-    WatchdogKick(Watchdog* d) : dog(d) { }
+    WatchdogKick(Watchdog* d) : dog(d) { dog->waiting = true; }
     bool execute(Analyzer&, void**) override
     {
         dog->resp[get_instance_id()] = true;
@@ -283,7 +283,7 @@ public:
     }
     const char* stringify() override { return "WATCHDOG_KICK"; }
 
-    ~WatchdogKick() override { }
+    ~WatchdogKick() override { dog->waiting = false; }
 private:
     Watchdog* dog;
 };
@@ -294,16 +294,13 @@ void Watchdog::kick()
     if ( waiting )
     {
         uint16_t thread_count = 0;
+        WarningMessage("Packet processing threads are unresponsive\n");
+        WarningMessage("Unresponsive thread ID: ");
         for ( unsigned i = 0; i < max; ++i )
         {
             if ( !resp[i] )
             {
                 ++thread_count;
-                if (thread_count == 1)
-                {
-                    WarningMessage("Packet processing threads are unresponsive\n");
-                    WarningMessage("Unresponsive thread ID: ");
-                }
                 const int tid = SnortConfig::get_conf()->thread_config->get_instance_tid(i);
                 if ( tid != -1 )
                     WarningMessage("%d (TID: %d)", i, tid);
@@ -311,10 +308,7 @@ void Watchdog::kick()
                     WarningMessage("%d ", i);
             }
         }
-
-        if ( thread_count )
-            WarningMessage("\n");
-
+        WarningMessage("\n");
         if ( thread_count >= SnortConfig::get_conf()->watchdog_min_thread_count )
         {
             WarningMessage("Aborting Snort\n");
@@ -326,26 +320,19 @@ void Watchdog::kick()
         resp[i] = false;
 
     main_broadcast_command(new WatchdogKick(this), nullptr);
-    waiting = true;
-}
-
-static Watchdog& get_watchdog()
-{
-    static Watchdog s_dog(SnortConfig::get_conf()->watchdog_timer);
-    return s_dog;
 }
 
 static void s_watchdog_handler(void*)
 {
-    Watchdog& dog = get_watchdog();
+    static Watchdog s_dog(SnortConfig::get_conf()->watchdog_timer);
     if ( SnortConfig::get_conf()->watchdog_timer > 0 )
     {
-        if ( dog.seconds_count > 0 )
-            dog.seconds_count--;
+        if ( s_dog.seconds_count > 0 )
+            s_dog.seconds_count--;
         else
         {
-            dog.kick();
-            dog.seconds_count = SnortConfig::get_conf()->watchdog_timer;
+            s_dog.kick();
+            s_dog.seconds_count = SnortConfig::get_conf()->watchdog_timer;
         }
     }
 }
@@ -353,15 +340,6 @@ static void s_watchdog_handler(void*)
 void ThreadConfig::start_watchdog()
 {
     Periodic::register_handler(s_watchdog_handler, nullptr, 0, 1000);
-}
-
-void ThreadConfig::preemptive_kick()
-{
-    if (SnortConfig::get_conf()->watchdog_timer)
-    {
-        Watchdog& dog = get_watchdog();
-        dog.resp[get_instance_id()] = true;
-    }
 }
 
 
