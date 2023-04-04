@@ -224,17 +224,17 @@ TEST(memory, prune1)
     const MemoryCounts& mc = MemoryCap::get_mem_stats();
     CHECK(mc.start_up_use == start);
 
-    flows = 1;
+    flows = 2;
     free_space();
-    CHECK(flows == 1);
+    CHECK(flows == 2);
 
     heap->total = cap + 1;
     periodic_check();
     CHECK(heap->epoch == 2);
 
-    CHECK(flows == 1);
+    CHECK(flows == 2);
     free_space();
-    CHECK(flows == 0);
+    CHECK(flows == 1);
 
     heap->total = cap;
     periodic_check();
@@ -243,6 +243,10 @@ TEST(memory, prune1)
     heap->alloc++;
     heap->dealloc++;
 
+    free_space();
+    CHECK(flows == 0);
+
+    heap->dealloc++;
     free_space();
     CHECK(flows == 0);
 
@@ -255,9 +259,9 @@ TEST(memory, prune1)
     CHECK(mc.deallocated == heap->dealloc);
 
     CHECK(mc.reap_cycles == 1);
-    CHECK(mc.reap_attempts == 1);
+    CHECK(mc.reap_attempts == 2);
     CHECK(mc.reap_failures == 0);
-    CHECK(mc.pruned == 1);
+    CHECK(mc.pruned == 2);
 
     heap->total = start;
     MemoryCap::stop();

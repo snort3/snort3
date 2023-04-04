@@ -62,6 +62,7 @@ static std::atomic<uint64_t> current_epoch { 0 };
 
 static THREAD_LOCAL uint64_t last_dealloc = 0;
 static THREAD_LOCAL uint64_t start_dealloc = 0;
+static THREAD_LOCAL uint64_t start_alloc = 0;
 static THREAD_LOCAL uint64_t start_epoch = 0;
 
 static HeapInterface* heap = nullptr;
@@ -230,6 +231,7 @@ void MemoryCap::free_space()
             return;
 
         start_dealloc = last_dealloc = mc.deallocated;
+        start_alloc = mc.allocated;
         start_epoch = current_epoch;
         mc.reap_cycles++;
     }
@@ -237,7 +239,9 @@ void MemoryCap::free_space()
     mc.pruned += (mc.deallocated - last_dealloc);
     last_dealloc = mc.deallocated;
 
-    if ( mc.deallocated - start_dealloc  >= config.prune_target )
+    uint64_t alloc = mc.allocated - start_alloc;
+    uint64_t dealloc = mc.deallocated - start_dealloc;
+    if ( dealloc > alloc and ( ( dealloc - alloc ) >= config.prune_target ) )
     {
         start_dealloc = 0;
         return;
