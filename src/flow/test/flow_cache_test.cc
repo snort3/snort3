@@ -33,6 +33,7 @@
 #include "flow/session.h"
 #include "main/policy.h"
 #include "main/snort_config.h"
+#include "main/thread_config.h"
 #include "managers/inspector_manager.h"
 #include "packet_io/active.h"
 #include "packet_tracer/packet_tracer.h"
@@ -105,6 +106,7 @@ SfIpRet SfIp::set(void const*, int) { return SFIP_SUCCESS; }
 void snort::trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) {}
 uint8_t snort::TraceApi::get_constraints_generation() { return 0; }
 void snort::TraceApi::filter(const Packet&) {}
+void ThreadConfig::preemptive_kick() {}
 
 namespace snort
 {

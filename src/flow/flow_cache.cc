@@ -28,6 +28,7 @@
 #include "hash/hash_defs.h"
 #include "hash/zhash.h"
 #include "helpers/flag_context.h"
+#include "main/thread_config.h"
 #include "packet_io/active.h"
 #include "packet_tracer/packet_tracer.h"
 #include "stream/base/stream_module.h"
@@ -48,6 +49,7 @@ using namespace snort;
 static const unsigned ALLOWED_FLOWS_ONLY = 1;
 static const unsigned OFFLOADED_FLOWS_TOO = 2;
 static const unsigned ALL_FLOWS = 3;
+static const unsigned WDT_MASK = 7; // kick watchdog once for every 8 flows deleted
 
 //-------------------------------------------------------------------------
 // FlowCache stuff
@@ -454,7 +456,9 @@ unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, u
             continue;
         }
 
-        // we have a winner...
+        if ( (deleted & WDT_MASK) == 0 )
+            ThreadConfig::preemptive_kick();
+
         unlink_uni(flow);
 
         if ( flow->was_blocked() )
@@ -488,6 +492,9 @@ unsigned FlowCache::delete_flows(unsigned num_to_delete)
         // delete from the free list first...
         while ( num_to_delete )
         {
+            if ( (deleted & WDT_MASK) == 0 )
+                ThreadConfig::preemptive_kick();
+
             Flow* flow = (Flow*)hash_table->pop();
             if ( !flow )
                 break;
