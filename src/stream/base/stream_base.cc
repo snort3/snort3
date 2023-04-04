@@ -21,6 +21,7 @@
 #endif
 
 #include <functional>
+#include <mutex>
 
 #include "detection/ips_context.h"
 #include "flow/expect_cache.h"
@@ -50,6 +51,9 @@ using namespace snort;
 
 THREAD_LOCAL ProfileStats s5PerfStats;
 THREAD_LOCAL FlowControl* flow_con = nullptr;
+
+std::vector<FlowControl *> crash_dump_flow_control;
+static std::mutex crash_dump_flow_control_mutex;
 
 static BaseStats g_stats;
 THREAD_LOCAL BaseStats stream_base_stats;
@@ -218,6 +222,11 @@ void StreamBase::tinit()
 
     // this is temp added to suppress the compiler error only
     flow_con = new FlowControl(config.flow_cache_cfg);
+
+    std::unique_lock<std::mutex> flow_control_lock(crash_dump_flow_control_mutex);
+    crash_dump_flow_control.push_back(flow_con);
+    flow_control_lock.unlock();
+
     InspectSsnFunc f;
 
     StreamHAManager::tinit();
