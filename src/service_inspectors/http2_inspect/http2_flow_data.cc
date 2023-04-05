@@ -45,7 +45,7 @@ uint64_t Http2FlowData::instance_count = 0;
 #endif
 
 Http2FlowData::Http2FlowData(Flow* flow_) :
-    FlowData(inspector_id),
+    FlowData(inspector_id,(Inspector*)(flow_->assistant_gadget)),
     flow(flow_),
     hi((HttpInspect*)(flow->assistant_gadget)),
     hpack_decoder { Http2HpackDecoder(this, SRC_CLIENT, events[SRC_CLIENT],
