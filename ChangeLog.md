@@ -1,3 +1,14 @@
+2023-04-06: 3.1.59.0
+
+* file_api: handling file cache context
+* flow_cache: prune multiple flows
+* http2_inspect: clear flow stream_intf with flow_data
+* http2_inspect: make flow data reload safe
+* memory: subtract the allocated memory from the thread pruned before comparing to the target
+* stream: store thread local flow control pointer in global
+* thread_config: add preemptive watchdog kick for flow deletion
+* thread_config: remove message use in watchdog timer
+
 2023-03-22: 3.1.58.0
 
 * actions: restore rtn check in Actions::alert and add to Actions::log

@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.58.0 2023-03-22 11:45:40 EDT TST
+Revision 3.1.59.0 2023-04-06 17:15:48 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -5527,6 +5527,8 @@ Configuration:
   * bool stream.ip_frags_only = false: don’t process non-frag flows
   * int stream.max_flows = 476288: maximum simultaneous flows tracked
     before pruning { 2:max32 }
+  * int stream.prune_flows = 10: maximum flows to prune at one time {
+    1:max32 }
   * int stream.pruning_timeout = 30: minimum inactive time before
     being eligible for pruning { 1:max32 }
   * int stream.held_packet_timeout = 1000: timeout in milliseconds
@@ -10850,6 +10852,8 @@ libraries see the Getting Started section of the manual.
     1:max31 }
   * int stream.max_flows = 476288: maximum simultaneous flows tracked
     before pruning { 2:max32 }
+  * int stream.prune_flows = 10: maximum flows to prune at one time {
+    1:max32 }
   * int stream.pruning_timeout = 30: minimum inactive time before
     being eligible for pruning { 1:max32 }
   * enum stream_reassemble.action: stop or start stream reassembly { 
