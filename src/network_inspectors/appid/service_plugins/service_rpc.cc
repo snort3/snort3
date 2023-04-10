@@ -564,7 +564,6 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
 
 int RpcServiceDetector::rpc_udp_validate(AppIdDiscoveryArgs& args)
 {
-    static char subname[64];
     ServiceRPCData* rd;
     AppIdServiceSubtype sub;
     AppIdServiceSubtype* subtype;
@@ -611,6 +610,7 @@ done:
             }
             else if (program)
             {
+                char subname[64];
                 snprintf(subname, sizeof(subname), "(%u)", program);
                 sub.service = subname;
                 subtype = &sub;
@@ -655,7 +655,6 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
     const ServiceRPCCall* call;
     const ServiceRPCReply* reply;
 
-    static char subname[64];
     AppIdServiceSubtype sub;
     AppIdServiceSubtype* subtype;
     uint32_t program = 0;
@@ -958,7 +957,8 @@ inprocess:
             }
             else if (program)
             {
-                sprintf(subname, "(%u)", program);
+                char subname[64];
+                snprintf(subname, sizeof(subname), "(%u)", program);
                 sub.service = subname;
                 subtype = &sub;
             }

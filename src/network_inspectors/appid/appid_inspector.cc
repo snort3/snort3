@@ -172,6 +172,7 @@ void AppIdInspector::tinit()
         appidDebug->set_enabled(true);
      if ( snort::HighAvailabilityManager::active() )
         AppIdHAManager::tinit();
+    ServiceDiscovery::set_thread_local_ftp_service();
 }
 
 void AppIdInspector::tterm()
@@ -185,6 +186,7 @@ void AppIdInspector::tterm()
         pkt_thread_tp_appid_ctxt->tfini();
     if ( snort::HighAvailabilityManager::active() )
         AppIdHAManager::tterm();
+    ServiceDiscovery::reset_thread_local_ftp_service();
 }
 
 void AppIdInspector::tear_down(SnortConfig*)

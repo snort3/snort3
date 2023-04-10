@@ -251,8 +251,9 @@ bool ACOdpContextSwap::execute(Analyzer&, void**)
     AppIdPegCounts::cleanup_pegs();
     AppIdServiceState::initialize(ctxt.config.memcap);
     AppIdPegCounts::init_pegs();
-
+    ServiceDiscovery::set_thread_local_ftp_service();
     pkt_thread_odp_ctxt = &current_odp_ctxt;
+
     assert(odp_thread_local_ctxt);
     delete odp_thread_local_ctxt;
     odp_thread_local_ctxt = new OdpThreadContext;

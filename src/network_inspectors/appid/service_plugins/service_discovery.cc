@@ -81,6 +81,7 @@
 using namespace snort;
 
 static ServiceDetector* ftp_service;
+static THREAD_LOCAL ServiceDetector* pkt_thread_ftp_service;
 
 void ServiceDiscovery::initialize(AppIdInspector& inspector)
 {
@@ -563,14 +564,24 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
 
 int ServiceDiscovery::add_ftp_service_state(AppIdSession& asd)
 {
-    if (!ftp_service)
+    if (!pkt_thread_ftp_service)
         return -1;
-    return asd.add_flow_data_id(21, ftp_service);
+    return asd.add_flow_data_id(21, pkt_thread_ftp_service);
 }
 
 void ServiceDiscovery::clear_ftp_service_state()
 {
     ftp_service = nullptr;
+}
+
+void ServiceDiscovery::set_thread_local_ftp_service()
+{
+    pkt_thread_ftp_service = ftp_service;
+}
+
+void ServiceDiscovery::reset_thread_local_ftp_service()
+{
+    pkt_thread_ftp_service = nullptr;
 }
 
 bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
