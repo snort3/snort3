@@ -51,11 +51,13 @@ public:
     void add_host_pattern(uint8_t*, size_t, uint8_t, AppId);
     void finalize_patterns();
     void reload_patterns();
+    unsigned get_pattern_count();
     int scan_hostname(const uint8_t*, size_t, AppId&, AppId&);
 
 private:
     DnsHostPatternList* dns_host_pattern_list = nullptr;
     snort::SearchTool dns_host_matcher = snort::SearchTool();
+    unsigned pattern_count = 0;
 };
 
 #endif

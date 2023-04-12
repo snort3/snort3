@@ -82,6 +82,7 @@ public:
     void insert_client_port_pattern(PortPatternNode*);
     void finalize_client_port_patterns(AppIdInspector&);
     void reload_client_port_patterns();
+    unsigned get_pattern_count();
 
     int validate(AppIdDiscoveryArgs&) override;
 
@@ -93,6 +94,7 @@ private:
     PatternService* service_port_pattern = nullptr;
     snort::SearchTool* tcp_pattern_matcher = nullptr;
     snort::SearchTool* udp_pattern_matcher = nullptr;
+    unsigned pattern_count = 0;
 };
 
 class PatternServiceDetector : public ServiceDetector
@@ -104,6 +106,7 @@ public:
     void insert_service_port_pattern(PortPatternNode*);
     void finalize_service_port_patterns(AppIdInspector&);
     void reload_service_port_patterns();
+    unsigned get_pattern_count();
 
     int validate(AppIdDiscoveryArgs&) override;
 
@@ -118,6 +121,7 @@ private:
     snort::SearchTool* udp_pattern_matcher = nullptr;
     snort::SearchTool* tcp_port_pattern_tree[65536] = { };
     snort::SearchTool* udp_port_pattern_tree[65536] = { };
+    unsigned pattern_count = 0;
 };
 
 #endif

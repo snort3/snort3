@@ -27,6 +27,7 @@
 
 #include <climits>
 #include <lua.hpp>
+#include <sys/resource.h>
 
 #include "control/control.h"
 #include "host_tracker/host_cache.h"
@@ -73,6 +74,8 @@ static const Parameter s_params[] =
       "enable logging of encrypted visibility engine process to client mappings" },
     { "log_alpn_service_mappings", Parameter::PT_BOOL, nullptr, "false",
       "enable logging of alpn service mappings" },
+    { "log_memory_and_pattern_count", Parameter::PT_BOOL, nullptr, "false",
+      "enable logging of memory usage and pattern counts" },
 #endif
     { "memcap", Parameter::PT_INT, "1024:maxSZ", "1048576",
       "max size of the service cache before we start pruning the cache" },
@@ -382,6 +385,18 @@ static int reload_detectors(lua_State* L)
 
     ctrlcon->respond(".. reloading detectors\n");
 
+    struct rusage ru;
+    long prev_maxrss = -1;
+    #ifdef REG_TEST
+    if ( inspector->get_config().log_memory_and_pattern_count )
+    {
+    #endif
+        getrusage(RUSAGE_SELF, &ru);
+        prev_maxrss = ru.ru_maxrss;
+    #ifdef REG_TEST
+    }
+    #endif
+
     AppIdContext& ctxt = inspector->get_ctxt();
     OdpContext& old_odp_ctxt = ctxt.get_odp_ctxt();
     ServiceDiscovery::clear_ftp_service_state();
@@ -401,6 +416,18 @@ static int reload_detectors(lua_State* L)
 
     ctrlcon->respond("== swapping detectors configuration\n");
     ReloadTracker::update(ctrlcon, "swapping detectors configuration");
+
+    #ifdef REG_TEST
+    if ( inspector->get_config().log_memory_and_pattern_count )
+    {
+    #endif
+        getrusage(RUSAGE_SELF, &ru);
+        LogMessage("appid: MaxRss diff: %li\n", ru.ru_maxrss - prev_maxrss);
+        LogMessage("appid: patterns loaded: %u\n", odp_ctxt.get_pattern_count());
+    #ifdef REG_TEST
+    }
+    #endif
+
     main_broadcast_command(new ACOdpContextSwap(*inspector, old_odp_ctxt, ctrlcon), ctrlcon);
     return 0;
 }
@@ -486,6 +513,8 @@ bool AppIdModule::set(const char*, Value& v, SnortConfig*)
         config->log_eve_process_client_mappings = v.get_bool();
     else if (v.is("log_alpn_service_mappings") )
         config->log_alpn_service_mappings = v.get_bool();
+    else if (v.is("log_memory_and_pattern_count") )
+        config->log_memory_and_pattern_count = v.get_bool();
     else
 #endif
     if ( v.is("memcap") )

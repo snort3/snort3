@@ -26,8 +26,10 @@
 #include "appid_inspector.h"
 
 #include <openssl/crypto.h>
+#include <sys/resource.h>
 
 #include "flow/flow.h"
+#include "log/messages.h"
 #include "main/analyzer_command.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
@@ -116,8 +118,34 @@ bool AppIdInspector::configure(SnortConfig* sc)
 {
     assert(!ctxt);
 
+    struct rusage ru;
+    long prev_maxrss = -1;
+    #ifdef REG_TEST
+    if ( config->log_memory_and_pattern_count )
+    {
+    #endif
+        if ( getrusage(RUSAGE_SELF, &ru) == 0 )
+            prev_maxrss = ru.ru_maxrss;
+    #ifdef REG_TEST
+    }
+    #endif
+
     ctxt = new AppIdContext(const_cast<AppIdConfig&>(*config));
     ctxt->init_appid(sc, *this);
+
+    #ifdef REG_TEST
+    if ( config->log_memory_and_pattern_count )
+    {
+    #endif
+        if ( prev_maxrss == -1 or getrusage(RUSAGE_SELF, &ru) == -1 )
+            ErrorMessage("appid: fetching memory usage failed\n");
+        else
+            LogMessage("appid: MaxRss diff: %li\n", ru.ru_maxrss - prev_maxrss);
+
+        LogMessage("appid: patterns loaded: %u\n", ctxt->get_odp_ctxt().get_pattern_count());
+    #ifdef REG_TEST
+    }
+    #endif
 
     DataBus::subscribe_global(http_pub_key, HttpEventIds::REQUEST_HEADER,
         new HttpEventHandler(HttpEventHandler::REQUEST_EVENT, *this), *sc);

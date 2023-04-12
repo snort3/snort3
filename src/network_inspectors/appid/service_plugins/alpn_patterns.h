@@ -46,6 +46,7 @@ public:
     void add_alpn_pattern(AppId, const std::string&, const std::string&);
     void finalize_patterns();
     void reload_patterns();
+    unsigned get_pattern_count();
 
     const AlpnPatternList& get_alpn_load_list() const { return alpn_load_list; }
 

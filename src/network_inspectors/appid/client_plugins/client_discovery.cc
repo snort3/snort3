@@ -92,6 +92,11 @@ void ClientDiscovery::reload_client_patterns()
     udp_patterns.reload();
 }
 
+unsigned ClientDiscovery::get_pattern_count()
+{
+    return tcp_pattern_count + udp_pattern_count;
+}
+
 /*
  * Callback function for string search
  *

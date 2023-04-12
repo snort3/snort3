@@ -120,3 +120,7 @@ void AlpnPatternMatchers::reload_patterns()
     alpn_pattern_matcher.reload();
 }
 
+unsigned AlpnPatternMatchers::get_pattern_count()
+{
+    return alpn_load_list.size();
+}

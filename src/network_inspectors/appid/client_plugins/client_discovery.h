@@ -47,6 +47,7 @@ public:
 
     void finalize_client_patterns();
     void reload_client_patterns();
+    unsigned get_pattern_count();
     bool do_client_discovery(AppIdSession&, snort::Packet*,
         AppidSessionDirection direction, AppidChangeBits& change_bits);
 

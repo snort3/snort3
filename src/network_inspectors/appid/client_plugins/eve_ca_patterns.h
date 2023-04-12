@@ -48,6 +48,7 @@ public:
     void add_eve_ca_pattern(AppId, const std::string&, uint8_t, const std::string&);
     void finalize_patterns();
     void reload_patterns();
+    unsigned get_pattern_count();
 
     const EveCaPatternList& get_eve_ca_load_list() const { return eve_ca_load_list; }
 

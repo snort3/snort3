@@ -383,6 +383,7 @@ void HttpPatternMatchers::insert_chp_pattern(CHPListElement* chpa)
             tmp_chpa = tmp_chpa->next;
         tmp_chpa->next = chpa;
     }
+    chp_pattern_count++;
 }
 
 void HttpPatternMatchers::insert_http_pattern(enum httpPatternType pType,
@@ -746,6 +747,15 @@ void HttpPatternMatchers::reload_patterns()
     field_matcher.reload();
     for (size_t i = 0; i < NUM_HTTP_FIELDS; i++)
         chp_matchers[i].reload();
+}
+
+unsigned HttpPatternMatchers::get_pattern_count()
+{
+    return chp_pattern_count +
+        client_agent_patterns.size() +
+        content_type_patterns.size() +
+        url_patterns.size() +
+        host_url_patterns.size();
 }
 
 static inline void free_matched_patterns(MatchedPatterns* mp)

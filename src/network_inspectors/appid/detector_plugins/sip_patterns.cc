@@ -123,6 +123,7 @@ void SipPatternMatchers::finalize_patterns(OdpContext& odp_ctxt)
     for ( pattern_node = sip_ua_list; pattern_node; pattern_node =
         pattern_node->next )
     {
+        pattern_count++;
         num_patterns = odp_ctxt.get_http_matchers().parse_multiple_http_patterns(
             (const char*)pattern_node->pattern.pattern, patterns, PATTERN_PART_MAX, 0);
         patterns[num_patterns].pattern = nullptr;
@@ -133,6 +134,7 @@ void SipPatternMatchers::finalize_patterns(OdpContext& odp_ctxt)
     for ( pattern_node = sip_server_list; pattern_node; pattern_node =
         pattern_node->next )
     {
+        pattern_count++;
         num_patterns = odp_ctxt.get_http_matchers().parse_multiple_http_patterns(
             (const char*)pattern_node->pattern.pattern, patterns, PATTERN_PART_MAX, 0);
         patterns[num_patterns].pattern = nullptr;
@@ -150,6 +152,11 @@ void SipPatternMatchers::reload_patterns()
     mlmp_reload_patterns(*sip_ua_matcher);
     assert(sip_server_matcher);
     mlmp_reload_patterns(*sip_server_matcher);
+}
+
+unsigned SipPatternMatchers::get_pattern_count()
+{
+    return pattern_count;
 }
 
 int SipPatternMatchers::get_client_from_ua(const char* pattern, uint32_t pattern_len,

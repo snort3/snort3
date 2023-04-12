@@ -28,7 +28,7 @@
 
 using namespace snort;
 
-static void create_matcher(SearchTool& matcher, SslPatternList* list, CnameCache& set)
+static void create_matcher(SearchTool& matcher, SslPatternList* list, CnameCache& set, unsigned& pattern_count)
 {
     size_t* pattern_index;
     size_t size = 0;
@@ -45,7 +45,7 @@ static void create_matcher(SearchTool& matcher, SslPatternList* list, CnameCache
             element->dpattern->pattern_size, element->dpattern, true);
         (*pattern_index)++;
     }
-
+    pattern_count = size;
     matcher.prep();
 }
 
@@ -187,13 +187,18 @@ void SslPatternMatchers::add_cert_pattern(uint8_t* pattern_str, size_t pattern_s
 
 void SslPatternMatchers::finalize_patterns()
 {
-    create_matcher(ssl_host_matcher, cert_pattern_list, cert_pattern_set);
+    create_matcher(ssl_host_matcher, cert_pattern_list, cert_pattern_set, pattern_count);
     cert_pattern_set.clear();
 }
 
 void SslPatternMatchers::reload_patterns()
 {
     ssl_host_matcher.reload();
+}
+
+unsigned SslPatternMatchers::get_pattern_count()
+{
+    return pattern_count;
 }
 
 bool SslPatternMatchers::scan_hostname(const uint8_t* hostname, size_t size, AppId& client_id, AppId& payload_id)

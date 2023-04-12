@@ -158,6 +158,11 @@ void ServiceDiscovery::reload_service_patterns()
     udp_patterns.reload();
 }
 
+unsigned ServiceDiscovery::get_pattern_count()
+{
+    return tcp_pattern_count + udp_pattern_count;
+}
+
 int ServiceDiscovery::add_service_port(AppIdDetector* detector, const ServiceDetectorPort& pp)
 {
     ServiceDetector* service = static_cast<ServiceDetector*>(detector);

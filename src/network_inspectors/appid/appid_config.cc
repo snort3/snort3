@@ -157,6 +157,21 @@ void AppIdContext::show() const
     config.show();
 }
 
+unsigned OdpContext::get_pattern_count()
+{
+    return service_pattern_detector->get_pattern_count() +
+        client_pattern_detector->get_pattern_count() +
+        service_disco_mgr.get_pattern_count() +
+        client_disco_mgr.get_pattern_count() +
+        http_matchers.get_pattern_count() +
+        eve_ca_matchers.get_pattern_count() +
+        alpn_matchers.get_pattern_count() +
+        sip_matchers.get_pattern_count() +
+        ssl_matchers.get_pattern_count() +
+        ssh_matchers.get_pattern_count() +
+        dns_matchers.get_pattern_count();
+}
+
 OdpContext::OdpContext(const AppIdConfig& config, SnortConfig* sc)
 {
     app_info_mgr.init_appid_info_table(config, sc, *this);

@@ -328,6 +328,7 @@ void PatternServiceDetector::register_service_patterns()
             {
                 if (pattern->data && pattern->length)
                 {
+                    pattern_count++;
                     if (ps->proto == IpProtocol::TCP)
                     {
                         handler->register_tcp_pattern(this, pattern->data, pattern->length,
@@ -346,7 +347,10 @@ void PatternServiceDetector::register_service_patterns()
         else
         {
             for (Pattern* pattern = ps->pattern; pattern; pattern = pattern->next)
+            {
+                pattern_count++;
                 ps->count++;
+            }
         }
     }
 
@@ -426,6 +430,11 @@ void PatternServiceDetector::reload_service_port_patterns()
 
     if (udp_pattern_matcher)
         udp_pattern_matcher->reload();
+}
+
+unsigned PatternServiceDetector::get_pattern_count()
+{
+    return pattern_count;
 }
 
 PatternServiceDetector::PatternServiceDetector(ServiceDiscovery* sd)
@@ -612,6 +621,7 @@ void PatternClientDetector::register_client_patterns()
         {
             if (pattern->data && pattern->length)
             {
+                pattern_count++;
                 if (ps->proto == IpProtocol::TCP)
                 {
                     handler->register_tcp_pattern(this, pattern->data, pattern->length,
@@ -652,3 +662,7 @@ void PatternClientDetector::reload_client_port_patterns()
         udp_pattern_matcher->reload();
 }
 
+unsigned PatternClientDetector::get_pattern_count()
+{
+    return pattern_count;
+}

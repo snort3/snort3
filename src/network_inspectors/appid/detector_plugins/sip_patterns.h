@@ -49,6 +49,7 @@ public:
     int get_client_from_server(const char*, uint32_t, AppId&, char*&);
     void finalize_patterns(OdpContext&);
     void reload_patterns();
+    unsigned get_pattern_count();
 
 private:
     static const int PATTERN_PART_MAX = 10;
@@ -57,6 +58,7 @@ private:
     DetectorAppSipPattern* sip_ua_list = nullptr;
     tMlmpTree* sip_server_matcher = nullptr;
     DetectorAppSipPattern* sip_server_list = nullptr;
+    unsigned pattern_count = 0;
 };
 
 #endif

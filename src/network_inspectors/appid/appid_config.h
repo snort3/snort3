@@ -87,6 +87,7 @@ public:
     uint32_t first_decrypted_packet_debug = 0;
     bool log_eve_process_client_mappings = false;
     bool log_alpn_service_mappings = false;
+    bool log_memory_and_pattern_count = false;
 #endif
     bool log_stats = false;
     uint32_t app_stats_period = 300;
@@ -241,6 +242,7 @@ public:
         return alpn_matchers;
     }
 
+    unsigned get_pattern_count();
     void add_port_service_id(IpProtocol, uint16_t, AppId);
     void add_protocol_service_id(IpProtocol, AppId);
     AppId get_port_service_id(IpProtocol, uint16_t);

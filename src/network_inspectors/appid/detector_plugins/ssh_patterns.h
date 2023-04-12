@@ -43,6 +43,7 @@ public:
     bool has_pattern(const std::string& pattern) const;
     bool empty() const;
     AppId get_appid(const std::string& pattern) const;
+    unsigned get_pattern_count();
 private:
     SshPatternTable ssh_patterns;
 };

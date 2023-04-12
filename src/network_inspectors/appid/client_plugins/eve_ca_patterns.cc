@@ -125,3 +125,7 @@ void EveCaPatternMatchers::reload_patterns()
     eve_ca_pattern_matcher.reload();
 }
 
+unsigned EveCaPatternMatchers::get_pattern_count()
+{
+    return eve_ca_load_list.size();
+}

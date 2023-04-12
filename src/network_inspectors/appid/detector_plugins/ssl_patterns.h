@@ -71,6 +71,7 @@ public:
     void add_cert_pattern(uint8_t*, size_t, uint8_t, AppId, bool);
     void finalize_patterns();
     void reload_patterns();
+    unsigned get_pattern_count();
     bool scan_hostname(const uint8_t*, size_t, AppId&, AppId&);
     bool scan_cname(const uint8_t*, size_t, AppId&, AppId&);
 
@@ -78,6 +79,7 @@ private:
     SslPatternList* cert_pattern_list = nullptr;
     CnameCache cert_pattern_set;
     snort::SearchTool ssl_host_matcher = snort::SearchTool();
+    unsigned pattern_count = 0;
 };
 
 #endif

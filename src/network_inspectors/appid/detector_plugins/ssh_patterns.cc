@@ -43,3 +43,8 @@ AppId SshPatternMatchers::get_appid(const std::string& pattern) const
 {
     return ssh_patterns.at(pattern);
 }
+
+unsigned SshPatternMatchers::get_pattern_count()
+{
+    return ssh_patterns.size();
+}
