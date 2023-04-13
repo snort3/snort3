@@ -225,7 +225,7 @@ static std::vector<View> build_entries()
         consolidate_otn_states(states);
         auto& state = states[0];
 
-        if ( !state )
+        if ( !state.is_active() )
             continue;
 
         // FIXIT-L should we assert(otn->sigInfo)?
@@ -422,7 +422,7 @@ static inline bool operator==(const RuleEntryVector& lhs, const RuleStatsVector&
         return false;
 
     for ( unsigned i = 0; i < lhs.size(); ++i )
-        if ( lhs[i].state != rhs[i] )
+        if ( lhs[i].state.is_active() != rhs[i].is_active() )
             return false;
 
     return true;
@@ -499,19 +499,19 @@ TEST_CASE( "otn state", "[profiler][rule_profiler]" )
         CHECK( state_a.alerts == 0 );
     }
 
-    SECTION( "bool()" )
+    SECTION( "is_active" )
     {
-        CHECK( state_a );
+        CHECK( true == state_a.is_active() );
 
         OtnState state_c = OtnState();
-        CHECK_FALSE( state_c );
+        CHECK( true == state_c.is_active() );
 
         state_c.elapsed = 1_ticks;
-        CHECK( state_c );
+        CHECK( true == state_c.is_active() );
 
         state_c.elapsed = 0_ticks;
         state_c.checks = 1;
-        CHECK( state_c );
+        CHECK( true == state_c.is_active() );
     }
 }
 
@@ -528,7 +528,7 @@ TEST_CASE( "rule entry", "[profiler][rule_profiler]" )
         CHECK( copy.sig_info.gid == entry.sig_info.gid );
         CHECK( copy.sig_info.sid == entry.sig_info.sid );
         CHECK( copy.sig_info.rev == entry.sig_info.rev );
-        CHECK( copy.state == entry.state );
+        CHECK( (copy.state.is_active() == entry.state.is_active()) );
     }
 
     SECTION( "copy construction" )
@@ -537,7 +537,7 @@ TEST_CASE( "rule entry", "[profiler][rule_profiler]" )
         CHECK( copy.sig_info.gid == entry.sig_info.gid );
         CHECK( copy.sig_info.sid == entry.sig_info.sid );
         CHECK( copy.sig_info.rev == entry.sig_info.rev );
-        CHECK( copy.state == entry.state );
+        CHECK( (copy.state.is_active() == entry.state.is_active()) );
     }
 
     SECTION( "elapsed" )

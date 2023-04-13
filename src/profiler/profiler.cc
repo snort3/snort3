@@ -136,7 +136,7 @@ TEST_CASE( "profile stats", "[profiler]" )
         {
             ProfileStats stats;
 
-            CHECK( !stats.time );
+            CHECK( false == stats.time.is_active() );
             CHECK( !stats.memory.stats );
         }
 
@@ -170,7 +170,7 @@ TEST_CASE( "profile stats", "[profiler]" )
         {
             stats.reset();
 
-            CHECK( !stats.time );
+            CHECK( false == stats.time.is_active() );
             CHECK( !stats.memory.stats );
         }
 

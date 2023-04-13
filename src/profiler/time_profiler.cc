@@ -123,7 +123,7 @@ static const ProfilerSorter<View> sorters[] =
 };
 
 static bool include_fn(const ProfilerNode& node)
-{ return node.get_stats().time; }
+{ return node.get_stats().time.is_active(); }
 
 static void print_fn(StatsTable& t, const View& v)
 {
@@ -150,7 +150,7 @@ void show_time_profiler_stats(ProfilerNodeMap& nodes, const TimeProfilerConfig& 
     ProfilerBuilder<time_stats::View> builder(time_stats::include_fn);
     auto root = builder.build(nodes.get_root());
 
-    if ( root.children.empty() && !root.view.stats )
+    if ( root.children.empty() && !root.view.stats.is_active() )
         return;
 
     const auto& sorter = time_stats::sorters[config.sort];
@@ -334,10 +334,10 @@ TEST_CASE( "time profiler stats", "[profiler][time_profiler]" )
         CHECK( stats == TimeProfilerStats() );
     }
 
-    SECTION( "bool()" )
+    SECTION( "is_active" )
     {
-        CHECK( stats );
-        CHECK_FALSE( TimeProfilerStats() );
+        CHECK( true == stats.is_active() );
+        CHECK_FALSE( TimeProfilerStats().is_active() );
     }
 }
 
@@ -357,7 +357,7 @@ TEST_CASE( "time profiler view", "[profiler][time_profiler]" )
         {
             CHECK( view.name == "foo" );
             CHECK( view.stats == the_stats.time );
-            CHECK_FALSE( view.caller_stats );
+            CHECK( false == view.caller_stats.is_active() );
         }
 
         SECTION( "elapsed" )
@@ -394,7 +394,7 @@ TEST_CASE( "time profiler view", "[profiler][time_profiler]" )
         parent.stats = { 24_ticks, 6 };
 
         time_stats::View child(node, &parent);
-        CHECK( child.caller_stats );
+        CHECK( true == child.caller_stats.is_active() );
 
         SECTION( "pct_caller" )
         {
@@ -471,7 +471,7 @@ TEST_CASE( "time profiler sorting", "[profiler][time_profiler]" )
 TEST_CASE( "time profiler time context disabled", "[profiler][time_profiler]" )
 {
     TimeProfilerStats stats;
-    REQUIRE_FALSE( stats );
+    REQUIRE( false == stats.is_active() );
     TimeProfilerStats::set_enabled(false);
 
     SECTION( "lifetime" )
@@ -505,7 +505,7 @@ TEST_CASE( "time profiler time context disabled", "[profiler][time_profiler]" )
         avoid_optimization();
         ctx.stop();
 
-        CHECK( !stats );
+        CHECK( false == stats.is_active() );
     }
 
     SECTION( "reentrance" )
@@ -532,7 +532,7 @@ TEST_CASE( "time profiler time context disabled", "[profiler][time_profiler]" )
 TEST_CASE( "time profiler time context", "[profiler][time_profiler]" )
 {
     TimeProfilerStats stats;
-    REQUIRE_FALSE( stats );
+    REQUIRE( false == stats.is_active() );
     TimeProfilerStats::set_enabled(true);
 
     SECTION( "lifetime" )
@@ -566,7 +566,7 @@ TEST_CASE( "time profiler time context", "[profiler][time_profiler]" )
         avoid_optimization();
         ctx.stop();
 
-        CHECK( stats );
+        CHECK( true == stats.is_active() );
     }
 
     SECTION( "reentrance" )
