@@ -504,7 +504,7 @@ TEST_CASE( "otn state", "[profiler][rule_profiler]" )
         CHECK( true == state_a.is_active() );
 
         OtnState state_c = OtnState();
-        CHECK( true == state_c.is_active() );
+        CHECK( false == state_c.is_active() );
 
         state_c.elapsed = 1_ticks;
         CHECK( true == state_c.is_active() );

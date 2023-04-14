@@ -74,7 +74,7 @@ struct OtnState
     uint64_t latency_suspends = 0;
 
     bool is_active() const
-    { return elapsed > 0_ticks || checks > 0; }
+    { return elapsed > CLOCK_ZERO || checks > 0; }
 };
 
 /* function pointer list for rule head nodes */
