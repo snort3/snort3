@@ -145,7 +145,7 @@ struct PServiceMatch
     Pattern* data;
 };
 
-static PServiceMatch* free_servicematch_list;
+static THREAD_LOCAL PServiceMatch* free_servicematch_list;
 
 static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
@@ -261,6 +261,13 @@ static int csd_pattern_tree_search(const uint8_t* data, uint16_t size, SearchToo
         matches = sm->next;
         sm->next = free_servicematch_list;
         free_servicematch_list = sm;
+    }
+
+    while (free_servicematch_list)
+    {
+        auto tmp = free_servicematch_list;
+        free_servicematch_list = free_servicematch_list->next;
+        snort_free(tmp);
     }
 
     if (ps == nullptr)
