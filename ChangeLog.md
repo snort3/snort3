@@ -1,3 +1,12 @@
+2023-04-20: 3.1.60.0
+
+* appid: fixed TSAN warnings
+* appid: log max rss difference and pattern count during appid initialization and reload detectors
+* appid: make ssl app group id lookup set payload and client
+* appid: making free_servicematch_list thread local
+* src: change a few operator bool functions to named functions
+* src: fix broken unit test/tweak define related to previous operator bool fixes
+
 2023-04-06: 3.1.59.0
 
 * file_api: handling file cache context
