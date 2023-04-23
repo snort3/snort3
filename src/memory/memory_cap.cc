@@ -24,7 +24,6 @@
 
 #include "memory_cap.h"
 
-#include <malloc.h>
 #include <sys/resource.h>
 
 #include <atomic>
