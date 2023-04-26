@@ -54,7 +54,9 @@ public:
 
     bool unlink_uni(snort::Flow* flow)
     {
-        if ( !flow->next )
+        // FIXIT-H: Checking flow->prev is a defensive fix but doesn't resolve the
+        // root cause of how next and prev could be different.
+        if ( !flow->next or !flow->prev )
             return false;
 
         flow->next->prev = flow->prev;
