@@ -45,7 +45,9 @@ struct MemoryCounts
     PegCount reap_cycles;
     PegCount reap_attempts;
     PegCount reap_failures;
-    PegCount pruned;
+    PegCount reap_aborts;
+    PegCount reap_decrease;
+    PegCount reap_increase;
 };
 
 typedef bool (*PruneHandler)();

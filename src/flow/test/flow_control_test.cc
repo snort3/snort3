@@ -85,6 +85,7 @@ unsigned FlowCache::timeout(unsigned, time_t) { return 1; }
 size_t FlowCache::uni_flows_size() const { return 0; }
 size_t FlowCache::uni_ip_flows_size() const { return 0; }
 size_t FlowCache::flows_size() const { return 0; }
+size_t FlowCache::free_flows_size() const { return 0; }
 void Flow::init(PktType) { }
 void DataBus::publish(unsigned, unsigned, DataEvent&, Flow*) { }
 void DataBus::publish(unsigned, unsigned, const uint8_t*, unsigned, Flow*) { }

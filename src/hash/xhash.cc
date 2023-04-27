@@ -427,6 +427,7 @@ void XHash::save_free_node(HashNode* hnode)
         hnode->gnext = nullptr;
         fhead = hnode;
     }
+    ++num_free_nodes;
 }
 
 HashNode* XHash::get_free_node()
@@ -437,6 +438,7 @@ HashNode* XHash::get_free_node()
         fhead = fhead->gnext;
         if ( fhead )
             fhead->gprev = nullptr;
+        --num_free_nodes;
     }
 
     return node;
@@ -464,6 +466,7 @@ void XHash::purge_free_list()
     }
 
     fhead = nullptr;
+    num_free_nodes = 0;
 }
 
 void XHash::clear_hash()

@@ -70,7 +70,9 @@ const PegInfo mem_pegs[] =
     { CountType::NOW, "reap_cycles", "number of actionable over-limit conditions" },
     { CountType::NOW, "reap_attempts", "attempts to reclaim memory" },
     { CountType::NOW, "reap_failures", "failures to reclaim memory" },
-    { CountType::NOW, "pruned", "total amount of memory pruned" },
+    { CountType::NOW, "reap_aborts", "abort pruning before target due to process under limit" },
+    { CountType::NOW, "reap_decrease", "total amount of the decrease in thread memory while process over limit" },
+    { CountType::NOW, "reap_increase", "total amount of the increase in thread memory while process over limit" },
     { CountType::END, nullptr, nullptr }
 };
 

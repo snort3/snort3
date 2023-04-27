@@ -98,6 +98,7 @@ public:
     PegCount get_uni_flows() const;
     PegCount get_uni_ip_flows() const;
     PegCount get_num_flows() const;
+    PegCount get_num_free_flows() const;
 
 private:
     void set_key(snort::FlowKey*, snort::Packet*);

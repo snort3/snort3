@@ -104,6 +104,7 @@ public:
     size_t uni_flows_size() const;
     size_t uni_ip_flows_size() const;
     size_t flows_size() const;
+    size_t free_flows_size() const;
 
 private:
     void delete_uni();

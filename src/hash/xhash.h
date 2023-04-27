@@ -74,6 +74,9 @@ public:
     unsigned get_num_nodes()
     { return num_nodes; }
 
+    unsigned get_num_free_nodes()
+    { return num_free_nodes; }
+
     void set_memcap(unsigned long memcap)
     { mem_allocator->set_mem_capacity(memcap); }
 
@@ -113,6 +116,7 @@ protected:
     unsigned nrows = 0;
     unsigned keysize = 0;
     unsigned num_nodes = 0;
+    unsigned num_free_nodes = 0;
     bool recycle_nodes = true;
     bool anr_enabled = true;
 

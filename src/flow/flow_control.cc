@@ -88,6 +88,9 @@ PegCount FlowControl::get_uni_ip_flows() const
 PegCount FlowControl::get_num_flows() const
 { return cache->flows_size(); }
 
+PegCount FlowControl::get_num_free_flows() const
+{ return cache->free_flows_size(); }
+
 
 //-------------------------------------------------------------------------
 // cache foo

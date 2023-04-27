@@ -108,16 +108,22 @@ TEST(zhash, create_zhash_test)
         zh->push(data);
     }
 
+    UNSIGNED_LONGS_EQUAL(0, zh->get_num_nodes());
+    UNSIGNED_LONGS_EQUAL(MAX_ZHASH_NODES, zh->get_num_free_nodes());
+
     std::string key_prefix = "foo";
     for (unsigned i = 0; i < MAX_ZHASH_NODES; i++ )
-     {
+    {
         std::string key;
         key = key_prefix + std::to_string(i + 1);
         memcpy(key_buf, key.c_str(), key.size());
         unsigned* data = (unsigned*)zh->get(key_buf);
         CHECK(*data == 0);
         *data = i + 1;
-     }
+    }
+
+    UNSIGNED_LONGS_EQUAL(MAX_ZHASH_NODES, zh->get_num_nodes());
+    UNSIGNED_LONGS_EQUAL(0, zh->get_num_free_nodes());
 
     unsigned nodes_walked = 0;
     unsigned* data = (unsigned*)zh->lru_first();

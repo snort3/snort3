@@ -56,10 +56,9 @@ static std::vector<MemoryCounts> pkt_mem_stats;
 static MemoryConfig config;
 static size_t limit = 0;
 
-static std::atomic<bool> over_limit { false };
+static bool over_limit = false;
 static std::atomic<uint64_t> current_epoch { 0 };
 
-static THREAD_LOCAL uint64_t last_dealloc = 0;
 static THREAD_LOCAL uint64_t start_dealloc = 0;
 static THREAD_LOCAL uint64_t start_alloc = 0;
 static THREAD_LOCAL uint64_t start_epoch = 0;
@@ -72,13 +71,15 @@ static void epoch_check(void*)
     uint64_t epoch, total;
     heap->get_process_total(epoch, total);
 
-    current_epoch = epoch;
-
     bool prior = over_limit;
     over_limit = limit and total > limit;
 
     if ( prior != over_limit )
         trace_logf(memory_trace, nullptr, "Epoch=%lu, memory=%lu (%s)\n", epoch, total, over_limit?"over":"under");
+    if ( over_limit )
+        current_epoch = epoch;
+    else
+        current_epoch = 0;
 
     MemoryCounts& mc = MemoryCap::get_mem_stats();
 
@@ -221,37 +222,73 @@ void MemoryCap::free_space()
     MemoryCounts& mc = get_mem_stats();
     heap->get_thread_allocs(mc.allocated, mc.deallocated);
 
-    if ( !over_limit and !start_dealloc )
-        return;
-
+    // Not already pruning
     if ( !start_dealloc )
     {
+        // Not over the limit
+        if ( !current_epoch )
+            return;
+        // Already completed pruning in the epoch
         if ( current_epoch == start_epoch )
             return;
 
-        start_dealloc = last_dealloc = mc.deallocated;
+        // Start pruning for this epoch
+        start_dealloc = mc.deallocated;
         start_alloc = mc.allocated;
         start_epoch = current_epoch;
         mc.reap_cycles++;
     }
 
-    mc.pruned += (mc.deallocated - last_dealloc);
-    last_dealloc = mc.deallocated;
-
-    uint64_t alloc = mc.allocated - start_alloc;
     uint64_t dealloc = mc.deallocated - start_dealloc;
-    if ( dealloc > alloc and ( ( dealloc - alloc ) >= config.prune_target ) )
+    uint64_t alloc = mc.allocated - start_alloc;
+
+    // Has the process gone under the limit
+    if ( !current_epoch )
     {
+        if ( dealloc > alloc)
+            mc.reap_decrease += dealloc - alloc;
+        else
+            mc.reap_increase += alloc - dealloc;
+        start_dealloc = 0;
+        mc.reap_aborts++;
+        return;
+    }
+    // Has this thread freed enough outside of pruning
+    else if ( dealloc > alloc and ( ( dealloc - alloc ) >= config.prune_target ) )
+    {
+        mc.reap_decrease += dealloc - alloc;
         start_dealloc = 0;
         return;
     }
 
     ++mc.reap_attempts;
 
-    if ( pruner() )
-        return;
+    bool prune_success = pruner();
 
-    ++mc.reap_failures;
+    // Updates values after pruning
+    heap->get_thread_allocs(mc.allocated, mc.deallocated);
+    alloc = mc.allocated - start_alloc;
+    dealloc = mc.deallocated - start_dealloc;
+
+    if ( prune_success )
+    {
+        // Pruned the target amount, so stop pruning for this epoch
+        if ( dealloc > alloc and ( ( dealloc - alloc ) >= config.prune_target ) )
+        {
+            mc.reap_decrease += dealloc - alloc;
+            start_dealloc = 0;
+        }
+    }
+    else
+    {
+        // Failed to prune, so stop pruning
+        if ( dealloc > alloc)
+            mc.reap_decrease += dealloc - alloc;
+        else
+            mc.reap_increase += alloc - dealloc;
+        start_dealloc = 0;
+        ++mc.reap_failures;
+    }
 }
 
 // required to capture any update in final epoch

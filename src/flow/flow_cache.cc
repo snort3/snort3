@@ -560,3 +560,8 @@ size_t FlowCache::flows_size() const
 {
     return hash_table->get_num_nodes();
 }
+
+size_t FlowCache::free_flows_size() const
+{
+    return hash_table->get_num_free_nodes();
+}
