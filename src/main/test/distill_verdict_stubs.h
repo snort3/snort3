@@ -64,6 +64,7 @@
 #include "utils/stats.h"
 
 THREAD_LOCAL DAQStats daq_stats;
+THREAD_LOCAL bool RuleContext::enabled = false;
 
 void Profiler::start() { }
 void Profiler::stop(uint64_t) { }

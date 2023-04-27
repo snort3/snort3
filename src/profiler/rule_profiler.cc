@@ -35,9 +35,10 @@
 // 2.  The left expression of the compound assignment is an uninitialized value.
 //     The computed value will also be garbage (duration& operator+=(const duration& __d))
 #include "detection/detection_options.h"  // ... FIXIT-W
-
+#include "control/control.h"
 #include "detection/treenodes.h"
 #include "hash/ghash.h"
+#include "hash/xhash.h"
 #include "main/snort_config.h"
 #include "main/thread_config.h"
 #include "parser/parser.h"
@@ -57,20 +58,10 @@ using namespace snort;
 
 #define s_rule_table_title "rule profile"
 
-bool RuleContext::enabled = false;
+THREAD_LOCAL bool RuleContext::enabled = false;
 struct timeval RuleContext::start_time = {0, 0};
 struct timeval RuleContext::end_time = {0, 0};
 struct timeval RuleContext::total_time = {0, 0};
-
-static inline OtnState& operator+=(OtnState& lhs, const OtnState& rhs)
-{
-    lhs.elapsed += rhs.elapsed;
-    lhs.elapsed_match += rhs.elapsed_match;
-    lhs.checks += rhs.checks;
-    lhs.matches += rhs.matches;
-    lhs.alerts += rhs.alerts;
-    return lhs;
-}
 
 namespace rule_stats
 {
@@ -199,44 +190,20 @@ static const ProfilerSorter<View> sorters[] =
     }
 };
 
-static void consolidate_otn_states(OtnState* states)
+static std::vector<View> build_entries(const std::unordered_map<SigInfo*, OtnState>& stats)
 {
-    for ( unsigned i = 1; i < ThreadConfig::get_instance_max(); ++i )
-        states[0] += states[i];
-}
-
-static std::vector<View> build_entries()
-{
-    const SnortConfig* sc = SnortConfig::get_conf();
-    assert(sc);
-
-    detection_option_tree_update_otn_stats(sc->detection_option_tree_hash_table);
-    auto* otn_map = sc->otn_map;
-
     std::vector<View> entries;
 
-    for ( auto* h = otn_map->find_first(); h; h = otn_map->find_next() )
-    {
-        auto* otn = static_cast<OptTreeNode*>(h->data);
-        assert(otn);
-
-        auto* states = otn->state;
-
-        consolidate_otn_states(states);
-        auto& state = states[0];
-
-        if ( !state.is_active() )
-            continue;
-
-        // FIXIT-L should we assert(otn->sigInfo)?
-        entries.emplace_back(state, &otn->sigInfo);
-    }
+    for (auto stat : stats)
+        if (stat.second.is_active())
+            entries.emplace_back(stat.second, stat.first);
 
     return entries;
 }
 
 // FIXIT-L logic duplicated from ProfilerPrinter
-static void print_single_entry(const View& v, unsigned n, double total_time_usec)
+static void print_single_entry(ControlConn* ctrlcon, const View& v, unsigned n,
+    double total_time_usec)
 {
     using std::chrono::duration_cast;
     using std::chrono::microseconds;
@@ -268,11 +235,12 @@ static void print_single_entry(const View& v, unsigned n, double total_time_usec
         table << v.rule_time_per(total_time_usec);
     }
 
-    LogMessage("%s", ss.str().c_str());
+    LogRespond(ctrlcon, "%s", ss.str().c_str());
 }
 
 // FIXIT-L logic duplicated from ProfilerPrinter
-static void print_entries(std::vector<View>& entries, ProfilerSorter<View>& sort, unsigned count)
+static void print_entries(ControlConn* ctrlcon, std::vector<View>& entries,
+    ProfilerSorter<View>& sort, unsigned count)
 {
     std::ostringstream ss;
     RuleContext::set_end_time(get_time_curr());
@@ -300,7 +268,7 @@ static void print_entries(std::vector<View>& entries, ProfilerSorter<View>& sort
         table << StatsTable::HEADER;
     }
 
-    LogMessage("%s", ss.str().c_str());
+    LogRespond(ctrlcon, "%s", ss.str().c_str());
 
     if ( !count || count > entries.size() )
         count = entries.size();
@@ -309,17 +277,15 @@ static void print_entries(std::vector<View>& entries, ProfilerSorter<View>& sort
         std::partial_sort(entries.begin(), entries.begin() + count, entries.end(), sort);
 
     for ( unsigned i = 0; i < count; ++i )
-        print_single_entry(entries[i], i + 1, total_time_usec);
+        print_single_entry(ctrlcon, entries[i], i + 1, total_time_usec);
 }
 
 }
 
-void show_rule_profiler_stats(const RuleProfilerConfig& config)
+void print_rule_profiler_stats(const RuleProfilerConfig& config, const std::unordered_map<SigInfo*, OtnState>& stats,
+    ControlConn* ctrlcon)
 {
-    if ( !config.show )
-        return;
-
-    auto entries = rule_stats::build_entries();
+    auto entries = rule_stats::build_entries(stats);
 
     // if there aren't any eval'd rules, don't sort or print
     if ( entries.empty() )
@@ -328,7 +294,42 @@ void show_rule_profiler_stats(const RuleProfilerConfig& config)
     auto sort = rule_stats::sorters[config.sort];
 
     // FIXIT-L do we eventually want to be able print rule totals, too?
-    print_entries(entries, sort, config.count);
+    print_entries(ctrlcon, entries, sort, config.count);
+}
+
+void show_rule_profiler_stats(const RuleProfilerConfig& config)
+{
+    if (!RuleContext::is_enabled())
+        return;
+
+    const SnortConfig* sc = SnortConfig::get_conf();
+    assert(sc);
+
+    auto doth = sc->detection_option_tree_hash_table;
+
+    if (!doth)
+        return;
+
+    std::vector<HashNode*> nodes;
+    std::unordered_map<SigInfo*, OtnState> stats;
+
+    for (HashNode* hnode = doth->find_first_node(); hnode; hnode = doth->find_next_node())
+    {
+        nodes.push_back(hnode);
+    }
+
+    for ( unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
+        prepare_rule_profiler_stats(nodes, stats, i);
+
+    print_rule_profiler_stats(config, stats, nullptr);
+}
+
+void prepare_rule_profiler_stats(std::vector<HashNode*>& nodes, std::unordered_map<SigInfo*, OtnState>& stats, unsigned thread_id)
+{
+    if (!RuleContext::is_enabled())
+        return;
+
+    detection_option_tree_update_otn_stats(nodes, stats, thread_id);
 }
 
 void reset_rule_profiler_stats()
@@ -336,24 +337,28 @@ void reset_rule_profiler_stats()
     const SnortConfig* sc = SnortConfig::get_conf();
     assert(sc);
 
-    auto* otn_map = sc->otn_map;
+    auto doth = sc->detection_option_tree_hash_table;
 
-    for ( auto* h = otn_map->find_first(); h; h = otn_map->find_next() )
+    if (!doth)
+        return;
+
+    std::vector<HashNode*> nodes;
+
+    for (HashNode* hnode = doth->find_first_node(); hnode; hnode = doth->find_next_node())
     {
-        auto* otn = static_cast<OptTreeNode*>(h->data);
-        assert(otn);
-
-        auto* rtn = getRtnFromOtn(otn);
-
-        if ( !rtn || !is_network_protocol(rtn->snort_protocol_id) )
-            continue;
-
-        for ( unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
-        {
-            auto& state = otn->state[i];
-            state = OtnState();
-        }
+        nodes.emplace_back(hnode);
     }
+
+    for ( unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
+        reset_thread_rule_profiler_stats(nodes, i);
+}
+
+void reset_thread_rule_profiler_stats(std::vector<HashNode*>& nodes, unsigned thread_id)
+{
+    if (!RuleContext::is_enabled())
+        return;
+
+    detection_option_tree_reset_otn_stats(nodes, thread_id);
 }
 
 void RuleContext::stop(bool match)
@@ -466,27 +471,6 @@ TEST_CASE( "otn state", "[profiler][rule_profiler]" )
     state_a.matches = 2;
     state_a.noalerts = 3;
     state_a.alerts = 4;
-
-    SECTION( "incremental addition" )
-    {
-        OtnState state_b;
-
-        state_b.elapsed = 4_ticks;
-        state_b.elapsed_match = 5_ticks;
-        state_b.elapsed_no_match = 6_ticks;
-        state_b.checks = 5;
-        state_b.matches = 6;
-        state_b.noalerts = 7;
-        state_b.alerts = 8;
-
-        state_a += state_b;
-
-        CHECK( (state_a.elapsed == 5_ticks) );
-        CHECK( (state_a.elapsed_match == 7_ticks) );
-        CHECK( (state_a.checks == 6) );
-        CHECK( (state_a.matches == 8) );
-        CHECK( (state_a.alerts == 12) );
-    }
 
     SECTION( "reset" )
     {

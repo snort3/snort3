@@ -406,6 +406,13 @@ int main_rotate_stats(lua_State* L)
     return 0;
 }
 
+int main_show_config_generation(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    LogRespond(ctrlcon, "== configuration id: %u\n", SnortConfig::get_conf()->get_reload_id());
+    return 0;
+}
+
 int main_reload_config(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);

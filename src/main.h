@@ -37,6 +37,7 @@ int main_reload_config(lua_State* = nullptr);
 int main_reload_policy(lua_State* = nullptr);
 int main_reload_daq(lua_State* = nullptr);
 int main_reload_hosts(lua_State* = nullptr);
+int main_show_config_generation(lua_State* = nullptr);
 int main_process(lua_State* = nullptr);
 int main_pause(lua_State* = nullptr);
 int main_resume(lua_State* = nullptr);

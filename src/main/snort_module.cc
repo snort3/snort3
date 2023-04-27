@@ -134,7 +134,8 @@ static const Command snort_cmds[] =
     { "reload_policy", main_reload_policy, s_reload, "reload part or all of the default policy" },
     { "reload_daq", main_reload_daq, nullptr, "reload daq module" },
     { "reload_hosts", main_reload_hosts, s_reload, "load a new hosts table" },
-    { "log_command", main_log_command,main_log_command_param, "enabled or disable logging of a command"},
+    { "log_command", main_log_command,main_log_command_param, "enable or disable command logging"},
+    { "show_config_generation", main_show_config_generation, nullptr, "show loaded configuration ID"},
 
     // FIXIT-M rewrite trough to permit updates on the fly
     //{ "process", main_process, nullptr, "process given pcap" },

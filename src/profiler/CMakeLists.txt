@@ -24,6 +24,8 @@ set ( PROFILER_SOURCES
     rule_profiler.h
     time_profiler.cc
     time_profiler.h
+    profiler_module.cc
+    profiler_module.h
     )
 
 add_library ( profiler OBJECT

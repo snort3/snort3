@@ -733,109 +733,102 @@ int detection_option_node_evaluate(
     return result;
 }
 
-struct node_profile_stats
-{
-    // FIXIT-L duplicated from dot_node_state_t and OtnState
-    hr_duration elapsed;
-    hr_duration elapsed_match;
-    hr_duration elapsed_no_match;
-
-    uint64_t checks;
-    uint64_t latency_timeouts;
-    uint64_t latency_suspends;
-};
-
 static void detection_option_node_update_otn_stats(detection_option_tree_node_t* node,
-    node_profile_stats* stats, uint64_t checks, uint64_t timeouts, uint64_t suspends)
+    const dot_node_state_t* stats, unsigned thread_id, std::unordered_map<SigInfo*, OtnState>& entries)
 {
-    node_profile_stats local_stats; /* cumulative stats for this node */
-    node_profile_stats node_stats;  /* sum of all instances */
+    dot_node_state_t local_stats(node->state[thread_id]); /* cumulative stats for this node */
 
-    memset(&node_stats, 0, sizeof(node_stats));
-
-    for ( unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
+    if (stats)
     {
-        node_stats.elapsed += node->state[i].elapsed;
-        node_stats.elapsed_match += node->state[i].elapsed_match;
-        node_stats.elapsed_no_match += node->state[i].elapsed_no_match;
-        node_stats.checks += node->state[i].checks;
-    }
+        local_stats.elapsed += stats->elapsed;
+        local_stats.elapsed_match += stats->elapsed_match;
+        local_stats.elapsed_no_match += stats->elapsed_no_match;
 
-    if ( stats )
-    {
-        local_stats.elapsed = stats->elapsed + node_stats.elapsed;
-        local_stats.elapsed_match = stats->elapsed_match + node_stats.elapsed_match;
-        local_stats.elapsed_no_match = stats->elapsed_no_match + node_stats.elapsed_no_match;
-
-        if (node_stats.checks > stats->checks)
-            local_stats.checks = node_stats.checks;
-        else
+        if (stats->checks > local_stats.checks)
             local_stats.checks = stats->checks;
 
-        local_stats.latency_timeouts = timeouts;
-        local_stats.latency_suspends = suspends;
-    }
-    else
-    {
-        local_stats.elapsed = node_stats.elapsed;
-        local_stats.elapsed_match = node_stats.elapsed_match;
-        local_stats.elapsed_no_match = node_stats.elapsed_no_match;
-        local_stats.checks = node_stats.checks;
-        local_stats.latency_timeouts = timeouts;
-        local_stats.latency_suspends = suspends;
+        local_stats.latency_suspends += stats->latency_suspends;
+        local_stats.latency_timeouts += stats->latency_timeouts;
     }
 
     if ( node->option_type == RULE_OPTION_TYPE_LEAF_NODE )
     {
         // Update stats for this otn
-        // FIXIT-L call from packet threads at exit or total *all* states by main thread
-        // Right now, it looks like we're missing out on some stats although it's possible
-        // that this is "corrected" in the profiler code
         auto* otn = (OptTreeNode*)node->option_data;
-        auto& state = otn->state[get_instance_id()];
+        auto& state = otn->state[thread_id];
 
-        state.elapsed += local_stats.elapsed;
-        state.elapsed_match += local_stats.elapsed_match;
-        state.elapsed_no_match += local_stats.elapsed_no_match;
+        state.elapsed = local_stats.elapsed;
+        state.elapsed_match = local_stats.elapsed_match;
+        state.elapsed_no_match = local_stats.elapsed_no_match;
 
         if (local_stats.checks > state.checks)
             state.checks = local_stats.checks;
 
-        state.latency_timeouts += local_stats.latency_timeouts;
-        state.latency_suspends += local_stats.latency_suspends;
+        state.latency_timeouts = local_stats.latency_timeouts;
+        state.latency_suspends = local_stats.latency_suspends;
+
+        static std::mutex rule_prof_stats_mutex;
+        std::lock_guard<std::mutex> lock(rule_prof_stats_mutex);
+
+        // All threads totals
+        OtnState& totals = entries[&otn->sigInfo];
+
+        totals.elapsed += state.elapsed;
+        totals.elapsed_match += state.elapsed_match;
+        totals.elapsed_no_match += state.elapsed_no_match;
+        totals.checks += state.checks;
+        totals.latency_timeouts += state.latency_timeouts;
+        totals.latency_suspends += state.latency_suspends;
+        totals.matches += state.matches;
+        totals.alerts += state.alerts;
     }
 
     if ( node->num_children )
     {
         for ( int i = 0; i < node->num_children; ++i )
-            detection_option_node_update_otn_stats(node->children[i], &local_stats, checks,
-                timeouts, suspends);
+            detection_option_node_update_otn_stats(node->children[i], &local_stats, thread_id, entries);
     }
 }
 
-void detection_option_tree_update_otn_stats(XHash* doth)
+static void detection_option_node_reset_otn_stats(detection_option_tree_node_t* node,
+    unsigned thread_id)
 {
-    if ( !doth )
-        return;
+    node->state[thread_id].reset_profiling();
 
-    for ( auto hnode = doth->find_first_node(); hnode; hnode = doth->find_next_node() )
+    if ( node->option_type == RULE_OPTION_TYPE_LEAF_NODE )
+    {
+        auto& state = ((OptTreeNode*)node->option_data)->state[thread_id];
+        state = OtnState();
+    }
+
+    if ( node->num_children )
+    {
+        for ( int i = 0; i < node->num_children; ++i )
+            detection_option_node_reset_otn_stats(node->children[i], thread_id);
+    }
+}
+
+void detection_option_tree_update_otn_stats(std::vector<HashNode*>& nodes, std::unordered_map<SigInfo*, OtnState>& stats, unsigned thread_id)
+{
+    for ( auto hnode : nodes )
     {
         auto* node = (detection_option_tree_node_t*)hnode->data;
         assert(node);
 
-        uint64_t checks = 0;
-        uint64_t timeouts = 0;
-        uint64_t suspends = 0;
+        if ( node->state[thread_id].checks )
+            detection_option_node_update_otn_stats(node, nullptr, thread_id, stats);
+    }
+}
 
-        for ( unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
-        {
-            checks += node->state[i].checks;
-            timeouts += node->state[i].latency_timeouts;
-            suspends += node->state[i].latency_suspends;
-        }
+void detection_option_tree_reset_otn_stats(std::vector<HashNode*>& nodes, unsigned thread_id)
+{
+    for ( auto hnode : nodes )
+    {
+        auto* node = (detection_option_tree_node_t*)hnode->data;
+        assert(node);
 
-        if ( checks )
-            detection_option_node_update_otn_stats(node, nullptr, checks, timeouts, suspends);
+        if ( node->state[thread_id].checks )
+            detection_option_node_reset_otn_stats(node, thread_id);
     }
 }
 

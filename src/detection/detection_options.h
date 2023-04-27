@@ -46,6 +46,8 @@ struct Packet;
 struct SnortConfig;
 }
 struct RuleLatencyState;
+struct SigInfo;
+struct OtnState;
 
 typedef int (* eval_func_t)(void* option_data, class Cursor&, snort::Packet*);
 
@@ -87,6 +89,13 @@ struct dot_node_state_t
             elapsed_no_match += delta;
 
         ++checks;
+    }
+
+    void reset_profiling()
+    {
+        elapsed = elapsed_match = elapsed_no_match = 0_ticks;
+        checks = disables = 0;
+        latency_suspends = latency_timeouts = 0;
     }
 };
 
@@ -158,7 +167,9 @@ int detection_option_node_evaluate(
     const detection_option_tree_node_t*, detection_option_eval_data_t&, const class Cursor&);
 
 void print_option_tree(detection_option_tree_node_t*, int level);
-void detection_option_tree_update_otn_stats(snort::XHash*);
+void detection_option_tree_update_otn_stats(std::vector<snort::HashNode*>&,
+    std::unordered_map<SigInfo*, OtnState>&, unsigned);
+void detection_option_tree_reset_otn_stats(std::vector<snort::HashNode*>&, unsigned);
 
 detection_option_tree_root_t* new_root(OptTreeNode*);
 void free_detection_option_root(void** existing_tree);

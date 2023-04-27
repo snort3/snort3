@@ -16,26 +16,28 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// rule_profiler.h author Joel Cornett <jocornet@cisco.com>
+// profiler_module.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef RULE_PROFILER_H
-#define RULE_PROFILER_H
+#ifndef PROFILER_MODULE_H
+#define PROFILER_MODULE_H
 
-#include "detection/treenodes.h"
-#include <unordered_map>
-#include <vector>
+#include "framework/module.h"
 
-struct RuleProfilerConfig;
-class ControlConn;
-namespace snort
+#include "profiler/profiler.h"
+
+class ProfilerModule : public snort::Module
 {
-    class HashNode;
-}
+public:
+    ProfilerModule();
 
-void prepare_rule_profiler_stats(std::vector<snort::HashNode*>&, std::unordered_map<SigInfo*, OtnState>&, unsigned);
-void print_rule_profiler_stats(const RuleProfilerConfig&, const std::unordered_map<SigInfo*, OtnState>&, ControlConn* = nullptr);
-void show_rule_profiler_stats(const RuleProfilerConfig&);
-void reset_rule_profiler_stats();
-void reset_thread_rule_profiler_stats(std::vector<snort::HashNode*>&, unsigned);
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
+
+    snort::ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
+    const snort::Command* get_commands() const override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
+};
 
 #endif

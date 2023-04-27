@@ -661,6 +661,9 @@ public:
 
     void update_reload_id();
 
+    unsigned get_reload_id() const
+    { return reload_id; }
+
     bool get_default_rule_state() const;
 
     ConfigOutput* create_config_output() const;

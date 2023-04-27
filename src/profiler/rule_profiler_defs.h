@@ -82,12 +82,15 @@ public:
     { return &total_time; }
 
     static void count_total_time();
+    static bool is_enabled()
+    { return enabled; }
 
 private:
     dot_node_state_t& stats;
     Stopwatch<SnortClock> sw;
     bool finished = false;
-    static bool enabled;
+
+    static THREAD_LOCAL bool enabled;
     static struct timeval start_time;
     static struct timeval end_time;
     static struct timeval total_time;

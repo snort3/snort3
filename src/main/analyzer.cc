@@ -629,6 +629,7 @@ void Analyzer::init_unprivileged()
     InspectorManager::thread_init(sc);
     PacketTracer::thread_init();
     HostAttributesManager::initialize();
+    RuleContext::set_enabled(sc->profiler->rule.show);
 
     // in case there are HA messages waiting, process them first
     HighAvailabilityManager::process_receive();
