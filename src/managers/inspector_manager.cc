@@ -1264,7 +1264,11 @@ Inspector* InspectorManager::get_inspector(const char* key, Module::Usage usage,
     InspectorType type, const SnortConfig* sc)
 {
     if ( !sc )
+    {
         sc = SnortConfig::get_conf();
+        if (!sc)
+            return nullptr;
+    }
 
     if (Module::GLOBAL == usage && IT_FILE == type)
     {
