@@ -56,8 +56,10 @@ class JemallocInterface : public HeapInterface
 
 static size_t stats_mib[2], mib_len = 2;
 
-static THREAD_LOCAL uint64_t* alloc_ptr = nullptr;
-static THREAD_LOCAL uint64_t* dealloc_ptr = nullptr;
+static const uint64_t alloc_zero = 0;
+static const uint64_t dealloc_zero = 0;
+static THREAD_LOCAL const uint64_t* alloc_ptr = &alloc_zero;
+static THREAD_LOCAL const uint64_t* dealloc_ptr = &dealloc_zero;
 
 static ControlConn* s_ctrlconn = nullptr;
 static void log_jem_stats(void *,const char *buf)
