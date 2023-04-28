@@ -357,7 +357,7 @@ void RnaAppDiscovery::discover_client(const Packet* p, DiscoveryFilter& filter, 
     rt->update_last_seen();
 
     const uint8_t* mac;
-    if ( layer::get_eth_layer(p) )
+    if ( !(p->packet_flags & PKT_REBUILT_STREAM ) && layer::get_eth_layer(p) )
     {
         if ( p->is_from_server() )
             mac = layer::get_eth_layer(p)->ether_dst;

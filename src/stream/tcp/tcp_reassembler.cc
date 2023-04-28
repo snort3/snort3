@@ -551,6 +551,15 @@ Packet* TcpReassembler::initialize_pdu(
     pdu->data = nullptr;
     pdu->ip_proto_next = (IpProtocol)p->flow->ip_proto;
 
+
+    if ( p->proto_bits & PROTO_BIT__VLAN ) 
+    {
+        memcpy( pdu->layers, p->layers, p->num_layers * sizeof(Layer));
+        pdu->num_layers = p->num_layers;
+        pdu->proto_bits |= PROTO_BIT__VLAN;
+        pdu->vlan_idx = p->vlan_idx;
+    }
+
     return pdu;
 }
 
