@@ -366,7 +366,10 @@ SMTPDetectorData* SmtpClientDetector::get_common_data(AppIdSession& asd)
         data_add(asd, dd, &smtp_free_state);
 
         if (asd.get_session_flags(APPID_SESSION_DECRYPTED))
+        {
             dd->server.state = SMTP_SERVICE_STATE_HELO;
+            dd->client.flags = CLIENT_FLAG_STARTTLS_SUCCESS;
+        }
         else
             dd->server.state = SMTP_SERVICE_STATE_CONNECTION;
 
@@ -605,6 +608,8 @@ done:
     else
         args.asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     args.asd.set_client_detected();
+    if (args.asd.get_client_id() == APP_ID_SSL_CLIENT)
+        args.asd.set_client_appid_data(APP_ID_SMTPS, args.change_bits);
     return APPID_SUCCESS;
 }
 
@@ -792,6 +797,11 @@ int SmtpServiceDetector::validate(AppIdDiscoveryArgs& args)
         {
             if (!(dd->client.flags & CLIENT_FLAG_STARTTLS_SUCCESS))
                 goto fail;
+            else if (args.asd.get_session_flags(APPID_SESSION_CLIENT_DETECTED))
+            {
+                args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
+                return APPID_SUCCESS;
+            }
             goto inprocess;
         }
         if (!fd->code)
