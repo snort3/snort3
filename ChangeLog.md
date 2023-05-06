@@ -1,3 +1,20 @@
+2023-05-04: 3.1.61.0
+
+* appid: appIdPegCounters thread data handling refactored to prevent data races
+* appid: ensure that TP SSL detection is not overwrite SMTPS service and client in a starttls session
+* appid: validate data size of SSL certificate record before parsing
+* build: remove unused header. Thanks to Rui Chen for reporting the issue.
+* cmake: update sed call. Thanks to graysky for reporting the issue.
+* flow: defensive fix to prevent crash if flow->prev is nullptr.
+* flow, hash, stream: add a free list node count that is output as a peg count
+* managers: check main SnortConfig pointer in InspectorManager::get_inspector() to avoid memory bad access calls
+* memory: fix memory pruning race condition and bail on reap failure
+* memory: provide a default value for pointers if the module has not been initialized
+* profiler: add shell commands
+* profiler: move profiler module to separate files
+* snort: add show_config_generation() command
+* stream_tcp: populate TCP pseudopackets with VLAN ids in TCP reassembler to avoid issues with secondary flow creation / expected flow cache
+
 2023-04-20: 3.1.60.0
 
 * appid: fixed TSAN warnings

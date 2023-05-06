@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.60.0 2023-04-20 15:35:36 EDT TST
+Revision 3.1.61.0 2023-05-04 22:13:01 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1098,7 +1098,12 @@ Peg counts:
     (now)
   * memory.reap_attempts: attempts to reclaim memory (now)
   * memory.reap_failures: failures to reclaim memory (now)
-  * memory.pruned: total amount of memory pruned (now)
+  * memory.reap_aborts: abort pruning before target due to process
+    under limit (now)
+  * memory.reap_decrease: total amount of the decrease in thread
+    memory while process over limit (now)
+  * memory.reap_increase: total amount of the increase in thread
+    memory while process over limit (now)
 
 
 2.20. network
@@ -1316,6 +1321,13 @@ Configuration:
   * enum profiler.rules.sort = total_time: sort by given field { none
     | checks | avg_check | total_time | matches | no_matches | 
     avg_match | avg_no_match }
+
+Commands:
+
+  * profiler.rule_start(): enable rule profiler
+  * profiler.rule_stop(): disable rule profiler
+  * profiler.rule_status(): print rule profiler status
+  * profiler.rule_dump(): print rule statistics
 
 
 2.27. rate_filter
@@ -1706,8 +1718,9 @@ Commands:
     policy
   * snort.reload_daq(): reload daq module
   * snort.reload_hosts(filename): load a new hosts table
-  * snort.log_command(command, logging): enabled or disable logging
-    of a command
+  * snort.log_command(command, logging): enable or disable command
+    logging
+  * snort.show_config_generation(): show loaded configuration ID
   * snort.pause(): suspend packet processing
   * snort.resume(pkt_num): continue packet processing. If number of
     packets is specified, will resume for n packets and pause
@@ -5586,6 +5599,8 @@ Peg counts:
   * stream.reload_offloaded_deletes: number of offloaded flows
     deleted by config reloads (sum)
   * stream.current_flows: current number of flows in cache (now)
+  * stream.current_free_flows: current number of free flows in cache
+    (now)
   * stream.uni_flows: number of uni flows in cache (now)
   * stream.uni_ip_flows: number of uni ip flows in cache (now)
 
@@ -11659,11 +11674,16 @@ libraries see the Getting Started section of the manual.
     threads (now)
   * memory.epochs: number of memory updates (now)
   * memory.max_in_use: maximum memory used (max)
-  * memory.pruned: total amount of memory pruned (now)
+  * memory.reap_aborts: abort pruning before target due to process
+    under limit (now)
   * memory.reap_attempts: attempts to reclaim memory (now)
   * memory.reap_cycles: number of actionable over-limit conditions
     (now)
+  * memory.reap_decrease: total amount of the decrease in thread
+    memory while process over limit (now)
   * memory.reap_failures: failures to reclaim memory (now)
+  * memory.reap_increase: total amount of the increase in thread
+    memory while process over limit (now)
   * memory.start_up_use: memory used before packet processing (now)
   * mem_test.packets: total packets (sum)
   * mms.concurrent_sessions: total concurrent MMS sessions (now)
@@ -11997,6 +12017,8 @@ libraries see the Getting Started section of the manual.
   * ssl.sessions_ignored: total sessions ignore (sum)
   * ssl.unrecognized_records: total unrecognized records (sum)
   * stream.current_flows: current number of flows in cache (now)
+  * stream.current_free_flows: current number of free flows in cache
+    (now)
   * stream.excess_prunes: sessions pruned due to excess (sum)
   * stream.expected_flows: total expected flows created within snort
     (sum)
@@ -15542,6 +15564,10 @@ alert is raised by the enhanced JavaScript normalizer.
     host pairs
   * perf_monitor.show_flow_ip_profiling(): show status of statistics
     on host pairs
+  * profiler.rule_start(): enable rule profiler
+  * profiler.rule_stop(): disable rule profiler
+  * profiler.rule_status(): print rule profiler status
+  * profiler.rule_dump(): print rule statistics
   * reputation.reload(): reload reputation data
   * rna.dump_macs(): dump rna’s internal MAC trackers
   * rna.delete_mac_host(mac): delete a MAC from rna’s MAC cache
@@ -15562,8 +15588,9 @@ alert is raised by the enhanced JavaScript normalizer.
     policy
   * snort.reload_daq(): reload daq module
   * snort.reload_hosts(filename): load a new hosts table
-  * snort.log_command(command, logging): enabled or disable logging
-    of a command
+  * snort.log_command(command, logging): enable or disable command
+    logging
+  * snort.show_config_generation(): show loaded configuration ID
   * snort.pause(): suspend packet processing
   * snort.resume(pkt_num): continue packet processing. If number of
     packets is specified, will resume for n packets and pause
