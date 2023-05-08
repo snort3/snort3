@@ -44,6 +44,8 @@ using namespace HttpCommon;
 using namespace HttpEnums;
 using namespace jsn;
 
+#define CONTENT_BYTES "bytes"
+
 extern THREAD_LOCAL const snort::Trace* js_trace;
 
 static HttpInfractions decode_infs;
@@ -246,9 +248,7 @@ void HttpMsgBody::analyze()
         do_utf_decoding(msg_text_new, decoded_body);
 
         if (session_data->file_depth_remaining[source_id] > 0)
-        {
             do_file_processing(decoded_body);
-        }
 
         if (session_data->detect_depth_remaining[source_id] > 0)
         {
@@ -560,24 +560,122 @@ void HttpMsgBody::clear_js_ctx_mime()
     session_data->js_ctx_mime[source_id] = nullptr;
 }
 
+static FilePosition find_range_file_pos(const std::string& hdr_content, bool front, bool back)
+{
+    // content range format: <unit> <range_start>-<range_end>/<file_size>
+
+    size_t processed = 0;
+
+    for (; processed < hdr_content.length() and hdr_content[processed] == ' '; ++processed);
+    
+    if (processed == hdr_content.length())
+        return SNORT_FILE_POSITION_UNKNOWN;
+
+    // currently only single ranges with bytes unit are supported
+    if (hdr_content.compare(processed, sizeof(CONTENT_BYTES) - 1, CONTENT_BYTES) != 0)
+        return SNORT_FILE_POSITION_UNKNOWN;
+
+    processed += sizeof(CONTENT_BYTES) - 1;
+    
+    for (; processed < hdr_content.length() and hdr_content[processed] == ' '; ++processed);
+    
+    if (processed == hdr_content.length() or !isdigit(hdr_content[processed]))
+        return SNORT_FILE_POSITION_UNKNOWN;
+
+    size_t dash_pos = hdr_content.find('-', processed);
+
+    if (dash_pos == hdr_content.npos or dash_pos == processed)
+        return SNORT_FILE_POSITION_UNKNOWN;
+
+    size_t slash_pos = hdr_content.find('/', dash_pos);
+
+    if (slash_pos == hdr_content.npos)
+        return SNORT_FILE_POSITION_UNKNOWN;
+    
+    char *end_ptr = nullptr;
+
+    unsigned long range_start = SnortStrtoul(hdr_content.c_str() + processed, &end_ptr, 10);
+
+    if (errno or end_ptr != hdr_content.c_str() + dash_pos)
+        return SNORT_FILE_POSITION_UNKNOWN;
+
+    if (range_start != 0)
+        return SNORT_FILE_MIDDLE;
+
+    unsigned long range_end = SnortStrtoul(hdr_content.c_str() + dash_pos + 1, &end_ptr, 10);
+
+    if (errno or range_end == 0 or end_ptr != hdr_content.c_str() + slash_pos)
+        return SNORT_FILE_POSITION_UNKNOWN;
+
+    unsigned long file_size = 1;
+
+    // asterisk - complete file length is unknown
+    if (hdr_content[slash_pos + 1] != '*')
+    {
+        file_size = SnortStrtoul(hdr_content.c_str() + slash_pos + 1, &end_ptr, 10);
+
+        if (errno or range_end >= file_size or end_ptr > hdr_content.c_str() + hdr_content.length())
+            return SNORT_FILE_POSITION_UNKNOWN;
+    }
+
+    if (range_end == file_size - 1)
+    {
+        if (front && back) 
+            return SNORT_FILE_FULL;
+        else if (front)
+            return SNORT_FILE_START;
+        else if (back)
+            return SNORT_FILE_END;
+        else
+            return SNORT_FILE_MIDDLE;
+    }
+
+    if (front && back)
+        return SNORT_FILE_MIDDLE;
+    else if (front)
+        return SNORT_FILE_START;
+    else
+        return SNORT_FILE_MIDDLE;
+}
+
+
 void HttpMsgBody::do_file_processing(const Field& file_data)
 {
     // Using the trick that cutter is deleted when regular or chunked body is complete
     Packet* p = DetectionEngine::get_current_packet();
+    FilePosition file_position = SNORT_FILE_POSITION_UNKNOWN;
+
     const bool front = (body_octets == 0) &&
         (session_data->partial_inspected_octets[source_id] == 0);
     const bool back = (session_data->cutter[source_id] == nullptr) || tcp_close;
 
-    FilePosition file_position;
-    if (front && back) file_position = SNORT_FILE_FULL;
-    else if (front) file_position = SNORT_FILE_START;
-    else if (back) file_position = SNORT_FILE_END;
-    else file_position = SNORT_FILE_MIDDLE;
-
-    // Chunked body with nothing but the zero length chunk?
-    if (front && (file_data.length() == 0))
+    if (session_data->status_code_num != 206 or source_id != SRC_SERVER)
     {
-        return;
+        if (front && back)
+            file_position = SNORT_FILE_FULL;
+        else if (front)
+            file_position = SNORT_FILE_START;
+        else if (back)
+            file_position = SNORT_FILE_END;
+        else
+            file_position = SNORT_FILE_MIDDLE;
+
+        // Chunked body with nothing but the zero length chunk?
+        if (front && (file_data.length() == 0))
+            return;
+    }
+    else
+    {
+        const Field& range_hdr = get_header(SRC_SERVER)->get_header_value_raw(HEAD_CONTENT_RANGE);
+        
+        if (range_hdr.length() <= 0)
+            return;
+        
+        file_position = find_range_file_pos(std::string((const char*)range_hdr.start(), range_hdr.length()),
+            front, back);
+
+        if (file_position == SNORT_FILE_POSITION_UNKNOWN)
+            return;
     }
 
     const int32_t fp_length = (file_data.length() <=
