@@ -43,28 +43,6 @@ using namespace snort;
 
 namespace
 {
-struct GeneveOpt
-{
-    uint16_t g_class;
-    uint8_t  g_type;
-    uint8_t  g_len;
-
-    uint16_t optclass() const
-    { return (ntohs(g_class)); }
-
-    bool is_set(uint16_t which) const
-    { return (g_type & which); }
-
-    uint8_t type() const
-    { return (g_type); }
-
-    uint8_t olen() const
-    { return (sizeof(GeneveOpt) + ((g_len & 0x1f) * 4)); }
-
-    uint8_t len() const
-    { return ((g_len & 0x1f) * 4); }
-};
-
 static const RuleMap geneve_rules[] =
 {
     { DECODE_GENEVE_DGRAM_LT_GENEVE_HDR, "insufficient room for geneve header" },
@@ -98,7 +76,7 @@ public:
 private:
 
     void log_opts(TextLog* const, const uint8_t*, const uint16_t len);
-    bool validate_options(const uint8_t* rptr, uint16_t optlen, CodecData& codec);
+    bool validate_options(const uint8_t* rptr, uint16_t opts_len, CodecData& codec);
 };
 
 } // namespace
@@ -119,7 +97,7 @@ bool GeneveCodec::validate_options(const uint8_t* rptr, uint16_t hdrlen, CodecDa
 
     while (offset < hdrlen)
     {
-        const GeneveOpt* const opt = reinterpret_cast<const GeneveOpt*>(rptr);
+        const geneve::GeneveOpt* const opt = reinterpret_cast<const geneve::GeneveOpt*>(rptr);
         uint8_t olen = opt->olen();
 
         if ((offset + olen) > hdrlen)
@@ -165,7 +143,7 @@ bool GeneveCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
     }
 
-    const uint16_t optlen = hdr->optlen();
+    const uint16_t opts_len = hdr->opts_len();
     const uint32_t hdrlen = hdr->hlen();
     if (raw.len <  hdrlen)
     {
@@ -173,8 +151,8 @@ bool GeneveCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
     }
 
-    /* If critical header present bit is set, optlen cannot be 0 */
-    if (hdr->is_set(GENEVE_FLAG_C) && (optlen == 0))
+    /* If critical header present bit is set, opts_len cannot be 0 */
+    if (hdr->is_set(GENEVE_FLAG_C) && (opts_len == 0))
     {
         codec_event(codec, DECODE_GENEVE_INVALID_FLAGS);
         return false;
@@ -199,21 +177,21 @@ bool GeneveCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     return true;
 }
 
-void GeneveCodec::log_opts(TextLog* const text_log, const uint8_t *rptr, uint16_t optlen)
+void GeneveCodec::log_opts(TextLog* const text_log, const uint8_t *rptr, uint16_t opts_len)
 {
     uint16_t offset = 0;
 
-    while (offset < optlen)
+    while (offset < opts_len)
     {
-        const GeneveOpt* const opt = reinterpret_cast<const GeneveOpt*>(rptr);
+        const geneve::GeneveOpt* const opt = reinterpret_cast<const geneve::GeneveOpt*>(rptr);
         uint8_t olen = opt->olen();
 
         TextLog_Print(text_log, "\n\tclass 0x%04x, type 0x%02x%s, len %3u%s", opt->optclass(),
             opt->type(), (opt->is_set(GENEVE_OPT_TYPE_C) ? " (C)" : ""), olen, (olen ? " value " : ""));
 
-        rptr += sizeof(GeneveOpt);
+        rptr += sizeof(geneve::GeneveOpt);
 
-        for (int idx=0; idx < opt->len(); idx++)
+        for (int idx=0; idx < opt->data_len(); idx++)
             TextLog_Print(text_log, "%02x ", *rptr++);
 
         offset += olen;
@@ -238,10 +216,10 @@ void GeneveCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     if (flags == "")
         flags = "none";
 
-    TextLog_Print(text_log, "version %u, optlen %u flags [%s]", hdr->version(), hdr->optlen(), flags.c_str());
+    TextLog_Print(text_log, "version %u, opts_len %u flags [%s]", hdr->version(), hdr->opts_len(), flags.c_str());
     TextLog_Print(text_log, " network id %u, next protocol: 0x%04x", hdr->vni(), hdr->proto());
 
-    log_opts(text_log, rptr, hdr->optlen());
+    log_opts(text_log, rptr, hdr->opts_len());
 }
 
 bool GeneveCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,

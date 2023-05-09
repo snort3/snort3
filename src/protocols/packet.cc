@@ -271,9 +271,15 @@ uint32_t Packet::get_flow_geneve_vni() const
     uint32_t vni = 0;
 
     if (proto_bits & PROTO_BIT__GENEVE)
-        vni = layer::get_geneve_layer(this)->vni();
+        vni = layer::get_geneve_layer(this, true)->hdr.vni();
 
     return vni;
+}
+
+std::vector<snort::geneve::GeneveOptData> Packet::get_geneve_options(bool inner) const
+{
+    const snort::geneve::GeneveLyr* lyr = layer::get_geneve_layer(this, inner);
+    return lyr->get_opt_data();
 }
 
 bool Packet::is_from_application_client() const

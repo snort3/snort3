@@ -26,6 +26,7 @@
 #include "framework/decode_data.h"
 #include "framework/pdu_section.h"
 #include "main/snort_types.h"
+#include "protocols/geneve.h"
 #include "target_based/snort_protocols.h"
 
 namespace snort
@@ -348,6 +349,7 @@ struct SO_PUBLIC Packet
 
     uint16_t get_flow_vlan_id() const;
     uint32_t get_flow_geneve_vni() const;
+    std::vector<snort::geneve::GeneveOptData> get_geneve_options(bool inner) const;
 
     int16_t get_ingress_group() const
     {

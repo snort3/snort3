@@ -23,6 +23,8 @@ else(STATIC_CODECS)
 
 endif(STATIC_CODECS)
 
+add_subdirectory(test)
+
 add_library( misc_codecs OBJECT
     cd_default.cc
     ${PLUGIN_LIST}
