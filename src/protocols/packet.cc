@@ -279,7 +279,10 @@ uint32_t Packet::get_flow_geneve_vni() const
 std::vector<snort::geneve::GeneveOptData> Packet::get_geneve_options(bool inner) const
 {
     const snort::geneve::GeneveLyr* lyr = layer::get_geneve_layer(this, inner);
-    return lyr->get_opt_data();
+    if (lyr)
+        return lyr->get_opt_data();
+    else
+        return {};
 }
 
 bool Packet::is_from_application_client() const

@@ -346,7 +346,7 @@ static int FuncCheck(int i)
 
     result = RunFunc(f->func, f->arg1, f->arg2);
 
-    code = (0 <= result && (size_t)result < sizeof(codes)/sizeof(code[0])) ?
+    code = (0 <= result && (size_t)result < sizeof(codes)/sizeof(codes[0])) ?
         codes[result] : "uh oh";
 
     if ( result != f->expected )
