@@ -322,7 +322,7 @@ public:
     void set_user_ips(IpsPolicy* p)
     { user_ips[p->user_policy_id] = p; }
 
-    NetworkPolicy* get_user_network(unsigned user_id);
+    NetworkPolicy* get_user_network(unsigned user_id) const;
 
     IpsPolicy* get_user_ips(unsigned user_id)
     {

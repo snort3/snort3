@@ -164,6 +164,18 @@ public:
     const char* get_alias_name() const
     { return alias_name; }
 
+    void set_network_policy_user_id(uint32_t user_id)
+    {
+        network_policy_user_id = user_id;
+        network_policy_user_id_set = true;
+    }
+
+    bool get_network_policy_user_id(uint32_t& user_id) const
+    {
+        user_id = network_policy_user_id;
+        return network_policy_user_id_set;
+    }
+
     virtual bool is_control_channel() const
     { return false; }
 
@@ -195,6 +207,8 @@ private:
     SnortProtocolId snort_protocol_id = 0;
     // FIXIT-E Use std::string to avoid storing a pointer to external std::string buffers
     const char* alias_name = nullptr;
+    uint32_t network_policy_user_id = 0;
+    bool network_policy_user_id_set = false;
 };
 
 // at present there is no sequencing among like types except that appid

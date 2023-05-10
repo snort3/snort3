@@ -377,7 +377,7 @@ std::shared_ptr<PolicyTuple> PolicyMap::get_policies(Shell* sh)
     return pt == shell_map.end() ? nullptr : pt->second;
 }
 
-NetworkPolicy* PolicyMap::get_user_network(unsigned user_id)
+NetworkPolicy* PolicyMap::get_user_network(unsigned user_id) const
 {
     auto it = user_network.find(user_id);
     NetworkPolicy* np = (it == user_network.end()) ? nullptr : it->second;

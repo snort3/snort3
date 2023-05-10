@@ -404,6 +404,8 @@ struct TrafficPolicy : public InspectorList
     PHInstance* get_instance_by_type(const char* key, InspectorType);
 
     PHObjectList* get_specific_handlers();
+
+    void set_inspector_network_policy_user_id(uint32_t);
 };
 
 TrafficPolicy::~TrafficPolicy()
@@ -490,6 +492,12 @@ PHInstance* TrafficPolicy::get_instance_by_type(const char* key, InspectorType t
         break;
     }
     return nullptr;
+}
+
+void TrafficPolicy::set_inspector_network_policy_user_id(uint32_t user_id)
+{
+    for (auto* p : ilist)
+        p->handler->set_network_policy_user_id(user_id);
 }
 
 class SingleInstanceInspectorPolicy
@@ -1350,7 +1358,19 @@ bool InspectorManager::delete_inspector(SnortConfig* sc, const char* iname)
 
 void InspectorManager::free_inspector(Inspector* p)
 {
+    NetworkPolicy* np = get_network_policy();
+    uint32_t user_id;
+    if ( p->get_network_policy_user_id(user_id) )
+    {
+        const SnortConfig* sc = SnortConfig::get_conf();
+        if ( sc && sc->policy_map )
+        {
+            NetworkPolicy* user_np = sc->policy_map->get_user_network(user_id);
+            set_network_policy(user_np);
+        }
+    }
     p->get_api()->dtor(p);
+    set_network_policy(np);
 }
 
 InspectSsnFunc InspectorManager::get_session(uint16_t proto)
@@ -1830,6 +1850,7 @@ void InspectorManager::prepare_inspectors(SnortConfig* sc)
         if (!tp->ts_handlers)
             tp->ts_handlers = new ThreadSpecificHandlers(ThreadConfig::get_instance_max());
         tp->allocate_thread_storage();
+        tp->set_inspector_network_policy_user_id(np->user_policy_id);
     }
 }
 

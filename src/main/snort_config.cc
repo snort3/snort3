@@ -269,6 +269,7 @@ SnortConfig::~SnortConfig()
     delete fast_pattern_config;
 
     delete policy_map;
+    policy_map = nullptr;
     InspectorManager::delete_config(this);
     ActionManager::delete_config(this);
 

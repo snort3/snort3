@@ -339,13 +339,14 @@ void Snort::term()
     // since the "TraceApi::thread_term()" uses SnortConfig
     TraceApi::thread_term();
 
+    SnortConfig::set_conf(nullptr);
+
     /* free allocated memory */
     if (sc != snort_cmd_line_conf)
         delete sc;
 
     delete snort_cmd_line_conf;
     snort_cmd_line_conf = nullptr;
-    SnortConfig::set_conf(nullptr);
 
     CleanupProtoNames();
     HighAvailabilityManager::term();
