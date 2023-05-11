@@ -96,19 +96,6 @@ static const ConvertMap rule_rev =
 const ConvertMap* rev_map = &rule_rev;
 
 /************************************
- ********  REFERENCE  ***************
- ************************************/
-
-static const std::string reference = "reference";
-static const ConvertMap rule_reference =
-{
-    reference,
-    unchanged_rule_ctor<& reference>,
-};
-
-const ConvertMap* reference_map = &rule_reference;
-
-/************************************
  **********  CLASSTYPE  *************
  ************************************/
 

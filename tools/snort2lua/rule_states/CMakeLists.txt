@@ -14,6 +14,7 @@ add_library( rule_states OBJECT
     rule_metadata.cc
     rule_pcre.cc
     rule_react.cc
+    rule_reference.cc
     rule_replace.cc
     rule_resp.cc
     rule_sd_pattern.cc
