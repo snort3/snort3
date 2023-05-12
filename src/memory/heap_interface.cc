@@ -52,6 +52,7 @@ class JemallocInterface : public HeapInterface
 
     void print_stats(ControlConn*) override;
 
+    void get_aux_counts(uint64_t&, uint64_t&, uint64_t&, uint64_t&) override;
 };
 
 static size_t stats_mib[2], mib_len = 2;
@@ -81,7 +82,7 @@ static void log_jem_stats(void *,const char *buf)
 
 void JemallocInterface::main_init()
 {
-    mallctlnametomib("stats.allocated", stats_mib, &mib_len);
+    mallctlnametomib("stats.mapped", stats_mib, &mib_len);
 }
 
 void JemallocInterface::thread_init()
@@ -120,6 +121,16 @@ void JemallocInterface::print_stats(ControlConn* ctrlcon)
 {
     s_ctrlconn = ctrlcon;
     malloc_stats_print(log_jem_stats, nullptr, nullptr);
+}
+
+void JemallocInterface::get_aux_counts(uint64_t& all, uint64_t& act, uint64_t& res, uint64_t& ret)
+{
+    size_t sz = sizeof(all);
+
+    mallctl("stats.allocated", (void*)&all, &sz, nullptr, 0);
+    mallctl("stats.active", (void*)&act, &sz, nullptr, 0);
+    mallctl("stats.resident", (void*)&res, &sz, nullptr, 0);
+    mallctl("stats.retained", (void*)&ret, &sz, nullptr, 0);
 }
 
 //--------------------------------------------------------------------------

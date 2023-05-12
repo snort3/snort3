@@ -88,6 +88,15 @@ static void epoch_check(void*)
 
     mc.cur_in_use = total;
     mc.epochs++;
+
+    // for reporting / tracking only
+    uint64_t all, act, res, ret;
+    heap->get_aux_counts(all, act, res, ret);
+
+    mc.app_all = all;
+    mc.active = act;
+    mc.resident = res;
+    mc.retained = ret;
 }
 
 // -----------------------------------------------------------------------------

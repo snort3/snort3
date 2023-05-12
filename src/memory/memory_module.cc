@@ -73,6 +73,11 @@ const PegInfo mem_pegs[] =
     { CountType::NOW, "reap_aborts", "abort pruning before target due to process under limit" },
     { CountType::NOW, "reap_decrease", "total amount of the decrease in thread memory while process over limit" },
     { CountType::NOW, "reap_increase", "total amount of the increase in thread memory while process over limit" },
+    { CountType::NOW, "app_all", "total bytes allocated by application" },
+    { CountType::NOW, "active", "total bytes allocated in active pages" },
+    { CountType::NOW, "resident", "maximum bytes physically resident" },
+    { CountType::NOW, "retained", "total bytes not returned to OS" },
+
     { CountType::END, nullptr, nullptr }
 };
 

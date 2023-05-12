@@ -48,6 +48,11 @@ struct MemoryCounts
     PegCount reap_aborts;
     PegCount reap_decrease;
     PegCount reap_increase;
+    // reporting only
+    PegCount app_all;
+    PegCount active;
+    PegCount resident;
+    PegCount retained;
 };
 
 typedef bool (*PruneHandler)();
