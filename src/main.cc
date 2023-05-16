@@ -731,6 +731,10 @@ int main_dump_plugins(lua_State*)
 int main_quit(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    SnortConfig* sc = SnortConfig::get_main_conf();
+    // Disable watchdog when process stops
+    if (sc)
+        sc->set_watchdog(0);
     send_response(ctrlcon, "== stopping\n");
     main_broadcast_command(new ACStop(), ctrlcon);
     exit_requested = true;
