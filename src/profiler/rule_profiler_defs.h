@@ -26,6 +26,12 @@
 
 struct dot_node_state_t;
 
+enum OutType
+{
+    OUTPUT_TABLE = 0,
+    OUTPUT_JSON
+};
+
 struct RuleProfilerConfig
 {
     enum Sort

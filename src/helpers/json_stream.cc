@@ -166,3 +166,7 @@ void JsonStream::split()
         sep = true;
 }
 
+void JsonStream::put_eol()
+{
+    out << std::endl;
+}

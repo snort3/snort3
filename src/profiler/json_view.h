@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2023-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,28 +16,18 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// profiler_module.h author Russ Combs <rucombs@cisco.com>
+// json_view.h author Anna Norokh <anorokh@cisco.com>
 
-#ifndef PROFILER_MODULE_H
-#define PROFILER_MODULE_H
+#ifndef JSON_VIEW_H
+#define JSON_VIEW_H
 
-#include "framework/module.h"
+#include <vector>
 
-#include "profiler.h"
+#include "main/snort_config.h"
 
-class ProfilerModule : public snort::Module
-{
-public:
-    ProfilerModule();
+#include "profiler_printer.h"
+#include "rule_profiler.h"
 
-    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
-    bool end(const char*, int, snort::SnortConfig*) override;
-
-    snort::ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
-    const snort::Command* get_commands() const override;
-
-    Usage get_usage() const override
-    { return GLOBAL; }
-};
+void print_json_entries(ControlConn*, std::vector<rule_stats::View>&, ProfilerSorter<rule_stats::View>&, unsigned);
 
 #endif

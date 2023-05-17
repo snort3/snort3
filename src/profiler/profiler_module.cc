@@ -27,14 +27,15 @@
 #include "control/control.h"
 #include "hash/xhash.h"
 #include "log/messages.h"
+#include "lua/lua.h"
 #include "main/analyzer_command.h"
 #include "main/reload_tuner.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "managers/module_manager.h"
 
-#include "profiler/rule_profiler.h"
-#include "profiler/rule_profiler_defs.h"
+#include "rule_profiler.h"
+#include "rule_profiler_defs.h"
 
 using namespace snort;
 
@@ -86,8 +87,8 @@ private:
 class ProfilerRuleDump : public AnalyzerCommand
 {
 public:
-    ProfilerRuleDump(ControlConn* conn)
-        : AnalyzerCommand(conn), nodes(), stats()
+    ProfilerRuleDump(ControlConn* conn, OutType out_type)
+        : AnalyzerCommand(conn), nodes(), stats(), out_type(out_type)
     {
         const SnortConfig* sc = SnortConfig::get_conf();
         assert(sc);
@@ -108,7 +109,7 @@ public:
         const auto* config = SnortConfig::get_conf()->get_profiler();
         assert(config);
 
-        print_rule_profiler_stats(config->rule, stats, ctrlcon);
+        print_rule_profiler_stats(config->rule, stats, ctrlcon, out_type);
     }
 
     bool execute(Analyzer&, void**) override
@@ -123,6 +124,7 @@ public:
 private:
     std::vector<HashNode*> nodes;
     std::unordered_map<SigInfo*, OtnState> stats;
+    OutType out_type;
 };
 
 class ProfilerRuleReset : public AnalyzerCommand
@@ -213,10 +215,41 @@ static int rule_profiling_dump(lua_State* L)
         return 0;
     }
 
-    main_broadcast_command(new ProfilerRuleDump(ctrlcon), ctrlcon);
+    const int num_of_args = lua_gettop(L);
+
+    if (!L or (num_of_args == 0))
+    {
+        main_broadcast_command(new ProfilerRuleDump(ctrlcon, OutType::OUTPUT_TABLE), ctrlcon);
+        return 0;
+    }
+
+    if (num_of_args > 1)
+    {
+        LogRespond(ctrlcon, "Too many arguments for rule_dump(output) command\n");
+        return 0;
+    }
+
+    const char* arg = lua_tostring(L, 1);
+
+    if (strcmp(arg, "json") == 0)
+        main_broadcast_command(new ProfilerRuleDump(ctrlcon, OutType::OUTPUT_JSON), ctrlcon);
+
+    else if (strcmp(arg, "table") == 0)
+        main_broadcast_command(new ProfilerRuleDump(ctrlcon, OutType::OUTPUT_TABLE), ctrlcon);
+
+    else
+        LogRespond(ctrlcon, "Invalid usage of rule_dump(output), argument can be 'table' or 'json'\n");
 
     return 0;
 }
+
+static const Parameter profiler_dump_params[] =
+{
+    { "output", Parameter::PT_ENUM, "table | json",
+      "table", "print rule statistics in table or json format" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
 
 static const Command profiler_cmds[] =
 {
@@ -230,7 +263,7 @@ static const Command profiler_cmds[] =
       nullptr, "print rule profiler status" },
 
     { "rule_dump", rule_profiling_dump,
-      nullptr, "print rule statistics" },
+      profiler_dump_params, "print rule statistics" },
 
     { nullptr, nullptr, nullptr, nullptr }
 };

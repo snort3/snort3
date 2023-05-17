@@ -10,22 +10,26 @@ set ( PROFILER_INCLUDES
 
 set ( PROFILER_SOURCES
     active_context.h
+    json_view.cc
+    json_view.h
     memory_context.cc
     memory_profiler.cc
     memory_profiler.h
     profiler.cc
+    profiler_module.cc
+    profiler_module.h
+    profiler_nodes.cc
+    profiler_nodes.h
     profiler_printer.h
     profiler_stats_table.cc
     profiler_stats_table.h
     profiler_tree_builder.h
-    profiler_nodes.cc
-    profiler_nodes.h
     rule_profiler.cc
     rule_profiler.h
+    table_view.cc
+    table_view.h
     time_profiler.cc
     time_profiler.h
-    profiler_module.cc
-    profiler_module.h
     )
 
 add_library ( profiler OBJECT

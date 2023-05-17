@@ -30,12 +30,12 @@
 #include <sstream>
 #include <vector>
 
+#include "control/control.h"
 // this include eventually leads to possible issues with std::chrono:
 // 1.  Undefined or garbage value returned to caller (rep count())
 // 2.  The left expression of the compound assignment is an uninitialized value.
 //     The computed value will also be garbage (duration& operator+=(const duration& __d))
 #include "detection/detection_options.h"  // ... FIXIT-W
-#include "control/control.h"
 #include "detection/treenodes.h"
 #include "hash/ghash.h"
 #include "hash/xhash.h"
@@ -43,12 +43,14 @@
 #include "main/thread_config.h"
 #include "parser/parser.h"
 #include "target_based/snort_protocols.h"
-#include "utils/stats.h"
 #include "time/timersub.h"
+#include "utils/stats.h"
 
+#include "json_view.h"
 #include "profiler_printer.h"
 #include "profiler_stats_table.h"
 #include "rule_profiler_defs.h"
+#include "table_view.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -65,90 +67,6 @@ struct timeval RuleContext::total_time = {0, 0};
 
 namespace rule_stats
 {
-
-static const StatsTable::Field fields[] =
-{
-    { "#", 5, '\0', 0, std::ios_base::left },
-    { "gid", 6, '\0', 0, std::ios_base::fmtflags() },
-    { "sid", 6, '\0', 0, std::ios_base::fmtflags() },
-    { "rev", 4, '\0', 0, std::ios_base::fmtflags() },
-    { "checks", 10, '\0', 0, std::ios_base::fmtflags() },
-    { "matches", 8, '\0', 0, std::ios_base::fmtflags() },
-    { "alerts", 7, '\0', 0, std::ios_base::fmtflags() },
-    { "time (us)", 10, '\0', 0, std::ios_base::fmtflags() },
-    { "avg/check", 10, '\0', 1, std::ios_base::fmtflags() },
-    { "avg/match", 10, '\0', 1, std::ios_base::fmtflags() },
-    { "avg/non-match", 14, '\0', 1, std::ios_base::fmtflags() },
-    { "timeouts", 9, '\0', 0, std::ios_base::fmtflags() },
-    { "suspends", 9, '\0', 0, std::ios_base::fmtflags() },
-    { "rule_time (%)", 14, '\0', 5, std::ios_base::fmtflags() },
-    { nullptr, 0, '\0', 0, std::ios_base::fmtflags() }
-};
-
-struct View
-{
-    OtnState state;
-    SigInfo sig_info;
-
-    hr_duration elapsed() const
-    { return state.elapsed; }
-
-    hr_duration elapsed_match() const
-    { return state.elapsed_match; }
-
-    hr_duration elapsed_no_match() const
-    { return elapsed() - elapsed_match(); }
-
-    uint64_t checks() const
-    { return state.checks; }
-
-    uint64_t matches() const
-    { return state.matches; }
-
-    uint64_t no_matches() const
-    { return checks() - matches(); }
-
-    uint64_t alerts() const
-    { return state.alerts; }
-
-    uint64_t timeouts() const
-    { return state.latency_timeouts; }
-
-    uint64_t suspends() const
-    { return state.latency_suspends; }
-
-    hr_duration time_per(hr_duration d, uint64_t v) const
-    {
-        if ( v  == 0 )
-            return CLOCK_ZERO;
-
-        return hr_duration(d / v);
-    }
-
-    hr_duration avg_match() const
-    { return time_per(elapsed_match(), matches()); }
-
-    hr_duration avg_no_match() const
-    { return time_per(elapsed_no_match(), no_matches()); }
-
-    hr_duration avg_check() const
-    { return time_per(elapsed(), checks()); }
-
-    double rule_time_per(double total_time_usec) const
-    {
-        if (total_time_usec < 1.)
-            return 100.0;
-        return clock_usecs(TO_USECS(elapsed())) / total_time_usec * 100;
-    }
-
-    View(const OtnState& otn_state, const SigInfo* si = nullptr) :
-        state(otn_state)
-    {
-        if ( si )
-            // FIXIT-L does sig_info need to be initialized otherwise?
-            sig_info = *si;
-    }
-};
 
 static const ProfilerSorter<View> sorters[] =
 {
@@ -201,89 +119,10 @@ static std::vector<View> build_entries(const std::unordered_map<SigInfo*, OtnSta
     return entries;
 }
 
-// FIXIT-L logic duplicated from ProfilerPrinter
-static void print_single_entry(ControlConn* ctrlcon, const View& v, unsigned n,
-    double total_time_usec)
-{
-    using std::chrono::duration_cast;
-    using std::chrono::microseconds;
-
-    std::ostringstream ss;
-
-    {
-        StatsTable table(fields, ss);
-
-        table << StatsTable::ROW;
-
-        table << n; // #
-
-        table << v.sig_info.gid;
-        table << v.sig_info.sid;
-        table << v.sig_info.rev;
-
-        table << v.checks();
-        table << v.matches();
-        table << v.alerts();
-
-        table << clock_usecs(TO_USECS(v.elapsed()));
-        table << clock_usecs(TO_USECS(v.avg_check()));
-        table << clock_usecs(TO_USECS(v.avg_match()));
-        table << clock_usecs(TO_USECS(v.avg_no_match()));
-
-        table << v.timeouts();
-        table << v.suspends();
-        table << v.rule_time_per(total_time_usec);
-    }
-
-    LogRespond(ctrlcon, "%s", ss.str().c_str());
-}
-
-// FIXIT-L logic duplicated from ProfilerPrinter
-static void print_entries(ControlConn* ctrlcon, std::vector<View>& entries,
-    ProfilerSorter<View>& sort, unsigned count)
-{
-    std::ostringstream ss;
-    RuleContext::set_end_time(get_time_curr());
-    RuleContext::count_total_time();
-
-    double total_time_usec =
-        RuleContext::get_total_time()->tv_sec * 1000000.0 + RuleContext::get_total_time()->tv_usec;
-
-    {
-        StatsTable table(fields, ss);
-
-        table << StatsTable::SEP;
-
-        table << s_rule_table_title;
-        if ( count )
-            table << " (worst " << count;
-        else
-            table << " (all";
-
-        if ( sort )
-            table << ", sorted by " << sort.name;
-
-        table << ")\n";
-
-        table << StatsTable::HEADER;
-    }
-
-    LogRespond(ctrlcon, "%s", ss.str().c_str());
-
-    if ( !count || count > entries.size() )
-        count = entries.size();
-
-    if ( sort )
-        std::partial_sort(entries.begin(), entries.begin() + count, entries.end(), sort);
-
-    for ( unsigned i = 0; i < count; ++i )
-        print_single_entry(ctrlcon, entries[i], i + 1, total_time_usec);
-}
-
 }
 
 void print_rule_profiler_stats(const RuleProfilerConfig& config, const std::unordered_map<SigInfo*, OtnState>& stats,
-    ControlConn* ctrlcon)
+    ControlConn* ctrlcon, OutType out_type)
 {
     auto entries = rule_stats::build_entries(stats);
 
@@ -294,7 +133,11 @@ void print_rule_profiler_stats(const RuleProfilerConfig& config, const std::unor
     auto sort = rule_stats::sorters[config.sort];
 
     // FIXIT-L do we eventually want to be able print rule totals, too?
-    print_entries(ctrlcon, entries, sort, config.count);
+    if ( out_type == OutType::OUTPUT_TABLE )
+        print_entries(ctrlcon, entries, sort, config.count);
+
+    else if ( out_type == OutType::OUTPUT_JSON )
+        print_json_entries(ctrlcon, entries, sort, config.count);
 }
 
 void show_rule_profiler_stats(const RuleProfilerConfig& config)

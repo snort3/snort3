@@ -48,6 +48,8 @@ public:
     void put_true(const char* key);
     void put_false(const char* key);
 
+    void put_eol();
+
 private:
     void split();
 
