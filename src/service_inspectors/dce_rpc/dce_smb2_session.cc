@@ -73,8 +73,7 @@ uint32_t Dce2Smb2SessionTracker::fill_map(const uint64_t msg_id, const uint8_t c
     msgid_state* mid_ptr;
     if (it == mid_map.end())
     {
-        mid_ptr = new msgid_state { 0, 0, { 0 }, { 0 }
-        };
+        mid_ptr = new msgid_state;
         mid_map.insert(std::make_pair(current_flow_key, mid_ptr));
     }
     else

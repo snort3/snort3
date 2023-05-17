@@ -95,16 +95,11 @@ public:
     const FlowCacheConfig& get_flow_cache_config() const
     { return config; }
 
-    unsigned get_flows_allocated() const
-    { return flows_allocated; }
-
-    static bool is_pruning_in_progress()
-    { return pruning_in_progress; }
+    unsigned get_flows_allocated() const;
 
     size_t uni_flows_size() const;
     size_t uni_ip_flows_size() const;
     size_t flows_size() const;
-    size_t free_flows_size() const;
 
 private:
     void delete_uni();
@@ -117,13 +112,11 @@ private:
         (unsigned mode, unsigned num_to_delete, unsigned &deleted);
 
 private:
-    static THREAD_LOCAL bool pruning_in_progress;
     static const unsigned cleanup_flows = 1;
     FlowCacheConfig config;
     uint32_t flags;
 
     class ZHash* hash_table;
-    unsigned flows_allocated = 0;
     FlowUniList* uni_flows;
     FlowUniList* uni_ip_flows;
 

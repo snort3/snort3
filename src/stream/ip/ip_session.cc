@@ -277,6 +277,7 @@ TEST_CASE("IP Session", "[ip_session]")
 
         update_session(&p, &lws);
         CHECK(lws.expire_time == 360);
+        lws.ssn_server = nullptr;
     }
 }
 #endif

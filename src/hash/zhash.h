@@ -27,7 +27,7 @@
 class ZHash : public snort::XHash
 {
 public:
-    ZHash(int nrows, int keysize);
+    ZHash(int nrows, int keysize, bool recycle = true);
 
     ZHash(const ZHash&) = delete;
     ZHash& operator=(const ZHash&) = delete;

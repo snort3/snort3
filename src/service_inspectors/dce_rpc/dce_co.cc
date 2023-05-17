@@ -818,7 +818,6 @@ static void dce_co_process_ctx_result(DCE2_SsnData*, DCE2_CoTracker* cot,
     const Uuid* transport)
 {
     DCE2_CoCtxIdNode* ctx_node, * existing_ctx_node;
-    DCE2_Ret status;
 
     /* Dequeue context item in pending queue - this will get put in the permanent
      * context id list or freed */
@@ -898,8 +897,7 @@ static void dce_co_process_ctx_result(DCE2_SsnData*, DCE2_CoTracker* cot,
     }
     else
     {
-        status = DCE2_ListInsert(cot->ctx_ids, (void*)(uintptr_t)ctx_node->ctx_id,
-            (void*)ctx_node);
+        DCE2_Ret status = DCE2_ListInsert(cot->ctx_ids, (void*)(uintptr_t)ctx_node->ctx_id, (void*)ctx_node);
         if (status != DCE2_RET__SUCCESS)
         {
             snort_free((void*)ctx_node);
@@ -1468,7 +1466,6 @@ static DCE2_Ret dce_co_handle_frag(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 {
     uint32_t size = (frag_len < DCE2_CO__MIN_ALLOC_SIZE) ? DCE2_CO__MIN_ALLOC_SIZE : frag_len;
     DCE2_BufferMinAddFlag mflag = DCE2_BUFFER_MIN_ADD_FLAG__USE;
-    DCE2_Ret status;
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
     Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
@@ -1537,7 +1534,7 @@ static DCE2_Ret dce_co_handle_frag(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         if (DceRpcCoLastFrag(co_hdr) || (DCE2_BufferLength(frag_buf) == max_frag_data))
             mflag = DCE2_BUFFER_MIN_ADD_FLAG__IGNORE;
 
-        status = DCE2_BufferAddData(frag_buf, frag_ptr,
+        DCE2_Ret status = DCE2_BufferAddData(frag_buf, frag_ptr,
             frag_len, DCE2_BufferLength(frag_buf), mflag);
 
         if (status != DCE2_RET__SUCCESS)

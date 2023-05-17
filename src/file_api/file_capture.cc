@@ -475,7 +475,7 @@ void FileCapture::store_file()
     if (!file_info)
         return;
 
-    std::string& file_full_name = file_info->get_file_name();
+    const std::string& file_full_name = file_info->get_file_name();
 
     /*Check whether the file exists*/
     struct stat buffer;

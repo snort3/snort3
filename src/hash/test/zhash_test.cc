@@ -75,7 +75,7 @@ SnortConfig::~SnortConfig() = default;
 const SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
 
-const unsigned ZHASH_ROWS = 1000;
+const unsigned ZHASH_ROWS = 50;
 const unsigned ZHASH_KEY_SIZE = 100;
 const unsigned MAX_ZHASH_NODES = 100;
 char key_buf[ZHASH_KEY_SIZE];
@@ -151,6 +151,68 @@ TEST(zhash, create_zhash_test)
         CHECK(*data == (i + 1));
         snort_free(data);
      }
+}
+
+TEST(zhash, zhash_pop_test)
+{
+    unsigned* pop_data = (unsigned*)zh->pop();
+    CHECK_TEXT(nullptr == pop_data, "Empty pop should return nullptr");
+    unsigned* data = (unsigned*)snort_calloc(sizeof(unsigned));
+    zh->push(data);
+    pop_data = (unsigned*)zh->pop();
+    CHECK_TEXT(pop_data == data, "Pop from free list should return pushed data");
+    snort_free(pop_data);
+    pop_data = (unsigned*)zh->pop();
+    CHECK_TEXT(nullptr == pop_data, "Pop after pop should return nullptr");
+}
+
+TEST(zhash, zhash_get_test)
+{
+    unsigned* data = (unsigned*)snort_calloc(sizeof(unsigned));
+    zh->push(data);
+    key_buf[0] = 'a';
+    unsigned* get_data = (unsigned*)zh->get(key_buf);
+    CHECK_TEXT(get_data == data, "Get should return pushed data");
+    get_data = (unsigned*)zh->get(key_buf);
+    CHECK_TEXT(get_data == data, "Second get should return data");
+    key_buf[0] = 'b';
+    get_data = (unsigned*)zh->get(key_buf);
+    CHECK_TEXT(nullptr == get_data, "Get with nonexistent key should return nullptr");
+    get_data = (unsigned*)zh->lru_first();
+    CHECK_TEXT(data == get_data, "Lru first should return data");
+    get_data = (unsigned*)zh->remove();
+    CHECK_TEXT(get_data == data, "Remove node should return data");
+    snort_free(get_data);
+}
+
+TEST(zhash, zhash_lru_test)
+{
+    unsigned* data1 = (unsigned*)snort_calloc(sizeof(unsigned));
+    zh->push(data1);
+    key_buf[0] = '1';
+    unsigned* get_data = (unsigned*)zh->get(key_buf);
+    CHECK_TEXT(get_data == data1, "Get should return pushed data1");
+    unsigned* data2 = (unsigned*)snort_calloc(sizeof(unsigned));
+    zh->push(data2);
+    key_buf[0] = '2';
+    get_data = (unsigned*)zh->get(key_buf);
+    CHECK_TEXT(get_data == data2, "Get should return pushed data2");
+
+    get_data = (unsigned*)zh->lru_first();
+    CHECK_TEXT(get_data == data1, "Lru first should return data1");
+
+    zh->lru_touch();
+    get_data = (unsigned*)zh->lru_first();
+    CHECK_TEXT(get_data == data2, "Lru first should return data2 after touch");
+    get_data = (unsigned*)zh->remove();
+    CHECK_TEXT(get_data == data2, "Remove node should return data2");
+    snort_free(get_data);
+
+    get_data = (unsigned*)zh->lru_first();
+    CHECK_TEXT(get_data == data1, "Lru first should return data1");
+    get_data = (unsigned*)zh->remove();
+    CHECK_TEXT(get_data == data1, "Remove node should return data1");
+    snort_free(get_data);
 }
 
 int main(int argc, char** argv)

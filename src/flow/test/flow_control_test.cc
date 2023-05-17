@@ -53,7 +53,6 @@ THREAD_LOCAL bool Active::s_suspend = false;
 THREAD_LOCAL Active::ActiveSuspendReason Active::s_suspend_reason = Active::ASP_NONE;
 
 THREAD_LOCAL PacketTracer* snort::s_pkt_trace = nullptr;
-THREAD_LOCAL bool FlowCache::pruning_in_progress = false;
 
 void Active::drop_packet(snort::Packet const*, bool) { }
 PacketTracer::~PacketTracer() = default;
@@ -69,12 +68,12 @@ Packet::~Packet() = default;
 uint32_t Packet::get_flow_geneve_vni() const { return 0; }
 FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg) { }
 FlowCache::~FlowCache() = default;
-Flow::Flow() = default;
 Flow::~Flow() = default;
 DetectionEngine::DetectionEngine() = default;
 DetectionEngine::~DetectionEngine() = default;
 ExpectCache::~ExpectCache() = default;
 unsigned FlowCache::purge() { return 1; }
+unsigned FlowCache::get_flows_allocated() const { return 0; }
 Flow* FlowCache::find(const FlowKey*) { return nullptr; }
 Flow* FlowCache::allocate(const FlowKey*) { return nullptr; }
 void FlowCache::push(Flow*) { }
@@ -85,7 +84,6 @@ unsigned FlowCache::timeout(unsigned, time_t) { return 1; }
 size_t FlowCache::uni_flows_size() const { return 0; }
 size_t FlowCache::uni_ip_flows_size() const { return 0; }
 size_t FlowCache::flows_size() const { return 0; }
-size_t FlowCache::free_flows_size() const { return 0; }
 void Flow::init(PktType) { }
 void DataBus::publish(unsigned, unsigned, DataEvent&, Flow*) { }
 void DataBus::publish(unsigned, unsigned, const uint8_t*, unsigned, Flow*) { }

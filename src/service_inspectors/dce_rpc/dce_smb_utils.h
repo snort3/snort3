@@ -141,7 +141,7 @@ void DCE2_SmbCleanFileTracker(DCE2_SmbFileTracker*);
 void DCE2_SmbFileTrackerDataFree(void*);
 void DCE2_SmbCleanSessionFileTracker(DCE2_SmbSsnData*, DCE2_SmbFileTracker*);
 void DCE2_SmbRemoveFileTrackerFromRequestTrackers(DCE2_SmbSsnData*,
-    DCE2_SmbFileTracker*);
+    const DCE2_SmbFileTracker*);
 DCE2_SmbFileTracker* DCE2_SmbDequeueTmpFileTracker(DCE2_SmbSsnData*,
     DCE2_SmbRequestTracker*, const uint16_t);
 DCE2_SmbFileTracker* DCE2_SmbNewFileTracker(DCE2_SmbSsnData*,

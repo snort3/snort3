@@ -30,8 +30,8 @@ uint32_t Smb2Tid(const Smb2Hdr* hdr);
 
 typedef struct _msgid_state
 {
-    uint64_t max_req_msg_id;
-    uint64_t max_resp_msg_id;
+    uint64_t max_req_msg_id = 0;
+    uint64_t max_resp_msg_id = 0;
     std::unordered_set<uint64_t> missing_req_msg_ids;
     std::unordered_set<uint64_t> missing_resp_msg_ids;
 } msgid_state;

@@ -82,31 +82,26 @@ public:
     int32_t get_first_difat();
     void set_difat_array(const uint8_t* buf);
     int32_t get_difat_array(int num);
-    OleHeader()
-    {
-        first_dir = -1;
-        fat_sector_count = 0;
-        first_minifat = 0;
-    }
+    OleHeader() = default;
 
 private:
-    unsigned char sig[8]; //0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1
-    uint16_t minor_version;
-    uint16_t major_version;
-    uint16_t byte_order;
-    uint16_t sector_size;
-    uint16_t mini_sector_size;
-    int32_t dir_sector_count;
-    int32_t first_dir;
-    int32_t difat_count;
-    int32_t fat_sector_count;
-    uint32_t minifat_cutoff;
-    int32_t first_minifat;
-    int32_t minifat_count;
-    int32_t first_difat;
-    int32_t difat_array[MAX_DIFAT_SECTORS];
+    unsigned char sig[8] = {}; //0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1
+    uint16_t minor_version = 0;
+    uint16_t major_version = 0;
+    uint16_t byte_order = 0;
+    uint16_t sector_size = 0;
+    uint16_t mini_sector_size = 0;
+    int32_t dir_sector_count = 0;
+    int32_t first_dir = -1;
+    int32_t difat_count = 0;
+    int32_t fat_sector_count = 0;
+    uint32_t minifat_cutoff = 0;
+    int32_t first_minifat = 0;
+    int32_t minifat_count = 0;
+    int32_t first_difat = 0;
+    int32_t difat_array[MAX_DIFAT_SECTORS] = {};
 
-    byte_order_endianess byte_order_endian;
+    byte_order_endianess byte_order_endian = LITL_END;
 };
 #endif
 

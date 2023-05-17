@@ -435,7 +435,7 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
 
                     FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,
                         "File signature lookup adding packet to retry queue"
-                        "Resume=%d, Waited %" PRIi64 "ms.\n", resume,	
+                        "Resume=%d, Waited %" PRIi64 "ms.\n", resume,
                         time_elapsed_ms(&now, &file_ctx->pending_expire_time, lookup_timeout));
                 }
             }
@@ -457,15 +457,10 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
                     "apply_verdict:FILE_VERDICT_PENDING with action drop\n");
                 act->set_delayed_action(Active::ACT_DROP, true);
             }
-            else
+            else if (files)
             {
-                FileFlows* files = FileFlows::get_file_flows(flow);
-                if (files)
-                {
-                    files->add_pending_file(file_ctx->get_file_id());
-                    FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
-                        "apply_verdict:Adding file id to pending\n");
-                }
+                FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+                    "apply_verdict:Adding file id to pending\n");
             }
         }
         return true;

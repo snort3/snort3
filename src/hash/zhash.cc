@@ -41,11 +41,12 @@ using namespace snort;
 //-------------------------------------------------------------------------
 
 
-ZHash::ZHash(int rows, int key_len)
+ZHash::ZHash(int rows, int key_len, bool recycle)
     : XHash(rows, key_len)
 {
     initialize(new FlowHashKeyOps(nrows));
     anr_enabled = false;
+    recycle_nodes = recycle;
 }
 
 void* ZHash::get(const void* key)

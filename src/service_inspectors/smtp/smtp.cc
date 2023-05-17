@@ -1743,6 +1743,7 @@ TEST_CASE("handle_header_line", "[smtp]")
 
     // Cleanup
     delete p.context;
+    p.flow->stash = nullptr;
 }
 
 TEST_CASE("normalize_data", "[smtp]")
@@ -1774,5 +1775,6 @@ TEST_CASE("normalize_data", "[smtp]")
 
     // Cleanup
     delete p.context;
+    p.flow->stash = nullptr;
 }
 #endif

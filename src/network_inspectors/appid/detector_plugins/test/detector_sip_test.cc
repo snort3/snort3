@@ -61,7 +61,6 @@ namespace snort
 AppIdApi appid_api;
 AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) { }
-Flow::Flow() = default;
 Flow::~Flow() = default;
 AppIdSession* AppIdApi::get_appid_session(snort::Flow const&) { return nullptr; }
 
@@ -209,7 +208,7 @@ TEST(detector_sip_tests, sip_event_handler)
     odpctxt->initialize(appid_inspector);
     SipEvent event(&pkt, nullptr, nullptr);
     SipEventHandler event_handler(appid_inspector);
-    Flow* flow = new Flow();
+    Flow* flow = new Flow;
     event_handler.handle(event, flow);
     delete sip_data;
     delete session;

@@ -27,6 +27,7 @@
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
+#include <CppUTestExt/MockSupport.h>
 
 using namespace snort;
 
@@ -72,7 +73,6 @@ static struct __attribute__((__packed__)) TestUpdateMessage {
     HAMessageHeader mhdr;
     FlowKey key;
     HAClientHeader schdr;
-    // cppcheck-suppress unusedStructMember
     uint8_t scmsg[10];
 } s_update_stream_message =
 {
@@ -91,31 +91,6 @@ static struct __attribute__((__packed__)) TestUpdateMessage {
 };
 
 
-static struct timeval s_packet_time = { 0, 0 };
-static uint8_t s_message[MSG_SIZE];
-static SideChannel s_side_channel;
-static SCMessage s_sc_message;
-static SCMessage s_rec_sc_message;
-static bool s_stream_consume_called = false;
-static uint8_t s_stream_consume_size = 0;
-static bool s_other_consume_called = false;
-static uint8_t s_other_consume_size = 0;
-static bool s_get_session_called = false;
-static bool s_delete_session_called = false;
-static bool s_transmit_message_called = false;
-static bool s_stream_update_required = false;
-static bool s_other_update_required = false;
-static uint8_t* s_message_content = nullptr;
-static uint8_t s_message_length = 0;
-static Flow s_flow;
-static FlowKey s_flowkey;
-static Packet s_pkt;
-static Active active;
-static StreamHAClient* s_ha_client;
-static FlowHAClient* s_other_ha_client;
-static std::function<void (SCMessage*)> s_handler = nullptr;
-static SCMsgHdr s_sc_header = { 0, 1, 0, 0, };
-
 class StreamHAClient : public FlowHAClient
 {
 public:
@@ -123,8 +98,8 @@ public:
     ~StreamHAClient() override = default;
     bool consume(Flow*&, const FlowKey*, HAMessage& msg, uint8_t size) override
     {
-        s_stream_consume_called = true;
-        s_stream_consume_size = size;
+        mock().actualCall("consume");
+        mock().setData("stream_consume_size", (int)size);
 
         for ( uint8_t i = 0; i < 10; i++ )
         {
@@ -147,7 +122,10 @@ public:
         }
         return true;
     }
-    bool is_update_required(Flow*) override { return s_stream_update_required; }
+    bool is_update_required(Flow*) override
+    {
+        return (bool)mock().getData("stream_update_required").getIntValue();
+    }
 };
 
 class OtherHAClient : public FlowHAClient
@@ -157,8 +135,8 @@ public:
     ~OtherHAClient() override = default;
     bool consume(Flow*&, const FlowKey*, HAMessage& msg, uint8_t size) override
     {
-        s_other_consume_called = true;
-        s_other_consume_size = size;
+        mock().actualCall("other_consume");
+        mock().setData("other_consume_size", (int)size);
 
         for ( uint8_t i = 0; i < 5; i++ )
         {
@@ -181,7 +159,10 @@ public:
         }
         return true;
     }
-    bool is_update_required(Flow*) override { return s_other_update_required; }
+    bool is_update_required(Flow*) override
+    {
+        return (bool)mock().getData("other_update_required").getIntValue();
+    }
 };
 
 //-------------------------------------------------------------------------
@@ -192,9 +173,9 @@ THREAD_LOCAL HAStats ha_stats = { };
 
 Flow* Stream::get_flow(const FlowKey* flowkey)
 {
-    s_flowkey = *flowkey;
-    s_get_session_called = true;
-    return &s_flow;
+    mock().actualCall("get_flow");
+    mock().setDataObject("flowkey", "FlowKey", (void*)flowkey);
+    return (Flow*)mock().getData("flow").getObjectPointer();
 }
 
 Packet::Packet(bool) { }
@@ -202,8 +183,8 @@ Packet::~Packet() = default;
 
 void Stream::delete_flow(const FlowKey* flowkey)
 {
-    s_flowkey = *flowkey;
-    s_delete_session_called = true;
+    mock().actualCall("delete_flow");
+    mock().setDataObject("flowkey", "FlowKey", (void*)flowkey);
 }
 
 namespace snort
@@ -212,21 +193,23 @@ void ErrorMessage(const char*,...) { }
 void LogMessage(const char*,...) { }
 
 void packet_gettimeofday(struct timeval* tv)
-{ *tv = s_packet_time; }
+{
+    *tv = *(struct timeval*)mock().getData("packet_tv").getObjectPointer();
+}
 }
 
 bool FlowKey::is_equal(const void*, const void*, size_t) { return false; }
 
 int SFDAQInstance::ioctl(DAQ_IoctlCmd, void*, size_t) { return DAQ_SUCCESS; }
 
-Flow::Flow() { ha_state = new FlowHAState; key = new FlowKey; }
-Flow::~Flow() { delete key; delete ha_state; }
+Flow::~Flow() { }
 
 FlowStash::~FlowStash() = default;
 
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
 
+static SideChannel s_side_channel;
 SideChannel* SideChannelManager::get_side_channel(SCPort)
 { return &s_side_channel; }
 
@@ -237,6 +220,7 @@ Connector::Direction SideChannel::get_direction()
 
 void SideChannel::set_default_port(SCPort) { }
 
+static std::function<void (SCMessage*)> s_handler = nullptr;
 void SideChannel::register_receive_handler(const std::function<void (SCMessage*)>& handler)
 {
     s_handler = handler;
@@ -247,12 +231,15 @@ void SideChannel::unregister_receive_handler() { }
 bool SideChannel::discard_message(SCMessage*)
 { return true; }
 
+static SCMsgHdr s_sc_header = { 0, 1, 0, 0 };
 bool SideChannel::process(int)
 {
-    if ( s_handler && s_message_content && (s_message_length != 0))
+    SCMessage* msg = (SCMessage*)mock().getData("message_content").getObjectPointer();
+    if (s_handler && msg && msg->content && msg->content_length != 0)
     {
-        s_rec_sc_message.content = s_message_content;
-        s_rec_sc_message.content_length = s_message_length;
+        SCMessage s_rec_sc_message = {};
+        s_rec_sc_message.content = msg->content;
+        s_rec_sc_message.content_length = msg->content_length;
         s_rec_sc_message.hdr = &s_sc_header;
         s_rec_sc_message.sc = &s_side_channel;
         s_handler(&s_rec_sc_message);
@@ -264,9 +251,8 @@ bool SideChannel::process(int)
 
 bool SideChannel::transmit_message(SCMessage* msg)
 {
-    s_transmit_message_called = true;
-    s_message_content = msg->content;
-    s_message_length = msg->content_length;
+    mock().actualCall("transmit_message");
+    mock().setDataObject("message", "SCMessage", msg);
     return true;
 }
 
@@ -275,9 +261,9 @@ SCMessage* SideChannel::alloc_transmit_message(uint32_t len)
     if ( len > MSG_SIZE )
         return nullptr;
 
-    s_sc_message.content = s_message;
-    s_sc_message.content_length = len;
-    return &s_sc_message;
+    SCMessage* message = (SCMessage*)mock().getData("message_content").getObjectPointer();
+    message->content_length = len;
+    return message;
 }
 
 //-------------------------------------------------------------------------
@@ -289,6 +275,7 @@ TEST_GROUP(high_availability_manager_test)
     void teardown() override
     {
         HighAvailabilityManager::term();
+        mock().clear();
     }
 };
 
@@ -307,22 +294,32 @@ TEST(high_availability_manager_test, inst_init_term)
     HighAvailabilityConfig hac;
     hac.enabled = true;
     hac.daq_channel = false;
-    hac.ports = new PortBitSet();
+    hac.ports = new PortBitSet;
     hac.ports->set(1);
     hac.min_session_lifetime = { 1, 0 };
     hac.min_sync_interval = { 0, 500000 };
 
     HighAvailabilityManager::configure(&hac);
     HighAvailabilityManager::thread_init();
-    s_ha_client = new StreamHAClient;
     CHECK(HighAvailabilityManager::active()==true);
-    delete s_ha_client;
     HighAvailabilityManager::thread_term();
     CHECK(HighAvailabilityManager::active()==false);
 }
 
 TEST_GROUP(flow_ha_state_test)
 {
+    struct timeval s_packet_time;
+
+    void setup() override
+    {
+        s_packet_time = {};
+        mock().setDataObject("packet_tv", "struct timeval", &s_packet_time);
+    }
+
+    void teardown() override
+    {
+        mock().clear();
+    }
 };
 
 TEST(flow_ha_state_test, timing_test)
@@ -332,19 +329,17 @@ TEST(flow_ha_state_test, timing_test)
     FlowHAState::config_timers(min_age, min_age); // one-time config
 
     s_packet_time.tv_sec = 1;
-    FlowHAState* state = new FlowHAState;
-    state->set_next_update();       // set the time for next update
+    FlowHAState state;
+    state.set_next_update();       // set the time for next update
     s_packet_time.tv_sec = 2;       // advance the clock to 2 seconds
-    CHECK(state->sync_interval_elapsed() == false);
-    delete state;
+    CHECK(state.sync_interval_elapsed() == false);
 
     s_packet_time.tv_sec = 1;
-    state = new FlowHAState;
-    CHECK(state->sync_interval_elapsed() == false);
+    FlowHAState state2;
+    CHECK(state2.sync_interval_elapsed() == false);
     s_packet_time.tv_sec = 22;      // advance the clock to 22 seconds
-    state->set_next_update();       // set the time for next update
-    CHECK(state->sync_interval_elapsed() == true);
-    delete state;
+    state2.set_next_update();       // set the time for next update
+    CHECK(state2.sync_interval_elapsed() == true);
 
 }
 
@@ -384,99 +379,123 @@ TEST(flow_ha_state_test, state_test)
 
 TEST_GROUP(high_availability_test)
 {
+    Flow s_flow;
+    Active active;
+    StreamHAClient* s_ha_client; // cppcheck-suppress variableScope
+    FlowHAClient* s_other_ha_client; // cppcheck-suppress variableScope
+    uint8_t s_message[MSG_SIZE];
+    SCMessage s_sc_message;
+    Packet s_pkt;
+    struct timeval s_packet_time;
+    HighAvailabilityConfig hac;
+    FlowHAState* ha_state;
+    FlowKey flow_key;
+
     void setup() override
     {
+        s_packet_time = {};
+        mock().setDataObject("packet_tv", "struct timeval", &s_packet_time);
+        mock().setData("stream_update_required", false);
+        mock().setData("other_update_required", false);
+        ha_state = new FlowHAState;
+        s_flow.ha_state = ha_state;
+        flow_key = {};
+        s_flow.key = &flow_key;
+        mock().setDataObject("flow", "Flow", &s_flow);
+        active = {};
+        memset(s_message, 0, sizeof(s_message));
+        s_sc_message = {};
+        s_sc_message.content = s_message;
+        mock().setDataObject("message_content", "SCMessage", &s_sc_message);
+        s_pkt.active = &active; // cppcheck-suppress unreadVariable
+
         memset(&ha_stats, 0, sizeof(ha_stats));
 
-        HighAvailabilityConfig hac;
         hac.enabled = true;
         hac.daq_channel = false;
-        hac.ports = new PortBitSet();
+        hac.ports = new PortBitSet;
         hac.ports->set(1);
         hac.min_session_lifetime = { 1, 0 };
         hac.min_sync_interval = { 0, 500000 };
 
         HighAvailabilityManager::configure(&hac);
         HighAvailabilityManager::thread_init();
-        s_ha_client = new StreamHAClient;
-        s_other_ha_client = new OtherHAClient;
+        s_ha_client = new StreamHAClient; // cppcheck-suppress unreadVariable
+        s_other_ha_client = new OtherHAClient; // cppcheck-suppress unreadVariable
     }
 
     void teardown() override
     {
         delete s_other_ha_client;
         delete s_ha_client;
+        delete ha_state;
         HighAvailabilityManager::thread_term();
         HighAvailabilityManager::term();
+        mock().clear();
     }
 };
 
 TEST(high_availability_test, receive_deletion)
 {
-    s_delete_session_called = false;
-    s_message_content = (uint8_t*) &s_delete_message;
-    s_message_length = sizeof(s_delete_message);
+    s_sc_message.content = (uint8_t*) &s_delete_message;
+    s_sc_message.content_length = sizeof(s_delete_message);
+    mock().expectNCalls(1, "delete_flow");
     HighAvailabilityManager::process_receive();
-    CHECK(s_delete_session_called == true);
-    CHECK(memcmp((const void*)&s_flowkey, (const void*)&s_test_key, sizeof(s_test_key)) == 0);
+    mock().checkExpectations();
+    MEMCMP_EQUAL_TEXT((const void*)mock().getData("flowkey").getObjectPointer(),
+        (const void*)&s_test_key, sizeof(s_test_key), "flow key should be s_test_key");
 }
 
 TEST(high_availability_test, receive_update_stream_only)
 {
-    s_stream_consume_called = false;
-    s_stream_consume_size = 0;
-    s_message_content = (uint8_t*) &s_update_stream_message;
-    s_message_length = sizeof(s_update_stream_message);
+    s_sc_message.content = (uint8_t*) &s_update_stream_message;
+    s_sc_message.content_length = sizeof(s_update_stream_message);
+    mock().expectNCalls(1, "get_flow");
+    mock().expectNCalls(1, "consume");
     HighAvailabilityManager::process_receive();
-    CHECK(s_stream_consume_called == true);
-    CHECK(s_stream_consume_size == 10);
-    CHECK(memcmp((const void*)&s_flowkey, (const void*)&s_test_key, sizeof(s_test_key)) == 0);
+    mock().checkExpectations();
+    CHECK(mock().getData("stream_consume_size").getIntValue() == 10);
+    MEMCMP_EQUAL_TEXT((const void*)mock().getData("flowkey").getObjectPointer(),
+            (const void*)&s_test_key, sizeof(s_test_key), "flow key should be s_test_key");
 }
 
 TEST(high_availability_test, transmit_deletion)
 {
-    s_transmit_message_called = false;
+    mock().expectNCalls(1, "transmit_message");
     HighAvailabilityManager::process_deletion(s_flow);
-    CHECK(s_transmit_message_called == true);
 }
 
 TEST(high_availability_test, transmit_update_no_update)
 {
-    s_transmit_message_called = false;
-    s_stream_update_required = false;
-    s_other_update_required = false;
-    s_pkt.active = &active;
+    mock().setData("stream_update_required", (int)false);
+    mock().setData("other_update_required", (int)false);
+    mock().expectNCalls(1, "transmit_message");
     HighAvailabilityManager::process_update(&s_flow, &s_pkt);
-    CHECK(s_transmit_message_called == false);
 }
 
 TEST(high_availability_test, transmit_update_stream_only)
 {
-    s_transmit_message_called = false;
-    s_stream_update_required = true;
-    s_other_update_required = false;
-    s_pkt.active = &active;
+    mock().setData("stream_update_required", (int)true);
+    mock().setData("other_update_required", (int)false);
+    mock().expectNCalls(1, "transmit_message");
     HighAvailabilityManager::process_update(&s_flow, &s_pkt);
-    CHECK(s_transmit_message_called == true);
 }
 
 TEST(high_availability_test, transmit_update_both_update)
 {
-    s_transmit_message_called = false;
-    s_stream_update_required = true;
-    s_other_update_required = true;
-    s_pkt.active = &active;
+    mock().setData("stream_update_required", (int)true);
+    mock().setData("other_update_required", (int)true);
     CHECK(s_other_ha_client->handle == 1);
     s_flow.ha_state->set_pending(s_other_ha_client->handle);
+    mock().expectNCalls(1, "transmit_message");
     HighAvailabilityManager::process_update(&s_flow, &s_pkt);
-    CHECK(s_transmit_message_called == true);
 }
 
 TEST(high_availability_test, read_flow_key_error_v4)
 {
     HAMessageHeader hdr = { 0, 0, 0, KEY_TYPE_IP4 };
     HAMessage msg((uint8_t*) &s_test_key, KEY_SIZE_IP4 / 2);
-    FlowKey key;
+    FlowKey key{};
 
     CHECK(read_flow_key(msg, &hdr, key) == 0);
     CHECK(ha_stats.truncated_msgs == 1);
@@ -486,7 +505,7 @@ TEST(high_availability_test, read_flow_key_error_v6)
 {
     HAMessageHeader hdr = { 0, 0, 0, KEY_TYPE_IP6 };
     HAMessage msg((uint8_t*) &s_test_key, KEY_SIZE_IP6 / 2);
-    FlowKey key;
+    FlowKey key{};
 
     CHECK(read_flow_key(msg, &hdr, key) == 0);
     CHECK(ha_stats.truncated_msgs == 1);
@@ -496,7 +515,7 @@ TEST(high_availability_test, read_flow_key_error_unknown)
 {
     HAMessageHeader hdr = { 0, 0, 0, 0x42 };
     HAMessage msg((uint8_t*) &s_test_key, sizeof(s_test_key));
-    FlowKey key;
+    FlowKey key{};
 
     CHECK(read_flow_key(msg, &hdr, key) == 0);
     CHECK(ha_stats.unknown_key_type == 1);
@@ -506,8 +525,9 @@ TEST(high_availability_test, consume_error_truncated_client_hdr)
 {
     HAClientHeader chdr = { 0, 0 };
     HAMessage msg((uint8_t*) &chdr, sizeof(chdr) / 2);
-    FlowKey key;
+    FlowKey key{};
 
+    mock().expectNCalls(1, "get_flow");
     consume_ha_update_message(msg, key, &s_pkt);
     CHECK(ha_stats.update_msgs_consumed == 0);
     CHECK(ha_stats.truncated_msgs == 1);
@@ -517,8 +537,9 @@ TEST(high_availability_test, consume_error_invalid_client_idx)
 {
     HAClientHeader chdr = { 0x42, 0 };
     HAMessage msg((uint8_t*) &chdr, sizeof(chdr));
-    FlowKey key;
+    FlowKey key{};
 
+    mock().expectNCalls(1, "get_flow");
     consume_ha_update_message(msg, key, &s_pkt);
     CHECK(ha_stats.update_msgs_consumed == 0);
     CHECK(ha_stats.unknown_client_idx == 1);
@@ -529,12 +550,12 @@ TEST(high_availability_test, consume_error_truncated_client_msg)
     struct __attribute__((__packed__))
     {
         HAClientHeader chdr = { 0, 0x42 };
-        // cppcheck-suppress unusedStructMember
         uint8_t cmsg[0x42 / 2] = { };
     } input;
     HAMessage msg((uint8_t*) &input, sizeof(input));
-    FlowKey key;
+    FlowKey key{};
 
+    mock().expectNCalls(1, "get_flow");
     consume_ha_update_message(msg, key, &s_pkt);
     CHECK(ha_stats.update_msgs_consumed == 0);
     CHECK(ha_stats.truncated_msgs == 1);
@@ -545,12 +566,13 @@ TEST(high_availability_test, consume_error_client_consume)
     struct __attribute__((__packed__))
     {
         HAClientHeader chdr = { 0, 10 };
-        // cppcheck-suppress unusedStructMember
         uint8_t cmsg[0x42 / 2] = { };
     } input;
     HAMessage msg((uint8_t*) &input, sizeof(input));
-    FlowKey key;
+    FlowKey key{};
 
+    mock().expectNCalls(1, "get_flow");
+    mock().expectNCalls(1, "consume");
     consume_ha_update_message(msg, key, &s_pkt);
     CHECK(ha_stats.update_msgs_consumed == 0);
     CHECK(ha_stats.client_consume_errors == 1);
@@ -561,7 +583,7 @@ TEST(high_availability_test, consume_error_key_mismatch)
     HAMessageHeader hdr[10] = { 0, HA_MESSAGE_VERSION, 0x32, KEY_TYPE_IP4 };
     HAMessage msg((uint8_t*) &hdr, sizeof(hdr));
 
-    FlowKey packet_key;
+    FlowKey packet_key{};
     FlowKey* key = &packet_key;
     CHECK(consume_ha_message(msg, key, &s_pkt) == nullptr);
     CHECK(ha_stats.key_mismatch == 1);
@@ -601,9 +623,7 @@ TEST(high_availability_test, produce_error_client_hdr_overflow)
 {
     uint8_t buffer[sizeof(HAClientHeader) / 2];
     HAMessage msg(buffer, sizeof(buffer));
-    Flow flow;
-
-    write_update_msg_client(s_ha_client, flow, msg);
+    write_update_msg_client(s_ha_client, s_flow, msg);
     CHECK(msg.cursor == msg.buffer);
 }
 
@@ -611,9 +631,7 @@ TEST(high_availability_test, produce_error_client_produce)
 {
     uint8_t buffer[sizeof(HAClientHeader)];
     HAMessage msg(buffer, sizeof(buffer));
-    Flow flow;
-
-    write_update_msg_client(s_ha_client, flow, msg);
+    write_update_msg_client(s_ha_client, s_flow, msg);
     CHECK(msg.cursor == msg.buffer);
 }
 

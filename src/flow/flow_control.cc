@@ -88,9 +88,6 @@ PegCount FlowControl::get_uni_ip_flows() const
 PegCount FlowControl::get_num_flows() const
 { return cache->flows_size(); }
 
-PegCount FlowControl::get_num_free_flows() const
-{ return cache->free_flows_size(); }
-
 
 //-------------------------------------------------------------------------
 // cache foo
@@ -150,8 +147,8 @@ Flow* FlowControl::stale_flow_cleanup(FlowCache* cache, Flow* flow, Packet* p)
         {
             PacketTracerSuspend pt_susp;
 
-            cache->release(flow, PruneReason::STALE);
-            flow = nullptr;
+            if ( cache->release(flow, PruneReason::STALE) )
+                flow = nullptr;
         }
     }
 

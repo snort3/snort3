@@ -69,18 +69,11 @@ void Active::set_drop_reason(char const*) { }
 Packet::Packet(bool) { }
 Packet::~Packet() = default;
 uint32_t Packet::get_flow_geneve_vni() const { return 0; }
-Flow::Flow()
-{
-    constexpr size_t offset = offsetof(Flow, key);
-    // FIXIT-L need a struct to zero here to make future proof
-    memset((uint8_t*)this+offset, 0, sizeof(*this)-offset);
-}
 Flow::~Flow() = default;
 DetectionEngine::DetectionEngine() = default;
 ExpectCache::~ExpectCache() = default;
 DetectionEngine::~DetectionEngine() = default;
 void Flow::init(PktType) { }
-void Flow::term() { }
 void Flow::flush(bool) { }
 void Flow::reset(bool) { }
 void Flow::free_flow_data() { }

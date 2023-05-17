@@ -68,6 +68,8 @@ void Dce2Smb::eval(Packet* p)
     assert(p->has_tcp_data() || p->has_udp_quic_data());
     assert(p->flow);
 
+    reset_using_rpkt();
+
     Dce2SmbFlowData* smb_flowdata =
         (Dce2SmbFlowData*)p->flow->get_flow_data(Dce2SmbFlowData::inspector_id);
 

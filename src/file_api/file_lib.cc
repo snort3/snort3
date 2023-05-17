@@ -638,10 +638,9 @@ void FileContext::find_file_type_from_ips(Packet* pkt, const uint8_t* file_data,
         depth_exhausted = true;
     }
     const FileConfig* const conf = get_file_config();
+    Packet *p = DetectionEngine::set_next_packet(pkt);
     DetectionEngine de;
-    Packet* p = DetectionEngine::get_current_packet();
     p->flow = pkt->flow;
-    p->pkth = pkt->pkth;
 
     p->context->file_data = { file_data, (unsigned int)data_size };
     p->context->file_pos = processed_bytes;
@@ -805,16 +804,23 @@ uint64_t FileContext::get_processed_bytes()
 
 void FileContext::print_file_data(FILE* fp, const uint8_t* data, int len, int max_depth)
 {
-    char str[18];
-    int i, pos;
-
     if (max_depth < len)
         len = max_depth;
 
     fprintf(fp,"Show length: %d \n", len);
 
-    for (i=0, pos=0; i<len; i++, pos++)
+    int pos = 0;
+    char str[18];
+    for (int i=0; i<len; i++)
     {
+        char c = (char)data[i];
+        if (isprint(c) and (c == ' ' or !isspace(c)))
+            str[pos] = c; // cppcheck-suppress unreadVariable
+        else
+            str[pos] = '.'; // cppcheck-suppress unreadVariable
+        pos++;
+        fprintf(fp, "%02X ", data[i]);
+
         if (pos == 17)
         {
             str[pos] = 0;
@@ -823,17 +829,10 @@ void FileContext::print_file_data(FILE* fp, const uint8_t* data, int len, int ma
         }
         else if (pos == 8)
         {
-            str[pos] = ' ';
+            str[pos] = ' '; // cppcheck-suppress unreadVariable
             pos++;
             fprintf(fp, "%s", " ");
         }
-        char c = (char)data[i];
-
-        if (isprint(c) and (c == ' ' or !isspace(c)))
-            str[pos] = c;
-        else
-            str[pos] = '.';
-        fprintf(fp, "%02X ", data[i]);
     }
     if (pos)
     {
@@ -880,10 +879,10 @@ void FileContext::print_file_sha256(std::ostream& log)
 
 void FileContext::print_file_name(std::ostream& log)
 {
-    if (file_name.length() <= 0)
+    size_t fname_len = file_name.length();
+    if (!fname_len)
         return;
 
-    size_t fname_len = file_name.length();
     char* outbuf = get_UTF8_fname(&fname_len);
     const char* fname  = (outbuf != nullptr) ? outbuf : file_name.c_str();
 

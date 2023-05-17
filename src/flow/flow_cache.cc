@@ -55,12 +55,11 @@ static const unsigned WDT_MASK = 7; // kick watchdog once for every 8 flows dele
 // FlowCache stuff
 //-------------------------------------------------------------------------
 
-THREAD_LOCAL bool FlowCache::pruning_in_progress = false;
 extern THREAD_LOCAL const snort::Trace* stream_trace;
 
 FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg)
 {
-    hash_table = new ZHash(config.max_flows, sizeof(FlowKey));
+    hash_table = new ZHash(config.max_flows, sizeof(FlowKey), false);
     uni_flows = new FlowUniList;
     uni_ip_flows = new FlowUniList;
     flags = 0x0;
@@ -72,6 +71,11 @@ FlowCache::~FlowCache()
 {
     delete hash_table;
     delete_uni();
+}
+
+unsigned FlowCache::get_flows_allocated() const
+{
+    return hash_table->get_num_nodes();
 }
 
 void FlowCache::delete_uni()
@@ -87,7 +91,6 @@ void FlowCache::push(Flow* flow)
 {
     void* key = hash_table->push(flow);
     flow->key = (FlowKey*)key;
-    ++flows_allocated;
 }
 
 unsigned FlowCache::get_count()
@@ -154,58 +157,45 @@ void FlowCache::unlink_uni(Flow* flow)
 
 Flow* FlowCache::allocate(const FlowKey* key)
 {
+    // This is called by packet processing and HA consume. This method is only called after a
+    // failed attempt to find a flow with this key.
     time_t timestamp = packet_time();
-    Flow* flow = (Flow*)hash_table->get(key);
-    if ( !flow )
+    if ( hash_table->get_num_nodes() >= config.max_flows )
     {
-        if ( flows_allocated < config.max_flows )
-        {
-            Flow* new_flow = new Flow();
-            push(new_flow);
-        }
-        else if ( !prune_stale(timestamp, nullptr) )
+        if ( !prune_stale(timestamp, nullptr) )
         {
             if ( !prune_unis(key->pkt_type) )
                 prune_excess(nullptr);
         }
-
-        flow = (Flow*)hash_table->get(key);
-        assert(flow);
-
-        if ( flow->session && flow->pkt_type != key->pkt_type )
-            flow->term();
-        else
-            flow->reset();
     }
 
+    Flow* flow = new Flow;
+    push(flow);
+
+    flow = (Flow*)hash_table->get(key);
+    assert(flow);
     link_uni(flow);
-    if ( flow->session && flow->pkt_type != key->pkt_type )
-        flow->term();
-
     flow->last_data_seen = timestamp;
-
     return flow;
 }
 
 void FlowCache::remove(Flow* flow)
 {
     unlink_uni(flow);
-
-    hash_table->release_node(flow->key);
+    const snort::FlowKey* key = flow->key;
+    // Delete before releasing the node, so that the key is valid until the flow is completely freed
+    delete flow;
+    hash_table->release_node(key);
 }
 
 bool FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
 {
-    assert(!pruning_in_progress);
-    pruning_in_progress = true;
-
     if ( !flow->was_blocked() )
     {
         flow->flush(do_cleanup);
         if ( flow->ssn_state.session_flags & SSNFLAG_KEEP_FLOW )
         {
             flow->ssn_state.session_flags &= ~SSNFLAG_KEEP_FLOW;
-            pruning_in_progress = false;
             return false;
         }
     }
@@ -213,14 +203,12 @@ bool FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
     flow->reset(do_cleanup);
     prune_stats.update(reason);
     remove(flow);
-    pruning_in_progress = false;
     return true;
 }
 
 void FlowCache::retire(Flow* flow)
 {
     flow->reset(true);
-    flow->term();
     prune_stats.update(PruneReason::NONE);
     remove(flow);
 }
@@ -469,10 +457,10 @@ unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, u
             delete_stats.update(FlowDeleteState::ALLOWED);
 
         flow->reset(true);
+        // Delete before removing the node, so that the key is valid until the flow is completely freed
+        delete flow;
         //The flow should not be removed from the hash before reset
         hash_table->remove();
-        delete flow;
-        --flows_allocated;
         ++deleted;
         --num_to_delete;
     }
@@ -489,27 +477,8 @@ unsigned FlowCache::delete_flows(unsigned num_to_delete)
     {
         PacketTracerSuspend pt_susp;
 
-        // delete from the free list first...
-        while ( num_to_delete )
-        {
-            if ( (deleted & WDT_MASK) == 0 )
-                ThreadConfig::preemptive_kick();
-
-            Flow* flow = (Flow*)hash_table->pop();
-            if ( !flow )
-                break;
-
-            delete flow;
-            delete_stats.update(FlowDeleteState::FREELIST);
-
-            --flows_allocated;
-            ++deleted;
-            --num_to_delete;
-        }
-
-        unsigned mode = ALLOWED_FLOWS_ONLY;
-        while ( num_to_delete && mode <= ALL_FLOWS )
-            num_to_delete = delete_active_flows(mode++, num_to_delete, deleted);
+        for ( unsigned mode = ALLOWED_FLOWS_ONLY; num_to_delete && mode <= ALL_FLOWS; ++mode )
+            num_to_delete = delete_active_flows(mode, num_to_delete, deleted);
     }
 
     if ( PacketTracer::is_active() and deleted )
@@ -525,19 +494,10 @@ unsigned FlowCache::purge()
     FlagContext<decltype(flags)>(flags, SESSION_CACHE_FLAG_PURGING);
 
     unsigned retired = 0;
-    assert(!pruning_in_progress);
-    pruning_in_progress = true;
     while ( auto flow = static_cast<Flow*>(hash_table->lru_first()) )
     {
         retire(flow);
         ++retired;
-    }
-    pruning_in_progress = false;
-
-    while ( Flow* flow = (Flow*)hash_table->pop() )
-    {
-        delete flow;
-        --flows_allocated;
     }
 
     // Remove these here so alloc/dealloc counts are right when Memory::get_pegs is called
@@ -559,9 +519,4 @@ size_t FlowCache::uni_ip_flows_size() const
 size_t FlowCache::flows_size() const
 {
     return hash_table->get_num_nodes();
-}
-
-size_t FlowCache::free_flows_size() const
-{
-    return hash_table->get_num_free_nodes();
 }

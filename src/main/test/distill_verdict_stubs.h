@@ -222,7 +222,6 @@ void Stream::block_flow(const Packet*) { }
 IpsContext::IpsContext(unsigned) { }
 NetworkPolicy* get_network_policy() { return nullptr; }
 InspectionPolicy* get_inspection_policy() { return nullptr; }
-Flow::Flow() = default;
 Flow::~Flow() = default;
 void ThreadConfig::implement_thread_affinity(SThreadType, unsigned) { }
 void ThreadConfig::set_instance_tid(int) { }

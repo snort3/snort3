@@ -112,7 +112,7 @@ TEST(nondefault_timeout, hard_expiration)
 {
     uint64_t validate = 100;
     Packet pkt(false);
-    Flow *flow = new Flow();
+    Flow *flow = new Flow;
     DAQ_PktHdr_t pkthdr;
 
     pkt.pkth = &pkthdr;

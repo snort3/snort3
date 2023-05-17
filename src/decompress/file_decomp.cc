@@ -290,22 +290,7 @@ fd_status_t File_Decomp_Init(fd_session_t* SessionPtr)
 /* Returns a new session object from the MemPool */
 fd_session_t* File_Decomp_New()
 {
-    fd_session_t* New_Session = new fd_session_t;
-
-    New_Session->State = STATE_NEW;
-    New_Session->Sig_State = 0;
-    New_Session->Total_In = 0;
-    New_Session->Total_Out = 0;
-    New_Session->Avail_In = 0;
-    New_Session->Next_In = nullptr;
-    New_Session->Avail_Out = 0;
-    New_Session->Next_Out = nullptr;
-    New_Session->File_Type = FILE_TYPE_NONE;
-    New_Session->vba_analysis = false;
-    New_Session->ole_data_ptr = nullptr;
-    New_Session->ole_data_len = 0;
-
-    return New_Session;
+    return new fd_session_t{};
 }
 
 /* Process Decompression.  The session Next_In, Avail_In, Next_Out, Avail_Out MUST have been
@@ -313,8 +298,6 @@ fd_session_t* File_Decomp_New()
 */
 fd_status_t File_Decomp(fd_session_t* SessionPtr)
 {
-    fd_status_t Return_Code;
-
     if ( (SessionPtr == nullptr) || (SessionPtr->State == STATE_NEW) ||
         (SessionPtr->Next_In == nullptr) || (SessionPtr->Next_Out == nullptr) )
         return( File_Decomp_Error );
@@ -322,6 +305,8 @@ fd_status_t File_Decomp(fd_session_t* SessionPtr)
     /* STATE_NEW: Look for one of the configured file signatures. */
     if ( SessionPtr->State == STATE_READY )
     {
+        fd_status_t Return_Code;
+
         /* Look for the signature at the beginning of the payload stream. */
         if ( (Return_Code = Locate_Sig_Here(SessionPtr)) == File_Decomp_OK )
         {

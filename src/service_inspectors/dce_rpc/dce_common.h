@@ -407,6 +407,7 @@ snort::Packet* DCE2_GetRpkt(snort::Packet*, DCE2_RpktType, const uint8_t*, uint3
 uint16_t DCE2_GetRpktMaxData(DCE2_RpktType);
 DCE2_Ret DCE2_AddDataToRpkt(snort::Packet*, const uint8_t*, uint32_t);
 DCE2_TransType get_dce2_trans_type(const snort::Packet* p);
+void reset_using_rpkt();
 
 #endif
 

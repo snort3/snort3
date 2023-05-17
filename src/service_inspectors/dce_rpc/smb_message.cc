@@ -1030,13 +1030,11 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
  ********************************************************************/
 static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr)
 {
-    int smb_com = SmbCom(smb_hdr);
-
-    if (smb_com < 0 or smb_com > 255) return nullptr;
+    uint8_t smb_com = SmbCom(smb_hdr);
 
     SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
         DetectionEngine::get_current_packet(),
-	"SMB command: %s (0x%02X)\n", get_smb_com_string(smb_com), smb_com);
+	"SMB command: %s (0x%02X)\n", get_smb_com_string(smb_com), (unsigned)smb_com);
 
     if (smb_com_funcs[smb_com] == nullptr)
     {

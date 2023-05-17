@@ -58,7 +58,6 @@ static std::mutex crash_dump_flow_control_mutex;
 static BaseStats g_stats;
 THREAD_LOCAL BaseStats stream_base_stats;
 THREAD_LOCAL PegCount current_flows_prev;
-THREAD_LOCAL PegCount current_free_flows_prev;
 THREAD_LOCAL PegCount uni_flows_prev;
 THREAD_LOCAL PegCount uni_ip_flows_prev;
 
@@ -88,13 +87,12 @@ const PegInfo base_pegs[] =
 
     // Keep the NOW stats at the bottom as it requires special sum_stats logic
     { CountType::NOW, "current_flows", "current number of flows in cache" },
-    { CountType::NOW, "current_free_flows", "current number of free flows in cache" },
     { CountType::NOW, "uni_flows", "number of uni flows in cache" },
     { CountType::NOW, "uni_ip_flows", "number of uni ip flows in cache" },
     { CountType::END, nullptr, nullptr }
 };
 
-#define NOW_PEGS_NUM 4
+#define NOW_PEGS_NUM 3
 
 // FIXIT-L dependency on stats define in another file
 void base_prep()
@@ -116,7 +114,6 @@ void base_prep()
     stream_base_stats.reload_blocked_flow_deletes= flow_con->get_deletes(FlowDeleteState::BLOCKED);
 
     stream_base_stats.current_flows = flow_con->get_num_flows();
-    stream_base_stats.current_free_flows = flow_con->get_num_free_flows();
     stream_base_stats.uni_flows = flow_con->get_uni_flows();
     stream_base_stats.uni_ip_flows = flow_con->get_uni_ip_flows();
 
@@ -137,7 +134,6 @@ void base_sum()
         array_size(base_pegs) - 1 - NOW_PEGS_NUM);
 
     g_stats.current_flows += (int64_t)stream_base_stats.current_flows - (int64_t)current_flows_prev;
-    g_stats.current_free_flows += (int64_t)stream_base_stats.current_free_flows - (int64_t)current_free_flows_prev;
     g_stats.uni_flows += (int64_t)stream_base_stats.uni_flows - (int64_t)uni_flows_prev;
     g_stats.uni_ip_flows += (int64_t)stream_base_stats.uni_ip_flows - (int64_t)uni_ip_flows_prev;
 
@@ -152,7 +148,6 @@ void base_stats()
 void base_reset(bool reset_all)
 {
     current_flows_prev = stream_base_stats.current_flows;
-    current_free_flows_prev = stream_base_stats.current_free_flows;
     uni_flows_prev = stream_base_stats.uni_flows;
     uni_ip_flows_prev = stream_base_stats.uni_ip_flows;
 

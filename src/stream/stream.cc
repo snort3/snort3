@@ -213,12 +213,15 @@ void Stream::check_flow_closed(Packet* p)
         if ( flow->flags.use_direct_inject )
             p->packet_flags |= PKT_USE_DIRECT_INJECT;
 
+        p->flow = nullptr;
+
         // this will get called on each onload
         // eventually all onloads will occur and delete will be called
         if ( not flow->is_suspended() )
+        {
             flow_con->release_flow(flow, PruneReason::NONE);
-
-        p->flow = nullptr;
+            return;
+        }
     }
     else if (flow->session_state & STREAM_STATE_BLOCK_PENDING)
     {

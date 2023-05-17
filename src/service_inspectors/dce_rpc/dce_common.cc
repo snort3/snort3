@@ -141,9 +141,14 @@ bool dce2_paf_abort(DCE2_SsnData* sd)
     return false;
 }
 
+void reset_using_rpkt()
+{
+    using_rpkt = false;
+}
+
 void DCE2_Detect(DCE2_SsnData* sd)
 {
-    if (!sd) return ;
+    if (!sd) return;
     DceContextData::set_current_ropts(sd);
     if ( using_rpkt )
     {

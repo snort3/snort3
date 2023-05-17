@@ -128,7 +128,7 @@ public:
 private:
     void _subscribe(unsigned pub_id, unsigned evt_id, DataHandler*);
     void _subscribe(const PubKey&, unsigned evt_id, DataHandler*);
-    void _unsubscribe(const PubKey&, unsigned evt_id, DataHandler*);
+    void _unsubscribe(const PubKey&, unsigned evt_id, const DataHandler*);
     void _publish(unsigned pub_id, unsigned evt_id, DataEvent&, Flow*) const;
 
 private:

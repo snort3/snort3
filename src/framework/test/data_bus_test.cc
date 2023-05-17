@@ -120,7 +120,7 @@ TEST_GROUP(data_bus)
 {
     InspectionPolicy my_inspection_policy;
     NetworkPolicy my_network_policy;
-    unsigned pub_id = 0;  // cppcheck-suppress variableScope
+    unsigned pub_id = 0;
 
     void setup() override
     {

@@ -37,11 +37,11 @@ using namespace snort;
 
 TEST_GROUP(deferred_trust_test)
 {
-    DeferredTrust deferred_trust;
 };
 
 TEST(deferred_trust_test, set_deferred_trust)
 {
+    DeferredTrust deferred_trust;
     // Disable non-existent module_id
     deferred_trust.set_deferred_trust(1, false);
     CHECK_TEXT(!deferred_trust.is_active(), "Deferred trust should not be active");
@@ -89,6 +89,7 @@ TEST(deferred_trust_test, set_deferred_trust)
 
 TEST(deferred_trust_test, finalize)
 {
+    DeferredTrust deferred_trust;
     Active active{};
     active.block_again();
 
@@ -158,6 +159,7 @@ void Active::drop_packet(const Packet*, bool)
 
 TEST(deferred_trust_test, finalize_clear)
 {
+    DeferredTrust deferred_trust;
     Active active{};
 
     deferred_trust.clear();

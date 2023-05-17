@@ -41,19 +41,19 @@ public:
 
     using Data = std::shared_ptr<Value>;
 
-    Data find_id(Key key)
+    Data find_id(const Key& key)
     {
         Data session = this->find(key);
         return session;
     }
 
-    Data find_session(Key key)
+    Data find_session(const Key& key)
     {
         Data session = this->find(key);
         return session;
     }
 
-    Data find_else_create_session(Key& key, Dce2Smb2SessionData* ssd)
+    Data find_else_create_session(const Key& key, Dce2Smb2SessionData* ssd)
     {
         Data new_session = Data(new Value(key));
         Data session = this->find_else_insert(key, new_session, nullptr,false);

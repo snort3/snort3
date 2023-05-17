@@ -49,7 +49,6 @@ fd_status_t File_Decomp_StopFree(fd_session_t*) { return File_Decomp_OK; }
 uint32_t str_to_hash(const uint8_t *, size_t) { return 0; }
 FlowData* Flow::get_flow_data(uint32_t) const { return nullptr; }
 int Flow::set_flow_data(FlowData*) { return 0;}
-Flow::Flow() { stream_intf = nullptr; }
 Flow::~Flow() = default;
 }
 
@@ -73,7 +72,7 @@ public:
 
 TEST_GROUP(http_transaction_test)
 {
-    Flow* const flow = new Flow();
+    Flow* const flow = new Flow;
     HttpParaList params;
     HttpFlowData* flow_data = new HttpFlowData(flow, &params);
     SectionType* const section_type = HttpUnitTestSetup::get_section_type(flow_data);

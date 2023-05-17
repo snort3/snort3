@@ -221,7 +221,7 @@ void DataBus::_subscribe(const PubKey& key, unsigned eid, DataHandler* h)
     _subscribe(pid, eid, h);
 }
 
-void DataBus::_unsubscribe(const PubKey& key, unsigned eid, DataHandler* h)
+void DataBus::_unsubscribe(const PubKey& key, unsigned eid, const DataHandler* h)
 {
     unsigned pid = get_id(key);
     unsigned idx = pid + eid;

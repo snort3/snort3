@@ -39,8 +39,6 @@ bool norm_enabled = true;
 THREAD_LOCAL TcpStats tcpStats;
 THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 
-Flow::Flow( void ) {}
-
 class FlowMock : public Flow
 {
 public:

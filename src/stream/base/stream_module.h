@@ -77,7 +77,6 @@ struct BaseStats
 
      // Keep the NOW stats at the bottom as it requires special sum_stats logic
      PegCount current_flows;
-     PegCount current_free_flows;
      PegCount uni_flows;
      PegCount uni_ip_flows;
 

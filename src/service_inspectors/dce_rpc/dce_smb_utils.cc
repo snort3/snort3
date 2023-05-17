@@ -658,7 +658,7 @@ void DCE2_SmbRemoveRequestTracker(DCE2_SmbSsnData* ssd,
 }
 
 void DCE2_SmbRemoveFileTrackerFromRequestTrackers(DCE2_SmbSsnData* ssd,
-    DCE2_SmbFileTracker* ftracker)
+    const DCE2_SmbFileTracker* ftracker)
 {
     if (ftracker == nullptr)
         return;

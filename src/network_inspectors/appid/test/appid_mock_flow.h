@@ -33,7 +33,6 @@ FlowData::~FlowData() = default;
 FlowData* mock_flow_data = nullptr;
 
 typedef int32_t AppId;
-Flow::Flow() = default;
 Flow::~Flow() = default;
 
 class FakeFlow : public Flow
