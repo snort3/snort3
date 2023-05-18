@@ -691,7 +691,14 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
             portAppId = getSslServiceAppId(serverPort);
             if (tp_app_id == APP_ID_SSL)
             {
-                tp_app_id = portAppId;
+                if (asd.encrypted.service_id > 0)
+                {
+                    tp_app_id = asd.encrypted.service_id;
+                }
+                else
+                {
+                    tp_app_id = portAppId;
+                }
                 //SSL policy determines IMAPS/POP3S etc before appId sees first server
                 // packet
                 asd.set_port_service_id(portAppId);

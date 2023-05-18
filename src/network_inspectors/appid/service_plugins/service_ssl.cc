@@ -692,7 +692,6 @@ AppId getSslServiceAppId(short srcPort)
         return APP_ID_HTTPS;
     case 448:
         return APP_ID_DDM_SSL;
-    case 25:
     case 465:
         return APP_ID_SMTPS;
     case 563:

@@ -797,11 +797,7 @@ int SmtpServiceDetector::validate(AppIdDiscoveryArgs& args)
         {
             if (!(dd->client.flags & CLIENT_FLAG_STARTTLS_SUCCESS))
                 goto fail;
-            else if (args.asd.get_session_flags(APPID_SESSION_CLIENT_DETECTED))
-            {
-                args.asd.clear_session_flags(APPID_SESSION_CONTINUE);
-                return APPID_SUCCESS;
-            }
+            
             goto inprocess;
         }
         if (!fd->code)
