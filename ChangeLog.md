@@ -1,3 +1,20 @@
+2023-05-21: 3.1.62.0
+
+* appid: added logic to check for encrypted appid before assigning SSL service based on port
+* decompress, detetion, file_api, framework: cppcheck fixes
+* flow: clean up flow termination
+* flow: do not recycle flow cache entries
+* http_inspect: add support for file transfer using Partial Content
+* main: disable watchdog when Snort 3 process exits gracefully
+* main, managers: set the network policy using the user id during inspector delete
+* memory: add extra jemalloc counts for tracking
+* memory: use jemalloc stats.mapped for process total
+* profiler: add json formatter
+* protocols: add check for missing Geneve layer in get_geneve_options.
+* protocols,codecs: decode Geneve variable length options.
+* sfip/test: fix a miscalculation of the number of codes entries.
+* snort2lua: remove 'reference' option during conversion
+
 2023-05-04: 3.1.61.0
 
 * appid: appIdPegCounters thread data handling refactored to prevent data races

@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.61.0 2023-05-04 22:13:01 EDT TST
+Revision 3.1.62.0 2023-05-21 12:06:30 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1104,6 +1104,10 @@ Peg counts:
     memory while process over limit (now)
   * memory.reap_increase: total amount of the increase in thread
     memory while process over limit (now)
+  * memory.app_all: total bytes allocated by application (now)
+  * memory.active: total bytes allocated in active pages (now)
+  * memory.resident: maximum bytes physically resident (now)
+  * memory.retained: total bytes not returned to OS (now)
 
 
 2.20. network
@@ -1327,7 +1331,7 @@ Commands:
   * profiler.rule_start(): enable rule profiler
   * profiler.rule_stop(): disable rule profiler
   * profiler.rule_status(): print rule profiler status
-  * profiler.rule_dump(): print rule statistics
+  * profiler.rule_dump(output): print rule statistics
 
 
 2.27. rate_filter
@@ -5599,8 +5603,6 @@ Peg counts:
   * stream.reload_offloaded_deletes: number of offloaded flows
     deleted by config reloads (sum)
   * stream.current_flows: current number of flows in cache (now)
-  * stream.current_free_flows: current number of free flows in cache
-    (now)
   * stream.uni_flows: number of uni flows in cache (now)
   * stream.uni_ip_flows: number of uni ip flows in cache (now)
 
@@ -11667,8 +11669,10 @@ libraries see the Getting Started section of the manual.
   * latency.total_packets: total packets monitored (sum)
   * latency.total_rule_evals: total rule evals monitored (sum)
   * latency.total_usecs: total usecs elapsed (sum)
+  * memory.active: total bytes allocated in active pages (now)
   * memory.allocated: total amount of memory allocated by packet
     threads (now)
+  * memory.app_all: total bytes allocated by application (now)
   * memory.cur_in_use: current memory used (now)
   * memory.deallocated: total amount of memory deallocated by packet
     threads (now)
@@ -11684,6 +11688,8 @@ libraries see the Getting Started section of the manual.
   * memory.reap_failures: failures to reclaim memory (now)
   * memory.reap_increase: total amount of the increase in thread
     memory while process over limit (now)
+  * memory.resident: maximum bytes physically resident (now)
+  * memory.retained: total bytes not returned to OS (now)
   * memory.start_up_use: memory used before packet processing (now)
   * mem_test.packets: total packets (sum)
   * mms.concurrent_sessions: total concurrent MMS sessions (now)
@@ -12017,8 +12023,6 @@ libraries see the Getting Started section of the manual.
   * ssl.sessions_ignored: total sessions ignore (sum)
   * ssl.unrecognized_records: total unrecognized records (sum)
   * stream.current_flows: current number of flows in cache (now)
-  * stream.current_free_flows: current number of free flows in cache
-    (now)
   * stream.excess_prunes: sessions pruned due to excess (sum)
   * stream.expected_flows: total expected flows created within snort
     (sum)
@@ -15567,7 +15571,7 @@ alert is raised by the enhanced JavaScript normalizer.
   * profiler.rule_start(): enable rule profiler
   * profiler.rule_stop(): disable rule profiler
   * profiler.rule_status(): print rule profiler status
-  * profiler.rule_dump(): print rule statistics
+  * profiler.rule_dump(output): print rule statistics
   * reputation.reload(): reload reputation data
   * rna.dump_macs(): dump rna’s internal MAC trackers
   * rna.delete_mac_host(mac): delete a MAC from rna’s MAC cache
