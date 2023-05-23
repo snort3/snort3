@@ -91,6 +91,8 @@ public:
     unsigned get_pub_id()
     { return pub_id; }
 
+    const uint8_t* adjust_log_packet(snort::Packet* p, uint16_t& length) override;
+
 private:
     friend HttpApi;
     friend HttpStreamSplitter;

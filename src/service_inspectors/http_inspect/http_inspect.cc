@@ -679,3 +679,58 @@ void HttpInspect::clear(Packet* p)
     }
 }
 
+const uint8_t* HttpInspect::adjust_log_packet(Packet* p, uint16_t& length)
+{
+    HttpMsgSection*  current_section = HttpContextData::get_snapshot(p);
+    if (current_section == nullptr ||
+        current_section->get_inspection_section() != PS_HEADER)
+        return nullptr;
+
+    HttpMsgSection* other_section = nullptr;
+    unsigned id;
+    if ((HttpMsgHeader*)current_section == current_section->get_header(SRC_CLIENT))
+    {
+        other_section = current_section->get_request();
+        id = HTTP_BUFFER_RAW_REQUEST;
+    }
+    else if ((HttpMsgHeader*)current_section == current_section->get_header(SRC_SERVER))
+    {
+        other_section = current_section->get_status();
+        id = HTTP_BUFFER_RAW_STATUS;
+    }
+    else
+        return nullptr;
+
+    const Field& start_line = other_section->get_classic_buffer(id, 0, 0);
+    if (start_line.length() > 0)
+    {
+        static const uint8_t END_HEADERS[] = "\r\n\r\n";
+        static const size_t END_HEADERS_LEN = 4;
+        static const uint8_t* END_START_LINE = END_HEADERS;
+        static const size_t END_START_LINE_LEN = 2;
+
+        const struct { const uint8_t* data; const size_t len; } frags[] =
+        {
+            { start_line.start(), (size_t) start_line.length() },
+            { END_START_LINE, END_START_LINE_LEN },
+            { p->data, p->dsize },
+            { END_HEADERS, END_HEADERS_LEN }
+        };
+        const uint frags_cnt = sizeof(frags)/sizeof(frags[0]);
+
+        uint8_t* data = new uint8_t[start_line.length() + END_START_LINE_LEN +
+                                    p->dsize + END_HEADERS_LEN];
+
+        uint8_t* dst = data;
+        for (uint i = 0; i < frags_cnt; i++)
+        {
+            memcpy(dst, frags[i].data, frags[i].len);
+            dst += frags[i].len;
+        }
+
+        length = dst - data;
+        return data;
+    }
+
+    return nullptr;
+}

@@ -193,6 +193,9 @@ public:
     virtual void install_reload_handler(SnortConfig*)
     { }
 
+    virtual const uint8_t* adjust_log_packet(Packet*, uint16_t&)
+    { return nullptr; }
+
 public:
     static THREAD_LOCAL unsigned slot;
 
