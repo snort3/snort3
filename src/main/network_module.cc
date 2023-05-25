@@ -43,7 +43,7 @@ static const Parameter network_params[] =
       "all | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none", "all",
       "checksums to verify" },
 
-    { "id", Parameter::PT_INT, "0:65535", "0",
+    { "id", Parameter::PT_INT, "0:max32", "0",
       "correlate unified2 events with configuration" },
 
     { "min_ttl", Parameter::PT_INT, "1:255", "1",
@@ -78,7 +78,7 @@ static int network_set_policy(lua_State* L)
 
 const Parameter network_set_policy_params[] =
 {
-    {"id", Parameter::PT_INT, "0:65535", 0, "user network policy id"},
+    {"id", Parameter::PT_INT, "0:max32", 0, "user network policy id"},
     {nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr}
 };
 
@@ -106,7 +106,7 @@ bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
         ConfigChecksumMode(v.get_string());
 
     else if ( v.is("id") )
-        p->user_policy_id = v.get_uint16();
+        p->user_policy_id = v.get_uint32();
 
     else if ( v.is("min_ttl") )
         p->min_ttl = v.get_uint8();

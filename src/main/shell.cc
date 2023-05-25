@@ -664,7 +664,7 @@ void Shell::set_network_policy_user_id(lua_State* L, uint32_t user_id)
 
 void Shell::set_user_network_policy()
 {
-    if (UNDEFINED_USER_POLICY_ID > network_user_policy_id)
+    if (UNDEFINED_NETWORK_USER_POLICY_ID > network_user_policy_id)
     {
         NetworkPolicy* np =
             SnortConfig::get_conf()->policy_map->get_user_network(network_user_policy_id);

@@ -143,7 +143,7 @@ private:
     Allowlist internal_allowlist;
     Allowlist allowlist_prefixes;
     ConfigData config_data;
-    uint32_t network_user_policy_id = UNDEFINED_USER_POLICY_ID;
+    uint32_t network_user_policy_id = UNDEFINED_NETWORK_USER_POLICY_ID;
     bool load_defaults;
 };
 
