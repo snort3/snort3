@@ -116,6 +116,7 @@ class Pig
 {
 public:
     Pig() = default;
+    ~Pig();
 
     void set_index(unsigned index) { idx = index; }
 
@@ -143,6 +144,13 @@ private:
     std::thread* athread = nullptr;
     unsigned idx = (unsigned)-1;
 };
+
+Pig::~Pig()
+{
+    delete analyzer;
+    delete swapper;
+    delete athread;
+}
 
 bool Pig::prep(const char* source)
 {
@@ -1035,9 +1043,11 @@ static void main_loop()
     {
         for (unsigned i = 0; i < max_pigs; i++)
         {
-            if (pigs[i].prep(SFDAQ::get_input_spec(SnortConfig::get_conf()->daq_config, i)))
-                swine++;
+            if (!pigs[i].prep(SFDAQ::get_input_spec(SnortConfig::get_conf()->daq_config, i)))
+                return;
         }
+
+        swine += max_pigs;
     }
 
     // Iterate over the drove, spawn them as allowed, and handle their deaths.
