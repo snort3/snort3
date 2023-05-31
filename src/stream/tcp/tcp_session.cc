@@ -54,6 +54,7 @@
 #include "profiler/profiler.h"
 #include "protocols/eth.h"
 #include "pub_sub/intrinsic_event_ids.h"
+#include "packet_tracer/packet_tracer.h"
 
 #include "stream_tcp.h"
 #include "tcp_ha.h"
@@ -344,6 +345,14 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
                 else
                     (const_cast<tcp::TCPHdr*>(tsd.get_pkt()->ptrs.tcph))->set_seq(listener->max_queue_seq_nxt);
             }
+
+            if ( inline_mode || listener->normalizer.get_trim_win() == NORM_MODE_ON)
+            {
+                tsd.get_pkt()->active->set_drop_reason("stream");
+                if (PacketTracer::is_active())
+                    PacketTracer::log("Stream: Flow exceeded the configured max byte threshold (%u)\n", tcp_config->max_queued_bytes);
+            }
+
             listener->normalizer.trim_win_payload(tsd, space_left, inline_mode);
             return ret_val;
         }
@@ -368,6 +377,14 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
                 else
                     (const_cast<tcp::TCPHdr*>(tsd.get_pkt()->ptrs.tcph))->set_seq(listener->max_queue_seq_nxt);
             }
+
+            if ( inline_mode || listener->normalizer.get_trim_win() == NORM_MODE_ON)
+            {
+                tsd.get_pkt()->active->set_drop_reason("stream");
+                if (PacketTracer::is_active())
+                    PacketTracer::log("Stream: Flow exceeded the configured max segment threshold (%u)\n", tcp_config->max_queued_segs);
+            }
+
             listener->normalizer.trim_win_payload(tsd, 0, inline_mode);
             return true;
         }
@@ -451,8 +468,16 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
         if ( tcp_config->policy != StreamPolicy::OS_PROXY
             and listener->normalizer.get_stream_window(tsd) == 0 )
         {
-            listener->normalizer.trim_win_payload(tsd);
-            return STREAM_UNALIGNED;
+            if (tsd.get_len() == ZERO_WIN_PROBE_LEN)
+            {
+                tcpStats.zero_win_probes++;
+                listener->normalizer.set_zwp_seq(seq);
+            }
+            else
+            {
+                listener->normalizer.trim_win_payload(tsd);
+                return STREAM_UNALIGNED;
+            }
         }
 
         /* move the ack boundary up, this is the only way we'll accept data */
@@ -478,6 +503,9 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
         if ( tcp_config->policy != StreamPolicy::OS_PROXY
             and listener->normalizer.get_stream_window(tsd) == 0 )
         {
+            if (tsd.get_len() == ZERO_WIN_PROBE_LEN)
+                tcpStats.zero_win_probes++;
+            
             listener->normalizer.trim_win_payload(tsd);
             return STREAM_UNALIGNED;
         }

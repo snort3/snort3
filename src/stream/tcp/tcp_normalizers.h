@@ -50,6 +50,9 @@ public:
     void reset()
     { init(StreamPolicy::OS_DEFAULT, nullptr, nullptr, nullptr); }
 
+    void session_blocker(TcpSegmentDescriptor& tsd)
+    { norm->session_blocker(tns, tsd); }
+
     bool packet_dropper(TcpSegmentDescriptor& tsd, NormFlags nflags)
     { return norm->packet_dropper(tns, tsd, nflags); }
 
@@ -71,6 +74,9 @@ public:
     void ecn_stripper(TcpSegmentDescriptor& tsd)
     { norm->ecn_stripper(tns, tsd); }
 
+    uint32_t get_zwp_seq()
+    { return norm->get_zwp_seq(tns); }
+
     uint32_t get_stream_window(TcpSegmentDescriptor& tsd)
     { return norm->get_stream_window(tns, tsd); }
 
@@ -85,6 +91,9 @@ public:
 
     int handle_repeated_syn(TcpSegmentDescriptor& tsd)
     { return norm->handle_repeated_syn(tns, tsd); }
+
+    void set_zwp_seq(uint32_t seq)
+    { return norm->set_zwp_seq(tns, seq); }
 
     uint16_t set_urg_offset(const snort::tcp::TCPHdr* tcph, uint16_t dsize)
     { return norm->set_urg_offset(tns, tcph, dsize); }

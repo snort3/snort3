@@ -115,6 +115,7 @@ const PegInfo tcp_pegs[] =
     { CountType::MAX, "max_segs", "maximum number of segments queued in any flow" },
     { CountType::MAX, "max_bytes", "maximum number of bytes queued in any flow" },
     { CountType::SUM, "zero_len_tcp_opt", "number of zero length tcp options" },
+    { CountType::SUM, "zero_win_probes", "number of tcp zero window probes" },
     { CountType::END, nullptr, nullptr }
 };
 

@@ -113,6 +113,7 @@ struct TcpStats
     PegCount max_segs;
     PegCount max_bytes;
     PegCount zero_len_tcp_opt;
+    PegCount zero_win_probes;
 };
 
 extern THREAD_LOCAL struct TcpStats tcpStats;

@@ -494,6 +494,9 @@ void TcpStreamTracker::update_tracker_ack_recv(TcpSegmentDescriptor& tsd)
         if ( snd_nxt < snd_una )
             snd_nxt = snd_una;
     }
+    if ( !tsd.get_len() and snd_wnd == 0
+        and SEQ_LT(tsd.get_seq(), r_win_base) )
+        tcpStats.zero_win_probes++;
 }
 
 // In no-ack policy, data is implicitly acked immediately.

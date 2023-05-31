@@ -108,6 +108,7 @@ protected:
 
     virtual bool is_segment_retransmit(TcpReassemblerState&, bool*);
     virtual void drop_old_segment(TcpReassemblerState&);
+    virtual bool zwp_data_mismatch(TcpReassemblerState&, TcpSegmentDescriptor&, uint32_t);
 
     virtual void left_overlap_keep_first(TcpReassemblerState&);
     virtual void left_overlap_trim_first(TcpReassemblerState&);

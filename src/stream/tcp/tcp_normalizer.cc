@@ -28,6 +28,7 @@
 #include "tcp_module.h"
 #include "tcp_stream_session.h"
 #include "tcp_stream_tracker.h"
+#include "packet_tracer/packet_tracer.h"
 
 using namespace snort;
 
@@ -64,6 +65,19 @@ bool TcpNormalizer::strip_tcp_timestamp(
     }
 
     return false;
+}
+
+void TcpNormalizer::session_blocker(
+    TcpNormalizerState&, TcpSegmentDescriptor& tsd)
+{
+    Packet *p = tsd.get_pkt();
+    DetectionEngine::disable_all(p);
+    p->active->block_session(p, true);
+    p->active->set_drop_reason("normalizer");
+    if (PacketTracer::is_active())
+        {
+            PacketTracer::log("Normalizer: TCP Zero Window Probe byte data mismatch\n");
+        }
 }
 
 bool TcpNormalizer::packet_dropper(
@@ -142,6 +156,12 @@ void TcpNormalizer::ecn_stripper(
 
         norm_stats[PC_TCP_ECN_SSN][tns.strip_ecn]++;
     }
+}
+
+uint32_t TcpNormalizer::get_zwp_seq(
+    TcpNormalizerState& tns)
+{
+    return tns.zwp_seq;
 }
 
 // don't use the window if we may have missed scaling
@@ -379,6 +399,12 @@ int TcpNormalizer::handle_paws(
     {
         return handle_paws_no_timestamps(tns, tsd);
     }
+}
+
+void TcpNormalizer::set_zwp_seq(
+    TcpNormalizerState& tns, uint32_t seq)
+{
+    tns.zwp_seq = seq;
 }
 
 uint16_t TcpNormalizer::set_urg_offset(

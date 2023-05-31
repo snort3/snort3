@@ -180,6 +180,9 @@ void SegmentOverlapEditor::eval_right(TcpReassemblerState& trs)
             tcpStats.overlaps++;
             trs.sos.overlap_count++;
             insert_full_overlap(trs);
+            
+            if ( trs.sos.keep_segment == false )
+                return;
         }
     }
 }
@@ -343,9 +346,18 @@ void SegmentOverlapEditor::right_overlap_truncate_new(TcpReassemblerState& trs)
 // REASSEMBLY_POLICY_VISTA:
 void SegmentOverlapEditor::full_right_overlap_truncate_new(TcpReassemblerState& trs)
 {
+
     if ( trs.sos.tcp_ips_data == NORM_MODE_ON )
     {
         unsigned offset = trs.sos.right->i_seq - trs.sos.tsd->get_seq();
+
+        if ( !offset && zwp_data_mismatch(trs, *trs.sos.tsd, trs.sos.right->i_len))
+        {
+            trs.tracker->normalizer.session_blocker(*trs.sos.tsd);
+            trs.sos.keep_segment = false;
+            return;
+        }
+        
         trs.sos.tsd->rewrite_payload(offset, trs.sos.right->data, trs.sos.right->i_len);
     }
 
@@ -448,6 +460,19 @@ void SegmentOverlapEditor::full_right_overlap_os4(TcpReassemblerState& trs)
 void SegmentOverlapEditor::full_right_overlap_os5(TcpReassemblerState& trs)
 {
     full_right_overlap_truncate_new(trs);
+}
+
+bool SegmentOverlapEditor::zwp_data_mismatch(
+    TcpReassemblerState& trs, TcpSegmentDescriptor& tsd, uint32_t overlap)
+{
+    if ( overlap == ZERO_WIN_PROBE_LEN
+        and trs.sos.right->i_seq == trs.tracker->normalizer.get_zwp_seq()
+        and (trs.sos.right->data[0] != tsd.get_pkt()->data[0]) )
+    {
+        return tsd.is_nap_policy_inline();
+    }
+    
+    return false;
 }
 
 void SegmentOverlapEditor::print(TcpReassemblerState& trs)

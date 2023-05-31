@@ -61,6 +61,8 @@ struct Packet;
 
 #define SLAM_MAX 4
 
+#define ZERO_WIN_PROBE_LEN 1
+
 // target-based policy types - changes to this enum require changes to stream.h::TCP_POLICIES
 enum StreamPolicy : uint8_t
 {
