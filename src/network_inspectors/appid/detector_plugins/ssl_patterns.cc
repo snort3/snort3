@@ -99,12 +99,15 @@ static bool scan_patterns(SearchTool& matcher, const uint8_t* data, size_t size,
     best_match = nullptr;
     while (mp)
     {
-        /*  Only patterns that match start of payload,
+        /*  Only patterns that match end of the payload AND
+            (match the start of the payload
+            or match after '.'
             or patterns starting with '.'
-            or patterns following '.' in payload are considered a match. */
-        if (mp->match_start_pos == 0 ||
-            *mp->mpattern->pattern == '.' ||
-            data[mp->match_start_pos-1] == '.')
+            ) are considered a match. */
+        if (mp->match_start_pos + mp->mpattern->pattern_size == (int)size and
+            (mp->match_start_pos == 0 or
+            data[mp->match_start_pos-1] == '.' or
+            *mp->mpattern->pattern == '.'))
         {
             if (!best_match ||
                 mp->mpattern->pattern_size > best_match->pattern_size)
