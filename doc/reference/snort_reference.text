@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.62.0 2023-05-21 12:06:30 EDT TST
+Revision 3.1.63.0 2023-06-01 16:02:55 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1127,7 +1127,7 @@ Configuration:
   * multi network.checksum_eval = all: checksums to verify { all | ip
     | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
   * int network.id = 0: correlate unified2 events with configuration
-    { 0:65535 }
+    { 0:max32 }
   * int network.min_ttl = 1: alert / normalize packets with lower TTL
     / hop limit (you must enable rules and / or normalization also) {
     1:255 }
@@ -5897,6 +5897,8 @@ Peg counts:
     (max)
   * stream_tcp.zero_len_tcp_opt: number of zero length tcp options
     (sum)
+  * stream_tcp.zero_win_probes: number of tcp zero window probes
+    (sum)
 
 
 5.52. stream_udp
@@ -9997,7 +9999,7 @@ libraries see the Getting Started section of the manual.
   * multi network.checksum_eval = all: checksums to verify { all | ip
     | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
   * int network.id = 0: correlate unified2 events with configuration
-    { 0:65535 }
+    { 0:max32 }
   * int network.layers = 40: the maximum number of protocols that
     Snort can correctly decode { 3:255 }
   * int network.max_ip6_extensions = 0: the maximum number of IP6
@@ -12175,6 +12177,8 @@ libraries see the Getting Started section of the manual.
   * stream_tcp.timeouts: tcp session timeouts (sum)
   * stream_tcp.untracked: tcp packets not tracked (sum)
   * stream_tcp.zero_len_tcp_opt: number of zero length tcp options
+    (sum)
+  * stream_tcp.zero_win_probes: number of tcp zero window probes
     (sum)
   * stream.total_prunes: total sessions pruned (sum)
   * stream_udp.created: udp session trackers created (sum)

@@ -1,3 +1,14 @@
+2023-06-01: 3.1.63.0
+
+* appid: changes logic in ssl pattern matching
+* http_inspect: rebuild start line
+* loggers: reuse sensor_id u2 event field for tenant_id value
+* main: add Pig destructor to free dynamic memory
+* main: allow network IDs to use up to 32 bits.
+* main: handling the return code in case of error in creation of daq instance
+* perf_monitor: fix data bus subscription
+* stream_tcp: account for data from zero window probes
+
 2023-05-21: 3.1.62.0
 
 * appid: added logic to check for encrypted appid before assigning SSL service based on port
