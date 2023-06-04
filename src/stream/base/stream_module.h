@@ -56,7 +56,8 @@ struct BaseStats
 {
      PegCount flows;
      PegCount prunes;
-     PegCount timeout_prunes;
+     PegCount max_flow_prunes;
+     PegCount protocol_timeout_prunes;
      PegCount excess_prunes;
      PegCount uni_prunes;
      PegCount memcap_prunes;

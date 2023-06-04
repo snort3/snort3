@@ -66,7 +66,8 @@ const PegInfo base_pegs[] =
 {
     { CountType::SUM, "flows", "total sessions" },
     { CountType::SUM, "total_prunes", "total sessions pruned" },
-    { CountType::SUM, "idle_prunes", " sessions pruned due to timeout" },
+	{ CountType::SUM, "idle_prunes_max_flows", " sessions pruned due to pruning timeout since max flows is reached" },
+	{ CountType::SUM, "idle_prunes_proto_timeout", " sessions pruned due to protocol timeout" },
     { CountType::SUM, "excess_prunes", "sessions pruned due to excess" },
     { CountType::SUM, "uni_prunes", "uni sessions pruned" },
     { CountType::SUM, "memcap_prunes", "sessions pruned due to memcap" },
@@ -102,7 +103,8 @@ void base_prep()
 
     stream_base_stats.flows = flow_con->get_flows();
     stream_base_stats.prunes = flow_con->get_total_prunes();
-    stream_base_stats.timeout_prunes = flow_con->get_prunes(PruneReason::IDLE);
+    stream_base_stats.max_flow_prunes = flow_con->get_prunes(PruneReason::IDLE_MAX_FLOWS);
+    stream_base_stats.protocol_timeout_prunes = flow_con->get_prunes(PruneReason::IDLE_PROTOCOL_TIMEOUT);
     stream_base_stats.excess_prunes = flow_con->get_prunes(PruneReason::EXCESS);
     stream_base_stats.uni_prunes = flow_con->get_prunes(PruneReason::UNI);
     stream_base_stats.memcap_prunes = flow_con->get_prunes(PruneReason::MEMCAP);

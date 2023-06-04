@@ -28,12 +28,13 @@
 
 enum class PruneReason : uint8_t
 {
-    IDLE,
     EXCESS,
     UNI,
     MEMCAP,
     HA,
     STALE,
+	IDLE_MAX_FLOWS,
+	IDLE_PROTOCOL_TIMEOUT,
     NONE,
     MAX
 };

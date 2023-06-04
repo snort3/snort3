@@ -162,7 +162,7 @@ Flow* FlowCache::allocate(const FlowKey* key)
     time_t timestamp = packet_time();
     if ( hash_table->get_num_nodes() >= config.max_flows )
     {
-        if ( !prune_stale(timestamp, nullptr) )
+        if ( !prune_idle(timestamp, nullptr) )
         {
             if ( !prune_unis(key->pkt_type) )
                 prune_excess(nullptr);
@@ -213,7 +213,7 @@ void FlowCache::retire(Flow* flow)
     remove(flow);
 }
 
-unsigned FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
+unsigned FlowCache::prune_idle(uint32_t thetime, const Flow* save_me)
 {
     ActiveSuspendContext act_susp(Active::ASP_PRUNE);
 
@@ -247,7 +247,7 @@ unsigned FlowCache::prune_stale(uint32_t thetime, const Flow* save_me)
                 break;
 
             flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
-            if ( release(flow, PruneReason::IDLE) )
+            if ( release(flow, PruneReason::IDLE_MAX_FLOWS) )
                 ++pruned;
 
             flow = static_cast<Flow*>(hash_table->lru_first());
@@ -417,7 +417,7 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
             }
 
             flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
-            if ( release(flow, PruneReason::IDLE) )
+            if ( release(flow, PruneReason::IDLE_PROTOCOL_TIMEOUT) )
                 ++retired;
 
             flow = static_cast<Flow*>(hash_table->lru_current());
