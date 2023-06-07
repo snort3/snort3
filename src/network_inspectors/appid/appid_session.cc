@@ -823,7 +823,7 @@ AppId AppIdSession::pick_service_app_id() const
             return tp_app_id;
         else if (odp_ctxt.first_pkt_service_id > APP_ID_NONE)
             return odp_ctxt.first_pkt_service_id;
-    }   
+    }
 
     if (client_inferred_service_id > APP_ID_NONE)
         return client_inferred_service_id;
@@ -895,8 +895,8 @@ AppId AppIdSession::pick_ss_client_app_id() const
 
 AppId AppIdSession::check_first_pkt_tp_payload_app_id() const
 {
-    if (get_session_flags(APPID_SESSION_FIRST_PKT_CACHE_MATCHED) and 
-        (api.payload.get_id() <= APP_ID_NONE))    
+    if (get_session_flags(APPID_SESSION_FIRST_PKT_CACHE_MATCHED) and
+        (api.payload.get_id() <= APP_ID_NONE))
     {
         if ((odp_ctxt.first_pkt_payload_id > APP_ID_NONE) and (tp_payload_app_id > APP_ID_NONE))
         {
@@ -939,7 +939,7 @@ AppId AppIdSession::pick_ss_payload_app_id(AppId service_id) const
     AppId first_pkt_payload_appid = check_first_pkt_tp_payload_app_id();
     if (first_pkt_payload_appid > APP_ID_NONE)
         return first_pkt_payload_appid;
-    
+
     if (api.payload.get_id() > APP_ID_NONE)
         return api.payload.get_id();
 
@@ -1207,7 +1207,10 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packe
         api.flags.finished = true;
     }
 
-    if (change_bits.none())
+    // Publish an event, if this is the first packet after appid processing
+    if (get_session_flags(APPID_SESSION_DO_NOT_DECRYPT))
+        clear_session_flags(APPID_SESSION_DO_NOT_DECRYPT);
+    else if (change_bits.none())
         return;
 
     AppidEvent app_event(change_bits, is_httpx, httpx_stream_index, api, p);

@@ -34,14 +34,15 @@ public:
     {
         assert(flow);
         AppIdSession* asd = snort::appid_api.get_appid_session(*flow);
-        if (!asd or
-            !asd->get_session_flags(APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED))
-                return;
+        if (!asd or !asd->get_session_flags(APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED))
+            return;
         const DataDecryptEvent& data_decrypt_event = static_cast<DataDecryptEvent&>(event);
-        if (data_decrypt_event.get_type() == DataDecryptEvent::DATA_DECRYPT_MONITOR_EVENT)
-        {
+        DataDecryptEvent::StateEventType state = data_decrypt_event.get_type();
+        if (DataDecryptEvent::DATA_DECRYPT_MONITOR_EVENT== state)
             asd->set_session_flags(APPID_SESSION_DECRYPT_MONITOR);
-        }
+        // Set a do not decrypt flag, so that an event can be generated after appid processes the packet
+        else if (DataDecryptEvent::DATA_DECRYPT_DO_NOT_DECRYPT_EVENT == state)
+            asd->set_session_flags(APPID_SESSION_DO_NOT_DECRYPT);
     }
 };
 
