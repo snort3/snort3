@@ -274,12 +274,17 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
 **    OptTreeNode        * - the otn to add.
 **
 **  FORMAL OUTPUTS
-**    int - 1 max_events variable hit, 0 successful.
+**    int - 2 No rule tree node found for given policy ID.
+**    int - 1 max_events variable hit.
+**    int - 0 successful.
 **
 */
 int fpAddMatch(OtnxMatchData* omd, const OptTreeNode* otn)
 {
     RuleTreeNode* rtn = getRtnFromOtn(otn);
+    if ( not rtn )
+        return 2;
+
     unsigned evalIndex = rtn->listhead->ruleListNode->evalIndex;
 
     const SnortConfig* sc = SnortConfig::get_conf();
