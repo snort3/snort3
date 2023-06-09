@@ -79,7 +79,9 @@ static void IpSessionCleanup(Flow* lws, FragTracker* tracker)
         d->cleanup(tracker);
     }
 
-    ip_stats.released++;
+    if ( lws->ssn_state.session_flags & SSNFLAG_SEEN_SENDER )
+        ip_stats.released++;
+
     lws->restart();
 }
 
@@ -178,6 +180,7 @@ int IpSession::process(Packet* p)
     {
         ip_stats.timeouts++;
         IpSessionCleanup(flow, &tracker);
+        ip_stats.created++;
 
 #ifdef ENABLE_EXPECTED_IP
         if ( Stream::expected_flow(flow, p) )
