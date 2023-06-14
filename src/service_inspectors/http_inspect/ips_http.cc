@@ -97,9 +97,7 @@ HttpInspect const* HttpIpsOption::eval_helper(Packet* p)
     if (!p->flow || !p->flow->gadget || (HttpInspect::get_latest_is(p) == PS_NONE))
         return nullptr;
 
-    assert(p->flow->stream_intf);
-    const HttpFlowData* const hi_flow_data =
-        (HttpFlowData*)p->flow->stream_intf->get_stream_flow_data(p->flow);
+    const HttpFlowData* const hi_flow_data = HttpInspect::http_get_flow_data(p->flow);
 
     const HttpInspect* const hi = (hi_flow_data->is_for_httpx()) ?
         (HttpInspect*)(p->flow->assistant_gadget) : (HttpInspect*)(p->flow->gadget);

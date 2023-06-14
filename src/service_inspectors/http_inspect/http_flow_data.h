@@ -85,7 +85,6 @@ public:
     void set_hx_body_state(HttpCommon::SourceId source_id, HttpCommon::HXBodyState state)
     { hx_body_state[source_id] = state; }
 
-    bool valid_hx_stream_id() const;
     int64_t get_hx_stream_id() const;
     bool is_for_httpx() const { return for_httpx; }
 
@@ -217,7 +216,6 @@ private:
     int64_t hx_stream_id = -1;
     HttpCommon::HXBodyState hx_body_state[2] = { HttpCommon::HX_BODY_NOT_COMPLETE,
         HttpCommon::HX_BODY_NOT_COMPLETE };
-    snort::Flow* flow;
 
 #ifdef REG_TEST
     static uint64_t instance_count;
@@ -225,14 +223,6 @@ private:
 
     void show(FILE* out_file) const;
 #endif
-};
-
-class HttpFlowStreamIntf : public snort::StreamFlowIntf
-{
-public:
-    snort::FlowData* get_stream_flow_data(const snort::Flow* flow) override;
-    void set_stream_flow_data(snort::Flow* flow, snort::FlowData* flow_data) override;
-    void get_stream_id(const snort::Flow* flow, int64_t& stream_id) override;
 };
 
 #endif

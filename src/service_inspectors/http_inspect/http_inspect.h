@@ -39,6 +39,7 @@
 
 class HttpApi;
 class HttpParam;
+class HttpIpsOption;
 
 class HttpInspect : public HttpInspectBase
 {
@@ -96,6 +97,7 @@ public:
 private:
     friend HttpApi;
     friend HttpStreamSplitter;
+    friend HttpIpsOption;
 
     HttpStreamSplitter splitter[2] = { { true, this }, { false, this } };
 

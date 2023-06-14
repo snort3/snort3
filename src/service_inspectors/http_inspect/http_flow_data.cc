@@ -50,9 +50,8 @@ uint64_t HttpFlowData::instance_count = 0;
 #endif
 
 HttpFlowData::HttpFlowData(Flow* flow, const HttpParaList* params_) :
-    FlowData(inspector_id), params(params_), flow(flow)
+    FlowData(inspector_id), params(params_)
 {
-    static HttpFlowStreamIntf h1_stream;
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
     {
@@ -71,16 +70,15 @@ HttpFlowData::HttpFlowData(Flow* flow, const HttpParaList* params_) :
         HttpModule::increment_peg_counts(PEG_MAX_CONCURRENT_SESSIONS);
 
     if (flow->stream_intf)
-        flow->stream_intf->get_stream_id(flow, hx_stream_id);
-
-    if (valid_hx_stream_id())
     {
-        for_httpx = true;
-        events[0]->suppress_event(HttpEnums::EVENT_LOSS_OF_SYNC);
-        events[1]->suppress_event(HttpEnums::EVENT_LOSS_OF_SYNC);
+        flow->stream_intf->get_stream_id(flow, hx_stream_id);
+        if (hx_stream_id >= 0)
+        {
+            for_httpx = true;
+            events[0]->suppress_event(HttpEnums::EVENT_LOSS_OF_SYNC);
+            events[1]->suppress_event(HttpEnums::EVENT_LOSS_OF_SYNC);
+        }
     }
-    else
-        flow->stream_intf = &h1_stream;
 }
 
 HttpFlowData::~HttpFlowData()
@@ -127,9 +125,6 @@ HttpFlowData::~HttpFlowData()
         discard_list = discard_list->next;
         delete tmp;
     }
-
-    if (!for_httpx)
-        flow->stream_intf = nullptr;
 }
 
 void HttpFlowData::half_reset(SourceId source_id)
@@ -308,29 +303,6 @@ int64_t HttpFlowData::get_hx_stream_id() const
 {
     return hx_stream_id;
 }
-
-bool HttpFlowData::valid_hx_stream_id() const
-{
-    return (hx_stream_id >= 0);
-}
-
-FlowData* HttpFlowStreamIntf::get_stream_flow_data(const Flow* flow)
-{
-    return (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
-}
-
-void HttpFlowStreamIntf::set_stream_flow_data(Flow* flow, FlowData* flow_data)
-{
-    flow->set_flow_data(flow_data);
-}
-
-void HttpFlowStreamIntf::get_stream_id(const Flow*, int64_t& stream_id)
-{
-    // HTTP Flows by itself doesn't have any stream id, thus assigning -1 to
-    // indicate invalid value
-    stream_id = -1;
-}
-
 
 #ifdef REG_TEST
 void HttpFlowData::show(FILE* out_file) const

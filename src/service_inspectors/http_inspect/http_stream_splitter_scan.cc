@@ -140,9 +140,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
     // This is the session state information we share with HttpInspect and store with stream. A
     // session is defined by a TCP connection. Since scan() is the first to see a new TCP
     // connection the new flow data object is created here.
-    HttpFlowData* session_data = nullptr;
-    if (flow->stream_intf)
-        session_data = (HttpFlowData*)flow->stream_intf->get_stream_flow_data(flow);
+    HttpFlowData* session_data = HttpInspect::http_get_flow_data(flow);
 
     if (session_data == nullptr)
     {

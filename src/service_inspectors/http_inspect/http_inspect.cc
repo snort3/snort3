@@ -453,12 +453,15 @@ HttpFlowData* HttpInspect::http_get_flow_data(const Flow* flow)
     if (flow->stream_intf)
         return (HttpFlowData*)flow->stream_intf->get_stream_flow_data(flow);
     else
-        return nullptr;
+        return (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
 }
 
 void HttpInspect::http_set_flow_data(Flow* flow, HttpFlowData* flow_data)
 {
-    flow->stream_intf->set_stream_flow_data(flow, flow_data);
+    if (flow->stream_intf)
+        flow->stream_intf->set_stream_flow_data(flow, flow_data);
+    else
+        flow->set_flow_data(flow_data);
 }
 
 void HttpInspect::eval(Packet* p)
