@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.63.0 2023-06-01 16:02:55 EDT TST
+Revision 3.1.64.0 2023-06-15 21:19:24 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -5573,7 +5573,10 @@ Peg counts:
 
   * stream.flows: total sessions (sum)
   * stream.total_prunes: total sessions pruned (sum)
-  * stream.idle_prunes: sessions pruned due to timeout (sum)
+  * stream.idle_prunes_max_flows: sessions pruned due to pruning
+    timeout since max flows is reached (sum)
+  * stream.idle_prunes_proto_timeout: sessions pruned due to protocol
+    timeout (sum)
   * stream.excess_prunes: sessions pruned due to excess (sum)
   * stream.uni_prunes: uni sessions pruned (sum)
   * stream.memcap_prunes: sessions pruned due to memcap (sum)
@@ -12040,7 +12043,10 @@ libraries see the Getting Started section of the manual.
   * stream_icmp.released: icmp session trackers released (sum)
   * stream_icmp.sessions: total icmp sessions (sum)
   * stream_icmp.timeouts: icmp session timeouts (sum)
-  * stream.idle_prunes: sessions pruned due to timeout (sum)
+  * stream.idle_prunes_max_flows: sessions pruned due to pruning
+    timeout since max flows is reached (sum)
+  * stream.idle_prunes_proto_timeout: sessions pruned due to protocol
+    timeout (sum)
   * stream_ip.alerts: alerts generated (sum)
   * stream_ip.anomalies: anomalies detected (sum)
   * stream_ip.created: ip session trackers created (sum)

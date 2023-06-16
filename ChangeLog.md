@@ -1,3 +1,11 @@
+2023-06-15: 3.1.64.0
+
+* appid: always publish a change message after do not decrypt
+* detection: handle case when no rule tree node is found for a policy ID.
+* flow: introduced granular counters for idle_prunes
+* http_inspect: remove stream interface abstraction for http/1.1 flows
+* stream_ip: fix session counters in timeout and cleanup cases
+
 2023-06-01: 3.1.63.0
 
 * appid: changes logic in ssl pattern matching
