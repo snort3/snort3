@@ -51,6 +51,21 @@ void OopsHandler::tterm()
     local_oops_handler = nullptr;
 }
 
+void OopsHandler::set_current_message(DAQ_Msg_h cur_msg, snort::SFDAQInstance* daq_instance)
+{
+    msg = cur_msg;
+    priv_data_len = 0;
+
+    if (daq_instance)
+    {
+        DIOCTL_GetPrivDataLen ioctl_data = {cur_msg,  0};
+        if (DAQ_SUCCESS == daq_instance->ioctl(DIOCTL_GET_PRIV_DATA_LEN, &ioctl_data, sizeof(ioctl_data)))
+        {
+            priv_data_len = ioctl_data.priv_data_len;
+        }
+    }
+}
+
 void OopsHandler::eternalize(int fd)
 {
     if (!msg)
@@ -77,4 +92,10 @@ void OopsHandler::eternalize(int fd)
     ssp.printf("\n== Data (%u) ==\n", data_len);
     ssp.hex_dump(data, data_len);
     ssp.printf("\n");
+    if (priv_data_len)
+    {
+        memcpy(priv_data, daq_msg_get_priv_data(msg), std::min<size_t>(priv_data_len, sizeof(priv_data)));
+        ssp.printf("== Private Data (%u) ==\n", priv_data_len);
+        ssp.hex_dump(priv_data, priv_data_len);
+    }
 }

@@ -73,6 +73,7 @@ void Swapper::apply(Analyzer&) { }
 Swapper::~Swapper() = default;
 void OopsHandler::tinit() { }
 void OopsHandler::tterm() { }
+void OopsHandler::set_current_message(DAQ_Msg_h, snort::SFDAQInstance*) { }
 uint16_t get_run_num() { return 0; }
 void set_run_num(uint16_t) { }
 void set_instance_id(unsigned) { }

@@ -371,7 +371,7 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
         if (verdict == DAQ_VERDICT_BLOCK or verdict == DAQ_VERDICT_BLACKLIST)
             p->active->send_reason_to_daq(*p);
 
-        oops_handler->set_current_message(nullptr);
+        oops_handler->set_current_message(nullptr, nullptr);
         p->pkth = nullptr;  // No longer avail after finalize_message.
 
         {
@@ -430,7 +430,7 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
 
 void Analyzer::process_daq_msg(DAQ_Msg_h msg, bool retry)
 {
-    oops_handler->set_current_message(msg);
+    oops_handler->set_current_message(msg, daq_instance);
     memory::MemoryCap::free_space();
 
     DAQ_Verdict verdict = DAQ_VERDICT_PASS;
@@ -452,7 +452,7 @@ void Analyzer::process_daq_msg(DAQ_Msg_h msg, bool retry)
             }
             break;
     }
-    oops_handler->set_current_message(nullptr);
+    oops_handler->set_current_message(nullptr, nullptr);
     {
         Profile profile(daqPerfStats);
         daq_instance->finalize_message(msg, verdict);
@@ -683,7 +683,7 @@ void Analyzer::term()
     HighAvailabilityManager::thread_term();
     SideChannelManager::thread_term();
 
-    oops_handler->set_current_message(nullptr);
+    oops_handler->set_current_message(nullptr, nullptr);
 
     daq_instance->stop();
     SFDAQ::set_local_instance(nullptr);
