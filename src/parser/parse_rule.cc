@@ -1014,11 +1014,7 @@ void parse_rule_opt_end(SnortConfig* sc, const char* key, OptTreeNode* otn)
     CursorActionType cat = ips ? ips->get_cursor_type() : CAT_NONE;
 
     if ( cat > CAT_ADJUST )
-    {
-        if ( cat != CAT_SET_RAW )
-            otn->set_service_only();
         buf_is_set = true;
-    }
 
     if ( type != OPT_TYPE_META )
         otn->num_detection_opts++;

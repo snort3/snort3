@@ -531,6 +531,10 @@ void validate_services(SnortConfig* sc, OptTreeNode* otn)
         }
         svc = s;
     }
+
+    if ( !svc.empty() or !multi_svc_buf.empty() or guess )
+        otn->set_service_only();
+
     if ( otn->sigInfo.services.size() == 1 and !svc.empty() and otn->sigInfo.services[0].service != svc )
     {
         ParseWarning(WARN_RULES, "%u:%u:%u has service:%s with %s buffer",
@@ -560,8 +564,6 @@ void validate_services(SnortConfig* sc, OptTreeNode* otn)
 
         if ( !strcmp(guess, "netbios-ssn") )  // :(
             add_service_to_otn(sc, otn, "dcerpc");
-
-        otn->set_service_only();
     }
 }
 
