@@ -170,7 +170,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     }
 
     const uint16_t dsize = raw.len - icmp::ICMP6_HEADER_MIN_LEN;
-    uint16_t len;
+    uint16_t len = icmp::ICMP6_HEADER_MIN_LEN;
 
     switch (icmp6h->type)
     {
@@ -241,8 +241,6 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
             if (ntohl(ra->reachable_time) > 3600000)
                 codec_event(codec, DECODE_ICMPV6_ADVERT_BAD_REACHABLE);
-
-            len = icmp::ICMP6_HEADER_MIN_LEN;
         }
         else
         {
@@ -260,8 +258,6 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
             if (ntohl(rs->reserved) != 0)
                 codec_event(codec, DECODE_ICMPV6_SOLICITATION_BAD_RESERVED);
-
-            len = icmp::ICMP6_HEADER_MIN_LEN;
         }
         else
         {
@@ -279,7 +275,6 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
                 codec_event(codec, DECODE_ICMPV6_NODE_INFO_BAD_CODE);
 
             // FIXIT-L add alert for INFO Response, code == 1 || code == 2) with data
-            len = icmp::ICMP6_HEADER_MIN_LEN;
         }
         else
         {
@@ -313,12 +308,10 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     case icmp::Icmp6Types::DUPLICATE_ADDRESS_REQUEST:
     case icmp::Icmp6Types::DUPLICATE_ADDRESS_CONFIRMATION:
     case icmp::Icmp6Types::MPL_CONTROL:
-        len = raw.len;
         break;
 
     default:
         codec_event(codec, DECODE_ICMP6_TYPE_OTHER);
-        len = raw.len;
         break;
     }
 
