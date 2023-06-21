@@ -185,8 +185,9 @@ FileContext* get_smb_file_context(Flow* flow, uint64_t file_id,
         return nullptr;
     }
 
+    bool is_new_context = false;
     std::lock_guard<std::mutex> guard(file_flows->file_flow_context_mutex);
-    return file_flows->get_file_context(file_id, to_create, multi_file_processing_id);
+    return file_flows->get_file_context(file_id, to_create, is_new_context, multi_file_processing_id);
 }
 
 char* get_smb_file_name(const uint8_t* data, uint32_t data_len, bool unicode,

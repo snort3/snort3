@@ -337,7 +337,8 @@ bool Dce2Smb2FileTracker::process_data(const uint32_t current_flow_key, const ui
             if (updated_flow.first)
             {
                 // update the new file context in case of flow switch
-                FileContext* file = file_flows->get_file_context(file_name_hash, true, file_id);
+                bool is_new_context = false;
+                FileContext* file = file_flows->get_file_context(file_name_hash, true, is_new_context, file_id);
                 file->set_file_name(file_name, file_name_len);
                 file->set_file_size(file_size.load() ? file_size.load() : UNKNOWN_FILE_SIZE);
             }

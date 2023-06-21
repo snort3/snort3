@@ -72,7 +72,7 @@ public:
 
     // Get file context based on file id, create it if does not exist
     FileContext* get_file_context(uint64_t file_id, bool to_create,
-        uint64_t multi_file_processing_id=0);
+        bool& is_new_context, uint64_t multi_file_processing_id=0);
     // Get a partially processed file context from the flow object
     FileContext* get_partially_processed_context(uint64_t file_id);
     // Remove a file from the flow object when processing is complete
