@@ -80,6 +80,9 @@ if(UUID_INCLUDE_DIR)
     set(UUID_CPPFLAGS "-I${UUID_INCLUDE_DIR}")
 endif()
 
+if(NUMA_INCLUDE_DIR)
+    set(NUMA_CPPFLAGS "-I${NUMA_INCLUDE_DIR}")
+endif()
 # create & install pkgconfig file
 
 configure_file(

@@ -150,6 +150,10 @@ if (ICONV_FOUND)
     set (HAVE_ICONV "1")
 endif()
 
+if (NUMA_FOUND)
+    check_library_exists (${NUMA_LIBRARIES} numa_num_possible_cpus "" HAVE_NUMA)
+endif()
+
 if (LIBUNWIND_FOUND)
     # We don't actually use backtrace from libunwind, but it's basically the
     # only symbol guaranteed to be present.

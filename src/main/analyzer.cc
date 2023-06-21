@@ -746,7 +746,7 @@ void Analyzer::operator()(Swapper* ps, uint16_t run_num)
     SnortConfig::get_conf()->thread_config->set_instance_tid(id);
     // Perform all packet thread initialization actions that need to be taken with escalated
     // privileges prior to starting the DAQ module.
-    SnortConfig::get_conf()->thread_config->implement_thread_affinity(
+    SnortConfig::get_conf()->thread_config->apply_thread_policy(
         STHREAD_TYPE_PACKET, get_instance_id());
 
     SFDAQ::set_local_instance(daq_instance);

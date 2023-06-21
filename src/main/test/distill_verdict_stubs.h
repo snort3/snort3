@@ -225,6 +225,7 @@ NetworkPolicy* get_network_policy() { return nullptr; }
 InspectionPolicy* get_inspection_policy() { return nullptr; }
 Flow::~Flow() = default;
 void ThreadConfig::implement_thread_affinity(SThreadType, unsigned) { }
+void ThreadConfig::apply_thread_policy(SThreadType , unsigned ) { }
 void ThreadConfig::set_instance_tid(int) { }
 }
 

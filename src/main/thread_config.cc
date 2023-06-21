@@ -24,13 +24,16 @@
 #include "thread_config.h"
 
 #include <atomic>
-#include <hwloc.h>
 
 #include "analyzer_command.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "time/periodic.h"
 #include "utils/util.h"
+
+#ifdef HAVE_NUMA
+#include "utils/util_numa.h"
+#endif
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -46,6 +49,13 @@ static unsigned instance_max = 1;
 static std::mutex instance_mutex;
 static std::map<int, int> instance_id_to_tid;
 
+#ifdef HAVE_NUMA
+
+std::shared_ptr<NumaWrapper> numa;
+std::shared_ptr<HwlocWrapper> hwloc;
+
+#endif
+
 struct CpuSet
 {
     CpuSet(hwloc_cpuset_t set) : cpuset(set) { }
@@ -60,6 +70,13 @@ struct CpuSet
 
 bool ThreadConfig::init()
 {
+#ifdef HAVE_NUMA
+
+    numa = std::make_shared<NumaWrapper>();
+    hwloc = std::make_shared<HwlocWrapper>();
+
+#endif
+
     if (hwloc_topology_init(&topology))
         return false;
     if (hwloc_topology_load(topology))
@@ -125,6 +142,13 @@ void ThreadConfig::term()
         process_cpuset = nullptr;
     }
     topology_support = nullptr;
+
+#ifdef HAVE_NUMA
+
+    numa.reset();
+    hwloc.reset();
+
+#endif
 }
 
 ThreadConfig::~ThreadConfig()
@@ -148,7 +172,10 @@ void ThreadConfig::set_thread_affinity(SThreadType type, unsigned id, CpuSet* cp
         thread_affinity[key] = cpuset;
     }
     else
+    {
+        delete cpuset;
         ParseWarning(WARN_CONF, "This platform does not support setting thread affinity.\n");
+    }
 }
 
 void ThreadConfig::set_named_thread_affinity(const string& name, CpuSet* cpuset)
@@ -192,6 +219,78 @@ static inline string stringify_thread(const SThreadType& type, const unsigned& i
     info += to_string(id) + " (TID " + to_string((int)gettid()) + ")";
     return info;
 }
+
+void ThreadConfig::apply_thread_policy(SThreadType type, unsigned id)
+{
+    implement_thread_affinity( type, id );
+
+#ifdef HAVE_NUMA
+
+    implement_thread_mempolicy( type, id );
+
+#endif
+}
+
+#ifdef HAVE_NUMA
+
+int ThreadConfig::get_numa_node(hwloc_topology_t topology, hwloc_cpuset_t cpuset)
+{
+    int depth = hwloc->get_type_depth(topology, HWLOC_OBJ_NODE);
+    if (depth == HWLOC_TYPE_DEPTH_UNKNOWN)
+        return -1;
+
+    for (unsigned i = 0; i < hwloc->get_nbobjs_by_depth(topology, depth); ++i)
+    {
+        hwloc_obj_t node = hwloc->get_obj_by_depth(topology, depth, i);
+        if (node and hwloc->bitmap_intersects(cpuset, node->cpuset))
+            return node->os_index;
+    }
+    return -1;
+}
+
+bool ThreadConfig::set_preferred_mempolicy(int node) 
+{
+    if (node < 0) 
+        return false;
+
+    unsigned long nodemask = 1UL << (unsigned long)node;
+    int result = numa->set_mem_policy(MPOL_PREFERRED, &nodemask, sizeof(nodemask)*8);
+    if (result != 0) 
+        return false;
+ 
+    if(numa->preferred() != node) 
+        return false;
+    
+    return true;
+}
+
+bool ThreadConfig::implement_thread_mempolicy(SThreadType type, unsigned id)
+{
+    if (!topology_support->cpubind->set_thisthread_cpubind or 
+                numa->available() < 0 or numa->max_node() <= 0)
+    {     
+        return false;
+    }
+
+    TypeIdPair key { type, id };
+    auto iter = thread_affinity.find(key);
+    if (iter != thread_affinity.end())
+    {
+        int node_index = get_numa_node(topology, iter->second->cpuset);
+        if(set_preferred_mempolicy(node_index))
+            LogMessage( "Preferred memory policy set for %s to node %d\n",stringify_thread(type, id).c_str(), node_index);
+        else
+            return false;
+        }
+    else
+    {
+        return false;
+    }
+    
+    return true;
+}
+
+#endif
 
 void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
 {
@@ -471,5 +570,144 @@ TEST_CASE("Named thread affinity with type configured", "[ThreadConfig]")
         hwloc_bitmap_free(thread_cpuset);
     }
 }
+
+#ifdef HAVE_NUMA
+
+class NumaWrapperMock : public NumaWrapper
+{
+public:
+    int numa_avail = 1;
+    int max_n = 1;
+    int pref = 0;
+    int mem_policy = 0;
+
+    int available() override { return numa_avail; }
+    int max_node() override { return max_n; }
+    int preferred() override { return pref; }
+    int set_mem_policy(int , const unsigned long *,
+                              unsigned long ) override
+    { return mem_policy; }
+};
+
+class HwlocWrapperMock : public HwlocWrapper
+{
+public:
+    int nbobjs_by_depth = 1;
+    int type_depth = 2;
+    int intersects = 1;
+    struct hwloc_obj node;
+
+    unsigned get_nbobjs_by_depth(hwloc_topology_t , int ) override
+    { return nbobjs_by_depth; }
+    hwloc_obj_t get_obj_by_depth(hwloc_topology_t, int, unsigned ) override
+    { return &node; }
+    int get_type_depth(hwloc_topology_t, hwloc_obj_type_t ) override
+    { return type_depth; }
+    int bitmap_intersects(hwloc_const_cpuset_t, hwloc_const_cpuset_t ) override
+    { return intersects; }
+};
+
+TEST_CASE("set node for thread", "[ThreadConfig]")
+{
+    CpuSet* cpuset = new CpuSet(hwloc_bitmap_dup(process_cpuset));
+    CpuSet* cpuset2 = new CpuSet(hwloc_bitmap_dup(process_cpuset));
+    ThreadConfig tc;
+
+    std::shared_ptr<NumaWrapperMock> numa_mock = std::make_shared<NumaWrapperMock>();
+    std::shared_ptr<HwlocWrapperMock> hwloc_mock = std::make_shared<HwlocWrapperMock>();
+
+    hwloc_mock->node.os_index = 0; 
+
+    numa = numa_mock;
+    hwloc = hwloc_mock;
+
+    tc.set_thread_affinity(STHREAD_TYPE_PACKET, 0, cpuset2);
+    tc.set_thread_affinity(STHREAD_TYPE_PACKET, 1, cpuset);
+
+    CHECK(tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
+
+    hwloc_mock->node.os_index = 1; 
+    numa_mock->pref = 1;
+    CHECK(tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 1));
+}   
+
+TEST_CASE("numa_available negative test", "[ThreadConfig]")
+{
+    CpuSet* cpuset = new CpuSet(hwloc_bitmap_dup(process_cpuset));
+    ThreadConfig tc;
+    tc.set_thread_affinity(STHREAD_TYPE_PACKET, 1, cpuset);
+
+    std::shared_ptr<NumaWrapperMock> numa_mock = std::make_shared<NumaWrapperMock>();
+    std::shared_ptr<HwlocWrapperMock> hwloc_mock = std::make_shared<HwlocWrapperMock>();
+
+    numa_mock->numa_avail = -1; 
+    numa = numa_mock;
+    hwloc = hwloc_mock;
+    CHECK(!tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
+}
+
+TEST_CASE("set node failure negative test", "[ThreadConfig]")
+{
+    CpuSet* cpuset = new CpuSet(hwloc_bitmap_dup(process_cpuset));
+    ThreadConfig tc;
+    tc.set_thread_affinity(STHREAD_TYPE_PACKET, 0, cpuset);
+
+    std::shared_ptr<NumaWrapperMock> numa_mock = std::make_shared<NumaWrapperMock>();
+    std::shared_ptr<HwlocWrapperMock> hwloc_mock = std::make_shared<HwlocWrapperMock>();
+    hwloc_mock->node.os_index = 0; 
+    numa_mock->pref = -1; 
+    numa = numa_mock;
+    hwloc = hwloc_mock;
+    CHECK(!tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
+}
+
+TEST_CASE("depth unknown negative test", "[ThreadConfig]")
+{
+    CpuSet* cpuset = new CpuSet(hwloc_bitmap_dup(process_cpuset));
+
+    ThreadConfig tc;
+    tc.set_thread_affinity(STHREAD_TYPE_PACKET, 0, cpuset);
+
+    std::shared_ptr<NumaWrapperMock> numa_mock = std::make_shared<NumaWrapperMock>();
+    std::shared_ptr<HwlocWrapperMock> hwloc_mock = std::make_shared<HwlocWrapperMock>();
+
+    hwloc_mock->type_depth = HWLOC_TYPE_DEPTH_UNKNOWN;
+    hwloc = hwloc_mock;
+    numa = numa_mock;
+    CHECK(!tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
+}
+
+TEST_CASE("set memory policy failure negative test", "[ThreadConfig]")
+{
+    CpuSet* cpuset = new CpuSet(hwloc_bitmap_dup(process_cpuset));
+    ThreadConfig tc;
+    tc.set_thread_affinity(STHREAD_TYPE_PACKET, 0, cpuset);
+
+    std::shared_ptr<NumaWrapperMock> numa_mock = std::make_shared<NumaWrapperMock>();
+    std::shared_ptr<HwlocWrapperMock> hwloc_mock = std::make_shared<HwlocWrapperMock>();
+
+    hwloc_mock->node.os_index = 0;
+    numa_mock->mem_policy = -1;
+    numa = numa_mock;
+    hwloc = hwloc_mock;
+    CHECK(!tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));    
+}
+
+TEST_CASE("get_nbobjs_by_depth failure negative test", "[ThreadConfig]")
+{
+    CpuSet* cpuset = new CpuSet(hwloc_bitmap_dup(process_cpuset));
+    ThreadConfig tc;
+    tc.set_thread_affinity(STHREAD_TYPE_PACKET, 0, cpuset);
+
+    std::shared_ptr<NumaWrapperMock> numa_mock = std::make_shared<NumaWrapperMock>();
+    std::shared_ptr<HwlocWrapperMock> hwloc_mock = std::make_shared<HwlocWrapperMock>();
+
+    hwloc_mock->nbobjs_by_depth = 0;
+    hwloc = hwloc_mock;
+    numa = numa_mock;
+    CHECK(!tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
+}
+
+#endif
 
 #endif

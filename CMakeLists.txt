@@ -196,4 +196,12 @@ else ()
     UUID:           OFF")
 endif ()
 
+if (HAVE_NUMA)
+    message("\
+    NUMA:           ON")
+else ()
+    message("\
+    NUMA:           OFF")
+endif ()
+
 message("-------------------------------------------------------\n")

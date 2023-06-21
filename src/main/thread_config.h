@@ -19,6 +19,7 @@
 #ifndef THREAD_CONFIG_H
 #define THREAD_CONFIG_H
 
+#include <hwloc.h>
 #include <map>
 #include <string>
 
@@ -44,11 +45,13 @@ public:
     static int get_instance_tid(int);
 
     ~ThreadConfig();
+    void apply_thread_policy(SThreadType type, unsigned id);
     void set_thread_affinity(SThreadType, unsigned id, CpuSet*);
     void set_named_thread_affinity(const std::string&, CpuSet*);
     void implement_thread_affinity(SThreadType, unsigned id);
     void implement_named_thread_affinity(const std::string& name);
-
+    bool implement_thread_mempolicy(SThreadType type, unsigned id);
+    
     static constexpr unsigned int DEFAULT_THREAD_ID = 0;
 
 private:
@@ -70,7 +73,9 @@ private:
     };
     std::map<TypeIdPair, CpuSet*, TypeIdPairComparer> thread_affinity;
     std::map<std::string, CpuSet*> named_thread_affinity;
+
+    bool set_preferred_mempolicy(int node);
+    int get_numa_node(hwloc_topology_t, hwloc_cpuset_t);
 };
 }
-
 #endif

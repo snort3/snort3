@@ -16,6 +16,7 @@ set( UTIL_INCLUDES
     util_cstring.h
     util_unfold.h
     util_utf.h
+    util_numa.h
 )
 
 add_library ( utils OBJECT
@@ -40,6 +41,7 @@ add_library ( utils OBJECT
     util_net.h
     util_unfold.cc
     util_utf.cc
+    util_numa.h
     ${TEST_FILES}
 )
 
