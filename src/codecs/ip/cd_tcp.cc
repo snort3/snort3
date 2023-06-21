@@ -136,6 +136,8 @@ private:
 
     int validate_option(const tcp::TcpOption* const opt,
         const uint8_t* const end, const int expected_len);
+    int validate_option(const tcp::TcpOption* const opt,
+        const uint8_t* const end);
 
     void decode_options(const uint8_t*, uint32_t, CodecData&, DecodeData&);
 
@@ -394,7 +396,7 @@ void TcpCodec::decode_options(
             break;
 
         case tcp::TcpOptCode::AUTH:
-            code = validate_option(opt, end_ptr, -1);
+            code = validate_option(opt, end_ptr);
 
             /* Has to have at least 4 bytes - see RFC 5925, Section 2.2 */
             if (code >= 0 && opt->len < 4)
@@ -402,7 +404,7 @@ void TcpCodec::decode_options(
             break;
 
         case tcp::TcpOptCode::SACK:
-            code = validate_option(opt, end_ptr, -1);
+            code = validate_option(opt, end_ptr);
 
             if ((code >= 0) && (opt->len < 2))
                 code = tcp::OPT_BADLEN;
@@ -431,7 +433,7 @@ void TcpCodec::decode_options(
         case tcp::TcpOptCode::BUBBA:
         case tcp::TcpOptCode::UNASSIGNED:
             obsolete_option_found = true;
-            code = validate_option(opt, end_ptr, -1);
+            code = validate_option(opt, end_ptr);
             break;
 
         case tcp::TcpOptCode::SCPS:
@@ -444,7 +446,7 @@ void TcpCodec::decode_options(
         case tcp::TcpOptCode::SNAP:
         default:
             experimental_option_found = true;
-            code = validate_option(opt, end_ptr, -1);
+            code = validate_option(opt, end_ptr);
             break;
         }
 
@@ -479,31 +481,33 @@ void TcpCodec::decode_options(
 }
 
 int TcpCodec::validate_option(const tcp::TcpOption* const opt,
-    const uint8_t* const end,
-    const int expected_len)
+    const uint8_t* const end, const int expected_len)
 {
-    // case for pointer arithmetic
     const uint8_t* const opt_ptr = reinterpret_cast<const uint8_t*>(opt);
 
-    if (expected_len > 1)
-    {
-        /* not enough data to read in a perfect world */
-        if ((opt_ptr + expected_len) > end)
-            return tcp::OPT_TRUNC;
+    assert(expected_len > 1);
 
-        if (opt->len != expected_len)
-            return tcp::OPT_BADLEN;
-    }
-    else /* expected_len < 0 (i.e. variable length) */
-    {
-        /* RFC says that we MUST have at least this much data */
-        if (opt->len < 2)
-            return tcp::OPT_BADLEN;
+    /* not enough data to read in a perfect world */
+    if ((opt_ptr + expected_len) > end)
+        return tcp::OPT_TRUNC;
 
-        /* not enough data to read in a perfect world */
-        if ((opt_ptr + opt->len) > end)
-            return tcp::OPT_TRUNC;
-    }
+    if (opt->len != expected_len)
+        return tcp::OPT_BADLEN;
+
+    return 0;
+}
+
+int TcpCodec::validate_option(const tcp::TcpOption* const opt, const uint8_t* const end)
+{
+    const uint8_t* const opt_ptr = reinterpret_cast<const uint8_t*>(opt);
+
+    /* not enough data to read in a perfect world */
+    if ((opt_ptr + 2) > end or (opt_ptr + opt->len) > end)
+        return tcp::OPT_TRUNC;
+
+    /* RFC says that we MUST have at least this much data */
+    if (opt->len < 2)
+        return tcp::OPT_BADLEN;
 
     return 0;
 }

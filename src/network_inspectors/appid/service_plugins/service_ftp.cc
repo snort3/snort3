@@ -533,6 +533,7 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset, uint16_t si
                     return -1;
                 if (++offset >= size)
                 {
+                    offset = size;
                     fd.rstate = FTP_REPLY_BEGIN;
                     break;
                 }

@@ -505,17 +505,10 @@ const char* get_error(int errnum)
 #endif
 }
 
-char* snort_strndup(const char* src, size_t dst_size)
+char* snort_strndup(const char* src, size_t n)
 {
-    char* dup = (char*)snort_calloc(dst_size + 1);
-
-    if ( SnortStrncpy(dup, src, dst_size + 1) == SNORT_STRNCPY_ERROR )
-    {
-        snort_free(dup);
-        return nullptr;
-    }
-
-    return dup;
+    char* dst = (char*)snort_calloc(n + 1);
+    return strncpy(dst, src, n);
 }
 
 char* snort_strdup(const char* str)

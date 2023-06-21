@@ -236,10 +236,10 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 
         case NETFLOW_LAST_PKT:
 
-            if( field_length != sizeof(record.last_pkt_second) )
+            if (field_length != sizeof(uint32_t))
                 return false;
 
-            last_pkt_time = ntohl(*(const time_t*)data)/1000;
+            last_pkt_time = ntohl(*(const uint32_t*)data)/1000;
             // last_pkt_time (LAST_SWITCHED) is defined as the system uptime
             // at which the flow was seen. If this is >= to the current uptime
             // something has gone wrong - use the NetFlow header unix time instead.
@@ -257,10 +257,10 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 
         case NETFLOW_FIRST_PKT:
 
-            if( field_length != sizeof(record.first_pkt_second) )
+            if (field_length != sizeof(uint32_t))
                 return false;
 
-            first_pkt_time = ntohl(*(const time_t*)data)/1000;
+            first_pkt_time = ntohl(*(const uint32_t*)data)/1000;
             if (first_pkt_time >= sys_uptime)
                 record.first_pkt_second = unix_secs;
             else

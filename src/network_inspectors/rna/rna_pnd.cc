@@ -1042,7 +1042,7 @@ int RnaPnd::discover_host_types_icmpv6_ndp(RnaTracker& ht, const Packet* p, uint
         return 1;
 
     const uint8_t* data = (const uint8_t*)p->ptrs.icmph;
-    int32_t data_len = p->ptrs.ip_api.pay_len();
+    int32_t data_len = std::min((int)p->ptrs.ip_api.pay_len(), (int)(p->pkt + p->pktlen - data));
 
     switch ( ((const icmp::Icmp6Hdr*)p->ptrs.icmph)->type )
     {

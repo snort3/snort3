@@ -178,7 +178,7 @@ static void LogIpOptions(TextLog* log, const ip::IpOptionIterator& options)
 
     TextLog_Print(log, "IP Options (%u) => ", c);
 
-    for (auto op : options)
+    for (const auto& op : options)
     {
         switch (op.code)
         {

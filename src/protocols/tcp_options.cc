@@ -40,13 +40,11 @@ const TcpOption& TcpOptIteratorIter::operator*() const { return *opt; }
 
 const TcpOptIteratorIter& TcpOptIteratorIter::operator++()
 {
-    const auto* old_opt = opt;
-    opt = &opt->next();
-    if (opt == old_opt or opt->code == TcpOptCode::EOL)       // defend against option length = 0
-    {
+    if (opt->code != TcpOptCode::EOL)
+        opt = &opt->next();
+    else
         *this = iter->end();
-        tcpStats.zero_len_tcp_opt++;
-    }
+
     return *this;
 }
 

@@ -66,7 +66,14 @@ bool MobilityCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
     }
 
+    if ( raw.len < ip::MIN_EXT_LEN )
+    {
+        codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
+        return false;
+    }
+
     codec.lyr_len = ip::MIN_EXT_LEN + (mip6->header_len << 3);
+
     if (codec.lyr_len > raw.len)
     {
         codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);

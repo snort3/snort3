@@ -628,6 +628,10 @@ int DnsTcpServiceDetector::validate(AppIdDiscoveryArgs& args)
         const uint8_t* data = args.data + sizeof(DNSTCPHeader);
         uint16_t size = args.size - sizeof(DNSTCPHeader);
         uint16_t tmp = ntohs(hdr->length);
+
+        if (tmp > size)
+            goto not_compatible;
+
         if (tmp < sizeof(DNSHeader) || dns_validate_header(args.dir, (const DNSHeader*)data,
             args.asd.get_odp_ctxt().dns_host_reporting, args.asd))
         {
@@ -637,8 +641,6 @@ int DnsTcpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 goto fail;
         }
 
-        if (tmp > size)
-            goto not_compatible;
         rval = validate_packet(data, size, args.dir,
             args.asd.get_odp_ctxt().dns_host_reporting, args.asd, args.change_bits);
         if (rval != APPID_SUCCESS)
