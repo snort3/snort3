@@ -62,6 +62,9 @@ struct CipEventData
     //  CIP_DATA_TYPE_SET_ATTRIBUTE
     uint8_t service_id;
 
+    // Set when the packet is a multiple service packet
+    bool multipayload;
+
     // Used for:
     //  CIP_DATA_TYPE_PATH_CLASS: This represents the Request Path Class.
     //  CIP_DATA_TYPE_SET_ATTRIBUTE: This represents the Request Path Class.

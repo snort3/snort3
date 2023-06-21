@@ -1538,6 +1538,11 @@ static bool parse_multiple_service_packet(const uint8_t* data,
 
         pack_cip_request_event(&embedded_request, &cip_event_data);
 
+        if (i != number_services)
+            cip_event_data.multipayload = true;
+        else
+            cip_event_data.multipayload = false;
+
         DataBus::publish(CipEventData::pub_id, CipEventIds::DATA, cip_event, global_data->snort_packet->flow);
     }
 

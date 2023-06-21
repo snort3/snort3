@@ -702,6 +702,17 @@ public:
     {
         return client_info_unpublished;
     }
+ 
+    void set_cip_msp(bool multipayload)
+    {
+        cip_msp = multipayload;
+    }
+ 
+    bool is_cip_msp() const
+    {
+        return cip_msp;
+    }
+
 private:
     uint16_t prev_httpx_raw_packet = 0;
 
@@ -725,6 +736,7 @@ private:
     bool no_service_candidate = false;
     bool no_service_inspector = false;
     bool client_info_unpublished = false;
+    bool cip_msp = false;
 };
 
 #endif

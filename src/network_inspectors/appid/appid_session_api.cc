@@ -239,6 +239,11 @@ bool AppIdSessionApi::is_appid_inspecting_session() const
         return true;
     }
 
+    if ( get_service_app_id() == APP_ID_CIP and asd->is_cip_msp())
+    {
+         return true;
+    }
+
     if (asd->get_odp_ctxt().check_host_port_app_cache)
         return true;
 

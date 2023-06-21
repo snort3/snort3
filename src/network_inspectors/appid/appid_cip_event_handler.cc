@@ -24,6 +24,7 @@
 
 #include "appid_cip_event_handler.h"
 #include "detector_plugins/cip_patterns.h"
+#include "service_inspectors/cip/cip.h"
 #include "appid_debug.h"
 
 using namespace snort;
@@ -90,7 +91,8 @@ void CipEventHandler::handle(DataEvent& event, Flow* flow)
     AppId payload_id = asd->get_odp_ctxt().get_cip_matchers().get_cip_payload_id(event_data);
     asd->set_payload_id(payload_id);
     asd->set_ss_application_ids(APP_ID_CIP, APP_ID_CIP, payload_id, APP_ID_NONE, APP_ID_NONE, change_bits);
-   
+    asd->set_cip_msp(event_data->multipayload);
+
     if (change_bits[APPID_PAYLOAD_BIT] and appidDebug->is_enabled())
     {
         appidDebug->activate(flow, asd, inspector.get_ctxt().config.log_all_sessions);
