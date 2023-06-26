@@ -71,6 +71,8 @@ public:
     bool offset_set = false;
 
     unsigned match_delta;   /* Maximum distance we can jump to search for this pattern again. */
+
+    bool depth_configured = true;
 };
 
 ContentData::ContentData()
@@ -266,11 +268,10 @@ bool ContentOption::operator==(const IpsOption& ips) const
 /*
  * single search function.
  *
- * return  1 for found
- * return  0 for not found
- * return -1 for error (search out of bounds)
+ * return  true for found
+ * return  false for all other cases
  */
-static int uniSearchReal(ContentData* cd, Cursor& c)
+static bool uniSearchReal(ContentData* cd, Cursor& c)
 {
     // byte_extract variables are strictly unsigned, used for sizes and forward offsets
     // converting from uint32_t to int64_t ensures all extracted values remain positive
@@ -300,10 +301,10 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
     {
         offset -= file_pos;
         if (offset < 0)
-            return 0;
+            return false;
     }
 
-    int64_t pos;
+    int64_t pos = 0;
 
     if ( !c.get_delta() )
     {
@@ -312,7 +313,7 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
 
         if ( pos < 0 )
         {
-            if ( depth )
+            if ( cd->depth_configured )
                 depth += pos;
 
             pos = 0;
@@ -323,30 +324,23 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
         // retry - adjust from start of last match
         pos = c.get_pos() - cd->pmd.pattern_size + cd->match_delta;
 
-        if ( depth )
+        if ( cd->depth_configured )
             depth -= c.get_delta();
+
+        if ( pos < 0 )
+            return false;
     }
 
-    if ( pos < 0 or depth < 0 or pos >= c.size() )
-        return -1;
+    if ( ( cd->depth_configured and depth <= 0 ) or pos + cd->pmd.pattern_size > c.size() )
+        return false;
 
-    int64_t len = c.size() - pos;
+    int64_t bytes_left = c.size() - pos;
 
-    if ( !depth || len < depth )
-        depth = len;
+    if ( !cd->depth_configured or bytes_left < depth )
+        depth = bytes_left;
 
-    int64_t end = pos + cd->pmd.pattern_size;
-
-    // If the pattern size is greater than the amount of data we have to
-    // search, there's no way we can match, but return 0 here for the
-    // case where the match is inverted and there is at least some data.
-    if ( end > c.size() || end > pos + depth )
-    {
-        if ( cd->pmd.is_negated() && (depth > 0) )
-            return 0;
-
-        return -1;
-    }
+    if ( cd->pmd.pattern_size > depth )
+        return false;
 
     const uint8_t* base = c.buffer() + pos;
     int found = cd->searcher->search(search_handle, base, (unsigned)depth);
@@ -358,39 +352,22 @@ static int uniSearchReal(ContentData* cd, Cursor& c)
             c.set_delta(c.get_delta() + found + cd->match_delta);
             c.set_pos(pos + found + cd->pmd.pattern_size);
         }
-        return 1;
+
+        return true;
     }
 
-    return 0;
+    return false;
 }
 
 static IpsOption::EvalStatus CheckANDPatternMatch(ContentData* idx, Cursor& c)
 {
     RuleProfile profile(contentPerfStats);
 
-    int found = uniSearchReal(idx, c);
+    bool found = uniSearchReal(idx, c);
 
-    if ( found == -1 )
-    {
-        /* On error, mark as not found.  This is necessary to handle !content
-           cases.  In that case, a search that is outside the given buffer will
-           return 0, and !0 is 1, so a !content out of bounds will return true,
-           which is not what we want.  */
-        found = 0;
-    }
-    else
-    {
-        found ^= idx->pmd.is_negated();
-    }
+    found ^= idx->pmd.is_negated();
 
-    if ( found )
-    {
-        return IpsOption::MATCH;
-    }
-    else
-    {
-        return IpsOption::NO_MATCH;
-    }
+    return found ? IpsOption::MATCH : IpsOption::NO_MATCH;
 }
 
 //-------------------------------------------------------------------------
@@ -692,6 +669,9 @@ bool ContentModule::end(const char*, int, SnortConfig*)
         cd->pmd.last_check = (PmdLastCheck*)snort_calloc(
             ThreadConfig::get_instance_max(), sizeof(*cd->pmd.last_check));
     }
+
+    if ( cd->pmd.depth == 0 and cd->depth_var == IPS_OPTIONS_NO_VAR )
+        cd->depth_configured = false;
 
     return true;
 }
