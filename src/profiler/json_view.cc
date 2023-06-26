@@ -30,7 +30,6 @@
 #include "control/control.h"
 #include "helpers/json_stream.h"
 #include "main/snort_config.h"
-#include "utils/stats.h"
 
 #include "profiler_printer.h"
 #include "rule_profiler.h"
@@ -80,19 +79,11 @@ void print_json_entries(ControlConn* ctrlcon, std::vector<rule_stats::View>& ent
     std::ostringstream ss;
     JsonStream json(ss);
 
-    RuleContext::set_end_time(get_time_curr());
     RuleContext::count_total_time();
 
-    double start_time_usec =
-        RuleContext::get_start_time()->tv_sec * 1000000.0 + RuleContext::get_start_time()->tv_usec;
-    double end_time_usec =
-        RuleContext::get_end_time()->tv_sec * 1000000.0 + RuleContext::get_end_time()->tv_usec;
-    double total_time_usec =
-        RuleContext::get_total_time()->tv_sec * 1000000.0 + RuleContext::get_total_time()->tv_usec;
-
     json.open();
-    json.put("startTime", start_time_usec);
-    json.put("endTime", end_time_usec);
+    json.put("startTime", RuleContext::get_start_time()->tv_sec);
+    json.put("endTime", RuleContext::get_end_time()->tv_sec);
     json.open_array("rules");
     json.put_eol();
 
@@ -103,6 +94,9 @@ void print_json_entries(ControlConn* ctrlcon, std::vector<rule_stats::View>& ent
 
     if ( sort )
         std::partial_sort(entries.begin(), entries.begin() + count, entries.end(), sort);
+
+    double total_time_usec =
+        RuleContext::get_total_time()->tv_sec * 1000000.0 + RuleContext::get_total_time()->tv_usec;
 
     for ( unsigned i = 0; i < count; ++i )
         print_single_entry(ctrlcon, entries[i], i + 1, count, total_time_usec);

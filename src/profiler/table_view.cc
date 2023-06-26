@@ -29,7 +29,6 @@
 
 #include "control/control.h"
 #include "detection/treenodes.h"
-#include "utils/stats.h"
 
 #include "profiler_printer.h"
 #include "profiler_stats_table.h"
@@ -100,7 +99,6 @@ void print_entries(ControlConn* ctrlcon, std::vector<rule_stats::View>& entries,
     ProfilerSorter<rule_stats::View>& sort, unsigned count)
 {
     std::ostringstream ss;
-    RuleContext::set_end_time(get_time_curr());
     RuleContext::count_total_time();
 
     double total_time_usec =

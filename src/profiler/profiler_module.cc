@@ -33,6 +33,7 @@
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "managers/module_manager.h"
+#include "utils/stats.h"
 
 #include "rule_profiler.h"
 #include "rule_profiler_defs.h"
@@ -109,6 +110,7 @@ public:
         const auto* config = SnortConfig::get_conf()->get_profiler();
         assert(config);
 
+        RuleContext::set_end_time(get_time_curr());
         print_rule_profiler_stats(config->rule, stats, ctrlcon, out_type);
     }
 
@@ -170,6 +172,7 @@ static int rule_profiling_start(lua_State* L)
     }
 
     RuleContext::set_enabled(true);
+    RuleContext::set_start_time(get_time_curr());
     main_broadcast_command(new ProfilerControl(ProfilerControl::CommandType::ENABLE), ctrlcon);
     main_broadcast_command(new ProfilerRuleReset(), ctrlcon);
     LogRespond(ctrlcon, "Rule profiler started\n");
@@ -189,6 +192,7 @@ static int rule_profiling_stop(lua_State* L)
     }
 
     RuleContext::set_enabled(false);
+    RuleContext::set_end_time(get_time_curr());
     main_broadcast_command(new ProfilerControl(ProfilerControl::CommandType::DISABLE), ctrlcon);
     LogRespond(ctrlcon, "Rule profiler stopped\n");
 
@@ -246,7 +250,7 @@ static int rule_profiling_dump(lua_State* L)
 static const Parameter profiler_dump_params[] =
 {
     { "output", Parameter::PT_ENUM, "table | json",
-      "table", "print rule statistics in table or json format" },
+      "table", "output format for rule statistics" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -263,7 +267,7 @@ static const Command profiler_cmds[] =
       nullptr, "print rule profiler status" },
 
     { "rule_dump", rule_profiling_dump,
-      profiler_dump_params, "print rule statistics" },
+      profiler_dump_params, "print rule statistics in table or json format (json format prints dates as Unix epoch)" },
 
     { nullptr, nullptr, nullptr, nullptr }
 };
