@@ -411,6 +411,8 @@ static int reload_detectors(lua_State* L)
     OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
     odp_ctxt.get_client_disco_mgr().initialize(*inspector);
     odp_ctxt.get_service_disco_mgr().initialize(*inspector);
+    odp_ctxt.set_client_and_service_detectors();
+
     odp_thread_local_ctxt->initialize(SnortConfig::get_conf(), ctxt, true, true);
     odp_ctxt.initialize(*inspector);
 

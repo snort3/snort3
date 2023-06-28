@@ -74,17 +74,12 @@ public:
         DataHandler(MOD_NAME), inspector(inspector)
     { }
 
-    static void set_client(SipUdpClientDetector* cd) { SipEventHandler::client = cd; }
-    static void set_service(SipServiceDetector* sd) { SipEventHandler::service = sd; }
-
     void handle(snort::DataEvent&, snort::Flow*) override;
 
 private:
     void client_handler(SipEvent&, AppIdSession&, AppidChangeBits&);
     void service_handler(SipEvent&, AppIdSession&, AppidChangeBits&);
 
-    static SipUdpClientDetector* client;
-    static SipServiceDetector* service;
     AppIdInspector& inspector;
 };
 #endif

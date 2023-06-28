@@ -50,6 +50,7 @@ public:
     unsigned get_pattern_count();
     bool do_client_discovery(AppIdSession&, snort::Packet*,
         AppidSessionDirection direction, AppidChangeBits& change_bits);
+    ClientDetector* get_client_detector(const std::string&) const;
 
 private:
     void exec_client_detectors(AppIdSession&, snort::Packet*,

@@ -111,10 +111,7 @@ struct KerberosDetectorData
 #define TGS_REP_MSG_TYPE    0x0d
 #define ERROR_MSG_TYPE      0x1e
 
-static KerberosClientDetector* krb_client_detector;
-static KerberosServiceDetector* krb_service_detector;
-
-static int krb_walk_server_packet(KRBState* krbs, const uint8_t* s, const uint8_t* end,
+int KerberosServiceDetector::krb_walk_server_packet(KRBState* krbs, const uint8_t* s, const uint8_t* end,
     AppIdSession& asd, Packet* pkt, const AppidSessionDirection dir,
     const char* reqCname, AppidChangeBits& change_bits)
 {
@@ -411,21 +408,19 @@ static int krb_walk_server_packet(KRBState* krbs, const uint8_t* s, const uint8_
         /*end of server response message */
         if (krbs->flags & KRB_FLAG_SERVICE_DETECTED)
             if (!asd.is_service_detected() && pkt)
-                krb_service_detector->add_service(change_bits, asd, pkt, dir, APP_ID_KERBEROS,
-                    nullptr, krbs->ver, nullptr);
+                this->add_service(change_bits, asd, pkt, dir, APP_ID_KERBEROS, nullptr, krbs->ver, nullptr);
 
         if (krbs->flags & KRB_FLAG_AUTH_FAILED)
         {
             if (krb_client_detector->failed_login
                 && ((krbs->flags & KRB_FLAG_USER_DETECTED) || reqCname))
             {
-                krb_service_detector->add_user(asd,
-                    (krbs->flags & KRB_FLAG_USER_DETECTED) ? krbs->cname : reqCname,
+                this->add_user(asd, (krbs->flags & KRB_FLAG_USER_DETECTED) ? krbs->cname : reqCname,
                     APP_ID_LDAP, false, change_bits);
             }
         }
         else if (krbs->flags & KRB_FLAG_USER_DETECTED)
-            krb_service_detector->add_user(asd, krbs->cname, APP_ID_LDAP, true, change_bits);
+            this->add_user(asd, krbs->cname, APP_ID_LDAP, true, change_bits);
 
         krbs->flags = 0;
     }
@@ -440,7 +435,6 @@ static const uint8_t TGS_REP_4[] = "\x0a0\x003\x002\x001\x004\x0a1\x003\x002\x00
 
 KerberosServiceDetector::KerberosServiceDetector(ServiceDiscovery* sd)
 {
-    krb_service_detector = this;
     handler = sd;
     name = "kerberos";
     proto = IpProtocol::TCP;
@@ -474,6 +468,9 @@ KerberosServiceDetector::KerberosServiceDetector(ServiceDiscovery* sd)
 
 int KerberosServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
+    if (!krb_client_detector)
+        return APPID_NOMATCH;
+
     KerberosDetectorData* fd;
     const uint8_t* s = args.data;
     const uint8_t* end = (args.data + args.size);
@@ -525,7 +522,6 @@ static const uint8_t TGS_REQ_4[] = "\x0a1\x003\x002\x001\x004\x0a2\x003\x002\x00
 
 KerberosClientDetector::KerberosClientDetector(ClientDiscovery* cdm)
 {
-    krb_client_detector = this;
     handler = cdm;
     name = "kerberos";
     proto = IpProtocol::TCP;
@@ -641,7 +637,7 @@ int KerberosClientDetector::krb_walk_client_packet(KRBState* krbs, const uint8_t
             krbs->tag = *s;
             if (krbs->tag == 0xa4
                 && (krbs->msg_type == AS_REQ_MSG_TYPE || krbs->msg_type == TGS_REQ_MSG_TYPE)
-                && krb_client_detector->failed_login)
+                && this->failed_login)
             {
                 krbs->next_state = KRB_STATE_REQBODY_SEQ;
             }
@@ -891,6 +887,9 @@ KerberosDetectorData* KerberosClientDetector::get_common_data(AppIdSession& asd)
 
 int KerberosClientDetector::validate(AppIdDiscoveryArgs& args)
 {
+    if (!krb_service_detector)
+        return APPID_NOMATCH;
+
     const uint8_t* s = args.data;
     const uint8_t* end = (args.data + args.size);
 
@@ -914,7 +913,7 @@ int KerberosClientDetector::validate(AppIdDiscoveryArgs& args)
             return APPID_SUCCESS;
         }
     }
-    else if (krb_walk_server_packet(&fd->svr_state, s, end, args.asd, nullptr, args.dir,
+    else if (krb_service_detector->krb_walk_server_packet(&fd->svr_state, s, end, args.asd, nullptr, args.dir,
         fd->clnt_state.cname, args.change_bits) == KRB_FAILED)
     {
         args.asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);

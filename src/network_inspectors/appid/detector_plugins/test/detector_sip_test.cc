@@ -109,6 +109,8 @@ void OdpContext::initialize(AppIdInspector&)
     sip_matchers.finalize_patterns(*this);
 }
 
+SipUdpClientDetector* OdpContext::get_sip_client_detector() { return &cd; }
+
 void SipPatternMatchers::finalize_patterns(OdpContext&)
 {
     sip_ua_matcher = mlmpCreate();
@@ -177,7 +179,6 @@ bool SipEvent::is_invite() const { return false; }
 bool SipEvent::is_dialog_established() const { return false; }
 int SipPatternMatchers::get_client_from_ua(char const*, unsigned int, int&, char*&) { return 0; }  // LCOV_EXCL_LINE
 void SipEventHandler::service_handler(SipEvent&, AppIdSession&, AppidChangeBits&) { }
-SipUdpClientDetector* SipEventHandler::client = &cd;
 
 void* AppIdDetector::data_get(AppIdSession&)
 {

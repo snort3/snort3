@@ -22,11 +22,18 @@
 #ifndef DETECTOR_KERBEROS_H
 #define DETECTOR_KERBEROS_H
 
+#include "protocols/packet.h"
 #include "client_plugins/client_detector.h"
 #include "service_plugins/service_detector.h"
 
+namespace snort
+{
+struct Packet;
+}
+
 struct KRBState;
 struct KerberosDetectorData;
+class KerberosServiceDetector;
 
 class KerberosClientDetector : public ClientDetector
 {
@@ -35,12 +42,17 @@ public:
 
     int validate(AppIdDiscoveryArgs&) override;
     KerberosDetectorData* get_common_data(AppIdSession&);
+    void set_service_detector(KerberosServiceDetector* s)
+    {
+        krb_service_detector = s;
+    }
 
     bool failed_login = false;
 
 private:
     int krb_walk_client_packet(KRBState*, const uint8_t*, const uint8_t*,
         AppIdSession&, AppidChangeBits&);
+    KerberosServiceDetector* krb_service_detector = nullptr;
 };
 
 class KerberosServiceDetector : public ServiceDetector
@@ -49,6 +61,15 @@ public:
     KerberosServiceDetector(ServiceDiscovery*);
 
     int validate(AppIdDiscoveryArgs&) override;
+    int krb_walk_server_packet(KRBState*, const uint8_t*, const uint8_t*, AppIdSession&, snort::Packet*,
+        const AppidSessionDirection, const char*, AppidChangeBits&);
+    void set_client_detector(KerberosClientDetector* c)
+    {
+        krb_client_detector = c;
+    }
+
+private:
+    KerberosClientDetector* krb_client_detector = nullptr;
 };
 
 #endif

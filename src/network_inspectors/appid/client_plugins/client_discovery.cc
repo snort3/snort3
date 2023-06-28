@@ -97,6 +97,15 @@ unsigned ClientDiscovery::get_pattern_count()
     return tcp_pattern_count + udp_pattern_count;
 }
 
+ClientDetector* ClientDiscovery::get_client_detector(const std::string& name) const
+{
+    auto det = tcp_detectors.find(name);
+    if (det != tcp_detectors.end())
+        return (ClientDetector*) det->second;
+
+    return nullptr;
+}
+
 /*
  * Callback function for string search
  *

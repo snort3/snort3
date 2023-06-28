@@ -50,6 +50,13 @@ public:
     ImapServiceDetector(ServiceDiscovery*);
 
     int validate(AppIdDiscoveryArgs&) override;
+    void set_client_detector(ImapClientDetector* c)
+    {
+        imap_client_detector = c;
+    }
+
+private:
+    ImapClientDetector* imap_client_detector = nullptr;
 };
 
 #endif

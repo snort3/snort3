@@ -72,6 +72,8 @@ enum SnortProtoIdIndex
 class AppIdInspector;
 class PatternClientDetector;
 class PatternServiceDetector;
+class SipUdpClientDetector;
+class SipServiceDetector;
 
 class AppIdConfig
 {
@@ -247,6 +249,9 @@ public:
     void add_protocol_service_id(IpProtocol, AppId);
     AppId get_port_service_id(IpProtocol, uint16_t);
     AppId get_protocol_service_id(IpProtocol);
+    void set_client_and_service_detectors();
+    SipUdpClientDetector* get_sip_client_detector();
+    SipServiceDetector* get_sip_service_detector();
 
 private:
     AppInfoManager app_info_mgr;

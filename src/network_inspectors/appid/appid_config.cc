@@ -33,7 +33,11 @@
 #include "appid_http_session.h"
 #include "appid_inspector.h"
 #include "appid_session.h"
+#include "detector_plugins/detector_imap.h"
+#include "detector_plugins/detector_kerberos.h"
 #include "detector_plugins/detector_pattern.h"
+#include "detector_plugins/detector_pop3.h"
+#include "detector_plugins/detector_smtp.h"
 #include "host_port_app_cache.h"
 #include "main/snort_config.h"
 #include "log/messages.h"
@@ -120,6 +124,8 @@ bool AppIdContext::init_appid(SnortConfig* sc, AppIdInspector& inspector)
     {
         odp_ctxt->get_client_disco_mgr().initialize(inspector);
         odp_ctxt->get_service_disco_mgr().initialize(inspector);
+        odp_ctxt->set_client_and_service_detectors();
+
         odp_thread_local_ctxt->initialize(sc, *this, true);
         odp_ctxt->initialize(inspector);
 
@@ -210,6 +216,63 @@ void OdpContext::reload()
     ssl_matchers.reload_patterns();
     dns_matchers.reload_patterns();
     alpn_matchers.reload_patterns();
+}
+
+void OdpContext::set_client_and_service_detectors()
+{
+    Pop3ServiceDetector* s_pop = (Pop3ServiceDetector*) service_disco_mgr.get_service_detector("pop3");
+    Pop3ClientDetector* c_pop = (Pop3ClientDetector*) client_disco_mgr.get_client_detector("pop3");
+    if (!s_pop or !c_pop)
+    {
+        ErrorMessage("appid: failed to initialize pop3 detector\n");
+        return;
+    }
+    s_pop->set_client_detector(c_pop);
+    c_pop->set_service_detector(s_pop);
+
+    KerberosServiceDetector* s_krb = (KerberosServiceDetector*) service_disco_mgr.get_service_detector("kerberos");
+    KerberosClientDetector* c_krb = (KerberosClientDetector*) client_disco_mgr.get_client_detector("kerberos");
+    if (!s_krb or !c_krb)
+    {
+        ErrorMessage("appid: failed to initialize kerberos detector\n");
+        return;
+    }
+    s_krb->set_client_detector(c_krb);
+    c_krb->set_service_detector(s_krb);
+
+    SmtpServiceDetector* s_smtp = (SmtpServiceDetector*) service_disco_mgr.get_service_detector("smtp");
+    SmtpClientDetector* c_smtp = (SmtpClientDetector*) client_disco_mgr.get_client_detector("SMTP");
+    if (!s_smtp or !c_smtp)
+    {
+        ErrorMessage("appid: failed to initialize smtp detector\n");
+        return;
+    }
+    s_smtp->set_client_detector(c_smtp);
+
+    ImapServiceDetector* s_imap = (ImapServiceDetector*) service_disco_mgr.get_service_detector("IMAP");
+    ImapClientDetector* c_imap = (ImapClientDetector*) client_disco_mgr.get_client_detector("IMAP");
+    if (!s_imap or !c_imap)
+    {
+        ErrorMessage("appid: failed to initialize imap detector\n");
+        return;
+    }
+    s_imap->set_client_detector(c_imap);
+}
+
+SipServiceDetector* OdpContext::get_sip_service_detector()
+{
+    SipServiceDetector* s_sip = (SipServiceDetector*) service_disco_mgr.get_service_detector("sip");
+    if (!s_sip)
+        ErrorMessage("appid: failed to initialize sip service detector\n");
+    return s_sip;
+}
+
+SipUdpClientDetector* OdpContext::get_sip_client_detector()
+{
+    SipUdpClientDetector* c_sip = (SipUdpClientDetector*) client_disco_mgr.get_client_detector("SIP");
+    if (!c_sip)
+        ErrorMessage("appid: failed to initialize sip client detector\n");
+    return c_sip;
 }
 
 void OdpContext::add_port_service_id(IpProtocol proto, uint16_t port, AppId appid)

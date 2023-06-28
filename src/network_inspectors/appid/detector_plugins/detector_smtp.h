@@ -51,6 +51,13 @@ public:
     SmtpServiceDetector(ServiceDiscovery*);
 
     int validate(AppIdDiscoveryArgs&) override;
+    void set_client_detector(SmtpClientDetector* c)
+    {
+        smtp_client_detector = c;
+    }
+
+private:
+    SmtpClientDetector* smtp_client_detector = nullptr;
 };
 
 #endif

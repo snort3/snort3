@@ -84,6 +84,8 @@ public:
     static void clear_ftp_service_state();
     static void set_thread_local_ftp_service();
     static void reset_thread_local_ftp_service();
+    ServiceDetector* get_service_detector(const std::string&) const;
+
 private:
     void get_next_service(const snort::Packet*, const AppidSessionDirection dir, AppIdSession&);
     void get_port_based_services(IpProtocol, uint16_t port, AppIdSession&);

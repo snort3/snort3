@@ -108,7 +108,6 @@ SipUdpClientDetector::SipUdpClientDetector(ClientDiscovery* cdm)
         { APP_ID_SIP, APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER },
     };
 
-    SipEventHandler::set_client(this);
     handler->register_detector(name, this, proto);
 }
 
@@ -273,7 +272,6 @@ SipServiceDetector::SipServiceDetector(ServiceDiscovery* sd)
         { SIP_PORT, IpProtocol::TCP, false }
     };
 
-    SipEventHandler::set_service(this);
     handler->register_detector(name, this, proto);
 }
 
@@ -305,9 +303,7 @@ int SipServiceDetector::validate(AppIdDiscoveryArgs& args)
     return APPID_INPROCESS;
 }
 
-SipUdpClientDetector* SipEventHandler::client = nullptr;
 #endif
-SipServiceDetector* SipEventHandler::service = nullptr;
 
 void SipEventHandler::handle(DataEvent& event, Flow* flow)
 {
@@ -345,6 +341,10 @@ void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession& asd,
 {
     AppId client_id = APP_ID_SIP;
     char* client_version = nullptr;
+
+    SipUdpClientDetector* client = pkt_thread_odp_ctxt->get_sip_client_detector();
+    if (!client)
+        return;
 
     ClientSIPData* fd = (ClientSIPData*)client->data_get(asd);
     if ( !fd )
@@ -403,6 +403,10 @@ success:
 void SipEventHandler::service_handler(SipEvent& sip_event, AppIdSession& asd,
     AppidChangeBits& change_bits)
 {
+    SipServiceDetector* service = pkt_thread_odp_ctxt->get_sip_service_detector();
+    if (!service)
+        return;
+
     ServiceSIPData* ss = (ServiceSIPData*)service->data_get(asd);
     if ( !ss )
     {

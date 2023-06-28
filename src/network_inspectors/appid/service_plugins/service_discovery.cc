@@ -163,6 +163,15 @@ unsigned ServiceDiscovery::get_pattern_count()
     return tcp_pattern_count + udp_pattern_count;
 }
 
+ServiceDetector* ServiceDiscovery::get_service_detector(const std::string& name) const
+{
+    auto det = tcp_detectors.find(name);
+    if (det != tcp_detectors.end())
+        return (ServiceDetector*) det->second;
+
+    return nullptr;
+}
+
 int ServiceDiscovery::add_service_port(AppIdDetector* detector, const ServiceDetectorPort& pp)
 {
     ServiceDetector* service = static_cast<ServiceDetector*>(detector);

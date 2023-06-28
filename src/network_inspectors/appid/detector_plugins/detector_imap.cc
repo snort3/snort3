@@ -156,8 +156,6 @@ struct ImapDetectorData
     int need_continue;
 };
 
-static ImapClientDetector* imap_client_detector;
-
 static int isImapTagChar(uint8_t tag)
 {
     /* Per RFC 3501
@@ -493,7 +491,6 @@ static std::array<bool, num_imap_client_patterns> eoc =
 
 ImapClientDetector::ImapClientDetector(ClientDiscovery* cdm)
 {
-    imap_client_detector = this;
     handler = cdm;
     name = "IMAP";
     proto = IpProtocol::TCP;
@@ -860,6 +857,9 @@ ImapServiceDetector::ImapServiceDetector(ServiceDiscovery* sd)
 
 int ImapServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
+    if (!imap_client_detector)
+        return APPID_NOMATCH;
+
     ImapDetectorData* dd;
     ImapServiceData* id;
 

@@ -126,8 +126,6 @@ static const uint8_t APP_SMTP_THUNDERBIRD[] =  "Thunderbird ";
 static const uint8_t APP_SMTP_MOZILLA[] = "Mozilla";
 static const uint8_t APP_SMTP_THUNDERBIRD_SHORT[] = "Thunderbird/";
 
-static SmtpClientDetector* smtp_client_detector;
-
 SmtpClientDetector::SmtpClientDetector(ClientDiscovery* cdm)
 {
     handler = cdm;
@@ -175,7 +173,6 @@ SmtpClientDetector::SmtpClientDetector(ClientDiscovery* cdm)
         { APP_ID_SMTPS, APPINFO_FLAG_CLIENT_ADDITIONAL }
     };
 
-    smtp_client_detector = this;
     handler->register_detector(name, this, proto);
 }
 
@@ -769,6 +766,9 @@ static inline int smtp_validate_reply(const uint8_t* data, uint16_t* offset, uin
 
 int SmtpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
+    if (!smtp_client_detector)
+        return APPID_NOMATCH;
+
     SMTPDetectorData* dd = smtp_client_detector->get_common_data(args.asd);
     if ( !dd )
         return APPID_ENOMEM;

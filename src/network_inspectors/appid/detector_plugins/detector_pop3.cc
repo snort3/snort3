@@ -129,9 +129,6 @@ struct POP3DetectorData
     int need_continue;
 };
 
-static Pop3ClientDetector* pop3_client_detector;
-static Pop3ServiceDetector* pop3_service_detector;
-
 static AppIdFlowContentPattern pop3_client_patterns[] =
 {
     { USER, sizeof(USER)-1,         0, 1, 0 },
@@ -205,7 +202,6 @@ Pop3ClientDetector::Pop3ClientDetector(ClientDiscovery* cdm)
         { APP_ID_POP3S, APPINFO_FLAG_SERVICE_ADDITIONAL | APPINFO_FLAG_CLIENT_USER }
     };
 
-    pop3_client_detector = this;
     handler->register_detector(name, this, proto);
 }
 
@@ -292,7 +288,7 @@ static int pop3_check_line(const uint8_t** data, const uint8_t* end)
     return 1;
 }
 
-static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint16_t size,
+int Pop3ServiceDetector::pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint16_t size,
     AppIdSession& asd, int server, AppidChangeBits& change_bits)
 {
     ServicePOP3Data* pd = &dd->server;
@@ -355,7 +351,7 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
         {
             if (pd->error)
             {
-                pop3_service_detector->add_user(asd, dd->client.username, APP_ID_POP3, false, change_bits);
+                this->add_user(asd, dd->client.username, APP_ID_POP3, false, change_bits);
                 snort_free(dd->client.username);
                 dd->client.username = nullptr;
             }
@@ -363,7 +359,7 @@ static int pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint1
             {
                 if (dd->client.state == POP3_CLIENT_STATE_TRANS)
                 {
-                    pop3_service_detector->add_user(asd, dd->client.username, APP_ID_POP3, true, change_bits);
+                    this->add_user(asd, dd->client.username, APP_ID_POP3, true, change_bits);
                     snort_free(dd->client.username);
                     dd->client.username = nullptr;
                     dd->need_continue = 0;
@@ -567,6 +563,9 @@ POP3DetectorData* Pop3ClientDetector::get_common_data(AppIdSession& asd)
 
 int Pop3ClientDetector::validate(AppIdDiscoveryArgs& args)
 {
+    if (!pop3_service_detector)
+        return APPID_NOMATCH;
+
     const uint8_t* s = args.data;
     const uint8_t* end = (args.data + args.size);
     unsigned length;
@@ -583,7 +582,7 @@ int Pop3ClientDetector::validate(AppIdDiscoveryArgs& args)
 
     if (args.dir == APP_ID_FROM_RESPONDER)
     {
-        if (pop3_server_validate(dd, args.data, args.size, args.asd, 0, args.change_bits))
+        if (pop3_service_detector->pop3_server_validate(dd, args.data, args.size, args.asd, 0, args.change_bits))
             args.asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
         return APPID_INPROCESS;
     }
@@ -765,13 +764,15 @@ Pop3ServiceDetector::Pop3ServiceDetector(ServiceDiscovery* sd)
         { POP3_PORT, IpProtocol::TCP, false }
     };
 
-    pop3_service_detector = this;
     handler->register_detector(name, this, proto);
 }
 
 
 int Pop3ServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
+    if (!pop3_client_detector)
+        return APPID_NOMATCH;
+
     POP3DetectorData* dd;
     ServicePOP3Data* pd;
 
