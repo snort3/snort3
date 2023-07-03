@@ -1,3 +1,29 @@
+2023-06-29: 3.1.65.0
+
+* analyzer: poison memory segment after msg->data
+* appid: add support for cip multiple service packet
+* appid: check size boundaries before header validation
+* appid: do not use global pointers to service and client detectors for packet processing during reload detectors
+* appid: fix FTP parsing
+* codecs: fix ipv6_mobility parsing
+* codecs: fix tcp options parsing
+* detection: update condition since the negated stuff can be matched in such cases
+* file_api: avoid file cache lookup after creating new file cache entry.
+* icmp6: allow rules to match packet data after header
+* ips_content: add flag for non-default value of depth
+* ips_content: clean-up of function
+* ips_content: make the negated content be opposite to normal content
+* ips_content: update condition checks
+* log: fix out-of-bounds read access
+* netflow: fix raw data conversion
+* parser: base service_only on services not cursor type
+* profiler: fix date related problems in rule_profiling json output
+* protocols: remove of unnecessary old_opt check
+* regex: clear flags reused by module to construct ips option
+* rna: fix icmpv6 decoding
+* thread_config: added thread level mempolicy
+* utils: fix out-of-bound access
+
 2023-06-15: 3.1.64.0
 
 * appid: always publish a change message after do not decrypt

@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.64.0 2023-06-15 21:19:45 EDT TST
+Revision 3.1.65.0 2023-06-29 22:24:14 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1063,14 +1063,13 @@ Optional:
     received
   * lzma >= 5.1.2 from http://tukaani.org/xz/ for decompression of
     SWF and PDF files
-  * numa from https://github.com/numactl/numactl for NUMA memory management
   * safec >= 3.5 from https://github.com/rurban/safeclib/ for runtime
     bounds checks on certain legacy C-library calls
   * source-highlight from http://www.gnu.org/software/src-highlite/
     to generate the dev guide
   * w3m from http://sourceforge.net/projects/w3m/ to build the plain
     text manual
-  * uuid from uuid-dev package for unique identifiers 
+  * uuid from uuid-dev package for unique identifiers
 
 
 3.2. Building

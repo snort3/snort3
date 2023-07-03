@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.64.0 2023-06-15 21:19:24 EDT TST
+Revision 3.1.65.0 2023-06-29 22:23:53 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1331,7 +1331,8 @@ Commands:
   * profiler.rule_start(): enable rule profiler
   * profiler.rule_stop(): disable rule profiler
   * profiler.rule_status(): print rule profiler status
-  * profiler.rule_dump(output): print rule statistics
+  * profiler.rule_dump(output): print rule statistics in table or
+    json format (json format prints dates as Unix epoch)
 
 
 2.27. rate_filter
@@ -15581,7 +15582,8 @@ alert is raised by the enhanced JavaScript normalizer.
   * profiler.rule_start(): enable rule profiler
   * profiler.rule_stop(): disable rule profiler
   * profiler.rule_status(): print rule profiler status
-  * profiler.rule_dump(output): print rule statistics
+  * profiler.rule_dump(output): print rule statistics in table or
+    json format (json format prints dates as Unix epoch)
   * reputation.reload(): reload reputation data
   * rna.dump_macs(): dump rna’s internal MAC trackers
   * rna.delete_mac_host(mac): delete a MAC from rna’s MAC cache
