@@ -183,7 +183,7 @@ public:
         ALLOW
     };
     Flow() = default;
-    ~Flow();
+    virtual ~Flow();
 
     Flow(const Flow&) = delete;
     Flow& operator=(const Flow&) = delete;
@@ -366,7 +366,7 @@ public:
         data = nullptr;
     }
 
-    void disable_inspection()
+    virtual void disable_inspection()
     { flags.disable_inspect = true; }
 
     bool is_inspection_disabled() const
