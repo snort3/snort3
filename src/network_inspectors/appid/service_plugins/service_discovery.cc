@@ -637,6 +637,12 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
         }
     }
 
+    if (asd.is_encrypted_oportunistic_tls_session() and asd.encrypted.service_id > 0)
+    {
+        asd.set_service_id(asd.encrypted.service_id, asd.get_odp_ctxt());
+        asd.stop_service_inspection(p, direction);
+    }
+
     //stop inspection as soon as tp has classified a valid AppId later in the session
     if ( tp_app_id > APP_ID_NONE and
          asd.service_disco_state == APPID_DISCO_STATE_STATEFUL and

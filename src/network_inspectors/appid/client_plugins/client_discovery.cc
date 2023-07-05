@@ -333,6 +333,13 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
         }
     }
 
+    if (asd.is_encrypted_oportunistic_tls_session() and asd.encrypted.client_id > 0)
+    {
+        asd.set_client_id(asd.encrypted.client_id);
+        asd.set_client_detected();
+        asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
+    }
+
     if (asd.client_disco_state == APPID_DISCO_STATE_STATEFUL)
     {
         if (asd.client_candidates.empty() and tp_app_id > APP_ID_NONE and

@@ -425,7 +425,7 @@ static int imap_server_validate(ImapDetectorData* dd, const uint8_t* data, uint1
         if (id->flags & IMAP_FLAG_RESULT_OK)
         {
             // FIXIT-L - this may be called from server side
-            //add_app(asd, APP_ID_IMAPS, APP_ID_IMAPS, nullptr);
+            detector->add_app(asd, APP_ID_IMAPS, APP_ID_IMAPS, nullptr, change_bits);
             asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
         }
         else

@@ -713,6 +713,11 @@ public:
         return cip_msp;
     }
 
+    inline bool is_encrypted_oportunistic_tls_session()
+    {
+        return get_session_flags(APPID_SESSION_OPPORTUNISTIC_TLS) and !flow->flags.data_decrypted;
+    }
+    
 private:
     uint16_t prev_httpx_raw_packet = 0;
 
