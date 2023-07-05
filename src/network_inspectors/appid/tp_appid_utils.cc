@@ -522,7 +522,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
 {
     AppId tp_app_id = asd.get_tp_app_id();
 
-    if (tp_app_id == APP_ID_SSH && asd.get_payload_id() != APP_ID_SFTP &&
+    if ((tp_app_id == APP_ID_SSH or asd.get_service_id() == APP_ID_SSH) && asd.get_payload_id() != APP_ID_SFTP &&
         asd.session_packet_count >= MIN_SFTP_PACKET_COUNT &&
         asd.session_packet_count < MAX_SFTP_PACKET_COUNT)
     {
@@ -599,6 +599,15 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
     {
         hsession = asd.get_http_session();
         assert(hsession);
+    }
+
+    if (tp_app_id == APP_ID_SSH) 
+    {
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s Setting the ignore and early detection flag\n",
+                    appidDebug->get_debug_session());
+         asd.get_odp_ctxt().get_app_info_mgr().set_app_info_flags(tp_app_id, APPINFO_FLAG_IGNORE);
+         asd.set_session_flags(APPID_SESSION_EARLY_SSH_DETECTED);
     }
 
     unsigned app_info_flags = asd.get_odp_ctxt().get_app_info_mgr().get_app_info_flags(tp_app_id,
