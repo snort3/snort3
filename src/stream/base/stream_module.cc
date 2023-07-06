@@ -233,17 +233,21 @@ bool StreamModule::end(const char* fqn, int, SnortConfig* sc)
     return true;
 }
 
-void StreamModule::prep_counts()
+void StreamModule::prep_counts(bool)
 { base_prep(); }
 
-void StreamModule::sum_stats(bool)
-{ base_sum(); }
-
-void StreamModule::show_stats()
-{ base_stats(); }
+void StreamModule::sum_stats(bool dump_stats)
+{
+    Module::sum_stats(dump_stats);
+    if(!dump_stats)
+        base_reset();
+}
 
 void StreamModule::reset_stats()
-{ base_reset(); }
+{ 
+    base_reset();
+    Module::reset_stats();
+}
 
 // Stream handler to adjust allocated resources as needed on a config reload
 bool StreamReloadResourceManager::initialize(const StreamModuleConfig& config_)

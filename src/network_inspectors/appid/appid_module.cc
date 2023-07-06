@@ -588,10 +588,10 @@ PegCount* AppIdModule::get_counts() const
     return (PegCount*)&appid_stats;
 }
 
-void AppIdModule::sum_stats(bool accumulate_now_stats)
+void AppIdModule::sum_stats(bool dump_stats)
 {
     AppIdPegCounts::sum_stats();
-    Module::sum_stats(accumulate_now_stats);
+    Module::sum_stats(dump_stats);
 }
 
 void AppIdModule::show_dynamic_stats()

@@ -149,10 +149,10 @@ const RuleMap* FileIdModule::get_rules() const
     return file_id_rules;
 }
 
-void FileIdModule::sum_stats(bool accumulate_now_stats)
+void FileIdModule::sum_stats(bool dump_stats)
 {
     file_stats_sum();
-    Module::sum_stats(accumulate_now_stats);
+    Module::sum_stats(dump_stats);
 }
 
 bool FileIdModule::set(const char*, Value& v, SnortConfig*)

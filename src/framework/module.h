@@ -144,7 +144,7 @@ public:
     virtual bool counts_need_prep() const
     { return false; }
 
-    virtual void prep_counts() { }
+    virtual void prep_counts(bool) { }
 
     // counts and profile are thread local
     virtual PegCount* get_counts() const
@@ -169,7 +169,7 @@ public:
     virtual bool global_stats() const
     { return false; }
 
-    virtual void sum_stats(bool accumulate_now_stats);
+    virtual void sum_stats(bool dump_stats);
     virtual void show_interval_stats(IndexVec&, FILE*);
     virtual void show_stats();
     virtual void reset_stats();
@@ -202,11 +202,14 @@ protected:
     void set_params(const Parameter* p)
     { params = p; }
 
+    bool dump_stats_initialized = false;
+
 private:
     friend ModuleManager;
     void init(const char*, const char* = nullptr);
 
     std::vector<PegCount> counts;
+    std::vector<PegCount> dump_stats_counts;
     int num_counts = -1;
 
     const char* name;
@@ -216,23 +219,38 @@ private:
     bool list;
     int table_level = 0;
 
-    void set_peg_count(int index, PegCount value)
+    void set_peg_count(int index, PegCount value, bool dump_stats = false)
     {
         assert(index < num_counts);
-        counts[index] = value;
-    }
-
-    void set_max_peg_count(int index, PegCount value)
-    {
-        assert(index < num_counts);
-        if(value > counts[index])
+        if(dump_stats)
+            dump_stats_counts[index] = value;
+        else
             counts[index] = value;
     }
 
-    void add_peg_count(int index, PegCount value)
+    void set_max_peg_count(int index, PegCount value, bool dump_stats = false)
     {
         assert(index < num_counts);
-        counts[index] += value;
+        if(dump_stats)
+        {
+            if(value > dump_stats_counts[index])
+                dump_stats_counts[index] = value;
+        }
+        else
+        {
+            if(value > counts[index])
+                counts[index] = value;
+        }
+    }
+
+    void add_peg_count(int index, PegCount value, bool dump_stats = false)
+    {
+        assert(index < num_counts);
+        if(dump_stats)
+            dump_stats_counts[index] += value;
+        else
+            counts[index] += value;
+            
     }
 };
 }

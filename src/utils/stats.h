@@ -109,7 +109,7 @@ SO_PUBLIC void LogStat(const char*, uint64_t n, uint64_t tot, FILE* = stdout);
 SO_PUBLIC void LogStat(const char*, double, FILE* = stdout);
 }
 
-void sum_stats(PegCount* sums, PegCount* counts, unsigned n);
+void sum_stats(PegCount* sums, PegCount* counts, unsigned n, bool dump_stats = false);
 void show_stats(PegCount*, const PegInfo*, const char* module_name = nullptr);
 void show_stats(PegCount*, const PegInfo*, unsigned n, const char* module_name = nullptr);
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char* module_name, FILE*);

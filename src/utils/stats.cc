@@ -303,12 +303,13 @@ void PrintStatistics()
 //-------------------------------------------------------------------------
 
 void sum_stats(
-    PegCount* gpegs, PegCount* tpegs, unsigned n)
+    PegCount* gpegs, PegCount* tpegs, unsigned n, bool dump_stats)
 {
     for ( unsigned i = 0; i < n; ++i )
     {
         gpegs[i] += tpegs[i];
-        tpegs[i] = 0;
+        if(!dump_stats)
+            tpegs[i] = 0;
     }
 }
 

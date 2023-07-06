@@ -1431,7 +1431,7 @@ PegCount* ModuleManager::get_stats(const char* name)
     ModHook* mh = get_hook(name);
 
     if ( mh )
-        pc = &mh->mod->counts[0];
+        pc = &mh->mod->dump_stats_counts[0];
 
     return pc;
 }
@@ -1464,7 +1464,7 @@ void ModuleManager::accumulate(const char* except)
             continue;
 
         lock_guard<mutex> lock(stats_mutex);
-        mh->mod->prep_counts();
+        mh->mod->prep_counts(true);
         mh->mod->sum_stats(true);
     }
 }
@@ -1475,7 +1475,7 @@ void ModuleManager::accumulate_module(const char* name)
     if ( mh )
     {
         lock_guard<mutex> lock(stats_mutex);
-        mh->mod->prep_counts();
+        mh->mod->prep_counts(true);
         mh->mod->sum_stats(true);
     }
 }

@@ -85,7 +85,7 @@ void Module::clear_global_active_counters()
     }
 }
 
-void Module::sum_stats(bool accumulate_now_stats)
+void Module::sum_stats(bool dump_stats)
 {
     if ( num_counts < 0 )
         reset_stats();
@@ -97,11 +97,17 @@ void Module::sum_stats(bool accumulate_now_stats)
         return;
 
     assert(q);
+    if(dump_stats && !dump_stats_initialized)
+    {
+        for (unsigned long i=0; i<counts.size(); i++)
+            dump_stats_counts[i] = counts[i];
+        dump_stats_initialized = true;
+    }
 
     if ( global_stats() )
     {
         for ( int i = 0; i < num_counts; i++ )
-            set_peg_count(i, p[i]);
+            set_peg_count(i, p[i], dump_stats);
     }
     else
     {
@@ -113,17 +119,18 @@ void Module::sum_stats(bool accumulate_now_stats)
                 break;
 
             case CountType::SUM:
-                add_peg_count(i, p[i]);
-                p[i] = 0;
+                add_peg_count(i, p[i], dump_stats);
+                if(!dump_stats)
+                    p[i] = 0;
                 break;
 
             case CountType::NOW:
-                if ( accumulate_now_stats )
-                    add_peg_count(i, p[i]);
+                if ( dump_stats )
+                    add_peg_count(i, p[i], dump_stats);
                 break;
 
             case CountType::MAX:
-                set_max_peg_count(i, p[i]);
+                set_max_peg_count(i, p[i], dump_stats);
                 break;
             }
         }
@@ -139,7 +146,10 @@ void Module::show_interval_stats(IndexVec& peg_idxs, FILE* fh)
 void Module::show_stats()
 {
     if ( num_counts > 0 )
-        ::show_stats(&counts[0], get_pegs(), num_counts, get_name());
+    {
+        ::show_stats(&dump_stats_counts[0], get_pegs(), num_counts, get_name());
+        dump_stats_initialized = false;
+    }
 }
 
 void Module::reset_stats()
@@ -162,11 +172,13 @@ void Module::reset_stats()
             ++num_counts;
 
         counts.resize(num_counts);
+        dump_stats_counts.resize(num_counts);
     }
 
     for ( int i = 0; i < num_counts; i++ )
     {
         counts[i] = 0;
+        dump_stats_counts[i] = 0;
 
         if ( pegs[i].type != CountType::NOW )
             p[i] = 0;

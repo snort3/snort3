@@ -55,11 +55,8 @@ THREAD_LOCAL FlowControl* flow_con = nullptr;
 std::vector<FlowControl *> crash_dump_flow_control;
 static std::mutex crash_dump_flow_control_mutex;
 
-static BaseStats g_stats;
 THREAD_LOCAL BaseStats stream_base_stats;
-THREAD_LOCAL PegCount current_flows_prev;
-THREAD_LOCAL PegCount uni_flows_prev;
-THREAD_LOCAL PegCount uni_ip_flows_prev;
+
 
 // FIXIT-L dependency on stats define in another file
 const PegInfo base_pegs[] =
@@ -130,29 +127,8 @@ void base_prep()
     }
 }
 
-void base_sum()
+void base_reset()
 {
-    sum_stats((PegCount*)&g_stats, (PegCount*)&stream_base_stats,
-        array_size(base_pegs) - 1 - NOW_PEGS_NUM);
-
-    g_stats.current_flows += (int64_t)stream_base_stats.current_flows - (int64_t)current_flows_prev;
-    g_stats.uni_flows += (int64_t)stream_base_stats.uni_flows - (int64_t)uni_flows_prev;
-    g_stats.uni_ip_flows += (int64_t)stream_base_stats.uni_ip_flows - (int64_t)uni_ip_flows_prev;
-
-    base_reset(false);
-}
-
-void base_stats()
-{
-    show_stats((PegCount*)&g_stats, base_pegs, array_size(base_pegs) - 1, MOD_NAME);
-}
-
-void base_reset(bool reset_all)
-{
-    current_flows_prev = stream_base_stats.current_flows;
-    uni_flows_prev = stream_base_stats.uni_flows;
-    uni_ip_flows_prev = stream_base_stats.uni_ip_flows;
-
     memset(&stream_base_stats, 0, sizeof(stream_base_stats));
 
     if ( flow_con )
@@ -162,9 +138,6 @@ void base_reset(bool reset_all)
         if ( exp_cache )
             exp_cache->reset_stats();
     }
-
-    if ( reset_all )
-        memset(&g_stats, 0, sizeof(g_stats));
 }
 
 //-------------------------------------------------------------------------

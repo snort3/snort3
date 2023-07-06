@@ -209,6 +209,7 @@ const PegInfo daq_names[] =
 };
 
 THREAD_LOCAL DAQStats daq_stats;
+static THREAD_LOCAL DAQ_Stats_t prev_daq_stats;
 
 const PegInfo* SFDAQModule::get_pegs() const
 {
@@ -236,9 +237,8 @@ static DAQ_Stats_t operator-(const DAQ_Stats_t& left, const DAQ_Stats_t& right)
     return ret;
 }
 
-void SFDAQModule::prep_counts()
+void SFDAQModule::prep_counts(bool dump_stats)
 {
-    static THREAD_LOCAL DAQ_Stats_t prev_daq_stats;
 
     if ( SFDAQ::get_local_instance() == nullptr )
         return;
@@ -269,11 +269,17 @@ void SFDAQModule::prep_counts()
     else
         daq_stats.outstanding = 0;
 
-    prev_daq_stats = new_daq_stats;
+    if(!dump_stats)
+        prev_daq_stats = new_daq_stats;
 }
 
 void SFDAQModule::reset_stats()
 {
+    if ( SFDAQ::get_local_instance() != nullptr )
+    {
+        DAQ_Stats_t new_daq_stats = *SFDAQ::get_stats();
+        prev_daq_stats = new_daq_stats;
+    }
     Trough::clear_file_count();
     Module::reset_stats();
 }

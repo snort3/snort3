@@ -50,7 +50,7 @@ BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf, PERF_NAME "_base"
 void BaseTracker::process(bool summary)
 {
     for ( Module* mod : mods_to_prep )
-        mod->prep_counts();
+        mod->prep_counts(false);
 
     write();
 

@@ -476,7 +476,7 @@ const PegInfo* HostCacheModule::get_pegs() const
 PegCount* HostCacheModule::get_counts() const
 { return (PegCount*)host_cache.get_counts(); }
 
-void HostCacheModule::sum_stats(bool accumulate_now_stats)
+void HostCacheModule::sum_stats(bool dump_stats)
 {
     host_cache.lock();
     // These could be set in prep_counts but we set them here
@@ -484,7 +484,7 @@ void HostCacheModule::sum_stats(bool accumulate_now_stats)
     host_cache.stats.bytes_in_use = host_cache.current_size;
     host_cache.stats.items_in_use = host_cache.list.size();
 
-    Module::sum_stats(accumulate_now_stats);
+    Module::sum_stats(dump_stats);
     host_cache.unlock();
 }
 
