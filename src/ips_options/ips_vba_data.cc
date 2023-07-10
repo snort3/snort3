@@ -39,6 +39,9 @@ IpsOption::EvalStatus VbaDataOption::eval(Cursor& c, Packet* p)
 {
     RuleProfile profile(vbaDataPerfStats);
 
+    if (!p->flow or !p->flow->gadget)
+        return NO_MATCH;
+
     InspectionBuffer buf;
     if (!p->flow->gadget->get_fp_buf(buf.IBT_VBA, p, buf)) 
         return NO_MATCH;
@@ -147,3 +150,37 @@ const BaseApi* ips_vba_data[] =
     nullptr
 };
 
+//-------------------------------------------------------------------------
+// UNIT TESTS
+//-------------------------------------------------------------------------
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+TEST_CASE("vba_data test", "[ips_vba_data]")
+{
+    VbaDataOption vba_data_opt;
+    Packet p;
+    p.data = (const uint8_t*) "foo";
+    p.dsize = strlen((const char*) p.data);
+
+    SECTION("null flow")
+    {
+        p.flow = nullptr;
+
+        Cursor c(&p);
+        REQUIRE(vba_data_opt.eval(c, &p) == IpsOption::NO_MATCH);
+    }
+
+    SECTION("null gadget")
+    {
+        Flow f;
+        p.flow = &f;
+        p.flow->gadget = nullptr;
+
+        Cursor c(&p);
+        REQUIRE(vba_data_opt.eval(c, &p) == IpsOption::NO_MATCH);
+    }
+}
+
+#endif
