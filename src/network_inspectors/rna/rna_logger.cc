@@ -248,6 +248,7 @@ bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_
     }
 
     EventManager::call_loggers(nullptr, const_cast<Packet*>(p), "RNA", &rle);
+    ++rna_stats.total_events_in_interval;
 
 #ifdef DEBUG_MSGS
     rna_logger_message(rle, p);

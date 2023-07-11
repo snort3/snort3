@@ -32,6 +32,7 @@ void RnaAppidEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.appid_change;
+    update_rna_pkt_stats(event);
     pnd.analyze_appid_changes(event);
 }
 
@@ -39,6 +40,7 @@ void RnaIcmpBidirectionalEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.icmp_bidirectional;
+    update_rna_pkt_stats(event);
     pnd.analyze_flow_icmp(event.get_packet());
 }
 
@@ -46,6 +48,7 @@ void RnaIcmpNewFlowEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.icmp_new;
+    update_rna_pkt_stats(event);
     pnd.analyze_flow_icmp(event.get_packet());
 }
 
@@ -53,6 +56,7 @@ void RnaIpBidirectionalEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.ip_bidirectional;
+    update_rna_pkt_stats(event);
     pnd.analyze_flow_ip(event.get_packet());
 }
 
@@ -60,6 +64,7 @@ void RnaIpNewFlowEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.ip_new;
+    update_rna_pkt_stats(event);
     pnd.analyze_flow_ip(event.get_packet());
 }
 
@@ -67,6 +72,7 @@ void RnaTcpSynEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.tcp_syn;
+    update_rna_pkt_stats(event);
     pnd.analyze_flow_tcp(event.get_packet(), TcpPacketType::SYN);
 }
 
@@ -74,6 +80,7 @@ void RnaTcpSynAckEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.tcp_syn_ack;
+    update_rna_pkt_stats(event);
     pnd.analyze_flow_tcp(event.get_packet(), TcpPacketType::SYN_ACK);
 }
 
@@ -81,6 +88,7 @@ void RnaTcpMidstreamEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.tcp_midstream;
+    update_rna_pkt_stats(event);
     pnd.analyze_flow_tcp(event.get_packet(), TcpPacketType::MIDSTREAM);
 }
 
@@ -88,6 +96,7 @@ void RnaUdpBidirectionalEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.udp_bidirectional;
+    update_rna_pkt_stats(event);
     pnd.analyze_flow_udp(event.get_packet());
 }
 
@@ -95,14 +104,15 @@ void RnaUdpNewFlowEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.udp_new;
+    update_rna_pkt_stats(event);
     pnd.analyze_flow_udp(event.get_packet());
 }
 
 void RnaIdleEventHandler::handle(DataEvent& event, Flow*)
 {
-    UNUSED(event);
     Profile profile(rna_perf_stats);
     ++rna_stats.change_host_update;
+    update_rna_pkt_stats(event);
     pnd.generate_change_host_update();
 }
 
@@ -110,6 +120,7 @@ void RnaDHCPInfoEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.dhcp_info;
+    update_rna_pkt_stats(event);
     pnd.add_dhcp_info(event);
 }
 
@@ -117,6 +128,7 @@ void RnaDHCPDataEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.dhcp_data;
+    update_rna_pkt_stats(event);
     pnd.analyze_dhcp_fingerprint(event);
 }
 
@@ -124,6 +136,7 @@ void RnaFpSMBEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.smb;
+    update_rna_pkt_stats(event);
     pnd.analyze_smb_fingerprint(event);
 }
 
@@ -131,6 +144,7 @@ void RnaCPEOSInfoEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.cpe_os;
+    update_rna_pkt_stats(event);
     pnd.analyze_cpe_os_info(event);
 }
 
@@ -138,5 +152,6 @@ void RnaNetFlowEventHandler::handle(DataEvent& event, Flow*)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.netflow_record;
+    update_rna_pkt_stats(event);
     pnd.analyze_netflow(event);
 }

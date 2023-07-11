@@ -134,6 +134,7 @@ void RnaInspector::eval(Packet* p)
 {
     Profile profile(rna_perf_stats);
     ++rna_stats.other_packets;
+    update_rna_pkt_stats(p);
 
     assert( !p->flow );
     assert( !(BIT((unsigned)p->type()) & PROTO_BIT__ANY_SSN) );
