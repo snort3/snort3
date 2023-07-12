@@ -780,6 +780,7 @@ void Binder::handle_flow_service_change(Flow& flow)
             {
                 flow.set_gadget(ins);
                 flow.ssn_state.snort_protocol_id = ins->get_service();
+                flow.clear_session_flags(SSNFLAG_ABORT_CLIENT | SSNFLAG_ABORT_SERVER);
                 if (data and data != flow.data)
                 {
                     if (flow.data)
