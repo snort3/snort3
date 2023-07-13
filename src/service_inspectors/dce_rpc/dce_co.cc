@@ -1418,7 +1418,7 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             if ( from_client )
                 dce_common_stats->co_cli_seg_reassembled++;
             else
-                dce_common_stats->co_cli_seg_reassembled++;
+                dce_common_stats->co_srv_seg_reassembled++;
         }
 
         *co_hdr = (const DceRpcCoHdr*)rpkt->data;
