@@ -69,25 +69,38 @@ enum LuaLogLevels
     LUA_LOG_TRACE = 5,
 };
 
-static std::unordered_map<AppId, CHPApp*>* CHP_glossary = nullptr; // tracks http multipatterns
+static CHPGlossary* CHP_glossary = nullptr; // tracks http multipatterns
+static CHPGlossary* old_CHP_glossary = nullptr;
 
 void init_chp_glossary()
 {
-    CHP_glossary = new std::unordered_map<AppId, CHPApp*>;
+    if(CHP_glossary)
+        old_CHP_glossary = CHP_glossary;
+    CHP_glossary = new CHPGlossary;
 }
 
-void free_chp_glossary()
+static void free_chp_glossary(CHPGlossary*& glossary)
 {
-    if (!CHP_glossary)
+
+    if (!glossary)
         return;
 
-    for (auto& entry : *CHP_glossary)
+    for (auto& entry : *glossary)
     {
         if (entry.second)
             snort_free(entry.second);
     }
-    delete CHP_glossary;
-    CHP_glossary = nullptr;
+    delete glossary;
+    glossary = nullptr;
+}
+
+void free_current_chp_glossary(){
+    free_chp_glossary(CHP_glossary);
+}
+
+void free_old_chp_glossary()
+{
+    free_chp_glossary(old_CHP_glossary);
 }
 
 static inline int convert_string_to_address(const char* string, SfIp* address)

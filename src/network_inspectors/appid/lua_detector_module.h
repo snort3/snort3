@@ -58,6 +58,7 @@ public:
     static void initialize(const snort::SnortConfig*, AppIdContext&, bool is_control=false,
         bool reload=false);
     static void init_thread_manager(const snort::SnortConfig*, const AppIdContext&);
+    static void cleanup_after_swap();
     static void clear_lua_detector_mgrs();
 
     void set_detector_flow(DetectorFlow* df)
@@ -69,6 +70,12 @@ public:
     {
         return detector_flow;
     }
+
+    void set_ignore_chp_cleanup(bool value)
+    {
+        ignore_chp_cleanup = value;
+    }
+
     void free_detector_flow();
     lua_State* L;
     bool insert_cb_detector(AppId app_id, LuaObject* ud);
@@ -88,6 +95,7 @@ private:
     size_t num_odp_detectors = 0;
     std::map<AppId, LuaObject*> cb_detectors;
     DetectorFlow* detector_flow = nullptr;
+    bool ignore_chp_cleanup = false;
 };
 
 #endif

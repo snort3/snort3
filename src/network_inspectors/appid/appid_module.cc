@@ -269,6 +269,7 @@ ACOdpContextSwap::~ACOdpContextSwap()
     odp_ctxt.get_app_info_mgr().cleanup_appid_info_table();
     delete &odp_ctxt;
     AppIdContext& ctxt = inspector.get_ctxt();
+    LuaDetectorManager::cleanup_after_swap();
     if (ctxt.config.app_detector_dir)
     {
         std::string file_path = std::string(ctxt.config.app_detector_dir) + "/custom/userappid.conf";
@@ -405,6 +406,7 @@ static int reload_detectors(lua_State* L)
     LuaDetectorManager::clear_lua_detector_mgrs();
     ctxt.create_odp_ctxt();
     assert(odp_thread_local_ctxt);
+    odp_thread_local_ctxt->get_lua_detector_mgr().set_ignore_chp_cleanup(true);
     delete odp_thread_local_ctxt;
     odp_thread_local_ctxt = new OdpThreadContext;
 

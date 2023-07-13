@@ -155,10 +155,13 @@ public:
     { return cd; }
 };
 
+typedef std::unordered_map<AppId, CHPApp*> CHPGlossary;
+
 int register_detector(lua_State*);
 void init_chp_glossary();
 int init(lua_State*, int result=0);
-void free_chp_glossary();
+void free_current_chp_glossary();
+void free_old_chp_glossary();
 
 void check_detector_callback(const snort::Packet& p, AppIdSession& asd, AppidSessionDirection dir,
     AppId app_id, AppidChangeBits& change_bits, AppInfoTableEntry* entry = nullptr);
