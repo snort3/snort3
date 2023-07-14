@@ -99,6 +99,7 @@ protected:
     bool fin_acked_no_gap(const TcpSegmentNode&, const TcpReassemblerState&);
     void update_next(TcpReassemblerState&, const TcpSegmentNode&);
     void update_skipped_bytes(uint32_t, TcpReassemblerState&);
+    void check_first_segment_hole(TcpReassemblerState&);
     bool has_seglist_hole(TcpReassemblerState&, TcpSegmentNode&, PAF_State&, uint32_t& total,
         uint32_t& flags);
     void skip_seglist_hole(TcpReassemblerState&, snort::Packet*, uint32_t flags,

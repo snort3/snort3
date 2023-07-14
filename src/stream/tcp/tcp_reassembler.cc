@@ -972,12 +972,26 @@ void TcpReassembler::fallback(TcpStreamTracker& tracker, bool server_side)
     }
 }
 
+void TcpReassembler::check_first_segment_hole(TcpReassemblerState& trs)
+{
+    if ( SEQ_LT(trs.sos.seglist_base_seq, trs.sos.seglist.head->c_seq)
+        and SEQ_EQ(trs.sos.seglist_base_seq, trs.tracker->rcv_nxt) )
+        {
+            trs.sos.seglist_base_seq = trs.sos.seglist.head->c_seq;
+            trs.tracker->rcv_nxt = trs.tracker->r_win_base;
+            trs.paf_state.paf = StreamSplitter::START;
+        }
+}
+
 bool TcpReassembler::has_seglist_hole(TcpReassemblerState& trs, TcpSegmentNode& tsn, PAF_State& ps,
     uint32_t& total, uint32_t& flags)
 {
     if ( !tsn.prev or SEQ_GEQ(tsn.prev->c_seq + tsn.prev->c_len, tsn.c_seq) or
         SEQ_GEQ(tsn.c_seq, trs.tracker->r_win_base) )
-        return false;
+        {
+            check_first_segment_hole(trs);
+            return false;
+        }
 
     // safety - prevent seq + total < seq
     if ( total > 0x7FFFFFFF )
