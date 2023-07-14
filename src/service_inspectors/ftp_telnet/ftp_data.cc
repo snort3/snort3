@@ -311,9 +311,6 @@ void FtpData::eval(Packet* p)
     // precondition - what we registered for
     assert(p->has_tcp_data());
 
-    if (FileService::get_max_file_depth() < 0)
-        return;
-
     SnortFTPData(p);
     ++fdstats.total_packets;
 }
