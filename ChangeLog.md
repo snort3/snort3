@@ -1,3 +1,19 @@
+2023-07-14: 3.1.66.0
+
+* appid: cache Complex HTTP Pattern glossary before detectors reload
+* appid: early detection of ssh and ignoring third-party detection
+* appid: fix for opportunistic tls detected as ssl
+* binder: in case of a service change, remove flags indicating an abort of the direction
+* flow: changes to support derived classes of parent class Flow
+* ftp: remove file_data dependency on file_id
+* helpers: added additional log in print_backtrace for debugging purpose
+* ips_options: add gadget check for vba_data
+* ips_options: add unit tests for vba_data
+* ips_options: update dev_notes about IPS options input values
+* perf_mon: fix dump_stats collision with perf mon
+* rna: add stats for rna graphs
+* stream_tcp: validate proper update of stream_tcp state when seglist head follows a hole
+
 2023-06-29: 3.1.65.0
 
 * analyzer: poison memory segment after msg->data

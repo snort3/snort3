@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.65.0 2023-06-29 22:23:53 EDT TST
+Revision 3.1.66.0 2023-07-14 16:06:42 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -5147,6 +5147,9 @@ Peg counts:
   * rna.dhcp_info: count of new DHCP lease events received (sum)
   * rna.smb: count of new SMB events received (sum)
   * rna.netflow_record: count of netflow record events received (sum)
+  * rna.total_events_in_interval: count of RNA events generated (sum)
+  * rna.total_packets_in_interval: count of packets processed (sum)
+  * rna.total_bytes_in_interval: count of bytes processed (sum)
 
 
 5.40. rpc_decode
@@ -11899,6 +11902,9 @@ libraries see the Getting Started section of the manual.
   * rna.tcp_midstream: count of TCP midstream packets received (sum)
   * rna.tcp_syn_ack: count of TCP SYN-ACK packets received (sum)
   * rna.tcp_syn: count of TCP SYN packets received (sum)
+  * rna.total_bytes_in_interval: count of bytes processed (sum)
+  * rna.total_events_in_interval: count of RNA events generated (sum)
+  * rna.total_packets_in_interval: count of packets processed (sum)
   * rna.udp_bidirectional: count of bidirectional UDP flows received
     (sum)
   * rna.udp_new: count of new UDP flows received (sum)
