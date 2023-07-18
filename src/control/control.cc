@@ -78,33 +78,35 @@ void ControlConn::configure() const
     ModuleManager::load_commands(shell);
 }
 
-void ControlConn::log_command(const std::string& command, bool log) 
+void ControlConn::log_command(const std::string& command, bool log)
 {
-    if(command.empty())
+    if (command.empty())
         return;
-    
+
     auto it = std::find(log_exclusion_list.begin(), log_exclusion_list.end(), command);
-    if (log) 
+    if (log)
     {
-        if (it != log_exclusion_list.end()) 
+        if (it != log_exclusion_list.end())
             log_exclusion_list.erase(it);
-    } else 
+    }
+    else
     {
-        if (it == log_exclusion_list.end()) 
+        if (it == log_exclusion_list.end())
             log_exclusion_list.push_back(command);
     }
 }
 
 bool ControlConn::loggable(const std::string& command)
 {
-    if(log_exclusion_list.empty() or command.empty())
+    if (log_exclusion_list.empty() or command.empty())
         return true;
-    
-    for (const auto& m : log_exclusion_list) 
+
+    for (const auto& m : log_exclusion_list)
     {
         if (command.find(m) != std::string::npos)
             return false;
     }
+
     return true;
 }
 
@@ -122,13 +124,14 @@ int ControlConn::read_commands()
         while ((nl = strchr(p, '\n')) != nullptr)
         {
             next_command.append(buf, nl - p);
-            if(loggable(next_command))
+            if (loggable(next_command))
                 LogMessage("Control: received command, %s\n", next_command.c_str());
             pending_commands.push(std::move(next_command));
             next_command.clear();
             p = nl + 1;
             commands_found++;
         }
+
         if (*p != '\0')
             next_command.append(p);
         else if (local)
@@ -145,14 +148,19 @@ int ControlConn::read_commands()
         ErrorMessage("Error reading from control descriptor: %s\n", get_error(errno));
         return -1;
     }
+
     if (n == 0 && commands_found == 0)
         return -1;
+
     touch();
+
     return commands_found;
 }
 
 void ControlConn::set_user_network_policy()
-{ shell->set_user_network_policy(); }
+{
+    shell->set_user_network_policy();
+}
 
 int ControlConn::execute_commands()
 {
@@ -214,8 +222,10 @@ bool ControlConn::respond(const char* format, va_list& ap)
 {
     char buf[STD_BUF];
     int response_len = vsnprintf(buf, sizeof(buf), format, ap);
+
     if (response_len < 0 || response_len == sizeof(buf))
         return false;
+
     buf[response_len] = '\0';
 
     int bytes_written = 0;
@@ -233,7 +243,9 @@ bool ControlConn::respond(const char* format, va_list& ap)
         else
             bytes_written += n;
     }
+
     touch();
+
     return true;
 }
 

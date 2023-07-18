@@ -56,7 +56,9 @@ static std::unordered_map<int, ControlConn*> controls;
 
 #define READY 1
 #define DEAD  2
-struct FdEvents{
+
+struct FdEvents
+{
     int fd;
     unsigned flag;
 };
@@ -214,21 +216,24 @@ static bool poll_control_fds(FdEvents ready[MAX_CONTROL_FDS], unsigned& nready)
             ErrorMessage("Failed to poll control descriptors: %s\n", get_error(errno));
         return false;
     }
-    nready = ret;
-    for (unsigned i = 0; i < ret; i++)
+    nready = 0;
+    for (int i = 0; i < npfds; i++)
     {
         struct pollfd* pfd = &pfds[i];
         int fd = pfd->fd;
-        ready[i].fd = fd;
-        ready[i].flag = 0;
+        ready[nready].fd = fd;
+        ready[nready].flag = 0;
         if (pfd->revents & (POLLHUP | POLLERR | POLLNVAL))
         {
             if (pfd->revents & (POLLERR | POLLNVAL))
                 ErrorMessage("Failed to poll control descriptor %d!\n", fd);
-            ready[i].flag |= DEAD;
+            ready[nready].flag |= DEAD;
         }
         if (pfd->revents & POLLIN)
-            ready[i].flag |= READY;
+            ready[nready].flag |= READY;
+
+        if (ready[nready].flag)
+            ++nready;
     }
     return true;
 }
