@@ -59,7 +59,7 @@ using namespace snort;
 THREAD_LOCAL ProfileStats sslPerfStats;
 THREAD_LOCAL SslStats sslstats;
 
-static unsigned ssl_chello_pub_id = 0;
+static unsigned pub_id = 0;
 
 const PegInfo ssl_peg_names[] =
 {
@@ -309,13 +309,21 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
     uint8_t heartbleed_type = 0;
     uint32_t info_flags = 0;
     SSLV3ClientHelloData client_hello_data;
+    SSLV3ServerCertData server_cert_data;
     uint32_t new_flags = SSL_decode(p->data, (int)p->dsize, p->packet_flags, sd->ssn_flags,
-        &heartbleed_type, &(sd->partial_rec_len[dir+index]), config->max_heartbeat_len, &info_flags, &client_hello_data);
+        &heartbleed_type, &(sd->partial_rec_len[dir+index]), config->max_heartbeat_len, &info_flags, &client_hello_data,
+        &server_cert_data);
 
     if (client_hello_data.host_name != nullptr)
     {
         SslClientHelloEvent event(client_hello_data.host_name, p);
-        DataBus::publish(ssl_chello_pub_id, SslEventIds::CHELLO_SERVER_NAME, event);
+        DataBus::publish(pub_id, SslEventIds::CHELLO_SERVER_NAME, event);
+    }
+
+    if (server_cert_data.common_name != nullptr)
+    {
+        SslServerCommonNameEvent event(server_cert_data.common_name, p);
+        DataBus::publish(pub_id, SslEventIds::SERVER_COMMON_NAME, event);
     }
 
     if (heartbleed_type & SSL_HEARTBLEED_REQUEST)
@@ -500,7 +508,7 @@ void Ssl::eval(Packet* p)
 
 bool Ssl::configure(SnortConfig*)
 {
-    ssl_chello_pub_id = DataBus::get_id(ssl_chello_pub_key);
+    pub_id = DataBus::get_id(ssl_pub_key);
 
     DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::FINALIZE_PACKET, new SslFinalizePacketHandler());
     DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::OPPORTUNISTIC_TLS, new SslStartTlsEventtHandler());

@@ -25,9 +25,18 @@
 
 #include "framework/data_bus.h"
 
-struct  SslEventIds { enum : unsigned { CHELLO_SERVER_NAME, num_ids }; };
+struct SslEventIds
+{
+    enum : unsigned
+    {
+        CHELLO_SERVER_NAME,
+        SERVER_COMMON_NAME,
+    
+        num_ids
+    };
+};
 
-const snort::PubKey ssl_chello_pub_key { "ssl_chello", SslEventIds::num_ids };
+const snort::PubKey ssl_pub_key { "ssl", SslEventIds::num_ids };
 
 class SslClientHelloEvent : public snort::DataEvent
 {
@@ -44,6 +53,24 @@ public:
 
 private:
     const std::string ch_server_name;
+    const snort::Packet* packet;
+};
+
+class SslServerCommonNameEvent : public snort::DataEvent
+{
+public:
+    SslServerCommonNameEvent(const std::string& server_common_name, const snort::Packet* packet) :
+        server_common_name(server_common_name), packet(packet)
+        { }
+
+    const snort::Packet* get_packet() const override
+    { return packet; }
+
+    const std::string& get_common_name() const
+    { return server_common_name; }
+
+private:
+    const std::string server_common_name;
     const snort::Packet* packet;
 };
 

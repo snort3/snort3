@@ -52,6 +52,12 @@
 #define SSL_VER_TLS11_FLAG      0x00040000
 #define SSL_VER_TLS12_FLAG      0x00080000
 
+/* Convert 3-byte lengths in TLS headers to integers. */
+#define ntoh3(msb_ptr) \
+    ((uint32_t)((uint32_t)(((const uint8_t*)(msb_ptr))[0] << 16) \
+    + (uint32_t)(((const uint8_t*)(msb_ptr))[1] << 8) \
+    + (uint32_t)(((const uint8_t*)(msb_ptr))[2])))
+
 #define SSL_VERFLAGS \
     (SSL_VER_SSLV2_FLAG | SSL_VER_SSLV3_FLAG | \
     SSL_VER_TLS10_FLAG | SSL_VER_TLS11_FLAG | \
@@ -202,6 +208,20 @@ struct SSLV3ClientHelloData
     char* host_name = nullptr;
 };
 
+struct SSLV3ServerCertData
+{
+    ~SSLV3ServerCertData();
+    void clear();
+    /* While collecting certificates: */
+    unsigned certs_len;   // (Total) length of certificate(s).
+    uint8_t* certs_data = nullptr;  // Certificate(s) data (each proceeded by length (3 bytes)).
+    /* Data collected from certificates afterwards: */
+    char* common_name = nullptr;
+    int common_name_strlen;
+    char* org_name = nullptr;
+    int org_name_strlen;
+};
+
 enum class SSLV3RecordType : uint8_t
 {
     CLIENT_HELLO = 1,
@@ -211,6 +231,19 @@ enum class SSLV3RecordType : uint8_t
     SERVER_CERT_REQ = 13,
     SERVER_HELLO_DONE = 14,
     CERTIFICATE_STATUS = 22
+};
+
+/* Usually referred to as a Certificate Handshake. */
+struct ServiceSSLV3CertsRecord
+{
+    uint8_t type;
+    uint8_t length_msb;
+    uint16_t length;
+    uint8_t certs_len[3];  // 3-byte length, network byte order.
+    /* Certificate(s) follow.
+     * For each:
+     *  - Length: 3 bytes
+     *  - Data  : "Length" bytes */
 };
 
 /* Usually referred to as a TLS Handshake. */
@@ -275,9 +308,10 @@ namespace snort
 uint32_t SSL_decode(
     const uint8_t* pkt, int size, uint32_t pktflags, uint32_t prevflags,
     uint8_t* alert_flags, uint16_t* partial_rec_len, int hblen, uint32_t* info_flags = nullptr,
-    SSLV3ClientHelloData* data = nullptr);
+    SSLV3ClientHelloData* data = nullptr, SSLV3ServerCertData* server_cert_data = nullptr);
 
     void parse_client_hello_data(const uint8_t* pkt, uint16_t size, SSLV3ClientHelloData*);
+    bool parse_server_certificates(SSLV3ServerCertData* server_cert_data);
 
 SO_PUBLIC bool IsTlsClientHello(const uint8_t* ptr, const uint8_t* end);
 SO_PUBLIC bool IsTlsServerHello(const uint8_t* ptr, const uint8_t* end);
