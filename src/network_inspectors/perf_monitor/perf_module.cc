@@ -409,8 +409,8 @@ bool ModuleConfig::resolve()
         {
             if ( !i.second )
             {
-                ParseError("Perf monitor is unable to find %s.%s count", name.c_str(), i.first.c_str());
-                return false;
+                ParseWarning(WARN_CONF, "Perf monitor is unable to find %s.%s count\n",
+                    name.c_str(), i.first.c_str());
             }
         }
     }
