@@ -867,7 +867,6 @@ static const uint8_t* SMTP_HandleCommand(SmtpProtoConf* config, Packet* p, SMTPD
          * last line in the packet as you can't pipeline the tls hello */
         if (eol == end)
         {
-            smtp_ssn->state = STATE_TLS_CLIENT_PEND;
             smtp_ssn->client_requested_starttls = true;
         }
 
@@ -1104,6 +1103,7 @@ static void SMTP_ProcessServerPacket(
             smtp_ssn->state = STATE_TLS_DATA;
             //TLS server hello received, reset flag
             smtp_ssn->server_accepted_starttls = false;
+            smtp_ssn->client_requested_starttls = false;
         }
         else if ( !p->test_session_flags(SSNFLAG_MIDSTREAM)
             && !Stream::missed_packets(p->flow, SSN_DIR_BOTH))
@@ -1112,9 +1112,18 @@ static void SMTP_ProcessServerPacket(
         }
     }
 
-    if (smtp_ssn->state == STATE_TLS_DATA)
+    if (smtp_ssn->state == STATE_TLS_CLIENT_PEND)
     {
-        smtp_ssn->state = STATE_COMMAND;
+        if (p->flow->flags.data_decrypted)
+        {
+            smtp_ssn->state = STATE_COMMAND;
+            smtp_ssn->server_accepted_starttls = false;
+            smtp_ssn->client_requested_starttls = false;
+        }
+        else
+        {
+            smtp_ssn->state = STATE_TLS_DATA;
+        }
     }
 
     while (ptr < end)
@@ -1162,7 +1171,7 @@ static void SMTP_ProcessServerPacket(
                 break;
 
             default:
-                if (smtp_ssn->state != STATE_COMMAND)
+                if (smtp_ssn->state != STATE_COMMAND and smtp_ssn->state != STATE_TLS_DATA)
                 {
                     *next_state = STATE_COMMAND;
                 }
@@ -1179,6 +1188,7 @@ static void SMTP_ProcessServerPacket(
                 else
                 {
                     smtp_ssn->server_accepted_starttls = true;
+                    smtp_ssn->state = STATE_TLS_CLIENT_PEND;
 
                     OpportunisticTlsEvent event(p, p->flow->service);
                     DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::OPPORTUNISTIC_TLS, event, p->flow);
@@ -1203,7 +1213,8 @@ static void SMTP_ProcessServerPacket(
         }
 
         if ((config->max_response_line_len != 0) &&
-            (resp_line_len > config->max_response_line_len))
+            (resp_line_len > config->max_response_line_len) &&
+            (smtp_ssn->state != STATE_TLS_DATA))
         {
             DetectionEngine::queue_event(GID_SMTP, SMTP_RESPONSE_OVERFLOW);
         }
