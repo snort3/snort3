@@ -174,7 +174,9 @@ THREAD_LOCAL HAStats ha_stats = { };
 Flow* Stream::get_flow(const FlowKey* flowkey)
 {
     mock().actualCall("get_flow");
-    mock().setDataObject("flowkey", "FlowKey", (void*)flowkey);
+    FlowKey* s_flowkey = (FlowKey*)mock().getData("flowkey").getObjectPointer();
+    if (s_flowkey)
+        memcpy(s_flowkey, flowkey, sizeof(*s_flowkey));
     return (Flow*)mock().getData("flow").getObjectPointer();
 }
 
@@ -184,7 +186,9 @@ Packet::~Packet() = default;
 void Stream::delete_flow(const FlowKey* flowkey)
 {
     mock().actualCall("delete_flow");
-    mock().setDataObject("flowkey", "FlowKey", (void*)flowkey);
+    FlowKey* s_flowkey = (FlowKey*)mock().getData("flowkey").getObjectPointer();
+    if (s_flowkey)
+        memcpy(s_flowkey, flowkey, sizeof(*s_flowkey));
 }
 
 namespace snort
@@ -209,9 +213,10 @@ FlowStash::~FlowStash() = default;
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
 
-static SideChannel s_side_channel;
 SideChannel* SideChannelManager::get_side_channel(SCPort)
-{ return &s_side_channel; }
+{
+    return (SideChannel*)mock().getData("s_side_channel").getObjectPointer();
+}
 
 SideChannel::SideChannel() = default;
 
@@ -220,10 +225,11 @@ Connector::Direction SideChannel::get_direction()
 
 void SideChannel::set_default_port(SCPort) { }
 
-static std::function<void (SCMessage*)> s_handler = nullptr;
-void SideChannel::register_receive_handler(const std::function<void (SCMessage*)>& handler)
+void SideChannel::register_receive_handler(const SCProcessMsgFunc& handler)
 {
-    s_handler = handler;
+    SCProcessMsgFunc* s_handler = (SCProcessMsgFunc*)mock().getData("s_handler").getObjectPointer();
+    if (s_handler)
+        *s_handler = handler;
 }
 
 void SideChannel::unregister_receive_handler() { }
@@ -235,14 +241,15 @@ static SCMsgHdr s_sc_header = { 0, 1, 0, 0 };
 bool SideChannel::process(int)
 {
     SCMessage* msg = (SCMessage*)mock().getData("message_content").getObjectPointer();
-    if (s_handler && msg && msg->content && msg->content_length != 0)
+    SCProcessMsgFunc* s_handler = (SCProcessMsgFunc*)mock().getData("s_handler").getObjectPointer();
+    if (*s_handler && msg && msg->content && msg->content_length != 0)
     {
         SCMessage s_rec_sc_message = {};
         s_rec_sc_message.content = msg->content;
         s_rec_sc_message.content_length = msg->content_length;
         s_rec_sc_message.hdr = &s_sc_header;
-        s_rec_sc_message.sc = &s_side_channel;
-        s_handler(&s_rec_sc_message);
+        s_rec_sc_message.sc = (SideChannel*)mock().getData("s_side_channel").getObjectPointer();;
+        (*s_handler)(&s_rec_sc_message);
         return true;
     }
     else
@@ -390,6 +397,9 @@ TEST_GROUP(high_availability_test)
     HighAvailabilityConfig hac;
     FlowHAState* ha_state;
     FlowKey flow_key;
+    SCProcessMsgFunc handler;
+    SideChannel side_channel;
+    FlowKey s_flow_key;
 
     void setup() override
     {
@@ -397,6 +407,9 @@ TEST_GROUP(high_availability_test)
         mock().setDataObject("packet_tv", "struct timeval", &s_packet_time);
         mock().setData("stream_update_required", false);
         mock().setData("other_update_required", false);
+        mock().setDataObject("s_handler", "SCProcessMsgFunc", &handler);
+        mock().setDataObject("s_side_channel", "SideChannel", &side_channel);
+        mock().setDataObject("flowkey", "FlowKey", &s_flow_key);
         ha_state = new FlowHAState;
         s_flow.ha_state = ha_state;
         flow_key = {};
@@ -442,8 +455,7 @@ TEST(high_availability_test, receive_deletion)
     mock().expectNCalls(1, "delete_flow");
     HighAvailabilityManager::process_receive();
     mock().checkExpectations();
-    MEMCMP_EQUAL_TEXT((const void*)mock().getData("flowkey").getObjectPointer(),
-        (const void*)&s_test_key, sizeof(s_test_key), "flow key should be s_test_key");
+    MEMCMP_EQUAL_TEXT(&s_test_key, &s_flow_key, sizeof(s_test_key), "flow key should be s_test_key");
 }
 
 TEST(high_availability_test, receive_update_stream_only)
@@ -455,8 +467,7 @@ TEST(high_availability_test, receive_update_stream_only)
     HighAvailabilityManager::process_receive();
     mock().checkExpectations();
     CHECK(mock().getData("stream_consume_size").getIntValue() == 10);
-    MEMCMP_EQUAL_TEXT((const void*)mock().getData("flowkey").getObjectPointer(),
-            (const void*)&s_test_key, sizeof(s_test_key), "flow key should be s_test_key");
+    MEMCMP_EQUAL_TEXT(&s_test_key, &s_flow_key, sizeof(s_test_key), "flow key should be s_test_key");
 }
 
 TEST(high_availability_test, transmit_deletion)
