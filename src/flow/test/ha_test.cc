@@ -242,7 +242,7 @@ bool SideChannel::process(int)
 {
     SCMessage* msg = (SCMessage*)mock().getData("message_content").getObjectPointer();
     SCProcessMsgFunc* s_handler = (SCProcessMsgFunc*)mock().getData("s_handler").getObjectPointer();
-    if (*s_handler && msg && msg->content && msg->content_length != 0)
+    if (s_handler && nullptr != *s_handler && msg && msg->content && msg->content_length != 0)
     {
         SCMessage s_rec_sc_message = {};
         s_rec_sc_message.content = msg->content;
@@ -279,6 +279,11 @@ SCMessage* SideChannel::alloc_transmit_message(uint32_t len)
 
 TEST_GROUP(high_availability_manager_test)
 {
+    void setup() override
+    {
+        mock().setDataObject("s_handler", "SCProcessMsgFunc", nullptr);
+    }
+
     void teardown() override
     {
         HighAvailabilityManager::term();
@@ -321,6 +326,8 @@ TEST_GROUP(flow_ha_state_test)
     {
         s_packet_time = {};
         mock().setDataObject("packet_tv", "struct timeval", &s_packet_time);
+        mock().setDataObject("s_side_channel", "SideChannel", nullptr);
+        mock().setDataObject("s_handler", "SCProcessMsgFunc", nullptr);
     }
 
     void teardown() override
