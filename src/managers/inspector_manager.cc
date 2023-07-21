@@ -405,7 +405,7 @@ struct TrafficPolicy : public InspectorList
 
     PHObjectList* get_specific_handlers();
 
-    void set_inspector_network_policy_user_id(uint32_t);
+    void set_inspector_network_policy_user_id(uint64_t);
 };
 
 TrafficPolicy::~TrafficPolicy()
@@ -494,7 +494,7 @@ PHInstance* TrafficPolicy::get_instance_by_type(const char* key, InspectorType t
     return nullptr;
 }
 
-void TrafficPolicy::set_inspector_network_policy_user_id(uint32_t user_id)
+void TrafficPolicy::set_inspector_network_policy_user_id(uint64_t user_id)
 {
     for (auto* p : ilist)
         p->handler->set_network_policy_user_id(user_id);
@@ -1359,7 +1359,7 @@ bool InspectorManager::delete_inspector(SnortConfig* sc, const char* iname)
 void InspectorManager::free_inspector(Inspector* p)
 {
     NetworkPolicy* np = get_network_policy();
-    uint32_t user_id;
+    uint64_t user_id;
     if ( p->get_network_policy_user_id(user_id) )
     {
         const SnortConfig* sc = SnortConfig::get_conf();

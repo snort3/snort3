@@ -43,7 +43,9 @@ static const Parameter network_params[] =
       "all | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none", "all",
       "checksums to verify" },
 
-    { "id", Parameter::PT_INT, "0:max32", "0",
+    // The maximum is max64-1. This is because the code uses the max64 value to determine if a network policy
+    // has been set using the network_set_policy command
+    { "id", Parameter::PT_INT, "0:18446744073709551614", "0",
       "correlate unified2 events with configuration" },
 
     { "min_ttl", Parameter::PT_INT, "1:255", "1",
@@ -71,14 +73,15 @@ static const Parameter network_params[] =
 
 static int network_set_policy(lua_State* L)
 {
-    int user_id = luaL_optint(L, 1, 0);
+    const char* user_id_str = luaL_optstring(L, 1, 0);
+    uint64_t user_id = strtoull(user_id_str, nullptr, 10);
     Shell::set_network_policy_user_id(L, user_id);
     return 0;
 }
 
 const Parameter network_set_policy_params[] =
 {
-    {"id", Parameter::PT_INT, "0:max32", 0, "user network policy id"},
+    {"id", Parameter::PT_INT, "0:18446744073709551614", 0, "user network policy id"},
     {nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr}
 };
 
@@ -106,7 +109,7 @@ bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
         ConfigChecksumMode(v.get_string());
 
     else if ( v.is("id") )
-        p->user_policy_id = v.get_uint32();
+        p->user_policy_id = v.get_uint64();
 
     else if ( v.is("min_ttl") )
         p->min_ttl = v.get_uint8();
@@ -125,4 +128,3 @@ bool NetworkModule::set(const char*, Value& v, SnortConfig* sc)
 
     return true;
 }
-

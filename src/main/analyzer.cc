@@ -303,7 +303,7 @@ static DAQ_Verdict distill_verdict(Packet* p)
 
 static void packet_trace_dump(Packet* p, DAQ_Verdict verdict, bool msg_was_held)
 {
-    PacketTracer::log("Policies: Network %u, Inspection %u, Detection %u\n",
+    PacketTracer::log("Policies: Network %" PRIu64 ", Inspection %" PRIu64 ", Detection %" PRIu64 "\n",
         get_network_policy()->user_policy_id, get_inspection_policy()->user_policy_id,
         get_ips_policy()->user_policy_id);
 

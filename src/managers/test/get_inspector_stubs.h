@@ -33,7 +33,7 @@
 THREAD_LOCAL const snort::Trace* snort_trace = nullptr;
 
 std::shared_ptr<PolicyTuple> PolicyMap::get_policies(Shell*) { return nullptr; }
-NetworkPolicy* PolicyMap::get_user_network(unsigned) const { return nullptr; }
+NetworkPolicy* PolicyMap::get_user_network(uint64_t) const { return nullptr; }
 void InspectionPolicy::configure() { }
 void BinderModule::add(const char*, const char*) { }
 void BinderModule::add(unsigned, const char*) { }

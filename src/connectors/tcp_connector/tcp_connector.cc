@@ -100,12 +100,10 @@ static ReadDataOutcome read_data(int sockfd, uint8_t *data, uint16_t length, ssi
 
 static ReadDataOutcome read_message_data(int sockfd, uint16_t length, uint8_t *data)
 {
-    ssize_t offset;
-    ReadDataOutcome rval;
-
     if ( length > 0 )
     {
-        offset = 0;
+        ReadDataOutcome rval;
+        ssize_t offset = 0;
         do
         {
             rval = read_data(sockfd, data, length, &offset);

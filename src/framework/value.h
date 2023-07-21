@@ -39,7 +39,7 @@ class SO_PUBLIC Value
 {
 public:
     static const unsigned mask_bits = 52; // ieee 754 significand
-    enum ValueType { VT_BOOL, VT_NUM, VT_STR };
+    enum ValueType { VT_BOOL, VT_NUM, VT_UNUM, VT_STR, VT_REAL };
 
     Value(bool b)
     { set(b); }
@@ -47,12 +47,20 @@ public:
     Value(double d)
     { set(d); }
 
+    Value(int64_t i)
+    { set(i); }
+
+    Value(uint64_t u)
+    { set(u); }
+
     Value(const char* s)
     { set(s); set_origin(s); }
 
     Value(const Value& v) :
         type(v.type),
+        unum(v.unum),
         num(v.num),
+        real(v.real),
         str(v.str),
         origin_str(v.origin_str),
         ss(nullptr),
@@ -69,6 +77,8 @@ public:
 
         type = v.type;
         num = v.num;
+        unum = v.unum;
+        real = v.real;
         str = v.str;
         origin_str = v.origin_str;
         param = v.param;
@@ -83,31 +93,34 @@ public:
     { delete ss; }
 
     void set(bool b)
-    { type = VT_BOOL; num = b ? 1 : 0; str.clear(); }
+    { type = VT_BOOL; unum = b ? 1 : 0; }
 
     void set(double d)
-    { type = VT_NUM; num = d; str.clear(); }
+    { type = VT_REAL; real = d; }
 
-    void set(long n)
-    { set((double)n); }
+    void set(uint64_t n)
+    { type = VT_UNUM; unum = n; }
+
+    void set(int64_t n)
+    { type = VT_NUM; num = n; }
 
     void set(const char* s)
-    { type = VT_STR; str = s; num = 0; }
+    { type = VT_STR; str = s; }
 
     void set_origin(const char* val)
     { origin_str = val; }
 
     void set(const uint8_t* s, unsigned len)
-    { type = VT_STR; str.assign((const char*)s, len); num = 0; }
+    { type = VT_STR; str.assign((const char*)s, len); }
 
     void set(const Parameter* p)
     { param = p; }
 
     void set_enum(unsigned u)
-    { type = VT_NUM; num = u;  }
+    { type = VT_UNUM; unum = u; }
 
     void set_aux(uint64_t u)
-    { num = (double)u; }
+    { type = VT_UNUM; unum = u; }
 
     const char* get_name() const
     { return param ? param->name : nullptr; }
@@ -119,34 +132,34 @@ public:
     { return param ? param->deflt != nullptr : false; }
 
     bool get_bool() const
-    { return num != 0; }
+    { return 0 != ((VT_REAL == type) ? real : unum); }
 
     size_t get_size() const
-    { return (size_t)num; }
+    { return (VT_REAL == type) ? (size_t)real : ((VT_UNUM == type) ? (size_t)unum : (size_t)num); }
 
     uint8_t get_uint8() const
-    { return (uint8_t)num; }
+    { return (VT_REAL == type) ? (uint8_t)real : ((VT_UNUM == type) ? (uint8_t)unum : (uint8_t)num); }
 
     int16_t get_int16() const
-    { return (int16_t)num; }
+    { return (VT_REAL == type) ? (int16_t)real : ((VT_UNUM == type) ? (int16_t)unum : (int16_t)num); }
 
     uint16_t get_uint16() const
-    { return (uint16_t)num; }
+    { return (VT_REAL == type) ? (uint16_t)real : ((VT_UNUM == type) ? (uint16_t)unum : (uint16_t)num); }
 
     int32_t get_int32() const
-    { return (int32_t)num; }
+    { return (VT_REAL == type) ? (int32_t)real : ((VT_UNUM == type) ? (int32_t)unum : (int32_t)num); }
 
     uint32_t get_uint32() const
-    { return (uint32_t)num; }
+    { return (VT_REAL == type) ? (uint32_t)real : ((VT_UNUM == type) ? (uint32_t)unum : (uint32_t)num); }
 
     int64_t get_int64() const
-    { return (int64_t)num; }
+    { return (VT_REAL == type) ? (int64_t)real : ((VT_UNUM == type) ? (int64_t)unum : (int64_t)num); }
 
     uint64_t get_uint64() const
-    { return (uint64_t)num; }
+    { return (VT_REAL == type) ? (uint64_t)real : ((VT_UNUM == type) ? (uint64_t)unum : (uint64_t)num); }
 
     double get_real() const
-    { return num; }
+    { return real; }
 
     const uint8_t* get_buffer(unsigned& n) const
     { n = (unsigned)str.size(); return (const uint8_t*)str.data(); }
@@ -182,11 +195,11 @@ public:
     bool operator==(const char* s) const
     { return str == s; }
 
-    bool operator==(long n) const
-    { return (long)num == n; }
+    bool operator==(uint64_t n) const
+    { return n == ((VT_UNUM == type) ? unum : (uint64_t)num); }
 
     bool operator==(double d) const
-    { return num == d; }
+    { return real == d; }
 
     void get_bits(PortBitSet&) const;
     void get_bits(VlanBitSet&) const;
@@ -198,7 +211,8 @@ public:
     void upper()
     { std::transform(str.begin(), str.end(), str.begin(), ::toupper); }
 
-    uint32_t get_ip4() const;
+    uint32_t get_ip4() const
+    { return (VT_REAL == type) ? (uint32_t)real : (uint32_t)unum; }
     void get_mac(uint8_t (&mac)[6]) const;
     void get_addr(uint8_t (&addr)[16]) const;
     void get_addr_ip4(uint8_t (&addr)[4]) const;
@@ -218,7 +232,9 @@ public:
 
 private:
     ValueType type;
-    double num;
+    uint64_t unum = 0;
+    int64_t num = 0;
+    double real = 0;
     std::string str;
     std::string origin_str;
     std::stringstream* ss = nullptr;

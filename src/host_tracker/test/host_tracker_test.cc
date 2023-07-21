@@ -98,9 +98,9 @@ TEST(host_tracker, add_rediscover_service_payload_test)
     // Verify we added the services, payload visibility == true
     for (auto& srv : services)
     {
-        CHECK(srv.visibility);
+        CHECK(true == srv.visibility);
         for (auto& pld : srv.payloads)
-            CHECK(pld.second);
+            CHECK(true == pld.second);
     }
 
     // Delete the service
@@ -108,12 +108,14 @@ TEST(host_tracker, add_rediscover_service_payload_test)
 
     // Verify that the service (and payloads) are deleted
     services = ht.get_services();
-    for (auto& srv : services)
+    for (const auto& srv : services)
     {
         if (srv.port == 80)
-            CHECK(srv.visibility == false);
-            for ( auto& pld : srv.payloads )
-                CHECK(pld.second == false);
+        {
+            CHECK(false == srv.visibility);
+            for (const auto& pld : srv.payloads)
+                CHECK(false == pld.second);
+        }
     }
 
     // Test rediscovery
@@ -124,15 +126,17 @@ TEST(host_tracker, add_rediscover_service_payload_test)
     ht.add_payload(local_ha, 80, IpProtocol::TCP, 101, 676, 5);
 
     services = ht.get_services();
-    for (auto& srv : services)
+    for (const auto& srv : services)
     {
         if (srv.port == 80)
-            CHECK(srv.visibility == true);
-            for ( auto& pld : srv.payloads )
-                CHECK(pld.second);
+        {
+            CHECK(true == srv.visibility);
+            for (const  auto& pld : srv.payloads)
+                CHECK(true == pld.second);
+        }
     }
 
-    CHECK(services.front().payloads.size() == 2);
+    CHECK(2 == services.front().payloads.size());
 }
 
 //  Test HostTracker with max payloads and payload reuse
@@ -154,40 +158,40 @@ TEST(host_tracker, max_payloads_test)
     auto services = ht.get_services();
 
     // Verify we added the services, payload visibility == true
-    CHECK(services.front().payloads.size() == 5);
+    CHECK(5 == services.front().payloads.size());
 
     for (auto& pld : services.front().payloads)
-        CHECK(pld.second);
+        CHECK(true == pld.second);
 
     // Delete the service
     ht.set_service_visibility(80, IpProtocol::TCP, false);
 
     // Check all payloads are invisible after service visibility is false
     services = ht.get_services();
-    for (auto& pld : services.front().payloads)
-        CHECK(pld.second == false);
+    for (const auto& pld : services.front().payloads)
+        CHECK(false == pld.second);
 
     // Add a payload; we are already at max payloads, so re-use an existing slot
     ht.add_service(80, IpProtocol::TCP, 676, true);
     ht.add_payload(local_ha, 80, IpProtocol::TCP, 999, 676, 5);
     bool found_new = false;
     services = ht.get_services();
-    for (auto& pld : services.front().payloads)
+    for (const auto& pld : services.front().payloads)
     {
         if (pld.first == 999)
         {
-            CHECK(pld.second);
+            CHECK(true == pld.second);
             found_new = true;
         }
         else
         {
-            CHECK(pld.second == false);
+            CHECK(false == pld.second);
         }
     }
 
     // Check we still have only 5 payloads, and the new payload was added
-    CHECK(services.front().payloads.size() == 5 and found_new);
-    CHECK(services.front().num_visible_payloads == 1);
+    CHECK(5 == services.front().payloads.size() and found_new);
+    CHECK(1 == services.front().num_visible_payloads);
 }
 
 //  Test HostTracker with simple client payload rediscovery
@@ -200,37 +204,37 @@ TEST(host_tracker, client_payload_rediscovery_test)
 
     // Create a new client, HTTP
     hc = ht.find_or_add_client(2, "one", 676, new_client);
-    CHECK(new_client);
+    CHECK(true == new_client);
 
     // Add payloads 123 and 456
     ht.add_client_payload(hc, 123, 5);
     ht.add_client_payload(hc, 456, 5);
     auto clients = ht.get_clients();
-    CHECK(clients.front().payloads.size() == 2);
+    CHECK(2 == clients.front().payloads.size());
 
     // Delete client, ensure payloads are also deleted
     ht.set_client_visibility(hc, false);
     clients = ht.get_clients();
-    for (auto& pld : clients.front().payloads)
-        CHECK(pld.second == false);
+    for (const auto& pld : clients.front().payloads)
+        CHECK(false == pld.second);
 
     // Rediscover client, make sure payloads are still deleted
     hc = ht.find_or_add_client(2, "one", 676, new_client);
     clients = ht.get_clients();
-    for (auto& pld : clients.front().payloads)
-        CHECK(pld.second == false);
+    for (const auto& pld : clients.front().payloads)
+        CHECK(false == pld.second);
 
     // Re-add payloads, ensure they're actually visible now
     ht.add_client_payload(hc, 123, 5);
     ht.add_client_payload(hc, 456, 5);
     clients = ht.get_clients();
-    for (auto& pld : clients.front().payloads)
-        CHECK(pld.second == true);
+    for (const auto& pld : clients.front().payloads)
+        CHECK(true == pld.second);
 
-    CHECK(clients.front().payloads.size() == 2);
+    CHECK(2 == clients.front().payloads.size());
 
     // Make sure we didn't just add an extra client and two new payloads, rather than reusing
-    CHECK(clients.size() == 1);
+    CHECK(1 == clients.size());
 }
 
 //  Test HostTracker with max payloads and payload reuse
@@ -252,21 +256,21 @@ TEST(host_tracker, client_payload_max_payloads_test)
     ht.add_client_payload(hc, 555, 5);
     auto clients = ht.get_clients();
     CHECK_FALSE(ht.add_client_payload(hc, 666, 5));
-    CHECK(clients.front().payloads.size() == 5);
+    CHECK(5 == clients.front().payloads.size());
 
     // Delete client, ensure payloads are also deleted
     ht.set_client_visibility(hc, false);
     clients = ht.get_clients();
-    for (auto& pld : clients.front().payloads)
-        CHECK(pld.second == false);
+    for (const auto& pld : clients.front().payloads)
+        CHECK(false == pld.second);
 
    // Rediscover client, make sure payloads are still deleted
     hc = ht.find_or_add_client(2, "one", 676, new_client);
     clients = ht.get_clients();
-    for (auto& pld : clients.front().payloads)
-        CHECK(pld.second == false);
+    for (const auto& pld : clients.front().payloads)
+        CHECK(false == pld.second);
 
-    CHECK(clients.front().num_visible_payloads == 0);
+    CHECK(0 == clients.front().num_visible_payloads);
 
     //Re-add payloads, ensure they're actually visible now
     ht.add_client_payload(hc, 666, 5);
@@ -276,17 +280,17 @@ TEST(host_tracker, client_payload_max_payloads_test)
     {
         if (pld.first == 666 or pld.first == 777)
         {
-            CHECK(pld.second);
+            CHECK(true == pld.second);
         }
         else
         {
-            CHECK(pld.second == false);
+            CHECK(false == pld.second);
         }
     }
 
-    CHECK(clients.front().payloads.size() == 5);
-    CHECK(clients.front().num_visible_payloads == 2);
-    CHECK(clients.size() == 1);
+    CHECK(5 == clients.front().payloads.size());
+    CHECK(2 == clients.front().num_visible_payloads);
+    CHECK(1 == clients.size());
 }
 
 // Test user login information updates for service
@@ -294,19 +298,19 @@ TEST(host_tracker, update_service_user_test)
 {
     HostTracker ht;
 
-    CHECK(ht.add_service(110, IpProtocol::TCP, 788, false) == true);
+    CHECK(true == ht.add_service(110, IpProtocol::TCP, 788, false));
 
     // The first discoveries of both login success and login failure are updated
-    CHECK(ht.update_service_user(110, IpProtocol::TCP, "user1", 1, 1, true) == true);
-    CHECK(ht.update_service_user(110, IpProtocol::TCP, "user1", 1, 1, false) == true);
+    CHECK(true == ht.update_service_user(110, IpProtocol::TCP, "user1", 1, 1, true));
+    CHECK(true == ht.update_service_user(110, IpProtocol::TCP, "user1", 1, 1, false));
 
     // Subsequent discoveries for login success and login failure are not updated
-    CHECK(ht.update_service_user(110, IpProtocol::TCP, "user1", 1, 1, true) == false);
-    CHECK(ht.update_service_user(110, IpProtocol::TCP, "user1", 1, 1, false) == false);
+    CHECK(false == ht.update_service_user(110, IpProtocol::TCP, "user1", 1, 1, true));
+    CHECK(false == ht.update_service_user(110, IpProtocol::TCP, "user1", 1, 1, false));
 
     // Discoveries for a new user name are updated
-    CHECK(ht.update_service_user(110, IpProtocol::TCP, "user2", 1, 1, false) == true);
-    CHECK(ht.update_service_user(110, IpProtocol::TCP, "user2", 1, 1, true) == true);
+    CHECK(true == ht.update_service_user(110, IpProtocol::TCP, "user2", 1, 1, false));
+    CHECK(true == ht.update_service_user(110, IpProtocol::TCP, "user2", 1, 1, true));
 }
 
 //  Test copying data and deleting copied list
@@ -322,15 +326,15 @@ TEST(host_tracker, copy_data_test)
     list<HostMac>* p_macs = nullptr;
     ht.copy_data(p_hops, p_last_seen, p_macs);
 
-    CHECK(p_hops == 255);
-    CHECK(p_last_seen == 1562198400);
-    CHECK(p_macs != nullptr);
-    CHECK(p_macs->size() == 1);
+    CHECK(255 == p_hops);
+    CHECK(1562198400 == p_last_seen);
+    CHECK(nullptr != p_macs);
+    CHECK(1 == p_macs->size());
     const auto& copied_data = p_macs->front();
-    CHECK(copied_data.ttl == 50);
-    CHECK(copied_data.primary == 1);
-    CHECK(copied_data.last_seen == 1562198400);
-    CHECK(memcmp(copied_data.mac, mac, MAC_SIZE) == 0);
+    CHECK(50 == copied_data.ttl);
+    CHECK(1 == copied_data.primary);
+    CHECK(1562198400 == copied_data.last_seen);
+    CHECK(0 == memcmp(copied_data.mac, mac, MAC_SIZE));
 
     delete p_macs;
 }
@@ -374,24 +378,24 @@ TEST(host_tracker, rediscover_host)
 
     ht.add_service(80, IpProtocol::TCP, 676, true);
     ht.add_service(443, IpProtocol::TCP, 1122);
-    CHECK(ht.get_service_count() == 2);
+    CHECK(2 == ht.get_service_count());
 
     bool is_new;
     ht.find_or_add_client(1, "one", 100, is_new);
     ht.find_or_add_client(2, "two", 200, is_new);
-    CHECK(ht.get_client_count() == 2);
+    CHECK(2 == ht.get_client_count());
 
     ht.set_visibility(false);
-    CHECK(ht.get_service_count() == 0);
+    CHECK(0 == ht.get_service_count());
 
     // rediscover the host, no services and clients should be visible
     ht.set_visibility(true);
-    CHECK(ht.get_service_count() == 0);
-    CHECK(ht.get_client_count() == 0);
+    CHECK(0 == ht.get_service_count());
+    CHECK(0 == ht.get_client_count());
 
     // rediscover a service, that and only that should be visible
     ht.add_service(443, IpProtocol::TCP, 1122);
-    CHECK(ht.get_service_count() == 1);
+    CHECK(1 == ht.get_service_count());
 
     // change the appid of existing service
     HostApplication ha(443, IpProtocol::TCP, 1133, false);
@@ -407,7 +411,7 @@ TEST(host_tracker, rediscover_host)
 
     // and a client
     ht.find_or_add_client(2, "one", 200, is_new);
-    CHECK(ht.get_client_count() == 1);
+    CHECK(1 == ht.get_client_count());
 
     string host_tracker_string;
     ht.stringify(host_tracker_string);

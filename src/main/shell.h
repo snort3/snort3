@@ -89,7 +89,7 @@ public:
     static void set_lua_sandbox(const char* s)
     { lua_sandbox = s; }
 
-    static void set_network_policy_user_id(lua_State*, uint32_t user_id);
+    static void set_network_policy_user_id(lua_State*, uint64_t user_id);
 
 private:
     static void add_config_root_node(const std::string& root_name, snort::Parameter::Type type);
@@ -143,7 +143,7 @@ private:
     Allowlist internal_allowlist;
     Allowlist allowlist_prefixes;
     ConfigData config_data;
-    uint32_t network_user_policy_id = UNDEFINED_NETWORK_USER_POLICY_ID;
+    uint64_t network_user_policy_id = UNDEFINED_NETWORK_USER_POLICY_ID;
     bool load_defaults;
 };
 

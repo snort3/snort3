@@ -845,7 +845,7 @@ bool AttributeTableModule::set(const char*, Value& v, SnortConfig* sc)
 
 static const Parameter inspection_params[] =
 {
-    { "id", Parameter::PT_INT, "0:65535", "0",
+    { "id", Parameter::PT_INT, "0:max64", "0",
       "correlate policy and events with other items in configuration" },
 
 #ifdef HAVE_UUID
@@ -882,7 +882,7 @@ bool InspectionModule::set(const char*, Value& v, SnortConfig* sc)
     InspectionPolicy* p = get_inspection_policy();
 
     if ( v.is("id") )
-        p->user_policy_id = v.get_uint16();
+        p->user_policy_id = v.get_uint64();
 
 #ifdef HAVE_UUID
     else if ( v.is("uuid") )
@@ -983,7 +983,7 @@ static const Parameter ips_params[] =
     { "enable_builtin_rules", Parameter::PT_BOOL, nullptr, "false",
       "enable events from builtin rules w/o stubs" },
 
-    { "id", Parameter::PT_INT, "0:65535", "0",
+    { "id", Parameter::PT_INT, "0:max64", "0",
       "correlate unified2 events with configuration" },
 
     { "include", Parameter::PT_STRING, nullptr, nullptr,
@@ -1049,7 +1049,7 @@ bool IpsModule::set(const char* fqn, Value& v, SnortConfig*)
         p->enable_builtin_rules = v.get_bool();
 
     else if ( v.is("id") )
-        p->user_policy_id = v.get_uint16();
+        p->user_policy_id = v.get_uint64();
 
     else if ( v.is("include") )
         p->include = v.get_string();
@@ -1242,7 +1242,7 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
         sc->set_watchdog(v.get_uint16());
 
     else if ( v.is("watchdog_min_thread_count") )
-        sc->set_watchdog_min_thread_count(v.get_uint16());    
+        sc->set_watchdog_min_thread_count(v.get_uint16());
 
     return true;
 }

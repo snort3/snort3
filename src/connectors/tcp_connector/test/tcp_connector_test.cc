@@ -174,9 +174,7 @@ TcpConnectorModule::TcpConnectorModule() :
 
 TcpConnectorConfig::TcpConnectorConfigSet* TcpConnectorModule::get_and_clear_config()
 {
-    TcpConnectorConfig::TcpConnectorConfigSet* config_set = new TcpConnectorConfig::TcpConnectorConfigSet;
-
-    return config_set;
+    return new TcpConnectorConfig::TcpConnectorConfigSet;
 }
 
 TcpConnectorModule::~TcpConnectorModule() = default;

@@ -42,11 +42,6 @@ void Value::get_mac(uint8_t (&mac)[6]) const
         memset(mac, 0, sizeof(mac));
 }
 
-uint32_t Value::get_ip4() const
-{
-    return (uint32_t)num;
-}
-
 void Value::get_addr(uint8_t (&addr)[16]) const
 {
     if ( str.size() <= sizeof(addr) )
@@ -226,20 +221,34 @@ std::string Value::get_as_string() const
     switch ( type )
     {
     case VT_BOOL:
-        value_str = num ? "true" : "false";
+        value_str = unum ? "true" : "false";
         break;
     case VT_NUM:
     {
         stringstream tmp;
-        tmp << std::fixed;
         tmp << num;
+        value_str = tmp.str();
+        break;
+    }
+    case VT_UNUM:
+    {
+        stringstream tmp;
+        tmp << unum;
+        value_str = tmp.str();
+        break;
+    }
+    case VT_REAL:
+    {
+        stringstream tmp;
+        tmp << std::fixed;
+        tmp << real;
         value_str = tmp.str();
         auto dot_pos = value_str.find('.');
         auto pos = value_str.find_last_not_of("0");
         if ( pos == dot_pos )
             --pos;
 
-        value_str = value_str.substr(0, pos + 1);
+        value_str.resize(pos + 1);
         break;
     }
     default:
@@ -256,8 +265,8 @@ std::string Value::get_origin_string() const
     std::string value;
     std::string token;
 
-    stringstream ss(origin_str);
-    while ( ss >> token )
+    stringstream s(origin_str);
+    while ( s >> token )
     {
         value += token;
         value += " ";
@@ -321,6 +330,21 @@ void Value::update_mask(uint64_t& mask, uint64_t flag, bool invert)
 // internal representation of the data is a C string and the purpose was to
 // exercise the APIs to ensure things like length checks are done correctly
 // and the string value/zero is returned based on the result etc.
+
+TEST_CASE("set double test", "[Value]")
+{
+    Value test_val((double)123456.89);
+    CHECK(true == test_val.get_bool());
+    CHECK(123456 == test_val.get_size());
+    CHECK(-7616 == test_val.get_int16());
+    CHECK(0xe240 == test_val.get_uint16());
+    CHECK(0x1e240 == test_val.get_int32());
+    CHECK(0x1e240 == test_val.get_uint32());
+    CHECK(0x1e240 == test_val.get_int64());
+    CHECK(0x1e240 == test_val.get_uint64());
+    CHECK(123456.89 == test_val.get_real());
+    CHECK(0x1e240 == test_val.get_ip4());
+}
 
 TEST_CASE("mac addr negative test", "[Value]")
 {
@@ -435,9 +459,9 @@ TEST_CASE("token test", "[Value]")
     test_val.set_first_token();
 
 
-    CHECK(test_val.get_next_csv_token(test_str));
+    CHECK(true == test_val.get_next_csv_token(test_str));
     str_val = (const char *)test_str.c_str();
-    REQUIRE(str_val != nullptr);
+    REQUIRE(nullptr != str_val);
     CHECK((strcmp(str_val,"123456")==0));
 }
 

@@ -33,6 +33,7 @@ typedef unsigned char uuid_t[16];
 #endif
 
 #include <algorithm>
+#include <climits>
 #include <map>
 #include <memory>
 #include <unordered_map>
@@ -56,7 +57,7 @@ struct PortTable;
 struct vartable_t;
 struct sfip_var_t;
 
-#define UNDEFINED_NETWORK_USER_POLICY_ID 0xffffffff
+#define UNDEFINED_NETWORK_USER_POLICY_ID UINT64_MAX
 
 typedef unsigned int PolicyId;
 typedef snort::GHash PortVarTable;
@@ -150,7 +151,7 @@ public:
 public:
     PolicyId policy_id = 0;
     PolicyMode policy_mode = POLICY_MODE__MAX;
-    uint32_t user_policy_id = 0;
+    uint64_t user_policy_id = 0;
     uuid_t uuid{};
 
     struct FrameworkPolicy* framework_policy;
@@ -216,10 +217,10 @@ public:
     snort::DataBus dbus;
 
     std::vector<InspectionPolicy*> inspection_policy;
-    std::unordered_map<unsigned, InspectionPolicy*> user_inspection;
+    std::unordered_map<uint64_t, InspectionPolicy*> user_inspection;
 
     PolicyId policy_id = 0;
-    uint32_t user_policy_id = 0;
+    uint64_t user_policy_id = 0;
     PolicyId default_ips_policy_id = 0;
 
     // minimum possible (allows all but errors to pass by default)
@@ -249,7 +250,7 @@ public:
 
 public:
     PolicyId policy_id;
-    uint32_t user_policy_id = 0;
+    uint64_t user_policy_id = 0;
     uuid_t uuid{};
 
     PolicyMode policy_mode = POLICY_MODE__MAX;
@@ -322,9 +323,9 @@ public:
     void set_user_ips(IpsPolicy* p)
     { user_ips[p->user_policy_id] = p; }
 
-    NetworkPolicy* get_user_network(unsigned user_id) const;
+    NetworkPolicy* get_user_network(uint64_t user_id) const;
 
-    IpsPolicy* get_user_ips(unsigned user_id)
+    IpsPolicy* get_user_ips(uint64_t user_id)
     {
         auto it = user_ips.find(user_id);
         return it == user_ips.end() ? nullptr : it->second;
@@ -387,8 +388,8 @@ private:
     IpsPolicy* empty_ips_policy;
 
     std::unordered_map<Shell*, std::shared_ptr<PolicyTuple>> shell_map;
-    std::unordered_map<unsigned, NetworkPolicy*> user_network;
-    std::unordered_map<unsigned, IpsPolicy*> user_ips;
+    std::unordered_map<uint64_t, NetworkPolicy*> user_network;
+    std::unordered_map<uint64_t, IpsPolicy*> user_ips;
 
     snort::PolicySelector* selector = nullptr;
     SingleInstanceInspectorPolicy* file_id;

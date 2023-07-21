@@ -99,11 +99,48 @@ int64_t Parameter::get_int(const char* r)
         if ( !strncmp(r, "max32", 5) )
             return 4294967295;
 
+        // Lua represents numbers in a 64-bit double. The max representable value is 9007199254740992
+        // and the min is -9007199254740992
         if ( !strncmp(r, "max53", 5) )
             return 9007199254740992;
+
+        if ( !strncmp(r, "max63", 5) )
+            return 9223372036854775807;
+
+        if ( !strncmp(r, "max64", 5) )
+            return -1;
     }
     char* end = nullptr;
     int64_t i = (int64_t)strtoll(r, &end, 0);
+    assert(!*end or *end == ':');
+
+    return i;
+}
+
+uint64_t Parameter::get_uint(const char* r)
+{
+    if ( *r == 'm' )
+    {
+        if ( !strncmp(r, "maxSZ", 5) )
+            r = (sizeof(size_t) == 4) ? "max32" : "max53";
+
+        if ( !strncmp(r, "max31", 5) )
+            return 2147483647;
+
+        if ( !strncmp(r, "max32", 5) )
+            return 4294967295;
+
+        if ( !strncmp(r, "max53", 5) )
+            return 9007199254740992;
+
+        if ( !strncmp(r, "max63", 5) )
+            return 9223372036854775807;
+
+        if ( !strncmp(r, "max64", 5) )
+            return 18446744073709551615ULL;
+    }
+    char* end = nullptr;
+    uint64_t i = (uint64_t)strtoull(r, &end, 0);
     assert(!*end or *end == ':');
 
     return i;
@@ -119,42 +156,105 @@ static bool valid_bool(const Value& v, const char*)
 }
 
 // FIXIT-L allow multiple , separated ranges
-static bool valid_int(const Value& v, const char* r)
+static bool valid_int(Value& v, const char* r)
 {
-    if ( v.get_type() != Value::VT_NUM )
-        return false;
+    bool signed_values;
+    switch (v.get_type())
+    {
+        case Value::VT_STR:
+            {
+                const char* str = v.get_string();
+                if (!str[0])
+                    return false;
+                signed_values = ('-' == str[0]);
+                if (!r || !r[0])
+                {
+                    if (signed_values)
+                        v.set((int64_t)strtoll(str, nullptr, 0));
+                    else
+                        v.set((uint64_t)strtoull(str, nullptr, 0));
+                    return true;
+                }
+            }
+            break;
 
-    if ( v.get_real() != v.get_int64() )
-        return false;
+        case Value::VT_REAL:
+            {
+                double d = v.get_real();
+                signed_values = (0.0 > d);
+                if (!r || !r[0])
+                {
+                    if (signed_values)
+                        v.set((int64_t)d);
+                    else
+                        v.set((uint64_t)d);
+                    return true;
+                }
+            }
+            break;
 
-    if ( !r )
-        return true;
-
-    int64_t d = v.get_int64();
+        default:
+            return false;
+    }
 
     // require no leading or trailing whitespace
     // and either # | #: | :# | #:#
     // where # is a valid pos or neg dec, hex, or octal number
 
     const char* t = strchr(r, ':');
-
-    if ( *r != ':' )
+    if (!signed_values)
     {
-        int64_t low = Parameter::get_int(r);
-
-        if ( d < low )
-            return false;
-
-        if ( !t )
-            return d == low;
+        if ('-' == r[0])
+            signed_values = true;
+        if (t && '-' == t[1])
+            signed_values = true;
     }
 
-    if ( t and *++t )
+    if (signed_values)
     {
-        int64_t hi = Parameter::get_int(t);
-
-        if ( d > hi )
-            return false;
+        int64_t d;
+        if (Value::VT_STR == v.get_type())
+            d = (int64_t)Parameter::get_int(v.get_string());
+        else
+            d = (int64_t)v.get_real();
+        v.set(d);
+        if (':' != *r)
+        {
+            int64_t low = Parameter::get_int(r);
+            if (d < low)
+                return false;
+            if (!t)
+                return d == low;
+        }
+        if (t && *++t)
+        {
+            int64_t hi = Parameter::get_int(t);
+            if (d > hi)
+                return false;
+        }
+    }
+    else
+    {
+        uint64_t d;
+        if (Value::VT_STR == v.get_type())
+            d = Parameter::get_uint(v.get_string());
+        else
+            d = (uint64_t)v.get_real();
+        v.set(d);
+        if (':' != *r)
+        {
+            uint64_t low = Parameter::get_uint(r);
+            if (d < low)
+                return false;
+            if (!t)
+                return d == low;
+        }
+        if (t && *++t)
+        {
+            uint64_t hi = Parameter::get_uint(t);
+            if (d > hi)
+                return false;
+        }
     }
     return true;
 }
@@ -174,9 +274,18 @@ static bool valid_interval(const Value&, const char*)
 { return true; }
 
 // FIXIT-L allow multiple , separated ranges
-static bool valid_real(const Value& v, const char* r)
+static bool valid_real(Value& v, const char* r)
 {
-    if ( v.get_type() != Value::VT_NUM )
+    if (Value::VT_STR == v.get_type())
+    {
+        const char* str = v.get_string();
+        if (!str[0])
+            return false;
+
+        double d = strtod(str, nullptr);
+        v.set(d);
+    }
+    else if (Value::VT_REAL != v.get_type())
         return false;
 
     if ( !r )
@@ -323,7 +432,7 @@ static bool valid_ip4(Value& v, const char*)
     if ( ip4 == INADDR_NONE )
         return false;
 
-    v.set((double)ip4);
+    v.set((uint64_t)ip4);
     return true;
 }
 
@@ -567,13 +676,14 @@ int Parameter::index(const char* r, const char* s)
 TEST_CASE("bool", "[Parameter]")
 {
     Value v(true);
-    CHECK(valid_bool(v, nullptr));
+    CHECK(true == valid_bool(v, nullptr));
+    CHECK(true == valid_interval(v, nullptr));
 }
 
 struct
 {
     bool expected;
-    bool (*validate)(const Value&, const char*);
+    bool (*validate)(Value&, const char*);
     double value;
     const char* range;
 }
@@ -598,8 +708,10 @@ num_tests[] =
     { true, valid_int, -10, "-11:-9" },
     { true, valid_int, 10, "9:11" },
     { true, valid_int, 10, "0xA:11" },
-
-    { true, valid_interval, 0, nullptr },
+    { true, valid_int, -11, ":-11" },
+    { true, valid_int, -30, ":-11" },
+    { false, valid_int, -10, ":-11" },
+    { false, valid_int, 10, ":-11" },
 
     { true, valid_real, 0.0, nullptr },
     { true, valid_real, 0.0, "" },
@@ -627,6 +739,79 @@ num_tests[] =
 TEST_CASE("num", "[Parameter]")
 {
     auto test = num_tests;
+
+    while ( test->validate )
+    {
+        Value v(test->value);
+        bool result = test->validate(v, test->range);
+        CHECK(result == test->expected);
+        ++test;
+    }
+}
+
+struct
+{
+    bool expected;
+    bool (*validate)(Value&, const char*);
+    const char* value;
+    const char* range;
+}
+str_num_tests[] =
+{
+// __STRDUMP_DISABLE__
+    { true, valid_int, "5", "-53:53" },
+    { true, valid_int, "-9223372036854775808", "-9223372036854775808:9223372036854775807" },
+    { true, valid_int, "0x7fffffffffffffff", "-9223372036854775808:9223372036854775807" },
+    { true, valid_int, "9223372036854775806", "-9223372036854775808:9223372036854775807" },
+    { true, valid_int, "0", "-9223372036854775808:9223372036854775807" },
+    { false, valid_int, "9223372036854775807", "-9223372036854775808:9223372036854775806" },
+    { false, valid_int, "-9223372036854775808", "-9223372036854775807:9223372036854775806" },
+    { true, valid_int, "0", "0:18446744073709551615" },
+    { true, valid_int, "0", "0:18446744073709551614" },
+    { true, valid_int, "1024", "0:18446744073709551614" },
+    { true, valid_int, "18446744073709551614", "0:18446744073709551614" },
+    { false, valid_int, "18446744073709551615", "0:18446744073709551614" },
+    { true, valid_int, "18446744073709551615", "18446744073709551615" },
+    { true, valid_int, "18446744073709551615", "max64" },
+    { true, valid_int, "4294967295", "max32" },
+    { false, valid_int, "4294967296", "max32" },
+    { true, valid_int, "2147483647", "max31" },
+    { false, valid_int, "2147483648", "max31" },
+    { true, valid_int, "50", "50:50" },
+    { false, valid_int, "51", "50:50" },
+    { true, valid_int, "-50", "-50:-50" },
+    { false, valid_int, "51", "-50:-50" },
+    { false, valid_int, "-51", "-50:-50" },
+    { true, valid_int, "-53", ":-53" },
+    { true, valid_int, "-54", ":-53" },
+    { true, valid_int, "-9223372036854775808", ":-53" },
+    { false, valid_int, "-52", ":-53" },
+    { false, valid_int, "2", ":-53" },
+
+    { true, valid_real, "0.0", "0.0" },
+    { true, valid_real, "0.0", ":0" },
+
+    { true, valid_real, "0.1", "0:" },
+    { true, valid_real, "0.1", ":0.9" },
+    { true, valid_real, "0.1", "-0.9:0.9" },
+    { true, valid_real, "0.1", "-0.9:" },
+
+    { false, valid_real, "1", "0.9" },
+    { true, valid_real, "1", "0.9:" },
+    { false, valid_real, "1", ":0.9" },
+
+    { true, valid_real, "-10", "-11.1:-9.9" },
+    { true, valid_real, "10", "9.9:11.1" },
+    { false, valid_real, "10", "011:11" },
+    { true, valid_real, "10", "0xA:11" },
+
+    { false, nullptr, 0, nullptr }
+// __STRDUMP_ENABLE__
+};
+
+TEST_CASE("str_num", "[Parameter]")
+{
+    auto test = str_num_tests;
 
     while ( test->validate )
     {
@@ -744,11 +929,24 @@ TEST_CASE("max", "[Parameter]")
     CHECK(Parameter::get_int("max31") == 2147483647);
     CHECK(Parameter::get_int("max32") == 4294967295);
     CHECK(Parameter::get_int("max53") == 9007199254740992);
+    CHECK(Parameter::get_int("max63") == 9223372036854775807);
+    CHECK(Parameter::get_int("max64") == -1);
 
     if ( sizeof(size_t) == 4 )
         CHECK(Parameter::get_int("maxSZ") == 4294967295);
     else
         CHECK(Parameter::get_int("maxSZ") == 9007199254740992);
+
+    CHECK(Parameter::get_uint("max31") == 2147483647);
+    CHECK(Parameter::get_uint("max32") == 4294967295);
+    CHECK(Parameter::get_uint("max53") == 9007199254740992);
+    CHECK(Parameter::get_uint("max63") == 9223372036854775807);
+    CHECK(Parameter::get_uint("max64") == 18446744073709551615ULL);
+
+    if ( sizeof(size_t) == 4 )
+        CHECK(Parameter::get_uint("maxSZ") == 4294967295);
+    else
+        CHECK(Parameter::get_uint("maxSZ") == 9007199254740992);
 }
 
 #endif

@@ -164,13 +164,13 @@ public:
     const char* get_alias_name() const
     { return alias_name; }
 
-    void set_network_policy_user_id(uint32_t user_id)
+    void set_network_policy_user_id(uint64_t user_id)
     {
         network_policy_user_id = user_id;
         network_policy_user_id_set = true;
     }
 
-    bool get_network_policy_user_id(uint32_t& user_id) const
+    bool get_network_policy_user_id(uint64_t& user_id) const
     {
         user_id = network_policy_user_id;
         return network_policy_user_id_set;
@@ -210,7 +210,7 @@ private:
     SnortProtocolId snort_protocol_id = 0;
     // FIXIT-E Use std::string to avoid storing a pointer to external std::string buffers
     const char* alias_name = nullptr;
-    uint32_t network_policy_user_id = 0;
+    uint64_t network_policy_user_id = 0;
     bool network_policy_user_id_set = false;
 };
 

@@ -80,20 +80,20 @@ TEST(tcp_connector_module, test_call)
 
     TcpConnectorConfig::TcpConnectorConfigSet* config_set = module.get_and_clear_config();
 
-    CHECK(config_set != nullptr);
+    CHECK(nullptr != config_set);
 
-    CHECK(config_set->size() == 1);
+    CHECK(1 == config_set->size());
 
     TcpConnectorConfig config = *(config_set->front());
-    CHECK(config.base_port == 10000);
-    CHECK(config.address == "127.0.0.1");
-    CHECK(config.setup == TcpConnectorConfig::Setup::CALL);
-    CHECK(config.connector_name == "tcp-c");
-    CHECK(config.direction == Connector::CONN_DUPLEX);
+    CHECK(10000 == config.base_port);
+    CHECK("127.0.0.1" == config.address);
+    CHECK(TcpConnectorConfig::Setup::CALL == config.setup);
+    CHECK("tcp-c" == config.connector_name);
+    CHECK(Connector::CONN_DUPLEX == config.direction);
 
-    CHECK(module.get_pegs() != nullptr );
-    CHECK(module.get_counts() != nullptr );
-    CHECK(module.get_profile() != nullptr );
+    CHECK(nullptr != module.get_pegs());
+    CHECK(nullptr != module.get_counts());
+    CHECK(nullptr != module.get_profile());
 
     for ( auto conf : *config_set )
         delete conf;
@@ -117,11 +117,11 @@ TEST(tcp_connector_module, test_answer)
     TcpConnectorModule module;
 
     base_port_val.set(&base_port_param);
-    CHECK( base_port_param.validate(base_port_val) == true );
+    CHECK( true == base_port_param.validate(base_port_val) );
     setup_val.set(&setup_param);
-    CHECK( setup_param.validate(setup_val) == true );
+    CHECK( true == setup_param.validate(setup_val) );
     connector_val.set(&connector_param);
-    CHECK( connector_param.validate(connector_val) == true );
+    CHECK( true == connector_param.validate(connector_val) );
 
     module.begin("tcp_connector", 0, nullptr);
     module.begin("tcp_connector", 1, nullptr);
@@ -133,15 +133,15 @@ TEST(tcp_connector_module, test_answer)
 
     TcpConnectorConfig::TcpConnectorConfigSet* config_set = module.get_and_clear_config();
 
-    CHECK(config_set != nullptr);
+    CHECK(nullptr != config_set);
 
-    CHECK(config_set->size() == 1);
+    CHECK(1 == config_set->size());
 
     TcpConnectorConfig config = *(config_set->front());
-    CHECK(config.base_port == 20000);
+    CHECK(20000 == config.base_port);
 //    CHECK(config.setup == TcpConnectorConfig::Setup::ANSWER);
-    CHECK(config.connector_name == "tcp-a");
-    CHECK(config.direction == Connector::CONN_DUPLEX);
+    CHECK("tcp-a" == config.connector_name);
+    CHECK(Connector::CONN_DUPLEX == config.direction);
 
     for ( auto conf : *config_set )
         delete conf;

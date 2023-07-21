@@ -185,7 +185,6 @@ void InspectionPolicy::configure()
 IpsPolicy::IpsPolicy(PolicyId id) : action(Actions::get_max_types(), nullptr)
 {
     policy_id = id;
-    user_policy_id = 0;
     policy_mode = POLICY_MODE__MAX;
 
     var_table = nullptr;
@@ -377,7 +376,7 @@ std::shared_ptr<PolicyTuple> PolicyMap::get_policies(Shell* sh)
     return pt == shell_map.end() ? nullptr : pt->second;
 }
 
-NetworkPolicy* PolicyMap::get_user_network(unsigned user_id) const
+NetworkPolicy* PolicyMap::get_user_network(uint64_t user_id) const
 {
     auto it = user_network.find(user_id);
     NetworkPolicy* np = (it == user_network.end()) ? nullptr : it->second;

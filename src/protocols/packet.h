@@ -160,9 +160,9 @@ struct SO_PUBLIC Packet
 
     PseudoPacketType pseudo_type;    // valid only when PKT_PSEUDO is set
 
-    uint32_t user_inspection_policy_id;
-    uint32_t user_ips_policy_id;
-    uint32_t user_network_policy_id;
+    uint64_t user_inspection_policy_id;
+    uint64_t user_ips_policy_id;
+    uint64_t user_network_policy_id;
 
     uint8_t vlan_idx;
     uint8_t ts_packet_flags; // FIXIT-M packet flags should always be thread safe

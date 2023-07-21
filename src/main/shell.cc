@@ -654,7 +654,7 @@ void Shell::install(const char* name, const luaL_Reg* reg)
     luaL_register(lua, name, reg);
 }
 
-void Shell::set_network_policy_user_id(lua_State* L, uint32_t user_id)
+void Shell::set_network_policy_user_id(lua_State* L, uint64_t user_id)
 {
     lua_getglobal(L, lua_shell_id);
     Shell* shell = *static_cast<Shell**>(lua_touserdata(L, -1));

@@ -1716,20 +1716,30 @@ static void dump_param_range_json(JsonStream& json, const Parameter* p)
         {
             std::string tr = range;
             const char* d = strchr(range, ':');
+            bool is_signed = ('-' == *range) || (d && '-' == d[1]);
             if ( *range == 'm' )
             {
                 if ( d )
                 {
-                    tr = std::to_string(Parameter::get_int(range)) +
-                        tr.substr(tr.find(":"));
+                    if (is_signed)
+                        tr = std::to_string(Parameter::get_int(range)) + tr.substr(tr.find(":"));
+                    else
+                        tr = std::to_string(Parameter::get_uint(range)) + tr.substr(tr.find(":"));
                 }
                 else
-                    tr = std::to_string(Parameter::get_int(range));
+                {
+                    if (is_signed)
+                        tr = std::to_string(Parameter::get_int(range));
+                    else
+                        tr = std::to_string(Parameter::get_uint(range));
+                }
             }
             if ( d and *++d == 'm' )
             {
-                tr = tr.substr(0, tr.find(":") + 1) +
-                    std::to_string(Parameter::get_int(d));
+                if (is_signed)
+                    tr = tr.substr(0, tr.find(":") + 1) + std::to_string(Parameter::get_int(d));
+                else
+                    tr = tr.substr(0, tr.find(":") + 1) + std::to_string(Parameter::get_uint(d));
             }
             json.put("range", tr);
             break;

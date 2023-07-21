@@ -43,82 +43,82 @@ TEST_CASE("parse sfdaq config", "[SFDAQModule]")
     sfdm.begin("daq", 0, &sc);
 
     Value module_dir1("/test/dir/1");
-    CHECK(sfdm.set("daq.module_dirs", module_dir1, &sc));
+    CHECK(true == sfdm.set("daq.module_dirs", module_dir1, &sc));
 
     Value module_dir2("/test/dir/2");
-    CHECK(sfdm.set("daq.module_dirs", module_dir2, &sc));
+    CHECK(true == sfdm.set("daq.module_dirs", module_dir2, &sc));
 
     Value input1("test_input1");
-    CHECK(sfdm.set("daq.inputs", input1, &sc));
+    CHECK(true == sfdm.set("daq.inputs", input1, &sc));
 
     Value input2("test_input2");
-    CHECK(sfdm.set("daq.inputs", input2, &sc));
+    CHECK(true == sfdm.set("daq.inputs", input2, &sc));
 
     Value input3("test_input3");
-    CHECK(sfdm.set("daq.inputs", input3, &sc));
+    CHECK(true == sfdm.set("daq.inputs", input3, &sc));
 
     Value snaplen(static_cast<double>(6666));
-    CHECK(sfdm.set("daq.snaplen", snaplen, &sc));
+    CHECK(true == sfdm.set("daq.snaplen", snaplen, &sc));
 
     Value batch_size(static_cast<double>(10));
-    CHECK(sfdm.set("daq.batch_size", batch_size, &sc));
+    CHECK(true == sfdm.set("daq.batch_size", batch_size, &sc));
 
-    CHECK(sfdm.begin("daq.modules", 0, &sc));
+    CHECK(true == sfdm.begin("daq.modules", 0, &sc));
 
     SECTION("empty module config")
     {
         // Empty module table entry should fail
-        CHECK(sfdm.begin("daq.modules", 1, &sc));
+        CHECK(true == sfdm.begin("daq.modules", 1, &sc));
         CHECK_FALSE(sfdm.end("daq.modules", 1, &sc));
     }
 
-    CHECK(sfdm.begin("daq.modules", 2, &sc));
+    CHECK(true == sfdm.begin("daq.modules", 2, &sc));
 
     Value module_name("dump");
-    CHECK(sfdm.set("daq.modules.name", module_name, &sc));
+    CHECK(true == sfdm.set("daq.modules.name", module_name, &sc));
 
     Value mode_val("passive");
     Parameter mode_param = { "mode", Parameter::PT_ENUM, "passive | inline | read-file", "passive", "DAQ module mode" };
     mode_val.set(&mode_param);
-    CHECK(sfdm.set("daq.modules.mode", mode_val, &sc));
+    CHECK(true == sfdm.set("daq.modules.mode", mode_val, &sc));
 
     Value dump_var1("dump_var1=foo");
-    CHECK(sfdm.set("daq.modules.variables", dump_var1, &sc));
+    CHECK(true == sfdm.set("daq.modules.variables", dump_var1, &sc));
 
     Value dump_var2("dump_var2");
-    CHECK(sfdm.set("daq.modules.variables", dump_var2, &sc));
+    CHECK(true == sfdm.set("daq.modules.variables", dump_var2, &sc));
 
-    CHECK(sfdm.end("daq.modules", 2, &sc));
-    CHECK(sfdm.end("daq.modules", 0, &sc));
-    CHECK(sfdm.end("daq", 0, &sc));
+    CHECK(true == sfdm.end("daq.modules", 2, &sc));
+    CHECK(true == sfdm.end("daq.modules", 0, &sc));
+    CHECK(true == sfdm.end("daq", 0, &sc));
 
     SECTION("validate sfdaq config")
     {
         /* Validate the configuration */
         SFDAQConfig* cfg = sc.daq_config;
-        REQUIRE((cfg->module_dirs.size() == 2));
+        REQUIRE((2 == cfg->module_dirs.size()));
         CHECK(cfg->module_dirs[0] == module_dir1.get_string());
         CHECK(cfg->module_dirs[1] == module_dir2.get_string());
 
-        REQUIRE((cfg->inputs.size() == 3));
+        REQUIRE((3 == cfg->inputs.size()));
         CHECK(cfg->inputs[0] == input1.get_string());
         CHECK(cfg->inputs[1] == input2.get_string());
         CHECK(cfg->inputs[2] == input3.get_string());
 
-        CHECK((cfg->mru_size == 6666));
-        CHECK((cfg->batch_size == 10));
+        CHECK((6666 == cfg->mru_size));
+        CHECK((10 == cfg->batch_size));
 
-        REQUIRE(cfg->module_configs.size() == 1);
+        REQUIRE(1 == cfg->module_configs.size());
         for (auto it : cfg->module_configs)
         {
             SFDAQModuleConfig* mcfg = it;
             CHECK((mcfg->name == module_name.get_string()));
             CHECK((mcfg->mode == SFDAQModuleConfig::SFDAQ_MODE_PASSIVE));
-            REQUIRE((mcfg->variables.size() == 2));
-            CHECK(mcfg->variables[0].first == "dump_var1");
-            CHECK(mcfg->variables[0].second == "foo");
+            REQUIRE((2 == mcfg->variables.size()));
+            CHECK("dump_var1" == mcfg->variables[0].first);
+            CHECK("foo" == mcfg->variables[0].second);
             CHECK(mcfg->variables[1].first == dump_var2.get_string());
-            CHECK(mcfg->variables[1].second.empty());
+            CHECK(true == mcfg->variables[1].second.empty());
         }
     }
 
@@ -147,37 +147,37 @@ TEST_CASE("parse sfdaq config", "[SFDAQModule]")
         SFDAQConfig* cfg = sc.daq_config;
         cfg->overlay(&overlay_cfg);
 
-        REQUIRE(cfg->module_dirs.size() == 1);
-        CHECK(cfg->module_dirs[0] == "cli_module_dir");
+        REQUIRE(1 == cfg->module_dirs.size());
+        CHECK("cli_module_dir" == cfg->module_dirs[0]);
 
-        REQUIRE((cfg->inputs.size() == 1));
-        CHECK(cfg->inputs[0] == "cli_input");
+        REQUIRE((1 == cfg->inputs.size()));
+        CHECK("cli_input" == cfg->inputs[0]);
 
-        CHECK((cfg->mru_size == 3333));
-        CHECK((cfg->batch_size == 12));
+        CHECK((3333 == cfg->mru_size));
+        CHECK((12 == cfg->batch_size));
 
-        REQUIRE(cfg->module_configs.size() == 2);
+        REQUIRE(2 == cfg->module_configs.size());
         for (auto it : cfg->module_configs)
         {
             SFDAQModuleConfig* mcfg = it;
             CHECK((mcfg->name == "cli_module_name" or mcfg->name == "dump"));
             if (mcfg->name == "cli_module_name")
             {
-                CHECK(mcfg->mode == SFDAQModuleConfig::SFDAQ_MODE_READ_FILE);
-                REQUIRE((mcfg->variables.size() == 1));
-                CHECK(mcfg->variables[0].first == "cli_module_variable");
-                CHECK(mcfg->variables[0].second == "abc");
+                CHECK(SFDAQModuleConfig::SFDAQ_MODE_READ_FILE == mcfg->mode);
+                REQUIRE((1 == mcfg->variables.size()));
+                CHECK("cli_module_variable" == mcfg->variables[0].first);
+                CHECK("abc" == mcfg->variables[0].second);
             }
             else if (mcfg->name == "dump")
             {
-                CHECK(mcfg->mode == SFDAQModuleConfig::SFDAQ_MODE_INLINE);
-                REQUIRE((mcfg->variables.size() == 3));
-                CHECK(mcfg->variables[0].first == "dump_var3");
-                CHECK(mcfg->variables[0].second.empty());
-                CHECK(mcfg->variables[1].first == "dump_var4");
-                CHECK(mcfg->variables[1].second == "bar");
-                CHECK(mcfg->variables[2].first == "dump_var5");
-                CHECK(mcfg->variables[2].second == "foo");
+                CHECK(SFDAQModuleConfig::SFDAQ_MODE_INLINE == mcfg->mode);
+                REQUIRE((3 == mcfg->variables.size()));
+                CHECK("dump_var3" == mcfg->variables[0].first);
+                CHECK(true == mcfg->variables[0].second.empty());
+                CHECK("dump_var4" == mcfg->variables[1].first);
+                CHECK("bar" == mcfg->variables[1].second);
+                CHECK("dump_var5" == mcfg->variables[2].first);
+                CHECK("foo" == mcfg->variables[2].second);
             }
         }
     }

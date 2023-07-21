@@ -41,6 +41,7 @@ public:
 
     void put(const char* key);    // null
     void put(const char* key, int64_t val);
+    void uput(const char* key, uint64_t val);
     void put(const char* key, const char* val);
     void put(const char* key, const std::string& val);
     void put(const char* key, double val, int precision);

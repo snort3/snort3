@@ -63,10 +63,7 @@ FileConnectorModule::FileConnectorModule() :
 
 FileConnectorConfig::FileConnectorConfigSet* FileConnectorModule::get_and_clear_config()
 {
-    FileConnectorConfig::FileConnectorConfigSet* config_set =
-        new FileConnectorConfig::FileConnectorConfigSet;
-
-    return config_set;
+    return new FileConnectorConfig::FileConnectorConfigSet;
 }
 
 FileConnectorModule::~FileConnectorModule() = default;

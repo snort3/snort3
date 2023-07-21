@@ -98,6 +98,16 @@ void JsonStream::put(const char* key, int64_t val)
     out << val;
 }
 
+void JsonStream::uput(const char* key, uint64_t val)
+{
+    split();
+
+    if ( key )
+        out << std::quoted(key) << ": ";
+
+    out << val;
+}
+
 void JsonStream::put(const char* key, const char* val)
 {
     if (val and val[0] == '\0')

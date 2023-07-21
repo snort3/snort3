@@ -49,7 +49,10 @@ static void dump_value(const BaseConfigNode* node, const std::string& config_nam
         break;
     }
     case Parameter::PT_INT:
-        std::cout << config_name << "=" << value->get_int64() << std::endl;
+        if (Value::VT_UNUM == value->get_type())
+            std::cout << config_name << "=" << value->get_uint64() << std::endl;
+        else
+            std::cout << config_name << "=" << value->get_int64() << std::endl;
         break;
     case Parameter::PT_REAL:
         std::cout << config_name << "=" << value->get_real() << std::endl;
