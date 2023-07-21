@@ -209,7 +209,7 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
                 snort::parse_server_certificates(server_cert_data);
             }
 
-            retval |= SSL_CERTIFICATE_FLAG; 
+            retval |= SSL_CERTIFICATE_FLAG;
             break;
 
         /* The following types are not presently of interest */

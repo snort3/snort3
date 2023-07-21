@@ -37,9 +37,9 @@ using namespace snort;
 
 // perform some checks on the ASDU
 static bool checkIec104Asdu(Iec104AsduCheck curAsduCheck)
-{    
+{
     // keep a flag to indicate whether we should exit after executing
-    // taking this approach instead of returning directly as multiple of these 
+    // taking this approach instead of returning directly as multiple of these
     //   cases could exist and we want to alert on all of them
     bool continueProcessing = true;
 
@@ -91,7 +91,7 @@ static bool checkIec104Asdu(Iec104AsduCheck curAsduCheck)
         }
     }
 
-    // Verify that the cause of transmission indicated by the sender is one that is 
+    // Verify that the cause of transmission indicated by the sender is one that is
     // allowed for the message type
     switch (curAsduCheck.apci->asdu.causeOfTransmission.causeOfTransmission)
     {
@@ -1345,7 +1345,7 @@ static void parseIec104GenericAsdu(uint32_t asduType, const Iec104ApciI* apci)
         for (uint32_t i = 0; i < verifiedNumberOfElements; i++)
         {
 
-            // 
+            //
             // Handle Structure Qualifier == 1
             //
             if (apci->asdu.variableStructureQualifier.sq)
@@ -2535,7 +2535,7 @@ void parseIec104ApciU(const Iec104ApciU* apci)
         DetectionEngine::queue_event(GID_IEC104, IEC104_BAD_START);
     }
     // throw an alert if any length other than 0x04 is provided since this APCI can only have 4 bytes of data
-    // a similar length check is performed in `iec104.c` when determining packet size. It is possible for that check to pass and this one alert 
+    // a similar length check is performed in `iec104.c` when determining packet size. It is possible for that check to pass and this one alert
     else if (apci->header.length != IEC104_APCI_TYPE_U_LEN)
     {
         DetectionEngine::queue_event(GID_IEC104, IEC104_BAD_LENGTH);
@@ -2572,7 +2572,7 @@ void parseIec104ApciS(const Iec104ApciS* apci)
         DetectionEngine::queue_event(GID_IEC104, IEC104_BAD_START);
     }
     // throw an alert if any length other than 0x04 is provided since this APCI can only have 4 bytes of data
-    // a similar length check is performed in `iec104.c` when determining packet size. It is possible for that check to pass and this one alert 
+    // a similar length check is performed in `iec104.c` when determining packet size. It is possible for that check to pass and this one alert
     else if (apci->header.length != IEC104_APCI_TYPE_S_LEN)
     {
         DetectionEngine::queue_event(GID_IEC104, IEC104_BAD_LENGTH);
@@ -2596,7 +2596,7 @@ void parseIec104ApciI(const Iec104ApciI* apci)
         DetectionEngine::queue_event(GID_IEC104, IEC104_BAD_START);
     }
     // throw an alert if any length under 12 is detected as that is the smallest possible message according to the spec
-    // a similar length check is performed in `iec104.c` when determining packet size. It is possible for that check to pass and this one alert 
+    // a similar length check is performed in `iec104.c` when determining packet size. It is possible for that check to pass and this one alert
     else if (apci->header.length < IEC104_APCI_TYPE_I_MIN_LEN)
     {
         DetectionEngine::queue_event(GID_IEC104, IEC104_BAD_LENGTH);

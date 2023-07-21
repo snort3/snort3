@@ -797,7 +797,7 @@ int SmtpServiceDetector::validate(AppIdDiscoveryArgs& args)
         {
             if (!(dd->client.flags & CLIENT_FLAG_STARTTLS_SUCCESS))
                 goto fail;
-            
+
             goto inprocess;
         }
         if (!fd->code)

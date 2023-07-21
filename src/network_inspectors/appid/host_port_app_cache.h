@@ -72,9 +72,9 @@ struct FirstPktkey
 
     bool operator<(const FirstPktkey& right) const
     {
-        if ((htonl(right.netmask[0]) < htonl(this->netmask[0])) or 
-            (htonl(right.netmask[1]) < htonl(this->netmask[1])) or 
-            (htonl(right.netmask[2]) < htonl(this->netmask[2])) or 
+        if ((htonl(right.netmask[0]) < htonl(this->netmask[0])) or
+            (htonl(right.netmask[1]) < htonl(this->netmask[1])) or
+            (htonl(right.netmask[2]) < htonl(this->netmask[2])) or
             (htonl(right.netmask[3]) < htonl(this->netmask[3])))
             return true;
         else
@@ -110,7 +110,7 @@ public:
     HostPortVal* find(const snort::SfIp*, uint16_t port, IpProtocol, const OdpContext&);
     bool add(const snort::SnortConfig*, const snort::SfIp*, uint16_t port, IpProtocol,
         unsigned type, AppId);
-    
+
     HostAppIdsVal* find_on_first_pkt(const snort::SfIp*, uint16_t port, IpProtocol, const OdpContext&);
     bool add_host(const snort::SnortConfig*, const snort::SfIp*, uint32_t* netmask, uint16_t port, IpProtocol,
         AppId, AppId, AppId, unsigned reinspect);

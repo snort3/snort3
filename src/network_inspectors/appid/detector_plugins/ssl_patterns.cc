@@ -60,7 +60,7 @@ static int cert_pattern_match(void* id, void*, int match_end_pos, void* data, vo
     cm->match_start_pos = match_end_pos - target->pattern_size;
     cm->next = *matches;
     *matches = cm;
-    
+
     return 0;
 }
 
@@ -89,7 +89,7 @@ static bool scan_patterns(SearchTool& matcher, const uint8_t* data, size_t size,
     SslPattern* best_match;
 
     if (is_cname_search)
-        matcher.find_all((const char*)data, size, cname_pattern_match, false, &mp);    
+        matcher.find_all((const char*)data, size, cname_pattern_match, false, &mp);
     else
         matcher.find_all((const char*)data, size, cert_pattern_match, false, &mp);
 

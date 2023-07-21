@@ -51,7 +51,7 @@ public:
     void implement_thread_affinity(SThreadType, unsigned id);
     void implement_named_thread_affinity(const std::string& name);
     bool implement_thread_mempolicy(SThreadType type, unsigned id);
-    
+
     static constexpr unsigned int DEFAULT_THREAD_ID = 0;
 
 private:

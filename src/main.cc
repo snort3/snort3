@@ -391,7 +391,7 @@ int main_log_command(lua_State* L)
 {
     if (!L)
         return 0;
-    
+
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     if (lua_gettop(L) >= 2)
     {
@@ -402,7 +402,7 @@ int main_log_command(lua_State* L)
     }
     else
         LogRespond(ctrlcon, "Usage: log_command(<command>,true|false)\n");
-    
+
     return 0;
 }
 

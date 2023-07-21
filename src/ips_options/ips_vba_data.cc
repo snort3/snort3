@@ -43,7 +43,7 @@ IpsOption::EvalStatus VbaDataOption::eval(Cursor& c, Packet* p)
         return NO_MATCH;
 
     InspectionBuffer buf;
-    if (!p->flow->gadget->get_fp_buf(buf.IBT_VBA, p, buf)) 
+    if (!p->flow->gadget->get_fp_buf(buf.IBT_VBA, p, buf))
         return NO_MATCH;
 
     c.set(s_name, buf.data, buf.len);
@@ -54,7 +54,7 @@ bool VbaDataModule::end(const char*, int, SnortConfig*)
 {
     if (!search_handle)
         search_handle = LiteralSearch::setup();
-    
+
     if (!searcher)
         searcher = snort::LiteralSearch::instantiate(search_handle,
             (const uint8_t*)"ATTRIBUT", 8, true);

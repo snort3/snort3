@@ -357,7 +357,7 @@ bool FTPDataDirection(Packet* p, FTP_DATA_SESSION* ftpdata)
            return true;
 
       // upload
-      if (p->is_from_application_client() && !p->is_from_client()) 
+      if (p->is_from_application_client() && !p->is_from_client())
           return true;
     }
     else
@@ -367,7 +367,7 @@ bool FTPDataDirection(Packet* p, FTP_DATA_SESSION* ftpdata)
            return true;
 
       // upload
-      if (p->is_from_client() && p->is_from_application_client()) 
+      if (p->is_from_client() && p->is_from_application_client())
           return true;
     }
 

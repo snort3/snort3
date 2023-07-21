@@ -47,8 +47,8 @@ struct Iec104AsduFuncMap
 };
 
 /* Mapping of name -> function code for 'iec104_asdu_func' option. */
-static Iec104AsduFuncMap iec104_asdu_func_map[] = 
-{ 
+static Iec104AsduFuncMap iec104_asdu_func_map[] =
+{
     { "reserved",  IEC104_NO_ASDU },                                                 // 0 reserved
     { "M_SP_NA_1", IEC104_ASDU_M_SP_NA_1 }, { "m_sp_na_1", IEC104_ASDU_M_SP_NA_1 }, // Single-point information
     { "M_SP_TA_1", IEC104_ASDU_M_SP_TA_1 }, { "m_sp_ta_1", IEC104_ASDU_M_SP_TA_1 }, // Single-point information with time tag
@@ -295,30 +295,30 @@ static void opt_dtor(IpsOption* p)
     delete p;
 }
 
-static const IpsApi ips_api = 
-{ 
-    { 
-        PT_IPS_OPTION, 
-        sizeof(IpsApi), 
-        IPSAPI_VERSION, 
-        0, 
+static const IpsApi ips_api =
+{
+    {
+        PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        0,
         API_RESERVED,
-        API_OPTIONS, 
+        API_OPTIONS,
         s_name,
-        s_help, 
-        mod_ctor, 
-        mod_dtor 
-    }, 
-    OPT_TYPE_DETECTION, 
-    0, 
-    PROTO_BIT__TCP, 
-    nullptr, 
-    nullptr, 
+        s_help,
+        mod_ctor,
+        mod_dtor
+    },
+    OPT_TYPE_DETECTION,
+    0,
+    PROTO_BIT__TCP,
     nullptr,
-    nullptr, 
-    opt_ctor, 
-    opt_dtor, 
-    nullptr 
+    nullptr,
+    nullptr,
+    nullptr,
+    opt_ctor,
+    opt_dtor,
+    nullptr
 };
 
 const BaseApi* ips_iec104_asdu_func = &ips_api.base;

@@ -1246,7 +1246,7 @@ static int detector_add_ssl_cert_pattern(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &pattern_size);
     if (!tmp_string or !pattern_size)
     {
-        ErrorMessage("appid: Invalid SSL Host pattern string in %s.\n", 
+        ErrorMessage("appid: Invalid SSL Host pattern string in %s.\n",
             ud->get_detector()->get_name().c_str());
         return 0;
     }
@@ -1333,19 +1333,19 @@ static int detector_add_host_first_pkt_application(lua_State* L)
     uint32_t client_appid = lua_tointeger(L, ++index);
     uint32_t web_appid = lua_tointeger(L, ++index);
     unsigned reinspect = lua_tointeger(L, ++index);
-   
+
     /* Extract Network IP and netmask */
     size_t ipaddr_size = 0;
     uint32_t netmask32[4] = { 0xFFFFFFFFu, 0xFFFFFFFFu, 0xFFFFFFFFu, 0xFFFFFFFFu };
     bool netmask_parsed = false;
     const char* cidr_str = lua_tolstring(L, ++index, &ipaddr_size);
-    vector<string> tokens; 
+    vector<string> tokens;
 
     if (!cidr_str or !ipaddr_size)
     {
         ErrorMessage("%s: No IP address provided\n", "First packet API");
         return 0;
-    }    
+    }
 
     if (strchr(cidr_str, '/') == nullptr)
     {
@@ -1355,30 +1355,30 @@ static int detector_add_host_first_pkt_application(lua_State* L)
             return 0;
         }
     }
-    else 
+    else
     {
-        stringstream ss(cidr_str); 
-        string temp_str; 
-    
+        stringstream ss(cidr_str);
+        string temp_str;
+
         while (getline(ss, temp_str, '/'))
-        { 
-            tokens.push_back(temp_str); 
-        } 
+        {
+            tokens.push_back(temp_str);
+        }
 
         const char* netip_str = tokens[0].c_str();
-        
+
         if (!netip_str or !convert_string_to_address(netip_str, &ip_address))
         {
             ErrorMessage("%s: Invalid IP address: %s\n", "First packet API", netip_str);
             return 0;
         }
 
-        if (all_of(tokens[1].begin(), tokens[1].end(), ::isdigit)) 
+        if (all_of(tokens[1].begin(), tokens[1].end(), ::isdigit))
         {
             int bits = stoi(tokens[1].c_str());
             if (strchr(netip_str, '.'))
             {
-                if (bits < 0 or bits > 32) 
+                if (bits < 0 or bits > 32)
                 {
                     ErrorMessage("%s: Invalid IPv4 prefix range: %d\n","First packet API", bits);
                     return 0;
@@ -1399,7 +1399,7 @@ static int detector_add_host_first_pkt_application(lua_State* L)
                 for (int i = 3; i >= 0; --i)
                 {
                     auto tmp_bits = 32 + (32 * i) - bits;
-                    
+
                     if (tmp_bits > 0)
                         netmask32[i] = tmp_bits >= 32 ? 0 : (0xFFFFFFFFu << tmp_bits);
                 }
@@ -1412,7 +1412,7 @@ static int detector_add_host_first_pkt_application(lua_State* L)
 
             netmask_parsed = true;
         }
-        else 
+        else
         {
             ErrorMessage("%s: Invalid prefix bit: %s\n", "First packet API", tokens[1].c_str());
             return 0;
@@ -2947,7 +2947,7 @@ static int detector_add_cip_connection_class(lua_State *L)
     auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
     // Verify detector user data and that we are NOT in packet context
     ud->validate_lua_state(false);
-    if (!init(L)) 
+    if (!init(L))
         return 0;
 
     uint32_t app_id = lua_tointeger(L, ++index);
@@ -2967,7 +2967,7 @@ static int detector_add_cip_path(lua_State *L)
     auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
     // Verify detector user data and that we are NOT in packet context
     ud->validate_lua_state(false);
-    if (!init(L)) 
+    if (!init(L))
         return 0;
 
     uint32_t app_id = lua_tointeger(L, ++index);
@@ -2988,7 +2988,7 @@ static int detector_add_cip_set_attribute(lua_State *L)
     auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
     // Verify detector user data and that we are NOT in packet context
     ud->validate_lua_state(false);
-    if (!init(L)) 
+    if (!init(L))
         return 0;
 
     uint32_t app_id = lua_tointeger(L, ++index);
@@ -3010,7 +3010,7 @@ static int detector_add_cip_extended_symbol_service(lua_State *L)
     auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
     // Verify detector user data and that we are NOT in packet context
     ud->validate_lua_state(false);
-    if (!init(L)) 
+    if (!init(L))
         return 0;
 
     uint32_t app_id = lua_tointeger(L, ++index);
@@ -3030,7 +3030,7 @@ static int detector_add_cip_service(lua_State *L)
     auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
     // Verify detector user data and that we are NOT in packet context
     ud->validate_lua_state(false);
-    if (!init(L)) 
+    if (!init(L))
         return 0;
 
     uint32_t app_id = lua_tointeger(L, ++index);
@@ -3050,7 +3050,7 @@ static int detector_add_enip_command(lua_State *L)
     auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
     // Verify detector user data and that we are NOT in packet context
     ud->validate_lua_state(false);
-    if (!init(L)) 
+    if (!init(L))
         return 0;
 
     uint32_t app_id = lua_tointeger(L, ++index);

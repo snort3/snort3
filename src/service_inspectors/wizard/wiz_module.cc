@@ -142,7 +142,7 @@ bool WizardModule::set(const char*, Value& v, SnortConfig*)
             proto = MagicBook::ArcaneType::TCP;
         else if ( !strcmp(v.get_string(), "udp") )
             proto = MagicBook::ArcaneType::UDP;
-        else 
+        else
             proto = MagicBook::ArcaneType::ANY;
     }
 

@@ -375,7 +375,7 @@ const PegInfo* NormalizeModule::get_pegs() const
         p++;
     }
     test_pegs.emplace_back(*p);
-    
+
     return &test_pegs[0];
 }
 

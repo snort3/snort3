@@ -107,7 +107,7 @@ private:
 void ReplaceAction::exec(Packet* p, const OptTreeNode* otn)
 {
     p->active->rewrite_packet(p);
-    
+
     Actions::alert(p, otn);
 }
 

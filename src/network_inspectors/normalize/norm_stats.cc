@@ -58,7 +58,7 @@ const PegInfo norm_names[] =
     { CountType::SUM, "tcp_ts_nop", "timestamp options cleared" },
     { CountType::SUM, "tcp_ips_data", "normalized segments" },
     { CountType::SUM, "tcp_block", "blocked segments" },
-    
+
     { CountType::END, nullptr, nullptr }
 };
 

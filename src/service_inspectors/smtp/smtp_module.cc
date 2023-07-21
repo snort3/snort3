@@ -171,7 +171,7 @@ static const RuleMap smtp_rules[] =
     { SMTP_AUTH_COMMAND_OVERFLOW, "attempted authentication command buffer overflow" },
     { SMTP_FILE_DECOMP_FAILED, "file decompression failed" },
     { SMTP_STARTTLS_INJECTION_ATTEMPT, "STARTTLS command injection attempt"},
-    
+
 
     { 0, nullptr }
 };

@@ -53,7 +53,7 @@ void MimeDecode::clear_decode_state()
     decoder = nullptr;
 }
 
-// Called if MIME_FLAG_FILE_ATTACH flag is set 
+// Called if MIME_FLAG_FILE_ATTACH flag is set
 void MimeDecode::finalize_decoder(MimeStats* mime_stats)
 {
     // If this isn't the first body section, the decoder is already set
@@ -95,7 +95,7 @@ void MimeDecode::finalize_decoder(MimeStats* mime_stats)
     }
 }
 
-// This may be called more than once due to folding. 
+// This may be called more than once due to folding.
 void MimeDecode::process_decode_type(const char* start, int length)
 {
     if (config->get_b64_depth() > -1)
@@ -223,7 +223,7 @@ const BufferData& MimeDecode::get_decomp_vba_data()
 
     uint8_t* buf = nullptr;
     uint32_t buf_len = 0;
-    
+
     VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
                "Found OLE file. Sending %d bytes for the processing.\n",
                 ole_data.length());

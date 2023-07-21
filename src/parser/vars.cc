@@ -449,7 +449,7 @@ const std::string ExpandVars(const std::string& input_str)
             }
 
             std::string var_name(begin, end);
-            std::string var_aux; 
+            std::string var_aux;
 
             i = end;
 

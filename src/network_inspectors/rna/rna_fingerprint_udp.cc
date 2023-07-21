@@ -74,7 +74,7 @@ void UdpFpProcessor::push(const RawFingerprint& rfp)
         DHCPFingerprint dhcp_fp(rfp);
         if (dhcp_fp.dhcp55.size() > DHCP_OP55_MAX_SIZE)
             return;
-        push_dhcp_fp(dhcp_fp);   
+        push_dhcp_fp(dhcp_fp);
     }
 }
 

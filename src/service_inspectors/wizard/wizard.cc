@@ -170,9 +170,9 @@ MagicSplitter::MagicSplitter(bool c2s, class Wizard* w) :
     StreamSplitter(c2s), wizard_processed_bytes(0)
 {
     wizard = w;
-    // FIXIT-M: Handle inspector reference elsewhere such that all splitters 
+    // FIXIT-M: Handle inspector reference elsewhere such that all splitters
     // are able to be deleted before their inspectors
-    w->add_ref();  
+    w->add_ref();
     // Used only in case of TCP traffic
     w->reset(wand, c2s, MagicBook::ArcaneType::TCP);
 }

@@ -109,7 +109,7 @@ IpsOption::EvalStatus HttpParamIpsOption::eval(Cursor& c, Packet* p)
     const HttpInspect* const hi = eval_helper(p);
     if (hi == nullptr)
         return NO_MATCH;
-    
+
     const Field& http_buffer = hi->http_get_param_buf(c, p, http_param);
     if (http_buffer.length() <= 0)
         return NO_MATCH;

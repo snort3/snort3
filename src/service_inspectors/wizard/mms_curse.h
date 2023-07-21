@@ -21,7 +21,7 @@
 #define MMS_CURSE_H
 
 // MMS curse provides the ability to determine if the traffic being processed
-// conforms to the Manufacturing Message Specification (MMS) traffic defined 
+// conforms to the Manufacturing Message Specification (MMS) traffic defined
 // within the IEC-61850 family of protocols
 
 #include "curses.h"

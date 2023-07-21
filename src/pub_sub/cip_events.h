@@ -48,7 +48,7 @@ public:
     { return p; }
 
     const CipEventData* get_event_data()
-    { return event_data; }	    
+    { return event_data; }
 private:
     const snort::Packet* p;
     const CipEventData* event_data;

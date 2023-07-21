@@ -22,7 +22,7 @@
 
 #include "detection/detection_util.h"
 #include "framework/cursor.h"
-#include "framework/pdu_section.h"	
+#include "framework/pdu_section.h"
 #include "protocols/packet.h"
 
 #include "http_buffer_info.h"

@@ -40,7 +40,7 @@ using namespace snort;
 
 static void print_single_entry(ControlConn* ctrlcon, const rule_stats::View& v, unsigned n,
     unsigned count, double total_time_usec)
-{ 
+{
     using std::chrono::duration_cast;
     using std::chrono::microseconds;
 

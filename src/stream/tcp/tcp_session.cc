@@ -505,7 +505,7 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
         {
             if (tsd.get_len() == ZERO_WIN_PROBE_LEN)
                 tcpStats.zero_win_probes++;
-            
+
             listener->normalizer.trim_win_payload(tsd);
             return STREAM_UNALIGNED;
         }
@@ -723,8 +723,8 @@ void TcpSession::update_paws_timestamps(TcpSegmentDescriptor& tsd)
     TcpStreamTracker* talker = tsd.get_talker();
 
     if ( no_ack_mode_enabled() )
-    { 
-        talker->set_ts_last(0); 
+    {
+        talker->set_ts_last(0);
     }
     else if ( listener->normalizer.handling_timestamps()
         && SEQ_EQ(listener->r_win_base, tsd.get_seq()) )

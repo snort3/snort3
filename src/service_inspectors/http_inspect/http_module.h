@@ -137,7 +137,7 @@ public:
 class ScriptFinder
 {
 public:
-    ScriptFinder(snort::LiteralSearch::Handle* h) : handle(h), 
+    ScriptFinder(snort::LiteralSearch::Handle* h) : handle(h),
         finder(snort::LiteralSearch::instantiate(h, (const uint8_t*)"</SCRIPT>", 9, true, true))
     {}
 

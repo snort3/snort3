@@ -167,7 +167,7 @@ HostAppIdsVal* HostPortCache::find_on_first_pkt(const SfIp* ip, uint16_t port, I
             return &iter->second;
         }
     }
-    
+
     return nullptr;
 }
 
@@ -194,7 +194,7 @@ bool HostPortCache::add_host(const SnortConfig* sc, const SfIp* ip, uint32_t* ne
 
         cache_first_ip[ hk ] = hv;
     }
-    else 
+    else
     {
         FirstPktkey hk;
         HostAppIdsVal hv;
@@ -205,7 +205,7 @@ bool HostPortCache::add_host(const SnortConfig* sc, const SfIp* ip, uint32_t* ne
         apply_max_ip_range(hk.max_network_range, netmask);
 
         memcpy(&hk.netmask[0], netmask, 16);
-        
+
         AppIdInspector* inspector =
             (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, false, sc);
         assert(inspector);

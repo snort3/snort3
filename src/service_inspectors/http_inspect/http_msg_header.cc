@@ -122,12 +122,12 @@ const Field& HttpMsgHeader::get_true_ip_addr()
     addr_str[true_ip.length()] = '\0';
 
     SfIp tmp_sfip;
-    
+
     /* remove port number from ip address */
     char* colon_port = strrchr((char*)addr_str, ':');
     if (colon_port && (strpbrk((char*)addr_str, "[.")))
         *colon_port = '\0';
-    
+
     const SfIpRet status = tmp_sfip.set((char*)addr_str);
     delete[] addr_str;
     if (status != SFIP_SUCCESS)

@@ -244,7 +244,7 @@ void StreamModule::sum_stats(bool dump_stats)
 }
 
 void StreamModule::reset_stats()
-{ 
+{
     base_reset();
     Module::reset_stats();
 }

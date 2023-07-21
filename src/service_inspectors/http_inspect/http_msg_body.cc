@@ -567,7 +567,7 @@ static FilePosition find_range_file_pos(const std::string& hdr_content, bool fro
     size_t processed = 0;
 
     for (; processed < hdr_content.length() and hdr_content[processed] == ' '; ++processed);
-    
+
     if (processed == hdr_content.length())
         return SNORT_FILE_POSITION_UNKNOWN;
 
@@ -576,9 +576,9 @@ static FilePosition find_range_file_pos(const std::string& hdr_content, bool fro
         return SNORT_FILE_POSITION_UNKNOWN;
 
     processed += sizeof(CONTENT_BYTES) - 1;
-    
+
     for (; processed < hdr_content.length() and hdr_content[processed] == ' '; ++processed);
-    
+
     if (processed == hdr_content.length() or !isdigit(hdr_content[processed]))
         return SNORT_FILE_POSITION_UNKNOWN;
 
@@ -591,7 +591,7 @@ static FilePosition find_range_file_pos(const std::string& hdr_content, bool fro
 
     if (slash_pos == hdr_content.npos)
         return SNORT_FILE_POSITION_UNKNOWN;
-    
+
     char *end_ptr = nullptr;
 
     unsigned long range_start = SnortStrtoul(hdr_content.c_str() + processed, &end_ptr, 10);
@@ -620,7 +620,7 @@ static FilePosition find_range_file_pos(const std::string& hdr_content, bool fro
 
     if (range_end == file_size - 1)
     {
-        if (front && back) 
+        if (front && back)
             return SNORT_FILE_FULL;
         else if (front)
             return SNORT_FILE_START;
@@ -667,10 +667,10 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
     else
     {
         const Field& range_hdr = get_header(SRC_SERVER)->get_header_value_raw(HEAD_CONTENT_RANGE);
-        
+
         if (range_hdr.length() <= 0)
             return;
-        
+
         file_position = find_range_file_pos(std::string((const char*)range_hdr.start(), range_hdr.length()),
             front, back);
 

@@ -88,7 +88,7 @@ public:
     static void tinit()
     {
         if ( snort::HighAvailabilityManager::active() )
-        {   
+        {
             ha_apps_client = new AppIdHAAppsClient;
             ha_http_client = new AppIdHAHttpClient;
             ha_tls_host_client = new AppIdHATlsHostClient;
@@ -97,7 +97,7 @@ public:
     static void tterm()
     {
         if ( snort::HighAvailabilityManager::active() )
-        {   
+        {
             delete ha_apps_client;
             delete ha_http_client;
             delete ha_tls_host_client;

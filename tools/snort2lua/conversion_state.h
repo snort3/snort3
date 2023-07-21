@@ -207,7 +207,7 @@ protected:
                     order.insert(std::pair<int, std::string>(dig, elem));
                 }
                 else
-                { 
+                {
                     table_api.add_comment("Unable to add " + elem +
                         ". Max precedence value is " + std::to_string(max));
                 }

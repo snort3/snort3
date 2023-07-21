@@ -31,7 +31,7 @@ struct SslEventIds
     {
         CHELLO_SERVER_NAME,
         SERVER_COMMON_NAME,
-    
+
         num_ids
     };
 };

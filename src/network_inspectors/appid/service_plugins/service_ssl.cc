@@ -180,7 +180,7 @@ static void ssl_cache_free(uint8_t*& ssl_cache, uint16_t& len)
         snort_free(ssl_cache);
         ssl_cache = nullptr;
     }
-        
+
     len = 0;
 }
 
@@ -218,7 +218,7 @@ static void save_ssl_cache(ServiceSSLData* ss, uint16_t size, const uint8_t* dat
 {
     ss->cached_data = (uint8_t*)snort_calloc(size, sizeof(uint8_t));
     memcpy(ss->cached_data, data, size);
-    ss->cached_len = size;               
+    ss->cached_len = size;
 }
 
 int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
@@ -345,7 +345,7 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
                         save_ssl_cache(ss, size, data);
                         goto inprocess;
                     }
-                    
+
                     hdr3 = (const ServiceSSLV3Hdr*)data;
                     ver = ntohs(hdr3->version);
                     if ((hdr3->type != SSL_HANDSHAKE &&
@@ -505,7 +505,7 @@ success:
         snort_free(reallocated_data);
         reallocated_data = nullptr;
     }
-        
+
     if (ss->server_cert.certs_data && ss->server_cert.certs_len)
     {
         if (!(args.asd.scan_flags & SCAN_CERTVIZ_ENABLED_FLAG) and

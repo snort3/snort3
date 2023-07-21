@@ -350,7 +350,7 @@ TEST(appid_session_api, get_client_app_detect_type)
     mock_session->set_eve_client_app_id(638);
     AppId id = mock_session->pick_ss_client_app_id();
     CHECK_EQUAL(id, 638);
-    detect_type = mock_session->get_api().get_client_app_detect_type();   
+    detect_type = mock_session->get_api().get_client_app_detect_type();
     CHECK_EQUAL(detect_type, CLIENT_APP_DETECT_TLS_FP);
 
     /* Now set the normal client id to something. That is the appid that should be picked,

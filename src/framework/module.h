@@ -250,7 +250,7 @@ private:
             dump_stats_counts[index] += value;
         else
             counts[index] += value;
-            
+
     }
 };
 }

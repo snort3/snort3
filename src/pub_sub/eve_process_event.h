@@ -85,7 +85,7 @@ public:
     {
         return is_quic;
     }
-    
+
     bool is_client_process_mapping() const
     {
         return client_process_mapping;

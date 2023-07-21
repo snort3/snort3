@@ -37,7 +37,7 @@ struct SslPattern
     bool operator==(const SslPattern& v) const
     {
         return this->type == v.type and pattern_size == v.pattern_size
-            and (memcmp(pattern, v.pattern, (size_t)pattern_size) == 0); 
+            and (memcmp(pattern, v.pattern, (size_t)pattern_size) == 0);
     }
 };
 

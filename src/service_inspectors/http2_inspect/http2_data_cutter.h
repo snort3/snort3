@@ -41,7 +41,7 @@ private:
     bool check_http_state(Http2Stream* const stream);
     snort::StreamSplitter::Status skip_over_frame(Http2Stream* const stream, uint32_t length,
         uint32_t* flush_offset, uint32_t data_offset, uint8_t frame_flags);
-    
+
     Http2FlowData* const session_data;
     const HttpCommon::SourceId source_id;
 

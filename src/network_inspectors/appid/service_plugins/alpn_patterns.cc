@@ -105,7 +105,7 @@ void AlpnPatternMatchers::finalize_patterns()
         alpn_pattern_matcher.add(p->pattern.data(), p->pattern.size(), p, true);
 
         #ifdef REG_TEST
-        AppIdInspector* inspector = 
+        AppIdInspector* inspector =
             (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
         if (inspector and inspector->get_ctxt().config.log_alpn_service_mappings)
             LogMessage("Adding ALPN service App pattern %d %s\n",

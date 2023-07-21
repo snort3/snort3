@@ -36,7 +36,7 @@
 
 typedef std::unordered_map<std::string, AppId> SshPatternTable;
 
-class SshPatternMatchers 
+class SshPatternMatchers
 {
 public:
     void add_ssh_pattern(const std::string& pattern, AppId id);

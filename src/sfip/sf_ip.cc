@@ -204,7 +204,7 @@ SfIpRet SfIp::set(const char* src, uint16_t* srcBits)
     /* skip whitespace or opening bracket */
     while (isspace((int)*ip) || ((*ip == '[') ? ob = 1 : 0))
         ip++;
-    
+
     if (ob && (cb = strrchr(ip, ']')))
         *cb = '\0';
 

@@ -366,7 +366,7 @@ bool HostCacheModule::end(const char* fqn, int, SnortConfig* sc)
         if ( Snort::is_reloading() )
             sc->register_reload_handler(new HostCacheReloadTuner(memcap));
         else
-        {   
+        {
             host_cache.set_max_size(memcap);
             ControlConn::log_command("host_cache.delete_host",false);
         }

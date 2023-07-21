@@ -6258,7 +6258,7 @@ TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
 
 TEST_CASE("Function call tracking - nesting", "[JSNormalizer]")
 {
-   auto tester = default_config; 
+   auto tester = default_config;
 
     SECTION("Opening")
     {

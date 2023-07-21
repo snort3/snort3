@@ -91,7 +91,7 @@ void AppIdPegCounts::cleanup_dynamic_sum()
         DetectorPegs::NUM_APPID_DETECTOR_PEGS);
     if (unknown_appids_peg)
         memset(&unknown_appids_peg->stats, 0, sizeof(PegCount) * DetectorPegs::NUM_APPID_DETECTOR_PEGS);
-        
+
 }
 
 void AppIdPegCounts::add_app_peg_info(std::string app_name, AppId app_id)

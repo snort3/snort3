@@ -27,7 +27,7 @@
 class SshEventHandler : public snort::DataHandler
 {
 public:
-    SshEventHandler() : snort::DataHandler(MOD_NAME) 
+    SshEventHandler() : snort::DataHandler(MOD_NAME)
     { id = snort::FlowData::create_flow_data_id(); }
 
     void handle(snort::DataEvent &, snort::Flow *) override;

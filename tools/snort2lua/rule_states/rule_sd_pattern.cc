@@ -42,9 +42,9 @@ private:
 std::string SDPattern::convert_pattern(const std::string& pattern)
 {
     const std::string unused_pcre_tokens("()[].+*^$|");
-    
+
     std::string s3_pattern;
-    
+
     for (unsigned i = 0; i < pattern.size(); ++i)
     {
         char sym = pattern[i];
@@ -64,7 +64,7 @@ std::string SDPattern::convert_pattern(const std::string& pattern)
                 }
 
                 switch (sym)
-                {            
+                {
                 case 'l':
                     s3_pattern.append("\\p{L}");
                     break;
@@ -72,7 +72,7 @@ std::string SDPattern::convert_pattern(const std::string& pattern)
                 case 'L':
                     s3_pattern.append("[^\\p{L}]");
                     break;
-                
+
                 case 'w':
                 case 'W':
                 case 'd':
@@ -89,10 +89,10 @@ std::string SDPattern::convert_pattern(const std::string& pattern)
                     // Snort2 ignores unknown escape sequences
                     break;
                 }
-                
+
                 break;
             }
-        
+
         case '{':
         case '}':
         case '?':
@@ -106,7 +106,7 @@ std::string SDPattern::convert_pattern(const std::string& pattern)
             break;
         }
     }
-    
+
     return s3_pattern;
 }
 
@@ -124,7 +124,7 @@ bool SDPattern::convert(std::istringstream& stream)
     }
 
     std::string pattern = util::get_remain_data(arg_stream, false);
-    
+
     if ( pattern.empty() )
     {
         rule_api.bad_rule(stream, "sd_pattern missing pattern argument");

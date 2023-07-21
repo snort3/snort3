@@ -293,7 +293,7 @@ public:
 
     Dce2SmbSessionData* upgrade(const snort::Packet*);
     void update_smb_session_data(Dce2SmbSessionData* ssd_v)
-    { 
+    {
         if (ssd) delete ssd;
         ssd = ssd_v;
     }

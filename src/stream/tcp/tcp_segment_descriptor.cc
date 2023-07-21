@@ -106,7 +106,7 @@ TcpSegmentDescriptor::TcpSegmentDescriptor
 }
 
 void TcpSegmentDescriptor::setup()
-{ 
+{
     ma_pseudo_packet = new Packet(false);
 }
 

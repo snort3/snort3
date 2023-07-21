@@ -288,7 +288,7 @@ static bool mms_curse(const uint8_t* data, unsigned len, CurseTracker* tracker)
     }
 
     // define all known MMS tags to check for
-    enum 
+    enum
     {
         MMS_CONFIRMED_REQUEST_TAG    = 0xA0,
         MMS_CONFIRMED_RESPONSE_TAG   = 0xA1,
@@ -368,7 +368,7 @@ static bool mms_curse(const uint8_t* data, unsigned len, CurseTracker* tracker)
             case MMS_STATE__OSI_SESSION_SPDU:
             {
                 // define all known OSI Session layer SPDU tags to check
-                enum 
+                enum
                 {
                     MMS_OSI_SESSION_SPDU_GT_DT = 0x01,
                     MMS_OSI_SESSION_SPDU_CN = 0x0D,
@@ -399,9 +399,9 @@ static bool mms_curse(const uint8_t* data, unsigned len, CurseTracker* tracker)
                         break;
                     }
 
-                    // if mms isn't found, search for an OSI Session layer 
-                    case MMS_OSI_SESSION_SPDU_GT_DT: // fallthrough intentional      
-                    case MMS_OSI_SESSION_SPDU_CN:    // fallthrough intentional   
+                    // if mms isn't found, search for an OSI Session layer
+                    case MMS_OSI_SESSION_SPDU_GT_DT: // fallthrough intentional
+                    case MMS_OSI_SESSION_SPDU_CN:    // fallthrough intentional
                     case MMS_OSI_SESSION_SPDU_AC:
                     {
                         mms.state = MMS_STATE__MMS;
@@ -416,7 +416,7 @@ static bool mms_curse(const uint8_t* data, unsigned len, CurseTracker* tracker)
                 }
 
                 break;
-            }            
+            }
 
             case MMS_STATE__MMS:
             {
@@ -446,13 +446,13 @@ static bool mms_curse(const uint8_t* data, unsigned len, CurseTracker* tracker)
                             mms.state = MMS_STATE__FOUND;
                             break;
                         }
-                        // no default here as it we don't know when we would hit 
-                        // the first MMS tag without doing full parsing 
+                        // no default here as it we don't know when we would hit
+                        // the first MMS tag without doing full parsing
                     }
 
                     // exit the loop when a state has been determined
                     if ( mms.state == MMS_STATE__NOT_FOUND
-                        or mms.state == MMS_STATE__SEARCH 
+                        or mms.state == MMS_STATE__SEARCH
                         or mms.state == MMS_STATE__FOUND )
                     {
                         break;
@@ -570,7 +570,7 @@ static bool s7commplus_curse(const uint8_t* data, unsigned len, CurseTracker* tr
             {
                 // there are two possible protocol identifiers - 0x32 and 0x72
                 // 0x32 indicates the original s7comm protocol
-                //   * the original protocol is not supported within the inspector 
+                //   * the original protocol is not supported within the inspector
                 //     so just catching and considering it a no match for now
                 // 0x72 indicates the s7commplus protocol
                 //   * this is the protocol on which the existing inspector focuses
@@ -579,7 +579,7 @@ static bool s7commplus_curse(const uint8_t* data, unsigned len, CurseTracker* tr
                     s7commplus.state = S7COMMPLUS_STATE__PDU_TYPE;
                 }
                 else
-                {                
+                {
                     s7commplus.state = S7COMMPLUS_STATE__NOT_FOUND;
                 }
                 break;

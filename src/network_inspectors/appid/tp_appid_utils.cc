@@ -403,7 +403,7 @@ static inline void process_ftp_control(AppIdSession& asd,
         asd.set_user_logged_in();
         asd.tpsession->set_attr(TP_ATTR_UNAME_KNOWN);
     }
-    // This is a safe bail out condition in case username is not known 
+    // This is a safe bail out condition in case username is not known
     if ((asd.init_tpPackets + asd.resp_tpPackets) >= asd.get_odp_ctxt().max_tp_flow_depth)
         asd.tpsession->set_attr(TP_ATTR_UNAME_KNOWN);
 }
@@ -601,7 +601,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
         assert(hsession);
     }
 
-    if (tp_app_id == APP_ID_SSH) 
+    if (tp_app_id == APP_ID_SSH)
     {
         if (appidDebug->is_active())
             LogMessage("AppIdDbg %s Setting the ignore and early detection flag\n",

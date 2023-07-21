@@ -29,8 +29,8 @@
 
 enum iec104_paf_state_t
 {
-    IEC104_PAF_STATE__START = 0, 
-    IEC104_PAF_STATE__LEN = 1, 
+    IEC104_PAF_STATE__START = 0,
+    IEC104_PAF_STATE__LEN = 1,
     IEC104_PAF_STATE__SET_FLUSH = 2,
 };
 

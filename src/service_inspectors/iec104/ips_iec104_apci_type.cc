@@ -47,8 +47,8 @@ struct Iec104ApciTypeMap
 };
 
 /* Mapping of name -> apci type for 'iec104_apci_type' option. */
-static Iec104ApciTypeMap iec104_apci_type_map[] = 
-{ 
+static Iec104ApciTypeMap iec104_apci_type_map[] =
+{
     { "u", IEC104_APCI_TYPE_U },                              // unnumbered control function
     { "U", IEC104_APCI_TYPE_U },                              // unnumbered control function
     { "unnumbered_control_function", IEC104_APCI_TYPE_U },    // unnumbered control function
@@ -222,30 +222,30 @@ static void opt_dtor(IpsOption* p)
     delete p;
 }
 
-static const IpsApi ips_api = 
-{ 
-    { 
-        PT_IPS_OPTION, 
-        sizeof(IpsApi), 
-        IPSAPI_VERSION, 
-        0, 
+static const IpsApi ips_api =
+{
+    {
+        PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        0,
         API_RESERVED,
-        API_OPTIONS, 
+        API_OPTIONS,
         s_name,
-        s_help, 
-        mod_ctor, 
-        mod_dtor 
-    }, 
-    OPT_TYPE_DETECTION, 
-    0, 
-    PROTO_BIT__TCP, 
-    nullptr, 
-    nullptr, 
+        s_help,
+        mod_ctor,
+        mod_dtor
+    },
+    OPT_TYPE_DETECTION,
+    0,
+    PROTO_BIT__TCP,
     nullptr,
-    nullptr, 
-    opt_ctor, 
-    opt_dtor, 
-    nullptr 
+    nullptr,
+    nullptr,
+    nullptr,
+    opt_ctor,
+    opt_dtor,
+    nullptr
 };
 
 const BaseApi* ips_iec104_apci_type = &ips_api.base;

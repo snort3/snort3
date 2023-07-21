@@ -84,7 +84,7 @@ public:
     { return (config.flags & ISDATAAT_RELATIVE_FLAG) != 0; }
 
     CursorActionType get_cursor_type() const override
-    { return CAT_READ; }  
+    { return CAT_READ; }
 
 private:
     IsDataAtData config;

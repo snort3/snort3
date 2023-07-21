@@ -93,7 +93,7 @@ StreamSplitter::Status FtpDataSplitter::scan(Packet* pkt, const uint8_t*, uint32
         *fp = len;
         // avoid unnecessary signature calc by clearing the flag set by detained packet
         if (fdfd->session.packet_flags & FTPDATA_FLG_FLUSH)
-            fdfd->session.packet_flags &= ~FTPDATA_FLG_FLUSH; 
+            fdfd->session.packet_flags &= ~FTPDATA_FLG_FLUSH;
         return FLUSH;
     }
 

@@ -726,7 +726,7 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
 
             if (!add_entry_to_app_info_name_table(entry->app_name_key, entry))
                 delete entry;
-            else 
+            else
             {
                 if ((app_id = get_static_app_info_entry(entry->appId)))
                 {

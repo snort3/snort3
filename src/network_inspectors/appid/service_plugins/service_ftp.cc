@@ -353,7 +353,7 @@ static bool check_ret_digit_code(const uint8_t* code_raw, int start_digit_place,
                 ret = false;
             break;
         case 2:
-            if (ret and fd.rstate == FTP_REPLY_BEGIN and code_raw[index] >='0' 
+            if (ret and fd.rstate == FTP_REPLY_BEGIN and code_raw[index] >='0'
                 and code_raw[index] <= '5')
                 code += (code_raw[index] - '0') * 10;
             else if (ret and fd.rstate != FTP_REPLY_BEGIN and code_raw[index] >='1'

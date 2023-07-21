@@ -57,7 +57,7 @@ void CipEventHandler::service_handler(const Packet& p, AppIdSession& asd)
 
     asd.set_server_info(*ip, port, group);
     asd.set_service_id(APP_ID_CIP, asd.get_odp_ctxt());
-    asd.set_service_detected();	
+    asd.set_service_detected();
 }
 
 void CipEventHandler::handle(DataEvent& event, Flow* flow)
@@ -71,7 +71,7 @@ void CipEventHandler::handle(DataEvent& event, Flow* flow)
         return;
 
     if (!pkt_thread_odp_ctxt or (asd->get_odp_ctxt_version() != pkt_thread_odp_ctxt->get_version()))
-        return; 
+        return;
 
     if (!asd->get_session_flags(APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED))
         return;

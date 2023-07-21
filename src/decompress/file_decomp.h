@@ -141,7 +141,7 @@ struct fd_session_t
     uint8_t Sig_State;   // Sig search state machine
     uint8_t State;       // main state machine
     uint8_t* ole_data_ptr; // compressed ole file.
-    uint32_t ole_data_len; 
+    uint32_t ole_data_len;
     bool vba_analysis;
 
     void get_ole_data(uint8_t*& ole_data_ptr, uint32_t& ole_data_len)
@@ -154,7 +154,7 @@ struct fd_session_t
     {
         ole_data_ptr = nullptr;
         ole_data_len = 0;
-    } 
+    }
 };
 
 /* Macros */

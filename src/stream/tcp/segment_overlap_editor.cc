@@ -180,7 +180,7 @@ void SegmentOverlapEditor::eval_right(TcpReassemblerState& trs)
             tcpStats.overlaps++;
             trs.sos.overlap_count++;
             insert_full_overlap(trs);
-            
+
             if ( trs.sos.keep_segment == false )
                 return;
         }
@@ -357,7 +357,7 @@ void SegmentOverlapEditor::full_right_overlap_truncate_new(TcpReassemblerState& 
             trs.sos.keep_segment = false;
             return;
         }
-        
+
         trs.sos.tsd->rewrite_payload(offset, trs.sos.right->data, trs.sos.right->i_len);
     }
 
@@ -471,7 +471,7 @@ bool SegmentOverlapEditor::zwp_data_mismatch(
     {
         return tsd.is_nap_policy_inline();
     }
-    
+
     return false;
 }
 

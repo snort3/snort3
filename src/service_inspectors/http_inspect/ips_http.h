@@ -76,7 +76,7 @@ public:
     EvalStatus eval(Cursor&, snort::Packet*) override = 0;
     uint32_t hash() const override;
     bool operator==(const snort::IpsOption& ips) const override;
-  
+
     snort::section_flags get_pdu_section(bool) const override;
 
 protected:

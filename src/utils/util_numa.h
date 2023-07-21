@@ -31,17 +31,17 @@ class NumaWrapper
 {
 public:
     virtual ~NumaWrapper() {}
-    virtual int available() 
-    { 
-        return numa_available(); 
+    virtual int available()
+    {
+        return numa_available();
     }
-    virtual int max_node() 
-    { 
-        return numa_max_node(); 
+    virtual int max_node()
+    {
+        return numa_max_node();
     }
-    virtual int preferred() 
-    { 
-        return numa_preferred(); 
+    virtual int preferred()
+    {
+        return numa_preferred();
     }
     virtual int set_mem_policy(int mode, const unsigned long *nodemask,
                               unsigned long maxnode)

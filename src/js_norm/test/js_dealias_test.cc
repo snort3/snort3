@@ -814,7 +814,7 @@ TEST_CASE("De-aliasing - scopes", "[JSNormalizer]")
 
 TEST_CASE("De-aliasing - class", "[JSNormalizer]")
 {
-    
+
     SECTION("basic case")
         test_normalization(
             "a = new String(); a.foo()",

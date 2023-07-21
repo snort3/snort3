@@ -702,12 +702,12 @@ public:
     {
         return client_info_unpublished;
     }
- 
+
     void set_cip_msp(bool multipayload)
     {
         cip_msp = multipayload;
     }
- 
+
     bool is_cip_msp() const
     {
         return cip_msp;
@@ -717,7 +717,7 @@ public:
     {
         return get_session_flags(APPID_SESSION_OPPORTUNISTIC_TLS) and !flow->flags.data_decrypted;
     }
-    
+
 private:
     uint16_t prev_httpx_raw_packet = 0;
 

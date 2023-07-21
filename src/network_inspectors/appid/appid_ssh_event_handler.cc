@@ -202,7 +202,7 @@ void SshEventHandler::handle(DataEvent& event, Flow* flow)
     switch(ssh_event.get_event_type())
     {
     case SSH_VERSION_STRING:
-        if (handle_protocol(ssh_event, fd)) 
+        if (handle_protocol(ssh_event, fd))
         {
             if (asd->get_session_flags(APPID_SESSION_EARLY_SSH_DETECTED))
             {

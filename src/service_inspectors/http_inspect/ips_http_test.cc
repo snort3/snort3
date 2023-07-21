@@ -163,7 +163,7 @@ IpsOption::EvalStatus HttpTestIpsOption::eval(Cursor&, Packet* p)
     const HttpInspect* const hi = eval_helper(p);
     if (hi == nullptr)
         return NO_MATCH;
-    
+
     const Field& http_buffer = hi->http_get_buf(p, buffer_info);
 
     // Check if field is absent or section is not present

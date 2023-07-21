@@ -148,7 +148,7 @@ static bool get_func(const char* s, long& n)
 
     for (size_t i = 0; i < max; ++i)
     {
-        // return true when the passed string matches a known function 
+        // return true when the passed string matches a known function
         if (strcmp(s, mms_func_map[i].name) == 0)
         {
             n = mms_func_map[i].func;

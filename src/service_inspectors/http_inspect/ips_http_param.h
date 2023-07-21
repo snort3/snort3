@@ -51,7 +51,7 @@ public:
 private:
     friend class HttpParamIpsOption;
     static THREAD_LOCAL snort::ProfileStats http_param_ps;
-  
+
     std::string param;       // provide buffer containing specific parameter
     bool nocase;             // case insensitive match
     snort::LiteralSearch::Handle* search_handle;
@@ -72,12 +72,12 @@ public:
 
     static void opt_dtor(snort::IpsOption* p) { delete p; }
     bool retry(Cursor& , const Cursor&) override;
-  
+
     snort::section_flags get_pdu_section(bool) const override;
 
 private:
     const char* const key;
-    const HttpParam http_param; 
+    const HttpParam http_param;
 };
 
 #endif

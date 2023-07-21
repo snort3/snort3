@@ -101,7 +101,7 @@ bool Variable::add_value(std::string elem)
                 vars.back()->data.push_back('[');
                 end.insert(0, 1, ']');
             }
-            
+
             // add a space between strings
             if (vars.back()->type == VarType::STRING)
                 vars.back()->data.push_back(' ');

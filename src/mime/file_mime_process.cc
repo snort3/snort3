@@ -248,7 +248,7 @@ bool MimeSession::process_header_line(const uint8_t*& ptr, const uint8_t* eol, c
     const uint8_t* colon;
     const uint8_t* header_value_ptr = nullptr;
     int max_header_name_len = 0;
-    
+
     int header_found;
     /* got a line with only end of line marker should signify end of header */
     if (eolm == ptr)
@@ -287,7 +287,7 @@ bool MimeSession::process_header_line(const uint8_t*& ptr, const uint8_t* eol, c
 
             colon++;
         }
-        
+
         if (colon + 1 < eolm)
             header_value_ptr = colon + 1;
 

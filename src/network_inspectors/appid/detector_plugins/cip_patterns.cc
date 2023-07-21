@@ -23,7 +23,7 @@
 #endif
 
 #include "cip_patterns.h"
-#include "service_inspectors/cip/cip.h"              
+#include "service_inspectors/cip/cip.h"
 #include "utils/util.h"
 
 using namespace snort;
@@ -59,7 +59,7 @@ void CipPatternMatchers::cip_add_path(AppId app_id, uint32_t class_id, uint8_t s
     path_list = pattern;
 }
 
-void CipPatternMatchers::cip_add_set_attribute(AppId app_id, uint32_t class_id, bool is_class_instance, 
+void CipPatternMatchers::cip_add_set_attribute(AppId app_id, uint32_t class_id, bool is_class_instance,
     uint32_t attribute_id)
 {
     CipSetAttributeList* pattern = (CipSetAttributeList*)snort_calloc(sizeof(CipSetAttributeList));
@@ -75,7 +75,7 @@ void CipPatternMatchers::cip_add_set_attribute(AppId app_id, uint32_t class_id, 
 
     pattern->next = set_attribute_list;
     set_attribute_list = pattern;
-} 
+}
 
 void CipPatternMatchers::cip_add_connection_class(AppId app_id, uint32_t class_id)
 {
@@ -338,19 +338,19 @@ CipPatternMatchers::~CipPatternMatchers()
 {
     free_enip_command_list(enip_command_list);
     enip_command_list = nullptr;
-    
+
     free_cip_path_list(path_list);
     path_list = nullptr;
-    
+
     free_cip_set_attribute_list(set_attribute_list);
     set_attribute_list = nullptr;
-    
+
     free_cip_connection_class_list(connection_list);
     connection_list = nullptr;
-    
+
     free_cip_extended_symbol_service_list(symbol_list);
     symbol_list = nullptr;
-    
+
     free_cip_service_list(service_list);
     service_list = nullptr;
 }

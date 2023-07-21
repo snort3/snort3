@@ -248,27 +248,27 @@ int ThreadConfig::get_numa_node(hwloc_topology_t topology, hwloc_cpuset_t cpuset
     return -1;
 }
 
-bool ThreadConfig::set_preferred_mempolicy(int node) 
+bool ThreadConfig::set_preferred_mempolicy(int node)
 {
-    if (node < 0) 
+    if (node < 0)
         return false;
 
     unsigned long nodemask = 1UL << (unsigned long)node;
     int result = numa->set_mem_policy(MPOL_PREFERRED, &nodemask, sizeof(nodemask)*8);
-    if (result != 0) 
+    if (result != 0)
         return false;
- 
-    if(numa->preferred() != node) 
+
+    if(numa->preferred() != node)
         return false;
-    
+
     return true;
 }
 
 bool ThreadConfig::implement_thread_mempolicy(SThreadType type, unsigned id)
 {
-    if (!topology_support->cpubind->set_thisthread_cpubind or 
+    if (!topology_support->cpubind->set_thisthread_cpubind or
                 numa->available() < 0 or numa->max_node() <= 0)
-    {     
+    {
         return false;
     }
 
@@ -286,7 +286,7 @@ bool ThreadConfig::implement_thread_mempolicy(SThreadType type, unsigned id)
     {
         return false;
     }
-    
+
     return true;
 }
 
@@ -616,7 +616,7 @@ TEST_CASE("set node for thread", "[ThreadConfig]")
     std::shared_ptr<NumaWrapperMock> numa_mock = std::make_shared<NumaWrapperMock>();
     std::shared_ptr<HwlocWrapperMock> hwloc_mock = std::make_shared<HwlocWrapperMock>();
 
-    hwloc_mock->node.os_index = 0; 
+    hwloc_mock->node.os_index = 0;
 
     numa = numa_mock;
     hwloc = hwloc_mock;
@@ -626,10 +626,10 @@ TEST_CASE("set node for thread", "[ThreadConfig]")
 
     CHECK(tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
 
-    hwloc_mock->node.os_index = 1; 
+    hwloc_mock->node.os_index = 1;
     numa_mock->pref = 1;
     CHECK(tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 1));
-}   
+}
 
 TEST_CASE("numa_available negative test", "[ThreadConfig]")
 {
@@ -640,7 +640,7 @@ TEST_CASE("numa_available negative test", "[ThreadConfig]")
     std::shared_ptr<NumaWrapperMock> numa_mock = std::make_shared<NumaWrapperMock>();
     std::shared_ptr<HwlocWrapperMock> hwloc_mock = std::make_shared<HwlocWrapperMock>();
 
-    numa_mock->numa_avail = -1; 
+    numa_mock->numa_avail = -1;
     numa = numa_mock;
     hwloc = hwloc_mock;
     CHECK(!tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
@@ -654,8 +654,8 @@ TEST_CASE("set node failure negative test", "[ThreadConfig]")
 
     std::shared_ptr<NumaWrapperMock> numa_mock = std::make_shared<NumaWrapperMock>();
     std::shared_ptr<HwlocWrapperMock> hwloc_mock = std::make_shared<HwlocWrapperMock>();
-    hwloc_mock->node.os_index = 0; 
-    numa_mock->pref = -1; 
+    hwloc_mock->node.os_index = 0;
+    numa_mock->pref = -1;
     numa = numa_mock;
     hwloc = hwloc_mock;
     CHECK(!tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
@@ -690,7 +690,7 @@ TEST_CASE("set memory policy failure negative test", "[ThreadConfig]")
     numa_mock->mem_policy = -1;
     numa = numa_mock;
     hwloc = hwloc_mock;
-    CHECK(!tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));    
+    CHECK(!tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
 }
 
 TEST_CASE("get_nbobjs_by_depth failure negative test", "[ThreadConfig]")

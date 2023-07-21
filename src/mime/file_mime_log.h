@@ -48,7 +48,7 @@ struct MailLogConfig
 
 class Flow;
 
-class SO_PUBLIC MailLogState : public snort::StashGenericObject 
+class SO_PUBLIC MailLogState : public snort::StashGenericObject
 {
 public:
     MailLogState(MailLogConfig* conf);

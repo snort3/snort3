@@ -144,8 +144,8 @@ static inline void fpLogOther(
     if ( PacketTracer::is_daq_activated() )
     {
         std::string act = Actions::get_string(action);
-        tr_len += snprintf(tr_context+tr_len, sizeof(tr_context) - tr_len, 
-                      "gid:%u, sid:%u, rev:%u, action:%s, msg:%s\n", 
+        tr_len += snprintf(tr_context+tr_len, sizeof(tr_context) - tr_len,
+                      "gid:%u, sid:%u, rev:%u, action:%s, msg:%s\n",
                       otn->sigInfo.gid, otn->sigInfo.sid,
                       otn->sigInfo.rev, act.c_str(),
                       otn->sigInfo.message.c_str());
