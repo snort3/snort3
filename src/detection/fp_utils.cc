@@ -140,23 +140,11 @@ void update_buffer_map(const char** bufs, const char* svc)
         return;
     }
 
-    // FIXIT-M update NHI and H2I api.buffers and remove the hard-coded foo below
     for ( int i = 0; bufs[i]; ++i )
-    {
         buffer_map[bufs[i]].push_back(svc);
-        if ( !strcmp(svc, "http") )
-        {
-            buffer_map[bufs[i]].push_back("http2");
-            buffer_map[bufs[i]].push_back("http3");
-        }
-    }
 
     if ( !strcmp(svc, "http") )
-    {
         buffer_map["file_data"].push_back("http");
-        buffer_map["file_data"].push_back("http2");
-        buffer_map["file_data"].push_back("http3");
-    }
 }
 
 void add_default_services(SnortConfig* sc, const std::string& buf, OptTreeNode* otn)
@@ -501,35 +489,41 @@ void validate_services(SnortConfig* sc, OptTreeNode* otn)
             continue;
 
         CursorActionType cat = ofl->ips_opt->get_cursor_type();
-        const char* s = ofl->ips_opt->get_name();
+        const char* opt = ofl->ips_opt->get_name();
 
         if ( cat <= CAT_ADJUST )
         {
             if ( !guess )
-                guess = guess_service(s);
+                guess = guess_service(opt);
 
             continue;
         }
 
-        unsigned n = get_num_services(s);
+        unsigned n = get_num_services(opt);
 
         if ( !n )
             continue;
 
         if ( n > 1 )
         {
-            multi_svc_buf = s;
+            multi_svc_buf = opt;
             continue;
         }
 
-        s = get_service(s);
+        const char* opt_svc = get_service(opt);
+        const auto& search = sc->service_extension.find(opt_svc);
+        if (search != sc->service_extension.end())
+        {
+            multi_svc_buf = opt;
+            continue;
+        }
 
-        if ( !svc.empty() and svc != s )
+        if ( !svc.empty() and svc != opt_svc )
         {
             ParseWarning(WARN_RULES, "%u:%u:%u has mixed service buffers (%s and %s)",
-                otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, svc.c_str(), s);
+                otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, svc.c_str(), opt_svc);
         }
-        svc = s;
+        svc = opt_svc;
     }
 
     if ( !svc.empty() or !multi_svc_buf.empty() or guess )
@@ -561,9 +555,6 @@ void validate_services(SnortConfig* sc, OptTreeNode* otn)
             otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, guess);
 
         add_service_to_otn(sc, otn, guess);
-
-        if ( !strcmp(guess, "netbios-ssn") )  // :(
-            add_service_to_otn(sc, otn, "dcerpc");
     }
 }
 

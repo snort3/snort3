@@ -250,6 +250,18 @@ void ParseIpVar(const char* var, const char* value)
     }
 }
 
+static void add_service_to_otn_helper(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
+{
+    SnortProtocolId svc_id = sc->proto_ref->add(svc_name);
+
+    for ( const auto& si : otn->sigInfo.services )
+        if ( si.snort_protocol_id == svc_id )
+            return;  // already added
+
+    SignatureServiceInfo si(svc_name, svc_id);
+    otn->sigInfo.services.emplace_back(si);
+}
+
 void add_service_to_otn(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
 {
     if ( !strcmp(svc_name, "file") and otn->sigInfo.services.empty() )
@@ -262,20 +274,13 @@ void add_service_to_otn(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
         return;
     }
 
-    if ( !strcmp(svc_name, "http") )
+    add_service_to_otn_helper(sc, otn, svc_name);
+    const auto& search = sc->service_extension.find(svc_name);
+    if ( search != sc->service_extension.end() )
     {
-        add_service_to_otn(sc, otn, "http2");
-        add_service_to_otn(sc, otn, "http3");
+        for ( const auto& svc : search->second)
+            add_service_to_otn_helper(sc, otn, svc.c_str());
     }
-
-    SnortProtocolId svc_id = sc->proto_ref->add(svc_name);
-
-    for ( const auto& si : otn->sigInfo.services )
-        if ( si.snort_protocol_id == svc_id )
-            return;  // already added
-
-    SignatureServiceInfo si(svc_name, svc_id);
-    otn->sigInfo.services.emplace_back(si);
 }
 
 ListHead* get_rule_list(SnortConfig* sc, const char* s)

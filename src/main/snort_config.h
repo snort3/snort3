@@ -237,6 +237,12 @@ public:
     bool enable_strict_reduction = false;
     uint16_t max_continuations = 1024;
 
+    std::unordered_map<std::string, std::vector<std::string>> service_extension =
+        {
+             { "http", {"http2", "http3"} },
+             { "netbios-ssn", {"dcerpc"} },
+        };
+
     //------------------------------------------------------
     // process stuff
 

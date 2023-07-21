@@ -223,7 +223,7 @@ bool SdPatternOption::operator==(const IpsOption& ips) const
 
     const SdPatternOption& rhs = static_cast<const SdPatternOption&>(ips);
 
-    if ( config == rhs.config )  // FIXIT-H seems incorrect
+    if ( config == rhs.config )
         return true;
 
     return false;

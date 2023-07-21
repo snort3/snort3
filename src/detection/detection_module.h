@@ -31,6 +31,7 @@ class DetectionModule : public Module
 public:
     DetectionModule();
 
+    bool begin(const char*, int, snort::SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
@@ -45,6 +46,12 @@ public:
 
     void set_trace(const Trace*) const override;
     const TraceOption* get_trace_options() const override;
+
+private:
+    bool add_service_extension(snort::SnortConfig*);
+
+    std::string service;
+    std::vector<std::string> extend_to;
 };
 }
 
