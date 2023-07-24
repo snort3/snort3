@@ -21,6 +21,7 @@
 #define MAGIC_H
 
 #include <cassert>
+#include <cstdint>
 #include <string>
 #include <vector>
 

@@ -21,6 +21,7 @@
 #ifndef SFDAQ_CONFIG_H
 #define SFDAQ_CONFIG_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
 

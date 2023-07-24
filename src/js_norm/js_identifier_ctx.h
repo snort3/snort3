@@ -20,6 +20,7 @@
 #ifndef JS_IDENTIFIER_CTX
 #define JS_IDENTIFIER_CTX
 
+#include <cstdint>
 #include <list>
 #include <string>
 #include <unordered_map>
