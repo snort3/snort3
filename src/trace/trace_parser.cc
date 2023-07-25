@@ -184,16 +184,16 @@ void TraceParser::init_configured_trace_options()
     name.set(value)
 
 #define MODULE_OPTION(name, value) \
-    CONFIG_OPTION(name, value, Parameter::PT_INT, "0:255")
+    CONFIG_OPTION(name, (uint64_t)value, Parameter::PT_INT, "0:255")
 
 #define PROTO_OPTION(name, value) \
-    CONFIG_OPTION(name, value, Parameter::PT_INT, "0:255")
+    CONFIG_OPTION(name, (uint64_t)value, Parameter::PT_INT, "0:255")
 
 #define ADDR_OPTION(name, value) \
     CONFIG_OPTION(name, value, Parameter::PT_STRING, nullptr)
 
 #define PORT_OPTION(name, value) \
-    CONFIG_OPTION(name, value, Parameter::PT_INT, "0:65535")
+    CONFIG_OPTION(name, (uint64_t)value, Parameter::PT_INT, "0:65535")
 
 enum { OPT_1, OPT_2 };
 
@@ -240,13 +240,13 @@ TEST_CASE("modules traces", "[TraceParser]")
 
     SECTION("invalid module")
     {
-        MODULE_OPTION(all, 10l);
+        MODULE_OPTION(all, 10);
         CHECK(!tp.set_traces("invalid_module", all));
     }
 
     SECTION("invalid option")
     {
-        MODULE_OPTION(invalid_option, 10l);
+        MODULE_OPTION(invalid_option, 10);
         CHECK(!tp.set_traces("mod_1", invalid_option));
     }
 
@@ -263,7 +263,7 @@ TEST_CASE("modules traces", "[TraceParser]")
 
     SECTION("all modules")
     {
-        MODULE_OPTION(all, 3l);
+        MODULE_OPTION(all, 3);
         CHECK(tp.set_traces("all", all));
 
         REQUIRE(m1_trace != nullptr);
@@ -282,7 +282,7 @@ TEST_CASE("modules traces", "[TraceParser]")
 
     SECTION("module all")
     {
-        MODULE_OPTION(all, 3l);
+        MODULE_OPTION(all, 3);
         CHECK(tp.set_traces("mod_1", all));
 
         REQUIRE(m1_trace != nullptr);
@@ -296,8 +296,8 @@ TEST_CASE("modules traces", "[TraceParser]")
 
     SECTION("options")
     {
-        MODULE_OPTION(option1, 1l);
-        MODULE_OPTION(option2, 5l);
+        MODULE_OPTION(option1, 1);
+        MODULE_OPTION(option2, 5);
         CHECK(tp.set_traces("mod_1", option1));
         CHECK(tp.set_traces("mod_1", option2));
         CHECK(tp.set_traces("mod_2", option1));
@@ -319,9 +319,9 @@ TEST_CASE("modules traces", "[TraceParser]")
 
     SECTION("override all modules")
     {
-        MODULE_OPTION(option1, 1l);
-        MODULE_OPTION(option2, 2l);
-        MODULE_OPTION(all, 3l);
+        MODULE_OPTION(option1, 1);
+        MODULE_OPTION(option2, 2);
+        MODULE_OPTION(all, 3);
         CHECK(tp.set_traces("mod_1", option1));
         CHECK(tp.set_traces("mod_2", option2));
         CHECK(tp.set_traces("all", all));
@@ -357,7 +357,7 @@ TEST_CASE("packet constraints", "[TraceParser]")
 
     SECTION("ip_proto")
     {
-        PROTO_OPTION(ip_proto, 6l);
+        PROTO_OPTION(ip_proto, 6);
         const PacketConstraints exp = { IpProtocol::TCP, 0, 0,
             SfIp(), SfIp(), PacketConstraints::IP_PROTO };
 
@@ -396,7 +396,7 @@ TEST_CASE("packet constraints", "[TraceParser]")
     {
         const PacketConstraints exp = { IpProtocol::PROTO_NOT_SET, 100, 0,
             SfIp(), SfIp(), PacketConstraints::SRC_PORT };
-        PORT_OPTION(src_port, 100l);
+        PORT_OPTION(src_port, 100);
 
         CHECK(tp.set_constraints(src_port));
         tp.finalize_constraints();
@@ -431,7 +431,7 @@ TEST_CASE("packet constraints", "[TraceParser]")
 
     SECTION("dst_port")
     {
-        PORT_OPTION(dst_port, 200l);
+        PORT_OPTION(dst_port, 200);
         const PacketConstraints exp = { IpProtocol::PROTO_NOT_SET, 0, 200,
             SfIp(), SfIp(), PacketConstraints::DST_PORT };
 
@@ -446,7 +446,7 @@ TEST_CASE("packet constraints", "[TraceParser]")
 
     SECTION("invalid option")
     {
-        CONFIG_OPTION(invalid_option, 5l, Parameter::PT_INT, "0:8");
+        CONFIG_OPTION(invalid_option, (uint64_t)5, Parameter::PT_INT, "0:8");
         CHECK(!tp.set_constraints(invalid_option));
     }
 }
