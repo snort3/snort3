@@ -30,8 +30,6 @@
 #include "packet.h"
 #include "utils/util.h"
 
-#define COMMON_NAME_STR "/CN="
-
 #define THREE_BYTE_LEN(x) ((x)[2] | (x)[1] << 8 | (x)[0] << 16)
 
 #define SSL_ERROR_FLAGS \
@@ -710,8 +708,7 @@ bool parse_server_certificates(SSLV3ServerCertData* server_cert_data)
     while (len > 0 and !(common_name and org_name))
     {
         X509* cert = nullptr;
-        char* cert_name = nullptr;
-        char* start = nullptr;
+        X509_NAME* cert_name = nullptr;
 
         int cert_len = ntoh3(data);
         data += 3;
@@ -725,31 +722,30 @@ bool parse_server_certificates(SSLV3ServerCertData* server_cert_data)
         if (!cert)
             return false;
 
-        if (nullptr == (cert_name = X509_NAME_oneline(X509_get_subject_name(cert), nullptr, 0)))
+        if (nullptr == (cert_name = X509_get_subject_name(cert)))
         {
             X509_free(cert);
             continue;
         }
 
-        if (!common_name and (start = strstr(cert_name, COMMON_NAME_STR)))
+        if (!common_name)
         {
-            start += strlen(COMMON_NAME_STR);
-            int length = strlen(start);
-            if (length > 2 and *start == '*' and *(start+1) == '.')
+            int lastpos = -1;
+            lastpos = X509_NAME_get_index_by_NID(cert_name, NID_commonName, lastpos);
+            if (lastpos != -1)
             {
-                start += 2; // remove leading *.
-                length -= 2;
+                X509_NAME_ENTRY* e = X509_NAME_get_entry(cert_name, lastpos);
+                const unsigned char* str_data = ASN1_STRING_get0_data(X509_NAME_ENTRY_get_data(e));
+                int length = strlen((const char*)str_data);
+
+                common_name_len = length;
+                common_name = snort_strndup((const char*)str_data, common_name_len);
+
+                org_name_len = length;
+                org_name = snort_strndup((const char*)str_data, org_name_len);
             }
-            common_name = snort_strndup(start, length);
-            common_name_len = length;
-
-            org_name = snort_strndup(start, length);
-            org_name_len = length;
-
-            start = nullptr;
         }
 
-        free(cert_name);
         cert_name = nullptr;
         X509_free(cert);
     }
