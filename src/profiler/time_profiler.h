@@ -23,7 +23,9 @@
 
 class ProfilerNodeMap;
 struct TimeProfilerConfig;
+class ControlConn;
 
 void show_time_profiler_stats(ProfilerNodeMap&, const TimeProfilerConfig&);
+void print_time_profiler_stats(ProfilerNodeMap&, const TimeProfilerConfig&, ControlConn*);
 
 #endif

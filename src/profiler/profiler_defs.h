@@ -33,6 +33,13 @@ namespace snort
 #define ROOT_NODE "total"
 #define FLEX_NODE "other"
 
+enum ProfilerType
+{
+    PROFILER_TYPE_TIME,
+    PROFILER_TYPE_MEMORY,
+    PROFILER_TYPE_BOTH
+};
+
 struct ProfilerConfig
 {
     TimeProfilerConfig time;
@@ -51,11 +58,18 @@ struct SO_PUBLIC ProfileStats
         memory.reset();
     }
 
+    void reset_time()
+    {
+        time.reset();
+    }
+
     bool operator==(const ProfileStats&) const;
     bool operator!=(const ProfileStats& rhs) const
     { return !(*this == rhs); }
 
     ProfileStats& operator+=(const ProfileStats&);
+    ProfileStats& operator+=(const TimeProfilerStats&);
+    ProfileStats& operator+=(const MemoryTracker&);
 
     constexpr ProfileStats() = default;
     constexpr ProfileStats(const TimeProfilerStats& time, const MemoryTracker& memory) :
@@ -70,6 +84,18 @@ inline ProfileStats& ProfileStats::operator+=(const ProfileStats& rhs)
     time += rhs.time;
     memory.stats += rhs.memory.stats;
 
+    return *this;
+}
+
+inline ProfileStats& ProfileStats::operator+=(const TimeProfilerStats& rhs)
+{
+    time += rhs;
+    return *this;
+}
+
+inline ProfileStats& ProfileStats::operator+=(const MemoryTracker& rhs)
+{
+    memory.stats += rhs.stats;
     return *this;
 }
 

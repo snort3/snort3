@@ -46,7 +46,7 @@ struct GetProfileFunctor
     GetProfileFunctor(const std::string& name) : name(name) { }
 
     virtual ~GetProfileFunctor() = default;
-    virtual const ProfileStats* operator()() = 0;
+    virtual ProfileStats* operator()() = 0;
 
     const std::string name;
 };
@@ -56,10 +56,10 @@ struct GetProfileFromModule : public GetProfileFunctor
     GetProfileFromModule(const std::string& pn, Module* m) :
         GetProfileFunctor(pn), m(m) { }
 
-    const ProfileStats* operator()() override
+    ProfileStats* operator()() override
     {
         // const auto *ps = m->get_profiler_stats();
-        const auto *ps = m->get_profile();
+        auto *ps = m->get_profile();
         if ( ps )
             return ps;
 
@@ -79,7 +79,7 @@ struct GetProfileFromFunction : public GetProfileFunctor
     GetProfileFromFunction(const std::string& pn, get_profile_stats_fn fn) :
         GetProfileFunctor(pn), fn(fn) { }
 
-    const ProfileStats* operator()() override
+    ProfileStats* operator()() override
     { return fn(name.c_str()); }
 
     get_profile_stats_fn fn;
@@ -108,7 +108,7 @@ void ProfilerNode::set(Module* m)
 void ProfilerNode::set(get_profile_stats_fn fn)
 { getter = std::make_shared<GetProfileFromFunction>(name, fn); }
 
-void ProfilerNode::accumulate()
+void ProfilerNode::accumulate(snort::ProfilerType type)
 {
     if ( is_set() )
     {
@@ -118,20 +118,48 @@ void ProfilerNode::accumulate()
             return;
 
         get_stats();
-        stats += *local_stats;
+
+        if ( type == snort::PROFILER_TYPE_TIME )
+            stats += local_stats->time;
+        else if ( type == snort::PROFILER_TYPE_MEMORY )
+            stats += local_stats->memory;
+        else
+            stats += *local_stats;
+    }
+}
+
+void ProfilerNode::reset(ProfilerType type)
+{ 
+    if ( is_set() )
+    {
+        auto* local_stats = (*getter)();
+
+        if ( !local_stats )
+            return;
+
+        if ( type == snort::PROFILER_TYPE_TIME )
+        {
+            stats.reset_time();
+            local_stats->reset_time();
+        }
+        else
+        {
+            stats.reset();
+            local_stats->reset();
+        }
     }
 }
 
 void ProfilerNodeMap::register_node(const std::string &n, const char* pn, Module* m)
 { setup_node(get_node(n), get_node(pn ? pn : ROOT_NODE), m); }
 
-void ProfilerNodeMap::accumulate_nodes()
+void ProfilerNodeMap::accumulate_nodes(ProfilerType type)
 {
     static std::mutex stats_mutex;
     std::lock_guard<std::mutex> lock(stats_mutex);
 
     for ( auto it = nodes.begin(); it != nodes.end(); ++it )
-        it->second.accumulate();
+        it->second.accumulate(type);
 }
 
 void ProfilerNodeMap::accumulate_flex()
@@ -142,10 +170,20 @@ void ProfilerNodeMap::accumulate_flex()
         it->second.accumulate();
 }
 
-void ProfilerNodeMap::reset_nodes()
+void ProfilerNodeMap::clear_flex()
 {
-    for ( auto it = nodes.begin(); it != nodes.end(); ++it )
+    auto it = nodes.find(FLEX_NODE);
+
+    if ( it != nodes.end() )
         it->second.reset();
+}
+
+void ProfilerNodeMap::reset_nodes(ProfilerType type)
+{
+    static std::mutex reset_mutex;
+    std::lock_guard<std::mutex> lock(reset_mutex);
+    for ( auto it = nodes.begin(); it != nodes.end(); ++it )
+        it->second.reset(type);
 }
 
 const ProfilerNode& ProfilerNodeMap::get_root()

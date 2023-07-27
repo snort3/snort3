@@ -68,7 +68,7 @@ THREAD_LOCAL bool RuleContext::enabled = false;
 
 void Profiler::start() { }
 void Profiler::stop(uint64_t) { }
-void Profiler::consolidate_stats() { }
+void Profiler::consolidate_stats(snort::ProfilerType) { }
 void Swapper::apply(Analyzer&) { }
 Swapper::~Swapper() = default;
 void OopsHandler::tinit() { }
@@ -128,7 +128,7 @@ namespace snort
 static struct timeval s_packet_time = { 0, 0 };
 THREAD_LOCAL PacketTracer* s_pkt_trace;
 THREAD_LOCAL TimeContext* ProfileContext::curr_time = nullptr;
-bool TimeProfilerStats::enabled = false;
+THREAD_LOCAL bool TimeProfilerStats::enabled = false;
 THREAD_LOCAL PacketCount pc;
 
 void packet_gettimeofday(struct timeval* tv) { *tv = s_packet_time; }

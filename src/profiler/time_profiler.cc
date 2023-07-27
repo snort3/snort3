@@ -29,6 +29,7 @@
 #include "profiler_printer.h"
 #include "profiler_stats_table.h"
 #include "time_profiler_defs.h"
+#include "control/control.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -41,7 +42,7 @@ using namespace snort;
 // enabled is not in SnortConfig to avoid that ugly dependency
 // enabled is not in TimeContext because declaring it SO_PUBLIC made TimeContext visible
 // putting enabled in TimeProfilerStats seems to be the best solution
-bool TimeProfilerStats::enabled = false;
+THREAD_LOCAL bool TimeProfilerStats::enabled = false;
 
 namespace time_stats
 {
@@ -140,13 +141,28 @@ static void print_fn(StatsTable& t, const View& v)
     t << clock_usecs(TO_USECS(v.avg_check()));
 }
 
+struct s_print_table
+{
+    ControlConn* ctrlcon;
+
+    s_print_table(ControlConn* ctrlcon) : ctrlcon(ctrlcon) {}
+
+    void operator()(const char* l) const
+    { LogRespond(ctrlcon, "%s", l); }
+};
+
 } // namespace time_stats
 
 void show_time_profiler_stats(ProfilerNodeMap& nodes, const TimeProfilerConfig& config)
 {
-    if ( !config.show )
+    if ( !TimeProfilerStats::is_enabled() )
         return;
 
+    print_time_profiler_stats(nodes, config, nullptr);
+}
+
+void print_time_profiler_stats(ProfilerNodeMap& nodes, const TimeProfilerConfig& config, ControlConn* ctrlcon)
+{
     ProfilerBuilder<time_stats::View> builder(time_stats::include_fn);
     auto root = builder.build(nodes.get_root());
 
@@ -154,8 +170,9 @@ void show_time_profiler_stats(ProfilerNodeMap& nodes, const TimeProfilerConfig& 
         return;
 
     const auto& sorter = time_stats::sorters[config.sort];
+    const auto& printer_t = time_stats::s_print_table(ctrlcon);
 
-    ProfilerPrinter<time_stats::View> printer(time_stats::fields, time_stats::print_fn, sorter);
+    ProfilerPrinter<time_stats::View> printer(time_stats::fields, time_stats::print_fn, sorter, printer_t);
     printer.print_table(s_time_table_title, root, config.count, config.max_depth);
 }
 

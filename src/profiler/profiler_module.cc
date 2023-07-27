@@ -37,6 +37,8 @@
 
 #include "rule_profiler.h"
 #include "rule_profiler_defs.h"
+#include "time_profiler.h"
+#include "time_profiler_defs.h"
 
 using namespace snort;
 
@@ -255,6 +257,101 @@ static const Parameter profiler_dump_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static void time_profiling_start_cmd()
+{
+    // Because profiler is always started in Analyzer::operator()
+    Profiler::stop(0);
+    TimeProfilerStats::set_enabled(true);
+    Profiler::reset_stats(snort::PROFILER_TYPE_TIME);
+    Profiler::start();
+}
+
+static void time_profiling_stop_cmd()
+{
+    TimeProfilerStats::set_enabled(false);
+    Profiler::stop((uint64_t)get_packet_number());
+    Profiler::consolidate_stats(snort::PROFILER_TYPE_TIME);
+}
+
+class ProfilerTimeCmd : public AnalyzerCommand
+{
+public:
+    ProfilerTimeCmd(bool en) : enable(en) { }
+    bool execute(Analyzer&, void**) override
+    {
+        if ( enable )
+            time_profiling_start_cmd();
+        else
+            time_profiling_stop_cmd();
+
+        return true;
+    }
+    const char* stringify() override { return "TIME_PROFILING"; }
+private:
+    bool enable;
+};
+
+static int time_profiling_start(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    if ( TimeProfilerStats::is_enabled() )
+    {
+        LogRespond(ctrlcon, "Time profiling is already started.\n");
+        return 0;
+    }
+    Profiler::reset_stats(snort::PROFILER_TYPE_TIME);
+    TimeProfilerStats::set_enabled(true);
+    main_broadcast_command(new ProfilerTimeCmd(true), ctrlcon);
+    LogRespond(ctrlcon, "Time profiling is started.\n");
+    return 0;
+}
+
+static int time_profiling_stop(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    if ( !TimeProfilerStats::is_enabled() )
+    {
+        LogRespond(ctrlcon, "Time profiling is not started.\n");
+        return 0;
+    }
+
+    TimeProfilerStats::set_enabled(false);
+    main_broadcast_command(new ProfilerTimeCmd(false), ctrlcon);
+    LogRespond(ctrlcon, "Time profiling is stopped.\n");
+    return 0;
+}
+
+static int time_profiling_dump(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    if ( TimeProfilerStats::is_enabled() )
+    {
+        LogRespond(ctrlcon, "Time profiling is still running.\n");
+        return 0;
+    }
+
+    Profiler::prepare_stats();
+
+    const auto* config = SnortConfig::get_conf()->get_profiler();
+    assert(config);
+
+    print_time_profiler_stats(Profiler::get_profiler_nodes(), config->time, ctrlcon);
+
+    return 0;
+}
+
+static int time_profiling_status(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+
+    if ( TimeProfilerStats::is_enabled() )
+        LogRespond(ctrlcon, "Time profiling is enabled.\n");
+    else
+        LogRespond(ctrlcon, "Time profiling is disabled.\n");
+
+    return 0;
+}
+
 static const Command profiler_cmds[] =
 {
     { "rule_start", rule_profiling_start,
@@ -268,6 +365,18 @@ static const Command profiler_cmds[] =
 
     { "rule_dump", rule_profiling_dump,
       profiler_dump_params, "print rule statistics in table or json format (json format prints dates as Unix epoch)" },
+
+    { "module_start", time_profiling_start,
+      nullptr, "enable module time profiling" },
+
+    { "module_stop", time_profiling_stop,
+      nullptr, "disable module time profiling" },
+
+    { "module_dump", time_profiling_dump,
+      nullptr, "print module time profiling statistics" },
+
+    { "module_status", time_profiling_status,
+      nullptr, "show module time profiler status" },
 
     { nullptr, nullptr, nullptr, nullptr }
 };
@@ -344,13 +453,21 @@ static const Parameter profiler_params[] =
 class ProfilerReloadTuner : public snort::ReloadResourceTuner
 {
 public:
-    explicit ProfilerReloadTuner(bool enable) : enable(enable)
+    explicit ProfilerReloadTuner(bool enable_rule, bool enable_time) 
+        : enable_rule(enable_rule), enable_time(enable_time)
     {}
     ~ProfilerReloadTuner() override = default;
 
     bool tinit() override
     {
-        RuleContext::set_enabled(enable);
+        RuleContext::set_enabled(enable_rule);
+
+        if ( enable_time && !TimeProfilerStats::is_enabled() )
+            time_profiling_start_cmd();
+
+        else if ( !enable_time && TimeProfilerStats::is_enabled() )
+            time_profiling_stop_cmd();
+
         return false;
     }
 
@@ -361,7 +478,8 @@ public:
     { return true; }
 
 private:
-    bool enable = false;
+    bool enable_rule = false;
+    bool enable_time = false;
 };
 
 template<typename T>
@@ -419,7 +537,8 @@ bool ProfilerModule::end(const char* fqn, int, SnortConfig* sc)
     RuleContext::set_enabled(sc->profiler->rule.show);
 
     if ( Snort::is_reloading() && strcmp(fqn, "profiler") == 0 )
-        sc->register_reload_handler(new ProfilerReloadTuner(sc->profiler->rule.show));
+        sc->register_reload_handler(new ProfilerReloadTuner(sc->profiler->rule.show,
+            sc->profiler->time.show));
 
     return true;
 }

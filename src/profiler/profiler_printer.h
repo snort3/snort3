@@ -32,6 +32,7 @@
 #include "profiler_stats_table.h"
 #include "profiler_tree_builder.h"
 
+class ControlConn;
 template<typename View>
 struct ProfilerSorter
 {
@@ -61,9 +62,10 @@ public:
     using Entry = typename ProfilerBuilder<View>::Entry;
     using Sorter = ProfilerSorter<View>;
     using PrintFn = std::function<void(StatsTable&, const View&)>;
+    using PrintTableFn = std::function<void(const char*)>;
 
-    ProfilerPrinter(const StatsTable::Field* fields, const PrintFn print, const Sorter& sort) :
-        fields(fields), print(print), sort(sort) { }
+    ProfilerPrinter(const StatsTable::Field* fields, const PrintFn print, const Sorter& sort,
+        const PrintTableFn print_t) : fields(fields), print(print), sort(sort), print_t(print_t){ }
 
     void print_table(const std::string& title, Entry& root, unsigned count, int max_depth = -1)
     {
@@ -91,7 +93,7 @@ public:
             table << StatsTable::HEADER;
         }
 
-        snort::LogMessage("%s", ss.str().c_str());
+        print_t(ss.str().c_str());
 
         print_recursive(root, root, 1, count, max_depth);
         print_row(root, root, 0, 0);
@@ -165,7 +167,7 @@ public:
             }
         }
 
-        snort::LogMessage("%s", ss.str().c_str());
+        print_t(ss.str().c_str());
     }
 
 private:
@@ -173,6 +175,7 @@ private:
     const PrintFn print;
     const Sorter& sort;
     float total = 0;
+    const PrintTableFn print_t;
 };
 
 #endif

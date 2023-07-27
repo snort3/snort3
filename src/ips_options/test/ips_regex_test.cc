@@ -103,7 +103,7 @@ char* snort_strdup(const char* s)
 MemoryContext::MemoryContext(MemoryTracker&) { }
 MemoryContext::~MemoryContext() = default;
 
-bool TimeProfilerStats::enabled = false;
+THREAD_LOCAL bool TimeProfilerStats::enabled = false;
 }
 
 extern const BaseApi* ips_regex;

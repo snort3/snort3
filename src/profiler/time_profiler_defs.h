@@ -47,7 +47,7 @@ struct SO_PUBLIC TimeProfilerStats
     hr_duration elapsed;
     uint64_t checks;
     mutable unsigned int ref_count;
-    static bool enabled;
+    static THREAD_LOCAL bool enabled;
 
     static void set_enabled(bool b)
     { enabled = b; }

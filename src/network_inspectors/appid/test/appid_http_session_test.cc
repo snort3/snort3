@@ -160,8 +160,8 @@ void AppIdDebug::set_constraints(const char*, const AppIdDebugSessionConstraints
 // Profiler mock functions
 void Profiler::register_module(Module*) { }
 void Profiler::register_module(const char*, const char*, Module*) { }
-void Profiler::consolidate_stats() { }
-void Profiler::reset_stats() { }
+void Profiler::consolidate_stats(snort::ProfilerType) { }
+void Profiler::reset_stats(snort::ProfilerType) { }
 void Profiler::show_stats() { }
 
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }

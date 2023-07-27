@@ -27,6 +27,7 @@
 #include "profiler_nodes.h"
 #include "profiler_printer.h"
 #include "memory_defs.h"
+#include "control/control.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -143,6 +144,16 @@ static void print_fn(StatsTable& t, const View& v)
     t << v.avg_alloc();
 }
 
+struct s_print_table
+{
+    ControlConn* ctrlcon;
+
+    s_print_table(ControlConn* ctrlcon) : ctrlcon(ctrlcon) {}
+
+    void operator()(const char* l) const
+    { LogRespond(ctrlcon, "%s", l); }
+};
+
 } // namespace memory_stats
 
 void show_memory_profiler_stats(ProfilerNodeMap& nodes, const MemoryProfilerConfig& config)
@@ -157,8 +168,9 @@ void show_memory_profiler_stats(ProfilerNodeMap& nodes, const MemoryProfilerConf
         return;
 
     const auto& sorter = memory_stats::sorters[config.sort];
+    const auto& printer_t = memory_stats::s_print_table(nullptr);
 
-    ProfilerPrinter<memory_stats::View> printer(memory_stats::fields, memory_stats::print_fn, sorter);
+    ProfilerPrinter<memory_stats::View> printer(memory_stats::fields, memory_stats::print_fn, sorter, printer_t);
     printer.print_table(s_memory_table_title, root, config.count, config.max_depth);
 }
 
