@@ -42,7 +42,7 @@ static void create_matcher(SearchTool& matcher, SslPatternList* list, CnameCache
             continue;
 
         matcher.add(element->dpattern->pattern,
-            element->dpattern->pattern_size, element->dpattern, true);
+            element->dpattern->pattern_size, element->dpattern, true, element->dpattern->is_literal);
         (*pattern_index)++;
     }
     pattern_count = size;
@@ -81,12 +81,33 @@ static int cname_pattern_match(void* id, void*, int match_end_pos, void* data, v
     }
     return 0;
 }
+/*  
+Only patterns that match end of the payload AND
+(match the start of the payload
+or match after '.'
+or patterns starting with '.')
+are considered a match. */
+inline static bool ssl_pattern_validate_match(const MatchedSslPatterns * const mp, const uint8_t* data, int data_size)
+{
+    return mp->match_start_pos + mp->mpattern->pattern_size == data_size and
+            (mp->match_start_pos == 0 or
+            data[mp->match_start_pos-1] == '.' or
+            *mp->mpattern->pattern == '.');
+}
+
+inline static bool is_perfect_literal_match(const MatchedSslPatterns * const mp, int data_size)
+{
+    return mp->mpattern->is_literal and
+            (mp->match_start_pos + mp->mpattern->pattern_size == data_size) and
+            mp->match_start_pos == 0;
+
+}
 
 static bool scan_patterns(SearchTool& matcher, const uint8_t* data, size_t size,
     AppId& client_id, AppId& payload_id, bool is_cname_search)
 {
     MatchedSslPatterns* mp = nullptr;
-    SslPattern* best_match;
+    SslPattern* best_match = nullptr;
 
     if (is_cname_search)
         matcher.find_all((const char*)data, size, cname_pattern_match, false, &mp);
@@ -95,26 +116,30 @@ static bool scan_patterns(SearchTool& matcher, const uint8_t* data, size_t size,
 
     if (!mp)
         return false;
+    
+    MatchedSslPatterns* tmp = mp;
 
-    best_match = nullptr;
-    while (mp)
+    while (tmp)
     {
-        /*  Only patterns that match end of the payload AND
-            (match the start of the payload
-            or match after '.'
-            or patterns starting with '.'
-            ) are considered a match. */
-        if (mp->match_start_pos + mp->mpattern->pattern_size == (int)size and
-            (mp->match_start_pos == 0 or
-            data[mp->match_start_pos-1] == '.' or
-            *mp->mpattern->pattern == '.'))
+        if (!tmp->mpattern->is_literal or ssl_pattern_validate_match(tmp, data, (int)size))
         {
-            if (!best_match ||
-                mp->mpattern->pattern_size > best_match->pattern_size)
+            if(is_perfect_literal_match(tmp, (int)size))
             {
-                best_match = mp->mpattern;
+                best_match = tmp->mpattern;
+                break;
+            }
+
+            if (!best_match or
+                    tmp->mpattern->pattern_size > best_match->pattern_size)
+            {
+                best_match = tmp->mpattern;
             }
         }
+        tmp = tmp->next;
+    }
+
+    while (mp)
+    {
         MatchedSslPatterns* tmpMp = mp;
         mp = mp->next;
         snort_free(tmpMp);
@@ -159,7 +184,7 @@ static void free_patterns(SslPatternList*& list)
 }
 
 static void add_pattern(SslPatternList*& list, uint8_t* pattern_str, size_t
-    pattern_size, uint8_t type, AppId app_id, bool is_cname, CnameCache& set)
+    pattern_size, uint8_t type, AppId app_id, bool is_cname, bool is_literal, CnameCache& set)
 {
     SslPatternList* new_ssl_pattern;
 
@@ -170,6 +195,7 @@ static void add_pattern(SslPatternList*& list, uint8_t* pattern_str, size_t
     new_ssl_pattern->dpattern->pattern = pattern_str;
     new_ssl_pattern->dpattern->pattern_size = pattern_size;
     new_ssl_pattern->dpattern->is_cname = is_cname;
+    new_ssl_pattern->dpattern->is_literal = is_literal;
 
     new_ssl_pattern->next = list;
     list = new_ssl_pattern;
@@ -183,9 +209,9 @@ SslPatternMatchers::~SslPatternMatchers()
     free_patterns(cert_pattern_list);
 }
 
-void SslPatternMatchers::add_cert_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id, bool is_cname)
+void SslPatternMatchers::add_cert_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id, bool is_cname, bool is_literal)
 {
-    add_pattern(cert_pattern_list, pattern_str, pattern_size, type, app_id, is_cname, cert_pattern_set);
+    add_pattern(cert_pattern_list, pattern_str, pattern_size, type, app_id, is_cname, is_literal, cert_pattern_set);
 }
 
 void SslPatternMatchers::finalize_patterns()

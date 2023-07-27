@@ -72,7 +72,7 @@ namespace snort
         s_prep_data.clear();
     }
 
-    void SearchTool::add(const char* s, unsigned n, void*, bool)
+    void SearchTool::add(const char* s, unsigned n, void*, bool, bool)
     {
         s_count++;
         s_data.append(s, n);

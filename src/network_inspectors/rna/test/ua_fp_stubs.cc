@@ -26,9 +26,9 @@
 
 namespace snort
 {
-void SearchTool::add(const char*, unsigned, int, bool) { }
-void SearchTool::add(const uint8_t*, unsigned, int, bool) { }
-void SearchTool::add(const uint8_t*, unsigned, void*, bool) { }
+void SearchTool::add(const char*, unsigned, int, bool, bool) { }
+void SearchTool::add(const uint8_t*, unsigned, int, bool, bool) { }
+void SearchTool::add(const uint8_t*, unsigned, void*, bool, bool) { }
 
 void SearchTool::reload() { }
 

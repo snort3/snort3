@@ -28,10 +28,10 @@ void WarningMessage(const char*,...) { }
 // Stubs for search_tool.cc
 SearchTool::SearchTool(bool) { }
 SearchTool::~SearchTool() = default;
-void SearchTool::add(const char*, unsigned, int, bool) { }
-void SearchTool::add(const char*, unsigned, void*, bool) { }
-void SearchTool::add(const uint8_t*, unsigned, int, bool) { }
-void SearchTool::add(const uint8_t*, unsigned, void*, bool) { }
+void SearchTool::add(const char*, unsigned, int, bool, bool) { }
+void SearchTool::add(const char*, unsigned, void*, bool, bool) { }
+void SearchTool::add(const uint8_t*, unsigned, int, bool, bool) { }
+void SearchTool::add(const uint8_t*, unsigned, void*, bool, bool) { }
 void SearchTool::prep() { }
 void SearchTool::reload() { }
 }

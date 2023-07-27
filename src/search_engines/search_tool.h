@@ -40,11 +40,11 @@ public:
     SearchTool(bool multi_match = true);
     ~SearchTool();
 
-    void add(const char* pattern, unsigned len, int s_id, bool no_case = true);
-    void add(const char* pattern, unsigned len, void* s_context, bool no_case = true);
+    void add(const char* pattern, unsigned len, int s_id, bool no_case = true, bool literal = true);
+    void add(const char* pattern, unsigned len, void* s_context, bool no_case = true, bool literal = true);
 
-    void add(const uint8_t* pattern, unsigned len, int s_id, bool no_case = true);
-    void add(const uint8_t* pattern, unsigned len, void* s_context, bool no_case = true);
+    void add(const uint8_t* pattern, unsigned len, int s_id, bool no_case = true, bool literal = true);
+    void add(const uint8_t* pattern, unsigned len, void* s_context, bool no_case = true, bool literal = true);
 
     void prep();
     void reload();

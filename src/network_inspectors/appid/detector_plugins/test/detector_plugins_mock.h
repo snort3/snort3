@@ -53,10 +53,10 @@ class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
 // Stubs for search_tool.cc
 SearchTool::~SearchTool() = default;
 // LCOV_EXCL_START
-void SearchTool::add(const char*, unsigned, int, bool) { }
-void SearchTool::add(const char*, unsigned, void*, bool) { }
-void SearchTool::add(const uint8_t*, unsigned, int, bool) { }
-void SearchTool::add(const uint8_t*, unsigned, void*, bool) { }
+void SearchTool::add(const char*, unsigned, int, bool, bool) { }
+void SearchTool::add(const char*, unsigned, void*, bool, bool) { }
+void SearchTool::add(const uint8_t*, unsigned, int, bool, bool) { }
+void SearchTool::add(const uint8_t*, unsigned, void*, bool, bool) { }
 // LCOV_EXCL_STOP
 void SearchTool::prep() { }
 

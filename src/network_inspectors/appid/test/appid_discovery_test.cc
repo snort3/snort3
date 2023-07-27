@@ -103,10 +103,10 @@ time_t packet_time() { return std::time(nullptr); }
 // Stubs for search_tool
 SearchTool::SearchTool(bool) {}
 SearchTool::~SearchTool() = default;
-void SearchTool::add(const char*, unsigned, int, bool) {}
-void SearchTool::add(const char*, unsigned, void*, bool) {}
-void SearchTool::add(const uint8_t*, unsigned, int, bool) {}
-void SearchTool::add(const uint8_t*, unsigned, void*, bool) {}
+void SearchTool::add(const char*, unsigned, int, bool, bool) {}
+void SearchTool::add(const char*, unsigned, void*, bool, bool) {}
+void SearchTool::add(const uint8_t*, unsigned, int, bool, bool) {}
+void SearchTool::add(const uint8_t*, unsigned, void*, bool, bool) {}
 
 // Mocks for ip
 namespace ip
