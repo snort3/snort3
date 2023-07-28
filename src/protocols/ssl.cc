@@ -738,11 +738,15 @@ bool parse_server_certificates(SSLV3ServerCertData* server_cert_data)
                 const unsigned char* str_data = ASN1_STRING_get0_data(X509_NAME_ENTRY_get_data(e));
                 int length = strlen((const char*)str_data);
 
+                bool wildcard = false;
+                if ((wildcard = (length > 2 and *str_data == '*' and *(str_data + 1) == '.')))
+                    length -= 2; // remove leading *.
+
                 common_name_len = length;
-                common_name = snort_strndup((const char*)str_data, common_name_len);
+                common_name = snort_strndup((const char*)(str_data + (wildcard ? 2 : 0)), common_name_len);
 
                 org_name_len = length;
-                org_name = snort_strndup((const char*)str_data, org_name_len);
+                org_name = snort_strndup((const char*)(str_data + (wildcard ? 2 : 0)), org_name_len);
             }
         }
 
