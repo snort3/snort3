@@ -1,3 +1,27 @@
+2023-07-30: 3.1.67.0
+
+* appid: do not raise SMTP response overflow IPS alert on SSL traffic
+* appid: SSL regex pattern implementation
+* build: fix cstdint related clearlinux errors
+* build: fix issues with local build
+* build: fix type resolution for OSX build environment
+* control: fix descriptor polling implementation (POSIX)
+* control: follow code style and formatting
+* detection: service_extension config
+* flow: fix ha_test use of stack variable
+* flow: make sure cpputest mock objects are initialized
+* ips_options: remove FIXIT comment from sd_pattern
+* lua: change cip binder rule from 22222 to 2222 (thanks to animator-ra on GitHub for this fix).
+* main: increase the user policy id range to 0 - 2^64-1 
+* perf_mon: continue even when pegcounts can't be resolved
+* profiler: handle reload scenarios and tsan issues
+* profiler: remove interdependency with time and memory for accumulation
+* profiler: shell commands for time profiler
+* ssl: extract common name in the SSL certificate using openssl apis
+* ssl: parse and publish server common name from server certificate
+* ssl: remove wildcard character from common name string extracted from ssl certificate
+* style: fix whitespace
+
 2023-07-14: 3.1.66.0
 
 * appid: cache Complex HTTP Pattern glossary before detectors reload

@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.66.0 2023-07-14 16:06:42 EDT TST
+Revision 3.1.67.0 2023-07-30 09:54:39 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -601,6 +601,10 @@ Configuration:
     some speed during config reading)
   * int detection.max_continuations_per_flow = 1024: maximum number
     of continuations stored simultaneously on the flow { 0:65535 }
+  * string detection.service_extension[].service: service to perform
+    extension for
+  * string detection.service_extension[].extend_to
+    [].extend_to_service: service to extend to
 
 Peg counts:
 
@@ -924,7 +928,7 @@ Usage: inspect
 Configuration:
 
   * int inspection.id = 0: correlate policy and events with other
-    items in configuration { 0:65535 }
+    items in configuration { 0:max64 }
   * string inspection.uuid: correlate events by uuid
   * enum inspection.mode = inline-test: set policy mode { inline | 
     inline-test }
@@ -954,7 +958,7 @@ Configuration:
   * bool ips.enable_builtin_rules = false: enable events from builtin
     rules w/o stubs
   * int ips.id = 0: correlate unified2 events with configuration {
-    0:65535 }
+    0:max64 }
   * string ips.include: snort rules and includes
   * enum ips.mode: set policy mode { tap | inline | inline-test }
   * bool ips.obfuscate_pii = true: mask all but the last 4 characters
@@ -1127,7 +1131,7 @@ Configuration:
   * multi network.checksum_eval = all: checksums to verify { all | ip
     | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
   * int network.id = 0: correlate unified2 events with configuration
-    { 0:max32 }
+    { 0:18446744073709551614 }
   * int network.min_ttl = 1: alert / normalize packets with lower TTL
     / hop limit (you must enable rules and / or normalization also) {
     1:255 }
@@ -1333,6 +1337,10 @@ Commands:
   * profiler.rule_status(): print rule profiler status
   * profiler.rule_dump(output): print rule statistics in table or
     json format (json format prints dates as Unix epoch)
+  * profiler.module_start(): enable module time profiling
+  * profiler.module_stop(): disable module time profiling
+  * profiler.module_dump(): print module time profiling statistics
+  * profiler.module_status(): show module time profiler status
 
 
 2.27. rate_filter
@@ -9365,6 +9373,10 @@ libraries see the Getting Started section of the manual.
     overrides when pattern matching (ie ignore /O)
   * bool detection.pcre_to_regex = false: enable the use of regex
     instead of pcre for compatible expressions
+  * string detection.service_extension[].extend_to
+    [].extend_to_service: service to extend to
+  * string detection.service_extension[].service: service to perform
+    extension for
   * bool dnp3.check_crc = false: validate checksums in DNP3 link
     layer frames
   * string dnp3_func.~: match DNP3 function code or name
@@ -9872,7 +9884,7 @@ libraries see the Getting Started section of the manual.
   * int imap.uu_decode_depth = -1: Unix-to-Unix decoding depth (-1 no
     limit) { -1:65535 }
   * int inspection.id = 0: correlate policy and events with other
-    items in configuration { 0:65535 }
+    items in configuration { 0:max64 }
   * int inspection.max_aux_ip = 16: maximum number of auxiliary IPs
     per flow to detect and save (-1 = disable, 0 = detect but don’t
     save, 1+ = save in FIFO manner) { -1:127 }
@@ -9891,7 +9903,7 @@ libraries see the Getting Started section of the manual.
   * bool ips.enable_builtin_rules = false: enable events from builtin
     rules w/o stubs
   * int ips.id = 0: correlate unified2 events with configuration {
-    0:65535 }
+    0:max64 }
   * string ips.include: snort rules and includes
   * enum ips.mode: set policy mode { tap | inline | inline-test }
   * bool ips.obfuscate_pii = true: mask all but the last 4 characters
@@ -10006,7 +10018,7 @@ libraries see the Getting Started section of the manual.
   * multi network.checksum_eval = all: checksums to verify { all | ip
     | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
   * int network.id = 0: correlate unified2 events with configuration
-    { 0:max32 }
+    { 0:18446744073709551614 }
   * int network.layers = 40: the maximum number of protocols that
     Snort can correctly decode { 3:255 }
   * int network.max_ip6_extensions = 0: the maximum number of IP6
@@ -15590,6 +15602,10 @@ alert is raised by the enhanced JavaScript normalizer.
   * profiler.rule_status(): print rule profiler status
   * profiler.rule_dump(output): print rule statistics in table or
     json format (json format prints dates as Unix epoch)
+  * profiler.module_start(): enable module time profiling
+  * profiler.module_stop(): disable module time profiling
+  * profiler.module_dump(): print module time profiling statistics
+  * profiler.module_status(): show module time profiler status
   * reputation.reload(): reload reputation data
   * rna.dump_macs(): dump rna’s internal MAC trackers
   * rna.delete_mac_host(mac): delete a MAC from rna’s MAC cache
