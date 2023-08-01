@@ -23,6 +23,7 @@
 
 #include <string>
 #include <vector>
+#include <cstdint>
 
 using DaqVar = std::pair<std::string, std::string>;
 using DaqVarList = std::vector<DaqVar>;
