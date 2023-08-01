@@ -703,16 +703,6 @@ public:
         return client_info_unpublished;
     }
 
-    void set_cip_msp(bool multipayload)
-    {
-        cip_msp = multipayload;
-    }
-
-    bool is_cip_msp() const
-    {
-        return cip_msp;
-    }
-
     inline bool is_encrypted_oportunistic_tls_session()
     {
         return get_session_flags(APPID_SESSION_OPPORTUNISTIC_TLS) and !flow->flags.data_decrypted;
@@ -741,7 +731,6 @@ private:
     bool no_service_candidate = false;
     bool no_service_inspector = false;
     bool client_info_unpublished = false;
-    bool cip_msp = false;
 };
 
 #endif

@@ -255,6 +255,9 @@ AppId CipPatternMatchers::get_cip_payload_id(const CipEventData* event_data)
         }
         break;
 
+    case CIP_DATA_TYPE_CONNECTION_SAFETY:
+        found_app_id = APP_ID_CIP_SAFETY;
+        break;
     case CIP_DATA_TYPE_CONNECTION:
     case CIP_DATA_TYPE_IMPLICIT:
         found_app_id = match_cip_connection(connection_list, event_data);

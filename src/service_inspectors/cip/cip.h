@@ -44,7 +44,8 @@ enum CipDataType
     CIP_DATA_TYPE_IMPLICIT,
     CIP_DATA_TYPE_OTHER,
     CIP_DATA_TYPE_ENIP_COMMAND,
-    CIP_DATA_TYPE_MALFORMED
+    CIP_DATA_TYPE_MALFORMED,
+    CIP_DATA_TYPE_CONNECTION_SAFETY
 };
 
 struct CipEventData
@@ -61,9 +62,6 @@ struct CipEventData
     //  CIP_DATA_TYPE_PATH_EXT_SYMBOL
     //  CIP_DATA_TYPE_SET_ATTRIBUTE
     uint8_t service_id;
-
-    // Set when the packet is a multiple service packet
-    bool multipayload;
 
     // Used for:
     //  CIP_DATA_TYPE_PATH_CLASS: This represents the Request Path Class.

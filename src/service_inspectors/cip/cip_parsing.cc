@@ -690,7 +690,7 @@ static bool parse_segment_network(const uint8_t* data,
 {
     #define CIP_PATH_NETWORK_FORMAT_MASK 0xF0
     #define CIP_PATH_NETWORK_ONE_BYTE 0x40
-
+    #define CIP_PATH_NETWORK_SAFETY_SEGMENT 0x50
     size_t segment_size_bytes = 0;
 
     uint8_t segment_type = data[CIP_PATH_TYPE_OFFSET];
@@ -708,8 +708,11 @@ static bool parse_segment_network(const uint8_t* data,
             return false;
         }
     }
+    if (segment_type == CIP_PATH_NETWORK_SAFETY_SEGMENT)
+       segment->type = CipSegment_Type_NETWORK_SAFETY;
+    else
+       segment->type = CipSegment_Type_NETWORK;
 
-    segment->type = CipSegment_Type_NETWORK;
     segment->size = segment_size_bytes;
 
     return true;
@@ -1015,33 +1018,47 @@ static bool parse_cip_segments(const uint8_t* data,
             break;
         }
 
+        switch (segment.type)
+        {
         // Save off key data in this segment for later use.
-        if (segment.type == CipSegment_Type_LOGICAL_CLASS)
-        {
-            path->has_class_id = true;
-            path->class_id = segment.logical_value;
+            case CipSegment_Type_LOGICAL_CLASS:
 
-            path->primary_segment_type = CipSegment_Type_LOGICAL_CLASS;
-        }
-        else if (segment.type == CipSegment_Type_DATA_EXT_SYMBOL)
-        {
-            path->primary_segment_type = CipSegment_Type_DATA_EXT_SYMBOL;
-        }
-        else if (segment.type == CipSegment_Type_LOGICAL_INSTANCE)
-        {
-            path->has_instance_id = true;
-            path->instance_id = segment.logical_value;
-        }
-        else if (segment.type == CipSegment_Type_LOGICAL_ATTRIBUTE)
-        {
-            path->has_attribute_id = true;
-            path->attribute_id = segment.logical_value;
-        }
-        else if (segment.type == CipSegment_Type_UNKNOWN)
-        {
-            path->has_unknown_segment = true;
-        }
+                path->has_class_id = true;
+                path->class_id = segment.logical_value;
 
+                path->primary_segment_type = CipSegment_Type_LOGICAL_CLASS;
+                break;
+
+            case CipSegment_Type_DATA_EXT_SYMBOL:
+
+                path->primary_segment_type = CipSegment_Type_DATA_EXT_SYMBOL;
+                break;
+
+            case CipSegment_Type_LOGICAL_INSTANCE:
+
+                path->has_instance_id = true;
+                path->instance_id = segment.logical_value;
+                break;
+
+            case CipSegment_Type_LOGICAL_ATTRIBUTE:
+
+                path->has_attribute_id = true;
+                path->attribute_id = segment.logical_value;
+                break;
+
+            case CipSegment_Type_NETWORK_SAFETY:
+
+                path->primary_segment_type = CipSegment_Type_NETWORK_SAFETY;
+                break;
+
+            case CipSegment_Type_UNKNOWN:
+
+                path->has_unknown_segment = true;
+                break;
+
+            default:
+                break;
+        }
         // Move to the next segment.
         data_length -= segment.size;
         data += segment.size;
@@ -1538,11 +1555,6 @@ static bool parse_multiple_service_packet(const uint8_t* data,
 
         pack_cip_request_event(&embedded_request, &cip_event_data);
 
-        if (i != number_services)
-            cip_event_data.multipayload = true;
-        else
-            cip_event_data.multipayload = false;
-
         DataBus::publish(CipEventData::pub_id, CipEventIds::DATA, cip_event, global_data->snort_packet->flow);
     }
 
@@ -1658,6 +1670,8 @@ static bool parse_cip_command_specific_data_request(const uint8_t* data,
             cip_request->connection_path_class_id = forward_open_request.connection_path.class_id;
             cip_request->timeout_ms = forward_open_request.timeout_ms;
             cip_request->has_timeout = true;
+            if (forward_open_request.connection_path.primary_segment_type == CipSegment_Type_NETWORK_SAFETY)
+                cip_request->is_cip_safety = true;
         }
 
         cip_request->request_type = CipRequestTypeForwardOpen;
@@ -2078,9 +2092,17 @@ void pack_cip_request_event(const CipRequest* request, CipEventData* cip_event_d
 
     if (request->is_forward_open_request)
     {
-        cip_event_data->type = CIP_DATA_TYPE_CONNECTION;
+        if (request->is_cip_safety)
+        {
+            cip_event_data->type = CIP_DATA_TYPE_CONNECTION_SAFETY;
+        }
+        else
+        {
+            cip_event_data->type = CIP_DATA_TYPE_CONNECTION;
+        }
         cip_event_data->class_id = request->connection_path_class_id;
     }
+
     else if (request->request_path.primary_segment_type == CipSegment_Type_LOGICAL_CLASS)
     {
         // Publish Set Attribute Single services separately than other requests.

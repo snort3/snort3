@@ -239,7 +239,7 @@ bool AppIdSessionApi::is_appid_inspecting_session() const
         return true;
     }
 
-    if ( get_service_app_id() == APP_ID_CIP and asd->is_cip_msp())
+    if ( get_service_app_id() == APP_ID_CIP)
     {
          return true;
     }
