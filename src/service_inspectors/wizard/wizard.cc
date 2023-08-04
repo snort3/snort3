@@ -29,7 +29,7 @@
 #include "stream/stream_splitter.h"
 #include "trace/trace_api.h"
 
-#include "curses.h"
+#include "curse_book.h"
 #include "magic.h"
 #include "wiz_module.h"
 

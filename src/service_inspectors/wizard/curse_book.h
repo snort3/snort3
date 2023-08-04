@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2023-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,91 +15,28 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// curses.h author Maya Dagon <mdagon@cisco.com>
+// curse_book.h author Maya Dagon <mdagon@cisco.com>
+// Refactored from curse.h
 
-#ifndef CURSES_H
-#define CURSES_H
+#ifndef CURSE_BOOK_H
+#define CURSE_BOOK_H
 
 #include <cstdint>
 #include <string>
 #include <vector>
 
+#include "dce_curse.h"
 #include "mms_curse.h"
 #include "s7commplus_curse.h"
-
-enum DCE_State
-{
-    STATE_0 = 0,
-    STATE_1,
-    STATE_2,
-    STATE_3,
-    STATE_4,
-    STATE_5,
-    STATE_6,
-    STATE_7,
-    STATE_8,
-    STATE_9,
-    STATE_10
-};
-
-enum SSL_State
-{
-    BYTE_0_LEN_MSB = 0,
-    BYTE_1_LEN_LSB,
-    BYTE_2_CLIENT_HELLO,
-    BYTE_3_MAX_MINOR_VER,
-    BYTE_4_V3_MAJOR,
-    BYTE_5_SPECS_LEN_MSB,
-    BYTE_6_SPECS_LEN_LSB,
-    BYTE_7_SSNID_LEN_MSB,
-    BYTE_8_SSNID_LEN_LSB,
-    BYTE_9_CHLNG_LEN_MSB,
-    BYTE_10_CHLNG_LEN_LSB,
-    SSL_FOUND,
-    SSL_NOT_FOUND
-};
+#include "ssl_curse.h"
 
 class CurseTracker
 {
 public:
-    struct DCE
-    {
-        DCE_State state;
-        uint32_t helper;
-    } dce;
-
-    struct MMS
-    {
-        MMS_State state;
-        MMS_State last_state;
-    } mms;
-
-    struct S7COMMPLUS
-    {
-        S7commplus_State state;
-        S7commplus_State last_state;
-        uint16_t func;
-    } s7commplus;
-
-    struct SSL
-    {
-        SSL_State state;
-        unsigned total_len;
-        unsigned ssnid_len;
-        unsigned specs_len;
-        unsigned chlng_len;
-    } ssl;
-
-    CurseTracker()
-    {
-        dce.state = DCE_State::STATE_0;
-        mms.state = MMS_State::MMS_STATE__TPKT_VER;
-        mms.last_state = mms.state;
-        s7commplus.state = S7commplus_State::S7COMMPLUS_STATE__TPKT_VER;
-        s7commplus.last_state = s7commplus.state;
-        s7commplus.func = 0;
-        ssl.state = SSL_State::BYTE_0_LEN_MSB;
-    }
+    DceTracker dce;
+    MmsTracker mms;
+    S7commplusTracker s7commplus;
+    SslTracker ssl;
 };
 
 typedef bool (* curse_alg)(const uint8_t* data, unsigned len, CurseTracker*);
@@ -121,7 +58,17 @@ public:
 private:
     std::vector<const CurseDetails*> tcp_curses;
     std::vector<const CurseDetails*> non_tcp_curses;
+    static std::vector<CurseDetails> curse_map;
+
+    static bool dce_udp_curse(const uint8_t* data, unsigned len, CurseTracker*);
+    static bool dce_tcp_curse(const uint8_t* data, unsigned len, CurseTracker*);
+    static bool dce_smb_curse(const uint8_t* data, unsigned len, CurseTracker*);
+    static bool mms_curse(const uint8_t* data, unsigned len, CurseTracker*);
+    static bool s7commplus_curse(const uint8_t* data, unsigned len, CurseTracker*);
+#ifdef CATCH_TEST_BUILD
+public:
+#endif  
+    static bool ssl_v2_curse(const uint8_t* data, unsigned len, CurseTracker*);
 };
 
 #endif
-

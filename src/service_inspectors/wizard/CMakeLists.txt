@@ -1,11 +1,17 @@
 
 set(FILE_LIST
-    curses.cc
-    curses.h
+    curse_book.cc
+    curse_book.h
+    dce_curse.cc
+    dce_curse.h
     magic.cc
     magic.h
+    mms_curse.cc
     mms_curse.h
+    s7commplus_curse.cc
     s7commplus_curse.h
+    ssl_curse.cc
+    ssl_curse.h
     hexes.cc
     spells.cc
     wizard.cc
@@ -24,5 +30,5 @@ endif (STATIC_INSPECTORS)
 add_catch_test(curses_test
     NO_TEST_SOURCE
     SOURCES
-        curses.cc
+        ssl_curse.cc
 )

@@ -27,7 +27,7 @@
 #include "log/messages.h"
 #include "trace/trace.h"
 
-#include "curses.h"
+#include "curse_book.h"
 
 using namespace snort;
 using namespace std;

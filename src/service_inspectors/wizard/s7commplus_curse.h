@@ -23,48 +23,7 @@
 // s7commplus_curse provides the ability to determine if the traffic being processed
 // conforms to the S7CommPlus protocol used in select Siemens devices
 
-#include "curses.h"
-
-enum S7commplus_Protocol_Identifier
-{
-    S7COMMPLUS_PROTOCOL_IDENTIFIER__S7COMM     = 0x32,
-    S7COMMPLUS_PROTOCOL_IDENTIFIER__S7COMMPLUS = 0x72,
-};
-
-
-enum S7commplus_Pdu_Type
-{
-    S7COMMPLUS_PDU_TYPE__CONNECT           = 0x01,
-    S7COMMPLUS_PDU_TYPE__DATA              = 0x02,
-    S7COMMPLUS_PDU_TYPE__DATA2             = 0x03,
-    S7COMMPLUS_PDU_TYPE__KEEPALIVE         = 0xFF,
-};
-
-
-enum S7commplus_Opcode
-{
-    S7COMMPLUS_OPCODE__REQ                 = 0x31,
-    S7COMMPLUS_OPCODE__RES                 = 0x32,
-    S7COMMPLUS_OPCODE__NOTIFICATION        = 0x33,
-    S7COMMPLUS_OPCODE__RES2                = 0x02,
-};
-
-
-enum S7commplus_Function
-{
-    S7COMMPLUS_FUNCTION__EXPLORE           = 0x04BB,
-    S7COMMPLUS_FUNCTION__CREATEOBJECT      = 0x04CA,
-    S7COMMPLUS_FUNCTION__DELETEOBJECT      = 0x04D4,
-    S7COMMPLUS_FUNCTION__SETVARIABLE       = 0x04F2,
-    S7COMMPLUS_FUNCTION__GETLINK           = 0x0524,
-    S7COMMPLUS_FUNCTION__SETMULTIVAR       = 0x0542,
-    S7COMMPLUS_FUNCTION__GETMULTIVAR       = 0x054C,
-    S7COMMPLUS_FUNCTION__BEGINSEQUENCE     = 0x0556,
-    S7COMMPLUS_FUNCTION__ENDSEQUENCE       = 0x0560,
-    S7COMMPLUS_FUNCTION__INVOKE            = 0x056B,
-    S7COMMPLUS_FUNCTION__GETVARSUBSTR      = 0x0586,
-};
-
+#include <cstdint>
 
 enum S7commplus_State
 {
@@ -87,6 +46,14 @@ enum S7commplus_State
     S7COMMPLUS_STATE__FOUND,
     S7COMMPLUS_STATE__SEARCH,
     S7COMMPLUS_STATE__NOT_FOUND,
+};
+
+class S7commplusTracker
+{
+public:  
+    S7commplus_State state = S7commplus_State::S7COMMPLUS_STATE__TPKT_VER;
+    S7commplus_State last_state = S7commplus_State::S7COMMPLUS_STATE__TPKT_VER;
+    uint16_t func = 0;
 };
 
 #endif

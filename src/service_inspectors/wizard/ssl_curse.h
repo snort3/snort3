@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2022-2023 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2023-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,37 +15,39 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// mms_curse.h author Jared Rittle <jared.rittle@cisco.com>
+// ssl_curse.h author Maya Dagon <mdagon@cisco.com>
+// Refactored from curses.h
 
-#ifndef MMS_CURSE_H
-#define MMS_CURSE_H
+#ifndef SSL_CURSE_H
+#define SSL_CURSE_H
 
-// MMS curse provides the ability to determine if the traffic being processed
-// conforms to the Manufacturing Message Specification (MMS) traffic defined
-// within the IEC-61850 family of protocols
+// SSL curse helps determine if the traffic being processed is SSL
 
-enum MMS_State
+enum SSL_State
 {
-    MMS_STATE__TPKT_VER = 0,
-    MMS_STATE__TPKT_RES,
-    MMS_STATE__TPKT_LEN1,
-    MMS_STATE__TPKT_LEN2,
-    MMS_STATE__COTP_LEN,
-    MMS_STATE__COTP_PDU,
-    MMS_STATE__COTP_TPDU_NUM,
-    MMS_STATE__OSI_SESSION_SPDU,
-    MMS_STATE__MMS,
-    MMS_STATE__FOUND,
-    MMS_STATE__SEARCH,
-    MMS_STATE__NOT_FOUND,
+    SSL_STATE__BYTE_0_LEN_MSB = 0,
+    SSL_STATE__BYTE_1_LEN_LSB,
+    SSL_STATE__BYTE_2_CLIENT_HELLO,
+    SSL_STATE__BYTE_3_MAX_MINOR_VER,
+    SSL_STATE__BYTE_4_V3_MAJOR,
+    SSL_STATE__BYTE_5_SPECS_LEN_MSB,
+    SSL_STATE__BYTE_6_SPECS_LEN_LSB,
+    SSL_STATE__BYTE_7_SSNID_LEN_MSB,
+    SSL_STATE__BYTE_8_SSNID_LEN_LSB,
+    SSL_STATE__BYTE_9_CHLNG_LEN_MSB,
+    SSL_STATE__BYTE_10_CHLNG_LEN_LSB,
+    SSL_STATE__SSL_FOUND,
+    SSL_STATE__SSL_NOT_FOUND
 };
 
-class MmsTracker
+class SslTracker
 {
-public:  
-    MMS_State state = MMS_State::MMS_STATE__TPKT_VER;
-    MMS_State last_state = MMS_State::MMS_STATE__TPKT_VER;
+public:
+    SSL_State state = SSL_STATE__BYTE_0_LEN_MSB;
+    unsigned total_len;
+    unsigned ssnid_len;
+    unsigned specs_len;
+    unsigned chlng_len;
 };
 
 #endif
-
