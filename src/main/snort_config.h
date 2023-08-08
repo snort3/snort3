@@ -222,7 +222,6 @@ public:
     int pcre_ovector_size = 0;
     bool pcre_override = true;
 
-    int asn1_mem = 0;
     uint32_t run_flags = 0;
 
     unsigned offload_limit = 99999;  // disabled

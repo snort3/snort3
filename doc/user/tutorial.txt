@@ -324,7 +324,6 @@ The following parameters can't be changed during reload, and require a restart:
 * attribute_table.max_hosts
 * attribute_table.max_services_per_host
 * daq.snaplen
-* detection.asn1
 * file_id.max_files_cached
 * process.chroot
 * process.daemon

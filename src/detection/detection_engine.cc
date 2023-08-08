@@ -98,7 +98,9 @@ void DetectionEngine::thread_init()
 }
 
 void DetectionEngine::thread_term()
-{ delete offloader; }
+{
+    delete offloader;
+}
 
 DetectionEngine::DetectionEngine()
 {

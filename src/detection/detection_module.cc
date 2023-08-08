@@ -79,9 +79,6 @@ static const Parameter detection_params[] =
     { "allow_missing_so_rules", Parameter::PT_BOOL, nullptr, "false",
       "warn (true) or error (false) when an SO rule stub refers to an SO rule that isn't loaded" },
 
-    { "asn1", Parameter::PT_INT, "0:65535", "0",
-      "maximum decode nodes" },
-
     { "global_default_rule_state", Parameter::PT_BOOL, nullptr, "true",
       "enable or disable rules by default (overridden by ips policy settings)" },
 
@@ -206,9 +203,6 @@ bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( v.is("allow_missing_so_rules") )
         sc->allow_missing_so_rules = v.get_bool();
-
-    else if ( v.is("asn1") )
-        sc->asn1_mem = v.get_uint16();
 
     else if ( v.is("global_default_rule_state") )
         sc->global_default_rule_state = v.get_bool();

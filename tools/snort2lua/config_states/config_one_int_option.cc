@@ -120,19 +120,6 @@ static ConversionState* config_int_ctor(Converter& c)
 } // namespace
 
 /*************************************************
- *********************  asn1  ********************
- *************************************************/
-
-static const std::string asn1 = "asn1";
-static const ConvertMap asn1_api =
-{
-    asn1,
-    config_int_ctor<& asn1, & detection>,
-};
-
-const ConvertMap* asn1_map = &asn1_api;
-
-/*************************************************
  *************  max_attribute_hosts  *************
  *************************************************/
 

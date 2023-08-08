@@ -27,7 +27,6 @@ namespace config
 extern const ConvertMap* addressspace_agnostic_map;
 extern const ConvertMap* alert_with_interface_name_map;
 extern const ConvertMap* alertfile_map;
-extern const ConvertMap* asn1_map;
 extern const ConvertMap* autogenerate_preprocessor_decoder_rules_map;
 extern const ConvertMap* binding_map;
 extern const ConvertMap* bpf_file_map;
@@ -147,7 +146,6 @@ const std::vector<const ConvertMap*> config_api =
     addressspace_agnostic_map,
     alert_with_interface_name_map,
     alertfile_map,
-    asn1_map,
     autogenerate_preprocessor_decoder_rules_map,
     binding_map,
     bpf_file_map,

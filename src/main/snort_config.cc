@@ -490,9 +490,6 @@ bool SnortConfig::verify() const
     if (!policy_map->setup_network_policies())
         ReloadError("Network policy user ids must be unique\n");
 
-    if ( sc->asn1_mem != asn1_mem )
-        ReloadError("Changing detection.asn1_mem requires a restart.\n");
-
     else if ( sc->bpf_filter != bpf_filter )
         ReloadError("Changing packets.bfp_filter requires a restart.\n");
 

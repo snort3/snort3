@@ -1,11 +1,6 @@
 
 SET( PLUGIN_LIST
-    asn1_detect.cc
-    asn1_detect.h
-    asn1_util.cc
-    asn1_util.h
     ips_ack.cc
-    ips_asn1.cc
     ips_base64.cc
     ips_ber_data.cc
     ips_ber_skip.cc
@@ -100,7 +95,6 @@ else (STATIC_IPS_OPTIONS)
     )
 
     add_dynamic_module(ips_ack ips_options ips_ack.cc)
-    add_dynamic_module(ips_asn1 ips_options ips_asn1.cc asn1_detect.cc asn1_detect.h asn1_util.h asn1_util.cc)
     add_dynamic_module(ips_base64 ips_options ips_base64.cc)
     add_dynamic_module(ips_ber_data ips_options ips_ber_data.cc)
     add_dynamic_module(ips_ber_skip ips_options ips_ber_skip.cc)

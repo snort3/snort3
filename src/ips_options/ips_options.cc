@@ -49,7 +49,6 @@ extern const BaseApi* ips_vba_data;
 
 #ifdef STATIC_IPS_OPTIONS
 extern const BaseApi* ips_ack[];
-extern const BaseApi* ips_asn1[];
 extern const BaseApi* ips_base64[];
 extern const BaseApi* ips_ber_data[];
 extern const BaseApi* ips_ber_skip[];
@@ -124,7 +123,6 @@ void load_ips_options()
 
 #ifdef STATIC_IPS_OPTIONS
     PluginManager::load_plugins(ips_ack);
-    PluginManager::load_plugins(ips_asn1);
     PluginManager::load_plugins(ips_base64);
     PluginManager::load_plugins(ips_ber_data);
     PluginManager::load_plugins(ips_ber_skip);
