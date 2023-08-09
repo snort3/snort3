@@ -80,6 +80,7 @@ TcpSegmentDescriptor::TcpSegmentDescriptor
     pkt->ptrs = p->ptrs;
     pkt->ptrs.ip_api.set(*p->ptrs.ip_api.get_dst(), *p->ptrs.ip_api.get_src());
     pkt->active = p->active_inst;
+    pkt->action = &p->action_inst;
     if( p->is_from_client() )
     {
         pkt->packet_flags = PKT_FROM_SERVER;
