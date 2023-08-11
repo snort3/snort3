@@ -26,12 +26,14 @@ set (PUB_SUB_INCLUDES
     smb_events.h
     ssh_events.h
     ssl_events.h
+    dns_events.h
 )
 
 add_library( pub_sub OBJECT
     ${PUB_SUB_INCLUDES}
     cip_events.cc
     http_events.cc
+    dns_events.cc
     http_request_body_event.cc
     sip_events.cc
 )

@@ -40,6 +40,7 @@ struct SnortConfig;
 #define DNS_NAME "dns"
 #define DNS_HELP "dns inspection"
 
+class DnsConfig;
 
 struct DnsStats
 {
@@ -58,9 +59,10 @@ class DnsModule : public snort::Module
 {
 public:
     DnsModule();
+    ~DnsModule() override;
 
-    bool set(const char*, snort::Value&, snort::SnortConfig*) override
-    { return false; }
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
 
     unsigned get_gid() const override
     { return GID_DNS; }
@@ -69,12 +71,16 @@ public:
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     snort::ProfileStats* get_profile() const override;
+    const DnsConfig* get_config();
 
     Usage get_usage() const override
     { return INSPECT; }
 
     bool is_bindable() const override
     { return true; }
+
+private:
+    DnsConfig* config = nullptr;
 };
 
 #endif

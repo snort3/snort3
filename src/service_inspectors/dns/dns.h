@@ -24,6 +24,8 @@
 
 #include "flow/flow.h"
 
+#include "pub_sub/dns_events.h"
+
 // Implementation header with definitions, datatypes and flowdata class for
 // DNS service inspector.
 
@@ -33,12 +35,12 @@
 
 struct DNSHdr
 {
-    uint16_t id;
-    uint16_t flags;
-    uint16_t questions;
-    uint16_t answers;
-    uint16_t authorities;
-    uint16_t additionals;
+    uint16_t id = 0;
+    uint16_t flags = 0;
+    uint16_t questions = 0;
+    uint16_t answers = 0;
+    uint16_t authorities = 0;
+    uint16_t additionals = 0;
 };
 
 #define DNS_HDR_FLAG_REPLY_CODE_MASK        0x000F
@@ -54,29 +56,36 @@ struct DNSHdr
 
 struct DNSQuestion
 {
-    uint16_t type;
-    uint16_t dns_class;
+    uint16_t type = 0;
+    uint16_t dns_class = 0;
 };
 
 struct DNSRR
 {
-    uint16_t type;
-    uint16_t dns_class;
-    uint32_t ttl;
-    uint16_t length;
+    uint16_t type = 0;
+    uint16_t dns_class = 0;
+    uint32_t ttl = 0;
+    uint16_t length = 0;
 };
 
 // FIXIT-L replace alerted/relative to bool?
 struct DNSNameState
 {
-    uint32_t txt_count;
-    uint32_t total_txt_len;
-    uint8_t txt_len;
-    uint8_t txt_bytes_seen;
-    uint8_t name_state;
-    uint8_t alerted;
-    uint16_t offset;
-    uint8_t relative;
+    uint32_t txt_count = 0;
+    uint32_t total_txt_len = 0;
+    uint8_t txt_len = 0;
+    uint8_t txt_bytes_seen = 0;
+    uint8_t name_state = 0;
+    uint8_t alerted = 0;
+    uint16_t offset = 0;
+    uint8_t relative = 0;
+    std::string dns_name;
+
+    void get_dns_name(std::string& name) const
+    {
+        if (dns_name.size())
+            name = dns_name;
+    }
 };
 
 // FIXIT-L  remove obsolete flags?
@@ -96,6 +105,7 @@ struct DNSNameState
 #define DNS_RR_TYPE_MINFO                   0x000e // experimental
 #define DNS_RR_TYPE_MX                      0x000f
 #define DNS_RR_TYPE_TXT                     0x0010
+#define DNS_RR_TYPE_AAAA                    0x001c
 
 #define DNS_FLAG_NOT_DNS                0x01
 
@@ -149,21 +159,68 @@ struct DNSNameState
 #define DNS_RESP_STATE_AUTH_RR          0x50
 #define DNS_RESP_STATE_ADD_RR           0x60
 
+class DnsConfig;
+struct DNSData;
+
+class DnsResponseFqdn
+{
+public:
+    DnsResponseFqdn()
+    {}
+
+    DnsResponseFqdn(const unsigned char* data, uint16_t bytes_unused, DNSData* dnsSessionData) :
+        data(data), bytes_unused(bytes_unused), dnsSessionData(std::make_shared<DNSData>(*dnsSessionData))
+    {}
+
+    FqdnTtl get_fqdn();
+    void update_ttl(uint32_t ttl);
+
+private:
+    const unsigned char* data = nullptr;
+    uint16_t bytes_unused = 0;
+    std::shared_ptr<DNSData> dnsSessionData;
+};
+
 // Per-session data block containing current state
 // of the DNS inspector for the session.
 struct DNSData
 {
-    uint32_t state;               // The current state of the session.
-    uint16_t curr_rec;            // Record number for the current record
-    uint16_t curr_rec_length;
-    uint16_t bytes_seen_curr_rec;
-    uint16_t length;
-    uint8_t curr_rec_state;
+    uint32_t state = 0;               // The current state of the session.
+    uint16_t curr_rec = 0;            // Record number for the current record
+    uint16_t curr_rec_length = 0;
+    uint16_t bytes_seen_curr_rec = 0;
+    uint16_t length = 0;
+    uint16_t bytes_unused = 0;
+    uint8_t curr_rec_state = 0;
     DNSHdr hdr;                   // Copy of the data from the DNS Header
     DNSQuestion curr_q;
     DNSRR curr_rr;
     DNSNameState curr_txt;
-    uint8_t flags;
+    uint8_t flags = 0;
+    std::vector<unsigned char> data;
+    const DnsConfig* dns_config = nullptr;
+    snort::DnsResponseDataEvents dns_events;
+    DnsResponseFqdn cur_fqdn_event;
+
+    bool publish_response() const;
+    bool has_events() const;
+};
+
+class DnsResponseIp
+{
+public:
+    DnsResponseIp()
+    {}
+
+    DnsResponseIp(const unsigned char* data, uint16_t type) :
+        data(data), type(type)
+    {}
+
+    snort::SfIp get_ip();
+
+private:
+    const unsigned char* data = nullptr;
+    uint16_t type = 0;
 };
 
 class DnsFlowData : public snort::FlowData
