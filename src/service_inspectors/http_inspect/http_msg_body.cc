@@ -750,6 +750,11 @@ bool HttpMsgBody::run_detection(snort::Packet* p)
             js_ctx_tmp = session_data->js_ctx[source_id];
             session_data->js_ctx[source_id] = acquire_js_ctx_mime();
 
+            // When multiple attachments appear in a single TCP segment,
+            // the detection engine caches the results of the rule options after
+            // evaluating on the first call. Setting this flag stops the caching.
+            p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
+
             DetectionEngine::detect(p);
 
             if (!is_last_attachment || last_attachment_complete)
