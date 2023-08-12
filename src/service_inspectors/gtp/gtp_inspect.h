@@ -48,8 +48,13 @@ public:
     GTP_Roptions ropts;
 };
 
-int get_message_type(int version, const char* name);
-int get_info_type(int version, const char* name);
+namespace snort
+{
+struct SnortConfig;
+}
+
+int get_message_type(int version, const char* name, snort::SnortConfig*);
+int get_info_type(int version, const char* name, snort::SnortConfig*);
 
 struct GTP_IEData* get_infos();
 

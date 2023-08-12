@@ -153,9 +153,9 @@ int GtpInspect::get_message_type(int version, const char* name)
     return -1;
 }
 
-int get_message_type(int version, const char* name)
+int get_message_type(int version, const char* name, snort::SnortConfig* sc)
 {
-    GtpInspect* ins = (GtpInspect*)InspectorManager::get_inspector(GTP_NAME);
+    GtpInspect* ins = (GtpInspect*)InspectorManager::get_inspector(GTP_NAME, false, sc);
 
     if ( !ins )
         return -1;
@@ -175,9 +175,9 @@ int GtpInspect::get_info_type(int version, const char* name)
     return -1;
 }
 
-int get_info_type(int version, const char* name)
+int get_info_type(int version, const char* name, SnortConfig* sc)
 {
-    GtpInspect* ins = (GtpInspect*)InspectorManager::get_inspector(GTP_NAME);
+    GtpInspect* ins = (GtpInspect*)InspectorManager::get_inspector(GTP_NAME, false, sc);
 
     if ( !ins )
         return -1;

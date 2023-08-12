@@ -138,7 +138,7 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
 
     bool set_types(long);
-    bool set_types(const char*);
+    bool set_types(const char*, SnortConfig*);
 
     ProfileStats* get_profile() const override
     { return &gtp_type_prof; }
@@ -169,13 +169,13 @@ bool GtpTypeModule::set_types(long t)
     return true;
 }
 
-bool GtpTypeModule::set_types(const char* name)
+bool GtpTypeModule::set_types(const char* name, SnortConfig* sc)
 {
     bool ok = false;
 
     for ( int v = 0; v <= MAX_GTP_VERSION_CODE; ++v )
     {
-        int t = get_message_type(v, name);
+        int t = get_message_type(v, name, sc);
 
         if ( t < 0 )
             continue;
@@ -186,7 +186,7 @@ bool GtpTypeModule::set_types(const char* name)
     return ok;
 }
 
-bool GtpTypeModule::set(const char*, Value& v, SnortConfig*)
+bool GtpTypeModule::set(const char*, Value& v, SnortConfig* sc)
 {
     assert(v.is("~"));
     v.set_first_token();
@@ -210,7 +210,7 @@ bool GtpTypeModule::set(const char*, Value& v, SnortConfig*)
             if ( !set_types(n) )
                 return false;
         }
-        else if ( !set_types(tok.c_str()) )
+        else if ( !set_types(tok.c_str(), sc) )
             return false;
     }
     return true;

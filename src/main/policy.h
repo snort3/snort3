@@ -95,7 +95,7 @@ SO_PUBLIC void set_ips_policy(IpsPolicy*);
 
 SO_PUBLIC NetworkPolicy* get_default_network_policy(const snort::SnortConfig*);
 // Based on currently set network policy
-SO_PUBLIC InspectionPolicy* get_user_inspection_policy(unsigned policy_id);
+SO_PUBLIC InspectionPolicy* get_user_inspection_policy(uint64_t policy_id);
 
 SO_PUBLIC IpsPolicy* get_ips_policy(const snort::SnortConfig*, unsigned i = 0);
 // Based on currently set network policy
@@ -183,7 +183,8 @@ public:
     { return i < inspection_policy.size() ? inspection_policy[i] : nullptr; }
     unsigned inspection_policy_count()
     { return inspection_policy.size(); }
-    InspectionPolicy* get_user_inspection_policy(unsigned user_id);
+    void setup_inspection_policies();
+    InspectionPolicy* get_user_inspection_policy(uint64_t user_id) const;
     void set_user_inspection(InspectionPolicy* p)
     { user_inspection[p->user_policy_id] = p; }
 

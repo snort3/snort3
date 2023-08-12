@@ -123,7 +123,13 @@ FilePolicy* NetworkPolicy::get_file_policy() const
 void NetworkPolicy::add_file_policy_rule(FileRule& file_rule)
 { file_policy->add_file_id(file_rule); }
 
-InspectionPolicy* NetworkPolicy::get_user_inspection_policy(unsigned user_id)
+void NetworkPolicy::setup_inspection_policies()
+{
+    std::for_each(inspection_policy.begin(), inspection_policy.end(),
+        [this](InspectionPolicy* ip){ set_user_inspection(ip); });
+}
+
+InspectionPolicy* NetworkPolicy::get_user_inspection_policy(uint64_t user_id) const
 {
     auto it = user_inspection.find(user_id);
     return it == user_inspection.end() ? nullptr : it->second;
@@ -386,9 +392,10 @@ NetworkPolicy* PolicyMap::get_user_network(uint64_t user_id) const
 bool PolicyMap::set_user_network(NetworkPolicy* p)
 {
     NetworkPolicy* current_np = get_user_network(p->user_policy_id);
-    if (current_np && p != current_np)
-        return false;
+    if (current_np)
+        return p == current_np;
     user_network[p->user_policy_id] = p;
+    p->setup_inspection_policies();
     return true;
 }
 
@@ -428,7 +435,7 @@ void set_inspection_policy(InspectionPolicy* p)
 void set_ips_policy(IpsPolicy* p)
 { s_detection_policy = p; }
 
-InspectionPolicy* get_user_inspection_policy(unsigned policy_id)
+InspectionPolicy* get_user_inspection_policy(uint64_t policy_id)
 {
     NetworkPolicy* np = get_network_policy();
     assert(np);

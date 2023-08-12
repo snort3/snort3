@@ -871,7 +871,6 @@ class InspectionModule : public Module
 public:
     InspectionModule() : Module("inspection", inspection_help, inspection_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
 
     Usage get_usage() const override
     { return INSPECT; }
@@ -913,15 +912,6 @@ bool InspectionModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("max_aux_ip") )
         sc->max_aux_ip = v.get_int16();
 
-    return true;
-}
-
-bool InspectionModule::end(const char*, int, SnortConfig*)
-{
-    InspectionPolicy* p = get_inspection_policy();
-    NetworkPolicy* np = get_network_parse_policy();
-    assert(np);
-    np->set_user_inspection(p);
     return true;
 }
 

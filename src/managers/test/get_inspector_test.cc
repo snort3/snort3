@@ -35,7 +35,11 @@ bool Inspector::is_inactive() { return true; }
 
 NetworkPolicy* snort::get_network_policy()
 { return (NetworkPolicy*)mock().getData("network_policy").getObjectPointer(); }
+NetworkPolicy* PolicyMap::get_user_network(uint64_t) const
+{ return (NetworkPolicy*)mock().getData("network_policy").getObjectPointer(); }
 InspectionPolicy* snort::get_inspection_policy()
+{ return (InspectionPolicy*)mock().getData("inspection_policy").getObjectPointer(); }
+InspectionPolicy* NetworkPolicy::get_user_inspection_policy(uint64_t) const
 { return (InspectionPolicy*)mock().getData("inspection_policy").getObjectPointer(); }
 
 InspectionPolicy::InspectionPolicy(PolicyId)

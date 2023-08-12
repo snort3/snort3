@@ -629,7 +629,7 @@ bool Binder::configure(SnortConfig* sc)
             default:            name = nullptr; break;
         }
         if (name)
-            default_ssn_inspectors[proto] = InspectorManager::get_inspector(name);
+            default_ssn_inspectors[proto] = InspectorManager::get_inspector(name, false, sc);
     }
 
     DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::PKT_WITHOUT_FLOW, new NonFlowPacketHandler());

@@ -79,10 +79,13 @@ public:
     static InspectSsnFunc get_session(uint16_t proto);
 
     SO_PUBLIC static Inspector* get_file_inspector(const SnortConfig* = nullptr);
-    SO_PUBLIC static Inspector* get_inspector(
-        const char* key, bool dflt_only = false, const SnortConfig* = nullptr);
-    SO_PUBLIC static Inspector* get_inspector(const char* key, Module::Usage, InspectorType,
-        const SnortConfig* = nullptr);
+
+    // This assumes that, in a multi-tenant scenario, this is called with the correct network and inspection
+    // policies are set correctly
+    SO_PUBLIC static Inspector* get_inspector(const char* key, bool dflt_only = false, const SnortConfig* = nullptr);
+
+    // This cannot be called in or before the inspector configure phase for a new snort config during reload
+    SO_PUBLIC static Inspector* get_inspector(const char* key, Module::Usage, InspectorType);
 
     static Inspector* get_service_inspector_by_service(const char*);
     static Inspector* get_service_inspector_by_id(const SnortProtocolId);

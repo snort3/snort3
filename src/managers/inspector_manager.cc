@@ -1220,13 +1220,15 @@ Inspector* InspectorManager::get_file_inspector(const SnortConfig* sc)
 }
 
 // FIXIT-P cache get_inspector() returns or provide indexed lookup
-Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only, const SnortConfig* sc)
+Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only, const SnortConfig* snort_config)
 {
     InspectionPolicy* pi;
     NetworkPolicy* ni;
 
+    const SnortConfig* sc = snort_config;
     if ( !sc )
         sc = SnortConfig::get_conf();
+    assert(sc);
     if ( dflt_only )
     {
         ni = get_default_network_policy(sc);
@@ -1235,7 +1237,31 @@ Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only, cons
     else
     {
         pi = get_inspection_policy();
+        // During reload, get_network_policy will return the network policy from the new snort config
+        // for a given tenant
         ni = get_network_policy();
+        if (!snort_config)
+        {
+            // If no snort config is passed in, it means that this is either a normally running system with
+            // the correct network policy set or that get_inspector is being called from Inspector::configure
+            // and it is expecting the inspector from the running configuration and not the new snort config
+            if (ni)
+            {
+                PolicyMap* pm = sc->policy_map;
+                NetworkPolicy* np = pm->get_user_network(ni->user_policy_id);
+                if (np)
+                {
+                    // If network policy is correct, then no need to change the inspection policy
+                    if (np != ni && pi)
+                        pi = np->get_user_inspection_policy(pi->user_policy_id);
+                    ni = np;
+                }
+                else
+                    pi = nullptr;
+            }
+            else
+                pi = nullptr;
+        }
     }
 
     if ( pi )
@@ -1268,15 +1294,11 @@ Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only, cons
     return nullptr;
 }
 
-Inspector* InspectorManager::get_inspector(const char* key, Module::Usage usage,
-    InspectorType type, const SnortConfig* sc)
+Inspector* InspectorManager::get_inspector(const char* key, Module::Usage usage, InspectorType type)
 {
-    if ( !sc )
-    {
-        sc = SnortConfig::get_conf();
-        if (!sc)
-            return nullptr;
-    }
+    const SnortConfig* sc = SnortConfig::get_conf();
+    if (!sc)
+        return nullptr;
 
     if (Module::GLOBAL == usage && IT_FILE == type)
     {
@@ -1304,6 +1326,10 @@ Inspector* InspectorManager::get_inspector(const char* key, Module::Usage usage,
             NetworkPolicy* np = get_network_policy();
             if (!np)
                 return nullptr;
+            PolicyMap* pm = sc->policy_map;
+            np = pm->get_user_network(np->user_policy_id);
+            if (!np)
+                return nullptr;
             TrafficPolicy* il = np->traffic_policy;
             assert(il);
             PHInstance* p = il->get_instance_by_type(key, type);
@@ -1311,9 +1337,23 @@ Inspector* InspectorManager::get_inspector(const char* key, Module::Usage usage,
         }
         else
         {
+            NetworkPolicy* orig_np = get_network_policy();
+            if (!orig_np)
+                return nullptr;
+            PolicyMap* pm = sc->policy_map;
+            NetworkPolicy* np = pm->get_user_network(orig_np->user_policy_id);
+            if (!np)
+                return nullptr;
             InspectionPolicy* ip = get_inspection_policy();
             if (!ip)
                 return nullptr;
+            // If network policy is correct, then no need to change the inspection policy
+            if (np != orig_np)
+            {
+                ip = np->get_user_inspection_policy(ip->user_policy_id);
+                if (!ip)
+                    return nullptr;
+            }
             FrameworkPolicy* il = ip->framework_policy;
             assert(il);
             PHInstance* p = il->get_instance_by_type(key, type);
