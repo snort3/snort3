@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.67.0 2023-07-30 09:55:01 EDT TST
+Revision 3.1.68.0 2023-08-14 22:07:09 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1373,7 +1373,6 @@ a restart:
   * attribute_table.max_hosts
   * attribute_table.max_services_per_host
   * daq.snaplen
-  * detection.asn1
   * file_id.max_files_cached
   * process.chroot
   * process.daemon

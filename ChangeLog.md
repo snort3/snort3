@@ -1,3 +1,15 @@
+2023-08-14: 3.1.68.0
+
+* appid, cip: parsing cip safety segments
+* dns: parse and publish dns response with ip, fqdn/ttl data
+* doc: udpate tutorial
+* http_inspect: disable rule evaluation caching for MIME attachments
+* managers: fix get_inspector to use the passed in snort config for context and inspection inspectors
+* sfip: Add < operator so SfIp can be used in std::map and std::set.
+* src: remove ips option asn1
+* stream: init meta ack packet action field
+* wizard: refactoring - split curses to multiple files by protocol
+
 2023-07-30: 3.1.67.0
 
 * appid: do not raise SMTP response overflow IPS alert on SSL traffic

@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.67.0 2023-07-30 09:54:39 EDT TST
+Revision 3.1.68.0 2023-08-14 22:06:48 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -153,135 +153,134 @@ Table of Contents
 
     7.1. ack
     7.2. appids
-    7.3. asn1
-    7.4. base64_decode
-    7.5. ber_data
-    7.6. ber_skip
-    7.7. bufferlen
-    7.8. byte_extract
-    7.9. byte_jump
-    7.10. byte_math
-    7.11. byte_test
-    7.12. cip_attribute
-    7.13. cip_class
-    7.14. cip_conn_path_class
-    7.15. cip_instance
-    7.16. cip_req
-    7.17. cip_rsp
-    7.18. cip_service
-    7.19. cip_status
-    7.20. classtype
-    7.21. content
-    7.22. cvs
-    7.23. dce_iface
-    7.24. dce_opnum
-    7.25. dce_stub_data
-    7.26. detection_filter
-    7.27. dnp3_data
-    7.28. dnp3_func
-    7.29. dnp3_ind
-    7.30. dnp3_obj
-    7.31. dsize
-    7.32. enable
-    7.33. enip_command
-    7.34. enip_req
-    7.35. enip_rsp
-    7.36. file_data
-    7.37. file_meta
-    7.38. file_type
-    7.39. flags
-    7.40. flow
-    7.41. flowbits
-    7.42. fragbits
-    7.43. fragoffset
-    7.44. gid
-    7.45. gtp_info
-    7.46. gtp_type
-    7.47. gtp_version
-    7.48. http_client_body
-    7.49. http_cookie
-    7.50. http_header
-    7.51. http_header_test
-    7.52. http_max_header_line
-    7.53. http_max_trailer_line
-    7.54. http_method
-    7.55. http_num_cookies
-    7.56. http_num_headers
-    7.57. http_num_trailers
-    7.58. http_param
-    7.59. http_raw_body
-    7.60. http_raw_cookie
-    7.61. http_raw_header
-    7.62. http_raw_request
-    7.63. http_raw_status
-    7.64. http_raw_trailer
-    7.65. http_raw_uri
-    7.66. http_stat_code
-    7.67. http_stat_msg
-    7.68. http_trailer
-    7.69. http_trailer_test
-    7.70. http_true_ip
-    7.71. http_uri
-    7.72. http_version
-    7.73. http_version_match
-    7.74. icmp_id
-    7.75. icmp_seq
-    7.76. icode
-    7.77. id
-    7.78. iec104_apci_type
-    7.79. iec104_asdu_func
-    7.80. ip_proto
-    7.81. ipopts
-    7.82. isdataat
-    7.83. itype
-    7.84. js_data
-    7.85. md5
-    7.86. metadata
-    7.87. mms_data
-    7.88. mms_func
-    7.89. modbus_data
-    7.90. modbus_func
-    7.91. modbus_unit
-    7.92. msg
-    7.93. mss
-    7.94. pcre
-    7.95. pkt_data
-    7.96. pkt_num
-    7.97. priority
-    7.98. raw_data
-    7.99. reference
-    7.100. regex
-    7.101. rem
-    7.102. replace
-    7.103. rev
-    7.104. rpc
-    7.105. s7commplus_content
-    7.106. s7commplus_func
-    7.107. s7commplus_opcode
-    7.108. sd_pattern
-    7.109. seq
-    7.110. service
-    7.111. sha256
-    7.112. sha512
-    7.113. sid
-    7.114. sip_body
-    7.115. sip_header
-    7.116. sip_method
-    7.117. sip_stat_code
-    7.118. so
-    7.119. soid
-    7.120. ssl_state
-    7.121. ssl_version
-    7.122. stream_reassemble
-    7.123. stream_size
-    7.124. tag
-    7.125. target
-    7.126. tos
-    7.127. ttl
-    7.128. urg
-    7.129. vba_data
-    7.130. window
-    7.131. wscale
+    7.3. base64_decode
+    7.4. ber_data
+    7.5. ber_skip
+    7.6. bufferlen
+    7.7. byte_extract
+    7.8. byte_jump
+    7.9. byte_math
+    7.10. byte_test
+    7.11. cip_attribute
+    7.12. cip_class
+    7.13. cip_conn_path_class
+    7.14. cip_instance
+    7.15. cip_req
+    7.16. cip_rsp
+    7.17. cip_service
+    7.18. cip_status
+    7.19. classtype
+    7.20. content
+    7.21. cvs
+    7.22. dce_iface
+    7.23. dce_opnum
+    7.24. dce_stub_data
+    7.25. detection_filter
+    7.26. dnp3_data
+    7.27. dnp3_func
+    7.28. dnp3_ind
+    7.29. dnp3_obj
+    7.30. dsize
+    7.31. enable
+    7.32. enip_command
+    7.33. enip_req
+    7.34. enip_rsp
+    7.35. file_data
+    7.36. file_meta
+    7.37. file_type
+    7.38. flags
+    7.39. flow
+    7.40. flowbits
+    7.41. fragbits
+    7.42. fragoffset
+    7.43. gid
+    7.44. gtp_info
+    7.45. gtp_type
+    7.46. gtp_version
+    7.47. http_client_body
+    7.48. http_cookie
+    7.49. http_header
+    7.50. http_header_test
+    7.51. http_max_header_line
+    7.52. http_max_trailer_line
+    7.53. http_method
+    7.54. http_num_cookies
+    7.55. http_num_headers
+    7.56. http_num_trailers
+    7.57. http_param
+    7.58. http_raw_body
+    7.59. http_raw_cookie
+    7.60. http_raw_header
+    7.61. http_raw_request
+    7.62. http_raw_status
+    7.63. http_raw_trailer
+    7.64. http_raw_uri
+    7.65. http_stat_code
+    7.66. http_stat_msg
+    7.67. http_trailer
+    7.68. http_trailer_test
+    7.69. http_true_ip
+    7.70. http_uri
+    7.71. http_version
+    7.72. http_version_match
+    7.73. icmp_id
+    7.74. icmp_seq
+    7.75. icode
+    7.76. id
+    7.77. iec104_apci_type
+    7.78. iec104_asdu_func
+    7.79. ip_proto
+    7.80. ipopts
+    7.81. isdataat
+    7.82. itype
+    7.83. js_data
+    7.84. md5
+    7.85. metadata
+    7.86. mms_data
+    7.87. mms_func
+    7.88. modbus_data
+    7.89. modbus_func
+    7.90. modbus_unit
+    7.91. msg
+    7.92. mss
+    7.93. pcre
+    7.94. pkt_data
+    7.95. pkt_num
+    7.96. priority
+    7.97. raw_data
+    7.98. reference
+    7.99. regex
+    7.100. rem
+    7.101. replace
+    7.102. rev
+    7.103. rpc
+    7.104. s7commplus_content
+    7.105. s7commplus_func
+    7.106. s7commplus_opcode
+    7.107. sd_pattern
+    7.108. seq
+    7.109. service
+    7.110. sha256
+    7.111. sha512
+    7.112. sid
+    7.113. sip_body
+    7.114. sip_header
+    7.115. sip_method
+    7.116. sip_stat_code
+    7.117. so
+    7.118. soid
+    7.119. ssl_state
+    7.120. ssl_version
+    7.121. stream_reassemble
+    7.122. stream_size
+    7.123. tag
+    7.124. target
+    7.125. tos
+    7.126. ttl
+    7.127. urg
+    7.128. vba_data
+    7.129. window
+    7.130. wscale
 
 8. Search Engine Modules
 9. SO Rule Modules
@@ -574,7 +573,6 @@ Configuration:
   * bool detection.allow_missing_so_rules = false: warn (true) or
     error (false) when an SO rule stub refers to an SO rule that
     isn’t loaded
-  * int detection.asn1 = 0: maximum decode nodes { 0:65535 }
   * bool detection.global_default_rule_state = true: enable or
     disable rules by default (overridden by ips policy settings)
   * bool detection.global_rule_state = false: apply rule_state
@@ -3375,6 +3373,11 @@ Usage: inspect
 
 Instance Type: multiton
 
+Configuration:
+
+  * bool dns.publish_response = false: parse and publish dns
+    responses
+
 Rules:
 
   * 131:1 (dns) obsolete DNS RR types
@@ -6135,32 +6138,7 @@ Configuration:
   * string appids.~: comma separated list of application names
 
 
-7.3. asn1
-
---------------
-
-Help: rule option for asn1 detection
-
-Type: ips_option
-
-Usage: detect
-
-Configuration:
-
-  * implied asn1.bitstring_overflow: detects invalid bitstring
-    encodings that are known to be remotely exploitable
-  * implied asn1.double_overflow: detects a double ASCII encoding
-    that is larger than a standard buffer
-  * implied asn1.print: dump decode data to console; always true
-  * int asn1.oversize_length: compares ASN.1 type lengths with the
-    supplied argument { 0:max32 }
-  * int asn1.absolute_offset: absolute offset from the beginning of
-    the packet { 0:65535 }
-  * int asn1.relative_offset: relative offset from the cursor {
-    -65535:65535 }
-
-
-7.4. base64_decode
+7.3. base64_decode
 
 --------------
 
@@ -6181,7 +6159,7 @@ Configuration:
     start of buffer
 
 
-7.5. ber_data
+7.4. ber_data
 
 --------------
 
@@ -6197,7 +6175,7 @@ Configuration:
     element type { 0:255 }
 
 
-7.6. ber_skip
+7.5. ber_skip
 
 --------------
 
@@ -6214,7 +6192,7 @@ Configuration:
     is not found
 
 
-7.7. bufferlen
+7.6. bufferlen
 
 --------------
 
@@ -6232,7 +6210,7 @@ Configuration:
     position) instead of total length
 
 
-7.8. byte_extract
+7.7. byte_extract
 
 --------------
 
@@ -6267,7 +6245,7 @@ Configuration:
     value before storage in name { 0x1:0xFFFFFFFF }
 
 
-7.9. byte_jump
+7.8. byte_jump
 
 --------------
 
@@ -6306,7 +6284,7 @@ Configuration:
     0x1:0xFFFFFFFF }
 
 
-7.10. byte_math
+7.9. byte_math
 
 --------------
 
@@ -6338,7 +6316,7 @@ Configuration:
     value before storage in name { 0x1:0xFFFFFFFF }
 
 
-7.11. byte_test
+7.10. byte_test
 
 --------------
 
@@ -6371,7 +6349,7 @@ Configuration:
     0x1:0xFFFFFFFF }
 
 
-7.12. cip_attribute
+7.11. cip_attribute
 
 --------------
 
@@ -6386,7 +6364,7 @@ Configuration:
   * interval cip_attribute.~range: match CIP attribute { 0:65535 }
 
 
-7.13. cip_class
+7.12. cip_class
 
 --------------
 
@@ -6401,7 +6379,7 @@ Configuration:
   * interval cip_class.~range: match CIP class { 0:65535 }
 
 
-7.14. cip_conn_path_class
+7.13. cip_conn_path_class
 
 --------------
 
@@ -6417,7 +6395,7 @@ Configuration:
     Class { 0:65535 }
 
 
-7.15. cip_instance
+7.14. cip_instance
 
 --------------
 
@@ -6432,7 +6410,7 @@ Configuration:
   * interval cip_instance.~range: match CIP instance { 0:4294967295 }
 
 
-7.16. cip_req
+7.15. cip_req
 
 --------------
 
@@ -6443,7 +6421,7 @@ Type: ips_option
 Usage: detect
 
 
-7.17. cip_rsp
+7.16. cip_rsp
 
 --------------
 
@@ -6454,7 +6432,7 @@ Type: ips_option
 Usage: detect
 
 
-7.18. cip_service
+7.17. cip_service
 
 --------------
 
@@ -6469,7 +6447,7 @@ Configuration:
   * interval cip_service.~range: match CIP service { 0:127 }
 
 
-7.19. cip_status
+7.18. cip_status
 
 --------------
 
@@ -6484,7 +6462,7 @@ Configuration:
   * interval cip_status.~range: match CIP response status { 0:255 }
 
 
-7.20. classtype
+7.19. classtype
 
 --------------
 
@@ -6499,7 +6477,7 @@ Configuration:
   * string classtype.~: classification for this rule
 
 
-7.21. content
+7.20. content
 
 --------------
 
@@ -6530,7 +6508,7 @@ Configuration:
     from cursor
 
 
-7.22. cvs
+7.21. cvs
 
 --------------
 
@@ -6545,7 +6523,7 @@ Configuration:
   * implied cvs.invalid-entry: looks for an invalid Entry string
 
 
-7.23. dce_iface
+7.22. dce_iface
 
 --------------
 
@@ -6562,7 +6540,7 @@ Configuration:
   * implied dce_iface.any_frag: match on any fragment
 
 
-7.24. dce_opnum
+7.23. dce_opnum
 
 --------------
 
@@ -6578,7 +6556,7 @@ Configuration:
     list
 
 
-7.25. dce_stub_data
+7.24. dce_stub_data
 
 --------------
 
@@ -6589,7 +6567,7 @@ Type: ips_option
 Usage: detect
 
 
-7.26. detection_filter
+7.25. detection_filter
 
 --------------
 
@@ -6610,7 +6588,7 @@ Configuration:
     1:max32 }
 
 
-7.27. dnp3_data
+7.26. dnp3_data
 
 --------------
 
@@ -6621,7 +6599,7 @@ Type: ips_option
 Usage: detect
 
 
-7.28. dnp3_func
+7.27. dnp3_func
 
 --------------
 
@@ -6636,7 +6614,7 @@ Configuration:
   * string dnp3_func.~: match DNP3 function code or name
 
 
-7.29. dnp3_ind
+7.28. dnp3_ind
 
 --------------
 
@@ -6651,7 +6629,7 @@ Configuration:
   * string dnp3_ind.~: match given DNP3 indicator flags
 
 
-7.30. dnp3_obj
+7.29. dnp3_obj
 
 --------------
 
@@ -6669,7 +6647,7 @@ Configuration:
     }
 
 
-7.31. dsize
+7.30. dsize
 
 --------------
 
@@ -6685,7 +6663,7 @@ Configuration:
     given range { 0:65535 }
 
 
-7.32. enable
+7.31. enable
 
 --------------
 
@@ -6702,7 +6680,7 @@ Configuration:
     }
 
 
-7.33. enip_command
+7.32. enip_command
 
 --------------
 
@@ -6717,7 +6695,7 @@ Configuration:
   * interval enip_command.~range: match CIP Enip Command { 0:65535 }
 
 
-7.34. enip_req
+7.33. enip_req
 
 --------------
 
@@ -6728,7 +6706,7 @@ Type: ips_option
 Usage: detect
 
 
-7.35. enip_rsp
+7.34. enip_rsp
 
 --------------
 
@@ -6739,7 +6717,7 @@ Type: ips_option
 Usage: detect
 
 
-7.36. file_data
+7.35. file_data
 
 --------------
 
@@ -6750,7 +6728,7 @@ Type: ips_option
 Usage: detect
 
 
-7.37. file_meta
+7.36. file_meta
 
 --------------
 
@@ -6770,7 +6748,7 @@ Configuration:
   * string file_meta.version: file type version
 
 
-7.38. file_type
+7.37. file_type
 
 --------------
 
@@ -6785,7 +6763,7 @@ Configuration:
   * string file_type.~: list of file type IDs to match
 
 
-7.39. flags
+7.38. flags
 
 --------------
 
@@ -6801,7 +6779,7 @@ Configuration:
   * string flags.~mask_flags: these flags are don’t cares
 
 
-7.40. flow
+7.39. flow
 
 --------------
 
@@ -6827,7 +6805,7 @@ Configuration:
   * implied flow.only_frag: match on defragmented packets only
 
 
-7.41. flowbits
+7.40. flowbits
 
 --------------
 
@@ -6844,7 +6822,7 @@ Configuration:
   * string flowbits.~bits: bit [|bit]* or bit [&bit]*
 
 
-7.42. fragbits
+7.41. fragbits
 
 --------------
 
@@ -6859,7 +6837,7 @@ Configuration:
   * string fragbits.~flags: these flags are tested
 
 
-7.43. fragoffset
+7.42. fragoffset
 
 --------------
 
@@ -6875,7 +6853,7 @@ Configuration:
     given range { 0:8192 }
 
 
-7.44. gid
+7.43. gid
 
 --------------
 
@@ -6890,7 +6868,7 @@ Configuration:
   * int gid.~: generator id { 1:8129 }
 
 
-7.45. gtp_info
+7.44. gtp_info
 
 --------------
 
@@ -6905,7 +6883,7 @@ Configuration:
   * string gtp_info.~: info element to match
 
 
-7.46. gtp_type
+7.45. gtp_type
 
 --------------
 
@@ -6920,7 +6898,7 @@ Configuration:
   * string gtp_type.~: list of types to match
 
 
-7.47. gtp_version
+7.46. gtp_version
 
 --------------
 
@@ -6935,7 +6913,7 @@ Configuration:
   * int gtp_version.~: version to match { 0:2 }
 
 
-7.48. http_client_body
+7.47. http_client_body
 
 --------------
 
@@ -6946,7 +6924,7 @@ Type: ips_option
 Usage: detect
 
 
-7.49. http_cookie
+7.48. http_cookie
 
 --------------
 
@@ -6968,7 +6946,7 @@ Configuration:
     will be removed in a future release
 
 
-7.50. http_header
+7.49. http_header
 
 --------------
 
@@ -6993,7 +6971,7 @@ Configuration:
     will be removed in a future release
 
 
-7.51. http_header_test
+7.50. http_header_test
 
 --------------
 
@@ -7022,7 +7000,7 @@ Configuration:
   * implied http_header_test.absent: header is absent
 
 
-7.52. http_max_header_line
+7.51. http_max_header_line
 
 --------------
 
@@ -7040,7 +7018,7 @@ Configuration:
     from the request message even when examining the response
 
 
-7.53. http_max_trailer_line
+7.52. http_max_trailer_line
 
 --------------
 
@@ -7058,7 +7036,7 @@ Configuration:
     from the request message even when examining the response
 
 
-7.54. http_method
+7.53. http_method
 
 --------------
 
@@ -7079,7 +7057,7 @@ Configuration:
     will be removed in a future release
 
 
-7.55. http_num_cookies
+7.54. http_num_cookies
 
 --------------
 
@@ -7097,7 +7075,7 @@ Configuration:
     the request message even when examining the response
 
 
-7.56. http_num_headers
+7.55. http_num_headers
 
 --------------
 
@@ -7121,7 +7099,7 @@ Configuration:
     and will be removed in a future release
 
 
-7.57. http_num_trailers
+7.56. http_num_trailers
 
 --------------
 
@@ -7145,7 +7123,7 @@ Configuration:
     and will be removed in a future release
 
 
-7.58. http_param
+7.57. http_param
 
 --------------
 
@@ -7162,7 +7140,7 @@ Configuration:
   * implied http_param.nocase: case insensitive match
 
 
-7.59. http_raw_body
+7.58. http_raw_body
 
 --------------
 
@@ -7174,7 +7152,7 @@ Type: ips_option
 Usage: detect
 
 
-7.60. http_raw_cookie
+7.59. http_raw_cookie
 
 --------------
 
@@ -7197,7 +7175,7 @@ Configuration:
     and will be removed in a future release
 
 
-7.61. http_raw_header
+7.60. http_raw_header
 
 --------------
 
@@ -7222,7 +7200,7 @@ Configuration:
     and will be removed in a future release
 
 
-7.62. http_raw_request
+7.61. http_raw_request
 
 --------------
 
@@ -7243,7 +7221,7 @@ Configuration:
     and will be removed in a future release
 
 
-7.63. http_raw_status
+7.62. http_raw_status
 
 --------------
 
@@ -7262,7 +7240,7 @@ Configuration:
     and will be removed in a future release
 
 
-7.64. http_raw_trailer
+7.63. http_raw_trailer
 
 --------------
 
@@ -7285,7 +7263,7 @@ Configuration:
     will be removed in a future release
 
 
-7.65. http_raw_uri
+7.64. http_raw_uri
 
 --------------
 
@@ -7314,7 +7292,7 @@ Configuration:
     URI only
 
 
-7.66. http_stat_code
+7.65. http_stat_code
 
 --------------
 
@@ -7332,7 +7310,7 @@ Configuration:
     will be removed in a future release
 
 
-7.67. http_stat_msg
+7.66. http_stat_msg
 
 --------------
 
@@ -7351,7 +7329,7 @@ Configuration:
     will be removed in a future release
 
 
-7.68. http_trailer
+7.67. http_trailer
 
 --------------
 
@@ -7373,7 +7351,7 @@ Configuration:
     be removed in a future release
 
 
-7.69. http_trailer_test
+7.68. http_trailer_test
 
 --------------
 
@@ -7400,7 +7378,7 @@ Configuration:
   * implied http_trailer_test.absent: trailer is absent
 
 
-7.70. http_true_ip
+7.69. http_true_ip
 
 --------------
 
@@ -7421,7 +7399,7 @@ Configuration:
     will be removed in a future release
 
 
-7.71. http_uri
+7.70. http_uri
 
 --------------
 
@@ -7449,7 +7427,7 @@ Configuration:
     only
 
 
-7.72. http_version
+7.71. http_version
 
 --------------
 
@@ -7471,7 +7449,7 @@ Configuration:
     will be removed in a future release
 
 
-7.73. http_version_match
+7.72. http_version_match
 
 --------------
 
@@ -7495,7 +7473,7 @@ Configuration:
     and will be removed in a future release
 
 
-7.74. icmp_id
+7.73. icmp_id
 
 --------------
 
@@ -7511,7 +7489,7 @@ Configuration:
     0:65535 }
 
 
-7.75. icmp_seq
+7.74. icmp_seq
 
 --------------
 
@@ -7527,7 +7505,7 @@ Configuration:
     given range { 0:65535 }
 
 
-7.76. icode
+7.75. icode
 
 --------------
 
@@ -7543,7 +7521,7 @@ Configuration:
     0:255 }
 
 
-7.77. id
+7.76. id
 
 --------------
 
@@ -7559,7 +7537,7 @@ Configuration:
     }
 
 
-7.78. iec104_apci_type
+7.77. iec104_apci_type
 
 --------------
 
@@ -7574,7 +7552,7 @@ Configuration:
   * string iec104_apci_type.~: APCI type to match
 
 
-7.79. iec104_asdu_func
+7.78. iec104_asdu_func
 
 --------------
 
@@ -7589,7 +7567,7 @@ Configuration:
   * string iec104_asdu_func.~: function code to match
 
 
-7.80. ip_proto
+7.79. ip_proto
 
 --------------
 
@@ -7604,7 +7582,7 @@ Configuration:
   * string ip_proto.~proto: [!|>|<] name or number
 
 
-7.81. ipopts
+7.80. ipopts
 
 --------------
 
@@ -7620,7 +7598,7 @@ Configuration:
     lsrre|ssrr|satid|any }
 
 
-7.82. isdataat
+7.81. isdataat
 
 --------------
 
@@ -7637,7 +7615,7 @@ Configuration:
     buffer
 
 
-7.83. itype
+7.82. itype
 
 --------------
 
@@ -7653,7 +7631,7 @@ Configuration:
     0:255 }
 
 
-7.84. js_data
+7.83. js_data
 
 --------------
 
@@ -7665,7 +7643,7 @@ Type: ips_option
 Usage: detect
 
 
-7.85. md5
+7.84. md5
 
 --------------
 
@@ -7685,7 +7663,7 @@ Configuration:
     of buffer
 
 
-7.86. metadata
+7.85. metadata
 
 --------------
 
@@ -7702,7 +7680,7 @@ Configuration:
     pairs
 
 
-7.87. mms_data
+7.86. mms_data
 
 --------------
 
@@ -7713,7 +7691,7 @@ Type: ips_option
 Usage: detect
 
 
-7.88. mms_func
+7.87. mms_func
 
 --------------
 
@@ -7728,7 +7706,7 @@ Configuration:
   * string mms_func.~: func to match
 
 
-7.89. modbus_data
+7.88. modbus_data
 
 --------------
 
@@ -7739,7 +7717,7 @@ Type: ips_option
 Usage: detect
 
 
-7.90. modbus_func
+7.89. modbus_func
 
 --------------
 
@@ -7754,7 +7732,7 @@ Configuration:
   * string modbus_func.~: function code to match
 
 
-7.91. modbus_unit
+7.90. modbus_unit
 
 --------------
 
@@ -7769,7 +7747,7 @@ Configuration:
   * int modbus_unit.~: Modbus unit ID { 0:255 }
 
 
-7.92. msg
+7.91. msg
 
 --------------
 
@@ -7784,7 +7762,7 @@ Configuration:
   * string msg.~: message describing rule
 
 
-7.93. mss
+7.92. mss
 
 --------------
 
@@ -7800,7 +7778,7 @@ Configuration:
     }
 
 
-7.94. pcre
+7.93. pcre
 
 --------------
 
@@ -7822,7 +7800,7 @@ Peg counts:
   * pcre.pcre_negated: total pcre rules using negation syntax (sum)
 
 
-7.95. pkt_data
+7.94. pkt_data
 
 --------------
 
@@ -7834,7 +7812,7 @@ Type: ips_option
 Usage: detect
 
 
-7.96. pkt_num
+7.95. pkt_num
 
 --------------
 
@@ -7850,7 +7828,7 @@ Configuration:
     { 1: }
 
 
-7.97. priority
+7.96. priority
 
 --------------
 
@@ -7866,7 +7844,7 @@ Configuration:
     1:max31 }
 
 
-7.98. raw_data
+7.97. raw_data
 
 --------------
 
@@ -7877,7 +7855,7 @@ Type: ips_option
 Usage: detect
 
 
-7.99. reference
+7.98. reference
 
 --------------
 
@@ -7892,7 +7870,7 @@ Configuration:
   * string reference.~ref: reference: <scheme>,<id>
 
 
-7.100. regex
+7.99. regex
 
 --------------
 
@@ -7916,7 +7894,7 @@ Configuration:
     instead of start of buffer
 
 
-7.101. rem
+7.100. rem
 
 --------------
 
@@ -7931,7 +7909,7 @@ Configuration:
   * string rem.~: comment
 
 
-7.102. replace
+7.101. replace
 
 --------------
 
@@ -7947,7 +7925,7 @@ Configuration:
   * string replace.~: byte code to replace with
 
 
-7.103. rev
+7.102. rev
 
 --------------
 
@@ -7962,7 +7940,7 @@ Configuration:
   * int rev.~: revision { 1:max32 }
 
 
-7.104. rpc
+7.103. rpc
 
 --------------
 
@@ -7979,7 +7957,7 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-7.105. s7commplus_content
+7.104. s7commplus_content
 
 --------------
 
@@ -7990,7 +7968,7 @@ Type: ips_option
 Usage: detect
 
 
-7.106. s7commplus_func
+7.105. s7commplus_func
 
 --------------
 
@@ -8005,7 +7983,7 @@ Configuration:
   * string s7commplus_func.~: function code to match
 
 
-7.107. s7commplus_opcode
+7.106. s7commplus_opcode
 
 --------------
 
@@ -8020,7 +7998,7 @@ Configuration:
   * string s7commplus_opcode.~: opcode code to match
 
 
-7.108. sd_pattern
+7.107. sd_pattern
 
 --------------
 
@@ -8044,7 +8022,7 @@ Peg counts:
   * sd_pattern.terminated: hyperscan terminated (sum)
 
 
-7.109. seq
+7.108. seq
 
 --------------
 
@@ -8060,7 +8038,7 @@ Configuration:
     range { 0: }
 
 
-7.110. service
+7.109. service
 
 --------------
 
@@ -8075,7 +8053,7 @@ Configuration:
   * string service.*: one or more comma-separated service names
 
 
-7.111. sha256
+7.110. sha256
 
 --------------
 
@@ -8095,7 +8073,7 @@ Configuration:
     start of buffer
 
 
-7.112. sha512
+7.111. sha512
 
 --------------
 
@@ -8115,7 +8093,7 @@ Configuration:
     start of buffer
 
 
-7.113. sid
+7.112. sid
 
 --------------
 
@@ -8130,7 +8108,7 @@ Configuration:
   * int sid.~: signature id { 1:max32 }
 
 
-7.114. sip_body
+7.113. sip_body
 
 --------------
 
@@ -8141,7 +8119,7 @@ Type: ips_option
 Usage: detect
 
 
-7.115. sip_header
+7.114. sip_header
 
 --------------
 
@@ -8153,7 +8131,7 @@ Type: ips_option
 Usage: detect
 
 
-7.116. sip_method
+7.115. sip_method
 
 --------------
 
@@ -8168,7 +8146,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-7.117. sip_stat_code
+7.116. sip_stat_code
 
 --------------
 
@@ -8183,7 +8161,7 @@ Configuration:
   * int sip_stat_code.*code: status code { 1:999 }
 
 
-7.118. so
+7.117. so
 
 --------------
 
@@ -8200,7 +8178,7 @@ Configuration:
     buffer
 
 
-7.119. soid
+7.118. soid
 
 --------------
 
@@ -8216,7 +8194,7 @@ Configuration:
     like 3_45678_9
 
 
-7.120. ssl_state
+7.119. ssl_state
 
 --------------
 
@@ -8245,7 +8223,7 @@ Configuration:
     unknown
 
 
-7.121. ssl_version
+7.120. ssl_version
 
 --------------
 
@@ -8272,7 +8250,7 @@ Configuration:
     tls1.2
 
 
-7.122. stream_reassemble
+7.121. stream_reassemble
 
 --------------
 
@@ -8293,7 +8271,7 @@ Configuration:
     remainder of the session
 
 
-7.123. stream_size
+7.122. stream_size
 
 --------------
 
@@ -8311,7 +8289,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-7.124. tag
+7.123. tag
 
 --------------
 
@@ -8330,7 +8308,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1:max32 }
 
 
-7.125. target
+7.124. target
 
 --------------
 
@@ -8346,7 +8324,7 @@ Configuration:
     dst_ip }
 
 
-7.126. tos
+7.125. tos
 
 --------------
 
@@ -8361,7 +8339,7 @@ Configuration:
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
 
 
-7.127. ttl
+7.126. ttl
 
 --------------
 
@@ -8377,7 +8355,7 @@ Configuration:
     0:255 }
 
 
-7.128. urg
+7.127. urg
 
 --------------
 
@@ -8393,7 +8371,7 @@ Configuration:
     { 0:65535 }
 
 
-7.129. vba_data
+7.128. vba_data
 
 --------------
 
@@ -8405,7 +8383,7 @@ Type: ips_option
 Usage: detect
 
 
-7.130. window
+7.129. window
 
 --------------
 
@@ -8421,7 +8399,7 @@ Configuration:
     range { 0:65535 }
 
 
-7.131. wscale
+7.130. wscale
 
 --------------
 
@@ -9082,17 +9060,6 @@ libraries see the Getting Started section of the manual.
     print stats on exit in third party module
   * ip4 arp_spoof.hosts[].ip: host ip address
   * mac arp_spoof.hosts[].mac: host mac address
-  * int asn1.absolute_offset: absolute offset from the beginning of
-    the packet { 0:65535 }
-  * implied asn1.bitstring_overflow: detects invalid bitstring
-    encodings that are known to be remotely exploitable
-  * implied asn1.double_overflow: detects a double ASCII encoding
-    that is larger than a standard buffer
-  * int asn1.oversize_length: compares ASN.1 type lengths with the
-    supplied argument { 0:max32 }
-  * implied asn1.print: dump decode data to console; always true
-  * int asn1.relative_offset: relative offset from the cursor {
-    -65535:65535 }
   * string attribute_table.hosts_file: filename to load attribute
     host table from
   * int attribute_table.max_hosts = 1024: maximum number of hosts in
@@ -9340,7 +9307,6 @@ libraries see the Getting Started section of the manual.
   * bool detection.allow_missing_so_rules = false: warn (true) or
     error (false) when an SO rule stub refers to an SO rule that
     isn’t loaded
-  * int detection.asn1 = 0: maximum decode nodes { 0:65535 }
   * bool detection.enable_address_anomaly_checks = false: enable
     check and alerting of address anomalies
   * bool detection.enable_strict_reduction = false: enable strict
@@ -9385,6 +9351,8 @@ libraries see the Getting Started section of the manual.
     0:255 }
   * int dnp3_obj.var = 0: match given DNP3 object header var { 0:255
     }
+  * bool dns.publish_response = false: parse and publish dns
+    responses
   * string domain_filter.file: file with list of domains identifying
     hosts to be filtered
   * string domain_filter.hosts: list of domains identifying hosts to
@@ -15681,7 +15649,6 @@ and are not applicable elsewhere.
   * appids (ips_option): detection option for application ids
   * arp (codec): support for address resolution protocol
   * arp_spoof (inspector): detect ARP attacks and anomalies
-  * asn1 (ips_option): rule option for asn1 detection
   * attribute_table (basic): configure hosts loading
   * auth (codec): support for IP authentication header
   * back_orifice (inspector): back orifice detection
@@ -16181,7 +16148,6 @@ and are not applicable elsewhere.
     option content
   * ips_option::ack: rule option to match on TCP ack numbers
   * ips_option::appids: detection option for application ids
-  * ips_option::asn1: rule option for asn1 detection
   * ips_option::base64_data: set detection cursor to decoded Base64
     data
   * ips_option::base64_decode: rule option to decode base64 data -
