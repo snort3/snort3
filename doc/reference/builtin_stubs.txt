@@ -1458,6 +1458,14 @@ Invalid HTTP/2 PRIORITY frame. Stream ID is 0 or length is not 5.
 
 Invalid HTTP/2 GOAWAY frame. R bit is set or stream ID is not 0 or length is less than 8.
 
+121:42
+
+More than 6 unacknowledged settings frames.
+
+121:43
+
+Unexpected settings ACK.
+
 122:1
 
 Basic one host to one host TCP portscan where multiple TCP ports are scanned on

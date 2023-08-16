@@ -149,6 +149,7 @@ protected:
 
     // Used in eval()
     Http2ConnectionSettings connection_settings[2];
+    Http2ConnectionSettingsQueue settings_queue[2];
     Http2HpackDecoder hpack_decoder[2];
     std::list<Http2Stream> streams;
     uint32_t concurrent_files = 0;

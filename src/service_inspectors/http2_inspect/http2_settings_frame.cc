@@ -59,16 +59,29 @@ Http2SettingsFrame::Http2SettingsFrame(const uint8_t* header_buffer, const uint3
     }
 
     if (FLAG_ACK & get_flags())
-        return;
+        apply_settings();
+    else
+    {
+        if (src_id == HttpCommon::SRC_SERVER && !ssn_data->was_server_settings_received())
+            ssn_data->set_server_settings_received();
 
-    if (src_id == HttpCommon::SRC_SERVER && !ssn_data->was_server_settings_received())
-        ssn_data->set_server_settings_received();
-
-    parse_settings_frame();
+        queue_settings();
+    }
 }
 
-void Http2SettingsFrame::parse_settings_frame()
+void Http2SettingsFrame::queue_settings()
 {
+    auto& settings_queue = session_data->settings_queue[source_id];
+    // Insert new settings in the queue (duplicating latest queued or current)
+    if (not settings_queue.extend(session_data->connection_settings[source_id]))
+    {
+        session_data->events[source_id]->create_event(EVENT_SETTINGS_QUEUE_OVERFLOW);
+        *session_data->infractions[source_id] += INF_SETTINGS_QUEUE_OVERFLOW;
+    }
+
+    // Update new settings values based on received frame
+    Http2ConnectionSettings& settings = settings_queue.back();
+
     int32_t data_pos = 0;
 
     while (data_pos < data.length())
@@ -82,11 +95,14 @@ void Http2SettingsFrame::parse_settings_frame()
         {
             session_data->events[source_id]->create_event(EVENT_SETTINGS_FRAME_UNKN_PARAM);
             *session_data->infractions[source_id] += INF_SETTINGS_FRAME_UNKN_PARAM;
-            continue;
         }
-
-        if (handle_update(parameter_id, parameter_value))
-            session_data->connection_settings[source_id].set_param(parameter_id, parameter_value);
+        else if (parameter_id == SFID_ENABLE_PUSH and parameter_value > 1)
+        {
+            session_data->events[source_id]->create_event(EVENT_BAD_SETTINGS_VALUE);
+            *session_data->infractions[source_id] += INF_BAD_SETTINGS_PUSH_VALUE;
+        }
+        else
+            settings.set_param(parameter_id, parameter_value);
     }
 }
 
@@ -103,24 +119,39 @@ bool Http2SettingsFrame::sanity_check()
     return !(bad_frame);
 }
 
+void Http2SettingsFrame::apply_settings()
+{
+    // Apply settings to direction opposite to current ACK frame.
+    auto settings_source_id = 1 - source_id;
+    assert(settings_source_id == HttpCommon::SRC_CLIENT || settings_source_id == HttpCommon::SRC_SERVER);
+    auto& settings_queue = session_data->settings_queue[settings_source_id];
+    if (settings_queue.size() == 0)
+    {
+        session_data->events[source_id]->create_event(EVENT_SETTINGS_QUEUE_UNDERFLOW);
+        *session_data->infractions[source_id] += INF_SETTINGS_QUEUE_UNDERFLOW;
+        return;
+    }
+
+    auto& next_settings = settings_queue.front();
+    auto& current_settings = session_data->connection_settings[settings_source_id];
+
+    for (uint16_t parameter_id = SFID_HEADER_TABLE_SIZE; parameter_id <= SFID_MAX_HEADER_LIST_SIZE; ++parameter_id)
+        if (next_settings.get_param(parameter_id) != current_settings.get_param(parameter_id))
+            handle_update(parameter_id, next_settings.get_param(parameter_id));
+
+    current_settings = next_settings;
+    settings_queue.pop();
+}
+
 bool Http2SettingsFrame::handle_update(uint16_t id, uint32_t value)
 {
     switch (id)
     {
         case SFID_HEADER_TABLE_SIZE:
             // Sending a table size parameter informs the receiver the maximum hpack dynamic
-            // table size they may use.
-            session_data->get_hpack_decoder((HttpCommon::SourceId) (1 - source_id))->
+            // table size they may use. The receiver is the sender of this ack.
+            session_data->get_hpack_decoder((HttpCommon::SourceId) (source_id))->
                 settings_table_size_update(value);
-            break;
-        case SFID_ENABLE_PUSH:
-            // Only values of 0 or 1 are allowed
-            if (!(value == 0 or value == 1))
-            {
-                session_data->events[source_id]->create_event(EVENT_BAD_SETTINGS_VALUE);
-                *session_data->infractions[source_id] += INF_BAD_SETTINGS_PUSH_VALUE;
-                return false;
-            }
             break;
         default:
             break;
@@ -136,7 +167,8 @@ void Http2SettingsFrame::print_frame(FILE* output)
     if (bad_frame)
         fprintf(output, " Error in settings frame.");
     else if (FLAG_ACK & get_flags())
-        fprintf(output, " ACK");
+        fprintf(output, " ACK, Header Table Size: %d.",
+                session_data->connection_settings[1 - source_id].get_param(SFID_HEADER_TABLE_SIZE));
     else
         fprintf(output, " Parameters in current frame - %d.", (data.length()/6)) ;
 
@@ -159,4 +191,34 @@ void Http2ConnectionSettings::set_param(uint16_t id, uint32_t value)
     assert(id <= SFID_MAX_HEADER_LIST_SIZE);
 
     parameters[id - 1] = value;
+}
+
+void Http2ConnectionSettingsQueue::pop()
+{
+    assert(size());
+    queue->erase(queue->begin());
+    if (queue->size() == 0)
+    {
+        delete queue;
+        queue = nullptr;
+    }
+}
+
+bool Http2ConnectionSettingsQueue::init(Http2ConnectionSettings& item)
+{
+    queue = new std::vector<Http2ConnectionSettings>();
+    queue->reserve(SETTINGS_QUEUE_MAX);
+    queue->push_back(item);
+    return true;
+}
+
+bool Http2ConnectionSettingsQueue::extend()
+{
+    if (size() == SETTINGS_QUEUE_MAX)
+        // to stay in sync, do an implicit tail drop
+        return false;
+
+    auto& item = back();
+    queue->push_back(item);
+    return true;
 }

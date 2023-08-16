@@ -42,8 +42,9 @@ private:
         const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* ssn_data,
         HttpCommon::SourceId src_id, Http2Stream* stream);
 
-    void parse_settings_frame();
+    void queue_settings();
     bool sanity_check();
+    void apply_settings();
     bool handle_update(uint16_t id, uint32_t value);
 
     uint8_t get_flags_mask() const override
@@ -70,5 +71,23 @@ private:
             16384, // Max frame size
        4294967295  // Max header list size
     };
+};
+
+class Http2ConnectionSettingsQueue
+{
+public:
+    ~Http2ConnectionSettingsQueue() { delete queue; }
+    auto size() { return queue ? queue->size() : 0; }
+    bool extend(Http2ConnectionSettings& item) { return size() ? extend() : init(item); }
+    void pop();
+    auto& front() { assert(size()); return queue->front(); }
+    auto& back() { assert(size()); return queue->back(); }
+
+private:
+    bool init(Http2ConnectionSettings& item);
+    bool extend();
+
+    static const uint8_t SETTINGS_QUEUE_MAX = 6;
+    std::vector<Http2ConnectionSettings>* queue = nullptr;
 };
 #endif

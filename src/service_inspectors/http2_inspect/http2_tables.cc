@@ -75,6 +75,8 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_LOSS_OF_SYNC,  "not HTTP/2 traffic or unrecoverable HTTP/2 protocol error" },
     { EVENT_INVALID_PRIORITY_FRAME, "invalid HTTP/2 PRIORITY frame" },
     { EVENT_INVALID_GOAWAY_FRAME, "invalid HTTP/2 GOAWAY frame" },
+    { EVENT_SETTINGS_QUEUE_OVERFLOW, "too many unacknowledged settings" },
+    { EVENT_SETTINGS_QUEUE_UNDERFLOW, "setting acknowledgment without actual settings" },
     { 0, nullptr }
 };
 
