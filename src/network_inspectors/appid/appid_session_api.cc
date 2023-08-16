@@ -83,12 +83,21 @@ AppId AppIdSessionApi::get_misc_app_id(uint32_t stream_index) const
     return APP_ID_NONE;
 }
 
+bool AppIdSessionApi::prefer_eve_client_over_appid_http_client() const
+{
+    return ((client.get_eve_client_app_id() > APP_ID_NONE) and pkt_thread_odp_ctxt
+        and pkt_thread_odp_ctxt->eve_http_client);
+}
+
 AppId AppIdSessionApi::get_client_app_id(uint32_t stream_index) const
 {
-    if (get_service_app_id() == APP_ID_HTTP2 or get_service_app_id() == APP_ID_HTTP3)
+    AppId service_id = get_service_app_id();
+    if (service_id == APP_ID_HTTP2 or service_id == APP_ID_HTTP3)
     {
         if ((stream_index != 0) and (stream_index >= get_hsessions_size()))
             return APP_ID_NONE;
+        else if (service_id == APP_ID_HTTP2 and prefer_eve_client_over_appid_http_client())
+            return application_ids[APP_PROTOID_CLIENT];
         else if (AppIdHttpSession* hsession = get_hsession(stream_index))
             return hsession->client.get_id();
         else if ((get_service_app_id() == APP_ID_HTTP3) and (stream_index == 0))
@@ -135,7 +144,8 @@ AppId AppIdSessionApi::get_referred_app_id(uint32_t stream_index) const
 void AppIdSessionApi::get_app_id(AppId& service, AppId& client,
     AppId& payload, AppId& misc, AppId& referred, uint32_t stream_index) const
 {
-    if (get_service_app_id() == APP_ID_HTTP2 or get_service_app_id() == APP_ID_HTTP3)
+    AppId service_id = get_service_app_id();
+    if (service_id == APP_ID_HTTP2 or service_id == APP_ID_HTTP3)
     {
         if ((stream_index != 0) and (stream_index >= get_hsessions_size()))
         {
@@ -144,8 +154,11 @@ void AppIdSessionApi::get_app_id(AppId& service, AppId& client,
         }
         else if (AppIdHttpSession* hsession = get_hsession(stream_index))
         {
-            service = get_service_app_id();
-            client = hsession->client.get_id();
+            service = service_id;
+            if (service_id == APP_ID_HTTP2 and prefer_eve_client_over_appid_http_client())
+                client = application_ids[APP_PROTOID_CLIENT];
+            else
+                client = hsession->client.get_id();
             payload = hsession->payload.get_id();
             misc = hsession->misc_app_id;
             referred = hsession->referred_payload_app_id;
@@ -160,7 +173,8 @@ void AppIdSessionApi::get_app_id(AppId& service, AppId& client,
 void AppIdSessionApi::get_app_id(AppId* service, AppId* client,
     AppId* payload, AppId* misc, AppId* referred, uint32_t stream_index) const
 {
-    if (get_service_app_id() == APP_ID_HTTP2 or get_service_app_id() == APP_ID_HTTP3)
+    AppId service_id = get_service_app_id();
+    if (service_id == APP_ID_HTTP2 or service_id == APP_ID_HTTP3)
     {
         if ((stream_index != 0) and (stream_index >= get_hsessions_size()))
         {
@@ -179,9 +193,14 @@ void AppIdSessionApi::get_app_id(AppId* service, AppId* client,
         else if (AppIdHttpSession* hsession = get_hsession(stream_index))
         {
             if (service)
-                *service = get_service_app_id();
+                *service = service_id;
             if (client)
-                *client = hsession->client.get_id();
+            {
+                if (service_id == APP_ID_HTTP2 and prefer_eve_client_over_appid_http_client())
+                    *client = application_ids[APP_PROTOID_CLIENT];
+                else
+                    *client = hsession->client.get_id();
+            }
             if (payload)
                 *payload = hsession->payload.get_id();
             if (misc)
@@ -192,9 +211,14 @@ void AppIdSessionApi::get_app_id(AppId* service, AppId* client,
         }
     }
     if (service)
-        *service = get_service_app_id();
+        *service = service_id;
     if (client)
-        *client = get_client_app_id();
+    {
+        if (service_id == APP_ID_HTTP2 and prefer_eve_client_over_appid_http_client())
+            *client = application_ids[APP_PROTOID_CLIENT];
+        else
+            *client = get_client_app_id();
+    }
     if (payload)
         *payload = get_payload_app_id();
     if (misc)
@@ -263,15 +287,22 @@ bool AppIdSessionApi::is_appid_available(uint32_t stream_index) const
 
 const char* AppIdSessionApi::get_client_info(uint32_t stream_index) const
 {
-    if (client.get_eve_client_app_id() > APP_ID_NONE and pkt_thread_odp_ctxt and
-        pkt_thread_odp_ctxt->eve_http_client)
-        return client.get_version();
     if (uint32_t num_hsessions = get_hsessions_size())
     {
         if (stream_index >= num_hsessions)
             return nullptr;
         else if (AppIdHttpSession* hsession = get_hsession(stream_index))
-            return hsession->client.get_version();
+        {
+            if (prefer_eve_client_over_appid_http_client())
+            {
+                if (hsession->client.get_id() == client.get_eve_client_app_id())
+                    return hsession->client.get_version();
+                else
+                    return nullptr;
+            }
+            else
+                return hsession->client.get_version();
+        }
     }
     else if (stream_index == 0)
         return client.get_version();
@@ -437,7 +468,10 @@ void AppIdSessionApi::get_first_stream_app_ids(AppId& service_id, AppId& client_
     }
     else if (AppIdHttpSession* hsession = get_hsession(0))
     {
-        client_id = hsession->client.get_id();
+        if (service_id == APP_ID_HTTP2 and prefer_eve_client_over_appid_http_client())
+            client_id = application_ids[APP_PROTOID_CLIENT];
+        else
+            client_id = hsession->client.get_id();
         payload_id = hsession->payload.get_id();
         misc_id = hsession->misc_app_id;
     }
@@ -466,7 +500,10 @@ void AppIdSessionApi::get_first_stream_app_ids(AppId& service_id, AppId& client_
     }
     else if (AppIdHttpSession* hsession = get_hsession(0))
     {
-        client_id = hsession->client.get_id();
+        if (service_id == APP_ID_HTTP2 and prefer_eve_client_over_appid_http_client())
+            client_id = application_ids[APP_PROTOID_CLIENT];
+        else
+            client_id = hsession->client.get_id();
         payload_id = hsession->payload.get_id();
     }
     else if (service_id == APP_ID_HTTP3)

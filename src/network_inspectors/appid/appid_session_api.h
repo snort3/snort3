@@ -194,6 +194,7 @@ private:
     void set_application_ids_service(AppId service_id, AppidChangeBits& change_bits, Flow& flow);
     void set_netbios_name(AppidChangeBits& change_bits, const char* name);
     void set_netbios_domain(AppidChangeBits& change_bits, const char* domain);
+    bool prefer_eve_client_over_appid_http_client() const;
 
     AppIdHttpSession* get_hsession(uint32_t stream_index = 0) const;
 

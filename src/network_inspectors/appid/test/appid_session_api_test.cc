@@ -110,6 +110,36 @@ TEST(appid_session_api, get_client_app_id)
     CHECK_EQUAL(APP_ID_NONE, id);
 }
 
+TEST(appid_session_api, get_client_app_id_with_eve_for_http2)
+{
+    SfIp ip;
+    AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
+    asd.flow = &flow;
+    AppidChangeBits change_bits;
+    asd.set_ss_application_ids(APP_ID_HTTP2, APPID_UT_ID, APPID_UT_ID, APPID_UT_ID, APPID_UT_ID, change_bits);
+
+    // Service id is HTTP2 but hsession hasn't been created yet. For example, after SSL decryption,
+    // third-party returns HTTP2 but http2 inspector hasn't given appid the metadata
+    AppId id = asd.get_api().get_client_app_id();
+    CHECK_EQUAL(id, APP_ID_NONE);
+
+    // hsession is created and eve appid is available
+    AppId eve_client = APPID_UT_ID + 100;
+    asd.create_http_session();
+    asd.set_eve_client_app_id(eve_client);
+    asd.get_odp_ctxt().eve_http_client = true;
+    asd.set_ss_application_ids(APP_ID_HTTP2, eve_client, APPID_UT_ID, APPID_UT_ID, APPID_UT_ID, change_bits);
+
+    id = asd.get_api().get_client_app_id(0);
+    CHECK_EQUAL(eve_client, id);
+
+    // invalid stream id
+    id = asd.get_api().get_client_app_id(3);
+    CHECK_EQUAL(APP_ID_NONE, id);
+
+    delete &asd.get_api();
+}
+
 TEST(appid_session_api, get_payload_app_id)
 {
     AppId id = mock_session->get_api().get_payload_app_id();
@@ -155,6 +185,146 @@ TEST(appid_session_api, get_app_id)
     CHECK_EQUAL(payload, APP_ID_NONE);
     CHECK_EQUAL(misc, APP_ID_NONE);
     CHECK_EQUAL(referred, APP_ID_NONE);
+
+    delete &asd.get_api();
+}
+
+TEST(appid_session_api, get_app_id_with_eve_for_http2)
+{
+    SfIp ip;
+    AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
+    asd.flow = &flow;
+    AppidChangeBits change_bits;
+    asd.set_application_ids_service(APP_ID_HTTP2, change_bits);
+
+    // invalid stream id
+    AppId service, client, payload, misc, referred;
+    asd.get_api().get_app_id(service, client, payload, misc, referred, 10);
+    CHECK_EQUAL(service, APP_ID_UNKNOWN);
+    CHECK_EQUAL(client, APP_ID_UNKNOWN);
+    CHECK_EQUAL(payload, APP_ID_UNKNOWN);
+    CHECK_EQUAL(misc, APP_ID_UNKNOWN);
+    CHECK_EQUAL(referred, APP_ID_UNKNOWN);
+
+    service = client = payload = misc = referred = APPID_UT_ID;
+    asd.get_api().get_app_id(&service, &client, &payload, &misc, &referred, 10);
+    CHECK_EQUAL(service, APP_ID_UNKNOWN);
+    CHECK_EQUAL(client, APP_ID_UNKNOWN);
+    CHECK_EQUAL(payload, APP_ID_UNKNOWN);
+    CHECK_EQUAL(misc, APP_ID_UNKNOWN);
+    CHECK_EQUAL(referred, APP_ID_UNKNOWN);
+
+    // hsession not created yet and eve appid is not available
+    service = client = payload = misc = referred = APP_ID_NONE;
+    asd.get_api().get_app_id(service, client, payload, misc, referred, 0);
+    CHECK_EQUAL(service, APP_ID_HTTP2);
+    CHECK_EQUAL(client, APP_ID_NONE);
+    CHECK_EQUAL(payload, APP_ID_NONE);
+    CHECK_EQUAL(misc, APP_ID_NONE);
+    CHECK_EQUAL(referred, APP_ID_NONE);
+
+    service = client = payload = misc = referred = APPID_UT_ID;
+    asd.get_api().get_app_id(&service, &client, &payload, &misc, &referred, 0);
+    CHECK_EQUAL(service, APP_ID_HTTP2);
+    CHECK_EQUAL(client, APP_ID_NONE);
+    CHECK_EQUAL(payload, APP_ID_NONE);
+    CHECK_EQUAL(misc, APP_ID_NONE);
+    CHECK_EQUAL(referred, APP_ID_NONE);
+
+    // hsession not created yet and eve appid is available
+    AppId eve_client = APPID_UT_ID + 100;
+    asd.set_eve_client_app_id(eve_client);
+    asd.get_odp_ctxt().eve_http_client = true;
+    asd.set_ss_application_ids(APP_ID_HTTP2, eve_client, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, change_bits);
+
+    service = client = payload = misc = referred = APP_ID_NONE;
+    asd.get_api().get_app_id(&service, &client, &payload, &misc, &referred, 0);
+    CHECK_EQUAL(service, APP_ID_HTTP2);
+    CHECK_EQUAL(client, eve_client);
+    CHECK_EQUAL(payload, APP_ID_NONE);
+    CHECK_EQUAL(misc, APP_ID_NONE);
+    CHECK_EQUAL(referred, APP_ID_NONE);
+
+    // hsession is created and eve appid is not available
+    AppIdHttpSession* hsession = asd.create_http_session();
+    asd.set_eve_client_app_id(APP_ID_NONE);
+    asd.set_ss_application_ids(APP_ID_HTTP2, hsession->client.get_id(), APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, change_bits);
+
+    service = client = payload = misc = referred = APP_ID_NONE;
+    asd.get_api().get_app_id(service, client, payload, misc, referred, 0);
+    CHECK_EQUAL(service, APP_ID_HTTP2);
+    CHECK_EQUAL(client, hsession->client.get_id());
+    CHECK_EQUAL(payload, hsession->payload.get_id());
+    CHECK_EQUAL(misc, hsession->misc_app_id);
+    CHECK_EQUAL(referred, hsession->referred_payload_app_id);
+
+    // hsession is created and eve appid is available
+    asd.set_eve_client_app_id(eve_client);
+    asd.set_ss_application_ids(APP_ID_HTTP2, eve_client, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, change_bits);
+
+    service = client = payload = misc = referred = APP_ID_NONE;
+    asd.get_api().get_app_id(service, client, payload, misc, referred, 0);
+    CHECK_EQUAL(service, APP_ID_HTTP2);
+    CHECK_EQUAL(client, eve_client);
+    CHECK_EQUAL(payload, hsession->payload.get_id());
+    CHECK_EQUAL(misc, hsession->misc_app_id);
+    CHECK_EQUAL(referred, hsession->referred_payload_app_id);
+
+    service = client = payload = misc = referred = APPID_UT_ID + 1;
+    asd.get_api().get_app_id(&service, &client, &payload, &misc, &referred, 0);
+
+    CHECK_EQUAL(service, APP_ID_HTTP2);
+    CHECK_EQUAL(client, eve_client);
+    CHECK_EQUAL(payload, hsession->payload.get_id());
+    CHECK_EQUAL(misc, hsession->misc_app_id);
+    CHECK_EQUAL(referred, hsession->referred_payload_app_id);
+
+    delete &asd.get_api();
+}
+
+TEST(appid_session_api, get_first_stream_appids_for_http2)
+{
+    SfIp ip;
+    AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
+    asd.flow = &flow;
+    AppidChangeBits change_bits;
+    asd.set_application_ids_service(APP_ID_HTTP2, change_bits);
+
+    // hsession is created, eve appid not available
+    AppIdHttpSession* hsession = asd.create_http_session();
+
+    AppId service, client, payload, misc;
+    asd.get_api().get_first_stream_app_ids(service, client, payload, misc);
+    CHECK_EQUAL(service, APP_ID_HTTP2);
+    CHECK_EQUAL(client, hsession->client.get_id());
+    CHECK_EQUAL(payload, hsession->payload.get_id());
+    CHECK_EQUAL(misc, hsession->misc_app_id);
+
+    service = client = payload = APP_ID_NONE;
+    asd.get_api().get_first_stream_app_ids(service, client, payload);
+    CHECK_EQUAL(service, APP_ID_HTTP2);
+    CHECK_EQUAL(client, hsession->client.get_id());
+    CHECK_EQUAL(payload, hsession->payload.get_id());
+
+    // hsession is created, eve appid available
+    AppId eve_client = APPID_UT_ID + 100;
+    asd.set_eve_client_app_id(eve_client);
+    asd.get_odp_ctxt().eve_http_client = true;
+    asd.set_ss_application_ids(APP_ID_HTTP2, eve_client, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, change_bits);
+
+    service = client = payload = misc = APP_ID_NONE;
+    asd.get_api().get_first_stream_app_ids(service, client, payload, misc);
+
+    CHECK_EQUAL(service, APP_ID_HTTP2);
+    CHECK_EQUAL(client, eve_client);
+    CHECK_EQUAL(payload, hsession->client.get_id());
+    CHECK_EQUAL(misc, hsession->misc_app_id);
+
+    service = client = payload = APP_ID_NONE;
+    asd.get_api().get_first_stream_app_ids(service, client, payload);
+    CHECK_EQUAL(service, APP_ID_HTTP2);
+    CHECK_EQUAL(client, eve_client);
+    CHECK_EQUAL(payload, hsession->payload.get_id());
 
     delete &asd.get_api();
 }
@@ -259,6 +429,50 @@ TEST(appid_session_api, get_client_info)
     val = mock_session->get_api().get_client_info(2);
     STRCMP_EQUAL(nullptr, val);
 }
+
+TEST(appid_session_api, get_client_info_http2)
+{
+    SfIp ip;
+    AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
+    asd.flow = &flow;
+    AppidChangeBits change_bits;
+    asd.set_ss_application_ids(APP_ID_HTTP2, APPID_UT_ID + 1, APPID_UT_ID, APPID_UT_ID, APPID_UT_ID, change_bits);
+    asd.get_odp_ctxt().eve_http_client = true;
+
+    const char* val;
+    AppId client;
+    // both eve client and hsession not available - default client version in appid session is used.
+    val = asd.get_api().get_client_info();
+    STRCMP_EQUAL(APPID_UT_CLIENT_VERSION, val);
+    client = asd.get_api().get_client_app_id();
+    CHECK_EQUAL(client, APP_ID_NONE);
+
+    // hsession is available. eve client not equals hsession client id - eve client = APPID_UT_ID + 100 and
+    // hsession client id is APPID_UT_ID; so client version is not used.
+    AppId eve_client = APPID_UT_ID + 100;
+    asd.set_eve_client_app_id(eve_client);
+    asd.set_ss_application_ids(APP_ID_HTTP2, eve_client, APPID_UT_ID, APPID_UT_ID, APPID_UT_ID, change_bits);
+    AppIdHttpSession* hsession = asd.create_http_session();
+    hsession->client.set_version("TEST_VERSION");
+
+    val = asd.get_api().get_client_info();
+    STRCMP_EQUAL(nullptr, val);
+    client = asd.get_api().get_client_app_id();
+    CHECK_EQUAL(client, eve_client);
+
+    // eve client equals hsession client id
+    eve_client = APPID_UT_ID + 200;
+    asd.set_eve_client_app_id(eve_client);
+    hsession->client.set_id(eve_client);
+    asd.set_ss_application_ids(APP_ID_HTTP2, eve_client, APPID_UT_ID, APPID_UT_ID, APPID_UT_ID, change_bits);
+    val = asd.get_api().get_client_info();
+    STRCMP_EQUAL("TEST_VERSION", val);
+    client = asd.get_api().get_client_app_id();
+    CHECK_EQUAL(client, eve_client);
+
+    delete &asd.get_api();
+}
+
 TEST(appid_session_api, get_http_session)
 {
     const AppIdHttpSession* val;

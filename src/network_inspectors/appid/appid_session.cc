@@ -858,11 +858,17 @@ AppId AppIdSession::pick_ss_misc_app_id() const
 
 AppId AppIdSession::pick_ss_client_app_id() const
 {
-    if (api.service.get_id() == APP_ID_HTTP2 or
-        (api.service.get_id() == APP_ID_HTTP3 and !api.hsessions.empty()))
+    bool prefer_eve_client = use_eve_client_app_id();
+    if (api.service.get_id() == APP_ID_HTTP2 and !prefer_eve_client)
+    {
+        api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_APPID);
+        return APP_ID_NONE;
+    }
+
+    if (api.service.get_id() == APP_ID_HTTP3 and !api.hsessions.empty())
         return APP_ID_NONE;
 
-    if (use_eve_client_app_id())
+    if (prefer_eve_client)
     {
         api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_TLS_FP);
         return api.client.get_eve_client_app_id();
