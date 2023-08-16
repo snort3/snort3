@@ -32,10 +32,10 @@ extern const BaseApi* sin_http[];
 extern const BaseApi* sin_http2[];
 extern const BaseApi* sin_sip[];
 extern const BaseApi* sin_ssl[];
+extern const BaseApi* sin_dns[];
 
 #ifdef STATIC_INSPECTORS
 extern const BaseApi* sin_bo;
-extern const BaseApi* sin_dns;
 extern const BaseApi* sin_ftp_client;
 extern const BaseApi* sin_ftp_server;
 extern const BaseApi* sin_ftp_data;
@@ -63,7 +63,6 @@ const BaseApi* service_inspectors[] =
 {
 #ifdef STATIC_INSPECTORS
     sin_bo,
-    sin_dns,
     sin_ftp_client,
     sin_ftp_server,
     sin_ftp_data,
@@ -83,6 +82,7 @@ void load_service_inspectors()
 {
     PluginManager::load_plugins(service_inspectors);
 
+    PluginManager::load_plugins(sin_dns);
     PluginManager::load_plugins(sin_file);
     PluginManager::load_plugins(sin_http);
     PluginManager::load_plugins(sin_http2);

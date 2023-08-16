@@ -1210,6 +1210,10 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
     nullptr
 };
 #else
-const BaseApi* sin_dns = &dns_api.base;
+const BaseApi* sin_dns[] =
+{
+    &dns_api.base,
+    nullptr
+};
 #endif
 
