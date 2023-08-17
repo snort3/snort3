@@ -87,7 +87,7 @@ public:
     // This cannot be called in or before the inspector configure phase for a new snort config during reload
     SO_PUBLIC static Inspector* get_inspector(const char* key, Module::Usage, InspectorType);
 
-    static Inspector* get_service_inspector_by_service(const char*);
+    SO_PUBLIC static Inspector* get_service_inspector_by_service(const char*);
     static Inspector* get_service_inspector_by_id(const SnortProtocolId);
 
     SO_PUBLIC static Binder* get_binder();
