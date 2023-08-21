@@ -342,7 +342,7 @@ bool Http2HpackDecoder::decode_header_line(const uint8_t* encoded_header_buffer,
     // Handle pseudoheaders
     if (ret and bytes_written > 0)
     {
-        if (decoded_header_buffer[0] == ':')
+        if (decoded_header_buffer[0] == ':' and name.length() != 0)
         {
             if (pseudo_headers_allowed)
                 start_line->process_pseudo_header(name, value);
