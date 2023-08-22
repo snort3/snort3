@@ -232,7 +232,7 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
                 payload_id);
     }
 
-    if (client_id != APP_ID_NONE or payload_id != APP_ID_NONE)
+    if (service_id != APP_ID_NONE or client_id != APP_ID_NONE or payload_id != APP_ID_NONE)
     {
         return true;
     }
