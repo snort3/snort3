@@ -202,40 +202,44 @@ void HttpMsgBody::analyze()
             ptr++;
 
             latest_attachment = session_data->mime_state[source_id]->get_attachment();
-            if (latest_attachment.data != nullptr)
-            {
-                uint32_t attach_length;
-                uint8_t* attach_buf;
-                if (!last_attachment_complete)
-                {
-                    assert(!mime_bufs->empty());
-                    // Remove the partial attachment from the list and replace it with an extended version
-                    const uint8_t* const old_buf = mime_bufs->back().file.start();
-                    const uint32_t old_length = mime_bufs->back().file.length();
-                    attach_length = old_length + latest_attachment.length;
-                    attach_buf = new uint8_t[attach_length];
-                    memcpy(attach_buf, old_buf, old_length);
-                    memcpy(attach_buf + old_length, latest_attachment.data, latest_attachment.length);
-                    mime_bufs->pop_back();
-                }
-                else
-                {
-                    attach_length = latest_attachment.length;
-                    attach_buf = new uint8_t[attach_length];
-                    memcpy(attach_buf, latest_attachment.data, latest_attachment.length);
-                }
-                const BufferData& vba_buf = session_data->mime_state[source_id]->get_ole_buf();
-                if (vba_buf.data_ptr() != nullptr)
-                {
-                    uint8_t* my_vba_buf = new uint8_t[vba_buf.length()];
-                    memcpy(my_vba_buf, vba_buf.data_ptr(), vba_buf.length());
-                    mime_bufs->emplace_back(attach_length, attach_buf, true, vba_buf.length(), my_vba_buf, true);
-                }
-                else
-                    mime_bufs->emplace_back(attach_length, attach_buf, true, STAT_NOT_PRESENT, nullptr, false);
 
-                mime_bufs->back().file.set_accumulation(!last_attachment_complete);
+            if (!latest_attachment.data)
+            {
+                last_attachment_complete = latest_attachment.finished;
+                continue;
             }
+
+            uint32_t attach_length;
+            uint8_t* attach_buf;
+            if (!last_attachment_complete)
+            {
+                assert(!mime_bufs->empty());
+                // Remove the partial attachment from the list and replace it with an extended version
+                const uint8_t* const old_buf = mime_bufs->back().file.start();
+                const uint32_t old_length = mime_bufs->back().file.length();
+                attach_length = old_length + latest_attachment.length;
+                attach_buf = new uint8_t[attach_length];
+                memcpy(attach_buf, old_buf, old_length);
+                memcpy(attach_buf + old_length, latest_attachment.data, latest_attachment.length);
+                mime_bufs->pop_back();
+            }
+            else
+            {
+                attach_length = latest_attachment.length;
+                attach_buf = new uint8_t[attach_length];
+                memcpy(attach_buf, latest_attachment.data, latest_attachment.length);
+            }
+            const BufferData& vba_buf = session_data->mime_state[source_id]->get_ole_buf();
+            if (vba_buf.data_ptr() != nullptr)
+            {
+                uint8_t* my_vba_buf = new uint8_t[vba_buf.length()];
+                memcpy(my_vba_buf, vba_buf.data_ptr(), vba_buf.length());
+                mime_bufs->emplace_back(attach_length, attach_buf, true, vba_buf.length(), my_vba_buf, true);
+            }
+            else
+                mime_bufs->emplace_back(attach_length, attach_buf, true, STAT_NOT_PRESENT, nullptr, false);
+
+            mime_bufs->back().file.set_accumulation(!last_attachment_complete);
             last_attachment_complete = latest_attachment.finished;
         }
 

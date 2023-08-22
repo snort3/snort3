@@ -233,6 +233,9 @@ const uint8_t* MimeSession::process_mime_header(Packet* p, const uint8_t* ptr,
     if (!cont)
     {
         data_state = STATE_DATA_BODY;
+        delete[] partial_data;
+        partial_data = nullptr;
+        partial_data_len = 0;
     }
     return ptr;
 }
@@ -437,42 +440,43 @@ static const uint8_t* GetDataEnd(const uint8_t* data_start,
     return data_end_marker;
 }
 
-/*
- * Handle DATA_BODY state
- * @param   packet standard Packet structure
- * @param   i index into p->payload buffer to start looking at data
- * @return  i index into p->payload where we stopped looking at data
- */
 const uint8_t* MimeSession::process_mime_body(const uint8_t* ptr,
-    const uint8_t* data_end, bool is_body_end)
+    const uint8_t* data_end, FilePosition position)
 {
-    if (state_flags & MIME_FLAG_FILE_ATTACH)
+    auto data_size = data_end - ptr;
+
+    if (partial_data && mime_boundary.boundary_search_len < data_size)
     {
-        const uint8_t* attach_start = ptr;
-        const uint8_t* attach_end;
+        delete[] rebuilt_data;
+        rebuilt_data = new uint8_t[partial_data_len + data_size];
+        memcpy(rebuilt_data, partial_data, partial_data_len);
+        memcpy(rebuilt_data + partial_data_len, ptr, data_size);
 
-        if (is_body_end )
-        {
-            attach_end = GetDataEnd(ptr, data_end);
-        }
-        else
-        {
-            attach_end = data_end;
-        }
+        ptr = rebuilt_data;
+        data_size = partial_data_len + data_size;
 
-        if (( attach_start < attach_end ) && decode_state)
-        {
-            decode_state->finalize_decoder(mime_stats);
-            if (decode_state->decode_data(attach_start, attach_end) == DECODE_FAIL )
-            {
-                decode_alert();
-            }
-        }
+        delete[] partial_data;
+        partial_data = nullptr;
+        partial_data_len = 0;
     }
 
-    if (is_body_end)
+    const uint8_t* attach_end = isFileEnd(position) && mime_boundary.boundary_search_len < data_size
+        ? GetDataEnd(ptr, ptr + data_size) : ptr + data_size - mime_boundary.boundary_search_len;
+
+    if (!isFileEnd(position)
+        && mime_boundary.boundary_search_len && mime_boundary.boundary_state != MIME_PAF_BOUNDARY_UNKNOWN)
     {
-        data_state = STATE_MIME_HEADER;
+        delete[] partial_data;
+        partial_data_len = mime_boundary.boundary_search_len;
+        partial_data = new uint8_t[partial_data_len];
+        memcpy(partial_data, attach_end, partial_data_len);
+    }
+
+    if (ptr < attach_end && decode_state)
+    {
+        decode_state->finalize_decoder(mime_stats);
+        if (decode_state->decode_data(ptr, attach_end) == DECODE_FAIL)
+            decode_alert();
     }
 
     return data_end;
@@ -556,11 +560,17 @@ const uint8_t* MimeSession::process_mime_data_paf(
         case STATE_MIME_HEADER:
             start = process_mime_header(p, start, end);
             break;
-        case STATE_DATA_BODY:
-            start = process_mime_body(start, end, isFileEnd(position) );
 
-            if (state_flags & MIME_FLAG_FILE_ATTACH)
+        case STATE_DATA_BODY:
+            if (isFileEnd(position))
+                data_state = STATE_MIME_HEADER;
+
+            if (!(state_flags & MIME_FLAG_FILE_ATTACH))
+                start = end;
+            else
             {
+                start = process_mime_body(start, end, position);
+
                 const DecodeConfig* conf = decode_conf;
                 const uint8_t* buffer = nullptr;
                 uint32_t buf_size = 0;
@@ -574,11 +584,10 @@ const uint8_t* MimeSession::process_mime_data_paf(
 
                     detection_size = (uint32_t)decode_state->get_detection_depth();
 
-                    DecodeResult result = decode_state->decompress_data(
-                        buffer, detection_size, decomp_buffer, decomp_buf_size
-                        );
+                    DecodeResult result =
+                        decode_state->decompress_data(buffer, detection_size, decomp_buffer, decomp_buf_size);
 
-                    if ( result != DECODE_SUCCESS )
+                    if (result != DECODE_SUCCESS)
                         decompress_alert();
 
                     if (session_base_file_id)
@@ -639,9 +648,15 @@ void MimeSession::reset_part_state()
 {
     state_flags = 0;
     filename_state = CONT_DISP_FILENAME_PARAM_NAME;
+
     delete[] partial_header;
     partial_header = nullptr;
     partial_header_len = 0;
+
+    delete[] partial_data;
+    partial_data = nullptr;
+    partial_data_len = 0;
+
     if (decode_state)
     {
         decode_state->clear_decode_state();
@@ -690,7 +705,6 @@ const uint8_t* MimeSession::process_mime_data(Packet* p, const uint8_t* start,
             process_mime_data_paf(p, attach_start, attach_end,
                 upload, position);
             data_state = STATE_MIME_HEADER;
-            position = SNORT_FILE_START;
             return attach_end;
         }
 
@@ -856,6 +870,8 @@ MimeSession::~MimeSession()
 {
     delete decode_state;
     delete[] partial_header;
+    delete[] partial_data;
+    delete[] rebuilt_data;
 }
 
 // File verdicts get cached with key (file_id, sip, dip). File_id is hash of filename if available.

@@ -30,6 +30,7 @@
 enum MimeDataState
 {
     MIME_PAF_FINDING_BOUNDARY_STATE,
+    MIME_PAF_FOUND_FIRST_BOUNDARY_STATE,
     MIME_PAF_FOUND_BOUNDARY_STATE
 };
 
@@ -37,6 +38,8 @@ enum MimeDataState
 enum MimeBoundaryState
 {
     MIME_PAF_BOUNDARY_UNKNOWN = 0,      /* UNKNOWN */
+    MIME_PAF_BOUNDARY_CR,               /* '\r' */
+    MIME_PAF_BOUNDARY_LF,               /* '\n' */
     MIME_PAF_BOUNDARY_HYPEN_FIRST,      /* First '-' */
     MIME_PAF_BOUNDARY_HYPEN_SECOND      /* Second '-' */
 };
@@ -59,15 +62,16 @@ struct MimeDataPafInfo
     MimeDataState data_state;
     char boundary[ MAX_MIME_BOUNDARY_LEN + 1];  /* MIME boundary string + '\0' */
     int boundary_len;
+    int boundary_search_len;
     const char* boundary_search;
     MimeBoundaryState boundary_state;
 };
 
 inline bool scanning_boundary(MimeDataPafInfo* mime_info, uint32_t boundary_start, uint32_t* fp)
 {
-    if (boundary_start &&
-        mime_info->data_state == MIME_PAF_FOUND_BOUNDARY_STATE &&
-        mime_info->boundary_state != MIME_PAF_BOUNDARY_UNKNOWN)
+    if (boundary_start
+        && mime_info->data_state != MIME_PAF_FINDING_BOUNDARY_STATE
+        && mime_info->boundary_state >= MIME_PAF_BOUNDARY_HYPEN_FIRST)
     {
         *fp = boundary_start;
         return true;

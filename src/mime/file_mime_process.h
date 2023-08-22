@@ -133,15 +133,18 @@ private:
     const uint8_t* process_mime_header(Packet*, const uint8_t* ptr, const uint8_t* data_end_marker);
     bool process_header_line(const uint8_t*& ptr, const uint8_t* eol, const uint8_t* eolm, const
         uint8_t* start_hdr, Packet* p);
-    const uint8_t* process_mime_body(const uint8_t* ptr, const uint8_t* data_end,bool is_data_end);
+    const uint8_t* process_mime_body(const uint8_t* ptr, const uint8_t* data_end, FilePosition);
     const uint8_t* process_mime_data_paf(Packet*, const uint8_t* start, const uint8_t* end,
         bool upload, FilePosition);
     int extract_file_name(const char*& start, int length);
 
-    uint8_t* partial_header = nullptr;
+    uint8_t* partial_header = nullptr;      // single header line split into multiple sections
     uint32_t partial_header_len = 0;
+    uint8_t* partial_data = nullptr;        // attachment's trailing bytes (suspected boundary)
+    uint32_t partial_data_len = 0;
+    uint8_t* rebuilt_data = nullptr;        // prepended attachment data for detection module
 
-    AttachmentBuffer attachment;
+    AttachmentBuffer attachment;            // decoded and uncompressed file body
 };
 }
 #endif
