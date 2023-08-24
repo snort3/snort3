@@ -1052,6 +1052,9 @@ public:
     void show(const snort::SnortConfig*) const override;
     static unsigned get_pub_id() { return pub_id; }
 
+    bool supports_no_ips() const override
+    { return true; }
+
 private:
     const DnsConfig* config = nullptr;
     static unsigned pub_id;

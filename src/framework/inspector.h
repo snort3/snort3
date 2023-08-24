@@ -185,6 +185,9 @@ public:
     virtual bool can_start_tls() const
     { return false; }
 
+    virtual bool supports_no_ips() const
+    { return false; }
+
     void allocate_thread_storage();
     void set_thread_specific_data(void*);
     void* get_thread_specific_data() const;

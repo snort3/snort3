@@ -776,6 +776,9 @@ public:
     bool is_control_channel() const override
     { return true; }
 
+    bool supports_no_ips() const override
+    { return true; }
+
 private:
     const NetFlowConfig *config;
 
