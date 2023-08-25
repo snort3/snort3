@@ -35,6 +35,7 @@ public:
 
     bool is_detection_required() const override { return false; }
     void update_stream_state() override;
+    virtual const uint8_t* get_frame_data(uint32_t& length) const override;
 
     friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const uint32_t, const uint8_t*,
         const uint32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);

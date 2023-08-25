@@ -103,3 +103,9 @@ void Http2DataFrame::print_frame(FILE* output)
     Http2Frame::print_frame(output);
 }
 #endif
+
+const uint8_t* Http2DataFrame::get_frame_data(uint32_t& length) const
+{
+    length = data_length;
+    return data_buffer;
+}

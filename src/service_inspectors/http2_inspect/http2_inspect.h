@@ -55,6 +55,7 @@ public:
     bool can_carve_files() const override
     { return true; }
 
+    const uint8_t* adjust_log_packet(snort::Packet* p, uint16_t& length) override;
 private:
     friend Http2Api;
 

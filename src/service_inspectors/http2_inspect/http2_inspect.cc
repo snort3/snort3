@@ -214,3 +214,20 @@ static void print_flow_issues(FILE* output, Http2Infractions* const infractions,
         infractions->get_raw(0), events->get_raw(0));
 }
 #endif
+
+const uint8_t* Http2Inspect::adjust_log_packet(Packet* p, uint16_t& length)
+{
+    auto* const session_data = (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
+    if (!session_data)
+        return nullptr;
+
+    auto* stream = session_data->find_processing_stream();
+    if (!stream)
+        return nullptr;
+
+    auto* frame = stream->get_current_frame();
+    if (!frame)
+        return nullptr;
+
+    return frame->get_frame_pdu(length);
+}

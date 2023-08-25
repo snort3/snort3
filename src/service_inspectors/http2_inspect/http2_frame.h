@@ -50,7 +50,8 @@ public:
     virtual const Field& get_buf(unsigned id);
     virtual bool is_detection_required() const { return true; }
     virtual void update_stream_state() { }
-
+    const uint8_t* get_frame_pdu(uint16_t& length) const;
+    virtual const uint8_t* get_frame_data(uint32_t& length) const;
 #ifdef REG_TEST
     virtual void print_frame(FILE* output);
 #endif
