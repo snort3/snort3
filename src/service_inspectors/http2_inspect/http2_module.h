@@ -36,13 +36,9 @@ struct Http2ParaList
 public:
     uint32_t concurrent_streams_limit;
 #ifdef REG_TEST
-    int64_t print_amount;
 
     bool test_input;
     bool test_output;
-    bool print_hex;
-    bool show_pegs;
-    bool show_scan;
 #endif
 };
 

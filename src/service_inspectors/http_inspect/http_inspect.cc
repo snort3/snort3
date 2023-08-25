@@ -117,13 +117,12 @@ HttpInspect::HttpInspect(const HttpParaList* params_) :
     {
         HttpTestManager::activate_test_output(HttpTestManager::IN_HTTP);
     }
-    if ((params->test_input) || (params->test_output))
-    {
-        HttpTestManager::set_print_amount(params->print_amount);
-        HttpTestManager::set_print_hex(params->print_hex);
-        HttpTestManager::set_show_pegs(params->show_pegs);
-        HttpTestManager::set_show_scan(params->show_scan);
-    }
+
+    HttpTestManager::set_print_amount(params->print_amount);
+    HttpTestManager::set_print_hex(params->print_hex);
+    HttpTestManager::set_show_pegs(params->show_pegs);
+    HttpTestManager::set_show_scan(params->show_scan);
+
 #endif
 
     if (params->script_detection)

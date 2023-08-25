@@ -53,13 +53,6 @@ Http2Inspect::Http2Inspect(const Http2ParaList* params_) : params(params_)
     {
         HttpTestManager::activate_test_output(HttpTestManager::IN_HTTP2);
     }
-    if ((params->test_input) || (params->test_output))
-    {
-        HttpTestManager::set_print_amount(params->print_amount);
-        HttpTestManager::set_print_hex(params->print_hex);
-        HttpTestManager::set_show_pegs(params->show_pegs);
-        HttpTestManager::set_show_scan(params->show_scan);
-    }
 #endif
 }
 
