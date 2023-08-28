@@ -1,3 +1,20 @@
+2023-08-27: 3.1.69.0
+
+* appid: mark ssl appid lookup successful if a service id is available
+* appid: prefer eve client over appid detected client after decryption and use appid detected client version if eve client equals appid client
+* dce_rpc: fix stats for client/server segments reassembled. Thanks to Bader-eddine Ouaich for addressing the issue.
+* dns: updates to allow DNS to be compiled dynamically.
+* framework: add virtual for inspectors that publish data when no ips policy is enabled.
+* http2_inspect: add frame when logging a packet
+* http2_inspect: handle empty header name
+* http2_inspect: update connection settings on ack
+* http2_inspect: update test tool configurations
+* http_inspect: adjust formatting
+* inspector: export get_service_inspector_by_service method
+* mime: fix boundary search
+* mime: postpone boundary-look-alike data till the next PDU arrives
+* mime: support transport padding in boundary strings
+
 2023-08-14: 3.1.68.0
 
 * appid, cip: parsing cip safety segments

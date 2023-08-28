@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.68.0 2023-08-14 22:06:48 EDT TST
+Revision 3.1.69.0 2023-08-27 09:33:21 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -3790,6 +3790,9 @@ Rules:
     protocol error
   * 121:40 (http2_inspect) invalid HTTP/2 PRIORITY frame
   * 121:41 (http2_inspect) invalid HTTP/2 GOAWAY frame
+  * 121:42 (http2_inspect) too many unacknowledged settings
+  * 121:43 (http2_inspect) setting acknowledgment without actual
+    settings
 
 Peg counts:
 
@@ -13978,6 +13981,14 @@ Invalid HTTP/2 PRIORITY frame. Stream ID is 0 or length is not 5.
 
 Invalid HTTP/2 GOAWAY frame. R bit is set or stream ID is not 0 or
 length is less than 8.
+
+121:42 (http2_inspect) too many unacknowledged settings
+
+More than 6 unacknowledged settings frames.
+
+121:43 (http2_inspect) setting acknowledgment without actual settings
+
+Unexpected settings ACK.
 
 122:1 (port_scan) TCP portscan
 
