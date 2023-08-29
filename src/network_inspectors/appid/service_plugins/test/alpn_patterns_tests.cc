@@ -35,7 +35,7 @@ AlpnPattern alpn_pattern(APPID_UT_ID, "h3");
 
 namespace snort
 {
-int SearchTool::find_all(const char* pattern, unsigned, MpseMatch, bool, void* data)
+int SearchTool::find_all(const char* pattern, unsigned, MpseMatch, bool, void* data, const SnortConfig*)
 {
     if (strcmp(pattern, "h3") == 0)
         alpn_pattern_match(&alpn_pattern, nullptr, 0, data, nullptr);

@@ -70,7 +70,7 @@ SearchTool::SearchTool(bool)
     mpsegrp = &mpse_group;
 }
 void SearchTool::reload() { }  // LCOV_EXCL_LINE
-int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void*)
+int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void*, const SnortConfig*)
 {
     // Seg-fault will be observed if this is called without initializing pattern matchers
     assert(mpsegrp);

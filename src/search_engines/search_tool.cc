@@ -134,10 +134,11 @@ int SearchTool::find(
 }
 
 int SearchTool::find_all(
-    const char* str, unsigned len, MpseMatch mf, bool confine, void* user_data)
+    const char* str, unsigned len, MpseMatch mf, bool confine, void* user_data, const SnortConfig* sc)
 {
     int num = 0;
-    const SnortConfig* sc = SnortConfig::get_conf();
+    if (!sc)
+        sc = SnortConfig::get_conf();
     const FastPatternConfig* fp = sc->fast_pattern_config;
 
     if ( confine && max_len > 0 )

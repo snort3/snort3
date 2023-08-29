@@ -38,7 +38,7 @@ int SearchTool::find(const char*, unsigned, MpseMatch, int&, bool, void*)
 int SearchTool::find(const char*, unsigned, MpseMatch, bool, void*)
 { return 0; }
 
-int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void*)
+int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void*, const SnortConfig*)
 { return 0; }
 }
 

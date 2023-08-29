@@ -57,7 +57,7 @@ public:
         bool confine = false, void* user_data = nullptr);
 
     int find_all(const char* s, unsigned s_len, MpseMatch,
-        bool confine = false, void* user_data = nullptr);
+        bool confine = false, void* user_data = nullptr, const SnortConfig* = nullptr);
 
 private:
     class MpseGroup* mpsegrp;

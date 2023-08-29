@@ -65,7 +65,7 @@ void SearchTool::reload() { }
 static bool test_find_all_done = false;
 static bool test_find_all_enabled = false;
 static MatchedPatterns* mock_mp = nullptr;
-int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void* mp_arg)
+int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void* mp_arg, const SnortConfig*)
 {
     test_find_all_done = true;
     if (test_find_all_enabled)
