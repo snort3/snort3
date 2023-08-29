@@ -1273,7 +1273,7 @@ static int detector_add_ssl_cert_regex_pattern(lua_State* L)
 
     const FastPatternConfig* const fp = SnortConfig::get_conf()->fast_pattern_config;
     if (!MpseManager::is_regex_capable(fp->get_search_api())){
-        ErrorMessage("appid: Regex patterns require usage of regex capable search engine like hyperscan in %s\n", 
+        WarningMessage("WARNING: appid: Regex patterns require usage of regex capable search engine like hyperscan in %s\n", 
             ud->get_detector()->get_name().c_str());
             return 0;
     }
@@ -1339,7 +1339,7 @@ static int detector_add_ssl_cname_regex_pattern(lua_State* L)
 
     const FastPatternConfig* const fp = SnortConfig::get_conf()->fast_pattern_config;
     if (!MpseManager::is_regex_capable(fp->get_search_api())){
-        ErrorMessage("appid: Regex patterns require usage of regex capable search engine like hyperscan in %s\n", 
+        WarningMessage("WARNING: appid: Regex patterns require usage of regex capable search engine like hyperscan in %s\n", 
             ud->get_detector()->get_name().c_str());
             return 0;
     }
