@@ -597,6 +597,49 @@ void ts_print(const struct timeval* tvp, char* timebuf, bool yyyymmdd)
             (unsigned)tvp->tv_usec);
     }
 }
+
+static void start_hex_state(bool& hex_state, std::string& print_str)
+{
+    if (!hex_state)
+    {
+        hex_state = true;
+        print_str += "|";
+    }
+}
+
+static void end_hex_state(bool& hex_state, std::string& print_str)
+{
+    if (hex_state)
+    {
+        hex_state = false;
+        print_str += "|";
+    }
+}
+
+void uint8_to_printable_str(const uint8_t* buff, unsigned len, std::string& print_str)
+{
+    print_str.clear();
+    char output[4];
+    bool hex_state = false;
+    for (unsigned i = 0 ; i < len ; i++)
+    {
+        if ((buff[i] >= 0x20) && (buff[i] <= 0x7E))
+        {
+            end_hex_state(hex_state, print_str);
+            sprintf(output, "%c", (char)buff[i]);
+        }
+        else
+        {
+            start_hex_state(hex_state, print_str);
+            sprintf(output, "%.2x ", buff[i]);
+        }
+
+        print_str += output;
+    }
+
+    end_hex_state(hex_state, print_str);
+}
+
 }
 
 #ifdef UNIT_TEST
@@ -604,4 +647,29 @@ TEST_CASE("gmt2local_time_out_of_range", "[util]")
 {
     REQUIRE((gmt2local(0xffffffff1fff2f)==0));
 }
+
+TEST_CASE("uint8_to_printable_str go over all options", "[util]")
+{
+    std::string print_str;
+    uint8_t pattern[] = { 0, 'a', '(', 'd', ')', 1, '\r', 2, '\n','n'};
+    uint8_to_printable_str(pattern, 10, print_str);
+    CHECK((strcmp(print_str.c_str(),"|00 |a(d)|01 0d 02 0a |n") == 0));
+}
+
+TEST_CASE("uint8_to_printable_str empty buffer", "[util]")
+{
+    std::string print_str;
+    uint8_t* pattern = nullptr;
+    uint8_to_printable_str(pattern, 0, print_str);
+    CHECK((strcmp(print_str.c_str(),"") == 0));
+}
+
+TEST_CASE("uint8_to_printable_str end with |", "[util]")
+{
+    std::string print_str;
+    uint8_t pattern[] = { 'a', 0 };
+    uint8_to_printable_str(pattern, 2, print_str);
+    CHECK((strcmp(print_str.c_str(),"a|00 |") == 0));
+}
+
 #endif

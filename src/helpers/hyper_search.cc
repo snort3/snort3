@@ -33,6 +33,7 @@
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/thread.h"
+#include "utils/util.h"
 
 #include "hyper_scratch_allocator.h"
 
@@ -81,12 +82,18 @@ HyperSearch::HyperSearch(LiteralSearch::Handle* h, const uint8_t* pattern, unsig
         HS_MODE_BLOCK, nullptr, (hs_database_t**)&db, &err) != HS_SUCCESS )
 #endif
     {
-        ParseError("can't compile content '%s'", pattern);
+        std::string print_str;
+        uint8_to_printable_str(pattern, len, print_str);
+        ParseError("can't compile content '%s'", print_str.c_str());
         hs_free_compile_error(err);
         return;
     }
     if ( !scratcher->allocate(db) )
-        ParseError("can't allocate scratch for content '%s'", pattern);
+    {
+        std::string print_str;
+        uint8_to_printable_str(pattern, len, print_str);
+        ParseError("can't allocate scratch for content '%s'", print_str.c_str());
+    }
 }
 
 HyperSearch::~HyperSearch()

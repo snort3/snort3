@@ -84,6 +84,9 @@ void ParseError(const char*, ...)
 unsigned get_instance_id()
 { return 0; }
 
+void uint8_to_printable_str(const uint8_t*, unsigned, std::string&)
+{}
+
 }
 
 //-------------------------------------------------------------------------
