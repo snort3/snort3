@@ -25,6 +25,7 @@
 
 #include "appid_discovery.h"
 #include "host_tracker/host_cache.h"
+#include "host_tracker/host_cache_segmented.h"
 
 #include "log/messages.h"
 #include "packet_tracer/packet_tracer.h"

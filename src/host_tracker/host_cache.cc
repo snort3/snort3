@@ -23,11 +23,9 @@
 #endif
 
 #include "host_cache.h"
+#include "host_cache_segmented.h"
 
 using namespace snort;
 
-// Default host cache size in bytes.
-// Must agree with default memcap in host_cache_module.cc.
-#define LRU_CACHE_INITIAL_SIZE 16384 * 512
-
-HostCacheIp host_cache(LRU_CACHE_INITIAL_SIZE);
+HostCacheIp default_host_cache(LRU_CACHE_INITIAL_SIZE);
+HostCacheSegmentedIp host_cache;

@@ -42,12 +42,14 @@ namespace snort
 char* snort_strdup(const char* str)
 { return strdup(str); }
 time_t packet_time() { return test_time; }
+void FatalError(const char* fmt, ...) { (void)fmt; exit(1); }
 }
 
 // There always needs to be a HostCacheIp associated with HostTracker,
 // because any allocation / deallocation into the HostTracker will take up
 // memory managed by the cache.
-HostCacheIp host_cache(1024);
+HostCacheIp default_host_cache(LRU_CACHE_INITIAL_SIZE);
+HostCacheSegmentedIp host_cache(4,1024);
 
 TEST_GROUP(host_tracker)
 {
@@ -429,5 +431,7 @@ TEST(host_tracker, rediscover_host)
 
 int main(int argc, char** argv)
 {
-    return CommandLineTestRunner::RunAllTests(argc, argv);
+    int ret = CommandLineTestRunner::RunAllTests(argc, argv);
+    host_cache.term();
+    return ret;
 }

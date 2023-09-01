@@ -45,6 +45,7 @@
 #include "framework/policy_selector.h"
 #include "hash/xhash.h"
 #include "helpers/process.h"
+#include "host_tracker/host_cache_segmented.h"
 #include "latency/latency_config.h"
 #include "log/messages.h"
 #include "managers/action_manager.h"
@@ -1061,6 +1062,7 @@ void SnortConfig::cleanup_fatal_error()
         EventManager::release_plugins();
         IpsManager::release_plugins();
         InspectorManager::release_plugins();
+        host_cache.term();
     }
 #endif
 }

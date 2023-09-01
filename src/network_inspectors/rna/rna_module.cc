@@ -33,6 +33,7 @@
 
 #include "control/control.h"
 #include "host_tracker/host_cache.h"
+#include "host_tracker/host_cache_segmented.h"
 #include "log/messages.h"
 #include "lua/lua.h"
 #include "main/snort_config.h"

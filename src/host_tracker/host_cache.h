@@ -36,6 +36,9 @@
 #include "cache_allocator.h"
 #include "cache_interface.h"
 
+// Default host cache size in bytes.
+#define LRU_CACHE_INITIAL_SIZE 8388608 // 8 MB
+
 // Used to create hash of key for indexing into cache.
 //
 // Note that both HashIp and IpEqualTo below ignore the IP family.
@@ -276,6 +279,5 @@ public:
     }
 };
 
-extern SO_PUBLIC HostCacheIp host_cache;
 
 #endif

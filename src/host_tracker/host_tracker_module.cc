@@ -23,6 +23,7 @@
 #endif
 
 #include "host_tracker_module.h"
+#include "host_cache_segmented.h"
 
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -30,6 +31,8 @@
 #include "cache_allocator.cc"
 
 using namespace snort;
+
+static HostCacheIp initial_host_cache(LRU_CACHE_INITIAL_SIZE);
 
 const PegInfo host_tracker_pegs[] =
 {
@@ -92,10 +95,10 @@ bool HostTrackerModule::end(const char* fqn, int idx, SnortConfig*)
 
     else if ( idx && !strcmp(fqn, "host_tracker") && addr.is_set() )
     {
-        host_cache[addr];
+        initial_host_cache[addr];
 
         for ( auto& a : apps )
-            host_cache[addr]->add_service(a);
+            initial_host_cache[addr]->add_service(a);
 
         addr.clear();
         apps.clear();
@@ -103,6 +106,17 @@ bool HostTrackerModule::end(const char* fqn, int idx, SnortConfig*)
 
     return true;
 }
+
+void HostTrackerModule::init_data()
+{
+    auto host_data = initial_host_cache.get_all_data();
+    for ( auto& h : host_data )
+    {
+        host_cache.find_else_insert(h.first, h.second);
+        h.second->init_visibility(1);
+    }
+}
+
 
 const PegInfo* HostTrackerModule::get_pegs() const
 { return host_tracker_pegs; }

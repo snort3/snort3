@@ -26,6 +26,7 @@
 
 #include "helpers/discovery_filter.h"
 #include "host_tracker/host_cache.h"
+#include "host_tracker/host_cache_segmented.h"
 #include "protocols/packet.h"
 
 #ifdef UNIT_TEST

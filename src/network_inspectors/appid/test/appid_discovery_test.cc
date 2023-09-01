@@ -54,6 +54,7 @@ const char* AppIdApi::get_application_name(AppId, OdpContext&) { return NULL; }
 THREAD_LOCAL PacketTracer* s_pkt_trace = nullptr;
 THREAD_LOCAL Stopwatch<SnortClock>* pt_timer = nullptr;
 void PacketTracer::daq_log(const char*, ...) { }
+void FatalError(const char* fmt, ...) { (void)fmt; exit(1); }
 
 // Stubs for packet
 Packet::Packet(bool) {}
@@ -261,7 +262,8 @@ static AppIdModule* s_app_module = nullptr;
 static AppIdInspector* s_ins = nullptr;
 static ServiceDiscovery* s_discovery_manager = nullptr;
 
-HostCacheIp host_cache(50);
+HostCacheIp default_host_cache(LRU_CACHE_INITIAL_SIZE);
+HostCacheSegmentedIp host_cache(1,50);
 AppId HostTracker::get_appid(Port, IpProtocol, bool, bool)
 {
     return APP_ID_NONE;
@@ -545,5 +547,6 @@ TEST(appid_discovery_tests, change_bits_to_string)
 int main(int argc, char** argv)
 {
     int rc = CommandLineTestRunner::RunAllTests(argc, argv);
+    host_cache.term();
     return rc;
 }

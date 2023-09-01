@@ -40,6 +40,8 @@
 #include "framework/mpse.h"
 #include "helpers/process.h"
 #include "host_tracker/host_cache.h"
+#include "host_tracker/host_cache_segmented.h"
+#include "host_tracker/host_tracker_module.h"
 #include "ips_options/ips_options.h"
 #include "log/log.h"
 #include "log/messages.h"
@@ -352,12 +354,14 @@ void Snort::term()
     HighAvailabilityManager::term();
     SideChannelManager::term();
     ModuleManager::term();
+    host_cache.term();
     PluginManager::release_plugins();
     ScriptManager::release_scripts();
     memory::MemoryCap::term();
     detection_filter_term();
 
     term_signals();
+    
 }
 
 void Snort::clean_exit(int)
@@ -404,6 +408,8 @@ void Snort::setup(int argc, char* argv[])
     memory::MemoryCap::start(*sc->memory, Stream::prune_flows);
     memory::MemoryCap::print(SnortConfig::log_verbose(), true);
 
+    host_cache.init();
+    ((HostTrackerModule*)ModuleManager::get_module(HOST_TRACKER_NAME))->init_data();
     host_cache.print_config();
 
     TimeStart();

@@ -26,11 +26,12 @@
 #define CACHE_ALLOCATOR_CC
 
 #include "host_cache.h"
+#include "host_cache_segmented.h"
 
 template <class T>
 HostCacheAllocIp<T>::HostCacheAllocIp()
 {
-    lru = &host_cache;
+    lru = &default_host_cache;
 }
 
 #endif

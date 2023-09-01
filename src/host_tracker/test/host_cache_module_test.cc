@@ -29,6 +29,7 @@
 #include "control/control.h"
 #include "host_tracker/host_cache_module.h"
 #include "host_tracker/host_cache.h"
+#include "host_tracker/host_cache_segmented.h"
 #include "main/snort_config.h"
 #include "managers/module_manager.h"
 
@@ -38,6 +39,9 @@
 #include "sfip/sf_ip.h"
 
 using namespace snort;
+
+HostCacheIp default_host_cache(LRU_CACHE_INITIAL_SIZE);
+HostCacheSegmentedIp host_cache(4,LRU_CACHE_INITIAL_SIZE);
 
 // All tests here use the same module since host_cache is global. Creating a local module for each
 // test will cause host_cache PegCount testing to be dependent on the order of running these tests.
@@ -78,6 +82,7 @@ void LogMessage(const char* format,...)
 time_t packet_time() { return 0; }
 bool Snort::is_reloading() { return false; }
 void SnortConfig::register_reload_handler(ReloadResourceTuner* rrt) { delete rrt; }
+void FatalError(const char* fmt, ...) { (void)fmt; exit(1); }
 } // end of namespace snort
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
@@ -86,7 +91,7 @@ void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) 
 template <class T>
 HostCacheAllocIp<T>::HostCacheAllocIp()
 {
-    lru = &host_cache;
+    lru = host_cache.seg_list[0];
 }
 
 TEST_GROUP(host_cache_module)
@@ -95,15 +100,51 @@ TEST_GROUP(host_cache_module)
 
 static void try_reload_prune(bool is_not_locked)
 {
+    auto segs = host_cache.seg_list.size();
+    auto prune_size = host_cache.seg_list[0]->mem_chunk * 1.5 * segs;
     if ( is_not_locked )
     {
-        CHECK(host_cache.reload_prune(host_cache.mem_chunk * 1.5, 2) == true);
+        CHECK(host_cache.reload_prune(prune_size, 2) == true);
+        for ( auto& seg : host_cache.seg_list )
+        {
+            CHECK(seg->get_max_size() == prune_size/segs);
+        }
     }
     else
     {
-        CHECK(host_cache.reload_prune(host_cache.mem_chunk * 1.5, 2) == false);
+        CHECK(host_cache.reload_prune(prune_size, 2) == false);
     }
 }
+
+TEST(host_cache_module, cache_segments)
+{
+    SfIp ip0, ip1, ip2, ip3;
+    ip0.set("1.2.3.2");
+    ip1.set("11.22.2.0");
+    ip2.set("192.168.1.1");
+    ip3.set("10.20.33.10");
+
+    uint8_t segment0 = host_cache.get_segment_idx(ip0);
+    uint8_t segment1 = host_cache.get_segment_idx(ip1);
+    uint8_t segment2 = host_cache.get_segment_idx(ip2);
+    uint8_t segment3 = host_cache.get_segment_idx(ip3);
+
+    CHECK(segment0 == 0);
+    CHECK(segment1 == 1);
+    CHECK(segment2 == 2);
+    CHECK(segment3 == 3);
+
+    auto h0 = host_cache.find_else_create(ip0, nullptr);
+    auto h1 = host_cache.find_else_create(ip1, nullptr);
+    auto h2 = host_cache.find_else_create(ip2, nullptr);
+    auto h3 = host_cache.find_else_create(ip3, nullptr);
+
+    CHECK(segment0 == h0->get_cache_idx());
+    CHECK(segment1 == h1->get_cache_idx());
+    CHECK(segment2 == h2->get_cache_idx());
+    CHECK(segment3 == h3->get_cache_idx());
+}
+
 
 // Test stats when HostCacheModule sets/changes host_cache size.
 // This method is a friend of LruCacheSharedMemcap class.
@@ -130,11 +171,12 @@ TEST(host_cache_module, misc)
     // cache, because sum_stats resets the pegs.
     module.sum_stats(true);
 
-    // add 3 entries
+    // add 3 entries to segment 3 
     SfIp ip1, ip2, ip3;
     ip1.set("1.1.1.1");
     ip2.set("2.2.2.2");
     ip3.set("3.3.3.3");
+    
     host_cache.find_else_create(ip1, nullptr);
     host_cache.find_else_create(ip2, nullptr);
     host_cache.find_else_create(ip3, nullptr);
@@ -143,23 +185,28 @@ TEST(host_cache_module, misc)
     CHECK(ht_stats[2] == 3*mc);  // bytes_in_use
     CHECK(ht_stats[3] == 3);     // items_in_use
 
-    // no pruning needed for resizing higher than current size
-    CHECK(host_cache.reload_resize(host_cache.mem_chunk * 10) == false);
+    // no pruning needed for resizing higher than current size in segment 3
+    CHECK(host_cache.seg_list[2]->reload_resize(host_cache.get_mem_chunk() * 10 ) == false);
     module.sum_stats(true);
     CHECK(ht_stats[2] == 3*mc);  // bytes_in_use unchanged
     CHECK(ht_stats[3] == 3);     // items_in_use unchanged
 
-    // pruning needed for resizing lower than current size
-    CHECK(host_cache.reload_resize(host_cache.mem_chunk * 1.5) == true);
+    // pruning needed for resizing lower than current size in segment 3
+    CHECK(host_cache.seg_list[2]->reload_resize(host_cache.get_mem_chunk() * 1.5) == true);
     module.sum_stats(true);
     CHECK(ht_stats[2] == 3*mc);  // bytes_in_use still unchanged
     CHECK(ht_stats[3] == 3);     // items_in_use still unchanged
 
     // pruning in thread is not done when reload_mutex is already locked
-    host_cache.reload_mutex.lock();
+    for(auto cache : host_cache.seg_list)
+        cache->reload_mutex.lock();
+        
     std::thread test_negative(try_reload_prune, false);
     test_negative.join();
-    host_cache.reload_mutex.unlock();
+
+    for(auto cache : host_cache.seg_list)
+        cache->reload_mutex.unlock();
+
     module.sum_stats(true);
     CHECK(ht_stats[2] == 3*mc);   // no pruning yet
     CHECK(ht_stats[3] == 3);      // no pruning_yet
@@ -193,6 +240,32 @@ TEST(host_cache_module, misc)
     CHECK(ht_stats[0] == 4);
 }
 
+
+// Test host_cache.get_segment_stats()
+TEST(host_cache_module, get_segment_stats)
+{
+    host_cache.init();
+    std::string str;
+    str = module.get_host_cache_segment_stats(0);
+
+    bool contain = str.find("Segment 0:") != std::string::npos;
+    CHECK_TRUE(contain);
+
+    str = module.get_host_cache_segment_stats(1);
+    contain = str.find("Segment 1:") != std::string::npos;
+    CHECK_TRUE(contain);
+
+    str = module.get_host_cache_segment_stats(2);
+    contain = str.find("Segment 2:") != std::string::npos;
+    CHECK_TRUE(contain);
+
+    str = module.get_host_cache_segment_stats(-1);
+    contain = str.find("total cache segments: 4") != std::string::npos;
+    CHECK_TRUE(contain);
+    
+
+}
+
 TEST(host_cache_module, log_host_cache_messages)
 {
     module.log_host_cache(nullptr, true);
@@ -211,8 +284,8 @@ TEST(host_cache_module, log_host_cache_messages)
 
 int main(int argc, char** argv)
 {
-    // FIXIT-L There is currently no external way to fully release the memory from the global host
-    //   cache unordered_map in host_cache.cc
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-    return CommandLineTestRunner::RunAllTests(argc, argv);
+    int ret = CommandLineTestRunner::RunAllTests(argc, argv);
+    host_cache.term();
+    return ret;
 }

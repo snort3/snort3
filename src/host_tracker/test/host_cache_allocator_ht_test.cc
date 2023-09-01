@@ -28,13 +28,13 @@
 #include "network_inspectors/rna/rna_flow.h"
 
 #include <cstring>
-
 #include "main/snort_config.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
 using namespace snort;
+using namespace std;
 
 namespace snort
 {
@@ -42,13 +42,74 @@ namespace snort
 char* snort_strdup(const char* str)
 { return strdup(str); }
 time_t packet_time() { return 0; }
+void FatalError(const char* fmt, ...) { (void)fmt; exit(1);}
+}
+HostCacheIp default_host_cache(LRU_CACHE_INITIAL_SIZE);
+HostCacheSegmentedIp host_cache(1,100);
+
+
+template <class T>
+class Allocator : public CacheAlloc<T>
+{
+public:
+    template <class U>
+    struct rebind
+    {
+        typedef Allocator<U> other;
+    };
+
+    using CacheAlloc<T>::lru;
+    using Base = CacheAlloc<T>;
+
+    void set_cache(CacheInterface* hci) { Base::set_lru(hci); }
+    CacheInterface* get_cache_ptr() { return Base::get_lru(); }
+
+    template <class U>
+    Allocator(const Allocator<U>& other) 
+    {
+        lru = other.lru;
+    }
+    template <class U>
+    Allocator(const Allocator<U>&& other) 
+    {
+        lru = other.lru;
+    }
+    Allocator();
+};
+
+
+class Item
+{
+public:
+    typedef int ValueType;
+    vector<ValueType, Allocator<ValueType>> data;
+};
+
+typedef LruCacheSharedMemcap<string, Item, hash<string>> CacheType;
+CacheType cache(100);
+CacheType cache2(100);
+
+template <class T>
+Allocator<T>::Allocator()
+{
+    lru = &cache;
 }
 
-HostCacheIp host_cache(100);
 
 TEST_GROUP(host_cache_allocator_ht)
 {
+
 };
+
+TEST(host_cache_allocator_ht, allocate_update)
+{   
+    //declare a list with allocator cache
+    std::list<string, Allocator<string>> test_list;
+    CHECK(test_list.get_allocator().get_lru() == &cache);
+    //update cache interface of test_list to cache_2
+    update_allocator(test_list, &cache2);
+    CHECK(test_list.get_allocator().get_lru() == &cache2);
+}
 
 // Test allocation / deallocation, pruning and remove.
 TEST(host_cache_allocator_ht, allocate)
@@ -61,12 +122,7 @@ TEST(host_cache_allocator_ht, allocate)
 
     // room for n host trackers in the cache and 2^floor(log2(3))+2^ceil(log2(3))-1 host
     // applications in ht
-    // FIXIT-L this makes a questionable assumption about the STL vector implementation
-    // that it will double the allocation each time it needs to increase its size, so
-    // going from 2 to 3 will allocate 4 and then release 2, meaning in order to exactly
-    // induce pruning, the max size should be just one <ht_item_sz> short of holding 6
-    const size_t max_size = n * hc_item_sz + 5 * ht_item_sz;
-
+    const size_t max_size = n * hc_item_sz + m * ht_item_sz;
     host_cache.set_max_size(max_size);
 
     // insert n empty host trackers:
@@ -146,8 +202,8 @@ TEST(host_cache_allocator_ht, allocate)
 
 int main(int argc, char** argv)
 {
-    // FIXIT-L There is currently no external way to fully release the memory from the global host
-    //   cache unordered_map in host_cache.cc
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-    return CommandLineTestRunner::RunAllTests(argc, argv);
+    int ret = CommandLineTestRunner::RunAllTests(argc, argv);
+    host_cache.term();
+    return ret;
 }

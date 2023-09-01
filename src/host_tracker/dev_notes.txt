@@ -131,3 +131,53 @@ host_tracker.h and host_tracker.cc.
 Illustrative examples are test/cache_allocator_test.cc (standalone
 host cache / allocator example) and test/host_cache_allocator_ht_test.cc
 (host_cache / allocator with host tracker example).
+
+13/08/2023
+
+To address the issue of contention due to mutex locks when Snort is configured
+to run a large number (over 100) of threads with a single host_cache, 
+we introduced a new layer: "host_cache_segmented". This layer operates on 
+multiple cache segments, thus significantly reducing the locking contention 
+that was previously observed.
+
+The segmented host cache is not a replacement but rather an enhancement layer 
+above the existing host_cache. With this architecture, there can be more than 
+one host_cache, now referred to as a "segment". Each segment functions 
+as an LRU cache, just like the previous singular host_cache. Importantly, 
+there has been no change in the LRU cache design or its logic.
+
+Whenever a new key-data pair is added to a segment, its allocator needs updating. 
+This ensures that the peg counts and visibility metrics are accurate for 
+that specific segment. The find_else_create method of the segmented cache 
+takes care of this, ensuring that each key-data pair is correctly 
+associated with its segment.
+
+Each of these cache segments can operate independently, allowing for more 
+efficient parallel processing. This not only reduces the time threads spend 
+waiting for locks but also better utilizes multi-core systems by allowing 
+simultaneous read and write operations in different cache segments.
+
+The number of segments and the memcap are both configurable, providing flexibility 
+for tuning based on the specific requirements of the deployment environment 
+and the workload. Furthermore, this segmented approach scales well with the 
+increase in the number of threads, making it a robust solution for high-performance, 
+multi-threaded environments.
+
+In summary, the introduction of the "host_cache_segmented" layer represents 
+a significant step forward in the performance and scalability of Snort in 
+multi-threaded environments. This enhancement not only provides immediate benefits 
+in terms of improved throughput but also paves the way for further performance 
+optimizations in the future.
+                         +-----------------+
+                         |   Snort Threads |
+                         +-----------------+
+                                 |
+                                 v
+                    +-------------------------------+
+                    | Host Cache Segmented Layer    |
+                    +-------------------------------+
+                                 |
+                                 v
+            +-------------------------------------------------+
+            | Cache Segment 1 | Cache Segment 2 |   ...       |
+            +-------------------------------------------------+
