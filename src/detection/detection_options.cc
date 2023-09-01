@@ -515,7 +515,7 @@ int detection_option_node_evaluate(
             {
                 rval = node->evaluate(node->option_data, cursor, eval_data.p);
                 assert((flowbits_setter(node->option_data) and rval == (int)IpsOption::MATCH)
-                    or !flowbits_setter(node->option_data));
+                    or !flowbits_setter(node->option_data) or !eval_data.p->flow);
             }
             break;
 
