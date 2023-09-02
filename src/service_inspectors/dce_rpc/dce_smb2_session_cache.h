@@ -88,7 +88,7 @@ public:
     void reload_prune(size_t new_size)
     {
         Purgatory data;
-        std::lock_guard<std::mutex> cache_lock(cache_mutex);
+        spinlock_lock(&cache_sl);
         max_size = new_size;
         while (current_size > max_size && !list.empty())
         {
@@ -110,11 +110,12 @@ public:
                 list.splice(list.begin(), list, list_iter);
             }
         }
+        spinlock_unlock(&cache_sl);
     }
 
 private:
     using LruBase = LruCacheShared<Key, Value, Hash, Eq, Purgatory>;
-    using LruBase::cache_mutex;
+    using LruBase::cache_sl;
     using LruBase::current_size;
     using LruBase::list;
     using LruBase::map;

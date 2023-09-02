@@ -48,61 +48,74 @@ HostTracker::HostTracker() : hops(-1)
     last_seen = nat_count_start = (uint32_t) packet_time();
     last_event = -1;
     visibility = host_cache.get_valid_id();
+    spinlock_init(&host_tracker_sl);
+    spinlock_init(&flow_sl);
 }
 
 void HostTracker::update_last_seen()
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     last_seen = (uint32_t) packet_time();
+    spinlock_unlock(&host_tracker_sl);
 }
 
 void HostTracker::update_last_event(uint32_t time)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     last_event = time ? time : last_seen;
+    spinlock_unlock(&host_tracker_sl);
 }
 
 bool HostTracker::add_network_proto(const uint16_t type)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
-
+    spinlock_lock(&host_tracker_sl);
     for ( auto& proto : network_protos )
     {
         if ( proto.first == type )
         {
             if ( proto.second )
+            {
+                spinlock_unlock(&host_tracker_sl);
                 return false;
+            }
             else
             {
                 proto.second = true;
+                spinlock_unlock(&host_tracker_sl);
                 return true;
             }
         }
     }
 
     network_protos.emplace_back(type, true);
+    spinlock_unlock(&host_tracker_sl);
     return true;
 }
 
 bool HostTracker::add_xport_proto(const uint8_t type)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
 
     for ( auto& proto : xport_protos )
     {
         if ( proto.first == type )
         {
             if ( proto.second )
+            {
+                spinlock_unlock(&host_tracker_sl);
                 return false;
+            }
             else
             {
                 proto.second = true;
+                spinlock_unlock(&host_tracker_sl);
                 return true;
             }
         }
     }
 
     xport_protos.emplace_back(type, true);
+    spinlock_unlock(&host_tracker_sl);
     return true;
 }
 
@@ -112,7 +125,7 @@ bool HostTracker::add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary)
         return false;
 
     HostMac_t* invisible_swap_candidate = nullptr;
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
 
     for ( auto& hm_t : macs )
     {
@@ -120,12 +133,14 @@ bool HostTracker::add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary)
         {
             if ( hm_t.visibility )
             {
+                spinlock_unlock(&host_tracker_sl);
                 return false;
             }
 
             hm_t.visibility = true;
             hm_t.last_seen = last_seen;
             num_visible_macs++;
+            spinlock_unlock(&host_tracker_sl);
             return true;
         }
 
@@ -144,12 +159,14 @@ bool HostTracker::add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary)
         invisible_swap_candidate->visibility = true;
         invisible_swap_candidate->last_seen = last_seen;
         num_visible_macs++;
+        spinlock_unlock(&host_tracker_sl);
         return true;
     }
 
     macs.emplace_back(ttl, mac, primary, last_seen);
     num_visible_macs++;
 
+    spinlock_unlock(&host_tracker_sl);
     return true;
 }
 
@@ -199,24 +216,29 @@ bool HostTracker::get_hostmac(const uint8_t* mac, HostMac& hm)
     if ( !mac or !memcmp(mac, zero_mac, MAC_SIZE) )
         return false;
 
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
 
     for ( auto& ahm : macs )
         if ( !memcmp(mac, ahm.mac, MAC_SIZE) )
         {
             if ( !ahm.visibility )
+            {
+                spinlock_unlock(&host_tracker_sl);
                 return false;
+            }
 
             hm = static_cast<HostMac>(ahm);
+            spinlock_unlock(&host_tracker_sl);
             return true;
         }
 
+    spinlock_unlock(&host_tracker_sl);
     return false;
 }
 
 const uint8_t* HostTracker::get_last_seen_mac(uint8_t* mac_addr)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     const HostMac_t* max_hm = nullptr;
 
     for ( const auto& hm : macs )
@@ -227,9 +249,11 @@ const uint8_t* HostTracker::get_last_seen_mac(uint8_t* mac_addr)
     if ( max_hm )
     {
         memcpy(mac_addr, max_hm->mac, MAC_SIZE);
+        spinlock_unlock(&host_tracker_sl);
         return mac_addr;
     }
 
+    spinlock_unlock(&host_tracker_sl);
     return zero_mac;
 }
 
@@ -238,7 +262,7 @@ bool HostTracker::update_mac_ttl(const uint8_t* mac, uint8_t new_ttl)
     if ( !mac or !memcmp(mac, zero_mac, MAC_SIZE) )
         return false;
 
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
 
     for ( auto& hm : macs )
         if ( !memcmp(mac, hm.mac, MAC_SIZE) )
@@ -246,12 +270,14 @@ bool HostTracker::update_mac_ttl(const uint8_t* mac, uint8_t new_ttl)
             if ( hm.ttl < new_ttl and hm.visibility )
             {
                 hm.ttl = new_ttl;
+                spinlock_unlock(&host_tracker_sl);
                 return true;
             }
-
+            spinlock_unlock(&host_tracker_sl);
             return false;
         }
 
+    spinlock_unlock(&host_tracker_sl);
     return false;
 }
 
@@ -262,85 +288,103 @@ bool HostTracker::make_primary(const uint8_t* mac)
 
     HostMac_t* hm = nullptr;
 
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
 
     for ( auto& hm_iter : macs )
         if ( !memcmp(mac, hm_iter.mac, MAC_SIZE) )
         {
             if ( !hm_iter.visibility )
+            {
+                spinlock_unlock(&host_tracker_sl);
                 return false;
+            }
 
             hm = &hm_iter;
             break;
         }
 
     if ( !hm )
+    {
+        spinlock_unlock(&host_tracker_sl);
         return false;
+    }
 
     hm->last_seen = last_seen;
     if ( !hm->primary )
     {
         hm->primary = true;
+        spinlock_unlock(&host_tracker_sl);
         return true;
     }
 
+    spinlock_unlock(&host_tracker_sl);
     return false;
 }
 
 bool HostTracker::reset_hops_if_primary()
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
 
     for ( auto& hm : macs )
         if ( hm.primary and hm.visibility )
         {
             if ( !hops )
+            {
+                spinlock_unlock(&host_tracker_sl);
                 return false;
+	    }
             hops = 0;
+            spinlock_unlock(&host_tracker_sl);
             return true;
         }
 
+    spinlock_unlock(&host_tracker_sl);
     return false;
 }
 
 void HostTracker::update_vlan(uint16_t vth_pri_cfi_vlan, uint16_t vth_proto)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     vlan_tag_present = true;
     vlan_tag.vth_pri_cfi_vlan = vth_pri_cfi_vlan;
     vlan_tag.vth_proto = vth_proto;
+    spinlock_unlock(&host_tracker_sl);
 }
 
 bool HostTracker::has_same_vlan(uint16_t pvlan)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
-    return vlan_tag_present and ( vlan_tag.vth_pri_cfi_vlan == pvlan );
+    spinlock_lock(&host_tracker_sl);
+    auto result = vlan_tag_present and ( vlan_tag.vth_pri_cfi_vlan == pvlan );
+    spinlock_unlock(&host_tracker_sl);
+    return result;
 }
 
 void HostTracker::get_vlan_details(uint8_t& cfi, uint8_t& priority, uint16_t& vid)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     cfi = vlan_tag.cfi();
     priority = vlan_tag.priority();
     vid = vlan_tag.vid();
+    spinlock_unlock(&host_tracker_sl);
 }
 
 void HostTracker::copy_data(uint8_t& p_hops, uint32_t& p_last_seen, list<HostMac>*& p_macs)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
 
     p_hops = hops;
     p_last_seen = last_seen;
     if ( !macs.empty() )
         p_macs = new list<HostMac>(macs.begin(), macs.end());
+    spinlock_unlock(&host_tracker_sl);
 }
 
 bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inferred_appid,
     bool* added)
 {
     host_tracker_stats.service_adds++;
-    lock_guard<mutex> lck(host_tracker_lock);
 
+    spinlock_lock(&host_tracker_sl);
     for ( auto& s : services )
     {
         if ( s.port == port and s.proto == proto )
@@ -361,6 +405,7 @@ bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inf
                 num_visible_services++;
             }
 
+            spinlock_unlock(&host_tracker_sl);
             return true;
         }
     }
@@ -370,12 +415,13 @@ bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inf
     if ( added )
         *added = true;
 
+    spinlock_unlock(&host_tracker_sl);
     return true;
 }
 
 void HostTracker::clear_service(HostApplication& ha)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     ha.port = 0;
     ha.proto = (IpProtocol) 0;
     ha.appid = (AppId) 0;
@@ -385,12 +431,13 @@ void HostTracker::clear_service(HostApplication& ha)
     ha.payloads.clear();
     ha.info.clear();
     ha.banner_updated = false;
+    spinlock_unlock(&host_tracker_sl);
 }
 
 bool HostTracker::add_client_payload(HostClient& hc, AppId payload, size_t max_payloads)
 {
     Payload_t* invisible_swap_candidate = nullptr;
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
 
     for ( auto& client : clients )
         if ( client.id == hc.id and client.service == hc.service )
@@ -400,12 +447,16 @@ bool HostTracker::add_client_payload(HostClient& hc, AppId payload, size_t max_p
                 if ( pld.first == payload )
                 {
                     if ( pld.second )
+                    {
+                        spinlock_unlock(&host_tracker_sl);
                         return false;
+                    }
 
                     pld.second = true;
                     client.num_visible_payloads++;
                     hc.payloads = client.payloads;
                     strncpy(hc.version, client.version, INFO_SIZE);
+                    spinlock_unlock(&host_tracker_sl);
                     return true;
                 }
                 if ( !invisible_swap_candidate and !pld.second )
@@ -419,26 +470,32 @@ bool HostTracker::add_client_payload(HostClient& hc, AppId payload, size_t max_p
                 client.num_visible_payloads++;
                 hc.payloads = client.payloads;
                 strncpy(hc.version, client.version, INFO_SIZE);
+                spinlock_unlock(&host_tracker_sl);
                 return true;
             }
 
             if ( client.payloads.size() >= max_payloads )
+            {
+                spinlock_unlock(&host_tracker_sl);
                 return false;
+            }
 
             client.payloads.emplace_back(payload, true);
             hc.payloads = client.payloads;
             strncpy(hc.version, client.version, INFO_SIZE);
             client.num_visible_payloads++;
+            spinlock_unlock(&host_tracker_sl);
             return true;
         }
 
+    spinlock_unlock(&host_tracker_sl);
     return false;
 }
 
 bool HostTracker::add_service(const HostApplication& app, bool* added)
 {
     host_tracker_stats.service_adds++;
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
 
     for ( auto& s : services )
     {
@@ -460,6 +517,7 @@ bool HostTracker::add_service(const HostApplication& app, bool* added)
                 num_visible_services++;
             }
 
+            spinlock_unlock(&host_tracker_sl);
             return true;
         }
     }
@@ -469,6 +527,7 @@ bool HostTracker::add_service(const HostApplication& app, bool* added)
     if ( added )
         *added = true;
 
+    spinlock_unlock(&host_tracker_sl);
     return true;
 }
 
@@ -476,23 +535,30 @@ AppId HostTracker::get_appid(Port port, IpProtocol proto, bool inferred_only,
     bool allow_port_wildcard)
 {
     host_tracker_stats.service_finds++;
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
 
     for ( const auto& s : services )
     {
         bool matched = (s.port == port and s.proto == proto and
             (!inferred_only or s.inferred_appid == inferred_only));
         if ( matched or ( allow_port_wildcard and s.inferred_appid ) )
-            return s.appid;
+        {
+            AppId t = s.appid;
+            spinlock_unlock(&host_tracker_sl);
+            return t;
+        }
     }
 
+    spinlock_unlock(&host_tracker_sl);
     return APP_ID_NONE;
 }
 
 size_t HostTracker::get_service_count()
 {
-    lock_guard<mutex> lck(host_tracker_lock);
-    return num_visible_services;
+    spinlock_lock(&host_tracker_sl);
+    auto t = num_visible_services;
+    spinlock_unlock(&host_tracker_sl);
+    return t;
 }
 
 HostApplication* HostTracker::find_service_no_lock(Port port, IpProtocol proto, AppId appid)
@@ -515,7 +581,7 @@ bool HostTracker::add_payload(HostApplication& local_ha, Port port, IpProtocol p
     AppId service, size_t max_payloads)
 {
     // This lock is responsible for find_service and add_payload
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
 
     auto ha = find_service_no_lock(port, proto, service);
 
@@ -524,9 +590,11 @@ bool HostTracker::add_payload(HostApplication& local_ha, Port port, IpProtocol p
         bool success = add_payload_no_lock(payload, ha, max_payloads);
         local_ha = *ha;
         local_ha.payloads = ha->payloads;
+        spinlock_unlock(&host_tracker_sl);
         return success;
     }
 
+    spinlock_unlock(&host_tracker_sl);
     return false;
 }
 
@@ -598,37 +666,43 @@ HostApplication* HostTracker::find_and_add_service_no_lock(Port port, IpProtocol
 HostApplication HostTracker::add_service(Port port, IpProtocol proto, uint32_t lseen,
     bool& is_new, AppId appid)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     HostApplication* ha = find_and_add_service_no_lock(port, proto, lseen, is_new, appid);
-    return *ha;
+    auto t = *ha;
+    spinlock_unlock(&host_tracker_sl);
+    return t;
 }
 
 void HostTracker::update_service(const HostApplication& ha)
 {
     host_tracker_stats.service_finds++;
-    lock_guard<mutex> lck(host_tracker_lock);
 
+    spinlock_lock(&host_tracker_sl);
     for ( auto& s : services )
     {
         if ( s.port == ha.port and s.proto == ha.proto )
         {
             s.hits = ha.hits;
             s.last_seen = ha.last_seen;
+            spinlock_unlock(&host_tracker_sl);
             return;
         }
     }
+    spinlock_unlock(&host_tracker_sl);
 }
 
 void HostTracker::update_service_port(HostApplication& app, Port port)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     app.port = port;
+    spinlock_unlock(&host_tracker_sl);
 }
 
 void HostTracker::update_service_proto(HostApplication& app, IpProtocol proto)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     app.proto = proto;
+    spinlock_unlock(&host_tracker_sl);
 }
 
 void HostTracker::update_ha_no_lock(HostApplication& dst, HostApplication& src)
@@ -649,17 +723,23 @@ bool HostTracker::update_service_info(HostApplication& ha, const char* vendor,
     const char* version, uint16_t max_info)
 {
     host_tracker_stats.service_finds++;
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
 
     for ( auto& s : services )
     {
         if ( s.port == ha.port and s.proto == ha.proto )
         {
             if ( s.visibility == false )
+            {
+                spinlock_unlock(&host_tracker_sl);
                 return false;
+            }
 
             if ( !version and !vendor )
+            {
+                spinlock_unlock(&host_tracker_sl);
                 return true;
+            }
 
             HostApplicationInfo* available = nullptr;
             for ( auto& i : s.info )
@@ -671,8 +751,10 @@ bool HostTracker::update_service_info(HostApplication& ha, const char* vendor,
                     {
                         i.visibility = true;  // rediscover it
                         update_ha_no_lock(ha, s);
+                        spinlock_unlock(&host_tracker_sl);
                         return true;
                     }
+                    spinlock_unlock(&host_tracker_sl);
                     return false;
                 }
                 else if ( !available and !i.visibility )
@@ -698,30 +780,40 @@ bool HostTracker::update_service_info(HostApplication& ha, const char* vendor,
             else if ( s.info.size() < max_info )
                 s.info.emplace_back(version, vendor);
             else
+            {
+                spinlock_unlock(&host_tracker_sl);
                 return false;
+            }
 
             update_ha_no_lock(ha, s);
+            spinlock_unlock(&host_tracker_sl);
             return true;
         }
     }
+    spinlock_unlock(&host_tracker_sl);
     return false;
 }
 
 bool HostTracker::update_service_banner(Port port, IpProtocol proto)
 {
     host_tracker_stats.service_finds++;
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     for ( auto& s : services )
     {
         if ( s.port == port and s.proto == proto )
         {
             if ( !s.visibility or s.banner_updated )
+            {
+                spinlock_unlock(&host_tracker_sl);
                 return false;
+            }
 
             s.banner_updated = true;
+            spinlock_unlock(&host_tracker_sl);
             return true;
         }
     }
+    spinlock_unlock(&host_tracker_sl);
     return false;
 }
 
@@ -730,41 +822,54 @@ bool HostTracker::update_service_user(Port port, IpProtocol proto, const char* u
 {
     host_tracker_stats.service_finds++;
     bool is_new = false;
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
 
     // Appid notifies user events before service events, so use find or add service function.
     HostApplication* ha = find_and_add_service_no_lock(port, proto, lseen, is_new, 0,
         max_services);
     if ( !ha or ha->visibility == false )
+    {
+        spinlock_unlock(&host_tracker_sl);
         return false;
+    }
 
     if ( user and strncmp(user, ha->user, INFO_SIZE-1) )
     {
         strncpy(ha->user, user, INFO_SIZE);
         ha->user[INFO_SIZE-1] = '\0';
         ha->user_login = success ? USER_LOGIN_SUCCESS : USER_LOGIN_FAILURE;
+        spinlock_unlock(&host_tracker_sl);
         return true;
     }
 
     if ( success )
     {
         if ( ha->user_login & USER_LOGIN_SUCCESS )
+        {
+            spinlock_unlock(&host_tracker_sl);
             return false;
+        }
         ha->user_login |= USER_LOGIN_SUCCESS;
+        spinlock_unlock(&host_tracker_sl);
         return true;
     }
     else
     {
         if ( ha->user_login & USER_LOGIN_FAILURE )
+        {
+            spinlock_unlock(&host_tracker_sl);
             return false;
+        }
         ha->user_login |= USER_LOGIN_FAILURE;
+        spinlock_unlock(&host_tracker_sl);
         return true;
     }
+    spinlock_unlock(&host_tracker_sl);
 }
 
 void HostTracker::remove_inferred_services()
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     for ( auto s = services.begin(); s != services.end(); )
     {
         if ( s->inferred_appid )
@@ -772,45 +877,55 @@ void HostTracker::remove_inferred_services()
         else
             s++;
     }
+    spinlock_unlock(&host_tracker_sl);
 }
 
 bool HostTracker::add_tcp_fingerprint(uint32_t fpid)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     auto result = tcp_fpids.emplace(fpid);
-    return result.second;
+    bool t = result.second;
+    spinlock_unlock(&host_tracker_sl);
+    return t;
 }
 
 bool HostTracker::add_udp_fingerprint(uint32_t fpid)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     auto result = udp_fpids.emplace(fpid);
-    return result.second;
+    auto t = result.second;
+    spinlock_unlock(&host_tracker_sl);
+    return t;
 }
 
 bool HostTracker::set_netbios_name(const char* nb_name)
 {
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     if ( nb_name && netbios_name != nb_name )
     {
         netbios_name = nb_name;
+        spinlock_unlock(&host_tracker_sl);
         return true;
     }
-    else
+    else {
+        spinlock_unlock(&host_tracker_sl);
         return false;
+    }
 }
 
 bool HostTracker::add_smb_fingerprint(uint32_t fpid)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     auto result = smb_fpids.emplace(fpid);
+    spinlock_unlock(&host_tracker_sl);
     return result.second;
 }
 
 bool HostTracker::add_cpe_os_hash(uint32_t hash)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     auto result = cpe_fpids.emplace(hash);
+    spinlock_unlock(&host_tracker_sl);
     return result.second;
 }
 
@@ -819,7 +934,7 @@ bool HostTracker::set_visibility(bool v)
     // get_valid_id may use its own lock, so get this outside our lock
     size_t container_id = host_cache.get_valid_id();
 
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     size_t old_visibility = visibility;
 
     visibility = v ? container_id : HostCacheIp::invalid_id;
@@ -863,41 +978,48 @@ bool HostTracker::set_visibility(bool v)
         host_type = HostType::HOST_TYPE_HOST;
     }
 
+    spinlock_unlock(&host_tracker_sl);
     return old_visibility == visibility;
 }
 
 bool HostTracker::is_visible() const
 {
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
-    return visibility == host_cache.get_valid_id();
+    spinlock_lock(&host_tracker_sl);
+    bool t = (visibility == host_cache.get_valid_id());
+    spinlock_unlock(&host_tracker_sl);
+    return t;
 }
 
 
 bool HostTracker::set_network_proto_visibility(uint16_t proto, bool v)
 {
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     for ( auto& pp : network_protos )
     {
         if ( pp.first == proto )
         {
             pp.second = v;
+            spinlock_unlock(&host_tracker_sl);
             return true;
         }
     }
+    spinlock_unlock(&host_tracker_sl);
     return false;
 }
 
 bool HostTracker::set_xproto_visibility(uint8_t proto, bool v)
 {
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     for ( auto& pp : xport_protos )
     {
         if ( pp.first == proto )
         {
             pp.second = v;
+            spinlock_unlock(&host_tracker_sl);
             return true;
         }
     }
+    spinlock_unlock(&host_tracker_sl);
     return false;
 }
 
@@ -918,7 +1040,7 @@ void HostTracker::set_payload_visibility_no_lock(PayloadVector& pv, bool v, size
 
 bool HostTracker::set_service_visibility(Port port, IpProtocol proto, bool v)
 {
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     for ( auto& s : services )
     {
         if ( s.port == port and s.proto == proto )
@@ -941,15 +1063,17 @@ bool HostTracker::set_service_visibility(Port port, IpProtocol proto, bool v)
             }
 
             set_payload_visibility_no_lock(s.payloads, v, s.num_visible_payloads);
+            spinlock_unlock(&host_tracker_sl);
             return true;
         }
     }
+    spinlock_unlock(&host_tracker_sl);
     return false;
 }
 
 bool HostTracker::set_client_visibility(const HostClient& hc, bool v)
 {
-    std::lock_guard<std::mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     bool deleted = false;
     for ( auto& c : clients )
     {
@@ -968,6 +1092,7 @@ bool HostTracker::set_client_visibility(const HostClient& hc, bool v)
             deleted = true;
         }
     }
+    spinlock_unlock(&host_tracker_sl);
     return deleted;
 }
 
@@ -984,7 +1109,7 @@ DeviceFingerprint::DeviceFingerprint(uint32_t id, uint32_t type, bool jb, const 
 bool HostTracker::add_ua_fingerprint(uint32_t fpid, uint32_t fp_type, bool jail_broken,
     const char* device, uint8_t max_devices)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
 
     int count = 0;
     for ( const auto& fp : ua_fps )
@@ -993,20 +1118,29 @@ bool HostTracker::add_ua_fingerprint(uint32_t fpid, uint32_t fp_type, bool jail_
             continue;
         ++count; // only count same fpid with different device information
         if ( count >= max_devices )
+        {
+            spinlock_unlock(&host_tracker_sl);
             return false;
+        }
         if ( jail_broken == fp.jail_broken and ( ( !device and fp.device[0] == '\0') or
             ( device and strncmp(fp.device, device, INFO_SIZE) == 0) ) )
+        {
+            spinlock_unlock(&host_tracker_sl);
             return false;
+        }
     }
 
     ua_fps.emplace_back(fpid, fp_type, jail_broken, device);
+    spinlock_unlock(&host_tracker_sl);
     return true;
 }
 
 size_t HostTracker::get_client_count()
 {
-    lock_guard<mutex> lck(host_tracker_lock);
-    return num_visible_clients;
+    spinlock_lock(&host_tracker_sl);
+    auto t = num_visible_clients;
+    spinlock_unlock(&host_tracker_sl);
+    return t;
 }
 
 HostClient::HostClient(AppId clientid, const char *ver, AppId ser) :
@@ -1022,7 +1156,7 @@ HostClient::HostClient(AppId clientid, const char *ver, AppId ser) :
 HostClient HostTracker::find_or_add_client(AppId id, const char* version, AppId service,
     bool& is_new)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
     HostClient* available = nullptr;
     for ( auto& c : clients )
     {
@@ -1037,7 +1171,9 @@ HostClient HostTracker::find_or_add_client(AppId id, const char* version, AppId 
                 num_visible_clients++;
             }
 
-            return c;
+            HostClient t = c;
+            spinlock_unlock(&host_tracker_sl);
+            return t;
         }
         else if ( !available and !c.visibility )
             available = &c;
@@ -1055,23 +1191,29 @@ HostClient HostTracker::find_or_add_client(AppId id, const char* version, AppId 
             strncpy(available->version, version, INFO_SIZE);
             available->version[INFO_SIZE-1] = '\0';
         }
-        return *available;
+        HostClient t = *available;
+        spinlock_unlock(&host_tracker_sl);
+        return t;
     }
 
     clients.emplace_back(id, version, service);
-    return clients.back();
+    auto s = clients.back();
+    spinlock_unlock(&host_tracker_sl);
+    return s;
 }
 
 void HostTracker::add_flow(RNAFlow* fd)
 {
-    lock_guard<mutex> lck(flows_lock);
+    spinlock_lock(&flow_sl);
     flows.insert(fd);
+    spinlock_unlock(&flow_sl);
 }
 
 void HostTracker::remove_flow(RNAFlow* fd)
 {
-    lock_guard<mutex> lck(flows_lock);
+    spinlock_lock(&flow_sl);
     flows.erase(fd);
+    spinlock_unlock(&flow_sl);
 }
 
 void HostTracker::remove_flows()
@@ -1100,12 +1242,13 @@ void HostTracker::remove_flows()
     // but on the HT::flows set. This means we may not lock the HT here,
     // to avoid the deadlock from the first case, but we SHOULD lock on
     // a different mutex to protect the HT::flows set.
-    lock_guard<mutex> lck(flows_lock);
+    spinlock_lock(&flow_sl);
     for ( auto& rna_flow : flows )
     {
         rna_flow->clear_ht(*this);
     }
     flows.clear();
+    spinlock_unlock(&flow_sl);
 }
 
 HostApplicationInfo::HostApplicationInfo(const char *ver, const char *ven)
@@ -1148,7 +1291,7 @@ static inline string& to_host_type_string(HostType type)
 
 void HostTracker::stringify(string& str)
 {
-    lock_guard<mutex> lck(host_tracker_lock);
+    spinlock_lock(&host_tracker_sl);
 
     str += "\n    type: " + to_host_type_string(host_type) + ", ttl: " + to_string(ip_ttl)
         + ", hops: " + to_string(hops) + ", time: " + to_time_string(last_seen);
@@ -1308,4 +1451,5 @@ void HostTracker::stringify(string& str)
 
     if ( !netbios_name.empty() )
         str += "\nnetbios name: " + netbios_name;
+    spinlock_unlock(&host_tracker_sl);
 }
