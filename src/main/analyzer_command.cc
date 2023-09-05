@@ -139,6 +139,10 @@ ACResetStats::ACResetStats(clear_counter_type_t requested_type_l) : requested_ty
 
 bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
 {
+    if (analyzer.get_state() != Analyzer::State::PAUSED and
+        analyzer.get_state() != Analyzer::State::RUNNING)
+        return false;
+
     if (ps)
     {
         ps->apply(analyzer);
