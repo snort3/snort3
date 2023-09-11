@@ -1,3 +1,12 @@
+2023-08-10: 3.1.70.0
+
+* appid: makes regex error more of a warning
+* detection: fix assert expression
+* helpers: improve hyperscan_search error message
+* host_cache: added segmented host cache
+* main: prevent reloading unprepared thread
+* search_engines: allow a snort config to be passed to find_all
+
 2023-08-27: 3.1.69.0
 
 * appid: mark ssl appid lookup successful if a service id is available

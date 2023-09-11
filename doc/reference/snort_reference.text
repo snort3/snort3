@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.69.0 2023-08-27 09:33:21 EDT TST
+Revision 3.1.70.0 2023-09-10 14:39:41 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -820,6 +820,8 @@ Configuration:
     shutdown; won’t dump by default
   * int host_cache.memcap = 8388608: maximum host cache size in bytes
     { 512:maxSZ }
+  * int host_cache.segments = 4: number of host cache segments. It
+    must be power of 2. { 1:32 }
 
 Commands:
 
@@ -834,6 +836,8 @@ Commands:
   * host_cache.delete_client(host_ip, id, service, version): delete
     client from host
   * host_cache.get_stats(): get current host cache usage and pegs
+  * host_cache.get_segment_stats(segment): get usage and pegs for
+    cache segment(s)
 
 Peg counts:
 
@@ -9551,6 +9555,8 @@ libraries see the Getting Started section of the manual.
     shutdown; won’t dump by default
   * int host_cache.memcap = 8388608: maximum host cache size in bytes
     { 512:maxSZ }
+  * int host_cache.segments = 4: number of host cache segments. It
+    must be power of 2. { 1:32 }
   * enum hosts[].frag_policy: defragmentation policy { first | linux
     | bsd | bsd_right | last | windows | solaris }
   * addr hosts[].ip = 0.0.0.0/32: hosts address / CIDR
@@ -15563,6 +15569,8 @@ alert is raised by the enhanced JavaScript normalizer.
   * host_cache.delete_client(host_ip, id, service, version): delete
     client from host
   * host_cache.get_stats(): get current host cache usage and pegs
+  * host_cache.get_segment_stats(segment): get usage and pegs for
+    cache segment(s)
   * network.set_policy(id): set the network policy for commands given
     the user policy id
   * packet_capture.enable(filter, group): dump raw packets
