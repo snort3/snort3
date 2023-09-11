@@ -1399,7 +1399,7 @@ void fp_eval_service_group(Packet* p, SnortProtocolId snort_protocol_id)
     IpsContext::ActiveRules actv_rules = c->active_rules;
     c->active_rules = IpsContext::CONTENT;
     IpsPolicy* ips_policy = snort::get_ips_policy();
-    snort::set_ips_policy(get_default_ips_policy(SnortConfig::get_conf()));
+    snort::set_ips_policy(get_ips_policy(SnortConfig::get_conf()));
 
     print_pkt_info(p, "file_id fast-patterns"); //FIXIT
     fpEvalHeaderSW(svc, p, 0, FPTask::FP, true, true);
