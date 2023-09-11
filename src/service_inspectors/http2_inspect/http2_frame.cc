@@ -171,6 +171,11 @@ const uint8_t* Http2Frame::get_frame_pdu(uint16_t& length) const
     memcpy(pdu, header.start(), hlen);
     if (dlen)
         memcpy(&pdu[hlen], data, dlen);
+
+    pdu[0] = (dlen >> 16) & 0xff;
+    pdu[1] = (dlen >> 8) & 0xff;
+    pdu[2] = dlen & 0xff;
+
     return pdu;
 }
 

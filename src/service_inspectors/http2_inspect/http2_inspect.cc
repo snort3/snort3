@@ -215,7 +215,7 @@ static void print_flow_issues(FILE* output, Http2Infractions* const infractions,
 }
 #endif
 
-const uint8_t* Http2Inspect::adjust_log_packet(Packet* p, uint16_t& length)
+static const uint8_t* get_frame_pdu(Packet* p, uint16_t& length)
 {
     auto* const session_data = (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
     if (!session_data)
@@ -230,4 +230,22 @@ const uint8_t* Http2Inspect::adjust_log_packet(Packet* p, uint16_t& length)
         return nullptr;
 
     return frame->get_frame_pdu(length);
+}
+
+const uint8_t* Http2Inspect::adjust_log_packet(Packet* p, uint16_t& length)
+{
+    const uint8_t* pdu = get_frame_pdu(p, length);
+    if (pdu or !p->has_parent())
+        return pdu;
+
+    // for rebuilt packet w/o frame fall back to wire packet
+    Packet* wire_packet = DetectionEngine::get_current_wire_packet();
+    if (!wire_packet or !wire_packet->data or !wire_packet->dsize)
+        return nullptr;
+
+    uint8_t* wire_pdu = new uint8_t[wire_packet->dsize];
+    memcpy(wire_pdu, wire_packet->data, wire_packet->dsize);
+    length = wire_packet->dsize;
+
+    return wire_pdu;
 }
