@@ -527,7 +527,7 @@ public:
     void handle(DataEvent&, Flow* flow) override
     {
         Binder* binder = InspectorManager::get_binder();
-        if (binder && flow)
+        if (binder && flow && !flow->flags.ha_flow)
             binder->handle_flow_setup(*flow);
     }
 };

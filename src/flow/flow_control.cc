@@ -393,11 +393,14 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
     if (flow)
         flow = stale_flow_cleanup(cache, flow, p);
 
+    bool new_ha_flow = false;
     if ( !flow )
     {
         flow = HighAvailabilityManager::import(*p, key);
 
-        if ( !flow )
+        if ( flow )
+            new_ha_flow = true;
+        else
         {
             if ( !want_flow(type, p) )
                 return true;
@@ -418,7 +421,7 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
         flow->session = get_proto_session[to_utype(type)](flow);
     }
 
-    num_flows += process(flow, p);
+    num_flows += process(flow, p, new_ha_flow);
 
     // FIXIT-M refactor to unlink_uni immediately after session
     // is processed by inspector manager (all flows)
@@ -428,7 +431,7 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
     return true;
 }
 
-unsigned FlowControl::process(Flow* flow, Packet* p)
+unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
 {
     unsigned news = 0;
 
@@ -452,8 +455,10 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
     if ( flow->flow_state != Flow::FlowState::SETUP )
     {
+        if ( new_ha_flow )
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_STATE_SETUP, p);
         unsigned reload_id = SnortConfig::get_thread_reload_id();
-        if (flow->reload_id != reload_id)
+        if ( flow->reload_id != reload_id )
             flow->network_policy_id = get_network_policy()->policy_id;
         else
         {
@@ -462,7 +467,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         }
         p->filtering_state = flow->filtering_state;
         update_stats(flow, p);
-        if (p->is_retry())
+        if ( p->is_retry() )
         {
             RetryPacketEvent retry_event(p);
             DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::RETRY_PACKET, retry_event);
@@ -479,7 +484,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
     else
     {
         flow->network_policy_id = get_network_policy()->policy_id;
-        if (PacketTracer::is_active())
+        if ( PacketTracer::is_active() )
             PacketTracer::log("Session: new snort session\n");
 
         init_roles(p, flow);

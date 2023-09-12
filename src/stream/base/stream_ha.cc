@@ -104,6 +104,7 @@ bool StreamHAClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg, ui
         if ( (flow = protocol_create_session(key)) == nullptr )
             return false;
 
+        flow->flags.ha_flow = true;
         BareDataEvent event;
         DataBus::publish(Stream::get_pub_id(), StreamEventIds::HA_NEW_FLOW, event, flow);
 
@@ -126,6 +127,7 @@ bool StreamHAClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg, ui
     }
 
     flow->ssn_state = hac->ssn_state;
+    flow->ssn_state.session_flags &= ~SSNFLAG_ESTABLISHED;  // clear flag for tcp established event to be generated
     flow->flow_state = hac->flow_state;
 
     if ( !flow->ha_state->check_any(FlowHAState::STANDBY) )

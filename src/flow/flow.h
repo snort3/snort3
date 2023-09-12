@@ -496,6 +496,7 @@ public:  // FIXIT-M privatize if possible
         bool efd_flow : 1;  // Indicate that current flow is an elephant flow
         bool svc_event_generated : 1; // Set if FLOW_NO_SERVICE_EVENT was generated for this flow
         bool retry_queued : 1; // Set if a packet was queued for retry for this flow
+        bool ha_flow : 1; // Set if this flow was created by an HA message
     } flags = {};
 
     FlowState flow_state = FlowState::SETUP;

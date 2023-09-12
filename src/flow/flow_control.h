@@ -101,7 +101,7 @@ public:
 
 private:
     void set_key(snort::FlowKey*, snort::Packet*);
-    unsigned process(snort::Flow*, snort::Packet*);
+    unsigned process(snort::Flow*, snort::Packet*, bool new_ha_flow);
     void update_stats(snort::Flow*, snort::Packet*);
 
 private:
