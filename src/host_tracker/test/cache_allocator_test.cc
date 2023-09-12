@@ -46,7 +46,7 @@ void FatalError(const char* fmt, ...) { (void)fmt; exit(1); }
 }
 // Derive an allocator from CacheAlloc:
 template <class T>
-class Allocator : public CacheAlloc<T>
+class Alloc : public CacheAlloc<T>
 {
 public:
 
@@ -54,12 +54,12 @@ public:
     template <class U>
     struct rebind
     {
-        typedef Allocator<U> other;
+        typedef Alloc<U> other;
     };
 
     using CacheAlloc<T>::lru;
 
-    Allocator();
+    Alloc();
 };
 
 
@@ -68,7 +68,7 @@ class Item
 {
 public:
     typedef int ValueType;
-    vector<ValueType, Allocator<ValueType>> data;
+    vector<ValueType, Alloc<ValueType>> data;
 };
 
 // Instantiate a cache, as soon as we know the Item type:
@@ -78,7 +78,7 @@ CacheType cache(100);
 // Implement the allocator constructor AFTER we have a cache object
 // to point to and the implementation of our base CacheAlloc:
 template <class T>
-Allocator<T>::Allocator()
+Alloc<T>::Alloc()
 {
     lru = &cache;
 }

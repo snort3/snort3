@@ -86,13 +86,13 @@ public:
 };
 
 typedef LruCacheSharedMemcap<string, Item, hash<string>> CacheType;
-CacheType cache(100);
+CacheType cache1(100);
 CacheType cache2(100);
 
 template <class T>
 Allocator<T>::Allocator()
 {
-    lru = &cache;
+    lru = &cache1;
 }
 
 
@@ -105,7 +105,7 @@ TEST(host_cache_allocator_ht, allocate_update)
 {   
     //declare a list with allocator cache
     std::list<string, Allocator<string>> test_list;
-    CHECK(test_list.get_allocator().get_lru() == &cache);
+    CHECK(test_list.get_allocator().get_lru() == &cache1);
     //update cache interface of test_list to cache_2
     update_allocator(test_list, &cache2);
     CHECK(test_list.get_allocator().get_lru() == &cache2);
