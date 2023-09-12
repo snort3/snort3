@@ -62,9 +62,22 @@ class StreamSplitter;
     "first | last | linux | old_linux | bsd | macos | solaris | irix | " \
     "hpux11 | hpux10 | windows | win_2003 | vista | proxy"
 
+struct AlertInfo
+{
+    AlertInfo() = default;
+    AlertInfo(uint32_t gid, uint32_t sid, uint32_t id, uint32_t ts = 0)
+        : gid(gid), sid(sid), event_id(id), event_second(ts) {}
+
+    uint32_t gid = 0;
+    uint32_t sid = 0;
+
+    uint32_t event_id = 0;
+    uint32_t event_second = 0;
+};
+
 typedef int (* LogFunction)(Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
 typedef void (* LogExtraData)(Flow*, void* config, LogFunction* funcs,
-    uint32_t max_count, uint32_t xtradata_mask, uint32_t id, uint32_t sec);
+    uint32_t max_count, uint32_t xtradata_mask, const AlertInfo& alert_info);
 
 #define MAX_LOG_FN 32
 
@@ -230,7 +243,7 @@ public:
 
     // extra data methods
     static void set_extra_data(Flow*, Packet*, uint32_t);
-    static void log_extra_data(Flow*, uint32_t mask, uint32_t id, uint32_t sec);
+    static void log_extra_data(Flow*, uint32_t mask, const AlertInfo&);
 
     static uint32_t reg_xtra_data_cb(LogFunction);
     static void reg_xtra_data_log(LogExtraData, void*);

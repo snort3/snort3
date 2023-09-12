@@ -62,7 +62,7 @@ public:
     uint32_t xtradata_func_count = 0;
     LogFunction xtradata_map[MAX_LOG_FN];
     LogExtraData extra_data_log = nullptr;
-    void* extra_data_config = nullptr;
+    void* extra_data_context = nullptr;
 };
 
 static StreamImpl stream;
@@ -513,13 +513,13 @@ StreamSplitter* Stream::get_splitter(Flow* flow, bool to_server)
 //-------------------------------------------------------------------------
 
 void Stream::log_extra_data(
-    Flow* flow, uint32_t mask, uint32_t id, uint32_t sec)
+    Flow* flow, uint32_t mask, const AlertInfo& alert_info)
 {
     if ( mask && stream.extra_data_log )
     {
         stream.extra_data_log(
-            flow, stream.extra_data_config, stream.xtradata_map,
-            stream.xtradata_func_count, mask, id, sec);
+            flow, stream.extra_data_context, stream.xtradata_map,
+            stream.xtradata_func_count, mask, alert_info);
     }
 }
 
@@ -550,7 +550,7 @@ void Stream::reg_xtra_data_log(LogExtraData f, void* config)
 {
     const std::lock_guard<std::mutex> xtra_lock(stream_xtra_mutex);
     stream.extra_data_log = f;
-    stream.extra_data_config = config;
+    stream.extra_data_context = config;
 }
 
 //-------------------------------------------------------------------------

@@ -331,13 +331,12 @@ static void _WriteExtraData(Unified2Config* config,
 static void AlertExtraData(
     Flow* flow, void* data,
     LogFunction* log_funcs, uint32_t max_count,
-    uint32_t xtradata_mask,
-    uint32_t event_id, uint32_t event_second)
+    uint32_t xtradata_mask, const AlertInfo& alert_info)
 {
     Unified2Config* config = (Unified2Config*)data;
     uint32_t xid;
 
-    if ((config == nullptr) || !xtradata_mask || !event_second)
+    if ((config == nullptr) || !xtradata_mask || !alert_info.event_second)
         return;
 
     xid = ffs(xtradata_mask);
@@ -359,7 +358,7 @@ static void AlertExtraData(
 
         if ( log_func(flow, &write_buffer, &len, &type) && (len > 0) )
         {
-            _WriteExtraData(config, obf, event_id, tenant_id, event_second, write_buffer, len, type);
+            _WriteExtraData(config, obf, alert_info.event_id, tenant_id, alert_info.event_second, write_buffer, len, type);
         }
         xtradata_mask ^= BIT(xid);
         xid = ffs(xtradata_mask);
@@ -965,9 +964,8 @@ void U2Logger::alert_legacy(Packet* p, const char* msg, const Event& event)
         uint32_t max_count = Stream::get_xtra_data_map(log_funcs);
 
         if ( max_count > 0 )
-            AlertExtraData(
-                p->flow, &config, log_funcs, max_count, p->xtradata_mask,
-                event.get_event_id(), event.ref_time.tv_sec);
+            AlertExtraData(p->flow, &config, log_funcs, max_count, p->xtradata_mask,
+                { /* gid */ 0, /* sid */ 0, event.get_event_id(), event.ref_time.tv_sec });
     }
 }
 
@@ -991,9 +989,8 @@ void U2Logger::alert(Packet* p, const char* msg, const Event& event)
         uint32_t max_count = Stream::get_xtra_data_map(log_funcs);
 
         if ( max_count > 0 )
-            AlertExtraData(
-                p->flow, &config, log_funcs, max_count, p->xtradata_mask,
-                event.get_event_id(), event.ref_time.tv_sec);
+            AlertExtraData(p->flow, &config, log_funcs, max_count, p->xtradata_mask,
+                { /* gid */ 0, /* sid */ 0, event.get_event_id(), event.ref_time.tv_sec });
     }
 }
 

@@ -265,7 +265,7 @@ void TcpReassembler::dup_reassembly_segment(
 
 bool TcpReassembler::add_alert(TcpReassemblerState& trs, uint32_t gid, uint32_t sid)
 {
-    trs.alerts.emplace_back(gid, sid, 0, 0, 0);
+    trs.alerts.emplace_back(gid, sid);
     return true;
 }
 
@@ -300,7 +300,7 @@ void TcpReassembler::purge_alerts(TcpReassemblerState& trs)
     Flow* flow = trs.sos.session->flow;
 
     for ( auto& alert : trs.alerts )
-        Stream::log_extra_data(flow, trs.xtradata_mask, alert.event_id, alert.event_second);
+        Stream::log_extra_data(flow, trs.xtradata_mask, alert);
 
     if ( !flow->is_suspended() )
         trs.alerts.clear();
