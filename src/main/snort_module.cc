@@ -118,6 +118,12 @@ static const Parameter main_log_command_param[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const Parameter reset_stat_param[] =
+{
+	{ "type", Parameter::PT_STRING, nullptr, nullptr, "possible type can be: daq|module|appid|file_id|snort|ha|all." },
+	{ nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Command snort_cmds[] =
 {
     { "set_watchdog_params", main_set_watchdog_params, s_watchdog, "set watchdog parameters" },
@@ -128,7 +134,8 @@ static const Command snort_cmds[] =
 
     { "dump_stats", main_dump_stats, nullptr, "show summary statistics" },
     { "dump_heap_stats", main_dump_heap_stats, nullptr, "show heap statistics" },
-    { "reset_stats", main_reset_stats, nullptr, "clear summary statistics" },
+    { "reset_stats", main_reset_stats, reset_stat_param, "clear summary statistics. "
+      "Type can be: daq|module|appid|file_id|snort|ha|all. reset_stats() without a parameter clears all statistics."},
     { "rotate_stats", main_rotate_stats, nullptr, "roll perfmonitor log files" },
     { "reload_config", main_reload_config, s_reload_w_path, "load new configuration" },
     { "reload_policy", main_reload_policy, s_reload, "reload part or all of the default policy" },

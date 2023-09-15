@@ -1504,7 +1504,7 @@ void ModuleManager::clear_global_active_counters()
 
 void ModuleManager::reset_stats(clear_counter_type_t type)
 {
-    if ( type != TYPE_MODULE and type != TYPE_UNKNOWN )
+    if ( type != TYPE_MODULE and type != TYPE_ALL )
     {
         ModHook* mh = get_hook(clear_counter_type_string_map[type]);
         if ( mh and mh->mod )
@@ -1531,14 +1531,14 @@ void ModuleManager::reset_stats(clear_counter_type_t type)
                 }
             }
 
-            if ( type == TYPE_UNKNOWN or !ignore )
+            if ( type == TYPE_ALL or !ignore )
             {
                 lock_guard<mutex> lock(stats_mutex);
                 mh->mod->reset_stats();
             }
         }
     }
-    if ( type == TYPE_DAQ or type == TYPE_UNKNOWN )
+    if ( type == TYPE_DAQ or type == TYPE_ALL )
     {
         lock_guard<mutex> lock(stats_mutex);
         PacketManager::reset_stats();

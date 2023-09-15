@@ -74,13 +74,14 @@ public:
 
 typedef enum clear_counter_type
 {
-    TYPE_UNKNOWN=-1,
+    TYPE_INVALID=-1,
     TYPE_DAQ=0,
     TYPE_MODULE,
     TYPE_APPID,
     TYPE_FILE_ID,
     TYPE_SNORT,
-    TYPE_HA
+    TYPE_HA,
+	TYPE_ALL
 } clear_counter_type_t;
 
 // FIXIT-M Will replace this vector with an unordered map of

@@ -83,6 +83,17 @@ const struct timespec main_sleep = { 0, 1000000 }; // 0.001 sec
 
 static const char* prompt = "o\")~ ";
 
+static const std::map<std::string, clear_counter_type_t> counter_name_to_id =
+{
+	{"daq", clear_counter_type_t::TYPE_DAQ},
+	{"module", clear_counter_type_t::TYPE_MODULE},
+	{"appid", clear_counter_type_t::TYPE_APPID},
+	{"file_id", clear_counter_type_t::TYPE_FILE_ID},
+	{"snort", clear_counter_type_t::TYPE_SNORT},
+	{"ha", clear_counter_type_t::TYPE_HA},
+	{"all", clear_counter_type_t::TYPE_ALL}
+};
+
 const char* get_prompt()
 { return prompt; }
 static bool use_shell(const SnortConfig* sc)
@@ -353,12 +364,29 @@ int main_dump_heap_stats(lua_State* L)
     return 0;
 }
 
+int convert_counter_type(const char* type)
+{
+	auto it = counter_name_to_id.find(type);
+	if ( it != counter_name_to_id.end() )
+		return it->second;
+	else
+		return clear_counter_type_t::TYPE_INVALID;
+}
+
 int main_reset_stats(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    int type = luaL_optint(L, 1, 0);
+    const char* command;
+    int type;
+    if ( lua_gettop(L) == 0 )
+    	command = "all";
+    else
+    	command = luaL_checkstring(L, 1);
     ctrlcon->respond("== clearing stats\n");
-    main_broadcast_command(new ACResetStats(static_cast<clear_counter_type_t>(type)), ctrlcon);
+    if ((type = convert_counter_type(command)) != clear_counter_type_t::TYPE_INVALID)
+    	main_broadcast_command(new ACResetStats(static_cast<clear_counter_type_t>(type)), ctrlcon);
+    else
+    	LogRespond(ctrlcon, "Available options to use: all, daq, module, appid, file_id, snort, ha\n");
     return 0;
 }
 
