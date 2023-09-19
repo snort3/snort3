@@ -24,6 +24,7 @@
 
 // SMTP helper functions
 
+#include "smtp.h"
 #include "smtp_config.h"
 
 namespace snort
@@ -31,7 +32,7 @@ namespace snort
 struct Packet;
 }
 
-void SMTP_GetEOL(const uint8_t*, const uint8_t*, const uint8_t**, const uint8_t**);
+SMTPEol SMTP_GetEOL(const uint8_t*, const uint8_t*, const uint8_t**, const uint8_t**);
 void SMTP_LogFuncs(SmtpProtoConf*, snort::Packet*, snort::MimeSession*);
 
 int SMTP_CopyToAltBuffer(snort::Packet*, const uint8_t*, int);

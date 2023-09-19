@@ -35,13 +35,14 @@
 
 using namespace snort;
 
-void SMTP_GetEOL(const uint8_t* ptr, const uint8_t* end,
+SMTPEol SMTP_GetEOL(const uint8_t* ptr, const uint8_t* end,
     const uint8_t** eol, const uint8_t** eolm)
 {
     assert(ptr and end and eol and eolm);
 
     const uint8_t* tmp_eolm;
     const uint8_t* tmp_eol = (const uint8_t*)memchr(ptr, '\n', end - ptr);
+    SMTPEol eol_state = EOL_NOT_SEEN;
 
     if (tmp_eol == nullptr)
     {
@@ -55,10 +56,12 @@ void SMTP_GetEOL(const uint8_t* ptr, const uint8_t* end,
         if ((tmp_eol > ptr) && (*(tmp_eol - 1) == '\r'))
         {
             tmp_eolm = tmp_eol - 1;
+            eol_state = EOL_CRLF;
         }
         else
         {
             tmp_eolm = tmp_eol;
+            eol_state = EOL_LF;
         }
 
         /* move past newline */
@@ -67,6 +70,7 @@ void SMTP_GetEOL(const uint8_t* ptr, const uint8_t* end,
 
     *eol = tmp_eol;
     *eolm = tmp_eolm;
+    return eol_state;
 }
 
 void SMTP_ResetAltBuffer(Packet* p)

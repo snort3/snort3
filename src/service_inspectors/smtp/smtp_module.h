@@ -46,6 +46,7 @@
 #define SMTP_AUTH_COMMAND_OVERFLOW  15
 #define SMTP_FILE_DECOMP_FAILED     16
 #define SMTP_STARTTLS_INJECTION_ATTEMPT 17
+#define SMTP_LF_CRLF_MIX            18
 
 #define SMTP_NAME "smtp"
 #define SMTP_HELP "smtp inspection"

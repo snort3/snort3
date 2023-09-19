@@ -123,6 +123,14 @@ enum SMTPDataEndEnum
     DATA_END_LAST
 };
 
+enum SMTPEol
+{
+    EOL_NOT_SEEN,
+    EOL_LF,
+    EOL_CRLF,
+    EOL_MIXED
+};
+
 struct SMTPSearchInfo
 {
     int id;
@@ -173,7 +181,9 @@ struct SMTPData
                  auth_name{nullptr},
                  client_requested_starttls{false},
                  pipelined_command_counter{0},
-                 server_accepted_starttls{false}
+                 server_accepted_starttls{false},
+                 client_eol{EOL_NOT_SEEN},
+                 server_eol{EOL_NOT_SEEN}
     { }
 
     int state;
@@ -186,6 +196,8 @@ struct SMTPData
     bool client_requested_starttls;
     size_t pipelined_command_counter;
     bool server_accepted_starttls;
+    SMTPEol client_eol;
+    SMTPEol server_eol;
 };
 
 class SmtpFlowData : public snort::FlowData

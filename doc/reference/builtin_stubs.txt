@@ -1715,6 +1715,10 @@ File decompression failed.
 
 SMTP STARTTLS command injection attempt.
 
+124:18
+
+SMTP traffic has a mix of LF and CRLF as end of line
+
 125:1
 
 TELNET command is detected on FTP control channel.

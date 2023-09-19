@@ -200,6 +200,7 @@ enum SMTPCmdGroup
 
 static void snort_smtp(SmtpProtoConf* GlobalConf, Packet* p);
 static void SMTP_ResetState(Flow*);
+static void update_eol_state(SMTPEol new_eol, SMTPEol& curr_eol_state);
 
 SmtpFlowData::SmtpFlowData() : FlowData(inspector_id)
 {
@@ -696,7 +697,7 @@ static const uint8_t* SMTP_HandleCommand(SmtpProtoConf* config, Packet* p, SMTPD
     char alert_long_command_line = 0;
 
     /* get end of line and end of line marker */
-    SMTP_GetEOL(ptr, end, &eol, &eolm);
+    SMTPEol new_eol = SMTP_GetEOL(ptr, end, &eol, &eolm);
 
     /* calculate length of command line */
     cmd_line_len = eol - ptr;
@@ -1020,6 +1021,8 @@ static const uint8_t* SMTP_HandleCommand(SmtpProtoConf* config, Packet* p, SMTPD
        DetectionEngine::queue_event(GID_SMTP, SMTP_STARTTLS_INJECTION_ATTEMPT);
     }
 
+    update_eol_state(new_eol, smtp_ssn->client_eol);
+
     return eol;
 }
 
@@ -1131,7 +1134,7 @@ static void SMTP_ProcessServerPacket(
         const uint8_t* eol;
         const uint8_t* eolm;
 
-        SMTP_GetEOL(ptr, end, &eol, &eolm);
+        SMTPEol new_eol = SMTP_GetEOL(ptr, end, &eol, &eolm);
 
         int resp_line_len = eol - ptr;
 
@@ -1212,10 +1215,11 @@ static void SMTP_ProcessServerPacket(
             }
         }
 
-        if ((config->max_response_line_len != 0) &&
-            (resp_line_len > config->max_response_line_len) &&
-            (smtp_ssn->state != STATE_TLS_DATA))
+        if (smtp_ssn->state != STATE_TLS_DATA)
         {
+            update_eol_state(new_eol, smtp_ssn->server_eol);
+            if ((config->max_response_line_len != 0) &&
+                (resp_line_len > config->max_response_line_len))
             DetectionEngine::queue_event(GID_SMTP, SMTP_RESPONSE_OVERFLOW);
         }
 
@@ -1381,6 +1385,25 @@ static void SMTP_RegXtraDataFuncs(SmtpProtoConf* config)
     config->xtra_mfrom_id = Stream::reg_xtra_data_cb(SMTP_GetMailFrom);
     config->xtra_rcptto_id = Stream::reg_xtra_data_cb(SMTP_GetRcptTo);
     config->xtra_ehdrs_id = Stream::reg_xtra_data_cb(SMTP_GetEmailHdrs);
+}
+
+static void update_eol_state(SMTPEol new_eol, SMTPEol& curr_eol_state)
+{
+    if (new_eol == EOL_NOT_SEEN or curr_eol_state == EOL_MIXED)
+        return;
+
+    if (curr_eol_state == EOL_NOT_SEEN)
+    {
+        curr_eol_state = new_eol;
+        return;
+    }
+
+    if ((new_eol == EOL_LF and curr_eol_state == EOL_CRLF) or
+        (new_eol == EOL_CRLF and curr_eol_state == EOL_LF))
+    {
+        curr_eol_state = EOL_MIXED;
+        DetectionEngine::queue_event(GID_SMTP, SMTP_LF_CRLF_MIX);
+    }
 }
 
 int SmtpMime::handle_header_line(
