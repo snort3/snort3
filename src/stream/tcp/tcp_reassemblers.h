@@ -124,6 +124,9 @@ public:
     void set_norm_mode_test()
     { trs.sos.tcp_ips_data = NORM_MODE_TEST; }
 
+    bool segment_within_seglist_window(TcpSegmentDescriptor& tsd)
+    { return reassembler->segment_within_seglist_window(trs, tsd); }
+
     uint32_t perform_partial_flush(snort::Flow* flow, snort::Packet*& p)
     { return reassembler->perform_partial_flush(trs, flow, p); }
 

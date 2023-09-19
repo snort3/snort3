@@ -52,6 +52,7 @@ public:
     virtual int update_alert(TcpReassemblerState&, uint32_t gid, uint32_t sid,
         uint32_t event_id, uint32_t event_second);
     virtual void purge_alerts(TcpReassemblerState&);
+    virtual bool segment_within_seglist_window(TcpReassemblerState&, TcpSegmentDescriptor&);
 
     uint32_t perform_partial_flush(TcpReassemblerState&, snort::Flow*, snort::Packet*&);
 

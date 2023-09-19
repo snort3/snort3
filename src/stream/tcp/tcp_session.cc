@@ -346,6 +346,9 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
                     (const_cast<tcp::TCPHdr*>(tsd.get_pkt()->ptrs.tcph))->set_seq(listener->max_queue_seq_nxt);
             }
 
+            if( listener->reassembler.segment_within_seglist_window(tsd) )
+                return false;
+
             if ( inline_mode || listener->normalizer.get_trim_win() == NORM_MODE_ON)
             {
                 tsd.get_pkt()->active->set_drop_reason("stream");
@@ -377,6 +380,9 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
                 else
                     (const_cast<tcp::TCPHdr*>(tsd.get_pkt()->ptrs.tcph))->set_seq(listener->max_queue_seq_nxt);
             }
+
+            if( listener->reassembler.segment_within_seglist_window(tsd) )
+                return false;
 
             if ( inline_mode || listener->normalizer.get_trim_win() == NORM_MODE_ON)
             {
