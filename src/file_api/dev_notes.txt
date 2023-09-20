@@ -16,3 +16,4 @@ threads to improve performance when multiple disks are used.
 * File libraries: provides file type identification and file signature
 calculation
 
+* file_id: file rules must contain `file_meta` and at least one fast-pattern option.

@@ -94,6 +94,8 @@ static std::string s_type;
 static std::string s_body;
 
 static bool action_file_id = false;
+static bool fp_file_id = false;
+static bool only_file_data = true;
 static bool strict_rtn_reduction = false;
 
 struct SoRule
@@ -1014,7 +1016,17 @@ void parse_rule_opt_end(SnortConfig* sc, const char* key, OptTreeNode* otn)
     CursorActionType cat = ips ? ips->get_cursor_type() : CAT_NONE;
 
     if ( cat > CAT_ADJUST )
+    {
         buf_is_set = true;
+        if ( action_file_id and strcmp(ips->get_name(), "file_data") )
+            only_file_data = false;
+    }
+
+    if ( ips and action_file_id )
+    {
+        if ( !strcmp(ips->get_name(), "content") or !strcmp(ips->get_name(), "regex") )
+            fp_file_id = true;
+    }
 
     if ( type != OPT_TYPE_META )
         otn->num_detection_opts++;
@@ -1155,6 +1167,28 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
         }
         delete otn;
         return;
+    }
+
+    if ( action_file_id )
+    {
+        if ( !otn->sigInfo.file_id )
+            ParseError("file_id rule %u:%u:%u requires file_meta option", otn->sigInfo.gid,
+                otn->sigInfo.sid, otn->sigInfo.rev);
+
+        if ( !fp_file_id )
+            ParseError("file_id rule %u:%u:%u requires a fast-pattern option",
+                otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev);
+
+        if ( buf_is_set and !only_file_data )
+            ParseError("file_id rule %u:%u:%u disallows IPS buffers that are not file_data",
+                otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev);
+
+        if ( !buf_is_set )
+            ParseError("file_id rule %u:%u:%u requires file_data option",
+                otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev);
+
+        only_file_data = true;
+        fp_file_id = false;
     }
 
     RuleTreeNode* tmp = s_so_rule ? s_so_rule->rtn : &rtn;

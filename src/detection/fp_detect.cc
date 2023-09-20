@@ -274,7 +274,6 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
 **    OptTreeNode        * - the otn to add.
 **
 **  FORMAL OUTPUTS
-**    int - 2 No rule tree node found for given policy ID.
 **    int - 1 max_events variable hit.
 **    int - 0 successful.
 **
@@ -282,8 +281,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
 int fpAddMatch(OtnxMatchData* omd, const OptTreeNode* otn)
 {
     RuleTreeNode* rtn = getRtnFromOtn(otn);
-    if ( not rtn )
-        return 2;
+    assert(rtn);
 
     unsigned evalIndex = rtn->listhead->ruleListNode->evalIndex;
 

@@ -267,7 +267,7 @@ Fast patterns are content strings that have the fast_pattern option or
 which have been selected by Snort automatically to be used as a fast
 pattern.  Snort will by default choose the longest pattern in the rule
 since that is likely to be most unique.  That is not always the case so add
-fast_pattern to the appropriate content option for best performance.  The
+fast_pattern to the appropriate content or regex option for best performance.  The
 ideal fast pattern is one which, if found, is very likely to result in a
 rule match.  Fast patterns that match frequently for unrelated traffic will
 cause Snort to work hard with little to show for it.
