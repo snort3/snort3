@@ -431,6 +431,14 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
     return true;
 }
 
+static inline void restart_inspection(Flow* flow, Packet* p)
+{
+    p->disable_inspect = false;
+    flow->flags.disable_inspect = false;
+    flow->flow_state = Flow::FlowState::SETUP;
+    flow->last_verdict = MAX_DAQ_VERDICT;
+}
+
 unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
 {
     unsigned news = 0;
@@ -439,6 +447,10 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
 
     p->flow = flow;
     p->disable_inspect = flow->is_inspection_disabled();
+
+    if ( p->disable_inspect and p->type() == PktType::ICMP
+         and flow->reload_id and SnortConfig::get_thread_reload_id() != flow->reload_id )
+        restart_inspection(flow, p);
 
     last_pkt_type = p->type();
 
