@@ -561,6 +561,7 @@ const char* Analyzer::get_state_string()
         case State::RUNNING:     return "RUNNING";
         case State::PAUSED:      return "PAUSED";
         case State::STOPPED:     return "STOPPED";
+        case State::FAILED:      return "FAILED";
         default: assert(false);
     }
 
@@ -778,7 +779,8 @@ void Analyzer::operator()(Swapper* ps, uint16_t run_num)
     Profiler::stop(pc.analyzed_pkts);
     term();
 
-    set_state(State::STOPPED);
+    if (state != State::FAILED)
+        set_state(State::STOPPED);
 
     oops_handler->tterm();
 }
@@ -971,6 +973,8 @@ void Analyzer::start()
     {
         ErrorMessage("Analyzer: Failed to start DAQ instance\n");
         exit_requested = true;
+        set_state(State::FAILED);
+        return;
     }
     set_state(State::STARTED);
 }

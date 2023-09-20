@@ -72,6 +72,7 @@ public:
         RUNNING,
         PAUSED,
         STOPPED,
+        FAILED,
         NUM_STATES
     };
 

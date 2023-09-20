@@ -73,7 +73,7 @@ using namespace snort;
 static bool exit_requested = false;
 static int main_exit_code = 0;
 static bool paused = false;
-static bool all_pthreads_started = false;
+static bool pthreads_started = false;
 static std::queue<AnalyzerCommand*> orphan_commands;
 
 static std::mutex poke_mutex;
@@ -284,6 +284,7 @@ void Pig::reap_commands()
 static bool* pigs_started = nullptr;
 static Pig* pigs = nullptr;
 static unsigned max_pigs = 0;
+static unsigned pigs_failed = 0;
 
 static Pig* get_lazy_pig(unsigned max)
 {
@@ -873,7 +874,7 @@ static void reap_commands()
 // FIXIT-L return true if something was done to avoid sleeping
 static bool house_keeping()
 {
-    if (all_pthreads_started)
+    if (pthreads_started)
         signal_check();
 
     reap_commands();
@@ -888,7 +889,7 @@ static bool house_keeping()
 static void service_check()
 {
 #ifdef SHELL
-    if (all_pthreads_started && ControlMgmt::service_users() )
+    if (pthreads_started && ControlMgmt::service_users())
         return;
 #endif
 
@@ -1049,6 +1050,9 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
         }
         break;
 
+    case Analyzer::State::FAILED:
+        pigs_failed++;
+        // fallthrough
     case Analyzer::State::STOPPED:
         pig.stop();
         --swine;
@@ -1061,7 +1065,7 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
 
 static void main_loop()
 {
-    unsigned swine = 0, pending_privileges = 0;
+    unsigned max_swine = 0, swine = 0, pending_privileges = 0;
 
     if (SnortConfig::get_conf()->change_privileges())
         pending_privileges = max_pigs;
@@ -1075,7 +1079,7 @@ static void main_loop()
                 return;
         }
 
-        swine += max_pigs;
+        max_swine = swine += max_pigs;
     }
 
     // Iterate over the drove, spawn them as allowed, and handle their deaths.
@@ -1096,6 +1100,9 @@ static void main_loop()
                 if (!pigs_started[idx] && pig.analyzer && (pig.analyzer->get_state() ==
                     Analyzer::State::STARTED))
                     pigs_started[idx] = true;
+                if (pigs_started[idx] && (!pig.analyzer || pig.analyzer->get_state() ==
+                    Analyzer::State::FAILED))
+                    pigs_started[idx] = false;
             }
             else if ( pending_privileges )
                 pending_privileges--;
@@ -1106,13 +1113,19 @@ static void main_loop()
             continue;
         }
 
-        if (!all_pthreads_started)
+        if (!pthreads_started)
         {
-            all_pthreads_started = true;
-            const unsigned num_threads = (!Trough::has_next()) ? swine : max_pigs;
+            const unsigned num_threads = (!Trough::has_next()) ? max_swine : max_pigs;
+            unsigned pigs_started_count = 0;
             for (unsigned i = 0; i < num_threads; i++)
-                all_pthreads_started &= pigs_started[i];
-            if (all_pthreads_started)
+            {
+                if (pigs_started[i])
+                    pigs_started_count++;
+            }
+
+            pthreads_started = pigs_started_count && num_threads <= pigs_started_count + pigs_failed;
+
+            if (pthreads_started)
             {
 #ifdef REG_TEST
                 LogMessage("All pthreads started\n");
@@ -1131,7 +1144,11 @@ static void main_loop()
         {
             Pig* pig = get_lazy_pig(max_pigs);
             if (pig->prep(src))
+            {
                 ++swine;
+                if (max_swine < swine)
+                    max_swine = swine;
+            }
             continue;
         }
         service_check();
