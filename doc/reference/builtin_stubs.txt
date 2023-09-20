@@ -725,6 +725,14 @@ An ICMPv6 packet was received that was not encapsulated in IPv6.
 
 The IPv6 mobility header includes an invalid value for the payload protocol field.
 
+116:476
+
+The IPv6 packet has a reserved source address.
+
+116:477
+
+The IPv6 packet has a reserved destination address.
+
 119:1
 
 URI has percent encoding of an unreserved character. The ignore_unreserved option designates

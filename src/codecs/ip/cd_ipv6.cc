@@ -29,12 +29,15 @@
 #include "framework/codec.h"
 #include "log/text_log.h"
 #include "main/snort_config.h"
+#include "parser/parse_ip.h"
+#include "sfip/sf_ipvar.h"
 
 using namespace snort;
 
 #define CD_IPV6_NAME "ipv6"
 #define CD_IPV6_HELP_STR "support for Internet protocol v6"
 #define CD_IPV6_HELP ADD_DLT(CD_IPV6_HELP_STR, DLT_IPV6)
+static sfip_var_t* ReservedIpv6 = nullptr;
 
 namespace
 {
@@ -72,6 +75,8 @@ static const RuleMap ipv6_rules[] =
     { DECODE_IP6_EXCESS_EXT_HDR, "too many IPv6 extension headers" },
     { DECODE_MIPV6_BAD_PAYLOAD_PROTO,
       "IPv6 mobility header includes an invalid value for the 'payload protocol' field" },
+    { DECODE_IPV6_SRC_RESERVED, "IPv6 packet from reserved source address" },
+    { DECODE_IPV6_DST_RESERVED, "IPv6 packet to reserved dest address" },
     { 0, nullptr }
 };
 
@@ -276,6 +281,15 @@ void Ipv6Codec::IPV6MiscTests(const DecodeData& snort, const CodecData& codec)
     if (!ip_dst->is_set())
     {
         codec_event(codec, DECODE_IPV6_DST_ZERO);
+    }
+
+    if (codec.conf->is_address_anomaly_check_enabled())
+    {
+        if (sfvar_ip_in(ReservedIpv6, ip_src))
+            codec_event(codec, DECODE_IPV6_SRC_RESERVED);
+
+        if (sfvar_ip_in(ReservedIpv6, ip_dst))
+            codec_event(codec, DECODE_IPV6_DST_RESERVED);
     }
 }
 
@@ -661,6 +675,21 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
+static void ipv6_codec_ginit()
+{
+    /* Check against reserved ipv6 addresses. These are listed at:
+       https://www.iana.org/assignments/ipv6-address-space/ipv6-address-space.xml   */
+    ReservedIpv6 = sfip_var_from_string(
+        "[0000::/8,0100::/8,0200::/7,0400::/6,0800::/5,1000::/4,4000::/3,6000::/3,8000::/3,"
+        "a000::/3,c000::/3,e000::/4,f000::/5,f800::/6,fe00::/9]", "ipv6");
+    assert(ReservedIpv6);
+}
+
+static void ipv6_codec_gterm()
+{
+    sfvar_free(ReservedIpv6);
+}
+
 static Codec* ctor(Module*)
 { return new Ipv6Codec(); }
 
@@ -681,8 +710,8 @@ static const CodecApi ipv6_api =
         mod_ctor,
         mod_dtor,
     },
-    nullptr, // pinit
-    nullptr, // pterm
+    ipv6_codec_ginit, // pinit
+    ipv6_codec_gterm, // pterm
     nullptr, // tinit
     nullptr, // tterm
     ctor, // ctor

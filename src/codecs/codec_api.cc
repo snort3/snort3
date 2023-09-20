@@ -29,6 +29,7 @@
 using namespace snort;
 
 extern const BaseApi* cd_ipv4[];    // static due to dependence on fpdetect
+extern const BaseApi* cd_ipv6[];    // static due to dependence on fpdetect
 extern const BaseApi* cd_hopopts[]; // static to ensure the symbols CheckIPV6HopOptions
                                     // and CheckIPv6ExtensionOrder the final executable.
 extern const BaseApi* cd_tcp[];     // static because only file that specific functions
@@ -53,7 +54,6 @@ extern const BaseApi* cd_icmp4[];
 extern const BaseApi* cd_icmp4_ip[];
 extern const BaseApi* cd_icmp6[];
 extern const BaseApi* cd_icmp6_ip[];
-extern const BaseApi* cd_ipv6[];
 extern const BaseApi* cd_igmp[];
 extern const BaseApi* cd_llc[];
 extern const BaseApi* cd_mobility[];
@@ -75,6 +75,7 @@ extern const BaseApi* cd_vxlan[];
 void load_codecs()
 {
     PluginManager::load_plugins(cd_ipv4);
+    PluginManager::load_plugins(cd_ipv6);
     PluginManager::load_plugins(cd_tcp);
     PluginManager::load_plugins(cd_hopopts);
 
@@ -97,7 +98,6 @@ void load_codecs()
     PluginManager::load_plugins(cd_icmp4_ip);
     PluginManager::load_plugins(cd_icmp6);
     PluginManager::load_plugins(cd_icmp6_ip);
-    PluginManager::load_plugins(cd_ipv6);
     PluginManager::load_plugins(cd_igmp);
     PluginManager::load_plugins(cd_llc);
     PluginManager::load_plugins(cd_mobility);
