@@ -121,7 +121,10 @@ static int finalize_detection_option_tree(SnortConfig* sc, detection_option_tree
             free_detection_option_tree(node);
             root->children[i] = (detection_option_tree_node_t*)dup_node;
         }
-        fixup_tree(root->children[i], true, 0);
+        else
+        {
+            fixup_tree(root->children[i], true, 0);
+        }
 
         debug_logf(detection_trace, TRACE_OPTION_TREE, nullptr, "%3d %3d  %p %4s\n",
             0, root->num_children, (void*)root, "root");
