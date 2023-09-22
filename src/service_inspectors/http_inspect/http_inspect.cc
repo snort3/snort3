@@ -645,18 +645,12 @@ void HttpInspect::clear(Packet* p)
         return;
     }
 
-    Http2FlowData* h2i_flow_data = nullptr;
-    if (Http2FlowData::inspector_id != 0)
-    {
-        h2i_flow_data = (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
-    }
-
     HttpMsgSection* current_section = nullptr;
-    if (h2i_flow_data != nullptr)
+    if(p->flow->stream_intf)
     {
-        current_section = h2i_flow_data->get_hi_msg_section();
+        current_section = (HttpMsgSection*)p->flow->stream_intf->get_hi_msg_section(p->flow);
         assert(current_section != nullptr);
-        h2i_flow_data->set_hi_msg_section(nullptr);
+        p->flow->stream_intf->set_hi_msg_section(p->flow, nullptr);
     }
     else
         current_section = HttpContextData::clear_snapshot(p->context);

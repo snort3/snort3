@@ -63,14 +63,10 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
 {
     assert((source_id == SRC_CLIENT) || (source_id == SRC_SERVER));
 
-    if (Http2FlowData::inspector_id != 0)
+    if (flow->stream_intf)
     {
-        Http2FlowData* const h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
-        if (h2i_flow_data != nullptr)
-        {
-            h2i_flow_data->set_hi_msg_section(this);
-            return;
-        }
+        flow->stream_intf->set_hi_msg_section(flow, this);
+        return;
     }
 
     HttpContextData::save_snapshot(this);

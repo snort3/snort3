@@ -25,6 +25,7 @@
 
 #include "main/snort_types.h"
 #include "service_inspectors/http_inspect/http_inspect.h"
+#include "service_inspectors/http_inspect/http_msg_section.h"
 #include "service_inspectors/http_inspect/http_test_manager.h"
 
 #include "http2_enum.h"
@@ -288,4 +289,23 @@ AppId Http2FlowStreamIntf::get_appid_from_stream(const Flow* flow)
 #endif
 
     return APP_ID_HTTP2;
+}
+
+void* Http2FlowStreamIntf::get_hi_msg_section(const Flow* flow)
+{
+    const Http2FlowData* const h2i_flow_data =
+        (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    HttpMsgSection* current_section = nullptr;
+    if (h2i_flow_data)
+        current_section = h2i_flow_data->get_hi_msg_section();
+    return current_section;
+}
+
+void Http2FlowStreamIntf::set_hi_msg_section(Flow* flow, void* section)
+{
+    Http2FlowData* h2i_flow_data =
+        (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    if (h2i_flow_data)
+        h2i_flow_data->set_hi_msg_section((HttpMsgSection*)section);
+
 }

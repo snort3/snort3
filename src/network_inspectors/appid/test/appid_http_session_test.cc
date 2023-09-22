@@ -144,6 +144,10 @@ bool AppIdSession::is_tp_appid_available() const
     return true;
 }
 
+void AppIdSession::update_encrypted_app_id(AppId)
+{
+}
+
 void AppIdModule::reset_stats() {}
 
 // AppIdDebug mock functions

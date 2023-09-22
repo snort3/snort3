@@ -21,29 +21,20 @@
 #ifndef APPID_DATA_DECRYPT_EVENT_HANDLER_H
 #define APPID_DATA_DECRYPT_EVENT_HANDLER_H
 
-#include "pub_sub/data_decrypt_event.h"
+#include "framework/data_bus.h"
 
-#include "appid_session.h"
+#include "appid_module.h"
 
 class DataDecryptEventHandler : public snort::DataHandler
 {
 public:
-    DataDecryptEventHandler() : DataHandler(MOD_NAME){ }
+    DataDecryptEventHandler(AppIdInspector& inspector) : DataHandler(MOD_NAME), inspector(inspector)
+    { }
 
-    void handle(snort::DataEvent& event, snort::Flow* flow) override
-    {
-        assert(flow);
-        AppIdSession* asd = snort::appid_api.get_appid_session(*flow);
-        if (!asd or !asd->get_session_flags(APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED))
-            return;
-        const DataDecryptEvent& data_decrypt_event = static_cast<DataDecryptEvent&>(event);
-        DataDecryptEvent::StateEventType state = data_decrypt_event.get_type();
-        if (DataDecryptEvent::DATA_DECRYPT_MONITOR_EVENT== state)
-            asd->set_session_flags(APPID_SESSION_DECRYPT_MONITOR);
-        // Set a do not decrypt flag, so that an event can be generated after appid processes the packet
-        else if (DataDecryptEvent::DATA_DECRYPT_DO_NOT_DECRYPT_EVENT == state)
-            asd->set_session_flags(APPID_SESSION_DO_NOT_DECRYPT);
-    }
+    void handle(snort::DataEvent& event, snort::Flow* flow) override;
+
+private:
+    AppIdInspector& inspector;
 };
 
 #endif

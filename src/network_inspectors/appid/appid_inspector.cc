@@ -158,7 +158,7 @@ bool AppIdInspector::configure(SnortConfig* sc)
     DataBus::subscribe_global(dce_tcp_pub_key, DceTcpEventIds::EXP_SESSION, new DceExpSsnEventHandler(), *sc);
     DataBus::subscribe_global(ssh_pub_key, SshEventIds::STATE_CHANGE, new SshEventHandler(), *sc);
     DataBus::subscribe_global(cip_pub_key, CipEventIds::DATA, new CipEventHandler(*this), *sc);
-    DataBus::subscribe_global(external_pub_key, ExternalEventIds::DATA_DECRYPT, new DataDecryptEventHandler(), *sc);
+    DataBus::subscribe_global(external_pub_key, ExternalEventIds::DATA_DECRYPT, new DataDecryptEventHandler(*this), *sc);
 
     DataBus::subscribe_global(external_pub_key, ExternalEventIds::EVE_PROCESS,
         new AppIdEveProcessEventHandler(*this), *sc);

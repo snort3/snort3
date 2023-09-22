@@ -558,6 +558,15 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             asd.set_service_id(APP_ID_HTTP, asd.get_odp_ctxt());
         asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
         asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
+        if (asd.get_service_id() == APP_ID_HTTP3)
+        {
+            if(asd.misc_app_id == APP_ID_NONE)
+            {
+                asd.update_encrypted_app_id(APP_ID_HTTP3);
+                misc_app_id = APP_ID_QUIC;
+                change_bits.set(APPID_MISC_BIT);
+            }
+        }
     }
 
     if (!chp_finished or chp_hold_flow)
