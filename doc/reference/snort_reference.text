@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.70.0 2023-09-10 14:39:41 EDT TST
+Revision 3.1.71.0 2023-09-25 07:40:20 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1726,7 +1726,9 @@ Commands:
     default policy
   * snort.dump_stats(): show summary statistics
   * snort.dump_heap_stats(): show heap statistics
-  * snort.reset_stats(): clear summary statistics
+  * snort.reset_stats(type): clear summary statistics. Type can be:
+    daq|module|appid|file_id|snort|ha|all. reset_stats() without a
+    parameter clears all statistics.
   * snort.rotate_stats(): roll perfmonitor log files
   * snort.reload_config(filename): load new configuration
   * snort.reload_policy(filename): reload part or all of the default
@@ -2252,6 +2254,8 @@ Rules:
   * 116:461 (ipv6) IPv6 routing type 0 extension header
   * 116:475 (ipv6) IPv6 mobility header includes an invalid value for
     the payload protocol field
+  * 116:476 (ipv6) IPv6 packet from reserved source address
+  * 116:477 (ipv6) IPv6 packet to reserved dest address
 
 
 3.18. llc
@@ -5418,6 +5422,7 @@ Rules:
   * 124:15 (smtp) attempted authentication command buffer overflow
   * 124:16 (smtp) file decompression failed
   * 124:17 (smtp) STARTTLS command injection attempt
+  * 124:18 (smtp) mix of LF and CRLF as end of line
 
 Peg counts:
 
@@ -12869,12 +12874,12 @@ session.
 The TCP packet is invalid because it doesn’t have a SYN, ACK, or RST
 flag set.
 
-116:424 (eth) truncated ethernet header
+116:424 (pbb) truncated ethernet header
 
 The packet length is less than the minimum ethernet header size (14
 bytes)
 
-116:424 (eth) truncated ethernet header
+116:424 (pbb) truncated ethernet header
 
 A truncated ethernet header was detected.
 
@@ -13104,6 +13109,14 @@ payload protocol field
 
 The IPv6 mobility header includes an invalid value for the payload
 protocol field.
+
+116:476 (ipv6) IPv6 packet from reserved source address
+
+The IPv6 packet has a reserved source address.
+
+116:477 (ipv6) IPv6 packet to reserved dest address
+
+The IPv6 packet has a reserved destination address.
 
 119:1 (http_inspect) URI has percent-encoding of an unreserved
 character
@@ -14257,6 +14270,10 @@ File decompression failed.
 124:17 (smtp) STARTTLS command injection attempt
 
 SMTP STARTTLS command injection attempt.
+
+124:18 (smtp) mix of LF and CRLF as end of line
+
+SMTP traffic has a mix of LF and CRLF as end of line
 
 125:1 (ftp_server) TELNET cmd on FTP command channel
 
@@ -15606,7 +15623,9 @@ alert is raised by the enhanced JavaScript normalizer.
     default policy
   * snort.dump_stats(): show summary statistics
   * snort.dump_heap_stats(): show heap statistics
-  * snort.reset_stats(): clear summary statistics
+  * snort.reset_stats(type): clear summary statistics. Type can be:
+    daq|module|appid|file_id|snort|ha|all. reset_stats() without a
+    parameter clears all statistics.
   * snort.rotate_stats(): roll perfmonitor log files
   * snort.reload_config(filename): load new configuration
   * snort.reload_policy(filename): reload part or all of the default

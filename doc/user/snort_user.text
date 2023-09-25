@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.70.0 2023-09-10 14:40:02 EDT TST
+Revision 3.1.71.0 2023-09-25 07:40:35 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -963,11 +963,11 @@ Fast patterns are content strings that have the fast_pattern option
 or which have been selected by Snort automatically to be used as a
 fast pattern. Snort will by default choose the longest pattern in the
 rule since that is likely to be most unique. That is not always the
-case so add fast_pattern to the appropriate content option for best
-performance. The ideal fast pattern is one which, if found, is very
-likely to result in a rule match. Fast patterns that match frequently
-for unrelated traffic will cause Snort to work hard with little to
-show for it.
+case so add fast_pattern to the appropriate content or regex option
+for best performance. The ideal fast pattern is one which, if found,
+is very likely to result in a rule match. Fast patterns that match
+frequently for unrelated traffic will cause Snort to work hard with
+little to show for it.
 
 Certain contents are not eligible to be used as fast patterns.
 Specifically, if a content is negated, then if it is also relative to
@@ -3330,25 +3330,29 @@ There are 3 steps to enable file processing:
 5.7.3. Pre-packaged File Magic Rules
 
 A set of file magic rules is packaged with Snort. They can be located
-at "lua/file_magic.lua". To use this feature, it is recommended that
-these pre-packaged rules are used; doing so requires that you include
-the file in your Snort configuration as such (already in snort.lua):
+at "lua/file_magic.rules". To use this feature, it is recommended
+that these pre-packaged rules are used; doing so requires that you
+include the file in your Snort configuration as such (already in
+snort.lua):
 
-dofile('magic.lua')
+file_id = { rules_file = 'file_magic.rules' }
 
 Example:
 
-{ type = "GIF", id = 62, category = "Graphics", rev = 1,
-  magic = { { content = "| 47 49 46 38 37 61 |",offset = 0 } } },
+file_id (msg:"GIF"; file_meta:type GIF, id 62, category "Graphics";
+  file_data; content:"| 47 49 46 38 37 61 |", depth 6, offset 0; gid:4; sid:56; rev:1;)
 
-{ type = "GIF", id = 63, category = "Graphics", rev = 1,
-  magic = { { content = "| 47 49 46 38 39 61 |",offset = 0 } } },
+file_id (msg:"GIF"; file_meta:type GIF, id 63, category 'Graphics";
+  file_data; content:"| 47 49 46 38 39 61 |", depth 6, offset 0; gid:4; sid:57; rev:1;)
 
 The previous two rules define GIF format, because two file magics are
 different. File magics are specified by content and offset, which
 look at content at particular file offset to identify the file type.
 In this case, two magics look at the beginning of the file. You can
 use character if it is printable or hex value in between "|".
+
+Note that file_meta and a fast-pattern option (content, regex) are
+required for each file_id rule.
 
 5.7.4. File Policy
 

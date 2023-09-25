@@ -1,4 +1,23 @@
-2023-08-10: 3.1.70.0
+2023-09-25: 3.1.71.0
+
+* appid, http_inspect, http2_inspect: create appid session if not present in decrypt event handler, add message section as part of StreamFlowIntf for httpx
+* codecs: Add IPv6 Reserved Address to GID:116 Rules
+* detection: avoid multiple fixups of duplicated trees
+* detection: fix of default ips policy switching
+* flow: allow reinspection for blocked icmp flows after reload
+* flow: generate flow setup and established events for ha flows
+* host_cache: cppcheck fix
+* http2_inspect: fix http2 frame length for logging
+* main: fix signals handling after failed started instances
+* main: reset_stats argument type improvement
+* parser: add file_id rule syntax evaluation
+* smtp: add alert for mixed LF and CRLF
+* smtp: process DATA\n (no \r)
+* stream: extend list of arguments for extra data logging
+* stream_tcp: ensure all data segments after a zero window are blocked when NAP is inline
+* stream_tcp: examine whether a segment plugs a hole before blocking due to exceeding queue_limit
+
+2023-09-10: 3.1.70.0
 
 * appid: makes regex error more of a warning
 * detection: fix assert expression
