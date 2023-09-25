@@ -697,11 +697,10 @@ const uint8_t* HttpInspect::adjust_log_packet(Packet* p, uint16_t& length)
     else
         return nullptr;
 
-    // FIXIT-L IPV6 regression test fails with IPv6 anomaly check enabled and
-    // 'other_section' is NULL. Seems to be a bug in HNI. Needs investigation
-    if (!other_section)
+    assert(other_section != nullptr);
+    if (other_section == nullptr)
         return nullptr;
-    
+
     const Field& start_line = other_section->get_classic_buffer(id, 0, 0);
     if (start_line.length() > 0)
     {

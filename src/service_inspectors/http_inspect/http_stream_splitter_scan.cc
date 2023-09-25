@@ -27,6 +27,7 @@
 #include "protocols/packet.h"
 
 #include "http_common.h"
+#include "http_context_data.h"
 #include "http_cutter.h"
 #include "http_enum.h"
 #include "http_inspect.h"
@@ -238,6 +239,10 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
         prepare_flush(session_data, nullptr, SEC_HEADER, 0, 0, 0, false, 0, 0);
         my_inspector->process((const uint8_t*)"", 0, flow, SRC_SERVER, false, nullptr);
         session_data->transaction[SRC_SERVER]->clear_section();
+        HttpContextData* hcd = (HttpContextData*)DetectionEngine::get_data(HttpContextData::ips_id);
+        assert(hcd != nullptr);
+        if (hcd != nullptr)
+            hcd->clear();
     }
 
     HttpCutter*& cutter = session_data->cutter[source_id];
