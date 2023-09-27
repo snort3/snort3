@@ -225,6 +225,12 @@ static const Parameter s_params[] =
     { "track_only", Parameter::PT_BOOL, nullptr, "false",
       "disable reassembly if true" },
 
+    { "embryonic_timeout", Parameter::PT_INT, "1:max31", "30",
+      "Non-established connection timeout" },
+
+    { "idle_timeout", Parameter::PT_INT, "1:max31", "3600",
+      "session deletion on idle " },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -334,6 +340,12 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("session_timeout") )
         config->session_timeout = v.get_uint32();
+
+    else if ( v.is("embryonic_timeout") )
+        config->embryonic_timeout = v.get_uint32();
+
+    else if ( v.is("idle_timeout") )
+        config->idle_timeout = v.get_uint32();
 
     else if ( v.is("reassemble_async") )
     {

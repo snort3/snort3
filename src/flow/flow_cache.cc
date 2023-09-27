@@ -176,6 +176,8 @@ Flow* FlowCache::allocate(const FlowKey* key)
     assert(flow);
     link_uni(flow);
     flow->last_data_seen = timestamp;
+    flow->set_idle_timeout(config.proto[to_utype(flow->key->pkt_type)].nominal_timeout);
+
     return flow;
 }
 
@@ -406,7 +408,7 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
                 if ( flow->expire_time > (uint64_t) thetime )
                     break;
             }
-            else if ( flow->last_data_seen + config.proto[to_utype(flow->key->pkt_type)].nominal_timeout > thetime )
+            else if ( flow->last_data_seen + flow->idle_timeout > thetime )
                 break;
 
             if ( HighAvailabilityManager::in_standby(flow) or

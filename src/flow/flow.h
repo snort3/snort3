@@ -410,6 +410,9 @@ public:
 
     bool trust_is_deferred()
     { return deferred_trust.is_deferred(); }
+ 
+    void set_idle_timeout(unsigned timeout)
+    { idle_timeout = timeout; }  
 
 public:  // FIXIT-M privatize if possible
     // fields are organized by initialization and size to minimize
@@ -460,11 +463,9 @@ public:  // FIXIT-M privatize if possible
     unsigned inspection_policy_id = 0;
     unsigned ips_policy_id = 0;
     unsigned reload_id = 0;
-
     uint32_t tenant = 0;
-
     uint32_t default_session_timeout = 0;
-
+    uint32_t idle_timeout = 0;
     int32_t client_intf = 0;
     int32_t server_intf = 0;
 

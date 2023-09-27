@@ -112,6 +112,7 @@ bool TcpSession::setup(Packet*)
 
     tcp_config = get_tcp_cfg(flow->ssn_server);
     flow->set_default_session_timeout(tcp_config->session_timeout, false);
+    flow->set_idle_timeout(tcp_config->embryonic_timeout);
     set_os_policy();
 
     SESSION_STATS_ADD(tcpStats)

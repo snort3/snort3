@@ -344,6 +344,7 @@ void TcpStreamSession::set_established(const TcpSegmentDescriptor& tsd)
 {
     update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
     flow->session_state |= STREAM_STATE_ESTABLISHED;
+    flow->set_idle_timeout(this->tcp_config->idle_timeout);
     if (SSNFLAG_ESTABLISHED != (SSNFLAG_ESTABLISHED & flow->get_session_flags()))
     {
         flow->set_session_flags(SSNFLAG_ESTABLISHED);

@@ -71,6 +71,8 @@ public:
     int hs_timeout = -1;
 
     bool no_ack;
+    uint32_t embryonic_timeout = STREAM_DEFAULT_SSN_TIMEOUT;
+    uint32_t idle_timeout;
 };
 
 #endif
