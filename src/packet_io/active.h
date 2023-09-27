@@ -117,6 +117,9 @@ public:
     const char* get_action_string() const
     { return act_str[active_action][active_status]; }
 
+    const char* get_delayed_action_string() const
+    { return act_str[delayed_active_action][active_status]; }
+
     void update_status(const Packet*, bool force = false);
 
     void drop_packet(const Packet*, bool force = false);
