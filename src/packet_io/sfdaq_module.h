@@ -63,6 +63,7 @@ struct DAQStats
     PegCount dropped;
     PegCount filtered;
     PegCount outstanding;
+    PegCount outstanding_max;
     PegCount injected;
     PegCount verdicts[MAX_DAQ_VERDICT];
     PegCount internal_blacklist;

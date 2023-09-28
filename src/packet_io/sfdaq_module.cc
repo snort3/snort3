@@ -178,7 +178,8 @@ const PegInfo daq_names[] =
     { CountType::SUM, "analyzed", "total packets analyzed from DAQ" },
     { CountType::SUM, "dropped", "packets dropped" },
     { CountType::SUM, "filtered", "packets filtered out" },
-    { CountType::SUM, "outstanding", "packets unprocessed" },
+    { CountType::NOW, "outstanding", "packets unprocessed" },
+    { CountType::MAX, "outstanding_max", "maximum of packets unprocessed" },
     { CountType::SUM, "injected", "active responses or replacements" },
 
     // Must align with MAX_DAQ_VERDICT (one for each, in order)
@@ -258,16 +259,11 @@ void SFDAQModule::prep_counts(bool dump_stats)
     for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
         daq_stats.verdicts[i] = daq_stats_delta.verdicts[i];
 
-    // If DAQ returns HW packets counter less than SW packets counter,
-    // Snort treats that as no outstanding packets left.
-    if (daq_stats_delta.hw_packets_received >
-        (daq_stats_delta.packets_filtered + daq_stats_delta.packets_received))
-    {
-        daq_stats.outstanding = daq_stats_delta.hw_packets_received -
-            daq_stats_delta.packets_filtered - daq_stats_delta.packets_received;
-    }
-    else
-        daq_stats.outstanding = 0;
+    daq_stats.outstanding = new_daq_stats.hw_packets_received -
+        new_daq_stats.packets_filtered - new_daq_stats.packets_received;
+
+    if ( daq_stats.outstanding > daq_stats.outstanding_max )
+        daq_stats.outstanding_max = daq_stats.outstanding;
 
     if(!dump_stats)
         prev_daq_stats = new_daq_stats;
