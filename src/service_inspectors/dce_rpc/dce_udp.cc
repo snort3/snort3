@@ -134,6 +134,8 @@ void Dce2Udp::eval(Packet* p)
 
     assert(p->flow);
 
+    reset_using_rpkt();
+
     dce2_udp_sess = dce2_handle_udp_session(p, &config);
 
     if (dce2_udp_sess)

@@ -135,6 +135,8 @@ void Dce2Tcp::eval(Packet* p)
     assert(p->has_tcp_data());
     assert(p->flow);
 
+    reset_using_rpkt();
+
     if ( p->test_session_flags(SSNFLAG_MIDSTREAM) )
     {
         return;

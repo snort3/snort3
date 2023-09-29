@@ -41,7 +41,9 @@ THREAD_LOCAL DceHttpProxyStats dce_http_proxy_stats;
 class DceHttpProxy : public Inspector
 {
 public:
-    void eval(Packet*) override { }
+    void eval(Packet*) override {
+        reset_using_rpkt();
+    }
     void clear(Packet*) override;
     StreamSplitter* get_splitter(bool c2s) override
     {
