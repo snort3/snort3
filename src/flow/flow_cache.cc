@@ -51,6 +51,8 @@ static const unsigned OFFLOADED_FLOWS_TOO = 2;
 static const unsigned ALL_FLOWS = 3;
 static const unsigned WDT_MASK = 7; // kick watchdog once for every 8 flows deleted
 
+const uint8_t MAX_PROTOCOLS = (uint8_t)to_utype(PktType::MAX) - 1; //removing PktType::NONE from count
+
 //-------------------------------------------------------------------------
 // FlowCache stuff
 //-------------------------------------------------------------------------
@@ -59,7 +61,7 @@ extern THREAD_LOCAL const snort::Trace* stream_trace;
 
 FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg)
 {
-    hash_table = new ZHash(config.max_flows, sizeof(FlowKey), false);
+    hash_table = new ZHash(config.max_flows, sizeof(FlowKey), MAX_PROTOCOLS, false);
     uni_flows = new FlowUniList;
     uni_ip_flows = new FlowUniList;
     flags = 0x0;
@@ -100,8 +102,7 @@ unsigned FlowCache::get_count()
 
 Flow* FlowCache::find(const FlowKey* key)
 {
-    Flow* flow = (Flow*)hash_table->get_user_data(key);
-
+    Flow* flow = (Flow*)hash_table->get_user_data(key,to_utype(key->pkt_type));
     if ( flow )
     {
         time_t t = packet_time();
@@ -172,7 +173,7 @@ Flow* FlowCache::allocate(const FlowKey* key)
     Flow* flow = new Flow;
     push(flow);
 
-    flow = (Flow*)hash_table->get(key);
+    flow = (Flow*)hash_table->get(key, to_utype(key->pkt_type));
     assert(flow);
     link_uni(flow);
     flow->last_data_seen = timestamp;
@@ -187,7 +188,7 @@ void FlowCache::remove(Flow* flow)
     const snort::FlowKey* key = flow->key;
     // Delete before releasing the node, so that the key is valid until the flow is completely freed
     delete flow;
-    hash_table->release_node(key);
+    hash_table->release_node(key, to_utype(key->pkt_type));
 }
 
 bool FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
@@ -220,39 +221,45 @@ unsigned FlowCache::prune_idle(uint32_t thetime, const Flow* save_me)
     ActiveSuspendContext act_susp(Active::ASP_PRUNE);
 
     unsigned pruned = 0;
-    auto flow = static_cast<Flow*>(hash_table->lru_first());
+    uint64_t skip_protos = 0;
+
+    assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
+
+    const uint64_t max_skip_protos = (1ULL << MAX_PROTOCOLS) - 1;
 
     {
         PacketTracerSuspend pt_susp;
-
-        while ( flow and pruned <= cleanup_flows )
+        while ( pruned <= cleanup_flows and 
+                skip_protos != max_skip_protos )
         {
-#if 0
-            // FIXIT-RC this loops forever if 1 flow in cache
-            if (flow == save_me)
+            // Round-robin through the proto types
+            for( uint8_t proto_idx = 0; proto_idx < MAX_PROTOCOLS; ++proto_idx ) 
             {
-                break;
-                if ( hash_table->get_count() == 1 )
+                if( pruned > cleanup_flows )
                     break;
 
-                hash_table->lru_touch();
+                if ( skip_protos & (1ULL << proto_idx) )
+                    continue;
+
+                auto flow = static_cast<Flow*>(hash_table->lru_first(proto_idx));
+                if ( !flow )
+                {
+                    skip_protos |= (1ULL << proto_idx);
+                    continue;
+                }
+                
+                if ( flow == save_me // Reached the current flow. This *should* be the newest flow
+                    or flow->is_suspended()
+                    or flow->last_data_seen + config.pruning_timeout >= thetime )
+                {
+                    skip_protos |= (1ULL << proto_idx);
+                    continue;
+                }
+
+                flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
+                if ( release(flow, PruneReason::IDLE_MAX_FLOWS) )
+                    ++pruned;
             }
-#else
-            // Reached the current flow. This *should* be the newest flow
-            if ( flow == save_me )
-                break;
-#endif
-            if ( flow->is_suspended() )
-                break;
-
-            if ( flow->last_data_seen + config.pruning_timeout >= thetime )
-                break;
-
-            flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
-            if ( release(flow, PruneReason::IDLE_MAX_FLOWS) )
-                ++pruned;
-
-            flow = static_cast<Flow*>(hash_table->lru_first());
         }
     }
 
@@ -312,39 +319,62 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
     // initially skip offloads but if that doesn't work the hash table is iterated from the
     // beginning again. prune offloads at that point.
     unsigned ignore_offloads = hash_table->get_num_nodes();
+    uint64_t skip_protos = 0;
+
+    assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
+
+    const uint64_t max_skip_protos = (1ULL << MAX_PROTOCOLS) - 1;
 
     {
         PacketTracerSuspend pt_susp;
         unsigned blocks = 0;
 
-        while ( hash_table->get_num_nodes() > max_cap and hash_table->get_num_nodes() > blocks )
+        while ( true )
         {
-            auto flow = static_cast<Flow*>(hash_table->lru_first());
-            assert(flow); // holds true because hash_table->get_count() > 0
-
-            if ( (save_me and flow == save_me) or flow->was_blocked() or
-                    (flow->is_suspended() and ignore_offloads) )
+            auto num_nodes = hash_table->get_num_nodes();
+            if ( num_nodes <= max_cap or num_nodes <= blocks or 
+                    ignore_offloads == 0 or skip_protos == max_skip_protos )
+                    break;
+            
+            for( uint8_t proto_idx = 0; proto_idx < MAX_PROTOCOLS; ++proto_idx )  
             {
-                // check for non-null save_me above to silence analyzer
-                // "called C++ object pointer is null" here
-                if ( flow->was_blocked() )
-                    ++blocks;
+                num_nodes = hash_table->get_num_nodes();
+                if ( num_nodes <= max_cap or num_nodes <= blocks )
+                    break;
+                
+                if ( skip_protos & (1ULL << proto_idx) ) 
+                    continue;
 
-                // FIXIT-M we should update last_data_seen upon touch to ensure
-                // the hash_table LRU list remains sorted by time
-                hash_table->lru_touch();
+                auto flow = static_cast<Flow*>(hash_table->lru_first(proto_idx));
+                if ( !flow )
+                {
+                    skip_protos |= (1ULL << proto_idx);
+                    continue;
+                }
+
+                if ( (save_me and flow == save_me) or flow->was_blocked() or 
+                        (flow->is_suspended() and ignore_offloads) )
+                {
+                    // check for non-null save_me above to silence analyzer
+                    // "called C++ object pointer is null" here
+                    if ( flow->was_blocked() )
+                        ++blocks;
+                    // FIXIT-M we should update last_data_seen upon touch to ensure
+                    // the hash_table LRU list remains sorted by time
+                    hash_table->lru_touch(proto_idx);
+                }
+                else
+                {
+                    flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
+                    if ( release(flow, PruneReason::EXCESS) )
+                        ++pruned;
+                }
+                if ( ignore_offloads > 0 )
+                    --ignore_offloads;
             }
-            else
-            {
-                flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
-                if ( release(flow, PruneReason::EXCESS) )
-                    ++pruned;
-            }
-            if ( ignore_offloads > 0 )
-                --ignore_offloads;
         }
 
-        if (!pruned and hash_table->get_num_nodes() > max_cap)
+        if ( !pruned and hash_table->get_num_nodes() > max_cap )
         {
             pruned += prune_multiple(PruneReason::EXCESS, true);
         }
@@ -356,15 +386,16 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
     return pruned;
 }
 
-bool FlowCache::prune_one(PruneReason reason, bool do_cleanup)
+bool FlowCache::prune_one(PruneReason reason, bool do_cleanup, uint8_t type)
 {
     // so we don't prune the current flow (assume current == MRU)
     if ( hash_table->get_num_nodes() <= 1 )
         return false;
 
     // ZHash returns in LRU order, which is updated per packet via find --> move_to_front call
-    auto flow = static_cast<Flow*>(hash_table->lru_first());
-    assert(flow);
+    auto flow = static_cast<Flow*>(hash_table->lru_first(type));
+    if( !flow )
+        return false;
 
     flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
     release(flow, reason, do_cleanup);
@@ -378,8 +409,29 @@ unsigned FlowCache::prune_multiple(PruneReason reason, bool do_cleanup)
     // so we don't prune the current flow (assume current == MRU)
     if ( hash_table->get_num_nodes() <= 1 )
         return 0;
+    
+    uint8_t proto = 0;
+    uint64_t skip_protos = 0;
 
-    for (pruned = 0; pruned < config.prune_flows && prune_one(reason, do_cleanup); pruned++);
+    assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
+
+    const uint64_t max_skip_protos = (1ULL << MAX_PROTOCOLS) - 1;
+
+    while ( pruned < config.prune_flows )
+    {
+        if ( (skip_protos & (1ULL << proto)) or !prune_one(reason, do_cleanup, proto) )
+        {
+
+            skip_protos |= (1ULL << proto);
+            if ( skip_protos == max_skip_protos )
+                break;
+        }
+        else
+            pruned++;
+       
+        if ( ++proto >= MAX_PROTOCOLS )
+            proto = 0;
+    }
 
     if ( PacketTracer::is_active() and pruned )
         PacketTracer::log("Flow: Pruned memcap %u flows\n", pruned);
@@ -392,37 +444,54 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
     ActiveSuspendContext act_susp(Active::ASP_TIMEOUT);
 
     unsigned retired = 0;
+    uint64_t skip_protos = 0;
 
+    assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
+
+    const uint64_t max_skip_protos = (1ULL << MAX_PROTOCOLS) - 1;
     {
         PacketTracerSuspend pt_susp;
 
-        auto flow = static_cast<Flow*>(hash_table->lru_current());
-
-        if ( !flow )
-            flow = static_cast<Flow*>(hash_table->lru_first());
-
-        while ( flow and (retired < num_flows) )
+        while ( retired < num_flows and skip_protos != max_skip_protos )
         {
-            if ( flow->is_hard_expiration() )
+            for( uint8_t proto_idx = 0; proto_idx < MAX_PROTOCOLS; ++proto_idx ) 
             {
-                if ( flow->expire_time > (uint64_t) thetime )
+                if( retired >= num_flows )
                     break;
+
+                if ( skip_protos & (1ULL << proto_idx) ) 
+                    continue;
+
+                auto flow = static_cast<Flow*>(hash_table->lru_current(proto_idx));
+                if ( !flow )
+                    flow = static_cast<Flow*>(hash_table->lru_first(proto_idx));
+                if ( !flow )
+                {
+                    skip_protos |= (1ULL << proto_idx);
+                    continue;
+                }
+
+                if ( flow->is_hard_expiration() )
+                {
+                    if ( flow->expire_time > static_cast<uint64_t>(thetime) )
+                    {
+                        skip_protos |= (1ULL << proto_idx);
+                        continue;
+                    }
+                }
+                else if ( flow->last_data_seen + flow->idle_timeout > thetime )
+                {
+                    skip_protos |= (1ULL << proto_idx);
+                    continue;
+                }
+
+                if ( HighAvailabilityManager::in_standby(flow) or flow->is_suspended() )
+                    continue;
+
+                flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
+                if ( release(flow, PruneReason::IDLE_PROTOCOL_TIMEOUT) )
+                    ++retired;
             }
-            else if ( flow->last_data_seen + flow->idle_timeout > thetime )
-                break;
-
-            if ( HighAvailabilityManager::in_standby(flow) or
-                    flow->is_suspended() )
-            {
-                flow = static_cast<Flow*>(hash_table->lru_next());
-                continue;
-            }
-
-            flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
-            if ( release(flow, PruneReason::IDLE_PROTOCOL_TIMEOUT) )
-                ++retired;
-
-            flow = static_cast<Flow*>(hash_table->lru_current());
         }
     }
 
@@ -434,39 +503,60 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
 
 unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, unsigned &deleted)
 {
-    unsigned flows_to_check = hash_table->get_num_nodes();
-    while ( num_to_delete && flows_to_check-- )
+    uint64_t skip_protos = 0;
+    uint64_t undeletable = 0;
+
+    assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
+
+    const uint64_t max_skip_protos = (1ULL << MAX_PROTOCOLS) - 1;
+
+    while ( num_to_delete and skip_protos != max_skip_protos and
+            undeletable < hash_table->get_num_nodes() )
     {
-        auto flow = static_cast<Flow*>(hash_table->lru_first());
-        assert(flow);
-        if ( (mode == ALLOWED_FLOWS_ONLY and (flow->was_blocked() || flow->is_suspended()))
-                or (mode == OFFLOADED_FLOWS_TOO and flow->was_blocked()) )
+        for( uint8_t proto_idx = 0; proto_idx < MAX_PROTOCOLS; ++proto_idx ) 
         {
-            hash_table->lru_touch();
-            continue;
+            if( num_to_delete == 0)
+                break;
+            
+            if ( skip_protos & (1ULL << proto_idx) )
+                continue;
+            
+            auto flow = static_cast<Flow*>(hash_table->lru_first(proto_idx));
+            if ( !flow )
+            {
+                skip_protos |= (1ULL << proto_idx);
+                continue;
+            }
+
+            if ( (mode == ALLOWED_FLOWS_ONLY and (flow->was_blocked() or flow->is_suspended()))
+                or (mode == OFFLOADED_FLOWS_TOO and flow->was_blocked()) )
+            {
+                undeletable++;
+                hash_table->lru_touch(proto_idx);
+                continue;
+            }
+
+            if ( (deleted & WDT_MASK) == 0 )
+                ThreadConfig::preemptive_kick();
+
+            unlink_uni(flow);
+
+            if ( flow->was_blocked() )
+                delete_stats.update(FlowDeleteState::BLOCKED);
+            else if ( flow->is_suspended() )
+                delete_stats.update(FlowDeleteState::OFFLOADED);
+            else
+                delete_stats.update(FlowDeleteState::ALLOWED);
+
+            flow->reset(true);
+            // Delete before removing the node, so that the key is valid until the flow is completely freed
+            delete flow;
+            // The flow should not be removed from the hash before reset
+            hash_table->remove(proto_idx);
+            ++deleted;
+            --num_to_delete;
         }
-
-        if ( (deleted & WDT_MASK) == 0 )
-            ThreadConfig::preemptive_kick();
-
-        unlink_uni(flow);
-
-        if ( flow->was_blocked() )
-            delete_stats.update(FlowDeleteState::BLOCKED);
-        else if ( flow->is_suspended() )
-            delete_stats.update(FlowDeleteState::OFFLOADED);
-        else
-            delete_stats.update(FlowDeleteState::ALLOWED);
-
-        flow->reset(true);
-        // Delete before removing the node, so that the key is valid until the flow is completely freed
-        delete flow;
-        //The flow should not be removed from the hash before reset
-        hash_table->remove();
-        ++deleted;
-        --num_to_delete;
     }
-
     return num_to_delete;
 }
 
@@ -496,15 +586,17 @@ unsigned FlowCache::purge()
     FlagContext<decltype(flags)>(flags, SESSION_CACHE_FLAG_PURGING);
 
     unsigned retired = 0;
-    while ( auto flow = static_cast<Flow*>(hash_table->lru_first()) )
-    {
-        retire(flow);
-        ++retired;
-    }
 
+    for( uint8_t proto_idx = 0; proto_idx < MAX_PROTOCOLS; ++proto_idx ) 
+    {
+        while ( auto flow = static_cast<Flow*>(hash_table->lru_first(proto_idx)) )
+        {
+            retire(flow);
+            ++retired;
+        }
+    }
     // Remove these here so alloc/dealloc counts are right when Memory::get_pegs is called
     delete_uni();
-
     return retired;
 }
 

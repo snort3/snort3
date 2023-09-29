@@ -18,3 +18,17 @@ For thread-safe shared caches:
 
 * lru_cache_shared: A thread-safe LRU map.
 
+09/25/2023
+
+A vector of pointers to HashLruCache objects, `vector<HashLruCache*>`, 
+has been introduced to manage multiple types of LRUs within xhash. 
+This enhancement facilitates more sophisticated handling of varied 
+data types within the same xhash. With this advancement, greater 
+control over data pruning in the LRU is achieved, depending on the 
+type of data. This feature is valuable when there's a necessity to 
+retain certain data in the LRU for durations longer or shorter than 
+other data. The utilization of this feature is optional. 
+During initialization, the number of LRUs to be created can be specified. 
+If not specified, a single LRU will be created by default.
+
+

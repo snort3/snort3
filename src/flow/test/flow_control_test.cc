@@ -77,7 +77,7 @@ unsigned FlowCache::get_flows_allocated() const { return 0; }
 Flow* FlowCache::find(const FlowKey*) { return nullptr; }
 Flow* FlowCache::allocate(const FlowKey*) { return nullptr; }
 void FlowCache::push(Flow*) { }
-bool FlowCache::prune_one(PruneReason, bool) { return true; }
+bool FlowCache::prune_one(PruneReason, bool, uint8_t) { return true; }
 unsigned FlowCache::prune_multiple(PruneReason , bool) { return 0; }
 unsigned FlowCache::delete_flows(unsigned) { return 0; }
 unsigned FlowCache::timeout(unsigned, time_t) { return 1; }

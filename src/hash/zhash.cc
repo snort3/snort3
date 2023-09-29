@@ -41,18 +41,19 @@ using namespace snort;
 //-------------------------------------------------------------------------
 
 
-ZHash::ZHash(int rows, int key_len, bool recycle)
-    : XHash(rows, key_len)
+ZHash::ZHash(int rows, int key_len, uint8_t lru_count, bool recycle)
+    : XHash(rows, key_len, lru_count)
 {
     initialize(new FlowHashKeyOps(nrows));
     anr_enabled = false;
     recycle_nodes = recycle;
 }
 
-void* ZHash::get(const void* key)
+void* ZHash::get(const void* key, uint8_t type)
 {
     assert(key);
-
+    assert(type < num_lru_caches);
+    
     int index;
     HashNode* node = find_node_row(key, index);
     if ( node )
@@ -65,19 +66,20 @@ void* ZHash::get(const void* key)
     memcpy(node->key, key, keysize);
     node->rindex = index;
     link_node(node);
-    lru_cache->insert(node);
+    lru_caches[type]->insert(node);
     num_nodes++;
     return node->data;
 }
 
-void* ZHash::remove()
+void* ZHash::remove(uint8_t type)
 {
-    HashNode* node = lru_cache->get_current_node();
+    assert(type < num_lru_caches);
+    HashNode* node = lru_caches[type]->get_current_node();
     assert(node);
     void* pv = node->data;
 
     unlink_node(node);
-    lru_cache->remove_node(node);
+    lru_caches[type]->remove_node(node);
     num_nodes--;
     mem_allocator->free(node);
     return pv;
@@ -104,27 +106,31 @@ void* ZHash::pop()
     return pv;
 }
 
-void* ZHash::lru_first()
+void* ZHash::lru_first(uint8_t type)
 {
-    HashNode* node = lru_cache->get_lru_node();
+    assert(type < num_lru_caches);
+    HashNode* node = lru_caches[type]->get_lru_node();
     return node ? node->data : nullptr;
 }
 
-void* ZHash::lru_next()
+void* ZHash::lru_next(uint8_t type)
 {
-    HashNode* node = lru_cache->get_next_lru_node();
+    assert(type < num_lru_caches);
+    HashNode* node = lru_caches[type]->get_next_lru_node();
     return node ? node->data : nullptr;
 }
 
-void* ZHash::lru_current()
+void* ZHash::lru_current(uint8_t type)
 {
-    HashNode* node = lru_cache->get_current_node();
+    assert(type < num_lru_caches);
+    HashNode* node = lru_caches[type]->get_current_node();
     return node ? node->data : nullptr;
 }
 
-void ZHash::lru_touch()
+void ZHash::lru_touch(uint8_t type)
 {
-    HashNode* node = lru_cache->get_current_node();
+    assert(type < num_lru_caches);
+    HashNode* node = lru_caches[type]->get_current_node();
     assert(node);
-    lru_cache->touch(node);
+    lru_caches[type]->touch(node);
 }

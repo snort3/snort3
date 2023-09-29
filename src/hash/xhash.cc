@@ -108,7 +108,11 @@ void XHash::initialize(HashKeyOperations* hk_ops)
 {
     hashkey_ops = hk_ops;
     table = (HashNode**)snort_calloc(sizeof(HashNode*) * nrows);
-    lru_cache = new HashLruCache();
+
+    lru_caches.resize(num_lru_caches);
+    for (size_t i = 0; i < num_lru_caches; ++i)
+        lru_caches[i] = new HashLruCache();
+    
     mem_allocator = new MemCapAllocator(mem_cap, sizeof(HashNode) + keysize + datasize);
 }
 
@@ -125,16 +129,17 @@ void XHash::set_number_of_rows (int rows)
         nrows = -rows;
 }
 
-XHash::XHash(int rows, int keysize)
-    : keysize(keysize)
+XHash::XHash(int rows, int keysize, uint8_t num_lru_caches)
+    : keysize(keysize), num_lru_caches(num_lru_caches)
 
 {
     set_number_of_rows(rows);
 }
 
-XHash::XHash(int rows, int keysize, int datasize, unsigned long memcap)
-    : keysize(keysize), datasize(datasize), mem_cap(memcap)
+XHash::XHash(int rows, int keysize, int datasize, unsigned long memcap, uint8_t num_lru_caches)
+    : keysize(keysize), num_lru_caches(num_lru_caches), datasize(datasize), mem_cap(memcap)
 {
+    assert(num_lru_caches > 0);
     set_number_of_rows(rows);
     initialize();
 }
@@ -157,7 +162,10 @@ XHash::~XHash()
 
     purge_free_list();
     delete hashkey_ops;
-    delete lru_cache;
+    for (auto lru : lru_caches)
+    {
+        delete lru;
+    }
     delete mem_allocator;
 }
 
@@ -179,8 +187,10 @@ void XHash::delete_hash_table()
     table = nullptr;
 }
 
-void XHash::initialize_node(HashNode *hnode, const void *key, void *data, int index)
+void XHash::initialize_node(HashNode *hnode, const void *key, void *data, int index, uint8_t type)
 {
+    assert(type < num_lru_caches);
+
     hnode->key = (char*) (hnode) + sizeof(HashNode);
     memcpy(hnode->key, key, keysize);
     if ( datasize )
@@ -194,7 +204,7 @@ void XHash::initialize_node(HashNode *hnode, const void *key, void *data, int in
 
     hnode->rindex = index;
     link_node(hnode);
-    lru_cache->insert(hnode);
+    lru_caches[type]->insert(hnode);
 }
 
 HashNode* XHash::allocate_node(const void* key, void* data, int index)
@@ -295,29 +305,31 @@ void XHash::update_cursor()
     }
 }
 
-void* XHash::get_user_data(const void* key)
+void* XHash::get_user_data(const void* key, uint8_t type)
 {
     assert(key);
+    assert(type < num_lru_caches);
 
     int rindex = 0;
-    HashNode* hnode = find_node_row(key, rindex);
+    HashNode* hnode = find_node_row(key, rindex, type);
     return ( hnode ) ? hnode->data : nullptr;
 }
 
-void XHash::release()
+void XHash::release(uint8_t type)
 {
-    HashNode* node = lru_cache->get_current_node();
+    assert(type < num_lru_caches);
+    HashNode* node = lru_caches[type]->get_current_node();
     assert(node);
     release_node(node);
 }
-
-int XHash::release_node(HashNode* hnode)
+int XHash::release_node(HashNode* hnode, uint8_t type)
 {
     assert(hnode);
+    assert(type < num_lru_caches);
 
     free_user_data(hnode);
     unlink_node(hnode);
-    lru_cache->remove_node(hnode);
+    lru_caches[type]->remove_node(hnode);
     num_nodes--;
 
     if ( recycle_nodes )
@@ -334,9 +346,10 @@ int XHash::release_node(HashNode* hnode)
     return HASH_OK;
 }
 
-int XHash::release_node(const void* key)
+int XHash::release_node(const void* key, uint8_t type)
 {
     assert(key);
+    assert(type < num_lru_caches);
 
     unsigned hashkey = hashkey_ops->do_hash((const unsigned char*)key, keysize);
 
@@ -344,7 +357,7 @@ int XHash::release_node(const void* key)
     for (HashNode* hnode = table[index]; hnode; hnode = hnode->next)
     {
         if ( hashkey_ops->key_compare(hnode->key, key, keysize) )
-            return release_node(hnode);
+            return release_node(hnode, type);
     }
 
     return HASH_NOT_FOUND;
@@ -383,19 +396,20 @@ void XHash::unlink_node(HashNode* hnode)
     }
 }
 
-void XHash::move_to_front(HashNode* node)
+void XHash::move_to_front(HashNode* node,uint8_t type)
 {
+    assert(type < num_lru_caches);
     if ( table[node->rindex] != node )
     {
         unlink_node(node);
         link_node(node);
     }
-
-    lru_cache->touch(node);
+    lru_caches[type]->touch(node);
 }
 
-HashNode* XHash::find_node_row(const void* key, int& rindex)
+HashNode* XHash::find_node_row(const void* key, int& rindex, uint8_t type)
 {
+    assert(type < num_lru_caches);
     unsigned hashkey = hashkey_ops->do_hash((const unsigned char*)key, keysize);
 
     /* Modulus is slow. Switched to a table size that is a power of 2. */
@@ -404,7 +418,7 @@ HashNode* XHash::find_node_row(const void* key, int& rindex)
     {
         if ( hashkey_ops->key_compare(hnode->key, key, keysize) )
         {
-            move_to_front(hnode);
+            move_to_front(hnode,type);
             return hnode;
         }
     }
@@ -485,24 +499,27 @@ void XHash::clear_hash()
     cursor = nullptr;
 }
 
-void* XHash::get_mru_user_data()
+void* XHash::get_mru_user_data(uint8_t type)
 {
-    return lru_cache->get_mru_user_data();
+    assert(type < num_lru_caches);
+    return lru_caches[type]->get_mru_user_data();
 }
 
-void* XHash::get_lru_user_data()
+void* XHash::get_lru_user_data(uint8_t type)
 {
-    return lru_cache->get_lru_user_data();
+    assert(type < num_lru_caches);
+    return lru_caches[type]->get_lru_user_data();
 }
 
-HashNode* XHash::release_lru_node()
+HashNode* XHash::release_lru_node(uint8_t type)
 {
-    HashNode* hnode = lru_cache->get_lru_node();
+    assert(type < num_lru_caches);
+    HashNode* hnode = lru_caches[type]->get_lru_node();
     while ( hnode )
     {
         if ( is_node_recovery_ok(hnode) )
         {
-            lru_cache->remove_node(hnode);
+            lru_caches[type]->remove_node(hnode);
             free_user_data(hnode);
             unlink_node(hnode);
             --num_nodes;
@@ -510,14 +527,16 @@ HashNode* XHash::release_lru_node()
             break;
         }
         else
-            hnode = lru_cache->get_next_lru_node ();
+            hnode = lru_caches[type]->get_next_lru_node ();
     }
     return hnode;
 }
 
-bool XHash::delete_lru_node()
+bool XHash::delete_lru_node(uint8_t type)
 {
-    if ( HashNode* hnode = lru_cache->remove_lru_node() )
+    assert(type < num_lru_caches);
+
+    if ( HashNode* hnode = lru_caches[type]->remove_lru_node() )
     {
         unlink_node(hnode);
         free_user_data(hnode);

@@ -58,7 +58,7 @@ public:
 
     unsigned prune_idle(uint32_t thetime, const snort::Flow* save_me);
     unsigned prune_excess(const snort::Flow* save_me);
-    bool prune_one(PruneReason, bool do_cleanup);
+    bool prune_one(PruneReason, bool do_cleanup, uint8_t type = 0);
     unsigned timeout(unsigned num_flows, time_t cur_time);
     unsigned delete_flows(unsigned num_to_delete);
     unsigned prune_multiple(PruneReason, bool do_cleanup);

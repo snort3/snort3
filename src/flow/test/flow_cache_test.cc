@@ -94,7 +94,7 @@ ExpectCache::ExpectCache(uint32_t) { }
 bool ExpectCache::check(Packet*, Flow*) { return true; }
 bool ExpectCache::is_expected(Packet*) { return true; }
 Flow* HighAvailabilityManager::import(Packet&, FlowKey&) { return nullptr; }
-bool HighAvailabilityManager::in_standby(Flow*) { return true; }
+bool HighAvailabilityManager::in_standby(Flow*) { return false; }
 SfIpRet SfIp::set(void const*, int) { return SFIP_SUCCESS; }
 void snort::trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) {}
 uint8_t snort::TraceApi::get_constraints_generation() { return 0; }
@@ -259,6 +259,82 @@ TEST(flow_prune, prune_all_blocked_flows)
     CHECK(cache->get_count() == fcg.max_flows);
     CHECK(cache->delete_flows(3) == 3);
     CHECK(cache->get_count() == 0);
+
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    delete cache;
+}
+
+
+// prune base on the proto type of the flow
+TEST(flow_prune, prune_proto)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 5;
+    fcg.prune_flows = 3;
+    
+    for(uint8_t i = to_utype(PktType::NONE); i <= to_utype(PktType::MAX); i++)
+        fcg.proto[i].nominal_timeout = 5;
+    
+    FlowCache *cache = new FlowCache(fcg);
+    int port = 1;
+
+    for ( unsigned i = 0; i < 2; i++ )
+    {
+        FlowKey flow_key;
+        flow_key.port_l = port++;
+        flow_key.pkt_type = PktType::UDP;
+        cache->allocate(&flow_key);
+    }
+
+    CHECK (cache->get_count() == 2);
+
+    //pruning should not happen for all other proto except UDP
+    for(uint8_t i = 0; i < to_utype(PktType::MAX) - 1; i++)
+    {
+        if (i == to_utype(PktType::UDP))
+            continue;
+        CHECK(cache->prune_one(PruneReason::NONE, true, i) == false);
+    }
+    
+    //pruning should happen for UDP
+    CHECK(cache->prune_one(PruneReason::NONE, true, to_utype(PktType::UDP)) == true);
+
+    FlowKey flow_key2;
+    flow_key2.port_l = port++;
+    flow_key2.pkt_type = PktType::ICMP;
+    cache->allocate(&flow_key2);
+
+    CHECK (cache->get_count() == 2);
+
+    //target flow is ICMP
+    CHECK(cache->prune_multiple(PruneReason::NONE, true) == 1);
+
+    //adding UDP flow it will become LRU
+    for ( unsigned i = 0; i < 2; i++ )
+    {
+        FlowKey flow_key;
+        flow_key.port_l = port++;
+        flow_key.pkt_type = PktType::UDP;
+        Flow* flow = cache->allocate(&flow_key);
+        flow->last_data_seen = 2+i;
+    }
+
+    //adding TCP flow it will become MRU and put UDP flow to LRU
+    for ( unsigned i = 0; i < 3; i++ )
+    {
+        FlowKey flow_key;
+        flow_key.port_l = port++;
+        flow_key.pkt_type = PktType::TCP;
+        Flow* flow = cache->allocate(&flow_key);
+        flow->last_data_seen = 4+i; //this will force to timeout later than UDP
+    }
+
+    //timeout should happen for 2 UDP and 1 TCP flow
+    CHECK( 3 == cache->timeout(5,9));
+
+    //target flow UDP flow and it will fail because no UDP flow is present
+    CHECK(cache->prune_one(PruneReason::NONE, true, to_utype(PktType::UDP)) == false);
 
     cache->purge();
     CHECK(cache->get_flows_allocated() == 0);

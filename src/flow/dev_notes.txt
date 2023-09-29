@@ -69,3 +69,20 @@ The HA subsystem implements these classes:
     and is handled as a special case.  Client 0 is the fundamental session HA
     state sync functionality.  Other clients are optional.
 
+
+09/25/2023
+In response to the need for more nuanced management of different protocol 
+types within the `flow_cache`, we've leveraged the newly added feature in 
+xhash. This enhancement includes the introduction of Protocol-Based 
+Least Recently Used (LRU) caches, which substantially improves the handling 
+of multiple protocol types in the cache.
+With this implementation, during various pruning sessions (idle, 
+excess, and timeout etc), we've adopted a round-robin method to cycle through 
+the LRU lists designated for each protocol type. This methodology ensures 
+that every protocol, irrespective of its inherent timeout characteristics, 
+is given an equal opportunity for pruning and retirement from the cache.
+This adjustment to `flow_cache` not only addresses the previously observed 
+bias during pruning sessions, especially concerning UDP flows, 
+but lays down a framework for more advanced and controlled data management 
+within the cache moving forward.
+

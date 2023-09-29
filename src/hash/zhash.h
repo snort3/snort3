@@ -27,7 +27,7 @@
 class ZHash : public snort::XHash
 {
 public:
-    ZHash(int nrows, int keysize, bool recycle = true);
+    ZHash(int nrows, int keysize, uint8_t lru_count = 1, bool recycle = true);
 
     ZHash(const ZHash&) = delete;
     ZHash& operator=(const ZHash&) = delete;
@@ -35,13 +35,13 @@ public:
     void* push(void* p);
     void* pop();
 
-    void* get(const void* key);
-    void* remove();
+    void* get(const void* key, uint8_t type = 0);
+    void* remove(uint8_t type = 0);
 
-    void* lru_first();
-    void* lru_next();
-    void* lru_current();
-    void lru_touch();
+    void* lru_first(uint8_t type = 0);
+    void* lru_next(uint8_t type = 0);
+    void* lru_current(uint8_t type = 0);
+    void lru_touch(uint8_t type = 0);
 };
 
 #endif

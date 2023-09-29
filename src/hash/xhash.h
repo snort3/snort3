@@ -24,6 +24,7 @@
 
 // generic hash table - stores and maps key + data pairs
 // (supports memcap and automatic memory recovery when out of memory)
+#include <vector>
 
 #include "framework/counts.h"
 #include "main/snort_types.h"
@@ -48,8 +49,8 @@ struct XHashStats
 class SO_PUBLIC XHash
 {
 public:
-    XHash(int rows, int keysize);
-    XHash(int rows, int keysize, int datasize, unsigned long memcap);
+    XHash(int rows, int keysize, uint8_t num_lru_caches = 1);
+    XHash(int rows, int keysize, int datasize, unsigned long memcap, uint8_t num_lru_caches = 1);
     virtual ~XHash();
 
     int insert(const void* key, void* data);
@@ -57,13 +58,13 @@ public:
     HashNode* find_first_node();
     HashNode* find_next_node();
     void* get_user_data();
-    void* get_user_data(const void* key);
-    void release();
-    int release_node(const void* key);
-    int release_node(HashNode* node);
-    void* get_mru_user_data();
-    void* get_lru_user_data();
-    bool delete_lru_node();
+    void* get_user_data(const void* key, uint8_t type = 0);
+    void release(uint8_t type = 0);
+    int release_node(const void* key, u_int8_t type = 0);
+    int release_node(HashNode* node, uint8_t type = 0);
+    void* get_mru_user_data(uint8_t type = 0);
+    void* get_lru_user_data(uint8_t type = 0);
+    bool delete_lru_node(uint8_t type = 0);
     void clear_hash();
     bool full() const { return !fhead; }
 
@@ -95,9 +96,9 @@ protected:
     void initialize(HashKeyOperations*);
     void initialize();
 
-    void initialize_node (HashNode*, const void* key, void* data, int index);
+    void initialize_node(HashNode*, const void* key, void* data, int index, uint8_t type = 0);
     HashNode* allocate_node(const void* key, void* data, int index);
-    HashNode* find_node_row(const void* key, int& rindex);
+    HashNode* find_node_row(const void* key, int& rindex, uint8_t type = 0);
     void link_node(HashNode*);
     void unlink_node(HashNode*);
     bool delete_a_node();
@@ -112,13 +113,15 @@ protected:
     { }
 
     MemCapAllocator* mem_allocator = nullptr;
-    HashLruCache* lru_cache = nullptr;
+    std::vector<HashLruCache*> lru_caches;  // Multiple LRU caches
+
     unsigned nrows = 0;
     unsigned keysize = 0;
     unsigned num_nodes = 0;
     unsigned num_free_nodes = 0;
     bool recycle_nodes = true;
     bool anr_enabled = true;
+    uint8_t num_lru_caches = 1;
 
 private:
     HashNode** table = nullptr;
@@ -132,9 +135,9 @@ private:
     XHashStats stats;
 
     void set_number_of_rows(int nrows);
-    void move_to_front(HashNode*);
+    void move_to_front(HashNode*, uint8_t type = 0);
     bool delete_free_node();
-    HashNode* release_lru_node();
+    HashNode* release_lru_node(uint8_t type = 0);
     void update_cursor();
     void purge_free_list();
 };
