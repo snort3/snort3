@@ -126,6 +126,7 @@ public:
     uint16_t get_service_port() const;
     const AppIdDnsSession* get_dns_session() const;
     const AppIdHttpSession* get_http_session(uint32_t stream_index = 0) const;
+    const AppIdHttpSession* get_matching_http_session(int64_t stream_id) const;
     const char* get_tls_host() const;
     bool is_http_inspection_done() const;
     const char* get_netbios_name() const;
