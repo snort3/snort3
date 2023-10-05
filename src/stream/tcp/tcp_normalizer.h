@@ -76,6 +76,7 @@ public:
     virtual void ecn_stripper(State&, TcpSegmentDescriptor&);
     virtual uint32_t get_zwp_seq(State&);
     virtual uint32_t get_stream_window(State&, TcpSegmentDescriptor&);
+    virtual uint32_t data_inside_window(State&, TcpSegmentDescriptor&);
     virtual uint32_t get_tcp_timestamp(State&, TcpSegmentDescriptor&, bool strip);
     virtual int handle_paws(State&, TcpSegmentDescriptor&);
     virtual bool validate_rst(State&, TcpSegmentDescriptor&);

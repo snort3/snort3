@@ -80,6 +80,9 @@ public:
     uint32_t get_stream_window(TcpSegmentDescriptor& tsd)
     { return norm->get_stream_window(tns, tsd); }
 
+    uint32_t data_inside_window(TcpSegmentDescriptor& tsd)
+    { return norm->data_inside_window(tns, tsd);  }
+
     uint32_t get_tcp_timestamp(TcpSegmentDescriptor& tsd, bool strip)
     { return norm->get_tcp_timestamp(tns, tsd, strip); }
 

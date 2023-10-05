@@ -170,8 +170,6 @@ uint32_t TcpNormalizer::get_zwp_seq(
 uint32_t TcpNormalizer::get_stream_window(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
-    int32_t window;
-
     if ( tns.tracker->get_snd_wnd() )
     {
         if ( !(tns.session->flow->session_state & STREAM_STATE_MIDSTREAM ) )
@@ -181,11 +179,17 @@ uint32_t TcpNormalizer::get_stream_window(
         return tns.tracker->get_snd_wnd();
 
     // ensure the data is in the window
-    window = tsd.get_end_seq() - tns.tracker->r_win_base;
-    if ( window < 0 )
-        window = 0;
+    return data_inside_window(tns, tsd);
+}
 
-    return (uint32_t)window;
+uint32_t TcpNormalizer::data_inside_window(
+    TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
+{
+    int32_t window = tsd.get_end_seq() - tns.tracker->r_win_base;
+    if ( window < 0 )
+        return 0;
+
+    return (uint32_t) window;
 }
 
 uint32_t TcpNormalizer::get_tcp_timestamp(

@@ -465,7 +465,7 @@ void SegmentOverlapEditor::full_right_overlap_os5(TcpReassemblerState& trs)
 bool SegmentOverlapEditor::zwp_data_mismatch(
     TcpReassemblerState& trs, TcpSegmentDescriptor& tsd, uint32_t overlap)
 {
-    if ( overlap == ZERO_WIN_PROBE_LEN
+    if ( overlap == MAX_ZERO_WIN_PROBE_LEN
         and trs.sos.right->i_seq == trs.tracker->normalizer.get_zwp_seq()
         and (trs.sos.right->data[0] != tsd.get_pkt()->data[0]) )
     {
