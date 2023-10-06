@@ -44,7 +44,7 @@ LiteralSearch::Handle* LiteralSearch::setup() { return nullptr; }
 void LiteralSearch::cleanup(LiteralSearch::Handle*) { }
 LiteralSearch* LiteralSearch::instantiate(LiteralSearch::Handle*, const uint8_t*, unsigned, bool,
     bool) { return nullptr; }
-void UtfDecodeSession::set_decode_utf_state_charset(CharsetCode) { }
+void UtfDecodeSession::set_decode_utf_state_charset(CharsetCode, CharsetSrc) { }
 bool UtfDecodeSession::decode_utf(unsigned char const*, unsigned int, unsigned char*, unsigned int,
     int*) { return true; }
 UtfDecodeSession::UtfDecodeSession() { }

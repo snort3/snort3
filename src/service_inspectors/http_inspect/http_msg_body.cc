@@ -328,40 +328,32 @@ void HttpMsgBody::analyze()
 
 void HttpMsgBody::do_utf_decoding(const Field& input, Field& output)
 {
-    if ((session_data->utf_state[source_id] == nullptr) || (input.length() == 0))
+    auto ctx = session_data->utf_state[source_id];
+
+    if ((ctx == nullptr) || (input.length() <= 0) || !ctx->is_utf_encoding_present())
     {
         output.set(input);
         return;
     }
 
-    if (session_data->utf_state[source_id]->is_utf_encoding_present())
-    {
-        int bytes_copied;
-        bool decoded;
-        uint8_t* buffer = new uint8_t[input.length()];
-        decoded = session_data->utf_state[source_id]->decode_utf(
-            input.start(), input.length(), buffer, input.length(), &bytes_copied);
+    int bytes_copied;
+    uint8_t* buffer = new uint8_t[input.length()];
 
-        if (!decoded)
-        {
-            delete[] buffer;
-            output.set(input);
-            add_infraction(INF_UTF_NORM_FAIL);
-            create_event(EVENT_UTF_NORM_FAIL);
-        }
-        else if (bytes_copied > 0)
-        {
-            output.set(bytes_copied, buffer, true);
-        }
-        else
-        {
-            delete[] buffer;
-            output.set(input);
-        }
+    if (!ctx->decode_utf(input.start(), input.length(), buffer, input.length(), &bytes_copied))
+    {
+        add_infraction(INF_UTF_NORM_FAIL);
+        create_event(EVENT_UTF_NORM_FAIL);
+        if (CHARSET_SET_BY_GUESS == ctx->get_decode_utf_charset_src())
+            bytes_copied = 0;
     }
 
+    if (bytes_copied > 0)
+        output.set(bytes_copied, buffer, true);
     else
+    {
+        delete[] buffer;
         output.set(input);
+    }
 }
 
 void HttpMsgBody::get_ole_data()

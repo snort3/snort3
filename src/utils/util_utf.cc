@@ -49,18 +49,25 @@ void UtfDecodeSession::init_decode_utf_state()
 {
     dstate.state = DSTATE_FIRST;
     dstate.charset = CHARSET_DEFAULT;
+    dstate.charset_src = CHARSET_SET_BY_GUESS;
 }
 
 /* setters & getters */
-void UtfDecodeSession::set_decode_utf_state_charset(CharsetCode charset)
+void UtfDecodeSession::set_decode_utf_state_charset(CharsetCode charset, CharsetSrc src)
 {
     dstate.state = DSTATE_FIRST;
     dstate.charset = charset;
+    dstate.charset_src = src;
 }
 
 CharsetCode UtfDecodeSession::get_decode_utf_state_charset()
 {
     return dstate.charset;
+}
+
+CharsetSrc UtfDecodeSession::get_decode_utf_charset_src()
+{
+    return dstate.charset_src;
 }
 
 bool UtfDecodeSession::is_utf_encoding_present()
@@ -252,76 +259,79 @@ bool UtfDecodeSession::DecodeUTF32BE(const uint8_t* src, unsigned int src_len, u
 
 void UtfDecodeSession::determine_charset(const uint8_t** src, unsigned int* src_len)
 {
-    CharsetCode charset;
-    if (dstate.charset == CHARSET_UNKNOWN)
+    if (dstate.charset != CHARSET_UNKNOWN)
+        return;
+
+    CharsetCode charset = CHARSET_DEFAULT;
+    CharsetSrc charset_src = CHARSET_SET_BY_GUESS;
+
+    if (*src_len < 4)
     {
-        /* Got a text content type but no charset.
-         * Look for potential BOM (Byte Order Mark) */
-        if (*src_len >= 4)
-        {
-            uint8_t size = 0;
-
-            if (!memcmp(*src, "\x00\x00\xFE\xFF", 4))
-            {
-                charset = CHARSET_UTF32BE;
-                size = 4;
-            }
-            else if (!memcmp(*src, "\xFF\xFE\x00\x00", 4))
-            {
-                charset = CHARSET_UTF32LE;
-                size = 4;
-            }
-            else if (!memcmp(*src, "\xFE\xFF", 2))
-            {
-                charset = CHARSET_UTF16BE;
-                size = 2;
-            }
-            else if (!memcmp(*src, "\xFF\xFE", 2))
-            {
-                charset = CHARSET_UTF16LE;
-                size = 2;
-            }
-            //  BOM (Byte Order Mark) was missing. Try to guess the encoding.
-            else if (((*src)[0] == '\0') && ((*src)[2] == '\0') && ((*src)[3] != '\0'))
-            {
-                if ((*src)[1] != '\0')
-                    charset = CHARSET_UTF16BE;  // \0C\0C
-                else
-                    charset = CHARSET_UTF32BE;  // \0\0\0C
-            }
-            else if (((*src)[0] != '\0') && ((*src)[1] == '\0') && ((*src)[3] == '\0'))
-            {
-                if ((*src)[2] != '\0')
-                    charset = CHARSET_UTF16LE;  // C\0C\0
-                else
-                    charset = CHARSET_UTF32LE;  // C\0\0\0
-            }
-            else
-            {
-                // NOTE: The UTF-8 BOM (Byte Order Mark) does not match the above cases, so we end
-                // up here when parsing UTF-8. That works out for the moment because the first 128
-                // characters of UTF-8 are identical to ASCII. We may want to handle other UTF-8
-                // characters beyond 0x7f in the future.
-
-                charset = CHARSET_DEFAULT; // ensure we don't try again
-            }
-
-            // FIXIT-M We are not currently handling the case where some characters are not ASCII
-            // and some are ASCII. This is a problem because some UTF-16 characters have no NUL
-            // bytes (so won't be identified as UTF-16.)
-
-            // FIXIT-L We also do not handle multiple levels of encoding (where unicode becomes
-            // %u0020 for example).
-
-            *src += size;
-            *src_len -= size;
-        }
-        else
-        {
-            charset = CHARSET_DEFAULT; // ensure we don't try again
-        }
-        set_decode_utf_state_charset(charset);
+        set_decode_utf_state_charset(charset, charset_src);
+        return;
     }
+
+    /* Got a text content type but no charset.
+     * Look for potential BOM (Byte Order Mark) */
+    uint8_t size = 0;
+
+    if (!memcmp(*src, "\x00\x00\xFE\xFF", 4))
+    {
+        charset = CHARSET_UTF32BE;
+        size = 4;
+    }
+    else if (!memcmp(*src, "\xFF\xFE\x00\x00", 4))
+    {
+        charset = CHARSET_UTF32LE;
+        size = 4;
+    }
+    else if (!memcmp(*src, "\xFE\xFF", 2))
+    {
+        charset = CHARSET_UTF16BE;
+        size = 2;
+    }
+    else if (!memcmp(*src, "\xFF\xFE", 2))
+    {
+        charset = CHARSET_UTF16LE;
+        size = 2;
+    }
+
+    // If BOM (Byte Order Mark) is missing try to guess the encoding.
+    if (charset != CHARSET_DEFAULT)
+        charset_src = CHARSET_SET_BY_BOM;
+    else if (((*src)[0] == '\0') && ((*src)[2] == '\0') && ((*src)[3] != '\0'))
+    {
+        if ((*src)[1] != '\0')
+            charset = CHARSET_UTF16BE;  // \0C\0C
+        else
+            charset = CHARSET_UTF32BE;  // \0\0\0C
+    }
+    else if (((*src)[0] != '\0') && ((*src)[1] == '\0') && ((*src)[3] == '\0'))
+    {
+        if ((*src)[2] != '\0')
+            charset = CHARSET_UTF16LE;  // C\0C\0
+        else
+            charset = CHARSET_UTF32LE;  // C\0\0\0
+    }
+    else
+    {
+        // NOTE: The UTF-8 BOM (Byte Order Mark) does not match the above cases, so we end
+        // up here when parsing UTF-8. That works out for the moment because the first 128
+        // characters of UTF-8 are identical to ASCII. We may want to handle other UTF-8
+        // characters beyond 0x7f in the future.
+    }
+
+    // FIXIT-M We are not currently handling the case where some characters are not ASCII
+    // and some are ASCII. This is a problem because some UTF-16 characters have no NUL
+    // bytes (so won't be identified as UTF-16.)
+
+    // FIXIT-L We also do not handle multiple levels of encoding (where unicode becomes
+    // %u0020 for example).
+
+    *src += size;
+    *src_len -= size;
+
+    set_decode_utf_state_charset(charset, charset_src);
 }
 
 /* Wrapper function for DecodeUTF{16,32}{LE,BE} */

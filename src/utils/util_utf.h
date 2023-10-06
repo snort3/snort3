@@ -38,6 +38,14 @@ enum CharsetCode
     CHARSET_UNKNOWN
 };
 
+// How character set was set.
+enum CharsetSrc
+{
+    CHARSET_SET_BY_APP=0,
+    CHARSET_SET_BY_BOM,
+    CHARSET_SET_BY_GUESS
+};
+
 // Since payloads don't have to end on 2/4-byte boundaries, callers to
 // DecodeUTF are responsible for keeping a decode_utf_state_t. This carries
 // state between subsequent calls.
@@ -45,6 +53,7 @@ struct decode_utf_state_t
 {
     int state;
     CharsetCode charset;
+    CharsetSrc charset_src;
 };
 
 namespace snort
@@ -55,8 +64,9 @@ public:
     UtfDecodeSession();
     virtual ~UtfDecodeSession() = default;
     void init_decode_utf_state();
-    void set_decode_utf_state_charset(CharsetCode charset);
+    void set_decode_utf_state_charset(CharsetCode charset, CharsetSrc src = CHARSET_SET_BY_APP);
     CharsetCode get_decode_utf_state_charset();
+    CharsetSrc get_decode_utf_charset_src();
     bool is_utf_encoding_present();
     bool decode_utf(const uint8_t* src, unsigned int src_len, uint8_t* dst, unsigned int dst_len,
         int* bytes_copied);
