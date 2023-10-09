@@ -226,12 +226,24 @@ static void print_backtrace(SigSafePrinter& ssp)
 
         ssp.printf("  #%u 0x%x", frame_num, pc);
 
-        char sym[256];
+        char sym[1024];
         unw_word_t offset;
-        if ((ret = unw_get_proc_name(&cursor, sym, sizeof(sym), &offset)) == 0)
-            ssp.printf(" in %s+0x%x", sym, offset);
-        else
-        	ssp.printf(" unw_get_proc_name failed: %s (%d)", unw_strerror(ret), ret);
+        ret = unw_get_proc_name(&cursor, sym, sizeof(sym), &offset);
+        switch (-ret)
+        {
+            case 0:
+                // fallthrough
+            case UNW_ENOMEM:
+                ssp.printf(" in %s+0x%x", sym, offset);
+                break;
+            case UNW_ENOINFO:
+                // fallthrough
+            case UNW_EUNSPEC:
+                // fallthrough
+            default:
+                ssp.printf(" unw_get_proc_name failed: %s (%d)", unw_strerror(ret), ret);
+                break;
+        }
 
         Dl_info dlinfo;
         if (dladdr((void *)(uintptr_t)(pip.start_ip + offset), &dlinfo)
