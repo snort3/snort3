@@ -35,6 +35,7 @@
 using namespace snort;
 
 std::vector<std::string> ControlConn::log_exclusion_list;
+unsigned ControlConn::pending_cmds_count = 0;
 
 ControlConn* ControlConn::query_from_lua(const lua_State* L)
 {
@@ -66,6 +67,9 @@ ControlConn::~ControlConn()
 
 void ControlConn::shutdown()
 {
+    if (blocked)
+        blocked = false;
+
     if (is_closed())
         return;
     if (!local)
@@ -168,6 +172,8 @@ int ControlConn::execute_commands()
     while (!is_closed() && !blocked && !pending_commands.empty())
     {
         const std::string& command = pending_commands.front();
+        if (pending_cmds_count && !ModuleManager::is_parallel_cmd(command))
+            break;
         std::string rsp;
         shell->execute(command.c_str(), rsp);
         if (!rsp.empty())

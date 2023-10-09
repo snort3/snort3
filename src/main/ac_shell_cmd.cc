@@ -33,6 +33,7 @@ ACShellCmd::ACShellCmd(ControlConn* conn, AnalyzerCommand* ac) : AnalyzerCommand
 
     if (ctrlcon)
         ctrlcon->block();
+    ControlConn::increment_pending_cmds_count();
 }
 
 bool ACShellCmd::execute(Analyzer& analyzer, void** state)
@@ -44,6 +45,7 @@ bool ACShellCmd::execute(Analyzer& analyzer, void** state)
 ACShellCmd::~ACShellCmd()
 {
     delete ac;
+    ControlConn::decrement_pending_cmds_count();
 
     if (ctrlcon)
     {

@@ -49,7 +49,6 @@ public:
     void unblock();
     void remove();
     bool show_prompt();
-
     bool is_blocked() const { return blocked; }
     bool is_closed() const { return (fd == -1); }
     bool is_removed() const { return removed; }
@@ -70,6 +69,8 @@ public:
     SO_PUBLIC static ControlConn* query_from_lua(const lua_State*);
 
     static void log_command(const std::string& module, bool log);
+    static unsigned increment_pending_cmds_count() { return ++pending_cmds_count; }
+    static unsigned decrement_pending_cmds_count() { return --pending_cmds_count; }
 
 private:
     void touch();
@@ -81,11 +82,12 @@ private:
     class Shell *shell;
     int fd;
     bool local = false;
-    bool blocked = false;
+    bool blocked = false; //block any new commands from executing before current command in control connection is complete
     bool removed = false;
     time_t touched;
 
     static std::vector<std::string> log_exclusion_list;
+    static unsigned pending_cmds_count; //counter to serialize commands across control connections
 };
 
 #define LogRespond(cn, ...)       do { if (cn) cn->respond(__VA_ARGS__); else LogMessage(__VA_ARGS__); } while(0)

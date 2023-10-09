@@ -66,6 +66,8 @@ struct Command
     LuaCFunction func;
     const Parameter* params;
     const char* help;
+    // the flag determines if the command is allowed to run in parallel with other control commands
+    bool can_run_in_parallel = false;
 
     std::string get_arg_list() const;
 };

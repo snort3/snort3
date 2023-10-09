@@ -83,6 +83,7 @@ static string s_aliased_name;
 static string s_aliased_type;
 static string s_ips_includer;
 static string s_file_id_includer;
+static std::unordered_set<string> s_parallel_cmds;
 
 // for callbacks from Lua
 static SnortConfig* s_config = nullptr;
@@ -157,11 +158,19 @@ void ModHook::init()
     // would be out of date, out of sync, etc. QED
     reg = new luaL_Reg[++n];
     unsigned k = 0;
-
+    std::string cmd_name;
+    const char* dot = ".";
     while ( k < n )
     {
         reg[k].name = c[k].name;
         reg[k].func = c[k].func;
+        if (c[k].can_run_in_parallel)
+        {
+            cmd_name = mod->get_name();
+            cmd_name = cmd_name + dot + c[k].name;
+            s_parallel_cmds.insert(cmd_name);
+        }
+
         k++;
     }
 }
@@ -1940,6 +1949,30 @@ void ModuleManager::show_modules_json()
         json.close();
     }
     json.close_array();
+}
+
+bool ModuleManager::is_parallel_cmd(std::string control_cmd)
+{
+    control_cmd = remove_whitespace(control_cmd);
+
+    std::string mod_cmd;
+
+    size_t dotPos = control_cmd.find('.');
+    size_t openParenthesisPos = control_cmd.find("(");
+
+    if (dotPos == std::string::npos)
+        mod_cmd = "snort.";
+
+    if (openParenthesisPos != std::string::npos)
+        mod_cmd = mod_cmd + control_cmd.substr(0,openParenthesisPos);
+
+    return 1 == s_parallel_cmds.count(mod_cmd);
+}
+
+std::string ModuleManager::remove_whitespace(std::string& control_cmd)
+{
+    control_cmd.erase(std::remove_if(control_cmd.begin(), control_cmd.end(), ::isspace), control_cmd.end());
+    return control_cmd;
 }
 
 #ifdef UNIT_TEST

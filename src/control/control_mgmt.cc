@@ -337,6 +337,35 @@ static void delete_control(int fd)
         delete_control(iter);
 }
 
+static int execute_control_commands(ControlConn *ctrlcon)
+{
+    int executed = 0;
+    if (!ctrlcon)
+        return executed;
+
+    executed = ctrlcon->execute_commands();
+    if (executed > 0)
+    {
+        if (ctrlcon->is_local())
+            proc_stats.local_commands += executed;
+        else
+            proc_stats.remote_commands += executed;
+    }
+    return executed;
+}
+
+static void process_pending_control_commands()
+{
+    for (auto it : controls)
+    {
+        if (it.second->has_pending_command())
+        {
+            ControlConn* ctrlcon = it.second;
+            execute_control_commands(ctrlcon);
+        }
+    }
+}
+
 static bool process_control_commands(int fd)
 {
     const auto iter = controls.find(fd);
@@ -353,14 +382,7 @@ static bool process_control_commands(int fd)
         return false;
     }
 
-    int executed = ctrlcon->execute_commands();
-    if (executed > 0)
-    {
-        if (ctrlcon->is_local())
-            proc_stats.local_commands += executed;
-        else
-            proc_stats.remote_commands += executed;
-    }
+    int executed = execute_control_commands(ctrlcon);
 
     if (ctrlcon->is_closed())
         delete_control(iter);
@@ -489,6 +511,8 @@ bool ControlMgmt::service_users()
 {
     static FdEvents event[MAX_CONTROL_FDS];
     unsigned nevent;
+
+    process_pending_control_commands();
 
     if (!poll_control_fds(event, nevent))
         return false;

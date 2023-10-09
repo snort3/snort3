@@ -94,6 +94,8 @@ public:
     static void reset_stats(clear_counter_type_t);
 
     static void clear_global_active_counters();
+    static bool is_parallel_cmd(std::string control_cmd);
+    static std::string remove_whitespace(std::string& control_cmd);
 
 
     static std::set<uint32_t> gids;

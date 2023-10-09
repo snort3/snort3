@@ -147,14 +147,14 @@ static const Command snort_cmds[] =
     // FIXIT-M rewrite trough to permit updates on the fly
     //{ "process", main_process, nullptr, "process given pcap" },
 
-    { "pause", main_pause, nullptr, "suspend packet processing" },
+    { "pause", main_pause, nullptr, "suspend packet processing", true },
 
     { "resume", main_resume, s_pktnum, "continue packet processing. "
-      "If number of packets is specified, will resume for n packets and pause" },
+      "If number of packets is specified, will resume for n packets and pause", true },
 
-    { "detach", main_detach, nullptr, "detach from control shell (without shutting down)" },
-    { "quit", main_quit, nullptr, "shutdown and dump-stats" },
-    { "help", main_help, nullptr, "this output" },
+    { "detach", main_detach, nullptr, "detach from control shell (without shutting down)", true },
+    { "quit", main_quit, nullptr, "shutdown and dump-stats", true },
+    { "help", main_help, nullptr, "this output", true },
 
     { nullptr, nullptr, nullptr, nullptr }
 };
