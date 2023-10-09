@@ -172,6 +172,9 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
     tcp_init = false;
     tcpStats.released++;
 
+    client.ooo_packet_seen = false;
+    server.ooo_packet_seen = false;
+
     if ( flush_segments )
     {
         client.reassembler.flush_queued_segments(flow, true, p);
@@ -455,7 +458,7 @@ void TcpSession::update_stream_order(const TcpSegmentDescriptor& tsd, bool align
             if ( !(flow->get_session_flags() & SSNFLAG_STREAM_ORDER_BAD) )
                 flow->set_session_flags(SSNFLAG_STREAM_ORDER_BAD);
             tsd.set_packet_flags(PKT_STREAM_ORDER_BAD);
-         }
+        }
     }
 }
 
@@ -494,7 +497,7 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
 
         if ( tsd.is_data_segment() )
         {
-            update_stream_order(tsd, true);
+            update_stream_order(tsd, !listener->ooo_packet_seen);
             process_tcp_stream(tsd);
             return STREAM_ALIGNED;
         }

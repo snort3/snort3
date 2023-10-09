@@ -331,6 +331,7 @@ public:
     bool client_tracker;
     bool require_3whs = false;
     bool rst_pkt_sent = false;
+    bool ooo_packet_seen = false;
 
 // FIXIT-L make these non-public
 public:
