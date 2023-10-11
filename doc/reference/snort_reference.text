@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.71.0 2023-09-25 07:40:20 EDT TST
+Revision 3.1.72.0 2023-10-10 22:54:49 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -505,7 +505,8 @@ Peg counts:
   * daq.analyzed: total packets analyzed from DAQ (sum)
   * daq.dropped: packets dropped (sum)
   * daq.filtered: packets filtered out (sum)
-  * daq.outstanding: packets unprocessed (sum)
+  * daq.outstanding: packets unprocessed (now)
+  * daq.outstanding_max: maximum of packets unprocessed (max)
   * daq.injected: active responses or replacements (sum)
   * daq.allow: total allow verdicts (sum)
   * daq.block: total block verdicts (sum)
@@ -1095,21 +1096,21 @@ Peg counts:
   * memory.start_up_use: memory used before packet processing (now)
   * memory.cur_in_use: current memory used (now)
   * memory.max_in_use: maximum memory used (max)
-  * memory.epochs: number of memory updates (now)
+  * memory.epochs: number of memory updates (sum)
   * memory.allocated: total amount of memory allocated by packet
     threads (now)
   * memory.deallocated: total amount of memory deallocated by packet
     threads (now)
   * memory.reap_cycles: number of actionable over-limit conditions
-    (now)
-  * memory.reap_attempts: attempts to reclaim memory (now)
-  * memory.reap_failures: failures to reclaim memory (now)
+    (sum)
+  * memory.reap_attempts: attempts to reclaim memory (sum)
+  * memory.reap_failures: failures to reclaim memory (sum)
   * memory.reap_aborts: abort pruning before target due to process
-    under limit (now)
+    under limit (sum)
   * memory.reap_decrease: total amount of the decrease in thread
-    memory while process over limit (now)
+    memory while process over limit (sum)
   * memory.reap_increase: total amount of the increase in thread
-    memory while process over limit (now)
+    memory while process over limit (sum)
   * memory.app_all: total bytes allocated by application (now)
   * memory.active: total bytes allocated in active pages (now)
   * memory.resident: maximum bytes physically resident (now)
@@ -5803,6 +5804,10 @@ Configuration:
   * int stream_tcp.session_timeout = 180: session tracking timeout {
     1:max31 }
   * bool stream_tcp.track_only = false: disable reassembly if true
+  * int stream_tcp.embryonic_timeout = 30: Non-established connection
+    timeout { 1:max31 }
+  * int stream_tcp.idle_timeout = 3600: session deletion on idle {
+    1:max31 }
 
 Rules:
 
@@ -10889,9 +10894,13 @@ libraries see the Getting Started section of the manual.
     given range { 0: }
   * int stream.tcp_cache.idle_timeout = 3600: maximum inactive time
     before retiring session tracker { 1:max32 }
+  * int stream_tcp.embryonic_timeout = 30: Non-established connection
+    timeout { 1:max31 }
   * int stream_tcp.flush_factor = 0: flush upon seeing a drop in
     segment size after given number of non-decreasing segments {
     0:65535 }
+  * int stream_tcp.idle_timeout = 3600: session deletion on idle {
+    1:max31 }
   * int stream_tcp.max_pdu = 16384: maximum reassembled PDU size {
     1460:32768 }
   * int stream_tcp.max_window = 0: maximum allowed TCP window {
@@ -11115,7 +11124,8 @@ libraries see the Getting Started section of the manual.
     lack of DAQ support (sum)
   * daq.other_messages: messages received from DAQ with unrecognized
     message type (sum)
-  * daq.outstanding: packets unprocessed (sum)
+  * daq.outstanding_max: maximum of packets unprocessed (max)
+  * daq.outstanding: packets unprocessed (now)
   * daq.pcaps: total files and interfaces processed (max)
   * daq.received: total packets received from DAQ (sum)
   * daq.replace: total replace verdicts (sum)
@@ -11679,18 +11689,18 @@ libraries see the Getting Started section of the manual.
   * memory.cur_in_use: current memory used (now)
   * memory.deallocated: total amount of memory deallocated by packet
     threads (now)
-  * memory.epochs: number of memory updates (now)
+  * memory.epochs: number of memory updates (sum)
   * memory.max_in_use: maximum memory used (max)
   * memory.reap_aborts: abort pruning before target due to process
-    under limit (now)
-  * memory.reap_attempts: attempts to reclaim memory (now)
+    under limit (sum)
+  * memory.reap_attempts: attempts to reclaim memory (sum)
   * memory.reap_cycles: number of actionable over-limit conditions
-    (now)
+    (sum)
   * memory.reap_decrease: total amount of the decrease in thread
-    memory while process over limit (now)
-  * memory.reap_failures: failures to reclaim memory (now)
+    memory while process over limit (sum)
+  * memory.reap_failures: failures to reclaim memory (sum)
   * memory.reap_increase: total amount of the increase in thread
-    memory while process over limit (now)
+    memory while process over limit (sum)
   * memory.resident: maximum bytes physically resident (now)
   * memory.retained: total bytes not returned to OS (now)
   * memory.start_up_use: memory used before packet processing (now)

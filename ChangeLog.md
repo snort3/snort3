@@ -1,3 +1,19 @@
+2023-10-10: 3.1.72.0
+
+* active: added API for printing delayed action string
+* appid: support to get correct http session based on stream_id
+* control: allow one command at a time
+* dce_rpc: using  reset_using_rpkt() inline to what is there in eval() of SMB inspector code as well
+* flow_cache: added protocol base LRU caches
+* helpers: increase buffer space for function names, allow printing truncated names
+* http_inspect: clear fake headers snapshot for 0.9 response
+* http_inspect: run detection on failed utf decoding
+* memory: change NOW type counts to SUM type, where necessary
+* packet_io: fix daq stats
+* stream_tcp: accept 1 byte of trimmed probe data after zero window
+* stream_tcp: update rcv_nxt appropriately for each segment
+* tcp: timeout for embryonic and idle session
+
 2023-09-25: 3.1.71.0
 
 * appid, http_inspect, http2_inspect: create appid session if not present in decrypt event handler, add message section as part of StreamFlowIntf for httpx
