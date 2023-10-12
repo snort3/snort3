@@ -27,6 +27,7 @@
 #include <list>
 #include <mutex>
 #include <set>
+#include <string>
 
 #include "framework/counts.h"
 #include "main/analyzer_command.h"
