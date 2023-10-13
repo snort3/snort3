@@ -827,8 +827,7 @@ void detection_option_tree_reset_otn_stats(std::vector<HashNode*>& nodes, unsign
         auto* node = (detection_option_tree_node_t*)hnode->data;
         assert(node);
 
-        if ( node->state[thread_id].checks )
-            detection_option_node_reset_otn_stats(node, thread_id);
+        detection_option_node_reset_otn_stats(node, thread_id);
     }
 }
 
