@@ -27,10 +27,7 @@
 namespace snort
 {
 // Stubs for messages
-void ErrorMessage(const char*,...) { }
 // LCOV_EXCL_START
-void WarningMessage(const char*,...) { }
-void LogMessage(const char*,...) { }
 void ParseWarning(WarningGroup, const char*, ...) { }
 // LCOV_EXCL_STOP
 

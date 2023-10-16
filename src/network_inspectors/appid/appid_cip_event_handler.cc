@@ -91,16 +91,15 @@ void CipEventHandler::handle(DataEvent& event, Flow* flow)
     asd->set_payload_id(payload_id);
     asd->set_ss_application_ids(APP_ID_CIP, APP_ID_CIP, payload_id, APP_ID_NONE, APP_ID_NONE, change_bits);
 
-    if (change_bits[APPID_PAYLOAD_BIT] and appidDebug->is_enabled())
+    if (change_bits[APPID_PAYLOAD_BIT])
     {
-        appidDebug->activate(flow, asd, inspector.get_ctxt().config.log_all_sessions);
-        if (appidDebug->is_active())
-        {
-            const char* app_name_service = asd->get_odp_ctxt().get_app_info_mgr().get_app_name(APP_ID_CIP);
-            const char* app_name_payload = asd->get_odp_ctxt().get_app_info_mgr().get_app_name(payload_id);
-            LogMessage("AppIdDbg %s CIP event handler service %s (%d) and payload %s (%d) are detected\n",
-                appidDebug->get_debug_session(), app_name_service, APP_ID_CIP, app_name_payload, payload_id);
-        }
+        if (appidDebug->is_enabled())
+            appidDebug->activate(flow, asd, inspector.get_ctxt().config.log_all_sessions);
+
+        const char* app_name_service = asd->get_odp_ctxt().get_app_info_mgr().get_app_name(APP_ID_CIP);
+        const char* app_name_payload = asd->get_odp_ctxt().get_app_info_mgr().get_app_name(payload_id);
+        appid_log(p, TRACE_DEBUG_LEVEL, "CIP event handler service %s (%d) and payload %s (%d) are detected\n",
+            app_name_service, APP_ID_CIP, app_name_payload, payload_id);
     }
 
     asd->publish_appid_event(change_bits, *p);

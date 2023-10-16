@@ -49,6 +49,9 @@ using namespace snort;
 
 namespace snort
 {
+Packet::Packet(bool) {}
+Packet::~Packet() = default;
+Packet* DetectionEngine::get_current_packet() { return nullptr; }
 AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
 }
@@ -59,6 +62,8 @@ const char* AppInfoManager::get_app_name(AppId)
 {
     return "";
 }
+
+void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
 
 // HttpPatternMatchers mock functions
 void HttpPatternMatchers::scan_key_chp(ChpMatchDescriptor&)
@@ -205,7 +210,6 @@ TEST(appid_http_session, http_field_ids_enum_order)
     // to make sure the order of the HttpFieldIds has not changed
     // in appid_http_session.h.
     AppidChangeBits change_bits;
-
     mock_hsession->set_field( (HttpFieldIds)0, new std::string("agent"), change_bits);
     mock_hsession->set_field( (HttpFieldIds)1, new std::string("host"), change_bits);
     mock_hsession->set_field( (HttpFieldIds)2, new std::string("referer"), change_bits);

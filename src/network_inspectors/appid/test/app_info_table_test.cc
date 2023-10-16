@@ -41,9 +41,6 @@ char* snort_strdup(const char* str)
     return p;
 }
 
-void ErrorMessage(const char*,...) { }
-void WarningMessage(const char*,...) { }
-void LogMessage(const char*,...) { }
 void ParseWarning(WarningGroup, const char*, ...) { }
 
 const char* UT_TEST_APP_NAME_001 = "ut_app_001";

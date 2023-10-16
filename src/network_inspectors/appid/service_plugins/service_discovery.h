@@ -28,7 +28,6 @@
 #include <vector>
 
 #include "flow/flow.h"
-#include "log/messages.h"
 #include "utils/sflsq.h"
 
 #include "appid_types.h"

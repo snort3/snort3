@@ -133,8 +133,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
         data_add(args.asd, rd, &rexec_free_state);
         rd->state = REXEC_STATE_PORT;
     }
-    if (appidDebug->is_active())
-        LogMessage("AppIdDbg %s rexec state %d\n", appidDebug->get_debug_session(), rd->state);
+    appid_log(args.pkt, TRACE_DEBUG_LEVEL, "rexec state %d\n", rd->state);
 
     switch (rd->state)
     {

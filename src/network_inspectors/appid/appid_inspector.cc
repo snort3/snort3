@@ -29,7 +29,6 @@
 #include <sys/resource.h>
 
 #include "flow/flow.h"
-#include "log/messages.h"
 #include "main/analyzer_command.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
@@ -138,11 +137,10 @@ bool AppIdInspector::configure(SnortConfig* sc)
     {
     #endif
         if ( prev_maxrss == -1 or getrusage(RUSAGE_SELF, &ru) == -1 )
-            ErrorMessage("appid: fetching memory usage failed\n");
+            appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: fetching memory usage failed\n");
         else
-            LogMessage("appid: MaxRss diff: %li\n", ru.ru_maxrss - prev_maxrss);
-
-        LogMessage("appid: patterns loaded: %u\n", ctxt->get_odp_ctxt().get_pattern_count());
+            appid_log(nullptr, TRACE_INFO_LEVEL, "appid: MaxRss diff: %li\n", ru.ru_maxrss - prev_maxrss);
+        appid_log(nullptr, TRACE_INFO_LEVEL, "appid: patterns loaded: %u\n", ctxt->get_odp_ctxt().get_pattern_count());
     #ifdef REG_TEST
     }
     #endif

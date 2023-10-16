@@ -23,7 +23,6 @@
 #define CLIENT_DISCOVERY_H
 
 #include "flow/flow.h"
-#include "log/messages.h"
 
 #include "appid_discovery.h"
 #include "appid_types.h"

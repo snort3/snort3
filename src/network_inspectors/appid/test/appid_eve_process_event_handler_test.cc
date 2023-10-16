@@ -60,6 +60,8 @@ Packet* DetectionEngine::get_current_packet()
 }
 }
 
+void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
+
 AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
     AppidSessionDirection, AppIdInspector&, OdpContext&)
 {

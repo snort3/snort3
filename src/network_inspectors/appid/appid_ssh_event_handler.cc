@@ -62,9 +62,8 @@ static bool handle_protocol(SshEvent& event, SshAppIdInfo* fd)
     size_t version_len = (size_t)(version_end - version_begin);
     fd->version.assign(version_begin, version_len);
 
-    if (appidDebug->is_active())
-        LogMessage("AppIdDbg %s SSH event handler read SSH version string with vendor %s and version %s\n",
-            appidDebug->get_debug_session(), fd->vendor.c_str(), fd->version.c_str());
+    appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "SSH event handler read SSH version string with vendor %s and version %s\n",
+        fd->vendor.c_str(), fd->version.c_str());
 
     return true;
 }
@@ -89,16 +88,12 @@ static void client_success(const SshAppIdInfo& fd, AppIdSession& asd, AppidChang
     if (table.has_pattern(fd.vendor))
     {
         client_id = table.get_appid(fd.vendor);
-        if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s SSH event handler identified client with AppId %u\n",
-                appidDebug->get_debug_session(), client_id);
+        appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "SSH event handler identified client with AppId %u\n", client_id);
     }
     else
     {
         client_id = APP_ID_SSH;
-        if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s SSH event handler client detected, but vendor not recognized\n",
-                appidDebug->get_debug_session());
+        appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "SSH event handler client detected, but vendor not recognized\n");
     }
 
     asd.set_client_id(client_id);
@@ -142,9 +137,7 @@ static void handle_success(SshEventFlowData& data, const SshEvent& event,
     service_success(data.service_info, *event.get_packet(), asd, change_bits);
     client_success(data.client_info, asd, change_bits);
 
-    if (appidDebug->is_active())
-        LogMessage("AppIdDbg %s SSH event handler service detected\n",
-            appidDebug->get_debug_session());
+    appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "SSH event handler service detected\n");
 }
 
 
@@ -170,14 +163,11 @@ void SshEventHandler::handle(DataEvent& event, Flow* flow)
         return;
 
     SshEventFlowData* data = (SshEventFlowData* )asd->get_flow_data(id);
+    Packet* p = DetectionEngine::get_current_packet();
 
     if (data and data->failed)
     {
-        if (appidDebug->is_active())
-        {
-            LogMessage("AppIdDbg %s SSH detection failed, ignoring event\n",
-                appidDebug->get_debug_session());
-        }
+        appid_log(p, TRACE_DEBUG_LEVEL, "SSH detection failed, ignoring event\n");
         return;
     }
 
@@ -206,16 +196,15 @@ void SshEventHandler::handle(DataEvent& event, Flow* flow)
         {
             if (asd->get_session_flags(APPID_SESSION_EARLY_SSH_DETECTED))
             {
-                if (appidDebug->is_active())
-                    LogMessage("AppIdDbg %s Early detection of SSH\n", appidDebug->get_debug_session());
+                appid_log(p, TRACE_DEBUG_LEVEL, "Early detection of SSH\n");
                 handle_success(*data, ssh_event, *asd, change_bits);
                 asd->publish_appid_event(change_bits, *ssh_event.get_packet());
                 asd->clear_session_flags(APPID_SESSION_EARLY_SSH_DETECTED);
             }
         }
-        else if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s SSH event handler received unsupported protocol %s\n",
-                appidDebug->get_debug_session(), ssh_event.get_version_str().c_str());
+        else
+            appid_log(p, TRACE_DEBUG_LEVEL, "SSH event handler received unsupported protocol %s\n",
+                ssh_event.get_version_str().c_str());
 
         break;
 
@@ -223,23 +212,17 @@ void SshEventHandler::handle(DataEvent& event, Flow* flow)
         switch (ssh_event.get_validation_result())
         {
         case SSH_VALID_KEXINIT:
-            if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s SSH event handler received valid key exchange\n",
-                    appidDebug->get_debug_session());
+                appid_log(p, TRACE_DEBUG_LEVEL, "SSH event handler received valid key exchange\n");
             fd->finished = true;
             break;
 
         case SSH_INVALID_KEXINIT:
-            if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s SSH event handler received invalid key exchange\n",
-                    appidDebug->get_debug_session());
+                appid_log(p, TRACE_DEBUG_LEVEL, "SSH event handler received invalid key exchange\n");
             handle_failure(*asd, *data);
             break;
 
         case SSH_INVALID_VERSION:
-            if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s SSH event handler received invalid version\n",
-                    appidDebug->get_debug_session());
+                appid_log(p, TRACE_DEBUG_LEVEL, "SSH event handler received invalid version\n");
             handle_failure(*asd, *data);
             break;
 

@@ -41,11 +41,22 @@ namespace snort
 {
 unsigned get_instance_id() { return 3; }
 
+Packet::Packet(bool) {}
+Packet::~Packet() = default;
 FlowData::FlowData(unsigned, Inspector*) { }
 FlowData::~FlowData() = default;
 AppIdSessionApi::AppIdSessionApi(const AppIdSession* asd, const SfIp& ip) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID), asd(asd), initiator_ip(ip) {}
+[[noreturn]] void FatalError(const char*,...) {  exit(-1); }
+void ErrorMessage(const char*, va_list&) { }
+void WarningMessage(const char*, va_list&) { }
+void LogMessage(const char*, va_list&) { }
+void TraceApi::filter(snort::Packet const&) { }
+void trace_vprintf(const char*, unsigned char, const char*, const Packet*, const char*, va_list) { }
+uint8_t TraceApi::get_constraints_generation() { return 0; }
 }
+
+THREAD_LOCAL const snort::Trace* appid_trace;
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 class AppIdInspector

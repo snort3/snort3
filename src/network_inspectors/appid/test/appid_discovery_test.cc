@@ -80,11 +80,8 @@ void Module::reset_stats() {}
 PegCount Module::get_global_count(char const*) const { return 0; }
 
 // Stubs for logs
-void LogMessage(const char*,...) {}
-void ErrorMessage(const char*,...) {}
 void LogLabel(const char*, FILE*) {}
 void LogText(const char*, FILE*) {}
-
 
 // Stubs for utils
 char* snort_strdup(const char* str)
@@ -304,6 +301,8 @@ TPLibHandler* TPLibHandler::self = nullptr;
 THREAD_LOCAL AppIdStats appid_stats;
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = false; }
+
+void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
 
 bool AppIdReloadTuner::tinit() { return false; }
 

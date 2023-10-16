@@ -27,7 +27,6 @@
 #include "host_tracker/host_cache.h"
 #include "host_tracker/host_cache_segmented.h"
 
-#include "log/messages.h"
 #include "packet_tracer/packet_tracer.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
@@ -100,7 +99,7 @@ void AppIdDiscovery::register_detector(const std::string& name, AppIdDetector* c
     else if (proto == IpProtocol::UDP)
         udp_detectors[name] = cd;
     else
-        ErrorMessage("Detector %s has unsupported protocol %u", name.c_str(), (unsigned)proto);
+        appid_log(nullptr, TRACE_ERROR_LEVEL, "Detector %s has unsupported protocol %u\n", name.c_str(), (unsigned)proto);
 }
 
 void AppIdDiscovery::add_pattern_data(AppIdDetector* detector, SearchTool& st, int position, const
@@ -242,19 +241,16 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
         if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
         {
             asd->flags |= APPID_SESSION_MID;
-            if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s New AppId mid-stream session\n",
-                    appidDebug->get_debug_session());
+            appid_log(p, TRACE_DEBUG_LEVEL, "New AppId mid-stream session\n");
         }
-        else if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s New AppId session\n", appidDebug->get_debug_session());
+        else
+            appid_log(p, TRACE_DEBUG_LEVEL, "New AppId session\n");
     }
     else if (!asd->get_session_flags(APPID_SESSION_MID) and
         (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM))
     {
         asd->flags |= APPID_SESSION_MID;
-        if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s AppId mid-stream session\n", appidDebug->get_debug_session());
+        appid_log(p, TRACE_DEBUG_LEVEL, "AppId mid-stream session\n");
     }
 
     if (!asd->get_session_flags(APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED))
@@ -300,14 +296,10 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
         asd->publish_appid_event(change_bits, *p);
         asd->set_session_flags(APPID_SESSION_FUTURE_FLOW_IDED);
 
-        if (appidDebug->is_active())
-        {
-            const char *app_name =
-                asd->get_odp_ctxt().get_app_info_mgr().get_app_name(asd->get_service_id());
-            LogMessage("AppIdDbg %s Ignoring connection with service %s (%d)\n",
-                appidDebug->get_debug_session(), app_name ? app_name : "unknown",
-                asd->get_service_id());
-        }
+        const char *app_name =
+            asd->get_odp_ctxt().get_app_info_mgr().get_app_name(asd->get_service_id());
+        appid_log(p, TRACE_DEBUG_LEVEL, "Ignoring connection with service %s (%d)\n",
+            app_name ? app_name : "unknown", asd->get_service_id());
 
         return false;
     }
@@ -332,11 +324,9 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
             (p->dsize and !(p->packet_flags & (PKT_STREAM_ORDER_OK | PKT_REBUILT_STREAM))))
         {
             asd->set_session_flags(APPID_SESSION_OOO | APPID_SESSION_OOO_CHECK_TP);
-            if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s Packet out-of-order, %s%sflow\n",
-                    appidDebug->get_debug_session(),
-                    (p->packet_flags & PKT_STREAM_ORDER_BAD) ? "bad " : "not-ok ",
-                    asd->get_session_flags(APPID_SESSION_MID) ? "mid-stream " : "");
+            appid_log(p, TRACE_DEBUG_LEVEL, "Packet out-of-order, %s%sflow\n",
+                (p->packet_flags & PKT_STREAM_ORDER_BAD) ? "bad " : "not-ok ",
+                asd->get_session_flags(APPID_SESSION_MID) ? "mid-stream " : "");
 
             // Shut off service/client discoveries, since they skip not-ok data packets and
             // may keep failing on subsequent data packets causing performance degradation
@@ -350,9 +340,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
                 asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
                 asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED |
                     APPID_SESSION_CLIENT_DETECTED);
-                if (appidDebug->is_active())
-                    LogMessage("AppIdDbg %s stopped service/client discovery\n",
-                        appidDebug->get_debug_session());
+                appid_log(p, TRACE_DEBUG_LEVEL, "stopped service/client discovery\n");
             }
         }
         else
@@ -387,9 +375,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
     if (fdpd and (fdpd == asd->session_packet_count))
     {
         p->flow->set_proxied();
-        if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s Marked the flow as decrypted at packet number %lu\n",
-                appidDebug->get_debug_session(), (long unsigned)fdpd);
+        appid_log(p, TRACE_DEBUG_LEVEL, "Marked the flow as decrypted at packet number %lu\n", (long unsigned)fdpd);
     }
 #endif
 
@@ -421,14 +407,10 @@ void AppIdDiscovery::do_port_based_discovery(Packet* p, AppIdSession& asd, IpPro
     if (id > APP_ID_NONE)
     {
         asd.set_port_service_id(id);
-        if (appidDebug->is_active())
-        {
-            AppId ps_id = asd.get_port_service_id();
-            const char *app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(ps_id);
-            LogMessage("AppIdDbg %s Port service %s (%d) from port\n",
-                appidDebug->get_debug_session(), app_name ? app_name : "unknown",
-                asd.get_port_service_id());
-        }
+        AppId ps_id = asd.get_port_service_id();
+        const char *app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(ps_id);
+        appid_log(p, TRACE_DEBUG_LEVEL, "Port service %s (%d) from port\n",
+            app_name ? app_name : "unknown", asd.get_port_service_id());
     }
     asd.set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
 }
@@ -658,14 +640,11 @@ bool AppIdDiscovery::detect_on_first_pkt(Packet* p, AppIdSession& asd,
             break;
         }
         asd.set_session_flags(APPID_SESSION_FIRST_PKT_CACHE_MATCHED);
-        if (appidDebug->is_active())
-        {
-            LogMessage("AppIdDbg %s Host cache match found on first packet, service: %s(%d), "
-                "client: %s(%d), payload: %s(%d), reinspect: %s \n", appidDebug->get_debug_session(),
-                (service_app_name ? service_app_name : ""), service_id,
-                (client_app_name ? client_app_name : ""), client_id,
-                (payload_app_name ? payload_app_name : ""), payload_id, (hv->reinspect ? "True" : "False"));
-        }
+        appid_log(p, TRACE_DEBUG_LEVEL, "Host cache match found on first packet, service: %s(%d), "
+            "client: %s(%d), payload: %s(%d), reinspect: %s \n",
+            (service_app_name ? service_app_name : ""), service_id,
+            (client_app_name ? client_app_name : ""), client_id,
+            (payload_app_name ? payload_app_name : ""), payload_id, (hv->reinspect ? "True" : "False"));
         return true;
     }
     return false;
@@ -704,14 +683,9 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         if (id > APP_ID_NONE)
         {
             asd.misc_app_id = misc_id = id;
-            if (appidDebug->is_active())
-            {
-                const char *app_name =
-                    asd.get_odp_ctxt().get_app_info_mgr().get_app_name(asd.misc_app_id);
-                LogMessage("AppIdDbg %s Outer protocol service %s (%d)\n",
-                    appidDebug->get_debug_session(), app_name ? app_name : "unknown",
-                    asd.misc_app_id);
-            }
+            const char *app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(asd.misc_app_id);
+            appid_log(p, TRACE_DEBUG_LEVEL, "Outer protocol service %s (%d)\n",
+                app_name ? app_name : "unknown", asd.misc_app_id);
         }
     }
 
@@ -725,14 +699,10 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
                 asd.set_port_service_id(id);
                 service_id = id;
                 asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
-                if (appidDebug->is_active())
-                {
-                    AppId ps_id = asd.get_port_service_id();
-                    const char *app_name =
-                        asd.get_odp_ctxt().get_app_info_mgr().get_app_name(ps_id);
-                    LogMessage("AppIdDbg %s Protocol service %s (%d) from protocol\n",
-                        appidDebug->get_debug_session(), app_name ? app_name : "unknown", ps_id);
-                }
+                AppId ps_id = asd.get_port_service_id();
+                const char *app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(ps_id);
+                appid_log(p, TRACE_DEBUG_LEVEL, "Protocol service %s (%d) from protocol\n",
+                    app_name ? app_name : "unknown", ps_id);
             }
             asd.set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
         }
@@ -813,12 +783,9 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         {
             service_id = id;
             asd.set_port_service_id(id);
-            if (appidDebug->is_active())
-            {
-                const char *app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(id);
-                LogMessage("AppIdDbg %s Port service %s (%d) from length\n",
-                    appidDebug->get_debug_session(), app_name ? app_name : "unknown", id);
-            }
+            const char *app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(id);
+            appid_log(p, TRACE_DEBUG_LEVEL, "Port service %s (%d) from length\n",
+                app_name ? app_name : "unknown", id);
             asd.set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
         }
     }
@@ -882,9 +849,7 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
         if (!asd.is_tp_appid_done())
         {
             asd.tpsession->set_state(TP_STATE_TERMINATED);
-            if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s Stopped 3rd party detection\n",
-                    appidDebug->get_debug_session());
+            appid_log(p, TRACE_DEBUG_LEVEL, "Stopped 3rd party detection\n");
         }
     }
 

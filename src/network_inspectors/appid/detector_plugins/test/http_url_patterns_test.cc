@@ -91,6 +91,7 @@ AlpnPatternMatchers::~AlpnPatternMatchers() = default;
 CipPatternMatchers::~CipPatternMatchers() = default;
 void AppIdModule::reset_stats() {}
 bool AppIdInspector::configure(snort::SnortConfig*) { return true; }
+void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
 
 TEST_GROUP(http_url_patterns_tests)
 {

@@ -28,11 +28,11 @@
 #include "http_url_patterns.h"
 
 #include "app_info_table.h"
+#include "appid_debug.h"
 #include "appid_module.h"
 #include "appid_http_session.h"
 #include "appid_session.h"
 #include "appid_utils/sf_mlmp.h"
-#include "log/messages.h"
 #include "protocols/packet.h"
 
 using namespace snort;
@@ -1684,7 +1684,7 @@ uint32_t HttpPatternMatchers::parse_multiple_http_patterns(const char* pattern,
             for (unsigned i = 0; i <= partNum; i++)
                 snort_free((void*)parts[i].pattern);
 
-            ErrorMessage("Failed to allocate memory");
+            appid_log(nullptr, TRACE_ERROR_LEVEL, "Failed to allocate memory");
             return 0;
         }
         partNum++;

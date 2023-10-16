@@ -192,7 +192,7 @@ int ServiceDiscovery::add_service_port(AppIdDetector* detector, const ServiceDet
     }
     else
     {
-        ErrorMessage("Invalid protocol (%u) specified for service %s.\n",
+        appid_log(nullptr, TRACE_ERROR_LEVEL, "Invalid protocol (%u) specified for service %s.\n",
             (unsigned)pp.proto, service->get_name().c_str());
         return 0;
     }
@@ -437,8 +437,7 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
 
         if ( sds_state == ServiceState::FAILED )
         {
-            if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s No service match, failed state\n", appidDebug->get_debug_session());
+            appid_log(p, TRACE_DEBUG_LEVEL, "No service match, failed state\n");
             fail_service(asd, p, dir, nullptr, sds);
             return APPID_NOMATCH;
         }
@@ -472,10 +471,9 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
         else if (ret == APPID_NOT_COMPATIBLE)
             got_incompatible_service = true;
         asd.service_search_state = SESSION_SERVICE_SEARCH_STATE::PENDING;
-        if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s %s service detector returned %s (%d)\n",
-                appidDebug->get_debug_session(), asd.service_detector->get_log_name().c_str(),
-                asd.service_detector->get_code_string((APPID_STATUS_CODE)ret), ret);
+        appid_log(p, TRACE_DEBUG_LEVEL, "%s service detector returned %s (%d)\n",
+            asd.service_detector->get_log_name().c_str(),
+            asd.service_detector->get_code_string((APPID_STATUS_CODE)ret), ret);
     }
     /* Try to find detectors based on ports and patterns. */
     else if (!got_brute_force)
@@ -497,10 +495,8 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
             int result;
 
             result = service->validate(args);
-            if ( appidDebug->is_active() )
-                LogMessage("AppIdDbg %s %s service candidate returned %s (%d)\n",
-                    appidDebug->get_debug_session(), service->get_log_name().c_str(),
-                    service->get_code_string((APPID_STATUS_CODE)result), result);
+            appid_log(p, TRACE_DEBUG_LEVEL, "%s service candidate returned %s (%d)\n",
+                service->get_log_name().c_str(), service->get_code_string((APPID_STATUS_CODE)result), result);
 
             if ( result == APPID_SUCCESS )
             {
@@ -529,9 +525,8 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
             // below needs to be removed.
             if (asd.has_no_service_inspector() or (proto == IpProtocol::UDP))
                 got_fail_service = true;
-            else if (appidDebug->is_active() and !asd.service_detector and !asd.has_no_service_candidate())
-                LogMessage("AppIdDbg %s No service candidate, wait for snort service inspection\n",
-                    appidDebug->get_debug_session());
+            else if (!asd.service_detector and !asd.has_no_service_candidate())
+                appid_log(p, TRACE_DEBUG_LEVEL, "No service candidate, wait for snort service inspection\n");
 
             asd.set_no_service_candidate();
         }
@@ -545,9 +540,8 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
             sds = AppIdServiceState::add(ip, proto, port, group, asd.asid,
                 asd.is_decrypted(), true);
         // Don't log this if fail service is not due to empty list
-        if (appidDebug->is_active() and !(got_fail_service and asd.service_detector))
-            LogMessage("AppIdDbg %s No service %s\n", appidDebug->get_debug_session(),
-                got_fail_service ? "candidate" : "detector");
+        if (!(got_fail_service and asd.service_detector))
+            appid_log(p, TRACE_DEBUG_LEVEL, "No service %s\n", got_fail_service ? "candidate" : "detector");
         got_fail_service = true;
         fail_service(asd, p, dir, nullptr, sds);
         ret = APPID_NOMATCH;
@@ -654,8 +648,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
         if ( entry && entry->service_detector &&
             !(entry->flags & APPINFO_FLAG_SERVICE_ADDITIONAL) )
         {
-            if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s Stop service detection\n", appidDebug->get_debug_session());
+            appid_log(p, TRACE_DEBUG_LEVEL, "Stop service detection\n");
             asd.stop_service_inspection(p, direction);
         }
     }

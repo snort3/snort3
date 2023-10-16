@@ -46,7 +46,6 @@ extern THREAD_LOCAL const snort::Trace* appid_trace;
 #define MOD_HELP "application and service identification"
 #define MOD_USAGE snort::Module::GLOBAL
 
-
 class AppIdReloadTuner : public snort::ReloadResourceTuner
 {
 public:

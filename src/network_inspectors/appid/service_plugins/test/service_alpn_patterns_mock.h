@@ -21,10 +21,6 @@
 
 namespace snort
 {
-// Stubs for  messages
-void LogMessage(const char*,...) { }
-void WarningMessage(const char*,...) { }
-
 // Stubs for search_tool.cc
 SearchTool::SearchTool(bool) { }
 SearchTool::~SearchTool() = default;

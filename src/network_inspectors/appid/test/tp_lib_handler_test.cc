@@ -68,6 +68,7 @@ void ServiceDiscovery::initialize(AppIdInspector&) { }
 void ServiceDiscovery::reload() { }
 int ServiceDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&)
 { return 0; }
+void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
 
 TEST_GROUP(tp_lib_handler)
 {

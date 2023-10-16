@@ -27,12 +27,72 @@
 
 #include "flow/flow_key.h"
 #include "log/messages.h"
+#include "trace/trace_api.h"
 
 #include "appid_config.h"
+#include "appid_module.h"
 #include "appid_session.h"
 
 using namespace snort;
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
+
+void appid_log(const Packet* p, const uint8_t log_level, const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+
+    va_list dup_args;
+    va_copy(dup_args, args);
+
+    switch(log_level)
+    {
+        case TRACE_CRITICAL_LEVEL:
+            FatalError(format, args);
+            break;
+
+        case TRACE_ERROR_LEVEL:
+            ErrorMessage(format, args);
+
+            if (p)
+                trace_logf(TRACE_ERROR_LEVEL, appid_trace, DEFAULT_TRACE_OPTION_ID, p, format, dup_args);
+            break;
+
+        case TRACE_WARNING_LEVEL:
+            WarningMessage(format, args);
+
+            if (p)
+                trace_logf(TRACE_WARNING_LEVEL, appid_trace, DEFAULT_TRACE_OPTION_ID, p, format, dup_args);
+            break;
+
+        case TRACE_INFO_LEVEL:
+            LogMessage(format, args);
+
+            if (p)
+                trace_logf(TRACE_INFO_LEVEL, appid_trace, DEFAULT_TRACE_OPTION_ID, p, format, dup_args);
+            break;
+
+        case TRACE_DEBUG_LEVEL:
+            if (p) //called from packet threads
+            {
+                if (appidDebug and appidDebug->is_active())
+                {
+                    string msg = string("AppIdDbg ") + appidDebug->get_debug_session() + " " + format;
+                    LogMessage(msg.c_str(), args);
+                }
+
+                trace_logf(TRACE_DEBUG_LEVEL, appid_trace, DEFAULT_TRACE_OPTION_ID, p, format, dup_args);
+            }
+            else //called from control thread
+                LogMessage(format, args);
+            break;
+
+        default:
+            break;
+    }
+
+    va_end(args);
+    va_end(dup_args);
+}
 
 void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t port1,
     uint16_t port2, IpProtocol protocol, const int version, uint32_t address_space_id,
@@ -148,14 +208,14 @@ void AppIdDebug::set_constraints(const char *desc,
         info = *constraints;
         info.sip.ntop(sipstr, sizeof(sipstr));
         info.dip.ntop(dipstr, sizeof(dipstr));
-        LogMessage("Debugging %s with %s-%hu and %s-%hu %hhu\n", desc,
+        appid_log(nullptr, TRACE_INFO_LEVEL, "Debugging %s with %s-%hu and %s-%hu %hhu\n", desc,
             sipstr, info.sport, dipstr, info.dport, static_cast<uint8_t>(info.protocol));
 
         enabled = true;
     }
     else
     {
-        LogMessage("Debugging %s disabled\n", desc);
+        appid_log(nullptr, TRACE_INFO_LEVEL, "Debugging %s disabled\n", desc);
         enabled = false;
         active = false;
     }

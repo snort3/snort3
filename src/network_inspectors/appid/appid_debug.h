@@ -26,6 +26,7 @@
 
 #include <daq_common.h>
 
+#include "detection/detection_engine.h"
 #include "protocols/ipv6.h"
 #include "protocols/protocol_ids.h"
 #include "main/thread.h"
@@ -35,11 +36,16 @@ class AppIdSession;
 namespace snort
 {
     class Flow;
+    struct Packet;
 }
 
 // %s %u -> %s %u %u AS=%u ID=%u [GR=%hd-%hd]
 // IPv6 Port -> IPv6 Port Proto AS=ASNum ID=InstanceNum [GR=SrcGroupNum-DstGroupNum]
 #define APPID_DEBUG_SESSION_ID_SIZE ((39+1+5+1+2+1+39+1+5+1+3+1+2+1+10+1+2+1+10+32)+1)
+
+#define CURRENT_PACKET snort::DetectionEngine::get_current_packet()
+
+void appid_log(const snort::Packet*, const uint8_t log_level, const char*, ...);
 
 struct AppIdDebugSessionConstraints
 {

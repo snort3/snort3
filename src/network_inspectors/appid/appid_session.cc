@@ -28,7 +28,6 @@
 #include <cstring>
 
 #include "flow/flow_stash.h"
-#include "log/messages.h"
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
@@ -38,6 +37,7 @@
 #include "stream/stream.h"
 #include "target_based/snort_protocols.h"
 #include "time/packet_time.h"
+#include "trace/trace.h"
 
 #include "app_info_table.h"
 #include "appid_config.h"
@@ -214,9 +214,8 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
 
     if (type == PktType::NONE)
     {
-        if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s Failed to create a related flow - invalid protocol %u\n",
-                appidDebug->get_debug_session(), (unsigned)proto);
+        appid_log(ctrlPkt, TRACE_DEBUG_LEVEL, "Failed to create a related flow - invalid protocol %u\n",
+            (unsigned)proto);
         return nullptr;
     }
 
@@ -237,27 +236,19 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
         cliPort, srvIp, srvPort, snort_protocol_id, asd, swap_app_direction, false,
         bidirectional, expect_persist))
     {
-        if (appidDebug->is_active())
-        {
-            sfip_ntop(cliIp, src_ip, sizeof(src_ip));
-            sfip_ntop(srvIp, dst_ip, sizeof(dst_ip));
-            LogMessage("AppIdDbg %s Failed to create a related flow for %s-%u -> %s-%u %u\n",
-                appidDebug->get_debug_session(), src_ip, (unsigned)cliPort, dst_ip,
-                (unsigned)srvPort, (unsigned)proto);
-        }
+        sfip_ntop(cliIp, src_ip, sizeof(src_ip));
+        sfip_ntop(srvIp, dst_ip, sizeof(dst_ip));
+        appid_log(ctrlPkt, TRACE_DEBUG_LEVEL, "Failed to create a related flow for %s-%u -> %s-%u %u\n",
+            src_ip, (unsigned)cliPort, dst_ip, (unsigned)srvPort, (unsigned)proto);
         delete asd;
         asd = nullptr;
     }
     else
     {
-        if (appidDebug->is_active())
-        {
-            sfip_ntop(cliIp, src_ip, sizeof(src_ip));
-            sfip_ntop(srvIp, dst_ip, sizeof(dst_ip));
-            LogMessage("AppIdDbg %s Related flow created for %s-%u -> %s-%u %u\n",
-                appidDebug->get_debug_session(),
-                src_ip, (unsigned)cliPort, dst_ip, (unsigned)srvPort, (unsigned)proto);
-        }
+        sfip_ntop(cliIp, src_ip, sizeof(src_ip));
+        sfip_ntop(srvIp, dst_ip, sizeof(dst_ip));
+        appid_log(ctrlPkt, TRACE_DEBUG_LEVEL, "Related flow created for %s-%u -> %s-%u %u\n",
+            src_ip, (unsigned)cliPort, dst_ip, (unsigned)srvPort, (unsigned)proto);
         asd->in_expected_cache = true;
     }
 
@@ -394,9 +385,7 @@ void AppIdSession::check_ssl_detection_restart(AppidChangeBits& change_bits,
         encrypted.referred_id = pick_ss_referred_payload_app_id();
 
         reinit_session_data(change_bits, curr_tp_appid_ctxt);
-        if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s SSL decryption is available, restarting app detection\n",
-                appidDebug->get_debug_session());
+        appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "SSL decryption is available, restarting app detection\n");
 
         // APPID_SESSION_ENCRYPTED is set upon receiving a command which upgrades the session to
         // SSL. Next packet after the command will have encrypted traffic.  In the case of a
@@ -416,9 +405,7 @@ void AppIdSession::check_tunnel_detection_restart()
     if (!hsession or !hsession->get_tunnel())
         return;
 
-    if (appidDebug->is_active())
-        LogMessage("AppIdDbg %s Found HTTP Tunnel, restarting app Detection\n",
-            appidDebug->get_debug_session());
+    appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Found HTTP Tunnel, restarting app Detection\n");
 
     // service
     if (api.service.get_id() == api.service.get_port_service_id())
@@ -552,9 +539,8 @@ void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits)
     if (tsession->get_tls_handshake_done() and
         api.payload.get_id() == APP_ID_NONE)
     {
-        if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s End of SSL/TLS handshake detected with no payloadAppId, "
-                "so setting to unknown\n", appidDebug->get_debug_session());
+        appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "End of SSL/TLS handshake detected with no payloadAppId, "
+            "so setting to unknown\n");
         api.payload.set_id(APP_ID_UNKNOWN);
     }
 }
@@ -1221,16 +1207,12 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packe
 
     AppidEvent app_event(change_bits, is_httpx, httpx_stream_index, api, p);
     DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::ANY_CHANGE, app_event, p.flow);
-    if (appidDebug->is_active())
-    {
-        std::string str;
-        change_bits_to_string(change_bits, str);
-        if (is_httpx)
-            LogMessage("AppIdDbg %s Published event for changes: %s for HTTPX stream index %u\n",
-                appidDebug->get_debug_session(), str.c_str(), httpx_stream_index);
-        else
-            LogMessage("AppIdDbg %s Published event for changes: %s\n",
-                appidDebug->get_debug_session(), str.c_str());
-    }
+    std::string str;
+    change_bits_to_string(change_bits, str);
+    if (is_httpx)
+        appid_log(&p, TRACE_DEBUG_LEVEL, "Published event for changes: %s for HTTPX stream index %u\n",
+            str.c_str(), httpx_stream_index);
+    else
+        appid_log(&p, TRACE_DEBUG_LEVEL, "Published event for changes: %s\n",  str.c_str());
 }
 

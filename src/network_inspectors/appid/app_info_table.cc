@@ -36,6 +36,7 @@
 #include "utils/util_cstring.h"
 #include "appid_api.h"
 #include "appid_config.h"
+#include "appid_debug.h"
 #include "appid_inspector.h"
 #include "appid_peg_counts.h"
 
@@ -104,8 +105,8 @@ bool AppInfoManager::add_entry_to_app_info_name_table(const char* app_name,
         app_info_name_table[app_name] = entry;
     else
     {
-        WarningMessage("App name, \"%s\" is a duplicate entry will be shared by each detector.\n",
-            app_name);
+        appid_log(nullptr, TRACE_WARNING_LEVEL, "App name, \"%s\" is a duplicate entry will be shared by "
+            "each detector.\n", app_name);
         added = false;
     }
     return added;
@@ -170,7 +171,7 @@ AppInfoTableEntry* AppInfoManager::add_dynamic_app_entry(const char* app_name)
 {
     if (!app_name || strlen(app_name) >= MAX_EVENT_APPNAME_LEN)
     {
-        ErrorMessage("Appname invalid or too long: %s\n", app_name);
+        appid_log(nullptr, TRACE_ERROR_LEVEL, "Appname invalid or too long: %s\n", app_name);
         return nullptr;
     }
 
@@ -204,14 +205,14 @@ void AppInfoManager::cleanup_appid_info_table()
 
 void AppInfoManager::dump_app_info_table()
 {
-    LogMessage("Cisco provided detectors:\n");
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Cisco provided detectors:\n");
     for (auto& kv: app_info_table)
-        LogMessage("%s\t%d\t%s\n", kv.second->app_name, kv.second->appId,
+        appid_log(nullptr, TRACE_INFO_LEVEL, "%s\t%d\t%s\n", kv.second->app_name, kv.second->appId,
             (kv.second->flags & APPINFO_FLAG_ACTIVE) ? "active" : "inactive");
 
-    LogMessage("User provided detectors:\n");
+    appid_log(nullptr, TRACE_INFO_LEVEL, "User provided detectors:\n");
     for (auto& kv: custom_app_info_table)
-        LogMessage("%s\t%d\t%s\n", kv.second->app_name, kv.second->appId,
+        appid_log(nullptr, TRACE_INFO_LEVEL, "%s\t%d\t%s\n", kv.second->app_name, kv.second->appId,
             (kv.second->flags & APPINFO_FLAG_ACTIVE) ? "active" : "inactive");
 }
 
@@ -395,7 +396,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
             else if (!(strcasecmp(conf_key, "bittorrent_aggressiveness")))
             {
                 int aggressiveness = atoi(conf_val);
-                LogMessage("AppId: bittorrent_aggressiveness %d\n", aggressiveness);
+                appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: bittorrent_aggressiveness %d\n", aggressiveness);
                 if (aggressiveness >= 50)
                 {
                     odp_ctxt.host_port_app_cache_lookup_interval = 5;
@@ -403,59 +404,59 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                     set_app_info_flags(APP_ID_BITTORRENT, APPINFO_FLAG_DEFER);
                     set_app_info_flags(APP_ID_BITTORRENT, APPINFO_FLAG_DEFER_PAYLOAD);
                     odp_ctxt.max_tp_flow_depth = 25;
-                    LogMessage("AppId: host_port_app_cache_lookup_interval %d\n",
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: host_port_app_cache_lookup_interval %d\n",
                         odp_ctxt.host_port_app_cache_lookup_interval);
-                    LogMessage("AppId: recheck_for_portservice_appid enabled\n");
-                    LogMessage("AppId: defer_to_thirdparty %d\n", APP_ID_BITTORRENT);
-                    LogMessage("AppId: defer_payload_to_thirdparty %d\n", APP_ID_BITTORRENT);
-                    LogMessage("AppId: max_tp_flow_depth %d\n", odp_ctxt.max_tp_flow_depth);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: recheck_for_portservice_appid enabled\n");
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_to_thirdparty %d\n", APP_ID_BITTORRENT);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_payload_to_thirdparty %d\n", APP_ID_BITTORRENT);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: max_tp_flow_depth %d\n", odp_ctxt.max_tp_flow_depth);
                 }
                 if (aggressiveness >= 80)
                 {
                     odp_ctxt.allow_port_wildcard_host_cache = true;
-                    LogMessage("AppId: allow_port_wildcard_host_cache enabled\n");
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: allow_port_wildcard_host_cache enabled\n");
                 }
             }
             else if (!(strcasecmp(conf_key, "ultrasurf_aggressiveness")))
             {
                 int aggressiveness = atoi(conf_val);
-                LogMessage("AppId: ultrasurf_aggressiveness %d\n", aggressiveness);
+                appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: ultrasurf_aggressiveness %d\n", aggressiveness);
                 if (aggressiveness >= 50)
                 {
                     odp_ctxt.check_host_cache_unknown_ssl = true;
                     set_app_info_flags(APP_ID_ULTRASURF, APPINFO_FLAG_DEFER);
                     set_app_info_flags(APP_ID_ULTRASURF, APPINFO_FLAG_DEFER_PAYLOAD);
                     odp_ctxt.max_tp_flow_depth = 25;
-                    LogMessage("AppId: check_host_cache_unknown_ssl enabled\n");
-                    LogMessage("AppId: defer_to_thirdparty %d\n", APP_ID_ULTRASURF);
-                    LogMessage("AppId: defer_payload_to_thirdparty %d\n", APP_ID_ULTRASURF);
-                    LogMessage("AppId: max_tp_flow_depth %d\n", odp_ctxt.max_tp_flow_depth);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: check_host_cache_unknown_ssl enabled\n");
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_to_thirdparty %d\n", APP_ID_ULTRASURF);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_payload_to_thirdparty %d\n", APP_ID_ULTRASURF);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: max_tp_flow_depth %d\n", odp_ctxt.max_tp_flow_depth);
                 }
                 if (aggressiveness >= 80)
                 {
                     odp_ctxt.allow_port_wildcard_host_cache = true;
-                    LogMessage("AppId: allow_port_wildcard_host_cache enabled\n");
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: allow_port_wildcard_host_cache enabled\n");
                 }
             }
             else if (!(strcasecmp(conf_key, "psiphon_aggressiveness")))
             {
                 int aggressiveness = atoi(conf_val);
-                LogMessage("AppId: psiphon_aggressiveness %d\n", aggressiveness);
+                appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: psiphon_aggressiveness %d\n", aggressiveness);
                 if (aggressiveness >= 50)
                 {
                     odp_ctxt.check_host_cache_unknown_ssl = true;
                     set_app_info_flags(APP_ID_PSIPHON, APPINFO_FLAG_DEFER);
                     set_app_info_flags(APP_ID_PSIPHON, APPINFO_FLAG_DEFER_PAYLOAD);
                     odp_ctxt.max_tp_flow_depth = 25;
-                    LogMessage("AppId: check_host_cache_unknown_ssl enabled\n");
-                    LogMessage("AppId: defer_to_thirdparty %d\n", APP_ID_PSIPHON);
-                    LogMessage("AppId: defer_payload_to_thirdparty %d\n", APP_ID_PSIPHON);
-                    LogMessage("AppId: max_tp_flow_depth %d\n", odp_ctxt.max_tp_flow_depth);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: check_host_cache_unknown_ssl enabled\n");
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_to_thirdparty %d\n", APP_ID_PSIPHON);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_payload_to_thirdparty %d\n", APP_ID_PSIPHON);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: max_tp_flow_depth %d\n", odp_ctxt.max_tp_flow_depth);
                 }
                 if (aggressiveness >= 80)
                 {
                     odp_ctxt.allow_port_wildcard_host_cache = true;
-                    LogMessage("AppId: allow_port_wildcard_host_cache enabled\n");
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: allow_port_wildcard_host_cache enabled\n");
                 }
             }
             else if (!(strcasecmp(conf_key, "tp_allow_probes")))
@@ -627,10 +628,10 @@ void AppInfoManager::dump_appid_configurations(const std::string& file_path) con
     if (!conf_file.is_open())
         return;
 
-    LogMessage("AppId: Configuration file %s\n", file_path.c_str());
+    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: Configuration file %s\n", file_path.c_str());
     std::string line;
     while (getline(conf_file, line))
-        LogMessage("%s\n", line.c_str());
+        appid_log(nullptr, TRACE_INFO_LEVEL, "%s\n", line.c_str());
 
     conf_file.close();
 }
@@ -674,7 +675,7 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
             const char* token = strtok_r(buf, CONF_SEPARATORS, &context);
             if (!token)
             {
-                ErrorMessage("Could not read id for AppId\n");
+                appid_log(nullptr, TRACE_ERROR_LEVEL, "Could not read id for AppId\n");
                 continue;
             }
             app_id = strtol(token, nullptr, 10);
@@ -682,7 +683,7 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
             token = strtok_r(nullptr, CONF_SEPARATORS, &context);
             if (!token)
             {
-                ErrorMessage("Could not read app_name. Line %s\n", buf);
+                appid_log(nullptr, TRACE_ERROR_LEVEL, "Could not read app_name. Line %s\n", buf);
                 continue;
             }
             app_name = snort_strdup(token);
@@ -690,7 +691,7 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
             token = strtok_r(nullptr, CONF_SEPARATORS, &context);
             if (!token)
             {
-                ErrorMessage("Could not read service id for AppId\n");
+                appid_log(nullptr, TRACE_ERROR_LEVEL, "Could not read service id for AppId\n");
                 snort_free(app_name);
                 continue;
             }
@@ -699,7 +700,7 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
             token = strtok_r(nullptr, CONF_SEPARATORS, &context);
             if (!token)
             {
-                ErrorMessage("Could not read client id for AppId\n");
+                appid_log(nullptr, TRACE_ERROR_LEVEL, "Could not read client id for AppId\n");
                 snort_free(app_name);
                 continue;
             }
@@ -708,7 +709,7 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
             token = strtok_r(nullptr, CONF_SEPARATORS, &context);
             if (!token)
             {
-                ErrorMessage("Could not read payload id for AppId\n");
+                appid_log(nullptr, TRACE_ERROR_LEVEL, "Could not read payload id for AppId\n");
                 snort_free(app_name);
                 continue;
             }

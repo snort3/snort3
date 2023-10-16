@@ -30,16 +30,24 @@
 
 namespace snort
 {
+Packet::Packet(bool) { }
+Packet::~Packet() = default;
+Packet* DetectionEngine::get_current_packet() { return nullptr; }
+
 // Stubs for logs
 char test_log[256];
+void LogMessage(const char* format, va_list& args)
+{
+    vsprintf(test_log, format, args);
+}
 void LogMessage(const char* format,...)
 {
     va_list args;
     va_start(args, format);
-    vsprintf(test_log, format, args);
+    LogMessage(format, args);
     va_end(args);
 }
-void ErrorMessage(const char*,...) {}
+
 void LogLabel(const char*, FILE*) {}
 void LogText(const char* s, FILE*) { LogMessage("%s\n", s); }
 
@@ -131,6 +139,13 @@ AlpnPatternMatchers::~AlpnPatternMatchers() = default;
 CipPatternMatchers::~CipPatternMatchers() = default;
 snort::SearchTool::SearchTool(bool) { }
 snort::SearchTool::~SearchTool() = default;
+void appid_log(const snort::Packet*, unsigned char, char const* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    LogMessage(fmt, args);
+    va_end(args);
+}
 
 TEST_GROUP(service_state_tests)
 {
@@ -150,15 +165,14 @@ TEST(service_state_tests, select_detector_by_brute_force)
 {
     ServiceDiscovery sd;
     ServiceDiscoveryState sds;
-
     // Testing end of brute-force walk for supported and unsupported protocols
     test_log[0] = '\0';
     sds.select_detector_by_brute_force(IpProtocol::TCP, sd);
-    STRCMP_EQUAL(test_log, "AppIdDbg  Brute-force state failed - no more TCP detectors\n");
+    STRCMP_EQUAL(test_log, "Brute-force state failed - no more TCP detectors\n");
 
     test_log[0] = '\0';
     sds.select_detector_by_brute_force(IpProtocol::UDP, sd);
-    STRCMP_EQUAL(test_log, "AppIdDbg  Brute-force state failed - no more UDP detectors\n");
+    STRCMP_EQUAL(test_log, "Brute-force state failed - no more UDP detectors\n");
 
     test_log[0] = '\0';
     sds.select_detector_by_brute_force(IpProtocol::IP, sd);

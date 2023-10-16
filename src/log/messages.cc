@@ -222,12 +222,8 @@ void LogMessage(FILE* fh, const char* format,...)
 }
 
 // print a warning message to stderr or syslog
-void WarningMessage(const char* format,...)
+void WarningMessage(const char* format, va_list& ap)
 {
-    va_list ap;
-
-    va_start(ap, format);
-
     if ( SnortConfig::log_syslog() )
     {
         char buf[STD_BUF+1];
@@ -239,17 +235,21 @@ void WarningMessage(const char* format,...)
     {
         vfprintf(stderr, format, ap);
     }
+}
+
+void WarningMessage(const char* format, ...)
+{
+    va_list ap;
+    va_start(ap, format);
+
+    WarningMessage(format, ap);
 
     va_end(ap);
 }
 
-// print a warning message to stderr or syslog
-void ErrorMessage(const char* format,...)
+// print an error message to stderr or syslog
+void ErrorMessage(const char* format, va_list& ap)
 {
-    va_list ap;
-
-    va_start(ap, format);
-
     if ( SnortConfig::log_syslog() )
     {
         char buf[STD_BUF+1];
@@ -261,6 +261,16 @@ void ErrorMessage(const char* format,...)
     {
         vfprintf(stderr, format, ap);
     }
+}
+
+void ErrorMessage(const char* format,...)
+{
+    va_list ap;
+
+    va_start(ap, format);
+
+    ErrorMessage(format, ap);
+
     va_end(ap);
 }
 

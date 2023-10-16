@@ -28,7 +28,6 @@
 #include <list>
 #include <map>
 
-#include "log/messages.h"
 #include "sfip/sf_ip.h"
 #include "time/packet_time.h"
 #include "utils/util.h"
@@ -65,18 +64,14 @@ ServiceDetector* ServiceDiscoveryState::select_detector_by_brute_force(IpProtoco
         if ( !tcp_brute_force_mgr )
             tcp_brute_force_mgr = new AppIdDetectorList(IpProtocol::TCP, sd);
         service = tcp_brute_force_mgr->next();
-        if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s Brute-force state %s\n", appidDebug->get_debug_session(),
-                service? "" : "failed - no more TCP detectors");
+        appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Brute-force state %s\n", service? "" : "failed - no more TCP detectors");
     }
     else if (proto == IpProtocol::UDP)
     {
         if ( !udp_brute_force_mgr )
             udp_brute_force_mgr = new AppIdDetectorList(IpProtocol::UDP, sd);
         service = udp_brute_force_mgr->next();
-        if (appidDebug->is_active())
-            LogMessage("AppIdDbg %s Brute-force state %s\n", appidDebug->get_debug_session(),
-                service? "" : "failed - no more UDP detectors");
+        appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Brute-force state %s\n", service? "" : "failed - no more UDP detectors");
     }
     else
         service = nullptr;
@@ -238,7 +233,8 @@ void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port,
 
         ipstr[0] = 0;
         sfip_ntop(ip, ipstr, sizeof(ipstr));
-        ErrorMessage("Failed to remove from hash: %s:%u:%hu\n", ipstr, (unsigned)proto, port);
+        appid_log(CURRENT_PACKET, TRACE_ERROR_LEVEL, "Failed to remove from hash: %s:%u:%hu\n", ipstr,
+            (unsigned)proto, port);
     }
 }
 

@@ -450,12 +450,9 @@ void AppIdHttpSession::set_client(AppId app_id, AppidChangeBits& change_bits,
         change_bits.set(APPID_CLIENT_INFO_BIT);
     }
 
-    if (appidDebug->is_active())
-    {
-        const char* app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(app_id);
-        LogMessage("AppIdDbg %s %s is client %s (%d)\n", appidDebug->get_debug_session(),
-            type, app_name ? app_name : "unknown", app_id);
-    }
+    const char* app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(app_id);
+    appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "%s is client %s (%d)\n",
+        type, app_name ? app_name : "unknown", app_id);
 }
 
 void AppIdHttpSession::set_payload(AppId app_id, AppidChangeBits& change_bits,
@@ -473,16 +470,12 @@ void AppIdHttpSession::set_payload(AppId app_id, AppidChangeBits& change_bits,
         AppIdPegCounts::inc_payload_count(app_id);
     payload.set_version(version);
 
-    if (appidDebug->is_active())
-    {
-        const char* app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(app_id);
-        if (app_id == APP_ID_UNKNOWN)
-            LogMessage("AppIdDbg %s Payload is Unknown (%d)\n", appidDebug->get_debug_session(),
-                app_id);
-        else
-            LogMessage("AppIdDbg %s %s is payload %s (%d)\n", appidDebug->get_debug_session(),
-                type, app_name ? app_name : "unknown", app_id);
-    }
+    const char* app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(app_id);
+    if (app_id == APP_ID_UNKNOWN)
+        appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Payload is Unknown (%d)\n", app_id);
+    else
+        appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "%s is payload %s (%d)\n", type,
+            app_name ? app_name : "unknown", app_id);
 }
 
 void AppIdHttpSession::set_referred_payload(AppId app_id, AppidChangeBits& change_bits)
@@ -495,12 +488,8 @@ void AppIdHttpSession::set_referred_payload(AppId app_id, AppidChangeBits& chang
         AppIdPegCounts::inc_referred_count(app_id);
     change_bits.set(APPID_REFERRED_BIT);
 
-    if (appidDebug->is_active())
-    {
-        const char* app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(app_id);
-        LogMessage("AppIdDbg %s URL is referred %s (%d)\n", appidDebug->get_debug_session(),
-            app_name ? app_name : "unknown", app_id);
-    }
+    const char* app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(app_id);
+    appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "URL is referred %s (%d)\n", app_name ? app_name : "unknown", app_id);
 }
 
 int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
@@ -520,6 +509,8 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
         return 0;
     }
 
+    Packet* p = CURRENT_PACKET;
+
     if ( direction == APP_ID_FROM_RESPONDER and
         !asd.get_session_flags(APPID_SESSION_RESPONSE_CODE_CHECKED) )
     {
@@ -530,9 +521,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             constexpr auto RESPONSE_CODE_LENGTH = 3;
             if (response_code->size() != RESPONSE_CODE_LENGTH)
             {
-                if (appidDebug->is_active())
-                    LogMessage("AppIdDbg %s Bad http response code.\n",
-                        appidDebug->get_debug_session());
+                appid_log(p, TRACE_DEBUG_LEVEL, "Bad http response code.\n");
                 asd.reset_session_data(change_bits);
                 return 0;
             }
@@ -543,9 +532,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             set_session_flags(APPID_SESSION_RESPONSE_CODE_CHECKED);
             /* didn't receive response code in first X packets. Stop processing this session */
             asd.reset_session_data(change_bits);
-            if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s No response code received\n",
-                    appidDebug->get_debug_session());
+            appid_log(p, TRACE_DEBUG_LEVEL, "No response code received\n");
             return 0;
         }
 #endif
@@ -618,15 +605,11 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
 
             http_matchers.identify_user_agent(useragent->c_str(), useragent->size(),
                 service_id, client_id, &version);
-            if (appidDebug->is_active())
+            if (service_id > APP_ID_NONE and service_id != APP_ID_HTTP and asd.get_service_id() != service_id)
             {
-                if (service_id > APP_ID_NONE and service_id != APP_ID_HTTP and
-                    asd.get_service_id() != service_id)
-                {
-                    const char* app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
-                    LogMessage("AppIdDbg %s User Agent is service %s (%d)\n",
-                        appidDebug->get_debug_session(), app_name ? app_name : "unknown", service_id);
-                }
+                const char* app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
+                appid_log(p, TRACE_DEBUG_LEVEL, "User Agent is service %s (%d)\n",
+                    app_name ? app_name : "unknown", service_id);
             }
             asd.set_service_appid_data(service_id, change_bits);
             if (client_id != APP_ID_HTTP)
@@ -665,12 +648,8 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             if (app_id and asd.get_service_id() != app_id)
             {
                 asd.set_service_appid_data(app_id, change_bits, version);
-                if (appidDebug->is_active())
-                {
-                    const char* app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(app_id);
-                    LogMessage("AppIdDbg %s X service %s (%d)\n", appidDebug->get_debug_session(),
-                        app_name ? app_name : "unknown", app_id);
-                }
+                const char* app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(app_id);
+                appid_log(p, TRACE_DEBUG_LEVEL, "X service %s (%d)\n", app_name ? app_name : "unknown", app_id);
             }
         }
         asd.scan_flags &= ~SCAN_HTTP_XWORKINGWITH_FLAG;
@@ -712,14 +691,11 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
 
             if (asd.get_service_id() <= APP_ID_NONE)
             {
-                if (appidDebug->is_active() and service_id > APP_ID_NONE and service_id !=
-                    APP_ID_HTTP and asd.get_service_id() != service_id)
+                if (service_id > APP_ID_NONE and service_id != APP_ID_HTTP and asd.get_service_id() != service_id)
                 {
                     const char* app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
-                    LogMessage("AppIdDbg %s URL is service %s (%d)\n",
-                        appidDebug->get_debug_session(),
-                        app_name ? app_name : "unknown",
-                        service_id);
+                    appid_log(p, TRACE_DEBUG_LEVEL, "URL is service %s (%d)\n",
+                        app_name ? app_name : "unknown", service_id);
                 }
                 asd.set_service_appid_data(service_id, change_bits);
             }
@@ -814,8 +790,7 @@ void AppIdHttpSession::set_field(HttpFieldIds id, const std::string* str,
         set_http_change_bits(change_bits, id);
         set_scan_flags(id);
 
-        if (appidDebug->is_active())
-            print_field(id, str);
+        print_field(id, str);
     }
     else if (str)
         delete str;
@@ -831,8 +806,7 @@ void AppIdHttpSession::set_field(HttpFieldIds id, const uint8_t* str, int32_t le
         set_http_change_bits(change_bits, id);
         set_scan_flags(id);
 
-        if (appidDebug->is_active())
-            print_field(id, meta_data[id]);
+        print_field(id, meta_data[id]);
     }
 }
 
@@ -860,8 +834,7 @@ void AppIdHttpSession::set_req_body_field(HttpFieldIds id, const uint8_t* str, i
         set_http_change_bits(change_bits, id);
         set_scan_flags(id);
 
-        if (appidDebug->is_active())
-            print_field(id, meta_data[id]);
+        print_field(id, meta_data[id]);
     }
 }
 
@@ -935,10 +908,9 @@ void AppIdHttpSession::print_field(HttpFieldIds id, const std::string* field)
     }
 
     if (httpx_stream_id >= 0)
-        LogMessage("AppIdDbg %s stream %" PRId64 ": %s is %s\n", appidDebug->get_debug_session(),
+        appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "stream %" PRId64 ": %s is %s\n",
             httpx_stream_id, field_name.c_str(), field->c_str());
     else
-        LogMessage("AppIdDbg %s %s is %s\n", appidDebug->get_debug_session(),
-            field_name.c_str(), field->c_str());
+        appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "%s is %s\n", field_name.c_str(), field->c_str());
 }
 

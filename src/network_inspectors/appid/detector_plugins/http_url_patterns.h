@@ -26,10 +26,11 @@
 #include <vector>
 
 #include "flow/flow.h"
-#include "log/messages.h"
 #include "search_engines/search_tool.h"
+#include "trace/trace.h"
 #include "utils/util.h"
 
+#include "appid_debug.h"
 #include "appid_types.h"
 #include "appid_utils/sf_mlmp.h"
 #include "application_ids.h"
@@ -101,13 +102,13 @@ struct DetectorHTTPPattern
     {
         if( !pat )
         {
-            snort::ErrorMessage("HTTP pattern string is null.");
+            appid_log(nullptr, TRACE_ERROR_LEVEL, "HTTP pattern string is null.");
             return false;
         }
 
         if (seq < SINGLE || seq > USER_AGENT_HEADER)
         {
-            snort::ErrorMessage("Invalid HTTP DHP Sequence.");
+            appid_log(nullptr, TRACE_ERROR_LEVEL, "Invalid HTTP DHP Sequence.");
             return false;
         }
 

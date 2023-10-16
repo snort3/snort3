@@ -63,7 +63,9 @@ SO_PUBLIC void LogMessage(const char*, va_list& ap);
 SO_PUBLIC void LogMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
 SO_PUBLIC void LogMessage(FILE*, const char*, ...) __attribute__((format (printf, 2, 3)));
 SO_PUBLIC void WarningMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
+SO_PUBLIC void WarningMessage(const char*, va_list& ap);
 SO_PUBLIC void ErrorMessage(const char*, ...) __attribute__((format (printf, 1, 2)));
+SO_PUBLIC void ErrorMessage(const char*, va_list& ap);
 
 class SO_PUBLIC ConfigLogger final
 {

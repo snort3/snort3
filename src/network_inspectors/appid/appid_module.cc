@@ -32,7 +32,6 @@
 #include "control/control.h"
 #include "host_tracker/host_cache.h"
 #include "host_tracker/host_cache_segmented.h"
-#include "log/messages.h"
 #include "main/analyzer.h"
 #include "main/analyzer_command.h"
 #include "main/reload_tracker.h"
@@ -161,7 +160,7 @@ public:
     ACThirdPartyAppIdContextSwap(const AppIdInspector& inspector, ControlConn* conn)
         : AnalyzerCommand(conn), inspector(inspector)
     {
-        LogMessage("== swapping third-party configuration\n");
+        appid_log(nullptr, TRACE_INFO_LEVEL, "== swapping third-party configuration\n");
     }
 
     ~ACThirdPartyAppIdContextSwap() override;
@@ -186,7 +185,7 @@ ACThirdPartyAppIdContextSwap::~ACThirdPartyAppIdContextSwap()
     std::string file_path = ctxt.get_tp_appid_ctxt()->get_user_config();
     ctxt.get_odp_ctxt().get_app_info_mgr().dump_appid_configurations(file_path);
     log_message("== reload third-party complete\n");
-    LogMessage("== third-party configuration swap complete\n");
+    appid_log(nullptr, TRACE_INFO_LEVEL, "== third-party configuration swap complete\n");
     ReloadTracker::end(ctrlcon, true);
 }
 
@@ -294,7 +293,7 @@ static int enable_debug(lua_State* L)
     if (sipstr)
     {
         if (constraints.sip.set(sipstr) != SFIP_SUCCESS)
-            LogMessage("Invalid source IP address provided: %s\n", sipstr);
+            appid_log(nullptr, TRACE_INFO_LEVEL, "Invalid source IP address provided: %s\n", sipstr);
         else if (constraints.sip.is_set())
             constraints.sip_flag = true;
     }
@@ -302,7 +301,7 @@ static int enable_debug(lua_State* L)
     if (dipstr)
     {
         if (constraints.dip.set(dipstr) != SFIP_SUCCESS)
-            LogMessage("Invalid destination IP address provided: %s\n", dipstr);
+            appid_log(nullptr, TRACE_INFO_LEVEL, "Invalid destination IP address provided: %s\n", dipstr);
         else if (constraints.dip.is_set())
             constraints.dip_flag = true;
     }
@@ -427,8 +426,8 @@ static int reload_detectors(lua_State* L)
     {
     #endif
         getrusage(RUSAGE_SELF, &ru);
-        LogMessage("appid: MaxRss diff: %li\n", ru.ru_maxrss - prev_maxrss);
-        LogMessage("appid: patterns loaded: %u\n", odp_ctxt.get_pattern_count());
+        appid_log(nullptr, TRACE_INFO_LEVEL, "appid: MaxRss diff: %li\n", ru.ru_maxrss - prev_maxrss);
+        appid_log(nullptr, TRACE_INFO_LEVEL, "appid: patterns loaded: %u\n", odp_ctxt.get_pattern_count());
     #ifdef REG_TEST
     }
     #endif
@@ -488,12 +487,8 @@ void AppIdModule::set_trace(const Trace* trace) const
 
 const TraceOption* AppIdModule::get_trace_options() const
 {
-#ifndef DEBUG_MSGS
-    return nullptr;
-#else
     static const TraceOption appid_trace_options(nullptr, 0, nullptr);
     return &appid_trace_options;
-#endif
 }
 
 ProfileStats* AppIdModule::get_profile() const

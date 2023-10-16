@@ -50,6 +50,7 @@ Inspector* InspectorManager::get_inspector(char const*, bool, const snort::Snort
 
 AppIdContext* ctxt;
 AppIdContext& AppIdInspector::get_ctxt() const { return *ctxt; }
+void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
 
 TEST_GROUP(eve_ca_patterns_tests)
 {

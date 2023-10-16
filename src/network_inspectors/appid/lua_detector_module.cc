@@ -32,13 +32,13 @@
 #include <fstream>
 
 #include "appid_config.h"
+#include "appid_debug.h"
 #include "appid_inspector.h"
 #include "lua_detector_util.h"
 #include "lua_detector_api.h"
 #include "lua_detector_flow_api.h"
 #include "utils/util.h"
 #include "utils/sflsq.h"
-#include "log/messages.h"
 
 using namespace snort;
 using namespace std;
@@ -165,7 +165,7 @@ LuaDetectorManager::~LuaDetectorManager()
 {
     auto L = this->L;
     if (lua_gettop(L))
-        WarningMessage("appid: leak of %d lua stack elements before detector unload\n",
+        appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: leak of %d lua stack elements before detector unload\n",
             lua_gettop(L));
 
     if (L)
@@ -186,7 +186,7 @@ LuaDetectorManager::~LuaDetectorManager()
 
                 if ( lua_pcall(L, 1, 1, 0) )
                 {
-                    ErrorMessage("Could not cleanup the %s client app element: %s\n",
+                    appid_log(nullptr, TRACE_ERROR_LEVEL, "Could not cleanup the %s client app element: %s\n",
                         lsd->package_info.name.c_str(), lua_tostring(L, -1));
                 }
             }
@@ -209,19 +209,19 @@ void LuaDetectorManager::initialize(const SnortConfig* sc, AppIdContext& ctxt, b
     odp_thread_local_ctxt->set_lua_detector_mgr(*lua_detector_mgr);
 
     if (!lua_detector_mgr->L)
-        FatalError("Error - appid: can not create new luaState, instance=%u\n",
-            get_instance_id());
+        appid_log(nullptr, is_control? TRACE_CRITICAL_LEVEL : TRACE_ERROR_LEVEL,
+            "Error - appid: can not create new luaState, instance=%u\n", get_instance_id());
 
     if (reload)
     {
-        LogMessage("AppId Lua-Detectors : loading lua detectors in control thread\n");
+        appid_log(nullptr, TRACE_INFO_LEVEL, "AppId Lua-Detectors : loading lua detectors in control thread\n");
         unsigned max_threads = ThreadConfig::get_instance_max();
         for (unsigned i = 0 ; i < max_threads; i++)
         {
             lua_detector_mgr_list.emplace_back(new LuaDetectorManager(ctxt, 0));
 
             if (!lua_detector_mgr_list[i]->L)
-                FatalError("Error - appid: can not create new luaState, instance=%u\n", i);
+                appid_log(nullptr, TRACE_CRITICAL_LEVEL, "Error - appid: can not create new luaState, instance=%u\n", i);
 
         }
     }
@@ -295,7 +295,7 @@ static inline void set_lua_tracker_size(lua_State* L, uint32_t numTrackers)
         {
             lua_pushinteger (L, numTrackers);
             if (lua_pcall(L, 1, 0, 0) != 0 and init(L))
-                ErrorMessage("Error - appid: activating lua detector. "
+                appid_log(nullptr, TRACE_ERROR_LEVEL, "Error - appid: activating lua detector. "
                     "Setting tracker size to %u failed.\n", numTrackers);
         }
     }
@@ -311,7 +311,7 @@ static inline void set_lua_tracker_size(lua_State* L, uint32_t numTrackers)
         {
             lua_pushinteger (L, numTrackers);
             if (lua_pcall(L, 1, 0, 0) != 0 and init(L))
-                ErrorMessage("Error - appid: setting tracker size\n");
+                appid_log(nullptr, TRACE_ERROR_LEVEL, "Error - appid: setting tracker size\n");
         }
     }
 
@@ -355,7 +355,7 @@ LuaObject* LuaDetectorManager::create_lua_detector(const char* detector_name,
             int c = detector_file.peek();
             detector_file.close();
             if (c != EOF)
-                ErrorMessage("Error - appid: can not read DetectorPackageInfo table from %s\n",
+                appid_log(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not read DetectorPackageInfo table from %s\n",
                     detector_name);
         }
         if (!lua_isnil(L, -1)) // pop DetectorPackageInfo index if it was pushed
@@ -366,7 +366,7 @@ LuaObject* LuaDetectorManager::create_lua_detector(const char* detector_name,
     if (!get_lua_field(L, -1, "name", log_name))
     {
         if (init(L))
-            ErrorMessage("Error - appid: can not read DetectorPackageInfo field 'name' from %s\n",
+            appid_log(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not read DetectorPackageInfo field 'name' from %s\n",
                 detector_name);
         lua_pop(L, 1);
         return nullptr;
@@ -375,7 +375,7 @@ LuaObject* LuaDetectorManager::create_lua_detector(const char* detector_name,
     if (!get_lua_field(L, -1, "proto", proto))
     {
         if (init(L))
-            ErrorMessage("Error - appid: can not read DetectorPackageInfo field 'proto' from %s\n",
+            appid_log(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not read DetectorPackageInfo field 'proto' from %s\n",
                 detector_name);
         lua_pop(L, 1);
         return nullptr;
@@ -398,7 +398,7 @@ LuaObject* LuaDetectorManager::create_lua_detector(const char* detector_name,
                 detector_name, log_name, is_custom, proto, L, ctxt.get_odp_ctxt());
         }
         else if (init(L))
-            ErrorMessage("Error - appid: can not read DetectorPackageInfo field"
+            appid_log(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not read DetectorPackageInfo field"
                 " 'client' or 'server' from %s\n", detector_name);
 
         lua_pop(L, 1);        // pop server table
@@ -423,7 +423,7 @@ bool LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, 
         if (luaL_loadbuffer(L, buf.c_str(), buf.length(), detector_filename))
         {
             if (init(L))
-                ErrorMessage("Error - appid: can not load Lua detector, %s\n", lua_tostring(L, -1));
+                appid_log(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not load Lua detector, %s\n", lua_tostring(L, -1));
             lua_pop(L, 1);
             return false;
         }
@@ -440,14 +440,14 @@ bool LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, 
         if (luaL_loadfile(L, detector_filename))
         {
             if (init(L))
-                ErrorMessage("Error - appid: can not load Lua detector, %s\n", lua_tostring(L, -1));
+                appid_log(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not load Lua detector, %s\n", lua_tostring(L, -1));
             lua_pop(L, 1);
             return false;
         }
         if (reload and lua_dump(L, dump, &buf))
         {
             if (init(L))
-                ErrorMessage("Error - appid: can not compile Lua detector, %s\n", lua_tostring(L, -1));
+                appid_log(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not compile Lua detector, %s\n", lua_tostring(L, -1));
             lua_pop(L, 1);
             return false;
         }
@@ -476,7 +476,7 @@ bool LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, 
     lua_setfenv(L, -2);
     if (lua_pcall(L, 0, 0, 0))
     {
-        ErrorMessage("Error - appid: can not set env of Lua detector %s : %s\n",
+        appid_log(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not set env of Lua detector %s : %s\n",
             detector_filename, lua_tostring(L, -1));
         lua_pop(L, 1);
         return false;
@@ -501,7 +501,7 @@ void LuaDetectorManager::load_lua_detectors(const char* path, bool is_custom, bo
     if (rval == 0 )
     {
         if (lua_gettop(L))
-            WarningMessage("appid: leak of %d lua stack elements before detector load\n",
+            appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: leak of %d lua stack elements before detector load\n",
                 lua_gettop(L));
 
         string buf;
@@ -517,7 +517,7 @@ void LuaDetectorManager::load_lua_detectors(const char* path, bool is_custom, bo
             }
             if (size > MAX_LUA_DETECTOR_FILE_SIZE)
             {
-                ErrorMessage("Error - appid: can not load Lua detector %s : \
+                appid_log(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not load Lua detector %s : \
                     size exceeded maximum limit\n", globs.gl_pathv[n]);
                 file.close();
                 continue;
@@ -595,7 +595,7 @@ void LuaDetectorManager::activate_lua_detectors(const SnortConfig* sc)
     list<LuaObject*>::iterator lo = allocated_objects.begin();
 
     if (lua_gettop(L))
-        WarningMessage("appid: leak of %d lua stack elements before detector activate\n",
+        appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: leak of %d lua stack elements before detector activate\n",
             lua_gettop(L));
 
     while (lo != allocated_objects.end())
@@ -606,7 +606,7 @@ void LuaDetectorManager::activate_lua_detectors(const SnortConfig* sc)
         if (!lua_isfunction(L, -1))
         {
             if (init(L))
-                ErrorMessage("Error - appid: can not load DetectorInit function from %s\n",
+                appid_log(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not load DetectorInit function from %s\n",
                     (*lo)->get_detector()->get_name().c_str());
             if (!(*lo)->get_detector()->is_custom_detector())
                 num_odp_detectors--;
@@ -628,7 +628,7 @@ void LuaDetectorManager::activate_lua_detectors(const SnortConfig* sc)
         if (lua_pcall(L, 2, 1, 0))
         {
             if (init(L))
-                ErrorMessage("Error - appid: can not run DetectorInit, %s\n", lua_tostring(L, -1));
+                appid_log(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not run DetectorInit, %s\n", lua_tostring(L, -1));
             if (!(*lo)->get_detector()->is_custom_detector())
                 num_odp_detectors--;
             lua_settop(L, 0);
@@ -647,7 +647,7 @@ void LuaDetectorManager::activate_lua_detectors(const SnortConfig* sc)
 
 void LuaDetectorManager::list_lua_detectors()
 {
-    LogMessage("AppId Lua-Detector Stats: instance %u, odp detectors %zu, custom detectors %zu,"
+    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId Lua-Detector Stats: instance %u, odp detectors %zu, custom detectors %zu,"
         " total memory %d kb\n", get_instance_id(), num_odp_detectors,
         (allocated_objects.size() - num_odp_detectors), lua_gc(L, LUA_GCCOUNT, 0));
 }

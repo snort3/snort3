@@ -65,6 +65,8 @@ AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
 }
 
+void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
+
 const char* content_type = nullptr;
 const char* cookie = nullptr;
 const char* host = nullptr;

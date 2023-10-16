@@ -26,10 +26,10 @@
 #include <map>
 
 #include "host_port_app_cache.h"
-#include "log/messages.h"
 #include "main/thread.h"
 #include "managers/inspector_manager.h"
 #include "appid_config.h"
+#include "appid_debug.h"
 #include "appid_inspector.h"
 
 using namespace snort;
@@ -233,7 +233,7 @@ void HostPortCache::dump()
         HostPortVal hv = kv.second;
 
         inet_ntop(AF_INET6, &hk.ip, inet_buffer, sizeof(inet_buffer));
-        LogMessage("\tip=%s, \tport %d, \tip_proto %u, \ttype=%u, \tappId=%d\n",
+        appid_log(nullptr, TRACE_INFO_LEVEL, "\tip=%s, \tport %d, \tip_proto %u, \ttype=%u, \tappId=%d\n",
             inet_buffer, hk.port, (unsigned)hk.proto, hv.type, hv.appId);
     }
 }
