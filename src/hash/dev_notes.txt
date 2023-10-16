@@ -31,4 +31,17 @@ other data. The utilization of this feature is optional.
 During initialization, the number of LRUs to be created can be specified. 
 If not specified, a single LRU will be created by default.
 
-
+Segmented Shared LRU Cache
+The SegmentedLruCache class is a layer built atop the existing 
+LruCacheShared class, designed to mitigate bottlenecks in 
+multi-threaded environments, thereby bolstering scalability. 
+Without altering the core caching logic, it divides the cache 
+into multiple segments, defaulting to four. This structure drastically 
+reduces contention among threads, allowing for improved performance. 
+The segmented approach is generic and configurable, enabling easy 
+adaptation for different modules while preserving the fundamental 
+LRU cache behavior. Through this strategic modification, 
+the pathway for enhanced scalability and future advancements is 
+significantly broadened, making the caching mechanism more robust 
+and adaptable to evolving computational demands.
+check host_attributes.cc for example usage.

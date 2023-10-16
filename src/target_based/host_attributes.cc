@@ -25,7 +25,7 @@
 
 #include "host_attributes.h"
 
-#include "hash/lru_cache_shared.h"
+#include "hash/lru_segmented_cache_shared.h"
 #include "main/reload_tuner.h"
 #include "main/shell.h"
 #include "main/snort.h"
@@ -46,14 +46,16 @@ static const PegInfo host_attribute_pegs[] =
 };
 
 template<typename Key, typename Value, typename Hash>
-class HostLruSharedCache : public LruCacheShared<Key, Value, Hash>
+class HostLruSegmentedCache : public SegmentedLruCache<Key, Value, Hash> 
 {
 public:
-    HostLruSharedCache(const size_t initial_size) : LruCacheShared<Key, Value, Hash>(initial_size)
-    { }
+
+    HostLruSegmentedCache(const size_t initial_size, std::size_t seg_count = DEFAULT_SEGMENT_COUNT)
+        : SegmentedLruCache<Key, Value, Hash>(initial_size, seg_count)
+      { } 
 };
 
-typedef HostLruSharedCache<snort::SfIp, HostAttributesDescriptor, HostAttributesCacheKey> HostAttributesSharedCache;
+typedef HostLruSegmentedCache<snort::SfIp, HostAttributesDescriptor, HostAttributesCacheKey> HostAttributesSegmentedCache;
 
 class HostAttributesReloadTuner : public snort::ReloadResourceTuner
 {
@@ -73,10 +75,10 @@ public:
     { return true; }
 };
 
-static THREAD_LOCAL HostAttributesSharedCache* active_cache = nullptr;
-static HostAttributesSharedCache* swap_cache = nullptr;
-static HostAttributesSharedCache* next_cache = nullptr;
-static HostAttributesSharedCache* old_cache = nullptr;
+static THREAD_LOCAL HostAttributesSegmentedCache* active_cache = nullptr;
+static HostAttributesSegmentedCache* swap_cache = nullptr;
+static HostAttributesSegmentedCache* next_cache = nullptr;
+static HostAttributesSegmentedCache* old_cache = nullptr;
 static THREAD_LOCAL HostAttributeStats host_attribute_stats;
 
 bool HostAttributesDescriptor::update_service
@@ -140,7 +142,7 @@ void HostAttributesDescriptor::get_host_attributes(uint16_t port,HostAttriInfo* 
 bool HostAttributesManager::load_hosts_file(snort::SnortConfig* sc, const char* fname)
 {
     delete next_cache;
-    next_cache = new HostAttributesSharedCache(sc->max_attribute_hosts);
+    next_cache = new HostAttributesSegmentedCache(sc->max_attribute_hosts, sc->segment_count_host);
 
     Shell sh(fname);
     if ( sh.configure(sc, true) )
@@ -157,7 +159,7 @@ bool HostAttributesManager::load_hosts_file(snort::SnortConfig* sc, const char* 
 bool HostAttributesManager::add_host(HostAttributesEntry host, snort::SnortConfig* sc)
 {
     if ( !next_cache )
-        next_cache = new HostAttributesSharedCache(sc->max_attribute_hosts);
+        next_cache = new HostAttributesSegmentedCache(sc->max_attribute_hosts, sc->segment_count_host);
 
     return next_cache->find_else_insert(host->get_ip_addr(), host, true);
 }

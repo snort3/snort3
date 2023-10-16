@@ -6,6 +6,11 @@ add_cpputest( lru_cache_shared_test
     SOURCES ../lru_cache_shared.cc
 )
 
+add_cpputest( lru_seg_cache_shared_test
+    SOURCES ../lru_segmented_cache_shared.h
+            ../lru_cache_shared.cc
+)
+
 add_cpputest( hash_lru_cache_test
     SOURCES ../hash_lru_cache.cc
 )

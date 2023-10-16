@@ -6,6 +6,7 @@ set (HASH_INCLUDES
     hash_key_operations.h
     lru_cache_local.h
     lru_cache_shared.h
+    lru_segmented_cache_shared.h
     xhash.h
 )
 

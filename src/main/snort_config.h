@@ -286,6 +286,7 @@ public:
     uint32_t max_attribute_hosts = 0;
     uint32_t max_attribute_services_per_host = 0;
     uint32_t max_metadata_services = 0;
+    uint32_t segment_count_host = 4;
 
     //------------------------------------------------------
     // packet module stuff
@@ -515,7 +516,10 @@ public:
     { return run_flags & RUN_FLAG__READ; }
 
     bool ips_inline_mode() const
-    { return get_ips_policy()->policy_mode == POLICY_MODE__INLINE; }
+    {   
+        // cppcheck-suppress nullPointer
+        return get_ips_policy()->policy_mode == POLICY_MODE__INLINE; 
+    }
 
     bool ips_inline_test_mode() const
     { return get_ips_policy()->policy_mode == POLICY_MODE__INLINE_TEST; }
@@ -625,6 +629,9 @@ public:
 
     uint32_t get_max_attribute_hosts() const
     { return max_attribute_hosts; }
+
+    uint32_t get_segment_count_host() const
+    { return segment_count_host; }
 
     uint32_t get_max_services_per_host() const
     { return max_attribute_services_per_host; }
